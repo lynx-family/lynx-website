@@ -2,10 +2,13 @@ import { useI18n, useLocation } from 'rspress/runtime';
 import './RuleItem.css';
 
 const ICON = {
-  css: '/assets/css.png',
-  eslint: '/assets/eslint.png',
-  react: '/assets/react.png',
-  artifact: '/assets/artifact.png',
+  css: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/css.png',
+  eslint:
+    'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/eslint.png',
+  react:
+    'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/react.png',
+  artifact:
+    'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/artifact.png',
 };
 
 export function RuleSymbolDesc() {
@@ -15,22 +18,22 @@ export function RuleSymbolDesc() {
       <div className="rule-types item">
         <div className="inline-flex">
           <img
-            src="/assets/eslint.png"
+            src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/eslint.png"
             className="w-6 h-6 mr-2 rule-type"
             alt="ESLint"
           />
           <img
-            src="/assets/css.png"
+            src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/css.png"
             className="w-6 h-6 mr-2 rule-type"
             alt="CSS"
           />
           <img
-            src="/assets/react.png"
+            src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/react.png"
             className="w-6 h-6 mr-2 rule-type"
             alt="React"
           />
           <img
-            src="/assets/artifact.png"
+            src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/artifact.png"
             className="w-6 h-6 rule-type"
             alt="Artifact"
           />

@@ -17,7 +17,7 @@ export default defineConfig({
   title: 'Lynx',
   description:
     'Empower the web community and invite more to build cross-platform apps',
-  icon: '/assets/lynx-dark-logo.svg',
+  icon: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
   lang: 'en',
   globalStyles: path.join(__dirname, 'src', 'styles', 'global.css'),
   builderConfig: {
@@ -54,8 +54,9 @@ export default defineConfig({
     },
   },
   logo: {
-    light: '/assets/lynx-dark-logo.svg',
-    dark: '/assets/lynx-light-logo.svg',
+    light:
+      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
+    dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
   themeConfig: {
     locales: [

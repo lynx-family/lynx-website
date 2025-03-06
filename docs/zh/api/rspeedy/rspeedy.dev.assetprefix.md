@@ -43,7 +43,7 @@ If `dev.assetPrefix` is set to a string, the value will be used as a prefix and 
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   dev: {
-    assetPrefix: 'https://example.com/assets/',
+    assetPrefix: 'https://example.comhttps://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/',
   },
 })
 ```
@@ -62,7 +62,7 @@ To avoid `dev.assetPrefix` becoming invalid due to port changes, you can use one
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   dev: {
-    assetPrefix: 'https://example.com:<port>/assets/',
+    assetPrefix: 'https://example.com:<port>https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/',
   },
 })
 ```

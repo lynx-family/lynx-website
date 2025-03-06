@@ -3,19 +3,19 @@
 
 首先参照[为 iOS 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) 指南在本地创建 Lynx Explorer 项目，并用 Xcode 打开项目。
 
-![demo](/assets/doc/native-modules-ios-step1.png)
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step1.png)
 
 接着在 Lynx Explorer 项目的 `modules` 文件夹上右键点击，选择 `New Fie...` 创建原生模块代码文件。
 
-![demo](/assets/doc/native-modules-ios-step2.png)
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step2.png)
 
 然后使用 `Cocoa Touch Class` 模板。
 
-![demo](/assets/doc/native-modules-ios-step3.png)
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step3.png)
 
 将类命名为 `NativeLocalStorageModule`，语言你可以选择创建 `Objective-C`，也可以选择 `Swift`。接着点击 `Next`，完成文件的创建。
 
-![demo](/assets/doc/native-modules-ios-step4.png)
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step4.png)
 
 #### 实现原生模块
 
@@ -117,11 +117,11 @@ import Foundation
 
 @objcMembers
 public final class NativeLocalStorageModule: NSObject, LynxModule {
-    
+
     @objc public static var name: String {
         return "NativeLocalStorageModule"
     }
-    
+
     @objc public static var methodLookup: [String : String] {
         return [
             "setStorageItem": NSStringFromSelector(#selector(setStorageItem(_:value:))),
@@ -129,10 +129,10 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
             "clearStorage": NSStringFromSelector(#selector(clearStorage))
         ]
     }
-    
+
     private let localStorage: UserDefaults
     private static let storageKey = "MyLocalStorage"
-  
+
     @objc public init(param: Any) {
       guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
           fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
@@ -140,7 +140,7 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
       localStorage = suite
       super.init()
     }
-    
+
     @objc public override init() {
         guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
             fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
@@ -148,15 +148,15 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
         localStorage = suite
         super.init()
     }
-    
+
     @objc func setStorageItem(_ key: String, value: String) {
         localStorage.set(value, forKey: key)
     }
-    
+
     @objc func getStorageItem(_ key: String) -> String? {
         return localStorage.string(forKey: key)
     }
-    
+
     @objc func clearStorage() {
         localStorage.dictionaryRepresentation().keys.forEach {
             localStorage.removeObject(forKey: $0)
@@ -238,4 +238,4 @@ Lynx Explorer 是使用 Objective-C 构建的项目，如果你希望在 Objecti
 
 你将会看到控制台中看到二维码和产物链接，使用 Lynx Explorer 扫描二维码或者填写产物链接即可打开你的 Lynx 页面。
 
-![demo](/assets/doc/native-modules-demo-ios-en.gif)
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-demo-ios-en.gif)

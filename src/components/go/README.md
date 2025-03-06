@@ -56,7 +56,7 @@ interface Props {
    * example screenshot, if not provided, the default is example/preview-image.png, supports multiple formats /^preview-image\.(png|jpg|jpeg|webp|gif)$/
    *
    * @example
-   * img="/assets/doc/view_render.jpeg"
+   * img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/view_render.jpeg"
    */
   img?: string;
   /**
@@ -103,11 +103,11 @@ To include a preview image, use the following:
 <Go
   example="animation"
   defaultFile="src/transition_animation/index.tsx"
-  img="/assets/bg-draggable.gif"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/bg-draggable.gif"
 />
 ```
 
-The above code demonstrates an animation example with the preview image `/assets/bg-draggable.gif`. If the img prop is not provide，it will default to using `example/preview-image.png` `(matches /^preview-image\.(png|jpg|jpeg|webp|gif)$/)` as the preview image.
+The above code demonstrates an animation example with the preview image `https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/bg-draggable.gif`. If the img prop is not provide，it will default to using `example/preview-image.png` `(matches /^preview-image\.(png|jpg|jpeg|webp|gif)$/)` as the preview image.
 
 ### Entry File
 
@@ -157,7 +157,7 @@ Here’s a complete example of the `<Go>` component in use:
 ```jsx
 <Go
   example="animation"
-  img="/assets/bg-draggable.gif"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/bg-draggable.gif"
   defaultFile="src/transition_animation/index.tsx"
   highlight="{1,3-5}"
   defaultEntryFile="dist/transition_animation.lynx.bundle"

@@ -29,7 +29,7 @@ The functionality of [Output.assetPrefix](./rspeedy.output.assetprefix.md) is ba
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   output: {
-    assetPrefix: 'https://cdn.example.com/assets/',
+    assetPrefix: 'https://cdn.example.comhttps://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/',
   },
 })
 ```

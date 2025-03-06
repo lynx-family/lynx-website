@@ -26,7 +26,7 @@ import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   output: {
     copy: [
-      // `./src/assets/image.png` -> `./dist/image.png`
+      // `./srchttps://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/image.png` -> `./dist/image.png`
       { from: './src/assets' },
     ],
   },
@@ -43,7 +43,7 @@ import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   output: {
     copy: [
-      // `./src/assets/image.png` -> `./dist/assets/image.png`
+      // `./srchttps://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/image.png` -> `./disthttps://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/image.png`
       { from: './src/assets', to: 'assets' },
     ],
   },

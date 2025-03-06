@@ -31,8 +31,9 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/',
     url: '/guide/ui/elements-components',
     logo: {
-      light: '/assets/lynx-dark-logo.svg',
-      dark: '/assets/lynx-light-logo.svg',
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
     },
   },
   {
@@ -42,8 +43,9 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/react',
     url: '/react/introduction',
     logo: {
-      light: '/assets/reactlynx-logo-light.svg',
-      dark: '/assets/reactlynx-logo-dark.svg',
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
     },
     descriptionZh: '用 React 开发 Lynx 应用',
   },
@@ -55,8 +57,9 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/rspeedy',
     url: '/rspeedy/cli',
     logo: {
-      light: '/assets/rspeedy.PNG',
-      dark: '/assets/rspeedy.PNG',
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
     },
   },
 ];
