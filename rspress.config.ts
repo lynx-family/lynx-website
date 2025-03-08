@@ -47,7 +47,7 @@ export default defineConfig({
         'process.env': {
           OSS: '3.2',
           DOC_GIT_BASE_URL: JSON.stringify(
-            'https://github.com/lynx-wg/lynx-website/tree/main',
+            'https://github.com/lynx-family/lynx-website/tree/main',
           ),
         },
       },
