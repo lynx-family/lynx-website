@@ -26,7 +26,8 @@ export default defineConfig({
         title: 'Lynx',
         type: 'website',
         url: 'https://lynxjs.org/',
-        image: 'https://lynxjs.org/assets/og-image.png',
+        image:
+          'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/og-image.png',
         description:
           'Empower the web community and invite more to build cross-platform apps',
         twitter: {
