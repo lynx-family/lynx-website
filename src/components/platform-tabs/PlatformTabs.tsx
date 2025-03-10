@@ -230,6 +230,13 @@ export const PlatformTabs = ({
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [activePlatform, getPlatformFromHash]);
+  useEffect(() => {
+    // wait for the component to load
+    requestAnimationFrame(() => {
+      const element = document.getElementById(window.location.hash?.slice(1));
+      element?.scrollIntoView({ behavior: 'auto' });
+    });
+  }, []);
 
   // Filter platform options to only show available ones
   const availableOptions = PLATFORM_OPTIONS.filter((option) =>
