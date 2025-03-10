@@ -2,9 +2,9 @@ import { RuntimeBadge } from '@lynx';
 
 # MetricTtiEntry
 
-TTI is a performance metric that measures the time it takes for a page to become interactive. `MetricTtiEntry` is the data type that describes this metric, inheriting from [`PerformanceEntry`](../performance-entry).
+TTI is a performance metric that measures the time it takes for a page to become interactive. `MetricTtiEntry` interface provides timing information about this metric, inheriting from [`PerformanceEntry`](../performance-entry).
 
-In Lynx, the [Main Thread Script (MTS)](guide/spec#main-thread-script-or-mts) is responsible for rendering the UI and accepting user interactions, while the [Background Thread Script (BTS)](guide/spec#background-thread-script-or-bts) handles interaction events and business logic. Therefore, in Lynx, MTS must complete the first render and BTS must complete loading before user interactions can be responded to.
+the [Main Thread Script (MTS)](guide/spec#main-thread-script-or-mts) is responsible for rendering the UI and accepting user interactions, while the [Background Thread Script (BTS)](guide/spec#background-thread-script-or-bts) handles interaction events and business logic. Therefore, MTS must complete the [first-screen render](guide/spec#first-screen-rendering-or-fsr) and BTS must complete loading before user interactions can be responded to.
 
 Depending on different starting points, Lynx provides three metrics: `tti`, `lynxTti`, and `totalTti`. Each metric is defined in the rendering process as shown in the diagram below:
 
@@ -59,7 +59,7 @@ Calculation formula: `tti = max(LoadBundleEntry.paintEnd, LoadBundleEntry.loadBa
 lynxTti: PerformanceMetric;
 ```
 
-The time taken from executing the [TemplateBundle](api/lynx-native-api/template-bundle) to the page becoming interactive, with a data type of [`PerformanceMetric`](api/lynx-api/performance-api/performance-metric).
+The time taken from loading the [TemplateBundle](api/lynx-native-api/template-bundle) to the page becoming interactive, with a data type of [`PerformanceMetric`](api/lynx-api/performance-api/performance-metric).
 
 Calculation formula: `lynxTti = max(LoadBundleEntry.paintEnd, LoadBundleEntry.loadBackgroundEnd) - LoadBundleEntry.loadBundleStart`.
 

@@ -14,32 +14,16 @@ When a marked Lynx Pipeline execution is completed and the screen display is ref
 1. **Marking the Node**: Set the `__lynx_timing_flag` attribute on the target component. When the node finishes rendering, the framework will automatically collect performance data for its Lynx Pipeline.
 2. **Getting Data**: Register an observer using [`lynx.performance.createObserver()`](api/lynx-api/lynx/lynx-performance#createobserver) to obtain relevant performance data (`PipelineEntry`).
 
-```ts
-{
-  this.state.actualData && (
-    <view __lynx_timing_flag="__lynx_timing_actual_fmp">
-      {/* Child component content */}
-    </view>
-  );
-}
+import { Go } from '@lynx';
 
-// 1. Create observer object
-let observer = lynx.performance.createObserver((entry: PerformanceEntry) => {
-  if (entry.entryType == 'pipeline' && entry.name != 'loadBundle') {
-    // 3. Received "pipeline" metric
-    let pipelineEntry = entry as PipelineEntry;
-    // pipelineEntry.identifier is the same as __lynx_timing_flag
-    console.log('pipelineEntry identifier : ', pipelineEntry.identifier);
-    // Get the difference between pipelineEnd and pipelineStart timestamps to calculate component display time
-    console.log(
-      'pipelineEntry duration : ',
-      pipelineEntry.pipelineEnd - pipelineEntry.pipelineStart,
-    );
-  }
-});
-// 2. Register to listen for "pipeline" metrics
-observer.observe(['pipeline']);
-```
+<Go
+  example="performance-api"
+  defaultFile="src/pipeline_entry/index.tsx"
+  defaultEntryFile="dist/pipeline_entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/pipeline-entry-demo.jpeg"
+  entry="src/pipeline_entry"
+  highlight="{11-21,31}"
+/>
 
 ## Compatibility
 
