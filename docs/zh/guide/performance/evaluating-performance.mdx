@@ -1,18 +1,16 @@
 # 评估性能
 
-页面性能的好坏会直接影响用户的使用体验。Lynx 提供了[性能 API](api/lynx-api/performance-api) 来帮助你评估页面性能。
+页面性能的好坏会直接影响用户的使用体验。Lynx 提供了[性能 API](api/lynx-api/performance-api) 来帮助你评估页面性能。本篇文章将从三个方向介绍如何使用它们。
 
 ## 评估用户感知性能
 
-用户感知性能是衡量用户对页面“快”、“慢”主观感受的概念。
-
-在用户打开一个页面时，用户会希望尽快看到内容而不是白屏等待。这提示我们提升用户感知性能的两个基本准则：尽早显示和快速响应。
+需要理解的是，感知性能是用户对页面运行速度的主观体验。当用户打开一个页面时，他们通常希望尽快看到内容而不是白屏等待。因此，有两个基本准则可以帮助我们提高用户的感知性能：尽早显示和快速响应。
 
 - 尽早显示：在加载页面时，最好通过展示动态加载动画（如 CSS 动画或 SVG 动画）、友好的提示文本、骨架屏或其他任何对改善用户焦虑有帮助的内容，而不是等待所有的数据就绪再完整显示。这样可以让用户感到页面加载更快，因为他们看到的是一个可以理解的界面而不是空白。
 
-- 快速响应：用户操作导致需要长时间等待的操作时（如搜索或图像处理）立即显示加载动画。虽然这不会改变完成操作完成的时间，但用户会认为页面及时响应了他们的操作。
+- 快速响应：执行需要长时间等待的操作（如搜索或图像处理）时应该立即显示加载动画。虽然这不会让操作完成的更快，但是用户会认为页面及时响应了他们的操作。
 
-遵循以上两条准则可以显著降低用户认为页面不可用而提前跳出的可能。然而由于用户感知性能涉及复杂的主观体验，因此很难构造单一的指标来评估它，需要综合使用[性能 API](api/lynx-api/performance-api) 提供的多项指标来形成更全面的评估：
+遵循以上两条准则可以显著降低用户认为页面不可用而提前跳出的可能。然而由于用户感知性能涉及复杂的主观体验，因此很难构造单一的指标进行评估。需要综合使用[性能 API](api/lynx-api/performance-api) 提供的多项指标，以形成更全面的评估：
 
 - [First Contentful Paint (FCP)](api/lynx-api/performance-api/performance-entry/metric-fcp-entry): 页面首次渲染完成所用的时间。
 
@@ -20,25 +18,25 @@
 
 - [Time to interactive (TTI)](api/lynx-api/performance-api/performance-entry/metric-tti-entry): 页面达到可交互状态的时间。
 
-基于以上指标，在实际页面显示时，如果你的页面如下图所示在页面加载（LoadBundle）后即可显示主要内容，不需要依赖网络请求或异步 IO 再获取需要呈现给用户的数据，应侧重优化 _FCP_ 与 _TTI_。
+基于以上指标，在实际页面显示时，如果页面在加载（LoadBundle）后能够直接呈现主要内容，无需额外获取数据来展示，则应侧重优化 _FCP_ 与 _TTI_。
 
 ![首屏直出的首屏渲染流程](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-without-network.png '首屏直出的首屏渲染流程')
 
-反之如果你的页面如下图所示需要依赖其他数据，比如通过网络请求（Network Request）获取的数据才能“真正”完成渲染。那么你需要[标记 Lynx 流水线](guide/performance/timing-flag)，关注与重要数据、元件相关的 _ActualFMP_。因为当 FCP 与 TTI 完成时展现的画面很可能是没有意义的，比如加载动画或骨架屏。
+反之，如果页面依赖额外的数据才能完成显示，例如通过网络下载或本地文件读取等异步方式获取的数据来“真正”完成渲染，那么可以[标记 Lynx 流水线](guide/performance/timing-flag)。标注后，可以获取被标记的 [Lynx Pipeline](guide/spec#lynx-pipeline) 产生的 _ActualFMP_。与无数据请求时不同，这种情况下 FCP 和 TTI 完成时可能展现的是无意义的画面，例如加载动画或骨架屏。
 
 ![带网络请求的首屏渲染流程图](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-with-network.png '带网络请求的首屏渲染流程')
 
-由此你也可以发现，显示真实数据需要消耗额外的处理时间，这与提升用户感知性能的基本准则相悖。因此为了提高用户感受到的性能，首屏展示的内容应该尽可能是静态内容或者预加载内容，其余内容再依赖网络下载并在后续的数据更新中显示。这种方式虽然增加了总下载量，但是通过更早渲染有意义的内容，可以极大提升了用户感受到的性能。
+由此你也可以发现，显示真实数据需要消耗额外的处理时间，这与提升用户感知性能的基本准则相悖。因此为了提高用户感受到的性能，首屏展示的内容应该尽可能是静态内容或者预加载内容，其余内容再依赖网络下载并在后续的数据更新中显示。这种方式虽然增加了总的数据下载量，但是通过更早渲染有意义的内容可以极大提升用户感受到的性能。
 
 ## 评估应用运行性能
 
-页面性能涉及应用运行性能和用户感知性能，[评估用户感知性能](./evaluating-performance#评估用户感知性能)中说明了用户感知速度的重要性，这一部分将介绍如何评估页面的应用运行性能。
+[评估用户感知性能](./evaluating-performance#评估用户感知性能)中说明了用户感知性能的重要性，这一部分将介绍如何评估应用运行性能，即应用实际准备资源、渲染页面的速度。
 
-页面运行性能的好坏重点关注从**加载**和**渲染**两方面，它们都直接影响用户与应用程序交互体验的好坏。它们任何一方的坏表现都可能导致用户放弃访问页面内容甚至完全无法访问内容。
+应用运行性能的好坏着重从**初始化**和**渲染**两方面进行评估，它们都直接影响用户与应用程序的交互体验。它们任何一方的坏表现都可能导致用户放弃访问页面内容甚至完全无法访问内容。
 
-### 加载
+### 初始化
 
-从用户点击链接到新的页面显示，应用程序需要完成包括页面容器初始化、准备 [TemplateBundle](guide/spec#template-bundle) 等准备工作。
+从用户点击链接到新的页面显示，应用程序需要完成包括页面容器初始化、准备 [TemplateBundle](api/lynx-native-api/template-bundle) 等初始化工作。
 
 如下图所示是页面显示前必须经过的初始化阶段，包括了[容器（Container）](api/lynx-api/performance-api/performance-entry/init-container-entry)、[LynxView](guide/spec#lynxview①) 和 [Background Thread Runtime](guide/spec#background-thread-runtime) 三部分的初始化耗时。[性能 API](api/lynx-api/performance-api) 提供了 [`InitContainerEntry`](api/lynx-api/performance-api/performance-entry/init-container-entry)、[`InitLynxviewEntry`](api/lynx-api/performance-api/performance-entry/init-lynxview-entry) 和 [`InitBackgroundRuntimeEntry`](api/lynx-api/performance-api/performance-entry/init-background-runtime-entry) 来描述这些阶段的关键时刻。你可以任意组合这些性能数据进行整个初始化阶段的具体分析。
 
@@ -54,14 +52,14 @@
 
 ![Lynx Pipeline](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/pipeline-entry.png 'Lynx Pipeline')
 
-理解并跟踪页面的实际性能表现对提升用户体验是非常重要的。通过具体的性能指标，可以识别哪些环节造成了延迟，继而实施优化措施，确保用户尽快看到完整、可交互的页面内容。这样的跟踪与优化最终能极大减少用户等待时间，提升整体应用流畅度。
+理解并跟踪页面的实际性能表现对优化页面性能是非常重要的。通过具体的性能指标，可以识别哪些环节造成了延迟，继而实施优化措施，确保用户尽快看到完整、可交互的页面内容。这样的跟踪与优化最终能极大减少用户等待时间，提升整体应用流畅度。
 
 ## 构建自定义的性能评估指标
 
-没有一套性能指标可以描述所有的情况，不同的业务目标意味着你可能需要关注不同的性能指标。对[性能 API](api/lynx-api/performance-api) 的使用可以不局限于通过内置指标来分析页面性能，你也可以灵活组合不同 [`PerformanceEntry`](api/lynx-api/performance-api/performance-entry) 提供给你的关键时刻，构建出一套适配你的应用程序的性能检测指标。
+不同的业务目标意味着你可能需要关注不同的性能指标。对[性能 API](api/lynx-api/performance-api) 的使用可以不局限于通过内置指标来分析页面性能，你也可以灵活组合不同 [`PerformanceEntry`](api/lynx-api/performance-api/performance-entry) 提供给你的关键节点的时间，构建出一套适配你的应用程序的性能检测指标。
 
 假如你希望关注从首屏渲染结束到首次重要数据更新的时间间隔，来优化用户第二时间看到更多、更丰富信息的速度，你可以像下面的代码这样灵活组合 [`LoadBundleEntry`](api/lynx-api/performance-api/performance-entry/load-bundle-entry) 和
-[`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry) 计算出一个属于你的独特指标 `waitingDuration`。它可以帮助你监测网络请求、文件读取等行为的速度，精准定位页面性能变坏的原因。
+[`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry) 计算出一个属于你的性能指标 `waitingDuration`。它可以帮助你监测网络请求、文件读取等行为的速度，精准定位页面性能变坏的原因。
 
 ![waiting duration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/custom-metric-waitingduration.png)
 
