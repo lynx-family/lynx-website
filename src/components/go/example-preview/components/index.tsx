@@ -278,9 +278,10 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                       {t('go.scan.message-1')}
                       <Typography.Text
                         link={{
-                          href: lang
-                            ? `/${lang}/guide/start/quick-start.html`
-                            : '/guide/start/quick-start.html',
+                          href:
+                            lang === 'zh'
+                              ? `/${lang}/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator`
+                              : '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
                           target: '_blank',
                         }}
                         size="small"
