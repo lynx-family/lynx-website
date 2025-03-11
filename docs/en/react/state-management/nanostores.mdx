@@ -1,0 +1,48 @@
+import { PackageManagerTabs } from '@theme';
+
+# Nanostores
+
+## Using `nanostores`
+
+[Nanostores](https://github.com/nanostores/nanostores) is a tiny state manager with many atomic tree-shakable stores.
+
+### Installation
+
+<PackageManagerTabs command="install nanostores" />
+
+### Example
+
+```tsx
+import { useEffect } from '@lynx-js/react';
+import { atom } from 'nanostores';
+import { useStore } from '@nanostores/react';
+
+const $counter = atom(0);
+
+export function App() {
+  const count = useStore($counter);
+
+  const handleTap = () => {
+    $counter.set($counter.get() + 1);
+  };
+
+  useEffect(() => {
+    const unsubscribe = $counter.subscribe((value) => {
+      console.log('count changed: ', value);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <view>
+      <text>{count}</text>
+      <text bindtap={handleTap}>Tap</text>
+    </view>
+  );
+}
+```
+
+See [nanostores - guide](https://github.com/nanostores/nanostores?tab=readme-ov-file#guide) for details.
