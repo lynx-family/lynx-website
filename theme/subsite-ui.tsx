@@ -1,4 +1,4 @@
-import type { SubsiteConfig } from '../shared-route-config';
+import type { SubsiteConfig } from '@site/shared-route-config';
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
   return (

@@ -247,6 +247,7 @@ export const PlatformTabs = ({
     if (!React.isValidElement(child)) return null;
     return (
       <div
+        key={child.props.platform}
         style={{
           display: child.props.platform === activePlatform ? 'block' : 'none',
         }}

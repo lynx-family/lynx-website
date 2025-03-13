@@ -1,5 +1,5 @@
-import { Spin, Typography } from '@douyinfe/semi-ui';
 import React, { useEffect, useRef, useState } from 'react';
+import { Spin, Typography } from '@douyinfe/semi-ui';
 
 interface WebIframeProps {
   show: boolean;
@@ -43,27 +43,52 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
 
   return (
     <div
-      className="sh-w-full sh-h-full sh-relative sh-flex sh-items-center sh-justify-center"
-      style={{ display: show ? 'flex' : 'none' }}
+      style={{
+        display: show ? 'flex' : 'none',
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
     >
       {hasBeenVisible && (
         <iframe
           src={previewBaseUrl}
           ref={iframeRef}
-          className="sh-w-full sh-h-full"
+          style={{ width: '100%', height: '100%' }}
         />
       )}
       {loading && (
-        <div className="sh-absolute sh-top-0 sh-left-0 sh-w-full sh-h-full sh-flex sh-items-center sh-justify-center">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
           <Spin />
         </div>
       )}
       {error && (
-        <div className="sh-absolute sh-top-0 sh-left-0 sh-w-full sh-h-full sh-flex sh-items-center sh-justify-center">
-          <Typography.Text
-            type="tertiary"
-            style={{ padding: '0 12px', textAlign: 'center' }}
-          >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <Typography.Text type="tertiary">
             Failed to load the preview, please try again later.
           </Typography.Text>
         </div>

@@ -3,6 +3,7 @@ import { Typography } from '@douyinfe/semi-ui';
 
 import { Code } from './code';
 import { getFileCodeLanguage, isImgType } from '../utils/example-data';
+import s from './index.module.scss';
 
 interface CodeViewProps {
   currentFileName: string;
@@ -21,13 +22,13 @@ export const CodeView = ({
   if (isAssetFile) {
     if (isImgType(currentFileName)) {
       return (
-        <div className="sh-flex sh-items-center sh-justify-center sh-w-full sh-h-full sh-overflow-auto">
+        <div className={s['code-view-comp']}>
           <img src={currentFile} alt="" />
         </div>
       );
     }
     return (
-      <div className="sh-flex sh-items-center sh-justify-center sh-w-full sh-h-full">
+      <div className={s['code-view-comp']}>
         <Typography.Text type="secondary">{currentFileName}</Typography.Text>
       </div>
     );

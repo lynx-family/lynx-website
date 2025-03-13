@@ -6,7 +6,6 @@ import {
   Switch,
   Button,
   SideSheet,
-  Resizable,
   RadioGroup,
   Radio,
   Select,
@@ -14,25 +13,30 @@ import {
   Tabs,
   TabPane,
 } from '@douyinfe/semi-ui';
+import { IconList, IconChevronRightStroked } from '@douyinfe/semi-icons';
 import { QRCodeSVG } from 'qrcode.react';
-
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { FileTree } from './file-tree';
 import { CodeView } from './code-view';
 import { WebIframe } from './web-iframe';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
-import {
-  IconList,
-  IconChevronRightStroked,
-  IconHandle,
-} from '@douyinfe/semi-icons';
+import { SwitchSchema } from './switch-schema';
+import { PreviewImg } from './preview-img';
+import { ResizableContainer } from './resizable';
+
 import { IconGithub, IconCopyLink } from '../utils/icon';
-import { isSupportWebExplorer } from '../utils/tool';
+import { isSupportWebExplorer, tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
+import { SchemaOptionsData } from '../hooks/use-switch-schema';
 
 import s from './index.module.scss';
 
-const EXAMPLE_BASE_URL =
-  'https://github.com/lynx-family/lynx-examples/tree/main';
+const LYNX_EXPLORER_URL_CN =
+  process.env.LYNX_EXPLORER_URL_CN ||
+  '/zh/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator';
+
+const LYNX_EXPLORER_URL_EN =
+  process.env.LYNX_EXPLORER_URL_EN ||
+  '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator';
 
 enum PreviewType {
   Preview = 'Preview',
@@ -57,6 +61,9 @@ interface ExampleContentProps {
   entry?: string;
   defaultWebPreviewFile?: string;
   initState: boolean;
+  rightFooter?: React.ReactNode;
+  schemaOptions?: SchemaOptionsData;
+  exampleGitBaseUrl?: string;
 }
 
 export const ExampleContent: FC<ExampleContentProps> = ({
@@ -76,6 +83,9 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   entry,
   defaultWebPreviewFile,
   initState,
+  rightFooter,
+  schemaOptions,
+  exampleGitBaseUrl,
 }) => {
   const { treeData, doChangeExpand, selectedKeys, expandedKeys, entryData } =
     useTreeController({ fileNames, value: currentFileName, entry });
@@ -85,6 +95,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   const [previewType, setPreviewType] = useState(
     previewImage ? PreviewType.Preview : PreviewType.QRCode,
   );
+  const [qrcodeUrlWithSchema, setQrcodeUrlWithSchema] = useState('');
   const { hasPreview, hasWebPreview } = useMemo(() => {
     const count =
       Number(Boolean(previewImage)) +
@@ -108,18 +119,11 @@ export const ExampleContent: FC<ExampleContentProps> = ({
     }
   };
 
-  const isVideo = (filename: string) => {
-    let ext = filename.split('.').pop();
-    if (!ext) {
-      return false;
-    }
-    ext = ext.toLowerCase();
-    const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'];
-    if (videoExtensions.includes(ext)) {
-      return true;
-    }
-    return false;
+  const onSwitchSchema = (schema: string) => {
+    setQrcodeUrlWithSchema(schema);
   };
+  const qrcodeUrl = qrcodeUrlWithSchema || currentEntryFileUrl;
+
   const showCodeTab = entryData && entryData?.length > 1;
   return (
     <div className={s.box}>
@@ -132,24 +136,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   className={s['code-tab']}
                   ref={(tabsRef) => {
                     // scroll to active tab
-                    if (tabsRef) {
-                      const activeTab = tabsRef.querySelector(
-                        '.semi-tabs-tab-active',
-                      ) as HTMLElement;
-                      const scrollContainer =
-                        activeTab?.parentNode as HTMLElement;
-                      if (activeTab && scrollContainer) {
-                        const scrollLeft =
-                          activeTab.offsetLeft -
-                          (scrollContainer.clientWidth -
-                            activeTab.offsetWidth) /
-                            2;
-                        scrollContainer.scrollTo({
-                          left: scrollLeft,
-                          behavior: 'auto',
-                        });
-                      }
-                    }
+                    tabScrollToTop(tabsRef);
                   }}
                 >
                   <Tabs
@@ -193,83 +180,42 @@ export const ExampleContent: FC<ExampleContentProps> = ({
             </div>
           </div>
 
-          <Resizable
-            style={{
-              display: hasPreview && showPreview ? 'block' : 'none',
-            }}
-            enable={{
-              top: false,
-              right: false,
-              bottom: false,
-              topLeft: false,
-              topRight: false,
-              bottomLeft: false,
-              bottomRight: false,
-              left: true,
-            }}
-            defaultSize={{
-              width: 280,
-            }}
-            minWidth={200}
-            maxWidth={600}
-            handleStyle={{
-              left: {
-                left: '-8px',
-                width: '8px',
-              },
-            }}
-            handleNode={{
-              left: (
-                <div
+          <ResizableContainer show={hasPreview && showPreview}>
+            <div className={s['preview-wrap']}>
+              <div className={s['preview-wrap-content']}>
+                <RadioGroup
+                  onChange={(e) => setPreviewType(e.target.value)}
+                  value={previewType}
+                  type="button"
                   style={{
-                    height: '100%',
                     display: 'flex',
-                    alignItems: 'center',
+                    width: '100%',
+                    justifyContent: 'center',
                   }}
                 >
-                  <IconHandle
-                    style={{ fontSize: '12px', marginLeft: '-2px' }}
-                  />
-                </div>
-              ),
-            }}
-          >
-            <div className={s['preview-wrap']}>
-              <div className="sh-w-full sh-h-full sh-flex sh-flex-col sh-items-center">
-                {
-                  <RadioGroup
-                    onChange={(e) => setPreviewType(e.target.value)}
-                    value={previewType}
-                    type="button"
-                    style={{
-                      display: 'flex',
-                      width: '100%',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {initState ? (
-                      <>
-                        {previewImage && (
-                          <Radio value={PreviewType.Preview}>
-                            {t('go.preview')}
-                          </Radio>
-                        )}
-                        {hasWebPreview && (
-                          <Radio value={PreviewType.Web}>Web</Radio>
-                        )}
-                        {currentEntry && (
-                          <Radio value={PreviewType.QRCode}>
-                            {t('go.qrcode')}
-                          </Radio>
-                        )}
-                      </>
-                    ) : (
-                      <div style={{ width: '100%', height: '32px' }}></div>
-                    )}
-                  </RadioGroup>
-                }
+                  {initState ? (
+                    <>
+                      {previewImage && (
+                        <Radio value={PreviewType.Preview}>
+                          {t('go.preview')}
+                        </Radio>
+                      )}
+                      {hasWebPreview && (
+                        <Radio value={PreviewType.Web}>Web</Radio>
+                      )}
+                      {currentEntry && (
+                        <Radio value={PreviewType.QRCode}>
+                          {t('go.qrcode')}
+                        </Radio>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ width: '100%', height: '32px' }}></div>
+                  )}
+                </RadioGroup>
+
                 {previewType === PreviewType.QRCode && currentEntry && (
-                  <div className={s.qrcode} style={{ minHeight: '0px' }}>
+                  <div className={s.qrcode}>
                     <Typography.Text
                       size="small"
                       type="tertiary"
@@ -280,26 +226,26 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                         link={{
                           href:
                             lang === 'zh'
-                              ? `/${lang}/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator`
-                              : '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
+                              ? LYNX_EXPLORER_URL_CN
+                              : LYNX_EXPLORER_URL_EN,
                           target: '_blank',
                         }}
                         size="small"
                         underline
                       >
                         Lynx Explorer
-                      </Typography.Text>
+                      </Typography.Text>{' '}
                       {t('go.scan.message-2')}
                     </Typography.Text>
                     <div className={s['qrcode-svg']}>
-                      <QRCodeSVG value={currentEntryFileUrl} />
+                      <QRCodeSVG value={qrcodeUrl} />
                     </div>
                     <div style={{ marginBottom: '32px' }}>
                       <CopyToClipboard
                         onCopy={() => {
                           Toast.success(t('go.qrcode.copied'));
                         }}
-                        text={currentEntryFileUrl}
+                        text={qrcodeUrl}
                       >
                         <Button
                           type="tertiary"
@@ -310,6 +256,13 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                         </Button>
                       </CopyToClipboard>
                     </div>
+                    {schemaOptions && (
+                      <SwitchSchema
+                        optionsData={schemaOptions}
+                        currentEntryFileUrl={currentEntryFileUrl}
+                        onSwitchSchema={onSwitchSchema}
+                      />
+                    )}
                     <div className={s['qrcode-entry']}>
                       <Typography.Text
                         size="small"
@@ -333,40 +286,10 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   </div>
                 )}
                 {previewImage && (
-                  <div
-                    className="sh-w-full sh-h-full sh-flex sh-items-center sh-justify-center"
-                    style={{
-                      minHeight: '0px',
-                      display:
-                        previewType === PreviewType.Preview ? 'flex' : 'none',
-                    }}
-                  >
-                    {isVideo(previewImage) ? (
-                      <video
-                        muted
-                        loop
-                        playsInline
-                        autoPlay
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                        }}
-                      >
-                        <source src={previewImage} />
-                      </video>
-                    ) : (
-                      <img
-                        src={previewImage}
-                        alt=""
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                        }}
-                      />
-                    )}
-                  </div>
+                  <PreviewImg
+                    show={previewType === PreviewType.Preview}
+                    previewImage={previewImage}
+                  />
                 )}
                 {hasWebPreview && (
                   <WebIframe
@@ -376,12 +299,16 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                 )}
               </div>
             </div>
-          </Resizable>
+          </ResizableContainer>
         </div>
         <div className={s.footer}>
           <Space
             spacing={2}
-            className="sh-max-w-full sh-overflow-hidden sh-whitespace-nowrap"
+            style={{
+              maxWidth: '100%',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+            }}
           >
             <Button
               theme="borderless"
@@ -390,7 +317,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
               size="small"
               onClick={() => setShowFileTree(true)}
             />
-            <Space spacing={2} className="sh-overflow-hidden">
+            <Space spacing={2} style={{ overflow: 'hidden' }}>
               <Typography.Text
                 size="small"
                 type="tertiary"
@@ -440,11 +367,12 @@ export const ExampleContent: FC<ExampleContentProps> = ({
               size="small"
               onClick={() => {
                 window.open(
-                  `${EXAMPLE_BASE_URL}/${directory}/${currentFileName}`,
+                  `${exampleGitBaseUrl}/${directory}/${currentFileName}`,
                   '_blank',
                 );
               }}
             />
+            {rightFooter}
           </Space>
         </div>
         <SideSheet
