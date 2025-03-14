@@ -2,6 +2,7 @@ import * as path from 'node:path';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import type { RspressPlugin, SidebarGroup } from '@rspress/shared';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
+import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { defineConfig } from 'rspress/config';
 import {
   SHARED_DOC_FILES,
@@ -22,6 +23,7 @@ export default defineConfig({
   globalStyles: path.join(__dirname, 'src', 'styles', 'global.css'),
   builderConfig: {
     plugins: [
+      pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       pluginOpenGraph({
         title: 'Lynx',
         type: 'website',
