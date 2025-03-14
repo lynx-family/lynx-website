@@ -57,6 +57,9 @@ function getAllFiles(dirPath, arrayOfFiles) {
     const fullPath = path.join(dirPath, file);
 
     if (fs.statSync(fullPath).isDirectory()) {
+      if (file === 'node_modules') {
+        return;
+      }
       getAllFiles(fullPath, arrayOfFiles);
     } else {
       arrayOfFiles.push(fullPath);

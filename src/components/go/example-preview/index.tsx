@@ -28,7 +28,7 @@ interface ExamplePreviewProps {
   img?: string;
   defaultEntryFile?: string;
   highlight?: string | Record<string, string>;
-  entry?: string;
+  entry?: string | RegExp;
   schema?: string;
 }
 
