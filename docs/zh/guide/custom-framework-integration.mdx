@@ -1,0 +1,356 @@
+import { Details, PlatformTabs, Go, VideoList } from '@lynx';
+import { PackageManagerTabs, Steps } from '@theme';
+import { Tab, Tabs } from 'rspress/theme';
+
+# 集成其他框架
+
+> Highly WIP.
+
+Lynx 是“框架无关”的。
+
+:::info 就如同我们在博客中所说：
+
+> _However, Lynx isn't limited to React._ In fact, other frameworks already represent roughly half of Lynx's overall usage, demonstrating its neutrality in hosting different flavors.
+
+> Not only is the core engine of Lynx framework-agnostic, but it's also agnostic to host platforms and rendering backends.
+
+前往[这篇博客](https://lynxjs.org/blog/lynx-unlock-native-for-more.html#craft-designs-with-markups-and-css-as-usual)了解更多细节。
+
+:::
+
+这意味着你可以接入其他框架。事实上，其他框架也占据了 Lynx 整体使用量的一半，充分证明了其对不同技术栈的兼容性和中立性。
+
+Lynx 可能会在稍晚一些时候开源其他框架（你可[在此处](https://github.com/lynx-family/lynx/issues/144#issuecomment-2705466656)关注其后续的进展），但是可能不会包括所有你想要的框架。如果你想要接入一个 Lynx 尚未支持或无支持计划的框架，你可以自己动手。
+
+## 我们将构建什么？
+
+此文档将通过**构建一个 Lynx 下的极简框架**，来展示如何将一个框架接入到 Lynx 中。这个“框架”被称为 Vanilla，它只包括构建一个可运行的 Lynx App Bundle 所需的最小化代码。
+
+你也可以**直接跳转到[集成真实框架](#real-framework-integration)**，其直接使用真实框架的示例进行更实际的演示。
+
+你需要一些前置准备：
+
+- 一个基本的开发环境。这意味着你需要安装 Node.js 和 npm。
+
+- 熟悉 Web 开发。
+
+- 熟悉 Webpack 类配置的编写。类似于在 Web 上构建一个应用，你需要配置构建工具。在此 Guide 中我们将使用 [Rspack](https://rspack.dev/)，它配置起来和 Webpack 没什么区别。
+
+- 了解 Lynx 的基本概念。需要你提前了解[快速入门](/guide/start/quick-start)。
+
+## 如何产出一个 App Bundle
+
+你可能注意到了 Lynx 需要加载一个形如 `dist/main.lynx.bundle` 的文件。这是一个二进制文件，其中包括了 Lynx 两个运行时的脚本文件以及 CSS 文件——你的应用代码就在其中。
+
+<Details title="@lynx-js/tasm 包的职责">
+
+本质上，App Bundle 由 npm 包 `@lynx-js/tasm` 生成。这个包是 Lynx 的编码器，它将你的应用代码编码为 Lynx 的二进制格式。
+
+你可以参考 Rspeedy 是如何[使用 `@lynx-js/tasm` 编码器](https://github.com/lynx-family/lynx-stack/blob/5e01cef366a20d48b430b11eedbf9e5141f316a2/packages/webpack/template-webpack-plugin/src/LynxEncodePlugin.ts#L202)的。
+
+</Details>
+
+结合 Rspack，你可以使用 npm 包 `@lynx-js/template-webpack-plugin` 提供的 `LynxEncodePlugin` 和 `LynxTemplatePlugin` 插件来产出这个文件。
+
+如果你喜欢“Show me the code”，下面的 Playground 已经为你准备好了：
+
+<Go
+  example="vanilla-lynx-bundle"
+  highlight="{40-44}"
+  defaultFile="rspack.config.js"
+  defaultEntryFile="dist/vanilla.lynx.bundle"
+  entry="rspack.config.js"
+/>
+
+---
+
+但是如果你希望一步一步地进行构建，请跟随下面的步骤：
+
+<Steps>
+
+### 创建项目
+
+就像在 Web 上一样，想要得到一个最简化的网页，你不需要那些大而全的框架或者工具链，往往只需要类似 Webpack 的构建工具就足够了。这里我们使用 Rspack。
+
+请创建一个新的目录，我们建议叫做 `vanilla-lynx-bundle`，然后安装以下依赖：
+
+<PackageManagerTabs command="add -D @rspack/core @rspack/cli" />
+
+你还需要创建一个 `rspack.config.js` 文件，用于配置 Rspack。
+
+```js filename=rspack.config.js
+/**
+ * @type {import("@rspack/core").Configuration}
+ */
+const config = {
+  // 我们稍后会完善此配置
+};
+export default config;
+```
+
+### 配置 Rspack
+
+和 Web 上的构建工具一样，你需要配置 Rspack 来告诉它如何构建你的应用。这一般从入口文件开始。
+
+这里我们将添加两个入口文件，因为我们需要构建两个不同的文件，分别运行在 Lynx 的[主线程](guide/spec.html#main-thread-or-lynx-main-thread)和[后台线程](guide/spec.html#background-thread-aka-off-main-thread)上。
+
+<Details title="Layers?">
+
+使用两个 [layer](https://webpack.js.org/configuration/module/#rulelayer) 分别构建 Lynx 的主线程和后台线程，将会为后续增加更多复杂构建配置带来便利。
+
+目前，Rspack 需要通过配置 `experiments.layers` 来启用这个特性。
+
+</Details>
+
+```js filename=rspack.config.js {10-19,21}
+const LAYERS = {
+  MAIN_THREAD: 'main-thread',
+  BACKGROUND: 'background',
+};
+const NAME = 'vanilla';
+/**
+ * @type {import("@rspack/core").Configuration}
+ */
+const config = {
+  entry: {
+    [`${NAME}@main-thread`]: {
+      layer: LAYERS.MAIN_THREAD,
+      import: './src/index.main-thread.js',
+    },
+    [`${NAME}@background`]: {
+      layer: LAYERS.BACKGROUND,
+      import: './src/index.js',
+    },
+  },
+  experiments: {
+    layers: true,
+  },
+};
+export default config;
+```
+
+### 添加入口文件
+
+显然，上述配置指向了两个不存在的文件，你需要创建它们。在 `src` 目录下创建两个入口文件：
+
+<Tabs
+  defaultValue="src/index.main-thread.js"
+  values={[
+    { label: '主线程', value: 'src/index.main-thread.js' },
+    { label: '后台线程', value: 'src/index.js' },
+  ]}>
+  <Tab value="src/index.main-thread.js">
+
+```jsx title="src/index.main-thread.js"
+console.log('Hello, Lynx');
+```
+
+  </Tab>
+  <Tab value="src/index.js">
+
+```jsx title="src/index.js"
+console.log('Hello, Lynx');
+```
+
+  </Tab>
+</Tabs>
+
+现在，如果执行 `npx rspack build`，你应该可以在 `dist` 目录下看到两个文件。Lynx 不能直接运行这些文件。
+
+### 生成 App Bundle 文件
+
+我们需要使用 `@lynx-js/template-webpack-plugin` 提供的 `LynxEncodePlugin` 和 `LynxTemplatePlugin` 插件来生成 App Bundle 文件。
+
+首先，安装这个 npm 包：
+
+<PackageManagerTabs command="add -D @lynx-js/template-webpack-plugin" />
+
+然后，修改 `rspack.config.js` 文件：
+
+```js filename=rspack.config.js {1,9-13,20}
+import { LynxEncodePlugin, LynxTemplatePlugin } from '@lynx-js/template-webpack-plugin';
+...
+/**
+ * @type {import("@rspack/core").Configuration}
+ */
+const config = {
+  ...
+  plugins: [
+    new LynxEncodePlugin({}),
+    new LynxTemplatePlugin({
+      filename: `${NAME}.lynx.bundle`,
+      intermediate: NAME,
+    }),
+    (compiler) => {
+      compiler.hooks.thisCompilation.tap('MarkMainThreadWebpackPlugin', (compilation) => {
+          compilation.hooks.processAssets.tap('MarkMainThreadWebpackPlugin', () => {
+              const asset = compilation.getAsset(`${NAME}@main-thread.js`);
+              compilation.updateAsset(asset.name, asset.source, {
+                ...asset.info,
+                'lynx:main-thread': true,
+              });
+            },
+          );
+        },
+      );
+    },
+  ],
+  ...
+}
+```
+
+除了 LynxEncodePlugin 和 LynxTemplatePlugin，我们还添加了一个插件来标记运行在主线程的脚本文件。
+它添加的 `'lynx:main-thread': true` 信息将用来区分脚本文件应该运行在主线程还是后台线程。
+
+至此，你可以再次执行 `npx rspack build`，然后在 `dist` 目录下看到 `vanilla.lynx.bundle` 文件。
+你已经成功构建了一个 Lynx 的 App Bundle。但是这个 Bundle 里面没有任何有效的内容，因此 Lynx 无法运行它。
+如果使用 LynxExplorer（在[此文档](guide/start/quick-start.html)中获取它）打开这个文件，你会看到一个空白的页面，以及一些错误信息。
+
+</Steps>
+
+## 将 App Bundle 运行起来
+
+我们现在开始关注这个 App Bundle 的运行效果。
+
+我们将完善两个线程的入口文件，以便 Lynx 可以正确地运行它们，并能绘制出 UI。同时，我们还会添加CSS，来为我们 UI 添加样式。下面是最终的效果：
+
+<Go
+  example="vanilla-lynx-bundle"
+  highlight="{3}"
+  defaultFile="src/index.main-thread.js"
+  defaultEntryFile="dist/vanilla.lynx.bundle"
+  img={`${window.location.origin}/lynx-examples/vanilla-lynx-bundle/assets/preview.png`}
+  entry={/(^src\/|rspack\.config\.js)/}
+/>
+
+---
+
+请跟随我们的步骤，一步一步地完成构建：
+
+<Steps>
+
+### 添加 Called-by-Native 的函数
+
+Lynx 通过调用一些 `globalThis` 上的函数来与你的应用进行交互。这些函数被称为 Called-by-Native 函数。
+
+我们将在主线程的 `renderPage` 函数中调用 Lynx 的 [Element PAPI](api/engine/element-api.html) 来绘制一些 UI。
+而在后台线程，也有一个类似的函数 `initBundle`，由于后台线程无法直接操作 UI，因此我们只是简单地打印一些信息。
+
+<Tabs
+  defaultValue="src/index.main-thread.js"
+  values={[
+    { label: '主线程', value: 'src/index.main-thread.js' },
+    { label: '后台线程', value: 'src/index.js' },
+  ]}>
+  <Tab value="src/index.main-thread.js">
+
+```jsx title="src/index.main-thread.js" {2-14}
+globalThis.renderPage = function () {
+  const page = __CreatePage('0', 0);
+  const pageId = __GetElementUniqueID(page);
+  const container = __CreateView(pageId);
+  __AddClass(container, 'container');
+  const logo = __CreateImage(pageId);
+  __SetAttribute(logo, 'src', 'https://github.com/lynx-family.png');
+  __AddClass(logo, 'logo');
+  const slogan = __CreateText(pageId);
+  __AddClass(slogan, 'slogan');
+  __SetAttribute(slogan, 'text', 'Lynx: Unlock Native for More');
+  __AppendElement(page, container);
+  __AppendElement(container, logo);
+  __AppendElement(container, slogan);
+};
+globalThis.updatePage = function () {};
+globalThis.processData = function () {};
+```
+
+  </Tab>
+  <Tab value="src/index.js">
+
+```jsx title="src/index.js" {2}
+globalThis.initBundle = () => {
+  console.log('Lynx: Unlock Native for More');
+};
+```
+
+  </Tab>
+</Tabs>
+
+### 为 Rspack 添加 CSS 支持
+
+Rspack 提供了开箱即用的 CSS 支持。你只需要配置 `experiment.css` 为 `true`，便一切就绪了。
+
+`LynxTemplatePlugin` 插件会“收集”你的 CSS 文件，并将其添加到 App Bundle 中。
+
+```js filename=rspack.config.js {5}
+const config = {
+  ...
+  experiments: {
+    ...
+    css: true,
+  },
+};
+```
+
+### 编写样式
+
+我们还需要为 UI 添加一些样式。我们已经为你写好了 CSS 文件，请在 `src` 目录下创建一个 `index.css` 文件，并将下面的内容复制进去：
+
+```css filename=src/index.css
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16rpx;
+}
+.logo {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 64rpx;
+}
+.slogan {
+  color: #333;
+  font-weight: bold;
+}
+```
+
+当然，别忘记在入口文件中引入这个 CSS 文件，请注意不要同时在两个入口文件中引入相同的 CSS 文件，否则会导致 CSS 重复。
+
+```jsx filename=src/index.main-thread.js {1}
+import './index.css';
+
+...
+```
+
+### 构建和运行
+
+现在，你可以再次执行 `npx rspack build`，然后在 `dist` 目录下看到 `vanilla.lynx.bundle` 文件。
+使用 LynxExplorer 打开这个文件，你会看到一个带有 Lynx Logo 和 Slogan 的页面。
+
+</Steps>
+
+## 集成真实框架 \{#real-framework-integration}
+
+:::tip
+
+此章节会假设你已经阅读了上述指引，并以展示代码为主。
+
+你可能会对特定的代码感到疑惑。如果这样的话，阅读上述指引可能会有帮助。
+
+:::
+
+:::caution 免责声明
+
+这些框架目前并非 Lynx 官方支持的框架，不能代表 Lynx 的真实性能、开发体验和用户体验。这些框架的集成可能会有一些限制，或者在未来的版本中可能会有所变化。
+
+以下代码仅用于演示目的。它并非设计为完整的框架。其性能和兼容性无法保证，不应在生产中使用。
+
+:::
+
+请直接参考代码：
+
+- [lynx-examples/examples/with-solidjs](https://github.com/lynx-family/lynx-examples/tree/main/examples/with-solidjs): 在 Lynx 下使用 SolidJS
+
+- （更多示例正在进行中...）

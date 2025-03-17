@@ -8,7 +8,7 @@ import { TreeNode } from '../utils/transform';
 
 interface FileTreeProps {
   onSelect?: (value: string) => void;
-  entry?: string;
+  entry?: string | RegExp;
   treeData: TreeNode[];
   doChangeExpand: (keys: string[]) => void;
   selectedKeys: string[];

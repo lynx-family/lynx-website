@@ -59,15 +59,18 @@ const sortTree = (nodes: TreeNode[]) => {
 export const doTransTreeData = (
   names: string[],
   expandedKeys: string[] = [],
-  entry?: string,
+  entry?: string | RegExp,
 ) => {
   const root: TreeNode[] = [];
   const entryData: EntryFile[] = [];
   for (const name of names) {
     const isEntryPath = Boolean(
-      entry &&
-        (entry === name ||
-          name.startsWith(entry.endsWith('/') ? entry : entry + '/')),
+      typeof entry === 'string'
+        ? entry === name ||
+            name.startsWith(entry.endsWith('/') ? entry : entry + '/')
+        : entry instanceof RegExp
+          ? entry.test(name)
+          : false,
     );
     if (isEntryPath) {
       const label = name.split('/').pop() || '';
