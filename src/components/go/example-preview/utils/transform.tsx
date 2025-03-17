@@ -56,7 +56,7 @@ const sortTree = (nodes: TreeNode[]) => {
   });
 };
 
-const isEntry = (name: string, entry?: string | string[]) => {
+const isEntry = (name: string, entry?: string | string[] | RegExp) => {
   if (!entry) {
     return false;
   }
@@ -67,6 +67,8 @@ const isEntry = (name: string, entry?: string | string[]) => {
   };
   if (typeof entry === 'string') {
     return isPath(name, entry);
+  } else if (entry instanceof RegExp) {
+    return entry.test(name);
   } else if (Array.isArray(entry) && entry.length > 0) {
     return Boolean(
       entry.find((item) => {
@@ -80,7 +82,7 @@ const isEntry = (name: string, entry?: string | string[]) => {
 export const doTransTreeData = (
   names: string[],
   expandedKeys: string[] = [],
-  entry?: string | string[],
+  entry?: string | string[] | RegExp,
 ) => {
   const root: TreeNode[] = [];
   const entryData: EntryFile[] = [];
