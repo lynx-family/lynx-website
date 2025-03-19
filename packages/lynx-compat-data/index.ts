@@ -52,7 +52,8 @@ export function isVersionValue(value: unknown): value is VersionValue {
  * @returns True if the string is a valid PlatformType, false otherwise
  */
 export function isPlatformType(type: string): type is PlatformType {
-  return ['native', 'web', 'clay'].includes(type);
+  const validPlatformTypes: PlatformType[] = ['native', 'web', 'clay'];
+  return validPlatformTypes.includes(type as PlatformType);
 }
 
 /**
@@ -61,7 +62,13 @@ export function isPlatformType(type: string): type is PlatformType {
  * @returns True if the string is a valid PlatformStatus, false otherwise
  */
 export function isPlatformStatus(status: string): status is PlatformStatus {
-  return ['retired', 'current', 'beta', 'planned'].includes(status);
+  const validPlatformStatuses: PlatformStatus[] = [
+    'retired',
+    'current',
+    'beta',
+    'planned',
+  ];
+  return validPlatformStatuses.includes(status as PlatformStatus);
 }
 
 /**
