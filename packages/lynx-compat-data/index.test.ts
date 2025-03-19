@@ -64,6 +64,10 @@ describe('API', () => {
 
 describe('Util functions', () => {
   it('should work', () => {
-    expect(getSupportedPlatforms(sTO.__compat)).toEqual(['android', 'ios']);
+    expect(getSupportedPlatforms(sTO.__compat)).toEqual([
+      'android',
+      'ios',
+      'web_lynx',
+    ]);
   });
 });
