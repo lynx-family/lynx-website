@@ -1,5 +1,5 @@
 // Re-export types for easier access
-export * from './types/types.d.ts';
+export type * from './types/types.d.ts';
 import platforms from './platforms/platforms.json' assert { type: 'json' };
 
 import type {
