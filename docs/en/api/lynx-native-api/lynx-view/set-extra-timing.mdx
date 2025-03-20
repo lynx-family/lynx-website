@@ -3,12 +3,16 @@
 This interface is used to supplement key performance data before loading the Lynx page, specifically including the following items from [`InitContainerEntry`](api/lynx-api/performance-api/performance-entry/init-container-entry):
 
 - Page open time (`openTime`)
-- Timestamp for the start of preparing the TemplateBundle (`prepareTemplateStart`)
+- Timestamp for the start of preparing the [TemplateBundle](api/lynx-native-api/template-bundle) (`prepareTemplateStart`)
 - Timestamp for the end of preparing the TemplateBundle (`prepareTemplateEnd`)
-- Timestamp for the start of **container** initialization (`containerInitStart`)
-- Timestamp for the end of **container** initialization (`containerInitEnd`)
+- Timestamp for the start of [container](guide/spec#container) initialization (`containerInitStart`)
+- Timestamp for the end of container initialization (`containerInitEnd`)
 
-> In an [App](guide/spec#app), a container is an independent module responsible for managing the lifecycle of [LynxView](guide/spec#lynxview). Its main responsibilities include creating, initializing, configuring, loading content, handling state changes, and destroying LynxView instances.
+Upon successfully updating all timestamps using this interface, the `InitContainerEntry` performance event will be triggered. Depending on the timing of the configuration, it may also trigger the calculation of `fcp`, `totalFcp`, `actualFmp`, and `totalActualFmp` metrics, along with dispatching new performance events for [`MetricFcpEntry`](api/lynx-api/performance-api/performance-entry/metric-fcp-entry) and [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+
+:::caution
+Timestamps within extraTiming cannot be overwritten, meaning that multiple calls to this interface attempting to repeatedly update a timestamp will yield no effect.
+:::
 
 ## Syntax
 

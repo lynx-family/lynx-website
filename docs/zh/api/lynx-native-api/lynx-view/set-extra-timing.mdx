@@ -3,12 +3,16 @@
 该接口用于补充加载 Lynx 页面前的关键性能数据，具体包括 [`InitContainerEntry`](api/lynx-api/performance-api/performance-entry/init-container-entry) 中的以下内容：
 
 - 页面打开时间 (`openTime`)
-- 准备 TemplateBundle 的起始时间戳 (`prepareTemplateStart`)
+- 准备 [TemplateBundle](api/lynx-native-api/template-bundle) 的起始时间戳 (`prepareTemplateStart`)
 - 准备 TemplateBundle 的结束时间戳 (`prepareTemplateEnd`)
-- **容器**初始化的起始时间戳 (`containerInitStart`)
-- **容器**初始化的结束时间戳 (`containerInitEnd`)
+- [容器](guide/spec#container)(Container)初始化的起始时间戳 (`containerInitStart`)
+- 容器初始化的结束时间戳 (`containerInitEnd`)
 
-> 在[应用程序](guide/spec#app)中，容器是一个独立的模块，它负责管理 [LynxView](guide/spec#lynxview) 的生命周期。其主要职责包括创建、初始化、配置、加载内容、处理状态变化及销毁 LynxView 实例等。
+使用该接口成功更新所有时间戳后，将触发 `InitContainerEntry` 性能事件的发送。根据配置时机的不同，还可能触发 `fcp`, `totalFcp`, `actualFmp` 和 `totalActualFmp` 指标的计算，并发送新的性能事件 [`MetricFcpEntry`](api/lynx-api/performance-api/performance-entry/metric-fcp-entry) 和 [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry)。
+
+:::caution
+extraTiming 为不可覆盖项，即多次调用该接口重复更新某个时间戳不会产生效果。
+:::
 
 ## 语法
 
