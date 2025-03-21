@@ -9,6 +9,8 @@ import {
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
 import { pluginRss } from '@rspress/plugin-rss';
+import { pluginSass } from '@rsbuild/plugin-sass';
+import { pluginLess } from '@rsbuild/plugin-less';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -41,6 +43,8 @@ export default defineConfig({
         },
       }),
       pluginSvgr(),
+      pluginSass(),
+      pluginLess(),
     ],
     source: {
       alias: {
