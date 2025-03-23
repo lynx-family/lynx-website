@@ -9,7 +9,7 @@ The [Output](./rspeedy.output.md) option is used to set how and where should the
 **Signature:**
 
 ```typescript
-export interface Output
+export interface Output 
 ```
 
 ## Properties

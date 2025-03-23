@@ -9,7 +9,7 @@ The [Performance](./rspeedy.performance.md) option is used to
 **Signature:**
 
 ```typescript
-export interface Performance
+export interface Performance 
 ```
 
 ## Properties

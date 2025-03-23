@@ -9,7 +9,7 @@ Options of [pluginReactLynx()](./react-rsbuild-plugin.pluginreactlynx.md)
 **Signature:**
 
 ```typescript
-export interface PluginReactLynxOptions
+export interface PluginReactLynxOptions 
 ```
 
 ## Properties
@@ -23,17 +23,19 @@ export interface PluginReactLynxOptions
 |  [defineDCE?](./react-rsbuild-plugin.pluginreactlynxoptions.definedce.md) |  | Partial&lt;DefineDceVisitorConfig&gt; \| undefined | _(Optional)_ Like <code>define</code> in various bundlers, but this one happens at transform time, and a DCE pass will be performed. |
 |  [enableAccessibilityElement?](./react-rsbuild-plugin.pluginreactlynxoptions.enableaccessibilityelement.md) |  | boolean | _(Optional)_ enableAccessibilityElement set the default value of <code>accessibility-element</code> for all <code>&lt;view /&gt;</code> elements. |
 |  [enableCSSInheritance?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance.md) |  | boolean | _(Optional)_ enableCSSInheritance enables the default inheritance properties. |
-|  [enableCSSInvalidation?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinvalidation.md) |  | boolean | _(Optional)_ CSS Invalidation refers to the process of determining which elements need to have their styles recalculated when the element is updated. |
+|  [enableCSSInvalidation?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinvalidation.md) |  | boolean | _(Optional)_ CSS Invalidation refers to the process of determining which elements need to have their styles recalculated when the DOM is updated. |
 |  [enableCSSSelector?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssselector.md) |  | boolean | _(Optional)_ enableCSSSelector controls whether enabling the new CSS implementation. |
 |  [enableICU?](./react-rsbuild-plugin.pluginreactlynxoptions.enableicu.md) |  | boolean | <p>_(Optional)_ enableICU enables the Intl API to be enabled globally.</p><p>If enabled, please double check the compatibility with Lynx Share Context feature to avoid using shared Intl API from other destroyed card.</p> |
 |  [enableNewGesture?](./react-rsbuild-plugin.pluginreactlynxoptions.enablenewgesture.md) |  | boolean | _(Optional)_ enableNewGesture enables the new gesture system. |
 |  [enableParallelElement?](./react-rsbuild-plugin.pluginreactlynxoptions.enableparallelelement.md) |  | boolean | _(Optional)_ enableParallelElement enables Threaded Element Resolution. |
 |  [enableRemoveCSSScope?](./react-rsbuild-plugin.pluginreactlynxoptions.enableremovecssscope.md) |  | boolean \| undefined | <p>_(Optional)_ enableRemoveCSSScope controls whether CSS is restrict to use in the component scope.</p><p><code>true</code>: All CSS files are treated as global CSS.</p><p><code>false</code>: All CSS files are treated as scoped CSS, and only take effect in the component that explicitly imports it.</p><p><code>undefined</code>: Only use scoped CSS for CSS Modules, and treat other CSS files as global CSS. Scoped CSS is faster than global CSS, thus you can use CSS Modules to speedy up your CSS if there are performance issues.</p> |
+|  [enableSSR?](./react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md) |  | boolean | _(Optional)_ <code>enableSSR</code> enable Lynx SSR feature for this build. |
+|  [engineVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md) |  | string | _(Optional)_ <code>engineVersion</code> specifies the minimum Lynx Engine version required for an App bundle to function properly. |
 |  [experimental\_isLazyBundle?](./react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle.md) |  | boolean | **_(ALPHA)_** _(Optional)_ Generate standalone lazy bundle. |
 |  [firstScreenSyncTiming?](./react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md) |  | 'immediately' \| 'jsReady' | <p>_(Optional)_ This flag controls when MainThread (Lepus) transfers control to Background after the first screen</p><p>This flag has two options:</p><p><code>&quot;immediately&quot;</code>: Transfer immediately</p><p><code>&quot;jsReady&quot;</code>: Transfer when background (JS Runtime) is ready</p><p>After handing over control, MainThread (Lepus) runtime can no longer respond to data updates, and data updates will be forwarded to background (JS Runtime) and processed \_\_asynchronously\_\_</p> |
 |  [jsx?](./react-rsbuild-plugin.pluginreactlynxoptions.jsx.md) |  | Partial&lt;JsxTransformerConfig&gt; \| undefined | _(Optional)_ The <code>jsx</code> option controls how JSX is transformed. |
 |  [pipelineSchedulerConfig?](./react-rsbuild-plugin.pluginreactlynxoptions.pipelineschedulerconfig.md) |  | number | _(Optional)_ Composite configuration representing pipeline scheduling strategies, including [PluginReactLynxOptions.enableParallelElement](./react-rsbuild-plugin.pluginreactlynxoptions.enableparallelelement.md) and list batch-rendering. All newly introduced scheduling strategies will be managed by this uint64 configuration. |
 |  [removeDescendantSelectorScope?](./react-rsbuild-plugin.pluginreactlynxoptions.removedescendantselectorscope.md) |  | boolean | _(Optional)_ removeDescendantSelectorScope is used to remove the scope of descendant selectors. |
 |  [shake?](./react-rsbuild-plugin.pluginreactlynxoptions.shake.md) |  | Partial&lt;ShakeVisitorConfig&gt; \| undefined | _(Optional)_ How main-thread code will be shaken. |
-|  [targetSdkVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.targetsdkversion.md) |  | string | _(Optional)_ targetSdkVersion is used to specify the minimal Lynx SDK version1 that a Lynx template can run on. |
+|  [targetSdkVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.targetsdkversion.md) |  | string | _(Optional)_ targetSdkVersion is used to specify the minimal Lynx Engine version that a App bundle can run on. |
 

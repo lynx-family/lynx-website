@@ -24,6 +24,7 @@ export default defineConfig({
 |  [createRspeedy({ cwd, rspeedyConfig })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
 |  [defineConfig(config)](./rspeedy.defineconfig.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
 |  [loadConfig(loadConfigOptions)](./rspeedy.loadconfig.md) | Load the build config by the config path. |
+|  [mergeRspeedyConfig(configs)](./rspeedy.mergerspeedyconfig.md) | Merge multiple Rspeedy configuration objects. |
 
 ## Interfaces
 
@@ -36,7 +37,7 @@ export default defineConfig({
 |  [CreateRspeedyOptions](./rspeedy.createrspeedyoptions.md) | The options of <code>createRspeedy</code> method. |
 |  [CssExtract](./rspeedy.cssextract.md) | The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
 |  [CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md) | The options of CSS extract loader. |
-|  [CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) | The options for  |
+|  [CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) | The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
 |  [CssLoader](./rspeedy.cssloader.md) | The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](https://github.com/webpack-contrib/css-loader)<!-- -->. |
 |  [CssLoaderModules](./rspeedy.cssloadermodules.md) | The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables the CSS Modules specification and setup basic behavior. |
 |  [CssModules](./rspeedy.cssmodules.md) | The [CssModules](./rspeedy.cssmodules.md) option is used for the customization of CSS Modules configurations. |

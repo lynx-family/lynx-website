@@ -9,7 +9,7 @@ Set the directory of the dist files.
 **Signature:**
 
 ```typescript
-export interface DistPath
+export interface DistPath 
 ```
 
 ## Properties

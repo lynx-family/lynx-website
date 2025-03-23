@@ -9,7 +9,7 @@ The [Dev](./rspeedy.dev.md) option is used to control the behavior related with 
 **Signature:**
 
 ```typescript
-export interface Dev
+export interface Dev 
 ```
 
 ## Properties

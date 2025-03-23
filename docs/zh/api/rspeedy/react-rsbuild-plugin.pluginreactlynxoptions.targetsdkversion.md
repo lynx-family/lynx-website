@@ -4,7 +4,12 @@
 
 ## PluginReactLynxOptions.targetSdkVersion property
 
-targetSdkVersion is used to specify the minimal Lynx SDK version1 that a Lynx template can run on.
+> Warning: This API is now obsolete.
+> 
+> `targetSdkVersion` is now an alias of [PluginReactLynxOptions.engineVersion](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md)<!-- -->. Use [PluginReactLynxOptions.engineVersion](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md) instead.
+> 
+
+targetSdkVersion is used to specify the minimal Lynx Engine version that a App bundle can run on.
 
 **Signature:**
 

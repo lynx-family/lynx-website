@@ -9,7 +9,7 @@ The options of `createRspeedy` method.
 **Signature:**
 
 ```typescript
-export interface CreateRspeedyOptions
+export interface CreateRspeedyOptions 
 ```
 
 ## Properties

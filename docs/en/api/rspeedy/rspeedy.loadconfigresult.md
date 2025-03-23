@@ -9,7 +9,7 @@ The result of [loadConfig()](./rspeedy.loadconfig.md)<!-- -->.
 **Signature:**
 
 ```typescript
-export interface LoadConfigResult
+export interface LoadConfigResult 
 ```
 
 ## Properties

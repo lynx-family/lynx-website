@@ -9,7 +9,7 @@ The options of loadConfig.
 **Signature:**
 
 ```typescript
-export interface LoadConfigOptions
+export interface LoadConfigOptions 
 ```
 
 ## Properties

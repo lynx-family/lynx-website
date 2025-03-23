@@ -9,7 +9,7 @@ The `Config` is the configuration that `rspeedy` uses.
 **Signature:**
 
 ```typescript
-export interface Config
+export interface Config 
 ```
 
 ## Properties

@@ -9,7 +9,7 @@ The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate s
 **Signature:**
 
 ```typescript
-export interface SourceMap
+export interface SourceMap 
 ```
 
 ## Properties
