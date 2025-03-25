@@ -77,7 +77,7 @@ export function App() {
   return (
     <view>
       <view bindtap={handleClick}>Load Component</view>
-      {shouldShow && (
+      {shouldDisplay && (
         <Suspense fallback={<text>Loading...</text>}>
           <LazyComponent />
         </Suspense>
