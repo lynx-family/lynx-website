@@ -235,7 +235,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
             }}
           >
             <div className={s['preview-wrap']}>
-              <div className="w-full h-full flex flex-col items-center">
+              <div className="sh-w-full sh-h-full sh-flex sh-flex-col sh-items-center">
                 {
                   <RadioGroup
                     onChange={(e) => setPreviewType(e.target.value)}
@@ -334,7 +334,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                 )}
                 {previewImage && (
                   <div
-                    className="w-full h-full flex items-center justify-center"
+                    className="sh-w-full sh-h-full sh-flex sh-items-center sh-justify-center"
                     style={{
                       minHeight: '0px',
                       display:
@@ -381,7 +381,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
         <div className={s.footer}>
           <Space
             spacing={2}
-            className="max-w-full overflow-hidden whitespace-nowrap"
+            className="sh-max-w-full sh-overflow-hidden sh-whitespace-nowrap"
           >
             <Button
               theme="borderless"
@@ -390,7 +390,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
               size="small"
               onClick={() => setShowFileTree(true)}
             />
-            <Space spacing={2} className="overflow-hidden">
+            <Space spacing={2} className="sh-overflow-hidden">
               <Typography.Text
                 size="small"
                 type="tertiary"

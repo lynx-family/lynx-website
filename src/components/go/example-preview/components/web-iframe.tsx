@@ -43,23 +43,23 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
 
   return (
     <div
-      className="w-full h-full relative flex items-center justify-center"
+      className="sh-w-full sh-h-full sh-relative sh-flex sh-items-center sh-justify-center"
       style={{ display: show ? 'flex' : 'none' }}
     >
       {hasBeenVisible && (
         <iframe
           src={previewBaseUrl}
           ref={iframeRef}
-          className="w-full h-full"
+          className="sh-w-full sh-h-full"
         />
       )}
       {loading && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+        <div className="sh-absolute sh-top-0 sh-left-0 sh-w-full sh-h-full sh-flex sh-items-center sh-justify-center">
           <Spin />
         </div>
       )}
       {error && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+        <div className="sh-absolute sh-top-0 sh-left-0 sh-w-full sh-h-full sh-flex sh-items-center sh-justify-center">
           <Typography.Text
             type="tertiary"
             style={{ padding: '0 12px', textAlign: 'center' }}

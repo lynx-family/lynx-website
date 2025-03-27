@@ -21,13 +21,13 @@ export const CodeView = ({
   if (isAssetFile) {
     if (isImgType(currentFileName)) {
       return (
-        <div className="flex items-center justify-center w-full h-full overflow-auto">
+        <div className="sh-flex sh-items-center sh-justify-center sh-w-full sh-h-full sh-overflow-auto">
           <img src={currentFile} alt="" />
         </div>
       );
     }
     return (
-      <div className="flex items-center justify-center w-full h-full">
+      <div className="sh-flex sh-items-center sh-justify-center sh-w-full sh-h-full">
         <Typography.Text type="secondary">{currentFileName}</Typography.Text>
       </div>
     );
