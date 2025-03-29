@@ -114,6 +114,7 @@ Usage: rspeedy inspect [options]
 View the Rsbuild config and Rspack config of the project.
 
 Options:
+  --base <base>         specify the base path of the server
   --mode <mode>         specify the mode of Rsbuild (default: "development")
   --output <output>     specify inspect content output path
   --verbose             show full function definitions in output
