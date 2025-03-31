@@ -9,7 +9,7 @@ Options of [pluginReactLynx()](./react-rsbuild-plugin.pluginreactlynx.md)
 **Signature:**
 
 ```typescript
-export interface PluginReactLynxOptions 
+export interface PluginReactLynxOptions
 ```
 
 ## Properties
@@ -32,6 +32,7 @@ export interface PluginReactLynxOptions
 |  [enableSSR?](./react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md) |  | boolean | _(Optional)_ <code>enableSSR</code> enable Lynx SSR feature for this build. |
 |  [engineVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md) |  | string | _(Optional)_ <code>engineVersion</code> specifies the minimum Lynx Engine version required for an App bundle to function properly. |
 |  [experimental\_isLazyBundle?](./react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle.md) |  | boolean | **_(ALPHA)_** _(Optional)_ Generate standalone lazy bundle. |
+|  [extractStr?](./react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md) |  | Partial&lt;ExtractStrConfig<!-- -->&gt; \| boolean | _(Optional)_ Merge same string literals in JS and Lepus to reduce output bundle size. Set to <code>false</code> to disable. |
 |  [firstScreenSyncTiming?](./react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md) |  | 'immediately' \| 'jsReady' | <p>_(Optional)_ This flag controls when MainThread (Lepus) transfers control to Background after the first screen</p><p>This flag has two options:</p><p><code>&quot;immediately&quot;</code>: Transfer immediately</p><p><code>&quot;jsReady&quot;</code>: Transfer when background (JS Runtime) is ready</p><p>After handing over control, MainThread (Lepus) runtime can no longer respond to data updates, and data updates will be forwarded to background (JS Runtime) and processed \_\_asynchronously\_\_</p> |
 |  [jsx?](./react-rsbuild-plugin.pluginreactlynxoptions.jsx.md) |  | Partial&lt;JsxTransformerConfig&gt; \| undefined | _(Optional)_ The <code>jsx</code> option controls how JSX is transformed. |
 |  [pipelineSchedulerConfig?](./react-rsbuild-plugin.pluginreactlynxoptions.pipelineschedulerconfig.md) |  | number | _(Optional)_ Composite configuration representing pipeline scheduling strategies, including [PluginReactLynxOptions.enableParallelElement](./react-rsbuild-plugin.pluginreactlynxoptions.enableparallelelement.md) and list batch-rendering. All newly introduced scheduling strategies will be managed by this uint64 configuration. |

@@ -18,6 +18,7 @@ export interface Dev
 |  --- | --- | --- | --- |
 |  [assetPrefix?](./rspeedy.dev.assetprefix.md) |  | string \| boolean \| undefined | _(Optional)_ The [Dev.assetPrefix](./rspeedy.dev.assetprefix.md) is used to set the URL prefix for static assets during development. |
 |  [client?](./rspeedy.dev.client.md) |  | [Client](./rspeedy.devclient.md) \| undefined | _(Optional)_ Configuration of the development client. |
+|  [progressBar?](./rspeedy.dev.progressbar.md) |  | boolean \| { id?: string; } \| undefined | <p>_(Optional)_ Whether to display progress bar during compilation.</p><p>Defaults to <code>true</code>.</p> |
 |  [watchFiles?](./rspeedy.dev.watchfiles.md) |  | WatchFiles \| WatchFiles\[\] \| undefined | _(Optional)_ Watch specified files and directories for changes. When a file change is detected, it can trigger a page reload or restart the dev server. |
 |  [writeToDisk?](./rspeedy.dev.writetodisk.md) |  | boolean \| ((filename: string) =&gt; boolean) \| undefined | _(Optional)_ Used to control whether the build artifacts of the development environment are written to the disk. |
 

@@ -21,7 +21,7 @@ export default defineConfig({
 
 |  Function | Description |
 |  --- | --- |
-|  [createRspeedy({ cwd, rspeedyConfig })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
+|  [createRspeedy({ cwd, rspeedyConfig, loadEnv })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
 |  [defineConfig(config)](./rspeedy.defineconfig.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
 |  [loadConfig(loadConfigOptions)](./rspeedy.loadconfig.md) | Load the build config by the config path. |
 |  [mergeRspeedyConfig(configs)](./rspeedy.mergerspeedyconfig.md) | Merge multiple Rspeedy configuration objects. |

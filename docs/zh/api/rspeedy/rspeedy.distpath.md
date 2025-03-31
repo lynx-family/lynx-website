@@ -9,17 +9,17 @@ Set the directory of the dist files.
 **Signature:**
 
 ```typescript
-export interface DistPath 
+export interface DistPath extends DistPathConfig 
 ```
+**Extends:** DistPathConfig
+
+## Remarks
+
+More options can be found at [Rsbuild - distPath](https://rsbuild.dev/config/output/dist-path)<!-- -->.
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [css?](./rspeedy.distpath.css.md) |  | string \| undefined | _(Optional)_ The output directory of CSS style files. |
-|  [cssAsync?](./rspeedy.distpath.cssasync.md) |  | string \| undefined | _(Optional)_ The output directory of async JavaScript files. |
 |  [intermediate?](./rspeedy.distpath.intermediate.md) |  | string \| undefined | _(Optional)_ The output directory of the intermediate files. |
-|  [js?](./rspeedy.distpath.js.md) |  | string \| undefined | _(Optional)_ The output directory of JavaScript files. |
-|  [jsAsync?](./rspeedy.distpath.jsasync.md) |  | string \| undefined | _(Optional)_ The output directory of async JavaScript files. |
-|  [root?](./rspeedy.distpath.root.md) |  | string \| undefined | _(Optional)_ The root directory of all output files. |
 
