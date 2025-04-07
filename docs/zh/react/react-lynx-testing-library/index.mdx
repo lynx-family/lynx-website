@@ -1,0 +1,403 @@
+import { PackageManagerTabs } from '@theme';
+
+# ReactLynx Testing Library
+
+[ReactLynx Testing Library](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library) 基于 [Lynx Environment（`@lynx-js/lynx-environment`，Lynx 的 JS 实现）](./lynx-environment.md) 实现了一套 ReactLynx 组件的测试方案。
+
+ReactLynx Testing Library 借鉴了 React Testing Library 的设计。底层的 Lynx Environment 负责提供 Lynx 环境的 JS 实现，类似于 `jsdom` 等工具提供的 DOM 环境。我们在 Lynx Environment 中使用了 `jsdom` 来实现 [Element PAPI](https://lynxjs.org/api/engine/element-api)，因此你可以直接使用 [`@testing-library/dom`](https://github.com/testing-library/dom-testing-library)、[`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) 等工具来辅助测试。
+
+## 适用场景
+
+ReactLynx Testing Library 适用于对于 ReactLynx 组件的单元测试。它基于 Lynx Environment 和 `@testing-library/dom`（页面元素的查询和事件触发），屏蔽了 Lynx 双线程的实现细节，将 ReactLynx 的渲染流程抽象成 `render`、`fireEvent`、`screen` 等和 React Testing Library 类似的 API。用户也可以对页面中的 Element 进行断言，例如使用 `data-testid` 来快速寻找元素，使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 判断元素在页面中。
+
+## 安装
+
+<PackageManagerTabs command="add -D @lynx-js/react-lynx-testing-library vitest" />
+
+配置 Vitest：
+
+```js title=vitest.config.js
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { createVitestConfig } from '@lynx-js/react-lynx-testing-library/vitest-config';
+
+const defaultConfig = createVitestConfig();
+const config = defineConfig({
+  test: {
+    // ...
+  },
+});
+
+export default defineConfig(mergeConfig(defaultConfig, config));
+```
+
+然后你就可以开始编写测试并运行了！
+
+:::info 无需安装 @lynx-js/environment
+`@lynx-js/environment` 已经包含在 `@lynx-js/react-lynx-testing-library` 的 `dependencies` 中了。`createVitestConfig` 会对 `@lynx-js/environment` 进行配置使其可用，无需其他额外配置。
+:::
+
+如果需要使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 等方法，你需要安装 `@testing-library/jest-dom`：
+
+<PackageManagerTabs command="add -D @testing-library/jest-dom" />
+
+## 示例
+
+### 快速开始
+
+这是一个最小化的示例，展示了如何使用 ReactLynx Testing Library 进行测试。
+
+```tsx
+import '@testing-library/jest-dom';
+import { expect, it, vi } from 'vitest';
+import { render, fireEvent, screen } from '@lynx-js/react-lynx-testing-library';
+
+it('basic', async function () {
+  const Button = ({ children, onClick }) => {
+    return <view bindtap={onClick}>{children}</view>;
+  };
+  const onClick = vi.fn(() => {});
+
+  // ARRANGE
+  const { container } = render(
+    <Button onClick={onClick}>
+      <text data-testid="text">Click me</text>
+    </Button>,
+  );
+
+  expect(onClick).not.toHaveBeenCalled();
+
+  // ACT
+  fireEvent.tap(container.firstChild);
+
+  // ASSERT
+  expect(onClick).toBeCalledTimes(1);
+  expect(screen.getByTestId('text')).toHaveTextContent('Click me');
+});
+```
+
+### 基础渲染
+
+```jsx
+import '@testing-library/jest-dom';
+import { expect, it } from 'vitest';
+import { render } from '@lynx-js/react-lynx-testing-library';
+
+it('basic render', () => {
+  const WrapperComponent = ({ children }) => (
+    <view data-testid="wrapper">{children}</view>
+  );
+  const Comp = () => {
+    return <view data-testid="inner" style="background-color: yellow;" />;
+  };
+  const { container, getByTestId } = render(<Comp />, {
+    wrapper: WrapperComponent,
+  });
+  // 由于 Lynx Environment 底层使用的是 jsdom 来实现 Element PAPI
+  // 因此可以使用 `@testing-library/jest-dom` 中的方法来断言页面元素是否存在
+  expect(getByTestId('wrapper')).toBeInTheDocument();
+  expect(container.firstChild).toMatchInlineSnapshot(`
+    <view
+      data-testid="wrapper"
+    >
+      <view
+        data-testid="inner"
+        style="background-color: yellow;"
+      />
+    </view>
+  `);
+});
+```
+
+### 事件触发
+
+在触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](zh/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值有：
+
+- `bindEvent`：触发 `bind` 类型的事件，例如 `bindtap` 绑定的事件应该使用 `new Event('bindEvent:tap')` 触发。
+- `catchEvent`：触发 `catch` 类型的事件，例如 `catchtap` 绑定的事件应该使用 `new Event('catchEvent:tap')` 触发。
+- `capture-bind`：触发 `capture-bind` 类型的事件，例如 `capture-bindtap` 绑定的事件应该使用 `new Event('capture-bind:tap')` 触发。
+- `capture-catch`：触发 `capture-catch` 类型的事件，例如 `capture-catchtap` 绑定的事件应该使用 `new Event('capture-catch:tap')` 触发。
+
+可以直接自己构造 `Event` 对象，也可以使用直接传入事件类型和初始化参数让 Testing Library 自动构造 `Event` 对象。
+
+```jsx
+import { render, fireEvent } from '@lynx-js/react-lynx-testing-library';
+import { vi, expect } from 'vitest';
+
+it('fireEvent', async () => {
+  const handler = vi.fn();
+
+  const Comp = () => {
+    return <text catchtap={handler} />;
+  };
+
+  const {
+    container: { firstChild: button },
+  } = render(<Comp />);
+
+  expect(button).toMatchInlineSnapshot(`<text />`);
+
+  // Lynx Environment 会将事件处理器挂载到 Element 的 `eventMap` 属性上。
+  // 如果需要断言事件处理器是否被挂载，可以使用 `eventMap` 属性。
+  expect(button.eventMap).toMatchInlineSnapshot(`
+    {
+      "catchEvent:tap": [Function],
+    }
+  `);
+
+  expect(handler).toHaveBeenCalledTimes(0);
+
+  // 方式一：自己构造 Event 对象
+  const event = new Event('catchEvent:tap');
+  Object.assign(event, {
+    eventType: 'catchEvent',
+    eventName: 'tap',
+    key: 'value',
+  });
+  expect(fireEvent(button, event)).toBe(true);
+
+  expect(handler).toHaveBeenCalledTimes(1);
+  expect(handler).toHaveBeenCalledWith(event);
+  expect(handler.mock.calls[0][0].type).toMatchInlineSnapshot(
+    `"catchEvent:tap"`,
+  );
+  expect(handler.mock.calls[0][0]).toMatchInlineSnapshot(`
+  Event {
+    "eventName": "tap",
+    "eventType": "catchEvent",
+    "isTrusted": false,
+    "key": "value",
+  }
+  `);
+
+  // 方式二：传入事件类型和初始化参数
+  fireEvent.tap(button, {
+    eventType: 'catchEvent',
+    key: 'value',
+  });
+  expect(handler).toHaveBeenCalledTimes(2);
+  expect(handler.mock.calls[1][0]).toMatchInlineSnapshot(`
+  Event {
+    "eventName": "tap",
+    "eventType": "catchEvent",
+    "isTrusted": false,
+    "key": "value",
+  }
+  `);
+});
+```
+
+### Ref 获取
+
+```jsx
+import { test, expect } from 'vitest';
+import { render } from '@lynx-js/react-lynx-testing-library';
+import { Component, createRef } from '@lynx-js/react';
+
+it('element ref', async () => {
+  const ref = createRef();
+  const Comp = () => {
+    return <view ref={ref} />;
+  };
+  const { container } = render(<Comp />);
+  // ReactLynx 对于有 ref 的元素会设置 `has-react-ref` 属性
+  // 因此可以通过快照测试来判断 ref 是否被正确设置
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view
+        has-react-ref="true"
+      />
+    </page>
+  `);
+  // ref.current 是一个 NodesRef 对象
+  expect(ref.current).toMatchInlineSnapshot(`
+    NodesRef {
+      "_nodeSelectToken": {
+        "identifier": "1",
+        "type": 2,
+      },
+      "_selectorQuery": {},
+    }
+  `);
+});
+
+it('component ref', async () => {
+  const ref1 = vi.fn();
+  const ref2 = createRef();
+
+  class Child extends Component {
+    x = 'x';
+    render() {
+      return <view />;
+    }
+  }
+
+  class Comp extends Component {
+    render() {
+      return (
+        this.props.show && (
+          <view>
+            <Child ref={ref1} />
+            <Child ref={ref2} />
+          </view>
+        )
+      );
+    }
+  }
+
+  const { container } = render(<Comp show />);
+  expect(container).toMatchInlineSnapshot(`
+      <page>
+        <view>
+          <view />
+          <view />
+        </view>
+      </page>
+    `);
+  expect(ref1).toBeCalledWith(
+    expect.objectContaining({
+      x: 'x',
+    }),
+  );
+  // ref2 指向的是 Child 组件实例
+  expect(ref2.current).toHaveProperty('x', 'x');
+});
+```
+
+### 使用 `@testing-library/dom`
+
+ReactLynx Testing Library 中导出了 `@testing-library/dom`，因此你可以直接使用 `@testing-library/dom` 中的方法来查询页面元素。
+
+```jsx
+import '@testing-library/jest-dom';
+import { Component } from '@lynx-js/react';
+import { expect } from 'vitest';
+// waitForElementToBeRemoved 是 @testing-library/dom 中的一个方法，用于等待元素被移除
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from '@lynx-js/react-lynx-testing-library';
+
+const fetchAMessage = () =>
+  new Promise((resolve) => {
+    // 我们使用随机超时来模拟一个真实的例子
+    const randomTimeout = Math.floor(Math.random() * 100);
+
+    setTimeout(() => {
+      resolve({ returnedMessage: 'Hello World' });
+    }, randomTimeout);
+  });
+
+class ComponentWithLoader extends Component {
+  state = { loading: true };
+
+  componentDidMount() {
+    fetchAMessage().then((data) => {
+      this.setState({ data, loading: false });
+    });
+  }
+
+  render() {
+    if (this.state.loading) {
+      return <text>Loading...</text>;
+    }
+
+    return (
+      <text data-testid="message">
+        Loaded this message: {this.state.data.returnedMessage}!
+      </text>
+    );
+  }
+}
+
+test('it waits for the data to be loaded', async () => {
+  render(<ComponentWithLoader />);
+  // Lynx Environment 中的 elementTree.root 用于维护页面元素树
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        Loading...
+      </text>
+    </page>
+  `);
+  const loading = () => {
+    return screen.getByText('Loading...');
+  };
+  await waitForElementToBeRemoved(loading);
+  // 由于 Lynx Environment 底层使用的是 jsdom 来实现 Element PAPI
+  // 因此可以直接访问 document.body 来获取页面元素
+  expect(document.body).toMatchInlineSnapshot(`
+    <body>
+      <page>
+        <text
+          data-testid="message"
+        >
+          Loaded this message:
+          <wrapper>
+            Hello World
+          </wrapper>
+          !
+        </text>
+      </page>
+    </body>
+  `);
+  expect(screen.getByTestId('message')).toHaveTextContent(/Hello World/);
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <text
+        data-testid="message"
+      >
+        Loaded this message:
+        <wrapper>
+          Hello World
+        </wrapper>
+        !
+      </text>
+    </page>
+  `);
+});
+```
+
+### Rerender
+
+```jsx
+import '@testing-library/jest-dom';
+import { render } from '@lynx-js/react-lynx-testing-library';
+import { expect } from 'vitest';
+
+it('rerender will re-render the element', async () => {
+  const Greeting = (props) => <text>{props.message}</text>;
+  const { container, rerender } = render(<Greeting message="hi" />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        hi
+      </text>
+    </page>
+  `);
+  expect(container.firstChild).toHaveTextContent('hi');
+
+  {
+    // 不同于 React Testing Library，container 需要在 rerender 之后重新获取
+    // 因为 ReactLynx 每次加载都会创建一个新的 page 元素
+    const { container } = rerender(<Greeting message="hey" />);
+    expect(container.firstChild).toHaveTextContent('hey');
+
+    expect(container).toMatchInlineSnapshot(`
+      <page>
+        <text>
+          hey
+        </text>
+      </page>
+    `);
+  }
+});
+```
+
+### 更多用法
+
+更多用法请参考可以参考 ReactLynx Testing Library 源码中维护的[测试用例](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library/src/__tests__)。
+
+## API 参考
+
+详见 [API 参考](../../api/react-lynx-testing-library/index.md)。
