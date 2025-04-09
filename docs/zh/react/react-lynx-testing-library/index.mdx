@@ -394,6 +394,159 @@ it('rerender will re-render the element', async () => {
 });
 ```
 
+### list
+
+> list 的使用文档请参考：https://lynxjs.org/zh/api/elements/built-in/list.html
+
+```jsx
+import { useState } from '@lynx-js/react';
+import { render } from '@lynx-js/react-lynx-testing-library';
+import { expect } from 'vitest';
+
+it('list', () => {
+  const Comp = () => {
+    const [list, setList] = useState([0, 1, 2]);
+    return (
+      <list>
+        {list.map((item) => (
+          <list-item key={item} item-key={item}>
+            <text>{item}</text>
+          </list-item>
+        ))}
+      </list>
+    );
+  };
+  const { container } = render(<Comp />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <list
+        update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+      />
+    </page>
+  `);
+  const list = container.firstChild;
+  // 触发 list 的 componentAtIndex 方法，加载第 0 个 item
+  const uid0 = elementTree.triggerComponentAtIndex(list, 0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+  // 触发 list 的 enqueueComponent 方法，通知第 0 个 item 被回收
+  elementTree.triggerEnqueueComponent(list, uid0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+  // 触发 list 的 componentAtIndex 方法，加载第 1 个 item，此时会复用被回收的 item
+  const uid1 = elementTree.triggerComponentAtIndex(list, 1);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="1"
+      >
+        <text>
+          1
+        </text>
+      </list-item>
+    </list>
+  `);
+});
+```
+
+### 主线程脚本
+
+> 主线程脚本的使用文档请参考：https://lynxjs.org/zh/react/main-thread-script.html
+
+```jsx
+import { fireEvent, render } from '@lynx-js/react-lynx-testing-library';
+import { expect } from 'vitest';
+
+it('main thread script', async () => {
+  globalThis.cb = vi.fn();
+  const Comp = () => {
+    return (
+      <view
+        main-thread:bindtap={(e) => {
+          'main thread';
+          globalThis.cb(e);
+        }}
+      >
+        <text>Hello Main Thread Script</text>
+      </view>
+    );
+  };
+  const { container } = render(<Comp />, {
+    // 你可以尝试开启同时主线程和后台线程，得到的效果都将是一样的
+    // enableMainThread: true,
+    // enableBackgroundThread: true,
+  });
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view>
+        <text>
+          Hello Main Thread Script
+        </text>
+      </view>
+    </page>
+  `);
+  fireEvent.tap(container.firstChild, {
+    key: 'value',
+  });
+  expect(cb).toBeCalledTimes(1);
+  expect(cb.mock.calls).toMatchInlineSnapshot(`
+    [
+      [
+        {
+          "eventName": "tap",
+          "eventType": "bindEvent",
+          "isTrusted": false,
+          "key": "value",
+        },
+      ],
+    ]
+  `);
+});
+```
+
+#### 控制渲染所用的线程
+
+`render` 方法的第二个参数中支持 `enableMainThread` 和 `enableBackgroundThread` 两个选项，用于开启主线程和后台线程。默认情况下 `enableMainThread` 为 `false`，`enableBackgroundThread` 为 `true`，这样主线程不会渲染首屏，只有后台线程运行完整的 Preact 运行时，并将 UI 更新发送到主线程进行处理。我们之所以不同时开启主线程和后台线程，是因为单元测试并没有和使用 Rspeedy 构建一样将文件编译成两份产物，这样会导致最顶层的代码只能执行一次，并且默认是在后台线程中。假如你写了一个这样的组件：
+
+```jsx
+const isBackground = __BACKGROUND__;
+const Comp = () => {
+  return (
+    <view>
+      <text>{isBackground ? 'background' : 'main thread'}</text>
+    </view>
+  );
+};
+```
+
+这个组件最顶层的 `isBackground` 只会被执行一次，而且默认情况下是 `true`（Lynx Environment 初始化后默认为后台线程），为了避免 `enableMainThread: true` 时渲染出错误的首屏结果，我们默认将 `enableMainThread` 设置为 `false`，得到空首屏，可以避免此问题。
+
+如果确认自己的组件顶层代码没有双线程的差异，建议开启 `enableMainThread`，这样可以得到正确的首屏结果。
+
 ### 更多用法
 
 更多用法请参考可以参考 ReactLynx Testing Library 源码中维护的[测试用例](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library/src/__tests__)。

@@ -395,6 +395,160 @@ it('rerender will re-render your component', async () => {
 });
 ```
 
+### list
+
+> For list usage documentation, please refer to: https://lynxjs.org/zh/api/elements/built-in/list.html
+
+```jsx
+import { useState } from '@lynx-js/react';
+import { render } from '@lynx-js/react-lynx-testing-library';
+import { expect } from 'vitest';
+
+it('list', () => {
+  const Comp = () => {
+    const [list, setList] = useState([0, 1, 2]);
+    return (
+      <list>
+        {list.map((item) => (
+          <list-item key={item} item-key={item}>
+            <text>{item}</text>
+          </list-item>
+        ))}
+      </list>
+    );
+  };
+  const { container } = render(<Comp />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <list
+        update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+      />
+    </page>
+  `);
+  const list = container.firstChild;
+  // Trigger the componentAtIndex method of list and load the 0th item
+  const uid0 = elementTree.triggerComponentAtIndex(list, 0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+  // Trigger the enqueueComponent method of list to notify that 0th item is recycled
+  elementTree.triggerEnqueueComponent(list, uid0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+  // Trigger componentAtIndex method of list, load the 1th item (it will reuse the recycled item)
+  const uid1 = elementTree.triggerComponentAtIndex(list, 1);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="1"
+      >
+        <text>
+          1
+        </text>
+      </list-item>
+    </list>
+  `);
+});
+```
+
+### Main thread script
+
+> For the usage document of the main thread script, please refer to: https://lynxjs.org/zh/react/main-thread-script.html
+
+```jsx
+import { fireEvent, render } from '@lynx-js/react-lynx-testing-library';
+import { expect } from 'vitest';
+
+it('main thread script', async () => {
+  globalThis.cb = vi.fn();
+  const Comp = () => {
+    return (
+      <view
+        main-thread:bindtap={(e) => {
+          'main thread';
+          globalThis.cb(e);
+        }}
+      >
+        <text>Hello Main Thread Script</text>
+      </view>
+    );
+  };
+  const { container } = render(<Comp />, {
+    // You can try to enable both the main thread and the background thread at the same time
+    // and the results will be the same
+    // enableMainThread: true,
+    // enableBackgroundThread: true,
+  });
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view>
+        <text>
+          Hello Main Thread Script
+        </text>
+      </view>
+    </page>
+  `);
+  fireEvent.tap(container.firstChild, {
+    key: 'value',
+  });
+  expect(cb).toBeCalledTimes(1);
+  expect(cb.mock.calls).toMatchInlineSnapshot(`
+    [
+      [
+        {
+          "eventName": "tap",
+          "eventType": "bindEvent",
+          "isTrusted": false,
+          "key": "value",
+        },
+      ],
+    ]
+  `);
+});
+```
+
+#### Choose the thread used for rendering
+
+The second parameter of the `render` method supports `enableMainThread` and `enableBackgroundThread` are two options for enabling the main thread and background threads. By default, `enableMainThread` is `false` and `enableBackgroundThread` is `true`, so the main thread does not render the first screen, only the background thread runs the full Preact runtime and sends UI updates to the main thread for rendering. The reason why we don't enable both the main thread and the background thread is because unit tests do not compile files into two products like using Rspeedy does, which will result in the top-level code being executed only once, and by default in the background thread. Suppose you wrote a component like this:
+
+```jsx
+const isBackground = __BACKGROUND__;
+const Comp = () => {
+  return (
+    <view>
+      <text>{isBackground ? 'background' : 'main thread'}</text>
+    </view>
+  );
+};
+```
+
+The top-level `isBackground` of this component will only be executed once, and by default it is `true` (Lynx Environment defaults to the background thread after initialization). In order to avoid rendering the wrong first screen result when `enableMainThread: true`, we set `enableMainThread` to `false` by default, and get an empty first screen, which can avoid this problem.
+
+If you confirm that there is no difference between the top-level code of your component and the dual thread, it is recommended to turn on `enableMainThread`, so that you can get the correct first screen result.
+
 ### More usage
 
 For more usage, please refer to the [test cases](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library/src/__tests__) maintained in the ReactLynx Testing Library source code.
