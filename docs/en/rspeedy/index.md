@@ -11,4 +11,7 @@ hero:
     - theme: alt
       text: API
       link: ../api/rspeedy.html
+    - theme: alt
+      text: Github
+      link: https://github.com/lynx-family/lynx-stack/tree/main/packages/rspeedy
 ---
