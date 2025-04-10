@@ -106,7 +106,7 @@ export default defineConfig({
       {
         icon: 'github',
         mode: 'link',
-        content: 'https://github.com/lynx-family/lynx',
+        content: 'https://github.com/lynx-family',
       },
       {
         icon: 'discord',
