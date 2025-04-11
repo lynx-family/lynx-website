@@ -10,15 +10,17 @@ ReactLynx Testing Library 借鉴了 React Testing Library 的设计。底层的 
 
 ReactLynx Testing Library 适用于对于 ReactLynx 组件的单元测试。它基于 Lynx Environment 和 `@testing-library/dom`（页面元素的查询和事件触发），屏蔽了 Lynx 双线程的实现细节，将 ReactLynx 的渲染流程抽象成 `render`、`fireEvent`、`screen` 等和 React Testing Library 类似的 API。用户也可以对页面中的 Element 进行断言，例如使用 `data-testid` 来快速寻找元素，使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 判断元素在页面中。
 
-## 安装
+## 配置
 
-<PackageManagerTabs command="add -D @lynx-js/react-lynx-testing-library vitest" />
+ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，可以直接使用，但是它有一些 `peerDependencies`，你需要手动安装：
+
+<PackageManagerTabs command="add -D vitest @lynx-js/lynx-environment @testing-library/dom @vitejs/plugin-react" />
 
 配置 Vitest：
 
 ```js title=vitest.config.js
 import { defineConfig, mergeConfig } from 'vitest/config';
-import { createVitestConfig } from '@lynx-js/react-lynx-testing-library/vitest-config';
+import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
 
 const defaultConfig = createVitestConfig();
 const config = defineConfig({
@@ -30,11 +32,77 @@ const config = defineConfig({
 export default defineConfig(mergeConfig(defaultConfig, config));
 ```
 
-然后你就可以开始编写测试并运行了！
-
 如果需要使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 等方法，你需要安装 `@testing-library/jest-dom`：
 
 <PackageManagerTabs command="add -D @testing-library/jest-dom" />
+
+然后你就可以开始编写测试并运行了，下面是一个完整的示例：
+
+```tsx title=src/__tests__/index.test.tsx
+import '@testing-library/jest-dom';
+import { expect, test, vi } from 'vitest';
+import { render, getQueriesForElement } from '@lynx-js/react/testing-library';
+import { Component } from '@lynx-js/react';
+
+export interface IProps {
+  onMounted?: () => void;
+}
+
+export class App extends Component<IProps> {
+  override componentDidMount() {
+    this.props?.onMounted?.();
+  }
+
+  override render() {
+    return (
+      <view>
+        <text id="app-text">Hello World!</text>
+      </view>
+    );
+  }
+}
+
+test('App', async () => {
+  const cb = vi.fn();
+
+  render(
+    <App
+      onMounted={() => {
+        cb(`__MAIN_THREAD__: ${__MAIN_THREAD__}`);
+      }}
+    />,
+  );
+  expect(cb).toBeCalledTimes(1);
+  expect(cb.mock.calls).toMatchInlineSnapshot(`
+    [
+      [
+        "__MAIN_THREAD__: false",
+      ],
+    ]
+  `);
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <view>
+        <text
+          id="app-text"
+        >
+          Hello World!
+        </text>
+      </view>
+    </page>
+  `);
+  const { findByText } = getQueriesForElement(elementTree.root!);
+  const element = await findByText('Hello World!');
+  expect(element).toBeInTheDocument();
+  expect(element).toMatchInlineSnapshot(`
+    <text
+      id="app-text"
+    >
+      Hello World!
+    </text>
+  `);
+});
+```
 
 ## 示例
 
@@ -45,7 +113,7 @@ export default defineConfig(mergeConfig(defaultConfig, config));
 ```tsx
 import '@testing-library/jest-dom';
 import { expect, it, vi } from 'vitest';
-import { render, fireEvent, screen } from '@lynx-js/react-lynx-testing-library';
+import { render, fireEvent, screen } from '@lynx-js/react/testing-library';
 
 it('basic', async function () {
   const Button = ({ children, onClick }) => {
@@ -76,7 +144,7 @@ it('basic', async function () {
 ```jsx
 import '@testing-library/jest-dom';
 import { expect, it } from 'vitest';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 
 it('basic render', () => {
   const WrapperComponent = ({ children }) => (
@@ -116,7 +184,7 @@ it('basic render', () => {
 可以直接自己构造 `Event` 对象，也可以使用直接传入事件类型和初始化参数让 Testing Library 自动构造 `Event` 对象。
 
 ```jsx
-import { render, fireEvent } from '@lynx-js/react-lynx-testing-library';
+import { render, fireEvent } from '@lynx-js/react/testing-library';
 import { vi, expect } from 'vitest';
 
 it('fireEvent', async () => {
@@ -186,7 +254,7 @@ it('fireEvent', async () => {
 
 ```jsx
 import { test, expect } from 'vitest';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 import { Component, createRef } from '@lynx-js/react';
 
 it('element ref', async () => {
@@ -272,7 +340,7 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
-} from '@lynx-js/react-lynx-testing-library';
+} from '@lynx-js/react/testing-library';
 
 const fetchAMessage = () =>
   new Promise((resolve) => {
@@ -358,7 +426,7 @@ test('it waits for the data to be loaded', async () => {
 
 ```jsx
 import '@testing-library/jest-dom';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 import { expect } from 'vitest';
 
 it('rerender will re-render the element', async () => {
@@ -396,7 +464,7 @@ it('rerender will re-render the element', async () => {
 
 ```jsx
 import { useState } from '@lynx-js/react';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 import { expect } from 'vitest';
 
 it('list', () => {
@@ -474,7 +542,7 @@ it('list', () => {
 > 主线程脚本的使用文档请参考：https://lynxjs.org/zh/react/main-thread-script.html
 
 ```jsx
-import { fireEvent, render } from '@lynx-js/react-lynx-testing-library';
+import { fireEvent, render } from '@lynx-js/react/testing-library';
 import { expect } from 'vitest';
 
 it('main thread script', async () => {
@@ -545,7 +613,7 @@ const Comp = () => {
 
 ### 更多用法
 
-更多用法请参考可以参考 ReactLynx Testing Library 源码中维护的[测试用例](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library/src/__tests__)。
+更多用法请参考可以参考 ReactLynx Testing Library 源码中维护的[测试用例](https://github.com/lynx-family/lynx-stack/tree/main/packages/react/testing-library/src/__tests__)。
 
 ## API 参考
 

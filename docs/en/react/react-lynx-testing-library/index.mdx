@@ -10,15 +10,17 @@ ReactLynx Testing Library is inspired by React Testing Library. The underlying L
 
 ReactLynx Testing Library is suitable for unit testing of ReactLynx components. It is based on Lynx Environment and `@testing-library/dom` (querying and event triggering of page elements), shielding the implementation details of Lynx dual threads, and abstracting the rendering process of ReactLynx into `render`, `fireEvent`, `screen` and other APIs similar to React Testing Library. Users can also assert on the elements in the page, for example, use `data-testid` to quickly find the element, and use `toBeInTheDocument` in `@testing-library/jest-dom` to determine whether the element is in the page.
 
-## Installation
+## Setup
 
-<PackageManagerTabs command="add -D @lynx-js/react-lynx-testing-library vitest" />
+ReactLynx Testing Library is integrated in the `testing-library` subdirectory of the `@lynx-js/react` package and can be used directly, but it has some `peerDependencies` that you need to install manually:
+
+<PackageManagerTabs command="add -D vitest @lynx-js/lynx-environment @testing-library/dom @vitejs/plugin-react" />
 
 Configure Vitest:
 
 ```js title=vitest.config.js
 import { defineConfig, mergeConfig } from 'vitest/config';
-import { createVitestConfig } from '@lynx-js/react-lynx-testing-library/vitest-config';
+import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
 
 const defaultConfig = createVitestConfig();
 const config = defineConfig({
@@ -36,6 +38,74 @@ If you need to use methods such as `toBeInTheDocument` in `@testing-library/jest
 
 <PackageManagerTabs command="add -D @testing-library/jest-dom" />
 
+Then you can start writing tests and running them. Here is a complete example:
+
+```tsx title=src/__tests__/index.test.tsx
+import '@testing-library/jest-dom';
+import { expect, test, vi } from 'vitest';
+import { render, getQueriesForElement } from '@lynx-js/react/testing-library';
+import { Component } from '@lynx-js/react';
+
+export interface IProps {
+  onMounted?: () => void;
+}
+
+export class App extends Component<IProps> {
+  override componentDidMount() {
+    this.props?.onMounted?.();
+  }
+
+  override render() {
+    return (
+      <view>
+        <text id="app-text">Hello World!</text>
+      </view>
+    );
+  }
+}
+
+test('App', async () => {
+  const cb = vi.fn();
+
+  render(
+    <App
+      onMounted={() => {
+        cb(`__MAIN_THREAD__: ${__MAIN_THREAD__}`);
+      }}
+    />,
+  );
+  expect(cb).toBeCalledTimes(1);
+  expect(cb.mock.calls).toMatchInlineSnapshot(`
+    [
+      [
+        "__MAIN_THREAD__: false",
+      ],
+    ]
+  `);
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <view>
+        <text
+          id="app-text"
+        >
+          Hello World!
+        </text>
+      </view>
+    </page>
+  `);
+  const { findByText } = getQueriesForElement(elementTree.root!);
+  const element = await findByText('Hello World!');
+  expect(element).toBeInTheDocument();
+  expect(element).toMatchInlineSnapshot(`
+    <text
+      id="app-text"
+    >
+      Hello World!
+    </text>
+  `);
+});
+```
+
 ## Examples
 
 ### Quick Start
@@ -45,7 +115,7 @@ This is a minimal example that shows how to test with ReactLynx Testing Library.
 ```tsx
 import '@testing-library/jest-dom';
 import { expect, it, vi } from 'vitest';
-import { render, fireEvent, screen } from '@lynx-js/react-lynx-testing-library';
+import { render, fireEvent, screen } from '@lynx-js/react/testing-library';
 
 it('basic', async function () {
   const Button = ({ children, onClick }) => {
@@ -76,7 +146,7 @@ it('basic', async function () {
 ```jsx
 import '@testing-library/jest-dom';
 import { expect, it } from 'vitest';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 
 it('basic render', () => {
   const WrapperComponent = ({ children }) => (
@@ -116,7 +186,7 @@ When firing an event, you need to explicitly specify the type of event. For exam
 You can directly construct an `Event` object yourself, or you can directly pass in the event type and initialization parameters to let the Testing Library automatically construct an `Event` object.
 
 ```jsx
-import { render, fireEvent } from '@lynx-js/react-lynx-testing-library';
+import { render, fireEvent } from '@lynx-js/react/testing-library';
 import { vi, expect } from 'vitest';
 
 it('fireEvent', async () => {
@@ -186,7 +256,7 @@ it('fireEvent', async () => {
 
 ```jsx
 import { test, expect } from 'vitest';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 import { Component, createRef } from '@lynx-js/react';
 
 it('element ref', async () => {
@@ -272,7 +342,7 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
-} from '@lynx-js/react-lynx-testing-library';
+} from '@lynx-js/react/testing-library';
 
 const fetchAMessage = () =>
   new Promise((resolve) => {
@@ -359,7 +429,7 @@ test('it waits for the data to be loaded', async () => {
 
 ```jsx
 import '@testing-library/jest-dom';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 import { expect } from 'vitest';
 
 it('rerender will re-render your component', async () => {
@@ -397,7 +467,7 @@ it('rerender will re-render your component', async () => {
 
 ```jsx
 import { useState } from '@lynx-js/react';
-import { render } from '@lynx-js/react-lynx-testing-library';
+import { render } from '@lynx-js/react/testing-library';
 import { expect } from 'vitest';
 
 it('list', () => {
@@ -475,7 +545,7 @@ it('list', () => {
 > For the usage document of the main thread script, please refer to: https://lynxjs.org/zh/react/main-thread-script.html
 
 ```jsx
-import { fireEvent, render } from '@lynx-js/react-lynx-testing-library';
+import { fireEvent, render } from '@lynx-js/react/testing-library';
 import { expect } from 'vitest';
 
 it('main thread script', async () => {
@@ -547,7 +617,7 @@ If you confirm that there is no difference between the top-level code of your co
 
 ### More usage
 
-For more usage, please refer to the [test cases](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library/src/__tests__) maintained in the ReactLynx Testing Library source code.
+For more usage, please refer to the [test cases](https://github.com/lynx-family/lynx-stack/tree/main/packages/react/testing-library/src/__tests__) maintained in the ReactLynx Testing Library source code.
 
 ## API Reference
 
