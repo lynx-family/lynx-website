@@ -3,7 +3,7 @@
 在 React 生态中，测试是一个重要的话题，目前 React 生态中也有很多优秀的测试方案，大概可以分为 2 类：
 
 - 端到端测试：在真实的浏览器环境中渲染组件，对整个应用的行为进行测试，底层往往需要用到 Puppeteer、Playwright 等工具提供一个真实的浏览器环境。
-- 单元测试：在纯粹的 JS 环境中渲染组件，然后断言组件的渲染结果以及组件的行为，底层往往需要用到 jsdom、happy-dom 等来模拟浏览器环境，在 ReactLynx 中，则需要使用 `@lynx-js/lynx-environment`。
+- 单元测试：在纯粹的 JS 环境中渲染组件，然后断言组件的渲染结果以及组件的行为，底层往往需要用到 jsdom、happy-dom 等来模拟浏览器环境，在 ReactLynx 中，则需要使用 `@lynx-js/test-environment`。
 
 在 ReactLynx 中，对于端到端测试，可以基于 [Lynx for Web](guide/start/fragments/web/integrating-lynx-with-web)，将产物编译至 Web 环境，然后基于 Puppeteer 等工具进行测试。
 

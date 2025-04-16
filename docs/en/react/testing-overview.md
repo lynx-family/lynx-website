@@ -4,7 +4,7 @@ Testing is an important topic in the React ecosystem. There are many excellent t
 
 - End-to-end testing: Render components in a real browser environment to test the behavior of the entire application. The underlying layer often requires tools such as Puppeteer and Playwright to provide a real browser environment.
 
-- Unit testing: Render components in a pure JS environment, and then assert the rendering results and behavior of components. The underlying layer often requires jsdom, happy-dom, etc. to simulate the browser environment. In ReactLynx, `@lynx-js/lynx-environment` is required.
+- Unit testing: Render components in a pure JS environment, and then assert the rendering results and behavior of components. The underlying layer often requires jsdom, happy-dom, etc. to simulate the browser environment. In ReactLynx, `@lynx-js/test-environment` is required.
 
 For end-to-end testing in ReactLynx, you can bundle you App into web using [Lynx for Web](guide/start/fragments/web/integrating-lynx-with-web), and then test it based on tools such as Puppeteer.
 

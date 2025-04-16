@@ -2,19 +2,19 @@ import { PackageManagerTabs } from '@theme';
 
 # ReactLynx Testing Library
 
-[ReactLynx Testing Library](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library) implements a set of testing solutions for ReactLynx components based on [Lynx Environment (`@lynx-js/lynx-environment`, JS implementation of Lynx)](./lynx-environment.md).
+[ReactLynx Testing Library](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library) implements a set of testing solutions for ReactLynx components based on [Lynx Test Environment (`@lynx-js/test-environment`, JS implementation of Lynx)](./lynx-test-environment.md).
 
-ReactLynx Testing Library is inspired by React Testing Library. The underlying Lynx Environment is responsible for providing the JS implementation of the Lynx environment, similar to the DOM environment provided by tools such as `jsdom`. We use `jsdom` in Lynx Environment to implement [Element PAPI](https://lynxjs.org/api/engine/element-api), so you can directly use tools such as [`@testing-library/dom`](https://github.com/testing-library/dom-testing-library) and [`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) to assist testing.
+ReactLynx Testing Library is inspired by React Testing Library. The underlying Lynx Test Environment is responsible for providing the JS implementation of the Lynx Test Environment, similar to the DOM environment provided by tools such as `jsdom`. We use `jsdom` in Lynx Test Environment to implement [Element PAPI](https://lynxjs.org/api/engine/element-api), so you can directly use tools such as [`@testing-library/dom`](https://github.com/testing-library/dom-testing-library) and [`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) to assist testing.
 
 ## Applicable scenarios
 
-ReactLynx Testing Library is suitable for unit testing of ReactLynx components. It is based on Lynx Environment and `@testing-library/dom` (querying and event triggering of page elements), shielding the implementation details of Lynx dual threads, and abstracting the rendering process of ReactLynx into `render`, `fireEvent`, `screen` and other APIs similar to React Testing Library. Users can also assert on the elements in the page, for example, use `data-testid` to quickly find the element, and use `toBeInTheDocument` in `@testing-library/jest-dom` to determine whether the element is in the page.
+ReactLynx Testing Library is suitable for unit testing of ReactLynx components. It is based on Lynx Test Environment and `@testing-library/dom` (querying and event triggering of page elements), shielding the implementation details of Lynx dual threads, and abstracting the rendering process of ReactLynx into `render`, `fireEvent`, `screen` and other APIs similar to React Testing Library. Users can also assert on the elements in the page, for example, use `data-testid` to quickly find the element, and use `toBeInTheDocument` in `@testing-library/jest-dom` to determine whether the element is in the page.
 
 ## Setup
 
 ReactLynx Testing Library is integrated in the `testing-library` subdirectory of the `@lynx-js/react` package and can be used directly, but it has some `peerDependencies` that you need to install manually:
 
-<PackageManagerTabs command="add -D vitest @lynx-js/lynx-environment @testing-library/dom @vitejs/plugin-react" />
+<PackageManagerTabs command="add -D vitest @lynx-js/test-environment @testing-library/dom @vitejs/plugin-react" />
 
 Configure Vitest:
 
@@ -29,7 +29,7 @@ const config = defineConfig({
   },
 });
 
-export default defineConfig(mergeConfig(defaultConfig, config));
+export default mergeConfig(defaultConfig, config);
 ```
 
 Then you can start writing tests and running them!
@@ -158,7 +158,7 @@ it('basic render', () => {
   const { container, getByTestId } = render(<Comp />, {
     wrapper: WrapperComponent,
   });
-  // Since Lynx Environment uses jsdom to implement Element PAPI at the bottom layer
+  // Since Lynx Test Environment uses jsdom to implement Element PAPI at the bottom layer
   // you can use the method in `@testing-library/jest-dom` to assert whether the page element exists
   expect(getByTestId('wrapper')).toBeInTheDocument();
   expect(container.firstChild).toMatchInlineSnapshot(`
@@ -202,7 +202,7 @@ it('fireEvent', async () => {
 
   expect(button).toMatchInlineSnapshot(`<text />`);
 
-  // Lynx Environment will mount the event handler to the `eventMap` property of Element.
+  // Lynx Test Environment will mount the event handler to the `eventMap` property of Element.
   // If you need to assert whether the event handler is mounted, you can use the `eventMap` property.
   expect(button.eventMap).toMatchInlineSnapshot(`
     {
@@ -379,7 +379,7 @@ class ComponentWithLoader extends Component {
 
 test('it waits for the data to be loaded', async () => {
   render(<ComponentWithLoader />);
-  // elementTree.root in Lynx Environment is used to maintain the page element tree
+  // elementTree.root in Lynx Test Environment is used to maintain the page element tree
   expect(elementTree.root).toMatchInlineSnapshot(`
     <page>
       <text>
@@ -391,7 +391,7 @@ test('it waits for the data to be loaded', async () => {
     return screen.getByText('Loading...');
   };
   await waitForElementToBeRemoved(loading);
-  // Since Lynx Environment uses jsdom to implement Element PAPI at the bottom layer
+  // Since Lynx Test Environment uses jsdom to implement Element PAPI at the bottom layer
   // you can directly access document.body to get page elements
   expect(document.body).toMatchInlineSnapshot(`
     <body>
@@ -611,7 +611,7 @@ const Comp = () => {
 };
 ```
 
-The top-level `isBackground` of this module will only be executed once, and by default it is `true` (Lynx Environment defaults to the background thread after initialization). In order to avoid rendering the wrong first screen result when `enableMainThread: true`, we set `enableMainThread` to `false` by default, and get an empty first screen, which can avoid this problem.
+The top-level `isBackground` of this module will only be executed once, and by default it is `true` (Lynx Test Environment defaults to the background thread after initialization). In order to avoid rendering the wrong first screen result when `enableMainThread: true`, we set `enableMainThread` to `false` by default, and get an empty first screen, which can avoid this problem.
 
 If you confirm that there is no difference between the top-level code of your component and the dual thread, it is recommended to turn on `enableMainThread`, so that you can get the correct first screen result.
 

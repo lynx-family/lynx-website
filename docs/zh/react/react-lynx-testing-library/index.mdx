@@ -2,19 +2,19 @@ import { PackageManagerTabs } from '@theme';
 
 # ReactLynx Testing Library
 
-[ReactLynx Testing Library](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library) 基于 [Lynx Environment（`@lynx-js/lynx-environment`，Lynx 的 JS 实现）](./lynx-environment.md) 实现了一套 ReactLynx 组件的测试方案。
+[ReactLynx Testing Library](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/react-lynx-testing-library) 基于 [Lynx Test Environment（`@lynx-js/test-environment`，Lynx 的 JS 实现）](./lynx-test-environment.md) 实现了一套 ReactLynx 组件的测试方案。
 
-ReactLynx Testing Library 借鉴了 React Testing Library 的设计。底层的 Lynx Environment 负责提供 Lynx 环境的 JS 实现，类似于 `jsdom` 等工具提供的 DOM 环境。我们在 Lynx Environment 中使用了 `jsdom` 来实现 [Element PAPI](https://lynxjs.org/api/engine/element-api)，因此你可以直接使用 [`@testing-library/dom`](https://github.com/testing-library/dom-testing-library)、[`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) 等工具来辅助测试。
+ReactLynx Testing Library 借鉴了 React Testing Library 的设计。底层的 Lynx Test Environment 负责提供 Lynx 环境的 JS 实现，类似于 `jsdom` 等工具提供的 DOM 环境。我们在 Lynx Test Environment 中使用了 `jsdom` 来实现 [Element PAPI](https://lynxjs.org/api/engine/element-api)，因此你可以直接使用 [`@testing-library/dom`](https://github.com/testing-library/dom-testing-library)、[`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) 等工具来辅助测试。
 
 ## 适用场景
 
-ReactLynx Testing Library 适用于对于 ReactLynx 组件的单元测试。它基于 Lynx Environment 和 `@testing-library/dom`（页面元素的查询和事件触发），屏蔽了 Lynx 双线程的实现细节，将 ReactLynx 的渲染流程抽象成 `render`、`fireEvent`、`screen` 等和 React Testing Library 类似的 API。用户也可以对页面中的 Element 进行断言，例如使用 `data-testid` 来快速寻找元素，使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 判断元素在页面中。
+ReactLynx Testing Library 适用于对于 ReactLynx 组件的单元测试。它基于 Lynx Test Environment 和 `@testing-library/dom`（页面元素的查询和事件触发），屏蔽了 Lynx 双线程的实现细节，将 ReactLynx 的渲染流程抽象成 `render`、`fireEvent`、`screen` 等和 React Testing Library 类似的 API。用户也可以对页面中的 Element 进行断言，例如使用 `data-testid` 来快速寻找元素，使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 判断元素在页面中。
 
 ## 配置
 
 ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，可以直接使用，但是它有一些 `peerDependencies`，你需要手动安装：
 
-<PackageManagerTabs command="add -D vitest @lynx-js/lynx-environment @testing-library/dom @vitejs/plugin-react" />
+<PackageManagerTabs command="add -D vitest @lynx-js/test-environment @testing-library/dom @vitejs/plugin-react" />
 
 配置 Vitest：
 
@@ -29,7 +29,7 @@ const config = defineConfig({
   },
 });
 
-export default defineConfig(mergeConfig(defaultConfig, config));
+export default mergeConfig(defaultConfig, config);
 ```
 
 如果需要使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 等方法，你需要安装 `@testing-library/jest-dom`：
@@ -156,7 +156,7 @@ it('basic render', () => {
   const { container, getByTestId } = render(<Comp />, {
     wrapper: WrapperComponent,
   });
-  // 由于 Lynx Environment 底层使用的是 jsdom 来实现 Element PAPI
+  // 由于 Lynx Test Environment 底层使用的是 jsdom 来实现 Element PAPI
   // 因此可以使用 `@testing-library/jest-dom` 中的方法来断言页面元素是否存在
   expect(getByTestId('wrapper')).toBeInTheDocument();
   expect(container.firstChild).toMatchInlineSnapshot(`
@@ -200,7 +200,7 @@ it('fireEvent', async () => {
 
   expect(button).toMatchInlineSnapshot(`<text />`);
 
-  // Lynx Environment 会将事件处理器挂载到 Element 的 `eventMap` 属性上。
+  // Lynx Test Environment 会将事件处理器挂载到 Element 的 `eventMap` 属性上。
   // 如果需要断言事件处理器是否被挂载，可以使用 `eventMap` 属性。
   expect(button.eventMap).toMatchInlineSnapshot(`
     {
@@ -376,7 +376,7 @@ class ComponentWithLoader extends Component {
 
 test('it waits for the data to be loaded', async () => {
   render(<ComponentWithLoader />);
-  // Lynx Environment 中的 elementTree.root 用于维护页面元素树
+  // Lynx Test Environment 中的 elementTree.root 用于维护页面元素树
   expect(elementTree.root).toMatchInlineSnapshot(`
     <page>
       <text>
@@ -388,7 +388,7 @@ test('it waits for the data to be loaded', async () => {
     return screen.getByText('Loading...');
   };
   await waitForElementToBeRemoved(loading);
-  // 由于 Lynx Environment 底层使用的是 jsdom 来实现 Element PAPI
+  // 由于 Lynx Test Environment 底层使用的是 jsdom 来实现 Element PAPI
   // 因此可以直接访问 document.body 来获取页面元素
   expect(document.body).toMatchInlineSnapshot(`
     <body>
@@ -607,7 +607,7 @@ const Comp = () => {
 };
 ```
 
-这个组件最顶层的 `isBackground` 只会被执行一次，而且默认情况下是 `true`（Lynx Environment 初始化后默认为后台线程），为了避免 `enableMainThread: true` 时渲染出错误的首屏结果，我们默认将 `enableMainThread` 设置为 `false`，得到空首屏，可以避免此问题。
+这个组件最顶层的 `isBackground` 只会被执行一次，而且默认情况下是 `true`（Lynx Test Environment 初始化后默认为后台线程），为了避免 `enableMainThread: true` 时渲染出错误的首屏结果，我们默认将 `enableMainThread` 设置为 `false`，得到空首屏，可以避免此问题。
 
 如果确认自己的组件顶层代码没有双线程的差异，建议开启 `enableMainThread`，这样可以得到正确的首屏结果。
 

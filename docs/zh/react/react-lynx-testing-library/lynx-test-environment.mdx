@@ -1,0 +1,72 @@
+import { Details } from '@lynx';
+
+# Lynx Test Environment
+
+`@lynx-js/test-environment` 是 [Lynx Spec](https://lynxjs.org/api/engine/element-api) 的纯 JavaScript 实现，包含用于 Node.js 的 [Element PAPI](https://lynxjs.org/api/engine/element-api) 和 [Dual-threaded Model](https://lynxjs.org/guide/spec#dual-threaded-model) 实现。该项目的目标是模拟 Lynx 环境，以便用于测试。
+
+Lynx Test Environment 中的 Element PAPI 实现基于 jsdom，例如 `__CreateElement` 将返回一个 `LynxElement`，它从 jsdom 扩展了 `HTMLElement`。你可以复用常用于 DOM 测试工具，例如 [`@testing-library/dom`](https://github.com/testing-library/dom-testing-library)（页面元素的查询和事件触发）和 [`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom)（用于 DOM 的自定义 jest 匹配器）等。
+
+## 用法
+
+```js
+import { LynxEnv } from '@lynx-js/test-environment';
+
+const lynxEnv = new LynxEnv();
+```
+
+要使用 `@lynx-js/test-environment`，你将主要使用其中导出的 `LynxEnv` 构造函数。你会得到一个 `LynxEnv` 实例，它具有许多有用的属性方法，特别是 `switchToMainThread` 和 `switchToBackgroundThread`，它们允许你在主线程和后台线程之间切换。
+
+使用后台线程 API：
+
+```js
+lynxEnv.switchToBackgroundThread();
+// 使用后台线程全局对象
+globalThis.lynxCoreInject.tt.OnLifecycleEvent(...args);
+// 或者直接使用 `lynxCoreInject`，因为它已经注入到 `globalThis`
+// lynxCoreInject.tt.OnLifecycleEvent(...args);
+```
+
+使用主线程 API：
+
+```js
+lynxEnv.switchToMainThread();
+// 使用主线程 Element PAPI
+const page = __CreatePage('0', 0);
+const view = __CreateView(0);
+__AppendElement(page, view);
+```
+
+请注意，你仍然可以访问其他线程的全局变量而无需切换线程：
+
+```js
+lynxEnv.switchToMainThread();
+// 即使我们在主线程上，也可以使用 `backgroundThread` 全局对象
+lynxEnv.backgroundThread.tt.OnLifecycleEvent(...args);
+```
+
+### 在 Vitest 中使用
+
+推荐作为 Vitest 的[测试环境](https://vitest.dev/guide/environment)进行配置，例如：
+
+```js title=vitest.config.js
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: require.resolve('@lynx-js/test-environment/env/vitest'),
+  },
+});
+```
+
+配置好之后，在测试中可以直接全局访问 `lynxEnv` 对象。
+
+<Details title="@lynx-js/react/testing-library 中已经包含了 @lynx-js/test-environment">
+如果你想在 ReactLynx 中进行单元测试，@lynx-js/react/testing-library 中已经包含了 @lynx-js/test-environment，因此你不需要手动指定此配置。
+
+请参考 [ReactLynx Testing Library](/zh/react/react-lynx-testing-library/index) 对 `@lynx-js/react/testing-library` 进行配置。
+
+</Details>
+
+## API 参考
+
+详见 [API 参考](../../api/lynx-test-environment/index.md)。
