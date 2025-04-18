@@ -206,7 +206,7 @@ class App extends Component {
 例如，根据点击次数变换节点的背景色：
 
 ```jsx
-import {useMainThreadRef} from '@lynx-js/react';
+import { useMainThreadRef } from '@lynx-js/react';
 
 function App() {
   const countRef = useMainThreadRef(0);
@@ -228,19 +228,21 @@ function App() {
 
 在后台线程使用 [`runOnMainThread()`] 来异步地在主线程执行主线程函数：
 
-```tsx
-import { useMainThreadRef, runOnMainThread } from '@lynx-js/react';
+```jsx
+import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
 
 function App() {
   const countRef = useMainThreadRef(0);
 
-  const addCount = (value: number) => {
+  const addCount = (value) => {
     'main thread';
     countRef.current += value;
+    return countRef.current;
   };
 
-  const doSomething = () => {
-    runOnMainThread(addCount)(1);
+  const increaseMainThreadCount = async () => {
+    const result = await runOnMainThread(addCount)(1);
+    console.log(result);
   };
 }
 ```
@@ -249,17 +251,22 @@ function App() {
 
 在主线程使用 [`runOnBackground()`] 来异步地在后台线程执行非主线程的普通函数：
 
-```tsx
-import { useState, runOnBackground } from '@lynx-js/react';
+```jsx
+import { runOnBackground, useState } from '@lynx-js/react';
 
 function App() {
   const [count, setCount] = useState(1);
 
-  const onTapMainThread = (event: MainThread.ITouchEvent) => {
+  const increaseBackgroundCount = async (event) => {
     'main thread';
-    runOnBackground(() => {
-      setCount((count) => count + 1);
+    const result = await runOnBackground(() => {
+      let count;
+      setCount((c) => {
+        return (count = c + 1);
+      });
+      return count;
     })();
+    console.log(result);
   };
 }
 ```

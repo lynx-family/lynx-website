@@ -9,7 +9,7 @@ Configuration of the development client.
 **Signature:**
 
 ```typescript
-export interface Client
+export interface Client 
 ```
 
 ## Properties

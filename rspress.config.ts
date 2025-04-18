@@ -2,11 +2,17 @@ import * as path from 'node:path';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import type { RspressPlugin, SidebarGroup } from '@rspress/shared';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
+import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { defineConfig } from 'rspress/config';
 import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
+import { pluginRss } from '@rspress/plugin-rss';
+import { pluginSass } from '@rsbuild/plugin-sass';
+import { pluginLess } from '@rsbuild/plugin-less';
+
+const PUBLISH_URL = 'https://lynxjs.org/';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -22,10 +28,11 @@ export default defineConfig({
   globalStyles: path.join(__dirname, 'src', 'styles', 'global.css'),
   builderConfig: {
     plugins: [
+      pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       pluginOpenGraph({
         title: 'Lynx',
         type: 'website',
-        url: 'https://lynxjs.org/',
+        url: PUBLISH_URL,
         image:
           'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/og-image.png',
         description:
@@ -36,6 +43,8 @@ export default defineConfig({
         },
       }),
       pluginSvgr(),
+      pluginSass(),
+      pluginLess(),
     ],
     source: {
       alias: {
@@ -97,7 +106,7 @@ export default defineConfig({
       {
         icon: 'github',
         mode: 'link',
-        content: 'https://github.com/lynx-family/lynx',
+        content: 'https://github.com/lynx-family',
       },
       {
         icon: 'discord',
@@ -113,7 +122,35 @@ export default defineConfig({
     nav: [],
     sidebar: {},
   },
-  plugins: [rspeedyApiPlugin(), sharedSidebarPlugin()],
+  plugins: [
+    rspeedyApiPlugin(),
+    sharedSidebarPlugin(),
+    pluginRss({
+      siteUrl: PUBLISH_URL,
+      feed: [
+        {
+          id: 'blog-rss',
+          test: '/blog',
+          title: 'Lynx Blog',
+          language: 'en',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss.xml',
+          },
+        },
+        {
+          id: 'blog-rss-zh',
+          test: '/zh/blog',
+          title: 'Lynx 博客',
+          language: 'zh-CN',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss-zh.xml',
+          },
+        },
+      ],
+    }),
+  ],
   markdown: {
     defaultWrapCode: false,
     checkDeadLinks: true,

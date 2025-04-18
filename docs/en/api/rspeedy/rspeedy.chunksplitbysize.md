@@ -9,7 +9,7 @@
 **Signature:**
 
 ```typescript
-export interface ChunkSplitBySize
+export interface ChunkSplitBySize 
 ```
 
 ## Properties

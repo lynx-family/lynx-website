@@ -9,7 +9,7 @@ The `EntryDescription` describes a entry. It is useful when the project has mult
 **Signature:**
 
 ```typescript
-export interface EntryDescription
+export interface EntryDescription 
 ```
 
 ## Remarks

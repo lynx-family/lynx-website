@@ -9,7 +9,7 @@ The [Tools](./rspeedy.tools.md) options changes the behavior of various building
 **Signature:**
 
 ```typescript
-export interface Tools
+export interface Tools 
 ```
 
 ## Properties

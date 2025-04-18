@@ -1,78 +1,69 @@
 # Evaluating Performane
 
-The performance of an individual page can determine users' perceptions of your application. Lynx provides the [Performance API](api/lynx-api/performance-api)
+The performance of the Lynx page can determine users' perceptions of your application. Lynx provides the [Performance API](api/lynx-api/performance-api)
 to help you monitor the status of the page and accurately measure its performance during operation.
 
 ## Evaluating User Perceived Performance
 
-User perceived performance is a concept that measures the subjective perception of users regarding whether a page is "fast" or "slow."
+It is critical to understand that **User Perceived Performance (UPP)** reflects users' subjective experience of page responsiveness. When opening a page, users typically expect
+immediate content visibility rather than waiting through a blank screen. To enhance this perception, two fundamental principles apply: **Show Content Early** and **Quick Response**.
 
-When users open a page, they expect to see content as soon as possible rather than waiting on a blank screen. This highlights two fundamental principles for
-improving user perceived performance: showing content early and responding quickly.
-
-- Show Content Early: While loading a page, it is better to display dynamic loading animations (e.g., CSS or SVG animations), friendly text prompts, skeleton
-  screens, or any content that helps alleviate user anxiety, rather than waiting for all data to be ready before displaying completely. This gives users the
-  impression of a faster load, as they see a comprehensible interface instead of a blank screen.
+- Show Content Early: While loading a page, prioritize displaying partial content (e.g., skeleton screens, loading animations) instead of waiting for full data readiness.
+  This reduces perceived wait time by providing immediate visual feedback.
 
 - Quick Response: When user actions trigger operations that take time (such as searching or image processing), display a loading animation immediately. Although
   this doesn't change the actual completion time, it gives users the impression that the page responded timely to their actions.
 
-Following these principles can significantly reduce the likelihood of users prematurely leaving due to perceiving the page as unusable. However, since user
-perceived performance involves complex subjective experiences, it's challenging to rely on a single metric for evaluation. Instead, a comprehensive assessment
-using multiple metrics provided by the [Performance API](api/lynx-api/performance-api) is necessary:
+These principles reduce user abandonment caused by perceived unresponsiveness. However, since UPP involves complex subjective experiences, it's challenging to rely on a single
+metric for evaluation. Instead, a comprehensive assessment using multiple metrics provided by the [Performance API](api/lynx-api/performance-api) is necessary:
 
 - [First Contentful Paint (FCP)](api/lynx-api/performance-api/performance-entry/metric-fcp-entry): Time to first content rendering completion.
 
 - [Actual First Meaningful Paint (ActualFMP)](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry): Time to rendering of truly meaningful content.
 
-- [Time to interactive (TTI)](api/lynx-api/performance-api/performance-entry/metric-tti-entry): Time until page reaches interactive state.
+Based on the aforementioned metrics, if a page can immediately display primary content after loading (LoadBundle) without requiring additional data fetches to render,
+prioritize optimizing _FCP_.
 
-Based on these metrics, if your page, as shown below, can display primary content after the LoadBundle without relying on network requests or asynchronous IO for
-additional user-presented data, you should focus on optimizing _FCP_ and _TTI_.
+![First Frame Direct Render Process](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-without-network.png 'First Frame Direct Render Process')
 
-![First Screen Direct Render Process](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-without-network.png 'First Screen Direct Render Process')
+Conversely, if page rendering depends on additional data — such as asynchronous fetches via network requests or local file reads — to achieve "actual" content display,
+you can [mark the Lynx pipeline](guide/performance/timing-flag) to track this critical data update. By annotating the [Lynx Pipeline](guide/spec#lynx-pipeline), developers can track critical data
+updates and measure the resulting _ActualFMP_. Unlike scenarios without data dependencies, FCP in such cases may only show non-meaningful UI states (e.g., loading animations or skeleton screens).
 
-Conversely, if your page relies on external data, such as that obtained via network requests, to "truly" complete rendering, you need to
-[mark Lynx Pipeline](guide/performance/timing-flag) and focus on _ActualFMP_ related to critical data and elements. At times when FCP and TTI indicate
-completion, the displayed content might be meaningless, such as a loading animation or a skeleton graphic.
+![First Frame Render Process with Network Requests](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-with-network.png 'First Frame Render Process with Network Requests')
 
-![First Screen Render Process with Network Requests](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-with-network.png 'First Screen Render Process with Network Requests')
-
-This also reveals that displaying real data requires additional processing time, contradicting the fundamental principles for enhancing user perceived performance.
-Therefore, to improve perceived performance, the first-screen display should consist of static or preloaded content, while other content can rely on network downloads
-to be shown in subsequent data updates. Although this approach increases total download volume, it dramatically enhances perceived performance by rendering meaningful
-content earlier.
+This highlights a conflict: rendering real data requires additional processing time, which contradicts the goal of improving UPP. To optimize perceived performance,
+prioritize static or preloaded content for the initial screen, while deferring network-dependent content to subsequent updates. Although this approach may
+increases total data transfer, it significantly enhances user perceived performance by rendering meaningful content earlier.
 
 ## Evaluating Application Runtime Performance
 
-Page performance involves both the actual speed of the application and the speed perceived by the user. The importance of perceived speed is explained
-in [Evaluating User Perceived Performance](./evaluating-performance#evaluating-user-perceived-performance). This section will introduce how Lynx evaluates
-the actual runtime performance.
+While perceived speed (UPP) drives user satisfaction, **Application Runtime Performance (ARP)** determines technical efficiency in resource preparation and rendering.
 
-The actual performance of a page can be evaluated from **load** and **render**. They directly affect the interaction experience between the
-user and the application. Poor performance in either aspect can lead to users abandoning the content or being unable to access it at all.
+ARP evaluation focuses on two phases: **initialize** and **render**. Both phases dictate how quickly users can interact with the application. Poor performance may
+cause users to abandon accessing the page content or even be unable to access the content at all.
 
-### Load
+### Initialize
 
 From the moment a user clicks a link to the display of a new page, an application needs to complete preparatory tasks, including initializing the page container and
 preparing the [TemplateBundle](guide/spec#template-bundle).
 
-The diagram below illustrates the initialization phases before the page display, including initialization times for the [Container](api/lynx-api/performance-api/performance-entry/init-container-entry),
-[LynxView](guide/spec#lynxview①), and [Background Thread Runtime](guide/spec#background-thread-runtime). The [Performance API](api/lynx-api/performance-api)
-provides [`InitContainerEntry`](api/lynx-api/performance-api/performance-entry/init-container-entry), [`InitLynxviewEntry`](api/lynx-api/performance-api/performance-entry/init-lynxview-entry),
+The initialization phase includes three key steps: [Container](guide/spec#container) setup, [LynxView](guide/spec#lynxview①)
+creation, and [Background Thread Runtime](guide/spec#background-thread-runtime) preparation. The [Performance API](api/lynx-api/performance-api) provides
+[`InitContainerEntry`](api/lynx-api/performance-api/performance-entry/init-container-entry), [`InitLynxviewEntry`](api/lynx-api/performance-api/performance-entry/init-lynxview-entry),
 and [`InitBackgroundRuntimeEntry`](api/lynx-api/performance-api/performance-entry/init-background-runtime-entry) to describe these key moments. You can
 combine these performance entries to analyze the entire initialization phase.
 
 ![All Initialization Phase](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/all-init-process.png 'All Initialization Phase')
 
-Although these preparations occur before the page rendering, their performance directly impacts the user experience. Slow initialization speeds can delay rendering,
-causing users to wait longer to see content, subsequently perceiving poor application performance. To minimize loading time, you can leverage caching, preloading,
-and pre-creation to complete these tasks in advance, ensuring immediate response to user interactions and enhancing the user experience.
+Although these preparations occur before the page rendering, their performance directly impacts the user experience. Slow initialization delays rendering, increasing user
+wait time and negatively impacting perceived performance. To minimize loading time as much as possible, you can advance these initialization tasks by using local caching,
+preloading TemplateBundle, and pre-creating LynxView, ensuring immediate response.
 
 ### Render
 
-After loading, the process enters the page rendering stage. This stage most directly affects how quickly users can view the page content. To manage each step precisely,
-Lynx uses the Lynx pipeline to divide the rendering process into several crucial stages. The [Performance API](api/lynx-api/performance-api) provides the
+The rendering phase begins post-load and directly controls content visibility speed. To manage each step precisely, Lynx uses the Lynx pipeline to divide the rendering
+process into several crucial stages. The [Performance API](api/lynx-api/performance-api) provides the
 [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry) interface to record and analyze the specific timing of these stages.
 
 With `PipelineEntry`, you can access detailed timing data during the page rendering process, such as main thread script execution time, style computation time, and layout
@@ -86,13 +77,13 @@ significantly reduce user waiting time and enhance the overall smoothness of an 
 
 ## Building Custom Performance Metrics
 
-There is no single set of performance metrics can describe all situations. Different business goals mean you may need to focus on different performance metrics.
-Usage of the [Performance API](api/lynx-api/performance-api) is not restricted to analyzing page performance using built-in metrics. You can flexibly combine
-key moments of different [`PerformanceEntry`](api/lynx-api/performance-api/performance-entry) to build a set of performance metrics tailored to your application.
+Custom performance metrics align with specific business objectives. Usage of the [Performance API](api/lynx-api/performance-api) is not restricted to analyzing
+page performance using built-in metrics. You can flexibly combine key moments of different [`PerformanceEntry`](api/lynx-api/performance-api/performance-entry) to build a set
+of performance metrics tailored to your application.
 
-For example, if you want to focus on the interval between the end of the first screen rendering and the first significant data update to optimize the speed at which
-users see more and richer information. You can combine [`LoadBundleEntry`](api/lynx-api/performance-api/performance-entry/load-bundle-entry) and [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry)
-to calculate a unique metric `waitingDuration` like the following code. This metric can help you monitor the speed of network requests, file reads, and other
+For example, if you want to focus on the delay between the end of the first-frame rendering and the end of the first significant data updates. You can combine
+[`LoadBundleEntry`](api/lynx-api/performance-api/performance-entry/load-bundle-entry) and [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry)
+to calculate a new performance metric `waitingDuration` like the following code. This metric can help you monitor the speed of network requests, file reads, and other
 behaviors, pinpointing the reasons for deteriorating page performance.
 
 ![waiting duration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/custom-metric-waitingduration.png)

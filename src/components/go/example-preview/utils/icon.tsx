@@ -92,9 +92,12 @@ export function IconCopyLink(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+const iconsBaseUrl =
+  'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/vscode-icons';
+
 export function getFolderIcon(isExpanded: boolean) {
   const name = isExpanded ? DEFAULT_FOLDER_OPENED : DEFAULT_FOLDER;
-  const link = `/vscode-icons/${name}`;
+  const link = `${iconsBaseUrl}/${name}`;
   return (props: any) => (
     <img width="18px" height="18px" {...props} src={link} alt="" />
   );
@@ -103,7 +106,7 @@ export function getFolderIcon(isExpanded: boolean) {
 export function getFileIcon(filename: string) {
   const iconPath = getIconForFile(filename);
   if (iconPath) {
-    const link = `/vscode-icons/${iconPath}`;
+    const link = `${iconsBaseUrl}/${iconPath}`;
     return (props: any) => (
       <img width="18px" height="18px" {...props} src={link} alt="" />
     );

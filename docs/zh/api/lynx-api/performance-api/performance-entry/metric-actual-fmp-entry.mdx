@@ -18,6 +18,8 @@ Actual Fmp 是衡量页面“真实数据”渲染完成所需时间的关键性
 
 该示例展示了如何产生和获取 `MetricActualFmpEntry`。
 
+Lynx 在被标记的元件渲染完成时计算 Actual Fmp。如果已经通过 [LynxView.setExtraTiming](api/lynx-native-api/lynx-view/set-extra-timing) 提供了[容器](guide/spec#container)时间戳，那么收到的 `MetricActualFmpEntry` 里会包含 `actualFmp`、`lynxActualFmp` 和 `totalActualFmp` 三项指标。否则，`MetricFcpEntry` 只包含 `lynxActualFmp`。补充容器时间戳后，其余指标将被重新计算。重新计算完成后，Lynx 将发送一个新的包含所有指标的 `MetricActualFmpEntry`。
+
 import { Go } from '@lynx';
 
 <Go
@@ -50,7 +52,7 @@ name: string;
 ### actualFmp
 
 ```ts
-actualFmp: PerformanceMetric;
+actualFmp?: PerformanceMetric;
 ```
 
 从准备 [TemplateBundle](api/lynx-native-api/template-bundle) 至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](api/lynx-api/performance-api/performance-metric)。
@@ -70,7 +72,7 @@ lynxActualFmp: PerformanceMetric;
 ### totalActualFmp
 
 ```ts
-totalActualFmp: PerformanceMetric;
+totalActualFmp?: PerformanceMetric;
 ```
 
 从用户打开页面至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](api/lynx-api/performance-api/performance-metric)。

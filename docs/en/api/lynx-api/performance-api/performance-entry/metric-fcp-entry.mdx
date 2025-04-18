@@ -14,6 +14,8 @@ Depending on different starting points, Lynx provides three metrics: `fcp`, `lyn
 
 This example demonstrates how to obtain a `MetricFcpEntry`.
 
+Lynx calculates the FCP upon completion of the first frame rendering. If you have provided container-related timestamps using [LynxView.setExtraTiming](api/lynx-native-api/lynx-view/set-extra-timing), the `MetricFcpEntry` includes `fcp`, `lynxFcp`, and `totalFcp`. Otherwise, the `MetricFcpEntry` only contains `lynxFcp`. After supplementing the [container](guide/spec#container) timestamp, the remaining metrics will be recalculated. Once recalculation is complete, Lynx will send a new `MetricFcpEntry` containing all the metrics.
+
 import { Go } from '@lynx';
 
 <Go
@@ -46,7 +48,7 @@ The specific name of the performance event; the value for all instances of this 
 ### fcp
 
 ```ts
-fcp: PerformanceMetric;
+fcp?: PerformanceMetric;
 ```
 
 The time taken from preparing the [TemplateBundle](api/lynx-native-api/template-bundle) to the completion of the first rendering, with a data type of [`PerformanceMetric`](api/lynx-api/performance-api/performance-metric).
@@ -66,7 +68,7 @@ Calculation formula: `lynxFcp = LoadBundleEntry.paintEnd - LoadBundleEntry.loadB
 ### totalFcp
 
 ```ts
-totalFcp: PerformanceMetric;
+totalFcp?: PerformanceMetric;
 ```
 
 The time taken from the user opening the page to the completion of the first rendering, with a data type of [`PerformanceMetric`](api/lynx-api/performance-api/performance-metric).

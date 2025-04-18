@@ -4,7 +4,7 @@
 
 ## CssExtractRspackLoaderOptions.esModule property
 
-The same as [https://github.com/webpack-contrib/mini-css-extract-plugin/tree/master?tab=readme-ov-file\#esModule](https://github.com/webpack-contrib/mini-css-extract-plugin/tree/master?tab=readme-ov-file#esModule)<!-- -->. By default, `@lynx-js/css-extract-webpack-plugin` generates JS modules that use the ES modules syntax. There are some cases in which using ES modules is beneficial, like in the case of module concatenation and tree shaking.
+The same as [https://github.com/webpack-contrib/mini-css-extract-plugin\#esModule](https://github.com/webpack-contrib/mini-css-extract-plugin#esModule)<!-- -->. By default, `@lynx-js/css-extract-webpack-plugin` generates JS modules that use the ES modules syntax. There are some cases in which using ES modules is beneficial, like in the case of module concatenation and tree shaking.
 
 **Signature:**
 

@@ -9,12 +9,12 @@ The options of CSS extract loader.
 **Signature:**
 
 ```typescript
-export interface CssExtractRspackLoaderOptions
+export interface CssExtractRspackLoaderOptions 
 ```
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [esModule?](./rspeedy.cssextractrspackloaderoptions.esmodule.md) |  | boolean \| undefined | _(Optional)_ The same as [https://github.com/webpack-contrib/mini-css-extract-plugin/tree/master?tab=readme-ov-file\#esModule](https://github.com/webpack-contrib/mini-css-extract-plugin/tree/master?tab=readme-ov-file#esModule)<!-- -->. By default, <code>@lynx-js/css-extract-webpack-plugin</code> generates JS modules that use the ES modules syntax. There are some cases in which using ES modules is beneficial, like in the case of module concatenation and tree shaking. |
+|  [esModule?](./rspeedy.cssextractrspackloaderoptions.esmodule.md) |  | boolean \| undefined | _(Optional)_ The same as [https://github.com/webpack-contrib/mini-css-extract-plugin\#esModule](https://github.com/webpack-contrib/mini-css-extract-plugin#esModule)<!-- -->. By default, <code>@lynx-js/css-extract-webpack-plugin</code> generates JS modules that use the ES modules syntax. There are some cases in which using ES modules is beneficial, like in the case of module concatenation and tree shaking. |
 

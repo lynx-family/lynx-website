@@ -9,7 +9,7 @@ The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables t
 **Signature:**
 
 ```typescript
-export interface CssLoaderModules
+export interface CssLoaderModules 
 ```
 
 ## Properties

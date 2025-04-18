@@ -16,11 +16,11 @@ bundle?: string | undefined;
 
 Default values:
 
-- `'[name].lynx.bundle'`
+- `'[name].[platform].bundle'`
 
 The following placeholder is supported:
 
-- `[name]`<!-- -->: the name of the entry. - `[contenthash]`<!-- -->: the contenthash of the bundle.
+- `[name]`<!-- -->: the name of the entry. - `[contenthash]`<!-- -->: the contenthash of the bundle. - `[platform]`<!-- -->: the environment name of the bundle.
 
 ## Example 1
 

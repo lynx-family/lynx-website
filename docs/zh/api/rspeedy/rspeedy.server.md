@@ -9,14 +9,16 @@ The [Server](./rspeedy.server.md) option changes the behavior of dev-server.
 **Signature:**
 
 ```typescript
-export interface Server
+export interface Server 
 ```
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
+|  [base?](./rspeedy.server.base.md) |  | string \| undefined | _(Optional)_ Configure the base path of the server. |
 |  [headers?](./rspeedy.server.headers.md) |  | Record&lt;string, string \| string\[\]&gt; \| undefined | _(Optional)_ Adds headers to all responses. |
 |  [host?](./rspeedy.server.host.md) |  | string \| undefined | _(Optional)_ Specify the host that the Rspeedy Server listens to. |
 |  [port?](./rspeedy.server.port.md) |  | number \| undefined | _(Optional)_ Specify the port that the Rspeedy Server listens to. |
+|  [strictPort?](./rspeedy.server.strictport.md) |  | boolean \| undefined | <p>_(Optional)_ When a port is occupied, Rspeedy will automatically increment the port number until an available port is found.</p><p>Set strictPort to true and Rspeedy will throw an exception when the port is occupied.</p> |
 

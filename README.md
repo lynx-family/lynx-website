@@ -64,3 +64,5 @@ lynx-website uses the following third-party libraries and more. Thanks to all th
 | [Radix UI](https://github.com/radix-ui)                    | Components, icons, colors, and templates for building high-quality, accessible UI. |
 | [Semi UI](https://github.com/DouyinFE/semi-design)         | A modern, comprehensive, flexible design system and React UI library.              |
 | [Tailwind CSS](https://github.com/tailwindcss/tailwindcss) | A utility-first CSS framework.                                                     |
+
+This Lynx-website is powered by [Netlify](https://www.netlify.com/).
