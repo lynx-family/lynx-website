@@ -6,7 +6,7 @@
 
 Any Lynx Element, such as `view`<!-- -->, `text`<!-- -->, `image`<!-- -->, etc.
 
-\[Lynx Spec Reference\](https://lynxjs.org/living-spec/index.html?ts=1743416098203\#element%E2%91%A0)
+[Lynx Spec Reference](https://lynxjs.org/living-spec/index.html?ts=1743416098203#element%E2%91%A0)
 
 **Signature:**
 
@@ -18,11 +18,11 @@ export interface LynxElement extends HTMLElement
 
 ## Properties
 
-| Property                                                     | Modifiers | Type                                             | Description                                                                                                           |
-| ------------------------------------------------------------ | --------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| [cssId?](./test-environment.lynxelement.cssid.md)            |           | string                                           | _(Optional)_ The cssId of the element                                                                                 |
-| [eventMap?](./test-environment.lynxelement.eventmap.md)      |           | { \[key: string\]: any; }                        | _(Optional)_ The map of events bound to the element.                                                                  |
-| [firstChild](./test-environment.lynxelement.firstchild.md)   |           | [LynxElement](./test-environment.lynxelement.md) | <p>Returns the first child.</p><p>\[MDN Reference\](https://developer.mozilla.org/docs/Web/API/Node/firstChild)</p>   |
-| [gesture?](./test-environment.lynxelement.gesture.md)        |           | { \[key: string\]: any; }                        | _(Optional)_ The gestures bound to the element.                                                                       |
-| [nextSibling](./test-environment.lynxelement.nextsibling.md) |           | [LynxElement](./test-environment.lynxelement.md) | <p>Returns the next sibling.</p><p>\[MDN Reference\](https://developer.mozilla.org/docs/Web/API/Node/nextSibling)</p> |
-| [parentNode](./test-environment.lynxelement.parentnode.md)   |           | [LynxElement](./test-environment.lynxelement.md) | <p>Returns the parent.</p><p>\[MDN Reference\](https://developer.mozilla.org/docs/Web/API/Node/parentNode)</p>        |
+| Property                                                     | Modifiers | Type                                             | Description                                                                                                         |
+| ------------------------------------------------------------ | --------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| [cssId?](./test-environment.lynxelement.cssid.md)            |           | string                                           | _(Optional)_ The cssId of the element                                                                               |
+| [eventMap?](./test-environment.lynxelement.eventmap.md)      |           | { \[key: string\]: any; }                        | _(Optional)_ The map of events bound to the element.                                                                |
+| [firstChild](./test-environment.lynxelement.firstchild.md)   |           | [LynxElement](./test-environment.lynxelement.md) | <p>Returns the first child.</p><p>[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/firstChild)</p>   |
+| [gesture?](./test-environment.lynxelement.gesture.md)        |           | { \[key: string\]: any; }                        | _(Optional)_ The gestures bound to the element.                                                                     |
+| [nextSibling](./test-environment.lynxelement.nextsibling.md) |           | [LynxElement](./test-environment.lynxelement.md) | <p>Returns the next sibling.</p><p>[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/nextSibling)</p> |
+| [parentNode](./test-environment.lynxelement.parentnode.md)   |           | [LynxElement](./test-environment.lynxelement.md) | <p>Returns the parent.</p><p>[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/parentNode)</p>        |

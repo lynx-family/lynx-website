@@ -6,7 +6,7 @@
 
 Returns the parent.
 
-\[MDN Reference\](https://developer.mozilla.org/docs/Web/API/Node/parentNode)
+[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/parentNode)
 
 **Signature:**
 

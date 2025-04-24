@@ -20,10 +20,10 @@ A pure-JavaScript implementation of the [Lynx Spec](https://lynxjs.org/guide/spe
 
 ## Interfaces
 
-| Interface                                              | Description                                                                                                                                                                                                 |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [LynxElement](./test-environment.lynxelement.md)       | <p>Any Lynx Element, such as <code>view</code>, <code>text</code>, <code>image</code>, etc.</p><p>\[Lynx Spec Reference\](https://lynxjs.org/living-spec/index.html?ts=1743416098203\#element%E2%91%A0)</p> |
-| [LynxGlobalThis](./test-environment.lynxglobalthis.md) | The <code>globalThis</code> object of Lynx dual thread environment.                                                                                                                                         |
+| Interface                                              | Description                                                                                                                                                                                              |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [LynxElement](./test-environment.lynxelement.md)       | <p>Any Lynx Element, such as <code>view</code>, <code>text</code>, <code>image</code>, etc.</p><p>[Lynx Spec Reference](https://lynxjs.org/living-spec/index.html?ts=1743416098203#element%E2%91%A0)</p> |
+| [LynxGlobalThis](./test-environment.lynxglobalthis.md) | The <code>globalThis</code> object of Lynx dual thread environment.                                                                                                                                      |
 
 ## Type Aliases
 

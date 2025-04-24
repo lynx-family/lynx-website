@@ -6,7 +6,7 @@
 
 Returns the next sibling.
 
-\[MDN Reference\](https://developer.mozilla.org/docs/Web/API/Node/nextSibling)
+[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/nextSibling)
 
 **Signature:**
 
