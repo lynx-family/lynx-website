@@ -26,7 +26,7 @@ export default function EditThis({ path }: Props) {
   const sourcePath = `${process.env.DOC_GIT_BASE_URL}/${basePath}`;
 
   return (
-    <div className="flex space-x-2">
+    <div className="sh-flex sh-space-x-2">
       {process.env.DOC_GIT_BASE_URL && (
         <Button variant="outline" size="sm">
           <a href={sourcePath}>{t('edit.source')}</a>

@@ -211,7 +211,7 @@ Main thread functions cannot modify captured variables. Therefore, if you need t
 For example, changing the background color of a node based on the number of clicks:
 
 ```jsx
-import {useMainThreadRef} from '@lynx-js/react';
+import { useMainThreadRef } from '@lynx-js/react';
 
 function App() {
   const countRef = useMainThreadRef(0);
@@ -233,19 +233,21 @@ function App() {
 
 Use [`runOnMainThread()`] in the background thread to asynchronously execute a main thread function on the main thread:
 
-```tsx
-import { useMainThreadRef, runOnMainThread } from '@lynx-js/react';
+```jsx
+import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
 
 function App() {
   const countRef = useMainThreadRef(0);
 
-  const addCount = (value: number) => {
+  const addCount = (value) => {
     'main thread';
     countRef.current += value;
+    return countRef.current;
   };
 
-  const doSomething = () => {
-    runOnMainThread(addCount)(1);
+  const increaseMainThreadCount = async () => {
+    const result = await runOnMainThread(addCount)(1);
+    console.log(result);
   };
 }
 ```
@@ -254,17 +256,22 @@ function App() {
 
 Use [`runOnBackground()`] on the main thread to asynchronously execute a regular function on the background thread:
 
-```tsx
-import { useState, runOnBackground } from '@lynx-js/react';
+```jsx
+import { runOnBackground, useState } from '@lynx-js/react';
 
 function App() {
   const [count, setCount] = useState(1);
 
-  const onTapMainThread = (event: MainThread.ITouchEvent) => {
+  const increaseBackgroundCount = async (event) => {
     'main thread';
-    runOnBackground(() => {
-      setCount((count) => count + 1);
+    const result = await runOnBackground(() => {
+      let count;
+      setCount((c) => {
+        return (count = c + 1);
+      });
+      return count;
     })();
+    console.log(result);
   };
 }
 ```

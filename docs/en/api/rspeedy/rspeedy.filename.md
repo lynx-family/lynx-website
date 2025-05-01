@@ -9,7 +9,7 @@ The [Filename](./rspeedy.filename.md) determines the name of the JavaScript bund
 **Signature:**
 
 ```typescript
-export interface Filename
+export interface Filename 
 ```
 
 ## Remarks

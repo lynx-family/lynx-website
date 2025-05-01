@@ -9,7 +9,7 @@ The [TransformImport](./rspeedy.transformimport.md) option transforms the import
 **Signature:**
 
 ```typescript
-export interface TransformImport
+export interface TransformImport 
 ```
 
 ## Properties

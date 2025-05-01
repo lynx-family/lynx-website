@@ -17,5 +17,5 @@ export interface CssExtract
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [loaderOptions?](./rspeedy.cssextract.loaderoptions.md) |  | [CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md) \| undefined | _(Optional)_ The options of CSS extract loader. |
-|  [pluginOptions?](./rspeedy.cssextract.pluginoptions.md) |  | [CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) \| undefined | _(Optional)_ The options for  |
+|  [pluginOptions?](./rspeedy.cssextract.pluginoptions.md) |  | [CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) \| undefined | _(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
 

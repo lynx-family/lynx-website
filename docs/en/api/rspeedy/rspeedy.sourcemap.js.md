@@ -9,7 +9,7 @@ How the source map should be generated. Setting it to `false` will disable the s
 **Signature:**
 
 ```typescript
-js?: Rspack.DevTool | undefined;
+js?: Rspack.DevTool | undefined | `${Exclude<Rspack.DevTool, false | 'eval'>}-debugids`;
 ```
 
 ## Remarks

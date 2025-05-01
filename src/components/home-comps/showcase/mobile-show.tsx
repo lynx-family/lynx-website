@@ -1,16 +1,22 @@
 import case0src from '@assets/home/home-s-case-0.webp';
 import case1src from '@assets/home/home-s-case-1.webp';
-import case0video from '@assets/killers/ifr.mp4';
-import case1video from '@assets/killers/mts.mp4';
 import cls from 'classnames';
 import styles from './index.module.less';
 
 type CaseKey = 'case-0' | 'case-1';
 
 export const MobileShow = ({ preview }: { preview: CaseKey }) => {
-  const caseList = {
-    'case-0': { image: case0src, video: case0video },
-    'case-1': { image: case1src, video: case1video },
+   const caseList = {
+    'case-0': {
+      image: case0src,
+      video:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
+    },
+    'case-1': {
+      image: case1src,
+      video:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+    },
   };
 
   return (

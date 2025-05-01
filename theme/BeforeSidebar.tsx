@@ -12,10 +12,10 @@ import {
   SUBSITES_CONFIG,
   createSharedRouteSidebar,
   getLangPrefix,
-} from '../shared-route-config';
+} from '@site/shared-route-config';
 import './index.scss';
 
-import type { SubsiteConfig } from '../shared-route-config';
+import type { SubsiteConfig } from '@site/shared-route-config';
 
 import { SubsiteView } from './subsite-ui';
 

@@ -9,7 +9,7 @@ The options for [pluginQRCode()](./qrcode-rsbuild-plugin.pluginqrcode.md)<!-- --
 **Signature:**
 
 ```typescript
-export interface PluginQRCodeOptions
+export interface PluginQRCodeOptions 
 ```
 
 ## Properties

@@ -1,16 +1,17 @@
-import type { SubsiteConfig } from '../shared-route-config';
+import type { SubsiteConfig } from '@site/shared-route-config';
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
   return (
     <>
       <img
         src={subsite.logo.light}
-        className="sh-w-full sh-h-full sh-object-contain dark:hidden"
+        // "dark:rp-hidden" is in the @rspress/theme-default CSS
+        className="sh-w-full sh-h-full sh-object-contain dark:rp-hidden"
         alt={`${subsite.label} logo`}
       />
       <img
         src={subsite.logo.dark}
-        className="hidden sh-w-full sh-h-full sh-object-contain dark:block"
+        className="sh-hidden sh-w-full sh-h-full sh-object-contain dark:rp-block"
         alt={`${subsite.label} logo`}
       />
     </>

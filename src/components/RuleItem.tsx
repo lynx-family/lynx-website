@@ -16,7 +16,7 @@ export function RuleSymbolDesc() {
   return (
     <div className="rule-symbol-desc">
       <div className="rule-types item">
-        <div className="inline-flex">
+        <div className="sh-inline-flex">
           <img
             src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/eslint.png"
             className="w-6 h-6 mr-2 rule-type"

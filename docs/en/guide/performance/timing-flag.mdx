@@ -7,7 +7,7 @@ When a marked Lynx Pipeline execution is completed and the screen display is ref
 ## Usage Rules
 
 - The `__lynx_timing_flag` attribute must be a non-empty string; empty values or invalid types will not trigger the `PerformanceObserver` callback.
-- When the value of the `__lynx_timing_flag` attribute is `__lynx_timing_actual_fmp`, an additional [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry) metric will be generated.
+- When the value of the `__lynx_timing_flag` attribute is `__lynx_timing_actual_fmp`, an additional [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry) performance event will be generated.
 
 ## Usage Example
 
@@ -24,6 +24,73 @@ import { Go } from '@lynx';
   entry="src/pipeline_entry"
   highlight="{11-21,31}"
 />
+
+## Important Notes
+
+### 1. Multiple Components with Same Timing Flag
+```ts
+export default function App() {
+  const [showImage, setShowImage] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setShowImage(true);
+    }, 3000);
+  }, []);
+
+  return (
+    <view className="container">
+      <text __lynx_timing_flag="__lynx_timing_actual_fmp">Hello World</text>
+      {showImage && <image __lynx_timing_flag="__lynx_timing_actual_fmp" src="xxxx.png" />}
+    </view>
+  );
+}
+```
+In this case, only the Lynx Pipeline data of the first displayed component will be counted:
+
+1. Calculate the `ActualFMP` metric and send a [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+
+2. Send a [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry).
+
+If you want to track the timing of both components completing rendering, using different __lynx_timing_flag values.
+
+### 2. Re-rendering Same Component
+
+```ts
+export default function App() {
+  return (
+    <view className="container">
+      {data.needShow && 
+        <text __lynx_timing_flag="__lynx_timing_actual_fmp">
+          {data.msg}
+        </text>
+      }
+    </view>
+  );
+}
+```
+
+In this case, only the Lynx Pipeline data of the first displayed instance of the component will be counted:
+
+1. Calculate the `ActualFMP` metric and send a [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+
+2. Send a [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry).
+
+If you want to perceive the rendering performance of the component with each data update, you can use data-driven flags as follows:
+
+```ts
+let isFirst = true;
+export default function App(this: any) {
+  return (
+    <view className="container">
+      {
+         // needShow: true -> false -> true
+         data.needShow ? <text __lynx_timing_flag={"__lynx_timing_actual_fmp" + (isFirst ? "" : +data.id)}>{data.msg}</text> : null
+      }
+    </view>
+  );
+}
+```
 
 ## Compatibility
 

@@ -1,5 +1,6 @@
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { getCustomMDXComponent } from '@theme';
-import { FC, useEffect, useRef, useState } from 'react';
+
 import { getHighlightLines } from '../utils/example-data';
 
 interface CodeProps {

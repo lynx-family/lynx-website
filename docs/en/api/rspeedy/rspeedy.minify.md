@@ -9,7 +9,7 @@ The [Minify](./rspeedy.minify.md) configures whether to enable code minification
 **Signature:**
 
 ```typescript
-export interface Minify
+export interface Minify 
 ```
 
 ## Properties
@@ -17,7 +17,6 @@ export interface Minify
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [css?](./rspeedy.minify.css.md) |  | boolean \| undefined | _(Optional)_ Whether enable the CSS minification. |
-|  [cssOptions?](./rspeedy.minify.cssoptions.md) |  | Rspack.LightningCssMinimizerRspackPluginOptions \| undefined | _(Optional)_ [Minify.cssOptions](./rspeedy.minify.cssoptions.md) is used to configure CSS minimizer options. |
 |  [js?](./rspeedy.minify.js.md) |  | boolean \| undefined | _(Optional)_ Whether enable the JavaScript minification. |
 |  [jsOptions?](./rspeedy.minify.jsoptions.md) |  | Rspack.SwcJsMinimizerRspackPluginOptions \| undefined | _(Optional)_ [Minify.jsOptions](./rspeedy.minify.jsoptions.md) is used to configure SWC minification options. |
 
