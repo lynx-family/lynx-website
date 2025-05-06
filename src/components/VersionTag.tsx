@@ -65,3 +65,7 @@ export const Version216 = () => <VersionTag>2.16</VersionTag>;
 export const Version217 = () => <VersionTag>2.17</VersionTag>;
 /** @deprecated */
 export const Version218 = () => <VersionTag>2.18</VersionTag>;
+/** @deprecated */
+export const Version31 = () => <VersionTag>3.1</VersionTag>;
+/** @deprecated */
+export const Version32 = () => <VersionTag>3.2</VersionTag>;
