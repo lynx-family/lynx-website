@@ -115,6 +115,122 @@ When `direction` is set to `lynx-rtl`, `text-align:left` will be converted to `t
   entry="src/text_style"
 />
 
+### Text Selection
+
+The `<text>` element supports text selection and copying. You can enable this feature by setting the `text-selection` attribute on the `<text>` element, and make sure to set `flatten={false}` as well:
+
+```tsx
+<text text-selection={true} flatten={false}>
+  hello world
+</text>
+```
+
+Long-pressing the text will highlight the selected area and trigger the default context menu, which includes options like "Select All" and "Copy".
+
+::: note
+Text selection is currently not supported for RTL (Right-to-Left) mode.
+:::
+
+If you want to implement a **custom context menu**, you need to set the `custom-context-menu` attribute and use the `bindselectionchange` event along with the `getTextBoundingRect` method to determine the position for rendering your custom menu.
+
+<Go
+  example="text"
+  defaultFile="src/text_selection/index.tsx"
+  entry="src/text_selection"
+/>
+
+For more advanced scenarios, such as supporting **cross-node selection** across multiple `<text>` elements, you need to implement custom selection logic.
+
+Step-by-Step: Implementing Cross-Text Selection
+
+Step 1: Enable Custom Text Selection Mode
+
+Set the `custom-text-selection` attribute on each `<text>` element. This disables the built-in selection and gesture handling, allowing you to define your own.
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{271}"
+/>
+
+Step 2: Bind Gesture Events on the Wrapper `<view>`
+
+Bind long-press, tap, and touch events on the outer `<view>` container. These will be used to control your custom selection and gesture logic.
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{257-266}"
+/>
+
+Step 3: Handle Selection and Copying Logic
+
+On component mount, retrieve metadata for all selectable `<text>` nodes, including their ID, dimensions, and positions:
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{26,33-39,89-130}"
+/>
+
+On Long Press: Start Selection
+
+`handleLongPress()` is triggered on long press. It initiates the selection state, records the starting point, and performs the first selection update:
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{42-47}"
+/>
+
+On Drag: Update Selection Area in Real Time
+
+As the user drags, `handleTouchMove()` is called. If a selection is in progress, it updates the highlighted area accordingly:
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{66-70}"
+/>
+
+On Finger Release: Finalize Selection
+
+`handleTouchEnd()` is triggered on finger release. This finalizes the selected region and exits selection mode:
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{73-78}"
+/>
+
+On Tap Blank Area: Clear Selection
+
+Tapping outside the text elements triggers a selection clear:
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{81-86}"
+/>
+
+On Handle Drag: Adjust Selection Range
+
+In `handleTouchStart()`, determine if the touch point is near one of the draggable handles. If so, allow real-time adjustment of the selection:
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{50-63}"
+/>
+
 ## Attributes
 
 Attribute names and values are used to describe the behavior and appearance of components.
@@ -173,40 +289,189 @@ Frontend can bind corresponding event callbacks to components to listen to runti
 ### `bindlayout`
 
 ```ts
-bindlayout = (e: LineInfo) => {};
+bindlayout = (e: layoutEvent) => {};
 
-class LineInfo {
+interface LineInfo {
   /**
-   * Start offset of the line relative to the entire text.
+   * The starting character offset of this line relative to the entire text
    */
   start: number;
   /**
-   * End offset of the line relative to the entire text.
+   * The ending character offset of this line relative to the entire text
    */
   end: number;
   /**
-   * Number of characters truncated in the line. If not zero, it means the entire text was truncated on this line.
+   * The number of characters truncated in this line. A non-zero value indicates truncation occurred on this line.
    */
   ellipsisCount: number;
-};
+}
 
-{
-  /**
-   * Number of visible text lines after layout.
-   */
-  lineCount: number;
-  /**
-   * Detailed information of each line after layout.
-   */
-  lines: LineInfo[];
-  /**
-   * Dimensions of the text component.
-   */
-  size: {width: number, height: number};
+interface layoutEvent extends CustomEvent {
+  detail: {
+    /**
+     * Number of visible text lines after layout.
+     */
+    lineCount: number;
+    /**
+     * Detailed information of each line after layout.
+     */
+    lines: LineInfo[];
+    /**
+     * Dimensions of the text component.
+     */
+    size: { width: number; height: number };
+  };
 }
 ```
 
 The layout event returns the result information after text layout, including the number of lines of the current text, and the start and end positions of the text in each line relative to the entire text.
+
+### `bindselectionchange`
+
+```ts
+bindselectionchange = (e: selectionChangeEvent) => {};
+
+interface selectionChangeEvent extends CustomEvent {
+  detail: {
+    /**
+     * The start index of the selected text. Value is -1 when no text is selected.
+     */
+    start;
+    /**
+     * The end index of the selected text. Value is -1 when no text is selected.
+     */
+    end;
+    /**
+     * Selection direction: `forward` or `backward`
+     */
+    direction;
+  };
+}
+```
+
+This event is triggered whenever the selected text range changes.
+
+## Methods
+
+You can invoke component methods from the frontend using the [SelectorQuery](api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+
+### `setTextSelection`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "setTextSelection",
+    params: {
+      startX,  // X-coordinate of the selection start relative to the component
+      startY,  // Y-coordinate of the selection start
+      endX,    // X-coordinate of the selection end
+      endY,    // Y-coordinate of the selection end
+      showStartHandle, // Whether to show the start selection handle
+      showEndHandle,   // Whether to show the end selection handle
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+This method sets the selected text based on start and end positions and controls the visibility of selection handles. The response `res` contains:
+
+```ts
+interface Rect {
+  left: number;    // Left boundary
+  right: number;   // Right boundary
+  top: number;     // Top boundary
+  bottom: number;  // Bottom boundary
+  width: number;   // Width
+  height: number;  // Height
+}
+
+interface Handle {
+  x: number;       // Center X of handle
+  y: number;       // Center Y of handle
+  radius: number;  // Touch radius of the handle
+}
+
+{
+  /**
+   * Bounding box of the selected text
+   */
+  boundingRect: Rect;
+  /**
+   * Bounding boxes for each line within the selection
+   */
+  boxes: Rect[];
+  /**
+   * Position and touch radius for each handle
+   */
+  handles: Handle[];
+}
+```
+
+### `getTextBoundingRect`
+
+```ts
+<text id="test"></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getTextBoundingRect",
+    params: {
+      start,
+      end,
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+This method retrieves the bounding box of a specific range of text. The response `res` includes:
+
+```ts
+{
+  /**
+   * Bounding box of the selected text
+   */
+  boundingRect: Rect;
+  /**
+   * Bounding boxes for each line in the selected range
+   */
+  boxes: Rect[];
+}
+```
+
+### `getSelectedText`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getSelectedText",
+    params: {},
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+This method retrieves the string content of the currently selected text.
 
 ## Loading Custom Fonts
 

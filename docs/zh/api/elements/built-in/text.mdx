@@ -117,6 +117,118 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
   entry="src/text_style"
 />
 
+### 选择复制
+
+`<text>` 元件支持文本选择复制能力。可以通过在 `<text>` 元件上设置 `text-selection` 属性开启此能力，同时需要设置 `flatten={false}`。
+
+```tsx
+<text text-selection={true} flatten={false}>
+  hello world
+</text>
+```
+
+长按文字即可高亮选中文本，同时弹出默认的上下文菜单，包含全选和复制按钮。
+
+:::note
+选择复制目前不支持 RTL
+:::
+
+如果开发者需要自定义的上下文菜单，需要设置 `custom-context-menu` 属性，并且通过 `bindselectionchange` 事件和 `getTextBoundingRect` 方法来确定自定义上下文菜单的显示位置。
+
+<Go
+  example="text"
+  defaultFile="src/text_selection/index.tsx"
+  entry="src/text_selection"
+/>
+
+进一步的，如果你的需求是支持跨多个 `<text>` 元件进行选中并复制内容，需开发者自定义文本选择逻辑：
+
+步骤一：开启自定义文本选择模式
+
+需要在 `<text>` 元件上设置 `custom-text-selection` 属性，开启之后元件不再处理选择复制相关手势逻辑。
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{271}"
+/>
+
+步骤二：在外层 `<view>` 上绑定手势事件
+
+在外层 `<view>` 上绑定长按、点击和触摸事件，用于控制选择复制相关手势逻辑。
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{257-266}"
+/>
+
+步骤三：处理选择复制交互逻辑
+
+组件挂载时获取所有可选中的文本节点信息，包含节点的 id 和宽高位置等信息
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{26,33-39,89-130}"
+/>
+
+用户长按：开始选区
+
+长按后触发 `handleLongPress()` 进入文本选中状态，记录文本选中的开始位置，并且进行第一次选区更新。
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{42-47}"
+/>
+
+拖动手势：实时更新选中区域
+
+拖动中触发 `handleTouchMove()`，如果处于选中状态则更新选中区域
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{66-70}"
+/>
+
+抬起手指：结束选区
+
+手指抬起触发 `handleTouchEnd()`，确定最终的选择区域，并且清除选中状态
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{73-78}"
+/>
+
+单击空白：清除选区
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{81-86}"
+/>
+
+拖拽浮标：调整选区
+
+在 `handleTouchStart()` 中判断浮标中心和触摸位置是否在可拖拽的范围内，如果在则开始更新选中区域
+
+<Go
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{50-63}"
+/>
+
 ## 属性
 
 属性名和属性值用于描述元件的行为和外观
@@ -176,6 +288,28 @@ text-selection?: boolean;
 
 设置是否开启文本选择功能，开启时需要同时设置 `flatten={false}`
 
+#### `custom-context-menu`
+
+```tsx
+
+// DefaultValue: false
+custom-context-menu?: boolean;
+
+```
+
+设置选择复制之后是否开启自定义弹出的上下文菜单
+
+#### `custom-text-selection`
+
+```tsx
+
+// DefaultValue: false
+custom-text-selection?: boolean;
+
+```
+
+设置是否开启自定义文本选择功能，开启时元件不再处理选择复制相关手势逻辑，需要开发者通过 `setTextSelection` 等 API 控制
+
 ## 事件
 
 前端可以在元件上绑定相应事件回调来监听元件的运行时行为。支持所有[基础事件](/api/elements/built-in/view.mdx#事件)。
@@ -183,9 +317,9 @@ text-selection?: boolean;
 ### `bindlayout`
 
 ```ts
-bindlayout = (e: LineInfo) => {};
+bindlayout = (e: layoutEvent) => {};
 
-class LineInfo {
+interface LineInfo {
   /**
    * 该行相对整段文本的起始偏移量
    */
@@ -198,25 +332,174 @@ class LineInfo {
    * 行内文本被截断的字符数量. 如果不为0,说明整段文本在这一行发生了截断.
    */
   ellipsisCount: number;
-};
+}
 
-{
-  /**
-   * 文本布局之后,可以显示的文本行数
-   */
-  lineCount: number;
-  /**
-   * 详细的布局行内信息
-   */
-  lines: LineInfo[];
-  /**
-   * text 元件宽高
-   */
-  size: {width: number, height: number};
+interface layoutEvent extends CustomEvent {
+  detail: {
+    /**
+     * 文本布局之后,可以显示的文本行数
+     */
+    lineCount: number;
+    /**
+     * 详细的布局行内信息
+     */
+    lines: LineInfo[];
+    /**
+     * text 元件宽高
+     */
+    size: { width: number; height: number };
+  };
 }
 ```
 
 layout 事件会返回文本布局后的结果信息，其中包含当前文本的行数，以及每行的文字在整段文本中的起始和结束位置。
+
+### `bindselectionchange`
+
+```ts
+bindselectionchange = (e: selectionChangeEvent) => {};
+
+interface selectionChangeEvent extends CustomEvent {
+  detail: {
+    /**
+     * 选中文本字符串的开始索引，非选择状态时为 -1
+     */
+    start;
+    /**
+     * 选中文本字符串的结束索引，非选择状态时为 -1
+     */
+    end;
+    /**
+     * 选择的方向，forward | backward
+     */
+    direction;
+  };
+}
+```
+
+文本选中范围变化时触发该事件。
+
+## 方法
+
+前端可以通过 [SelectorQuery](api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行组件的方法。
+
+### `setTextSelection`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "setTextSelection",
+    params: {
+      startX,  //相对元件的选中文本开始坐标x
+      startY,  //相对元件的选中文本开始坐标y
+      endX,  //相对元件的选中文本结束坐标x
+      endY,  //相对元件的选中文本结束坐标y
+      showStartHandle, //是否显示开始位置的浮标
+      showEndHandle,  //是否显示结束位置的浮标
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+通过开始和结束位置设置文本选中内容，并且可以控制开始和结束浮标是否显示，回调参数 `res` 的格式如下：
+
+```ts
+interface Rect {
+  left: number  //左边界
+  right: number  //右边界
+  top: number  //上边界
+  bottom: number  //下边界
+  width: number  //宽度
+  height: number  //高度
+}
+
+interface Handle {
+  x: number  //浮标中心x坐标
+  y: number  //浮标中心y坐标
+  radius: number //浮标默认响应触摸的半径
+}
+
+{
+  /**
+  * 选择文本的包围盒
+  */
+  boundingRect: Rect
+  /**
+  * 选择文本的行包围盒
+  */
+  boxes: Rect[]
+  /**
+  * 浮标位置和默认响应半径
+  */
+  handles: Handle[]
+}
+```
+
+### `getTextBoundingRect`
+
+```ts
+<text id="test"></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getTextBoundingRect",
+    params: {
+      start,
+      end,
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+获取指定范围文本的包围盒，，回调参数 `res` 的格式如下：
+
+```ts
+{
+  /**
+  * 选择文本的包围盒
+  */
+  boundingRect: Rect
+  /**
+  * 选择文本的行包围盒
+  */
+  boxes: Rect[]
+}
+```
+
+### `getSelectedText`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getSelectedText",
+    params: {},
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+获取选中文本的字符串
 
 ## 加载自定义字体
 
