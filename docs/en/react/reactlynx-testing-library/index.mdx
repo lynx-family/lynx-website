@@ -1,18 +1,18 @@
 # ReactLynx Testing Library
 
-ReactLynx Testing Library is inspired by [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and is suitable for unit testing of ReactLynx components. It shields the implementation details of Lynx dual threads, and abstracts the rendering process of ReactLynx into `render`, `fireEvent`, `screen` and other APIs same to React Testing Library. Similar to React Testing Library, users can also assert on the elements in the page, such as using `data-testid` to quickly find elements, and using `toBeInTheDocument` in `@testing-library/jest-dom` to determine whether an element is in the page.
+The [`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) package provides the same set of APIs (e.g. [`render`](../../api/reactlynx-testing-library/Function.render.mdx), [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx) and [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx), etc.) for testing the rendering result of ReactLynx, just like the popular [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), with the underlying dual-threaded architecture abstracted away by the [@lynx-js/testing-environment](../../api/lynx-testing-environment/index.mdx).
 
 ## Setup
 
 ### From create-rspeedy
 
-If you create a new project using `create-rspeedy`, you can choose whether to use ReactLynx Testing Library (default checked) when creating the project. The created project is already configured with ReactLynx Testing Library.
+If you create a new project using [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy), you can choose whether to use ReactLynx Testing Library (default checked) when creating the project. The created project is already configured with ReactLynx Testing Library.
 
 ### Adding to an existing project
 
 ReactLynx Testing Library is integrated in the `testing-library` subdirectory of the `@lynx-js/react` package and can be used directly.
 
-To use ReactLynx Testing Library, you need to configure Vitest. You can use `@lynx-js/react/testing-library/vitest-config` to create a Vitest configuration. This method will automatically configure [Lynx Testing Environment](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/testing-environment), which is responsible for providing pure-JavaScript implementation of the Lynx Spec. You can use the `mergeConfig` method to merge it with other configurations.
+To configure [Vitest](https://vitest.dev/), you can use `@lynx-js/react/testing-library/vitest-config` to create a Vitest configuration. You can use the `mergeConfig` method to merge it with other configurations.
 
 ```js title=vitest.config.js
 import { defineConfig, mergeConfig } from 'vitest/config';
@@ -32,7 +32,7 @@ export default mergeConfig(defaultConfig, config);
 
 ### Quick Start
 
-Same as in React Testing Library, it is recommended to divide test cases into three parts: Arrange, Act, and Assert. The Arrange part is used to prepare test data, the Act part is used to perform test operations, and the Assert part is used to assert test results. Here is a simple example:
+Same as in React Testing Library, it is recommended to divide test cases into three parts: [Arrange](https://testing-library.com/docs/react-testing-library/example-intro#arrange), [Act](https://testing-library.com/docs/react-testing-library/example-intro#act), and [Assert](https://testing-library.com/docs/react-testing-library/example-intro#assert). The Arrange part is used to prepare test data, the Act part is used to perform test operations, and the Assert part is used to assert test results. Here is a simple example:
 
 ```tsx
 import '@testing-library/jest-dom';
@@ -63,11 +63,11 @@ it('basic', async function () {
 });
 ```
 
-In this example, you may have noticed that we used the `toHaveTextContent` method from third-party library `@testing-library/jest-dom` to assert the text content of an element. This is because we use JSDOM to implement [Element PAPI](https://lynxjs.org/api/engine/element-api) at the bottom layer, so you can directly use the methods in `@testing-library/jest-dom` to assert whether the page element exists.
+In this example, you may have noticed that we used the `toHaveTextContent` method from third-party library [`@testing-library/jest-dom`](https://www.npmjs.com/package/@testing-library/jest-dom) to assert the text content of an element. In React Testing Library, you can use `@testing-library/jest-dom` because the test framework uses [JSDOM](https://github.com/jsdom/jsdom) to create DOM elements; in ReactLynx Testing Library, we also use JSDOM to implement the behavior of [Element PAPI](https://lynxjs.org/api/engine/element-api), so it is compatible with DOM API.
 
 ### Basic rendering
 
-The `render` method is used to render a ReactLynx component and returns an object containing methods such as `container`, `rerender`, `unmount`, and `getByTestId`. The `container` is a LynxElement containing the rendering result, `rerender` is used to re-render the page, `unmount` is used to unmount the component, and `getByTestId` is used to get elements by the `data-testid` attribute.
+The [`render`](../../api/reactlynx-testing-library/Function.render.mdx) method is used to render a ReactLynx component and returns a [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) object. The `container` is a `LynxElement` containing the rendering result, `rerender` is used to re-render the page, `unmount` is used to unmount the component, and `getByTestId` is used to get elements by the `data-testid` attribute.
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -97,14 +97,16 @@ it('basic render', () => {
 
 When firing an event, you need to explicitly specify the type of event. For example, `new Event('catchEvent:tap')` (`eventType:eventName`) means triggering a `tap` event of type `catch`. Please refer to [Event Handler Properties](guide/interaction/event-handling/event-propagation.html#event-handler-property). The possible values of `eventType` are:
 
-- `bindEvent`: trigger an event of type `bind`. For example, an event bound to `bindtap` should be triggered using `new Event('bindEvent:tap')`.
-- `catchEvent`: trigger an event of type `catch`. For example, an event bound to `catchtap` should be triggered using `new Event('catchEvent:tap')`.
-- `capture-bind`: trigger an event of type `capture-bind`. For example, an event bound to `capture-bindtap` should be triggered using `new Event('capture-bind:tap')`.
-- `capture-catch`: trigger an event of the `capture-catch` type. For example, an event bound to `capture-catchtap` should be triggered using `new Event('capture-catch:tap')`.
+| Event Type      | `eventType`     | Event Binding Example | Event Triggering Example         |
+| --------------- | --------------- | --------------------- | -------------------------------- |
+| `bind`          | `bindEvent`     | `bindtap`             | `new Event('bindEvent:tap')`     |
+| `catch`         | `catchEvent`    | `catchtap`            | `new Event('catchEvent:tap')`    |
+| `capture-bind`  | `capture-bind`  | `capture-bindtap`     | `new Event('capture-bind:tap')`  |
+| `capture-catch` | `capture-catch` | `capture-catchtap`    | `new Event('capture-catch:tap')` |
 
 You can directly construct an `Event` object yourself, or you can directly pass in the event type and initialization parameters to let the Testing Library automatically construct an `Event` object.
 
-In the `render` process, the event handler will be mounted to the `eventMap` property of the Element, so you can use the `eventMap` property to get the event handler of the element for assertion.
+In the `render` process, the event handler will be mounted to the `eventMap` property of the `Element`, so you can use the `eventMap` property to get the event handler of the element for assertion.
 
 ```jsx
 import { render, fireEvent } from '@lynx-js/react/testing-library';
@@ -173,7 +175,7 @@ it('fireEvent', async () => {
 
 ### Ref
 
-ReactLynx supports `ref` just like React. You can use `ref` to get the corresponding [`NodesRef`](zh/api/lynx-api/nodes-ref.html) object of the element, or you can get the instance of the class component. In ReactLynx Testing Library, you can use snapshot testing on the rendering result and the corresponding `ref` object of the element to determine whether it is set correctly.
+In ReactLynx Testing Library, you can use snapshot testing on the rendering result and the corresponding `ref` object of the element to determine whether it is set correctly.
 
 ```jsx
 import { test, expect } from 'vitest';
@@ -252,13 +254,13 @@ it('component ref', async () => {
 
 ### Querying page elements
 
-Like React Testing Library, ReactLynx Testing Library also provides a `screen` object to query page elements. The `screen` object is a global object that can be used directly. It provides some common methods, such as `getByText`, `getByTestId`, etc. There are also methods like `waitForElementToBeRemoved` to wait for the state of page elements, and these APIs are the same as those in React Testing Library.
+You can use [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) to query page elements, it provides some common methods, such as `getByText`, `getByTestId`, etc. There are also methods like [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) to wait for the state of page elements.
 
 ```jsx
 import '@testing-library/jest-dom';
 import { Component } from '@lynx-js/react';
 import { expect } from 'vitest';
-// waitForElementToBeRemoved is a method in @testing-library/dom that waits for an element to be removed
+// waitForElementToBeRemoved is a method in @testing-library/dom that waits for an element to be removed, which is re-exported here
 import {
   render,
   screen,
@@ -352,6 +354,12 @@ In this example, we use the `waitForElementToBeRemoved` method to wait for the _
 
 The `render` method returns an object that contains the `rerender` method, which can be used to re-render the page. The `rerender` method will render the new component on the page and return a new object. You can use the `rerender` method to test different states of the component.
 
+:::warning
+
+Unlike React Testing Library, a new `container` needs to be retrieved after `rerender`. Because ReactLynx creates a new `page` element each time it loads.
+
+:::
+
 ```jsx
 import '@testing-library/jest-dom';
 import { render } from '@lynx-js/react/testing-library';
@@ -370,8 +378,6 @@ it('rerender will re-render your component', async () => {
   expect(container.firstChild).toHaveTextContent('hi');
 
   {
-    // Unlike React Testing Library, container needs to be retrieved after rerender
-    // Because ReactLynx creates a new page element each time it loads
     const { container } = rerender(<Greeting message="hey" />);
     expect(container.firstChild).toHaveTextContent('hey');
 
@@ -531,7 +537,7 @@ In this example, we triggered a `tap` event and called the `globalThis.cb` funct
 
 ### Choose the thread used for rendering
 
-The second parameter of the `render` method supports `enableMainThread` and `enableBackgroundThread` are two options for enabling the main thread and background threads. By default, `enableMainThread` is `false` and `enableBackgroundThread` is `true`, so the main thread does not render the first screen, only the background thread runs the full Preact runtime and sends UI updates to the main thread for rendering. The reason why we don't enable both the main thread and the background thread is because unit tests do not compile files into two bundles like using Rspeedy does, which will result in the top-level code being executed only once, and by default in the background thread. Suppose you wrote a component like this:
+The second parameter of the `render` method supports `enableMainThread` and `enableBackgroundThread` are two options for enabling the main thread and background threads. By default, `enableMainThread` is `false` and `enableBackgroundThread` is `true`, so the main thread does not render the first screen, only the background thread runs the full Preact runtime and sends diff result to the main thread for reconciliation. The reason why we don't enable both the main thread and the background thread is because unit tests do not compile files into two bundles like using Rspeedy does, which will result in the top-level code being executed only once, and by default in the background thread. Suppose you wrote a component like this:
 
 ```jsx
 const isBackground = __BACKGROUND__;

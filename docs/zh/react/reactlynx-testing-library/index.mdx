@@ -1,18 +1,18 @@
 # ReactLynx Testing Library
 
-ReactLynx Testing Library 借鉴了 [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) 的设计，适用于对于 ReactLynx 组件的单元测试。它屏蔽了 Lynx 双线程的实现细节，将 ReactLynx 的渲染流程抽象成 `render`、`fireEvent`、`screen` 等和 React Testing Library 相同的 API。和 React Testing Library 类似，用户也可以对页面中的 Element 进行断言，例如使用 `data-testid` 来快速寻找元素，使用 `@testing-library/jest-dom` 中的 `toBeInTheDocument` 判断元素在页面中。
+[`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) 包适用于对 ReactLynx 组件的渲染结果进行测试。它提供了和 [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) 相同的 API，例如 [`render`](../../api/reactlynx-testing-library/Function.render.mdx)、[`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx)、[`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 等，其底层使用了 [`@lynx-js/testing-environment`](../../api/lynx-testing-environment/index.mdx) 包来提供 Lynx 环境的 JS 实现，屏蔽了 Lynx 双线程的实现细节。
 
 ## 配置
 
 ### 从 create-rspeedy 创建新项目
 
-使用 `create-rspeedy` 创建的项目，在创建时可以主动选择是否使用 ReactLynx Testing Library（默认勾选），勾选后创建出来的项目已经配置好了 ReactLynx Testing Library。
+使用 [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 创建的项目，在创建时可以主动选择是否使用 ReactLynx Testing Library（默认勾选），勾选后创建出来的项目已经配置好了 ReactLynx Testing Library。
 
 ### 在已有项目中配置
 
 ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，无需额外安装其他包。
 
-配置 Vitest 时需要使用 `@lynx-js/react/testing-library/vitest-config` 中的 `createVitestConfig` 方法来创建 Vitest 配置。该方法会自动配置 [Lynx Testing Environment](https://github.com/lynx-family/lynx-stack/tree/main/packages/testing-library/testing-environment)，负责提供 Lynx 环境的 JS 实现。你可以通过 `mergeConfig` 方法将其和其他配置合并。
+配置 [Vitest](https://vitest.dev/) 时需要使用 `@lynx-js/react/testing-library/vitest-config` 中的 `createVitestConfig` 方法来创建 Vitest 配置。你可以通过 `mergeConfig` 方法将其和其他配置合并。
 
 ```js title=vitest.config.js
 import { defineConfig, mergeConfig } from 'vitest/config';
@@ -32,7 +32,7 @@ export default mergeConfig(defaultConfig, config);
 
 ### 快速开始
 
-和 React Testing Library 一样，我们推荐将测试用例分为 Arrange、Act 和 Assert 三个部分。Arrange 部分用于准备测试数据，Act 部分用于执行测试操作，Assert 部分用于断言测试结果。下面是一个简单的示例：
+和 React Testing Library 一样，我们推荐将测试用例分为[安排](https://testing-library.com/docs/react-testing-library/example-intro#arrange)、[操作](https://testing-library.com/docs/react-testing-library/example-intro#act) 和[断言](https://testing-library.com/docs/react-testing-library/example-intro#assert) 三个部分。安排部分用于准备测试数据，操作部分用于执行测试操作，断言部分用于断言测试结果。下面是一个简单的示例：
 
 ```tsx
 import '@testing-library/jest-dom';
@@ -45,7 +45,7 @@ it('basic', async function () {
   };
   const onClick = vi.fn(() => {});
 
-  // ARRANGE
+  // 安排
   const { container } = render(
     <Button onClick={onClick}>
       <text data-testid="text">Click me</text>
@@ -54,20 +54,20 @@ it('basic', async function () {
 
   expect(onClick).not.toHaveBeenCalled();
 
-  // ACT
+  // 操作
   fireEvent.tap(container.firstChild);
 
-  // ASSERT
+  // 断言
   expect(onClick).toBeCalledTimes(1);
   expect(screen.getByTestId('text')).toHaveTextContent('Click me');
 });
 ```
 
-在这个示例中，你可能已经注意到了我们用到了第三方包 `@testing-library/jest-dom` 中的 `toHaveTextContent` 方法来断言元素的文本内容。这得益于我们底层使用的是 JSDOM 来实现 [Element PAPI](https://lynxjs.org/api/engine/element-api)，因此可以直接使用基于 JSDOM 的 `@testing-library/jest-dom` 中的方法来断言页面元素是否存在。
+在这个示例中，你可能已经注意到了我们用到了第三方包 [`@testing-library/jest-dom`](https://www.npmjs.com/package/@testing-library/jest-dom) 中的 `toHaveTextContent` 方法来断言元素的文本内容。在 React Testing Library 中，你可以使用 `@testing-library/jest-dom` 是因为测试框架会使用 [JSDOM](https://github.com/jsdom/jsdom) 来创建 DOM 元素；在 ReactLynx Testing Library 中，我们同样使用了 JSDOM 来实现 [Element PAPI](https://lynxjs.org/api/engine/element-api) 的行为，因此和 DOM API 完全兼容。
 
 ### 基础渲染
 
-`render` 方法用于渲染一个 ReactLynx 组件，并返回一个包含 `container`、`rerender`、`unmount`、`getByTestId` 等方法的对象。`container` 是一个包含渲染结果的 LynxElement，`rerender` 用于重新渲染，`unmount` 用于卸载组件、`getByTestId` 用于根据 `data-testid` 属性获取元素。
+[`render`](../../api/reactlynx-testing-library/Function.render.mdx) 方法用于渲染一个 ReactLynx 组件，并返回一个 [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) 对象。
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -97,14 +97,16 @@ it('basic render', () => {
 
 在触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](zh/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值有：
 
-- `bindEvent`：触发 `bind` 类型的事件，例如 `bindtap` 绑定的事件应该使用 `new Event('bindEvent:tap')` 触发。
-- `catchEvent`：触发 `catch` 类型的事件，例如 `catchtap` 绑定的事件应该使用 `new Event('catchEvent:tap')` 触发。
-- `capture-bind`：触发 `capture-bind` 类型的事件，例如 `capture-bindtap` 绑定的事件应该使用 `new Event('capture-bind:tap')` 触发。
-- `capture-catch`：触发 `capture-catch` 类型的事件，例如 `capture-catchtap` 绑定的事件应该使用 `new Event('capture-catch:tap')` 触发。
+| 事件类型        | `eventType`     | 事件绑定举例       | 事件触发举例                     |
+| --------------- | --------------- | ------------------ | -------------------------------- |
+| `bind`          | `bindEvent`     | `bindtap`          | `new Event('bindEvent:tap')`     |
+| `catch`         | `catchEvent`    | `catchtap`         | `new Event('catchEvent:tap')`    |
+| `capture-bind`  | `capture-bind`  | `capture-bindtap`  | `new Event('capture-bind:tap')`  |
+| `capture-catch` | `capture-catch` | `capture-catchtap` | `new Event('capture-catch:tap')` |
 
 可以直接自己构造 `Event` 对象，也可以使用直接传入事件类型和初始化参数让 Testing Library 自动构造 `Event` 对象。
 
-在 `render` 过程中，事件处理器会被挂载到 Element 的 `eventMap` 属性上，因此可以通过 `eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
+在 `render` 过程中，事件处理器会被挂载到 `Element` 的 `eventMap` 属性上，因此可以通过 `·`eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
 
 ```jsx
 import { render, fireEvent } from '@lynx-js/react/testing-library';
@@ -173,7 +175,7 @@ it('fireEvent', async () => {
 
 ### Ref 获取
 
-ReactLynx 和 React 一样支持 `ref`。可以通过 `ref` 来获取元素的对应的 [`NodesRef` 对象](zh/api/lynx-api/nodes-ref.html)，也可以获取类组件的实例。在 ReactLynx Testing Library 中，可以对渲染结果和元素对应的 `ref` 对象进行快照测试来判断其是否被正确设置。
+在 ReactLynx Testing Library 中，可以对渲染结果和元素对应的 `ref` 对象进行快照测试来判断其是否被正确设置。
 
 ```jsx
 import { test, expect } from 'vitest';
@@ -252,13 +254,13 @@ it('component ref', async () => {
 
 ### 页面元素查询
 
-和 React Testing Library 一样，ReactLynx Testing Library 也提供了 `screen` 对象来查询页面元素。`screen` 对象是一个全局对象，可以直接使用。它提供了一些常用的方法，例如 `getByText`、`getByTestId` 等。还有像 `waitForElementToBeRemoved` 这样的方法对页面元素状态进行等待，这些 API 都和 React Testing Library 中的 API 相同。
+你可以使用 [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 对象来查询页面元素，它提供了一些常用的方法，例如 `getByText`、`getByTestId` 等。还有像 [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) 这样的方法对页面元素状态进行等待。
 
 ```jsx
 import '@testing-library/jest-dom';
 import { Component } from '@lynx-js/react';
 import { expect } from 'vitest';
-// waitForElementToBeRemoved 是 @testing-library/dom 中的一个方法，用于等待元素被移除
+// waitForElementToBeRemoved 是 @testing-library/dom 中的一个方法，用于等待元素被移除，这里被重新导出了
 import {
   render,
   screen,
@@ -351,6 +353,12 @@ test('it waits for the data to be loaded', async () => {
 
 `render` 方法返回的对象中包含 `rerender` 方法，可以用于重新渲染页面。`rerender` 方法会将新的组件渲染到页面中，并返回一个新的对象。可以使用 `rerender` 方法来测试组件的不同状态。
 
+:::warning
+
+不同于 React Testing Library，`container` 需要在 `rerender` 之后重新获取，因为 ReactLynx 每次加载都会创建一个新的 `page` 元素。
+
+:::
+
 ```jsx
 import '@testing-library/jest-dom';
 import { render } from '@lynx-js/react/testing-library';
@@ -369,8 +377,6 @@ it('rerender will re-render the element', async () => {
   expect(container.firstChild).toHaveTextContent('hi');
 
   {
-    // 不同于 React Testing Library，container 需要在 rerender 之后重新获取
-    // 因为 ReactLynx 每次加载都会创建一个新的 page 元素
     const { container } = rerender(<Greeting message="hey" />);
     expect(container.firstChild).toHaveTextContent('hey');
 
@@ -529,7 +535,7 @@ it('main thread script', async () => {
 
 ### 控制渲染所用的线程
 
-`render` 方法的第二个参数中支持 `enableMainThread` 和 `enableBackgroundThread` 两个选项，用于开启主线程和后台线程。默认情况下 `enableMainThread` 为 `false`，`enableBackgroundThread` 为 `true`，这样主线程不会渲染首屏，只有后台线程运行完整的 Preact 运行时，并将 UI 更新发送到主线程进行处理。我们之所以不同时开启主线程和后台线程，是因为单元测试并没有和使用 Rspeedy 构建一样将文件编译成两份产物，这样会导致最顶层的代码只能执行一次，并且默认是在后台线程中。假如你写了一个这样的组件：
+`render` 方法的第二个参数中支持 `enableMainThread` 和 `enableBackgroundThread` 两个选项，用于开启主线程和后台线程。默认情况下 `enableMainThread` 为 `false`，`enableBackgroundThread` 为 `true`，这样主线程不会渲染首屏，只有后台线程运行完整的 Preact 运行时，并将 diff 结果发送到主线程进行协调处理。我们之所以不同时开启主线程和后台线程，是因为单元测试并没有和使用 Rspeedy 构建一样将文件编译成两份产物，这样会导致最顶层的代码只能执行一次，并且默认是在后台线程中。假如你写了一个这样的组件：
 
 ```jsx
 const isBackground = __BACKGROUND__;
