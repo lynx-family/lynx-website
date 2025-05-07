@@ -1,6 +1,6 @@
 # ReactLynx Testing Library
 
-The [`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) package provides the same set of APIs (e.g. [`render`](../../api/reactlynx-testing-library/Function.render.mdx), [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx) and [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx), etc.) for testing the rendering result of ReactLynx, just like the popular [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), with the underlying dual-threaded architecture abstracted away by the [@lynx-js/testing-environment](../../api/lynx-testing-environment/index.mdx).
+The [`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) package provides the same set of APIs (e.g. [`render`](../../api/reactlynx-testing-library/Function.render.mdx), [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx), [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx), etc.) for testing the rendering result of ReactLynx, just like the popular [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), with the underlying dual-threaded architecture abstracted away by the [@lynx-js/testing-environment](../../api/lynx-testing-environment/index.mdx).
 
 ## Setup
 
@@ -67,7 +67,7 @@ In this example, you may have noticed that we used the `toHaveTextContent` metho
 
 ### Basic rendering
 
-The [`render`](../../api/reactlynx-testing-library/Function.render.mdx) method is used to render a ReactLynx component and returns a [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) object. The `container` is a `LynxElement` containing the rendering result, `rerender` is used to re-render the page, `unmount` is used to unmount the component, and `getByTestId` is used to get elements by the `data-testid` attribute.
+The [`render`](../../api/reactlynx-testing-library/Function.render.mdx) method is used to render a ReactLynx component and returns a [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) object. The `container` field is a [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) containing the rendering result.
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -95,7 +95,7 @@ it('basic render', () => {
 
 ### Firing events
 
-When firing an event, you need to explicitly specify the type of event. For example, `new Event('catchEvent:tap')` (`eventType:eventName`) means triggering a `tap` event of type `catch`. Please refer to [Event Handler Properties](guide/interaction/event-handling/event-propagation.html#event-handler-property). The possible values of `eventType` are:
+When firing an event with [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx), you need to explicitly specify the type of event. For example, `new Event('catchEvent:tap')` (`eventType:eventName`) means triggering a `tap` event of type `catch`. Please refer to [Event Handler Properties](guide/interaction/event-handling/event-propagation.html#event-handler-property). The possible values of `eventType` and usage scenarios are as follows:
 
 | Event Type      | `eventType`     | Event Binding Example | Event Triggering Example         |
 | --------------- | --------------- | --------------------- | -------------------------------- |
@@ -106,7 +106,7 @@ When firing an event, you need to explicitly specify the type of event. For exam
 
 You can directly construct an `Event` object yourself, or you can directly pass in the event type and initialization parameters to let the Testing Library automatically construct an `Event` object.
 
-In the `render` process, the event handler will be mounted to the `eventMap` property of the `Element`, so you can use the `eventMap` property to get the event handler of the element for assertion.
+In the `render` process, the event handler will be mounted to the [`eventMap`](../../api/lynx-testing-environment/Interface.LynxElement.mdx#eventmap) property of the [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) object, so you can use the `eventMap` property to get the event handler of the element for assertion.
 
 ```jsx
 import { render, fireEvent } from '@lynx-js/react/testing-library';
@@ -254,7 +254,7 @@ it('component ref', async () => {
 
 ### Querying page elements
 
-You can use [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) to query page elements, it provides some common methods, such as `getByText`, `getByTestId`, etc. There are also methods like [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) to wait for the state of page elements.
+You can use [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) to query page elements, it provides some common methods, such as [`getByText`](../../api/reactlynx-testing-library/Function.getByText.mdx), [`getByTestId`](../../api/reactlynx-testing-library/Function.getByTestId.mdx), etc. There are also methods like [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) to wait for the state of page elements.
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -396,7 +396,7 @@ it('rerender will re-render your component', async () => {
 
 The usage of `list` is documented in the [list usage document](api/elements/built-in/list.html).
 
-Since the `list` element's `list-item` elements are lazily loaded, they are only loaded when they enter the viewport and marked as recyclable when they leave the viewport. In the testing framework, you can use the `elementTree.enterListItemAtIndex` and `elementTree.leaveListItem` methods to simulate loading and recycling of list item elements.
+Since the `list` element's `list-item` elements are lazily loaded, they are only loaded when they enter the viewport and marked as recyclable when they leave the viewport. In the testing framework, you can use the [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) and [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leaveListItem) methods to simulate loading and recycling of list item elements.
 
 ```jsx
 import { useState } from '@lynx-js/react';
@@ -473,7 +473,7 @@ it('list', () => {
 });
 ```
 
-In this example, we entered the list item element at index 0, loaded the list item element, then left the list item element at index 0, marked the list item element as recyclable, and finally entered the list item element at index 1, which reused the recycled item.
+In this example, we entered the list item element at index 0, loaded the list item element, then left the list item element at index 0, marked the list item element as recyclable, and finally entered the list item element at index 1, which reused the recycled `list-item`.
 
 ### Main thread script
 

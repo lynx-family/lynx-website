@@ -67,7 +67,7 @@ it('basic', async function () {
 
 ### 基础渲染
 
-[`render`](../../api/reactlynx-testing-library/Function.render.mdx) 方法用于渲染一个 ReactLynx 组件，并返回一个 [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) 对象。
+[`render`](../../api/reactlynx-testing-library/Function.render.mdx) 方法用于渲染一个 ReactLynx 组件，并返回一个 [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) 对象，其中的 `container` 字段是一个 [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx)，表示渲染结果的根元素。
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -95,7 +95,7 @@ it('basic render', () => {
 
 ### 事件触发
 
-在触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](zh/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值有：
+在使用 [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx) 触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](zh/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值和使用场景如下：
 
 | 事件类型        | `eventType`     | 事件绑定举例       | 事件触发举例                     |
 | --------------- | --------------- | ------------------ | -------------------------------- |
@@ -106,7 +106,7 @@ it('basic render', () => {
 
 可以直接自己构造 `Event` 对象，也可以使用直接传入事件类型和初始化参数让 Testing Library 自动构造 `Event` 对象。
 
-在 `render` 过程中，事件处理器会被挂载到 `Element` 的 `eventMap` 属性上，因此可以通过 `·`eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
+在 `render` 过程中，事件处理器会被挂载到 [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) 的 [`eventMap`](../../api/lynx-testing-environment/Interface.LynxElement.mdx#eventmap) 属性上，因此可以通过 `eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
 
 ```jsx
 import { render, fireEvent } from '@lynx-js/react/testing-library';
@@ -254,7 +254,7 @@ it('component ref', async () => {
 
 ### 页面元素查询
 
-你可以使用 [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 对象来查询页面元素，它提供了一些常用的方法，例如 `getByText`、`getByTestId` 等。还有像 [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) 这样的方法对页面元素状态进行等待。
+你可以使用 [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 对象来查询页面元素，它提供了一些常用的方法，例如 [`getByText`](../../api/reactlynx-testing-library/Function.getByText.mdx)、[`getByTestId`](../../api/reactlynx-testing-library/Function.getByTestId.mdx) 等。还有像 [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) 这样的方法对页面元素状态进行等待。
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -395,7 +395,7 @@ it('rerender will re-render the element', async () => {
 
 list 的使用方法请参考 [list 使用文档](zh/api/elements/built-in/list.html)。
 
-由于 `list` 下的 `list-item` 元素是懒加载的，只有元素进入视口时才会被加载，离开视口时会被标记为可回收，在测试框架中可以使用 `elementTree.enterListItemAtIndex` 和 `elementTree.leaveListItem` 方法来模拟列表项元素的加载和回收。
+由于 `list` 下的 `list-item` 元素是懒加载的，只有元素进入视口时才会被加载，离开视口时会被标记为可回收，在测试框架中可以使用 [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) 和 [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leaveListItem) 方法来模拟列表项元素的加载和回收。
 
 ```jsx
 import { useState } from '@lynx-js/react';
@@ -454,7 +454,7 @@ it('list', () => {
       </list-item>
     </list>
   `);
-  // 进入给定索引 1 处的列表项元素，此时会复用被回收的 item
+  // 进入给定索引 1 处的列表项元素，此时会复用被回收的 list-item
   const uid1 = elementTree.enterListItemAtIndex(list, 1);
   expect(list).toMatchInlineSnapshot(`
     <list
@@ -472,7 +472,7 @@ it('list', () => {
 });
 ```
 
-在这个例子中，我们进入了索引 0 处的列表项元素，加载了列表项元素。然后我们离开了索引 0 处的列表项元素，将标记列表项元素为可回收。最后我们进入了索引 1 处的列表项元素，此时会复用被回收的 item。
+在这个例子中，我们进入了索引 0 处的列表项元素，加载了列表项元素。然后我们离开了索引 0 处的列表项元素，将标记列表项元素为可回收。最后我们进入了索引 1 处的列表项元素，此时会复用被回收的 `list-item`。
 
 ### 主线程脚本
 
