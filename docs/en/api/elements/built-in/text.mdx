@@ -2,7 +2,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 # `<text>`
 
-`<text>` is a built-in component in Lynx used to display text content. It supports specifying text style, binding click event callbacks, and can nest `<text>`, `<image>`, and `<view>` components to achieve relatively complex text and image content presentation.
+`<text>` is a built-in element in Lynx used to display text content. It supports specifying text style, binding click event callbacks, and can nest `<text>`, `<image>`, and `<view>` elements to achieve relatively complex text and image content presentation.
 
 ## Usage
 
@@ -10,13 +10,13 @@ The `<text>` element is different from the `<view>` in layout. It does not suppo
 
 ### Nested Text
 
-Nested text refers to text subcomponents within a text component. They can be written as `<text>` and are generally used for setting additional text styles or adding click events.
+Nested text refers to text subelements within a text element. They can be written as `<text>` and are generally used for setting additional text styles or adding click events.
 
-Unlike text components, nested text only supports some `color/font/background-related` properties and does not support view properties such as `opacity/margin/padding` or paragraph properties like `line-height/text-align`.
+Unlike text elements, nested text only supports some `color/font/background-related` properties and does not support view properties such as `opacity/margin/padding` or paragraph properties like `line-height/text-align`.
 
 :::note
 
-`line-height/text-align` only supports being written on the text component and not on nested text.
+`line-height/text-align` only supports being written on the text element and not on nested text.
 
 :::
 
@@ -46,7 +46,7 @@ In Lynx, the [CSS inheritance](guide/styling/custom-theming#leveraging-css-inher
 
 ### Nested Image
 
-Nested images are text subcomponents and can be written as `<image>`, generally used for mixed text and image layout.
+Nested images are text subelements and can be written as `<image>`, generally used for mixed text and image layout.
 
 :::note
 
@@ -64,7 +64,7 @@ Currently, the nested image cannot adapt its size automatically, **you must disp
 
 ### Nested View
 
-A `<view>` written inside a text component will have inline characteristics and participate in text layout. It also supports all functionalities of the `<view>` tag, including adding borders, rounded corners, and any other component content inside it.
+A `<view>` written inside a text element will have inline characteristics and participate in text layout. It also supports all functionalities of the `<view>` tag, including adding borders, rounded corners, and any other element content inside it.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-view-demo.gif"
@@ -97,7 +97,7 @@ The `<inline-truncation>` tag only supports nesting within the `<text>` tag. Nod
 
 ### RTL
 
-The `text` component supports RTL (Right-To-Left) language layout display. By default, the `text` component will determine the text language based on the content and use the corresponding layout method. Developers can also specify the use of RTL layout by setting the `direction` style.
+The `text` element supports RTL (Right-To-Left) language layout display. By default, the `text` element will determine the text language based on the content and use the corresponding layout method. Developers can also specify the use of RTL layout by setting the `direction` style.
 
 :::tip
 
@@ -108,7 +108,7 @@ When `direction` is set to `lynx-rtl`, `text-align:left` will be converted to `t
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/text_direction_rtl_demo.jpeg"
-  highlight="{169-239}"
+  highlight="{303-356}"
   example="text"
   defaultFile="src/text_style/index.tsx"
   defaultEntryFile="dist/text_style.lynx.bundle"
@@ -117,7 +117,7 @@ When `direction` is set to `lynx-rtl`, `text-align:left` will be converted to `t
 
 ## Attributes
 
-Attribute names and values are used to describe the behavior and appearance of components.
+Attribute names and values are used to describe the behavior and appearance of elements.
 
 ### `text-maxline`
 
@@ -128,7 +128,7 @@ text-maxline?: number;
 
 Limits the maximum number of lines displayed for the text content, `overflow:hidden` should be set simultaneously.
 
-### `include-font-padding`
+### `include-font-padding` <AndroidOnly />
 
 ```tsx
 // DefaultValue: false
@@ -186,13 +186,13 @@ custom-text-selection?: boolean;
 
 ```
 
-Used to set whether to enable the custom text selection function. When it is enabled, the component will no longer handle the gesture logic related to selection and copying. Developers need to control it through APIs such as `setTextSelection`. It takes effect after enabling `text-selection`.
+Used to set whether to enable the custom text selection function. When it is enabled, the element will no longer handle the gesture logic related to selection and copying. Developers need to control it through APIs such as `setTextSelection`. It takes effect after enabling `text-selection`.
 
 ## Events
 
-Frontend can bind corresponding event callbacks to components to listen to runtime behaviors. All [basic events](/api/elements/built-in/view.mdx#events) are supported.
+Frontend can bind corresponding event callbacks to elements to listen to runtime behaviors. All [basic events](/api/elements/built-in/view.mdx#events) are supported.
 
-### `bindlayout`
+### `layout`
 
 ```ts
 bindlayout = (e: layoutEvent) => {};
@@ -223,7 +223,7 @@ interface layoutEvent extends CustomEvent {
      */
     lines: LineInfo[];
     /**
-     * Dimensions of the text component.
+     * Dimensions of the text element.
      */
     size: { width: number; height: number };
   };
@@ -232,7 +232,7 @@ interface layoutEvent extends CustomEvent {
 
 The layout event returns the result information after text layout, including the number of lines of the current text, and the start and end positions of the text in each line relative to the entire text.
 
-### `bindselectionchange`
+### `selectionchange`
 
 ```ts
 bindselectionchange = (e: selectionChangeEvent) => {};
@@ -259,7 +259,7 @@ This event is triggered whenever the selected text range changes.
 
 ## Methods
 
-You can invoke component methods from the frontend using the [SelectorQuery](api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+You can invoke element methods from the frontend using the [SelectorQuery](api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
 
 ### `setTextSelection`
 
@@ -271,7 +271,7 @@ lynx.createSelectorQuery()
   .invoke({
     method: "setTextSelection",
     params: {
-      startX,  // X-coordinate of the selection start relative to the component
+      startX,  // X-coordinate of the selection start relative to the element
       startY,  // Y-coordinate of the selection start
       endX,    // X-coordinate of the selection end
       endY,    // Y-coordinate of the selection end
@@ -506,7 +506,7 @@ Long-pressing the text will highlight the selected area and trigger the default 
 Text selection is currently not supported for RTL (Right-to-Left) mode.
 :::
 
-If you want to implement a **custom context menu**, you need to set the `custom-context-menu` attribute and use the `bindselectionchange` event along with the `getTextBoundingRect` method to determine the position for rendering your custom menu.
+If you want to implement a **custom context menu**, you need to set the `custom-context-menu` attribute and bind the `selectionchange` event along with the `getTextBoundingRect` method to determine the position for rendering your custom menu.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/sigle-text-copy.gif"
@@ -718,7 +718,7 @@ const handleTouchStart = (e) => {
 | [font-weight](api/css/properties/font-weight.mdx)         | Yes  | Yes         | No           | No          | Sets the weight of the font. It may not be applied if the custom font only provides the normal type                 |
 | [letter-spacing](api/css/properties/letter-spacing.mdx)   | Yes  | Yes         | No           | No          | Sets the spacing between characters of the text                                                                     |
 | [line-height](api/css/properties/line-height.mdx)         | Yes  | No          | No           | No          | Sets the height of multiple lines of text.                                                                          |
-| [text-align](api/css/properties/text-align.mdx)           | Yes  | No          | No           | No          | Sets text alignment within the text component                                                                       |
+| [text-align](api/css/properties/text-align.mdx)           | Yes  | No          | No           | No          | Sets text alignment within the text element                                                                         |
 | [text-decoration](api/css/properties/text-decoration.mdx) | Yes  | Yes         | No           | No          | Sets the appearance of text decorations                                                                             |
 | [text-indent](api/css/properties/text-indent.mdx)         | Yes  | No          | No           | No          | Sets the indentation before the first line of text                                                                  |
 | [text-overflow](api/css/properties/text-overflow.mdx)     | Yes  | No          | No           | No          | Sets how overflowed content should be displayed                                                                     |
