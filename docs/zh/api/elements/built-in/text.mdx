@@ -117,118 +117,6 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
   entry="src/text_style"
 />
 
-### 选择复制
-
-`<text>` 元件支持文本选择复制能力。可以通过在 `<text>` 元件上设置 `text-selection` 属性开启此能力，同时需要设置 `flatten={false}`。
-
-```tsx
-<text text-selection={true} flatten={false}>
-  hello world
-</text>
-```
-
-长按文字即可高亮选中文本，同时弹出默认的上下文菜单，包含全选和复制按钮。
-
-:::note
-选择复制目前不支持 RTL
-:::
-
-如果开发者需要自定义的上下文菜单，需要设置 `custom-context-menu` 属性，并且通过 `bindselectionchange` 事件和 `getTextBoundingRect` 方法来确定自定义上下文菜单的显示位置。
-
-<Go
-  example="text"
-  defaultFile="src/text_selection/index.tsx"
-  entry="src/text_selection"
-/>
-
-进一步的，如果你的需求是支持跨多个 `<text>` 元件进行选中并复制内容，需开发者自定义文本选择逻辑：
-
-步骤一：开启自定义文本选择模式
-
-需要在 `<text>` 元件上设置 `custom-text-selection` 属性，开启之后元件不再处理选择复制相关手势逻辑。
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{271}"
-/>
-
-步骤二：在外层 `<view>` 上绑定手势事件
-
-在外层 `<view>` 上绑定长按、点击和触摸事件，用于控制选择复制相关手势逻辑。
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{257-266}"
-/>
-
-步骤三：处理选择复制交互逻辑
-
-组件挂载时获取所有可选中的文本节点信息，包含节点的 id 和宽高位置等信息
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{26,33-39,89-130}"
-/>
-
-用户长按：开始选区
-
-长按后触发 `handleLongPress()` 进入文本选中状态，记录文本选中的开始位置，并且进行第一次选区更新。
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{42-47}"
-/>
-
-拖动手势：实时更新选中区域
-
-拖动中触发 `handleTouchMove()`，如果处于选中状态则更新选中区域
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{66-70}"
-/>
-
-抬起手指：结束选区
-
-手指抬起触发 `handleTouchEnd()`，确定最终的选择区域，并且清除选中状态
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{73-78}"
-/>
-
-单击空白：清除选区
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{81-86}"
-/>
-
-拖拽浮标：调整选区
-
-在 `handleTouchStart()` 中判断浮标中心和触摸位置是否在可拖拽的范围内，如果在则开始更新选中区域
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{50-63}"
-/>
-
 ## 属性
 
 属性名和属性值用于描述元件的行为和外观
@@ -288,7 +176,7 @@ text-selection?: boolean;
 
 设置是否开启文本选择功能，开启时需要同时设置 `flatten={false}`
 
-#### `custom-context-menu`
+### `custom-context-menu`
 
 ```tsx
 
@@ -297,9 +185,9 @@ custom-context-menu?: boolean;
 
 ```
 
-设置选择复制之后是否开启自定义弹出的上下文菜单
+在开启 `text-selection` 之后生效，用于设置选择复制之后是否开启自定义弹出的上下文菜单
 
-#### `custom-text-selection`
+### `custom-text-selection`
 
 ```tsx
 
@@ -308,7 +196,7 @@ custom-text-selection?: boolean;
 
 ```
 
-设置是否开启自定义文本选择功能，开启时元件不再处理选择复制相关手势逻辑，需要开发者通过 `setTextSelection` 等 API 控制
+在开启 `text-selection` 之后生效，用于设置是否开启自定义文本选择功能，开启时元件不再处理选择复制相关手势逻辑，需要开发者通过 `setTextSelection` 等 API 控制
 
 ## 事件
 
@@ -608,6 +496,219 @@ const YourComponent = () => {
       <text>touch: {touchCount}</text>
     </view>
   );
+};
+```
+
+## 更多功能
+
+### `<text>` 元件内选择复制
+
+`<text>` 元件支持文本选择复制能力。可以通过在 `<text>` 元件上设置 `text-selection` 属性开启此能力，同时需要设置 `flatten={false}`。
+
+```tsx
+<text text-selection={true} flatten={false}>
+  hello world
+</text>
+```
+
+长按文字即可高亮选中文本，同时弹出默认的上下文菜单，包含全选和复制按钮。
+
+:::note
+选择复制目前不支持 RTL
+:::
+
+如果开发者需要自定义的上下文菜单，需要设置 `custom-context-menu` 属性，并且通过 `bindselectionchange` 事件和 `getTextBoundingRect` 方法来确定自定义上下文菜单的显示位置。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/sigle-text-copy.gif"
+  example="text"
+  defaultFile="src/text_selection/index.tsx"
+  entry="src/text_selection"
+  highlight="{26-48,128}"
+/>
+
+### 跨 `<text>` 元件选择复制
+
+如果需求是支持跨多个 `<text>` 元件进行选中并复制内容，需开发者自定义文本选择逻辑：
+
+1. 步骤一：开启自定义文本选择模式
+
+需要在 `<text>` 元件上设置 `custom-text-selection` 属性，开启之后元件不再处理选择复制相关手势逻辑。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/cross-text-select.gif"
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{270}"
+/>
+
+2. 步骤二：在外层 `<view>` 上绑定手势事件
+
+在外层 `<view>` 上绑定长按、点击和触摸事件，用于控制选择复制相关手势逻辑。
+
+```jsx
+<view
+  id="container"
+  style={{ width: '90vw' }}
+  className="Container"
+  bindlongpress={handleLongPress}
+  bindtouchstart={handleTouchStart}
+  bindtouchmove={handleTouchMove}
+  bindtouchend={handleTouchEnd}
+  bindtap={handleTap}
+>
+  <text
+    id="0"
+    text-selection={true}
+    custom-text-selection={true}
+    flatten={false}
+    className="Title"
+  >
+    This is title
+  </text>
+  <view className="SplitLine" />
+</view>
+```
+
+3. 步骤三：处理选择复制交互逻辑
+
+- 获取所有文本节点信息：组件挂载时获取所有可选中的文本节点信息，包含节点的 id 和宽高位置等信息
+
+```jsx
+let handlers: Array<{ x: number; y: number; radius: number; startX: number; startY: number }> = [];
+
+const CrossTextSelection = () => {
+  // useEffect hook to run code when the component mounts and unmounts
+  useEffect(() => {
+    console.log("component did mount");
+    getTextNodeRect();
+    return () => {
+      console.log("component will unmount");
+    };
+  }, []);
+
+
+// Asynchronous function to get the bounding rectangles of text nodes
+  async function getTextNodeRect() {
+    let resArray = await new Promise((resolve) => {
+      lynx.createSelectorQuery()
+        .selectAll("#container text")
+        .fields(
+          {
+            query: true,
+            id: true,
+          },
+          resolve,
+        )
+        .exec();
+    });
+
+    Promise.all(
+      resArray.map((element) => {
+        return new Promise((resolve) => {
+          element.query
+            .selectRoot()
+            .invoke({
+              method: "boundingClientRect",
+              success: (res) => {
+                resolve(res);
+              },
+            })
+            .exec();
+        });
+      }),
+    ).then((values) => {
+      textsInfo = [...values].map(({ top, left, width, height, id }) => ({
+        id: String(id),
+        left: Number(left),
+        top: Number(top),
+        width: Number(width),
+        height: Number(height),
+        startX: -1,
+        startY: 0,
+        endX: width,
+        endY: height,
+      }));
+    });
+  }
+
+```
+
+- 用户长按：开始选区
+  长按后触发 `handleLongPress()` 进入文本选中状态，记录文本选中的开始位置，并且进行第一次选区更新。
+
+```jsx
+// Handle long press event to start text selection
+const handleLongPress = (e) => {
+  isSelecting = true;
+  startPosition.x = e.detail.x;
+  startPosition.y = e.detail.y;
+  setSelection(e.detail.x, e.detail.y, e.detail.x, e.detail.y);
+};
+```
+
+- 拖动手势：实时更新选中区域
+
+拖动中触发 `handleTouchMove()`，如果处于选中状态则更新选中区域
+
+```jsx
+// Handle touch move event to update the selection area
+const handleTouchMove = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+};
+```
+
+- 抬起手指：结束选区
+
+手指抬起触发 `handleTouchEnd()`，确定最终的选择区域，并且清除选中状态
+
+```jsx
+// Handle touch end event to finalize the selection
+const handleTouchEnd = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+  isSelecting = false;
+};
+```
+
+单击空白：清除选区
+
+```jsx
+// Handle tap event to clear the selection
+const handleTap = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  setSelection(-1, -1, -1, -1);
+};
+```
+
+- 拖拽浮标：调整选区
+
+在 `handleTouchStart()` 中判断浮标中心和触摸位置是否在可拖拽的范围内，如果在则开始更新选中区域
+
+```jsx
+// Handle touch start event to check if the touch is on a handler
+const handleTouchStart = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  const { x, y } = e.detail;
+  for (const [index, handler] of handlers.entries()) {
+    if (
+      Math.pow(handler.x - x, 2) + Math.pow(handler.y - y, 2) <
+      Math.pow(handler.radius, 2)
+    ) {
+      isSelecting = true;
+      const another = handlers[(index + 1) % 2];
+      startPosition = { x: another.startX, y: another.startY };
+      break;
+    }
+  }
 };
 ```
 

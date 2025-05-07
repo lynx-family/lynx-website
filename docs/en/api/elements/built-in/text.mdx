@@ -115,122 +115,6 @@ When `direction` is set to `lynx-rtl`, `text-align:left` will be converted to `t
   entry="src/text_style"
 />
 
-### Text Selection
-
-The `<text>` element supports text selection and copying. You can enable this feature by setting the `text-selection` attribute on the `<text>` element, and make sure to set `flatten={false}` as well:
-
-```tsx
-<text text-selection={true} flatten={false}>
-  hello world
-</text>
-```
-
-Long-pressing the text will highlight the selected area and trigger the default context menu, which includes options like "Select All" and "Copy".
-
-::: note
-Text selection is currently not supported for RTL (Right-to-Left) mode.
-:::
-
-If you want to implement a **custom context menu**, you need to set the `custom-context-menu` attribute and use the `bindselectionchange` event along with the `getTextBoundingRect` method to determine the position for rendering your custom menu.
-
-<Go
-  example="text"
-  defaultFile="src/text_selection/index.tsx"
-  entry="src/text_selection"
-/>
-
-For more advanced scenarios, such as supporting **cross-node selection** across multiple `<text>` elements, you need to implement custom selection logic.
-
-Step-by-Step: Implementing Cross-Text Selection
-
-Step 1: Enable Custom Text Selection Mode
-
-Set the `custom-text-selection` attribute on each `<text>` element. This disables the built-in selection and gesture handling, allowing you to define your own.
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{271}"
-/>
-
-Step 2: Bind Gesture Events on the Wrapper `<view>`
-
-Bind long-press, tap, and touch events on the outer `<view>` container. These will be used to control your custom selection and gesture logic.
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{257-266}"
-/>
-
-Step 3: Handle Selection and Copying Logic
-
-On component mount, retrieve metadata for all selectable `<text>` nodes, including their ID, dimensions, and positions:
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{26,33-39,89-130}"
-/>
-
-On Long Press: Start Selection
-
-`handleLongPress()` is triggered on long press. It initiates the selection state, records the starting point, and performs the first selection update:
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{42-47}"
-/>
-
-On Drag: Update Selection Area in Real Time
-
-As the user drags, `handleTouchMove()` is called. If a selection is in progress, it updates the highlighted area accordingly:
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{66-70}"
-/>
-
-On Finger Release: Finalize Selection
-
-`handleTouchEnd()` is triggered on finger release. This finalizes the selected region and exits selection mode:
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{73-78}"
-/>
-
-On Tap Blank Area: Clear Selection
-
-Tapping outside the text elements triggers a selection clear:
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{81-86}"
-/>
-
-On Handle Drag: Adjust Selection Range
-
-In `handleTouchStart()`, determine if the touch point is near one of the draggable handles. If so, allow real-time adjustment of the selection:
-
-<Go
-  example="text"
-  defaultFile="src/cross_text_selection/index.tsx"
-  entry="src/cross_text_selection"
-  highlight="{50-63}"
-/>
-
 ## Attributes
 
 Attribute names and values are used to describe the behavior and appearance of components.
@@ -579,6 +463,223 @@ const YourComponent = () => {
       <text>touch: {touchCount}</text>
     </view>
   );
+};
+```
+
+## More Features
+
+### `<text>` selection and copying
+
+The `<text>` element supports text selection and copying. You can enable this feature by setting the `text-selection` attribute on the `<text>` element, and make sure to set `flatten={false}` as well:
+
+```tsx
+<text text-selection={true} flatten={false}>
+  hello world
+</text>
+```
+
+Long-pressing the text will highlight the selected area and trigger the default context menu, which includes options like "Select All" and "Copy".
+
+::: note
+Text selection is currently not supported for RTL (Right-to-Left) mode.
+:::
+
+If you want to implement a **custom context menu**, you need to set the `custom-context-menu` attribute and use the `bindselectionchange` event along with the `getTextBoundingRect` method to determine the position for rendering your custom menu.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/sigle-text-copy.gif"
+  example="text"
+  defaultFile="src/text_selection/index.tsx"
+  entry="src/text_selection"
+  highlight="{26-48,128}"
+/>
+
+### cross `<text>` selection and copying
+
+For more advanced scenarios, such as supporting **cross-node selection** across multiple `<text>` elements, you need to implement custom selection logic.
+
+Step-by-Step: Implementing Cross-Text Selection
+
+1. Enable Custom Text Selection Mode
+
+Set the `custom-text-selection` attribute on each `<text>` element. This disables the built-in selection and gesture handling, allowing you to define your own.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/cross-text-select.gif"
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{270}"
+/>
+
+2. Bind Gesture Events on the Wrapper `<view>`
+
+Bind long-press, tap, and touch events on the outer `<view>` container. These will be used to control your custom selection and gesture logic.
+
+```jsx
+<view
+  id="container"
+  style={{ width: '90vw' }}
+  className="Container"
+  bindlongpress={handleLongPress}
+  bindtouchstart={handleTouchStart}
+  bindtouchmove={handleTouchMove}
+  bindtouchend={handleTouchEnd}
+  bindtap={handleTap}
+>
+  <text
+    id="0"
+    text-selection={true}
+    custom-text-selection={true}
+    flatten={false}
+    className="Title"
+  >
+    This is title
+  </text>
+  <view className="SplitLine" />
+</view>
+```
+
+3. Handle Selection and Copying Logic
+
+- On component mount, retrieve metadata for all selectable `<text>` nodes, including their ID, dimensions, and positions:
+
+```jsx
+let handlers: Array<{ x: number; y: number; radius: number; startX: number; startY: number }> = [];
+
+const CrossTextSelection = () => {
+  // useEffect hook to run code when the component mounts and unmounts
+  useEffect(() => {
+    console.log("component did mount");
+    getTextNodeRect();
+    return () => {
+      console.log("component will unmount");
+    };
+  }, []);
+
+
+// Asynchronous function to get the bounding rectangles of text nodes
+  async function getTextNodeRect() {
+    let resArray = await new Promise((resolve) => {
+      lynx.createSelectorQuery()
+        .selectAll("#container text")
+        .fields(
+          {
+            query: true,
+            id: true,
+          },
+          resolve,
+        )
+        .exec();
+    });
+
+    Promise.all(
+      resArray.map((element) => {
+        return new Promise((resolve) => {
+          element.query
+            .selectRoot()
+            .invoke({
+              method: "boundingClientRect",
+              success: (res) => {
+                resolve(res);
+              },
+            })
+            .exec();
+        });
+      }),
+    ).then((values) => {
+      textsInfo = [...values].map(({ top, left, width, height, id }) => ({
+        id: String(id),
+        left: Number(left),
+        top: Number(top),
+        width: Number(width),
+        height: Number(height),
+        startX: -1,
+        startY: 0,
+        endX: width,
+        endY: height,
+      }));
+    });
+  }
+
+```
+
+- On Long Press: Start Selection
+  `handleLongPress()` is triggered on long press. It initiates the selection state, records the starting point, and performs the first selection update:
+
+```jsx
+// Handle long press event to start text selection
+const handleLongPress = (e) => {
+  isSelecting = true;
+  startPosition.x = e.detail.x;
+  startPosition.y = e.detail.y;
+  setSelection(e.detail.x, e.detail.y, e.detail.x, e.detail.y);
+};
+```
+
+- On Drag: Update Selection Area in Real Time
+
+As the user drags, `handleTouchMove()` is called. If a selection is in progress, it updates the highlighted area accordingly:
+
+```jsx
+// Handle touch move event to update the selection area
+const handleTouchMove = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+};
+```
+
+- On Finger Release: Finalize Selection
+
+`handleTouchEnd()` is triggered on finger release. This finalizes the selected region and exits selection mode:
+
+```jsx
+// Handle touch end event to finalize the selection
+const handleTouchEnd = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+  isSelecting = false;
+};
+```
+
+On Tap Blank Area: Clear Selection
+
+Tapping outside the text elements triggers a selection clear:
+
+```jsx
+// Handle tap event to clear the selection
+const handleTap = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  setSelection(-1, -1, -1, -1);
+};
+```
+
+- On Handle Drag: Adjust Selection Range
+
+In `handleTouchStart()`, determine if the touch point is near one of the draggable handles. If so, allow real-time adjustment of the selection:
+
+```jsx
+// Handle touch start event to check if the touch is on a handler
+const handleTouchStart = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  const { x, y } = e.detail;
+  for (const [index, handler] of handlers.entries()) {
+    if (
+      Math.pow(handler.x - x, 2) + Math.pow(handler.y - y, 2) <
+      Math.pow(handler.radius, 2)
+    ) {
+      isSelecting = true;
+      const another = handlers[(index + 1) % 2];
+      startPosition = { x: another.startX, y: another.startY };
+      break;
+    }
+  }
 };
 ```
 
