@@ -567,13 +567,14 @@ If you want to write a test case to test the IFR rendering (i.e. `enableMainThre
 In ReactLynx Testing Library, we do not generate two bundles for dual-threading like using Rspeedy, which will cause the top-level code to be executed only once in the background thread. In the following case, the value of the `isBackground` variable will be set to `true`.
 
 ```jsx
+import '@testing-library/jest-dom';
 import { describe, expect, it } from 'vitest';
 import { render } from '@lynx-js/react/testing-library';
 
 const isBackground = __BACKGROUND__;
 
 describe('IFR Testing', () => {
-  it('will render wrong result if has top level side effects', () => {
+  it('will render a wrong result if it has top-level side effects', () => {
     const CompWithTopLevelSideEffects = () => {
       return <text>{isBackground ? 'background' : 'main thread'}</text>;
     };
@@ -582,14 +583,13 @@ describe('IFR Testing', () => {
       enableMainThread: true,
       enableBackgroundThread: false,
     });
-    // It will incorrectly render `background`
-    expect(container).toMatchInlineSnapshot(`
-    <page>
-      <text>
-        background
-      </text>
-    </page>
-  `);
+    // Test fails
+    // Error: expect(element).toHaveTextContent()
+    // Expected element to have text content:
+    //   main thread
+    // Received:
+    //   background
+    expect(container).toHaveTextContent('main thread');
   });
 });
 ```
@@ -597,11 +597,12 @@ describe('IFR Testing', () => {
 The correct way is to use `__BACKGROUND__` inside the component. Here is an example:
 
 ```jsx
+import '@testing-library/jest-dom';
 import { describe, expect, it } from 'vitest';
 import { render } from '@lynx-js/react/testing-library';
 
 describe('IFR Testing', () => {
-  it('will render correct result if does not have top level side effects', () => {
+  it('will render the correct result if it does not have top-level side effects', () => {
     const Comp = () => {
       return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
     };
@@ -610,14 +611,8 @@ describe('IFR Testing', () => {
       enableMainThread: true,
       enableBackgroundThread: false,
     });
-    // It correctly renders `main thread`
-    expect(container).toMatchInlineSnapshot(`
-      <page>
-        <text>
-          main thread
-        </text>
-      </page>
-    `);
+    // Test passes
+    expect(container).toHaveTextContent('main thread');
   });
 });
 ```

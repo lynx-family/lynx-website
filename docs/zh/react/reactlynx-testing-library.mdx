@@ -565,13 +565,14 @@ const Comp = () => {
 由于没有和使用 Rspeedy 构建一样将文件编译成双线程对应的两份产物，Lynx 测试环境的初始化环境为后台线程。比如，下面的例子中 `isBackground` 变量的值会被设置为 `true`。
 
 ```jsx
+import '@testing-library/jest-dom';
 import { describe, expect, it } from 'vitest';
 import { render } from '@lynx-js/react/testing-library';
 
 const isBackground = __BACKGROUND__;
 
 describe('IFR Testing', () => {
-  it('will render wrong result if has top level side effects', () => {
+  it('will render a wrong result if it has top-level side effects', () => {
     const CompWithTopLevelSideEffects = () => {
       return <text>{isBackground ? 'background' : 'main thread'}</text>;
     };
@@ -580,14 +581,13 @@ describe('IFR Testing', () => {
       enableMainThread: true,
       enableBackgroundThread: false,
     });
-    // 这里错误地渲染出了 `background`
-    expect(container).toMatchInlineSnapshot(`
-    <page>
-      <text>
-        background
-      </text>
-    </page>
-  `);
+    // 测试失败
+    // Error: expect(element).toHaveTextContent()
+    // Expected element to have text content:
+    //   main thread
+    // Received:
+    //   background
+    expect(container).toHaveTextContent('main thread');
   });
 });
 ```
@@ -599,7 +599,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@lynx-js/react/testing-library';
 
 describe('IFR Testing', () => {
-  it('will render correct result if does not have top level side effects', () => {
+  it('will render the correct result if it does not have top-level side effects', () => {
     const Comp = () => {
       return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
     };
@@ -608,14 +608,8 @@ describe('IFR Testing', () => {
       enableMainThread: true,
       enableBackgroundThread: false,
     });
-    // 这里正确地渲染出了 `main thread`
-    expect(container).toMatchInlineSnapshot(`
-      <page>
-        <text>
-          main thread
-        </text>
-      </page>
-    `);
+    // 测试通过
+    expect(container).toHaveTextContent('main thread');
   });
 });
 ```
