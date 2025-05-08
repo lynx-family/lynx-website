@@ -1,8 +1,18 @@
-declare module '@theme' {
-  export const PackageManagerTabs: any;
+declare module '*.mdx' {
+  const component: React.ComponentType<any>;
+  export default component;
 }
 
-declare module '*.less' {
+declare module '@theme' {
+  export * from 'rspress/theme';
+}
+
+declare module '*.module.less' {
+  const classes: { [key: string]: string };
+  export default classes;
+}
+
+declare module '*.module.scss' {
   const classes: { [key: string]: string };
   export default classes;
 }

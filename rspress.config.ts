@@ -9,6 +9,7 @@ import {
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
 import { pluginRss } from '@rspress/plugin-rss';
+import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginLess } from '@rsbuild/plugin-less';
 
@@ -17,9 +18,13 @@ const PUBLISH_URL = 'https://lynxjs.org/';
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
   route: {
-    exclude: ['lynx-compat-data/**/*'],
+    exclude: [
+      'lynx-compat-data/**/*',
+      '**/guide/start/fragments/**',
+      '**/guide/custom-native-component/*',
+      '**/guide/embed-lynx-to-native/*',
+    ],
   },
-  ssg: { strict: true },
   title: 'Lynx',
   description:
     'Empower the web community and invite more to build cross-platform apps',
@@ -123,6 +128,7 @@ export default defineConfig({
     sidebar: {},
   },
   plugins: [
+    pluginLlms(),
     rspeedyApiPlugin(),
     sharedSidebarPlugin(),
     pluginRss({

@@ -131,6 +131,9 @@ function OptionSelector({
   );
 }
 
+//  FIXME: this is a hack for hook Rspress update the TOC */
+let renderCountForTocUpdate = 0;
+
 /**
  * A radio group interface for showing platform-specific content for iOS, Android and Web.
  * Uses a card-based layout with radio buttons for platform selection.
@@ -257,15 +260,21 @@ export const PlatformTabs = ({
     );
   });
 
+  renderCountForTocUpdate++;
   return (
-    <div className={cn('sh-w-full sh-space-y-4', className)}>
-      <OptionSelector
-        options={availableOptions}
-        selected={activePlatform}
-        onSelect={setActivePlatform}
-      />
-      {tabContent}
-    </div>
+    <>
+      <div className={cn('sh-w-full sh-space-y-4', className)}>
+        <OptionSelector
+          options={availableOptions}
+          selected={activePlatform}
+          onSelect={setActivePlatform}
+        />
+        {tabContent}
+      </div>
+      {renderCountForTocUpdate % 2 === 0 ? (
+        <h2 style={{ display: 'none' }} />
+      ) : null}
+    </>
   );
 };
 
