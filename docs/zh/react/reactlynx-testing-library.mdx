@@ -173,7 +173,7 @@ it('fireEvent', async () => {
 });
 ```
 
-### Ref 获取
+### 测试 Ref
 
 在 ReactLynx Testing Library 中，可以对渲染结果和元素对应的 `ref` 对象进行快照测试来判断其是否被正确设置。
 
@@ -301,7 +301,7 @@ class ComponentWithLoader extends Component {
 
 test('it waits for the data to be loaded', async () => {
   render(<ComponentWithLoader />);
-  // Lynx Test Environment 中的 elementTree.root 用于维护页面元素树
+  // elementTree.root 用于维护页面元素树
   expect(elementTree.root).toMatchInlineSnapshot(`
     <page>
       <text>
@@ -313,7 +313,7 @@ test('it waits for the data to be loaded', async () => {
     return screen.getByText('Loading...');
   };
   await waitForElementToBeRemoved(loading);
-  // 由于 Lynx Test Environment 底层使用的是 jsdom 来实现 Element PAPI
+  // 由于底层使用的是 JSDOM 来实现 Element PAPI
   // 因此可以直接访问 document.body 来获取页面元素
   expect(document.body).toMatchInlineSnapshot(`
     <body>
@@ -347,7 +347,7 @@ test('it waits for the data to be loaded', async () => {
 });
 ```
 
-在这个例子中，我们使用 `waitForElementToBeRemoved` 方法来等待 _Loading..._ 元素被移除，此时页面中会渲染出 _Loaded this message: Hello World!_ 元素。这时我们可以用 `screen.getByTestId` 方法来获取页面中的元素，并断言其文本内容是否正确。
+在这个例子中，我们使用 `waitForElementToBeRemoved` 方法来等待 `Loading...` 元素被移除，此时页面中会渲染出 `Loaded this message: Hello World!` 元素。这时我们可以用 `screen.getByTestId` 方法来获取页面中的元素，并断言其文本内容是否正确。
 
 ### rerender
 
@@ -391,9 +391,7 @@ it('rerender will re-render the element', async () => {
 });
 ```
 
-### list
-
-list 的使用方法请参考 [list 使用文档](zh/api/elements/built-in/list.html)。
+### 测试 [list](zh/api/elements/built-in/list.html)
 
 由于 `list` 下的 `list-item` 元素是懒加载的，只有元素进入视口时才会被加载，离开视口时会被标记为可回收，在测试框架中可以使用 [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) 和 [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leaveListItem) 方法来模拟列表项元素的加载和回收。
 
@@ -424,6 +422,7 @@ it('list', () => {
     </page>
   `);
   const list = container.firstChild;
+
   // 进入给定索引 0 处的列表项元素，加载列表项元素
   const uid0 = elementTree.enterListItemAtIndex(list, 0);
   expect(list).toMatchInlineSnapshot(`
@@ -439,6 +438,7 @@ it('list', () => {
       </list-item>
     </list>
   `);
+
   // 离开给定索引 0 处的列表项元素，将标记列表项元素为可回收
   elementTree.leaveListItem(list, uid0);
   expect(list).toMatchInlineSnapshot(`
@@ -454,6 +454,7 @@ it('list', () => {
       </list-item>
     </list>
   `);
+
   // 进入给定索引 1 处的列表项元素，此时会复用被回收的 list-item
   const uid1 = elementTree.enterListItemAtIndex(list, 1);
   expect(list).toMatchInlineSnapshot(`
@@ -474,9 +475,7 @@ it('list', () => {
 
 在这个例子中，我们进入了索引 0 处的列表项元素，加载了列表项元素。然后我们离开了索引 0 处的列表项元素，将标记列表项元素为可回收。最后我们进入了索引 1 处的列表项元素，此时会复用被回收的 `list-item`。
 
-### 主线程脚本
-
-主线程脚本的使用文档请参考：[主线程脚本](zh/react/main-thread-script.html)。
+### 测试[主线程脚本](zh/react/main-thread-script.html)
 
 主线程脚本的测试无需额外配置，需要注意的是，主线程脚本中不能直接调用后台线程的方法，因此需要断言函数被调用时，推荐将函数放在 `globalThis` 上，例如：
 
@@ -533,28 +532,93 @@ it('main thread script', async () => {
 
 在这个例子中，我们触发了一个 `tap` 事件，并在事件处理器中调用了 `globalThis.cb` 函数，然后断言 `globalThis.cb` 函数被调用了一次，并且事件对象中的 `key` 属性为 `value`。
 
-### 控制渲染所用的线程
-
-`render` 方法的第二个参数中支持 `enableMainThread` 和 `enableBackgroundThread` 两个选项，用于开启主线程和后台线程。默认情况下 `enableMainThread` 为 `false`，`enableBackgroundThread` 为 `true`，这样主线程不会渲染首屏，只有后台线程运行完整的 Preact 运行时，并将 diff 结果发送到主线程进行协调处理。我们之所以不同时开启主线程和后台线程，是因为单元测试并没有和使用 Rspeedy 构建一样将文件编译成两份产物，这样会导致最顶层的代码只能执行一次，并且默认是在后台线程中。假如你写了一个这样的组件：
-
-```jsx
-const isBackground = __BACKGROUND__;
-const Comp = () => {
-  return (
-    <view>
-      <text>{isBackground ? 'background' : 'main thread'}</text>
-    </view>
-  );
-};
-```
-
-这个组件最顶层的 `isBackground` 只会被执行一次，而且默认情况下是 `true`（Lynx Test Environment 初始化后默认为后台线程），为了避免 `enableMainThread: true` 时渲染出错误的首屏结果，我们默认将 `enableMainThread` 设置为 `false`，得到空首屏，可以避免此问题。
-
-如果确认自己的组件顶层代码没有双线程的差异，建议开启 `enableMainThread`，这样可以得到正确的首屏结果。
-
 ### 更多用法
 
 更多用法请参考可以参考 ReactLynx Testing Library 源码中维护的[测试用例](https://github.com/lynx-family/lynx-stack/tree/main/packages/react/testing-library/src/__tests__)。
+
+## 进阶功能
+
+### 控制渲染时的[双线程](./thinking-in-reactlynx.mdx#你的代码运行在两个线程上)行为
+
+[`render`](../api/reactlynx-testing-library/Function.render.mdx) 方法的第二个参数 [`RenderOptions`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx) 中支持 [`enableMainThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablemainthread) 和 [`enableBackgroundThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablebackgroundthread) 两个选项，`enableMainThread` 用于开启[首帧直出](../guide/interaction/ifr.mdx)，`enableBackgroundThread` 用于开启后台线程渲染。
+
+以这个组件为例：
+
+```jsx
+const Comp = () => {
+  return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+};
+```
+
+下表列出了不同配置下的渲染结果：
+
+| `enableMainThread` | `enableBackgroundThread` | 首帧直出渲染结果 | 后台线程渲染结果 | 适用场景                         |
+| ------------------ | ------------------------ | ---------------- | ---------------- | -------------------------------- |
+| `false`            | `true`                   | 无               | `background`     | 默认值，适用于大部分场景         |
+| `true`             | `false`                  | `main thread`    | 无               | 需要确保首帧直出正确的场景       |
+| `true`             | `true`                   | `main thread`    | `background`     | 需要确保双线程一起正常渲染的场景 |
+
+#### 注意
+
+当你希望编写一个测试用例测试首帧渲染（即 `enableMainThread: true`）结果时，请确保该渲染没有依赖来自最顶层的副作用。
+
+由于没有和使用 Rspeedy 构建一样将文件编译成双线程对应的两份产物，Lynx 测试环境的初始化环境为后台线程。比如，下面的例子中 `isBackground` 变量的值会被设置为 `true`。
+
+```jsx
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+const isBackground = __BACKGROUND__;
+
+describe('IFR Testing', () => {
+  it('will render wrong result if has top level side effects', () => {
+    const CompWithTopLevelSideEffects = () => {
+      return <text>{isBackground ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<CompWithTopLevelSideEffects />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // 这里错误地渲染出了 `background`
+    expect(container).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        background
+      </text>
+    </page>
+  `);
+  });
+});
+```
+
+正确的写法应该是，将对环境变量 `__BACKGROUND__` 的引用包含在组件内部。这里给出了一个例子：
+
+```jsx
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+describe('IFR Testing', () => {
+  it('will render correct result if does not have top level side effects', () => {
+    const Comp = () => {
+      return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<Comp />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // 这里正确地渲染出了 `main thread`
+    expect(container).toMatchInlineSnapshot(`
+      <page>
+        <text>
+          main thread
+        </text>
+      </page>
+    `);
+  });
+});
+```
 
 ## API 参考
 

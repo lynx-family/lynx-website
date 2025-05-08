@@ -173,7 +173,7 @@ it('fireEvent', async () => {
 });
 ```
 
-### Ref
+### Testing Refs
 
 In ReactLynx Testing Library, you can use snapshot testing on the rendering result and the corresponding `ref` object of the element to determine whether it is set correctly.
 
@@ -348,9 +348,9 @@ test('it waits for the data to be loaded', async () => {
 });
 ```
 
-In this example, we use the `waitForElementToBeRemoved` method to wait for the _Loading..._ element to be removed. At this point, the page will render the _Loaded this message: Hello World!_ element. We can then use the `screen.getByTestId` method to get the element on the page and assert its text content.
+In this example, we use the `waitForElementToBeRemoved` method to wait for the `Loading...` element to be removed. At this point, the page will render the `Loaded this message: Hello World!` element. We can then use the `screen.getByTestId` method to get the element on the page and assert its text content.
 
-### rerender
+### Rerendering
 
 The `render` method returns an object that contains the `rerender` method, which can be used to re-render the page. The `rerender` method will render the new component on the page and return a new object. You can use the `rerender` method to test different states of the component.
 
@@ -392,9 +392,7 @@ it('rerender will re-render your component', async () => {
 });
 ```
 
-### list
-
-The usage of `list` is documented in the [list usage document](api/elements/built-in/list.html).
+### Testing [list](api/elements/built-in/list.html)
 
 Since the `list` element's `list-item` elements are lazily loaded, they are only loaded when they enter the viewport and marked as recyclable when they leave the viewport. In the testing framework, you can use the [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) and [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leaveListItem) methods to simulate loading and recycling of list item elements.
 
@@ -425,6 +423,7 @@ it('list', () => {
     </page>
   `);
   const list = container.firstChild;
+
   // Enter the list-item element at the given index 0, it will load the list-item element
   const uid0 = elementTree.enterListItemAtIndex(list, 0);
   expect(list).toMatchInlineSnapshot(`
@@ -440,6 +439,7 @@ it('list', () => {
       </list-item>
     </list>
   `);
+
   // Leave the list-item element at the given index 0, it will mark the list-item element as unused and can be recycled
   elementTree.leaveListItem(list, uid0);
   expect(list).toMatchInlineSnapshot(`
@@ -455,6 +455,7 @@ it('list', () => {
       </list-item>
     </list>
   `);
+
   // Trigger componentAtIndex method of list, load the 1th item (it will reuse the recycled item)
   const uid1 = elementTree.enterListItemAtIndex(list, 1);
   expect(list).toMatchInlineSnapshot(`
@@ -475,9 +476,7 @@ it('list', () => {
 
 In this example, we entered the list item element at index 0, loaded the list item element, then left the list item element at index 0, marked the list item element as recyclable, and finally entered the list item element at index 1, which reused the recycled `list-item`.
 
-### Main thread script
-
-The usage of the main thread script is documented in the [main thread script usage document](react/main-thread-script.html).
+### Testing [Main thread script](react/main-thread-script.html)
 
 The test for the main thread script does not require additional configuration. It is important to note that you cannot directly call background thread methods in the main thread script, so it is recommended to place the function on `globalThis` for assertion, as shown below:
 
@@ -535,28 +534,93 @@ it('main thread script', async () => {
 
 In this example, we triggered a `tap` event and called the `globalThis.cb` function in the event handler. We then asserted that the `globalThis.cb` function was called once and that the `key` property in the event object was `value`.
 
-### Choose the thread used for rendering
-
-The second parameter of the `render` method supports `enableMainThread` and `enableBackgroundThread` are two options for enabling the main thread and background threads. By default, `enableMainThread` is `false` and `enableBackgroundThread` is `true`, so the main thread does not render the first screen, only the background thread runs the full Preact runtime and sends diff result to the main thread for reconciliation. The reason why we don't enable both the main thread and the background thread is because unit tests do not compile files into two bundles like using Rspeedy does, which will result in the top-level code being executed only once, and by default in the background thread. Suppose you wrote a component like this:
-
-```jsx
-const isBackground = __BACKGROUND__;
-const Comp = () => {
-  return (
-    <view>
-      <text>{isBackground ? 'background' : 'main thread'}</text>
-    </view>
-  );
-};
-```
-
-The top-level `isBackground` of this module will only be executed once, and by default it is `true` (Lynx Test Environment defaults to the background thread after initialization). In order to avoid rendering the wrong first screen result when `enableMainThread: true`, we set `enableMainThread` to `false` by default, and get an empty first screen, which can avoid this problem.
-
-If you confirm that there is no difference between the top-level code of your component and the dual thread, it is recommended to turn on `enableMainThread`, so that you can get the correct first screen result.
-
 ### More usage
 
 For more usage, please refer to the [test cases](https://github.com/lynx-family/lynx-stack/tree/main/packages/react/testing-library/src/__tests__) maintained in the ReactLynx Testing Library source code.
+
+## Advanced
+
+### Change the rendering behavior of [dual-threading](./thinking-in-reactlynx.mdx#your-code-runs-on-two-threads)
+
+In the second parameter [`RenderOptions`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx) of the [`render`](../api/reactlynx-testing-library/Function.render.mdx) method, there are two options [`enableMainThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablemainthread) and [`enableBackgroundThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablebackgroundthread). `enableMainThread` is used to enable [IFR](../guide/interaction/ifr.mdx) and `enableBackgroundThread` is used to enable background thread rendering.
+
+Take this example:
+
+```jsx
+const Comp = () => {
+  return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+};
+```
+
+The table below lists the rendering results under different configurations:
+
+| `enableMainThread` | `enableBackgroundThread` | IFR result    | Background result | Applicable scenarios                                                     |
+| ------------------ | ------------------------ | ------------- | ----------------- | ------------------------------------------------------------------------ |
+| `false`            | `true`                   | None          | `background`      | Default value, suitable for most scenarios                               |
+| `true`             | `false`                  | `main thread` | None              | Scenarios that require ensuring correct IFR rendering result             |
+| `true`             | `true`                   | `main thread` | `background`      | Scenarios that require ensuring the dual-thread rendering works normally |
+
+#### Pitfalls
+
+If you want to write a test case to test the IFR rendering (i.e. `enableMainThread: true`) result, make sure that the rendering does not depend on side effects from the top level.
+
+In ReactLynx Testing Library, we do not generate two bundles for dual-threading like using Rspeedy, which will cause the top-level code to be executed only once in the background thread. In the following case, the value of the `isBackground` variable will be set to `true`.
+
+```jsx
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+const isBackground = __BACKGROUND__;
+
+describe('IFR Testing', () => {
+  it('will render wrong result if has top level side effects', () => {
+    const CompWithTopLevelSideEffects = () => {
+      return <text>{isBackground ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<CompWithTopLevelSideEffects />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // It will incorrectly render `background`
+    expect(container).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        background
+      </text>
+    </page>
+  `);
+  });
+});
+```
+
+The correct way is to use `__BACKGROUND__` inside the component. Here is an example:
+
+```jsx
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+describe('IFR Testing', () => {
+  it('will render correct result if does not have top level side effects', () => {
+    const Comp = () => {
+      return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<Comp />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // It correctly renders `main thread`
+    expect(container).toMatchInlineSnapshot(`
+      <page>
+        <text>
+          main thread
+        </text>
+      </page>
+    `);
+  });
+});
+```
 
 ## API Reference
 
