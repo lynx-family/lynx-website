@@ -7,7 +7,7 @@ interface WebIframeProps {
 }
 
 const previewBaseUrl =
-  'https://www.unpkg.com/@lynx-js/web-explorer-canary@0.0.7-canary-20250428-5ff7cd8c/index.html';
+  'https://www.unpkg.com/@lynx-js/web-explorer-canary@0.0.7-canary-20250508-dd1de5ae/index.html';
 
 export const WebIframe = ({ show, src }: WebIframeProps) => {
   const [hasBeenVisible, setHasBeenVisible] = useState(false);
