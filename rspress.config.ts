@@ -22,6 +22,7 @@ export default defineConfig({
       'lynx-compat-data/**/*',
       '**/guide/start/fragments/**',
       '**/guide/custom-native-component/*',
+      '**/guide/custom-native-modules/*',
       '**/guide/embed-lynx-to-native/*',
     ],
   },
