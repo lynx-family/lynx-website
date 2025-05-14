@@ -7,11 +7,11 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 ## 使用指南
 
-`<text>` 元件在布局上和 `<view>` 不同，不支持设置 `display` 等排版及相关属性，`<text>` 内部有自身的布局方式。`<text>` 元件提供行内格式化上下文。在 Lynx 里，除了在 `<text>` 元件内的元件，其他元件都是块级元件。当元件处于 `<text>` 元件内部时，`<text>` 元件如同提供了一个行内格式化上下文（Inline formatting context），使得其中的元件具有类似行内元件的布局特性，元件不会独占一行，而是与周围文本内容在同一行内排列。
+`<text>` 元件在布局上和 `<view>` 不同，不支持设置 `display` 等排版及相关属性，`<text>` 内部有自身的布局方式。在 Lynx 里，除了在 `<text>` 元件内的元件，其他元件都是块级元件。当元件处于 `<text>` 元件内部时，`<text>` 元件如同提供了一个行内格式化上下文（[Inline formatting context](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context)），使得其中的元件具有类似行内元件的布局特性，元件不会独占一行，而是与周围文本内容在同一行内排列。
 
 ### 嵌套 text
 
-嵌套 text 是 `<text>` 的子元件，可以写成 `<text>`，一般用于设置额外的文字样式或者增加点击事件。
+嵌套 text 是 `<text>` 内的子元件，类似 Web 中 `Inline Elements`， 可以写成 `<text>`，一般用于设置额外的文字样式或者增加点击事件。
 
 与 text 不同的是，嵌套 text 只支持一些 `color/font/background` 相关的属性，不支持 `opacity/margin/padding` 等这些 `<view>` 的属性和 `line-height/text-align` 这些段落属性。
 
@@ -47,7 +47,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 ### 嵌套 image
 
-嵌套 image 是 text 的子元件，可以写成 `<image>`，一般用于图文混排。
+嵌套 image 是 `<text>` 内的子元件，类似 Web 中 `Inline Elements`，可以写成 `<image>`，一般用于图文混排。
 
 :::note
 
@@ -110,7 +110,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/text_direction_rtl_demo.jpeg"
-  highlight="{169-239}"
+  highlight="{303-356}"
   example="text"
   defaultFile="src/text_style/index.tsx"
   defaultEntryFile="dist/text_style.lynx.bundle"
@@ -130,9 +130,9 @@ text-maxline?: number;
 
 ```
 
-限制文本内容显示的最大行数
+限制文本内容显示的最大行数，同时需要设置 `overflow:hidden`
 
-### `include-font-padding`
+### `include-font-padding` <AndroidOnly />
 
 ```tsx
 
@@ -165,16 +165,49 @@ text-single-line-vertical-align?: 'normal' | 'top' | 'center' | 'bottom';
 
 用于设置单行纯文本行内居中和对齐，可通过设置 'top' | 'center' | 'bottom' 改变其行为。建议仅在默认字体不满足居中对齐要求时使用，会增加文本测量耗时
 
+### `text-selection`
+
+```tsx
+
+// DefaultValue: false
+text-selection?: boolean;
+
+```
+
+设置是否开启文本选择功能，开启时需要同时设置 `flatten={false}`
+
+### `custom-context-menu`
+
+```tsx
+
+// DefaultValue: false
+custom-context-menu?: boolean;
+
+```
+
+在开启 `text-selection` 之后生效，用于设置选择复制之后是否开启自定义弹出的上下文菜单
+
+### `custom-text-selection`
+
+```tsx
+
+// DefaultValue: false
+custom-text-selection?: boolean;
+
+```
+
+在开启 `text-selection` 之后生效，用于设置是否开启自定义文本选择功能，开启时元件不再处理选择复制相关手势逻辑，需要开发者通过 `setTextSelection` 等 API 控制
+
 ## 事件
 
 前端可以在元件上绑定相应事件回调来监听元件的运行时行为。支持所有[基础事件](/api/elements/built-in/view.mdx#事件)。
 
-### `bindlayout`
+### `layout`
 
 ```ts
-bindlayout = (e: LineInfo) => {};
+bindlayout = (e: layoutEvent) => {};
 
-class LineInfo {
+interface LineInfo {
   /**
    * 该行相对整段文本的起始偏移量
    */
@@ -187,25 +220,174 @@ class LineInfo {
    * 行内文本被截断的字符数量. 如果不为0,说明整段文本在这一行发生了截断.
    */
   ellipsisCount: number;
-};
+}
 
-{
-  /**
-   * 文本布局之后,可以显示的文本行数
-   */
-  lineCount: number;
-  /**
-   * 详细的布局行内信息
-   */
-  lines: LineInfo[];
-  /**
-   * text 元件宽高
-   */
-  size: {width: number, height: number};
+interface layoutEvent extends CustomEvent {
+  detail: {
+    /**
+     * 文本布局之后,可以显示的文本行数
+     */
+    lineCount: number;
+    /**
+     * 详细的布局行内信息
+     */
+    lines: LineInfo[];
+    /**
+     * text 元件宽高
+     */
+    size: { width: number; height: number };
+  };
 }
 ```
 
 layout 事件会返回文本布局后的结果信息，其中包含当前文本的行数，以及每行的文字在整段文本中的起始和结束位置。
+
+### `selectionchange`
+
+```ts
+bindselectionchange = (e: selectionChangeEvent) => {};
+
+interface selectionChangeEvent extends CustomEvent {
+  detail: {
+    /**
+     * 选中文本字符串的开始索引，非选择状态时为 -1
+     */
+    start;
+    /**
+     * 选中文本字符串的结束索引，非选择状态时为 -1
+     */
+    end;
+    /**
+     * 选择的方向，forward | backward
+     */
+    direction;
+  };
+}
+```
+
+文本选中范围变化时触发该事件。
+
+## 方法
+
+前端可以通过 [SelectorQuery](api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行组件的方法。
+
+### `setTextSelection`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "setTextSelection",
+    params: {
+      startX,  //相对元件的选中文本开始坐标x
+      startY,  //相对元件的选中文本开始坐标y
+      endX,  //相对元件的选中文本结束坐标x
+      endY,  //相对元件的选中文本结束坐标y
+      showStartHandle, //是否显示开始位置的浮标
+      showEndHandle,  //是否显示结束位置的浮标
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+通过开始和结束位置设置文本选中内容，并且可以控制开始和结束浮标是否显示，回调参数 `res` 的格式如下：
+
+```ts
+interface Rect {
+  left: number  //左边界
+  right: number  //右边界
+  top: number  //上边界
+  bottom: number  //下边界
+  width: number  //宽度
+  height: number  //高度
+}
+
+interface Handle {
+  x: number  //浮标中心x坐标
+  y: number  //浮标中心y坐标
+  radius: number //浮标默认响应触摸的半径
+}
+
+{
+  /**
+  * 选择文本的包围盒
+  */
+  boundingRect: Rect
+  /**
+  * 选择文本的行包围盒
+  */
+  boxes: Rect[]
+  /**
+  * 浮标位置和默认响应半径
+  */
+  handles: Handle[]
+}
+```
+
+### `getTextBoundingRect`
+
+```ts
+<text id="test"></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getTextBoundingRect",
+    params: {
+      start,
+      end,
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+获取指定范围文本的包围盒，，回调参数 `res` 的格式如下：
+
+```ts
+{
+  /**
+  * 选择文本的包围盒
+  */
+  boundingRect: Rect
+  /**
+  * 选择文本的行包围盒
+  */
+  boxes: Rect[]
+}
+```
+
+### `getSelectedText`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getSelectedText",
+    params: {},
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+获取选中文本的字符串
 
 ## 加载自定义字体
 
@@ -317,52 +499,237 @@ const YourComponent = () => {
 };
 ```
 
+## 更多功能
+
+### `<text>` 元件内选择复制
+
+`<text>` 元件支持文本选择复制能力。可以通过在 `<text>` 元件上设置 `text-selection` 属性开启此能力，同时需要设置 `flatten={false}`。
+
+```tsx
+<text text-selection={true} flatten={false}>
+  hello world
+</text>
+```
+
+长按文字即可高亮选中文本，同时弹出默认的上下文菜单，包含全选和复制按钮。
+
+:::note
+选择复制目前不支持 RTL
+:::
+
+如果开发者需要自定义的上下文菜单，需要设置 `custom-context-menu` 属性，并且通过绑定 `selectionchange` 事件和 `getTextBoundingRect` 方法来确定自定义上下文菜单的显示位置。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/sigle-text-copy.gif"
+  example="text"
+  defaultFile="src/text_selection/index.tsx"
+  entry="src/text_selection"
+  highlight="{26-48,128}"
+/>
+
+### 跨 `<text>` 元件选择复制
+
+如果需求是支持跨多个 `<text>` 元件进行选中并复制内容，需开发者自定义文本选择逻辑：
+
+1. 开启自定义文本选择模式
+
+需要在 `<text>` 元件上设置 `custom-text-selection` 属性，开启之后元件不再处理选择复制相关手势逻辑。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/cross-text-select.gif"
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{270}"
+/>
+
+2. 在外层 `<view>` 上绑定手势事件
+
+在外层 `<view>` 上绑定长按、点击和触摸事件，用于控制选择复制相关手势逻辑。
+
+```jsx
+<view
+  id="container"
+  style={{ width: '90vw' }}
+  className="Container"
+  bindlongpress={handleLongPress}
+  bindtouchstart={handleTouchStart}
+  bindtouchmove={handleTouchMove}
+  bindtouchend={handleTouchEnd}
+  bindtap={handleTap}
+>
+  <text
+    id="0"
+    text-selection={true}
+    custom-text-selection={true}
+    flatten={false}
+    className="Title"
+  >
+    This is title
+  </text>
+  <view className="SplitLine" />
+</view>
+```
+
+3. 处理选择复制交互逻辑
+
+- 获取所有文本节点信息：组件挂载时获取所有可选中的文本节点信息，包含节点的 id 和宽高位置等信息
+
+```jsx
+let handlers: Array<{ x: number; y: number; radius: number; startX: number; startY: number }> = [];
+
+const CrossTextSelection = () => {
+  // useEffect hook to run code when the component mounts and unmounts
+  useEffect(() => {
+    console.log("component did mount");
+    getTextNodeRect();
+    return () => {
+      console.log("component will unmount");
+    };
+  }, []);
+
+
+// Asynchronous function to get the bounding rectangles of text nodes
+  async function getTextNodeRect() {
+    let resArray = await new Promise((resolve) => {
+      lynx.createSelectorQuery()
+        .selectAll("#container text")
+        .fields(
+          {
+            query: true,
+            id: true,
+          },
+          resolve,
+        )
+        .exec();
+    });
+
+    Promise.all(
+      resArray.map((element) => {
+        return new Promise((resolve) => {
+          element.query
+            .selectRoot()
+            .invoke({
+              method: "boundingClientRect",
+              success: (res) => {
+                resolve(res);
+              },
+            })
+            .exec();
+        });
+      }),
+    ).then((values) => {
+      textsInfo = [...values].map(({ top, left, width, height, id }) => ({
+        id: String(id),
+        left: Number(left),
+        top: Number(top),
+        width: Number(width),
+        height: Number(height),
+        startX: -1,
+        startY: 0,
+        endX: width,
+        endY: height,
+      }));
+    });
+  }
+
+```
+
+- 用户长按：开始选区
+  长按后触发 `handleLongPress()` 进入文本选中状态，记录文本选中的开始位置，并且进行第一次选区更新。
+
+```jsx
+// Handle long press event to start text selection
+const handleLongPress = (e) => {
+  isSelecting = true;
+  startPosition.x = e.detail.x;
+  startPosition.y = e.detail.y;
+  setSelection(e.detail.x, e.detail.y, e.detail.x, e.detail.y);
+};
+```
+
+- 拖动手势：实时更新选中区域
+
+拖动中触发 `handleTouchMove()`，如果处于选中状态则更新选中区域
+
+```jsx
+// Handle touch move event to update the selection area
+const handleTouchMove = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+};
+```
+
+- 抬起手指：结束选区
+
+手指抬起触发 `handleTouchEnd()`，确定最终的选择区域，并且清除选中状态
+
+```jsx
+// Handle touch end event to finalize the selection
+const handleTouchEnd = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+  isSelecting = false;
+};
+```
+
+单击空白：清除选区
+
+```jsx
+// Handle tap event to clear the selection
+const handleTap = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  setSelection(-1, -1, -1, -1);
+};
+```
+
+- 拖拽浮标：调整选区
+
+在 `handleTouchStart()` 中判断浮标中心和触摸位置是否在可拖拽的范围内，如果在则开始更新选中区域
+
+```jsx
+// Handle touch start event to check if the touch is on a handler
+const handleTouchStart = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  const { x, y } = e.detail;
+  for (const [index, handler] of handlers.entries()) {
+    if (
+      Math.pow(handler.x - x, 2) + Math.pow(handler.y - y, 2) <
+      Math.pow(handler.radius, 2)
+    ) {
+      isSelecting = true;
+      const another = handlers[(index + 1) % 2];
+      startPosition = { x: another.startX, y: another.startY };
+      break;
+    }
+  }
+};
+```
+
 ## 兼容性
-
-### 文本相关 CSS 属性
-
-| CSS                                                       | text | 嵌套 text | 嵌套 image | 嵌套 view | 说明                                                                            |
-| --------------------------------------------------------- | ---- | --------- | ---------- | --------- | ------------------------------------------------------------------------------- |
-| [color](api/css/properties/color.mdx)                     | 是   | 是        | 否         | 否        | 支持指定文本的颜色，支持设置 gradient 渐变色效果                                |
-| [font-family](api/css/properties/font-family.mdx)         | 是   | 是        | 否         | 否        | 设置自定义字体                                                                  |
-| [font-size](api/css/properties/font-size.mdx)             | 是   | 是        | 否         | 否        | 设置字体的大小                                                                  |
-| [font-style](api/css/properties/font-style.mdx)           | 是   | 是        | 否         | 否        | 设置字体样式，未生效可能是因为不存在该 style 的字体                             |
-| [font-weight](api/css/properties/font-weight.mdx)         | 是   | 是        | 否         | 否        | 设置字体粗细程度，未生效可能是自定义字体只提供了 normal 类型的字形              |
-| [letter-spacing](api/css/properties/letter-spacing.mdx)   | 是   | 是        | 否         | 否        | 设置文本字符的间距                                                              |
-| [line-height](api/css/properties/line-height.mdx)         | 是   | 否        | 否         | 否        | 设置多行文本的行高度                                                            |
-| [text-align](api/css/properties/text-align.mdx)           | 是   | 否        | 否         | 否        | 设置文本在 text 元件中的对齐方式                                                |
-| [text-decoration](api/css/properties/text-decoration.mdx) | 是   | 是        | 否         | 否        | 设置文本的修饰线外观                                                            |
-| [text-indent](api/css/properties/text-indent.mdx)         | 是   | 否        | 否         | 否        | 设置首行文本内容之前的缩进量                                                    |
-| [text-overflow](api/css/properties/text-overflow.mdx)     | 是   | 否        | 否         | 否        | 设置如何提示用户存在隐藏的溢出内容                                              |
-| [text-shadow](api/css/properties/text-shadow.mdx)         | 是   | 是        | 否         | 否        | 为文字添加阴影 ，某些 Android 平台上，blur-radius 的值为 0 时，阴影可能无法绘制 |
-| [text-stroke](api/css/properties/text-stroke.mdx)         | 是   | 是        | 否         | 否        | 指定了文字的笔画宽度和颜色                                                      |
-| [vertical-align](api/css/properties/vertical-align.mdx)   | 否   | 是        | 是         | 是        | 设置子元件的垂直对齐方式                                                        |
-| [white-space](api/css/properties/white-space.mdx)         | 是   | 否        | 否         | 否        | 设置如何处理空格                                                                |
-| [word-break](api/css/properties/word-break)               | 是   | 否        | 否         | 否        | 用于指定怎样在单词内断行                                                        |
-
-### 其他 CSS 属性
-
-| CSS                                                   | text | 嵌套 text | 嵌套 image | 说明                                                             |
-| ----------------------------------------------------- | ---- | --------- | ---------- | ---------------------------------------------------------------- |
-| [animation](api/css/properties/animation.mdx)         | 是   | 否        | 否         | -                                                                |
-| [background](api/css/properties/background.mdx)       | 是   | 是        | 否         |                                                                  |
-| [border](api/css/properties/border.mdx)               | 是   | 否        | 是         | -                                                                |
-| [border-radius](api/css/properties/border-radius.mdx) | 是   | 否        | 是         | -                                                                |
-| [box-shadow](api/css/properties/box-shadow.mdx)       | 是   | 否        | 否         | -                                                                |
-| [direction](api/css/properties/direction.mdx)         | 是   | 否        | 否         | -                                                                |
-| [display](api/css/properties/display.mdx)             | 否   | 否        | 否         | -                                                                |
-| [height](api/css/properties/height.mdx)               | 是   | 否        | 是         | -                                                                |
-| [margin](api/css/properties/margin.mdx)               | 是   | 否        | 是         | -                                                                |
-| [padding](api/css/properties/padding.mdx)             | 是   | 否        | 否         | -                                                                |
-| [position](api/css/properties/position.mdx)           | 是   | 否        | 否         | -                                                                |
-| [opacity](api/css/properties/opacity.mdx)             | 是   | 否        | 否         | Android上会造成overflow:visible失效，可以使用overlap={false}规避 |
-| [outline](api/css/properties/height.mdx)              | 是   | 否        | 否         | -                                                                |
-| [overflow](api/css/properties/overflow.mdx)           | 是   | 否        | 否         | -                                                                |
-| [top](api/css/properties/top.mdx)                     | 是   | 否        | 否         | -                                                                |
-| [transform](api/css/properties/transform.mdx)         | 是   | 否        | 否         | -                                                                |
-| [width](api/css/properties/width.mdx)                 | 是   | 否        | 是         | -                                                                |
-| [z-index](api/css/properties/z-index.mdx)             | 是   | 否        | 否         | -                                                                |
 
 import { LegacyCompatTable } from '@lynx';
 
+### text
+
+[text](/api/elements/built-in/text.html#text)：Lynx 内置元件，用来显示文本内容。
+
 <LegacyCompatTable metadata="elements/text" />
+
+### 嵌套 text
+
+[嵌套 text](/api/elements/built-in/text.html#嵌套-text)： `<text>` 内的子元件， 用于设置额外的文字样式或者增加点击事件。
+
+<LegacyCompatTable metadata="elements/nested-text" />
+
+### 嵌套 image
+
+[嵌套 image](/api/elements/built-in/text.html#嵌套-image)：`<text>` 内的子元件，用于图文混排。
+
+<LegacyCompatTable metadata="elements/nested-image" />

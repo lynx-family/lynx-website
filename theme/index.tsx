@@ -13,7 +13,7 @@ import {
   ShowCase,
   Footer,
 } from '@/components/home-comps';
-import { SUBSITES_CONFIG } from '../shared-route-config';
+import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';

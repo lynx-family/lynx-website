@@ -24,7 +24,9 @@ If no value is provided, the default value `'./src/index.js'` will be used.
 ```js
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
-  entry: './src/pages/main/index.js',
+  source: {
+    entry: './src/pages/main/index.js',
+  }
 })
 ```
 
@@ -35,7 +37,9 @@ export default defineConfig({
 ```js
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
-  entry: ['./src/prefetch.js', './src/pages/main/index.js'],
+  source: {
+    entry: ['./src/prefetch.js', './src/pages/main/index.js'],
+  }
 })
 ```
 
@@ -46,10 +50,12 @@ export default defineConfig({
 ```js
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
-  entry: {
-    foo: './src/pages/foo/index.js',
-    bar: ['./src/pages/bar/index.js', './src/post.js'], // multiple entry modules is allowed
-  },
+  source: {
+    entry: {
+      foo: './src/pages/foo/index.js',
+      bar: ['./src/pages/bar/index.js', './src/post.js'], // multiple entry modules is allowed
+    }
+  }
 })
 ```
 
@@ -60,12 +66,14 @@ export default defineConfig({
 ```js
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
-  entry: {
-    foo: './src/pages/foo/index.js',
-    bar: {
-      import: ['./src/prefetch.js', './src/pages/bar'],
-    },
-  },
+  source: {
+    entry: {
+      foo: './src/pages/foo/index.js',
+      bar: {
+        import: ['./src/prefetch.js', './src/pages/bar'],
+      }
+    }
+  }
 })
 ```
 

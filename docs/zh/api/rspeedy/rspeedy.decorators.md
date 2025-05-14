@@ -9,7 +9,7 @@ Used to configure the decorators syntax.
 **Signature:**
 
 ```typescript
-export interface Decorators
+export interface Decorators 
 ```
 
 ## Remarks

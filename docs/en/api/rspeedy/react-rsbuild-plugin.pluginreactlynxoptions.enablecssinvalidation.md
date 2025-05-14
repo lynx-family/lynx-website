@@ -4,7 +4,7 @@
 
 ## PluginReactLynxOptions.enableCSSInvalidation property
 
-CSS Invalidation refers to the process of determining which elements need to have their styles recalculated when the element is updated.
+CSS Invalidation refers to the process of determining which elements need to have their styles recalculated when the DOM is updated.
 
 **Signature:**
 

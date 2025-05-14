@@ -1,0 +1,619 @@
+# ReactLynx Testing Library
+
+[`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) 包适用于对 ReactLynx 组件的渲染结果进行测试。它提供了和 [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) 相同的 API，例如 [`render`](../../api/reactlynx-testing-library/Function.render.mdx)、[`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx)、[`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 等，其底层使用了 [`@lynx-js/testing-environment`](../../api/lynx-testing-environment/index.mdx) 包来提供 Lynx 环境的 JS 实现，屏蔽了 Lynx 双线程的实现细节。
+
+## 配置
+
+### 从 create-rspeedy 创建新项目
+
+使用 [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 创建的项目，在创建时可以主动选择是否使用 ReactLynx Testing Library（默认勾选），勾选后创建出来的项目已经配置好了 ReactLynx Testing Library。
+
+### 在已有项目中配置
+
+ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，无需额外安装其他包。
+
+配置 [Vitest](https://vitest.dev/) 时需要使用 `@lynx-js/react/testing-library/vitest-config` 中的 `createVitestConfig` 方法来创建 Vitest 配置。你可以通过 `mergeConfig` 方法将其和其他配置合并。
+
+```js title=vitest.config.js
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
+
+const defaultConfig = await createVitestConfig();
+const config = defineConfig({
+  test: {
+    // ...
+  },
+});
+
+export default mergeConfig(defaultConfig, config);
+```
+
+## 示例
+
+### 快速开始
+
+和 React Testing Library 一样，我们推荐将测试用例分为[安排](https://testing-library.com/docs/react-testing-library/example-intro#arrange)、[操作](https://testing-library.com/docs/react-testing-library/example-intro#act) 和[断言](https://testing-library.com/docs/react-testing-library/example-intro#assert) 三个部分。安排部分用于准备测试数据，操作部分用于执行测试操作，断言部分用于断言测试结果。下面是一个简单的示例：
+
+```tsx
+import '@testing-library/jest-dom';
+import { expect, it, vi } from 'vitest';
+import { render, fireEvent, screen } from '@lynx-js/react/testing-library';
+
+it('basic', async function () {
+  const Button = ({ children, onClick }) => {
+    return <view bindtap={onClick}>{children}</view>;
+  };
+  const onClick = vi.fn(() => {});
+
+  // 安排
+  const { container } = render(
+    <Button onClick={onClick}>
+      <text data-testid="text">Click me</text>
+    </Button>,
+  );
+
+  expect(onClick).not.toHaveBeenCalled();
+
+  // 操作
+  fireEvent.tap(container.firstChild);
+
+  // 断言
+  expect(onClick).toBeCalledTimes(1);
+  expect(screen.getByTestId('text')).toHaveTextContent('Click me');
+});
+```
+
+在这个示例中，你可能已经注意到了我们用到了第三方包 [`@testing-library/jest-dom`](https://www.npmjs.com/package/@testing-library/jest-dom) 中的 `toHaveTextContent` 方法来断言元素的文本内容。在 React Testing Library 中，你可以使用 `@testing-library/jest-dom` 是因为测试框架会使用 [JSDOM](https://github.com/jsdom/jsdom) 来创建 DOM 元素；在 ReactLynx Testing Library 中，我们同样使用了 JSDOM 来实现 [Element PAPI](https://lynxjs.org/api/engine/element-api) 的行为，因此和 DOM API 完全兼容。
+
+### 基础渲染
+
+[`render`](../../api/reactlynx-testing-library/Function.render.mdx) 方法用于渲染一个 ReactLynx 组件，并返回一个 [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) 对象，其中的 `container` 字段是一个 [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx)，表示渲染结果的根元素。
+
+```jsx
+import '@testing-library/jest-dom';
+import { expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+it('basic render', () => {
+  const Comp = () => {
+    return <view data-testid="inner" style="background-color: yellow;" />;
+  };
+  const { container, getByTestId } = render(<Comp />);
+  expect(getByTestId('wrapper')).toBeInTheDocument();
+  expect(container.firstChild).toMatchInlineSnapshot(`
+    <view
+      data-testid="wrapper"
+    >
+      <view
+        data-testid="inner"
+        style="background-color: yellow;"
+      />
+    </view>
+  `);
+});
+```
+
+### 事件触发
+
+在使用 [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx) 触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](zh/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值和使用场景如下：
+
+| 事件类型        | `eventType`     | 事件绑定举例       | 事件触发举例                     |
+| --------------- | --------------- | ------------------ | -------------------------------- |
+| `bind`          | `bindEvent`     | `bindtap`          | `new Event('bindEvent:tap')`     |
+| `catch`         | `catchEvent`    | `catchtap`         | `new Event('catchEvent:tap')`    |
+| `capture-bind`  | `capture-bind`  | `capture-bindtap`  | `new Event('capture-bind:tap')`  |
+| `capture-catch` | `capture-catch` | `capture-catchtap` | `new Event('capture-catch:tap')` |
+
+可以直接自己构造 `Event` 对象，也可以使用直接传入事件类型和初始化参数让 Testing Library 自动构造 `Event` 对象。
+
+在 `render` 过程中，事件处理器会被挂载到 [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) 的 [`eventMap`](../../api/lynx-testing-environment/Interface.LynxElement.mdx#eventmap) 属性上，因此可以通过 `eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
+
+```jsx
+import { render, fireEvent } from '@lynx-js/react/testing-library';
+import { vi, expect } from 'vitest';
+
+it('fireEvent', async () => {
+  const handler = vi.fn();
+
+  const Comp = () => {
+    return <text catchtap={handler} />;
+  };
+
+  const {
+    container: { firstChild: button },
+  } = render(<Comp />);
+
+  expect(button).toMatchInlineSnapshot(`<text />`);
+
+  expect(button.eventMap).toMatchInlineSnapshot(`
+    {
+      "catchEvent:tap": [Function],
+    }
+  `);
+
+  expect(handler).toHaveBeenCalledTimes(0);
+
+  // 方式一：自己构造 Event 对象
+  const event = new Event('catchEvent:tap');
+  Object.assign(event, {
+    eventType: 'catchEvent',
+    eventName: 'tap',
+    key: 'value',
+  });
+  expect(fireEvent(button, event)).toBe(true);
+
+  expect(handler).toHaveBeenCalledTimes(1);
+  expect(handler).toHaveBeenCalledWith(event);
+  expect(handler.mock.calls[0][0].type).toMatchInlineSnapshot(
+    `"catchEvent:tap"`,
+  );
+  expect(handler.mock.calls[0][0]).toMatchInlineSnapshot(`
+  Event {
+    "eventName": "tap",
+    "eventType": "catchEvent",
+    "isTrusted": false,
+    "key": "value",
+  }
+  `);
+
+  // 方式二：传入事件类型和初始化参数
+  fireEvent.tap(button, {
+    eventType: 'catchEvent',
+    key: 'value',
+  });
+  expect(handler).toHaveBeenCalledTimes(2);
+  expect(handler.mock.calls[1][0]).toMatchInlineSnapshot(`
+  Event {
+    "eventName": "tap",
+    "eventType": "catchEvent",
+    "isTrusted": false,
+    "key": "value",
+  }
+  `);
+});
+```
+
+### 测试 Ref
+
+在 ReactLynx Testing Library 中，可以对渲染结果和元素对应的 `ref` 对象进行快照测试来判断其是否被正确设置。
+
+```jsx
+import { test, expect } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+import { Component, createRef } from '@lynx-js/react';
+
+it('element ref', async () => {
+  const ref = createRef();
+  const Comp = () => {
+    return <view ref={ref} />;
+  };
+  const { container } = render(<Comp />);
+  // ReactLynx 对于有 ref 的元素会设置 `has-react-ref` 属性
+  // 因此可以通过快照测试来判断 ref 是否被正确设置
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view
+        has-react-ref="true"
+      />
+    </page>
+  `);
+  // ref.current 是一个 NodesRef 对象
+  expect(ref.current).toMatchInlineSnapshot(`
+    NodesRef {
+      "_nodeSelectToken": {
+        "identifier": "1",
+        "type": 2,
+      },
+      "_selectorQuery": {},
+    }
+  `);
+});
+
+it('component ref', async () => {
+  const ref1 = vi.fn();
+  const ref2 = createRef();
+
+  class Child extends Component {
+    x = 'x';
+    render() {
+      return <view />;
+    }
+  }
+
+  class Comp extends Component {
+    render() {
+      return (
+        this.props.show && (
+          <view>
+            <Child ref={ref1} />
+            <Child ref={ref2} />
+          </view>
+        )
+      );
+    }
+  }
+
+  const { container } = render(<Comp show />);
+  expect(container).toMatchInlineSnapshot(`
+      <page>
+        <view>
+          <view />
+          <view />
+        </view>
+      </page>
+    `);
+  expect(ref1).toBeCalledWith(
+    expect.objectContaining({
+      x: 'x',
+    }),
+  );
+  // ref2 指向的是 Child 组件实例
+  expect(ref2.current).toHaveProperty('x', 'x');
+});
+```
+
+### 页面元素查询
+
+你可以使用 [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 对象来查询页面元素，它提供了一些常用的方法，例如 [`getByText`](../../api/reactlynx-testing-library/Function.getByText.mdx)、[`getByTestId`](../../api/reactlynx-testing-library/Function.getByTestId.mdx) 等。还有像 [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) 这样的方法对页面元素状态进行等待。
+
+```jsx
+import '@testing-library/jest-dom';
+import { Component } from '@lynx-js/react';
+import { expect } from 'vitest';
+// waitForElementToBeRemoved 是 @testing-library/dom 中的一个方法，用于等待元素被移除，这里被重新导出了
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from '@lynx-js/react/testing-library';
+
+const fetchAMessage = () =>
+  new Promise((resolve) => {
+    // 我们使用随机超时来模拟一个真实的例子
+    const randomTimeout = Math.floor(Math.random() * 100);
+
+    setTimeout(() => {
+      resolve({ returnedMessage: 'Hello World' });
+    }, randomTimeout);
+  });
+
+class ComponentWithLoader extends Component {
+  state = { loading: true };
+
+  componentDidMount() {
+    fetchAMessage().then((data) => {
+      this.setState({ data, loading: false });
+    });
+  }
+
+  render() {
+    if (this.state.loading) {
+      return <text>Loading...</text>;
+    }
+
+    return (
+      <text data-testid="message">
+        Loaded this message: {this.state.data.returnedMessage}!
+      </text>
+    );
+  }
+}
+
+test('it waits for the data to be loaded', async () => {
+  render(<ComponentWithLoader />);
+  // elementTree.root 用于维护页面元素树
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        Loading...
+      </text>
+    </page>
+  `);
+  const loading = () => {
+    return screen.getByText('Loading...');
+  };
+  await waitForElementToBeRemoved(loading);
+  // 由于底层使用的是 JSDOM 来实现 Element PAPI
+  // 因此可以直接访问 document.body 来获取页面元素
+  expect(document.body).toMatchInlineSnapshot(`
+    <body>
+      <page>
+        <text
+          data-testid="message"
+        >
+          Loaded this message:
+          <wrapper>
+            Hello World
+          </wrapper>
+          !
+        </text>
+      </page>
+    </body>
+  `);
+  expect(screen.getByTestId('message')).toHaveTextContent(/Hello World/);
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <text
+        data-testid="message"
+      >
+        Loaded this message:
+        <wrapper>
+          Hello World
+        </wrapper>
+        !
+      </text>
+    </page>
+  `);
+});
+```
+
+在这个例子中，我们使用 `waitForElementToBeRemoved` 方法来等待 `Loading...` 元素被移除，此时页面中会渲染出 `Loaded this message: Hello World!` 元素。这时我们可以用 `screen.getByTestId` 方法来获取页面中的元素，并断言其文本内容是否正确。
+
+### rerender
+
+`render` 方法返回的对象中包含 `rerender` 方法，可以用于重新渲染页面。`rerender` 方法会将新的组件渲染到页面中，并返回一个新的对象。可以使用 `rerender` 方法来测试组件的不同状态。
+
+:::warning
+
+不同于 React Testing Library，`container` 需要在 `rerender` 之后重新获取，因为 ReactLynx 每次加载都会创建一个新的 `page` 元素。
+
+:::
+
+```jsx
+import '@testing-library/jest-dom';
+import { render } from '@lynx-js/react/testing-library';
+import { expect } from 'vitest';
+
+it('rerender will re-render the element', async () => {
+  const Greeting = (props) => <text>{props.message}</text>;
+  const { container, rerender } = render(<Greeting message="hi" />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        hi
+      </text>
+    </page>
+  `);
+  expect(container.firstChild).toHaveTextContent('hi');
+
+  {
+    const { container } = rerender(<Greeting message="hey" />);
+    expect(container.firstChild).toHaveTextContent('hey');
+
+    expect(container).toMatchInlineSnapshot(`
+      <page>
+        <text>
+          hey
+        </text>
+      </page>
+    `);
+  }
+});
+```
+
+### 测试 [list](zh/api/elements/built-in/list.html)
+
+由于 `list` 下的 `list-item` 元素是懒加载的，只有元素进入视口时才会被加载，离开视口时会被标记为可回收，在测试框架中可以使用 [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) 和 [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leaveListItem) 方法来模拟列表项元素的加载和回收。
+
+```jsx
+import { useState } from '@lynx-js/react';
+import { render } from '@lynx-js/react/testing-library';
+import { expect } from 'vitest';
+
+it('list', () => {
+  const Comp = () => {
+    const [list, setList] = useState([0, 1, 2]);
+    return (
+      <list>
+        {list.map((item) => (
+          <list-item key={item} item-key={item}>
+            <text>{item}</text>
+          </list-item>
+        ))}
+      </list>
+    );
+  };
+  const { container } = render(<Comp />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <list
+        update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+      />
+    </page>
+  `);
+  const list = container.firstChild;
+
+  // 进入给定索引 0 处的列表项元素，加载列表项元素
+  const uid0 = elementTree.enterListItemAtIndex(list, 0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+
+  // 离开给定索引 0 处的列表项元素，将标记列表项元素为可回收
+  elementTree.leaveListItem(list, uid0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+
+  // 进入给定索引 1 处的列表项元素，此时会复用被回收的 list-item
+  const uid1 = elementTree.enterListItemAtIndex(list, 1);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="1"
+      >
+        <text>
+          1
+        </text>
+      </list-item>
+    </list>
+  `);
+});
+```
+
+在这个例子中，我们进入了索引 0 处的列表项元素，加载了列表项元素。然后我们离开了索引 0 处的列表项元素，将标记列表项元素为可回收。最后我们进入了索引 1 处的列表项元素，此时会复用被回收的 `list-item`。
+
+### 测试[主线程脚本](zh/react/main-thread-script.html)
+
+主线程脚本的测试无需额外配置，需要注意的是，主线程脚本中不能直接调用后台线程的方法，因此需要断言函数被调用时，推荐将函数放在 `globalThis` 上，例如：
+
+```jsx
+import { fireEvent, render } from '@lynx-js/react/testing-library';
+import { expect } from 'vitest';
+
+it('main thread script', async () => {
+  globalThis.cb = vi.fn();
+  const Comp = () => {
+    return (
+      <view
+        main-thread:bindtap={(e) => {
+          'main thread';
+          globalThis.cb(e);
+        }}
+      >
+        <text>Hello Main Thread Script</text>
+      </view>
+    );
+  };
+  const { container } = render(<Comp />, {
+    // 你可以尝试开启同时主线程和后台线程，得到的效果都将是一样的
+    // enableMainThread: true,
+    // enableBackgroundThread: true,
+  });
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view>
+        <text>
+          Hello Main Thread Script
+        </text>
+      </view>
+    </page>
+  `);
+  fireEvent.tap(container.firstChild, {
+    key: 'value',
+  });
+  expect(cb).toBeCalledTimes(1);
+  expect(cb.mock.calls).toMatchInlineSnapshot(`
+    [
+      [
+        {
+          "eventName": "tap",
+          "eventType": "bindEvent",
+          "isTrusted": false,
+          "key": "value",
+        },
+      ],
+    ]
+  `);
+});
+```
+
+在这个例子中，我们触发了一个 `tap` 事件，并在事件处理器中调用了 `globalThis.cb` 函数，然后断言 `globalThis.cb` 函数被调用了一次，并且事件对象中的 `key` 属性为 `value`。
+
+### 更多用法
+
+更多用法请参考可以参考 ReactLynx Testing Library 源码中维护的[测试用例](https://github.com/lynx-family/lynx-stack/tree/main/packages/react/testing-library/src/__tests__)。
+
+## 进阶功能
+
+### 控制渲染时的[双线程](./thinking-in-reactlynx.mdx#你的代码运行在两个线程上)行为
+
+[`render`](../api/reactlynx-testing-library/Function.render.mdx) 方法的第二个参数 [`RenderOptions`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx) 中支持 [`enableMainThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablemainthread) 和 [`enableBackgroundThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablebackgroundthread) 两个选项，`enableMainThread` 用于开启[首帧直出](../guide/interaction/ifr.mdx)，`enableBackgroundThread` 用于开启后台线程渲染。
+
+以这个组件为例：
+
+```jsx
+const Comp = () => {
+  return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+};
+```
+
+下表列出了不同配置下的渲染结果：
+
+| `enableMainThread` | `enableBackgroundThread` | 首帧直出渲染结果 | 后台线程渲染结果 | 适用场景                         |
+| ------------------ | ------------------------ | ---------------- | ---------------- | -------------------------------- |
+| `false`            | `true`                   | 无               | `background`     | 默认值，适用于大部分场景         |
+| `true`             | `false`                  | `main thread`    | 无               | 需要确保首帧直出正确的场景       |
+| `true`             | `true`                   | `main thread`    | `background`     | 需要确保双线程一起正常渲染的场景 |
+
+#### 注意
+
+当你希望编写一个测试用例测试首帧渲染（即 `enableMainThread: true`）结果时，请确保该渲染没有依赖来自最顶层的副作用。
+
+由于没有和使用 Rspeedy 构建一样将文件编译成双线程对应的两份产物，Lynx 测试环境的初始化环境为后台线程。比如，下面的例子中 `isBackground` 变量的值会被设置为 `true`。
+
+```jsx
+import '@testing-library/jest-dom';
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+const isBackground = __BACKGROUND__;
+
+describe('IFR Testing', () => {
+  it('will render a wrong result if it has top-level side effects', () => {
+    const CompWithTopLevelSideEffects = () => {
+      return <text>{isBackground ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<CompWithTopLevelSideEffects />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // 测试失败
+    // Error: expect(element).toHaveTextContent()
+    // Expected element to have text content:
+    //   main thread
+    // Received:
+    //   background
+    expect(container).toHaveTextContent('main thread');
+  });
+});
+```
+
+正确的写法应该是，将对环境变量 `__BACKGROUND__` 的引用包含在组件内部。这里给出了一个例子：
+
+```jsx
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+describe('IFR Testing', () => {
+  it('will render the correct result if it does not have top-level side effects', () => {
+    const Comp = () => {
+      return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<Comp />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // 测试通过
+    expect(container).toHaveTextContent('main thread');
+  });
+});
+```
+
+## API 参考
+
+详见 [API 参考](../../api/reactlynx-testing-library/index.md)。

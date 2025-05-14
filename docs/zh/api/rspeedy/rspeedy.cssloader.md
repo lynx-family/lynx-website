@@ -9,7 +9,7 @@ The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](htt
 **Signature:**
 
 ```typescript
-export interface CssLoader
+export interface CssLoader 
 ```
 
 ## Remarks

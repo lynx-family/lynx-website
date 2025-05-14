@@ -5,9 +5,9 @@
 ## Filename.template property
 
 > Warning: This API is now obsolete.
->
+> 
 > Use [Filename.bundle](./rspeedy.filename.bundle.md) instead.
->
+> 
 
 The name of the template files.
 

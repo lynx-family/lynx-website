@@ -105,6 +105,8 @@ export {
   Version27,
   Version28,
   Version29,
+  Version31,
+  Version32,
 } from './VersionTag';
 
 export { ExamplePreview } from './go/example-preview';

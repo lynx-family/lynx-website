@@ -9,7 +9,7 @@ The [Source](./rspeedy.source.md) option changes the behavior of source files.
 **Signature:**
 
 ```typescript
-export interface Source
+export interface Source 
 ```
 
 ## Properties

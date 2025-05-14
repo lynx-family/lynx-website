@@ -9,12 +9,12 @@ The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate s
 **Signature:**
 
 ```typescript
-export interface SourceMap
+export interface SourceMap 
 ```
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [js?](./rspeedy.sourcemap.js.md) |  | Rspack.DevTool \| undefined | _(Optional)_ How the source map should be generated. Setting it to <code>false</code> will disable the source map. |
+|  [js?](./rspeedy.sourcemap.js.md) |  | Rspack.DevTool \| undefined \| \`${Exclude&lt;Rspack.DevTool, false \| 'eval'&gt;}-debugids\` | _(Optional)_ How the source map should be generated. Setting it to <code>false</code> will disable the source map. |
 

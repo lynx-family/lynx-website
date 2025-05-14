@@ -4,7 +4,7 @@
 
 ## CssExtract.pluginOptions property
 
-The options for
+The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
 
 **Signature:**
 

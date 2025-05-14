@@ -61,3 +61,16 @@ export const getHighlightLines = (meta: string) => {
   }
   return highlightLines;
 };
+
+export const isVideo = (filename: string) => {
+  let ext = filename.split('.').pop();
+  if (!ext) {
+    return false;
+  }
+  ext = ext.toLowerCase();
+  const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'];
+  if (videoExtensions.includes(ext)) {
+    return true;
+  }
+  return false;
+};

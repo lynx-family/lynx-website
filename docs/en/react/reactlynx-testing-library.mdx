@@ -1,0 +1,622 @@
+# ReactLynx Testing Library
+
+The [`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) package provides the same set of APIs (e.g. [`render`](../../api/reactlynx-testing-library/Function.render.mdx), [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx), [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx), etc.) for testing the rendering result of ReactLynx, just like the popular [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), with the underlying dual-threaded architecture abstracted away by the [@lynx-js/testing-environment](../../api/lynx-testing-environment/index.mdx).
+
+## Setup
+
+### From create-rspeedy
+
+If you create a new project using [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy), you can choose whether to use ReactLynx Testing Library (default checked) when creating the project. The created project is already configured with ReactLynx Testing Library.
+
+### Adding to an existing project
+
+ReactLynx Testing Library is integrated in the `testing-library` subdirectory of the `@lynx-js/react` package and can be used directly.
+
+To configure [Vitest](https://vitest.dev/), you can use `@lynx-js/react/testing-library/vitest-config` to create a Vitest configuration. You can use the `mergeConfig` method to merge it with other configurations.
+
+```js title=vitest.config.js
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
+
+const defaultConfig = await createVitestConfig();
+const config = defineConfig({
+  test: {
+    // ...
+  },
+});
+
+export default mergeConfig(defaultConfig, config);
+```
+
+## Examples
+
+### Quick Start
+
+Same as in React Testing Library, it is recommended to divide test cases into three parts: [Arrange](https://testing-library.com/docs/react-testing-library/example-intro#arrange), [Act](https://testing-library.com/docs/react-testing-library/example-intro#act), and [Assert](https://testing-library.com/docs/react-testing-library/example-intro#assert). The Arrange part is used to prepare test data, the Act part is used to perform test operations, and the Assert part is used to assert test results. Here is a simple example:
+
+```tsx
+import '@testing-library/jest-dom';
+import { expect, it, vi } from 'vitest';
+import { render, fireEvent, screen } from '@lynx-js/react/testing-library';
+
+it('basic', async function () {
+  const Button = ({ children, onClick }) => {
+    return <view bindtap={onClick}>{children}</view>;
+  };
+  const onClick = vi.fn(() => {});
+
+  // ARRANGE
+  const { container } = render(
+    <Button onClick={onClick}>
+      <text data-testid="text">Click me</text>
+    </Button>,
+  );
+
+  expect(onClick).not.toHaveBeenCalled();
+
+  // ACT
+  fireEvent.tap(container.firstChild);
+
+  // ASSERT
+  expect(onClick).toBeCalledTimes(1);
+  expect(screen.getByTestId('text')).toHaveTextContent('Click me');
+});
+```
+
+In this example, you may have noticed that we used the `toHaveTextContent` method from third-party library [`@testing-library/jest-dom`](https://www.npmjs.com/package/@testing-library/jest-dom) to assert the text content of an element. In React Testing Library, you can use `@testing-library/jest-dom` because the test framework uses [JSDOM](https://github.com/jsdom/jsdom) to create DOM elements; in ReactLynx Testing Library, we also use JSDOM to implement the behavior of [Element PAPI](https://lynxjs.org/api/engine/element-api), so it is compatible with DOM API.
+
+### Basic rendering
+
+The [`render`](../../api/reactlynx-testing-library/Function.render.mdx) method is used to render a ReactLynx component and returns a [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) object. The `container` field is a [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) containing the rendering result.
+
+```jsx
+import '@testing-library/jest-dom';
+import { expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+it('basic render', () => {
+  const Comp = () => {
+    return <view data-testid="inner" style="background-color: yellow;" />;
+  };
+  const { container, getByTestId } = render(<Comp />);
+  expect(getByTestId('wrapper')).toBeInTheDocument();
+  expect(container.firstChild).toMatchInlineSnapshot(`
+    <view
+      data-testid="wrapper"
+    >
+      <view
+        data-testid="inner"
+        style="background-color: yellow;"
+      />
+    </view>
+  `);
+});
+```
+
+### Firing events
+
+When firing an event with [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx), you need to explicitly specify the type of event. For example, `new Event('catchEvent:tap')` (`eventType:eventName`) means triggering a `tap` event of type `catch`. Please refer to [Event Handler Properties](guide/interaction/event-handling/event-propagation.html#event-handler-property). The possible values of `eventType` and usage scenarios are as follows:
+
+| Event Type      | `eventType`     | Event Binding Example | Event Triggering Example         |
+| --------------- | --------------- | --------------------- | -------------------------------- |
+| `bind`          | `bindEvent`     | `bindtap`             | `new Event('bindEvent:tap')`     |
+| `catch`         | `catchEvent`    | `catchtap`            | `new Event('catchEvent:tap')`    |
+| `capture-bind`  | `capture-bind`  | `capture-bindtap`     | `new Event('capture-bind:tap')`  |
+| `capture-catch` | `capture-catch` | `capture-catchtap`    | `new Event('capture-catch:tap')` |
+
+You can directly construct an `Event` object yourself, or you can directly pass in the event type and initialization parameters to let the Testing Library automatically construct an `Event` object.
+
+In the `render` process, the event handler will be mounted to the [`eventMap`](../../api/lynx-testing-environment/Interface.LynxElement.mdx#eventmap) property of the [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) object, so you can use the `eventMap` property to get the event handler of the element for assertion.
+
+```jsx
+import { render, fireEvent } from '@lynx-js/react/testing-library';
+import { vi, expect } from 'vitest';
+
+it('fireEvent', async () => {
+  const handler = vi.fn();
+
+  const Comp = () => {
+    return <text catchtap={handler} />;
+  };
+
+  const {
+    container: { firstChild: button },
+  } = render(<Comp />);
+
+  expect(button).toMatchInlineSnapshot(`<text />`);
+
+  expect(button.eventMap).toMatchInlineSnapshot(`
+    {
+      "catchEvent:tap": [Function],
+    }
+  `);
+
+  expect(handler).toHaveBeenCalledTimes(0);
+
+  // Method 1: Construct the Event object yourself
+  const event = new Event('catchEvent:tap');
+  Object.assign(event, {
+    eventType: 'catchEvent',
+    eventName: 'tap',
+    key: 'value',
+  });
+  expect(fireEvent(button, event)).toBe(true);
+
+  expect(handler).toHaveBeenCalledTimes(1);
+  expect(handler).toHaveBeenCalledWith(event);
+  expect(handler.mock.calls[0][0].type).toMatchInlineSnapshot(
+    `"catchEvent:tap"`,
+  );
+  expect(handler.mock.calls[0][0]).toMatchInlineSnapshot(`
+  Event {
+    "eventName": "tap",
+    "eventType": "catchEvent",
+    "isTrusted": false,
+    "key": "value",
+  }
+  `);
+
+  // Method 2: Pass in event type and initialization parameters
+  fireEvent.tap(button, {
+    eventType: 'catchEvent',
+    key: 'value',
+  });
+  expect(handler).toHaveBeenCalledTimes(2);
+  expect(handler.mock.calls[1][0]).toMatchInlineSnapshot(`
+  Event {
+    "eventName": "tap",
+    "eventType": "catchEvent",
+    "isTrusted": false,
+    "key": "value",
+  }
+  `);
+});
+```
+
+### Testing Refs
+
+In ReactLynx Testing Library, you can use snapshot testing on the rendering result and the corresponding `ref` object of the element to determine whether it is set correctly.
+
+```jsx
+import { test, expect } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+import { Component, createRef } from '@lynx-js/react';
+
+it('element ref', async () => {
+  const ref = createRef();
+  const Comp = () => {
+    return <view ref={ref} />;
+  };
+  const { container } = render(<Comp />);
+  // ReactLynx sets the `has-react-ref` attribute for elements with ref
+  // So you can use snapshot testing to determine whether ref is set correctly
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view
+        has-react-ref="true"
+      />
+    </page>
+  `);
+  // ref.current is a NodesRef object
+  expect(ref.current).toMatchInlineSnapshot(`
+    NodesRef {
+      "_nodeSelectToken": {
+        "identifier": "1",
+        "type": 2,
+      },
+      "_selectorQuery": {},
+    }
+  `);
+});
+
+it('component ref', async () => {
+  const ref1 = vi.fn();
+  const ref2 = createRef();
+
+  class Child extends Component {
+    x = 'x';
+    render() {
+      return <view />;
+    }
+  }
+
+  class Comp extends Component {
+    render() {
+      return (
+        this.props.show && (
+          <view>
+            <Child ref={ref1} />
+            <Child ref={ref2} />
+          </view>
+        )
+      );
+    }
+  }
+
+  const { container } = render(<Comp show />);
+  expect(container).toMatchInlineSnapshot(`
+      <page>
+        <view>
+          <view />
+          <view />
+        </view>
+      </page>
+    `);
+  expect(ref1).toBeCalledWith(
+    expect.objectContaining({
+      x: 'x',
+    }),
+  );
+  // ref2 refers to the Child component instance
+  expect(ref2.current).toHaveProperty('x', 'x');
+});
+```
+
+### Querying page elements
+
+You can use [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) to query page elements, it provides some common methods, such as [`getByText`](../../api/reactlynx-testing-library/Function.getByText.mdx), [`getByTestId`](../../api/reactlynx-testing-library/Function.getByTestId.mdx), etc. There are also methods like [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) to wait for the state of page elements.
+
+```jsx
+import '@testing-library/jest-dom';
+import { Component } from '@lynx-js/react';
+import { expect } from 'vitest';
+// waitForElementToBeRemoved is a method in @testing-library/dom that waits for an element to be removed, which is re-exported here
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from '@lynx-js/react/testing-library';
+
+const fetchAMessage = () =>
+  new Promise((resolve) => {
+    // we are using random timeout here to simulate a real-time example
+    // of an async operation calling a callback at a non-deterministic time
+    const randomTimeout = Math.floor(Math.random() * 100);
+
+    setTimeout(() => {
+      resolve({ returnedMessage: 'Hello World' });
+    }, randomTimeout);
+  });
+
+class ComponentWithLoader extends Component {
+  state = { loading: true };
+
+  componentDidMount() {
+    fetchAMessage().then((data) => {
+      this.setState({ data, loading: false });
+    });
+  }
+
+  render() {
+    if (this.state.loading) {
+      return <text>Loading...</text>;
+    }
+
+    return (
+      <text data-testid="message">
+        Loaded this message: {this.state.data.returnedMessage}!
+      </text>
+    );
+  }
+}
+
+test('it waits for the data to be loaded', async () => {
+  render(<ComponentWithLoader />);
+  // elementTree.root in Lynx Test Environment is used to maintain the page element tree
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        Loading...
+      </text>
+    </page>
+  `);
+  const loading = () => {
+    return screen.getByText('Loading...');
+  };
+  await waitForElementToBeRemoved(loading);
+  // Since Lynx Test Environment uses jsdom to implement Element PAPI at the bottom layer
+  // you can directly access document.body to get page elements
+  expect(document.body).toMatchInlineSnapshot(`
+    <body>
+      <page>
+        <text
+          data-testid="message"
+        >
+          Loaded this message:
+          <wrapper>
+            Hello World
+          </wrapper>
+          !
+        </text>
+      </page>
+    </body>
+  `);
+  expect(screen.getByTestId('message')).toHaveTextContent(/Hello World/);
+  expect(elementTree.root).toMatchInlineSnapshot(`
+    <page>
+      <text
+        data-testid="message"
+      >
+        Loaded this message:
+        <wrapper>
+          Hello World
+        </wrapper>
+        !
+      </text>
+    </page>
+  `);
+});
+```
+
+In this example, we use the `waitForElementToBeRemoved` method to wait for the `Loading...` element to be removed. At this point, the page will render the `Loaded this message: Hello World!` element. We can then use the `screen.getByTestId` method to get the element on the page and assert its text content.
+
+### Rerendering
+
+The `render` method returns an object that contains the `rerender` method, which can be used to re-render the page. The `rerender` method will render the new component on the page and return a new object. You can use the `rerender` method to test different states of the component.
+
+:::warning
+
+Unlike React Testing Library, a new `container` needs to be retrieved after `rerender`. Because ReactLynx creates a new `page` element each time it loads.
+
+:::
+
+```jsx
+import '@testing-library/jest-dom';
+import { render } from '@lynx-js/react/testing-library';
+import { expect } from 'vitest';
+
+it('rerender will re-render your component', async () => {
+  const Greeting = (props) => <text>{props.message}</text>;
+  const { container, rerender } = render(<Greeting message="hi" />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <text>
+        hi
+      </text>
+    </page>
+  `);
+  expect(container.firstChild).toHaveTextContent('hi');
+
+  {
+    const { container } = rerender(<Greeting message="hey" />);
+    expect(container.firstChild).toHaveTextContent('hey');
+
+    expect(container).toMatchInlineSnapshot(`
+      <page>
+        <text>
+          hey
+        </text>
+      </page>
+    `);
+  }
+});
+```
+
+### Testing [list](api/elements/built-in/list.html)
+
+Since the `list` element's `list-item` elements are lazily loaded, they are only loaded when they enter the viewport and marked as recyclable when they leave the viewport. In the testing framework, you can use the [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) and [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leaveListItem) methods to simulate loading and recycling of list item elements.
+
+```jsx
+import { useState } from '@lynx-js/react';
+import { render } from '@lynx-js/react/testing-library';
+import { expect } from 'vitest';
+
+it('list', () => {
+  const Comp = () => {
+    const [list, setList] = useState([0, 1, 2]);
+    return (
+      <list>
+        {list.map((item) => (
+          <list-item key={item} item-key={item}>
+            <text>{item}</text>
+          </list-item>
+        ))}
+      </list>
+    );
+  };
+  const { container } = render(<Comp />);
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <list
+        update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+      />
+    </page>
+  `);
+  const list = container.firstChild;
+
+  // Enter the list-item element at the given index 0, it will load the list-item element
+  const uid0 = elementTree.enterListItemAtIndex(list, 0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+
+  // Leave the list-item element at the given index 0, it will mark the list-item element as unused and can be recycled
+  elementTree.leaveListItem(list, uid0);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="0"
+      >
+        <text>
+          0
+        </text>
+      </list-item>
+    </list>
+  `);
+
+  // Trigger componentAtIndex method of list, load the 1th item (it will reuse the recycled item)
+  const uid1 = elementTree.enterListItemAtIndex(list, 1);
+  expect(list).toMatchInlineSnapshot(`
+    <list
+      update-list-info="[{"insertAction":[{"position":0,"type":"__Card__:__snapshot_f75b7_test_2","item-key":0},{"position":1,"type":"__Card__:__snapshot_f75b7_test_2","item-key":1},{"position":2,"type":"__Card__:__snapshot_f75b7_test_2","item-key":2}],"removeAction":[],"updateAction":[]}]"
+    >
+      <list-item
+        item-key="1"
+      >
+        <text>
+          1
+        </text>
+      </list-item>
+    </list>
+  `);
+});
+```
+
+In this example, we entered the list item element at index 0, loaded the list item element, then left the list item element at index 0, marked the list item element as recyclable, and finally entered the list item element at index 1, which reused the recycled `list-item`.
+
+### Testing [Main thread script](react/main-thread-script.html)
+
+The test for the main thread script does not require additional configuration. It is important to note that you cannot directly call background thread methods in the main thread script, so it is recommended to place the function on `globalThis` for assertion, as shown below:
+
+```jsx
+import { fireEvent, render } from '@lynx-js/react/testing-library';
+import { expect } from 'vitest';
+
+it('main thread script', async () => {
+  globalThis.cb = vi.fn();
+  const Comp = () => {
+    return (
+      <view
+        main-thread:bindtap={(e) => {
+          'main thread';
+          globalThis.cb(e);
+        }}
+      >
+        <text>Hello Main Thread Script</text>
+      </view>
+    );
+  };
+  const { container } = render(<Comp />, {
+    // You can try to enable both the main thread and the background thread at the same time
+    // and the results will be the same
+    // enableMainThread: true,
+    // enableBackgroundThread: true,
+  });
+  expect(container).toMatchInlineSnapshot(`
+    <page>
+      <view>
+        <text>
+          Hello Main Thread Script
+        </text>
+      </view>
+    </page>
+  `);
+  fireEvent.tap(container.firstChild, {
+    key: 'value',
+  });
+  expect(cb).toBeCalledTimes(1);
+  expect(cb.mock.calls).toMatchInlineSnapshot(`
+    [
+      [
+        {
+          "eventName": "tap",
+          "eventType": "bindEvent",
+          "isTrusted": false,
+          "key": "value",
+        },
+      ],
+    ]
+  `);
+});
+```
+
+In this example, we triggered a `tap` event and called the `globalThis.cb` function in the event handler. We then asserted that the `globalThis.cb` function was called once and that the `key` property in the event object was `value`.
+
+### More usage
+
+For more usage, please refer to the [test cases](https://github.com/lynx-family/lynx-stack/tree/main/packages/react/testing-library/src/__tests__) maintained in the ReactLynx Testing Library source code.
+
+## Advanced
+
+### Change the rendering behavior of [dual-threading](./thinking-in-reactlynx.mdx#your-code-runs-on-two-threads)
+
+In the second parameter [`RenderOptions`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx) of the [`render`](../api/reactlynx-testing-library/Function.render.mdx) method, there are two options [`enableMainThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablemainthread) and [`enableBackgroundThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablebackgroundthread). `enableMainThread` is used to enable [IFR](../guide/interaction/ifr.mdx) and `enableBackgroundThread` is used to enable background thread rendering.
+
+Take this example:
+
+```jsx
+const Comp = () => {
+  return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+};
+```
+
+The table below lists the rendering results under different configurations:
+
+| `enableMainThread` | `enableBackgroundThread` | IFR result    | Background result | Applicable scenarios                                                     |
+| ------------------ | ------------------------ | ------------- | ----------------- | ------------------------------------------------------------------------ |
+| `false`            | `true`                   | None          | `background`      | Default value, suitable for most scenarios                               |
+| `true`             | `false`                  | `main thread` | None              | Scenarios that require ensuring correct IFR rendering result             |
+| `true`             | `true`                   | `main thread` | `background`      | Scenarios that require ensuring the dual-thread rendering works normally |
+
+#### Pitfalls
+
+If you want to write a test case to test the IFR rendering (i.e. `enableMainThread: true`) result, make sure that the rendering does not depend on side effects from the top level.
+
+In ReactLynx Testing Library, we do not generate two bundles for dual-threading like using Rspeedy, which will cause the top-level code to be executed only once in the background thread. In the following case, the value of the `isBackground` variable will be set to `true`.
+
+```jsx
+import '@testing-library/jest-dom';
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+const isBackground = __BACKGROUND__;
+
+describe('IFR Testing', () => {
+  it('will render a wrong result if it has top-level side effects', () => {
+    const CompWithTopLevelSideEffects = () => {
+      return <text>{isBackground ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<CompWithTopLevelSideEffects />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // Test fails
+    // Error: expect(element).toHaveTextContent()
+    // Expected element to have text content:
+    //   main thread
+    // Received:
+    //   background
+    expect(container).toHaveTextContent('main thread');
+  });
+});
+```
+
+The correct way is to use `__BACKGROUND__` inside the component. Here is an example:
+
+```jsx
+import '@testing-library/jest-dom';
+import { describe, expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+describe('IFR Testing', () => {
+  it('will render the correct result if it does not have top-level side effects', () => {
+    const Comp = () => {
+      return <text>{__BACKGROUND__ ? 'background' : 'main thread'}</text>;
+    };
+
+    const { container } = render(<Comp />, {
+      enableMainThread: true,
+      enableBackgroundThread: false,
+    });
+    // Test passes
+    expect(container).toHaveTextContent('main thread');
+  });
+});
+```
+
+## API Reference
+
+See details in [API Reference](../../api/reactlynx-testing-library/index.md).

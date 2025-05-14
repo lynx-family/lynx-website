@@ -1,5 +1,5 @@
-import { Spin, Typography } from '@douyinfe/semi-ui';
 import React, { useEffect, useRef, useState } from 'react';
+import { Spin, Typography } from '@douyinfe/semi-ui';
 
 interface WebIframeProps {
   show: boolean;
@@ -7,7 +7,7 @@ interface WebIframeProps {
 }
 
 const previewBaseUrl =
-  'https://www.unpkg.com/@lynx-js/web-explorer-canary@0.0.2-canary-20250304-bbe8a143/index.html';
+  'https://www.unpkg.com/@lynx-js/web-explorer-canary@0.0.7-canary-20250508-dd1de5ae/index.html';
 
 export const WebIframe = ({ show, src }: WebIframeProps) => {
   const [hasBeenVisible, setHasBeenVisible] = useState(false);
@@ -43,27 +43,52 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
 
   return (
     <div
-      className="w-full h-full relative flex items-center justify-center"
-      style={{ display: show ? 'flex' : 'none' }}
+      style={{
+        display: show ? 'flex' : 'none',
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
     >
       {hasBeenVisible && (
         <iframe
           src={previewBaseUrl}
           ref={iframeRef}
-          className="w-full h-full"
+          style={{ width: '100%', height: '100%' }}
         />
       )}
       {loading && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
           <Spin />
         </div>
       )}
       {error && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-          <Typography.Text
-            type="tertiary"
-            style={{ padding: '0 12px', textAlign: 'center' }}
-          >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <Typography.Text type="tertiary">
             Failed to load the preview, please try again later.
           </Typography.Text>
         </div>

@@ -9,7 +9,7 @@ The [CssModules](./rspeedy.cssmodules.md) option is used for the customization o
 **Signature:**
 
 ```typescript
-export interface CssModules
+export interface CssModules 
 ```
 
 ## Remarks

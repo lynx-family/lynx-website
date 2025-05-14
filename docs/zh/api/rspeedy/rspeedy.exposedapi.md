@@ -9,7 +9,7 @@ The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](
 **Signature:**
 
 ```typescript
-export interface ExposedAPI
+export interface ExposedAPI 
 ```
 
 ## Example
