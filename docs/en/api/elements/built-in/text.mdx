@@ -6,7 +6,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 ## Usage
 
-The `<text>` element has its own layout context similar to the Web's [inline formatting context](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context). It does not support `display` properties like `<view>`. For advanced text styling with nested elements, see the [Text and Typography guide](/guide/styling/text-and-typography).
+The `<text>` element has its own layout context similar to the Web's [inline formatting context](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context). It does not support `display` properties like `<view>`. For advanced text styling with `<text>` element, see the [Text and Typography guide](/guide/styling/text-and-typography).
 
 ### Nested `<text>`
 
@@ -29,7 +29,7 @@ Since the [CSS inheritance is not enabled](guide/styling/custom-theming#leveragi
 </view>
 ```
 
-However, nested `<text>` is special. Even when CSS inheritance is not enabled, it will still apply some properties of the parent `<text>`. To maintain consistency, it is recommended to explicitly override the properties of the parent `<text>` in the inline `<text>`.
+However, nested `<text>` is special. Even when CSS inheritance is not enabled, it will still apply `<color>` and `<font-family>` properties of the parent `<text>`. To maintain consistency, it is recommended to explicitly override the properties of the parent `<text>` in the inline `<text>`.
 
 ```tsx
 <text style={{ color: 'red' }}>
@@ -63,18 +63,9 @@ A `<view>` written inside a text element will have inline characteristics and pa
   entry="src/inline_view"
 />
 
-### Inline Truncation
+### `<inline-truncation>`
 
 `<inline-truncation>` tag is used to customize the content that needs to be displayed at the end of the text when truncation occurs.
-
-The `<inline-truncation>` tag only supports nesting within the `<text>` tag. Nodes inside `<inline-truncation>` can include `<text>` or `<inline-text>`, `<image>` or `<inline-image>`, and `<view>`. When text truncation occurs, nodes within `<inline-truncation>` will participate in text layout and appear at the end of the overall text content. If the content width of `<inline-truncation>` exceeds the width limit of the outer `<text>`, the content within `<inline-truncation>` will not be displayed, and the display result will be the same as without adding `<inline-truncation>`.
-
-:::tip
-
-- If you need to show ellipsis, add the ellipsis node `<text>...</text>` within `<inline-truncation>`.
-- `<inline-truncation>` does not support setting attributes and styles, nor does it support binding events.
-
-:::
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-truncation-demo.png"
@@ -405,25 +396,24 @@ LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(cont
 @end
 
 @implementation ExampleGenericResourceFetcher
-NSURL* url = [NSURL URLWithString:request.url];
-  NSURLRequest* url_request = [NSURLRequest requestWithURL:url
-                                               cachePolicy:NSURLRequestReloadIgnoringCacheData
-                                           timeoutInterval:5];
 
-  [NSURLConnection
-      sendAsynchronousRequest:url_request
-                        queue:[NSOperationQueue mainQueue]
-            completionHandler:^(NSURLResponse* _Nullable response, NSData* _Nullable data,
-                                NSError* _Nullable connectionError) {
-              if (!connectionError) {
-                //notify font data
-                callback(data, nil);
-              } else {
-                callback(data, connectionError);
-              }
-            }];
+NSURL *url = [NSURL URLWithString:request.url];
+NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url
+                                             cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                         timeoutInterval:5];
 
-
+[NSURLConnection sendAsynchronousRequest:urlRequest
+                                   queue:[NSOperationQueue mainQueue]
+                       completionHandler:^(NSURLResponse * _Nullable response,
+                                           NSData * _Nullable data,
+                                           NSError * _Nullable connectionError) {
+    if (!connectionError) {
+        // Notify font data
+        callback(data, nil);
+    } else {
+        callback(data, connectionError);
+    }
+}];
 @end
 
 //Inject during `LynxView` construction.
@@ -432,7 +422,7 @@ LynxViewBuilder.genericResourceFetcher = [[ExampleGenericResourceFetcher alloc] 
 
 ## Big Font
 
-The client can use the `FontScale` API to adjust the font scaling after the user changes the font scale in the system settings. This will also trigger the `onFontScaleChanged` event, allowing the front-end to adapt accordingly.
+Clients can use font scaling related APIs to modify the font scaling ratio after users change the system or application font size. This will also trigger the `onFontScaleChanged` event.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/big-font-flow.png"
@@ -442,20 +432,18 @@ The client can use the `FontScale` API to adjust the font scaling after the user
 
 ### Usage
 
-1. Client-side: Use `LynxViewBuilder.setFontScale()` to set the font size when creating the LynxView. When the font size setting is changed, update the font size with `LynxView.updateFontScale()`.
+1. Client-side: Use `LynxViewBuilder.setFontScale()` to set the font scale when creating the LynxView.Update the font scale with `LynxView.updateFontScale()`.
 
-2. Front-end: `font-size` and `line-height` will zoom in and out according to the set scale.
-   The front-end can obtain the updated `fontScale` from the client by listening to the `onFontScaleChanged` event. It can also be obtained through `globalProps.fontScale`.
+2. Front-end: `font-size` and `line-height` will zoom in and out according to the font scale.
+   The front-end can obtain the updated `fontScale` from the client by listening to the `onFontScaleChanged` event.
 
-A demo for the front-end to listen to `onFontScaleChanged`:
+The front-end to listen to `onFontScaleChanged`:
 
 ```jsx
 const YourComponent = () => {
   const [touchCount, setTouchCount] = useState(0);
 
   useEffect(() => {
-    console.log('hello world card loaded');
-
     const eventEmitter = getJSModule('GlobalEventEmitter');
     const listener = (msg) => {
       console.log('onFontScaleChanged testGlobalEvent:', msg);
@@ -556,62 +544,17 @@ Bind long-press, tap, and touch events on the outer `<view>` container. These wi
 - On component mount, retrieve metadata for all selectable `<text>` nodes, including their ID, dimensions, and positions:
 
 ```jsx
-let handlers: Array<{ x: number; y: number; radius: number; startX: number; startY: number }> = [];
-
 const CrossTextSelection = () => {
-  // useEffect hook to run code when the component mounts and unmounts
   useEffect(() => {
-    console.log("component did mount");
     getTextNodeRect();
-    return () => {
-      console.log("component will unmount");
-    };
-  }, []);
+}, []);
 
 
 // Asynchronous function to get the bounding rectangles of text nodes
-  async function getTextNodeRect() {
-    let resArray = await new Promise((resolve) => {
-      lynx.createSelectorQuery()
-        .selectAll("#container text")
-        .fields(
-          {
-            query: true,
-            id: true,
-          },
-          resolve,
-        )
-        .exec();
-    });
-
-    Promise.all(
-      resArray.map((element) => {
-        return new Promise((resolve) => {
-          element.query
-            .selectRoot()
-            .invoke({
-              method: "boundingClientRect",
-              success: (res) => {
-                resolve(res);
-              },
-            })
-            .exec();
-        });
-      }),
-    ).then((values) => {
-      textsInfo = [...values].map(({ top, left, width, height, id }) => ({
-        id: String(id),
-        left: Number(left),
-        top: Number(top),
-        width: Number(width),
-        height: Number(height),
-        startX: -1,
-        startY: 0,
-        endX: width,
-        endY: height,
-      }));
-    });
-  }
+async function getTextNodeRect() {
+  // 1.Use lynx.createSelectorQuery () to get the required text node.
+  // 2.Call boundingClientRect method of the text node to get the rect of the node.
+}
 
 ```
 
@@ -709,3 +652,7 @@ import { LegacyCompatTable } from '@lynx';
 ### nested `<image>`
 
 <LegacyCompatTable metadata="elements/nested-image" />
+
+### `<inline-truncation>`
+
+<LegacyCompatTable metadata="elements/inline-truncation" />

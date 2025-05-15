@@ -6,7 +6,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 ## 使用指南
 
-`<text>` 元件具有自己的布局上下文，类似于 Web 中的[行内格式化上下文](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context)。与 `<view>` 不同,它不支持 `display` 等属性。如需了解更多关于嵌套元件的文本样式设置,请参阅[文本与排版指南](/guide/styling/text-and-typography)。
+`<text>` 元件具有自己的布局上下文，类似于 Web 中的[行内格式化上下文](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context)。与 `<view>` 不同,它不支持 `display` 等属性。如需了解更多关于 `<text>` 元件的文本样式设置,请参阅[文本与排版指南](/guide/styling/text-and-typography)。
 
 ### 嵌套 `<text>`
 
@@ -29,7 +29,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 </view>
 ```
 
-但是，嵌套 `<text>` 比较特殊，未开启 CSS 继承时也会应用部分父 `<text>` 的属性，为保持一致建议在內联 `<text>` 显式覆盖父 `<text>` 的属性。
+但是，嵌套 `<text>` 比较特殊，未开启 CSS 继承时也会应用父 `<text>` 的 `<color>` 和 `<font-family>` 属性，为保持一致建议在內联 `<text>` 显式覆盖父 `<text>` 的属性。
 
 ```tsx
 <text style={{ color: 'red' }}>
@@ -63,19 +63,9 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
   entry="src/inline_view"
 />
 
-### inline-truncation
+### `<inline-truncation>`
 
 `<inline-truncation>` 标签用于自定义文本出现省略时需要显示在文本末尾的内容。
-
-`<inline-truncation>` 标签只支持嵌套在 `<text>` 标签中。`<inline-truncation>` 标签内支持嵌套 `<text>`，`<image>` 以及 `<view>`。当文本出现省略时，`<inline-truncation>` 中的节点会参与文本排版并显示在整体文本内容的结尾，如果 `<inline-truncation>` 内容宽度超过外层 `<text>` 的宽度限制，则 `<inline-truncation>` 内容不显示，显示结果和没有添加 `<inline-truncation>` 相同。
-
-:::tip
-
-- 如果需要显示省略号，需要在 `<inline-truncation>` 中添加省略号 `<text>...</text>` 节点。
-
-- `<inline-truncation>` 不支持设置属性和样式，暂不支持绑定事件。
-
-:::
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-truncation-demo.png"
@@ -414,25 +404,24 @@ LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(cont
 @end
 
 @implementation ExampleGenericResourceFetcher
-NSURL* url = [NSURL URLWithString:request.url];
-  NSURLRequest* url_request = [NSURLRequest requestWithURL:url
-                                               cachePolicy:NSURLRequestReloadIgnoringCacheData
-                                           timeoutInterval:5];
 
-  [NSURLConnection
-      sendAsynchronousRequest:url_request
-                        queue:[NSOperationQueue mainQueue]
-            completionHandler:^(NSURLResponse* _Nullable response, NSData* _Nullable data,
-                                NSError* _Nullable connectionError) {
-              if (!connectionError) {
-                //notify font data
-                callback(data, nil);
-              } else {
-                callback(data, connectionError);
-              }
-            }];
+NSURL *url = [NSURL URLWithString:request.url];
+NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url
+                                             cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                         timeoutInterval:5];
 
-
+[NSURLConnection sendAsynchronousRequest:urlRequest
+                                   queue:[NSOperationQueue mainQueue]
+                       completionHandler:^(NSURLResponse * _Nullable response,
+                                           NSData * _Nullable data,
+                                           NSError * _Nullable connectionError) {
+    if (!connectionError) {
+        // Notify font data
+        callback(data, nil);
+    } else {
+        callback(data, connectionError);
+    }
+}];
 @end
 
 //构造`LynxView`时注入
@@ -441,7 +430,7 @@ LynxViewBuilder.genericResourceFetcher = [[ExampleGenericResourceFetcher alloc] 
 
 ## 大字模式
 
-客户端的可以通过 FontScale 接口，在用户在系统设置更改字体缩放比例后，来修改字体的缩放比例，同时也回发送 onFontScaleChanged 事件给前端，前端可自行适配。
+客户端可以通过字体缩放相关 API，在用户更改系统或者应用字体大小之后，来修改字体的缩放比例，同时会发送 `onFontScaleChanged` 事件到前端。
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/big-font-flow.png"
@@ -451,21 +440,19 @@ LynxViewBuilder.genericResourceFetcher = [[ExampleGenericResourceFetcher alloc] 
 
 ### 使用方式
 
-1. 客户端: 在创建 LynxView 时使用 `LynxViewBuilder.setFontScale()` 设置字体大小；
-   当字体大小的设置发生改变后，通过 `LynxView.updateFontScale()` 更新字体大小。
+1. 客户端: 在创建 LynxView 时使用 `LynxViewBuilder.setFontScale()` 设置字体缩放大小；
+   通过 `LynxView.updateFontScale()` 更新字体缩放大小。
 
-2. 前端: 设置的 `font-size` 和 `line-height`, 会根据客设置的 `fontScale` 等比例放大缩小。
-   同时前端可通过监听 `onFontScaleChanged` 事件, 获取到客户端更新的 `fontScale`, 也可以通过 `globalProps.fontScale` 获取。
+2. 前端: 设置的 `font-size` 和 `line-height` 会根据客户端设置的 `fontScale` 等比例放大缩小。
+   同时前端可通过监听 `onFontScaleChanged` 事件, 获取到客户端更新的 `fontScale`。
 
-前端监听 `onFontScaleChanged` 的 demo:
+前端监听 `onFontScaleChanged` 事件:
 
 ```jsx
 const YourComponent = () => {
   const [touchCount, setTouchCount] = useState(0);
 
   useEffect(() => {
-    console.log('hello world card loaded');
-
     const eventEmitter = getJSModule('GlobalEventEmitter');
     const listener = (msg) => {
       console.log('onFontScaleChanged testGlobalEvent:', msg);
@@ -564,62 +551,17 @@ const YourComponent = () => {
 - 获取所有文本节点信息：组件挂载时获取所有可选中的文本节点信息，包含节点的 id 和宽高位置等信息
 
 ```jsx
-let handlers: Array<{ x: number; y: number; radius: number; startX: number; startY: number }> = [];
-
 const CrossTextSelection = () => {
-  // useEffect hook to run code when the component mounts and unmounts
   useEffect(() => {
-    console.log("component did mount");
     getTextNodeRect();
-    return () => {
-      console.log("component will unmount");
-    };
-  }, []);
+}, []);
 
 
 // Asynchronous function to get the bounding rectangles of text nodes
-  async function getTextNodeRect() {
-    let resArray = await new Promise((resolve) => {
-      lynx.createSelectorQuery()
-        .selectAll("#container text")
-        .fields(
-          {
-            query: true,
-            id: true,
-          },
-          resolve,
-        )
-        .exec();
-    });
-
-    Promise.all(
-      resArray.map((element) => {
-        return new Promise((resolve) => {
-          element.query
-            .selectRoot()
-            .invoke({
-              method: "boundingClientRect",
-              success: (res) => {
-                resolve(res);
-              },
-            })
-            .exec();
-        });
-      }),
-    ).then((values) => {
-      textsInfo = [...values].map(({ top, left, width, height, id }) => ({
-        id: String(id),
-        left: Number(left),
-        top: Number(top),
-        width: Number(width),
-        height: Number(height),
-        startX: -1,
-        startY: 0,
-        endX: width,
-        endY: height,
-      }));
-    });
-  }
+async function getTextNodeRect() {
+  // 1.Use lynx.createSelectorQuery () to get the required text node.
+  // 2.Call boundingClientRect method of the text node to get the rect of the node.
+}
 
 ```
 
@@ -715,3 +657,7 @@ import { LegacyCompatTable } from '@lynx';
 ### 嵌套 `<image>`
 
 <LegacyCompatTable metadata="elements/nested-image" />
+
+### `<inline-truncation>`
+
+<LegacyCompatTable metadata="elements/inline-truncation" />
