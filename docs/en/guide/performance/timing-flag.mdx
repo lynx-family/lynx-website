@@ -2,17 +2,17 @@
 
 The [Lynx Pipeline](guide/spec#lynx-pipeline) defines the complete process from rendering trigger to display on the screen. If you are concerned about the performance of the rendering process for certain key components, you can mark the Lynx Pipeline that renders them by setting the `__lynx_timing_flag` attribute. This allows you to monitor the performance of that specific Lynx Pipeline.
 
-When a marked Lynx Pipeline execution is completed and the screen display is refreshed, a [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry) performance event is generated. You can retrieve this event using the [`PerformanceObserver`](api/lynx-api/performance-api/performance-observer).
+When a marked Lynx Pipeline execution is completed and the screen display is refreshed, a [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) performance event is generated. You can retrieve this event using the [`PerformanceObserver`](/api/lynx-api/performance-api/performance-observer).
 
 ## Usage Rules
 
 - The `__lynx_timing_flag` attribute must be a non-empty string; empty values or invalid types will not trigger the `PerformanceObserver` callback.
-- When the value of the `__lynx_timing_flag` attribute is `__lynx_timing_actual_fmp`, an additional [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry) performance event will be generated.
+- When the value of the `__lynx_timing_flag` attribute is `__lynx_timing_actual_fmp`, an additional [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry) performance event will be generated.
 
 ## Usage Example
 
 1. **Marking the Node**: Set the `__lynx_timing_flag` attribute on the target component. When the node finishes rendering, the framework will automatically collect performance data for its Lynx Pipeline.
-2. **Getting Data**: Register an observer using [`lynx.performance.createObserver()`](api/lynx-api/lynx/lynx-performance#createobserver) to obtain relevant performance data (`PipelineEntry`).
+2. **Getting Data**: Register an observer using [`lynx.performance.createObserver()`](/api/lynx-api/lynx/lynx-performance#createobserver) to obtain relevant performance data (`PipelineEntry`).
 
 import { Go } from '@lynx';
 
@@ -28,6 +28,7 @@ import { Go } from '@lynx';
 ## Important Notes
 
 ### 1. Multiple Components with Same Timing Flag
+
 ```ts
 export default function App() {
   const [showImage, setShowImage] = useState(false);
@@ -46,13 +47,14 @@ export default function App() {
   );
 }
 ```
+
 In this case, only the Lynx Pipeline data of the first displayed component will be counted:
 
-1. Calculate the `ActualFMP` metric and send a [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+1. Calculate the `ActualFMP` metric and send a [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
 
-2. Send a [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry).
+2. Send a [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry).
 
-If you want to track the timing of both components completing rendering, using different __lynx_timing_flag values.
+If you want to track the timing of both components completing rendering, using different \_\_lynx_timing_flag values.
 
 ### 2. Re-rendering Same Component
 
@@ -60,7 +62,7 @@ If you want to track the timing of both components completing rendering, using d
 export default function App() {
   return (
     <view className="container">
-      {data.needShow && 
+      {data.needShow &&
         <text __lynx_timing_flag="__lynx_timing_actual_fmp">
           {data.msg}
         </text>
@@ -72,9 +74,9 @@ export default function App() {
 
 In this case, only the Lynx Pipeline data of the first displayed instance of the component will be counted:
 
-1. Calculate the `ActualFMP` metric and send a [`MetricActualFmpEntry`](api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+1. Calculate the `ActualFMP` metric and send a [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
 
-2. Send a [`PipelineEntry`](api/lynx-api/performance-api/performance-entry/pipeline-entry).
+2. Send a [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry).
 
 If you want to perceive the rendering performance of the component with each data update, you can use data-driven flags as follows:
 
