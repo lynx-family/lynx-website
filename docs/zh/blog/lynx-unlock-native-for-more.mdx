@@ -64,7 +64,7 @@ Lynx 继承了相似的理念——你甚至可以将它视作“**专为应用�
 
 ### 让主线程专责服务于交互体验
 
-Lynx 最具代表性的架构决策之一是**静态强制划分**用户脚本的运行环境，将用户脚本拆分跑在了两个独立的运行时上：一个[主线程](guide/spec.html#main-thread-or-lynx-main-thread)运行时，它由 [**PrimJS**](https://github.com/lynx-family/primjs) 这个专为 Lynx 优化的 JavaScript 引擎驱动，有着独享的同步 UI 操作权限，用于处理初始启动和高优事件处理等任务；另一个则是[后台](guide/spec.html#background-thread-aka-off-main-thread)运行时，作为用户代码的默认执行环境，以确保主线程的低负载和*非阻塞*。这一架构带来了 Lynx 的两大杀手锏：
+Lynx 最具代表性的架构决策之一是**静态强制划分**用户脚本的运行环境，将用户脚本拆分跑在了两个独立的运行时上：一个[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)运行时，它由 [**PrimJS**](https://github.com/lynx-family/primjs) 这个专为 Lynx 优化的 JavaScript 引擎驱动，有着独享的同步 UI 操作权限，用于处理初始启动和高优事件处理等任务；另一个则是[后台](/guide/spec.html#background-thread-aka-off-main-thread)运行时，作为用户代码的默认执行环境，以确保主线程的低负载和*非阻塞*。这一架构带来了 Lynx 的两大杀手锏：
 
 1. [_首帧直出 (Instant First-Frame Rendering，IFR)_](/guide/interaction/ifr.html)：[用研表明](https://www.nngroup.com/articles/response-times-3-important-limits/)：如果渲染足够快（而 Lynx 正是如此），那么在界面过渡时就无需多余的反馈。Lynx 通过短暂阻塞主线程，确保首帧一次性完整呈现，因为用户不会看到空白，可以给用户带来一种即刻响应的感知体验。
 

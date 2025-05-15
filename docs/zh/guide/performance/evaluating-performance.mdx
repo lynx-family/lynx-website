@@ -20,7 +20,7 @@
 
 ![首屏直出的首屏渲染流程](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-without-network.png '首屏直出的首屏渲染流程')
 
-反之，如果页面依赖额外的数据才能完成显示，例如通过网络下载或本地文件读取等异步方式获取的数据，才能“真正”完成渲染。那么你可以[标记 Lynx 流水线](guide/performance/timing-flag)来跟踪这次重要的数据更新。标记后，可以获取被标记的 [Lynx Pipeline](guide/spec#lynx-pipeline) 产生的 _ActualFMP_。与无数据请求时不同，这种情况下 FCP 完成时可能展现的是无意义的画面，例如加载动画或骨架屏。
+反之，如果页面依赖额外的数据才能完成显示，例如通过网络下载或本地文件读取等异步方式获取的数据，才能“真正”完成渲染。那么你可以[标记 Lynx 流水线](/guide/performance/timing-flag)来跟踪这次重要的数据更新。标记后，可以获取被标记的 [Lynx Pipeline](/guide/spec#lynx-pipeline) 产生的 _ActualFMP_。与无数据请求时不同，这种情况下 FCP 完成时可能展现的是无意义的画面，例如加载动画或骨架屏。
 
 ![带网络请求的首屏渲染流程图](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/first-render-with-network.png '带网络请求的首屏渲染流程')
 
@@ -36,7 +36,7 @@
 
 从用户点击链接到新的页面显示，应用程序需要完成包括容器初始化、准备 [TemplateBundle](/api/lynx-native-api/template-bundle) 等初始化工作。
 
-如下图所示是页面显示前必须经过的初始化阶段，包括了[容器](guide/spec#container)、[LynxView](guide/spec#lynxview①) 和 [Background Thread Runtime](guide/spec#background-thread-runtime) 三部分的初始化耗时。[性能 API](/api/lynx-api/performance-api) 提供了 [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry)、[`InitLynxviewEntry`](/api/lynx-api/performance-api/performance-entry/init-lynxview-entry) 和 [`InitBackgroundRuntimeEntry`](/api/lynx-api/performance-api/performance-entry/init-background-runtime-entry) 来描述这些阶段的关键时刻。你可以任意组合这些性能数据进行整个初始化阶段的具体分析。
+如下图所示是页面显示前必须经过的初始化阶段，包括了[容器](/guide/spec#container)、[LynxView](/guide/spec#lynxview①) 和 [Background Thread Runtime](/guide/spec#background-thread-runtime) 三部分的初始化耗时。[性能 API](/api/lynx-api/performance-api) 提供了 [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry)、[`InitLynxviewEntry`](/api/lynx-api/performance-api/performance-entry/init-lynxview-entry) 和 [`InitBackgroundRuntimeEntry`](/api/lynx-api/performance-api/performance-entry/init-background-runtime-entry) 来描述这些阶段的关键时刻。你可以任意组合这些性能数据进行整个初始化阶段的具体分析。
 
 ![完整的初始化阶段划分](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/all-init-process.png '完整的初始化阶段划分')
 
@@ -44,7 +44,7 @@
 
 ### 渲染
 
-加载完成之后，会进入页面渲染阶段。这是最直接影响用户能够以多快的速度看到页面内容的环节。为了准确控制每个环节，Lynx 使用 [Lynx 流水线](guide/spec#lynx-pipeline)将渲染流程分成若干重要阶段。[性能 API](/api/lynx-api/performance-api) 为此提供了 [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 接口用于记录和分析这些阶段的具体耗时。
+加载完成之后，会进入页面渲染阶段。这是最直接影响用户能够以多快的速度看到页面内容的环节。为了准确控制每个环节，Lynx 使用 [Lynx 流水线](/guide/spec#lynx-pipeline)将渲染流程分成若干重要阶段。[性能 API](/api/lynx-api/performance-api) 为此提供了 [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 接口用于记录和分析这些阶段的具体耗时。
 
 通过 `PipelineEntry` 你可以获取页面渲染过程中的详细时间数据，比如主线程脚本执行时间、样式计算时间、布局计算时间等。这些细分的计时信息能帮助识别性能瓶颈，然后进行有针对性的优化。
 
