@@ -1,17 +1,17 @@
-import * as path from 'node:path';
+import { pluginLess } from '@rsbuild/plugin-less';
+import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
+import { pluginLlms } from '@rspress/plugin-llms';
+import { pluginRss } from '@rspress/plugin-rss';
 import type { RspressPlugin, SidebarGroup } from '@rspress/shared';
-import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
+import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
+import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import { defineConfig } from 'rspress/config';
 import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
-import { pluginRss } from '@rspress/plugin-rss';
-import { pluginLlms } from '@rspress/plugin-llms';
-import { pluginSass } from '@rsbuild/plugin-sass';
-import { pluginLess } from '@rsbuild/plugin-less';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -61,6 +61,7 @@ export default defineConfig({
       },
       define: {
         'process.env': {
+          // This marks the first open sourced version of Lynx.
           OSS: '3.2',
           DOC_GIT_BASE_URL: JSON.stringify(
             'https://github.com/lynx-family/lynx-website/tree/main',

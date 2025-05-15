@@ -196,7 +196,9 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   return (
     <ErrorBoundary>
       <Suspense fallback={<Loading message="Loading LCD table" />}>
-        <EditThis path={`packages/lynx-compat-data/${module}.json`} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <EditThis path={`packages/lynx-compat-data/${module}.json`} />
+        </div>
         <CompatTable
           locale={locale}
           query={accessor}

@@ -1,20 +1,8 @@
-import {
-  AndroidOnly,
-  IOSOnly,
-  KnownBug,
-  Required,
-  Go,
-  Version31,
-  Version32,
-} from '@lynx';
+import { AndroidOnly, IOSOnly, Required, Go, VersionBadge } from '@lynx';
 
 import { Tab, Tabs } from 'rspress/theme';
 
-import data from 'virtual-jwt';
-
 # `<list>`
-
-## Introduction
 
 `<list>` is a high-performance scrollable container that enhances rendering performance through lazy loading and reduces memory pressure by implementing recycling and reuse. It supports both horizontal and vertical scrolling, as well as multi-column, grid, and waterfall layouts. `<list>` is commonly used for implementing infinite scrolling in feed streams and similar scenarios.
 
@@ -523,7 +511,7 @@ enum ListEventSource {
 
 :::
 
-### scrolltoupper
+### `scrolltoupper`
 
 ```tsx
 bindscrolltoupper?: EventHandler<ListScrollEvent>;
@@ -531,7 +519,7 @@ bindscrolltoupper?: EventHandler<ListScrollEvent>;
 
 Callback triggered when scrolling to the top of `<list>`. The trigger position of this callback can be controlled by [`upper-threshold-item-count`](#upper-threshold-item-count).
 
-### scrolltolower
+### `scrolltolower`
 
 ```tsx
 bindscrolltolower?: EventHandler<ListScrollEvent>;
@@ -751,7 +739,7 @@ Continue scrolling the distance specified by `offset` based on the existing offs
 
 ## More Features
 
-### Implement Sticky Nodes
+### Creating Sticky Elements
 
 In the `<list>` component, you can achieve sticky top or sticky bottom node effects by setting the [`sticky-top`](#sticky-top) or [`sticky-bottom`](#sticky-bottom) attributes on `<list-item>`.
 
@@ -789,11 +777,11 @@ Set the [`sticky-top`](#sticky-top) or [`sticky-bottom`](#sticky-bottom) attribu
   highlight="{16,25-26}"
 />
 
-### Implement Load More Data on Scroll to Bottom
+### Loading Additional Content When Scrolling to Bottom
 
-In the `<list>` component, you can implement the feature to load more nodes by listening to the event of scrolling to the bottom.
+The `<list>` component supports infinite scroll loading functionality through two key steps:
 
-Ensure that the [`lower-threshold-item-count`](#lower-threshold-item-count) attribute of the `<list>` component is set to an appropriate value to trigger the load more event when scrolling close to the bottom. You also need to bind the [`scrolltolower`](#scrolltolower) event to listen to the action of scrolling to the bottom and load more data in the callback.
+First, set an appropriate value for the [`lower-threshold-item-count`](#lower-threshold-item-count) attribute on the `<list>` component. This determines how close to the bottom the scroll needs to be before triggering the load more event. Then, bind the [`scrolltolower`](#scrolltolower) event handler which will be called when scrolling reaches the bottom threshold, allowing you to load additional data.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-loadmore.gif"
@@ -804,24 +792,23 @@ Ensure that the [`lower-threshold-item-count`](#lower-threshold-item-count) attr
   highlight="{44-47}"
 />
 
-### Implement Paginated Scrolling
-
-In `<list>` , you can implement paginated scrolling effects by setting the [`item-snap`](#item-snap) attribute.
+### Implementing Pagination with `item-snap`
 
 Set the `factor` to determine the parameter for paginated scrolling positioning, with a range of `[0, 1]`. `0` means `<list-item>` aligns with the top of `<list>`, and `1` means `<list-item>` aligns with the bottom of `<list>`. You can also set `offset` to add a scrolling offset on top of factor.
 
-- vertical orientation
+Example of vertical orientation:
 
-  <Go
-    img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-item-snap.gif"
-    example="list"
-    defaultFile="src/itemSnap/index.tsx"
-    defaultEntryFile="dist/itemSnap.lynx.bundle"
-    entry="src/itemsnap"
-    highlight="{20}"
-  />
+{' '}
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-item-snap.gif"
+  example="list"
+  defaultFile="src/itemSnap/index.tsx"
+  defaultEntryFile="dist/itemSnap.lynx.bundle"
+  entry="src/itemsnap"
+  highlight="{20}"
+/>
 
-- horizontal orientation
+Example of horizontal orientation:
 
 <Go
   img="/assets/list_horizontal_snap.gif"
@@ -832,7 +819,7 @@ Set the `factor` to determine the parameter for paginated scrolling positioning,
   highlight="{19,26}"
 />
 
-### Implement z-index <Version32/>
+### Use `z-index` <VersionBadge v="3.2.0" />
 
 <Go
   img="/assets/list-oss-zIndex.gif"
@@ -847,14 +834,10 @@ Set the `factor` to determine the parameter for paginated scrolling positioning,
 
 import { LegacyCompatTable } from '@lynx';
 
-### list
+### `<list>`
 
 <LegacyCompatTable metadata="elements/list" />
 
-`border-radius related CSS properties` includes: [border-radius](api/css/properties/border-radius.mdx), [border-bottom-left-radius](api/css/properties/border-bottom-left-radius.mdx), [border-bottom-right-radius](api/css/properties/border-bottom-right-radius.mdx).
-
-### list-item
+### `<list-item>`
 
 <LegacyCompatTable metadata="elements/list-item" />
-
-`position related CSS properties` includes: [position](api/css/properties/position.mdx), [left](api/css/properties/left.mdx), [top](api/css/properties/top.mdx), [right](api/css/properties/right.mdx), [bottom](api/css/properties/bottom.mdx).

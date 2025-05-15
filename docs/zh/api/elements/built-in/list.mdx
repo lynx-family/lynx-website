@@ -1,20 +1,8 @@
-import {
-  AndroidOnly,
-  IOSOnly,
-  KnownBug,
-  Required,
-  Go,
-  Version31,
-  Version32,
-} from '@lynx';
+import { AndroidOnly, IOSOnly, Required, Go, VersionBadge } from '@lynx';
 
 import { Tab, Tabs } from 'rspress/theme';
 
-import data from 'virtual-jwt';
-
 # `<list>`
-
-## 介绍
 
 `<list>` 是高性能的可滚动容器，通过懒加载提高渲染性能，实现回收复用功能来减轻内存压力，并支持横向和纵向滚动，支持多列、网格和瀑布流布局。`<list>` 常用于实现无限滚动的 Feed 流等场景。
 
@@ -525,7 +513,7 @@ enum ListEventSource {
 
 :::
 
-### scrolltoupper
+### `scrolltoupper`
 
 ```tsx
 bindscrolltoupper?: EventHandler<ListScrollEvent>;
@@ -533,7 +521,7 @@ bindscrolltoupper?: EventHandler<ListScrollEvent>;
 
 滚动到 `<list>` 顶部时触发的回调。该回调触发的位置可以由 [`upper-threshold-item-count`](#upper-threshold-item-count) 控制。
 
-### scrolltolower
+### `scrolltolower`
 
 ```tsx
 bindscrolltolower?: EventHandler<ListScrollEvent>;
@@ -793,9 +781,11 @@ lynx
 
 ### 实现滚动到底部加载更多数据
 
-在 `<list>` 组件中，可以通过监听滚动到底部的事件来实现加载更多节点的功能。
+在 `<list>` 组件中，你可以实现无限滚动加载的功能。这需要两个步骤:
 
-确保 `<list>` 组件的 [`lower-threshold-item-count`](#lower-threshold-item-count) 属性设置为合适的值，以便在滚动到接近底部时触发加载更多的事件，同时需要绑定 [`scrolltolower`](#scrolltolower) 事件来监听滚动到底部的动作，并在回调中加载更多数据。
+1. 设置 [`lower-threshold-item-count`](#lower-threshold-item-count) 属性来控制触发时机。当列表滚动到距离底部还剩指定数量的 item 时,就会触发加载。
+
+2. 监听 [`scrolltolower`](#scrolltolower) 事件。当触发条件满足时,该事件会被调用,你可以在回调函数中请求新数据并添加到列表中。
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-loadmore.gif"
@@ -806,24 +796,22 @@ lynx
   highlight="{44-47}"
 />
 
-### 实现分页滚动效果
-
-在 `<list>` 中，可以通过设置 [`item-snap`](#item-snap) 属性来实现分页滚动效果。
+### 利用 `item-snap` 实现分页滚动
 
 通过设置 `factor` 来确定分页滚动定位的参数，取值范围 `[0, 1]`. 以竖直方向为例，`0` 代表 `<list-item>` 和 `<list>` 顶部对齐，`1` 代表 `<list-item>` 和 `<list>` 底部对齐，还可以通过设置 `offset`，从而在 `factor` 的基础上添加滚动偏移量。
 
-- 竖直方向
+竖直方向：
 
-  <Go
-    img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-item-snap.gif"
-    example="list"
-    defaultFile="src/itemsnap/index.tsx"
-    defaultEntryFile="dist/itemsnap.lynx.bundle"
-    entry="src/itemsnap"
-    highlight="{19}"
-  />
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-item-snap.gif"
+  example="list"
+  defaultFile="src/itemsnap/index.tsx"
+  defaultEntryFile="dist/itemsnap.lynx.bundle"
+  entry="src/itemsnap"
+  highlight="{19}"
+/>
 
-- 水平方向
+水平方向：
 
 <Go
   img="/assets/list_horizontal_snap.gif"
@@ -834,7 +822,7 @@ lynx
   highlight="{19,26}"
 />
 
-### 支持 z-index <Version32/>
+### 使用 `z-index` <VersionBadge v="3.2.0" />
 
 <Go
   img="/assets/list-oss-zIndex.gif"
@@ -849,14 +837,10 @@ lynx
 
 import { LegacyCompatTable } from '@lynx';
 
-### list
+### `<list>`
 
 <LegacyCompatTable metadata="elements/list" />
 
-`border-radius related CSS properties` 包含: [border-radius](api/css/properties/border-radius.mdx)、[border-bottom-left-radius](api/css/properties/border-bottom-left-radius.mdx)、[border-bottom-right-radius](api/css/properties/border-bottom-right-radius.mdx)。
-
-### list-item
+### `<list-item>`
 
 <LegacyCompatTable metadata="elements/list-item" />
-
-`position related CSS properties` 包含: [position](api/css/properties/position.mdx)、[left](api/css/properties/left.mdx)、[top](api/css/properties/top.mdx)、[right](api/css/properties/right.mdx)、[bottom](api/css/properties/bottom.mdx)。

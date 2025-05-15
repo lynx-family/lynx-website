@@ -17,6 +17,10 @@ export {
   NoClay,
 } from './api-badge/PlatformBadge';
 
+/**
+ * @deprecated
+ * Use `VersionBadge` instead.
+ */
 import { VersionBadge as VersionTag } from './api-badge/VersionBadge';
 
 /** @deprecated */

@@ -6,8 +6,10 @@ interface Props {
   showPlatformCategoryHead?: boolean | undefined;
 }
 
-// Polyfilled from the APITable component.
-// This is a legacy version left for compatibility reasons
+/**
+ * @deprecated
+ * Use `APITable` instead.
+ */
 export default function LegacyCompatTable({ metadata }: Props) {
   // Convert metadata string from "/" to "."
   // const query = metadata.replace(/\//g, '.');

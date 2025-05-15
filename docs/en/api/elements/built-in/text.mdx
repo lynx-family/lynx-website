@@ -2,23 +2,15 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 # `<text>`
 
-`<text>` is a built-in element in Lynx used to display text content. It supports specifying text style, binding click event callbacks, and can nest `<text>`, `<image>`, and `<view>` elements to achieve relatively complex text and image content presentation.
+`<text>` is a built-in element in Lynx used to display text content. It supports specifying text style, binding click event callbacks, and can nest `<text>`, [`<image>`](/api/elements/built-in/image.mdx), and [`<view>`](/api/elements/built-in/view.mdx) elements to achieve relatively complex text and image content presentation.
 
 ## Usage
 
-The `<text>` element is different from the `<view>` in layout. It does not support setting typesetting and related properties such as `display`. The `<text>` element has its own layout method. The `<text>` element provides an [inline formatting context](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context). In Lynx, except for the elements in the `<text>` element, all other elements are block-level elements. When an element is inside the `<text>` element, the `<text>` element provides an inline formatting context, so that the elements in it have the layout characteristics of an inline element. The elements do not occupy a line alone, but are arranged in the same line as the surrounding text content.
+The `<text>` element has its own layout context similar to the Web's [inline formatting context](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context). It does not support `display` properties like `<view>`. For advanced text styling with nested elements, see the [Text and Typography guide](/guide/styling/text-and-typography).
 
-### Nested Text
+### Nested `<text>`
 
-Nested text refers to text subelements within a text element, similar to `Inline Elements` in the Web. They can be written as `<text>` and are generally used for setting additional text styles or adding click events.
-
-Unlike text elements, nested text only supports some `color/font/background-related` properties and does not support view properties such as `opacity/margin/padding` or paragraph properties like `line-height/text-align`.
-
-:::note
-
-`line-height/text-align` only supports being written on the text element and not on nested text.
-
-:::
+Nested `<text>` refers to `<text>` subelements within a `<text>` element.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-text-demo.jpeg"
@@ -28,31 +20,28 @@ Unlike text elements, nested text only supports some `color/font/background-rela
   entry="src/inline_text"
 />
 
-In Lynx, the [CSS inheritance](guide/styling/custom-theming#leveraging-css-inheritance-as-needed) feature is not enabled by default. When defining text styles, note that child nodes will not inherit text-related properties from the parent node. Therefore, you need to explicitly declare the required styles on the child nodes.
+Since the [CSS inheritance is not enabled](guide/styling/custom-theming#leveraging-css-inheritance-as-needed) by default in Lynx, it's recommended to explicitly declare the required styles for `<text>`, as it will not inherit the text-related properties from its parent node.
 
 ```tsx
 // When CSS inheritance is not enabled, the font-size of the parent node will not be applied to the child <text> node.
-<view style={{ fontSize: "20px" }}>
+<view style={{ fontSize: '20px' }}>
   <text>hello world</text>
 </view>
+```
 
-// Inline <text> is special. Even when CSS inheritance is not enabled, it will still apply some properties of the parent <text>. To maintain consistency, it is recommended to explicitly override the properties of the parent <text> in the inline <text>.
-<text style={{ color: "red" }}>
+However, nested `<text>` is special. Even when CSS inheritance is not enabled, it will still apply some properties of the parent `<text>`. To maintain consistency, it is recommended to explicitly override the properties of the parent `<text>` in the inline `<text>`.
+
+```tsx
+<text style={{ color: 'red' }}>
   red
   <text>red</text>
-  <text style={{ color: "blue" }}>blue</text>
+  <text style={{ color: 'blue' }}>blue</text>
 </text>
 ```
 
-### Nested Image
+### Nested `<image>`
 
-Nested images are text subelements and can be written as `<image>`, similar to `Inline Elements` in the Web, generally used for mixed text and image layout.
-
-:::note
-
-Currently, the nested image cannot adapt its size automatically, **you must display specify the element size in the `<image>` styles**.
-
-:::
+Nested `<image>` refers to `<image>` subelements within a `<text>` element. It can be used for mixed text and image layout.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
@@ -62,7 +51,7 @@ Currently, the nested image cannot adapt its size automatically, **you must disp
   entry="src/inline_image"
 />
 
-### Nested View
+### Nested `<view>`
 
 A `<view>` written inside a text element will have inline characteristics and participate in text layout. It also supports all functionalities of the `<view>` tag, including adding borders, rounded corners, and any other element content inside it.
 
@@ -709,20 +698,14 @@ const handleTouchStart = (e) => {
 
 import { LegacyCompatTable } from '@lynx';
 
-### text
-
-[text](/api/elements/built-in/text.html#text)：built-in element in Lynx and used to display text content.
+### `<text>`
 
 <LegacyCompatTable metadata="elements/text" />
 
-### nested text
-
-[nested text](/api/elements/built-in/text.html#nested-text)： within a `<text>` element and used to set additional text styles or adding click events.
+### Nested `<text>`
 
 <LegacyCompatTable metadata="elements/nested-text" />
 
-### nested image
-
-[nested image](/api/elements/built-in/text.html#nested-image)： within a `<text>` element and used to mix text and image layouts.
+### nested `<image>`
 
 <LegacyCompatTable metadata="elements/nested-image" />

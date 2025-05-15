@@ -2,24 +2,15 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
 
 # `<text>`
 
-`<text>` 是 Lynx 内置元件，用来显示文本内容。支持指定文字样式，支持绑定点击事件回调。<br />
-`<text>` 内部可以嵌套 `<text>`, `<image>` 以及 `<view>`，以实现相对复杂的图文内容展示。<br />
+`<text>` 是 Lynx 内置元件，用来显示文本内容。支持指定文字样式，支持绑定点击事件回调。`<text>` 内部可以嵌套 `<text>`, [`<image>`](/api/elements/built-in/image.mdx), 以及 [`<view>`](/api/elements/built-in/view.mdx)，以实现相对复杂的图文内容展示。
 
 ## 使用指南
 
-`<text>` 元件在布局上和 `<view>` 不同，不支持设置 `display` 等排版及相关属性，`<text>` 内部有自身的布局方式。在 Lynx 里，除了在 `<text>` 元件内的元件，其他元件都是块级元件。当元件处于 `<text>` 元件内部时，`<text>` 元件如同提供了一个行内格式化上下文（[Inline formatting context](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context)），使得其中的元件具有类似行内元件的布局特性，元件不会独占一行，而是与周围文本内容在同一行内排列。
+`<text>` 元件具有自己的布局上下文，类似于 Web 中的[行内格式化上下文](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context)。与 `<view>` 不同,它不支持 `display` 等属性。如需了解更多关于嵌套元件的文本样式设置,请参阅[文本与排版指南](/guide/styling/text-and-typography)。
 
-### 嵌套 text
+### 嵌套 `<text>`
 
-嵌套 text 是 `<text>` 内的子元件，类似 Web 中 `Inline Elements`， 可以写成 `<text>`，一般用于设置额外的文字样式或者增加点击事件。
-
-与 text 不同的是，嵌套 text 只支持一些 `color/font/background` 相关的属性，不支持 `opacity/margin/padding` 等这些 `<view>` 的属性和 `line-height/text-align` 这些段落属性。
-
-:::note
-
-`line-height/text-align` 只支持写在 text 元件上，不支持使用在嵌套 text 上。
-
-:::
+嵌套 `<text>` 指的是在 `<text>` 元素标签内部嵌套另一个 `<text>` 元素标签。
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-text-demo.jpeg"
@@ -29,31 +20,28 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
   entry="src/inline_text"
 />
 
-在 Lynx 中没有默认开启 [CSS 继承](guide/styling/custom-theming#按需使用-css-继承)功能，在定义文本样式时需要注意子节点并不会继承父节点的文本相关属性。因此你需要在子节点上显示声明需要的样式。
+由于 Lynx 默认[不开启 CSS 继承](guide/styling/custom-theming#按需使用-css-继承)，子节点并不会继承父节点的文本相关属性。我们建议在子节点上显示声明需要的样式。
 
 ```tsx
 // 未开启 CSS 继承时父节点的 font-size 不会应用到子 <text> 节点上
-<view style={{ fontSize:"20px" }}>
+<view style={{ fontSize: '20px' }}>
   <text>hello world</text>
 </view>
+```
 
-// 內联 <text> 比较特殊，未开启 CSS 继承时也会应用部分父 <text> 的属性，为保持一致建议在內联 <text> 显式覆盖父 <text> 的属性
-<text style={{ color:"red" }}>
+但是，嵌套 `<text>` 比较特殊，未开启 CSS 继承时也会应用部分父 `<text>` 的属性，为保持一致建议在內联 `<text>` 显式覆盖父 `<text>` 的属性。
+
+```tsx
+<text style={{ color: 'red' }}>
   red
   <text>red</text>
-  <text style={{ color:"blue" }}>blue</text>
+  <text style={{ color: 'blue' }}>blue</text>
 </text>
 ```
 
-### 嵌套 image
+### 嵌套 `<image>`
 
-嵌套 image 是 `<text>` 内的子元件，类似 Web 中 `Inline Elements`，可以写成 `<image>`，一般用于图文混排。
-
-:::note
-
-目前嵌套 image 无法自适应图片大小，**必须在 `<image>` 的样式中显示指定元件大小**。
-
-:::
+嵌套 `<image>` 指的是在 `<text>` 元素标签内部嵌套另一个 `<image>` 元素标签，可以用于实现图文混排。
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
@@ -63,7 +51,7 @@ import { AndroidOnly, Deprecated, Go } from '@lynx';
   entry="src/inline_image"
 />
 
-### 嵌套 view
+### 嵌套 `<view>`
 
 写在 `<text>` 元件内部的 `<view>` 会具有內联的特性，参与文本的布局。并且内部可以支持 `<view>` 标签的所有功能，内部可以添加边框、圆角以及其他任意元件内容。
 
@@ -716,20 +704,14 @@ const handleTouchStart = (e) => {
 
 import { LegacyCompatTable } from '@lynx';
 
-### text
-
-[text](/api/elements/built-in/text.html#text)：Lynx 内置元件，用来显示文本内容。
+### `<text>`
 
 <LegacyCompatTable metadata="elements/text" />
 
-### 嵌套 text
-
-[嵌套 text](/api/elements/built-in/text.html#嵌套-text)： `<text>` 内的子元件， 用于设置额外的文字样式或者增加点击事件。
+### 嵌套 `<text>`
 
 <LegacyCompatTable metadata="elements/nested-text" />
 
-### 嵌套 image
-
-[嵌套 image](/api/elements/built-in/text.html#嵌套-image)：`<text>` 内的子元件，用于图文混排。
+### 嵌套 `<image>`
 
 <LegacyCompatTable metadata="elements/nested-image" />

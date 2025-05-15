@@ -1,5 +1,4 @@
 import { useI18n, usePageData } from 'rspress/runtime';
-import { Button } from '../ui/button';
 
 interface Props {
   /**
@@ -26,18 +25,28 @@ export default function EditThis({ path }: Props) {
   const sourcePath = `${process.env.DOC_GIT_BASE_URL}/${basePath}`;
 
   return (
-    <div className="sh-flex sh-space-x-2">
+    <div className="sh-flex sh-items-center sh-gap-2 sh-text-sm -sh-mb-3">
       {process.env.DOC_GIT_BASE_URL && (
-        <Button variant="outline" size="sm">
-          <a href={sourcePath}>{t('edit.source')}</a>
-        </Button>
+        <a
+          href={sourcePath}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="sh-text-[var(--custom-link-color)] hover:sh-opacity-85"
+          title={t('edit.source')}
+        >
+          {t('edit.source')}
+        </a>
       )}
       {process.env.CODE_IDE_BASE_URL && (
-        <Button variant="outline" size="sm">
-          <a href={`${process.env.CODE_IDE_BASE_URL}/${basePath}`}>
-            {t('edit.cloud-ide')}
-          </a>
-        </Button>
+        <a
+          href={`${process.env.CODE_IDE_BASE_URL}/${basePath}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="sh-text-[var(--custom-link-color)] hover:sh-opacity-85"
+          title={t('edit.cloud-ide')}
+        >
+          {t('edit.cloud-ide')}
+        </a>
       )}
     </div>
   );
