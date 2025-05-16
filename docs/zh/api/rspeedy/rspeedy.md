@@ -21,7 +21,7 @@ export default defineConfig({
 
 |  Function | Description |
 |  --- | --- |
-|  [createRspeedy({ cwd, rspeedyConfig, loadEnv, environment })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
+|  [createRspeedy({ cwd, rspeedyConfig, loadEnv, environment, callerName, })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
 |  [defineConfig(config)](./rspeedy.defineconfig.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
 |  [loadConfig(loadConfigOptions)](./rspeedy.loadconfig.md) | Load the build config by the config path. |
 |  [mergeRspeedyConfig(configs)](./rspeedy.mergerspeedyconfig.md) | Merge multiple Rspeedy configuration objects. |
@@ -30,6 +30,7 @@ export default defineConfig({
 
 |  Interface | Description |
 |  --- | --- |
+|  [BuildCache](./rspeedy.buildcache.md) | <p>**_(BETA)_** Enable or configure persistent build cache.</p><p>This feature is experimental and may be changed in the future.</p> |
 |  [ChunkSplit](./rspeedy.chunksplit.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
 |  [ChunkSplitBySize](./rspeedy.chunksplitbysize.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
 |  [ChunkSplitCustom](./rspeedy.chunksplitcustom.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
