@@ -56,19 +56,36 @@ const sortTree = (nodes: TreeNode[]) => {
   });
 };
 
+const isEntry = (name: string, entry?: string | string[]) => {
+  if (!entry) {
+    return false;
+  }
+  const isPath = (name: string, item: string) => {
+    return Boolean(
+      item === name || name.startsWith(item?.endsWith('/') ? item : item + '/'),
+    );
+  };
+  if (typeof entry === 'string') {
+    return isPath(name, entry);
+  } else if (Array.isArray(entry) && entry.length > 0) {
+    return Boolean(
+      entry.find((item) => {
+        return isPath(name, item);
+      }),
+    );
+  }
+  return false;
+};
+
 export const doTransTreeData = (
   names: string[],
   expandedKeys: string[] = [],
-  entry?: string,
+  entry?: string | string[],
 ) => {
   const root: TreeNode[] = [];
   const entryData: EntryFile[] = [];
   for (const name of names) {
-    const isEntryPath = Boolean(
-      entry &&
-        (entry === name ||
-          name.startsWith(entry.endsWith('/') ? entry : entry + '/')),
-    );
+    const isEntryPath = isEntry(name, entry);
     if (isEntryPath) {
       const label = name.split('/').pop() || '';
       entryData.push({ label, value: name });

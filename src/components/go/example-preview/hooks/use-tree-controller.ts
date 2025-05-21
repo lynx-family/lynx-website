@@ -11,7 +11,7 @@ import {
 export interface ITreeProps {
   fileNames: string[];
   value: string;
-  entry?: string;
+  entry?: string | string[];
 }
 
 const useTreeController = ({ fileNames, value, entry }: ITreeProps) => {
