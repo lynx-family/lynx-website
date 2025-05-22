@@ -2,7 +2,7 @@ import { Go } from '@lynx';
 
 # 多主题
 
-Lynx 支持了较丰富的 [CSS 属性](/api/css/properties)，配合 [CSS 选择器](/api/css/selectors)、[CSS 变量](/api/css/properties/css-variable)以及 CSS 继承能力，可轻松实现多样化的主题样式，为用户界面提供一致且优雅的外观和风格。通过定义和管理不同的主题变量，开发者可以方便地切换不同的配色方案、字体风格以及其他视觉元件，确保用户获得最佳的视觉体验和互动感受。
+Lynx 支持了较丰富的 [CSS 属性](/api/css/properties)，配合 [CSS 选择器](/api/css/selectors)、[CSS 变量](/api/css/properties/css-variable)以及 可选择的 CSS 继承能力，可轻松实现多样化的主题样式，为用户界面提供一致且优雅的外观和风格。通过定义和管理不同的主题变量，开发者可以方便地切换不同的配色方案、字体风格以及其他视觉元件，确保用户获得最佳的视觉体验和互动感受。
 
 ## 使用 CSS 后代选择器切换主题
 
@@ -151,7 +151,7 @@ export function App() {
 
 #### 切换 class 间接修改变量的值
 
-当然也可以在需要切换主题时，通过[切换顶层节点](/api/css/properties/css-variable#通过修改声明了-css-变量的选择器)上定义了不同的 CSS 变量的 class，间接修改变量的值，从而触发所有应用到该变量的子节点的样式更新。
+当然也可以在需要切换主题时，通过切换祖先节点上定义了不同的 [CSS 变量](/api/css/properties/css-variable#通过修改声明了-css-变量的选择器)的 class，间接修改变量的值，从而触发所有应用到该变量的子节点的样式更新。
 
 比如用 `.theme-light` 和 `.theme-dark` 来定义不同主题需要的 CSS 变量的值：
 
@@ -209,24 +209,26 @@ export function App() {
 
 ## 按需使用 CSS 继承
 
-在一些具有复杂样式的页面中，使用 CSS 继承会有助于简化开发，但实现属性继承逻辑，一定程度上增加了样式处理流程的复杂度，从而会带来一定的性能开销。
-鉴于性能考虑，Lynx 没有默认开启 CSS 继承能力，需要开发者按需启用。
+在复杂样式的页面中，使用 CSS 继承会有助于简化开发，但实现属性继承逻辑，一定程度上增加了样式处理流程的复杂度，从而会带来一定的性能开销。
+为优化性能，Lynx 默认不启用普通 CSS 属性的继承，开发者需按需启用。CSS 自定义属性（也称 CSS 变量）则默认可被后代节点继承。
 
-### 如何开启 CSS 继承
+### CSS 自定义属性的继承
+
+[CSS 自定义属性](/api/css/properties/css-variable)（CSS 变量，如 `--primary-color`）遵循 Web 标准，默认可被后代节点继承，无需额外配置。开发者可通过在祖先节点中定义 CSS 自定义属性，实现动态样式管理。
+
+### 常规（非自定义）CSS 属性的继承
 
 需要配置 [`enableCSSInheritance`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance) 来启用继承能力。
 
-### 默认继承的属性
+#### 默认继承的属性
 
 开启 `enableCSSInheritance` 后，默认情况下只有这些属性可以被继承：
 
 [`direction`](/api/css/properties/direction.mdx),[`color`](/api/css/properties/color.mdx),[`font-family`](/api/css/properties/font-family.mdx),[`font-size`](/api/css/properties/font-size.mdx),[`font-style`](/api/css/properties/font-style.mdx),[`font-weight`](/api/css/properties/font-weight.mdx),[`letter-spacing`](/api/css/properties/letter-spacing.mdx),[`line-height`](/api/css/properties/line-height.mdx),[`text-align`](/api/css/properties/text-align.mdx),[`text-decoration`](/api/css/properties/text-decoration.mdx),[`text-shadow`](/api/css/properties/text-shadow.mdx)
 
-### CSS 继承规则
-
 默认继承属性的继承行为对齐 [🌐W3C 继承行为](https://www.w3.org/TR/css-cascade-3/#inheriting)
 
-### 自定义可继承的属性
+#### 自定义可继承的属性
 
 除了默认可继承属性之外，可以在页面配置 [`customCSSInheritanceList`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.customcssinheritancelist) 自定义可继承的 CSS 属性。
 当有自定义继承的声明时，仅有在自定义继承列表里面的 CSS 属性才可以继承。
@@ -237,7 +239,7 @@ export function App() {
 "customCSSInheritanceList":["font-size","flex-direction"]
 ```
 
-### CSS 继承的功能局限
+#### CSS 继承的功能局限
 
 1. `position:fixed` 的元件永远只继承 page 的属性。
 2. 不支持关键字 "inherit"
