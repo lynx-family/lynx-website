@@ -16,5 +16,10 @@ A rsbuild plugin that integrates with ReactLynx.
 
 |  Interface | Description |
 |  --- | --- |
+|  [AddComponentElementConfig](./react-rsbuild-plugin.addcomponentelementconfig.md) | Controls whether to add wrapper elements for components |
+|  [CompatVisitorConfig](./react-rsbuild-plugin.compatvisitorconfig.md) | The <code>compat</code> option controls compatibilities with ReactLynx2.0. |
+|  [DefineDceVisitorConfig](./react-rsbuild-plugin.definedcevisitorconfig.md) | Like <code>define</code> in various bundlers, but this one happens at transform time, and a DCE pass will be performed. |
+|  [ExtractStrConfig](./react-rsbuild-plugin.extractstrconfig.md) | Merge same string literals in JS and Lepus to reduce output bundle size. Set to <code>false</code> to disable. |
 |  [PluginReactLynxOptions](./react-rsbuild-plugin.pluginreactlynxoptions.md) | Options of [pluginReactLynx()](./react-rsbuild-plugin.pluginreactlynx.md) |
+|  [ShakeVisitorConfig](./react-rsbuild-plugin.shakevisitorconfig.md) | How main-thread code will be shaken. |
 
