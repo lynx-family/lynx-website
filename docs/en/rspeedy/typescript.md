@@ -54,6 +54,47 @@ To solve this, create a `src/rspeedy-env.d.ts` file, and add the following conte
 [`create-rspeedy`](https://npmjs.com/create-rspeedy) will automatically create this file for you.
 :::
 
+## Extending Lynx types
+
+Lynx provides default types, but you may need to extend or customize certain type definitions for your application.
+
+- [`GlobalProps`](#globalprops): extends the type definition for `lynx.__globalProps`
+- [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Function.useInitData.mdx)
+
+### GlobalProps
+
+You can extend the `interface GlobalProps` from `@lynx-js/types` to add custom properties:
+
+```ts title="src/global-props.d.ts"
+declare module '@lynx-js/types' {
+  interface GlobalProps {
+    foo: string;
+    bar: number;
+  }
+}
+
+export {}; // This export makes the file a module
+```
+
+After this extension, TypeScript will recognize and provide type checking for `lynx.__globalProps.foo` and `lynx.__globalProps.bar`.
+
+### InitData
+
+You can extend the `interface InitData` from `@lynx-js/react` to add your custom data properties:
+
+```ts title="src/init-data.d.ts"
+declare module '@lynx-js/react' {
+  interface InitData {
+    foo: string;
+    bar: number;
+  }
+}
+
+export {}; // This export makes the file a module
+```
+
+With this extension, TypeScript will provide type checking for `useInitData().foo` and `useInitData().bar` in your components.
+
 ## TypeScript Transpilation
 
 Rsbuild uses SWC for transforming TypeScript code.

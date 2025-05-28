@@ -54,6 +54,47 @@ Rspeedy 提供了 CSS Modules、[静态资源](./assets.md)等内置功能，这
 [`create-rspeedy`](https://npmjs.com/create-rspeedy) 在创建项目时会自动生成该文件。
 :::
 
+## 扩展 Lynx 类型
+
+Lynx 提供了默认类型，但你可能需要为你的应用扩展或自定义某些类型定义。
+
+- [`GlobalProps`](#globalprops)：扩展 `lynx.__globalProps` 的类型定义
+- [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Function.useInitData.mdx) 的返回类型
+
+### GlobalProps
+
+你可以扩展 `@lynx-js/types` 中的 `interface GlobalProps` 来添加自定义属性：
+
+```ts title="src/global-props.d.ts"
+declare module '@lynx-js/types' {
+  interface GlobalProps {
+    foo: string;
+    bar: number;
+  }
+}
+
+export {}; // 这个导出使文件成为一个模块
+```
+
+完成此扩展后，TypeScript 将识别并为 `lynx.__globalProps.foo` 和 `lynx.__globalProps.bar` 提供类型检查。
+
+### InitData
+
+你可以扩展 `@lynx-js/react` 中的 `interface InitData` 来添加自定义数据属性：
+
+```ts title="src/init-data.d.ts"
+declare module '@lynx-js/react' {
+  interface InitData {
+    foo: string;
+    bar: number;
+  }
+}
+
+export {}; // 这个导出使文件成为一个模块
+```
+
+通过这个扩展，TypeScript 将为组件中的 `useInitData().foo` 和 `useInitData().bar` 提供类型检查。
+
 ## TypeScript 编译
 
 Rsbuild 使用 SWC 来编译 TypeScript 代码。
