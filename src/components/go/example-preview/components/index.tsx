@@ -140,8 +140,6 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   }}
                 >
                   <Tabs
-                    keepDOM
-                    lazyRender
                     activeKey={currentFileName}
                     onChange={(v) => updateCurrentName(v)}
                     size="small"

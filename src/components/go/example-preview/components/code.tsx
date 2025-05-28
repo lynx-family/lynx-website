@@ -21,25 +21,22 @@ export const Code: FC<CodeProps> = ({
   isFirstShowCode,
   setIsFirstShowCode,
 }) => {
-  const [rendered, setRendered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightVal, setHighlightVal] = useState(highlight);
   const defaultValRef = useRef(val);
 
-  useEffect(() => {
+  function scrollToFirstHighlightLine() {
     if (!val) {
       return;
     }
-    if (!rendered) {
-      return;
-    }
+
     if (isFirstShowCode) {
       if (containerRef.current && highlight) {
         const highlightLines = getHighlightLines(highlight);
         const firstHighlight = highlightLines[0];
         setIsFirstShowCode(false);
         if (firstHighlight > 3) {
-          if (firstHighlight && containerRef.current) {
+          setTimeout(() => {
             const container = containerRef.current;
             if (container) {
               const firstHighlightElement = containerRef.current.querySelector(
@@ -57,7 +54,7 @@ export const Code: FC<CodeProps> = ({
                 }
               }
             }
-          }
+          });
         }
         defaultValRef.current = val;
       }
@@ -76,7 +73,7 @@ export const Code: FC<CodeProps> = ({
         }, 0);
       }
     }
-  }, [val, rendered, highlight, isFirstShowCode]);
+  }
 
   // fixed tab change highlight delay
   useEffect(() => {
@@ -87,7 +84,7 @@ export const Code: FC<CodeProps> = ({
       <CodeBlockRuntime
         lang={language}
         onRendered={() => {
-          setRendered(true);
+          scrollToFirstHighlightLine();
         }}
         code={val}
         shikiOptions={{
