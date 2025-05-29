@@ -171,6 +171,9 @@ export const PlatformTabs = ({
 
   // Get platform from hash or use default
   const getPlatformFromHash = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return defaultPlatform;
+    }
     const hash = window.location.hash.slice(1);
     const hashParts = hash.split(',');
     const platformFromHash = hashParts

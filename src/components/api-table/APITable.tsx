@@ -1,6 +1,7 @@
 import { usePageData } from 'rspress/runtime';
 import Callout from '../Callout';
 import { FetchingCompatTable } from './FetchingCompatTable';
+import { Suspense } from 'react';
 
 interface APITableProps {
   /**
@@ -36,5 +37,9 @@ export default function APITable(props: APITableProps) {
     query = frontmatter.api as string;
   }
 
-  return <FetchingCompatTable query={query} />;
+  return (
+    <Suspense>
+      <FetchingCompatTable query={query} />
+    </Suspense>
+  );
 }

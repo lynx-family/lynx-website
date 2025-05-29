@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 import { ExampleContent } from './components';
@@ -36,7 +36,7 @@ export interface ExamplePreviewProps {
   schemaOptions?: SchemaOptionsData;
 }
 
-export const ExamplePreview = ({
+const ExamplePreviewComponent = ({
   example,
   defaultFile = 'package.json',
   defaultEntryFile,
@@ -189,5 +189,13 @@ export const ExamplePreview = ({
       schemaOptions={schema ? undefined : schemaOptions}
       exampleGitBaseUrl={exampleData?.exampleGitBaseUrl}
     />
+  );
+};
+
+export const ExamplePreview = (props: ExamplePreviewProps) => {
+  return (
+    <Suspense>
+      <ExamplePreviewComponent {...props} />
+    </Suspense>
   );
 };
