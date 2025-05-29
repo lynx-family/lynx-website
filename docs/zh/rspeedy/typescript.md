@@ -95,6 +95,26 @@ export {}; // 这个导出使文件成为一个模块
 
 通过这个扩展，TypeScript 将为组件中的 `useInitData().foo` 和 `useInitData().bar` 提供类型检查。
 
+### IntrinsicElements
+
+你可以扩展 `@lynx-js/types` 中的 `interface IntrinsicElements` 来添加你的[自定义元件](/guide/custom-native-component.mdx)类型定义。
+
+以下是一个 `<input>` 元件的示例，它具有必需的 `type` 属性和可选的 `bindinput` 和 `value` 属性。
+
+```ts title="src/intrinsic-element.d.ts"
+import * as Lynx from '@lynx-js/types';
+
+declare module '@lynx-js/types' {
+  interface IntrinsicElements extends Lynx.IntrinsicElements {
+    input: {
+      bindinput?: (e: { type: 'input'; detail: { value: string } }) => void;
+      type: string;
+      value?: string | undefined;
+    };
+  }
+}
+```
+
 ## TypeScript 编译
 
 Rsbuild 使用 SWC 来编译 TypeScript 代码。

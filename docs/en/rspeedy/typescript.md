@@ -60,6 +60,7 @@ Lynx provides default types, but you may need to extend or customize certain typ
 
 - [`GlobalProps`](#globalprops): extends the type definition for `lynx.__globalProps`
 - [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Function.useInitData.mdx)
+- [`IntrinsicElements`](#intrinsicelements): extends the type definition for elements (e.g: you may have your own `<input>` element)
 
 ### GlobalProps
 
@@ -94,6 +95,26 @@ export {}; // This export makes the file a module
 ```
 
 With this extension, TypeScript will provide type checking for `useInitData().foo` and `useInitData().bar` in your components.
+
+### IntrinsicElements
+
+You can extends the `interface IntrinsicElements` from `@lynx-js/types` to add your custom [native element](/guide/custom-native-component.mdx)
+
+Here is an example for a `<input>` element with required `type` and optional `bindinput` and `value`.
+
+```ts title="src/intrinsic-element.d.ts"
+import * as Lynx from '@lynx-js/types';
+
+declare module '@lynx-js/types' {
+  interface IntrinsicElements extends Lynx.IntrinsicElements {
+    input: {
+      bindinput?: (e: { type: 'input'; detail: { value: string } }) => void;
+      type: string;
+      value?: string | undefined;
+    };
+  }
+}
+```
 
 ## TypeScript Transpilation
 
