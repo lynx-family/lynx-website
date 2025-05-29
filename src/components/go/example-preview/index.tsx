@@ -30,7 +30,7 @@ export interface ExamplePreviewProps {
   defaultEntryFile?: string;
   defaultEntryName?: string;
   highlight?: string | Record<string, string>;
-  entry?: string;
+  entry?: string | string[];
   schema?: string;
   rightFooter?: React.ReactNode;
   schemaOptions?: SchemaOptionsData;
