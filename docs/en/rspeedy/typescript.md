@@ -98,7 +98,7 @@ With this extension, TypeScript will provide type checking for `useInitData().fo
 
 ### IntrinsicElements
 
-You can extends the `interface IntrinsicElements` from `@lynx-js/types` to add your custom [native element](/guide/custom-native-component.mdx)
+You can extends the `interface IntrinsicElements` from `@lynx-js/types` to add your [custom native element](/guide/custom-native-component.mdx)
 
 Here is an example for a `<input>` element with required `type` and optional `bindinput` and `value`.
 
