@@ -119,7 +119,7 @@ declare module '@lynx-js/types' {
 
 ### NativeModules
 
-You can extend the `interface NativeModules` from `@lynx-js/types` to add custom [native modules](<(/guide/use-native-modules.mdx)>):
+You can extend the `interface NativeModules` from `@lynx-js/types` to add custom [native modules](/guide/use-native-modules.mdx):
 
 Here is an example for a `NativeLocalStorageModule` with 3 methods:
 
