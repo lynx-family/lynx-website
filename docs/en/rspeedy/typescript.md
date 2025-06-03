@@ -61,6 +61,7 @@ Lynx provides default types, but you may need to extend or customize certain typ
 - [`GlobalProps`](#globalprops): extends the type definition for `lynx.__globalProps`
 - [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Function.useInitData.mdx)
 - [`IntrinsicElements`](#intrinsicelements): extends the type definition for elements (e.g: you may have your own `<input>` element)
+- [`NativeModules`](#nativemodules): extends the type definition for [custom native modules](/guide/use-native-modules.mdx).
 
 ### GlobalProps
 
@@ -114,6 +115,26 @@ declare module '@lynx-js/types' {
     };
   }
 }
+```
+
+### NativeModules
+
+You can extend the `interface NativeModules` from `@lynx-js/types` to add custom [native modules](<(/guide/use-native-modules.mdx)>):
+
+Here is an example for a `NativeLocalStorageModule` with 3 methods:
+
+```ts title="src/native-modules.d.ts"
+declare module '@lynx-js/types' {
+  interface NativeModules {
+    NativeLocalStorageModule: {
+      clearStorage(): void;
+      getStorageItem(key: string): string | null;
+      setStorageItem(key: string, value: string): void;
+    };
+  }
+}
+
+export {}; // This export makes the file a module
 ```
 
 ## TypeScript Transpilation

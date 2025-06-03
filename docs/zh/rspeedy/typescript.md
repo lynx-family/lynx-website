@@ -60,6 +60,8 @@ Lynx 提供了默认类型，但你可能需要为你的应用扩展或自定义
 
 - [`GlobalProps`](#globalprops)：扩展 `lynx.__globalProps` 的类型定义
 - [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Function.useInitData.mdx) 的返回类型
+- [`IntrinsicElements`](#intrinsicelements): 扩展元件的类型（例如：可以为 `<input>` 元件定义类型）
+- [`NativeModules`](#nativemodules): 扩展[原生模块](/guide/use-native-modules.mdx)的类型定义
 
 ### GlobalProps
 
@@ -113,6 +115,26 @@ declare module '@lynx-js/types' {
     };
   }
 }
+```
+
+### NativeModules
+
+你可以扩展 `@lynx-js/types` 中的 `interface NativeModules` 来添加自定义[原生模块](/guide/use-native-modules.mdx)。
+
+下面这个示例定义了一个有三个方法的 `NativeLocalStorageModule` 模块：
+
+```ts title="src/native-modules.d.ts"
+declare module '@lynx-js/types' {
+  interface NativeModules {
+    NativeLocalStorageModule: {
+      clearStorage(): void;
+      getStorageItem(key: string): string | null;
+      setStorageItem(key: string, value: string): void;
+    };
+  }
+}
+
+export {}; // This export makes the file a module
 ```
 
 ## TypeScript 编译
