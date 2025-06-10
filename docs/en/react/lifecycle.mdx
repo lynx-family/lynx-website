@@ -6,7 +6,7 @@ Due to Lynx's dual-thread architecture, ReactLynx's rendering process and compon
 
 ## Rendering Process
 
-![Lifecycle Flowchart](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lifecycle-init-render-1.png)
+![Lifecycle Flowchart](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lifecycle-init-render-v2.png)
 
 ### First-Screen Rendering Optimization
 
@@ -39,13 +39,12 @@ Here's a simple example modified from [Measuring layout before the browser repai
 
 The [`<list />`] element has on-demand loading and node reuse characteristics. When a [`<list />`] element is created, all its child component JS object instances are created together, but the corresponding actual elements ([UI]) are not immediately generated. Instead, they are created or reused only when the [`<list />`] is about to scroll to the corresponding position. Therefore, special attention is needed regarding the timing of child component lifecycle triggers.
 
-### Timing of `useEffect` and `ref` Callback Functions
+### Timing of `useEffect` and `ref` Callbacks
 
-The `useEffect` callback function executes strictly after component creation and data updates. Even if the component is not displayed on the screen (resulting in the actual [UI] node not being created or having entered the reuse pool), `useEffect` will still trigger its callback function.
+The `useEffect` callback function will strictly execute after component creation and data updates; the `ref` attribute will also be assigned when the element is created or destroyed. Even if the component is not displayed on the screen (resulting in the actual [UI] node not being created or having entered the reuse pool), both the `useEffect` callback function and `ref` will still be triggered.
 
-The `ref` callback accurately reflects the state of [UI] elements inside [`<list />`]. When an element is about to scroll into view, the `ref` callback function is triggered, and when the element scrolls out of view, the `ref` cleanup function is triggered.
-
-Based on this characteristic, if you need to handle node references, we recommend using `ref` callbacks instead of `useEffect` callbacks. This allows for more accurate tracking of node states and ensures components work properly whether they are in a [`<list />`] or not.
+Specifically for [UI] elements inside a [`<list />`], the [`main-thread:ref`] attribute accurately reflects their state. When an element is about to scroll into view, the [`main-thread:ref`] callback function is triggered, and when the element scrolls out of view, the [`main-thread:ref`] cleanup function is triggered.
 
 [`<list />`]: /api/elements/built-in/list
 [UI]: /guide/spec.html#ui
+[`main-thread:ref`]: /react/main-thread-script.html#usingmain-threadref-to-obtain-node-objects
