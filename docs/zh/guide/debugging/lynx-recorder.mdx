@@ -1,0 +1,279 @@
+import { Tab, Tabs, Steps } from '@rspress/core/theme';
+import { Go } from '@lynx';
+import { QRCodeSVG } from 'qrcode.react';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { Button, Toast } from '@douyinfe/semi-ui';
+
+# LynxRecorder
+
+## 体验 LynxRecorder
+
+在 LynxExplorer 中默认已经集成了 LynxRecorder 的录制与回放能力，可以按照下面的步骤来进行体验。
+
+<Steps>
+
+### 下载安装 LynxExplorer
+
+请访问 [LynxExplorer](/guide/start/quick-start.html#准备-lynx-explorer)，并按照文档说明运行Lynx Explorer。
+
+### 下载安装 Lynx Devtool Application
+
+Lynx Devtool Application 集成了 LynxRecorder 控制插件，可以方便的进行页面录制控制、录制产物获取等操作。
+你可以访问 [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) 来获取 Lynx DevTool Application 的最新版本。
+
+### 开启录制
+
+1. 将设备通过 USB 连接到 PC, 并在 Tab 中选中目标应用。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/device-connect.png"
+  alt="设备连接"
+  width={800}
+/>
+
+2. 进入 LynxRecorder 插件看板，点击 Start 按钮来启动 LynxRecorder 的录制能力。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/start-record.gif"
+  alt="启动录制"
+  width={800}
+/>
+
+3. 随后进入需要录制的目标页面，对你的目标页面进行操作，使其达到预期的状态。
+
+:::note
+特别需要注意的是，为了确保页面录制数据的完整性，请确保先点击 Start，再进入目标页面。
+:::
+
+这里提供了一个页面示例，你可以通过在 LynxExplorer 上扫码或者输入链接以进入，效果如下：
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/galleryComplete.gif"
+  example="gallery"
+  defaultFile="src/GalleryComplete/index.tsx"
+  defaultEntryFile="dist/GalleryComplete.lynx.bundle"
+  highlight={{ 'src/GalleryComplete/index.tsx': '{6}' }}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Popular Furniture&title_color=ffffff"
+/>
+
+5. 点击 Stop 按钮，结束录制。
+
+点击结束录制后，LynxRecorder 看板会自动从你的设备中获取录制产物，并提供预览图以更容易定位目标页面。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/end-record.png"
+  alt="结束录制"
+  width={800}
+/>
+
+### 回放展示
+
+1. 产物托管
+
+Lynx DevTool Application 对于每次录制到的产物只提供了本地文件托管服务，如果你需要分享录制产物或者跨设备访问，则需要你将产物额外进行托管以确保可以访问。
+
+2. 使用 LynxExplorer 回放
+
+这里提供了一个录制产物实例，你可以使用 LynxExplorer 扫码回放。
+
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
+  }}
+>
+  <QRCodeSVG
+    style={{ border: '2px solid #fff' }}
+    size={220}
+    value="file://lynxrecorder?url=https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/LynxRecorder_2025-06-26T06_51_24.926Z.json"
+  />
+  <CopyToClipboard
+    onCopy={() => {
+      Toast.success('copy-link');
+    }}
+    text={
+      'file://lynxrecorder?url=https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/LynxRecorder_2025-06-26T06_51_24.926Z.json'
+    }
+  >
+    <Button type="tertiary" style={{ fontSize: '12px' }}>
+      copy-link
+    </Button>
+  </CopyToClipboard>
+</div>
+
+:::note
+特别需要注意的是，为了表明产物是一份 LynxRecorder 产物，你需要在回放的时候将 LynxRecorder Header 拼接到产物地址上。
+
+```txt
+产物原始地址
+
+https://lynx.recorder.artifacts/LynxRecorder.json
+
+增加 LynxRecorder Header
+
+file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json
+```
+
+:::
+
+LynxExplorer 可以完整的复现录制页面效果。
+
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
+  }}
+>
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/replay.png"
+    alt="replay-show"
+    width={300}
+  />
+</div>
+
+</Steps>
+
+## 在自己的应用中集成 LynxRecorder
+
+<Steps>
+
+### 切换 dev 版本
+
+LynxRecorder 录制与回放过程覆盖了 Lynx 整个渲染过程，需要 Lynx 底层做能力支持，为了避免这些录制逻辑影响到生产场景。我们独立于 Lynx 正式版本发布了对应的 dev 版本。如果需要接入 LynxRecorder 能力，你需要在自己的工程内将 Lynx 以及 LynxDevtool 版本号切换到对应的 dev 版本。[集成 Lynx 开发版本](/guide/start/integrate-lynx-dev-version.html)
+
+### 录制能力集成
+
+录制能力只需通过接入 dev 版本集成即可，无需额外适配。
+
+### 回放能力集成
+
+LynxRecorder 提供了一个高度封装的回放模块，其随着 LynxDevTool 一并集成到你的应用，你只需要按照下面的方式提供简单的入口即可。
+
+#### Android
+
+1.  增加 LynxRecorder 页面入口
+
+<Tabs groupId='integrate-lynxrecorder-to-android'>
+<Tab label="Java">
+
+```java
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import com.lynx.devtool.recorder.LynxRecorderActivity;
+import com.lynx.devtool.recorder.LynxRecorderEnv;
+
+public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        buildLynxRecorderView();
+    }
+
+    private LynxView buildLynxRecordView() {
+        String url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+        Intent intent = new Intent(this, LynxRecorderActivity.class);
+        intent.putExtra(LynxRecorderEnv.getInstance().mUriKey, url);
+        startActivity(intent);
+    }
+
+}
+```
+
+</Tab>
+<Tab label="Kotlin">
+```kotlin
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import com.lynx.devtool.recorder.LynxRecorderActivity
+import com.lynx.devtool.recorder.LynxRecorderEnv
+
+class MainActivity :Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        buildLynxRecorderView()
+    }
+
+    private fun buildLynxRecordView() {
+        val intent = Intent(this, LynxRecorderActivity::class.java)
+        val url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+        intent.putExtra(LynxRecorderEnv.getInstance().mUriKey, url)
+        startActivity(intent)
+    }
+
+}
+
+````
+</Tab>
+</Tabs>
+
+2. 注册 LynxRecorderActivity
+
+```xml
+// AndroidManifest.xml
+<activity
+    android:name="com.lynx.devtool.recorder.LynxRecorderActivity"
+    android:exported="false" />
+````
+
+#### iOS
+
+1. 在你的应用 Podfile 中对 LynxDevtool 额外引入 LynxRecorder 模块
+
+```ruby
+pod 'LynxDevtool', lynxDevVersion, :subspecs => [
+    'Framework',
+    'LynxRecorder'
+]
+```
+
+2. 使用 LynxRecorderViewController 回放录制页面
+
+:::note Swift 工程接入注意事项
+
+LynxRecorder 使用 objective-c 编写，如果 swift 工程想要调用对应的方法，需要参照 [Importing Objective-C into Swift](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift) 提供对应的 bridge 文件。
+
+并在 bridge 文件中增加如下内容：
+
+```swift
+#import <LynxDevtool/LynxRecorderViewController.h>
+```
+
+:::
+
+<Tabs groupId='integrate-lynxrecorder-to-android'>
+<Tab label="Objective-C">
+
+```objective-c
+#import <LynxDevtool/LynxRecorderViewController.h>
+
+LynxRecorderViewController *recorderVC = [[LynxRecorderViewController alloc] init];
+recorderVC.url = @"file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json";
+UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:recorderVC];
+[self presentViewController:nav animated:YES completion:nil];
+```
+
+</Tab>
+
+<Tab label="Swift">
+
+```swift
+
+let recorderVC = LynxRecorderViewController()
+recorderVC.url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+present(recorderVC, animated: true, completion: nil)
+
+```
+
+</Tab>
+</Tabs>
+
+</Steps>

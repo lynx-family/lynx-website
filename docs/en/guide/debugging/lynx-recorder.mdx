@@ -1,0 +1,281 @@
+import { Tab, Tabs, Steps } from '@rspress/core/theme';
+import { Go } from '@lynx';
+import { QRCodeSVG } from 'qrcode.react';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { Button, Toast } from '@douyinfe/semi-ui';
+
+# LynxRecorder
+
+## Try LynxRecorder
+
+LynxRecorder’s record and replay capabilities are already integrated by default in LynxExplorer. You can follow the steps below to experience them.
+
+<Steps>
+
+### Download and install LynxExplorer
+
+Please visit [LynxExplorer](/guide/start/quick-start.html#prepare-lynx-explorer) and follow the documentation to run Lynx Explorer app locally.
+
+### Download and install Lynx Devtool Application
+
+The Lynx Devtool Application integrates the LynxRecorder control plugin, making it easy to control page record, obtain recorded artifacts, and perform other related operations.
+
+You can visit [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) to get the latest version of Lynx DevTool desktop application.
+
+### Start record
+
+1. Connect the device to your PC via USB, and select the target application in the Tab.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/device-connect.png"
+  alt="device-connect"
+  width={800}
+/>
+
+2. Enter the LynxRecorder plugin dashboard and click the Start button to activate.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/start-record.gif"
+  alt="start-record"
+  width={800}
+/>
+
+3. Operate on your phone, navigate to the target page you want to record and interact with it until it reaches the desired state.
+
+:::note
+It is especially important to note that, in order to ensure the completeness of the recorded page data, please make sure to click Start **before** navigating to the target page.
+:::
+
+Here is a sample page that you can access by scanning the QR code or entering the link in LynxExplorer.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/galleryComplete.gif"
+  example="gallery"
+  defaultFile="src/GalleryComplete/index.tsx"
+  defaultEntryFile="dist/GalleryComplete.lynx.bundle"
+  highlight={{ 'src/GalleryComplete/index.tsx': '{6}' }}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Popular Furniture&title_color=ffffff"
+/>
+
+5. Click the Stop button to end the record.
+
+After stopping the record, the LynxRecorder dashboard will automatically retrieve the recorded artifact from your device and provide a preview image to help you easily identify the target page.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/end-record.png"
+  alt="end-record"
+  width={800}
+/>
+
+### Page Replay
+
+1. Artifact Hosting
+
+The Lynx DevTool Application only provides local file hosting for each recorded artifact. If you need to share the record artifact or access it across devices, you will need to host the artifact separately.
+
+2. Replay using LynxExplorer
+
+Here is a sample recorded artifact that you can replay by scanning the QR code or entering the link in LynxExplorer.
+
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
+  }}
+>
+  <QRCodeSVG
+    style={{ border: '2px solid #fff' }}
+    size={220}
+    value="file://lynxrecorder?url=https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/LynxRecorder_2025-06-26T06_51_24.926Z.json"
+  />
+  <CopyToClipboard
+    onCopy={() => {
+      Toast.success('copy-link');
+    }}
+    text={
+      'file://lynxrecorder?url=https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/LynxRecorder_2025-06-26T06_51_24.926Z.json'
+    }
+  >
+    <Button type="tertiary" style={{ fontSize: '12px' }}>
+      copy-link
+    </Button>
+  </CopyToClipboard>
+</div>
+
+:::note
+It is especially important to note that if you are using a self-hosted artifact URL for replay, you need to append the LynxRecorder Header to the artifact URL to indicate that the artifact is from LynxRecorder.
+
+Original artifact URL:
+
+```txt
+https://lynx.recorder.artifacts/LynxRecorder.json
+```
+
+Append the LynxRecorder Header:
+
+```txt
+file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json
+```
+
+:::
+
+LynxExplorer can fully reproduce the recorded page.
+
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
+  }}
+>
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/replay.png"
+    alt="replay-show"
+    width={300}
+  />
+</div>
+
+</Steps>
+
+## Integrate LynxRecorder into your own application
+
+<Steps>
+
+### Switch to the dev version
+
+Since the record and replay process of LynxRecorder covers the entire rendering process of Lynx and requires support from the underlying Lynx engine, we have released a separate dev version apart from the official Lynx release to prevent these record-related codes from affecting production environments. If you want to integrate LynxRecorder, you need to change the version numbers of both Lynx and LynxDevtool in your project to the corresponding dev versions. [integrate lynx dev version](/guide/start/integrate-lynx-dev-version.html)
+
+### Record capability integration
+
+The record capability can be integrated simply by using the dev version, with no additional adaptation required.
+
+### Replay capability integration
+
+LynxRecorder provides a highly encapsulated replay module, which is integrated into your application together with LynxDevTool. You only need to provide a simple entry point as described below.
+
+#### Android
+
+1.  Add a LynxRecorder page entry
+
+<Tabs groupId='integrate-lynxrecorder-to-android'>
+<Tab label="Java">
+
+```java
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import com.lynx.devtool.recorder.LynxRecorderActivity;
+import com.lynx.devtool.recorder.LynxRecorderEnv;
+
+public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        buildLynxRecorderView();
+    }
+
+    private LynxView buildLynxRecordView() {
+        String url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+        Intent intent = new Intent(this, LynxRecorderActivity.class);
+        intent.putExtra(LynxRecorderEnv.getInstance().mUriKey, url);
+        startActivity(intent);
+    }
+
+}
+```
+
+</Tab>
+<Tab label="Kotlin">
+```kotlin
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import com.lynx.devtool.recorder.LynxRecorderActivity
+import com.lynx.devtool.recorder.LynxRecorderEnv
+
+class MainActivity :Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        buildLynxRecorderView()
+    }
+
+    private fun buildLynxRecordView() {
+        val intent = Intent(this, LynxRecorderActivity::class.java)
+        val url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+        intent.putExtra(LynxRecorderEnv.getInstance().mUriKey, url)
+        startActivity(intent)
+    }
+
+}
+
+````
+</Tab>
+</Tabs>
+
+2. Register LynxRecorderActivity in the app manifest file.
+
+```xml
+// AndroidManifest.xml
+<activity
+    android:name="com.lynx.devtool.recorder.LynxRecorderActivity"
+    android:exported="false" />
+````
+
+#### iOS
+
+1. In the Podfile, additionally include LynxRecorder for the LynxDevtool module.
+
+```ruby
+pod 'LynxDevtool', lynxDevVersion, :subspecs => [
+    'Framework',
+    'LynxRecorder'
+]
+```
+
+2. Use LynxRecorderViewController to replay the recorded page.
+
+:::note Swift integration considerations
+
+LynxRecorder is written in Objective-C. If you want to call its methods from a Swift project, you need to provide a corresponding bridge file as described in [Importing Objective-C into Swift](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift).
+
+Add the following content to the bridge file:
+
+```swift
+#import <LynxDevtool/LynxRecorderViewController.h>
+```
+
+:::
+
+<Tabs groupId='integrate-lynxrecorder-to-android'>
+<Tab label="Objective-C">
+
+```objective-c
+#import <LynxDevtool/LynxRecorderViewController.h>
+
+LynxRecorderViewController *recorderVC = [[LynxRecorderViewController alloc] init];
+recorderVC.url = @"file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json";
+UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:recorderVC];
+[self presentViewController:nav animated:YES completion:nil];
+```
+
+</Tab>
+
+<Tab label="Swift">
+
+```swift
+let recorderVC = LynxRecorderViewController()
+recorderVC.url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+present(recorderVC, animated: true, completion: nil)
+
+```
+
+</Tab>
+</Tabs>
+
+</Steps>
