@@ -6,7 +6,7 @@ Lynx 采用双线程架构设计，这使得 ReactLynx 的渲染流程和组件�
 
 ## 渲染流程
 
-![生命周期流程图](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lifecycle-init-render-1.png)
+![生命周期流程图](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lifecycle-init-render-v2.png)
 
 ### 首屏渲染优化
 
@@ -41,11 +41,10 @@ Lynx 采用双线程架构设计，这使得 ReactLynx 的渲染流程和组件�
 
 ### `useEffect` 与 `ref` 回调函数的触发时机
 
-`useEffect` 回调函数会严格在组件创建和数据更新后执行。即使组件并未在屏幕上显示（导致实际 [UI] 节点未创建或已进入复用池的情况），`useEffect` 仍然会触发其回调函数。
+`useEffect` 回调函数与 `ref` 会严格在组件创建和数据更新后执行，`ref` 属性也会在元素创建或销毁时被赋值。即使组件并未在屏幕上显示（导致实际 [UI] 节点未创建或已进入复用池的情况），`useEffect` 回调函数和 `ref` 仍然会触发。
 
-而 `ref` 回调能够准确反映 [`<list />`] 内部元件 [UI] 的状态。当元件即将滚入屏幕时会触发 `ref` 的回调函数，而当元件滚出屏幕后则会触发 `ref` 的清理函数。
-
-基于这一特性，如果需要处理节点引用，我们建议使用 `ref` 回调而非 `useEffect` 回调，这样可以更准确地追踪节点状态，并确保组件无论是否在 [`<list />`] 中都能正常工作。
+如果需要准确反映 [`<list />`] 内部元件 [UI] 的状态的时机，可以使用 [`main-thread:ref`] 属性。当元件即将滚入屏幕时会触发 [`main-thread:ref`] 的回调函数，而当元件滚出屏幕后则会触发 [`main-thread:ref`] 的清理函数。
 
 [`<list />`]: /api/elements/built-in/list
 [UI]: /guide/spec.html#ui
+[`main-thread:ref`]: react/main-thread-script.html#通过main-threadref-获取节点对象
