@@ -46,7 +46,7 @@ const zhSuffix = '原生体验';
 function HomeLayout() {
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
-  const { page } = usePageData();
+  const { page, siteData } = usePageData();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [text, setText] = useState(
@@ -55,7 +55,13 @@ function HomeLayout() {
   const [delta, setDelta] = useState(200);
   const [isPaused, setIsPaused] = useState(false);
 
-  const routePath = useMemo(() => page.routePath.replace('/zh/', '/'), [page]);
+  const routePath = useMemo(() => {
+    let tmp = page.routePath.replace('/zh/', '/');
+    if (siteData.base && siteData.base !== '/') {
+      tmp = tmp.replace(siteData.base, '');
+    }
+    return tmp;
+  }, [page]);
 
   useBlogBtnDom(routePath);
 

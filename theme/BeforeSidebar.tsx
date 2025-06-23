@@ -78,10 +78,8 @@ export default function BeforeSidebar() {
 
   useEffect(() => {
     // Check if current path should show shared sidebar
-    const isSharedPath = SHARED_SIDEBAR_PATHS.some(
-      (prefix) =>
-        pathname.startsWith(`/${prefix}`) ||
-        pathname.startsWith(`/zh/${prefix}`),
+    const isSharedPath = SHARED_SIDEBAR_PATHS.some((prefix) =>
+      pathname.startsWith(`${getLangPrefix(lang)}/${prefix}`),
     );
 
     // Update sidebar data based on path:

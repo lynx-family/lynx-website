@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from 'rspress/runtime';
+import { getLangPrefix } from '@site/shared-route-config';
 
 type ConfigKey = '/' | '/react/' | '/rspeedy/';
 
@@ -30,11 +31,7 @@ const useBlogBtnDom = (src: string) => {
   const lang = useLang() as 'en' | 'zh';
 
   const handleInteraction = useCallback(() => {
-    navigate(
-      lang === 'en'
-        ? '/blog/lynx-unlock-native-for-more'
-        : '/zh/blog/lynx-unlock-native-for-more',
-    );
+    navigate(`${getLangPrefix(lang)}/blog/lynx-unlock-native-for-more`);
   }, [navigate, lang]);
 
   const configKey = useMemo(() => {
