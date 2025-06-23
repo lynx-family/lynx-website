@@ -1,4 +1,4 @@
-# LoadTemplate
+# loadTemplate
 
 Using [`LynxLoadMeta`](../lynx-load-meta.mdx) to render `LynxView`, it is the main entrance for the client to load `Lynx` templates.
 
@@ -7,22 +7,57 @@ Using [`LynxLoadMeta`](../lynx-load-meta.mdx) to render `LynxView`, it is the ma
 ### Android
 
 ```java
-void loadTemplate(@NonNull LynxLoadMeta meta);
+public void loadTemplate(@NonNull LynxLoadMeta meta);
 ```
 
-### Parameters
+#### Parameters
 
-- `meta: LynxLoadMeta`: Lynx template loads metadata, and developers use this data structure to specify optional data loaded by the template.
+- `meta`: Lynx template loads metadata, and developers use this data structure to specify optional data loaded by the template.
 
 ### iOS
 
 ```objc
-- (void)loadTemplate:(nonnull LynxLoadMetadata*)meta;
+- (void)loadTemplate:(nonnull LynxLoadMeta *)meta;
 ```
 
-### Parameters
+#### Parameters
 
-- `meta: LynxLoadMetadata*`: Lynx template loads metadata, and developers use this data structure to specify optional data loaded by the template.
+- `meta`: Lynx template loads metadata, and developers use this data structure to specify optional data loaded by the template.
+
+### Harmony
+
+LynxView has the following members:
+
+- `url: String `: Template file path.
+- `buffer: ArrayBuffer`: The binary file data of the template.
+- `templateBundle: TemplateBundle`: [TemplateBundle](../template-bundle) object parsed in advance by the template's binary file data.
+- `metaData: MetaData`: Initial data specified by the client during the first screen loading process.
+- `loadOption: LynxLoadOption`: Additional configuration information when loading templates.
+
+On the HarmonyOS platfrom, you need to pass your implemented LynxViewClient as a parameter during the initialization of LynxView:
+
+```typescript
+@Entry
+@Component
+struct Index {
+  private url: string = 'playground/main.lynx.bundle';
+  private buffer: ArrayBuffer = getTemplateBuffer();
+  private metaData = new MetaData(
+    new TemplateData('{"text":"TD"}'),
+    new TemplateData({ "theme": "Light" }));
+
+  build() {
+    Column() {
+      LynxView({
+        url: this.url,
+        buffer: this.buffer,
+        metadata: this.metaData,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
 
 ## Compatibility
 
