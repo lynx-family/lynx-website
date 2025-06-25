@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import useSWR from 'swr';
 import Callout from '../Callout';
 import EditThis from '../EditThis';
-import { useLang } from 'rspress/runtime';
+import { useLang, usePageData } from 'rspress/runtime';
 
 // Because it's bad for web performance to lazy-load CSS during the initial render
 // (because the page is saying "Wait! Stop rendering, now that I've downloaded
@@ -112,6 +112,15 @@ const parseQuery = (
   }
 };
 
+function useLCDBaseUrl(): string {
+  const { siteData } = usePageData();
+  if (siteData.base !== '/') {
+    return siteData.base + LCD_BASE_URL;
+  } else {
+    return LCD_BASE_URL;
+  }
+}
+
 type FetchingCompatTableProps = {
   /**
    * The query to fetch the data from the server.
@@ -129,6 +138,7 @@ type FetchingCompatTableProps = {
 export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const locale = useLang();
   const isServer = useIsServer();
+  const lcdBaseUrl = useLCDBaseUrl();
 
   // Use the utility function within useMemo
   const { module, accessor } = React.useMemo(() => parseQuery(query), [query]);
@@ -137,7 +147,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const { error, data: apiData } = useSWR(
     module,
     async (_) => {
-      const response = await fetch(`${LCD_BASE_URL}/${module}.json`);
+      const response = await fetch(`${lcdBaseUrl}/${module}.json`);
       if (!response.ok) {
         throw new Error(response.status.toString());
       }
@@ -150,7 +160,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const { error: platformError, data: platformData } = useSWR(
     'platforms.json',
     async (_) => {
-      const response = await fetch(`${LCD_BASE_URL}/platforms/platforms.json`);
+      const response = await fetch(`${lcdBaseUrl}/platforms/platforms.json`);
       if (!response.ok) {
         throw new Error(response.status.toString());
       }
