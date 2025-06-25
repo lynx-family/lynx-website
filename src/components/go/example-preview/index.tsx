@@ -6,16 +6,12 @@ import { isAssetFileType } from './utils/example-data';
 import Callout from '../../Callout';
 import { SchemaOptionsData } from './hooks/use-switch-schema';
 import { usePageData } from 'rspress/runtime';
+import { useUrlWithBase } from '@site/src/lib/utils';
 
 const EXAMPLE_BASE_URL = '/lynx-examples';
 
 function useExampleBaseUrl() {
-  const { siteData } = usePageData();
-  if (siteData.base === '/') {
-    return EXAMPLE_BASE_URL;
-  } else {
-    return `${siteData.base}${EXAMPLE_BASE_URL}`;
-  }
+  return useUrlWithBase(EXAMPLE_BASE_URL);
 }
 
 const ErrorWrap = ({ example }: { example: string }) => {

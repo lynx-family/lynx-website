@@ -14,6 +14,7 @@ import { useLang, usePageData } from 'rspress/runtime';
 import './compat-table/index.scss';
 
 import type LCD from '@lynx-js/lynx-compat-data';
+import { useUrlWithBase } from '@site/src/lib/utils';
 const LCD_BASE_URL = '/lynx-compat-data';
 
 function useIsServer() {
@@ -113,12 +114,7 @@ const parseQuery = (
 };
 
 function useLCDBaseUrl(): string {
-  const { siteData } = usePageData();
-  if (siteData.base !== '/') {
-    return siteData.base + LCD_BASE_URL;
-  } else {
-    return LCD_BASE_URL;
-  }
+  return useUrlWithBase(LCD_BASE_URL);
 }
 
 type FetchingCompatTableProps = {
