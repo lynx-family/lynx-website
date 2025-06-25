@@ -21,7 +21,7 @@ function isRelativeUrl(url: string): boolean {
 function formatUrlWithBase(url: string): string {
   const { siteData } = usePageData();
   const base = siteData?.base || '';
-  return isRelativeUrl(url) ? `${base}${url}` : url;
+  return isRelativeUrl(url) && base !== '/' ? `${base}${url}` : url;
 }
 
 const HtmlViewer = ({ path }: { path: string }) => {
