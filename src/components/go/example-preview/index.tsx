@@ -5,7 +5,6 @@ import { ExampleContent } from './components';
 import { isAssetFileType } from './utils/example-data';
 import Callout from '../../Callout';
 import { SchemaOptionsData } from './hooks/use-switch-schema';
-import { usePageData } from 'rspress/runtime';
 import { useUrlWithBase } from '@site/src/lib/utils';
 
 const EXAMPLE_BASE_URL = '/lynx-examples';

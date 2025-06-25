@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import useSWR from 'swr';
 import Callout from '../Callout';
 import EditThis from '../EditThis';
-import { useLang, usePageData } from 'rspress/runtime';
+import { useLang } from 'rspress/runtime';
 
 // Because it's bad for web performance to lazy-load CSS during the initial render
 // (because the page is saying "Wait! Stop rendering, now that I've downloaded
