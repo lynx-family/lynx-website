@@ -1,16 +1,30 @@
 import type { SubsiteConfig } from '@site/shared-route-config';
+import { usePageData } from 'rspress/runtime';
+
+function isRelativeUrl(url: string): boolean {
+  return url.startsWith('/');
+}
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
+  const { siteData } = usePageData();
+  // Ensure the logo URLs are absolute by prepending the site base if they are relative
+  const lightLogoSrc = isRelativeUrl(subsite.logo.light)
+    ? siteData.base + subsite.logo.light
+    : subsite.logo.light;
+  const darkLogoSrc = isRelativeUrl(subsite.logo.dark)
+    ? siteData.base + subsite.logo.dark
+    : subsite.logo.dark;
+
   return (
     <>
       <img
-        src={subsite.logo.light}
+        src={lightLogoSrc}
         // "dark:rp-hidden" is in the @rspress/theme-default CSS
         className="sh-w-full sh-h-full sh-object-contain dark:rp-hidden"
         alt={`${subsite.label} logo`}
       />
       <img
-        src={subsite.logo.dark}
+        src={darkLogoSrc}
         className="sh-hidden sh-w-full sh-h-full sh-object-contain dark:rp-block"
         alt={`${subsite.label} logo`}
       />
