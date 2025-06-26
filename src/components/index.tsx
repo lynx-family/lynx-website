@@ -20,7 +20,7 @@ export { default as APITable } from './api-table/APITable';
 export { default as CompatTable } from './api-table/compat-table';
 
 // API Badges
-export { Badge } from 'rspress/theme';
+export { Badge } from '@rspress/core/theme';
 export {
   APIBadge,
   PlatformBadge,

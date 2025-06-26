@@ -1,4 +1,4 @@
-import { Badge } from 'rspress/theme';
+import { Badge } from '@rspress/core/theme';
 
 /**
  * Renders a badge indicating that a feature is deprecated.

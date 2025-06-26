@@ -1,5 +1,5 @@
 import React, { FC, useMemo, useRef, useState } from 'react';
-import { useI18n, useLang } from 'rspress/runtime';
+import { useI18n, useLang } from '@rspress/core/runtime';
 import {
   Space,
   Typography,

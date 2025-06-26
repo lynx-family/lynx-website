@@ -1,6 +1,6 @@
 import type LCD from '@lynx-js/lynx-compat-data';
 import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
-import { Badge } from 'rspress/theme';
+import { Badge } from '@rspress/core/theme';
 
 // TODO(xuan.huang): move this to a common place.
 import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/compat-table/headers';

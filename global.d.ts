@@ -4,7 +4,7 @@ declare module '*.mdx' {
 }
 
 declare module '@theme' {
-  export * from 'rspress/theme';
+  export * from '@rspress/core/theme';
 }
 
 declare module '*.module.less' {

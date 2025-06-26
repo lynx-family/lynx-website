@@ -1,7 +1,7 @@
 import { useFixDark } from '@site/theme/hooks/use-fix-dark';
 import React from 'react';
-import { useLang } from 'rspress/runtime';
-import { Link } from 'rspress/theme';
+import { useLang } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import styles from './index.module.less';
 import { MobileShow } from './mobile-show';
 

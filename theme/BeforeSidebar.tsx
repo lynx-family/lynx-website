@@ -5,8 +5,8 @@ import {
   SelectTrigger,
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
-import { useLang, useLocation, useNavigate } from 'rspress/runtime';
-import { type SidebarData, SidebarList } from 'rspress/theme';
+import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
+import { type SidebarData, SidebarList } from '@rspress/core/theme';
 import {
   SHARED_SIDEBAR_PATHS,
   SUBSITES_CONFIG,

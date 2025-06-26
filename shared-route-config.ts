@@ -2,7 +2,7 @@
  * Sub-sites and shared docs configuration
  */
 
-import type { SidebarData } from 'rspress/theme';
+import type { SidebarData } from '@rspress/core/theme';
 
 /**
  * Metadata for each subsites. This is used to

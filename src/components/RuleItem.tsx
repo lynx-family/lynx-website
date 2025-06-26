@@ -1,4 +1,4 @@
-import { useI18n, useLocation } from 'rspress/runtime';
+import { useI18n, useLocation } from '@rspress/core/runtime';
 import './RuleItem.css';
 
 const ICON = {
