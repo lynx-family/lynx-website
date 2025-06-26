@@ -1,18 +1,17 @@
 import type { SubsiteConfig } from '@site/shared-route-config';
-import { usePageData } from 'rspress/runtime';
+import { withBase } from 'rspress/runtime';
 
 function isRelativeUrl(url: string): boolean {
   return url.startsWith('/');
 }
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
-  const { siteData } = usePageData();
   // Ensure the logo URLs are absolute by prepending the site base if they are relative
   const lightLogoSrc = isRelativeUrl(subsite.logo.light)
-    ? siteData.base + subsite.logo.light
+    ? withBase(subsite.logo.light)
     : subsite.logo.light;
   const darkLogoSrc = isRelativeUrl(subsite.logo.dark)
-    ? siteData.base + subsite.logo.dark
+    ? withBase(subsite.logo.dark)
     : subsite.logo.dark;
 
   return (

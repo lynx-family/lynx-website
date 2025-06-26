@@ -3,7 +3,7 @@ import { CodeBlockRuntime } from '@theme';
 
 import { getHighlightLines } from '../utils/example-data';
 import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerLineNumber } from '@rspress/plugin-shiki/transformers';
+import { transformerLineNumber } from 'rspress/shiki-transformers';
 import { transformerRuntimeMetaHighlight } from './shiki-transformer';
 
 interface CodeProps {

@@ -13,12 +13,13 @@ import {
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
 import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerCompatibleMetaHighlight } from '@rspress/plugin-shiki/transformers';
+import { transformerCompatibleMetaHighlight } from 'rspress/shiki-transformers';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
+  base: '/v3',
   route: {
     exclude: [
       'lynx-compat-data/**/*',
@@ -54,13 +55,16 @@ export default defineConfig({
       pluginSass(),
       pluginLess(),
     ],
-    source: {
+    resolve: {
       alias: {
         '@site': path.join(__dirname),
-        '@': path.join(__dirname, 'src'),
+        '@/': path.join(__dirname, 'src'),
         '@assets': path.join(__dirname, 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
       },
+    },
+    source: {
+      include: [path.join(require.resolve('rspress'), '../')],
       define: {
         'process.env': {
           // This marks the first open sourced version of Lynx.
@@ -174,7 +178,7 @@ export default defineConfig({
 function rspeedyApiPlugin(): RspressPlugin {
   return {
     name: 'rspeedy:api',
-    // FIXME: this is hack to modify rspress.config in-place when autoNav generated
+    // FIXME: warning: this is hack to modify rspress.config in-place when autoNav generated
     async beforeBuild(config, isProd) {
       const {
         transformRspeedySidebar,
