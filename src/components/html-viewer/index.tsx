@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation, usePageData, withBase } from 'rspress/runtime';
+import { useLocation, withBase } from '@rspress/core/runtime';
 import styles from './index.module.less';
 
 const doUpdataParentHash = (event: MessageEvent) => {

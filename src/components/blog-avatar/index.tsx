@@ -7,7 +7,7 @@ import {
 } from '@douyinfe/semi-icons';
 import { Avatar, Space } from '@douyinfe/semi-ui';
 import { useMemo } from 'react';
-import { useLang } from 'rspress/runtime';
+import { useLang } from '@rspress/core/runtime';
 import originListData from './authors.json';
 import styles from './index.module.less';
 

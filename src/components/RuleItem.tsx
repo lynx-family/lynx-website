@@ -1,5 +1,5 @@
-import { useI18n, useLocation } from 'rspress/runtime';
-import { Link } from 'rspress/theme';
+import { useI18n, useLocation } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import './RuleItem.css';
 
 const ICON = {

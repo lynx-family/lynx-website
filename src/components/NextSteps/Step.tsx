@@ -1,5 +1,5 @@
-import { useLang, withBase } from 'rspress/runtime';
-import { Link } from 'rspress/theme';
+import { useLang, withBase } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import styles from './Step.module.scss';
 import { getLangPrefix } from '../../../shared-route-config';
 

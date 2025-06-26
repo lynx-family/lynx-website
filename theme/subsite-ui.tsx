@@ -1,5 +1,5 @@
 import type { SubsiteConfig } from '@site/shared-route-config';
-import { withBase } from 'rspress/runtime';
+import { withBase } from '@rspress/core/runtime';
 
 function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('/');

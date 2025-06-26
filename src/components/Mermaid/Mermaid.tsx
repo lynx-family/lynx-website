@@ -3,7 +3,7 @@ import './Mermaid.scss';
 
 import type { MermaidConfig } from 'mermaid';
 import { useCallback, useEffect, useId, useState } from 'react';
-import { useDark } from 'rspress/runtime';
+import { useDark } from '@rspress/core/runtime';
 
 interface Props {
   style?: CSSProperties;

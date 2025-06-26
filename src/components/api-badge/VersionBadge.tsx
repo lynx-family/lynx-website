@@ -1,4 +1,4 @@
-import { Badge } from 'rspress/theme';
+import { Badge } from '@rspress/core/theme';
 
 /**
  * VersionBadge component displays a badge with a Lynx icon and version information.

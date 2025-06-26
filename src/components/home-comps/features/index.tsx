@@ -5,7 +5,7 @@ import styles from './index.module.less';
 import { Moon } from './moon';
 import { WriteOnceRunAllPlatform } from './write-once-run-all-platform';
 import cls from 'classnames';
-import { useLang } from 'rspress/runtime';
+import { useLang } from '@rspress/core/runtime';
 import { BorderBeam } from '../border-beam';
 import { ActionBtn } from './action-btn';
 import { FeatureItem } from './feature-item';

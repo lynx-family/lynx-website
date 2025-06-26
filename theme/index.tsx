@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { removeBase, useLocation, usePageData } from 'rspress/runtime';
+import { removeBase, useLocation, usePageData } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
-} from 'rspress/theme';
+} from '@rspress/core/theme';
 import './index.scss';
 
 import {
@@ -165,4 +165,4 @@ function HomeLayout() {
 
 export { HomeLayout, Layout };
 
-export * from 'rspress/theme';
+export * from '@rspress/core/theme';

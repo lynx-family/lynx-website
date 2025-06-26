@@ -1,4 +1,4 @@
-import { useI18n, usePageData } from 'rspress/runtime';
+import { useI18n, usePageData } from '@rspress/core/runtime';
 
 export const Footer = () => {
   const t = useI18n();

@@ -1,5 +1,5 @@
-import { Badge } from 'rspress/theme';
-import { Link } from 'rspress/theme';
+import { Badge } from '@rspress/core/theme';
+import { Link } from '@rspress/core/theme';
 
 /**
  * Renders a badge indicating that a API only use for main thread.

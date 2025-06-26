@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDark } from 'rspress/runtime';
+import { useDark } from '@rspress/core/runtime';
 
 const useFixDark = () => {
   const [isDark, setIsDark] = useState(false);

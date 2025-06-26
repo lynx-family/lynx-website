@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
-import { Link } from 'rspress/theme';
+import { Link } from '@rspress/core/theme';
 
 interface CardLinkTabProps {
   /** Whether this tab is currently active */

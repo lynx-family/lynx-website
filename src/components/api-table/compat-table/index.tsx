@@ -1,7 +1,7 @@
 import type BCD from '@lynx-js/lynx-compat-data';
 import type React from 'react';
 import { useReducer } from 'react';
-import { useLocation } from 'rspress/runtime';
+import { useLocation } from '@rspress/core/runtime';
 import { BrowserInfoContext } from './browser-info';
 import { BrowserCompatibilityErrorBoundary } from './error-boundary';
 import { FeatureRow } from './feature-row';
