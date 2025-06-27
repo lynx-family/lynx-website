@@ -19,7 +19,6 @@ const PUBLISH_URL = 'https://lynxjs.org/';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
-  base: '/v3',
   route: {
     exclude: [
       'lynx-compat-data/**/*',
