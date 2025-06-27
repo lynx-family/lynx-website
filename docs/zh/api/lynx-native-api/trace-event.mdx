@@ -1,0 +1,196 @@
+# TraceEvent
+
+`TraceEvent` 是 Lynx 提供的性能埋点工具类。开发者可以通过 TraceEvent 在客户端代码中灵活埋点，记录关键函数、任务、渲染流程等的执行时序和耗时。
+
+## Android
+
+### beginSection
+
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的开始。
+
+```java
+public static void beginSection(String category, String name)
+public static void beginSection(String category, String name, Map<String, String> args)
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### args (可选)
+
+自定义的 trace event 参数。
+
+#### 示例
+
+```java
+TraceEvent.beginSection("render", "measure-layout");
+// ... your code ...
+TraceEvent.endSection("render", "measure-layout");
+
+// 添加自定义参数
+Map<String, String> args = new HashMap();
+args.put("component", "Image");
+args.put("size", "large");
+TraceEvent.beginSection("render", "draw-image", args);
+// ... your code ...
+TraceEvent.endSection("render", "draw-image");
+```
+
+### endSection
+
+标记一个 trace event(https://perfetto.dev/docs/instrumentation/track-events) 的结束。
+
+```java
+public static void endSection(String category, String name)
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### 示例
+
+```java
+TraceEvent.beginSection("logic", "parse-data");
+// ... your code ...
+TraceEvent.endSection("logic", "parse-data");
+```
+
+### instant
+
+标记一个即时(没有持续时间) trace event。
+
+```java
+public static void instant(String category, String name)
+public static void instant(String category, String name, Map<String, String> args)
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### args (可选)
+
+自定义的 trace event 参数。
+
+#### 示例
+
+```java
+TraceEvent.instant("network", "request-started");
+
+// 添加自定义参数
+
+Map<String, String> args = new HashMap<>();
+args.put("url", "https://example.com");
+args.put("method", "GET");
+TraceEvent.instant("network", "request-finished", args);
+```
+
+## iOS
+
+### beginSection
+
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的开始。
+
+```objective-c
++ (void)beginSection:(NSString *)category withName:(NSString *)name
++ (void)beginSection:(NSString *)category withName:(NSString *)name debugInfo:(NSDictionary *)args
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### args (可选)
+
+自定义的 trace event 参数。
+
+#### 示例
+
+```objective-c
+[LynxTraceEvent beginSection:@"render" withName:@"measure-layout"];
+// ... your code ...
+[LynxTraceEvent endSection:@"render" withName:@"measure-layout"];
+
+// 添加自定义参数
+[LynxTraceEvent beginSection:@"render" withName:@"draw-image" debugInfo:@{@"component": @"Image", @"size": @"large"}];
+// ... your code ...
+[LynxTraceEvent endSection:@"render" withName:@"draw-image"];
+```
+
+### endSection
+
+标记一个 trace event(https://perfetto.dev/docs/instrumentation/track-events) 的结束。
+
+```objective-c
++ (void)endSection:(NSString *)category withName:(NSString *)name
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### 示例
+
+```objective-c
+[LynxTraceEvent beginSection:@"logic" withName:@"parse-data"];
+// ... your code ...
+[LynxTraceEvent endSection:@"logic" withName:@"parse-data"];
+```
+
+### instant()
+
+标记一个即时(没有持续时间) trace event。
+
+```java
++ (void)instant:(NSString *)category withName:(NSString *)name
++ (void)instant:(NSString *)category withName:(NSString *)name debugInfo:(NSDictionary *)args
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### args (可选)
+
+自定义的 trace event 参数。
+
+#### 示例
+
+```objective-c
+[LynxTraceEvent instant:@"network" withName:@"request-started"];
+
+// 添加自定义参数
+[LynxTraceEvent instant:@"network" withName:@"request-finished" debugInfo:@{@"url": @"https://example.com", @"method": @"GET"}];
+```
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-native-api/trace-event" />

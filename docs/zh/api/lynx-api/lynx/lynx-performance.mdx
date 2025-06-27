@@ -45,6 +45,152 @@ import { Go } from '@lynx';
   highlight="{11-21,31}"
 />
 
+### profileStart()
+
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的开始。
+
+#### 语法
+
+```typescript
+profileStart(name: string, option?: { flowId: number, arg?:  Record<string, string>}): void;
+```
+
+#### 参数
+
+##### name
+
+trace event 的名称。
+
+##### option（可选）
+
+额外选项，例如 `flowId` 和自定义参数（`arg`）。
+
+#### 示例
+
+```typescript
+// 开始一个 trace event。
+lynx.performance.profileStart('DataFetch');
+
+// 开始一个 trace event 并添加自定义参数
+lynx.performance.profileStart('DataFetch', {
+  args: { url: 'https://api.example.com/data', method: 'GET' },
+});
+
+// 开始一个 flow 类型的 trace event
+const flowId = lynx.performance.profileFlowId();
+lynx.performance.profileStart('UserAction', { flowId });
+
+// 开始一个 flow 类型的 trace event 并添加自定义参数
+lynx.performance.profileStart('ComplexProcess', {
+  args: { step: 'start' },
+  flowId,
+});
+```
+
+### profileEnd()
+
+标记最近的 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的结束。
+
+#### 语法
+
+```typescript
+profileEnd(): void;
+```
+
+#### 示例
+
+```typescript
+// 结束最近的 trace event
+lynx.performance.profileEnd();
+```
+
+### profileMark()
+
+标记一个即时(没有持续时间) trace event。
+
+#### 语法
+
+```typescript
+profileMark(name: string, option?: { flowId: number, arg?:  Record<string, string>}): void;
+```
+
+#### 参数
+
+##### name
+
+trace event 的名称。
+
+##### option(optional)
+
+额外选项，如 `flowId` 和自定义参数（`arg`）。
+
+#### 示例
+
+```typescript
+// 标记一个即时 trace event
+lynx.performance.profileMark('FetchStarted');
+
+// 标记一个即时 trace event 并添加自定义参数
+lynx.performance.profileMark('FetchStarted', {
+  args: { status: 'initiated' },
+});
+
+// 标记一个 flow 类型的即时 trace event
+const flowId = lynx.performance.profileFlowId();
+lynx.performance.profileMark('ActionCheckpoint', { flowId });
+
+// 标记一个 flow 类型的即时 trace event 并添加自定义参数
+lynx.performance.profileMark('ProcessMidpoint', {
+  args: { step: 'middle' },
+  flowId,
+});
+```
+
+### profileFlowId()
+
+为 [flow events](https://perfetto.dev/docs/instrumentation/track-events#flows) 生成一个唯一的 flow id.
+
+#### 语法
+
+```typescript
+profileFlowId(): number;
+```
+
+#### 返回值
+
+一个唯一的 flow id 数字。
+
+### 示例
+
+```typescript
+const flowId = lynx.performance.profileFlowId();
+lynx.performance.profileStart('UserAction', { flowId });
+lynx.performance.profileMark('ActionCheckpoint', { flowId });
+lynx.performance.profileEnd();
+```
+
+### isProfileRecording()
+
+检查当前是否正在进行 trace 录制。
+
+#### 语法
+
+```typescript
+isProfileRecording(): boolean
+```
+
+#### 返回值
+
+如果正在录制 trace，返回 `true`。
+
+### Examples
+
+```typescript
+if (lynx.performance.isProfileRecording()) {
+  lynx.performance.profileMark('RecordingIsActive');
+}
+```
+
 ## 兼容性
 
 import { LegacyCompatTable } from '@lynx';

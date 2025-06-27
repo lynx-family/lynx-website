@@ -1,0 +1,130 @@
+import { Tab, Tabs, Steps } from 'rspress/theme';
+import { Details, PlatformTabs, CodeFold } from '@lynx';
+
+# Integrate Lynx development version
+
+During Lynx page development, you can use the Lynx Trace and Lynx Recorder tools for debugging, analysis, and locate issues.
+To avoid impacting production performance, the official release version of Lynx does not include Lynx Trace and Lynx Recorder features.  
+For developer convenience, Lynx also provides a development version (with a `-dev` suffix in the version number). Starting from `release/3.4`, Lynx provides a dev version for each release version (the dev version uses the same release version number with a `-dev` suffix). You can integrate the Lynx development version by following the steps below.
+
+:::info
+
+You can find the development version corresponding to your release version at [github](https://github.com/lynx-family/lynx/tags).
+
+:::
+
+<PlatformTabs hashKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+<Steps>
+
+### Integrate Lynx
+
+Refer to the [Lynx integration guide](/guide/start/integrate-with-existing-apps.html#platform=ios) for detailed steps on integrating Lynx.
+
+### Integrate Lynx Devtool
+
+Refer to the [Lynx Devtool integration guide](/guide/start/integrate-lynx-devtool.html#platform=ios) for detailed steps on integrating Lynx Devtool.
+
+### Switch to the dev version of Lynx
+
+Update your `Podfile` to use the dev version of the Lynx component.
+
+```ruby title="Podfile" {8,11}
+
+- pod 'Lynx', '3.4.0-rc.0'
++ pod 'Lynx', '3.4.0-rc.0-dev'
+
+- pod 'LynxDevtool', '3.4.0-rc.0'
++ pod 'LynxDevtool', '3.4.0-rc.0-dev'
+
+```
+
+### Install Dependencies
+
+Run `pod install` to install dependencies, then open your Xcode project and rebuild.
+
+</Steps>
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+<Steps>
+
+### Integrate Lynx
+
+Refer to the [Lynx integration guide](/guide/start/integrate-with-existing-apps.html#platform=android) for detailed steps on integrating Lynx.
+
+### Integrate Lynx Devtool
+
+Refer to the [Lynx Devtool integration guide](/guide/start/integrate-lynx-devtool.html#platform=android) for detailed steps on integrating Lynx Devtool.
+
+### Switch to the dev version of lynx and lynx-trace
+
+Update your `build.gradle` or `build.gradle.kts` to use the dev versions:
+
+<Tabs groupId='impl-android'>
+<Tab label="build.gradle">
+
+```groovy
+- implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0-dev") {
++   // Exclude the lynx-trace module to avoid including it transitively
++  exclude group: 'org.lynxsdk.lynx', module: 'lynx-trace'
++ }
+
+- implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0-dev")
+
+- implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0") {
++   // Exclude the lynx-trace and lynx module to avoid including it transitively
++   exclude group: 'org.lynxsdk.lynx', module: 'lynx-trace'
++   exclude group: 'org.lynxsdk.lynx', module: 'lynx'
++ }
+
+```
+
+</Tab>
+<Tab label="build.gradle.kts">
+
+```kotlin
+
+- implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0-dev") {
++   // Exclude the lynx-trace module to avoid including it transitively
++  exclude(group = "org.lynxsdk.lynx", module = "lynx-trace")
++ }
+
+- implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0-dev")
+
+- implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0") {
++   // Exclude the lynx-trace and lynx module to avoid including it transitively
++   exclude(group = "org.lynxsdk.lynx", module = "lynx-trace")'
++   exclude(group = 'org.lynxsdk.lynx', module = 'lynx')
++ }
+
+```
+
+</Tab>
+</Tabs>
+
+### Rebuild your application
+
+Rebuild your application to ensure all changes take effect.
+
+</Steps>
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+Congratulations! You have completed the integration of the Lynx development version.
+Now, you may launch the Lynx DevTool Desktop and connect your app via USB to start debugging and performance analysis.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-trace-overview-latest.png"
+  alt="Integrate Lynx DevTool Successfully"
+  width={800}
+/>

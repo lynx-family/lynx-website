@@ -1,0 +1,131 @@
+import { Tab, Tabs, Steps } from 'rspress/theme';
+import { PlatformTabs } from '@lynx';
+
+# 集成 Lynx 开发版本
+
+在 Lynx 页面开发过程中，你可以使用 Lynx Trace 和 Lynx Recorder 工具进行调试、分析和定位问题。为避免影响线上性能，Lynx 正式版本（release）并不包含 Lynx Trace 和 Lynx Recorder 功能。  
+为了方便开发者使用 Lynx Trace 和 Lynx Recorder 工具，Lynx 同时提供了开发版本(版本号带 `-dev` 后缀)。
+从 `release/3.4` 版本开始，Lynx 会为每一个 release 版本提供对应的开发版本（版本号为 release 版本号加上“-dev”后缀）。你可以按照以下步骤集成 Lynx 的开发版本。
+你可以按照以下步骤集成 Lynx 的开发版本。
+
+:::info
+
+在 [github](https://github.com/lynx-family/lynx/tags) 上找到 release 版本对应的开发版本.
+
+:::
+
+<PlatformTabs hashKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+<Steps>
+
+### 集成 Lynx
+
+参考 [Lynx 集成指南](/guide/start/integrate-with-existing-apps.html#platform=ios) 集成 Lynx 组件。
+
+### 集成 Lynx Devtool
+
+参考 [Lynx Devtool 集成指南](/guide/start/integrate-lynx-devtool.html#platform=ios) 集成 Lynx Devtool 组件。
+
+### 切换为 Lynx 开发版本
+
+在 `Podfile` 里，将 Lynx 组件版本号改为开发版本：
+
+```ruby title="Podfile" {8,11}
+
+- pod 'Lynx', '3.4.0-rc.0'
++ pod 'Lynx', '3.4.0-rc.0-dev'
+
+- pod 'LynxDevtool', '3.4.0-rc.0'
++ pod 'LynxDevtool', '3.4.0-rc.0-dev'
+
+```
+
+### 安装依赖
+
+运行 `pod install` 安装依赖，然后打开 Xcode 工程并重新编译。
+
+</Steps>
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+<Steps>
+
+### 集成 Lynx
+
+参考 [Lynx 集成指南](/guide/start/integrate-with-existing-apps.html#platform=android) 集成 Lynx 组件。
+
+### 集成 Lynx Devtool
+
+参考 [Lynx Devtool 集成指南](/guide/start/integrate-lynx-devtool.html#platform=android) 集成 Lynx Devtool 组件。
+
+### 切换 lynx 和 lynx-trace 组件为开发版本
+
+在你的 `build.gradle` 或 `build.gradle.kts` 文件中，使用开发版本依赖：
+
+<Tabs groupId='impl-android'>
+<Tab label="build.gradle">
+
+```groovy
+
+- implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0-dev") {
++   // 排除 lynx-trace 模块，防止版本冲突
++  exclude group: 'org.lynxsdk.lynx', module: 'lynx-trace'
++ }
+
+- implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0-dev")
+
+- implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0") {
++   // 排除 lynx-trace 和 lynx 模块，防止版本冲突
++   exclude group: 'org.lynxsdk.lynx', module: 'lynx-trace'
++   exclude group: 'org.lynxsdk.lynx', module: 'lynx'
++ }
+
+```
+
+</Tab>
+<Tab label="build.gradle.kts">
+
+```kotlin
+
+- implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx:3.4.0-rc.0-dev") {
++   // 排除 lynx-trace 模块，防止版本冲突
++  exclude(group = "org.lynxsdk.lynx", module = "lynx-trace")
++ }
+
+- implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-trace:3.4.0-rc.0-dev")
+
+- implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0")
++ implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.0-rc.0") {
++   // 排除 lynx-trace 和 lynx 模块，防止版本冲突
++   exclude(group = "org.lynxsdk.lynx", module = "lynx-trace")'
++   exclude(group = 'org.lynxsdk.lynx', module = 'lynx')
++ }
+
+```
+
+</Tab>
+</Tabs>
+
+### 重新构建应用
+
+重新编译你的应用。
+
+</Steps>
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+恭喜你已完成 Lynx 开发版本的集成！现在，你可以启动 Lynx DevTool 桌面端，通过 USB 连接你的应用，开始调试和性能分析。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-trace-overview-latest.png"
+  alt="Integrate Lynx DevTool Successfully"
+  width={800}
+/>

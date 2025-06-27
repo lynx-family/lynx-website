@@ -1,0 +1,146 @@
+<style jsx>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+import { Steps } from 'rspress/theme';
+
+# Trace UI 基本使用指南
+
+本文将介绍 Trace UI 的主要界面结构与常用操作，助你快速上手性能分析。
+
+## 界面结构简介
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace-ui-structure-overiview-latest.png"
+  alt="UI Structure Overview"
+  class="full_image"
+/>
+
+Trace UI 主要由以下几个部分组成：
+
+- **顶部栏(Topbar)**: 包含搜索框、“SourceMap Decode”、“聚焦 LynxView”等按钮，便于定位和分析特定 Trace 事件。
+- **时间轴(Timeline)**: 展示 Trace 事件的发生与持续时间，支持添加注释（Annotation）、统计时间间隔等功能。
+- **Track 树视图(Track Tree View)**: 按线程（Track）展示 Trace 事件，每个线程可对应一个或多个 Track，便于区分不同线程/任务的执行情况。
+- **详情面板(DetailPanel)**: 点击任意 Trace 事件后，显示该事件的详细参数、耗时、线程、进程等信息。
+
+## 常用操作指南
+
+### 打开 Trace 文件
+
+- 直接将 Trace 文件拖拽到页面，自动解析并展示 Trace。
+
+### 缩放与移动时间轴
+
+- **缩放时间轴**：按下 `w`（放大）或 `s`（缩小）键；
+- **左右平移**：按下 `a`（向左）或 `d`（向右）键。
+
+### 搜索 Trace 事件
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/search-trace-event.PNG"
+  alt="Search for TraceEvents"
+  class="full_image"
+/>
+
+- 在顶部栏搜索框输入 Trace 事件名称、参数等关键词，快速定位目标事件。
+- 敲击 `f` 键可跳转到当前选择的搜索结果；
+- 点击搜索框末尾的箭头跳转到前一个/后一个结果，或按 `Enter` 跳转到下一个结果；
+- 时间轴会为当前搜索结果高亮显示，方便定位。
+
+### 查看 Trace 事件详情
+
+- 点击任意 Trace 事件，详情面板会显示其详细参数、耗时、进程、线程等信息，便于深入分析。
+
+### 聚合 Trace 事件
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/aggregate-trace-event.PNG"
+  alt="Aggregate TraceEvents"
+  class="full_image"
+/>
+
+- 在任意一个或多个 Track 上，按住鼠标左键框选一段 Trace 事件，可按事件名称聚合统计；
+- 聚合结果会在详情面板显示，包括总耗时、平均耗时、出现次数等信息；
+- 点击聚合结果表头，可按名称、总耗时、平均耗时、出现次数等字段排序。
+
+### 标记时间轴
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/add-timeline-annotations-latest.png"
+  alt="Add Timeline Annotations"
+  class="full_image"
+/>
+
+- 鼠标点击可在时间轴对应位置添加注释（note），可自定义命名，便于后续查找和协作。
+
+### 统计时间间隔
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/measure-time-intervals.png"
+  alt="Measure Time Intervals"
+  class="full_image"
+/>
+
+- 鼠标点击时间轴并拖动，可快速统计所选区间的时间间隔，支持精确分析任务耗时。
+
+### 聚焦 LynxView
+
+Trace 数据中可能包含多个 Lynx 页面的 Trace 数据，Lynx Trace 支持聚焦单个或者多个 Lynx 页面，便于定位和分析特定页面的性能问题。
+
+<Steps>
+#### 1. 点击 Focus LynxView 按钮
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/focus-lynxview-trace.png"
+  alt="Force LynxView Button"
+  class="full_image"
+/>
+#### 2. 根据 url 选择需要分析的 Lynx 页面
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/focus-lynxview-choose-trace-latest.png"
+  alt="Force LynxView Choose"
+  class="full_image"
+/>
+
+选择 Lynx 页面后，未选择的页面的 Trace 事件将变为灰色。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/focus-lynxview-after-trace-latest.png"
+  alt="Force LynxView After Choose"
+  class="full_image"
+/>
+
+</Steps>
+
+### 查询 Lynx Engine 版本
+
+搜索 `LynxEngineVersion` 或者 `Version` 可以查询 Lynx Engine 版本。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-engine-version-trace.png"
+  alt="Lynx Engine Version"
+  class="full_image"
+/>
+
+### 查询录制 Trace 的系统
+
+1. Topbar 搜索框输入冒号（:）;
+2. 输入一下 SQL 语句查询录制 Trace 的系统信息：
+
+```sql
+select name, str_value from metadata where name like "system%";
+```
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/record-trace-system-machine-trace.png"
+  alt="Lynx Trace System"
+  class="full_image"
+/>
+
+## 更多资源
+
+想了解 Trace UI 及其高级功能的更详细指南，请参考官方 Perfetto 文档：[perfetto-ui](https://perfetto.dev/docs/visualization/perfetto-ui)

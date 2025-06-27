@@ -1,0 +1,194 @@
+# TraceEvent
+
+`TraceEvent` is a performance instrumentation utility provided by Lynx. Developers can use TraceEvent to flexibly insert trace points in client-side code, recording the execution timing and duration of key functions, tasks, rendering processes, and more.
+
+## Android
+
+### beginSection
+
+Marks the start of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
+
+```java
+public static void beginSection(String category, String name)
+public static void beginSection(String category, String name, Map<String, String> args)
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### args (optional)
+
+Custom arguments for the trace event.
+
+#### Examples
+
+```java
+TraceEvent.beginSection("render", "measure-layout");
+// ... your code ...
+TraceEvent.endSection("render", "measure-layout");
+
+// With custom arguments
+Map<String, String> args = new HashMap();
+args.put("component", "Image");
+args.put("size", "large");
+TraceEvent.beginSection("render", "draw-image", args);
+// ... your code ...
+TraceEvent.endSection("render", "draw-image");
+```
+
+### endSection
+
+Marks the end of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
+
+```java
+public static void endSection(String category, String name)
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### Examples
+
+```java
+TraceEvent.beginSection("logic", "parse-data");
+// ... your code ...
+TraceEvent.endSection("logic", "parse-data");
+```
+
+### instant
+
+Marks an instant trace event.
+
+```java
+public static void instant(String category, String name)
+public static void instant(String category, String name, Map<String, String> args)
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### args(optional)
+
+Custom arguments for the trace event.
+
+#### Examples
+
+```java
+TraceEvent.instant("network", "request-started");
+
+// With custom arguments
+Map<String, String> args = new HashMap<>();
+args.put("url", "https://example.com");
+args.put("method", "GET");
+TraceEvent.instant("network", "request-finished", args);
+```
+
+## iOS
+
+### beginSection
+
+Marks the start of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
+
+```objective-c
++ (void)beginSection:(NSString *)category withName:(NSString *)name
++ (void)beginSection:(NSString *)category withName:(NSString *)name debugInfo:(NSDictionary *)args
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### args(optional)
+
+Custom arguments for the trace event.
+
+#### Examples
+
+```objective-c
+[LynxTraceEvent beginSection:@"render" withName:@"measure-layout"];
+// ... your code ...
+[LynxTraceEvent endSection:@"render" withName:@"measure-layout"];
+
+// With custom arguments
+[LynxTraceEvent beginSection:@"render" withName:@"draw-image" debugInfo:@{@"component": @"Image", @"size": @"large"}];
+// ... your code ...
+[LynxTraceEvent endSection:@"render" withName:@"draw-image"];
+```
+
+### endSection
+
+Marks the end of a trace event(https://perfetto.dev/docs/instrumentation/track-events).
+
+```objective-c
++ (void)endSection:(NSString *)category withName:(NSString *)name
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### Examples
+
+```objective-c
+[LynxTraceEvent beginSection:@"logic" withName:@"parse-data"];
+// ... your code ...
+[LynxTraceEvent endSection:@"logic" withName:@"parse-data"];
+```
+
+### instant
+
+Marks an instant trace event.
+
+```java
++ (void)instant:(NSString *)category withName:(NSString *)name
++ (void)instant:(NSString *)category withName:(NSString *)name debugInfo:(NSDictionary *)args
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### args(optional)
+
+Custom arguments for the trace event.
+
+#### Examples
+
+```objective-c
+[LynxTraceEvent instant:@"network" withName:@"request-started"];
+// With custom arguments
+[LynxTraceEvent instant:@"network" withName:@"request-finished" debugInfo:@{@"url": @"https://example.com", @"method": @"GET"}];
+```
+
+## Compatibility
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-native-api/trace-event" />
