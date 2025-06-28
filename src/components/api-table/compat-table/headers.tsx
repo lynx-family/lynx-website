@@ -26,6 +26,8 @@ export function mapPlatformNameToIconName(platformName: BCD.PlatformName) {
       return 'windows';
     case 'web_lynx':
       return 'web';
+    case 'harmony':
+      return 'harmony';
     default:
       return platformName;
   }
