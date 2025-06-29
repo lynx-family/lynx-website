@@ -1,6 +1,4 @@
----
-title: animate()
----
+import { VersionBadge } from '@lynx';
 
 # animate()
 
@@ -119,6 +117,8 @@ element.animate([
 
 ## 示例
 
+### 通过 getElementById() 调用
+
 ```js
 let ani = lynx.getElementById('test').animate(
   [
@@ -172,32 +172,115 @@ ani.play();
 ani.cancel();
 ```
 
+:::note
+
+- 每次调用 `lynx.getElementById("test").animate` 都会生成一个新的 `Animation` 对象，同时后面创建的动画会覆盖前面创建的动画。
+- 如果想重启一个同样的动画，需要重新调用 `lynx.getElementById("test").animate` 来创建一个新的 `Animation` 对象。。
+
+:::
+
+### 通过 createSelectorQuery() 调用 <VersionBadge>3.4</VersionBadge>
+
+在 **Lynx 3.4** 版本后，`animate()` 可以通过 `createSelectorQuery()` 来调用。
+
+**该方式属于实验性功能。**
+
+```js
+const ani1 = lynx.createAnimation(
+  'ani1',
+  [
+    {
+      transform: 'translateY(0px)',
+    },
+    {
+      transform: 'translateY(-150px)',
+    },
+  ],
+  {
+    name: 'js-animation-1',
+    duration: 3000,
+    iterations: 'infinite',
+    easing: 'cubic-bezier(.64, .57, .67, 1.53)',
+    fill: 'forwards',
+  },
+);
+
+// start
+this.createSelectorQuery().select('#test').animate([ani1]).exec();
+// pause
+this.createSelectorQuery()
+  .select('#test')
+  .pauseAnimation(['js-animation-1'])
+  .exec();
+```
+
+### 多动画 Multiple animate <VersionBadge>3.4</VersionBadge>
+
+在 **Lynx 3.4** 版本后，可以通过 `createSelectorQuery()` 来在一个节点上同时启动多个动画。
+
+**该方式属于实验性功能。**
+
+```js
+const ani1 = lynx.createAnimation(
+  'ani1',
+  [
+    {
+      transform: 'translateY(0px)',
+    },
+    {
+      transform: 'translateY(-150px)',
+    },
+  ],
+  {
+    name: 'js-animation-1',
+    duration: 3000,
+    iterations: 'infinite',
+    easing: 'cubic-bezier(.64, .57, .67, 1.53)',
+    fill: 'forwards',
+  },
+);
+
+const ani2 = lynx.createAnimation(
+  'ani2',
+  [
+    {
+      'background-color': 'red',
+    },
+    {
+      'background-color': 'blue',
+    },
+  ],
+  {
+    name: 'js-animation-2',
+    duration: 3000,
+    easing: 'linear',
+    fill: 'forwards',
+    iterations: 'infinite',
+  },
+);
+
+// start
+this.createSelectorQuery().select('#test').animate([ani1, ani2]).exec();
+// pause
+this.createSelectorQuery()
+  .select('#test')
+  .pauseAnimation(['js-animation-1', 'js-animation-2'])
+  .exec();
+```
+
 ## 动画事件
 
 Animate API 的事件和 CSS Animation [动画事件](../event/animation-event#animation-动画)相同。
 
 ## 其他信息
 
-:::info
+:::tip
 
 - Animate API 与 CSS Animation 会互相覆盖，后生效的那一方会覆盖前者。
 
-- 每次调用 `lynx.getElementById("test").animate` 都会生成一个新的 `Animation` 对象。
-
-- Animate Api 暂只支持创建一个动画，未来会支持创建多个。因此现在若对一个节点多次调用 `lynx.getElementById("test").animate`，最后创建的动画会覆盖前面的动画。
-
-- 一个 `Animation` 对象对应的动画结束后，若想重启一个同样的动画，需要重新调用 `lynx.getElementById("test").animate` 创建一个新的 `Animation` 对象。
-
-- Animate API 暂只支持 getElementById API，对 SelectQuery API 的支持还未接入。
-
-:::
-
-:::tip
-
-Animate API 不生效，可能是 getElementById 未能选中节点：
-
-- 可能是 ID 选择器不正确
-- 可能是 ID 选择器的值依赖复杂 JS 表达式，导致 ID 选择器的值无法在首屏得到，此时若 getElementById 的时机过早 (如在 ComponentDidMount)，则可能找不到节点
+- Animate API 不生效，可能是 getElementById 未能选中节点：
+  - 可能是 ID 选择器不正确
+  - 可能是 ID 选择器的值依赖复杂 JS 表达式，导致 ID 选择器的值无法在首屏得到，此时若 getElementById 的时机过早 (如在 ComponentDidMount)，则可能找不到节点
 
 :::
 
@@ -211,3 +294,4 @@ Animate API 不生效，可能是 getElementById 未能选中节点：
 import { LegacyCompatTable } from '@lynx';
 
 <LegacyCompatTable metadata="lynx-api/lynx/animateAPI" />
+```
