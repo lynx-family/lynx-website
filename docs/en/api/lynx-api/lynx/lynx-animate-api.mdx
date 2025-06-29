@@ -1,6 +1,4 @@
----
-title: animate()
----
+import { VersionBadge } from '@lynx';
 
 # animate()
 
@@ -172,28 +170,76 @@ ani.play();
 ani.cancel();
 ```
 
+After **Lynx version 3.3**, the `Animate()` can be called via the `createSelectorQuery()`, you can chain chain multiple animation with it.
+
+**It's an experimental feature, and you should use it with caution.**
+
+<VersionBadge>3.3</VersionBadge>
+
+```js
+const ani1 = lynx.createAnimation(
+  'ani1',
+  [
+    {
+      transform: 'translateY(0px)',
+    },
+    {
+      transform: 'translateY(-150px)',
+    },
+  ],
+  {
+    name: 'js-animation-1',
+    duration: 3000,
+    iterations: 'infinite',
+    easing: 'cubic-bezier(.64, .57, .67, 1.53)',
+    fill: 'forwards',
+  },
+);
+
+const ani2 = lynx.createAnimation(
+  'ani2',
+  [
+    {
+      'background-color': 'red',
+    },
+    {
+      'background-color': 'blue',
+    },
+  ],
+  {
+    name: 'js-animation-2',
+    duration: 3000,
+    easing: 'linear',
+    fill: 'forwards',
+    iterations: 'infinite',
+  },
+);
+
+// start
+this.createSelectorQuery().select('#test').animate([ani1, ani2]).exec();
+// pause
+this.createSelectorQuery()
+  .select('#test')
+  .pauseAnimation(['js-animation-1', 'js-animation-2'])
+  .exec();
+```
+
 ## Animation Event
 
 The events for the `animate()` API are the same as the [animation events](../event/animation-event#animation) for CSS animations.
 
 ## Other Infos
 
-:::info
+:::tip
 
 - Animate Api and CSS Animation will override each other, and the one that takes effect later will override the former.
 - Each call to `getElementById("test").animate` will generate a new `Animation` object.
-- Animate Api currently only supports the creation of one animation, and will support the creation of multiple animations in the future. So now if `getElementById("test").animate` is called multiple times for a node, the last created animation will overwrite the previous animation.
+- Before Lynx version 3.3, the Animate API only supported creating one animation. Therefore, if `lynx.getElementById("test").animate` is called multiple times on a single node before Lynx version 3.3, the last created animation will overwrite the previous ones.
 - After the animation corresponding to an `Animation` object ends, if you want to restart the same animation, you need to call `getElementById("test").animate` again to create a new `Animation` object.
-- Animate API currently only supports getElementById API, and the support for SelectQuery API is still being accessed.
-
-:::
-
-:::tip
-
-The Animate API may not take effect, possibly because `getElementById` failed to select the node:
-
-- The ID selector might be incorrect
-- The value of the ID selector might depend on a complex JS expression, causing the value of the ID selector not to be available on the first screen. In this case, if getElementById is invoked too early (like in ComponentDidMount), it might not find the node.
+- Before Lynx version 3.3, the Animate API only supported the getElementById API. After Lynx version 3.3, it supports the SelectQuery API.
+- The Animate API may not take effect, possibly because `getElementById` failed to select the node:
+  - The ID selector might be incorrect
+  - The value of the ID selector might depend on a complex JS expression, causing the value of the ID selector not to be available on the first screen. In this case, if getElementById is invoked too early (like in ComponentDidMount), it might not find the node.
 
 :::
 
