@@ -13,7 +13,7 @@ import {
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
 import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerCompatibleMetaHighlight } from '@rspress/plugin-shiki/transformers';
+import { transformerCompatibleMetaHighlight } from 'rspress/shiki-transformers';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -54,13 +54,16 @@ export default defineConfig({
       pluginSass(),
       pluginLess(),
     ],
-    source: {
+    resolve: {
       alias: {
         '@site': path.join(__dirname),
-        '@': path.join(__dirname, 'src'),
+        '@/': path.join(__dirname, 'src'),
         '@assets': path.join(__dirname, 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
       },
+    },
+    source: {
+      include: [path.join(require.resolve('rspress'), '../')],
       define: {
         'process.env': {
           // This marks the first open sourced version of Lynx.
@@ -128,8 +131,6 @@ export default defineConfig({
         content: 'https://x.com/lynxjs_org',
       },
     ],
-    nav: [],
-    sidebar: {},
   },
   plugins: [
     pluginLlms(),
@@ -176,16 +177,13 @@ export default defineConfig({
 function rspeedyApiPlugin(): RspressPlugin {
   return {
     name: 'rspeedy:api',
-    async config(config, utils, isProd) {
-      const { pluginAutoNavSidebar } = await import(
-        '@rspress/plugin-auto-nav-sidebar'
-      );
+    // FIXME: warning: this is hack to modify rspress.config in-place when autoNav generated
+    async beforeBuild(config, isProd) {
       const {
         transformRspeedySidebar,
         transformReactRsbuildPluginSidebar,
         transformQrcodeRsbuildPluginSidebar,
       } = await import('./api-reports/index.js');
-      config = await pluginAutoNavSidebar().config!(config, utils, isProd);
       config.themeConfig?.locales?.map((locale) => {
         if (locale.sidebar?.['/api']) {
           locale.sidebar!['/api'] =
@@ -232,7 +230,6 @@ function rspeedyApiPlugin(): RspressPlugin {
         }
         return locale;
       });
-      return config;
     },
   };
 }
