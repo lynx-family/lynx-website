@@ -9,16 +9,20 @@ The [Output.inlineScripts](./rspeedy.output.inlinescripts.md) option controls wh
 **Signature:**
 
 ```typescript
-inlineScripts?: boolean | undefined;
+inlineScripts?: InlineChunkConfig | undefined;
 ```
 
 ## Remarks
 
-If no value is provided, the default value would be `true`<!-- -->.
+If no value is provided, the default value would be `true`<!-- -->, which means all background thread scripts will be inlined.
 
 This is different with [output.inlineScripts](https://rsbuild.dev/config/output/inline-scripts) since we normally want to inline scripts in Lynx bundle (`.lynx.bundle`<!-- -->).
 
-Only background thread scripts can remain non-inlined, whereas the main thread script is always inlined.
+There are two points that need to be especially noted:
+
+1. Only background thread scripts can remain non-inlined, whereas the main thread script is always inlined.
+
+2. Currently, when `experimental_isLazyBundle` is enabled, `inlineScripts` will always be `true`<!-- -->.
 
 ## Example
 
