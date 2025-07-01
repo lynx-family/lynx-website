@@ -13,12 +13,12 @@ interface Props {
  * - [] use it within the new APITable
  */
 export default function EditThis({ path }: Props) {
-  const pageData = usePageData();
+  const { page } = usePageData();
   const t = useI18n();
 
   let basePath = '';
   if (!path) {
-    basePath = `docs/${pageData.page.pagePath}`;
+    basePath = `docs/${page.pagePath}`;
   } else {
     basePath = `${path}`;
   }

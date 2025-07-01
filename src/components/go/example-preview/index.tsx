@@ -5,8 +5,9 @@ import { ExampleContent } from './components';
 import { isAssetFileType } from './utils/example-data';
 import Callout from '../../Callout';
 import { SchemaOptionsData } from './hooks/use-switch-schema';
+import { withBase } from 'rspress/runtime';
 
-const EXAMPLE_BASE_URL = '/lynx-examples';
+const EXAMPLE_BASE_URL = withBase('/lynx-examples');
 
 const ErrorWrap = ({ example }: { example: string }) => {
   return (
