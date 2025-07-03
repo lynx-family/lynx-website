@@ -350,7 +350,7 @@ By implementing a URL redirection mechanism, developers can intercept specific i
 
 #### Implementation Principle
 
-This feature is implemented based on the [`MediaResourceFetcher`](/api/lynx-native-api/resource-fetcher/MediaResourceFetcher.html) interface, with the core process divided into two stages:
+This feature is implemented based on the [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) interface, with the core process divided into two stages:
 
 1. **Resource Type Detection** (`isLocalResource`)
 
@@ -461,12 +461,44 @@ class LocalMediaFetcher : LynxMediaResourceFetcher() {
 ```
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+```typescript
+import { LynxMediaResourceFetcher, LynxResourceRequest, LynxOptionalBool } from '@lynx/lynx';
+
+// Local resource handler implementation
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+
+  // Resource path conversion method
+  // @param request Resource request object
+  // @return Local file path or empty string
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    return request.url?.replace(
+      'http://localhost',
+      'file://'
+    ) ?? '';
+  }
+
+  // Determines if the resource is local
+  // @param url The original request URL
+  // @return LynxOptionalBool.TRUE indicates the request needs redirection
+  isLocalResource(url: string): LynxOptionalBool {
+    if (url.startsWith('http://localhost')) {
+      return LynxOptionalBool.TRUE
+    }
+    return LynxOptionalBool.FALSE
+  }
+}
+
+```
+</PlatformTabs.Tab>
 </PlatformTabs>
 
-Read the API reference of [`MediaResourceFetcher`](/api/lynx-native-api/resource-fetcher/MediaResourceFetcher.html) for more details.
+Read the API reference of [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) for more details.
 
 ## Compatibility
 
 import { LegacyCompatTable } from '@lynx';
 
 <LegacyCompatTable metadata="elements/image" />
+```

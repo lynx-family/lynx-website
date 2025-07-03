@@ -357,7 +357,7 @@ lynx.createSelectorQuery()
 
 #### 实现原理
 
-本功能基于 [`MediaResourceFetcher`](/api/lynx-native-api/resource-fetcher/MediaResourceFetcher.html) 接口实现，核心流程分为两个阶段：
+本功能基于 [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) 接口实现，核心流程分为两个阶段：
 
 1. **资源类型检测** (`isLocalResource`)
 
@@ -467,12 +467,49 @@ class LocalMediaFetcher : LynxMediaResourceFetcher() {
 ```
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+```typescript
+
+import {
+  LynxMediaResourceFetcher,
+  LynxResourceRequest,
+  LynxOptionalBool,
+} from '@lynx/lynx';
+
+// 本地资源处理器实现
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+
+  // 资源路径转换方法
+  // @param request 资源请求对象
+  // @return 本地文件路径或空字符串
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    return request.url?.replace(
+      'http://localhost',
+      'file://'
+    ) ?? '';
+  }
+
+  // 判断是否本地资源
+  // @param url 请求的原始URL
+  // @return LynxOptionalBool.TRUE 需要重定向的请求
+  isLocalResource(url: string): LynxOptionalBool {
+    if (url.startsWith('http://localhost')) {
+      return LynxOptionalBool.TRUE
+    }
+    return LynxOptionalBool.FALSE
+  }
+}
+
+```
+</PlatformTabs.Tab>
 </PlatformTabs>
 
-更多详细信息请参考 [`MediaResourceFetcher`](/api/lynx-native-api/resource-fetcher/MediaResourceFetcher.html) 的 API 文档。
+更多详细信息请参考 [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) 的 API 文档。
 
 ## 兼容性
 
 import { LegacyCompatTable } from '@lynx';
 
 <LegacyCompatTable metadata="elements/image" />
+```
