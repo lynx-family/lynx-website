@@ -1,0 +1,357 @@
+## 将 Lynx 集成到 Harmony 平台
+
+import { Info, CodeFold } from '@lynx';
+import { Steps } from '@theme';
+import { Tab, Tabs } from 'rspress/theme';
+
+<Info title="Lynx for Harmony">
+  - 本文假设你已熟悉原生 Harmony 应用开发的基本概念。
+  - 下文中的所有代码，你都可以参考项目: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/pull/18)
+</Info>
+
+## 1. 依赖配置
+
+<Steps>
+### 包依赖
+1. **Lynx 相关版本依赖** 
+
+[Lynx Engine](/guide/spec.html#engine) 核心能力，包含了解析 [Bundle](/guide/spec.html#lynx-bundle-or-bundle)、样式解析、排版以及渲染视图等基础能力，以及 Lynx 页面依赖的 JavaScript 运行时基础代码
+
+Lynx Service 包括 `LynxDevtoolService`、`LynxLogService` 等，旨在提供一些宿主应用特性强相关的能力，允许宿主应用在运行时注入自定义实现.
+
+```groovy title=oh-package.json5 {2-7}
+"dependencies": {
+  "@ohos/imageknife": "3.2.6",
+  "@lynx/lynx": "0.0.1-alpha.1",
+  "@lynx/lynx_devtool": "0.0.1-alpha.1",
+  "@lynx/lynx_devtool_service": "0.0.1-alpha.1",
+  "@lynx/lynx_log_service": "0.0.1-alpha.1",
+  "@lynx/primjs": "0.0.1-alpha.4"
+},
+```
+
+### 能力依赖
+
+1. **Native C++ 配置**
+
+为了引入libc++_shared.so 需要进行Native C++ 相关配置，需要定义 CMakeLists.txt 
+
+```groovy title=CMakeLists.txt
+# the minimum version of CMake.
+cmake_minimum_required(VERSION 3.5.0)
+project(MyApplication)
+```
+并且修改 entry/build-profile.json5 中的 "buildOptions"
+```groovy title=build-profile.json5 {3-7}
+{
+  "buildOption": {
+    "externalNativeOptions": {
+      "path": "./src/main/cpp/CMakeLists.txt",
+      "arguments": "",
+      "cppFlags": "",
+    }
+  },
+}
+```
+
+2. **网络请求配置**
+
+如果需要请求网络资源，请在 module.json5 配置 requestPermissions 来启用网络请求。
+
+```groovy title=module.json5 {3-14}
+{
+  "module": {
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET",
+        "reason": "$string:network",
+        "usedScene": {
+          "abilities": [
+            "FormAbility"
+          ],
+          "when": "inuse"
+        }
+      },
+    ],
+}
+}
+```
+并且在 entry/src/main/resources/base/element/string.json 中配置 network 关键字段
+
+```groovy title=string.json {3-6}
+{
+  "string": [
+    {
+      "name": "network",
+      "value": "Request network"
+    }
+  ]
+}
+```
+</Steps>
+
+## 2. 环境初始化
+
+<Steps>
+### LynxService 初始化 ###
+
+Lynx Service 提供了宿主特性相关能力，推荐在 EntryAbility 的 OnCreate 生命周期中完成 Lynx Service 的初始化。
+
+``` groovy title=EntryAbility.ets
+import { LLog, LynxServiceCenter, LynxEnv, LynxServiceType } from '@lynx/lynx';
+import { LynxDevToolService } from '@lynx/lynx_devtool_service';
+import { LynxLogService } from '@lynx/lynx_log_service';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    
+    // Init LynxDevtool
+    LynxServiceCenter.registerService(LynxServiceType.DevTool, LynxDevToolService);
+    // Init LynxLog
+    LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
+    
+    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+  }
+}
+```
+### LynxEnv 初始化
+
+LynxEnv 提供了 Lynx Engine 的全局初始化接口。请保证 LynxEnv 的初始化发生在 Lynx Engine 的任何接口调用之前；例如可以在 EntryAbility 的 OnCreate 生命周期中完成初始化。
+
+``` groovy title=EntryAbility.ets
+import { LLog, LynxEnv } from '@lynx/lynx';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    // Init LynxEnv
+    LLog.useSysLog(true);
+    LynxEnv.initialize(this.context);
+    let options = new Map<string, string>();
+    options.set('App', 'LynxExplorer');
+    options.set('AppVersion', '0.0.1');
+    LynxEnv.setAppInfo(options);
+    LynxEnv.enableDevtool(true);
+    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+  }
+}
+```
+</Steps>
+
+## 3.渲染LynxView
+
+<Steps>
+### 创建 Bundle 加载器 ###
+
+Lynx Engine 自身并没有集成下载资源的能力，因此需要宿主应用来提供 LynxResourceProvider 的具体实现，并在构造 LynxView 时注入，Lynx 会采用注入的资源加载器来获取真实的 Bundle 内容。
+
+你可以使用多种方式获取 Bundle 的资源内容，在这里我们选择将 Bundle 的内容内置在应用中:
+
+首先请将快速上手阶段生成的 Bundle 文件放置在 src/main/resources/rawfile 目录下；或者你可以将下面的文件下载到本机上并放置在同样目录下；
+
+:::note
+Bundle 示例:
+**https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
+:::
+
+```
+entry
+└── src    
+    └── main        
+        └── resources  
+            └── rawfile             
+                 └── main.lynx.bundle
+```
+
+1. **LynxTemplateResourceFetcher**
+
+LynxTemplateResourceFetcher 提供了 Bundle 模板资源的加载能力，你需要实现 fetchTemplate 方法来完成 Bundle 模板资源的加载。
+
+<CodeFold>
+``` groovy title=ExampleTemplateResourceFetcher.ets
+import { LLog, LynxResourceRequest, LynxTemplateResourceFetcher, TemplateProviderResult } from '@lynx/lynx';
+import { AsyncCallback, BusinessError } from '@ohos.base';
+import http from '@ohos.net.http';
+import resourceManager from '@ohos.resourceManager';
+
+export class ExampleTemplateResourceFetcher extends LynxTemplateResourceFetcher {
+  fetchTemplate(request: LynxResourceRequest,
+    callback: AsyncCallback<TemplateProviderResult, void>) {
+    if (request.url.startsWith('http')) {
+      let httpRequest = http.createHttp();
+      httpRequest.request(
+        request.url, {
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+      }, (err: BusinessError, data: http.HttpResponse) => {
+        callback(err, {
+          binary: data?.result as ArrayBuffer
+        });
+        httpRequest.destroy();
+      });
+    } else {
+      // local file
+      const context: Context = getContext(this);
+      const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
+      resourceMgr.getRawFileContent(request.url, (err: BusinessError, data: Uint8Array) => {
+        callback(err, {
+          binary: data?.buffer as ArrayBuffer
+        })
+      });
+    }
+  }
+
+  fetchSSRData(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>) {
+    let httpRequest = http.createHttp();
+    httpRequest.request(request.url, {
+      expectDataType: http.HttpDataType.ARRAY_BUFFER
+    }, (err: BusinessError, data: http.HttpResponse) => {
+      callback(err, data?.result as ArrayBuffer)
+      httpRequest.destroy();
+    })
+  }
+}
+```
+</CodeFold>
+
+2. **LynxMediaResourceFetcher**
+
+LynxMediaResourceFetcher 提供了媒体资源的加载能力。
+
+<CodeFold>
+``` groovy title=ExampleMediaResourceFetcher.ets
+import { LynxMediaResourceFetcher, LynxResourceRequest, LynxOptionalBool } from '@lynx/lynx';
+
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    // just return the input url;
+    return request.url;
+  }
+
+  isLocalResource(url: string): LynxOptionalBool {
+    return LynxOptionalBool.UNDEFINED;
+  }
+}
+```
+</CodeFold>
+
+3. **LynxGenericResourceFetcher**
+
+LynxGenericResourceFetcher 提供了通用资源的加载能力，你需要实现 fetchResource 方法来完成通用资源的加载。
+
+<CodeFold>
+```groovy title=ExampleGenericResourceFetcher.ets
+import { LynxError, LynxSubErrorCode, LynxGenericResourceFetcher, LynxResourceRequest, LynxResourceType, LynxStreamDelegate } from '@lynx/lynx';
+import { AsyncCallback, BusinessError } from '@ohos.base';
+import http from '@ohos.net.http';
+import { ImageKnife, ImageKnifeOption, CacheStrategy } from  '@ohos/imageknife';
+
+export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  fetchResource(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>): void {
+    let httpRequest = http.createHttp();
+    httpRequest.request(request.url, {
+      expectDataType: http.HttpDataType.ARRAY_BUFFER
+    }, (err: BusinessError, data: http.HttpResponse) => {
+      callback(err, data?.result as ArrayBuffer)
+      httpRequest.destroy();
+    })
+  }
+
+  fetchResourcePath(request: LynxResourceRequest, callback: AsyncCallback<string, void>): void {
+    if (request.type === LynxResourceType.LYNX_RESOURCE_TYPE_IMAGE) {
+      let option = new ImageKnifeOption();
+      option.loadSrc = request.url;
+      option.writeCacheStrategy = CacheStrategy.File;
+      let error: BusinessError | undefined = undefined;
+      ImageKnife.getInstance().preLoadCache(option).then((data: string) => {
+        if (data.length > 0) {
+          callback(error, data);
+        } else {
+          error = {
+            code: LynxSubErrorCode.E_RESOURCE_IMAGE_PIC_SOURCE,
+            message: 'Image path is invalid',
+            name: 'Image Error',
+          }
+          callback(error, '');
+        }
+      }).catch((e: string) => {
+        error = {
+          code: LynxSubErrorCode.E_RESOURCE_IMAGE_FROM_NETWORK_OR_OTHERS,
+          message: e,
+          name: 'Image Error',
+        }
+        callback(error, '');
+      })
+    } else {
+      callback({
+        code: LynxError.LYNX_ERROR_CODE_RESOURCE,
+        message: 'unsupported type: ' + request.type,
+        name: 'Resource Error',
+      }, '');
+    }
+  }
+
+  fetchStream(request: LynxResourceRequest, delegate: LynxStreamDelegate): void {
+    // TODO(Lynx): support fetching stream.
+    delegate.onStart(100);
+    let a = new ArrayBuffer(10);
+    delegate.onData(a, 0, 10);
+    delegate.onEnd();
+  }
+
+  cancel(request: LynxResourceRequest): void {
+    // TODO(Lynx)
+  }
+}
+```
+</CodeFold>
+
+### 构造 LynxView 并渲染视图
+
+当你完成以上步骤之后，已经完成了 LynxView 创建与资源读取的全部工作，即可将对应的 Bundle 内容渲染到 LynxView 视图上。
+<CodeFold>
+``` groovy title=Index.ets
+import {
+  LynxTemplateResourceFetcher,
+  LynxMediaResourceFetcher,
+  LynxGenericResourceFetcher,
+  LynxView,
+} from '@lynx/lynx';
+
+import { ExampleTemplateResourceFetcher } from '../provider/ExampleTemplateResourceFetcher';
+import { ExampleMediaResourceFetcher } from '../provider/ExampleMediaResourceFetcher';
+import { ExampleGenericResourceFetcher } from  '../provider/ExampleGenericResourceFetcher';
+
+@Entry
+@Component
+struct Index {
+  templateResourceFetcher: LynxTemplateResourceFetcher = new ExampleTemplateResourceFetcher();
+  mediaResourceFetcher: LynxMediaResourceFetcher = new ExampleMediaResourceFetcher();
+  genericResourceFetcher: LynxGenericResourceFetcher = new ExampleGenericResourceFetcher();
+  private url: string = 'your bundle file';
+
+  build() {
+    Column() {
+      LynxView({
+        templateResourceFetcher: this.templateResourceFetcher,
+        mediaResourceFetcher: this.mediaResourceFetcher,
+        genericResourceFetcher: this.genericResourceFetcher,
+        url: this.url,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
+</CodeFold>
+然后你将在屏幕上看到如下内容：
+
+<center>
+  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-android.png" width="200" />
+</center>
+
+</Steps>
+
+恭喜你，现在你现在已经完成了 Lynx Engine 集成的全部工作！
+
+## 4. 进入 Lynx 世界
+
+现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/debugging/lynx-devtool)文档进一步在 Lynx 的世界里遨游吧！

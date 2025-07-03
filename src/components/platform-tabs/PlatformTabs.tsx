@@ -12,7 +12,8 @@ type Platform =
   | 'web'
   | 'macos'
   | 'macos-arm64'
-  | 'macos-intel';
+  | 'macos-intel'
+  | 'harmony';
 
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
