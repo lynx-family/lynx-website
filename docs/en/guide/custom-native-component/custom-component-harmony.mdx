@@ -3,17 +3,17 @@ import { Steps } from '@theme';
 import { CodeFold } from '@lynx';
 import { Tab, Tabs } from 'rspress/theme';
 
-自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理样式与属性、事件绑定等。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，简要介绍自定义元件的实现流程。
+The implementation of custom native elements can be broken down into several steps, including: declaring and registering elements, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<explorer-input>` as an example to briefly introduce the implementation process of custom elements.
 
-完整实现参见查看。通过编译运行可实时预览自定义元件效果。
+The complete implementation can be found in the [LynxExplorer/input module](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios/lynx_explorer/LynxExplorer/input). You can compile and run the [LynxExplorer sample project](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) to preview element behavior in real-time.
 
 <Steps>
 
-### 声明并注册元件
+### Declare and Register Elements
 
-#### 声明自定义元件
+#### Declare Custom Elements
 
-下面是 `<explorer-input>` 自定义元件的实现，需要继承自 `UIBase`。
+A declared custom element needs to inherit from `UIBase`. Below is the implementation of the `<explorer-input>` element:
 
 ```typescript title="LynxExplorerInput.ets" {20-23}
 import { UIBase, EventHandlerArray, LynxUIMethodConstants } from '@lynx/lynx';
@@ -41,13 +41,13 @@ export class LynxExplorerInput extends UIBase {
 }
 ```
 
-#### 注册自定义元件
+#### Register Custom Element
 
-元件注册有两种方式：全局注册和局部注册。
+Elements can be registered in two ways: globally and locally.
 
-##### 全局注册
+##### Global Registration
 
-全局注册的元件可以在多个 `LynxView` 实例中共享。
+Globally registered elements can be shared across multiple `LynxView` instances.
 
 ```typescript {3,17}
 import { BUILTIN_BEHAVIORS } from '@lynx/lynx/src/main/ets/tasm/behavior/Behavior';
@@ -74,9 +74,9 @@ export default class EntryAbility extends UIAbility {
 }
 ```
 
-##### 局部注册
+##### Local Registration
 
-局部注册的元件仅适用于当前 `LynxView` 实例。组件名和对应的组件实例通过 `BehaviorRegistryMap` 关联。`Behavior` 定义了具体的组件的实现信息 ，包括 `UI Class` 和 `ShadowNode Class`
+Locally registered elements are only applicable to the current `LynxView` instance. Component names and their component instances are associated through `BehaviorRegistryMap`. `Behavior` defines the specific implementation of the component, including `UI Class` and `ShadowNode Class`.
 
 ```typescript
 export class Behavior {
@@ -87,21 +87,21 @@ export class Behavior {
 }
 ```
 
-对应的参数说明：
+Corresponding parameter description:
 
-`uiClass`: 该组件对应的 `UI` 类，`UI` 类用来执行绘制相关；
+`uiClass`: The `UI` class corresponding to the component, which is used for rendering-related operations;
 
-`shadowNodeClass`: 可选参数，该组件对应的 `ShadowNode` 类；如果有实现，表示该节点可以给 `Lynx` 排版引擎提供测量能力（比如 `text` 节点）；
+`shadowNodeClass`: Optional parameter, the `ShadowNode` class corresponding to the component， if implemented, it indicates that this node can provide measurement capabilities to the Lynx layout engine (such as `text` nodes);
 
-`customData`: 可选参数，一些自定义数据；
+`customData`: Optional parameter, some custom data;
 
-`type`: 可选参数，指定了这个组件的类型，一般可以不用传，目前定义了以下三种类型:
+`type`: Optional parameter, specifies the type of this component, generally not required. Currently, the following three types are defined:
 
-`- COMMON` 表示有 `UI` 节点
+`- COMMON` indicates having a `UI` node
 
-`- VIRTUAL` 表示仅有 `ShadowNode`，没有 `UI`
+`- VIRTUAL` indicates having only a `ShadowNode` without a `UI`
 
-`- CUSTOM` 表示既有 `UI` 也有 `ShadowNode`
+`- CUSTOM` indicates having both `UI` and `ShadowNode`
 
 <CodeFold toggle height={200}>
 
@@ -124,13 +124,13 @@ build() {
 
 </CodeFold>
 
-其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元件并创建实例。
+Where `"input"` corresponds to the tag name in the front-end DSL. When Lynx Engine parses this tag, it will look for the registered native element and create an instance.
 
-### 创建原生 `Component` 实例
+### Create Native `Component` Instance
 
-每个自定义元件都需要实现 `Builder` 方法，该方法返回一个与之对应的原生 `Component` 实例。
+Each custom element needs to implement the `Builder` method, which returns a corresponding native `Component` instance.
 
-以下是 `<explorer-input>` 元件的实现：
+Here is the implementation for the `<explorer-input>` element:
 
 <CodeFold toggle height={500}>
 
@@ -183,9 +183,9 @@ export class LynxExplorerInput extends UIBase {
 
 </CodeFold>
 
-### 处理前端更新的样式和属性
+### Handle Front-End Style and Property Updates
 
-你可以通过继承并重写 `update(props: Object, events?: EventHandlerArray[])` 来监听前端传入的属性变化，并更新原生视图。例如，处理 `<explorer-input>` 元件的 `value` 属性:
+You can inherit and override `update(props: Object, events?: EventHandlerArray[])` to listen for property changes passed from the front-end and update the native view. For example, handling the `value` property of the `<explorer-input>` element:
 
 <CodeFold toggle height={500}>
 
@@ -228,12 +228,11 @@ export class LynxExplorerInput extends UIBase {
 
 </CodeFold>
 
-### 处理排版信息（可选）
+### Handle Layout Information (Optional)
 
-#### 处理 Lynx Engine 的排版结果
+#### Handle Lynx Engine Layout Results
 
-通常，Lynx Engine 会自动计算并更新 `Component` 的排版信息，无需开发者手动处理。但在某些特殊情况下，例如需要对 `Component` 进行额外调整时，
-可以在组件的 `layout` 中获取最新的排版信息，并应用自定义逻辑。
+Typically, Lynx Engine automatically calculates and updates the `Component` layout information, so developers do not need to manually handle this. However, in some special cases, such as when additional adjustments to the `Component` are required, you can obtain the latest layout information in the `layout` function and apply custom logic.
 
 <CodeFold toggle height={200}>
 
@@ -253,30 +252,30 @@ export class LynxExplorerInput extends UIBase {
   paddingTop: number, paddingRight: number, paddingBottom: number, marginLeft: number, marginTop: number,
   marginRight: number, marginBottom: number, sticky?: number[]): void {
    ...
-   // 一般来说不用特意处理！
+   // Generally, no special handling is required!
  }
 }
 ```
 
 </CodeFold>
 
-### 自定义 `measure`（可选）
+### Custom `measure` (Optional)
 
 :::warning
 
-如果一个组件的大小需要由组件自身决定，那么需要实现一个 `ShadowNode` 用来提供 `Measure` 的能力，并返回给Lynx排版引擎。最典型的例子是 `text` 组件，其大小可由文本内容计算后得出。
+If a component's size needs to be determined by the component itself, you need to implement a `ShadowNode` to provide `Measure` capability and return it to the Lynx layout engine. The most typical example is the `text` component, whose size can be calculated from the text content.
 
 :::
 
 :::tip
 
-注意：只支持给叶子结点 Component 提供 ShadowNode 能力！！
+Note: `ShadowNode` capabilities are only supported for leaf node Components!!
 
 :::
 
-#### 声明并实现 ShadowNode
+#### Declare and Implement ShadowNode
 
-下面是 `<LynxExplorerInputShadowNode>` 的实现，需要继承自 `ShadowNode`。
+The following is the implementation of `<LynxExplorerInputShadowNode>`, which needs to inherit from `ShadowNode`.
 
 <CodeFold toggle height={200}>
 
@@ -300,9 +299,9 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
 
 </CodeFold>
 
-#### 处理前端更新的样式和属性
+#### Handle Front-End Style and Property Updates
 
-通过继承并重写 `ShadowNode` 的 `updateProps(props: Record<string, Object>)` 方法，来监听前端传入的属性变化，并更新原生视图。
+You can inherit and override `updateProps(props: Record<string, Object>)` method of `ShadowNode` to listen for property changes passed from the front-end and update the native view.
 
 <CodeFold toggle height={200}>
 
@@ -317,12 +316,12 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
   }
 
   override updateProps(props: Record<string, Object>) {
-    // props相关处理
+    // Props-related processing
     if (prop['text-maxline'] !== undefined) {
       this.maxLength = prop['max-length'] as number;
     }
     ...
-    // 调用super方法
+    // Call the super method
     super.update(props, events);
   }
 
@@ -336,9 +335,9 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
 
 </CodeFold>
 
-#### 重写 ` measure` 方法，返回自定义大小
+#### Override the `measure` method to return a custom size
 
-通过继承并重写 `ShadowNode` 的 `measure`，计算并返回对应的 `size` 给排版引擎
+You can inherit and override `measure` method of `ShadowNode` to return a custom size.
 
 <CodeFold toggle height={200}>
 
@@ -353,12 +352,12 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
   }
 
   override updateProps(props: Record<string, Object>) {
-    // props相关处理
+    // Props-related processing
     if (prop['text-maxline'] !== undefined) {
       this.maxLength = prop['max-length'] as number;
     }
     ...
-    // 调用super方法
+    // Call the super method
     super.update(props, events);
   }
 
@@ -375,23 +374,23 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
 ```
 
 </CodeFold>
-`参数`:
+`Parameters`:
 
-width宽度限制，可能是 0
+width: Width constraint, may be 0
 
-widthMode：0: undefined、1: exactly、2: at_most
+widthMode: 0: undefined, 1: exactly, 2: at_most
 
-height高度限制，可能是 0
+height: Height constraint, may be 0
 
-heightMode: 0: undefined、1: exactly、2: at_most
+heightMode: 0: undefined, 1: exactly, 2: at_most
 
-`返回值`:
+`Return Value`:
 
-返回值是一个数组，需要返回3个值：宽度、高度、Baseline（影响 vertical 对齐，默认传0）
+The return value is an array that needs to return 3 values: width, height, Baseline (affects vertical alignment, default to 0)
 
-#### `UI` 与 `ShadowNode` 的通信
+#### Communication between `UI` and `ShadowNode`
 
-目前只能把 `ShadowNode` 的测算结果传递给 `UI` 去绘制，`ShadowNode` 实现 `setExtraDataFunc(func: () => Object): void`，在这里提供了返回给 `UI` 的 `getExtraBundle` 方法。
+Currently, only the measurement results of `ShadowNode` can be passed to `UI` for rendering. `ShadowNode` implements `setExtraDataFunc(func: () => Object): void`, where the `getExtraBundle` method returned to `UI` is provided
 
 <CodeFold toggle height={200}>
 
@@ -411,12 +410,12 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
   }
 
   override updateProps(props: Record<string, Object>) {
-    // props相关处理
+    // Props-related processing
     if (prop['text-maxline'] !== undefined) {
       this.maxLength = prop['max-length'] as number;
     }
     ...
-    // 调用super方法
+    // Call the super method
     super.update(props, events);
   }
 
@@ -434,7 +433,7 @@ export class LynxExplorerInputShadowNode extends ShadowNode {
 
 </CodeFold>
 
-对应的 `UI` 继承并重写 `UIBase` 的 `updateExtraData` 方法，则可以在 `Layout` 流程之后，接收到 `ShadowNode` 传递的 `ExtraBundle`。
+The corresponding `UI` inherits and overrides the `updateExtraData` method of `UIBase`, which allows it to receive the `ExtraBundle` passed by `ShadowNode` after the `Layout` process.
 
 <CodeFold toggle height={200}>
 ```typescript title="LynxExplorerInput.ets" {13}
@@ -458,15 +457,15 @@ override updateExtraData(data: Object): void {
 ````
 </CodeFold>
 
-### 处理事件绑定（可选）
+### Handle Event Binding (Optional)
 
-在某些场景中，前端可能需要响应自定义元件的事件。例如，当用户在文本框中输入内容时，前端可能需要获取并处理这些输入数据。
+In some scenarios, the front-end may need to respond to events from custom elements. For example, when the user types in the input box, the front-end might need to capture and process the input data.
 
-以下示例演示了如何实现从 `<explorer-input>` 元件向前端发送文本输入事件，以及前端如何监听该事件。
+Here is an example of how to send a text input event from the `<explorer-input>` element to the front-end and how the front-end listens for the event.
 
-#### 客户端事件发送
+#### Client-Side Event Sending
 
-客户端通过监听原生视图的文本输入回调，当文本变更时使用 `UIBase` 的 `sendCustomEvent(name: string, params: Object, paramName?: string)` 将事件发送到前端，以便前端进行相应的处理。
+The client listens to text input callbacks from the native view, and when the text changes, it uses `sendCustomEvent(name: string, params: Object, paramName?: string)` method of `UIBase` to send the event to the front-end for handling.
 
 <CodeFold toggle height={850}>
 
@@ -523,9 +522,9 @@ export class LynxExplorerInput extends UIBase {
 
 </CodeFold>
 
-#### 前端 DSL 事件绑定
+#### Front-End DSL Event Binding
 
-在前端，需要绑定相应的文本框输入事件。通过以下代码，前端将监听客户端发送的事件，并根据需要处理输入的数据。
+On the front-end, bind the corresponding input event to listen for and handle the text input data sent by the client.
 
 ```jsx title="App.tsx"
 const handleInput = (e) => {
@@ -540,15 +539,15 @@ const handleInput = (e) => {
 />;
 ```
 
-> **注意**：前端 DSL 使用 `bindxxx` 进行事件绑定，例如 `bindinput` 绑定 `input` 事件。
+> **Note**: The front-end DSL uses `bindxxx` for event binding, such as `bindinput` to bind the `input` event.
 
-### 支持直接操作元件（可选）
+### Support Direct Element Manipulation (Optional)
 
-在某些情况下，前端可能需要通过命令式 API 直接操作自定义元件，你可以通过 `LYNX_UI_METHOD` 让元件支持这些操作。
+In some cases, the front-end may need to directly manipulate custom elements via imperative APIs. You can make elements support such operations with `LYNX_UI_METHOD`.
 
-#### 前端调用示例
+#### Front-End Call Example
 
-以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `focus` 方法让 `<explorer-input>` 元件获取焦点：
+The following code shows how to use [SelectorQuery](/api/lynx-api/selector-query) to call the `focus` method and focus the `<explorer-input>` element:
 
 ```jsx title="App.tsx"
 lynx
@@ -567,9 +566,9 @@ lynx
   .exec();
 ```
 
-#### 客户端实现
+#### Client-Side Implementation
 
-在客户端，需要重写 `UIBase` 的 `invokeMethod` 为自定义元件添加 `focus` 方法，确保它能够正确处理前端的调用。
+On the client side, you need to override the `invokeMethod` of `UIBase` to add a `focus` method to the custom element to handle front-end call.
 
 <CodeFold toggle height={600}>
 
@@ -607,21 +606,21 @@ export class LynxExplorerInput extends UIBase {
 
 </CodeFold>
 
-#### 方法回调返回值
+#### Method Callback Return Values
 
-在实现 `focus` 方法时，元件开发者需要向前端返回一个状态码，以表明操作是否成功。例如，前端调用可能会失败，此时应返回相应的错误状态，以便前端在 `fail` 回调进行处理。
+When implementing the focus method, component developers need to return a status code to the frontend to indicate whether the operation was successful. For instance, the frontend call might fail, in which case an appropriate error status should be returned so that the frontend can handle it in the `fail` callback.
 
-Lynx Engine 预定义了一些常见的错误码，元件开发者可以在方法回调中返回相应的状态码：
+Lynx Engine defines several common error codes, and developers can return the appropriate status code in the method callback:
 
-```typescript
+```objc
 enum LynxUIMethodErrorCode {
-  kUIMethodSuccess = 0, // 调用成功
-  kUIMethodUnknown, // 未知错误
-  kUIMethodNodeNotFound, // 无法找到对应的元件
-  kUIMethodMethodNotFound, // 该元件上没有对应的 Method
-  kUIMethodParamInvalid, // 方法参数无效
-  kUIMethodSelectorNotSupported, // 该选择器暂时不支持
-}
+  kUIMethodSuccess = 0, // Succeeded
+  kUIMethodUnknown, // Unknown error
+  kUIMethodNodeNotFound, // Cannot find corresponding element
+  kUIMethodMethodNotFound, // No corresponding method on this element
+  kUIMethodParamInvalid, // Invalid method parameters
+  kUIMethodSelectorNotSupported, // Selector not supported
+};
 ```
 
 </Steps>
