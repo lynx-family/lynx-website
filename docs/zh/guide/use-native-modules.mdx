@@ -3,6 +3,7 @@ import { Tab, Tabs, Badge, PackageManagerTabs, Steps } from 'rspress/theme';
 
 import NativeModuleIOS from './custom-native-modules/native-module-ios.mdx';
 import NativeModuleAndroid from './custom-native-modules/native-module-android.mdx';
+import NativeModuleHarmony from './custom-native-modules/native-module-harmony.mdx';
 
 # 原生模块
 
@@ -24,10 +25,11 @@ import NativeModuleAndroid from './custom-native-modules/native-module-android.m
 
 本指南旨在展示如何编写一个本地持久存储模块，让 Lynx 应用能够利用 JavaScript 代码在本地持久地存储数据。
 
-要在移动设备上实现本地持久存储功能，需要借助 Android 和 iOS 的原生 API：
+要在移动设备上实现本地持久存储功能，需要借助 Android 、iOS 和 HarmonyOS 的原生 API：
 
 - Android: [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences)
 - iOS: [NSUserDefaults](https://developer.apple.com/documentation/foundation/nsuserdefaults)
+- HarmonyOS: [Preferences](https://developer.huawei.com/consumer/en/doc/harmonyos-references/_preferences)
 
 <Steps>
 ### 声明类型化的接口规范
@@ -49,7 +51,7 @@ import NativeModuleAndroid from './custom-native-modules/native-module-android.m
 declare let NativeModules: {
   NativeLocalStorageModule: {
     setStorageItem(key: string, value: string): void;
-    getStorageItem(key: string): string | null;
+    getStorageItem(key: string, callback: (value: string) => void): void;
     clearStorage(): void;
   };
 };
@@ -88,6 +90,12 @@ declare let NativeModules: {
 
 </PlatformTabs.Tab>
 
+<PlatformTabs.Tab platform="harmony">
+
+  <NativeModuleHarmony />
+  
+</PlatformTabs.Tab>
+
 </PlatformTabs>
 
 </Steps>
@@ -96,15 +104,15 @@ declare let NativeModules: {
 
 ## 类型对照表
 
-| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     |
-| --------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `null`          | `nil`                                             | `null`                                            |
-| `undefined`     | `nil`                                             | `null`                                            |
-| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) |
-| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   |
-| `string`        | `NSString`                                        | `String`                                          |
-| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     |
-| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          |
-| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               |
-| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             |
-| Callback `()=>` | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  |
+| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| `null`          | `nil`                                             | `null`                                            | `null`                                            |
+| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            |
+| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` |
+| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   |
+| `string`        | `NSString`                                        | `String`                                          | `string`                                          |
+| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    |
+| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          |
+| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               |
+| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             |
+| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  |

@@ -1,0 +1,140 @@
+import { Steps, Tabs, Tab, PackageManagerTabs } from '@theme'
+import { CodeFold } from '@lynx'
+
+首先参照[为 HarmonyOS 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony) 指南在本地创建 Lynx Explorer 项目。
+
+接着在 Lynx Explorer 项目下新建 `NativeLocalStorageModule.ets` 文件，并继承 `@lynx/lynx` 包中的 `LynxModule` 实现 `NativeLocalStorageModule` 原生模块。
+
+:::info
+你可以为 Module class 加上 `@Sendable` 注解，将其转换为 Sendable Module。只有 Sendable Module 的 Method 是同步的，其余的 Method 都是异步的。异步 Method 的返回值是 `null`。
+:::
+
+<CodeFold height={360} toggle>
+
+```typescript title="NativeLocalStorageModule.ets"
+import { LynxModule } from '@lynx/lynx';
+import Constants from '../common/constants';
+import { featureAbility } from '@kit.AbilityKit';
+import { preferences } from '@kit.ArkData';
+
+export class NativeLocalStorageModule {
+  private static readonly PREF_NAME: string = "MyLocalStorage";
+  private context: any;
+  private dataPreferences: preferences.Preferences | null = null;
+
+  constructor(context: any) {
+    this.context = context;
+    this.initPreferencesSync();
+  }
+
+  private initPreferencesSync() {
+    try {
+      this.dataPreferences = preferences.getPreferencesSync(
+        this.getContext(), 
+        { name: NativeLocalStorageModule.PREF_NAME }
+      );
+      console.info("Preferences initialization succeeded.");
+    } catch (error) {
+      console.error(`Failed to initialize preferences: ${error}`);
+    }
+  }
+
+  private getContext(): any {
+    return featureAbility.getContext();
+  }
+
+  public setStorageItem(key: string, value: string) {
+    if (!this.dataPreferences) {
+      console.error("Preferences instance is not initialized.");
+      return;
+    }
+
+    try {
+      this.dataPreferences.putSync(key, value);
+      this.dataPreferences.flushSync();
+      console.info(`Storage item set successfully. key=${key}`);
+    } catch (err: any) {
+      console.error(`Failed to set storage item. key=${key}, error=${err.message}`);
+    }
+  }
+
+  public getStorageItem(key: string, callback: (value: string)=> void) {
+    if (!this.dataPreferences) {
+      console.error("Preferences instance is not initialized.");
+      callback("");
+      return;
+    }
+
+    try {
+      const value = this.dataPreferences.getSync(key, "");
+      callback(value as string);
+      return;
+    } catch (err) {
+      console.error(`Failed to get storage item. key=${key}, error=${err.message}`);
+      callback("");
+      return;
+    }
+  }
+
+  public clearStorage() {
+    if (!this.dataPreferences) {
+      console.error("Preferences instance is not initialized.");
+      return;
+    }
+
+    try {
+      this.dataPreferences.clearSync();
+      this.dataPreferences.flushSync();
+      console.info("Storage cleared successfully.");
+    } catch (err: any) {
+      console.error(`Failed to clear storage. error=${err.message}`);
+    }
+  }
+}
+
+```
+
+</CodeFold>
+
+接下来将原生模块注册到 Lynx 运行时环境中。
+
+在 Lynx Explorer 项目的 `explorer/harmony/lynx_explorer/src/main/ets/pages/Lynx.ets` 文件的 `aboutToAppear` 方法中添加如下注册代码，将原生模块注册到 Lynx 运行时环境中。在这里需要指定原生模块的名称，需要和上面接口规范里的名称保持一致。
+
+:::info
+普通 Module 注册到 `this.modules` 中，Sendable Module 注册到 `this.sendableModules`。
+:::
+
+```typescript {8-10,12} title="src/main/ets/pages/Lynx.ets"
+import { NativeLocalStorageModule } from '../module/NativeLocalStorageModule';
+
+@Entry
+@Component
+struct Lynx {
+  aboutToAppear() {
+    // `param` 是模块的可选构造参数
+    this.modules.set('NativeLocalStorageModule', {
+      moduleClass: NativeLocalStorageModule,
+      param: {}
+    });
+    // Sendable Module 请注册到 this.sendableModules
+  }
+}
+```
+
+准备好所有内容后，现在可以构建运行你的代码。
+
+首先参照[编译和运行 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony) 指南从源码构建 Lynx Explorer，并安装到你的手机上。
+
+接着参考[安装依赖&启动开发服务器](../start/quick-start#安装)指南，在 Lynx 项目根目录下安装依赖并且启动开发服务器。
+
+安装依赖：
+
+<PackageManagerTabs command="install" />
+
+启动开发服务器：
+
+<PackageManagerTabs command="run dev" />
+
+你将会在控制台中看到二维码，使用 Lynx Explorer 扫描二维码来打开页面。
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/native-modules-demo-harmony-0.gif)

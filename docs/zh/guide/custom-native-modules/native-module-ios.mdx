@@ -68,7 +68,7 @@ static NSString *const NativeLocalStorageKey = @"MyLocalStorage";
 + (NSDictionary<NSString *, NSString *> *)methodLookup {
     return @{
         @"setStorageItem": NSStringFromSelector(@selector(setStorageItem:value:)),
-        @"getStorageItem": NSStringFromSelector(@selector(getStorageItem:)),
+        @"getStorageItem": NSStringFromSelector(@selector(getStorageItem:callback:)),
         @"clearStorage": NSStringFromSelector(@selector(clearStorage))
     };
 }
@@ -77,9 +77,9 @@ static NSString *const NativeLocalStorageKey = @"MyLocalStorage";
     [self.localStorage setObject:value forKey:key];
 }
 
-- (NSString *)getStorageItem:(NSString *)key {
+- (void)getStorageItem:(NSString *)key callback:(void(^)(NSString *value)) callback{
     NSString *value = [self.localStorage stringForKey:key];
-    return value;
+    callback(value);
 }
 
 - (void)clearStorage {
@@ -127,7 +127,7 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
     @objc public static var methodLookup: [String : String] {
         return [
             "setStorageItem": NSStringFromSelector(#selector(setStorageItem(_:value:))),
-            "getStorageItem": NSStringFromSelector(#selector(getStorageItem(_:))),
+            "getStorageItem": NSStringFromSelector(#selector(getStorageItem(_:completion:))),
             "clearStorage": NSStringFromSelector(#selector(clearStorage))
         ]
     }
@@ -155,8 +155,12 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
         localStorage.set(value, forKey: key)
     }
 
-    @objc func getStorageItem(_ key: String) -> String? {
-        return localStorage.string(forKey: key)
+    @objc func getStorageItem(_ key: String, completion:(NSString) -> Void) {
+      if let value = localStorage.string(forKey: key) {
+          completion(value as NSString)
+      } else {
+          completion("" as NSString)
+      }
     }
 
     @objc func clearStorage() {

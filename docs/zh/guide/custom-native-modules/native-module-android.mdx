@@ -23,6 +23,7 @@ import android.content.SharedPreferences;
 import com.lynx.jsbridge.LynxMethod;
 import com.lynx.jsbridge.LynxModule;
 import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.react.bridge.Callback
 
 public class NativeLocalStorageModule extends LynxModule {
   private static final String PREF_NAME = "MyLocalStorage";
@@ -44,10 +45,10 @@ public class NativeLocalStorageModule extends LynxModule {
   }
 
   @LynxMethod
-  public String getStorageItem(String key) {
+  public void getStorageItem(String key, Callback callback) {
     SharedPreferences sharedPreferences = getContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     String value = sharedPreferences.getString(key, null);
-    return value;
+    callback.invoke(value);
   }
 
   @LynxMethod
@@ -76,6 +77,7 @@ import android.content.Context
 import com.lynx.jsbridge.LynxMethod
 import com.lynx.jsbridge.LynxModule
 import com.lynx.tasm.behavior.LynxContext
+import com.lynx.react.bridge.Callback
 
 class NativeLocalStorageModule(context: Context) : LynxModule(context) {
   private val PREF_NAME = "MyLocalStorage"
@@ -94,9 +96,9 @@ class NativeLocalStorageModule(context: Context) : LynxModule(context) {
   }
 
   @LynxMethod
-  fun getStorageItem(key: String): String? {
+  fun getStorageItem(key: String, callback: Callback) {
     val sharedPreferences = getContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-    return sharedPreferences.getString(key, null)
+    callback(sharedPreferences.getString(key, null))
   }
 
   @LynxMethod
