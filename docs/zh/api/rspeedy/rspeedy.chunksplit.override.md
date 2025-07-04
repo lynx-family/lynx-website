@@ -32,7 +32,6 @@ export default defineConfig({
           react: {
             test: /node_modules[\\/](@lynx-js[\\/]react|react-router)[\\/]/,
             name: 'lib-react',
-            chunks: 'all',
           },
         },
       },

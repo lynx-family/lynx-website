@@ -18,7 +18,7 @@ LynxService API 是 Lynx Engine 提供的，用于指定 Lynx Service 能力的 
 
 ## 1. 快速接入
 
-Lynx 提供了默认的 Lynx Service 实现，可直接[接入](/guide/start/integrate-with-existing-apps)
+Lynx 提供了 Lynx Service 的默认实现，可以直接[接入](/guide/start/integrate-with-existing-apps)
 
 ## 2. 扩展 Lynx Service
 
@@ -35,7 +35,7 @@ Lynx 提供了默认的 Lynx Service 实现，可直接[接入](/guide/start/int
 - 1. 实现 `LynxServiceLogProtocol`
 
 ```objective-c title="YourLogService.h"
-#import <Lynx/Lynx Service.h>
+#import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceLogProtocol.h>
 
 // 实现 LynxServiceLogProtocol
@@ -82,7 +82,7 @@ Lynx 提供了默认的 Lynx Service 实现，可直接[接入](/guide/start/int
   return kLynxServiceLog;
 }
 
-// 推荐：实现为一个单例
+// 推荐：实现为单例
 + (instancetype)sharedInstance {
   static dispatch_once_t onceToken;
   static YourLogService *logService;
@@ -135,6 +135,35 @@ object YourLogService : ILynxLogService {
 
 </Tab>
 
+<Tab label="Harmony">
+
+实现 `ILynxLogService`：
+
+<CodeFold toggle>
+
+```typescript title="YourLogService.ets"
+import { ILynxLogService } from '@lynx/lynx';
+
+export class YourLogService implements ILynxLogService {
+  static instance = new YourLogService();
+
+  logByPlatform(level: number, tag: string, message: string): void {
+    console.log(`level: ${level} tag: ${tag} message: ${message}`);
+  }
+
+  isLogOutputByPlatform(): boolean {
+    return true;
+  }
+
+  getDefaultWriteFunction(): number {
+    return 0;
+  }
+}
+```
+</CodeFold>
+
+</Tab>
+
 </Tabs>
 
 <div style={{ height: 30}} />
@@ -145,9 +174,9 @@ object YourLogService : ILynxLogService {
 
 <Tab label="iOS">
 
-Lynx Service 在 iOS 中拥有自动注册机制。在实现阶段已经通过 `LynxServiceRegister` 宏，完成了快速自动注册。
+Lynx Service 在 iOS 中有自动注册机制。在实现阶段，`LynxServiceRegister` 宏已用于完成快速自动注册。
 
-如果使用了自己实现的 Lynx Service，请删除 Lynx 提供的[默认实现](/guide/start/integrate-with-existing-apps#platform=ios)。
+如果您使用自己实现的 Lynx Service，请删除 Lynx 提供的[默认实现](/guide/start/integrate-with-existing-apps#platform=ios)。
 
 ```diff title="Podfile"
 pod 'LynxService', '3.2.0-rc.0', :subspecs => [
@@ -161,7 +190,7 @@ pod 'LynxService', '3.2.0-rc.0', :subspecs => [
 
 <Tab label="Android">
 
-将[接入文档](/guide/start/integrate-with-existing-apps#platform=android)里 `LynxServiceCenter` 中的 log service 的实现替换为你的实现
+在[集成文档](/guide/start/integrate-with-existing-apps#platform=android)中，将 `LynxServiceCenter` 中的日志服务实现替换为您的实现。
 
 ```diff
 - LynxServiceCenter.inst().registerService(ILynxLogService::class.java, LynxLogService)
@@ -172,8 +201,27 @@ pod 'LynxService', '3.2.0-rc.0', :subspecs => [
 
 ```diff title="build.gradle"
 dependencies {
--   // integrating log-service
+-   // 集成日志服务
 -   implementation "engineer.lynx.test2:lynx-service-log:0.0.1"
+}
+```
+
+</Tab>
+
+<Tab label="Harmony">
+
+在[集成文档](/guide/start/integrate-with-existing-apps#platform=harmony)中，将 `LynxServiceCenter` 中的日志服务实现替换为您的实现。
+
+```diff
+- LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
++ LynxServiceCenter.registerService(LynxServiceType.Log, YourLogService.instance);
+```
+
+并删除相关依赖
+
+```diff title="oh-package.json5"
+"dependencies": {
+- "@lynx/lynx_log_service": "0.0.1",
 }
 ```
 

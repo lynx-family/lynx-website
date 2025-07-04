@@ -1,4 +1,4 @@
-import { AndroidOnly, Deprecated, Go } from '@lynx';
+import { AndroidOnly, Deprecated, Go, PlatformTabs } from '@lynx';
 
 # `<text>`
 
@@ -370,30 +370,10 @@ lynx.createSelectorQuery()
 ## 加载自定义字体
 
 可以通过 [`@font-face`](/api/css/at-rule/font-face) 来指定自定义的字体资源，然后通过 [`font-family`](/api/css/properties/font-family) 属性来使用。
-需要客户端通过 [`GenericResourceFetcher`](/api/lynx-native-api/resource-fetcher/GenericResourceFetcher) 实现对应的字体资源加载器，用来下载网络字体资源。
+需要客户端通过 [`GenericResourceFetcher`](/api/lynx-native-api/lynx-generic-resource-fetcher/fetch-resource.html) 实现对应的字体资源加载器，用来下载网络字体资源。
 
-### Android 资源加载器实现
-
-```java
-public class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
-  @Override
-  public void fetchResource(LynxResourceRequest request, LynxResourceCallback<byte[]> callback) {
-    ...
-      //download font file through http
-      byte[] data = new byte[(int) file.length()];
-
-      //notify the font data if success
-      callback.onResponse(LynxResourceResponse.onSuccess(data));
-
-    ...
-  }
-}
-
-//构造`LynxView`时注入
-LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(context));
-```
-
-### iOS 资源加载器实现
+<PlatformTabs hashKey="platform">
+<PlatformTabs.Tab platform="ios">
 
 ```objective-c
 @interface ExampleGenericResourceFetcher : NSObject <LynxGenericResourceFetcher>
@@ -402,7 +382,9 @@ LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(cont
            onComplete:(LynxGenericResourceCompletionBlock)callback;
 
 @end
+```
 
+```objective-c
 @implementation ExampleGenericResourceFetcher
 
 NSURL *url = [NSURL URLWithString:request.url];
@@ -424,9 +406,61 @@ NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url
 }];
 @end
 
-//构造`LynxView`时注入
+// 构造`LynxView`时注册
 LynxViewBuilder.genericResourceFetcher = [[ExampleGenericResourceFetcher alloc] init];
 ```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+public class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  @Override
+  public void fetchResource(LynxResourceRequest request, LynxResourceCallback<byte[]> callback) {
+    ...
+      // download font file through http
+      byte[] data = new byte[(int) file.length()];
+
+      // notify the font data if success
+      callback.onResponse(LynxResourceResponse.onSuccess(data));
+
+    ...
+  }
+}
+
+// 构造`LynxView`时注册
+LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(context));
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```typescript
+import {
+  LynxError,
+  LynxSubErrorCode,
+  LynxGenericResourceFetcher,
+  LynxResourceRequest,
+  LynxResourceType,
+} from '@lynx/lynx';
+
+export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  fetchResource(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<ArrayBuffer, void>,
+  ): void {
+    // download font file through http
+    let data: http.HttpResponse;
+    // notify the font data if success
+    callback.onResponse(LynxResourceResponse.onSuccess(data));
+  }
+}
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
 
 ## 大字模式
 
