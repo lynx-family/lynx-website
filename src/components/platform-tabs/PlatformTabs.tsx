@@ -12,8 +12,7 @@ type Platform =
   | 'web'
   | 'macos'
   | 'macos-arm64'
-  | 'macos-intel'
-  | 'harmony';
+  | 'macos-intel';
 
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
@@ -35,6 +34,12 @@ const PLATFORM_OPTIONS: Array<{
     label: 'Android',
     iconName: mapPlatformNameToIconName('android'),
   },
+
+  {
+    id: 'harmony',
+    label: 'HarmonyOS',
+    iconName: mapPlatformNameToIconName('harmony'),
+  },
   {
     id: 'web',
     label: 'Web',
@@ -54,11 +59,6 @@ const PLATFORM_OPTIONS: Array<{
     id: 'macos-intel',
     label: 'macOS (x86_64)',
     iconName: mapPlatformNameToIconName('ios'),
-  },
-  {
-    id: 'harmony',
-    label: 'HarmonyOS',
-    iconName: mapPlatformNameToIconName('harmony'),
   },
 ];
 
