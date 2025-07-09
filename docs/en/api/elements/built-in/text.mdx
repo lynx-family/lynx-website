@@ -1,4 +1,4 @@
-import { AndroidOnly, Deprecated, Go } from '@lynx';
+import { AndroidOnly, Deprecated, Go, PlatformTabs } from '@lynx';
 
 # `<text>`
 
@@ -362,30 +362,10 @@ This method retrieves the string content of the currently selected text.
 ## Loading Custom Fonts
 
 You can specify custom font resources using [`@font-face`](/api/css/at-rule/font-face) and utilize them with the [`font-family`](/api/css/properties/font-family) property.
-The client needs to implement the corresponding font resource loader using [`GenericResourceFetcher`](/api/lynx-native-api/resource-fetcher/GenericResourceFetcher) to download web font resources.
+The client needs to implement the corresponding font resource loader using [`GenericResourceFetcher`](/api/lynx-native-api/lynx-generic-resource-fetcher/fetch-resource.html) to download web font resources.
 
-### Implementing Android Resource Loader
-
-```java
-public class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
-  @Override
-  public void fetchResource(LynxResourceRequest request, LynxResourceCallback<byte[]> callback) {
-    ...
-      //download font file through http
-      byte[] data = new byte[(int) file.length()];
-
-      //notify the font data if success
-      callback.onResponse(LynxResourceResponse.onSuccess(data));
-
-    ...
-  }
-}
-
-//Inject during `LynxView` construction.
-LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(context));
-```
-
-### Implementing iOS Resource Loader
+<PlatformTabs hashKey="platform">
+<PlatformTabs.Tab platform="ios">
 
 ```objective-c
 @interface ExampleGenericResourceFetcher : NSObject <LynxGenericResourceFetcher>
@@ -394,7 +374,9 @@ LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(cont
            onComplete:(LynxGenericResourceCompletionBlock)callback;
 
 @end
+```
 
+```objective-c
 @implementation ExampleGenericResourceFetcher
 
 NSURL *url = [NSURL URLWithString:request.url];
@@ -416,9 +398,61 @@ NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url
 }];
 @end
 
-//Inject during `LynxView` construction.
+// Register when constructing LynxView.
 LynxViewBuilder.genericResourceFetcher = [[ExampleGenericResourceFetcher alloc] init];
 ```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+public class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  @Override
+  public void fetchResource(LynxResourceRequest request, LynxResourceCallback<byte[]> callback) {
+    ...
+      // download font file through http
+      byte[] data = new byte[(int) file.length()];
+
+      // notify the font data if success
+      callback.onResponse(LynxResourceResponse.onSuccess(data));
+
+    ...
+  }
+}
+
+// Register when constructing LynxView.
+LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(context));
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```typescript
+import {
+  LynxError,
+  LynxSubErrorCode,
+  LynxGenericResourceFetcher,
+  LynxResourceRequest,
+  LynxResourceType,
+} from '@lynx/lynx';
+
+export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  fetchResource(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<ArrayBuffer, void>,
+  ): void {
+    // download font file through http
+    let data: http.HttpResponse;
+    // notify the font data if success
+    callback.onResponse(LynxResourceResponse.onSuccess(data));
+  }
+}
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
 
 ## Big Font
 
