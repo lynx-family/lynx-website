@@ -9,9 +9,9 @@ import { Info } from '@lynx';
   React、Vue、Svelte 还是纯 HTML。
 </Info>
 
-## 1. 构建 web 产物
+## 1. 构建 Lynx 产物
 
-我们需要你已经阅读并按照[快速开始](/guide/start/quick-start)创建了一个 Lynx 项目。
+我们假设已经阅读并按照[快速开始](guide/start/quick-start)创建了一个 Lynx 项目。
 
 <Steps>
 
@@ -76,7 +76,7 @@ cd <web-project-name>
 
 2. 安装依赖：
 
-<PackageManagerTabs command="install @lynx-js/web-core @lynx-js/web-elements" />
+<PackageManagerTabs command="install @lynx-js/web-core @lynx-js/web-elements @lynx-js/lynx-core" />
 
 3. 在 `src/app.tsx` 引入这些依赖：
 
@@ -140,3 +140,205 @@ export default defineConfig({
 访问 `http://localhost:3000` 即能看到你的 Lynx 应用。
 
 </Steps>
+
+### `<lynx-view>` properties
+
+推荐的配置方式是使用HTMLElement的property
+
+例如
+
+```jsx
+const dom = document.createElement('lynx-view');
+dom.url = '/main.web.bundle';
+```
+
+#### url
+
+必须. 设置后启动渲染逻辑, 其他属性需要在 url 设置前设置才能生效.
+
+#### globalProps
+
+传递给lynx应用的globalProps. 需要[可以被Clone](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types)
+
+#### overrideLynxTagToHTMLTagMap
+
+可以覆盖Lynx的tag到HTML tag的映射
+
+#### nativeModulesMap
+
+自定义的NativeModules
+
+```ts
+// use to customize NativeModules. key is module-name, value is esm url.
+export type NativeModulesMap = Record<string, string>;
+```
+
+example
+
+```ts
+const nativeModulesMap = {
+  CustomModule: URL.createObjectURL(
+    new Blob(
+      [
+        `export default function(NativeModules, NativeModulesCall) {
+      return {
+        async getColor(data, callback) {
+          const color = await NativeModulesCall('getColor', data);
+          callback(color);
+        },
+      }
+    };`,
+      ],
+      { type: 'text/javascript' },
+    ),
+  ),
+};
+lynxView.nativeModulesMap = nativeModulesMap;
+```
+
+#### onNativeModulesCall
+
+```ts
+// the NativeModules value handler.
+// Arguments will be cached before this property is assigned.
+(name: string, data: any, moduleName: string) => Promise<any> | any;
+```
+
+跨线程响应NativeModules等调用
+
+```
+// 处理 NativeModule.bridge.call('request')
+lynxView.onNativeModulesCall = (name, data, moduleName) => {
+  if (moduleName === 'bridge') {
+    if (name === 'request') {
+       // ...
+
+       // return data 会被自动处理为 callback data
+       return {}
+    }
+  }
+};
+```
+
+#### 4.2.3 customTemplateLoader
+
+url对应的json文件内部默认使用fetch get 来加载, 赋值这个属性可以自定义加载方式
+
+```ts
+lynxView.customTemplateLoader = (url) => {
+  return await(
+    await fetch(url, {
+      method: 'GET',
+    }),
+  ).json();
+};
+```
+
+### `<lynx-view>` events
+
+#### error
+
+包括MTS错误和BTS错误
+
+```ts
+type LynxError = CustomEvent<{
+  error: Error;
+  sourceMap: {
+    offset: {
+      // 行偏移量
+      line: number;
+      // 列偏移量
+      col: number;
+    };
+  };
+}>;
+
+lynxView.addEventListener('error', (err: LynxError) => {
+  // ...
+});
+```
+
+### `<lynx-view>` methods
+
+#### updateData
+
+See [Update Data](https://lynx.bytedance.net/api/lynx-native-api/lynx-view/update-data.html)
+
+```ts
+export type Cloneable<T = string | number | null | boolean | undefined> =
+  | T
+  | Record<string, T>
+  | T[];
+
+updateData(
+  data: Cloneable,
+  updateDataType: UpdateDataType,
+  callback?: () => void,
+): void
+```
+
+#### updateGlobalProps
+
+```ts
+updateGlobalProps(data: Cloneable): void;
+```
+
+#### sendGlobalEvent
+
+```ts
+sendGlobalEvent(eventName: string, params: Cloneable[]): void;
+```
+
+See [Send Global Event](https://lynx.bytedance.net/api/lynx-native-api/lynx-view/send-global-event.html)
+
+### 支持 Chrome < 118, Safari < 18 and Firefox
+
+由于我们使用了部分高阶CSS能力, 例如[Container Queries](https://developer.mozilla.org/en-US/docs/Web/CSS/@container#container_style_queries)
+
+在低版本的浏览器上需要额外安装一个官方Polyfill来实现正确排版
+
+<PackageManagerTabs command="install @lynx-js/web-elements-compat" />
+
+然后在Web工程导入
+
+```ts
+import '@lynx-js/web-elements-compat/LinearContainer';
+```
+
+这里只是使用JS实现了内部依赖的特定CSS能力, 对于其他能力, 可以开启Rsbuild的polyfill
+
+> https://rsbuild.rs/config/source/include#sourceinclude
+
+```ts
+// rsbuild.config.ts
+export default {
+  source: {
+    include: [/@lynx-js/],
+  },
+};
+```
+
+### FAQ
+
+#### Uncaught SecurityError: Failed to construct 'Worker': Script at '...' cannot be accessed from origin '...'.
+
+This error usually occurs when the worker script is not served from the same origin as the main page. Ensure that your worker script is accessible from the same domain, protocol, and port as your web application.
+
+> https://github.com/webpack-contrib/worker-loader/issues/154 > https://rsbuild.rs/guide/basic/web-workers#loading-scripts-from-remote-urls-cross-origin
+
+One simple solution is to use the `remove-web-worker`
+
+```ts
+import 'remote-web-worker';
+
+import '@lynx-js/web-core';
+import '@lynx-js/web-core/index.css';
+import '@lynx-js/web-elements/all';
+import '@lynx-js/web-elements/index.css';
+document.body.innerHTML = `
+<lynx-view 
+    style="height:100vh; width:100vw;" 
+    url="http://localhost:3000/main/index.json"
+>
+</lynx-view>`;
+```
