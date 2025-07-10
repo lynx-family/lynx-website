@@ -9,13 +9,15 @@ import { Info } from '@lynx';
   of whether the project uses React, Vue, Svelte, or plain HTML.
 </Info>
 
-## 1. Build web artifact
+## 1. Build Lynx artifact
 
-We need you to have read and created a Lynx project according to [Quick Start](/guide/start/quick-start).
+This assumes that you already have a Lynx project.
+
+If you don't have a Lynx project yet please check this [Quick Start](guide/start/quick-start).
 
 <Steps>
 
-### Add web configuration
+### Generate output file for Web Platform
 
 1. Enter the previously created Lynx project:
 
@@ -32,11 +34,7 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 export default defineConfig({
   plugins: [pluginReactLynx()],
   environments: {
-    web: {
-      output: {
-        assetPrefix: '/',
-      },
-    },
+    web: {},
     lynx: {},
   },
 });
@@ -52,9 +50,19 @@ You will see an additional `dist/main.web.bundle` file in this project, which is
 
 </Steps>
 
-## 2. Integrate with a new web project
+## 2. Integrate with a existing Web App
 
-Now that you have a Lynx for Web build artifact, we need to create a web project to use it. Here we use Rsbuild.
+Now that you have a Lynx for Web build artifact, we need to create a web project to use it. Here we use [Rsbuild](https://rsbuild.dev/) as an example.
+
+Configure may various for different bundlers
+
+### Prerequisites for your bundlers
+
+- Support for ES modules
+- Support for dynamic imports
+- Support for WASM
+- Support for Top-Level Await
+- Support for Webpack's Magic Comments
 
 <Steps>
 
@@ -140,3 +148,207 @@ Run:
 Visit `http://localhost:3000` to see your Lynx application.
 
 </Steps>
+
+// ...existing code...
+
+### `<lynx-view>` properties
+
+The recommended way to configure is by using the properties of the HTMLElement.
+
+For example:
+
+```jsx
+const dom = document.createElement('lynx-view');
+dom.url = '/main.web.bundle';
+```
+
+#### url
+
+Required. Setting this property starts the rendering logic. Other properties must be set before `url` to take effect.
+
+#### globalProps
+
+The `globalProps` to pass to the Lynx application. Needs to be [cloneable](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types).
+
+#### overrideLynxTagToHTMLTagMap
+
+Allows overriding the mapping from Lynx tags to HTML tags.
+
+#### nativeModulesMap
+
+Custom NativeModules.
+
+```ts
+// use to customize NativeModules. key is module-name, value is esm url.
+export type NativeModulesMap = Record<string, string>;
+```
+
+Example:
+
+```ts
+const nativeModulesMap = {
+  CustomModule: URL.createObjectURL(
+    new Blob(
+      [
+        `export default function(NativeModules, NativeModulesCall) {
+      return {
+        async getColor(data, callback) {
+          const color = await NativeModulesCall('getColor', data);
+          callback(color);
+        },
+      }
+    };`,
+      ],
+      { type: 'text/javascript' },
+    ),
+  ),
+};
+lynxView.nativeModulesMap = nativeModulesMap;
+```
+
+#### onNativeModulesCall
+
+```ts
+// the NativeModules value handler.
+// Arguments will be cached before this property is assigned.
+(name: string, data: any, moduleName: string) => Promise<any> | any;
+```
+
+Responds to calls like NativeModules across threads.
+
+```
+// Handle NativeModule.bridge.call('request')
+lynxView.onNativeModulesCall = (name, data, moduleName) => {
+  if (moduleName === 'bridge') {
+    if (name === 'request') {
+       // ...
+
+       // returned data will be automatically handled as callback data
+       return {}
+    }
+  }
+};
+```
+
+#### customTemplateLoader
+
+By default, the JSON file corresponding to the URL is loaded using `fetch` with GET. Assigning this property allows for a custom loading method.
+
+```ts
+lynxView.customTemplateLoader = async (url) => {
+  return (
+    await fetch(url, {
+      method: 'GET',
+    })
+  ).json();
+};
+```
+
+### `<lynx-view>` events
+
+#### error
+
+Includes MTS errors and BTS errors.
+
+```ts
+type LynxError = CustomEvent<{
+  error: Error;
+  sourceMap: {
+    offset: {
+      // line offset
+      line: number;
+      // column offset
+      col: number;
+    };
+  };
+}>;
+
+lynxView.addEventListener('error', (err: LynxError) => {
+  // ...
+});
+```
+
+### `<lynx-view>` methods
+
+#### updateData
+
+See [Update Data](https://lynx.bytedance.net/api/lynx-native-api/lynx-view/update-data.html)
+
+```ts
+export type Cloneable<T = string | number | null | boolean | undefined> =
+  | T
+  | Record<string, T>
+  | T[];
+
+updateData(
+  data: Cloneable,
+  updateDataType: UpdateDataType,
+  callback?: () => void,
+): void
+```
+
+#### updateGlobalProps
+
+```ts
+updateGlobalProps(data: Cloneable): void;
+```
+
+#### sendGlobalEvent
+
+```ts
+sendGlobalEvent(eventName: string, params: Cloneable[]): void;
+```
+
+See [Send Global Event](https://lynx.bytedance.net/api/lynx-native-api/lynx-view/send-global-event.html)
+
+### Support for Chrome < 118, Safari < 18 and Firefox
+
+Since we use some advanced CSS features, like [Container Queries](https://developer.mozilla.org/en-US/docs/Web/CSS/@container#container_style_queries), an official polyfill needs to be installed for correct layout on older browsers.
+
+<PackageManagerTabs command="install @lynx-js/web-elements-compat" />
+
+Then import it into your web project:
+
+```ts
+import '@lynx-js/web-elements-compat/LinearContainer';
+```
+
+This only implements specific CSS features depended on internally using JS. For other features, you can enable Rsbuild's polyfill.
+
+> https://rsbuild.rs/config/source/include#sourceinclude
+
+```ts
+// rsbuild.config.ts
+export default {
+  source: {
+    include: [/@lynx-js/],
+  },
+};
+```
+
+### FAQ
+
+#### Uncaught SecurityError: Failed to construct 'Worker': Script at '...' cannot be accessed from origin '...'.
+
+This error usually occurs when the worker script is not served from the same origin as the main page. Ensure that your worker script is accessible from the same domain, protocol, and port as your web application.
+
+> https://github.com/webpack-contrib/worker-loader/issues/154 > https://rsbuild.rs/guide/basic/web-workers#loading-scripts-from-remote-urls-cross-origin
+
+One simple solution is to use `remote-web-worker`.
+
+```ts
+import 'remote-web-worker';
+
+import '@lynx-js/web-core';
+import '@lynx-js/web-core/index.css';
+import '@lynx-js/web-elements/all';
+import '@lynx-js/web-elements/index.css';
+document.body.innerHTML = `
+<lynx-view 
+    style="height:100vh; width:100vw;" 
+    url="http://localhost:3000/main/index.json"
+>
+</lynx-view>`;
+```
+
+// ...existing code...
