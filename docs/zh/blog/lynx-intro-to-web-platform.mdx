@@ -1,0 +1,151 @@
+---
+date: 2025-07-11
+sidebar: false
+---
+
+import { BlogAvatar } from '@lynx';
+
+_July 11th, 2025_
+
+# Intro to the Lynx's Web Platform
+
+<BlogAvatar list={['haoyang.wang', 'aihao']} />
+
+## 全平台的 Lynx
+
+![lynx-for-everywhere](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-banner.png)
+
+Lynx 为 Web 平台提供了第一方浏览器支持.
+
+我们立志为开发者提供一个“一次编写，随处运行”的跨平台基础设施, 并始终把Web看作Lynx生态系统中不可或缺目标平台。 我们希望通过对浏览器平台的支持, 能帮助开发者更加轻松地预览开发结果, 避免花费大量时间在重写和维护分离的代码库上，能更敏捷的方式交付功能, 并最终能够帮助开发者吸引更多用户。
+
+开发者的成功就是我们的成功。
+
+我们在公司内部有许多 Lynx 在 Web 平台的业务成功案例。 这里有一个简单的展示。
+
+<div style={{ maxWidth: '30%', margin: '0 auto' }}>
+
+![tiktok-preview-demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-tiktok-demo.gif)
+
+</div>
+
+我们的 Web 平台是 Lynx FFI 在浏览器上的一个实现。通过提供了与Lynx引擎相同的API, 来实现让Lynx代码能在手机端和浏览器上有相同的外观和行为。
+
+## 同一份代码, 同一个表现, 同一个Lynx
+
+Lynx Web Platform的核心目标是为开发者提供一个解决方案, 让开发者们能以高性能和低成本在浏览器中渲染 Lynx 页面。
+
+因此, 我们通过 Rspeedy 提供了内置支持, 并重用了整个 JavaScript 编译管道来支持Web平台。但对于Web平台, 我们简单跳过了 Primjs 的 AOT 优化, 这也是产物文件不同的原因。
+
+![lynx-web-compile-time-graph-show-diff](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-compile-chunk-diff.png)
+
+所以对于开发者以及 Rspeedy(Rsbuild) 插件作者来说, 不需要额外的工作来支持 Web 平台。 你的Lynx代码不需要为不同的平台提供不同的变体/入口/文件。
+
+**我们是同一个 Lynx!**
+
+在 ReactLynx 内部, Preact 运行时通过调用 Lynx 的 [PAPIs](https://lynxjs.org/api/engine/element-api.html)来更新页面，这些 PAPIs 类似于 DOM API 。为了确保架构的一致性，我们在Web平台上重新封装了基于浏览器的 DOM API ，提供与 PAPI 一致的 API 。下面是一个简单的代码实现帮助理解。
+
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '20px' }}>
+<div style={{display: 'flex', justifyContent:'center'}}>**__SetAttribute on Web Platform**</div>
+<div style={{display: 'flex', justifyContent:'center',}}>**__SetAttribute on Lynx Engine**</div>
+<div>
+```js
+// lynx/runtime/papi.ts
+const __SetAttribute: SetAttributePAPI = (
+  element,
+  key,
+  value,
+) => {
+  if (value == null) {
+    element.removeAttribute(key)
+  } else {
+    element.setAttribute(key, value + '')
+  }
+};
+```
+</div>
+```cpp
+RENDERER_FUNCTION_CC(FiberSetAttribute) {
+  CONVERT_ARG_AND_CHECK_FOR_ELEMENT_API(arg0, 0, RefCounted, FiberSetAttribute);
+  auto element = fml::static_ref_ptr_cast<FiberElement>(arg0->RefCounted());
+  CONVERT_ARG(arg1, 1);
+  CONVERT_ARG(arg2, 2);
+  auto string_type = arg1->StringView();
+  CHECK_ILLEGAL_ATTRIBUTE_CONFIG(element, FiberSetAttribute);
+  element->SetAttribute(arg1->String(), arg2->ToLepusValue());
+  ON_NODE_MODIFIED(element);
+  RETURN_UNDEFINED();
+}
+```
+<div>
+</div>
+</div>
+
+> https://lynxjs.org/api/engine/element-api/__SetAttribute.html
+
+而且, 作为 Web 平台作为Lynx官方支持的一个平台, 我们非常重视它的性能。借助现代 Web API 和现代 ECMAScript API, 如[CSSOM](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model), [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API), [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM), [Scroll Driven Animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll-driven_animations)等, 我们能够为Web渲染提供更好的性能。我们专注于那些被广泛使用的现代浏览器, 确保在这些浏览器上提供最佳的性能体验。
+
+### 同样的CSS标准: W3C CSS标准
+
+对于Lynx本身, 它的绝大多数支持遵循 W3C CSS 规范。Lynx 引擎的 CSS 实现几乎都是基于W3C规范或其子集。因此，在大部分情况下, 在 Web 平台上我们只需要透传这些 CSS。
+
+![lynx-web-height-transform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-height-property.png)
+
+然而, 出于原生渲染的性能考虑, Lynx 引擎会提供一些特殊的属性和取值, 来为原生渲染提供性能捷径。这就是为什么我们的Web平台实现了一个CSS转换器来将一些值转换为 CSS 自定义属性。
+然后我们使用一些 CSS tricks 来把 Lynx 取值转换为表现一致的W3C标准CSS取值, 并设置到 HTML 元素上。这种设计使我们能够实现对于客户端原生渲染的最大兼容性和 Web 平台中更快的渲染速度。
+
+![lynx-web-display-linear-transform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-css-polyfill.png)
+
+> https://lea.verou.me/blog/2024/css-conditionals-now/
+
+### 同样是原生组件: Web 平台的 Web Components
+
+![native-elements-on-different-platform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-native-element.png)
+
+> https://lynxjs.org/zh/guide/ui/elements-components.html
+
+Lynx的基因是使用原生渲染实现"一次编写，随处运行"的开发模式。也就是说，在每个平台上，我们都有一个对应的原生组件实现，提供相同的行为。
+就像是Lynx在iOS/Android上的元素一样，在 Web 平台上我们使用原生的[Web Component技术](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)提供了一系列符合 Lynx 标准定义的自定义元素。
+我们直接使用浏览器提供的生命周期来实现这些元素，不需要依赖任何 JavaScript 框架, 这帮助我们最小化接入 Lynx 的 Web 应用的 IO 开销。
+
+## Lynx 为您带来 Javascript 上的并发渲染
+
+Lynx的 Web 平台不仅仅是一个简单的浏览器支持, 我们还希望能够抛砖引玉, 能够启发 Web 开发者社区引入多线程模型。
+
+我们在 Web 平台上也实现了基于 Web Worker 的双线程架构设计。 通过 ReactLynx 已经设计好的双线程编程范式，用户代码会被自动优雅地拆分到两个线程。
+
+我们希望能够提供尽可能快的 FMP 并且并行执行副作用(effects), 来帮助使用 Lynx 的产品尽快为用户展示内容。
+
+这里我们构造了一个 Demo, 来模拟常见的具有复杂副作用的页面。 在 Lynx 上这些副作用会和主线程的渲染并发执行。
+
+![demo-for-page-with-complex-effects](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-compare-lynx-web-with-react.webp)
+
+这个 Demo 中, 我们有一个 useEffect 来加载当前页面的详细信息。 在 Lynx上, 这个副作用不会等待渲染完成, 也不会阻塞渲染。这样的设计提升了高优先级的渲染任务，还能够让副作用能够快速执行。
+
+![lynx-web-all-on-ui-thread-model](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-all-on-ui-thread-strategy.png)
+
+近十年来, 现代 CPU 的核心数和线程数大幅增加, 硬件的多线程性能增长速度远远超过了单线程性能的增长。然而，许多 Web 应用仍然依赖于单线程模型，这限制了它们的性能和响应能力。
+在单线称模型上, 所有副作用都在主线程上执行，这意味着在处理复杂的副作用时，渲染会被阻塞，导致用户界面出现卡顿。
+
+## 更快, 更易用
+
+### WASM 接入
+
+我们正在推进WASM模块接入到 Lynx Web Platform 中。通过 WASM，我们可以在浏览器中高性能地实现部分热点代码。 目前我们的内部测试使用 Rust 重写了 CSS 转换模块, 带来了30%~40%的渲染性能提升。
+
+### 为[PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)提供原生支持
+
+我们正在积极探索PWA技术的更多可能性，例如推送通知和服务工作者，以改善用户体验。想象一下，在没有SSR服务器的情况下进行 HTML 直出渲染？ 让我们来试试!
+
+### [SSR](https://developer.mozilla.org/en-US/docs/Glossary/SSR) support
+
+我们也意识到SSR是提升用户体验的重要方式之一。Web 平台的 SSR 支持将使用[Template](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/template), 提供内置的“零 JavaScript”SSR输出.
+
+## 现在接入
+
+[See Here](https://lynxjs.org/guide/start/integrate-with-existing-apps.html#platform=web)
+
+## 当前开发状态
+
+我们的 Web 平台目前处于活跃开发阶段。我们的团队正在紧密合作，致力于完善和扩展这个平台。因此，有一些功能仍在开发中，尚未完全实现。例如，热模块替换（HMR）是我们正在积极开发但仍未交付的一个特性.
+我们将会砥砺前行, 努力为开发者提供更大的价值。
