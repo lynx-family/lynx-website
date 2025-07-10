@@ -1,0 +1,141 @@
+---
+date: 2025-07-11
+sidebar: false
+---
+
+import { BlogAvatar } from '@lynx';
+
+_July 11th, 2025_
+
+# Intro to the Lynx's Web Platform
+
+<BlogAvatar list={['haoyang.wang', 'aihao']} />
+
+## Lynx For Everywhere
+
+![lynx-for-everywhere](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-banner.png)
+
+Through Lynx, we provide first-class browser support for developers' code.
+
+As Lynx is a cross-platform infrastructure which provides a "write once runs anywhere" experience , we believe that the Web is an essential platform for the Lynx ecosystem to enlighten developers to extend their boundaries of creativity and innovation. With the browser support offered by Lynx, developers can easily preview and engage more users, avoid spending a lot of time on rewriting and maintaining a split code base, as well as deliver features in more agile ways.
+
+We have many use cases in Tiktok. Here is a simple showcases.
+
+<div style={{ maxWidth: '30%', margin: '0 auto' }}>
+
+![tiktok-preview-demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-tiktok-demo.gif)
+
+</div>
+
+Our Web Platform, which is a Lynx FFI implementation on browsers, provides the same rendering and appearance behavior as the Lynx engine.
+
+## One source code, One appearance, One Lynx
+
+Our Web Platform's core proposal is to provide a solution that allows developers to render their Lynx page in a browser in a high performance way and at a minimal cost.
+
+Therefore, we provided built-in support by Rspeedy and reused the entire JavaScript compilation pipeline for Web Platform. The only difference in the output file is that for the Web Platform we skipped the AOT optimization.
+
+![lynx-web-compile-time-graph-show-diff](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-compile-chunk-diff.png)
+
+This means that developers and Rspeedy(Rsbuild) plugin authors don't need to do extra work on supporting web platforms. There are no variants of your code for different platforms. We offer you One Lynx!.
+
+Under the hood of ReactLynx, Preact runtime updates the page by invoking Lynx's [PAPIs](https://lynxjs.org/api/engine/element-api.html) like \_\_SetAttribute that resemble DOM APIs. To ensure architectural consistency, we have re-encapsulated browser-based DOM APIs on the Web platform, providing DOM APIs consistent with PAPI. Below is an example.
+
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '20px' }}>
+<div style={{display: 'flex', justifyContent:'center'}}>**__SetAttribute on Web Platform**</div>
+<div style={{display: 'flex', justifyContent:'center',}}>**__SetAttribute on Lynx Engine**</div>
+<div>
+```js
+// lynx/runtime/papi.ts
+const __SetAttribute: SetAttributePAPI = (
+  element,
+  key,
+  value,
+) => {
+  if (value == null) {
+    element.removeAttribute(key)
+  } else {
+    element.setAttribute(key, value + '')
+  }
+};
+```
+</div>
+```cpp
+RENDERER_FUNCTION_CC(FiberSetAttribute) {
+  CONVERT_ARG_AND_CHECK_FOR_ELEMENT_API(arg0, 0, RefCounted, FiberSetAttribute);
+  auto element = fml::static_ref_ptr_cast<FiberElement>(arg0->RefCounted());
+  CONVERT_ARG(arg1, 1);
+  CONVERT_ARG(arg2, 2);
+  auto string_type = arg1->StringView();
+  CHECK_ILLEGAL_ATTRIBUTE_CONFIG(element, FiberSetAttribute);
+  element->SetAttribute(arg1->String(), arg2->ToLepusValue());
+  ON_NODE_MODIFIED(element);
+  RETURN_UNDEFINED();
+}
+```
+<div>
+</div>
+</div>
+
+> https://lynxjs.org/api/engine/element-api/__SetAttribute.html
+
+Also, in case the Web is one of the official supported rendering platforms. We really care about its performance. Fortunately, with modern Web APIs and modern ECMAScript APIs, like [CSSOM](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model), [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API), [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM), [Scroll Driven Animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll-driven_animations), etc,., we're able to deliver better performance for web rendering. Focusing on those browsers with 90%+ usage share helped us to achieve it.
+
+### One CSS Spec, Web CSS Spec
+
+For most Lynx supported CSS properties and all selectors, Lynx Engine is implemented in W3C specs or a sub set of corresponding W3C specs. Therefore, we just dump these declarations as-is into the document.
+
+![lynx-web-height-transform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-height-property.png)
+
+However, there are some special properties and values that are implemented for performance. That's why our web platform integrates a CSS transformer to transform some values into CSS custom properties. Then we use some CSS tricks to switch and apply different properties on HTMLElement. This makes us achieve max compatibility with higher performance.
+
+![lynx-web-display-linear-transform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-css-polyfill.png)
+
+> https://lea.verou.me/blog/2024/css-conditionals-now/
+
+### Native components, Web Components
+
+![native-elements-on-different-platform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-native-element.png)
+
+> https://lynxjs.org/zh/guide/ui/elements-components.html
+
+One of the highlights of Lynx's promise is that we provide a "write once, run every platform" development pattern and rendering based on native UI components, which means that , on every platform, we have a corresponding UI component implementation with the same behavior.
+We have similar system designs on different platforms. Just like Lynx's elements on iOS/Android, in browsers we provide a series of custom elements using the [Web Components technology](https://developer.mozilla.org/en-US/docs/Web/API/Web_components).
+By using lifecycles directly provided by web browsers, we don't need to depend on any JavaScript framework. This helps us to provide a minimal IO overhead for applications shipped with Lynx.
+
+## Empowered by Concurrency on Lynx
+
+Moreover, Lynx is inspiring web development by bringing a multi-threading model. With Lynx's dual thread architecture design based on WebWorker, we've implemented a multi-threading rendering model.
+Now on Lynx's Web Platform, we shipped a well-designed dual-threading programming pattern : ReactLynx. By using ReactLynx, the user code will be automatically and gracefully split into two threads. With the fastest FMP and non-blocking effects execution, we help you to catch users' eyes as soon as possible.
+
+Here is a demo to show a page with complex effects that the effects won't block the main thread running.
+
+![demo-for-page-with-complex-effects](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-compare-lynx-web-with-react.webp)
+
+In this demo, we have one `effects` to load detailed information for users. On Lynx, the effect won't wait for the rendering to finish and won't block rendering. This design boosts the high priority rendering tasks and keeps the effects to be executed fast.
+
+![lynx-web-all-on-ui-thread-model](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-web-all-on-ui-thread-strategy.png)
+
+As we all known, in the past decade, the multi-thread performance growth of hardware is faster than the single-thread performance growth. In a single thread model, applications can only process tasks sequentially. When faced with computationally intensive tasks, the interface may become unresponsive or even freeze, severely affecting the user experience.
+
+## Faster, Easier and Rust-ize Future
+
+### Boosted by Rust and WASM
+
+An ongoing optimization will introduce Rust implemented WASM module. Our in-house benchmarking shows that by rewriting style transformer in rust, it will have 30~40% rendering cut down.
+
+### Ready for [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+
+We're going to explore more possibilities with PWA technologies, such as Push and Service Workers, to improve user experience. Imagine that non-blocking content dumping without an SSR server? Let's make it work with workers!
+
+### [SSR](https://developer.mozilla.org/en-US/docs/Glossary/SSR) support
+
+We do know the SSR is one of the important ways to improve user experiences. The Web Platform's SSR support will be shipped with built-in "zero JavaScript ready" SSR output. We will integrate with the [HTML `<template>` Element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/template) powered solutions.
+
+## Integrate with your Web App now
+
+[See Here](https://lynxjs.org/guide/start/integrate-with-existing-apps.html#platform=web)
+
+## Currently Status
+
+we're still deeply entrenched in active development—our team is working closely and intensively to refine and expand the platform. As a result, there are a few capabilities that remain in the pipeline and haven’t been fully implemented yet. For instance, Hot Module Replacement (HMR) is one such feature we're actively working on but haven’t rolled out just yet. We're working hard to make it better.
