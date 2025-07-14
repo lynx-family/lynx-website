@@ -14,6 +14,7 @@ import { useLang } from 'rspress/runtime';
 import './compat-table/index.scss';
 
 import type LCD from '@lynx-js/lynx-compat-data';
+import { useUrlWithBase } from '@site/src/lib/utils';
 const LCD_BASE_URL = '/lynx-compat-data';
 
 function useIsServer() {
@@ -112,6 +113,10 @@ const parseQuery = (
   }
 };
 
+function useLCDBaseUrl(): string {
+  return useUrlWithBase(LCD_BASE_URL);
+}
+
 type FetchingCompatTableProps = {
   /**
    * The query to fetch the data from the server.
@@ -129,6 +134,7 @@ type FetchingCompatTableProps = {
 export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const locale = useLang();
   const isServer = useIsServer();
+  const lcdBaseUrl = useLCDBaseUrl();
 
   // Use the utility function within useMemo
   const { module, accessor } = React.useMemo(() => parseQuery(query), [query]);
@@ -137,7 +143,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const { error, data: apiData } = useSWR(
     module,
     async (_) => {
-      const response = await fetch(`${LCD_BASE_URL}/${module}.json`);
+      const response = await fetch(`${lcdBaseUrl}/${module}.json`);
       if (!response.ok) {
         throw new Error(response.status.toString());
       }
@@ -150,7 +156,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const { error: platformError, data: platformData } = useSWR(
     'platforms.json',
     async (_) => {
-      const response = await fetch(`${LCD_BASE_URL}/platforms/platforms.json`);
+      const response = await fetch(`${lcdBaseUrl}/platforms/platforms.json`);
       if (!response.ok) {
         throw new Error(response.status.toString());
       }
