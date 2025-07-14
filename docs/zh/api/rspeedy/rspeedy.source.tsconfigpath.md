@@ -18,7 +18,7 @@ The `tsconfigPath` configuration affects the following behaviors:
 
 - The `paths` field is used to configure [Path Aliases](./rspeedy.source.alias.md)<!-- -->.
 
-- Sets the scope and rules for the [Type Check Plugin](https://rsbuild.rs/zh/guide/basic/typescript#%E7%B1%BB%E5%9E%8B%E6%A3%80%E6%9F%A5)<!-- -->.
+- Sets the scope and rules for the [Type Check Plugin](https://rsbuild.rs/guide/basic/typescript#type-checking)<!-- -->.
 
 ## Example
 
