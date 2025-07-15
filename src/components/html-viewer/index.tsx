@@ -14,12 +14,12 @@ const doUpdataParentHash = (event: MessageEvent) => {
   }
 };
 
-function isRelativeUrl(url: string): boolean {
-  return url.startsWith('./') || url.startsWith('../');
+function isAbsoluteUrl(url: string): boolean {
+  return url.startsWith('/');
 }
 
 function formatUrlWithBase(url: string): string {
-  return isRelativeUrl(url) ? url : withBase(url);
+  return isAbsoluteUrl(url) ? withBase(url) : url;
 }
 
 const HtmlViewer = ({ path }: { path: string }) => {

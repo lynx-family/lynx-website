@@ -1,16 +1,16 @@
 import type { SubsiteConfig } from '@site/shared-route-config';
 import { withBase } from 'rspress/runtime';
 
-function isRelativeUrl(url: string): boolean {
+function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('/');
 }
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
   // Ensure the logo URLs are absolute by prepending the site base if they are relative
-  const lightLogoSrc = isRelativeUrl(subsite.logo.light)
+  const lightLogoSrc = isAbsoluteUrl(subsite.logo.light)
     ? withBase(subsite.logo.light)
     : subsite.logo.light;
-  const darkLogoSrc = isRelativeUrl(subsite.logo.dark)
+  const darkLogoSrc = isAbsoluteUrl(subsite.logo.dark)
     ? withBase(subsite.logo.dark)
     : subsite.logo.dark;
 
