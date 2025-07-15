@@ -3,17 +3,17 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
-import type { RspressPlugin, SidebarGroup } from '@rspress/shared';
+import { transformerNotationHighlight } from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import { defineConfig } from 'rspress/config';
+import type { RspressPlugin } from 'rspress/core';
+import { transformerCompatibleMetaHighlight } from 'rspress/shiki-transformers';
 import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
-import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerCompatibleMetaHighlight } from 'rspress/shiki-transformers';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -134,7 +134,6 @@ export default defineConfig({
   },
   plugins: [
     pluginLlms(),
-    rspeedyApiPlugin(),
     sharedSidebarPlugin(),
     pluginRss({
       siteUrl: PUBLISH_URL,
@@ -173,66 +172,6 @@ export default defineConfig({
     },
   },
 });
-
-function rspeedyApiPlugin(): RspressPlugin {
-  return {
-    name: 'rspeedy:api',
-    // FIXME: warning: this is hack to modify rspress.config in-place when autoNav generated
-    async beforeBuild(config, isProd) {
-      const {
-        transformRspeedySidebar,
-        transformReactRsbuildPluginSidebar,
-        transformQrcodeRsbuildPluginSidebar,
-      } = await import('./api-reports/index.js');
-      config.themeConfig?.locales?.map((locale) => {
-        if (locale.sidebar?.['/api']) {
-          locale.sidebar!['/api'] =
-            locale.sidebar?.['/api'].map((sidebar) => {
-              if ('text' in sidebar && sidebar.text === 'lynx.config.js') {
-                transformRspeedySidebar(sidebar as SidebarGroup);
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/react-rsbuild-plugin'
-              ) {
-                transformReactRsbuildPluginSidebar(sidebar as SidebarGroup);
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/qrcode-rsbuild-plugin'
-              ) {
-                transformQrcodeRsbuildPluginSidebar(sidebar as SidebarGroup);
-              }
-              return sidebar;
-            }) ?? [];
-        } else if (locale.sidebar?.[`/${locale.lang}/api`]) {
-          locale.sidebar![`/${locale.lang}/api`] =
-            locale.sidebar?.[`/${locale.lang}/api`].map((sidebar) => {
-              if ('text' in sidebar && sidebar.text === 'lynx.config.js') {
-                transformRspeedySidebar(sidebar as SidebarGroup, locale.lang);
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/react-rsbuild-plugin'
-              ) {
-                transformReactRsbuildPluginSidebar(
-                  sidebar as SidebarGroup,
-                  locale.lang,
-                );
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/qrcode-rsbuild-plugin'
-              ) {
-                transformQrcodeRsbuildPluginSidebar(
-                  sidebar as SidebarGroup,
-                  locale.lang,
-                );
-              }
-              return sidebar;
-            }) ?? [];
-        }
-        return locale;
-      });
-    },
-  };
-}
 
 function mapNonGuideSharedSectionsToGuide(
   lang: string,
