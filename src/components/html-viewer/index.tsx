@@ -15,7 +15,7 @@ const doUpdataParentHash = (event: MessageEvent) => {
 };
 
 function isRelativeUrl(url: string): boolean {
-  return url.startsWith('./');
+  return url.startsWith('./') || url.startsWith('../');
 }
 
 function formatUrlWithBase(url: string): string {
