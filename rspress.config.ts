@@ -57,13 +57,12 @@ export default defineConfig({
     resolve: {
       alias: {
         '@site': path.join(__dirname),
-        '@/': path.join(__dirname, 'src'),
+        '@': path.join(__dirname, 'src'),
         '@assets': path.join(__dirname, 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
       },
     },
     source: {
-      include: [path.join(require.resolve('rspress'), '../')],
       define: {
         'process.env': {
           // This marks the first open sourced version of Lynx.
@@ -133,7 +132,26 @@ export default defineConfig({
     ],
   },
   plugins: [
-    pluginLlms(),
+    pluginLlms([
+      {
+        llmsTxt: {
+          name: 'llms.txt',
+        },
+        llmsFullTxt: {
+          name: 'llms-full.txt',
+        },
+        include: ({ page }) => page.lang === 'en',
+      },
+      {
+        llmsTxt: {
+          name: 'zh/llms.txt',
+        },
+        llmsFullTxt: {
+          name: 'zh/llms-full.txt',
+        },
+        include: ({ page }) => page.lang === 'zh',
+      },
+    ]),
     sharedSidebarPlugin(),
     pluginRss({
       siteUrl: PUBLISH_URL,
