@@ -8,6 +8,7 @@ type Platform =
   | 'ios'
   | 'ios-simulator'
   | 'android'
+  | 'harmony'
   | 'web'
   | 'macos'
   | 'macos-arm64'
@@ -32,6 +33,12 @@ const PLATFORM_OPTIONS: Array<{
     id: 'android',
     label: 'Android',
     iconName: mapPlatformNameToIconName('android'),
+  },
+
+  {
+    id: 'harmony',
+    label: 'HarmonyOS',
+    iconName: mapPlatformNameToIconName('harmony'),
   },
   {
     id: 'web',

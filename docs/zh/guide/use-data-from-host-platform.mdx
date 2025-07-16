@@ -41,9 +41,31 @@ Lynx 允许宿主平台在页面加载时提供一份初始数据，并且在之
     ```
 
   </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4,11}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
+    ```
+
+  </PlatformTabs.Tab>
 </PlatformTabs>
 
-你可以在后续需要的时机通过 [`LynxView.updateData()`] 来更新这些数据：
+你可以在后续需要的时机通过 [`LynxView.updateData()`] (或 HarmonyOS 平台的 [`LynxContext.updateData()`]) 来更新这些数据：
 
 <PlatformTabs hashKey="platform">
   <PlatformTabs.Tab platform="ios">
@@ -62,6 +84,33 @@ Lynx 允许宿主平台在页面加载时提供一份初始数据，并且在之
     builder.setUpdatedData(__YOUR_DATA__);
     LynxUpdateMeta meta = builder.build();
     lynxView.updateMetaData(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4-5,13-16}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+      private context?: LynxContext;
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+            onCreate: (context: LynxContext) => {
+              this.context = context;
+              this.context.updateMetaData(new MetaData(new TemplateData(__YOUR_DATA__)));
+            }
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
     ```
 
   </PlatformTabs.Tab>
@@ -123,7 +172,7 @@ class C extends Component {
 
 想象一下，你有以下混乱的 `initData`：
 
-- 在 Android 上：
+- 在 Android 或 HarmonyOS 上：
 
   ```json
   {
@@ -139,7 +188,7 @@ class C extends Component {
   }
   ```
 
-如果你想要兼容两个平台，你的代码可能会变得不那么干净：
+如果你想要兼容这些平台，你的代码可能会变得不那么干净：
 
 ```tsx {7}
 import { useInitData } from '@lynx-js/react';
@@ -201,7 +250,7 @@ export function App() {
 
 ### 使用命名的 `dataProcessor`
 
-你（或宿主平台开发人员）还可以在调用 [`LynxView.updateData()`] 时指定 `processorName`：
+你（或宿主平台开发人员）还可以在调用 [`LynxView.updateData()`] (或 HarmonyOS 平台的 [`LynxContext.updateData()`]) 时指定 `processorName`：
 
 <PlatformTabs hashKey="platform">
   <PlatformTabs.Tab platform="ios">
@@ -223,6 +272,34 @@ export function App() {
     // TODO: set data and processorName
 
     lynxView.updateMetaData(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4-5,14-16}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+      private context?: LynxContext;
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+            onCreate: (context: LynxContext) => {
+              const templateData: TemplateData = new TemplateData('', 'someDataProcessor');
+              this.context = context;
+              this.context.updateMetaData(new MetaData(templateData));
+            }
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
     ```
 
   </PlatformTabs.Tab>
@@ -256,8 +333,9 @@ if (import.meta.webpackHot) {
 如果业务逻辑需要，这允许你（或宿主平台开发人员）在宿主平台上决定使用哪个 `dataProcessor`。
 
 [`LynxView.loadTemplate()`]: /api/lynx-native-api/lynx-view/load-template
-[`LynxView.updateData()`]: /api/lynx-native-api/lynx-view/update-data
+[`LynxView.updateData()`]: /api/lynx-native-api/lynx-view/update-meta-data
 [`useInitData()`]: /api/react/Function.useInitData
 [`InitDataConsumer`]: /api/react/Function.InitDataConsumer
 [`InitDataProvider`]: /api/react/Function.InitDataProvider
 [`lynx.registerdataprocessors`]: /api/react/Interface.Lynx#registerdataprocessors
+[`LynxContext.updateData()`]: /api/lynx-native-api/lynx-context/update-meta-data

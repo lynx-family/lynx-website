@@ -3,7 +3,7 @@ import { CodeFold } from '@lynx';
 
 ### Custom Native element Implementation Process
 
-The implementation of custom native elements involves several steps, including: declaring and registering the element, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<input>` as an example to briefly introduce the implementation process of a custom element. The complete code can be viewed in [LynxExplorer](https://github.com/lynx-family/lynx/tree/develop/explorer/android/lynx_explorer/src/main/java/com/lynx/explorer/input).
+The implementation of custom native elements involves several steps, including: declaring and registering the element, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<explorer-input>` as an example to briefly introduce the implementation process of a custom element. The complete code can be viewed in [LynxExplorer](https://github.com/lynx-family/lynx/tree/develop/explorer/android/lynx_explorer/src/main/java/com/lynx/explorer/input).
 
 The complete implementation can be found in the [LynxExplorer/input module](https://github.com/lynx-family/lynx/tree/develop/explorer/android/lynx_explorer/src/main/java/com/lynx/explorer/input). You can compile and run the [LynxExplorer sample project](https://github.com/lynx-family/lynx/tree/develop/explorer/android) to preview element behavior in real-time.
 
@@ -76,7 +76,7 @@ Globally registered elements can be shared among multiple `LynxView` instances.
 import com.lynx.tasm.LynxEnv;
 import com.lynx.tasm.behavior.Behavior;
 
-LynxEnv.inst().addBehavior(new Behavior("input"){
+LynxEnv.inst().addBehavior(new Behavior("explorer-input"){
       @Override
       public LynxExplorerInput createUI(LynxContext context) {
         return new LynxExplorerInput(context);
@@ -94,7 +94,7 @@ LynxEnv.inst().addBehavior(new Behavior("input"){
 import com.lynx.tasm.LynxEnv
 import com.lynx.tasm.behavior.Behavior
 
-LynxEnv.inst().addBehavior(object : Behavior("input") {
+LynxEnv.inst().addBehavior(object : Behavior("explorer-input") {
     override fun createUI(context: LynxContext): LynxExplorerInput {
         return LynxExplorerInput(context)
     }
@@ -117,7 +117,7 @@ Locally registered elements are only available for the current `LynxView` instan
 ```java
 
 LynxViewBuilder lynxViewBuilder = new LynxViewBuilder();
-lynxViewBuilder.addBehavior(new Behavior("input") {
+lynxViewBuilder.addBehavior(new Behavior("explorer-input") {
       @Override
       public LynxExplorerInput createUI(LynxContext context) {
         return new LynxExplorerInput(context);
@@ -133,7 +133,7 @@ lynxViewBuilder.addBehavior(new Behavior("input") {
 ```kotlin
 
     val lynxViewBuilder = LynxViewBuilder()
-    lynxViewBuilder.addBehavior(object : Behavior("input") {
+    lynxViewBuilder.addBehavior(object : Behavior("explorer-input") {
       override fun createUI(context: LynxContext): LynxExplorerInput {
         return LynxExplorerInput(context)
       }
@@ -145,13 +145,13 @@ lynxViewBuilder.addBehavior(new Behavior("input") {
 
 </Tabs>
 
-Where `"input"` corresponds to the tag name in the front-end DSL. When the Lynx Engine encounters this tag, it will look for the registered native element and create an instance.
+Where `explorer-input"` corresponds to the tag name in the front-end DSL. When the Lynx Engine encounters this tag, it will look for the registered native element and create an instance.
 
 ### Create the Native `View` Instance
 
 Each custom element needs to implement the `createView` method, which returns the corresponding native `View` instance.
 
-Here’s the implementation for the `<input>` element:
+Here’s the implementation for the `<explorer-input>` element:
 
 <Tabs groupId='custom-component-android'>
 
@@ -211,7 +211,7 @@ class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(contex
 
 ### Handle Front-End Style and Property Updates
 
-You can use the `@LynxProp` annotation to listen for property changes passed from the front-end and update the native view accordingly. For example, handling the `value` property of the `<input>` element:
+You can use the `@LynxProp` annotation to listen for property changes passed from the front-end and update the native view accordingly. For example, handling the `value` property of the `<explorer-input>` element:
 
 <Tabs groupId='custom-component-android'>
 
@@ -403,7 +403,7 @@ class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(contex
 
 ### Event Binding
 
-Event handling in native elements is usually done using the `@LynxEvent` annotation, which binds events between the front-end and native elements. For example, let’s implement a custom `onChange` event for the `<input>` element:
+Event handling in native elements is usually done using the `@LynxEvent` annotation, which binds events between the front-end and native elements. For example, let’s implement a custom `onChange` event for the `<explorer-input>` element:
 
 <Tabs groupId='custom-component-android'>
 
@@ -566,7 +566,11 @@ const handleInput = (e) => {
   setInputValue(currentValue);
 };
 
-<input className="input-box" bindinput={handleInput} value={inputValue} />;
+<explorer-input
+  className="input-box"
+  bindinput={handleInput}
+  value={inputValue}
+/>;
 ```
 
 > **Note**: Front-end DSL uses `bindxxx` for event binding, such as `bindinput` for binding the `input` event.
@@ -577,7 +581,7 @@ In some cases, the front-end may need to directly manipulate custom elements usi
 
 #### Front-End Example Call
 
-The following code demonstrates how to use the [SelectorQuery](/api/lynx-api/selector-query) API to call the `focus` method and make the `<input>` element gain focus:
+The following code demonstrates how to use the [SelectorQuery](/api/lynx-api/selector-query) API to call the `focus` method and make the `<explorer-input>` element gain focus:
 
 ```jsx title="App.tsx"
 lynx

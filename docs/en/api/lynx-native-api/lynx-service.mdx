@@ -106,7 +106,7 @@ If there are custom requirements, you can also quickly implement and register re
 
 <Tab label="Android">
 
-Implement `ILynxLogService`：
+Implement `ILynxLogService`:
 
 <CodeFold toggle>
 
@@ -129,6 +129,35 @@ object YourLogService : ILynxLogService {
   override fun switchLogToSystem(enableSystemLog: Boolean) {}
 
   override fun getLogToSystemStatus(): Boolean = false
+}
+```
+</CodeFold>
+
+</Tab>
+
+<Tab label="Harmony">
+
+Implement `ILynxLogService`:
+
+<CodeFold toggle>
+
+```typescript title="YourLogService.ets"
+import { ILynxLogService } from '@lynx/lynx';
+
+export class YourLogService implements ILynxLogService {
+  static instance = new YourLogService();
+
+  logByPlatform(level: number, tag: string, message: string): void {
+    console.log(`level: ${level} tag: ${tag} message: ${message}`);
+  }
+
+  isLogOutputByPlatform(): boolean {
+    return true;
+  }
+
+  getDefaultWriteFunction(): number {
+    return 0;
+  }
 }
 ```
 </CodeFold>
@@ -174,6 +203,25 @@ And delete related dependencies
 dependencies {
 -   // integrating log-service
 -   implementation "engineer.lynx.test2:lynx-service-log:0.0.1"
+}
+```
+
+</Tab>
+
+<Tab label="Harmony">
+
+Replace the implementation of log service in `LynxServiceCenter` in the [integration documentation](/guide/start/integrate-with-existing-apps#platform=harmony) with your implementation.
+
+```diff
+- LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
++ LynxServiceCenter.registerService(LynxServiceType.Log, YourLogService.instance);
+```
+
+And delete related dependencies
+
+```diff title="oh-package.json5"
+"dependencies": {
+- "@lynx/lynx_log_service": "0.0.1",
 }
 ```
 
