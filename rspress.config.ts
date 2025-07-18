@@ -128,8 +128,6 @@ export default defineConfig({
         content: 'https://x.com/lynxjs_org',
       },
     ],
-    nav: [],
-    sidebar: {},
   },
   plugins: [
     pluginLlms(),
@@ -176,16 +174,13 @@ export default defineConfig({
 function rspeedyApiPlugin(): RspressPlugin {
   return {
     name: 'rspeedy:api',
-    async config(config, utils, isProd) {
-      const { pluginAutoNavSidebar } = await import(
-        '@rspress/plugin-auto-nav-sidebar'
-      );
+    // FIXME: this is hack to modify rspress.config in-place when autoNav generated
+    async beforeBuild(config, isProd) {
       const {
         transformRspeedySidebar,
         transformReactRsbuildPluginSidebar,
         transformQrcodeRsbuildPluginSidebar,
       } = await import('./api-reports/index.js');
-      config = await pluginAutoNavSidebar().config!(config, utils, isProd);
       config.themeConfig?.locales?.map((locale) => {
         if (locale.sidebar?.['/api']) {
           locale.sidebar!['/api'] =
@@ -232,7 +227,6 @@ function rspeedyApiPlugin(): RspressPlugin {
         }
         return locale;
       });
-      return config;
     },
   };
 }
