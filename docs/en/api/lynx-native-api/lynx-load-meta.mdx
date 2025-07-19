@@ -1,4 +1,4 @@
-# LynxMetaData
+# LynxLoadMeta
 
 `LynxLoadMeta` is the metadata structure used by `LynxView` to load templates. It will be used as the input parameter of [loadTemplate](./lynx-view/load-template.mdx). Users can use `LynxLoadMeta` to specify many parameters of loading templates, such as specifying template content, template initial data, and other additional configuration information;
 
@@ -10,7 +10,10 @@
 - `binaryData: byte[]`: The binary file data of the template;
 - `bundle: TemplateBundle`: [TemplateBundle](./template-bundle) object parsed in advance by the template's binary file data;
 - `initialData: TemplateData`: Initial data specified by the client during the first screen loading process;
+- `globalProps: TemplateData`: Global properties, which will be synchronized to the template after the template is loaded.
+- `loadMode: LynxLoadMode`: Loading mode, the default value is `LynxLoadMode.NORMAL`.
 - `loadOptions: EnumSet<LynxLoadOption>`: Additional configuration information when loading templates;
+- `lynxViewConfig: Map<String, String>`: Page Config information passed in when loading the template.
 
 :::info
 
@@ -28,6 +31,16 @@ loadOptions is additional configuration information when loading a template. Cur
 
 :::
 
+:::info
+
+loadMode is the loading mode of the template. Currently, the following configuration items are supported:
+- **NORMAL**: Default loading mode.
+- **PRE_PAINTING**: Suspend JS events when loading the template. Events will be sent during update, and layout will be blocked until the update is complete.
+- **PRE_PAINTING_DRAW**: Suspend JS events when loading the template. Events will be sent during update.
+
+:::
+
+
 ### Construction
 
 To construct a `LynxLoadMeta` object on the `Android` platform, you need to use `LynxLoadMeta.Builder`:
@@ -38,7 +51,10 @@ builder.setUrl();
 builder.setBinaryData();
 builder.setTemplateBundle();
 builder.setInitialData();
+builder.setGlobalProps();
+builder.setLoadMode();
 builder.addLoadOption();
+builder.setLynxViewConfig();
 LynxLoadMeta meta = builder.build();
 ```
 
@@ -50,21 +66,32 @@ LynxLoadMeta meta = builder.build();
 - `binaryData: NSData*`: The binary file data of the template;
 - `templateBundle: LynxTemplateBundle*`: [TemplateBundle](./template-bundle) object parsed in advance by the template's binary file data;
 - `initialData: LynxTemplateData*`: Initial data specified by the client during the first screen loading process;
-- `loadOptions: LynxLoadOption`: Additional configuration information when loading templates;
+- `globalProps: LynxTemplateData*`: Global properties, which will be synchronized to the template after the template is loaded.
+- `loadMode: LynxLoadMode`: Loading mode, the default value is `LynxLoadModeNormal`.
+- `loadOption: LynxLoadOption`: Additional configuration information when loading templates;
+- `lynxViewConfig: NSMutableDictionary<NSString*, id>*`: Page Config information passed in when loading the template.
 
 :::info
 
-url, binaryData, bundle are the required parameters for template loading. You can pass only one or all of them. The priority relationship is as follows:
-bundle > binaryData > url
+url, binaryData, templateBundle are the required parameters for template loading. You can pass only one or all of them. The priority relationship is as follows:
+templateBundle > binaryData > url
 
 :::
 
 :::info
 
-loadOptions is additional configuration information when loading a template. Currently the following configuration items are supported:
+loadOption is additional configuration information when loading a template. Currently the following configuration items are supported:
 
 - **RECYCLE_TEMPLATE_BUNDLE**: After LynxView uses url or binaryData to load the template, it supports returning a TemplateBundle to the calling business party through LynxViewClient;
 - **DUMP_ELEMENT**: When LynxView loads a Bundle , copy the ElementBundle to the TemplateBundle and pass it back through the LynxViewClient;
+
+:::
+
+:::info
+
+loadMode is the loading mode of the template. Currently, the following configuration items are supported:
+- **LynxLoadModeNormal**: Default loading mode.
+- **LynxLoadModePrePainting**: Suspend JS events when loading the template. Events will be sent during update, and layout will be blocked until the update is complete.
 
 :::
 
@@ -78,7 +105,10 @@ meta.url = @"";
 meta.binaryData = nil;
 meta.templateBundle = nil;
 meta.initialData = nil;
+meta.globalProps = nil;
+meta.loadMode = LynxLoadModeNormal;
 meta.loadOption = LynxLoadOptionDumpElement | LynxLoadOptionRecycleTemplateBundle;
+meta.lynxViewConfig = nil;
 ```
 
 ## Compatibility
