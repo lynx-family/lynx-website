@@ -1,8 +1,16 @@
 import { RuntimeBadge } from '@lynx';
 
-# FrameworkPipelineTiming
+# FrameworkRenderingTiming
 
 This interface describes the performance data of key stages in [framework rendering](/guide/spec#framework-rendering).
+
+In the [First-screen Rendering](/guide/spec#first-screen-rendering-or-fsr) and [Re-rendering](/guide/spec#re-rendering), the framework is responsible for a series of critical tasks. The diagram below illustrates the significant steps of framework rendering in the entire FSR and Re-rendering processes:
+
+- **The yellow sections represent the key phases of framework rendering**.
+- The green sections represent the key phases of [Engine Rendering (Pixel Pipeline)](/guide/spec#pixel-pipeline), with details available at [PipelineEntry](/api/lynx-api/performance-api/performance-entry/pipeline-entry).
+- The purple sections represent the key phases of [Lynx Engine](/guide/spec#engine), with details available at [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
+
+![Critical Phases in Framework Rendering](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/framework-rendering-timing.png)
 
 ## Instance Properties
 
@@ -94,9 +102,7 @@ hydrateParseSnapshotStart: number;
 
 The timestamp when the framework starts deserializing [main thread](/guide/spec.html#main-thread-or-lynx-main-thread) information on the [background thread](/guide/spec.html#background-thread-aka-off-main-thread). This timestamp is a floating-point Unix timestamp (in milliseconds), accurate to three decimal places. For example: 1739594612307.429.
 
-:::tip
 This property is only valid when `stage` is `hydrate`.
-:::
 
 ### hydrateParseSnapshotEnd
 
@@ -106,12 +112,70 @@ hydrateParseSnapshotEnd: number;
 
 The timestamp when the framework ends deserializing [main thread](/guide/spec.html#main-thread-or-lynx-main-thread) information on the [background thread](/guide/spec.html#background-thread-aka-off-main-thread). This timestamp is a floating-point Unix timestamp (in milliseconds), accurate to three decimal places. For example: 1739594612307.429.
 
-:::tip
 This property is only valid when `stage` is `hydrate`.
-:::
+
+### vmExecuteStart
+
+```tsx
+vmExecuteStart: number;
+```
+
+The timestamp when the framework starts executing [`main-thread.js`](/guide/spec.html#instances-of-main-thread-script) in the main thread to initialize the [Javascript Engine](/guide/spec.html#javascript-engine). This timestamp is a floating-point Unix timestamp (in milliseconds), accurate to three decimal places. For example: 1739594612307.429.
+
+This property is only valid when `frameworkRenderingTiming` is present in [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
+
+### vmExecuteEnd
+
+```tsx
+vmExecuteEnd: number;
+```
+
+The timestamp when the framework ends executing [`main-thread.js`](/guide/spec.html#instances-of-main-thread-script) in the main thread to initialize the [Javascript engine](/guide/spec.html#javascript-engine). This timestamp is a Unix timestamp expressed as a floating point (unit: milliseconds), accurate to three decimal places. For example: 1739594612307.429.
+
+This property is only valid when `frameworkRenderingTiming` is present in [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
+
+### dataProcessorStart
+
+```tsx
+dataProcessorStart: number;
+```
+
+The timestamp when the framework starts initial data processing by executing the [DataProcessor](/api/react/Interface.DataProcessorDefinition.mdx) in the main thread. This timestamp is a floating-point Unix timestamp (unit: milliseconds), accurate to three decimal places. For example: 1739594612307.429.
+
+This property is only valid when `frameworkRenderingTiming` is present in [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
+
+### dataProcessorEnd
+
+```tsx
+dataProcessorEnd: number;
+```
+
+The timestamp when the framework completes initial data processing by executing the [DataProcessor](/api/react/Interface.DataProcessorDefinition.mdx) in the main thread. This timestamp is a floating-point Unix timestamp (unit: milliseconds), accurate to three decimal places. For example: 1739594612307.429.
+
+This property is only valid when `frameworkRenderingTiming` is present in [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
+
+### setInitDataStart
+
+```tsx
+setInitDataStart: number;
+```
+
+The timestamp when the [update init data](/guide/use-data-from-host-platform#provide-and-update-data) starts. This timestamp is a floating point Unix timestamp (unit: milliseconds), accurate to three decimal places. For example: 1739594612307.429
+
+This property is only valid when `frameworkRenderingTiming` is present in [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
+
+### setInitDataEnd
+
+```tsx
+setInitDataEnd: number;
+```
+
+The timestamp when the [update init data](/guide/use-data-from-host-platform#provide-and-update-data) ends. This timestamp is a floating point Unix timestamp (unit: milliseconds), accurate to three decimal places. For example: 1739594612307.429.
+
+This property is only valid when `frameworkRenderingTiming` is present in [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry).
 
 ## Compatibility
 
 import { LegacyCompatTable } from '@lynx';
 
-<LegacyCompatTable metadata="lynx-api/performance-api/framework-pipeline-timing" />
+<LegacyCompatTable metadata="lynx-api/performance-api/framework-rendering-timing" />

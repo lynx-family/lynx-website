@@ -1,8 +1,16 @@
 import { RuntimeBadge } from '@lynx';
 
-# FrameworkPipelineTiming
+# FrameworkRenderingTiming
 
 该接口描述了[框架渲染](/guide/spec#framework-rendering)中关键阶段的性能数据。
+
+在 [首屏渲染（First-screen Rendering）](/guide/spec#first-screen-rendering-or-fsr) 和 [重渲染（Re-rendering）](/guide/spec#re-rendering) 中，框架承担了一系列重要任务。下图展示了框架渲染在整个 FSR 和 Re-rendering 流程中的关键作用:
+
+- **黄色部分代表框架渲染中的关键阶段**。
+- 绿色部分代表[引擎渲染(Pixel Pipeline)](/guide/spec#pixel-pipeline)的重要阶段，详细内容可在 [PipelineEntry](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 中查看。
+- 紫色部分代表 FSR 中的 [Lynx 引擎](/guide/spec#engine)的重要任务，详细内容可在 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 中查看。
+
+![框架渲染中的关键阶段](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/framework-rendering-timing.png)
 
 ## 实例属性
 
@@ -94,11 +102,7 @@ hydrateParseSnapshotStart: number;
 
 框架在[后台线程](/guide/spec.html#background-thread-aka-off-main-thread)反序列化[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)信息开始的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
 
-:::tip
-
 该属性仅当 `stage` 为 `hydrate` 时有效。
-
-:::
 
 ### hydrateParseSnapshotEnd
 
@@ -108,14 +112,70 @@ hydrateParseSnapshotEnd: number;
 
 框架在[后台线程](/guide/spec.html#background-thread-aka-off-main-thread)反序列化[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)信息结束的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
 
-:::tip
-
 该属性仅当 `stage` 为 `hydrate` 时有效。
 
-:::
+### vmExecuteStart
+
+```tsx
+vmExecuteStart: number;
+```
+
+框架在主线程执行 [`main-thread.js`](/guide/spec.html#instances-of-main-thread-script) 初始化 [Javascript 引擎](/guide/spec.html#javascript-engine)开始的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+该属性仅当 `frameworkRenderingTiming` 存在于 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 时有效。
+
+### vmExecuteEnd
+
+```tsx
+vmExecuteEnd: number;
+```
+
+框架在主线程执行 [`main-thread.js`](/guide/spec.html#instances-of-main-thread-script) 初始化 [Javascript 引擎](/guide/spec.html#javascript-engine)结束的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+该属性仅当 `frameworkRenderingTiming` 存在于 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 时有效。
+
+### dataProcessorStart
+
+```tsx
+dataProcessorStart: number;
+```
+
+框架在主线程执行[数据预处理函数（DataProcessor）](/api/react/Interface.DataProcessorDefinition.mdx) 进行初始数据处理开始的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+该属性仅当 `frameworkRenderingTiming` 存在于 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 时有效。
+
+### dataProcessorEnd
+
+```tsx
+dataProcessorEnd: number;
+```
+
+框架在主线程执行[数据预处理函数（DataProcessor）](/api/react/Interface.DataProcessorDefinition.mdx) 进行初始数据处理结束的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+该属性仅当 `frameworkRenderingTiming` 存在于 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 时有效。
+
+### setInitDataStart
+
+```tsx
+setInitDataStart: number;
+```
+
+[更新初始数据](/guide/use-data-from-host-platform#提供和更新数据)开始的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+该属性仅当 `frameworkRenderingTiming` 存在于 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 时有效。
+
+### setInitDataEnd
+
+```tsx
+setInitDataEnd: number;
+```
+
+[更新初始数据](/guide/use-data-from-host-platform#提供和更新数据)结束的时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+该属性仅当 `frameworkRenderingTiming` 存在于 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 时有效。
 
 ## 兼容性
 
 import { LegacyCompatTable } from '@lynx';
 
-<LegacyCompatTable metadata="lynx-api/performance-api/framework-pipeline-timing" />
+<LegacyCompatTable metadata="lynx-api/performance-api/framework-rendering-timing" />
