@@ -1,6 +1,6 @@
 # addLynxViewClient
 
-Register lifecycle event observer for `LynxView`
+Register lifecycle event observer for `LynxView`.
 
 ## Syntax
 
@@ -10,19 +10,47 @@ Register lifecycle event observer for `LynxView`
 public void addLynxViewClient(LynxViewClient client);
 ```
 
-### Parameters
+#### Parameters
 
-- `client: LynxViewClient`: The structure implemented by the client and registered to the `LynxView` instance is used to obtain the callbacks of each process in the `LynxView` lifecycle;
+- `client`: The structure implemented by the client and registered to the `LynxView` instance is used to obtain the callbacks of each process in the `LynxView` lifecycle
 
 ### iOS
 
 ```objc
-- (void)addLifecycleClient:(nonnull id<LynxViewLifecycle>)lifecycleClient;
+- (void)addLifecycleClient:(nonnull id<LynxViewBaseLifecycle>)lifecycleClient;
 ```
 
-### Parameters
+#### Parameters
 
-- `lifecycleClient: id<LynxViewLifecycle>`: The structure implemented by the client and registered to the `LynxView` instance is used to obtain the callbacks of each process in the `LynxView` lifecycle;
+- `lifecycleClient`: The structure implemented by the client and registered to the `LynxView` instance is used to obtain the callbacks of each process in the `LynxView` lifecycle.
+
+### Harmony
+
+#### Field
+
+LynxView has clients member:
+
+- `clients: LynxViewClient[]`: The structure implemented by the client and registered to the `LynxView` instance is used to obtain the callbacks of each process in the `LynxView` lifecycle.
+
+On the HarmonyOS platfrom, you need to pass your implemented LynxViewClient as a parameter during the initialization of LynxView:
+
+```typescript
+@Entry
+@Component
+struct Index {
+  private clients: EntryLynxClient[] = [new EntryLynxClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        clients: this.clients,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
+
 
 ## Compatibility
 

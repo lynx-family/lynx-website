@@ -16,6 +16,7 @@ export type PlatformName =
   | 'clay_macos'
   | 'clay_windows'
   | 'ios'
+  | 'harmony'
   | 'web_lynx';
 
 export type VersionValue = string | boolean | null;
