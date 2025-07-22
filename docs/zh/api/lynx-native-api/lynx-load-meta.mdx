@@ -11,7 +11,10 @@
 - `binaryData: byte[]`: Bundle 的二进制文件数据；
 - `bundle: TemplateBundle`: 通过 Bundle 的二进制文件数据提前解析出来的 [TemplateBundle](./template-bundle) 对象；
 - `initialData: TemplateData`: 在首屏加载过程中客户端指定的初始数据；
+- `globalProps: TemplateData`: 全局属性，在模板加载完成后会同步到模板中；
+- `loadMode: LynxLoadMode`: 加载模式，默认值为 `LynxLoadMode.NORMAL`；
 - `loadOptions: EnumSet<LynxLoadOption>`: 加载模板时的额外配置信息；
+- `lynxViewConfig: Map<String, String>`: 加载模板时传入的 Page Config 信息；
 
 :::info
 
@@ -28,6 +31,15 @@ loadOptions 是加载模板时的额外配置信息，目前支持如下配置�
 
 :::
 
+:::info
+
+loadMode 是模板的加载模式，目前支持如下配置项：
+- **NORMAL**: 默认加载模式；
+- **PRE_PAINTING**：加载模板时挂起 JS 事件，事件将在更新时发送，布局将被阻塞直到更新完成；
+- **PRE_PAINTING_DRAW**：加载模板时挂起 JS 事件，事件将在更新时发送；
+
+:::
+
 
 ### 构造
 
@@ -39,7 +51,10 @@ builder.setUrl();
 builder.setBinaryData();
 builder.setTemplateBundle();
 builder.setInitialData();
+builder.setGlobalProps();
+builder.setLoadMode();
 builder.addLoadOption();
+builder.setLynxViewConfig();
 LynxLoadMeta meta = builder.build();
 ```
 
@@ -52,7 +67,10 @@ LynxLoadMeta meta = builder.build();
 - `binaryData: NSData*`: 模板的二进制文件数据；
 - `templateBundle: LynxTemplateBundle*`: 通过模板的二进制文件数据提前解析出来的 [TemplateBundle](./template-bundle) 对象；
 - `initialData: LynxTemplateData*`: 在首屏加载过程中客户端指定的初始数据；
-- `loadOptions: LynxLoadOption`: 加载模板时的额外配置信息；
+- `globalProps: LynxTemplateData*`: 全局属性，在模板加载完成后会同步到模板中；
+- `loadMode: LynxLoadMode`: 加载模式，默认值为 `LynxLoadModeNormal`；
+- `loadOption: LynxLoadOption`: 加载模板时的额外配置信息；
+- `lynxViewConfig: NSMutableDictionary<NSString*, id>*`: 加载模板时传入的 Page Config 信息；
 
 :::info
 
@@ -63,9 +81,17 @@ templateBundle > binaryData > url
 
 :::info
 
-loadOptions 是加载模板时的额外配置信息，目前支持如下配置项：
+loadOption 是加载模板时的额外配置信息，目前支持如下配置项：
 - **RECYCLE_TEMPLATE_BUNDLE**: 在 LynxView 使用 url 或者 binaryData 加载之后，支持通过 LynxViewClient 回传一个 TemplateBundle 给调用方；
 - **DUMP_ELEMENT**: 在 LynxView 加载 Bundle 时，将 ElementBundle 拷贝至 TemplateBundle 中，并通过 LynxViewClient 回传；
+
+:::
+
+:::info
+
+loadMode 是模板的加载模式，目前支持如下配置项：
+- **LynxLoadModeNormal**: 默认加载模式；
+- **LynxLoadModePrePainting**：加载模板时挂起 JS 事件，事件将在更新时发送，布局将被阻塞直到更新完成；
 
 :::
 
@@ -79,7 +105,10 @@ meta.url = @"";
 meta.binaryData = nil;
 meta.templateBundle = nil;
 meta.initialData = nil;
+meta.globalProps = nil;
+meta.loadMode = LynxLoadModeNormal;
 meta.loadOption = LynxLoadOptionDumpElement | LynxLoadOptionRecycleTemplateBundle;
+meta.lynxViewConfig = nil;
 ```
 
 ## 兼容性
