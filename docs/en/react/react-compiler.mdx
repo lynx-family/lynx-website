@@ -1,0 +1,42 @@
+import { PackageManagerTabs } from '@theme';
+
+# React Compiler
+
+React Compiler can optimize components at compile time, eliminating the need to manually use `useMemo`, `useCallback`, and `memo`. You can use React Compiler in ReactLynx to enhance your application's performance.
+
+## How to Use
+
+Follow these steps to enable React Compiler for ReactLynx in Rspeedy:
+
+1. Install the runtime dependency for React Compiler:
+
+{' '}
+<PackageManagerTabs command="install react-compiler-runtime@rc" />
+
+2. Install the build-time dependencies for React Compiler:
+
+{' '}
+<PackageManagerTabs command="install -D @babel/core @babel/plugin-syntax-jsx @babel/plugin-syntax-typescript babel-plugin-react-compiler@rc @swc/react-compiler" />
+
+3. Enable React Compiler in the lynx.config.js configuration:
+
+```js title="lynx.config.js"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      experimental_enableReactCompiler: true,
+    }),
+  ],
+});
+```
+
+4. To maximize the benefits of React Compiler, it is recommended to configure the ESLint rule `react-hooks/react-compiler` to detect code that cannot be optimized. Please refer to [React Compiler - ESLint Integration](https://react.dev/learn/react-compiler/installation#eslint-integration) for configuration details.
+
+## Recommendations
+
+Since React Compiler compiles user code and injects additional memorization logic, it may impact [IFR](../guide/interaction/ifr.mdx) and the initial render on background threads. However, we’ve also observed significant performance improvements for subsequent diffs and renders.
+
+Therefore, we recommend using React Compiler in scenarios where the performance of [IFR](../guide/interaction/ifr.mdx) is not critical, or where the performance of subsequent renders is more important.

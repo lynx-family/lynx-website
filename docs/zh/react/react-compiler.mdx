@@ -1,0 +1,40 @@
+import { PackageManagerTabs } from '@theme';
+
+# React Compiler
+
+[React Compiler](https://react.dev/learn/react-compiler) 可以在编译期对组件进行优化，从而无需手动使用 `useMemo`、`useCallback` 和 `memo`。你可以在 ReactLynx 中使用 React Compiler 来对你的应用性能进行优化。
+
+## 如何使用
+
+在 Rspeedy 中为 ReactLynx 开启 React Compiler 的步骤如下：
+
+1. 安装 React Compiler 运行时所需依赖 `react-compiler-runtime`
+
+{' '}
+<PackageManagerTabs command="install react-compiler-runtime@rc" />
+
+2. 安装 React Compiler 编译时所需的依赖：
+
+{' '}
+<PackageManagerTabs command="install -D @babel/core @babel/plugin-syntax-jsx @babel/plugin-syntax-typescript babel-plugin-react-compiler@rc @swc/react-compiler" />
+
+3. 在 `lynx.config.js` 配置中开启 React Compiler
+
+```js title="lynx.config.js"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      experimental_enableReactCompiler: true,
+    }),
+  ],
+});
+```
+
+4. 为了最大化发挥 React Compiler 的作用，推荐配置 ESLint 规则 `react-hooks/react-compiler` 以便及时发现无法优化的代码，请参考 [React Compiler - ESLint 集成](https://react.dev/learn/react-compiler/installation#eslint-integration) 进行配置。
+
+## 使用建议
+
+由于 React Compiler 会对用户代码进行编译，插入额外的缓存逻辑，因此会影响[首帧直出](../guide/interaction/ifr.mdx)以及后台线程的第一次渲染。但是我们也注意到，对于后续的 diff 和 render，会有比较大的性能提升。因此，我们建议将 React Compiler 用于不是强依赖首帧直出的场景，或者后续渲染的性能对应用更重要的场景。
