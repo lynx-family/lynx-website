@@ -16,8 +16,8 @@ const showCaseList = [
     },
     class: 'case-0',
     link: {
-      en: 'guide/start/tutorial-gallery',
-      zh: 'zh/guide/start/tutorial-gallery',
+      en: '/guide/start/tutorial-gallery',
+      zh: '/zh/guide/start/tutorial-gallery',
     },
   },
   {
@@ -31,8 +31,8 @@ const showCaseList = [
     },
     class: 'case-1',
     link: {
-      en: 'guide/start/tutorial-product-detail',
-      zh: 'zh/guide/start/tutorial-product-detail',
+      en: '/guide/start/tutorial-product-detail',
+      zh: '/zh/guide/start/tutorial-product-detail',
     },
   },
   // {

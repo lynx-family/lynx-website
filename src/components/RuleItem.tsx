@@ -1,4 +1,5 @@
 import { useI18n, useLocation } from 'rspress/runtime';
+import { Link } from 'rspress/theme';
 import './RuleItem.css';
 
 const ICON = {
@@ -74,7 +75,7 @@ export function RuleItem(props: IRuleProps) {
     <article className="rule-item">
       <div className="rule-title">
         <div className="rule-name">
-          <a href={ruleLink}>{props.name}</a>
+          <Link href={ruleLink}>{props.name}</Link>
         </div>
 
         <div className="right">

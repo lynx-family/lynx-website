@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
 import { PlatformIcon } from './PlatformIcon';
 import { Platform } from './types';
+import { Link } from 'rspress/theme';
 
 interface CardLinkTabProps {
   /** Whether this tab is currently active */
@@ -28,7 +29,7 @@ const CardLinkTab = ({
   platforms,
 }: CardLinkTabProps) => {
   return (
-    <a href={to} className="sh-no-underline sh-flex-1">
+    <Link href={to} className="sh-no-underline sh-flex-1">
       <Card
         className={cn(
           'sh-cursor-pointer sh-transition-colors sh-border-2',
@@ -43,7 +44,7 @@ const CardLinkTab = ({
           {children}
         </CardContent>
       </Card>
-    </a>
+    </Link>
   );
 };
 

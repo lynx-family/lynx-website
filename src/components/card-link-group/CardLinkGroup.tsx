@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
+import { Link } from 'rspress/theme';
 
 interface CardLinkTabProps {
   /** Whether this tab is currently active */
@@ -23,7 +24,7 @@ const CardLinkTab = ({
   className,
 }: CardLinkTabProps) => {
   return (
-    <a href={url} className="sh-no-underline">
+    <Link href={url} className="sh-no-underline">
       <Card
         className={cn(
           'sh-flex-1 sh-cursor-pointer sh-transition-colors sh-border-2',
@@ -37,7 +38,7 @@ const CardLinkTab = ({
           {children}
         </CardContent>
       </Card>
-    </a>
+    </Link>
   );
 };
 

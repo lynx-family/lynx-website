@@ -1,4 +1,5 @@
 import { Badge } from 'rspress/theme';
+import { Link } from 'rspress/theme';
 
 /**
  * Renders a badge indicating that a API only use for main thread.
@@ -11,9 +12,9 @@ import { Badge } from 'rspress/theme';
  */
 export function MTS() {
   return (
-    <a href="/guide/spec.html#scripting-mts">
+    <Link href="/guide/spec.html#scripting-mts">
       <Badge text={'MTS Only'} />
-    </a>
+    </Link>
   );
 }
 
@@ -25,9 +26,9 @@ export function MTS() {
  */
 export function BTS() {
   return (
-    <a href="/guide/spec.html#scripting-bts">
+    <Link href="/guide/spec.html#scripting-bts">
       <Badge text={'BTS Only'} />
-    </a>
+    </Link>
   );
 }
 
