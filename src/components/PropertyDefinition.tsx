@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table } from '@douyinfe/semi-ui';
 import { cn } from '../lib/utils';
-import { useDark, useI18n } from 'rspress/runtime';
+import { useDark, useI18n } from '@rspress/core/runtime';
 
 interface PropertyDefinitionProps {
   initialValue: React.ReactNode;

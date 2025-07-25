@@ -6,7 +6,7 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import React, { useCallback, useRef, useState } from 'react';
 import './index.scss';
-import { useDark } from 'rspress/runtime';
+import { useDark } from '@rspress/core/runtime';
 import { Button } from '@douyinfe/semi-ui';
 import { IconExpand, IconShrink } from '@douyinfe/semi-icons';
 
