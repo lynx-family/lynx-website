@@ -1,0 +1,65 @@
+import { PackageManagerTabs } from '@theme';
+import { Go } from '@lynx';
+
+# TanStack Router
+
+Modern and scalable routing for React applications
+
+### Introduction
+
+:::info
+ReactLynx supports both Memory Routing and File-Based Routing with:
+
+- Lynx requires Memory Routing due to browser history API limitations.
+- Rspeedy enables seamless `@tanstack/router-plugin/rspack` integration.
+
+:::
+
+### Installation
+
+Install dependencies `@tanstack/react-router` and `url-search-params-polyfill`:
+
+<PackageManagerTabs command="install @tanstack/react-router url-search-params-polyfill" />
+
+Install devDependencies `@tanstack/router-plugin`:
+
+<PackageManagerTabs command="install @tanstack/router-plugin -D" />
+
+### Config
+
+1. File-based Routing via `@tanstack/router-plugin/rspack`.
+2. React 18 API compatibility through alias resolution.
+
+```js
+// lynx.config.js
+import { defineConfig } from '@lynx-js/rspeedy';
+import { tanstackRouter } from '@tanstack/router-plugin/rspack';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default defineConfig({
+  // ...other configs
+  tools: {
+    rspack: {
+      plugins: [
+        tanstackRouter({
+          target: 'react',
+          autoCodeSplitting: true,
+        }),
+      ],
+      resolve: {
+        alias: {
+          react$: require.resolve('@lynx-js/react/compat'),
+        },
+      },
+    },
+  },
+});
+```
+
+### Example
+
+// TODO: use Go
+
+See [Lynx Examples - TanStack Router](https://github.com/lynx-family/lynx-examples/tree/main/examples/tanstack-router) for more details.
