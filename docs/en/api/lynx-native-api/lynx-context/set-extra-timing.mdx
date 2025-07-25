@@ -1,0 +1,50 @@
+# setExtraTiming
+
+This interface is used to supplement key performance data before loading the Lynx page, specifically including the following items from [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry):
+
+- Page open time (`openTime`)
+- Timestamp for the start of preparing the [TemplateBundle](/api/lynx-native-api/template-bundle) (`prepareTemplateStart`)
+- Timestamp for the end of preparing the TemplateBundle (`prepareTemplateEnd`)
+- Timestamp for the start of [container](/guide/spec#container) initialization (`containerInitStart`)
+- Timestamp for the end of container initialization (`containerInitEnd`)
+
+Upon successfully updating all timestamps using this interface, the `InitContainerEntry` performance event will be triggered. Depending on the timing of the configuration, it may also trigger the calculation of `fcp`, `totalFcp`, `actualFmp`, and `totalActualFmp` metrics, along with dispatching new performance events for [`MetricFcpEntry`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry) and [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+
+:::caution
+Timestamps within extraTiming cannot be overwritten, meaning that multiple calls to this interface attempting to repeatedly update a timestamp will yield no effect.
+:::
+
+## Syntax
+
+### Harmony
+
+```typescript
+public setExtraTiming(extraTiming: LynxExtraTiming): void;
+```
+
+#### Parameters
+
+- `extraTiming`: Used to supplement key performance data before loading the Lynx page.
+
+The specific definition of `LynxExtraTiming` is as follows:
+```typescript
+export class LynxExtraTiming {
+  public static readonly OPEN_TIME = 'openTime';
+  public static readonly CONTAINER_INIT_START = 'containerInitStart';
+  public static readonly CONTAINER_INIT_END = 'containerInitEnd';
+  public static readonly PREPARE_TEMPLATE_START = 'prepareTemplateStart';
+  public static readonly PREPARE_TEMPLATE_END = 'prepareTemplateEnd';
+
+  public openTime: number = 0;
+  public containerInitStart: number = 0;
+  public containerInitEnd: number = 0;
+  public prepareTemplateStart: number = 0;
+  public prepareTemplateEnd: number = 0;
+}
+```
+
+## Compatibility
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-native-api/lynx-context/set-extra-timing" />

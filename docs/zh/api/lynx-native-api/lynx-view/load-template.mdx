@@ -1,4 +1,4 @@
-# LoadTemplate
+# loadTemplate
 
 使用 [`LynxLoadMeta`](../lynx-load-meta.mdx) 渲染 `LynxView`，是客户端加载 `Lynx` 模板的主入口。
 
@@ -7,22 +7,57 @@
 ### Android
 
 ```java
-void loadTemplate(@NonNull LynxLoadMeta meta);
+public void loadTemplate(@NonNull LynxLoadMeta meta);
 ```
 
-### 参数说明
+#### 参数说明
 
-- `meta: LynxLoadMeta`: Lynx 模板加载元数据，开发者通过该数据结构指定模板加载的可选数据。
+- `meta`: Lynx 模板加载元数据，开发者通过该数据结构指定模板加载的可选数据。
 
 ### iOS
 
 ```objc
-- (void)loadTemplate:(nonnull LynxLoadMeta*)meta;
+- (void)loadTemplate:(nonnull LynxLoadMeta *)meta;
 ```
 
-### 参数说明
+#### 参数说明
 
-- `meta: LynxLoadMeta*`: Lynx 模板加载元数据，开发者通过该数据结构指定模板加载的可选数据。
+- `meta`: Lynx 模板加载元数据，开发者通过该数据结构指定模板加载的可选数据。
+
+### Harmony
+
+LynxView 包含以下成员：
+
+- `url: String `: 模板文件路径。
+- `buffer: ArrayBuffer`: 模板的二进制文件数据。
+- `templateBundle: TemplateBundle`: 由模板的二进制文件数据预先解析的 [TemplateBundle](../template-bundle) 对象。
+- `metaData: MetaData`: 在首屏加载过程中由客户端指定的初始数据。
+- `loadOption: LynxLoadOption`: 加载模板时的附加配置信息。
+
+在 HarmonyOS 平台上, 你需要在 LynxView 初始化时传入你实现的 LynxViewClient 作为参数：
+
+```typescript
+@Entry
+@Component
+struct Index {
+  private url: string = 'playground/main.lynx.bundle';
+  private buffer: ArrayBuffer = getTemplateBuffer();
+  private metaData = new MetaData(
+    new TemplateData('{"text":"TD"}'),
+    new TemplateData({ "theme": "Light" }));
+
+  build() {
+    Column() {
+      LynxView({
+        url: this.url,
+        buffer: this.buffer,
+        metadata: this.metaData,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
 
 ## 兼容性
 

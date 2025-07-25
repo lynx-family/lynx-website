@@ -1,6 +1,6 @@
 # addLynxViewClient
 
-为 `LynxView` 注册生命周期事件监听；
+为 `LynxView` 注册生命周期事件监听。
 
 ## 语法
 
@@ -10,19 +10,47 @@
 public void addLynxViewClient(LynxViewClient client);
 ```
 
-### 参数说明
+#### 参数说明
 
-- `client: LynxViewClient`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调；
+- `client`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调。
 
 ### iOS
 
 ```objc
-- (void)addLifecycleClient:(nonnull id<LynxViewLifecycle>)lifecycleClient;
+- (void)addLifecycleClient:(nonnull id<LynxViewBaseLifecycle>)lifecycleClient;
 ```
 
-### 参数说明
+#### 参数说明
 
-- `lifecycleClient: id<LynxViewLifecycle>`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调；
+- `lifecycleClient`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调。
+
+### Harmony
+
+#### 成员
+
+LynxView 包含 clients 成员：
+
+- `clients: LynxViewClient[]`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调。
+
+在 HarmonyOS 平台上, 你需要在 LynxView 初始化时传入你实现的 LynxViewClient 作为参数：
+
+```typescript
+@Entry
+@Component
+struct Index {
+  private clients: EntryLynxClient[] = [new EntryLynxClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        clients: this.clients,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
+
 
 ## 兼容性
 
