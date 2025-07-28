@@ -552,7 +552,149 @@ class MainActivity : Activity() {
 
 <div style={{ marginBottom: 30 }} />
 
-### 3.1 Render view
+3. **XElement**
+
+​​XElement​​ is a UI library maintained by the Lynx team. It provides richer component capabilities, enabling faster adoption of Lynx in production environments and enhancing the vibrancy of the Lynx ecosystem.
+
+<Tabs groupId='integrating-lynx-with-existing-app-android-build'>
+<Tab label="build.gradle">
+<CodeFold height={360} toggle>
+
+```groovy title=build.gradle {26-28}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:3.2.0"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:3.2.0"
+    implementation "org.lynxsdk.lynx:lynx-trace:3.2.0"
+    implementation "org.lynxsdk.lynx:primjs:2.12.0"
+    // integrating image-service
+    implementation "org.lynxsdk.lynx:lynx-service-image:3.2.0"
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation "com.facebook.fresco:fresco:2.3.0"
+    implementation "com.facebook.fresco:animated-gif:2.3.0"
+    implementation "com.facebook.fresco:animated-webp:2.3.0"
+    implementation "com.facebook.fresco:webpsupport:2.3.0"
+    implementation "com.facebook.fresco:animated-base:2.3.0"
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+    // integrating log-service
+    implementation "org.lynxsdk.lynx:lynx-service-log:3.2.0"
+    // integrating http-service
+    implementation "org.lynxsdk.lynx:lynx-service-http:3.2.0"
+    // integrating XElement
+    implementation "org.lynxsdk.lynx:xelement:3.4.0"
+    implementation "org.lynxsdk.lynx:xelement:3.4.0"
+}
+```
+
+</CodeFold>
+</Tab>
+
+<Tab label="build.gradle.kts">
+<CodeFold height={360} toggle>
+
+```groovy title=build.gradle.kts {26-28}
+dependencies {
+    // lynx dependencies
+    implementation("org.lynxsdk.lynx:lynx:3.2.0")
+    implementation("org.lynxsdk.lynx:lynx-jssdk:3.2.0")
+    implementation("org.lynxsdk.lynx:lynx-trace:3.2.0")
+    implementation("org.lynxsdk.lynx:primjs:2.12.0")
+
+    // integrating image-service
+    implementation("org.lynxsdk.lynx:lynx-service-image:3.2.0")
+
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation("com.facebook.fresco:fresco:2.3.0")
+    implementation("com.facebook.fresco:animated-gif:2.3.0")
+    implementation("com.facebook.fresco:animated-webp:2.3.0")
+    implementation("com.facebook.fresco:webpsupport:2.3.0")
+    implementation("com.facebook.fresco:animated-base:2.3.0")
+
+    // integrating log-service
+    implementation("org.lynxsdk.lynx:lynx-service-log:3.2.0")
+
+    // integrating http-service
+    implementation("org.lynxsdk.lynx:lynx-service-http:3.2.0")
+
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+
+    // integrating XElement
+    implementation("org.lynxsdk.lynx:xelement:3.4.0")
+    implementation("org.lynxsdk.lynx:xelement-input:3.4.0")
+}
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### Introduce XElement
+XElement requires additional importation in the `LynxViewBuilder`:
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+<Tab label="Java">
+
+```java title=MainActivity.java {6,19}
+import android.app.Activity;
+import android.os.Bundle;
+
+import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxViewBuilder;
+import com.lynx.xelement.XElementBehaviors;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LynxView lynxView = buildLynxView();
+        setContentView(lynxView);
+    }
+
+    private LynxView buildLynxView() {
+        LynxViewBuilder viewBuilder = new LynxViewBuilder();
+        viewBuilder.addBehaviors(new XElementBehaviors().create());
+        viewBuilder.setTemplateProvider(new DemoTemplateProvider(this));
+        return viewBuilder.build(this);
+    }
+}
+```
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin title=MainActivity.kt {5,17}
+import android.app.Activity
+import android.os.Bundle
+import com.lynx.tasm.LynxView
+import com.lynx.tasm.LynxViewBuilder
+import com.lynx.xelement.XElementBehaviors
+
+class MainActivity : Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val lynxView = buildLynxView()
+        setContentView(lynxView)
+    }
+
+    private fun buildLynxView(): LynxView {
+        val viewBuilder: LynxViewBuilder = LynxViewBuilder()
+        viewBuilder.addBehaviors(XElementBehaviors().create())
+        viewBuilder.setTemplateProvider(DemoTemplateProvider(this))
+        return viewBuilder.build(this)
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### 4 Render view
 
 After completing the above steps, all the work of initializing LynxView have been completed. Call the `lynxView.renderTemplateUrl` method to render the corresponding Bundle onto the LynxView view.
 

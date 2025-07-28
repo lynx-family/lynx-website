@@ -1,0 +1,255 @@
+# `<textarea>`
+
+import {
+  Required,
+  Deprecated,
+  AndroidOnly,
+  IOSOnly,
+  Go,
+  LegacyCompatTable,
+} from '@lynx';
+import { PropsTable, EventsTable, MethodsTable } from '@theme/reference';
+
+`<textarea>` 用于创建交互式输入控件，允许用户输入和编辑多行文本。
+
+## 使用指南
+
+### 基本用法
+
+下面是一个基本的 `<textarea>` 组件用法示例：
+
+<Go
+  example="textarea"
+  defaultFile="src/base/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/textarea_basic.PNG"
+  highlight="{13-21}"
+/>
+
+### 自定义占位符样式
+
+`<textarea>` 可以通过设置 `::placeholder` 伪元素来定制其样式：
+
+<Go
+  example="textarea"
+  defaultFile="src/customized-placeholder/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/textarea_customized.MP4"
+  highlight="{13-21}"
+/>
+
+## 属性
+
+属性名和属性值用于描述元件的行为和外观。
+
+### `placeholder`
+
+```ts
+// DefaultValue: undefined
+placeholder?: string
+```
+
+占位文字
+
+### `confirm-type`
+
+```ts
+// DefaultValue: undefined
+'confirm-type'?: 'send' | 'search' | 'go' | 'done' | 'next';
+```
+
+指定输入法回车键的表现形式
+
+### `maxlength`
+
+```ts
+// DefaultValue: 140
+maxlength?: number;
+```
+
+输入框最大字符数量限制
+
+### `maxlines`
+
+```ts
+// DefaultValue: 140
+maxlines?: number;
+```
+
+输入框最大输入行数量限制
+
+### `readonly`
+
+```ts
+// DefaultValue: false
+readonly?: boolean;
+```
+
+是否允许输入框可交互，不影响对其进行组件方法调用
+
+### `show-soft-input-on-focus`
+
+```ts
+// DefaultValue: true
+'show-soft-input-on-focus'?: boolean;
+```
+
+聚焦时是否允许拉起系统软键盘
+
+### `type`
+
+```ts
+// DefaultValue: 'text'
+type?: 'text' | 'number' | 'digit' | 'tel' | 'email';
+```
+
+指定键盘的类型
+
+- text\tel\email: 全符号
+- number: 0-9 +-.
+- digit: 0-9 .
+
+::: info
+不同的输入法可能会有不同的视觉表现
+:::
+
+### `input-filter`
+
+```ts
+// DefaultValue: undefined
+'input-filter'?: string;
+```
+
+指定单个字符的过滤条件，用正则表达式描述
+
+## 事件
+
+前端可以在元件上设置[事件处理器属性](../../../guide/interaction/event-handling/event-propagation.mdx#事件处理器属性)来监听元件的运行时行为。
+
+### `bindfocus`
+
+```ts
+export interface TextareaFocusEvent {
+  value: string;
+}
+ bindfocus?: (e: BaseEvent<'bindfocus', TextareaFocusEvent>) => void;
+```
+
+输入框聚焦时的回调
+
+### `bindblur`
+
+```ts
+export interface TextareaBlurEvent {
+  value: string;
+}
+bindblur?: (e: BaseEvent<'bindblur', TextareaBlurEvent>) => void;
+```
+
+输入框失去焦点时的回调
+
+### `bindconfirm`
+
+```ts
+export interface TextareaConfirmEvent {
+  value: string;
+}
+bindconfirm?: (e: BaseEvent<'bindconfirm', TextareaConfirmEvent>) => void;
+```
+
+点击软键盘回车时的回调
+
+### `bindinput`
+
+```ts
+export interface TextareaTextareaEvent {
+  value: string;
+  selectionStart: number;
+  selectionEnd: number;
+  isComposing?: boolean;
+}
+bindinput?: (e: BaseEvent<'bindinput', TextareaTextareaEvent>) => void;
+```
+
+输入框内容变化的回调
+
+### `bindselection`
+
+```ts
+export interface TextareaSelectionEvent {
+  selectionStart: number;
+  selectionEnd: number;
+}
+bindselection?: (e: BaseEvent<'bindselection', TextareaSelectionEvent>) => void;
+```
+
+输入框光标变化的回调
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行元件的方法。
+
+### `focus`
+
+```ts
+export interface TextareaFocusMethod extends BaseMethod {
+  method: 'focus';
+}
+```
+
+控制输入框主动聚焦
+
+### `blur`
+
+```ts
+export interface TextareaBlurMethod extends BaseMethod {
+  method: 'blur';
+}
+```
+
+控制输入框主动取消聚焦
+
+### `getValue`
+
+```ts
+export interface TextareaGetValueMethod extends BaseMethod {
+  method: 'getValue';
+  success?: Callback<{
+    value: string;
+    selectionStart: number;
+    selectionEnd: number;
+    isComposing: boolean;
+  }>;
+}
+```
+
+获取输入框的内容
+
+### `setValue`
+
+```ts
+export interface TextareaSetValueMethod extends BaseMethod {
+  method: 'setValue';
+  params: {
+    value: string;
+  };
+}
+```
+
+主动设置输入框的内容
+
+### `setSelectionRange`
+
+```ts
+export interface TextareaSetSelectionRangeMethod extends BaseMethod {
+  method: 'setSelectionRange';
+  params: {
+    selectionStart: number;
+    selectionEnd: number;
+  };
+}
+```
+
+主动设置输入框的光标
+
+## 兼容性
+
+<LegacyCompatTable metadata="elements/textarea" />
