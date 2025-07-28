@@ -1,23 +1,23 @@
-## 将 Lynx 集成到 Harmony 平台
+## Integrating Lynx into the Harmony Platform
 
 import { Info, CodeFold } from '@lynx';
 import { Steps } from '@theme';
 import { Tab, Tabs } from 'rspress/theme';
 
 <Info title="Lynx for Harmony">
-  - 本文假设你已熟悉原生 Harmony 应用开发的基本概念。
-  - 下文中的所有代码，你都可以参考项目: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject)
+  - This document assumes you are familiar with the basic concepts of native Harmony application development.
+  - For all the code in this document, you can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject)
 </Info>
 
-## 1. 依赖配置
+## 1. Dependency Configuration
 
 <Steps>
-### 包依赖
-1. **Lynx 相关版本依赖** 
+### Package Dependencies
+1. **Lynx-Related Version Dependencies** 
 
-[Lynx Engine](/guide/spec.html#engine) 核心能力，包含了解析 [Bundle](/guide/spec.html#lynx-bundle-or-bundle)、样式解析、排版以及渲染视图等基础能力，以及 Lynx 页面依赖的 JavaScript 运行时基础代码
+The core capabilities of the [Lynx Engine](/guide/spec.html#engine), including parsing the [Bundle](/guide/spec.html#lynx-bundle-or-bundle), style parsing, layout, rendering views, and the basic JavaScript runtime code that Lynx pages depend on.
 
-Lynx Service 包括 `LynxDevtoolService`、`LynxLogService` 等，旨在提供一些宿主应用特性强相关的能力，允许宿主应用在运行时注入自定义实现.
+Lynx Service, which includes `LynxDevtoolService`, `LynxLogService`, and more, is designed to provide capabilities closely related to host application features, allowing the host application to inject custom implementations at runtime.
 
 ```groovy title=oh-package.json5 {2-7}
 "dependencies": {
@@ -30,18 +30,18 @@ Lynx Service 包括 `LynxDevtoolService`、`LynxLogService` 等，旨在提供�
 },
 ```
 
-### 能力依赖
+### Capability Dependencies
 
-1. **Native C++ 配置**
+1. **Native C++ Configuration**
 
-为了引入 `libc++_shared.so` 需要进行 Native C++ 相关配置，需要定义 `CMakeLists.txt`
+To import `libc++_shared.so`, you need to configure Native C++. This requires defining a `CMakeLists.txt` file.
 
 ```groovy title=CMakeLists.txt
 # the minimum version of CMake.
 cmake_minimum_required(VERSION 3.5.0)
 project(MyApplication)
 ```
-并且修改 `entry/build-profile.json5` 中的 `buildOptions`
+And modify the `buildOptions` in `entry/build-profile.json5`:
 ```groovy title=build-profile.json5 {3-7}
 {
   "buildOption": {
@@ -54,9 +54,9 @@ project(MyApplication)
 }
 ```
 
-2. **网络请求配置**
+2. **Network Request Configuration**
 
-如果需要请求网络资源，请在 `module.json5` 配置 `requestPermissions` 来启用网络请求。
+If you need to request network resources, configure `requestPermissions` in `module.json5` to enable network requests.
 
 ```groovy title=module.json5 {3-14}
 {
@@ -76,7 +76,7 @@ project(MyApplication)
 }
 }
 ```
-并且在 `entry/src/main/resources/base/element/string.json` 中配置 `network` 关键字段
+And configure the `network` key field in `entry/src/main/resources/base/element/string.json`:
 
 ```groovy title=string.json {3-6}
 {
@@ -90,12 +90,12 @@ project(MyApplication)
 ```
 </Steps>
 
-## 2. 环境初始化
+## 2. Environment Initialization
 
 <Steps>
-### LynxService 初始化 ###
+### LynxService Initialization
 
-`Lynx Service` 提供了宿主特性相关能力，推荐在 `EntryAbility` 的 `OnCreate` 生命周期中完成 `Lynx Service` 的初始化。
+`Lynx Service` provides capabilities related to host features. It is recommended to complete the `Lynx Service` initialization in the `OnCreate` lifecycle of `EntryAbility`.
 
 ``` groovy title=EntryAbility.ets
 import { LLog, LynxServiceCenter, LynxEnv, LynxServiceType } from '@lynx/lynx';
@@ -114,9 +114,9 @@ export default class EntryAbility extends UIAbility {
   }
 }
 ```
-### LynxEnv 初始化
+### LynxEnv Initialization
 
-`LynxEnv` 提供了 `Lynx Engine` 的全局初始化接口。请保证 `LynxEnv` 的初始化发生在 `Lynx Engine` 的任何接口调用之前；例如可以在 `EntryAbility` 的 `OnCreate` 生命周期中完成初始化。
+`LynxEnv` provides the global initialization interface for the `Lynx Engine`. Please ensure that `LynxEnv` is initialized before any other `Lynx Engine` interfaces are called. For example, this can be done in the `OnCreate` lifecycle of `EntryAbility`.
 
 ``` groovy title=EntryAbility.ets
 import { LLog, LynxEnv } from '@lynx/lynx';
@@ -137,19 +137,19 @@ export default class EntryAbility extends UIAbility {
 ```
 </Steps>
 
-## 3.渲染LynxView
+## 3. Rendering LynxView
 
 <Steps>
-### 创建 Bundle 加载器 ###
+### Create a Bundle Loader
 
-`Lynx Engine` 自身并没有集成下载资源的能力，因此需要宿主应用来提供 `LynxResourceProvider` 的具体实现，并在构造 `LynxView` 时注入，`Lynx` 会采用注入的资源加载器来获取真实的 `Bundle` 内容。
+The `Lynx Engine` itself does not have a built-in capability for downloading resources. Therefore, the host application must provide a specific implementation of `LynxResourceProvider` and inject it when constructing a `LynxView`. Lynx will then use the injected resource loader to fetch the actual Bundle content.
 
-你可以使用多种方式获取 Bundle 的资源内容，在这里我们选择将 Bundle 的内容内置在应用中:
+You can obtain the Bundle's resource content in various ways. Here, we'll choose to embed the Bundle's content directly within the application:
 
-首先请将快速上手阶段生成的 Bundle 文件放置在 `src/main/resources/rawfile` 目录下；或者你可以将下面的文件下载到本机上并放置在同样目录下；
+First, place the Bundle file generated during the quick start phase into the `src/main/resources/rawfile` directory. Alternatively, you can download the following file and place it in the same directory:
 
 :::note
-Bundle 示例:
+Bundle Example:
 **https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
 :::
 
@@ -164,7 +164,7 @@ entry
 
 1. **LynxTemplateResourceFetcher**
 
-`LynxTemplateResourceFetcher` 提供了 Bundle 模板资源的加载能力，你需要实现 `fetchTemplate` 方法来完成 Bundle 模板资源的加载。
+`LynxTemplateResourceFetcher` provides the capability to load Bundle template resources. You need to implement the `fetchTemplate` method to handle the loading.
 
 <CodeFold>
 ``` groovy title=ExampleTemplateResourceFetcher.ets
@@ -214,7 +214,7 @@ export class ExampleTemplateResourceFetcher extends LynxTemplateResourceFetcher 
 
 2. **LynxMediaResourceFetcher**
 
-`LynxMediaResourceFetcher` 提供了媒体资源的加载能力。
+`LynxMediaResourceFetcher` provides the capability to load media resources.
 
 <CodeFold>
 ``` groovy title=ExampleMediaResourceFetcher.ets
@@ -235,7 +235,7 @@ export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
 
 3. **LynxGenericResourceFetcher**
 
-`LynxGenericResourceFetcher` 提供了通用资源的加载能力，你需要实现 `fetchResource` 方法来完成通用资源的加载。
+`LynxGenericResourceFetcher` provides the capability to load generic resources. You need to implement the `fetchResource` method to handle the loading.
 
 <CodeFold>
 ```groovy title=ExampleGenericResourceFetcher.ets
@@ -304,9 +304,9 @@ export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
 ```
 </CodeFold>
 
-### 构造 LynxView 并渲染视图
+### Construct LynxView and Render the View
 
-当你完成以上步骤之后，已经完成了 `LynxView` 创建与资源读取的全部工作，即可将对应的 Bundle 内容渲染到 `LynxView` 视图上。
+Once you have completed the steps above, you have finished all the necessary work for creating the `LynxView` and reading its resources. You can now render the corresponding Bundle content onto the `LynxView`.
 <CodeFold>
 ``` groovy title=Index.ets
 import {
@@ -342,7 +342,7 @@ struct Index {
 }
 ```
 </CodeFold>
-然后你将在屏幕上看到如下内容：
+You will then see the following content on your screen:
 
 <center>
   <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-android.png" width="200" />
@@ -350,8 +350,8 @@ struct Index {
 
 </Steps>
 
-恭喜你，现在你现在已经完成了 Lynx Engine 集成的全部工作！
+Congratulations! You have now completed the full integration of the Lynx Engine.
 
-## 4. 进入 Lynx 世界
+## 4. Enter the World of Lynx
 
-现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/debugging/lynx-devtool)文档进一步在 Lynx 的世界里遨游吧！
+Now that you have integrated Lynx into your application, please refer to the [Development](/guide/start/quick-start) and [Debugging](/guide/debugging/lynx-devtool) documentation to further explore the world of Lynx!
