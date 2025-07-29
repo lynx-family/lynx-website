@@ -10,6 +10,7 @@ interface CodeViewProps {
   currentFile: string;
   isAssetFile: boolean;
   highlight?: string;
+  langAlias?: Record<string, string>;
 }
 
 export const CodeView = ({
@@ -17,6 +18,7 @@ export const CodeView = ({
   currentFile,
   isAssetFile,
   highlight,
+  langAlias,
 }: CodeViewProps) => {
   const [isFirstShowCode, setIsFirstShowCode] = useState(true);
   if (isAssetFile) {
@@ -33,7 +35,7 @@ export const CodeView = ({
       </div>
     );
   }
-  const language = getFileCodeLanguage(currentFileName);
+  const language = getFileCodeLanguage(currentFileName, langAlias);
 
   return (
     <Code

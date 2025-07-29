@@ -28,12 +28,15 @@ export const isAssetFileType = (fileName: string) => {
   return assetExtension.some((type) => fileName.endsWith(type));
 };
 
-export const getFileCodeLanguage = (fileName: string) => {
+export const getFileCodeLanguage = (
+  fileName: string,
+  langAlias: Record<string, string> = {},
+) => {
   const fileType = fileName.split('.').pop();
   if (fileType === 'mjs') {
     return 'js';
   }
-  return fileType || 'txt';
+  return langAlias[fileType || ''] || fileType || 'txt';
 };
 
 export const getHighlightLines = (meta: string) => {

@@ -64,6 +64,7 @@ interface ExampleContentProps {
   rightFooter?: React.ReactNode;
   schemaOptions?: SchemaOptionsData;
   exampleGitBaseUrl?: string;
+  langAlias?: Record<string, string>;
 }
 
 export const ExampleContent: FC<ExampleContentProps> = ({
@@ -86,6 +87,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   rightFooter,
   schemaOptions,
   exampleGitBaseUrl,
+  langAlias,
 }) => {
   const { treeData, doChangeExpand, selectedKeys, expandedKeys, entryData } =
     useTreeController({ fileNames, value: currentFileName, entry });
@@ -175,6 +177,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   currentFile={currentFile}
                   isAssetFile={isAssetFile}
                   highlight={highlight}
+                  langAlias={langAlias}
                 />
               </div>
             </div>
