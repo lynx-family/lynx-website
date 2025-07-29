@@ -40,6 +40,11 @@ const require = createRequire(import.meta.url);
 
 export default defineConfig({
   // ...其它的配置
+  source: {
+    alias: {
+      react$: require.resolve('@lynx-js/react/compat'),
+    },
+  },
   tools: {
     rspack: {
       plugins: [
@@ -47,14 +52,22 @@ export default defineConfig({
           target: 'react',
         }),
       ],
-      resolve: {
-        alias: {
-          react$: require.resolve('@lynx-js/react/compat'),
-        },
-      },
     },
   },
 });
+```
+
+### Polyfill
+
+`url-search-params-polyfill` 确保 URLSearchParams API 在 Lynx 中的兼容性。
+
+```tsx title=index.tsx
+import 'url-search-params-polyfill';
+
+import { root } from '@lynx-js/react';
+import { App } from './App.jsx';
+
+root.render(<App />);
 ```
 
 ### 示例

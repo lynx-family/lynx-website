@@ -14,6 +14,7 @@ import {
 } from './shared-route-config.js';
 import { transformerNotationHighlight } from '@shikijs/transformers';
 import { transformerCompatibleMetaHighlight } from '@rspress/plugin-shiki/transformers';
+import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -132,6 +133,14 @@ export default defineConfig({
     sidebar: {},
   },
   plugins: [
+    pluginClientRedirects({
+      redirects: [
+        {
+          from: '/react/routing.html',
+          to: '/react/routing/react-router.html',
+        },
+      ],
+    }),
     pluginLlms(),
     rspeedyApiPlugin(),
     sharedSidebarPlugin(),
