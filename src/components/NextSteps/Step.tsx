@@ -1,6 +1,7 @@
-import { useLang, usePageData, withBase } from 'rspress/runtime';
+import { useLang, withBase } from 'rspress/runtime';
 import { Link } from 'rspress/theme';
 import styles from './Step.module.scss';
+import { getLangPrefix } from '../../../shared-route-config';
 
 const Step = (props: { href: string; title: string; description: string }) => {
   return (
@@ -15,8 +16,7 @@ export default Step;
 
 function useUrl(url: string) {
   const lang = useLang();
-  const {
-    siteData: { lang: defaultLang },
-  } = usePageData();
-  return withBase(lang === defaultLang ? url : `/${lang}${url}`);
+  const langPrefix = getLangPrefix(lang);
+
+  return withBase(`${langPrefix}${url}`);
 }

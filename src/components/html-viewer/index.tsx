@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation, usePageData } from 'rspress/runtime';
+import { useLocation, usePageData, withBase } from 'rspress/runtime';
 import styles from './index.module.less';
 
 const doUpdataParentHash = (event: MessageEvent) => {
@@ -14,14 +14,12 @@ const doUpdataParentHash = (event: MessageEvent) => {
   }
 };
 
-function isRelativeUrl(url: string): boolean {
+function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('/');
 }
 
 function formatUrlWithBase(url: string): string {
-  const { siteData } = usePageData();
-  const base = siteData?.base || '';
-  return isRelativeUrl(url) && base !== '/' ? `${base}${url}` : url;
+  return isAbsoluteUrl(url) ? withBase(url) : url;
 }
 
 const HtmlViewer = ({ path }: { path: string }) => {
