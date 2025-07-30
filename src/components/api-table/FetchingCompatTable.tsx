@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import useSWR from 'swr';
 import Callout from '../Callout';
 import EditThis from '../EditThis';
-import { useLang } from 'rspress/runtime';
+import { useLang, withBase } from 'rspress/runtime';
 
 // Because it's bad for web performance to lazy-load CSS during the initial render
 // (because the page is saying "Wait! Stop rendering, now that I've downloaded
@@ -14,7 +14,6 @@ import { useLang } from 'rspress/runtime';
 import './compat-table/index.scss';
 
 import type LCD from '@lynx-js/lynx-compat-data';
-import { useUrlWithBase } from '@site/src/lib/utils';
 const LCD_BASE_URL = '/lynx-compat-data';
 
 function useIsServer() {
@@ -114,7 +113,7 @@ const parseQuery = (
 };
 
 function useLCDBaseUrl(): string {
-  return useUrlWithBase(LCD_BASE_URL);
+  return withBase(LCD_BASE_URL);
 }
 
 type FetchingCompatTableProps = {

@@ -5,12 +5,12 @@ import { ExampleContent } from './components';
 import { isAssetFileType } from './utils/example-data';
 import Callout from '../../Callout';
 import { SchemaOptionsData } from './hooks/use-switch-schema';
-import { useUrlWithBase } from '@site/src/lib/utils';
+import { withBase } from 'rspress/runtime';
 
 const EXAMPLE_BASE_URL = '/lynx-examples';
 
 function useExampleBaseUrl() {
-  return useUrlWithBase(EXAMPLE_BASE_URL);
+  return withBase(EXAMPLE_BASE_URL);
 }
 
 const ErrorWrap = ({ example }: { example: string }) => {
