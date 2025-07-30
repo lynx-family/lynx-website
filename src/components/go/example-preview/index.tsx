@@ -36,6 +36,18 @@ export interface ExamplePreviewProps {
   schemaOptions?: SchemaOptionsData;
 }
 
+interface ExampleMetadata {
+  name: string;
+  files: string[];
+  templateFiles: Array<{
+    name: string;
+    file: string;
+    webFile?: string;
+  }>;
+  previewImage?: string;
+  exampleGitBaseUrl?: string;
+}
+
 export const ExamplePreview = ({
   example,
   defaultFile = 'package.json',
@@ -55,14 +67,14 @@ export const ExamplePreview = ({
 
   const [defaultWebPreviewFile, setDefaultWebPreviewFile] = useState('');
   const [initState, setInitState] = useState(false);
-  const storeRef = useRef({});
+  const storeRef = useRef<Record<string, string>>({});
   const highlightData = useMemo(() => {
     return typeof highlight === 'string'
       ? { [defaultFile]: highlight }
       : highlight || {};
   }, [highlight, defaultFile]);
 
-  const { error, data: exampleData } = useSWR(
+  const { error, data: exampleData } = useSWR<ExampleMetadata>(
     `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
     async (url) => {
       const response = await fetch(url);

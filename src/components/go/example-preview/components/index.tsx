@@ -52,10 +52,10 @@ interface ExampleContentProps {
   updateCurrentName: (v: string) => void;
   isAssetFile: boolean;
   name: string;
-  directory: string;
+  directory?: string;
   currentEntryFileUrl: string;
   currentEntry: string;
-  entryFiles: { name: string; file: string }[];
+  entryFiles?: { name: string; file: string }[];
   setCurrentEntry: (v: string) => void;
   highlight?: string;
   entry?: string;
@@ -276,7 +276,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                         value={currentEntry}
                         onChange={(v) => setCurrentEntry(v as string)}
                       >
-                        {entryFiles.map((file) => (
+                        {entryFiles?.map((file) => (
                           <Select.Option key={file.name} value={file.name}>
                             {file.name}
                           </Select.Option>
