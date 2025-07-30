@@ -10,25 +10,64 @@
 
 ### 在已有项目中配置
 
-ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，无需额外安装其他包。
+ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，无需额外安装其他包。目前我们支持测试框架有 Rstest 和 Vitest。
 
-配置 [Vitest](https://vitest.dev/) 时需要使用 `@lynx-js/react/testing-library/vitest-config` 中的 `createVitestConfig` 方法来创建 Vitest 配置。你可以通过 `mergeConfig` 方法将其和其他配置合并。
+#### Rstest
 
-```js title=vitest.config.js
-import { defineConfig, mergeConfig } from 'vitest/config';
-import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
+使用 `@lynx-js/react/testing-library/rstest-config` 配置 [Rstest](https://rstest.rs/)。
 
-const defaultConfig = await createVitestConfig();
-const config = defineConfig({
+对于库项目，推荐使用 `withDefaultConfig` 配置 Rstest。
+
+```ts
+import { defineConfig } from '@rstest/core';
+import { withDefaultConfig } from '@lynx-js/react/testing-library/rstest-config';
+
+export default defineConfig({
+  extends: withDefaultConfig(),
+});
+```
+
+对于应用项目，推荐使用 `withLynxConfig` 配置 Rstest，这样可以复用应用项目的 Lynx 配置（`lynx.config.ts`）。
+
+```ts title=rstest.config.ts
+import { defineConfig } from '@rstest/core';
+import { withLynxConfig } from '@lynx-js/react/testing-library/rstest-config';
+
+export default defineConfig({
+  extends: withLynxConfig(),
+});
+```
+
+`withLynxConfig` 和 `withDefaultConfig` 的区别是：
+
+- `withLynxConfig`: 应用项目推荐使用，这样可以复用应用项目的 Lynx 配置（`lynx.config.ts`）。
+- `withDefaultConfig`: 库项目推荐使用，极小配置，只负责注入 ReactLynx Testing Library 的默认配置（`jsdom`、setup 文件、`globals`）并允许你提供其他配置。
+
+这样你就可以开始编写测试用例并使用 Rstest 来运行它们了。
+
+#### Vitest
+
+配置 [Vitest](https://vitest.dev/)：
+
+```ts title=vitest.config.ts
+import { defineConfig } from 'vitest/config';
+import { vitestTestingLibraryPlugin } from '@lynx-js/react/testing-library/plugins';
+
+export default defineConfig({
+  plugins: [vitestTestingLibraryPlugin()],
   test: {
     // ...
   },
 });
-
-export default mergeConfig(defaultConfig, config);
 ```
 
+这样你就可以开始编写测试用例并使用 Vitest 来运行它们了。
+
 ## 示例
+
+:::info
+下文的代码示例均用 Vitest 实现，但是你也可以在 Rstest 中使用它们。将代码示例中的 `vitest` 替换成 `@rstest/core`，并将 `vi` 替换成 `rstest` 即可在 Rstest 下使用。
+:::
 
 ### 快速开始
 
