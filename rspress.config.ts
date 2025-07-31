@@ -3,6 +3,7 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
+import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import { transformerNotationHighlight } from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
@@ -195,6 +196,11 @@ export default defineConfig({
   ],
   markdown: {
     defaultWrapCode: false,
+    link: {
+      checkDeadLinks: {
+        excludes: ['/guide/spec.html?ts=1743416098203#element%E2%91%A0'],
+      },
+    },
     shiki: {
       transformers: [
         transformerCompatibleMetaHighlight(),
