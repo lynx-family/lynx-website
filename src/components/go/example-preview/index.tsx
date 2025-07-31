@@ -9,10 +9,6 @@ import { withBase } from '@rspress/core/runtime';
 
 const EXAMPLE_BASE_URL = withBase('/lynx-examples');
 
-function useExampleBaseUrl() {
-  return withBase(EXAMPLE_BASE_URL);
-}
-
 const ErrorWrap = ({ example }: { example: string }) => {
   return (
     <Callout type="danger" title="Error Loading Example Data">
@@ -21,7 +17,7 @@ const ErrorWrap = ({ example }: { example: string }) => {
         <br />
         Please check if the file <code>example-metadata.json</code> exists in{' '}
         <code>
-          {useExampleBaseUrl()}/{example}
+          {EXAMPLE_BASE_URL}/{example}
         </code>{' '}
         .
       </p>
@@ -81,10 +77,8 @@ export const ExamplePreview = ({
       : highlight || {};
   }, [highlight, defaultFile]);
 
-  const exampleBaseUrl = useExampleBaseUrl();
-
   const { error, data: exampleData } = useSWR<ExampleMetadata>(
-    `${exampleBaseUrl}/${example}/example-metadata.json`,
+    `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
 
     async (url) => {
       const response = await fetch(url);
@@ -97,7 +91,7 @@ export const ExamplePreview = ({
   );
 
   const { trigger } = useSWRMutation(
-    `${exampleBaseUrl}/${example}/${currentName}`,
+    `${EXAMPLE_BASE_URL}/${example}/${currentName}`,
     async (url) => {
       const response = await fetch(url);
       if (!response.ok) {
@@ -113,7 +107,7 @@ export const ExamplePreview = ({
   };
   useEffect(() => {
     if (isAssetFile) {
-      setCurrentFile(`${exampleBaseUrl}/${example}/${currentName}`);
+      setCurrentFile(`${EXAMPLE_BASE_URL}/${example}/${currentName}`);
     } else {
       if (storeRef.current[currentName]) {
         setCurrentFile(storeRef.current[currentName]);
@@ -131,7 +125,7 @@ export const ExamplePreview = ({
       (file) => file.name === currentEntry,
     );
     if (file) {
-      const url = `${window.location.origin}${exampleBaseUrl}/${example}/${file?.file}`;
+      const url = `${window.location.origin}${EXAMPLE_BASE_URL}/${example}/${file?.file}`;
       if (schema) {
         const schemaUrl = schema.replace('{{{url}}}', url);
         return schemaUrl;
@@ -167,7 +161,7 @@ export const ExamplePreview = ({
       }
       if (tmpEntry) {
         if (tmpEntry.webFile) {
-          const fullWebFile = `${window.location.origin}${exampleBaseUrl}/${example}/${tmpEntry.webFile}`;
+          const fullWebFile = `${window.location.origin}${EXAMPLE_BASE_URL}/${example}/${tmpEntry.webFile}`;
           setDefaultWebPreviewFile(fullWebFile);
         }
         setCurrentEntry(tmpEntry.name);
@@ -196,7 +190,7 @@ export const ExamplePreview = ({
       previewImage={
         img ||
         (exampleData?.previewImage
-          ? `${exampleBaseUrl}/${example}/${exampleData?.previewImage}`
+          ? `${EXAMPLE_BASE_URL}/${example}/${exampleData?.previewImage}`
           : '')
       }
       langAlias={langAlias}
