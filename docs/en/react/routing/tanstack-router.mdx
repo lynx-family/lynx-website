@@ -1,19 +1,14 @@
 import { PackageManagerTabs } from '@theme';
-import { Go } from '@lynx';
+import { Go, Details } from '@lynx';
 
 # TanStack Router
 
-Modern and scalable routing for React applications
+Modern and scalable routing for React applications.
 
-### Introduction
-
-:::info
-ReactLynx supports both Memory Routing and File-Based Routing:
-
-- Lynx requires Memory Routing due to browser history API limitations.
-- Rspeedy enables seamless `@tanstack/router-plugin/rspack` integration.
-
-:::
+ReactLynx supports both [Memory Routing](https://tanstack.com/router/latest/docs/framework/react/guide/history-types#memory-routing)
+and [File-Based Routing](https://tanstack.com/router/latest/docs/framework/react/routing/file-based-routing),
+where Memory Routing is required due to browser [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) limitations in Lynx,
+and File-Based Routing is enabled through seamless `@tanstack/router-plugin/rspack` integration in Rspeedy.
 
 ### Installation
 
@@ -27,8 +22,14 @@ Install devDependencies:
 
 ### Config
 
-1. File-based Routing via `@tanstack/router-plugin/rspack`.
-2. React 18 API compatibility through alias resolution.
+- **File-based Routing**: Enabled via `@tanstack/router-plugin/rspack` for seamless routing integration.
+- **React 18 API Compatibility**: Use `@lynx-js/react/compat` to ensure third-party libraries work correctly.
+
+<Details title="❓ Why use @lynx-js/react/compat">
+  ReactLynx offers React 18 API compatibility via `@lynx-js/react/compat`,
+  providing crucial APIs such as `React.startTransition` required by TanStack
+  Router.
+</Details>
 
 ```js title=lynx.config.js
 import { defineConfig } from '@lynx-js/rspeedy';
@@ -58,7 +59,8 @@ export default defineConfig({
 
 ### Polyfill
 
-`url-search-params-polyfill` ensures URLSearchParams API compatibility in Lynx.
+To ensure [URLSearchParams API](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) works correctly in the Lynx environment,
+add `url-search-params-polyfill` at the top of your entry file:
 
 ```tsx title=index.tsx
 import 'url-search-params-polyfill';
@@ -68,6 +70,40 @@ import { App } from './App.jsx';
 
 root.render(<App />);
 ```
+
+### File-Based
+
+TanStack Router supports file-based routing where your file structure defines your routes.
+Place your route components in the `src/routes` directory, with `__root.tsx` serving as the root component.
+
+```jsx title="src/routes/__root.tsx"
+import { createRootRoute, Outlet } from '@tanstack/react-router';
+
+export const Route = createRootRoute({
+  component: () => (
+    <view>
+      <Outlet />
+    </view>
+  ),
+});
+```
+
+```jsx title="src/routes/Index.tsx"
+import { createFileRoute } from '@tanstack/react-router';
+
+export const Route = createFileRoute('/')({
+  component: () => <view>Index Page</view>,
+});
+```
+
+The `@tanstack/router-plugin/rspack` automatically scans the `src/routes` directory and generates a `routeTree.gen.ts` file
+that contains all the route definitions and type information. This generated file includes:
+
+- Route imports and configurations
+- TypeScript interfaces for type-safe routing
+- The complete route tree structure
+
+See [TanStack File-Based Routing](https://tanstack.com/router/latest/docs/framework/react/routing/file-based-routing) for more details.
 
 ### Example
 

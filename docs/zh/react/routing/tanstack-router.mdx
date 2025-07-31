@@ -1,19 +1,13 @@
 import { PackageManagerTabs } from '@theme';
-import { Go } from '@lynx';
+import { Go, Details } from '@lynx';
 
 # TanStack Router
 
-现代化且可扩展的 React 应用路由解决方案
+现代化且可扩展的 React 应用路由解决方案。
 
-### 介绍
-
-:::info
-ReactLynx 支持 Memory Routing 和 File-Based Routing
-
-- Lynx 由于浏览器 history API 限制需要使用 Memory Routing
-- Rspeedy 支持无缝集成 `@tanstack/router-plugin/rspack`
-
-:::
+ReactLynx 支持 [Memory Routing](https://tanstack.com/router/latest/docs/framework/react/guide/history-types#memory-routing) 和 [File-Based Routing](https://tanstack.com/router/latest/docs/framework/react/routing/file-based-routing)，
+其中 Memory Routing 是必需的，因为 Lynx 中存在浏览器 [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) 限制，
+而 File-Based Routing 通过 Rspeedy 无缝集成 `@tanstack/router-plugin/rspack` 来启用。
 
 ### 安装依赖
 
@@ -27,8 +21,13 @@ ReactLynx 支持 Memory Routing 和 File-Based Routing
 
 ### 配置
 
-1. 通过 `@tanstack/router-plugin/rspack` 实现 File-based Routing。
-2. 通过 alias 实现 React 18 API 兼容。
+- **File-based Routing**: 通过 `@tanstack/router-plugin/rspack` 启用，实现无缝路由集成。
+- **React 18 API 兼容性**: 使用 `@lynx-js/react/compat` 确保第三方库正常工作。
+
+<Details title="❓ 为什么使用 @lynx-js/react/compat">
+  ReactLynx 通过 `@lynx-js/react/compat` 提供 React 18 API 兼容， 提供 TanStack
+  Router 所需的 API，如 `React.startTransition`。
+</Details>
 
 ```js title=lynx.config.js
 import { defineConfig } from '@lynx-js/rspeedy';
@@ -58,7 +57,7 @@ export default defineConfig({
 
 ### Polyfill
 
-`url-search-params-polyfill` 确保 URLSearchParams API 在 Lynx 中的兼容性。
+为了确保 [URLSearchParams API](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) 在 Lynx 环境中正常工作，请在入口文件顶部添加 `url-search-params-polyfill`：
 
 ```tsx title=index.tsx
 import 'url-search-params-polyfill';
@@ -68,6 +67,36 @@ import { App } from './App.jsx';
 
 root.render(<App />);
 ```
+
+### File-Based
+
+TanStack Router 支持基于文件结构定义路由。将路由组件放置在 `src/routes` 目录中，其中 `__root.tsx` 作为根组件。
+
+```jsx title="src/routes/__root.tsx"
+import { createRootRoute, Outlet } from '@tanstack/react-router';
+
+export const Route = createRootRoute({
+  component: () => (
+    <view>
+      <Outlet />
+    </view>
+  ),
+});
+```
+
+```jsx title="src/routes/index.tsx"
+import { createFileRoute } from '@tanstack/react-router';
+
+export const Route = createFileRoute('/')({
+  component: () => <view>首页</view>,
+});
+```
+
+`@tanstack/router-plugin/rspack` 会自动扫描 `src/routes` 目录并生成包含所有路由定义和类型信息的 `routeTree.gen.ts` 文件。该生成文件包括：
+
+- 路由导入和配置
+- 类型安全路由的 TypeScript 接口
+- 完整的路由树结构
 
 ### 示例
 
