@@ -10,25 +10,47 @@
 
 ### 在已有项目中配置
 
-ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，无需额外安装其他包。
+ReactLynx Testing Library 集成在 `@lynx-js/react` 包的 `testing-library` 子目录中，无需额外安装其他包。目前我们支持测试框架有 Rstest 和 Vitest。
 
-配置 [Vitest](https://vitest.dev/) 时需要使用 `@lynx-js/react/testing-library/vitest-config` 中的 `createVitestConfig` 方法来创建 Vitest 配置。你可以通过 `mergeConfig` 方法将其和其他配置合并。
+#### Rstest
 
-```js title=vitest.config.js
-import { defineConfig, mergeConfig } from 'vitest/config';
-import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
+配置 [Rstest](https://rstest.rs/) 时，可以直接复用 `lynx.config.ts` 中的配置，并指定 ReactLynx Testing Library 内置的 `setupFiles`。
 
-const defaultConfig = await createVitestConfig();
-const config = defineConfig({
+```ts title=rstest.config.ts
+import { defineConfig, RstestConfig } from '@rstest/core';
+import lynxConfig from './lynx.config.js';
+
+export default defineConfig({
+  ...(lynxConfig as RstestConfig),
+  testEnvironment: 'jsdom',
+  setupFiles: [
+    require.resolve('@lynx-js/react/testing-library/setupFiles/rstest'),
+  ],
+  globals: true,
+});
+```
+
+#### Vitest
+
+配置 [Vitest](https://vitest.dev/) 时需要使用 `@lynx-js/react/testing-library/plugins` 中的 `vitestTestingLibraryPlugin` 插件。
+
+```ts title=vitest.config.ts
+import { defineConfig } from 'vitest/config';
+import { vitestTestingLibraryPlugin } from '@lynx-js/react/testing-library/plugins';
+
+export default defineConfig({
+  plugins: [vitestTestingLibraryPlugin()],
   test: {
     // ...
   },
 });
-
-export default mergeConfig(defaultConfig, config);
 ```
 
 ## 示例
+
+:::info
+下文的代码示例均用 Vitest 实现，但是你也可以在 Rstest 中使用它们。将代码示例中的 `vitest` 替换成 `@rstest/core`，并将 `vi` 替换成 `rstest` 即可在 Rstest 下使用。
+:::
 
 ### 快速开始
 

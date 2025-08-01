@@ -12,23 +12,47 @@ If you create a new project using [`create-rspeedy`](https://www.npmjs.com/packa
 
 ReactLynx Testing Library is integrated in the `testing-library` subdirectory of the `@lynx-js/react` package and can be used directly.
 
-To configure [Vitest](https://vitest.dev/), you can use `@lynx-js/react/testing-library/vitest-config` to create a Vitest configuration. You can use the `mergeConfig` method to merge it with other configurations.
+Below are setup instructions for the supported testing frameworks:
+
+#### Rstest
+
+When configuring [Rstest](https://rstest.rs/), you can directly reuse the configuration in `lynx.config.ts` and specify the built-in `setupFiles` of the ReactLynx Testing Library.
+
+```ts title=rstest.config.ts
+import { defineConfig, RstestConfig } from '@rstest/core';
+import lynxConfig from './lynx.config.js';
+
+export default defineConfig({
+  ...(lynxConfig as RstestConfig),
+  testEnvironment: 'jsdom',
+  setupFiles: [
+    require.resolve('@lynx-js/react/testing-library/setupFiles/rstest'),
+  ],
+  globals: true,
+});
+```
+
+#### Vitest
+
+To configure [Vitest](https://vitest.dev/), you need to use the `vitestTestingLibraryPlugin` plugin in `@lynx-js/react/testing-library/plugins`.
 
 ```js title=vitest.config.js
-import { defineConfig, mergeConfig } from 'vitest/config';
-import { createVitestConfig } from '@lynx-js/react/testing-library/vitest-config';
+import { defineConfig } from 'vitest/config';
+import { vitestTestingLibraryPlugin } from '@lynx-js/react/testing-library/plugins';
 
-const defaultConfig = await createVitestConfig();
-const config = defineConfig({
+export default defineConfig({
+  plugins: [vitestTestingLibraryPlugin()],
   test: {
     // ...
   },
 });
-
-export default mergeConfig(defaultConfig, config);
 ```
 
 ## Examples
+
+:::info
+The following code examples are all implemented in Vitest, but you can also use them in Rstest. Replace `vitest` with `@rstest/core` and `vi` with `rstest` in the code examples to use them under Rstest.
+:::
 
 ### Quick Start
 
