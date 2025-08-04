@@ -74,6 +74,44 @@ Take a look at the [Fetch Response](/api/lynx-api/global/fetch#response) for the
 
 Don't forget to catch any errors that may be thrown by `fetch`, otherwise they will be dropped silently.
 
+## Fetch chunk streaming
+
+Chunked encoding is useful when larger amounts of data are sent to the Front-End. Front-End can process each chunk
+when the chunk is received, to reduce waiting duration.
+
+You can refer to the MDN guides on [Transfer-Encoding chunked](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Transfer-Encoding#chunked)
+to know more about chunk streaming standard.
+
+:::tip
+
+To facilitate Front-End development, the http response body is split by Lynx:
+
+The chunk size and '\r\n' delimiters are removed, only the chunk contents are returned as `arraybuffer`.
+
+:::
+
+To enable chunk streaming, you can mark switch `useStreaming` as `true` inside `lynxExtension`.
+
+```typescript
+fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
+  lynxExtension: { useStreaming: true },
+}).then((response) => {
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    } else {
+      const text = globalThis.TextCodecHelper.decode(value);
+      setData(text);
+    }
+  }
+});
+```
+
+You can refer to the MDN guides on [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
+to know more about how to process streaming body.
+
 ## Using Other Networking Libraries
 
 Since The Fetch API is built into Lynx. This means that you can use third party libraries that depend on it.
