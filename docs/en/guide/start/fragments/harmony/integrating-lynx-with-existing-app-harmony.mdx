@@ -22,11 +22,12 @@ Lynx Service, which includes `LynxDevtoolService`, `LynxLogService`, and more, i
 ```groovy title=oh-package.json5 {2-7}
 "dependencies": {
   "@ohos/imageknife": "3.2.6",
-  "@lynx/lynx": "0.0.1-alpha.1",
-  "@lynx/lynx_devtool": "0.0.1-alpha.1",
-  "@lynx/lynx_devtool_service": "0.0.1-alpha.1",
-  "@lynx/lynx_log_service": "0.0.1-alpha.1",
-  "@lynx/primjs": "0.0.1-alpha.4"
+  "@lynx/lynx": "0.0.1-alpha.4",
+  "@lynx/lynx_devtool": "0.0.1-alpha.4",
+  "@lynx/lynx_devtool_service": "0.0.1-alpha.4",
+  "@lynx/lynx_http_service": "0.0.1-alpha.4",
+  "@lynx/lynx_log_service": "0.0.1-alpha.4",
+  "@lynx/primjs": "0.0.1-alpha.7"
 },
 ```
 
@@ -101,12 +102,15 @@ And configure the `network` key field in `entry/src/main/resources/base/element/
 import { LLog, LynxServiceCenter, LynxEnv, LynxServiceType } from '@lynx/lynx';
 import { LynxDevToolService } from '@lynx/lynx_devtool_service';
 import { LynxLogService } from '@lynx/lynx_log_service';
+import { LynxHttpService } from '@lynx/lynx_http_service';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     
     // Init LynxDevtool
-    LynxServiceCenter.registerService(LynxServiceType.DevTool, LynxDevToolService);
+    LynxServiceCenter.registerService(LynxServiceType.DevTool, LynxDevToolService.instance);
+    // Init LynxHttp
+    LynxServiceCenter.registerService(LynxServiceType.Http, LynxHttpService.instance);
     // Init LynxLog
     LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
     
