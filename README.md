@@ -1,6 +1,6 @@
 # Lynx Website
 
-This repo contains the website and documentation for Lynx.
+This repo contains brief information about the website and documentation for Lynx.
 
 ## Getting Started
 
