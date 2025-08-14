@@ -3,7 +3,7 @@ import { Steps } from '@theme';
 import { CodeFold } from '@lynx';
 import { Tab, Tabs } from '@rspress/core/theme';
 
-自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理样式与属性、事件绑定等。接下来以一个简单的自定义输入框元件 `<input>` 为例，简要介绍自定义元件的实现流程。
+自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理样式与属性、事件绑定等。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，简要介绍自定义元件的实现流程。
 
 完整实现参见 [LynxExplorer/input 模块](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios/lynx_explorer/LynxExplorer/input)查看。通过编译运行 [LynxExplorer 示例项目](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios)可实时预览自定义元件效果。
 
@@ -13,7 +13,7 @@ import { Tab, Tabs } from '@rspress/core/theme';
 
 #### 声明自定义元件
 
-下面是 `<input>` 自定义元件的实现，需要继承自 `LynxUI`。
+下面是 `<explorer-input>` 自定义元件的实现，需要继承自 `LynxUI`。
 
 ```objc title="LynxExplorerInput.h" {1,11}
 
@@ -99,7 +99,7 @@ NS_ASSUME_NONNULL_END
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 @end
 
@@ -144,18 +144,18 @@ LYNX_LAZY_REGISTER_UI("input")
   LynxView *lynxView = [[LynxView alloc] initWithBuilderBlock:^(LynxViewBuilder *builder) {
     builder.config =
         [[LynxConfig alloc] initWithProvider:[LynxEnv sharedInstance].config.templateProvider];
-    [builder.config registerUI:[LynxExplorerInput class] withName:@"input"];
+    [builder.config registerUI:[LynxExplorerInput class] withName:@"explorer-input"];
   }];
 
 ```
 
-其中，`"input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元件并创建实例。
+其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元件并创建实例。
 
 ### 创建原生 `View` 实例
 
 每个自定义元件都需要实现 `createView` 方法，该方法返回一个与之对应的原生 `View` 实例。
 
-以下是 `<input>` 元件的实现：
+以下是 `<explorer-input>` 元件的实现：
 
 <CodeFold toggle height={500}>
 
@@ -166,7 +166,7 @@ LYNX_LAZY_REGISTER_UI("input")
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 
 - (UITextField *)createView {
@@ -212,7 +212,7 @@ LYNX_LAZY_REGISTER_UI("input")
 
 ### 处理前端更新的样式和属性
 
-你可以使用 `LYNX_PROP_SETTER` 宏来监听前端传入的属性变化，并更新原生视图。例如，处理 `<input>` 元件的 value 属性：
+你可以使用 `LYNX_PROP_SETTER` 宏来监听前端传入的属性变化，并更新原生视图。例如，处理 `<explorer-input>` 元件的 value 属性：
 
 <CodeFold toggle height={500}>
 
@@ -224,7 +224,7 @@ LYNX_LAZY_REGISTER_UI("input")
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 LYNX_PROP_SETTER("value", setValue, NSString *) {
     self.view.text = value;
@@ -291,7 +291,7 @@ LYNX_PROP_SETTER("value", setValue, NSString *) {
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 - (void)layoutDidFinished {
   self.view.padding = self.padding;
@@ -343,7 +343,7 @@ self.view.text = value;
 
 在某些场景中，前端可能需要响应自定义元件的事件。例如，当用户在文本框中输入内容时，前端可能需要获取并处理这些输入数据。
 
-以下示例演示了如何实现从 `<input>` 元件向前端发送文本输入事件，以及前端如何监听该事件。
+以下示例演示了如何实现从 `<explorer-input>` 元件向前端发送文本输入事件，以及前端如何监听该事件。
 
 #### 客户端事件发送
 
@@ -358,7 +358,7 @@ self.view.text = value;
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 - (UITextField *)createView {
   UITextField *textField = [[LynxTextField alloc] init];
@@ -440,7 +440,11 @@ const handleInput = (e) => {
   setInputValue(currentValue);
 };
 
-<input className="input-box" bindinput={handleInput} value={inputValue} />;
+<explorer-input
+  className="input-box"
+  bindinput={handleInput}
+  value={inputValue}
+/>;
 ```
 
 > **注意**：前端 DSL 使用 `bindxxx` 进行事件绑定，例如 `bindinput` 绑定 `input` 事件。
@@ -451,7 +455,7 @@ const handleInput = (e) => {
 
 #### 前端调用示例
 
-以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `focus` 方法让 `<input>` 元件获取焦点：
+以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `focus` 方法让 `<explorer-input>` 元件获取焦点：
 
 ```jsx title="App.tsx"
 lynx
@@ -485,7 +489,7 @@ lynx
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 LYNX_UI_METHOD(focus) {
     if ([self.view becomeFirstResponder]) {

@@ -4,6 +4,7 @@ import { Tab, Tabs } from '@rspress/core/theme';
 
 import NativeModuleIOS from './custom-native-modules/native-module-ios.mdx';
 import NativeModuleAndroid from './custom-native-modules/native-module-android.mdx';
+import NativeModuleHarmony from './custom-native-modules/native-module-harmony.mdx';
 
 # Native Modules
 
@@ -25,10 +26,11 @@ Currently, native modules can only be used in [Background Thread Scripting](/gui
 
 This guide aims to show you how to write a local persistent storage module that enables your Lynx application to use JavaScript code to store data persistently locally.
 
-To implement local persistent storage on mobile devices, you need to use the native APIs of Android and iOS:
+To implement local persistent storage on mobile devices, you need to use the native APIs of Android, iOS and HarmonyOS:
 
 - Android: [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences)
 - iOS: [NSUserDefaults](https://developer.apple.com/documentation/foundation/nsuserdefaults)
+- HarmonyOS: [Preferences](https://developer.huawei.com/consumer/en/doc/harmonyos-references/_preferences)
 
 <Steps>
 ### Declare a Typed Interface Specification
@@ -51,7 +53,7 @@ The following is the implementation of the interface specification for the local
 declare let NativeModules: {
   NativeLocalStorageModule: {
     setStorageItem(key: string, value: string): void;
-    getStorageItem(key: string): string | null;
+    getStorageItem(key: string, callback: (value: string) => void): void;
     clearStorage(): void;
   };
 };
@@ -87,6 +89,11 @@ Now, you can start writing the native platform code.
     <NativeModuleAndroid />
 
   </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    <NativeModuleHarmony />
+    
+  </PlatformTabs.Tab>
 </PlatformTabs>
 
 </Steps>
@@ -95,15 +102,15 @@ Congratulations! You have successfully created a native module in Lynx Explorer!
 
 ## Type Mapping Table
 
-| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     |
-| --------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `null`          | `nil`                                             | `null`                                            |
-| `undefined`     | `nil`                                             | `null`                                            |
-| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) |
-| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   |
-| `string`        | `NSString`                                        | `String`                                          |
-| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     |
-| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          |
-| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               |
-| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             |
-| Callback `()=>` | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  |
+| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| `null`          | `nil`                                             | `null`                                            | `null`                                            |
+| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            |
+| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` |
+| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   |
+| `string`        | `NSString`                                        | `String`                                          | `string`                                          |
+| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    |
+| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          |
+| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               |
+| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             |
+| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  |
