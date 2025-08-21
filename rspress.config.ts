@@ -4,7 +4,10 @@ import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
-import { transformerNotationHighlight } from '@shikijs/transformers';
+import {
+  transformerNotationHighlight,
+  transformerNotationDiff,
+} from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
@@ -205,6 +208,7 @@ export default defineConfig({
       transformers: [
         transformerCompatibleMetaHighlight(),
         transformerNotationHighlight(),
+        transformerNotationDiff(),
       ],
     },
   },
