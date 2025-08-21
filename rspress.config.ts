@@ -7,6 +7,7 @@ import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import {
   transformerNotationHighlight,
   transformerNotationDiff,
+  transformerNotationFocus,
 } from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
@@ -209,6 +210,7 @@ export default defineConfig({
         transformerCompatibleMetaHighlight(),
         transformerNotationHighlight(),
         transformerNotationDiff(),
+        transformerNotationFocus(),
       ],
     },
   },
