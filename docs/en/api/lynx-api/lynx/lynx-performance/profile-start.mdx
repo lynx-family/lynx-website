@@ -1,0 +1,49 @@
+---
+title: profileStart()
+---
+
+Marks the start of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
+
+#### Syntax
+
+```typescript
+profileStart(name: string, option?: { flowId: number, arg?:  Record<string, string>}): void;
+```
+
+#### Parameters
+
+##### name
+
+The name of the trace event.
+
+##### option(optional)
+
+Additional options such as `flowId` and custom arguments.
+
+#### Examples
+
+```typescript
+// Start a trace event with only a name
+lynx.performance.profileStart('DataFetch');
+
+// Start a trace event with custom arguments
+lynx.performance.profileStart('DataFetch', {
+  args: { url: 'https://api.example.com/data', method: 'GET' },
+});
+
+// Start a trace event with a flow id
+const flowId = lynx.performance.profileFlowId();
+lynx.performance.profileStart('UserAction', { flowId });
+
+// Start a duration event with both arguments and flow ID
+lynx.performance.profileStart('ComplexProcess', {
+  args: { step: 'start' },
+  flowId,
+});
+```
+
+## Compatibility
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-api/lynx/performance" />
