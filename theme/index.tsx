@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { removeBase, useLocation, usePageData } from '@rspress/core/runtime';
+import {
+  removeBase,
+  useLang,
+  useLocation,
+  usePageData,
+} from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
 } from '@rspress/core/theme';
+import {
+  Search as PluginAlgoliaSearch,
+  ZH_LOCALES,
+} from '@rspress/plugin-algolia/runtime';
+
 import './index.scss';
 
 import {
@@ -163,6 +173,23 @@ function HomeLayout() {
   );
 }
 
-export { HomeLayout, Layout };
+const Search = () => {
+  const lang = useLang();
+  return (
+    <PluginAlgoliaSearch
+      docSearchProps={{
+        appId: 'V4ET1OFZ5S', // cspell:disable-line
+        apiKey: '15236c16e0f335c0cb2a67bc3ac06bcb', // cspell:disable-line
+        indexName: 'lynx',
+        searchParameters: {
+          facetFilters: [`lang:${lang}`],
+        },
+      }}
+      locales={ZH_LOCALES}
+    />
+  );
+};
+
+export { HomeLayout, Layout, Search };
 
 export * from '@rspress/core/theme';

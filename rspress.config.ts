@@ -1,6 +1,7 @@
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
+import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
@@ -83,12 +84,6 @@ export default defineConfig({
             'https://github.com/lynx-family/lynx-website/tree/main',
           ),
         },
-      },
-    },
-    html: {
-      meta: {
-        // <meta name="algolia-site-verification"  content="6AD08DFB25B7234D" />
-        'algolia-site-verification': '6AD08DFB25B7234D',
       },
     },
   },
@@ -206,6 +201,9 @@ export default defineConfig({
           },
         },
       ],
+    }),
+    pluginAlgolia({
+      verificationContent: '6AD08DFB25B7234D',
     }),
   ],
   markdown: {
