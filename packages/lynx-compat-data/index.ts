@@ -1,5 +1,5 @@
 // Re-export types for easier access
-export * from './types/types.d.ts';
+export type * from './types/types.d.ts';
 import platforms from './platforms/platforms.json' assert { type: 'json' };
 
 import type {
@@ -52,7 +52,8 @@ export function isVersionValue(value: unknown): value is VersionValue {
  * @returns True if the string is a valid PlatformType, false otherwise
  */
 export function isPlatformType(type: string): type is PlatformType {
-  return ['native', 'web', 'clay'].includes(type);
+  const validPlatformTypes: PlatformType[] = ['native', 'web', 'clay'];
+  return validPlatformTypes.includes(type as PlatformType);
 }
 
 /**
@@ -61,7 +62,13 @@ export function isPlatformType(type: string): type is PlatformType {
  * @returns True if the string is a valid PlatformStatus, false otherwise
  */
 export function isPlatformStatus(status: string): status is PlatformStatus {
-  return ['retired', 'current', 'beta', 'planned'].includes(status);
+  const validPlatformStatuses: PlatformStatus[] = [
+    'retired',
+    'current',
+    'beta',
+    'planned',
+  ];
+  return validPlatformStatuses.includes(status as PlatformStatus);
 }
 
 /**
@@ -76,9 +83,14 @@ export function isPlatformStatement(obj: unknown): obj is PlatformStatement {
     'name' in obj &&
     typeof obj.name === 'string' &&
     'type' in obj &&
+    typeof obj.type === 'string' &&
     isPlatformType(obj.type) &&
     'releases' in obj &&
-    typeof obj.releases === 'object'
+    typeof obj.releases === 'object' &&
+    obj.releases !== null &&
+    Object.entries(obj.releases).every(([key, value]) =>
+      isReleaseStatement(value),
+    )
   );
 }
 
@@ -94,6 +106,7 @@ export function isReleaseStatement(obj: unknown): obj is ReleaseStatement {
     (!('release_date' in obj) || typeof obj.release_date === 'string') &&
     (!('release_notes' in obj) || typeof obj.release_notes === 'string') &&
     'status' in obj &&
+    typeof obj.status === 'string' &&
     isPlatformStatus(obj.status)
   );
 }
