@@ -3,6 +3,7 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
+import { pluginSitemap } from '@rspress/plugin-sitemap';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import {
   transformerNotationHighlight,
@@ -178,6 +179,9 @@ export default defineConfig({
       },
     ]),
     sharedSidebarPlugin(),
+    pluginSitemap({
+      siteUrl: PUBLISH_URL,
+    }),
     pluginRss({
       siteUrl: PUBLISH_URL,
       feed: [
