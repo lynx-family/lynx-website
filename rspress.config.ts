@@ -84,6 +84,12 @@ export default defineConfig({
         },
       },
     },
+    html: {
+      meta: {
+        // <meta name="algolia-site-verification"  content="6AD08DFB25B7234D" />
+        'algolia-site-verification': '6AD08DFB25B7234D',
+      },
+    },
   },
   logo: {
     light:
