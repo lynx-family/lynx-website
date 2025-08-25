@@ -1,0 +1,627 @@
+import * as NextSteps from '@lynx/NextSteps';
+import { Steps } from '@theme';
+import { CodeFold } from '@lynx';
+import { Tab, Tabs } from 'rspress/theme';
+
+The implementation of custom native elements can be broken down into several steps, including: declaring and registering elements, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<explorer-input>` as an example to briefly introduce the implementation process of custom elements.
+
+The complete implementation can be found in the [LynxExplorer/input module](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony/lynx_explorer/src/main/ets/component). You can compile and run the [LynxExplorer sample project](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony) to preview element behavior in real-time.
+
+<Steps>
+
+### Declare and Register Elements
+
+#### Declare Custom Elements
+
+A declared custom element needs to inherit from `UIBase`. Below is the implementation of the `<explorer-input>` element:
+
+```typescript title="LynxExplorerInput.ets" {20-23}
+import { UIBase, EventHandlerArray, LynxUIMethodConstants } from '@lynx/lynx';
+
+@ComponentV2
+struct InputView {
+  build() {
+    Stack() {
+      TextInput({})
+    }
+    .width('100%')
+    .height('100%')
+  }
+}
+
+@Builder
+export function buildInput(ui: UIBase) {
+  if (ui as LynxExplorerInput) {
+    InputView();
+  }
+}
+
+export class LynxExplorerInput extends UIBase {
+  readonly builder: WrappedBuilder<[UIBase]> = wrapBuilder<[UIBase]>(buildInput);
+}
+```
+
+#### Register Custom Element
+
+Elements can be registered in two ways: globally and locally.
+
+##### Global Registration
+
+Globally registered elements can be shared across multiple `LynxView` instances.
+
+```typescript {3,17}
+import { BUILTIN_BEHAVIORS } from '@lynx/lynx/src/main/ets/tasm/behavior/Behavior';
+
+export class CustomElement {
+  private static initialized = false;
+
+  static initialize() {
+    if (CustomElement.initialized) {
+      return;
+    }
+    BUILTIN_BEHAVIORS.set(
+      'explorer-input',
+      new Behavior(LynxExplorerInput, undefined),
+    );
+    CustomElement.initialized = true;
+  }
+}
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
+    CustomElement.initialize();
+  }
+}
+```
+
+##### Local Registration
+
+Locally registered elements are only applicable to the current `LynxView` instance. Component names and their component instances are associated through `BehaviorRegistryMap`. `Behavior` defines the specific implementation of the component, including `UI Class` and `ShadowNode Class`.
+
+```typescript
+export class Behavior {
+  uiClass?: Function;
+  shadowNodeClass?: Function;
+  customData?: Object;
+  type?: NodeType;
+}
+```
+
+Corresponding parameter description:
+
+`uiClass`: The `UI` class corresponding to the component, which is used for rendering-related operations;
+
+`shadowNodeClass`: Optional parameter, the `ShadowNode` class corresponding to the component， if implemented, it indicates that this node can provide measurement capabilities to the Lynx layout engine (such as `text` nodes);
+
+`customData`: Optional parameter, some custom data;
+
+`type`: Optional parameter, specifies the type of this component, generally not required. Currently, the following three types are defined:
+
+`- COMMON` indicates having a `UI` node
+
+`- VIRTUAL` indicates having only a `ShadowNode` without a `UI`
+
+`- CUSTOM` indicates having both `UI` and `ShadowNode`
+
+<CodeFold toggle height={200}>
+
+```typescript title="Lynx.ets"
+import {
+  Behavior,
+  BehaviorRegistryMap,
+} from '@lynx/lynx';
+import { LynxExplorerInput } from '../component/LynxExplorerInput';
+
+build() {
+  LynxView({
+    ...
+    behaviors: new Map([['explorer-input', new Behavior(LynxExplorerInput, undefined)]]),
+    ...
+  }).height('100%')
+  ...
+}
+```
+
+</CodeFold>
+
+Where `"input"` corresponds to the tag name in the front-end DSL. When Lynx Engine parses this tag, it will look for the registered native element and create an instance.
+
+### Create Native `Component` Instance
+
+Each custom element needs to implement the `Builder` method, which returns a corresponding native `Component` instance.
+
+Here is the implementation for the `<explorer-input>` element:
+
+<CodeFold toggle height={500}>
+
+```typescript title="LynxExplorerInput.ets" {31-37,43}
+@ObservedV2
+class InputParams {
+  constructor(ui: LynxExplorerInput) {
+    this.ui = ui;
+  }
+
+  @Trace inputText: string = '';
+  @Trace placeholder: string = '';
+  ui: LynxExplorerInput;
+}
+
+@ComponentV2
+struct InputView {
+  @Param @Require inputParams: InputParams;
+
+  build() {
+    Stack() {
+      TextInput({
+        controller: this.inputParams.ui.controller,
+        text: this.inputParams.inputText,
+        placeholder: this.inputParams.placeholder
+      })
+      .id(this.inputParams.ui.sign.toString())
+      .style(TextContentStyle.DEFAULT)
+      .focusable(true)
+    }
+    .width('100%')
+    .height('100%')
+  }
+}
+
+@Builder
+export function buildInput(ui: UIBase) {
+  if (ui as LynxExplorerInput) {
+    InputView({ inputParams: (ui as LynxExplorerInput).inputParams });
+  }
+}
+
+export class LynxExplorerInput extends UIBase {
+  controller: TextInputController = new TextInputController();
+  inputParams: InputParams = new InputParams(this)
+  focused: boolean = false;
+  readonly builder: WrappedBuilder<[UIBase]> = wrapBuilder<[UIBase]>(buildInput);
+}
+```
+
+</CodeFold>
+
+### Handle Front-End Style and Property Updates
+
+You can inherit and override `update(props: Object, events?: EventHandlerArray[])` to listen for property changes passed from the front-end and update the native view. For example, handling the `value` property of the `<explorer-input>` element:
+
+<CodeFold toggle height={500}>
+
+```typescript title="LynxExplorerInput.ets" {16}
+export class LynxExplorerInput extends UIBase {
+  controller: TextInputController = new TextInputController();
+  inputParams: InputParams = new InputParams(this);
+  focused: boolean = false;
+  readonly builder: WrappedBuilder<[UIBase]> =
+    wrapBuilder<[UIBase]>(buildInput);
+
+  static PropSetter: Map<string, Function> = new Map([
+    [
+      'value',
+      (ui: LynxExplorerInput, value: Object) => {
+        ui.updateInputTextIfNecessary(value, true);
+      },
+    ],
+    [
+      'placeholder',
+      (ui: LynxExplorerInput, value: Object) => {
+        ui.inputParams.placeholder = value as string;
+      },
+    ],
+    [
+      'text-color',
+      (ui: LynxExplorerInput, value: Object) => {
+        ui.inputParams.fontColor = value as string;
+      },
+    ],
+  ]);
+
+  update(prop: Record<string, Object>, events?: EventHandlerArray[]): void {
+    for (const entry of Object.entries(prop)) {
+      LynxExplorerInput.PropSetter.get(entry[0])?.(this, entry[1]);
+    }
+  }
+}
+```
+
+</CodeFold>
+
+### Handle Layout Information (Optional)
+
+#### Handle Lynx Engine Layout Results
+
+Typically, Lynx Engine automatically calculates and updates the `Component` layout information, so developers do not need to manually handle this. However, in some special cases, such as when additional adjustments to the `Component` are required, you can obtain the latest layout information in the `layout` function and apply custom logic.
+
+<CodeFold toggle height={200}>
+
+```typescript title="LynxExplorerInput.ets" {12}
+
+export class LynxExplorerInput extends UIBase {
+  controller: TextInputController = new TextInputController();
+  inputParams: InputParams = new InputParams(this)
+  focused: boolean = false;
+  readonly builder: WrappedBuilder<[UIBase]> = wrapBuilder<[UIBase]>(buildInput);
+
+  update(prop: Record<string, Object>, events?: EventHandlerArray[]): void {
+    ...
+  }
+
+  layout(x: number, y: number, width: number, height: number, paddingLeft: number,
+  paddingTop: number, paddingRight: number, paddingBottom: number, marginLeft: number, marginTop: number,
+  marginRight: number, marginBottom: number, sticky?: number[]): void {
+   ...
+   // Generally, no special handling is required!
+ }
+}
+```
+
+</CodeFold>
+
+### Custom `measure` (Optional)
+
+:::warning
+
+If a component's size needs to be determined by the component itself, you need to implement a `ShadowNode` to provide `Measure` capability and return it to the Lynx layout engine. The most typical example is the `text` component, whose size can be calculated from the text content.
+
+:::
+
+:::tip
+
+Note: `ShadowNode` capabilities are only supported for leaf node Components!!
+
+:::
+
+#### Declare and Implement ShadowNode
+
+The following is the implementation of `<LynxExplorerInputShadowNode>`, which needs to inherit from `ShadowNode`.
+
+<CodeFold toggle height={200}>
+
+```typescript title="LynxExplorerInputShadowNode.ets"  {4,7,10}
+
+import { ShadowNode, MeasureMode, IContext } from '@lynx/lynx';
+
+export class LynxExplorerInputShadowNode extends ShadowNode {
+  constructor(context: IContext) {
+    super(context);
+    this.setMeasureFunc(this.measure, null);
+  }
+
+  measure(width: number, widthMode: number, height: number, heightMode: number): [number, number, number] {
+    let res = 0;
+    ...
+    return [width, res, 0];
+  }
+}
+```
+
+</CodeFold>
+
+#### Handle Front-End Style and Property Updates
+
+You can inherit and override `updateProps(props: Record<string, Object>)` method of `ShadowNode` to listen for property changes passed from the front-end and update the native view.
+
+<CodeFold toggle height={200}>
+
+```typescript title="LynxExplorerInputShadowNode.ets"  {10}
+
+import { ShadowNode, MeasureMode, IContext } from '@lynx/lynx';
+
+export class LynxExplorerInputShadowNode extends ShadowNode {
+  constructor(context: IContext) {
+    super(context);
+    this.setMeasureFunc(this.measure, null);
+  }
+
+  override updateProps(props: Record<string, Object>) {
+    // Props-related processing
+    if (prop['text-maxline'] !== undefined) {
+      this.maxLength = prop['max-length'] as number;
+    }
+    ...
+    // Call the super method
+    super.update(props, events);
+  }
+
+  measure(width: number, widthMode: number, height: number, heightMode: number): [number, number, number] {
+    let res = 0;
+    ...
+    return [width, res, 0];
+  }
+}
+```
+
+</CodeFold>
+
+#### Override the `measure` method to return a custom size
+
+You can inherit and override `measure` method of `ShadowNode` to return a custom size.
+
+<CodeFold toggle height={200}>
+
+```typescript title="LynxExplorerInputShadowNode.ets"  {20}
+
+import { ShadowNode, MeasureMode, IContext } from '@lynx/lynx';
+
+export class LynxExplorerInputShadowNode extends ShadowNode {
+  constructor(context: IContext) {
+    super(context);
+    this.setMeasureFunc(this.measure, null);
+  }
+
+  override updateProps(props: Record<string, Object>) {
+    // Props-related processing
+    if (prop['text-maxline'] !== undefined) {
+      this.maxLength = prop['max-length'] as number;
+    }
+    ...
+    // Call the super method
+    super.update(props, events);
+  }
+
+  override measure(width: number, widthMode: number, height: number, heightMode: number): [number, number, number] {
+    let res = height;
+    if (heightMode === MeasureMode.DEFINITE) {
+      res = height;
+    } else if (heightMode === MeasureMode.AT_MOST) {
+      res = Math.min(res, height);
+    }
+    return [width, res, 0];
+  }
+}
+```
+
+</CodeFold>
+
+Parameter descriptions:
+
+`width`: Width constraint;
+
+`widthMode`: Width constraint mode, type is `MeasureMode`;
+
+`height`: Height constraint;
+
+`heightMode`: Height constraint mode, type is `MeasureMode`;
+
+Return Value Description:
+
+The return value is an array that needs to return 3 values: width, height, and Baseline (affects vertical alignment, default is 0)
+
+#### Communication between `UI` and `ShadowNode`
+
+Currently, only the measurement results of `ShadowNode` can be passed to `UI` for rendering. `ShadowNode` implements `setExtraDataFunc(func: () => Object): void`, where the `getExtraBundle` method returned to `UI` is provided
+
+<CodeFold toggle height={200}>
+
+```typescript title="LynxExplorerInputShadowNode.ets"  {8,11}
+
+import { ShadowNode, MeasureMode, IContext } from '@lynx/lynx';
+
+export class LynxExplorerInputShadowNode extends ShadowNode {
+  constructor(context: IContext) {
+    super(context);
+    this.setMeasureFunc(this.measure, null);
+    this.setExtraDataFunc(this.getExtraBundle);
+  }
+
+  getExtraBundle(): Object {
+    return "This is from extra bundle"
+  }
+
+  override updateProps(props: Record<string, Object>) {
+    // Props-related processing
+    if (prop['text-maxline'] !== undefined) {
+      this.maxLength = prop['max-length'] as number;
+    }
+    ...
+    // Call the super method
+    super.update(props, events);
+  }
+
+  override measure(width: number, widthMode: number, height: number, heightMode: number): [number, number, number] {
+    let res = height;
+    if (heightMode === MeasureMode.DEFINITE) {
+      res = height;
+    } else if (heightMode === MeasureMode.AT_MOST) {
+      res = Math.min(res, height);
+    }
+    return [width, res, 0];
+  }
+}
+```
+
+</CodeFold>
+
+The corresponding `UI` inherits and overrides the `updateExtraData` method of `UIBase`, which allows it to receive the `ExtraBundle` passed by `ShadowNode` after the `Layout` process.
+
+<CodeFold toggle height={200}>
+```typescript title="LynxExplorerInput.ets" {13}
+import { UIBase, EventHandlerArray, LynxUIMethodConstants } from '@lynx/lynx';
+...
+@Builder
+export function buildInput(ui: UIBase) {
+  if (ui as LynxExplorerInput) {
+    InputView();
+  }
+}
+
+export class LynxExplorerInput extends UIBase {
+  readonly builder: WrappedBuilder<[UIBase]> = wrapBuilder<[UIBase]>(buildInput);
+
+override updateExtraData(data: Object): void {
+...
+}
+}
+
+````
+</CodeFold>
+
+### Handle Event Binding (Optional)
+
+In some scenarios, the front-end may need to respond to events from custom elements. For example, when the user types in the input box, the front-end might need to capture and process the input data.
+
+Here is an example of how to send a text input event from the `<explorer-input>` element to the front-end and how the front-end listens for the event.
+
+#### Client-Side Event Sending
+
+The client listens to text input callbacks from the native view, and when the text changes, it uses `sendCustomEvent(name: string, params: Object, paramName?: string)` method of `UIBase` to send the event to the front-end for handling.
+
+<CodeFold toggle height={850}>
+
+```typescript title="LynxExplorerInput.ets" {16-25}
+
+@ComponentV2
+struct InputView {
+  @Param @Require inputParams: InputParams;
+
+  build() {
+    Stack() {
+      TextInput({
+        controller: this.inputParams.ui.controller,
+        text: this.inputParams.inputText,
+        placeholder: this.inputParams.placeholder
+      })
+      .id(this.inputParams.ui.sign.toString())
+      .style(TextContentStyle.DEFAULT)
+      .focusable(true)
+      .onChange((value: string) => {
+        // update input text
+        this.inputParams.inputText = value;
+        this.inputParams.ui.sendCustomEvent('input', {
+          value: value,
+          cursor: this.inputParams.ui.controller.getCaretOffset()
+            .index,
+          compositing: false
+        } as InputEvent, 'detail');
+      })
+    }
+    .width('100%')
+    .height('100%')
+  }
+}
+
+export class LynxExplorerInput extends UIBase {
+  controller: TextInputController = new TextInputController();
+  inputParams: InputParams = new InputParams(this)
+  focused: boolean = false;
+  readonly builder: WrappedBuilder<[UIBase]> = wrapBuilder<[UIBase]>(buildInput);
+
+  update(prop: Record<string, Object>, events?: EventHandlerArray[]): void {
+    ...
+  }
+
+  layout(x: number, y: number, width: number, height: number, paddingLeft: number,
+    paddingTop: number, paddingRight: number, paddingBottom: number, marginLeft: number, marginTop: number,
+    marginRight: number, marginBottom: number, sticky?: number[]): void {
+   ...
+ }
+}
+
+````
+
+</CodeFold>
+
+#### Front-End DSL Event Binding
+
+On the front-end, bind the corresponding input event to listen for and handle the text input data sent by the client.
+
+```jsx title="App.tsx"
+const handleInput = (e) => {
+  const currentValue = e.detail.value.trim();
+  setInputValue(currentValue);
+};
+
+<explorer-input
+  className="input-box"
+  bindinput={handleInput}
+  value={inputValue}
+/>;
+```
+
+> **Note**: The front-end DSL uses `bindxxx` for event binding, such as `bindinput` to bind the `input` event.
+
+### Support Direct Element Manipulation (Optional)
+
+In some cases, the front-end may need to directly manipulate custom elements via imperative APIs. You can make elements support such operations with `LYNX_UI_METHOD`.
+
+#### Front-End Call Example
+
+The following code shows how to use [SelectorQuery](/api/lynx-api/selector-query) to call the `focus` method and focus the `<explorer-input>` element:
+
+```jsx title="App.tsx"
+lynx
+  .createSelectorQuery()
+  .select('#input-id')
+  .invoke({
+    method: 'focus',
+    params: {},
+    success: function (res) {
+      console.log('lynx', 'request focus success');
+    },
+    fail: function (res : {code: number, data: any}) {
+      console.log('lynx', 'request focus fail');
+    },
+  })
+  .exec();
+```
+
+#### Client-Side Implementation
+
+On the client side, you need to override the `invokeMethod` of `UIBase` to add a `focus` method to the custom element to handle front-end call.
+
+<CodeFold toggle height={600}>
+
+```typescript title="LynxExplorerInput.ets" {15}
+export class LynxExplorerInput extends UIBase {
+  controller: TextInputController = new TextInputController();
+  inputParams: InputParams = new InputParams(this);
+  focused: boolean = false;
+  readonly builder: WrappedBuilder<[UIBase]> =
+    wrapBuilder<[UIBase]>(buildInput);
+
+  focus(callback: (code: number, res: Object) => void) {
+    focusControl.requestFocus(this.sign.toString());
+    this.focused = true;
+    this.setFocusedUI();
+    callback(LynxUIMethodConstants.SUCCESS, new Object());
+  }
+
+  override invokeMethod(
+    method: string,
+    params: Object,
+    callback: (code: number, res: Object) => void,
+  ): boolean {
+    switch (method) {
+      case 'focus':
+        this.focus(callback);
+        break;
+      default:
+        return false;
+    }
+    return true;
+  }
+}
+```
+
+</CodeFold>
+
+#### Method Callback Return Values
+
+When implementing the focus method, component developers need to return a status code to the frontend to indicate whether the operation was successful. For instance, the frontend call might fail, in which case an appropriate error status should be returned so that the frontend can handle it in the `fail` callback.
+
+Lynx Engine defines several common error codes, and developers can return the appropriate status code in the method callback:
+
+```objc
+enum LynxUIMethodErrorCode {
+  kUIMethodSuccess = 0, // Succeeded
+  kUIMethodUnknown, // Unknown error
+  kUIMethodNodeNotFound, // Cannot find corresponding element
+  kUIMethodMethodNotFound, // No corresponding method on this element
+  kUIMethodParamInvalid, // Invalid method parameters
+  kUIMethodSelectorNotSupported, // Selector not supported
+};
+```
+
+</Steps>

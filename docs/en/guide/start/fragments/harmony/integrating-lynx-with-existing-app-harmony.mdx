@@ -1,0 +1,364 @@
+## Integrating Lynx into the Harmony Platform
+
+import { Info, CodeFold } from '@lynx';
+import { Steps } from '@theme';
+import { Tab, Tabs } from 'rspress/theme';
+
+<Info title="Lynx for Harmony">
+  - This document assumes you are familiar with the basic concepts of native Harmony application development.
+  - For all the code in this document, you can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject)
+</Info>
+
+## 1. Dependency Configuration
+
+<Steps>
+### Package Dependencies
+1. **Lynx-Related Version Dependencies**
+
+The core capabilities of the [Lynx Engine](/guide/spec.html#engine), including parsing the [Bundle](/guide/spec.html#lynx-bundle-or-bundle), style parsing, layout, rendering views, and the basic JavaScript runtime code that Lynx pages depend on.
+
+Lynx Service, which includes `LynxDevtoolService`, `LynxLogService`, and more, is designed to provide capabilities closely related to host application features, allowing the host application to inject custom implementations at runtime, or use the default implementations provided by Lynx. For example, LynxHttpService uses the built-in HTTP module of HarmonyOS by default. Lynx provides standard native Log and HTTP service capabilities, allowing integrators to quickly integrate and use them;
+
+```json5 title=oh-package.json5 {2-7}
+"dependencies": {
+  "@ohos/imageknife": "3.2.6",
+  "@lynx/lynx": "3.4.0",
+  "@lynx/lynx_devtool": "3.4.0",
+  "@lynx/lynx_devtool_service": "3.4.0",
+  "@lynx/lynx_http_service": "3.4.0",
+  "@lynx/lynx_log_service": "3.4.0",
+  "@lynx/primjs": "2.14.0",
+},
+```
+
+### Capability Dependencies
+
+1. **Native C++ Configuration**
+
+To import `libc++_shared.so`, you need to configure Native C++. This requires defining a `CMakeLists.txt` file.
+
+```cmake title=CMakeLists.txt
+# the minimum version of CMake.
+cmake_minimum_required(VERSION 3.5.0)
+project(MyApplication)
+```
+And modify the `buildOptions` in `entry/build-profile.json5`:
+
+```json5 title=build-profile.json5 {3-7}
+{
+  "buildOption": {
+    "externalNativeOptions": {
+      "path": "./src/main/cpp/CMakeLists.txt",
+      "arguments": "",
+      "cppFlags": "",
+    }
+  },
+}
+```
+
+2. **Network Request Configuration**
+
+If you need to request network resources, configure `requestPermissions` in `module.json5` to enable network requests.
+
+```json5 title=module.json5 {3-14}
+{
+  "module": {
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET",
+        "reason": "$string:network",
+        "usedScene": {
+          "abilities": [
+            "FormAbility"
+          ],
+          "when": "inuse"
+        }
+      },
+    ],
+}
+}
+```
+And configure the `network` key field in `entry/src/main/resources/base/element/string.json`:
+
+```json title=string.json {3-6}
+{
+  "string": [
+    {
+      "name": "network",
+      "value": "Request network"
+    }
+  ]
+}
+```
+</Steps>
+
+## 2. Environment Initialization
+
+<Steps>
+### LynxService Initialization
+
+`Lynx Service` provides capabilities related to host features. It is recommended to complete the `Lynx Service` initialization in the `OnCreate` lifecycle of `EntryAbility`.
+
+```ts title=EntryAbility.ets
+import { LLog, LynxServiceCenter, LynxEnv, LynxServiceType } from '@lynx/lynx';
+import { LynxDevToolService } from '@lynx/lynx_devtool_service';
+import { LynxLogService } from '@lynx/lynx_log_service';
+import { LynxHttpService } from '@lynx/lynx_http_service';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+
+    // Init LynxDevtoolService
+    LynxServiceCenter.registerService(LynxServiceType.DevTool, LynxDevToolService.instance);
+    // Init LynxHttpService
+    LynxServiceCenter.registerService(LynxServiceType.Http, LynxHttpService.instance);
+    // Init LynxLogService
+    LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
+
+    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+  }
+}
+```
+### LynxEnv Initialization
+
+`LynxEnv` provides the global initialization interface for the `Lynx Engine`. Please ensure that `LynxEnv` is initialized before any other `Lynx Engine` interfaces are called. For example, this can be done in the `OnCreate` lifecycle of `EntryAbility`.
+
+```ts title=EntryAbility.ets
+import { LLog, LynxEnv } from '@lynx/lynx';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    // Init LynxService
+    // ...
+    // Init LynxEnv
+    LLog.useSysLog(true);
+    LynxEnv.initialize(this.context);
+    let options = new Map<string, string>();
+    options.set('App', 'LynxExplorer');
+    options.set('AppVersion', '0.0.1');
+    LynxEnv.setAppInfo(options);
+    LynxEnv.enableDevtool(true);
+    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+  }
+}
+```
+</Steps>
+
+## 3. Rendering LynxView
+
+<Steps>
+### Create a Bundle Loader
+
+The `Lynx Engine` itself does not have a built-in capability for downloading resources. Therefore, the host application must provide a specific implementation of `LynxResourceProvider` and inject it when constructing a `LynxView`. Lynx will then use the injected resource loader to fetch the actual Bundle content.
+
+You can obtain the Bundle's resource content in various ways. Here, we'll choose to embed the Bundle's content directly within the application:
+
+First, place the Bundle file generated during the quick start phase into the `src/main/resources/rawfile` directory. Alternatively, you can download the following file and place it in the same directory:
+
+:::note
+Bundle Example:
+**https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
+:::
+
+```
+entry
+└── src
+    └── main
+        └── resources
+            └── rawfile
+                 └── main.lynx.bundle
+```
+
+1. **LynxTemplateResourceFetcher**
+
+`LynxTemplateResourceFetcher` provides the capability to load Bundle template resources. You need to implement the `fetchTemplate` method to handle the loading.
+
+<CodeFold>
+``` ts title=ExampleTemplateResourceFetcher.ets
+import { LLog, LynxResourceRequest, LynxTemplateResourceFetcher, TemplateProviderResult } from '@lynx/lynx';
+import { AsyncCallback, BusinessError } from '@ohos.base';
+import http from '@ohos.net.http';
+import resourceManager from '@ohos.resourceManager';
+
+export class ExampleTemplateResourceFetcher extends LynxTemplateResourceFetcher {
+  fetchTemplate(request: LynxResourceRequest,
+    callback: AsyncCallback<TemplateProviderResult, void>) {
+    if (request.url.startsWith('http')) {
+      let httpRequest = http.createHttp();
+      httpRequest.request(
+        request.url, {
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+      }, (err: BusinessError, data: http.HttpResponse) => {
+        callback(err, {
+          binary: data?.result as ArrayBuffer
+        });
+        httpRequest.destroy();
+      });
+    } else {
+      // local file
+      const context: Context = getContext(this);
+      const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
+      resourceMgr.getRawFileContent(request.url, (err: BusinessError, data: Uint8Array) => {
+        callback(err, {
+          binary: data?.buffer as ArrayBuffer
+        })
+      });
+    }
+  }
+
+  fetchSSRData(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>) {
+    let httpRequest = http.createHttp();
+    httpRequest.request(request.url, {
+      expectDataType: http.HttpDataType.ARRAY_BUFFER
+    }, (err: BusinessError, data: http.HttpResponse) => {
+      callback(err, data?.result as ArrayBuffer)
+      httpRequest.destroy();
+    })
+  }
+}
+```
+</CodeFold>
+
+2. **LynxMediaResourceFetcher**
+
+`LynxMediaResourceFetcher` provides the capability to load media resources.
+
+<CodeFold>
+``` ts title=ExampleMediaResourceFetcher.ets
+import { LynxMediaResourceFetcher, LynxResourceRequest, LynxOptionalBool } from '@lynx/lynx';
+
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    // just return the input url;
+    return request.url;
+  }
+
+  isLocalResource(url: string): LynxOptionalBool {
+    return LynxOptionalBool.UNDEFINED;
+  }
+}
+```
+</CodeFold>
+
+3. **LynxGenericResourceFetcher**
+
+`LynxGenericResourceFetcher` provides the capability to load generic resources. You need to implement the `fetchResource` method to handle the loading.
+
+<CodeFold>
+```ts title=ExampleGenericResourceFetcher.ets
+import { LynxError, LynxSubErrorCode, LynxGenericResourceFetcher, LynxResourceRequest, LynxResourceType, LynxStreamDelegate } from '@lynx/lynx';
+import { AsyncCallback, BusinessError } from '@ohos.base';
+import http from '@ohos.net.http';
+import { ImageKnife, ImageKnifeOption, CacheStrategy } from  '@ohos/imageknife';
+
+export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  fetchResource(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>): void {
+    let httpRequest = http.createHttp();
+    httpRequest.request(request.url, {
+      expectDataType: http.HttpDataType.ARRAY_BUFFER
+    }, (err: BusinessError, data: http.HttpResponse) => {
+      callback(err, data?.result as ArrayBuffer)
+      httpRequest.destroy();
+    })
+  }
+
+  fetchResourcePath(request: LynxResourceRequest, callback: AsyncCallback<string, void>): void {
+    if (request.type === LynxResourceType.LYNX_RESOURCE_TYPE_IMAGE) {
+      let option = new ImageKnifeOption();
+      option.loadSrc = request.url;
+      option.writeCacheStrategy = CacheStrategy.File;
+      let error: BusinessError | undefined = undefined;
+      ImageKnife.getInstance().preLoadCache(option).then((data: string) => {
+        if (data.length > 0) {
+          callback(error, data);
+        } else {
+          error = {
+            code: LynxSubErrorCode.E_RESOURCE_IMAGE_PIC_SOURCE,
+            message: 'Image path is invalid',
+            name: 'Image Error',
+          }
+          callback(error, '');
+        }
+      }).catch((e: string) => {
+        error = {
+          code: LynxSubErrorCode.E_RESOURCE_IMAGE_FROM_NETWORK_OR_OTHERS,
+          message: e,
+          name: 'Image Error',
+        }
+        callback(error, '');
+      })
+    } else {
+      callback({
+        code: LynxError.LYNX_ERROR_CODE_RESOURCE,
+        message: 'unsupported type: ' + request.type,
+        name: 'Resource Error',
+      }, '');
+    }
+  }
+
+  fetchStream(request: LynxResourceRequest, delegate: LynxStreamDelegate): void {
+    // TODO(Lynx): support fetching stream.
+    delegate.onStart(100);
+    let a = new ArrayBuffer(10);
+    delegate.onData(a, 0, 10);
+    delegate.onEnd();
+  }
+
+  cancel(request: LynxResourceRequest): void {
+    // TODO(Lynx)
+  }
+}
+```
+</CodeFold>
+
+### Construct LynxView and Render the View
+
+Once you have completed the steps above, you have finished all the necessary work for creating the `LynxView` and reading its resources. You can now render the corresponding Bundle content onto the `LynxView`.
+<CodeFold>
+``` ts title=Index.ets
+import {
+  LynxTemplateResourceFetcher,
+  LynxMediaResourceFetcher,
+  LynxGenericResourceFetcher,
+  LynxView,
+} from '@lynx/lynx';
+
+import { ExampleTemplateResourceFetcher } from '../provider/ExampleTemplateResourceFetcher';
+import { ExampleMediaResourceFetcher } from '../provider/ExampleMediaResourceFetcher';
+import { ExampleGenericResourceFetcher } from  '../provider/ExampleGenericResourceFetcher';
+
+@Entry
+@Component
+struct Index {
+  templateResourceFetcher: LynxTemplateResourceFetcher = new ExampleTemplateResourceFetcher();
+  mediaResourceFetcher: LynxMediaResourceFetcher = new ExampleMediaResourceFetcher();
+  genericResourceFetcher: LynxGenericResourceFetcher = new ExampleGenericResourceFetcher();
+  private url: string = 'your bundle file';
+
+  build() {
+    Column() {
+      LynxView({
+        templateResourceFetcher: this.templateResourceFetcher,
+        mediaResourceFetcher: this.mediaResourceFetcher,
+        genericResourceFetcher: this.genericResourceFetcher,
+        url: this.url,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
+</CodeFold>
+You will then see the following content on your screen:
+
+<center>
+  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-harmony.png" width="200" />
+</center>
+
+</Steps>
+
+Congratulations! You have now completed the full integration of the Lynx Engine.
+
+## 4. Enter the World of Lynx
+
+Now that you have integrated Lynx into your application, please refer to the [Development](/guide/start/quick-start) and [Debugging](/guide/debugging/lynx-devtool) documentation to further explore the world of Lynx!

@@ -3,7 +3,7 @@ import { CodeFold } from '@lynx';
 import { Tab, Tabs } from '@rspress/core/theme';
 import * as NextSteps from '@lynx/NextSteps';
 
-The implementation of custom native elements can be broken down into several steps, including: declaring and registering elements, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<input>` as an example to briefly introduce the implementation process of custom elements.
+The implementation of custom native elements can be broken down into several steps, including: declaring and registering elements, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<explorer-input>` as an example to briefly introduce the implementation process of custom elements.
 
 The complete implementation can be found in the [LynxExplorer/input module](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios/lynx_explorer/LynxExplorer/input). You can compile and run the [LynxExplorer sample project](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) to preview element behavior in real-time.
 
@@ -13,7 +13,7 @@ The complete implementation can be found in the [LynxExplorer/input module](http
 
 #### Declare Custom Elements
 
-A declared custom element needs to inherit from `LynxUI`. Below is the implementation of the `<input>` element:
+A declared custom element needs to inherit from `LynxUI`. Below is the implementation of the `<explorer-input>` element:
 
 ```objc title="LynxExplorerInput.h" {1,11}
 
@@ -93,7 +93,7 @@ Globally registered elements can be shared across multiple `LynxView` instances.
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 @end
 
@@ -138,17 +138,17 @@ Locally registered elements are only applicable to the current `LynxView` instan
   LynxView *lynxView = [[LynxView alloc] initWithBuilderBlock:^(LynxViewBuilder *builder) {
     builder.config =
         [[LynxConfig alloc] initWithProvider:[LynxEnv sharedInstance].config.templateProvider];
-    [builder.config registerUI:[LynxExplorerInput class] withName:@"input"];
+    [builder.config registerUI:[LynxExplorerInput class] withName:@"explorer-input"];
   }];
 ```
 
-Where `"input"` corresponds to the tag name in the front-end DSL. When Lynx Engine parses this tag, it will look for the registered native element and create an instance.
+Where `"explorer-input"` corresponds to the tag name in the front-end DSL. When Lynx Engine parses this tag, it will look for the registered native element and create an instance.
 
 ### Create Native `View` Instance
 
 Each custom element needs to implement the `createView` method, which returns a corresponding native `View` instance.
 
-Here is the implementation for the `<input>` element:
+Here is the implementation for the `<explorer-input>` element:
 
 <CodeFold toggle height={500}>
 
@@ -158,7 +158,7 @@ Here is the implementation for the `<input>` element:
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 - (UITextField *)createView {
   UITextField *textField = [[LynxTextField alloc] init];
@@ -199,7 +199,7 @@ LYNX_LAZY_REGISTER_UI("input")
 
 ### Handle Front-End Style and Property Updates
 
-You can use the `LYNX_PROP_SETTER` macro to listen for property changes passed from the front end and update the native view. For example, handling the `value` property of the `<input>` element:
+You can use the `LYNX_PROP_SETTER` macro to listen for property changes passed from the front end and update the native view. For example, handling the `value` property of the `<explorer-input>` element:
 
 <CodeFold toggle height={500}>
 
@@ -211,7 +211,7 @@ You can use the `LYNX_PROP_SETTER` macro to listen for property changes passed f
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 LYNX_PROP_SETTER("value", setValue, NSString *) {
     self.view.text = value;
@@ -268,7 +268,7 @@ Typically, Lynx Engine automatically calculates and updates the `View` layout in
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 - (void)layoutDidFinished {
   self.view.padding = self.padding;
@@ -321,7 +321,7 @@ In some scenarios, the front-end may need to respond to events from custom eleme
 
  need to capture and process the input data.
 
-Here is an example of how to send a text input event from the `<input>` element to the front-end and how the front-end listens for the event.
+Here is an example of how to send a text input event from the `<explorer-input>` element to the front-end and how the front-end listens for the event.
 
 #### Client-Side Event Sending
 
@@ -336,7 +336,7 @@ The client listens to text input callbacks from the native view, and when the te
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 - (UITextField *)createView {
   UITextField *textField = [[LynxTextField alloc] init];
@@ -411,7 +411,11 @@ const handleInput = (e) => {
   setInputValue(currentValue);
 };
 
-<input className="input-box" bindinput={handleInput} value={inputValue} />;
+<explorer-input
+  className="input-box"
+  bindinput={handleInput}
+  value={inputValue}
+/>;
 ```
 
 > **Note**: The front-end DSL uses `bindxxx` for event binding, such as `bindinput` to bind the `input` event.
@@ -422,7 +426,7 @@ In some cases, the front-end may need to directly manipulate custom elements via
 
 #### Front-End Call Example
 
-The following code shows how to use [SelectorQuery](/api/lynx-api/selector-query) to call the `focus` method and focus the `<input>` element:
+The following code shows how to use [SelectorQuery](/api/lynx-api/selector-query) to call the `focus` method and focus the `<explorer-input>` element:
 
 ```jsx title="App.tsx"
 lynx
@@ -455,7 +459,7 @@ On the client side, use `LYNX_UI_METHOD` to add a `focus` method to the custom e
 
 @implementation LynxExplorerInput
 
-LYNX_LAZY_REGISTER_UI("input")
+LYNX_LAZY_REGISTER_UI("explorer-input")
 
 LYNX_UI_METHOD(focus) {
     if ([self.view becomeFirstResponder]) {

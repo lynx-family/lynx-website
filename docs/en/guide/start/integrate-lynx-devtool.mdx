@@ -10,7 +10,7 @@ However, you need to follow these steps to integrate DevTool first.
 :::info
 
 It is recommended to integrate DevTool in non-production environments to keep your production builds lightweight.
-All code examples in this documentation can be found in the [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/release/3.1).
+All code examples in this documentation can be found in the [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main).
 
 :::
 
@@ -42,7 +42,7 @@ Here are three important switches:
 - `Lynx DevTool` controls main debugging features: element inspection and JavaScript debugging.
 - `Lynx LogBox` manages the [LogBox](/guide/debugging/handle-errors.html).
 
-<Details title="These switches are disabled by default. It is recommended to enable all three switches">
+<Details title="Lynx Debug and LogBox are on by default; DevTool is off. Enabling DevTool is recommended.">
 
 - When debugging Lynx pages with the DevTool Desktop, both `Lynx Debug` and
   `Lynx DevTool` need be enabled
@@ -171,7 +171,7 @@ Here are three important switches:
 - `Lynx DevTool` controls main debugging features: element inspection and JavaScript debugging.
 - `Lynx LogBox` manages the [LogBox](/guide/debugging/handle-errors.html).
 
-<Details title="These switches are disabled by default. It is recommended to enable all three switches">
+<Details title="Lynx Debug and LogBox are on by default; DevTool is off. Enabling DevTool is recommended.">
 
 - When debugging Lynx pages with the DevTool Desktop, both `Lynx Debug` and
   `Lynx DevTool` switches need be enabled
@@ -210,6 +210,111 @@ private fun initLynxEnv() {
   // Enable Lynx LogBox
   LynxEnv.inst().enableLogBox(true)
 }
+```
+
+</Tab>
+</Tabs>
+
+:::info
+In addition to the three switches introduced earlier, there are more that can help you control the behavior of DevTool. Please refer to the [DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
+:::
+
+</Steps>
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+  <Steps>
+### Adding Dependencies
+
+You need to integrate these two components: `@lynx/lynx_devtool` and `@lynx/lynx_devtool_service`.
+
+<Tabs groupId='impl-harmony'>
+<Tab label="oh-package.json5">
+
+```json5
+// Ensure Lynx DevTool version matches the Lynx version when integrating
+"dependencies": {
+  "@lynx/lynx_devtool": "@param:dependencies.lynx_version",
+  "@lynx/lynx_devtool_service": "@param:dependencies.lynx_version"
+}
+```
+
+</Tab>
+<Tab label="build-profile.json5">
+
+```json5
+// Since @lynx/lynx_devtool is dynamically imported via a variable,
+// to include the devtool module in the build,
+// you also need to add a runtimeOnly buildOption in buildOption within build-profile.json5.
+"buildOption": {
+    "arkOptions": {
+      "runtimeOnly": {
+        "packages": [
+          "@lynx/lynx_devtool"
+        ]
+      }
+    },
+}
+```
+
+</Tab>
+</Tabs>
+
+:::info
+It is recommended to use the latest [Lynx version](https://github.com/lynx-family/lynx/releases) when integrating
+:::
+
+### Registering DevTool Service
+
+<Tabs groupId="register-devtool-service-harmony">
+<Tab label="ETS">
+
+```ts title=YourEntryAbility.ets {2 - 3}
+// Initialize LynxDevToolService first, as LynxEnv initialization
+// depends on LynxDevToolService from LynxService
+LynxServiceCenter.registerService(
+  LynxServiceType.DevTool,
+  LynxDevToolService.instance,
+);
+```
+
+</Tab>
+</Tabs>
+
+### Enabling DevTool
+
+DevTool provides several debugging switches.
+Here are three important switches:
+
+- `Lynx Debug` is the switch that controls all DevTool debugging.
+- `Lynx DevTool` controls main debugging features: element inspection and JavaScript debugging.
+- `Lynx LogBox` manages the [LogBox](/guide/debugging/handle-errors.html).
+
+<Details title="Lynx Debug and LogBox are on by default; DevTool is off. Enabling DevTool is recommended.">
+
+- When debugging Lynx pages with the DevTool Desktop, both `Lynx Debug` and
+  `Lynx DevTool` switches need be enabled
+- LogBox helps you quickly identify and diagnose issues
+
+</Details>
+
+You can configure these switches during [Lynx Environment Initialization](/guide/start/integrate-with-existing-apps.html):
+
+<Tabs groupId='turn-on-switches-harmony'>
+<Tab label="ETS">
+
+```ts title=YourEntryAbility.ets {4-9}
+public initLynxEnv() {
+  LynxEnv.initialize(this.context);
+
+  // Enable Lynx Debug
+  LynxEnv.enableLynxDebug(true);
+  // Enable Lynx DevTool
+  LynxEnv.enableDevtool(true);
+  // Enable Lynx LogBox
+  LynxEnv.setLogBoxEnabled(true);
+}
+
 ```
 
 </Tab>

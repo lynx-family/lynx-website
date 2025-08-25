@@ -5,7 +5,7 @@ import { Tabs, Tab } from '@theme';
 
 ## 接入 DevTool 开关页
 
-我们提供了一个开关页, 可以帮助你快速查看或者配置 DevTool。如果你需要，可以把它集成进 app。
+我们提供了一个开关页，可以帮助你快速查看或者配置 DevTool。如果你需要，可以把它集成进 app。
 
 <div id="debugging-devtool-switch"></div>
 <PlatformTabs hashKey="platform">
@@ -19,7 +19,7 @@ import { Tabs, Tab } from '@theme';
 
 > DevTool 开关页使用 Lynx 编写，DevTool 组件中已经打包了该页面的产物。
 
-开关页接入代码示例:
+开关页接入代码示例：
 
 <Tabs groupId='switch-page-ios'>
 <Tab label="Objective-C">
@@ -102,7 +102,7 @@ class DebugSettingViewController: UIViewController {
 
 > Lynx DevTool 开关页使用 Lynx 编写，DevTool 组件中已经打包了该页面的产物。
 
-开关页接入代码示例:
+开关页接入代码示例：
 
 <Tabs groupId='switch-page-android'>
 <Tab label="Java">
@@ -175,6 +175,66 @@ class SwitchActivity : Activity() {
 ```
 
 </Tab>
+</Tabs>
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/debugging-devtool-switch-zh-harmony.png"
+  alt="Lynx DevTool 开关页面"
+  width={200}
+/>
+
+> Lynx DevTool 开关页使用 Lynx 编写，DevTool 组件中已经打包了该页面的产物。
+
+开关页接入代码示例：
+
+<Tabs groupId='switch-page-harmony'>
+<Tab label="ETS">
+
+```ts
+class Param {
+  url: string;
+  constructor(url: string) {
+    this.url = url;
+  }
+}
+@Entry
+@Component
+struct SwitchPage {
+  // ... existing code ...
+  build() {
+    Column() {
+      Text('Lynx').fontSize(18).width('100%').height('5%').textAlign(TextAlign.Center)
+      LynxView({
+        clients: this.clients,
+        url: this.url,
+        genericResourceFetcher: this.genericFetcher,
+        mediaResourceFetcher: this.mediaFetcher,
+        templateResourceFetcher: this.templateFetcher,
+        modules: this.modules,
+        sendableModules: this.sendableModules,
+        metaData: this.metaData,
+        onCreate: (context: LynxContext) => {
+          let param: Param = new Param(this.url);
+          context.sendGlobalEvent('viewAppear', [param]);
+          if (this.widthPixel > 0 && this.heightPixel > 0) {
+            context.updateScreenMetrics(this.widthPixel * this.viewDensity / TEST_DENSITY,
+              this.heightPixel * this.viewDensity / TEST_DENSITY);
+          }
+          context.setExtraTiming(this.extraTiming);
+        }
+      }).height(this.viewHeight).width(this.viewWidth)
+    }.size({ width: '100%', height: '100%' }).alignItems(HorizontalAlign.Start)
+  }
+}
+
+```
+
+</Tab>
+
 </Tabs>
 
 </PlatformTabs.Tab>

@@ -41,10 +41,32 @@ When using [`LynxView.loadTemplate()`] to load a Bundle, you have the opportunit
     ```
 
   </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4,11}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
+    ```
+
+  </PlatformTabs.Tab>
 
 </PlatformTabs>
 
-You can update this data later through [`LynxView.updateData()`] when needed:
+You can update this data later through [`LynxView.updateData()`] (or [`LynxContext.updateData()`] on HarmonyOS) when needed:
 
 <PlatformTabs hashKey="platform">
   <PlatformTabs.Tab platform="ios">
@@ -63,6 +85,33 @@ You can update this data later through [`LynxView.updateData()`] when needed:
     builder.setUpdatedData(__YOUR_DATA__);
     LynxUpdateMeta meta = builder.build();
     lynxView.updateMetaData(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4-5,13-16}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+      private context?: LynxContext;
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+            onCreate: (context: LynxContext) => {
+              this.context = context;
+              this.context.updateMetaData(new MetaData(new TemplateData(__YOUR_DATA__)));
+            }
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
     ```
 
   </PlatformTabs.Tab>
@@ -124,7 +173,7 @@ While [`useInitData()`] gives you the `initData` from the client, it may not be 
 
 Image you have the following disorganized `initData`:
 
-- On Android:
+- On Android or HarmonyOS:
 
   ```json
   {
@@ -139,7 +188,7 @@ Image you have the following disorganized `initData`:
   }
   ```
 
-Your code may become less cleaner if you want to be compatible with both platforms:
+Your code may become less cleaner if you want to be compatible with these platforms:
 
 ```tsx {7}
 import { useInitData } from '@lynx-js/react';
@@ -201,7 +250,7 @@ export function App() {
 
 ### Using named `dataProcessor`
 
-You (or the client developer) can also specify a `processorName` when calling [`LynxView.updateData()`]:
+You (or the client developer) can also specify a `processorName` when calling [`LynxView.updateData()`] (or [`LynxContext.updateData()`] on HarmonyOS):
 
 <PlatformTabs hashKey="platform">
   <PlatformTabs.Tab platform="ios">
@@ -219,6 +268,34 @@ You (or the client developer) can also specify a `processorName` when calling [`
     LynxUpdateMeta meta = new LynxUpdateMeta();
 
     lynxView.updateMetaData(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4-5,14-16}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+      private context?: LynxContext;
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+            onCreate: (context: LynxContext) => {
+              const templateData: TemplateData = new TemplateData('', 'someDataProcessor');
+              this.context = context;
+              this.context.updateMetaData(new MetaData(templateData));
+            }
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
     ```
 
   </PlatformTabs.Tab>
@@ -252,8 +329,9 @@ if (import.meta.webpackHot) {
 This allows you (or the client developer) to decide on the client which `dataProcessor` to use if the business logic requires it.
 
 [`LynxView.loadTemplate()`]: /api/lynx-native-api/lynx-view/load-template
-[`LynxView.updateData()`]: /api/lynx-native-api/lynx-view/update-data
+[`LynxView.updateData()`]: /api/lynx-native-api/lynx-view/update-meta-data
 [`useInitData()`]: /api/react/Function.useInitData
 [`InitDataConsumer`]: /api/react/Function.InitDataConsumer
 [`InitDataProvider`]: /api/react/Function.InitDataProvider
 [`lynx.registerdataprocessors`]: /api/react/Interface.Lynx#registerdataprocessors
+[`LynxContext.updateData()`]: /api/lynx-native-api/lynx-context/update-meta-data
