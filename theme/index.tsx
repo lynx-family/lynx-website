@@ -184,6 +184,7 @@ const Search = () => {
         searchParameters: {
           facetFilters: [`lang:${lang}`],
         },
+        maxResultsPerGroup: 5,
       }}
       locales={ZH_LOCALES}
     />
