@@ -174,7 +174,7 @@ function HomeLayout() {
   );
 }
 
-const Search = (props: Partial<SearchProps>) => {
+const Search = (props: Partial<SearchProps> | undefined) => {
   const lang = useLang();
   return (
     <PluginAlgoliaSearch
@@ -186,7 +186,7 @@ const Search = (props: Partial<SearchProps>) => {
           facetFilters: [`lang:${lang}`],
         },
         maxResultsPerGroup: 5,
-        ...props.docSearchProps,
+        ...props?.docSearchProps,
       }}
       locales={ZH_LOCALES}
     />
