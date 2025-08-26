@@ -1,10 +1,16 @@
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
+import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
+import { pluginSitemap } from '@rspress/plugin-sitemap';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
-import { transformerNotationHighlight } from '@shikijs/transformers';
+import {
+  transformerNotationHighlight,
+  transformerNotationDiff,
+  transformerNotationFocus,
+} from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
@@ -168,6 +174,9 @@ export default defineConfig({
       },
     ]),
     sharedSidebarPlugin(),
+    pluginSitemap({
+      siteUrl: PUBLISH_URL,
+    }),
     pluginRss({
       siteUrl: PUBLISH_URL,
       feed: [
@@ -193,6 +202,9 @@ export default defineConfig({
         },
       ],
     }),
+    pluginAlgolia({
+      verificationContent: '6AD08DFB25B7234D',
+    }),
   ],
   markdown: {
     defaultWrapCode: false,
@@ -205,6 +217,8 @@ export default defineConfig({
       transformers: [
         transformerCompatibleMetaHighlight(),
         transformerNotationHighlight(),
+        transformerNotationDiff(),
+        transformerNotationFocus(),
       ],
     },
   },

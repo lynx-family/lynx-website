@@ -100,11 +100,3 @@ export function RuleItem(props: IRuleProps) {
     </article>
   );
 }
-
-// TODO
-{
-  /* 1. Lynx 不支持 Attribute Selector，Selector Combinator，Pseudo Class Selector 以及 Pseudo Element Selector */
-}
-{
-  /* 2. 会根据你指定的 minSdkVersion 判断当前使用的 css 属性是否支持 */
-}

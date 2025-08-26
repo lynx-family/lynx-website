@@ -148,7 +148,7 @@ Rsbuild 使用 SWC 来编译 TypeScript 代码。
 ```json title="tsconfig.json"
 {
   "compilerOptions": {
-    "isolatedModules": true
+    "isolatedModules": true // [!code focus]
   }
 }
 ```
@@ -192,7 +192,7 @@ import { defineConfig } from '@lynx-js/rspeedy';
 export default defineConfig({
   plugins: [
     pluginTypeCheck({
-      enable: true,
+      enable: true, // [!code focus],
     }),
   ],
 });
