@@ -174,7 +174,7 @@ function HomeLayout() {
   );
 }
 
-const Search = (props: Partial<SearchProps> | undefined) => {
+const Search = (props?: Partial<SearchProps> | undefined) => {
   const lang = useLang();
   return (
     <PluginAlgoliaSearch
