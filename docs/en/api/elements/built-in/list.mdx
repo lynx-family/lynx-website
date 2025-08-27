@@ -386,6 +386,37 @@ scroll-bar-enable?: boolean
 
 Indicates whether the `<list>` component scroll bar is displayed.
 
+### `defer`
+
+```tsx
+defer?: boolean | { unmountRecycled?: boolean } | undefined
+```
+
+Enables deferred rendering for `<list-item />`,
+preventing it from being eagerly rendered on the main thread as non-deferred items are.
+
+Deferred items are rendered on a background thread when required, making rendering asynchronous.
+As a consequence, during extremely fast scrolling some `<list-item />`s might not be rendered immediately and may briefly appear empty.
+
+This mode is intended for `<list-item />`s that host heavyweight components and should be rendered off the main thread:
+
+```tsx
+<list-item defer item-key="heavy-item">
+  <HeavyComponent />
+</list-item>
+```
+
+Enable the `unmountRecycled` switch to unmount recycled (invisible) JSX nodes. When enabled:
+
+- Components will undergo normal teardown — lifecycle methods (e.g. `componentWillUnmount`) and effect cleanups (e.g. `useEffect` cleanup) will be invoked.
+- Intrinsic elements will have their references cleared — refs will be set to `null` or otherwise cleaned up according to the ref implementation.
+
+```tsx
+<list-item defer={{ unmountRecycled: true }} item-key="some-item">
+  <WillBeUnmountedIfRecycled />
+</list-item>
+```
+
 ### `reuse-identifier`
 
 ```tsx
