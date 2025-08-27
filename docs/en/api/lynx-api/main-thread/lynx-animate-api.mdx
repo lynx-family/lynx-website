@@ -1,5 +1,6 @@
 ---
 title: animate()
+api: lynx-api/main-thread/ElementAnimate
 ---
 
 # animate()
@@ -7,9 +8,6 @@ title: animate()
 ## Introduction
 
 Use `animate()` to set a [CSS Animation](../../css/properties/animation.mdx) on UI elements.
-
-1. Use the [getElementById](./lynx-get-element-by-id) API to find the `Element` object that needs to be animated based on its `id`.
-2. Call the `animate` API on the `Element` object to achieve animation.
 
 ## Syntax
 
@@ -21,67 +19,52 @@ animate(keyframes, options);
 
 #### keyframes
 
-There are **two different formats**:
-
 1. An **array** consisting of objects that contain properties and values of multiple keyframes.
 
 ```js
-element.animate(
-  [
-    {
-      // from
-      opacity: 0,
-      color: '#fff',
-    },
-    {
-      // to
-      opacity: 1,
-      color: '#000',
-    },
-  ],
-  2000,
-);
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  ele.animate(
+    [
+      {
+        // from
+        opacity: 0,
+        color: '#fff',
+      },
+      {
+        // to
+        opacity: 1,
+        color: '#000',
+      },
+    ],
+    2000,
+  );
+}
 ```
 
-2. An **object** consisting of keys as offsets and values as keyframes.
+2. Assign a [timing-function](../../css/properties/animation-timing-function) for each keyframe to control the animation's speed.
 
 ```js
-element.animate({
-  '0%': {
-    // from
-    opacity: 0,
-    color: '#fff',
-  },
-  '50%': {
-    // 50%
-    opacity: 0.5,
-    color: '#aaa',
-  },
-  '100%': {
-    // to
-    opacity: 1,
-    color: '#000',
-  },
-});
-```
-
-3. You can also assign a [timing-function](../../css/properties/animation-timing-function) for each keyframe.
-
-```js
-element.animate([
-  {
-    // from
-    opacity: 0,
-    color: '#fff',
-    'animation-timing-function': 'linear',
-  },
-  {
-    // to
-    opacity: 1,
-    color: '#000',
-    'animation-timing-function': 'ease-in',
-  },
-]);
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  ele.animate(
+    [
+      {
+        // from
+        opacity: 0,
+        color: '#fff',
+        'animation-timing-function': 'linear',
+      },
+      {
+        // to
+        opacity: 1,
+        color: '#000',
+        'animation-timing-function': 'ease-in',
+      },
+    ],
+    2000,
+  );
+}
 ```
 
 #### options
@@ -101,8 +84,7 @@ An **object** that contains one or more properties:
 
 :::info Note:
 
-1. If no `name` is specified, a unique id is generated incrementally.
-2. An animation with the same `name` cannot be triggered consecutively multiple times.
+If no `name` is specified, a unique id is generated incrementally.
 
 :::
 
@@ -120,90 +102,47 @@ The `Animation` object has the following methods:
 ## Example
 
 ```js
-let ani = lynx.getElementById('test').animate(
-  [
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  let ani = ele.animate(
+    [
+      {
+        'background-color': 'blue',
+        transform: 'translateX(100px) translateY(300px) rotate(360deg)',
+      },
+      {
+        'background-color': 'red',
+        transform: 'translateX(0px) translateY(600px) rotate(0deg)',
+      },
+    ],
     {
-      'background-color': 'blue',
-      transform: 'translateX(100px) translateY(300px) rotate(360deg)',
+      duration: 3000,
+      delay: 1000,
+      iterations: Infinity,
+      direction: 'alternate',
+      easing: 'ease-in-out',
+      fill: 'both',
     },
-    {
-      'background-color': 'red',
-      transform: 'translateX(0px) translateY(600px) rotate(0deg)',
-    },
-  ],
-  {
-    duration: 3000,
-    delay: 1000,
-    iterations: Infinity,
-    direction: 'alternate',
-    easing: 'ease-in-out',
-    fill: 'both',
-  },
-);
+  );
 
-// When the parameter is Object, it is strictly required to write percentages with a percent sign such as '.50' and '50' equivalents are divided by 100
-let ani = lynx.getElementById('test').animate(
-  {
-    '0%': {
-      transform: 'rotate(0deg)',
-      left: '0px',
-    },
-    '50%': {
-      // The properties of the intermediate frame can default.
-      left: '30px',
-    },
-    '100%': {
-      transform: 'rotate(225deg)',
-      left: '100px',
-    },
-  },
-  {
-    duration: 3000,
-    delay: 1000,
-    iterations: Infinity,
-    direction: 'alternate',
-    easing: 'ease-in-out',
-    fill: 'both',
-  },
-);
+  ani.pause();
+  ani.play();
+  ani.cancel();
+}
 
-ani.pause();
-ani.play();
-ani.cancel();
 ```
 
 ## Animation Event
 
 The events for the `animate()` API are the same as the [animation events](../event/animation-event#animation) for CSS animations.
 
-## Other Infos
-
-:::info
-
-- Animate Api and CSS Animation will override each other, and the one that takes effect later will override the former.
-- Each call to `getElementById("test").animate` will generate a new `Animation` object.
-- Animate Api currently only supports the creation of one animation, and will support the creation of multiple animations in the future. So now if `getElementById("test").animate` is called multiple times for a node, the last created animation will overwrite the previous animation.
-- After the animation corresponding to an `Animation` object ends, if you want to restart the same animation, you need to call `getElementById("test").animate` again to create a new `Animation` object.
-- Animate API currently only supports getElementById API, and the support for SelectQuery API is still being accessed.
-
-:::
-
-:::tip
-
-The Animate API may not take effect, possibly because `getElementById` failed to select the node:
-
-- The ID selector might be incorrect
-- The value of the ID selector might depend on a complex JS expression, causing the value of the ID selector not to be available on the first screen. In this case, if getElementById is invoked too early (like in ComponentDidMount), it might not find the node.
-
-:::
-
 ## See also
 
 - [Introduction to CSS Animations](../../../guide/styling/animation.mdx)
-- [Animate API in MTS](../main-thread/lynx-animate-api.mdx)
+- [Animate API in BTS](../lynx/lynx-animate-api.mdx)
 
 ## Compatibility
 
-import { LegacyCompatTable } from '@lynx';
+import { APITable } from '@lynx';
 
-<LegacyCompatTable metadata="lynx-api/lynx/animateAPI" />
+<APITable />

@@ -1,5 +1,6 @@
 ---
 title: animate()
+api: lynx-api/main-thread/ElementAnimate
 ---
 
 # animate()
@@ -7,9 +8,6 @@ title: animate()
 ## 介绍
 
 使用 `Element` 的 `animate()` 方法来给 UI 元件设置 [CSS Animation 动画](../../css/properties/animation.mdx)。
-
-1. 使用 [getElementById](./lynx-get-element-by-id) API, 根据 `id` 查找需要做动画的 `Element` 对象。
-2. 调用 `Element` 对象上的 `animate` API 实现动画。
 
 ## 语法
 
@@ -21,67 +19,52 @@ animate(keyframes, options);
 
 #### keyframes
 
-有**两种不同的格式**：
-
 1. 一个由多个关键帧的属性和值组成的对象所构成的**数组**。
 
 ```js
-element.animate(
-  [
-    {
-      // from
-      opacity: 0,
-      color: '#fff',
-    },
-    {
-      // to
-      opacity: 1,
-      color: '#000',
-    },
-  ],
-  2000,
-);
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  ele.animate(
+    [
+      {
+        // from
+        opacity: 0,
+        color: '#fff',
+      },
+      {
+        // to
+        opacity: 1,
+        color: '#000',
+      },
+    ],
+    2000,
+  );
+}
 ```
 
-2. 一个 key 是 offset，value 是关键帧组成的**对象**。
+2. 给每个关键帧指定一个 [timing-function](../../css/properties/animation-timing-function) 来控制动画的速度。
 
 ```js
-element.animate({
-  '0%': {
-    // from
-    opacity: 0,
-    color: '#fff',
-  },
-  '50%': {
-    // 50%
-    opacity: 0.5,
-    color: '#aaa',
-  },
-  '100%': {
-    // to
-    opacity: 1,
-    color: '#000',
-  },
-});
-```
-
-3. 你也可以给关键帧指定一个 [timing-function](../../css/properties/animation-timing-function)。
-
-```js
-element.animate([
-  {
-    // from
-    opacity: 0,
-    color: '#fff',
-    'animation-timing-function': 'linear',
-  },
-  {
-    // to
-    opacity: 1,
-    color: '#000',
-    'animation-timing-function': 'ease-in',
-  },
-]);
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  ele.animate(
+    [
+      {
+        // from
+        opacity: 0,
+        color: '#fff',
+        'animation-timing-function': 'linear',
+      },
+      {
+        // to
+        opacity: 1,
+        color: '#000',
+        'animation-timing-function': 'ease-in',
+      },
+    ],
+    2000,
+  );
+}
 ```
 
 #### options
@@ -101,8 +84,7 @@ element.animate([
 
 :::info 备注
 
-1. 若没有指定 `name`，每次生成一个自增的 unique id 作为 `name`。
-2. 相同 `name` 的动画无法连续多次触发。
+若没有指定 `name`，每次生成一个自增的 unique id 作为 `name`。
 
 :::
 
@@ -120,94 +102,47 @@ element.animate([
 ## 示例
 
 ```js
-let ani = lynx.getElementById('test').animate(
-  [
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  let ani = ele.animate(
+    [
+      {
+        'background-color': 'blue',
+        transform: 'translateX(100px) translateY(300px) rotate(360deg)',
+      },
+      {
+        'background-color': 'red',
+        transform: 'translateX(0px) translateY(600px) rotate(0deg)',
+      },
+    ],
     {
-      'background-color': 'blue',
-      transform: 'translateX(100px) translateY(300px) rotate(360deg)',
+      duration: 3000,
+      delay: 1000,
+      iterations: Infinity,
+      direction: 'alternate',
+      easing: 'ease-in-out',
+      fill: 'both',
     },
-    {
-      'background-color': 'red',
-      transform: 'translateX(0px) translateY(600px) rotate(0deg)',
-    },
-  ],
-  {
-    duration: 3000,
-    delay: 1000,
-    iterations: Infinity,
-    direction: 'alternate',
-    easing: 'ease-in-out',
-    fill: 'both',
-  },
-);
+  );
 
-// 当参数为Object时，严格要求百分比写法为带有百分号的百分数 诸如'.50','50'等值都会被除以100
-let ani = lynx.getElementById('test').animate(
-  {
-    '0%': {
-      transform: 'rotate(0deg)',
-      left: '0px',
-    },
-    '50%': {
-      // 中间帧的属性可以缺省
-      left: '30px',
-    },
-    '100%': {
-      transform: 'rotate(225deg)',
-      left: '100px',
-    },
-  },
-  {
-    duration: 3000,
-    delay: 1000,
-    iterations: Infinity,
-    direction: 'alternate',
-    easing: 'ease-in-out',
-    fill: 'both',
-  },
-);
+  ani.pause();
+  ani.play();
+  ani.cancel();
+}
 
-ani.pause();
-ani.play();
-ani.cancel();
 ```
 
 ## 动画事件
 
 Animate API 的事件和 CSS Animation [动画事件](../event/animation-event#animation-动画)相同。
 
-## 其他信息
-
-:::info
-
-- Animate API 与 CSS Animation 会互相覆盖，后生效的那一方会覆盖前者。
-
-- 每次调用 `lynx.getElementById("test").animate` 都会生成一个新的 `Animation` 对象。
-
-- Animate Api 暂只支持创建一个动画，未来会支持创建多个。因此现在若对一个节点多次调用 `lynx.getElementById("test").animate`，最后创建的动画会覆盖前面的动画。
-
-- 一个 `Animation` 对象对应的动画结束后，若想重启一个同样的动画，需要重新调用 `lynx.getElementById("test").animate` 创建一个新的 `Animation` 对象。
-
-- Animate API 暂只支持 getElementById API，对 SelectQuery API 的支持还未接入。
-
-:::
-
-:::tip
-
-Animate API 不生效，可能是 getElementById 未能选中节点：
-
-- 可能是 ID 选择器不正确
-- 可能是 ID 选择器的值依赖复杂 JS 表达式，导致 ID 选择器的值无法在首屏得到，此时若 getElementById 的时机过早 (如在 ComponentDidMount)，则可能找不到节点
-
-:::
-
 ## 参见
 
 - [CSS 动画介绍](../../../guide/styling/animation.mdx)
-- [主线程 Animate API](../main-thread/lynx-animate-api.mdx)
+- [后台线程 Animate API](../lynx/lynx-animate-api.mdx)
 
 ## 兼容性
 
-import { LegacyCompatTable } from '@lynx';
+import { APITable } from '@lynx';
 
-<LegacyCompatTable metadata="lynx-api/lynx/animateAPI" />
+<APITable />
