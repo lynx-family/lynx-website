@@ -102,7 +102,7 @@ fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
     if (done) {
       break;
     } else {
-      const text = globalThis.TextCodecHelper.decode(value);
+      const text = TextCodecHelper.decode(value);
       setData(text);
     }
   }
@@ -129,6 +129,25 @@ eventSource.onmessage = (event) => {
 eventSource.onerror = (error) => {
   console.error('EventSource failed:', error);
 };
+```
+
+## Using TextCodecHelper
+
+Due to lack of support of `TextEncoder/TextDecoder` in `PrimJS`, to support
+basic usages of encoding and decoding, Lynx provides `TextCodecHelper`. This
+class supports conversions between `string` and `arraybuffer` under `utf-8`.
+How to use:
+
+convert `arraybuffer` to `string`
+
+```typescript
+const str = TextCodecHelper.decode(arraybuffer);
+```
+
+convert `string` to `arraybuffer`
+
+```typescript
+const arraybuffer = TextCodecHelper.encode(str);
 ```
 
 ## Using Other Networking Libraries

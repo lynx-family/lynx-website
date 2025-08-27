@@ -100,7 +100,7 @@ fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
     if (done) {
       break;
     } else {
-      const text = globalThis.TextCodecHelper.decode(value);
+      const text = TextCodecHelper.decode(value);
       setData(text);
     }
   }
@@ -127,6 +127,24 @@ eventSource.onmessage = (event) => {
 eventSource.onerror = (error) => {
   console.error('EventSource failed:', error);
 };
+```
+
+## 使用 TextCodecHelper
+
+由于 `PrimJS` 不支持 `TextEncoder/TextDecoder`，为满足前端开发者基本的编解码需求。
+提供 `TextCodecHelper` 以支持 `utf-8` 编码下 `string` 与 `arraybuffer` 间的转换。
+具体使用方法如下：
+
+将 `arraybuffer` 转换为 `string`
+
+```typescript
+const str = TextCodecHelper.decode(arraybuffer);
+```
+
+将 `string` 转换为 `arraybuffer`
+
+```typescript
+const arraybuffer = TextCodecHelper.encode(str);
 ```
 
 ## 使用其他网络库
