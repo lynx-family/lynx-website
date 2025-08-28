@@ -22,6 +22,12 @@ To upgrade `@lynx-js/rspeedy` and its plugins to the latest version, use the fol
 npx upgrade-rspeedy@latest
 ```
 
+For better performance when using pnpm in a monolithic repository, run the following command
+
+```bash
+pnpm dlx upgrade-rspeedy@latest
+```
+
 ### Upgrade to a specific version
 
 To upgrade `@lynx-js/rspeedy` and its plugins to a specific version, use the following command in your project:
