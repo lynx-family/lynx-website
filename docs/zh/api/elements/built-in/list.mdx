@@ -204,6 +204,21 @@ sticky-bottom?: boolean
 
 声明在子节点 `<list-item>` 上，控制该节点是否会吸底。
 
+### `recyclable`
+
+```tsx
+// DefaultValue: true
+recyclable?: boolean
+```
+
+```json
+"dependencies": {
+  "@lynx-js/react": "^0.112.2"
+}
+```
+
+声明在子节点 `<list-item>` 上，控制该节点是否会被回收，如果 `recyclable` 设置为 `false`，则 `<list-item>` 被滑出 `<list>` 可视区域后不会被回收。
+
 ### `bounces`
 
 ```ts
@@ -443,6 +458,34 @@ estimated-main-axis-size-px?: number
 强烈建议开发者设置与子节点真实大小相近的 `estimated-main-axis-size-px`。
 
 :::
+
+### `experimental-recycle-sticky-item`
+
+```tsx
+// DefaultValue: true
+experimental-recycle-sticky-item?: boolean
+```
+
+`<list>` 中存在多个吸顶或者吸底的节点时，当吸顶或吸底的节点被其他吸顶或吸底的节点推出 `<list>` 区域后回收该节点，以解决吸顶或者吸底的节点过多导致的内存开销问题。此优化在 `engineVersion` 版本大于等于 `3.4` 时 默认开启。
+
+<table rules="none" align="center" width="100%" style={{tableLayout:"fixed"}}>
+  <tr style={{height: '300px'}}>
+    <td style={{padding: '5px'}}>
+      <center>
+        <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/not-recycle-sticky-1.gif" style={{width: "100%"}}/>
+        <br/>
+        <span>吸顶的节点不回收，`<list-item>` 数量会不断增长</span>
+      </center>
+    </td>
+    <td style={{padding: '5px'}}>
+      <center>
+        <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recycle-sticky-1.gif" style={{width: "100%"}}/>
+        <br/>
+         <span>吸顶的节点回收，`<list-item>` 会被复用，数量不会增长</span>
+      </center>
+    </td>
+  </tr>
+</table>
 
 ## 事件
 
@@ -786,7 +829,7 @@ lynx
   highlight="{44-47}"
 />
 
-### 利用 `item-snap` 实现分页滚动 {#pagination-withitem-snap}
+### 利用 `item-snap` 实现分页滚动
 
 通过设置 `factor` 来确定分页滚动定位的参数，取值范围 `[0, 1]`. 以竖直方向为例，`0` 代表 `<list-item>` 和 `<list>` 顶部对齐，`1` 代表 `<list-item>` 和 `<list>` 底部对齐，还可以通过设置 `offset`，从而在 `factor` 的基础上添加滚动偏移量。
 
@@ -821,6 +864,19 @@ lynx
   defaultEntryFile="dist/zIndex.lynx.bundle"
   entry="src/zIndex"
   highlight="{20,23,31}"
+/>
+
+### 实现 `<list-item>` 不回收
+
+通过给 `<list-item>` 设置 [`recyclable`](#recyclable) 为 `false` 来实现该节点不回收。在这个例子中，我们给第一个 `<list-item>` 中添加了一个溢出且带背景色的 `<view>` 节点，当这个 `<list-item>` 被滑动出屏幕后，我们依然可以看到这个带背景色的 `<view>` 在屏幕上。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/20250828-213840.gif"
+  example="list"
+  defaultFile="src/recyclable/index.tsx"
+  defaultEntryFile="dist/recyclable.lynx.bundle"
+  entry="src/recyclable"
+  highlight="{25}"
 />
 
 ## 兼容性
