@@ -170,6 +170,54 @@ let ani = lynx.getElementById('test').animate(
 ani.pause();
 ani.play();
 ani.cancel();
+
+// 在 Lynx 3.3 版本后，Animate API 可以通过 createSelectorQuery API 来调用，并且可以同时在一个节点上启动多个动画，使用方式如下：
+// 该方式属于实验性功能。
+const ani1 = lynx.createAnimation(
+  'ani1',
+  [
+    {
+      transform: 'translateY(0px)',
+    },
+    {
+      transform: 'translateY(-150px)',
+    },
+  ],
+  {
+    name: 'js-animation-1',
+    duration: 3000,
+    iterations: 'infinite',
+    easing: 'cubic-bezier(.64, .57, .67, 1.53)',
+    fill: 'forwards',
+  },
+);
+
+const ani2 = lynx.createAnimation(
+  'ani2',
+  [
+    {
+      'background-color': 'red',
+    },
+    {
+      'background-color': 'blue',
+    },
+  ],
+  {
+    name: 'js-animation-2',
+    duration: 3000,
+    easing: 'linear',
+    fill: 'forwards',
+    iterations: 'infinite',
+  },
+);
+
+// start
+this.createSelectorQuery().select('#test').animate([ani1, ani2]).exec();
+// pause
+this.createSelectorQuery()
+  .select('#test')
+  .pauseAnimation(['js-animation-1', 'js-animation-2'])
+  .exec();
 ```
 
 ## 动画事件
@@ -184,11 +232,11 @@ Animate API 的事件和 CSS Animation [动画事件](../event/animation-event#a
 
 - 每次调用 `lynx.getElementById("test").animate` 都会生成一个新的 `Animation` 对象。
 
-- Animate Api 暂只支持创建一个动画，未来会支持创建多个。因此现在若对一个节点多次调用 `lynx.getElementById("test").animate`，最后创建的动画会覆盖前面的动画。
+- Animate Api 在 Lynx 3.3 版本之前仅支持创建一个动画，因此在 Lynx 3.3 版本前若对一个节点多次调用 `lynx.getElementById("test").animate`，最后创建的动画会覆盖前面的动画。
 
 - 一个 `Animation` 对象对应的动画结束后，若想重启一个同样的动画，需要重新调用 `lynx.getElementById("test").animate` 创建一个新的 `Animation` 对象。
 
-- Animate API 暂只支持 getElementById API，对 SelectQuery API 的支持还未接入。
+- Animate API Lynx 3.3 版本之前只支持 getElementById API，在 Lynx 3.3 版本后支持了 SelectQuery API.
 
 :::
 
