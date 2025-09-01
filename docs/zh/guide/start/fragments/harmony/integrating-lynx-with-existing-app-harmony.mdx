@@ -5,8 +5,9 @@ import { Steps } from '@theme';
 import { Tab, Tabs } from 'rspress/theme';
 
 <Info title="Lynx for Harmony">
-  - 本文假设你已熟悉原生 Harmony 应用开发的基本概念。
-  - 下文中的所有代码，你都可以参考项目: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject)
+  - 本文假设你已熟悉原生 Harmony 应用开发的基本概念。 -
+  下文中的所有代码，你都可以参考项目:
+  [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject)
 </Info>
 
 ## 1. 依赖配置
@@ -42,16 +43,17 @@ Lynx Service 包括 `LynxDevtoolService`、`LynxLogService` 等，旨在提供�
 cmake_minimum_required(VERSION 3.5.0)
 project(MyApplication)
 ```
+
 并且修改 `entry/build-profile.json5` 中的 `buildOptions`
 
 ```json5 title=build-profile.json5 {3-7}
 {
-  "buildOption": {
-    "externalNativeOptions": {
-      "path": "./src/main/cpp/CMakeLists.txt",
-      "arguments": "",
-      "cppFlags": "",
-    }
+  buildOption: {
+    externalNativeOptions: {
+      path: './src/main/cpp/CMakeLists.txt',
+      arguments: '',
+      cppFlags: '',
+    },
   },
 }
 ```
@@ -62,20 +64,18 @@ project(MyApplication)
 
 ```json5 title=module.json5 {3-14}
 {
-  "module": {
-    "requestPermissions": [
+  module: {
+    requestPermissions: [
       {
-        "name": "ohos.permission.INTERNET",
-        "reason": "$string:network",
-        "usedScene": {
-          "abilities": [
-            "FormAbility"
-          ],
-          "when": "inuse"
-        }
+        name: 'ohos.permission.INTERNET',
+        reason: '$string:network',
+        usedScene: {
+          abilities: ['FormAbility'],
+          when: 'inuse',
+        },
       },
     ],
-}
+  },
 }
 ```
 
@@ -91,6 +91,7 @@ project(MyApplication)
   ]
 }
 ```
+
 </Steps>
 
 ## 2. 环境初始化
@@ -108,18 +109,27 @@ import { LynxHttpService } from '@lynx/lynx_http_service';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-
     // Init LynxDevtoolService
-    LynxServiceCenter.registerService(LynxServiceType.DevTool, LynxDevToolService.instance);
+    LynxServiceCenter.registerService(
+      LynxServiceType.DevTool,
+      LynxDevToolService.instance,
+    );
     // Init LynxHttpService
-    LynxServiceCenter.registerService(LynxServiceType.Http, LynxHttpService.instance);
+    LynxServiceCenter.registerService(
+      LynxServiceType.Http,
+      LynxHttpService.instance,
+    );
     // Init LynxLogService
-    LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
+    LynxServiceCenter.registerService(
+      LynxServiceType.Log,
+      LynxLogService.instance,
+    );
 
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 }
 ```
+
 ### LynxEnv 初始化
 
 `LynxEnv` 提供了 `Lynx Engine` 的全局初始化接口。请保证 `LynxEnv` 的初始化发生在 `Lynx Engine` 的任何接口调用之前；例如可以在 `EntryAbility` 的 `OnCreate` 生命周期中完成初始化。
@@ -143,6 +153,7 @@ export default class EntryAbility extends UIAbility {
   }
 }
 ```
+
 </Steps>
 
 ## 3.渲染LynxView
@@ -207,17 +218,18 @@ export class ExampleTemplateResourceFetcher extends LynxTemplateResourceFetcher 
     }
   }
 
-  fetchSSRData(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>) {
-    let httpRequest = http.createHttp();
-    httpRequest.request(request.url, {
-      expectDataType: http.HttpDataType.ARRAY_BUFFER
-    }, (err: BusinessError, data: http.HttpResponse) => {
-      callback(err, data?.result as ArrayBuffer)
-      httpRequest.destroy();
-    })
-  }
+fetchSSRData(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>) {
+let httpRequest = http.createHttp();
+httpRequest.request(request.url, {
+expectDataType: http.HttpDataType.ARRAY_BUFFER
+}, (err: BusinessError, data: http.HttpResponse) => {
+callback(err, data?.result as ArrayBuffer)
+httpRequest.destroy();
+})
 }
-```
+}
+
+````
 </CodeFold>
 
 2. **LynxMediaResourceFetcher**
@@ -238,7 +250,8 @@ export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
     return LynxOptionalBool.UNDEFINED;
   }
 }
-```
+````
+
 </CodeFold>
 
 3. **LynxGenericResourceFetcher**
@@ -263,53 +276,54 @@ export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
     })
   }
 
-  fetchResourcePath(request: LynxResourceRequest, callback: AsyncCallback<string, void>): void {
-    if (request.type === LynxResourceType.LYNX_RESOURCE_TYPE_IMAGE) {
-      let option = new ImageKnifeOption();
-      option.loadSrc = request.url;
-      option.writeCacheStrategy = CacheStrategy.File;
-      let error: BusinessError | undefined = undefined;
-      ImageKnife.getInstance().preLoadCache(option).then((data: string) => {
-        if (data.length > 0) {
-          callback(error, data);
-        } else {
-          error = {
-            code: LynxSubErrorCode.E_RESOURCE_IMAGE_PIC_SOURCE,
-            message: 'Image path is invalid',
-            name: 'Image Error',
-          }
-          callback(error, '');
-        }
-      }).catch((e: string) => {
-        error = {
-          code: LynxSubErrorCode.E_RESOURCE_IMAGE_FROM_NETWORK_OR_OTHERS,
-          message: e,
-          name: 'Image Error',
-        }
-        callback(error, '');
-      })
-    } else {
-      callback({
-        code: LynxError.LYNX_ERROR_CODE_RESOURCE,
-        message: 'unsupported type: ' + request.type,
-        name: 'Resource Error',
-      }, '');
-    }
-  }
-
-  fetchStream(request: LynxResourceRequest, delegate: LynxStreamDelegate): void {
-    // TODO(Lynx): support fetching stream.
-    delegate.onStart(100);
-    let a = new ArrayBuffer(10);
-    delegate.onData(a, 0, 10);
-    delegate.onEnd();
-  }
-
-  cancel(request: LynxResourceRequest): void {
-    // TODO(Lynx)
-  }
+fetchResourcePath(request: LynxResourceRequest, callback: AsyncCallback<string, void>): void {
+if (request.type === LynxResourceType.LYNX_RESOURCE_TYPE_IMAGE) {
+let option = new ImageKnifeOption();
+option.loadSrc = request.url;
+option.writeCacheStrategy = CacheStrategy.File;
+let error: BusinessError | undefined = undefined;
+ImageKnife.getInstance().preLoadCache(option).then((data: string) => {
+if (data.length > 0) {
+callback(error, data);
+} else {
+error = {
+code: LynxSubErrorCode.E_RESOURCE_IMAGE_PIC_SOURCE,
+message: 'Image path is invalid',
+name: 'Image Error',
 }
-```
+callback(error, '');
+}
+}).catch((e: string) => {
+error = {
+code: LynxSubErrorCode.E_RESOURCE_IMAGE_FROM_NETWORK_OR_OTHERS,
+message: e,
+name: 'Image Error',
+}
+callback(error, '');
+})
+} else {
+callback({
+code: LynxError.LYNX_ERROR_CODE_RESOURCE,
+message: 'unsupported type: ' + request.type,
+name: 'Resource Error',
+}, '');
+}
+}
+
+fetchStream(request: LynxResourceRequest, delegate: LynxStreamDelegate): void {
+// TODO(Lynx): support fetching stream.
+delegate.onStart(100);
+let a = new ArrayBuffer(10);
+delegate.onData(a, 0, 10);
+delegate.onEnd();
+}
+
+cancel(request: LynxResourceRequest): void {
+// TODO(Lynx)
+}
+}
+
+````
 </CodeFold>
 
 ### 构造 LynxView 并渲染视图
@@ -348,12 +362,16 @@ struct Index {
     .size({ width: '100%', height: '100%' })
   }
 }
-```
+````
+
 </CodeFold>
 然后你将在屏幕上看到如下内容：
 
 <center>
-  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-harmony.png" width="200" />
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-harmony.png"
+    width="200"
+  />
 </center>
 
 </Steps>
@@ -362,4 +380,4 @@ struct Index {
 
 ## 4. 进入 Lynx 世界
 
-现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/debugging/lynx-devtool)文档进一步在 Lynx 的世界里遨游吧！
+现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/devtool/panels)文档进一步在 Lynx 的世界里遨游吧！
