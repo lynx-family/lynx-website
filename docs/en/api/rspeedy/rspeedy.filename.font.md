@@ -9,7 +9,7 @@ The name of the font files.
 **Signature:**
 
 ```typescript
-font?: string | undefined;
+font?: Rspack.AssetModuleFilename | undefined;
 ```
 
 ## Remarks

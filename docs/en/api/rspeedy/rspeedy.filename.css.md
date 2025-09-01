@@ -9,7 +9,7 @@ The name of the CSS files.
 **Signature:**
 
 ```typescript
-css?: string | undefined;
+css?: Rspack.CssFilename | undefined;
 ```
 
 ## Remarks
@@ -17,4 +17,27 @@ css?: string | undefined;
 Default values:
 
 - `'[name].css'`
+
+## Example
+
+- Using a function to dynamically set the filename based on the file information:
+
+```js
+import { defineConfig } from '@lynx-js/rspeedy'
+
+export default defineConfig({
+  output: {
+    filename: {
+      css: (pathData, assetInfo) => {
+        console.log(pathData); // You can check the contents of pathData here
+
+        if (pathData.chunk?.name === 'index') {
+          return isProd ? '[name].[contenthash:8].css' : '[name].css';
+        }
+        return '/some-path/[name].css';
+      },
+    },
+  },
+})
+```
 
