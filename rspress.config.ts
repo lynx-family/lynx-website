@@ -80,6 +80,7 @@ export default defineConfig({
         'process.env': {
           // This marks the first open sourced version of Lynx.
           OSS: '3.2',
+          COMPAT_TABLE_HIDE_CLAY: true,
           DOC_GIT_BASE_URL: JSON.stringify(
             'https://github.com/lynx-family/lynx-website/tree/main',
           ),
