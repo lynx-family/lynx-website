@@ -12,35 +12,29 @@ You can add the `@Sendable` annotation to the Module class to convert it into a 
 <CodeFold height={360} toggle>
 
 ```typescript title="NativeLocalStorageModule.ets"
-import { LynxModule } from '@lynx/lynx';
-import Constants from '../common/constants';
-import { featureAbility } from '@kit.AbilityKit';
+import { LynxContext, LynxModule } from '@lynx/lynx';
+import common from '@ohos.app.ability.common';
 import { preferences } from '@kit.ArkData';
 
-export class NativeLocalStorageModule {
-  private static readonly PREF_NAME: string = "MyLocalStorage";
-  private context: any;
+export class NativeLocalStorageModule extends LynxModule {
+  private static readonly PREF_NAME: string = "NativeLocalStorageModule";
   private dataPreferences: preferences.Preferences | null = null;
 
-  constructor(context: any) {
-    this.context = context;
+  constructor(context: LynxContext, param?: Object) {
+    super(context, param);
     this.initPreferencesSync();
   }
 
   private initPreferencesSync() {
     try {
       this.dataPreferences = preferences.getPreferencesSync(
-        this.getContext(), 
+        getContext(), 
         { name: NativeLocalStorageModule.PREF_NAME }
       );
       console.info("Preferences initialization succeeded.");
     } catch (error) {
       console.error(`Failed to initialize preferences: ${error}`);
     }
-  }
-
-  private getContext(): any {
-    return featureAbility.getContext();
   }
 
   public setStorageItem(key: string, value: string) {
@@ -53,7 +47,7 @@ export class NativeLocalStorageModule {
       this.dataPreferences.putSync(key, value);
       this.dataPreferences.flushSync();
       console.info(`Storage item set successfully. key=${key}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error(`Failed to set storage item. key=${key}, error=${err.message}`);
     }
   }
@@ -86,7 +80,7 @@ export class NativeLocalStorageModule {
       this.dataPreferences.clearSync();
       this.dataPreferences.flushSync();
       console.info("Storage cleared successfully.");
-    } catch (err: any) {
+    } catch (err) {
       console.error(`Failed to clear storage. error=${err.message}`);
     }
   }
@@ -113,8 +107,7 @@ struct Lynx {
   aboutToAppear() {
     // `param` is an optional constructor parameter for the module
     this.modules.set('NativeLocalStorageModule', {
-      moduleClass: NativeLocalStorageModule,
-      param: {}
+      moduleClass: NativeLocalStorageModule
     });
     // Register Sendable Modules to this.sendableModules
   }
@@ -137,4 +130,4 @@ Start the development server:
 
 You'll see a QR code and an artifact link in the console. Use Lynx Explorer to scan the QR code or enter the artifact link to open your Lynx page.
 
-![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/native-modules-demo-harmony-0.gif)
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/native-modules-demo-harmony.gif)
