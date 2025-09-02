@@ -2,7 +2,7 @@
 
 ## Profiling Lynx
 
-Following the instruction of [Record Trace](/guide/performance/analysis/record-trace.html) to profiling Lynx.
+Following the instruction of [Record Trace](/guide/devtool/trace/record-trace.html) to profiling Lynx.
 
 ## Profiling Framework
 

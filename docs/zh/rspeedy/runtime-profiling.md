@@ -2,7 +2,7 @@
 
 ## 分析 Lynx 性能
 
-按照[录制 Trace](/guide/performance/analysis/record-trace.html) 的指引来分析 Lynx 性能。
+按照[录制 Trace](/guide/devtool/trace/record-trace.html) 的指引来分析 Lynx 性能。
 
 ## 分析框架性能
 
