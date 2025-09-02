@@ -13,6 +13,7 @@
 export type PlatformName =
   | 'android'
   | 'clay_android'
+  | 'clay_ios'
   | 'clay_macos'
   | 'clay_windows'
   | 'ios'
