@@ -8,26 +8,21 @@ import { Button, Toast } from '@douyinfe/semi-ui';
 
 ## Introduction
 
-Just as photographers in life use their cameras to capture beautiful moments, Recorder is the dedicated "photographer" for Lynx. It can precisely record the pages, generating "film reels" that can be replayed.
+Recorder is a tool designed for the Lynx framework to facilitate the recording and replay of page runtime states. Its core functionality involves precisely capturing the complete state of a page at a specific moment and serializing it into a portable recording file for subsequent high-fidelity replay.
 
-Is it simply video recording? No! Recorder goes a step further by offering "perfect replay". During replay, it not only ensures the completeness of the UI and the consistency of rendering data, but also preserves the interactive functionality of the page. Even the time obtained by the page is consistent with that of the recording phase.
+Unlike traditional screen recording technologies, Recorder achieves "Deterministic Replay." During the replay process, the system not only reconstructs the complete UI hierarchy and rendering data from the time of recording but also preserves all page interactivity. Crucially, it achieves temporal consistency by hijacking and mocking time-related APIs, ensuring that time-sensitive operations within the replayed environment yield the same results as they did during the original session.
 
-Can it be replayed across devices? Absolutely! Recorder provides a Replayer to decode the "film reels". With that, you can replay a "film reel" on any device without worrying about the model type. For instance, a "film reel" recorded on an iPad can be replayed on an iPhone or even an Android device. If your apps on PC, TV, or other non-mobile devices are also developed with Lynx, the "film reels" are available to them as well.
+Recorder features cross-device replay capabilities. Through its integrated Replayer decoder, a recording file can be parsed and replayed on any device that supports the Lynx framework, regardless of hardware model or operating system. For instance, a session recorded on an iPad can be accurately reproduced on an iPhone, an Android device, or even on desktop and TV applications built with the same Lynx technology stack.
 
-### Faster Issue Addressing
+As an application's feature set expands, Lynx pages often become tightly coupled with the native application environment. This includes dependencies on custom NativeModules or private cloud services for data and resource management.
 
-If you are using Lynx to develop an application, as features gradually grow, your pages will become increasingly coupled with your application environment. For example, your Lynx pages might rely on custom NativeModules within your app, or depend on your own cloud services for resources and data management.
-When you encounter tricky issues and need help from others, if the problem is simple enough, it can be solved through basic communication or by reviewing the source code. But if you’re not so lucky, you’ll often hope to resolve the issue through source code debugging. Trust me, when a truly tough problem arises, even the most enthusiastic helpers may become overwhelmed by the over-coupling between your page and your private environment. Problems like build fails, authentication errors, and environmental differences will soon follow.
+When diagnosing complex issues, this strong coupling becomes a major impediment to external collaboration and debugging, leading to problems such as build failures, complex authentication procedures, and inaccessible backend services. In such scenarios, traditional methods like code review are inefficient, while source-level debugging is often impractical due to environmental discrepancies.
+A core design objective of Recorder is to decouple the page from its private environment. A recording file encapsulates all information required for the page to run, including the view hierarchy, data state, and responses from asynchronous requests. During replay, all external dependencies are simulated using the data contained within the recording file, eliminating the need for any live network requests. This makes the debugging process entirely independent of the original production environment.
+Technical Advantages:
 
-The original intention behind Recorder’s design is to eliminate the coupling between Lynx pages and private environments, thereby accelerating the troubleshooting process. Thanks to Recorder’s "film reels", which store all the information required by the page, no external requests are needed during replay, freeing you from dependency on private environments.
-
-With Recorder assisting in troubleshooting, there’s no need to compile the original application, configure complex authentication processes, or worry about differences in development environments. All you need to do is provide a "film reel," and others replay the scenario on any device equipped with the Replayer to resolve the issue.
-
-### Richer Testing Scenarios
-
-In daily development, there is always a delay between code merging and actual user use. This causes some subtle issues—especially those related to specific business scenarios—to surface late, often in a very urgent manner. Facing anxious customers and a long commit history, you’ll inevitably wish you had discovered the issue sooner.
-
-Leveraging its role as a "photographer", Recorder can capture a wide range of real-world scenarios and use replay during development to verify whether changes introduce issues in actual scenarios. This allows potential risks from code changes to be identified earlier and more quickly.
+- Environment-Agnostic: Debuggers do not need to compile the original application, configure complex authentication, or set up specific development environments.
+- Self-Contained Context: A single recording file contains all the necessary context to reproduce an issue.
+- Efficient Collaboration: The party reporting the issue simply provides a recording file, allowing the recipient to debug in a standardized replay environment. This significantly reduces communication overhead and the difficulty of issue reproduction.
 
 ## Try Recorder
 
@@ -37,13 +32,7 @@ Recorder's record and replay capabilities are already integrated by default in L
 
 ### Download and install LynxExplorer
 
-Please visit [LynxExplorer](/guide/start/quick-start.html#prepare-lynx-explorer) and follow the documentation to run Lynx Explorer app locally.
-
-### Download and install Lynx Devtool Application
-
-The Lynx Devtool Application integrates the Recorder control plugin, making it easy to control page record, obtain recorded artifacts, and perform other related operations.
-
-You can visit [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) to get the latest version of Lynx DevTool desktop application.
+Please visit [LynxExplorer](/guide/start/quick-start.html#prepare-lynx-explorer) and follow the documentation to run LynxExplorer app locally.
 
 ### Start record
 
@@ -128,7 +117,7 @@ Here is a sample recorded artifact that you can replay by scanning the QR code o
 </div>
 
 :::note
-It is especially important to note that if you are using a self-hosted artifact URL for replay, you need to append the Recorder Header to the artifact URL to indicate that the artifact is from LynxRecorder.
+It is especially important to note that if you are using a self-hosted artifact URL for replay, you need to append the Recorder Header to the artifact URL to indicate that the artifact is from Recorder.
 
 Original artifact URL:
 
@@ -169,7 +158,7 @@ LynxExplorer can fully reproduce the recorded page.
 
 ### Switch to the dev version
 
-Since the record and replay process of Recorder covers the entire rendering process of Lynx and requires support from the underlying Lynx engine, we have released a separate dev version apart from the official Lynx release to prevent these record-related codes from affecting production environments. If you want to integrate LynxRecorder, you need to change the version numbers of both Lynx and LynxDevtool in your project to the corresponding dev versions. [integrate lynx dev version](/guide/start/integrate-lynx-dev-version.html)
+Since the record and replay process of Recorder covers the entire rendering process of Lynx and requires support from the underlying Lynx engine, we have released a separate dev version apart from the official Lynx release to prevent these record-related codes from affecting production environments. If you want to integrate Recorder, you need to change the version numbers of both Lynx and LynxDevtool in your project to the corresponding dev versions. [integrate lynx dev version](/guide/start/integrate-lynx-dev-version.html)
 
 ### Record capability integration
 
