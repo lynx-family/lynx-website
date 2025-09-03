@@ -1,5 +1,5 @@
 ---
-date: 2025-8-25  // TODO Update Date
+date: 2025-8-29
 sidebar: false
 ---
 
@@ -10,8 +10,83 @@ import { Tab, Tabs } from '@rspress/core/theme';
 
 _May 14th, 2025_ // TODO Update Date
 
-# What’s new in Lynx 3.2
+# Lynx 3.4: HarmonyOS Support, Trace and Recorder, Text Input Elements
 
 <BlogAvatar list={['liujilong', 'lynx']} />
 
 
+Lynx 3.4 is now officially released!
+
+In line with the [technical roadmap](/blog/lynx-open-source-roadmap-2025) announced earlier this year, this new version open-sources several core capabilities of the Lynx technology stack. These include adding support for HarmonyOS, enabling Windows as a development environment, introducing the Trace and Recorder tools to boost efficiency, and adding two new text input elements.
+
+Lynx 3.4 also introduces a series of feature updates designed to expand its capabilities in complex scenarios. We optimized the recycling strategy of the `<list>` element to improve rendering performance; provided more complete and smooth animation support; and added support for variable fonts, allowing developers to achieve finer typographic control through properties like `font-variation-settings`.
+
+## New System Support
+### Open-Source HarmonyOS Support
+Lynx now officially supports the HarmonyOS platform. Developers can integrate Lynx into their HarmonyOS applications by following our [Integration Guide](/guide/start/integrate-with-existing-apps.html#platform=harmony).
+Additionally, we will soon be publishing a technical deep dive that explores the implementation of Lynx on HarmonyOS. Keep an eye on our blog for this upcoming post.
+
+### Windows Development Environment Support
+
+* The build tool [Rspeedy](/rspeedy) now supports the Windows, enabling developers to develop and build Lynx projects on Windows PCs;
+
+* Developers can successfully compile the Android Lynx SDK and LynxExplorer application in a Windows environment;
+
+Support for the Windows version of Devtool desktop is currently in development and will be released soon.
+
+## New Development Tools
+Lynx 3.4 introduces two development tools dedicated to improving the developer experience and debugging efficiency.
+
+### Trace
+Trace: Capable of deeply tracing and visualizing the complete rendering process of Lynx pages and the internal execution logic of the engine, it clearly presents the previously opaque "black box" runtime state. It not only helps developers quickly understand the underlying working principles of Lynx but also significantly improves the efficiency of locating performance bottlenecks.
+
+(Image placeholder for Trace introduction)
+
+### Recorder
+Recorder: Can record all external dependencies during the operation of a Lynx page (including bundle resources, native module return results, user interaction sequences, etc.) and supports exporting the recording results. The recorded scenarios can be fully replayed in LynxExplorer, greatly facilitating the reproduction and debugging of complex interaction scenarios.
+
+(Image placeholder for Recorder introduction)
+
+## More Built-in Elements
+### New Text Input Elements
+In the UI capability survey initiated by the Lynx community, `<Input>/<TextArea>` received over 50% of the votes, becoming the core functionality developers most urgently期待.
+Lynx 3.4 delivers two core text input elements:
+
+* [`<input>`](/api/elements/built-in/input): Single-line text input element
+
+<Go example="input" defaultFile="src/base/index.tsx" img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/input_basic.PNG" highlight="{13-20}" />
+
+* [`<textarea>`](/api/elements/built-in/textarea): Multi-line text input element
+
+<Go example="textarea" defaultFile="src/base/index.tsx" img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/textarea_basic.PNG" highlight="{13-21}" />
+
+We will continue to improve core elements. Developers are welcome to continue voting in the [discussion](https://github.com/lynx-family/lynx/discussions/673) to help shape Lynx's future.
+
+### More Flexible `<list>` Recycling Strategy
+When a `<list-item>` is scrolled out of the `<list>` viewport, the original recycling mechanism would cache the item for reuse. Prior to Lynx 3.4, `<list-item>` elements with the sticky attribute were not recycled. In long lists making heavy use of the sticky feature, this could lead to high memory usage. Lynx 3.4 optimizes this strategy; sticky items are now also recycled after scrolling out of the viewport.
+If this change adversely affects your existing scenarios, you can temporarily disable this optimization by setting [`experimental-recycle-sticky-item={false}`](/api/elements/built-in/list.html#experimental-recycle-sticky-item). If you encounter any issues, please provide feedback via an issue.
+
+<table border="0"> <tr> <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/not-recycle-sticky-1.gif)</td> <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recycle-sticky-1.gif)</td> </tr> <tr> <td>sticky `<list-item>` in Lynx 3.3</td> <td>sticky `<list-item>` in Lynx 3.4</td> </tr> </table>
+When a `<list-item>` contains complex components, recycling and re-updating the node incurs significant CPU overhead. Developers can now set `recyclable={false}` to [prevent specific `<list-item>` from being recycled](/api/elements/built-in/list.html#not-recycle-list-item). Once disabled, the item will not be recycled when it slides out of the viewport and won't require re-rendering when it reappears, making it suitable for scenarios demanding rendering performance.
+
+<Go img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/20250828-213840.gif" example="list" defaultFile="src/recyclable/index.tsx" defaultEntryFile="dist/recyclable.lynx.bundle" entry="src/recyclable" />
+
+## New Animation Capabilities
+### Element.animate()
+The [`MainThread.Element`](/api/lynx-api/main-thread/main-thread-element) now features an animate() method for finely controlling CSS animations on the MTS (Main Thread Scripting), including operations like play, pause, and seeking, enabling more flexible interactive animations.
+
+<Go img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/mt_animation.webp" example="animation" defaultFile="src/animate_mt/index.tsx" defaultEntryFile="dist/animate_mt.lynx.bundle" entry="src/animate_mt" />
+
+### CSS Variables Triggering Transition
+Transition animations can now be triggered by changes in CSS variables, enhancing the flexibility and maintainability of过渡animations. In multi-theme designs, developers can associate animation parameters with theme variables. Switching themes only requires modifying the variable values without changing selector logic to complete the theme transition.
+
+<Go img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/transition-variable.gif" example="animation" defaultFile="src/transition_variable/index.scss" defaultEntryFile="dist/transition_variable.lynx.bundle" entry="src/transition_variable" />
+
+## Variable Fonts Support
+Lynx 3.4 adds support for variable fonts. Developers can now perform finer adjustments to font styles using underlying CSS properties like font-variation-settings and font-optical-sizing.
+Read the [MDN](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_fonts/Variable_fonts_guide) and [web.dev](https://web.dev/articles/variable-fonts) guides to learn more about variable fonts technology.
+
+<Go img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/variable-font.jpeg" example="text" defaultFile="src/variable_font/index.tsx" defaultEntryFile="dist/variable_font.lynx.bundle" entry="src/variable_font" />
+
+## Upgrade Guide
+Refer to the official guide on [Integrating Lynx into Existing Apps](/zh/guide/start/integrate-with-existing-apps.html), update the Lynx and LynxService dependency versions to complete the upgrade to Lynx 3.4.
