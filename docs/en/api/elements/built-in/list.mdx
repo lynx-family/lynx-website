@@ -204,6 +204,21 @@ sticky-bottom?: boolean
 
 Declared on the `<list-item>` child node to control whether the node will be sticky at the bottom.
 
+### `recyclable`
+
+```tsx
+// DefaultValue: true
+recyclable?: boolean
+```
+
+```json
+"dependencies": {
+  "@lynx-js/react": "^0.112.2"
+}
+```
+
+Declared on the `<list-item>` node to control whether the node can be recycled, and if set to `false`, the `<list-item>` will not be recycled when it is scrolled out of the viewport of `<list>`.
+
 ### `bounces`
 
 ```ts
@@ -441,6 +456,50 @@ Specifies the placeholder size in the main axis direction for `<list-item>` befo
 It is strongly recommended that developers set `estimated-main-axis-size-px` to a value close to the actual size of the child nodes.
 
 :::
+
+### `experimental-recycle-sticky-item`
+
+```tsx
+// DefaultValue: true
+experimental-recycle-sticky-item?: boolean
+```
+
+When there are multiple sticky nodes, after a sticky node is pushed out of the `<list>` area by other sticky nodes, the node is recycled to address the memory overhead issue caused by too many sticky nodes. This optimization is enabled by default when `engineVersion` version is greater than or equal to `3.4`.
+
+<table
+  rules="none"
+  align="center"
+  width="100%"
+  style={{ tableLayout: 'fixed' }}
+>
+  <tr style={{ height: '300px' }}>
+    <td style={{ padding: '5px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/not-recycle-sticky-1.gif"
+          style={{ width: '100%' }}
+        />
+        <br />
+        <span>
+          sticky nodes not recycled, the ui count will keep increasing
+        </span>
+      </center>
+    </td>
+    <td style={{ padding: '5px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recycle-sticky-1.gif"
+          style={{ width: '100%' }}
+        />
+        <br />
+        <span>
+          sticky nodes is recycled and reused, the ui count will not keep
+          increasing
+        </span>
+      </center>
+    </td>
+  </tr>
+</table>
 
 ## Events
 
@@ -819,6 +878,19 @@ Example of horizontal orientation:
   defaultEntryFile="dist/zIndex.lynx.bundle"
   entry="src/zIndex"
   highlight="{20,23,31}"
+/>
+
+### Not recycle `<list-item>`
+
+By setting the [`recyclable`](#recyclable) property of `<list-item>` to `false`, you can prevent the node from being recycled. In this example, we added an overflowing `<view>` with a background color to the first `<list-item>`. When this `<list-item>` is scrolled off the screen, we can still see the `<view>` with background color on the screen.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/20250828-213840.gif"
+  example="list"
+  defaultFile="src/recyclable/index.tsx"
+  defaultEntryFile="dist/recyclable.lynx.bundle"
+  entry="src/recyclable"
+  highlight="{25}"
 />
 
 ## Compatibility

@@ -4,7 +4,7 @@
 
 ## Performance interface
 
-The [Performance](./rspeedy.performance.md) option is used to
+The [Performance](./rspeedy.performance.md) option is used to optimize the build-time and runtime performance.
 
 **Signature:**
 

@@ -46,7 +46,7 @@ function gatherPlatformsAndBrowsers(
   const hasNodeJSData = data.__compat && 'nodejs' in data.__compat.support;
   const hasDenoData = data.__compat && 'deno' in data.__compat.support;
 
-  const platforms: BCD.PlatformType[] = !!process.env.OSS
+  const platforms: BCD.PlatformType[] = !!process.env.COMPAT_TABLE_HIDE_CLAY
     ? ['native', 'web']
     : ['native', 'clay', 'web'];
   let browsers: BCD.PlatformName[] = [];

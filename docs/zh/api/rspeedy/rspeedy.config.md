@@ -20,9 +20,9 @@ export interface Config
 |  [environments?](./rspeedy.config.environments.md) |  | RsbuildConfig\['environments'\] \| undefined | _(Optional)_ The [Config.environments](./rspeedy.config.environments.md) option is used to set the output environment. |
 |  [mode?](./rspeedy.config.mode.md) |  | 'development' \| 'production' \| 'none' \| undefined | _(Optional)_ Specify the build mode for Rsbuild and Rspack, as each mode has different default behavior and optimizations. |
 |  [output?](./rspeedy.config.output.md) |  | [Output](./rspeedy.output.md) \| undefined | _(Optional)_ The [Output](./rspeedy.output.md) option is used to set how and where should the bundles and assets output. |
-|  [performance?](./rspeedy.config.performance.md) |  | [Performance](./rspeedy.performance.md) \| undefined | _(Optional)_ The [Performance](./rspeedy.performance.md) option is used to |
+|  [performance?](./rspeedy.config.performance.md) |  | [Performance](./rspeedy.performance.md) \| undefined | _(Optional)_ The [Performance](./rspeedy.performance.md) option is used to optimize the build-time and runtime performance. |
 |  [plugins?](./rspeedy.config.plugins.md) |  | RsbuildPlugins \| undefined | _(Optional)_ The <code>plugins</code> option is used to customize the build process in a variety of ways. |
-|  [provider?](./rspeedy.config.provider.md) |  | RsbuildConfig\['provider'\] | **_(ALPHA)_** _(Optional)_ The Rsbuild provider. |
+|  [resolve?](./rspeedy.config.resolve.md) |  | [Resolve](./rspeedy.resolve.md) \| undefined | _(Optional)_ The [Resolve](./rspeedy.resolve.md) option is used to control the resolution behavior of Rspack. |
 |  [server?](./rspeedy.config.server.md) |  | [Server](./rspeedy.server.md) \| undefined | _(Optional)_ The [Server](./rspeedy.server.md) option changes the behavior of dev-server. |
 |  [source?](./rspeedy.config.source.md) |  | [Source](./rspeedy.source.md) \| undefined | _(Optional)_ The [Source](./rspeedy.source.md) option changes the behavior of source files. |
 |  [tools?](./rspeedy.config.tools.md) |  | [Tools](./rspeedy.tools.md) \| undefined | _(Optional)_ The [Tools](./rspeedy.tools.md) options changes the behavior of various building tools. |

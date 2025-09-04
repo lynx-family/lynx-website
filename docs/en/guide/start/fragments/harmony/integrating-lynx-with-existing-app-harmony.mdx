@@ -2,26 +2,36 @@
 
 import { Info, CodeFold } from '@lynx';
 import { Steps } from '@theme';
-import { Tab, Tabs } from 'rspress/theme';
 
 <Info title="Lynx for Harmony">
-  - This document assumes you are familiar with the basic concepts of native
-  Harmony application development. - For all the code in this document, you can
-  refer to the project:
-  [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject)
+
+  - This article assumes that you are familiar with the basic concepts of native Harmony application development.
+  - You can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject) for all the code mentioned below.
 </Info>
 
 ## 1. Dependency Configuration
 
 <Steps>
-### Package Dependencies
-1. **Lynx-Related Version Dependencies**
 
-The core capabilities of the [Lynx Engine](/guide/spec.html#engine), including parsing the [Bundle](/guide/spec.html#lynx-bundle-or-bundle), style parsing, layout, rendering views, and the basic JavaScript runtime code that Lynx pages depend on.
+### Configuring Deps
 
-Lynx Service, which includes `LynxDevtoolService`, `LynxLogService`, and more, is designed to provide capabilities closely related to host application features, allowing the host application to inject custom implementations at runtime, or use the default implementations provided by Lynx. For example, LynxHttpService uses the built-in HTTP module of HarmonyOS by default. Lynx provides standard native Log and HTTP service capabilities, allowing integrators to quickly integrate and use them;
+1. **Lynx**
 
-```json5 title=oh-package.json5 {2-7}
+The core capabilities of [Lynx Engine](/guide/spec.html#engine) include basic capabilities such as parsing [Bundle](/guide/spec.html#lynx-bundle-or-bundle), style parsing, layout, rendering views and the basic code of the javascript runtime that Lynx pages rely on
+
+```json5 title=oh-package.json5 {3-4}
+"dependencies": {
+  "@ohos/imageknife": "3.2.6",
+  "@lynx/lynx": "3.4.0",
+  "@lynx/primjs": "2.14.0",
+},
+```
+
+2. **Lynx Service**
+
+Lynx Service includes `LynxDevtoolService`, `LynxLogService`, etc. It aims to provide the ability to strongly correlate some host App features, allowing the App to inject custom Services at runtime, or use the default implementation provided by the official. For example, `LynxHttpService` is implemented using the built-in HTTP module of HarmonyOS by default. Lynx provides standard native Log and HTTP service capabilities, which can be quickly accessed and used by the access party;
+
+```json5 title=oh-package.json5 {3-8}
 "dependencies": {
   "@ohos/imageknife": "3.2.6",
   "@lynx/lynx": "3.4.1",
@@ -98,9 +108,11 @@ And configure the `network` key field in `entry/src/main/resources/base/element/
 ## 2. Environment Initialization
 
 <Steps>
-### LynxService Initialization
 
-`Lynx Service` provides capabilities related to host features. It is recommended to complete the `Lynx Service` initialization in the `OnCreate` lifecycle of `EntryAbility`.
+### Lynx Service Initialization
+
+- Lynx Service provides host feature-related capabilities and it is recommended to complete the initialization of Lynx Service during the `UIAbility#onCreate` lifecycle of the application.
+- Lynx Service needs to be actively injected.
 
 ```ts title=EntryAbility.ets
 import { LLog, LynxServiceCenter, LynxEnv, LynxServiceType } from '@lynx/lynx';
@@ -121,19 +133,17 @@ export default class EntryAbility extends UIAbility {
       LynxHttpService.instance,
     );
     // Init LynxLogService
-    LynxServiceCenter.registerService(
-      LynxServiceType.Log,
-      LynxLogService.instance,
-    );
 
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+
+    LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
   }
 }
 ```
 
 ### LynxEnv Initialization
 
-`LynxEnv` provides the global initialization interface for the `Lynx Engine`. Please ensure that `LynxEnv` is initialized before any other `Lynx Engine` interfaces are called. For example, this can be done in the `OnCreate` lifecycle of `EntryAbility`.
+`LynxEnv` provides the global initialization interface for the `Lynx Engine`. Please ensure that the initialization of `LynxEnv` occurs before any interface calls to the `Lynx Engine`. It is recommended to complete the initialization of LynxEnv during the `UIAbility#onCreate` lifecycle of the application.
 
 ```ts title=EntryAbility.ets
 import { LLog, LynxEnv } from '@lynx/lynx';
@@ -150,7 +160,6 @@ export default class EntryAbility extends UIAbility {
     options.set('AppVersion', '0.0.1');
     LynxEnv.setAppInfo(options);
     LynxEnv.enableDevtool(true);
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }
 }
 ```
@@ -160,13 +169,14 @@ export default class EntryAbility extends UIAbility {
 ## 3. Rendering LynxView
 
 <Steps>
-### Create a Bundle Loader
 
-The `Lynx Engine` itself does not have a built-in capability for downloading resources. Therefore, the host application must provide a specific implementation of `LynxResourceProvider` and inject it when constructing a `LynxView`. Lynx will then use the injected resource loader to fetch the actual Bundle content.
+### Create Bundle Loader
 
-You can obtain the Bundle's resource content in various ways. Here, we'll choose to embed the Bundle's content directly within the application:
+Lynx Engine itself does not have the ability to integrate downloading resources, so the existing app needs to provide the specific implementation of `LynxResourceProvider`, and inject it when constructing [LynxView](/guide/spec.html#lynxview). Lynx will use the injected resource loader to obtain the Bundle content
 
-First, place the Bundle file generated during the quick start phase into the `src/main/resources/rawfile` directory. Alternatively, you can download the following file and place it in the same directory:
+You can use various methods to obtain the contents of the Bundle. Here, we choose to embed the contents of the Bundle within the application.
+
+First, please place the Bundle file generated in the [Quick Start](/guide/start/quick-start) stage in the src/main/resources/rawfile directory, or you can download the file below to your local machine and place it in the same directory:
 
 :::note
 Bundle Example:
@@ -366,6 +376,7 @@ struct Index {
 ````
 
 </CodeFold>
+
 You will then see the following content on your screen:
 
 <center>

@@ -9,7 +9,7 @@ The name of media assets, such as video.
 **Signature:**
 
 ```typescript
-media?: string | undefined;
+media?: Rspack.AssetModuleFilename | undefined;
 ```
 
 ## Remarks

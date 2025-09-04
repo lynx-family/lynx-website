@@ -29,7 +29,6 @@ export declare function defineConfig(config: Config): Config;
 Use `defineConfig` in `lynx.config.ts`<!-- -->:
 
 ```ts
-//@ts-check
 import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   // autocompletion works here!

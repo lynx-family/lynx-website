@@ -4,6 +4,11 @@
 
 ## Source.alias property
 
+> Warning: This API is now obsolete.
+> 
+> - Use [Resolve.alias](./rspeedy.resolve.alias.md) instead.
+> 
+
 Create aliases to `import` or `require` certain modules more easily.
 
 **Signature:**
@@ -11,77 +16,3 @@ Create aliases to `import` or `require` certain modules more easily.
 ```typescript
 alias?: Record<string, string | false | string[]> | undefined;
 ```
-
-## Example 1
-
-A trailing `$` can also be added to the given object's keys to signify an exact match:
-
-```js
-import { defineConfig } from '@lynx-js/rspeedy'
-export default defineConfig({
-  source: {
-    alias: {
-      xyz$: 'path/to/file.js',
-    },
-  },
-})
-```
-which would yield these results:
-
-```js
-import Test1 from 'xyz'; // Exact match, so path/to/file.js is resolved and imported
-import Test2 from 'xyz/file.js'; // Not an exact match, normal resolution takes place
-```
-
-## Example 2
-
-`source.alias` is useful to control how a npm package is resolved.
-
-- Change `react` to `@lynx-js/react`<!-- -->:
-
-```js
-import { defineConfig } from '@lynx-js/rspeedy'
-import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
-export default defineConfig({
-  source: {
-    alias: {
-      react: require.resolve('@lynx-js/react'),
-    },
-  },
-})
-```
-This allows you to use some third-party libraries that directly uses `react` as dependencies in ReactLynx.
-
-- Force using the same version of `dayjs`<!-- -->:
-
-```js
-import { defineConfig } from '@lynx-js/rspeedy'
-import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
-export default defineConfig({
-  source: {
-    alias: {
-      dayjs: require.resolve('dayjs'),
-    },
-  },
-})
-```
-Please note that this is dangerous, since all the `dayjs`<!-- -->(including the dependencies of a dependencies) is resolved to the version in the project. It may cause both compile-time and runtime errors due to version mismatch.
-
-## Example 3
-
-Setting `source.alias` to `false` will ignore a module.
-
-```js
-import { defineConfig } from '@lynx-js/rspeedy'
-export default defineConfig({
-  source: {
-    alias: {
-      'ignored-module': false,
-      './ignored-module': false,
-    },
-  },
-})
-```
-

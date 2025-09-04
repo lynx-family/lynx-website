@@ -9,7 +9,7 @@ The name of the JavaScript files.
 **Signature:**
 
 ```typescript
-js?: string | undefined;
+js?: Rspack.Filename | undefined;
 ```
 
 ## Remarks
@@ -17,4 +17,27 @@ js?: string | undefined;
 Default values:
 
 - Development: `'[name].js'` - Production: `'[name].[contenthash:8].js'`
+
+## Example
+
+- Using a function to dynamically set the filename based on the file information:
+
+```js
+import { defineConfig } from '@lynx-js/rspeedy'
+
+export default defineConfig({
+  output: {
+    filename: {
+      js: (pathData, assetInfo) => {
+        console.log(pathData); // You can check the contents of pathData here
+
+        if (pathData.chunk?.name === 'index') {
+          return isProd ? '[name].[contenthash:8].js' : '[name].js';
+        }
+        return '/some-path/[name].js';
+      },
+    },
+  },
+})
+```
 
