@@ -1,0 +1,292 @@
+<style jsx>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+# ReactLynx Rendering Pipeline
+
+This article uses the [hello-world](https://github.com/lynx-family/lynx-examples/blob/main/examples/hello-world/) project as an example to explain the ReactLynx rendering process in detail:
+
+- Demonstrate the complete execution flow from the first-frame render to component updates in ReactLynx
+- Understand the event distribution and timing relationships of each key stage in the Trace view
+- Learn how to use the Trace tool to accurately locate performance bottlenecks in the rendering process
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reactlynx-overview-trace.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+## First Screen Rendering
+
+[First Screen Rendering](/guide/spec.html#first-screen-rendering-or-fsr) includes stages such as downloading the [Bundle](/guide/spec.html#lynx-bundle-or-bundle), loading the bundle, and drawing.
+
+### Download Bundle
+
+After the page starts, it first [downloads](/guide/spec.html#load) the Bundle。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/download_lynx_bundle_trace.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+### Load Bundle
+
+Once the bundle is downloaded, it enters the loading stage.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/first-screen-render-pipeline-in-trace.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+#### Parse Bundle
+
+During the bundle loading stage, the content of the bundle—such as CSS stylesheets, scripts, and page configurations—is first [parsed](/guide/spec.html#parse)
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/decode-lynx-bundle-trace.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+#### Execute MTS
+
+After parsing the bundle, the [Engine thread](/guide/spec.html#engine-thread-historically-known-as-tasm-thread) virtual machine executes the [MTS](/guide/spec.html#main-thread-script-or-mts).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/execute-main-scripts.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+#### Execute BTS
+
+Meanwhile, the [background thread](/guide/spec.html#background-scripting-thread-historically-known-as-js-thread) virtual machine loads, parses, and executes the [BTS](/guide/spec.html#background-thread-script-or-bts).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/backgound-script-execute.png"
+  alt="Execute Background Script"
+  class="full_image"
+/>
+
+During BTS execution, you can observe the creation process of components.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/background-thread-create-component-thread.png"
+  alt="Background Thread Create Component"
+  class="full_image"
+/>
+
+:::tip
+The background thread does not block the Engine thread’s Element tree construction, resolve, layout, and other flows.
+:::
+
+#### Construct the Element Tree
+
+During the [Element tree](/guide/spec.html#element-tree) construction stage, the [Element PAPI](/guide/spec.html#element-papi) is called to convert the page structure into an Element tree.
+
+Taking the [hello-world](https://github.com/lynx-family/lynx-examples/blob/main/examples/hello-world/) project as an example, the first frame creates 1 page element, 6 view elements, 2 image elements, and 5 text elements.
+
+```html
+<page>
+  <view className="Background" />
+  <view className="App">
+    <view className="Banner">
+      <view className="Logo" bindtap={onTap}>
+        <image src={lynxLogo} className="Logo--lynx" />
+      </view>
+      <text className="Title">React</text>
+      <text className="Subtitle">on Lynx</text>
+  </view>
+  <view className="Content">
+    <image src={arrow} className="Arrow" />
+    <text className="Description">Tap the logo and have fun!</text>
+    <text className="Hint">
+      Edit<text style={{ fontStyle: "italic" }}>{" src/App.tsx "}</text>
+      to see updates!
+    </text>
+  </view>
+  <view style={{ flex: 1 }}></view>
+  </view>
+</page>
+```
+
+In Trace, you can observe the complete process of creating Elements and setting their Events, Classes, and other attributes.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/construct-element-tree-trace.jpeg"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+#### Resolve
+
+During the [Resolve](/guide/spec.html#resolve) stage, the Element’s class, inline styles, and other attributes are parsed to determine the Element’s style, and the [layout node tree](/guide/spec.html#layout-node-tree) is created.
+As shown below, the Resolve stage covers the complete execution flow and the parsing of styles for `<view className="Background" />`.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/resolve-in-trace.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+#### Layout
+
+The [layout](/guide/spec.html#layout) stage measures and lays out the layout nodes. The following example shows the layout process of the `<text>Tap the logo and have fun!</text>` node.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/layout-in-trace.png"
+  alt="Trace Render Pipeline"
+  class="full_image"
+/>
+
+#### Flush
+
+After the layout is complete, [platform UIs](/guide/spec.html#platform-ui) are created, with various attributes and layout information set.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/create-platform-ui-trace.png"
+  alt="Create Platform UI"
+  class="full_image"
+/>
+
+:::tip
+Element nodes containing only layout attributes will not create platform UI nodes.
+[Nested text](/api/elements/built-in/text.html#嵌套text) will be merged with their parent text node to create a single platform UI.
+::
+
+In the [hello-world](https://github.com/lynx-family/lynx-examples/blob/main/examples/hello-world/) project, the following nodes create platform UI on the first screen:
+
+```html
+<page>
+  <view className="Background" />
+  <view className="Banner">
+    <view className="Logo" bindtap="{onTap}">
+      <image src="{lynxLogo}" className="Logo--lynx" />}
+    </view>
+  </view>
+  <text className="Title">React</text>
+  <text className="Subtitle">on Lynx</text>
+  <image src="{arrow}" className="Arrow" />
+  <text className="Description">Tap the logo and have fun!</text>
+  <text className="Hint"> Edit " src/App.tsx " to see updates!</text>
+</page>
+```
+
+### Draw
+
+When the system’s rendering callback occurs, the platform UI completes its first-screen drawing.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/draw-in-trace.png"
+  alt="Draw Platform UI"
+  class="full_image"
+/>
+
+## Update Rendering Process
+
+Taking the [hello-world](https://github.com/lynx-family/lynx-examples/blob/main/examples/hello-world/) project as an example, clicking the Logo triggers an update, which demonstrates the component update rendering flow.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reactlynx-re-rendering-trace.png"
+  alt="Draw Platform UI"
+  class="full_image"
+/>
+
+### Trigger the Click Event
+
+After clicking the Logo, LynxView processes the [click event](/guide/spec.html#event-propagation) and sends the event to the background thread, triggering the corresponding node’s click [event handler](/guide/spec.html#event-handler).
+
+To better observe the execution timing of the click event callback in Trace, you can use the [Trace API](/guide/performance/analysis/custom-trace#platform=reactlynx) to add custom Trace events.
+
+```javascript {3,5}
+const onTap = useCallback(() => {
+  'background only';
+  lynx.performance.profileStart('onTap');
+  setAlterLogo(!alterLogo);
+  lynx.performance.profileEnd();
+}, [alterLogo]);
+```
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/touch-event-trace.png"
+  alt="Touch Event Process"
+  class="full_image"
+/>
+
+The App component updates the state of alterLogo in the click event callback.
+
+### Diff Component Diff
+
+After updating the component state, the component diff process is triggered, and the image node changes:
+
+```html
+<view className="Logo" bindtap="{onTap}">
+  + <image src="{reactLynxLogo}" className="Logo--react" /> - -
+  <image src="{lynxLogo}" className="Logo--lynx" />
+</view>
+```
+
+The following image shows the diff process for the App component:
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/component-diff-process.png"
+  alt="Component Diff Process"
+  class="full_image"
+/>
+
+### Component Update Synchronization
+
+After the component diff is complete, the update information is synchronized to the Engine thread, driving subsequent UI changes. In Trace, clicking the `CallLepusMethod` event allows you to see the UI update process after component diff is complete.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/sync-change-to-ui-thread.png"
+  alt="Sync Diff To UI Thread"
+  class="full_image"
+/>
+
+### UI Update
+
+The Engine thread shows the update process of the Element tree. As shown below, the Element tree removes one element and adds a new image element.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/element-update-process.png"
+  alt="Sync Diff To UI Thread"
+  class="full_image"
+/>
+
+After the Element update is complete, the layout and UI are updated again.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ui-update-process.png"
+  alt="Sync Diff To UI Thread"
+  class="full_image"
+/>
+
+### Trigger useEffect Callback
+
+After the Element tree update is complete, the background thread is notified to trigger the component’s useEffect callback.
+
+To better observe the execution timing of the useEffect callback in Trace, use the [Trace API](/guide/performance/analysis/custom-trace#platform=reactlynx) to add custom trace events.
+
+```javascript {6-8}
+useEffect(() => {
+  console.info('Hello, ReactLynx');
+}, []);
+
+useEffect(() => {
+  lynx.performance.profileMark('useEffect', {
+    args: { alterLogo: `${alterLogo}` },
+  });
+}, [alterLogo]);
+```
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/useeffect-callback-trace.png"
+  alt="useEffect Callback"
+  class="full_image"
+/>
