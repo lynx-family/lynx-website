@@ -42,12 +42,6 @@ function Layout() {
   const { pathname } = useLocation();
 
   const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
-  // useEffect(() => {
-  //   document.documentElement.setAttribute(
-  //     'data-subsite',
-  //     subsite ? subsite.value : 'guide',
-  //   );
-  // }, [pathname]);
 
   return (
     <>
