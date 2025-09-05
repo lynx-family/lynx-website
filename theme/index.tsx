@@ -4,6 +4,7 @@ import {
   useLang,
   useLocation,
   usePageData,
+  Head,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -29,23 +30,36 @@ import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      htmlAttrs: unknown;
+    }
+  }
+}
+
 function Layout() {
   const { pathname } = useLocation();
 
-  useEffect(() => {
-    const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
-    document.documentElement.setAttribute(
-      'data-subsite',
-      subsite ? subsite.value : 'guide',
-    );
-  }, [pathname]);
+  const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
+  // useEffect(() => {
+  //   document.documentElement.setAttribute(
+  //     'data-subsite',
+  //     subsite ? subsite.value : 'guide',
+  //   );
+  // }, [pathname]);
 
   return (
-    <BaseLayout
-      afterNavTitle={<AfterNavTitle />}
-      beforeSidebar={<BeforeSidebar />}
-      bottom={<Footer />}
-    />
+    <>
+      <Head>
+        <htmlAttrs data-subsite={subsite ? subsite.value : 'guide'} />
+      </Head>
+      <BaseLayout
+        afterNavTitle={<AfterNavTitle />}
+        beforeSidebar={<BeforeSidebar />}
+        bottom={<Footer />}
+      />
+    </>
   );
 }
 
