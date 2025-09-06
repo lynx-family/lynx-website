@@ -18,6 +18,7 @@ export function mapPlatformNameToIconName(platformName: BCD.PlatformName) {
   switch (platformName) {
     case 'ios':
     case 'clay_macos':
+    case 'clay_ios':
       return 'apple';
     case 'android':
     case 'clay_android':
