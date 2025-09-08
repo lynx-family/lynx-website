@@ -181,12 +181,15 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
         style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
       >
         <PreWithCodeButtonGroup
-          containerElementClassName="language-bash"
+          containerElementClassName="language-bash home-layout-create-block"
           codeButtonGroupProps={{
             showCodeWrapButton: false,
           }}
         >
-          <Code className="language-bash" style={{ textAlign: 'center' }}>
+          <Code
+            className="language-bash home-layout-create-block"
+            style={{ textAlign: 'center' }}
+          >
             npm create rspeedy@latest
           </Code>
         </PreWithCodeButtonGroup>
