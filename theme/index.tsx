@@ -9,6 +9,7 @@ import {
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
+  getCustomMDXComponent,
 } from '@rspress/core/theme';
 import {
   Search as PluginAlgoliaSearch,
@@ -62,7 +63,7 @@ const enWords = ['Unlock', 'Render', 'Toward', 'Ship'];
 const zhWords = ['迈向', '更快的', '更多平台的', '更多人的'];
 const zhSuffix = '原生体验';
 
-function HomeLayout() {
+function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
   const { page } = usePageData();
@@ -164,6 +165,8 @@ function HomeLayout() {
     return () => clearInterval(ticker);
   }, [updateText, delta, page]);
 
+  const { pre: PreWithCodeButtonGroup, code: Code } = getCustomMDXComponent();
+
   return (
     <>
       <MeteorsBackground gridSize={120} meteorCount={3} />
@@ -176,6 +179,24 @@ function HomeLayout() {
               {routePath === '/' && <Banner />}
             </>
           }
+          afterHeroActions={
+            <div
+              className="rspress-doc"
+              style={{ minHeight: 'auto', width: '100%', maxWidth: 450 }}
+            >
+              <PreWithCodeButtonGroup
+                containerElementClassName="language-bash"
+                codeButtonGroupProps={{
+                  showCodeWrapButton: false,
+                }}
+              >
+                <Code className="language-bash" style={{ textAlign: 'center' }}>
+                  npm create rspeedy@latest
+                </Code>
+              </PreWithCodeButtonGroup>
+            </div>
+          }
+          {...props}
         />
       </div>
     </>
