@@ -115,16 +115,17 @@ Lynx Explorer 是使用 Objective-C 构建的项目，如果你希望在 Swift �
 <CodeFold height={360} toggle>
 
 ```swift {6-8,10-16} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.swift"
+
 import Foundation
 
 @objcMembers
 public final class NativeLocalStorageModule: NSObject, LynxModule {
 
-    @objc public static var name: String {
+    public static var name: String {
         return "NativeLocalStorageModule"
     }
 
-    @objc public static var methodLookup: [String : String] {
+    public static var methodLookup: [String : String] {
         return [
             "setStorageItem": NSStringFromSelector(#selector(setStorageItem(_:value:))),
             "getStorageItem": NSStringFromSelector(#selector(getStorageItem(_:completion:))),
@@ -135,7 +136,7 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
     private let localStorage: UserDefaults
     private static let storageKey = "MyLocalStorage"
 
-    @objc public init(param: Any) {
+    public init(param: Any) {
       guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
           fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
       }
@@ -143,7 +144,7 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
       super.init()
     }
 
-    @objc public override init() {
+    public override init() {
         guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
             fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
         }
@@ -151,11 +152,11 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
         super.init()
     }
 
-    @objc func setStorageItem(_ key: String, value: String) {
+    func setStorageItem(_ key: String, value: String) {
         localStorage.set(value, forKey: key)
     }
 
-    @objc func getStorageItem(_ key: String, completion:(NSString) -> Void) {
+    objc func getStorageItem(_ key: String, completion:(NSString) -> Void) {
       if let value = localStorage.string(forKey: key) {
           completion(value as NSString)
       } else {
@@ -163,7 +164,7 @@ public final class NativeLocalStorageModule: NSObject, LynxModule {
       }
     }
 
-    @objc func clearStorage() {
+    func clearStorage() {
         localStorage.dictionaryRepresentation().keys.forEach {
             localStorage.removeObject(forKey: $0)
         }
