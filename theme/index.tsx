@@ -182,7 +182,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
           afterHeroActions={
             <div
               className="rspress-doc"
-              style={{ minHeight: 'auto', width: '100%', maxWidth: 450 }}
+              style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
             >
               <PreWithCodeButtonGroup
                 containerElementClassName="language-bash"
@@ -196,7 +196,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
               </PreWithCodeButtonGroup>
             </div>
           }
-          {...props}
         />
       </div>
     </>
