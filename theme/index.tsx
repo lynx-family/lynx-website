@@ -167,35 +167,41 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   const { pre: PreWithCodeButtonGroup, code: Code } = getCustomMDXComponent();
 
+  // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
+  const {
+    afterHero = (
+      <>
+        <Features src={routePath} /> {routePath === '/' && <ShowCase />}
+        {routePath === '/' && <Banner />}
+      </>
+    ),
+    afterHeroActions = (
+      <div
+        className="rspress-doc"
+        style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
+      >
+        <PreWithCodeButtonGroup
+          containerElementClassName="language-bash"
+          codeButtonGroupProps={{
+            showCodeWrapButton: false,
+          }}
+        >
+          <Code className="language-bash" style={{ textAlign: 'center' }}>
+            npm create rspeedy@latest
+          </Code>
+        </PreWithCodeButtonGroup>
+      </div>
+    ),
+  } = props;
+
   return (
     <>
       <MeteorsBackground gridSize={120} meteorCount={3} />
       <div className="home-layout-container">
         <BaseHomeLayout
-          afterHero={
-            <>
-              <Features src={routePath} />
-              {routePath === '/' && <ShowCase />}
-              {routePath === '/' && <Banner />}
-            </>
-          }
-          afterHeroActions={
-            <div
-              className="rspress-doc"
-              style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
-            >
-              <PreWithCodeButtonGroup
-                containerElementClassName="language-bash"
-                codeButtonGroupProps={{
-                  showCodeWrapButton: false,
-                }}
-              >
-                <Code className="language-bash" style={{ textAlign: 'center' }}>
-                  npm create rspeedy@latest
-                </Code>
-              </PreWithCodeButtonGroup>
-            </div>
-          }
+          {...props}
+          afterHero={afterHero}
+          afterHeroActions={afterHeroActions}
         />
       </div>
     </>
