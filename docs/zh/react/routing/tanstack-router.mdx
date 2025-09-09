@@ -19,7 +19,7 @@ ReactLynx 支持 [Memory Routing](https://tanstack.com/router/latest/docs/framew
 
 <PackageManagerTabs command="install @tanstack/router-plugin -D" />
 
-### 配置
+### 项目配置
 
 - **File-based Routing**: 通过 `@tanstack/router-plugin/rspack` 实现。
 - **React 18 API 兼容性**: 使用 `@lynx-js/react/compat` 确保第三方库正常工作。
@@ -53,6 +53,36 @@ export default defineConfig({
     },
   },
 });
+```
+
+### 路由配置
+
+在 Lynx 环境中，[document](https://developer.mozilla.org/en-US/docs/Web/API/Document) 为 `undefined`，导致错误地被识别为 `isServer: true`。你需要显式设置 `isServer: false` 来确保渲染的正确性。
+
+此外，由于 Lynx 中浏览器 [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) 的限制，需要使用 [Memory Routing](https://tanstack.com/router/latest/docs/framework/react/guide/history-types#memory-routing)。
+
+```tsx title=App.tsx
+import {
+  createMemoryHistory,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
+
+import { routeTree } from './routeTree.gen.js';
+
+const memoryHistory = createMemoryHistory({
+  initialEntries: ['/'],
+});
+
+const router = createRouter({
+  routeTree,
+  history: memoryHistory,
+  isServer: false,
+});
+
+export function App() {
+  return <RouterProvider router={router} />;
+}
 ```
 
 ### Polyfill

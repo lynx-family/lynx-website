@@ -20,7 +20,7 @@ Install devDependencies:
 
 <PackageManagerTabs command="install @tanstack/router-plugin -D" />
 
-### Config
+### Project Configuration
 
 - **File-based Routing**: Enabled via `@tanstack/router-plugin/rspack` for seamless routing integration.
 - **React 18 API Compatibility**: Use `@lynx-js/react/compat` to ensure third-party libraries work correctly.
@@ -55,6 +55,36 @@ export default defineConfig({
     },
   },
 });
+```
+
+### Router Configuration
+
+In the Lynx environment, the [document](https://developer.mozilla.org/en-US/docs/Web/API/Document) is `undefined`, causing the router to incorrectly identify it as `isServer: true`. You need to explicitly set `isServer: false` to ensure proper rendering.
+
+Additionally, [Memory Routing](https://tanstack.com/router/latest/docs/framework/react/guide/history-types#memory-routing) is required due to browser [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) limitations in Lynx.
+
+```tsx title=App.tsx
+import {
+  createMemoryHistory,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
+
+import { routeTree } from './routeTree.gen.js';
+
+const memoryHistory = createMemoryHistory({
+  initialEntries: ['/'],
+});
+
+const router = createRouter({
+  routeTree,
+  history: memoryHistory,
+  isServer: false,
+});
+
+export function App() {
+  return <RouterProvider router={router} />;
+}
 ```
 
 ### Polyfill
