@@ -359,6 +359,180 @@ TraceEvent.instant("async-task", "async-task-end");
 
 </PlatformTabs.Tab>
 
+<PlatformTabs.Tab platform="harmony">
+
+### Slice Events
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/slice-event.png"
+  alt="Slice Events"
+  className="full_image"
+/>
+
+- Definition: Slice events have both a start and end timestamp, representing a duration.
+- Nesting: On the same thread, slice events can be nested like a call stack.
+  - For example, if event B starts after event A but before A ends, B is considered a child of A and will be displayed nested under A in the Trace UI.
+  - Important: Child events must always end before their parent ends (i.e., B must end before A).
+- Use case: Suitable for profiling code sections where execution time matters.
+
+```javascript {3,5,10-14,16}
+// Basic usage
+function measure() {
+  TraceEvent.beginSection(TraceCategory.Other, "measure");
+  // ... your code ...
+  TraceEvent.endSection(TraceCategory.Other, "measure");
+}
+
+// With custom arguments
+function draw() {
+  const args: Record<string, string> = {
+    "component": "Image",
+    "size": "large"
+  }
+  TraceEvent.beginSection(TraceCategory.Other, "draw-image", args);
+  // ... your code ...
+  TraceEvent.endSection(TraceCategory.Other, "draw-image");
+}
+```
+
+### Instant Events
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/instant-event.png"
+  alt="Instant Events"
+  className="full_image"
+/>
+
+- Definition: Instant events have only a single timestamp and no duration.
+- Use case: Suitable for marking significant moments or points in your code (such as state changes, cross-thread/async boundaries, etc.).
+
+```javascript {4,11-15}
+// Basic usage
+function requestBegin() {
+  // ...
+  TraceEvent.instant(TraceCategory.Other, "request-begin")
+  // ...
+}
+
+// With custom arguments
+function requestFinished() {
+  // ...
+  const args: Record<string, string> = {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+  TraceEvent.instant(TraceCategory.Other, "request-finished", args);
+  //...
+}
+```
+
+## Best Practices
+
+### Begin/End Must Match on the Same Thread
+
+- Every `beginSection` must have a corresponding `endSection`, and both calls must occur on the same thread.
+- Do not let exceptions or early returns prevent `endSection` from being called.
+
+#### Bad Examples
+
+```javascript {5-6,11-12,17-18,21}
+function measure() {
+  TraceEvent.beginSection(TraceCategory.Other, 'measure');
+  // ...
+  throw new Error('Error occurred');
+  // profileEnd not called due to exception
+  TraceEvent.endSection(TraceCategory.Other, 'measure');
+}
+
+function measureWithFastExit(fastExit) {
+  TraceEvent.beginSection(TraceCategory.Other, 'measure');
+  // Early return causes profileEnd not to be called
+  if (fastExit) return;
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'measure');
+}
+
+// Cross-async/thread begin/end mismatch
+TraceEvent.beginSection(TraceCategory.Other, 'background-task');
+setTimeout(() => {
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'background-task');
+}, 1000);
+```
+
+#### Good Examples
+
+```javascript {6-9,15-17,24-25,27}
+function measure(shouldThrow) {
+  try {
+    TraceEvent.beginSection(TraceCategory.Other, 'measure');
+    // ...
+    throw new Error('Error occurred');
+  } finally {
+    // Exception safe: ensure profileEnd is always called
+    TraceEvent.endSection(TraceCategory.Other, 'measure');
+  }
+}
+
+function measureWithFastExit(fastExit) {
+  TraceEvent.beginSection(TraceCategory.Other, 'measure');
+  if (fastExit) {
+    // Early return safe
+    TraceEvent.endSection(TraceCategory.Other, 'measure');
+    return;
+  }
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'measure');
+}
+
+setTimeout(() => {
+  // Thread safe: begin/end in the same execution context
+  TraceEvent.beginSection(TraceCategory.Other, 'background-task');
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'background-task');
+}, 0);
+```
+
+### Do Not Use Slice Events Across Async Boundaries
+
+- Do not use `beginSection`/`endSection` across asynchronous boundaries such as timers, callbacks, or `await`/`Promise`.
+- Slice events require start and end to be in the same synchronous context.
+- Use Instant events if you need to trace both sides of an async boundary.
+
+#### Incorrect Examples
+
+```javascript {2,5,9,11}
+// Timer/callback
+TraceEvent.beginSection(TraceCategory.Other, 'async function');
+setTimeout(() => {
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'async function');
+}, 3000);
+
+// await/promise
+TraceEvent.beginSection(TraceCategory.Other, 'await-task');
+await someAsyncFunc();
+TraceEvent.endSection(TraceCategory.Other, 'await-task');
+```
+
+#### Correct Examples
+
+```javascript {3,5,9,11}
+// Timer/callback: use begin/end inside the callback
+setTimeout(() => {
+  TraceEvent.beginSection(TraceCategory.Other, 'async function');
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'async function');
+}, 3000);
+
+// await/promise: use instant trace events
+TraceEvent.instant(TraceCategory.Other, 'await-task:begin');
+await someAsyncFunc();
+TraceEvent.instant(TraceCategory.Other, 'await-task:end');
+```
+
+</PlatformTabs.Tab>
+
 <PlatformTabs.Tab platform="reactlynx">
 
 ### Slice Events

@@ -136,7 +136,7 @@ Custom arguments for the trace event.
 
 ### endSection
 
-Marks the end of a trace event(https://perfetto.dev/docs/instrumentation/track-events).
+Marks the end of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
 
 ```objective-c
 + (void)endSection:(NSString *)category withName:(NSString *)name
@@ -185,6 +185,116 @@ Custom arguments for the trace event.
 [LynxTraceEvent instant:@"network" withName:@"request-started"];
 // With custom arguments
 [LynxTraceEvent instant:@"network" withName:@"request-finished" debugInfo:@{@"url": @"https://example.com", @"method": @"GET"}];
+```
+
+## Harmony
+
+### beginSection
+
+Marks the start of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
+
+```javascript
+static void beginSection(traceCategory: TraceCategory, name: string, args?: Record<string, string>)
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event. 
+```javascript
+export enum TraceCategory {
+  Lynx = 'lynx',
+  Vitals = 'vitals',
+  Other = 'other'
+}
+```
+
+##### name
+The name of the trace event.
+
+#### args (optional)
+
+Custom arguments for the trace event.
+
+#### Examples
+
+```javascript
+TraceEvent.beginSection(TraceCategory.Other, "measure-layout");
+// ... your code ...
+TraceEvent.endSection(TraceCategory.Other, "measure-layout");
+
+// With custom arguments
+const args: Record<string, string> = {
+  "src": "https://example.com",
+  "size": "large"
+}
+TraceEvent.beginSection(TraceCategory.Other, "draw-image", args);
+// ... your code ...
+TraceEvent.endSection(TraceCategory.Other, "draw-image");
+```
+
+### endSection
+
+Marks the end of a [trace event](https://perfetto.dev/docs/instrumentation/track-events).
+
+```javascript
+static void endSection(traceCategory: TraceCategory, name: string)
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+```javascript
+export enum TraceCategory {
+  Lynx = 'lynx',
+  Vitals = 'vitals',
+  Other = 'other'
+}
+```
+
+##### name
+The name of the trace event.
+
+#### Examples
+
+```javascript
+TraceEvent.beginSection(TraceCategory.Other, "parse-data");
+// ... your code ...
+TraceEvent.endSection(TraceCategory.Other, "parse-data");
+```
+
+### instant
+
+Marks an instant trace event.
+
+```javascript
+static instant(traceCategory: TraceCategory, name: string, args?: Record<string, string>)
+```
+
+#### Parameters
+
+##### category
+The [category](https://perfetto.dev/docs/instrumentation/track-events#category-configuration) of the trace event.
+
+##### name
+The name of the trace event.
+
+#### args(optional)
+
+Custom arguments for the trace event.
+
+#### Examples
+
+```javascript
+TraceEvent.instant(TraceCategory.Other, "request-started");
+
+// With custom arguments
+const args: Record<string, string> = {
+  "url": "https://example.com",
+  "method": "GET"
+}
+TraceEvent.instant(TraceCategory.Other, "request-finished", args);
 ```
 
 ## Compatibility

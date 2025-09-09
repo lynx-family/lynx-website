@@ -43,7 +43,7 @@ TraceEvent.endSection("render", "draw-image");
 
 ### endSection
 
-标记一个 trace event(https://perfetto.dev/docs/instrumentation/track-events) 的结束。
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的结束。
 
 ```java
 public static void endSection(String category, String name)
@@ -92,7 +92,6 @@ trace event 的名称。
 TraceEvent.instant("network", "request-started");
 
 // 添加自定义参数
-
 Map<String, String> args = new HashMap<>();
 args.put("url", "https://example.com");
 args.put("method", "GET");
@@ -137,7 +136,7 @@ trace event 的名称。
 
 ### endSection
 
-标记一个 trace event(https://perfetto.dev/docs/instrumentation/track-events) 的结束。
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的结束。
 
 ```objective-c
 + (void)endSection:(NSString *)category withName:(NSString *)name
@@ -188,6 +187,110 @@ trace event 的名称。
 // 添加自定义参数
 [LynxTraceEvent instant:@"network" withName:@"request-finished" debugInfo:@{@"url": @"https://example.com", @"method": @"GET"}];
 ```
+
+## Harmony
+
+### beginSection
+
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的开始。
+
+```java
+static void beginSection(traceCategory: TraceCategory, name: string, args?: Record<string, string>)
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+```javascript
+export enum TraceCategory {
+  Lynx = 'lynx',
+  Vitals = 'vitals',
+  Other = 'other'
+}
+```
+
+##### name
+trace event 的名称。
+
+#### args (可选)
+
+自定义的 trace event 参数。
+
+#### 示例
+
+```javascript
+TraceEvent.beginSection(TraceCategory.Other, "measure-layout");
+// ... 你的代码 ...
+TraceEvent.endSection(TraceCategory.Other, "measure-layout");
+
+// 带自定义参数
+const args: Record<string, string> = {
+  "src": "https://example.com",
+  "size": "large"
+}
+TraceEvent.beginSection(TraceCategory.Other, "draw-image", args);
+// ... 你的代码 ...
+TraceEvent.endSection(TraceCategory.Other, "draw-image");
+```
+
+### endSection
+
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的结束。
+
+```javascript
+static void endSection(traceCategory: TraceCategory, name: string)
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### 示例
+
+```java
+TraceEvent.beginSection(TraceCategory.Other, "parse-data");
+// ... 你的代码 ...
+TraceEvent.endSection(TraceCategory.Other, "parse-data");
+```
+
+### instant
+
+标记一个即时(没有持续时间) trace event。
+
+```java
+static instant(traceCategory: TraceCategory, name: string, args?: Record<string, string>)
+```
+
+#### 参数说明
+
+##### category
+trace event 的[类别](https://perfetto.dev/docs/instrumentation/track-events#category-configuration)。
+
+##### name
+trace event 的名称。
+
+#### args (可选)
+
+自定义的 trace event 参数。
+
+#### 示例
+
+```javascript
+TraceEvent.instant(TraceCategory.Other, "request-started");
+
+// 带自定义参数
+const args: Record<string, string> = {
+  "url": "https://example.com",
+  "method": "GET"
+}
+TraceEvent.instant(TraceCategory.Other, "request-finished", args);
+```
+
 
 ## 兼容性
 

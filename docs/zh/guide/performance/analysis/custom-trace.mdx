@@ -366,6 +366,179 @@ TraceEvent.instant("async-task", "async-task-end");
 
 </PlatformTabs.Tab>
 
+<PlatformTabs.Tab platform="harmony">
+
+### Slice 事件
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/slice-event.png"
+  alt="Slice Events"
+  className="full_image"
+/>
+
+- 定义：Slice 事件具有开始和结束时间戳，表示一个持续的区间。
+- 嵌套：在同一线程上，Slice 事件可以像调用栈一样嵌套。
+  - 例如，如果事件 B 在事件 A 开始后且 A 结束前开始，则 B 被视为 A 的子事件，并会在 Trace UI 中以嵌套的形式显示在 A 之下。
+- 适用场景：适合用于分析关心执行耗时的代码片段。
+
+```javascript {3,5,10-14,16}
+// 基本用法
+function measure() {
+  TraceEvent.beginSection(TraceCategory.Other, "measure");
+  // ... 你的代码 ...
+  TraceEvent.endSection(TraceCategory.Other, "measure");
+}
+
+// 带自定义参数
+function draw() {
+  const args: Record<string, string> = {
+    "component": "Image",
+    "size": "large"
+  }
+  TraceEvent.beginSection(TraceCategory.Other, "draw-image", args);
+  // ... 你的代码 ...
+  TraceEvent.endSection(TraceCategory.Other, "draw-image");
+}
+```
+
+### Instant 事件
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/instant-event.png"
+  alt="Instant Events"
+  className="full_image"
+/>
+
+- 定义：Instant 事件只有一个时间戳，没有持续时间。
+- 适用场景：适用于标记代码中的重要时刻或节点（如状态变更、跨线程/异步边界等）。
+
+```javascript {4,11-15}
+// 基本用法
+function requestBegin() {
+  // ...
+  TraceEvent.instant(TraceCategory.Other, "request-begin")
+  // ...
+}
+
+// 带自定义参数
+function requestFinished() {
+  // ...
+  const args: Record<string, string> = {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+  TraceEvent.instant(TraceCategory.Other, "request-finished", args);
+  //...
+}
+```
+
+## 最佳实践
+
+### Begin/End 必须在同一线程且成对出现
+
+- 每个 `beginSection` 必须有一个对应的 `endSection`，且这两个调用必须发生在同一线程。
+- 不要因为异常或提前 return 而导致 `endSection` 未被调用。
+
+#### 错误示例
+
+```javascript {5-6,11-12,17-18,21}
+function measure() {
+  TraceEvent.beginSection(TraceCategory.Other, 'measure');
+  // ...
+  throw new Error('Error occurred');
+  // 异常导致 endSection 未被调用
+  TraceEvent.endSection(TraceCategory.Other, 'measure');
+}
+
+function measureWithFastExit(fastExit) {
+  TraceEvent.beginSection(TraceCategory.Other, 'measure');
+  // 提前返回导致 endSection 未被调用
+  if (fastExit) return;
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'measure');
+}
+
+// 跨异步任务调用导致 begin/end 不匹配
+TraceEvent.beginSection(TraceCategory.Other, 'background-task');
+setTimeout(() => {
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'background-task');
+}, 1000);
+```
+
+#### 正确示例
+
+```javascript {6-9,15-17,24-25,27}
+function measure(shouldThrow) {
+  try {
+    TraceEvent.beginSection(TraceCategory.Other, 'measure');
+    // ...
+    throw new Error('Error occurred');
+  } finally {
+    // 异常安全
+    TraceEvent.endSection(TraceCategory.Other, 'measure');
+  }
+}
+
+function measureWithFastExit(fastExit) {
+  TraceEvent.beginSection(TraceCategory.Other, 'measure');
+  if (fastExit) {
+    // 提前返回安全
+    TraceEvent.endSection(TraceCategory.Other, 'measure');
+    return;
+  }
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'measure');
+}
+
+setTimeout(() => {
+  // 异步任务安全
+  TraceEvent.beginSection(TraceCategory.Other, 'background-task');
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'background-task');
+}, 0);
+```
+
+### 不要跨异步边界使用 Slice 事件
+
+- 不要在异步边界（如定时器、回调、`await`/`Promise`）之间使用 `beginSection`/`endSection`。
+- Slice 事件要求开始和结束在同一个同步上下文中。
+- 如果需要追踪异步边界两侧，请使用 Instant 事件。
+
+#### 错误示例
+
+```javascript {2,5,9,11}
+// 定时任务
+TraceEvent.beginSection(TraceCategory.Other, 'async function');
+setTimeout(() => {
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'async function');
+}, 3000);
+
+// await/promise
+TraceEvent.beginSection(TraceCategory.Other, 'await-task');
+await someAsyncFunc();
+TraceEvent.endSection(TraceCategory.Other, 'await-task');
+```
+
+#### 正确示例
+
+```javascript {3,5,9,11}
+// 定时器/回调：在回调内部成对使用
+setTimeout(() => {
+  TraceEvent.beginSection(TraceCategory.Other, 'async function');
+  // ...
+  TraceEvent.endSection(TraceCategory.Other, 'async function');
+}, 3000);
+
+// await/promise：使用 Instant 事件
+TraceEvent.instant(TraceCategory.Other, 'await-task:begin');
+await someAsyncFunc();
+TraceEvent.instant(TraceCategory.Other, 'await-task:end');
+```
+
+</PlatformTabs.Tab>
+
 <PlatformTabs.Tab platform="reactlynx">
 
 ### Slice 事件
