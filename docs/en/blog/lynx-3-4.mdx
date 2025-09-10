@@ -17,12 +17,12 @@ _September 3rd, 2025_
 
 Lynx 3.4 is now officially released!
 
-In line with the [technical roadmap](/blog/lynx-open-source-roadmap-2025) announced earlier this year, this new version open-sources several core capabilities of the Lynx technology stack. These include adding support for HarmonyOS, enabling Windows as a development environment, introducing the Trace and Recorder tools to boost efficiency, and adding two new text input elements.
+In line with the [technical roadmap](/blog/lynx-open-source-roadmap-2025) announced earlier this year, this new version open-sources several core capabilities of the Lynx technology stack. These include adding support for HarmonyOS, enabling Windows as a development environment, introducing new developer tools Trace and Recorder, and adding two new text input elements.
 
 Lynx 3.4 also introduces a series of feature updates designed to expand its capabilities in complex scenarios. We optimized the recycling strategy of the `<list>` element to improve rendering performance; provided more complete and smooth animation support; and added support for variable fonts, allowing developers to achieve finer typographic control through properties like `font-variation-settings`.
 
 ## New Platform Support
-### Open-Source HarmonyOS Support
+### HarmonyOS Support Public Beta
 Lynx now officially supports the HarmonyOS platform. Developers can integrate Lynx into their HarmonyOS applications by following our [Integration Guide](/guide/start/integrate-with-existing-apps.html#platform=harmony).
 Additionally, we will soon be publishing a dedicated blog that takes a closer look at Lynx on HarmonyOS. Stay tuned.
 
@@ -37,7 +37,7 @@ Additionally, we will soon be publishing a dedicated blog that takes a closer lo
 Support for the Windows version of Devtool desktop is currently in development and will be released soon.
 
 ## New Developer Tools
-Lynx 3.4 introduces two Developer tools dedicated to improving the developer experience and debugging efficiency.
+Lynx 3.4 introduces two developer tools dedicated to improving the developer experience and debugging efficiency.
 
 ### Trace
 [Trace](/guide/devtool/trace) delivers comprehensive, end-to-end insight into your Lynx app’s rendering pipeline. From parsing and construction to layout and rendering, Trace captures and visualizes every stage of your page’s lifecycle. What was once a “black box” is now a transparent, interactive map of your app’s inner workings. Developers can finally observe, understand, and optimize performance at the deepest levels, making it easier than ever to identify bottlenecks and fine-tune for maximum efficiency.
@@ -50,28 +50,32 @@ Lynx 3.4 introduces two Developer tools dedicated to improving the developer exp
 ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recorder.png)
 
 ## More Built-in Elements
-### New Text Input Elements
 
-In a recent UI capability survey conducted within the Lynx community, `<Input>/<TextArea>` elements emerged as the most highly anticipated core features, garnering over 50% of the vote.
+In a recent UI capability survey conducted within the Lynx community, `<Input>/<TextArea>` elements emerged as the most highly anticipated core features, garnering over 50% of the vote. 
 
-Lynx 3.4 delivers two core text input elements:
+Lynx 3.4 delivers two core text input elements. 
+We will continue to improve core elements. Developers are welcome to continue voting in the [discussion](https://github.com/lynx-family/lynx/discussions/673) to help shape Lynx's future.
 
-* [`<input>`](/api/elements/built-in/input): Single-line text input element
+### Single-line [`<input>`](/api/elements/built-in/input) Element
 
 <Go example="input" defaultFile="src/base/index.tsx" img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/input_basic.PNG" highlight="{13-20}" />
 
-* [`<textarea>`](/api/elements/built-in/textarea): Multi-line text input element
+### Multi-line [`<textarea>`](/api/elements/built-in/textarea) element
 
 <Go example="textarea" defaultFile="src/base/index.tsx" img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/textarea_basic.PNG" highlight="{13-21}" />
 
-We will continue to improve core elements. Developers are welcome to continue voting in the [discussion](https://github.com/lynx-family/lynx/discussions/673) to help shape Lynx's future.
+## List Recycle Optimization
 
-### More Flexible `<list>` Recycling Strategy
-* When a `<list-item>` is scrolled out of the `<list>` viewport, the original recycling mechanism would cache the item for reuse. Prior to Lynx 3.4, `<list-item>` elements with the sticky attribute were not recycled. In long lists making heavy use of the sticky feature, this could lead to high memory usage. Lynx 3.4 optimizes this strategy; sticky items are now also recycled after scrolling out of the viewport.
+Lynx 3.4 optimizes the recycling strategy of the `<list>` element to improve rendering performance.
+
+### Recycle `<list>` Sticky Item
+When a `<list-item>` is scrolled out of the `<list>` viewport, the original recycling mechanism would cache the item for reuse. Prior to Lynx 3.4, `<list-item>` elements with the sticky attribute were not recycled. In long lists making heavy use of the sticky feature, this could lead to high memory usage. Lynx 3.4 optimizes this strategy; sticky items are now also recycled after scrolling out of the viewport.
 If this change adversely affects your existing scenarios, you can temporarily disable this optimization by setting [`experimental-recycle-sticky-item={false}`](/api/elements/built-in/list.html#experimental-recycle-sticky-item). If you encounter any issues, please provide feedback via an issue.
 
 <table border="0"> <tr> <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/not-recycle-sticky-1.gif)</td> <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recycle-sticky-1.gif)</td> </tr> <tr> <td>sticky `<list-item>` in Lynx 3.3</td> <td>sticky `<list-item>` in Lynx 3.4</td> </tr> </table>
-* When a `<list-item>` contains complex components, recycling and re-updating the node incurs significant CPU overhead. Developers can now set `recyclable={false}` to [prevent specific `<list-item>` from being recycled](/api/elements/built-in/list.html#not-recycle-list-item). Once disabled, the item will not be recycled when it slides out of the viewport and won't require re-rendering when it reappears, making it suitable for scenarios demanding rendering performance.
+
+### Prevent `<list-item>` from Being Recycled
+When a `<list-item>` contains complex components, recycling and re-updating the node incurs significant CPU overhead. Developers can now set `recyclable={false}` to [prevent specific `<list-item>` from being recycled](/api/elements/built-in/list.html#not-recycle-list-item). Once disabled, the item will not be recycled when it slides out of the viewport and won't require re-rendering when it reappears, making it suitable for scenarios demanding rendering performance.
 
 <Go img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/20250828-213840.gif" example="list" defaultFile="src/recyclable/index.tsx" defaultEntryFile="dist/recyclable.lynx.bundle" entry="src/recyclable" />
 
