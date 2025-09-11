@@ -78,8 +78,8 @@ interface PlatformTabsProps {
   children: React.ReactNode;
   /** Optional className for styling */
   className?: string;
-  /** Key used for storing platform selection in URL hash */
-  hashKey: string;
+  /** Key used for storing platform selection in URL query */
+  queryKey: string;
 }
 
 /**
@@ -153,7 +153,7 @@ let renderCountForTocUpdate = 0;
  *
  * @example
  * ```tsx
- * <PlatformTabs defaultPlatform="ios" hashKey="platform-example">
+ * <PlatformTabs defaultPlatform="ios" queryKey="platform-example">
  *   <PlatformTabs.Tab platform="ios">
  *     <p>iOS content</p>
  *   </PlatformTabs.Tab>
@@ -170,7 +170,7 @@ export const PlatformTabs = ({
   defaultPlatform = 'ios',
   children,
   className,
-  hashKey,
+  queryKey,
 }: PlatformTabsProps) => {
   // Get available platforms from children
   const availablePlatforms = React.Children.toArray(children).reduce<
@@ -182,75 +182,63 @@ export const PlatformTabs = ({
     return acc;
   }, []);
 
-  // Get platform from hash or use default
-  const getPlatformFromHash = useCallback(() => {
+  // Get platform from query parameters or use default
+  const getPlatformFromQuery = useCallback(() => {
     if (typeof window === 'undefined') {
       return defaultPlatform;
     }
-    const hash = window.location.hash.slice(1);
-    const hashParts = hash.split(',');
-    const platformFromHash = hashParts
-      .find((part) => part.startsWith(`${hashKey}=`))
-      ?.split('=')[1];
+    const searchParams = new URLSearchParams(window.location.search);
+    const platformFromQuery = searchParams.get(queryKey);
 
-    return availablePlatforms.includes(platformFromHash as Platform)
-      ? (platformFromHash as Platform)
+    return availablePlatforms.includes(platformFromQuery as Platform)
+      ? (platformFromQuery as Platform)
       : availablePlatforms.includes(defaultPlatform)
         ? defaultPlatform
         : availablePlatforms[0];
-  }, [availablePlatforms, defaultPlatform, hashKey]);
+  }, [availablePlatforms, defaultPlatform, queryKey]);
 
   const [activePlatform, setActivePlatform] = useState<Platform>(
-    getPlatformFromHash(),
+    getPlatformFromQuery(),
   );
 
-  // Update hash when platform changes
+  // Update query parameters when platform changes
   useEffect(() => {
-    const currentHash = window.location.hash.slice(1);
-    const hashParts = currentHash
-      .split(',')
-      .filter((part) => part.length > 0) // Filter out empty strings
-      .filter((part) => !part.startsWith(`${hashKey}=`));
-    const newHashPart = `${hashKey}=${activePlatform}`;
-    const newHash =
-      hashParts.length > 0
-        ? `${hashParts.join(',')},${newHashPart}`
-        : newHashPart;
+    const searchParams = new URLSearchParams(window.location.search);
 
-    // Use replaceState to update hash without page reload
+    // Set or update the query parameter
+    searchParams.set(queryKey, activePlatform);
+
+    // Use replaceState to update query without page reload
     const newUrl = new URL(window.location.href);
-    newUrl.hash = newHash;
+    newUrl.search = searchParams.toString();
     window.history.replaceState(null, '', newUrl);
 
-    // Cleanup hash when component unmounts
+    // Cleanup query parameter when component unmounts
     return () => {
-      const hash = window.location.hash.slice(1);
-      const remainingParts = hash
-        .split(',')
-        .filter((part) => part.length > 0) // Filter out empty strings
-        .filter((part) => !part.startsWith(`${hashKey}=`));
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete(queryKey);
 
-      // Use replaceState for cleanup too
       const cleanUrl = new URL(window.location.href);
-      cleanUrl.hash = remainingParts.length > 0 ? remainingParts.join(',') : '';
+      cleanUrl.search = searchParams.toString();
       window.history.replaceState(null, '', cleanUrl);
     };
-  }, [activePlatform, hashKey]);
+  }, [activePlatform, queryKey]);
 
-  // Listen for hash changes
+  // Listen for popstate events (back/forward navigation)
   useEffect(() => {
-    const handleHashChange = () => {
-      const newPlatform = getPlatformFromHash();
+    const handlePopState = () => {
+      const newPlatform = getPlatformFromQuery();
       if (newPlatform !== activePlatform) {
         setActivePlatform(newPlatform);
       }
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [activePlatform, getPlatformFromHash]);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activePlatform, getPlatformFromQuery]);
+
   useEffect(() => {
-    // wait for the component to load
+    // Wait for the component to load
     requestAnimationFrame(() => {
       const element = document.getElementById(window.location.hash?.slice(1));
       element?.scrollIntoView({ behavior: 'auto' });
