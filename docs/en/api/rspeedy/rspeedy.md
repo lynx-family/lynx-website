@@ -23,6 +23,9 @@ export default defineConfig({
 |  --- | --- |
 |  [createRspeedy({ cwd, rspeedyConfig, loadEnv, environment, callerName, })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
 |  [defineConfig(config)](./rspeedy.defineconfig.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
+|  [defineConfig(config)](./rspeedy.defineconfig_1.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
+|  [defineConfig(config)](./rspeedy.defineconfig_2.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
+|  [defineConfig(config)](./rspeedy.defineconfig_3.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
 |  [loadConfig(loadConfigOptions)](./rspeedy.loadconfig.md) | Load the build config by the config path. |
 |  [mergeRspeedyConfig(configs)](./rspeedy.mergerspeedyconfig.md) | Merge multiple Rspeedy configuration objects. |
 
@@ -35,6 +38,7 @@ export default defineConfig({
 |  [ChunkSplitBySize](./rspeedy.chunksplitbysize.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
 |  [ChunkSplitCustom](./rspeedy.chunksplitcustom.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
 |  [Config](./rspeedy.config.md) | The <code>Config</code> is the configuration that <code>rspeedy</code> uses. |
+|  [ConfigParams](./rspeedy.configparams.md) | Parameters for the function exported from <code>lynx.config.js</code>. |
 |  [CreateRspeedyOptions](./rspeedy.createrspeedyoptions.md) | The options of <code>createRspeedy</code> method. |
 |  [CssExtract](./rspeedy.cssextract.md) | The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
 |  [CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md) | The options of CSS extract loader. |
@@ -53,7 +57,8 @@ export default defineConfig({
 |  [LoadConfigResult](./rspeedy.loadconfigresult.md) | The result of [loadConfig()](./rspeedy.loadconfig.md)<!-- -->. |
 |  [Minify](./rspeedy.minify.md) | The [Minify](./rspeedy.minify.md) configures whether to enable code minification in the production build, or to configure minimizer options. |
 |  [Output](./rspeedy.output.md) | The [Output](./rspeedy.output.md) option is used to set how and where should the bundles and assets output. |
-|  [Performance](./rspeedy.performance.md) | The [Performance](./rspeedy.performance.md) option is used to |
+|  [Performance](./rspeedy.performance.md) | The [Performance](./rspeedy.performance.md) option is used to optimize the build-time and runtime performance. |
+|  [Resolve](./rspeedy.resolve.md) | The [Resolve](./rspeedy.resolve.md) option is used to control the resolution behavior of Rspack. |
 |  [Server](./rspeedy.server.md) | The [Server](./rspeedy.server.md) option changes the behavior of dev-server. |
 |  [Source](./rspeedy.source.md) | The [Source](./rspeedy.source.md) option changes the behavior of source files. |
 |  [SourceMap](./rspeedy.sourcemap.md) | The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate source-map for outputs. |

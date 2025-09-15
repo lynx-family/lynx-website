@@ -9,22 +9,22 @@ The `defineConfig` method is a helper function used to get TypeScript intellisen
 **Signature:**
 
 ```typescript
-export declare function defineConfig(config: () => Promise<Config>): () => Promise<Config>;
+export declare function defineConfig(config: (params: ConfigParams) => Promise<Config>): (params: ConfigParams) => Promise<Config>;
 ```
 
 ## Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  config | () =&gt; Promise&lt;[Config](./rspeedy.config.md)<!-- -->&gt; | The function that returns a promise that resolves to a config of Rspeedy. |
+|  config | (params: [ConfigParams](./rspeedy.configparams.md)<!-- -->) =&gt; Promise&lt;[Config](./rspeedy.config.md)<!-- -->&gt; | The function that returns a promise that resolves to a config of Rspeedy. |
 
 **Returns:**
 
-() =&gt; Promise&lt;[Config](./rspeedy.config.md)<!-- -->&gt;
+(params: [ConfigParams](./rspeedy.configparams.md)<!-- -->) =&gt; Promise&lt;[Config](./rspeedy.config.md)<!-- -->&gt;
 
 - The identical function as the input.
 
-## Example
+## Example 1
 
 Use `defineConfig` in `lynx.config.ts`<!-- -->:
 
@@ -34,6 +34,24 @@ export default defineConfig(async () => {
   const foo = await bar()
   return {
     // autocompletion works here!
+  }
+})
+```
+
+## Example 2
+
+Use `defineConfig` with parameters in `lynx.config.ts`<!-- -->:
+
+```ts
+import { defineConfig } from '@lynx-js/rspeedy'
+
+export default defineConfig(async ({ env }) => {
+  const foo = await bar()
+  const isTest = env === 'test'
+  return {
+    output: {
+      minify: isTest ? false : true,
+    },
   }
 })
 ```

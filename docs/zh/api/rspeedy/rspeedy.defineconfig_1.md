@@ -9,22 +9,22 @@ The `defineConfig` method is a helper function used to get TypeScript intellisen
 **Signature:**
 
 ```typescript
-export declare function defineConfig(config: () => Config): () => Config;
+export declare function defineConfig(config: (params: ConfigParams) => Config): (params: ConfigParams) => Config;
 ```
 
 ## Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  config | () =&gt; [Config](./rspeedy.config.md) | The function that returns a config of Rspeedy. |
+|  config | (params: [ConfigParams](./rspeedy.configparams.md)<!-- -->) =&gt; [Config](./rspeedy.config.md) | The function that returns a config of Rspeedy. |
 
 **Returns:**
 
-() =&gt; [Config](./rspeedy.config.md)
+(params: [ConfigParams](./rspeedy.configparams.md)<!-- -->) =&gt; [Config](./rspeedy.config.md)
 
 - The identical function as the input.
 
-## Example
+## Example 1
 
 Use `defineConfig` in `lynx.config.ts`<!-- -->:
 
@@ -33,6 +33,23 @@ import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig(() => {
   return {
     // autocompletion works here!
+  }
+})
+```
+
+## Example 2
+
+Use `defineConfig` with parameters in `lynx.config.ts`<!-- -->:
+
+```ts
+import { defineConfig } from '@lynx-js/rspeedy'
+
+export default defineConfig(({ env }) => {
+  const isTest = env === 'test'
+  return {
+    output: {
+      minify: isTest ? false : true,
+    },
   }
 })
 ```

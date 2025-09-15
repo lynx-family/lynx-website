@@ -17,4 +17,6 @@ export interface Resolve
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [alias?](./rspeedy.resolve.alias.md) |  | Record&lt;string, string \| false \| string\[\]&gt; \| undefined | _(Optional)_ Create aliases to <code>import</code> or <code>require</code> certain modules more easily. |
+|  [aliasStrategy?](./rspeedy.resolve.aliasstrategy.md) |  | 'prefer-tsconfig' \| 'prefer-alias' \| undefined | _(Optional)_ Set the strategy for path alias resolution, to control the priority relationship between the <code>paths</code> option in <code>tsconfig.json</code> and the <code>resolve.alias</code> option of Rsbuild. - <code>prefer-tsconfig</code> (default): The <code>paths</code> option in <code>tsconfig.json</code> will take precedence over the <code>resolve.alias</code> option of Rsbuild. - <code>prefer-alias</code>: The <code>resolve.alias</code> option of Rsbuild will take precedence over the <code>paths</code> option in <code>tsconfig.json</code>. |
+|  [dedupe?](./rspeedy.resolve.dedupe.md) |  | string\[\] \| undefined | _(Optional)_ Force to resolve the specified packages from project root, which is useful for deduplicating packages and reducing the bundle size. |
 
