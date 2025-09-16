@@ -10,6 +10,7 @@ type Platform =
   | 'android'
   | 'harmony'
   | 'web'
+  | 'windows'
   | 'macos'
   | 'macos-arm64'
   | 'macos-intel'
@@ -45,6 +46,11 @@ const PLATFORM_OPTIONS: Array<{
     id: 'web',
     label: 'Web',
     iconName: mapPlatformNameToIconName('web_lynx'),
+  },
+  {
+    id: 'windows',
+    label: 'Windows',
+    iconName: 'windows',
   },
   {
     id: 'macos',
