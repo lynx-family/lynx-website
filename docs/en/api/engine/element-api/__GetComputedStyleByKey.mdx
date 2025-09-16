@@ -1,0 +1,54 @@
+# `__GetComputedStyleByKey`
+
+## Introduction
+
+Returns the resolved style value for a CSS property of an element
+
+## Syntax
+
+```jsx
+__GetComputedStyleByKey(element: Element, key: string) : string;
+```
+
+### Parameters
+
+|   Key   | Description                                                                                                                                                                              |
+| :-----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| element | Any Element object.                                                                                                                                                                      |
+|   key   | A string indicating the CSS property key to be retrieved. Keep in mind that not every CSS property is supported. Refer to the Compatibility table to see which properties are supported. |
+
+### Return Value
+
+Resolved style value for a CSS property of specified element.
+
+:::caution
+Unlike browser, this PAPI won't trigger document reflow.
+:::
+
+## Example
+
+The frontend framework can retrieve resolved style value of an Element as follows.
+
+```jsx
+// main-thread.js
+let page = __CreateElement('page', 0, {});
+
+let element = __CreateElement('view', 0, {});
+__SetInlineStyles(element, {
+  top: '10px',
+  left: '10px',
+  right: '10px',
+  bottom: '10px',
+});
+
+__AppendElement(page, element);
+__FlushElementTree(page, {});
+
+let width = __GetComputedStyleByKey(element, 'width');
+```
+
+## Compatability
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="elements/get-computed-style-supported-properties" />

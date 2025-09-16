@@ -1,0 +1,54 @@
+# `__GetComputedStyleByKey`
+
+## 介绍
+
+返回当前 Element 某个 CSS 属性的解析值
+
+## 语法
+
+```jsx
+__GetComputedStyleByKey(element: Element, key: string) : string;
+```
+
+### 参数
+
+|   Key   | Description                                                                                              |
+| :-----: | -------------------------------------------------------------------------------------------------------- |
+| element | 任意 Element 对象引用。                                                                                  |
+|   key   | 要获取的样式值对应的 CSS 属性键，是一个 String 类型，目前尚未支持所有 CSS 属性，支持情况请看兼容性部分。 |
+
+### 返回值
+
+当前 Element CSS 属性键所有对应的样式解析值，是一个 String 类型。
+
+:::caution
+不同于浏览器, 这个 API 不会触发页面样式更新。
+:::
+
+## 示例
+
+前端框架可以按下如下的方法获取样式解析值。
+
+```jsx
+// main-thread.js
+let page = __CreateElement('page', 0, {});
+
+let element = __CreateElement('view', 0, {});
+__SetInlineStyles(element, {
+  top: '10px',
+  left: '10px',
+  right: '10px',
+  bottom: '10px',
+});
+
+__AppendElement(page, element);
+__FlushElementTree(page, {});
+
+let width = __GetComputedStyleByKey(element, 'width');
+```
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="elements/get-computed-style-supported-properties" />
