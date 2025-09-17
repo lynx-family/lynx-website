@@ -1,0 +1,200 @@
+import { RuntimeBadge } from '@lynx';
+
+# ReloadBundleEntry
+
+_ReloadBundle_ 是指通过平台层接口`LynxView.reloadTemplate`、前端框架接口 [`lynx.reload`](/api/lynx-api/lynx/lynx-reload.html) 触发重新加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的渲染流水线。`ReloadBundleEntry` 用来记录该次流水线所有关键时间戳结构，继承自 [`PipelineEntry`](./pipeline-entry)。
+
+客户端接口`LynxView.reloadTemplate` 以及前端接口 `lynx.reload` 的主要流程图如下。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reload-bundle-entry-v5.png" />
+
+## 示例
+
+该示例展示了如何获取 `ReloadBundleEntry`。
+
+import { Go } from '@lynx';
+
+<Go
+  example="performance-api"
+  defaultFile="src/reload-bundle-entry/index.tsx"
+  defaultEntryFile="dist/reload-bundle-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/exmaple-reload-bundle-entry.jpeg"
+  entry="src/reload-bundle-entry"
+  highlight="{14-25}"
+/>
+
+## 实例属性
+
+### [entryType](/api/lynx-api/performance-api/performance-entry#entryType)
+
+```ts
+entryType: string;
+```
+
+性能事件的类型，当前类所有实例的值均固定为 `pipeline`。
+
+### [name](/api/lynx-api/performance-api/performance-entry#name)
+
+```ts
+name: string;
+```
+
+性能事件的具体名称。由客户端接口触发的事件固定为`reloadBundleFromNative`；由前端触发的事件固定为`reloadBundleFromBts`。
+
+### identifier
+
+```ts
+identifier: string;
+```
+
+某条渲染流水线的标记, 当前类所有实例的值均固定为空字符串：
+
+### reloadBundleStart
+
+```ts
+reloadBundleStart: number;
+```
+
+reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### reloadBundleEnd
+
+```ts
+reloadBundleEnd: number;
+```
+
+reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### reloadBackgroundStart
+
+```ts
+reloadBackgroundStart: number;
+```
+
+reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 中[后台线程脚本](/guide/spec#background-thread-script-or-bts)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### loadBackgroundEnd
+
+```ts
+loadBackgroundEnd: number;
+```
+
+reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 中[后台线程脚本](/guide/spec#background-thread-script-or-bts)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### pipelineStart
+
+```ts
+pipelineStart: number;
+```
+
+渲染流水线的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### pipelineEnd
+
+```ts
+pipelineEnd: number;
+```
+
+渲染流水线的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### mtsRenderStart
+
+```ts
+mtsRenderStart: number;
+```
+
+执行[主线程脚本](/guide/spec#main-thread-script-or-mts)构建 Element Tree 的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### mtsRenderEnd
+
+```ts
+mtsRenderEnd: number;
+```
+
+执行[主线程脚本](/guide/spec#main-thread-script-or-mts)构建 Element Tree 的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### resolveStart
+
+```ts
+resolveStart: number;
+```
+
+计算 [Element](/guide/spec#element) 样式的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### resolveEnd
+
+```ts
+resolveEnd: number;
+```
+
+计算 [Element](/guide/spec#element) 样式的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutStart
+
+```ts
+layoutStart: number;
+```
+
+[布局](/guide/spec#layout)计算的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutEnd
+
+```ts
+layoutEnd: number;
+```
+
+[布局](/guide/spec#layout)计算的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### paintingUiOperationExecuteStart
+
+```ts
+paintingUiOperationExecuteStart: number;
+```
+
+执行绘制相关 [UI 操作](/guide/spec#ui-op)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### paintingUiOperationExecuteEnd
+
+```ts
+paintingUiOperationExecuteEnd: number;
+```
+
+执行绘制相关 [UI 操作](/guide/spec#ui-op)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutUiOperationExecuteStart
+
+```ts
+layoutUiOperationExecuteStart: number;
+```
+
+执行布局相关 [UI 操作](/guide/spec#ui-op)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutUiOperationExecuteEnd
+
+```ts
+layoutUiOperationExecuteEnd: number;
+```
+
+执行布局相关 [UI 操作](/guide/spec#ui-op)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### paintEnd
+
+```ts
+paintEnd: number;
+```
+
+基于 UI 和 UITree，完成最终像素化的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### frameworkPipelineTiming
+
+```ts
+frameworkPipelineTiming:  FrameworkPipelineTiming[keyof FrameworkPipelineTiming];
+```
+
+[框架渲染](/guide/spec#framework-rendering)中关键阶段的性能数据. 类型为 [`FrameworkPipelineTiming`](/api/lynx-api/performance-api/framework-pipeline-timing)。
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-api/performance-api/performance-entry/reload-bundle-entry" />
