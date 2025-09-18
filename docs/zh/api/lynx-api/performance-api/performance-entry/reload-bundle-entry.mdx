@@ -2,11 +2,11 @@ import { RuntimeBadge } from '@lynx';
 
 # ReloadBundleEntry
 
-_ReloadBundle_ 是指通过平台层接口`LynxView.reloadTemplate`、前端框架接口 [`lynx.reload`](/api/lynx-api/lynx/lynx-reload.html) 触发重新加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的渲染流水线。`ReloadBundleEntry` 用来记录该次流水线所有关键时间戳结构，继承自 [`PipelineEntry`](./pipeline-entry)。
+_ReloadBundle_ 是指通过客户端接口`LynxView.reloadTemplate`、前端框架接口 [`lynx.reload`](/api/lynx-api/lynx/lynx-reload.html) 触发重新加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的渲染流水线。`ReloadBundleEntry` 用来记录该次流水线所有关键时间戳结构，继承自 [`PipelineEntry`](./pipeline-entry)。
 
-客户端接口`LynxView.reloadTemplate` 以及前端接口 `lynx.reload` 的主要流程图如下。
+reloadBundle 的主要流程图如下。
 
-<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reload-bundle-entry-v5.png" />
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reload-bundle-entry-v9.png" />
 
 ## 示例
 
@@ -39,7 +39,7 @@ entryType: string;
 name: string;
 ```
 
-性能事件的具体名称。由客户端接口触发的事件固定为`reloadBundleFromNative`；由前端触发的事件固定为`reloadBundleFromBts`。
+性能事件的具体名称。由客户端接口`LynxView.reloadTemplate`触发的事件固定为`reloadBundleFromNative`；由前端接口`lynx.reload`触发的事件固定为`reloadBundleFromBts`。
 
 ### identifier
 
@@ -55,7 +55,7 @@ identifier: string;
 reloadBundleStart: number;
 ```
 
-reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+reload 流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
 
 ### reloadBundleEnd
 
@@ -63,7 +63,7 @@ reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 
 reloadBundleEnd: number;
 ```
 
-reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+reload 流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
 
 ### reloadBackgroundStart
 
@@ -71,15 +71,15 @@ reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 
 reloadBackgroundStart: number;
 ```
 
-reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 中[后台线程脚本](/guide/spec#background-thread-script-or-bts)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+reload 流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 中[后台线程脚本](/guide/spec#background-thread-script-or-bts)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
 
-### loadBackgroundEnd
+### reloadBackgroundEnd
 
 ```ts
-loadBackgroundEnd: number;
+reloadBackgroundEnd: number;
 ```
 
-reload流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 中[后台线程脚本](/guide/spec#background-thread-script-or-bts)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+reload 流程加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 中[后台线程脚本](/guide/spec#background-thread-script-or-bts)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
 
 ### pipelineStart
 
@@ -192,6 +192,16 @@ frameworkPipelineTiming:  FrameworkPipelineTiming[keyof FrameworkPipelineTiming]
 ```
 
 [框架渲染](/guide/spec#framework-rendering)中关键阶段的性能数据. 类型为 [`FrameworkPipelineTiming`](/api/lynx-api/performance-api/framework-pipeline-timing)。
+
+### hostPlatformTiming
+
+```ts
+hostPlatformTiming: AndroidHostPlatformTiming |
+  HarmonyHostPlatformTiming |
+  IOSHostPlatformTiming;
+```
+
+[Lynx Pipeline](/guide/spec#lynx-pipeline) 中不同平台特有的关键阶段的性能数据， 类型为 [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing)。
 
 ## 兼容性
 
