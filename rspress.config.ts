@@ -93,6 +93,7 @@ export default defineConfig({
       'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
+  base: '/next',
   themeConfig: {
     locales: [
       {
