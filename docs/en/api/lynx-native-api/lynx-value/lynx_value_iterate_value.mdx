@@ -1,0 +1,49 @@
+# lynx_value_iterate_value
+
+## Introduction
+
+Iterate through lynx_value of array or map type.
+
+## Syntax
+
+```c
+typedef void (*lynx_value_iterator_callback)(lynx_api_env env, lynx_value key,
+                                             lynx_value val, void* func,
+                                             void* raw_data);
+```
+
+```c
+lynx_api_status lynx_value_iterate_value(
+    lynx_api_env env, lynx_value object, lynx_value_iterator_callback callback,
+    void* func, void* raw_data);
+```
+
+### Parameters
+
+| Key           | Description                                                                                                |
+|:--------------|:-----------------------------------------------------------------------------------------------------------|
+| [in] env      | The environment in which lynx value runs, typically nullptr.                                               |
+| [in] object   | lynx_value to be iterated through.                                                                         |
+| [in] callback | lynx_value_iterator_callback function pointer.                                                             |
+| [in] func     | Pass through a function pointer to handle the Callback, which is not used inside the iterator function.    |
+| [in] raw_data | Pass through user-defined pointer data, which is not used inside the iterator function.                    |
+
+### Return Value
+
+Returns `lynx_api_ok` if the API succeeded.
+
+## Example
+
+If the lynx_value being iterated is an array, the Callback's key is of type lynx_value_uint32. If the lynx_value being iterated is a map, the Callback's key is of type lynx_value_string.
+
+```c
+static inline void LynxValueIteratorCallback(lynx_api_env env,
+                                             lynx_value key,
+                                             lynx_value value, void* func,
+                                             void* raw_data) {
+  // do something by func
+}
+
+lynx_value_iterate_value(env, val, LynxValueIteratorCallback,
+                         reinterpret_cast<void*>(func), nullptr);
+```
