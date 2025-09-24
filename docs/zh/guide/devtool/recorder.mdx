@@ -1,5 +1,5 @@
 import { Tab, Tabs, Steps } from '@rspress/core/theme';
-import { Go } from '@lynx';
+import { Go, PlatformTabs } from '@lynx';
 import { QRCodeSVG } from 'qrcode.react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { Button, Toast } from '@douyinfe/semi-ui';
@@ -174,7 +174,63 @@ Recorder 录制与回放过程覆盖了 Lynx 整个渲染过程，需要 Lynx �
 
 Recorder 提供了一个高度封装的回放模块，其随着 LynxDevTool 一并集成到你的应用，你只需要按照下面的方式提供简单的入口即可。
 
-#### Android
+选择你的目标平台查看具体的集成步骤：
+
+<PlatformTabs queryKey="platform">
+
+<PlatformTabs.Tab platform="ios">
+1. 在你的应用 Podfile 中对 LynxDevtool 额外引入 LynxRecorder 模块
+
+```ruby
+pod 'LynxDevtool', lynxDevVersion, :subspecs => [
+    'Framework',
+    'LynxRecorder'
+]
+```
+
+2. 使用 LynxRecorderViewController 回放录制页面
+
+:::note Swift 工程接入注意事项
+
+Recorder 使用 Objective-C 编写，如果 Swift 工程想要调用对应的方法，需要参照 [Importing Objective-C into Swift](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift) 提供对应的 bridge 文件。
+
+并在 bridge 文件中增加如下内容：
+
+```objective-c title="BridgeFile"
+#import <LynxDevtool/LynxRecorderViewController.h>
+```
+
+:::
+
+<Tabs groupId='integrate-lynxrecorder-to-android'>
+<Tab label="Objective-C">
+
+```objective-c
+#import <LynxDevtool/LynxRecorderViewController.h>
+
+LynxRecorderViewController *recorderVC = [[LynxRecorderViewController alloc] init];
+recorderVC.url = @"file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json";
+UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:recorderVC];
+[self presentViewController:nav animated:YES completion:nil];
+```
+
+</Tab>
+<Tab label="Swift">
+
+```swift
+
+let recorderVC = LynxRecorderViewController()
+recorderVC.url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
+present(recorderVC, animated: true, completion: nil)
+
+```
+
+</Tab>
+</Tabs>
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
 
 1.  增加 Recorder 页面入口
 
@@ -245,56 +301,32 @@ class MainActivity :Activity() {
     android:exported="false" />
 ````
 
-#### iOS
+</PlatformTabs.Tab>
 
-1. 在你的应用 Podfile 中对 LynxDevtool 额外引入 LynxRecorder 模块
+<PlatformTabs.Tab platform="harmony">
 
-```ruby
-pod 'LynxDevtool', lynxDevVersion, :subspecs => [
-    'Framework',
-    'LynxRecorder'
-]
+lynx_devtool 提供了一个高度封装的 `LynxRecorderView` 组件，通过传入录制产物的 URL 即可实现页面回放功能。
+
+```tsx
+import { LynxRecorderView } from '@lynx/lynx_devtool';
+
+build() {
+  Column() {
+    LynxRecorderView({
+      url: 'file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json'
+    })
+  }.size({ width: '100%', height: '100%' })
+}
 ```
 
-2. 使用 LynxRecorderViewController 回放录制页面
+</PlatformTabs.Tab>
 
-:::note Swift 工程接入注意事项
-
-Recorder 使用 objective-c 编写，如果 swift 工程想要调用对应的方法，需要参照 [Importing Objective-C into Swift](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift) 提供对应的 bridge 文件。
-
-并在 bridge 文件中增加如下内容：
-
-```swift
-#import <LynxDevtool/LynxRecorderViewController.h>
-```
-
-:::
-
-<Tabs groupId='integrate-lynxrecorder-to-android'>
-<Tab label="Objective-C">
-
-```objective-c
-#import <LynxDevtool/LynxRecorderViewController.h>
-
-LynxRecorderViewController *recorderVC = [[LynxRecorderViewController alloc] init];
-recorderVC.url = @"file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json";
-UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:recorderVC];
-[self presentViewController:nav animated:YES completion:nil];
-```
-
-</Tab>
-
-<Tab label="Swift">
-
-```swift
-
-let recorderVC = LynxRecorderViewController()
-recorderVC.url = "file://lynxrecorder?url=https://lynx.recorder.artifacts/LynxRecorder.json"
-present(recorderVC, animated: true, completion: nil)
-
-```
-
-</Tab>
-</Tabs>
+</PlatformTabs>
 
 </Steps>
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="devtool/recorder" />
