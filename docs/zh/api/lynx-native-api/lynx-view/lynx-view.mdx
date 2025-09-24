@@ -10,9 +10,9 @@ context: 'Web'
 
 完成上述集成后，你可以通过 Lynx for Web 提供的 API 实现更灵活的交互控制，以下是核心 API 的详细说明：
 
-### 1 lynx-view
+### lynx-view
 
-#### 1.1 Attributes
+#### Attributes
 
 | 名称                        | 是否必传 | 说明                                                                                                               |
 | :-------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------- |
@@ -21,9 +21,9 @@ context: 'Web'
 | initData                    | 否       | 卡片初始化时的 InitData                                                                                            |
 | overrideLynxTagToHTMLTagMap | 否       | 自定义 Lynx 标签到 HTML 标签的映射关系。不支持 React Component，只支持 HTMLElement(可以是webcomponent或者原生标签) |
 
-#### 2 Properties
+#### Properties
 
-##### 2.1 nativeModulesMap
+##### nativeModulesMap
 
 自定义的 [NativeModule](/guide/use-native-modules)，key 为 module 名称，value 为 module 实现（一个 esm url）：
 
@@ -54,7 +54,7 @@ const nativeModulesMap = {
 lynxView.nativeModulesMap = nativeModulesMap;
 ```
 
-##### 2.2 onNativeModulesCall
+##### onNativeModulesCall
 
 处理 NativeModules（JSB 等）相关调用的入口:
 
@@ -78,7 +78,7 @@ lynxView.onNativeModulesCall = (name, data, moduleName) => {
 };
 ```
 
-##### 2.3 customTemplateLoader
+##### customTemplateLoader
 
 允许用户实现自定义模板加载功能（默认是 fetch）：
 
@@ -92,9 +92,9 @@ lynxView.customTemplateLoader = (url) => {
 };
 ```
 
-#### 3 Events
+#### Events
 
-##### 1 error
+##### error
 
 报错信息通知：
 
@@ -118,9 +118,9 @@ lynxView.addEventListener('error', (err: LynxError) => {
 });
 ```
 
-#### 4 Methods
+#### Methods
 
-##### 4.1 updateData
+##### updateData
 
 [详见](/api/lynx-native-api/lynx-view/update-meta-data.mdx)
 
@@ -137,7 +137,7 @@ updateData(
 ): void
 ```
 
-##### 4.2 updateGlobalProps
+##### updateGlobalProps
 
 [详见](/api/lynx-api/main-thread/lynx-global-props)
 
@@ -145,7 +145,7 @@ updateData(
 updateGlobalProps(data: Cloneable): void;
 ```
 
-##### 4.3 sendGlobalEvent
+##### sendGlobalEvent
 
 [详见](/api/lynx-native-api/lynx-view/send-global-event)
 
@@ -153,7 +153,7 @@ updateGlobalProps(data: Cloneable): void;
 sendGlobalEvent(eventName: string, params: Cloneable[]): void;
 ```
 
-#### 5 宽、高
+#### 宽、高
 
 :::note
 lynx-view的内部排版会被强制移出外部排版流
@@ -165,7 +165,7 @@ lynx-view的内部排版会被强制移出外部排版流
 
 有些情况下您的确需要由 lynx-view 的内容决定宽或高，您可以设置 `height="auto"` 或者 `width="auto"` 来启动自动宽高监听器。在这种情况下，lynx-view 的内部排版依旧与外部排版流独立。
 
-### 2 兼容性
+### 兼容性
 
 推荐配置为：**Chrome > 118, safari>18, Firefox NSR**
 
@@ -191,9 +191,9 @@ export default {
 };
 ```
 
-### 3 FAQ
+### FAQ
 
-#### 1 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
+#### 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
 
 这是因为 Worker 加载远程脚本需要遵守[同源策略](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy)，而项目的 JS 资源一般会部署在 CDN 上，从而造成了跨域问题。
 
@@ -215,6 +215,6 @@ document.body.innerHTML = `
 </lynx-view>`;
 ```
 
-#### 2 性能优化
+#### 性能优化
 
 我们提供了 RSBuild 插件来做性能优化，你可以在你的 web 工程中引入[该插件](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin)
