@@ -40,10 +40,10 @@ DevTool 提供了一些调试功能开关，
 - `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
 - `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
 
-<Details title="Lynx Debug 与 Lynx LogBox 开关是默认开启的，Lynx DevTool 开关默认关闭，建议开启 Lynx DevTool 开关">
+<Details title="这三个开关均默认关闭，需要主动打开">
 
-- 使用 DevTool 桌面应用调试 Lynx 页面时，需要同时打开 Lynx Debug 和
-  Lynx DevTool 开关
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
 - LogBox 可以帮助你快速发现问题
 
 </Details>
@@ -53,16 +53,22 @@ DevTool 提供了一些调试功能开关，
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {5-10}
+```objective-c title=AppDelegate.m {9-16}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
+  LynxEnv *lynxEnv = [LynxEnv sharedInstance];
   // 打开 Lynx Debug 开关
   lynxEnv.lynxDebugEnabled = YES;
   // 打开 Lynx DevTool 开关
   lynxEnv.devtoolEnabled = YES;
   // 打开 Lynx LogBox 开关
+  [LynxService(LynxServiceDevToolProtocol) setLogBoxPresetValue:YES];
   lynxEnv.logBoxEnabled = YES;
   return YES;
 }
@@ -71,16 +77,24 @@ DevTool 提供了一些调试功能开关，
 </Tab>
 <Tab label="Swift">
 
-```swift title=AppDelegate.swift {5-10}
+```objective-c title="YourTarget-Bridging-Header.h"
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+```
+
+```swift title=AppDelegate.swift {5-12}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
+    let lynxEnv = LynxEnv.sharedInstance()
     // 打开 Lynx Debug 开关
     lynxEnv.lynxDebugEnabled = true
     // 打开 Lynx DevTool 开关
     lynxEnv.devtoolEnabled = true
     // 打开 Lynx LogBox 开关
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.logBoxPresetValue = true
     lynxEnv.logBoxEnabled = true
     return true
   }
@@ -141,7 +155,7 @@ dependencies {
 private void initLynxService() {
   // ...
   // register DevTool service
-  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE);
+  LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
 }
 
 ```
@@ -153,7 +167,7 @@ private void initLynxService() {
 private fun initLynxService() {
   // ...
   // register DevTool service
-  LynxServiceCenter.inst().registerService(LynxDevToolService)
+  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
 }
 ```
 
@@ -169,10 +183,10 @@ DevTool 提供了一些调试功能开关，
 - `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
 - `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
 
-<Details title="Lynx Debug 与 Lynx LogBox 开关是默认开启的，Lynx DevTool 开关默认关闭，建议开启 Lynx DevTool 开关">
+<Details title="这三个开关均默认关闭，需要主动打开">
 
-- 使用 DevTool 桌面应用调试 Lynx 页面时，需要同时打开 Lynx Debug 和
-  Lynx DevTool 开关
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
 - LogBox 可以帮助你快速发现问题
 
 </Details>
@@ -182,7 +196,7 @@ DevTool 提供了一些调试功能开关，
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-8}
+```java title=YourApplication.java {3-9}
 private void initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null);
   // 打开 Lynx Debug 开关
@@ -190,6 +204,7 @@ private void initLynxEnv() {
   // 打开 Lynx DevTool 开关
   LynxEnv.inst().enableDevtool(true);
   // 打开 Lynx LogBox 开关
+  LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
   LynxEnv.inst().enableLogBox(true);
 }
 
@@ -198,7 +213,7 @@ private void initLynxEnv() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-8}
+```kotlin title=YourApplication.kt {3-9}
 private fun initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null)
   // 打开 Lynx Debug 开关
@@ -206,6 +221,7 @@ private fun initLynxEnv() {
   // 打开 Lynx DevTool 开关
   LynxEnv.inst().enableDevtool(true)
   // 打开 Lynx LogBox 开关
+  LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
   LynxEnv.inst().enableLogBox(true)
 }
 ```
@@ -289,8 +305,8 @@ DevTool 提供了一些调试功能开关，
 
 <Details title="Lynx Debug 与 Lynx LogBox 开关是默认开启的，Lynx DevTool 开关默认关闭，建议开启 Lynx DevTool 开关">
 
-- 使用 DevTool 桌面应用调试 Lynx 页面时，需要同时打开 Lynx Debug 和
-  Lynx DevTool 开关
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
 - LogBox 可以帮助你快速发现问题
 
 </Details>

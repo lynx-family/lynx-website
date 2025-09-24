@@ -42,11 +42,11 @@ Here are three important switches:
 - `Lynx DevTool` controls main debugging features: element inspection and JavaScript debugging.
 - `Lynx LogBox` manages the [LogBox](/guide/devtool/handle-errors.html).
 
-<Details title="Lynx Debug and LogBox are on by default; DevTool is off. Enabling DevTool is recommended.">
+<Details title="These three switches are disabled by default, you need to enable them.">
 
-- When debugging Lynx pages with the DevTool Desktop, both `Lynx Debug` and
-  `Lynx DevTool` need be enabled
-- LogBox helps you quickly identify and diagnose issues
+- `Lynx DevTool` and `Lynx LogBox` switches can only take effect after `Lynx Debug` is enabled.
+- When debugging Lynx pages with the DevTool Desktop, `Lynx DevTool` needs to be enabled.
+- LogBox helps you quickly identify and diagnose issues.
 
 </Details>
 
@@ -55,16 +55,22 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {5-10}
+```objective-c title=AppDelegate.m {9-16}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
+  LynxEnv *lynxEnv = [LynxEnv sharedInstance];
   // Enable Lynx Debug
   lynxEnv.lynxDebugEnabled = YES;
   // Enable Lynx DevTool
   lynxEnv.devtoolEnabled = YES;
   // Enable Lynx LogBox
+  [LynxService(LynxServiceDevToolProtocol) setLogBoxPresetValue:YES];
   lynxEnv.logBoxEnabled = YES;
   return YES;
 }
@@ -73,16 +79,24 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 </Tab>
 <Tab label="Swift">
 
-```swift title=AppDelegate.swift {5-10}
+```objective-c title="YourTarget-Bridging-Header.h"
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+```
+
+```swift title=AppDelegate.swift {5-12}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
+    let lynxEnv = LynxEnv.sharedInstance()
     // Enable Lynx Debug
     lynxEnv.lynxDebugEnabled = true
     // Enable Lynx DevTool
     lynxEnv.devtoolEnabled = true
     // Enable Lynx LogBox
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.logBoxPresetValue = true
     lynxEnv.logBoxEnabled = true
     return true
   }
@@ -143,7 +157,7 @@ It is recommended to use the latest [Lynx version](https://github.com/lynx-famil
 private void initLynxService() {
   // ...
   // register DevTool service
-  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE);
+  LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
 }
 
 ```
@@ -155,7 +169,7 @@ private void initLynxService() {
 private fun initLynxService() {
   // ...
   // register DevTool service
-  LynxServiceCenter.inst().registerService(LynxDevToolService)
+  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
 }
 ```
 
@@ -171,11 +185,11 @@ Here are three important switches:
 - `Lynx DevTool` controls main debugging features: element inspection and JavaScript debugging.
 - `Lynx LogBox` manages the [LogBox](/guide/devtool/handle-errors.html).
 
-<Details title="Lynx Debug and LogBox are on by default; DevTool is off. Enabling DevTool is recommended.">
+<Details title="These three switches are disabled by default, you need to enable them.">
 
-- When debugging Lynx pages with the DevTool Desktop, both `Lynx Debug` and
-  `Lynx DevTool` switches need be enabled
-- LogBox helps you quickly identify and diagnose issues
+- `Lynx DevTool` and `Lynx LogBox` switches can only take effect after `Lynx Debug` is enabled.
+- When debugging Lynx pages with the DevTool Desktop, `Lynx DevTool` needs to be enabled.
+- LogBox helps you quickly identify and diagnose issues.
 
 </Details>
 
@@ -184,7 +198,7 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-8}
+```java title=YourApplication.java {3-9}
 private void initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null);
   // Enable Lynx Debug
@@ -192,6 +206,7 @@ private void initLynxEnv() {
   // Enable Lynx DevTool
   LynxEnv.inst().enableDevtool(true);
   // Enable Lynx LogBox
+  LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
   LynxEnv.inst().enableLogBox(true);
 }
 
@@ -200,7 +215,7 @@ private void initLynxEnv() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-8}
+```kotlin title=YourApplication.kt {3-9}
 private fun initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null)
   // Enable Lynx Debug
@@ -208,6 +223,7 @@ private fun initLynxEnv() {
   // Enable Lynx DevTool
   LynxEnv.inst().enableDevtool(true)
   // Enable Lynx LogBox
+  LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
   LynxEnv.inst().enableLogBox(true)
 }
 ```
@@ -292,9 +308,9 @@ Here are three important switches:
 
 <Details title="Lynx Debug and LogBox are on by default; DevTool is off. Enabling DevTool is recommended.">
 
-- When debugging Lynx pages with the DevTool Desktop, both `Lynx Debug` and
-  `Lynx DevTool` switches need be enabled
-- LogBox helps you quickly identify and diagnose issues
+- `Lynx DevTool` and `Lynx LogBox` switches can only take effect after `Lynx Debug` is enabled.
+- When debugging Lynx pages with the DevTool Desktop, `Lynx DevTool` needs to be enabled.
+- LogBox helps you quickly identify and diagnose issues.
 
 </Details>
 
