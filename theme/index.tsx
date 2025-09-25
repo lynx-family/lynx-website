@@ -218,7 +218,7 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
       docSearchProps={{
         appId: 'V4ET1OFZ5S', // cspell:disable-line
         apiKey: '15236c16e0f335c0cb2a67bc3ac06bcb', // cspell:disable-line
-        indexName: 'lynx',
+        indexName: 'lynx_next',
         searchParameters: {
           facetFilters: [`lang:${lang}`],
         },
