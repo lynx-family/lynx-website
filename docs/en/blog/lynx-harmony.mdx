@@ -1,0 +1,183 @@
+---
+date: 2025-9-25
+sidebar: false
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { Go } from '@lynx';
+
+_September 25, 2025_
+
+# Lynx on HarmonyOS: Unlock Native for More on Multi-Platform
+
+<BlogAvatar list={['baiqiang', 'shiwentao', 'lynx']} />
+
+![lynx-harmony-background](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-harmony/lynx-harmony-background1.png)
+
+As introduced in the [blog](/blog/lynx-unlock-native-for-more.html), using Lynx can empower developers to use their existing web skills to create truly native UIs for both mobile and web from a single codebase. With the release of [**HarmonyOS NEXT**](https://consumer.huawei.com/cn/harmonyos-next/), a pure HarmonyOS ecosystem is approaching. Against this backdrop, Lynx developers encounter some challenges on HarmonyOS: when developing with Lynx, how can developers efficiently manage multi-platform code across iOS/Android/HarmonyOS and reuse existing business logic; how to ensure that applications developed with Lynx deliver smooth native experiences on HarmonyOS.
+
+Regarding the challenges mentioned above, Lynx team has been actively exploring corresponding solutions. Today, we're excited to announce a major milestone: **Lynx has completed its deep integration with HarmonyOS and is now officially open-sourced**. Lynx provides developers with a complete and efficient cross-platform development solution, enables developers to leverage existing Android and iOS codebases while unlocking HarmonyOS's unique capabilities to deliver truly native experiences across all platforms.
+
+## Why developers choose Lynx on HarmonyOS?
+
+Lynx empowers developers to build applications that deliver native experiences while leveraging their existing web technology expertise. By integrating with HarmonyOS, Lynx unifies its high-performance rendering engine with HarmonyOS's native UI capabilities, delivering the following advantages:
+
+- **Code Reuse**：Write Once, Run Everywhere. Developers can use a single codebase to simultaneously target Android, iOS, Web, and HarmonyOS platforms, improving development productivity and code maintainability.
+- **High Performance**: Through integration with [ArkUI's](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview) [C API](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ndk-build-ui-overview), Lynx rendering instructions bypass [ArkTS](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-overview) virtual machine execution overhead by directly invoking C APIs for UI creation, delivering rendering performance on HarmonyOS that matches or surpasses native ArkTS capabilities.
+- **Native Element Customization**：Lynx provides rich [built-in elements](https://lynxjs.org/api/elements/built-in/view.html) and supports integration of custom HarmonyOS native elements (via ArkTS), enabling developers to extend UI capabilities for highly customized interfaces while preserving native performance. More details: [Custom Element](/guide/custom-native-component.html#platform=harmony).
+- **Native Modules**：Lynx enables developers to call HarmonyOS native APIs from JavaScript, supporting both system services and custom native modules. More detail: [Native Modules](/guide/use-native-modules.html#platform=harmony)。
+
+## Lynx on HarmonyOS Implementation Overview
+
+Lynx rendering instructions directly connect to HarmonyOS's ArkUI system, optimizing Lynx performance on HarmonyOS.
+
+![lynx-harmony-background](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-harmony/lynx-harmony-impl.png)
+
+### Rendering Engine: Interfacing Directly with ArkUI
+
+Map Lynx [platform-ui-tree](https://lynxjs.org/guide/spec.html#platform-ui-tree) to HarmonyOS native UI, combining Lynx performance with ArkTS ecosystem benefits.
+
+- **Native UI Rendering**: Using [ArkUI's](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview) [C API](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ndk-build-ui-overview) to convert [element-tree](https://lynxjs.org/guide/spec.html#element-tree) operations directly to native UI calls, eliminating data conversion overhead for better performance in complex UI updates.
+
+- **Custom Native Element**：By utilizing HarmonyOS's [`BuilderNode`](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-user-defined-arktsnode-buildernode) and [`Builder`](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-builder) capabilities, developers can dynamically construct ArkTS subtrees and seamlessly embed them into the ArkUI node tree created by Lynx, achieving highly customized component implementations.
+
+### Event System: Complex Interactions
+
+Lynx designed a complete event system that captures and responds to gestures and events in complex interactions.
+
+<table
+  rules="none"
+  align="center"
+  width="100%"
+  style={{ tableLayout: 'fixed' }}
+>
+  <thead align="center">
+    <th colSpan={1}>
+      <span style={{ fontWeight: 'bold' }}>
+        Gesture Support
+      </span>
+    </th>
+    <th colSpan={1}>
+      <span style={{ fontWeight: 'bold' }}>
+        Custom Gesture Control in Hybrid Scenarios
+      </span>
+    </th>
+  </thead>
+  <tr >
+    <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-harmony/base-event.gif"
+          style={{ width: '200px',height:'380px',aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-harmony/complex-event.gif"
+          style={{ width: '200px',height:'380px',aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+  </tr>
+</table>
+
+- **Custom HitTest**：Accurately find event-responsive nodes on the Lynx platform-ui-tree, ensuring precise basic interactions.
+- **Gesture Support**：Integrates HarmonyOS gesture capabilities like [`tap`](https://lynxjs.org/api/lynx-api/event/touch-event#tap) and [`longpress`](https://lynxjs.org/api/lynx-api/event/touch-event#longpress), ensuring native-like gesture experience on Lynx.
+- **Custom Gesture Control in Hybrid Scenarios**：Offers a comprehensive set of event APIs, including [`user-interaction-enabled`](https://lynxjs.org/api/elements/built-in/view.html#user-interaction-enabled)  and [`block-native-event`](https://lynxjs.org/api/elements/built-in/view.html#block-native-event), empowering Lynx developers to manage event propagation and handling logic for efficient processing of hybrid scrolling scenarios with native pages.
+
+
+### LynxView: Lightweight Client Interface
+
+Combines reactive ArkTS to design `LynxView` component API for simple Lynx integration.
+
+- Initialize `LynxView` with `LynxService` and `LynxEnv` 
+<CodeFold>
+```ts title=EntryAbility.ets {6-8}
+import { LynxServiceCenter, LynxEnv, LynxServiceType } from '@lynx/lynx';
+import { LynxDevToolService } from '@lynx/lynx_devtool_service';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    LynxServiceCenter.registerService(LynxServiceType.DevTool, LynxDevToolService.instance);
+    // ...
+    LynxEnv.initialize(this.context);
+    // ...
+  }
+}
+```
+</CodeFold>
+
+- Complete page rendering by loading the application bundle via LynxView
+
+<CodeFold>
+```ts title=Index.ets {9-16}
+import { LynxServiceCenter, LynxEnv, LynxServiceType, LynxTemplateResourceFetcher, LynxMediaResourceFetcher, LynxGenericResourceFetcher, LynxView, } from '@lynx/lynx';
+// ...
+@Entry
+@Component
+struct Index {
+  private url: string = 'your bundle file';
+  build() {
+    Column() {
+      LynxView({
+        templateResourceFetcher: this.templateResourceFetcher,
+        mediaResourceFetcher: this.mediaResourceFetcher,
+        genericResourceFetcher: this.genericResourceFetcher,
+        url: this.url,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+````
+</CodeFold>
+
+1. **[LynxView](/api/lynx-native-api/lynx-view/load-template.html#harmony)**: Follows ArkTS lifecycle and auto-handles template loading, memory management, and component reuse. Developers just pass the bundle path for automatic rendering.
+
+1. **[LynxResourceFetcher](/api/lynx-native-api/lynx-generic-resource-fetcher/fetch-resource.html#harmony)**: Resource loading capabilities, developers need only implement this protocol to interface their application's existing resource loading capabilities with Lynx, ensuring lightweight and efficient integration into established development ecosystems.
+
+
+## Getting Started with Lynx on HarmonyOS
+
+Complete [development documentation](/guide/start/integrate-with-existing-apps.html#platform=harmony) and [demo code](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject) are available on the official Lynx website to help developer integration.
+
+### Use the Pre-built Lynx Explorer
+
+- **Set up DevEco Studio**
+
+Download and install the latest version of [DevEco Studio](https://developer.huawei.com/consumer/cn/deveco-studio/)
+
+- **Download Lynx Explore**
+
+Download [`lynx_explorer-default-unsigned.hap`](https://github.com/lynx-family/lynx/releases/latest/download/lynx_explorer-default-unsigned.hap)。
+
+- **Install Lynx Explorer on the Emulator**
+
+```bash
+export PATH=/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains:$PATH
+hdc install lynx_explorer-default-unsigned.hap
+````
+
+- **Develop**
+
+Click 'Copy Link' in the QR Code section below, paste into Lynx Explorer's Card URL field, then click 'Go'.
+
+<Go
+  example="hello-world"
+  defaultFile="src/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-harmony.png"
+  defaultEntryFile="dist/main.lynx.bundle"
+/>
+
+### Local Build of Lynx Explorer
+
+Developers interested in exploring the Lynx on HarmonyOS source code can also attempt local builds by following the guide [Building Lynx Explorer for Harmony](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony).
+
+### Integrate with Existing Apps on HarmonyOS
+
+For developers with existing HarmonyOS application projects seeking to integrate Lynx, the official website provides comprehensive [documentation](/guide/start/integrate-with-existing-apps.html#platform=harmony) references.
+
+
+Welcome to the Lynx community! Let's build outstanding native experiences with Lynx on HarmonyOS!
