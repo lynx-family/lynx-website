@@ -1,149 +1,68 @@
-### 将 Lynx 集成到 Web 平台
+---
+context: 'Web'
+---
 
-import { PackageManagerTabs, Steps } from '@theme';
-import { Info } from '@lynx';
+# `<lynx-view>`
 
-<Info title="Lynx for Web">
-  Lynx for Web 在 Web 浏览器中实现了 Lynx 引擎。通过 Lynx for
-  Web，你可以轻松地将 Lynx 应用集成到任何现有的 Web 项目中，无论该项目使用的是
-  React、Vue、Svelte 还是纯 HTML。
-</Info>
+`<lynx-view>` 是一个加载并展示 Lynx 模板的容器组件，可以在 Web 应用中使用它来渲染 Lynx 模板。
 
-## 1. 构建 web 产物
+##  API 参考
 
-我们需要你已经阅读并按照[快速开始](/guide/start/quick-start)创建了一个 Lynx 项目。
+完成上述集成后，你可以通过 Lynx for Web 提供的 API 实现更灵活的交互控制，以下是核心 API 的详细说明：
 
-<Steps>
+### lynx-view
 
-### 添加 web 配置
+#### Attributes
 
-1. 进入 Lynx 项目：
+| 名称                        | 是否必传 | 说明                                                                                                               |
+| :-------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------- |
+| url                         | 是       | Rspeedy 产物的url（其它 chunk 的 url 会编译时注入产物自动启动）                                                    |
+| globalProps                 | 否       | 卡片初始化时的 [GlobalProps](/api/lynx-api/lynx/lynx-global-props.mdx)                                             |
+| initData                    | 否       | 卡片初始化时的 InitData                                                                                            |
+| overrideLynxTagToHTMLTagMap | 否       | 自定义 Lynx 标签到 HTML 标签的映射关系。不支持 React Component，只支持 HTMLElement(可以是webcomponent或者原生标签) |
 
-```bash
-cd <lynx-project-name>
-```
+#### Properties
 
-2. `lynx.config.ts` 增加 web 配置（`environments.web`）：
+##### nativeModulesMap
+
+自定义的 [NativeModule](/guide/use-native-modules)，key 为 module 名称，value 为 module 实现（一个 esm url）：
 
 ```ts
-import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+type NativeModulesMap = Record<string, string>;
+```
 
-export default defineConfig({
-  plugins: [pluginReactLynx()],
-  environments: {
-    web: {
-      output: {
-        assetPrefix: '/',
+示例:
+
+```ts
+const nativeModulesMap = {
+  CustomModule: URL.createObjectURL(
+    new Blob(
+      [
+        `export default function(NativeModules, NativeModulesCall) {
+    return {
+      async getColor(data, callback) {
+        const color = await NativeModulesCall('getColor', data);
+        callback(color);
       },
-    },
-    lynx: {},
-  },
-});
-```
-
-### 构建
-
-执行：
-
-<PackageManagerTabs command="run build" />
-
-你将会看到项目中多出了 `dist/main.lynx.bundle` 文件，它就是最终的 web 构建产物。
-
-</Steps>
-
-## 2. 接入 web 项目
-
-目前你已经有了一份 Lynx for Web 构建产物，接下来我们需要创建一个 web 工程去使用它，这里使用 Rsbuild。
-
-<Steps>
-
-### 创建一个 web 项目
-
-在上述的 Lynx 项目**同级**，创建一个新的工程，执行：
-
-<PackageManagerTabs command="create rsbuild@latest" />
-
-跟随提示来创建一个 React 项目。
-
-### 配置工程
-
-1. 进入 Web 项目：
-
-```bash
-cd <web-project-name>
-```
-
-2. 安装依赖：
-
-<PackageManagerTabs command="install @lynx-js/web-core @lynx-js/web-elements" />
-
-3. 在 `src/app.tsx` 引入这些依赖：
-
-```tsx
-import './App.css';
-import '@lynx-js/web-core/index.css';
-import '@lynx-js/web-elements/index.css';
-import '@lynx-js/web-core';
-import '@lynx-js/web-elements/all';
-
-const App = () => {
-  return (
-    <lynx-view
-      style={{ height: '100vh', width: '100vw' }}
-      url="/main.web.bundle"
-    ></lynx-view>
-  );
+    }
+  };`,
+      ],
+      { type: 'text/javascript' },
+    ),
+  ),
 };
-
-export default App;
+lynxView.nativeModulesMap = nativeModulesMap;
 ```
 
-4. 更新 `rsbuild.config.ts`
+##### onNativeModulesCall
 
-:::warning
-`server.publicDir` 需要更换为你实际的 Lynx 项目路径。
-:::
+处理 NativeModules（JSB 等）相关调用的入口:
 
 ```ts
-import { defineConfig } from '@rsbuild/core';
-import { pluginReact } from '@rsbuild/plugin-react';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default defineConfig({
-  plugins: [pluginReact()],
-  server: {
-    publicDir: [
-      {
-        name: path.join(
-          __dirname,
-          '../',
-          // 这里请替换为你实际的 Lynx 项目名称
-          'lynx-project',
-          'dist',
-        ),
-      },
-    ],
-  },
-});
+(name: string, data: any, moduleName: string) => Promise<any> | any;
 ```
 
-### 启动工程
-
-执行：
-
-<PackageManagerTabs command="run dev" />
-
-访问 `http://localhost:3000` 即能看到你的 Lynx 应用。
-
-</Steps>
-
-## 3. API 参考
-
-更多 API 细节请参阅 [LynxView](/api/lynx-native-api/lynx-view/lynx-view)。
+示例：
 
 ```ts
 // 处理 NativeModule.bridge.call('request')
@@ -159,7 +78,7 @@ lynxView.onNativeModulesCall = (name, data, moduleName) => {
 };
 ```
 
-##### 3.2.3 customTemplateLoader
+##### customTemplateLoader
 
 允许用户实现自定义模板加载功能（默认是 fetch）：
 
@@ -173,9 +92,9 @@ lynxView.customTemplateLoader = (url) => {
 };
 ```
 
-#### 3.3 Events
+#### Events
 
-##### 3.3.1 error
+##### error
 
 报错信息通知：
 
@@ -199,9 +118,9 @@ lynxView.addEventListener('error', (err: LynxError) => {
 });
 ```
 
-#### 3.4 Methods
+#### Methods
 
-##### 3.4.1 updateData
+##### updateData
 
 [详见](/api/lynx-native-api/lynx-view/update-meta-data.mdx)
 
@@ -218,7 +137,7 @@ updateData(
 ): void
 ```
 
-##### 3.4.2 updateGlobalProps
+##### updateGlobalProps
 
 [详见](/api/lynx-api/main-thread/lynx-global-props)
 
@@ -226,7 +145,7 @@ updateData(
 updateGlobalProps(data: Cloneable): void;
 ```
 
-##### 3.4.3 sendGlobalEvent
+##### sendGlobalEvent
 
 [详见](/api/lynx-native-api/lynx-view/send-global-event)
 
@@ -234,7 +153,7 @@ updateGlobalProps(data: Cloneable): void;
 sendGlobalEvent(eventName: string, params: Cloneable[]): void;
 ```
 
-#### 3.5 宽、高
+#### 宽、高
 
 :::note
 lynx-view的内部排版会被强制移出外部排版流
@@ -246,7 +165,7 @@ lynx-view的内部排版会被强制移出外部排版流
 
 有些情况下您的确需要由 lynx-view 的内容决定宽或高，您可以设置 `height="auto"` 或者 `width="auto"` 来启动自动宽高监听器。在这种情况下，lynx-view 的内部排版依旧与外部排版流独立。
 
-### 3.2 兼容性
+### 兼容性
 
 推荐配置为：**Chrome > 118, safari>18, Firefox NSR**
 
@@ -272,9 +191,9 @@ export default {
 };
 ```
 
-### 3.3 FAQ
+### FAQ
 
-#### 3.3.1 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
+#### 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
 
 这是因为 Worker 加载远程脚本需要遵守[同源策略](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy)，而项目的 JS 资源一般会部署在 CDN 上，从而造成了跨域问题。
 
@@ -296,6 +215,6 @@ document.body.innerHTML = `
 </lynx-view>`;
 ```
 
-#### 3.3.2 性能优化
+#### 性能优化
 
 我们提供了 RSBuild 插件来做性能优化，你可以在你的 web 工程中引入[该插件](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin)

@@ -1,0 +1,225 @@
+---
+context: 'Web'
+---
+
+# `<lynx-view>`
+
+`<lynx-view>` is a container component that loads and displays Lynx templates. It can be used in web applications to render Lynx templates.
+
+After completing the above integration, you can achieve more flexible interaction control through the APIs provided by Lynx for Web. Here is a detailed description of the core APIs:
+
+## lynx-view
+
+### Attributes
+
+| Name                        | Required | Description                                                                                                                                           |
+| :-------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| url                         | Yes      | URL of the Rspeedy output (URLs of other chunks will be automatically injected and launched during compilation)                                       |
+| globalProps                 | No       | [GlobalProps](/api/lynx-api/lynx/lynx-global-props.mdx) for card initialization                                                                       |
+| initData                    | No       | InitData for card initialization                                                                                                                      |
+| overrideLynxTagToHTMLTagMap | No       | Custom mapping relationship from Lynx tags to HTML tags. React Components are not supported, only HTMLElements (can be web components or native tags) |
+
+### Properties
+
+#### nativeModulesMap
+
+Custom [NativeModule](/guide/use-native-modules) where key is the module name and value is the module implementation (an ESM URL):
+
+```ts
+type NativeModulesMap = Record<string, string>;
+```
+
+Example:
+
+```ts
+const nativeModulesMap = {
+  CustomModule: URL.createObjectURL(
+    new Blob(
+      [
+        `export default function(NativeModules, NativeModulesCall) {
+    return {
+      async getColor(data, callback) {
+        const color = await NativeModulesCall('getColor', data);
+        callback(color);
+      },
+    }
+  };`,
+      ],
+      { type: 'text/javascript' },
+    ),
+  ),
+};
+lynxView.nativeModulesMap = nativeModulesMap;
+```
+
+#### onNativeModulesCall
+
+Entry point for handling NativeModules (JSB, etc.) related calls:
+
+```ts
+(name: string, data: any, moduleName: string) => Promise<any> | any;
+```
+
+Example:
+
+```ts
+// Handle NativeModule.bridge.call('request')
+lynxView.onNativeModulesCall = (name, data, moduleName) => {
+  if (moduleName === 'bridge') {
+    if (name === 'request') {
+      // ...
+
+      // return data will be automatically processed as callback data
+      return {};
+    }
+  }
+};
+```
+
+#### customTemplateLoader
+
+Allows users to implement custom template loading functionality (default is fetch):
+
+```ts
+lynxView.customTemplateLoader = (url) => {
+  return await(
+    await fetch(url, {
+      method: 'GET',
+    }),
+  ).json();
+};
+```
+
+### Events
+
+#### error
+
+Error message notification:
+
+```ts
+type LynxError = CustomEvent<{
+  error: Error;
+  sourceMap: {
+    offset: {
+      // Line offset
+      line: number;
+      // Column offset
+      col: number;
+    };
+  };
+  release: string;
+  fileName: 'lepus.js' | 'app-service.js';
+}>;
+
+lynxView.addEventListener('error', (err: LynxError) => {
+  // ...
+});
+```
+
+### Methods
+
+#### updateData
+
+[See details](/api/lynx-native-api/lynx-view/update-meta-data.mdx)
+
+```ts
+export type Cloneable<T = string | number | null | boolean | undefined> =
+  | T
+  | Record<string, T>
+  | T[];
+
+updateData(
+  data: Cloneable,
+  updateDataType: UpdateDataType,
+  callback?: () => void,
+): void
+```
+
+#### updateGlobalProps
+
+[See details](/api/lynx-api/main-thread/lynx-global-props)
+
+```ts
+updateGlobalProps(data: Cloneable): void;
+```
+
+#### sendGlobalEvent
+
+[See details](/api/lynx-native-api/lynx-view/send-global-event)
+
+```ts
+sendGlobalEvent(eventName: string, params: Cloneable[]): void;
+```
+
+### Width and Height
+
+:::note
+The internal layout of lynx-view will be forced out of the external layout flow
+:::
+
+We will force all lynx-view elements to apply [CSS Containment](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment).
+
+That is, by default, you need to set a width and height for lynx-view. The width and height can be allocated by `flex-grow` or specified as a percentage, but cannot be "stretched". Setting width and height is a strongly recommended practice and also a best practice for performance.
+
+In some cases where you really need the width or height to be determined by the content of lynx-view, you can set `height="auto"` or `width="auto"` to enable the automatic width/height listener. In this case, the internal layout of lynx-view remains independent of the external layout flow.
+
+## Compatibility
+
+The recommended configuration is: **Chrome > 118, Safari > 18, Firefox NSR**
+
+If you want to support browsers with Chrome < 118 and Safari < 18, you need to do the following:
+
+1. Import the compatibility plugin:
+
+```ts
+import '@lynx-js/web-elements-compat/LinearContainer';
+```
+
+2. Additionally compile the `@lynx-js` dependencies. If your project uses Rsbuild, modify the configuration as follows:
+
+```ts
+// rsbuild.config.ts
+export default {
+  source: {
+    include: [/@lynx-js/],
+  },
+  output: {
+    polyfill: 'usage',
+  },
+};
+```
+
+## FAQ
+
+### Runtime error: `Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'.`
+
+This is because Worker loading remote scripts needs to comply with the [Same-Origin Policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy), and the JS resources of the project are generally deployed on CDN, causing cross-origin issues.
+
+This can be solved by introducing [remote-web-worker](https://github.com/jantimon/remote-web-worker):
+
+```ts
+// The import position must be before @lynx-js/web-core
+import 'remote-web-worker';
+
+import '@lynx-js/web-core';
+import '@lynx-js/web-core/index.css';
+import '@lynx-js/web-elements/all';
+import '@lynx-js/web-elements/index.css';
+document.body.innerHTML = `
+<lynx-view
+    style="height:100vh; width:100vw;"
+    url="http://localhost:3000/main/index.main.bundle"
+>
+</lynx-view>`;
+```
+
+### Performance Optimization
+
+We provide an RSBuild plugin for performance optimization. You can introduce [this plugin](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin) in your web project.
+
+
+## Compatibility
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-native-api/lynx-view/lynx-view-custom-element" />
