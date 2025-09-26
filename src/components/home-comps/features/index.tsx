@@ -9,7 +9,7 @@ import { useLang } from '@rspress/core/runtime';
 import { BorderBeam } from '../border-beam';
 import { ActionBtn } from './action-btn';
 import { FeatureItem } from './feature-item';
-import { IconAndroid, IconIOS, IconWeb } from './icon';
+import { IconAndroid, IconHarmony, IconIOS, IconWeb } from './icon';
 import { FeatureIconItem } from './item-icon';
 type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
 
@@ -38,19 +38,10 @@ const featuresConfig: Record<
         zh: '一次编写，多端渲染',
       },
       desc: {
-        en: 'Enjoy native rendering on Android, iOS, and Web, or pixel-perfect consistency across mobile and desktop via our custom renderer.',
-        zh: '享受 Android， iOS， Web 原生渲染，或选择在移动和桌面端达到像素级一致的自渲染。',
+        en: 'Enjoy native rendering on iOS, Android, HarmonyOS and Web, or pixel-perfect consistency across mobile and desktop via our custom renderer.',
+        zh: '享受 iOS， Android，鸿蒙, Web 原生渲染，或选择在移动和桌面端达到像素级一致的自渲染。',
       },
       actions: [
-        {
-          text: (
-            <Space>
-              <IconAndroid />
-              Android
-            </Space>
-          ),
-          size: 'large',
-        },
         {
           text: (
             <Space>
@@ -59,6 +50,27 @@ const featuresConfig: Record<
             </Space>
           ),
           size: 'large',
+          link: 'guide/start/integrate-with-existing-apps.html?platform=ios',
+        },
+        {
+          text: (
+            <Space>
+              <IconAndroid />
+              Android
+            </Space>
+          ),
+          link: 'guide/start/integrate-with-existing-apps.html?platform=android',
+          size: 'large',
+        },
+        {
+          text: (
+            <Space>
+              <IconHarmony />
+              HarmonyOS
+            </Space>
+          ),
+          size: 'large',
+          link: 'guide/start/integrate-with-existing-apps.html?platform=harmony',
         },
         {
           text: (
@@ -68,6 +80,7 @@ const featuresConfig: Record<
             </Space>
           ),
           size: 'large',
+          link: 'guide/start/integrate-with-existing-apps.html?platform=web',
         },
       ],
     },
