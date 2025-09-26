@@ -336,7 +336,7 @@ user-interaction-enabled?: boolean
 ### `native-interaction-enabled`
 
 ```ts
-// DefaultValue: true for iOS, false for Android
+// DefaultValue: true for iOS and Harmony, false for Android
 native-interaction-enabled?: boolean
 ```
 
@@ -361,18 +361,18 @@ block-native-event?: boolean
 
 ```ts
 // DefaultValue: []
-block-native-event-areas?: number [number []]
+block-native-event-areas?: [string, string, string, string][]
 ```
 
 指定目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且触摸在目标节点的指定区域时是否阻止 Lynx 外的平台层手势，可以实现类似阻止平台层侧滑返回的效果。
 
-内层数组是一个包含 `4` 个数字的数组，分别是 `x`、`y`、`width`、`height`，表示触摸区域在目标节点中的位置。
+内层数组是一个包含 `4` 个字符串的数组，分别是 `x`、`y`、`width`、`height`，表示触摸区域在目标节点中的位置。
 
 ### `consume-slide-event`
 
 ```ts
 // DefaultValue: []
-consume-slide-event?: number [number []]
+consume-slide-event?: [number, number][]
 ```
 
 指定目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上时滑动特定角度，平台层手势是否响应，不影响 Lynx 的触摸事件，可以实现类似消费指定方向滑动的前端滚动容器。
@@ -395,6 +395,23 @@ event-through?: boolean
 指定触摸在目标节点上时平台层的触摸事件是否分发到 Lynx，可以实现类似只展示不交互的效果。该属性支持继承。
 
 该属性只能保证 Lynx 不消费平台层的触摸事件，但 LynxView 的父视图可能消费触摸事件导致穿透失效。
+
+### `event-through-active-regions`
+
+```ts
+// DefaultValue: []
+event-through-active-regions?: [string, string, string, string][]
+```
+
+指定 [`event-through`](#event-through) 的生效区域。
+
+内层数组是一个包含 `4` 个字符串的数组，分别是 `x`、`y`、`width`、`height`，表示触摸区域在目标节点中的位置。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event-through-active-regions.png"
+  width="100%"
+  height="100%"
+/>
 
 ### `enable-touch-pseudo-propagation`
 
