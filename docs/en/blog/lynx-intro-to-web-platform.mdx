@@ -90,6 +90,22 @@ const __SetAttribute: SetAttributePAPI = (
 };
 ```
 </div>
+<div>
+```cpp
+RENDERER_FUNCTION_CC(FiberSetAttribute) {
+  CONVERT_ARG_AND_CHECK_FOR_ELEMENT_API(arg0, 0, RefCounted, FiberSetAttribute);
+  auto element = fml::static_ref_ptr_cast<FiberElement>(arg0->RefCounted());
+  CONVERT_ARG(arg1, 1);
+  CONVERT_ARG(arg2, 2);
+  auto string_type = arg1->StringView();
+  CHECK_ILLEGAL_ATTRIBUTE_CONFIG(element, FiberSetAttribute);
+  element->SetAttribute(arg1->String(), arg2->ToLepusValue());
+  ON_NODE_MODIFIED(element);
+  RETURN_UNDEFINED();
+}
+```
+</div>
+</div>
 
 
 This means that developers and Rspeedy (Rsbuild) plugin authors don't need extra work to support the web platform. 
@@ -121,8 +137,6 @@ One of Lynx's core ideas is rendering based on native UI components, which means
 Just like Lynx's elements on iOS and Android, in browsers we provide a series of custom elements using [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components).
 By using the lifecycles provided by web browsers, we don't depend on any JavaScript framework. This minimizes I/O overhead for applications built with Lynx.
 
-![web-components](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/web-shadow-tree-web-c.jpeg)
-
 ## Faster, Easier, and a Rust-powered Future
 
 ### Boosted by Rust and WebAssembly
@@ -139,7 +153,7 @@ We know SSR is an important way to improve user experience. The web platform's S
 
 ## See our presentation on [React Universe Conf 2025](https://www.youtube.com/watch?v=-uUcYrl51JM)
 
-[![React Universe Conf 2025](https://img.youtube.com/vi/Z4JHjv1gk0o/0.jpg)](https://www.youtube.com/watch?v=-uUcYrl51JM)
+[React Universe Conf 2025](https://www.youtube.com/watch?v=-uUcYrl51JM)
 
 ## Integrate with your web app now
 
