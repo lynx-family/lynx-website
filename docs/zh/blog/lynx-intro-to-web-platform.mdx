@@ -63,22 +63,41 @@ Lynx Web 平台现已进入 Beta 阶段。下面是一些平台亮点。
 
 ![lynx-web-arch](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/arch-web-colorful-1.jpeg)
 
-**__SetAttribute（Web 平台）**
-
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '20px' }}>
+<div style={{display: 'flex', justifyContent:'center'}}>**__SetAttribute on Web Platform**</div>
+<div style={{display: 'flex', justifyContent:'center',}}>**__SetAttribute on Lynx Engine**</div>
+<div>
 ```js
 // lynx/runtime/papi.ts
 const __SetAttribute: SetAttributePAPI = (
-	element,
-	key,
-	value,
+  element,
+  key,
+  value,
 ) => {
-	if (value == null) {
-		element.removeAttribute(key)
-	} else {
-		element.setAttribute(key, value + '')
-	}
+  if (value == null) {
+    element.removeAttribute(key)
+  } else {
+    element.setAttribute(key, value + '')
+  }
 };
 ```
+</div>
+```cpp
+RENDERER_FUNCTION_CC(FiberSetAttribute) {
+  CONVERT_ARG_AND_CHECK_FOR_ELEMENT_API(arg0, 0, RefCounted, FiberSetAttribute);
+  auto element = fml::static_ref_ptr_cast<FiberElement>(arg0->RefCounted());
+  CONVERT_ARG(arg1, 1);
+  CONVERT_ARG(arg2, 2);
+  auto string_type = arg1->StringView();
+  CHECK_ILLEGAL_ATTRIBUTE_CONFIG(element, FiberSetAttribute);
+  element->SetAttribute(arg1->String(), arg2->ToLepusValue());
+  ON_NODE_MODIFIED(element);
+  RETURN_UNDEFINED();
+}
+```
+<div>
+</div>
+</div>
 
 这意味着开发者与 Rspeedy（Rsbuild）插件作者无需为 Web 平台做额外适配。
 你的代码无需针对不同平台维护多套变体。
@@ -109,8 +128,6 @@ Lynx 的一个核心理念是：基于原生 UI 组件进行渲染。这意味�
 就像 iOS/Android 上的 Lynx 元素一样，在浏览器中我们提供了一系列基于 [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) 的自定义元素。
 借助浏览器原生提供的生命周期，我们无需依赖任何 JavaScript 框架。这有助于将 I/O 开销降至最低。
 
-![web-components](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/web-shadow-tree-web-c.jpeg)
-
 ## 更快，更易，用 Rust 驱动的未来
 
 ### 由 Rust 与 WebAssembly 驱动
@@ -128,7 +145,7 @@ Lynx 的一个核心理念是：基于原生 UI 组件进行渲染。这意味�
 
 ## 观看我们在 [React Universe Conf 2025](https://www.youtube.com/watch?v=-uUcYrl51JM) 的演讲
 
-[![React Universe Conf 2025](https://img.youtube.com/vi/Z4JHjv1gk0o/0.jpg)](https://www.youtube.com/watch?v=-uUcYrl51JM)
+[React Universe Conf 2025](https://www.youtube.com/watch?v=-uUcYrl51JM)
 
 ## 立即与你的 Web 应用集成
 
