@@ -336,7 +336,7 @@ user-interaction-enabled?: boolean
 ### `native-interaction-enabled`
 
 ```ts
-// DefaultValue: true for iOS, false for Android
+// DefaultValue: true for iOS and Harmony, false for Android
 native-interaction-enabled?: boolean
 ```
 
@@ -361,23 +361,27 @@ block-native-event?: boolean
 
 ```ts
 // DefaultValue: []
-block-native-event-areas?: number [number []]
+block-native-event-areas?: [string, string, string, string][]
 ```
 
-指定目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且触摸在目标节点的指定区域时是否阻止 Lynx 外的平台层手势，可以实现类似阻止平台层侧滑返回的效果。
+指定阻止 Lynx 外平台层手势的触摸区域，当目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且触摸在目标节点的指定区域时，平台层手势将被阻止，可以实现类似阻止平台层侧滑返回的效果。
 
-内层数组是一个包含 `4` 个数字的数组，分别是 `x`、`y`、`width`、`height`，表示触摸区域在目标节点中的位置。
+该二维数组内是若干个包含 `4` 个元素的数组，`4` 个元素依次为 `x`、`y`、`width`、`height`，单位为 `px` 或 `%`，表示触摸区域在目标节点中的位置和宽高。
+
+比如 `[['0px', '0px', '50%', '50%'], ['50%', '50%', '50%', '50%']]` 表示触摸在节点的左上和右下区域时，Lynx 外的平台层手势会被阻止。
 
 ### `consume-slide-event`
 
 ```ts
 // DefaultValue: []
-consume-slide-event?: number [number []]
+consume-slide-event?: [number, number][]
 ```
 
-指定目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上时滑动特定角度，平台层手势是否响应，不影响 Lynx 的触摸事件，可以实现类似消费指定方向滑动的前端滚动容器。
+指定阻止所有平台层滑动手势生效的角度范围，当目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且滑动角度在角度范围内时，所有平台层滑动手势将被阻止，但 Lynx 的触摸事件依旧生效，可以实现消费指定方向滑动的前端滚动容器，此时基于平台层手势的原生滚动会被阻止。
 
-内层数组是一个包含 2 个数字的数组，分别是 `start`、`end`，表示起始角度和结束角度。
+该二维数组是若干个包含 `2` 个元素的数组，`2` 个元素依次为 `start`、`end`，表示起始角度和结束角度，滑动角度由手指按下的位置和手指移动的位置确定。
+
+比如 `[[-180, -135], [-45, 45], [135, 180]]` 表示滑动方向为横向时，所有平台层滑动手势将被阻止，但滑动方向为纵向时，平台层滑动手势可以生效。
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/consume_slide_event.jpg"
@@ -392,14 +396,37 @@ consume-slide-event?: number [number []]
 event-through?: boolean
 ```
 
-指定触摸在目标节点上时平台层的触摸事件是否分发到 Lynx，可以实现类似只展示不交互的效果。该属性支持继承。
+指定触摸在目标节点上时 Lynx 是否消费平台层的触摸事件，可以实现类似只展示不交互的效果。
 
-该属性只能保证 Lynx 不消费平台层的触摸事件，但 LynxView 的父视图可能消费触摸事件导致穿透失效。
+该属性支持继承，即子节点未设置 `event-through` 时，会继承父节点的 `event-through` 值。其生效区域受 [`event-through-active-regions`](#event-through-active-regions) 的影响，未设置时默认为目标节点的所有区域。
+
+:::tip
+该属性设置为 `true` 只能保证 Lynx 不消费平台层的触摸事件，但 Lynx 的父节点可能消费触摸事件导致穿透失效。
+:::
+
+### `event-through-active-regions`
+
+```ts
+// DefaultValue: []
+event-through-active-regions?: [string, string, string, string][]
+```
+
+指定 [`event-through`](#event-through) 的生效区域。
+
+该二维数组内是若干个包含 `4` 个元素的数组，`4` 个元素依次为 `x`、`y`、`width`、`height`，单位为 `px` 或 `%`，表示触摸区域在目标节点中的位置和宽高。
+
+比如 `[['0px', '0px', '50%', '50%']]` 表示触摸在节点的左上区域时，Lynx 不消费平台层的触摸事件。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event-through-active-regions.png"
+  width="100%"
+  height="100%"
+/>
 
 ### `enable-touch-pseudo-propagation`
 
 ```ts
-// DefaultValue: false
+// DefaultValue: true
 enable-touch-pseudo-propagation?: boolean
 ```
 
@@ -414,6 +441,8 @@ hit-slop?: object | string
 
 指定目标节点的触摸事件响应热区，不影响平台层手势。
 
+比如 `{top: '10px', left: '10px', right: '10px', bottom: '10px'}` 或 `10px` 表示节点的触摸热区扩大 `10px`。
+
 :::tip
 其他更高优先级的因素可能导致热区修改失效，比如节点的视图层级（[`z-index`](../../css/properties/z-index)、[`translateZ`](../../css/properties/transform)、[`fixed`](../../css/properties/position.mdx#fixed)）比较高、父节点的 [`overflow`](../../css/properties/overflow.mdx) 为 `hidden` 等。
 :::
@@ -427,7 +456,7 @@ ignore-focus?: boolean
 
 指定触摸在目标节点上时是否不抢占焦点，默认点击在节点上时节点会抢占焦点，可以实现类似点击其他区域时键盘不收起的效果。
 
-此外，它还支持继承，即子节点的默认值为父节点的 `ignore-focus` 值，子节点可以覆盖该值。
+该属性支持继承，即子节点未设置 `ignore-focus` 时，会继承父节点的 `ignore-focus` 值。
 
 ### `ios-enable-simultaneous-touch` <IOSOnly />
 

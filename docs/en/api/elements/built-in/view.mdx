@@ -336,7 +336,7 @@ Specifies whether the target node and its child nodes can respond to Lynx touch 
 ### `native-interaction-enabled`
 
 ```ts
-// DefaultValue: true for iOS, false for Android
+// DefaultValue: true for iOS and Harmony, false for Android
 native-interaction-enabled?: boolean
 ```
 
@@ -361,23 +361,27 @@ Specify whether to block platform layer gestures outside Lynx when the target no
 
 ```ts
 // DefaultValue: []
-block-native-event-areas?: number [number []]
+block-native-event-areas?: [string, string, string, string][]
 ```
 
-Specify whether to block platform layer gestures outside Lynx when the target node is on the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and the touch is in the specified area of ​​the target node, which can achieve a similar effect of blocking the platform layer side sliding back.
+Specifies a touch area that blocks platform-layer gestures outside of Lynx. When the target node is in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and a touch is placed in the specified area of ​​the target node, platform-layer gestures will be blocked, achieving an effect similar to preventing platform-layer side-swipe back.
 
-The inner array is an array containing `4` numbers, namely `x`, `y`, `width`, `height`, indicating the position of the touch area in the target node.
+This two-dimensional array contains arrays containing 4 elements. The 4 elements are `x`, `y`, `width`, and `height`, in units of `px` or `%`, representing the position, width, and height of the touch area within the target node.
+
+For example, `[['0px', '0px', '50%', '50%'], ['50%', '50%', '50%', '50%']]` indicates that platform-layer gestures outside of Lynx will be blocked when touches are placed in the upper left and lower right areas of the node.
 
 ### `consume-slide-event`
 
 ```ts
 // DefaultValue: []
-consume-slide-event?: number [number []]
+consume-slide-event?: [number, number][]
 ```
 
-Specify the target node to slide a specific angle on the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain), whether the platform layer gesture responds, does not affect the touch event of Lynx, and can realize a front-end scrolling container similar to consuming the specified direction of sliding.
+Specifies the angle range within which all platform-level swipe gestures are blocked. When the target node is in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and the swipe angle is within this range, all platform-level swipe gestures are blocked. However, Lynx touch events continue to function, allowing front-end scrolling containers that consume swipes in the specified direction. However, native scrolling based on platform-level gestures is blocked.
 
-The inner array is an array containing 2 numbers, namely `start` and `end`, indicating the starting angle and the ending angle.
+This two-dimensional array contains several 2-element arrays, where the 2 elements are `start` and `end`, representing the start and end angles, respectively. The swipe angle is determined by the finger's press position and the finger's movement position.
+
+For example, `[[-180, -135], [-45, 45], [135, 180]]` indicates that all platform-level swipe gestures are blocked when the swipe direction is horizontal, but they are enabled when the swipe direction is vertical.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/consume_slide_event.jpg"
@@ -392,14 +396,37 @@ The inner array is an array containing 2 numbers, namely `start` and `end`, indi
 event-through?: boolean
 ```
 
-Specifies whether the touch event of the platform layer is distributed to Lynx when the touch is on the target node, which can achieve a similar effect of only displaying without interaction. This property supports inheritance.
+Specifies whether Lynx consumes touch events from the platform layer when a touch is on the target node, allowing for effects similar to display-only, non-interactive displays.
 
-This property can only ensure that Lynx does not consume the touch event of the platform layer, but the parent view of LynxView may consume the touch event, resulting in failure of penetration.
+This property supports inheritance; that is, if `event-through` is not set for a child node, it inherits the `event-through` value from its parent node. Its active region is affected by [`event-through-active-regions`](#event-through-active-regions). If not set, it defaults to the entire region of the target node.
+
+:::tip
+Setting this property to `true` only ensures that Lynx does not consume touch events from the platform layer. However, Lynx's parent node may consume touch events, causing touch-through to fail.
+:::
+
+### `event-through-active-regions`
+
+```ts
+// DefaultValue: []
+event-through-active-regions?: [string, string, string, string][]
+```
+
+Specifies the effective area for [`event-through`](#event-through).
+
+This two-dimensional array contains several arrays containing `4` elements, where the `4` elements are `x`, `y`, `width`, and `height`, in units of `px` or `%`, representing the position, width, and height of the touch area within the target node.
+
+For example, `[['0px', '0px', '50%', '50%']]` indicates that if the touch is in the upper left area of ​​the node, Lynx will not consume touch events from the platform layer.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event-through-active-regions.png"
+  width="100%"
+  height="100%"
+/>
 
 ### `enable-touch-pseudo-propagation`
 
 ```ts
-// DefaultValue: false
+// DefaultValue: true
 enable-touch-pseudo-propagation?: boolean
 ```
 
@@ -414,6 +441,8 @@ hit-slop?: object | string
 
 Specify the touch event response hotspot of the target node, without affecting the platform layer gesture.
 
+For example, `{top: '10px', left: '10px', right: '10px', bottom: '10px'}` or `10px` means the touch hotspot of the node is expanded by `10px`.
+
 :::tip
 Other factors with higher priority may cause the hot zone modification to fail, such as the node's view hierarchy ([`z-index`](../../css/properties/z-index), [`translateZ`](../../css/properties/transform), [`fixed`](../../css/properties/position.mdx#fixed)) is relatively high, the parent node's [`overflow`](../../css/properties/overflow.mdx) is `hidden`, etc.
 :::
@@ -427,7 +456,7 @@ ignore-focus?: boolean
 
 Specify whether to not grab focus when touching the target node. By default, the node grabs focus when clicking on it, which can achieve a similar effect of not closing the keyboard when clicking other areas.
 
-In addition, it also supports inheritance, that is, the default value of the child node is the `ignore-focus` value of the parent node, and the child node can override this value.
+This property supports inheritance, that is, when `ignore-focus` is not set on a child node, it will inherit the `ignore-focus` value of the parent node.
 
 ### `ios-enable-simultaneous-touch` <IOSOnly />
 
