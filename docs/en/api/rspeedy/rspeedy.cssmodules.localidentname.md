@@ -14,5 +14,49 @@ localIdentName?: string | undefined;
 
 ## Remarks
 
+The default value is `'[local]-[hash:base64:6]'` which combines the original class name with a 6-character hash.
+
+Available placeholders:
+
+- `[local]`<!-- -->: Original class name
+
+- `[hash]`<!-- -->: Hash of the class name
+
+- `[path]`<!-- -->: File path
+
+- `[name]`<!-- -->: File name
+
+- `[ext]`<!-- -->: File extension
+
 See [css-loader\#localIdentName](https://github.com/webpack-contrib/css-loader?tab=readme-ov-file#localIdentName) for details.
+
+## Example 1
+
+Use only hash for shorter class names:
+
+```js
+import { defineConfig } from '@lynx-js/rspeedy'
+export default defineConfig({
+  output: {
+    cssModules: {
+      localIdentName: '[hash:base64:8]',
+    },
+  },
+})
+```
+
+## Example 2
+
+Include file name for debugging:
+
+```js
+import { defineConfig } from '@lynx-js/rspeedy'
+export default defineConfig({
+  output: {
+    cssModules: {
+      localIdentName: '[name]__[local]--[hash:base64:5]',
+    },
+  },
+})
+```
 

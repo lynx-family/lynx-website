@@ -14,5 +14,19 @@ localIdentName?: string | undefined;
 
 ## Remarks
 
+The default value is `'[local]-[hash:base64:6]'` which combines the original class name with a 6-character hash.
+
+Available placeholders:
+
+- `[local]`<!-- -->: Original class name
+
+- `[hash]`<!-- -->: Hash of the class name
+
+- `[path]`<!-- -->: File path
+
+- `[name]`<!-- -->: File name
+
+- `[ext]`<!-- -->: File extension
+
 See [css-loader\#localIdentName](https://github.com/webpack-contrib/css-loader?tab=readme-ov-file#localIdentName) for details.
 
