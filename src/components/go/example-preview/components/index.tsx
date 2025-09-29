@@ -58,7 +58,7 @@ interface ExampleContentProps {
   entryFiles?: { name: string; file: string }[];
   setCurrentEntry: (v: string) => void;
   highlight?: string;
-  entry?: string;
+  entry?: string | string[];
   defaultWebPreviewFile?: string;
   initState: boolean;
   rightFooter?: React.ReactNode;
