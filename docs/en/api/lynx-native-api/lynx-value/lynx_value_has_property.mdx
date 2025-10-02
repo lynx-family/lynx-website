@@ -1,0 +1,41 @@
+# lynx_value_has_property
+
+## Introduction
+
+Check if the object passed in has the named property.
+
+## Syntax
+
+```c
+lynx_api_status lynx_value_has_property(lynx_api_env env,
+                                        lynx_value object,
+                                        const char* utf8name,
+                                        bool* result);
+```
+
+### Parameters
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | The environment in which lynx value runs, typically nullptr. |
+| [in] object   | The object to query.                                         |
+| [in] utf8name | The name of the property whose existence to check.           |
+| [out] result  | Whether the property exists on the object or not.            |
+
+### Return Value
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_map_expected` if the types do not match.
+
+## Example
+
+```c
+lynx_value map_value;
+lynx_value_create_map(env, &map_value);
+lynx_value v1;
+lynx_value_create_int32(env, 10, &v1);
+lynx_value_set_named_property(env, map_value, "v1", v1);
+bool has_property;
+lynx_value_has_property(env, map_value, "v1", &has_property);
+// do something
+lynx_value_remove_reference(env, map_value, NULL);
+```
