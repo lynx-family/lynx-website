@@ -177,7 +177,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     ),
     afterHeroActions = (
       <div
-        className="rspress-doc"
+        className="rp-doc"
         style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
       >
         <PreWithCodeButtonGroup
