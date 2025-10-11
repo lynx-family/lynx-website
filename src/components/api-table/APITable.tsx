@@ -36,5 +36,9 @@ export default function APITable(props: APITableProps) {
     query = frontmatter.api as string;
   }
 
-  return <FetchingCompatTable query={query} />;
+  return (
+    <div className="rp-not-doc">
+      <FetchingCompatTable query={query} />
+    </div>
+  );
 }
