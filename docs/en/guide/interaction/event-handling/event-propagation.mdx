@@ -88,6 +88,23 @@ During the process of event propagation, the event can be intercepted midway to 
 
 In the above example, since the `click me` area sets the static interception `tap` event, the event will bubble to the parent node and the background color of the node will change only when the non-`click me` area is clicked.
 
+## Prevent Event Propagation in Main Thread Script
+
+When used with [Main Thread Script](../../../react/main-thread-script.mdx), event propagation can be prevented by calling the [`stopPropagation`](../../../api/lynx-api/event/event.mdx#stoppropagation) method of the event object.
+
+**Example 5:**
+
+<Go
+  example="event"
+  defaultFile="src/event_stop_propagation/index.tsx"
+  defaultEntryFile="dist/event_stop_propagation.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event_stop.webp"
+  highlight="{34}"
+  entry="src/event_stop_propagation"
+/>
+
+In the above example, click the inner will not trigger the `tap` event of the outer.
+
 ## Cross-component event listening
 
 Generally speaking, when a node is not on the event response chain, the event cannot be monitored. Lynx provides a way to monitor cross-component events, allowing developers to register event monitoring on any node and receive corresponding events.
@@ -171,13 +188,11 @@ For the client, the example is as follows:
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="android">
-```java
-// You can call the sendGlobalEvent function of LynxContext
-// The first parameter is the event name monitored by the front end, and the second parameter is the data received by the front end
-LynxContext.sendGlobalEvent("eventName", args);
-// Or call the sendGlobalEvent function of LynxView
-LynxView.sendGlobalEvent("eventName", args);
-```
+  ```java // You can call the sendGlobalEvent function of LynxContext // The
+  first parameter is the event name monitored by the front end, and the second
+  parameter is the data received by the front end
+  LynxContext.sendGlobalEvent("eventName", args); // Or call the sendGlobalEvent
+  function of LynxView LynxView.sendGlobalEvent("eventName", args); ```
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="harmony">

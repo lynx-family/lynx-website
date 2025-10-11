@@ -88,6 +88,23 @@ import { PlatformTabs, Go } from '@lynx';
 
 在上面这个例子中，由于 `click me` 区域设置了静态拦截 `tap` 事件，所以仅当点击非 `click me` 区域，事件才会冒泡到父节点，节点的背景颜色才会改变。
 
+## 在主线程脚本中阻止事件冒泡
+
+当与[主线程脚本](../../../react/main-thread-script.mdx)一起使用时，可以通过调用事件对象的 [`stopPropagation`](../../../api/lynx-api/event/event.mdx#stoppropagation) 方法来阻止事件冒泡。
+
+**示例 5:**
+
+<Go
+  example="event"
+  defaultFile="src/event_stop_propagation/index.tsx"
+  defaultEntryFile="dist/event_stop_propagation.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event_stop.webp"
+  highlight="{34}"
+  entry="src/event_stop_propagation"
+/>
+
+在上面的示例中，点击内部元素不会触发外部元素的 `tap` 事件。
+
 ## 跨元件事件监听
 
 一般来说，当节点不在事件响应链上时，事件无法被监听到。Lynx 提供了一种跨元件事件监听的方式，使得开发者能够在任意节点上注册事件监听并接收到相应事件。
@@ -171,13 +188,10 @@ import { PlatformTabs, Go } from '@lynx';
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="android">
-```java
-// 可以调用 LynxContext 的 sendGlobalEvent 函数
-// 第一个参数为前端监听的事件名称，第二个参数为前端接收到的数据
-LynxContext.sendGlobalEvent("eventName", args);
-// 或者调用 LynxView 的sendGlobalEvent 函数
-LynxView.sendGlobalEvent("eventName", args);
-```
+  ```java // 可以调用 LynxContext 的 sendGlobalEvent 函数 //
+  第一个参数为前端监听的事件名称，第二个参数为前端接收到的数据
+  LynxContext.sendGlobalEvent("eventName", args); // 或者调用 LynxView
+  的sendGlobalEvent 函数 LynxView.sendGlobalEvent("eventName", args); ```
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="harmony">
