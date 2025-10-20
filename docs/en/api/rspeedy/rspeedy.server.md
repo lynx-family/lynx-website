@@ -17,6 +17,8 @@ export interface Server
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [base?](./rspeedy.server.base.md) |  | string \| undefined | _(Optional)_ Configure the base path of the server. |
+|  [compress?](./rspeedy.server.compress.md) |  | boolean \| CompressOptions \| undefined | <p>_(Optional)_ Configure whether to enable [gzip compression](https://developer.mozilla.org/en-US/docs/Glossary/gzip_compression) for static assets served by the dev server or preview server.</p><p>Default: true</p><p>See [Rsbuild - server.compress](https://rsbuild.rs/config/server/compress) for details.</p> |
+|  [cors?](./rspeedy.server.cors.md) |  | ServerConfig\['cors'\] \| undefined | <p>_(Optional)_ Configure CORS for the dev server or preview server.</p><p>- Set to an object to enable CORS with the specified options.</p><p>- Set to <code>true</code> to enable CORS with the default options (allows all origins, not recommended).</p><p>- Set to <code>false</code> to disable CORS.</p><p>See [Rsbuild - server.cors](https://rsbuild.rs/config/server/cors) for details.</p> |
 |  [headers?](./rspeedy.server.headers.md) |  | Record&lt;string, string \| string\[\]&gt; \| undefined | _(Optional)_ Adds headers to all responses. |
 |  [host?](./rspeedy.server.host.md) |  | string \| undefined | _(Optional)_ Specify the host that the Rspeedy Server listens to. |
 |  [port?](./rspeedy.server.port.md) |  | number \| undefined | _(Optional)_ Specify the port that the Rspeedy Server listens to. |
