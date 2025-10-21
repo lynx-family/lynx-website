@@ -112,3 +112,6 @@ export {
 export { ExamplePreview } from './go/example-preview';
 
 export { BlogAvatar } from './blog-avatar';
+
+// Version
+export { VersionTable } from './VersionTable';
