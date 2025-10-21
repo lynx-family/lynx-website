@@ -143,61 +143,7 @@ export default defineConfig({
 
 ## 3. API 参考
 
-完成上述集成后，你可以通过 Lynx for Web 提供的 API 实现更灵活的交互控制，以下是核心 API 的详细说明：
-
-### 3.1 lynx-view
-
-#### 3.1.1 Attributes
-
-| 名称                        | 是否必传 | 说明                                                                                                               |
-| :-------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------- |
-| url                         | 是       | Rspeedy 产物的url（其它 chunk 的 url 会编译时注入产物自动启动）                                                    |
-| globalProps                 | 否       | 卡片初始化时的 [GlobalProps](/api/lynx-api/lynx/lynx-global-props.mdx)                                             |
-| initData                    | 否       | 卡片初始化时的 InitData                                                                                            |
-| overrideLynxTagToHTMLTagMap | 否       | 自定义 Lynx 标签到 HTML 标签的映射关系。不支持 React Component，只支持 HTMLElement(可以是webcomponent或者原生标签) |
-
-#### 3.2 Properties
-
-##### 3.2.1 nativeModulesMap
-
-自定义的 [NativeModule](/guide/use-native-modules)，key 为 module 名称，value 为 module 实现（一个 esm url）：
-
-```ts
-type NativeModulesMap = Record<string, string>;
-```
-
-示例:
-
-```ts
-const nativeModulesMap = {
-  CustomModule: URL.createObjectURL(
-    new Blob(
-      [
-        `export default function(NativeModules, NativeModulesCall) {
-    return {
-      async getColor(data, callback) {
-        const color = await NativeModulesCall('getColor', data);
-        callback(color);
-      },
-    }
-  };`,
-      ],
-      { type: 'text/javascript' },
-    ),
-  ),
-};
-lynxView.nativeModulesMap = nativeModulesMap;
-```
-
-##### 3.2.2 onNativeModulesCall
-
-处理 NativeModules（JSB 等）相关调用的入口:
-
-```ts
-(name: string, data: any, moduleName: string) => Promise<any> | any;
-```
-
-示例：
+更多 API 细节请参阅 [LynxView](/api/lynx-native-api/lynx-view/lynx-view)。
 
 ```ts
 // 处理 NativeModule.bridge.call('request')

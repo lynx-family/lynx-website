@@ -1,11 +1,10 @@
-# LynxError
+# LynxError API
 
-`LynxError` 是用于表示错误的数据结构, 拥有错误码、错误子码、级别、信息等属性。
-开发者可以利用这些属性和方法来排查问题。
+`LynxError` 是 Lynx 运行时返回的用来表示你的应用中发生的失败、警告或可恢复问题的标准错误对象。
 
-## Android
+其中它同时包含机器可读的信息（错误码、错误子码、严重性等）和人工可读的消息。
 
-#### getErrorCode
+## 总览
 
 ```java
 public int getErrorCode()
@@ -44,66 +43,93 @@ public boolean getMsg()
 ```objective-c
 - (NSInteger)errorCode
 ```
+| 属性         | 类型     | 描述                                                |
+| ------------ | -------- | --------------------------------------------------- |
+| `errorCode`  | `int`    | 顶级错误码 (e.g. 102)                               |
+| `subCode`    | `int`    | 更具体的错误子码 (e.g. 10203)                       |
+| `level`      | `string` | 严重程度等级: `Fatal`, `Error`, `Warn`, `Undecided` |
+| `msg`        | `string` | 人工可读的错误信息                                  |
+| `toString()` | `string` | 完整字串化的错误                                    |
 
-返回错误码。错误码是一个 3 到 4 位的数字，用于表示错误的行为。例如 301 表示图片加载错误。你可以通过文档[错误码](/api/errors/error-code)来了解每个错误码代表的错误行为。
+---
 
-#### subcode
+## 用途
 
-```objective-c
-- (NSInteger)subcode
+- 在开发或调试中展示错误信息
+- 为致命运行时问题触发兜底 UI 或跳转
+- 上报问题以进行数据分析或 bug 追踪
+
+---
+
+## 平台方法
+
+### Android
+
+| 方法             | 返回类型 | 描述             |
+| ---------------- | -------- | ---------------- |
+| `getErrorCode()` | `int`    | 返回 `errorCode` |
+| `getSubCode()`   | `int`    | 返回 `subCode`   |
+| `getLevel()`     | `String` | 返回严重程度等级 |
+| `getMsg()`       | `String` | 返回错误信息字串 |
+| `toString()`     | `String` | 完整字串化的错误 |
+
+### iOS
+
+| 属性          | 类型        | 描述                |
+| ------------- | ----------- | ------------------- |
+| `errorCode`   | `NSInteger` | 同上                |
+| `subCode`     | `NSInteger` | —                   |
+| `level`       | `NSString*` | —                   |
+| `msg`         | `NSString*` | —                   |
+| `description` | `NSString*` | 等价于 `toString()` |
+
+---
+
+## 错误分级
+
+| 等级        | 含义             | 建议动作                  |
+| ----------- | ---------------- | ------------------------- |
+| `Fatal`     | 应用可能已不可用 | 重新加载或者跳转到兜底 UI |
+| `Error`     | 可恢复的问题     | 记录日志并重试            |
+| `Warn`      | 非阻碍的警告     | 记录日志并继续            |
+| `Undecided` | 尚未分类。       | 记录问题并合理处理        |
+
+---
+
+## 示例
+
+### JavaScript
+
+```js
+lynx.onError((err) => {
+  if (err.getLevel() === 'Fatal') {
+    // Possibly reload or fallback to home
+    console.error('Critical error occurred:', err.getMsg());
+  }
+});
 ```
 
-返回错误子码。错误子码是一个 5 到 6 位的数字，由错误码拓展 2 位而来。错误子码用于表示错误的原因。例如 30101 表示加载的图片过大。你可以通过文档[错误码](/api/errors/error-code)来了解每个错误子码代表的错误原因。
+### Kotlin
 
-#### isFatal
-
-```objective-c
-- (BOOL)isFatal
+```kotlin
+fun onLynxError(error: LynxError) {
+    if (error.level == "Fatal") {
+        println("Fatal error: ${error.msg}")
+    }
+}
 ```
 
-判断错误的级别是否为 `Fatal`。`LynxError` 有 `Fatal`、`Error`、`Warn` 三种级别，其中 `Fatal` 表示致命错误，可能导致 Lynx 页面白屏，需要接入方进行降级处理，例如尝试重新加载 Lynx 页面、展示兜底的错误页面等；`Error` 表示非致命错误，可能导致 Lynx 页面部分功能不可用；`Warn` 表示警告错误，不影响 Lynx 页面的功能，但仍建议尽量修复。你可以通过文档[错误码](/api/errors/error-code)来了解每个错误子码的错误级别，如果为 `Undecided`，则代表该错误子码的错误级别在运行时绑定。
+### Swift
 
-#### userInfo
-
-```objective-c
-- (NSDictionary*)userInfo
+```swift
+func onLynxError(_ error: LynxError) {
+  if error.level == "Fatal" {
+    print("Fatal error: \(error.msg)")
+  }
+}
 ```
 
-以 `NSDictionary` 的形式返回错误信息，通过关键字 `LynxErrorUserInfoKeyMessage` 可以从该 `NSDictionary` 中查询到 JSON 字符串形式的错误信息，该错误信息包含错误码、错误子码、错误描述、错误级别、修复建议等。
-
-## Harmony
-
-#### getErrorCode
-
-```typescript
-public getErrorCode(): number;
-```
-
-返回错误码。错误码是一个 3 到 4 位的数字，用于表示错误的行为。例如 301 表示图片加载错误。你可以通过文档[错误码](/api/errors/error-code)来了解每个错误码代表的错误行为。
-
-#### getSubCode
-
-```typescript
-public getSubCode(): number;
-```
-
-返回错误子码。错误子码是一个 5 到 6 位的数字，由错误码拓展 2 位而来。错误子码用于表示错误的原因。例如 30101 表示加载的图片过大。你可以通过文档[错误码](/api/errors/error-code)来了解每个错误子码代表的错误原因。
-
-#### isFatal
-
-```typescript
-public isFatal(): boolean;
-```
-
-判断错误的级别是否为 `Fatal`。`LynxError` 有 `Fatal`、`Error`、`Warn` 三种级别，其中 `Fatal` 表示致命错误，可能导致 Lynx 页面白屏，需要接入方进行降级处理，例如尝试重新加载 Lynx 页面、展示兜底的错误页面等；`Error` 表示非致命错误，可能导致 Lynx 页面部分功能不可用；`Warn` 表示警告错误，不影响 Lynx 页面的功能，但仍建议尽量修复。你可以通过文档[错误码](/api/errors/error-code)来了解每个错误子码的错误级别，如果为 `Undecided`，则代表该错误子码的错误级别在运行时绑定。
-
-#### getMsg
-
-```typescript
-public getMsg(): string | undefined;
-```
-
-以 JSON 字符串的形式返回错误的所有信息，包括错误码、错误子码、错误描述、错误级别、修复建议等。
+---
 
 ## 兼容性
 

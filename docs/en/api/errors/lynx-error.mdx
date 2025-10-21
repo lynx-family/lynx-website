@@ -1,12 +1,10 @@
-# LynxError
+# LynxError API
 
-`LynxError` is the structure used to represent an error,
-carrying several properties such as code, subcode, level, and error message.
-Developers can utilize the attributes and methods for troubleshooting.
+`LynxError` is the standard error object returned by the Lynx runtime to indicate runtime failures, warnings, or recoverable issues in your app.
 
-## Android
+It contains both machine-readable information (error code, subcode, severity) and a human-readable message.
 
-#### getErrorCode
+## Overview
 
 ```java
 public int getErrorCode()
@@ -45,66 +43,93 @@ Return all error information in JSON string format, including the code, subcode,
 ```objective-c
 - (NSInteger)errorCode
 ```
+| Property     | Type     | Description                                           |
+| ------------ | -------- | ----------------------------------------------------- |
+| `errorCode`  | `int`    | Top-level error code (e.g. 102)                       |
+| `subCode`    | `int`    | More specific error code (e.g. 10203)                 |
+| `level`      | `string` | Severity level: `Fatal`, `Error`, `Warn`, `Undecided` |
+| `msg`        | `string` | Human-readable error message                          |
+| `toString()` | `string` | Full string representation of the error               |
 
-Return the error code. The error code is a 3 to 4-digit number used to denote the behavior of the error. For example, code 301 indicates a loading error for image. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific behavior each error code represents.
+---
 
-#### subcode
+## Use Cases
 
-```objective-c
-- (NSInteger)subcode
+- Display meaningful errors in debug/development mode
+- Trigger fallback UI or navigation for fatal runtime issues
+- Report issues for analytics or bug tracking
+
+---
+
+## Platform Methods
+
+### Android
+
+| Method           | Return Type | Description            |
+| ---------------- | ----------- | ---------------------- |
+| `getErrorCode()` | `int`       | Returns `errorCode`    |
+| `getSubCode()`   | `int`       | Returns `subCode`      |
+| `getLevel()`     | `String`    | Returns severity level |
+| `getMsg()`       | `String`    | Returns error message  |
+| `toString()`     | `String`    | Full stringified error |
+
+### iOS
+
+| Property      | Type        | Description                |
+| ------------- | ----------- | -------------------------- |
+| `errorCode`   | `NSInteger` | Same as above              |
+| `subCode`     | `NSInteger` | —                          |
+| `level`       | `NSString*` | —                          |
+| `msg`         | `NSString*` | —                          |
+| `description` | `NSString*` | Equivalent of `toString()` |
+
+---
+
+## Error Levels
+
+| Level       | Meaning                | Suggested Action             |
+| ----------- | ---------------------- | ---------------------------- |
+| `Fatal`     | App is likely unusable | Reload or fallback UI        |
+| `Error`     | Recoverable issue      | Log or retry                 |
+| `Warn`      | Non-blocking warning   | Log and continue             |
+| `Undecided` | Not yet categorized    | Handle gracefully, log issue |
+
+---
+
+## Example
+
+### JavaScript
+
+```js
+lynx.onError((err) => {
+  if (err.getLevel() === 'Fatal') {
+    // Possibly reload or fallback to home
+    console.error('Critical error occurred:', err.getMsg());
+  }
+});
 ```
 
-Return the error subcode. The error subcode is a 5 to 6-digit number derived from extending the error code by 2 digits. The error subcode is used to indicate the cause of the error. For example, subcode 30101 indicates that the loaded image is too large. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific cause each error subcode represents.
+### Kotlin
 
-#### isFatal
-
-```objective-c
-- (BOOL)isFatal
+```kotlin
+fun onLynxError(error: LynxError) {
+    if (error.level == "Fatal") {
+        println("Fatal error: ${error.msg}")
+    }
+}
 ```
 
-Determine if the error level is `Fatal`. `LynxError` has three levels: `Fatal`, `Error`, and `Warn`. `Fatal` indicates a critical error that might cause the Lynx page to go blank, requiring the integrator to perform fallback handling; for example, attempting to reload the Lynx page or displaying an error page. `Error` denotes a non-critical error that might cause some functionalities of the Lynx page to become unavailable. `Warn` signifies a warning error that does not affect the functionality of the Lynx page but should be addressed if possible. You can refer to documentation [Error Codes](/api/errors/error-code) to learn about the error levels associated with each subcode. If the level is `Undecided`, it means that the error level for that subcode is determined at runtime.
+### Swift
 
-#### userInfo
-
-```objective-c
-- (NSDictionary*)userInfo
+```swift
+func onLynxError(_ error: LynxError) {
+  if error.level == "Fatal" {
+    print("Fatal error: \(error.msg)")
+  }
+}
 ```
 
-Return an `NSDictionary` from which the error information can be queried using the key `LynxErrorUserInfoKeyMessage`. The error information is a JSON string that includes the code, subcode, error message, level, fix suggestion, etc.
-
-## Harmony
-
-#### getErrorCode
-
-```typescript
-public getErrorCode(): number;
-```
-
-Return the error code. The error code is a 3 to 4-digit number used to denote the behavior of the error. For example, code 301 indicates a loading error for image. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific behavior each error code represents.
-
-#### getSubcode
-
-```typescript
-public getSubCode(): number;
-```
-
-Return the error subcode. The error subcode is a 5 to 6-digit number derived from extending the error code by 2 digits. The error subcode is used to indicate the cause of the error. For example, subcode 30101 indicates that the loaded image is too large. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific cause each error subcode represents.
-
-#### isFatal
-
-```typescript
-public isFatal(): boolean;
-```
-
-Determine if the error level is `Fatal`. `LynxError` has three levels: `Fatal`, `Error`, and `Warn`. `Fatal` indicates a critical error that might cause the Lynx page to go blank, requiring the integrator to perform fallback handling; for example, attempting to reload the Lynx page or displaying an error page. `Error` denotes a non-critical error that might cause some functionalities of the Lynx page to become unavailable. `Warn` signifies a warning error that does not affect the functionality of the Lynx page but should be addressed if possible. You can refer to documentation [Error Codes](/api/errors/error-code) to learn about the error levels associated with each subcode. If the level is `Undecided`, it means that the error level for that subcode is determined at runtime.
-
-#### getMsg
-
-```typescript
-public getMsg(): string | undefined;
-```
-
-Return all error information in JSON string format, including the code, subcode, error message, level, and fix suggestion.
+---
 
 ## Compatibility
 

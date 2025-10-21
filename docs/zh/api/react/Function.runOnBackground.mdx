@@ -8,21 +8,22 @@
 import * as Lynx from '@lynx';
 
 
-[react](/api/react/index.mdx) / runOnBackground
+[@lynx-js/react](/api/react/index.mdx) / runOnBackground
 
 # Function: runOnBackground()
 
 ```ts
-function runOnBackground<Fn>(f: Fn): (...args: Parameters<Fn>) => void
+function runOnBackground<R, Fn>(f: Fn): (...args: Parameters<Fn>) => Promise<R>
 ```
 
-`runOnBackground` allows triggering js functions on the js context asynchronously.
+`runOnBackground` allows triggering js functions on the background thread asynchronously.
 
 ## Type Parameters
 
 | Type Parameter |
 | ------ |
-| `Fn` *extends* (...`args`: `any`[]) => `any` |
+| `R` |
+| `Fn` *extends* (...`args`: `any`[]) => `R` |
 
 ## Parameters
 
@@ -34,7 +35,7 @@ function runOnBackground<Fn>(f: Fn): (...args: Parameters<Fn>) => void
 
 `Function`
 
-A function. Calling which with the arguments to be passed to the js function to trigger it on the js context.
+A function. Calling which with the arguments to be passed to the js function to trigger it on the background thread. This function returns a promise that resolves to the return value of the js function.
 
 ### Parameters
 
@@ -44,8 +45,22 @@ A function. Calling which with the arguments to be passed to the js function to 
 
 ### Returns
 
-`void`
+`Promise`\<`R`\>
+
+## Example
+
+```ts
+import { runOnBackground } from '@lynx-js/react';
+
+async function someMainthreadFunction() {
+  'main thread';
+  const fn = runOnBackground(() => {
+    return 'hello';
+  });
+  const result = await fn();
+}
+```
 
 ## Defined in
 
-@lynx-js/react/runtime/lib/worklet/runWorklet.d.ts:14
+@lynx-js/react/runtime/lib/worklet/call/runOnBackground.d.ts:19
