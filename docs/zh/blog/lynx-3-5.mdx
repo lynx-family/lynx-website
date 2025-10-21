@@ -1,0 +1,164 @@
+---
+date: 2025-11-29
+sidebar: false
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+_2025 年 11 月 29 日_
+
+# Lynx 3.5:
+
+<BlogAvatar list={['liujilong', 'lynx']} />
+
+Lynx 3.5 已经正式发布!
+
+
+
+
+## 事件处理
+
+Lynx 3.5 版本丰富了事件处理的能力：新增 CSS 属性  `<pointer-events>` 来指定元件是否能够响应触摸事件；在 MTS 中新增 API 来阻止事件冒泡。
+
+### `<pointer-events>`
+
+支持 `<pointer-events>` 属性来指定元件是否能够响应触摸事件。
+语法：
+```
+pointer-events: auto;
+pointer-events: none;
+```
+取值：
+- auto 默认值，此时，节点可以响应触摸事件。
+- none节点不能响应触摸事件。
+
+
+
+### MTS 事件拦截
+
+Lynx 3.5 版本支持在 MTS 中调用事件对象的 stopPropagation 方法来阻止事件冒泡。
+
+```
+function handleInnerTap(e: MainThread.TouchEvent) {
+  "main thread";
+  e.stopPropagation(); // ✋ stop event bubbling
+  flash("inner");
+}
+```
+
+
+## Fetch API 
+
+Lynx 提供了用法和 Web 标准完全一致的 fetch API，实现发送网络请求的功能。你可以查阅 MDN 文档的使用 Fetch 了解更多信息。
+
+### HarmonyOS 支持
+
+在 3.5 版本上，fetch API 新增了对 HarmonyOS 的支持。
+```
+const request = new Request('https://jsonplaceholder.typicode.com/todos/1');
+const response = await fetch(request);
+console.log(await response.json());
+```
+### chuncked streaming
+传输大量的数据时，可选择使用 chunk streaming，分批处理返回数据，以降低网络请求耗时。你可以查阅 MDN 文档的 Transfer-Encoding chunked 了解 chunk streaming 标准
+Lynx 3.5 在 Android 和 iOS 平台支持了 chuncked streaming 功能。
+
+```
+const response = await fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
+  lynxExtension: { useStreaming: true },
+});
+const reader = response.body.getReader();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) {
+    break;
+  } else {
+    const text = TextCodecHelper.decode(value);
+    console.log(text)
+  }
+}
+```
+
+
+
+
+## `<list>` 组件支持了更新动画
+
+```
+<list update-animation: "default" ></list>
+```
+
+<table border="0">
+ <tr>
+    <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_delete.gif)</td>
+    <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_update.gif)</td>
+    <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_insert.gif)</td>
+ </tr>
+ <tr>
+    <td>Delete</td>
+    <td>Update</td>
+    <td>Insert</td>
+ </tr>
+</table>
+
+## HarmonyOS 功能对齐
+
+
+### accessibilityAnnounce
+无障碍（Accessibility，简写为 A11y）是指通过技术手段构建可访问性，确保应用能够被各类人群平等访问的设计理念。其核心目标是打破使用壁垒，让不同身体条件、感知能力及认知水平的用户都能顺畅获取信息与服务。
+在平台提供的无障碍支持基础上，Lynx 框架封装了跨平台无障碍能力，使开发者能够在 App 中集成无障碍功能，构建信息无障碍的移动生态。
+Lynx 在 Android/iOS 支持 `lynx.accessibilityAnnounce()` 方法让屏幕阅读器朗读指定的文本内容，帮助视觉障碍用户感知界面状态变化或操作结果。
+Lynx 3.5 版本在 HarmonyOS 平台支持了该方法。
+
+```
+lynx.accessibilityAnnounce(
+  {
+    content: 'hello lynx',
+  },
+  (res) => {
+    console.log('test: ' + JSON.stringify(res));
+  },
+);
+```
+
+
+### requestResourcePrefetch
+
+开发者可以使用 requestResourcePrefetch API 进行前端主动发起 CDN 资源的预加载，目前只支持 image, video, audio 三种资源类型。在 Lynx 3.5 之前，该 API 只在 Android 和 iOS 平台生效。
+Lynx 3.5 版本在 HarmonyOS 平台上支持了该 API。
+
+
+```
+let resData = [
+  {
+    uri: 'https://xxxxx1.jpg',
+    type: 'image',
+    params: { priority: 'high', cacheTarget: 'disk' },
+  }
+];
+
+lynx.requestResourcePrefetch?.(
+  { data: resData },
+  (res) => {
+    if (res.code == 0) {
+      console.log('success!');
+    } else {
+      console.log('fail! ', res.msg);
+    }
+    console.log(
+      'prefetch status of each resource:',
+      JSON.stringify(res.details),
+    );
+  },
+);
+```
+
+
+
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 以及 LynxService 依赖版本，完成 Lynx 3.5 版本升级。
