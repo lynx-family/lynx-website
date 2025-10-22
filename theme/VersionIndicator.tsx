@@ -13,15 +13,29 @@ import { withBase, useI18n } from '@rspress/core/runtime';
 import versionJson from '../docs/public/version.json';
 
 export function VersionIndicator() {
-  const { pathname } = useLocation();
+  var { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const homepagePaths = SUBSITES_CONFIG.flatMap((site) => [
-    site.home,
-    site.home.endsWith('/') ? site.home.slice(0, -1) : `${site.home}/`,
-  ]);
-  const isHomepage = homepagePaths.includes(pathname);
+  const showIndicator = () => {
+    if (pathname.startsWith('/zh')) {
+      pathname = pathname.replace('/zh', '');
+    }
+    if (pathname.endsWith('/index.html')) {
+      pathname = pathname.replace('/index.html', '');
+    }
+    if (pathname.endsWith('.html')) {
+      pathname = pathname.replace('.html', '');
+    }
+    var homepagePaths = SUBSITES_CONFIG.flatMap((site) => [
+      site.home,
+      site.home.endsWith('/') ? site.home.slice(0, -1) : `${site.home}/`,
+    ]);
+    homepagePaths.push('/versions');
+    const specificPath =
+      homepagePaths.includes(pathname) || pathname.startsWith('/blog');
+    return !specificPath;
+  };
 
   const [versions, setVersions] = useState<string[]>(['next']);
 
@@ -83,7 +97,7 @@ export function VersionIndicator() {
   const displayVersion = versionJson.current_version;
   const t = useI18n();
   return (
-    !isHomepage && (
+    showIndicator() && (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
           <DropdownMenuTrigger asChild>
