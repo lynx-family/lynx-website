@@ -99,15 +99,17 @@ export function VersionIndicator() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="sh-w-28 sh-p-0" align="start">
             <div className="sh-p-2">
-              {versions.map((version) => (
-                <DropdownMenuItem
-                  key={version}
-                  className={`sh-w-full sh-justify-start ${version === displayVersion ? 'sh-bg-primary/10 sh-text-primary' : ''}`}
-                  onClick={() => changeVersion(version)}
-                >
-                  {version}
-                </DropdownMenuItem>
-              ))}
+              {versions
+                .filter((version) => version !== '3.2' && version !== '3.3')
+                .map((version) => (
+                  <DropdownMenuItem
+                    key={version}
+                    className={`sh-w-full sh-justify-start ${version === displayVersion ? 'sh-bg-primary/10 sh-text-primary' : ''}`}
+                    onClick={() => changeVersion(version)}
+                  >
+                    {version}
+                  </DropdownMenuItem>
+                ))}
               <DropdownMenuItem
                 key="versions"
                 className={`sh-w-full sh-justify-start ${'versions' === displayVersion ? 'sh-bg-primary/10 sh-text-primary' : ''}`}
