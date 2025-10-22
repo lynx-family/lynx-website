@@ -10,6 +10,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 
 import { withBase, useI18n } from '@rspress/core/runtime';
+import versionJson from '../docs/public/version.json';
 
 export function VersionIndicator() {
   const { pathname } = useLocation();
@@ -79,7 +80,7 @@ export function VersionIndicator() {
     window.location.href = '/next/versions';
   };
 
-  const displayVersion = withBase('').replace('/', '').replace('/', '');
+  const displayVersion = versionJson.current_version;
   const t = useI18n();
   return (
     !isHomepage && (
