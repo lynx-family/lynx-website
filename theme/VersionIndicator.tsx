@@ -10,6 +10,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 
 import { withBase, useI18n } from '@rspress/core/runtime';
+import versionJson from '../docs/public/version.json';
 
 export function VersionIndicator() {
   const { pathname } = useLocation();
@@ -23,9 +24,7 @@ export function VersionIndicator() {
   const isHomepage = homepagePaths.includes(pathname);
 
   const [versions, setVersions] = useState<string[]>(['next']);
-  const [displayVersion, setDisplayVersion] = useState<string>(
-    withBase('').replace('/', '').replace('/', ''),
-  );
+  const displayVersion = versionJson.current_version;
 
   useEffect(() => {
     const fetchVersions = async () => {
@@ -37,15 +36,6 @@ export function VersionIndicator() {
         const data = await response.json();
         if (data.versions && Array.isArray(data.versions)) {
           setVersions(data.versions.map((item: any) => item.version_number));
-          if (displayVersion.length == 0) {
-            // base for latest release version is empty, so we find the first latest version from version data.
-            const latestVersion = data.versions.find(
-              (item: any) => item.type === 'latest',
-            );
-            if (latestVersion && latestVersion.version_number) {
-              setDisplayVersion(latestVersion.version_number);
-            }
-          }
         }
       } catch (error) {
         console.error('Error fetching versions:', error);
