@@ -9,13 +9,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 
-import { withBase, useI18n } from '@rspress/core/runtime';
+import { getLangPrefix } from '../shared-route-config';
+
+import { withBase, useI18n, useLang } from '@rspress/core/runtime';
 import versionJson from '../docs/public/version.json';
 
 export function VersionIndicator() {
   var { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const langPrefix = getLangPrefix(useLang());
 
   const showIndicator = () => {
     if (pathname.startsWith('/zh')) {
@@ -91,7 +94,7 @@ export function VersionIndicator() {
   };
 
   const viewAllVersions = () => {
-    window.location.href = '/next/versions';
+    window.location.href = `/next${langPrefix}/versions`;
   };
 
   const displayVersion = versionJson.current_version;
