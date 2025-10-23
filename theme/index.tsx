@@ -9,6 +9,7 @@ import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
   getCustomMDXComponent,
+  Link as BaseLink,
 } from '@rspress/core/theme';
 import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
@@ -232,5 +233,28 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
 };
 
 export { HomeLayout, Layout, Search };
+
+const Link = (props: React.ComponentProps<typeof BaseLink>) => {
+  const { href, children, className, ...restProps } = props;
+  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
+  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+    return (
+      <a
+        className={`rp-link ${className}`}
+        href={`/next${removeBase(href)}`}
+        target="_blank"
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <BaseLink href={href} className={className} {...restProps}>
+      {children}
+    </BaseLink>
+  );
+};
+
+export { Link }; // override Link from @rspress/core/theme
 
 export * from '@rspress/core/theme';
