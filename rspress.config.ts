@@ -2,7 +2,6 @@ import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 import { pluginAlgolia } from '@rspress/plugin-algolia';
-import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginRss } from '@rspress/plugin-rss';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
@@ -69,6 +68,10 @@ export default defineConfig({
     ],
     resolve: {
       alias: {
+        '@rspress/core/_private/react': path.join(
+          __dirname,
+          'node_modules/react-render-to-markdown/dist/index.js',
+        ),
         '@site': path.join(__dirname),
         '@': path.join(__dirname, 'src'),
         '@assets': path.join(__dirname, 'public', 'assets'),
@@ -84,6 +87,25 @@ export default defineConfig({
           DOC_GIT_BASE_URL: JSON.stringify(
             'https://github.com/lynx-family/lynx-website/tree/main',
           ),
+        },
+      },
+    },
+    environments: {
+      node_md: {
+        tools: {
+          bundlerChain(chain, { rspack }) {
+            chain
+              .plugin('server-component')
+              .use(
+                new rspack.NormalModuleReplacementPlugin(
+                  /example-preview\/index\.tsx/,
+                  path.join(
+                    __dirname,
+                    'src/components/go/example-preview/index.server.tsx',
+                  ),
+                ),
+              );
+          },
         },
       },
     },
@@ -155,26 +177,6 @@ export default defineConfig({
         },
       ],
     }),
-    pluginLlms([
-      {
-        llmsTxt: {
-          name: 'llms.txt',
-        },
-        llmsFullTxt: {
-          name: 'llms-full.txt',
-        },
-        include: ({ page }) => page.lang === 'en',
-      },
-      {
-        llmsTxt: {
-          name: 'zh/llms.txt',
-        },
-        llmsFullTxt: {
-          name: 'zh/llms-full.txt',
-        },
-        include: ({ page }) => page.lang === 'zh',
-      },
-    ]),
     sharedSidebarPlugin(),
     pluginSitemap({
       siteUrl: PUBLISH_URL,
@@ -222,6 +224,11 @@ export default defineConfig({
         transformerNotationDiff(),
         transformerNotationFocus(),
       ],
+    },
+  },
+  llms: {
+    remarkSplitMdxOptions: {
+      includes: [[['Go'], '@lynx']],
     },
   },
 });
