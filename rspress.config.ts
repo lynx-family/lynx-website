@@ -90,23 +90,32 @@ export default defineConfig({
         },
       },
     },
-    environments: {
-      node_md: {
-        tools: {
-          bundlerChain(chain, { rspack }) {
-            chain
-              .plugin('server-component')
-              .use(
-                new rspack.NormalModuleReplacementPlugin(
-                  /example-preview\/index\.tsx/,
-                  path.join(
-                    __dirname,
-                    'src/components/go/example-preview/index.server.tsx',
-                  ),
+    tools: {
+      bundlerChain(chain, { rspack, environment }) {
+        if (environment.name === 'node_md') {
+          chain
+            .plugin('server-component')
+            .use(
+              new rspack.NormalModuleReplacementPlugin(
+                /example-preview\/index\.tsx/,
+                path.join(
+                  __dirname,
+                  'src/components/go/example-preview/index.server.tsx',
                 ),
-              );
-          },
-        },
+              ),
+            );
+          chain
+            .plugin('server-component-1')
+            .use(
+              new rspack.NormalModuleReplacementPlugin(
+                /api-table\/FetchingCompatTable\.tsx/,
+                path.join(
+                  __dirname,
+                  'src/components/api-table/FetchingCompatTable.server.tsx',
+                ),
+              ),
+            );
+        }
       },
     },
   },
@@ -228,7 +237,7 @@ export default defineConfig({
   },
   llms: {
     remarkSplitMdxOptions: {
-      includes: [[['Go'], '@lynx']],
+      includes: [[['Go', 'LegacyCompatTable', 'APITable'], '@lynx']],
     },
   },
 });
