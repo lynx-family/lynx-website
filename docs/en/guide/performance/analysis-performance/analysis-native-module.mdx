@@ -1,0 +1,136 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+# NativeModule Invocation
+
+NativeModule is the core communication bridge between JavaScript and native applications. By invoking a NativeModule, Lynx frontend pages can access and control native capabilities. This document together with code examples, details the invocation and execution flow of NativeModule within Trace.
+
+## Deep analysis with Trace
+
+Since Lynx 3.2, the Trace page includes a NativeModule Track that aggregates all NativeModule invocations. Each item’s length reflects the overall duration from request initiation to completion.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-track.png" />
+
+Basic display: click an item in the NativeModule Track to view a color-coded breakdown of rough durations for each stage of the invocation.
+
+Details panel: shows the method name, input parameters, and precise per-stage durations (including parameter conversion, platform logic, thread switches, and other key nodes).
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-timing-stage.png" />
+
+## Breakdown of NativeModule invocation details
+
+Below we use a frontend NativeModule call as an example to describe execution timing in Trace.
+
+### Example code
+
+```ts {4,5,6,7,10}
+NativeModules.bridge.call(
+  'setStorage',
+  {
+    data: {
+      key: 'lynx_nativemodule_test',
+      value: i,
+    },
+  },
+  (res) => {
+    console.log('setStorage res is: ', res);
+  },
+);
+```
+
+### Trace execution analysis
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-normal.jpeg" />
+A NativeModule call can be divided into five main stages:
+
+#### 1. Parameter conversion
+
+This stage corresponds to `JSValueToPubValue` in Trace, where JS data (lines 4–7 in the code sample) is converted into native types.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-1.png" />
+
+#### 2. Platform-layer implementation
+
+This stage corresponds to the time period in the Trace from the start of `CallPlatformImplementation` to `NativeModule::PlatformCallbackStart`, where the native method executes the specific functionality and returns platform-layer data.
+
+Among them, the `CallPlatformImplemention` occurs on the [background thread](/guide/spec.html#background-scripting-thread-historically-known-as-js-thread), while the logic between the `CallPlatformImplementation` event and `NativeModule::PlatformCallbackStart` usually runs on other threads.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-2.png" />
+
+#### 3. Waiting for the background thread to execute the callback
+
+This stage corresponds to `NativeModule::PlatformCallbackStart` and `NativeModule::Callback` in Trace.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-3.jpeg" />
+
+#### 4. Result conversion
+
+This stage corresponds to `PubValueToJSValue` in Trace, where platform-layer return data is converted into JS arguments.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-4.png" />
+
+#### 5. Callback execution
+
+This stage corresponds to `InvokeCallback` in Trace, which executes JS code logic (line 10 in the sample).
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-5.png" />
+
+## Special NativeModule calls
+
+Currently, JSB SDKs in the company return results via callbacks. Some NativeModule implementations return results directly to the Lynx SDK via callbacks on the background thread. Callback execution is not necessarily limited to the main thread—any thread may invoke and execute callback-related logic.
+
+### Example code
+
+```js {4,5,6,9}
+NativeModules.bridge.call(
+  'x.reportAppLog',
+  {
+    data: {
+      eventName: 'lynx_nativemodule_test_event_name',
+    },
+  },
+  (res) => {
+    console.log('reportAppLog res is: ' + JSON.stringify(res));
+  },
+);
+```
+
+### Trace execution analysis
+
+These special NativeModule calls can be divided into five main stages.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special.jpeg" />
+
+#### 1. Parameter conversion
+
+This stage corresponds to `JSValueToPubValue` in Trace, where JS data (lines 4–6 in the sample) is converted into native types.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-1.jpeg" />
+
+#### 2. Platform-layer implementation
+
+This stage corresponds to the time period in the Trace from `CallPlatformImplementation` to the start of `NativeModule::Callback`, where the native method executes the specific functionality and returns platform-layer data.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-2.jpeg" />
+
+#### 3. Result conversion
+
+This stage corresponds to `PubValueToJSValue` in Trace, where platform-layer return data is converted into JS arguments.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-3.jpeg" />
+
+#### 4. Callback execution
+
+This stage corresponds to `InvokeCallback` in Trace, which executes JS code logic (line 9 in the sample).
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-4.jpeg" />
+
+#### 5. Cleanup
+
+This stage corresponds to the time period in the Trace from the end of `InvokeCallback` to the end of `NativeModule::Invoke`, where platform-layer cleanup is performed and external registrants are notified that the NativeModule call has completed.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-5.jpeg" />

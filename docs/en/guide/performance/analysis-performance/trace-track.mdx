@@ -1,0 +1,160 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+# Track Overview
+
+## What is a Track
+
+In the Trace UI, a Track is the basic unit that displays Trace data. Each Track represents a type of events or data stream, such as thread activity, CPU frequency, memory changes, and key timing markers. Tracks let developers clearly see the occurrence order, duration, and distribution across threads on a timeline, enabling analysis of application behavior and performance bottlenecks.
+A Track is shown as a horizontal bar in the Trace UI, with its name displayed on the left.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/track-overview-trace.png"
+  alt="Trace Track Overview"
+  className="full_image"
+/>
+
+## Common Tracks
+
+### Process Track
+
+The Process Track is typically named using the process name and process id (iOS and macOS Traces use `Process {pid}`). In Lynx Trace, there is usually only one Process Track, serving as the top-level container for all other Tracks.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/process-track.png"
+  alt="Process Track"
+  className="full_image"
+/>
+
+### Thread Track
+
+Thread Tracks are typically named using the thread name and thread id. Lynx Trace includes multiple thread Tracks such as the [UI thread](/guide/spec.html#ui-thread), [Engine thread](/guide/spec.html#engine-thread-historically-known-as-tasm-thread), and [background thread](/guide/spec.html#background-scripting-thread-historically-known-as-js-thread). Below are common Thread Tracks that help developers see the order, duration, and thread distribution of events to analyze behavior and bottlenecks.
+
+#### UI Thread Track
+
+The UI Thread Track shows all events and tasks on the application’s UI thread, such as page rendering, UI operations, and the main loop. Analyzing the UI Thread Track helps locate performance issues like UI stutter and render blocking. In Lynx Trace, a process contains a single UI Thread Track.
+
+By default, the top-most Thread Track is the UI Thread Track.
+
+- On Android and Harmony, the UI Thread Track is named `process-name pid(main thread)`.
+- On iOS and macOS, the Thread Track with the smallest thread id is the UI Thread Track.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ui-thread-track.png"
+  alt="UI Thread Track"
+  className="full_image"
+/>
+
+#### Background Thread Track
+
+The Background Thread Track shows [BTS](/guide/spec.html#background-thread-script-or-bts) execution. Use this Track to analyze BTS scheduling, execution, and duration.
+
+:::info
+For historical reasons, the background thread is named Lynx_JS.
+:::
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/background-thread-track-trace.png"
+  alt="Background Thread Track"
+  className="full_image"
+/>
+
+#### AsyncCreateView Track
+
+The AsyncCreateView Track records the process of creating UI asynchronously and is suitable for analyzing asynchronous platform UI creation.
+
+<img
+  src="https://tosv.byted.org/obj/lynx-trace/async-create-view-thread-track.png"
+  alt="AsyncCreateView Track"
+  className="full_image"
+/>
+
+#### Event Report Track
+
+The Event Report Track shows Lynx’s internal event reporting process, helping locate issues like whether an event was reported.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event-report-thread-track.png"
+  alt="Event Report Track"
+  className="full_image"
+/>
+
+### Performance Issue Track
+
+The Performance Issue Track is used to mark performance anomalies and bottlenecks. Developers can quickly locate hot spots and abnormal behavior via this Track.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/performance-issue-track.png"
+  alt="Timing Track"
+  className="full_image"
+/>
+
+### Timing Track
+
+The Timing Track shows key timestamps (such as first screen render done and actual first meaningful paint), helping developers locate key milestones.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing-track.png"
+  alt="Timing Track"
+  className="full_image"
+/>
+
+### NativeModule Track
+
+The [NativeModule](/guide/use-native-modules.html#原生模块) Track shows the NativeModule invocation process, including JS–Native communication and data conversion. Use it to analyze native module flows and performance bottlenecks.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-track.png"
+  alt="NativeModule Track"
+  className="full_image"
+/>
+
+### CPU Frequency Track
+
+The CPU Frequency Track displays changes in CPU frequency over time as a line chart, helping developers analyze CPU resource usage under high load.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/cpu-frequency-track.png"
+  alt="CPU Frequency Track"
+  className="full_image"
+/>
+
+### Memory Track
+
+The Memory Track shows Lynx page memory usage changes over time, with each Memory Track representing one Lynx page. Use it to analyze memory leaks, peaks, and abnormal growth.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-latest.png"
+  alt="Memory Track"
+  className="full_image"
+/>
+
+## Common Track operations
+
+### Pin Track
+
+Pin Track fixes a Track at the top of the Trace view for easier comparison and continuous focus on key threads or events.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pin-to-top-track.png"
+  alt="Pin To Top"
+  className="full_image"
+/>
+
+### Delete Track
+
+Delete Track lets developers temporarily hide Tracks that are not of interest, simplifying the UI and leaving only the Tracks needed for analysis to improve efficiency. Deleted Tracks reappear after refreshing the Trace page.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/delete-track.png"
+  alt="Delete Track"
+  className="full_image"
+/>
+
+## More resources
+
+For a more detailed guide on Trace Tracks and advanced features, see the official Perfetto documentation: [perfetto-ui](https://perfetto.dev/docs/visualization/perfetto-ui)

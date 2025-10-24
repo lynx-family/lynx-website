@@ -1,0 +1,270 @@
+<style>{`  .full_image {
+    width: 750px;
+    margin: 20px;
+  }`}</style>
+
+import { PlatformTabs } from '@lynx';
+
+# Memory Usage Analysis
+
+Memory analysis helps discover leaks and abnormal usage within Lynx pages and ensures stability. You can use Trace Memory Track and IDE tools, to comprehensively monitor and troubleshoot memory-related performance issues.
+
+## Deep analysis with Trace
+
+Starting from 3.4, Trace supports Memory Track, which shows Lynx page memory usage trends over time. Each Memory Track represents one Lynx page’s memory changes.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-latest.png"
+  alt="Memory Track"
+  className="full_image"
+/>
+
+Click the Memory Track curve to see the page’s total memory usage and the memory used by Element, background scripting engine, main-thread scripting engine, images, etc.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-details.png"
+  alt="Memory Track Detail"
+  className="full_image"
+/>
+
+## Analyze memory with IDEs
+
+This section briefly introduces how to use Android Studio or Xcode’s built-in tools to debug apps and view performance metrics.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+This section introduces how to analyze memory using Xcode.
+
+### Analyze (static check)
+
+Choose Product > Analyze or press Shift + Command + B to run automatically. Analyze uses syntax and memory context to find potential issues. It mainly detects four categories:
+
+1. Logic errors: dereferencing null pointers, uninitialized variables.
+2. Memory management errors: e.g., memory leaks.
+3. Declaration errors: variables never used.
+4. API call errors: missing libraries or frameworks.
+
+:::tip
+📌 Analyzer makes compiler-driven judgments and is not always accurate. If you see a report, review surrounding code; some cycle references that cause memory leaks cannot be identified by Analyzer. Analyzer makes compiler-driven judgments and is not always accurate. If you see a report, review surrounding code; some cycle references that cause memory leaks cannot be identified by Analyzer.
+:::
+
+### Leaks (dynamic check)
+
+Xcode > Open Developer Tool > Instruments > Leaks
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-12.png"
+  alt="Leaks dynamic check"
+  className="full_image"
+/>
+
+Choose Leaks, then specify the device and app to debug. In this example, an iPhone SE2 (iOS 14.5) simulator debugs the LynxExample app. Click the start button to check for memory leaks.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-13.png"
+  alt="Leaks Start Button"
+  className="full_image"
+/>
+
+After starting, operate in the simulator or on device. If the Leaks window shows issues, jump to the corresponding code to debug. You can pause to inspect memory info shown in the chart. After debugging, you can save the results locally.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-14.png"
+  alt="Leaks Analysis Result"
+  className="full_image"
+/>
+
+If a memory leak appears (example below), set the chart to Call Tree mode, then enable Invert Call Tree at the bottom of the window. Select any leak to jump to source code.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-15.png"
+  alt="Leaks Call Tree Mode"
+  className="full_image"
+/>
+
+### Allocations (detailed allocation)
+
+Xcode > Open Developer Tool > Instruments > Allocations
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-17.png"
+  alt="Allocations Tool"
+  className="full_image"
+/>
+
+Similar to Leaks but focuses on detailed memory allocations. The lower list shows per-method memory usage. Check a graph to show a bar chart above. Click an item to view stack trace details; click the right-hand Stack Trace pane to jump into code and inspect allocations.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-18.png"
+  alt="Allocations Stack Info"
+  className="full_image"
+/>
+
+The code section is highlighted and the allocation ratio is shown.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-19.png"
+  alt="Allocations"
+  className="full_image"
+/>
+
+###
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+This section introduces how to analyze memory using Android Studio.
+
+### Profiler basics
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-1.png"
+  alt="Profiler Tool"
+  className="full_image"
+/>
+
+First click the highlighted area in the toolbar; Android Studio performs a Build and then opens the Profiler window. From there you can run tests—click the ‘+’ icon to select a device connected via adb and the process to test.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-2.png"
+  alt="Profiler Choose Process"
+  className="full_image"
+/>
+
+Using a Xiaomi MIX (API 24), we run a ~45 s test and manually trigger a GC at 15 s. From left to right, the icons are GC, Capture Heap Dump, and manual Record (an option for devices below API 26 for memory analysis).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-3.png"
+  alt="Profiler Tool Record"
+  className="full_image"
+/>
+
+Over 45 s, the device’s memory changes are as follows:
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-4.png"
+  alt="Profiler Tool Record"
+  className="full_image"
+/>
+
+In this example, after the manual GC, the app’s memory usage drops noticeably for a period.
+
+Heap dumps show which objects are using memory at the time of capture. Especially after long user sessions, heap dumps reveal objects that should no longer be in memory, helping identify leaks. After clicking the Heap Dump icon, Java memory may temporarily increase because dumping runs in the same process and needs memory to collect data.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-5.png"
+  alt="Profiler Memory Status"
+  className="full_image"
+/>
+
+After capturing the heap dump, use the built-in analyzer. The table shows:
+
+- Allocations: number of allocations in the heap.
+- Native Size: total native memory used by this object type (Bytes). Visible on Android 7.0+ only. Some Java-allocated framework classNames (e.g., Bitmap) consume native memory.
+- Shallow Size: total Java memory used by this object type (Bytes).
+- Retained Size: total memory retained by all instances of this className (Bytes).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-6.png"
+  alt="Profiler Memory Detail"
+  className="full_image"
+/>
+
+Click a className in the chart to open the Instance List window, then jump to source for inspection.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-7.png"
+  alt="Profiler Source Info"
+  className="full_image"
+/>
+
+Or use the Reference window for more detailed checks and jump elsewhere for inspection.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-8.png"
+  alt="Profiler Source Transfer"
+  className="full_image"
+/>
+
+After capturing a heap dump, you can also export hprof data from the SESSIONS window via Export Heap Dump. Use other tools (such as MAT) to further analyze the heap.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-9.png"
+  alt="Profiler Memory Dump"
+  className="full_image"
+/>
+
+### Memory profiler
+
+On devices below API 26, you need to manually record a time window before running memory performance analysis. Use the filter options (red circle) such as Arrange by className. In the table, select a className to jump to the Instance View, then to Allocation Call Stack to view stack traces and jump to source.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-10.png"
+  alt="Memory profiler"
+  className="full_image"
+/>
+
+### Symptoms of memory leaks
+
+- Many Full GCs during runtime.
+- During a specific thread’s execution, manual GC has little effect.
+- Many allocations and frees in a short time (memory graph jitter).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-11.png"
+  alt="Memory profiler"
+  className="full_image"
+/>
+
+### Example leak and related analysis
+
+```java
+final className LoadedInChildClassLoader {
+
+  static final byte[] moreBytesToLeak = new byte[1024 * 1024 * 100];
+
+  private static final ThreadLocal<LoadedInChildClassLoader> threadLocal
+          = new ThreadLocal<>();
+
+  public LoadedInChildClassLoader() {
+    threadLocal.set(this);
+  }
+}
+```
+
+#### Methods to trigger potential leaks
+
+Apply pressure to app code and try to force leaks while cross-checking with the memory profiler. One way to induce leaks is to let the app run for some time, then inspect the heap; leaks may accumulate near the top of allocation. The smaller the leak, the longer the app needs to run to reveal it.
+
+- Rotate the device repeatedly to trigger potential leaks.
+- Switch between the debug app and other apps across different Activity states (e.g., go Home then return).
+
+#### Possible causes of leaks
+
+- Long-running threads.
+- A thread loads a className via the ClassLoader.
+- A className allocates large memory.
+- A thread clears references to all custom classNames and the ClassLoader that loaded them.
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## Performance testing with PerfDog
+
+PerfDog is a third-party tool for checking Android and iOS app performance and is easy to use. After connecting a device and choosing the app to debug, click the red circled plus button at the bottom right to add performance parameters before starting.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-20.png"
+  alt="PerfDog Tool"
+  className="full_image"
+/>
+
+After the test, you can save data as a table and view performance parameters such as Jank count. Use the tool’s metrics as simple references to check app performance.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-21.png"
+  alt="PerfDog Save Data"
+  className="full_image"
+/>
