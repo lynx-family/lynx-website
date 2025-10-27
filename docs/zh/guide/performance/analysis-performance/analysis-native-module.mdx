@@ -1,0 +1,134 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+# NativeModule 调用
+
+NativeModule 是 JavaScript 与原生应用之间的核心通信桥梁，通过调用 NativeModule，Lynx 前端页面能够访问和控制原生功能。本文将介绍结合具体代码示例，详细解析 NativeModule 在 Trace 中的调用过程和执行流程。
+
+## 使用 Trace 深入分析
+
+自 Lynx 3.2 版本起，Trace 页面新增了一个 NativeModule 的 Track，用于集中展示所有 NativeModule 调用记录。每个条目的长度是一次 NativeModule 发起请求至请求完成的整体耗时。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-track.png" />
+
+**基础展示：** 点击 NativeModule Track 中的具体条目，可通过五种颜色标识直观呈现该次调用各阶段的粗略耗时。
+
+**详情面板：** 详细展示调用名称、入参信息及各阶段的精确耗时数据（包括参数转换、平台逻辑、线程切换等关键节点耗时）。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-timing-stage.png" />
+
+## NativeModule 调用细节拆分
+
+下面以一次前端代码的 NativeModule 调用为例，描述 Trace 中的执行时机。
+
+### 示例代码
+
+```ts {4,5,6,7,10}
+NativeModules.bridge.call(
+  'setStorage',
+  {
+    data: {
+      key: 'lynx_nativemodule_test',
+      value: i,
+    },
+  },
+  (res) => {
+    console.log('setStorage res is: ', res);
+  },
+);
+```
+
+### Trace 执行分析
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-normal.jpeg" />
+NativeModule 调用可以划分为以下五个主要阶段：
+
+#### 1. 数据转换
+
+该阶段对应 Trace 中 `JSValueToPubValue` 时间段，主要将 JS 数据（示例代码中的第4-7行）转换成 Native 类型数据。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-1.png" />
+
+#### 2. 平台层功能实现
+
+该阶段对应 Trace 中从 `CallPlatformImplementation` 开始到 `NativeModule::PlatformCallbackStart` 的时间段，Native 方法执行具体功能并返回平台层数据。
+
+其中，`CallPlatformImplemention` 发生在[后台线程](/guide/spec.html#background-scripting-thread-historically-known-as-js-thread)上，而 `CallPlatformImplemention` Trace 事件与 `NativeModule::PlatformCallbackStart` 之间的逻辑，通常是在其他线程中完成的。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-2.png" />
+
+#### 3. 等待后台线程执行 Callback
+
+该阶段对应 Trace 中从 `NativeModule::PlatformCallbackStart` 到 `NativeModule::Callback` 开始的时间段。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-3.jpeg" />
+#### 4. 返回结果类型转换
+
+该阶段对应 Trace 中 `PubValueToJSValue` 时间段，将平台层返回的数据转换为 JS 类型参数。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-4.png" />
+#### 5. Callback 执行
+
+该阶段对应 Trace 中 `InvokeCallback` 时间段，完成 JS 代码逻辑的执行（示例代码中的第10行）。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-stage-5.png" />
+
+## 特殊 NativeModule 调用
+
+目前公司内的 NativeModule SDK 均通过 Callback 形式完成结果的返回，部分 NativeModule 的实现，会在后台线程中直接通过 Callback 将结果返回给 Lynx SDK。Callback 的执行不一定局限于主线程，任何线程都有可能调用并执行 Callback 的相关逻辑。
+
+### 示例代码
+
+```js {4,5,6,9}
+NativeModules.bridge.call(
+  'x.reportAppLog',
+  {
+    data: {
+      eventName: 'lynx_nativemodule_test_event_name',
+    },
+  },
+  (res) => {
+    console.log('reportAppLog res is: ' + JSON.stringify(res));
+  },
+);
+```
+
+### Trace 执行分析
+
+这类特殊的 NativeModule 调用可分为5个主要阶段。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special.jpeg" />
+
+#### 1. 数据转换
+
+该阶段对应 Trace 中 `JSValueToPubValue` 时间段，主要将 JS 数据（示例代码中的第4-6行）转换成 Native 类型数据。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-1.jpeg" />
+
+#### 2. 平台层功能实现
+
+该阶段对应 Trace 中从 `CallPlatformImplementation` 到 `NativeModule::Callback`开始的时间段，Native 方法执行具体功能并返回平台层数据。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-2.jpeg" />
+
+#### 3. 返回结果类型转换
+
+该阶段对应 Trace 中 `PubValueToJSValue` 时间段，将平台层返回的数据转换为 JS 类型参数。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-3.jpeg" />
+
+#### 4. Callback 执行
+
+该阶段对应 Trace 中 `InvokeCallback` 时间段，完成 JS 代码逻辑的执行（示例代码中的第9行）。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-4.jpeg" />
+
+#### 5. 清理工作
+
+该阶段对应 Trace 中从 `InvokeCallback`结束到 `NativeModule::Invoke`结束的时间段，完成平台层的清理操作，并通知外部注册方 NativeModule 执行结束。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-invoke-special-stage-5.jpeg" />
