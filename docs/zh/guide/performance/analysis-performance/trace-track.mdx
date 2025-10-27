@@ -1,0 +1,150 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+# Track 介绍
+
+## 什么是 Track
+
+在 Trace UI 中，Track 是展示 Trace 数据的基本单元。每一条 Track 代表一类事件或数据流，如线程的活动、CPU 频率、内存变化、关键 Timing 等。通过 Track，开发者可以清晰地在时间轴上查看各类事件的发生顺序、持续时间、线程分布，进而分析应用的行为和性能瓶颈。
+Track 以横条的方式展示在 Trace UI 中，每个横条表示一个 Track，在 Track 的左侧会显示 Track 的名称。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/track-overview-trace.png"
+  alt="Trace Track Overview"
+  className="full_image"
+/>
+
+## 常用 Track 介绍
+
+### 进程 Track
+
+进程 Track 通常以进程名和进程 id 命名(iOS 和 Mac 的 Trace 以 `Process {pid}` 命名)。在 Lynx Trace 中，通常只包含一个进程 Track，作为所有其他 Track 的顶层容器。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/process-track.png"
+  alt="Process Track"
+  className="full_image"
+/>
+
+### 线程 Track
+
+线程 Track 通常以线程名和线程 id 命名。在 Lynx Trace 中包含 [UI 线程](/guide/spec.html#ui-thread)，[Engine 线程](/guide/spec.html#engine-thread-historically-known-as-tasm-thread)，[后台线程](/guide/spec.html#background-scripting-thread-historically-known-as-js-thread)等多个线程 Track，下面介绍一些常见的线程 Track，开发者可以清晰地在时间轴上查看各类事件的发生顺序、持续时间、线程分布，进而分析应用的行为和性能瓶颈。
+
+#### UI 线程 Track
+
+UI 线程 Track 展示应用 UI 线程上的所有事件和任务，如页面渲染、UI 操作、主循环等。分析 UI 线程 Track 可帮助定位 UI 卡顿、渲染阻塞等性能问题。在 Lynx Trace 中，一个进程只包含一个 UI 线程 Track。
+
+默认最顶部的线程 Track 为 UI 线程 Track。
+
+- Android 和 Harmony 系统的 UI 线程 Track 以 `进程名 pid(main thread)` 命名。
+- iOS 和 Mac 系统的 Trace 线程 id 最小的线程 Track 为 UI 线程 Track。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ui-thread-track.png"
+  alt="UI Thread Track"
+  className="full_image"
+/>
+
+#### 后台线程 Track
+
+后台线程 Track 展示 [BTS](/guide/spec.html#background-thread-script-or-bts) 执行逻辑，通过该 Track 可分析 BTS 调度、执行与耗时。
+
+:::info
+历史原因，后台线程名为 Lynx_JS。
+:::
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/background-thread-track-trace.png"
+  alt="Background Thread Track"
+  className="full_image"
+/>
+
+#### 事件上报 Track
+
+事件上报 Track 展示应用内部 Lynx 事件上报过程，有助于定位事件是否上报等问题。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event-report-thread-track.png"
+  alt="Event Report Track"
+  className="full_image"
+/>
+
+### Performance Issue Track
+
+Performance Issue Track 用于标记性能异常、瓶颈点等关键事件。开发者可通过该 Track 快速定位性能热点和异常行为。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/performance-issue-track.png"
+  alt="Performance Issue Track"
+  className="full_image"
+/>
+
+### 关键时间点 Track
+
+关键时间点 Track 展示关键时间点（如首帧渲染完成、真实首帧渲染完成等），便于开发者定位关键时间点。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing-track.png"
+  alt="Timing Track"
+  className="full_image"
+/>
+
+### 原生模块 Track
+
+[原生模块](/guide/use-native-modules.html#原生模块) Track 展示原生模块调用的过程，包括 JS 与 Native 的通信、数据转换等，可用于分析原生模块链路与性能瓶颈。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/nativemodule-track.png"
+  alt="NativeModule Track"
+  className="full_image"
+/>
+
+### CPU 频率 Track
+
+CPU 频率 Track 以折线图方式展示 CPU 频率随时间的变化情况，帮助开发者分析高负载场景下 CPU 资源的利用和变化。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/cpu-frequency-track.png"
+  alt="CPU Frequency Track"
+  className="full_image"
+/>
+
+### Memory Track
+
+Memory Track 展示 Lynx 页面内存占用随时间的变化趋势，每个 Memory Track 代表一个 Lynx 页面的内存变化。通过该 Track 可分析内存泄漏、资源峰值、异常增长等问题。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-latest.png"
+  alt="Memory Track"
+  className="full_image"
+/>
+
+## Track 常用操作
+
+### Pin Track
+
+Pin Track 功能可以将某个 Track 固定在 Trace 视图的顶部，便于对比和持续关注关键线程或事件。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pin-to-top-track.png"
+  alt="Pin To Top"
+  className="full_image"
+/>
+
+### Delete Track
+
+Delete Track 功能允许开发者临时隐藏不关注的 Track，简化界面，只保留需要分析的关键 Track，提升分析效率。被删除的 Track 可通过刷新 Trace 页面重新显示。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/delete-track.png"
+  alt="Delete Track"
+  className="full_image"
+/>
+
+## 更多资源
+
+想了解 Trace Track 及其高级功能的更详细指南，请参考官方 Perfetto 文档：[perfetto-ui](https://perfetto.dev/docs/visualization/perfetto-ui)

@@ -1,0 +1,101 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+import { Tab, Tabs } from '@rspress/core/theme';
+import * as NextSteps from '@lynx/NextSteps';
+
+# Render Time Analysis
+
+This document aims to help developers master how to accurately locate each execution stage in a Trace, thereby enabling effective analysis of specific performance issues.
+
+## Analyze render time with Trace
+
+Frontend pages can [flag Pipeline](/guide/performance/monitor-performance/timing-flag) for key components. When the component finishes rendering on screen, the [Timing Track](/guide/performance/analysis-performance/trace-track) in Trace generates a bubble at the corresponding timestamp to mark the key stage.
+
+A Lynx page generally has two render types: first-frame rendering and update rendering. Internally, the Lynx SDK produces [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) and [PipelineEntry](/api/lynx-api/performance-api/performance-entry/pipeline-entry) to describe stage durations in each process.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_overview.png" />
+
+Click a bubble to open a details panel showing the sub-stage timeline and the duration of each sub-stage in the render process.
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_detail_panel.png" />
+
+The following sections detail both render types and their constituent stages, including the corresponding Trace event names, so you can locate and troubleshoot issues via Trace events.
+
+## First-frame render time analysis
+
+First-frame rendering primarily consists of LoadBundle and Paint:
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_load_bundle.png" />
+
+### LoadBundle
+
+This stage corresponds to `Timing::Mark.loadBundleStart` and `Timing::Mark.loadBundleEnd` in Trace. It mainly parses the bundle and performs the initial screen render. It can be broken down into six sub-stages:
+
+#### Parse
+
+This stage corresponds to `Timing::Mark.parseStart` and `Timing::Mark.parseEnd` in Trace. It parses the binary bundle into in-memory data structures. The bundle contains a header and multiple sections; the JS source section runs on the [background thread](/guide/spec#background-thread-aka-off-main-thread), mapped to `Timing::Mark.loadBackgroundStart` and `Timing::Mark.loadBackgroundEnd` in Trace.
+
+#### MTS Render
+
+This stage corresponds to `Timing::Mark.mtsRenderStart` and `Timing::Mark.mtsRenderEnd` in Trace. It executes [Main Thread Script (MTS)](/guide/spec#main-thread-script-or-mts) to build the Element Tree.
+
+#### Resolve
+
+This stage corresponds to `Timing::Mark.resolveStart` and `Timing::Mark.resolveEnd` in Trace. It traverses the element tree, computes a layout node tree from node attributes and styles, and generates [UI Paint OP](/guide/spec#platform-ui-paint-operations-or-ui-paint-op).
+
+#### Layout
+
+This stage corresponds to `Timing::Mark.layoutStart` and `Timing::Mark.layoutEnd` in Trace. It traverses the layout node tree produced during Resolve, computes node positions and sizes, and generates [UI Layout OP](/guide/spec#platform-ui-layout-operations-or-ui-layout-op).
+
+#### Paint UI OP Execute
+
+This stage corresponds to `Timing::Mark.paintingUiOperationExecuteStart` and `Timing::Mark.paintingUiOperationExecuteEnd` in Trace. It executes the UI Paint OP generated during Resolve.
+
+#### Layout UI OP Execute
+
+This stage corresponds to `Timing::Mark.layoutUiOperationExecuteStart` and `Timing::Mark.layoutUiOperationExecuteEnd` in Trace. It executes the UI Layout OP generated during Layout.
+
+### Paint
+
+The system drawing stage measures, lays out, and paints the platform UI tree. The end of painting maps to `Timing::Mark.paintEnd` in Trace.
+
+## Update render time analysis
+
+Update renders are primarily driven by the background thread to update and draw the UI tree. The main difference from first-frame rendering lies in [Framework Rendering](/guide/spec#framework-rendering). Using ReactLynx 3 as an example, we highlight the differing parts:
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_pipeline_entry.png" />
+
+### Diff Changes
+
+This stage corresponds to `Timing::MarkFrameWorkTiming.diffVdomStart` and `Timing::MarkFrameWorkTiming.diffVdomEnd` in Trace. It performs component diff on the background thread.
+
+### Pack Changes
+
+This stage corresponds to `Timing::MarkFrameWorkTiming.packChangesStart` and `Timing::MarkFrameWorkTiming.packChangesEnd` in Trace. It serializes diff results and sends them to the [main thread](/guide/spec#main-thread-or-lynx-main-thread).
+
+### Parse Changes
+
+This stage corresponds to `Timing::MarkFrameWorkTiming.parseChangesStart` and `Timing::MarkFrameWorkTiming.parseChangesEnd` in Trace. It parses the serialized data on the main thread.
+
+### Patch Changes
+
+This stage corresponds to `Timing::MarkFrameWorkTiming.patchChangesStart` and `Timing::MarkFrameWorkTiming.patchChangesEnd` in Trace. It applies the diff results on the main thread and updates the Element Tree.
+
+Subsequent render stages are similar to the first-frame process: Resolve, Layout, Paint UI OP Execute, Layout UI OP Execute, and Paint.
+
+## Next Steps
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/performance/analysis-performance/reactlynx-render-process"
+  title="ReactLynx Render Pipeline"
+  description="Understanding the ReactLynx Rendering Pipeline"
+/>
+
+</NextSteps.Root>

@@ -1,0 +1,272 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+import { PlatformTabs } from '@lynx';
+
+# 分析内存用量
+
+内存分析有助于发现 Lynx 页面中的内存泄漏和内存的异常占用，保障稳定性。你可以使用线下的 Trace Memory Track 和 IDE 工具，全面监控和排查内存相关性能问题。
+
+## 使用 Trace 深入分析
+
+Trace 从 3.4 版本支持了 Memory Track，用来展示 Lynx 页面内存占用随时间的变化趋势，每个 Memory Track 代表一个 Lynx 页面的内存变化。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-latest.png"
+  alt="Memory Track"
+  className="full_image"
+/>
+
+点击 Memory Track 曲线，可以看到 Lynx 页面总的内存占用大小以及Element，后台脚本引擎，主线程脚本引擎，图片等占用的内存大小。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-details.png"
+  alt="Memory Track Detail"
+  className="full_image"
+/>
+
+## 使用 IDE 分析内存
+
+本节将简要地介绍如何使用 Android 或者 iOS IDE 内建的工具调试应用，并且查看应用的相关性能参数。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+本节将介绍如何使用 Xcode 内存分析工具分析内存。
+
+### Analyze 静态检查工具
+
+选择 Product > Analyze 或 Shift + Command + B 即可自动运行，通过分析代码上下文的语法结构和内存情况，找出代码中潜在错误。Analyze 主要分析四种问题：
+
+1. 逻辑错误：访问空指针或未初始化的变量等
+2. 内存管理错误：如内存泄漏等
+3. 声明错误：从未使用过的变量
+4. API 调用错误：未包含使用的库和框架
+
+:::tip
+📌 Analyzer 是编译器根据代码进行的判断，不一定准确。如果遇到提示，应该去结合代码上文检查；某些造成内存泄漏的循环引用通过 Analyzer 分析不出来。 ​Analyzer 是编译器根据代码进行的判断，不一定准确。如果遇到提示，应该去结合代码上文检查；某些造成内存泄漏的循环引用通过 Analyzer 分析不出来。
+:::
+
+### Leaks 动态检查工具
+
+Xcode > Open Developer Tool > Instruments > Leaks
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-12.png"
+  alt="Leaks 动态检查工具"
+  className="full_image"
+/>
+
+选择 Leaks 后需要确定调试的设备和应用，比如此示例中使用了一个 iPhone SE2 (iOS 14.5) 的模拟器调试 LynxExample 应用，点击按钮进行内存泄漏的检查。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-13.png"
+  alt="Leaks 工具开始按钮"
+  className="full_image"
+/>
+
+开始检查后，需要在模拟器或实机上进行调试，若 Leaks 窗口中显示不正常，便可以跳转到相应的代码处进行调试。调试过程中可以暂停检查图表中展示的内存信息。调试结束后可以将调试信息保存到本地。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-14.png"
+  alt="Leaks 分析结果"
+  className="full_image"
+/>
+
+若出现内存泄漏，如下图所示，将图表处设置为 Call Tree 模式，然后在软件底部在 Call Tree 设置中勾选 Invert Call Tree，接着选择任意一个内存泄漏就可以定位至源码处。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-15.png"
+  alt="Leaks Call Tree 模式"
+  className="full_image"
+/>
+
+### Allocations 检查详细内存分配
+
+Xcode > Open Developer Tool > Instruments > Allocations
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-17.png"
+  alt="Allocations 工具"
+  className="full_image"
+/>
+
+与 Leaks 使用方法相似，但是可以查看详细的内存分配信息。下方的列表展示了各个方法消耗内存的详细数据，通过勾选图表可以在上方显示出柱状图。 点击列表中的某一项，可以查看详细的 Stack Trace 信息，点击右侧的 Stack Trace 窗口可以跳转到相关代码中检查内存分配情况。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-18.png"
+  alt="Allocations Stack Info"
+  className="full_image"
+/>
+
+会高亮代码部分，并且显示分配的比例。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-19.png"
+  alt="Allocations 工具内存分配比例"
+  className="full_image"
+/>
+
+###
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+本节将介绍如何使用 Android Studio 内存分析工具分析内存。
+### Profiler 基本操作
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-1.png"
+  alt="Profiler 工具"
+  className="full_image"
+/>
+
+首先点击工具栏的框选部分，Android Studio 会自动开始一次 Build，结束后会自动跳转到 Profiler 窗口，在此处可以进行相关的测试，点选 ‘+’ 图标选中通过 adb 连接的设备与待测试的进程。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-2.png"
+  alt="Profiler 工具选择进程"
+  className="full_image"
+/>
+
+使用 Xiaomi MIX (API 24) 进行一段时长约 45s 的测试，在 15s 时点选图标手动进行一次 GC。下图从左到右分别是 GC，捕获堆转储，和手动录制（供 API 26 以下设备进行内存分析的选项）。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-3.png"
+  alt="Profiler 工具 Record"
+  className="full_image"
+/>
+
+在 45s 内，调试设备的内存变化如下图所示。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-4.png"
+  alt="Profiler 工具 Record"
+  className="full_image"
+/>
+
+在此示例中，手动 GC 后，应用占用的内存有一段较明显地下降。
+
+堆转储工具会显示在捕获堆转储时，待调试的应用中有哪些对象正在使用内存。特别是在长时间的用户会话后，堆转储会显示理应不存在于内存中，却仍在内存中的对象，从而帮助识别内存泄漏。当点击 Heap Dump 图标使用捕获堆转储后，Java 内存量可能会暂时增加，因为堆转储与调试的应用发生在同一进程中，需要一些内存收集数据。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-5.png"
+  alt="Profiler 工具内存状态"
+  className="full_image"
+/>
+
+捕获堆转储后，可以使用自带的分析工具进行分析，在下图的表中可以看到一些信息，比如：
+
+- Allocations ：堆中的分配数。
+- Native Size ：此对象类型使用的原生内存总量（以字节为单位）。只有在使用 Android 7.0 及更高版本时，才会看到此列。在此处会看到一些采用 Java 分配的某些对象的内存，因为 Android 对某些框架类（如 Bitmap ）使用原生内存。
+- Shallow Size ：此对象类型使用的 Java 内存总量（以字节为单位）。
+- Retained Size ：为此类的所有实例而保留的内存总大小（以字节为单位）。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-6.png"
+  alt="Profiler 工具内存详情"
+  className="full_image"
+/>
+
+可以点击图标中的一类，跳转至 Instance List 窗口，再跳转源码处进行检查。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-7.png"
+  alt="Profiler 工具源码信息"
+  className="full_image"
+/>
+
+或者通过 Reference 窗口，进行更详细的检查并跳转到其他处进行检查。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-8.png"
+  alt="Profiler 工具源码跳转"
+  className="full_image"
+/>
+
+捕获堆转储信息后，也可以在 SESSIONS 窗口中选择 Export Heap Dump 导出 hprof 数据。可以用其他工具（如 MAT）， 对堆信息进行进一步的分析。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-9.png"
+  alt="Profiler 工具内存 Dump"
+  className="full_image"
+/>
+
+### 内存性能分析器
+
+低于 API 26 的调试设备需要手动录制一段区间，然后才可以在录制的区间内进行内存性能分析。 可以在红圈标注处选择筛选条件，例如此处选择了 Arrange by className 选项。在表中选中一类后，可以跳转到右边 Instance View 窗口中选择相应的实例，跳转到 Allocation Call Stack 窗口后，可以查看堆栈的调用记录，选择一项 Call Stack 跳转到相应的源码处进行检查。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-10.png"
+  alt="内存性能分析器"
+  className="full_image"
+/>
+
+### 内存泄漏的表现
+
+- 运行过程中 Full GC 次数多
+- 某一线程运行时，手动 GC 效果不明显
+- 短时间内发生了多次内存分配和释放（内存图像出现抖动）
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-11.png"
+  alt="内存性能分析器"
+  className="full_image"
+/>
+
+### 内存泄漏的示例及相关分析
+
+```java
+final className LoadedInChildClassLoader {
+
+  static final byte[] moreBytesToLeak = new byte[1024 * 1024 * 100];
+
+  private static final ThreadLocal<LoadedInChildClassLoader> threadLocal
+          = new ThreadLocal<>();
+
+  public LoadedInChildClassLoader() {
+    // 在ThreadLocal中存储对这个类的引用
+    threadLocal.set(this);
+  }
+}
+```
+
+#### 触发潜在的内存泄漏的方法
+
+对应用代码施加压力并尝试强制内存泄漏时，可以同时对照内存性能分析器。在应用中引发内存泄漏的一种方式是，先让其运行一段时间，然后再检查堆。泄漏在堆中可能逐渐汇聚到分配顶部。不过，泄漏越小，为了发现泄漏所需要运行应用的时间就越长。
+
+- 可以通过多次反复多次旋转设备触发潜在的内存泄漏
+- 在不同的 Activity 状态下，在调试的应用与其他应用之间切换（例如回到主屏幕，然后再返回调试的应用）
+
+#### 可能造成内存泄漏的原因
+
+- 长时间运行的线程
+- 线程通过 ClassLoader 加载某个类
+- 有一个类分配了大量内存
+- 线程会清除所有自定义类及加载它的 ClassLoader 的引用
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## 使用 PerfDog 进行性能测试
+
+PerfDog 是一个用于检测 Android 或 iOS 应用性能的第三方工具，使用方法简单。连接设备并选择待调试的应用后，在开始测试前可以点选右下角红圈的加号添加性能参数列表。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-20.png"
+  alt="PerfDog 工具"
+  className="full_image"
+/>
+
+测试结束后可以将数据保存为表格，可以对照图表查看一些性能参数如 Jank 次数等，将工具提供的多种性能参数作为简单的参考，检查应用的性能。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/ide-perf-21.png"
+  alt="PerfDog 工具保存数据"
+  className="full_image"
+/>

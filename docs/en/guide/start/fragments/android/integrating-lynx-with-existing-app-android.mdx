@@ -3,10 +3,12 @@
 import { Info, CodeFold } from '@lynx';
 import { Steps } from '@theme';
 import { Tab, Tabs } from '@rspress/core/theme';
+import { Link } from '@rspress/core/theme';
+import versionJson from '../../../../../public/version.json';
 
 <Info title="Lynx for Android">
   - This article assumes that you are familiar with the basic concepts of native Android application development.
-  - You can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/release/3.1) for all the code mentioned below.
+  - You can refer to the project: <Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link> for all the code mentioned below.
 </Info>
 
 ## 1. Dependency configuration
@@ -147,7 +149,6 @@ The obfuscation rules for` Lynx Engine` are as follows. It is recommended to ref
     @androidx.annotation.Keep <fields>;
     @androidx.annotation.Keep <methods>;
 }
-
 # native method call
 -keepclasseswithmembers,includedescriptorclasses class * {
     native <methods>;
@@ -174,7 +175,8 @@ The obfuscation rules for` Lynx Engine` are as follows. It is recommended to ref
 # in case R8 compiler may remove mLoader in bytecode.
 # as mLoader is not used in java and passed as a WeakRef in JNI.
 -keepclassmembers class com.lynx.tasm.LynxTemplateRender {
-    private com.lynx.tasm.core.LynxResourceLoader mLoader;
+    private com.lynx.tasm.core.resource.LynxResourceLoader mLoader;
+    private com.lynx.tasm.core.resource.LynxResourceLoader mResourceLoader;
 }
 
 # the automatically generated setter classes use the class names of LynxBaseUI and ShadowNode and their subclasses.

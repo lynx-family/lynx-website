@@ -1,0 +1,101 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+import { Tab, Tabs } from '@rspress/core/theme';
+import * as NextSteps from '@lynx/NextSteps';
+
+# 渲染耗时分析
+
+本文档旨在帮助开发者掌握如何在 Trace 中精准定位各个执行阶段，从而针对具体的性能问题进行有效分析。
+
+## 使用 Trace 分析渲染耗时
+
+前端页面可以通过[标记 Pipeline](/guide/performance/monitor-performance/timing-flag) 为关键组件添加标记。当对应组件完成屏幕渲染时，Trace 中 [关键时间点 Track](/guide/performance/analysis-performance/trace-track) 会在对应时间戳位置生成一个气泡，用于标记关键阶段的渲染。
+
+Lynx 页面的渲染整体上分为首帧渲染和更新渲染两种类型，Lynx SDK 内部会分别生成 [LoadBundleEntry](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) 和 [PipelineEntry](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 描述渲染流程的阶段耗时。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_overview.png" />
+
+当点击某个气泡时，详情面板中会展示此次渲染流程的各个子阶段执行时序图以及各个子阶段的耗时。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_detail_panel.png" />
+
+下面将详细介绍两种渲染类型的各个组成阶段及对应的 Trace 事件名称，便于后续通过 Trace 事件进行问题定位和排查。
+
+## 首帧渲染耗时分析
+
+首帧渲染耗时如下，主要包含 LoadBundle 和 Paint 两部分。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_load_bundle.png" />
+
+### LoadBundle
+
+该阶段对应 Trace 中 `Timing::Mark.loadBundleStart` 和 `Timing::Mark.loadBundleEnd` 时间段，主要完成 Bundle 解析和首屏渲染。具体可以细分为6个子阶段:
+
+#### Parse
+
+该阶段对应 Trace 中 `Timing::Mark.parseStart` 和 `Timing::Mark.parseEnd` 时间段，主要将二进制 bundle 解析为内存数据结构。bundle 由 header 和多个 section 组成，其中 js source section 内容会在 [后台线程](/guide/spec#background-thread-aka-off-main-thread) 中执行，即对应 Trace 中 `Timing::Mark.loadBackgroundStart` 和 `Timing::Mark.loadBackgroundEnd` 时间段。
+
+#### MTS Render
+
+该阶段对应 Trace 中 `Timing::Mark.mtsRenderStart` 和 `Timing::Mark.mtsRenderEnd` 时间段，主要执行[主线程脚本](/guide/spec#main-thread-script-or-mts)构建 Element Tree。
+
+#### Resolve
+
+该阶段对应 Trace 中 `Timing::Mark.resolveStart` 和 `Timing::Mark.resolveEnd` 时间段，遍历 element tree 基于节点的属性和样式计算创建排版节点树，并同时生成 [UI Paint OP](/guide/spec#platform-ui-paint-operations-or-ui-paint-op)。
+
+#### Layout
+
+该阶段对应 Trace 中 `Timing::Mark.layoutStart` 和 `Timing::Mark.layoutEnd` 时间段，遍历 Resolve 阶段生成的排版节点树，计算节点的位置和大小，并同时生成 [UI Layout OP](/guide/spec#platform-ui-layout-operations-or-ui-layout-op)。
+
+#### Paint UI OP Execute
+
+该阶段对应 Trace 中 `Timing::Mark.paintingUiOperationExecuteStart` 和 `Timing::Mark.paintingUiOperationExecuteEnd` 时间段，执行 Resolve 阶段生成的 UI Paint OP。
+
+#### Layout UI OP Execute
+
+该阶段对应 Trace 中 `Timing::Mark.layoutUiOperationExecuteStart` 和 `Timing::Mark.layoutUiOperationExecuteEnd` 时间段，执行 Layout 阶段生成的 UI Layout OP。
+
+### Paint
+
+系统绘制阶段完成平台层 UI 树的测量、布局和绘制，绘制结束点对应 Trace 中的 Timing::Mark.paintEnd 时间点。
+
+## 更新渲染耗时分析
+
+更新渲染主要由后台线程驱动 UI 树的更新和绘制，与首帧渲染的主要区别在于 [Framework Rendering](/guide/spec#framework-rendering) 部分。下面以 ReactLynx 3 为例，重点描述差异部分的执行。
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/timing_demo_trace_pipeline_entry.png" />
+
+### Diff Changes
+
+该阶段对应 Trace 中 `Timing::MarkFrameWorkTiming.diffVdomStart` 和 `Timing::MarkFrameWorkTiming.diffVdomEnd` 时间段，在后台线程中完成前端组件的 diff 计算。
+
+### Pack Changes
+
+该阶段对应 Trace 中 `Timing::MarkFrameWorkTiming.packChangesStart` 和 `Timing::MarkFrameWorkTiming.packChangesEnd` 时间段，在后台线程中将 diff 计算结果序列化后发送给[主线程](/guide/spec#main-thread-or-lynx-main-thread)。
+
+### Parse Changes
+
+该阶段对应 Trace 中 `Timing::MarkFrameWorkTiming.parseChangesStart` 和 `Timing::MarkFrameWorkTiming.parseChangesEnd` 时间段，在主线程中解析后台线程发送的序列化数据。
+
+### Patch Changes
+
+该阶段对应 Trace 中 `Timing::MarkFrameWorkTiming.patchChangesStart` 和 `Timing::MarkFrameWorkTiming.patchChangesEnd` 时间段，在主线程中应用 diff 计算结果，完成 Element Tree 的变更。
+
+后续渲染阶段与首帧渲染流程类似，主要包含 Resolve、Layout、Paint UI OP Execute、Layout UI OP Execute 以及 Paint，在此不在赘述。
+
+## Next Steps
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/performance/analysis-performance/reactlynx-render-process"
+  title="ReactLynx 渲染流程"
+  description="了解 ReactLynx 渲染流程"
+/>
+
+</NextSteps.Root>

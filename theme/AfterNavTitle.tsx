@@ -5,6 +5,7 @@ import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme';
 import { SUBSITES_CONFIG, getLangPrefix } from '@site/shared-route-config';
 import { SubsiteLogo, SubsiteView } from './subsite-ui';
+import { VersionIndicator } from './VersionIndicator';
 
 import {
   DropdownMenu,
@@ -184,6 +185,7 @@ export default function AfterNavTitle() {
           </div>
         </DropdownMenu>
       )}
+      <VersionIndicator />
     </div>
   );
 }

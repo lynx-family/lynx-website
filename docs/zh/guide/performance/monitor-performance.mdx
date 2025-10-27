@@ -1,0 +1,42 @@
+# 监控性能总览
+
+本总览帮助你快速建立“监控性能”的心智模型与常见工作流，理解 [Performance API](./monitor-performance/performance-api.mdx) 与 [Timing Flag](./monitor-performance/timing-flag.mdx) 的协同方式，形成从标记到回溯的闭环：`标记` → `采集` → `上报` → `分析`。
+
+## 心智模型与闭环工作流
+
+监控的目标是让页面的关键时刻“可被精准地记录、上报与分析”，并能快速回到源码或具体 UI 位置完成定位与复盘。围绕 Lynx 渲染流水线与标准化事件，建议遵循以下闭环：
+
+- 标记：在关键 UI 节点或关键数据更新上使用 Timing Flag（`__lynx_timing_flag`），圈定需要监控的渲染流水线。特殊标记 `__lynx_timing_actual_fmp` 可额外生成 ActualFMP 指标。详见 [《标记渲染流水线》](./monitor-performance/timing-flag.mdx)。
+- 采集：尽早在前端注册 PerformanceObserver（例如监听 `metric.fcp`、`pipeline` 等），或在客户端通过异步回调消费事件。详见 [《采集性能事件》](./monitor-performance/performance-api.mdx)。
+- 上报：将关键指标与事件上报到你的数据平台，统一口径与字段。
+- 分析：通过分析线上数据，结合 `PipelineEntry.identifier`（Timing Flag）与事件时序回到对应模块或数据流，完成问题定位与复盘。
+
+建议的最小可用埋点集（生产环境起步配置）：
+
+- metric：`fcp`（必选），`actual_fmp`（当需要度量“首个真实数据落屏”时）
+- pipeline：`loadBundle`（首屏链路），以及你的关键 Timing Flag 所在流水线
+
+## 能力定位
+
+### [Performance API](./monitor-performance/performance-api.mdx)
+
+- 定位：标准化的性能接口，覆盖 `init/metric/pipeline/resource` 四类事件。
+- 触发与获取：由 Lynx Engine 生成 `PerformanceEntry`；前端通过 `PerformanceObserver.observe([...])` 订阅；客户端通过 `onPerformanceEvent(entry)` 在异步线程回调。
+- 典型用途：
+  - 获取首屏与关键更新的标准指标（FCP、ActualFMP）
+  - 组合多事件构建业务自定义指标（如“首屏结束到首次重要数据更新”的等待时长）
+
+### [Timing Flag](./monitor-performance/timing-flag.mdx)
+
+- 定位：标记需要监控的渲染流水线的唯一标识，驱动生成 `PipelineEntry`，并可触发 `MetricActualFmpEntry`。
+- 使用方式：
+  - 推荐 Attribute 方式，在 UI 元素上设置 `__lynx_timing_flag`
+  - 值设为 `__lynx_timing_actual_fmp` 时额外生成 ActualFMP 指标事件
+- 行为与限制：
+  - 相同的 Timing Flag 仅首次生效（重复标记不会二次触发回调）
+  - 在无 UI 的标签上无效（如 `<inline text/>`、`<block/>`、`<template/>`）
+
+## 常见组合路径
+
+- 关键阶段标记 → 通过 `PipelineEntry`/`ActualFMP` 拿到关键时刻 → 结合 `LoadBundleEntry`/`FCP` 形成首屏与首更基线 → 上报 → 按不同维度过滤高延迟样本 → 回到标记对应的组件/数据流定位原因。
+- 懒加载组件性能 → 在重要节点设置 Timing Flag，监听相应 `PipelineEntry` → 与页面 `loadBundle` 事件拼出端到端耗时画像 → 针对资源加载与布局阶段分别优化。
