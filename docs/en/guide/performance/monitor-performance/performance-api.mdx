@@ -1,0 +1,292 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+import { PlatformTabs, Go } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+# Performance API
+
+## Concepts and usage
+
+Measuring and analyzing performance metrics is critical to ensure the speed and user experience of Lynx applications. Similar to the [Web standard](https://developer.mozilla.org/en-US/docs/Web/API/Performance), Lynx provides the **Performance API** as a standardized interface to measure Lynx app performance, helping developers monitor comprehensive metrics from initialization through rendering completion.
+
+<center>
+  <img
+    width="60%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/performance-api-v4.png"
+  />
+</center>
+
+### Performance entry types
+
+The core of the Performance API is the **[`PerformanceEntry`](/api/lynx-api/performance-api/performance-entry)** object, which is the fundamental data structure describing a performance event. Each PerformanceEntry has the following basic properties:
+
+- `entryType`: The type of performance event (e.g., `init`, `metric`, `pipeline`, `resource`)
+- `name`: The specific name of the performance event
+- Other type-specific properties and timestamps
+
+Based on the `entryType` property, the Performance API supports four main categories of performance events:
+
+- **Initialization events (`init`)**
+  - [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry): Container initialization performance event
+  - [`InitLynxviewEntry`](/api/lynx-api/performance-api/performance-entry/init-lynxview-entry): LynxView initialization performance event
+  - [`InitBackgroundRuntimeEntry`](/api/lynx-api/performance-api/performance-entry/init-background-runtime-entry): Background runtime initialization performance event
+
+- **Metric events (`metric`)**
+  - [`MetricFcpEntry`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry): FCP (First Contentful Paint)
+  - [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry): ActualFMP (Actual First Meaningful Paint)
+
+- **Rendering pipeline events (`pipeline`)**
+  - [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry): Performance event for [flagged rendering pipelines](./timing-flag)
+  - [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry): Performance event for [TemplateBundle](/api/lynx-native-api/template-bundle) loading and first-screen rendering
+  - [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry): Performance event for reloading [TemplateBundle](/api/lynx-native-api/template-bundle)
+
+- **Resource loading events (`resource`)**
+  - [`LazyBundleEntry`](/api/lynx-api/performance-api/performance-entry/lazy-bundle-entry): Performance event for lazy-loaded [TemplateBundle](/api/lynx-native-api/template-bundle)
+
+### Getting performance data
+
+#### Front-end developers
+
+To consume performance events, the Performance API provides **PerformanceObserver**, which notifies you when the **Lynx Engine** produces performance events (`PerformanceEntry`).
+
+The PerformanceObserver object offers the `observe` method to start observing and the `disconnect` method to stop. With them, you can observe by `entryType` (all entries of a type) or `entryType.name` (a specific kind of entry).
+
+To prevent missing events due to late registration, register observations as early as possible.
+
+- **Component dependencies**
+  - `@lynx-js/react` >= 0.107.0
+
+- **Registration timing**
+  - Class components: register in the **constructor**
+  - Function components: register in **useMemo**
+
+The following example shows how to create a `PerformanceObserver` and observe [`metric.fcp`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry) and [`pipeline`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) events.
+
+<Go
+  example="performance-api"
+  defaultFile="src/simple-observe/index.tsx"
+  defaultEntryFile="dist/simple-obseve.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/simple-observe-demo.jpeg"
+  entry="src/simple-observe"
+  highlight="{11-30}"
+/>
+
+#### Client developers
+
+On the client side, performance events sent by the Performance API are delivered via the `onPerformanceEvent(PerformanceEntry entry)` callback on LynxViewClient on an **asynchronous thread**. It is therefore not recommended to perform any UI-related operations inside this callback.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="android">
+```java
+import com.lynx.tasm.LynxViewClientV2;
+import com.lynx.tasm.performance.performanceobserver.PerformanceEntry;
+import com.lynx.tasm.performance.performanceobserver.MetricFcpEntry;
+
+public class CustomLynxViewClient extends LynxViewClientV2 {
+  @Override
+  public void onPerformanceEvent(@NonNull PerformanceEntry entry) {
+    // If you need to consume raw data directly, convert to HashMap
+    Log.d(entry.toHashMap());
+    // If you need to consume a specific type, cast and use inner fields
+    if (entry.entryType.equals("metric") && entry.name.equals("fcp")) {
+      MetricFcpEntry fcpEntry = (MetricFcpEntry) entry;
+      Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
+    }
+  }
+}
+
+````
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="ios">
+```objc
+#import "LynxViewClient.h"
+#import "LynxMetricFcpEntry.h"
+
+@interface CustomLynxViewClient : NSObject <LynxViewLifecycleV2>
+@end
+@implementation
+
+- (void)onPerformanceEvent:(LynxPerformanceEntry*)entry {
+  // If you need to consume raw data directly, convert to NSDictionary*
+  NSLog(entry.toDictionary);
+  // If you need to consume a specific type, cast and use inner fields
+  if ([entry.entryType isEqual: @"metric"] && [entry.name isEqual: @"fcp"]) {
+    MetricFcpEntry* fcpEntry = (LynxMetricFcpEntry *) entry;
+    NSLog(@"lynxFcp is %@", fcpEntry.lynxFcp.duration);
+  }
+}
+@end
+
+````
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="harmony">
+```typescript
+import { LynxViewClient, PerformanceEntry, MetricFcpEntry } from '@lynx/lynx';
+
+export class CustomLynxViewClient extends LynxViewClient {
+  public onPerformanceEvent(entry: PerformanceEntry): void {
+    // If you need to consume raw data directly, convert to Record
+    Log.d(entry.Record);
+    // If you need to consume a specific type, cast and use inner fields
+    if (entry.entryType == "metric" && entry.name == "fcp") {
+        let fcpEntry: MetricFcpEntry = entry as MetricFcpEntry;
+        Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
+    }
+  }
+}
+```
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+## [Capture specific rendering pipelines](./timing-flag)
+
+A [rendering pipeline](/guide/spec#lynx-pipeline) is the complete process from triggering the rendering to displaying it on the screen. If you care about the rendering performance of certain key components, set the component’s `__lynx_timing_flag` property to mark the pipeline it belongs to and monitor its performance.
+
+When the flagged rendering pipeline completes and the screen is refreshed, a [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) event is generated. You can retrieve it via [`PerformanceObserver`](/api/lynx-api/performance-api/performance-observer).
+
+## Build custom performance metrics
+
+Different business goals imply different metrics to focus on. Your use of the Performance API need not be limited to built-in Lynx metrics—you can flexibly combine timestamps from different `PerformanceEntry`s at key points to construct a metric suite tailored to your application.
+
+For example, if you want to measure the latency from the end of first-screen rendering to the first important data update, you can combine `LoadBundleEntry` and `PipelineEntry` to compute a custom metric `waitingDuration` as shown below. It helps monitor the speed of network requests, file IO, etc., and pinpoint causes of performance regressions.
+
+![waiting duration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/custom-metric-waitingduration.png)
+
+<Go
+  example="performance-api"
+  defaultFile="src/create-custom-metric/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/simple-observe-demo.jpeg"
+  entry="src/simple-observe"
+  highlight="{11-30}"
+/>
+
+## Best practices
+
+### 1. Register observers early
+
+To avoid missing events due to late registration, register observations as early as possible:
+
+- Register in the class component `constructor`, or in `useMemo` for function components
+
+### 2. Choose an appropriate observe scope
+
+Select the observe scope based on your needs:
+
+```typescript
+// Observe all metric events
+observer.observe(['metric']);
+
+// Observe only FCP metric events
+observer.observe(['metric.fcp']);
+
+// Observe multiple specific events
+observer.observe(['metric.fcp', 'pipeline.loadBundle']);
+```
+
+### 3. Clean up promptly
+
+When a component unmounts or observation is no longer needed, call `disconnect()` to release resources:
+
+```typescript
+useEffect(() => {
+  return () => {
+    if (observer) {
+      observer.disconnect();
+    }
+  };
+}, []);
+```
+
+## FAQ
+
+### Q1: If my page uses [_Instant First-Frame Rendering (IFR)_](/guide/interaction/ifr.html), do I still need to mark a Timing Flag?
+
+For pages with [_Instant First-Frame Rendering (IFR)_](/guide/interaction/ifr.html), you generally do not need to manually mark a Timing Flag. However, if you do, you will still receive a `LoadBundleEntry` with an `identifier` value equal to the TimingFlag you marked.
+
+### Q2: My page uses [_Instant First-Frame Rendering (IFR)_](/guide/interaction/ifr.html). How can I get the ActualFMP performance metric?
+
+In scenarios with [_Instant First-Frame Rendering (IFR)_](/guide/interaction/ifr.html), you generally do not need to focus on the ActualFMP performance metric; you only need to pay attention to the FCP metric. The FCP metric can be obtained directly through `MetricFcpEntry`.
+
+### Q3: Can I get the rendering time of lazy-loaded components?
+
+Yes. Marking Timing Flags on lazy-loaded components works the same as on the main page; you can use the Timing Flag inside the lazy-loaded component:
+
+```typescript
+export default function MyLazyBundle() {
+  return (
+    <view className="root">
+      <text className="text", __lynx_timing_flag="dynamic_render" >Hello, This is a Lazy Bundle!</text>
+    </view>
+  );
+}
+```
+
+```typescript
+export default function app() {
+  return (
+    <view className="container">
+      <text className="title">Hello LazyBundleEntry~</text>
+      <Suspense fallback={<text className="sub-text">Loading...</text>}>
+        <MyLazyBundle />
+      </Suspense>
+      <ScrollItem title={entryName} value={lazyBundleEntry} />
+    </view>
+  );
+}
+```
+
+This method can be used to obtain the timestamp of the dynamic component rendering phase. For information about the time consumption of the dynamic component resource loading phase, refer to [`LazyBundleEntry`](/api/lynx-api/performance-api/performance-entry/lazy-bundle-entry).
+
+### Q4: Are Performance API callbacks related to other Lynx lifecycles?
+
+Performance API triggers its callbacks after all rendering pipeline timestamps are captured—i.e., after pixels are on screen—and has no strict ordering relationship with other Lynx lifecycles.
+
+### Q5: Which is triggered faster, a setState callback or a Performance API callback?
+
+See Q4: there is no defined ordering.
+
+### Q6: Can Timing Flags be reused?
+
+No. If two identical Timing Flags are injected, Performance API fires on the first one it detects and will not fire again for the second.
+
+### Q7: What happens if the client calls ReloadTemplate, calls LoadTemplate multiple times, or the front end calls reload?
+
+**Before Lynx 3.4**: Performance API state resets; LoadBundleEntry will be triggered again with timestamps from this template load. If front-end reloads but the page has no UI to redraw, no callback is received.
+
+**After Lynx 3.4**: Multiple LoadTemplate calls yield multiple LoadBundleEntry events; client ReloadTemplate and front-end reload yield ReloadBundleEntry.
+
+### Q8: Why don’t I receive the LoadBundleEntry callback?
+
+Possible causes:
+
+1. First-screen rendering produced no pixels, e.g., LynxView width/height is 0, LynxView is off-screen, or LynxView wasn’t added to the window.
+2. The observer was registered too late; try registering earlier:
+   - register in the class constructor or `useMemo`
+
+### Q9: I used an Timing Flag—why don’t I receive PipelineEntry callbacks?
+
+Possible causes:
+
+1. Observer registered too late (see Q8)
+2. Timing Flag is set on a Component while the `removeComponentElement` switch is enabled, making the Timing layer unable to detect the flag
+3. Timing Flag is ineffective on tags with no UI nodes, such as `<inline text/>`, `<block/>`, `<template/>`
+4. The same Timing Flag does not trigger multiple callbacks (see Q6)
+
+### Q10: How do I verify that Timing Flag integration works?
+
+You can validate via local Trace, or by registering an observer and checking whether callbacks fire.
+
+### Q11: My ActualFMP metric is particularly large—why?
+
+Check whether preloading is in effect; with preloading, the starting point of ActualFMP can be very early.
+
+### Q12: Error “OnPipelineStart arg count must == 1”
+
+To fix this, upgrade `@lynx-js/react` to version 0.107.1 or higher.
