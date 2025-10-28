@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Head,
   removeBase,
   useLang,
   useLocation,
   usePageData,
-  Head,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -12,20 +11,21 @@ import {
   getCustomMDXComponent,
   Link as BaseLink,
 } from '@rspress/core/theme';
+import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import type { SearchProps } from '@rspress/plugin-algolia/runtime';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
 
 import {
   Banner,
   Features,
+  Footer,
   MeteorsBackground,
   ShowCase,
-  Footer,
 } from '@/components/home-comps';
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
@@ -40,7 +40,7 @@ declare global {
   }
 }
 
-function Layout() {
+function Layout(props: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
 
   const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
@@ -51,6 +51,7 @@ function Layout() {
         <htmlAttrs data-subsite={subsite ? subsite.value : 'guide'} />
       </Head>
       <BaseLayout
+        {...props}
         afterNavTitle={<AfterNavTitle />}
         beforeSidebar={<BeforeSidebar />}
         bottom={<Footer />}
