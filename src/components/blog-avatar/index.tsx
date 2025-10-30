@@ -46,12 +46,12 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
           onMouseLeave={undefined}
         ></Avatar>
         <div>
-          <p className="sh-text-sm sh-font-bold">
+          <div className="sh-text-sm sh-font-bold">
             {lang === 'zh' ? author.name_zh : author.name}
-          </p>
-          <p className="sh-text-xs sh-leading-[1em] sh-mx-0 sh-my-1 text-[color:var(--text-secondary)]">
+          </div>
+          <div className="sh-text-xs sh-leading-[1em] sh-mx-0 sh-my-1 text-[color:var(--text-secondary)]">
             {lang === 'zh' ? author.title_zh : author.title}
-          </p>
+          </div>
           <div>
             <Space>
               {Object.entries(author.socials).map(([key, value]) => {
