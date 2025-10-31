@@ -6,6 +6,7 @@ import { isAssetFileType } from './utils/example-data';
 import Callout from '../../Callout';
 import { SchemaOptionsData } from './hooks/use-switch-schema';
 import { withBase } from '@rspress/core/runtime';
+import { ExamplePreview as ExamplePreviewMarkdown } from './index.server';
 
 const EXAMPLE_BASE_URL = withBase('/lynx-examples');
 
@@ -50,19 +51,25 @@ interface ExampleMetadata {
   exampleGitBaseUrl?: string;
 }
 
-export const ExamplePreview = ({
-  example,
-  defaultFile = 'package.json',
-  defaultEntryFile,
-  defaultEntryName,
-  highlight,
-  img,
-  entry,
-  schema,
-  rightFooter,
-  schemaOptions,
-  langAlias,
-}: ExamplePreviewProps) => {
+export const ExamplePreview = (props: ExamplePreviewProps) => {
+  if (process.env.__SSR_MD__) {
+    return <ExamplePreviewMarkdown {...props} />;
+  }
+
+  const {
+    example,
+    defaultFile = 'package.json',
+    defaultEntryFile,
+    defaultEntryName,
+    highlight,
+    img,
+    entry,
+    schema,
+    rightFooter,
+    schemaOptions,
+    langAlias,
+  } = props;
+
   const [currentName, setCurrentName] = useState(defaultFile);
   const [currentFile, setCurrentFile] = useState('');
   const [isAssetFile, setIsAssetFile] = useState(isAssetFileType(defaultFile));
