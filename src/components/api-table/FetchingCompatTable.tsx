@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import Callout from '../Callout';
 import EditThis from '../EditThis';
 import { useLang, withBase } from '@rspress/core/runtime';
+import { FetchingCompatTable as FetchingCompatTableMarkdown } from './FetchingCompatTable.server';
 
 // Because it's bad for web performance to lazy-load CSS during the initial render
 // (because the page is saying "Wait! Stop rendering, now that I've downloaded
@@ -131,6 +132,9 @@ type FetchingCompatTableProps = {
  * load source code and fetches the data from the server.
  */
 export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
+  if (process.env.__SSR_MD__) {
+    return <FetchingCompatTableMarkdown query={query} />;
+  }
   const locale = useLang();
   const isServer = useIsServer();
   const lcdBaseUrl = useLCDBaseUrl();

@@ -1,9 +1,12 @@
 import React from 'react';
 import type LCD from '@lynx-js/lynx-compat-data';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from 'fs';
+import path from 'path';
 
-const LCD_BASE_PATH = path.join(__dirname, '../../packages/lynx-compat-data');
+const LCD_BASE_PATH = path.join(
+  __dirname,
+  '../../docs/public/lynx-compat-data',
+);
 
 /**
  * Retrieves a nested value from an object using a dot-separated query string.

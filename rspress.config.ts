@@ -91,33 +91,13 @@ export default defineConfig({
       },
     },
     tools: {
-      bundlerChain(chain, { rspack, environment }) {
-        // why replaced these components in compile time?
-        // These components access the node API, such as `node:fs` and `node:path`, so for the safety of the client doc_build, replacements are made when building SSR output, similar to nextjs server components.
-        if (environment.name === 'node_md') {
-          chain
-            .plugin('server-component')
-            .use(
-              new rspack.NormalModuleReplacementPlugin(
-                /example-preview\/index\.tsx/,
-                path.join(
-                  __dirname,
-                  'src/components/go/example-preview/index.server.tsx',
-                ),
-              ),
-            );
-          chain
-            .plugin('server-component-1')
-            .use(
-              new rspack.NormalModuleReplacementPlugin(
-                /api-table\/FetchingCompatTable\.tsx/,
-                path.join(
-                  __dirname,
-                  'src/components/api-table/FetchingCompatTable.server.tsx',
-                ),
-              ),
-            );
-        }
+      rspack: {
+        resolve: {
+          fallback: {
+            fs: false,
+            path: false,
+          },
+        },
       },
     },
   },

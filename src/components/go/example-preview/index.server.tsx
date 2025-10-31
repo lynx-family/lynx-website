@@ -1,7 +1,7 @@
 import { useLang } from '@rspress/core/runtime';
 import type { ExamplePreviewProps } from './index';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from 'fs';
+import path from 'path';
 import { getFileCodeLanguage } from './utils/example-data';
 import { useMemo } from 'react';
 
