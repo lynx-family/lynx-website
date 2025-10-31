@@ -93,7 +93,7 @@ export default defineConfig({
     tools: {
       bundlerChain(chain, { rspack, environment }) {
         // why replaced these components in compile time?
-        // These components access the node API, such as `node:fs` and `node:path`, so for the safety of the client doc_build, replacements are made when building SSR output, similar to server components.
+        // These components access the node API, such as `node:fs` and `node:path`, so for the safety of the client doc_build, replacements are made when building SSR output, similar to nextjs server components.
         if (environment.name === 'node_md') {
           chain
             .plugin('server-component')
