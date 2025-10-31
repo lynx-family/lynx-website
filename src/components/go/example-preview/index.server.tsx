@@ -30,7 +30,6 @@ export const ExamplePreview = ({
   defaultEntryFile,
   defaultEntryName,
   highlight,
-  img,
   entry,
   langAlias,
 }: ExamplePreviewProps) => {
@@ -64,30 +63,6 @@ export const ExamplePreview = ({
     return '';
   }, [highlight, defaultFile]);
 
-  const previewImageUrl = useMemo(() => {
-    return (
-      img ||
-      (exampleMetadata?.previewImage
-        ? `/lynx-examples/${example}/${exampleMetadata.previewImage}`
-        : '')
-    );
-  }, [img, example, exampleMetadata]);
-
-  const gitHubUrl = useMemo(() => {
-    if (!exampleMetadata?.exampleGitBaseUrl) {
-      return null;
-    }
-    const baseUrl = exampleMetadata.exampleGitBaseUrl.replace(/\/$/, '');
-    if (!exampleMetadata.name) {
-      return baseUrl;
-    }
-    const filePath = defaultEntryFile || defaultFile;
-    return `${baseUrl}/${exampleMetadata.name}/${filePath}`.replace(
-      /([^:]\/)(\/)+/g,
-      '$1',
-    );
-  }, [exampleMetadata, defaultFile, defaultEntryFile]);
-
   const entryFileInfo = useMemo(() => {
     if (!exampleMetadata?.templateFiles) {
       return null;
@@ -119,11 +94,6 @@ export const ExamplePreview = ({
     // Title
     parts.push(`**${TEXT[lang]} ${example}**\n\n`);
 
-    // Preview image
-    if (previewImageUrl) {
-      parts.push(`![Preview](${previewImageUrl})\n`);
-    }
-
     // Entry info
     if (entry) {
       const entryText = Array.isArray(entry) ? entry.join(', ') : entry;
@@ -146,39 +116,16 @@ export const ExamplePreview = ({
       parts.push(codeBlock);
       parts.push('\n');
     }
-
-    // Available template files
-    if (
-      exampleMetadata?.templateFiles &&
-      exampleMetadata.templateFiles.length > 1
-    ) {
-      parts.push('\n**Available bundles:**\n\n');
-      exampleMetadata.templateFiles.forEach((file) => {
-        parts.push(`- **${file.name}**: \`${file.file}\``);
-        if (file.webFile) {
-          parts.push(` (Web: \`${file.webFile}\`)`);
-        }
-        parts.push('\n');
-      });
-    }
-
-    // GitHub link
-    if (gitHubUrl) {
-      parts.push(`\n[View source on GitHub](${gitHubUrl})\n`);
-    }
-
     return parts.join('');
   }, [
     lang,
     example,
-    previewImageUrl,
     entry,
     entryFileInfo,
     codeContent,
     codeLanguage,
     highlightMeta,
     exampleMetadata,
-    gitHubUrl,
   ]);
 
   return <p>{markdownContent}</p>;

@@ -122,7 +122,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
     const parts: string[] = [];
 
     // Title
-    parts.push(`### Compatibility Table\n`);
+    parts.push(`**Compatibility Table**\n`);
     parts.push(`**Query:** \`${accessor}\`\n\n`);
 
     // Check if __compat exists
@@ -233,12 +233,6 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
     if (compat.description) {
       parts.push(`**Description:** ${compat.description}\n\n`);
     }
-
-    // Edit link
-    parts.push(`---\n\n`);
-    parts.push(
-      `[Edit this data on GitHub](https://github.com/lynx-family/lynx-website/tree/main/packages/lynx-compat-data/${module}.json)\n`,
-    );
 
     return parts.join('');
   }, [compatData, platformData, accessor, query, module]);
