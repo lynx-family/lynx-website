@@ -68,7 +68,7 @@ export default defineConfig({
     ],
     resolve: {
       alias: {
-        // be compatible to react@18, react version within @rspress/core depends on react@19
+        // be compatible to react@18, renderToMarkdownString within @rspress/core depends on react@19
         '@rspress/core/_private/react': path.join(
           __dirname,
           'node_modules/react-render-to-markdown/dist/index.js',
