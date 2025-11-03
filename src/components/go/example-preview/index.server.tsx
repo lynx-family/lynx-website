@@ -5,10 +5,7 @@ import path from 'path';
 import { getFileCodeLanguage } from './utils/example-data';
 import { useMemo } from 'react';
 
-const EXAMPLE_PATH =
-  typeof path === 'undefined'
-    ? ''
-    : path.join(__dirname, '../../docs/public/lynx-examples');
+const EXAMPLE_PATH = path?.join?.(__dirname, '../../docs/public/lynx-examples');
 
 const TEXT = {
   zh: '下面是一个示例: ',

@@ -3,10 +3,10 @@ import type LCD from '@lynx-js/lynx-compat-data';
 import fs from 'fs';
 import path from 'path';
 
-const LCD_BASE_PATH =
-  typeof path === 'undefined'
-    ? ''
-    : path.join(__dirname, '../../docs/public/lynx-compat-data');
+const LCD_BASE_PATH = path?.join?.(
+  __dirname,
+  '../../docs/public/lynx-compat-data',
+);
 
 /**
  * Retrieves a nested value from an object using a dot-separated query string.
