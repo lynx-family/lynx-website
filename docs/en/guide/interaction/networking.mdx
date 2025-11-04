@@ -1,18 +1,18 @@
 # Networking
 
-Many mobile apps need to load resources from remote URLs. You might want to make a POST request to a REST API, or you might need to fetch a large amount of static content from another server.
+Many mobile apps need to load resources from remote URLs. You might want to make a POST request to a REST API or fetch a large amount of static content from another server.
 
 ## Using Fetch
 
 :::tip
 
-This feature depends on the http service provided by the integrated [Lynx Service](/guide/start/integrate-with-existing-apps).
+This feature depends on the HTTP service provided by the integrated [Lynx Service](/guide/start/integrate-with-existing-apps).
 
 :::
 
-Lynx provides the [Fetch API](/api/lynx-api/global/fetch) with the same usage as the Web. You can refer to the MDN guides on [Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) for more information.
+Lynx provides a [Fetch API](/api/lynx-api/global/fetch) that is compatible with the standard Web API. You can refer to the MDN guide on [Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) for more information.
 
-This is an example app that fetches and displays user posts provided by the [JSONPlaceholder API](https://jsonplaceholder.typicode.com/). It initializes with a loading state and, upon mounting, triggers a Fetch API request to retrieve posts. The fetched data is then displayed in a scrollable list where each post is shown with its ID and title. If the request is still in progress, a "Loading..." message appears.
+This example app fetches and displays user posts from the [JSONPlaceholder API](https://jsonplaceholder.typicode.com/). It initializes with a loading state and triggers a Fetch API request to retrieve posts upon mounting. The fetched data is then displayed in a scrollable list, showing each post's ID and title. A "Loading..." message appears if the request is still in progress.
 
 import { Go } from '@lynx';
 
@@ -24,15 +24,15 @@ import { Go } from '@lynx';
   entry="src/fetch"
 />
 
-### Making requests
+### Making Requests
 
-In order to fetch content from an arbitrary `URL`, you can pass the `URL` to `fetch`:
+To fetch content from an arbitrary `URL`, you can pass the `URL` to `fetch`:
 
 ```typescript
 fetch('https://jsonplaceholder.typicode.com/todos/1');
 ```
 
-`fetch` also takes an optional second argument that allows you to customize the HTTP request. You may want to specify additional `headers`, make a `POST` request, or provide JSON-based `body`:
+`fetch` also takes an optional second argument that allows you to customize the HTTP request. You may want to specify additional `headers`, make a `POST` request, or provide a JSON `body`:
 
 ```typescript
 fetch('https://jsonplaceholder.typicode.com/todos/1', {
@@ -50,11 +50,11 @@ fetch('https://jsonplaceholder.typicode.com/todos/1', {
 
 Take a look at the [Fetch Request](/api/lynx-api/global/fetch#request) for the properties supported by Lynx.
 
-### Handling the response
+### Handling the Response
 
 The above examples show how you can make a request. In many cases, you will want to do something with the response.
 
-Networking is an inherently asynchronous operation. `fetch` method will return a `Promise` that makes it straightforward to write code that works in an asynchronous manner. You can use the `async/await` syntax to wait the `promise` to end:
+Networking is an inherently asynchronous operation. The `fetch` method returns a `Promise`, which makes it straightforward to write code that works asynchronously. You can use the `async/await` syntax to await the promise's resolution:
 
 ```typescript
 const getDataFromApiAsync = async () => {
@@ -72,60 +72,49 @@ const getDataFromApiAsync = async () => {
 
 Take a look at the [Fetch Response](/api/lynx-api/global/fetch#response) for the properties supported by Lynx.
 
-Don't forget to catch any errors that may be thrown by `fetch`, otherwise they will be dropped silently.
+Don't forget to catch any errors that `fetch` may throw; otherwise, they will be silently ignored.
 
-## Fetch chunk streaming
+## Chunked Transfer Encoding
 
-Chunked encoding is useful when larger amounts of data are sent to the Front-End. Front-End can process each chunk
-when the chunk is received, to reduce waiting duration.
+Chunked Transfer Encoding is ideal for streaming large amounts of data to the client. This method allows the client to process data in chunks as they arrive, reducing overall latency.
 
-You can refer to the MDN guides on [Transfer-Encoding chunked](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Transfer-Encoding#chunked)
-to know more about chunk streaming standard.
+To learn more about this standard, see the MDN guide on [Chunked transfer encoding](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding#chunked).
 
 :::tip
 
-To facilitate Front-End development, the http response body is split by Lynx:
+To facilitate front-end development, the HTTP response body is processed by Lynx:
 
-The chunk size and '\r\n' delimiters are removed, only the chunk contents are returned as `arraybuffer`.
+The chunk size and `\r\n` delimiters are removed, and only the chunk's content is returned as an `arraybuffer`.
 
 :::
 
-To enable chunk streaming, you can mark switch `useStreaming` as `true` inside `lynxExtension`.
+To enable chunked transfer encoding, set the `useStreaming` option to `true` inside `lynxExtension`.
 
-```typescript
-fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
-  lynxExtension: { useStreaming: true },
-}).then((response) => {
-  const reader = response.body.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    } else {
-      const text = TextCodecHelper.decode(value);
-      setData(text);
-    }
-  }
-});
-```
+<Go
+  example="networking"
+  defaultFile="src/chunked-encoding/index.tsx"
+  defaultEntryFile="dist/chunked-encoding.lynx.bundle"
+  entry="src/chunked-encoding"
+/>
 
 You can refer to the MDN guides on [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
 to know more about how to process streaming body.
 
 ## Using TextCodecHelper
 
-Due to lack of support of `TextEncoder/TextDecoder` in `PrimJS`, to support
-basic usages of encoding and decoding, Lynx provides `TextCodecHelper`. This
-class supports conversions between `string` and `arraybuffer` under `utf-8`.
-How to use:
+Due to the lack of `TextEncoder`/`TextDecoder` support in `PrimJS`, Lynx provides
+`TextCodecHelper` for basic encoding and decoding operations. This class
+supports `UTF-8` conversions between `string` and `arraybuffer`.
 
-convert `arraybuffer` to `string`
+Usage:
+
+Convert `arraybuffer` to `string`:
 
 ```typescript
 const str = TextCodecHelper.decode(arraybuffer);
 ```
 
-convert `string` to `arraybuffer`
+Convert `string` to `arraybuffer`:
 
 ```typescript
 const arraybuffer = TextCodecHelper.encode(str);
@@ -133,8 +122,8 @@ const arraybuffer = TextCodecHelper.encode(str);
 
 ## Using Other Networking Libraries
 
-Since The Fetch API is built into Lynx. This means that you can use third party libraries that depend on it.
+The Fetch API is built into Lynx, which means you can use third-party libraries that rely on it.
 
-It is important to note that Lynx's Fetch API has subtle differences compared to the [Web Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). You can check the [Fetch API Reference - Compatibility](/api/lynx-api/global/fetch#compatibility) section to learn more about these differences. As a result, you may need to adapt libraries from the Web ecosystem to ensure compatibility. If you encounter any issues on Lynx Fetch API, you are welcome to submit feature requests or [contribute](https://github.com/lynx-family/lynx/blob/develop/CONTRIBUTING.md) to help Lynx better support the Web ecosystem.
+It is important to note that Lynx's Fetch API has subtle differences compared to the [Web Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). You can check the [Fetch API Reference - Compatibility](/api/lynx-api/global/fetch#compatibility) section to learn more about these differences. As a result, you may need to adapt libraries from the web ecosystem to ensure compatibility. If you encounter any issues with the Lynx Fetch API, you are welcome to submit feature requests or [contribute](https://github.com/lynx-family/lynx/blob/develop/CONTRIBUTING.md) to help Lynx better support the web ecosystem.
 
-For frontend framework-specific data fetching solutions, such as using [TanStack Query (React Query)](https://tanstack.com/query/latest) in ReactLynx, you can refer to the [Data Fetching](/react/data-fetching) chapter of ReactLynx guide.
+For front-end framework-specific data fetching solutions, such as using [TanStack Query (React Query)](https://tanstack.com/query/latest) in ReactLynx, you can refer to the [Data Fetching](/react/data-fetching) chapter of the ReactLynx guide.
