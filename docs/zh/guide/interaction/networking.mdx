@@ -6,13 +6,13 @@
 
 :::tip
 
-本功能依赖你已经接入了 [Lynx Service](/guide/start/integrate-with-existing-apps) 提供的网络请求服务
+本功能依赖于已集成的 [Lynx Service](/guide/start/integrate-with-existing-apps) 所提供的 HTTP 服务。
 
 :::
 
-Lynx 提供了用法和 Web 标准完全一致的 [Fetch API](/api/lynx-api/global/fetch)，供熟悉 Web 开发的开发者使用。你可以查阅 MDN 文档的[使用 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) 了解更多信息。
+Lynx 提供了与 Web 标准兼容的 [Fetch API](/api/lynx-api/global/fetch)，用法与 Web 平台保持一致。你可以查阅 MDN 的[使用 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) 指南了解更多信息。
 
-下面是一个使用 [JSONPlaceholder API](https://jsonplaceholder.typicode.com/) 获取并显示用户帖子的示例应用。应用启动后，在组件挂载（mounted）后触发 Fetch API 来请求帖子数据。获取的数据随后展示在一个可滚动的列表中，每个帖子都会显示其 `id` 和 `title`。如果请求仍在进行中，则界面上会显示 "Loading..." 消息。
+以下示例展示了一个从 [JSONPlaceholder API](https://jsonplaceholder.typicode.com/) 获取并显示用户帖子的应用。该应用在启动后会显示加载状态，并在组件挂载（mounted）后触发 Fetch API 请求以获取帖子数据。获取的数据将显示在一个可滚动的列表中，其中每个帖子都包含其 `id` 和 `title`。如果请求仍在进行中，界面将显示 “Loading...” 消息。
 
 import { Go } from '@lynx';
 
@@ -26,13 +26,13 @@ import { Go } from '@lynx';
 
 ### 发起请求
 
-通过 `fetch` 从任意 `URL` 获取内容：
+要从任意 `URL` 获取内容，你可以将 `URL` 传递给 `fetch`：
 
 ```typescript
 fetch('https://jsonplaceholder.typicode.com/todos/1');
 ```
 
-通过 `fetch` 的第二可选个参数，你可以自定义 HTTP 请求，如：添加自定义 `header`、指定 `POST` 请求、携带 `JSON body`：
+`fetch` 还接受第二个可选参数，用于自定义 HTTP 请求。你可以指定额外的 `header`、发起 `POST` 请求或提供 `JSON` 格式的 `body`：
 
 ```typescript
 fetch('https://jsonplaceholder.typicode.com/todos/1', {
@@ -48,13 +48,13 @@ fetch('https://jsonplaceholder.typicode.com/todos/1', {
 });
 ```
 
-请查看 [Fetch Request](/api/lynx-api/global/fetch#request) 获取 Lynx 支持的属性列表。
+请参阅 [Fetch Request](/api/lynx-api/global/fetch#request) 了解 Lynx 支持的属性。
 
-### 处理请求结果
+### 处理响应
 
-以上示例展示了如何发起请求。此外在许多情况下，你需要处理请求结果。
+以上示例展示了如何发起请求。在许多情况下，你还需要处理响应。
 
-网络操作本质上是异步的。`fetch` 方法遵循异步编程范式，返回一个 `Promise`。你可以使用 `async/await` 语法来等待 `Promise` 完成：
+网络请求是一项异步操作。`fetch` 方法会返回一个 `Promise`，这使得编写异步代码变得非常简单。你可以使用 `async/await` 语法来等待 `Promise` 的解析：
 
 ```typescript
 const getDataFromApiAsync = async () => {
@@ -70,59 +70,49 @@ const getDataFromApiAsync = async () => {
 };
 ```
 
-请查看 [Fetch Response](/api/lynx-api/global/fetch#response) 获取 Lynx 支持的属性列表。
+请参阅 [Fetch Response](/api/lynx-api/global/fetch#response) 了解 Lynx 支持的属性。
 
-不要忘记捕获 `fetch` 可能抛出的任何错误。
+不要忘记捕获 `fetch` 可能抛出的任何错误，否则它们将被静默忽略。
 
-## 使用 Fetch chunk streaming
+## 分块传输编码
 
-传输大量的数据时，可选择使用 chunk streaming，分批处理返回数据，以降低网络请求耗时。
+对于流式传输大量数据到客户端的场景，分块传输编码（Chunked Transfer Encoding）是理想的选择。该方法允许客户端在数据块到达时进行处理，从而减少整体延迟。
 
-你可以查阅 MDN 文档的 [Transfer-Encoding chunked](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Transfer-Encoding#chunked) 了解 chunk streaming 标准
+要了解有关此标准的更多信息，请参阅 MDN 关于[分块传输编码](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Transfer-Encoding#chunked)的指南。
 
 :::tip
 
-为了简化前端开发，LynxSDK 内部将 http 返回的 body 进行分割：
+为了简化前端开发，Lynx 会对 HTTP 响应体进行处理：
 
-chunk 大小与 '\r\n' 分隔符会被去除，只有 chunk 的内容会返回。
+块大小和 `\r\n` 分隔符会被移除，仅将块内容返回。
 
 :::
 
-将 `lynxExtension` 内的 `useStreaming` 设置为 `true`，以开启 Fetch chunk streaming。
+要启用分块传输编码，请在 `lynxExtension` 中将 `useStreaming` 选项设置为 `true`。
 
-```typescript
-fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
-  lynxExtension: { useStreaming: true },
-}).then((response) => {
-  const reader = response.body.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    } else {
-      const text = TextCodecHelper.decode(value);
-      setData(text);
-    }
-  }
-});
-```
+<Go
+  example="networking"
+  defaultFile="src/chunked-encoding/index.tsx"
+  defaultEntryFile="dist/chunked-encoding.lynx.bundle"
+  entry="src/chunked-encoding"
+/>
 
 你可以查阅 MDN 文档的 [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
 了解如何处理 streaming body。
 
 ## 使用 TextCodecHelper
 
-由于 `PrimJS` 不支持 `TextEncoder/TextDecoder`，为满足前端开发者基本的编解码需求。
-提供 `TextCodecHelper` 以支持 `utf-8` 编码下 `string` 与 `arraybuffer` 间的转换。
-具体使用方法如下：
+由于 `PrimJS` 缺少对 `TextEncoder`/`TextDecoder` 的支持，Lynx 提供了 `TextCodecHelper` 以满足基本的编解码需求。该类支持在 `UTF-8` 编码下 `string` 与 `arraybuffer` 之间的转换。
 
-将 `arraybuffer` 转换为 `string`
+用法如下：
+
+将 `arraybuffer` 转换为 `string`：
 
 ```typescript
 const str = TextCodecHelper.decode(arraybuffer);
 ```
 
-将 `string` 转换为 `arraybuffer`
+将 `string` 转换为 `arraybuffer`：
 
 ```typescript
 const arraybuffer = TextCodecHelper.encode(str);
@@ -130,8 +120,8 @@ const arraybuffer = TextCodecHelper.encode(str);
 
 ## 使用其他网络库
 
-由于 Fetch API 已内置于 Lynx，这意味着您可以使用依赖于该 API 的第三方库。
+Fetch API 已内置于 Lynx，这意味着你可以使用依赖于它的第三方库。
 
-需要注意的是，Lynx 的 Fetch API 与 [Web Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) 存在细微差异。你可以查阅 [Fetch API Reference - Compatibility](/api/lynx-api/global/fetch#compatibility) 了解更多关于这些差异的信息。因此，你可能需要调整 Web 生态中的库以确保兼容性。如果你在 Lynx Fetch API 上遇到任何问题，欢迎提交功能请求或[贡献](https://github.com/lynx-family/lynx/blob/develop/CONTRIBUTING.md)帮助 Lynx 更好地支持 Web 生态。
+值得注意的是，Lynx 的 Fetch API 与 [Web Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) 相比存在细微差异。你可以查阅 [Fetch API 参考 - 兼容性](/api/lynx-api/global/fetch#compatibility)部分以了解更多信息。因此，你可能需要调整来自 Web 生态系统的库以确保兼容性。如果你在使用 Lynx Fetch API 时遇到任何问题，欢迎提交功能请求或通过[贡献](https://github.com/lynx-family/lynx/blob/develop/CONTRIBUTING.md)来帮助 Lynx 更好地支持 Web 生态系统。
 
-对于前端框架特定的数据获取解决方案，例如在 ReactLynx 中使用 [TanStack Query (React Query)](https://tanstack.com/query/latest)，请参考 ReactLynx 指南的[数据获取](/react/data-fetching)章节。
+对于特定于前端框架的数据获取解决方案，例如在 ReactLynx 中使用 [TanStack Query (React Query)](https://tanstack.com/query/latest)，你可以参考 ReactLynx 指南的[数据获取](/react/data-fetching)一章。
