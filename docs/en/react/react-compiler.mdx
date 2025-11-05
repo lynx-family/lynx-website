@@ -1,6 +1,11 @@
-import { PackageManagerTabs } from '@theme';
+---
+context: 'Experimental'
+---
 
-# React Compiler
+import { PackageManagerTabs } from '@theme';
+import { Experimental } from '@lynx';
+
+# React Compiler <Experimental />
 
 React Compiler can optimize components at compile time, eliminating the need to manually use `useMemo`, `useCallback`, and `memo`. You can use React Compiler in ReactLynx to enhance your application's performance.
 
@@ -10,12 +15,10 @@ Follow these steps to enable React Compiler for ReactLynx in Rspeedy:
 
 1. Install the runtime dependency for React Compiler:
 
-{' '}
 <PackageManagerTabs command="install react-compiler-runtime@rc" />
 
 2. Install the build-time dependencies for React Compiler:
 
-{' '}
 <PackageManagerTabs command="install -D @babel/core @babel/plugin-syntax-jsx @babel/plugin-syntax-typescript babel-plugin-react-compiler@rc @swc/react-compiler" />
 
 3. Enable React Compiler in the lynx.config.js configuration:
@@ -26,8 +29,18 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 
 export default defineConfig({
   plugins: [
-    pluginReactLynx({
-      experimental_enableReactCompiler: true,
+    pluginBabel({
+      include: /\.(?:jsx|tsx)$/,
+      babelLoaderOptions(opts) {
+        opts.plugins?.unshift([
+          'babel-plugin-react-compiler',
+          // See https://react.dev/reference/react-compiler/configuration for config
+          {
+            // ReactLynx only supports target to version 17
+            target: '17',
+          },
+        ]);
+      },
     }),
   ],
 });
