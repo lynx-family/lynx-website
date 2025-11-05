@@ -25,7 +25,7 @@ import { Experimental } from '@lynx';
 
 ```js title="lynx.config.js"
 import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { pluginBabel } from '@rsbuild/plugin-babel';
 
 export default defineConfig({
   plugins: [
@@ -50,10 +50,8 @@ export default defineConfig({
 
 ## 性能考量
 
-由于 React Compiler 会对用户代码进行编译，插入额外的缓存逻辑，因此会影响[首帧直出](../guide/interaction/ifr.mdx)以及后台线程的第一次渲染。但是我们也注意到，对于后续的 diff 和 render，会有比较大的性能提升。因此，我们建议将 React Compiler 用于不是强依赖首帧直出的场景，或者后续渲染的性能对应用更重要的场景。
-
 React Compiler 会自动分析你的组件并注入 memo 代码，从而减少对 `useMemo`、`useCallback` 或 `React.memo` 等手动优化的需求。这简化了你的代码库，并可在后续重新渲染期间显著提升性能，尤其是在更新频繁的界面中。
 
-由于 React Compiler 会引入额外的运行时逻辑，因此可能会略微影响 [IFR](../guide/interaction/ifr.mdx) 的性能或初始后台线程渲染。我们建议在初始 IFR 性能要求不高，或者更注重重新渲染效率和开发者体验的情况下启用 React Compiler。
+由于 React Compiler 会引入额外的运行时逻辑，因此可能会略微影响[首帧直出](../guide/interaction/ifr.mdx)的性能或初始后台线程渲染。我们建议在初始 IFR 性能要求不高，或者更注重重新渲染效率和开发者体验的情况下启用 React Compiler。
 
 我们正在积极评估 React Compiler 在 ReactLynx 中的影响，并欢迎你进行实验和提供反馈，以帮助我们进行未来的改进。
