@@ -1,0 +1,63 @@
+---
+context: 'Experimental'
+---
+
+import { PackageManagerTabs } from '@theme';
+import { Experimental } from '@lynx';
+
+# React Compiler <Experimental />
+
+[React Compiler](https://react.dev/learn/react-compiler) 可以在编译期对组件进行优化，从而无需手动使用 `useMemo`、`useCallback` 和 `memo`。你可以在 ReactLynx 中使用 React Compiler 来对你的应用性能进行优化。
+
+## 如何使用
+
+在 Rspeedy 中为 ReactLynx 开启 React Compiler 的步骤如下：
+
+1. 安装 React Compiler 运行时所需依赖 `react-compiler-runtime`
+
+<PackageManagerTabs command="install react-compiler-runtime@rc" />
+
+2. 安装 React Compiler 编译时所需的依赖：
+
+<PackageManagerTabs command="install -D @rsbuild/plugin-babel babel-plugin-react-compiler@rc" />
+
+3. 在 `lynx.config.js` 配置中开启 React Compiler
+
+:::warning
+
+现在 ReactLynx 只支持 target 到 17。
+
+:::
+
+```js title="lynx.config.js"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginBabel } from '@rsbuild/plugin-babel';
+
+export default defineConfig({
+  plugins: [
+    pluginBabel({
+      include: /\.(?:jsx|tsx)$/,
+      babelLoaderOptions(opts) {
+        opts.plugins?.unshift([
+          'babel-plugin-react-compiler',
+          // 参考 https://react.dev/reference/react-compiler/configuration 进行配置
+          {
+            // ReactLynx 只支持 target 到 17
+            target: '17',
+          },
+        ]);
+      },
+    }),
+  ],
+});
+```
+
+4. 为了最大化发挥 React Compiler 的作用，推荐配置 ESLint 规则 `react-hooks/react-compiler` 以便及时发现无法优化的代码，请参考 [React Compiler - ESLint 集成](https://react.dev/learn/react-compiler/installation#eslint-integration) 进行配置。
+
+## 性能考量
+
+React Compiler 会自动分析你的组件并注入 memo 代码，从而减少对 `useMemo`、`useCallback` 或 `React.memo` 等手动优化的需求。这简化了你的代码库，并可在后续重新渲染期间显著提升性能，尤其是在更新频繁的界面中。
+
+由于 React Compiler 会引入额外的运行时逻辑，因此可能会略微影响[首帧直出](../guide/interaction/ifr.mdx)的性能或初始后台线程渲染。我们建议在初始 IFR 性能要求不高，或者更注重重新渲染效率和开发者体验的情况下启用 React Compiler。
+
+我们正在积极评估 React Compiler 在 ReactLynx 中的影响，并欢迎你进行实验和提供反馈，以帮助我们进行未来的改进。
