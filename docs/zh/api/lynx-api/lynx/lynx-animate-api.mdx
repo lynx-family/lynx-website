@@ -6,7 +6,7 @@ title: animate()
 
 ## 介绍
 
-`Element` 的 `animate()` 方法是在 JS 侧给 UI 元件设置 [CSS Animation 动画](../../css/properties/animation.mdx)的快捷方法。
+使用 `Element` 的 `animate()` 方法来给 UI 元件设置 [CSS Animation 动画](../../css/properties/animation.mdx)。
 
 1. 使用 [getElementById](./lynx-get-element-by-id) API, 根据 `id` 查找需要做动画的 `Element` 对象。
 2. 调用 `Element` 对象上的 `animate` API 实现动画。
@@ -65,29 +65,44 @@ element.animate({
 });
 ```
 
-:::info 备注
-Animate API 也支持 Segment Timing Function，因此你也可以在 Animate API 中为每段 Keyframe 单独指定 Timing Function。
-:::
+3. 你也可以给关键帧指定一个 [timing-function](../../css/properties/animation-timing-function)。
+
+```js
+element.animate([
+  {
+    // from
+    opacity: 0,
+    color: '#fff',
+    'animation-timing-function': 'linear',
+  },
+  {
+    // to
+    opacity: 1,
+    color: '#000',
+    'animation-timing-function': 'ease-in',
+  },
+]);
+```
 
 #### options
 
 包含一个或多个属性的**对象**：
 
-| Key        | Value类型 | 是否可选 | 说明                                                                                                                                                                                                                                       | 默认值          |
-| ---------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
-| duration   | Number    | optional | 动画持续时间                                                                                                                                                                                                                               | 0               |
-| delay      | Number    | optional | 动画开始生效前的延迟时间                                                                                                                                                                                                                   | 0               |
-| iterations | Number    | optional | 动画的重复次数。可以将其设为Infinity令动画无限循环。                                                                                                                                                                                       | 1               |
-| direction  | String    | optional | Whether the animation runs forwards (`normal`), backwards (`reverse`), switches direction after each iteration (`alternate`), or runs backwards and switches direction after each iteration (`alternate-reverse`). Defaults to `"normal"`. | `"normal"`      |
-| easing     | String    | optional | 动画的时间函数，表示动画在时间上的变化速率。接受一个[timing-function](../../css/properties/animation-timing-function)，例如`"linear"`, `"ease-in"`, `"step-end"`, or `"cubic-bezier(0.42, 0, 0.58, 1)"`。                                  | `"linear"`      |
-| fill       | String    | optional | 表示动画在执行之前和之后如何将样式应用于其目标，接受一个[animation-fill-mode](../../css/properties/animation-fill-mode)，例如`"backwards"`，`"forwards"`，`"both"`。                                                                       | `"none"`        |
-| name       | String    | optional | 动画的名字，可作为动画的唯一标识。该名字会出现在[动画事件](../event/animation-event#animation-动画)参数中，通常用于判断某个动画事件是否是你想要的。                                                                                        | 内部的unique ID |
-| play-state | String    | optional | 动画的运动状态，定义一个动画是否运行或者暂停，接受一个[animation-play-state](../../css/properties/animation-play-state)                                                                                                                    | running         |
+| Key        | Value类型 | 是否可选 | 说明                                                                                                                                                                                                      | 默认值          |
+| ---------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| duration   | Number    | optional | 动画持续时间                                                                                                                                                                                              | 0               |
+| delay      | Number    | optional | 动画开始生效前的延迟时间                                                                                                                                                                                  | 0               |
+| iterations | Number    | optional | 动画的重复次数。可以将其设为Infinity令动画无限循环。                                                                                                                                                      | 1               |
+| direction  | String    | optional | 动画的播放方向：向前（`normal`）、向后（`reverse`）、每次迭代切换方向（`alternate`），或向后并在每次迭代后切换方向（`alternate-reverse`）。默认值为 `"normal"`。                                          | `"normal"`      |
+| easing     | String    | optional | 动画的时间函数，表示动画在时间上的变化速率。接受一个[timing-function](../../css/properties/animation-timing-function)，例如`"linear"`, `"ease-in"`, `"step-end"`, or `"cubic-bezier(0.42, 0, 0.58, 1)"`。 | `"linear"`      |
+| fill       | String    | optional | 表示动画在执行之前和之后如何将样式应用于其目标，接受一个[animation-fill-mode](../../css/properties/animation-fill-mode)，例如`"backwards"`，`"forwards"`，`"both"`。                                      | `"none"`        |
+| name       | String    | optional | 动画的名字，可作为动画的唯一标识。该名字会出现在[动画事件](../event/animation-event#animation-动画)参数中，通常用于判断某个动画事件是否是你想要的。                                                       | 内部的unique ID |
+| play-state | String    | optional | 动画的运动状态，定义一个动画是否运行或者暂停，接受一个[animation-play-state](../../css/properties/animation-play-state)                                                                                   | running         |
 
 :::info 备注
 
-1. 若没有指定 name，每次由 Lynx SDK 生成一个自增的 unique id 作为 name。
-1. 相同 name 的动画无法连续多次触发。
+1. 若没有指定 `name`，每次生成一个自增的 unique id 作为 `name`。
+2. 相同 `name` 的动画无法连续多次触发。
 
 :::
 
@@ -189,6 +204,7 @@ Animate API 不生效，可能是 getElementById 未能选中节点：
 ## 参见
 
 - [CSS 动画介绍](../../../guide/styling/animation.mdx)
+- [主线程 Animate API](../main-thread/lynx-animate-api.mdx)
 
 ## 兼容性
 

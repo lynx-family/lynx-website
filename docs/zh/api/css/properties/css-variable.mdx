@@ -1,3 +1,5 @@
+import { Go, Tip } from '@lynx';
+
 # 自定义属性（`--*`）：CSS 变量
 
 ## 介绍
@@ -5,8 +7,6 @@
 自定义属性标记设定值 (比如: `--main-color: black`), 由 `var()` 函数来获取值 (比如: `color: var(--main-color)`); 自定义属性在某个地方定义值，然后在其他地方引用它。
 
 ## 使用示例
-
-import { Go } from '@lynx';
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-var-theme.gif"
@@ -20,28 +20,47 @@ import { Go } from '@lynx';
 ## 语法
 
 ```css
+/* 声明 CSS 变量*/
 --somekeyword: left;
 --somecolor: #0000ff;
+
+/* 引用 CSS 变量 */
+background: var(--somecolor);
 ```
 
 ## 基本用法
 
 ### 声明
 
-CSS Variable 是一个名称以两个连字符 (`-`) 开头的属性，如 `--foo`。定义之后可以使用 `var()` 引用的变量。
+CSS 变量是一个名称以两个连字符 (`-`) 开头的属性，如 `--foo`。定义之后可以使用 `var()` 引用的变量。
+
+你可以在选择器中声明一个 CSS 变量：
 
 ```css
 :root {
-  --main-bg-color: yellow;
+  --main-bg-color: yellow; /* [!code highlight] */
 }
 
 .two {
-  --main-height: 200px;
+  --main-height: 200px; /* [!code highlight] */
   color: white;
   background-color: black;
   width: 100%;
   height: 100%;
 }
+```
+
+也可以在内联样式中定义 CSS 变量：
+
+```tsx
+<view
+  style={{
+    '--main-bg-color': 'yellow', // [!code highlight]
+    '--main-height': '200px', // [!code highlight]
+    color: 'white',
+    width: '100%',
+  }}
+/>
 ```
 
 :::info
@@ -50,15 +69,37 @@ CSS Variable 可以定义在 `:root` 选择器中表示可以对全局生效，�
 
 ### 引用 CSS 变量
 
-可以在 CSS 的任何位置引用 CSS 变量：
+可以在选择器中的引用 CSS 变量对属性进行赋值：
 
 ```css
 .three {
   /* --main-bg-color: blue; */
   color: white;
-  background-color: var(--main-bg-color);
+  background-color: var(--main-bg-color); /* [!code highlight] */
   width: 50%;
   border: 1px blue solid;
+}
+```
+
+也可以在内联样式中引用 CSS 变量对属性进行赋值：
+
+```tsx
+<view
+  style={{
+    color: 'var(--main-bg-color)', // [!code highlight]
+    width: '100%',
+  }}
+/>
+```
+
+你也可以通过引用一个 CSS 变量来对另外的 CSS 变量赋值，以在选择器中为例：
+
+```css
+.nested-variables {
+  --first-var: blue;
+
+  /* 嵌套引用 */
+  --nested-reference: var(--first-var); /* [!code highlight] */
 }
 ```
 
@@ -197,4 +238,10 @@ lynx.getElementById('test').setProperty({
 </view>
 ```
 
-对于上面的例子，通过切换 class 'a' 或者 'b' 可以达到修改对应变量 `--main-bg-color` 的效果
+对于上面的例子，通过切换 class 'a' 或者 'b' 可以达到修改对应变量 `--main-bg-color` 的效果。
+
+## 兼容性
+
+import { APITable } from '@lynx';
+
+<APITable query={'css/properties/custom-property'} />

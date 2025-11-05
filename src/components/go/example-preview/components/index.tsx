@@ -1,5 +1,5 @@
 import React, { FC, useMemo, useRef, useState } from 'react';
-import { useI18n, useLang } from 'rspress/runtime';
+import { useI18n, useLang } from '@rspress/core/runtime';
 import {
   Space,
   Typography,
@@ -52,18 +52,19 @@ interface ExampleContentProps {
   updateCurrentName: (v: string) => void;
   isAssetFile: boolean;
   name: string;
-  directory: string;
+  directory?: string;
   currentEntryFileUrl: string;
   currentEntry: string;
-  entryFiles: { name: string; file: string }[];
+  entryFiles?: { name: string; file: string }[];
   setCurrentEntry: (v: string) => void;
   highlight?: string;
-  entry?: string;
+  entry?: string | string[];
   defaultWebPreviewFile?: string;
   initState: boolean;
   rightFooter?: React.ReactNode;
   schemaOptions?: SchemaOptionsData;
   exampleGitBaseUrl?: string;
+  langAlias?: Record<string, string>;
 }
 
 export const ExampleContent: FC<ExampleContentProps> = ({
@@ -86,6 +87,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   rightFooter,
   schemaOptions,
   exampleGitBaseUrl,
+  langAlias,
 }) => {
   const { treeData, doChangeExpand, selectedKeys, expandedKeys, entryData } =
     useTreeController({ fileNames, value: currentFileName, entry });
@@ -175,6 +177,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   currentFile={currentFile}
                   isAssetFile={isAssetFile}
                   highlight={highlight}
+                  langAlias={langAlias}
                 />
               </div>
             </div>
@@ -276,7 +279,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                         value={currentEntry}
                         onChange={(v) => setCurrentEntry(v as string)}
                       >
-                        {entryFiles.map((file) => (
+                        {entryFiles?.map((file) => (
                           <Select.Option key={file.name} value={file.name}>
                             {file.name}
                           </Select.Option>

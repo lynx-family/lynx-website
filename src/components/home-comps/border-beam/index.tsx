@@ -32,6 +32,9 @@ const BorderBeam: React.FC<BorderBeamProps> = ({
     resizeObserver.observe(container);
 
     function updateCanvasSize() {
+      const canvas = canvasRef.current;
+      const container = containerRef.current;
+      if (!canvas || !container) return;
       const { width, height } = container.getBoundingClientRect();
       canvas.width = width;
       canvas.height = height;

@@ -1,0 +1,98 @@
+# Mark Rendering Pipelines
+
+[Lynx Pipeline](/guide/spec#lynx-pipeline) defines the complete process from triggering the rendering to displaying it on the screen. If you care about rendering performance of certain key components, you can set the component’s `__lynx_timing_flag` property to mark its Lynx Pipeline and monitor its performance.
+
+When the flagged Lynx Pipeline finishes and the screen is refreshed, a [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) performance event is generated. You can obtain it via [`PerformanceObserver`](/api/lynx-api/performance-api/performance-observer).
+
+## Usage rules
+
+- The `__lynx_timing_flag` attribute must be a non-empty string. Empty values or invalid types will not trigger [`PerformanceObserver`](/api/lynx-api/performance-api/performance-observer) callbacks.
+- When the `__lynx_timing_flag` attribute value is `__lynx_timing_actual_fmp`, an additional [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry) performance event is generated.
+
+## Examples
+
+1. Mark a node: set the `__lynx_timing_flag` attribute on the target component. When the node finishes rendering, the framework automatically collects performance data for its Lynx Pipeline.
+2. Get data: register an observer (`PerformanceObserver`) via [`lynx.performance.createObserver()`](/api/lynx-api/lynx/lynx-performance#createobserver) to receive the corresponding performance data (`PipelineEntry`).
+
+import { Go } from '@lynx';
+
+<Go
+  example="performance-api"
+  defaultFile="src/pipeline-entry/index.tsx"
+  defaultEntryFile="dist/pipeline-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/pipeline-entry-demo.jpeg"
+  entry="src/pipeline-entry"
+  highlight="{11-21,34}"
+/>
+
+## Notes
+
+### 1. Multiple components set the same `__lynx_timing_flag` attribute
+
+```ts
+export default function App() {
+  const [showImage, setShowImage] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setShowImage(true);
+    }, 3000);
+  }, []);
+
+  return (
+    <view className="container">
+      <text __lynx_timing_flag="__lynx_timing_actual_fmp">Hello World</text>
+      {showImage && <image __lynx_timing_flag="__lynx_timing_actual_fmp" src="xxxx.png" />}
+    </view>
+  );
+}
+```
+
+In this case, only the Lynx Pipeline data of the first component that appears on screen will be recorded:
+
+1. Compute `ActualFMP` once and send one [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+2. Send one [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry).
+
+If you want to record the moment when both components finish rendering, use different `__lynx_timing_flag` values.
+
+### 2. The same component renders multiple times
+
+```ts
+export default function App(this: any) {
+  return (
+    <view className="container">
+      {
+         // needShow: true -> false -> true
+         data.needShow ? <text __lynx_timing_flag="__lynx_timing_actual_fmp">{data.msg}</text> : null
+      }
+    </view>
+  );
+}
+```
+
+In this scenario, only the Lynx Pipeline data for the component’s first appearance is recorded:
+
+1. Compute `ActualFMP` once and send one [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry).
+2. Send one [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry).
+
+If you need to measure each render individually, implement as follows:
+
+```ts
+let isFirst = true;
+export default function App(this: any) {
+  return (
+    <view className="container">
+      {
+         // needShow: true -> false -> true
+         data.needShow ? <text __lynx_timing_flag={"__lynx_timing_actual_fmp" + (isFirst ? "" : +data.id)}>{data.msg}</text> : null
+      }
+    </view>
+  );
+}
+```
+
+## Compatibility
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-api/performance-api/timing-flag" />

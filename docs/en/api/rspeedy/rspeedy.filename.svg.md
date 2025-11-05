@@ -9,7 +9,7 @@ The name of the SVG images.
 **Signature:**
 
 ```typescript
-svg?: string | undefined;
+svg?: Rspack.AssetModuleFilename | undefined;
 ```
 
 ## Remarks

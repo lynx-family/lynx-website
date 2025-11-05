@@ -1,7 +1,6 @@
-import { useFixDark } from '@site/theme/hooks/use-fix-dark';
 import React from 'react';
-import { useLang } from 'rspress/runtime';
-import { Link } from 'rspress/theme';
+import { useLang } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import styles from './index.module.less';
 import { MobileShow } from './mobile-show';
 
@@ -17,8 +16,8 @@ const showCaseList = [
     },
     class: 'case-0',
     link: {
-      en: 'guide/start/tutorial-gallery',
-      zh: 'zh/guide/start/tutorial-gallery',
+      en: '/guide/start/tutorial-gallery',
+      zh: '/zh/guide/start/tutorial-gallery',
     },
   },
   {
@@ -32,8 +31,8 @@ const showCaseList = [
     },
     class: 'case-1',
     link: {
-      en: 'guide/start/tutorial-product-detail',
-      zh: 'zh/guide/start/tutorial-product-detail',
+      en: '/guide/start/tutorial-product-detail',
+      zh: '/zh/guide/start/tutorial-product-detail',
     },
   },
   // {
@@ -48,21 +47,20 @@ const showCaseList = [
   //   class: 'case-2',
   //   link: undefined,
   // },
-];
+] as const;
 
 const caseTitle = {
   zh: '上手体验',
   en: 'Try it for yourself',
-};
+} as const;
 
 const caseDesc = {
   en: 'Experience true native feel, instant launch, and silky interactions.',
   zh: '体验原生质感，即刻启动，流畅交互。',
-};
+} as const;
 
 export const ShowCase: React.FC = () => {
   const lang = useLang() as 'en' | 'zh';
-  const dark = useFixDark();
 
   return (
     <div className={styles['show-case-frame']}>

@@ -87,6 +87,10 @@ export function App() {
 }
 ```
 
+:::warning Differences from the Web
+In Lynx, CSS is scoped to each [Bundle](../api/lynx-native-api/template-bundle.md). Since lazy-loaded components generate their own Bundles (see output structure at [Output Files](../rspeedy/output.md)), you shouldn’t expect them to behave like on the Web. Global CSS defined in the main Bundle will not affect lazy-loaded components, and vice versa.
+:::
+
 ### Error handling
 
 #### Use ErrorBoundary

@@ -9,7 +9,7 @@ The [Output.dataUriLimit](./rspeedy.output.dataurilimit.md) option is used to se
 **Signature:**
 
 ```typescript
-dataUriLimit?: number | undefined;
+dataUriLimit?: number | DataUriLimit | undefined;
 ```
 
 ## Remarks
@@ -51,6 +51,23 @@ import { defineConfig } from '@lynx-js/rspeedy'
 export default defineConfig({
   output: {
     dataUriLimit: Number.MAX_SAFE_INTEGER,
+  },
+})
+```
+
+## Example 4
+
+Disable inlining of all media but not images.
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+
+export default defineConfig({
+  output: {
+    dataUriLimit: {
+      image: 5000,
+      media: 0,
+    },
   },
 })
 ```

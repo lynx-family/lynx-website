@@ -1,40 +1,62 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, usePageData } from 'rspress/runtime';
+import {
+  Head,
+  removeBase,
+  useLang,
+  useLocation,
+  usePageData,
+} from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
-} from 'rspress/theme';
+  getCustomMDXComponent,
+  Link as BaseLink,
+} from '@rspress/core/theme';
+import type { SearchProps } from '@rspress/plugin-algolia/runtime';
+import {
+  Search as PluginAlgoliaSearch,
+  ZH_LOCALES,
+} from '@rspress/plugin-algolia/runtime';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import './index.scss';
 
 import {
   Banner,
   Features,
+  Footer,
   MeteorsBackground,
   ShowCase,
-  Footer,
 } from '@/components/home-comps';
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
-function Layout() {
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      htmlAttrs: unknown;
+    }
+  }
+}
+
+function Layout(props: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
 
-  useEffect(() => {
-    const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
-    document.documentElement.setAttribute(
-      'data-subsite',
-      subsite ? subsite.value : 'guide',
-    );
-  }, [pathname]);
+  const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
 
   return (
-    <BaseLayout
-      afterNavTitle={<AfterNavTitle />}
-      beforeSidebar={<BeforeSidebar />}
-      bottom={<Footer />}
-    />
+    <>
+      <Head>
+        <htmlAttrs data-subsite={subsite ? subsite.value : 'guide'} />
+      </Head>
+      <BaseLayout
+        {...props}
+        afterNavTitle={<AfterNavTitle />}
+        beforeSidebar={<BeforeSidebar />}
+        bottom={<Footer />}
+      />
+    </>
   );
 }
 
@@ -43,10 +65,10 @@ const enWords = ['Unlock', 'Render', 'Toward', 'Ship'];
 const zhWords = ['迈向', '更快的', '更多平台的', '更多人的'];
 const zhSuffix = '原生体验';
 
-function HomeLayout() {
+function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
-  const { page, siteData } = usePageData();
+  const { page } = usePageData();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [text, setText] = useState(
@@ -57,10 +79,7 @@ function HomeLayout() {
 
   const routePath = useMemo(() => {
     let tmp = page.routePath.replace('/zh/', '/');
-    if (siteData.base && siteData.base !== '/') {
-      tmp = tmp.replace(siteData.base, '');
-    }
-    return tmp;
+    return removeBase(tmp);
   }, [page]);
 
   useBlogBtnDom(routePath);
@@ -148,24 +167,94 @@ function HomeLayout() {
     return () => clearInterval(ticker);
   }, [updateText, delta, page]);
 
+  const { pre: PreWithCodeButtonGroup, code: Code } = getCustomMDXComponent();
+
+  // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
+  const {
+    afterHero = (
+      <>
+        <Features src={routePath} /> {routePath === '/' && <ShowCase />}
+        {routePath === '/' && <Banner />}
+      </>
+    ),
+    afterHeroActions = (
+      <div
+        className="rp-doc"
+        style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
+      >
+        <PreWithCodeButtonGroup
+          containerElementClassName="language-bash home-layout-create-block"
+          codeButtonGroupProps={{
+            showCodeWrapButton: false,
+          }}
+        >
+          <Code
+            className="language-bash home-layout-create-block"
+            style={{ textAlign: 'center' }}
+          >
+            npm create rspeedy@latest
+          </Code>
+        </PreWithCodeButtonGroup>
+      </div>
+    ),
+  } = props;
+
   return (
     <>
       <MeteorsBackground gridSize={120} meteorCount={3} />
       <div className="home-layout-container">
         <BaseHomeLayout
-          afterHero={
-            <>
-              <Features src={routePath} />
-              {routePath === '/' && <ShowCase />}
-              {routePath === '/' && <Banner />}
-            </>
-          }
+          {...props}
+          afterHero={afterHero}
+          afterHeroActions={afterHeroActions}
         />
       </div>
     </>
   );
 }
 
-export { HomeLayout, Layout };
+const Search = (props?: Partial<SearchProps> | undefined) => {
+  const lang = useLang();
+  return (
+    <PluginAlgoliaSearch
+      docSearchProps={{
+        appId: 'V4ET1OFZ5S', // cspell:disable-line
+        apiKey: '15236c16e0f335c0cb2a67bc3ac06bcb', // cspell:disable-line
+        indexName: 'lynx_next',
+        searchParameters: {
+          facetFilters: [`lang:${lang}`],
+        },
+        maxResultsPerGroup: 5,
+        ...props?.docSearchProps,
+      }}
+      locales={ZH_LOCALES}
+    />
+  );
+};
 
-export * from 'rspress/theme';
+export { HomeLayout, Layout, Search };
+
+const Link = (props: React.ComponentProps<typeof BaseLink>) => {
+  const { href, children, className, ...restProps } = props;
+  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
+  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+    return (
+      <a
+        className={`rp-link ${className}`}
+        href={`/next${removeBase(href)}`}
+        target="_blank"
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <BaseLink href={href} className={className} {...restProps}>
+      {children}
+    </BaseLink>
+  );
+};
+
+export { Link }; // override Link from @rspress/core/theme
+
+export * from '@rspress/core/theme';

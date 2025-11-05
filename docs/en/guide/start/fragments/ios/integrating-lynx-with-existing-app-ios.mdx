@@ -2,11 +2,13 @@
 
 import { Info, CodeFold } from '@lynx';
 import { Steps } from '@theme';
-import { Tab, Tabs } from 'rspress/theme';
+import { Tab, Tabs } from '@rspress/core/theme';
+import { Link } from '@rspress/core/theme';
+import versionJson from '../../../../../public/version.json';
 
 <Info title="Lynx for iOS">
   - This article assumes that you are familiar with the basic concepts of native iOS application development.
-  - You can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/release/3.1) for all the code mentioned below.
+  - You can refer to the project: <Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link> for all the code mentioned below.
 </Info>
 
 ## 1. Dependency configuration
@@ -38,11 +40,11 @@ source 'https://cdn.cocoapods.org/'
 platform :ios, '10.0'
 
 target 'YourTarget' do
-  pod 'Lynx', '3.2.0', :subspecs => [
+  pod 'Lynx', '3.4.1', :subspecs => [
     'Framework',
   ]
 
-  pod 'PrimJS', '2.12.0', :subspecs => ['quickjs', 'napi']
+  pod 'PrimJS', '2.14.1', :subspecs => ['quickjs', 'napi']
 end
 ```
 
@@ -63,14 +65,14 @@ source 'https://cdn.cocoapods.org/'
 platform :ios, '10.0'
 
 target 'YourTarget' do
-  pod 'Lynx', '3.2.0', :subspecs => [
+  pod 'Lynx', '3.4.1', :subspecs => [
     'Framework',
   ]
 
-  pod 'PrimJS', '2.12.0', :subspecs => ['quickjs', 'napi']
+  pod 'PrimJS', '2.14.1', :subspecs => ['quickjs', 'napi']
 
   # integrate image-service, log-service, and http-service
-  pod 'LynxService', '3.2.0', :subspecs => [
+  pod 'LynxService', '3.4.1', :subspecs => [
       'Image',
       'Log',
       'Http',
@@ -82,6 +84,39 @@ target 'YourTarget' do
 end
 ```
 
+</CodeFold>
+
+3. **More Elements**
+
+​​XElement​​ is an extend native elements library maintained by the Lynx team. It provides richer component capabilities, enabling faster adoption of Lynx in production environments and enhancing the vibrancy of the Lynx ecosystem.
+
+<CodeFold height={360} toggle>
+```ruby title="Podfile" {23}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+  pod 'Lynx', '3.4.1', :subspecs => [
+    'Framework',
+  ]
+
+  pod 'PrimJS', '2.14.1', :subspecs => ['quickjs', 'napi']
+
+  # integrate image-service, log-service, and http-service
+  pod 'LynxService', '3.4.1', :subspecs => [
+      'Image',
+      'Log',
+      'Http',
+  ]
+
+  # ImageService
+  pod 'SDWebImage','5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+
+  pod 'XElement', '3.4.1'
+end
+```
 </CodeFold>
 
 ### Install Dependencies
@@ -464,4 +499,4 @@ Congratulations, you have now completed all the work of integrating Lynx Engine!
 
 ## 4. Now what?
 
-At this stage, you have successfully integrated Lynx into your App. Refer to our [developing](/guide/start/quick-start) and [debugging](/guide/debugging/lynx-devtool) docs for in-depth insights on working with Lynx.
+At this stage, you have successfully integrated Lynx into your App. Refer to our [developing](/guide/start/quick-start) and [debugging](/guide/devtool/panels) docs for in-depth insights on working with Lynx.

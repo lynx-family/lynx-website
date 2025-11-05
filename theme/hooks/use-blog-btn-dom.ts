@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useLang, useNavigate, usePageData } from 'rspress/runtime';
+import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { getLangPrefix } from '@site/shared-route-config';
 
 type ConfigKey = '/' | '/react/' | '/rspeedy/';

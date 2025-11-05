@@ -1,0 +1,301 @@
+<style>{`
+  .full_image {
+    width: 750px;
+    margin: 20px;
+  }
+`}</style>
+
+import { PlatformTabs, Go } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+# Performance API
+
+## 概念和用法
+
+衡量和分析各种性能指标对于确保 Lynx 应用的速度和用户体验非常重要。与 [Web 标准](https://developer.mozilla.org/en-US/docs/Web/API/Performance) 类似，Lynx 提供了
+**Performance API** 用于衡量 Lynx 应用性能的标准化接口，帮助开发者全面监控从初始化到渲染完成的完整性能数据。
+
+<center>
+  <img
+    width="60%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/performance-api-v4.png"
+  />
+</center>
+
+### 性能事件类型
+
+Performance API 的核心是 **[`PerformanceEntry`](/api/lynx-api/performance-api/performance-entry)** 对象，它是描述性能事件的基础数据结构。每个 PerformanceEntry 都具有以下基本属性：
+
+- `entryType`：表示性能事件的类型（如 `init`、`metric`、`pipeline`、`resource`）
+- `name`：表示性能事件的具体名称
+- 其他特定于类型的属性和时间戳信息
+
+根据 `entryType` 属性，Performance API 支持以下四种主要类型的性能事件：
+
+- **初始化事件 (`init`)**
+  - [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry)：容器初始化性能事件
+  - [`InitLynxviewEntry`](/api/lynx-api/performance-api/performance-entry/init-lynxview-entry)：LynxView 初始化性能事件
+  - [`InitBackgroundRuntimeEntry`](/api/lynx-api/performance-api/performance-entry/init-background-runtime-entry)：后台运行时初始化性能事件
+
+- **性能指标事件 (`metric`)**
+  - [`MetricFcpEntry`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry)：FCP（First Contentful Paint）性能指标
+  - [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry)：ActualFMP（Actual First Meaningful Paint）性能指标
+
+- **渲染流水线事件 (`pipeline`)**
+  - [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry)：[被标记的渲染流水线](./timing-flag)性能事件
+  - [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry)：[TemplateBundle](/api/lynx-native-api/template-bundle) 加载和首屏渲染性能事件
+  - [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry)[TemplateBundle](/api/lynx-native-api/template-bundle) 重新加载性能事件
+
+- **资源加载事件 (`resource`)**
+  - [`LazyBundleEntry`](/api/lynx-api/performance-api/performance-entry/lazy-bundle-entry) ：懒加载 [TemplateBundle](/api/lynx-native-api/template-bundle) 性能事件
+
+### 获取性能数据
+
+#### 前端开发者
+
+为了获取上述性能事件，Performance API 提供了 **PerformanceObserver** 来让开发者观察性能事件，并在 **_Lynx Engine_** 产生性能事件 (`PerformanceEntry`) 时收到通知。
+
+PerformanceObserver 对象提供了用于开启监听的 `observe` 方法和结束监听的 `disconnect` 方法，通过它们你可以使用 `entryType` 监听某个类型的 PerformanceEntry 或者 `entryType.name` 监听某个种类的 PerformanceEntry。
+
+为了避免性能事件发送时，回调未注册导致的事件遗漏，应尽可能早的注册监听。
+
+- **组件依赖**
+  - `@lynx-js/react` >= 0.107.0
+
+- **监听时机**
+  - Class 组件：在 **constructor** 中注册
+  - 函数式组件：在 **useMemo** 中注册
+
+该示例展示了如何创建一个 `PerformanceObserver` 并监听 [`metric.fcp`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry) 和 [`pipeline`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 事件。
+
+<Go
+  example="performance-api"
+  defaultFile="src/simple-observe/index.tsx"
+  defaultEntryFile="dist/simple-obseve.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/simple-observe-demo.jpeg"
+  entry="src/simple-observe"
+  highlight="{11-30}"
+/>
+
+
+#### 客户端开发者
+
+客户端层面，Performance API 发送的性能事件将通过 LynxViewClient 下的 `onPerformanceEvent(PerformanceEntry entry)` 接口在**异步线程回调**。因此不建议在该回调内执行与 UI 有关的业务逻辑。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="android">
+```java
+import com.lynx.tasm.LynxViewClientV2;
+import com.lynx.tasm.performance.performanceobserver.PerformanceEntry;
+import com.lynx.tasm.performance.performanceobserver.MetricFcpEntry;
+
+public class CustomLynxViewClient extends LynxViewClientV2 {
+    @Override
+    public void onPerformanceEvent(@NonNull PerformanceEntry entry) {
+        // If you need to consume raw data directly, convert to HashMap
+        Log.d(entry.toHashMap());
+        // If you need to consume a specific type, cast and use inner fields
+        if (entry.entryType.equals("metric") && entry.name.equals("fcp")) {
+            MetricFcpEntry fcpEntry = (MetricFcpEntry) entry;
+            Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
+        }
+    }
+}
+
+````
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="ios">
+```objc
+#import "LynxViewClient.h"
+#import "LynxMetricFcpEntry.h"
+
+@interface CustomLynxViewClient : NSObject <LynxViewLifecycleV2>
+@end
+@implementation
+
+- (void)onPerformanceEvent:(LynxPerformanceEntry*)entry {
+  // 如果需要直接消费原始数据，可以转换为 NSDictionary*
+  NSLog(entry.toDictionary);
+  // 如果需要消费某类数据，可以做数据转换后获取内部数据
+  if ([entry.entryType isEqual: @"metric"] && [entry.name isEqual: @"fcp"]) {
+    MetricFcpEntry* fcpEntry = (LynxMetricFcpEntry *) entry;
+    NSLog(@"lynxFcp is %@", fcpEntry.lynxFcp.duration);
+  }
+}
+@end
+
+````
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="harmony">
+```typescript
+import { LynxViewClient, PerformanceEntry, MetricFcpEntry } from '@lynx/lynx';
+
+export class CustomLynxViewClient extends LynxViewClient {
+  public onPerformanceEvent(entry: PerformanceEntry): void {
+    // 如果需要直接消费原始数据，可以转换为 Record
+    Log.d(entry.Record);
+    // 如果需要消费某类数据，可以做数据转换后获取内部数据
+    if (entry.entryType == "metric" && entry.name == "fcp") {
+        let fcpEntry: MetricFcpEntry = entry as MetricFcpEntry;
+        Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
+    }
+  }
+}
+```
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+## [采集特定渲染流水线](./timing-flag)
+
+[渲染流水线](/guide/spec#lynx-pipeline)是从触发渲染到屏幕显示的完整流程。如果你关注某些关键组件的渲染性能，可以通过设置该组件的 `__lynx_timing_flag` 属性来标记其所在的渲染流水线，从而监测性能表现。
+
+当标记的渲染流水线执行完成并刷新屏幕显示后，会生成一个 [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 性能事件。你可以通过 [`PerformanceObserver`](/api/lynx-api/performance-api/performance-observer) 获取该事件。
+
+## 构建自定义的性能评估指标
+
+不同的业务目标意味着你需要关注不同的性能指标。对 Performance API 的使用可以不局限于通过 Lynx 内置指标来分析页面性能，你也可以灵活组合不同 `PerformanceEntry` 提供给你的关键节点的时间，构建出一套适配你的应用程序的性能检测指标。
+
+假如你希望关注从首屏渲染结束到首次重要数据更新的延迟，你可以像下面的代码这样灵活组合 `LoadBundleEntry` 和 `PipelineEntry` 计算出一个属于你的性能指标 `waitingDuration`，它可以帮助你监测网络请求、文件读取等行为的速度，精准定位页面性能变坏的原因。
+
+![waiting duration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/custom-metric-waitingduration.png)
+
+<Go
+  example="performance-api"
+  defaultFile="src/create-custom-metric/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/simple-observe-demo.jpeg"
+  entry="src/simple-observe"
+  highlight="{11-30}"
+/>
+
+## 最佳实践
+
+### 1. 及时注册监听器
+
+为了避免性能事件发送时，回调未注册导致的事件遗漏，应尽可能早的注册监听：
+
+- 在 Class 组件的 Constructor 或函数式组件的 `useMemo` 中注册
+
+### 2. 合理选择监听范围
+
+根据业务需求选择合适的监听范围：
+
+```typescript
+// 监听所有 metric 类型事件
+observer.observe(['metric']);
+
+// 只监听 FCP 指标事件
+observer.observe(['metric.fcp']);
+
+// 监听多种特定事件
+observer.observe(['metric.fcp', 'pipeline.loadBundle']);
+```
+
+### 3. 及时清理资源
+
+在组件卸载或不需要监听时，记得调用 `disconnect()` 方法清理资源：
+
+```typescript
+useEffect(() => {
+  return () => {
+    if (observer) {
+      observer.disconnect();
+    }
+  };
+}, []);
+```
+
+## FAQ
+
+### Q1: 我的页面是[_首帧直出 (Instant First-Frame Rendering，IFR)_](/guide/interaction/ifr.html)的情况下，还需要标记 Timing Flag 吗？
+
+[_首帧直出 (Instant First-Frame Rendering，IFR)_](/guide/interaction/ifr.html)的页面一般不需要再手动标记 Timing Flag，但是如果标记了你依旧会收到一个 identifier 值为你标记的 TimingFlag 的 LoadBundleEntry。
+
+### Q2: 我的页面是[_首帧直出 (Instant First-Frame Rendering，IFR)_](/guide/interaction/ifr.html)的，那我需要如何拿到 ActualFMP 性能指标呢？
+
+[_首帧直出 (Instant First-Frame Rendering，IFR)_](/guide/interaction/ifr.html)的场景一般不需要关注 ActualFMP 性能指标，只需要关注 FCP 指标即可。FCP 指标可以直接通过 MetricFcpEntry 拿到。
+
+### Q3: 可以获取懒加载组件渲染耗时吗？
+
+可以的，在懒加载组件上标记 Timing Flag 的方式和主页面一致，可以直接在懒加载组件内使用 Timing Flag：
+
+```typescript
+export default function MyLazyBundle() {
+  return (
+    <view className="root">
+      <text className="text", __lynx_timing_flag="dynamic_render" >Hello, This is a Lazy Bundle!</text>
+    </view>
+  );
+}
+```
+
+```typescript
+export default function app() {
+  return (
+    <view className="container">
+      <text className="title">Hello LazyBundleEntry~</text>
+      <Suspense fallback={<text className="sub-text">Loading...</text>}>
+        <MyLazyBundle />
+      </Suspense>
+      <ScrollItem title={entryName} value={lazyBundleEntry} />
+    </view>
+  );
+}
+```
+
+该方式可以获取懒加载组件渲染阶段的时间戳，关于懒加载组件资源加载阶段的耗时参考 [`LazyBundleEntry`](/api/lynx-api/performance-api/performance-entry/lazy-bundle-entry) 。
+
+### Q4: Performance API 回调与 Lynx 提供的其他生命周期有关系吗？
+
+Performance API 会在获取到所有渲染流程的时间戳后触发回调，因此会在渲染上屏之后触发，和 Lynx 提供的其他生命周期**没有任何执行先后的关系**。
+
+### Q5: setState 回调与 Performance API 回调中，哪个会被更快触发？
+
+见 Q4，**没有任何执行先后的关系**。
+
+### Q6: Timing Flag 可以重复吗？
+
+Timing Flag 不可以重复。
+
+如果用户注入了相同的 Timing Flag，Performance API 会在感知到第一个 Timing Flag 时就会触发回调，第二次不会再次触发。
+
+### Q7: 客户端调用 ReloadTemplate、多次调用 LoadTemplate 或前端调用 Reload 时，Performance API 是什么表现？
+
+**Lynx 3.4 版本之前**：Performance API 状态会重置，会以这次加载模版的时间戳重新触发一次 LoadBundleEntry 阶段性能回调。如果前端调用 reload 但是页面内没有 UI 需要重新绘制，则不会收到回调。
+
+**Lynx 3.4 版本之后**：多次调用 LoadTemplate 会多次收到 LoadBundleEntry；客户端调用 ReloadTemplate 和前端调用 Reload 会收到 ReloadBundleEntry。
+
+### Q8: 为什么我收不到 LoadBundleEntry 回调？
+
+收不到 LoadBundleEntry 可能有以下原因：
+
+1. **首屏渲染为空**，比如 LynxView 页面宽高为 0、LynxView 不在屏幕内、LynxView 没有被添加到窗口内等原因都会导致渲染为空。
+
+2. **业务注册事件监听函数过晚**，可以尝试在更早的时机注册回调：
+   - 应当在 Class 组件的 Constructor、函数式组件的 `useMemo` 中注册
+
+
+### Q9: 我使用了 Timing Flag，为什么我收不到 PipelineEntry 回调？
+
+使用 Timing Flag 后业务收不到 PipelineEntry 回调可能有以下原因：
+
+1. **业务注册事件监听函数过晚**，参考 Q8 的解决方案
+
+2. **Timing Flag 写在 Component 上，同时开启了 removeComponentElement 开关**，会导致 Timing 无法感知到该 Timing Flag，进而无法生效
+
+3. **Timing Flag 写在一些没有 UI 节点的标签上是无效的**，如 `<inline text/>`，`<block/>`，`<template/>` 等
+
+4. **同一个 timing flag 不会多次回调**，见 Q6
+
+### Q10: 我要如何验证 Timing Flag 接入成功了呢？
+
+可以通过本地 Trace 验证，也可以注册监听回调，验证是否触发回调事件。
+
+### Q11: 我的页面 ActualFMP 指标特别大，可能是什么原因呢？
+
+检查是否有预加载，在预加载场景下 ActualFMP 指标的起点可能会特别早。
+
+### Q12: 报错 OnPipelineStart arg count must == 1
+
+检查并保证 `@lynx-js/react` 版本不小于 `0.107.1` 。

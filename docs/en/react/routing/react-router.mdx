@@ -1,0 +1,98 @@
+import { PackageManagerTabs } from '@theme';
+
+# React Router
+
+React Router enables "single page routing".
+
+### Installation
+
+Since ReactLynx only have React v17 API now, you should install `react-router` v6.
+
+<PackageManagerTabs command="install react-router@6" />
+
+### Routing
+
+Routes are configured by rendering `<Routes>` and `<Route>` that couple URL segments to UI elements.
+
+```jsx
+import { root } from '@lynx-js/react';
+import { MemoryRouter, Routes, Route } from 'react-router';
+
+import { App } from './App.jsx';
+import { Home } from './Home.jsx';
+
+root.render(
+  <MemoryRouter>
+    <Routes>
+      <Route path="/" element={<App />} />
+      <Route path="/home" element={<Home />} />
+    </Routes>
+  </MemoryRouter>,
+);
+
+if (import.meta.webpackHot) {
+  import.meta.webpackHot.accept();
+}
+```
+
+See [React Router - Routing](https://reactrouter.com/start/library/routing) for details.
+
+### Navigating
+
+There are no `<Link>` or `<NavLink>` components now in ReactLynx.
+You may use `useNavigate` to navigate between routes.
+
+```jsx
+import { useNavigate } from 'react-router';
+
+export function App() {
+  const nav = useNavigate();
+
+  return (
+    <view>
+      <text bindtap={() => nav('/home')}>Navigate to Home</text>
+    </view>
+  );
+}
+```
+
+### URL Values
+
+#### Route Params
+
+Route params are the parsed values from a dynamic segment.
+
+```jsx
+<Route path="/concerts/:city" element={<City />} />
+```
+
+In this case, `:city` is the dynamic segment. The parsed value for that city will be available from `useParams`
+
+```jsx
+import { useParams } from 'react-router';
+
+function City() {
+  let { city } = useParams();
+  let data = useFakeDataLibrary(`/api/v2/cities/${city}`);
+}
+```
+
+See [React Router - useParams](https://reactrouter.com/6.28.1/hooks/use-params) for more details.
+
+#### Location Object
+
+React Router creates a custom location object with some useful information on it accessible with `useLocation`.
+
+```js
+import { useEffect } from '@lynx-js/react';
+import { useLocation } from 'react-router';
+
+function useAnalytics() {
+  let location = useLocation();
+  useEffect(() => {
+    sendFakeAnalytics(location.pathname);
+  }, [location]);
+}
+```
+
+See [React Router - useLocation](https://reactrouter.com/6.28.1/hooks/use-location) for more details.

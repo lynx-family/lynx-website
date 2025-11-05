@@ -322,28 +322,55 @@ export default {
 
 ## 使用 Tailwind CSS \{#using-tailwind-css}
 
-得益于 Rsbuild 开箱即用地支持 Tailwind CSS，您可以直接参考 Rsbuild 上的指南：[使用 Tailwind CSS v3](https://rsbuild.dev/zh/guide/basic/tailwindcss-v3)。
+1. 安装 Tailwind CSS
 
-设置 Tailwind CSS 后，您必须使用 [`@lynx-js/tailwind-preset`](https://github.com/lynx-family/lynx-stack/tree/main/packages/third-party/tailwind-preset) 删除 Lynx 中不支持的所有 tailwindcss 工具类或替换至特定于 Lynx 的替代方案。
+   Rspeedy 内置支持 PostCSS，你可以安装 tailwindcss 包来接入 Tailwind CSS：
 
-1. 安装 `@lynx-js/tailwind-preset` 包：
+   <PackageManagerTabs command="install -D tailwindcss@^3" />
 
-<PackageManagerTabs command="install -D @lynx-js/tailwind-preset" />
+2. 配置 PostCSS
 
-2. 将 `@lynx-js/tailwind-preset` 添加到 `tailwind.config.js`：
+   你可以通过 [`postcss.config.js`](https://www.npmjs.com/package/postcss-loader#config) 或 [`tools.postcss`](https://rsbuild.rs/zh/config/tools/postcss) 来注册 `tailwindcss` 的 PostCSS 插件。
 
-```js title=tailwind.config.js
-import preset from '@lynx-js/tailwind-preset';
+   ```js title=postcss.config.js
+   export default {
+     plugins: {
+       tailwindcss: {},
+     },
+   };
+   ```
 
-export default {
-  presets: [preset],
-};
-```
+3. 安装 `@lynx-js/tailwind-preset` 包：
 
-:::warning
+   <PackageManagerTabs command="install -D @lynx-js/tailwind-preset" />
 
-`@lynx-js/tailwind-preset` 仍不稳定，请谨慎使用。如果您发现任何 tailwindcss 功能无法使用且应予以支持，请在 https://github.com/lynx-family/lynx-stack/issues 上提出 issue。
+4. 配置 `tailwind.config.js` 并添加 `@lynx-js/tailwind-preset`：
 
-:::
+   您必须使用 [`@lynx-js/tailwind-preset`](https://github.com/lynx-family/lynx-stack/tree/main/packages/third-party/tailwind-preset) 删除 Lynx 中不支持的所有 tailwindcss 工具类或替换至特定于 Lynx 的替代方案。
 
-查看 ReactLynx 基础 Tailwind CSS 示例：https://github.com/lynx-family/lynx-examples/tree/main/examples/tailwindcss 。
+   ```js title=tailwind.config.js
+   import lynxPreset from '@lynx-js/tailwind-preset';
+
+   export default {
+     content: ['./src/**/*.{js,ts,jsx,tsx}'],
+     presets: [lynxPreset],
+   };
+   ```
+
+   :::warning
+
+   `@lynx-js/tailwind-preset` 仍不稳定，请谨慎使用。如果您发现任何 tailwindcss 功能无法使用且应予以支持，请在 https://github.com/lynx-family/lynx-stack/issues 上提出 issue。
+
+   :::
+
+### 使用示例
+
+import { Go } from '@lynx';
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-tailwindcss.png"
+  example="tailwindcss"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+></Go>

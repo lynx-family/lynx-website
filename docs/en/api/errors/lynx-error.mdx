@@ -1,76 +1,131 @@
-# LynxError
+# LynxError API
 
-`LynxError` is the structure used to represent an error,
-carrying several properties such as code, subcode, level, and error message.
-Developers can utilize the attributes and methods for troubleshooting.
+`LynxError` is the standard error object returned by the Lynx runtime to indicate runtime failures, warnings, or recoverable issues in your app.
 
-## Android
+It contains both **machine-readable information** (error code, subcode, severity level) and a **human-readable message** to help with debugging and recovery.
 
-#### getErrorCode
+## Use Cases
 
-```java
-public int getErrorCode()
+- Display meaningful errors in debug or development mode
+- Trigger fallback UI or navigation for fatal runtime issues
+- Report errors for analytics or bug tracking
+
+---
+
+## Core Concepts
+
+### Error Code
+
+A **3–4 digit number** identifying the category or behavior of an error.
+For example, `301` represents an image loading error.
+
+Refer to the [Error Codes documentation](/api/errors/error-code) for a full list of codes and their meanings.
+
+### Subcode
+
+A **5–6 digit number** derived from the error code, used to specify the exact cause of the error.
+For example, `30101` indicates that the loaded image is too large.
+
+Refer to the [Error Codes documentation](/api/errors/error-code) for details on individual subcodes.
+
+### Level
+
+`LynxError` defines four levels: `Fatal`, `Error`, `Warn`, and `Undecided`.
+
+| Level       | Meaning                | Suggested Action             |
+| ----------- | ---------------------- | ---------------------------- |
+| `Fatal`     | App is likely unusable | Reload or fallback UI        |
+| `Error`     | Recoverable issue      | Log and retry                |
+| `Warn`      | Non-blocking warning   | Log and continue             |
+| `Undecided` | Not yet categorized    | Handle gracefully, log issue |
+
+### Message
+
+A JSON-formatted string containing detailed error information, including:
+
+- `code`
+- `subcode`
+- `level`
+- `message`
+- `suggestion` (optional)
+
+---
+
+## Platform Methods
+
+### Android
+
+| Method           | Return Type | Description            |
+| ---------------- | ----------- | ---------------------- |
+| `getErrorCode()` | `int`       | Returns the error code |
+| `getSubCode()`   | `int`       | Returns the subcode    |
+| `getLevel()`     | `String`    | Returns the level      |
+| `getMsg()`       | `String`    | Returns the message    |
+
+### iOS
+
+| Property / Method | Type            | Description                                                                                       |
+| ----------------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `errorCode`       | `NSInteger`     | Returns the error code                                                                            |
+| `subcode`         | `NSInteger`     | Returns the subcode                                                                               |
+| `level`           | `NSString*`     | Returns the level                                                                                 |
+| `userInfo()`      | `NSDictionary*` | Returns a dictionary where the message can be queried using the key `LynxErrorUserInfoKeyMessage` |
+
+### HarmonyOS
+
+| Method           | Type             | Description            |
+| ---------------- | ---------------- | ---------------------- |
+| `getErrorCode()` | `number`         | Returns the error code |
+| `getSubCode()`   | `number`         | Returns the subcode    |
+| `getLevel()`     | `LynxErrorLevel` | Returns the level      |
+| `getMsg()`       | `string`         | Returns the message    |
+
+---
+
+## Example
+
+### JavaScript
+
+```js
+lynx.onError((err) => {
+  if (err.getLevel() === 'Fatal') {
+    // Possibly reload or fallback to home
+    console.error('Critical error occurred:', err.getMsg());
+  }
+});
 ```
 
-Return the error code. The error code is a 3 to 4-digit number used to denote the behavior of the error. For example, code 301 indicates a loading error for image. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific behavior each error code represents.
+### Kotlin
 
-#### getSubcode
-
-```java
-public int getSubcode()
+```kotlin
+fun onLynxError(error: LynxError) {
+  if (error.level == "Fatal") {
+    println("Fatal error: ${error.msg}")
+  }
+}
 ```
 
-Return the error subcode. The error subcode is a 5 to 6-digit number derived from extending the error code by 2 digits. The error subcode is used to indicate the cause of the error. For example, subcode 30101 indicates that the loaded image is too large. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific cause each error subcode represents.
+### Swift
 
-#### isFatal
-
-```java
-public boolean isFatal()
+```swift
+func onLynxError(_ error: LynxError) {
+  if error.level == "Fatal" {
+    print("Fatal error: \(error.msg)")
+  }
+}
 ```
 
-Determine if the error level is `Fatal`. `LynxError` has three levels: `Fatal`, `Error`, and `Warn`. `Fatal` indicates a critical error that might cause the Lynx page to go blank, requiring the integrator to perform fallback handling; for example, attempting to reload the Lynx page or displaying an error page. `Error` denotes a non-critical error that might cause some functionalities of the Lynx page to become unavailable. `Warn` signifies a warning error that does not affect the functionality of the Lynx page but should be addressed if possible. You can refer to documentation [Error Codes](/api/errors/error-code) to learn about the error levels associated with each subcode. If the level is `Undecided`, it means that the error level for that subcode is determined at runtime.
+### ETS
 
-#### getMsg
-
-```java
-public boolean getMsg()
+```ts
+onLynxError(error: LynxError) {
+  if (error.level == LynxErrorLevel.Fatal) {
+    console.error('Fatal error:', error.getMsg());
+  }
+}
 ```
 
-Return all error information in JSON string format, including the code, subcode, error message, level, and fix suggestion.
-
-## iOS
-
-#### errorCode
-
-```objective-c
-- (NSInteger)errorCode
-```
-
-Return the error code. The error code is a 3 to 4-digit number used to denote the behavior of the error. For example, code 301 indicates a loading error for image. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific behavior each error code represents.
-
-#### subcode
-
-```objective-c
-- (NSInteger)subcode
-```
-
-Return the error subcode. The error subcode is a 5 to 6-digit number derived from extending the error code by 2 digits. The error subcode is used to indicate the cause of the error. For example, subcode 30101 indicates that the loaded image is too large. You can refer to documentation [Error Codes](/api/errors/error-code) to learn the specific cause each error subcode represents.
-
-#### isFatal
-
-```objective-c
-- (BOOL)isFatal
-```
-
-Determine if the error level is `Fatal`. `LynxError` has three levels: `Fatal`, `Error`, and `Warn`. `Fatal` indicates a critical error that might cause the Lynx page to go blank, requiring the integrator to perform fallback handling; for example, attempting to reload the Lynx page or displaying an error page. `Error` denotes a non-critical error that might cause some functionalities of the Lynx page to become unavailable. `Warn` signifies a warning error that does not affect the functionality of the Lynx page but should be addressed if possible. You can refer to documentation [Error Codes](/api/errors/error-code) to learn about the error levels associated with each subcode. If the level is `Undecided`, it means that the error level for that subcode is determined at runtime.
-
-#### userInfo
-
-```objective-c
-- (NSDictionary*)userInfo
-```
-
-Return an `NSDictionary` from which the error information can be queried using the key `LynxErrorUserInfoKeyMessage`. The error information is a JSON string that includes the code, subcode, error message, level, fix suggestion, etc.
+---
 
 ## Compatibility
 

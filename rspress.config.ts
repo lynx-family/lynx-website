@@ -1,19 +1,25 @@
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
-import { pluginLlms } from '@rspress/plugin-llms';
+import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginRss } from '@rspress/plugin-rss';
-import type { RspressPlugin, SidebarGroup } from '@rspress/shared';
+import { pluginSitemap } from '@rspress/plugin-sitemap';
+import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
+import {
+  transformerNotationHighlight,
+  transformerNotationDiff,
+  transformerNotationFocus,
+} from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
-import { defineConfig } from 'rspress/config';
+import { defineConfig } from '@rspress/core';
+import type { RspressPlugin } from '@rspress/core';
+import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transformers';
 import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
-import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerCompatibleMetaHighlight } from '@rspress/plugin-shiki/transformers';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -34,7 +40,13 @@ export default defineConfig({
   icon: '/assets/favicon.png',
   lang: 'en',
   globalStyles: path.join(__dirname, 'src', 'styles', 'global.css'),
+  ssg: {
+    experimentalWorker: true,
+  },
   builderConfig: {
+    performance: {
+      buildCache: false,
+    },
     plugins: [
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       pluginOpenGraph({
@@ -54,20 +66,39 @@ export default defineConfig({
       pluginSass(),
       pluginLess(),
     ],
-    source: {
+    resolve: {
       alias: {
+        // be compatible to react@18, renderToMarkdownString within @rspress/core depends on react@19
+        '@rspress/core/_private/react': path.join(
+          __dirname,
+          'node_modules/react-render-to-markdown/dist/index.js',
+        ),
         '@site': path.join(__dirname),
         '@': path.join(__dirname, 'src'),
         '@assets': path.join(__dirname, 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
       },
+    },
+    source: {
       define: {
         'process.env': {
           // This marks the first open sourced version of Lynx.
           OSS: '3.2',
+          COMPAT_TABLE_HIDE_CLAY: true,
           DOC_GIT_BASE_URL: JSON.stringify(
             'https://github.com/lynx-family/lynx-website/tree/main',
           ),
+        },
+      },
+    },
+    tools: {
+      rspack: {
+        resolve: {
+          // This is a workaround for the lack of native fs and path modules in the browser in .server.tsx
+          fallback: {
+            fs: false,
+            path: false,
+          },
         },
       },
     },
@@ -77,6 +108,7 @@ export default defineConfig({
       'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
+  base: '/next',
   themeConfig: {
     locales: [
       {
@@ -128,13 +160,20 @@ export default defineConfig({
         content: 'https://x.com/lynxjs_org',
       },
     ],
-    nav: [],
-    sidebar: {},
   },
   plugins: [
-    pluginLlms(),
-    rspeedyApiPlugin(),
+    pluginClientRedirects({
+      redirects: [
+        {
+          from: '/react/routing.html',
+          to: '/react/routing/react-router.html',
+        },
+      ],
+    }),
     sharedSidebarPlugin(),
+    pluginSitemap({
+      siteUrl: PUBLISH_URL,
+    }),
     pluginRss({
       siteUrl: PUBLISH_URL,
       feed: [
@@ -160,82 +199,32 @@ export default defineConfig({
         },
       ],
     }),
+    pluginAlgolia({
+      verificationContent: '6AD08DFB25B7234D',
+    }),
   ],
   markdown: {
     defaultWrapCode: false,
-    checkDeadLinks: true,
+    link: {
+      checkDeadLinks: {
+        excludes: ['/guide/spec.html?ts=1743416098203#element%E2%91%A0'],
+      },
+    },
     shiki: {
       transformers: [
         transformerCompatibleMetaHighlight(),
         transformerNotationHighlight(),
+        transformerNotationDiff(),
+        transformerNotationFocus(),
       ],
     },
   },
-});
-
-function rspeedyApiPlugin(): RspressPlugin {
-  return {
-    name: 'rspeedy:api',
-    async config(config, utils, isProd) {
-      const { pluginAutoNavSidebar } = await import(
-        '@rspress/plugin-auto-nav-sidebar'
-      );
-      const {
-        transformRspeedySidebar,
-        transformReactRsbuildPluginSidebar,
-        transformQrcodeRsbuildPluginSidebar,
-      } = await import('./api-reports/index.js');
-      config = await pluginAutoNavSidebar().config!(config, utils, isProd);
-      config.themeConfig?.locales?.map((locale) => {
-        if (locale.sidebar?.['/api']) {
-          locale.sidebar!['/api'] =
-            locale.sidebar?.['/api'].map((sidebar) => {
-              if ('text' in sidebar && sidebar.text === 'lynx.config.js') {
-                transformRspeedySidebar(sidebar as SidebarGroup);
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/react-rsbuild-plugin'
-              ) {
-                transformReactRsbuildPluginSidebar(sidebar as SidebarGroup);
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/qrcode-rsbuild-plugin'
-              ) {
-                transformQrcodeRsbuildPluginSidebar(sidebar as SidebarGroup);
-              }
-              return sidebar;
-            }) ?? [];
-        } else if (locale.sidebar?.[`/${locale.lang}/api`]) {
-          locale.sidebar![`/${locale.lang}/api`] =
-            locale.sidebar?.[`/${locale.lang}/api`].map((sidebar) => {
-              if ('text' in sidebar && sidebar.text === 'lynx.config.js') {
-                transformRspeedySidebar(sidebar as SidebarGroup, locale.lang);
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/react-rsbuild-plugin'
-              ) {
-                transformReactRsbuildPluginSidebar(
-                  sidebar as SidebarGroup,
-                  locale.lang,
-                );
-              } else if (
-                'text' in sidebar &&
-                sidebar.text === '@lynx-js/qrcode-rsbuild-plugin'
-              ) {
-                transformQrcodeRsbuildPluginSidebar(
-                  sidebar as SidebarGroup,
-                  locale.lang,
-                );
-              }
-              return sidebar;
-            }) ?? [];
-        }
-        return locale;
-      });
-      return config;
+  llms: {
+    remarkSplitMdxOptions: {
+      includes: [[['Go', 'LegacyCompatTable', 'APITable'], '@lynx']],
     },
-  };
-}
+  },
+});
 
 function mapNonGuideSharedSectionsToGuide(
   lang: string,

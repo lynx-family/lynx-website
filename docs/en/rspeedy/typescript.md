@@ -148,7 +148,7 @@ Unlike the native TypeScript compiler, tools like SWC and Babel compile each fil
 ```json title="tsconfig.json"
 {
   "compilerOptions": {
-    "isolatedModules": true
+    "isolatedModules": true // [!code focus]
   }
 }
 ```

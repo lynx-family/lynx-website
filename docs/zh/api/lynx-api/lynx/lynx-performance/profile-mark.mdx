@@ -1,0 +1,49 @@
+---
+title: profileMark()
+---
+
+标记一个即时(没有持续时间) trace event。
+
+## 语法
+
+```typescript
+profileMark(name: string, option?: { flowId: number, arg?:  Record<string, string>}): void;
+```
+
+## 参数
+
+##### name
+
+trace event 的名称。
+
+##### option(optional)
+
+额外选项，如 `flowId` 和自定义参数（`arg`）。
+
+## 示例
+
+```typescript
+// 标记一个即时 trace event
+lynx.performance.profileMark('FetchStarted');
+
+// 标记一个即时 trace event 并添加自定义参数
+lynx.performance.profileMark('FetchStarted', {
+  args: { status: 'initiated' },
+});
+
+// 标记一个 flow 类型的即时 trace event
+const flowId = lynx.performance.profileFlowId();
+lynx.performance.profileMark('ActionCheckpoint', { flowId });
+
+// 标记一个 flow 类型的即时 trace event 并添加自定义参数
+lynx.performance.profileMark('ProcessMidpoint', {
+  args: { step: 'middle' },
+  flowId,
+});
+```
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-api/lynx/performance" />

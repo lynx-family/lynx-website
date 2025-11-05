@@ -2,7 +2,7 @@
  * Sub-sites and shared docs configuration
  */
 
-import type { SidebarData } from 'rspress/theme';
+import type { SidebarData } from '@rspress/core/theme';
 
 /**
  * Metadata for each subsites. This is used to
@@ -40,7 +40,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     value: 'react',
     label: 'ReactLynx',
     description: 'Build Lynx apps with React',
-    home: '/react',
+    home: '/react/',
     url: '/react/introduction',
     logo: {
       light:
@@ -54,7 +54,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     label: 'Rspeedy',
     description: 'The Lynx build tool',
     descriptionZh: 'Lynx 构建工具',
-    home: '/rspeedy',
+    home: '/rspeedy/',
     url: '/rspeedy/cli',
     logo: {
       light:

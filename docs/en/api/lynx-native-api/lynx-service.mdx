@@ -1,7 +1,7 @@
 # LynxService API
 
 import { CodeFold, LegacyCompatTable } from '@lynx';
-import { Tab, Tabs, Steps } from 'rspress/theme';
+import { Tab, Tabs, Steps } from '@rspress/core/theme';
 
 ## Introduction
 
@@ -106,7 +106,7 @@ If there are custom requirements, you can also quickly implement and register re
 
 <Tab label="Android">
 
-Implement `ILynxLogService`：
+Implement `ILynxLogService`:
 
 <CodeFold toggle>
 
@@ -135,6 +135,35 @@ object YourLogService : ILynxLogService {
 
 </Tab>
 
+<Tab label="Harmony">
+
+Implement `ILynxLogService`:
+
+<CodeFold toggle>
+
+```typescript title="YourLogService.ets"
+import { ILynxLogService } from '@lynx/lynx';
+
+export class YourLogService implements ILynxLogService {
+  static instance = new YourLogService();
+
+  logByPlatform(level: number, tag: string, message: string): void {
+    console.log(`level: ${level} tag: ${tag} message: ${message}`);
+  }
+
+  isLogOutputByPlatform(): boolean {
+    return true;
+  }
+
+  getDefaultWriteFunction(): number {
+    return 0;
+  }
+}
+```
+</CodeFold>
+
+</Tab>
+
 </Tabs>
 
 <div style={{ height: 30}} />
@@ -150,7 +179,7 @@ Lynx Service has an automatic registration mechanism in iOS. In the implementati
 If you use your own implementation of Lynx Service, please delete the [default implementation](/guide/start/integrate-with-existing-apps#platform=ios) provided by Lynx.
 
 ```diff title="Podfile"
-pod 'LynxService', '3.2.0-rc.0', :subspecs => [
+pod 'LynxService', '3.4.1', :subspecs => [
       'Image',
 -     'Log',
       'Http',
@@ -174,6 +203,25 @@ And delete related dependencies
 dependencies {
 -   // integrating log-service
 -   implementation "engineer.lynx.test2:lynx-service-log:0.0.1"
+}
+```
+
+</Tab>
+
+<Tab label="Harmony">
+
+Replace the implementation of log service in `LynxServiceCenter` in the [integration documentation](/guide/start/integrate-with-existing-apps#platform=harmony) with your implementation.
+
+```diff
+- LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
++ LynxServiceCenter.registerService(LynxServiceType.Log, YourLogService.instance);
+```
+
+And delete related dependencies
+
+```diff title="oh-package.json5"
+"dependencies": {
+- "@lynx/lynx_log_service": "0.0.1",
 }
 ```
 

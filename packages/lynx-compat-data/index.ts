@@ -27,6 +27,7 @@ export function isPlatformName(name: string): name is PlatformName {
   const validPlatforms: PlatformName[] = [
     'android',
     'clay_android',
+    'clay_ios',
     'clay_macos',
     'clay_windows',
     'ios',

@@ -4,46 +4,46 @@ import * as NextSteps from '@lynx/NextSteps';
 
 # 接入 Lynx DevTool
 
-当你开发 Lynx 页面遇到问题时，可以使用 [DevTool](/guide/debugging/lynx-devtool.mdx) 进行调试。
+当你开发 Lynx 页面遇到问题时，可以使用 [DevTool](/guide/devtool/panels.mdx) 进行调试。
 但你需要先按照以下步骤接入 DevTool。
 
 :::info
 推荐在非生产环境下接入 DevTool，让生产环境的应用更轻量。
 
-下文中的所有代码，你都可以在 [integrating-lynx-demo-projects 项目](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/release/3.1)中找到
+下文中的所有代码，你都可以在 [integrating-lynx-demo-projects 项目](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main) 中找到
 :::
 
-<PlatformTabs hashKey="platform">
+<PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="ios">
 
 <Steps>
 
 ### 引入依赖
 
-你需要新增以下两个组件: `LynxService` 的 `Devtool` 子组件和 `LynxDevTool`。
+你需要新增以下两个组件：`LynxService` 的 `Devtool` 子组件和 `LynxDevTool`。
 
 ```ruby title="Podfile" {8,11}
 target 'YourTarget' do
-  pod 'LynxService', '3.2.0-rc.0', :subspecs => [
+  pod 'LynxService', '3.4.1', :subspecs => [
       'Devtool',
   ]
-  pod 'LynxDevtool', '3.2.0-rc.0'
+  pod 'LynxDevtool', '3.4.1'
 end
 ```
 
 ### 打开 DevTool
 
 DevTool 提供了一些调试功能开关，
-其中有三个比较重要的开关:
+其中有三个比较重要的开关：
 
 - `Lynx Debug` 是 DevTool 的总开关，其控制 DevTool 的所有调试功能。
 - `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
-- `Lynx LogBox` 控制 [LogBox](/guide/debugging/handle-errors.html) 功能。
+- `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
 
-<Details title="这三个开关默认是关闭的，建议同步开启这三个开关">
+<Details title="这三个开关均默认关闭，需要主动打开">
 
-- 使用 DevTool 桌面应用调试 Lynx 页面时，需要同时打开 Lynx Debug 和
-  Lynx DevTool 开关
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
 - LogBox 可以帮助你快速发现问题
 
 </Details>
@@ -53,16 +53,22 @@ DevTool 提供了一些调试功能开关，
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {5-10}
+```objective-c title=AppDelegate.m {9-16}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
+  LynxEnv *lynxEnv = [LynxEnv sharedInstance];
   // 打开 Lynx Debug 开关
   lynxEnv.lynxDebugEnabled = YES;
   // 打开 Lynx DevTool 开关
   lynxEnv.devtoolEnabled = YES;
   // 打开 Lynx LogBox 开关
+  [LynxService(LynxServiceDevToolProtocol) setLogBoxPresetValue:YES];
   lynxEnv.logBoxEnabled = YES;
   return YES;
 }
@@ -71,16 +77,24 @@ DevTool 提供了一些调试功能开关，
 </Tab>
 <Tab label="Swift">
 
-```swift title=AppDelegate.swift {5-10}
+```objective-c title="YourTarget-Bridging-Header.h"
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+```
+
+```swift title=AppDelegate.swift {5-12}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
+    let lynxEnv = LynxEnv.sharedInstance()
     // 打开 Lynx Debug 开关
     lynxEnv.lynxDebugEnabled = true
     // 打开 Lynx DevTool 开关
     lynxEnv.devtoolEnabled = true
     // 打开 Lynx LogBox 开关
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.logBoxPresetValue = true
     lynxEnv.logBoxEnabled = true
     return true
   }
@@ -101,7 +115,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   <Steps>
 ### 引入依赖
 
-你需要接入这两个组件: `lynx-service-devtool` 和 `lynx-devtool`
+你需要接入这两个组件：`lynx-service-devtool` 和 `lynx-devtool`
 
 <Tabs groupId='impl-android'>
 <Tab label="build.gradle">
@@ -109,8 +123,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 ```groovy
 // Lynx DevTool 接入时请保证和 Lynx 相同版本
 dependencies {
-  implementation "org.lynxsdk.lynx:lynx-devtool:3.2.0-rc.0"
-  implementation "org.lynxsdk.lynx:lynx-service-devtool:3.2.0-rc.0"
+  implementation "org.lynxsdk.lynx:lynx-devtool:3.4.1"
+  implementation "org.lynxsdk.lynx:lynx-service-devtool:3.4.1"
 }
 ```
 
@@ -120,8 +134,8 @@ dependencies {
 ```kotlin
 // Lynx DevTool 接入时请保证和 Lynx 相同版本
 dependencies {
-  implementation ("org.lynxsdk.lynx:lynx-devtool:3.2.0-rc.0")
-  implementation ("org.lynxsdk.lynx:lynx-service-devtool:3.2.0-rc.0")
+  implementation ("org.lynxsdk.lynx:lynx-devtool:3.4.1")
+  implementation ("org.lynxsdk.lynx:lynx-service-devtool:3.4.1")
 }
 ```
 
@@ -141,7 +155,7 @@ dependencies {
 private void initLynxService() {
   // ...
   // register DevTool service
-  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE);
+  LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
 }
 
 ```
@@ -153,7 +167,7 @@ private void initLynxService() {
 private fun initLynxService() {
   // ...
   // register DevTool service
-  LynxServiceCenter.inst().registerService(LynxDevToolService)
+  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
 }
 ```
 
@@ -163,16 +177,16 @@ private fun initLynxService() {
 ### 打开 DevTool
 
 DevTool 提供了一些调试功能开关，
-其中有三个比较重要的开关:
+其中有三个比较重要的开关：
 
 - `Lynx Debug` 是 DevTool 的总开关，其控制 DevTool 的所有调试功能。
 - `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
-- `Lynx LogBox` 控制 [LogBox](/guide/debugging/handle-errors.html) 功能。
+- `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
 
-<Details title="这三个开关默认是关闭的，建议同步开启这三个开关">
+<Details title="这三个开关均默认关闭，需要主动打开">
 
-- 使用 DevTool 桌面应用调试 Lynx 页面时，需要同时打开 Lynx Debug 和
-  Lynx DevTool 开关
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
 - LogBox 可以帮助你快速发现问题
 
 </Details>
@@ -182,7 +196,7 @@ DevTool 提供了一些调试功能开关，
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-8}
+```java title=YourApplication.java {3-9}
 private void initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null);
   // 打开 Lynx Debug 开关
@@ -190,6 +204,7 @@ private void initLynxEnv() {
   // 打开 Lynx DevTool 开关
   LynxEnv.inst().enableDevtool(true);
   // 打开 Lynx LogBox 开关
+  LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
   LynxEnv.inst().enableLogBox(true);
 }
 
@@ -198,7 +213,7 @@ private void initLynxEnv() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-8}
+```kotlin title=YourApplication.kt {3-9}
 private fun initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null)
   // 打开 Lynx Debug 开关
@@ -206,6 +221,7 @@ private fun initLynxEnv() {
   // 打开 Lynx DevTool 开关
   LynxEnv.inst().enableDevtool(true)
   // 打开 Lynx LogBox 开关
+  LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
   LynxEnv.inst().enableLogBox(true)
 }
 ```
@@ -220,8 +236,112 @@ private fun initLynxEnv() {
 </Steps>
 </PlatformTabs.Tab>
 
+<PlatformTabs.Tab platform="harmony">
+  <Steps>
+### 引入依赖
+
+你需要接入这两个组件：`@lynx/lynx_devtool` 和 `@lynx/lynx_devtool_service`。
+
+<Tabs groupId='impl-harmony'>
+<Tab label="oh-package.json5">
+
+```json5
+// Lynx DevTool 接入时请保证和 Lynx 相同版本
+"dependencies": {
+  "@lynx/lynx_devtool": "@param:dependencies.lynx_version",
+  "@lynx/lynx_devtool_service": "@param:dependencies.lynx_version"
+}
+```
+
+</Tab>
+<Tab label="build-profile.json5">
+
+```json5
+// 由于 `@lynx/lynx_devtool` 是通过变量动态 import，为了将 devtool 模块加入编译，
+// 还需要额外在 build-profile.json5 中的 buildOption 额外增加一个 runtimeOnly 的 buildOption 配置。
+"buildOption": {
+    "arkOptions": {
+      "runtimeOnly": {
+        "packages": [
+          "@lynx/lynx_devtool"
+        ]
+      }
+    },
+}
+```
+
+</Tab>
+</Tabs>
+
+:::info
+推荐接入时使用最新 [Lynx 版本](https://github.com/lynx-family/lynx/releases)
+:::
+
+### 注册 DevTool Service
+
+<Tabs groupId="register-devtool-service-harmony">
+<Tab label="ETS">
+
+```ts title=YourEntryAbility.ets {2 - 3}
+// Initialize LynxDevToolService first, as LynxEnv initialization
+// depends on LynxDevToolService from LynxService
+LynxServiceCenter.registerService(
+  LynxServiceType.DevTool,
+  LynxDevToolService.instance,
+);
+```
+
+</Tab>
+</Tabs>
+
+### 打开 DevTool
+
+DevTool 提供了一些调试功能开关，
+其中有三个比较重要的开关：
+
+- `Lynx Debug` 是 DevTool 的总开关，其控制 DevTool 的所有调试功能。
+- `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
+- `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
+
+<Details title="Lynx Debug 与 Lynx LogBox 开关是默认开启的，Lynx DevTool 开关默认关闭，建议开启 Lynx DevTool 开关">
+
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
+- LogBox 可以帮助你快速发现问题
+
+</Details>
+
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+
+<Tabs groupId='turn-on-switches-harmony'>
+<Tab label="ETS">
+
+```ts title=YourEntryAbility.ets {4-9}
+public initLynxEnv() {
+  LynxEnv.initialize(this.context);
+
+  // 打开 Lynx Debug 开关
+  LynxEnv.enableLynxDebug(true);
+  // 打开 Lynx DevTool 开关
+  LynxEnv.enableDevtool(true);
+  // 打开 Lynx LogBox 开关
+  LynxEnv.setLogBoxEnabled(true);
+}
+
+```
+
+</Tab>
+</Tabs>
+
+:::info
+除了前面介绍的三个开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+:::
+
+</Steps>
+</PlatformTabs.Tab>
+
 </PlatformTabs>
-恭喜你! 至此你已经完成了 DevTool 的接入。打开 Lynx DevTool 桌面应用，
+恭喜你！至此你已经完成了 DevTool 的接入。打开 Lynx DevTool 桌面应用，
 使用 USB 线连接 app，即可开始调试。
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/devtool_connected_success.png"
@@ -243,7 +363,7 @@ private fun initLynxEnv() {
 
 <NextSteps.Root>
   <NextSteps.Step
-    href="/guide/debugging/lynx-devtool.html"
+    href="/guide/devtool/panels.html"
     title="使用调试工具"
     description="学习如何使用 Lynx DevTool 桌面应用，深入了解调试功能"
   />

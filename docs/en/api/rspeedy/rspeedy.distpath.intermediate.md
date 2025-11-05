@@ -4,6 +4,11 @@
 
 ## DistPath.intermediate property
 
+> Warning: This API is now obsolete.
+> 
+> This option is never read and will be removed in the future version.
+> 
+
 The output directory of the intermediate files.
 
 **Signature:**

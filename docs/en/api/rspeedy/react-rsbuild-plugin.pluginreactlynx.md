@@ -9,7 +9,7 @@ Create a rsbuild plugin for ReactLynx.
 **Signature:**
 
 ```typescript
-export declare function pluginReactLynx(userOptions?: PluginReactLynxOptions): RsbuildPlugin;
+export declare function pluginReactLynx(userOptions?: PluginReactLynxOptions): RsbuildPlugin[];
 ```
 
 ## Parameters
@@ -20,7 +20,7 @@ export declare function pluginReactLynx(userOptions?: PluginReactLynxOptions): R
 
 **Returns:**
 
-RsbuildPlugin
+RsbuildPlugin\[\]
 
 ## Example
 

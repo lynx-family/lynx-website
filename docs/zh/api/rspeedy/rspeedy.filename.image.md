@@ -9,7 +9,7 @@ The name of non-SVG images.
 **Signature:**
 
 ```typescript
-image?: string | undefined;
+image?: Rspack.AssetModuleFilename | undefined;
 ```
 
 ## Remarks

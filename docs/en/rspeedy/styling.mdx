@@ -351,28 +351,55 @@ export default {
 
 ## Using Tailwind CSS
 
-Since Rsbuild supports Tailwind CSS out of the box, you can directly refer to the guide on Rsbuild: [Use Tailwind CSS v3](https://rsbuild.dev/guide/basic/tailwindcss-v3).
+1. Installing Tailwind CSS
 
-After setting up Tailwind CSS, you must use [`@lynx-js/tailwind-preset`](https://github.com/lynx-family/lynx-stack/tree/main/packages/third-party/tailwind-preset) to remove all the tailwindcss utilities not supported in Lynx or adapt to Lynx-specific alternatives.
+   Rspeedy has built-in support for PostCSS, you can install tailwindcss package to integrate Tailwind CSS:
 
-1. Install the `@lynx-js/tailwind-preset` package:
+   <PackageManagerTabs command="install -D tailwindcss@^3" />
 
-<PackageManagerTabs command="install -D @lynx-js/tailwind-preset" />
+2. Configuring PostCSS
 
-2. Add the `@lynx-js/tailwind-preset` to `tailwind.config.js`:
+   You can register the tailwindcss PostCSS plugin through [`postcss.config.js`](https://www.npmjs.com/package/postcss-loader#config) or [`tools.postcss`](https://rsbuild.rs/config/tools/postcss).
 
-```js title=tailwind.config.js
-import preset from '@lynx-js/tailwind-preset';
+   ```js title=postcss.config.js
+   export default {
+     plugins: {
+       tailwindcss: {},
+     },
+   };
+   ```
 
-export default {
-  presets: [preset],
-};
-```
+3. Installing the `@lynx-js/tailwind-preset` package:
 
-:::warning
+   <PackageManagerTabs command="install -D @lynx-js/tailwind-preset" />
 
-`@lynx-js/tailwind-preset` is still not stable, please use it with caution. If you found any tailwindcss features that are not working and should be supported, please open an issue at https://github.com/lynx-family/lynx-stack/issues.
+4. Configuring `tailwind.config.js` and adding `@lynx-js/tailwind-preset`:
 
-:::
+   You must use [`@lynx-js/tailwind-preset`](https://github.com/lynx-family/lynx-stack/tree/main/packages/third-party/tailwind-preset) to remove all the tailwindcss utilities not supported in Lynx or adapt to Lynx-specific alternatives.
 
-See the basic ReactLynx Tailwind CSS example at: https://github.com/lynx-family/lynx-examples/tree/main/examples/tailwindcss.
+   ```js title=tailwind.config.js
+   import lynxPreset from '@lynx-js/tailwind-preset';
+
+   export default {
+     content: ['./src/**/*.{js,ts,jsx,tsx}'],
+     presets: [lynxPreset],
+   };
+   ```
+
+   :::warning
+
+   `@lynx-js/tailwind-preset` is still not stable, please use it with caution. If you found any tailwindcss features that are not working and should be supported, please open an issue at https://github.com/lynx-family/lynx-stack/issues.
+
+   :::
+
+### Example
+
+import { Go } from '@lynx';
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-tailwindcss.png"
+  example="tailwindcss"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+></Go>

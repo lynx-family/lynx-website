@@ -20,12 +20,14 @@ If a string is provided, it will be used as [Filename.bundle](./rspeedy.filename
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
+|  [assets?](./rspeedy.filename.assets.md) |  | Rspack.AssetModuleFilename | _(Optional)_ The name of other assets, except for above (image, svg, font, html, wasm...) |
 |  [bundle?](./rspeedy.filename.bundle.md) |  | string \| undefined | _(Optional)_ The name of the bundle files. |
-|  [css?](./rspeedy.filename.css.md) |  | string \| undefined | _(Optional)_ The name of the CSS files. |
-|  [font?](./rspeedy.filename.font.md) |  | string \| undefined | _(Optional)_ The name of the font files. |
-|  [image?](./rspeedy.filename.image.md) |  | string \| undefined | _(Optional)_ The name of non-SVG images. |
-|  [js?](./rspeedy.filename.js.md) |  | string \| undefined | _(Optional)_ The name of the JavaScript files. |
-|  [media?](./rspeedy.filename.media.md) |  | string \| undefined | _(Optional)_ The name of media assets, such as video. |
-|  [svg?](./rspeedy.filename.svg.md) |  | string \| undefined | _(Optional)_ The name of the SVG images. |
+|  [css?](./rspeedy.filename.css.md) |  | Rspack.CssFilename \| undefined | _(Optional)_ The name of the CSS files. |
+|  [font?](./rspeedy.filename.font.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of the font files. |
+|  [image?](./rspeedy.filename.image.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of non-SVG images. |
+|  [js?](./rspeedy.filename.js.md) |  | Rspack.Filename \| undefined | _(Optional)_ The name of the JavaScript files. |
+|  [media?](./rspeedy.filename.media.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of media assets, such as video. |
+|  [svg?](./rspeedy.filename.svg.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of the SVG images. |
 |  [template?](./rspeedy.filename.template.md) |  | string \| undefined | _(Optional)_ The name of the template files. |
+|  [wasm?](./rspeedy.filename.wasm.md) |  | Rspack.WebassemblyModuleFilename | _(Optional)_ The name of WebAssembly files. |
 

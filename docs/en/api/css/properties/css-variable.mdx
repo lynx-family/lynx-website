@@ -1,3 +1,5 @@
+import { Go, Tip } from '@lynx';
+
 # Custom properties (`--*`): CSS variables
 
 ## Introduction
@@ -5,8 +7,6 @@
 CSS variables, are defined with a specific syntax (e.g., `--main-color: black;`) and their values are accessed using the`var()`function (e.g., `color: var(--main-color);`). Custom properties store a value in one place and allow it to be referenced in multiple other places throughout the stylesheet, promoting reusability and maintainability.
 
 ## Examples
-
-import { Go } from '@lynx';
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-var-theme.gif"
@@ -20,8 +20,12 @@ import { Go } from '@lynx';
 ## Syntax
 
 ```css
+/* Declare css variables */
 --somekeyword: left;
 --somecolor: #0000ff;
+
+/* Reference css variables */
+background: var(--somecolor);
 ```
 
 ## Basic Usage
@@ -44,13 +48,26 @@ CSS Variable is a property whose name starts with two hyphens (`-`), such as `--
 }
 ```
 
+You can delcare CSS variables in `style` attribute as well.
+
+```tsx
+<view
+  style={{
+    '--main-bg-color': 'yellow', // [!code highlight]
+    '--main-height': '200px', // [!code highlight]
+    color: 'white',
+    width: '100%',
+  }}
+/>
+```
+
 :::info
 CSS Variables can be defined in the `:root` selector to take effect globally, or in a separate selector to take effect on the applied element and its child elements.
 :::
 
 ### How To Reference CSS variables
 
-CSS variables can be referenced anywhere in CSS:
+You use CSS variable by referencing the property in a `var()` function in place of a standard property value
 
 ```css
 .three {
@@ -59,6 +76,28 @@ CSS variables can be referenced anywhere in CSS:
   background-color: var(--main-bg-color);
   width: 50%;
   border: 1px blue solid;
+}
+```
+
+You can use them in `style` attributes as well:
+
+```tsx
+<view
+  style={{
+    color: 'var(--main-bg-color)', // [!code highlight]
+    width: '100%',
+  }}
+/>
+```
+
+And a CSS variable is able to be a value of another:
+
+```css
+.nested-variables {
+  --first-var: blue;
+
+  /* Nested reference */
+  --nested-reference: var(--first-var); /* [!code highlight] */
 }
 ```
 
@@ -199,3 +238,9 @@ In a selector, you can declare the value of CSS variables. By switching the sele
 ```
 
 In the example above, by toggling the class 'a' or 'b', you can achieve the effect of modifying the corresponding variable --main-bg-color.
+
+## Compatibility
+
+import { APITable } from '@lynx';
+
+<APITable query={'css/properties/custom-property'} />

@@ -1,6 +1,6 @@
 # LynxUpdateMeta
 
-LynxUpdateMeta is the metadata structure used by LynxView to update template data. It will serve as the input parameter for [UpdateData](./lynx-view/update-data.mdx). Users can specify various parameters required for the update through LynxUpdateMeta, such as template data and globalProps, among others.
+LynxUpdateMeta is the metadata structure used by LynxView to update template data. It will serve as the input parameter for [UpdateData](./lynx-view/update-meta-data.mdx). Users can specify various parameters required for the update through LynxUpdateMeta, such as template data and globalProps, among others.
 
 ## Android:
 
@@ -39,6 +39,46 @@ LynxUpdateMeta* meta = [LynxUpdateMeta init];
 meta.data = nil;
 meta.globalProps = nil;
 ```
+
+## Harmony
+
+### Field
+
+MetaData has the following members:
+
+- `templateData: TemplateData`: The content of the data to update the template;
+- `globalProps: TemplateData`: The globalProps content for updating the template;
+
+### Construction
+
+On the HarmonyOS platform, construct the MetaData object as follows:
+
+```typescript
+metaData = new MetaData(
+  new TemplateData('{"text":"TD"}'),
+  new TemplateData({ "theme": "Light" }));
+```
+
+## Web
+
+```ts
+export type Cloneable<T = string | number | null | boolean | undefined> =
+  | T
+  | Record<string, T>
+  | T[];
+
+updateData(
+  data: Cloneable,
+  updateDataType: UpdateDataType,
+  callback?: () => void,
+): void;
+updateGlobalProps(data: Cloneable): void;
+```
+
+#### Parameters
+
+- `data`: Data to be updated, should be `structuredClone` compatible.
+
 
 ## Compatibility
 

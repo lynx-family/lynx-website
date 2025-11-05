@@ -1,4 +1,5 @@
-import { useI18n, useLocation } from 'rspress/runtime';
+import { useI18n, useLocation } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import './RuleItem.css';
 
 const ICON = {
@@ -74,7 +75,7 @@ export function RuleItem(props: IRuleProps) {
     <article className="rule-item">
       <div className="rule-title">
         <div className="rule-name">
-          <a href={ruleLink}>{props.name}</a>
+          <Link href={ruleLink}>{props.name}</Link>
         </div>
 
         <div className="right">
@@ -98,12 +99,4 @@ export function RuleItem(props: IRuleProps) {
       <div className="rule-desc">{props.desc}</div>
     </article>
   );
-}
-
-// TODO
-{
-  /* 1. Lynx 不支持 Attribute Selector，Selector Combinator，Pseudo Class Selector 以及 Pseudo Element Selector */
-}
-{
-  /* 2. 会根据你指定的 minSdkVersion 判断当前使用的 css 属性是否支持 */
 }

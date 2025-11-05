@@ -7,8 +7,8 @@ hero:
   actions:
     - theme: brand
       text: 开始
-      link: ./start/quick-start
+      link: /zh/rspeedy/start/quick-start.html
     - theme: alt
       text: API
-      link: ../api/rspeedy.html
+      link: /api/rspeedy.html
 ---

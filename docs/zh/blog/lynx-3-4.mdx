@@ -1,0 +1,148 @@
+---
+date: 2025-9-3
+sidebar: false
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+_2025 年 9 月 3 日_
+
+# Lynx 3.4: HarmonyOS 支持，Trace 和 Recorder，文本输入元件
+
+<BlogAvatar list={['liujilong', 'lynx']} />
+
+Lynx 3.4 已经正式发布!
+
+延续今年初公布的[技术路线图](/blog/lynx-open-source-roadmap-2025)，我们一直保持着稳定的双月发布节奏。Lynx 3.3 版本因用户侧新功能较少而未单独发布博客，但该版本为 3.4 版本奠定了坚实基础。
+Lynx 3.4 新增对 HarmonyOS 的适配支持、支持 Windows 作为 Lynx 开发环境、推出 _Trace_ 与 _Recorder_ 开发者工具、开源备受期待的原生组件 `<input>` 和 `<textarea>`，还带来了更灵活的动画效果、可变字体等功能。
+
+## 新系统支持
+
+### HarmonyOS 支持
+
+Lynx 现已正式支持 [HarmonyOS](https://www.harmonyos.com/) 平台。开发者可参考 [接入现有应用](/guide/start/integrate-with-existing-apps.html#platform=harmony)，将 Lynx 集成进 HarmonyOS 应用中。我们也将很快发布技术博客，深入介绍 Lynx 在 HarmonyOS 上的实现与优化，敬请期待。
+
+![](https://tosv-sg.tiktok-row.org/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-harmony/background.png)
+
+### Windows 开发环境支持
+
+- 构建工具 [Rspeedy](/rspeedy) 现已支持 Windows 平台，开发者可在 Windows PC 上完成 Lynx 项目的开发与构建；
+
+- 开发者可在 Windows 环境下成功编译安卓端的 Lynx Engine 及 [LynxExplorer](/guide/start/quick-start.html#准备-lynx-explorer) 应用；
+
+Devtool 桌面版对 Windows 的支持也在积极开发中，即将与大家见面。
+
+## 新开发者工具
+
+Lynx 3.4 引入了两款开发者工具，致力于提升开发者体验与调试效率。
+
+### Trace
+
+[Trace](/guide/devtool/trace) 提供了全链路的渲染追踪与可视化能力，能够完整记录并展示 Lynx 页面从解析、构建、布局到渲染的全过程，同时深入监控引擎内部的执行逻辑。它将系统内部的工作状态由“黑盒”转变为清晰的可视化数据，有效帮助开发者理解底层运行机制，并显著提升定位与优化性能瓶颈的效率。
+
+![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace-tool-overview-latest2.png)
+
+### Recorder
+
+[Recorder](/guide/devtool/recorder) 录制了 Lynx 应用运行时的一切外部依赖操作，包括资源加载、原生模块调用返回结果及用户交互事件流。录制内容可导出为文件，并可在 LynxExplorer 中精准回放，从而实现了复杂场景的“录屏式”调试，极大提升了难以复现的交互或异步问题的排查效率。
+
+![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recorder-concept.png)
+
+## 文本输入元件
+
+在 Lynx 社区发起的 UI 能力[调研](https://github.com/lynx-family/lynx/discussions/673)中，`<input>`/`<textarea>` 以超过 50% 的得票率，成为开发者们最迫切期待的核心功能。
+Lynx 3.4 交付了两个核心文本输入组件。我们将继续完善核心元件，欢迎开发者们在 [discussion](https://github.com/lynx-family/lynx/discussions/673) 中投票，共同定义 Lynx 的未来。
+
+### 单行文本输入元件 [`<input>`](/api/elements/built-in/input)
+
+<Go
+  example="input"
+  defaultFile="src/base/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/input_basic.PNG"
+  highlight="{13-20}"
+/>
+
+### 多行文本输入元件 [`<textarea>`](/api/elements/built-in/textarea)
+
+<Go
+  example="textarea"
+  defaultFile="src/base/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/textarea_basic.PNG"
+  highlight="{13-21}"
+/>
+
+## 更高自由度的`<list>`回收策略
+
+### 回收 sticky 节点
+
+当 `<list-item>` 被滚动出 `<list>` 视口时，原有回收机制会缓存该条目以供复用。在 Lynx 3.4 之前，具有 sticky 属性的 `<list-item>` 并不会被回收。在大量使用 sticky 特性的长列表中，这可能导致内存占用过高。Lynx 3.4 优化了这一策略，sticky 项在滚出视口后同样会被回收。
+若该改动对你现有场景造成影响，可通过设置 [`experimental-recycle-sticky-item={false}`](/api/elements/built-in/list.html#experimental-recycle-sticky-item) 暂时禁用此优化。如遇到任何问题，欢迎通过 issue 反馈。
+
+<table border="0">
+ <tr>
+    <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/not-recycle-sticky-1.gif)</td>
+    <td>![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recycle-sticky-1.gif)</td>
+ </tr>
+ <tr>
+    <td>sticky `<list-item>` in Lynx 3.3</td>
+    <td>sticky `<list-item>` in Lynx 3.4</td>
+ </tr>
+</table>
+
+### 不回收 `<list-item>`
+
+当 `<list-item>` 内含复杂元件时，回收并重新更新节点带来较高的 CPU 开销。开发者现可设置 `recyclable={false}` 来实现[特定 `<list-item>` 不回收](/api/elements/built-in/list.html#实现-list-item-不回收)。禁用后，该条目滑出视窗后不会被回收，再次出现时也无需重新渲染，适用于对渲染性能有极致要求的场景。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/20250828-213840.gif"
+  example="list"
+  defaultFile="src/recyclable/index.tsx"
+  defaultEntryFile="dist/recyclable.lynx.bundle"
+  entry="src/recyclable"
+/>
+
+## 更灵活的动画
+
+### `Element.animate()`
+
+[`MainThread.Element`](/api/lynx-api/main-thread/main-thread-element) 新增 `animate()`方法，用于在 MTS 精细控制 CSS 动画，包括播放、暂停、跳转等操作，让交互动画实现更加灵活。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/mt_animation.webp"
+  example="animation"
+  defaultFile="src/animate_mt/index.tsx"
+  defaultEntryFile="dist/animate_mt.lynx.bundle"
+  entry="src/animate_mt"
+/>
+
+### CSS 变量触发 transition
+
+现支持通过 CSS 变量的变化触发 transition 动画，提升了过渡动画的灵活性与可维护性。在多主题设计中，开发者可将动画参数与主题变量关联。切换主题时，只需修改变量值而无需改动选择器逻辑，即可完成主题切换。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/transition-variable.gif"
+  example="animation"
+  defaultFile="src/transition_variable/index.scss"
+  defaultEntryFile="dist/transition_variable.lynx.bundle"
+  entry="src/transition_variable"
+/>
+
+## 可变字体
+
+Lynx 3.4 新增了对可变字体的支持，开发者现在可以通过 `font-variation-settings` 和 `font-optical-sizing` 等底层 CSS 属性，对字体样式进行更精细的微调。
+阅读[MDN](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_fonts/Variable_fonts_guide) 和 [web.dev](https://web.dev/articles/variable-fonts) 了解可变字体技术细节。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/variable-font.jpeg"
+  example="text"
+  defaultFile="src/variable_font/index.tsx"
+  defaultEntryFile="dist/variable_font.lynx.bundle"
+  entry="src/variable_font"
+/>
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 以及 LynxService 依赖版本，完成 Lynx 3.4 版本升级。

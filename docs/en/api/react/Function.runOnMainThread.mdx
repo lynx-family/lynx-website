@@ -8,12 +8,12 @@
 import * as Lynx from '@lynx';
 
 
-[react](/api/react/index.mdx) / runOnMainThread
+[@lynx-js/react](/api/react/index.mdx) / runOnMainThread
 
 # Function: runOnMainThread()
 
 ```ts
-function runOnMainThread<Fn>(fn: Fn): (...args: Parameters<Fn>) => void
+function runOnMainThread<R, Fn>(fn: Fn): (...args: Parameters<Fn>) => Promise<R>
 ```
 
 `runOnMainThread` allows triggering main thread functions on the main thread asynchronously.
@@ -22,7 +22,8 @@ function runOnMainThread<Fn>(fn: Fn): (...args: Parameters<Fn>) => void
 
 | Type Parameter |
 | ------ |
-| `Fn` *extends* (...`args`: `any`[]) => `any` |
+| `R` |
+| `Fn` *extends* (...`args`: `any`[]) => `R` |
 
 ## Parameters
 
@@ -34,7 +35,7 @@ function runOnMainThread<Fn>(fn: Fn): (...args: Parameters<Fn>) => void
 
 `Function`
 
-A function. Calling which with the arguments to be passed to the main thread function to trigger it on the main thread.
+A function. Calling which with the arguments to be passed to the main thread function to trigger it on the main thread. This function returns a promise that resolves to the return value of the main thread function.
 
 ### Parameters
 
@@ -44,8 +45,22 @@ A function. Calling which with the arguments to be passed to the main thread fun
 
 ### Returns
 
-`void`
+`Promise`\<`R`\>
+
+## Example
+
+```ts
+import { runOnMainThread } from '@lynx-js/react';
+
+async function someFunction() {
+  const fn = runOnMainThread(() => {
+    'main thread';
+    return 'hello';
+  });
+  const result = await fn();
+}
+```
 
 ## Defined in
 
-@lynx-js/react/runtime/lib/worklet/runWorklet.d.ts:7
+@lynx-js/react/runtime/lib/worklet/call/runOnMainThread.d.ts:19

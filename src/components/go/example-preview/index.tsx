@@ -5,8 +5,10 @@ import { ExampleContent } from './components';
 import { isAssetFileType } from './utils/example-data';
 import Callout from '../../Callout';
 import { SchemaOptionsData } from './hooks/use-switch-schema';
+import { withBase } from '@rspress/core/runtime';
+import { ExamplePreview as ExamplePreviewMarkdown } from './index.server';
 
-const EXAMPLE_BASE_URL = '/lynx-examples';
+const EXAMPLE_BASE_URL = withBase('/lynx-examples');
 
 const ErrorWrap = ({ example }: { example: string }) => {
   return (
@@ -30,24 +32,44 @@ export interface ExamplePreviewProps {
   defaultEntryFile?: string;
   defaultEntryName?: string;
   highlight?: string | Record<string, string>;
-  entry?: string;
+  entry?: string | string[];
   schema?: string;
   rightFooter?: React.ReactNode;
   schemaOptions?: SchemaOptionsData;
+  langAlias?: Record<string, string>;
 }
 
-export const ExamplePreview = ({
-  example,
-  defaultFile = 'package.json',
-  defaultEntryFile,
-  defaultEntryName,
-  highlight,
-  img,
-  entry,
-  schema,
-  rightFooter,
-  schemaOptions,
-}: ExamplePreviewProps) => {
+interface ExampleMetadata {
+  name: string;
+  files: string[];
+  templateFiles: Array<{
+    name: string;
+    file: string;
+    webFile?: string;
+  }>;
+  previewImage?: string;
+  exampleGitBaseUrl?: string;
+}
+
+export const ExamplePreview = (props: ExamplePreviewProps) => {
+  if (process.env.__SSR_MD__) {
+    return <ExamplePreviewMarkdown {...props} />;
+  }
+
+  const {
+    example,
+    defaultFile = 'package.json',
+    defaultEntryFile,
+    defaultEntryName,
+    highlight,
+    img,
+    entry,
+    schema,
+    rightFooter,
+    schemaOptions,
+    langAlias,
+  } = props;
+
   const [currentName, setCurrentName] = useState(defaultFile);
   const [currentFile, setCurrentFile] = useState('');
   const [isAssetFile, setIsAssetFile] = useState(isAssetFileType(defaultFile));
@@ -55,15 +77,16 @@ export const ExamplePreview = ({
 
   const [defaultWebPreviewFile, setDefaultWebPreviewFile] = useState('');
   const [initState, setInitState] = useState(false);
-  const storeRef = useRef({});
+  const storeRef = useRef<Record<string, string>>({});
   const highlightData = useMemo(() => {
     return typeof highlight === 'string'
       ? { [defaultFile]: highlight }
       : highlight || {};
   }, [highlight, defaultFile]);
 
-  const { error, data: exampleData } = useSWR(
+  const { error, data: exampleData } = useSWR<ExampleMetadata>(
     `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
+
     async (url) => {
       const response = await fetch(url);
       if (!response.ok) {
@@ -177,6 +200,7 @@ export const ExamplePreview = ({
           ? `${EXAMPLE_BASE_URL}/${example}/${exampleData?.previewImage}`
           : '')
       }
+      langAlias={langAlias}
       currentEntryFileUrl={currentEntryFileUrl}
       currentEntry={currentEntry}
       setCurrentEntry={setCurrentEntry}

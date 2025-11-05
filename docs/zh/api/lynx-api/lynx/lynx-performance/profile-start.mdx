@@ -1,0 +1,49 @@
+---
+title: profileStart()
+---
+
+标记一个 [trace event](https://perfetto.dev/docs/instrumentation/track-events) 的开始。
+
+## 语法
+
+```typescript
+profileStart(name: string, option?: { flowId: number, arg?:  Record<string, string>}): void;
+```
+
+## 参数
+
+##### name
+
+trace event 的名称。
+
+##### option（可选）
+
+额外选项，例如 `flowId` 和自定义参数（`arg`）。
+
+## 示例
+
+```typescript
+// 开始一个 trace event。
+lynx.performance.profileStart('DataFetch');
+
+// 开始一个 trace event 并添加自定义参数
+lynx.performance.profileStart('DataFetch', {
+  args: { url: 'https://api.example.com/data', method: 'GET' },
+});
+
+// 开始一个 flow 类型的 trace event
+const flowId = lynx.performance.profileFlowId();
+lynx.performance.profileStart('UserAction', { flowId });
+
+// 开始一个 flow 类型的 trace event 并添加自定义参数
+lynx.performance.profileStart('ComplexProcess', {
+  args: { step: 'start' },
+  flowId,
+});
+```
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="lynx-api/lynx/performance" />

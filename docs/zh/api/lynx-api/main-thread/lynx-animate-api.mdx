@@ -1,0 +1,148 @@
+---
+title: animate()
+api: lynx-api/main-thread/ElementAnimate
+---
+
+# animate()
+
+## 介绍
+
+使用 `Element` 的 `animate()` 方法来给 UI 元件设置 [CSS Animation 动画](../../css/properties/animation.mdx)。
+
+## 语法
+
+```js
+animate(keyframes, options);
+```
+
+### 参数
+
+#### keyframes
+
+1. 一个由多个关键帧的属性和值组成的对象所构成的**数组**。
+
+```js
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  ele.animate(
+    [
+      {
+        // from
+        opacity: 0,
+        color: '#fff',
+      },
+      {
+        // to
+        opacity: 1,
+        color: '#000',
+      },
+    ],
+    2000,
+  );
+}
+```
+
+2. 给每个关键帧指定一个 [timing-function](../../css/properties/animation-timing-function) 来控制动画的速度。
+
+```js
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  ele.animate(
+    [
+      {
+        // from
+        opacity: 0,
+        color: '#fff',
+        'animation-timing-function': 'linear',
+      },
+      {
+        // to
+        opacity: 1,
+        color: '#000',
+        'animation-timing-function': 'ease-in',
+      },
+    ],
+    2000,
+  );
+}
+```
+
+#### options
+
+包含一个或多个属性的**对象**：
+
+| Key        | Value类型 | 是否可选 | 说明                                                                                                                                                                                                      | 默认值          |
+| ---------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| duration   | Number    | optional | 动画持续时间                                                                                                                                                                                              | 0               |
+| delay      | Number    | optional | 动画开始生效前的延迟时间                                                                                                                                                                                  | 0               |
+| iterations | Number    | optional | 动画的重复次数。可以将其设为Infinity令动画无限循环。                                                                                                                                                      | 1               |
+| direction  | String    | optional | 动画的播放方向：向前（`normal`）、向后（`reverse`）、每次迭代切换方向（`alternate`），或向后并在每次迭代后切换方向（`alternate-reverse`）。默认值为 `"normal"`。                                          | `"normal"`      |
+| easing     | String    | optional | 动画的时间函数，表示动画在时间上的变化速率。接受一个[timing-function](../../css/properties/animation-timing-function)，例如`"linear"`, `"ease-in"`, `"step-end"`, or `"cubic-bezier(0.42, 0, 0.58, 1)"`。 | `"linear"`      |
+| fill       | String    | optional | 表示动画在执行之前和之后如何将样式应用于其目标，接受一个[animation-fill-mode](../../css/properties/animation-fill-mode)，例如`"backwards"`，`"forwards"`，`"both"`。                                      | `"none"`        |
+| name       | String    | optional | 动画的名字，可作为动画的唯一标识。该名字会出现在[动画事件](../event/animation-event#animation-动画)参数中，通常用于判断某个动画事件是否是你想要的。                                                       | 内部的unique ID |
+| play-state | String    | optional | 动画的运动状态，定义一个动画是否运行或者暂停，接受一个[animation-play-state](../../css/properties/animation-play-state)                                                                                   | running         |
+
+:::info 备注
+
+若没有指定 `name`，每次生成一个自增的 unique id 作为 `name`。
+
+:::
+
+### 返回值
+
+返回 `Animation` 对象。
+`Animation` 对象上的方法：
+
+| 方法名               | 说明                                         |
+| -------------------- | -------------------------------------------- |
+| `Animation.cancel()` | 取消动画的执行，会触发animation cancel事件。 |
+| `Animation.pause()`  | 暂停动画的执行。                             |
+| `Animation.play()`   | 恢复动画的执行。                             |
+
+## 示例
+
+```js
+function controlAnimation(ele: MainThread.Element) {
+  'main thread'
+  let ani = ele.animate(
+    [
+      {
+        'background-color': 'blue',
+        transform: 'translateX(100px) translateY(300px) rotate(360deg)',
+      },
+      {
+        'background-color': 'red',
+        transform: 'translateX(0px) translateY(600px) rotate(0deg)',
+      },
+    ],
+    {
+      duration: 3000,
+      delay: 1000,
+      iterations: Infinity,
+      direction: 'alternate',
+      easing: 'ease-in-out',
+      fill: 'both',
+    },
+  );
+
+  ani.pause();
+  ani.play();
+  ani.cancel();
+}
+
+```
+
+## 动画事件
+
+Animate API 的事件和 CSS Animation [动画事件](../event/animation-event#animation-动画)相同。
+
+## 参见
+
+- [CSS 动画介绍](../../../guide/styling/animation.mdx)
+- [后台线程 Animate API](../lynx/lynx-animate-api.mdx)
+
+## 兼容性
+
+import { APITable } from '@lynx';
+
+<APITable />

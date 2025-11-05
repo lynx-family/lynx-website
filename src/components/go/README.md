@@ -16,7 +16,7 @@ The <Go> component provides a versatile and interactive approach to showcase cod
 To utilize the <Go> component in your documentation, follow these steps:
 
 1. prepare the example package
-   You need to prepare an example package in advance and generate example data. For detailed guidance, please refer to[lynx-example-packages](./../../packages/lynx-example-packages/README.md)
+   You need to prepare an example package in advance and generate example data. For detailed guidance, please refer to [lynx-example-packages](./../../packages/lynx-example-packages/README.md)
 
    Running pnpm install in the root directory to install dependencies will automatically generate the example data.
 

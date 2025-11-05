@@ -357,10 +357,9 @@ lynx.createSelectorQuery()
 
 #### 实现原理
 
-本功能基于 [`MediaResourceFetcher`](/api/lynx-native-api/resource-fetcher/MediaResourceFetcher.html) 接口实现，核心流程分为两个阶段：
+本功能基于 [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) 接口实现，核心流程分为两个阶段：
 
 1. **资源类型检测** (`isLocalResource`)
-
    - 判断请求 URL 是否符合自定义协议
    - 返回布尔值标识是否进行本地处理
 
@@ -371,7 +370,7 @@ lynx.createSelectorQuery()
 
 以下示例演示如何将类似 `http://localhost/xxx` 的 URL 映射到应用内置资源路径：
 
-<PlatformTabs hashKey="platform">
+<PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="ios">
 
 ```objective-c
@@ -467,9 +466,44 @@ class LocalMediaFetcher : LynxMediaResourceFetcher() {
 ```
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+```typescript
+
+import {
+  LynxMediaResourceFetcher,
+  LynxResourceRequest,
+  LynxOptionalBool,
+} from '@lynx/lynx';
+
+// 本地资源处理器实现
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+
+  // 资源路径转换方法
+  // @param request 资源请求对象
+  // @return 本地文件路径或空字符串
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    return request.url?.replace(
+      'http://localhost',
+      'file://'
+    ) ?? '';
+  }
+
+  // 判断是否本地资源
+  // @param url 请求的原始URL
+  // @return LynxOptionalBool.TRUE 需要重定向的请求
+  isLocalResource(url: string): LynxOptionalBool {
+    if (url.startsWith('http://localhost')) {
+      return LynxOptionalBool.TRUE
+    }
+    return LynxOptionalBool.FALSE
+  }
+}
+```
+</PlatformTabs.Tab>
 </PlatformTabs>
 
-更多详细信息请参考 [`MediaResourceFetcher`](/api/lynx-native-api/resource-fetcher/MediaResourceFetcher.html) 的 API 文档。
+更多详细信息请参考 [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) 的 API 文档。
 
 ## 兼容性
 

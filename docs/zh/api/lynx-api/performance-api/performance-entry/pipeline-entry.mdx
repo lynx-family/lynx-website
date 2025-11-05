@@ -8,7 +8,7 @@ Lynx Pipeline 是指从渲染触发到最终显示的完整流程。该流程分
 
 由于 Lynx Pipeline 触发频繁，框架仅统计以下两种情况：
 
-1. **被 [`__lynx_timing_flag`](/guide/performance/timing-flag) 标记的 Lynx Pipeline**，产生的性能数据为 `PipelineEntry`。
+1. **被 [`__lynx_timing_flag`](/guide/performance/monitor-performance/timing-flag) 标记的 Lynx Pipeline**，产生的性能数据为 `PipelineEntry`。
 2. **加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 触发的 Lynx Pipeline**，产生的性能数据为 [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry)。
 
 以下是 `PipelineEntry` 的流程图：
@@ -23,11 +23,11 @@ import { Go } from '@lynx';
 
 <Go
   example="performance-api"
-  defaultFile="src/pipeline_entry/index.tsx"
-  defaultEntryFile="dist/pipeline_entry.lynx.bundle"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/pipeline-entry-demo.jpeg"
-  entry="src/pipeline_entry"
-  highlight="{11-21,31}"
+  defaultFile="src/pipeline-entry/index.tsx"
+  defaultEntryFile="dist/pipeline-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/exmaple-pipeline-entry-new.png"
+  entry="src/pipeline-entry"
+  highlight="{11-21,34}"
 />
 
 ## 实例属性
@@ -177,7 +177,17 @@ paintEnd: number;
 frameworkPipelineTiming:  FrameworkPipelineTiming[keyof FrameworkPipelineTiming];
 ```
 
-[框架渲染](/guide/spec#framework-rendering)中关键阶段的性能数据. 类型为 [`FrameworkPipelineTiming`](/api/lynx-api/performance-api/framework-pipeline-timing)。
+[框架渲染](/guide/spec#framework-rendering)中关键阶段的性能数据， 类型为 [`FrameworkPipelineTiming`](/api/lynx-api/performance-api/framework-pipeline-timing)。
+
+### hostPlatformTiming
+
+```ts
+hostPlatformTiming: AndroidHostPlatformTiming |
+  HarmonyHostPlatformTiming |
+  IOSHostPlatformTiming;
+```
+
+[Lynx Pipeline](/guide/spec#lynx-pipeline) 中不同平台特有的关键阶段的性能数据， 类型为 [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing)。
 
 ## 兼容性
 

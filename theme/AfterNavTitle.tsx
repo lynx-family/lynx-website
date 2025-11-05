@@ -1,9 +1,11 @@
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ChevronDown } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
-import { useLang, useLocation, useNavigate } from 'rspress/runtime';
+import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import { SUBSITES_CONFIG, getLangPrefix } from '@site/shared-route-config';
 import { SubsiteLogo, SubsiteView } from './subsite-ui';
+import { VersionIndicator } from './VersionIndicator';
 
 import {
   DropdownMenu,
@@ -137,16 +139,16 @@ export default function AfterNavTitle() {
   return (
     <div className="sh-flex sh-items-center sh-gap-2">
       {currentSubsite.value === 'guide' ? (
-        <a
+        <Link
           href={`${getLangPrefix(lang)}${currentSubsite.home}`}
           className="sh-text-lg sh-font-semibold"
         >
           Lynx
-        </a>
+        </Link>
       ) : (
         <>
           <Slash />
-          <a
+          <Link
             href={`${getLangPrefix(lang)}${currentSubsite.home}`}
             className="sh-flex sh-items-center sh-gap-2"
           >
@@ -156,7 +158,7 @@ export default function AfterNavTitle() {
             <span className="sh-text-base sh-font-medium">
               {currentSubsite.label}
             </span>
-          </a>
+          </Link>
         </>
       )}
 
@@ -183,6 +185,7 @@ export default function AfterNavTitle() {
           </div>
         </DropdownMenu>
       )}
+      <VersionIndicator />
     </div>
   );
 }

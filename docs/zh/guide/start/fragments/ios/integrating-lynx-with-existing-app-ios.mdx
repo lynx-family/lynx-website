@@ -2,11 +2,13 @@
 
 import { Info, CodeFold } from '@lynx';
 import { Steps } from '@theme';
-import { Tab, Tabs } from 'rspress/theme';
+import { Tab, Tabs } from '@rspress/core/theme';
+import { Link } from '@rspress/core/theme';
+import versionJson from '../../../../../public/version.json';
 
 <Info title="Lynx for iOS">
   - 本文假设你已熟悉原生 iOS 应用开发的基本概念。
-  - 下文中的所有代码，你都可以参考项目: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/release/3.1)
+  - 下文中的所有代码，你都可以参考项目:<Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link>
 </Info>
 
 ## 1. 依赖配置
@@ -37,11 +39,11 @@ source 'https://cdn.cocoapods.org/'
 platform :ios, '10.0'
 
 target 'YourTarget' do
-  pod 'Lynx', '3.2.0', :subspecs => [
+  pod 'Lynx', '3.4.1', :subspecs => [
     'Framework',
   ]
 
-  pod 'PrimJS', '2.12.0', :subspecs => ['quickjs', 'napi']
+  pod 'PrimJS', '2.14.1', :subspecs => ['quickjs', 'napi']
 end
 ```
 </CodeFold>
@@ -60,14 +62,14 @@ source 'https://cdn.cocoapods.org/'
 platform :ios, '10.0'
 
 target 'YourTarget' do
-  pod 'Lynx', '3.2.0', :subspecs => [
+  pod 'Lynx', '3.4.1', :subspecs => [
     'Framework',
   ]
 
-  pod 'PrimJS', '2.12.0', :subspecs => ['quickjs', 'napi']
+  pod 'PrimJS', '2.14.1', :subspecs => ['quickjs', 'napi']
 
   # integrate image-service, log-service, and http-service
-  pod 'LynxService', '3.2.0', :subspecs => [
+  pod 'LynxService', '3.4.1', :subspecs => [
       'Image',
       'Log',
       'Http',
@@ -79,6 +81,42 @@ target 'YourTarget' do
 end
 ```
 </CodeFold>
+
+3. **More Elements**
+
+XElement 是 Lynx 团队维护的客户端扩展元件集合，提供更丰富的元件能力，能够让 Lynx 能够更快速的被用到生产环境中，提升 Lynx 生态的活力。
+
+从 Cocoapods 中获取 XElement 的最新版本。然后将 XElement 添加到你的 Podfile 中：
+
+<CodeFold height={360} toggle>
+```ruby title="Podfile" {23}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+  pod 'Lynx', '3.4.1', :subspecs => [
+    'Framework',
+  ]
+
+  pod 'PrimJS', '2.14.1', :subspecs => ['quickjs', 'napi']
+
+  # integrate image-service, log-service, and http-service
+  pod 'LynxService', '3.4.1', :subspecs => [
+      'Image',
+      'Log',
+      'Http',
+  ]
+
+  # ImageService
+  pod 'SDWebImage','5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+
+  pod 'XElement', '3.4.1'
+end
+```
+</CodeFold>
+
 
 ### 安装依赖
 
@@ -461,4 +499,4 @@ class ViewController: UIViewController {
 
 ## 4. 进入 Lynx 世界
 
-现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/debugging/lynx-devtool)文档进一步在 Lynx 的世界里遨游吧！
+现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/devtool/panels)文档进一步在 Lynx 的世界里遨游吧！
