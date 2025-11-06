@@ -20,6 +20,7 @@ import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
+import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -34,6 +35,7 @@ export default defineConfig({
       '**/guide/embed-lynx-to-native/*',
     ],
   },
+  // outDir: 'doc_build',
   title: 'Lynx',
   description:
     'Empower the web community and invite more to build cross-platform apps',
@@ -202,6 +204,7 @@ export default defineConfig({
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
+    pluginLLMsPostprocess(),
   ],
   markdown: {
     defaultWrapCode: false,
