@@ -82,8 +82,8 @@ Additionally:
 
 ## 8. Type System
 
-- **TypeScript support**: Official typings live in `@l y n x j s`; using TypeScript throughout is highly encouraged. (See [TypeScript Support](https://lynxjs.org/next/rspeedy/typescript))
-- **`tsconfig.json`**: Set `compilerOptions.jsx` to `react-jsx` and `compilerOptions.jsxImportSource` to `@lynx-j s/react`.
+- **TypeScript support**: Official typings live in `@lynx-js/types`; using TypeScript throughout is highly encouraged. (See [TypeScript Support](https://lynxjs.org/next/rspeedy/typescript))
+- **`tsconfig.json`**: Set `compilerOptions.jsx` to `react-jsx` and `compilerOptions.jsxImportSource` to `@lynx-js/react`.
 - **Import types correctly**: All Lynx API types are exported from `@lynx-js/types`, for example `import type { MainThread, NodesRef } from '@lynx-js/types'`. ReactLynx APIs and types come from `@lynx-js/react`.
 
 ## 9. Event Model: Naming and Propagation

@@ -45,7 +45,7 @@ function segmentByH2(root: Parent): Array<H2Segment> {
 
     return {
       title,
-      heading, // need this to generate markdown back laters
+      heading, // need this to generate markdown back later
       content: rest,
     };
   });
@@ -121,7 +121,7 @@ Below is a full list of available APIs of Lynx:
       parent &&
       (allLynxJsLinks.has(link.url) ||
         // This is a trade-off:
-        // We are hidden `/guide/devtool/*` and `/guide/performance/*` from AI to avoid noise
+        // We are hiding `/guide/devtool/*` and `/guide/performance/*` from AI to avoid noise
         link.url.match(/\/guide\/devtool/) ||
         link.url.match(/\/guide\/performance/))
     ) {
