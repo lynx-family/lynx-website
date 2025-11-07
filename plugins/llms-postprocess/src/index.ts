@@ -1,5 +1,6 @@
 import type { RspressPlugin } from '@rspress/core';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { postprocessLLMs } from './postprocess';
@@ -14,14 +15,17 @@ function pluginLLMsPostprocess(): RspressPlugin {
         const roots = [path.join(cwd, outDir), path.join(cwd, outDir, 'zh')];
 
         for (const root of roots) {
-          const llmsTxt = await fs.readFile(
-            path.join(root, 'llms.txt'),
-            'utf-8',
-          );
-          const agentsMD = await fs.readFile(
-            path.join(root, 'AGENTS.md'),
-            'utf-8',
-          );
+          const llmsTxtPath = path.join(root, 'llms.txt');
+          const agentsMDPath = path.join(root, 'AGENTS.md');
+          if (
+            existsSync(llmsTxtPath) === false ||
+            existsSync(agentsMDPath) === false
+          ) {
+            continue;
+          }
+
+          const llmsTxt = await fs.readFile(llmsTxtPath, 'utf-8');
+          const agentsMD = await fs.readFile(agentsMDPath, 'utf-8');
 
           const result = postprocessLLMs(llmsTxt, agentsMD);
 
