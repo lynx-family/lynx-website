@@ -10,6 +10,12 @@ type VersionTableProps = {
 
 export function VersionTable({ type }: VersionTableProps) {
   const t = useI18n();
+  const versionList = versionData.versions.filter(
+    (item: any) => item.type === type,
+  );
+  if (versionList.length === 0) {
+    return null;
+  }
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -49,61 +55,59 @@ export function VersionTable({ type }: VersionTableProps) {
         </thead>
 
         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-          {versionData.versions
-            .filter((item: any) => item.type === type)
-            .map((item: any) => (
-              <tr key={item.version_number}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                  {item.version_number ?? '---'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {item.release_number ? (
-                    <Link
-                      href={
-                        'https://github.com/lynx-family/lynx/releases/tag/' +
-                        item.release_number
-                      }
-                    >
-                      {item.release_number}
-                    </Link>
-                  ) : (
-                    '---'
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {item.repo_branch ? (
-                    <Link
-                      href={
-                        'https://github.com/lynx-family/lynx-website/tree/' +
-                        item.repo_branch
-                      }
-                    >
-                      {item.repo_branch}
-                    </Link>
-                  ) : (
-                    '---'
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {item.docs_link ? (
-                    <Link href={'https://lynxjs.org' + item.docs_link}>
-                      {'https://lynxjs.org' + item.docs_link}
-                    </Link>
-                  ) : (
-                    '---'
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {item.release_blog ? (
-                    <Link href={'https://lynxjs.org/' + item.release_blog}>
-                      blog
-                    </Link>
-                  ) : (
-                    '---'
-                  )}
-                </td>
-              </tr>
-            ))}
+          {versionList.map((item: any) => (
+            <tr key={item.version_number}>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                {item.version_number ?? '---'}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                {item.release_number ? (
+                  <Link
+                    href={
+                      'https://github.com/lynx-family/lynx/releases/tag/' +
+                      item.release_number
+                    }
+                  >
+                    {item.release_number}
+                  </Link>
+                ) : (
+                  '---'
+                )}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                {item.repo_branch ? (
+                  <Link
+                    href={
+                      'https://github.com/lynx-family/lynx-website/tree/' +
+                      item.repo_branch
+                    }
+                  >
+                    {item.repo_branch}
+                  </Link>
+                ) : (
+                  '---'
+                )}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                {item.docs_link ? (
+                  <Link href={'https://lynxjs.org' + item.docs_link}>
+                    {'https://lynxjs.org' + item.docs_link}
+                  </Link>
+                ) : (
+                  '---'
+                )}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                {item.release_blog ? (
+                  <Link href={'https://lynxjs.org/' + item.release_blog}>
+                    blog
+                  </Link>
+                ) : (
+                  '---'
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
