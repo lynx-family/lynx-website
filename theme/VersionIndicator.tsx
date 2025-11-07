@@ -95,7 +95,7 @@ export function VersionIndicator() {
   };
 
   const viewAllVersions = () => {
-    window.location.href = `/next${langPrefix}/versions`;
+    window.open(`/next${langPrefix}/versions`, '_blank');
   };
 
   const t = useI18n();
