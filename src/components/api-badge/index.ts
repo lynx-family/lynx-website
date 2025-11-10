@@ -12,6 +12,7 @@ export {
   ClayOnly,
   ClayWindowsOnly,
   IOSOnly,
+  HarmonyOnly,
   NoAndroid,
   NoClay,
   NoClayAndroid,

@@ -14,6 +14,7 @@ export {
   ClayOnly,
   NoClay as ClayUnavailable,
   IOSOnly,
+  HarmonyOnly,
   NoClay,
 } from './api-badge/PlatformBadge';
 

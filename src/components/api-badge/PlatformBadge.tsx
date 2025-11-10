@@ -29,6 +29,9 @@ function mapPlatformNameToFullName(platform: ExtendedPlatformName) {
   if (platform === 'clay') {
     return 'Clay';
   }
+  if (platform === 'harmony') {
+    return 'Harmony';
+  }
   return getFullPlatformName(platform);
 }
 
@@ -95,6 +98,7 @@ export function PlatformBadge({
 const platformNames: ExtendedPlatformName[] = [
   'android',
   'ios',
+  'harmony',
   'clay_android',
   'clay_ios',
   'clay_macos',
@@ -184,6 +188,12 @@ export const {
    * <IOSOnly />
    */
   IOSOnly,
+  /**
+   * Renders a badge indicating Harmony-only support
+   * @example
+   * <HarmonyOnly />
+   */
+  HarmonyOnly,
   /**
    * Renders a badge indicating no iOS support
    * @example
