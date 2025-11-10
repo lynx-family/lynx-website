@@ -27,7 +27,12 @@ function pluginLLMsPostprocess(): RspressPlugin {
           const llmsTxt = await fs.readFile(llmsTxtPath, 'utf-8');
           const agentsMD = await fs.readFile(agentsMDPath, 'utf-8');
 
-          const result = postprocessLLMs(llmsTxt, agentsMD);
+          const result = postprocessLLMs(
+            'https://lynxjs.org',
+            config.base ?? '',
+            llmsTxt,
+            agentsMD,
+          );
 
           for (const [filePath, content] of Object.entries(result)) {
             const pp = path.join(root, filePath);

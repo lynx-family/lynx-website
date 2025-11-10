@@ -20,7 +20,12 @@ async function main() {
       path.join(root, 'llms.txt.bak'),
     );
 
-    const result = postprocessLLMs(llmsTxt, agentsMD);
+    const result = postprocessLLMs(
+      'https://lynxjs.org',
+      '/3.5',
+      llmsTxt,
+      agentsMD,
+    );
 
     for (const [filePath, content] of Object.entries(result)) {
       const pp = path.join(root, filePath);
