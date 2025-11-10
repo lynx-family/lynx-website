@@ -20,7 +20,7 @@ import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
-import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
+import { pluginLLMsPostprocess } from './plugins/llms-postprocess/index.js';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
