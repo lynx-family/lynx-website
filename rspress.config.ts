@@ -224,7 +224,18 @@ export default defineConfig({
   },
   llms: {
     remarkSplitMdxOptions: {
-      includes: [[['Go', 'LegacyCompatTable', 'APITable'], '@lynx']],
+      includes: [
+        [
+          [
+            'Go',
+            'LegacyCompatTable',
+            'APITable',
+            'PlatformTabs',
+            'PlatformTabs.Tab',
+          ],
+          '@lynx',
+        ],
+      ],
     },
   },
 });
