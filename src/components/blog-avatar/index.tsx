@@ -1,4 +1,5 @@
 import IconX from '@assets/x-logo.svg?react';
+import IconBsky from '@assets/bsky-logo.svg?react';
 import {
   IconGithubLogo,
   IconGitlabLogo,
@@ -23,6 +24,9 @@ const brandSpList = {
   },
   gitlab: {
     icon: <IconGitlabLogo />,
+  },
+  bsky: {
+    icon: <IconBsky />,
   },
   default: {
     icon: <IconUserCircle />,
