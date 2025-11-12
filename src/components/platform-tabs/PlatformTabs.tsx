@@ -108,6 +108,15 @@ interface PlatformTabProps {
  * ```
  */
 const PlatformTab = ({ platform, children }: PlatformTabProps) => {
+  if (process.env.__SSR_MD__) {
+    return (
+      <>
+        <>{`\n**${platform} specific content start**\n`}</>
+        {children}
+        <>{`\n**${platform} specific content end**\n`}</>
+      </>
+    );
+  }
   return <div data-platform={platform}>{children}</div>;
 };
 
@@ -178,6 +187,9 @@ export const PlatformTabs = ({
   className,
   queryKey,
 }: PlatformTabsProps) => {
+  if (process.env.__SSR_MD__) {
+    return <>{children}</>;
+  }
   // Get available platforms from children
   const availablePlatforms = React.Children.toArray(children).reduce<
     Platform[]
