@@ -1,0 +1,219 @@
+---
+date: 2025-11-10
+sidebar: false
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+_2025 年 11 月 10 日_
+
+# Lynx 3.5: 主线程脚本，Fetch API，HarmonyOS 能力对齐
+
+<BlogAvatar list={['liujilong', 'lynx']} />
+
+Lynx 3.5 已经正式发布!
+
+延续稳定的双月发布节奏，Lynx 3.5 带来了多项重要更新：主线程脚本支持了 `stopPropagation` 事件控制和首帧响应优化；Fetch API 现已适配 HarmonyOS 并支持分块传输编码；新版本还进一步对齐了 HarmonyOS 平台能力，并新增了 `<pointer-events>` CSS 属性等功能。
+
+让我们一起来看看有哪些新特性！
+
+## 主线程脚本
+
+### MTS 事件拦截
+
+当一个事件被触发后，它会沿着响应链进行[传播](https://lynxjs.org/3.5/zh/guide/interaction/event-handling/event-propagation)。为了让事件处理流程更灵活，Lynx 3.5 在主线程脚本中新增了对 [`event.stopPropagation()`](https://lynxjs.org/3.5/zh/api/lynx-api/event/event.html#stoppropagation) 的支持，允许开发者精确控制事件传播，阻止其继续向上冒泡。
+
+```tsx {3}
+function handleInnerTap(e: MainThread.TouchEvent) {
+  'main thread';
+  e.stopPropagation(); // ✋ stop event bubbling
+  flash('inner');
+}
+```
+
+### [首帧直出](https://lynxjs.org/3.5/zh/guide/interaction/ifr.html)之后立刻响应事件
+
+在之前的版本中，ReactLynx 的事件响应需要等待“吸水”（Hydration）流程完成后才能进行。
+
+为了进一步提升用户体验，新版本优化了渲染流程，在首帧渲染时便同步构建了事件响应所需的数据结构，实现了“渲染完即可交互”，大幅提升了页面的响应速度。
+
+```tsx {3,6}
+function App() {
+  const gotoUser = () => {
+    'main thread';
+    // go to second page
+  };
+  return (
+    <view main-thread:bindtap={gotoUser}>
+      <text>goto user</text>
+    </view>
+  );
+}
+```
+
+### 跨线程函数调用支持返回数据
+
+Lynx 提供了 [`runOnMainThread`](https://lynxjs.org/3.5/zh/api/react/Function.runOnMainThread#function-runonmainthread) 和 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html) 两个 API 用于跨线程函数调用。
+在 3.5 版本中，我们对这两个 API 进行了增强，现在它们支持从目标线程异步获取返回值，让跨线程通信更加灵活。
+
+```tsx {13,14}
+import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const countRef = useMainThreadRef(0);
+
+  const addCount = (value) => {
+    'main thread';
+    countRef.current += value;
+    return countRef.current;
+  };
+
+  const increaseMainThreadCount = async () => {
+    // await for return value from main thread
+    const result = await runOnMainThread(addCount)(1);
+    console.log(result);
+  };
+}
+```
+
+## Fetch API
+
+Lynx 提供了与 Web 标准兼容的 [Fetch API](https://lynxjs.org/3.5/zh/api/lynx-api/global/fetch)，用法与 Web 平台保持一致。
+
+### 在 HarmonyOS 上使用 Fetch API
+
+Lynx 3.5 将 Fetch API 的支持扩展到了 HarmonyOS 平台。
+
+<Go
+  example="networking"
+  defaultFile="src/fetch/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/networking/fetch-example-image.webp"
+  defaultEntryFile="dist/fetch.lynx.bundle"
+  entry="src/fetch"
+/>
+### 分块传输编码
+
+对于需要流式传输大量数据的场景，分块传输编码（Chunked Transfer Encoding）是理想的选择。为了优化大体积数据的加载体验，Lynx 3.5 在 Android 和 iOS 平台引入了对分块传输编码的支持，允许客户端在数据到达时即刻处理，从而有效降低延迟。
+
+<Go
+  example="networking"
+  defaultFile="src/chunked-encoding/index.tsx"
+  defaultEntryFile="dist/chunked-encoding.lynx.bundle"
+  entry="src/chunked-encoding"
+/>
+
+## `<list>` 元件
+
+### 内置更新动画
+
+为了提供更生动、自然的列表交互体验，`<list>` 元件现已内置默认的[更新动画](https://lynxjs.org/3.5/zh/api/elements/built-in/list.html#update-animation)。当列表项被插入、删除或更新时，将自动触发平滑的过渡效果，无需开发者编写额外代码。
+
+```tsx
+<list update-animation="default"></list>
+```
+
+<table border="0">
+  <tr>
+    <td>
+      ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_delete.gif)
+    </td>
+    <td>
+      ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_update.gif)
+    </td>
+    <td>
+      ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_insert.gif)
+    </td>
+  </tr>
+  <tr>
+    <td>删除</td>
+    <td>更新</td>
+    <td>插入</td>
+  </tr>
+</table>
+
+### 延迟创建 `<list-item>` VNode
+
+在处理长列表时，ReactLynx 默认会一次性创建所有列表项的 VNode，这在数据量较大时会影响首屏渲染性能。
+
+为此，新版本引入了 `defer` 属性。开发者可为非首屏的 `<list-item>` 设置该属性，使其 VNode 推迟到列表项即将上屏时才被创建，从而显著加快首屏渲染速度。
+
+由于 `defer` 的列表项渲染涉及跨线程交互，在快速滑动时可能出现短暂白屏。为缓解此问题，开发者可设置 `<list>` 的 `preload-buffer-count` 属性来预加载部分列表项，优化滑动体验。
+
+```tsx {1,8}
+<list preload-buffer-count={10}>
+  <list-item item-key="first">
+    <FirstScreenComponent />
+  </list-item>
+  // ...
+  <list-item item-key="lazy" defer>
+    <SomeHeavyComponent />
+  </list-item>
+</list>
+```
+
+## CSS 属性 `<pointer-events>`
+
+Lynx 3.5 版本新增 CSS 属性 [`<pointer-events>`](https://lynxjs.org/3.5/zh/api/css/properties/pointer-events.html) 来指定元件是否能够响应触摸事件。
+
+```css
+pointer-events: auto;  // 默认值，此时，节点可以响应触摸事件。
+pointer-events: none;  // 节点不能响应触摸事件
+```
+
+<Go
+  example="css-api"
+  defaultFile="src/pointer-events/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pointer-events.gif"
+  entry="src/pointer-events"
+  defaultEntryFile="dist/pointer-events.lynx.bundle"
+/>
+
+## HarmonyOS 功能补齐
+
+### accessibilityAnnounce
+
+为提升信息无障碍体验，Lynx 3.5 在 HarmonyOS 平台补齐了 [`accessibilityAnnounce()`](https://lynxjs.org/3.5/zh/api/lynx-api/lynx/lynx-accessibility-announce.html) 方法。
+该方法可调用屏幕阅读器朗读指定文本，帮助视觉障碍用户感知界面状态变化或操作结果，此前已在 Android/iOS 平台提供支持。
+
+```jsx
+lynx.accessibilityAnnounce(
+  {
+    content: 'hello lynx',
+  },
+  (res) => {
+    console.log('result: ' + JSON.stringify(res));
+  },
+);
+```
+
+### requestResourcePrefetch
+
+为提升资源加载性能，Lynx 3.5 在 HarmonyOS 平台补齐了 [`requestResourcePrefetch`](https://lynxjs.org/3.5/zh/api/lynx-api/lynx/lynx-request-resource-prefetch.html) API。
+该 API 允许开发者主动预加载 CDN 资源（目前支持 `image`、`video` 和 `audio`），此前已在 Android/iOS 平台提供支持。
+
+```js
+lynx.requestResourcePrefetch?.(
+  {
+    data: [
+      {
+        uri: 'https://demo.org/test.jpg',
+        type: 'image',
+        params: { priority: 'high', cacheTarget: 'disk' },
+      },
+    ],
+  },
+  (res) => {
+    console.log(
+      'prefetch status of each resource:',
+      JSON.stringify(res.details),
+    );
+  },
+);
+```
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.5/zh/guide/start/integrate-with-existing-apps.html)更新 Lynx 依赖版本，完成 Lynx 3.5 版本升级。

@@ -1,0 +1,219 @@
+---
+date: 2025-11-10
+sidebar: false
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+_November 10th, 2025_
+
+# Lynx 3.5: Main Thread Script, Fetch API, HarmonyOS Capability Alignment
+
+<BlogAvatar list={['liujilong', 'lynx']} />
+
+We’re pleased to share the official release of Lynx 3.5, continuing our commitment to a stable bi-monthly release cadence.
+This update brings a host of meaningful improvements:
+
+- The main thread script now supports `stopPropagation` for more precise event control, along with optimizations that further enhance first-frame responsiveness.
+- The Fetch API is now fully compatible with HarmonyOS and introduces support for chunked transfer encoding.
+- Lynx 3.5 continues to close the gap in capabilities on the HarmonyOS platform, and introduces new features—including the `<pointer-events>` CSS property—empowering developers to create even richer, more interactive experiences.
+
+Let's dive in and see what's new!
+
+## Main Thread Script
+
+### MTS Event capture
+
+When an event is triggered, it [propagates](https://lynxjs.org/3.5/guide/interaction/event-handling/event-propagation) along the responder chain, allowing different parts of your UI to respond as needed. In Lynx 3.5, we’ve added support for [`event.stopPropagation()`](https://lynxjs.org/3.5/api/lynx-api/event/event.html#stoppropagation) in main thread scripts. This gives developers more control over how events move through the UI, making it easier to prevent unwanted event bubbling.
+
+```tsx {3}
+function handleInnerTap(e: MainThread.TouchEvent) {
+  'main thread';
+  e.stopPropagation(); // ✋ stop event bubbling
+  flash('inner');
+}
+```
+
+### Immediate Event Response After [Instant First-Frame Rendering](https://lynxjs.org/3.5/guide/interaction/ifr.html)
+
+Previously, event handling in ReactLynx had to wait until the hydration process finished, which could cause delays in interactivity.
+
+With Lynx 3.5, the rendering process has been improved so that the data structure for event handling is built synchronously during the first frame render. This means users can interact with the page as soon as it appears, resulting in a more responsive experience.
+
+```tsx {3,6}
+function App() {
+  const gotoUser = () => {
+    'main thread';
+    // go to second page
+  };
+  return (
+    <view main-thread:bindtap={gotoUser}>
+      <text>goto user</text>
+    </view>
+  );
+}
+```
+
+### Return Value Support for Cross-Thread Function Calls
+
+Lynx provides two APIs for cross-thread function calls: [`runOnMainThread`](https://lynxjs.org/3.5/api/react/Function.runOnMainThread#function-runonmainthread) and [`runOnBackground`](https://lynxjs.org/3.5/api/react/Function.runOnBackground.html). In the new version, both APIs have been updated to support asynchronous value returns from the target thread, making it easier and more flexible to communicate between threads.
+
+```tsx {13,14}
+import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const countRef = useMainThreadRef(0);
+
+  const addCount = (value) => {
+    'main thread';
+    countRef.current += value;
+    return countRef.current;
+  };
+
+  const increaseMainThreadCount = async () => {
+    // await for return value from main thread
+    const result = await runOnMainThread(addCount)(1);
+    console.log(result);
+  };
+}
+```
+
+## Fetch API
+
+Lynx offers a [Fetch API](https://lynxjs.org/3.5/api/lynx-api/global/fetch) that follows web standards, so its usage is familiar to web developers.
+
+### Using Fetch API on HarmonyOS
+
+With Lynx 3.5, Fetch API support is now available on HarmonyOS, making it easier to build cross-platform apps.
+
+<Go
+  example="networking"
+  defaultFile="src/fetch/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/networking/fetch-example-image.webp"
+  defaultEntryFile="dist/fetch.lynx.bundle"
+  entry="src/fetch"
+/>
+### Chunked Transfer Encoding
+
+For use cases that involve streaming large amounts of data, Chunked Transfer Encoding helps improve performance. Lynx 3.5 adds support for Chunked Transfer Encoding on both Android and iOS. This allows the client to start processing data as soon as it arrives, which can significantly reduce loading times for large datasets.
+
+<Go
+  example="networking"
+  defaultFile="src/chunked-encoding/index.tsx"
+  defaultEntryFile="dist/chunked-encoding.lynx.bundle"
+  entry="src/chunked-encoding"
+/>
+
+## `<list>` Element
+
+### Built-in Update Animations
+
+To make list interactions feel smoother and more natural, the `<list>` element now comes with default [update animations](https://lynxjs.org/3.5/api/elements/built-in/list.html#update-animation). Whenever you add, remove, or update list items, transition effects are automatically applied—no extra code needed.
+
+```tsx
+<list update-animation="default"></list>
+```
+
+<table border="0">
+  <tr>
+    <td>
+      ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_delete.gif)
+    </td>
+    <td>
+      ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_update.gif)
+    </td>
+    <td>
+      ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_insert.gif)
+    </td>
+  </tr>
+  <tr>
+    <td>Delete</td>
+    <td>Update</td>
+    <td>Insert</td>
+  </tr>
+</table>
+
+### Deferred Creation of `<list-item>` VNode
+
+When working with long lists, ReactLynx used to create VNodes for every item all at once. This could slow down the initial rendering.
+
+The new version introduces a new `defer` attribute. By setting `defer` on off-screen `<list-item>` elements, their VNodes are only created when the item is about to appear on the screen. This change can greatly improve first-frame render performance.
+
+Because rendering a deferred list item requires cross-thread communication, you might notice a brief white flash during fast scrolling. To reduce this effect, you can use the `preload-buffer-count` attribute on the `<list>` element to preload a set number of items, ensuring a seamless scrolling experience .
+
+```tsx {1,8}
+<list preload-buffer-count={10}>
+  <list-item item-key="first">
+    <FirstScreenComponent />
+  </list-item>
+  // ...
+  <list-item item-key="lazy" defer>
+    <SomeHeavyComponent />
+  </list-item>
+</list>
+```
+
+## CSS Property: `<pointer-events>`
+
+Lynx 3.5 adds support for the [`<pointer-events>`](https://lynxjs.org/3.5/api/css/properties/pointer-events.html) CSS property, which lets you control whether an element can receive touch events.
+
+```css
+pointer-events: auto;  // Default value. The element can be the target of touch events.
+pointer-events: none;  // The element cannot be the target of touch events.
+```
+
+<Go
+  example="css-api"
+  defaultFile="src/pointer-events/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pointer-events.gif"
+  entry="src/pointer-events"
+  defaultEntryFile="dist/pointer-events.lynx.bundle"
+/>
+
+## HarmonyOS Capability Alignment
+
+### accessibilityAnnounce
+
+For better accessibility, Lynx 3.5 now supports the [`accessibilityAnnounce()`](https://lynxjs.org/3.5/api/lynx-api/lynx/lynx-accessibility-announce.html) method on HarmonyOS. This method allows screen readers to read out specific text, making it easier for visually impaired users to understand changes in the interface or the results of actions. This feature was already available on Android and iOS.
+
+```jsx
+lynx.accessibilityAnnounce(
+  {
+    content: 'hello lynx',
+  },
+  (res) => {
+    console.log('result: ' + JSON.stringify(res));
+  },
+);
+```
+
+### requestResourcePrefetch
+
+To help speed up resource loading, Lynx 3.5 also brings the [`requestResourcePrefetch`](https://lynxjs.org/3.5/api/lynx-api/lynx/lynx-request-resource-prefetch.html) API to HarmonyOS. With this API, developers can prefetch CDN resources like images, videos, and audio files. This feature was previously supported on Android and iOS.
+
+```js
+lynx.requestResourcePrefetch?.(
+  {
+    data: [
+      {
+        uri: 'https://demo.org/test.jpg',
+        type: 'image',
+        params: { priority: 'high', cacheTarget: 'disk' },
+      },
+    ],
+  },
+  (res) => {
+    console.log(
+      'prefetch status of each resource:',
+      JSON.stringify(res.details),
+    );
+  },
+);
+```
+
+## Upgrade Guide
+
+Refer to the official website's guide on [Integrate with Existing Apps](https://lynxjs.org/3.5/guide/start/integrate-with-existing-apps.html) and update the Lynx dependency versions to complete the upgrade to Lynx 3.5.
