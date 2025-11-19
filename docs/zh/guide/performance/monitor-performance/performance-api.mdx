@@ -6,7 +6,7 @@
 `}</style>
 
 import { PlatformTabs, Go } from '@lynx';
-import { Tab, Tabs } from '@rspress/core/theme';
+import { Tab, Tabs } from '@theme';
 
 # Performance API
 
@@ -33,15 +33,18 @@ Performance API 的核心是 **[`PerformanceEntry`](/api/lynx-api/performance-ap
 根据 `entryType` 属性，Performance API 支持以下四种主要类型的性能事件：
 
 - **初始化事件 (`init`)**
+
   - [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry)：容器初始化性能事件
   - [`InitLynxviewEntry`](/api/lynx-api/performance-api/performance-entry/init-lynxview-entry)：LynxView 初始化性能事件
   - [`InitBackgroundRuntimeEntry`](/api/lynx-api/performance-api/performance-entry/init-background-runtime-entry)：后台运行时初始化性能事件
 
 - **性能指标事件 (`metric`)**
+
   - [`MetricFcpEntry`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry)：FCP（First Contentful Paint）性能指标
   - [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry)：ActualFMP（Actual First Meaningful Paint）性能指标
 
 - **渲染流水线事件 (`pipeline`)**
+
   - [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry)：[被标记的渲染流水线](./timing-flag)性能事件
   - [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry)：[TemplateBundle](/api/lynx-native-api/template-bundle) 加载和首屏渲染性能事件
   - [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry)[TemplateBundle](/api/lynx-native-api/template-bundle) 重新加载性能事件
@@ -60,6 +63,7 @@ PerformanceObserver 对象提供了用于开启监听的 `observe` 方法和结�
 为了避免性能事件发送时，回调未注册导致的事件遗漏，应尽可能早的注册监听。
 
 - **组件依赖**
+
   - `@lynx-js/react` >= 0.107.0
 
 - **监听时机**
@@ -77,35 +81,35 @@ PerformanceObserver 对象提供了用于开启监听的 `observe` 方法和结�
   highlight="{11-30}"
 />
 
-
 #### 客户端开发者
 
 客户端层面，Performance API 发送的性能事件将通过 LynxViewClient 下的 `onPerformanceEvent(PerformanceEntry entry)` 接口在**异步线程回调**。因此不建议在该回调内执行与 UI 有关的业务逻辑。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
+
 ```java
 import com.lynx.tasm.LynxViewClientV2;
 import com.lynx.tasm.performance.performanceobserver.PerformanceEntry;
 import com.lynx.tasm.performance.performanceobserver.MetricFcpEntry;
 
 public class CustomLynxViewClient extends LynxViewClientV2 {
-    @Override
-    public void onPerformanceEvent(@NonNull PerformanceEntry entry) {
-        // If you need to consume raw data directly, convert to HashMap
-        Log.d(entry.toHashMap());
-        // If you need to consume a specific type, cast and use inner fields
-        if (entry.entryType.equals("metric") && entry.name.equals("fcp")) {
-            MetricFcpEntry fcpEntry = (MetricFcpEntry) entry;
-            Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
-        }
+  @Override
+  public void onPerformanceEvent(@NonNull PerformanceEntry entry) {
+    // If you need to consume raw data directly, convert to HashMap
+    Log.d(entry.toHashMap());
+    // If you need to consume a specific type, cast and use inner fields
+    if (entry.entryType.equals("metric") && entry.name.equals("fcp")) {
+      MetricFcpEntry fcpEntry = (MetricFcpEntry) entry;
+      Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
     }
+  }
 }
-
-````
+```
 
 </PlatformTabs.Tab>
 <PlatformTabs.Tab platform="ios">
+
 ```objc
 #import "LynxViewClient.h"
 #import "LynxMetricFcpEntry.h"
@@ -125,10 +129,11 @@ public class CustomLynxViewClient extends LynxViewClientV2 {
 }
 @end
 
-````
+```
 
 </PlatformTabs.Tab>
 <PlatformTabs.Tab platform="harmony">
+
 ```typescript
 import { LynxViewClient, PerformanceEntry, MetricFcpEntry } from '@lynx/lynx';
 
@@ -137,13 +142,14 @@ export class CustomLynxViewClient extends LynxViewClient {
     // 如果需要直接消费原始数据，可以转换为 Record
     Log.d(entry.Record);
     // 如果需要消费某类数据，可以做数据转换后获取内部数据
-    if (entry.entryType == "metric" && entry.name == "fcp") {
-        let fcpEntry: MetricFcpEntry = entry as MetricFcpEntry;
-        Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
+    if (entry.entryType == 'metric' && entry.name == 'fcp') {
+      let fcpEntry: MetricFcpEntry = entry as MetricFcpEntry;
+      Log.d('lynxFcp is %s', fcpEntry.lynxFcp.duration);
     }
   }
 }
 ```
+
 </PlatformTabs.Tab>
 </PlatformTabs>
 
@@ -274,7 +280,6 @@ Timing Flag 不可以重复。
 
 2. **业务注册事件监听函数过晚**，可以尝试在更早的时机注册回调：
    - 应当在 Class 组件的 Constructor、函数式组件的 `useMemo` 中注册
-
 
 ### Q9: 我使用了 Timing Flag，为什么我收不到 PipelineEntry 回调？
 

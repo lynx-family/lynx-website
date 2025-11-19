@@ -5,8 +5,9 @@ import { Steps } from '@theme';
 
 <Info title="Lynx for Harmony">
 
-  - This article assumes that you are familiar with the basic concepts of native Harmony application development.
-  - You can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject) for all the code mentioned below.
+- This article assumes that you are familiar with the basic concepts of native Harmony application development.
+- You can refer to the project: [integrating-lynx-demo-projects](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main/harmony/HarmonyEmptyProject) for all the code mentioned below.
+
 </Info>
 
 ## 1. Dependency Configuration
@@ -136,7 +137,10 @@ export default class EntryAbility extends UIAbility {
 
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
 
-    LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
+    LynxServiceCenter.registerService(
+      LynxServiceType.Log,
+      LynxLogService.instance,
+    );
   }
 }
 ```
@@ -197,50 +201,72 @@ entry
 `LynxTemplateResourceFetcher` provides the capability to load Bundle template resources. You need to implement the `fetchTemplate` method to handle the loading.
 
 <CodeFold>
-``` ts title=ExampleTemplateResourceFetcher.ets
-import { LLog, LynxResourceRequest, LynxTemplateResourceFetcher, TemplateProviderResult } from '@lynx/lynx';
+
+```ts title=ExampleTemplateResourceFetcher.ets
+import {
+  LLog,
+  LynxResourceRequest,
+  LynxTemplateResourceFetcher,
+  TemplateProviderResult,
+} from '@lynx/lynx';
 import { AsyncCallback, BusinessError } from '@ohos.base';
 import http from '@ohos.net.http';
 import resourceManager from '@ohos.resourceManager';
 
 export class ExampleTemplateResourceFetcher extends LynxTemplateResourceFetcher {
-  fetchTemplate(request: LynxResourceRequest,
-    callback: AsyncCallback<TemplateProviderResult, void>) {
+  fetchTemplate(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<TemplateProviderResult, void>,
+  ) {
     if (request.url.startsWith('http')) {
       let httpRequest = http.createHttp();
       httpRequest.request(
-        request.url, {
-        expectDataType: http.HttpDataType.ARRAY_BUFFER,
-      }, (err: BusinessError, data: http.HttpResponse) => {
-        callback(err, {
-          binary: data?.result as ArrayBuffer
-        });
-        httpRequest.destroy();
-      });
+        request.url,
+        {
+          expectDataType: http.HttpDataType.ARRAY_BUFFER,
+        },
+        (err: BusinessError, data: http.HttpResponse) => {
+          callback(err, {
+            binary: data?.result as ArrayBuffer,
+          });
+          httpRequest.destroy();
+        },
+      );
     } else {
       // local file
       const context: Context = getContext(this);
-      const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
-      resourceMgr.getRawFileContent(request.url, (err: BusinessError, data: Uint8Array) => {
-        callback(err, {
-          binary: data?.buffer as ArrayBuffer
-        })
-      });
+      const resourceMgr: resourceManager.ResourceManager =
+        context.resourceManager;
+      resourceMgr.getRawFileContent(
+        request.url,
+        (err: BusinessError, data: Uint8Array) => {
+          callback(err, {
+            binary: data?.buffer as ArrayBuffer,
+          });
+        },
+      );
     }
   }
 
-fetchSSRData(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>) {
-let httpRequest = http.createHttp();
-httpRequest.request(request.url, {
-expectDataType: http.HttpDataType.ARRAY_BUFFER
-}, (err: BusinessError, data: http.HttpResponse) => {
-callback(err, data?.result as ArrayBuffer)
-httpRequest.destroy();
-})
+  fetchSSRData(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<ArrayBuffer, void>,
+  ) {
+    let httpRequest = http.createHttp();
+    httpRequest.request(
+      request.url,
+      {
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+      },
+      (err: BusinessError, data: http.HttpResponse) => {
+        callback(err, data?.result as ArrayBuffer);
+        httpRequest.destroy();
+      },
+    );
+  }
 }
-}
+```
 
-````
 </CodeFold>
 
 2. **LynxMediaResourceFetcher**
@@ -248,8 +274,13 @@ httpRequest.destroy();
 `LynxMediaResourceFetcher` provides the capability to load media resources.
 
 <CodeFold>
-``` ts title=ExampleMediaResourceFetcher.ets
-import { LynxMediaResourceFetcher, LynxResourceRequest, LynxOptionalBool } from '@lynx/lynx';
+
+```ts title=ExampleMediaResourceFetcher.ets
+import {
+  LynxMediaResourceFetcher,
+  LynxResourceRequest,
+  LynxOptionalBool,
+} from '@lynx/lynx';
 
 export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
   shouldRedirectUrl(request: LynxResourceRequest): string {
@@ -261,7 +292,7 @@ export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
     return LynxOptionalBool.UNDEFINED;
   }
 }
-````
+```
 
 </CodeFold>
 
@@ -270,78 +301,107 @@ export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
 `LynxGenericResourceFetcher` provides the capability to load generic resources. You need to implement the `fetchResource` method to handle the loading.
 
 <CodeFold>
+
 ```ts title=ExampleGenericResourceFetcher.ets
-import { LynxError, LynxSubErrorCode, LynxGenericResourceFetcher, LynxResourceRequest, LynxResourceType, LynxStreamDelegate } from '@lynx/lynx';
+import {
+  LynxError,
+  LynxSubErrorCode,
+  LynxGenericResourceFetcher,
+  LynxResourceRequest,
+  LynxResourceType,
+  LynxStreamDelegate,
+} from '@lynx/lynx';
 import { AsyncCallback, BusinessError } from '@ohos.base';
 import http from '@ohos.net.http';
-import { ImageKnife, ImageKnifeOption, CacheStrategy } from  '@ohos/imageknife';
+import { ImageKnife, ImageKnifeOption, CacheStrategy } from '@ohos/imageknife';
 
 export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
-  fetchResource(request: LynxResourceRequest, callback: AsyncCallback<ArrayBuffer, void>): void {
+  fetchResource(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<ArrayBuffer, void>,
+  ): void {
     let httpRequest = http.createHttp();
-    httpRequest.request(request.url, {
-      expectDataType: http.HttpDataType.ARRAY_BUFFER
-    }, (err: BusinessError, data: http.HttpResponse) => {
-      callback(err, data?.result as ArrayBuffer)
-      httpRequest.destroy();
-    })
+    httpRequest.request(
+      request.url,
+      {
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+      },
+      (err: BusinessError, data: http.HttpResponse) => {
+        callback(err, data?.result as ArrayBuffer);
+        httpRequest.destroy();
+      },
+    );
   }
 
-fetchResourcePath(request: LynxResourceRequest, callback: AsyncCallback<string, void>): void {
-if (request.type === LynxResourceType.LYNX_RESOURCE_TYPE_IMAGE) {
-let option = new ImageKnifeOption();
-option.loadSrc = request.url;
-option.writeCacheStrategy = CacheStrategy.File;
-let error: BusinessError | undefined = undefined;
-ImageKnife.getInstance().preLoadCache(option).then((data: string) => {
-if (data.length > 0) {
-callback(error, data);
-} else {
-error = {
-code: LynxSubErrorCode.E_RESOURCE_IMAGE_PIC_SOURCE,
-message: 'Image path is invalid',
-name: 'Image Error',
-}
-callback(error, '');
-}
-}).catch((e: string) => {
-error = {
-code: LynxSubErrorCode.E_RESOURCE_IMAGE_FROM_NETWORK_OR_OTHERS,
-message: e,
-name: 'Image Error',
-}
-callback(error, '');
-})
-} else {
-callback({
-code: LynxError.LYNX_ERROR_CODE_RESOURCE,
-message: 'unsupported type: ' + request.type,
-name: 'Resource Error',
-}, '');
-}
-}
+  fetchResourcePath(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<string, void>,
+  ): void {
+    if (request.type === LynxResourceType.LYNX_RESOURCE_TYPE_IMAGE) {
+      let option = new ImageKnifeOption();
+      option.loadSrc = request.url;
+      option.writeCacheStrategy = CacheStrategy.File;
+      let error: BusinessError | undefined = undefined;
+      ImageKnife.getInstance()
+        .preLoadCache(option)
+        .then((data: string) => {
+          if (data.length > 0) {
+            callback(error, data);
+          } else {
+            error = {
+              code: LynxSubErrorCode.E_RESOURCE_IMAGE_PIC_SOURCE,
+              message: 'Image path is invalid',
+              name: 'Image Error',
+            };
+            callback(error, '');
+          }
+        })
+        .catch((e: string) => {
+          error = {
+            code: LynxSubErrorCode.E_RESOURCE_IMAGE_FROM_NETWORK_OR_OTHERS,
+            message: e,
+            name: 'Image Error',
+          };
+          callback(error, '');
+        });
+    } else {
+      callback(
+        {
+          code: LynxError.LYNX_ERROR_CODE_RESOURCE,
+          message: 'unsupported type: ' + request.type,
+          name: 'Resource Error',
+        },
+        '',
+      );
+    }
+  }
 
-fetchStream(request: LynxResourceRequest, delegate: LynxStreamDelegate): void {
-// TODO(Lynx): support fetching stream.
-delegate.onStart(100);
-let a = new ArrayBuffer(10);
-delegate.onData(a, 0, 10);
-delegate.onEnd();
-}
+  fetchStream(
+    request: LynxResourceRequest,
+    delegate: LynxStreamDelegate,
+  ): void {
+    // TODO(Lynx): support fetching stream.
+    delegate.onStart(100);
+    let a = new ArrayBuffer(10);
+    delegate.onData(a, 0, 10);
+    delegate.onEnd();
+  }
 
-cancel(request: LynxResourceRequest): void {
-// TODO(Lynx)
+  cancel(request: LynxResourceRequest): void {
+    // TODO(Lynx)
+  }
 }
-}
+```
 
-````
 </CodeFold>
 
 ### Construct LynxView and Render the View
 
 Once you have completed the steps above, you have finished all the necessary work for creating the `LynxView` and reading its resources. You can now render the corresponding Bundle content onto the `LynxView`.
+
 <CodeFold>
-``` ts title=Index.ets
+
+```ts title=Index.ets
 import {
   LynxTemplateResourceFetcher,
   LynxMediaResourceFetcher,
@@ -373,7 +433,7 @@ struct Index {
     .size({ width: '100%', height: '100%' })
   }
 }
-````
+```
 
 </CodeFold>
 

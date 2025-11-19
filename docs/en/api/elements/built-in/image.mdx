@@ -353,6 +353,7 @@ By implementing a URL redirection mechanism, developers can intercept specific i
 This feature is implemented based on the [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) interface, with the core process divided into two stages:
 
 1. **Resource Type Detection** (`isLocalResource`)
+
    - Determines if the request URL matches the custom protocol
    - Returns a boolean indicating whether to handle it locally
 
@@ -461,20 +462,21 @@ class LocalMediaFetcher : LynxMediaResourceFetcher() {
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="harmony">
+
 ```typescript
-import { LynxMediaResourceFetcher, LynxResourceRequest, LynxOptionalBool } from '@lynx/lynx';
+import {
+  LynxMediaResourceFetcher,
+  LynxResourceRequest,
+  LynxOptionalBool,
+} from '@lynx/lynx';
 
 // Local resource handler implementation
 export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
-
   // Resource path conversion method
   // @param request Resource request object
   // @return Local file path or empty string
   shouldRedirectUrl(request: LynxResourceRequest): string {
-    return request.url?.replace(
-      'http://localhost',
-      'file://'
-    ) ?? '';
+    return request.url?.replace('http://localhost', 'file://') ?? '';
   }
 
   // Determines if the resource is local
@@ -482,13 +484,13 @@ export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
   // @return LynxOptionalBool.TRUE indicates the request needs redirection
   isLocalResource(url: string): LynxOptionalBool {
     if (url.startsWith('http://localhost')) {
-      return LynxOptionalBool.TRUE
+      return LynxOptionalBool.TRUE;
     }
-    return LynxOptionalBool.FALSE
+    return LynxOptionalBool.FALSE;
   }
 }
-
 ```
+
 </PlatformTabs.Tab>
 </PlatformTabs>
 

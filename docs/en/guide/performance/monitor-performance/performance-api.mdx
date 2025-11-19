@@ -6,7 +6,7 @@
 `}</style>
 
 import { PlatformTabs, Go } from '@lynx';
-import { Tab, Tabs } from '@rspress/core/theme';
+import { Tab, Tabs } from '@theme';
 
 # Performance API
 
@@ -32,15 +32,18 @@ The core of the Performance API is the **[`PerformanceEntry`](/api/lynx-api/perf
 Based on the `entryType` property, the Performance API supports four main categories of performance events:
 
 - **Initialization events (`init`)**
+
   - [`InitContainerEntry`](/api/lynx-api/performance-api/performance-entry/init-container-entry): Container initialization performance event
   - [`InitLynxviewEntry`](/api/lynx-api/performance-api/performance-entry/init-lynxview-entry): LynxView initialization performance event
   - [`InitBackgroundRuntimeEntry`](/api/lynx-api/performance-api/performance-entry/init-background-runtime-entry): Background runtime initialization performance event
 
 - **Metric events (`metric`)**
+
   - [`MetricFcpEntry`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry): FCP (First Contentful Paint)
   - [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry): ActualFMP (Actual First Meaningful Paint)
 
 - **Rendering pipeline events (`pipeline`)**
+
   - [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry): Performance event for [flagged rendering pipelines](./timing-flag)
   - [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry): Performance event for [TemplateBundle](/api/lynx-native-api/template-bundle) loading and first-screen rendering
   - [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry): Performance event for reloading [TemplateBundle](/api/lynx-native-api/template-bundle)
@@ -59,6 +62,7 @@ The PerformanceObserver object offers the `observe` method to start observing an
 To prevent missing events due to late registration, register observations as early as possible.
 
 - **Component dependencies**
+
   - `@lynx-js/react` >= 0.107.0
 
 - **Registration timing**
@@ -82,6 +86,7 @@ On the client side, performance events sent by the Performance API are delivered
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
+
 ```java
 import com.lynx.tasm.LynxViewClientV2;
 import com.lynx.tasm.performance.performanceobserver.PerformanceEntry;
@@ -99,11 +104,11 @@ public class CustomLynxViewClient extends LynxViewClientV2 {
     }
   }
 }
-
-````
+```
 
 </PlatformTabs.Tab>
 <PlatformTabs.Tab platform="ios">
+
 ```objc
 #import "LynxViewClient.h"
 #import "LynxMetricFcpEntry.h"
@@ -123,10 +128,11 @@ public class CustomLynxViewClient extends LynxViewClientV2 {
 }
 @end
 
-````
+```
 
 </PlatformTabs.Tab>
 <PlatformTabs.Tab platform="harmony">
+
 ```typescript
 import { LynxViewClient, PerformanceEntry, MetricFcpEntry } from '@lynx/lynx';
 
@@ -135,13 +141,14 @@ export class CustomLynxViewClient extends LynxViewClient {
     // If you need to consume raw data directly, convert to Record
     Log.d(entry.Record);
     // If you need to consume a specific type, cast and use inner fields
-    if (entry.entryType == "metric" && entry.name == "fcp") {
-        let fcpEntry: MetricFcpEntry = entry as MetricFcpEntry;
-        Log.d("lynxFcp is %s", fcpEntry.lynxFcp.duration);
+    if (entry.entryType == 'metric' && entry.name == 'fcp') {
+      let fcpEntry: MetricFcpEntry = entry as MetricFcpEntry;
+      Log.d('lynxFcp is %s', fcpEntry.lynxFcp.duration);
     }
   }
 }
 ```
+
 </PlatformTabs.Tab>
 </PlatformTabs>
 
