@@ -122,7 +122,9 @@ exposure-ui-margin-left?: string;
 
 指定曝光检测中目标节点自身的边界缩放值，影响目标节点的视口交叉判断，每一个节点可以有自己的自身边界缩放值。
 
-在使用此能力前，也需要对当前节点设置 [`enable-exposure-ui-margin`](#enable-exposure-ui-margin)。
+:::tip
+Android 和 iOS 平台都需要对当前节点设置 [`enable-exposure-ui-margin`](#enable-exposure-ui-margin)，否则不生效。HarmonyOS 平台不需要设置[`enable-exposure-ui-margin`](#enable-exposure-ui-margin) 即可生效。
+:::
 
 ### `exposure-screen-margin-*`
 
@@ -135,6 +137,10 @@ exposure-screen-margin-left?: string;
 ```
 
 指定曝光检测任务中目标节点参考的屏幕边界缩放值，影响目标节点的视口交叉判断，每一个节点可以有自己的屏幕边界缩放值。
+
+:::tip
+Android 和 iOS 平台都需要对当前节点设置 [`enable-exposure-ui-margin`](#enable-exposure-ui-margin)，否则正值表示目标节点自身边界缩放值，负值表示屏幕边界缩放值。HarmonyOS 平台不需要设置[`enable-exposure-ui-margin`](#enable-exposure-ui-margin) 即可生效。
+:::
 
 ### `exposure-area`
 
@@ -154,7 +160,9 @@ enable-exposure-ui-margin?: boolean
 
 指定目标节点是否支持 [`exposure-ui-margin-*`](#exposure-ui-margin-) 属性。
 
-设置为 `true` 会改变 [`exposure-screen-margin-*`](#exposure-screen-margin-) 的行为，可能导致可滚动容器的懒加载失效。
+:::tip
+设置为 `true` 会改变 Android 和 iOS 平台 [`exposure-screen-margin-*`](#exposure-screen-margin-) 的行为，可能导致可滚动容器的懒加载失效。
+:::
 
 ### `enable-exposure-ui-clip`
 
@@ -164,6 +172,10 @@ enable-exposure-ui-clip?: boolean
 ```
 
 指定曝光检测任务中是否考虑父节点的视口裁剪。当设置为 `true` 时，父节点视口外的节点无法触发曝光，当设置为 `false` 时，父节点视口外的节点可以触发曝光。
+
+:::tip
+默认情况下，曝光检测只考虑可滚动的父级节点的视口裁剪，其他有宽高且 overflow: visible 的父级节点视口裁剪对曝光检测无影响。通过给这些父级节点设置 `enable-exposure-ui-clip` 可以实现更加合理的视口裁剪判断。
+:::
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/enable-exposure-ui-clip-en.png"
@@ -333,6 +345,10 @@ user-interaction-enabled?: boolean
 
 指定目标节点及其子节点是否能够响应 Lynx 的触摸事件，该属性不会影响平台层手势（比如 `scroll-view` 的滚动）。
 
+:::tip
+推荐使用 [`pointer-events`](../../css/properties/pointer-events.mdx) 代替 `user-interaction-enabled`。
+:::
+
 ### `native-interaction-enabled`
 
 ```ts
@@ -343,9 +359,9 @@ native-interaction-enabled?: boolean
 指定目标节点是否消费平台层的触摸事件，影响平台层手势（比如 `scroll-view` 的滚动），不影响 Lynx 的触摸事件，可以实现类似平台层手势穿透/拦截的效果。
 
 :::tip
-在 Android 端，只支持在 `view` 元件上设置生效。
+Android 平台只支持在 `view` 元件上设置生效，并且需要节点创建对应的 Android View，可能需要同时设置 [`flatten`](#flatten) 为 `false` 才能生效。
 
-已知的双端差异：Android/HarmonyOS 端支持父子/兄弟结构的平台层手势穿透/拦截；iOS 端只支持兄弟结构的平台层手势穿透/拦截。
+手势拦截效果只能作用于兄弟节点，不能作用于父子节点。
 :::
 
 ### `block-native-event`
@@ -364,7 +380,7 @@ block-native-event?: boolean
 block-native-event-areas?: [string, string, string, string][]
 ```
 
-指定阻止 Lynx 外平台层手势的触摸区域，当目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且触摸在目标节点的指定区域时，平台层手势将被阻止，可以实现类似阻止平台层侧滑返回的效果。
+指定阻止 Lynx 外平台层手势生效的触摸区域，当目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且触摸在目标节点的指定区域时，平台层手势将被阻止，可以实现类似阻止平台层侧滑返回的效果。
 
 该二维数组内是若干个包含 `4` 个元素的数组，`4` 个元素依次为 `x`、`y`、`width`、`height`，单位为 `px` 或 `%`，表示触摸区域在目标节点中的位置和宽高。
 
@@ -525,7 +541,9 @@ tap: TouchEvent;
 
 属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上单击时触发。
 
+:::tip
 该事件和 [`longpress`](#longpress) 事件在事件监听上互斥，即前端同时监听两个事件，则两个事件不会同时触发，[`longpress`](#longpress) 优先。
+:::
 
 ### `longpress`
 
@@ -534,6 +552,22 @@ longpress: TouchEvent;
 ```
 
 属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上长按时触发，长按触发的间隔为 `500 ms`。
+
+### `click`
+
+```ts
+click: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上单击时触发。
+
+:::tip
+该事件和 [`tap`](#tap) 事件稍微有区别，主要在于事件的触发距离阈值和触发对象不同。
+
+- `tap` 的距离阈值是固定的，移动距离超过某个值后无法触发；而 `click` 的距离阈值取决于节点的触摸热区，移动出触摸热区后无法触发。
+- `tap` 的触发对象是实际触摸的距离用户最近的节点；而 `click` 的触发对象是距离用户最近且监听了 `click` 事件的节点。
+
+:::
 
 ### `layoutchange`
 
@@ -628,6 +662,7 @@ lynx
   .invoke({
     method: 'boundingClientRect',
     params: {
+      iOSEnableAnimationProps: false, // 指定 iOS 上计算位置时是否考虑 animation 属性，默认为 false
       androidEnableTransformProps: true, // 指定 Android 上计算位置时是否考虑 transform 属性，默认为 false
       relativeTo: null, // 指定参考节点，默认相对于 LynxView
     },
