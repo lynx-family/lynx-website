@@ -1,0 +1,74 @@
+---
+context: 'XElement'
+---
+
+# `<overlay>`
+
+import { Required, Deprecated, AndroidOnly, IOSOnly, Go } from '@lynx';
+
+`<overlay>` 是特意为 Hybrid App 设计的元件，其子内容能脱离 LynxView 的文档流，`fix` 到客户端页面中。
+
+- 在 Hybrid App 中如使用 LynxView 作为 Feed 卡片，则可以使用`<overlay>`来构建弹窗。
+- 当使用 LynxView 来构建一整个页面时，不建议使用`<overlay>`，直接使用 `position: fixed` 是更简单的处理方式。
+
+## 使用指南
+
+:::info
+
+- `<overlay>`只能有一个直接子节点，且`<overlay>`本身需要设置必需的 CSS 属性：
+  - `<overlay style="position: fixed;"/>`
+- `<overlay>` 只是一个容器，不占据任何空间，因此它本身不需要拥有任何的宽度和高度，也不影响父容器的布局
+- `<overlay>` 会自动将内部的子节点统一放到合适的层级，不需要额外设置`z-index`、`translateZ`等属性
+- `<overlay>` 的唯一子节点的宽高基线默认是屏幕尺寸，建议它作为一个单独的容器承载所有的绘制内容
+  - 建议将这个子节点作为 backdrop 来绘制蒙层，（即使它有可能是透明的）并设置 `width:100%; height:100%;`
+  - 如需调整视觉上「弹窗」的尺寸，建议在这个子节点的内部设置`marign`等参数
+- `<overlay>`所有内部子节点的布局:
+  - 可以使用`position: absolute`但不能再出现`position: fixed`
+  - 当使用`z-index`时，必须保证其所在的 stacking context 是`<overlay>`自身，不然会吸附到`<page>`中
+
+```tsx
+<overlay class="overlay">
+  <view class="backdrop">
+    // Dialog Content
+    <BizContent class="biz-content" />
+  </view>
+</overlay>
+```
+
+```css
+.overlay {
+  overflow: visible;
+  position: fixed;
+  z-index: 0;
+}
+.backdrop {
+  width: 100%;
+  height: 100%;
+  background: gray;
+}
+.biz-content {
+  margin: 100px;
+  position: absolute;
+}
+```
+
+:::
+
+### 使用`<overlay>`来创建弹窗
+
+<Go
+  example="overlay"
+  defaultFile="src/base/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/overlay.gif"
+  highlight="{19-72}"
+/>
+
+import APIReference from './overlay-API.mdx';
+
+<APIReference />
+
+## 兼容性
+
+import { LegacyCompatTable } from '@lynx';
+
+<LegacyCompatTable metadata="elements/overlay" />

@@ -1,0 +1,143 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { AvailableBadge, LegacyCompatTable } from '@lynx';
+
+## 属性
+
+### `ios-enable-swipe-back`
+
+{' '}
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: false
+'ios-enable-swipe-back'?: boolean;
+```
+
+当 overlay 显示时，'true' 允许右滑关闭当前页面，'false' 不允许。
+
+### `level`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: 1
+level?: 4 | 2 | 1 | 3;
+```
+
+引入层级概念，共分为四个层级。层级数字越大越靠近底部。默认为第 1 层。层级按 1 到 4 的顺序排列，显示的层级是指定的，不受显示顺序影响。同一层级内的排列遵循“后进先出”逻辑。overlay 显示期间不可动态调整层级，只能在隐藏时调整。\*
+
+### `mode`
+
+{' '}
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: 'window'
+mode?: string;
+```
+
+指定 iOS 上 overlay 内容的挂载层级。window：挂载到窗口（应用顶层）；top：挂载到 topViewController；page：挂载到 UINavigationController；others：在客户端自定义类名。
+
+### `visible`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: false
+visible?: boolean;
+```
+
+控制 overlay 是否显示
+
+## 事件
+
+前端可绑定对应事件回调以监听元素运行时行为，如下所示。
+
+### `binddismissoverlay`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+binddismissoverlay = (e: BaseEvent) => {};
+```
+
+overlay 隐藏时回调。
+
+### `binderror`
+
+{' '}
+
+<AndroidOnly /> <AvailableBadge
+  type="version"
+  data={{ version: '2.18', support: 'support' }}
+/>
+
+```tsx
+binderror = (e: OverlayErrorEvent) => {};
+```
+
+| 字段      | 类型   | 可选 | 默认 | 平台            | 起始版本 | 说明                                                                                  |
+| --------- | ------ | ---- | ---- | --------------- | -------- | ------------------------------------------------------------------------------------- |
+| errorCode | string | 否   | –    | <AndroidOnly /> |          | 错误码：0 - 正常显示；非 0 - 无法显示，可尝试通过下文提到的预加载方案适配容器来解决。 |
+| errorMsg  | string | 否   | –    | <AndroidOnly /> |          | 错误信息                                                                              |
+
+触摸 overlay 时回调。
+
+### `bindoverlaytouch`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly />
+
+```tsx
+bindoverlaytouch = (e: OverlayTouchEvent) => {};
+```
+
+| 字段  | 类型              | 可选 | 默认 | 平台                                     | 起始版本 | 说明                       |
+| ----- | ----------------- | ---- | ---- | ---------------------------------------- | -------- | -------------------------- |
+| state | OverlayTouchState | 否   | –    | <AndroidOnly /> <IOSOnly /> <ClayOnly /> |          | 触摸状态                   |
+| x     | number            | 否   | –    | <AndroidOnly /> <IOSOnly /> <ClayOnly /> |          | 相对窗口的 x 坐标，单位 px |
+| y     | number            | 否   | –    | <AndroidOnly /> <IOSOnly /> <ClayOnly /> |          | 相对窗口的 y 坐标，单位 px |
+
+触摸 overlay 时回调。
+
+### `bindrequestclose`
+
+{' '}
+
+<AndroidOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindrequestclose = (e: BaseEvent) => {};
+```
+
+点击返回按钮时回调。
+
+### `bindshowoverlay`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindshowoverlay = (e: BaseEvent) => {};
+```
+
+overlay 显示时回调。
