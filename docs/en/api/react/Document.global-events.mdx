@@ -9,8 +9,12 @@ ReactLynx provides a series of global events that allow developers to listen and
 
 ## onGlobalPropsChanged
 
-The `onGlobalPropsChanged` event is triggered when the [`lynx.__globalProps`](/api/lynx-api/lynx/lynx-global-props.mdx) object changes.
-This is useful for components that need to react to global configuration changes, such as themes, languages, etc. The callback function for this event does not receive any arguments.
+The `onGlobalPropsChanged` event is triggered when the [`lynx.__globalProps`](/api/lynx-api/lynx/lynx-global-props.mdx) object changes, automatically re-rendering the entire page afterward.
+This is useful for components that need to react to global configuration changes, such as themes, languages, etc.
+
+As a result, `onGlobalPropsChanged` is mainly used for handling side effects that are **not directly related to UI rendering**, such as data fetching.
+
+The callback function for this event does not receive any arguments; you can read the latest state directly from [`lynx.__globalProps`](/api/lynx-api/lynx/lynx-global-props.mdx).
 
 ```tsx
 import { useLynxGlobalEventListener } from '@lynx-js/react';
@@ -18,7 +22,7 @@ import { useLynxGlobalEventListener } from '@lynx-js/react';
 function App() {
   useLynxGlobalEventListener('onGlobalPropsChanged', () => {
     console.log('Global props changed:', lynx.__globalProps);
-    // You can update the component state based on the new globalProps here
+    // You can perform data fetching or other operations here
   });
 
   return <view>...</view>;
