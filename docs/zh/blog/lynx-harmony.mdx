@@ -36,11 +36,9 @@ _2025 年 9 月 25 日_
   playbackRate={1}
 />
 
-
 Lynx 在 Android、iOS、HarmonyOS 上 CSS、原生组件等功能高度一致得益于 Lynx 的架构实现：**在多平台上 Lynx 的渲染流水线是共用、一致的**。在 HarmonyOS 上，Lynx 渲染指令与 HarmonyOS 的 [ArkUI](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview) 渲染组件对接，进而实现 CSS 属性绘制、动画、自定义组件等。
 
 ![lynx-harmony-background](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-harmony/lynx-harmony-imp.png)
-
 
 ## 原生的 Lynx for HarmonyOS
 
@@ -55,7 +53,6 @@ Lynx for HarmonyOS 最终选择 C API 方式将 Lynx [platform-ui-tree](https://
 - **原生组件渲染**：利用了 [ArkUI](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview) 的 [C API](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ndk-build-ui-overview) 将 [element-tree](https://lynxjs.org/guide/spec.html#element-tree) 操作直接转换为对原生 UI 节点的调用，其渲染指令可以绕开 [ArkTS](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-overview) 虚拟机的执行开销，不存在语言间数据传递的转换，在 HarmonyOS 上实现接近甚至超越原生 ArkTS 的渲染性能。
 
 - **自定义元件**：通过 HarmonyOS 提供的 [`BuilderNode`](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-user-defined-arktsnode-buildernode) 和 [`Builder`](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-builder) 可动态构建 ArkTS 子树，直接嵌入到 Lynx 创建的 ArkUI 节点树，以实现高度定制自定义元件。
-
 
 ### 复杂交互处理
 
@@ -100,15 +97,14 @@ Lynx 在 HarmonyOS 构建了一套完整的事件处理机制，能在复杂交�
   </tr>
 </table>
 
-
 - **自定义 HitTest**：在 Lynx platform-ui-tree 上准确查找响应事件的节点，保障基础交互的准确性。
 - **手势识别**：集成了 HarmonyOS 的手势识别能力如 [`tap`](https://lynxjs.org/api/lynx-api/event/touch-event#tap)、[`longpress`](https://lynxjs.org/api/lynx-api/event/touch-event#longpress) 等，保障在使用 Lynx for HarmonyOS 时拥有与原生一致的手势体验。
 - **混合场景自定义控制**：提供一系列事件 API，如 [`user-interaction-enabled`](https://lynxjs.org/api/elements/built-in/view.html#user-interaction-enabled) 和 [`block-native-event`](https://lynxjs.org/api/elements/built-in/view.html#block-native-event)，允许开发者可控制事件的穿透和消费逻辑，可高效处理与原生页面的混合滚动等复杂场景。
 
 ### 原生能力拓展
+
 - **元件定制能力**：Lynx 不仅提供了丰富的内置元件，还允许开发者将自己开发的 HarmonyOS 原生组件（通过 ArkTS 实现）封装并注册到 Lynx 运行时中。这意味着开发者可以根据业务需求扩展应用的 UI 能力，实现高度定制化的界面和交互，保持原生体验。更多内容参考：[自定义元件的使用指南](/zh/guide/custom-native-component.html#platform=harmony)。
 - **原生模块定制能力**：通过 Lynx 的原生模块扩展能力，开发者可以在 JavaScript 中调用 HarmonyOS 的原生 API，无论是系统级的服务还是自定义的原生模块。更多内容参考：[原生模块的使用指南](/zh/guide/use-native-modules.html#platform=harmony)。
-
 
 ## 在 HarmonyOS 创建第一个 Lynx 应用
 
