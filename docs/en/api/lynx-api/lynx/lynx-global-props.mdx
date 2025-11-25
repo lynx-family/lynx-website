@@ -1,15 +1,15 @@
 # GlobalProps
 
-`lynx.__globalProps` is a global variable, which is an object and you can access it from anywhere。
+`lynx.__globalProps` is a global object that you can access from anywhere.
 
-- It is read-only in the front-end code, you cannot modify its value
-- The client can set and update its value by calling the API provided by lynx SDK
-- Every time the client performs an update, it will trigger a re-rendering of the entire page
+- It is read-only in the front-end code, you cannot modify its value.
+- The client can set and update its value by calling APIs provided by the Lynx SDK.
+- Every time the client performs an update, it will trigger the `onGlobalPropsChanged` event, followed by a re-rendering of the entire page.
 
 ## Usage
 
 ```tsx
-// The properties within the `lynx.__globalProps` object are not managed by Lynx itself. 
+// The properties within the `lynx.__globalProps` object are not managed by Lynx itself.
 // Therefore, you must extend its interface yourself.
 declare module '@lynx-js/types' {
   interface GlobalProps {
@@ -32,9 +32,25 @@ function App() {
 }
 ```
 
+## Event Listening
+
+You can listen for changes to `__globalProps` in your component.
+
+```tsx
+import { useLynxGlobalEventListener } from '@lynx-js/react';
+
+export function App() {
+  useLynxGlobalEventListener('onGlobalPropsChanged', () => {
+    console.log('onGlobalPropsChanged', lynx.__globalProps);
+  });
+
+  return <view />;
+}
+```
+
 ## Client side
 
-`__globalProps` can be updated through the API provided by `LynxView`
+`__globalProps` can be updated through APIs provided by `LynxView`.
 
 ### Android
 
