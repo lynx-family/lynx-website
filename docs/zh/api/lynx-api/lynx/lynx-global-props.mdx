@@ -2,9 +2,9 @@
 
 `lynx.__globalProps` 是一个全局变量，它是一个对象，你可以在任何地方访问它。
 
-- 它在前端代码中是只读的，你不能修改它的值
+- 它在前端代码中是只读的，你不能修改它的值。
 - 客户端可以通过调用 lynx SDK 提供的相关 API 设置和更新它的值。
-- 客户端每次执行更新，都会触发整个页面的一次重新渲染
+- 客户端每次执行更新，都会触发 `onGlobalPropsChanged` 事件，随后触发整个页面的一次重新渲染。
 
 ## 用法
 
@@ -31,9 +31,25 @@ function App() {
 }
 ```
 
+## 事件监听
+
+你可以在你的组件中监听 `__globalProps` 的变化。
+
+```tsx
+import { useLynxGlobalEventListener } from '@lynx-js/react';
+
+export function App() {
+  useLynxGlobalEventListener('onGlobalPropsChanged', () => {
+    console.log('onGlobalPropsChanged', lynx.__globalProps);
+  });
+
+  return <view />;
+}
+```
+
 ## 客户端接入
 
-在 `LynxView` 提供了接口设置 `__globalProps`
+在 `LynxView` 提供了接口设置 `__globalProps`。
 
 ### Android
 
