@@ -1,0 +1,40 @@
+# lynx_value_get_named_property
+
+## Introduction
+
+Read value from lynx_value of map type by given key. 
+
+## Syntax
+
+```c
+lynx_api_status
+lynx_value_get_named_property(lynx_api_env env, lynx_value object,
+                              const char* utf8name, lynx_value* result);
+```
+
+### Parameters
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | The environment in which lynx value runs, typically nullptr. |
+| [in] object   | The lynx_value to query.                                     |
+| [in] utf8name | The name of the property to get.                             |
+| [out] result  | The value of the property.                                   |
+
+### Return Value
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_map_expected` if the types do not match.
+
+## Example
+
+After using the extracted result, memory needs to be freed using `lynx_value_remove_reference`.
+
+```c
+lynx_value ret;
+lynx_api_status status = lynx_value_get_named_property(env, map_value, "v1", &ret);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+// do something
+lynx_value_remove_reference(env, ret, NULL);
+```
