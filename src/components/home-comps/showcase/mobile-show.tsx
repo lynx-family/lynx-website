@@ -6,7 +6,7 @@ import styles from './index.module.less';
 type CaseKey = 'case-0' | 'case-1';
 
 export const MobileShow = ({ preview }: { preview: CaseKey }) => {
-   const caseList = {
+  const caseList = {
     'case-0': {
       image: case0src,
       video:
