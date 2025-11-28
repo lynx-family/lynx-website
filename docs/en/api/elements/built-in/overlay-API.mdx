@@ -1,0 +1,134 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { AvailableBadge, LegacyCompatTable } from '@lynx';
+
+## Attributes
+
+### `ios-enable-swipe-back`
+
+{' '}
+<IOSOnly />
+
+```tsx
+// @defaultValue: false
+'ios-enable-swipe-back'?: boolean;
+```
+
+When overlay is displayed, 'true' allows swiping right to close the current page, 'false' does not allow it
+
+### `level`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: 1
+level?: 4 | 2 | 1 | 3;
+```
+
+Introduces the concept of layers, which are divided into four levels. The larger the layer, the closer it is to the bottom. By default, it is the first level. The layers are arranged in order from 1 to 4. The displayed layer is specified and is not affected by the order of display. Within each layer, the arrangement is based on the 'last in, first out' logic. The layer cannot be dynamically adjusted when the overlay is displayed, and can only be adjusted when it is hidden. \*
+
+### `mode`
+
+{' '}
+<IOSOnly />
+
+```tsx
+// @defaultValue: 'window'
+mode?: string;
+```
+
+Specifies the level at which the overlay content resides on iOS. window: Mounted on the window, the top level of the app; top: Mounted on the topViewController; page: Mounted on UINavigationController; others: customize the name of class in the client.
+
+### `visible`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: false
+visible?: boolean;
+```
+
+Control whether the overlay is displayed
+
+## Events
+
+Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+
+### `binddismissoverlay`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+binddismissoverlay = (e: BaseEvent) => {};
+```
+
+Callback when the overlay is hidden.
+
+### `binderror`
+
+{' '}
+<AndroidOnly /> <AvailableBadge
+  type="version"
+  data={{ version: '2.18', support: 'support' }}
+/>
+
+```tsx
+binderror = (e: OverlayErrorEvent) => {};
+```
+
+| Field     | Type   | Optional | Default | Platforms       | Since | Description                                                                                                                                                  |
+| --------- | ------ | -------- | ------- | --------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| errorCode | string | No       | –       | <AndroidOnly /> |       | Error code: 0 - Display normally; non-0 - Unable to display, you can try to solve it by using the preloading scheme mentioned below for adapting containers. |
+| errorMsg  | string | No       | –       | <AndroidOnly /> |       | Error message                                                                                                                                                |
+
+Callback when touch on the overlay
+
+### `bindoverlaytouch`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <ClayOnly />
+
+```tsx
+bindoverlaytouch = (e: OverlayTouchEvent) => {};
+```
+
+| Field | Type              | Optional | Default | Platforms                                | Since | Description                              |
+| ----- | ----------------- | -------- | ------- | ---------------------------------------- | ----- | ---------------------------------------- |
+| state | OverlayTouchState | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> |       | Touch state                              |
+| x     | number            | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> |       | x position relative to the window, in px |
+| y     | number            | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> |       | y position relative to the window, in px |
+
+Callback when touch on the overlay
+
+### `bindrequestclose`
+
+{' '}
+<AndroidOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindrequestclose = (e: BaseEvent) => {};
+```
+
+Callback when the back button is clicked.
+
+### `bindshowoverlay`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindshowoverlay = (e: BaseEvent) => {};
+```
+
+Callback when the overlay is displayed
