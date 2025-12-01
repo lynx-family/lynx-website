@@ -99,7 +99,7 @@ Only available on Android platform, used to force specific nodes to create corre
 exposure-id?: string
 ```
 
-Specify whether the target node needs to listen to [exposure/anti-exposure events](../../../guide/interaction/visibility-detection/exposure-ability.mdx#monitor-exposure-of-the-entire-page).
+Specify whether the target node needs to listen to [exposure/disexposure events](../../../guide/interaction/visibility-detection/exposure-ability.mdx#monitor-exposure-of-the-entire-page).
 
 ### `exposure-scene`
 
@@ -122,7 +122,9 @@ exposure-ui-margin-left?: string;
 
 Specify the boundary scaling value of the target node itself in the exposure detection, which affects the viewport intersection judgment of the target node. Each node can have its own boundary scaling value.
 
-Before using this capability, you also need to set [`enable-exposure-ui-margin`](#enable-exposure-ui-margin) for the current node.
+:::tip
+On both Android and iOS platforms, you need to set [`enable-exposure-ui-margin`](#enable-exposure-ui-margin) for the current node; otherwise, it won't take effect. On the HarmonyOS platform, setting [`enable-exposure-ui-margin`](#enable-exposure-ui-margin) is not required for it to take effect.
+:::
 
 ### `exposure-screen-margin-*`
 
@@ -135,6 +137,10 @@ exposure-screen-margin-left?: string;
 ```
 
 Specify the screen boundary scaling value referenced by the target node in the exposure detection task, which affects the viewport intersection judgment of the target node. Each node can have its own screen boundary scaling value.
+
+:::tip
+On both Android and iOS platforms, you need to set [`enable-exposure-ui-margin`](#enable-exposure-ui-margin) for the current node; otherwise, a positive value represents the scaling value of the target node's own boundaries, and a negative value represents the scaling value of the screen boundaries. On the HarmonyOS platform, setting [`enable-exposure-ui-margin`](#enable-exposure-ui-margin) is not required for it to take effect.
+:::
 
 ### `exposure-area`
 
@@ -154,7 +160,9 @@ enable-exposure-ui-margin?: boolean
 
 Specify whether the target node supports the [`exposure-ui-margin-*`](#exposure-ui-margin-) properties.
 
-Setting it to `true` will change the behavior of [`exposure-screen-margin-*`](#exposure-screen-margin-) and may cause the lazy loading of the scrollable container to fail.
+:::tip
+Setting this to `true` will change the behavior of `exposure-screen-margin-*` on Android and iOS platforms, potentially causing lazy loading of scrollable containers to fail.
+:::
 
 ### `enable-exposure-ui-clip`
 
@@ -164,6 +172,10 @@ enable-exposure-ui-clip?: boolean
 ```
 
 Specify whether the exposure detection task takes into account the viewport clipping of the parent node. When set to `true`, nodes outside the parent node viewport cannot trigger exposure, and when set to `false`, nodes outside the parent node viewport can trigger exposure.
+
+:::tip
+By default, exposure detection only considers the viewport clipping of scrollable parent nodes. The viewport clipping of other parent nodes with width and height and `overflow: visible` has no effect on exposure detection. Setting `enable-exposure-ui-clip` for these parent nodes allows for more accurate viewport clipping determination.
+:::
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/enable-exposure-ui-clip-en.png"
@@ -333,6 +345,10 @@ user-interaction-enabled?: boolean
 
 Specifies whether the target node and its child nodes can respond to Lynx touch events. This property does not affect platform-level gestures (such as scrolling of `scroll-view`).
 
+:::tip
+It is recommended to use [`pointer-events`](../../css/properties/pointer-events.mdx) instead of `user-interaction-enabled`.
+:::
+
 ### `native-interaction-enabled`
 
 ```ts
@@ -343,9 +359,9 @@ native-interaction-enabled?: boolean
 Specify whether the target node consumes platform-layer touch events, affects platform-layer gestures (such as scrolling of `scroll-view`), does not affect Lynx touch events, and can achieve similar platform-layer gesture penetration/interception effects.
 
 :::tip
-On the Android side, only supports setting effectiveness on the `view` element.
+On the Android platform, this setting only applies to `view` elements, and the corresponding Android View needs to be created for the node to take effect. It may also require setting [`flatten`](#flatten) to `false` for it to work.
 
-Known differences between the two sides: Android and HarmonyOS support platform-layer gesture penetration/interception of parent-child/sibling structures; iOS only supports platform-layer gesture penetration/interception of sibling structures.
+Gesture interception effects only apply to sibling nodes, not parent-child nodes.
 :::
 
 ### `block-native-event`
@@ -521,7 +537,9 @@ tap: TouchEvent;
 
 It belongs to [touch event](../../lynx-api/event/touch-event), which is triggered when the finger clicks on the touch surface.
 
+:::tip
 This event and the [`longpress`](#longpress) event are mutually exclusive in event monitoring, that is, if the front-end monitors both events at the same time, the two events will not be triggered at the same time, and [`longpress`](#longpress) takes precedence.
+:::
 
 ### `longpress`
 
@@ -530,6 +548,23 @@ longpress: TouchEvent;
 ```
 
 It belongs to the [touch event](../../lynx-api/event/touch-event), which is triggered when the finger is long pressed on the touch surface, and the interval between long press triggers is `500 ms`.
+
+### `click`
+
+```ts
+click: TouchEvent;
+```
+
+This belongs to the [touch event](../../lynx-api/event/touch-event), triggered when a finger clicks on the touch surface.
+
+:::tip
+This event differs slightly from the [`tap`](#tap) event, mainly in the trigger distance threshold and the triggering object.
+
+- The distance threshold for `tap` is fixed; it cannot be triggered if the movement distance exceeds a certain value. The distance threshold for `click` depends on the node's touch hotspot; it cannot be triggered if the node moves outside the touch hotspot.
+
+- The triggering object for `tap` is the node closest to the user that is actually touched. The triggering object for `click` is the node closest to the user that is listening for the `click` event.
+
+:::
 
 ### `layoutchange`
 
@@ -624,6 +659,7 @@ lynx
   .invoke({
     method: 'boundingClientRect',
     params: {
+      iOSEnableAnimationProps: false, // Specifies whether to consider animation properties when calculating position on iOS; the default is false.
       androidEnableTransformProps: true, // Specifies whether to consider the transform attribute when calculating the position on Android. The default value is false.
       relativeTo: null, // Specify the reference node, relative to LynxView by default.
     },
