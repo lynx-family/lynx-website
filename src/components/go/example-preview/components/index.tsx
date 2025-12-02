@@ -1,5 +1,5 @@
 import React, { FC, useMemo, useRef, useState } from 'react';
-import { useI18n, useLang } from '@rspress/core/runtime';
+import { useI18n, useLang, withBase } from '@rspress/core/runtime';
 import {
   Space,
   Typography,
@@ -37,6 +37,8 @@ const LYNX_EXPLORER_URL_CN =
 const LYNX_EXPLORER_URL_EN =
   process.env.LYNX_EXPLORER_URL_EN ||
   '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator';
+
+const lynxExplorerText = process.env.LYNX_EXPLORER_TEXT || 'Lynx Explorer';
 
 enum PreviewType {
   Preview = 'Preview',
@@ -227,16 +229,17 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                       {t('go.scan.message-1')}
                       <Typography.Text
                         link={{
-                          href:
+                          href: withBase(
                             lang === 'zh'
                               ? LYNX_EXPLORER_URL_CN
                               : LYNX_EXPLORER_URL_EN,
+                          ),
                           target: '_blank',
                         }}
                         size="small"
                         underline
                       >
-                        Lynx Explorer
+                        {lynxExplorerText}
                       </Typography.Text>{' '}
                       {t('go.scan.message-2')}
                     </Typography.Text>
