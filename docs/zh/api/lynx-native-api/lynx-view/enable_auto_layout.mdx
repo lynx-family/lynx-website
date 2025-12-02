@@ -1,0 +1,45 @@
+---
+context: 'IOS'
+---
+
+# enableAutoLayout
+
+启用后，iOS AutoLayout 计算的尺寸将在 LynxView 上生效  
+
+## 语法
+
+### iOS
+
+```objc
+@property(nonatomic, assign) bool enableAutoLayout;
+```
+
+#### 参数说明
+
+`enableAutoLayout`：布尔开关
+- 默认值为 `false`，当取值为 `false` 时，LynxView 将忽略 AutoLayout 引擎计算的尺寸结果
+- 当取值为 `true` 时，LynxView 将使用 AutoLayout 引擎计算的尺寸结果
+
+#### 示例代码
+``` objc
+- (void)setupMainLynxView {
+  self.mainLynxView.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.mainLynxView.topAnchor constraintEqualToAnchor:self.autoLayoutSwitch.bottomAnchor
+                                                constant:20],
+    [self.mainLynxView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+    [self.mainLynxView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+    [self.mainLynxView.bottomAnchor
+        constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor]
+  ]];
+
+  self.mainLynxView.enableAutoLayout = true;
+}
+```
+
+## 注意事项
+
+开启后，`LynxView` 会在布局期间，自动使用 AutoLayout 引擎计算的结果作为视图大小；如果此前同时使用 `updateViewport`设置视图大小， `updateViewport` 的设置结果将被覆盖。
+
+相关文档：请参阅 [updateViewport](/api/lynx-native-api/lynx-view/update-viewport)。
+

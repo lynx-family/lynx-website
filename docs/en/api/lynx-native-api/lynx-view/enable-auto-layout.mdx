@@ -1,0 +1,44 @@
+---
+context: 'IOS'
+---
+
+# enableAutoLayout
+
+When enabled, the size calculated by iOS AutoLayout will take effect on LynxView.
+
+## Syntax
+
+### iOS
+
+```objc
+@property(nonatomic, assign) bool enableAutoLayout;
+```
+
+#### Parameter Description
+
+`enableAutoLayout`: Boolean switch
+- The default value is `false`. When the value is `false`, LynxView will ignore the size results calculated by the AutoLayout engine.
+- When the value is `true`, LynxView will use the size results calculated by the AutoLayout engine.
+
+#### Example Code
+```objc
+- (void)setupMainLynxView {
+  self.mainLynxView.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.mainLynxView.topAnchor constraintEqualToAnchor:self.autoLayoutSwitch.bottomAnchor
+                                                constant:20],
+    [self.mainLynxView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+    [self.mainLynxView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+    [self.mainLynxView.bottomAnchor
+        constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor]
+  ]];
+
+  self.mainLynxView.enableAutoLayout = true;
+}
+```
+
+## Notes
+
+When enabled, `LynxView` will automatically use the results calculated by the AutoLayout engine as the view size during layout. If `updateViewport` was previously used to set the view size, the settings from `updateViewport` will be overwritten.
+
+Related documentation: Please refer to [updateViewport](/api/lynx-native-api/lynx-view/update-viewport).
