@@ -46,6 +46,8 @@ const examplesDir = path.join(
 );
 const lynxEntryFileName = process.env.LYNX_ENTRY_FILE_NAME || '.lynx.bundle';
 const webEntryFileName = process.env.WEB_ENTRY_FILE_NAME || '.web.bundle';
+const removeLinkPath =
+  (process.env.REMOVE_LINK_PATH || 'true').toLowerCase() === 'true';
 const exampleGitBaseUrl =
   process.env.EXAMPLE_GIT_BASE_URL ||
   'https://github.com/lynx-family/lynx-examples/tree/main';
@@ -164,7 +166,7 @@ function sortFilesByDirectoryFirst(files) {
  * Parse example data and generate corresponding JSON files
  */
 function parseExampleData() {
-  if (fs.existsSync(linkPath)) {
+  if (removeLinkPath && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
