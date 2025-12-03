@@ -47,11 +47,22 @@ function PlatformHeaders({
     <tr className="bc-platforms">
       <td />
       {platforms.map((platform) => {
-        // Get the intersection of browsers in the `browsers` array and the
-        // `PLATFORM_BROWSERS[platform]`.
-        const browsersInPlatform = browsers.filter(
-          (browser) => browserInfo[browser].type === platform,
-        );
+        const browsersInPlatform = browsers.filter((browser) => {
+          if (process.env.COMPAT_TABLE_HIDE_CLAY) {
+            if (
+              platform === 'native' &&
+              (browser === 'clay_macos' || browser === 'clay_windows')
+            ) {
+              return true;
+            }
+            return browserInfo[browser].type === platform;
+          } else {
+            if (browser.startsWith('clay_')) {
+              return platform === 'clay';
+            }
+            return browserInfo[browser].type === platform;
+          }
+        });
         const browserCount = browsersInPlatform.length;
         return (
           <th
@@ -71,15 +82,38 @@ function PlatformHeaders({
   );
 }
 
-function BrowserHeaders({ browsers }: { browsers: BCD.PlatformName[] }) {
+function BrowserHeaders({
+  browsers,
+  browserInfo,
+  platforms,
+}: {
+  browsers: BCD.PlatformName[];
+  browserInfo: BCD.Platforms;
+  platforms: string[];
+}) {
+  const getBrowserPlatformType = (browser: BCD.PlatformName): string => {
+    if (process.env.COMPAT_TABLE_HIDE_CLAY) {
+      if (browser === 'clay_macos' || browser === 'clay_windows') {
+        return 'native';
+      }
+      return browserInfo[browser].type;
+    } else {
+      if (browser.startsWith('clay_')) {
+        return 'clay';
+      }
+      return browserInfo[browser].type;
+    }
+  };
+
   return (
     <tr className="bc-browsers">
       <td />
       {browsers.map((browser) => {
+        const platformType = getBrowserPlatformType(browser);
         return (
           <th key={browser} className={`bc-browser bc-browser-${browser}`}>
             <div className={`bc-head-txt-label bc-head-icon-${browser}`}>
-              <BrowserName id={browser} />
+              <BrowserName id={browser} platformType={platformType} />
             </div>
             <div
               className={`bc-head-icon-symbol icon icon-${mapPlatformNameToIconName(
@@ -114,7 +148,11 @@ export function Headers({
         browsers={browsers}
         browserInfo={browserInfo}
       />
-      <BrowserHeaders browsers={browsers} />
+      <BrowserHeaders
+        browsers={browsers}
+        browserInfo={browserInfo}
+        platforms={platforms}
+      />
     </thead>
   );
 }

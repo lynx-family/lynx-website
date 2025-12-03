@@ -53,11 +53,53 @@ function gatherPlatformsAndBrowsers(
 
   // Add browsers in platform order to align table cells
   for (const platform of platforms) {
-    browsers.push(
-      ...(Object.keys(browserInfo).filter(
-        (browser) => browserInfo[browser].type === platform,
-      ) as BCD.PlatformName[]),
-    );
+    if (platform === 'native') {
+      if (process.env.COMPAT_TABLE_HIDE_CLAY) {
+        const regularNativeBrowsers = Object.keys(browserInfo).filter(
+          (browser) => {
+            const platformName = browser as BCD.PlatformName;
+            return (
+              browserInfo[platformName].type === 'native' &&
+              platformName !== 'clay_macos' &&
+              platformName !== 'clay_windows'
+            );
+          },
+        );
+
+        browsers.push(...(regularNativeBrowsers as BCD.PlatformName[]));
+
+        if ('clay_macos' in browserInfo) {
+          browsers.push('clay_macos');
+        }
+        if ('clay_windows' in browserInfo) {
+          browsers.push('clay_windows');
+        }
+      } else {
+        browsers.push(
+          ...(Object.keys(browserInfo).filter((browser) => {
+            const platformName = browser as BCD.PlatformName;
+            return (
+              browserInfo[platformName].type === 'native' &&
+              !platformName.startsWith('clay_')
+            );
+          }) as BCD.PlatformName[]),
+        );
+      }
+    } else if (platform === 'clay') {
+      browsers.push(
+        ...(Object.keys(browserInfo).filter((browser) => {
+          const platformName = browser as BCD.PlatformName;
+          return platformName.startsWith('clay_');
+        }) as BCD.PlatformName[]),
+      );
+    } else {
+      browsers.push(
+        ...(Object.keys(browserInfo).filter((browser) => {
+          const platformName = browser as BCD.PlatformName;
+          return browserInfo[platformName].type === platform;
+        }) as BCD.PlatformName[]),
+      );
+    }
   }
 
   // Filter WebExtension browsers in corresponding tables.
