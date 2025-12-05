@@ -10,6 +10,7 @@ import {
   Layout as BaseLayout,
   getCustomMDXComponent,
   Link as BaseLink,
+  Tabs as BaseTabs,
 } from '@rspress/core/theme';
 import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
@@ -232,8 +233,6 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
   );
 };
 
-export { HomeLayout, Layout, Search };
-
 const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   const { href, children, className, ...restProps } = props;
   const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
@@ -255,6 +254,14 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   );
 };
 
-export { Link }; // override Link from @rspress/core/theme
+/* FIXME: overrides builtin Tabs for avoid "window is not defined" warning inner Tabs component, remove this line in the future when upgrading Rspress  */
+const Tabs = (props: any) => {
+  if (process.env.__SSR_MD__) {
+    return <>{props.children}</>;
+  }
 
+  return <BaseTabs {...props} />;
+};
+
+export { HomeLayout, Layout, Search, Link, Tabs };
 export * from '@rspress/core/theme';
