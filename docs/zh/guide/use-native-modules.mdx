@@ -116,3 +116,90 @@ declare let NativeModules: {
 | `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               |
 | `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             |
 | `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  |
+
+## 原生模块权限验证（实验性）
+
+在Lynx SDK 3.5之后，开发者可以通过`LynxViewBuilder`设置针对当前`LynxView`的原生模块验证器，从而对该`LynxView`中的所有的原生模块调用进行管控。目前仅支持Android与iOS，后续将逐步支持鸿蒙。
+<PlatformTabs queryKey="platform">
+
+  <PlatformTabs.Tab platform="android">
+    在使用`LynxViewBuilder`创建`LynxView`时，通过`registerModuleAuthValidator`接口注册原生模块验证器，验证器对当前`LynxView`中所有原生模块调用生效。
+
+    **原生模块验证器接口**
+
+    ```java title=""
+
+    /**
+    * LynxMethod verification interface, used to verify whether the LynxMethod is allowed to be
+    * called
+    */
+    public interface AuthValidator {
+    /**
+     *
+     * @param moduleName 被调用的原生模块名
+     * @param methodName 被调用的原生模块方法名
+     * @param methodParams 被调用的原生模块方法参数
+     * @return
+     * true: 验证通过，该原生模块调用将执行
+     * false: 验证失败，原声模块调用不会执行，产生JS错误
+     */
+    boolean verify(String moduleName, String methodName, JavaOnlyArray methodParams);
+    }
+
+    ```
+    **原生模块验证器注册方式**
+
+    ```java title=""
+
+    LynxViewBuilder builder = LynxView.builder()
+        // 向LynxViewBuilder中注册验证器实例
+        .registerModuleAuthValidator(new LynxModule.AuthValidator() {
+            void validate(@NonNull String moduleName, @NonNull String moduleName, @NonNull ReadableMap params) {
+               //验证逻辑
+               return result;
+            }
+       }
+    LynxView view = builder.build(context);
+
+    ```
+
+  </PlatformTabs.Tab>
+
+  <PlatformTabs.Tab platform="ios">
+
+    在使用`LynxViewBuilder`创建`LynxView`时，通过`registerMethodAuth`接口注册原生模块验证器，验证器对当前`LynxView`中所有原生模块调用生效。
+
+    **原生模块验证器接口**
+
+    ```objective-c title=""
+
+    /**
+    *
+    * @param method:被调用的原生模块名方法名
+    * @param module:被调用的原生模块
+    * @param invoke_session:原生模块调用时间戳
+    * @param inv：该次调用的动态调用方法
+    * @return
+    * true: 验证通过，该原生模块调用将执行
+    * false: 验证失败，原声模块调用不会执行，产生JS错误
+    */
+    typedef BOOL (^LynxMethodBlock)(NSString *method, NSString *module, NSString *invoke_session,
+    NSInvocation *inv);
+
+    ```
+
+    **原生模块验证器注册方式**
+
+    ```objective-c title=""
+
+    // 向LynxViewBuilder中注册验证器实例
+    LynxViewBuilder *builder = GetLynxViewBuilder();
+    [builder.config registerMethodAuth:validtorBlock];
+
+    ```
+
+  </PlatformTabs.Tab>
+
+
+</PlatformTabs>
+

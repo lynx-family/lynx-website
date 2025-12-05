@@ -113,3 +113,85 @@ Congratulations! You have successfully created a native module in Lynx Explorer!
 | `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               |
 | `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             |
 | `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  |
+
+## Native Module Permission Verification (Experimental)
+
+Starting from Lynx SDK 3.5, developers can use `LynxViewBuilder` to set a native module validator for the current `LynxView`, thereby controlling all native module calls within the `LynxView`. Currently, this feature is only supported on Android and iOS, with HarmonyOS support to be added in the future.
+
+<PlatformTabs queryKey="platform">
+
+  <PlatformTabs.Tab platform="android">
+
+    When creating a `LynxView` using `LynxViewBuilder`, register a native module validator through the `registerModuleAuthValidator` interface. The validator will apply to all native module calls within the current `LynxView`.
+
+    **Native Module Validator Interface**
+
+    ```java title=""
+
+    /**
+    * LynxMethod verification interface, used to verify whether the LynxMethod is allowed to be
+    * called
+    */
+    public interface AuthValidator {
+    /**
+     *
+     * @param moduleName The name of the called native module
+     * @param methodName The name of the called native module method
+     * @param methodParams The parameters of the called native module method
+     * @return
+     * true: Verification passed, the native module call will be executed
+     * false: Verification failed, the native module call will not be executed, and a JS error will be generated
+     */
+    boolean verify(String moduleName, String methodName, JavaOnlyArray methodParams);
+  }
+
+    ```
+
+    **Native Module Validator Registration Method**
+
+    ```java title=""
+
+    LynxViewBuilder builder = LynxView.builder()
+    // Register the validator instance with LynxViewBuilder
+    .registerModuleAuthValidator(new LynxModule.AuthValidator() {
+    void validate(@NonNull String moduleName, @NonNull String moduleName, @NonNull ReadableMap params) {
+    //Validation logic
+    return result;
+  }
+  }
+    LynxView view = builder.build(context);
+
+    ```
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="ios">
+    When creating a `LynxView` using `LynxViewBuilder`, register a native module validator through the `registerMethodAuth` interface. The validator will apply to all native module calls within the current `LynxView`.
+
+    **Native Module Validator Interface**
+
+    ```objective-c title=""
+
+    /**
+    *
+    * @param method: The name of the called native module method
+    * @param module: The called native module
+    * @param invoke_session: The timestamp of the native module call
+    * @param inv：The dynamic invocation method for this call
+    * @return
+    * true: Verification passed, the native module call will be executed
+    * false: Verification failed, the native module call will not be executed, and a JS error will be generated
+    */
+    typedef BOOL (^LynxMethodBlock)(NSString *method, NSString *module, NSString *invoke_session,
+    NSInvocation *inv);
+
+    ```
+    **Native Module Validator Registration Method**
+
+    ```objective-c title=""
+
+    // Register the validator instance with LynxViewBuilder
+    LynxViewBuilder *builder = GetLynxViewBuilder();
+    [builder.config registerMethodAuth:validtorBlock];
+
+    ```
+  </PlatformTabs.Tab>
+</PlatformTabs>
