@@ -38,6 +38,9 @@ export const CodeFold = ({
   imageFrameStyle,
   toggle = false,
 }: IProp) => {
+  if (process.env.__SSR_MD__) {
+    return <>{children}</>;
+  }
   const dark = useDark();
   const containerRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLDivElement>(null);
