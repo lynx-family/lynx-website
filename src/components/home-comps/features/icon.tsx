@@ -2,7 +2,7 @@ import React from 'react';
 import AndroidIcon from '@assets/home/home-icon-android.svg?react';
 import WebIcon from '@assets/home/home-icon-web.svg?react';
 import IosIcon from '@assets/home/home-icon-apple.svg?react';
-import HarmonyIcon from '@lynx/api-table/compat-table/assets/icons/harmony.svg?react';
+import HarmonyIcon from '@assets/home/harmony.svg?react';
 import styles from './index.module.less';
 
 const IconAndroid = () => {

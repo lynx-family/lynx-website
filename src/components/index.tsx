@@ -16,8 +16,8 @@ export {
 
 // APITable
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
-export { default as APITable } from './api-table/APITable';
-export { default as CompatTable } from './api-table/compat-table';
+export { default as SimpleAPITable } from './api-table/SimpleAPITable';
+export { default as CompatTable } from './api-table/CompatTable';
 
 // API Badges
 export { Badge } from '@rspress/core/theme';

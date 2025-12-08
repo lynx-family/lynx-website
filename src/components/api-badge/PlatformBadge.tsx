@@ -1,9 +1,10 @@
 import type LCD from '@lynx-js/lynx-compat-data';
-import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
+import { getFullPlatformName, PlatformName } from '@lynx-js/lynx-compat-data';
 import { Badge } from '@rspress/core/theme';
 
 // TODO(xuan.huang): move this to a common place.
-import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/compat-table/headers';
+import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/helpers';
+import { PlatformSvg } from '../platform-navigation/PlatformIcon';
 
 /**
  * Maps a platform name to its corresponding icon name.
@@ -38,7 +39,7 @@ function mapPlatformNameToFullName(platform: ExtendedPlatformName) {
 type BadgeProps = React.ComponentProps<typeof Badge>;
 
 type PlatformBadgeInnerProps = {
-  platform: ExtendedPlatformName;
+  platform: PlatformName;
   badgeText: string;
   type?: BadgeProps['type'];
 };
@@ -56,8 +57,9 @@ function PlatformBadgeInner({
 }: PlatformBadgeInnerProps) {
   return (
     <Badge type={type}>
-      <div
-        className={`icon icon-${mapPlatformNameToIconName(platform)} sh-bg-current sh-w-[0.9rem] sh-h-[0.9rem]`}
+      <PlatformSvg
+        platformName={platform}
+        className={`sh-bg-current sh-w-[0.9rem] sh-h-[0.9rem]`}
       />
       {badgeText}
     </Badge>
@@ -65,7 +67,7 @@ function PlatformBadgeInner({
 }
 
 type PlatformBadgeProps = {
-  platform: LCD.PlatformName;
+  platform: PlatformName;
   version?: LCD.VersionValue;
   type?: BadgeProps['type'];
 };

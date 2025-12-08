@@ -2,7 +2,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import React, { useCallback, useEffect, useState } from 'react';
-import { mapPlatformNameToIconName } from '../api-table/compat-table/headers';
+import { PlatformSvg } from '../platform-navigation/PlatformIcon';
+import { PlatformName } from '@lynx-js/lynx-compat-data';
 
 type Platform =
   | 'ios'
@@ -19,33 +20,33 @@ type Platform =
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
   label: string;
-  iconName: string;
+  iconName: PlatformName;
 }> = [
   {
     id: 'ios',
     label: 'iOS',
-    iconName: mapPlatformNameToIconName('ios'),
+    iconName: 'ios',
   },
   {
     id: 'ios-simulator',
     label: 'iOS Simulator',
-    iconName: mapPlatformNameToIconName('ios'),
+    iconName: 'ios',
   },
   {
     id: 'android',
     label: 'Android',
-    iconName: mapPlatformNameToIconName('android'),
+    iconName: 'android',
   },
 
   {
     id: 'harmony',
     label: 'HarmonyOS',
-    iconName: mapPlatformNameToIconName('harmony'),
+    iconName: 'harmony',
   },
   {
     id: 'web',
     label: 'Web',
-    iconName: mapPlatformNameToIconName('web_lynx'),
+    iconName: 'web_lynx',
   },
   {
     id: 'windows',
@@ -55,17 +56,17 @@ const PLATFORM_OPTIONS: Array<{
   {
     id: 'macos',
     label: 'macOS',
-    iconName: mapPlatformNameToIconName('ios'),
+    iconName: 'ios',
   },
   {
     id: 'macos-arm64',
     label: 'macOS (arm64)',
-    iconName: mapPlatformNameToIconName('ios'),
+    iconName: 'ios',
   },
   {
     id: 'macos-intel',
     label: 'macOS (x86_64)',
-    iconName: mapPlatformNameToIconName('ios'),
+    iconName: 'ios',
   },
   {
     id: 'reactlynx',
@@ -134,8 +135,9 @@ function OptionSelector({
           onClick={() => onSelect(option.id)}
         >
           <CardContent className="sh-pt-4 sh-pb-4 sh-flex sh-flex-col sh-items-center sh-gap-3">
-            <div
-              className={`icon icon-${option.iconName} sh-bg-current sh-h-8 sh-w-8`}
+            <PlatformSvg
+              platformName={option.iconName}
+              className="icon sh-bg-current sh-h-8 sh-w-8"
             />
             <Label
               htmlFor={option.id}

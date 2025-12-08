@@ -1,4 +1,4 @@
-import { APITable } from '@lynx';
+import { SimpleAPITable } from '@lynx';
 
 interface Props {
   metadata: string;
@@ -13,5 +13,5 @@ interface Props {
 export default function LegacyCompatTable({ metadata }: Props) {
   // Convert metadata string from "/" to "."
   // const query = metadata.replace(/\//g, '.');
-  return <APITable query={metadata} />;
+  return <SimpleAPITable query={metadata} />;
 }

@@ -6,7 +6,7 @@
  * - useSWR or a shared contextual store to ensure we are not over-fetching.
  */
 import type LCD from '@lynx-js/lynx-compat-data';
-import { getNestedValue } from '../api-table/FetchingCompatTable';
+import { getNestedValue } from '../api-table/helpers';
 import { PlatformBadge } from './PlatformBadge';
 import { StatusBadge } from './StatusBadge';
 export * as Platform from './PlatformBadge';
