@@ -248,7 +248,7 @@ fail: function (res) {},
 Automatic scrolling
 
 
-### `scrollBy`
+### `getScrollInfo`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
@@ -256,23 +256,42 @@ Automatic scrolling
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
-      method: 'scrollBy',
-      params: {
+      method: 'getScrollInfo',
+      success: Callback<{
         /**
-         * Offset to scroll
+         * Total scrollable range along orientation, in PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
          */
-        offset?: number;
-      };
-      success: function (res) {},
+        scrollRange: number;
+        /**
+         * Content offset on X-axis, in PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollX: number;
+        /**
+         * Content offset on Y-axis, in PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollY: number;
+      }>;
       fail: function (res) {},
     })
     .exec();
 
 ````
 
-Scroll by specified offset
+Get scroll info
 
-### `scrollTo`
+### `scrollBy`
 
 {' '}
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
@@ -281,29 +300,52 @@ Scroll by specified offset
 lynx.createSelectorQuery()
 .select('#id')
 .invoke({
-method: 'scrollTo',
+method: 'scrollBy',
 params: {
-/**
-_ Target item index
-_ @defaultValue 0
-\*/
-index?: number;
-/**
-_ Offset relative to target node
+/\*\*
+_ Offset to scroll
 _/
 offset?: number;
-/\*\*
-_ Enable scroll animation
-_/
-smooth?: boolean;
 };
 success: function (res) {},
 fail: function (res) {},
 })
 .exec();
 
-```
+````
+
+Scroll by specified offset
+
+
+### `scrollTo`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'scrollTo',
+      params: {
+        /**
+         * Target item index
+         * @defaultValue 0
+         */
+        index?: number;
+        /**
+         * Offset relative to target node
+         */
+        offset?: number;
+        /**
+         * Enable scroll animation
+         */
+        smooth?: boolean;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+````
 
 Scroll to specified position
-
-```
