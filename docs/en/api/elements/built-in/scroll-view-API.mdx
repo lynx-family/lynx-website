@@ -15,6 +15,7 @@ import { AvailableBadge, LegacyCompatTable } from '@lynx';
 ### `bounces`
 
 {' '}
+
 <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -30,6 +31,7 @@ Enable bounce effect
 ### `enable-scroll`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -45,6 +47,7 @@ Enable dragging
 ### `initial-scroll-offset`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '2.17', support: 'support' }}
@@ -60,6 +63,7 @@ Initial scroll position, only effective once, in PX
 ### `initial-scroll-to-index`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '2.17', support: 'support' }}
@@ -75,6 +79,7 @@ Scroll to specified child node on first screen, only effective once. All direct 
 ### `lower-threshold`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -90,6 +95,7 @@ Set upper threshold to bindscrolltoupper event.
 ### `scroll-bar-enable`
 
 {' '}
+
 <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -105,6 +111,7 @@ Enable scrollbar
 ### `scroll-orientation`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '3.0', support: 'support' }}
@@ -120,6 +127,7 @@ Replacement of scroll-x and scroll-y
 ### `upper-threshold`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -139,6 +147,7 @@ Frontend can bind corresponding event callbacks to listen for runtime behaviors 
 ### `bindcontentsizechanged`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.6', support: 'support' }}
@@ -153,6 +162,7 @@ This event is triggered when the scrollview's content size changed.
 ### `bindscroll`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -167,6 +177,7 @@ This event is triggered when the scrollview is scrolling.
 ### `bindscrollend`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.6', support: 'support' }}
@@ -181,6 +192,7 @@ This event is triggered when the scrollview's scroll ended.
 ### `bindscrolltolower`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -195,6 +207,7 @@ This event is triggered when the lower/right edge of the scrolling area intersec
 ### `bindscrolltoupper`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <AvailableBadge
   type="version"
   data={{ version: '1.4', support: 'support' }}
@@ -213,6 +226,7 @@ Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/node
 ### `autoScroll`
 
 {' '}
+
 <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
 
@@ -248,7 +262,7 @@ fail: function (res) {},
 Automatic scrolling
 
 
-### `scrollBy`
+### `getScrollInfo`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
@@ -256,12 +270,91 @@ Automatic scrolling
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
-      method: 'scrollBy',
+      method: 'getScrollInfo',
+      success: Callback<{
+        /**
+         * Total scrollable range along orientation, in PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollRange: number;
+        /**
+         * Content offset on X-axis, in PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollX: number;
+        /**
+         * Content offset on Y-axis, in PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollY: number;
+      }>;
+      fail: function (res) {},
+    })
+    .exec();
+
+````
+
+Get scroll info
+
+### `scrollBy`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+.select('#id')
+.invoke({
+method: 'scrollBy',
+params: {
+/\*\*
+_ Offset to scroll
+_/
+offset?: number;
+};
+success: function (res) {},
+fail: function (res) {},
+})
+.exec();
+
+````
+
+Scroll by specified offset
+
+
+### `scrollTo`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'scrollTo',
       params: {
         /**
-         * Offset to scroll
+         * Target item index
+         * @defaultValue 0
+         */
+        index?: number;
+        /**
+         * Offset relative to target node
          */
         offset?: number;
+        /**
+         * Enable scroll animation
+         */
+        smooth?: boolean;
       };
       success: function (res) {},
       fail: function (res) {},
@@ -270,40 +363,4 @@ lynx.createSelectorQuery()
 
 ````
 
-Scroll by specified offset
-
-### `scrollTo`
-
-{' '}
-<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
-```ts
-
-lynx.createSelectorQuery()
-.select('#id')
-.invoke({
-method: 'scrollTo',
-params: {
-/**
-_ Target item index
-_ @defaultValue 0
-\*/
-index?: number;
-/**
-_ Offset relative to target node
-_/
-offset?: number;
-/\*\*
-_ Enable scroll animation
-_/
-smooth?: boolean;
-};
-success: function (res) {},
-fail: function (res) {},
-})
-.exec();
-
-```
-
 Scroll to specified position
-
-```
