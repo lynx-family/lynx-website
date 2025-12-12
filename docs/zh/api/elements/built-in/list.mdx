@@ -469,6 +469,36 @@ scroll-bar-enable?: boolean
 
 是否显示 `<list>` 组件滚动条
 
+### `defer`
+
+```tsx
+defer?: boolean | { unmountRecycled?: boolean } | undefined
+```
+
+为 `<list-item />` 启用延迟渲染，阻止其在主线程上被立即渲染。
+
+延迟的 `<list-item />` 会在需要时在后台线程上渲染，从而使渲染过程变为异步。
+因此，在极快的滚动情况下，某些 `<list-item />` 可能不会立即渲染并可能短暂显示为空。
+
+此模式适用于在主线程之外渲染包含重量级组件的 `<list-item />`：
+
+```tsx
+<list-item defer item-key="heavy-item">
+  <HeavyComponent />
+</list-item>
+```
+
+启用 `unmountRecycled` 开关以卸载被回收的（不可见的）JSX 节点。启用后：
+
+- 组件节点将进行正常的拆卸——会调用生命周期方法（例如 `componentWillUnmount`）并执行 effect 的清理（例如 `useEffect` 的 cleanup）。
+- 元件的引用将被清除——refs 会被设置为 `null` 或根据 `ref` 的实现执行相应的清理。
+
+```tsx
+<list-item defer={{ unmountRecycled: true }} item-key="some-item">
+  <WillBeUnmountedIfRecycled />
+</list-item>
+```
+
 ### `reuse-identifier`
 
 ```tsx
