@@ -89,9 +89,7 @@ function App() {
 }
 ```
 
-## `<list>` Element
-
-### Built-in Update Animations
+## `<list>` Element with Built-in Update Animations
 
 To make list interactions feel smoother and more natural, the `<list>` element now comes with default [update animations](https://lynxjs.org/3.5/api/elements/built-in/list.html#update-animation). Whenever you add, remove, or update list items, transition effects are automatically applied—no extra code needed.
 
@@ -117,26 +115,6 @@ To make list interactions feel smoother and more natural, the `<list>` element n
     <td>Insert</td>
   </tr>
 </table>
-
-### Deferred Creation of `<list-item>` VNode
-
-When working with long lists, ReactLynx used to create VNodes for every item all at once. This could slow down the initial rendering.
-
-The new version introduces a new `defer` attribute. By setting `defer` on off-screen `<list-item>` elements, their VNodes are only created when the item is about to appear on the screen. This change can greatly improve first-frame render performance.
-
-Because rendering a deferred list item requires cross-thread communication, you might notice a brief white flash during fast scrolling. To reduce this effect, you can use the `preload-buffer-count` attribute on the `<list>` element to preload a set number of items, ensuring a seamless scrolling experience .
-
-```tsx {1,8}
-<list preload-buffer-count={10}>
-  <list-item item-key="first">
-    <FirstScreenComponent />
-  </list-item>
-  // ...
-  <list-item item-key="lazy" defer>
-    <SomeHeavyComponent />
-  </list-item>
-</list>
-```
 
 ## CSS Property: `<pointer-events>`
 
