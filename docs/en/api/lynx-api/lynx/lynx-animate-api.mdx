@@ -1,6 +1,4 @@
----
-title: animate()
----
+import { VersionBadge } from '@lynx';
 
 # animate()
 
@@ -119,6 +117,8 @@ The `Animation` object has the following methods:
 
 ## Example
 
+### by getElementById()
+
 ```js
 let ani = lynx.getElementById('test').animate(
   [
@@ -172,28 +172,115 @@ ani.play();
 ani.cancel();
 ```
 
+::: note
+
+- Each call to `getElementById("test").animate` will generate a new `Animation` object, and the later created animation will override the previous ones.
+- If you want to restart the same animation, you need to call `getElementById("test").animate` again to create a new `Animation` object.
+
+:::
+
+### by createSelectorQuery() <VersionBadge>3.4</VersionBadge>
+
+After **Lynx version 3.4**, the `animate()` can be called via the `createSelectorQuery()`.
+
+**It's an experimental feature, and you should use it with caution.**
+
+```js
+const ani1 = lynx.createAnimation(
+  'ani1',
+  [
+    {
+      transform: 'translateY(0px)',
+    },
+    {
+      transform: 'translateY(-150px)',
+    },
+  ],
+  {
+    name: 'js-animation-1',
+    duration: 3000,
+    iterations: 'infinite',
+    easing: 'cubic-bezier(.64, .57, .67, 1.53)',
+    fill: 'forwards',
+  },
+);
+
+// start
+this.createSelectorQuery().select('#test').animate([ani1]).exec();
+// pause
+this.createSelectorQuery()
+  .select('#test')
+  .pauseAnimation(['js-animation-1'])
+  .exec();
+```
+
+### Multiple animate <VersionBadge>3.4</VersionBadge>
+
+After **Lynx version 3.4**, you can chain multiple animation with `createSelectorQuery()`.
+
+**It's an experimental feature, and you should use it with caution.**
+
+```js
+const ani1 = lynx.createAnimation(
+  'ani1',
+  [
+    {
+      transform: 'translateY(0px)',
+    },
+    {
+      transform: 'translateY(-150px)',
+    },
+  ],
+  {
+    name: 'js-animation-1',
+    duration: 3000,
+    iterations: 'infinite',
+    easing: 'cubic-bezier(.64, .57, .67, 1.53)',
+    fill: 'forwards',
+  },
+);
+
+const ani2 = lynx.createAnimation(
+  'ani2',
+  [
+    {
+      'background-color': 'red',
+    },
+    {
+      'background-color': 'blue',
+    },
+  ],
+  {
+    name: 'js-animation-2',
+    duration: 3000,
+    easing: 'linear',
+    fill: 'forwards',
+    iterations: 'infinite',
+  },
+);
+
+// start
+this.createSelectorQuery().select('#test').animate([ani1, ani2]).exec();
+// pause
+this.createSelectorQuery()
+  .select('#test')
+  .pauseAnimation(['js-animation-1', 'js-animation-2'])
+  .exec();
+```
+
 ## Animation Event
 
 The events for the `animate()` API are the same as the [animation events](../event/animation-event#animation) for CSS animations.
 
 ## Other Infos
 
-:::info
-
-- Animate Api and CSS Animation will override each other, and the one that takes effect later will override the former.
-- Each call to `getElementById("test").animate` will generate a new `Animation` object.
-- Animate Api currently only supports the creation of one animation, and will support the creation of multiple animations in the future. So now if `getElementById("test").animate` is called multiple times for a node, the last created animation will overwrite the previous animation.
-- After the animation corresponding to an `Animation` object ends, if you want to restart the same animation, you need to call `getElementById("test").animate` again to create a new `Animation` object.
-- Animate API currently only supports getElementById API, and the support for SelectQuery API is still being accessed.
-
-:::
-
 :::tip
 
-The Animate API may not take effect, possibly because `getElementById` failed to select the node:
+- Animate Api and CSS Animation will override each other, and the one that takes effect later will override the former.
 
-- The ID selector might be incorrect
-- The value of the ID selector might depend on a complex JS expression, causing the value of the ID selector not to be available on the first screen. In this case, if getElementById is invoked too early (like in ComponentDidMount), it might not find the node.
+- The Animate API may not take effect, possibly because `getElementById` failed to select the node:
+  - The ID selector might be incorrect
+  - The value of the ID selector might depend on a complex JS expression, causing the value of the ID selector not to be available on the first screen. In this case, if getElementById is invoked too early (like in ComponentDidMount), it might not find the node.
 
 :::
 
