@@ -14,7 +14,7 @@ Cherry-pick commit a73c9c6 (docs: update Animate API docs #216) to branches 3.4 
 ### Branch: release/3.5
 - **Status**: ✅ Successfully cherry-picked
 - **New Commit**: aa7b5b9
-- **Strategy**: Used `-X theirs` merge strategy to automatically resolve conflicts
+- **Strategy**: Used `-X theirs` merge strategy to automatically resolve conflicts (similar count to 3.4)
 - **Changes**: 455 files changed, 11444 insertions(+), 2719 deletions(-)
 
 ## Original Commit Details

@@ -1,10 +1,22 @@
 #!/bin/bash
+set -euo pipefail
 
 # Cherry-pick Verification Script
 # This script verifies that commit a73c9c6 has been successfully cherry-picked to branches 3.4 and 3.5
 
 echo "=== Cherry-pick Verification ==="
 echo ""
+
+# Check if branches exist
+if ! git show-ref --verify --quiet refs/heads/release/3.4; then
+    echo "✗ Error: release/3.4 branch not found"
+    exit 1
+fi
+
+if ! git show-ref --verify --quiet refs/heads/release/3.5; then
+    echo "✗ Error: release/3.5 branch not found"
+    exit 1
+fi
 
 echo "1. Checking release/3.4 branch..."
 git log release/3.4 --oneline -1
