@@ -74,32 +74,6 @@ const getDataFromApiAsync = async () => {
 
 不要忘记捕获 `fetch` 可能抛出的任何错误，否则它们将被静默忽略。
 
-## 分块传输编码
-
-对于流式传输大量数据到客户端的场景，分块传输编码（Chunked Transfer Encoding）是理想的选择。该方法允许客户端在数据块到达时进行处理，从而减少整体延迟。
-
-要了解有关此标准的更多信息，请参阅 MDN 关于[分块传输编码](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Transfer-Encoding#chunked)的指南。
-
-:::tip
-
-为了简化前端开发，Lynx 会对 HTTP 响应体进行处理：
-
-块大小和 `\r\n` 分隔符会被移除，仅将块内容返回。
-
-:::
-
-要启用分块传输编码，请在 `lynxExtension` 中将 `useStreaming` 选项设置为 `true`。
-
-<Go
-  example="networking"
-  defaultFile="src/chunked-encoding/index.tsx"
-  defaultEntryFile="dist/chunked-encoding.lynx.bundle"
-  entry="src/chunked-encoding"
-/>
-
-你可以查阅 MDN 文档的 [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
-了解如何处理 streaming body。
-
 ## 使用 TextCodecHelper
 
 由于 `PrimJS` 缺少对 `TextEncoder`/`TextDecoder` 的支持，Lynx 提供了 `TextCodecHelper` 以满足基本的编解码需求。该类支持在 `UTF-8` 编码下 `string` 与 `arraybuffer` 之间的转换。
