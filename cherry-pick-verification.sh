@@ -20,12 +20,22 @@ fi
 
 echo "1. Checking release/3.4 branch..."
 git log release/3.4 --oneline -1
-git log release/3.4 --format="%H %s" -1 | grep -q "docs: update Animate API docs" && echo "✓ Cherry-pick found on release/3.4" || echo "✗ Cherry-pick NOT found on release/3.4"
+if git log release/3.4 --format="%H %s" -1 | grep -q "docs: update Animate API docs"; then
+    echo "✓ Cherry-pick found on release/3.4"
+else
+    echo "✗ Cherry-pick NOT found on release/3.4"
+    exit 1
+fi
 echo ""
 
 echo "2. Checking release/3.5 branch..."
 git log release/3.5 --oneline -1
-git log release/3.5 --format="%H %s" -1 | grep -q "docs: update Animate API docs" && echo "✓ Cherry-pick found on release/3.5" || echo "✗ Cherry-pick NOT found on release/3.5"
+if git log release/3.5 --format="%H %s" -1 | grep -q "docs: update Animate API docs"; then
+    echo "✓ Cherry-pick found on release/3.5"
+else
+    echo "✗ Cherry-pick NOT found on release/3.5"
+    exit 1
+fi
 echo ""
 
 echo "3. Commit details on release/3.4:"
