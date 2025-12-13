@@ -4,6 +4,7 @@ import {
   useLang,
   useLocation,
   usePageData,
+  useNavigate,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -235,9 +236,48 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
 export { HomeLayout, Layout, Search };
 
 const Link = (props: React.ComponentProps<typeof BaseLink>) => {
-  const { href, children, className, ...restProps } = props;
+  const { href, children, className, onClick, ...restProps } = props;
+  const navigate = useNavigate();
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // Call original onClick if provided
+      onClick?.(e);
+
+      // Check if we should handle this with view transitions
+      if (
+        !e.defaultPrevented &&
+        href &&
+        !href.startsWith('http://') &&
+        !href.startsWith('https://') &&
+        !href.startsWith('#') &&
+        e.button === 0 && // Left click
+        !e.metaKey && // Not cmd/ctrl click
+        !e.ctrlKey &&
+        !e.shiftKey &&
+        !e.altKey
+      ) {
+        // Check if browser supports View Transition API
+        if ('startViewTransition' in document) {
+          e.preventDefault();
+
+          // Use View Transition API for smooth navigation
+          (document as any).startViewTransition(() => {
+            navigate(href);
+          });
+        }
+      }
+    },
+    [href, onClick, navigate],
+  );
+
   return (
-    <BaseLink href={href} className={className} {...restProps}>
+    <BaseLink
+      href={href}
+      className={className}
+      onClick={handleClick}
+      {...restProps}
+    >
       {children}
     </BaseLink>
   );
