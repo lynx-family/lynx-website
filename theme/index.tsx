@@ -8,8 +8,8 @@ import {
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
-  getCustomMDXComponent,
   Link as BaseLink,
+  getCustomMDXComponent,
 } from '@rspress/core/theme';
 import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
@@ -239,13 +239,13 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
   if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
     return (
-      <a
-        className={`rp-link ${className}`}
+      <BaseLink
         href={`/next${removeBase(href)}`}
-        target="_blank"
+        className={`rp-link ${className}`}
+        {...restProps}
       >
         {children}
-      </a>
+      </BaseLink>
     );
   }
   return (

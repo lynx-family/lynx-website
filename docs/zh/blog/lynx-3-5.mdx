@@ -5,26 +5,32 @@ sidebar: false
 
 import { BlogAvatar, CodeFold } from '@lynx';
 import { PackageManagerTabs } from '@theme';
-import { Go, Badge } from '@lynx';
+import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
 import { Tab, Tabs } from '@rspress/core/theme';
 
 _2025 年 11 月 10 日_
 
-# Lynx 3.5: 主线程脚本，HarmonyOS 能力对齐
+# Lynx 3.5: 主线程脚本，React 编译器，HarmonyOS 能力对齐
 
-<BlogAvatar list={['liujilong', 'lynx']} />
+<BlogAvatar list={['liujilong', 'huxpro', 'lynx']} />
 
 Lynx 3.5 已经正式发布!
 
-延续稳定的双月发布节奏，Lynx 3.5 带来了多项重要更新：主线程脚本支持了 `stopPropagation` 事件控制和首帧响应优化；新版本还进一步对齐了 HarmonyOS 平台能力，并新增了 `<pointer-events>` CSS 属性等功能。
+延续稳定的双月发布节奏，Lynx 3.5 带来了多项重要更新：React 编译器的实验性支持；主线程脚本支持了 `stopPropagation` 事件冒泡拦截、首帧即可交互、跨线程通信等一系列增强；进一步对齐了 HarmonyOS 平台能力，并新增了 `<pointer-events>` CSS 属性等功能。
 
 让我们一起来看看有哪些新特性！
 
+## React 编译器 <Experimental />
+
+[React Compiler](https://react.dev/learn/react-compiler) 可以在编译期对组件进行优化，从而无需手动使用 `useMemo`、`useCallback` 和 `memo`。你现在可以在 ReactLynx 中使用 React Compiler 来优化你的应用性能。
+
+[查看如何在 ReactLynx 中开启 React Compiler](../react/react-compiler.mdx)。
+
 ## 主线程脚本
 
-### MTS 事件拦截
+### 支持用 `stopPropagation` 阻止事件冒泡 <Badge>Web 友好</Badge>
 
-当一个事件被触发后，它会沿着响应链进行[传播](https://lynxjs.org/3.5/zh/guide/interaction/event-handling/event-propagation)。为了让事件处理流程更灵活，Lynx 3.5 在主线程脚本中新增了对 [`event.stopPropagation()`](https://lynxjs.org/3.5/zh/api/lynx-api/event/event.html#stoppropagation) 的支持，允许开发者精确控制事件传播，阻止其继续向上冒泡。
+当一个事件被触发后，它会沿着响应链进行[传播](https://lynxjs.org/3.5/zh/guide/interaction/event-handling/event-propagation)。此前，虽然 Lynx 已经支持使用 [`catch` 类型的事件处理器属性静态拦截事件冒泡](https://lynxjs.org/3.5/zh/guide/interaction/event-handling/event-propagation#事件拦截)，但这种方式仍缺乏 Web 一样的表达力。得益于主线程编程能力，Lynx 3.5 在主线程脚本中支持了和 Web 一致的 [`event.stopPropagation()`](https://lynxjs.org/3.5/zh/api/lynx-api/event/event.html#stoppropagation)，实现运行时的事件冒泡拦截。
 
 ```tsx {3}
 function handleInnerTap(e: MainThread.TouchEvent) {
@@ -43,11 +49,11 @@ function handleInnerTap(e: MainThread.TouchEvent) {
   entry="src/event_stop_propagation"
 />
 
-### [首帧直出](https://lynxjs.org/3.5/zh/guide/interaction/ifr.html)之后立刻响应事件
+### [首帧](https://lynxjs.org/3.5/zh/guide/interaction/ifr.html)即可进行主线程交互
 
-在之前的版本中，ReactLynx 的事件响应需要等待“吸水”（Hydration）流程完成后才能进行。
+此前，主线程事件需要等待后台线程完成[“激活”（Hydration）](https://lynxjs.org/3.5/zh/guide/react/lifecycle.html)后才能响应，导致页面在首帧可见后，仍存在一段不可交互的延迟，类似[服务端渲染中的常见的恐怖谷效应](https://web.dev/articles/rendering-on-the-web?utm_source=chatgpt.com#rehydration)。
 
-为了进一步提升用户体验，新版本优化了渲染流程，在首帧渲染时便同步构建了事件处理上下文，实现了“渲染完即可交互”，大幅提升了页面的响应速度。
+为了消除这段延迟，我们优化了激活流程，使得主线程事件可以在首帧渲染后立刻响应，并在后台线程激活后正确接管主线程中的状态并重放 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html)，在保证线程间的正确同步的同时，实现首帧可见即可交互。
 
 ```tsx {3,6}
 function App() {
@@ -65,8 +71,7 @@ function App() {
 
 ### 跨线程函数调用支持返回数据
 
-Lynx 提供了 [`runOnMainThread`](https://lynxjs.org/3.5/zh/api/react/Function.runOnMainThread#function-runonmainthread) 和 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html) 两个 API 用于跨线程函数调用。
-在 3.5 版本中，我们对这两个 API 进行了增强，现在它们支持从目标线程异步获取返回值，让跨线程通信更加灵活。
+Lynx 提供了 [`runOnMainThread`](https://lynxjs.org/3.5/zh/api/react/Function.runOnMainThread#function-runonmainthread) 和 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html) 两个 API 用于跨线程函数调用。在 Lynx 3.5 中，这两个 API 现在支持异步返回值，让跨线程通信更加灵活和直观。
 
 ```tsx {13,14}
 import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
@@ -115,9 +120,9 @@ function App() {
   </tr>
 </table>
 
-## CSS 属性 `<pointer-events>`
+## CSS 属性 `pointer-events`
 
-Lynx 3.5 版本新增 CSS 属性 [`<pointer-events>`](https://lynxjs.org/3.5/zh/api/css/properties/pointer-events.html) 来指定元件是否能够响应触摸事件。
+Lynx 3.5 版本新增 CSS 属性 [`pointer-events`](https://lynxjs.org/3.5/zh/api/css/properties/pointer-events.html) 来指定元件是否能够响应触摸事件。
 
 ```css
 pointer-events: auto;  // 默认值，此时，节点可以响应触摸事件。
@@ -136,22 +141,11 @@ pointer-events: none;  // 节点不能响应触摸事件
 
 ### Fetch API
 
-Lynx 提供了与 Web 标准兼容的 [Fetch API](https://lynxjs.org/3.5/zh/api/lynx-api/global/fetch)，用法与 Web 平台保持一致。
-
-Lynx 3.5 将 Fetch API 的支持扩展到了 HarmonyOS 平台。
-
-<Go
-  example="networking"
-  defaultFile="src/fetch/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/networking/fetch-example-image.webp"
-  defaultEntryFile="dist/fetch.lynx.bundle"
-  entry="src/fetch"
-/>
+Lynx 提供了与 Web 标准兼容的 [Fetch API](https://lynxjs.org/3.5/zh/api/lynx-api/global/fetch)，用法与 Web 平台保持一致。Lynx 3.5 将 Fetch API 的支持扩展到了 HarmonyOS 平台，让跨平台开发更加便捷。
 
 ### accessibilityAnnounce
 
-为提升信息无障碍体验，Lynx 3.5 在 HarmonyOS 平台补齐了 [`accessibilityAnnounce()`](https://lynxjs.org/3.5/zh/api/lynx-api/lynx/lynx-accessibility-announce.html) 方法。
-该方法可调用屏幕阅读器朗读指定文本，帮助视觉障碍用户感知界面状态变化或操作结果，此前已在 Android/iOS 平台提供支持。
+Lynx 3.5 在 HarmonyOS 平台补齐了 [`accessibilityAnnounce()`](https://lynxjs.org/3.5/zh/api/lynx-api/lynx/lynx-accessibility-announce.html) 方法，与 Android 和 iOS 平台保持一致。该方法可调用屏幕阅读器朗读指定文本，帮助视觉障碍用户感知界面状态变化或操作结果。
 
 ```jsx
 lynx.accessibilityAnnounce(
@@ -166,8 +160,7 @@ lynx.accessibilityAnnounce(
 
 ### requestResourcePrefetch
 
-为提升资源加载性能，Lynx 3.5 在 HarmonyOS 平台补齐了 [`requestResourcePrefetch`](https://lynxjs.org/3.5/zh/api/lynx-api/lynx/lynx-request-resource-prefetch.html) API。
-该 API 允许开发者主动预加载 CDN 资源（目前支持 `image`、`video` 和 `audio`），此前已在 Android/iOS 平台提供支持。
+[`requestResourcePrefetch`](https://lynxjs.org/3.5/zh/api/lynx-api/lynx/lynx-request-resource-prefetch.html) API 现已支持 HarmonyOS 平台，与 Android 和 iOS 保持一致。该 API 允许开发者主动预加载 CDN 资源（目前支持 `image`、`video` 和 `audio`），以提升资源加载性能。
 
 ```js
 lynx.requestResourcePrefetch?.(
@@ -192,3 +185,11 @@ lynx.requestResourcePrefetch?.(
 ## 升级指南
 
 参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.5/zh/guide/start/integrate-with-existing-apps.html)更新 Lynx 依赖版本，完成 Lynx 3.5 版本升级。
+
+## 桌面端支持预告
+
+我们[原本计划](/blog/lynx-open-source-roadmap-2025.html)在 Lynx 3.5 版本正式引入桌面端支持，最初只是打算开放自渲染管线和底层集成 API。经过讨论，我们决定更进一步，开源整套桌面端技术体系。因此发布时间将顺延至 2026 年初，敬请期待。
+
+如果你想抢先了解 Lynx 桌面端的整体设计思路，以及我们与 [Electron](https://www.electronjs.org/) 和 [Qt](https://www.qt.io/) 等主流方案有哪些异同，欢迎观看我们多平台负责人 [王之轩](https://x.com/adservc1) 在 [Ubuntu Summit 2025](https://ubuntu.com/summit) 的主题演讲 **《Bringing Lynx to Desktop and Beyond》**：
+
+<YouTubeIframe src="https://www.youtube.com/embed/n0jDZSI4tXg" />

@@ -16,8 +16,8 @@ export {
 
 // APITable
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
-export { default as SimpleAPITable } from './api-table/SimpleAPITable';
 export { default as CompatTable } from './api-table/CompatTable';
+export { default as SimpleAPITable } from './api-table/SimpleAPITable';
 
 // API Badges
 export { Badge } from '@rspress/core/theme';
@@ -35,8 +35,8 @@ export {
   ClayMacOSOnly,
   ClayOnly,
   ClayWindowsOnly,
-  IOSOnly,
   HarmonyOnly,
+  IOSOnly,
   NoAndroid,
   NoClay,
   NoClayAndroid,
@@ -72,6 +72,8 @@ export { PlatformTabs } from './platform-tabs/PlatformTabs';
 export { Columns } from './Columns';
 
 export { default as Mermaid } from './Mermaid/Mermaid';
+
+export { YouTubeIframe } from './YoutubeIframe';
 
 // --------- Legacy ---------
 

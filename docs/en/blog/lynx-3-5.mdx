@@ -5,28 +5,32 @@ sidebar: false
 
 import { BlogAvatar, CodeFold } from '@lynx';
 import { PackageManagerTabs } from '@theme';
-import { Go, Badge } from '@lynx';
+import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
 import { Tab, Tabs } from '@rspress/core/theme';
 
 _November 10th, 2025_
 
-# Lynx 3.5: Main Thread Script, HarmonyOS Capability Alignment
+# Lynx 3.5: Main Thread Script, React Compiler, HarmonyOS Improvements
 
-<BlogAvatar list={['liujilong', 'lynx']} />
+<BlogAvatar list={['liujilong', 'huxpro', 'lynx']} />
 
-We’re pleased to share the official release of Lynx 3.5, continuing our commitment to a stable bi-monthly release cadence.
-This update brings a host of meaningful improvements:
+Lynx 3.5 is now officially released!
 
-- The main thread script now supports `stopPropagation` for more precise event control, along with optimizations that further enhance first-frame responsiveness.
-- Lynx 3.5 continues to close the gap in capabilities on the HarmonyOS platform, and introduces new features—including the `<pointer-events>` CSS property—empowering developers to create even richer, more interactive experiences.
+Following our stable bi-monthly release cadence, Lynx 3.5 brings several key improvements. This release adds experimental support for React Compiler, enhances main thread scripts with `stopPropagation` for better event bubbling control, enables immediate interactivity after first-frame rendering, and improves cross-thread communication. We've also expanded HarmonyOS platform support and introduced new features like the `pointer-events` CSS property.
 
 Let's dive in and see what's new!
 
+## React Compiler <Experimental />
+
+[React Compiler](https://react.dev/learn/react-compiler) optimizes components at compile time, so you don't need to manually add `useMemo`, `useCallback`, or `memo`. You can now use React Compiler in ReactLynx to optimize your app's performance.
+
+[Learn how to enable React Compiler in ReactLynx](../react/react-compiler.mdx).
+
 ## Main Thread Script
 
-### MTS Event capture
+### Event Stop Propagation <Badge>Web Friendly</Badge>
 
-When an event is triggered, it [propagates](https://lynxjs.org/3.5/guide/interaction/event-handling/event-propagation) along the responder chain, allowing different parts of your UI to respond as needed. In Lynx 3.5, we’ve added support for [`event.stopPropagation()`](https://lynxjs.org/3.5/api/lynx-api/event/event.html#stoppropagation) in main thread scripts. This gives developers more control over how events move through the UI, making it easier to prevent unwanted event bubbling.
+When an event fires, it [propagates](https://lynxjs.org/3.5/guide/interaction/event-handling/event-propagation) through event bubbling, allowing different parts of your UI to handle it. Previously, Lynx only supported static event bubbling interception via [`catch`-type event handler attributes](https://lynxjs.org/3.5/guide/interaction/event-handling/event-propagation#event-interception), which lacked the flexibility of web standards. With Lynx 3.5, main thread scripts now support [`event.stopPropagation()`](https://lynxjs.org/3.5/api/lynx-api/event/event.html#stoppropagation), giving you runtime control over event bubbling that matches what you'd expect on the web.
 
 ```tsx {3}
 function handleInnerTap(e: MainThread.TouchEvent) {
@@ -45,11 +49,11 @@ function handleInnerTap(e: MainThread.TouchEvent) {
   entry="src/event_stop_propagation"
 />
 
-### Immediate Event Response After [Instant First-Frame Rendering](https://lynxjs.org/3.5/guide/interaction/ifr.html)
+### Immediate Interactivity After [First-Frame](https://lynxjs.org/3.5/guide/interaction/ifr.html)
 
-Previously, event handling in ReactLynx had to wait until the hydration process finished, which could cause delays in interactivity.
+Previously, main thread events had to wait for the background thread to complete [hydration](https://lynxjs.org/3.5/guide/react/lifecycle.html) before responding, creating a frustrating delay where the page looked ready but wasn't interactive, similar to the [uncanny valley effect commonly seen in server-side rendering](https://web.dev/articles/rendering-on-the-web#rehydration).
 
-With Lynx 3.5, the rendering process has been improved so that event handling context is built synchronously during the first frame render. This means users can interact with the page as soon as it appears, resulting in a more responsive experience.
+To eliminate this delay, we optimized the hydration process so that main thread events can respond immediately after the first frame is rendered. After the background thread hydrates, it correctly takes over the state from the main thread and replays [`runOnBackground`](https://lynxjs.org/3.5/api/react/Function.runOnBackground.html) calls, ensuring proper synchronization between threads while achieving immediate interactivity as soon as the first frame is visible.
 
 ```tsx {3,6}
 function App() {
@@ -65,9 +69,9 @@ function App() {
 }
 ```
 
-### Return Value Support for Cross-Thread Function Calls
+### Cross-Thread Function Calls Now Return Values
 
-Lynx provides two APIs for cross-thread function calls: [`runOnMainThread`](https://lynxjs.org/3.5/api/react/Function.runOnMainThread#function-runonmainthread) and [`runOnBackground`](https://lynxjs.org/3.5/api/react/Function.runOnBackground.html). In the new version, both APIs have been updated to support asynchronous value returns from the target thread, making it easier and more flexible to communicate between threads.
+Lynx provides [`runOnMainThread`](https://lynxjs.org/3.5/api/react/Function.runOnMainThread#function-runonmainthread) and [`runOnBackground`](https://lynxjs.org/3.5/api/react/Function.runOnBackground.html) for cross-thread function calls. In Lynx 3.5, both APIs now support async return values, making cross-thread communication more flexible and intuitive.
 
 ```tsx {13,14}
 import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
@@ -89,9 +93,9 @@ function App() {
 }
 ```
 
-## `<list>` Element with Built-in Update Animations
+## Built-in Animations for `<list>` Updates
 
-To make list interactions feel smoother and more natural, the `<list>` element now comes with default [update animations](https://lynxjs.org/3.5/api/elements/built-in/list.html#update-animation). Whenever you add, remove, or update list items, transition effects are automatically applied—no extra code needed.
+The `<list>` element now includes default [update animations](https://lynxjs.org/3.5/api/elements/built-in/list.html#update-animation) out of the box. When you add, remove, or update list items, smooth transitions are applied automatically—no extra code needed.
 
 ```tsx
 <list update-animation="default"></list>
@@ -116,9 +120,9 @@ To make list interactions feel smoother and more natural, the `<list>` element n
   </tr>
 </table>
 
-## CSS Property: `<pointer-events>`
+## CSS Property: `pointer-events`
 
-Lynx 3.5 adds support for the [`<pointer-events>`](https://lynxjs.org/3.5/api/css/properties/pointer-events.html) CSS property, which lets you control whether an element can receive touch events.
+Lynx 3.5 adds support for the [`pointer-events`](https://lynxjs.org/3.5/api/css/properties/pointer-events.html) CSS property, giving you control over whether an element can receive touch events.
 
 ```css
 pointer-events: auto;  // Default value. The element can be the target of touch events.
@@ -133,25 +137,15 @@ pointer-events: none;  // The element cannot be the target of touch events.
   defaultEntryFile="dist/pointer-events.lynx.bundle"
 />
 
-## HarmonyOS Capability Alignment
+## HarmonyOS Improvements
 
-### Using Fetch API on HarmonyOS
+### Fetch API
 
-Lynx offers a [Fetch API](https://lynxjs.org/3.5/api/lynx-api/global/fetch) that follows web standards, so its usage is familiar to web developers.
-
-With Lynx 3.5, Fetch API support is now available on HarmonyOS, making it easier to build cross-platform apps.
-
-<Go
-  example="networking"
-  defaultFile="src/fetch/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/networking/fetch-example-image.webp"
-  defaultEntryFile="dist/fetch.lynx.bundle"
-  entry="src/fetch"
-/>
+Lynx provides a [Fetch API](https://lynxjs.org/3.5/api/lynx-api/global/fetch) that follows web standards, so it works just like you'd expect. With Lynx 3.5, Fetch API support extends to HarmonyOS, making cross-platform development even easier.
 
 ### accessibilityAnnounce
 
-For better accessibility, Lynx 3.5 now supports the [`accessibilityAnnounce()`](https://lynxjs.org/3.5/api/lynx-api/lynx/lynx-accessibility-announce.html) method on HarmonyOS. This method allows screen readers to read out specific text, making it easier for visually impaired users to understand changes in the interface or the results of actions. This feature was already available on Android and iOS.
+Lynx 3.5 adds [`accessibilityAnnounce()`](https://lynxjs.org/3.5/api/lynx-api/lynx/lynx-accessibility-announce.html) support on HarmonyOS, bringing it in line with Android and iOS. This method lets screen readers announce specific text, helping visually impaired users understand interface changes and action results.
 
 ```jsx
 lynx.accessibilityAnnounce(
@@ -166,7 +160,7 @@ lynx.accessibilityAnnounce(
 
 ### requestResourcePrefetch
 
-To help speed up resource loading, Lynx 3.5 also brings the [`requestResourcePrefetch`](https://lynxjs.org/3.5/api/lynx-api/lynx/lynx-request-resource-prefetch.html) API to HarmonyOS. With this API, developers can prefetch CDN resources like images, videos, and audio files. This feature was previously supported on Android and iOS.
+The [`requestResourcePrefetch`](https://lynxjs.org/3.5/api/lynx-api/lynx/lynx-request-resource-prefetch.html) API is now available on HarmonyOS, matching Android and iOS support. Use it to prefetch CDN resources like images, videos, and audio files for faster loading.
 
 ```js
 lynx.requestResourcePrefetch?.(
@@ -190,4 +184,13 @@ lynx.requestResourcePrefetch?.(
 
 ## Upgrade Guide
 
-Refer to the official website's guide on [Integrate with Existing Apps](https://lynxjs.org/3.5/guide/start/integrate-with-existing-apps.html) and update the Lynx dependency versions to complete the upgrade to Lynx 3.5.
+To upgrade to Lynx 3.5, follow the [integration guide](https://lynxjs.org/3.5/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions.
+
+## One More Thing: Desktop Support Preview
+
+We [previously planned](/blog/lynx-open-source-roadmap-2025.html) for Lynx 3.5 to introduce desktop support. At the time, our plan was to open source our custom rendering pipeline and low-level integration APIs for desktop. Since then, we've decided to go further and open source the full desktop stack to give you a more battery-included experience. As a result, we would have to adjust our timeline to early 2026.
+
+To get a preview of where we are heading, and how our approach both learns from and differs from prior arts like
+[Electron](https://www.electronjs.org/) and [Qt](https://www.qt.io/), check out the talk **"Bringing Lynx to Desktop and Beyond"** from our Multi-Platform Lead [ZhiXuan Wang](https://x.com/adservc1) at [Ubuntu Summit 2025](https://ubuntu.com/summit):
+
+<YouTubeIframe src="https://www.youtube.com/embed/n0jDZSI4tXg" />
