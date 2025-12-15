@@ -82,7 +82,12 @@ function parseMDXFile(filePath) {
   
   // Clean up excerpt
   excerpt = excerpt.replace(/!\[.*?\]\(.*?\)/g, ''); // Remove markdown images
-  excerpt = excerpt.replace(/<[^>]+>/g, ''); // Remove JSX-like tags
+  // Remove HTML/JSX tags - iterate to handle nested or malformed tags
+  let prevExcerpt = '';
+  while (prevExcerpt !== excerpt) {
+    prevExcerpt = excerpt;
+    excerpt = excerpt.replace(/<[^>]*>/gs, '');
+  }
   excerpt = excerpt.replace(/\s+/g, ' ').trim(); // Normalize whitespace
   
   // Truncate if too long
