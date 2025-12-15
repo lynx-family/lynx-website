@@ -48,7 +48,7 @@ function getLatestBlogMetadata(
   try {
     const buildTimeMetadata: LatestBlogMetadata | undefined =
       typeof process !== 'undefined' && process.env.LATEST_BLOG_METADATA
-        ? JSON.parse(process.env.LATEST_BLOG_METADATA as any)
+        ? JSON.parse(process.env.LATEST_BLOG_METADATA)
         : undefined;
 
     if (buildTimeMetadata && buildTimeMetadata[lang]) {
@@ -141,6 +141,13 @@ const useBlogBtnDom = (src: string) => {
     ) as ConfigKey;
   }, [src]);
 
+  // Memoize the click handler to maintain reference stability
+  const handleBadgeClick = useCallback(() => {
+    if (configKey === '/') {
+      navigateToLatestBlog();
+    }
+  }, [configKey, navigateToLatestBlog]);
+
   useEffect(() => {
     if (page.pageType !== 'home') return;
 
@@ -163,6 +170,12 @@ const useBlogBtnDom = (src: string) => {
       h1.style.margin = '0px -100px';
 
       badgeElementRef.current = badgeElement;
+
+      // Attach event listeners only when creating the element
+      if (configKey === '/') {
+        badgeElement.addEventListener('click', handleBadgeClick);
+        badgeElement.addEventListener('touchstart', handleBadgeClick);
+      }
     }
 
     // Update badge text (this is cheap and won't trigger animation)
@@ -175,23 +188,17 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.textContent = displayText;
     }
 
-    // Attach event listeners only if they're not already attached
-    const handleClick = () => {
-      if (configKey === '/') {
-        navigateToLatestBlog();
+    return () => {
+      // Cleanup only when component unmounts or page type changes
+      if (badgeElementRef.current && configKey === '/') {
+        badgeElementRef.current.removeEventListener('click', handleBadgeClick);
+        badgeElementRef.current.removeEventListener(
+          'touchstart',
+          handleBadgeClick,
+        );
       }
     };
-
-    if (configKey === '/') {
-      badgeElement.addEventListener('click', handleClick);
-      badgeElement.addEventListener('touchstart', handleClick);
-
-      return () => {
-        badgeElement?.removeEventListener('click', handleClick);
-        badgeElement?.removeEventListener('touchstart', handleClick);
-      };
-    }
-  }, [configKey, lang, latestBlogInfo, navigateToLatestBlog, page.pageType]);
+  }, [configKey, lang, latestBlogInfo, handleBadgeClick, page.pageType]);
 };
 
 export { useBlogBtnDom };

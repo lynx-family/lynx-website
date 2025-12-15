@@ -18,7 +18,9 @@ interface LatestBlogMetadata {
 }
 
 /**
- * Extract frontmatter from MDX file content
+ * Extract frontmatter from MDX file content.
+ * Handles simple YAML frontmatter with key: value pairs.
+ * For more complex YAML, consider using a library like gray-matter.
  */
 function extractFrontmatter(content: string): Record<string, any> {
   const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
@@ -31,16 +33,29 @@ function extractFrontmatter(content: string): Record<string, any> {
   const frontmatterText = match[1];
   const frontmatter: Record<string, any> = {};
 
-  // Parse simple YAML frontmatter
+  // Parse simple YAML frontmatter (key: value format)
   frontmatterText.split('\n').forEach((line) => {
     const colonIndex = line.indexOf(':');
     if (colonIndex > 0) {
       const key = line.substring(0, colonIndex).trim();
-      const value = line
-        .substring(colonIndex + 1)
-        .trim()
-        .replace(/^['"]|['"]$/g, '');
-      frontmatter[key] = value;
+      let value = line.substring(colonIndex + 1).trim();
+
+      // Remove surrounding quotes if present
+      if (
+        (value.startsWith("'") && value.endsWith("'")) ||
+        (value.startsWith('"') && value.endsWith('"'))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      // Handle boolean values
+      if (value === 'true') {
+        frontmatter[key] = true;
+      } else if (value === 'false') {
+        frontmatter[key] = false;
+      } else {
+        frontmatter[key] = value;
+      }
     }
   });
 
