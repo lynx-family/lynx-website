@@ -6,10 +6,10 @@ export const Footer = () => {
 
   return (
     <div
-      className={`${page.pageType === 'home' ? 'sh-px-6' : 'sh-pt-8'} sh-text-center sh-text-sm sh-pb-16`}
+      className={`${page.pageType === 'home' ? 'px-6' : 'pt-8'} text-center text-sm pb-16`}
     >
       <div
-        className="sh-w-full sh-pt-8"
+        className="w-full pt-8"
         style={{ borderTop: '1px solid var(--rp-c-divider-light)' }}
       ></div>
       <div style={{ color: 'var(--home-showcase-item-desc-color)' }}>

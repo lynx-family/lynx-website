@@ -71,10 +71,10 @@ export const ShowCase: React.FC = () => {
           return (
             <li className={styles['show-case-list-item']} key={index}>
               <MobileShow preview={item.class} />
-              <div className={`${styles['item-title']} sh-pb-2`}>
+              <div className={`${styles['item-title']} pb-2`}>
                 {item.title[lang]}
               </div>
-              <div className={`${styles['item-desc']} sh-pb-2`}>
+              <div className={`${styles['item-desc']} pb-2`}>
                 {item.desc[lang]}
               </div>
               {!!item.link && (

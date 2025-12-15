@@ -82,13 +82,13 @@ export const PlatformIcon = ({
   if (!platforms.length) return null;
 
   return (
-    <div className={cn('sh-flex sh-items-center sh-gap-2', className)}>
+    <div className={cn('flex items-center gap-2', className)}>
       {platforms.map((platform) => {
         return (
           <PlatformSvg
             platformName={toPlatformName(platform)}
             key={platform}
-            className={`icon sh-bg-current sh-h-8 sh-w-8`}
+            className={`icon bg-current h-8 w-8`}
           />
         );
       })}

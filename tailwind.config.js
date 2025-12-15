@@ -13,7 +13,6 @@ export default {
   // Adding 'dark' to safelist ensures the dark mode classes are preserved.
   // See: https://github.com/shadcn-ui/ui/issues/313#issuecomment-1927525155
   safelist: ['dark'],
-  prefix: 'sh-',
   theme: {
     container: {
       center: true,
