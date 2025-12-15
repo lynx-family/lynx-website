@@ -29,7 +29,10 @@ const CardLinkTab = ({
   platforms,
 }: CardLinkTabProps) => {
   return (
-    <Link href={to} className="sh-no-underline sh-flex-1">
+    <Link
+      href={to}
+      className="sh-no-underline sh-basis-[calc(50%-0.5rem)] sh-flex-grow"
+    >
       <Card
         className={cn(
           'sh-cursor-pointer sh-transition-colors sh-border-2',
