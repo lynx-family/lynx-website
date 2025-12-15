@@ -1,6 +1,6 @@
 /**
  * Plugin to generate static metadata for the latest blog post at build time.
- * This metadata is injected into the global window object for runtime access.
+ * This metadata is injected into the bundle via process.env for runtime access.
  */
 import type { RspressPlugin } from '@rspress/core';
 import * as fs from 'node:fs';
@@ -23,7 +23,8 @@ interface LatestBlogMetadata {
  * For more complex YAML, consider using a library like gray-matter.
  */
 function extractFrontmatter(content: string): Record<string, any> {
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
+  // Match frontmatter with flexible whitespace handling
+  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*$/m;
   const match = content.match(frontmatterRegex);
 
   if (!match) {
@@ -36,7 +37,8 @@ function extractFrontmatter(content: string): Record<string, any> {
   // Parse simple YAML frontmatter (key: value format)
   frontmatterText.split('\n').forEach((line) => {
     const colonIndex = line.indexOf(':');
-    if (colonIndex > 0) {
+    // Only process lines with a colon (skip if not found with -1)
+    if (colonIndex !== -1) {
       const key = line.substring(0, colonIndex).trim();
       let value = line.substring(colonIndex + 1).trim();
 

@@ -36,13 +36,25 @@ interface LatestBlogMetadata {
   zh: LatestBlogInfo | null;
 }
 
+interface PageData {
+  routePath?: string;
+  frontmatter?: {
+    date?: string;
+    badgeText?: string;
+  };
+}
+
+interface SiteData {
+  pages?: PageData[];
+}
+
 /**
  * Get latest blog metadata from build-time injected data.
  * Falls back to runtime computation if build-time data is not available.
  */
 function getLatestBlogMetadata(
   lang: 'en' | 'zh',
-  siteData: any,
+  siteData: SiteData | undefined,
 ): LatestBlogInfo | null {
   // Try to get build-time metadata first
   try {
@@ -68,7 +80,7 @@ function getLatestBlogMetadata(
     const blogPrefix = `${langPrefix}/blog/`;
 
     const blogPages = siteData.pages
-      .filter((p: { routePath?: string }) => {
+      .filter((p: PageData) => {
         const routePath = p.routePath || '';
         const blogBasePath = blogPrefix.replace(/\/$/, '');
         return (
@@ -77,20 +89,15 @@ function getLatestBlogMetadata(
           routePath !== blogPrefix + 'index'
         );
       })
-      .sort(
-        (
-          a: { frontmatter?: { date?: string } },
-          b: { frontmatter?: { date?: string } },
-        ) => {
-          const dateA = a.frontmatter?.date
-            ? new Date(a.frontmatter.date).getTime()
-            : 0;
-          const dateB = b.frontmatter?.date
-            ? new Date(b.frontmatter.date).getTime()
-            : 0;
-          return dateB - dateA;
-        },
-      );
+      .sort((a: PageData, b: PageData) => {
+        const dateA = a.frontmatter?.date
+          ? new Date(a.frontmatter.date).getTime()
+          : 0;
+        const dateB = b.frontmatter?.date
+          ? new Date(b.frontmatter.date).getTime()
+          : 0;
+        return dateB - dateA;
+      });
 
     if (blogPages.length === 0) {
       return null;
