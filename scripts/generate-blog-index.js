@@ -1,0 +1,229 @@
+/**
+ * This script generates blog index pages at build time by:
+ * 1. Reading all blog MDX files from docs/[lang]/blog/
+ * 2. Extracting metadata (date, title, authors, excerpt)
+ * 3. Generating index.mdx content with BlogAvatar components
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Parse frontmatter and content from MDX file
+ * @param {string} filePath - Path to MDX file
+ * @returns {Object} - Parsed data including frontmatter and content
+ */
+function parseMDXFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  
+  // Extract frontmatter
+  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const frontmatter = {};
+  
+  if (frontmatterMatch) {
+    const frontmatterText = frontmatterMatch[1];
+    frontmatterText.split('\n').forEach(line => {
+      const match = line.match(/^(\w+):\s*(.+)$/);
+      if (match) {
+        frontmatter[match[1]] = match[2];
+      }
+    });
+  }
+  
+  // Extract title (first H1)
+  const titleMatch = content.match(/^#\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1] : '';
+  
+  // Extract date string (formatted like "_September 3rd, 2025_")
+  const dateStringMatch = content.match(/^_(.+)_$/m);
+  const dateString = dateStringMatch ? dateStringMatch[1] : '';
+  
+  // Extract authors from BlogAvatar component
+  const avatarMatch = content.match(/<BlogAvatar\s+list=\{(\[.*?\])\}\s*\/>/);
+  let authors = [];
+  if (avatarMatch) {
+    try {
+      // Clean up the array string and parse it
+      const listStr = avatarMatch[1].replace(/'/g, '"');
+      authors = JSON.parse(listStr);
+    } catch (e) {
+      console.warn(`Failed to parse authors from ${filePath}:`, e);
+    }
+  }
+  
+  // Extract excerpt (first paragraph after title and avatar)
+  // Try to find text after BlogAvatar, skipping images and empty lines
+  const afterAvatar = content.split(/<BlogAvatar[^>]+\/>/)[1] || '';
+  // Split into lines and find the first meaningful text paragraph
+  const lines = afterAvatar.split('\n');
+  let excerpt = '';
+  let collecting = false;
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    // Skip empty lines, images, and headings
+    if (!trimmed || trimmed.startsWith('!') || trimmed.startsWith('#') || trimmed.startsWith('<')) {
+      if (collecting && excerpt) {
+        break; // We've collected a paragraph, stop here
+      }
+      continue;
+    }
+    
+    // Start or continue collecting text
+    collecting = true;
+    excerpt += (excerpt ? ' ' : '') + trimmed;
+    
+    // If we have a decent amount of text, stop
+    if (excerpt.length > 200) {
+      break;
+    }
+  }
+  
+  // Clean up excerpt
+  excerpt = excerpt.replace(/!\[.*?\]\(.*?\)/g, ''); // Remove markdown images
+  excerpt = excerpt.replace(/<[^>]+>/g, ''); // Remove JSX-like tags
+  excerpt = excerpt.replace(/\s+/g, ' ').trim(); // Normalize whitespace
+  
+  // Truncate if too long
+  if (excerpt.length > 300) {
+    excerpt = excerpt.substring(0, 297) + '...';
+  }
+  
+  return {
+    frontmatter,
+    title,
+    dateString,
+    authors,
+    excerpt,
+  };
+}
+
+/**
+ * Get all blog posts from a directory
+ * @param {string} blogDir - Path to blog directory
+ * @returns {Array} - Array of blog post objects
+ */
+function getBlogPosts(blogDir) {
+  const files = fs.readdirSync(blogDir);
+  const posts = [];
+  
+  files.forEach(file => {
+    if (file === 'index.mdx' || file === '_meta.json' || !file.endsWith('.mdx')) {
+      return;
+    }
+    
+    const filePath = path.join(blogDir, file);
+    const slug = file.replace('.mdx', '');
+    
+    try {
+      const data = parseMDXFile(filePath);
+      
+      // Parse date for sorting
+      const date = data.frontmatter.date ? new Date(data.frontmatter.date) : new Date();
+      
+      posts.push({
+        slug,
+        date,
+        ...data,
+      });
+    } catch (e) {
+      console.warn(`Failed to parse ${filePath}:`, e);
+    }
+  });
+  
+  // Sort by date, newest first
+  posts.sort((a, b) => b.date - a.date);
+  
+  return posts;
+}
+
+/**
+ * Generate blog index MDX content
+ * @param {Array} posts - Array of blog post objects
+ * @param {string} lang - Language code ('en' or 'zh')
+ * @returns {string} - Generated MDX content
+ */
+function generateBlogIndexContent(posts, lang) {
+  const isZh = lang === 'zh';
+  
+  const title = isZh ? 'Lynx 博客' : 'Lynx Blog';
+  const description = isZh 
+    ? '在此查看有关 Lynx 的最新文章和发布公告。'
+    : 'Check here for the latest articles and release announcements about Lynx.';
+  
+  let content = `---
+title: ${title}
+sidebar: false
+---
+
+import { BlogAvatar } from '@lynx';
+
+# ${title}
+
+${description}
+
+`;
+  
+  posts.forEach(post => {
+    content += `## [${post.title}](/blog/${post.slug})
+
+`;
+    
+    // Add date and authors
+    if (post.dateString) {
+      content += `_${post.dateString}`;
+      
+      // Add authors inline
+      if (post.authors && post.authors.length > 0) {
+        content += '_\n\n';
+        content += `<BlogAvatar list={${JSON.stringify(post.authors)}} />\n\n`;
+      } else {
+        content += '_\n\n';
+      }
+    }
+    
+    // Add excerpt if available
+    if (post.excerpt) {
+      content += `${post.excerpt}\n\n`;
+    }
+  });
+  
+  content += `---\n`;
+  
+  return content;
+}
+
+/**
+ * Generate blog index pages for all languages
+ */
+function generateBlogIndexPages() {
+  const docsDir = path.join(__dirname, '..', 'docs');
+  const languages = ['en', 'zh'];
+  
+  languages.forEach(lang => {
+    const blogDir = path.join(docsDir, lang, 'blog');
+    
+    if (!fs.existsSync(blogDir)) {
+      console.warn(`Blog directory not found: ${blogDir}`);
+      return;
+    }
+    
+    console.log(`Generating blog index for ${lang}...`);
+    
+    const posts = getBlogPosts(blogDir);
+    const content = generateBlogIndexContent(posts, lang);
+    
+    const indexPath = path.join(blogDir, 'index.mdx');
+    fs.writeFileSync(indexPath, content, 'utf8');
+    
+    console.log(`✓ Generated ${indexPath} with ${posts.length} posts`);
+  });
+}
+
+// Run if called directly
+if (require.main === module) {
+  generateBlogIndexPages();
+}
+
+module.exports = { generateBlogIndexPages };
