@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { getLangPrefix } from '@site/shared-route-config';
 
@@ -26,13 +26,72 @@ const config = {
 };
 
 const useBlogBtnDom = (src: string) => {
-  const { page } = usePageData();
+  const { page, siteData } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
+  const [latestBlogInfo, setLatestBlogInfo] = useState<{
+    slug: string;
+    badgeText: string;
+  } | null>(null);
+
+  // Get latest blog post information from siteData
+  useEffect(() => {
+    if (!siteData?.pages) {
+      return;
+    }
+
+    try {
+      const langPrefix = lang === 'en' ? '' : '/zh';
+      const blogPrefix = `${langPrefix}/blog/`;
+
+      // Filter blog pages and sort by date (newest first)
+      const blogPages = siteData.pages
+        .filter((p: any) => {
+          const routePath = p.routePath || '';
+          // Filter blog posts (not the index page)
+          return (
+            routePath.startsWith(blogPrefix) &&
+            routePath !== `${blogPrefix.slice(0, -1)}` &&
+            routePath !== blogPrefix + 'index'
+          );
+        })
+        .sort((a: any, b: any) => {
+          const dateA = a.frontmatter?.date
+            ? new Date(a.frontmatter.date).getTime()
+            : 0;
+          const dateB = b.frontmatter?.date
+            ? new Date(b.frontmatter.date).getTime()
+            : 0;
+          return dateB - dateA; // Newest first
+        });
+
+      if (blogPages.length === 0) {
+        return;
+      }
+
+      // Get the latest blog post
+      const latestBlog = blogPages[0];
+      const routePath = latestBlog.routePath || '';
+      const slug = routePath.replace(blogPrefix, '');
+
+      // Get badge text from frontmatter, or use a default
+      const badgeText =
+        latestBlog.frontmatter?.badgeText ||
+        (lang === 'zh' ? `阅读最新博客` : `Read the Latest Blog`);
+
+      setLatestBlogInfo({
+        slug,
+        badgeText,
+      });
+    } catch (error) {
+      console.error('Error getting latest blog:', error);
+    }
+  }, [lang, siteData]);
 
   const handleInteraction = useCallback(() => {
-    navigate(`${getLangPrefix(lang)}/blog/lynx-unlock-native-for-more`);
-  }, [navigate, lang]);
+    const targetSlug = latestBlogInfo?.slug || 'lynx-unlock-native-for-more';
+    navigate(`${getLangPrefix(lang)}/blog/${targetSlug}`);
+  }, [navigate, lang, latestBlogInfo]);
 
   const configKey = useMemo(() => {
     return (
@@ -56,7 +115,14 @@ const useBlogBtnDom = (src: string) => {
     const newElement = document.createElement('div');
     newElement.className =
       configKey === '/' ? `blog-btn-frame active-hover` : `blog-btn-frame`;
-    newElement.textContent = config[configKey].text[lang];
+
+    // Use dynamic badge text for '/' route, otherwise use static config
+    const displayText =
+      configKey === '/' && latestBlogInfo
+        ? latestBlogInfo.badgeText
+        : config[configKey].text[lang];
+
+    newElement.textContent = displayText;
 
     targetElement.insertBefore(newElement, targetElement.firstChild);
     h1.style.margin = '0px -100px';
@@ -72,7 +138,7 @@ const useBlogBtnDom = (src: string) => {
 
       targetElement.removeChild(newElement);
     };
-  }, [configKey, lang]);
+  }, [configKey, lang, latestBlogInfo, handleInteraction]);
 };
 
 export { useBlogBtnDom };
