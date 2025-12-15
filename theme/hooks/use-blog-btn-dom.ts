@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { getLangPrefix } from '@site/shared-route-config';
 
@@ -29,15 +29,11 @@ const useBlogBtnDom = (src: string) => {
   const { page, siteData } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
-  const [latestBlogInfo, setLatestBlogInfo] = useState<{
-    slug: string;
-    badgeText: string;
-  } | null>(null);
 
-  // Get latest blog post information from siteData
-  useEffect(() => {
+  // Get latest blog post information from siteData using useMemo to avoid infinite loops
+  const latestBlogInfo = useMemo(() => {
     if (!siteData?.pages) {
-      return;
+      return null;
     }
 
     try {
@@ -66,7 +62,7 @@ const useBlogBtnDom = (src: string) => {
         });
 
       if (blogPages.length === 0) {
-        return;
+        return null;
       }
 
       // Get the latest blog post
@@ -79,12 +75,13 @@ const useBlogBtnDom = (src: string) => {
         latestBlog.frontmatter?.badgeText ||
         (lang === 'zh' ? `阅读最新博客` : `Read the Latest Blog`);
 
-      setLatestBlogInfo({
+      return {
         slug,
         badgeText,
-      });
+      };
     } catch (error) {
       console.error('Error getting latest blog:', error);
+      return null;
     }
   }, [lang, siteData]);
 
