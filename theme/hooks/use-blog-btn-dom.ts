@@ -36,27 +36,14 @@ interface LatestBlogMetadata {
   zh: LatestBlogInfo | null;
 }
 
-interface PageData {
-  routePath?: string;
-  frontmatter?: {
-    date?: string;
-    badgeText?: string;
-  };
-}
-
-interface SiteData {
-  pages?: PageData[];
-}
-
 /**
  * Get latest blog metadata from build-time injected data.
- * Falls back to runtime computation if build-time data is not available.
+ * Returns null if build-time data is not available (which shouldn't happen in production).
  */
 function getLatestBlogMetadata(
   lang: 'en' | 'zh',
-  siteData: SiteData | undefined,
 ): LatestBlogInfo | null {
-  // Try to get build-time metadata first
+  // Get build-time metadata
   try {
     const buildTimeMetadata: LatestBlogMetadata | undefined =
       typeof process !== 'undefined' && process.env.LATEST_BLOG_METADATA
@@ -70,68 +57,18 @@ function getLatestBlogMetadata(
     console.warn('Failed to parse build-time blog metadata:', error);
   }
 
-  // Fallback to runtime computation
-  if (!siteData?.pages) {
-    return null;
-  }
-
-  try {
-    const langPrefix = lang === 'en' ? '' : '/zh';
-    const blogPrefix = `${langPrefix}/blog/`;
-
-    const blogPages = siteData.pages
-      .filter((p: PageData) => {
-        const routePath = p.routePath || '';
-        const blogBasePath = blogPrefix.replace(/\/$/, '');
-        return (
-          routePath.startsWith(blogPrefix) &&
-          routePath !== blogBasePath &&
-          routePath !== blogPrefix + 'index'
-        );
-      })
-      .sort((a: PageData, b: PageData) => {
-        const dateA = a.frontmatter?.date
-          ? new Date(a.frontmatter.date).getTime()
-          : 0;
-        const dateB = b.frontmatter?.date
-          ? new Date(b.frontmatter.date).getTime()
-          : 0;
-        return dateB - dateA;
-      });
-
-    if (blogPages.length === 0) {
-      return null;
-    }
-
-    const latestBlog = blogPages[0];
-    const routePath = latestBlog.routePath || '';
-    const slug = routePath.replace(blogPrefix, '');
-
-    const badgeText =
-      latestBlog.frontmatter?.badgeText ||
-      (lang === 'zh' ? `阅读最新博客` : `Read the Latest Blog`);
-
-    return {
-      slug,
-      badgeText,
-      date: latestBlog.frontmatter?.date || '',
-    };
-  } catch (error) {
-    console.error('Error getting latest blog at runtime:', error);
-    return null;
-  }
+  // Return null if build-time data is not available
+  // The badge will fallback to the original "Read the Introductory Blog of Lynx" text
+  return null;
 }
 
 const useBlogBtnDom = (src: string) => {
-  const { page, siteData } = usePageData();
+  const { page } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
   const badgeElementRef = useRef<HTMLDivElement | null>(null);
 
-  const latestBlogInfo = useMemo(
-    () => getLatestBlogMetadata(lang, siteData),
-    [lang, siteData],
-  );
+  const latestBlogInfo = useMemo(() => getLatestBlogMetadata(lang), [lang]);
 
   const navigateToLatestBlog = useCallback(() => {
     const targetSlug = latestBlogInfo?.slug || 'lynx-unlock-native-for-more';
@@ -148,13 +85,6 @@ const useBlogBtnDom = (src: string) => {
     ) as ConfigKey;
   }, [src]);
 
-  // Memoize the click handler to maintain reference stability
-  const handleBadgeClick = useCallback(() => {
-    if (configKey === '/') {
-      navigateToLatestBlog();
-    }
-  }, [configKey, navigateToLatestBlog]);
-
   useEffect(() => {
     if (page.pageType !== 'home') return;
 
@@ -167,7 +97,9 @@ const useBlogBtnDom = (src: string) => {
     // Check if badge already exists to prevent re-mounting during typing animation
     let badgeElement = badgeElementRef.current;
 
-    if (!badgeElement || !targetElement.contains(badgeElement)) {
+    const isFirstRender = !badgeElement || !targetElement.contains(badgeElement);
+
+    if (isFirstRender) {
       // Create new badge element only if it doesn't exist
       badgeElement = document.createElement('div');
       badgeElement.className =
@@ -177,12 +109,6 @@ const useBlogBtnDom = (src: string) => {
       h1.style.margin = '0px -100px';
 
       badgeElementRef.current = badgeElement;
-
-      // Attach event listeners only when creating the element
-      if (configKey === '/') {
-        badgeElement.addEventListener('click', handleBadgeClick);
-        badgeElement.addEventListener('touchstart', handleBadgeClick);
-      }
     }
 
     // Update badge text (this is cheap and won't trigger animation)
@@ -195,17 +121,28 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.textContent = displayText;
     }
 
-    return () => {
-      // Cleanup only when component unmounts or page type changes
-      if (badgeElementRef.current && configKey === '/') {
-        badgeElementRef.current.removeEventListener('click', handleBadgeClick);
-        badgeElementRef.current.removeEventListener(
-          'touchstart',
-          handleBadgeClick,
-        );
+    // Handle click event - always update to ensure latest callback is used
+    const handleClick = () => {
+      if (configKey === '/') {
+        navigateToLatestBlog();
       }
     };
-  }, [configKey, lang, latestBlogInfo, handleBadgeClick, page.pageType]);
+
+    if (configKey === '/') {
+      // Remove old listeners if they exist (to prevent stale closure)
+      badgeElement.removeEventListener('click', handleClick);
+      badgeElement.removeEventListener('touchstart', handleClick);
+      
+      // Add fresh listeners with current closure
+      badgeElement.addEventListener('click', handleClick);
+      badgeElement.addEventListener('touchstart', handleClick);
+
+      return () => {
+        badgeElement?.removeEventListener('click', handleClick);
+        badgeElement?.removeEventListener('touchstart', handleClick);
+      };
+    }
+  }, [configKey, lang, latestBlogInfo, navigateToLatestBlog, page.pageType]);
 };
 
 export { useBlogBtnDom };
