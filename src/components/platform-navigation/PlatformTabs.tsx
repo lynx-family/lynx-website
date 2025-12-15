@@ -91,7 +91,7 @@ function OptionSelector({
         <Card
           key={option.id}
           className={cn(
-            'sh-basis-[calc(50%-0.5rem)] sh-flex-grow sh-cursor-pointer sh-transition-colors sh-border-2',
+            'sh-basis-[calc(50%-0.5rem)] sh-max-w-[calc(50%-0.5rem)] sh-flex-grow sh-cursor-pointer sh-transition-colors sh-border-2',
             selected === option.id
               ? 'sh-border-primary sh-bg-primary/10'
               : 'sh-border-muted hover:sh-bg-muted',
