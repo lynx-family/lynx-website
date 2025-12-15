@@ -16,14 +16,14 @@ const path = require('path');
 function parseMDXFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   
-  // Extract frontmatter
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  // Extract frontmatter - handle different line endings
+  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   const frontmatter = {};
   
   if (frontmatterMatch) {
     const frontmatterText = frontmatterMatch[1];
     frontmatterText.split('\n').forEach(line => {
-      const match = line.match(/^(\w+):\s*(.+)$/);
+      const match = line.match(/^([a-zA-Z_-]+):\s*(.+)$/);
       if (match) {
         frontmatter[match[1]] = match[2];
       }
@@ -39,7 +39,7 @@ function parseMDXFile(filePath) {
   const dateString = dateStringMatch ? dateStringMatch[1] : '';
   
   // Extract authors from BlogAvatar component
-  const avatarMatch = content.match(/<BlogAvatar\s+list=\{(\[.*?\])\}\s*\/>/);
+  const avatarMatch = content.match(/<BlogAvatar\s+list=\{(\[[^\}]+\])\}\s*\/>/);
   let authors = [];
   if (avatarMatch) {
     try {
