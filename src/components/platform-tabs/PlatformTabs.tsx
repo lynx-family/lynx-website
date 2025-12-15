@@ -122,26 +122,26 @@ function OptionSelector({
   onSelect: (id: Platform) => void;
 }) {
   return (
-    <div className="sh-flex sh-flex-wrap sh-gap-4">
+    <div className="flex flex-wrap gap-4">
       {options.map((option) => (
         <Card
           key={option.id}
           className={cn(
-            'sh-flex-1 sh-cursor-pointer sh-transition-colors sh-border-2',
+            'flex-1 cursor-pointer transition-colors border-2',
             selected === option.id
-              ? 'sh-border-primary sh-bg-primary/10'
-              : 'sh-border-muted hover:sh-bg-muted',
+              ? 'border-primary bg-primary/10'
+              : 'border-muted hover:bg-muted',
           )}
           onClick={() => onSelect(option.id)}
         >
-          <CardContent className="sh-pt-4 sh-pb-4 sh-flex sh-flex-col sh-items-center sh-gap-3">
+          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
             <PlatformSvg
               platformName={option.iconName}
-              className="icon sh-bg-current sh-h-8 sh-w-8"
+              className="icon bg-current h-8 w-8"
             />
             <Label
               htmlFor={option.id}
-              className="sh-cursor-pointer sh-flex sh-items-center sh-gap-2"
+              className="cursor-pointer flex items-center gap-2"
             >
               {option.label}
             </Label>
@@ -275,7 +275,7 @@ export const PlatformTabs = ({
   renderCountForTocUpdate++;
   return (
     <>
-      <div className={cn('sh-w-full sh-space-y-4', className)}>
+      <div className={cn('w-full space-y-4', className)}>
         <OptionSelector
           options={availableOptions}
           selected={activePlatform}

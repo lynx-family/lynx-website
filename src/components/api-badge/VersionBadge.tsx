@@ -29,7 +29,7 @@ export function VersionBadge({
   return (
     <Badge>
       <div
-        className={'icon icon-lynx sh-bg-current sh-w-[0.9rem] sh-h-[0.9rem]'}
+        className={'icon icon-lynx bg-current w-[0.9rem] h-[0.9rem]'}
       />
       {content}
     </Badge>

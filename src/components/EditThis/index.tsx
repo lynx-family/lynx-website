@@ -25,13 +25,13 @@ export default function EditThis({ path }: Props) {
   const sourcePath = `${process.env.DOC_GIT_BASE_URL}/${basePath}`;
 
   return (
-    <div className="sh-flex sh-items-center sh-gap-2 sh-text-sm -sh-mb-3">
+    <div className="flex items-center gap-2 text-sm -mb-3">
       {process.env.DOC_GIT_BASE_URL && (
         <a
           href={sourcePath}
           target="_blank"
           rel="noopener noreferrer"
-          className="sh-text-[var(--custom-link-color)] hover:sh-opacity-85"
+          className="text-[var(--custom-link-color)] hover:opacity-85"
           title={t('edit.source')}
         >
           {t('edit.source')}
@@ -42,7 +42,7 @@ export default function EditThis({ path }: Props) {
           href={`${process.env.CODE_IDE_BASE_URL}/${basePath}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="sh-text-[var(--custom-link-color)] hover:sh-opacity-85"
+          className="text-[var(--custom-link-color)] hover:opacity-85"
           title={t('edit.cloud-ide')}
         >
           {t('edit.cloud-ide')}

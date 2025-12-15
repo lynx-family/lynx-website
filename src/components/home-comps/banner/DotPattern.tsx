@@ -49,7 +49,7 @@ export function DotPattern({ className }: DotPatternProps) {
   return (
     <canvas
       ref={canvasRef}
-      className={cn('sh-h-full sh-w-full sh-pointer-events-none', className)}
+      className={cn('h-full w-full pointer-events-none', className)}
       style={{ position: 'absolute', top: 0, left: 0, zIndex: -1 }}
     />
   );
