@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { getLangPrefix } from '@site/shared-route-config';
 
@@ -25,73 +25,108 @@ const config = {
   },
 };
 
+interface LatestBlogInfo {
+  slug: string;
+  badgeText: string;
+  date: string;
+}
+
+interface LatestBlogMetadata {
+  en: LatestBlogInfo | null;
+  zh: LatestBlogInfo | null;
+}
+
+/**
+ * Get latest blog metadata from build-time injected data.
+ * Falls back to runtime computation if build-time data is not available.
+ */
+function getLatestBlogMetadata(
+  lang: 'en' | 'zh',
+  siteData: any,
+): LatestBlogInfo | null {
+  // Try to get build-time metadata first
+  try {
+    const buildTimeMetadata: LatestBlogMetadata | undefined =
+      typeof process !== 'undefined' && process.env.LATEST_BLOG_METADATA
+        ? JSON.parse(process.env.LATEST_BLOG_METADATA as any)
+        : undefined;
+
+    if (buildTimeMetadata && buildTimeMetadata[lang]) {
+      return buildTimeMetadata[lang];
+    }
+  } catch (error) {
+    console.warn('Failed to parse build-time blog metadata:', error);
+  }
+
+  // Fallback to runtime computation
+  if (!siteData?.pages) {
+    return null;
+  }
+
+  try {
+    const langPrefix = lang === 'en' ? '' : '/zh';
+    const blogPrefix = `${langPrefix}/blog/`;
+
+    const blogPages = siteData.pages
+      .filter((p: { routePath?: string }) => {
+        const routePath = p.routePath || '';
+        const blogBasePath = blogPrefix.replace(/\/$/, '');
+        return (
+          routePath.startsWith(blogPrefix) &&
+          routePath !== blogBasePath &&
+          routePath !== blogPrefix + 'index'
+        );
+      })
+      .sort(
+        (
+          a: { frontmatter?: { date?: string } },
+          b: { frontmatter?: { date?: string } },
+        ) => {
+          const dateA = a.frontmatter?.date
+            ? new Date(a.frontmatter.date).getTime()
+            : 0;
+          const dateB = b.frontmatter?.date
+            ? new Date(b.frontmatter.date).getTime()
+            : 0;
+          return dateB - dateA;
+        },
+      );
+
+    if (blogPages.length === 0) {
+      return null;
+    }
+
+    const latestBlog = blogPages[0];
+    const routePath = latestBlog.routePath || '';
+    const slug = routePath.replace(blogPrefix, '');
+
+    const badgeText =
+      latestBlog.frontmatter?.badgeText ||
+      (lang === 'zh' ? `阅读最新博客` : `Read the Latest Blog`);
+
+    return {
+      slug,
+      badgeText,
+      date: latestBlog.frontmatter?.date || '',
+    };
+  } catch (error) {
+    console.error('Error getting latest blog at runtime:', error);
+    return null;
+  }
+}
+
 const useBlogBtnDom = (src: string) => {
   const { page, siteData } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
+  const badgeElementRef = useRef<HTMLDivElement | null>(null);
 
-  // Get latest blog post information from siteData using useMemo to avoid infinite loops
-  const latestBlogInfo = useMemo(() => {
-    if (!siteData?.pages) {
-      return null;
-    }
+  const latestBlogInfo = useMemo(
+    () => getLatestBlogMetadata(lang, siteData),
+    [lang, siteData],
+  );
 
-    try {
-      const langPrefix = lang === 'en' ? '' : '/zh';
-      const blogPrefix = `${langPrefix}/blog/`;
-
-      // Filter blog pages and sort by date (newest first)
-      const blogPages = siteData.pages
-        .filter((p: { routePath?: string }) => {
-          const routePath = p.routePath || '';
-          // Filter blog posts (not the index page)
-          const blogBasePath = blogPrefix.replace(/\/$/, '');
-          return (
-            routePath.startsWith(blogPrefix) &&
-            routePath !== blogBasePath &&
-            routePath !== blogPrefix + 'index'
-          );
-        })
-        .sort(
-          (
-            a: { frontmatter?: { date?: string } },
-            b: { frontmatter?: { date?: string } },
-          ) => {
-            const dateA = a.frontmatter?.date
-              ? new Date(a.frontmatter.date).getTime()
-              : 0;
-            const dateB = b.frontmatter?.date
-              ? new Date(b.frontmatter.date).getTime()
-              : 0;
-            return dateB - dateA; // Newest first
-          },
-        );
-
-      if (blogPages.length === 0) {
-        return null;
-      }
-
-      // Get the latest blog post
-      const latestBlog = blogPages[0];
-      const routePath = latestBlog.routePath || '';
-      const slug = routePath.replace(blogPrefix, '');
-
-      // Get badge text from frontmatter, or use a default
-      const badgeText =
-        latestBlog.frontmatter?.badgeText ||
-        (lang === 'zh' ? `阅读最新博客` : `Read the Latest Blog`);
-
-      return {
-        slug,
-        badgeText,
-      };
-    } catch (error) {
-      console.error('Error getting latest blog:', error);
-      return null;
-    }
-  }, [lang, siteData]);
-
-  const handleInteraction = useCallback(() => {
+  const navigateToLatestBlog = useCallback(() => {
     const targetSlug = latestBlogInfo?.slug || 'lynx-unlock-native-for-more';
     navigate(`${getLangPrefix(lang)}/blog/${targetSlug}`);
   }, [navigate, lang, latestBlogInfo]);
@@ -115,33 +150,48 @@ const useBlogBtnDom = (src: string) => {
     const targetElement = h1.parentElement;
     if (!targetElement) return;
 
-    const newElement = document.createElement('div');
-    newElement.className =
-      configKey === '/' ? `blog-btn-frame active-hover` : `blog-btn-frame`;
+    // Check if badge already exists to prevent re-mounting during typing animation
+    let badgeElement = badgeElementRef.current;
 
-    // Use dynamic badge text for '/' route, otherwise use static config
+    if (!badgeElement || !targetElement.contains(badgeElement)) {
+      // Create new badge element only if it doesn't exist
+      badgeElement = document.createElement('div');
+      badgeElement.className =
+        configKey === '/' ? `blog-btn-frame active-hover` : `blog-btn-frame`;
+
+      targetElement.insertBefore(badgeElement, targetElement.firstChild);
+      h1.style.margin = '0px -100px';
+
+      badgeElementRef.current = badgeElement;
+    }
+
+    // Update badge text (this is cheap and won't trigger animation)
     const displayText =
       configKey === '/' && latestBlogInfo
         ? latestBlogInfo.badgeText
         : config[configKey].text[lang];
 
-    newElement.textContent = displayText;
-
-    targetElement.insertBefore(newElement, targetElement.firstChild);
-    h1.style.margin = '0px -100px';
-
-    if (configKey === '/') {
-      newElement.addEventListener('click', handleInteraction);
-      newElement.addEventListener('touchstart', handleInteraction);
+    if (badgeElement.textContent !== displayText) {
+      badgeElement.textContent = displayText;
     }
 
-    return () => {
-      newElement.removeEventListener('click', handleInteraction);
-      newElement.removeEventListener('touchstart', handleInteraction);
-
-      targetElement.removeChild(newElement);
+    // Attach event listeners only if they're not already attached
+    const handleClick = () => {
+      if (configKey === '/') {
+        navigateToLatestBlog();
+      }
     };
-  }, [configKey, lang, latestBlogInfo, handleInteraction]);
+
+    if (configKey === '/') {
+      badgeElement.addEventListener('click', handleClick);
+      badgeElement.addEventListener('touchstart', handleClick);
+
+      return () => {
+        badgeElement?.removeEventListener('click', handleClick);
+        badgeElement?.removeEventListener('touchstart', handleClick);
+      };
+    }
+  }, [configKey, lang, latestBlogInfo, navigateToLatestBlog, page.pageType]);
 };
 
 export { useBlogBtnDom };
