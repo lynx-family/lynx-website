@@ -43,19 +43,19 @@ export function SubsiteView({
   return (
     <div className="sh-flex sh-items-center sh-gap-3">
       <div
-        className={`sh-relative ${size === 'large' ? 'sh-h-8 sh-w-8' : 'sh-h-6 sh-w-6'}`}
+        className={`sh-relative sh-flex-shrink-0 ${size === 'large' ? 'sh-h-8 sh-w-8' : 'sh-h-6 sh-w-6'}`}
       >
         <SubsiteLogo subsite={subsite} />
       </div>
-      <div className="sh-flex sh-flex-col sh-items-start">
+      <div className="sh-flex sh-flex-col sh-items-start sh-min-w-0 sh-flex-1">
         <span
-          className={`sh-font-medium sh-text-foreground ${size === 'large' ? 'sh-text-base' : 'sh-text-sm'}`}
+          className={`sh-font-medium sh-text-foreground sh-truncate sh-w-full ${size === 'large' ? 'sh-text-base' : 'sh-text-sm'}`}
         >
           {subsite.label}
         </span>
         {size !== 'minimal' && (
           <span
-            className={`sh-text-muted-foreground ${size === 'large' ? 'sh-text-sm' : 'sh-text-xs'}`}
+            className={`sh-text-muted-foreground sh-truncate sh-w-full ${size === 'large' ? 'sh-text-sm' : 'sh-text-xs'}`}
           >
             {lang === 'zh' ? subsite.descriptionZh : subsite.description}
           </span>
