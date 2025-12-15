@@ -42,24 +42,30 @@ const useBlogBtnDom = (src: string) => {
 
       // Filter blog pages and sort by date (newest first)
       const blogPages = siteData.pages
-        .filter((p: any) => {
+        .filter((p: { routePath?: string }) => {
           const routePath = p.routePath || '';
           // Filter blog posts (not the index page)
+          const blogBasePath = blogPrefix.replace(/\/$/, '');
           return (
             routePath.startsWith(blogPrefix) &&
-            routePath !== `${blogPrefix.slice(0, -1)}` &&
+            routePath !== blogBasePath &&
             routePath !== blogPrefix + 'index'
           );
         })
-        .sort((a: any, b: any) => {
-          const dateA = a.frontmatter?.date
-            ? new Date(a.frontmatter.date).getTime()
-            : 0;
-          const dateB = b.frontmatter?.date
-            ? new Date(b.frontmatter.date).getTime()
-            : 0;
-          return dateB - dateA; // Newest first
-        });
+        .sort(
+          (
+            a: { frontmatter?: { date?: string } },
+            b: { frontmatter?: { date?: string } },
+          ) => {
+            const dateA = a.frontmatter?.date
+              ? new Date(a.frontmatter.date).getTime()
+              : 0;
+            const dateB = b.frontmatter?.date
+              ? new Date(b.frontmatter.date).getTime()
+              : 0;
+            return dateB - dateA; // Newest first
+          },
+        );
 
       if (blogPages.length === 0) {
         return null;
