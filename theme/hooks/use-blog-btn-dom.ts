@@ -65,6 +65,7 @@ const useBlogBtnDom = (src: string) => {
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
   const badgeElementRef = useRef<HTMLDivElement | null>(null);
+  const clickHandlerRef = useRef<(() => void) | null>(null);
 
   // Store refs for dynamic values accessed in the click handler
   const latestBlogInfoRef = useRef<LatestBlogInfo | null>(null);
@@ -126,6 +127,7 @@ const useBlogBtnDom = (src: string) => {
           );
         };
 
+        clickHandlerRef.current = handleClick;
         badgeElement.addEventListener('click', handleClick);
         badgeElement.addEventListener('touchstart', handleClick);
       }
@@ -141,11 +143,21 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.textContent = displayText;
     }
 
-    // Return cleanup function only for event listeners
+    // Cleanup function to remove event listeners
     return () => {
-      if (configKey === '/' && badgeElementRef.current) {
-        // Note: We can't remove the exact same handler function here since it's defined in the if block above
-        // The handler will be naturally cleaned up when the component unmounts
+      if (
+        configKey === '/' &&
+        badgeElementRef.current &&
+        clickHandlerRef.current
+      ) {
+        badgeElementRef.current.removeEventListener(
+          'click',
+          clickHandlerRef.current,
+        );
+        badgeElementRef.current.removeEventListener(
+          'touchstart',
+          clickHandlerRef.current,
+        );
       }
     };
   }, [configKey, lang, latestBlogInfo, page.pageType]);
