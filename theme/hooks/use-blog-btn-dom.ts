@@ -40,9 +40,7 @@ interface LatestBlogMetadata {
  * Get latest blog metadata from build-time injected data.
  * Returns null if build-time data is not available (which shouldn't happen in production).
  */
-function getLatestBlogMetadata(
-  lang: 'en' | 'zh',
-): LatestBlogInfo | null {
+function getLatestBlogMetadata(lang: 'en' | 'zh'): LatestBlogInfo | null {
   // Get build-time metadata
   try {
     const buildTimeMetadata: LatestBlogMetadata | undefined =
@@ -67,13 +65,9 @@ const useBlogBtnDom = (src: string) => {
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
   const badgeElementRef = useRef<HTMLDivElement | null>(null);
+  const clickHandlerRef = useRef<(() => void) | null>(null);
 
   const latestBlogInfo = useMemo(() => getLatestBlogMetadata(lang), [lang]);
-
-  const navigateToLatestBlog = useCallback(() => {
-    const targetSlug = latestBlogInfo?.slug || 'lynx-unlock-native-for-more';
-    navigate(`${getLangPrefix(lang)}/blog/${targetSlug}`);
-  }, [navigate, lang, latestBlogInfo]);
 
   const configKey = useMemo(() => {
     return (
@@ -84,6 +78,18 @@ const useBlogBtnDom = (src: string) => {
           : '/'
     ) as ConfigKey;
   }, [src]);
+
+  // Create the click handler and store it in ref
+  useEffect(() => {
+    if (configKey !== '/') return;
+
+    const handleClick = () => {
+      const targetSlug = latestBlogInfo?.slug || 'lynx-unlock-native-for-more';
+      navigate(`${getLangPrefix(lang)}/blog/${targetSlug}`);
+    };
+
+    clickHandlerRef.current = handleClick;
+  }, [configKey, lang, latestBlogInfo, navigate]);
 
   useEffect(() => {
     if (page.pageType !== 'home') return;
@@ -97,7 +103,8 @@ const useBlogBtnDom = (src: string) => {
     // Check if badge already exists to prevent re-mounting during typing animation
     let badgeElement = badgeElementRef.current;
 
-    const isFirstRender = !badgeElement || !targetElement.contains(badgeElement);
+    const isFirstRender =
+      !badgeElement || !targetElement.contains(badgeElement);
 
     if (isFirstRender) {
       // Create new badge element only if it doesn't exist
@@ -109,6 +116,13 @@ const useBlogBtnDom = (src: string) => {
       h1.style.margin = '0px -100px';
 
       badgeElementRef.current = badgeElement;
+
+      // Attach event listeners only when creating the element
+      if (configKey === '/' && clickHandlerRef.current) {
+        const handler = () => clickHandlerRef.current?.();
+        badgeElement.addEventListener('click', handler);
+        badgeElement.addEventListener('touchstart', handler);
+      }
     }
 
     // Update badge text (this is cheap and won't trigger animation)
@@ -120,29 +134,7 @@ const useBlogBtnDom = (src: string) => {
     if (badgeElement.textContent !== displayText) {
       badgeElement.textContent = displayText;
     }
-
-    // Handle click event - always update to ensure latest callback is used
-    const handleClick = () => {
-      if (configKey === '/') {
-        navigateToLatestBlog();
-      }
-    };
-
-    if (configKey === '/') {
-      // Remove old listeners if they exist (to prevent stale closure)
-      badgeElement.removeEventListener('click', handleClick);
-      badgeElement.removeEventListener('touchstart', handleClick);
-      
-      // Add fresh listeners with current closure
-      badgeElement.addEventListener('click', handleClick);
-      badgeElement.addEventListener('touchstart', handleClick);
-
-      return () => {
-        badgeElement?.removeEventListener('click', handleClick);
-        badgeElement?.removeEventListener('touchstart', handleClick);
-      };
-    }
-  }, [configKey, lang, latestBlogInfo, navigateToLatestBlog, page.pageType]);
+  }, [configKey, lang, latestBlogInfo, page.pageType]);
 };
 
 export { useBlogBtnDom };
