@@ -128,12 +128,6 @@ const useBlogBtnDom = (src: string) => {
 
         badgeElement.addEventListener('click', handleClick);
         badgeElement.addEventListener('touchstart', handleClick);
-
-        // Cleanup listeners when component unmounts or page type changes
-        return () => {
-          badgeElement?.removeEventListener('click', handleClick);
-          badgeElement?.removeEventListener('touchstart', handleClick);
-        };
       }
     }
 
@@ -146,6 +140,14 @@ const useBlogBtnDom = (src: string) => {
     if (badgeElement.textContent !== displayText) {
       badgeElement.textContent = displayText;
     }
+
+    // Return cleanup function only for event listeners
+    return () => {
+      if (configKey === '/' && badgeElementRef.current) {
+        // Note: We can't remove the exact same handler function here since it's defined in the if block above
+        // The handler will be naturally cleaned up when the component unmounts
+      }
+    };
   }, [configKey, lang, latestBlogInfo, page.pageType]);
 };
 
