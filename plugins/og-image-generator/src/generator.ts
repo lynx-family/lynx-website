@@ -25,26 +25,50 @@ export type OGImageConfig = {
    * Text color
    */
   textColor?: string;
+  /**
+   * Shared image name - if provided, use this as the filename instead of route-based name
+   * This allows multiple routes to share the same image
+   */
+  sharedImageName?: string;
 };
 
 // Cache for font data
 let fontDataCache: {
-  regular: ArrayBuffer;
-  bold: ArrayBuffer;
+  inter: {
+    regular: ArrayBuffer;
+    bold: ArrayBuffer;
+  };
+  notoSansSC: {
+    regular: ArrayBuffer;
+    bold: ArrayBuffer;
+  };
 } | null = null;
 
+// Check if text contains Chinese characters
+function containsChinese(text: string): boolean {
+  return /[\u4e00-\u9fff]/.test(text);
+}
+
 async function getFontData(): Promise<{
-  regular: ArrayBuffer;
-  bold: ArrayBuffer;
+  inter: {
+    regular: ArrayBuffer;
+    bold: ArrayBuffer;
+  };
+  notoSansSC: {
+    regular: ArrayBuffer;
+    bold: ArrayBuffer;
+  };
 }> {
   if (fontDataCache) {
     return fontDataCache;
   }
 
   try {
-    // Try to use fontsource Inter package
+    // Try to use fontsource packages
     const dirname = path.dirname(fileURLToPath(import.meta.url || ''));
-    const fontsourcePath = path.join(
+
+    // Load Inter font paths
+    const interPath = path.join(
       dirname,
       '..',
       'node_modules',
@@ -53,30 +77,53 @@ async function getFontData(): Promise<{
       'files',
     );
 
-    // Load regular and bold weights
-    const regularPath = path.join(
-      fontsourcePath,
-      'inter-latin-400-normal.woff',
+    // Load Noto Sans SC font paths
+    const notoSansSCPath = path.join(
+      dirname,
+      '..',
+      'node_modules',
+      '@fontsource',
+      'noto-sans-sc',
+      'files',
     );
-    const boldPath = path.join(fontsourcePath, 'inter-latin-700-normal.woff');
 
-    const [regular, bold] = await Promise.all([
-      fs.readFile(regularPath),
-      fs.readFile(boldPath),
-    ]);
+    // Load all font files
+    const [interRegular, interBold, notoSCRegular, notoSCBold] =
+      await Promise.all([
+        fs.readFile(path.join(interPath, 'inter-latin-400-normal.woff')),
+        fs.readFile(path.join(interPath, 'inter-latin-700-normal.woff')),
+        fs.readFile(
+          path.join(
+            notoSansSCPath,
+            'noto-sans-sc-chinese-simplified-400-normal.woff',
+          ),
+        ),
+        fs.readFile(
+          path.join(
+            notoSansSCPath,
+            'noto-sans-sc-chinese-simplified-700-normal.woff',
+          ),
+        ),
+      ]);
 
     fontDataCache = {
-      regular: regular.buffer,
-      bold: bold.buffer,
+      inter: {
+        regular: interRegular.buffer,
+        bold: interBold.buffer,
+      },
+      notoSansSC: {
+        regular: notoSCRegular.buffer,
+        bold: notoSCBold.buffer,
+      },
     };
 
     return fontDataCache;
   } catch (error) {
-    console.error('Failed to load fonts from @fontsource/inter:', error);
+    console.error('Failed to load fonts from @fontsource packages:', error);
 
     // Fallback: try to fetch from CDN
     try {
-      const [regularRes, boldRes] = await Promise.all([
+      const [interRegularRes, interBoldRes] = await Promise.all([
         fetch(
           'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff',
         ),
@@ -85,16 +132,29 @@ async function getFontData(): Promise<{
         ),
       ]);
 
+      // For Chinese fonts, we'll use a fallback
+      const notoSCUrl =
+        'https://fonts.gstatic.com/s/notosanssc/v36/k3kXo84MPvpLmixcA63oeALhL4iJ-Q7m8w.woff';
+      const [notoSCRegularRes, notoSCBoldRes] = await Promise.all([
+        fetch(notoSCUrl),
+        fetch(notoSCUrl), // Using same for both weights as fallback
+      ]);
+
       fontDataCache = {
-        regular: await regularRes.arrayBuffer(),
-        bold: await boldRes.arrayBuffer(),
+        inter: {
+          regular: await interRegularRes.arrayBuffer(),
+          bold: await interBoldRes.arrayBuffer(),
+        },
+        notoSansSC: {
+          regular: await notoSCRegularRes.arrayBuffer(),
+          bold: await notoSCBoldRes.arrayBuffer(),
+        },
       };
 
       return fontDataCache;
     } catch (fetchError) {
-      // Last fallback: return minimal data but this will fail in Satori
       throw new Error(
-        'Could not load fonts. Please ensure @fontsource/inter is installed or internet is available.',
+        'Could not load fonts. Please ensure @fontsource packages are installed or internet is available.',
       );
     }
   }
@@ -118,6 +178,17 @@ export async function generateOGImage(
   // Load fonts
   const fonts = await getFontData();
 
+  // Determine if we need Chinese fonts
+  const needsChinese =
+    containsChinese(title) ||
+    (subtitle && containsChinese(subtitle)) ||
+    containsChinese(logo);
+
+  // Choose font family based on content
+  const fontFamily = needsChinese
+    ? 'Noto Sans SC, Inter, sans-serif'
+    : 'Inter, sans-serif';
+
   // Create JSX structure for Satori
   const element = {
     type: 'div',
@@ -131,7 +202,7 @@ export async function generateOGImage(
         alignItems: 'flex-start',
         background,
         padding: '80px',
-        fontFamily: 'Inter, sans-serif',
+        fontFamily,
       },
       children: [
         {
@@ -180,24 +251,39 @@ export async function generateOGImage(
     },
   };
 
+  // Prepare font list for Satori
+  const satoriFonts = [
+    {
+      name: 'Inter',
+      data: fonts.inter.regular,
+      weight: 400,
+      style: 'normal',
+    },
+    {
+      name: 'Inter',
+      data: fonts.inter.bold,
+      weight: 700,
+      style: 'normal',
+    },
+    {
+      name: 'Noto Sans SC',
+      data: fonts.notoSansSC.regular,
+      weight: 400,
+      style: 'normal',
+    },
+    {
+      name: 'Noto Sans SC',
+      data: fonts.notoSansSC.bold,
+      weight: 700,
+      style: 'normal',
+    },
+  ];
+
   // Convert to SVG using Satori
   const svg = await satori(element as any, {
     width: 1200,
     height: 630,
-    fonts: [
-      {
-        name: 'Inter',
-        data: fonts.regular,
-        weight: 400,
-        style: 'normal',
-      },
-      {
-        name: 'Inter',
-        data: fonts.bold,
-        weight: 700,
-        style: 'normal',
-      },
-    ],
+    fonts: satoriFonts,
   });
 
   // Convert SVG to PNG using Sharp

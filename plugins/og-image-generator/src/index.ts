@@ -49,6 +49,19 @@ function matchRoute(routePath: string, pattern: string | RegExp): boolean {
   return pattern.test(routePath);
 }
 
+async function extractTitleFromMarkdown(
+  filePath: string,
+): Promise<string | null> {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    // Look for the first # heading
+    const match = content.match(/^#\s+(.+)$/m);
+    return match ? match[1].trim() : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 async function updateHtmlOgImage(
   htmlPath: string,
   ogImageUrl: string,
@@ -108,6 +121,9 @@ function pluginOGImageGenerator(
       let generated = 0;
       let skipped = 0;
 
+      // Track shared images to avoid regenerating
+      const sharedImagesGenerated = new Set<string>();
+
       for (const route of routes) {
         const routePath = route.routePath;
 
@@ -120,23 +136,51 @@ function pluginOGImageGenerator(
           continue;
         }
 
+        // Extract title from markdown file for blog posts if not available
+        let title = route.title;
+        if (
+          !title &&
+          routePath.includes('/blog/') &&
+          !routePath.endsWith('/blog/')
+        ) {
+          // Try to find the markdown file
+          // Route path could be like /blog/lynx-3-2 or /zh/blog/lynx-3-2
+          const normalizedPath = routePath.replace(/^\//, ''); // Remove leading slash
+          const possiblePaths = [
+            path.join(cwd, 'docs', 'en', normalizedPath + '.mdx'),
+            path.join(cwd, 'docs', 'en', normalizedPath + '.md'),
+            path.join(cwd, 'docs', normalizedPath + '.mdx'),
+            path.join(cwd, 'docs', normalizedPath + '.md'),
+          ];
+
+          for (const filePath of possiblePaths) {
+            if (existsSync(filePath)) {
+              title = await extractTitleFromMarkdown(filePath);
+              if (title) break;
+            }
+          }
+        }
+
         // Get OG config for this route
         const ogConfig = matchingConfig.getConfig({
           routePath,
           frontmatter: route.frontmatter,
-          title: route.title,
+          title,
         });
 
         if (!ogConfig) {
           continue;
         }
 
-        // Generate filename from route path
-        const filename = routePath
-          .replace(/^\//, '')
-          .replace(/\//g, '-')
-          .replace(/\.html$/, '')
-          .replace(/[^a-z0-9-]/gi, '_');
+        // Determine filename - use sharedImageName if provided
+        const filename = ogConfig.sharedImageName
+          ? ogConfig.sharedImageName
+          : routePath
+              .replace(/^\//, '')
+              .replace(/\//g, '-')
+              .replace(/\.html$/, '')
+              .replace(/[^a-z0-9-]/gi, '_');
+
         const imagePath = path.join(ogImagesDir, `${filename}.png`);
         const publicImagePath = `/assets/${outputDir}/${filename}.png`;
         const fullImageUrl = `${baseUrl}${publicImagePath}`;
@@ -144,8 +188,17 @@ function pluginOGImageGenerator(
         // Store mapping for HTML modification later
         routeToImageMap.set(routePath, fullImageUrl);
 
+        // If this is a shared image that's already been generated, skip
+        if (ogConfig.sharedImageName && sharedImagesGenerated.has(filename)) {
+          skipped++;
+          continue;
+        }
+
         // Skip if image exists and incremental is enabled
         if (incremental && existsSync(imagePath)) {
+          if (ogConfig.sharedImageName) {
+            sharedImagesGenerated.add(filename);
+          }
           skipped++;
           continue;
         }
@@ -153,6 +206,9 @@ function pluginOGImageGenerator(
         try {
           // Generate the OG image
           await generateOGImage(ogConfig, imagePath);
+          if (ogConfig.sharedImageName) {
+            sharedImagesGenerated.add(filename);
+          }
           generated++;
           console.log(`  ✓ Generated: ${publicImagePath}`);
         } catch (error) {
