@@ -102,7 +102,7 @@ function OptionSelector({
             <PlatformIcon platforms={[option.id]} />
             <Label
               htmlFor={option.id}
-              className="sh-cursor-pointer sh-flex sh-items-center sh-gap-2"
+              className="sh-cursor-pointer sh-flex sh-items-center sh-gap-2 sh-whitespace-nowrap sh-text-center"
             >
               {option.label}
             </Label>
