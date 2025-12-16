@@ -65,9 +65,20 @@ const useBlogBtnDom = (src: string) => {
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
   const badgeElementRef = useRef<HTMLDivElement | null>(null);
-  const clickHandlerRef = useRef<(() => void) | null>(null);
+
+  // Store refs for dynamic values accessed in the click handler
+  const latestBlogInfoRef = useRef<LatestBlogInfo | null>(null);
+  const langRef = useRef(lang);
+  const navigateRef = useRef(navigate);
 
   const latestBlogInfo = useMemo(() => getLatestBlogMetadata(lang), [lang]);
+
+  // Update refs when values change
+  useEffect(() => {
+    latestBlogInfoRef.current = latestBlogInfo;
+    langRef.current = lang;
+    navigateRef.current = navigate;
+  }, [latestBlogInfo, lang, navigate]);
 
   const configKey = useMemo(() => {
     return (
@@ -78,18 +89,6 @@ const useBlogBtnDom = (src: string) => {
           : '/'
     ) as ConfigKey;
   }, [src]);
-
-  // Create the click handler and store it in ref
-  useEffect(() => {
-    if (configKey !== '/') return;
-
-    const handleClick = () => {
-      const targetSlug = latestBlogInfo?.slug || 'lynx-unlock-native-for-more';
-      navigate(`${getLangPrefix(lang)}/blog/${targetSlug}`);
-    };
-
-    clickHandlerRef.current = handleClick;
-  }, [configKey, lang, latestBlogInfo, navigate]);
 
   useEffect(() => {
     if (page.pageType !== 'home') return;
@@ -118,10 +117,23 @@ const useBlogBtnDom = (src: string) => {
       badgeElementRef.current = badgeElement;
 
       // Attach event listeners only when creating the element
-      if (configKey === '/' && clickHandlerRef.current) {
-        const handler = () => clickHandlerRef.current?.();
-        badgeElement.addEventListener('click', handler);
-        badgeElement.addEventListener('touchstart', handler);
+      if (configKey === '/') {
+        const handleClick = () => {
+          const targetSlug =
+            latestBlogInfoRef.current?.slug || 'lynx-unlock-native-for-more';
+          navigateRef.current(
+            `${getLangPrefix(langRef.current)}/blog/${targetSlug}`,
+          );
+        };
+
+        badgeElement.addEventListener('click', handleClick);
+        badgeElement.addEventListener('touchstart', handleClick);
+
+        // Cleanup listeners when component unmounts or page type changes
+        return () => {
+          badgeElement?.removeEventListener('click', handleClick);
+          badgeElement?.removeEventListener('touchstart', handleClick);
+        };
       }
     }
 
