@@ -74,42 +74,6 @@ const getDataFromApiAsync = async () => {
 
 不要忘记捕获 `fetch` 可能抛出的任何错误。
 
-## 使用 Fetch chunk streaming
-
-传输大量的数据时，可选择使用 chunk streaming，分批处理返回数据，以降低网络请求耗时。
-
-你可以查阅 MDN 文档的 [Transfer-Encoding chunked](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Transfer-Encoding#chunked) 了解 chunk streaming 标准
-
-:::tip
-
-为了简化前端开发，LynxSDK 内部将 http 返回的 body 进行分割：
-
-chunk 大小与 '\r\n' 分隔符会被去除，只有 chunk 的内容会返回。
-
-:::
-
-将 `lynxExtension` 内的 `useStreaming` 设置为 `true`，以开启 Fetch chunk streaming。
-
-```typescript
-fetch('https://e3e0932a-9522-4aec-aec9-12cba94b0c7f.mock.pstmn.io/chunk', {
-  lynxExtension: { useStreaming: true },
-}).then((response) => {
-  const reader = response.body.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    } else {
-      const text = TextCodecHelper.decode(value);
-      setData(text);
-    }
-  }
-});
-```
-
-你可以查阅 MDN 文档的 [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
-了解如何处理 streaming body。
-
 ## 使用 TextCodecHelper
 
 由于 `PrimJS` 不支持 `TextEncoder/TextDecoder`，为满足前端开发者基本的编解码需求。
