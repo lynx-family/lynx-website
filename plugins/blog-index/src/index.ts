@@ -9,6 +9,7 @@ interface BlogPost {
   dateString: string;
   authors: string[];
   excerpt: string;
+  frontmatter: Record<string, string>;
 }
 
 /**
@@ -92,6 +93,7 @@ function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
   }
   
   return {
+    frontmatter,
     title,
     dateString,
     authors,
@@ -121,8 +123,8 @@ function getBlogPosts(blogDir: string): BlogPost[] {
     try {
       const data = parseMDXFile(filePath);
       
-      // Parse date for sorting - try frontmatter date first, then use current date
-      const date = data.dateString ? new Date(data.dateString) : new Date();
+      // Parse date for sorting - use frontmatter date (ISO format) for accurate sorting
+      const date = data.frontmatter.date ? new Date(data.frontmatter.date) : new Date();
       
       posts.push({
         slug,
