@@ -79,8 +79,6 @@ export { YouTubeIframe } from './YoutubeIframe';
 
 // --------- Legacy ---------
 
-export { default as LegacyCompatTable } from './LegacyCompatTable';
-
 // AvailableBadge
 export { default as AvailableBadge } from './available-badge/AvailableBadge';
 
