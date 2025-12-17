@@ -1,24 +1,25 @@
-/**
- * This script generates blog index pages at build time by:
- * 1. Reading all blog MDX files from docs/[lang]/blog/
- * 2. Extracting metadata (date, title, authors, excerpt)
- * 3. Generating index.mdx content with BlogAvatar components
- */
+import type { RspressPlugin } from '@rspress/core';
+import path from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
-const fs = require('fs');
-const path = require('path');
+interface BlogPost {
+  slug: string;
+  date: Date;
+  title: string;
+  dateString: string;
+  authors: string[];
+  excerpt: string;
+}
 
 /**
  * Parse frontmatter and content from MDX file
- * @param {string} filePath - Path to MDX file
- * @returns {Object} - Parsed data including frontmatter and content
  */
-function parseMDXFile(filePath) {
-  const content = fs.readFileSync(filePath, 'utf8');
+function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
+  const content = readFileSync(filePath, 'utf8');
   
-  // Extract frontmatter - handle different line endings
+  // Extract frontmatter
   const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  const frontmatter = {};
+  const frontmatter: Record<string, string> = {};
   
   if (frontmatterMatch) {
     const frontmatterText = frontmatterMatch[1];
@@ -40,10 +41,9 @@ function parseMDXFile(filePath) {
   
   // Extract authors from BlogAvatar component
   const avatarMatch = content.match(/<BlogAvatar\s+list=\{(\[[^\}]+\])\}\s*\/>/);
-  let authors = [];
+  let authors: string[] = [];
   if (avatarMatch) {
     try {
-      // Clean up the array string and parse it
       const listStr = avatarMatch[1].replace(/'/g, '"');
       authors = JSON.parse(listStr);
     } catch (e) {
@@ -52,9 +52,7 @@ function parseMDXFile(filePath) {
   }
   
   // Extract excerpt (first paragraph after title and avatar)
-  // Try to find text after BlogAvatar, skipping images and empty lines
   const afterAvatar = content.split(/<BlogAvatar[^>]+\/>/)[1] || '';
-  // Split into lines and find the first meaningful text paragraph
   const lines = afterAvatar.split('\n');
   let excerpt = '';
   let collecting = false;
@@ -65,16 +63,14 @@ function parseMDXFile(filePath) {
     // Skip empty lines, images, and headings
     if (!trimmed || trimmed.startsWith('!') || trimmed.startsWith('#') || trimmed.startsWith('<')) {
       if (collecting && excerpt) {
-        break; // We've collected a paragraph, stop here
+        break;
       }
       continue;
     }
     
-    // Start or continue collecting text
     collecting = true;
     excerpt += (excerpt ? ' ' : '') + trimmed;
     
-    // If we have a decent amount of text, stop
     if (excerpt.length > 200) {
       break;
     }
@@ -82,13 +78,13 @@ function parseMDXFile(filePath) {
   
   // Clean up excerpt
   excerpt = excerpt.replace(/!\[.*?\]\(.*?\)/g, ''); // Remove markdown images
-  // Remove HTML/JSX tags - iterate to handle nested or malformed tags
+  // Remove HTML/JSX tags iteratively
   let prevExcerpt = '';
   while (prevExcerpt !== excerpt) {
     prevExcerpt = excerpt;
     excerpt = excerpt.replace(/<[^>]*>/gs, '');
   }
-  excerpt = excerpt.replace(/\s+/g, ' ').trim(); // Normalize whitespace
+  excerpt = excerpt.replace(/\s+/g, ' ').trim();
   
   // Truncate if too long
   if (excerpt.length > 300) {
@@ -96,7 +92,6 @@ function parseMDXFile(filePath) {
   }
   
   return {
-    frontmatter,
     title,
     dateString,
     authors,
@@ -106,12 +101,14 @@ function parseMDXFile(filePath) {
 
 /**
  * Get all blog posts from a directory
- * @param {string} blogDir - Path to blog directory
- * @returns {Array} - Array of blog post objects
  */
-function getBlogPosts(blogDir) {
-  const files = fs.readdirSync(blogDir);
-  const posts = [];
+function getBlogPosts(blogDir: string): BlogPost[] {
+  if (!existsSync(blogDir)) {
+    return [];
+  }
+
+  const files = readdirSync(blogDir);
+  const posts: BlogPost[] = [];
   
   files.forEach(file => {
     if (file === 'index.mdx' || file === '_meta.json' || !file.endsWith('.mdx')) {
@@ -124,8 +121,8 @@ function getBlogPosts(blogDir) {
     try {
       const data = parseMDXFile(filePath);
       
-      // Parse date for sorting
-      const date = data.frontmatter.date ? new Date(data.frontmatter.date) : new Date();
+      // Parse date for sorting - try frontmatter date first, then use current date
+      const date = data.dateString ? new Date(data.dateString) : new Date();
       
       posts.push({
         slug,
@@ -138,18 +135,15 @@ function getBlogPosts(blogDir) {
   });
   
   // Sort by date, newest first
-  posts.sort((a, b) => b.date - a.date);
+  posts.sort((a, b) => b.date.getTime() - a.date.getTime());
   
   return posts;
 }
 
 /**
  * Generate blog index MDX content
- * @param {Array} posts - Array of blog post objects
- * @param {string} lang - Language code ('en' or 'zh')
- * @returns {string} - Generated MDX content
  */
-function generateBlogIndexContent(posts, lang) {
+function generateBlogIndexContent(posts: BlogPost[], lang: string): string {
   const isZh = lang === 'zh';
   
   const title = isZh ? 'Lynx 博客' : 'Lynx Blog';
@@ -162,11 +156,7 @@ title: ${title}
 sidebar: false
 ---
 
-<!--
-  This file is auto-generated by scripts/generate-blog-index.js
-  Do not edit manually - your changes will be overwritten!
-  To regenerate, run: pnpm prepare:blog-index
--->
+{/* This file is auto-generated by the blog-index plugin. Do not edit manually! */}
 
 import { BlogAvatar } from '@lynx';
 
@@ -183,14 +173,10 @@ ${description}
     
     // Add date and authors
     if (post.dateString) {
-      content += `_${post.dateString}`;
+      content += `_${post.dateString}_\n\n`;
       
-      // Add authors inline
       if (post.authors && post.authors.length > 0) {
-        content += '_\n\n';
         content += `<BlogAvatar list={${JSON.stringify(post.authors)}} />\n\n`;
-      } else {
-        content += '_\n\n';
       }
     }
     
@@ -206,35 +192,38 @@ ${description}
 }
 
 /**
- * Generate blog index pages for all languages
+ * Rspress plugin for auto-generating blog index pages
  */
-function generateBlogIndexPages() {
-  const docsDir = path.join(__dirname, '..', 'docs');
-  const languages = ['en', 'zh'];
-  
-  languages.forEach(lang => {
-    const blogDir = path.join(docsDir, lang, 'blog');
-    
-    if (!fs.existsSync(blogDir)) {
-      console.warn(`Blog directory not found: ${blogDir}`);
-      return;
-    }
-    
-    console.log(`Generating blog index for ${lang}...`);
-    
-    const posts = getBlogPosts(blogDir);
-    const content = generateBlogIndexContent(posts, lang);
-    
-    const indexPath = path.join(blogDir, 'index.mdx');
-    fs.writeFileSync(indexPath, content, 'utf8');
-    
-    console.log(`✓ Generated ${indexPath} with ${posts.length} posts`);
-  });
+export function pluginBlogIndex(): RspressPlugin {
+  return {
+    name: 'rspress-plugin-blog-index',
+    addPages(config, isProd) {
+      const docsDir = path.join(process.cwd(), 'docs');
+      const languages = ['en', 'zh'];
+      const pages: Array<{ routePath: string; content: string }> = [];
+      
+      languages.forEach(lang => {
+        const blogDir = path.join(docsDir, lang, 'blog');
+        
+        if (!existsSync(blogDir)) {
+          console.warn(`Blog directory not found: ${blogDir}`);
+          return;
+        }
+        
+        console.log(`Generating blog index for ${lang}...`);
+        
+        const posts = getBlogPosts(blogDir);
+        const content = generateBlogIndexContent(posts, lang);
+        
+        pages.push({
+          routePath: `/${lang}/blog/index`,
+          content,
+        });
+        
+        console.log(`✓ Generated blog index for ${lang} with ${posts.length} posts`);
+      });
+      
+      return pages;
+    },
+  };
 }
-
-// Run if called directly
-if (require.main === module) {
-  generateBlogIndexPages();
-}
-
-module.exports = { generateBlogIndexPages };

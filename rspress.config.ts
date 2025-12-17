@@ -21,6 +21,7 @@ import {
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
 import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
+import { pluginBlogIndex } from '@lynx-js/rspress-plugin-blog-index';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -164,6 +165,7 @@ export default defineConfig({
     ],
   },
   plugins: [
+    pluginBlogIndex(),
     pluginClientRedirects({
       redirects: [
         {
