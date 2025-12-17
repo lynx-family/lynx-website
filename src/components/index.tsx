@@ -79,39 +79,6 @@ export { YouTubeIframe } from './YoutubeIframe';
 
 export { default as LegacyCompatTable } from './LegacyCompatTable';
 
-// AvailableBadge
-export { default as AvailableBadge } from './available-badge/AvailableBadge';
-
-// Reexport everything from VersionTag as top-level exports to help with migration
-export {
-  ClayUnavailable,
-  Version14,
-  Version15,
-  Version16,
-  Version20,
-  Version21,
-  Version210,
-  Version211,
-  Version212,
-  Version213,
-  Version214,
-  Version215,
-  Version216,
-  Version217,
-  Version218,
-  Version22,
-  Version23,
-  Version24,
-  Version25,
-  Version25dot5,
-  Version26,
-  Version27,
-  Version28,
-  Version29,
-  Version31,
-  Version32,
-} from './VersionTag';
-
 export { ExamplePreview } from './go/example-preview';
 
 export { BlogAvatar } from './blog-avatar';
