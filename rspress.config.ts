@@ -224,7 +224,7 @@ export default defineConfig({
   },
   llms: {
     remarkSplitMdxOptions: {
-      includes: [[['Go', 'LegacyCompatTable', 'SimpleAPITable'], '@lynx']],
+      includes: [[['Go', 'APITable', 'SimpleAPITable'], '@lynx']],
     },
   },
 });

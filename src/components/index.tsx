@@ -76,8 +76,6 @@ export { YouTubeIframe } from './YoutubeIframe';
 
 // --------- Legacy ---------
 
-export { default as LegacyCompatTable } from './LegacyCompatTable';
-
 export { ExamplePreview } from './go/example-preview';
 
 export { BlogAvatar } from './blog-avatar';
