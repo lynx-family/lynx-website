@@ -1,6 +1,6 @@
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { cn } from '../../lib/utils';
-import { mapPlatformNameToIconName } from '../api-table/helpers';
+import { mapPlatformNameToIconName } from '../api-table/compat-table/headers';
 import { PlatformIconProps } from './types';
 import './icon.scss';
 import AndroidIcon from '@assets/home/home-icon-android.svg';

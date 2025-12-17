@@ -6,10 +6,21 @@
  * - useSWR or a shared contextual store to ensure we are not over-fetching.
  */
 import type LCD from '@lynx-js/lynx-compat-data';
-import { getNestedValue } from '../api-table/helpers';
 import { PlatformBadge } from './PlatformBadge';
 import { StatusBadge } from './StatusBadge';
 export * as Platform from './PlatformBadge';
+
+/**
+ * Gets a nested value from an object using a slash-separated path.
+ * @param obj The object to get the value from.
+ * @param query The slash-separated path to the value.
+ * @returns The value at the path, or undefined if not found.
+ */
+function getNestedValue(obj: any, query: string): any {
+  return query.split('/').reduce((acc, key) => {
+    return acc && acc[key] !== undefined ? acc[key] : undefined;
+  }, obj);
+}
 
 type CompatibilityBadgeProps = {
   query?: string;

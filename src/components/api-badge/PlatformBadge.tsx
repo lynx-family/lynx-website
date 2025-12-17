@@ -3,7 +3,7 @@ import { getFullPlatformName, PlatformName } from '@lynx-js/lynx-compat-data';
 import { Badge } from '@rspress/core/theme';
 
 // TODO(xuan.huang): move this to a common place.
-import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/helpers';
+import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/compat-table/headers';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
 
 /**

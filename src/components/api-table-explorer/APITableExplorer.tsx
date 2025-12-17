@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SimpleAPITable from '../api-table/SimpleAPITable';
+import APITable from '../api-table/APITable';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -52,12 +52,12 @@ const APITableExplorer: React.FC = () => {
           </div>
           <p className="mt-4">
             Below is the render output of{' '}
-            <code>{`<SimpleAPITable query="${query}" />`}</code>
+            <code>{`<APITable query="${query}" />`}</code>
           </p>
         </CardContent>
       </Card>
       <div>
-        <SimpleAPITable query={query} />
+        <APITable query={query} />
       </div>
     </div>
   );
