@@ -25,7 +25,7 @@ function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
   if (frontmatterMatch) {
     const frontmatterText = frontmatterMatch[1];
     frontmatterText.split('\n').forEach(line => {
-      const match = line.match(/^([a-zA-Z_-]+):\s*(.+)$/);
+      const match = line.match(/^([a-zA-Z_-]+):\s*(.*)$/);
       if (match) {
         frontmatter[match[1]] = match[2];
       }
@@ -41,7 +41,8 @@ function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
   const dateString = dateStringMatch ? dateStringMatch[1] : '';
   
   // Extract authors from BlogAvatar component
-  const avatarMatch = content.match(/<BlogAvatar\s+list=\{(\[[^\}]+\])\}\s*\/>/);
+  // Use a more lenient pattern that captures content until the closing }
+  const avatarMatch = content.match(/<BlogAvatar\s+list=\{(\[[\s\S]*?\])\}\s*\/>/);
   let authors: string[] = [];
   if (avatarMatch) {
     try {
@@ -79,13 +80,8 @@ function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
   
   // Clean up excerpt
   excerpt = excerpt.replace(/!\[.*?\]\(.*?\)/g, ''); // Remove markdown images
-  // Remove HTML/JSX tags iteratively
-  let prevExcerpt = '';
-  while (prevExcerpt !== excerpt) {
-    prevExcerpt = excerpt;
-    excerpt = excerpt.replace(/<[^>]*>/gs, '');
-  }
-  excerpt = excerpt.replace(/\s+/g, ' ').trim();
+  excerpt = excerpt.replace(/<[^>]*>/g, ''); // Remove HTML/JSX tags
+  excerpt = excerpt.replace(/\s+/g, ' ').trim(); // Normalize whitespace
   
   // Truncate if too long
   if (excerpt.length > 300) {
@@ -124,7 +120,17 @@ function getBlogPosts(blogDir: string): BlogPost[] {
       const data = parseMDXFile(filePath);
       
       // Parse date for sorting - use frontmatter date (ISO format) for accurate sorting
-      const date = data.frontmatter.date ? new Date(data.frontmatter.date) : new Date();
+      // Skip posts without a valid date
+      if (!data.frontmatter.date) {
+        console.warn(`Skipping ${filePath}: missing date in frontmatter`);
+        return;
+      }
+      
+      const date = new Date(data.frontmatter.date);
+      if (isNaN(date.getTime())) {
+        console.warn(`Skipping ${filePath}: invalid date format "${data.frontmatter.date}"`);
+        return;
+      }
       
       posts.push({
         slug,
