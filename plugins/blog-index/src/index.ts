@@ -25,7 +25,7 @@ function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
   if (frontmatterMatch) {
     const frontmatterText = frontmatterMatch[1];
     frontmatterText.split('\n').forEach(line => {
-      const match = line.match(/^([a-zA-Z_-]+):\s*(.*)$/);
+      const match = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
       if (match) {
         frontmatter[match[1]] = match[2];
       }
