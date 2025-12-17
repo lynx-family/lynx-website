@@ -32,7 +32,7 @@ function getNestedValue(obj: any, path: string): any {
     );
 }
 
-export default function SimpleAPITable(
+export default function APITable(
   props: PropsWithData | Partial<PropsWithQuery>,
 ) {
   const lang = useLang();

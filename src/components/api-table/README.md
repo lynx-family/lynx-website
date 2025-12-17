@@ -1,9 +1,9 @@
 # API Table
 
-It is a 2-layered thin wrapper over the `<APITable>` component:
+The `<APITable>` component fetches and displays API compatibility data.
 
-- `<FetchingCompatTable>`: this dynamically import the source code of the `<APITable>` and fetch the data on demand.
-- `<APITable>`: this further wrap over the `<FetchingCompatTable>` to get the query from frontmatter of the current page when the query is not specified. This component is the one actually exposed to the docs.
+- `<APITable>`: fetches compatibility data on demand and displays it. Gets the query from frontmatter of the current page when the query is not specified. This component is the one actually exposed to the docs.
+- `<CompatTable>`: renders the fetched compatibility data.
 
 ## Usage
 
