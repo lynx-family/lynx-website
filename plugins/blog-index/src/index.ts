@@ -217,12 +217,15 @@ export function pluginBlogIndex(): RspressPlugin {
         const posts = getBlogPosts(blogDir);
         const content = generateBlogIndexContent(posts, lang);
         
+        // For 'en' (default locale), use /blog/index, for others use /lang/blog/index
+        const routePath = lang === 'en' ? '/blog/index' : `/${lang}/blog/index`;
+        
         pages.push({
-          routePath: `/${lang}/blog/index`,
+          routePath,
           content,
         });
         
-        console.log(`✓ Generated blog index for ${lang} with ${posts.length} posts`);
+        console.log(`✓ Generated blog index for ${lang} with ${posts.length} posts at ${routePath}`);
       });
       
       return pages;
