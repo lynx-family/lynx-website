@@ -6,6 +6,10 @@
 
 ## 分析框架性能
 
+你可以采用构建配置和[JS Profile](/guide/devtool/trace/js-profile.html)两种方式来分析框架性能。
+
+### 通过构建配置启用
+
 我们为框架（如 ReactLynx组件的 `render` 和 `diff` ）提供了内置的 Trace 点。
 
 ![react profile](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/rspeedy-react-profile.png)
@@ -15,7 +19,7 @@
 
 这些 Trace 点显示了组件如何渲染和比较差异。
 
-### 在生产环境中运行性能分析
+#### 在生产环境中运行性能分析
 
 可以通过在构建时设置 [`performance.profile`] 为 `true` 来启用 Trace 点。
 
@@ -40,7 +44,7 @@ export default defineConfig({
 **不要**部署使用 `performance.profile: true` 构建的输出。它们不适用于生产环境。
 :::
 
-### 在开发环境中禁用性能分析
+#### 在开发环境中禁用性能分析
 
 可以通过在开发时设置 `performance.profile` 为 `false` 来禁用 Trace 点。
 
@@ -54,5 +58,9 @@ export default defineConfig({
   }, // [!code ++]
 });
 ```
+
+### 使用 JS Profile 动态采样
+
+使用 [JS Profile](/guide/devtool/trace/js-profile.html) 工具在运行时采集调用堆栈数据，无需修改构建配置。
 
 [`performance.profile`]: /api/rspeedy/rspeedy.performance.profile
