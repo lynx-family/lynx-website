@@ -80,7 +80,18 @@ function parseMDXFile(filePath: string): Omit<BlogPost, 'slug' | 'date'> {
   
   // Clean up excerpt
   excerpt = excerpt.replace(/!\[.*?\]\(.*?\)/g, ''); // Remove markdown images
-  excerpt = excerpt.replace(/<[^>]*>/g, ''); // Remove HTML/JSX tags
+  
+  // Remove HTML/JSX tags iteratively to handle nested/incomplete tags
+  // This prevents incomplete multi-character sanitization vulnerabilities
+  let prevExcerpt;
+  let iterations = 0;
+  const maxIterations = 10; // Safety limit to prevent infinite loops
+  do {
+    prevExcerpt = excerpt;
+    excerpt = excerpt.replace(/<[^>]*>/g, '');
+    iterations++;
+  } while (prevExcerpt !== excerpt && iterations < maxIterations);
+  
   excerpt = excerpt.replace(/\s+/g, ' ').trim(); // Normalize whitespace
   
   // Truncate if too long
