@@ -4,6 +4,14 @@ The Compatibility Table component displays feature compatibility across platform
 
 This component is a **presentational** component awaiting a data-fetching container. It serves as a precursor to the `<FetchingCompatTable>` (the internal implementation of `<APITable>` used in the docs).
 
+## License
+
+This component is ported from [yari (the MDN Web Docs)](https://github.com/mdn/yari/tree/main/client/src/document/ingredients/browser-compatibility-table), which reads data from [MDN BCD](https://github.com/mdn/browser-compat-data).
+
+The source files in this directory are licensed under the **Mozilla Public License, v. 2.0** (MPL-2.0). A copy of the MPL-2.0 license is included in this directory as `LICENSE`.
+
+If a copy of the MPL was not distributed with these files, you can obtain one at <http://mozilla.org/MPL/2.0/>.
+
 ## Usage
 
 ```tsx
