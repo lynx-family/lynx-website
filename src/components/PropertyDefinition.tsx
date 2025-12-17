@@ -1,7 +1,7 @@
 import React from 'react';
-import { Table } from '@douyinfe/semi-ui';
 import { cn } from '../lib/utils';
-import { useDark, useI18n } from '@rspress/core/runtime';
+import { useI18n } from '@rspress/core/runtime';
+import { Table, TableBody, TableCell, TableRow } from './ui/table';
 
 interface PropertyDefinitionProps {
   initialValue: React.ReactNode;
@@ -21,7 +21,6 @@ export const PropertyDefinition: React.FC<PropertyDefinitionProps> = ({
   className,
 }) => {
   const text = useI18n();
-  const dark = useDark();
 
   const data = [
     {
@@ -54,31 +53,20 @@ export const PropertyDefinition: React.FC<PropertyDefinitionProps> = ({
     });
   }
 
-  const columns = [
-    {
-      title: '',
-      dataIndex: 'property',
-      width: 120,
-      render: (text: string) => <span>{text}</span>,
-    },
-    {
-      title: '',
-      dataIndex: 'value',
-      render: (value: React.ReactNode) => <span>{value}</span>,
-    },
-  ];
-
   return (
     <div className={cn('not-prose', className)}>
-      <Table
-        size="small"
-        pagination={false}
-        showHeader={false}
-        bordered
-        columns={columns}
-        dataSource={data}
-        className={`${dark ? 'semi-always-dark' : 'semi-always-light'}`}
-      />
+      <Table>
+        <TableBody>
+          {data.map((row) => (
+            <TableRow key={row.key}>
+              <TableCell className="sh-w-[120px] sh-font-medium sh-text-muted-foreground">
+                {row.property}
+              </TableCell>
+              <TableCell>{row.value}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
