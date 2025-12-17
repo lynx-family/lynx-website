@@ -118,11 +118,22 @@ export const SHARED_DOC_FILES = Object.keys(SHARED_DOC_TITLES).map(
  * @returns The matching path prefix with leading slash, or empty string if no match
  */
 export function getUrlPathPrefix(pathname: string, sharedPaths: string[]) {
-  for (const path of sharedPaths) {
-    if (pathname.includes(`/${path}`)) {
-      return `/${path}`;
-    }
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length === 0) {
+    return '';
   }
+
+  const [first, second] = segments;
+  const effectiveSegment = first === 'zh' ? second : first;
+
+  if (!effectiveSegment) {
+    return '';
+  }
+
+  if (sharedPaths.includes(effectiveSegment)) {
+    return `/${effectiveSegment}`;
+  }
+
   return '';
 }
 

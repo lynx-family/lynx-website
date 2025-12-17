@@ -19,21 +19,47 @@ import type { SubsiteConfig } from '@site/shared-route-config';
 
 import { SubsiteView } from './subsite-ui';
 
+function findSubsiteFromPathname(
+  pathname: string,
+  lang: string,
+): SubsiteConfig {
+  const langPrefix = getLangPrefix(lang);
+  let path = pathname;
+
+  if (langPrefix && path.startsWith(`${langPrefix}/`)) {
+    path = path.slice(langPrefix.length + 1);
+  } else if (!langPrefix && path.startsWith('/')) {
+    path = path.slice(1);
+  }
+
+  if (!path) {
+    return SUBSITES_CONFIG[0];
+  }
+
+  const [firstSegment] = path.split('/');
+  const normalizedSegment = firstSegment.replace(/\.html$/, '');
+
+  const subsite =
+    SUBSITES_CONFIG.find((s) => s.value === normalizedSegment) ||
+    SUBSITES_CONFIG[0];
+
+  return subsite;
+}
+
 function SubsiteSelect() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const lang = useLang();
-  const [selectedSubsite, setSelectedSubsite] = useState<SubsiteConfig>(() => {
-    const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
-    return subsite || SUBSITES_CONFIG[0];
-  });
+  const [selectedSubsite, setSelectedSubsite] = useState<SubsiteConfig>(() =>
+    findSubsiteFromPathname(pathname, lang),
+  );
 
   useEffect(() => {
-    const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
-    if (subsite && subsite.value !== selectedSubsite.value) {
+    const subsite = findSubsiteFromPathname(pathname, lang);
+    if (subsite.value !== selectedSubsite.value) {
       setSelectedSubsite(subsite);
     }
-  }, [pathname, selectedSubsite.value]);
+  }, [lang, pathname, selectedSubsite.value]);
 
   const handleValueChange = (value: string) => {
     const newSubsite = SUBSITES_CONFIG.find((s) => s.value === value);
