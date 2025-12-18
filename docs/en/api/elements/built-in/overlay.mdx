@@ -6,31 +6,40 @@ context: 'XElement'
 
 import { Required, Deprecated, AndroidOnly, IOSOnly, Go } from '@lynx';
 
-`<overlay>` is an element designed specifically for Hybrid Apps; its children can break out of the LynxView document flow and be `fixed` to the native page.
+`<overlay>` is a container that does not participate in page layout. It occupies no space itself and requires neither width nor height.
 
-- In a hybrid app where LynxView is used as a feed card, you can use `<overlay>` to build dialogs/modals.
-- When using LynxView to build an entire page, `<overlay>` is not recommended; using `position: fixed` directly is simpler.
+When rendered, the content inside `<overlay>` is completely detached from the Lynx document flow and promoted to a rendering layer outside of Lynx.
 
-## Usage
+By default, the only child of `<overlay>` uses the screen dimensions as its width and height. It is recommended to treat it as an independent drawing container for the full overlay content.
 
 :::info
 
-- `<overlay>` can only have one direct child, and `<overlay>` itself must set a required CSS property:
-  - `<overlay style="position: fixed;/>`
-- `<overlay>` is just a container and occupies no space, so it does not need any width or height and does not affect the parent container's layout.
-- `<overlay>` automatically places its inner children at appropriate layers; you do not need to set `z-index`, `translateZ`, etc.
-- The single child node of `<overlay>` uses the screen size as its width/height baseline by default; we recommend using it as a dedicated container for all rendering content.
-  - Use this child as a backdrop to draw the overlay (even if it might be transparent) and set `width:100%; height:100%;`
-  - To adjust the visual size of the dialog, set `margin` and other parameters inside this child node.
-- Layout rules for all inner children of `<overlay>`:
-  - You can use `position: absolute` but must not use `position: fixed` inside.
-  - When using `z-index`, ensure the stacking context is `<overlay>` itself; otherwise, elements will attach to `<page>`.
+**Use cases**
+
+- When embedding a Lynx sub-module in a native page, use `<overlay>` to build a dialog that covers the entire page.
+- When the page is built entirely with Lynx, **do not** use `<overlay>`; simply use `position: fixed` instead.
+
+:::
+
+## Usage
+
+### Requirements
+
+- `<overlay>` **can only have one direct child node**.
+- `<overlay>` **itself must set `position: fixed`**.
+
+### Recommended Usage
+
+- Use the only child node of `<overlay>` as the backdrop container:
+  - Even if the background is transparent, it is still recommended to render it.
+  - Explicitly set the size: **`width: 100%; height: 100%`**.
+  - Explicitly create an independent stacking context: **`z-index: 0`**.
 
 ```tsx
 <overlay class="overlay">
   <view class="backdrop">
     // Dialog Content
-    <BizContent class="biz-content" />
+    <Dialog class="dialog-content" />
   </view>
 </overlay>
 ```
@@ -39,22 +48,23 @@ import { Required, Deprecated, AndroidOnly, IOSOnly, Go } from '@lynx';
 .overlay {
   overflow: visible;
   position: fixed;
-  z-index: 0;
 }
+
 .backdrop {
   width: 100%;
   height: 100%;
-  background: gray;
+  z-index: 0;
 }
-.biz-content {
+```
+
+- To adjust the dialog’s visual size, control it inside the backdrop (e.g. with `margin`) instead of changing the backdrop’s own size.
+
+```css
+.dialog-content {
   margin: 100px;
   position: absolute;
 }
 ```
-
-:::
-
-### Use `<overlay>` to create a dialog
 
 <Go
   example="overlay"
