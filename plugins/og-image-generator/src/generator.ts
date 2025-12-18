@@ -1,5 +1,6 @@
 import satori from 'satori';
 import sharp from 'sharp';
+import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,132 +33,145 @@ export type OGImageConfig = {
   sharedImageName?: string;
 };
 
-// Cache for font data
-let fontDataCache: {
-  inter: {
-    regular: ArrayBuffer;
-    bold: ArrayBuffer;
-  };
-  notoSansSC: {
-    regular: ArrayBuffer;
-    bold: ArrayBuffer;
-  };
-} | null = null;
+type FontPair = { regular: ArrayBuffer; bold: ArrayBuffer };
+
+// Cache for font data (so we don't re-read / re-download per image)
+let interCache: FontPair | null = null;
+let notoSansSCCache: FontPair | null = null;
 
 // Check if text contains Chinese characters
 function containsChinese(text: string): boolean {
   return /[\u4e00-\u9fff]/.test(text);
 }
 
-async function getFontData(): Promise<{
-  inter: {
-    regular: ArrayBuffer;
-    bold: ArrayBuffer;
-  };
-  notoSansSC: {
-    regular: ArrayBuffer;
-    bold: ArrayBuffer;
-  };
-}> {
-  if (fontDataCache) {
-    return fontDataCache;
+function bufferToArrayBuffer(buf: Buffer): ArrayBuffer {
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+}
+
+function getFontCacheDir(): string {
+  // Keep downloaded font artifacts out of git and reuse across builds if node_modules is cached (e.g. Netlify)
+  return path.join(process.cwd(), 'node_modules', '.cache', 'rspress-og-fonts');
+}
+
+async function fetchFontWithCache(url: string, cacheBasename: string) {
+  const cacheDir = getFontCacheDir();
+  const cachePath = path.join(cacheDir, cacheBasename);
+
+  if (existsSync(cachePath)) {
+    const cached = await fs.readFile(cachePath);
+    return bufferToArrayBuffer(cached);
   }
 
-  try {
-    // Try to use fontsource packages
-    const dirname = path.dirname(fileURLToPath(import.meta.url || ''));
-
-    // Load Inter font paths
-    const interPath = path.join(
-      dirname,
-      '..',
-      'node_modules',
-      '@fontsource',
-      'inter',
-      'files',
-    );
-
-    // Load Noto Sans SC font paths
-    const notoSansSCPath = path.join(
-      dirname,
-      '..',
-      'node_modules',
-      '@fontsource',
-      'noto-sans-sc',
-      'files',
-    );
-
-    // Load all font files
-    const [interRegular, interBold, notoSCRegular, notoSCBold] =
-      await Promise.all([
-        fs.readFile(path.join(interPath, 'inter-latin-400-normal.woff')),
-        fs.readFile(path.join(interPath, 'inter-latin-700-normal.woff')),
-        fs.readFile(
-          path.join(
-            notoSansSCPath,
-            'noto-sans-sc-chinese-simplified-400-normal.woff',
-          ),
-        ),
-        fs.readFile(
-          path.join(
-            notoSansSCPath,
-            'noto-sans-sc-chinese-simplified-700-normal.woff',
-          ),
-        ),
-      ]);
-
-    fontDataCache = {
-      inter: {
-        regular: interRegular.buffer,
-        bold: interBold.buffer,
-      },
-      notoSansSC: {
-        regular: notoSCRegular.buffer,
-        bold: notoSCBold.buffer,
-      },
-    };
-
-    return fontDataCache;
-  } catch (error) {
-    console.error('Failed to load fonts from @fontsource packages:', error);
-
-    // Fallback: try to fetch from CDN
-    try {
-      const [interRegularRes, interBoldRes] = await Promise.all([
-        fetch(
-          'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff',
-        ),
-        fetch(
-          'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff',
-        ),
-      ]);
-
-      // For Chinese fonts, we'll use a fallback
-      const notoSCUrl =
-        'https://fonts.gstatic.com/s/notosanssc/v36/k3kXo84MPvpLmixcA63oeALhL4iJ-Q7m8w.woff';
-      const [notoSCRegularRes, notoSCBoldRes] = await Promise.all([
-        fetch(notoSCUrl),
-        fetch(notoSCUrl), // Using same for both weights as fallback
-      ]);
-
-      fontDataCache = {
-        inter: {
-          regular: await interRegularRes.arrayBuffer(),
-          bold: await interBoldRes.arrayBuffer(),
-        },
-        notoSansSC: {
-          regular: await notoSCRegularRes.arrayBuffer(),
-          bold: await notoSCBoldRes.arrayBuffer(),
-        },
-      };
-
-      return fontDataCache;
-    } catch (fetchError) {
-      throw new Error(
-        'Could not load fonts. Please ensure @fontsource packages are installed or internet is available.',
-      );
-    }
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch font: ${url} (${res.status})`);
   }
+  const ab = await res.arrayBuffer();
+  await fs.mkdir(cacheDir, { recursive: true });
+  await fs.writeFile(cachePath, Buffer.from(ab));
+  return ab;
+}
+
+async function readLocalFontOrFetch(
+  url: string,
+  cacheBasename: string,
+  localPath?: string,
+) {
+  if (localPath && existsSync(localPath)) {
+    const buf = await fs.readFile(localPath);
+    return bufferToArrayBuffer(buf);
+  }
+  return fetchFontWithCache(url, cacheBasename);
+}
+
+async function getInterFonts(): Promise<FontPair> {
+  if (interCache) return interCache;
+
+  // Try local @fontsource first, else fetch just the specific files we need (woff2)
+  const dirname = path.dirname(fileURLToPath(import.meta.url || ''));
+  const interFilesDir = path.join(
+    dirname,
+    '..',
+    'node_modules',
+    '@fontsource',
+    'inter',
+    'files',
+  );
+
+  const interRegular = await readLocalFontOrFetch(
+    'https://unpkg.com/@fontsource/inter/files/inter-latin-400-normal.woff2',
+    'inter-latin-400-normal.woff2',
+    // Prefer woff2, fallback to woff by letting localPath be the woff2 first
+    existsSync(path.join(interFilesDir, 'inter-latin-400-normal.woff2'))
+      ? path.join(interFilesDir, 'inter-latin-400-normal.woff2')
+      : path.join(interFilesDir, 'inter-latin-400-normal.woff'),
+  );
+  const interBold = await readLocalFontOrFetch(
+    'https://unpkg.com/@fontsource/inter/files/inter-latin-700-normal.woff2',
+    'inter-latin-700-normal.woff2',
+    existsSync(path.join(interFilesDir, 'inter-latin-700-normal.woff2'))
+      ? path.join(interFilesDir, 'inter-latin-700-normal.woff2')
+      : path.join(interFilesDir, 'inter-latin-700-normal.woff'),
+  );
+
+  interCache = { regular: interRegular, bold: interBold };
+  return interCache;
+}
+
+async function getNotoSansSCFonts(): Promise<FontPair> {
+  if (notoSansSCCache) return notoSansSCCache;
+
+  // Prefer local @fontsource/noto-sans-sc if present, otherwise download only the needed subset (woff2)
+  const dirname = path.dirname(fileURLToPath(import.meta.url || ''));
+  const notoFilesDir = path.join(
+    dirname,
+    '..',
+    'node_modules',
+    '@fontsource',
+    'noto-sans-sc',
+    'files',
+  );
+
+  const regular = await readLocalFontOrFetch(
+    'https://unpkg.com/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-400-normal.woff2',
+    'noto-sans-sc-chinese-simplified-400-normal.woff2',
+    existsSync(
+      path.join(
+        notoFilesDir,
+        'noto-sans-sc-chinese-simplified-400-normal.woff2',
+      ),
+    )
+      ? path.join(
+          notoFilesDir,
+          'noto-sans-sc-chinese-simplified-400-normal.woff2',
+        )
+      : path.join(
+          notoFilesDir,
+          'noto-sans-sc-chinese-simplified-400-normal.woff',
+        ),
+  );
+
+  const bold = await readLocalFontOrFetch(
+    'https://unpkg.com/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-700-normal.woff2',
+    'noto-sans-sc-chinese-simplified-700-normal.woff2',
+    existsSync(
+      path.join(
+        notoFilesDir,
+        'noto-sans-sc-chinese-simplified-700-normal.woff2',
+      ),
+    )
+      ? path.join(
+          notoFilesDir,
+          'noto-sans-sc-chinese-simplified-700-normal.woff2',
+        )
+      : path.join(
+          notoFilesDir,
+          'noto-sans-sc-chinese-simplified-700-normal.woff',
+        ),
+  );
+
+  notoSansSCCache = { regular, bold };
+  return notoSansSCCache;
 }
 
 /**
@@ -175,14 +189,15 @@ export async function generateOGImage(
     textColor = '#ffffff',
   } = config;
 
-  // Load fonts
-  const fonts = await getFontData();
-
   // Determine if we need Chinese fonts
   const needsChinese =
     containsChinese(title) ||
     (subtitle && containsChinese(subtitle)) ||
     containsChinese(logo);
+
+  // Load fonts (only load Chinese font when needed)
+  const inter = await getInterFonts();
+  const notoSansSC = needsChinese ? await getNotoSansSCFonts() : null;
 
   // Choose font family based on content
   const fontFamily = needsChinese
@@ -255,28 +270,32 @@ export async function generateOGImage(
   const satoriFonts = [
     {
       name: 'Inter',
-      data: fonts.inter.regular,
-      weight: 400,
-      style: 'normal',
+      data: inter.regular,
+      weight: 400 as const,
+      style: 'normal' as const,
     },
     {
       name: 'Inter',
-      data: fonts.inter.bold,
-      weight: 700,
-      style: 'normal',
+      data: inter.bold,
+      weight: 700 as const,
+      style: 'normal' as const,
     },
-    {
-      name: 'Noto Sans SC',
-      data: fonts.notoSansSC.regular,
-      weight: 400,
-      style: 'normal',
-    },
-    {
-      name: 'Noto Sans SC',
-      data: fonts.notoSansSC.bold,
-      weight: 700,
-      style: 'normal',
-    },
+    ...(notoSansSC
+      ? ([
+          {
+            name: 'Noto Sans SC',
+            data: notoSansSC.regular,
+            weight: 400 as const,
+            style: 'normal' as const,
+          },
+          {
+            name: 'Noto Sans SC',
+            data: notoSansSC.bold,
+            weight: 700 as const,
+            style: 'normal' as const,
+          },
+        ] as const)
+      : []),
   ];
 
   // Convert to SVG using Satori

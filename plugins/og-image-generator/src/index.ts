@@ -77,16 +77,16 @@ async function updateHtmlOgImage(
     '',
   );
 
-  // Remove existing twitter:image tag if present
+  // Remove existing twitter:image tag if present (support both name and property)
   updatedHtml = updatedHtml.replace(
-    /<meta\s+property="twitter:image"\s+content="[^"]*"\s*\/?>/gi,
+    /<meta\s+(?:name|property)="twitter:image"\s+content="[^"]*"\s*\/?>/gi,
     '',
   );
 
   // Add new tags right after the <head> tag
   updatedHtml = updatedHtml.replace(
     /<head>/i,
-    `<head>\n    <meta property="og:image" content="${ogImageUrl}"/>\n    <meta property="twitter:image" content="${ogImageUrl}"/>`,
+    `<head>\n    <meta property="og:image" content="${ogImageUrl}"/>\n    <meta name="twitter:image" content="${ogImageUrl}"/>`,
   );
 
   await fs.writeFile(htmlPath, updatedHtml);
@@ -108,7 +108,10 @@ function pluginOGImageGenerator(
   return {
     name: 'rspress-plugin-og-image-generator',
 
-    async routeGenerated(routes: any[]) {
+    async routeGenerated(routes: any[], isProd?: boolean) {
+      // Don't generate OG images in dev; avoids extra work + any font downloads
+      if (!isProd) return;
+
       const cwd = process.cwd();
       const publicDir = path.join(cwd, 'docs', 'public');
       const ogImagesDir = path.join(publicDir, 'assets', outputDir);
@@ -221,7 +224,10 @@ function pluginOGImageGenerator(
       );
     },
 
-    async afterBuild(config: any) {
+    async afterBuild(config: any, isProd?: boolean) {
+      // Don't patch HTML in dev
+      if (!isProd) return;
+
       const { outDir = 'doc_build' } = config;
       const cwd = process.cwd();
       const buildDir = path.join(cwd, outDir);

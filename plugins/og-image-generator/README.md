@@ -124,9 +124,18 @@ pnpm build
 
 The plugin will be automatically picked up by the main project through the workspace configuration.
 
+## Fonts
+
+The plugin uses a hybrid font loading strategy to minimize bundle size:
+
+- **Inter** (Latin): Loaded from the bundled `@fontsource/inter` package (~200KB)
+- **Noto Sans SC** (Chinese): Fetched from CDN on-demand only when Chinese characters are detected
+
+Downloaded fonts are cached in `node_modules/.cache/rspress-og-fonts/` for subsequent builds, so the CDN is only hit once per CI environment.
+
 ## Notes
 
 - Generated images are gitignored by default (see `.gitignore`)
 - Images are generated once and reused on subsequent builds (unless deleted)
 - Set `incremental: false` to regenerate all images on every build
-- Font loading has a CDN fallback if local fonts fail to load
+- Chinese font is fetched from CDN (~5MB) only when generating images with Chinese text
