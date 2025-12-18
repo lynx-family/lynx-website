@@ -18,6 +18,9 @@ export {
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
 export { default as APITable } from './api-table/APITable';
 
+// BlogList
+export { BlogList } from './blog-list';
+
 // API Badges
 export { Badge } from '@rspress/core/theme';
 export {
