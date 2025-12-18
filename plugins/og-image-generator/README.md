@@ -66,9 +66,13 @@ Each route configuration returns an `OGImageConfig` object:
 type OGImageConfig = {
   title: string; // Main heading
   subtitle?: string; // Optional subheading
-  logo?: string; // Brand text (top left)
+  logo?: string; // Brand text (top left) - used if logoImage is not provided
+  logoImage?: string; // Logo image URL or file path - takes precedence over logo text
+  logoWidth?: number; // Logo image width in pixels (optional, auto-calculated if not provided)
+  logoHeight?: number; // Logo image height in pixels (default: 60)
   background?: string; // CSS background (color or gradient)
   textColor?: string; // Text color (default: '#ffffff')
+  sharedImageName?: string; // Use same image for multiple routes
 };
 ```
 
@@ -112,6 +116,42 @@ You can customize colors for different sections:
   }),
 }
 ```
+
+### Using Image Logos
+
+Instead of text logos, you can use image files (PNG, SVG, JPEG):
+
+```typescript
+{
+  pattern: /^\/blog\//,
+  getConfig: ({ title }) => ({
+    title,
+    // Use a logo image from a URL
+    logoImage: 'https://example.com/logo.png',
+    logoHeight: 60, // Height in pixels
+    logoWidth: 200, // Optional: width (auto-calculated if not provided)
+  }),
+}
+```
+
+Or use a local file path (relative to project root or absolute):
+
+```typescript
+{
+  pattern: /^\/guide\//,
+  getConfig: () => ({
+    title: 'Lynx Guide',
+    // Use a local SVG file (will be converted to PNG automatically)
+    logoImage: 'docs/public/assets/lynx-logo.svg',
+    logoHeight: 50,
+  }),
+}
+```
+
+**Supported formats:**
+- PNG, JPEG, SVG (SVG is automatically converted to PNG)
+- URLs (http/https) or local file paths
+- If `logoImage` fails to load, it falls back to the `logo` text
 
 ## Development
 

@@ -2,6 +2,16 @@ import type { RouteOGImageConfig } from './plugins/og-image-generator/src/index'
 import { SUBSITES_CONFIG } from './shared-route-config';
 
 /**
+ * Prefer local assets so OG generation doesn't depend on network access during build.
+ */
+const LYNX_LOGOS = {
+  light: 'docs/public/assets/lynx-light-logo.svg',
+  dark: 'docs/public/assets/lynx-dark-logo.svg',
+} as const;
+
+const OG_LOGO_HEIGHT = 75; // 50% larger than previous 50px
+
+/**
  * Configuration for dynamic OG image generation
  */
 export const ogImageGeneratorConfig = {
@@ -22,7 +32,8 @@ export const ogImageGeneratorConfig = {
         if (!title) return null;
         return {
           title,
-          logo: 'Lynx Blog',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           textColor: '#ffffff',
         };
@@ -42,7 +53,8 @@ export const ogImageGeneratorConfig = {
         if (!title) return null;
         return {
           title,
-          logo: 'Lynx 博客',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           textColor: '#ffffff',
         };
@@ -57,7 +69,8 @@ export const ogImageGeneratorConfig = {
         return {
           title: subsiteConfig.label,
           subtitle: subsiteConfig.description,
-          logo: 'Lynx',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #61dafb 0%, #21a1c4 100%)',
           textColor: '#ffffff',
           sharedImageName: 'react', // Use shared image for all react routes
@@ -72,7 +85,8 @@ export const ogImageGeneratorConfig = {
         return {
           title: subsiteConfig.label,
           subtitle: subsiteConfig.descriptionZh,
-          logo: 'Lynx',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #61dafb 0%, #21a1c4 100%)',
           textColor: '#ffffff',
           sharedImageName: 'react-zh', // Use shared image for all zh/react routes
@@ -90,7 +104,8 @@ export const ogImageGeneratorConfig = {
         return {
           title: subsiteConfig.label,
           subtitle: subsiteConfig.description,
-          logo: 'Lynx',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
           textColor: '#ffffff',
           sharedImageName: 'rspeedy', // Use shared image for all rspeedy routes
@@ -107,7 +122,8 @@ export const ogImageGeneratorConfig = {
         return {
           title: subsiteConfig.label,
           subtitle: subsiteConfig.descriptionZh,
-          logo: 'Lynx',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
           textColor: '#ffffff',
           sharedImageName: 'rspeedy-zh', // Use shared image for all zh/rspeedy routes
@@ -121,7 +137,8 @@ export const ogImageGeneratorConfig = {
         return {
           title: 'Lynx API',
           subtitle: 'API Reference',
-          logo: 'Lynx',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
           textColor: '#ffffff',
           sharedImageName: 'api', // Use shared image for all api routes
@@ -134,7 +151,8 @@ export const ogImageGeneratorConfig = {
         return {
           title: 'Lynx API',
           subtitle: 'API 参考',
-          logo: 'Lynx',
+          logoImage: LYNX_LOGOS.light,
+          logoHeight: OG_LOGO_HEIGHT,
           background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
           textColor: '#ffffff',
           sharedImageName: 'api-zh', // Use shared image for all zh/api routes

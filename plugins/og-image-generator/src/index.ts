@@ -104,76 +104,74 @@ function pluginOGImageGenerator(
 
   // Store mapping of route paths to OG image URLs
   const routeToImageMap = new Map<string, string>();
+  // Collect page data during build; used to generate OG images in afterBuild.
+  const pages: Array<{
+    routePath: string;
+    frontmatter?: Record<string, any>;
+    title?: string;
+    _filepath?: string;
+  }> = [];
+  const seenRoutePaths = new Set<string>();
 
   return {
     name: 'rspress-plugin-og-image-generator',
 
-    async routeGenerated(routes: any[], isProd?: boolean) {
-      // Don't generate OG images in dev; avoids extra work + any font downloads
+    async extendPageData(pageData: any, isProd: boolean) {
+      if (!isProd) return;
+      if (!pageData?.routePath || seenRoutePaths.has(pageData.routePath)) return;
+      seenRoutePaths.add(pageData.routePath);
+      pages.push({
+        routePath: pageData.routePath,
+        frontmatter: pageData.frontmatter,
+        title: pageData.title,
+        _filepath: pageData._filepath,
+      });
+    },
+
+    async afterBuild(config: any, isProd: boolean) {
+      // Don't generate/patch in dev
       if (!isProd) return;
 
       const cwd = process.cwd();
       const publicDir = path.join(cwd, 'docs', 'public');
       const ogImagesDir = path.join(publicDir, 'assets', outputDir);
 
+      const outDir =
+        config.outDir || config.builderConfig?.output?.distPath?.root || 'doc_build';
+      const buildDir = path.isAbsolute(outDir) ? outDir : path.join(cwd, outDir);
+      const buildOgImagesDir = path.join(buildDir, 'assets', outputDir);
+
       // Ensure output directory exists
       await fs.mkdir(ogImagesDir, { recursive: true });
+      await fs.mkdir(buildOgImagesDir, { recursive: true });
 
       console.log(`\n🎨 Generating OG images...`);
 
       let generated = 0;
       let skipped = 0;
-
-      // Track shared images to avoid regenerating
       const sharedImagesGenerated = new Set<string>();
 
-      for (const route of routes) {
-        const routePath = route.routePath;
+      for (const page of pages) {
+        const routePath = page.routePath;
 
         // Find matching route config
         const matchingConfig = routeConfigs.find((rc) =>
           matchRoute(routePath, rc.pattern),
         );
+        if (!matchingConfig) continue;
 
-        if (!matchingConfig) {
-          continue;
+        // Prefer page title; fallback to reading the source markdown if available
+        let title = page.title;
+        if (!title && page._filepath && existsSync(page._filepath)) {
+          title = await extractTitleFromMarkdown(page._filepath);
         }
 
-        // Extract title from markdown file for blog posts if not available
-        let title = route.title;
-        if (
-          !title &&
-          routePath.includes('/blog/') &&
-          !routePath.endsWith('/blog/')
-        ) {
-          // Try to find the markdown file
-          // Route path could be like /blog/lynx-3-2 or /zh/blog/lynx-3-2
-          const normalizedPath = routePath.replace(/^\//, ''); // Remove leading slash
-          const possiblePaths = [
-            path.join(cwd, 'docs', 'en', normalizedPath + '.mdx'),
-            path.join(cwd, 'docs', 'en', normalizedPath + '.md'),
-            path.join(cwd, 'docs', normalizedPath + '.mdx'),
-            path.join(cwd, 'docs', normalizedPath + '.md'),
-          ];
-
-          for (const filePath of possiblePaths) {
-            if (existsSync(filePath)) {
-              title = await extractTitleFromMarkdown(filePath);
-              if (title) break;
-            }
-          }
-        }
-
-        // Get OG config for this route
         const ogConfig = matchingConfig.getConfig({
           routePath,
-          frontmatter: route.frontmatter,
+          frontmatter: page.frontmatter,
           title,
         });
-
-        if (!ogConfig) {
-          continue;
-        }
+        if (!ogConfig) continue;
 
         // Determine filename - use sharedImageName if provided
         const filename = ogConfig.sharedImageName
@@ -188,30 +186,22 @@ function pluginOGImageGenerator(
         const publicImagePath = `/assets/${outputDir}/${filename}.png`;
         const fullImageUrl = `${baseUrl}${publicImagePath}`;
 
-        // Store mapping for HTML modification later
         routeToImageMap.set(routePath, fullImageUrl);
 
-        // If this is a shared image that's already been generated, skip
         if (ogConfig.sharedImageName && sharedImagesGenerated.has(filename)) {
           skipped++;
           continue;
         }
 
-        // Skip if image exists and incremental is enabled
         if (incremental && existsSync(imagePath)) {
-          if (ogConfig.sharedImageName) {
-            sharedImagesGenerated.add(filename);
-          }
+          if (ogConfig.sharedImageName) sharedImagesGenerated.add(filename);
           skipped++;
           continue;
         }
 
         try {
-          // Generate the OG image
           await generateOGImage(ogConfig, imagePath);
-          if (ogConfig.sharedImageName) {
-            sharedImagesGenerated.add(filename);
-          }
+          if (ogConfig.sharedImageName) sharedImagesGenerated.add(filename);
           generated++;
           console.log(`  ✓ Generated: ${publicImagePath}`);
         } catch (error) {
@@ -222,34 +212,33 @@ function pluginOGImageGenerator(
       console.log(
         `\n✨ OG image generation complete: ${generated} generated, ${skipped} skipped\n`,
       );
-    },
 
-    async afterBuild(config: any, isProd?: boolean) {
-      // Don't patch HTML in dev
-      if (!isProd) return;
-
-      const { outDir = 'doc_build' } = config;
-      const cwd = process.cwd();
-      const buildDir = path.join(cwd, outDir);
-
-      if (routeToImageMap.size === 0) {
-        return;
+      // Ensure generated images exist in the final build output.
+      // (Rspress copies public assets before `afterBuild`, so we need to copy here too.)
+      try {
+        // Node >=16.7
+        // @ts-expect-error - older TS libs may not include fs.cp typing
+        await fs.cp(ogImagesDir, buildOgImagesDir, { recursive: true, force: true });
+      } catch (e) {
+        // Fallback: copy known generated files one by one
+        const entries = await fs.readdir(ogImagesDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isFile()) continue;
+          const src = path.join(ogImagesDir, entry.name);
+          const dst = path.join(buildOgImagesDir, entry.name);
+          await fs.copyFile(src, dst);
+        }
       }
+
+      if (routeToImageMap.size === 0) return;
 
       console.log(`\n🔧 Updating HTML files with OG images...`);
 
       let updated = 0;
-
-      // Update HTML files with their respective OG images
       for (const [routePath, ogImageUrl] of routeToImageMap.entries()) {
-        // Convert route path to HTML file path
-        // Handle both /path and /path.html formats
         let htmlPath = path.join(buildDir, routePath);
-        if (!htmlPath.endsWith('.html')) {
-          htmlPath = htmlPath + '.html';
-        }
+        if (!htmlPath.endsWith('.html')) htmlPath = htmlPath + '.html';
 
-        // Also check if it's an index file
         const indexHtmlPath = path.join(
           buildDir,
           routePath.replace(/\.html$/, ''),

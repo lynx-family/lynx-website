@@ -1,9 +1,9 @@
-import satori from 'satori';
-import sharp from 'sharp';
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import satori from 'satori';
+import sharp from 'sharp';
 
 export type OGImageConfig = {
   /**
@@ -15,9 +15,22 @@ export type OGImageConfig = {
    */
   subtitle?: string;
   /**
-   * Logo or brand identifier (optional)
+   * Logo or brand identifier (optional) - text logo
    */
   logo?: string;
+  /**
+   * Logo image URL or file path (optional) - if provided, this takes precedence over logo text
+   * Supports: URLs (http/https), absolute paths, or paths relative to project root
+   */
+  logoImage?: string;
+  /**
+   * Logo image width in pixels (optional, default: auto based on height)
+   */
+  logoWidth?: number;
+  /**
+   * Logo image height in pixels (optional, default: 60)
+   */
+  logoHeight?: number;
   /**
    * Background color or gradient
    */
@@ -45,7 +58,11 @@ function containsChinese(text: string): boolean {
 }
 
 function bufferToArrayBuffer(buf: Buffer): ArrayBuffer {
-  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  // Create a new ArrayBuffer to avoid SharedArrayBuffer type issues
+  const ab = new ArrayBuffer(buf.byteLength);
+  const view = new Uint8Array(ab);
+  view.set(buf);
+  return ab;
 }
 
 function getFontCacheDir(): string {
@@ -87,7 +104,8 @@ async function readLocalFontOrFetch(
 async function getInterFonts(): Promise<FontPair> {
   if (interCache) return interCache;
 
-  // Try local @fontsource first, else fetch just the specific files we need (woff2)
+  // Try local @fontsource first, else fetch just the specific files we need (woff).
+  // Note: Satori doesn't support woff2 (wOF2 signature). Use woff for broad compatibility.
   const dirname = path.dirname(fileURLToPath(import.meta.url || ''));
   const interFilesDir = path.join(
     dirname,
@@ -99,19 +117,14 @@ async function getInterFonts(): Promise<FontPair> {
   );
 
   const interRegular = await readLocalFontOrFetch(
-    'https://unpkg.com/@fontsource/inter/files/inter-latin-400-normal.woff2',
-    'inter-latin-400-normal.woff2',
-    // Prefer woff2, fallback to woff by letting localPath be the woff2 first
-    existsSync(path.join(interFilesDir, 'inter-latin-400-normal.woff2'))
-      ? path.join(interFilesDir, 'inter-latin-400-normal.woff2')
-      : path.join(interFilesDir, 'inter-latin-400-normal.woff'),
+    'https://unpkg.com/@fontsource/inter/files/inter-latin-400-normal.woff',
+    'inter-latin-400-normal.woff',
+    path.join(interFilesDir, 'inter-latin-400-normal.woff'),
   );
   const interBold = await readLocalFontOrFetch(
-    'https://unpkg.com/@fontsource/inter/files/inter-latin-700-normal.woff2',
-    'inter-latin-700-normal.woff2',
-    existsSync(path.join(interFilesDir, 'inter-latin-700-normal.woff2'))
-      ? path.join(interFilesDir, 'inter-latin-700-normal.woff2')
-      : path.join(interFilesDir, 'inter-latin-700-normal.woff'),
+    'https://unpkg.com/@fontsource/inter/files/inter-latin-700-normal.woff',
+    'inter-latin-700-normal.woff',
+    path.join(interFilesDir, 'inter-latin-700-normal.woff'),
   );
 
   interCache = { regular: interRegular, bold: interBold };
@@ -121,7 +134,8 @@ async function getInterFonts(): Promise<FontPair> {
 async function getNotoSansSCFonts(): Promise<FontPair> {
   if (notoSansSCCache) return notoSansSCCache;
 
-  // Prefer local @fontsource/noto-sans-sc if present, otherwise download only the needed subset (woff2)
+  // Prefer local @fontsource/noto-sans-sc if present, otherwise download only the needed subset (woff).
+  // Note: Satori doesn't support woff2 (wOF2 signature). Use woff for broad compatibility.
   const dirname = path.dirname(fileURLToPath(import.meta.url || ''));
   const notoFilesDir = path.join(
     dirname,
@@ -133,45 +147,167 @@ async function getNotoSansSCFonts(): Promise<FontPair> {
   );
 
   const regular = await readLocalFontOrFetch(
-    'https://unpkg.com/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-400-normal.woff2',
-    'noto-sans-sc-chinese-simplified-400-normal.woff2',
+    'https://unpkg.com/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-400-normal.woff',
+    'noto-sans-sc-chinese-simplified-400-normal.woff',
     existsSync(
       path.join(
         notoFilesDir,
-        'noto-sans-sc-chinese-simplified-400-normal.woff2',
+        'noto-sans-sc-chinese-simplified-400-normal.woff',
       ),
     )
       ? path.join(
           notoFilesDir,
-          'noto-sans-sc-chinese-simplified-400-normal.woff2',
-        )
-      : path.join(
-          notoFilesDir,
           'noto-sans-sc-chinese-simplified-400-normal.woff',
-        ),
+        )
+      : path.join(notoFilesDir, 'noto-sans-sc-chinese-simplified-400-normal.woff'),
   );
 
   const bold = await readLocalFontOrFetch(
-    'https://unpkg.com/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-700-normal.woff2',
-    'noto-sans-sc-chinese-simplified-700-normal.woff2',
+    'https://unpkg.com/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-700-normal.woff',
+    'noto-sans-sc-chinese-simplified-700-normal.woff',
     existsSync(
       path.join(
         notoFilesDir,
-        'noto-sans-sc-chinese-simplified-700-normal.woff2',
+        'noto-sans-sc-chinese-simplified-700-normal.woff',
       ),
     )
       ? path.join(
           notoFilesDir,
-          'noto-sans-sc-chinese-simplified-700-normal.woff2',
-        )
-      : path.join(
-          notoFilesDir,
           'noto-sans-sc-chinese-simplified-700-normal.woff',
-        ),
+        )
+      : path.join(notoFilesDir, 'noto-sans-sc-chinese-simplified-700-normal.woff'),
   );
 
   notoSansSCCache = { regular, bold };
   return notoSansSCCache;
+}
+
+/**
+ * Load an image from URL or file path and convert to data URL
+ * Handles both SVG and raster formats (PNG, JPEG, etc.)
+ */
+type LoadedImage = {
+  dataUrl: string;
+  /**
+   * width / height
+   */
+  aspectRatio?: number;
+};
+
+function getSvgAspectRatio(svgText: string): number | undefined {
+  // Prefer viewBox if present: viewBox="minX minY width height"
+  const viewBoxMatch = svgText.match(/viewBox\s*=\s*"([^"]+)"/i);
+  if (viewBoxMatch) {
+    const parts = viewBoxMatch[1].trim().split(/\s+/).map(Number);
+    if (parts.length === 4) {
+      const w = parts[2];
+      const h = parts[3];
+      if (Number.isFinite(w) && Number.isFinite(h) && h !== 0) return w / h;
+    }
+  }
+
+  // Fallback: width="27" height="28"
+  const widthMatch = svgText.match(/width\s*=\s*"([\d.]+)"/i);
+  const heightMatch = svgText.match(/height\s*=\s*"([\d.]+)"/i);
+  if (widthMatch && heightMatch) {
+    const w = Number(widthMatch[1]);
+    const h = Number(heightMatch[1]);
+    if (Number.isFinite(w) && Number.isFinite(h) && h !== 0) return w / h;
+  }
+
+  return undefined;
+}
+
+async function loadImageAsDataUrl(
+  imagePathOrUrl: string,
+  options?: {
+    /**
+     * Desired display size in the final OG image (in px). Used to rasterize SVGs at a high-enough resolution.
+     */
+    targetWidth?: number;
+    targetHeight?: number;
+    /**
+     * Supersampling factor when rasterizing SVGs (default: 4).
+     */
+    rasterScale?: number;
+  },
+): Promise<LoadedImage> {
+  let imageBuffer: Buffer;
+
+  // Check if it's a URL
+  if (
+    imagePathOrUrl.startsWith('http://') ||
+    imagePathOrUrl.startsWith('https://')
+  ) {
+    const response = await fetch(imagePathOrUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch image: ${imagePathOrUrl} (${response.status})`,
+      );
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    imageBuffer = Buffer.from(arrayBuffer);
+  } else {
+    // It's a file path - resolve relative to project root
+    const cwd = process.cwd();
+    const resolvedPath = path.isAbsolute(imagePathOrUrl)
+      ? imagePathOrUrl
+      : path.join(cwd, imagePathOrUrl);
+
+    if (!existsSync(resolvedPath)) {
+      throw new Error(`Image file not found: ${resolvedPath}`);
+    }
+    imageBuffer = await fs.readFile(resolvedPath);
+  }
+
+  // Determine MIME type from file extension or buffer
+  const ext = path.extname(imagePathOrUrl).toLowerCase();
+  let mimeType: string;
+  let aspectRatio: number | undefined;
+
+  if (
+    ext === '.svg' ||
+    imageBuffer.toString('utf-8').trimStart().startsWith('<svg')
+  ) {
+    const svgText = imageBuffer.toString('utf-8');
+    aspectRatio = getSvgAspectRatio(svgText);
+
+    // SVG - convert to a *high-res* PNG (so it stays crisp when placed at ~50px+)
+    const rasterScale = options?.rasterScale ?? 4;
+    const targetHeight = Math.max(1, Math.round((options?.targetHeight ?? 60) * rasterScale));
+    const targetWidth = Math.max(
+      1,
+      Math.round(
+        (options?.targetWidth ??
+          (aspectRatio ? (options?.targetHeight ?? 60) * aspectRatio : options?.targetHeight ?? 60)) *
+          rasterScale,
+      ),
+    );
+
+    // `density` helps sharp render SVGs with enough detail before rasterization.
+    const transparent = { r: 0, g: 0, b: 0, alpha: 0 };
+    const pngBuffer = await sharp(imageBuffer, { density: 300 })
+      .resize(targetWidth, targetHeight, {
+        fit: 'contain',
+        background: transparent,
+      })
+      // Make sure alpha is preserved and avoid edge artifacts from premultiply defaults
+      .png({ force: true })
+      .toBuffer();
+    mimeType = 'image/png';
+    imageBuffer = pngBuffer;
+  } else if (ext === '.png') {
+    mimeType = 'image/png';
+  } else if (ext === '.jpg' || ext === '.jpeg') {
+    mimeType = 'image/jpeg';
+  } else {
+    // Try to detect from buffer or default to PNG
+    mimeType = 'image/png';
+  }
+
+  // Convert to base64 data URL
+  const base64 = imageBuffer.toString('base64');
+  return { dataUrl: `data:${mimeType};base64,${base64}`, aspectRatio };
 }
 
 /**
@@ -185,15 +321,36 @@ export async function generateOGImage(
     title,
     subtitle,
     logo = 'Lynx',
+    logoImage,
+    logoWidth,
+    logoHeight = 60,
     background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     textColor = '#ffffff',
   } = config;
+
+  // Load logo image if provided
+  let logoDataUrl: string | null = null;
+  let logoAspectRatio: number | undefined;
+  if (logoImage) {
+    try {
+      const loaded = await loadImageAsDataUrl(logoImage, {
+        targetWidth: logoWidth,
+        targetHeight: logoHeight,
+        rasterScale: 4,
+      });
+      logoDataUrl = loaded.dataUrl;
+      logoAspectRatio = loaded.aspectRatio;
+    } catch (error) {
+      console.warn(`Failed to load logo image ${logoImage}:`, error);
+      // Fall back to text logo
+    }
+  }
 
   // Determine if we need Chinese fonts
   const needsChinese =
     containsChinese(title) ||
     (subtitle && containsChinese(subtitle)) ||
-    containsChinese(logo);
+    (!logoDataUrl && containsChinese(logo));
 
   // Load fonts (only load Chinese font when needed)
   const inter = await getInterFonts();
@@ -203,6 +360,36 @@ export async function generateOGImage(
   const fontFamily = needsChinese
     ? 'Noto Sans SC, Inter, sans-serif'
     : 'Inter, sans-serif';
+
+  // Create logo element (image or text)
+  // Prefer <img> with a data: URL (PNG) for reliability across Satori renderers.
+  const logoElement = logoDataUrl
+    ? {
+        type: 'img',
+        props: {
+          src: logoDataUrl,
+          style: {
+            width: `${logoWidth ?? Math.round(logoHeight * (logoAspectRatio || 1))}px`,
+            height: `${logoHeight}px`,
+            objectFit: 'contain',
+            marginBottom: '20px',
+            opacity: 0.9,
+          },
+        },
+      }
+    : {
+        type: 'div',
+        props: {
+          style: {
+            fontSize: '48px',
+            fontWeight: 700,
+            color: textColor,
+            marginBottom: '20px',
+            opacity: 0.9,
+          },
+          children: logo,
+        },
+      };
 
   // Create JSX structure for Satori
   const element = {
@@ -220,19 +407,7 @@ export async function generateOGImage(
         fontFamily,
       },
       children: [
-        {
-          type: 'div',
-          props: {
-            style: {
-              fontSize: '48px',
-              fontWeight: 700,
-              color: textColor,
-              marginBottom: '20px',
-              opacity: 0.9,
-            },
-            children: logo,
-          },
-        },
+        logoElement,
         {
           type: 'div',
           props: {
