@@ -68,9 +68,11 @@ changedTouches: Touch []
 
 ### tap
 
-表示手指在触摸平面上单击，[`target`](./event#target) 是包含触摸点且距离用户最近的 `element`，仅第一根手指可以触发。当手指移动超过一定阈值时，或该 `element` 的[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上有 `element` 发生了滑动，`tap` 事件无法触发。
+表示手指在触摸平面上单击，[`target`](./event#target) 是包含触摸点且距离用户最近的 `element`，仅第一根手指可以触发。
 
-此外，该事件和 [`longpress`](#longpress) 事件在事件监听上互斥，即前端同时监听两个事件，则两个事件不会同时触发，[`longpress`](#longpress) 优先。
+当手指移动超过一定距离阈值时，或该 `element` 的[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上有 `element` 发生了滑动，`tap` 事件无法触发。
+
+该事件和 [`longpress`](#longpress) 事件在事件监听上互斥，即前端同时监听两个事件，则两个事件不会同时触发，[`longpress`](#longpress) 优先。
 
 ### longpress
 
@@ -78,7 +80,19 @@ changedTouches: Touch []
 
 ### click
 
-表示手指在触摸平面上单击，[`target`](./event#target) 是包含触摸点且距离用户最近且监听了 `click` 事件的 `element`，仅第一根手指可以触发。与 [`tap`](#tap) 事件不同的是，当手指移出距离用户最近且监听了 `click` 事件的 `element` 时，或该 `element` 的[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上有 `element` 发生了滑动，`click` 事件才无法触发。
+表示手指在触摸平面上单击，[`target`](./event#target) 是包含触摸点且距离用户最近且监听了 `click` 事件的 `element`，仅第一根手指可以触发。
+
+该事件和 [`tap`](#tap) 事件稍微有区别，主要在于事件的阻断距离阈值和 [target](../../lynx-api/event/event.mdx#target) 不同：
+
+- [`tap`](#tap) 的 [`target`](./event#target) 是实际触摸的距离用户最近的节点；而 `click` 的 [`target`](./event#target) 是距离用户最近且监听了 `click` 事件的节点。
+- [`tap`](#tap) 的阻断距离阈值是固定的，手指移动距离超过某个值后无法触发；而 `click` 的阻断距离阈值取决于 [`target`](./event#target) 的触摸热区，手指移出触摸热区后无法触发。
+- 当 [`target`](./event#target) 对应的[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上有 `element` 发生了滑动，[`tap`](#tap) 或 `click` 事件无法触发。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/tap_and_click.png"
+  width="100%"
+  height="100%"
+/>
 
 ## 兼容性
 

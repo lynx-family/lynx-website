@@ -68,17 +68,33 @@ Indicates that the touch event is interrupted by the system or `Lynx` external g
 
 ### tap
 
-This indicates a single tap on the touch surface. The [`target`](./event#target) is the `element` containing the touch point and closest to the user. Only the first finger can trigger this event. If the finger moves beyond a certain threshold, or if an `element` in the [`event response chain`](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) slides, the `tap` event will not trigger.
+This indicates a single tap on the touch surface. The [`target`](./event#target) is the `element` containing the touch point and closest to the user. Only the first finger can trigger this event.
 
-Furthermore, this event and the [`longpress`](#longpress) event are mutually exclusive in event listening. That is, if the front-end listens for both events simultaneously, they will not trigger concurrently; [`longpress`](#longpress) takes precedence.
+If the finger moves beyond a certain distance threshold, or if an `element` in the [`event response chain`](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) slides, the `tap` event will not trigger.
+
+This event and the [`longpress`](#longpress) event are mutually exclusive in event listening. That is, if the front-end listens for both events simultaneously, they will not trigger concurrently; [`longpress`](#longpress) takes precedence.
 
 ### longpress
 
-This indicates a long press on the touch surface. The [`target`](./event#target) is the `element` containing the touch point and closest to the user. Only the first finger can trigger this event. The `longpress` event will not trigger if the finger moves beyond a certain threshold or the long press interval is less than `500 ms`.
+This indicates a long press on the touch surface. The [`target`](./event#target) is the `element` containing the touch point and closest to the user. Only the first finger can trigger this event. The `longpress` event will not trigger if the finger moves beyond a certain threshold or the long press time interval is less than `500 ms`.
 
 ### click
 
-This indicates a single click on the touch plane. [`target`](./event#target) is the `element` containing the touch point, closest to the user, and listening for the `click` event. Only the first finger can trigger this event. Unlike the [`tap`](#tap) event, the `click` event will not trigger if the finger moves away from the `element` closest to the user and listening for the `click` event, or if an `element` in the [`event response chain`](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) of that `element` slides.
+This indicates a single click on the touch plane. [`target`](./event#target) is the `element` containing the touch point, closest to the user, and listening for the `click` event. Only the first finger can trigger this event.
+
+This event differs slightly from the [`tap`](#tap) event, primarily in its blocking distance threshold and the [`target`](./event#target):
+
+- The [`target`](./event#target) for [`tap`](#tap) event is the node closest to the user during the actual touch; while the [`target`](./event#target) for `click` event is the node closest to the user that is listening for the `click` event.
+
+- The blocking distance threshold for [`tap`](#tap) event is fixed; it won't trigger if the finger moves beyond a certain distance. The blocking distance threshold for `click` event depends on the touch hotspot of [`target`](./event#target); it won't trigger if the finger moves outside the touch hotspot.
+
+- When an element slides on the [`event response chain`](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) corresponding to [`target`](./event#target), the [`tap`](#tap) or `click` event cannot be triggered.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/tap_and_click.png"
+  width="100%"
+  height="100%"
+/>
 
 ## Compatibility
 
