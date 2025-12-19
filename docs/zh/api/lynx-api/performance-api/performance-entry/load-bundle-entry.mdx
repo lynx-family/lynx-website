@@ -8,6 +8,26 @@ LoadBundle 流程图如下：
 
 <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/load-bundle-entry.png" />
 
+:::tip
+
+若无法接收到 `LoadBundleEntry` 性能数据，可能由以下原因导致：
+
+**1. 未触发渲染**
+
+渲染流水线未执行，通常是因为：
+
+- **LynxView 容器状态问题**：宽高为 0、不在视口内、或未添加到窗口。
+- **业务逻辑未渲染内容**：例如数据未就绪导致组件返回 `null`。
+
+**2. 监听注册过晚**
+
+`LoadBundleEntry` 仅在首屏渲染完成时触发一次。建议尽早注册监听：
+
+- 类组件在 `constructor` 中注册。
+- 函数式组件在 `useMemo` 中注册。
+
+:::
+
 ## 示例
 
 该示例展示了如何获取 `LoadBundleEntry`。
