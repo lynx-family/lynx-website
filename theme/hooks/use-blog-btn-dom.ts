@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { getLangPrefix } from '@site/shared-route-config';
 
@@ -25,14 +25,61 @@ const config = {
   },
 };
 
+interface LatestBlogInfo {
+  slug: string;
+  badgeText: string;
+  date: string;
+}
+
+interface LatestBlogMetadata {
+  en: LatestBlogInfo | null;
+  zh: LatestBlogInfo | null;
+}
+
+/**
+ * Get latest blog metadata from build-time injected data.
+ * Returns null if build-time data is not available (which shouldn't happen in production).
+ */
+function getLatestBlogMetadata(lang: 'en' | 'zh'): LatestBlogInfo | null {
+  // Get build-time metadata
+  try {
+    const buildTimeMetadata: LatestBlogMetadata | undefined =
+      typeof process !== 'undefined' && process.env.LATEST_BLOG_METADATA
+        ? JSON.parse(process.env.LATEST_BLOG_METADATA)
+        : undefined;
+
+    if (buildTimeMetadata && buildTimeMetadata[lang]) {
+      return buildTimeMetadata[lang];
+    }
+  } catch (error) {
+    console.warn('Failed to parse build-time blog metadata:', error);
+  }
+
+  // Return null if build-time data is not available
+  // The badge will fallback to the original "Read the Introductory Blog of Lynx" text
+  return null;
+}
+
 const useBlogBtnDom = (src: string) => {
   const { page } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
+  const badgeElementRef = useRef<HTMLDivElement | null>(null);
+  const clickHandlerRef = useRef<(() => void) | null>(null);
 
-  const handleInteraction = useCallback(() => {
-    navigate(`${getLangPrefix(lang)}/blog/lynx-unlock-native-for-more`);
-  }, [navigate, lang]);
+  // Store refs for dynamic values accessed in the click handler
+  const latestBlogInfoRef = useRef<LatestBlogInfo | null>(null);
+  const langRef = useRef(lang);
+  const navigateRef = useRef(navigate);
+
+  const latestBlogInfo = useMemo(() => getLatestBlogMetadata(lang), [lang]);
+
+  // Update refs when values change
+  useEffect(() => {
+    latestBlogInfoRef.current = latestBlogInfo;
+    langRef.current = lang;
+    navigateRef.current = navigate;
+  }, [latestBlogInfo, lang, navigate]);
 
   const configKey = useMemo(() => {
     return (
@@ -53,26 +100,67 @@ const useBlogBtnDom = (src: string) => {
     const targetElement = h1.parentElement;
     if (!targetElement) return;
 
-    const newElement = document.createElement('div');
-    newElement.className =
-      configKey === '/' ? `blog-btn-frame active-hover` : `blog-btn-frame`;
-    newElement.textContent = config[configKey].text[lang];
+    // Check if badge already exists to prevent re-mounting during typing animation
+    let badgeElement = badgeElementRef.current;
 
-    targetElement.insertBefore(newElement, targetElement.firstChild);
-    h1.style.margin = '0px -100px';
+    const isFirstRender =
+      !badgeElement || !targetElement.contains(badgeElement);
 
-    if (configKey === '/') {
-      newElement.addEventListener('click', handleInteraction);
-      newElement.addEventListener('touchstart', handleInteraction);
+    if (isFirstRender) {
+      // Create new badge element only if it doesn't exist
+      badgeElement = document.createElement('div');
+      badgeElement.className =
+        configKey === '/' ? `blog-btn-frame active-hover` : `blog-btn-frame`;
+
+      targetElement.insertBefore(badgeElement, targetElement.firstChild);
+      h1.style.margin = '0px -100px';
+
+      badgeElementRef.current = badgeElement;
+
+      // Attach event listeners only when creating the element
+      if (configKey === '/') {
+        const handleClick = () => {
+          const targetSlug =
+            latestBlogInfoRef.current?.slug || 'lynx-unlock-native-for-more';
+          navigateRef.current(
+            `${getLangPrefix(langRef.current)}/blog/${targetSlug}`,
+          );
+        };
+
+        clickHandlerRef.current = handleClick;
+        badgeElement.addEventListener('click', handleClick);
+        badgeElement.addEventListener('touchstart', handleClick);
+      }
     }
 
-    return () => {
-      newElement.removeEventListener('click', handleInteraction);
-      newElement.removeEventListener('touchstart', handleInteraction);
+    // Update badge text (this is cheap and won't trigger animation)
+    const displayText =
+      configKey === '/' && latestBlogInfo
+        ? latestBlogInfo.badgeText
+        : config[configKey].text[lang];
 
-      targetElement.removeChild(newElement);
+    if (badgeElement.textContent !== displayText) {
+      badgeElement.textContent = displayText;
+    }
+
+    // Cleanup function to remove event listeners
+    return () => {
+      if (
+        configKey === '/' &&
+        badgeElementRef.current &&
+        clickHandlerRef.current
+      ) {
+        badgeElementRef.current.removeEventListener(
+          'click',
+          clickHandlerRef.current,
+        );
+        badgeElementRef.current.removeEventListener(
+          'touchstart',
+          clickHandlerRef.current,
+        );
+      }
     };
-  }, [configKey, lang]);
+  }, [configKey, lang, latestBlogInfo, page.pageType]);
 };
 
 export { useBlogBtnDom };
