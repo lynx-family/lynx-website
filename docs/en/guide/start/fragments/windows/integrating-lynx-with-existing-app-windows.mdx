@@ -1,0 +1,289 @@
+### Integrate Lynx with Existing Apps (Windows)
+
+import { Info, CodeFold } from '@lynx';
+import { Steps } from '@theme';
+import { Tab, Tabs } from '@theme';
+import { Link } from '@theme';
+import versionJson from '../../../../../public/version.json';
+
+<Info title="Lynx for Windows">
+  - This article assumes that you are familiar with the basic concepts of native
+  Windows application development. - You can refer to the official
+  [LynxExplorer](https://github.com/lynx-family/lynx/tree/develop/explorer/windows/lynx_explorer)
+  project.
+</Info>
+
+## 1. Dependency configuration
+
+<Steps>
+
+### Download or Build LynxSDK
+
+- Download the LynxSDK from [GitHub Release](https://github.com/lynx-family/lynx/releases/latest).
+- Extract the downloaded file to a subdirectory of your project, such as the `thirdparty` directory.
+
+Or, you may build from source by following the [Build Lynx Explorer for Windows](https://github.com/lynx-family/lynx/tree/develop/explorer/windows) guide.
+
+### Configuring CMake
+
+This manual assumes you have a CMake-based project already and wish to integrate LynxSDK. If you are using a different build system, you can refer to this guide and proceed with integration on your own.
+
+1. Based on your project configuration, set up the basic settings of the CMake project.
+
+```cmake title=CMakeLists.txt {17,20-30}
+# Set the C++ standard to at least 17 if you are using the C++ wrapper apis of LynxSDK.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+2. Setup LynxSDK.
+
+```cmake title=CMakeLists.txt {17,20-30}
+set(LYNX_LIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx) # Or your location of LynxSDK
+# Set include directory of LynxSDK.
+include_directories(${LYNX_LIB_PATH}/include)
+# Set library of LynxSDK that needs to be linked.
+target_link_libraries(${PROJECT_NAME} private ${LYNX_LIB_PATH}/lib/lynx.dll.lib)
+```
+
+3. Add custom command to copy data and resources after build.
+
+<CodeFold height={360} toggle>
+
+```cmake title=CMakeLists.txt {17,20-30}
+# Copy lynx.dll to output directory.
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/lib/lynx.dll
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+# Copy data to output directory.
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/data
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/data)
+# Copy lynx_core.js to output directory.
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/lynx_core.js
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+# Copy lynx_core_dev.js to output directory.
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/lynx_core_dev.js
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+```
+
+</CodeFold>
+
+</Steps>
+
+## 2. Environment Initialization - Optional
+
+<Steps>
+
+### Lynx Service Initialization
+
+- Lynx Service provides host feature-related capabilities and it is recommended to complete the initialization of Lynx Service before LynxView creation.
+- Lynx Service needs to be actively injected
+
+<CodeFold height={360} toggle>
+```objective-c title=AppDelegate.mm {17,20-30}
+
+#import "AppDelegate.h"
+#import "ViewController.h"
+#include "lynx_http_service.h"
+
+// Implements the http service if needed.
+class LynxHttpServiceImpl : public lynx::pub::LynxHttpService {
+public:
+LynxHttpServiceImpl() = default;
+~LynxHttpServiceImpl() = default;
+
+    void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request,
+               std::shared_ptr<lynx::pub::LynxHttpResponse> response) override {
+        // TODO
+    }
+
+};
+
+@interface AppDelegate ()
+@end
+
+@implementation AppDelegate {
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification \*)aNotification {
+  // Register http service for lynx.fetch.
+  lynx::pub::LynxServiceCenter::GetInstance().
+  RegisterService(std::make_shared<LynxHttpServiceImpl>());
+  }
+
+````
+</CodeFold>
+
+<div style={{ marginBottom: 30 }} />
+
+### LynxEnv Initialization
+
+LynxEnv provides the global initialization interface for the Lynx Engine. Please ensure that the initialization of LynxEnv occurs before any interface calls to the Lynx Engine. It is recommended to complete the initialization of LynxEnv before LynxView creation.
+
+<CodeFold height={360} toggle>
+```objective-c title=AppDelegate.mm {9,12-19}
+
+#import "AppDelegate.h"
+#import "ViewController.h"
+#include "lynx_env.h"
+#include "lynx_http_service.h"
+
+@interface AppDelegate ()
+@end
+
+@implementation AppDelegate {
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    // Register http service for lynx.fetch.
+  lynx::pub::LynxServiceCenter::GetInstance().
+    RegisterService(std::make_shared<LynxHttpServiceImpl>());
+
+  // Initialize LynxEnv
+  auto& lynx_env = lynx::pub::LynxEnv::GetInstance();
+  // Enable devtool.
+  lynx_env.SetDevtoolEnabled(true);
+  lynx_env.SetDevtoolAppInfo("App", "LynxExplorer");
+  lynx_env.SetDevtoolAppInfo("AppVersion", "1.0.0");
+  // Register global native module if needed.
+  lynx_env.RegisterNativeModule("ExplorerModule", ExplorerModuleCreator,
+                            nullptr);
+}
+
+````
+
+</CodeFold>
+
+</Steps>
+
+## 3. Render LynxView
+
+<Steps>
+
+### Create Resource Fetcher
+
+Lynx Engine itself does not have the ability to integrate downloading resources, so the existing app needs to provide the specific implementation of `LynxGenericResourceFetcher`, and inject it when constructing `LynxView`. Lynx will use the injected resource fetcher to obtain the Bundle content
+
+You can use various methods to obtain the contents of the Bundle. Here, we choose to load the contents of the Bundle from local file system.
+Download the Bundle file below.
+
+:::note
+Bundle Example:
+**https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
+:::
+
+Impl Resource Fetcher (Optional)
+
+<CodeFold height={360} toggle>
+```objective-c title=GenericResourceFetcher.cc {9,12-19}
+
+#import <Foundation/Foundation.h>
+#include "lynx_generic_resource_fetcher.h"
+
+class ExampleGenericResourceFetcher : public lynx::pub::LynxGenericResourceFetcher {
+public:
+void FetchResource(
+std::shared_ptr<lynx::pub::LynxResourceRequest> request,
+std::shared_ptr<lynx::pub::LynxResourceResponse> response) override {
+// Implements fetching logic if you want to load Bundle from net.
+}
+};
+
+````
+</CodeFold>
+
+### Construct LynxView
+
+`LynxView` is the basic rendering view provided by `Lynx Engine`. You can quickly construct a LynxView and provide a NSView as it's parent.
+
+<CodeFold height={360} toggle>
+```objective-c title=main.cc {9,12-19}
+#include <windows.h>
+#include "lynx_view.h"
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+  // TODO: create window.
+
+  // Construct LynxView.
+  lynx::pub::LynxView::Builder builder;
+  builder.SetScreenSize(800, 600, 1.0)
+      .SetFrame(0, 0, 800, 600)
+      .SetParent(hwnd);
+  // Set Resource fetcher if needed.
+  // builder.SetGenericResourceFetcher(std::make_shared<ExampleGenericResourceFetcher>());
+  auto lynx_view = builder.Build();
+
+  // Run message.
+  MSG msg = {0};
+  while (GetMessage(&msg, NULL, 0, 0)) {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+  return 0;
+}
+
+````
+
+</CodeFold>
+
+<div style={{ marginBottom: 30 }} />
+
+### Render view
+
+After completing the above steps, all the work of initializing LynxView have been completed. Call the `lynxView->LoadTemplate` method to render the corresponding Bundle onto the LynxView.
+
+<CodeFold height={360} toggle>
+```objective-c title=main.cc {9,12-19}
+#include <windows.h>
+#include "lynx_view.h"
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+// TODO: create window.
+
+// Construct LynxView.
+lynx::pub::LynxView::Builder builder;
+builder.SetScreenSize(800, 600, 1.0)
+.SetFrame(0, 0, 800, 600)
+.SetParent(hwnd);
+// Set Resource fetcher if needed.
+// builder.SetGenericResourceFetcher(std::make_shared<ExampleGenericResourceFetcher>());
+auto lynx_view = builder.Build();
+
+auto load_meta = std::make_shared<lynx::pub::LynxLoadMeta>();
+// Set to your location.
+load_meta->SetUrl("file://C:\\Users\\Admin\\Documents\\main.lynx.bundle");
+lynx_view->LoadTemplate(load_meta);
+
+// Run message.
+MSG msg = {0};
+while (GetMessage(&msg, NULL, 0, 0)) {
+TranslateMessage(&msg);
+DispatchMessage(&msg);
+}
+return 0;
+}
+
+```
+</CodeFold>
+
+Then you will see the following interface on the screen:
+
+<center>
+  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/hello-world-showcase-windows.jpg" width="800" />
+</center>
+
+</Steps>
+
+Congratulations, you have now completed all the work of rendering the LynxView!
+
+## 4. Now what?
+
+At this stage, you have successfully integrated Lynx into your App. Refer to our [developing](/guide/start/quick-start) and [debugging](/guide/devtool/panels) docs for in-depth insights on working with Lynx.
+```
