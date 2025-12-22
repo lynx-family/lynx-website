@@ -43,7 +43,13 @@
 
 此外：
 
-- `svg` 元件和 Web 中存在较大差异，直接将 SVG 内容作为 `content` 属性传递给 `<svg />` 元件。
+- `svg` 元件和 Web 中存在较大差异，直接将 SVG 内容作为 `content` 属性或将 SVG URL 作为 `src` 属性传递给 `<svg />` 元件：
+
+  ```jsx
+  <svg content={`<svg ... />`} />;
+  // or
+  <svg src={urlOfYourSvgFile} />;
+  ```
 
 ## 5. 布局系统：默认 Block，支持四种布局模式
 
