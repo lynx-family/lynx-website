@@ -1,3 +1,4 @@
+import IconBsky from '@assets/bsky-logo.svg?react';
 import IconX from '@assets/x-logo.svg?react';
 import {
   IconGithubLogo,
@@ -6,8 +7,8 @@ import {
   IconUserCircle,
 } from '@douyinfe/semi-icons';
 import { Avatar, Space } from '@douyinfe/semi-ui';
-import { useMemo } from 'react';
 import { useLang } from '@rspress/core/runtime';
+import { useMemo } from 'react';
 import originListData from './authors.json';
 import styles from './index.module.less';
 
@@ -23,6 +24,9 @@ const brandSpList = {
   },
   gitlab: {
     icon: <IconGitlabLogo />,
+  },
+  bsky: {
+    icon: <IconBsky className={styles['icon-bsky']} />,
   },
   default: {
     icon: <IconUserCircle />,
@@ -53,23 +57,23 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
             {lang === 'zh' ? author.title_zh : author.title}
           </div>
           <div>
-            <Space>
+            <Space align="center" vertical={false} spacing="tight">
               {Object.entries(author.socials).map(([key, value]) => {
                 return value?.link ? (
                   <span
                     onClick={() => window.open(value?.link, '_blank')}
-                    className="sh-cursor-pointer"
+                    className={`sh-cursor-pointer ${styles['social-icon-wrapper']}`}
                   >
                     {brandSpList[key as BrandKey]
                       ? brandSpList[key as BrandKey].icon
                       : brandSpList['default'].icon}
                   </span>
                 ) : (
-                  <>
+                  <span className={styles['social-icon-wrapper']}>
                     {brandSpList[key as BrandKey]
                       ? brandSpList[key as BrandKey].icon
                       : brandSpList['default'].icon}
-                  </>
+                  </span>
                 );
               })}
             </Space>
