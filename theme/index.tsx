@@ -10,7 +10,7 @@ import {
   Layout as BaseLayout,
   Link as BaseLink,
   getCustomMDXComponent,
-} from '@rspress/core/theme';
+} from '@rspress/core/theme-original';
 import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
   Search as PluginAlgoliaSearch,
@@ -255,6 +255,6 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   );
 };
 
-export { Link }; // override Link from @rspress/core/theme
+export { Link }; // override Link from @rspress/core/theme-original
 
-export * from '@rspress/core/theme';
+export * from '@rspress/core/theme-original';
