@@ -94,8 +94,8 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [pathname]);
 
   const updateText = useCallback(() => {
-    const h1Ele = document.querySelector('h1');
-    const h1Span = document.querySelector('h1 > span');
+    const h1Ele = document.querySelector('.rp-home-hero__title');
+    const h1Span = document.querySelector('.rp-home-hero__title > span');
     if (!h1Ele) return;
     if (!h1Span) return;
 
