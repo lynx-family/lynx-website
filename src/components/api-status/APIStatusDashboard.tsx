@@ -614,7 +614,7 @@ export const APIStatusDashboard: React.FC = () => {
     'all' | 'supported' | 'unsupported'
   >('all');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const [showRecentApis, setShowRecentApis] = useState(false);
+  const [showRecentApis, setShowRecentApis] = useState(true);
   const [showAllResults, setShowAllResults] = useState(false);
   const [highlightMode, setHighlightMode] = useState<HighlightMode>('green');
 
