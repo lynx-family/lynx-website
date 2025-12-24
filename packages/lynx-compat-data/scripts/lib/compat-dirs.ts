@@ -12,7 +12,17 @@ import { fileURLToPath } from 'node:url';
 const dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(dirname, '..', '..');
 
-// Directories that are not compat data directories
+/**
+ * Directories that are not compat data directories.
+ * These are excluded from validation and linting:
+ * - .vscode: IDE configuration
+ * - platforms: Platform definitions (separate schema)
+ * - schemas: JSON schemas for validation
+ * - scripts: Build/lint scripts
+ * - test: Test files
+ * - types: TypeScript type definitions
+ * - node_modules: Dependencies
+ */
 const EXCLUDED_DIRS = [
   '.vscode',
   'platforms',
@@ -26,6 +36,9 @@ const EXCLUDED_DIRS = [
 /**
  * Get the list of compat data directories by scanning the top-level directory.
  * This automatically discovers directories like 'lynx-api', 'css', 'elements', etc.
+ *
+ * Note: Uses synchronous file system operations since this is called at script
+ * startup and the directory listing is small.
  */
 export function getCompatDataDirs(): string[] {
   const entries = fs.readdirSync(rootDir, { withFileTypes: true });
