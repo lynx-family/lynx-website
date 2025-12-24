@@ -6,8 +6,8 @@ import { Ajv } from 'ajv';
 import ajvErrors from 'ajv-errors';
 import ajvFormats from 'ajv-formats';
 
-import compatDataSchema from '../schemas/compat-data.schema.json' assert { type: 'json' };
-import platformDataSchema from '../schemas/platform.schema.json' assert { type: 'json' };
+import compatDataSchema from '../schemas/compat-data.schema.json' with { type: 'json' };
+import platformDataSchema from '../schemas/platform.schema.json' with { type: 'json' };
 
 const ajv = new Ajv({ allErrors: true });
 // We use 'fast' because as a side effect that makes the "uri" format more lax.
@@ -29,10 +29,16 @@ const platformDataDir = path.join(dirname, '..', 'platforms');
 
 const DEBUG = process.env.DEBUG === 'ajv';
 
+// Generated files that should be excluded from validation
+const EXCLUDED_PLATFORM_FILES = ['platform-keys.json', 'platforms.json'];
+
 const validatePlatformData = async () => {
   const files = await fs.readdir(platformDataDir);
   for (const file of files) {
-    if (path.extname(file) === '.json') {
+    if (
+      path.extname(file) === '.json' &&
+      !EXCLUDED_PLATFORM_FILES.includes(file)
+    ) {
       const filePath = path.join(platformDataDir, file);
       const content = await fs.readFile(filePath, 'utf-8');
       const data = JSON.parse(content);
@@ -70,7 +76,15 @@ const validateCompatDataForDir = async (dirName) => {
 };
 
 const validateAllCompatData = async () => {
-  const dirs = ['lynx-api', 'lynx-native-api', 'css', 'react'];
+  const dirs = [
+    'lynx-api',
+    'lynx-native-api',
+    'css',
+    'react',
+    'elements',
+    'devtool',
+    'errors',
+  ];
 
   for (const dir of dirs) {
     if (DEBUG) {
