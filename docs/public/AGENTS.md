@@ -44,7 +44,7 @@
 Additionally:
 
 - The `svg` element differs significantly from its web counterpart. Pass the SVG markup through the `content` attribute or SVG url through the `src` attribute on `<svg />`:
-  
+
   ```jsx
   <svg content={`<svg ... />`} />;
   // or
