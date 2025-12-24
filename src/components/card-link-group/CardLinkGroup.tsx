@@ -24,17 +24,17 @@ const CardLinkTab = ({
   className,
 }: CardLinkTabProps) => {
   return (
-    <Link href={url} className="sh-no-underline">
+    <Link href={url} className="no-underline">
       <Card
         className={cn(
-          'sh-flex-1 sh-cursor-pointer sh-transition-colors sh-border-2',
+          'flex-1 cursor-pointer transition-colors border-2',
           active
-            ? 'sh-border-primary sh-bg-primary/10'
-            : 'sh-border-muted hover:sh-bg-muted',
+            ? 'border-primary bg-primary/10'
+            : 'border-muted hover:bg-muted',
           className,
         )}
       >
-        <CardContent className="sh-pt-4 sh-pb-4 sh-flex sh-flex-col sh-items-center sh-gap-3">
+        <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
           {children}
         </CardContent>
       </Card>
@@ -56,11 +56,11 @@ interface CardLinkGroupProps {
  * ```tsx
  * <CardLinkGroup>
  *   <CardLinkGroup.Tab active url="/docs/ios">
- *     <div className="icon icon-ios sh-bg-current sh-h-8 sh-w-8" />
+ *     <div className="icon icon-ios bg-current h-8 w-8" />
  *     <span>iOS Documentation</span>
  *   </CardLinkGroup.Tab>
  *   <CardLinkGroup.Tab url="/docs/android">
- *     <div className="icon icon-android sh-bg-current sh-h-8 sh-w-8" />
+ *     <div className="icon icon-android bg-current h-8 w-8" />
  *     <span>Android Documentation</span>
  *   </CardLinkGroup.Tab>
  * </CardLinkGroup>
@@ -68,9 +68,7 @@ interface CardLinkGroupProps {
  */
 export const CardLinkGroup = ({ children, className }: CardLinkGroupProps) => {
   return (
-    <div className={cn('sh-flex sh-flex-wrap sh-gap-4', className)}>
-      {children}
-    </div>
+    <div className={cn('flex flex-wrap gap-4', className)}>{children}</div>
   );
 };
 

@@ -59,7 +59,7 @@ export const PropertyDefinition: React.FC<PropertyDefinitionProps> = ({
         <TableBody>
           {data.map((row) => (
             <TableRow key={row.key}>
-              <TableCell className="sh-w-[120px] sh-font-medium sh-text-muted-foreground">
+              <TableCell className="w-[120px] font-medium text-muted-foreground">
                 {row.property}
               </TableCell>
               <TableCell>{row.value}</TableCell>

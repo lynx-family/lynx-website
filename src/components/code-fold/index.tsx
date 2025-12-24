@@ -75,16 +75,12 @@ export const CodeFold = ({
       className={`${dark ? 'semi-always-dark' : 'semi-always-light'}`}
       ref={containerRef}
     >
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="sh-w-full"
-      >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsContent
           forceMount={true}
           value="example"
           hidden={activeTab !== 'example'}
-          className="sh-w-full sh-overflow-hidden"
+          className="w-full overflow-hidden"
         >
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel
@@ -124,7 +120,7 @@ export const CodeFold = ({
                   <img
                     src={img}
                     alt="Example visualization"
-                    className="sh-w-full sh-h-auto sh-border sh-border-solid sh-rounded-lg sh-border-slate-200"
+                    className="w-full h-auto border border-solid rounded-lg border-slate-200"
                   />
                 </div>
               </ResizablePanel>

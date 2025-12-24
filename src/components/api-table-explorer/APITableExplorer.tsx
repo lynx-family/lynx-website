@@ -90,11 +90,11 @@ const examples: Example[] = [
 ];
 
 const categoryStyles = {
-  css: 'sh-bg-blue-500/10 sh-text-blue-600 dark:sh-text-blue-400 sh-border-blue-500/20 hover:sh-bg-blue-500/20',
+  css: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20',
   element:
-    'sh-bg-emerald-500/10 sh-text-emerald-600 dark:sh-text-emerald-400 sh-border-emerald-500/20 hover:sh-bg-emerald-500/20',
+    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20',
   nested:
-    'sh-bg-purple-500/10 sh-text-purple-600 dark:sh-text-purple-400 sh-border-purple-500/20 hover:sh-bg-purple-500/20',
+    'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:bg-purple-500/20',
 };
 
 const categoryLabels = {
@@ -165,25 +165,25 @@ const APITableExplorer: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="sh-flex sh-flex-col sh-gap-5">
-        <Card className="sh-overflow-hidden sh-border-0 sh-shadow-lg dark:sh-shadow-none dark:sh-border">
-          <div className="sh-absolute sh-inset-0 sh-bg-gradient-to-br sh-from-primary/5 sh-via-transparent sh-to-transparent sh-pointer-events-none" />
-          <CardHeader className="sh-relative sh-pb-4">
-            <div className="sh-flex sh-items-center sh-gap-2 sh-mb-1">
-              <div className="sh-p-1.5 sh-rounded-md sh-bg-primary/10">
-                <SparklesIcon className="sh-w-4 sh-h-4 sh-text-primary" />
+      <div className="flex flex-col gap-5">
+        <Card className="overflow-hidden border-0 shadow-lg dark:shadow-none dark:border">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+          <CardHeader className="relative pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <SparklesIcon className="w-4 h-4 text-primary" />
               </div>
-              <CardTitle className="sh-text-xl">{texts.title}</CardTitle>
+              <CardTitle className="text-xl">{texts.title}</CardTitle>
             </div>
-            <CardDescription className="sh-text-sm">
+            <CardDescription className="text-sm">
               {texts.description}
             </CardDescription>
           </CardHeader>
-          <CardContent className="sh-relative sh-flex sh-flex-col sh-gap-4">
-            <div className="sh-relative">
-              <SearchIcon className="sh-absolute sh-left-3 sh-top-1/2 sh-transform sh--translate-y-1/2 sh-w-4 sh-h-4 sh-text-muted-foreground" />
+          <CardContent className="relative flex flex-col gap-4">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                className="sh-pl-10 sh-font-mono sh-text-sm sh-h-11 sh-bg-background/50"
+                className="pl-10 font-mono text-sm h-11 bg-background/50"
                 type="text"
                 placeholder={texts.placeholder}
                 value={query}
@@ -191,29 +191,29 @@ const APITableExplorer: React.FC = () => {
               />
             </div>
 
-            <div className="sh-flex sh-flex-col sh-gap-2">
-              <span className="sh-text-xs sh-font-medium sh-text-muted-foreground sh-uppercase sh-tracking-wide">
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {texts.quickAccess}
               </span>
-              <div className="sh-flex sh-flex-wrap sh-gap-2">
+              <div className="flex flex-wrap gap-2">
                 {examples.map((example) => (
                   <Tooltip key={example.query}>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className={`sh-h-8 sh-px-3 sh-text-xs sh-font-medium sh-transition-all sh-duration-200 sh-border ${categoryStyles[example.category]} ${query === example.query ? 'sh-ring-2 sh-ring-primary/50 sh-ring-offset-1' : ''}`}
+                        className={`h-8 px-3 text-xs font-medium transition-all duration-200 border ${categoryStyles[example.category]} ${query === example.query ? 'ring-2 ring-primary/50 ring-offset-1' : ''}`}
                         onClick={() => handleExampleClick(example)}
                       >
-                        <span className="sh-opacity-60 sh-mr-1.5 sh-text-[10px] sh-font-semibold sh-uppercase">
+                        <span className="opacity-60 mr-1.5 text-[10px] font-semibold uppercase">
                           {catLabels[example.category]}
                         </span>
-                        <code className="sh-font-mono">{example.label}</code>
+                        <code className="font-mono">{example.label}</code>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="sh-text-xs">
+                    <TooltipContent side="bottom" className="text-xs">
                       <p>{getTooltipText(example.category)}</p>
-                      <code className="sh-text-[10px] sh-opacity-70 sh-block sh-mt-1">
+                      <code className="text-[10px] opacity-70 block mt-1">
                         {example.query}
                       </code>
                     </TooltipContent>
@@ -224,13 +224,13 @@ const APITableExplorer: React.FC = () => {
           </CardContent>
         </Card>
 
-        <div className="sh-flex sh-flex-col sh-gap-4">
-          <div className="sh-flex sh-flex-col sh-gap-2">
-            <div className="sh-flex sh-items-center sh-gap-2 sh-text-sm sh-text-muted-foreground">
-              <CodeIcon className="sh-w-4 sh-h-4" />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CodeIcon className="w-4 h-4" />
               <span>{texts.embedCode}</span>
             </div>
-            <div className="sh-relative">
+            <div className="relative">
               <CodeBlockRuntime lang="jsx" code={embedCode} />
             </div>
           </div>

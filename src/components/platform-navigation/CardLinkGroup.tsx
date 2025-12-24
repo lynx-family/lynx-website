@@ -31,18 +31,18 @@ const CardLinkTab = ({
   return (
     <Link
       href={to}
-      className="sh-no-underline sh-basis-[calc(50%-0.5rem)] sh-max-w-[calc(50%-0.5rem)] sh-flex-grow"
+      className="no-underline basis-[calc(50%-0.5rem)] max-w-[calc(50%-0.5rem)] flex-grow"
     >
       <Card
         className={cn(
-          'sh-cursor-pointer sh-transition-colors sh-border-2',
+          'cursor-pointer transition-colors border-2',
           active
-            ? 'sh-border-primary sh-bg-primary/10'
-            : 'sh-border-muted hover:sh-bg-muted',
+            ? 'border-primary bg-primary/10'
+            : 'border-muted hover:bg-muted',
           className,
         )}
       >
-        <CardContent className="sh-pt-4 sh-pb-4 sh-flex sh-flex-col sh-items-center sh-gap-3">
+        <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
           {platforms && <PlatformIcon platforms={platforms} />}
           {children}
         </CardContent>
@@ -83,7 +83,7 @@ interface CardLinkGroupProps {
  */
 export const CardLinkGroup = ({ children, className }: CardLinkGroupProps) => {
   return (
-    <div className={cn('sh-w-full sh-flex sh-flex-wrap sh-gap-4', className)}>
+    <div className={cn('w-full flex flex-wrap gap-4', className)}>
       {children}
     </div>
   );

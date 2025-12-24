@@ -86,23 +86,23 @@ function OptionSelector({
   onSelect: (id: Platform) => void;
 }) {
   return (
-    <div className="sh-w-full sh-flex sh-flex-wrap sh-gap-4">
+    <div className="w-full flex flex-wrap gap-4">
       {options.map((option) => (
         <Card
           key={option.id}
           className={cn(
-            'sh-basis-[calc(50%-0.5rem)] sh-max-w-[calc(50%-0.5rem)] sh-flex-grow sh-cursor-pointer sh-transition-colors sh-border-2',
+            'basis-[calc(50%-0.5rem)] max-w-[calc(50%-0.5rem)] flex-grow cursor-pointer transition-colors border-2',
             selected === option.id
-              ? 'sh-border-primary sh-bg-primary/10'
-              : 'sh-border-muted hover:sh-bg-muted',
+              ? 'border-primary bg-primary/10'
+              : 'border-muted hover:bg-muted',
           )}
           onClick={() => onSelect(option.id)}
         >
-          <CardContent className="sh-pt-4 sh-pb-4 sh-flex sh-flex-col sh-items-center sh-gap-3">
+          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
             <PlatformIcon platforms={[option.id]} />
             <Label
               htmlFor={option.id}
-              className="sh-cursor-pointer sh-flex sh-items-center sh-gap-2 sh-whitespace-nowrap sh-text-center"
+              className="cursor-pointer flex items-center gap-2 whitespace-nowrap text-center"
             >
               {option.label}
             </Label>
@@ -226,7 +226,7 @@ export const PlatformTabs = ({
   });
 
   return (
-    <div className={cn('sh-w-full sh-space-y-4', className)}>
+    <div className={cn('w-full space-y-4', className)}>
       <OptionSelector
         options={availableOptions}
         selected={activePlatform}

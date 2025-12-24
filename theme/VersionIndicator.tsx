@@ -106,23 +106,20 @@ export function VersionIndicator() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="sh-flex sh-items-center sh-rounded-md sh-px-1.5 sh-py-2 sh-text-sm sh-text-foreground hover:sh-bg-accent -sh-ml-1 -sh-mb-1"
+              className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
             >
               {displayVersion}{' '}
-              <ChevronDown
-                className="sh-h-4 sh-w-4 sh-ml-1"
-                strokeWidth={1.5}
-              />
+              <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="sh-w-28 sh-p-0" align="start">
-            <div className="sh-p-2">
+          <DropdownMenuContent className="w-28 p-0" align="start">
+            <div className="p-2">
               {versions
                 .filter((version) => version !== '3.2' && version !== '3.3')
                 .map((version) => (
                   <DropdownMenuItem
                     key={version}
-                    className={`sh-w-full sh-justify-start ${version === displayVersion ? 'sh-bg-primary/10 sh-text-primary' : ''}`}
+                    className={`w-full justify-start ${version === displayVersion ? 'bg-primary/10 text-primary' : ''}`}
                     onClick={() => changeVersion(version)}
                   >
                     {version}
@@ -130,7 +127,7 @@ export function VersionIndicator() {
                 ))}
               <DropdownMenuItem
                 key="versions"
-                className={`sh-w-full sh-justify-start ${'versions' === displayVersion ? 'sh-bg-primary/10 sh-text-primary' : ''}`}
+                className={`w-full justify-start ${'versions' === displayVersion ? 'bg-primary/10 text-primary' : ''}`}
                 onClick={() => viewAllVersions()}
               >
                 {t('all_versions')}

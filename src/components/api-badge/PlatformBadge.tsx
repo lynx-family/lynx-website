@@ -59,7 +59,7 @@ function PlatformBadgeInner({
     <Badge type={type}>
       <PlatformSvg
         platformName={platform}
-        className={`sh-bg-current sh-w-[0.9rem] sh-h-[0.9rem]`}
+        className={`bg-current w-[0.9rem] h-[0.9rem]`}
       />
       {badgeText}
     </Badge>

@@ -171,7 +171,7 @@ const BorderBeam: React.FC<BorderBeamProps> = ({
     <div ref={containerRef} className={styles['border-beam-frame']}>
       <canvas
         ref={canvasRef}
-        className="sh-absolute sh-top-0 sh-left-0 sh-w-full sh-h-full sh-pointer-events-none"
+        className="absolute top-0 left-0 w-full h-full pointer-events-none"
       />
     </div>
   );

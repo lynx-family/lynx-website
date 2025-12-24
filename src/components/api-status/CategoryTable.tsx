@@ -33,30 +33,30 @@ interface CategoryTableProps {
 // Higher coverage = more saturated/vibrant green, lower coverage = muted/gray
 const getCoverageColorGreen = (coverage: number): string => {
   if (coverage >= 95)
-    return 'sh-bg-emerald-100 dark:sh-bg-emerald-500/25 sh-text-emerald-900 dark:sh-text-emerald-300';
+    return 'bg-emerald-100 dark:bg-emerald-500/25 text-emerald-900 dark:text-emerald-300';
   if (coverage >= 85)
-    return 'sh-bg-emerald-100/80 dark:sh-bg-emerald-500/20 sh-text-emerald-800 dark:sh-text-emerald-400';
+    return 'bg-emerald-100/80 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400';
   if (coverage >= 75)
-    return 'sh-bg-emerald-100/60 dark:sh-bg-emerald-500/15 sh-text-emerald-800/90 dark:sh-text-emerald-400/80';
+    return 'bg-emerald-100/60 dark:bg-emerald-500/15 text-emerald-800/90 dark:text-emerald-400/80';
   if (coverage >= 65)
-    return 'sh-bg-emerald-100/40 dark:sh-bg-emerald-500/10 sh-text-emerald-800/80 dark:sh-text-emerald-400/60';
-  if (coverage >= 50) return 'sh-bg-muted/50 sh-text-muted-foreground/80';
-  return 'sh-bg-muted/30 sh-text-muted-foreground/60';
+    return 'bg-emerald-100/40 dark:bg-emerald-500/10 text-emerald-800/80 dark:text-emerald-400/60';
+  if (coverage >= 50) return 'bg-muted/50 text-muted-foreground/80';
+  return 'bg-muted/30 text-muted-foreground/60';
 };
 
 // Red mode: highlights low coverage (what needs attention)
 // Lower coverage = more saturated/vibrant red, higher coverage = muted/gray
 const getCoverageColorRed = (coverage: number): string => {
   if (coverage < 50)
-    return 'sh-bg-red-100 dark:sh-bg-red-500/25 sh-text-red-900 dark:sh-text-red-300';
+    return 'bg-red-100 dark:bg-red-500/25 text-red-900 dark:text-red-300';
   if (coverage < 65)
-    return 'sh-bg-red-100/80 dark:sh-bg-red-500/20 sh-text-red-800 dark:sh-text-red-400';
+    return 'bg-red-100/80 dark:bg-red-500/20 text-red-800 dark:text-red-400';
   if (coverage < 75)
-    return 'sh-bg-red-100/60 dark:sh-bg-red-500/15 sh-text-red-800/90 dark:sh-text-red-400/80';
+    return 'bg-red-100/60 dark:bg-red-500/15 text-red-800/90 dark:text-red-400/80';
   if (coverage < 85)
-    return 'sh-bg-red-100/40 dark:sh-bg-red-500/10 sh-text-red-800/80 dark:sh-text-red-400/60';
-  if (coverage < 95) return 'sh-bg-muted/50 sh-text-muted-foreground/80';
-  return 'sh-bg-muted/30 sh-text-muted-foreground/60';
+    return 'bg-red-100/40 dark:bg-red-500/10 text-red-800/80 dark:text-red-400/60';
+  if (coverage < 95) return 'bg-muted/50 text-muted-foreground/80';
+  return 'bg-muted/30 text-muted-foreground/60';
 };
 
 const getCoverageColor = (
@@ -113,7 +113,7 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
       <tr>
         <td
           colSpan={colSpan}
-          className="sh-px-4 sh-py-3 sh-bg-emerald-500/5 sh-text-center sh-text-sm sh-text-emerald-700 dark:sh-text-emerald-400"
+          className="px-4 py-3 bg-emerald-500/5 text-center text-sm text-emerald-700 dark:text-emerald-400"
         >
           {texts.allSupported}
         </td>
@@ -132,10 +132,10 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
     <tr>
       <td
         colSpan={colSpan}
-        className="sh-px-3 sh-py-3 sh-bg-red-500/5 dark:sh-bg-red-500/10"
+        className="px-3 py-3 bg-red-500/5 dark:bg-red-500/10"
       >
         {/* Show ALL missing APIs - prioritize completeness over aesthetics */}
-        <div className="sh-grid sh-grid-cols-1 sm:sh-grid-cols-2 lg:sh-grid-cols-3 xl:sh-grid-cols-4 2xl:sh-grid-cols-5 sh-gap-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-1">
           {missingApis.map((api, index) => (
             <APIItem
               key={`${api.path}-${index}`}
@@ -187,7 +187,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
   // Debug: log category count
   if (sortedCategories.length === 0) {
     return (
-      <div className="sh-p-4 sh-text-center sh-text-red-500">
+      <div className="p-4 text-center text-red-500">
         No categories found. Keys: {Object.keys(categories).join(', ')}
       </div>
     );
@@ -195,27 +195,27 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 
   return (
     <div
-      className="sh-overflow-x-auto sh-rounded-lg sh-border sh-bg-card"
+      className="overflow-x-auto rounded-lg border bg-card"
       role="region"
       aria-label="Category Table"
     >
-      <table className="sh-w-full sh-text-sm">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="sh-border-b sh-bg-muted/50">
-            <th className="sh-w-8 sh-px-2 sh-py-3"></th>
-            <th className="sh-text-left sh-font-semibold sh-px-4 sh-py-3 sh-whitespace-nowrap">
+          <tr className="border-b bg-muted/50">
+            <th className="w-8 px-2 py-3"></th>
+            <th className="text-left font-semibold px-4 py-3 whitespace-nowrap">
               Category
             </th>
-            <th className="sh-text-center sh-font-semibold sh-px-3 sh-py-3 sh-whitespace-nowrap sh-font-mono sh-text-xs">
+            <th className="text-center font-semibold px-3 py-3 whitespace-nowrap font-mono text-xs">
               Total
             </th>
             {displayPlatforms.map((platform) => (
               <th
                 key={platform}
                 className={cn(
-                  'sh-text-center sh-font-semibold sh-px-3 sh-py-3 sh-whitespace-nowrap sh-text-xs',
-                  CLAY_PLATFORMS.includes(platform) && 'sh-bg-muted/30',
-                  platform === selectedPlatform && 'sh-bg-primary/10',
+                  'text-center font-semibold px-3 py-3 whitespace-nowrap text-xs',
+                  CLAY_PLATFORMS.includes(platform) && 'bg-muted/30',
+                  platform === selectedPlatform && 'bg-primary/10',
                 )}
               >
                 {PLATFORM_DISPLAY_NAMES[platform]}
@@ -235,33 +235,33 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                 <React.Fragment key={key}>
                   <tr
                     className={cn(
-                      'sh-border-b hover:sh-bg-muted/30 sh-transition-colors sh-cursor-pointer',
-                      index % 2 === 0 ? 'sh-bg-background' : 'sh-bg-muted/10',
-                      isExpanded && 'sh-bg-muted/40',
+                      'border-b hover:bg-muted/30 transition-colors cursor-pointer',
+                      index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+                      isExpanded && 'bg-muted/40',
                     )}
                     onClick={() => onCategoryClick?.(key)}
                   >
-                    <td className="sh-px-2 sh-py-3 sh-text-center">
+                    <td className="px-2 py-3 text-center">
                       <ChevronRightIcon
                         className={cn(
-                          'sh-w-4 sh-h-4 sh-transition-transform sh-text-muted-foreground',
-                          isExpanded && 'sh-rotate-90',
+                          'w-4 h-4 transition-transform text-muted-foreground',
+                          isExpanded && 'rotate-90',
                         )}
                       />
                     </td>
-                    <td className="sh-px-4 sh-py-3 sh-font-medium">
-                      <div className="sh-flex sh-items-center sh-gap-2">
+                    <td className="px-4 py-3 font-medium">
+                      <div className="flex items-center gap-2">
                         <span>
                           {CATEGORY_DISPLAY_NAMES[key] || display_name}
                         </span>
                         {missingCount > 0 && (
-                          <span className="sh-text-xs sh-px-1.5 sh-py-0.5 sh-rounded sh-bg-amber-100 dark:sh-bg-amber-500/20 sh-text-amber-900 dark:sh-text-amber-300">
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300">
                             {missingCount} missing
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="sh-text-center sh-px-3 sh-py-3 sh-font-mono sh-text-muted-foreground sh-text-xs">
+                    <td className="text-center px-3 py-3 font-mono text-muted-foreground text-xs">
                       {stats.total}
                     </td>
                     {displayPlatforms.map((platform) => {
@@ -271,22 +271,21 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                         <td
                           key={platform}
                           className={cn(
-                            'sh-text-center sh-px-2 sh-py-2',
-                            CLAY_PLATFORMS.includes(platform) &&
-                              'sh-bg-muted/10',
-                            platform === selectedPlatform && 'sh-bg-primary/5',
+                            'text-center px-2 py-2',
+                            CLAY_PLATFORMS.includes(platform) && 'bg-muted/10',
+                            platform === selectedPlatform && 'bg-primary/5',
                           )}
                         >
                           <div
                             className={cn(
-                              'sh-inline-flex sh-flex-col sh-items-center sh-rounded-md sh-px-2 sh-py-1 sh-min-w-[50px]',
+                              'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
                               getCoverageColor(coverage, highlightMode),
                             )}
                           >
-                            <span className="sh-font-bold sh-font-mono sh-text-xs">
+                            <span className="font-bold font-mono text-xs">
                               {coverage}%
                             </span>
-                            <span className="sh-text-[9px] sh-opacity-70">
+                            <span className="text-[9px] opacity-70">
                               {supported}/{stats.total}
                             </span>
                           </div>
@@ -309,10 +308,10 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         </tbody>
         {/* Summary Row */}
         <tfoot>
-          <tr className="sh-border-t-2 sh-bg-muted/50 sh-font-semibold">
-            <td className="sh-px-2 sh-py-3"></td>
-            <td className="sh-px-4 sh-py-3">Total</td>
-            <td className="sh-text-center sh-px-3 sh-py-3 sh-font-mono sh-text-xs">
+          <tr className="border-t-2 bg-muted/50 font-semibold">
+            <td className="px-2 py-3"></td>
+            <td className="px-4 py-3">Total</td>
+            <td className="text-center px-3 py-3 font-mono text-xs">
               {sortedCategories.reduce((sum, cat) => sum + cat.stats.total, 0)}
             </td>
             {displayPlatforms.map((platform) => {
@@ -332,21 +331,21 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                 <td
                   key={platform}
                   className={cn(
-                    'sh-text-center sh-px-2 sh-py-2',
-                    CLAY_PLATFORMS.includes(platform) && 'sh-bg-muted/30',
-                    platform === selectedPlatform && 'sh-bg-primary/10',
+                    'text-center px-2 py-2',
+                    CLAY_PLATFORMS.includes(platform) && 'bg-muted/30',
+                    platform === selectedPlatform && 'bg-primary/10',
                   )}
                 >
                   <div
                     className={cn(
-                      'sh-inline-flex sh-flex-col sh-items-center sh-rounded-md sh-px-2 sh-py-1 sh-min-w-[50px]',
+                      'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
                       getCoverageColor(coverage, highlightMode),
                     )}
                   >
-                    <span className="sh-font-bold sh-font-mono sh-text-xs">
+                    <span className="font-bold font-mono text-xs">
                       {coverage}%
                     </span>
-                    <span className="sh-text-[9px] sh-opacity-70">
+                    <span className="text-[9px] opacity-70">
                       {totalSupported}/{totalApis}
                     </span>
                   </div>

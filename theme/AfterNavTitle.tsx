@@ -29,11 +29,11 @@ function NavContent({
   };
 
   return (
-    <div className="sh-flex sh-flex-col sh-gap-2 sh-p-1">
+    <div className="flex flex-col gap-2 p-1">
       {SUBSITES_CONFIG.map((subsite) => (
         <div
           key={subsite.value}
-          className="sh-cursor-pointer hover:sh-bg-accent sh-rounded-md sh-p-2"
+          className="cursor-pointer hover:bg-accent rounded-md p-2"
           onClick={() => handleSubsiteClick(subsite)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -62,10 +62,10 @@ const Trigger = forwardRef<
     <button
       ref={ref}
       type="button"
-      className="sh-flex sh-items-center sh-rounded-md sh-px-1.5 sh-py-2 sh-text-sm sh-text-foreground hover:sh-bg-accent -sh-ml-1 -sh-mb-1"
+      className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
       {...props}
     >
-      <ChevronDown className="sh-h-4 sh-w-4" strokeWidth={1.5} />
+      <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
     </button>
   );
 });
@@ -84,7 +84,7 @@ function Slash() {
       strokeWidth="1.1"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="sh-text-foreground -sh-m-2"
+      className="text-foreground -m-2"
       role="img"
       aria-label="Slash separator"
     >
@@ -137,11 +137,11 @@ export default function AfterNavTitle() {
   };
 
   return (
-    <div className="sh-flex sh-items-center sh-gap-2">
+    <div className="flex items-center gap-2">
       {currentSubsite.value === 'guide' ? (
         <Link
           href={`${getLangPrefix(lang)}${currentSubsite.home}`}
-          className="sh-text-lg sh-font-semibold"
+          className="text-lg font-semibold"
         >
           Lynx
         </Link>
@@ -150,12 +150,12 @@ export default function AfterNavTitle() {
           <Slash />
           <Link
             href={`${getLangPrefix(lang)}${currentSubsite.home}`}
-            className="sh-flex sh-items-center sh-gap-2"
+            className="flex items-center gap-2"
           >
-            <div className="sh-relative sh-h-[28px] sh-w-[28px]">
+            <div className="relative h-[28px] w-[28px]">
               <SubsiteLogo subsite={currentSubsite} />
             </div>
-            <span className="sh-text-base sh-font-medium">
+            <span className="text-base font-medium">
               {currentSubsite.label}
             </span>
           </Link>
@@ -168,7 +168,7 @@ export default function AfterNavTitle() {
             <Trigger />
           </DrawerTrigger>
           <DrawerContent>
-            <div className="sh-py-5 sh-px-4 sh-pb-7">
+            <div className="py-5 px-4 pb-7">
               <NavContent onSelect={() => setIsOpen(false)} isDrawer />
             </div>
           </DrawerContent>
@@ -179,7 +179,7 @@ export default function AfterNavTitle() {
             <DropdownMenuTrigger asChild>
               <Trigger />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="sh-w-56 sh-p-0" align="start">
+            <DropdownMenuContent className="w-56 p-0" align="start">
               <NavContent onSelect={() => setIsOpen(false)} />
             </DropdownMenuContent>
           </div>

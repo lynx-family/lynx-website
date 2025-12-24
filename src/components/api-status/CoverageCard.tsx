@@ -17,54 +17,54 @@ const platformColors: Record<
   { bg: string; indicator: string; text: string }
 > = {
   android: {
-    bg: 'sh-from-emerald-500/10 sh-to-emerald-600/5',
-    indicator: 'sh-bg-emerald-500',
-    text: 'sh-text-emerald-700 dark:sh-text-emerald-400',
+    bg: 'from-emerald-500/10 to-emerald-600/5',
+    indicator: 'bg-emerald-500',
+    text: 'text-emerald-700 dark:text-emerald-400',
   },
   ios: {
-    bg: 'sh-from-blue-500/10 sh-to-blue-600/5',
-    indicator: 'sh-bg-blue-500',
-    text: 'sh-text-blue-700 dark:sh-text-blue-400',
+    bg: 'from-blue-500/10 to-blue-600/5',
+    indicator: 'bg-blue-500',
+    text: 'text-blue-700 dark:text-blue-400',
   },
   harmony: {
-    bg: 'sh-from-orange-500/10 sh-to-orange-600/5',
-    indicator: 'sh-bg-orange-500',
-    text: 'sh-text-orange-700 dark:sh-text-orange-400',
+    bg: 'from-orange-500/10 to-orange-600/5',
+    indicator: 'bg-orange-500',
+    text: 'text-orange-700 dark:text-orange-400',
   },
   web_lynx: {
-    bg: 'sh-from-purple-500/10 sh-to-purple-600/5',
-    indicator: 'sh-bg-purple-500',
-    text: 'sh-text-purple-700 dark:sh-text-purple-400',
+    bg: 'from-purple-500/10 to-purple-600/5',
+    indicator: 'bg-purple-500',
+    text: 'text-purple-700 dark:text-purple-400',
   },
   clay_android: {
-    bg: 'sh-from-teal-500/10 sh-to-teal-600/5',
-    indicator: 'sh-bg-teal-500',
-    text: 'sh-text-teal-700 dark:sh-text-teal-400',
+    bg: 'from-teal-500/10 to-teal-600/5',
+    indicator: 'bg-teal-500',
+    text: 'text-teal-700 dark:text-teal-400',
   },
   clay_ios: {
-    bg: 'sh-from-cyan-500/10 sh-to-cyan-600/5',
-    indicator: 'sh-bg-cyan-500',
-    text: 'sh-text-cyan-700 dark:sh-text-cyan-400',
+    bg: 'from-cyan-500/10 to-cyan-600/5',
+    indicator: 'bg-cyan-500',
+    text: 'text-cyan-700 dark:text-cyan-400',
   },
   clay_harmony: {
-    bg: 'sh-from-indigo-500/10 sh-to-indigo-600/5',
-    indicator: 'sh-bg-indigo-500',
-    text: 'sh-text-indigo-700 dark:sh-text-indigo-400',
+    bg: 'from-indigo-500/10 to-indigo-600/5',
+    indicator: 'bg-indigo-500',
+    text: 'text-indigo-700 dark:text-indigo-400',
   },
   clay_web: {
-    bg: 'sh-from-sky-500/10 sh-to-sky-600/5',
-    indicator: 'sh-bg-sky-500',
-    text: 'sh-text-sky-700 dark:sh-text-sky-400',
+    bg: 'from-sky-500/10 to-sky-600/5',
+    indicator: 'bg-sky-500',
+    text: 'text-sky-700 dark:text-sky-400',
   },
   clay_macos: {
-    bg: 'sh-from-indigo-500/10 sh-to-indigo-600/5',
-    indicator: 'sh-bg-indigo-500',
-    text: 'sh-text-indigo-700 dark:sh-text-indigo-400',
+    bg: 'from-indigo-500/10 to-indigo-600/5',
+    indicator: 'bg-indigo-500',
+    text: 'text-indigo-700 dark:text-indigo-400',
   },
   clay_windows: {
-    bg: 'sh-from-sky-500/10 sh-to-sky-600/5',
-    indicator: 'sh-bg-sky-500',
-    text: 'sh-text-sky-700 dark:sh-text-sky-400',
+    bg: 'from-sky-500/10 to-sky-600/5',
+    indicator: 'bg-sky-500',
+    text: 'text-sky-700 dark:text-sky-400',
   },
 };
 
@@ -137,41 +137,39 @@ export const CoverageCard: React.FC<CoverageCardProps> = ({
   return (
     <Card
       className={cn(
-        'sh-relative sh-overflow-hidden sh-transition-all sh-duration-300 hover:sh-shadow-lg',
-        isHighlighted && 'sh-ring-2 sh-ring-primary sh-ring-offset-2',
+        'relative overflow-hidden transition-all duration-300 hover:shadow-lg',
+        isHighlighted && 'ring-2 ring-primary ring-offset-2',
       )}
     >
       <div
         className={cn(
-          'sh-absolute sh-inset-0 sh-bg-gradient-to-br sh-pointer-events-none',
+          'absolute inset-0 bg-gradient-to-br pointer-events-none',
           colors.bg,
         )}
       />
-      <CardHeader className="sh-relative sh-pb-2">
-        <div className="sh-flex sh-items-center sh-justify-between">
-          <div className="sh-flex sh-items-center sh-gap-2">
+      <CardHeader className="relative pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <PlatformIcon
               platform={platform}
-              className={cn('sh-w-5 sh-h-5', colors.text)}
+              className={cn('w-5 h-5', colors.text)}
             />
-            <CardTitle className="sh-text-base sh-font-semibold">
+            <CardTitle className="text-base font-semibold">
               {displayName}
             </CardTitle>
           </div>
-          <span
-            className={cn('sh-text-2xl sh-font-bold sh-font-mono', colors.text)}
-          >
+          <span className={cn('text-2xl font-bold font-mono', colors.text)}>
             {coverage}%
           </span>
         </div>
       </CardHeader>
-      <CardContent className="sh-relative sh-pt-0">
+      <CardContent className="relative pt-0">
         <Progress
           value={coverage}
-          className="sh-h-2 sh-mb-2"
+          className="h-2 mb-2"
           indicatorClassName={colors.indicator}
         />
-        <p className="sh-text-xs sh-text-muted-foreground sh-font-mono">
+        <p className="text-xs text-muted-foreground font-mono">
           {supported.toLocaleString()} / {total.toLocaleString()} APIs
         </p>
       </CardContent>

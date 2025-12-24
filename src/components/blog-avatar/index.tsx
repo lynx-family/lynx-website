@@ -38,7 +38,7 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
     <span className={styles['avatar-item']}>
       <Space>
         <Avatar
-          className="!sh-pointer-events-none"
+          className="!pointer-events-none"
           src={author?.image}
           zoom={false}
           onMouseEnter={undefined}
@@ -46,10 +46,10 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
           onMouseLeave={undefined}
         ></Avatar>
         <div>
-          <div className="sh-text-sm sh-font-bold">
+          <div className="text-sm font-bold">
             {lang === 'zh' ? author.name_zh : author.name}
           </div>
-          <div className="sh-text-xs sh-leading-[1em] sh-mx-0 sh-my-1 text-[color:var(--text-secondary)]">
+          <div className="text-xs leading-[1em] mx-0 my-1 text-[color:var(--text-secondary)]">
             {lang === 'zh' ? author.title_zh : author.title}
           </div>
           <div>
@@ -58,7 +58,7 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
                 return value?.link ? (
                   <span
                     onClick={() => window.open(value?.link, '_blank')}
-                    className="sh-cursor-pointer"
+                    className="cursor-pointer"
                   >
                     {brandSpList[key as BrandKey]
                       ? brandSpList[key as BrandKey].icon

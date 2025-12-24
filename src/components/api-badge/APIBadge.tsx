@@ -98,7 +98,7 @@ export function APIBadge({
   ];
 
   return (
-    <span className="sh-inline-flex sh-flex-wrap sh-items-center sh-gap-1 sh-align-middle">
+    <span className="inline-flex flex-wrap items-center gap-1 align-middle">
       {badges}
     </span>
   );

@@ -189,59 +189,59 @@ const platformColors: Record<
   { bg: string; border: string; text: string; progress: string; line: string }
 > = {
   android: {
-    bg: 'sh-bg-emerald-500/10',
-    border: 'sh-border-emerald-500',
-    text: 'sh-text-emerald-700 dark:sh-text-emerald-400',
-    progress: 'sh-bg-emerald-500',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500',
+    text: 'text-emerald-700 dark:text-emerald-400',
+    progress: 'bg-emerald-500',
     line: '#10b981',
   },
   ios: {
-    bg: 'sh-bg-blue-500/10',
-    border: 'sh-border-blue-500',
-    text: 'sh-text-blue-700 dark:sh-text-blue-400',
-    progress: 'sh-bg-blue-500',
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500',
+    text: 'text-blue-700 dark:text-blue-400',
+    progress: 'bg-blue-500',
     line: '#3b82f6',
   },
   harmony: {
-    bg: 'sh-bg-orange-500/10',
-    border: 'sh-border-orange-500',
-    text: 'sh-text-orange-700 dark:sh-text-orange-400',
-    progress: 'sh-bg-orange-500',
+    bg: 'bg-orange-500/10',
+    border: 'border-orange-500',
+    text: 'text-orange-700 dark:text-orange-400',
+    progress: 'bg-orange-500',
     line: '#f97316',
   },
   web_lynx: {
-    bg: 'sh-bg-purple-500/10',
-    border: 'sh-border-purple-500',
-    text: 'sh-text-purple-700 dark:sh-text-purple-400',
-    progress: 'sh-bg-purple-500',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500',
+    text: 'text-purple-700 dark:text-purple-400',
+    progress: 'bg-purple-500',
     line: '#a855f7',
   },
   clay_android: {
-    bg: 'sh-bg-teal-500/10',
-    border: 'sh-border-teal-500',
-    text: 'sh-text-teal-700 dark:sh-text-teal-400',
-    progress: 'sh-bg-teal-500',
+    bg: 'bg-teal-500/10',
+    border: 'border-teal-500',
+    text: 'text-teal-700 dark:text-teal-400',
+    progress: 'bg-teal-500',
     line: '#14b8a6',
   },
   clay_ios: {
-    bg: 'sh-bg-cyan-500/10',
-    border: 'sh-border-cyan-500',
-    text: 'sh-text-cyan-700 dark:sh-text-cyan-400',
-    progress: 'sh-bg-cyan-500',
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500',
+    text: 'text-cyan-700 dark:text-cyan-400',
+    progress: 'bg-cyan-500',
     line: '#06b6d4',
   },
   clay_macos: {
-    bg: 'sh-bg-indigo-500/10',
-    border: 'sh-border-indigo-500',
-    text: 'sh-text-indigo-700 dark:sh-text-indigo-400',
-    progress: 'sh-bg-indigo-500',
+    bg: 'bg-indigo-500/10',
+    border: 'border-indigo-500',
+    text: 'text-indigo-700 dark:text-indigo-400',
+    progress: 'bg-indigo-500',
     line: '#6366f1',
   },
   clay_windows: {
-    bg: 'sh-bg-sky-500/10',
-    border: 'sh-border-sky-500',
-    text: 'sh-text-sky-700 dark:sh-text-sky-400',
-    progress: 'sh-bg-sky-500',
+    bg: 'bg-sky-500/10',
+    border: 'border-sky-500',
+    text: 'text-sky-700 dark:text-sky-400',
+    progress: 'bg-sky-500',
     line: '#0ea5e9',
   },
 };
@@ -384,50 +384,50 @@ export const APIItem: React.FC<APIItemProps> = ({
 
   // Color scheme based on support status
   const colorClasses = isSupported
-    ? 'sh-bg-emerald-100 dark:sh-bg-emerald-500/10 sh-text-emerald-900 dark:sh-text-emerald-400 sh-border-emerald-200 dark:sh-border-emerald-500/20 hover:sh-bg-emerald-200 dark:hover:sh-bg-emerald-500/20'
-    : 'sh-bg-red-100 dark:sh-bg-red-500/10 sh-text-red-900 dark:sh-text-red-400 sh-border-red-200 dark:sh-border-red-500/20 hover:sh-bg-red-200 dark:hover:sh-bg-red-500/20';
+    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-200 dark:hover:bg-emerald-500/20'
+    : 'bg-red-100 dark:bg-red-500/10 text-red-900 dark:text-red-400 border-red-200 dark:border-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/20';
 
   return (
     <Drawer>
       <DrawerTrigger asChild>
         <button
           className={cn(
-            'sh-inline-flex sh-items-center sh-gap-1.5 sh-rounded-md sh-font-medium sh-transition-all sh-duration-200',
-            'sh-border sh-text-left sh-cursor-pointer sh-w-full',
+            'inline-flex items-center gap-1.5 rounded-md font-medium transition-all duration-200',
+            'border text-left cursor-pointer w-full',
             // Allow content to wrap - prioritize showing full content
             compact
-              ? 'sh-min-h-[36px] sh-py-1.5 sh-px-2.5 sh-text-xs'
-              : 'sh-min-h-[40px] sh-py-2 sh-px-3 sh-text-sm',
+              ? 'min-h-[36px] py-1.5 px-2.5 text-xs'
+              : 'min-h-[40px] py-2 px-3 text-sm',
             colorClasses,
           )}
         >
           <span
             className={cn(
-              'sh-font-semibold sh-uppercase sh-tracking-wider sh-flex-shrink-0',
-              compact ? 'sh-text-[8px]' : 'sh-text-[9px]',
+              'font-semibold uppercase tracking-wider flex-shrink-0',
+              compact ? 'text-[8px]' : 'text-[9px]',
             )}
           >
             {categoryBadge}
           </span>
           {hasHtmlContent ? (
             <span
-              className="sh-font-mono sh-break-all sh-leading-tight [&>code]:sh-bg-current/10 [&>code]:sh-px-0.5 [&>code]:sh-rounded"
+              className="font-mono break-all leading-tight [&>code]:bg-current/10 [&>code]:px-0.5 [&>code]:rounded"
               dangerouslySetInnerHTML={{ __html: displayName }}
             />
           ) : (
-            <code className="sh-font-mono sh-break-all sh-leading-tight">
+            <code className="font-mono break-all leading-tight">
               {displayName}
             </code>
           )}
         </button>
       </DrawerTrigger>
-      <DrawerContent className="sh-max-h-[85vh]">
+      <DrawerContent className="max-h-[85vh]">
         <DrawerHeader>
-          <DrawerTitle className="sh-text-base">
-            <code className="sh-font-mono">{query}</code>
+          <DrawerTitle className="text-base">
+            <code className="font-mono">{query}</code>
           </DrawerTitle>
         </DrawerHeader>
-        <div className="sh-px-4 sh-pb-6 sh-overflow-auto">
+        <div className="px-4 pb-6 overflow-auto">
           <APITable query={query} />
         </div>
       </DrawerContent>
@@ -472,9 +472,9 @@ const ParityChart: React.FC<ParityChartProps> = ({
   const hovered = hoveredIndex !== null ? points[hoveredIndex] : null;
 
   return (
-    <div className="sh-relative">
+    <div className="relative">
       <svg
-        className="sh-w-full sh-h-[120px]"
+        className="w-full h-[120px]"
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="xMidYMid meet"
         onMouseLeave={() => setHoveredIndex(null)}
@@ -532,14 +532,14 @@ const ParityChart: React.FC<ParityChartProps> = ({
               cy={p.y}
               r="12"
               fill="transparent"
-              className="sh-cursor-pointer"
+              className="cursor-pointer"
             />
             <circle
               cx={p.x}
               cy={p.y}
               r={hoveredIndex === i ? 5 : 3}
               fill={colors.line}
-              className="sh-transition-all"
+              className="transition-all"
             />
           </g>
         ))}
@@ -580,19 +580,15 @@ const ParityChart: React.FC<ParityChartProps> = ({
       {/* Hover tooltip */}
       {hovered && (
         <div
-          className="sh-absolute sh-bg-popover sh-border sh-rounded-md sh-px-2 sh-py-1 sh-text-xs sh-shadow-lg sh-pointer-events-none"
+          className="absolute bg-popover border rounded-md px-2 py-1 text-xs shadow-lg pointer-events-none"
           style={{
             left: hovered.x,
             top: hovered.y - 30,
             transform: 'translateX(-50%)',
           }}
         >
-          <span className="sh-font-mono sh-font-semibold">
-            {hovered.coverage}%
-          </span>
-          <span className="sh-text-muted-foreground sh-ml-1">
-            v{hovered.version}
-          </span>
+          <span className="font-mono font-semibold">{hovered.coverage}%</span>
+          <span className="text-muted-foreground ml-1">v{hovered.version}</span>
         </div>
       )}
     </div>
@@ -719,25 +715,25 @@ export const APIStatusDashboard: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="sh-flex sh-flex-col sh-gap-4">
+      <div className="flex flex-col gap-4">
         {/* ===== CONTROL PANEL ===== */}
-        <div className="sh-rounded-xl sh-border sh-bg-card sh-overflow-hidden">
+        <div className="rounded-xl border bg-card overflow-hidden">
           {/* Header Row */}
-          <div className="sh-flex sh-flex-col sm:sh-flex-row sh-items-start sm:sh-items-center sh-justify-between sh-gap-2 sh-px-4 sh-py-4 sh-border-b sh-bg-muted/30">
-            <div className="sh-flex sh-items-center sh-gap-3">
-              <h1 className="sh-text-lg sh-font-semibold sh-tracking-tight">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-4 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-semibold tracking-tight">
                 {t.title}
               </h1>
-              <div className="sh-flex sh-items-center sh-gap-1.5 sh-text-xs sh-text-muted-foreground">
-                <span className="sh-font-mono sh-font-bold sh-text-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="font-mono font-bold text-foreground">
                   {summary.total_apis.toLocaleString()}
                 </span>
                 <span>{t.totalApis}</span>
               </div>
             </div>
-            <div className="sh-flex sh-items-center sh-gap-3 sh-text-xs sh-text-muted-foreground">
-              <div className="sh-flex sh-items-center sh-gap-1.5">
-                <ClockIcon className="sh-w-3 sh-h-3" />
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <ClockIcon className="w-3 h-3" />
                 <span>
                   {t.generatedAt} {generatedDate}
                 </span>
@@ -746,18 +742,18 @@ export const APIStatusDashboard: React.FC = () => {
                 href={withBase(
                   lang === 'zh' ? '/zh/api/status/help' : '/api/status/help',
                 )}
-                className="sh-flex sh-items-center sh-gap-1 sh-px-2 sh-py-1 sh-rounded-md sh-text-muted-foreground hover:sh-text-foreground hover:sh-bg-muted/50 sh-transition-colors"
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
-                <HelpCircleIcon className="sh-w-3.5 sh-h-3.5" />
+                <HelpCircleIcon className="w-3.5 h-3.5" />
                 <span>{t.help}</span>
               </a>
             </div>
           </div>
 
           {/* Filters Row */}
-          <div className="sh-p-4 sh-space-y-3">
+          <div className="p-4 space-y-3">
             {/* Platform Selector - flows inline on desktop, stacks on mobile */}
-            <div className="sh-flex sh-flex-wrap sh-items-center sh-gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               {/* Native Platforms */}
               {NATIVE_PLATFORMS.map((platform) => {
                 const ps = summary.by_platform[platform];
@@ -773,19 +769,19 @@ export const APIStatusDashboard: React.FC = () => {
                       setExpandedCategory(null);
                     }}
                     className={cn(
-                      'sh-flex sh-items-center sh-gap-1.5 sh-px-2.5 sh-py-1.5 sh-rounded-md sh-text-xs sh-font-medium sh-transition-all',
-                      'sh-border-2',
+                      'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
+                      'border-2',
                       isSelected
                         ? `${colors.bg} ${colors.border}`
-                        : 'sh-bg-card sh-border-transparent hover:sh-border-muted-foreground/30',
+                        : 'bg-card border-transparent hover:border-muted-foreground/30',
                     )}
                   >
                     <PlatformIcon
                       platform={platform}
-                      className={cn('sh-w-3.5 sh-h-3.5', colors.text)}
+                      className={cn('w-3.5 h-3.5', colors.text)}
                     />
                     <span>{PLATFORM_DISPLAY_NAMES[platform]}</span>
-                    <span className={cn('sh-font-mono', colors.text)}>
+                    <span className={cn('font-mono', colors.text)}>
                       {ps.coverage_percent}%
                     </span>
                   </button>
@@ -793,22 +789,22 @@ export const APIStatusDashboard: React.FC = () => {
               })}
 
               {/* Separator on desktop */}
-              <div className="sh-hidden sm:sh-block sh-w-px sh-h-5 sh-bg-border sh-mx-1" />
+              <div className="hidden sm:block w-px h-5 bg-border mx-1" />
 
               {/* Clay Toggle */}
               <button
                 onClick={() => setShowClay(!showClay)}
                 className={cn(
-                  'sh-inline-flex sh-items-center sh-gap-1.5 sh-px-2.5 sh-py-1.5 sh-rounded-md sh-text-xs sh-font-medium sh-transition-all sh-border-2',
+                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border-2',
                   showClay
-                    ? 'sh-bg-primary/10 sh-border-primary sh-text-primary'
-                    : 'sh-bg-card sh-border-transparent sh-text-muted-foreground hover:sh-border-muted-foreground/30',
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'bg-card border-transparent text-muted-foreground hover:border-muted-foreground/30',
                 )}
               >
                 <svg
                   className={cn(
-                    'sh-w-3.5 sh-h-3.5 sh-transition-colors',
-                    showClay ? 'sh-text-primary' : 'sh-text-muted-foreground',
+                    'w-3.5 h-3.5 transition-colors',
+                    showClay ? 'text-primary' : 'text-muted-foreground',
                   )}
                   viewBox="0 0 24 24"
                   fill="currentColor"
@@ -818,7 +814,7 @@ export const APIStatusDashboard: React.FC = () => {
                 <span>Clay</span>
                 {showClay && (
                   <svg
-                    className="sh-w-3 sh-h-3"
+                    className="w-3 h-3"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -849,19 +845,19 @@ export const APIStatusDashboard: React.FC = () => {
                         setExpandedCategory(null);
                       }}
                       className={cn(
-                        'sh-flex sh-items-center sh-gap-1.5 sh-px-2.5 sh-py-1.5 sh-rounded-md sh-text-xs sh-font-medium sh-transition-all',
-                        'sh-border-2',
+                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
+                        'border-2',
                         isSelected
                           ? `${colors.bg} ${colors.border}`
-                          : 'sh-bg-card sh-border-transparent hover:sh-border-muted-foreground/30',
+                          : 'bg-card border-transparent hover:border-muted-foreground/30',
                       )}
                     >
                       <PlatformIcon
                         platform={platform}
-                        className={cn('sh-w-3.5 sh-h-3.5', colors.text)}
+                        className={cn('w-3.5 h-3.5', colors.text)}
                       />
                       <span>{PLATFORM_DISPLAY_NAMES[platform]}</span>
-                      <span className={cn('sh-font-mono', colors.text)}>
+                      <span className={cn('font-mono', colors.text)}>
                         {ps.coverage_percent}%
                       </span>
                     </button>
@@ -870,50 +866,50 @@ export const APIStatusDashboard: React.FC = () => {
             </div>
 
             {/* Search and Filters - search on own row on mobile, all in one row on desktop */}
-            <div className="sh-flex sh-flex-col sm:sh-flex-row sh-gap-2">
-              <div className="sh-relative sh-flex-1 sh-min-w-0">
-                <SearchIcon className="sh-absolute sh-left-2.5 sh-top-1/2 sh-transform -sh-translate-y-1/2 sh-w-3.5 sh-h-3.5 sh-text-muted-foreground" />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1 min-w-0">
+                <SearchIcon className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
-                  className="sh-pl-8 sh-h-8 sh-text-sm sh-font-mono"
+                  className="pl-8 h-8 text-sm font-mono"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t.searchPlaceholder}
                 />
               </div>
-              <div className="sh-flex sh-items-center sh-gap-2 sh-w-full sm:sh-w-auto">
-                <div className="sh-flex-1 sm:sh-flex-none sm:sh-w-[130px]">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex-1 sm:flex-none sm:w-[130px]">
                   <Select
                     value={categoryFilter}
                     onValueChange={setCategoryFilter}
                   >
-                    <SelectTrigger className="sh-h-8 sh-text-xs">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder={t.category} />
                     </SelectTrigger>
                     <SelectContent>
                       {categoryOptions.map((c) => (
-                        <SelectItem key={c} value={c} className="sh-text-xs">
+                        <SelectItem key={c} value={c} className="text-xs">
                           {c === 'all' ? t.all : CATEGORY_DISPLAY_NAMES[c] || c}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="sh-flex-1 sm:sh-flex-none sm:sh-w-[110px]">
+                <div className="flex-1 sm:flex-none sm:w-[110px]">
                   <Select
                     value={stateFilter}
                     onValueChange={(v) => setStateFilter(v as any)}
                   >
-                    <SelectTrigger className="sh-h-8 sh-text-xs">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder={t.state} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="sh-text-xs">
+                      <SelectItem value="all" className="text-xs">
                         {t.all}
                       </SelectItem>
-                      <SelectItem value="supported" className="sh-text-xs">
+                      <SelectItem value="supported" className="text-xs">
                         {t.supported}
                       </SelectItem>
-                      <SelectItem value="unsupported" className="sh-text-xs">
+                      <SelectItem value="unsupported" className="text-xs">
                         {t.unsupported}
                       </SelectItem>
                     </SelectContent>
@@ -923,20 +919,20 @@ export const APIStatusDashboard: React.FC = () => {
             </div>
 
             {/* API List - Filtered Results */}
-            <div className="sh-border-t sh-pt-3 sh-mt-1">
-              <div className="sh-flex sh-items-center sh-justify-between sh-mb-2">
-                <span className="sh-text-xs sh-font-medium sh-text-muted-foreground">
+            <div className="border-t pt-3 mt-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">
                   {t.apiList}
                 </span>
-                <div className="sh-flex sh-items-center sh-gap-2">
-                  <span className="sh-text-[10px] sh-text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground">
                     {t.showing} {shownFeatures.length} {t.of}{' '}
                     {filteredFeatures.length} {t.matches}
                   </span>
                   {hasMoreResults && (
                     <button
                       onClick={() => setShowAllResults(!showAllResults)}
-                      className="sh-text-[10px] sh-text-primary hover:sh-underline sh-font-medium"
+                      className="text-[10px] text-primary hover:underline font-medium"
                     >
                       {showAllResults ? t.showLess : t.showAll}
                     </button>
@@ -944,14 +940,14 @@ export const APIStatusDashboard: React.FC = () => {
                 </div>
               </div>
               {shownFeatures.length === 0 ? (
-                <div className="sh-text-center sh-py-4 sh-text-xs sh-text-muted-foreground sh-bg-muted/20 sh-rounded-md">
+                <div className="text-center py-4 text-xs text-muted-foreground bg-muted/20 rounded-md">
                   {t.noResults}
                 </div>
               ) : (
                 <div
                   className={cn(
-                    'sh-grid sh-grid-cols-1 sm:sh-grid-cols-2 lg:sh-grid-cols-3 xl:sh-grid-cols-4 2xl:sh-grid-cols-5 sh-gap-1 sh-overflow-y-auto sh-pr-1',
-                    showAllResults ? 'sh-max-h-[600px]' : 'sh-max-h-[300px]',
+                    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-1 overflow-y-auto pr-1',
+                    showAllResults ? 'max-h-[600px]' : 'max-h-[300px]',
                   )}
                 >
                   {shownFeatures.map((f) => (
@@ -972,30 +968,30 @@ export const APIStatusDashboard: React.FC = () => {
         </div>
 
         {/* ===== STATS ROW ===== */}
-        <div className="sh-grid sh-grid-cols-1 md:sh-grid-cols-2 sh-gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Platform Stats Card */}
-          <Card className="sh-overflow-hidden">
-            <CardHeader className="sh-py-2 sh-px-4">
-              <CardTitle className="sh-text-sm sh-font-medium sh-flex sh-items-center sh-gap-2">
+          <Card className="overflow-hidden">
+            <CardHeader className="py-2 px-4">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <PlatformIcon
                   platform={selectedPlatform}
-                  className={cn('sh-w-4 sh-h-4', selectedColors.text)}
+                  className={cn('w-4 h-4', selectedColors.text)}
                 />
                 {PLATFORM_DISPLAY_NAMES[selectedPlatform]} Coverage
               </CardTitle>
             </CardHeader>
-            <CardContent className="sh-pt-0 sh-px-4 sh-pb-3">
-              <div className="sh-flex sh-items-end sh-justify-between sh-mb-2">
+            <CardContent className="pt-0 px-4 pb-3">
+              <div className="flex items-end justify-between mb-2">
                 <div
                   className={cn(
-                    'sh-text-3xl sh-font-bold sh-font-mono',
+                    'text-3xl font-bold font-mono',
                     selectedColors.text,
                   )}
                 >
                   {platformStats?.coverage_percent}%
                 </div>
-                <div className="sh-text-right sh-text-xs sh-text-muted-foreground">
-                  <div className="sh-font-mono">
+                <div className="text-right text-xs text-muted-foreground">
+                  <div className="font-mono">
                     {platformStats?.supported_count.toLocaleString()} /{' '}
                     {summary.total_apis.toLocaleString()}
                   </div>
@@ -1003,7 +999,7 @@ export const APIStatusDashboard: React.FC = () => {
               </div>
               <Progress
                 value={platformStats?.coverage_percent || 0}
-                className="sh-h-1.5"
+                className="h-1.5"
                 indicatorClassName={selectedColors.progress}
               />
             </CardContent>
@@ -1012,13 +1008,13 @@ export const APIStatusDashboard: React.FC = () => {
           {/* Trend Chart Card */}
           {timeline && timeline.length >= 2 && (
             <Card>
-              <CardHeader className="sh-py-2 sh-px-4">
-                <CardTitle className="sh-text-sm sh-font-medium sh-flex sh-items-center sh-gap-2">
-                  <TrendingUpIcon className="sh-w-4 sh-h-4 sh-text-primary" />
+              <CardHeader className="py-2 px-4">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUpIcon className="w-4 h-4 text-primary" />
                   {t.parityOverTime}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="sh-pt-0 sh-px-2 sh-pb-2">
+              <CardContent className="pt-0 px-2 pb-2">
                 <ParityChart
                   timeline={timeline}
                   selectedPlatform={selectedPlatform}
@@ -1030,20 +1026,20 @@ export const APIStatusDashboard: React.FC = () => {
 
         {/* ===== CATEGORY BREAKDOWN ===== */}
         <Card>
-          <CardHeader className="sh-py-2 sh-px-4">
-            <CardTitle className="sh-text-sm sh-font-medium sh-flex sh-items-center sh-justify-between">
-              <div className="sh-flex sh-items-center sh-gap-2">
-                <LayersIcon className="sh-w-4 sh-h-4 sh-text-primary" />
+          <CardHeader className="py-2 px-4">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LayersIcon className="w-4 h-4 text-primary" />
                 {t.categoryBreakdown}
               </div>
-              <div className="sh-flex sh-items-center sh-gap-1 sh-bg-muted/50 sh-rounded-md sh-p-0.5">
+              <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
                 <button
                   onClick={() => setHighlightMode('green')}
                   className={cn(
-                    'sh-px-2 sh-py-1 sh-rounded sh-text-xs sh-font-medium sh-transition-all',
+                    'px-2 py-1 rounded text-xs font-medium transition-all',
                     highlightMode === 'green'
-                      ? 'sh-bg-emerald-500/20 sh-text-emerald-700 dark:sh-text-emerald-300'
-                      : 'sh-text-muted-foreground hover:sh-text-foreground',
+                      ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   {t.highlightGood}
@@ -1051,10 +1047,10 @@ export const APIStatusDashboard: React.FC = () => {
                 <button
                   onClick={() => setHighlightMode('red')}
                   className={cn(
-                    'sh-px-2 sh-py-1 sh-rounded sh-text-xs sh-font-medium sh-transition-all',
+                    'px-2 py-1 rounded text-xs font-medium transition-all',
                     highlightMode === 'red'
-                      ? 'sh-bg-red-500/20 sh-text-red-700 dark:sh-text-red-300'
-                      : 'sh-text-muted-foreground hover:sh-text-foreground',
+                      ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   {t.highlightBad}
@@ -1062,7 +1058,7 @@ export const APIStatusDashboard: React.FC = () => {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="sh-pt-0 sh-px-0 sh-pb-0">
+          <CardContent className="pt-0 px-0 pb-0">
             <CategoryTable
               categories={categories}
               showClay={showClay}
@@ -1079,14 +1075,14 @@ export const APIStatusDashboard: React.FC = () => {
         {/* ===== RECENTLY ADDED ===== */}
         <Card>
           <CardHeader
-            className="sh-py-2 sh-px-4 sh-cursor-pointer hover:sh-bg-muted/30 sh-transition-colors"
+            className="py-2 px-4 cursor-pointer hover:bg-muted/30 transition-colors"
             onClick={() => setShowRecentApis(!showRecentApis)}
           >
-            <CardTitle className="sh-text-sm sh-font-medium sh-flex sh-items-center sh-justify-between">
-              <div className="sh-flex sh-items-center sh-gap-2">
-                <SparklesIcon className="sh-w-4 sh-h-4 sh-text-primary" />
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-primary" />
                 {t.recentApisTitle}
-                <span className="sh-text-xs sh-text-muted-foreground sh-font-normal">
+                <span className="text-xs text-muted-foreground font-normal">
                   (
                   {recentApisByVersion.reduce(
                     (sum, g) => sum + g.apis.length,
@@ -1097,8 +1093,8 @@ export const APIStatusDashboard: React.FC = () => {
               </div>
               <svg
                 className={cn(
-                  'sh-w-4 sh-h-4 sh-transition-transform',
-                  showRecentApis && 'sh-rotate-180',
+                  'w-4 h-4 transition-transform',
+                  showRecentApis && 'rotate-180',
                 )}
                 viewBox="0 0 24 24"
                 fill="none"
@@ -1114,26 +1110,26 @@ export const APIStatusDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           {showRecentApis && (
-            <CardContent className="sh-pt-0 sh-px-4 sh-pb-4">
-              <div className="sh-space-y-4 sh-max-h-[400px] sh-overflow-y-auto sh-pr-1">
+            <CardContent className="pt-0 px-4 pb-4">
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
                 {recentApisByVersion.length === 0 ? (
-                  <div className="sh-text-center sh-py-4 sh-text-sm sh-text-muted-foreground">
+                  <div className="text-center py-4 text-sm text-muted-foreground">
                     No recent APIs for{' '}
                     {PLATFORM_DISPLAY_NAMES[selectedPlatform]}
                   </div>
                 ) : (
                   recentApisByVersion.map(({ version, apis }) => (
                     <div key={version}>
-                      <div className="sh-flex sh-items-center sh-gap-2 sh-mb-2">
-                        <span className="sh-text-xs sh-font-semibold sh-px-2 sh-py-0.5 sh-rounded sh-bg-primary/10 sh-text-primary sh-font-mono">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary font-mono">
                           v{version}
                         </span>
-                        <span className="sh-text-[10px] sh-text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground">
                           {apis.length} APIs
                         </span>
-                        <div className="sh-flex-1 sh-h-px sh-bg-border" />
+                        <div className="flex-1 h-px bg-border" />
                       </div>
-                      <div className="sh-grid sh-grid-cols-1 sm:sh-grid-cols-2 lg:sh-grid-cols-3 sh-gap-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
                         {apis.map((f) => (
                           <APIItem
                             key={f.id}

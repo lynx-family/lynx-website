@@ -70,19 +70,19 @@ function SubsiteSelect() {
   };
 
   return (
-    <div className="sh-w-full sh-pl-2 sh-pr-1 sh-my-2">
+    <div className="w-full pl-2 pr-1 my-2">
       <Select onValueChange={handleValueChange} value={selectedSubsite.value}>
-        <SelectTrigger className="sh-h-auto sh-border-0 sh-bg-transparent sh-px-4 sh-py-2 sh-shadow-none [&>span]:sh-flex [&>span]:sh-flex-1 sh-relative before:sh-pointer-events-none before:sh-absolute before:sh-inset-0 before:sh-size-full before:sh-rounded-md before:sh-p-[1px] before:sh-will-change-[background-position] before:sh-content-[''] before:sh-[-webkit-mask-composite:xor] before:sh-[mask-composite:exclude] before:sh-bg-shine before:sh-bg-[length:300%_300%] before:[mask:linear-gradient(white_0_0)_content-box,linear-gradient(white_0_0)] before:sh-opacity-0 hover:before:sh-opacity-100 before:sh-transition-opacity before:sh-duration-300 hover:motion-safe:before:sh-animate-shine sh-transition-all hover:sh-shadow-[0_0_12px_-3px_var(--rp-c-brand)] hover:sh-translate-y-[-1px]">
-          <div className="sh-flex sh-w-full sh-items-center sh-gap-2 sh-relative">
+        <SelectTrigger className="h-auto border-0 bg-transparent px-4 py-2 shadow-none [&>span]:flex [&>span]:flex-1 relative before:pointer-events-none before:absolute before:inset-0 before:size-full before:rounded-md before:p-[1px] before:will-change-[background-position] before:content-[''] before:[-webkit-mask-composite:xor] before:[mask-composite:exclude] before:bg-shine before:bg-[length:300%_300%] before:[mask:linear-gradient(white_0_0)_content-box,linear-gradient(white_0_0)] before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 hover:motion-safe:before:animate-shine transition-all hover:shadow-[0_0_12px_-3px_var(--rp-c-brand)] hover:translate-y-[-1px]">
+          <div className="flex w-full items-center gap-2 relative">
             <SubsiteView subsite={selectedSubsite} lang={lang} size="minimal" />
           </div>
         </SelectTrigger>
-        <SelectContent className="sh-min-w-[240px]">
+        <SelectContent className="min-w-[240px]">
           {SUBSITES_CONFIG.map((subsite) => (
             <SelectItem
               key={subsite.value}
               value={subsite.value}
-              className="!sh-pl-3 sh-py-2 [&>span:first-child]:sh-hidden"
+              className="!pl-3 py-2 [&>span:first-child]:hidden"
             >
               <SubsiteView subsite={subsite} lang={lang} />
             </SelectItem>
