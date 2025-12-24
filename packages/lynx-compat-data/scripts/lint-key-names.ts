@@ -13,21 +13,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const dirname = fileURLToPath(new URL('.', import.meta.url));
-const rootDir = path.join(dirname, '..');
-
-// Directories to check
-const COMPAT_DATA_DIRS = [
-  'lynx-api',
-  'lynx-native-api',
-  'css',
-  'react',
-  'elements',
-  'devtool',
-  'errors',
-];
+import { getCompatDataDirs, rootDir } from './lib/compat-dirs.js';
 
 // Pattern to match keys that indicate improper naming
 const IMPROPER_KEY_PATTERNS = [/^nested_value_\d+$/, /^unsupported_value_\d*$/];
@@ -191,8 +178,9 @@ function processFile(filePath: string, fix: boolean): Issue[] {
  */
 function processAllFiles(fix: boolean): FixResult[] {
   const results: FixResult[] = [];
+  const compatDataDirs = getCompatDataDirs();
 
-  for (const dir of COMPAT_DATA_DIRS) {
+  for (const dir of compatDataDirs) {
     const dirPath = path.join(rootDir, dir);
     if (!fs.existsSync(dirPath)) {
       continue;

@@ -8,6 +8,7 @@ import ajvFormats from 'ajv-formats';
 
 import compatDataSchema from '../schemas/compat-data.schema.json' with { type: 'json' };
 import platformDataSchema from '../schemas/platform.schema.json' with { type: 'json' };
+import { getCompatDataDirs } from './lib/compat-dirs.js';
 
 const ajv = new Ajv({ allErrors: true });
 // We use 'fast' because as a side effect that makes the "uri" format more lax.
@@ -76,15 +77,7 @@ const validateCompatDataForDir = async (dirName) => {
 };
 
 const validateAllCompatData = async () => {
-  const dirs = [
-    'lynx-api',
-    'lynx-native-api',
-    'css',
-    'react',
-    'elements',
-    'devtool',
-    'errors',
-  ];
+  const dirs = getCompatDataDirs();
 
   for (const dir of dirs) {
     if (DEBUG) {
