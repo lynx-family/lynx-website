@@ -143,6 +143,19 @@ Run the linting process to validate all JSON data files against their schemas:
 pnpm run lint
 ```
 
+### Lint Key Names
+
+Run the key name linter to check for improperly named keys in compat data JSON files. This ensures keys use meaningful API names instead of placeholder names like `nested_value_N`:
+
+```bash
+pnpm run lint:keys         # Check for issues
+pnpm run lint:keys --fix   # Auto-fix issues by extracting names from description fields
+```
+
+The linter checks for:
+1. Keys like `nested_value_N` or `unsupported_value_N` that should use actual API names
+2. Keys with `<code>name</code>` patterns in their description that should use the name as the key
+
 ### Build
 
 The build process consists of two steps:
