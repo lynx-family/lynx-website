@@ -143,12 +143,12 @@ export const DISPLAY_PLATFORMS: PlatformName[] = [
 
 ## Integration with CI/CD
 
-Consider adding the stats generation to your build pipeline:
+The stats generation is included in the `prepare` script, so it runs automatically during `pnpm install` - both locally and in CI/CD pipelines. No additional configuration needed.
 
-```yaml
-# In your CI config
-- name: Generate API Stats
-  run: pnpm --filter @lynx-js/lynx-compat-data run gen-stats
+If you need to regenerate stats manually:
+
+```bash
+pnpm --filter @lynx-js/lynx-compat-data run gen-stats
 ```
 
 This ensures the dashboard always shows up-to-date statistics.
