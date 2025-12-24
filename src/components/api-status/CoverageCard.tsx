@@ -1,7 +1,7 @@
+import { cn } from '@/lib/utils';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { cn } from '@/lib/utils';
 
 interface CoverageCardProps {
   platform: string;
