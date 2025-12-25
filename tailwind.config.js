@@ -8,6 +8,8 @@
 const { fontFamily } = require('tailwindcss/defaultTheme');
 export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}', './theme/**/*.{js,ts,jsx,tsx}'],
+  // Use class-based dark mode to sync with Rspress's toggle (adds .dark to <html>)
+  darkMode: 'class',
   // When there is no explicit usage of the `.dark` class in project files,
   // tailwind will not include dark mode styles in the final bundle.
   // Adding 'dark' to safelist ensures the dark mode classes are preserved.

@@ -153,7 +153,7 @@ const i18n = {
     help: 'Help',
   },
   zh: {
-    title: 'Lynx API 状态',
+    title: 'Lynx API 大盘',
     subtitle: '实时追踪所有 Lynx 平台的 API 兼容性',
     totalApis: 'APIs',
     categoryBreakdown: '分类',
