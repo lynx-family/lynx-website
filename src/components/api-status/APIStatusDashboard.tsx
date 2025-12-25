@@ -1,3 +1,4 @@
+import { useIsDesktop } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang, withBase } from '@rspress/core/runtime';
@@ -339,6 +340,7 @@ export const APIItem: React.FC<APIItemProps> = ({
   compact = false,
   missing = false,
 }) => {
+  const isDesktop = useIsDesktop();
   const platformSupport = support[selectedPlatform];
   const versionAdded = platformSupport?.version_added;
   const isSupported =
@@ -388,7 +390,7 @@ export const APIItem: React.FC<APIItemProps> = ({
     : 'bg-red-100 dark:bg-red-500/10 text-red-900 dark:text-red-400 border-red-200 dark:border-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/20';
 
   return (
-    <Drawer>
+    <Drawer direction={isDesktop ? 'right' : undefined}>
       <DrawerTrigger asChild>
         <button
           className={cn(
@@ -421,14 +423,21 @@ export const APIItem: React.FC<APIItemProps> = ({
           )}
         </button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
-          <DrawerTitle className="text-base">
-            <code className="font-mono">{query}</code>
-          </DrawerTitle>
-        </DrawerHeader>
-        <div className="px-4 pb-6 overflow-auto">
-          <APITable query={query} />
+      <DrawerContent
+        className={cn(
+          isDesktop ? 'h-full' : 'max-h-[85vh]',
+          isDesktop && 'bg-zinc-50 dark:bg-zinc-900',
+        )}
+      >
+        <div className="h-full w-full grow p-5 flex flex-col overflow-hidden">
+          <DrawerHeader className="p-0 mb-4">
+            <DrawerTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+              <code className="font-mono">{query}</code>
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-auto pr-1">
+            <APITable query={query} />
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
