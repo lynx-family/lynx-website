@@ -113,7 +113,7 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
       <tr>
         <td
           colSpan={colSpan}
-          className="px-4 py-3 bg-emerald-500/5 text-center text-sm text-emerald-700 dark:text-emerald-400"
+          className="px-4 py-3 text-sm text-center bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
         >
           {texts.allSupported}
         </td>
@@ -135,7 +135,7 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
         className="px-3 py-3 bg-red-500/5 dark:bg-red-500/10"
       >
         {/* Show ALL missing APIs - prioritize completeness over aesthetics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-1">
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {missingApis.map((api, index) => (
             <APIItem
               key={`${api.path}-${index}`}
@@ -195,7 +195,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 
   return (
     <div
-      className="overflow-x-auto rounded-lg border bg-card"
+      className="overflow-x-auto border rounded-lg bg-card"
       role="region"
       aria-label="Category Table"
     >
@@ -203,10 +203,10 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="w-8 px-2 py-3"></th>
-            <th className="text-left font-semibold px-4 py-3 whitespace-nowrap">
+            <th className="px-2 pr-1 text-xs font-semibold text-left sm:px-4 sm:py-3 sm:text-sm whitespace-nowrap">
               Category
             </th>
-            <th className="text-center font-semibold px-3 py-3 whitespace-nowrap font-mono text-xs">
+            <th className="px-3 py-3 font-mono text-xs font-semibold text-center whitespace-nowrap">
               Total
             </th>
             {displayPlatforms.map((platform) => (
@@ -241,27 +241,27 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                     )}
                     onClick={() => onCategoryClick?.(key)}
                   >
-                    <td className="px-2 py-3 text-center">
+                    <td className="px-1 py-2 text-center sm:px-2 sm:py-3">
                       <ChevronRightIcon
                         className={cn(
-                          'w-4 h-4 transition-transform text-muted-foreground',
+                          'w-3 h-3 sm:w-4 sm:h-4 transition-transform text-muted-foreground',
                           isExpanded && 'rotate-90',
                         )}
                       />
                     </td>
-                    <td className="px-4 py-3 font-medium">
-                      <div className="flex items-center gap-2">
-                        <span>
+                    <td className="px-2 py-2 pr-1 sm:px-4 sm:py-3">
+                      <div className="flex flex-col min-w-0 gap-1 sm:flex-row sm:items-center sm:gap-2">
+                        <span className="text-[11px] sm:text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
                           {CATEGORY_DISPLAY_NAMES[key] || display_name}
                         </span>
                         {missingCount > 0 && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300">
+                          <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 self-start whitespace-nowrap">
                             {missingCount} missing
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="text-center px-3 py-3 font-mono text-muted-foreground text-xs">
+                    <td className="px-3 py-3 font-mono text-xs text-center text-muted-foreground">
                       {stats.total}
                     </td>
                     {displayPlatforms.map((platform) => {
@@ -282,7 +282,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                               getCoverageColor(coverage, highlightMode),
                             )}
                           >
-                            <span className="font-bold font-mono text-xs">
+                            <span className="font-mono text-xs font-bold">
                               {coverage}%
                             </span>
                             <span className="text-[9px] opacity-70">
@@ -308,10 +308,10 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         </tbody>
         {/* Summary Row */}
         <tfoot>
-          <tr className="border-t-2 bg-muted/50 font-semibold">
+          <tr className="font-semibold border-t-2 bg-muted/50">
             <td className="px-2 py-3"></td>
             <td className="px-4 py-3">Total</td>
-            <td className="text-center px-3 py-3 font-mono text-xs">
+            <td className="px-3 py-3 font-mono text-xs text-center">
               {sortedCategories.reduce((sum, cat) => sum + cat.stats.total, 0)}
             </td>
             {displayPlatforms.map((platform) => {
@@ -342,7 +342,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                       getCoverageColor(coverage, highlightMode),
                     )}
                   >
-                    <span className="font-bold font-mono text-xs">
+                    <span className="font-mono text-xs font-bold">
                       {coverage}%
                     </span>
                     <span className="text-[9px] opacity-70">
