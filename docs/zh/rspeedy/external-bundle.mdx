@@ -1,0 +1,378 @@
+import { PackageManagerTabs } from '@theme';
+import { VersionBadge } from '@lynx';
+
+# External Bundle
+
+<VersionBadge v={3.5} />
+
+External Bundle 是指将代码打包为可在**不同** Lynx 应用中运行时动态加载的模块，以减小产物体积。使用流程包含两个步骤：
+
+1. **[`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config)** - 用于构建 External Bundle
+2. **[`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin)** - 用于在应用中加载 External Bundle
+
+:::info
+
+与 [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit) 区别：
+
+1. **线程支持范围**：Chunk Splitting 仅支持后台线程代码拆分，External Bundle 同时支持后台线程和主线程
+2. **跨应用共享**：External Bundle 可以在多个 Lynx 应用之间共享，减少重复代码；而 Chunk Splitting 的产物仅在当前应用内使用
+3. **打包方式**：Chunk Splitting 是构建时自动拆分，与应用产物一起部署；External Bundle 需要单独构建，可以与应用产物一起部署、也可以上传到 CDN 或服务器，运行时动态加载
+4. **使用场景**：External Bundle 适合跨应用共享的通用库（如 `lodash-es`、`moment`）；Chunk Splitting 适合单应用内的代码分割优化
+
+:::
+
+## 1. 构建 External Bundle
+
+### 安装
+
+<PackageManagerTabs command="install @lynx-js/lynx-bundle-rslib-config @rslib/core -D" />
+
+### 基础用法
+
+在 `rslib.config.ts` 中使用 [`defineExternalBundleRslibConfig()`](/api/rspeedy/lynx-bundle-rslib-config.defineexternalbundlerslibconfig) 定义 External Bundle 的构建配置。
+
+#### 示例 1：同时支持后台线程和主线程
+
+```js title="rslib.config.ts"
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default defineExternalBundleRslibConfig({
+  id: 'lodash-es',
+  source: {
+    entry: {
+      'lodash-es': require.resolve('lodash-es'),
+    },
+  },
+});
+```
+
+执行以下命令构建：
+
+<PackageManagerTabs command="exec rslib build" />
+
+输出文件为 `dist/lodash-es.lynx.bundle`，文件名前缀由 `id` 配置决定。可将 `.lynx.bundle` 文件上传至 CDN 或服务器。
+
+:::tip
+由于 Lynx 后台线程和主线程的产物格式不同，当前版本会针对两个线程分别构建产物。`dist/lodash-es.lynx.bundle` 产物内容类似于：
+
+```js
+{
+  'lodash-es':              `// background code`,   // 后台线程产物
+  'lodash-es__main-thread': `// main-thread code`,  // `<entry>__main-thread` 是自动生成的后缀，代表主线程产物
+}
+```
+
+后续版本将支持统一的代码产物，以进一步减小产物体积。
+:::
+
+:::info Section Path 命名规则
+
+上述产物中的 `'lodash-es'` 和 `'lodash-es__main-thread'` 称为 **section path**，是 `.lynx.bundle` 内部模块的标识符。这些 section path 在加载 external bundle 时需要通过 [`background.sectionPath`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle#backgroundsectionpath) 和 [`mainThread.sectionPath`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle#mainthreadsectionpath) 配置。我们将在下面的章节介绍到。
+:::
+
+#### 示例 2：仅用于后台线程
+
+```js title="rslib.config.ts" {15}
+import {
+  defineExternalBundleRslibConfig,
+  LAYERS,
+} from '@lynx-js/lynx-bundle-rslib-config';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default defineExternalBundleRslibConfig({
+  id: 'lodash-es',
+  source: {
+    entry: {
+      'lodash-es': {
+        import: require.resolve('lodash-es'),
+        layer: LAYERS.BACKGROUND,
+      },
+    },
+  },
+});
+```
+
+`dist/lodash-es.lynx.bundle` 产物内容类似于：
+
+```js
+{
+  'lodash-es': `// lodash-es background code`,
+}
+```
+
+#### 示例 3：仅用于主线程
+
+```js title="rslib.config.ts" {15}
+import {
+  defineExternalBundleRslibConfig,
+  LAYERS,
+} from '@lynx-js/lynx-bundle-rslib-config';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default defineExternalBundleRslibConfig({
+  id: 'lodash-es',
+  source: {
+    entry: {
+      'lodash-es': {
+        import: require.resolve('lodash-es'),
+        layer: LAYERS.MAIN_THREAD,
+      },
+    },
+  },
+});
+```
+
+`dist/lodash-es.lynx.bundle` 产物内容类似于：
+
+```js
+{
+  'lodash-es': `// lodash-es main-thread code`,
+}
+```
+
+### 打包多个依赖
+
+支持将多个依赖打包到同一个 external bundle，减少运行时请求次数，提升性能。
+
+```js title="rslib.config.ts"
+import {
+  defineExternalBundleRslibConfig,
+  LAYERS,
+} from '@lynx-js/lynx-bundle-rslib-config';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default defineExternalBundleRslibConfig({
+  id: 'lodash',
+  source: {
+    entry: {
+      'lodash.get': require.resolve('lodash.get'),
+      'lodash.isequal': require.resolve('lodash.isequal'),
+    },
+  },
+});
+```
+
+`dist/lodash.lynx.bundle` 产物内容类似于：
+
+```js
+{
+  'lodash.get':                  '// lodash.get background code',
+  'lodash.get__main-thread':     '// lodash.get main-thread code',
+  'lodash.isequal':              '// lodash.isequal background code',
+  'lodash.isequal__main-thread': '// lodash.isequal main-thread code',
+}
+```
+
+### 引用其他 External Bundle
+
+当 external bundle 依赖其他 external bundle 时，可通过 [`output.externals`](https://rslib.rs/config/rsbuild/output#outputexternals) 将这些依赖声明为外部依赖，避免重复打包：
+
+```js title="rslib.config.ts"
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
+
+export default defineExternalBundleRslibConfig({
+  id: 'my-components',
+  output: {
+    externals: {
+      // 从 ReactLynx.React 中读取 @lynx-js/react
+      '@lynx-js/react': ['ReactLynx', 'React'],
+    },
+  },
+});
+```
+
+:::warning
+在运行时加载 `my-components` 之前，必须确保 `@lynx-js/react` external bundle 已经加载完成，否则会导致运行时错误。
+:::
+
+### 自定义配置
+
+`defineExternalBundleRslibConfig()` 会自动应用[默认配置](https://github.com/lynx-family/lynx-stack/blob/71b9083d7c117666ae815e62ced38709c3d207e6/packages/rspeedy/lynx-bundle-rslib-config/src/externalBundleRslibConfig.ts#L42)。如需修改默认配置，直接在配置对象中覆盖即可：
+
+```js title="rslib.config.ts" {5-13}
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
+
+export default defineExternalBundleRslibConfig({
+  source: {
+    define: {
+      __PROFILE__: false,
+      __MAIN_THREAD__: "__webpack_layer__ === 'main-thread'",
+      __BACKGROUND__: "__webpack_layer__ === 'background'",
+    },
+  },
+  autoExternal: {
+    dependencies: true, // 将 dependencies 设为外部依赖
+  },
+});
+```
+
+### 查看 Bundle 中间产物
+
+`.lynx.bundle` 是编译后的产物，不可直接阅读。如需查看编译前代码，添加 `DEBUG=rspeedy` 环境变量：
+
+```bash
+DEBUG=rspeedy npm exec rslib build
+```
+
+会输出以下中间产物：
+
+```md
+./dist
+├── lodash-es.js
+├── lodash-es.lynx.bundle
+├── lodash-es\_\_main-thread.js
+└── tasm.json
+```
+
+## 2. 加载 External Bundle
+
+基于 [Webpack Externals](https://webpack.js.org/configuration/externals/) 实现。引入 external bundle 时，依赖不会被打包到主 bundle 中，而是从 `.lynx.bundle` 文件动态加载。
+
+### 安装
+
+<PackageManagerTabs command="install @lynx-js/external-bundle-rsbuild-plugin -D" />
+
+### 基础用法
+
+若代码中使用 `lodash-es`：
+
+```js
+import _ from 'lodash-es';
+
+_.isEmpty([]);
+```
+
+在 `lynx.config.ts` 中使用 [`pluginExternalBundle`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle) 插件，将 `lodash-es` 配置到 `externals`，避免打包到主 bundle 中：
+
+```ts title="lynx.config.ts"
+import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default {
+  plugins: [
+    pluginReactLynx(), // 必须在前面
+    pluginExternalBundle({
+      externals: {
+        'lodash-es': {
+          url: 'http://cdn.example.com/lodash-es.lynx.bundle',
+          background: { sectionPath: 'lodash-es' },
+          mainThread: { sectionPath: 'lodash-es__main-thread' },
+        },
+      },
+    }),
+  ],
+};
+```
+
+配置完成后，代码中 `lodash-es` 不会被打包到主 bundle 中，而是在运行时从指定 URL 动态加载。
+
+### 配置多个 external bundle
+
+可在 `externals` 中配置多个 external bundle：
+
+```ts title="lynx.config.ts"
+pluginExternalBundle({
+  externals: {
+    '@lynx-js/react': {
+      libraryName: ['ReactLynx', 'React'],
+      url: 'http://example.com/react.lynx.bundle',
+      background: { sectionPath: 'ReactLynx' },
+      mainThread: { sectionPath: 'ReactLynx__main-thread' },
+      async: false, // 同步加载
+    },
+    'my-components': {
+      url: 'http://example.com/comp-lib.lynx.bundle',
+      background: { sectionPath: 'components' },
+      mainThread: { sectionPath: 'components__main-thread' },
+    },
+  },
+});
+```
+
+### 配置项
+
+- **url**: External Bundle 的加载地址（必填）
+- **libraryName**: 指定全局变量名称，`string` / `string[]`（可选）
+- **background**: 后台线程配置，包含 `sectionPath`（可选）
+- **mainThread**: 主线程配置，包含 `sectionPath`（可选）
+- **async**: 是否异步加载，默认为 `true`（可选）
+
+#### `libraryName`
+
+指定从哪个全局变量读取 external bundle 的模块导出。通常不需要配置，插件会根据 package 的导入名自动推断。
+
+当 external bundle 挂载到嵌套对象时，使用 `string[]` 指定访问路径：
+
+```ts title="lynx.config.ts"
+pluginExternalBundle({
+  externals: {
+    '@lynx-js/react': {
+      libraryName: ['ReactLynx', 'React'], // 类似从 global.ReactLynx.React 读取
+      url: 'http://example.com/react.lynx.bundle',
+    },
+  },
+});
+```
+
+#### `sectionPath`
+
+`sectionPath` 是 external bundle 内部模块的路径标识符：
+
+- **background**：后台线程使用的模块路径
+- **mainThread**：主线程使用的模块路径
+
+`sectionPath` 必须与构建 external bundle 时的实际输出 section 名称完全一致，否则运行时因找不到对应模块而报错。
+
+以 [构建 External Bundle - 示例 1](#示例-1同时支持后台线程和主线程) 为例，对应的 `sectionPath` 配置如下：
+
+```ts title="lynx.config.ts" {9,10}
+import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
+
+export default {
+  plugins: [
+    pluginExternalBundle({
+      externals: {
+        'lodash-es': {
+          url: 'http://cdn.example.com/lodash.lynx.bundle',
+          background: { sectionPath: 'lodash-es' },
+          mainThread: { sectionPath: 'lodash-es__main-thread' },
+        },
+      },
+    }),
+  ],
+};
+```
+
+若 external bundle 仅支持某个线程（参考 [构建 External Bundle - 示例 2](#示例-2仅用于后台线程) 和 [构建 External Bundle - 示例 3](#示例-3仅用于主线程)），只需配置对应线程的 `sectionPath`：
+
+```ts title="lynx.config.ts"
+pluginExternalBundle({
+  externals: {
+    'lodash-es': {
+      url: 'http://cdn.example.com/lodash.lynx.bundle',
+      background: { sectionPath: 'lodash-es' },
+    },
+  },
+});
+```
+
+```ts title="lynx.config.ts"
+// 主线程
+pluginExternalBundle({
+  externals: {
+    'lodash-es': {
+      url: 'http://cdn.example.com/lodash.lynx.bundle',
+      mainThread: { sectionPath: 'lodash-es' },
+    },
+  },
+});
+```
