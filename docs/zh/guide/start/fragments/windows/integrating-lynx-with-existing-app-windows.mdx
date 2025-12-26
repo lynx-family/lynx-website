@@ -1,0 +1,279 @@
+### 将 Lynx 集成到 Windows 平台
+
+import { Info, CodeFold } from '@lynx';
+import { Steps } from '@theme';
+import { Tab, Tabs } from '@theme';
+import { Link } from '@theme';
+import versionJson from '../../../../../public/version.json';
+
+<Info title="Lynx for Windows">
+  - 本文假设你已熟悉原生 Windows 应用开发的基本概念。 - 你可以参考官方的
+  [LynxExplorer](https://github.com/lynx-family/lynx/tree/develop/explorer/windows/lynx_explorer)
+  项目。
+</Info>
+
+## 1. 依赖配置
+
+<Steps>
+
+### 下载或构建 LynxSDK
+
+- 可以从 [GitHub Release](https://github.com/lynx-family/lynx/releases/latest) 下载预编译的LynxSDK。
+- 解压下载的LynxSDK到你项目的目录下，比如 `thirdparty` 目录。
+
+或者，你可以按照 [为Windows构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/windows) 指南从源代码构建。
+
+### 配置CMake
+
+本文假设你已有一个基于CMake的Windows原生项目，并且希望集成Lynx能力。如果你使用的其它构建系统，你可以参考本文内容，并自行集成。
+
+1. 基于你的项目，设置CMake基本配置。
+
+```cmake title=CMakeLists.txt {17,20-30}
+# Set the C++ standard to at least 17 if you are using the C++ wrapper apis of LynxSDK.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+2. 配置LynxSDK相关内容。
+
+```cmake title=CMakeLists.txt {17,20-30}
+set(LYNX_LIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx) # Or your location of LynxSDK
+# Set include directory of LynxSDK.
+include_directories(${LYNX_LIB_PATH}/include)
+# Set library of LynxSDK that needs to be linked.
+target_link_libraries(${PROJECT_NAME} private ${LYNX_LIB_PATH}/lib/lynx.dll.lib)
+```
+
+3. 添加自定义命令，用于在构建应用之后，拷贝必须的数据和资源到应用包。
+
+<CodeFold height={360} toggle>
+
+```cmake title=CMakeLists.txt {17,20-30}
+# 拷贝 lynx.dll 到输出目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/lib/lynx.dll
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+# 拷贝 data 到输出目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/data
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/data)
+# 拷贝 lynx_core.js 到输出目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/lynx_core.js
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+# 拷贝 lynx_core_dev.js 到输出目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lynx/lynx_core_dev.js
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+```
+
+</CodeFold>
+
+</Steps>
+
+## 2. 环境初始化 - 可选
+
+<Steps>
+
+### Lynx Service 初始化
+
+- Lynx Service 提供了宿主特性相关能力，推荐在LynxView创建之前完成 Lynx Service 的初始化。
+- Lynx Service 需主动注入。
+
+<CodeFold height={360} toggle>
+```c++ title=main.cc {17,20-30}
+
+#include "lynx_http_service.h"
+
+// Implements the http service if needed.
+class LynxHttpServiceImpl : public lynx::pub::LynxHttpService {
+public:
+LynxHttpServiceImpl() = default;
+~LynxHttpServiceImpl() = default;
+
+    void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request,
+               std::shared_ptr<lynx::pub::LynxHttpResponse> response) override {
+        // TODO
+    }
+
+};
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+// Register http service for lynx.fetch.
+lynx::pub::LynxServiceCenter::GetInstance().
+RegisterService(std::make_shared<LynxHttpServiceImpl>());
+
+// TODO: create window and construct LynxView.
+
+return 0;
+}
+
+````
+</CodeFold>
+
+<div style={{ marginBottom: 30 }} />
+
+### LynxEnv 初始化
+
+LynxEnv 提供了 Lynx Engine 的全局初始化接口, 请保证 LynxEnv 的初始化发生在 Lynx Engine 的任何接口调用之前。
+
+<CodeFold height={360} toggle>
+```c++ title=main.cc {9,12-19}
+
+#include <windows.h>
+#include "lynx_env.h"
+#include "lynx_http_service.h"
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    // Register http service for lynx.fetch.
+  lynx::pub::LynxServiceCenter::GetInstance().
+    RegisterService(std::make_shared<LynxHttpServiceImpl>());
+
+  // Initialize LynxEnv
+  auto& lynx_env = lynx::pub::LynxEnv::GetInstance();
+  // Enable devtool.
+  lynx_env.SetDevtoolEnabled(true);
+  lynx_env.SetDevtoolAppInfo("App", "LynxExplorer");
+  lynx_env.SetDevtoolAppInfo("AppVersion", "1.0.0");
+  // Register global native module if needed.
+  lynx_env.RegisterNativeModule("ExplorerModule", ExplorerModuleCreator,
+                            nullptr);
+
+  // TODO: create window and construct LynxView.
+
+  return 0;
+}
+
+````
+
+</CodeFold>
+
+</Steps>
+
+## 3. 渲染 LynxView
+
+<Steps>
+
+### 创建资源加载器
+
+Lynx Engine 自身并没有集成下载资源的能力，因此需要宿主应用来提供 `LynxGenericResourceFetcher` 的具体实现，并在构造 `LynxView` 时注入，Lynx 会采用注入的资源加载器来获取真实的 Bundle 内容。
+你可以使用多种方式获取 Bundle 的资源内容，在这里我们选择通过本地文件加载 Bundle 的内容。
+请先下载下面的Bundle文件到本地。
+
+:::note
+Bundle Example:
+**https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
+:::
+
+实现 Resource Fetcher （可选）
+
+<CodeFold height={360} toggle>
+```c++ title=GenericResourceFetcher.cc {9,12-19}
+
+#include "lynx_generic_resource_fetcher.h"
+
+class ExampleGenericResourceFetcher : public lynx::pub::LynxGenericResourceFetcher {
+public:
+void FetchResource(
+std::shared_ptr<lynx::pub::LynxResourceRequest> request,
+std::shared_ptr<lynx::pub::LynxResourceResponse> response) override {
+// Implements fetching logic if you want to load Bundle from net.
+}
+};
+
+````
+</CodeFold>
+
+### 构造 LynxView
+
+LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造一个 LynxView，并通过设置一个窗口句柄作为父窗口容器。
+
+<CodeFold height={360} toggle>
+```c++ title=main.cc {9,12-19}
+#include <windows.h>
+#include "lynx_view.h"
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+  // TODO: create window.
+
+  // Construct LynxView.
+  lynx::pub::LynxView::Builder builder;
+  builder.SetScreenSize(800, 600, 1.0)
+      .SetFrame(0, 0, 800, 600)
+      .SetParent(hwnd);
+  // Set Resource fetcher if needed.
+  // builder.SetGenericResourceFetcher(std::make_shared<ExampleGenericResourceFetcher>());
+  auto lynx_view = builder.Build();
+
+  // Run message.
+  MSG msg = {0};
+  while (GetMessage(&msg, NULL, 0, 0)) {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+  return 0;
+}
+
+````
+
+</CodeFold>
+
+<div style={{ marginBottom: 30 }} />
+
+### 渲染视图
+
+当你完成以上步骤之后，已经完成了 LynxView 创建与资源读取的全部工作，调用 `lynxView->LoadTemplate` 方法，即可将对应的 Bundle 内容渲染到 LynxView 视图上。
+
+<CodeFold height={360} toggle>
+```c++ title=main.cc {9,12-19}
+#include <windows.h>
+#include "lynx_view.h"
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+// TODO: create window.
+
+// Construct LynxView.
+lynx::pub::LynxView::Builder builder;
+builder.SetScreenSize(800, 600, 1.0)
+.SetFrame(0, 0, 800, 600)
+.SetParent(hwnd);
+// Set Resource fetcher if needed.
+// builder.SetGenericResourceFetcher(std::make_shared<ExampleGenericResourceFetcher>());
+auto lynx_view = builder.Build();
+
+auto load_meta = std::make_shared<lynx::pub::LynxLoadMeta>();
+// Set to your location.
+load_meta->SetUrl("file://C:\\Users\\Admin\\Documents\\main.lynx.bundle");
+lynx_view->LoadTemplate(load_meta);
+
+// Run message.
+MSG msg = {0};
+while (GetMessage(&msg, NULL, 0, 0)) {
+TranslateMessage(&msg);
+DispatchMessage(&msg);
+}
+return 0;
+}
+
+```
+</CodeFold>
+
+然后你将在屏幕上看到如下内容：
+
+<center>
+  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/hello-world-showcase-windows.jpg" width="800" />
+</center>
+
+</Steps>
+
+恭喜你，现在你现在已经完成了 Lynx Engine 集成的全部工作！
+
+## 4. 进入 Lynx 世界
+
+现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/devtool/panels)文档进一步在 Lynx 的世界里遨游吧！
+```
