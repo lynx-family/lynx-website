@@ -8,8 +8,8 @@ import { postprocessLLMs } from './postprocess';
 function pluginLLMsPostprocess(): RspressPlugin {
   return {
     name: 'rspress-plugin-llms-postprocess',
-    async afterBuild({ llms, ...config }) {
-      if (llms) {
+    async afterBuild({ llms, ...config }, isProd: boolean) {
+      if (llms && isProd) {
         const { outDir = 'doc_build' } = config;
         const cwd = process.cwd();
         const roots = [path.join(cwd, outDir), path.join(cwd, outDir, 'zh')];
