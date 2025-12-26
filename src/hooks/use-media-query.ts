@@ -30,3 +30,8 @@ export function useMediaQuery(query: string): boolean {
 export function useIsDesktop(): boolean {
   return useMediaQuery('(min-width: 768px)');
 }
+
+// Convenience hook for detecting mobile (below md breakpoint)
+export function useIsMobile(): boolean {
+  return useMediaQuery('(max-width: 767px)');
+}
