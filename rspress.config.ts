@@ -21,6 +21,8 @@ import {
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
 import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
+import { pluginOGImageGenerator } from '@lynx-js/rspress-plugin-og-image-generator';
+import { ogImageGeneratorConfig } from './og-image-config.js';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -51,6 +53,7 @@ export default defineConfig({
     },
     plugins: [
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
+      // Static OG image as fallback for pages without custom images
       pluginOpenGraph({
         title: 'Lynx',
         type: 'website',
@@ -204,6 +207,9 @@ export default defineConfig({
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
+    // Dynamic OG image generator - generates custom images per route
+    // and overrides the static OG image set by pluginOpenGraph above
+    pluginOGImageGenerator(ogImageGeneratorConfig),
     pluginLLMsPostprocess(),
   ],
   markdown: {
