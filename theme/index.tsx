@@ -32,6 +32,13 @@ import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
+// Use word boundary (\b) to match complete words only (e.g., "react" matches but "reactive" doesn't)
+const findSubsite = (pathname: string) => {
+  return SUBSITES_CONFIG.find((s) =>
+    new RegExp(`\\b${s.value}\\b`).test(pathname),
+  );
+};
+
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -42,8 +49,7 @@ declare global {
 
 function Layout(props: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
-
-  const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
+  const subsite = findSubsite(pathname);
 
   return (
     <>
@@ -86,7 +92,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   // Update theme based on URL
   useEffect(() => {
-    const subsite = SUBSITES_CONFIG.find((s) => pathname.includes(s.value));
+    const subsite = findSubsite(pathname);
     document.documentElement.setAttribute(
       'data-subsite',
       subsite ? subsite.value : 'guide',
