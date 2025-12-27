@@ -3,7 +3,7 @@ import { CodeBlockRuntime } from '@theme';
 
 import { getHighlightLines } from '../utils/example-data';
 import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerLineNumber } from '@rspress/core/shiki-transformers';
+import { transformerAddLineNumbers } from '@rspress/core/shiki-transformers';
 import { transformerRuntimeMetaHighlight } from './shiki-transformer';
 
 interface CodeProps {
@@ -90,7 +90,7 @@ export const Code: FC<CodeProps> = ({
         shikiOptions={{
           transformers: [
             transformerNotationHighlight(),
-            transformerLineNumber(),
+            transformerAddLineNumbers(),
             ...(highlightVal
               ? [
                   transformerRuntimeMetaHighlight({

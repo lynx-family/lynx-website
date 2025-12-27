@@ -10,7 +10,7 @@ import {
   Layout as BaseLayout,
   Link as BaseLink,
   getCustomMDXComponent,
-} from '@rspress/core/theme';
+} from '@rspress/core/theme-original';
 import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
   Search as PluginAlgoliaSearch,
@@ -100,8 +100,8 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [pathname]);
 
   const updateText = useCallback(() => {
-    const h1Ele = document.querySelector('h1');
-    const h1Span = document.querySelector('h1 > span');
+    const h1Ele = document.querySelector('.rp-home-hero__title');
+    const h1Span = document.querySelector('.rp-home-hero__title > span');
     if (!h1Ele) return;
     if (!h1Span) return;
 
@@ -261,6 +261,6 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   );
 };
 
-export { Link }; // override Link from @rspress/core/theme
+export { Link }; // override Link from @rspress/core/theme-original
 
-export * from '@rspress/core/theme';
+export * from '@rspress/core/theme-original';

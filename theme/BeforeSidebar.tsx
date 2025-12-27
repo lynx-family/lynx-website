@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
-import { type SidebarData, SidebarList } from '@rspress/core/theme';
+import { type SidebarData, SidebarList } from '@rspress/core/theme-original';
 import {
   SHARED_SIDEBAR_PATHS,
   SUBSITES_CONFIG,
