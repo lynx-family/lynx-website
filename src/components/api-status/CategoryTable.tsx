@@ -3,12 +3,12 @@ import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
 import React from 'react';
 import { APIItem } from './APIStatusDashboard';
+import { PLATFORM_CONFIG } from './constants';
 import type { APIInfo, CategoryStats, FeatureInfo } from './types';
 import {
   CATEGORY_DISPLAY_NAMES,
   CLAY_PLATFORMS,
   NATIVE_PLATFORMS,
-  PLATFORM_DISPLAY_NAMES,
 } from './types';
 
 export type HighlightMode = 'green' | 'red';
@@ -218,7 +218,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                   platform === selectedPlatform && 'bg-primary/10',
                 )}
               >
-                {PLATFORM_DISPLAY_NAMES[platform]}
+                {PLATFORM_CONFIG[platform]?.label || platform}
               </th>
             ))}
           </tr>

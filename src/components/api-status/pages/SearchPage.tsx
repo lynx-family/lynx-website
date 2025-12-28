@@ -195,10 +195,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       ) : (
         <div
           className={cn(
-            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5 overflow-y-auto pr-1',
-            showAllResults
-              ? 'max-h-[calc(100vh-200px)]'
-              : 'max-h-[calc(100vh-300px)]',
+            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5 pr-1',
           )}
         >
           {shownFeatures.map((f) => (

@@ -16,124 +16,16 @@ import {
   SidebarRail,
   useSidebar,
 } from '../ui/sidebar';
-import {
-  CLAY_PLATFORMS,
-  NATIVE_PLATFORMS,
-  PLATFORM_DISPLAY_NAMES,
-  type APIStats,
-} from './types';
-
-// Platform colors
-const platformColors: Record<
-  string,
-  { bg: string; border: string; text: string; progress: string }
-> = {
-  android: {
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500',
-    text: 'text-emerald-700 dark:text-emerald-400',
-    progress: 'bg-emerald-500',
-  },
-  ios: {
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500',
-    text: 'text-blue-700 dark:text-blue-400',
-    progress: 'bg-blue-500',
-  },
-  harmony: {
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500',
-    text: 'text-orange-700 dark:text-orange-400',
-    progress: 'bg-orange-500',
-  },
-  web_lynx: {
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500',
-    text: 'text-purple-700 dark:text-purple-400',
-    progress: 'bg-purple-500',
-  },
-  clay_android: {
-    bg: 'bg-teal-500/10',
-    border: 'border-teal-500',
-    text: 'text-teal-700 dark:text-teal-400',
-    progress: 'bg-teal-500',
-  },
-  clay_ios: {
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500',
-    text: 'text-cyan-700 dark:text-cyan-400',
-    progress: 'bg-cyan-500',
-  },
-  clay_macos: {
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500',
-    text: 'text-indigo-700 dark:text-indigo-400',
-    progress: 'bg-indigo-500',
-  },
-  clay_windows: {
-    bg: 'bg-sky-500/10',
-    border: 'border-sky-500',
-    text: 'text-sky-700 dark:text-sky-400',
-    progress: 'bg-sky-500',
-  },
-};
+import { PLATFORM_CONFIG } from './constants';
+import { CLAY_PLATFORMS, NATIVE_PLATFORMS, type APIStats } from './types';
 
 // Platform icons
 const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
   platform,
   className,
 }) => {
-  const ClayIcon = (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
-    </svg>
-  );
-  const icons: Record<string, React.ReactNode> = {
-    android: (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.532 15.106a1.003 1.003 0 1 1 .001-2.006 1.003 1.003 0 0 1-.001 2.006zm-11.044 0a1.003 1.003 0 1 1 .001-2.006 1.003 1.003 0 0 1-.001 2.006zm11.4-6.018l2.006-3.459a.416.416 0 1 0-.721-.416l-2.032 3.505A12.192 12.192 0 0 0 12.001 7.9a12.19 12.19 0 0 0-5.142.818L4.828 5.213a.416.416 0 1 0-.722.416l2.006 3.461C2.651 11.095.436 14.762.046 18.997h23.909c-.39-4.235-2.606-7.901-6.067-9.909z" />
-      </svg>
-    ),
-    ios: (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-      </svg>
-    ),
-    harmony: (
-      <svg
-        className={className}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M6 4v16" />
-        <path d="M18 4v16" />
-        <path d="M6 12h12" />
-      </svg>
-    ),
-    web_lynx: (
-      <svg
-        className={className}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="16 18 22 12 16 6" />
-        <polyline points="8 6 2 12 8 18" />
-      </svg>
-    ),
-    clay_android: ClayIcon,
-    clay_ios: ClayIcon,
-    clay_macos: ClayIcon,
-    clay_windows: ClayIcon,
-  };
-  return <>{icons[platform] || null}</>;
+  const Icon = PLATFORM_CONFIG[platform]?.icon;
+  return Icon ? <Icon className={className} /> : null;
 };
 
 // Page types
@@ -224,20 +116,6 @@ const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// Clock icon
-const ClockIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 6v6l4 2" />
-  </svg>
-);
-
 export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   stats,
   selectedPlatform,
@@ -254,7 +132,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   // Get current platform info for header
   const currentPlatformStats = stats.summary.by_platform[selectedPlatform];
   const currentPlatformColors =
-    platformColors[selectedPlatform] || platformColors.android;
+    PLATFORM_CONFIG[selectedPlatform]?.colors || PLATFORM_CONFIG.android.colors;
 
   // Format date
   const updatedDate = new Date(stats.generated_at).toLocaleDateString(
@@ -275,42 +153,30 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b px-3 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
-            <svg
-              className="h-5 w-5 text-sidebar-accent-foreground"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold">Lynx API Status</span>
-                <span className="text-xs text-muted-foreground font-mono">
-                  {stats.summary.total_apis.toLocaleString()}
-                </span>
-                <span className="text-[10px] text-muted-foreground">APIs</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <ClockIcon className="h-3 w-3" />
-                <span>Updated {updatedDate}</span>
-                <span className="mx-0.5">·</span>
-                <PlatformIcon
-                  platform={selectedPlatform}
-                  className={cn('h-3 w-3', currentPlatformColors.text)}
-                />
-                <span className={currentPlatformColors.text}>
-                  {PLATFORM_DISPLAY_NAMES[selectedPlatform]}{' '}
-                  {currentPlatformStats?.coverage_percent}%
-                </span>
-              </div>
+      <SidebarHeader className="px-4 pt-4 pb-2">
+        {!isCollapsed && (
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-3">
+              <span className="text-base font-semibold">Lynx API Status</span>
+              <span className="text-xs text-muted-foreground font-mono">
+                {stats.summary.total_apis.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                APIs
+              </span>
             </div>
-          )}
-        </div>
+            <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium">
+              <PlatformIcon
+                platform={selectedPlatform}
+                className={cn('h-3 w-3', currentPlatformColors.text)}
+              />
+              <span className={currentPlatformColors.text}>
+                {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}{' '}
+                {currentPlatformStats?.coverage_percent}%
+              </span>
+            </div>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -323,21 +189,22 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                 const ps = stats.summary.by_platform[platform];
                 if (!ps) return null;
                 const colors =
-                  platformColors[platform] || platformColors.android;
+                  PLATFORM_CONFIG[platform]?.colors ||
+                  PLATFORM_CONFIG.android.colors;
                 const isSelected = selectedPlatform === platform;
                 return (
                   <SidebarMenuItem key={platform}>
                     <SidebarMenuButton
                       isActive={isSelected}
                       onClick={() => onPlatformChange(platform)}
-                      tooltip={`${PLATFORM_DISPLAY_NAMES[platform]} (${ps.coverage_percent}%)`}
+                      tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
                     >
                       <PlatformIcon
                         platform={platform}
                         className={cn('h-4 w-4', colors.text)}
                       />
                       <span className="flex-1">
-                        {PLATFORM_DISPLAY_NAMES[platform]}
+                        {PLATFORM_CONFIG[platform]?.label || platform}
                       </span>
                       <span className={cn('text-xs font-mono', colors.text)}>
                         {ps.coverage_percent}%
@@ -353,16 +220,13 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   onClick={() => onShowClayChange(!showClay)}
                   tooltip="Toggle Clay Platforms"
                 >
-                  <svg
+                  <PlatformIcon
+                    platform="clay_android"
                     className={cn(
                       'h-4 w-4',
                       showClay ? 'text-primary' : 'text-muted-foreground',
                     )}
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
-                  </svg>
+                  />
                   <span className="flex-1">Clay</span>
                   {showClay && (
                     <svg
@@ -388,14 +252,15 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   const ps = stats.summary.by_platform[platform];
                   if (!ps) return null;
                   const colors =
-                    platformColors[platform] || platformColors.clay_android;
+                    PLATFORM_CONFIG[platform]?.colors ||
+                    PLATFORM_CONFIG.clay_android.colors;
                   const isSelected = selectedPlatform === platform;
                   return (
                     <SidebarMenuItem key={platform}>
                       <SidebarMenuButton
                         isActive={isSelected}
                         onClick={() => onPlatformChange(platform)}
-                        tooltip={`${PLATFORM_DISPLAY_NAMES[platform]} (${ps.coverage_percent}%)`}
+                        tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
                         className="pl-6"
                       >
                         <PlatformIcon
@@ -403,7 +268,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                           className={cn('h-4 w-4', colors.text)}
                         />
                         <span className="flex-1">
-                          {PLATFORM_DISPLAY_NAMES[platform]}
+                          {PLATFORM_CONFIG[platform]?.label || platform}
                         </span>
                         <span className={cn('text-xs font-mono', colors.text)}>
                           {ps.coverage_percent}%
@@ -438,30 +303,33 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="Help"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-8"
             >
               <a
                 href={withBase(
                   lang === 'zh' ? '/zh/api/status/help' : '/api/status/help',
                 )}
+                className="flex items-center justify-between w-full"
               >
-                <HelpCircleIcon className="h-4 w-4" />
-                <span>Help</span>
+                <div className="flex items-center gap-2">
+                  <HelpCircleIcon className="h-4 w-4" />
+                  <span>Help</span>
+                </div>
+                {!isCollapsed && (
+                  <span className="text-[10px] text-muted-foreground/70 font-mono">
+                    {updatedDate}
+                  </span>
+                )}
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        {!isCollapsed && (
-          <div className="px-3 pb-2 text-[10px] text-muted-foreground">
-            Updated {updatedDate}
-          </div>
-        )}
       </SidebarFooter>
 
       <SidebarRail />

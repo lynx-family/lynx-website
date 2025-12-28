@@ -50,11 +50,17 @@ declare global {
 function Layout(props: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
   const subsite = findSubsite(pathname);
+  const normalizedPath = removeBase(pathname);
+  const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
+  const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
 
   return (
     <>
       <Head>
-        <htmlAttrs data-subsite={subsite ? subsite.value : 'guide'} />
+        <htmlAttrs
+          data-subsite={subsite ? subsite.value : 'guide'}
+          data-scroll-locked={isStatusRoute ? 'true' : undefined}
+        />
       </Head>
       <BaseLayout
         {...props}

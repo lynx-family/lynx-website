@@ -13,17 +13,6 @@ export const CLAY_PLATFORMS: PlatformName[] = [
   'clay_windows',
 ];
 
-export const PLATFORM_DISPLAY_NAMES: Record<string, string> = {
-  android: 'Android',
-  ios: 'iOS',
-  harmony: 'Harmony',
-  web_lynx: 'Web',
-  clay_android: 'Clay (Android)',
-  clay_ios: 'Clay (iOS)',
-  clay_macos: 'Clay (macOS)',
-  clay_windows: 'Clay (Windows)',
-};
-
 export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   'css/properties': 'CSS Properties',
   'css/data-type': 'CSS Data Types',

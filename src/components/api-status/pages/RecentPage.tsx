@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { APIItem } from '../APIStatusDashboard';
 import type { APIStats, FeatureInfo } from '../types';
-import { PLATFORM_DISPLAY_NAMES } from '../types';
+import { PLATFORM_CONFIG } from '../constants';
 
 const i18n = {
   en: {
@@ -101,15 +101,16 @@ export const RecentPage: React.FC<RecentPageProps> = ({
           {t.title}
           <span className="text-xs text-muted-foreground font-normal">
             ({totalCount} {t.apis} for{' '}
-            {PLATFORM_DISPLAY_NAMES[selectedPlatform]})
+            {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform})
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+        <div className="space-y-6 pr-1">
           {recentApisByVersion.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              {t.noApis} {PLATFORM_DISPLAY_NAMES[selectedPlatform]}
+              {t.noApis}{' '}
+              {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}
             </div>
           ) : (
             recentApisByVersion.map(({ version, apis }) => (

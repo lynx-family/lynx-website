@@ -57,7 +57,10 @@ export const APIStatusLayout: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider
+        defaultOpen={true}
+        style={{ minHeight: '0', height: '100%' }}
+      >
         <APIStatusSidebar
           stats={stats}
           selectedPlatform={selectedPlatform}
@@ -67,7 +70,7 @@ export const APIStatusLayout: React.FC = () => {
           activePage={activePage}
           onPageChange={setActivePage}
         />
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden min-h-0">
           {/* Header with sidebar trigger */}
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
