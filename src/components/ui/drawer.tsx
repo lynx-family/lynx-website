@@ -52,8 +52,8 @@ const DrawerContent = React.forwardRef<
   const sideDrawerStyle = isHorizontal
     ? {
         ...style,
-        ...(direction === "right" && { right: `${sideDrawerGap}px`, top: `${sideDrawerGap}px`, bottom: `${sideDrawerGap}px` }),
-        ...(direction === "left" && { left: `${sideDrawerGap}px`, top: `${sideDrawerGap}px`, bottom: `${sideDrawerGap}px` }),
+        // ...(direction === "right" && { right: `${sideDrawerGap}px`, top: `${sideDrawerGap}px`, bottom: `${sideDrawerGap}px` }),
+        // ...(direction === "left" && { left: `${sideDrawerGap}px`, top: `${sideDrawerGap}px`, bottom: `${sideDrawerGap}px` }),
         '--initial-transform': `calc(100% + ${sideDrawerGap}px)` as React.CSSProperties['--initial-transform'],
       } as React.CSSProperties
     : style
@@ -68,9 +68,9 @@ const DrawerContent = React.forwardRef<
           // Bottom drawer (default)
           !isHorizontal && "inset-x-0 bottom-0 mt-24 h-auto rounded-t-[10px] border",
           // Right drawer - with gap from edge, no border (gap provides visual separation)
-          direction === "right" && "inset-y-0 h-full w-[400px] max-w-[90vw] rounded-[16px] shadow-lg",
+          direction === "right" && "inset-y-0 right-2 h-full w-[600px] max-w-[90vw] rounded-[16px] shadow-lg",
           // Left drawer - with gap from edge, no border (gap provides visual separation)
-          direction === "left" && "inset-y-0 h-full w-[400px] max-w-[90vw] rounded-[16px] shadow-lg",
+          direction === "left" && "inset-y-0 left-2 h-full w-[600px] max-w-[90vw] rounded-[16px] shadow-lg",
           // Top drawer
           direction === "top" && "inset-x-0 top-0 mb-24 h-auto rounded-b-[10px] border",
           className
@@ -110,7 +110,7 @@ const DrawerFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+    className={cn("flex flex-col gap-2 p-4 mt-auto", className)}
     {...props}
   />
 )
@@ -123,7 +123,7 @@ const DrawerTitle = React.forwardRef<
   <DrawerPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "text-lg font-semibold tracking-tight leading-none",
       className
     )}
     {...props}

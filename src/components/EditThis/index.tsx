@@ -25,7 +25,7 @@ export default function EditThis({ path }: Props) {
   const sourcePath = `${process.env.DOC_GIT_BASE_URL}/${basePath}`;
 
   return (
-    <div className="flex items-center gap-2 text-sm -mb-3">
+    <div className="flex gap-2 items-center text-sm">
       {process.env.DOC_GIT_BASE_URL && (
         <a
           href={sourcePath}

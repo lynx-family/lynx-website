@@ -1,7 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import useSWR from 'swr';
-import Callout from '../Callout';
-import EditThis from '../EditThis';
+
 import { useLang, withBase } from '@rspress/core/runtime';
 import { FetchingCompatTable as FetchingCompatTableMarkdown } from './FetchingCompatTable.server';
 
@@ -46,25 +45,65 @@ export function useTimeout(callback: React.EffectCallback, delay: number) {
   }, [delay, callback]);
 }
 
-// Temporary loading component
-function Loading({
-  message = 'Loading…',
-  delay = 600,
-  minHeight = 200,
-}: {
-  message?: string;
-  delay?: number;
-  minHeight?: number;
-}) {
-  const [show, enableShow] = React.useReducer(() => true, false);
-  useTimeout(enableShow, delay);
-  const style = { minHeight };
+const TableSkeleton = () => {
   return (
-    <Callout type="info" title="Loading">
-      <p>{show ? message : ''}</p>
-    </Callout>
+    <div className="w-full border rounded-lg overflow-hidden my-4 bg-card">
+      <div className="h-10 bg-muted/30 border-b animate-pulse" />
+      <div className="p-4 space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-4">
+            <div className="h-8 bg-muted/20 rounded w-1/4 animate-pulse" />
+            <div className="h-8 bg-muted/20 rounded w-3/4 animate-pulse" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+const TableError = ({
+  title,
+  message,
+  onRetry,
+}: {
+  title: string;
+  message: React.ReactNode;
+  onRetry?: () => void;
+}) => {
+  return (
+    <div className="w-full border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 rounded-lg p-6 my-4 flex flex-col items-center justify-center text-center gap-3">
+      <div className="text-red-500 dark:text-red-400">
+        <svg
+          className="w-10 h-10 mx-auto"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      </div>
+      <h3 className="font-semibold text-base text-red-900 dark:text-red-200">
+        {title}
+      </h3>
+      <div className="text-sm text-red-600 dark:text-red-300/80 max-w-[500px] leading-relaxed">
+        {message}
+      </div>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="mt-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-200 rounded-md text-sm font-medium transition-colors"
+        >
+          Try Again
+        </button>
+      )}
+    </div>
+  );
+};
 
 interface QueryJson {
   [key: string]: LCD.Identifier;
@@ -127,6 +166,33 @@ type FetchingCompatTableProps = {
    */
   query: string;
 };
+export function useDelayedLoading(
+  isLoading: boolean,
+  delay: number = 200,
+): boolean {
+  const [showLoading, setShowLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (isLoading) {
+      timeoutId = setTimeout(() => {
+        setShowLoading(true);
+      }, delay);
+    } else {
+      setShowLoading(false);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isLoading, delay]);
+
+  return showLoading;
+}
+
 /**
  * This is a wrapper over the `CompatTable` component that dynamically
  * load source code and fetches the data from the server.
@@ -143,9 +209,15 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const { module, accessor } = React.useMemo(() => parseQuery(query), [query]);
 
   // Fetching API data.
-  const { error, data: apiData } = useSWR(
+  const {
+    error,
+    data: apiData,
+    isLoading: isApiLoading,
+  } = useSWR(
     module,
     async (_) => {
+      // Simulate network delay for testing skeleton
+      // await new Promise((resolve) => setTimeout(resolve, 2000));
       const response = await fetch(`${lcdBaseUrl}/${module}.json`);
       if (!response.ok) {
         throw new Error(response.status.toString());
@@ -156,7 +228,11 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   );
 
   // Fetching platforms data.
-  const { error: platformError, data: platformData } = useSWR(
+  const {
+    error: platformError,
+    data: platformData,
+    isLoading: isPlatformLoading,
+  } = useSWR(
     'platforms.json',
     async (_) => {
       const response = await fetch(`${lcdBaseUrl}/platforms/platforms.json`);
@@ -166,6 +242,11 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
       return (await response.json()) as PlatformsJson;
     },
     { revalidateOnFocus: false },
+  );
+
+  const showSkeleton = useDelayedLoading(
+    isApiLoading || isPlatformLoading,
+    500,
   );
 
   // If the user is on the server, return a message to the user.
@@ -181,33 +262,53 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
     );
   }
   if (platformError) {
-    return <p>Error loading LCD platforms data</p>;
+    return (
+      <TableError
+        title="Platform Data Error"
+        message="Failed to load platform configuration data. Please verify your network connection."
+        onRetry={() => window.location.reload()}
+      />
+    );
   }
   if (error) {
     return (
-      <Callout type="warning" title="Error Loading Data">
-        <p>
-          Error loading LCD data for query: <code>{query}</code>.<br />
-          Please check if the file <code>{module}.json</code> exists in{' '}
-          <code>@lynx-js/lynx-compat-data</code> and if the{' '}
-          <code>{accessor}</code> field is present within it.
-        </p>
-      </Callout>
+      <TableError
+        title="Data Not Found"
+        message={
+          <>
+            Error loading LCD data for query:{' '}
+            <code className="text-xs bg-muted/50 p-1 rounded">{query}</code>.
+            <br />
+            Please check if the file{' '}
+            <code className="text-xs bg-muted/50 p-1 rounded">
+              {module}.json
+            </code>{' '}
+            exists in{' '}
+            <code className="text-xs bg-muted/50 p-1 rounded">
+              @lynx-js/lynx-compat-data
+            </code>{' '}
+            and if the{' '}
+            <code className="text-xs bg-muted/50 p-1 rounded">{accessor}</code>{' '}
+            field is present within it.
+          </>
+        }
+      />
     );
   }
   if (!apiData || !platformData) {
-    return <Loading />;
+    if (showSkeleton) {
+      return <TableSkeleton />;
+    }
+    return null; // Don't show anything for the first 500ms
   }
 
   return (
     <ErrorBoundary>
-      <Suspense fallback={<Loading message="Loading LCD table" />}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <EditThis path={`packages/lynx-compat-data/${module}.json`} />
-        </div>
+      <Suspense fallback={<TableSkeleton />}>
         <CompatTable
           locale={locale}
           query={accessor}
+          module={module}
           data={getNestedValue(apiData, accessor)}
           browsers={platformData.platforms}
         />
@@ -241,34 +342,19 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.error) {
       return (
-        <Callout
-          type="danger"
-          title="Error loading browser compatibility table"
-        >
-          <p>
-            This can happen if the JavaScript, which is loaded later, didn't
-            successfully load.
-          </p>
-          <p>
-            <a
-              href="."
-              onClick={(event) => {
-                event.preventDefault();
-                window.location.reload();
-              }}
-            >
-              Try reloading the page
-            </a>
-          </p>
-          <hr style={{ margin: 20 }} />
-          <p>
-            <small>If you're curious, this was the error:</small>
-            <br />
-            <small style={{ fontFamily: 'monospace' }}>
-              {this.state.error.toString()}
-            </small>
-          </p>
-        </Callout>
+        <TableError
+          title="Component Error"
+          message={
+            <>
+              Something went wrong while rendering the compatibility table.
+              <br />
+              <small className="font-mono mt-2 block opacity-75">
+                {this.state.error.toString()}
+              </small>
+            </>
+          }
+          onRetry={() => window.location.reload()}
+        />
       );
     }
 

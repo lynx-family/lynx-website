@@ -12,9 +12,10 @@
  *   Licensed under the Mozilla Public License, v. 2.0
  */
 import type BCD from '@lynx-js/lynx-compat-data';
+import { useI18n, useLocation, withBase } from '@rspress/core/runtime';
 import type React from 'react';
 import { useReducer } from 'react';
-import { useLocation } from '@rspress/core/runtime';
+import EditThis from '../../EditThis';
 import { BrowserInfoContext } from './browser-info';
 import { BrowserCompatibilityErrorBoundary } from './error-boundary';
 import { FeatureRow } from './feature-row';
@@ -175,20 +176,43 @@ function FeatureListAccordion({
 
 export default function CompatibilityTable({
   query,
+  module,
   data,
   browsers: browserInfo,
   locale,
 }: {
   query: string;
+  module?: string;
   data: BCD.Identifier;
   browsers: BCD.Platforms;
   locale: string;
 }) {
   const location = useLocation();
+  const t = useI18n();
 
   if (!data || !Object.keys(data).length) {
     throw new Error('CompatibilityTable component called with empty data');
   }
+
+  const { __compat: compat } = data;
+  // Try to find source_file in data, then __compat
+  const sourceFile = (data as any).source_file || compat?.source_file;
+  const path = sourceFile
+    ? `packages/lynx-compat-data/${sourceFile}`
+    : module
+      ? `packages/lynx-compat-data/${module}.json`
+      : undefined;
+
+  // Try to find description_url in data, then __compat
+  const descriptionUrl =
+    (data as any).description_url || compat?.description_url;
+
+  // Try to find lynx_path in data, then __compat
+  const lynxPath = (data as any).lynx_path || compat?.lynx_path;
+  const lynxDocUrl =
+    lynxPath && !location.pathname.endsWith(lynxPath)
+      ? withBase(`/${lynxPath}`)
+      : undefined;
 
   const breadcrumbs = query.split('.');
   const category = breadcrumbs[0];
@@ -219,6 +243,33 @@ export default function CompatibilityTable({
   return (
     <BrowserCompatibilityErrorBoundary>
       <BrowserInfoContext.Provider value={browserInfo}>
+        <div className="flex justify-end items-center mb-2">
+          <div className="flex gap-2 text-sm">
+            {path && <EditThis path={path} />}
+            {lynxDocUrl && (
+              <a
+                href={lynxDocUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
+              >
+                <span>{t('api.reference')}</span>
+                <span className="text-xs">↗</span>
+              </a>
+            )}
+            {descriptionUrl && (
+              <a
+                href={descriptionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
+              >
+                <span>MDN</span>
+                <span className="text-xs">↗</span>
+              </a>
+            )}
+          </div>
+        </div>
         {/* <a
           className="bc-github-link external external-icon"
           href={getNewIssueURL()}
