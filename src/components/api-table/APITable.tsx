@@ -36,8 +36,10 @@ export default function APITable(props: APITableProps) {
     query = frontmatter.api as string;
   }
 
+  const tableId = `compat-table-${query.replace(/[\/.]/g, '-')}`;
+
   return (
-    <div className="rp-not-doc">
+    <div className="rp-not-doc" id={tableId}>
       <FetchingCompatTable query={query} />
     </div>
   );
