@@ -113,7 +113,7 @@ function createPlatformOnlyComponent(platform: ExtendedPlatformName) {
     return (
       <PlatformBadgeInner
         platform={platform}
-        badgeText={`${mapPlatformNameToFullName(platform)} only`}
+        badgeText={mapPlatformNameToFullName(platform)}
         type="warning"
       />
     );
