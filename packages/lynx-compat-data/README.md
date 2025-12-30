@@ -153,6 +153,7 @@ pnpm run lint:keys --fix   # Auto-fix issues by extracting names from descriptio
 ```
 
 The linter checks for:
+
 1. Keys like `nested_value_N` or `unsupported_value_N` that should use actual API names
 2. Keys with `<code>name</code>` patterns in their description that should use the name as the key
 

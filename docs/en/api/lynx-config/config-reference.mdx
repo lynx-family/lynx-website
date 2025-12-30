@@ -1,0 +1,2812 @@
+import {
+  Deprecated,
+  VersionBadge,
+  PlatformBadge,
+  AndroidOnly,
+  IOSOnly,
+  HarmonyOnly,
+} from '@lynx';
+
+# Lynx Config Reference
+
+Auto-generated documentation for Lynx Configs.
+
+## Navigation
+
+- **[Summary](#summary)**: Quick table view with links to details
+- **[Config Reference](#config-reference)**: Active configs (alphabetical)
+- **[Deprecated Config](#deprecated-config)**: Legacy options (do not use)
+
+## Summary
+
+| Config                                                                                      | Description                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [absoluteInContentBound](#absoluteincontentbound)                                           | When set to true, the containing block of absolute/fixed elements is the content area; otherwise, it is the padding area                                                                                                                                                                                                                                           |
+| [asyncRedirect](#asyncredirect)                                                             | Enable Android Lynx Image URL asynchronous redirect                                                                                                                                                                                                                                                                                                                |
+| [autoExpose](#autoexpose)                                                                   | if this flag is true, onShow/onHide will be automatically triggered by attachToView/detachFromWindow calls                                                                                                                                                                                                                                                         |
+| [CSSAlignWithLegacyW3C](#cssalignwithlegacyw3c)                                             | When set to true, for compatibility, some layout behaviors are consistent with the previous incorrect behaviors.                                                                                                                                                                                                                                                   |
+| [customCSSInheritanceList](#customcssinheritancelist)                                       | Custom Inheritable CSS Properties                                                                                                                                                                                                                                                                                                                                  |
+| [dataStrictMode](#datastrictmode)                                                           | ReactLynx cannot opt top_level_variables used in lepus. So we cannot forbid updateData when variable not in top_level_variables. User can use this config to close the check.                                                                                                                                                                                      |
+| [debugInfoOutside](#debuginfooutside)                                                       | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [defaultDisplayLinear](#defaultdisplaylinear)                                               | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [defaultOverflowVisible](#defaultoverflowvisible)                                           | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [disableLongpressAfterScroll](#disablelongpressafterscroll)                                 | Prevent the long press event from being triggered during inertial scrolling.                                                                                                                                                                                                                                                                                       |
+| [disableMultipleCascadeCSS](#disablemultiplecascadecss)                                     | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [disableQuickTracingGC](#disablequicktracinggc)                                             | Disable tracing gc mode in quick context.                                                                                                                                                                                                                                                                                                                          |
+| [enableA11y](#enablea11y)                                                                   | Enable Android A11y                                                                                                                                                                                                                                                                                                                                                |
+| [enableAccessibilityElement](#enableaccessibilityelement)                                   | Indicates whether all ui enable a11y                                                                                                                                                                                                                                                                                                                               |
+| [enableAsyncInitVideoEngine](#enableasyncinitvideoengine)                                   | Whether to enable asynchronous initialization of videoEngine                                                                                                                                                                                                                                                                                                       |
+| [enableAsyncRequestImage](#enableasyncrequestimage)                                         | If true, supports initiating image requests in asynchronous threads.                                                                                                                                                                                                                                                                                               |
+| [enableAsyncResolveSubtree](#enableasyncresolvesubtree)                                     | FE Framework use this config to notify Engine that resolve subtree binding will be triggered when render DOM (Not exposed to normal user)                                                                                                                                                                                                                          |
+| [enableCheckExposureOptimize](#enablecheckexposureoptimize)                                 | Enable exposure detection optimization so that exposure detection is not performed when the page is static.                                                                                                                                                                                                                                                        |
+| [enableCheckLocalImage](#enablechecklocalimage)                                             | Determine whether redirection is needed for local image resources.                                                                                                                                                                                                                                                                                                 |
+| [enableCircularDataCheck](#enablecirculardatacheck)                                         | If this flag is true, circular data check will enable when convert js value to other vale.                                                                                                                                                                                                                                                                         |
+| [enableComponentAsyncDecode](#enablecomponentasyncdecode)                                   | Enable dynamic components to be decoded in child threads before they are delivered into tasm in async-loading.                                                                                                                                                                                                                                                     |
+| [enableComponentConfig](#enablecomponentconfig)                                             | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableComponentNullProp](#enablecomponentnullprop)                                         | Support component can be passed null props, null props only supported in LepusNG now. Open this switch to support lepus use null prop.                                                                                                                                                                                                                             |
+| [enableCreateViewAsync](#enablecreateviewasync)                                             | Create Android platform UIs in lynx built-in thread-pool to optimize UI Operation Execution                                                                                                                                                                                                                                                                        |
+| [enableCSSAsyncDecode](#enablecssasyncdecode)                                               | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableCSSClassMerge](#enablecssclassmerge)                                                 | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableCSSEngine](#enablecssengine)                                                         | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableCSSExternalClass](#enablecssexternalclass)                                           | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableCSSInheritance](#enablecssinheritance)                                               | Enable CSS inheritance                                                                                                                                                                                                                                                                                                                                             |
+| [enableCSSInlineVariables](#enablecssinlinevariables)                                       | Enable CSS inline variables.                                                                                                                                                                                                                                                                                                                                       |
+| [enableCSSInvalidation](#enablecssinvalidation)                                             | If enable CSS invalidation we use RuleInvalidationSet to gather the selector invalidation.                                                                                                                                                                                                                                                                         |
+| [enableCSSLazyDecode](#enablecsslazydecode)                                                 | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableCSSLazyImport](#enablecsslazyimport)                                                 | Under scoped CSS, the imported CSS declarations by import rules are lazily decoded at the first time the scope takes effect.                                                                                                                                                                                                                                       |
+| [enableCSSSelector](#enablecssselector)                                                     | This switch will enable the css module in blink standard mode.                                                                                                                                                                                                                                                                                                     |
+| [enableCSSStrictMode](#enablecssstrictmode)                                                 | CSS Length should be &lt;number&gt; follows a unit. Under strict mode, invalid &lt;length&gt; values are dropped.                                                                                                                                                                                                                                                  |
+| [enableCSSVariable](#enablecssvariable)                                                     | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableDisexposureWhenLynxHidden](#enabledisexposurewhenlynxhidden)                         | Enables the disexposure event to fire when LynxView is in the hidden state.                                                                                                                                                                                                                                                                                        |
+| [enableEndGestureAtLastFingerUp](#enableendgestureatlastfingerup)                           | Enable the Lynx touch event to be triggered normally after the last finger is lifted in a multi-finger scenario.                                                                                                                                                                                                                                                   |
+| [enableEventHandleRefactor](#enableeventhandlerefactor)                                     | Enable new event processing logic to support dynamic registration of event listeners, interception of events, etc.                                                                                                                                                                                                                                                 |
+| [enableEventRefactor](#enableeventrefactor)                                                 | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableEventThrough](#enableeventthrough)                                                   | Enable the client-slide touch event penetrate Lynx when touching the root node area of the Lynx page.                                                                                                                                                                                                                                                              |
+| [enableExposureUIMargin](#enableexposureuimargin)                                           | Enable exposure-ui-margin-\* properties to take effect.                                                                                                                                                                                                                                                                                                            |
+| [enableExposureWhenLayout](#enableexposurewhenlayout)                                       | Enable exposure check when LynxView is layoutRequest                                                                                                                                                                                                                                                                                                               |
+| [enableExposureWhenReload](#enableexposurewhenreload)                                       | Enables exposure and disexposure events to be triggered when reloading the Lynx page.                                                                                                                                                                                                                                                                              |
+| [enableFiberArch](#enablefiberarch)                                                         | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableFixedNew](#enablefixednew)                                                           | A better and stable position fixed handling.                                                                                                                                                                                                                                                                                                                       |
+| [enableFlexibleTemplate](#enableflexibletemplate)                                           | If enable this value, the template will be encoded as flexible template.                                                                                                                                                                                                                                                                                           |
+| [enableHarmonyNewOverlay](#enableharmonynewoverlay)                                         | Enable harmony new overlay based overlayManager to handle events pass through.                                                                                                                                                                                                                                                                                     |
+| [enableHarmonyVisibleAreaChangeForExposure](#enableharmonyvisibleareachangeforexposure)     | Enable Harmony to detect exposure with visible area change event.                                                                                                                                                                                                                                                                                                  |
+| [enableICU](#enableicu)                                                                     | Enable Bind PRIMJS-ICU                                                                                                                                                                                                                                                                                                                                             |
+| [enableImageDownsampling](#enableimagedownsampling)                                         | If true, downsampling will be enabled for all images on this LynxView                                                                                                                                                                                                                                                                                              |
+| [enableJsBindingApiThrowException](#enablejsbindingapithrowexception)                       | Enable js binding api throw exception                                                                                                                                                                                                                                                                                                                              |
+| [enableJSDataProcessor](#enablejsdataprocessor)                                             | Enable data processor on JS thread                                                                                                                                                                                                                                                                                                                                 |
+| [enableKeepPageData](#enablekeeppagedata)                                                   | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableListMoveOperation](#enablelistmoveoperation)                                         | Does diffResult have moveAction                                                                                                                                                                                                                                                                                                                                    |
+| [enableListNewArchitecture](#enablelistnewarchitecture)                                     | Indicates whether to use new architecture for the platform list                                                                                                                                                                                                                                                                                                    |
+| [enableListPlug](#enablelistplug)                                                           | Indicates whether to use list plug                                                                                                                                                                                                                                                                                                                                 |
+| [enableLynxScrollFluency](#enablelynxscrollfluency)                                         | Force report lynx scroll fluency event. When setting pageConfig.enableLynxScrollFluency to a double value in the range [0, 1], we will monitor the fluency metrics for this LynxUI based on this probability. The probability indicates the likelihood of enabling fluency monitoring, and the metrics will be reported unconditionally through the applogService. |
+| [enableMicrotaskPromisePolyfill](#enablemicrotaskpromisepolyfill)                           | This configuration item enableMicrotaskPromisePolyfill is used to determine whether to enable the micro - task Promise polyfill. Its value type is TernaryBool, and the default value is TernaryBool::UNDEFINE_VALUE.                                                                                                                                              |
+| [enableMTSPreExecute](#enablemtspreexecute)                                                 | Enable MTS VM pre execute code.                                                                                                                                                                                                                                                                                                                                    |
+| [enableMultiTouch](#enablemultitouch)                                                       | Enable support multi-finger events so that event parameters can contain information about multiple fingers.                                                                                                                                                                                                                                                        |
+| [enableMultiTouchParamsCompatible](#enablemultitouchparamscompatible)                       | Enable the parameters of multi-finger events compatible with single-finger events                                                                                                                                                                                                                                                                                  |
+| [enableNativeList](#enablenativelist)                                                       | Indicates whether use c++ list.                                                                                                                                                                                                                                                                                                                                    |
+| [enableNewAnimator](#enablenewanimator)                                                     | If this flag is false, will use platform animation ability.                                                                                                                                                                                                                                                                                                        |
+| [enableNewClipMode](#enablenewclipmode)                                                     | Whether enable new clip mode.                                                                                                                                                                                                                                                                                                                                      |
+| [enableNewGesture](#enablenewgesture)                                                       | if want to use gesture handler api, you need to set true                                                                                                                                                                                                                                                                                                           |
+| [enableNewImage](#enablenewimage)                                                           | Enable load image from image service                                                                                                                                                                                                                                                                                                                               |
+| [enableNewIntersectionObserver](#enablenewintersectionobserver)                             | Enable the new IntersectionObserver detection logic so that observe can be triggered normally without binding to scroll events.                                                                                                                                                                                                                                    |
+| [enableNewListContainer](#enablenewlistcontainer)                                           | Implement the platform-level list based on scrollView on the IOS platform                                                                                                                                                                                                                                                                                          |
+| [enableNewTransformOrigin](#enablenewtransformorigin)                                       | If this flag is true, new transform origin algorithm will apply.                                                                                                                                                                                                                                                                                                   |
+| [enablePlatformGesture](#enableplatformgesture)                                             | Enable shadow platform gesture to handle gesture conflict.                                                                                                                                                                                                                                                                                                         |
+| [enablePropertyBasedSimpleStyle](#enablepropertybasedsimplestyle)                           | SimpleStyle mode will incrementally update styles based on properties if this config set to TRUE. Otherwise it will incrementally update based on StyleObjects. The StyleObject based updating has a better performance but not allow StyleObjects bound to the same element has intersect properties.                                                             |
+| [enableQueryComponentSync](#enablequerycomponentsync)                                       | Enable query component sync in background runtime                                                                                                                                                                                                                                                                                                                  |
+| [enableReactOnlyPropsId](#enablereactonlypropsid)                                           | If we got propsId, we could only pass propsId and a flag to JS thread. JS thread will use a propsMap to get correct props                                                                                                                                                                                                                                          |
+| [enableReduceInitDataCopy](#enablereduceinitdatacopy)                                       | If this flag is true, do not copy init data, instead copy Object.keys of init data for efficiency.                                                                                                                                                                                                                                                                 |
+| [enableReloadLifecycle](#enablereloadlifecycle)                                             | Enable LynxUI onNodeReload lifecycle.                                                                                                                                                                                                                                                                                                                              |
+| [enableRemoveComponentExtraData](#enableremovecomponentextradata)                           | If this flag is true, remove the globalProps &amp; systemInfo from component data for efficiency.                                                                                                                                                                                                                                                                  |
+| [enableRemoveCSSScope](#enableremovecssscope)                                               | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [enableReuseLoadScriptExports](#enablereuseloadscriptexports)                               | Enable reuse loadScript&#39;s result.                                                                                                                                                                                                                                                                                                                              |
+| [enableSignalAPI](#enablesignalapi)                                                         | Enable using native signal API                                                                                                                                                                                                                                                                                                                                     |
+| [enableSimpleStyling](#enablesimplestyling)                                                 | Using the simplified styling module.                                                                                                                                                                                                                                                                                                                               |
+| [enableSimultaneousTap](#enablesimultaneoustap)                                             | Enable the client&#39;s tap gesture to be triggered simultaneously with Lynx&#39;s tap gesture.                                                                                                                                                                                                                                                                    |
+| [enableTextBoringLayout](#enabletextboringlayout)                                           | Enable using BoringLayout on Android.                                                                                                                                                                                                                                                                                                                              |
+| [enableTextGradientOpt](#enabletextgradientopt)                                             | Enable text gradient optimization for iOS.                                                                                                                                                                                                                                                                                                                         |
+| [enableTextLanguageAlignment](#enabletextlanguagealignment)                                 | Enable a more accurate text alignment judgment method, but it will increase the time taken for text layout.                                                                                                                                                                                                                                                        |
+| [enableTextLayerRender](#enabletextlayerrender)                                             | Enable using text layer render on iOS.                                                                                                                                                                                                                                                                                                                             |
+| [enableTextLayoutCache](#enabletextlayoutcache)                                             | Whether enable text layout cache.                                                                                                                                                                                                                                                                                                                                  |
+| [enableTextNonContiguousLayout](#enabletextnoncontiguouslayout)                             | Whether enable text noncontiguous layout                                                                                                                                                                                                                                                                                                                           |
+| [enableTextOverflow](#enabletextoverflow)                                                   | Set text overflow as visible if true.                                                                                                                                                                                                                                                                                                                              |
+| [enableTextRefactor](#enabletextrefactor)                                                   | Enable text refactor, with behavior more aligned with web.                                                                                                                                                                                                                                                                                                         |
+| [enableTouchRefactor](#enabletouchrefactor)                                                 | Enable Lynx&#39;s touchend event to be triggered normally.                                                                                                                                                                                                                                                                                                         |
+| [enableUIOperationOptimize](#enableuioperationoptimize)                                     | Enable the optimization about UIOperation batching and CreateViewAsync at Android.                                                                                                                                                                                                                                                                                 |
+| [enableUnifiedPipeline](#enableunifiedpipeline)                                             | Enable the unified pixel pipeline for Lynx Engine.                                                                                                                                                                                                                                                                                                                 |
+| [enableUnifyFixedBehavior](#enableunifyfixedbehavior)                                       | Unify behavior between old-fixed and new-fixed                                                                                                                                                                                                                                                                                                                     |
+| [enableUseContextPool](#enableusecontextpool)                                               | Enable Use Context Pool For LepusNG VM creation.                                                                                                                                                                                                                                                                                                                   |
+| [enableUseMapBuffer](#enableusemapbuffer)                                                   | Enable the mapbuffer structure for LynxProps.                                                                                                                                                                                                                                                                                                                      |
+| [enableViewReceiveTouch](#enableviewreceivetouch)                                           | Enable touchesBegan and other methods to be triggered when touching the client-slide custom components.                                                                                                                                                                                                                                                            |
+| [enableVsyncAlignedFlush](#enablevsyncalignedflush)                                         | Drive the execution of UI tasks in the pipeline according to the VSync signal, bringing a certain progressive rendering effect. It is suitable for scenarios where JS-driven updates are frequent. Turn it on as needed.                                                                                                                                           |
+| [enableXTextLayoutReused](#enablextextlayoutreused)                                         | Whether enable x-text layout reused.                                                                                                                                                                                                                                                                                                                               |
+| [experimental_encodeQuickjsBytecode](#experimental_encodequickjsbytecode)                   | Allow encoding quickjs bytecode instead of source code in template.                                                                                                                                                                                                                                                                                                |
+| [extendedLayoutOnlyOpt](#extendedlayoutonlyopt)                                             | A config to force make some special properties can be used to layout only (such as direction&amp;text-align,etc.).                                                                                                                                                                                                                                                 |
+| [extraInfo](#extrainfo)                                                                     | user defined extraInfo.                                                                                                                                                                                                                                                                                                                                            |
+| [flatten](#flatten)                                                                         | Control whether the node requires creating a corresponding Android View. Default is true.                                                                                                                                                                                                                                                                          |
+| [fontScaleEffectiveOnlyOnSp](#fontscaleeffectiveonlyonsp)                                   | Make font scale only apply to sp units.                                                                                                                                                                                                                                                                                                                            |
+| [forceCalcNewStyle](#forcecalcnewstyle)                                                     | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [implicit](#implicit)                                                                       | Control whether implicit animations are allowed on the iOS platform.                                                                                                                                                                                                                                                                                               |
+| [implicitAnimation](#implicitanimation)                                                     | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [includeFontPadding](#includefontpadding)                                                   | Control the top and bottom padding of text on Android, which affects the text&#39;s height and vertical centering effect.                                                                                                                                                                                                                                          |
+| [keyboardCallbackPassRelativeHeight](#keyboardcallbackpassrelativeheight)                   | The outer decor view that wraps lynx view may change due to that virtual navigation bar is shielded or drawn. Change the returning value of keyboard event to return absolute keyboard height and the offset from keyboard to to lynx view bottom                                                                                                                  |
+| [longPressDuration](#longpressduration)                                                     | Specify the interval for triggering the long press event.                                                                                                                                                                                                                                                                                                          |
+| [observerFrameRate](#observerframerate)                                                     | Specifies the frequency of exposure detection.                                                                                                                                                                                                                                                                                                                     |
+| [pipelineSchedulerConfig](#pipelineschedulerconfig)                                         | Scheduler config for pipeline, including enableParallelElement/list-framework batch render and other scheduler config.                                                                                                                                                                                                                                             |
+| [preferredFps](#preferredfps)                                                               | Control the frame rate of CSS animations                                                                                                                                                                                                                                                                                                                           |
+| [quirksMode](#quirksmode)                                                                   | Supports string value. It is equal to TargetSDKVersion by default. The mode is for compatibility with old pages that do not conform to CSS layout specifications produced.                                                                                                                                                                                         |
+| [removeCSSParserLog](#removecssparserlog)                                                   | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [removeDescendantSelectorScope](#removedescendantselectorscope)                             | If false, descendant selector only works in component scope.                                                                                                                                                                                                                                                                                                       |
+| [strictPropType](#strictproptype)                                                           | if this flag is true, if component&#39;s prop type mismatch, will use default value.                                                                                                                                                                                                                                                                               |
+| [tapSlop](#tapslop)                                                                         | Specify the sliding distance threshold at which the tap event is not triggered.                                                                                                                                                                                                                                                                                    |
+| [targetSdkVersion](#targetsdkversion)                                                       | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [templateDebugUrl](#templatedebugurl)                                                       | NA                                                                                                                                                                                                                                                                                                                                                                 |
+| [trailNewImage](#trailnewimage)                                                             | Enable the iOS image refactor                                                                                                                                                                                                                                                                                                                                      |
+| [unifyVWVHBehavior](#unifyvwvhbehavior)                                                     | Control whether the vw and vh units dynamically adjust with the viewport in properties like font-size; enabled by default for targetSdkVersion &gt;= 2.3                                                                                                                                                                                                           |
+| [useImagePostProcessor](#useimagepostprocessor)                                             | Whether use image post processor                                                                                                                                                                                                                                                                                                                                   |
+| [useNewSwiper](#usenewswiper)                                                               | Indicates whether to use new swiper                                                                                                                                                                                                                                                                                                                                |
+| [autoResumeAnimation](#autoresumeanimation) <Deprecated/>                                   | deprecated                                                                                                                                                                                                                                                                                                                                                         |
+| [cli](#cli) <Deprecated/>                                                                   | cli version                                                                                                                                                                                                                                                                                                                                                        |
+| [compileRender](#compilerender) <Deprecated/>                                               | None                                                                                                                                                                                                                                                                                                                                                               |
+| [customData](#customdata) <Deprecated/>                                                     | None                                                                                                                                                                                                                                                                                                                                                               |
+| [enableA11yIDMutationObserver](#enablea11yidmutationobserver) <Deprecated/>                 | Enable MutationObserver for accessibility.                                                                                                                                                                                                                                                                                                                         |
+| [enableAsyncDisplay](#enableasyncdisplay) <Deprecated/>                                     | Globally enable async rendering for software rendering contents on iOS, this can largely optimize the frame rate and reduce janks.                                                                                                                                                                                                                                 |
+| [enableBackgroundShapeLayer](#enablebackgroundshapelayer) <Deprecated/>                     | Enable iOS background manager to apply shape layer optimization. Deprecated and to be removed since this optimization becomes a fixed setting.                                                                                                                                                                                                                     |
+| [enableCascadePseudo](#enablecascadepseudo) <Deprecated/>                                   | Deprecated, this is for legacy CSS selector to enable a cascading.                                                                                                                                                                                                                                                                                                 |
+| [enableCheckDataWhenUpdatePage](#enablecheckdatawhenupdatepage) <Deprecated/>               | None                                                                                                                                                                                                                                                                                                                                                               |
+| [enableComponentLayoutOnly](#enablecomponentlayoutonly) <Deprecated/>                       | None                                                                                                                                                                                                                                                                                                                                                               |
+| [enableGlobalComponentMap](#enableglobalcomponentmap) <Deprecated/>                         | None                                                                                                                                                                                                                                                                                                                                                               |
+| [enableNativeScheduleCreateViewAsync](#enablenativeschedulecreateviewasync) <Deprecated/>   | Enable create ui async form C++ PaintingContext                                                                                                                                                                                                                                                                                                                    |
+| [enableNewAccessibility](#enablenewaccessibility) <Deprecated/>                             | None                                                                                                                                                                                                                                                                                                                                                               |
+| [enableNewLayoutOnly](#enablenewlayoutonly) <Deprecated/>                                   | None                                                                                                                                                                                                                                                                                                                                                               |
+| [enableOptPushStyleToBundle](#enableoptpushstyletobundle) <Deprecated/>                     | Enable using PropBundleStyleWriter to write style to PropBundle.                                                                                                                                                                                                                                                                                                   |
+| [enableOverlapForAccessibilityElement](#enableoverlapforaccessibilityelement) <Deprecated/> | None                                                                                                                                                                                                                                                                                                                                                               |
+| [fixCSSImportRuleOrder](#fixcssimportruleorder) <Deprecated/>                               | None                                                                                                                                                                                                                                                                                                                                                               |
+| [forceCalcNewStyle](#forcecalcnewstyle) <Deprecated/>                                       | None                                                                                                                                                                                                                                                                                                                                                               |
+| [reactVersion](#reactversion) <Deprecated/>                                                 | None                                                                                                                                                                                                                                                                                                                                                               |
+| [redBoxImageSizeWarningThreshold](#redboximagesizewarningthreshold) <Deprecated/>           | None                                                                                                                                                                                                                                                                                                                                                               |
+| [removeComponentElement](#removecomponentelement) <Deprecated/>                             | deprecated                                                                                                                                                                                                                                                                                                                                                         |
+| [syncImageAttach](#syncimageattach) <Deprecated/>                                           | If true and on the main thread, image requests will be initiated immediately; otherwise, image requests will be posted after the next frame of the main thread to delay the requests.                                                                                                                                                                              |
+| [useNewImage](#usenewimage) <Deprecated/>                                                   | None                                                                                                                                                                                                                                                                                                                                                               |
+| [version](#version) <Deprecated/>                                                           | None                                                                                                                                                                                                                                                                                                                                                               |
+
+## Config Reference
+
+---
+
+### absoluteInContentBound
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+When set to true, the containing block of absolute/fixed elements is the content area; otherwise, it is the padding area
+
+```typescript
+absoluteInContentBound?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### asyncRedirect
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Enable Android Lynx Image URL asynchronous redirect
+
+```typescript
+asyncRedirect?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### autoExpose
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+if this flag is true, onShow/onHide will be automatically triggered by attachToView/detachFromWindow calls
+
+```typescript
+autoExpose?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### CSSAlignWithLegacyW3C
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+When set to true, for compatibility, some layout behaviors are consistent with the previous incorrect behaviors.
+
+```typescript
+CSSAlignWithLegacyW3C?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### customCSSInheritanceList
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Custom Inheritable CSS Properties
+
+```typescript
+customCSSInheritanceList?: string[] | undefined;
+```
+
+- **`valueType:`** string[] | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### dataStrictMode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+ReactLynx cannot opt top_level_variables used in lepus. So we cannot forbid updateData when variable not in top_level_variables. User can use this config to close the check.
+
+```typescript
+dataStrictMode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### debugInfoOutside
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+debugInfoOutside?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### defaultDisplayLinear
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+defaultDisplayLinear?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### defaultOverflowVisible
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+defaultOverflowVisible?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### disableLongpressAfterScroll
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Prevent the long press event from being triggered during inertial scrolling.
+
+```typescript
+disableLongpressAfterScroll?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### disableMultipleCascadeCSS
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+disableMultipleCascadeCSS?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### disableQuickTracingGC
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Disable tracing gc mode in quick context.
+
+```typescript
+disableQuickTracingGC?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableA11y
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Enable Android A11y
+
+```typescript
+enableA11y?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAccessibilityElement
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Indicates whether all ui enable a11y
+
+```typescript
+enableAccessibilityElement?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableAsyncInitVideoEngine
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Whether to enable asynchronous initialization of videoEngine
+
+```typescript
+enableAsyncInitVideoEngine?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAsyncRequestImage
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+If true, supports initiating image requests in asynchronous threads.
+
+```typescript
+enableAsyncRequestImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAsyncResolveSubtree
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.4} />
+
+FE Framework use this config to notify Engine that resolve subtree binding will be triggered when render DOM (Not exposed to normal user)
+
+```typescript
+enableAsyncResolveSubtree?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCheckExposureOptimize
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable exposure detection optimization so that exposure detection is not performed when the page is static.
+
+```typescript
+enableCheckExposureOptimize?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCheckLocalImage
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Determine whether redirection is needed for local image resources.
+
+```typescript
+enableCheckLocalImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCircularDataCheck
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If this flag is true, circular data check will enable when convert js value to other vale.
+
+```typescript
+enableCircularDataCheck?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableComponentAsyncDecode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable dynamic components to be decoded in child threads before they are delivered into tasm in async-loading.
+
+```typescript
+enableComponentAsyncDecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableComponentConfig
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableComponentConfig?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableComponentNullProp
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Support component can be passed null props, null props only supported in LepusNG now. Open this switch to support lepus use null prop.
+
+```typescript
+enableComponentNullProp?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCreateViewAsync
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Create Android platform UIs in lynx built-in thread-pool to optimize UI Operation Execution
+
+```typescript
+enableCreateViewAsync?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCSSAsyncDecode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSAsyncDecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCSSClassMerge
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSClassMerge?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSEngine
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSEngine?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCSSExternalClass
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSExternalClass?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCSSInheritance
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable CSS inheritance
+
+```typescript
+enableCSSInheritance?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSInlineVariables
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.6} />
+
+Enable CSS inline variables.
+
+```typescript
+enableCSSInlineVariables?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSInvalidation
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+If enable CSS invalidation we use RuleInvalidationSet to gather the selector invalidation.
+
+```typescript
+enableCSSInvalidation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSLazyDecode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSLazyDecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCSSLazyImport
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Under scoped CSS, the imported CSS declarations by import rules are lazily decoded at the first time the scope takes effect.
+
+```typescript
+enableCSSLazyImport?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCSSSelector
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+This switch will enable the css module in blink standard mode.
+
+```typescript
+enableCSSSelector?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSStrictMode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+CSS Length should be &lt;number&gt; follows a unit. Under strict mode, invalid &lt;length&gt; values are dropped.
+
+```typescript
+enableCSSStrictMode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSVariable
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSVariable?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableDisexposureWhenLynxHidden
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Enables the disexposure event to fire when LynxView is in the hidden state.
+
+```typescript
+enableDisexposureWhenLynxHidden?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableEndGestureAtLastFingerUp
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the Lynx touch event to be triggered normally after the last finger is lifted in a multi-finger scenario.
+
+```typescript
+enableEndGestureAtLastFingerUp?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableEventHandleRefactor
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.5} />
+
+Enable new event processing logic to support dynamic registration of event listeners, interception of events, etc.
+
+```typescript
+enableEventHandleRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableEventRefactor
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableEventRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableEventThrough
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the client-slide touch event penetrate Lynx when touching the root node area of the Lynx page.
+
+```typescript
+enableEventThrough?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableExposureUIMargin
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable exposure-ui-margin-\* properties to take effect.
+
+```typescript
+enableExposureUIMargin?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableExposureWhenLayout
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Enable exposure check when LynxView is layoutRequest
+
+```typescript
+enableExposureWhenLayout?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableExposureWhenReload
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.5} />
+
+Enables exposure and disexposure events to be triggered when reloading the Lynx page.
+
+```typescript
+enableExposureWhenReload?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableFiberArch
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableFiberArch?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableFixedNew
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+A better and stable position fixed handling.
+
+```typescript
+enableFixedNew?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableFlexibleTemplate
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+If enable this value, the template will be encoded as flexible template.
+
+```typescript
+enableFlexibleTemplate?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableHarmonyNewOverlay
+
+{' '}
+
+<HarmonyOnly /> <VersionBadge v={3.6} />
+
+Enable harmony new overlay based overlayManager to handle events pass through.
+
+```typescript
+enableHarmonyNewOverlay?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableHarmonyVisibleAreaChangeForExposure
+
+{' '}
+
+<HarmonyOnly /> <VersionBadge v={3.4} />
+
+Enable Harmony to detect exposure with visible area change event.
+
+```typescript
+enableHarmonyVisibleAreaChangeForExposure?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableICU
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable Bind PRIMJS-ICU
+
+```typescript
+enableICU?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableImageDownsampling
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+If true, downsampling will be enabled for all images on this LynxView
+
+```typescript
+enableImageDownsampling?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableJsBindingApiThrowException
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable js binding api throw exception
+
+```typescript
+enableJsBindingApiThrowException?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableJSDataProcessor
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable data processor on JS thread
+
+```typescript
+enableJSDataProcessor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableKeepPageData
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableKeepPageData?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableListMoveOperation
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Does diffResult have moveAction
+
+```typescript
+enableListMoveOperation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableListNewArchitecture
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Indicates whether to use new architecture for the platform list
+
+```typescript
+enableListNewArchitecture?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableListPlug
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Indicates whether to use list plug
+
+```typescript
+enableListPlug?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableLynxScrollFluency
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Force report lynx scroll fluency event. When setting pageConfig.enableLynxScrollFluency to a double value in the range [0, 1], we will monitor the fluency metrics for this LynxUI based on this probability. The probability indicates the likelihood of enabling fluency monitoring, and the metrics will be reported unconditionally through the applogService.
+
+```typescript
+enableLynxScrollFluency?: boolean | number | undefined;
+```
+
+- **`valueType:`** boolean | number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableMicrotaskPromisePolyfill
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+This configuration item enableMicrotaskPromisePolyfill is used to determine whether to enable the micro - task Promise polyfill. Its value type is TernaryBool, and the default value is TernaryBool::UNDEFINE_VALUE.
+
+```typescript
+enableMicrotaskPromisePolyfill?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableMTSPreExecute
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.7} />
+
+Enable MTS VM pre execute code.
+
+```typescript
+enableMTSPreExecute?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableMultiTouch
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable support multi-finger events so that event parameters can contain information about multiple fingers.
+
+```typescript
+enableMultiTouch?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableMultiTouchParamsCompatible
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the parameters of multi-finger events compatible with single-finger events
+
+```typescript
+enableMultiTouchParamsCompatible?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNativeList
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Indicates whether use c++ list.
+
+```typescript
+enableNativeList?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableNewAnimator
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If this flag is false, will use platform animation ability.
+
+```typescript
+enableNewAnimator?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableNewClipMode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Whether enable new clip mode.
+
+```typescript
+enableNewClipMode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableNewGesture
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+if want to use gesture handler api, you need to set true
+
+```typescript
+enableNewGesture?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewImage
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable load image from image service
+
+```typescript
+enableNewImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableNewIntersectionObserver
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the new IntersectionObserver detection logic so that observe can be triggered normally without binding to scroll events.
+
+```typescript
+enableNewIntersectionObserver?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewListContainer
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Implement the platform-level list based on scrollView on the IOS platform
+
+```typescript
+enableNewListContainer?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewTransformOrigin
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If this flag is true, new transform origin algorithm will apply.
+
+```typescript
+enableNewTransformOrigin?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enablePlatformGesture
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.6} />
+
+Enable shadow platform gesture to handle gesture conflict.
+
+```typescript
+enablePlatformGesture?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enablePropertyBasedSimpleStyle
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.5} />
+
+SimpleStyle mode will incrementally update styles based on properties if this config set to TRUE. Otherwise it will incrementally update based on StyleObjects. The StyleObject based updating has a better performance but not allow StyleObjects bound to the same element has intersect properties.
+
+```typescript
+enablePropertyBasedSimpleStyle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableQueryComponentSync
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable query component sync in background runtime
+
+```typescript
+enableQueryComponentSync?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReactOnlyPropsId
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If we got propsId, we could only pass propsId and a flag to JS thread. JS thread will use a propsMap to get correct props
+
+```typescript
+enableReactOnlyPropsId?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReduceInitDataCopy
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If this flag is true, do not copy init data, instead copy Object.keys of init data for efficiency.
+
+```typescript
+enableReduceInitDataCopy?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReloadLifecycle
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable LynxUI onNodeReload lifecycle.
+
+```typescript
+enableReloadLifecycle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableRemoveComponentExtraData
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If this flag is true, remove the globalProps &amp; systemInfo from component data for efficiency.
+
+```typescript
+enableRemoveComponentExtraData?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableRemoveCSSScope
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableRemoveCSSScope?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReuseLoadScriptExports
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.5} />
+
+Enable reuse loadScript&#39;s result.
+
+```typescript
+enableReuseLoadScriptExports?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableSignalAPI
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable using native signal API
+
+```typescript
+enableSignalAPI?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableSimpleStyling
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.3} />
+
+Using the simplified styling module.
+
+```typescript
+enableSimpleStyling?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableSimultaneousTap
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the client&#39;s tap gesture to be triggered simultaneously with Lynx&#39;s tap gesture.
+
+```typescript
+enableSimultaneousTap?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTextBoringLayout
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Enable using BoringLayout on Android.
+
+```typescript
+enableTextBoringLayout?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextGradientOpt
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.5} />
+
+Enable text gradient optimization for iOS.
+
+```typescript
+enableTextGradientOpt?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextLanguageAlignment
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable a more accurate text alignment judgment method, but it will increase the time taken for text layout.
+
+```typescript
+enableTextLanguageAlignment?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTextLayerRender
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable using text layer render on iOS.
+
+```typescript
+enableTextLayerRender?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextLayoutCache
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.3} />
+
+Whether enable text layout cache.
+
+```typescript
+enableTextLayoutCache?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextNonContiguousLayout
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Whether enable text noncontiguous layout
+
+```typescript
+enableTextNonContiguousLayout?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableTextOverflow
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Set text overflow as visible if true.
+
+```typescript
+enableTextOverflow?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTextRefactor
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable text refactor, with behavior more aligned with web.
+
+```typescript
+enableTextRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTouchRefactor
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable Lynx&#39;s touchend event to be triggered normally.
+
+```typescript
+enableTouchRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableUIOperationOptimize
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the optimization about UIOperation batching and CreateViewAsync at Android.
+
+```typescript
+enableUIOperationOptimize?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableUnifiedPipeline
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.4} />
+
+Enable the unified pixel pipeline for Lynx Engine.
+
+```typescript
+enableUnifiedPipeline?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableUnifyFixedBehavior
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.7} />
+
+Unify behavior between old-fixed and new-fixed
+
+```typescript
+enableUnifyFixedBehavior?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableUseContextPool
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable Use Context Pool For LepusNG VM creation.
+
+```typescript
+enableUseContextPool?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableUseMapBuffer
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the mapbuffer structure for LynxProps.
+
+```typescript
+enableUseMapBuffer?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableViewReceiveTouch
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable touchesBegan and other methods to be triggered when touching the client-slide custom components.
+
+```typescript
+enableViewReceiveTouch?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableVsyncAlignedFlush
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <PlatformBadge platform="android" version="3.2" />
+<PlatformBadge platform="ios" version="3.2" />
+
+Drive the execution of UI tasks in the pipeline according to the VSync signal, bringing a certain progressive rendering effect. It is suitable for scenarios where JS-driven updates are frequent. Turn it on as needed.
+
+```typescript
+enableVsyncAlignedFlush?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableXTextLayoutReused
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Whether enable x-text layout reused.
+
+```typescript
+enableXTextLayoutReused?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### experimental_encodeQuickjsBytecode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+Allow encoding quickjs bytecode instead of source code in template.
+
+```typescript
+experimental_encodeQuickjsBytecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### extendedLayoutOnlyOpt
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+A config to force make some special properties can be used to layout only (such as direction&amp;text-align,etc.).
+
+```typescript
+extendedLayoutOnlyOpt?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### extraInfo
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+user defined extraInfo.
+
+```typescript
+extraInfo?: Record<string, unknown> | undefined;
+```
+
+- **`valueType:`** Record&lt;string, unknown&gt; | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### flatten
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Control whether the node requires creating a corresponding Android View. Default is true.
+
+```typescript
+flatten?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### fontScaleEffectiveOnlyOnSp
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Make font scale only apply to sp units.
+
+```typescript
+fontScaleEffectiveOnlyOnSp?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### forceCalcNewStyle
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+forceCalcNewStyle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### implicit
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Control whether implicit animations are allowed on the iOS platform.
+
+```typescript
+implicit?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### implicitAnimation
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+implicitAnimation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### includeFontPadding
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Control the top and bottom padding of text on Android, which affects the text&#39;s height and vertical centering effect.
+
+```typescript
+includeFontPadding?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### keyboardCallbackPassRelativeHeight
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+The outer decor view that wraps lynx view may change due to that virtual navigation bar is shielded or drawn. Change the returning value of keyboard event to return absolute keyboard height and the offset from keyboard to to lynx view bottom
+
+```typescript
+keyboardCallbackPassRelativeHeight?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### longPressDuration
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Specify the interval for triggering the long press event.
+
+```typescript
+longPressDuration?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### observerFrameRate
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Specifies the frequency of exposure detection.
+
+```typescript
+observerFrameRate?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### pipelineSchedulerConfig
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Scheduler config for pipeline, including enableParallelElement/list-framework batch render and other scheduler config.
+
+```typescript
+pipelineSchedulerConfig?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### preferredFps
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Control the frame rate of CSS animations
+
+```typescript
+preferredFps?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;auto&#34;
+
+---
+
+### quirksMode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Supports string value. It is equal to TargetSDKVersion by default. The mode is for compatibility with old pages that do not conform to CSS layout specifications produced.
+
+```typescript
+quirksMode?: boolean | string | undefined;
+```
+
+- **`valueType:`** boolean | string | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### removeCSSParserLog
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+removeCSSParserLog?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### removeDescendantSelectorScope
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+If false, descendant selector only works in component scope.
+
+```typescript
+removeDescendantSelectorScope?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### strictPropType
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+if this flag is true, if component&#39;s prop type mismatch, will use default value.
+
+```typescript
+strictPropType?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### tapSlop
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+Specify the sliding distance threshold at which the tap event is not triggered.
+
+```typescript
+tapSlop?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;50px&#34;
+
+---
+
+### targetSdkVersion
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+targetSdkVersion?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### templateDebugUrl
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+templateDebugUrl?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### trailNewImage
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable the iOS image refactor
+
+```typescript
+trailNewImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### unifyVWVHBehavior
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Control whether the vw and vh units dynamically adjust with the viewport in properties like font-size; enabled by default for targetSdkVersion &gt;= 2.3
+
+```typescript
+unifyVWVHBehavior?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### useImagePostProcessor
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Whether use image post processor
+
+```typescript
+useImagePostProcessor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### useNewSwiper
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Indicates whether to use new swiper
+
+```typescript
+useNewSwiper?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+## Deprecated Config
+
+---
+
+### autoResumeAnimation <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+deprecated
+
+```typescript
+autoResumeAnimation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### cli <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+cli version
+
+```typescript
+cli?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### compileRender <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+compileRender?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### customData <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+customData?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### enableA11yIDMutationObserver <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+Enable MutationObserver for accessibility.
+
+```typescript
+enableA11yIDMutationObserver?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAsyncDisplay <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Globally enable async rendering for software rendering contents on iOS, this can largely optimize the frame rate and reduce janks.
+
+```typescript
+enableAsyncDisplay?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableBackgroundShapeLayer <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+Enable iOS background manager to apply shape layer optimization. Deprecated and to be removed since this optimization becomes a fixed setting.
+
+```typescript
+enableBackgroundShapeLayer?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCascadePseudo <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Deprecated, this is for legacy CSS selector to enable a cascading.
+
+```typescript
+enableCascadePseudo?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCheckDataWhenUpdatePage <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableCheckDataWhenUpdatePage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableComponentLayoutOnly <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableComponentLayoutOnly?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableGlobalComponentMap <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableGlobalComponentMap?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNativeScheduleCreateViewAsync <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+Enable create ui async form C++ PaintingContext
+
+```typescript
+enableNativeScheduleCreateViewAsync?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableNewAccessibility <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableNewAccessibility?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewLayoutOnly <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableNewLayoutOnly?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableOptPushStyleToBundle <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+Enable using PropBundleStyleWriter to write style to PropBundle.
+
+```typescript
+enableOptPushStyleToBundle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableOverlapForAccessibilityElement <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableOverlapForAccessibilityElement?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### fixCSSImportRuleOrder <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+fixCSSImportRuleOrder?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### forceCalcNewStyle <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+forceCalcNewStyle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### reactVersion <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+reactVersion?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### redBoxImageSizeWarningThreshold <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+redBoxImageSizeWarningThreshold?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### removeComponentElement <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+deprecated
+
+```typescript
+removeComponentElement?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### syncImageAttach <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+If true and on the main thread, image requests will be initiated immediately; otherwise, image requests will be posted after the next frame of the main thread to delay the requests.
+
+```typescript
+syncImageAttach?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### useNewImage <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+useNewImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### version <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+version?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;

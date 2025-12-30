@@ -1,0 +1,2812 @@
+import {
+  Deprecated,
+  VersionBadge,
+  PlatformBadge,
+  AndroidOnly,
+  IOSOnly,
+  HarmonyOnly,
+} from '@lynx';
+
+# Lynx 配置参考
+
+> 该文档由 AI 翻译生成
+
+## 导览
+
+- **[Lynx 配置概述](#summary)**: 带有详细信息链接的快速表格视图
+- **[Lynx 配置参考](#config-reference)**: 有效配置（按字母顺序排列）
+- **[已废弃的 Lynx 配置](#deprecated-config)**: 废弃配置（请勿使用）
+
+## Lynx 配置概述 {#summary}
+
+| 配置项                                                                                      | 描述                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [absoluteInContentBound](#absoluteincontentbound)                                           | 当设置为 true 时，绝对定位/固定定位元素的包含块是内容区域；否则，它是内边距区域。                                                                                                                                                                   |
+| [asyncRedirect](#asyncredirect)                                                             | 启用 Android Lynx 图片 URL 异步重定向                                                                                                                                                                                                               |
+| [autoExpose](#autoexpose)                                                                   | 如果此标志为 `true`，则 `onShow`/`onHide` 将由 `attachToView`/`detachFromWindow` 调用自动触发。                                                                                                                                                     |
+| [CSSAlignWithLegacyW3C](#cssalignwithlegacyw3c)                                             | 当设置为 true 时，为了兼容，一些布局行为会与之前的错误行为保持一致。                                                                                                                                                                                |
+| [customCSSInheritanceList](#customcssinheritancelist)                                       | 自定义可继承的 CSS 属性                                                                                                                                                                                                                             |
+| [dataStrictMode](#datastrictmode)                                                           | ReactLynx 无法选择在 lepus 中使用的顶级变量。因此，当变量不在顶级变量中时，我们无法禁止 `updateData`。用户可以使用此配置来关闭该检查。                                                                                                              |
+| [debugInfoOutside](#debuginfooutside)                                                       | NA                                                                                                                                                                                                                                                  |
+| [defaultDisplayLinear](#defaultdisplaylinear)                                               | NA                                                                                                                                                                                                                                                  |
+| [defaultOverflowVisible](#defaultoverflowvisible)                                           | NA                                                                                                                                                                                                                                                  |
+| [disableLongpressAfterScroll](#disablelongpressafterscroll)                                 | 防止在惯性滚动期间触发长按事件。                                                                                                                                                                                                                    |
+| [disableMultipleCascadeCSS](#disablemultiplecascadecss)                                     | NA                                                                                                                                                                                                                                                  |
+| [disableQuickTracingGC](#disablequicktracinggc)                                             | 在快速上下文环境中禁用跟踪垃圾回收（GC）模式。                                                                                                                                                                                                      |
+| [enableA11y](#enablea11y)                                                                   | 启用安卓无障碍功能（注：A11y 是 Accessibility 的缩写，在安卓开发语境中常代表无障碍功能）                                                                                                                                                            |
+| [enableAccessibilityElement](#enableaccessibilityelement)                                   | 指示是否所有用户界面（UI）都启用了无障碍访问功能（a11y）。                                                                                                                                                                                          |
+| [enableAsyncInitVideoEngine](#enableasyncinitvideoengine)                                   | 是否启用 videoEngine 的异步初始化                                                                                                                                                                                                                   |
+| [enableAsyncRequestImage](#enableasyncrequestimage)                                         | 如果为真，则支持在异步线程中发起图像请求。                                                                                                                                                                                                          |
+| [enableAsyncResolveSubtree](#enableasyncresolvesubtree)                                     | 前端（FE）框架使用此配置来通知引擎，在渲染 DOM 时将触发解析子树绑定（不向普通用户公开）。                                                                                                                                                           |
+| [enableCheckExposureOptimize](#enablecheckexposureoptimize)                                 | 启用曝光检测优化，以便在页面静止时不执行曝光检测。                                                                                                                                                                                                  |
+| [enableCheckLocalImage](#enablechecklocalimage)                                             | 确定本地图片资源是否需要重定向。                                                                                                                                                                                                                    |
+| [enableCircularDataCheck](#enablecirculardatacheck)                                         | 如果此标志为 `true`，则在将 JavaScript 值转换为其他值时将启用循环数据检查。                                                                                                                                                                         |
+| [enableComponentAsyncDecode](#enablecomponentasyncdecode)                                   | 在异步加载时，允许动态组件在被传递到 TASM 之前，先在子线程中进行解码处理。                                                                                                                                                                          |
+| [enableComponentConfig](#enablecomponentconfig)                                             | NA                                                                                                                                                                                                                                                  |
+| [enableComponentNullProp](#enablecomponentnullprop)                                         | 支持组件可以传入空属性，目前仅在 LepusNG 中支持空属性。打开此开关以支持 Lepus 使用空属性。                                                                                                                                                          |
+| [enableCreateViewAsync](#enablecreateviewasync)                                             | 在 Lynx 内置线程池中创建安卓平台的用户界面（UI），以优化 UI 操作执行。                                                                                                                                                                              |
+| [enableCSSAsyncDecode](#enablecssasyncdecode)                                               | NA                                                                                                                                                                                                                                                  |
+| [enableCSSClassMerge](#enablecssclassmerge)                                                 | NA                                                                                                                                                                                                                                                  |
+| [enableCSSEngine](#enablecssengine)                                                         | NA                                                                                                                                                                                                                                                  |
+| [enableCSSExternalClass](#enablecssexternalclass)                                           | NA                                                                                                                                                                                                                                                  |
+| [enableCSSInheritance](#enablecssinheritance)                                               | 启用 CSS 继承                                                                                                                                                                                                                                       |
+| [enableCSSInlineVariables](#enablecssinlinevariables)                                       | 启用 CSS 内联变量。                                                                                                                                                                                                                                 |
+| [enableCSSInvalidation](#enablecssinvalidation)                                             | 如果启用 CSS 失效机制，我们会使用 RuleInvalidationSet 来收集选择器失效信息。                                                                                                                                                                        |
+| [enableCSSLazyDecode](#enablecsslazydecode)                                                 | NA                                                                                                                                                                                                                                                  |
+| [enableCSSLazyImport](#enablecsslazyimport)                                                 | 在作用域 CSS 下，通过 `import` 规则导入的 CSS 声明会在该作用域首次生效时进行惰性解码。                                                                                                                                                              |
+| [enableCSSSelector](#enablecssselector)                                                     | 此开关将在 Blink 标准模式下启用 CSS 模块。                                                                                                                                                                                                          |
+| [enableCSSStrictMode](#enablecssstrictmode)                                                 | CSS 长度值应由一个 `&lt;number&gt;` 后跟一个单位组成。在严格模式下，无效的 `&lt;length&gt;` 值将被丢弃。                                                                                                                                            |
+| [enableCSSVariable](#enablecssvariable)                                                     | NA                                                                                                                                                                                                                                                  |
+| [enableDisexposureWhenLynxHidden](#enabledisexposurewhenlynxhidden)                         | 当 LynxView 处于隐藏状态时，启用曝光消失事件触发功能。                                                                                                                                                                                              |
+| [enableEndGestureAtLastFingerUp](#enableendgestureatlastfingerup)                           | 在多指场景下，确保最后一根手指抬起后，Lynx触摸事件能正常触发。                                                                                                                                                                                      |
+| [enableEventHandleRefactor](#enableeventhandlerefactor)                                     | 启用新的事件处理逻辑，以支持事件监听器的动态注册、事件拦截等功能。                                                                                                                                                                                  |
+| [enableEventRefactor](#enableeventrefactor)                                                 | NA                                                                                                                                                                                                                                                  |
+| [enableEventThrough](#enableeventthrough)                                                   | 在触摸 Lynx 页面的根节点区域时，允许客户端滑动触摸事件穿透 Lynx。                                                                                                                                                                                   |
+| [enableExposureUIMargin](#enableexposureuimargin)                                           | 启用 `exposure-ui-margin-*` 属性以使其生效。                                                                                                                                                                                                        |
+| [enableExposureWhenLayout](#enableexposurewhenlayout)                                       | 当 LynxView 进行布局请求时，启用暴露检查。                                                                                                                                                                                                          |
+| [enableExposureWhenReload](#enableexposurewhenreload)                                       | 启用在重新加载 Lynx 页面时触发曝光和取消曝光事件的功能。                                                                                                                                                                                            |
+| [enableFiberArch](#enablefiberarch)                                                         | NA                                                                                                                                                                                                                                                  |
+| [enableFixedNew](#enablefixednew)                                                           | 更出色且稳定的固定定位处理。                                                                                                                                                                                                                        |
+| [enableFlexibleTemplate](#enableflexibletemplate)                                           | 如果启用此值，模板将被编码为灵活模板。                                                                                                                                                                                                              |
+| [enableHarmonyNewOverlay](#enableharmonynewoverlay)                                         | 启用基于 Harmony 新覆盖层的 OverlayManager 来处理事件穿透。                                                                                                                                                                                         |
+| [enableHarmonyVisibleAreaChangeForExposure](#enableharmonyvisibleareachangeforexposure)     | 使 Harmony 能够通过可见区域更改事件检测曝光情况。                                                                                                                                                                                                   |
+| [enableICU](#enableicu)                                                                     | 启用绑定 PRIMJS-ICU                                                                                                                                                                                                                                 |
+| [enableImageDownsampling](#enableimagedownsampling)                                         | 如果为 true，则会为此 LynxView 上的所有图像启用下采样。                                                                                                                                                                                             |
+| [enableJsBindingApiThrowException](#enablejsbindingapithrowexception)                       | 启用 JavaScript 绑定 API 抛出异常                                                                                                                                                                                                                   |
+| [enableJSDataProcessor](#enablejsdataprocessor)                                             | 在 JavaScript 线程上启用数据处理器                                                                                                                                                                                                                  |
+| [enableKeepPageData](#enablekeeppagedata)                                                   | NA                                                                                                                                                                                                                                                  |
+| [enableListMoveOperation](#enablelistmoveoperation)                                         | diffResult 是否有移动操作（moveAction）                                                                                                                                                                                                             |
+| [enableListNewArchitecture](#enablelistnewarchitecture)                                     | 指示是否为平台列表使用新架构。                                                                                                                                                                                                                      |
+| [enableListPlug](#enablelistplug)                                                           | 指示是否使用列表插件                                                                                                                                                                                                                                |
+| [enableLynxScrollFluency](#enablelynxscrollfluency)                                         | 强制上报 Lynx 滚动流畅度事件。当将 `pageConfig.enableLynxScrollFluency` 设置为一个范围在 [0, 1] 的双精度值时，我们将基于此概率来监控这个基于 LynxUI 的流畅度指标。该概率表示启用流畅度监控的可能性，并且这些指标将通过 `applogService` 无条件上报。 |
+| [enableMicrotaskPromisePolyfill](#enablemicrotaskpromisepolyfill)                           | 这个配置项 `enableMicrotaskPromisePolyfill` 用于确定是否启用微任务 Promise 垫片。其值的类型为 `TernaryBool`，默认值为 `TernaryBool::UNDEFINE_VALUE`。                                                                                               |
+| [enableMTSPreExecute](#enablemtspreexecute)                                                 | 启用 MTS 虚拟机预执行代码。                                                                                                                                                                                                                         |
+| [enableMultiTouch](#enablemultitouch)                                                       | 启用对多指事件的支持，以便事件参数可以包含多个手指的信息。                                                                                                                                                                                          |
+| [enableMultiTouchParamsCompatible](#enablemultitouchparamscompatible)                       | 启用与单指事件兼容的多指事件参数                                                                                                                                                                                                                    |
+| [enableNativeList](#enablenativelist)                                                       | 指示是否使用 C++ 列表。                                                                                                                                                                                                                             |
+| [enableNewAnimator](#enablenewanimator)                                                     | 如果此标志为 false，则将使用平台动画能力。                                                                                                                                                                                                          |
+| [enableNewClipMode](#enablenewclipmode)                                                     | 是否启用新的裁剪模式。                                                                                                                                                                                                                              |
+| [enableNewGesture](#enablenewgesture)                                                       | 如果想使用手势处理程序 API，你需要将其设置为 true。                                                                                                                                                                                                 |
+| [enableNewImage](#enablenewimage)                                                           | 启用从图像服务加载图像的功能                                                                                                                                                                                                                        |
+| [enableNewIntersectionObserver](#enablenewintersectionobserver)                             | 启用新的 IntersectionObserver 检测逻辑，以便在不绑定滚动事件的情况下，observe 能够正常触发。                                                                                                                                                        |
+| [enableNewListContainer](#enablenewlistcontainer)                                           | 在 iOS 平台上基于 ScrollView 实现平台级列表。                                                                                                                                                                                                       |
+| [enableNewTransformOrigin](#enablenewtransformorigin)                                       | 如果此标志为 `true`，将应用新的变换原点算法。                                                                                                                                                                                                       |
+| [enablePlatformGesture](#enableplatformgesture)                                             | 启用影子平台手势以处理手势冲突。                                                                                                                                                                                                                    |
+| [enablePropertyBasedSimpleStyle](#enablepropertybasedsimplestyle)                           | 如果此配置设置为 `TRUE`，SimpleStyle 模式将根据属性逐步更新样式。否则，它将根据 StyleObject 逐步更新。基于 StyleObject 的更新性能更好，但不允许绑定到同一元素的 StyleObject 具有相交属性。                                                          |
+| [enableQueryComponentSync](#enablequerycomponentsync)                                       | 在后台运行时启用查询组件同步                                                                                                                                                                                                                        |
+| [enableReactOnlyPropsId](#enablereactonlypropsid)                                           | 如果我们有了 `propsId`，我们就可以只将 `propsId` 和一个标志传递给 JS 线程。JS 线程将使用一个 `propsMap` 来获取正确的属性。                                                                                                                          |
+| [enableReduceInitDataCopy](#enablereduceinitdatacopy)                                       | 如果此标志为 `true`，则不复制初始化数据，而是为了提高效率复制初始化数据的 `Object.keys`。                                                                                                                                                           |
+| [enableReloadLifecycle](#enablereloadlifecycle)                                             | 启用 LynxUI 的 onNodeReload 生命周期。                                                                                                                                                                                                              |
+| [enableRemoveComponentExtraData](#enableremovecomponentextradata)                           | 如果此标志为 true，则为了提高效率，从组件数据中移除 `globalProps` 和 `systemInfo`。                                                                                                                                                                 |
+| [enableRemoveCSSScope](#enableremovecssscope)                                               | NA                                                                                                                                                                                                                                                  |
+| [enableReuseLoadScriptExports](#enablereuseloadscriptexports)                               | 启用复用 `loadScript` 的结果。                                                                                                                                                                                                                      |
+| [enableSignalAPI](#enablesignalapi)                                                         | 启用 Signal API                                                                                                                                                                                                                                     |
+| [enableSimpleStyling](#enablesimplestyling)                                                 | 使用简化样式模块。                                                                                                                                                                                                                                  |
+| [enableSimultaneousTap](#enablesimultaneoustap)                                             | 启用客户端的点击手势，使其能与 Lynx 的点击手势同时触发。                                                                                                                                                                                            |
+| [enableTextBoringLayout](#enabletextboringlayout)                                           | 启用在 Android 上使用 BoringLayout。                                                                                                                                                                                                                |
+| [enableTextGradientOpt](#enabletextgradientopt)                                             | 为 iOS 启用文本渐变优化。                                                                                                                                                                                                                           |
+| [enableTextLanguageAlignment](#enabletextlanguagealignment)                                 | 启用更精确的文本对齐判断方法，但这会增加文本布局所需的时间。                                                                                                                                                                                        |
+| [enableTextLayerRender](#enabletextlayerrender)                                             | 启用在 iOS 上使用文本层渲染。                                                                                                                                                                                                                       |
+| [enableTextLayoutCache](#enabletextlayoutcache)                                             | 是否启用文本布局缓存。                                                                                                                                                                                                                              |
+| [enableTextNonContiguousLayout](#enabletextnoncontiguouslayout)                             | 是否启用文本非连续布局                                                                                                                                                                                                                              |
+| [enableTextOverflow](#enabletextoverflow)                                                   | 如果为 true，则将文本溢出设置为可见。                                                                                                                                                                                                               |
+| [enableTextRefactor](#enabletextrefactor)                                                   | 启用文本重构功能，使其行为更符合网页规范。                                                                                                                                                                                                          |
+| [enableTouchRefactor](#enabletouchrefactor)                                                 | 使 Lynx 的 touchend 事件能够正常触发。                                                                                                                                                                                                              |
+| [enableUIOperationOptimize](#enableuioperationoptimize)                                     | 在安卓系统上启用关于 UI 操作批量处理和异步创建视图（CreateViewAsync）的优化。                                                                                                                                                                       |
+| [enableUnifiedPipeline](#enableunifiedpipeline)                                             | 为 Lynx 引擎启用统一像素管道。                                                                                                                                                                                                                      |
+| [enableUnifyFixedBehavior](#enableunifyfixedbehavior)                                       | 统一旧固定模式和新固定模式之间的行为                                                                                                                                                                                                                |
+| [enableUseContextPool](#enableusecontextpool)                                               | 启用在LepusNG虚拟机创建时使用上下文池。                                                                                                                                                                                                             |
+| [enableUseMapBuffer](#enableusemapbuffer)                                                   | 为 LynxProps 启用 mapbuffer 结构。                                                                                                                                                                                                                  |
+| [enableViewReceiveTouch](#enableviewreceivetouch)                                           | 启用 `touchesBegan` 及其他方法，使其在触摸客户端滑动自定义组件时被触发。                                                                                                                                                                            |
+| [enableVsyncAlignedFlush](#enablevsyncalignedflush)                                         | 根据垂直同步（VSync）信号驱动流水线中的 UI 任务执行，带来一定的渐进式渲染效果。适用于 JavaScript（JS）驱动的更新频繁的场景。可根据需要开启。                                                                                                        |
+| [enableXTextLayoutReused](#enablextextlayoutreused)                                         | 是否启用 x-text 布局复用。                                                                                                                                                                                                                          |
+| [experimental_encodeQuickjsBytecode](#experimental_encodequickjsbytecode)                   | 允许在模板中对 QuickJS 字节码而不是源代码进行编码。                                                                                                                                                                                                 |
+| [extendedLayoutOnlyOpt](#extendedlayoutonlyopt)                                             | 一个用于强制使某些特殊属性仅可用于布局的配置（例如 direction 和 text-align 等）。                                                                                                                                                                   |
+| [extraInfo](#extrainfo)                                                                     | 用户定义的额外信息。                                                                                                                                                                                                                                |
+| [flatten](#flatten)                                                                         | 控制该节点是否需要创建对应的 Android 视图。默认值为 true。                                                                                                                                                                                          |
+| [fontScaleEffectiveOnlyOnSp](#fontscaleeffectiveonlyonsp)                                   | 仅让字体缩放应用于 sp 单位。                                                                                                                                                                                                                        |
+| [forceCalcNewStyle](#forcecalcnewstyle)                                                     | NA                                                                                                                                                                                                                                                  |
+| [implicit](#implicit)                                                                       | 控制是否允许在 iOS 平台上使用隐式动画。                                                                                                                                                                                                             |
+| [implicitAnimation](#implicitanimation)                                                     | NA                                                                                                                                                                                                                                                  |
+| [includeFontPadding](#includefontpadding)                                                   | 控制 Android 上文本的顶部和底部内边距，这会影响文本的高度和垂直居中效果。                                                                                                                                                                           |
+| [keyboardCallbackPassRelativeHeight](#keyboardcallbackpassrelativeheight)                   | 包裹 Lynx 视图的外部装饰视图可能会因虚拟导航栏被屏蔽或绘制而发生变化。修改键盘事件的返回值，以返回绝对键盘高度以及键盘到 Lynx 视图底部的偏移量。                                                                                                    |
+| [longPressDuration](#longpressduration)                                                     | 指定触发长按事件的间隔。                                                                                                                                                                                                                            |
+| [observerFrameRate](#observerframerate)                                                     | 指定暴露检测的频率。                                                                                                                                                                                                                                |
+| [pipelineSchedulerConfig](#pipelineschedulerconfig)                                         | 管道的调度器配置，包括启用并行元素/列表框架批量渲染以及其他调度器配置。                                                                                                                                                                             |
+| [preferredFps](#preferredfps)                                                               | 控制 CSS 动画的帧率                                                                                                                                                                                                                                 |
+| [quirksMode](#quirksmode)                                                                   | 支持字符串值。默认情况下，它等于 TargetSDKVersion。该模式用于兼容不符合所产生的 CSS 布局规范的旧页面。                                                                                                                                              |
+| [removeCSSParserLog](#removecssparserlog)                                                   | NA                                                                                                                                                                                                                                                  |
+| [removeDescendantSelectorScope](#removedescendantselectorscope)                             | 如果为 false，后代选择器仅在组件作用域内生效。                                                                                                                                                                                                      |
+| [strictPropType](#strictproptype)                                                           | 如果此标志为 `true`，当组件的属性类型不匹配时，将使用默认值。                                                                                                                                                                                       |
+| [tapSlop](#tapslop)                                                                         | 指定滑动距离阈值，达到该阈值时不触发点击事件。                                                                                                                                                                                                      |
+| [targetSdkVersion](#targetsdkversion)                                                       | NA                                                                                                                                                                                                                                                  |
+| [templateDebugUrl](#templatedebugurl)                                                       | NA                                                                                                                                                                                                                                                  |
+| [trailNewImage](#trailnewimage)                                                             | 启用 iOS 图像重构                                                                                                                                                                                                                                   |
+| [unifyVWVHBehavior](#unifyvwvhbehavior)                                                     | 控制诸如 `font-size` 等属性中的 `vw` 和 `vh` 单位是否随视口动态调整；对于 `targetSdkVersion` &gt;= 2.3 的情况，默认启用此功能。                                                                                                                     |
+| [useImagePostProcessor](#useimagepostprocessor)                                             | 是否使用图像后处理器                                                                                                                                                                                                                                |
+| [useNewSwiper](#usenewswiper)                                                               | 指示是否使用新的滑动器。                                                                                                                                                                                                                            |
+| [autoResumeAnimation](#autoresumeanimation) <Deprecated/>                                   | 过时的配置，将在未来版本中移除。                                                                                                                                                                                                                    |
+| [cli](#cli) <Deprecated/>                                                                   | CLI 版本                                                                                                                                                                                                                                            |
+| [compileRender](#compilerender) <Deprecated/>                                               | None                                                                                                                                                                                                                                                |
+| [customData](#customdata) <Deprecated/>                                                     | None                                                                                                                                                                                                                                                |
+| [enableA11yIDMutationObserver](#enablea11yidmutationobserver) <Deprecated/>                 | 为无障碍功能启用 MutationObserver。                                                                                                                                                                                                                 |
+| [enableAsyncDisplay](#enableasyncdisplay) <Deprecated/>                                     | 在 iOS 上全局启用软件渲染内容的异步渲染，这可以大幅优化帧率并减少卡顿。                                                                                                                                                                             |
+| [enableBackgroundShapeLayer](#enablebackgroundshapelayer) <Deprecated/>                     | 启用 iOS 后台管理器以应用形状图层优化。此功能已弃用并将被移除，因为该优化已成为固定设置。                                                                                                                                                           |
+| [enableCascadePseudo](#enablecascadepseudo) <Deprecated/>                                   | 已弃用，这用于旧版 CSS 选择器以启用级联。                                                                                                                                                                                                           |
+| [enableCheckDataWhenUpdatePage](#enablecheckdatawhenupdatepage) <Deprecated/>               | None                                                                                                                                                                                                                                                |
+| [enableComponentLayoutOnly](#enablecomponentlayoutonly) <Deprecated/>                       | None                                                                                                                                                                                                                                                |
+| [enableGlobalComponentMap](#enableglobalcomponentmap) <Deprecated/>                         | None                                                                                                                                                                                                                                                |
+| [enableNativeScheduleCreateViewAsync](#enablenativeschedulecreateviewasync) <Deprecated/>   | 在 C++ 绘画上下文（PaintingContext）中启用异步创建用户界面（UI）                                                                                                                                                                                    |
+| [enableNewAccessibility](#enablenewaccessibility) <Deprecated/>                             | None                                                                                                                                                                                                                                                |
+| [enableNewLayoutOnly](#enablenewlayoutonly) <Deprecated/>                                   | None                                                                                                                                                                                                                                                |
+| [enableOptPushStyleToBundle](#enableoptpushstyletobundle) <Deprecated/>                     | 启用使用 `PropBundleStyleWriter` 将样式写入 `PropBundle`。                                                                                                                                                                                          |
+| [enableOverlapForAccessibilityElement](#enableoverlapforaccessibilityelement) <Deprecated/> | None                                                                                                                                                                                                                                                |
+| [fixCSSImportRuleOrder](#fixcssimportruleorder) <Deprecated/>                               | None                                                                                                                                                                                                                                                |
+| [forceCalcNewStyle](#forcecalcnewstyle) <Deprecated/>                                       | None                                                                                                                                                                                                                                                |
+| [reactVersion](#reactversion) <Deprecated/>                                                 | None                                                                                                                                                                                                                                                |
+| [redBoxImageSizeWarningThreshold](#redboximagesizewarningthreshold) <Deprecated/>           | None                                                                                                                                                                                                                                                |
+| [removeComponentElement](#removecomponentelement) <Deprecated/>                             | 过时的配置，将在未来版本中移除。                                                                                                                                                                                                                    |
+| [syncImageAttach](#syncimageattach) <Deprecated/>                                           | 如果条件为真且处于主线程，图像请求将立即发起；否则，图像请求将在主线程的下一帧之后发出，以延迟请求。                                                                                                                                                |
+| [useNewImage](#usenewimage) <Deprecated/>                                                   | None                                                                                                                                                                                                                                                |
+| [version](#version) <Deprecated/>                                                           | None                                                                                                                                                                                                                                                |
+
+## Lynx 配置参考 {#config-reference}
+
+---
+
+### absoluteInContentBound
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+当设置为 true 时，绝对定位/固定定位元素的包含块是内容区域；否则，它是内边距区域。
+
+```typescript
+absoluteInContentBound?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### asyncRedirect
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+启用 Android Lynx 图片 URL 异步重定向
+
+```typescript
+asyncRedirect?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### autoExpose
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 `true`，则 `onShow`/`onHide` 将由 `attachToView`/`detachFromWindow` 调用自动触发。
+
+```typescript
+autoExpose?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### CSSAlignWithLegacyW3C
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+当设置为 true 时，为了兼容，一些布局行为会与之前的错误行为保持一致。
+
+```typescript
+CSSAlignWithLegacyW3C?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### customCSSInheritanceList
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+自定义可继承的 CSS 属性
+
+```typescript
+customCSSInheritanceList?: string[] | undefined;
+```
+
+- **`valueType:`** string[] | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### dataStrictMode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+ReactLynx 无法选择在 lepus 中使用的顶级变量。因此，当变量不在顶级变量中时，我们无法禁止 `updateData`。用户可以使用此配置来关闭该检查。
+
+```typescript
+dataStrictMode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### debugInfoOutside
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+debugInfoOutside?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### defaultDisplayLinear
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+defaultDisplayLinear?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### defaultOverflowVisible
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+defaultOverflowVisible?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### disableLongpressAfterScroll
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+防止在惯性滚动期间触发长按事件。
+
+```typescript
+disableLongpressAfterScroll?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### disableMultipleCascadeCSS
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+disableMultipleCascadeCSS?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### disableQuickTracingGC
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在快速上下文环境中禁用跟踪垃圾回收（GC）模式。
+
+```typescript
+disableQuickTracingGC?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableA11y
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+启用安卓无障碍功能（注：A11y 是 Accessibility 的缩写，在安卓开发语境中常代表无障碍功能）
+
+```typescript
+enableA11y?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAccessibilityElement
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+指示是否所有用户界面（UI）都启用了无障碍访问功能（a11y）。
+
+```typescript
+enableAccessibilityElement?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableAsyncInitVideoEngine
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+是否启用 videoEngine 的异步初始化
+
+```typescript
+enableAsyncInitVideoEngine?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAsyncRequestImage
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+如果为真，则支持在异步线程中发起图像请求。
+
+```typescript
+enableAsyncRequestImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAsyncResolveSubtree
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.4} />
+
+前端（FE）框架使用此配置来通知引擎，在渲染 DOM 时将触发解析子树绑定（不向普通用户公开）。
+
+```typescript
+enableAsyncResolveSubtree?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCheckExposureOptimize
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用曝光检测优化，以便在页面静止时不执行曝光检测。
+
+```typescript
+enableCheckExposureOptimize?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCheckLocalImage
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+确定本地图片资源是否需要重定向。
+
+```typescript
+enableCheckLocalImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCircularDataCheck
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 `true`，则在将 JavaScript 值转换为其他值时将启用循环数据检查。
+
+```typescript
+enableCircularDataCheck?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableComponentAsyncDecode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在异步加载时，允许动态组件在被传递到 TASM 之前，先在子线程中进行解码处理。
+
+```typescript
+enableComponentAsyncDecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableComponentConfig
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableComponentConfig?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableComponentNullProp
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+支持组件可以传入空属性，目前仅在 LepusNG 中支持空属性。打开此开关以支持 Lepus 使用空属性。
+
+```typescript
+enableComponentNullProp?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCreateViewAsync
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+在 Lynx 内置线程池中创建安卓平台的用户界面（UI），以优化 UI 操作执行。
+
+```typescript
+enableCreateViewAsync?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCSSAsyncDecode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSAsyncDecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCSSClassMerge
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSClassMerge?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSEngine
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSEngine?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCSSExternalClass
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSExternalClass?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCSSInheritance
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用 CSS 继承
+
+```typescript
+enableCSSInheritance?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSInlineVariables
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.6} />
+
+启用 CSS 内联变量。
+
+```typescript
+enableCSSInlineVariables?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSInvalidation
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+如果启用 CSS 失效机制，我们会使用 RuleInvalidationSet 来收集选择器失效信息。
+
+```typescript
+enableCSSInvalidation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSLazyDecode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSLazyDecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCSSLazyImport
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在作用域 CSS 下，通过 `import` 规则导入的 CSS 声明会在该作用域首次生效时进行惰性解码。
+
+```typescript
+enableCSSLazyImport?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableCSSSelector
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+此开关将在 Blink 标准模式下启用 CSS 模块。
+
+```typescript
+enableCSSSelector?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSStrictMode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+CSS 长度值应由一个 `&lt;number&gt;` 后跟一个单位组成。在严格模式下，无效的 `&lt;length&gt;` 值将被丢弃。
+
+```typescript
+enableCSSStrictMode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCSSVariable
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableCSSVariable?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableDisexposureWhenLynxHidden
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+当 LynxView 处于隐藏状态时，启用曝光消失事件触发功能。
+
+```typescript
+enableDisexposureWhenLynxHidden?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableEndGestureAtLastFingerUp
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+在多指场景下，确保最后一根手指抬起后，Lynx触摸事件能正常触发。
+
+```typescript
+enableEndGestureAtLastFingerUp?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableEventHandleRefactor
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.5} />
+
+启用新的事件处理逻辑，以支持事件监听器的动态注册、事件拦截等功能。
+
+```typescript
+enableEventHandleRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableEventRefactor
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableEventRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableEventThrough
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在触摸 Lynx 页面的根节点区域时，允许客户端滑动触摸事件穿透 Lynx。
+
+```typescript
+enableEventThrough?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableExposureUIMargin
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用 `exposure-ui-margin-*` 属性以使其生效。
+
+```typescript
+enableExposureUIMargin?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableExposureWhenLayout
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+当 LynxView 进行布局请求时，启用暴露检查。
+
+```typescript
+enableExposureWhenLayout?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableExposureWhenReload
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.5} />
+
+启用在重新加载 Lynx 页面时触发曝光和取消曝光事件的功能。
+
+```typescript
+enableExposureWhenReload?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableFiberArch
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableFiberArch?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableFixedNew
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+更出色且稳定的固定定位处理。
+
+```typescript
+enableFixedNew?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableFlexibleTemplate
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+如果启用此值，模板将被编码为灵活模板。
+
+```typescript
+enableFlexibleTemplate?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableHarmonyNewOverlay
+
+{' '}
+
+<HarmonyOnly /> <VersionBadge v={3.6} />
+
+启用基于 Harmony 新覆盖层的 OverlayManager 来处理事件穿透。
+
+```typescript
+enableHarmonyNewOverlay?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableHarmonyVisibleAreaChangeForExposure
+
+{' '}
+
+<HarmonyOnly /> <VersionBadge v={3.4} />
+
+使 Harmony 能够通过可见区域更改事件检测曝光情况。
+
+```typescript
+enableHarmonyVisibleAreaChangeForExposure?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableICU
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用绑定 PRIMJS-ICU
+
+```typescript
+enableICU?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableImageDownsampling
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+如果为 true，则会为此 LynxView 上的所有图像启用下采样。
+
+```typescript
+enableImageDownsampling?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableJsBindingApiThrowException
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用 JavaScript 绑定 API 抛出异常
+
+```typescript
+enableJsBindingApiThrowException?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableJSDataProcessor
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在 JavaScript 线程上启用数据处理器
+
+```typescript
+enableJSDataProcessor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableKeepPageData
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableKeepPageData?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableListMoveOperation
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+diffResult 是否有移动操作（moveAction）
+
+```typescript
+enableListMoveOperation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableListNewArchitecture
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+指示是否为平台列表使用新架构。
+
+```typescript
+enableListNewArchitecture?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableListPlug
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+指示是否使用列表插件
+
+```typescript
+enableListPlug?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableLynxScrollFluency
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+强制上报 Lynx 滚动流畅度事件。当将 `pageConfig.enableLynxScrollFluency` 设置为一个范围在 [0, 1] 的双精度值时，我们将基于此概率来监控这个基于 LynxUI 的流畅度指标。该概率表示启用流畅度监控的可能性，并且这些指标将通过 `applogService` 无条件上报。
+
+```typescript
+enableLynxScrollFluency?: boolean | number | undefined;
+```
+
+- **`valueType:`** boolean | number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableMicrotaskPromisePolyfill
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+这个配置项 `enableMicrotaskPromisePolyfill` 用于确定是否启用微任务 Promise 垫片。其值的类型为 `TernaryBool`，默认值为 `TernaryBool::UNDEFINE_VALUE`。
+
+```typescript
+enableMicrotaskPromisePolyfill?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableMTSPreExecute
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.7} />
+
+启用 MTS 虚拟机预执行代码。
+
+```typescript
+enableMTSPreExecute?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableMultiTouch
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用对多指事件的支持，以便事件参数可以包含多个手指的信息。
+
+```typescript
+enableMultiTouch?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableMultiTouchParamsCompatible
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用与单指事件兼容的多指事件参数
+
+```typescript
+enableMultiTouchParamsCompatible?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNativeList
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+指示是否使用 C++ 列表。
+
+```typescript
+enableNativeList?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableNewAnimator
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 false，则将使用平台动画能力。
+
+```typescript
+enableNewAnimator?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableNewClipMode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+是否启用新的裁剪模式。
+
+```typescript
+enableNewClipMode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableNewGesture
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果想使用手势处理程序 API，你需要将其设置为 true。
+
+```typescript
+enableNewGesture?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewImage
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用从图像服务加载图像的功能
+
+```typescript
+enableNewImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableNewIntersectionObserver
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用新的 IntersectionObserver 检测逻辑，以便在不绑定滚动事件的情况下，observe 能够正常触发。
+
+```typescript
+enableNewIntersectionObserver?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewListContainer
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+在 iOS 平台上基于 ScrollView 实现平台级列表。
+
+```typescript
+enableNewListContainer?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewTransformOrigin
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 `true`，将应用新的变换原点算法。
+
+```typescript
+enableNewTransformOrigin?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enablePlatformGesture
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.6} />
+
+启用影子平台手势以处理手势冲突。
+
+```typescript
+enablePlatformGesture?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enablePropertyBasedSimpleStyle
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.5} />
+
+如果此配置设置为 `TRUE`，SimpleStyle 模式将根据属性逐步更新样式。否则，它将根据 StyleObject 逐步更新。基于 StyleObject 的更新性能更好，但不允许绑定到同一元素的 StyleObject 具有相交属性。
+
+```typescript
+enablePropertyBasedSimpleStyle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableQueryComponentSync
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在后台运行时启用查询组件同步
+
+```typescript
+enableQueryComponentSync?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReactOnlyPropsId
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果我们有了 `propsId`，我们就可以只将 `propsId` 和一个标志传递给 JS 线程。JS 线程将使用一个 `propsMap` 来获取正确的属性。
+
+```typescript
+enableReactOnlyPropsId?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReduceInitDataCopy
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 `true`，则不复制初始化数据，而是为了提高效率复制初始化数据的 `Object.keys`。
+
+```typescript
+enableReduceInitDataCopy?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReloadLifecycle
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用 LynxUI 的 onNodeReload 生命周期。
+
+```typescript
+enableReloadLifecycle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableRemoveComponentExtraData
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 true，则为了提高效率，从组件数据中移除 `globalProps` 和 `systemInfo`。
+
+```typescript
+enableRemoveComponentExtraData?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableRemoveCSSScope
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+enableRemoveCSSScope?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableReuseLoadScriptExports
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.5} />
+
+启用复用 `loadScript` 的结果。
+
+```typescript
+enableReuseLoadScriptExports?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableSignalAPI
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用 Signal API
+
+```typescript
+enableSignalAPI?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableSimpleStyling
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.3} />
+
+使用简化样式模块。
+
+```typescript
+enableSimpleStyling?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableSimultaneousTap
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用客户端的点击手势，使其能与 Lynx 的点击手势同时触发。
+
+```typescript
+enableSimultaneousTap?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTextBoringLayout
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+启用在 Android 上使用 BoringLayout。
+
+```typescript
+enableTextBoringLayout?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextGradientOpt
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.5} />
+
+为 iOS 启用文本渐变优化。
+
+```typescript
+enableTextGradientOpt?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextLanguageAlignment
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用更精确的文本对齐判断方法，但这会增加文本布局所需的时间。
+
+```typescript
+enableTextLanguageAlignment?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTextLayerRender
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用在 iOS 上使用文本层渲染。
+
+```typescript
+enableTextLayerRender?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextLayoutCache
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.3} />
+
+是否启用文本布局缓存。
+
+```typescript
+enableTextLayoutCache?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableTextNonContiguousLayout
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+是否启用文本非连续布局
+
+```typescript
+enableTextNonContiguousLayout?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableTextOverflow
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果为 true，则将文本溢出设置为可见。
+
+```typescript
+enableTextOverflow?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTextRefactor
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用文本重构功能，使其行为更符合网页规范。
+
+```typescript
+enableTextRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableTouchRefactor
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+使 Lynx 的 touchend 事件能够正常触发。
+
+```typescript
+enableTouchRefactor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableUIOperationOptimize
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+在安卓系统上启用关于 UI 操作批量处理和异步创建视图（CreateViewAsync）的优化。
+
+```typescript
+enableUIOperationOptimize?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableUnifiedPipeline
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.4} />
+
+为 Lynx 引擎启用统一像素管道。
+
+```typescript
+enableUnifiedPipeline?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableUnifyFixedBehavior
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.7} />
+
+统一旧固定模式和新固定模式之间的行为
+
+```typescript
+enableUnifyFixedBehavior?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableUseContextPool
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用在LepusNG虚拟机创建时使用上下文池。
+
+```typescript
+enableUseContextPool?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableUseMapBuffer
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+为 LynxProps 启用 mapbuffer 结构。
+
+```typescript
+enableUseMapBuffer?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableViewReceiveTouch
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用 `touchesBegan` 及其他方法，使其在触摸客户端滑动自定义组件时被触发。
+
+```typescript
+enableViewReceiveTouch?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableVsyncAlignedFlush
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <PlatformBadge platform="android" version="3.2" />
+<PlatformBadge platform="ios" version="3.2" />
+
+根据垂直同步（VSync）信号驱动流水线中的 UI 任务执行，带来一定的渐进式渲染效果。适用于 JavaScript（JS）驱动的更新频繁的场景。可根据需要开启。
+
+```typescript
+enableVsyncAlignedFlush?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableXTextLayoutReused
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+是否启用 x-text 布局复用。
+
+```typescript
+enableXTextLayoutReused?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### experimental_encodeQuickjsBytecode
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+允许在模板中对 QuickJS 字节码而不是源代码进行编码。
+
+```typescript
+experimental_encodeQuickjsBytecode?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### extendedLayoutOnlyOpt
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+一个用于强制使某些特殊属性仅可用于布局的配置（例如 direction 和 text-align 等）。
+
+```typescript
+extendedLayoutOnlyOpt?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### extraInfo
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+用户定义的额外信息。
+
+```typescript
+extraInfo?: Record<string, unknown> | undefined;
+```
+
+- **`valueType:`** Record&lt;string, unknown&gt; | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### flatten
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+控制该节点是否需要创建对应的 Android 视图。默认值为 true。
+
+```typescript
+flatten?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### fontScaleEffectiveOnlyOnSp
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+仅让字体缩放应用于 sp 单位。
+
+```typescript
+fontScaleEffectiveOnlyOnSp?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### forceCalcNewStyle
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+forceCalcNewStyle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### implicit
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+控制是否允许在 iOS 平台上使用隐式动画。
+
+```typescript
+implicit?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### implicitAnimation
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+implicitAnimation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### includeFontPadding
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+控制 Android 上文本的顶部和底部内边距，这会影响文本的高度和垂直居中效果。
+
+```typescript
+includeFontPadding?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### keyboardCallbackPassRelativeHeight
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+包裹 Lynx 视图的外部装饰视图可能会因虚拟导航栏被屏蔽或绘制而发生变化。修改键盘事件的返回值，以返回绝对键盘高度以及键盘到 Lynx 视图底部的偏移量。
+
+```typescript
+keyboardCallbackPassRelativeHeight?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### longPressDuration
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+指定触发长按事件的间隔。
+
+```typescript
+longPressDuration?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### observerFrameRate
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+指定暴露检测的频率。
+
+```typescript
+observerFrameRate?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### pipelineSchedulerConfig
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+管道的调度器配置，包括启用并行元素/列表框架批量渲染以及其他调度器配置。
+
+```typescript
+pipelineSchedulerConfig?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### preferredFps
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+控制 CSS 动画的帧率
+
+```typescript
+preferredFps?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;auto&#34;
+
+---
+
+### quirksMode
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+支持字符串值。默认情况下，它等于 TargetSDKVersion。该模式用于兼容不符合所产生的 CSS 布局规范的旧页面。
+
+```typescript
+quirksMode?: boolean | string | undefined;
+```
+
+- **`valueType:`** boolean | string | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### removeCSSParserLog
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+removeCSSParserLog?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### removeDescendantSelectorScope
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果为 false，后代选择器仅在组件作用域内生效。
+
+```typescript
+removeDescendantSelectorScope?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### strictPropType
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+如果此标志为 `true`，当组件的属性类型不匹配时，将使用默认值。
+
+```typescript
+strictPropType?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### tapSlop
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+指定滑动距离阈值，达到该阈值时不触发点击事件。
+
+```typescript
+tapSlop?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;50px&#34;
+
+---
+
+### targetSdkVersion
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+targetSdkVersion?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### templateDebugUrl
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+NA
+
+```typescript
+templateDebugUrl?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### trailNewImage
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用 iOS 图像重构
+
+```typescript
+trailNewImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### unifyVWVHBehavior
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+控制诸如 `font-size` 等属性中的 `vw` 和 `vh` 单位是否随视口动态调整；对于 `targetSdkVersion` &gt;= 2.3 的情况，默认启用此功能。
+
+```typescript
+unifyVWVHBehavior?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### useImagePostProcessor
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+是否使用图像后处理器
+
+```typescript
+useImagePostProcessor?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### useNewSwiper
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+指示是否使用新的滑动器。
+
+```typescript
+useNewSwiper?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+## 已废弃的 Lynx 配置 {#deprecated-config}
+
+---
+
+### autoResumeAnimation <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+过时的配置，将在未来版本中移除。
+
+```typescript
+autoResumeAnimation?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### cli <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+CLI 版本
+
+```typescript
+cli?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### compileRender <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+compileRender?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### customData <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+customData?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### enableA11yIDMutationObserver <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+为无障碍功能启用 MutationObserver。
+
+```typescript
+enableA11yIDMutationObserver?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableAsyncDisplay <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+在 iOS 上全局启用软件渲染内容的异步渲染，这可以大幅优化帧率并减少卡顿。
+
+```typescript
+enableAsyncDisplay?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableBackgroundShapeLayer <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<IOSOnly /> <VersionBadge v={3.2} />
+
+启用 iOS 后台管理器以应用形状图层优化。此功能已弃用并将被移除，因为该优化已成为固定设置。
+
+```typescript
+enableBackgroundShapeLayer?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableCascadePseudo <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+已弃用，这用于旧版 CSS 选择器以启用级联。
+
+```typescript
+enableCascadePseudo?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableCheckDataWhenUpdatePage <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableCheckDataWhenUpdatePage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableComponentLayoutOnly <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableComponentLayoutOnly?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableGlobalComponentMap <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableGlobalComponentMap?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNativeScheduleCreateViewAsync <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+在 C++ 绘画上下文（PaintingContext）中启用异步创建用户界面（UI）
+
+```typescript
+enableNativeScheduleCreateViewAsync?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableNewAccessibility <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableNewAccessibility?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### enableNewLayoutOnly <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableNewLayoutOnly?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### enableOptPushStyleToBundle <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+启用使用 `PropBundleStyleWriter` 将样式写入 `PropBundle`。
+
+```typescript
+enableOptPushStyleToBundle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### enableOverlapForAccessibilityElement <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+```typescript
+enableOverlapForAccessibilityElement?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### fixCSSImportRuleOrder <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+fixCSSImportRuleOrder?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### forceCalcNewStyle <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+forceCalcNewStyle?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### reactVersion <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+reactVersion?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
+
+---
+
+### redBoxImageSizeWarningThreshold <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge v={3.2} />
+
+```typescript
+redBoxImageSizeWarningThreshold?: number | undefined;
+```
+
+- **`valueType:`** number | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### removeComponentElement <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+过时的配置，将在未来版本中移除。
+
+```typescript
+removeComponentElement?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** false
+
+---
+
+### syncImageAttach <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <VersionBadge v={3.2} />
+
+如果条件为真且处于主线程，图像请求将立即发起；否则，图像请求将在主线程的下一帧之后发出，以延迟请求。
+
+```typescript
+syncImageAttach?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** true
+
+---
+
+### useNewImage <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+useNewImage?: boolean | undefined;
+```
+
+- **`valueType:`** boolean | undefined
+
+- **`defaultValue:`** undefined
+
+---
+
+### version <Deprecated/><VersionBadge v={3.5}/>
+
+{' '}
+
+<AndroidOnly /> <HarmonyOnly /> <IOSOnly /> <VersionBadge v={3.2} />
+
+```typescript
+version?: string | undefined;
+```
+
+- **`valueType:`** string | undefined
+
+- **`defaultValue:`** &#34;&#34;
