@@ -1,5 +1,5 @@
-import React, { FC, useMemo, useRef, useState } from 'react';
-import { useI18n, useLang, withBase } from '@rspress/core/runtime';
+import React, { FC, Suspense, useMemo, useRef, useState } from 'react';
+import { useI18n, useLang, withBase, NoSSR } from '@rspress/core/runtime';
 import {
   Space,
   Typography,
@@ -18,7 +18,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { FileTree } from './file-tree';
 import { CodeView } from './code-view';
-import { WebIframe } from './web-iframe';
 import { SwitchSchema } from './switch-schema';
 import { PreviewImg } from './preview-img';
 import { ResizableContainer } from './resizable';
@@ -27,6 +26,9 @@ import { IconGithub, IconCopyLink } from '../utils/icon';
 import { isSupportWebExplorer, tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import { SchemaOptionsData } from '../hooks/use-switch-schema';
+const WebIframe = React.lazy(() =>
+  import('./web-iframe').then((module) => ({ default: module.WebIframe })),
+);
 
 import s from './index.module.scss';
 
@@ -298,10 +300,14 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   />
                 )}
                 {hasWebPreview && (
-                  <WebIframe
-                    show={previewType === PreviewType.Web}
-                    src={defaultWebPreviewFile || ''}
-                  />
+                  <NoSSR>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <WebIframe
+                        show={previewType === PreviewType.Web}
+                        src={defaultWebPreviewFile || ''}
+                      />
+                    </Suspense>
+                  </NoSSR>
                 )}
               </div>
             </div>
