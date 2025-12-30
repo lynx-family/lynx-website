@@ -1,55 +1,39 @@
 # Lynx Example Packages
 
-This package is used to generate data for Lynx examples in the docs. Please update the [lynx-examples](https://github.com/lynx-family/lynx-examples/tree/main/examples) and publish a new version to npm to generate the example data.
+This package manages the example dependencies used in the Lynx documentation website. It works in conjunction with the [build script](../../scripts/lynx-example.js) to generate static assets for the `<Go>` component.
 
-## Update or Add Example
+## Workflow for Contributors
 
-1. Update `package.json` to add necessary dependencies.
-2. Run `pnpm install` in the root directory.
+1.  **Add/Update Dependency**:
+    Edit [`package.json`](./package.json) to add or update the example package version (e.g., `"@lynx-example/view": "0.6.4"`).
 
-## Generate Example Data
+    > The source code for examples is hosted in the [lynx-examples](https://github.com/lynx-family/lynx-examples) repository.
 
-The script [scripts/lynx-example.js](./../../scripts/lynx-example.js) generates example data for the Lynx project.
+2.  **Install**:
+    Run `pnpm install` in the root directory to download the package into `node_modules`.
 
-```bash
-node scripts/lynx-example.js
+3.  **Generate Assets**:
+    The website build process automatically runs the generation script. To run it manually:
+    ```bash
+    node scripts/lynx-example.js
+    ```
+    This generates metadata and assets in `docs/public/lynx-examples/`.
+
+## Usage in Documentation
+
+Use the `<Go>` component to embed examples in MDX files.
+
+```tsx
+import { Go } from '@lynx';
+
+<Go
+  example="css"
+  defaultFile="src/class_guide/index.tsx"
+  defaultEntryFile="dist/class_guide.lynx.bundle"
+  highlight="{16}"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/class-guide.png"
+  entry="src/class_guide"
+/>;
 ```
 
-Example data will be generated in the `docs/public/lynx-examples` directory. For instance, the `@lynx-example/animation` package will be created in the `docs/public/lynx-examples/animation` directory, and an `example-data.json` file will be generated within that directory.
-
-### Example JSON Structure
-
-The generated `example-data.json` will have the following structure:
-
-```json
-{
-  "name": "view",
-  "files": [
-    "dist/main.lynx.bundle",
-    "src/App.tsx",
-    "src/index.tsx",
-    "src/rspeedy-env.d.ts",
-    "lynx.config.ts",
-    "package.json",
-    "README.md"
-  ],
-  "templateFiles": [
-    {
-      "name": "main",
-      "file": "dist/main.lynx.bundle"
-    }
-  ],
-  "previewImage": "preview-image.png"
-}
-```
-
-### Fields Description
-
-- **`name`**: The name of the example package.
-- **`files`**: The files included in the example package, used for the file tree component.
-- **`templateFiles`**: The .lynx.bundle|.web.bundle files within the example package.
-- **`previewImage`**: The preview image for the example package, which should match the pattern `/^preview-image\.(png|jpg|jpeg|webp|gif)$/`.
-
-## Use Example Data in Documentation
-
-Refer to [Go](./../../src/components/go/Go.tsx) for usage of the example data in documentation.
+See [Managing Examples](../../docs/en/help/example.mdx) for full documentation.

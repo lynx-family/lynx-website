@@ -1,0 +1,74 @@
+# Multi-Subsite Architecture
+
+The Lynx website operates as a collection of "mini-subsites" (e.g., **Lynx**, **ReactLynx**, **Rspeedy**) housed within a single repository. This architecture allows each subsite to have its own identity (logo, home page, sidebar) while sharing common documentation and infrastructure.
+
+## Configuration
+
+The central configuration for subsites is located in [`shared-route-config.ts`](https://github.com/lynx-family/lynx-website/blob/main/shared-route-config.ts). This file acts as the single source of truth for:
+
+1.  **Subsite Metadata**: Defines the list of available subsites.
+2.  **Shared Routes**: Defines which documentation sections are shared across subsites.
+
+### `SubsiteConfig`
+
+Each subsite is defined by a `SubsiteConfig` object:
+
+```typescript
+export type SubsiteConfig = {
+  value: string; // Unique ID (e.g., 'guide')
+  label: string; // Display name (e.g., 'Lynx')
+  description: string; // Short description
+  home: string; // Root path (e.g., '/')
+  url: string; // Landing page URL
+  logo: {
+    // Logo assets
+    light: string;
+    dark: string;
+  };
+};
+```
+
+## Adding a New Subsite
+
+To add a new subsite (e.g., `my-framework`):
+
+1.  **Create Directory**: Create `docs/en/my-framework/` (and `docs/zh/my-framework/`).
+2.  **Update Config**: Add a new entry to `SUBSITES_CONFIG` in `shared-route-config.ts`.
+    ```typescript
+    {
+      value: 'my-framework',
+      label: 'My Framework',
+      // ...
+    }
+    ```
+3.  **Configure Sidebar**: Create `docs/en/my-framework/_meta.json` to define its specific sidebar structure.
+
+## Shared Documentation
+
+To avoid duplicating content (like "Quick Start" guides) across multiple subsites, we use a shared documentation system.
+
+### How it Works
+
+1.  **Source of Truth**: Shared files are physically located in `docs/en/guide/start/`.
+2.  **Virtual Routes**: The `sharedSidebarPlugin` in `rspress.config.ts` dynamically creates virtual pages for other subsites (e.g., `react/start/quick-start`) that point to the same content.
+3.  **Unified Sidebar**: The `BeforeSidebar` component (in `theme/BeforeSidebar.tsx`) automatically injects the shared "Start" section into the sidebar of every subsite.
+
+### Managing Shared Content
+
+To modify which files are shared, update `SHARED_DOC_TITLES` in `shared-route-config.ts`.
+
+```typescript
+const SHARED_DOC_TITLES = {
+  'quick-start': { en: 'Quick Start', zh: '快速上手' },
+  // ...
+};
+```
+
+## Subsite UI
+
+The subsite navigation and identity are handled by custom theme components:
+
+- **`SubsiteSelect`** (`theme/BeforeSidebar.tsx`): The dropdown menu at the top of the sidebar allows users to switch between subsites.
+- **`SubsiteLogo`** (`theme/subsite-ui.tsx`): Renders the correct logo for the current subsite and theme mode.
+
+These components read directly from `SUBSITES_CONFIG`, so any changes there are immediately reflected in the UI.

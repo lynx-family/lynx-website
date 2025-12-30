@@ -3,41 +3,44 @@ import {
   getCustomMDXComponent,
   renderInlineMarkdown,
 } from '@rspress/core/theme';
-import { BlogAvatar } from '../blog-avatar';
 import { useBlogPages } from '@site/src/hooks';
-import React from 'react';
+import { BlogAvatar } from '../blog-avatar';
+import styles from './index.module.less';
 
-export function BlogList() {
-  const { h2: H2, p: P, a: A, hr: Hr } = getCustomMDXComponent();
-
+export function BlogList({ limit }: { limit?: number }) {
+  const { a: A } = getCustomMDXComponent();
   const blogPages = useBlogPages();
   const lang = useLang();
 
+  // Convert limit to number if it's passed as string
+  const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+  const pages = limitNum ? blogPages.slice(0, limitNum) : blogPages;
+
   return (
     <>
-      {blogPages.map(({ date, description, link, title, authors }, index) => (
-        <React.Fragment key={link || index}>
-          {title && (
-            <H2 id={link}>
-              <A href={link}>{title}</A>
-            </H2>
-          )}
+      {pages.map(({ date, description, link, title, authors }, index) => (
+        <A href={link} key={link || index} className={styles.card}>
+          {title && <div className={styles.title}>{title}</div>}
           {date && (
-            // @ts-ignore textAutospace is not in the type definition
-            <P style={{ textAutospace: 'normal' }}>
-              <em>
-                {new Intl.DateTimeFormat(lang, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }).format(date)}
-              </em>
-            </P>
+            <span className={styles.date}>
+              {new Intl.DateTimeFormat(lang, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }).format(date)}
+            </span>
           )}
-          {authors && <BlogAvatar list={authors} />}
-          {description && <P {...renderInlineMarkdown(description)} />}
-          {index < blogPages.length - 1 && <Hr />}
-        </React.Fragment>
+          {description && (
+            <div className={styles.description}>
+              <p {...renderInlineMarkdown(description)} style={{ margin: 0 }} />
+            </div>
+          )}
+          {authors && (
+            <div className={styles.footer}>
+              <BlogAvatar list={authors} className={styles.avatarOverride} />
+            </div>
+          )}
+        </A>
       ))}
     </>
   );
