@@ -11,7 +11,6 @@ import {
   Link as BaseLink,
   getCustomMDXComponent,
 } from '@rspress/core/theme';
-import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
@@ -237,13 +236,13 @@ const Search = () => {
           facetFilters: [`lang:${lang}`],
         },
         maxResultsPerGroup: 5,
+        hitComponent({ hit, children }) {
+          return <BaseLink href={hit.url}>{children}</BaseLink>;
+        },
         transformItems: (items) => {
           return items.map((item) => {
             const url = new URL(item.url);
             item.url = item.url.replace(url.origin, '');
-            // Rspress will automatically add the base path to the URL,
-            // so we need to remove the base path from the URL if it exists
-            item.url = removeBase(item.url);
             return item;
           });
         },
