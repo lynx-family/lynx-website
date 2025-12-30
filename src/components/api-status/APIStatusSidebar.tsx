@@ -156,9 +156,9 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
       <SidebarHeader className="px-4 pt-4 pb-2">
         {!isCollapsed && (
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-3">
+            <div className="flex gap-3 items-center">
               <span className="text-base font-semibold">Lynx API Status</span>
-              <span className="text-xs text-muted-foreground font-mono">
+              <span className="font-mono text-xs text-muted-foreground">
                 {stats.summary.total_apis.toLocaleString()}
               </span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
@@ -223,14 +223,14 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   <PlatformIcon
                     platform="clay_android"
                     className={cn(
-                      'h-4 w-4',
+                      'w-4 h-4',
                       showClay ? 'text-primary' : 'text-muted-foreground',
                     )}
                   />
                   <span className="flex-1">Clay</span>
                   {showClay && (
                     <svg
-                      className="h-3 w-3 text-primary"
+                      className="w-3 h-3 text-primary"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -293,7 +293,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                     onClick={() => onPageChange(page.id)}
                     tooltip={page.label}
                   >
-                    <page.icon className="h-4 w-4" />
+                    <page.icon className="w-4 h-4" />
                     <span>{page.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -303,22 +303,22 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-2">
+      <SidebarFooter className="p-2 border-t">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="Help"
-              className="text-muted-foreground hover:text-foreground h-8"
+              className="h-8 text-muted-foreground hover:text-foreground"
             >
               <a
                 href={withBase(
-                  lang === 'zh' ? '/zh/api/status/help' : '/api/status/help',
+                  lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',
                 )}
-                className="flex items-center justify-between w-full"
+                className="flex justify-between items-center w-full"
               >
-                <div className="flex items-center gap-2">
-                  <HelpCircleIcon className="h-4 w-4" />
+                <div className="flex gap-2 items-center">
+                  <HelpCircleIcon className="w-4 h-4" />
                   <span>Help</span>
                 </div>
                 {!isCollapsed && (

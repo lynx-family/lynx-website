@@ -1,26 +1,32 @@
 /**
- * Doc Components
+ * @lynx/doc-components
  *
- * Only components defined here are recommended to be used in the docs
+ * This module exports custom components used in the Lynx documentation.
+ * These components are designed to enhance the documentation experience
+ * with interactive examples, platform-specific content, and visual aids.
  */
 
-// CodeFold
-export { CodeFold } from './code-fold';
+// ----------------------------------------------------------------------------
+// Layout & Containers
+// ----------------------------------------------------------------------------
 
-// Containers
+export { CodeFold } from './code-fold';
+export { Columns } from './Columns';
 export { default as BrowserContainer } from './containers/BrowserContainer';
 export {
   FlexItem,
   ResponsiveDualColumn,
 } from './containers/ResponsiveDualColumn';
+export { PlatformTabs } from './platform-tabs/PlatformTabs';
 
-// APITable
+// ----------------------------------------------------------------------------
+// API Documentation (Tables, Badges)
+// ----------------------------------------------------------------------------
+
 export { default as APISummary } from './api-summary';
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
 export { default as APITable } from './api-table/APITable';
-
-// BlogList
-export { BlogList } from './blog-list';
+export { VersionTable } from './VersionTable';
 
 // API Badges
 export { Badge } from '@rspress/core/theme';
@@ -31,6 +37,7 @@ export {
   StatusBadge,
   VersionBadge,
 } from './api-badge';
+
 // Platform Badges shorthand
 export {
   AndroidOnly,
@@ -49,10 +56,36 @@ export {
   NoWeb,
   WebOnly,
 } from './api-badge';
+
 // Status Badges shorthand
 export { Deprecated, Experimental, Required } from './api-badge';
 
+// ----------------------------------------------------------------------------
+// Interactive & Examples
+// ----------------------------------------------------------------------------
+
+export { Go } from './go/Go';
+
+// ----------------------------------------------------------------------------
+// Media & Visuals
+// ----------------------------------------------------------------------------
+
+export { default as Mermaid } from './Mermaid/Mermaid';
 export { VideoList } from './VideoList';
+export { YouTubeIframe } from './YoutubeIframe';
+
+// ----------------------------------------------------------------------------
+// Blog & Social
+// ----------------------------------------------------------------------------
+
+export { BlogAvatar } from './blog-avatar';
+export { BlogList } from './blog-list';
+
+// ----------------------------------------------------------------------------
+// Utilities & Alerts
+// ----------------------------------------------------------------------------
+
+export { default as EditThis } from './EditThis';
 
 // Callout (Note, Warning, Danger, Tip, Info)
 export {
@@ -64,25 +97,3 @@ export {
   Tip,
   Warning,
 } from './Callout';
-
-// EditThis
-export { default as EditThis } from './EditThis';
-
-export { Go } from './go/Go';
-
-export { PlatformTabs } from './platform-tabs/PlatformTabs';
-
-export { Columns } from './Columns';
-
-export { default as Mermaid } from './Mermaid/Mermaid';
-
-export { YouTubeIframe } from './YoutubeIframe';
-
-// --------- Legacy ---------
-
-export { ExamplePreview } from './go/example-preview';
-
-export { BlogAvatar } from './blog-avatar';
-
-// Version
-export { VersionTable } from './VersionTable';

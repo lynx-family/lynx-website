@@ -1,0 +1,141 @@
+import { PackageManagerTabs, Steps } from '@theme';
+import * as NextSteps from '@lynx/NextSteps';
+import { PlatformTabs } from '@lynx';
+
+# 编写指南
+
+本页概述了在 Lynx 网站上编写 **指南** 的标准和最佳实践。指南是叙述性文档，旨在教授概念、解释架构或引导用户完成特定任务。
+
+有关结构良好的指南的优秀示例，请参阅 [快速上手](/guide/start/quick-start) 和 [与现有应用集成](/guide/start/integrate-with-existing-apps) 页面。
+
+## 页面结构 (Frontmatter)
+
+每个指南页面都是一个 `.mdx` 文件，以 YAML Frontmatter 开头来定义其元数据。
+
+### `title`
+
+设置侧边栏、浏览器标签和搜索结果中显示的页面标题。
+
+```yaml
+---
+title: 理解生命周期
+---
+```
+
+### `context`
+
+定义页面的框架或上下文（例如 `react`, `vue`, `new`）。这对于 **DSL 切换器** 功能至关重要，该功能允许用户在不同框架实现之间切换文档视图。
+
+```yaml
+---
+context: react
+---
+```
+
+## 编写教程
+
+在编写分步教程时，请使用以下组件来创建结构化且引人入胜的流程。
+
+### `<Steps>`
+
+使用 `<Steps>` 组件包裹顺序指令。这会渲染一条连接步骤的垂直线，提高可读性。
+
+<Steps>
+
+### 步骤 1: 安装
+
+运行安装命令...
+
+### 步骤 2: 配置
+
+更新您的配置文件...
+
+</Steps>
+
+```tsx
+import { Steps } from '@theme';
+
+<Steps>
+  ### 步骤 1: 安装 运行安装命令... ### 步骤 2: 配置 更新您的配置文件...
+</Steps>;
+```
+
+### `<PackageManagerTabs>`
+
+提供安装命令时，使用 `<PackageManagerTabs>` 自动显示 `npm`、`pnpm`、`yarn` 和 `bun` 的选项卡。
+
+<PackageManagerTabs command="install" />
+
+```tsx
+import { PackageManagerTabs } from '@theme';
+
+<PackageManagerTabs command="install" />;
+```
+
+### `<NextSteps>`
+
+在指南末尾，使用 `<NextSteps>` 建议相关的后续阅读。这有助于用户导航学习路径。
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/ui/styling"
+    title="样式"
+    description="了解如何在 Lynx 中应用不同的样式"
+  />
+  <NextSteps.Step
+    href="/guide/ui/layout"
+    title="布局"
+    description="了解布局系统"
+  />
+</NextSteps.Root>
+
+```tsx
+import * as NextSteps from '@lynx/NextSteps';
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/ui/styling"
+    title="样式"
+    description="了解如何在 Lynx 中应用不同的样式"
+  />
+  <NextSteps.Step
+    href="/guide/ui/layout"
+    title="布局"
+    description="了解布局系统"
+  />
+</NextSteps.Root>;
+```
+
+## 平台特定内容
+
+Lynx 运行在多个平台上（Android, iOS, Web 等）。编写指南时，必须明确区分因平台而异的内容。
+
+### 使用平台选项卡
+
+使用 `<PlatformTabs>` 组件组织平台特定的说明。当用户浏览网站时，此组件会保留用户的平台选择。
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">iOS 特定说明...</PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">Android 特定说明...</PlatformTabs.Tab>
+</PlatformTabs>
+
+```tsx
+import { PlatformTabs } from '@lynx';
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">iOS 特定说明...</PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">Android 特定说明...</PlatformTabs.Tab>
+</PlatformTabs>;
+```
+
+### 使用平台徽章
+
+使用 `<PlatformBadge>` 或特定平台图标（如 `<AndroidOnly />`）显式标记仅适用于特定平台的功能或注意事项。
+
+有关使用详情，请参阅 [MDX 组件参考](./components#platform-badges)。
+
+## 相关资源
+
+- [**MDX 组件参考**](./components) - 指南中可用的自定义组件目录。
+- [**管理示例**](./example) - 嵌入交互式代码示例的说明。
+- [**API 参考**](./api) - 有关记录技术 API 规范的详细信息。

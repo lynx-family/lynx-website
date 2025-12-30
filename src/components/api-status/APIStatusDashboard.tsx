@@ -638,7 +638,7 @@ export const APIStatusDashboard: React.FC = () => {
               </div>
               <a
                 href={withBase(
-                  lang === 'zh' ? '/zh/api/status/help' : '/api/status/help',
+                  lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',
                 )}
                 className="flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >

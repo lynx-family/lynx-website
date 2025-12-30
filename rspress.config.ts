@@ -1,26 +1,26 @@
+import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
+import type { RspressPlugin } from '@rspress/core';
+import { defineConfig } from '@rspress/core';
+import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transformers';
 import { pluginAlgolia } from '@rspress/plugin-algolia';
+import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import { pluginRss } from '@rspress/plugin-rss';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
-import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import {
-  transformerNotationHighlight,
   transformerNotationDiff,
   transformerNotationFocus,
+  transformerNotationHighlight,
 } from '@shikijs/transformers';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
-import { defineConfig } from '@rspress/core';
-import type { RspressPlugin } from '@rspress/core';
-import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transformers';
 import {
   SHARED_DOC_FILES,
   SHARED_SIDEBAR_PATHS,
 } from './shared-route-config.js';
-import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 
@@ -224,7 +224,11 @@ export default defineConfig({
   },
   llms: {
     remarkSplitMdxOptions: {
-      includes: [[['Go', 'APITable', 'SimpleAPITable', 'BlogList'], '@lynx']],
+      includes: [
+        [['Go', 'APITable', 'SimpleAPITable', 'BlogList'], '@lynx'],
+        // Also support imports from @site/src/components
+        [['BlogList'], '@site/src/components'],
+      ],
     },
   },
 });

@@ -1,0 +1,150 @@
+import { PackageManagerTabs, Steps } from '@theme';
+import * as NextSteps from '@lynx/NextSteps';
+import { PlatformTabs } from '@lynx';
+
+# Authoring Guides
+
+This page outlines the standards and best practices for writing **Guides** on the Lynx website. Guides are narrative documentation designed to teach concepts, explain architecture, or walk users through specific tasks.
+
+For excellent examples of well-structured guides, refer to the [Quick Start](/guide/start/quick-start) and [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) pages.
+
+## Page Structure (Frontmatter)
+
+Every guide page is an `.mdx` file that starts with YAML frontmatter to define its metadata.
+
+### `title`
+
+Sets the page title displayed in the sidebar, browser tab, and search results.
+
+```yaml
+---
+title: Understanding the Lifecycle
+---
+```
+
+### `context`
+
+Defines the framework or context for the page (e.g., `react`, `vue`, `new`). This is crucial for the **DSL Switcher** feature, which allows users to toggle the documentation view between different framework implementations.
+
+```yaml
+---
+context: react
+---
+```
+
+## Writing Tutorials
+
+When writing step-by-step tutorials, use the following components to create a structured and engaging flow.
+
+### `<Steps>`
+
+Use the `<Steps>` component to wrap sequential instructions. This renders a vertical line connecting the steps, improving readability.
+
+<Steps>
+
+### Step 1: Install
+
+Run the installation command...
+
+### Step 2: Configure
+
+Update your config file...
+
+</Steps>
+
+```tsx
+import { Steps } from '@theme';
+
+<Steps>
+  ### Step 1: Install Run the installation command... ### Step 2: Configure
+  Update your config file...
+</Steps>;
+```
+
+### `<PackageManagerTabs>`
+
+When providing installation commands, use `<PackageManagerTabs>` to automatically show tabs for `npm`, `pnpm`, `yarn`, and `bun`.
+
+<PackageManagerTabs command="install" />
+
+```tsx
+import { PackageManagerTabs } from '@theme';
+
+<PackageManagerTabs command="install" />;
+```
+
+### `<NextSteps>`
+
+At the end of a guide, use `<NextSteps>` to suggest relevant follow-up reading. This helps users navigate a learning path.
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/ui/styling"
+    title="Styling"
+    description="Learn how to apply different styles in Lynx"
+  />
+  <NextSteps.Step
+    href="/guide/ui/layout"
+    title="Layout"
+    description="Understand the layout system"
+  />
+</NextSteps.Root>
+
+```tsx
+import * as NextSteps from '@lynx/NextSteps';
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/ui/styling"
+    title="Styling"
+    description="Learn how to apply different styles in Lynx"
+  />
+  <NextSteps.Step
+    href="/guide/ui/layout"
+    title="Layout"
+    description="Understand the layout system"
+  />
+</NextSteps.Root>;
+```
+
+## Platform-Specific Content
+
+Lynx runs on multiple platforms (Android, iOS, Web, etc.). When writing guides, it is essential to clearly distinguish content that varies by platform.
+
+### Using Platform Tabs
+
+Use the `<PlatformTabs>` component to organize platform-specific instructions. This component persists the user's platform selection as they navigate the site.
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">
+    iOS specific instructions...
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">
+    Android specific instructions...
+  </PlatformTabs.Tab>
+</PlatformTabs>
+
+```tsx
+import { PlatformTabs } from '@lynx';
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">
+    iOS specific instructions...
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">
+    Android specific instructions...
+  </PlatformTabs.Tab>
+</PlatformTabs>;
+```
+
+### Using Platform Badges
+
+Use `<PlatformBadge>` or specific platform icons (like `<AndroidOnly />`) to explicitly mark features or caveats that apply only to certain platforms.
+
+See [MDX Components Reference](./components#platform-badges) for usage details.
+
+## Related Resources
+
+- [**MDX Components Reference**](./components) - A catalog of custom components available for use in guides.
+- [**Managing Examples**](./example) - Instructions for embedding interactive code examples.
+- [**API Reference**](./api) - For details on documenting technical API specifications.
