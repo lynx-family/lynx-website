@@ -23,7 +23,7 @@ import { PreviewImg } from './preview-img';
 import { ResizableContainer } from './resizable';
 
 import { IconGithub, IconCopyLink } from '../utils/icon';
-import { isSupportWebExplorer, tabScrollToTop } from '../utils/tool';
+import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import { SchemaOptionsData } from '../hooks/use-switch-schema';
 const WebIframe = React.lazy(() =>
@@ -109,7 +109,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
       Number(Boolean(defaultWebPreviewFile));
     return {
       hasPreview: count >= 1,
-      hasWebPreview: isSupportWebExplorer() && Boolean(defaultWebPreviewFile),
+      hasWebPreview: Boolean(defaultWebPreviewFile),
     };
   }, [previewImage, currentEntry, defaultWebPreviewFile]);
   const [tmpCurrentFileName, setTmpCurrentFileName] = useState('');
