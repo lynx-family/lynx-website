@@ -15,6 +15,7 @@ export {
 } from './containers/ResponsiveDualColumn';
 
 // APITable
+export { default as APISummary } from './api-summary';
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
 export { default as APITable } from './api-table/APITable';
 

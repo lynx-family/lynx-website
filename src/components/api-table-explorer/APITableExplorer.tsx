@@ -1,6 +1,7 @@
 import { useLang } from '@rspress/core/runtime';
 import { CodeBlockRuntime } from '@theme';
 import React, { useState } from 'react';
+import APISummary from '../api-summary/APISummary';
 import APITable from '../api-table/APITable';
 import { Button } from '../ui/button';
 import {
@@ -140,8 +141,9 @@ const APITableExplorer: React.FC = () => {
   const catLabels = lang === 'zh' ? categoryLabels.zh : categoryLabels.en;
   const [query, setQuery] = useState(examples[0].query);
 
-  const embedCode = `import { APITable } from '@lynx';
+  const embedCode = `import { APISummary, APITable } from '@lynx';
 
+<APISummary query="${query}" />
 <APITable query="${query}" />`;
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,9 +169,9 @@ const APITableExplorer: React.FC = () => {
     <TooltipProvider>
       <div className="flex flex-col gap-5">
         <Card className="overflow-hidden border-0 shadow-lg dark:shadow-none dark:border">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br via-transparent to-transparent pointer-events-none from-primary/5" />
           <CardHeader className="relative pb-4">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex gap-2 items-center mb-1">
               <div className="p-1.5 rounded-md bg-primary/10">
                 <SparklesIcon className="w-4 h-4 text-primary" />
               </div>
@@ -179,11 +181,11 @@ const APITableExplorer: React.FC = () => {
               {texts.description}
             </CardDescription>
           </CardHeader>
-          <CardContent className="relative flex flex-col gap-4">
+          <CardContent className="flex relative flex-col gap-4">
             <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <SearchIcon className="absolute left-3 top-1/2 w-4 h-4 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                className="pl-10 font-mono text-sm h-11 bg-background/50"
+                className="pl-10 h-11 font-mono text-sm bg-background/50"
                 type="text"
                 placeholder={texts.placeholder}
                 value={query}
@@ -192,7 +194,7 @@ const APITableExplorer: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <span className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
                 {texts.quickAccess}
               </span>
               <div className="flex flex-wrap gap-2">
@@ -226,7 +228,7 @@ const APITableExplorer: React.FC = () => {
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex gap-2 items-center text-sm text-muted-foreground">
               <CodeIcon className="w-4 h-4" />
               <span>{texts.embedCode}</span>
             </div>
@@ -234,6 +236,7 @@ const APITableExplorer: React.FC = () => {
               <CodeBlockRuntime lang="jsx" code={embedCode} />
             </div>
           </div>
+          <APISummary query={query} />
           <APITable query={query} />
         </div>
       </div>
