@@ -236,13 +236,12 @@ const Search = () => {
           facetFilters: [`lang:${lang}`],
         },
         maxResultsPerGroup: 5,
-        hitComponent({ hit, children }) {
-          return <BaseLink href={hit.url}>{children}</BaseLink>;
-        },
         transformItems: (items) => {
           return items.map((item) => {
+            // we already have basename, so pass the url without base to Link and navigate
             const url = new URL(item.url);
             item.url = item.url.replace(url.origin, '');
+            item.url = removeBase(item.url);
             return item;
           });
         },
