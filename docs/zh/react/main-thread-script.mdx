@@ -270,8 +270,92 @@ function App() {
 }
 ```
 
-[`MainThread.Element`]: ../api/lynx-api/main-thread/main-thread-element.mdx
-[`MainThreadRef`]: ../api/react/Class.MainThreadRef.mdx
-[`useMainThreadRef()`]: ../api/react/Function.useMainThreadRef.mdx
-[`runOnMainThread()`]: ../api/react/Function.runOnMainThread.mdx
-[`runOnBackground()`]: ../api/react/Function.runOnBackground.mdx
+## 跨线程共享模块
+
+默认情况下，主线程函数无法直接调用没有 `'main thread'` 指令的普通函数。这使得代码复用变得困难。
+为了解决这一限制，ReactLynx 引入了 `shared-module` 机制，允许显式声明某些模块可以在主线程和后台线程之间共享。
+
+在 `import` 语句后添加 `with { runtime: 'shared' }`，该模块中的导出变量（包括函数、类、对象等）即可在主线程函数中被直接调用。
+
+```javascript
+import { func } from './utils.js' with { runtime: 'shared' }; // `func` is a plain function
+
+function mainThreadFunction() {
+  'main thread';
+  func(); // 允许在主线程函数中调用普通函数
+}
+```
+
+> [!NOTE]
+> 被标注为 `'shared-runtime'` 的模块中的函数虽然能够被主线程函数调用，但其本身并不会被自动识别为主线程函数。如果其中使用了 `MainThreadRef` 等主线程特有能力，仍需手动标记 `'main thread'`。
+
+### 引用第三方库
+
+通常第三方库（例如 `motion-dom`）包含的都是普通 JavaScript 函数。如果直接在主线程函数中调用它们，会因为缺少 `'main thread'` 指令而报错。
+
+我们可以利用 Shared Runtime 机制将它们作为共享模块引入。
+
+```javascript
+// 直接引入并使用
+import { animate } from 'motion-dom' with { runtime: 'shared' };
+
+function onScroll() {
+  'main thread';
+  // 可以在主线程函数中直接调用
+  animate(element, { opacity: 0 });
+}
+```
+
+为了方便复用，或者避开 Shared Runtime 的[限制](#限制)（例如赋值给新变量后失效），我们推荐**封装**一层主线程函数：
+
+```ts
+// src/utils/motion.ts
+// 1. 以 shared 方式引入原始函数
+import { animate as _animate } from 'motion-dom' with { runtime: 'shared' };
+
+// 2. 导出一个新的主线程函数进行封装
+export function animate(...args) {
+  'main thread';
+  return _animate(...args);
+}
+```
+
+这样，`animate` 就变成了一个标准的主线程函数，可以在任何主线程函数中自由使用，不再受限于静态分析。
+
+```ts
+// src/App.tsx
+import { animate } from './utils/motion';
+
+function onTap() {
+  'main thread';
+  // 这是标准的主线程函数，可以随意赋值或传递
+  const myAnimate = animate;
+  myAnimate(element, { x: 100 });
+}
+```
+
+### 限制
+
+只有通过 `import` 直接引入的标识符才会被识别为“共享”。赋值给新变量后将失去共享特性。
+
+```javascript
+import { func } from './utils.js' with { runtime: 'shared' };
+const anotherFunc = func;
+
+function mainThreadFunction() {
+  'main thread';
+  anotherFunc(); // ❌ 编译时无法分析，调用失败
+}
+```
+
+### 状态隔离
+
+**Shared Module 中的变量和状态在两个线程中是完全隔离的，各自拥有独立的实例。**
+
+这意味着如果你在主线程修改了共享模块中的某个变量，后台线程是无法感知的，反之亦然。Shared Module 仅解决“代码共享”问题，不解决“状态共享”问题。
+
+[`MainThread.Element`]: /api/lynx-api/main-thread/main-thread-element
+[`MainThreadRef`]: /api/react/Class.MainThreadRef
+[`useMainThreadRef()`]: /api/react/Function.useMainThreadRef
+[`runOnMainThread()`]: /api/react/Function.runOnMainThread
+[`runOnBackground()`]: /api/react/Function.runOnBackground

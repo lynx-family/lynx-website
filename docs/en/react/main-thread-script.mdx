@@ -255,7 +255,7 @@ function App() {
 
 Use [`runOnBackground()`] on the main thread to asynchronously execute a regular function on the background thread:
 
-```jsx
+````jsx
 import { runOnBackground, useState } from '@lynx-js/react';
 
 function App() {
@@ -273,7 +273,90 @@ function App() {
     console.log(result);
   };
 }
+
+## Cross-thread Shared Modules
+
+By default, main thread functions cannot directly call plain functions that do not have the `'main thread'` directive. This makes code reuse difficult.
+To address this limitation, ReactLynx introduces the `shared-module` mechanism, allowing you to explicitly declare certain modules as shareable between the main thread and the background thread.
+
+Add `with { runtime: 'shared' }` after the `import` statement, and the exported variables (including functions, classes, objects, etc.) in that module can be directly called in main thread functions.
+
+```javascript
+import { func } from "./utils.js" with {runtime: 'shared'}; // `func` is a plain function
+
+function mainThreadFunction() {
+  'main thread';
+  func(); // Allows calling plain functions in a main thread function
+}
+````
+
+> [!NOTE]
+> Functions in a module marked as `'shared-runtime'`, while callable by main thread functions, are not automatically identified as main thread functions themselves. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
+
+### Referencing Third-Party Libraries
+
+Usually, third-party libraries (e.g., `motion-dom`) contain plain JavaScript functions. If called directly in a main thread function, they will report an error due to the missing `'main thread'` directive.
+
+We can use the Shared Runtime mechanism to import them as shared modules.
+
+```javascript
+// Import and use directly
+import { animate } from 'motion-dom' with { runtime: 'shared' };
+
+function onScroll() {
+  'main thread';
+  // Can be called directly in a main thread function
+  animate(element, { opacity: 0 });
+}
 ```
+
+To facilitate reuse or avoid the [limitations](#limitations) of Shared Runtime (e.g., losing the shared characteristic after assignment), we recommend **wrapping** it in a main thread function:
+
+```ts
+// src/utils/motion.ts
+// 1. Import the original function as shared
+import { animate as _animate } from 'motion-dom' with { runtime: 'shared' };
+
+// 2. Export a new main thread function for encapsulation
+export function animate(...args) {
+  'main thread';
+  return _animate(...args);
+}
+```
+
+In this way, `animate` becomes a standard main thread function that can be freely used in any main thread function, no longer restricted by static analysis.
+
+```ts
+// src/App.tsx
+import { animate } from './utils/motion';
+
+function onTap() {
+  'main thread';
+  // This is a standard main thread function, which can be assigned or passed freely
+  const myAnimate = animate;
+  myAnimate(element, { x: 100 });
+}
+```
+
+### Limitations
+
+Only identifiers identifiers directly imported via `import` are recognized as "shared". Assigning to a new variable will cause it to lose the shared characteristic.
+
+```javascript
+import { func } from './utils.js' with { runtime: 'shared' };
+const anotherFunc = func;
+
+function mainThreadFunction() {
+  'main thread';
+  anotherFunc(); // ❌ Cannot be analyzed at compile time, call fails
+}
+```
+
+### State Isolation
+
+**Variables and states in a Shared Module are completely isolated between the two threads, each possessing independent instances.**
+
+This means that if you modify a variable in a shared module on the main thread, the background thread cannot perceive it, and vice versa. Shared Module only solves the "code sharing" problem, not the "state sharing" problem.
 
 [`MainThread.Element`]: /api/lynx-api/main-thread/main-thread-element.mdx
 [`MainThreadRef`]: /api/react/Class.MainThreadRef.mdx
