@@ -42,7 +42,6 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         position: 'relative',
       }}
     >
-      {' '}
       {show && src && (
         <lynx-view
           ref={lynxViewRef}
