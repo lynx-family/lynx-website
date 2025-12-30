@@ -59,7 +59,7 @@ function Layout(props: Parameters<typeof BaseLayout>[0]) {
       <Head>
         <htmlAttrs
           data-subsite={subsite ? subsite.value : 'guide'}
-          data-scroll-locked={isStatusRoute ? 'true' : undefined}
+          data-scroll-locked={isStatusRoute ? 'true' : null}
         />
       </Head>
       <BaseLayout
@@ -237,6 +237,14 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
           facetFilters: [`lang:${lang}`],
         },
         maxResultsPerGroup: 5,
+        transformItems: (items) => {
+          return items.map((item) => {
+            // Rspress will automatically add the base path to the URL,
+            // so we need to remove the base path from the URL if it exists
+            item.url = removeBase(item.url);
+            return item;
+          });
+        },
         ...props?.docSearchProps,
       }}
       locales={ZH_LOCALES}
