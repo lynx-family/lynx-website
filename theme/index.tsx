@@ -16,7 +16,6 @@ import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import type { SearchProps } from '@rspress/plugin-algolia/runtime';
 
 import './index.scss';
 
@@ -212,7 +211,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
 }
 
-const Search = (props?: Partial<SearchProps> | undefined) => {
+const Search = () => {
   const lang = useLang();
   return (
     <PluginAlgoliaSearch
@@ -224,7 +223,15 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
           facetFilters: [`lang:${lang}`],
         },
         maxResultsPerGroup: 5,
-        ...props?.docSearchProps,
+        transformItems: (items) => {
+          return items.map((item) => {
+            // we already have basename, so pass the url without base to Link and navigate
+            const url = new URL(item.url);
+            item.url = item.url.replace(url.origin, '');
+            item.url = removeBase(item.url);
+            return item;
+          });
+        },
       }}
       locales={ZH_LOCALES}
     />
