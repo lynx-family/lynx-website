@@ -198,7 +198,7 @@ export interface APIItemProps {
   query: string;
   name: string;
   category: string;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
   support: FeatureInfo['support'];
   compact?: boolean;
   missing?: boolean; // Style variant for missing APIs
@@ -221,19 +221,27 @@ export const APIItem: React.FC<APIItemProps> = ({
   query,
   name,
   category,
-  selectedPlatform,
+  selectedPlatforms,
   support,
   compact = false,
   missing = false,
 }) => {
   const isDesktop = useIsDesktop();
-  const platformSupport = support[selectedPlatform];
-  const versionAdded = platformSupport?.version_added;
-  const isSupported =
-    !missing &&
-    versionAdded !== false &&
-    versionAdded !== undefined &&
-    versionAdded !== null;
+
+  // Calculate support status across selected platforms
+  const supportedCount = selectedPlatforms.filter((p) => {
+    const s = support[p];
+    return (
+      s?.version_added !== false &&
+      s?.version_added !== undefined &&
+      s?.version_added !== null
+    );
+  }).length;
+
+  const isFullySupported =
+    !missing && supportedCount === selectedPlatforms.length;
+  const isPartiallySupported =
+    !missing && supportedCount > 0 && supportedCount < selectedPlatforms.length;
 
   // Get short category name for badge
   const categoryBadge =
@@ -271,9 +279,16 @@ export const APIItem: React.FC<APIItemProps> = ({
     displayName.includes('<code>') || displayName.includes('&lt;');
 
   // Color scheme based on support status
-  const colorClasses = isSupported
-    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-200 dark:hover:bg-emerald-500/20'
-    : 'bg-red-100 dark:bg-red-500/10 text-red-900 dark:text-red-400 border-red-200 dark:border-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/20';
+  let colorClasses =
+    'bg-red-100 dark:bg-red-500/10 text-red-900 dark:text-red-400 border-red-200 dark:border-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/20';
+
+  if (isFullySupported) {
+    colorClasses =
+      'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-200 dark:hover:bg-emerald-500/20';
+  } else if (isPartiallySupported) {
+    colorClasses =
+      'bg-amber-100 dark:bg-amber-500/10 text-amber-900 dark:text-amber-400 border-amber-200 dark:border-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/20';
+  }
 
   return (
     <Drawer direction={isDesktop ? 'right' : undefined}>
@@ -307,6 +322,12 @@ export const APIItem: React.FC<APIItemProps> = ({
               {displayName}
             </code>
           )}
+          {/* Partial support indicator */}
+          {isPartiallySupported && (
+            <span className="ml-auto text-[9px] font-mono opacity-80 px-1 py-0.5 rounded bg-black/5 dark:bg-white/10">
+              {supportedCount}/{selectedPlatforms.length}
+            </span>
+          )}
         </button>
       </DrawerTrigger>
       <DrawerContent
@@ -333,12 +354,12 @@ export const APIItem: React.FC<APIItemProps> = ({
 // Interactive Parity Chart with hover
 interface ParityChartProps {
   timeline: TimelinePoint[];
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
 }
 
 const ParityChart: React.FC<ParityChartProps> = ({
   timeline,
-  selectedPlatform,
+  selectedPlatforms,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -349,24 +370,34 @@ const ParityChart: React.FC<ParityChartProps> = ({
   const padX = 32;
   const padY = 16;
 
-  const points = timeline.map((t, i) => ({
-    x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
-    y:
-      padY +
-      (1 - Math.min(1, (t.platforms[selectedPlatform]?.coverage ?? 0) / 100)) *
-        (h - padY * 2),
-    version: t.version,
-    coverage: t.platforms[selectedPlatform]?.coverage ?? 0,
-  }));
+  // Generate points for each platform
+  const platformPoints = selectedPlatforms.map((platform) => {
+    return {
+      platform,
+      points: timeline.map((t, i) => ({
+        x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
+        y:
+          padY +
+          (1 - Math.min(1, (t.platforms[platform]?.coverage ?? 0) / 100)) *
+            (h - padY * 2),
+        version: t.version,
+        coverage: t.platforms[platform]?.coverage ?? 0,
+      })),
+    };
+  });
 
-  const polyline = points
-    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(' ');
-  const colors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors ||
-    PLATFORM_CONFIG.web_lynx.colors;
-  const lastPoint = points[points.length - 1];
-  const hovered = hoveredIndex !== null ? points[hoveredIndex] : null;
+  const hovered =
+    hoveredIndex !== null
+      ? platformPoints.map((p) => ({
+          platform: p.platform,
+          point: p.points[hoveredIndex],
+        }))
+      : null;
+
+  const lastPoints = platformPoints.map((p) => ({
+    platform: p.platform,
+    point: p.points[p.points.length - 1],
+  }));
 
   return (
     <div className="relative">
@@ -404,42 +435,50 @@ const ParityChart: React.FC<ParityChartProps> = ({
           );
         })}
 
-        {/* Area fill */}
-        <polygon
-          points={`${padX},${h - padY} ${polyline} ${points[points.length - 1].x},${h - padY}`}
-          fill={colors.line}
-          fillOpacity="0.1"
-        />
+        {/* Lines */}
+        {platformPoints.map(({ platform, points }) => {
+          const polyline = points
+            .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+            .join(' ');
+          const colors =
+            PLATFORM_CONFIG[platform]?.colors ||
+            PLATFORM_CONFIG.web_lynx.colors;
 
-        {/* Line */}
-        <polyline
-          points={polyline}
-          fill="none"
-          stroke={colors.line}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Interactive points */}
-        {points.map((p, i) => (
-          <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r="12"
-              fill="transparent"
-              className="cursor-pointer"
-            />
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={hoveredIndex === i ? 5 : 3}
-              fill={colors.line}
-              className="transition-all"
-            />
-          </g>
-        ))}
+          return (
+            <React.Fragment key={platform}>
+              {/* Area fill (optional, maybe too messy with multiple) */}
+              {/* Line */}
+              <polyline
+                points={polyline}
+                fill="none"
+                stroke={colors.line} // Use platform color
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={0.8}
+              />
+              {/* Interactive points */}
+              {points.map((p, i) => (
+                <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="8"
+                    fill="transparent"
+                    className="cursor-pointer"
+                  />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredIndex === i ? 4 : 2}
+                    fill={colors.line}
+                    className="transition-all"
+                  />
+                </g>
+              ))}
+            </React.Fragment>
+          );
+        })}
 
         {/* X axis labels */}
         <text
@@ -459,33 +498,37 @@ const ParityChart: React.FC<ParityChartProps> = ({
           fillOpacity="0.4"
           textAnchor="end"
         >
-          {lastPoint.version}
-        </text>
-
-        {/* Current label */}
-        <text
-          x={lastPoint.x + 4}
-          y={lastPoint.y + 3}
-          fontSize="10"
-          fill={colors.line}
-          fontWeight="600"
-        >
-          {lastPoint.coverage}%
+          {timeline[timeline.length - 1].version}
         </text>
       </svg>
 
       {/* Hover tooltip */}
       {hovered && (
         <div
-          className="absolute bg-popover border rounded-md px-2 py-1 text-xs shadow-lg pointer-events-none"
+          className="absolute bg-popover border rounded-md px-2 py-1 text-xs shadow-lg pointer-events-none z-10"
           style={{
-            left: hovered.x,
-            top: hovered.y - 30,
+            left: hovered[0].point.x,
+            top: 0,
             transform: 'translateX(-50%)',
           }}
         >
-          <span className="font-mono font-semibold">{hovered.coverage}%</span>
-          <span className="text-muted-foreground ml-1">v{hovered.version}</span>
+          <div className="font-mono text-[10px] text-muted-foreground mb-1 border-b pb-1">
+            v{hovered[0].point.version}
+          </div>
+          {hovered.map(({ platform, point }) => (
+            <div key={platform} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'w-1.5 h-1.5 rounded-full',
+                  PLATFORM_CONFIG[platform]?.colors.bg,
+                )}
+              />
+              <span>{PLATFORM_CONFIG[platform]?.label || platform}</span>
+              <span className="font-mono font-semibold ml-auto">
+                {point.coverage}%
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -499,8 +542,9 @@ export const APIStatusDashboard: React.FC = () => {
 
   // Global filter state
   const [showClay, setShowClay] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] =
-    useState<PlatformName>('web_lynx');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformName[]>([
+    'web_lynx',
+  ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState<
@@ -513,6 +557,15 @@ export const APIStatusDashboard: React.FC = () => {
 
   const { summary, categories, recent_apis, features, timeline } = stats;
   const categoryOptions = ['all', ...Object.keys(categories)];
+
+  // Helper to toggle platform
+  const togglePlatform = (platform: PlatformName) => {
+    if (selectedPlatforms.includes(platform)) {
+      setSelectedPlatforms(selectedPlatforms.filter((p) => p !== platform));
+    } else {
+      setSelectedPlatforms([...selectedPlatforms, platform]);
+    }
+  };
 
   // Unified filtering for all API displays
   const filteredFeatures = useMemo(() => {
@@ -528,17 +581,23 @@ export const APIStatusDashboard: React.FC = () => {
       )
         return false;
       if (stateFilter !== 'all') {
-        const support = f.support[selectedPlatform];
-        const isSupported =
-          support?.version_added !== false &&
-          support?.version_added !== undefined &&
-          support?.version_added !== null;
+        // Check support across all selected platforms
+        const supportedCount = selectedPlatforms.filter((p) => {
+          const s = f.support[p];
+          return (
+            s?.version_added !== false &&
+            s?.version_added !== undefined &&
+            s?.version_added !== null
+          );
+        }).length;
+        const isSupported = supportedCount === selectedPlatforms.length;
+
         if (stateFilter === 'supported' && !isSupported) return false;
         if (stateFilter === 'unsupported' && isSupported) return false;
       }
       return true;
     });
-  }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatform]);
+  }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatforms]);
 
   // Convert recent_apis to FeatureInfo format for APIItem
   const recentApiFeatures: FeatureInfo[] = useMemo(() => {
@@ -553,59 +612,55 @@ export const APIStatusDashboard: React.FC = () => {
     }));
   }, [recent_apis]);
 
-  // Group recent APIs by version for the selected platform
+  // Group recent APIs by version for the selected platforms
   const recentApisByVersion = useMemo(() => {
     const grouped: Record<string, FeatureInfo[]> = {};
 
     for (const api of recent_apis) {
-      const version = api.versions[selectedPlatform];
-      // Skip if no version for selected platform or version is false/null
-      if (!version || version === true) continue;
+      // Check if any selected platform has a version for this API
+      for (const platform of selectedPlatforms) {
+        const version = api.versions[platform];
+        // Skip if no version for selected platform or version is false/null
+        if (!version || version === true) continue;
 
-      const versionKey = String(version);
-      if (!grouped[versionKey]) {
-        grouped[versionKey] = [];
+        const versionKey = `${PLATFORM_CONFIG[platform]?.label || platform} v${version}`;
+        if (!grouped[versionKey]) {
+          grouped[versionKey] = [];
+        }
+
+        // Avoid duplicates if already added for this version group
+        if (!grouped[versionKey].some((f) => f.query === api.path)) {
+          grouped[versionKey].push({
+            id: `recent-${api.path}-${platform}`,
+            query: api.path,
+            name: api.name,
+            category: api.category,
+            support: Object.fromEntries(
+              Object.entries(api.versions).map(([k, v]) => [
+                k,
+                { version_added: v },
+              ]),
+            ) as FeatureInfo['support'],
+          });
+        }
       }
-
-      grouped[versionKey].push({
-        id: `recent-${api.path}`,
-        query: api.path,
-        name: api.name,
-        category: api.category,
-        support: Object.fromEntries(
-          Object.entries(api.versions).map(([k, v]) => [
-            k,
-            { version_added: v },
-          ]),
-        ) as FeatureInfo['support'],
-      });
     }
 
-    // Sort versions in descending order (newest first)
-    const sortedVersions = Object.keys(grouped).sort((a, b) => {
-      // Parse version strings like "3.5", "3.4", "1.6"
-      const parseVersion = (v: string) => {
-        const parts = v.split('.').map(Number);
-        return parts[0] * 1000 + (parts[1] || 0);
-      };
-      return parseVersion(b) - parseVersion(a);
-    });
+    // Sort groups... simplified logic: sort by platform then version?
+    // Or just key sort
+    const sortedVersions = Object.keys(grouped).sort();
 
     return sortedVersions.map((version) => ({
       version,
       apis: grouped[version],
     }));
-  }, [recent_apis, selectedPlatform]);
+  }, [recent_apis, selectedPlatforms]);
 
   // Show up to 100 features by default, or all if user requests
   const shownFeatures = showAllResults
     ? filteredFeatures
     : filteredFeatures.slice(0, 100);
   const hasMoreResults = filteredFeatures.length > 100;
-  const selectedColors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors ||
-    PLATFORM_CONFIG.web_lynx.colors;
-  const platformStats = summary.by_platform[selectedPlatform];
   const generatedDate = new Date(stats.generated_at).toLocaleDateString(
     lang === 'zh' ? 'zh-CN' : 'en-US',
     { month: 'short', day: 'numeric' },
@@ -659,12 +714,12 @@ export const APIStatusDashboard: React.FC = () => {
                 const colors =
                   PLATFORM_CONFIG[platform]?.colors ||
                   PLATFORM_CONFIG.android.colors;
-                const isSelected = selectedPlatform === platform;
+                const isSelected = selectedPlatforms.includes(platform);
                 return (
                   <button
                     key={platform}
                     onClick={() => {
-                      setSelectedPlatform(platform);
+                      togglePlatform(platform);
                       setExpandedCategory(null);
                     }}
                     className={cn(
@@ -736,12 +791,12 @@ export const APIStatusDashboard: React.FC = () => {
                   const colors =
                     PLATFORM_CONFIG[platform]?.colors ||
                     PLATFORM_CONFIG.android.colors;
-                  const isSelected = selectedPlatform === platform;
+                  const isSelected = selectedPlatforms.includes(platform);
                   return (
                     <button
                       key={platform}
                       onClick={() => {
-                        setSelectedPlatform(platform);
+                        togglePlatform(platform);
                         setExpandedCategory(null);
                       }}
                       className={cn(
@@ -858,7 +913,7 @@ export const APIStatusDashboard: React.FC = () => {
                       query={f.query}
                       name={f.name}
                       category={f.category}
-                      selectedPlatform={selectedPlatform}
+                      selectedPlatforms={selectedPlatforms}
                       support={f.support}
                       compact
                     />
@@ -871,46 +926,54 @@ export const APIStatusDashboard: React.FC = () => {
 
         {/* ===== STATS ROW ===== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Platform Stats Card */}
-          <Card className="overflow-hidden">
-            <CardHeader className="py-2 px-4">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <PlatformIcon
-                  platform={selectedPlatform}
-                  className={cn('w-4 h-4', selectedColors.text)}
-                />
-                {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}{' '}
-                Coverage
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 px-4 pb-3">
-              <div className="flex items-end justify-between mb-2">
-                <div
-                  className={cn(
-                    'text-3xl font-bold font-mono',
-                    selectedColors.text,
-                  )}
-                >
-                  {platformStats?.coverage_percent}%
-                </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  <div className="font-mono">
-                    {platformStats?.supported_count.toLocaleString()} /{' '}
-                    {summary.total_apis.toLocaleString()}
+          {/* Platform Stats Card - Loop for selected */}
+          {selectedPlatforms.map((platform) => {
+            const platformStats = summary.by_platform[platform];
+            const colors =
+              PLATFORM_CONFIG[platform]?.colors ||
+              PLATFORM_CONFIG.web_lynx.colors;
+
+            return (
+              <Card key={platform} className="overflow-hidden">
+                <CardHeader className="py-2 px-4">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <PlatformIcon
+                      platform={platform}
+                      className={cn('w-4 h-4', colors.text)}
+                    />
+                    {PLATFORM_CONFIG[platform]?.label || platform} Coverage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 px-4 pb-3">
+                  <div className="flex items-end justify-between mb-2">
+                    <div
+                      className={cn(
+                        'text-3xl font-bold font-mono',
+                        colors.text,
+                      )}
+                    >
+                      {platformStats?.coverage_percent}%
+                    </div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      <div className="font-mono">
+                        {platformStats?.supported_count.toLocaleString()} /{' '}
+                        {summary.total_apis.toLocaleString()}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <Progress
-                value={platformStats?.coverage_percent || 0}
-                className="h-1.5"
-                indicatorClassName={selectedColors.progress}
-              />
-            </CardContent>
-          </Card>
+                  <Progress
+                    value={platformStats?.coverage_percent || 0}
+                    className="h-1.5"
+                    indicatorClassName={colors.progress}
+                  />
+                </CardContent>
+              </Card>
+            );
+          })}
 
           {/* Trend Chart Card */}
           {timeline && timeline.length >= 2 && (
-            <Card>
+            <Card className="col-span-full md:col-span-1">
               <CardHeader className="py-2 px-4">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <TrendingUpIcon className="w-4 h-4 text-primary" />
@@ -920,7 +983,7 @@ export const APIStatusDashboard: React.FC = () => {
               <CardContent className="pt-0 px-2 pb-2">
                 <ParityChart
                   timeline={timeline}
-                  selectedPlatform={selectedPlatform}
+                  selectedPlatforms={selectedPlatforms}
                 />
               </CardContent>
             </Card>
@@ -965,7 +1028,7 @@ export const APIStatusDashboard: React.FC = () => {
             <CategoryTable
               categories={categories}
               showClay={showClay}
-              selectedPlatform={selectedPlatform}
+              selectedPlatforms={selectedPlatforms}
               expandedCategory={expandedCategory}
               onCategoryClick={(cat) =>
                 setExpandedCategory(expandedCategory === cat ? null : cat)
@@ -991,9 +1054,7 @@ export const APIStatusDashboard: React.FC = () => {
                     (sum, g) => sum + g.apis.length,
                     0,
                   )}{' '}
-                  for{' '}
-                  {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}
-                  )
+                  APIs)
                 </span>
               </div>
               <svg
@@ -1019,16 +1080,14 @@ export const APIStatusDashboard: React.FC = () => {
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
                 {recentApisByVersion.length === 0 ? (
                   <div className="text-center py-4 text-sm text-muted-foreground">
-                    No recent APIs for{' '}
-                    {PLATFORM_CONFIG[selectedPlatform]?.label ||
-                      selectedPlatform}
+                    No recent APIs
                   </div>
                 ) : (
                   recentApisByVersion.map(({ version, apis }) => (
                     <div key={version}>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary font-mono">
-                          v{version}
+                          {version}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
                           {apis.length} APIs
@@ -1042,7 +1101,7 @@ export const APIStatusDashboard: React.FC = () => {
                             query={f.query}
                             name={f.name}
                             category={f.category}
-                            selectedPlatform={selectedPlatform}
+                            selectedPlatforms={selectedPlatforms}
                             support={f.support}
                             compact
                           />

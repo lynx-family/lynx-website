@@ -34,13 +34,13 @@ const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface CategoriesPageProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
   showClay: boolean;
 }
 
 export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   stats,
-  selectedPlatform,
+  selectedPlatforms,
   showClay,
 }) => {
   const lang = useLang();
@@ -89,7 +89,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         <CategoryTable
           categories={categories}
           showClay={showClay}
-          selectedPlatform={selectedPlatform}
+          selectedPlatforms={selectedPlatforms}
           expandedCategory={expandedCategory}
           onCategoryClick={(cat) =>
             setExpandedCategory(expandedCategory === cat ? null : cat)

@@ -93,8 +93,8 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface APIStatusSidebarProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
-  onPlatformChange: (platform: PlatformName) => void;
+  selectedPlatforms: PlatformName[];
+  onPlatformChange: (platforms: PlatformName[]) => void;
   showClay: boolean;
   onShowClayChange: (show: boolean) => void;
   activePage: PageType;
@@ -118,7 +118,7 @@ const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   stats,
-  selectedPlatform,
+  selectedPlatforms,
   onPlatformChange,
   showClay,
   onShowClayChange,
@@ -129,10 +129,50 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   const lang = useLang();
   const isCollapsed = state === 'collapsed';
 
+  // Toggle helper
+  const togglePlatform = (platform: PlatformName) => {
+    if (selectedPlatforms.includes(platform)) {
+      onPlatformChange(selectedPlatforms.filter((p) => p !== platform));
+    } else {
+      onPlatformChange([...selectedPlatforms, platform]);
+    }
+  };
+
   // Get current platform info for header
-  const currentPlatformStats = stats.summary.by_platform[selectedPlatform];
-  const currentPlatformColors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors || PLATFORM_CONFIG.android.colors;
+  // If one platform selected, show specific stats
+  // If multiple, show summary
+  const renderHeaderStats = () => {
+    if (selectedPlatforms.length === 1) {
+      const platform = selectedPlatforms[0];
+      const ps = stats.summary.by_platform[platform];
+      const colors =
+        PLATFORM_CONFIG[platform]?.colors || PLATFORM_CONFIG.android.colors;
+      return (
+        <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium">
+          <PlatformIcon
+            platform={platform}
+            className={cn('h-3 w-3', colors.text)}
+          />
+          <span className={colors.text}>
+            {PLATFORM_CONFIG[platform]?.label || platform}{' '}
+            {ps?.coverage_percent}%
+          </span>
+        </div>
+      );
+    } else if (selectedPlatforms.length > 1) {
+      return (
+        <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium text-muted-foreground">
+          <span>{selectedPlatforms.length} Platforms Selected</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium text-muted-foreground">
+          <span>No Platform Selected</span>
+        </div>
+      );
+    }
+  };
 
   // Format date
   const updatedDate = new Date(stats.generated_at).toLocaleDateString(
@@ -165,16 +205,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                 APIs
               </span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium">
-              <PlatformIcon
-                platform={selectedPlatform}
-                className={cn('h-3 w-3', currentPlatformColors.text)}
-              />
-              <span className={currentPlatformColors.text}>
-                {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}{' '}
-                {currentPlatformStats?.coverage_percent}%
-              </span>
-            </div>
+            {renderHeaderStats()}
           </div>
         )}
       </SidebarHeader>
@@ -191,12 +222,12 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                 const colors =
                   PLATFORM_CONFIG[platform]?.colors ||
                   PLATFORM_CONFIG.android.colors;
-                const isSelected = selectedPlatform === platform;
+                const isSelected = selectedPlatforms.includes(platform);
                 return (
                   <SidebarMenuItem key={platform}>
                     <SidebarMenuButton
                       isActive={isSelected}
-                      onClick={() => onPlatformChange(platform)}
+                      onClick={() => togglePlatform(platform)}
                       tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
                     >
                       <PlatformIcon
@@ -254,12 +285,12 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   const colors =
                     PLATFORM_CONFIG[platform]?.colors ||
                     PLATFORM_CONFIG.clay_android.colors;
-                  const isSelected = selectedPlatform === platform;
+                  const isSelected = selectedPlatforms.includes(platform);
                   return (
                     <SidebarMenuItem key={platform}>
                       <SidebarMenuButton
                         isActive={isSelected}
-                        onClick={() => onPlatformChange(platform)}
+                        onClick={() => togglePlatform(platform)}
                         tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
                         className="pl-6"
                       >

@@ -23,7 +23,7 @@ interface CategoryTableProps {
     }
   >;
   showClay?: boolean;
-  selectedPlatform?: string;
+  selectedPlatforms?: PlatformName[];
   expandedCategory?: string | null;
   onCategoryClick?: (category: string) => void;
   highlightMode?: HighlightMode;
@@ -83,32 +83,37 @@ const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }) => (
 // i18n for missing APIs section
 const missingTexts = {
   en: {
-    allSupported: 'All APIs supported on this platform! 🎉',
-    andMore: 'and more missing APIs',
+    allSupported: 'All APIs supported on these platforms! 🎉',
+    missingIn: 'Missing in',
   },
   zh: {
-    allSupported: '此平台已支持所有 API！🎉',
-    andMore: '更多缺失的 API',
+    allSupported: '这些平台已支持所有 API！🎉',
+    missingIn: '缺失于',
   },
 };
 
 interface MissingAPIsRowProps {
-  missingApis: APIInfo[];
+  missingMap: Record<PlatformName, APIInfo[]>;
   colSpan: number;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
   category: string;
 }
 
 const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
-  missingApis,
+  missingMap,
   colSpan,
-  selectedPlatform,
+  selectedPlatforms,
   category,
 }) => {
   const lang = useLang();
   const texts = lang === 'zh' ? missingTexts.zh : missingTexts.en;
 
-  if (missingApis.length === 0) {
+  // Check if any missing APIs exist across selected platforms
+  const hasMissing = selectedPlatforms.some(
+    (p) => missingMap[p] && missingMap[p].length > 0,
+  );
+
+  if (!hasMissing) {
     return (
       <tr>
         <td
@@ -121,33 +126,51 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
     );
   }
 
-  // Create support object indicating missing on selected platform
-  const createMissingSupport = (): FeatureInfo['support'] => {
-    return {
-      [selectedPlatform]: { version_added: false },
-    };
-  };
-
   return (
     <tr>
       <td
         colSpan={colSpan}
         className="px-3 py-3 bg-red-500/5 dark:bg-red-500/10"
       >
-        {/* Show ALL missing APIs - prioritize completeness over aesthetics */}
-        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {missingApis.map((api, index) => (
-            <APIItem
-              key={`${api.path}-${index}`}
-              query={api.path}
-              name={api.name}
-              category={category}
-              selectedPlatform={selectedPlatform}
-              support={createMissingSupport()}
-              compact
-              missing
-            />
-          ))}
+        <div className="space-y-4">
+          {selectedPlatforms.map((platform) => {
+            const missing = missingMap[platform];
+            if (!missing || missing.length === 0) return null;
+
+            const createMissingSupport = (): FeatureInfo['support'] => ({
+              [platform]: { version_added: false },
+            });
+
+            return (
+              <div key={platform}>
+                <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <div
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full',
+                      PLATFORM_CONFIG[platform]?.colors.bg,
+                    )}
+                  />
+                  {texts.missingIn}{' '}
+                  {PLATFORM_CONFIG[platform]?.label || platform} (
+                  {missing.length})
+                </div>
+                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  {missing.map((api, index) => (
+                    <APIItem
+                      key={`${platform}-${api.path}-${index}`}
+                      query={api.path}
+                      name={api.name}
+                      category={category}
+                      selectedPlatforms={[platform]} // Show status for this platform specifically
+                      support={createMissingSupport()}
+                      compact
+                      missing
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </td>
     </tr>
@@ -157,7 +180,7 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
 export const CategoryTable: React.FC<CategoryTableProps> = ({
   categories,
   showClay = false,
-  selectedPlatform = 'web_lynx',
+  selectedPlatforms = ['web_lynx'],
   expandedCategory = null,
   onCategoryClick,
   highlightMode = 'green',
@@ -174,9 +197,8 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
     'errors',
   ];
 
-  const displayPlatforms: PlatformName[] = showClay
-    ? [...NATIVE_PLATFORMS, ...CLAY_PLATFORMS]
-    : NATIVE_PLATFORMS;
+  // Use selectedPlatforms directly for columns
+  const displayPlatforms = selectedPlatforms;
 
   const sortedCategories = categoryOrder
     .filter((cat) => categories[cat])
@@ -184,7 +206,6 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 
   const colSpan = 3 + displayPlatforms.length;
 
-  // Debug: log category count
   if (sortedCategories.length === 0) {
     return (
       <div className="p-4 text-center text-red-500">
@@ -215,7 +236,6 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                 className={cn(
                   'text-center font-semibold px-3 py-3 whitespace-nowrap text-xs',
                   CLAY_PLATFORMS.includes(platform) && 'bg-muted/30',
-                  platform === selectedPlatform && 'bg-primary/10',
                 )}
               >
                 {PLATFORM_CONFIG[platform]?.label || platform}
@@ -227,9 +247,11 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
           {sortedCategories.map(
             ({ key, stats, display_name, missing }, index) => {
               const isExpanded = expandedCategory === key;
-              const missingApis =
-                missing?.[selectedPlatform as PlatformName] || [];
-              const missingCount = missingApis.length;
+
+              // Calculate missing count across all selected platforms
+              const totalMissingCount = displayPlatforms.reduce((sum, p) => {
+                return sum + (missing?.[p]?.length || 0);
+              }, 0);
 
               return (
                 <React.Fragment key={key}>
@@ -254,9 +276,9 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                         <span className="text-[11px] sm:text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
                           {CATEGORY_DISPLAY_NAMES[key] || display_name}
                         </span>
-                        {missingCount > 0 && (
+                        {totalMissingCount > 0 && (
                           <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 self-start whitespace-nowrap">
-                            {missingCount} missing
+                            {totalMissingCount} gaps
                           </span>
                         )}
                       </div>
@@ -273,7 +295,6 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                           className={cn(
                             'text-center px-2 py-2',
                             CLAY_PLATFORMS.includes(platform) && 'bg-muted/10',
-                            platform === selectedPlatform && 'bg-primary/5',
                           )}
                         >
                           <div
@@ -295,9 +316,9 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                   </tr>
                   {isExpanded && (
                     <MissingAPIsRow
-                      missingApis={missingApis}
+                      missingMap={missing as Record<PlatformName, APIInfo[]>}
                       colSpan={colSpan}
-                      selectedPlatform={selectedPlatform as PlatformName}
+                      selectedPlatforms={selectedPlatforms}
                       category={key}
                     />
                   )}
@@ -333,7 +354,6 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                   className={cn(
                     'text-center px-2 py-2',
                     CLAY_PLATFORMS.includes(platform) && 'bg-muted/30',
-                    platform === selectedPlatform && 'bg-primary/10',
                   )}
                 >
                   <div

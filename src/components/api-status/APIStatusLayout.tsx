@@ -24,8 +24,10 @@ const PAGE_TITLES: Record<PageType, { en: string; zh: string }> = {
 
 export const APIStatusLayout: React.FC = () => {
   // Shared state for platform selection
-  const [selectedPlatform, setSelectedPlatform] =
-    useState<PlatformName>('android');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformName[]>([
+    'android',
+    'ios',
+  ]);
   const [showClay, setShowClay] = useState(false);
 
   // Page navigation state
@@ -35,23 +37,29 @@ export const APIStatusLayout: React.FC = () => {
   const renderPage = () => {
     switch (activePage) {
       case 'search':
-        return <SearchPage stats={stats} selectedPlatform={selectedPlatform} />;
+        return (
+          <SearchPage stats={stats} selectedPlatforms={selectedPlatforms} />
+        );
       case 'coverage':
         return (
-          <CoveragePage stats={stats} selectedPlatform={selectedPlatform} />
+          <CoveragePage stats={stats} selectedPlatforms={selectedPlatforms} />
         );
       case 'categories':
         return (
           <CategoriesPage
             stats={stats}
-            selectedPlatform={selectedPlatform}
+            selectedPlatforms={selectedPlatforms}
             showClay={showClay}
           />
         );
       case 'recent':
-        return <RecentPage stats={stats} selectedPlatform={selectedPlatform} />;
+        return (
+          <RecentPage stats={stats} selectedPlatforms={selectedPlatforms} />
+        );
       default:
-        return <SearchPage stats={stats} selectedPlatform={selectedPlatform} />;
+        return (
+          <SearchPage stats={stats} selectedPlatforms={selectedPlatforms} />
+        );
     }
   };
 
@@ -63,8 +71,8 @@ export const APIStatusLayout: React.FC = () => {
       >
         <APIStatusSidebar
           stats={stats}
-          selectedPlatform={selectedPlatform}
-          onPlatformChange={setSelectedPlatform}
+          selectedPlatforms={selectedPlatforms}
+          onPlatformChange={setSelectedPlatforms}
           showClay={showClay}
           onShowClayChange={setShowClay}
           activePage={activePage}

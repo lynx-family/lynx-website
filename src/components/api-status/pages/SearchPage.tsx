@@ -62,12 +62,12 @@ const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface SearchPageProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
 }
 
 export const SearchPage: React.FC<SearchPageProps> = ({
   stats,
-  selectedPlatform,
+  selectedPlatforms,
 }) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
@@ -96,17 +96,23 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       )
         return false;
       if (stateFilter !== 'all') {
-        const support = f.support[selectedPlatform];
-        const isSupported =
-          support?.version_added !== false &&
-          support?.version_added !== undefined &&
-          support?.version_added !== null;
+        // Check support across all selected platforms
+        const supportedCount = selectedPlatforms.filter((p) => {
+          const s = f.support[p];
+          return (
+            s?.version_added !== false &&
+            s?.version_added !== undefined &&
+            s?.version_added !== null
+          );
+        }).length;
+        const isSupported = supportedCount === selectedPlatforms.length;
+
         if (stateFilter === 'supported' && !isSupported) return false;
         if (stateFilter === 'unsupported' && isSupported) return false;
       }
       return true;
     });
-  }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatform]);
+  }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatforms]);
 
   // Show up to 100 features by default, or all if user requests
   const shownFeatures = showAllResults
@@ -204,7 +210,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
               query={f.query}
               name={f.name}
               category={f.category}
-              selectedPlatform={selectedPlatform}
+              selectedPlatforms={selectedPlatforms}
               support={f.support}
               compact
             />
