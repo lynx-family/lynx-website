@@ -225,7 +225,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
 }
 
-const Search = (props?: Partial<SearchProps> | undefined) => {
+const Search = () => {
   const lang = useLang();
   return (
     <PluginAlgoliaSearch
@@ -239,13 +239,14 @@ const Search = (props?: Partial<SearchProps> | undefined) => {
         maxResultsPerGroup: 5,
         transformItems: (items) => {
           return items.map((item) => {
+            const url = new URL(item.url);
+            item.url = item.url.replace(url.origin, '');
             // Rspress will automatically add the base path to the URL,
             // so we need to remove the base path from the URL if it exists
             item.url = removeBase(item.url);
             return item;
           });
         },
-        ...props?.docSearchProps,
       }}
       locales={ZH_LOCALES}
     />
