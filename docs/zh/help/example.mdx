@@ -1,0 +1,97 @@
+import { Go } from '@lynx';
+
+# 管理交互式示例 (`<Go>`)
+
+交互式示例允许用户直接在文档中预览和编辑代码。本指南解释了如何使用专用工作区和 `<Go>` 组件来管理这些示例。
+
+## 概览
+
+交互式示例系统允许您在文档中嵌入实时、可运行的 Lynx 代码。它包括：
+
+1.  **源包 (Source Packages)**：示例是位于 `packages/lynx-example-packages/` 中的真实 npm 包。
+2.  **构建过程 (Build Process)**：脚本将这些包打包为网站的静态资源。
+3.  **`<Go>` 组件**：在 MDX 文件中渲染交互式编辑器和预览的 React 组件。
+
+---
+
+## 1. 使用 `<Go>` 组件
+
+要在文档中嵌入交互式示例，请使用 `<Go>` 组件。
+
+### 基本用法
+
+从 `@lynx` 导入 `Go` 并提供 `example` ID（对应于包目录名称）。
+
+```tsx
+import { Go } from '@lynx';
+
+<Go example="view" />;
+```
+
+### 组件属性
+
+| 属性               | 类型     | 默认值           | 描述                                                                               |
+| :----------------- | :------- | :--------------- | :--------------------------------------------------------------------------------- |
+| `example`          | `string` | **必需**         | 要加载的示例 ID（例如 `"view"`）。与 `docs/public/lynx-examples/` 中的目录名匹配。 |
+| `defaultFile`      | `string` | `"package.json"` | 代码编辑器中默认显示的文件路径。                                                   |
+| `defaultEntryName` | `string` | -                | 要运行的特定入口点（如果示例有多个 bundle）。                                      |
+| `img`              | `string` | -                | 自定义预览图像的 URL（覆盖默认的 `preview-image.png`）。                           |
+| `highlight`        | `object` | -                | 行高亮配置。格式：`{ "path/to/file": "start-end" }`。                              |
+| `schema`           | `string` | -                | 预览的自定义 schema URL 模式。使用 `{{{url}}}` 作为 bundle URL 的占位符。          |
+
+### 高级示例
+
+```tsx
+<Go
+  example="view"
+  defaultFile="src/App.tsx"
+  defaultEntryName="main"
+  highlight={{ 'src/App.tsx': '5-10' }}
+/>
+```
+
+<Go
+  example="view"
+  defaultFile="src/App.tsx"
+  defaultEntryName="main"
+  highlight={{ 'src/App.tsx': '5-10' }}
+/>
+
+---
+
+## 2. 管理示例包
+
+所有交互式示例均作为 `packages/lynx-example-packages/` 工作区中的依赖项进行管理。
+
+### 目录结构
+
+```text
+packages/lynx-example-packages/
+├── package.json          # 列出所有示例依赖项的清单
+├── pnpm-lock.yaml       # 示例的锁定文件
+└── node_modules/        # 安装示例的位置
+    └── @lynx-example/   # 官方示例的命名空间
+```
+
+### 添加新示例
+
+要使新示例可用于 `<Go>` 组件：
+
+1.  **发布包**：您的示例必须是有效的 npm 包（例如 `@lynx-example/my-feature`）。
+2.  **添加依赖**：将该包添加到 `packages/lynx-example-packages/package.json`。
+3.  **安装**：在工作区根目录运行 `pnpm install` 以下载新示例。
+4.  **重新构建资源**：网站构建过程将自动检测并打包新示例。
+
+---
+
+## 3. 构建架构
+
+对于那些对底层工作原理感兴趣的人：
+
+- **脚本**：`scripts/lynx-example.js` 在构建期间运行。
+- **过程**：
+  1.  扫描 `node_modules/@lynx-example/` 查找包。
+  2.  识别 bundle 文件（`.lynx.bundle`，`.web.bundle`）和源代码。
+  3.  为每个示例生成 `example-metadata.json`。
+  4.  将资源复制到 `docs/public/lynx-examples/`。
+- **运行时**：`<Go>` 组件在运行时获取此元数据以加载编辑器和预览。

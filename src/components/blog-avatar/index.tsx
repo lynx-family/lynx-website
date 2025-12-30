@@ -6,8 +6,8 @@ import {
   IconUserCircle,
 } from '@douyinfe/semi-icons';
 import { Avatar, Space } from '@douyinfe/semi-ui';
-import { useMemo } from 'react';
 import { useLang } from '@rspress/core/runtime';
+import { useMemo } from 'react';
 import originListData from './authors.json';
 import styles from './index.module.less';
 
@@ -40,7 +40,8 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
         <Avatar
           className="!pointer-events-none"
           src={author?.image}
-          zoom={false}
+          // @ts-ignore
+          zoom={undefined}
           onMouseEnter={undefined}
           onClick={undefined}
           onMouseLeave={undefined}
@@ -57,7 +58,12 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
               {Object.entries(author.socials).map(([key, value]) => {
                 return value?.link ? (
                   <span
-                    onClick={() => window.open(value?.link, '_blank')}
+                    key={key}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(value?.link, '_blank');
+                    }}
                     className="cursor-pointer"
                   >
                     {brandSpList[key as BrandKey]
@@ -65,11 +71,11 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
                       : brandSpList['default'].icon}
                   </span>
                 ) : (
-                  <>
+                  <span key={key}>
                     {brandSpList[key as BrandKey]
                       ? brandSpList[key as BrandKey].icon
                       : brandSpList['default'].icon}
-                  </>
+                  </span>
                 );
               })}
             </Space>
@@ -80,7 +86,13 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
   );
 };
 
-const BlogAvatar = ({ list }: { list: string[] }) => {
+const BlogAvatar = ({
+  list,
+  className,
+}: {
+  list: string[];
+  className?: string;
+}) => {
   const filteredAuthors = useMemo(() => {
     // Create a map of authors by id for O(1) lookup
     const authorMap = new Map(
@@ -98,7 +110,7 @@ const BlogAvatar = ({ list }: { list: string[] }) => {
   }
 
   return (
-    <div className={styles['blog-avatar-frame']}>
+    <div className={`${styles['blog-avatar-frame']} ${className || ''}`}>
       {filteredAuthors.map((author) => {
         return <HoverCard author={author} key={author.id} />;
       })}
