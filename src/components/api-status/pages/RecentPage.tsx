@@ -1,10 +1,20 @@
+import { cn } from '@/lib/utils';
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import React from 'react';
+import { Card, CardContent } from '../../ui/card';
 import { APIItem } from '../APIStatusDashboard';
-import type { APIStats, FeatureInfo } from '../types';
 import { PLATFORM_CONFIG } from '../constants';
+import type { APIStats, FeatureInfo } from '../types';
+
+// Platform icons
+const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
+  platform,
+  className,
+}) => {
+  const Icon = PLATFORM_CONFIG[platform]?.icon;
+  return Icon ? <Icon className={className} /> : null;
+};
 
 const i18n = {
   en: {
@@ -46,7 +56,7 @@ export const RecentPage: React.FC<RecentPageProps> = ({
   const { recent_apis } = stats;
 
   return (
-    <div className="space-y-6">
+    <div className="flex gap-4 overflow-x-auto pb-6 items-start -mx-4 px-4 scrollbar-thin">
       {selectedPlatforms.map((platform) => {
         // Group recent APIs by version for the current platform
         const recentApisByVersion = (() => {
@@ -96,20 +106,33 @@ export const RecentPage: React.FC<RecentPageProps> = ({
           0,
         );
 
+        const colors =
+          PLATFORM_CONFIG[platform]?.colors || PLATFORM_CONFIG.web_lynx.colors;
+
         return (
-          <Card key={platform}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium flex items-center gap-2">
-                <SparklesIcon className="w-5 h-5 text-primary" />
-                {t.title}
-                <span className="text-xs text-muted-foreground font-normal">
-                  ({totalCount} {t.apis} for{' '}
-                  {PLATFORM_CONFIG[platform]?.label || platform})
+          <Card
+            key={platform}
+            className={cn(
+              'min-w-[300px] flex-1 flex-shrink-0 transition-all',
+              colors.bg,
+              colors.border,
+            )}
+          >
+            <CardContent className="p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <PlatformIcon
+                  platform={platform}
+                  className={cn('w-4 h-4', colors.text)}
+                />
+                <span className={cn('text-sm font-medium', colors.text)}>
+                  {PLATFORM_CONFIG[platform]?.label || platform}
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6 pr-1">
+                <span className="text-xs text-muted-foreground ml-auto">
+                  ({totalCount} APIs)
+                </span>
+              </div>
+
+              <div className="space-y-6 pr-1 mt-2">
                 {recentApisByVersion.length === 0 ? (
                   <div className="text-center py-8 text-sm text-muted-foreground">
                     {t.noApis} {PLATFORM_CONFIG[platform]?.label || platform}
@@ -126,7 +149,14 @@ export const RecentPage: React.FC<RecentPageProps> = ({
                         </span>
                         <div className="flex-1 h-px bg-border" />
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                      <div
+                        className={cn(
+                          'grid gap-1.5',
+                          selectedPlatforms.length > 1
+                            ? 'grid-cols-1'
+                            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+                        )}
+                      >
                         {apis.map((f) => (
                           <APIItem
                             key={f.id}

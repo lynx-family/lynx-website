@@ -75,6 +75,20 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        status: {
+          supported: {
+            DEFAULT: 'hsl(var(--status-supported))',
+            strong: 'hsl(var(--status-supported-strong))',
+          },
+          unsupported: {
+            DEFAULT: 'hsl(var(--status-unsupported))',
+            strong: 'hsl(var(--status-unsupported-strong))',
+          },
+          partial: {
+            DEFAULT: 'hsl(var(--status-partial))',
+            strong: 'hsl(var(--status-partial-strong))',
+          },
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -231,7 +231,7 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
   return (
     <div className="space-y-6">
       {/* Platform Coverage Cards - Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {selectedPlatforms.map((platform) => {
           const platformStats = summary.by_platform[platform];
           const colors =
@@ -239,38 +239,42 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
             PLATFORM_CONFIG.web_lynx.colors;
 
           return (
-            <Card key={platform}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
+            <Card
+              key={platform}
+              className={cn('transition-all', colors.bg, colors.border)}
+            >
+              <CardContent className="p-4 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
                   <PlatformIcon
                     platform={platform}
-                    className={cn('w-5 h-5', colors.text)}
+                    className={cn('w-4 h-4', colors.text)}
                   />
-                  {PLATFORM_CONFIG[platform]?.label || platform} {t.coverage}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-end justify-between mb-3">
+                  <span className={cn('text-sm font-medium', colors.text)}>
+                    {PLATFORM_CONFIG[platform]?.label || platform}
+                  </span>
+                </div>
+
+                <div>
                   <div
-                    className={cn('text-5xl font-bold font-mono', colors.text)}
+                    className={cn(
+                      'text-3xl font-bold font-mono leading-none mb-2',
+                      colors.text,
+                    )}
                   >
                     {platformStats?.coverage_percent}%
                   </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <div className="font-mono text-lg">
+                  <Progress
+                    value={platformStats?.coverage_percent || 0}
+                    className="h-1.5 bg-black/5 dark:bg-white/10"
+                    indicatorClassName={colors.progress}
+                  />
+                  <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
+                    <span>
                       {platformStats?.supported_count.toLocaleString()} /{' '}
                       {summary.total_apis.toLocaleString()}
-                    </div>
-                    <div>
-                      {t.supported} / {t.total}
-                    </div>
+                    </span>
                   </div>
                 </div>
-                <Progress
-                  value={platformStats?.coverage_percent || 0}
-                  className="h-3"
-                  indicatorClassName={colors.progress}
-                />
               </CardContent>
             </Card>
           );
@@ -280,10 +284,10 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
       {/* Trend Chart */}
       {timeline && timeline.length >= 2 && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
+          <CardHeader className="py-2 px-4">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-primary"
+                className="w-4 h-4 text-primary"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -303,11 +307,33 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
               {t.trend}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 px-2 pb-2">
             <ParityChart
               timeline={timeline}
               selectedPlatforms={selectedPlatforms}
             />
+            {/* Bottom figures - Platform Legend */}
+            <div className="flex flex-wrap justify-center gap-4 mt-2">
+              {selectedPlatforms.map((platform) => {
+                const ps = summary.by_platform[platform];
+                const colors =
+                  PLATFORM_CONFIG[platform]?.colors ||
+                  PLATFORM_CONFIG.web_lynx.colors;
+                return (
+                  <div key={platform} className="flex items-center gap-1.5">
+                    <div
+                      className={cn('w-2 h-2 rounded-full', colors.progress)}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {PLATFORM_CONFIG[platform]?.label || platform}
+                    </span>
+                    <span className="text-xs font-mono font-bold">
+                      {ps?.coverage_percent}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}

@@ -5,11 +5,7 @@ import React from 'react';
 import { APIItem } from './APIStatusDashboard';
 import { PLATFORM_CONFIG } from './constants';
 import type { APIInfo, CategoryStats, FeatureInfo } from './types';
-import {
-  CATEGORY_DISPLAY_NAMES,
-  CLAY_PLATFORMS,
-  NATIVE_PLATFORMS,
-} from './types';
+import { CATEGORY_DISPLAY_NAMES, CLAY_PLATFORMS } from './types';
 
 export type HighlightMode = 'green' | 'red';
 
@@ -33,13 +29,13 @@ interface CategoryTableProps {
 // Higher coverage = more saturated/vibrant green, lower coverage = muted/gray
 const getCoverageColorGreen = (coverage: number): string => {
   if (coverage >= 95)
-    return 'bg-emerald-100 dark:bg-emerald-500/25 text-emerald-900 dark:text-emerald-300';
+    return 'bg-status-supported/25 text-status-supported-strong';
   if (coverage >= 85)
-    return 'bg-emerald-100/80 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400';
+    return 'bg-status-supported/20 text-status-supported-strong';
   if (coverage >= 75)
-    return 'bg-emerald-100/60 dark:bg-emerald-500/15 text-emerald-800/90 dark:text-emerald-400/80';
+    return 'bg-status-supported/15 text-status-supported-strong/90';
   if (coverage >= 65)
-    return 'bg-emerald-100/40 dark:bg-emerald-500/10 text-emerald-800/80 dark:text-emerald-400/60';
+    return 'bg-status-supported/10 text-status-supported-strong/80';
   if (coverage >= 50) return 'bg-muted/50 text-muted-foreground/80';
   return 'bg-muted/30 text-muted-foreground/60';
 };
@@ -48,13 +44,13 @@ const getCoverageColorGreen = (coverage: number): string => {
 // Lower coverage = more saturated/vibrant red, higher coverage = muted/gray
 const getCoverageColorRed = (coverage: number): string => {
   if (coverage < 50)
-    return 'bg-red-100 dark:bg-red-500/25 text-red-900 dark:text-red-300';
+    return 'bg-status-unsupported/25 text-status-unsupported-strong';
   if (coverage < 65)
-    return 'bg-red-100/80 dark:bg-red-500/20 text-red-800 dark:text-red-400';
+    return 'bg-status-unsupported/20 text-status-unsupported-strong';
   if (coverage < 75)
-    return 'bg-red-100/60 dark:bg-red-500/15 text-red-800/90 dark:text-red-400/80';
+    return 'bg-status-unsupported/15 text-status-unsupported-strong/90';
   if (coverage < 85)
-    return 'bg-red-100/40 dark:bg-red-500/10 text-red-800/80 dark:text-red-400/60';
+    return 'bg-status-unsupported/10 text-status-unsupported-strong/80';
   if (coverage < 95) return 'bg-muted/50 text-muted-foreground/80';
   return 'bg-muted/30 text-muted-foreground/60';
 };
@@ -118,7 +114,7 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
       <tr>
         <td
           colSpan={colSpan}
-          className="px-4 py-3 text-sm text-center bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
+          className="px-4 py-3 text-sm text-center bg-status-supported/5 text-status-supported-strong"
         >
           {texts.allSupported}
         </td>
@@ -128,10 +124,7 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
 
   return (
     <tr>
-      <td
-        colSpan={colSpan}
-        className="px-3 py-3 bg-red-500/5 dark:bg-red-500/10"
-      >
+      <td colSpan={colSpan} className="px-3 py-3 bg-status-unsupported/5">
         <div className="space-y-4">
           {selectedPlatforms.map((platform) => {
             const missing = missingMap[platform];
@@ -215,11 +208,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
   }
 
   return (
-    <div
-      className="overflow-x-auto border rounded-lg bg-card"
-      role="region"
-      aria-label="Category Table"
-    >
+    <div className="overflow-x-auto" role="region" aria-label="Category Table">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
@@ -277,7 +266,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                           {CATEGORY_DISPLAY_NAMES[key] || display_name}
                         </span>
                         {totalMissingCount > 0 && (
-                          <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 self-start whitespace-nowrap">
+                          <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-status-partial/20 text-status-partial-strong self-start whitespace-nowrap">
                             {totalMissingCount} gaps
                           </span>
                         )}
@@ -329,7 +318,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         </tbody>
         {/* Summary Row */}
         <tfoot>
-          <tr className="font-semibold border-t-2 bg-muted/50">
+          <tr className="font-semibold bg-muted/50 border-t-0">
             <td className="px-2 py-3"></td>
             <td className="px-4 py-3">Total</td>
             <td className="px-3 py-3 font-mono text-xs text-center">
