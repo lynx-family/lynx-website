@@ -80,7 +80,7 @@ export const APIStatusLayout: React.FC = () => {
         />
         <SidebarInset className="overflow-hidden min-h-0">
           {/* Header with sidebar trigger */}
-          <header className="flex gap-2 items-center px-4 h-14 border-b shrink-0">
+          <header className="flex gap-2 items-center px-4 h-14 border-b shrink-0 bg-background/80 backdrop-blur-sm">
             <SidebarTrigger className="-ml-1" />
             <div className="w-px h-4 bg-border" />
             <h1 className="text-sm font-semibold">
@@ -89,7 +89,9 @@ export const APIStatusLayout: React.FC = () => {
           </header>
 
           {/* Page content */}
-          <main className="overflow-auto flex-1 p-4">{renderPage()}</main>
+          <main className="overflow-auto flex-1 p-4 bg-muted/30">
+            {renderPage()}
+          </main>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
