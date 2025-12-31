@@ -93,8 +93,8 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface APIStatusSidebarProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
-  onPlatformChange: (platform: PlatformName) => void;
+  selectedPlatforms: PlatformName[];
+  onPlatformsChange: (platforms: PlatformName[]) => void;
   showClay: boolean;
   onShowClayChange: (show: boolean) => void;
   activePage: PageType;
@@ -116,10 +116,23 @@ const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const EyeIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
 export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   stats,
-  selectedPlatform,
-  onPlatformChange,
+  selectedPlatforms,
+  onPlatformsChange,
   showClay,
   onShowClayChange,
   activePage,
@@ -129,10 +142,54 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   const lang = useLang();
   const isCollapsed = state === 'collapsed';
 
-  // Get current platform info for header
-  const currentPlatformStats = stats.summary.by_platform[selectedPlatform];
+  // Colorblind mode state
+  const [isColorblindMode, setIsColorblindMode] = React.useState(false);
+
+  // Toggle colorblind mode class on document root
+  React.useEffect(() => {
+    if (isColorblindMode) {
+      document.documentElement.classList.add('colorblind-mode');
+    } else {
+      document.documentElement.classList.remove('colorblind-mode');
+    }
+  }, [isColorblindMode]);
+
+  // Get available platforms based on showClay
+  const availablePlatforms = showClay
+    ? [...NATIVE_PLATFORMS, ...CLAY_PLATFORMS]
+    : NATIVE_PLATFORMS;
+
+  // Toggle platform selection
+  const togglePlatform = (platform: PlatformName) => {
+    if (selectedPlatforms.includes(platform)) {
+      // Don't allow deselecting if it's the last one
+      if (selectedPlatforms.length > 1) {
+        onPlatformsChange(selectedPlatforms.filter((p) => p !== platform));
+      }
+    } else {
+      onPlatformsChange([...selectedPlatforms, platform]);
+    }
+  };
+
+  // Select all visible platforms
+  const selectAll = () => {
+    const allVisible = showClay
+      ? [...NATIVE_PLATFORMS, ...CLAY_PLATFORMS]
+      : NATIVE_PLATFORMS;
+    onPlatformsChange(allVisible.filter((p) => stats.summary.by_platform[p]));
+  };
+
+  // Clear to just the first platform
+  const clearSelection = () => {
+    onPlatformsChange([NATIVE_PLATFORMS[0]]);
+  };
+
+  // Get first selected platform for header display
+  const firstSelectedPlatform = selectedPlatforms[0] || 'android';
+  const currentPlatformStats = stats.summary.by_platform[firstSelectedPlatform];
   const currentPlatformColors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors || PLATFORM_CONFIG.android.colors;
+    PLATFORM_CONFIG[firstSelectedPlatform]?.colors ||
+    PLATFORM_CONFIG.android.colors;
 
   // Format date
   const updatedDate = new Date(stats.generated_at).toLocaleDateString(
@@ -166,23 +223,52 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
               </span>
             </div>
             <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium">
-              <PlatformIcon
-                platform={selectedPlatform}
-                className={cn('h-3 w-3', currentPlatformColors.text)}
-              />
-              <span className={currentPlatformColors.text}>
-                {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}{' '}
-                {currentPlatformStats?.coverage_percent}%
-              </span>
+              {selectedPlatforms.length === 1 ? (
+                <>
+                  <PlatformIcon
+                    platform={firstSelectedPlatform}
+                    className={cn('h-3 w-3', currentPlatformColors.text)}
+                  />
+                  <span className={currentPlatformColors.text}>
+                    {PLATFORM_CONFIG[firstSelectedPlatform]?.label ||
+                      firstSelectedPlatform}{' '}
+                    {currentPlatformStats?.coverage_percent}%
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">
+                  {selectedPlatforms.length} platforms selected
+                </span>
+              )}
             </div>
           </div>
         )}
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Platform Selector */}
+        {/* Platform Selector - Multi-Select */}
         <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <div className="flex items-center justify-between px-2">
+            <SidebarGroupLabel className="mb-0">
+              Platforms ({selectedPlatforms.length})
+            </SidebarGroupLabel>
+            {!isCollapsed && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={selectAll}
+                  className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted/50 transition-colors"
+                >
+                  All
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted/50 transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
               {NATIVE_PLATFORMS.map((platform) => {
@@ -191,14 +277,39 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                 const colors =
                   PLATFORM_CONFIG[platform]?.colors ||
                   PLATFORM_CONFIG.android.colors;
-                const isSelected = selectedPlatform === platform;
+                const isSelected = selectedPlatforms.includes(platform);
                 return (
                   <SidebarMenuItem key={platform}>
                     <SidebarMenuButton
                       isActive={isSelected}
-                      onClick={() => onPlatformChange(platform)}
+                      onClick={() => togglePlatform(platform)}
                       tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
                     >
+                      {/* Checkbox indicator */}
+                      <div
+                        className={cn(
+                          'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
+                          isSelected
+                            ? `${colors.border} ${colors.bg}`
+                            : 'border-muted-foreground/30',
+                        )}
+                      >
+                        {isSelected && (
+                          <svg
+                            className={cn('w-3 h-3', colors.text)}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <polyline
+                              points="20 6 9 17 4 12"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
                       <PlatformIcon
                         platform={platform}
                         className={cn('h-4 w-4', colors.text)}
@@ -254,15 +365,40 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   const colors =
                     PLATFORM_CONFIG[platform]?.colors ||
                     PLATFORM_CONFIG.clay_android.colors;
-                  const isSelected = selectedPlatform === platform;
+                  const isSelected = selectedPlatforms.includes(platform);
                   return (
                     <SidebarMenuItem key={platform}>
                       <SidebarMenuButton
                         isActive={isSelected}
-                        onClick={() => onPlatformChange(platform)}
+                        onClick={() => togglePlatform(platform)}
                         tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
                         className="pl-6"
                       >
+                        {/* Checkbox indicator */}
+                        <div
+                          className={cn(
+                            'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
+                            isSelected
+                              ? `${colors.border} ${colors.bg}`
+                              : 'border-muted-foreground/30',
+                          )}
+                        >
+                          {isSelected && (
+                            <svg
+                              className={cn('w-3 h-3', colors.text)}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <polyline
+                                points="20 6 9 17 4 12"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </div>
                         <PlatformIcon
                           platform={platform}
                           className={cn('h-4 w-4', colors.text)}
@@ -303,8 +439,30 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t">
+      <SidebarFooter className="p-2 border-t space-y-1">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => setIsColorblindMode(!isColorblindMode)}
+              tooltip="Colorblind Mode"
+              className={cn(
+                'h-8 text-muted-foreground hover:text-foreground',
+                isColorblindMode && 'text-primary bg-sidebar-accent',
+              )}
+            >
+              <div className="flex justify-between items-center w-full">
+                <div className="flex gap-2 items-center">
+                  <EyeIcon className="w-4 h-4" />
+                  <span>Colorblind Mode</span>
+                </div>
+                {!isCollapsed && isColorblindMode && (
+                  <span className="text-[10px] font-mono text-primary font-medium">
+                    ON
+                  </span>
+                )}
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild

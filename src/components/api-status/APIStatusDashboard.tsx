@@ -198,7 +198,7 @@ export interface APIItemProps {
   query: string;
   name: string;
   category: string;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
   support: FeatureInfo['support'];
   compact?: boolean;
   missing?: boolean; // Style variant for missing APIs
@@ -221,19 +221,33 @@ export const APIItem: React.FC<APIItemProps> = ({
   query,
   name,
   category,
-  selectedPlatform,
+  selectedPlatforms,
   support,
   compact = false,
   missing = false,
 }) => {
   const isDesktop = useIsDesktop();
-  const platformSupport = support[selectedPlatform];
-  const versionAdded = platformSupport?.version_added;
-  const isSupported =
-    !missing &&
-    versionAdded !== false &&
-    versionAdded !== undefined &&
-    versionAdded !== null;
+
+  // Calculate support status for each selected platform
+  const platformSupportStatus = selectedPlatforms.map((platform) => {
+    const platformSupport = support[platform];
+    const versionAdded = platformSupport?.version_added;
+    const isSupported =
+      !missing &&
+      versionAdded !== false &&
+      versionAdded !== undefined &&
+      versionAdded !== null;
+    return { platform, isSupported };
+  });
+
+  // Aggregate support status
+  const supportedCount = platformSupportStatus.filter(
+    (p) => p.isSupported,
+  ).length;
+  const totalSelected = selectedPlatforms.length;
+  const allSupported = supportedCount === totalSelected;
+  const someSupported = supportedCount > 0 && supportedCount < totalSelected;
+  const noneSupported = supportedCount === 0;
 
   // Get short category name for badge
   const categoryBadge =
@@ -270,17 +284,19 @@ export const APIItem: React.FC<APIItemProps> = ({
   const hasHtmlContent =
     displayName.includes('<code>') || displayName.includes('&lt;');
 
-  // Color scheme based on support status
-  const colorClasses = isSupported
-    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-200 dark:hover:bg-emerald-500/20'
-    : 'bg-red-100 dark:bg-red-500/10 text-red-900 dark:text-red-400 border-red-200 dark:border-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/20';
+  // Color scheme based on aggregate support status
+  const colorClasses = allSupported
+    ? 'bg-status-supported/15 text-status-supported-strong border-status-supported/30 hover:bg-status-supported/25'
+    : someSupported
+      ? 'bg-status-partial/15 text-status-partial-strong border-status-partial/30 hover:bg-status-partial/25'
+      : 'bg-status-unsupported/15 text-status-unsupported-strong border-status-unsupported/30 hover:bg-status-unsupported/25';
 
   return (
     <Drawer direction={isDesktop ? 'right' : undefined}>
       <DrawerTrigger asChild>
         <button
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-md font-medium transition-all duration-200',
+            'inline-flex flex-col gap-1 rounded-md font-medium transition-all duration-200',
             'border text-left cursor-pointer w-full',
             // Allow content to wrap - prioritize showing full content
             compact
@@ -289,23 +305,62 @@ export const APIItem: React.FC<APIItemProps> = ({
             colorClasses,
           )}
         >
-          <span
-            className={cn(
-              'font-semibold uppercase tracking-wider flex-shrink-0',
-              compact ? 'text-[8px]' : 'text-[9px]',
-            )}
-          >
-            {categoryBadge}
-          </span>
-          {hasHtmlContent ? (
+          <div className="flex items-center gap-1.5 w-full">
             <span
-              className="font-mono break-all leading-tight [&>code]:bg-current/10 [&>code]:px-0.5 [&>code]:rounded"
-              dangerouslySetInnerHTML={{ __html: displayName }}
-            />
-          ) : (
-            <code className="font-mono break-all leading-tight">
-              {displayName}
-            </code>
+              className={cn(
+                'flex-shrink-0 font-semibold tracking-wider uppercase',
+                compact ? 'text-[8px]' : 'text-[9px]',
+              )}
+            >
+              {categoryBadge}
+            </span>
+            {hasHtmlContent ? (
+              <span
+                className="font-mono break-all leading-tight [&>code]:bg-current/10 [&>code]:px-0.5 [&>code]:rounded flex-1"
+                dangerouslySetInnerHTML={{ __html: displayName }}
+              />
+            ) : (
+              <code className="flex-1 font-mono leading-tight break-all">
+                {displayName}
+              </code>
+            )}
+            {/* Partial support indicator */}
+            {someSupported && (
+              <span className="ml-auto text-[9px] font-mono opacity-80 px-1 py-0.5 rounded bg-black/5 dark:bg-white/10 flex-shrink-0">
+                {supportedCount}/{totalSelected}
+              </span>
+            )}
+          </div>
+          {/* Platform status badges - show when multiple platforms selected */}
+          {selectedPlatforms.length > 1 && (
+            <div className="flex flex-wrap gap-1 items-center">
+              {platformSupportStatus.map(({ platform, isSupported }) => {
+                const colors = PLATFORM_CONFIG[platform]?.colors;
+                const Icon = PLATFORM_CONFIG[platform]?.icon;
+                return (
+                  <div
+                    key={platform}
+                    className={cn(
+                      'flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px]',
+                      isSupported
+                        ? 'bg-status-supported/20 text-status-supported-strong'
+                        : 'bg-status-unsupported/20 text-status-unsupported-strong',
+                    )}
+                    title={`${PLATFORM_CONFIG[platform]?.label || platform}: ${isSupported ? 'Supported' : 'Not supported'}`}
+                  >
+                    {Icon && <Icon className="w-2.5 h-2.5" />}
+                    <span
+                      className={cn(
+                        'w-1.5 h-1.5 rounded-full',
+                        isSupported
+                          ? 'bg-status-supported'
+                          : 'bg-status-unsupported',
+                      )}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           )}
         </button>
       </DrawerTrigger>
@@ -315,13 +370,13 @@ export const APIItem: React.FC<APIItemProps> = ({
           isDesktop && 'bg-zinc-50 dark:bg-zinc-900',
         )}
       >
-        <div className="h-full w-full grow p-5 flex flex-col overflow-hidden">
+        <div className="flex overflow-hidden flex-col p-5 w-full h-full grow">
           <DrawerHeader className="p-0 mb-4">
             <DrawerTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
               <code className="font-mono">{query}</code>
             </DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-auto pr-1">
+          <div className="overflow-auto flex-1 pr-1">
             <APITable query={query} />
           </div>
         </div>
@@ -333,12 +388,12 @@ export const APIItem: React.FC<APIItemProps> = ({
 // Interactive Parity Chart with hover
 interface ParityChartProps {
   timeline: TimelinePoint[];
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
 }
 
 const ParityChart: React.FC<ParityChartProps> = ({
   timeline,
-  selectedPlatform,
+  selectedPlatforms,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -349,24 +404,29 @@ const ParityChart: React.FC<ParityChartProps> = ({
   const padX = 32;
   const padY = 16;
 
-  const points = timeline.map((t, i) => ({
-    x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
-    y:
-      padY +
-      (1 - Math.min(1, (t.platforms[selectedPlatform]?.coverage ?? 0) / 100)) *
-        (h - padY * 2),
-    version: t.version,
-    coverage: t.platforms[selectedPlatform]?.coverage ?? 0,
-  }));
+  // Generate points for each platform
+  const platformPoints = selectedPlatforms.map((platform) => {
+    return {
+      platform,
+      points: timeline.map((t, i) => ({
+        x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
+        y:
+          padY +
+          (1 - Math.min(1, (t.platforms[platform]?.coverage ?? 0) / 100)) *
+            (h - padY * 2),
+        version: t.version,
+        coverage: t.platforms[platform]?.coverage ?? 0,
+      })),
+    };
+  });
 
-  const polyline = points
-    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(' ');
-  const colors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors ||
-    PLATFORM_CONFIG.web_lynx.colors;
-  const lastPoint = points[points.length - 1];
-  const hovered = hoveredIndex !== null ? points[hoveredIndex] : null;
+  const hovered =
+    hoveredIndex !== null
+      ? platformPoints.map((p) => ({
+          platform: p.platform,
+          point: p.points[hoveredIndex],
+        }))
+      : null;
 
   return (
     <div className="relative">
@@ -404,42 +464,48 @@ const ParityChart: React.FC<ParityChartProps> = ({
           );
         })}
 
-        {/* Area fill */}
-        <polygon
-          points={`${padX},${h - padY} ${polyline} ${points[points.length - 1].x},${h - padY}`}
-          fill={colors.line}
-          fillOpacity="0.1"
-        />
+        {/* Lines */}
+        {platformPoints.map(({ platform, points }) => {
+          const polyline = points
+            .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+            .join(' ');
+          const colors =
+            PLATFORM_CONFIG[platform]?.colors ||
+            PLATFORM_CONFIG.web_lynx.colors;
 
-        {/* Line */}
-        <polyline
-          points={polyline}
-          fill="none"
-          stroke={colors.line}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Interactive points */}
-        {points.map((p, i) => (
-          <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r="12"
-              fill="transparent"
-              className="cursor-pointer"
-            />
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={hoveredIndex === i ? 5 : 3}
-              fill={colors.line}
-              className="transition-all"
-            />
-          </g>
-        ))}
+          return (
+            <React.Fragment key={platform}>
+              <polyline
+                points={polyline}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={0.8}
+              />
+              {/* Interactive points */}
+              {points.map((p, i) => (
+                <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="8"
+                    fill="transparent"
+                    className="cursor-pointer"
+                  />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredIndex === i ? 4 : 2}
+                    fill={colors.line}
+                    className="transition-all"
+                  />
+                </g>
+              ))}
+            </React.Fragment>
+          );
+        })}
 
         {/* X axis labels */}
         <text
@@ -459,33 +525,37 @@ const ParityChart: React.FC<ParityChartProps> = ({
           fillOpacity="0.4"
           textAnchor="end"
         >
-          {lastPoint.version}
-        </text>
-
-        {/* Current label */}
-        <text
-          x={lastPoint.x + 4}
-          y={lastPoint.y + 3}
-          fontSize="10"
-          fill={colors.line}
-          fontWeight="600"
-        >
-          {lastPoint.coverage}%
+          {timeline[timeline.length - 1].version}
         </text>
       </svg>
 
       {/* Hover tooltip */}
       {hovered && (
         <div
-          className="absolute bg-popover border rounded-md px-2 py-1 text-xs shadow-lg pointer-events-none"
+          className="absolute z-10 px-2 py-1 text-xs rounded-md border shadow-lg pointer-events-none bg-popover"
           style={{
-            left: hovered.x,
-            top: hovered.y - 30,
+            left: hovered[0].point.x,
+            top: 0,
             transform: 'translateX(-50%)',
           }}
         >
-          <span className="font-mono font-semibold">{hovered.coverage}%</span>
-          <span className="text-muted-foreground ml-1">v{hovered.version}</span>
+          <div className="font-mono text-[10px] text-muted-foreground mb-1 border-b pb-1">
+            v{hovered[0].point.version}
+          </div>
+          {hovered.map(({ platform, point }) => (
+            <div key={platform} className="flex gap-2 items-center">
+              <div
+                className={cn(
+                  'w-1.5 h-1.5 rounded-full',
+                  PLATFORM_CONFIG[platform]?.colors.bg,
+                )}
+              />
+              <span>{PLATFORM_CONFIG[platform]?.label || platform}</span>
+              <span className="ml-auto font-mono font-semibold">
+                {point.coverage}%
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -497,10 +567,11 @@ export const APIStatusDashboard: React.FC = () => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 
-  // Global filter state
+  // Global filter state - now uses multi-platform selection
   const [showClay, setShowClay] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] =
-    useState<PlatformName>('web_lynx');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformName[]>([
+    'web_lynx',
+  ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState<
@@ -513,6 +584,31 @@ export const APIStatusDashboard: React.FC = () => {
 
   const { summary, categories, recent_apis, features, timeline } = stats;
   const categoryOptions = ['all', ...Object.keys(categories)];
+
+  // Toggle platform selection
+  const togglePlatform = (platform: PlatformName) => {
+    if (selectedPlatforms.includes(platform)) {
+      if (selectedPlatforms.length > 1) {
+        setSelectedPlatforms(selectedPlatforms.filter((p) => p !== platform));
+      }
+    } else {
+      setSelectedPlatforms([...selectedPlatforms, platform]);
+    }
+    setExpandedCategory(null);
+  };
+
+  // Helper to check if feature is supported on selected platforms
+  const isFeatureSupported = (f: FeatureInfo): boolean => {
+    // Using "any" mode - supported if at least one platform supports it
+    return selectedPlatforms.some((platform) => {
+      const support = f.support[platform];
+      return (
+        support?.version_added !== false &&
+        support?.version_added !== undefined &&
+        support?.version_added !== null
+      );
+    });
+  };
 
   // Unified filtering for all API displays
   const filteredFeatures = useMemo(() => {
@@ -528,17 +624,13 @@ export const APIStatusDashboard: React.FC = () => {
       )
         return false;
       if (stateFilter !== 'all') {
-        const support = f.support[selectedPlatform];
-        const isSupported =
-          support?.version_added !== false &&
-          support?.version_added !== undefined &&
-          support?.version_added !== null;
+        const isSupported = isFeatureSupported(f);
         if (stateFilter === 'supported' && !isSupported) return false;
         if (stateFilter === 'unsupported' && isSupported) return false;
       }
       return true;
     });
-  }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatform]);
+  }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatforms]);
 
   // Convert recent_apis to FeatureInfo format for APIItem
   const recentApiFeatures: FeatureInfo[] = useMemo(() => {
@@ -553,21 +645,41 @@ export const APIStatusDashboard: React.FC = () => {
     }));
   }, [recent_apis]);
 
-  // Group recent APIs by version for the selected platform
+  // Group recent APIs by version for the selected platforms (union)
   const recentApisByVersion = useMemo(() => {
     const grouped: Record<string, FeatureInfo[]> = {};
+    const seenApis = new Set<string>();
 
     for (const api of recent_apis) {
-      const version = api.versions[selectedPlatform];
-      // Skip if no version for selected platform or version is false/null
-      if (!version || version === true) continue;
+      // Check if API has version on any selected platform
+      const platformVersions = selectedPlatforms
+        .map((p) => ({ platform: p, version: api.versions[p] }))
+        .filter((pv) => pv.version && pv.version !== true);
 
-      const versionKey = String(version);
-      if (!grouped[versionKey]) {
-        grouped[versionKey] = [];
+      if (platformVersions.length === 0) continue;
+
+      // Avoid duplicates
+      if (seenApis.has(api.path)) continue;
+      seenApis.add(api.path);
+
+      // Use the highest version across selected platforms
+      const maxVersion = platformVersions.reduce((max, pv) => {
+        const v = String(pv.version);
+        if (!max) return v;
+        const parseVersion = (ver: string) => {
+          const parts = ver.split('.').map(Number);
+          return parts[0] * 1000 + (parts[1] || 0);
+        };
+        return parseVersion(v) > parseVersion(max) ? v : max;
+      }, '');
+
+      if (!maxVersion) continue;
+
+      if (!grouped[maxVersion]) {
+        grouped[maxVersion] = [];
       }
 
-      grouped[versionKey].push({
+      grouped[maxVersion].push({
         id: `recent-${api.path}`,
         query: api.path,
         name: api.name,
@@ -595,17 +707,19 @@ export const APIStatusDashboard: React.FC = () => {
       version,
       apis: grouped[version],
     }));
-  }, [recent_apis, selectedPlatform]);
+  }, [recent_apis, selectedPlatforms]);
 
   // Show up to 100 features by default, or all if user requests
   const shownFeatures = showAllResults
     ? filteredFeatures
     : filteredFeatures.slice(0, 100);
   const hasMoreResults = filteredFeatures.length > 100;
+
+  // For single platform, use that platform's colors; for multi, use primary
+  const firstPlatform = selectedPlatforms[0] || 'web_lynx';
   const selectedColors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors ||
-    PLATFORM_CONFIG.web_lynx.colors;
-  const platformStats = summary.by_platform[selectedPlatform];
+    PLATFORM_CONFIG[firstPlatform]?.colors || PLATFORM_CONFIG.web_lynx.colors;
+  const platformStats = summary.by_platform[firstPlatform];
   const generatedDate = new Date(stats.generated_at).toLocaleDateString(
     lang === 'zh' ? 'zh-CN' : 'en-US',
     { month: 'short', day: 'numeric' },
@@ -615,10 +729,10 @@ export const APIStatusDashboard: React.FC = () => {
     <TooltipProvider>
       <div className="flex flex-col gap-4">
         {/* ===== CONTROL PANEL ===== */}
-        <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="overflow-hidden rounded-xl border bg-card">
           {/* Header Row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-4 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2 justify-between items-start px-4 py-4 border-b sm:flex-row sm:items-center bg-muted/30">
+            <div className="flex gap-3 items-center">
               <h1 className="text-lg font-semibold tracking-tight">
                 {t.title}
               </h1>
@@ -629,7 +743,7 @@ export const APIStatusDashboard: React.FC = () => {
                 <span>{t.totalApis}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex gap-3 items-center text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <ClockIcon className="w-3 h-3" />
                 <span>
@@ -640,7 +754,7 @@ export const APIStatusDashboard: React.FC = () => {
                 href={withBase(
                   lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',
                 )}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="flex gap-1 items-center px-2 py-1 rounded-md transition-colors text-muted-foreground hover:text-foreground hover:bg-muted/50"
               >
                 <HelpCircleIcon className="w-3.5 h-3.5" />
                 <span>{t.help}</span>
@@ -650,7 +764,7 @@ export const APIStatusDashboard: React.FC = () => {
 
           {/* Filters Row */}
           <div className="p-4 space-y-3">
-            {/* Platform Selector - flows inline on desktop, stacks on mobile */}
+            {/* Platform Selector - Multi-select toggle buttons */}
             <div className="flex flex-wrap items-center gap-1.5">
               {/* Native Platforms */}
               {NATIVE_PLATFORMS.map((platform) => {
@@ -659,14 +773,11 @@ export const APIStatusDashboard: React.FC = () => {
                 const colors =
                   PLATFORM_CONFIG[platform]?.colors ||
                   PLATFORM_CONFIG.android.colors;
-                const isSelected = selectedPlatform === platform;
+                const isSelected = selectedPlatforms.includes(platform);
                 return (
                   <button
                     key={platform}
-                    onClick={() => {
-                      setSelectedPlatform(platform);
-                      setExpandedCategory(null);
-                    }}
+                    onClick={() => togglePlatform(platform)}
                     className={cn(
                       'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
                       'border-2',
@@ -675,6 +786,31 @@ export const APIStatusDashboard: React.FC = () => {
                         : 'bg-card border-transparent hover:border-muted-foreground/30',
                     )}
                   >
+                    {/* Checkbox indicator */}
+                    <div
+                      className={cn(
+                        'w-3 h-3 rounded border flex items-center justify-center transition-colors',
+                        isSelected
+                          ? `${colors.border} ${colors.bg}`
+                          : 'border-muted-foreground/30',
+                      )}
+                    >
+                      {isSelected && (
+                        <svg
+                          className={cn('w-2 h-2', colors.text)}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        >
+                          <polyline
+                            points="20 6 9 17 4 12"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
                     <PlatformIcon
                       platform={platform}
                       className={cn('w-3.5 h-3.5', colors.text)}
@@ -688,7 +824,7 @@ export const APIStatusDashboard: React.FC = () => {
               })}
 
               {/* Separator on desktop */}
-              <div className="hidden sm:block w-px h-5 bg-border mx-1" />
+              <div className="hidden mx-1 w-px h-5 sm:block bg-border" />
 
               {/* Clay Toggle */}
               <button
@@ -736,14 +872,11 @@ export const APIStatusDashboard: React.FC = () => {
                   const colors =
                     PLATFORM_CONFIG[platform]?.colors ||
                     PLATFORM_CONFIG.android.colors;
-                  const isSelected = selectedPlatform === platform;
+                  const isSelected = selectedPlatforms.includes(platform);
                   return (
                     <button
                       key={platform}
-                      onClick={() => {
-                        setSelectedPlatform(platform);
-                        setExpandedCategory(null);
-                      }}
+                      onClick={() => togglePlatform(platform)}
                       className={cn(
                         'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
                         'border-2',
@@ -752,6 +885,31 @@ export const APIStatusDashboard: React.FC = () => {
                           : 'bg-card border-transparent hover:border-muted-foreground/30',
                       )}
                     >
+                      {/* Checkbox indicator */}
+                      <div
+                        className={cn(
+                          'w-3 h-3 rounded border flex items-center justify-center transition-colors',
+                          isSelected
+                            ? `${colors.border} ${colors.bg}`
+                            : 'border-muted-foreground/30',
+                        )}
+                      >
+                        {isSelected && (
+                          <svg
+                            className={cn('w-2 h-2', colors.text)}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          >
+                            <polyline
+                              points="20 6 9 17 4 12"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
                       <PlatformIcon
                         platform={platform}
                         className={cn('w-3.5 h-3.5', colors.text)}
@@ -768,17 +926,17 @@ export const APIStatusDashboard: React.FC = () => {
             </div>
 
             {/* Search and Filters - search on own row on mobile, all in one row on desktop */}
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative flex-1 min-w-0">
                 <SearchIcon className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
-                  className="pl-8 h-8 text-sm font-mono"
+                  className="pl-8 h-8 font-mono text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t.searchPlaceholder}
                 />
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex gap-2 items-center w-full sm:w-auto">
                 <div className="flex-1 sm:flex-none sm:w-[130px]">
                   <Select
                     value={categoryFilter}
@@ -821,12 +979,12 @@ export const APIStatusDashboard: React.FC = () => {
             </div>
 
             {/* API List - Filtered Results */}
-            <div className="border-t pt-3 mt-1">
-              <div className="flex items-center justify-between mb-2">
+            <div className="pt-3 mt-1 border-t">
+              <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-medium text-muted-foreground">
                   {t.apiList}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2 items-center">
                   <span className="text-[10px] text-muted-foreground">
                     {t.showing} {shownFeatures.length} {t.of}{' '}
                     {filteredFeatures.length} {t.matches}
@@ -842,13 +1000,13 @@ export const APIStatusDashboard: React.FC = () => {
                 </div>
               </div>
               {shownFeatures.length === 0 ? (
-                <div className="text-center py-4 text-xs text-muted-foreground bg-muted/20 rounded-md">
+                <div className="py-4 text-xs text-center rounded-md text-muted-foreground bg-muted/20">
                   {t.noResults}
                 </div>
               ) : (
                 <div
                   className={cn(
-                    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-1 overflow-y-auto pr-1',
+                    'grid overflow-y-auto grid-cols-1 gap-1 pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5',
                     showAllResults ? 'max-h-[600px]' : 'max-h-[300px]',
                   )}
                 >
@@ -858,7 +1016,7 @@ export const APIStatusDashboard: React.FC = () => {
                       query={f.query}
                       name={f.name}
                       category={f.category}
-                      selectedPlatform={selectedPlatform}
+                      selectedPlatforms={selectedPlatforms}
                       support={f.support}
                       compact
                     />
@@ -870,57 +1028,107 @@ export const APIStatusDashboard: React.FC = () => {
         </div>
 
         {/* ===== STATS ROW ===== */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Platform Stats Card */}
-          <Card className="overflow-hidden">
-            <CardHeader className="py-2 px-4">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <PlatformIcon
-                  platform={selectedPlatform}
-                  className={cn('w-4 h-4', selectedColors.text)}
-                />
-                {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}{' '}
-                Coverage
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 px-4 pb-3">
-              <div className="flex items-end justify-between mb-2">
-                <div
-                  className={cn(
-                    'text-3xl font-bold font-mono',
-                    selectedColors.text,
-                  )}
-                >
-                  {platformStats?.coverage_percent}%
+        <div className="flex flex-col gap-4">
+          {/* Platform Coverage Comparison */}
+          {selectedPlatforms.length > 0 && (
+            <Card className="overflow-hidden bg-transparent border-none shadow-none">
+              <div className="flex gap-2 items-center px-1 mb-3">
+                <div className="p-1 rounded bg-primary/10">
+                  <svg
+                    className="w-4 h-4 text-primary"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      d="M3 3v18h18"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  <div className="font-mono">
-                    {platformStats?.supported_count.toLocaleString()} /{' '}
-                    {summary.total_apis.toLocaleString()}
-                  </div>
-                </div>
+                <h3 className="text-sm font-semibold">
+                  Platform Coverage Comparison ({selectedPlatforms.length}{' '}
+                  platforms)
+                </h3>
               </div>
-              <Progress
-                value={platformStats?.coverage_percent || 0}
-                className="h-1.5"
-                indicatorClassName={selectedColors.progress}
-              />
-            </CardContent>
-          </Card>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {selectedPlatforms.map((platform) => {
+                  const ps = summary.by_platform[platform];
+                  const colors =
+                    PLATFORM_CONFIG[platform]?.colors ||
+                    PLATFORM_CONFIG.web_lynx.colors;
+                  return (
+                    <div
+                      key={platform}
+                      className={cn(
+                        'rounded-lg border p-3 flex flex-col gap-3 transition-all',
+                        colors.bg,
+                        colors.border,
+                      )}
+                    >
+                      {/* Header */}
+                      <div className="flex gap-2 items-center">
+                        <PlatformIcon
+                          platform={platform}
+                          className={cn('w-4 h-4', colors.text)}
+                        />
+                        <span
+                          className={cn('text-sm font-medium', colors.text)}
+                        >
+                          {PLATFORM_CONFIG[platform]?.label || platform}
+                        </span>
+                      </div>
+
+                      {/* Stats */}
+                      <div>
+                        <div
+                          className={cn(
+                            'text-3xl font-bold font-mono leading-none mb-2',
+                            colors.text,
+                          )}
+                        >
+                          {ps?.coverage_percent}%
+                        </div>
+                        <Progress
+                          value={ps?.coverage_percent || 0}
+                          className="h-1.5 bg-black/5 dark:bg-white/10"
+                          indicatorClassName={colors.progress}
+                        />
+                        <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
+                          <span>
+                            {ps?.supported_count.toLocaleString()} /{' '}
+                            {summary.total_apis.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
 
           {/* Trend Chart Card */}
           {timeline && timeline.length >= 2 && (
             <Card>
-              <CardHeader className="py-2 px-4">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CardHeader className="px-4 py-2">
+                <CardTitle className="flex gap-2 items-center text-sm font-medium">
                   <TrendingUpIcon className="w-4 h-4 text-primary" />
                   {t.parityOverTime}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 px-2 pb-2">
+              <CardContent className="px-2 pt-0 pb-2">
                 <ParityChart
                   timeline={timeline}
-                  selectedPlatform={selectedPlatform}
+                  selectedPlatforms={selectedPlatforms}
                 />
               </CardContent>
             </Card>
@@ -929,9 +1137,9 @@ export const APIStatusDashboard: React.FC = () => {
 
         {/* ===== CATEGORY BREAKDOWN ===== */}
         <Card>
-          <CardHeader className="py-2 px-4">
-            <CardTitle className="text-sm font-medium flex items-center justify-between">
-              <div className="flex items-center gap-2">
+          <CardHeader className="px-4 py-2">
+            <CardTitle className="flex justify-between items-center text-sm font-medium">
+              <div className="flex gap-2 items-center">
                 <LayersIcon className="w-4 h-4 text-primary" />
                 {t.categoryBreakdown}
               </div>
@@ -941,7 +1149,7 @@ export const APIStatusDashboard: React.FC = () => {
                   className={cn(
                     'px-2 py-1 rounded text-xs font-medium transition-all',
                     highlightMode === 'green'
-                      ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                      ? 'bg-status-supported/20 text-status-supported-strong'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
@@ -952,7 +1160,7 @@ export const APIStatusDashboard: React.FC = () => {
                   className={cn(
                     'px-2 py-1 rounded text-xs font-medium transition-all',
                     highlightMode === 'red'
-                      ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                      ? 'bg-status-unsupported/20 text-status-unsupported-strong'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
@@ -961,11 +1169,11 @@ export const APIStatusDashboard: React.FC = () => {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 px-0 pb-0">
+          <CardContent className="px-0 pt-0 pb-0">
             <CategoryTable
               categories={categories}
               showClay={showClay}
-              selectedPlatform={selectedPlatform}
+              selectedPlatforms={selectedPlatforms}
               expandedCategory={expandedCategory}
               onCategoryClick={(cat) =>
                 setExpandedCategory(expandedCategory === cat ? null : cat)
@@ -978,21 +1186,23 @@ export const APIStatusDashboard: React.FC = () => {
         {/* ===== RECENTLY ADDED ===== */}
         <Card>
           <CardHeader
-            className="py-2 px-4 cursor-pointer hover:bg-muted/30 transition-colors"
+            className="px-4 py-2 transition-colors cursor-pointer hover:bg-muted/30"
             onClick={() => setShowRecentApis(!showRecentApis)}
           >
-            <CardTitle className="text-sm font-medium flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <CardTitle className="flex justify-between items-center text-sm font-medium">
+              <div className="flex gap-2 items-center">
                 <SparklesIcon className="w-4 h-4 text-primary" />
                 {t.recentApisTitle}
-                <span className="text-xs text-muted-foreground font-normal">
+                <span className="text-xs font-normal text-muted-foreground">
                   (
                   {recentApisByVersion.reduce(
                     (sum, g) => sum + g.apis.length,
                     0,
                   )}{' '}
                   for{' '}
-                  {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}
+                  {selectedPlatforms.length === 1
+                    ? PLATFORM_CONFIG[firstPlatform]?.label || firstPlatform
+                    : `${selectedPlatforms.length} platforms`}
                   )
                 </span>
               </div>
@@ -1015,18 +1225,19 @@ export const APIStatusDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           {showRecentApis && (
-            <CardContent className="pt-0 px-4 pb-4">
+            <CardContent className="px-4 pt-0 pb-4">
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
                 {recentApisByVersion.length === 0 ? (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
+                  <div className="py-4 text-sm text-center text-muted-foreground">
                     No recent APIs for{' '}
-                    {PLATFORM_CONFIG[selectedPlatform]?.label ||
-                      selectedPlatform}
+                    {selectedPlatforms.length === 1
+                      ? PLATFORM_CONFIG[firstPlatform]?.label || firstPlatform
+                      : `${selectedPlatforms.length} platforms`}
                   </div>
                 ) : (
                   recentApisByVersion.map(({ version, apis }) => (
                     <div key={version}>
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex gap-2 items-center mb-2">
                         <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary font-mono">
                           v{version}
                         </span>
@@ -1035,14 +1246,14 @@ export const APIStatusDashboard: React.FC = () => {
                         </span>
                         <div className="flex-1 h-px bg-border" />
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                      <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
                         {apis.map((f) => (
                           <APIItem
                             key={f.id}
                             query={f.query}
                             name={f.name}
                             category={f.category}
-                            selectedPlatform={selectedPlatform}
+                            selectedPlatforms={selectedPlatforms}
                             support={f.support}
                             compact
                           />
