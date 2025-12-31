@@ -1,10 +1,20 @@
+import { cn } from '@/lib/utils';
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import React from 'react';
+import { Card, CardContent } from '../../ui/card';
 import { APIItem } from '../APIStatusDashboard';
-import type { APIStats, FeatureInfo } from '../types';
 import { PLATFORM_CONFIG } from '../constants';
+import type { APIStats, FeatureInfo } from '../types';
+
+// Platform icons
+const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
+  platform,
+  className,
+}) => {
+  const Icon = PLATFORM_CONFIG[platform]?.icon;
+  return Icon ? <Icon className={className} /> : null;
+};
 
 const i18n = {
   en: {
@@ -33,116 +43,141 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface RecentPageProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
 }
 
 export const RecentPage: React.FC<RecentPageProps> = ({
   stats,
-  selectedPlatform,
+  selectedPlatforms,
 }) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 
   const { recent_apis } = stats;
 
-  // Group recent APIs by version for the selected platform
-  const recentApisByVersion = useMemo(() => {
-    const grouped: Record<string, FeatureInfo[]> = {};
-
-    for (const api of recent_apis) {
-      const version = api.versions[selectedPlatform];
-      // Skip if no version for selected platform or version is false/null
-      if (!version || version === true) continue;
-
-      const versionKey = String(version);
-      if (!grouped[versionKey]) {
-        grouped[versionKey] = [];
-      }
-
-      grouped[versionKey].push({
-        id: `recent-${api.path}`,
-        query: api.path,
-        name: api.name,
-        category: api.category,
-        support: Object.fromEntries(
-          Object.entries(api.versions).map(([k, v]) => [
-            k,
-            { version_added: v },
-          ]),
-        ) as FeatureInfo['support'],
-      });
-    }
-
-    // Sort versions in descending order (newest first)
-    const sortedVersions = Object.keys(grouped).sort((a, b) => {
-      const parseVersion = (v: string) => {
-        const parts = v.split('.').map(Number);
-        return parts[0] * 1000 + (parts[1] || 0);
-      };
-      return parseVersion(b) - parseVersion(a);
-    });
-
-    return sortedVersions.map((version) => ({
-      version,
-      apis: grouped[version],
-    }));
-  }, [recent_apis, selectedPlatform]);
-
-  const totalCount = recentApisByVersion.reduce(
-    (sum, g) => sum + g.apis.length,
-    0,
-  );
-
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          <SparklesIcon className="w-5 h-5 text-primary" />
-          {t.title}
-          <span className="text-xs text-muted-foreground font-normal">
-            ({totalCount} {t.apis} for{' '}
-            {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform})
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6 pr-1">
-          {recentApisByVersion.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              {t.noApis}{' '}
-              {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}
-            </div>
-          ) : (
-            recentApisByVersion.map(({ version, apis }) => (
-              <div key={version}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm font-semibold px-2.5 py-1 rounded-md bg-primary/10 text-primary font-mono">
-                    v{version}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {apis.length} {t.apis}
-                  </span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                  {apis.map((f) => (
-                    <APIItem
-                      key={f.id}
-                      query={f.query}
-                      name={f.name}
-                      category={f.category}
-                      selectedPlatform={selectedPlatform}
-                      support={f.support}
-                      compact
-                    />
-                  ))}
-                </div>
+    <div className="flex gap-4 overflow-x-auto pb-6 items-start -mx-4 px-4 scrollbar-thin">
+      {selectedPlatforms.map((platform) => {
+        // Group recent APIs by version for the current platform
+        const recentApisByVersion = (() => {
+          const grouped: Record<string, FeatureInfo[]> = {};
+
+          for (const api of recent_apis) {
+            const version = api.versions[platform];
+            // Skip if no version for selected platform or version is false/null
+            if (!version || version === true) continue;
+
+            const versionKey = String(version);
+            if (!grouped[versionKey]) {
+              grouped[versionKey] = [];
+            }
+
+            grouped[versionKey].push({
+              id: `recent-${api.path}-${platform}`,
+              query: api.path,
+              name: api.name,
+              category: api.category,
+              support: Object.fromEntries(
+                Object.entries(api.versions).map(([k, v]) => [
+                  k,
+                  { version_added: v },
+                ]),
+              ) as FeatureInfo['support'],
+            });
+          }
+
+          // Sort versions in descending order (newest first)
+          const sortedVersions = Object.keys(grouped).sort((a, b) => {
+            const parseVersion = (v: string) => {
+              const parts = v.split('.').map(Number);
+              return parts[0] * 1000 + (parts[1] || 0);
+            };
+            return parseVersion(b) - parseVersion(a);
+          });
+
+          return sortedVersions.map((version) => ({
+            version,
+            apis: grouped[version],
+          }));
+        })();
+
+        const totalCount = recentApisByVersion.reduce(
+          (sum, g) => sum + g.apis.length,
+          0,
+        );
+
+        const colors =
+          PLATFORM_CONFIG[platform]?.colors || PLATFORM_CONFIG.web_lynx.colors;
+
+        return (
+          <Card
+            key={platform}
+            className={cn(
+              'min-w-[300px] flex-1 flex-shrink-0 transition-all',
+              colors.bg,
+              colors.border,
+            )}
+          >
+            <CardContent className="p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <PlatformIcon
+                  platform={platform}
+                  className={cn('w-4 h-4', colors.text)}
+                />
+                <span className={cn('text-sm font-medium', colors.text)}>
+                  {PLATFORM_CONFIG[platform]?.label || platform}
+                </span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  ({totalCount} APIs)
+                </span>
               </div>
-            ))
-          )}
-        </div>
-      </CardContent>
-    </Card>
+
+              <div className="space-y-6 pr-1 mt-2">
+                {recentApisByVersion.length === 0 ? (
+                  <div className="text-center py-8 text-sm text-muted-foreground">
+                    {t.noApis} {PLATFORM_CONFIG[platform]?.label || platform}
+                  </div>
+                ) : (
+                  recentApisByVersion.map(({ version, apis }) => (
+                    <div key={version}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm font-semibold px-2.5 py-1 rounded-md bg-primary/10 text-primary font-mono">
+                          v{version}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {apis.length} {t.apis}
+                        </span>
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
+                      <div
+                        className={cn(
+                          'grid gap-1.5',
+                          selectedPlatforms.length > 1
+                            ? 'grid-cols-1'
+                            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+                        )}
+                      >
+                        {apis.map((f) => (
+                          <APIItem
+                            key={f.id}
+                            query={f.query}
+                            name={f.name}
+                            category={f.category}
+                            selectedPlatforms={[platform]} // Show status for this platform
+                            support={f.support}
+                            compact
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 };
 

@@ -34,12 +34,12 @@ const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
 // Trend Chart
 interface ParityChartProps {
   timeline: TimelinePoint[];
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
 }
 
 const ParityChart: React.FC<ParityChartProps> = ({
   timeline,
-  selectedPlatform,
+  selectedPlatforms,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -50,24 +50,34 @@ const ParityChart: React.FC<ParityChartProps> = ({
   const padX = 40;
   const padY = 24;
 
-  const points = timeline.map((t, i) => ({
-    x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
-    y:
-      padY +
-      (1 - Math.min(1, (t.platforms[selectedPlatform]?.coverage ?? 0) / 100)) *
-        (h - padY * 2),
-    version: t.version,
-    coverage: t.platforms[selectedPlatform]?.coverage ?? 0,
-  }));
+  // Generate points for each platform
+  const platformPoints = selectedPlatforms.map((platform) => {
+    return {
+      platform,
+      points: timeline.map((t, i) => ({
+        x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
+        y:
+          padY +
+          (1 - Math.min(1, (t.platforms[platform]?.coverage ?? 0) / 100)) *
+            (h - padY * 2),
+        version: t.version,
+        coverage: t.platforms[platform]?.coverage ?? 0,
+      })),
+    };
+  });
 
-  const polyline = points
-    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(' ');
-  const colors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors ||
-    PLATFORM_CONFIG.web_lynx.colors;
-  const lastPoint = points[points.length - 1];
-  const hovered = hoveredIndex !== null ? points[hoveredIndex] : null;
+  const hovered =
+    hoveredIndex !== null
+      ? platformPoints.map((p) => ({
+          platform: p.platform,
+          point: p.points[hoveredIndex],
+        }))
+      : null;
+
+  const lastPoints = platformPoints.map((p) => ({
+    platform: p.platform,
+    point: p.points[p.points.length - 1],
+  }));
 
   return (
     <div className="relative">
@@ -105,42 +115,49 @@ const ParityChart: React.FC<ParityChartProps> = ({
           );
         })}
 
-        {/* Area fill */}
-        <polygon
-          points={`${padX},${h - padY} ${polyline} ${lastPoint.x},${h - padY}`}
-          fill={colors.line}
-          fillOpacity="0.15"
-        />
+        {/* Lines */}
+        {platformPoints.map(({ platform, points }) => {
+          const polyline = points
+            .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+            .join(' ');
+          const colors =
+            PLATFORM_CONFIG[platform]?.colors ||
+            PLATFORM_CONFIG.web_lynx.colors;
 
-        {/* Line */}
-        <polyline
-          points={polyline}
-          fill="none"
-          stroke={colors.line}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Interactive points */}
-        {points.map((p, i) => (
-          <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r="16"
-              fill="transparent"
-              className="cursor-pointer"
-            />
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={hoveredIndex === i ? 6 : 4}
-              fill={colors.line}
-              className="transition-all"
-            />
-          </g>
-        ))}
+          return (
+            <React.Fragment key={platform}>
+              {/* Line */}
+              <polyline
+                points={polyline}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={0.8}
+              />
+              {/* Interactive points */}
+              {points.map((p, i) => (
+                <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="16"
+                    fill="transparent"
+                    className="cursor-pointer"
+                  />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredIndex === i ? 6 : 4}
+                    fill={colors.line}
+                    className="transition-all"
+                  />
+                </g>
+              ))}
+            </React.Fragment>
+          );
+        })}
 
         {/* X axis labels */}
         <text
@@ -160,18 +177,7 @@ const ParityChart: React.FC<ParityChartProps> = ({
           fillOpacity="0.5"
           textAnchor="end"
         >
-          {lastPoint.version}
-        </text>
-
-        {/* Current label */}
-        <text
-          x={lastPoint.x + 6}
-          y={lastPoint.y + 4}
-          fontSize="12"
-          fill={colors.line}
-          fontWeight="600"
-        >
-          {lastPoint.coverage}%
+          {timeline[timeline.length - 1].version}
         </text>
       </svg>
 
@@ -180,15 +186,28 @@ const ParityChart: React.FC<ParityChartProps> = ({
         <div
           className="absolute bg-popover border rounded-md px-2.5 py-1.5 text-xs shadow-lg pointer-events-none z-10"
           style={{
-            left: hovered.x,
-            top: hovered.y - 36,
+            left: hovered[0].point.x,
+            top: 0, // Top of chart area
             transform: 'translateX(-50%)',
           }}
         >
-          <span className="font-mono font-semibold">{hovered.coverage}%</span>
-          <span className="text-muted-foreground ml-1.5">
-            v{hovered.version}
-          </span>
+          <div className="font-mono text-[10px] text-muted-foreground mb-1 border-b pb-1">
+            v{hovered[0].point.version}
+          </div>
+          {hovered.map(({ platform, point }) => (
+            <div key={platform} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'w-1.5 h-1.5 rounded-full',
+                  PLATFORM_CONFIG[platform]?.colors.bg,
+                )}
+              />
+              <span>{PLATFORM_CONFIG[platform]?.label || platform}</span>
+              <span className="font-mono font-semibold ml-auto">
+                {point.coverage}%
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -197,66 +216,78 @@ const ParityChart: React.FC<ParityChartProps> = ({
 
 interface CoveragePageProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
 }
 
 export const CoveragePage: React.FC<CoveragePageProps> = ({
   stats,
-  selectedPlatform,
+  selectedPlatforms,
 }) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 
   const { summary, timeline } = stats;
-  const platformStats = summary.by_platform[selectedPlatform];
-  const colors =
-    PLATFORM_CONFIG[selectedPlatform]?.colors ||
-    PLATFORM_CONFIG.web_lynx.colors;
 
   return (
     <div className="space-y-6">
-      {/* Platform Coverage Card */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <PlatformIcon
-              platform={selectedPlatform}
-              className={cn('w-5 h-5', colors.text)}
-            />
-            {PLATFORM_CONFIG[selectedPlatform]?.label || selectedPlatform}{' '}
-            {t.coverage}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-between mb-3">
-            <div className={cn('text-5xl font-bold font-mono', colors.text)}>
-              {platformStats?.coverage_percent}%
-            </div>
-            <div className="text-right text-sm text-muted-foreground">
-              <div className="font-mono text-lg">
-                {platformStats?.supported_count.toLocaleString()} /{' '}
-                {summary.total_apis.toLocaleString()}
-              </div>
-              <div>
-                {t.supported} / {t.total}
-              </div>
-            </div>
-          </div>
-          <Progress
-            value={platformStats?.coverage_percent || 0}
-            className="h-3"
-            indicatorClassName={colors.progress}
-          />
-        </CardContent>
-      </Card>
+      {/* Platform Coverage Cards - Grid Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {selectedPlatforms.map((platform) => {
+          const platformStats = summary.by_platform[platform];
+          const colors =
+            PLATFORM_CONFIG[platform]?.colors ||
+            PLATFORM_CONFIG.web_lynx.colors;
+
+          return (
+            <Card
+              key={platform}
+              className={cn('transition-all', colors.bg, colors.border)}
+            >
+              <CardContent className="p-4 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <PlatformIcon
+                    platform={platform}
+                    className={cn('w-4 h-4', colors.text)}
+                  />
+                  <span className={cn('text-sm font-medium', colors.text)}>
+                    {PLATFORM_CONFIG[platform]?.label || platform}
+                  </span>
+                </div>
+
+                <div>
+                  <div
+                    className={cn(
+                      'text-3xl font-bold font-mono leading-none mb-2',
+                      colors.text,
+                    )}
+                  >
+                    {platformStats?.coverage_percent}%
+                  </div>
+                  <Progress
+                    value={platformStats?.coverage_percent || 0}
+                    className="h-1.5 bg-black/5 dark:bg-white/10"
+                    indicatorClassName={colors.progress}
+                  />
+                  <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
+                    <span>
+                      {platformStats?.supported_count.toLocaleString()} /{' '}
+                      {summary.total_apis.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Trend Chart */}
       {timeline && timeline.length >= 2 && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
+          <CardHeader className="py-2 px-4">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-primary"
+                className="w-4 h-4 text-primary"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -276,11 +307,33 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
               {t.trend}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 px-2 pb-2">
             <ParityChart
               timeline={timeline}
-              selectedPlatform={selectedPlatform}
+              selectedPlatforms={selectedPlatforms}
             />
+            {/* Bottom figures - Platform Legend */}
+            <div className="flex flex-wrap justify-center gap-4 mt-2">
+              {selectedPlatforms.map((platform) => {
+                const ps = summary.by_platform[platform];
+                const colors =
+                  PLATFORM_CONFIG[platform]?.colors ||
+                  PLATFORM_CONFIG.web_lynx.colors;
+                return (
+                  <div key={platform} className="flex items-center gap-1.5">
+                    <div
+                      className={cn('w-2 h-2 rounded-full', colors.progress)}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {PLATFORM_CONFIG[platform]?.label || platform}
+                    </span>
+                    <span className="text-xs font-mono font-bold">
+                      {ps?.coverage_percent}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}

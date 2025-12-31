@@ -34,13 +34,13 @@ const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface CategoriesPageProps {
   stats: APIStats;
-  selectedPlatform: PlatformName;
+  selectedPlatforms: PlatformName[];
   showClay: boolean;
 }
 
 export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   stats,
-  selectedPlatform,
+  selectedPlatforms,
   showClay,
 }) => {
   const lang = useLang();
@@ -52,52 +52,46 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   const { categories } = stats;
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LayersIcon className="w-5 h-5 text-primary" />
-            {t.title}
-          </div>
-          <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
-            <button
-              onClick={() => setHighlightMode('green')}
-              className={cn(
-                'px-2.5 py-1 rounded text-xs font-medium transition-all',
-                highlightMode === 'green'
-                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t.highlightGood}
-            </button>
-            <button
-              onClick={() => setHighlightMode('red')}
-              className={cn(
-                'px-2.5 py-1 rounded text-xs font-medium transition-all',
-                highlightMode === 'red'
-                  ? 'bg-red-500/20 text-red-700 dark:text-red-300'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t.highlightBad}
-            </button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
+    <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-2 px-4 py-2 border-b bg-muted/30">
+        <div className="flex items-center gap-1 bg-background/50 border rounded-md p-0.5 ml-auto">
+          <button
+            onClick={() => setHighlightMode('green')}
+            className={cn(
+              'px-2 py-1 rounded text-xs font-medium transition-all',
+              highlightMode === 'green'
+                ? 'bg-status-supported/20 text-status-supported-strong'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.highlightGood}
+          </button>
+          <button
+            onClick={() => setHighlightMode('red')}
+            className={cn(
+              'px-2 py-1 rounded text-xs font-medium transition-all',
+              highlightMode === 'red'
+                ? 'bg-status-unsupported/20 text-status-unsupported-strong'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.highlightBad}
+          </button>
+        </div>
+      </div>
+      <div className="p-0">
         <CategoryTable
           categories={categories}
           showClay={showClay}
-          selectedPlatform={selectedPlatform}
+          selectedPlatforms={selectedPlatforms}
           expandedCategory={expandedCategory}
           onCategoryClick={(cat) =>
             setExpandedCategory(expandedCategory === cat ? null : cat)
           }
           highlightMode={highlightMode}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
