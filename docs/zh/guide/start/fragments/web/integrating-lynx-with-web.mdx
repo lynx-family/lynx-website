@@ -9,7 +9,7 @@ import { Info } from '@lynx';
   React、Vue、Svelte 还是纯 HTML。
 </Info>
 
-## 1. 构建 web 产物
+## 1. 开发调试
 
 我们需要你已经阅读并按照[快速开始](/guide/start/quick-start)创建了一个 Lynx 项目。
 
@@ -32,23 +32,31 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 export default defineConfig({
   plugins: [pluginReactLynx()],
   environments: {
-    web: {
-      output: {
-        assetPrefix: '/',
-      },
-    },
+    web: {},
     lynx: {},
   },
 });
 ```
 
-### 构建
+### 启动开发服务器
 
 执行：
+
+<PackageManagerTabs command="run dev" />
+
+即可在本地访问开发页面。
+
+### 构建与预览
+
+你也可以使用 Web Explorer 来快速预览生产模式下的某个页面的 web bundle。
+
+首先，执行构建：
 
 <PackageManagerTabs command="run build" />
 
 你将会看到项目中多出了 `dist/main.lynx.bundle` 文件，它就是最终的 web 构建产物。
+
+打开 [Lynx Explorer Web 版](https://www.unpkg.com/@lynx-js/web-explorer@latest/index.html)，填写你的产物可访问的 URL，即可看到生产模式下的效果。
 
 </Steps>
 
@@ -144,158 +152,3 @@ export default defineConfig({
 ## 3. API 参考
 
 更多 API 细节请参阅 [LynxView](/api/lynx-native-api/lynx-view/lynx-view)。
-
-```ts
-// 处理 NativeModule.bridge.call('request')
-lynxView.onNativeModulesCall = (name, data, moduleName) => {
-  if (moduleName === 'bridge') {
-    if (name === 'request') {
-      // ...
-
-      // return data 会被自动处理为 callback data
-      return {};
-    }
-  }
-};
-```
-
-##### 3.2.3 customTemplateLoader
-
-允许用户实现自定义模板加载功能（默认是 fetch）：
-
-```ts
-lynxView.customTemplateLoader = (url) => {
-  return await(
-    await fetch(url, {
-      method: 'GET',
-    }),
-  ).json();
-};
-```
-
-#### 3.3 Events
-
-##### 3.3.1 error
-
-报错信息通知：
-
-```ts
-type LynxError = CustomEvent<{
-  error: Error;
-  sourceMap: {
-    offset: {
-      // 行偏移量
-      line: number;
-      // 列偏移量
-      col: number;
-    };
-  };
-  release: string;
-  fileName: 'lepus.js' | 'app-service.js';
-}>;
-
-lynxView.addEventListener('error', (err: LynxError) => {
-  // ...
-});
-```
-
-#### 3.4 Methods
-
-##### 3.4.1 updateData
-
-[详见](/api/lynx-native-api/lynx-view/update-meta-data.mdx)
-
-```ts
-export type Cloneable<T = string | number | null | boolean | undefined> =
-  | T
-  | Record<string, T>
-  | T[];
-
-updateData(
-  data: Cloneable,
-  updateDataType: UpdateDataType,
-  callback?: () => void,
-): void
-```
-
-##### 3.4.2 updateGlobalProps
-
-[详见](/api/lynx-api/main-thread/lynx-global-props)
-
-```ts
-updateGlobalProps(data: Cloneable): void;
-```
-
-##### 3.4.3 sendGlobalEvent
-
-[详见](/api/lynx-native-api/lynx-view/send-global-event)
-
-```ts
-sendGlobalEvent(eventName: string, params: Cloneable[]): void;
-```
-
-#### 3.5 宽、高
-
-:::note
-lynx-view的内部排版会被强制移出外部排版流
-:::
-
-我们会给所有 lynx-view 强制应用 [CSS Containment](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment)。
-
-也就是默认情况下，您需要给 lynx-view 设置一个宽高。宽高可以是 `flex-grow` 分配的、可以是百分比指定的，但是不可以是“撑开”的。设置宽高是强烈推荐的做法，也是性能的最佳实践。
-
-有些情况下您的确需要由 lynx-view 的内容决定宽或高，您可以设置 `height="auto"` 或者 `width="auto"` 来启动自动宽高监听器。在这种情况下，lynx-view 的内部排版依旧与外部排版流独立。
-
-### 3.2 兼容性
-
-推荐配置为：**Chrome > 118, safari>18, Firefox NSR**
-
-如果你想支持 chrome < 118，safari < 18 的浏览器，需要做以下处理：
-
-1. 引入降级插件：
-
-```ts
-import '@lynx-js/web-elements-compat/LinearContainer';
-```
-
-2. 额外编译 `@lynx-js` 依赖。如果你的项目是 Rsbuild，则按照如下配置修改：
-
-```ts
-// rsbuild.config.ts
-export default {
-  source: {
-    include: [/@lynx-js/],
-  },
-  output: {
-    polyfill: 'usage',
-  },
-};
-```
-
-### 3.3 FAQ
-
-#### 3.3.1 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
-
-这是因为 Worker 加载远程脚本需要遵守[同源策略](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy)，而项目的 JS 资源一般会部署在 CDN 上，从而造成了跨域问题。
-
-可以通过引入 [remote-web-worker](https://github.com/jantimon/remote-web-worker) 的形式解决：
-
-```ts
-// 引入位置需要保证在 @lynx-js/web-core 前
-import 'remote-web-worker';
-
-import '@lynx-js/web-core';
-import '@lynx-js/web-core/index.css';
-import '@lynx-js/web-elements/all';
-import '@lynx-js/web-elements/index.css';
-document.body.innerHTML = `
-<lynx-view
-    style="height:100vh; width:100vw;"
-    url="http://localhost:3000/main/index.main.bundle"
->
-</lynx-view>`;
-```
-
-#### 3.3.2 性能优化
-
-我们提供了 RSBuild 插件来做性能优化，你可以在你的 web 工程中引入[该插件](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin)
