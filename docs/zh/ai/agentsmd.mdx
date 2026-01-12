@@ -1,0 +1,107 @@
+# Lynx 下的 `AGENTS.md`
+
+[`AGENTS.md`](https://agents.md) 类似于 `README.md`，但适用于 agent。
+
+在这篇文档中，你将了解如何添加一个适合 Lynx 项目的 `AGENTS.md`，继而确保你的 agents 可以在 Lynx 的项目上，最大限度的发挥出其能力。
+
+## 创建全新项目
+
+我们已经在初始化项目模版中内置了 `AGENTS.md`，你可以参考 [Quick Start](/guide/start/quick-start#create-a-new-lynx-project) 来创建一个全新的 Lynx 项目，项目的根目录会有一个我们预先编写好的 `AGENTS.md` 文件。
+
+## 现有项目中添加 `AGENTS.md`
+
+对于 Lynx 项目，你可以从此文件开始，然后根据你的项目需求进行修改：
+
+- [`AGENTS.md` in Lynx Template Project](https://github.com/nicholasxjy/create-rspeedy-app/blob/main/template-common/AGENTS.md)
+
+## 修改现有的 `AGENTS.md` 文件
+
+下面是一个示例，请将 "Read in Advance" 小节添加在你的项目的 `AGENTS.md` 里：
+
+:::info 没有魔法咒语
+
+这个小节不是什么魔法咒语，它可以工作是因为：
+
+1. 将 LLM 友好的 Lynx官网，也就是 [llms.txt](https://lynxjs.org/llms.txt)，提供给 agent
+2. 在 `AGENTS.md` 中明确强调 agent 阅读 [llms.txt](https://lynxjs.org/llms.txt) 的重要性
+
+:::
+
+```markdown
+# My Awesome Project
+
+<!-- Here goes your original project description -->
+
+<!-- Insert this section -->
+
+## Read in Advance
+
+Read docs below in advance to help you understand the library or frameworks this project depends on.
+
+- Lynx: [llms.txt](https://lynxjs.org/llms.txt).
+  While dealing with a Lynx task, an agent **MUST** read this doc because it is an entrypoint of all available docs about Lynx.
+
+<!-- Here goes your original content -->
+
+## Build Instructions
+
+<!-- ... -->
+
+## Test Instructions
+
+<!-- ... -->
+```
+
+## 在 monorepo 中使用 `AGENTS.md`
+
+在 monorepo 中，你可以在每个子项目中添加一个 `AGENTS.md` 文件，以便为每个子项目的 agents 提供特定的指导和信息。这有助于确保 agents 能够根据各自子项目的需求和特点进行优化和调整。
+
+但是你可以将 monorepo 根目录下的 `AGENTS.md` 作为一个全局的指导文件，提供一些通用的信息和指导原则。
+
+例如：
+
+```bash
+$ tree
+.
+├── AGENTS.md # 全局 AGENTS.md
+├── README.md
+└── packages
+    ├── web
+    │   ├── AGENTS.md # 专为 Web 项目的 AGENTS.md
+    │   ├── package-a
+    │   │   └── AGENTS.md
+    │   └── package-b
+    │       └── AGENTS.md
+    └── lynx
+        ├── AGENTS.md # 专为 Lynx 项目的 AGENTS.md
+        ├── package-c
+        │   └── AGENTS.md
+        └── package-d
+            └── AGENTS.md # d 子项目的 AGENTS.md
+```
+
+在这个例子中，你应该将 Lynx 特有的指导和信息放在 `packages/lynx/AGENTS.md` 中。
+
+例如：当 agents 处理 package-d 下的任务时，它们应该优先参考 `packages/lynx/package-d/AGENTS.md`，然后是 `packages/lynx/AGENTS.md`，最后是根目录下的 `AGENTS.md`。
+
+按照树状结构组织 `AGENTS.md` 文件，可以避免重复编写相同的信息，同时确保 agents 能够访问到最相关和最新的指导内容。但开发者应该确保各个 `AGENTS.md` 文件之间的信息不要相互冲突，以免导致 agents 行为异常。
+
+## 将 `llms.txt` 作为 `AGENTS.md`
+
+如果 agents 没有按照要求阅读 Lynx 文档，可以考虑"内联"或"覆盖" `llms.txt` 内容到 `AGENTS.md` 中。
+
+```bash
+curl https://lynxjs.org/llms.txt > packages/lynx/AGENTS.md
+```
+
+建议只针对公共 `AGENTS.md` 文件使用此方法，以避免在多个文件中重复内容，以及覆盖特定子项目的定制化指导。
+
+如果你希望保持 `llms.txt` 的最新状态，可以将上述命令添加到 package.json（对于 monorepo，则是根 package.json） 的 prepare 脚本中。请记住将生成的 `AGENTS.md` 文件添加到 .gitignore 中，以避免将其提交到版本控制系统中。
+
+## Troubleshooting
+
+### Agents 不按照要求阅读 Lynx 文档
+
+确保在 `AGENTS.md` 中正确添加了 "Read in Advance" 小节，并明确指出 agents 必须阅读 [llms.txt](https://lynxjs.org/llms.txt)。
+
+如果问题仍然存在，考虑将 `llms.txt` 的内容直接内联到 `AGENTS.md` 中，参考上面的示例。
