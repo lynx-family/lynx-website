@@ -1,0 +1,126 @@
+# Lynx Docs MCP
+
+> 一个 MCP 服务器，从 [Lynx 官网](https://lynxjs.org/) 提供适用于 LLM 的文档，并带有精心设计的提示。
+
+`@lynx-js/docs-mcp-server` 允许您的编码代理（例如 Gemini、Claude、Cursor 或 Copilot）访问 Lynx 文档，
+以协助您完成开发任务。因此，我们专门优化了 [llms.txt](https://lynxjs.org/llms.txt)，
+它是文档站点的精简版本，专为大型模型阅读而优化。
+
+## 要求
+
+- [Node.js](https://nodejs.org/) v18.17 或更新的 [最新维护 LTS 版本](https://github.com/nodejs/Release#release-schedule)。
+
+## 入门指南
+
+将以下配置添加到您的 MCP 客户端：
+
+```json
+{
+  "mcpServers": {
+    "lynx-docs": {
+      "command": "npx",
+      "args": ["-y", "@lynx-js/docs-mcp-server@latest"]
+    }
+  }
+}
+```
+
+`@lynx-js/docs-mcp-server` 最适合支持 [Server Instructions](https://modelcontextprotocol.io/specification/draft/schema#initializeresult) 的 MCP 客户端，例如 Claude Code。
+
+如果您发现您的 MCP 客户端无法识别 MCP 服务器，您可以手动提供以下说明：
+（例如，在您的 `AGENTS.md`、`CLAUDE.md` 文件中，或者直接将其与您的问题一起发送）：
+
+```md
+For any questions or requirements regarding Lynx:
+
+1. Use the "List Resources Tool" to list all Resources provided in MCP "lynx-docs".
+2. First read MCP Resources "lynx-docs://llms.txt" (**REQUIRED**), this document is an ENTRYPOINT of all Lynx Docs.
+3. After reading "lynx-docs://llms.txt", use the "Read MCP Resources Tool" to retrieve docs you need based on the user's questions or requirements, please read them proactively.
+4. If available, prioritize obtaining Lynx-related information through MCP Resources tools over external web searches.
+```
+
+<details>
+
+<summary>Claude Code</summary>
+
+使用 Claude Code CLI 添加 Lynx Docs MCP 服务器（<a href="https://docs.anthropic.com/en/docs/claude-code/mcp">指南</a>）：
+
+```bash
+
+claude mcp add lynx-docs npx @lynx-js/docs-mcp-server@latest
+
+```
+
+</details>
+
+<details>
+
+<summary>Codex</summary>
+
+按照<a href="https://github.com/openai/codex/blob/main/docs/advanced.md#model-context-protocol-mcp">配置 MCP 指南</a>进行操作。
+
+使用上述标准配置。您还可以使用 Codex CLI 安装 Lynx Docs MCP 服务器：
+
+```bash
+
+codex mcp add lynx-docs -- npx @lynx-js/docs-mcp-server@latest
+
+```
+
+</details>
+
+<details>
+
+<summary>Copilot / VS Code</summary>
+
+请按照 MCP 安装指南 <a href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server">guide</a> 进行操作，
+
+并使用上述标准配置。您还可以使用 VS Code CLI 安装 Lynx Docs MCP 服务器：
+
+```bash
+
+code --add-mcp '{"name":"lynx-docs","command":"npx","args":["@lynx-js/docs-mcp-server@latest"]}'
+
+```
+
+</details>
+
+<details>
+
+<summary>Cursor</summary>
+
+**手动安装：**
+
+前往"Cursor Settings"->"MCP"->"新建 MCP 服务器"。使用上面提供的配置。
+
+</details>
+
+<details>
+
+<summary>Gemini CLI</summary>
+
+使用 Gemini CLI 安装 Lynx Docs MCP 服务器。
+
+**项目级配置：**
+
+```bash
+
+gemini mcp add lynx-docs npx @lynx-js/docs-mcp-server@latest
+
+```
+
+**全局配置：**
+
+```bash
+
+gemini mcp add -s user lynx-docs npx @lynx-js/docs-mcp-server@latest
+
+```
+
+或者，您可以参考<a href="https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md#how-to-set-up-your-mcp-server">MCP 指南</a>，并使用上述标准配置。
+
+</details>
+
+## 致谢
+
+本项目灵感来源于 [Svelte MCP 服务器](https://svelte.dev/docs/mcp/overview)。实现和文档均参考了原始 MCP 服务器并进行了调整。

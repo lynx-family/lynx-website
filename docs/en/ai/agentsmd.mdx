@@ -1,0 +1,109 @@
+# `AGENTS.md` for Lynx
+
+The [`AGENTS.md`](https://agents.md) file is similar to `README.md`, but it's for agents.
+
+In this document, you'll learn how to add a suitable `AGENTS.md` for your Lynx project, ensuring your agents can perform at their best within your Lynx project.
+
+## Creating a New Project
+
+We've included `AGENTS.md` in the initial project template. You can refer to [Quick Start](/guide/start/quick-start#create-a-new-lynx-project) to create a new Lynx project. The project's root directory will contain a pre-written `AGENTS.md` file.
+
+## Adding `AGENTS.md` to an Existing Project
+
+For Lynx projects, you can start with this file and then modify it according to your project needs:
+
+- [`AGENTS.md` in Lynx Template Project](https://github.com/nicholasxjy/create-rspeedy-app/blob/main/template-common/AGENTS.md)
+
+## Modifying the existing `AGENTS.md`
+
+Below is an example; please add the "Read in Advance" section to your project's `AGENTS.md`:
+
+:::info No Magic Spell
+
+This section isn't a magic spell; it works because:
+
+1. It provides the agent with the LLM-friendly Lynx website: [llms.txt](https://lynxjs.org/llms.txt).
+
+2. It explicitly emphasizes the importance of reading [llms.txt](https://lynxjs.org/llms.txt) in `AGENTS.md` to agents.
+
+:::
+
+```markdown
+# My Awesome Project
+
+<!-- Here goes your original project description -->
+
+<!-- Insert the section below -->
+
+## Read in Advance
+
+Read the docs below in advance to help you understand the library or frameworks this project depends on.
+
+- Lynx: [llms.txt](https://lynxjs.org/llms.txt).
+  While dealing with a Lynx task, an agent **MUST** read this doc because it is an entry point of all available docs about Lynx.
+
+<!-- Below goes your original content -->
+
+## Build Instructions
+
+<!-- ... -->
+
+## Test Instructions
+
+<!-- ... -->
+```
+
+## Using `AGENTS.md` in a Monorepo
+
+In a monorepo, you can add an `AGENTS.md` file to each subproject to provide specific guidance and information to agents for each subproject. This helps ensure that agents can optimize and adapt to the needs and characteristics of their respective sub-projects.
+
+However, you can use `AGENTS.md` in the monorepo root directory as a global guideline file, providing general information and guiding principles.
+
+For example:
+
+```bash
+
+$ tree
+.
+├── AGENTS.md # the global AGENTS.md
+├── README.md
+└── packages
+    ├── web
+    │   ├── AGENTS.md # the AGENTS.md for web project
+    │   ├── package-a
+    │   │   └── AGENTS.md
+    │   └── package-b
+    │       └── AGENTS.md
+    └── lynx
+        ├── AGENTS.md # the AGENTS.md for lynx project
+        ├── package-c
+        │   └── AGENTS.md
+        └── package-d
+            └── AGENTS.md # the AGENTS.md for d subproject
+```
+
+In this example, you should place Lynx-specific guidance and information in `packages/lynx/AGENTS.md`.
+
+For example, when agents process tasks under package-d, they should first refer to `packages/lynx/package-d/AGENTS.md`, then `packages/lynx/AGENTS.md`, and finally the `AGENTS.md` in the root directory.
+
+Organizing the `AGENTS.md` files in a tree structure avoids repetitive writing of the same information and ensures that agents can access the most relevant and up-to-date guidance. However, developers should ensure that the information in the various `AGENTS.md` files does not conflict with each other to avoid causing abnormal agent behavior.
+
+## Using `llms.txt` as `AGENTS.md`
+
+If agents are not reading the Lynx documentation as required, consider inlining or overwriting the contents of `llms.txt` into `AGENTS.md`.
+
+```bash
+curl https://lynxjs.org/llms.txt > packages/lynx/AGENTS.md
+```
+
+It is recommended to use this method only for public `AGENTS.md` files to avoid duplicate content across multiple files and to override customized instructions for specific subprojects.
+
+If you want to keep `llms.txt` up-to-date, you can add the above command to the prepare script in your package.json (or root package.json for monorepo). Remember to gitignore the generated `AGENTS.md` file to avoid committing it to version control.
+
+## Troubleshooting
+
+### Agents Not Reading Lynx Documentation as Required
+
+Ensure that the "Read in Advance" section is correctly added to `AGENTS.md`, explicitly stating that agents must read [llms.txt](https://lynxjs.org/llms.txt).
+
+If the problem persists, consider inlining the contents of `llms.txt` directly into `AGENTS.md`, as shown in the example above.
