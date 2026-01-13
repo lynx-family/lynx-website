@@ -9,6 +9,7 @@ import * as NextSteps from '@lynx/NextSteps';
 
 :::info
 推荐在非生产环境下接入 DevTool，让生产环境的应用更轻量。
+
 - **包体积**：DevTool 会增加包体积。
 - **运行时**：相关模块在开启后懒加载，会增加内存开销，部分功能可能影响加载性能。
 
@@ -189,7 +190,9 @@ DevTool 提供了一些调试功能开关，
 
 - 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
 - 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
-  - 如果需要使用 JavaScript 调试功能，还需要打开 `LoadJsBridge` 开关
+  - 如果需要使用 JavaScript 调试功能，还需要打开 `LoadQJSBridge` 开关或 `LoadV8Bridge` 开关
+    - `LoadQJSBridge` 控制加载 PrimJS 引擎调试库
+    - `LoadV8Bridge` 控制加载 V8 引擎调试库
 - LogBox 可以帮助你快速发现问题
 
 </Details>
@@ -199,7 +202,7 @@ DevTool 提供了一些调试功能开关，
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-11}
+```java title=YourApplication.java {3-13}
 private void initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null);
   // 打开 Lynx Debug 开关
@@ -209,8 +212,10 @@ private void initLynxEnv() {
   // 打开 Lynx LogBox 开关
   LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
   LynxEnv.inst().enableLogBox(true);
-  // 打开 LoadJsBridge 开关
-  LynxDevToolService.getINSTANCE().setLoadJsBridge(true);
+  // 打开 LoadQJSBridge 开关
+  LynxDevToolService.getINSTANCE().setLoadQJSBridge(true);
+  // 打开 LoadV8Bridge 开关
+  LynxDevToolService.getINSTANCE().setLoadV8Bridge(true);
 }
 
 ```
@@ -218,7 +223,7 @@ private void initLynxEnv() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-11}
+```kotlin title=YourApplication.kt {3-13}
 private fun initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null)
   // 打开 Lynx Debug 开关
@@ -228,8 +233,10 @@ private fun initLynxEnv() {
   // 打开 Lynx LogBox 开关
   LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
   LynxEnv.inst().enableLogBox(true)
-  // 打开 LoadJsBridge 开关
-  LynxDevToolService.INSTANCE.setLoadJsBridge(true)
+  // 打开 LoadQJSBridge 开关
+  LynxDevToolService.INSTANCE.setLoadQJSBridge(true)
+  // 打开 LoadV8Bridge 开关
+  LynxDevToolService.INSTANCE.setLoadV8Bridge(true)
 }
 ```
 
@@ -349,9 +356,9 @@ public initLynxEnv() {
 
 </PlatformTabs>
 
-
 恭喜你！至此你已经完成了 DevTool 的接入。打开 Lynx DevTool 桌面应用，
 使用 USB 线连接 app，即可开始调试。
+
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/devtool_connected_success.png"
   alt="Lynx DevTool 接入成功"

@@ -9,6 +9,7 @@ However, you need to follow these steps to integrate DevTool first.
 
 :::info
 It is recommended to integrate DevTool in non-production environments to keep your production builds lightweight.
+
 - **Package size**: DevTool will increase the package size.
 - **Runtime**: Related modules are lazy loaded when enabled, which will increase memory overhead, and some features may affect the loading performance.
 
@@ -190,7 +191,9 @@ Here are three important switches:
 
 - `Lynx DevTool` and `Lynx LogBox` switches can only take effect after `Lynx Debug` is enabled.
 - When debugging Lynx pages with the DevTool Desktop, `Lynx DevTool` needs to be enabled.
-  - If you need to use JavaScript debugging, you also need to enable the `LoadJsBridge` switch.
+  - If you need to use JavaScript debugging, you also need to enable the `LoadQJSBridge` or `LoadV8Bridge` switch.
+    - `LoadQJSBridge` controls loading the PrimJS engine debugging library.
+    - `LoadV8Bridge` controls loading the V8 engine debugging library.
 - LogBox helps you quickly identify and diagnose issues.
 
 </Details>
@@ -200,7 +203,7 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-11}
+```java title=YourApplication.java {3-13}
 private void initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null);
   // Enable Lynx Debug
@@ -210,8 +213,10 @@ private void initLynxEnv() {
   // Enable Lynx LogBox
   LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
   LynxEnv.inst().enableLogBox(true);
-  // Enable LoadJsBridge
-  LynxDevToolService.getINSTANCE().setLoadJsBridge(true);
+  // Enable LoadQJSBridge
+  LynxDevToolService.getINSTANCE().setLoadQJSBridge(true);
+  // Enable LoadV8Bridge
+  LynxDevToolService.getINSTANCE().setLoadV8Bridge(true);
 }
 
 ```
@@ -219,7 +224,7 @@ private void initLynxEnv() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-11}
+```kotlin title=YourApplication.kt {3-13}
 private fun initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null)
   // Enable Lynx Debug
@@ -229,8 +234,10 @@ private fun initLynxEnv() {
   // Enable Lynx LogBox
   LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
   LynxEnv.inst().enableLogBox(true)
-  // Enable LoadJsBridge
-  LynxDevToolService.INSTANCE.setLoadJsBridge(true)
+  // Enable LoadQJSBridge
+  LynxDevToolService.INSTANCE.setLoadQJSBridge(true)
+  // Enable LoadV8Bridge
+  LynxDevToolService.INSTANCE.setLoadV8Bridge(true)
 }
 ```
 
@@ -353,6 +360,7 @@ In addition to the three switches introduced earlier, there are more that can he
 
 Congratulations! You have completed the DevTool integration. Now, you may launch the Lynx DevTool Desktop and
 connect your app via USB to start debugging.
+
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/devtool_connected_success.png"
   alt="Integrate Lynx DevTool Successfully"
