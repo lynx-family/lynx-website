@@ -19,7 +19,7 @@ Due to the frequent triggering of the Lynx Pipeline, the framework only records 
 
 The following is the flowchart for `PipelineEntry`:
 
-<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/pipeline-entry.png" />
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pipeline-entry-3-7-compressed.png" />
 
 ## Example
 
@@ -192,6 +192,36 @@ hostPlatformTiming: AndroidHostPlatformTiming |
 ```
 
 Performance data for platform-specific key stages in [Lynx Pipeline](/guide/spec#lynx-pipeline), with type [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing).
+
+### actualFmp
+
+```ts
+actualFmp?: PerformanceMetric;
+```
+
+The time taken from preparing a [TemplateBundle](/api/lynx-native-api/template-bundle) to the completion of rendering elements and tags with `__lynx_timing_flag="__lynx_timing_actual_fmp"`. The data type is [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `actualFmp = PipelineEntry.paintEnd - InitContainerEntry.prepareTemplateStart`.
+
+### lynxActualFmp
+
+```ts
+lynxActualFmp?: PerformanceMetric;
+```
+
+The time taken from loading a [TemplateBundle](/api/lynx-native-api/template-bundle) to the completion of rendering elements and tags with `__lynx_timing_flag="__lynx_timing_actual_fmp"`. The data type is [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `lynxActualFmp = PipelineEntry.paintEnd - LoadBundleEntry.loadBundleStart`.
+
+### totalActualFmp
+
+```ts
+totalActualFmp?: PerformanceMetric;
+```
+
+The time taken from the user opening the page to the completion of rendering elements and tags with `__lynx_timing_flag="__lynx_timing_actual_fmp"`. The data type is [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `totalActualFmp = PipelineEntry.paintEnd - InitContainerEntry.openTime`.
 
 ## Compatibility
 

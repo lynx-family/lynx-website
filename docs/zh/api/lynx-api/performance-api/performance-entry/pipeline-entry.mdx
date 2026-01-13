@@ -2,7 +2,7 @@
 api: lynx-api/performance-api/performance-entry/pipeline-entry
 ---
 
-import { APISummary, APITable, Go, RuntimeBadge } from '@lynx';
+import { APISummary, APITable, Go, RuntimeBadge, Deprecated } from '@lynx';
 
 # PipelineEntry
 
@@ -19,7 +19,7 @@ Lynx Pipeline 是指从渲染触发到最终显示的完整流程。该流程分
 
 以下是 `PipelineEntry` 的流程图：
 
-<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/pipeline-entry.png" />
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pipeline-entry-3-7-compressed.png" />
 
 ## 示例
 
@@ -192,6 +192,36 @@ hostPlatformTiming: AndroidHostPlatformTiming |
 ```
 
 [Lynx Pipeline](/guide/spec#lynx-pipeline) 中不同平台特有的关键阶段的性能数据， 类型为 [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing)。
+
+### actualFmp
+
+```ts
+actualFmp?: PerformanceMetric;
+```
+
+从准备 [TemplateBundle](/api/lynx-native-api/template-bundle) 至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`actualFmp = PipelineEntry.paintEnd - InitContainerEntry.prepareTemplateStart`。
+
+### lynxActualFmp
+
+```ts
+lynxActualFmp?: PerformanceMetric;
+```
+
+从加载 [TemplateBundle](/api/lynx-native-api/template-bundle) 至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`lynxActualFmp = PipelineEntry.paintEnd - LoadBundleEntry.loadBundleStart`。
+
+### totalActualFmp
+
+```ts
+totalActualFmp?: PerformanceMetric;
+```
+
+从用户打开页面至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`totalActualFmp = PipelineEntry.paintEnd - InitContainerEntry.openTime`。
 
 ## 兼容性
 

@@ -12,7 +12,7 @@ _ReloadBundle_ 是指通过客户端接口`LynxView.reloadTemplate`、前端框�
 
 reloadBundle 的主要流程图如下。
 
-<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reload-bundle-entry-v9.png" />
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/reload-bundle-entry-3-7-compressed.png" />
 
 ## 示例
 
@@ -206,6 +206,108 @@ hostPlatformTiming: AndroidHostPlatformTiming |
 ```
 
 [Lynx Pipeline](/guide/spec#lynx-pipeline) 中不同平台特有的关键阶段的性能数据， 类型为 [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing)。
+
+### loadCoreStart
+
+```ts
+loadCoreStart: number;
+```
+
+初始化[后台线程运行时](/guide/spec#background-thread-runtime)环境的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### loadCoreEnd
+
+```ts
+loadCoreEnd: number;
+```
+
+初始化[后台线程运行时](/guide/spec#background-thread-runtime)环境的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### openTime
+
+```ts
+openTime?: number;
+```
+
+容器开始打开 Lynx 页面的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### containerInitStart
+
+```ts
+containerInitStart?: number;
+```
+
+容器初始化开始的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### containerInitEnd
+
+```ts
+containerInitEnd?: number;
+```
+
+容器初始化完毕的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### prepareTemplateStart
+
+```ts
+prepareTemplateStart?: number;
+```
+
+容器开始准备 [TemplateBundle](/guide/spec#app-bundle-aka-template-bundle) 的时间。“准备”指容器通过网络下载、加载本地缓存等任意方式获得 TemplateBundle。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### prepareTemplateEnd
+
+```ts
+prepareTemplateEnd?: number;
+```
+
+容器准备完 [TemplateBundle](/guide/spec#app-bundle-aka-template-bundle) 的时间。“准备”指容器通过通过网络下载、加载本地缓存等任意方式获得 TemplateBundle。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### createLynxStart
+
+```ts
+createLynxStart: number;
+```
+
+LynxView 开始创建的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### createLynxEnd
+
+```ts
+createLynxEnd: number;
+```
+
+LynxView 创建完毕的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### fcp
+
+```ts
+fcp?: PerformanceMetric;
+```
+
+从准备 [TemplateBundle](/api/lynx-native-api/template-bundle) 至首次渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`fcp = ReloadBundleEntry.paintEnd - InitContainerEntry.prepareTemplateStart`。
+
+### lynxFcp
+
+```ts
+lynxFcp?: PerformanceMetric;
+```
+
+从加载 [TemplateBundle](/api/lynx-native-api/template-bundle) 至首次渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`lynxFcp = ReloadBundleEntry.paintEnd - ReloadBundleEntry.loadBundleStart`。
+
+### totalFcp
+
+```ts
+totalFcp?: PerformanceMetric;
+```
+
+从用户打开页面至首次渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`totalFcp = ReloadBundleEntry.paintEnd - InitContainerEntry.openTime`。
 
 ## 兼容性
 
