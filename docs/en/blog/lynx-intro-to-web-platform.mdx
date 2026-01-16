@@ -29,38 +29,38 @@ Our web platform—a Lynx FFI implementation for browsers—provides the same re
 
 On the Lynx Web Platform, we're bringing Lynx's dual-threading model to the web community.
 
-We're trying to give Web community an idea about the multi-threading web application. 
+We're trying to give Web community an idea about the multi-threading web application.
 With Lynx's dual-thread architecture, we use the [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) to implement Lynx's multi-threaded rendering.
-On Lynx's Web Platform, developers can easily render their ReactLynx pages in an HTML document. 
-With ReactLynx, your code is automatically and gracefully split into two threads. 
+On Lynx's Web Platform, developers can easily render their ReactLynx pages in an HTML document.
+With ReactLynx, your code is automatically and gracefully split into two threads.
 With fast First Meaningful Paint (FMP) and non-blocking effect execution, we help you catch users' eyes as soon as possible.
 
-
-As we all know, over the past decade, multi-threaded performance has outpaced single-thread performance on modern hardware. 
-In a single-threaded model, applications can only process tasks sequentially. 
+As we all know, over the past decade, multi-threaded performance has outpaced single-thread performance on modern hardware.
+In a single-threaded model, applications can only process tasks sequentially.
 When faced with computationally intensive tasks, the interface may become unresponsive or even freeze, severely affecting the user experience.
 
 Here's a demo showing a page with complex effects that don't block the main thread.
 
-
-<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '20px' }}>
-<div style={{display: 'flex', justifyContent:'center'}}>**Reactlynx**</div>
-<div style={{display: 'flex', justifyContent:'center',}}>**React**</div>
-<div>
-![web-platform-demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/60.webp)
+<div
+  style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '20px' }}
+>
+  <div style={{ display: 'flex', justifyContent: 'center' }}>**Reactlynx**</div>
+  <div style={{ display: 'flex', justifyContent: 'center' }}>**React**</div>
+  <div>
+    ![web-platform-demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/60.webp)
+  </div>
+  <div>
+    ![react-demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/react-single-thread-5hz.webp)
+  </div>
 </div>
-<div>
-![react-demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/react-single-thread-5hz.webp)
-</div>
-</div>
-In this demo, we emulate a scenario where we have to decode HEIC images in JavaScript. 
-Decoding is a CPU-intensive task. Even if we move the decoding into useEffect, the main thread is still blocked.
-This causes CSS animations to lag.
-In Lynx, effects don't wait for rendering to finish and don't block rendering. 
-This design prioritizes high-priority rendering tasks and keeps effects executing quickly.
+In this demo, we emulate a scenario where we have to decode HEIC images in
+JavaScript. Decoding is a CPU-intensive task. Even if we move the decoding into
+useEffect, the main thread is still blocked. This causes CSS animations to lag.
+In Lynx, effects don't wait for rendering to finish and don't block rendering.
+This design prioritizes high-priority rendering tasks and keeps effects
+executing quickly.
 
 ![lynx-web-all-on-ui-thread-model](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/dual-thread-heic-image-update.jpeg)
-
 
 ## One codebase, one Lynx
 
@@ -69,7 +69,6 @@ The core idea of our web platform is to provide a solution that lets developers 
 Therefore, we provide an implementation of the Lynx Engine APIs for browsers.
 
 ![lynx-web-arch](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/arch-web-colorful-1.jpeg)
-
 
 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '20px' }}>
 <div style={{display: 'flex', justifyContent:'center'}}>**__SetAttribute on Web Platform**</div>
@@ -107,9 +106,8 @@ RENDERER_FUNCTION_CC(FiberSetAttribute) {
 </div>
 </div>
 
-
-This means that developers and Rspeedy (Rsbuild) plugin authors don't need extra work to support the web platform. 
-There are no platform-specific variants of your code. 
+This means that developers and Rspeedy (Rsbuild) plugin authors don't need extra work to support the web platform.
+There are no platform-specific variants of your code.
 The only difference in the output is that for the web platform we skip AOT optimizations.
 One Lynx!
 
@@ -120,9 +118,9 @@ This lets us emit these declarations as-is into the document.
 
 ![lynx-web-height-transform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/style-transform-web.jpeg)
 
-However, there are properties and values implemented for performance reasons. 
-That's why our web platform includes a CSS transformer that converts some values into CSS custom properties. 
-Then we use CSS techniques to switch and apply different properties on HTML elements. 
+However, there are properties and values implemented for performance reasons.
+That's why our web platform includes a CSS transformer that converts some values into CSS custom properties.
+Then we use CSS techniques to switch and apply different properties on HTML elements.
 This achieves maximum compatibility while maintaining high performance.
 
 ![lynx-web-display-linear-transform](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/web-rust-transformer.jpeg)
