@@ -27,15 +27,37 @@ Represents the keyboard status change caused by input method focus or user opera
 ]
 ```
 
+**Example:**
+
+```javascript
+// Listen to keyboard status changes
+useLynxGlobalEventListener(
+  'keyboardstatuschanged',
+  (status, height, compatHeight) => {
+    console.log(
+      `status: ${status}, height: ${height}, compatHeight: ${compatHeight}`,
+    );
+  },
+);
+```
+
 ### onWindowResize
 
 Indicates the change in Lynx page size due to screen rotation or external typesetting.
 
 ```json
 [
-  width?: ['on', 'off'],    // indicates the width of the Lynx page after the change, in px
+  width?: number,    // indicates the width of the Lynx page after the change, in px
   height?: number,          // indicates the height of the Lynx page after the change, in px
 ]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('onWindowResize', (width, height) => {
+  console.log(`Window resized to: ${width}x${height}px`);
+});
 ```
 
 ### exposure
@@ -55,6 +77,19 @@ Indicates that a node in the exposure data source has generated exposure, that i
 ]
 ```
 
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('exposure', (exposures) => {
+  // The argument is an Array of exposure items
+  exposures.forEach((item) => {
+    console.log(
+      `Node exposed: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
+```
+
 ### disexposure
 
 Indicates that a node in the exposure data source has generated a reverse exposure, that is, the visibility of the node has changed from visible to invisible.
@@ -70,6 +105,19 @@ Indicates that a node in the exposure data source has generated a reverse exposu
   },
   //......
 ]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('disexposure', (disexposures) => {
+  // The argument is an Array of disexposure items
+  disexposures.forEach((item) => {
+    console.log(
+      `Node hidden: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
 ```
 
 ## Compatibility

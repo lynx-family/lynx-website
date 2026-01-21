@@ -26,15 +26,37 @@ import { APISummary, APITable, RuntimeBadge } from '@lynx';
 ]
 ```
 
+**Example:**
+
+```javascript
+// Listen to keyboard status changes
+useLynxGlobalEventListener(
+  'keyboardstatuschanged',
+  (status, height, compatHeight) => {
+    console.log(
+      `status: ${status}, height: ${height}, compatHeight: ${compatHeight}`,
+    );
+  },
+);
+```
+
 ### onWindowResize
 
 表示由于屏幕旋转或外部排版导致的 Lynx 页面大小变化。
 
 ```json
 [
-  width?: ['on', 'off'],          // 表示 Lynx 页面变化后的宽度，单位为 px
+  width?: number,          // 表示 Lynx 页面变化后的宽度，单位为 px
   height?: number,                // 表示 Lynx 页面变化后的高度，单位为 px
 ]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('onWindowResize', (width, height) => {
+  console.log(`Window resized to: ${width}x${height}px`);
+});
 ```
 
 ### exposure
@@ -54,6 +76,19 @@ import { APISummary, APITable, RuntimeBadge } from '@lynx';
 ]
 ```
 
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('exposure', (exposures) => {
+  // The argument is an Array of exposure items
+  exposures.forEach((item) => {
+    console.log(
+      `Node exposed: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
+```
+
 ### disexposure
 
 表示曝光数据源里有节点产生了反曝光，即节点的可见性从可见变为不可见。
@@ -69,6 +104,19 @@ import { APISummary, APITable, RuntimeBadge } from '@lynx';
   },
   //......
 ]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('disexposure', (disexposures) => {
+  // The argument is an Array of disexposure items
+  disexposures.forEach((item) => {
+    console.log(
+      `Node hidden: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
 ```
 
 ## 兼容性
