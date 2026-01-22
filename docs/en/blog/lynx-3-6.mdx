@@ -1,0 +1,130 @@
+---
+date: 2026-01-30
+sidebar: false
+authors: ['liujilong', 'Dugyu', 'lynx']
+badge_text: 'Lynx 3.6 is released!'
+description: 'Lynx 3.6 is now officially released! This release introduces reactlynx-use for improved developer ergonomics, expands AI-native tooling with Lynx for AI, and enhances CSS capabilities for design expressiveness. On the native side, Lynx 3.6 improves platform integration with Standalone BackgroundRuntime and asynchronous TemplateBundle creation on HarmonyOS, along with Auto Layout support for LynxView on iOS.'
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+_January 30th, 2026_
+
+# Lynx 3.6: reactlynx-use, Lynx for AI, CSS for Design
+
+<BlogAvatar list={['liujilong', 'Dugyu', 'lynx']} />
+
+Lynx 3.6 is now officially released!
+
+This release introduces reactlynx-use for improved developer ergonomics, expands AI-native tooling with Lynx for AI, and enhances CSS capabilities for design expressiveness. On the native side, Lynx 3.6 improves platform integration with Standalone BackgroundRuntime and asynchronous TemplateBundle creation on HarmonyOS, along with Auto Layout support for LynxView on iOS.
+
+Let's take a closer look at what's new in Lynx 3.6.
+
+## reactlynx-use
+
+[reactlynx-use](https://github.com/lynx-community/reactlynx-use) is a React-style hooks library explicitly designed for ReactLynx. It bundles nearly 30 battle-tested hooks from the open-source community, such as `useEffectOnce` and `useDebounce`, and also introduces hooks tailored for Lynx's dual-thread architecture.
+
+Notable additions include:
+
+- **useVelocity**: Track the velocity and direction of tap events on the main thread.
+- **useTapLock**: Constrain main-thread tap interactions to a specific direction or range.
+- **useMainThreadImperativeHandle**: A main-thread counterpart of `useImperativeHandle`.
+- **useEventListener**: A flexible event subscription hook supporting `exposure`, `disexposure`, and more.
+
+These hooks make it easier to write expressive, idiomatic React code while working directly with Lynx's underlying runtime model.
+
+## Lynx for AI
+
+Large language models are trained on public web data and typically lack awareness of the latest Lynx features and best practices. To bridge this gap, the Lynx team and community are building a set of tools that help AI systems better understand Lynx and assist developers more effectively.
+
+This work lays the foundation for AI-assisted Lynx development. Models can reason about Lynx-specific APIs, architectural constraints, and recommended patterns, instead of treating Lynx as a generic runtime.
+
+## CSS for Design
+
+In Lynx 3.6, CSS takes on a more explicit role in design systems. CSS serves as a medium for expressing design intent, including how values are scoped, composed, and perceived across the component tree.
+
+This release focuses on improving CSS expressiveness through variables, gradients, and filters.
+
+### Inline CSS Variables
+
+CSS variables can now be defined and overridden inline, allowing design tokens to be scoped directly within the component tree.
+
+```css
+:root {
+  --main-bg-color: yellow;
+}
+
+.two {
+  --main-height: 200px;
+  background-color: var(--main-bg-color);
+  width: 100%;
+  height: 100%;
+}
+```
+
+```tsx
+<view
+  style={{
+    color: 'var(--main-bg-color)',
+    width: '100%',
+  }}
+/>
+```
+
+Inline variables make it explicit where a parameter is applied. Components can consume semantic tokens, while contexts provide the actual values.
+
+### Nested CSS Variables
+
+CSS variables in Lynx 3.6 can also be defined in terms of other variables, allowing tokens to be layered compositionally.
+
+Nested variables express relationships between design tokens directly in code, turning implicit design-system conventions into explicit structure. Combined with inline scoping, this shifts theming from a global switch to a local property of the component tree.
+
+### Conic Gradients for Backgrounds
+
+`background-image` now supports `conic-gradient`, enabling richer and more continuous visual representations without relying on bitmap assets.
+
+```css
+.bg {
+  width: 100px;
+  height: 100px;
+  background-image: conic-gradient(from 180deg at 50% 50%, red, blue, red);
+}
+```
+
+Conic gradients are well-suited for cyclic or angular representations, such as color wheels and hue pickers. They can also serve as foundational surfaces for design tools and interactive components.
+
+### CSS Filters for Perceptual Adjustment
+
+Lynx 3.6 extends CSS filter support with `brightness`, `contrast`, and `saturate`.
+
+These filters allow visual states to be adjusted at a perceptual level. When combined with effects such as blur, they enable composable visual outcomes like grouping, focus, and fluid boundaries, without introducing additional layers or assets.
+
+## Native APIs
+
+### Standalone BackgroundRuntime on HarmonyOS
+
+HarmonyOS now supports Standalone BackgroundRuntime, aligning more closely with existing Android and iOS capabilities.
+
+With Standalone BackgroundRuntime, developers can run JavaScript tasks independently of rendering, or pre-create background runtimes to reduce LynxView initialization latency.
+
+### Asynchronous TemplateBundle Creation on HarmonyOS
+
+On Android and iOS, `TemplateBundle.fromBundle` can be called from any thread. On HarmonyOS, however, ArkTS logic must run on the application's main thread.
+
+To reduce main-thread I/O blocking, Lynx 3.6 introduces asynchronous APIs for creating `TemplateBundle` instances on HarmonyOS:
+
+- `TemplateBundle.fromTemplateAsync`
+- `TemplateBundle.fromTemplateAsyncWithOption`
+
+### AutoLayout Support for LynxView on iOS
+
+On iOS, LynxView now supports Auto Layout via `[LynxView enableAutoLayout]`.
+
+When enabled, LynxView can derive layout parameters directly from client-side Auto Layout constraints, eliminating the need to configure layout values manually.
+
+## Upgrade Guide
+
+To upgrade to Lynx 3.6, follow the [integration guide](https://lynxjs.org/3.6/zh/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions accordingly.

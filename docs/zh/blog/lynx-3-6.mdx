@@ -1,9 +1,9 @@
 ---
-date: 2026-01-04
+date: 2026-01-30
 sidebar: false
-authors: ['liujilong', 'huxpro', 'lynx']
+authors: ['liujilong', 'Dugyu', 'lynx']
 badge_text: 'Lynx 3.6 发布了!'
-description: 'Lynx 3.6 已经正式发布!'
+description: 'Lynx 3.6 已经正式发布！本次版本引入 reactlynx-use 以提升开发体验，推出 Lynx for AI 以增强 AI 原生开发能力，并围绕设计表达能力增强了 CSS 能力。在原生侧，Lynx 3.6 进一步完善平台集成，在 HarmonyOS 上支持 Standalone BackgroundRuntime 与异步 TemplateBundle 创建，并在 iOS 上新增 LynxView 的 Auto Layout 支持。'
 ---
 
 import { BlogAvatar, CodeFold } from '@lynx';
@@ -11,34 +11,49 @@ import { PackageManagerTabs } from '@theme';
 import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
 import { Tab, Tabs } from '@rspress/core/theme';
 
-_2025 年 01 月 04 日_
+_2026 年 01 月 30 日_
 
-# Lynx 3.6: reactlynx-use, Lynx for AI, CSS
+# Lynx 3.6: reactlynx-use, Lynx for AI, 面向设计的 CSS
 
-<BlogAvatar list={['liujilong', 'huxpro', 'lynx']} />
+<BlogAvatar list={['liujilong', 'Dugyu', 'lynx']} />
 
-Lynx 3.6 已经正式发布!
+Lynx 3.6 已经正式发布！
 
-让我们一起来看看有哪些新特性！
+本次版本从三个方向持续演进 Lynx 的能力边界：开发者体验、AI 原生工具链，以及面向设计表达的能力建设。在原生侧，Lynx 3.6 进一步完善平台集成，在 HarmonyOS 上支持 Standalone BackgroundRuntime 与异步 TemplateBundle 创建，并在 iOS 上新增 LynxView 的 Auto Layout 支持。
+
+下面我们一起来看看 Lynx 3.6 带来了哪些新变化。
 
 ## reactlynx-use
 
-[reactlynx-use](https://github.com/lynx-community/reactlynx-use) 是一个专门为 ReactLynx 设计的 React 风格 hooks 库，不仅内置近 30 个经开源社区验证的实用 Hooks，如 useEffectOnce、useDebounce 等，还提供了 Lynx 双线程架构下的 Hooks 能力，主要包括：
+[reactlynx-use](https://github.com/lynx-community/reactlynx-use) 是一个专门为 ReactLynx 设计的 React 风格 Hooks 库，不仅内置近 30 个经开源社区验证的实用 Hooks（如 useEffectOnce、useDebounce 等），还提供了一组面向 Lynx 双线程架构的 Hooks 能力。
 
-- useVelocity：追踪主线程 Tap 事件的速度与方向。
-- useTapLock：将主线程 Tap 事件限制在指定的方向与范围内。
-- useMainThreadImperativeHandle：useImperativeHandle 的 Lynx 主线程版本。
-- useEventListener：提供更灵活的事件监听能力，支持 exposure、disexposure 等。
+主要包括：
+
+- **useVelocity**：追踪主线程 Tap 事件的速度与方向。
+- **useTapLock**：将主线程 Tap 事件限制在指定的方向与范围内。
+- **useMainThreadImperativeHandle**：`useImperativeHandle` 的 Lynx 主线程版本。
+- **useEventListener**：提供更灵活的事件监听能力，支持 `exposure`、`disexposure` 等。
+
+这些 Hooks 使得在理解并直接利用 Lynx 底层运行时模型的同时，依然可以保持符合 React 直觉的开发体验。
 
 ## Lynx for AI
 
-大语言模型基于公开网络数据训练，因此通常缺乏对最新 Lynx 功能和最佳实践的了解。Lynx 团队和社区正在开发一套工具，帮助大语言模型更有效地理解和开发 Lynx。
+大语言模型通常基于公开网络数据训练，对最新的 Lynx 能力和最佳实践缺乏直接认知。为此，Lynx 团队与社区正在共同建设一套工具体系，帮助 AI 更好地理解 Lynx 的 API、架构约束与推荐用法。
 
-## CSS
+这一方向为 AI 辅助 Lynx 开发奠定了基础，使模型不再将 Lynx 视为通用运行时，而是能够在 Lynx 的语境中进行更准确的推理与生成。
 
-### 支持在 Inline CSS variables
+## 面向设计的 CSS
 
-```
+在 Lynx 3.6 中，CSS 开始在设计系统中承担更加明确的角色。
+它不再只是样式配置机制，而逐渐成为**表达设计意图的媒介**，包括数值如何被作用、如何被组合，以及如何在组件树中被感知。
+
+本次版本围绕 **CSS Variables、渐变与滤镜** 三个方面，增强了 CSS 的表达能力。
+
+### inline style 支持 CSS Variables
+
+CSS Variables 现已支持在 inline style 中定义与覆盖，使设计 token 能够直接作用于组件树中的特定节点。
+
+```css
 :root {
   --main-bg-color: yellow;
 }
@@ -52,7 +67,7 @@ Lynx 3.6 已经正式发布!
 }
 ```
 
-```
+```tsx
 <view
   style={{
     color: 'var(--main-bg-color)',
@@ -61,9 +76,20 @@ Lynx 3.6 已经正式发布!
 />
 ```
 
-### background-image支持 conic-gradient
+Inline CSS Variables 明确了一个参数**作用于组件树的哪个位置**：组件可以消费语义化 token，而具体的值则由所在上下文提供。
 
-```
+### CSS Variables 支持嵌套
+
+在 Lynx 3.6 中，CSS Variables 还可以基于其他变量进行定义，从而形成可组合的层级关系。
+
+嵌套变量将设计 token 之间的依赖关系直接表达在代码中，使原本隐含在文档或约定中的设计系统结构，变为显式、可追踪的实现。
+结合 inline 作用域能力，主题配置从“全局开关”转变为组件树中的局部属性。
+
+### background-image 支持 conic-gradient
+
+`background-image` 新增支持 `conic-gradient`，无需依赖位图资源即可表达更加连续的视觉结构。
+
+```css
 .bg {
   width: 100px;
   height: 100px;
@@ -71,28 +97,38 @@ Lynx 3.6 已经正式发布!
 }
 ```
 
-### filter 支持 brightness, contrast 和 saturate
+圆锥渐变特别适合表达**周期性或角度相关的数据**，例如颜色环、色相选择器等，也可以作为设计工具和交互组件中的基础视觉表面。
+
+### filter 支持 brightness、contrast 和 saturate
+
+Lynx 3.6 扩展了 CSS filter 能力，新增支持 `brightness`、`contrast` 与 `saturate`。
+
+这些滤镜使视觉状态可以在**感知层级**上进行调节。
+当与 blur 等效果组合使用时，可以形成可组合的视觉结果，例如分组、聚焦或流体边界，而无需引入额外的渲染层或资源。
 
 ## Native APIs
 
-### HarmonyOS 支持了 Standalone BackgroundRuntime
+### HarmonyOS 支持 Standalone BackgroundRuntime
 
-HarmonyOS 新增支持 Standalone BackgroundRuntime，部分对齐了 Android & iOS 现有的 Standalone BackgroundRuntime 能力。
-在 HarmonyOS 可以借助 Standalone BackgroundRuntime 来实现独立运行的后台 JS 线程，执行一些不依赖渲染的任务，或者提前创建 BackgroundRuntime, 优化 LynxView 的初始化耗时。
+HarmonyOS 新增支持 Standalone BackgroundRuntime，与 Android 和 iOS 的现有能力进一步对齐。
+
+借助 Standalone BackgroundRuntime，开发者可以在不依赖渲染的情况下独立运行后台 JS 任务，或提前创建后台运行时，以降低 LynxView 初始化阶段的延迟。
 
 ### HarmonyOS 平台新增异步创建 TemplateBundle 的方法
 
-在 Android 和 iOS 平台上，开发者可以使用 TemplateBundle.fromBundle 方法创建 TemplateBundle。该方法可以在任意线程执行。
-在 HarmonyOS 平台上，ArkTS 逻辑只能在应用主线程运行。在 3.6 版本，LynxSDK 提供异步创建 TemplateBundle 的方法，以减少主线程 I/O 操作带来的阻塞时间。
+在 Android 和 iOS 平台上，`TemplateBundle.fromBundle` 可以在任意线程执行；而在 HarmonyOS 上，ArkTS 逻辑必须运行在应用主线程。
 
-- TemplateBundle.fromTemplateAsync
-- TemplateBundle.fromTemplateAsyncWithOption
+为减少主线程 I/O 阻塞，Lynx 3.6 在 HarmonyOS 上引入了异步创建 `TemplateBundle` 的 API：
+
+- `TemplateBundle.fromTemplateAsync`
+- `TemplateBundle.fromTemplateAsyncWithOption`
 
 ### iOS 平台 LynxView 新增 enableAutoLayout 能力
 
-iOS 平台新增方法 [LynxView enableAutoLayout]。
-开启后 LynxView 支持 iOS AutoLayout 机制，从客户端约束中解析中 Lynx 排版所需的排版参数，不需要再手动设置 LynxView 排版参数。
+iOS 平台新增方法 `[LynxView enableAutoLayout]`。
+
+开启后，LynxView 可以直接从客户端的 Auto Layout 约束中解析排版参数，无需再手动设置 LynxView 的布局配置。
 
 ## 升级指南
 
-参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.6/zh/guide/start/integrate-with-existing-apps.html)更新 Lynx 依赖版本，完成 Lynx 3.5 版本升级。
+参照官网 [接入 Lynx 到现有应用](https://lynxjs.org/3.6/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.6 版本升级。
