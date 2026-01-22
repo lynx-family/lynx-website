@@ -62,6 +62,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
     },
   },
+  {
+    value: 'ai',
+    label: 'AI',
+    description: 'Lynx for AI',
+    descriptionZh: '面向 AI 的 Lynx',
+    home: '/ai/',
+    url: '/ai/',
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-light-logo-colorful.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-dark-logo-colorful.svg',
+    },
+  },
 ];
 
 /**
