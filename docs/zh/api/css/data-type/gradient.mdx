@@ -48,7 +48,7 @@ linear-gradient([ <angle> | to <side-or-corner> ,]? <color-stop> [ , <color-stop
   用角度值指定渐变的方向（或角度）。角度顺时针增加。
 
 - `<color-stop>`
-  由一个 `<color>` 值组成，并且跟随着一个可选的终点位置，位置是一个 [`<percentage>`] 值，描述沿渐变方向的偏移量。
+  由一个 `<color>` 值组成，并且跟随着至多一个可选的终点位置。该位置可以是一个 [`<percentage>`] 或 `<number>` 值，描述沿渐变方向的偏移量。注意，与 Web 标准不同，Lynx 不支持在一个颜色后跟随多个位置。如果是无单位的 `<number>`，会被视为百分比处理（如 `0.5` 视为 `50%`）。未显式指定位置的颜色点会根据前后已知位置进行线性平均分配。
 
 ### 径向渐变
 
@@ -104,6 +104,50 @@ radial-gradient(
 
 - `<color-stop>`
   同 `linear-gradient` 的描述。
+
+### 锥形渐变
+
+颜色值围绕一个中心点（原点）旋转逐渐过渡。由 `conic-gradient()` 函数产生。
+
+```css
+/* 默认从 0deg 开始，中心在 50% 50% */
+conic-gradient(red, blue);
+/* 从 45deg 开始 */
+conic-gradient(from 45deg, red, blue);
+/* 中心在左上角 */
+conic-gradient(at top left, red, blue);
+/* 从 90deg 开始，中心在 20% 30% */
+conic-gradient(from 90deg at 20% 30%, red 0%, blue 50%, green 100%);
+```
+
+#### 标准语法
+
+```
+conic-gradient(
+  [ [ from <angle> ]? [ at <position> ]? , ]?
+  <color-stop-list>
+)
+```
+
+#### 可填值
+
+- `<angle>`
+  起始角度，由关键字 `from` 引导。默认值为 `0deg`。支持单位：`deg`, `grad`, `rad`, `turn`。若使用无单位数字，仅当数值为 `0` 或开启了 `enable_transform_legacy` 兼容模式时才被接受。
+
+- `<position>`
+  中心位置，由关键字 `at` 引导。默认值为 `50% 50%` (`center`)。支持 1 到 2 个值，语法参考 [`background-position`](/api/css/properties/background-position)：
+
+  - 关键字：`left`, `center`, `right`, `top`, `bottom`。
+  - 数值：`<length-percentage>` (如 `20px`, `30%` 等)。
+
+- `<color-stop-list>`
+  颜色停止列表，由至少两个颜色点组成的逗号分隔列表。每个颜色点包含一个 `<color>` 以及至多一个可选的位置（`<percentage>` 或 `<number>`）。注意，与 Web 标准不同，Lynx 不支持在一个颜色后跟随多个位置。如果是无单位的 `<number>`，会被视为百分比处理（如 `0.5` 视为 `50%`）。未显式指定位置的颜色点会根据前后已知位置进行线性平均分配。
+
+#### 实现特殊约束
+
+- **参数顺序固定**：`from <angle>` 必须出现在 `at <position>` 之前（如果两者都存在）。
+- **逗号规则**：如果指定了 `from <angle>` 或 `at <position>` 中的任何一个，则在颜色停止列表之前必须有一个逗号。
+- **不支持重复语法**：目前不支持 `repeating-conic-gradient()`。
 
 ## 兼容性
 
