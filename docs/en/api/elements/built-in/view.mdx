@@ -357,7 +357,7 @@ Used to specify the accessibility identifier of a `UIView` in iOS. It is only us
 user-interaction-enabled?: boolean
 ```
 
-Specifies whether the target node and its child nodes can respond to Lynx touch events. This property does not affect platform-level gestures (such as scrolling of `scroll-view`).
+Specify whether the target node and its child nodes can respond to Lynx touch events. This property does not affect platform-level gestures (such as scrolling of `scroll-view`).
 
 :::tip
 It is recommended to use [`pointer-events`](../../css/properties/pointer-events.mdx) instead of `user-interaction-enabled`.
@@ -378,6 +378,40 @@ On the Android platform, this setting only applies to `view` elements, and the c
 Gesture interception effects only apply to sibling nodes, not parent-child nodes.
 :::
 
+### `pan-intercept-direction`
+
+```ts
+// DefaultValue: 2 /* none */
+pan-intercept-direction?:
+[ 0 /* horizontal */
+| 1 /* vertical */
+| 2 /* none */ ]
+```
+
+Specify which direction to block platform-layer swipe gestures, you need to use [`pan-intercept-scope`](#pan-intercept-scope). When the swipe direction matches `pan-intercept-direction`, [`pan-intercept-scope`](#pan-intercept-scope) will be used to determine whether to block platform-layer swipe gestures on the corresponding node.
+
+For example, when `pan-intercept-direction` is set to `0`, indicating a horizontal swipe direction, the [`pan-intercept-scope`](#pan-intercept-scope) of the node closest to the user in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) will be used to determine whether to block platform-layer swipe gestures on the corresponding node.
+
+:::tip
+On the Android platform, this setting only applies to `view`, `scroll-view`, and `list` elements, and the corresponding Android View needs to be created for the node to take effect. It may also require setting [`flatten`](#flatten) to `false` for it to work.
+:::
+
+### `pan-intercept-scope`
+
+```ts
+// DefaultValue: 6 /* none */
+pan-intercept-scope?:
+[ 0 /* self */
+| 1 /* ancestors */
+| 2 /* descendants */
+| 3 /* self-and-ancestors */
+| 4 /* self-and-descendants */
+| 5 /* all */
+| 6 /* none */ ]
+```
+
+Specify the scope within which platform-layer swipe gestures in a particular direction will be blocked. It must be used in conjunction with [`pan-intercept-direction`](#pan-intercept-direction). For example, setting `pan-intercept-scope` to `0` means that platform-layer swipe gestures will only be blocked on the target node, while setting it to `1` means that platform-layer swipe gestures will be blocked on all ancestor nodes of the target node.
+
 ### `block-native-event`
 
 ```ts
@@ -394,7 +428,7 @@ Specify whether to block platform layer gestures outside Lynx when the target no
 block-native-event-areas?: [string, string, string, string][]
 ```
 
-Specifies a touch area that blocks platform-layer gestures outside of Lynx. When the target node is in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and a touch is placed in the specified area of ​​the target node, platform-layer gestures will be blocked, achieving an effect similar to preventing platform-layer side-swipe back.
+Specify a touch area that blocks platform-layer gestures outside of Lynx. When the target node is in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and a touch is placed in the specified area of ​​the target node, platform-layer gestures will be blocked, achieving an effect similar to preventing platform-layer side-swipe back.
 
 This two-dimensional array contains arrays containing 4 elements. The 4 elements are `x`, `y`, `width`, and `height`, in units of `px` or `%`, representing the position, width, and height of the touch area within the target node.
 
@@ -407,7 +441,7 @@ For example, `[['0px', '0px', '50%', '50%'], ['50%', '50%', '50%', '50%']]` indi
 consume-slide-event?: [number, number][]
 ```
 
-Specifies the angle range within which all platform-level swipe gestures are blocked. When the target node is in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and the swipe angle is within this range, all platform-level swipe gestures are blocked. However, Lynx touch events continue to function, allowing front-end scrolling containers that consume swipes in the specified direction. However, native scrolling based on platform-level gestures is blocked.
+Specify the angle range within which all platform-level swipe gestures are blocked. When the target node is in the [event response chain](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) and the swipe angle is within this range, all platform-level swipe gestures are blocked. However, Lynx touch events continue to function, allowing front-end scrolling containers that consume swipes in the specified direction. However, native scrolling based on platform-level gestures is blocked.
 
 This two-dimensional array contains several 2-element arrays, where the 2 elements are `start` and `end`, representing the start and end angles, respectively. The swipe angle is determined by the finger's press position and the finger's movement position.
 
@@ -426,7 +460,7 @@ For example, `[[-180, -135], [-45, 45], [135, 180]]` indicates that all platform
 event-through?: boolean
 ```
 
-Specifies whether Lynx consumes touch events from the platform layer when a touch is on the target node, allowing for effects similar to display-only, non-interactive displays.
+Specify whether Lynx consumes touch events from the platform layer when a touch is on the target node, allowing for effects similar to display-only, non-interactive displays.
 
 This property supports inheritance; that is, if `event-through` is not set for a child node, it inherits the `event-through` value from its parent node. Its active region is affected by [`event-through-active-regions`](#event-through-active-regions). If not set, it defaults to the entire region of the target node.
 
@@ -441,7 +475,7 @@ Setting this property to `true` only ensures that Lynx does not consume touch ev
 event-through-active-regions?: [string, string, string, string][]
 ```
 
-Specifies the effective area for [`event-through`](#event-through).
+Specify the effective area for [`event-through`](#event-through).
 
 This two-dimensional array contains several arrays containing `4` elements, where the `4` elements are `x`, `y`, `width`, and `height`, in units of `px` or `%`, representing the position, width, and height of the touch area within the target node.
 
@@ -668,8 +702,8 @@ lynx
   .invoke({
     method: 'boundingClientRect',
     params: {
-      iOSEnableAnimationProps: false, // Specifies whether to consider animation properties when calculating position on iOS; the default is false.
-      androidEnableTransformProps: true, // Specifies whether to consider the transform attribute when calculating the position on Android. The default value is false.
+      iOSEnableAnimationProps: false, // Specify whether to consider animation properties when calculating position on iOS; the default is false.
+      androidEnableTransformProps: true, // Specify whether to consider the transform attribute when calculating the position on Android. The default value is false.
       relativeTo: null, // Specify the reference node, relative to LynxView by default.
     },
     success: function (res) {
