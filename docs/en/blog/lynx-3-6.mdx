@@ -69,35 +69,38 @@ In Lynx 3.6, CSS takes on a more explicit role in design systems. CSS serves as 
 
 This release focuses on improving CSS expressiveness through variables, gradients, and filters.
 
-### Inline CSS Variables
+### Inline CSS Variables for Scoped Theming
 
-CSS variables can now be defined and overridden inline, allowing design tokens to be scoped directly within the component tree.
+Before Lynx 3.6, theme switching typically happened from the outside of a component: either updating CSS variables via JS `setProperty`, or switching an ancestor class (such as `theme-light` / `theme-dark`) to change variable values indirectly.
+
+In Lynx 3.6, CSS variables can be defined and overridden inline. This makes theming a first-class, component-level capability:: a component can accept theme overrides through its props and apply them directly at its own boundary, without requiring a global wrapper or imperative JS updates.
 
 ```css
-:root {
-  --main-bg-color: yellow;
-}
-
-.two {
-  --main-height: 200px;
-  background-color: var(--main-bg-color);
-  width: 100%;
-  height: 100%;
+.card {
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--content);
 }
 ```
 
 ```tsx
-<view
-  style={{
-    color: 'var(--main-bg-color)',
-    width: '100%',
-  }}
-/>
+function Card({ surface, content, radius, children }) {
+  return (
+    <view
+      className="card"
+      style={{
+        '--surface': surface,
+        '--content': content,
+        '--radius': radius,
+      }}
+    >
+      {children}
+    </view>
+  );
+}
 ```
 
-Inline variables make it explicit where a parameter is applied. Components can consume semantic tokens, while contexts provide the actual values.
-
-### Nested CSS Variables
+### Nested CSS Variables for Theme Layering
 
 CSS variables in Lynx 3.6 can also be defined in terms of other variables, allowing tokens to be layered compositionally.
 
@@ -166,3 +169,7 @@ When enabled, LynxView can derive layout parameters directly from client-side Au
 ## Upgrade Guide
 
 To upgrade to Lynx 3.6, follow the [integration guide](https://lynxjs.org/3.6/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions accordingly.
+
+```
+
+```

@@ -66,36 +66,38 @@ Lynx 网站已完整支持该标准，对于任意页面，只需将其 `.html` 
 
 本次版本围绕 **CSS Variables、渐变与滤镜** 三个方面，增强了 CSS 的表达能力。
 
-### Inline CSS Variables
+### 用于局部主题的 Inline CSS Variables
 
-CSS Variables 现已支持在 inline style 中定义与覆盖，使设计 token 能够直接作用于组件树中的特定节点。
+在 Lynx 3.6 之前，主题切换通常发生在组件之外：要么通过 JS 的 `setProperty` 批量修改 CSS 变量，要么通过在祖先节点上切换类名（例如 `theme-light` / `theme-dark`）来间接改变变量取值。
+
+在 Lynx 3.6 中，CSS 变量可以直接以内联方式定义和覆盖。这使主题化成为组件级别的一等能力：主题取值可以在组件被实例化的边界处直接提供，而无需依赖全局包裹节点或命令式的 JS 更新。
 
 ```css
-:root {
-  --main-bg-color: yellow;
-}
-
-.two {
-  --main-height: 200px;
-  color: white;
-  background-color: black;
-  width: 100%;
-  height: 100%;
+.card {
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--content);
 }
 ```
 
 ```tsx
-<view
-  style={{
-    color: 'var(--main-bg-color)',
-    width: '100%',
-  }}
-/>
+function Card({ surface, content, radius, children }) {
+  return (
+    <view
+      className="card"
+      style={{
+        '--surface': surface,
+        '--content': content,
+        '--radius': radius,
+      }}
+    >
+      {children}
+    </view>
+  );
+}
 ```
 
-Inline CSS Variables 明确了一个参数**作用于组件树的哪个位置**：组件可以消费语义化 token，而具体的值则由所在上下文提供。
-
-### Nested CSS Variables
+### 用于主题分层的 Nested CSS Variables
 
 在 Lynx 3.6 中，CSS Variables 还可以基于其他变量进行定义，从而形成可组合的层级关系。
 
