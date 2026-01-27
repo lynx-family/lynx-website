@@ -65,15 +65,16 @@ In addition, [Lynx Docs MCP](/ai/lynx-docs-mcp) provides `llms.txt` along with c
 
 ## CSS for Design
 
-In Lynx 3.6, CSS takes on a more explicit role in design systems. CSS serves as a medium for expressing design intent, including how values are scoped, composed, and perceived across the component tree.
+In Lynx 3.6, CSS takes on a more explicit role in design systems.
+CSS serves as **a medium for expressing design intent**, including how values are scoped, composed, and perceived across the component tree.
 
-This release focuses on improving CSS expressiveness through variables, gradients, and filters.
+This release focuses on improving CSS expressiveness through **CSS variables**, **gradients**, and **filters**.
 
 ### Inline CSS Variables for Scoped Theming
 
 Before Lynx 3.6, theme switching typically happened from the outside of a component: either updating CSS variables via JS `setProperty`, or switching an ancestor class (such as `theme-light` / `theme-dark`) to change variable values indirectly.
 
-In Lynx 3.6, CSS variables can be defined and overridden inline. This makes theming a first-class, component-level capability:: a component can accept theme overrides through its props and apply them directly at its own boundary, without requiring a global wrapper or imperative JS updates.
+In Lynx 3.6, CSS variables can be defined and overridden inline. This makes theming a first-class, component-level capability: a component can accept theme overrides through its props and apply them directly at its own boundary, without requiring a global wrapper or imperative JS updates.
 
 ```css
 .card {
@@ -102,9 +103,28 @@ function Card({ surface, content, radius, children }) {
 
 ### Nested CSS Variables for Theme Layering
 
-CSS variables in Lynx 3.6 can also be defined in terms of other variables, allowing tokens to be layered compositionally.
+CSS variables in Lynx 3.6 can also be defined in terms of other variables. This allows theme definitions to be layered compositionally.
 
-Nested variables express relationships between design tokens directly in code, turning implicit design-system conventions into explicit structure. Combined with inline scoping, this shifts theming from a global switch to a local property of the component tree.
+In practice, nested variables are used to encode how design intent flows into concrete usage: global theme variables establish the visual foundations, while local component variables resolve that intent into specific styles.
+By expressing these references directly in CSS, the theme's structure becomes part of the code itself rather than something inferred from design documentation or conventions.
+
+```css
+.theme-light {
+  --theme-canvas: #ffffff;
+  --theme-content: #111827;
+  --theme-primary: #111827;
+}
+
+.card {
+  /* Component variables reference global theme variables */
+  --card-bg: var(--theme-canvas);
+  --card-text: var(--theme-content);
+  background: var(--card-bg);
+  color: var(--card-text);
+  padding: 16px;
+  border-radius: 12px;
+}
+```
 
 ### Conic Gradients as Design Surfaces
 
@@ -169,7 +189,3 @@ When enabled, LynxView can derive layout parameters directly from client-side Au
 ## Upgrade Guide
 
 To upgrade to Lynx 3.6, follow the [integration guide](https://lynxjs.org/3.6/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions accordingly.
-
-```
-
-```

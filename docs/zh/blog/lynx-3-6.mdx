@@ -64,7 +64,7 @@ Lynx 网站已完整支持该标准，对于任意页面，只需将其 `.html` 
 在 Lynx 3.6 中，CSS 开始在设计系统中承担更加明确的角色。
 它不再只是样式配置机制，而逐渐成为**表达设计意图的媒介**，包括数值如何被作用、如何被组合，以及如何在组件树中被感知。
 
-本次版本围绕 **CSS Variables、渐变与滤镜** 三个方面，增强了 CSS 的表达能力。
+本次版本围绕 **CSS 变量、渐变与滤镜** 三个方面，增强了 CSS 的表达能力。
 
 ### 用于局部主题的 Inline CSS Variables
 
@@ -99,10 +99,27 @@ function Card({ surface, content, radius, children }) {
 
 ### 用于主题分层的 Nested CSS Variables
 
-在 Lynx 3.6 中，CSS Variables 还可以基于其他变量进行定义，从而形成可组合的层级关系。
+在 Lynx 3.6 中，CSS Variables 还可以基于其他变量进行定义，从而支持分层组合式的主题构建。
 
-嵌套变量将设计 token 之间的依赖关系直接表达在代码中，使原本隐含在文档或约定中的设计系统结构，变为显式、可追踪的实现。
-结合 inline 作用域能力，主题配置从“全局开关”转变为组件树中的局部属性。
+在实际使用中，嵌套变量用于表达设计意图如何逐层落入具体实现：全局主题变量确立整体视觉基础，而组件级变量则将这些意图解析为具体样式。当这些引用关系被直接写入 CSS 时，主题结构不再需要通过设计文档或既有惯例来反向理解，而是以可读、可追溯的方式体现在代码中。
+
+```css
+.theme-light {
+  --theme-canvas: #ffffff;
+  --theme-content: #111827;
+  --theme-primary: #111827;
+}
+
+.card {
+  /* Component variables reference global theme variables */
+  --card-bg: var(--theme-canvas);
+  --card-text: var(--theme-content);
+  background: var(--card-bg);
+  color: var(--card-text);
+  padding: 16px;
+  border-radius: 12px;
+}
+```
 
 ### 作为设计表面的 Conic Gradients
 
