@@ -70,11 +70,13 @@ CSS serves as **a medium for expressing design intent**, spanning how decisions 
 
 This release focuses on improving CSS expressiveness through **CSS variables**, **gradients**, and **filters**.
 
-### Inline CSS Variables for Scoped Theming
+### Inline CSS Variables for Computable Styling
 
-Before Lynx 3.6, theme switching typically happened from the outside of a component: either updating CSS variables via JS `setProperty`, or switching an ancestor class (such as `theme-light` / `theme-dark`) to change variable values indirectly.
+In Lynx 3.6, CSS variables can be defined and referenced inline. This allows CSS variables to be applied at component boundaries directly, without relying on ancestor class switches (such as `theme-light` / `theme-dark`) or imperative JS `setProperty` calls.
 
-In Lynx 3.6, CSS variables can be defined and overridden inline. This makes theming a first-class, component-level capability: a component can accept theme overrides through its props and apply them directly at its own boundary, without requiring a global wrapper or imperative JS updates.
+It becomes essential when a component's style is user-selected or computed at runtime, since such values cannot be represented by a finite set of predefined classes and would otherwise require imperative style updates.
+
+In this case, inline CSS variables allow design parameters to be passed from JS into CSS's inheritance and computation model, enabling design intent to be dynamically expressed and resolved while preserving component-level scoping and the declarative styling model.
 
 ```css
 .card {
