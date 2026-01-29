@@ -3,7 +3,6 @@ import '@lynx-js/web-core/index.css';
 import '@lynx-js/web-core';
 import '@lynx-js/web-elements/all';
 import '@lynx-js/web-elements/index.css';
-import '@lynx-js/web-elements/compat/LinearContainer';
 import type { LynxView } from '@lynx-js/web-core';
 
 declare global {
@@ -24,15 +23,26 @@ interface WebIframeProps {
 
 export const WebIframe = ({ show, src }: WebIframeProps) => {
   const lynxViewRef = useRef<LynxView>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (lynxViewRef.current && src && show) {
+    if (lynxViewRef.current && src && show && containerRef.current) {
+      // @ts-ignore
+      lynxViewRef.current.browserConfig = {
+        pixelWidth: Math.round(
+          containerRef.current.clientWidth * window.devicePixelRatio,
+        ),
+        pixelHeight: Math.round(
+          containerRef.current.clientHeight * window.devicePixelRatio,
+        ),
+      };
       lynxViewRef.current.url = src;
     }
   }, [lynxViewRef.current, src, show]);
 
   return (
     <div
+      ref={containerRef}
       style={{
         display: show ? 'flex' : 'none',
         width: '100%',
