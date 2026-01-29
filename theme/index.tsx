@@ -10,16 +10,11 @@ import {
   Layout as BaseLayout,
   Link as BaseLink,
   getCustomMDXComponent as basicGetCustomMDXComponent,
-} from '@rspress/core/theme';
+} from '@rspress/core/theme-original';
 import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import {
-  LlmsContainer,
-  LlmsCopyButton,
-  LlmsViewOptions,
-} from '@rspress/plugin-llms/runtime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
@@ -110,13 +105,13 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [pathname]);
 
   const updateText = useCallback(() => {
-    const h1Ele = document.querySelector('h1');
-    const h1Span = document.querySelector('h1 > span');
-    if (!h1Ele) return;
-    if (!h1Span) return;
+    const titleEle = document.querySelector('.rp-home-hero__title');
+    const titleTextSpan = document.querySelector('.rp-home-hero__title > span');
+    if (!titleEle) return;
+    if (!titleTextSpan) return;
 
     // Add negative margin to h1 span to avoid text wrapping
-    h1Ele.style.margin = '0 -100px';
+    titleEle.style.margin = '0 -100px';
 
     const words = isZh ? zhWords : enWords;
     const suffix = isZh ? zhSuffix : enSuffix;
@@ -130,11 +125,11 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     const fullText = `${dynamicText}${suffix}`;
     setText(fullText);
 
-    const dynamicSpan = h1Span.querySelector('.dynamic-text');
-    const suffixSpan = h1Span.querySelector('.suffix-text');
+    const dynamicSpan = titleTextSpan.querySelector('.dynamic-text');
+    const suffixSpan = titleTextSpan.querySelector('.suffix-text');
 
     if (!dynamicSpan || !suffixSpan) {
-      h1Span.innerHTML = `
+      titleTextSpan.innerHTML = `
         <span class="dynamic-text">${dynamicText}</span><span class="suffix-text">${suffix}</span>
       `;
     } else {
@@ -259,28 +254,6 @@ const Search = () => {
 
 export { HomeLayout, Layout, Search };
 
-function getCustomMDXComponent() {
-  const { h1: H1, ...mdxComponents } = basicGetCustomMDXComponent();
-
-  const MyH1 = ({ ...props }: React.ComponentProps<typeof H1>) => {
-    return (
-      <>
-        <H1 {...props} />
-        <LlmsContainer>
-          <LlmsCopyButton />
-          <LlmsViewOptions />
-        </LlmsContainer>
-      </>
-    );
-  };
-  return {
-    ...mdxComponents,
-    h1: MyH1,
-  };
-}
-
-export { getCustomMDXComponent };
-
 const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   const { href, children, className, ...restProps } = props;
   const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
@@ -302,6 +275,6 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   );
 };
 
-export { Link }; // override Link from @rspress/core/theme
+export { Link }; // override Link from @rspress/core/theme-original
 
-export * from '@rspress/core/theme';
+export * from '@rspress/core/theme-original';
