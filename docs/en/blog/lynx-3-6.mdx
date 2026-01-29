@@ -72,36 +72,26 @@ This release focuses on improving CSS expressiveness through **CSS variables**, 
 
 ### Inline CSS Variables for Computable Styling
 
-In Lynx 3.6, CSS variables can be defined and referenced inline. This allows CSS variables to be applied at component boundaries directly, without relying on ancestor class switches (such as `theme-light` / `theme-dark`) or imperative JS `setProperty` calls.
+In Lynx 3.6, CSS variables can be defined and referenced inline. This allows CSS variables to be applied at **component boundaries** (where JS-defined parameters are resolved by CSS) directly, without relying on ancestor class switches (such as `theme-light` / `theme-dark`) or imperative JS `setProperty` calls.
 
-It becomes essential when a component's style is user-selected or computed at runtime, since such values cannot be represented by a finite set of predefined classes and would otherwise require imperative style updates.
+It becomes essential when a component's style is user-selected or computed at runtime, since such continuous values cannot be represented by a finite set of predefined classes and would otherwise require imperative style updates.
+
+```tsx
+style={{
+  '--dot-x': pointer.x,  // normalized parameter from JS
+  backgroundColor: 'var(--dot-accent-color)', //defer resolution to component CSS
+}}
+```
 
 In this case, inline CSS variables allow design parameters to be passed from JS into CSS's inheritance and computation model, enabling design intent to be dynamically expressed and resolved while preserving component-level scoping and the declarative styling model.
 
-```css
-.card {
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--content);
-}
-```
-
-```tsx
-function Card({ surface, content, radius, children }) {
-  return (
-    <view
-      className="card"
-      style={{
-        '--surface': surface,
-        '--content': content,
-        '--radius': radius,
-      }}
-    >
-      {children}
-    </view>
-  );
-}
-```
+<Go
+  example="design-guide"
+  defaultFile="src/force_field/field.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_force_field_12fps.webp"
+  entry="src/force_field"
+  defaultEntryFile="dist/force_field.lynx.bundle"
+/>
 
 ### Nested CSS Variables for Theme Layering
 

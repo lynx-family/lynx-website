@@ -68,36 +68,26 @@ CSS 不再只是样式的载体，而是用于表达设计意图的媒介：既�
 
 ### 用于可计算样式的 Inline CSS Variables
 
-在 Lynx 3.6 中，CSS 变量可以以内联方式定义和引用。这使 CSS 变量能够直接应用在组件边界处，而无需依赖祖先节点的 class 切换（如 `theme-light` / `theme-dark`），也不需要命令式的 JS `setProperty` 调用。
+在 Lynx 3.6 中，CSS 变量可以以内联方式定义和引用。这使 CSS 变量能够直接应用在**组件边界处**(JS 中定义的参数在这里由 CSS 解析为具体样式)，而无需依赖祖先节点的 class 切换（如 `theme-light` / `theme-dark`），也不需要命令式的 JS `setProperty` 调用。
 
-当组件的样式由用户选择或在运行时计算得到时，这种能力尤为关键，因为此类值无法通过有限的预定义 class 集合来表达，否则就只能退回到命令式的样式更新方式。
+当组件的样式由用户选择或在运行时计算得到时，这种能力尤为关键，因为此类连续值无法通过有限的预定义 class 集合来表达，否则就只能退回到命令式的样式更新方式。
+
+```tsx
+style={{
+  '--dot-x': pointer.x,  // normalized parameter from JS
+  backgroundColor: 'var(--dot-accent-color)', //defer resolution to component CSS
+}}
+```
 
 在这种情况下，Inline CSS Variables（内联 CSS 变量）通过 JS 将设计参数交由 CSS 的继承与计算体系处理，使设计意图能够被动态解析与表达，并在不破坏组件作用域隔离的前提下，维持声明式的样式模型。
 
-```css
-.card {
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--content);
-}
-```
-
-```tsx
-function Card({ surface, content, radius, children }) {
-  return (
-    <view
-      className="card"
-      style={{
-        '--surface': surface,
-        '--content': content,
-        '--radius': radius,
-      }}
-    >
-      {children}
-    </view>
-  );
-}
-```
+<Go
+  example="design-guide"
+  defaultFile="src/force_field/field.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_force_field_12fps.webp"
+  entry="src/force_field"
+  defaultEntryFile="dist/force_field.lynx.bundle"
+/>
 
 ### 用于主题分层的 Nested CSS Variables
 
