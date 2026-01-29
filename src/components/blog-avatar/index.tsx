@@ -1,3 +1,4 @@
+import IconBsky from '@assets/bsky-logo.svg?react';
 import IconX from '@assets/x-logo.svg?react';
 import {
   IconGithubLogo,
@@ -23,6 +24,9 @@ const brandSpList = {
   },
   gitlab: {
     icon: <IconGitlabLogo />,
+  },
+  bsky: {
+    icon: <IconBsky className={styles['icon-bsky']} />,
   },
   default: {
     icon: <IconUserCircle />,
@@ -54,7 +58,7 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
             {lang === 'zh' ? author.title_zh : author.title}
           </div>
           <div>
-            <Space>
+            <Space align="center" vertical={false} spacing="tight">
               {Object.entries(author.socials).map(([key, value]) => {
                 return value?.link ? (
                   <span
@@ -64,14 +68,14 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
                       e.stopPropagation();
                       window.open(value?.link, '_blank');
                     }}
-                    className="cursor-pointer"
+                    className={`cursor-pointer ${styles['social-icon-wrapper']}`}
                   >
                     {brandSpList[key as BrandKey]
                       ? brandSpList[key as BrandKey].icon
                       : brandSpList['default'].icon}
                   </span>
                 ) : (
-                  <span key={key}>
+                  <span key={key} className={styles['social-icon-wrapper']}>
                     {brandSpList[key as BrandKey]
                       ? brandSpList[key as BrandKey].icon
                       : brandSpList['default'].icon}
