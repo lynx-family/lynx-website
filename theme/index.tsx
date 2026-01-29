@@ -15,7 +15,7 @@ import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
 
@@ -251,26 +251,32 @@ const Search = () => {
 
 export { HomeLayout, Layout, Search };
 
-const Link = (props: React.ComponentProps<typeof BaseLink>) => {
-  const { href, children, className, ...restProps } = props;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+const Link = forwardRef(
+  (
+    props: React.ComponentProps<typeof BaseLink>,
+    ref: React.LegacyRef<HTMLAnchorElement>,
+  ) => {
+    const { href, children, className, ...restProps } = props;
+    const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
+    if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+      return (
+        <BaseLink
+          href={`/next${removeBase(href)}`}
+          className={`rp-link ${className}`}
+          ref={ref}
+          {...restProps}
+        >
+          {children}
+        </BaseLink>
+      );
+    }
     return (
-      <BaseLink
-        href={`/next${removeBase(href)}`}
-        className={`rp-link ${className}`}
-        {...restProps}
-      >
+      <BaseLink href={href} className={className} ref={ref} {...restProps}>
         {children}
       </BaseLink>
     );
-  }
-  return (
-    <BaseLink href={href} className={className} {...restProps}>
-      {children}
-    </BaseLink>
-  );
-};
+  },
+);
 
 export { Link }; // override Link from @rspress/core/theme-original
 
