@@ -43,7 +43,7 @@ linear-gradient([ <angle> | to <side-or-corner> ,]? <color-stop> [ , <color-stop
   The gradient line's angle of direction. A value of `0deg` is equivalent to `to top`; increasing values rotate clockwise from there.
 
 - `<color-stop>`
-  A color-stop's [`<color>`](./color) value, followed by one stop position, a [`<percentage>`](./percentage) value along the gradient's axis.
+  A color-stop's [`<color>`](./color) value, followed by at most one optional stop position, a [`<percentage>`](./percentage) or `<number>` value along the gradient's axis. Note that unlike the Web standard, Lynx does not support multiple positions after a single color. If a unitless `<number>` is used, it is treated as a percentage by multiplying it by 100 (e.g., `0.5` is treated as `50%`). Color stops without an explicit position are distributed linearly between known positions.
 
 ### Radial Gradient
 
@@ -93,6 +93,44 @@ radial-gradient(
 
 - `<color-stop>`
   Same as `linear-gradient`
+
+### Conic Gradient
+
+Conic gradients transition colors progressively around a center point (origin). They are generated with the `conic-gradient()` function.
+
+```css
+/* Starting from 0deg (default), center at 50% 50% (default) */
+conic-gradient(red, blue);
+/* Starting from 45deg */
+conic-gradient(from 45deg, red, blue);
+/* Center at top left */
+conic-gradient(at top left, red, blue);
+/* Starting from 90deg, center at 20% 30% */
+conic-gradient(from 90deg at 20% 30%, red 0%, blue 50%, green 100%);
+```
+
+#### Formal Syntax
+
+```
+conic-gradient(
+  [ [ from <angle> ]? [ at <position> ]? , ]?
+  <color-stop-list>
+)
+```
+
+#### Values
+
+- `<angle>`
+  The starting angle of the gradient, preceded by the keyword `from`. The default value is `0deg`. Supported units include `deg`, `grad`, `rad`, and `turn`. Unitless numbers are only accepted if the value is `0` or if the `enable_transform_legacy` compatibility mode is enabled.
+
+- `<position>`
+  The center point of the gradient, preceded by the keyword `at`. The default value is `50% 50%` (`center`). It supports one or two values, using the same syntax as [`background-position`](/api/css/properties/background-position):
+
+  - Keywords: `left`, `center`, `right`, `top`, `bottom`.
+  - Length or percentage: `<length-percentage>` (e.g., `20px`, `30%`).
+
+- `<color-stop-list>`
+  A comma-separated list of at least two color stops. Each color stop consists of a `<color>` followed by at most one optional position (`<percentage>` or `<number>`). Note that unlike the Web standard, Lynx does not support multiple positions after a single color. If a unitless `<number>` is used, it is treated as a percentage by multiplying it by 100 (e.g., `0.5` is treated as `50%`). Color stops without an explicit position are distributed linearly between known positions.
 
 ## Compatibility
 
