@@ -95,7 +95,7 @@ const useBlogBtnDom = (src: string) => {
   useEffect(() => {
     if (page.pageType !== 'home') return;
 
-    const h1 = document.querySelector('h1');
+    const h1 = document.querySelector('.rp-home-hero__title');
     if (!h1) return;
 
     const targetElement = h1.parentElement;
