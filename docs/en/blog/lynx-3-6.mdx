@@ -97,25 +97,28 @@ In this case, inline CSS variables allow design parameters to be passed from JS 
 
 ### Nested CSS Variables for Token Layering
 
-CSS variables in Lynx 3.6 can be defined in terms of other variables, allowing design tokens to be layered and resolved compositionally.
-Design tokens capture high-level design decisions, such as colors, typography, spacing, shadows, and glows. Through nested CSS variables, these decisions are progressively resolved into component-level variables and concrete visual styles. By expressing these relationships directly in CSS, the design system embeds itself explicitly in both the code structure and styling logic, going beyond naming conventions and documentation.
+CSS variables in Lynx 3.6 can be defined in terms of other variables, allowing [design tokens](https://m3.material.io/foundations/design-tokens/overview) to be layered and resolved compositionally.
+
+Design tokens capture high-level design decisions, such as colors, typography, spacing, shadows, and glows. Nested CSS variables enable these tokens to be progressively resolved into component-level variables and concrete visual styles.
 
 ```css
-.theme-light {
-  --theme-canvas: #ffffff;
-  --theme-content: #111827;
-}
-
+/* Resolve and compose shadow tokens via nested CSS variables. */
 .card {
-  /* Component variables reference global theme variables */
-  --card-bg: var(--theme-canvas);
-  --card-text: var(--theme-content);
-  background: var(--card-bg);
-  color: var(--card-text);
-  padding: 16px;
-  border-radius: 12px;
+  --blur: 12px;
+  --ambient-shadow: 0 0 var(--blur) var(--color);
+  box-shadow: var(--ambient-shadow), var(--rim-shadow);
 }
 ```
+
+This is especially important for composite declarations like `box-shadow`. A single `box-shadow` may contain multiple shadow layers, each combining several interacting dimensions such as offset, blur, spread, and color. Nested CSS variables address this directly: shadow layers can now be derived, combined, and adjusted from design tokens, with their structure remaining explicit and traceable in CSS.
+
+<Go
+  example="design-guide"
+  defaultFile="src/soft_glow/index.css"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_soft_glow.jpg"
+  entry="src/soft_glow"
+  defaultEntryFile="dist/soft_glow.lynx.bundle"
+/>
 
 ### Conic Gradients as Design Surfaces
 

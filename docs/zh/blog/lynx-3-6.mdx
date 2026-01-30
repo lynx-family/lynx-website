@@ -95,27 +95,28 @@ style={{
 
 ### 用于设计变量分层的 Nested CSS Variables
 
-在 Lynx 3.6 中，CSS 变量可以基于其他变量进行定义，从而支持 [Design Token](https://m3.material.io/foundations/design-tokens/overview)（设计变量）的分层与组合式解析。
+在 Lynx 3.6 中，CSS 变量可以基于其他变量进行定义，从而支持 [Design Token](https://m3.material.io/foundations/design-tokens/overview)（设计变量）的分层组合与逐步解析。
 
 Design Token 用于承载高层级的设计决策，例如颜色、排版、间距、阴影与光影效果。通过 Nested CSS Variables（嵌套 CSS 变量），这些设计决策可以逐步解析为组件级变量，并最终落实为具体的视觉样式。
-通过在 CSS 中直接表达这些关系，设计系统以显式的方式融入代码结构与样式逻辑之中，从而超越命名约定与文档说明。
 
 ```css
-.theme-light {
-  --theme-canvas: #ffffff;
-  --theme-content: #111827;
-}
-
+/* Resolve and compose shadow tokens via nested CSS variables. */
 .card {
-  /* Component variables reference global theme variables */
-  --card-bg: var(--theme-canvas);
-  --card-text: var(--theme-content);
-  background: var(--card-bg);
-  color: var(--card-text);
-  padding: 16px;
-  border-radius: 12px;
+  --blur: 12px;
+  --ambient-shadow: 0 0 var(--blur) var(--color);
+  box-shadow: var(--ambient-shadow), var(--rim-shadow);
 }
 ```
+
+这一能力在处理 `box-shadow` 这类复合声明时尤为关键。一个 `box-shadow` 往往包含多个阴影层，每一层又由位移、模糊、扩散和颜色等多个相互关联的维度共同定义。借助 Nested CSS Variables，阴影层现在可以由 Design Token 派生并进行组合，并在 CSS 中保持清晰、可追溯的结构关系。
+
+<Go
+  example="design-guide"
+  defaultFile="src/soft_glow/index.css"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_soft_glow.jpg"
+  entry="src/soft_glow"
+  defaultEntryFile="dist/soft_glow.lynx.bundle"
+/>
 
 ### 作为设计表面的 Conic Gradients
 
