@@ -1,0 +1,180 @@
+import flowId from '../../../public/assets/react_lynx_profile_flow_id.png';
+
+# Performance Profiling
+
+ReactLynx provides built-in profiling support to help you analyze and optimize the performance of your applications. This feature allows you to trace component rendering, diffing, and state updates in production builds.
+
+## Overview
+
+When profiling is enabled, ReactLynx automatically instruments the following operations:
+
+| Trace Name                         | Description                                                     |
+| ---------------------------------- | --------------------------------------------------------------- |
+| `ReactLynx::render::ComponentName` | Time spent in your component's render function                  |
+| `ReactLynx::diff::ComponentName`   | Time spent in ReactLynx's diffing algorithm for the component   |
+| `ReactLynx::diffFinishNoPatch`     | Instant event marking when a component's diff produced no patch |
+| `ReactLynx::commit`                | Time spent committing changes to the native layer               |
+| `ReactLynx::patch`                 | Time spent applying patches on the main thread                  |
+| `ReactLynx::setState`              | Instant event marking when `setState` was called                |
+
+## Enabling Profiling
+
+Profiling is automatically enabled when the Lynx engine's profile recording is active. ReactLynx checks `lynx.performance.isProfileRecording()` at runtime to determine whether to enable profiling instrumentation.
+
+To start profiling, you need to enable profile recording in the Lynx engine. For detailed instructions on how to record and view traces, see [Recording Traces](/guide/devtool/trace/record-trace).
+
+:::info Requirements
+
+This feature requires Lynx 3.0 or later, which provides the necessary profiling APIs:
+
+- `lynx.performance.profileStart()`
+- `lynx.performance.profileEnd()`
+- `lynx.performance.profileMark()`
+- `lynx.performance.profileFlowId()`
+- `lynx.performance.isProfileRecording()`
+
+:::
+
+## Understanding Trace Events
+
+### Render Traces
+
+The `ReactLynx::render::ComponentName` trace measures the time spent executing your component's render function. This helps identify components with expensive render logic.
+
+```tsx
+function ExpensiveComponent({ data }) {
+  // This render function's execution time will be traced
+  const processed = data.map((item) => complexCalculation(item));
+  return (
+    <view>
+      {processed.map((item) => (
+        <text>{item}</text>
+      ))}
+    </view>
+  );
+}
+```
+
+### Diff Traces
+
+The `ReactLynx::diff::ComponentName` trace measures the time ReactLynx spends comparing the previous and new virtual DOM for a component. High diff times may indicate:
+
+- Large component trees
+- Frequent unnecessary re-renders
+- Complex nested structures
+
+### diffFinishNoPatch Traces
+
+The `ReactLynx::diffFinishNoPatch` is an instant event that fires when a component finishes diffing but produces no patch. This event includes a `componentName` argument indicating which component's diff produced no changes.
+
+This trace is useful for identifying unnecessary re-renders. If you see many `diffFinishNoPatch` events, it means components are frequently re-rendering but not actually producing any UI changes. This is an optimization signal that you may need to:
+
+- Use `React.memo` or `useMemo` to prevent unnecessary re-renders
+- Check if parent components are passing unstable props (e.g., creating new objects or functions on every render)
+- Optimize state management to avoid unnecessary state updates
+
+### setState Traces
+
+The `ReactLynx::setState` trace is an instant event that marks when `setState` is called. It includes additional metadata:
+
+- `current state keys`: Keys present in the current state
+- `next state keys`: Keys present in the next state
+- `changed (shallow diff) state keys`: Keys whose values changed
+
+This helps you understand what triggered updates and which state properties changed.
+
+### Flow ID Tracking
+
+ReactLynx uses flow IDs to connect related trace events. When you call `setState`, a flow ID is generated and attached to all subsequent operations (diff, commit, patch) triggered by that state update. This allows you to trace the complete flow of an update through the system.
+
+<p>
+  <img
+    style={{
+      height: '60vh',
+      width: 'auto',
+      display: 'block',
+      margin: '0 auto',
+    }}
+    src={flowId}
+    alt="React Lynx Profile Flow ID"
+  />
+</p>
+
+## Improving Component Name Readability
+
+In production builds, component names may be minified and become unreadable (e.g., `ReactLynx::render::t` instead of `ReactLynx::render::MyComponent`).
+
+To preserve readable component names, set the `displayName` property on your components:
+
+<details>
+
+<summary>If you encounter side effect issues during build</summary>
+
+Build tools may treat setting `displayName` as a side effect, which can affect Tree-Shaking optimization. In this case, you can use the following pattern to avoid side effects:
+
+```ts
+function withDisplayName<T extends React.ComponentType<any>>(
+  Component: T,
+  name: string,
+): T {
+  Component.displayName = name;
+  return Component;
+}
+```
+
+Using this helper function:
+
+```tsx
+// Function component
+function MyComponent() {
+  return <view />;
+}
+export default /* @__PURE__ */ withDisplayName(MyComponent, 'MyComponent');
+
+// Class component
+class MyClassComponent extends Component {
+  render() {
+    return <view />;
+  }
+}
+export default /* @__PURE__ */ withDisplayName(
+  MyClassComponent,
+  'MyClassComponent',
+);
+```
+
+</details>
+
+```tsx
+// Function component
+function MyComponent() {
+  return <view />;
+}
+MyComponent.displayName = 'MyComponent';
+
+// Class component
+class MyClassComponent extends Component {
+  static displayName = 'MyClassComponent';
+
+  render() {
+    return <view />;
+  }
+}
+```
+
+## Best Practices
+
+1. **Profile in realistic conditions**: Test with production builds and realistic data to get accurate measurements.
+
+2. **Focus on hot paths**: Pay attention to components that render frequently or handle large amounts of data.
+
+3. **Use displayName**: Always set `displayName` for components you want to profile, especially in production builds.
+
+4. **Analyze flow IDs**: Use flow IDs to understand the complete lifecycle of state updates, from `setState` to final patch.
+
+5. **Look for patterns**: Identify components with consistently high render or diff times as optimization candidates.
+
+## Related
+
+- [Rendering Process and Lifecycle](/react/lifecycle)
+- [Main Thread Script](/react/main-thread-script)

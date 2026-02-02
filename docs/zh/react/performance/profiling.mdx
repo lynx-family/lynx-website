@@ -1,0 +1,180 @@
+import flowId from '../../../public/assets/react_lynx_profile_flow_id.png';
+
+# 性能分析
+
+ReactLynx 提供了内置的性能分析支持，帮助你分析和优化应用的性能。此功能允许你在生产构建中追踪组件渲染、差异比较和状态更新。
+
+## 概述
+
+当性能分析启用时，ReactLynx 会自动对以下操作进行埋点：
+
+| 追踪名称                           | 描述                                         |
+| ---------------------------------- | -------------------------------------------- |
+| `ReactLynx::render::ComponentName` | 组件 render 函数的执行耗时                   |
+| `ReactLynx::diff::ComponentName`   | ReactLynx 对该组件进行差异比较算法的耗时     |
+| `ReactLynx::diffFinishNoPatch`     | 标记组件 diff 完成但未产生任何补丁的即时事件 |
+| `ReactLynx::commit`                | 将变更提交到原生层的耗时                     |
+| `ReactLynx::patch`                 | 在主线程应用补丁的耗时                       |
+| `ReactLynx::setState`              | 标记 `setState` 被调用时刻的即时事件         |
+
+## 启用性能分析
+
+当 Lynx 引擎的性能记录处于活动状态时，性能分析会自动启用。ReactLynx 在运行时通过检查 `lynx.performance.isProfileRecording()` 来确定是否启用性能分析埋点。
+
+要开始性能分析，你需要在 Lynx 引擎中启用性能记录。有关如何录制和查看 trace 的详细说明，请参阅[录制 Trace](/guide/devtool/trace/record-trace)。
+
+:::info 版本要求
+
+此功能需要 Lynx 3.0 或更高版本，该版本提供了必要的性能分析 API：
+
+- `lynx.performance.profileStart()`
+- `lynx.performance.profileEnd()`
+- `lynx.performance.profileMark()`
+- `lynx.performance.profileFlowId()`
+- `lynx.performance.isProfileRecording()`
+
+:::
+
+## 理解追踪事件
+
+### Render 追踪
+
+`ReactLynx::render::ComponentName` 追踪测量组件 render 函数的执行耗时。这有助于识别具有昂贵渲染逻辑的组件。
+
+```tsx
+function ExpensiveComponent({ data }) {
+  // 这个 render 函数的执行时间将被追踪
+  const processed = data.map((item) => complexCalculation(item));
+  return (
+    <view>
+      {processed.map((item) => (
+        <text>{item}</text>
+      ))}
+    </view>
+  );
+}
+```
+
+### Diff 追踪
+
+`ReactLynx::diff::ComponentName` 追踪测量 ReactLynx 比较组件前后虚拟 DOM 所花费的时间。较高的 diff 耗时可能表明：
+
+- 组件树过大
+- 频繁的不必要重渲染
+- 复杂的嵌套结构
+
+### diffFinishNoPatch 追踪
+
+`ReactLynx::diffFinishNoPatch` 是一个即时事件，当组件完成 diff 但没有产生任何补丁时触发。这个事件包含 `componentName` 参数，指示哪个组件的 diff 没有产生变更。
+
+这个追踪对于识别不必要的重渲染非常有用。如果你看到大量的 `diffFinishNoPatch` 事件，说明组件频繁地重新渲染但实际上没有产生任何 UI 变更。这是一个优化信号，表明你可能需要：
+
+- 使用 `React.memo` 或 `useMemo` 来避免不必要的重渲染
+- 检查父组件是否传递了不稳定的 props（如每次渲染都创建新的对象或函数）
+- 优化状态管理，避免不必要的状态更新
+
+### setState 追踪
+
+`ReactLynx::setState` 追踪是一个即时事件，标记 `setState` 被调用的时刻。它包含额外的元数据：
+
+- `current state keys`：当前状态中存在的键
+- `next state keys`：下一个状态中存在的键
+- `changed (shallow diff) state keys`：值发生变化的键
+
+这有助于你了解是什么触发了更新以及哪些状态属性发生了变化。
+
+### Flow ID 追踪
+
+ReactLynx 使用 flow ID 来关联相关的追踪事件。当你调用 `setState` 时，会生成一个 flow ID 并附加到该状态更新触发的所有后续操作（diff、commit、patch）上。这使你能够追踪更新在系统中的完整流程。
+
+<p>
+  <img
+    style={{
+      height: '60vh',
+      width: 'auto',
+      display: 'block',
+      margin: '0 auto',
+    }}
+    src={flowId}
+    alt="React Lynx Profile Flow ID"
+  />
+</p>
+
+## 改善组件名称可读性
+
+在生产构建中，组件名称可能会被压缩而变得不可读（例如，`ReactLynx::render::t` 而不是 `ReactLynx::render::MyComponent`）。
+
+要保留可读的组件名称，请在组件上设置 `displayName` 属性：
+
+<details>
+
+<summary>如果你在构建时遇到了副作用问题</summary>
+
+构建工具可能会将设置 `displayName` 视为副作用，从而影响 Tree-Shaking 优化。在这种情况下，可以使用以下模式来避免副作用：
+
+```ts
+function withDisplayName<T extends React.ComponentType<any>>(
+  Component: T,
+  name: string,
+): T {
+  Component.displayName = name;
+  return Component;
+}
+```
+
+使用这个帮助函数：
+
+```tsx
+// 函数组件
+function MyComponent() {
+  return <view />;
+}
+export default /* @__PURE__ */ withDisplayName(MyComponent, 'MyComponent');
+
+// 类组件
+class MyClassComponent extends Component {
+  render() {
+    return <view />;
+  }
+}
+export default /* @__PURE__ */ withDisplayName(
+  MyClassComponent,
+  'MyClassComponent',
+);
+```
+
+</details>
+
+```tsx
+// 函数组件
+function MyComponent() {
+  return <view />;
+}
+MyComponent.displayName = 'MyComponent';
+
+// 类组件
+class MyClassComponent extends Component {
+  static displayName = 'MyClassComponent';
+
+  render() {
+    return <view />;
+  }
+}
+```
+
+## 最佳实践
+
+1. **在真实条件下进行分析**：使用生产构建和真实数据进行测试，以获得准确的测量结果。
+
+2. **关注热点路径**：注意那些频繁渲染或处理大量数据的组件。
+
+3. **使用 displayName**：始终为你想要分析的组件设置 `displayName`，尤其是在生产构建中。
+
+4. **分析 flow ID**：使用 flow ID 来理解状态更新的完整生命周期，从 `setState` 到最终的 patch。
+
+5. **寻找模式**：识别具有持续高渲染或 diff 耗时的组件，作为优化候选。
+
+## 相关内容
+
+- [渲染流程与生命周期](/react/lifecycle)
+- [主线程脚本](/react/main-thread-script)
