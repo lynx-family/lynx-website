@@ -152,14 +152,24 @@ It is recommended to use the latest [Lynx version](https://github.com/lynx-famil
 
 ### Registering DevTool Service
 
+DevTool Service provides some preset values to control default behaviors. You can configure them as needed.
+
+In the next chapter, we will introduce these preset values in detail.
+
 <Tabs groupId='register-devtool-service-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-4}
+```java title=YourApplication.java {3-10}
 private void initLynxService() {
   // ...
   // register DevTool service
   LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
+
+  // set DevTool preset values
+  LynxDevToolService.getINSTANCE().setLynxDebugPresetValue(true);
+  LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
+  LynxDevToolService.getINSTANCE().setLoadQJSBridge(true);
+  LynxDevToolService.getINSTANCE().setLoadV8Bridge(true);
 }
 
 ```
@@ -167,11 +177,17 @@ private void initLynxService() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-4}
+```kotlin title=YourApplication.kt {3-10}
 private fun initLynxService() {
   // ...
   // register DevTool service
   LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
+
+  // set DevTool preset values
+  LynxDevToolService.INSTANCE.setLynxDebugPresetValue(true)
+  LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
+  LynxDevToolService.INSTANCE.setLoadQJSBridge(true)
+  LynxDevToolService.INSTANCE.setLoadV8Bridge(true)
 }
 ```
 
@@ -191,7 +207,7 @@ Here are three important switches:
 
 - `Lynx DevTool` and `Lynx LogBox` switches can only take effect after `Lynx Debug` is enabled.
 - When debugging Lynx pages with the DevTool Desktop, `Lynx DevTool` needs to be enabled.
-  - If you need to use JavaScript debugging, you also need to enable the `LoadQJSBridge` or `LoadV8Bridge` switch.
+  - If you need to use JavaScript debugging, you also need to set the `LoadQJSBridge` or `LoadV8Bridge` preset value to `true`.
     - `LoadQJSBridge` controls loading the PrimJS engine debugging library.
     - `LoadV8Bridge` controls loading the V8 engine debugging library.
 - LogBox helps you quickly identify and diagnose issues.
@@ -203,7 +219,7 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-13}
+```java title=YourApplication.java {3-8}
 private void initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null);
   // Enable Lynx Debug
@@ -211,12 +227,7 @@ private void initLynxEnv() {
   // Enable Lynx DevTool
   LynxEnv.inst().enableDevtool(true);
   // Enable Lynx LogBox
-  LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
   LynxEnv.inst().enableLogBox(true);
-  // Enable LoadQJSBridge
-  LynxDevToolService.getINSTANCE().setLoadQJSBridge(true);
-  // Enable LoadV8Bridge
-  LynxDevToolService.getINSTANCE().setLoadV8Bridge(true);
 }
 
 ```
@@ -224,7 +235,7 @@ private void initLynxEnv() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-13}
+```kotlin title=YourApplication.kt {3-8}
 private fun initLynxEnv() {
   LynxEnv.inst().init(this, null, null, null)
   // Enable Lynx Debug
@@ -232,12 +243,7 @@ private fun initLynxEnv() {
   // Enable Lynx DevTool
   LynxEnv.inst().enableDevtool(true)
   // Enable Lynx LogBox
-  LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
   LynxEnv.inst().enableLogBox(true)
-  // Enable LoadQJSBridge
-  LynxDevToolService.INSTANCE.setLoadQJSBridge(true)
-  // Enable LoadV8Bridge
-  LynxDevToolService.INSTANCE.setLoadV8Bridge(true)
 }
 ```
 
