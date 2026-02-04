@@ -1,0 +1,43 @@
+---
+api: lynx-native-api/lynx-env/trim-memory
+---
+
+import { APISummary, APITable, VersionBadge } from '@lynx';
+
+# trimMemory
+
+<APISummary />
+
+分发内存压力信号到已注册的回调，用于在系统内存紧张时通知 Lynx 执行资源回收或降级策略。
+
+## 语法
+
+### Android
+
+```java
+@AnyThread
+public void trimMemory(@MemoryPressureLevel int pressure);
+```
+
+### iOS
+
+```objc
+- (void)trimMemory:(LynxMemoryPressureLevel)pressure;
+```
+
+### Harmony
+
+```ts
+public trimMemory(pressure: MemoryPressureLevel): void;
+```
+
+## 参数说明
+
+- `pressure`: 内存压力级别，取值为 `MemoryPressureLevel`。
+  - `MEMORY_PRESSURE_LEVEL_NONE`：系统内存充足，通常不会通过回调发送该级别。
+  - `MEMORY_PRESSURE_LEVEL_MODERATE`：建议释放不立即需要、且重新分配代价较低的缓存等资源。
+  - `MEMORY_PRESSURE_LEVEL_CRITICAL`：建议尽可能释放所有可释放的内存，否则可能被系统杀掉进程并导致冷启动成本。
+
+## 兼容性
+
+<APITable />
