@@ -1,0 +1,67 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/get-console-object
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# getConsoleObject
+
+<APISummary />
+
+对于 Object 类型的 Console 消息，可使用此方法获取其详细信息。
+
+关于如何获取这类数据，请参考 [`LynxInspectorConsoleDelegate`](/api/lynx-devtool-native-api/lynx-inspector-console-delegate)。
+
+## 语法
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)getConsoleObject:(NSString *_Nonnull)objectId
+           needStringify:(BOOL)stringify
+           resultHandler:(void (^_Nonnull)(NSString *_Nonnull detail))handler;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void getConsoleObject(String objectId, boolean needStringify, Callback callback);
+```
+
+### Harmony
+
+```ts title="LynxBaseInspectorOwner.ets"
+getConsoleObject(objectId: string, needStringify: boolean, callback: (detail: string) => void): void;
+```
+
+### 参数说明
+
+- `objectId`: 要获取的 Object 的唯一标识符。请参考 [`objectId`](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#argument)。
+- `stringify` / `needStringify`: 是否需要将该 Object 序列化为字符串。
+  - 为 `true` 时，效果等同于调用 `JSON.stringify` 方法。
+  - 为 `false` 时，仅返回该 Object 的**第一层属性（非递归）**。如果属性值本身也是一个 Object，则仅返回其基本信息，你需要使用新的 `objectId` 再次调用此方法来获取其内部属性。
+- `handler` / `callback`: 获取结果的回调函数，只有一个 String 类型的参数。
+
+## 数据格式
+
+所有数据均为 JSON 格式的字符串。
+
+- `needStringify` 为 `true`: 返回该 Object **完整**序列化后的 JSON 字符串。
+- `needStringify` 为 `false`: 返回该 Object 的**第一层属性（非递归）**。数组类型，每个元素的格式如下：
+
+  | 字段  | 类型                                                                              | 说明     |
+  | :---- | :-------------------------------------------------------------------------------- | :------- |
+  | name  | string                                                                            | 属性名称 |
+  | value | [argument](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#argument) | 属性值   |
+
+### 示例
+
+请参考 [LynxInspectorConsoleDelegate](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#示例)。
+
+## 使用示例
+
+请参考 [LynxInspectorConsoleDelegate](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#使用示例)。
+
+## 兼容性
+
+<APITable />

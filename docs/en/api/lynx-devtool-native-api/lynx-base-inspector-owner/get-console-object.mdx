@@ -1,0 +1,67 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/get-console-object
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# getConsoleObject
+
+<APISummary />
+
+For Object type Console messages, this method can be used to retrieve its detailed information.
+
+To learn how to obtain this data, please refer to [`LynxInspectorConsoleDelegate`](/api/lynx-devtool-native-api/lynx-inspector-console-delegate).
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)getConsoleObject:(NSString *_Nonnull)objectId
+           needStringify:(BOOL)stringify
+           resultHandler:(void (^_Nonnull)(NSString *_Nonnull detail))handler;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void getConsoleObject(String objectId, boolean needStringify, Callback callback);
+```
+
+### Harmony
+
+```ts title="LynxBaseInspectorOwner.ets"
+getConsoleObject(objectId: string, needStringify: boolean, callback: (detail: string) => void): void;
+```
+
+### Parameters
+
+- `objectId`: The unique identifier of the Object to be retrieved. Please refer to [`objectId`](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#argument).
+- `stringify` / `needStringify`: Whether the Object needs to be serialized into a string.
+  - If `true`, it is equivalent to calling the `JSON.stringify` method.
+  - If `false`, it returns only **the top-level properties of the Object (non-recursive)**. If a property's value is another Object, only its basic information is returned. You must call this method again with the new `objectId` to retrieve its internal properties.
+- `handler` / `callback`: A callback function that receives the result as a single String parameter.
+
+## Data Format
+
+All data is in the form of a JSON formatted string.
+
+- If `needStringify` is `true`: Returns the **complete** serialized JSON string of the Object.
+- If `needStringify` is `false`: Returns **the top-level properties of the Object (non-recursive)**. It is an array, and the format of each element is as follows:
+
+  | Field | Type                                                                              | Description    |
+  | :---- | :-------------------------------------------------------------------------------- | :------------- |
+  | name  | string                                                                            | Property name  |
+  | value | [argument](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#argument) | Property value |
+
+### Example
+
+Please refer to [LynxInspectorConsoleDelegate](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#example).
+
+## Usage Example
+
+Please refer to [LynxInspectorConsoleDelegate](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#usage-example).
+
+## Compatibility
+
+<APITable />
