@@ -168,7 +168,7 @@ export function App() {
   }
 
   return (
-    <view main-thread:bindTap={handleTapMainThread}>
+    <view main-thread:bindtap={handleTapMainThread}>
       <view
         main-thread:ref={(ele: MainThread.Element) => {
           'main thread';
@@ -253,26 +253,34 @@ function App() {
 
 ### Asynchronously Invoking Non-Main Thread Functions from the Main Thread
 
-Use [`runOnBackground()`] on the main thread to asynchronously execute a regular function on the background thread:
+Use [`runOnBackground()`] on the main thread to asynchronously execute a regular function on the background thread.
 
-````jsx
+```jsx
 import { runOnBackground, useState } from '@lynx-js/react';
 
 function App() {
-  const [count, setCount] = useState(1);
+  const [current, setCurrent] = useState(0);
 
-  const increaseBackgroundCount = async (event) => {
+  const syncIndexToBackground = runOnBackground((nextIndex) => {
+    setCurrent(nextIndex);
+    return `Current index updated to ${nextIndex}`;
+  });
+
+  const onScrollMainThread = async (event) => {
     'main thread';
-    const result = await runOnBackground(() => {
-      let count;
-      setCount((c) => {
-        return (count = c + 1);
-      });
-      return count;
-    })();
+    const index = Math.round(event.detail.scrollTop / 300);
+    const result = await syncIndexToBackground(index);
     console.log(result);
   };
+
+  return (
+    <view>
+      <scroll-view main-thread:bindscroll={onScrollMainThread} />
+      <text>Current index: {current}</text>
+    </view>
+  );
 }
+```
 
 ## Cross-thread Shared Modules
 
@@ -282,16 +290,16 @@ To address this limitation, ReactLynx introduces the `shared-module` mechanism, 
 Add `with { runtime: 'shared' }` after the `import` statement, and the exported variables (including functions, classes, objects, etc.) in that module can be directly called in main thread functions.
 
 ```javascript
-import { func } from "./utils.js" with {runtime: 'shared'}; // `func` is a plain function
+import { func } from './utils.js' with { runtime: 'shared' }; // `func` is a plain function
 
 function mainThreadFunction() {
   'main thread';
   func(); // Allows calling plain functions in a main thread function
 }
-````
+```
 
 > [!NOTE]
-> Functions in a module marked as `'shared-runtime'`, while callable by main thread functions, are not automatically identified as main thread functions themselves. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
+> Functions in modules imported with `with { runtime: 'shared' }` can be called by main thread functions, but they are not automatically treated as main thread functions. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
 
 ### Referencing Third-Party Libraries
 

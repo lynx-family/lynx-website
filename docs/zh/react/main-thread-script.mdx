@@ -163,7 +163,7 @@ export function App() {
   }
 
   return (
-    <view main-thread:bindTap={handleTapMainThread}>
+    <view main-thread:bindtap={handleTapMainThread}>
       <view
         main-thread:ref={(ele: MainThread.Element) => {
           'main thread';
@@ -248,25 +248,32 @@ function App() {
 
 ### 在主线程中发起对非主线程函数的异步调用
 
-在主线程使用 [`runOnBackground()`] 来异步地在后台线程执行非主线程的普通函数：
+在主线程使用 [`runOnBackground()`] 来异步地在后台线程执行非主线程的普通函数。
 
 ```jsx
 import { runOnBackground, useState } from '@lynx-js/react';
 
 function App() {
-  const [count, setCount] = useState(1);
+  const [current, setCurrent] = useState(0);
 
-  const increaseBackgroundCount = async (event) => {
+  const syncIndexToBackground = runOnBackground((nextIndex) => {
+    setCurrent(nextIndex);
+    return `Current index updated to ${nextIndex}`;
+  });
+
+  const onScrollMainThread = async (event) => {
     'main thread';
-    const result = await runOnBackground(() => {
-      let count;
-      setCount((c) => {
-        return (count = c + 1);
-      });
-      return count;
-    })();
+    const index = Math.round(event.detail.scrollTop / 300);
+    const result = await syncIndexToBackground(index);
     console.log(result);
   };
+
+  return (
+    <view>
+      <scroll-view main-thread:bindscroll={onScrollMainThread} />
+      <text>Current index: {current}</text>
+    </view>
+  );
 }
 ```
 
@@ -287,7 +294,7 @@ function mainThreadFunction() {
 ```
 
 > [!NOTE]
-> 被标注为 `'shared-runtime'` 的模块中的函数虽然能够被主线程函数调用，但其本身并不会被自动识别为主线程函数。如果其中使用了 `MainThreadRef` 等主线程特有能力，仍需手动标记 `'main thread'`。
+> 以 `with { runtime: 'shared' }` 引入的模块中的函数虽然能够被主线程函数调用，但其本身并不会被自动识别为主线程函数。如果其中使用了 `MainThreadRef` 等主线程特有能力，仍需手动标记 `'main thread'`。
 
 ### 引用第三方库
 
