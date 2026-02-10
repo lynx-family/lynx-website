@@ -85,7 +85,6 @@ export const CodeFold = ({
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel
               defaultSize={75}
-              className="rounded-lg"
               style={{
                 position: 'relative',
                 aspectRatio: (16 / 9) * (1 / 0.25),
