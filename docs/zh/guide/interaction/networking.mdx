@@ -74,6 +74,51 @@ const getDataFromApiAsync = async () => {
 
 不要忘记捕获 `fetch` 可能抛出的任何错误，否则它们将被静默忽略。
 
+## 使用 Streaming Fetch
+
+当需要传输大量数据时，服务端通常会采用 Streaming HTTP 的方式，将数据以流式形式逐步发送。此时，客户端可以利用 `fetch` 接口的流式处理能力，实时分批接收和处理数据，从而显著提升数据处理效率。
+
+```typescript
+fetch('https://sse.dev/test').then((response) => {
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    } else {
+      const text = TextCodecHelper.decode(value);
+      setData(text);
+    }
+  }
+});
+```
+
+你可以查阅 MDN 文档的 [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
+了解如何处理 streaming body。
+
+:::tip
+试验性功能，页面中需要通过设置特定的 PageConfig `enableFetchAPIStandardStreaming = true`， 来开启 fetch 接口的流式读取能力。
+:::
+
+## 使用 EventSource
+
+LynxSDK 提供 Web 标准完全一致的 `EventSource`，以处理 SSE 协议。
+
+你可以查阅 MDN 文档的 [Using server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) 了解如何使用 `EventSource` 及 SEE 协议。
+
+```typescript
+const url = 'https://sse.dev/test';
+const eventSource = new lynx.EventSource(url2);
+
+eventSource.onmessage = (event) => {
+  console.log('Received message:', event.data);
+};
+
+eventSource.onerror = (error) => {
+  console.error('EventSource failed:', error);
+};
+```
+
 ## 使用 TextCodecHelper
 
 由于 `PrimJS` 缺少对 `TextEncoder`/`TextDecoder` 的支持，Lynx 提供了 `TextCodecHelper` 以满足基本的编解码需求。该类支持在 `UTF-8` 编码下 `string` 与 `arraybuffer` 之间的转换。
