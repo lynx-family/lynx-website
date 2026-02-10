@@ -77,7 +77,7 @@ function SubsiteSelect() {
             <SubsiteView subsite={selectedSubsite} lang={lang} size="minimal" />
           </div>
         </SelectTrigger>
-        <SelectContent className="min-w-[240px]">
+        <SelectContent className="min-w-[240px] z-[100]">
           {SUBSITES_CONFIG.map((subsite) => (
             <SelectItem
               key={subsite.value}
