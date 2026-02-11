@@ -23,6 +23,10 @@ const PAGE_TITLES: Record<PageType, { en: string; zh: string }> = {
 };
 
 export const APIStatusLayout: React.FC = () => {
+  if (import.meta.env.SSG_MD) {
+    // TODO: support SSG-MD
+    return <>{'APIStatusLayout'}</>;
+  }
   // Shared state for platform selection
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformName[]>([
     'android',

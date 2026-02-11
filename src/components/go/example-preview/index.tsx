@@ -52,7 +52,7 @@ interface ExampleMetadata {
 }
 
 export const ExamplePreview = (props: ExamplePreviewProps) => {
-  if (process.env.__SSR_MD__) {
+  if (import.meta.env.SSG_MD) {
     return <ExamplePreviewMarkdown {...props} />;
   }
 

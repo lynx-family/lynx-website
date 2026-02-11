@@ -76,7 +76,20 @@ const enWords = ['Unlock', 'Render', 'Toward', 'Ship'];
 const zhWords = ['迈向', '更快的', '更多平台的', '更多人的'];
 const zhSuffix = '原生体验';
 
+// Extend ImportMeta to include SSG-MD
+declare global {
+  interface ImportMetaEnv {
+    SSG_MD?: boolean;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  if (import.meta.env.SSG_MD) {
+    return <BaseHomeLayout {...props} />;
+  }
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
   const { page } = usePageData();
