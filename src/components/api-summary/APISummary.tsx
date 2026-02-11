@@ -118,6 +118,10 @@ interface APISummaryProps {
 }
 
 export function APISummary(props: APISummaryProps) {
+  if (import.meta.env.SSG_MD) {
+    // TODO: support SSG-MD
+    return <>{'APISummary'}</>;
+  }
   const { page } = usePageData();
   const frontmatter = page.frontmatter;
 

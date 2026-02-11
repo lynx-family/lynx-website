@@ -17,6 +17,14 @@ export default function Mermaid({
   title,
   config,
 }: PropsWithChildren<Props>) {
+  if (import.meta.env.SSG_MD) {
+    return (
+      <>
+        {`**${title}**`} {'\n'}
+        {children}
+      </>
+    );
+  }
   const id = useId();
   const [svg, setSvg] = useState('');
   const [renderError, setRenderError] = useState(false);
