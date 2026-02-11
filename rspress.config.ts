@@ -222,15 +222,7 @@ export default defineConfig({
       ],
     },
   },
-  llms: {
-    remarkSplitMdxOptions: {
-      includes: [
-        [['Go', 'APITable', 'SimpleAPITable', 'BlogList'], '@lynx'],
-        // Also support imports from @site/src/components
-        [['BlogList'], '@site/src/components'],
-      ],
-    },
-  },
+  llms: true,
 });
 
 function mapNonGuideSharedSectionsToGuide(

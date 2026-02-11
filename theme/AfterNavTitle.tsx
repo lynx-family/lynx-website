@@ -2,7 +2,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ChevronDown } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
-import { Link } from '@rspress/core/theme';
+import { Link } from '@rspress/core/theme-original';
 import { SUBSITES_CONFIG, getLangPrefix } from '@site/shared-route-config';
 import { SubsiteLogo, SubsiteView } from './subsite-ui';
 import { VersionIndicator } from './VersionIndicator';

@@ -34,7 +34,7 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-50 bg-black/40", className)}
+    className={cn("fixed inset-0 z-[100] bg-black/40", className)}
     {...props}
   />
 ))
@@ -64,7 +64,7 @@ const DrawerContent = React.forwardRef<
       <DrawerPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 flex flex-col bg-background outline-none",
+          "fixed z-[100] flex flex-col bg-background outline-none",
           // Bottom drawer (default)
           !isHorizontal && "inset-x-0 bottom-0 mt-24 h-auto rounded-t-[10px] border",
           // Right drawer - with gap from edge, no border (gap provides visual separation)

@@ -130,6 +130,9 @@ const MeteorsBackground: React.FC<GridBackgroundProps> = ({
   gridSize = 30,
   meteorCount = 20,
 }) => {
+  if (import.meta.env.SSG_MD) {
+    return null;
+  }
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

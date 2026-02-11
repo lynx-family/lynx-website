@@ -118,6 +118,10 @@ interface APISummaryProps {
 }
 
 export function APISummary(props: APISummaryProps) {
+  if (import.meta.env.SSG_MD) {
+    // TODO: support SSG-MD
+    return <>{'APISummary'}</>;
+  }
   const { page } = usePageData();
   const frontmatter = page.frontmatter;
 
@@ -292,9 +296,9 @@ export function APISummary(props: APISummaryProps) {
           <Icon className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="m-0 text-base font-bold leading-tight text-foreground">
+          <div className="m-0 text-base font-bold leading-tight text-foreground">
             {title}
-          </h3>
+          </div>
           <span className="text-xs text-muted-foreground mt-0.5 m-0 block">
             {description}
           </span>
