@@ -110,9 +110,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     if (!titleEle) return;
     if (!titleTextSpan) return;
 
-    // Add negative margin to h1 span to avoid text wrapping
-    titleEle.style.margin = '0 -100px';
-
     const words = isZh ? zhWords : enWords;
     const suffix = isZh ? zhSuffix : enSuffix;
 
