@@ -70,9 +70,8 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/ai/',
     url: '/ai/',
     logo: {
-      light:
-        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
-      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
+      light: '/assets/lynxai-logo-light.svg',
+      dark: '/assets/lynxai-logo-dark.svg',
     },
   },
 ];
