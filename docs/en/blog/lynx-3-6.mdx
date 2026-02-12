@@ -1,0 +1,180 @@
+---
+date: 2026-01-30
+sidebar: false
+authors: ['liujilong', 'Dugyu', 'lynx']
+badge_text: 'Lynx 3.6 is released!'
+description: 'Lynx 3.6 is now officially released! This release introduces Lynx for AI to enhance AI-native development capabilities, introduces reactlynx-use for improved developer experience, and enhances CSS capabilities for design expressiveness. On the native side, Lynx 3.6 improves platform integration with standalone BackgroundRuntime and asynchronous TemplateBundle creation on HarmonyOS, along with Auto Layout support for LynxView on iOS.'
+---
+
+import { BlogAvatar, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+_January 30th, 2026_
+
+# Lynx 3.6: Lynx for AI, reactlynx-use, CSS for Design Engineering
+
+<BlogAvatar list={['liujilong', 'Dugyu', 'lynx']} />
+
+Lynx 3.6 is now officially released!
+
+This release introduces Lynx for AI to enhance AI-native development capabilities, introduces `reactlynx-use` for improved developer experience, and enhances CSS capabilities for design expressiveness.
+
+On the native side, Lynx 3.6 improves platform integration with standalone `BackgroundRuntime` and asynchronous `TemplateBundle` creation on HarmonyOS, along with Auto Layout support for LynxView on iOS.
+
+Let's take a closer look at what's new in Lynx 3.6.
+
+## Lynx for AI: `AGENTS.md` and MCPs
+
+AI assistants are quickly becoming part of everyday development. With Lynx 3.6, we’re introducing **Lynx for AI**—a new section on our website at [/ai](/ai) to help coding agents understand Lynx, follow best practices, and help you ship.
+
+In this release, we’re shipping [`AGENTS.md`](/ai/agentsmd) and two MCP servers as the first building blocks for agent-friendly Lynx projects (Skills coming soon!).
+
+### Lynx Docs MCP
+
+[Lynx Docs MCP](/ai/lynx-docs-mcp) connects your coding agent (Gemini, Claude, Cursor, Copilot, etc.) to Lynx documentation via MCP, using [llms.txt](https://lynxjs.org/llms.txt) plus carefully designed prompts so the agent can retrieve the right docs and act on them.
+
+### Lynx DevTool MCP
+
+[Lynx DevTool MCP](/ai/lynx-devtool-mcp) helps coding agents connect to devices and inspect/control Lynx pages like DevTools: read elements/console/source code, perform interactions such as clicks and drags, and capture screenshots for multimodal analysis.
+
+## `reactlynx-use`: Hooks for ReactLynx
+
+[`reactlynx-use`](https://lynx-community.github.io/reactlynx-use) is a hooks toolkit for ReactLynx projects.
+
+It combines two sets of hooks: community-proven utilities that follow standard React patterns (such as `useEffectOnce`, `useDebounce`, etc.), built upon the excellent foundation provided by [react-use](https://github.com/streamich/react-use), and Lynx-specific hooks that expose Lynx capabilities and its dual-thread model through a React-friendly API.
+
+Notable Lynx-specific hooks include:
+
+- **useVelocity**: Track the velocity and direction of tap events on the main thread.
+- **useTapLock**: Constrain main-thread tap interactions to a specific direction or range.
+- **useMainThreadImperativeHandle**: A main-thread counterpart of `useImperativeHandle`.
+- **useEventListener**: A flexible event subscription hook supporting `exposure`, `disexposure`, and more.
+
+This keeps everyday logic in familiar hooks, while making it straightforward to tap into Lynx’s main-thread input model and runtime events when you need to.
+
+![reactlynx-use](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-use.jpeg)
+
+## CSS for Design Engineering
+
+From Lynx 3.6 onward, CSS takes on a more explicit role in design engineering and design systems.
+As a medium for expressing design intent, CSS describes how decisions are scoped and composed, and how visual structure and perception are formed in the interface.
+
+This release focuses on improving CSS expressiveness through **CSS variables**, **gradients**, and **filters**.
+
+For each capability, we’ve also prepared a polished demo that you can render and interact with on the web.
+
+### Inline CSS Variables for Computable Styling
+
+As of Lynx 3.6, [CSS variables](/api/css/properties/css-variable) can be defined and referenced inline. This allows them to be applied directly at component boundaries (where JS-defined parameters are handed off to CSS), without relying on ancestor class switches (such as `theme-light` / `theme-dark`) or imperative JS `setProperty` calls.
+
+It becomes essential when a component's style is user-selected or computed at runtime, since such continuous values cannot be represented by a finite set of predefined classes and would otherwise require imperative style updates.
+
+```tsx
+style={{
+  '--x': pointer.x,  // normalized parameter from JS
+  backgroundColor: 'var(--dot-accent-color)', //defer resolution to component CSS
+}}
+```
+
+Inline CSS variables provide a direct path for passing design parameters from JS into CSS's inheritance and computation model, so that design intent can be dynamically expressed and resolved while preserving component-level scoping and the declarative styling model.
+
+<Go
+  example="design-guide"
+  defaultFile="src/force_field/field.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_force_field_10fps_go.webp"
+  entry="src/force_field"
+  defaultEntryFile="dist/force_field.lynx.bundle"
+/>
+
+### Nested CSS Variables for Token Layering
+
+With Lynx 3.6, [CSS variables](/api/css/properties/css-variable) can be defined in terms of other variables, allowing [design tokens](https://m3.material.io/foundations/design-tokens/overview) to be layered and resolved compositionally.
+
+Design tokens capture high-level design decisions, such as colors, typography, spacing, shadows, and glows. Nested CSS variables enable these tokens to flow down into component-level variables and concrete visual styles.
+
+```css
+/* Resolve and compose shadow tokens via nested CSS variables. */
+.card {
+  --blur: 12px;
+  --ambient-shadow: 0 0 var(--blur) var(--color);
+  box-shadow: var(--ambient-shadow), var(--rim-shadow);
+}
+```
+
+This is especially important for composite declarations like `box-shadow`. A single `box-shadow` may contain multiple shadow layers, each combining several interacting dimensions such as offset, blur, spread, and color.
+With nested CSS variables, shadow layers can now be derived, combined, and adjusted from design tokens, while keeping their structure explicit and traceable in CSS.
+
+<Go
+  example="design-guide"
+  defaultFile="src/soft_glow/index.css"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_soft_glow.jpg"
+  entry="src/soft_glow"
+  defaultEntryFile="dist/soft_glow.lynx.bundle"
+/>
+
+### Conic Gradients as Design Primitives
+
+Lynx 3.6 adds support for the [`conic-gradient()`](/api/css/data-type/gradient) CSS image function. You can use it in CSS properties that accept `<image>` values, such as in `background-image` and `mask-image`, to create continuous angular color transitions directly in CSS.
+
+```css
+.bg {
+  background-image: conic-gradient(from 30deg, #ff7385, #fe69a1, #00d0f1);
+}
+```
+
+Conic gradients are a natural fit for angular or cyclic representations, including color wheels and hue pickers. In practice, they’re a lightweight design primitive you can compose into interactive controls and visual tools.
+
+<Go
+  example="design-guide"
+  defaultFile="src/color_wheels/index.css"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_color_wheels_go.jpg"
+  entry="src/color_wheels"
+  defaultEntryFile="dist/color_wheels.lynx.bundle"
+/>
+
+### CSS Filters for Shape Formation
+
+Lynx 3.6 extends CSS filter support with `contrast`, `brightness`, and `saturate`.
+
+With these additions, the CSS [`filter`](/api/css/properties/filter) property becomes a composable tool for shape formation.
+The newly supported `contrast` filter, when combined with the existing `blur` capability, amplifies overlapping regions and allows soft shapes to merge into coherent forms.
+
+Visual structures such as merging, perceptual grouping, and fluid boundaries can be constructed directly in CSS, without relying on bitmap assets or custom rendering pipelines.
+
+<Go
+  example="design-guide"
+  defaultFile="src/gooey_effect/index.css"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/design-guide/design_gooey_effect_20fps.webp"
+  entry="src/gooey_effect"
+  defaultEntryFile="dist/gooey_effect.lynx.bundle"
+/>
+
+## Native APIs
+
+### Standalone BackgroundRuntime on HarmonyOS
+
+HarmonyOS now supports standalone [BackgroundRuntime](/api/lynx-native-api/lynx-background-runtime), aligning more closely with existing Android and iOS capabilities.
+
+With standalone BackgroundRuntime, developers can run JavaScript tasks independently of rendering, or pre-create background runtimes to reduce LynxView initialization latency.
+
+### Asynchronous TemplateBundle Creation on HarmonyOS
+
+On Android and iOS, [`TemplateBundle.fromTemplate`](/api/lynx-native-api/template-bundle/from-template) can be called from any thread. On HarmonyOS, however, ArkTS logic must run on the application's main thread.
+
+To reduce main-thread I/O blocking, Lynx 3.6 introduces asynchronous APIs for creating `TemplateBundle` instances on HarmonyOS:
+
+- [`TemplateBundle.fromTemplateAsync`](/api/lynx-native-api/template-bundle/from-template-async)
+- [`TemplateBundle.fromTemplateAsyncWithOption`](/api/lynx-native-api/template-bundle/from-template-async-with-option)
+
+### AutoLayout Support for LynxView on iOS
+
+On iOS, LynxView now supports Auto Layout via [`[LynxView enableAutoLayout]`](/api/lynx-native-api/lynx-view/enable-auto-layout).
+
+When enabled, LynxView can derive layout parameters directly from client-side Auto Layout constraints, eliminating the need to configure layout values manually.
+
+## Upgrade Guide
+
+To upgrade to Lynx 3.6, follow the [integration guide](https://lynxjs.org/3.6/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions accordingly.
+**Lynx for AI**
