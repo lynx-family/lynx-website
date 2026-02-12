@@ -1,0 +1,327 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/subscribe-message
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# subscribeMessage
+
+<APISummary />
+
+Registers a handler for a specified debugging message type to receive and process messages of that type.
+
+It works with the [`sendMessage`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/send-message) method to enable two-way communication with the message sender (e.g., the [DevTool Desktop Application](/guide/devtool#run-lynx-devtool-desktop-application)).
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwnerNG.h"
+- (void)subscribeMessage:(nonnull NSString *)type withHandler:(nonnull id<MessageHandler>)handler;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwnerNG.java"
+void subscribeMessage(String type, MessageHandler handler);
+```
+
+### Harmony
+
+```ts title="LynxBaseInspectorOwner.ets"
+subscribeMessage(type: string, handler: MessageHandler): void;
+```
+
+### Parameters
+
+- `type`: The type of message to subscribe to, such as [CDP](https://chromedevtools.github.io/devtools-protocol/) or other custom message types.
+- `handler`: An object that implements [`MessageHandler`](/api/lynx-devtool-native-api/message-handler) to receive debugging messages.
+
+:::warning
+DevTool only holds a weak reference to the `MessageHandler` object. Developers need to manage its lifecycle.
+:::
+
+## Usage Example
+
+### Implementation Steps
+
+1. [Implement `MessageHandler`](/api/lynx-devtool-native-api/message-handler) to process incoming debugging messages.
+2. [Get the `LynxBaseInspectorOwner` instance](/api/lynx-devtool-native-api/lynx-base-inspector-owner#get-the-lynxbaseinspectorowner-instance). On iOS and Android, it needs to be cast to the `LynxBaseInspectorOwnerNG` type.
+3. Call the [`subscribeMessage`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/subscribe-message#syntax) method to subscribe to debugging messages of the specified type.
+
+### Code Example
+
+The following example code subscribes to CDP messages. When a [`Page.enable`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-enable) message is received, it sends a [`Log.entryAdded`](https://chromedevtools.github.io/devtools-protocol/tot/Log/#event-entryAdded) message with the content `Hello, Lynx DevTool!`.
+
+As a result, this log will be displayed in the [Console](/guide/devtool/panels/console-panel) panel of the [DevTool Desktop Application](/guide/devtool#run-lynx-devtool-desktop-application).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/devtool-native-api-subscribe-message.png"
+  alt="Subscribe Message"
+/>
+
+#### iOS
+
+```objective-c title="TestMessageHandler.h" {1,3}
+#import <Lynx/LynxBaseInspectorOwnerNG.h>
+
+@interface TestMessageHandler : NSObject <MessageHandler>
+
+- (instancetype)initWithInspectorOwner:(id<LynxBaseInspectorOwnerNG>)owner;
+
+@end
+```
+
+```objective-c title="TestMessageHandler.m" {2,18-50}
+#import <UIKit/UIKit.h>
+#import <Lynx/CustomizedMessage.h>
+
+#import "TestMessageHandler.h"
+
+@implementation TestMessageHandler {
+  __weak id<LynxBaseInspectorOwnerNG> _owner;
+}
+
+- (instancetype)initWithInspectorOwner:(id<LynxBaseInspectorOwnerNG>)owner {
+  self = [super init];
+  if (self) {
+    _owner = owner;
+  }
+  return self;
+}
+
+- (void)onMessage:(nonnull NSString *)message {
+  NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
+  NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+
+  if ([[dic objectForKey:@"method"] isEqualToString:@"Page.enable"]) {
+    id<LynxBaseInspectorOwnerNG> strongOwner = _owner;
+    if (!strongOwner) {
+      return;
+    }
+
+    long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000);
+    NSDictionary *logJSON = @{
+      @"method": @"Log.entryAdded",
+      @"params": @{
+        @"entry": @{
+          @"level": @"info",
+          @"source": @"javascript",
+          @"text": @"Hello, Lynx DevTool!",
+          @"timestamp": @(timestamp)
+        }
+      }
+    };
+
+    NSData *logData = [NSJSONSerialization dataWithJSONObject:logJSON options:0 error:nil];
+    NSString *logString = [[NSString alloc] initWithData:logData encoding:NSUTF8StringEncoding];
+    if (logString) {
+      CustomizedMessage *customizedMessage = [[CustomizedMessage alloc] init];
+      customizedMessage.type = @"CDP";
+      customizedMessage.data = logString;
+      [strongOwner sendMessage:customizedMessage];
+    }
+  }
+}
+
+@end
+```
+
+```objective-c title="ViewController.m" {2-4,7,15-23}
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+#import "TestMessageHandler.h"
+
+@implementation ViewController {
+  TestMessageHandler *_handler;
+}
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  id<LynxBaseInspectorOwnerNG> owner = (id<LynxBaseInspectorOwnerNG>)lynxView.baseInspectorOwner;
+  _handler = [[TestMessageHandler alloc] initWithInspectorOwner:owner];
+  [owner subscribeMessage:@"CDP" withHandler:_handler];
+  __weak id<LynxBaseInspectorOwnerNG> weakOwner = owner;
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)),
+                 dispatch_get_main_queue(), ^{
+                   id<LynxBaseInspectorOwnerNG> strongOwner = weakOwner;
+                   [strongOwner unsubscribeMessage:@"CDP"];
+                 });
+}
+
+@end
+```
+
+#### Android
+
+```java title="TestMessageHandler.java" {1-3,10,18-40}
+import com.lynx.devtoolwrapper.CustomizedMessage;
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwnerNG;
+import com.lynx.devtoolwrapper.MessageHandler;
+
+import java.lang.ref.WeakReference;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class TestMessageHandler implements MessageHandler {
+  private final WeakReference<LynxBaseInspectorOwnerNG> mOwner;
+
+  public TestMessageHandler(LynxBaseInspectorOwnerNG owner) {
+    mOwner = new WeakReference<>(owner);
+  }
+
+  @Override
+  public void onMessage(String message) {
+    try {
+      JSONObject jsonObject = new JSONObject(message);
+      String method = jsonObject.getString("method");
+      if ("Page.enable".equals(method)) {
+        LynxBaseInspectorOwnerNG owner = mOwner.get();
+        if (owner == null) {
+          return;
+        }
+        JSONObject logJSON = new JSONObject();
+        logJSON.put("method", "Log.entryAdded");
+        logJSON.put("params", new JSONObject().put("entry", new JSONObject()
+            .put("level", "info")
+            .put("source", "javascript")
+            .put("text", "Hello, Lynx DevTool!")
+            .put("timestamp", System.currentTimeMillis())));
+        CustomizedMessage customizedMessage = new CustomizedMessage("CDP", logJSON.toString());
+        owner.sendMessage(customizedMessage);
+      }
+    } catch (JSONException e) {
+      // ...
+    }
+  }
+}
+```
+
+```java title="MainActivity.java" {4,9,16,19-32}
+import android.os.Handler;
+import android.os.Looper;
+
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwnerNG;
+
+import java.lang.ref.WeakReference;
+
+public class MainActivity extends Activity {
+  private TestMessageHandler mTestMessageHandler = null;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ...
+
+    subscribeCDPMessage(lynxView);
+  }
+
+  private void subscribeCDPMessage(LynxView lynxView) {
+    LynxBaseInspectorOwnerNG owner = (LynxBaseInspectorOwnerNG) lynxView.getBaseInspectorOwner();
+    if (owner == null) {
+      return;
+    }
+    mTestMessageHandler = new TestMessageHandler(owner);
+    owner.subscribeMessage("CDP", mTestMessageHandler);
+    Handler mainHandler = new Handler(Looper.getMainLooper());
+    WeakReference<LynxBaseInspectorOwnerNG> weakOwner = new WeakReference<>(owner);
+    mainHandler.postDelayed(() -> {
+      LynxBaseInspectorOwnerNG strongOwner = weakOwner.get();
+      strongOwner.unsubscribeMessage("CDP");
+    }, 10000);
+  }
+}
+```
+
+#### Harmony
+
+```ts title="TestMessageHandler.ets" {1,19,26-46}
+import { LynxBaseInspectorOwner, MessageHandler } from '@lynx/lynx';
+
+interface LogEntry {
+  level: string;
+  source: string;
+  text: string;
+  timestamp: number;
+}
+
+interface LogParams {
+  entry: LogEntry;
+}
+
+interface LogMessage {
+  method: string;
+  params: LogParams;
+}
+
+export class TestMessageHandler implements MessageHandler {
+  private owner: WeakRef<LynxBaseInspectorOwner>;
+
+  constructor(owner: LynxBaseInspectorOwner) {
+    this.owner = new WeakRef(owner);
+  }
+
+  public onMessage(msg: string): void {
+    let json: object = JSON.parse(msg);
+    if (json['method'] === 'Page.enable') {
+      let owner = this.owner.deref();
+      if (!owner) {
+        return;
+      }
+      let log: LogMessage = {
+        method: 'Log.entryAdded',
+        params: {
+          entry: {
+            level: 'info',
+            source: 'javascript',
+            text: 'Hello, Lynx DevTool!',
+            timestamp: Date.now(),
+          },
+        },
+      };
+      owner.sendMessage('CDP', JSON.stringify(log));
+    }
+  }
+}
+```
+
+```ts title=Index.ets" {2,8,15-24}
+import { LynxView, LynxContext } from '@lynx/lynx';
+import { TestMessageHandler } from './TestMessageHandler'
+
+@Entry
+@Component
+struct Index {
+  // ...
+  private handler?: TestMessageHandler;
+
+  build() {
+    Column() {
+      LynxView({
+        // ...
+        onCreate: (context: LynxContext) => {
+          let owner = context?.getBaseInspectorOwner();
+          if (owner) {
+            this.handler = new TestMessageHandler(owner);
+            owner.subscribeMessage('CDP', this.handler);
+            let weakOwner = new WeakRef(owner);
+            setTimeout(() => {
+              let owner = weakOwner.deref();
+              owner?.unsubscribeMessage('CDP');
+            }, 10000);
+          }
+        }
+      }).width('100%').height('100%');
+    }
+  }
+}
+```
+
+## Compatibility
+
+<APITable />
