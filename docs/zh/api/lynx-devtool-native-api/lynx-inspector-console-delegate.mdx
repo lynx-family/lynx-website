@@ -1,0 +1,323 @@
+---
+api: lynx-devtool-native-api/lynx-inspector-console-delegate
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# LynxInspectorConsoleDelegate
+
+<APISummary />
+
+一个**协议（或接口）**，用于接收 `LynxView` 实例的所有 Console 消息。
+
+:::info
+目前仅支持获取使用 PrimJS 引擎时的 BTS Console 消息。
+:::
+
+## 语法
+
+实现 `LynxInspectorConsoleDelegate` 协议（或接口），通过 `onConsoleMessage` 方法接收 Console 消息。
+
+### iOS
+
+```objective-c title="LynxInspectorConsoleDelegate.h"
+@protocol LynxInspectorConsoleDelegate <NSObject>
+
+- (void)onConsoleMessage:(NSString *)msg;
+
+@end
+```
+
+### Android
+
+```java title="LynxInspectorConsoleDelegate.java"
+public interface LynxInspectorConsoleDelegate {
+  void onConsoleMessage(String msg);
+}
+```
+
+### Harmony
+
+```ts title="LynxInspectorConsoleDelegate.ets"
+export interface LynxInspectorConsoleDelegate {
+  onConsoleMessage: (msg: string) => void;
+}
+```
+
+## 数据格式
+
+所有数据均为 JSON 格式的字符串。
+
+对于 Object 类型数据，只包含该 Object 的基本信息，可以通过 [getConsoleObject](/api/lynx-devtool-native-api/lynx-base-inspector-owner/get-console-object) 来进一步获取详细数据。
+
+### onConsoleMessage
+
+| 字段 | 类型                                                                                     | 说明                                                       |
+| :--- | :--------------------------------------------------------------------------------------- | :--------------------------------------------------------- |
+| type | string                                                                                   | 日志类型，如 `log`, `debug`, `info`, `error`, `warning` 等 |
+| args | array[[argument](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#argument)] | 日志参数，数组类型，每个元素为一个 argument 对象           |
+
+### argument
+
+| 字段        | 类型   | 说明                                                                             |
+| :---------- | :----- | :------------------------------------------------------------------------------- |
+| type        | string | 参数类型，如 `string`, `number`, `boolean`, `object`, `function`, `undefined` 等 |
+| subtype     | string | 可选字段，参数的子类型，如 `array`, `null`, `error` 等，仅对 Object 类型参数有效 |
+| objectId    | string | 可选字段，参数为 Object 类型时的唯一标识符                                       |
+| description | string | 可选字段，参数的描述信息                                                         |
+| value       | any    | 可选字段，参数的值                                                               |
+
+### 示例
+
+```ts
+let testObj = { a: 1, b: 'test', c: true, d: undefined, e: null, f: { g: 2 } };
+console.log('test object: ', testObj);
+```
+
+上述代码会触发 `onConsoleMessage` 事件，事件数据如下：
+
+```json
+"{\"type\":\"log\",\"args\":[{\"value\":\"test object: \",\"type\":\"string\"},{\"type\":\"object\",\"objectId\":\"546729222512\",\"className\":\"Object\",\"description\":\"Object\"}]}"
+```
+
+取出其中第二个参数的 `objectId` 字段，进一步调用 [getConsoleObject](/api/lynx-devtool-native-api/lynx-base-inspector-owner/get-console-object) 方法。
+
+当 `needStringify` 为 `false` 时，返回的数据如下：
+
+```json
+"[{\"name\":\"a\",\"value\":{\"description\":\"1\",\"value\":1,\"type\":\"number\"}},{\"name\":\"b\",\"value\":{\"value\":\"test\",\"type\":\"string\"}},{\"name\":\"c\",\"value\":{\"value\":true,\"type\":\"boolean\"}},{\"name\":\"d\",\"value\":{\"type\":\"undefined\"}},{\"name\":\"e\",\"value\":{\"subtype\":\"null\",\"value\":null,\"type\":\"object\"}},{\"name\":\"f\",\"value\":{\"type\":\"object\",\"objectId\":\"546729222592\",\"className\":\"Object\",\"description\":\"Object\"}},{\"name\":\"__proto__\",\"value\":{\"type\":\"object\",\"objectId\":\"546824040688\",\"className\":\"Object\",\"description\":\"Object\"}}]"
+```
+
+当 `needStringify` 为 `true` 时，返回的数据如下：
+
+```json
+"{\n\t\"a\": 1,\n\t\"b\": \"test\",\n\t\"c\": true,\n\t\"e\": null,\n\t\"f\": {\n\t\t\"g\": 2\n\t}\n}"
+```
+
+## 使用示例
+
+### 使用步骤
+
+1. [实现 `LynxInspectorConsoleDelegate`](/api/lynx-devtool-native-api/lynx-inspector-console-delegate#语法)。
+2. [获取 `LynxBaseInspectorOwner` 实例](/api/lynx-devtool-native-api/lynx-base-inspector-owner#获取-lynxbaseinspectorowner-实例)。
+3. [注册 `LynxInspectorConsoleDelegate`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/set-lynx-inspector-console-delegate)。
+4. [获取 Object 详细信息](/api/lynx-devtool-native-api/lynx-base-inspector-owner/get-console-object)。
+
+### 代码示例
+
+#### iOS
+
+```objective-c title="TestConsoleDelegate.h" {2-5}
+#import <Foundation/Foundation.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+#import <Lynx/LynxInspectorConsoleDelegate.h>
+
+@interface TestConsoleDelegate : NSObject <LynxInspectorConsoleDelegate>
+
+- (instancetype)initWithInspectorOwner:(id<LynxBaseInspectorOwner>)owner;
+
+@end
+```
+
+```objective-c title="TestConsoleDelegate.m" {15-38}
+#import "TestConsoleDelegate.h"
+
+@implementation TestConsoleDelegate {
+  __weak id<LynxBaseInspectorOwner> _owner;
+}
+
+- (instancetype)initWithInspectorOwner:(id<LynxBaseInspectorOwner>)owner {
+  self = [super init];
+  if (self) {
+    _owner = owner;
+  }
+  return self;
+}
+
+- (void)onConsoleMessage:(NSString *)msg {
+  NSLog(@"onConsoleMessage: %@", msg);
+  NSData *data = [msg dataUsingEncoding:NSUTF8StringEncoding];
+  NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+  for (NSDictionary *item in [dic objectForKey:@"args"]) {
+    if ([item objectForKey:@"type"] && [[item objectForKey:@"type"] isEqualToString:@"object"]) {
+      NSString *objectId = [item objectForKey:@"objectId"];
+      id<LynxBaseInspectorOwner> strongOwner = _owner;
+      if (!strongOwner) {
+        break;
+      }
+      [strongOwner getConsoleObject:objectId
+                      needStringify:NO
+                      resultHandler:^(NSString *detail) {
+                        NSLog(@"getConsoleObject: %@", detail);
+                      }];
+      [strongOwner getConsoleObject:objectId
+                      needStringify:YES
+                      resultHandler:^(NSString *detail) {
+                        NSLog(@"getConsoleObject: %@", detail);
+                      }];
+    }
+  }
+}
+
+@end
+```
+
+```objective-c title="ViewController.m" {2-4,13-16}
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+#import "TestConsoleDelegate.h"
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  id<LynxBaseInspectorOwner> owner = lynxView.baseInspectorOwner;
+  TestConsoleDelegate* delegate =
+      [[TestConsoleDelegate alloc] initWithInspectorOwner:owner];
+  [owner setLynxInspectorConsoleDelegate:delegate];
+}
+
+@end
+```
+
+#### Android
+
+```java title="MainActivity.java" {4,18,24-59,62-64}
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import com.lynx.devtoolwrapper.LynxInspectorConsoleDelegate;
+import com.lynx.react.bridge.Callback;
+import com.lynx.tasm.LynxView;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class MainActivity extends Activity {
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ...
+
+    handleConsoleMessage(lynxView);
+  }
+
+  private void handleConsoleMessage(LynxView lynxView) {
+    LynxInspectorConsoleDelegate delegate = new LynxInspectorConsoleDelegate() {
+      @Override
+      public void onConsoleMessage(String msg) {
+        try {
+          Log.i("MainActivity", "onConsoleMessage: " + msg);
+          JSONObject jsonObject = new JSONObject(msg);
+          JSONArray args = jsonObject.getJSONArray("args");
+          for (int i = 0; i < args.length(); i++) {
+            JSONObject obj = new JSONObject(args.get(i).toString());
+            if (obj.get("type").toString().equals("object")) {
+              String objectId = obj.get("objectId").toString();
+              Handler mainHandler = new Handler(Looper.getMainLooper());
+              // Post task instead of calling `getConsoleObject` directly to avoid deadlock.
+              mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                  lynxView.getBaseInspectorOwner().getConsoleObject(
+                      objectId, false, new Callback() {
+                        @Override
+                        public void invoke(Object... args) {
+                          Log.i("MainActivity", "getConsoleObject: " + args[0].toString());
+                        }
+                      });
+                  lynxView.getBaseInspectorOwner().getConsoleObject(
+                      objectId, true, new Callback() {
+                        @Override
+                        public void invoke(Object... args) {
+                          Log.i("MainActivity", "getConsoleObject: " + args[0].toString());
+                        }
+                      });
+                }
+              });
+            }
+          }
+        } catch (JSONException e) {
+          // ...
+        }
+      }
+    };
+
+    if (lynxView.getBaseInspectorOwner() != null) {
+      lynxView.getBaseInspectorOwner().setLynxInspectorConsoleDelegate(delegate);
+    }
+  }
+}
+```
+
+#### Harmony
+
+```ts title="TestConsoleDelegate.ets" {2-3,6,13-31}
+import {
+  LynxBaseInspectorOwner,
+  LynxInspectorConsoleDelegate,
+} from '@lynx/lynx';
+
+export class TestConsoleDelegate implements LynxInspectorConsoleDelegate {
+  private owner: WeakRef<LynxBaseInspectorOwner>;
+
+  constructor(owner: LynxBaseInspectorOwner) {
+    this.owner = new WeakRef(owner);
+  }
+
+  public onConsoleMessage(msg: string): void {
+    console.log('onConsoleMessage:', msg);
+    let json: object = JSON.parse(msg);
+    let args: Array<object> = json['args'];
+    args.forEach((value) => {
+      if (value['type'] === 'object') {
+        let objectId: string = value['objectId'];
+        let owner = this.owner.deref();
+        if (owner) {
+          owner.getConsoleObject(objectId, true, (detail: string) => {
+            console.log('getConsoleObject:', detail);
+          });
+          owner.getConsoleObject(objectId, false, (detail: string) => {
+            console.log('getConsoleObject:', detail);
+          });
+        }
+      }
+    });
+  }
+}
+```
+
+```ts title=Index.ets" {2,14-18}
+import { LynxView, LynxContext } from '@lynx/lynx';
+import { TestConsoleDelegate } from './TestConsoleDelegate';
+
+@Entry
+@Component
+struct Index {
+  // ...
+
+  build() {
+    Column() {
+      LynxView({
+        // ...
+        onCreate: (context: LynxContext) => {
+          let owner = context?.getBaseInspectorOwner();
+          if (owner) {
+            let delegate = new TestConsoleDelegate(owner);
+            owner.setLynxInspectorConsoleDelegate(delegate);
+          }
+        }
+      }).width('100%').height('100%');
+    }
+  }
+}
+```
+
+## 兼容性
+
+<APITable />
