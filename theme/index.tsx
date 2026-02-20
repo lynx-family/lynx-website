@@ -201,7 +201,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     ),
     afterHeroActions = (
       <div
-        className="rp-doc"
+        className="rp-doc home-hero-codeblock"
         style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
       >
         <PreWithCodeButtonGroup
