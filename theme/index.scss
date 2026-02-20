@@ -5,6 +5,11 @@
 @use './hero-text';
 @use './semi';
 @use './sidebar-badge';
+
+.rspress-doc {
+  @include external-links.external-links;
+}
+
 @keyframes gradient-move {
   0% {
     background-position: 0% 50%;
@@ -17,19 +22,12 @@
   }
 }
 
-.overview-index {
-  padding-top: 48px;
-  max-width: 100%;
-}
-
 $major-brand-color: #ff351a;
 $second-color: #00ebeb;
 $react-brand-light: #1f92b9;
 $react-brand-dark: #42b8d2;
 $link-color: #0078fd;
 $link-color-dark: rgba(84, 169, 255, 1);
-$overview-index-color: #231c1c;
-$overview-index-color-dark: #f9f9f9;
 
 // Base theme mixin with common properties
 @mixin theme-base($brand-color) {
@@ -108,98 +106,86 @@ $overview-index-color-dark: #f9f9f9;
   @include subsite-theme($react-brand-dark);
 }
 
-#before-sidebar .border-divider-light {
-  border-top: 1.3px solid transparent;
-  border-image: var(--rp-c-divider-gradient) 1;
-  opacity: 0.5;
-
-  :root.dark & {
-    opacity: 0.4;
-  }
-}
-
-// This targets all <a target="_blank"> in the main doc container to add a
-// visual indicator to help users identify external links.
-.rspress-doc-container {
-  @include external-links.external-links;
-}
-
-// custom link color and overview index color only on guide subsite
-@mixin custom-link-color($color, $overview-index-color) {
+// #region ===== custom-link-color start
+// in doc main content, we want to keep the link color blue
+@mixin custom-link-color($color) {
   --custom-link-color: #{$color};
-  --custom-overview-index-color: #{$overview-index-color};
 }
 
 :root[data-subsite='guide'] {
-  @include custom-link-color($link-color, $overview-index-color);
-  .rspress-doc a > code {
-    color: var(--custom-link-color);
-  }
-
-  .rspress-doc a:hover > code {
-    color: var(--custom-link-color);
-  }
   .rspress-doc {
-    & > *:not(.next-steps, .rspress-directive.tip) {
-      .rp-link:not(.header-anchor),
-      summary .rp-link:not(.header-anchor) {
-        color: var(--custom-link-color);
-      }
-      .rp-link:hover,
-      summary .rp-link:hover,
-      summary a:hover {
-        border-bottom: 1px solid var(--custom-link-color);
-      }
-    }
-    [class^='tab-list']
-      [class^='tab'][class*='selected']:not([class*='not-selected']) {
-      color: var(--custom-overview-index-color);
-      &::after {
-        color: var(--rp-c-link);
-      }
-    }
-  }
-
-  .rspress-doc-container {
-    .overview-index h3 > a {
-      color: var(--custom-overview-index-color);
-      transition: color 0.2s;
-      &:hover {
-        color: var(--rp-c-link);
-      }
-    }
-    .overview-index .focus\:ring-2:focus {
-      box-shadow: none;
-    }
-  }
-  .rspress-doc-footer {
-    [class^='title'] {
-      color: var(--custom-overview-index-color);
+    @include custom-link-color($link-color);
+    --rp-c-link: var(--custom-link-color);
+    a > code:not(.rp-overview *) {
+      color: var(--custom-link-color);
     }
   }
 }
 .dark[data-subsite='guide'] {
-  @include custom-link-color($link-color-dark, $overview-index-color-dark);
+  .rspress-doc {
+    @include custom-link-color($link-color-dark);
+    --rp-c-link: var(--custom-link-color);
+    a > code:not(.rp-overview *) {
+      color: var(--custom-link-color);
+    }
+  }
+}
+// #endregion ===== custom-link-color end
+
+// #region ======== home layout =========
+:root {
+  --rp-home-background-bg: none;
+  --rp-home-hero-title-bg: linear-gradient(
+    275deg,
+    var(--rp-c-brand-dark) 3%,
+    var(--rp-c-brand-light) 97%
+  );
 }
 
 .home-layout-container {
-  h1 {
-    display: flex;
-    margin: 0px -100px;
-    margin-top: 62px;
-    white-space: nowrap;
-    overflow: hidden;
-    & > span {
-      white-space: nowrap;
-      overflow: hidden;
+  .rp-home-hero__container {
+    position: relative;
+    &::before {
+      content: '';
+      background-image: var(--rp-home-mask-background-image);
+      filter: blur(80px);
+      opacity: 0.05;
+      z-index: 1000;
+      border-radius: 100%;
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
+
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      pointer-events: none;
     }
-    @media (max-width: 768px) {
+  }
+
+  // When rendering the first screen, keep the typing animation transparent when it's not enabled.
+  .rp-home-hero__title-brand {
+    background: none;
+  }
+
+  @media (max-width: 1000px) {
+    .rp-home-hero {
       margin-top: 54px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .rp-home-hero .rp-home-hero__title {
+      font-size: 2rem;
     }
   }
 }
 
-.home-layout-create-block {
+// #endregion ======== home layout =========
+
+.home-hero-codeblock .rp-codeblock {
   background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
 
   @media (max-width: 640px) {
@@ -214,54 +200,17 @@ $overview-index-color-dark: #f9f9f9;
   padding-right: 0.1em;
 }
 
-// Compact LLMS buttons styling - shadcn-like
-[class*='llmsContainer'] {
-  margin-bottom: 10px !important;
-  gap: 4px !important;
+// #region ======== blog =========
+// For left-aligned blog page
+@media (min-width: 1280px) {
+  .rp-doc-layout__sidebar-placeholder {
+    width: 150px;
+  }
 }
+// #endregion ======== blog =========
 
-[class*='llmsCopyButtonContainer'] {
-  height: 28px !important;
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  gap: 4px !important;
-  border-radius: 4px !important;
+// #region ======== overview =========
+.rp-overview-group__item__content__item__link {
+  word-break: break-all;
 }
-
-[class*='dropdownButton'] {
-  height: 28px !important;
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  gap: 4px !important;
-  border-radius: 4px !important;
-}
-
-[class*='dropdownMenu'] {
-  padding: 4px !important;
-  border-radius: 6px !important;
-}
-
-[class*='dropdownItem'] {
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  gap: 4px !important;
-  border-radius: 3px !important;
-}
-
-[class*='iconContainer'] {
-  width: 12px !important;
-  height: 12px !important;
-}
-
-[class*='iconCopy'],
-[class*='iconSuccess'] {
-  width: 12px !important;
-  height: 12px !important;
-}
-
-[class*='leftIcon'],
-[class*='externalIcon'] {
-  width: 12px !important;
-  height: 12px !important;
-  font-size: 12px !important;
-}
+// #endregion ======== overview =========

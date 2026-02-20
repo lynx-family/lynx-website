@@ -95,30 +95,30 @@ const useBlogBtnDom = (src: string) => {
   useEffect(() => {
     if (page.pageType !== 'home') return;
 
-    const h1 = document.querySelector('h1');
+    const badgeElement = document.querySelector('.rp-home-hero__badge');
+
+    const h1 = document.querySelector('.rp-home-hero__title');
     if (!h1) return;
 
     const targetElement = h1.parentElement;
     if (!targetElement) return;
+    if (!badgeElement) return;
 
-    const newElement = document.createElement('div');
-    newElement.className =
-      configKey === '/' ? `blog-btn-frame active-hover` : `blog-btn-frame`;
-    newElement.textContent = displayText;
-
-    targetElement.insertBefore(newElement, targetElement.firstChild);
-    h1.style.margin = '0px -100px';
+    badgeElement.className =
+      configKey === '/'
+        ? `rp-home-hero__badge active-hover`
+        : `rp-home-hero__badge`;
+    badgeElement.textContent = displayText;
+    badgeElement.setAttribute('style', 'opacity: 1;');
 
     if (configKey === '/') {
-      newElement.addEventListener('click', handleInteraction);
-      newElement.addEventListener('touchstart', handleInteraction);
+      badgeElement.addEventListener('click', handleInteraction);
+      badgeElement.addEventListener('touchstart', handleInteraction);
     }
 
     return () => {
-      newElement.removeEventListener('click', handleInteraction);
-      newElement.removeEventListener('touchstart', handleInteraction);
-
-      targetElement.removeChild(newElement);
+      badgeElement.removeEventListener('click', handleInteraction);
+      badgeElement.removeEventListener('touchstart', handleInteraction);
     };
   }, [configKey, displayText, handleInteraction]);
 };

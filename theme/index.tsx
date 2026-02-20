@@ -10,17 +10,12 @@ import {
   Layout as BaseLayout,
   Link as BaseLink,
   getCustomMDXComponent as basicGetCustomMDXComponent,
-} from '@rspress/core/theme';
+} from '@rspress/core/theme-original';
 import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import {
-  LlmsContainer,
-  LlmsCopyButton,
-  LlmsViewOptions,
-} from '@rspress/plugin-llms/runtime';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
 
@@ -81,7 +76,20 @@ const enWords = ['Unlock', 'Render', 'Toward', 'Ship'];
 const zhWords = ['迈向', '更快的', '更多平台的', '更多人的'];
 const zhSuffix = '原生体验';
 
+// Extend ImportMeta to include SSG-MD
+declare global {
+  interface ImportMetaEnv {
+    SSG_MD?: boolean;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  if (import.meta.env.SSG_MD) {
+    return <BaseHomeLayout {...props} />;
+  }
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
   const { page } = usePageData();
@@ -110,13 +118,10 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [pathname]);
 
   const updateText = useCallback(() => {
-    const h1Ele = document.querySelector('h1');
-    const h1Span = document.querySelector('h1 > span');
-    if (!h1Ele) return;
-    if (!h1Span) return;
-
-    // Add negative margin to h1 span to avoid text wrapping
-    h1Ele.style.margin = '0 -100px';
+    const titleEle = document.querySelector('.rp-home-hero__title');
+    const titleTextSpan = document.querySelector('.rp-home-hero__title > span');
+    if (!titleEle) return;
+    if (!titleTextSpan) return;
 
     const words = isZh ? zhWords : enWords;
     const suffix = isZh ? zhSuffix : enSuffix;
@@ -130,11 +135,11 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     const fullText = `${dynamicText}${suffix}`;
     setText(fullText);
 
-    const dynamicSpan = h1Span.querySelector('.dynamic-text');
-    const suffixSpan = h1Span.querySelector('.suffix-text');
+    const dynamicSpan = titleTextSpan.querySelector('.dynamic-text');
+    const suffixSpan = titleTextSpan.querySelector('.suffix-text');
 
     if (!dynamicSpan || !suffixSpan) {
-      h1Span.innerHTML = `
+      titleTextSpan.innerHTML = `
         <span class="dynamic-text">${dynamicText}</span><span class="suffix-text">${suffix}</span>
       `;
     } else {
@@ -196,19 +201,16 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     ),
     afterHeroActions = (
       <div
-        className="rp-doc"
+        className="rp-doc home-hero-codeblock"
         style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
       >
         <PreWithCodeButtonGroup
-          containerElementClassName="language-bash home-layout-create-block"
+          containerElementClassName="language-bash"
           codeButtonGroupProps={{
             showCodeWrapButton: false,
           }}
         >
-          <Code
-            className="language-bash home-layout-create-block"
-            style={{ textAlign: 'center' }}
-          >
+          <Code className="language-bash" style={{ textAlign: 'center' }}>
             npm create rspeedy@latest
           </Code>
         </PreWithCodeButtonGroup>
@@ -259,49 +261,33 @@ const Search = () => {
 
 export { HomeLayout, Layout, Search };
 
-function getCustomMDXComponent() {
-  const { h1: H1, ...mdxComponents } = basicGetCustomMDXComponent();
-
-  const MyH1 = ({ ...props }: React.ComponentProps<typeof H1>) => {
+const Link = forwardRef(
+  (
+    props: React.ComponentProps<typeof BaseLink>,
+    ref: React.LegacyRef<HTMLAnchorElement>,
+  ) => {
+    const { href, children, className, ...restProps } = props;
+    const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
+    if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+      return (
+        <BaseLink
+          href={`/next${removeBase(href)}`}
+          className={`rp-link ${className}`}
+          ref={ref}
+          {...restProps}
+        >
+          {children}
+        </BaseLink>
+      );
+    }
     return (
-      <>
-        <H1 {...props} />
-        <LlmsContainer>
-          <LlmsCopyButton />
-          <LlmsViewOptions />
-        </LlmsContainer>
-      </>
-    );
-  };
-  return {
-    ...mdxComponents,
-    h1: MyH1,
-  };
-}
-
-export { getCustomMDXComponent };
-
-const Link = (props: React.ComponentProps<typeof BaseLink>) => {
-  const { href, children, className, ...restProps } = props;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
-    return (
-      <BaseLink
-        href={`/next${removeBase(href)}`}
-        className={`rp-link ${className}`}
-        {...restProps}
-      >
+      <BaseLink href={href} className={className} ref={ref} {...restProps}>
         {children}
       </BaseLink>
     );
-  }
-  return (
-    <BaseLink href={href} className={className} {...restProps}>
-      {children}
-    </BaseLink>
-  );
-};
+  },
+);
 
-export { Link }; // override Link from @rspress/core/theme
+export { Link }; // override Link from @rspress/core/theme-original
 
-export * from '@rspress/core/theme';
+export * from '@rspress/core/theme-original';

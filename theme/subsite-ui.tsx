@@ -18,13 +18,12 @@ export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
     <>
       <img
         src={lightLogoSrc}
-        // "dark:rp-hidden" is in the @rspress/theme-default CSS
-        className="w-full h-full object-contain dark:rp-hidden"
+        className="w-full h-full object-contain dark:hidden"
         alt={`${subsite.label} logo`}
       />
       <img
         src={darkLogoSrc}
-        className="hidden w-full h-full object-contain dark:rp-block"
+        className="hidden w-full h-full object-contain dark:block"
         alt={`${subsite.label} logo`}
       />
     </>

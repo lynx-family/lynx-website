@@ -38,6 +38,9 @@ export const CodeFold = ({
   imageFrameStyle,
   toggle = false,
 }: IProp) => {
+  if (import.meta.env.SSG_MD) {
+    return <>{children}</>;
+  }
   const dark = useDark();
   const containerRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLDivElement>(null);
@@ -85,7 +88,6 @@ export const CodeFold = ({
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel
               defaultSize={75}
-              className="rounded-lg"
               style={{
                 position: 'relative',
                 aspectRatio: (16 / 9) * (1 / 0.25),
