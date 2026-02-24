@@ -72,7 +72,7 @@ function Layout(props: Parameters<typeof BaseLayout>[0]) {
 }
 
 const enSuffix = ' Native for More';
-const enWords = ['Unlock', 'Render', 'Toward', 'Ship'];
+const enWords = ['Unlock', 'Render', 'Vibe', 'Ship'];
 const zhWords = ['迈向', '更快的', '更多平台的', '更多人的'];
 const zhSuffix = '原生体验';
 
