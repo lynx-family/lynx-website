@@ -1,0 +1,117 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## 属性
+
+### `enable-refresh`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: true
+'enable-refresh'?: boolean;
+```
+
+用于控制下拉拖拽或调用 `autoStartRefresh` 是否能够触发 `startrefresh` 事件。
+
+## 事件
+
+前端可以绑定相应的事件回调来监听元素的运行时行为，如下所示。
+
+### `bindheaderoffset`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+bindheaderoffset = (e: RefreshHeaderOffsetEvent) => {};
+```
+
+| 字段          | 类型    | 可选 | 默认值 | 平台                                        | 起始版本 | 描述                                   |
+| ------------- | ------- | ---- | ------ | ------------------------------------------- | -------- | -------------------------------------- |
+| isDragging    | boolean | 否   | –      | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |          | 表示 `<refresh-header>` 是否正在被拖拽 |
+| offsetPercent | number  | 否   | –      | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |          | 下拉位移距离与自身高度的比例           |
+
+当 `<refresh-header>` 被拉出并处于移动过程中触发。
+
+### `bindrefreshstatechange`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+bindrefreshstatechange = (e: RefreshStateChangeEvent) => {};
+```
+
+| 字段  | 类型         | 可选 | 默认值 | 平台                                        | 起始版本 | 描述                           |
+| ----- | ------------ | ---- | ------ | ------------------------------------------- | -------- | ------------------------------ |
+| state | RefreshState | 否   | –      | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |          | 表示 `<refresh-header>` 的状态 |
+
+当 `<refresh-header>` 状态发生变化时触发。
+
+### `bindstartrefresh`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+bindstartrefresh = (e: RefreshStartRefreshEvent) => {};
+```
+
+| 字段     | 类型    | 可选 | 默认值 | 平台                                        | 起始版本 | 描述                                       |
+| -------- | ------- | ---- | ------ | ------------------------------------------- | -------- | ------------------------------------------ |
+| isManual | boolean | 否   | –      | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |          | 表示 `startrefresh` 事件是否由手动拖拽触发 |
+
+当 `enable-refresh` 为 true 且下拉拖拽或调用 `autoStartRefresh`（进入刷新状态）时触发。
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
+
+### `autoStartRefresh`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+.select('#id')
+.invoke({
+method: 'autoStartRefresh',
+success: function (res) {},
+fail: function (res) {},
+})
+.exec();
+
+````
+
+当 `enable-refresh` 为 true 时，调用该方法会将整个 `<refresh-header>` 拉出并触发 `startrefresh` 事件；随后 `<refresh-header>` 会贴合在 refresh 视口的顶部边缘。
+
+
+### `finishRefresh`
+
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'finishRefresh',
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+````
+
+在 `startrefresh` 事件之后调用，用于结束刷新状态，使 `<refresh-header>` 回弹复位。

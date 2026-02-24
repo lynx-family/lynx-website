@@ -1,0 +1,127 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## Attributes
+
+### `enable-refresh`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: true
+'enable-refresh'?: boolean;
+```
+
+Determines if dragging down or calling autoStartRefresh can trigger the startrefresh event.
+
+## Events
+
+Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+
+### `bindheaderoffset`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+bindheaderoffset = (e: RefreshHeaderOffsetEvent) => {};
+```
+
+| Field         | Type    | Optional | Default | Platforms                                   | Since | Description                                                    |
+| ------------- | ------- | -------- | ------- | ------------------------------------------- | ----- | -------------------------------------------------------------- |
+| isDragging    | boolean | No       | –       | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |       | Indicates if `<refresh-header>` is being dragged               |
+| offsetPercent | number  | No       | –       | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |       | The ratio of the pull-down movement distance to its own height |
+
+Triggered during movement when
+`<refresh-header>`
+is exposed.
+
+### `bindrefreshstatechange`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+bindrefreshstatechange = (e: RefreshStateChangeEvent) => {};
+```
+
+| Field | Type         | Optional | Default | Platforms                                   | Since | Description                                      |
+| ----- | ------------ | -------- | ------- | ------------------------------------------- | ----- | ------------------------------------------------ |
+| state | RefreshState | No       | –       | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |       | Indicates if `<refresh-header>` is being dragged |
+
+Triggered when
+`<refresh-header>`
+state changes.
+
+### `bindstartrefresh`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+bindstartrefresh = (e: RefreshStartRefreshEvent) => {};
+```
+
+| Field    | Type    | Optional | Default | Platforms                                   | Since | Description                                                          |
+| -------- | ------- | -------- | ------- | ------------------------------------------- | ----- | -------------------------------------------------------------------- |
+| isManual | boolean | No       | –       | <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> |       | Indicates whether the startrefresh event is triggered by manual drag |
+
+Triggered when enable-refresh is true, and dragging down or calling autoStartRefresh (enters refresh state).
+
+## Methods
+
+Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+
+### `autoStartRefresh`
+
+{' '}
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+.select('#id')
+.invoke({
+method: 'autoStartRefresh',
+success: function (res) {},
+fail: function (res) {},
+})
+.exec();
+
+````
+
+When enable-refresh is true, call this method to expose the entire
+`<refresh-header>`
+, triggering the startrefresh event, after which
+`<refresh-header>`
+ will attach to the top edge of the refresh's viewport.
+
+
+### `finishRefresh`
+
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'finishRefresh',
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+````
+
+Called after the startrefresh event to end the refresh state, making
+`<refresh-header>`
+rebound.
