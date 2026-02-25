@@ -86,12 +86,45 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
   );
 };
 
+const CompactAvatar = ({
+  authors,
+}: {
+  authors: (typeof originListData)[0][];
+}) => {
+  const lang = useLang();
+
+  return (
+    <span className={styles['compact-authors']}>
+      <span className={styles['compact-avatars']}>
+        {authors.map((author) => (
+          <Avatar
+            key={author.id}
+            className={styles['compact-avatar']}
+            src={author?.image}
+            size="extra-small"
+            // @ts-ignore
+            zoom={undefined}
+            onMouseEnter={undefined}
+            onClick={undefined}
+            onMouseLeave={undefined}
+          />
+        ))}
+      </span>
+      <span className={styles['compact-names']}>
+        {authors.map((a) => (lang === 'zh' ? a.name_zh : a.name)).join(', ')}
+      </span>
+    </span>
+  );
+};
+
 const BlogAvatar = ({
   list,
   className,
+  compact,
 }: {
   list: string[];
   className?: string;
+  compact?: boolean;
 }) => {
   const filteredAuthors = useMemo(() => {
     // Create a map of authors by id for O(1) lookup
@@ -107,6 +140,14 @@ const BlogAvatar = ({
 
   if (filteredAuthors.length === 0) {
     return <></>;
+  }
+
+  if (compact) {
+    return (
+      <div className={className || ''}>
+        <CompactAvatar authors={filteredAuthors} />
+      </div>
+    );
   }
 
   return (

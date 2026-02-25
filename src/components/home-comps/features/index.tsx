@@ -1,6 +1,7 @@
 import { Space } from '@douyinfe/semi-ui';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
-import React, { ReactNode, useEffect, useState } from 'react';
+import { useTiltEffect } from '@site/src/hooks';
+import React, { ReactNode, useState } from 'react';
 import styles from './index.module.less';
 import { Moon } from './moon';
 import { WriteOnceRunAllPlatform } from './write-once-run-all-platform';
@@ -12,9 +13,6 @@ import { FeatureItem } from './feature-item';
 import { IconAndroid, IconHarmony, IconIOS, IconWeb } from './icon';
 import { FeatureIconItem } from './item-icon';
 type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
-
-// 最大倾斜角度（度数）
-const maxDegree = 6;
 const featuresConfig: Record<
   FeaturesConfigKey,
   Array<{
@@ -236,47 +234,7 @@ const Features = ({ src = '/' }: { src?: string }) => {
     }
   };
 
-  useEffect(() => {
-    if (isMobile) return;
-
-    const items = document.querySelectorAll('#hover-feature-item');
-
-    const handleMouseMove = (e: MouseEvent, item: HTMLElement) => {
-      const rect = item.getBoundingClientRect();
-
-      const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-
-      const rotateX = -y * maxDegree;
-      const rotateY = x * maxDegree;
-
-      item.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-    };
-
-    const handleMouseLeave = (item: HTMLElement) => {
-      item.style.transform = 'none';
-    };
-
-    items.forEach((item) => {
-      item.addEventListener('mousemove', (e) =>
-        handleMouseMove(e as MouseEvent, item as HTMLElement),
-      );
-      item.addEventListener('mouseleave', () =>
-        handleMouseLeave(item as HTMLElement),
-      );
-    });
-
-    return () => {
-      items.forEach((item) => {
-        item.removeEventListener('mousemove', (e) =>
-          handleMouseMove(e as MouseEvent, item as HTMLElement),
-        );
-        item.removeEventListener('mouseleave', () =>
-          handleMouseLeave(item as HTMLElement),
-        );
-      });
-    };
-  }, []);
+  useTiltEffect('#hover-feature-item', { isMobile });
 
   return (
     <div className={styles['features-frame']}>
