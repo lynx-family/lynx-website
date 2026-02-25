@@ -186,16 +186,75 @@ When `needStringify` is `true`, the returned data is as follows:
 
 #### Android
 
-```java title="MainActivity.java" {4,18,24-59,62-64}
+```java title="TestConsoleDelegate.java" {4-5,12,20-63}
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import com.lynx.devtoolwrapper.LynxInspectorConsoleDelegate;
+import com.lynx.devtool.LynxInspectorConsoleDelegate;
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwner;
 import com.lynx.react.bridge.Callback;
-import com.lynx.tasm.LynxView;
+import java.lang.ref.WeakReference;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+public class TestConsoleDelegate implements LynxInspectorConsoleDelegate {
+  private final WeakReference<LynxBaseInspectorOwner> mOwner;
+
+  public TestConsoleDelegate(LynxBaseInspectorOwner owner) {
+    mOwner = new WeakReference<>(owner);
+  }
+
+  @Override
+  public void onConsoleMessage(String msg) {
+    LynxBaseInspectorOwner owner = mOwner.get();
+    if (owner == null) {
+      return;
+    }
+    try {
+      Log.i("TestConsoleDelegate", "onConsoleMessage: " + msg);
+      JSONObject jsonObject = new JSONObject(msg);
+      JSONArray args = jsonObject.getJSONArray("args");
+      for (int i = 0; i < args.length(); i++) {
+        JSONObject obj = new JSONObject(args.get(i).toString());
+        if (obj.get("type").toString().equals("object")) {
+          String objectId = obj.get("objectId").toString();
+          Handler mainHandler = new Handler(Looper.getMainLooper());
+          // Post task instead of calling `getConsoleObject` directly to avoid deadlock.
+          mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+              LynxBaseInspectorOwner strongOwner = mOwner.get();
+              if (strongOwner == null) {
+                return;
+              }
+              strongOwner.getConsoleObject(
+                  objectId, false, new Callback() {
+                    @Override
+                    public void invoke(Object... args) {
+                      Log.i("TestConsoleDelegate", "getConsoleObject: " + args[0].toString());
+                    }
+                  });
+              strongOwner.getConsoleObject(
+                  objectId, true, new Callback() {
+                    @Override
+                    public void invoke(Object... args) {
+                      Log.i("TestConsoleDelegate", "getConsoleObject: " + args[0].toString());
+                    }
+                  });
+            }
+          });
+        }
+      }
+    } catch (JSONException e) {
+      // ...
+    }
+  }
+}
+```
+
+```java title="MainActivity.java" {1,10,13-20}
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwner;
 
 public class MainActivity extends Activity {
 
@@ -208,49 +267,12 @@ public class MainActivity extends Activity {
   }
 
   private void handleConsoleMessage(LynxView lynxView) {
-    LynxInspectorConsoleDelegate delegate = new LynxInspectorConsoleDelegate() {
-      @Override
-      public void onConsoleMessage(String msg) {
-        try {
-          Log.i("MainActivity", "onConsoleMessage: " + msg);
-          JSONObject jsonObject = new JSONObject(msg);
-          JSONArray args = jsonObject.getJSONArray("args");
-          for (int i = 0; i < args.length(); i++) {
-            JSONObject obj = new JSONObject(args.get(i).toString());
-            if (obj.get("type").toString().equals("object")) {
-              String objectId = obj.get("objectId").toString();
-              Handler mainHandler = new Handler(Looper.getMainLooper());
-              // Post task instead of calling `getConsoleObject` directly to avoid deadlock.
-              mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                  lynxView.getBaseInspectorOwner().getConsoleObject(
-                      objectId, false, new Callback() {
-                        @Override
-                        public void invoke(Object... args) {
-                          Log.i("MainActivity", "getConsoleObject: " + args[0].toString());
-                        }
-                      });
-                  lynxView.getBaseInspectorOwner().getConsoleObject(
-                      objectId, true, new Callback() {
-                        @Override
-                        public void invoke(Object... args) {
-                          Log.i("MainActivity", "getConsoleObject: " + args[0].toString());
-                        }
-                      });
-                }
-              });
-            }
-          }
-        } catch (JSONException e) {
-          // ...
-        }
-      }
-    };
-
-    if (lynxView.getBaseInspectorOwner() != null) {
-      lynxView.getBaseInspectorOwner().setLynxInspectorConsoleDelegate(delegate);
+    LynxBaseInspectorOwner owner = lynxView.getBaseInspectorOwner();
+    if (owner == null) {
+      return;
     }
+    TestConsoleDelegate delegate = new TestConsoleDelegate(owner);
+    owner.setLynxInspectorConsoleDelegate(delegate);
   }
 }
 ```
