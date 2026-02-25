@@ -1,16 +1,16 @@
-import { APITable } from '@lynx';
-
 import {
   AndroidOnly,
   IOSOnly,
   ClayOnly,
+  ClayWindowsOnly,
+  ClayMacOSOnly,
   HarmonyOnly,
   Required,
   Deprecated,
   Go,
   PlatformTabs,
-  VersionBadge,
 } from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
 
 Used to display images
 
@@ -81,6 +81,10 @@ Image blur radius
 
 Stretchable area for 9patch images, in percentage or decimal, four values for top, right, bottom, left
 
+:::note
+Using cap-insets does not require the original image to be a 9-patch image.
+:::
+
 ### `cap-insets-scale`
 
 {' '}
@@ -126,9 +130,37 @@ This can resolve flickering issues when the image src is switched and reloaded. 
 'image-config'?: 'ARGB_8888' | 'RGB_565';
 ```
 
-ARGB_8888: 32-bit memory per pixel, supports semi-transparent images
-RGB_565: 16-bit memory per pixel, reduces memory usage but loses transparency
+`ARGB_8888`
+: 32-bit memory per pixel, supports semi-transparent images.
+
+`RGB_565`
+: 16-bit memory per pixel, reduces memory usage but loses transparency.
+
 Support PC platform since 3.5
+
+:::note
+
+Affects the actual memory usage of the image bitmap.
+
+Taking an image with a resolution of 1024*768 as an example, the actual memory usage is (1024 * 768 \* bits per pixel / 8) Bytes.
+
+The default is ARGB_8888. Frontend developers can optimize image memory usage by setting it to RGB_565.
+
+`ARGB_8888`
+: Each pixel occupies 32 bits of memory and includes an alpha channel.
+
+`RGB_565`
+: Each pixel occupies 16 bits of memory, which reduces memory usage but results in the loss of transparency.
+
+Setting RGB_565 may affect the display of
+`<image>`
+'s border-radius. You can set border-radius on the parent view of the
+`<image>`
+and add the clip-radius attribute to the parent view.
+
+It is not recommended to use RGB_565 when mode="aspectFit", as it may cause black borders in the cropped area.
+
+:::
 
 ### `loop-count`
 
@@ -159,10 +191,18 @@ mode?: 'scaleToFill' | 'aspectFit' | 'aspectFill' | 'center';
 ```
 
 Specifies image cropping/scaling mode
-scaleToFill: Scales the image without preserving the aspect ratio, stretching the image to fill the element
-aspectFit: Scales the image while preserving aspect ratio so that the long side is fully visible
-aspectFill: Scales the image while preserving aspect ratio, ensuring the short side fills the element
-center: Does not scale the image; image is centered
+
+`scaleToFill`
+: Scales the image without preserving the aspect ratio, stretching the image to fill the element.
+
+`aspectFit`
+: Scales the image while preserving aspect ratio so that the long side is fully visible.
+
+`aspectFill`
+: Scales the image while preserving aspect ratio, ensuring the short side fills the element.
+
+`center`
+: Does not scale the image; image is centered.
 
 ### `placeholder`
 
@@ -223,7 +263,9 @@ Supports http/https/base64
 
 {' '}
 
-<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>2.12</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>
+  2.12
+</VersionBadge>
 
 ```tsx
 'tint-color'?: string;
@@ -236,6 +278,18 @@ Changes the color of all non-transparent pixels to the tint-color specified. The
 ## Events
 
 Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+
+### `bindcurrentloopcomplete`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.7</VersionBadge>
+
+```tsx
+bindcurrentloopcomplete = (e: BaseEvent) => {};
+```
+
+Triggered when one loop of the animated image finishes playing.
 
 ### `binderror`
 
@@ -251,6 +305,22 @@ binderror = (e: ErrorEvent) => {};
 
 Image load error event
 
+### `bindfinalloopcomplete`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.7</VersionBadge>
+
+```tsx
+bindfinalloopcomplete = (e: BaseEvent) => {};
+```
+
+Triggered when the animated image finishes playing all
+`loop-count`
+loops. If
+`loop-count`
+is not set, this callback will not be triggered.
+
 ### `bindload`
 
 {' '}
@@ -264,6 +334,18 @@ bindload = (e: LoadEvent) => {};
 ```
 
 Image load success event
+
+### `bindstartplay`
+
+{' '}
+
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.7</VersionBadge>
+
+```tsx
+bindstartplay = (e: BaseEvent) => {};
+```
+
+Triggered when the animated image starts playing.
 
 ## Methods
 
@@ -290,6 +372,7 @@ fail: function (res) {},
 ````
 
 Pauses the animation, without resetting the loop-count.
+
 
 ### `resumeAnimation`
 
@@ -328,6 +411,7 @@ fail: function (res) {},
 ````
 
 Restart the animation playback method controlled by the front end, and the animation playback progress and loop count will be reset.
+
 
 ### `stopAnimation`
 
