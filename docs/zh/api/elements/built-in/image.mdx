@@ -103,7 +103,7 @@ src: string;
 
 当前支持的图片格式包括：`png`、`jpg`、`jpeg`、`bmp`、`gif` 和 `webp`。
 
-暂不支持 `svg` 格式。如需渲染 `svg`，可参考[自定义元件](../../../guide/custom-native-component.mdx) 自行实现。
+暂不支持 `svg` 格式。如需渲染 `svg`，可参考[自定义元件](../../../guide/custom-native-component.mdx)自行实现。
 
 ::: note
 
@@ -115,7 +115,7 @@ src: string;
 
 ```tsx
 // DefaultValue: 'scaleToFill'
-mode?: 'scaleToFill' | 'aspectFit' | 'aspectFill';
+mode?: 'scaleToFill' | 'aspectFit' | 'aspectFill' | 'center';
 ```
 
 指定图片裁剪/缩放模式：
@@ -125,6 +125,8 @@ mode?: 'scaleToFill' | 'aspectFit' | 'aspectFill';
 - `aspectFit`：保持纵横比缩放，使图片的完整内容可见。
 
 - `aspectFill`：保持纵横比缩放，使短边填充 `<image>` 元件，可能导致部分内容裁剪。
+
+- `center`：不对图片进行缩放，图片将居中显示。
 
 ### `placeholder`
 
@@ -199,18 +201,30 @@ loop-count?: number;
 image-config?: 'RGB_565' | 'ARGB_8888';
 ```
 
-指定图像数据格式，有两种取值:
+指定图像数据格式，有两种取值：
 
-`ARGB_8888` 每个像素点占用 32 位内存，包含透明通道。
+`ARGB_8888`：每个像素占用 32 位内存，支持半透明图片（包含 alpha 通道）。
 
-`RGB_565` 每个像素占用 16 位内存，可以减少内存占用，但透明度会丢失。
+`RGB_565`：每个像素占用 16 位内存，可以减少内存占用，但会丢失透明度。
+
+PC 平台自 3.5 起支持。
 
 ::: note
 
-影响 Android 上实际 bitmap 占用的内存大小。
+影响图片 bitmap 的实际内存占用。
 
-以一个图像分辨率为 1024\*768 的图片为例。
-实际占用内存大小为（1024\*768\*像素位数/8）Byte
+以一个分辨率为 1024\*768 的图片为例，实际占用内存大小为（1024\*768\*像素位数/8）Bytes。
+
+默认值为 ARGB_8888。前端可以通过设置为 RGB_565 来优化图片内存占用。
+
+`ARGB_8888`：每个像素占用 32 bits 内存，并包含 alpha 通道。
+
+`RGB_565`：每个像素占用 16 bits 内存，可以减少内存占用，但会导致透明度丢失。
+
+设置为 RGB_565 可能会影响 `<image>` 的 border-radius 展示。你可以将 border-radius 设置在 `<image>` 的父 view 上，并在父 view 上添加 clip-radius 属性。
+
+不建议在 mode="aspectFit" 时使用 RGB_565，因为可能会在裁剪区域出现黑边。
+
 :::
 
 ### `auto-size`
@@ -255,6 +269,30 @@ tint-color?: string;
 ## 事件
 
 前端可以在元件上绑定相应事件回调来监听元件的运行时行为，使用方法如下。
+
+### `bindstartplay`
+
+动图开始播放时触发。
+
+```tsx
+bindstartplay = (e: BaseEvent) => {};
+```
+
+### `bindcurrentloopcomplete`
+
+动图播放完成一轮时触发。
+
+```tsx
+bindcurrentloopcomplete = (e: BaseEvent) => {};
+```
+
+### `bindfinalloopcomplete`
+
+动图播放完成所有 `loop-count` 次数时触发。如果未设置 `loop-count`，该回调不会触发。
+
+```tsx
+bindfinalloopcomplete = (e: BaseEvent) => {};
+```
 
 ### `bindload`
 
