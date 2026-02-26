@@ -79,6 +79,7 @@ export { YouTubeIframe } from './YoutubeIframe';
 // ----------------------------------------------------------------------------
 
 export { BlogAvatar } from './blog-avatar';
+export { BlogHeader } from './blog-header';
 export { BlogList } from './blog-list';
 
 // ----------------------------------------------------------------------------
