@@ -5,7 +5,7 @@ import {
   IconTiktokLogo,
   IconUserCircle,
 } from '@douyinfe/semi-icons';
-import { Avatar, Space } from '@douyinfe/semi-ui';
+import { Avatar } from '@douyinfe/semi-ui';
 import { useLang } from '@rspress/core/runtime';
 import { useMemo } from 'react';
 import originListData from './authors.json';
@@ -36,52 +36,75 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
 
   return (
     <span className={styles['avatar-item']}>
-      <Space>
-        <Avatar
-          className="!pointer-events-none"
-          src={author?.image}
-          // @ts-ignore
-          zoom={undefined}
-          onMouseEnter={undefined}
-          onClick={undefined}
-          onMouseLeave={undefined}
-        ></Avatar>
-        <div>
-          <div className="text-sm font-bold">
-            {lang === 'zh' ? author.name_zh : author.name}
-          </div>
-          <div className="text-xs leading-[1em] mx-0 my-1 text-[color:var(--text-secondary)]">
-            {lang === 'zh' ? author.title_zh : author.title}
-          </div>
-          <div>
-            <Space>
-              {Object.entries(author.socials).map(([key, value]) => {
-                return value?.link ? (
-                  <span
-                    key={key}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.open(value?.link, '_blank');
-                    }}
-                    className="cursor-pointer"
-                  >
-                    {brandSpList[key as BrandKey]
-                      ? brandSpList[key as BrandKey].icon
-                      : brandSpList['default'].icon}
-                  </span>
-                ) : (
-                  <span key={key}>
-                    {brandSpList[key as BrandKey]
-                      ? brandSpList[key as BrandKey].icon
-                      : brandSpList['default'].icon}
-                  </span>
-                );
-              })}
-            </Space>
-          </div>
+      <img
+        className={styles['avatar-img']}
+        src={author?.image}
+        alt={author.name}
+      />
+      <div className={styles['avatar-text']}>
+        <div className="text-sm leading-none font-medium">
+          {lang === 'zh' ? author.name_zh : author.name}
         </div>
-      </Space>
+        <div className="text-xs leading-none text-[color:var(--text-secondary)]">
+          {lang === 'zh' ? author.title_zh : author.title}
+        </div>
+        <div className={styles['avatar-socials']}>
+          {Object.entries(author.socials).map(([key, value]) => {
+            return value?.link ? (
+              <span
+                key={key}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(value?.link, '_blank');
+                }}
+                className="cursor-pointer"
+              >
+                {brandSpList[key as BrandKey]
+                  ? brandSpList[key as BrandKey].icon
+                  : brandSpList['default'].icon}
+              </span>
+            ) : (
+              <span key={key}>
+                {brandSpList[key as BrandKey]
+                  ? brandSpList[key as BrandKey].icon
+                  : brandSpList['default'].icon}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    </span>
+  );
+};
+
+const CompactAvatar = ({
+  authors,
+}: {
+  authors: (typeof originListData)[0][];
+}) => {
+  const lang = useLang();
+
+  return (
+    <span className={styles['compact-authors']}>
+      <span className={styles['compact-avatars']}>
+        {authors.map((author) => (
+          <Avatar
+            key={author.id}
+            className={styles['compact-avatar']}
+            src={author?.image}
+            size="extra-small"
+            // @ts-ignore
+            zoom={undefined}
+            onMouseEnter={undefined}
+            onClick={undefined}
+            onMouseLeave={undefined}
+          />
+        ))}
+      </span>
+      <span className={styles['compact-names']}>
+        {authors.map((a) => (lang === 'zh' ? a.name_zh : a.name)).join(', ')}
+      </span>
     </span>
   );
 };
@@ -89,9 +112,11 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
 const BlogAvatar = ({
   list,
   className,
+  compact,
 }: {
   list: string[];
   className?: string;
+  compact?: boolean;
 }) => {
   const filteredAuthors = useMemo(() => {
     // Create a map of authors by id for O(1) lookup
@@ -107,6 +132,14 @@ const BlogAvatar = ({
 
   if (filteredAuthors.length === 0) {
     return <></>;
+  }
+
+  if (compact) {
+    return (
+      <div className={className || ''}>
+        <CompactAvatar authors={filteredAuthors} />
+      </div>
+    );
   }
 
   return (

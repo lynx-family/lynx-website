@@ -112,6 +112,8 @@ export default defineConfig({
   },
   base: '/next',
   themeConfig: {
+    enableContentAnimation: true,
+    enableAppearanceAnimation: true,
     locales: [
       {
         lang: 'zh',
