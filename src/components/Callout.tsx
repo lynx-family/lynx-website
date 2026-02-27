@@ -1,66 +1,46 @@
-interface CalloutProps {
-  title?: string;
-  children: React.ReactNode;
-}
-
-function CalloutBase({
-  type,
-  title,
-  children,
-}: CalloutProps & { type: string }) {
-  if (type === 'details') {
-    return (
-      <details className={`rspress-directive ${type}`}>
-        <summary className="rspress-directive-title">{title}</summary>
-        <div className="rspress-directive-content">{children}</div>
-      </details>
-    );
-  }
-
-  return (
-    <div className={`rspress-directive ${type}`}>
-      <div className="rspress-directive-title">{title}</div>
-      <div className="rspress-directive-content">{children}</div>
-    </div>
-  );
-}
+import {
+  Callout as CalloutBase,
+  type CalloutProps,
+} from '@rspress/core/theme-original';
 
 export function Note(props: CalloutProps) {
-  return <CalloutBase type="note" title={props.title ?? 'NOTE'} {...props} />;
+  return <CalloutBase {...props} type="note" title={props.title ?? 'NOTE'} />;
 }
 
 export function Warning(props: CalloutProps) {
   return (
-    <CalloutBase type="warning" title={props.title ?? 'WARNING'} {...props} />
+    <CalloutBase {...props} type="warning" title={props.title ?? 'WARNING'} />
   );
 }
 
 export function Danger(props: CalloutProps) {
   return (
-    <CalloutBase type="danger" title={props.title ?? 'DANGER'} {...props} />
+    <CalloutBase {...props} type="danger" title={props.title ?? 'DANGER'} />
   );
 }
 
 export function Tip(props: CalloutProps) {
-  return <CalloutBase type="tip" title={props.title ?? 'TIP'} {...props} />;
+  return <CalloutBase {...props} type="tip" title={props.title ?? 'TIP'} />;
 }
 
 export function Info(props: CalloutProps) {
-  return <CalloutBase type="info" title={props.title ?? 'INFO'} {...props} />;
+  return <CalloutBase {...props} type="info" title={props.title ?? 'INFO'} />;
 }
 
 export function Details(props: CalloutProps) {
-  return <CalloutBase type="details" {...props} />;
+  return <CalloutBase {...props} type="details" />;
 }
 
 // For backwards compatibility
+type CalloutType = 'note' | 'warning' | 'danger' | 'tip' | 'info' | 'details';
+
 export default function Callout({
   type,
   ...props
 }: CalloutProps & {
-  type: 'note' | 'warning' | 'danger' | 'tip' | 'info' | 'details';
+  type: CalloutType;
 }) {
-  const defaultTitles: Record<Exclude<typeof type, 'details'>, string> = {
+  const defaultTitles: Record<Exclude<CalloutType, 'details'>, string> = {
     note: 'NOTE',
     warning: 'WARNING',
     danger: 'DANGER',
@@ -69,13 +49,14 @@ export default function Callout({
   };
   return (
     <CalloutBase
+      {...props}
       type={type}
       title={
         type === 'details'
           ? props.title
-          : (props.title ?? defaultTitles[type as keyof typeof defaultTitles])
+          : (props.title ??
+            defaultTitles[type as Exclude<CalloutType, 'details'>])
       }
-      {...props}
     />
   );
 }
