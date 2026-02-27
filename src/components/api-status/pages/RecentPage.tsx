@@ -1,11 +1,10 @@
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
 import React from 'react';
 import { Card, CardContent } from '../../ui/card';
 import { APIItem } from '../APIStatusDashboard';
 import { PLATFORM_CONFIG } from '../constants';
-import type { APIStats, FeatureInfo } from '../types';
+import type { APIStats, DisplayPlatformName, FeatureInfo } from '../types';
 
 // Platform icons
 const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
@@ -43,7 +42,7 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface RecentPageProps {
   stats: APIStats;
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
 }
 
 export const RecentPage: React.FC<RecentPageProps> = ({

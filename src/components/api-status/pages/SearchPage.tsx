@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
 import React, { useMemo, useState } from 'react';
 import { Input } from '../../ui/input';
@@ -11,7 +10,7 @@ import {
   SelectValue,
 } from '../../ui/select';
 import { APIItem } from '../APIStatusDashboard';
-import type { APIStats, FeatureInfo } from '../types';
+import type { APIStats, DisplayPlatformName, FeatureInfo } from '../types';
 import { CATEGORY_DISPLAY_NAMES } from '../types';
 
 const i18n = {
@@ -62,7 +61,7 @@ const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface SearchPageProps {
   stats: APIStats;
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
 }
 
 export const SearchPage: React.FC<SearchPageProps> = ({

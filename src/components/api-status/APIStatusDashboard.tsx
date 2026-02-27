@@ -1,6 +1,5 @@
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang, withBase } from '@rspress/core/runtime';
 import React, { useMemo, useState } from 'react';
 import APITable from '../api-table/APITable';
@@ -24,7 +23,12 @@ import {
 import { TooltipProvider } from '../ui/tooltip';
 import { CategoryTable, type HighlightMode } from './CategoryTable';
 import { PLATFORM_CONFIG } from './constants';
-import type { APIStats, FeatureInfo, TimelinePoint } from './types';
+import type {
+  APIStats,
+  DisplayPlatformName,
+  FeatureInfo,
+  TimelinePoint,
+} from './types';
 import {
   CATEGORY_DISPLAY_NAMES,
   CLAY_PLATFORMS,
@@ -198,7 +202,7 @@ export interface APIItemProps {
   query: string;
   name: string;
   category: string;
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
   support: FeatureInfo['support'];
   compact?: boolean;
   missing?: boolean; // Style variant for missing APIs
@@ -388,7 +392,7 @@ export const APIItem: React.FC<APIItemProps> = ({
 // Interactive Parity Chart with hover
 interface ParityChartProps {
   timeline: TimelinePoint[];
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
 }
 
 const ParityChart: React.FC<ParityChartProps> = ({
@@ -568,10 +572,10 @@ export const APIStatusDashboard: React.FC = () => {
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 
   // Global filter state - now uses multi-platform selection
-  const [showClay, setShowClay] = useState(false);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformName[]>([
-    'web_lynx',
-  ]);
+  const [showClayDetails, setShowClayDetails] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<
+    DisplayPlatformName[]
+  >(['web_lynx']);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState<
@@ -586,7 +590,7 @@ export const APIStatusDashboard: React.FC = () => {
   const categoryOptions = ['all', ...Object.keys(categories)];
 
   // Toggle platform selection
-  const togglePlatform = (platform: PlatformName) => {
+  const togglePlatform = (platform: DisplayPlatformName) => {
     if (selectedPlatforms.includes(platform)) {
       if (selectedPlatforms.length > 1) {
         setSelectedPlatforms(selectedPlatforms.filter((p) => p !== platform));
@@ -594,6 +598,39 @@ export const APIStatusDashboard: React.FC = () => {
     } else {
       setSelectedPlatforms([...selectedPlatforms, platform]);
     }
+    setExpandedCategory(null);
+  };
+
+  // Toggle between Clay aggregate and Clay detail view
+  const toggleClayDetails = () => {
+    if (!showClayDetails) {
+      // Switching to details: replace aggregate 'clay' with 4 sub-platforms
+      const hasClayAggregate = selectedPlatforms.includes('clay');
+      const withoutClay = selectedPlatforms.filter((p) => p !== 'clay');
+      setSelectedPlatforms(
+        hasClayAggregate
+          ? [...withoutClay, ...CLAY_PLATFORMS]
+          : withoutClay.length > 0
+            ? withoutClay
+            : ['web_lynx'],
+      );
+    } else {
+      // Switching to aggregate: replace any Clay sub-platforms with aggregate 'clay'
+      const hasAnyClayDetail = selectedPlatforms.some((p) =>
+        CLAY_PLATFORMS.includes(p as any),
+      );
+      const withoutClayDetails = selectedPlatforms.filter(
+        (p) => !CLAY_PLATFORMS.includes(p as any),
+      );
+      setSelectedPlatforms(
+        hasAnyClayDetail
+          ? [...withoutClayDetails, 'clay']
+          : withoutClayDetails.length > 0
+            ? withoutClayDetails
+            : ['web_lynx'],
+      );
+    }
+    setShowClayDetails(!showClayDetails);
     setExpandedCategory(null);
   };
 
@@ -826,103 +863,166 @@ export const APIStatusDashboard: React.FC = () => {
               {/* Separator on desktop */}
               <div className="hidden mx-1 w-px h-5 sm:block bg-border" />
 
-              {/* Clay Toggle */}
-              <button
-                onClick={() => setShowClay(!showClay)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border-2',
-                  showClay
-                    ? 'bg-primary/10 border-primary text-primary'
-                    : 'bg-card border-transparent text-muted-foreground hover:border-muted-foreground/30',
-                )}
-              >
-                <svg
-                  className={cn(
-                    'w-3.5 h-3.5 transition-colors',
-                    showClay ? 'text-primary' : 'text-muted-foreground',
-                  )}
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
-                </svg>
-                <span>Clay</span>
-                {showClay && (
-                  <svg
-                    className="w-3 h-3"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <polyline
-                      points="20 6 9 17 4 12"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-
-              {/* Clay Platforms - inline with others */}
-              {showClay &&
-                CLAY_PLATFORMS.map((platform) => {
-                  const ps = summary.by_platform[platform];
-                  if (!ps) return null;
-                  const colors =
-                    PLATFORM_CONFIG[platform]?.colors ||
-                    PLATFORM_CONFIG.android.colors;
-                  const isSelected = selectedPlatforms.includes(platform);
-                  return (
-                    <button
-                      key={platform}
-                      onClick={() => togglePlatform(platform)}
-                      className={cn(
-                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
-                        'border-2',
-                        isSelected
-                          ? `${colors.bg} ${colors.border}`
-                          : 'bg-card border-transparent hover:border-muted-foreground/30',
-                      )}
-                    >
-                      {/* Checkbox indicator */}
-                      <div
+              {/* Clay: aggregate or detail view */}
+              {!showClayDetails ? (
+                <>
+                  {/* Aggregate Clay platform button */}
+                  {(() => {
+                    const ps = summary.by_platform['clay'];
+                    if (!ps) return null;
+                    const colors =
+                      PLATFORM_CONFIG['clay']?.colors ||
+                      PLATFORM_CONFIG.android.colors;
+                    const isSelected = selectedPlatforms.includes('clay');
+                    return (
+                      <button
+                        key="clay"
+                        onClick={() => togglePlatform('clay')}
                         className={cn(
-                          'w-3 h-3 rounded border flex items-center justify-center transition-colors',
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
+                          'border-2',
                           isSelected
-                            ? `${colors.border} ${colors.bg}`
-                            : 'border-muted-foreground/30',
+                            ? `${colors.bg} ${colors.border}`
+                            : 'bg-card border-transparent hover:border-muted-foreground/30',
                         )}
                       >
-                        {isSelected && (
-                          <svg
-                            className={cn('w-2 h-2', colors.text)}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          >
-                            <polyline
-                              points="20 6 9 17 4 12"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                      <PlatformIcon
-                        platform={platform}
-                        className={cn('w-3.5 h-3.5', colors.text)}
+                        <div
+                          className={cn(
+                            'w-3 h-3 rounded border flex items-center justify-center transition-colors',
+                            isSelected
+                              ? `${colors.border} ${colors.bg}`
+                              : 'border-muted-foreground/30',
+                          )}
+                        >
+                          {isSelected && (
+                            <svg
+                              className={cn('w-2 h-2', colors.text)}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            >
+                              <polyline
+                                points="20 6 9 17 4 12"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                        <PlatformIcon
+                          platform="clay"
+                          className={cn('w-3.5 h-3.5', colors.text)}
+                        />
+                        <span>Clay</span>
+                        <span className={cn('font-mono', colors.text)}>
+                          {ps.coverage_percent}%
+                        </span>
+                      </button>
+                    );
+                  })()}
+                  {/* Details expand button */}
+                  <button
+                    onClick={toggleClayDetails}
+                    className="inline-flex items-center gap-1 px-1.5 py-1.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    title="Clay Details"
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="m9 18 6-6-6-6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
-                      <span>
-                        {PLATFORM_CONFIG[platform]?.label || platform}
-                      </span>
-                      <span className={cn('font-mono', colors.text)}>
-                        {ps.coverage_percent}%
-                      </span>
-                    </button>
-                  );
-                })}
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Individual Clay platform buttons */}
+                  {CLAY_PLATFORMS.map((platform) => {
+                    const ps = summary.by_platform[platform];
+                    if (!ps) return null;
+                    const colors =
+                      PLATFORM_CONFIG[platform]?.colors ||
+                      PLATFORM_CONFIG.android.colors;
+                    const isSelected = selectedPlatforms.includes(platform);
+                    return (
+                      <button
+                        key={platform}
+                        onClick={() => togglePlatform(platform)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
+                          'border-2',
+                          isSelected
+                            ? `${colors.bg} ${colors.border}`
+                            : 'bg-card border-transparent hover:border-muted-foreground/30',
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'w-3 h-3 rounded border flex items-center justify-center transition-colors',
+                            isSelected
+                              ? `${colors.border} ${colors.bg}`
+                              : 'border-muted-foreground/30',
+                          )}
+                        >
+                          {isSelected && (
+                            <svg
+                              className={cn('w-2 h-2', colors.text)}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            >
+                              <polyline
+                                points="20 6 9 17 4 12"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                        <PlatformIcon
+                          platform={platform}
+                          className={cn('w-3.5 h-3.5', colors.text)}
+                        />
+                        <span>
+                          {PLATFORM_CONFIG[platform]?.label || platform}
+                        </span>
+                        <span className={cn('font-mono', colors.text)}>
+                          {ps.coverage_percent}%
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {/* Collapse back to summary */}
+                  <button
+                    onClick={toggleClayDetails}
+                    className="inline-flex items-center gap-1 px-1.5 py-1.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    title="Clay Summary"
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="m15 18-6-6 6-6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Search and Filters - search on own row on mobile, all in one row on desktop */}
@@ -1172,7 +1272,6 @@ export const APIStatusDashboard: React.FC = () => {
           <CardContent className="px-0 pt-0 pb-0">
             <CategoryTable
               categories={categories}
-              showClay={showClay}
               selectedPlatforms={selectedPlatforms}
               expandedCategory={expandedCategory}
               onCategoryClick={(cat) =>

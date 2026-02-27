@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang, withBase } from '@rspress/core/runtime';
 import React from 'react';
 import {
@@ -17,7 +16,12 @@ import {
   useSidebar,
 } from '../ui/sidebar';
 import { PLATFORM_CONFIG } from './constants';
-import { CLAY_PLATFORMS, NATIVE_PLATFORMS, type APIStats } from './types';
+import {
+  CLAY_PLATFORMS,
+  NATIVE_PLATFORMS,
+  type APIStats,
+  type DisplayPlatformName,
+} from './types';
 
 // Platform icons
 const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
@@ -93,10 +97,10 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface APIStatusSidebarProps {
   stats: APIStats;
-  selectedPlatforms: PlatformName[];
-  onPlatformsChange: (platforms: PlatformName[]) => void;
-  showClay: boolean;
-  onShowClayChange: (show: boolean) => void;
+  selectedPlatforms: DisplayPlatformName[];
+  onPlatformsChange: (platforms: DisplayPlatformName[]) => void;
+  showClayDetails: boolean;
+  onShowClayDetailsChange: (show: boolean) => void;
   activePage: PageType;
   onPageChange: (page: PageType) => void;
 }
@@ -133,8 +137,8 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   stats,
   selectedPlatforms,
   onPlatformsChange,
-  showClay,
-  onShowClayChange,
+  showClayDetails,
+  onShowClayDetailsChange,
   activePage,
   onPageChange,
 }) => {
@@ -154,15 +158,9 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     }
   }, [isColorblindMode]);
 
-  // Get available platforms based on showClay
-  const availablePlatforms = showClay
-    ? [...NATIVE_PLATFORMS, ...CLAY_PLATFORMS]
-    : NATIVE_PLATFORMS;
-
   // Toggle platform selection
-  const togglePlatform = (platform: PlatformName) => {
+  const togglePlatform = (platform: DisplayPlatformName) => {
     if (selectedPlatforms.includes(platform)) {
-      // Don't allow deselecting if it's the last one
       if (selectedPlatforms.length > 1) {
         onPlatformsChange(selectedPlatforms.filter((p) => p !== platform));
       }
@@ -171,11 +169,43 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     }
   };
 
+  // Toggle between Clay aggregate and Clay detail view
+  const toggleClayDetails = () => {
+    if (!showClayDetails) {
+      // Switching to details: replace aggregate 'clay' with 4 sub-platforms
+      const hasClayAggregate = selectedPlatforms.includes('clay');
+      const withoutClay = selectedPlatforms.filter((p) => p !== 'clay');
+      onPlatformsChange(
+        hasClayAggregate
+          ? [...withoutClay, ...CLAY_PLATFORMS]
+          : withoutClay.length > 0
+            ? withoutClay
+            : ['web_lynx'],
+      );
+    } else {
+      // Switching to aggregate: replace any Clay sub-platforms with aggregate 'clay'
+      const hasAnyClayDetail = selectedPlatforms.some((p) =>
+        CLAY_PLATFORMS.includes(p as any),
+      );
+      const withoutClayDetails = selectedPlatforms.filter(
+        (p) => !CLAY_PLATFORMS.includes(p as any),
+      );
+      onPlatformsChange(
+        hasAnyClayDetail
+          ? [...withoutClayDetails, 'clay']
+          : withoutClayDetails.length > 0
+            ? withoutClayDetails
+            : ['web_lynx'],
+      );
+    }
+    onShowClayDetailsChange(!showClayDetails);
+  };
+
   // Select all visible platforms
   const selectAll = () => {
-    const allVisible = showClay
+    const allVisible: DisplayPlatformName[] = showClayDetails
       ? [...NATIVE_PLATFORMS, ...CLAY_PLATFORMS]
-      : NATIVE_PLATFORMS;
+      : [...NATIVE_PLATFORMS, 'clay'];
     onPlatformsChange(allVisible.filter((p) => stats.summary.by_platform[p]));
   };
 
@@ -203,8 +233,8 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     icon: React.FC<{ className?: string }>;
   }[] = [
     { id: 'search', label: 'Search', icon: SearchIcon },
-    { id: 'coverage', label: 'Coverages', icon: TrendingUpIcon },
     { id: 'categories', label: 'Categories', icon: LayersIcon },
+    { id: 'coverage', label: 'Trend', icon: TrendingUpIcon },
     { id: 'recent', label: 'Recently added', icon: SparklesIcon },
   ];
 
@@ -325,94 +355,174 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                 );
               })}
 
-              {/* Clay Toggle */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => onShowClayChange(!showClay)}
-                  tooltip="Toggle Clay Platforms"
-                >
-                  <PlatformIcon
-                    platform="clay_android"
-                    className={cn(
-                      'w-4 h-4',
-                      showClay ? 'text-primary' : 'text-muted-foreground',
-                    )}
-                  />
-                  <span className="flex-1">Clay</span>
-                  {showClay && (
-                    <svg
-                      className="w-3 h-3 text-primary"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline
-                        points="20 6 9 17 4 12"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Clay Platforms (when expanded) */}
-              {showClay &&
-                CLAY_PLATFORMS.map((platform) => {
-                  const ps = stats.summary.by_platform[platform];
-                  if (!ps) return null;
-                  const colors =
-                    PLATFORM_CONFIG[platform]?.colors ||
-                    PLATFORM_CONFIG.clay_android.colors;
-                  const isSelected = selectedPlatforms.includes(platform);
-                  return (
-                    <SidebarMenuItem key={platform}>
-                      <SidebarMenuButton
-                        isActive={isSelected}
-                        onClick={() => togglePlatform(platform)}
-                        tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
-                        className="pl-6"
-                      >
-                        {/* Checkbox indicator */}
-                        <div
-                          className={cn(
-                            'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
-                            isSelected
-                              ? `${colors.border} ${colors.bg}`
-                              : 'border-muted-foreground/30',
-                          )}
+              {/* Clay: aggregate or detail view */}
+              {!showClayDetails ? (
+                <>
+                  {/* Aggregate Clay entry */}
+                  {(() => {
+                    const ps = stats.summary.by_platform['clay'];
+                    if (!ps) return null;
+                    const colors =
+                      PLATFORM_CONFIG['clay']?.colors ||
+                      PLATFORM_CONFIG.clay_android.colors;
+                    const isSelected = selectedPlatforms.includes('clay');
+                    return (
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          isActive={isSelected}
+                          onClick={() => togglePlatform('clay')}
+                          tooltip={`Clay (${ps.coverage_percent}%)`}
                         >
-                          {isSelected && (
-                            <svg
-                              className={cn('w-3 h-3', colors.text)}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                            >
-                              <polyline
-                                points="20 6 9 17 4 12"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                        <PlatformIcon
-                          platform={platform}
-                          className={cn('h-4 w-4', colors.text)}
+                          <div
+                            className={cn(
+                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
+                              isSelected
+                                ? `${colors.border} ${colors.bg}`
+                                : 'border-muted-foreground/30',
+                            )}
+                          >
+                            {isSelected && (
+                              <svg
+                                className={cn('w-3 h-3', colors.text)}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <polyline
+                                  points="20 6 9 17 4 12"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <PlatformIcon
+                            platform="clay"
+                            className={cn('h-4 w-4', colors.text)}
+                          />
+                          <span className="flex-1">Clay</span>
+                          <span
+                            className={cn('text-xs font-mono', colors.text)}
+                          >
+                            {ps.coverage_percent}%
+                          </span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })()}
+                  {/* Expand to details */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={toggleClayDetails}
+                      tooltip="Clay Details"
+                      className="pl-6"
+                    >
+                      <svg
+                        className="w-3 h-3 text-muted-foreground"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="m9 18 6-6-6-6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
-                        <span className="flex-1">
-                          {PLATFORM_CONFIG[platform]?.label || platform}
-                        </span>
-                        <span className={cn('text-xs font-mono', colors.text)}>
-                          {ps.coverage_percent}%
-                        </span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                      </svg>
+                      <span className="text-muted-foreground">
+                        Clay Details
+                      </span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              ) : (
+                <>
+                  {/* Clay detail header with collapse */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={toggleClayDetails}
+                      tooltip="Clay Summary"
+                    >
+                      <PlatformIcon
+                        platform="clay"
+                        className="w-4 h-4 text-primary"
+                      />
+                      <span className="flex-1 text-primary">Clay</span>
+                      <svg
+                        className="w-3 h-3 text-muted-foreground"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="m15 18-6-6 6-6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {/* Individual Clay platforms */}
+                  {CLAY_PLATFORMS.map((platform) => {
+                    const ps = stats.summary.by_platform[platform];
+                    if (!ps) return null;
+                    const colors =
+                      PLATFORM_CONFIG[platform]?.colors ||
+                      PLATFORM_CONFIG.clay_android.colors;
+                    const isSelected = selectedPlatforms.includes(platform);
+                    return (
+                      <SidebarMenuItem key={platform}>
+                        <SidebarMenuButton
+                          isActive={isSelected}
+                          onClick={() => togglePlatform(platform)}
+                          tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
+                          className="pl-6"
+                        >
+                          <div
+                            className={cn(
+                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
+                              isSelected
+                                ? `${colors.border} ${colors.bg}`
+                                : 'border-muted-foreground/30',
+                            )}
+                          >
+                            {isSelected && (
+                              <svg
+                                className={cn('w-3 h-3', colors.text)}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <polyline
+                                  points="20 6 9 17 4 12"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <PlatformIcon
+                            platform={platform}
+                            className={cn('h-4 w-4', colors.text)}
+                          />
+                          <span className="flex-1">
+                            {PLATFORM_CONFIG[platform]?.label || platform}
+                          </span>
+                          <span
+                            className={cn('text-xs font-mono', colors.text)}
+                          >
+                            {ps.coverage_percent}%
+                          </span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

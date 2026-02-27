@@ -1,10 +1,9 @@
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
-import React from 'react';
+import React, { useState } from 'react';
 import { APIItem } from './APIStatusDashboard';
 import { PLATFORM_CONFIG } from './constants';
-import type { APIInfo, CategoryStats, FeatureInfo } from './types';
+import type { APIInfo, CategoryStats, DisplayPlatformName } from './types';
 import { CATEGORY_DISPLAY_NAMES, CLAY_PLATFORMS } from './types';
 
 export type HighlightMode = 'green' | 'red';
@@ -15,11 +14,11 @@ interface CategoryTableProps {
     {
       stats: CategoryStats;
       display_name: string;
-      missing?: Partial<Record<PlatformName, APIInfo[]>>;
+      missing?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+      exclusive?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
     }
   >;
-  showClay?: boolean;
-  selectedPlatforms?: PlatformName[];
+  selectedPlatforms?: DisplayPlatformName[];
   expandedCategory?: string | null;
   onCategoryClick?: (category: string) => void;
   highlightMode?: HighlightMode;
@@ -76,47 +75,112 @@ const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// i18n for missing APIs section
-const missingTexts = {
+// i18n
+const texts = {
   en: {
-    allSupported: 'All APIs supported on these platforms! 🎉',
+    allSupported: 'All shared APIs are supported on these platforms!',
+    gaps: 'gaps',
+    gapsDesc: 'Shared APIs not yet supported',
+    exclusive: 'platform-exclusive',
+    exclusiveDesc: 'APIs unique to one platform',
     missingIn: 'Missing in',
+    exclusiveIn: 'Exclusive to',
   },
   zh: {
-    allSupported: '这些平台已支持所有 API！🎉',
+    allSupported: '这些平台已支持所有共有 API！',
+    gaps: '缺失',
+    gapsDesc: '尚未支持的共有 API',
+    exclusive: '独占',
+    exclusiveDesc: '仅单一平台支持的 API',
     missingIn: '缺失于',
+    exclusiveIn: '独占于',
   },
 };
 
-interface MissingAPIsRowProps {
-  missingMap: Record<PlatformName, APIInfo[]>;
+// Collapsible section for API lists
+const CollapsibleAPISection: React.FC<{
+  title: string;
+  count: number;
+  description: string;
+  bgClass: string;
+  platformColor?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({
+  title,
+  count,
+  description,
+  bgClass,
+  platformColor,
+  defaultOpen = false,
+  children,
+}) => {
+  const [open, setOpen] = useState(defaultOpen);
+  if (count === 0) return null;
+
+  return (
+    <div className={cn('rounded-md overflow-hidden', bgClass)}>
+      <button
+        type="button"
+        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        onClick={() => setOpen(!open)}
+      >
+        <ChevronRightIcon
+          className={cn(
+            'w-3 h-3 transition-transform text-muted-foreground shrink-0',
+            open && 'rotate-90',
+          )}
+        />
+        {platformColor && (
+          <div
+            className={cn('w-1.5 h-1.5 rounded-full shrink-0', platformColor)}
+          />
+        )}
+        <span className="text-xs font-semibold">
+          {count} {title}
+        </span>
+        <span className="text-[10px] text-muted-foreground">{description}</span>
+      </button>
+      {open && <div className="px-3 pb-2 pt-0.5">{children}</div>}
+    </div>
+  );
+};
+
+interface ExpandedRowProps {
+  missingMap?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+  exclusiveMap?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
   colSpan: number;
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
   category: string;
 }
 
-const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
+const ExpandedRow: React.FC<ExpandedRowProps> = ({
   missingMap,
+  exclusiveMap,
   colSpan,
   selectedPlatforms,
   category,
 }) => {
   const lang = useLang();
-  const texts = lang === 'zh' ? missingTexts.zh : missingTexts.en;
+  const t = lang === 'zh' ? texts.zh : texts.en;
 
-  // Check if any missing APIs exist across selected platforms
-  const hasMissing = selectedPlatforms.some(
-    (p) => missingMap[p] && missingMap[p].length > 0,
+  const totalMissing = selectedPlatforms.reduce(
+    (sum, p) => sum + (missingMap?.[p]?.length || 0),
+    0,
+  );
+  const totalExclusive = selectedPlatforms.reduce(
+    (sum, p) => sum + (exclusiveMap?.[p]?.length || 0),
+    0,
   );
 
-  if (!hasMissing) {
+  if (totalMissing === 0 && totalExclusive === 0) {
     return (
       <tr>
         <td
           colSpan={colSpan}
           className="px-4 py-3 text-sm text-center bg-status-supported/5 text-status-supported-strong"
         >
-          {texts.allSupported}
+          {t.allSupported}
         </td>
       </tr>
     );
@@ -124,44 +188,68 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
 
   return (
     <tr>
-      <td colSpan={colSpan} className="px-3 py-3 bg-status-unsupported/5">
-        <div className="space-y-4">
+      <td colSpan={colSpan} className="px-3 py-3 border-b">
+        <div className="space-y-2">
+          {/* Per-platform missing */}
           {selectedPlatforms.map((platform) => {
-            const missing = missingMap[platform];
-            if (!missing || missing.length === 0) return null;
-
-            const createMissingSupport = (): FeatureInfo['support'] => ({
-              [platform]: { version_added: false },
-            });
-
+            const apis = missingMap?.[platform] || [];
+            if (apis.length === 0) return null;
             return (
-              <div key={platform}>
-                <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <div
-                    className={cn(
-                      'w-1.5 h-1.5 rounded-full',
-                      PLATFORM_CONFIG[platform]?.colors.bg,
-                    )}
-                  />
-                  {texts.missingIn}{' '}
-                  {PLATFORM_CONFIG[platform]?.label || platform} (
-                  {missing.length})
-                </div>
+              <CollapsibleAPISection
+                key={`missing-${platform}`}
+                title={`${t.missingIn} ${PLATFORM_CONFIG[platform]?.label || platform}`}
+                count={apis.length}
+                description=""
+                bgClass="bg-status-unsupported/5"
+                platformColor={PLATFORM_CONFIG[platform]?.colors.bg}
+                defaultOpen={false}
+              >
                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                  {missing.map((api, index) => (
+                  {apis.map((api, index) => (
                     <APIItem
                       key={`${platform}-${api.path}-${index}`}
                       query={api.path}
                       name={api.name}
                       category={category}
-                      selectedPlatforms={[platform]} // Show status for this platform specifically
-                      support={createMissingSupport()}
+                      selectedPlatforms={[platform]}
+                      support={{ [platform]: { version_added: false } }}
                       compact
                       missing
                     />
                   ))}
                 </div>
-              </div>
+              </CollapsibleAPISection>
+            );
+          })}
+
+          {/* Per-platform exclusive */}
+          {selectedPlatforms.map((platform) => {
+            const apis = exclusiveMap?.[platform] || [];
+            if (apis.length === 0) return null;
+            return (
+              <CollapsibleAPISection
+                key={`exclusive-${platform}`}
+                title={`${t.exclusiveIn} ${PLATFORM_CONFIG[platform]?.label || platform}`}
+                count={apis.length}
+                description=""
+                bgClass="bg-muted/30"
+                platformColor={PLATFORM_CONFIG[platform]?.colors.bg}
+                defaultOpen={false}
+              >
+                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  {apis.map((api, index) => (
+                    <APIItem
+                      key={`${platform}-${api.path}-${index}`}
+                      query={api.path}
+                      name={api.name}
+                      category={category}
+                      selectedPlatforms={[platform]}
+                      support={{ [platform]: { version_added: true } }}
+                      compact
+                    />
+                  ))}
+                </div>
+              </CollapsibleAPISection>
             );
           })}
         </div>
@@ -172,7 +260,6 @@ const MissingAPIsRow: React.FC<MissingAPIsRowProps> = ({
 
 export const CategoryTable: React.FC<CategoryTableProps> = ({
   categories,
-  showClay = false,
   selectedPlatforms = ['web_lynx'],
   expandedCategory = null,
   onCategoryClick,
@@ -224,7 +311,9 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                 key={platform}
                 className={cn(
                   'text-center font-semibold px-3 py-3 whitespace-nowrap text-xs',
-                  CLAY_PLATFORMS.includes(platform) && 'bg-muted/30',
+                  (CLAY_PLATFORMS.includes(platform as any) ||
+                    platform === 'clay') &&
+                    'bg-muted/30',
                 )}
               >
                 {PLATFORM_CONFIG[platform]?.label || platform}
@@ -234,12 +323,16 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         </thead>
         <tbody>
           {sortedCategories.map(
-            ({ key, stats, display_name, missing }, index) => {
+            ({ key, stats, display_name, missing, exclusive }, index) => {
               const isExpanded = expandedCategory === key;
 
               // Calculate missing count across all selected platforms
               const totalMissingCount = displayPlatforms.reduce((sum, p) => {
                 return sum + (missing?.[p]?.length || 0);
+              }, 0);
+
+              const totalExclusiveCount = displayPlatforms.reduce((sum, p) => {
+                return sum + (exclusive?.[p]?.length || 0);
               }, 0);
 
               return (
@@ -265,11 +358,18 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                         <span className="text-[11px] sm:text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
                           {CATEGORY_DISPLAY_NAMES[key] || display_name}
                         </span>
-                        {totalMissingCount > 0 && (
-                          <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-status-partial/20 text-status-partial-strong self-start whitespace-nowrap">
-                            {totalMissingCount} gaps
-                          </span>
-                        )}
+                        <div className="flex gap-1 self-start">
+                          {totalMissingCount > 0 && (
+                            <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-status-partial/20 text-status-partial-strong whitespace-nowrap">
+                              {totalMissingCount} gaps
+                            </span>
+                          )}
+                          {totalExclusiveCount > 0 && (
+                            <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground whitespace-nowrap">
+                              {totalExclusiveCount} excl.
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-3 py-3 font-mono text-xs text-center text-muted-foreground">
@@ -278,12 +378,15 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                     {displayPlatforms.map((platform) => {
                       const coverage = stats.coverage[platform] ?? 0;
                       const supported = stats.supported[platform] ?? 0;
+                      const excl = stats.exclusive?.[platform] ?? 0;
                       return (
                         <td
                           key={platform}
                           className={cn(
                             'text-center px-2 py-2',
-                            CLAY_PLATFORMS.includes(platform) && 'bg-muted/10',
+                            (CLAY_PLATFORMS.includes(platform as any) ||
+                              platform === 'clay') &&
+                              'bg-muted/10',
                           )}
                         >
                           <div
@@ -298,14 +401,20 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                             <span className="text-[9px] opacity-70">
                               {supported}/{stats.total}
                             </span>
+                            {excl > 0 && (
+                              <span className="text-[8px] opacity-50">
+                                +{excl} excl.
+                              </span>
+                            )}
                           </div>
                         </td>
                       );
                     })}
                   </tr>
                   {isExpanded && (
-                    <MissingAPIsRow
-                      missingMap={missing as Record<PlatformName, APIInfo[]>}
+                    <ExpandedRow
+                      missingMap={missing}
+                      exclusiveMap={exclusive}
                       colSpan={colSpan}
                       selectedPlatforms={selectedPlatforms}
                       category={key}
@@ -333,6 +442,10 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                 (sum, cat) => sum + cat.stats.total,
                 0,
               );
+              const totalExclusive = sortedCategories.reduce(
+                (sum, cat) => sum + (cat.stats.exclusive?.[platform] ?? 0),
+                0,
+              );
               const coverage =
                 totalApis > 0
                   ? Math.round((totalSupported / totalApis) * 100)
@@ -342,7 +455,9 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                   key={platform}
                   className={cn(
                     'text-center px-2 py-2',
-                    CLAY_PLATFORMS.includes(platform) && 'bg-muted/30',
+                    (CLAY_PLATFORMS.includes(platform as any) ||
+                      platform === 'clay') &&
+                      'bg-muted/30',
                   )}
                 >
                   <div
@@ -357,6 +472,11 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                     <span className="text-[9px] opacity-70">
                       {totalSupported}/{totalApis}
                     </span>
+                    {totalExclusive > 0 && (
+                      <span className="text-[8px] opacity-50">
+                        +{totalExclusive} excl.
+                      </span>
+                    )}
                   </div>
                 </td>
               );
