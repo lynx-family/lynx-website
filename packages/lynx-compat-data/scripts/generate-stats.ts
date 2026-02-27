@@ -32,6 +32,14 @@ const TRACKED_PLATFORMS: PlatformName[] = [
   'clay_windows',
 ];
 
+// Clay sub-platforms for aggregate computation
+const CLAY_SUB_PLATFORMS: PlatformName[] = [
+  'clay_android',
+  'clay_ios',
+  'clay_macos',
+  'clay_windows',
+];
+
 // Categories to scan with doc URL mappings
 const CATEGORIES = [
   {
@@ -79,11 +87,13 @@ interface CategoryStats {
   total: number;
   supported: Partial<Record<PlatformName, number>>;
   coverage: Partial<Record<PlatformName, number>>;
+  exclusive: Partial<Record<PlatformName, number>>;
 }
 
 interface PlatformStats {
   supported_count: number;
   coverage_percent: number;
+  exclusive_count: number;
 }
 
 interface CategoryDetail {
@@ -92,6 +102,7 @@ interface CategoryDetail {
   apis: string[];
   api_details: APIInfo[];
   missing: Partial<Record<PlatformName, APIInfo[]>>;
+  exclusive: Partial<Record<PlatformName, APIInfo[]>>;
 }
 
 interface RecentAPI {
@@ -178,6 +189,21 @@ function isRecentVersion(version: VersionValue): boolean {
 }
 
 /**
+ * Get the earliest version from a list of supported version values.
+ * Used for computing aggregate Clay support.
+ */
+function getEarliestVersion(versions: (string | boolean)[]): string | boolean {
+  const strings = versions.filter((v): v is string => typeof v === 'string');
+  if (strings.length === 0) return true; // all are boolean `true`
+  strings.sort((a, b) => {
+    const pa = a.split('.').map(Number);
+    const pb = b.split('.').map(Number);
+    return pa[0] * 1000 + (pa[1] || 0) - (pb[0] * 1000 + (pb[1] || 0));
+  });
+  return strings[0];
+}
+
+/**
  * Generate documentation URL from API path
  */
 function generateDocUrl(apiPath: string, docPrefix: string): string {
@@ -228,7 +254,6 @@ function collectAPIs(
   }
 
   if (identifier.__compat) {
-    total = 1;
     const compat = identifier.__compat as CompatStatement;
     const support: Partial<Record<PlatformName, string | boolean>> = {};
     let isRecent = false;
@@ -250,6 +275,16 @@ function collectAPIs(
         support[platform] = false;
       }
     }
+
+    // Only count toward total if at least 2 platforms support this API.
+    // APIs supported by 0 platforms are documented to signal Web API gaps.
+    // APIs supported by exactly 1 platform are platform-exclusive features
+    // (e.g. iOS-specific attributes, web_lynx-inheriting Web APIs).
+    // Neither should penalize other platforms in their coverage scores.
+    const supportCount = TRACKED_PLATFORMS.filter(
+      (p) => (supported[p] || 0) > 0,
+    ).length;
+    total = supportCount >= 2 ? 1 : 0;
 
     const docUrl = compat.lynx_path || generateDocUrl(apiPath, docPrefix);
     const name =
@@ -368,6 +403,7 @@ function processCategory(
   apis: string[];
   apiDetails: APIInfo[];
   missing: Partial<Record<PlatformName, APIInfo[]>>;
+  exclusiveApis: Partial<Record<PlatformName, APIInfo[]>>;
   recentAPIs: RecentAPI[];
 } {
   const fullPath = path.join(rootDir, categoryPath);
@@ -375,10 +411,11 @@ function processCategory(
   if (!fs.existsSync(fullPath)) {
     console.warn(`Category path does not exist: ${fullPath}`);
     return {
-      stats: { total: 0, supported: {}, coverage: {} },
+      stats: { total: 0, supported: {}, coverage: {}, exclusive: {} },
       apis: [],
       apiDetails: [],
       missing: {},
+      exclusiveApis: {},
       recentAPIs: [],
     };
   }
@@ -425,20 +462,44 @@ function processCategory(
       total > 0 ? Math.round(((supported[platform] || 0) / total) * 100) : 0;
   }
 
-  // Calculate missing APIs per platform
+  // Calculate missing APIs per platform (only for shared APIs, i.e. supported by >=2 platforms)
   const missing: Partial<Record<PlatformName, APIInfo[]>> = {};
   for (const platform of TRACKED_PLATFORMS) {
-    missing[platform] = apiDetails.filter(
-      (api) =>
-        api.support[platform] === false || api.support[platform] === undefined,
-    );
+    missing[platform] = apiDetails.filter((api) => {
+      const supportCount = TRACKED_PLATFORMS.filter(
+        (p) => api.support[p] !== false && api.support[p] !== undefined,
+      ).length;
+      if (supportCount < 2) return false;
+      return (
+        api.support[platform] === false || api.support[platform] === undefined
+      );
+    });
+  }
+
+  // Calculate per-platform exclusive APIs in this category
+  const exclusive: Partial<Record<PlatformName, number>> = {};
+  const exclusiveApis: Partial<Record<PlatformName, APIInfo[]>> = {};
+  for (const platform of TRACKED_PLATFORMS) {
+    const apis = apiDetails.filter((api) => {
+      const supporters = TRACKED_PLATFORMS.filter(
+        (p) => api.support[p] !== false && api.support[p] !== undefined,
+      );
+      return (
+        supporters.length === 1 &&
+        api.support[platform] !== false &&
+        api.support[platform] !== undefined
+      );
+    });
+    exclusive[platform] = apis.length;
+    exclusiveApis[platform] = apis;
   }
 
   return {
-    stats: { total, supported, coverage },
+    stats: { total, supported, coverage, exclusive },
     apis: apiDetails.map((a) => a.path),
     apiDetails,
     missing,
+    exclusiveApis,
     recentAPIs,
   };
 }
@@ -493,6 +554,15 @@ function calculateTimeline(
   // Only use recent versions (last 10)
   const recentVersions = versionHistory.slice(-10);
 
+  // Only count shared features (supported by at least 2 platforms)
+  const relevantFeatures = allFeatures.filter((f) => {
+    const supportCount = TRACKED_PLATFORMS.filter((p) => {
+      const support = f.support[p];
+      return support && isSupported(support.version_added);
+    }).length;
+    return supportCount >= 2;
+  });
+
   return recentVersions.map((v) => {
     const platformStats: Partial<
       Record<PlatformName, { supported: number; coverage: number }>
@@ -500,15 +570,15 @@ function calculateTimeline(
 
     for (const platform of TRACKED_PLATFORMS) {
       let supported = 0;
-      for (const feature of allFeatures) {
+      for (const feature of relevantFeatures) {
         const support = feature.support[platform];
         if (support && isVersionAtOrBefore(support.version_added, v.version)) {
           supported++;
         }
       }
       const coverage =
-        allFeatures.length > 0
-          ? Math.round((supported / allFeatures.length) * 100)
+        relevantFeatures.length > 0
+          ? Math.round((supported / relevantFeatures.length) * 100)
           : 0;
       platformStats[platform] = { supported, coverage };
     }
@@ -519,6 +589,157 @@ function calculateTimeline(
       platforms: platformStats,
     };
   });
+}
+
+/**
+ * Post-process stats to add aggregate "clay" platform data.
+ * For each API, "clay" is supported if ANY of the 4 Clay sub-platforms supports it.
+ * The version shown is the earliest among supporting sub-platforms.
+ */
+function addClayAggregate(stats: APIStats): void {
+  const clay = 'clay' as PlatformName;
+  const nonClayPlatforms = TRACKED_PLATFORMS.filter(
+    (p) => !CLAY_SUB_PLATFORMS.includes(p),
+  );
+
+  // 1. Process each category: compute aggregate clay stats per API
+  for (const cat of Object.values(stats.categories)) {
+    let claySupported = 0;
+
+    for (const api of cat.api_details) {
+      const supportingVersions = CLAY_SUB_PLATFORMS.map(
+        (p) => api.support[p],
+      ).filter((v): v is string | boolean => v !== false && v !== undefined);
+
+      if (supportingVersions.length > 0) {
+        claySupported++;
+        api.support[clay] = getEarliestVersion(supportingVersions);
+      } else {
+        api.support[clay] = false;
+      }
+    }
+
+    cat.stats.supported[clay] = claySupported;
+    cat.stats.coverage[clay] =
+      cat.stats.total > 0
+        ? Math.round((claySupported / cat.stats.total) * 100)
+        : 0;
+
+    // Exclusive to clay in this category: supported by clay but no non-clay platform
+    const clayExclApis = cat.api_details.filter((api) => {
+      const anyClaySupports = CLAY_SUB_PLATFORMS.some(
+        (p) => api.support[p] !== false && api.support[p] !== undefined,
+      );
+      if (!anyClaySupports) return false;
+      return nonClayPlatforms.every(
+        (p) => api.support[p] === false || api.support[p] === undefined,
+      );
+    });
+    cat.stats.exclusive = cat.stats.exclusive || {};
+    cat.stats.exclusive[clay] = clayExclApis.length;
+    cat.exclusive = cat.exclusive || {};
+    cat.exclusive[clay] = clayExclApis;
+
+    // Missing from clay = unsupported by ALL Clay sub-platforms,
+    // but is a shared API (supported by >=2 tracked platforms)
+    cat.missing[clay] = cat.api_details.filter((api) => {
+      const noClaySupport = CLAY_SUB_PLATFORMS.every(
+        (p) => api.support[p] === false || api.support[p] === undefined,
+      );
+      if (!noClaySupport) return false;
+      const supportCount = TRACKED_PLATFORMS.filter(
+        (p) => api.support[p] !== false && api.support[p] !== undefined,
+      ).length;
+      return supportCount >= 2;
+    });
+  }
+
+  // 2. Add to summary.by_platform
+  const totalSupported = Object.values(stats.categories).reduce(
+    (sum, cat) => sum + (cat.stats.supported[clay] || 0),
+    0,
+  );
+
+  // Count exclusive APIs for clay aggregate: supported by clay but no non-clay platform
+  const clayExclusiveCount = stats.features
+    ? stats.features.filter((f) => {
+        // Must be supported by at least one clay sub-platform
+        const anyClaySupports = CLAY_SUB_PLATFORMS.some((p) => {
+          const s = f.support[p];
+          return s && isSupported(s.version_added);
+        });
+        if (!anyClaySupports) return false;
+        // Must NOT be supported by any non-clay platform
+        return nonClayPlatforms.every((p) => {
+          const s = f.support[p];
+          return !s || !isSupported(s.version_added);
+        });
+      }).length
+    : 0;
+
+  stats.summary.by_platform[clay] = {
+    supported_count: totalSupported,
+    coverage_percent:
+      stats.summary.total_apis > 0
+        ? Math.round((totalSupported / stats.summary.total_apis) * 100)
+        : 0,
+    exclusive_count: clayExclusiveCount,
+  };
+
+  // 3. Add to features
+  if (stats.features) {
+    for (const feature of stats.features) {
+      const clayVersions = CLAY_SUB_PLATFORMS.map(
+        (p) => feature.support[p]?.version_added,
+      ).filter(
+        (v): v is string | boolean =>
+          v !== false && v !== null && v !== undefined,
+      );
+      feature.support[clay] = {
+        version_added:
+          clayVersions.length > 0 ? getEarliestVersion(clayVersions) : false,
+      };
+    }
+  }
+
+  // 4. Add to recent_apis
+  for (const api of stats.recent_apis) {
+    const clayVersions = CLAY_SUB_PLATFORMS.map((p) => api.versions[p]).filter(
+      (v): v is string | boolean =>
+        v !== false && v !== null && v !== undefined,
+    );
+    api.versions[clay] =
+      clayVersions.length > 0 ? getEarliestVersion(clayVersions) : false;
+  }
+
+  // 5. Add to timeline (must recompute properly per version)
+  if (stats.timeline && stats.features) {
+    const relevantFeatures = stats.features.filter((f) => {
+      const supportCount = TRACKED_PLATFORMS.filter((p) => {
+        const support = f.support[p];
+        return support && isSupported(support.version_added);
+      }).length;
+      return supportCount >= 2;
+    });
+
+    for (const point of stats.timeline) {
+      let supported = 0;
+      for (const feature of relevantFeatures) {
+        const anyClayAtVersion = CLAY_SUB_PLATFORMS.some((p) => {
+          const support = feature.support[p];
+          return (
+            support && isVersionAtOrBefore(support.version_added, point.version)
+          );
+        });
+        if (anyClayAtVersion) supported++;
+      }
+      const coverage =
+        relevantFeatures.length > 0
+          ? Math.round((supported / relevantFeatures.length) * 100)
+          : 0;
+      point.platforms[clay] = { supported, coverage };
+    }
+  }
 }
 
 /**
@@ -541,11 +762,8 @@ function generateStats(): APIStats {
   let featureId = 0;
   for (const { path: categoryPath, displayName, docPrefix } of CATEGORIES) {
     console.log(`  Processing ${displayName}...`);
-    const { stats, apis, apiDetails, missing, recentAPIs } = processCategory(
-      categoryPath,
-      displayName,
-      docPrefix,
-    );
+    const { stats, apis, apiDetails, missing, exclusiveApis, recentAPIs } =
+      processCategory(categoryPath, displayName, docPrefix);
 
     categories[categoryPath] = {
       display_name: displayName,
@@ -553,6 +771,7 @@ function generateStats(): APIStats {
       apis,
       api_details: apiDetails,
       missing,
+      exclusive: exclusiveApis,
     };
 
     byCategory[categoryPath] = stats;
@@ -660,12 +879,24 @@ function generateStats(): APIStats {
   // Calculate global platform stats for ALL platforms
   const byPlatform: Partial<Record<PlatformName, PlatformStats>> = {};
   for (const platform of TRACKED_PLATFORMS) {
+    // Count exclusive APIs: supported ONLY by this platform (among all tracked)
+    const exclusiveCount = allFeatures.filter((f) => {
+      const supporters = TRACKED_PLATFORMS.filter((p) => {
+        const s = f.support[p];
+        return s && isSupported(s.version_added);
+      });
+      if (supporters.length !== 1) return false;
+      const s = f.support[platform];
+      return s && isSupported(s.version_added);
+    }).length;
+
     byPlatform[platform] = {
       supported_count: globalSupported[platform] || 0,
       coverage_percent:
         globalTotal > 0
           ? Math.round(((globalSupported[platform] || 0) / globalTotal) * 100)
           : 0,
+      exclusive_count: exclusiveCount,
     };
   }
 
@@ -689,6 +920,9 @@ function generateStats(): APIStats {
     timeline,
   };
 
+  // Add aggregate Clay platform data
+  addClayAggregate(stats);
+
   console.log(`\nSummary:`);
   console.log(`  Total APIs: ${globalTotal}`);
   console.log(`  Features: ${allFeatures.length}`);
@@ -702,9 +936,14 @@ function generateStats(): APIStats {
   ] as PlatformName[]) {
     const ps = byPlatform[platform];
     console.log(
-      `    ${platform}: ${ps?.supported_count} (${ps?.coverage_percent}%)`,
+      `    ${platform}: ${ps?.supported_count}/${globalTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
     );
   }
+  const clayAgg = byPlatform['clay' as PlatformName];
+  console.log(`\n  Clay (Aggregate):`);
+  console.log(
+    `    clay: ${clayAgg?.supported_count}/${globalTotal} (${clayAgg?.coverage_percent}%) +${clayAgg?.exclusive_count} exclusive`,
+  );
   console.log(`\n  Clay Platforms:`);
   for (const platform of [
     'clay_android',
@@ -714,7 +953,7 @@ function generateStats(): APIStats {
   ] as PlatformName[]) {
     const ps = byPlatform[platform];
     console.log(
-      `    ${platform}: ${ps?.supported_count} (${ps?.coverage_percent}%)`,
+      `    ${platform}: ${ps?.supported_count}/${globalTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
     );
   }
 

@@ -1,11 +1,10 @@
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Progress } from '../../ui/progress';
 import { PLATFORM_CONFIG } from '../constants';
-import type { APIStats, TimelinePoint } from '../types';
+import type { APIStats, DisplayPlatformName, TimelinePoint } from '../types';
 
 const i18n = {
   en: {
@@ -13,12 +12,16 @@ const i18n = {
     trend: 'Coverage Trend',
     supported: 'Supported',
     total: 'Total APIs',
+    exclusive: 'exclusive',
+    shared: 'shared',
   },
   zh: {
     coverage: '覆盖率',
     trend: '覆盖率趋势',
     supported: '已支持',
     total: '总 API 数',
+    exclusive: '独占',
+    shared: '共有',
   },
 };
 
@@ -34,7 +37,7 @@ const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
 // Trend Chart
 interface ParityChartProps {
   timeline: TimelinePoint[];
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
 }
 
 const ParityChart: React.FC<ParityChartProps> = ({
@@ -216,7 +219,7 @@ const ParityChart: React.FC<ParityChartProps> = ({
 
 interface CoveragePageProps {
   stats: APIStats;
-  selectedPlatforms: PlatformName[];
+  selectedPlatforms: DisplayPlatformName[];
 }
 
 export const CoveragePage: React.FC<CoveragePageProps> = ({
@@ -271,8 +274,13 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
                   <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
                     <span>
                       {platformStats?.supported_count.toLocaleString()} /{' '}
-                      {summary.total_apis.toLocaleString()}
+                      {summary.total_apis.toLocaleString()} {t.shared}
                     </span>
+                    {(platformStats?.exclusive_count ?? 0) > 0 && (
+                      <span className="opacity-60">
+                        +{platformStats?.exclusive_count} {t.exclusive}
+                      </span>
+                    )}
                   </div>
                 </div>
               </CardContent>

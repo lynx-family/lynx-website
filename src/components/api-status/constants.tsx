@@ -105,6 +105,17 @@ export const PLATFORM_CONFIG: Record<string, PlatformConfig> = {
       line: '#a855f7',
     },
   },
+  clay: {
+    label: 'Clay',
+    icon: ClayIcon,
+    colors: {
+      bg: 'bg-teal-500/10',
+      border: 'border-teal-500',
+      text: 'text-teal-700 dark:text-teal-400',
+      progress: 'bg-teal-500',
+      line: '#14b8a6',
+    },
+  },
   clay_android: {
     label: 'Clay Android',
     icon: ClayIcon,

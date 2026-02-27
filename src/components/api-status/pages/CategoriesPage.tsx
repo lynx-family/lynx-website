@@ -1,10 +1,9 @@
 import { cn } from '@/lib/utils';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { useLang } from '@rspress/core/runtime';
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { CategoryTable, type HighlightMode } from '../CategoryTable';
-import type { APIStats } from '../types';
+import type { APIStats, DisplayPlatformName } from '../types';
 
 const i18n = {
   en: {
@@ -34,14 +33,12 @@ const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 interface CategoriesPageProps {
   stats: APIStats;
-  selectedPlatforms: PlatformName[];
-  showClay: boolean;
+  selectedPlatforms: DisplayPlatformName[];
 }
 
 export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   stats,
   selectedPlatforms,
-  showClay,
 }) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
@@ -82,7 +79,6 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
       <div className="p-0">
         <CategoryTable
           categories={categories}
-          showClay={showClay}
           selectedPlatforms={selectedPlatforms}
           expandedCategory={expandedCategory}
           onCategoryClick={(cat) =>

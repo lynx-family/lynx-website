@@ -1,5 +1,8 @@
 import type { PlatformName, VersionValue } from '@lynx-js/lynx-compat-data';
 
+/** PlatformName extended with the aggregate 'clay' virtual platform. */
+export type DisplayPlatformName = PlatformName | 'clay';
+
 export const NATIVE_PLATFORMS: PlatformName[] = [
   'android',
   'ios',
@@ -27,13 +30,15 @@ export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
 
 export interface CategoryStats {
   total: number;
-  supported: Partial<Record<PlatformName, number>>;
-  coverage: Partial<Record<PlatformName, number>>;
+  supported: Partial<Record<DisplayPlatformName, number>>;
+  coverage: Partial<Record<DisplayPlatformName, number>>;
+  exclusive: Partial<Record<DisplayPlatformName, number>>;
 }
 
 export interface PlatformSummary {
   supported_count: number;
   coverage_percent: number;
+  exclusive_count: number;
 }
 
 export interface APIInfo {
@@ -45,7 +50,8 @@ export interface APIInfo {
 export interface CategoryDetail {
   stats: CategoryStats;
   display_name: string;
-  missing: Partial<Record<PlatformName, APIInfo[]>>;
+  missing: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+  exclusive: Partial<Record<DisplayPlatformName, APIInfo[]>>;
 }
 
 export interface RecentAPI {
@@ -53,7 +59,7 @@ export interface RecentAPI {
   path: string;
   category: string;
   doc_url?: string;
-  versions: Partial<Record<PlatformName, VersionValue>>;
+  versions: Partial<Record<DisplayPlatformName, VersionValue>>;
 }
 
 export interface FeatureInfo {
@@ -63,7 +69,9 @@ export interface FeatureInfo {
   description?: string;
   category: string;
   source_file?: string;
-  support: Partial<Record<PlatformName, { version_added: VersionValue }>>;
+  support: Partial<
+    Record<DisplayPlatformName, { version_added: VersionValue }>
+  >;
 }
 
 export interface TimelinePoint {
@@ -71,7 +79,7 @@ export interface TimelinePoint {
   release_date?: string;
   platforms: Partial<
     Record<
-      PlatformName,
+      DisplayPlatformName,
       {
         supported: number;
         coverage: number;
@@ -85,7 +93,7 @@ export interface APIStats {
   summary: {
     total_apis: number;
     by_category: Record<string, CategoryStats>;
-    by_platform: Partial<Record<PlatformName, PlatformSummary>>;
+    by_platform: Partial<Record<DisplayPlatformName, PlatformSummary>>;
   };
   categories: Record<string, CategoryDetail>;
   recent_apis: RecentAPI[];

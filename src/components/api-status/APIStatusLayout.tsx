@@ -1,4 +1,3 @@
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import React, { useState } from 'react';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../ui/sidebar';
 import { TooltipProvider } from '../ui/tooltip';
@@ -7,7 +6,7 @@ import { CategoriesPage } from './pages/CategoriesPage';
 import { CoveragePage } from './pages/CoveragePage';
 import { RecentPage } from './pages/RecentPage';
 import { SearchPage } from './pages/SearchPage';
-import type { APIStats } from './types';
+import type { APIStats, DisplayPlatformName } from './types';
 
 // Import the generated stats
 import apiStats from '@lynx-js/lynx-compat-data/api-stats.json';
@@ -28,11 +27,10 @@ export const APIStatusLayout: React.FC = () => {
     return <>{'APIStatusLayout'}</>;
   }
   // Shared state for platform selection
-  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformName[]>([
-    'android',
-    'ios',
-  ]);
-  const [showClay, setShowClay] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<
+    DisplayPlatformName[]
+  >(['android', 'ios']);
+  const [showClayDetails, setShowClayDetails] = useState(false);
 
   // Page navigation state
   const [activePage, setActivePage] = useState<PageType>('search');
@@ -50,11 +48,7 @@ export const APIStatusLayout: React.FC = () => {
         );
       case 'categories':
         return (
-          <CategoriesPage
-            stats={stats}
-            selectedPlatforms={selectedPlatforms}
-            showClay={showClay}
-          />
+          <CategoriesPage stats={stats} selectedPlatforms={selectedPlatforms} />
         );
       case 'recent':
         return (
@@ -77,8 +71,8 @@ export const APIStatusLayout: React.FC = () => {
           stats={stats}
           selectedPlatforms={selectedPlatforms}
           onPlatformsChange={setSelectedPlatforms}
-          showClay={showClay}
-          onShowClayChange={setShowClay}
+          showClayDetails={showClayDetails}
+          onShowClayDetailsChange={setShowClayDetails}
           activePage={activePage}
           onPageChange={setActivePage}
         />
