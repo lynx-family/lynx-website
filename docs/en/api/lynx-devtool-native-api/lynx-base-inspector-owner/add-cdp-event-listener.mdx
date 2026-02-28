@@ -1,0 +1,48 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/add-cdp-event-listener
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# addCDPEventListener
+
+<APISummary />
+
+Adds a listener for [CDP](https://chromedevtools.github.io/devtools-protocol/) **Event** messages.
+
+This can be used with the [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk) method to listen for CDP messages sent from DevTool.
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)addCDPEventListener:(nonnull NSString *)name
+               withListener:(nonnull id<CDPEventListener>)listener;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void addCDPEventListener(final String name, final CDPEventListener listener);
+```
+
+### Parameters
+
+- `name`: A unique identifier for the listener, used for subsequent [removal](/api/lynx-devtool-native-api/lynx-base-inspector-owner/remove-cdp-event-listener).
+- `listener`: An object that implements [`CDPEventListener`](/api/lynx-devtool-native-api/cdp-event-listener) to receive Event messages.
+
+:::warning
+
+1. DevTool only holds a weak reference to `CDPEventListener`. Developers need to manage its lifecycle.
+2. Multiple listeners can be set by calling this method multiple times, but if a listener with the same name is set, the previous one will be overwritten.
+
+:::
+
+## Usage Example
+
+Please refer to [`CDPEventListener`](/api/lynx-devtool-native-api/cdp-event-listener#usage-example).
+
+## Compatibility
+
+<APITable />
