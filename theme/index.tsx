@@ -31,10 +31,11 @@ import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
-// Use word boundary (\b) to match complete words only (e.g., "react" matches but "reactive" doesn't)
+// Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
+  const segments = pathname.split('/');
   return SUBSITES_CONFIG.find((s) =>
-    new RegExp(`\\b${s.value}\\b`).test(pathname),
+    segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
   );
 };
 

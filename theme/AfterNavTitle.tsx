@@ -98,18 +98,22 @@ export default function AfterNavTitle() {
   const { pathname } = useLocation();
   const lang = useLang();
   const [currentSubsite, setCurrentSubsite] = useState(() => {
+    const segments = pathname.split('/');
     return (
-      SUBSITES_CONFIG.find((s) => pathname.includes(s.value)) ||
-      SUBSITES_CONFIG[0]
+      SUBSITES_CONFIG.find((s) =>
+        segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
+      ) || SUBSITES_CONFIG[0]
     );
   });
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout>();
 
   useEffect(() => {
+    const segments = pathname.split('/');
     const subsite =
-      SUBSITES_CONFIG.find((s) => pathname.includes(s.value)) ||
-      SUBSITES_CONFIG[0];
+      SUBSITES_CONFIG.find((s) =>
+        segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
+      ) || SUBSITES_CONFIG[0];
     setCurrentSubsite(subsite);
   }, [pathname]);
 
