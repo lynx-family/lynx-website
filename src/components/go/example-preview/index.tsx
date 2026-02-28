@@ -32,7 +32,7 @@ export interface ExamplePreviewProps {
   defaultEntryFile?: string;
   defaultEntryName?: string;
   highlight?: string | Record<string, string>;
-  entry?: string | string[];
+  entry?: string | string[] | RegExp;
   schema?: string;
   rightFooter?: React.ReactNode;
   schemaOptions?: SchemaOptionsData;
