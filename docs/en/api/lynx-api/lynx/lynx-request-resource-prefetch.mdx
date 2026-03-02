@@ -9,7 +9,7 @@ import { APISummary, APITable } from '@lynx';
 
 <APISummary />
 
-- This API is used for proactively initiating the preloading of CDN resources from the frontend, currently supporting only **image**, **video**, and **audio** resource types.
+- This API is used for proactively initiating the preloading of CDN resources from the frontend, currently supporting **image**, **video**, **audio**, and **font** resource types.
 - The preloaded resources will not be returned to the frontend through this API; instead, they are retained in memory or on disk. Therefore, after preloading is complete, a `unique key` is needed to specify the resource to the component:
   - The key for an image resource is consistent with the `uri` parameter during its preloading. When rendering, pass this key to the [src](/api/elements/built-in/image#src) attribute of the `<image />` component, allowing the component to locate the resource.
 
@@ -31,6 +31,7 @@ A collection that describes all the details of the resources to be preloaded, it
     - `image`: Image resource. (api/elements/built-in/image.html#trailnewimage--) switch for the Image component to preload images.)
     - `video`: Video resource.
     - `audio`: Audio resource.
+    - `font`: Font resource.
   - `params` (optional): Custom control parameters for resource preloading, the supported parameters are as follows:
     - `priority` (optional): Only for `image` type resources. Indicates network request priority. If the priority is high, other image requests will be blocked while the image library preloads these images, which may slow down the display of other images. Therefore, if these preloaded images are not immediately needed for display, consider setting a lower priority. The options supported are as follows:
       - `high`: High priority.
@@ -60,6 +61,7 @@ The callback function called after the API is executed or fails. The inside defi
     - `image`: Image resource.
     - `video`: Video resource.
     - `audio`: Audio resource.
+    - `font`: Font resource.
 
 ### Return Value
 
@@ -101,6 +103,10 @@ function Page() {
         uri: 'https://zzzzz2.mp4',
         type: 'video',
         params: { preloadKey: 'zzzzz2' },
+      },
+      {
+        uri: 'https://my-font-src',
+        type: 'font',
       },
     ];
 
