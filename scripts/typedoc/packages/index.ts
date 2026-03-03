@@ -36,4 +36,21 @@ export const PACKAGES: Record<string, PackageConfig> = {
       ],
     },
   },
+  'element-api': {
+    out: 'api/engine/element-api',
+    tsconfig: 'scripts/typedoc/tsconfigs/element-api.json',
+    en: {
+      entryPoints: ['scripts/typedoc/entries/element-api.d.ts'],
+    },
+    zh: {
+      entryPoints: ['scripts/typedoc/entries/element-api.d.ts'],
+    },
+    shared: {
+      options: {
+        // Disable README merging since this package doesn't have its own README
+        mergeReadme: false,
+        readme: 'none',
+      },
+    },
+  },
 };
