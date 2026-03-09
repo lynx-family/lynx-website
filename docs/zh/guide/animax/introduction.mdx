@@ -1,0 +1,158 @@
+import * as NextSteps from '@lynx/NextSteps';
+
+# 介绍
+
+AnimaX (`/ˈænɪmæks/`) 是一个 Lynx 团队自研的使用 C++ 并自带渲染引擎（底层依赖 Skity）构建的高性能跨平台动画库。它不仅完全兼容 Lottie 格式，还独家支持 Alpha 视频（透明视频）的独立播放，以及 Lottie 2D 矢量图层和 Alpha 视频图层的无缝混合。
+
+通过采用统一的 C++ 自渲染架构，AnimaX 实现了 iOS 和 Android 平台上像素级的完美一致性，避免了平台特定的渲染差异，并通过将图形工作从主线程卸载来提供卓越的性能。
+
+其将 2D 矢量图层与 Alpha 视频图层混合的独特能力，使设计师能够交付仅靠 Lottie 以前无法实现的、视觉上更加丰富和复杂的动画。
+
+## Show Case
+
+<table>
+  <tr>
+    <td>
+      <video
+        src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_mp4/video_demo_1.mp4"
+        controls
+        width="250"
+      ></video>
+    </td>
+    <td>
+      <video
+        src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_mp4/image_demo_3.mp4"
+        controls
+        width="250"
+      ></video>
+    </td>
+    <td>
+      <video
+        src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_mp4/video_demo_2.mp4"
+        controls
+        width="250"
+      ></video>
+    </td>
+  </tr>
+  <tr>
+    <td>Alpha 视频图层</td>
+    <td>图片图层</td>
+    <td>Alpha 视频与图片混合图层</td>
+  </tr>
+  <tr>
+    <td>
+      <video
+        src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_mp4/vector_demo_3.mp4"
+        controls
+        width="250"
+      ></video>
+    </td>
+    <td>
+      <video
+        src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_mp4/text_demo.mp4"
+        controls
+        width="250"
+      ></video>
+    </td>
+    <td>
+      <video
+        src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_mp4/mixed_image_video_demo.mp4"
+        controls
+        width="250"
+      ></video>
+    </td>
+  </tr>
+  <tr>
+    <td>带特效的矢量图层</td>
+    <td>文本图层</td>
+    <td>文本与图片图层</td>
+  </tr>
+</table>
+
+## 为什么选择 AnimaX？
+
+虽然 Lottie 使得矢量动画在移动设备和网页上普及开来，但为了复现复杂的 After Effects 特性，通常需要做出妥协。设计师可能不得不依赖庞大的图像序列，这会使应用体积膨胀；由于不同平台的实现方式不同，还要面对 iOS 和 Android 上渲染不一致的问题；又或者因为传统的 Lottie 播放器在主线程上运行繁重的解析和渲染操作，从而导致性能下降。
+
+AnimaX 通过完全重新架构运行时引擎来弥补了这一差距，同时保持了与标准 After Effects 和 Lottie 工作流的完全兼容性：
+
+- **极致性能**：与竞争主线程资源的传统 Lottie 播放器不同，AnimaX 将最耗时的图形渲染工作完全转移到了后台子线程，确保即使在低端设备上也能获得丝滑流畅的帧率。
+- **一致的跨平台渲染**：由统一的 C++ 渲染引擎 [Skity](https://github.com/lynx-family/skity) 驱动，AnimaX 确保了跨平台像素级的完美一致性，而不依赖于碎片化的原生 API。
+- **突破性的引擎能力**：克服了 Lottie 无法渲染复杂 AE 效果的问题。AnimaX 独创性地支持标准的 2D 矢量图层与 Alpha 视频（透明视频）图层的混合，在不牺牲文件大小或性能的情况下释放了无限的视觉潜力。
+- **完全兼容 Lottie 且零成本迁移**：AnimaX 无缝解析并播放现有的 Lottie JSON 文件。您可以将 AnimaX直接放入您的项目中作为传统 Lottie 播放器的替代品，无需任何代码更改。
+- **高级互动性**：内置对动态属性的支持，允许您在运行时修改动画属性或无缝响应用户交互。
+
+## 术语表
+
+<table>
+  <tr>
+    <th>术语</th>
+    <th>描述</th>
+  </tr>
+  <tr>
+    <td>
+      <b>Lottie</b>
+    </td>
+    <td>
+      一种最初由 Airbnb 开发的开源动画文件格式。设计师在 Adobe After Effects
+      中创建动画，并将其导出为轻量级的 JSON 文件，随后可以在移动和 Web
+      平台上原生渲染。AnimaX 与 Lottie 格式完全兼容。
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Alpha 视频 (Alpha Video)</b>
+    </td>
+    <td>
+      包含
+      Alpha（透明度）通道的视频格式，允许视频部分区域透明。这使得视频可以像叠加
+      UI 元素一般边缘平滑地展现在其他内容上方。AnimaX 支持独立播放 Alpha
+      视频，从而能够渲染那些仅靠矢量动画难以或无法实现的复杂视觉效果。
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>视频图层混合 (Video Layer Mixing)</b>
+    </td>
+    <td>
+      在一个动画中将标准 2D 矢量/图像图层与 Alpha 视频图层结合的能力。这是
+      AnimaX 的一项突破性功能 —— 设计师可以将传统的 Lottie
+      元素（形状、文本、图像）与透明视频图层混合使用，以创建更丰富、更具表现力的动画。主要优势包括：（1）与完整的图像序列相比，大幅缩小资源体积；（2）实现纯矢量图层无法再现的复杂视觉效果（如粒子、3D、真人实拍）；（3）由于
+      C++ 引擎在后台线程中使用统一流水线渲染所有图层类型，因此能保持流畅的性能。
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>动态属性 (Dynamic Properties)</b>
+    </td>
+    <td>
+      即运行时可修改的动画属性，允许开发者在代码运行中编程更改动画中的颜色、文本内容、位置等特性。这使得动画可以根据用户输入、数据变化或应用状态进行动态响应交互，而无需引入新的动画资源。
+    </td>
+  </tr>
+</table>
+
+## 下一步
+
+### 快速上手
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/animax/start/quick_start"
+    title="快速开始"
+    description="运行你的第一个 AnimaX 最小可运行示例"
+  />
+  <NextSteps.Step
+    href="/guide/animax/start/afx"
+    title="制作动画"
+    description="使用 AFX 插件创作并导出适配 AnimaX 的 Lottie 动画"
+  />
+</NextSteps.Root>
+
+### 相关文档
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/api/elements/built-in/animax-view"
+    title="<animax-view>"
+    description="查看 AnimaX 能力的核心 API 文档"
+  />
+</NextSteps.Root>

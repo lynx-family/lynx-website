@@ -1,0 +1,878 @@
+---
+tag: 'XElement'
+api: elements/animax-view
+---
+
+import { AndroidOnly } from '@lynx';
+
+# `<animax-view>`
+
+## 简介
+
+`animax-view` 是动效框架 AnimaX 的 Lynx UI 组件。
+
+:::caution
+
+- play/playSegment/stop/pause/resume/seek 这些动画播放控制方法需要在 bindready 回调后才可以调用。
+- 如果动画挂载在 popup/overlay 这类弹窗上，推荐 ignore-attach-status 置为 true，避免平台弹窗可见性回调不准导致动画停播问题。如果仍然不能解决问题，推荐 ignore-lynx-lifecycle 置为 true，进一步禁用弹窗的声明周期回调事件。
+
+:::
+
+## 普通属性
+
+### src
+
+动画资源，目前支持"http"、"https" 与链接，推荐使用 CDN Url。一次只能加载一个动画，需要换动画可以直接进行 src 替换。如果需要传入静态资源，请通过[静态资源部署](/rspeedy/assets.html)传入。
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| string | -      | 否   |
+
+---
+
+### src-format
+
+带占位符（以 "%s" 来代替）lottie 的资源的路径（仅支持 json 文件）。注意 `src-format`与`src-polyfill` 必须一起使用
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| string | -      | 否   |
+
+---
+
+### src-polyfill
+
+一个 JS 对象，里面的 key 是图片的 ID，value 是图片的资源地址，详见下面的例子。注意：src-polyfill 必须和 src-format 一起使用。
+
+| 类型                   | 默认值 | 必填 |
+| :--------------------- | :----- | :--- |
+| record(string, string) | -      | 否   |
+
+:::caution
+`src-format`与`src-polyfill`必须一起使用
+
+使用 src-format 之前需要对 lottie.json 文件进行编辑：将 assets 字段下需要替换的图片字段进行如下处理，将 u 字段置空，p 字段置为'%s'
+
+```json
+  "assets": [
+    {
+      "id": "image_0",
+      "w": 380,
+      "h": 380,
+      "u": "",
+      "p": "%s",
+      "e": 0
+    },
+  ]
+```
+
+:::
+
+---
+
+### json
+
+以 json string 的形式输入 lottie 的资源文件。注意不能传入 object，需要先使用 `JSON.stringify` 转换成 string 再传入 `json` 属性中。
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| string | -      | 否   |
+
+:::caution
+
+json 文件中的资源文件需要使用绝对路径来声明，不能使用相对路径。
+
+```json
+  "assets":[
+    {
+      "id": "image_0",
+      "w": 127,
+      "h": 127,
+      "u": "", // 这里为空
+      "p": "https://your_host/your_path/img_0.png", // 这里给绝对路径
+      "e": 0
+    },
+  ]
+```
+
+:::
+
+---
+
+### speed
+
+播放速度，1 代表正常 1 倍，0.5 代表 0.5 倍数，用法是 `speed={1}`
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | 1      | 否   |
+
+---
+
+### autoplay
+
+是否自动播放，写成 `autoplay={true}` 或者 autoplay。
+
+- `autoplay=true` 建议在 `bindready` 触发前进行设置。
+- `autoplay=false` 时，`bindready` 时会自动绘制第一帧，但不会自动开始播放。
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | true   | 否   |
+
+---
+
+### start-frame
+
+起始帧，默认为 0
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | 0      | 否   |
+
+---
+
+### end-frame
+
+结束帧，默认为动画最大帧
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | -1     | 否   |
+
+---
+
+### auto-reverse
+
+当 repeat 动画时，是否倒放动画。
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | false  | 否   |
+
+---
+
+### progress
+
+设置动画进度，范围是[0, 1]
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | 0      | 否   |
+
+---
+
+### loop
+
+是否循环播放，写成 `loop={true}` 或者 loop
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | false  | 否   |
+
+---
+
+### loop-count
+
+指定动画的循环次数，0 表示无限循环；不要与 loop 一起设置
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | 1      | 否   |
+
+---
+
+### objectfit
+
+设置当 lottie 动画的大小和外层容器大小不匹配时，lottie 内部图片的显示方式。目前支持 "cover"、"fill"、"contain"、"center"、"scale-down"，默认是 "contain"。
+
+| 类型                                                     | 默认值    | 必填 |
+| :------------------------------------------------------- | :-------- | :--- |
+| enum("center", "fill", "contain", "cover", "scale-down") | 'contain' | 否   |
+
+| animax:objectfit | image:mode     | 行为描述                                                                     |
+| ---------------- | -------------- | ---------------------------------------------------------------------------- |
+| `center`         | `center`       | 不缩放                                                                       |
+| `fill`           | `scaleToFill`  | 不按比例缩放以覆盖容器。                                                     |
+| `contain`        | `aspectFit`    | 按比例缩放使内容完整可见，适配短边，可能留白不裁剪。                         |
+| `cover`          | `aspectFill`   | 按比例缩放以覆盖容器，适配长边，铺满并可能裁剪超出部分。                     |
+| `scale-down`     | （无直接对应） | 类似 `aspectFit`，但永不放大：仅在内容大于容器时按比例缩小，否则保持原尺寸。 |
+
+---
+
+### object-position
+
+设置当动画尺寸与视图尺寸不匹配时，动画在视图内的对齐方式。目前支持 "center"、"left"、"right"、"top"、"button"，默认是 "center"。
+
+| 类型                                             | 默认值   | 必填 |
+| :----------------------------------------------- | :------- | :--- |
+| enum("center", "left", "right", "top", "bottom") | 'center' | 否   |
+
+| object-position | 行为描述                     |
+| --------------- | ---------------------------- |
+| `center`        | 水平居中，垂直居中。         |
+| `left`          | 水平对齐左边缘，垂直居中。   |
+| `right`         | 水平对齐右边缘，垂直居中。   |
+| `top`           | 水平居中，垂直对齐顶部边缘。 |
+| `buttom`        | 水平居中，垂直对齐底部边缘。 |
+
+---
+
+### fps-event-interval
+
+设置 bind fps 事件回调的间隔时间，单位为毫秒（ms）。例如，若要每隔 500 毫秒收到一次 fps 事件，如果不设置 [bindfps](###bindfps) 事件不会回调。
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | 0      | 否   |
+
+---
+
+### max-frame-rate
+
+设置渲染动画的最大帧率。例如，若希望动画渲染的最大帧率为 30，运行时的 FPS 最大为 30。
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | 60     | 否   |
+
+---
+
+### ignore-attach-status
+
+当 animax-view 被移出屏幕时会自动停止播放动画，通过将该属性置为 `true` 可以关闭这一行为。
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | false  | 否   |
+
+---
+
+### ignore-lynx-lifecycle
+
+当容器发送 onHide 事件时会自动暂停动画，避免 animax-view 保持绘制。有时这个事件并不精确，通过将该属性置为 `true` 可以关闭这一行为。
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | false  | 否   |
+
+---
+
+### video-decoder-type <AndroidOnly/>
+
+设置视频解码器类型。默认使用平台侧解码，当设置为 `tt-video-engine` 时使用 TTVideoEngine 进行解码。
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| string | -      | 否   |
+
+---
+
+### video-frame-timeout <AndroidOnly/>
+
+设置视频帧超时时间。如果在超时时间（毫秒）内未获取到该帧，播放器将放弃当前帧，等待下一帧。
+
+| 类型   | 默认值 | 必填 |
+| :----- | :----- | :--- |
+| number | -      | 否   |
+
+---
+
+### anti-aliasing
+
+开启抗锯齿。如果发现形状图层相关的锯齿明显，可以这个参数降低锯齿感。
+
+- `none`: 关闭抗锯齿功能。默认是这个选项。
+- `fxaa` 与 `msaa`: 开启抗锯齿，当前推荐使用 `fxaa`。
+
+| 类型                         | 默认值 | 必填 |
+| :--------------------------- | :----- | :--- |
+| enum("none", "fxaa", "msaa") | 'none' | 否   |
+
+---
+
+### dynamic-resource
+
+是否需要修改动态资源属性。如果需要则设置为 `true`，**否则不要设置这个属性**。
+
+使用示例请参考文档 [动态属性](../../../guide/animax/dynamic_property.mdx) 进行使用。
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | false  | 否   |
+
+---
+
+### display-mode
+
+:::danger
+
+该属性仍在实验中，仍然存在稳定性风险。如需使用该属性，请联系我们并按以下方式使用：
+
+```tsx
+
+<animax-view
+  ...
+  tag = "ANY_UNIQUE_KEY_YOU_LIKE"
+  display-mode = "auto"
+  ...
+/>
+
+```
+
+:::
+
+设置上屏模式。当设置为`image`时，使用独立的内存缓冲区进行渲染。**推荐在动画尺寸小于50rpx时开启`image`模式**
+
+| 类型                            | 默认值    | 必填 |
+| :------------------------------ | :-------- | :--- |
+| enum("image","surface", "auto") | "surface" | 否   |
+
+---
+
+### multi-thread-accelerate
+
+:::danger
+
+该属性仍在实验中，仍然存在稳定性风险。如需使用该属性，请联系我们并通过实验控制或充分测试后上线。
+
+:::
+
+通过多线程加速渲染。当设置为true时，该动画组件将创建一个独立的新渲染线程，专门为该组件服务，可以有效提升渲染性能。**推荐在同屏组件数量大于8时开启此功能**
+
+| 类型    | 默认值 | 必填 |
+| :------ | :----- | :--- |
+| boolean | false  | 否   |
+
+###
+
+## 事件属性
+
+### bindcompletion
+
+```ts
+bindcompletion: (e: BaseEvent<'bindcompletion', AnimaXParam>) => {};
+```
+
+播放结束后的回调，写成 bindcompletion="callback"，当 loop 为 true 时不会触发。
+
+---
+
+### bindstart
+
+```ts
+bindstart: (e: BaseEvent<'bindstart', AnimaXParam>) => {};
+```
+
+用于监听动画开始。
+
+---
+
+### bindrepeat
+
+```ts
+bindrepeat: (e: BaseEvent<'bindrepeat', AnimaXParam>) => {};
+```
+
+用于监听动画重复播放。
+
+---
+
+### bindcancel
+
+```ts
+bindcancel: (e: BaseEvent<'bindcancel', AnimaXParam>) => {};
+```
+
+用于监听动画被取消。
+
+---
+
+### bindready
+
+```ts
+bindready: (e: BaseEvent<'bindready', AnimaXReadyParam>) => {};
+```
+
+用于监听动画资源加载完成。
+
+---
+
+### bindupdate
+
+```ts
+bindupdate: (e: BaseEvent<'bindupdate', AnimaXParam>) => {};
+```
+
+用于监听动画的特定帧，需要配合方法列表里的 subscribeUpdateEvent 和 unsubscribeUpdateEvent 来使用。
+
+---
+
+### binderror
+
+```ts
+binderror: (e: BaseEvent<'binderror', AnimaXErrorParam>) => {};
+```
+
+当 `animax-view` 加载期间遇到了问题时，会主动抛出 error 事件，业务方可选择监听事件进行降级兜底。
+
+---
+
+### bindfps
+
+```ts
+bindfps: (e: BaseEvent<'bindfps', AnimaXFPSParam>) => void;
+```
+
+用于监测实际渲染帧率（FPS）和丢帧率。应与 `fps-event-interval` 配合使用。
+
+---
+
+### bindfirstframe
+
+```ts
+bindfirstframe: (e: BaseEvent<'bindfirstframe', AnimaXParam>) => void;
+```
+
+Lynx版本 >= 3.1 可用
+
+## 用于监听第一个帧被渲染到屏幕上时的事件。
+
+### bindtaplayers
+
+Lynx 版本 >= 2.18 可用
+
+详见文档: [[RFC] AnimaX 支持图层可点击事件](https://bytedance.larkoffice.com/docx/GiPvdl2AIoeOyVxiaK5chkamnFg)
+
+```ts
+bindtaplayers: (e: BaseEvent<'bindtaplayers', AnimaXTapParam>) => {};
+```
+
+当 `animax-view` 被点击后，通过 `bindtaplayers` 回调给前端点击事件命中的所有图层名列表。
+
+## 事件定义
+
+### BaseEvent
+
+```ts
+export interface BaseEvent<T = string, D = any> {
+  /** Event type. */
+  type: T;
+
+  /** Timestamp when the event was generated. */
+  timestamp: number;
+
+  /** Collection of attribute values of the target that triggers the event. */
+  target: Target;
+
+  /** Collection of attribute values of the target that listens to the event. */
+  currentTarget: Target;
+
+  /** Additional information. */
+  detail: D;
+}
+```
+
+### AnimaXParam
+
+```ts
+interface AnimaXParam {
+  /**
+   * 当前动画唯一标识 ID，每次调用 play 方法时刷新
+   **/
+  animationID: string;
+
+  /**
+   * 当前帧
+   **/
+  current: number;
+
+  /**
+   * 总帧数
+   **/
+  total: number;
+
+  /**
+   * 当前循环播放 index
+   **/
+  loopindex: number;
+}
+```
+
+---
+
+### AnimaXErrorParam
+
+```ts
+interface AnimaXErrorParam {
+  /**
+   * error 编码
+   */
+  code: number;
+
+  /**
+   * error 对应的信息
+   */
+  data: string;
+}
+```
+
+---
+
+### AnimaXFPSParam
+
+```ts
+interface AnimaXFPSParam extends AnimaXParam {
+  /**
+   * 当前 interval 内的 FPS
+   */
+  fps: number;
+
+  /**
+   * 当前 interval 内的 max drop rate
+   */
+  max_drop_rate: number;
+}
+```
+
+---
+
+### AnimaXReadyParam
+
+```ts
+interface AnimaXReadyParam extends AnimaXParam {
+  /**
+   * 当前 animax element ID, 仅在动态属性更新时会用到
+   */
+  elementID: string;
+}
+```
+
+### AnimaXTapParam
+
+```ts
+interface AnimaXTapParam extends AnimaXParam {
+  /**
+   * 当前被点击位置下所有的图层名列表
+   */
+  layerList: array<string>;
+}
+```
+
+## UI 方法
+
+:::caution
+所有 UI 方法需要在 bindready 回调后才可以进行调用
+:::
+
+### play
+
+```ts
+invoke({
+  method: 'play',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+从起始位置开始播放动画。
+
+---
+
+### stop
+
+```ts
+invoke({
+  method: 'stop',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+停止播放动画。
+
+---
+
+### pause
+
+```ts
+invoke({
+  method: 'pause',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+暂停动画。
+
+---
+
+### resume
+
+```ts
+invoke({
+  method: 'resume',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+从上一次 pause 的位置开始续播动画。
+
+---
+
+### seek
+
+```ts
+invoke({
+  method: 'seek',
+  params: {
+    frame: <number>, // 替换为具体的帧数值
+  },
+  success: function (res) {},
+  fail: function (res) {},
+})
+```
+
+跳转到指定帧。
+
+---
+
+### getDuration
+
+```ts
+invoke({
+  method: 'getDuration',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+获取动画时长。
+
+---
+
+### subscribeUpdateEvent
+
+```ts
+invoke({
+  method: 'subscribeUpdateEvent',
+  params: {
+    frame: <number>, // 替换为具体的帧数值
+  },
+  success: function (res) {},
+  fail: function (res) {},
+})
+```
+
+注册监听动画指定帧。
+
+---
+
+### unsubscribeUpdateEvent
+
+```ts
+invoke({
+  method: 'unsubscribeUpdateEvent',
+  params: {
+    frame: <number>, // 替换为具体的帧数值
+  },
+  success: function (res) {},
+  fail: function (res) {},
+})
+```
+
+解除监听动画指定帧。
+
+---
+
+### subscribeUpdateEvents
+
+```ts
+invoke({
+  method: 'subscribeUpdateEvents',
+  params: {
+    frames: Array<number>, // 替换为一组具体的帧数值
+  },
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Lynx版本 >= 3.1可用。
+
+批量注册监听动画指定帧。
+
+---
+
+### unsubscribeUpdateEvents
+
+```ts
+invoke({
+  method: 'unsubscribeUpdateEvents',
+  params: {
+    frames: Array<number>, // 替换为一组具体的帧数值
+  },
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Lynx版本 >= 3.1可用。
+
+批量解除监听动画指定帧。
+
+---
+
+### listenAnimationUpdate <AndroidOnly/>
+
+```ts
+invoke({
+  method: 'listenAnimationUpdate',
+  params: {
+    isListen: <boolean>, // true or false
+  },
+  success: function (res) {
+    // res.data will be a boolean indicating the current listening status
+  },
+  fail: function (res) {},
+})
+```
+
+设置是否接收通过 `subscribeUpdateEvent` 方法订阅的事件，如果 `isListen` 为 true，当订阅的帧渲染时，将会收到通知。
+
+---
+
+### isAnimating
+
+```ts
+invoke({
+  method: 'isAnimating',
+  success: function (res) {
+    // res.data will be a boolean indicating whether the animation is currently playing
+  },
+  fail: function (res) {},
+});
+```
+
+判断动画是否正在播放中。
+
+---
+
+### getCurrentFrame
+
+```ts
+invoke({
+  method: 'getCurrentFrame',
+  success: function (res) {
+    // You will get the current frame from res
+  },
+  fail: function (res) {},
+});
+```
+
+获取当前渲染的帧数。
+
+---
+
+### playSegment
+
+:::info
+该方法仅在 >= Lynx 2.16 版本上可用，请确认该方法可用的客户端版本再使用。
+
+如果需在低版本实现，建议使用 start-frame 和 end-frame 组合进行使用。[范围播放 (Coming Soon)](#) 有相关的 FAQ 参考。
+
+**请注意:** 如果设置了 playSegment(startFrame, endFrame), 对于 seek(frame) 方法会有 [startFrame, endFrame] 的范围约束。
+:::
+
+播放局部范围动画，调用后将**中断**原先的播放进度，直接开始从 `startFrame` 进行播放。
+
+相关需求背景文档: [[RFC] AnimaX 支持播放局部范围动画](https://bytedance.larkoffice.com/docx/HJEddE4SVoHfXdx0FsWcyiMnnNg)
+
+```ts
+invoke({
+  method: 'playSegment',
+  params: {
+    startFrame,
+    endFrame,
+  },
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+## 兼容性
+
+### 图片解码
+
+当前图片解码对主流图片格式的兼容性情况。
+
+| 图片格式      | iOS                                                            | Android                  | HarmonyOS NEXT |
+| :------------ | :------------------------------------------------------------- | :----------------------- | :------------- |
+| **JPEG**      | ✅ 全版本支持                                                  | ✅ 全版本支持            | ✅ 全版本支持  |
+| **PNG**       | ✅ 全版本支持                                                  | ✅ 全版本支持            | ✅ 全版本支持  |
+| **GIF**       | ✅ 全版本支持                                                  | ✅ 全版本支持            | ✅ 全版本支持  |
+| **BMP**       | ✅ 全版本支持                                                  | ✅ 全版本支持            | ✅ 全版本支持  |
+| **WebP**      | 🔶 Lynx < 3.5：仅支持 iOS 14+ <br /> 🔶 Lynx ≥ 3.5：全系统支持 | ✅ 全版本支持            | ✅ 全版本支持  |
+| **HEIF/HEIC** | ✅ iOS 11+                                                     | ✅ Android 9.0+ (API 28) | ✅ 全版本支持  |
+
+### 视频解码
+
+当前视频解码对主流视频编码格式的兼容性情况。
+
+| 编码格式       | iOS                                                                                                | Android                                                            | HarmonyOS NEXT                                             |
+| :------------- | :------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------- | :--------------------------------------------------------- |
+| **H.264/AVC**  | ✅ **支持** <br/>硬解：iPhone 4+ / iPad 2+ <br/>软解：全版本支持                                   | ✅ **支持** <br/>硬解：取决于设备硬件 <br/>软解：Android 4.0+      | ✅ **支持** <br/>硬解：取决于设备硬件<br/>软解：全版本支持 |
+| **H.265/HEVC** | ✅ **支持** <br/>硬解：iPhone 6s+ (A9+芯片)<br/>软解：iOS 11+<br/>**格式限制**：仅支持 `hvc1` 格式 | ✅ **支持** <br/>硬解：取决于设备硬件 <br/>软解：Android 5.0+<br/> | ✅ **支持** <br/>硬解：取决于设备硬件<br/>软解：API 11+    |
+
+:::tip 扩展方案
+
+- 部分安卓设备不支持 H.265/HEVC 解码，我们引入了 ByteVc1 软解库，可在无系统支持的设备上提供 H.265/HEVC 兼容播放，该功能在[集成对应依赖 (Coming Soon)](#)后默认打开。
+
+:::
+
+### CSS
+
+:::caution
+推荐使用 visibility: visible/hidden 来控制组件的显示/隐藏，性能更优
+
+:::
+
+#### [visibility](/api/css/properties/visibility)
+
+```css
+visibility: visible;
+visibility: hidden;
+```
+
+当 visibility 设置为 `hidden` 后，animax 会变得不可见，同时也会自动停止播放。
+
+---
+
+#### [display](/api/css/properties/display.mdx)
+
+```css
+display: none;
+```
+
+当 display 设置为 `none` 后，该 UI 的实际宽高将会被设置为 0，animax 会变得不可见，同时也会自动停止播放。
+
+---
+
+#### [opacity](/api/css/properties/opacity)
+
+```css
+/* 完全不透明 */
+opacity: 1;
+
+/* 半透明 */
+opacity: 0.5;
+
+/* 完全透明 */
+
+opacity: 0;
+```
+
+当 opacity 设置为 `0` 后，animax 会变得不可见，同时也会自动停止播放。
+
+---

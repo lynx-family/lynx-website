@@ -1,0 +1,301 @@
+import { UIApiTable } from '@lynx/index';
+
+# 动态属性
+
+AnimaX 通过 napi 向前端开发者提供运行时更新动画属性的功能。
+
+:::info
+
+动画属性分为 图层属性 和 资源属性。其中 图层属性 包括 transform、可见性等，可以在动画播放期间动态修改。而 资源属性 包括图片、文字资源和视频资源等，只能在动画播放之前修改。
+
+:::
+
+:::tip 想更快写好动态属性相关代码？
+
+如果你不确定该用哪个 API、参数怎么传，或者需要排查动态属性相关问题，可以直接使用 [AnimaX MCP (Coming Soon)](#)：
+
+- 生成动态属性相关代码（例如更新文本/图片/字体、按图层名定位等）
+- 基于知识库与历史 on-call 记录，给出可执行的排查步骤与解决方案
+
+:::
+
+## 使用方法
+
+### 通过封装好的前端组件使用动态属性
+
+在 Lynx UI 中，我们定义了动态属性的相关类型，并封装了动态属性相关的接口。
+
+在实践中，推荐通过[封装好的前端组件 (Coming Soon)](#)使用动态属性相关能力。
+
+#### 设置图片资源
+
+:::warning
+
+需要设置属性 `autoplay={false}`, `dynamic-resource={true}`。动画播放开始后，资源属性的更新将不会生效。
+
+:::
+
+```tsx {6-10,15-16}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateImageById(
+    'image_0',
+    'http://your.assets.com'
+  )
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 设置文本字体资源
+
+:::warning
+
+需要设置属性 `autoplay={false}`, `dynamic-resource={true}`。动画播放开始后，资源属性的更新将不会生效。
+
+:::
+
+```tsx {6-10,15-16}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateFontByName(
+    'fontName',
+    'http://your.assets.com'
+  );
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 设置Alpha视频资源
+
+:::warning
+
+需要设置属性 `autoplay={false}`, `dynamic-resource={true}`。动画播放开始后，资源属性的更新将不会生效。
+
+:::
+
+```tsx {6-10,15-16}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateVideoById(
+    'videoName',
+    'http://your.assets.com'
+  );
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 提交资源属性
+
+:::info
+
+在提交资源属性之前，任何尝试渲染动画的行为（如 `seek`,`resume`）都是未定义行为。
+
+除了显式提交资源属性，也可以通过调用 `play`/`playSegment` 提交资源属性。通过显式提交资源属性，
+可以提前加载资源并渲染特定帧，在弹窗场景中可以做到无缝直出。
+
+:::
+
+```tsx {11-13,17-18}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateImageById(
+    'image_0',
+    'http://your.assets.com'
+  )
+  proxy.current?.submitResourcePropertiesUpdate(()=>{
+    animaxRef.current?.seek({frame:0})
+  })
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 更新文本图层属性
+
+```tsx {6-9}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateTextByLayerName("text", "YourText");
+  proxy.current?.updateTextSizeByLayerName("text", 36);
+  proxy.current?.updateTextColorByLayerName("red_text", "#acbeef");
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 更新其他图层属性
+
+```tsx {7-44}
+import { AnimaX, AnimaXUtils } from '@lynxjs/lynx-ui-animax'
+type LayerPropertyType = AnimaXUtils.LayerPropertyType
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current.updateLayerProperty(
+    LayerPropertyType.Visibility,
+    'layer',
+    createValueParam(true)
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformOpacity,
+    'layer',
+    createValueParam(50)
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformRotation,
+    'layer',
+    createValueParam(30)
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformPosition,
+    'layer',
+    createValueParam({
+      x: 50,
+      y: 50,
+    })
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformAnchor,
+    'layer',
+    createValueParam({
+      x: 50,
+      y: 50,
+    })
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformScale,
+    'layer',
+    createValueParam({
+      x: 1,
+      y: 2,
+    })
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 更新部分帧的图层属性
+
+```tsx {6-9}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateTextByLayerName("text", "YourText", 0); // 只更新第一帧
+  proxy.current?.updateTextSizeByLayerName("text", 36); // 默认更新全部帧
+  proxy.current?.updateTextColorByLayerName("red_text", "#acbeef", -1); // 更新全部帧
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### 使用通配符更新图层属性
+
+AnimaX 支持通配符更新图层属性，当 layerName 传入 `**` 通配符时将会尝试对所有图层进行对应的属性更新，而 `*` 会尝试匹配一个层级的所有图层。
+当 layerName 传入的图层名有重复时，将会能够选取所有的相同图层进行属性更新。
+
+```javascript {16,25}
+const element = useRef(null);
+
+const callback = (success: boolean, errorType: number) => {
+  if(!success){
+    console.log("Failed for type: " + errorType)
+  }
+}
+
+onReady = (e) => {
+  const app = lynx?.getApp?.()
+  const runtimeId = app?._nativeApp?.id ?? app?.nativeAppId
+  const animax = globalThis[`napiLoaderOnRT${runtimeId}`].load('animax')
+  element.current = new animax.CompositionElement(e.detail.elementID)
+  element.current?.updateLayerProperty(
+    5, // TransformScale
+    "**", // 所有图层
+    {
+      doubleValue: 2
+      frameIndex: 0
+    },
+    callback
+  )
+  element.current?.updateLayerProperty(
+    5, // TransformOpacity
+    "ShapeGroup.*.InvisibleLayer", // 所有满足条件的图层
+    {
+      doubleValue: 0
+      frameIndex: 0
+    },
+    callback
+  )
+}
+
+...
+
+return(
+  <animax-view
+    ...
+    bindready = {onReady}
+    ...
+  />
+)
+```

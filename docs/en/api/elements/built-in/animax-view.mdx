@@ -1,0 +1,873 @@
+---
+tag: 'XElement'
+api: elements/animax-view
+---
+
+import { AndroidOnly } from '@lynx';
+
+# `animax-view`
+
+## Introduction
+
+`animax-view` is the Lynx UI component for the AnimaX animation framework.
+
+:::caution
+
+- Animation control methods such as play/playSegment/stop/pause/resume/seek can only be triggered after the bindready callback
+- If animations are mounted on popup/overlay type windows, it is recommended to set ignore-attach-status to true to avoid animation stopping issues caused by inaccurate platform popup visibility callbacks. If problems persist, it is recommended to set ignore-lynx-lifecycle to true to further disable popup lifecycle callback events.
+
+:::
+
+## Ordinary Properties
+
+### src
+
+Network resource, currently supports "http" and "https" with the link, recommended to use CDN Url. Only one animation can be loaded at a time. To switch animations, directly replace the src. If you need to provide static assets, pass them via [Static Asset Deployment](/rspeedy/assets.html)
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| string | -             | No       |
+
+---
+
+### src-format
+
+Path to the Lottie resource with placeholders (represented by "%s") (only supports json files). Note: src-format and src-polyfill must be used together.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| string | -             | No       |
+
+---
+
+### src-polyfill
+
+A JavaScript object where the key is the ID of the image, and the value is the resource URL of the image. See the example below. Note: src-polyfill must be used together with src-format.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| string | -             | No       |
+
+:::caution
+`src-format` and `src-polyfill` must be used together
+
+Before using src-format, you need to edit the lottie.json file: For the image fields under the assets field that need to be replaced, process them as follows: set the u field to an empty string, and set the p field to '%s'
+
+```json
+  "assets": [
+    {
+      "id": "image_0",
+      "w": 380,
+      "h": 380,
+      "u": "",
+      "p": "%s",
+      "e": 0
+    },
+  ]
+```
+
+:::
+
+---
+
+### json
+
+Lottie resource input as a json string.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| string | -             | No       |
+
+:::caution
+
+In the JSON file, asset files must be declared using absolute URLs/paths; relative paths are not allowed.
+
+```json
+"assets": [
+  {
+    "id": "image_0",
+    "w": 127,
+    "h": 127,
+    "u": "", // leave this empty
+    "p": "https://your_host/your_path/img_0.png", // provide an absolute URL here
+    "e": 0
+  }
+]
+```
+
+:::
+
+---
+
+### speed
+
+Playback speed, 1 represents normal speed, 0.5 for half speed, usage is `speed={1}`.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | 1             | No       |
+
+---
+
+### autoplay
+
+Whether to autoplay, written as `autoplay={true}` or simply `autoplay`.
+
+- `autoplay=true` is recommended to be set before `bindready` is triggered.
+- When `autoplay=false`, the first frame will be automatically rendered at `bindready`, but playback will not start automatically.
+
+| Type    | Default Value | Required |
+| :------ | :------------ | :------- |
+| boolean | true          | No       |
+
+---
+
+### start-frame
+
+The starting frame, defaults to 0.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | 0             | No       |
+
+---
+
+### end-frame
+
+The ending frame defaults to the animation's maximum frame.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | -1            | No       |
+
+---
+
+### auto-reverse
+
+Whether to reverse the animation during repeat playback.
+
+| Type    | Default Value | Required |
+| :------ | :------------ | :------- |
+| boolean | false         | No       |
+
+---
+
+### progress
+
+Sets the progress of the animation, the range is [0, 1].
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | 0             | No       |
+
+---
+
+### loop
+
+Whether to loop playback, written as `loop={true}` or just loop.
+
+| Type    | Default Value | Required |
+| :------ | :------------ | :------- |
+| boolean | false         | No       |
+
+---
+
+### loop-count
+
+Specifies the number of times the animation loops, with 0 indicating infinite looping; do not set together with loop.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | 1             | No       |
+
+---
+
+### objectfit
+
+Sets how the internal image of the lottie animation is displayed when the size of the lottie animation does not match the size of the outer container. Currently supports "cover", "fill", "contain", "center" and "scale-down", with "contain" being the default.
+
+| Type                                                     | Default Value | Required |
+| :------------------------------------------------------- | :------------ | :------- |
+| enum("center", "fill", "contain", "cover", "scale-down") | 'contain'     | No       |
+
+| animax:objectfit | image:mode          | Behavior                                                                                                                              |
+| ---------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `center`         | `center`            | No scaling                                                                                                                            |
+| `fill`           | `scaleToFill`       | Covers the container without preserving aspect ratio.                                                                                 |
+| `contain`        | `aspectFit`         | Scales proportionally to keep the entire content visible; fits short side; may leave blank areas without cropping.                    |
+| `cover`          | `aspectFill`        | Scales proportionally to cover the container; fits long side; fills and may crop overflow.                                            |
+| `scale-down`     | (no direct mapping) | Similar to `aspectFit` but never upscales: only scales down when content is larger than the container; otherwise keeps original size. |
+
+---
+
+### object-position
+
+Set the alignment of the animation within the view when the animation size does not match the view size. Currently supports "center", "left", "right", "top" and "buttom", with "center" being the default.
+
+| Type                                             | Default  | Required |
+| ------------------------------------------------ | -------- | -------- |
+| enum("center", "left", "right", "top", "bottom") | 'center' | No       |
+
+| object-position | Behavior                                                      |
+| --------------- | ------------------------------------------------------------- |
+| center          | Centered horizontally and vertically.                         |
+| left            | Aligned to the left edge horizontally; vertically centered.   |
+| right           | Aligned to the right edge horizontally; vertically centered.  |
+| top             | Horizontally centered; aligned to the top edge vertically.    |
+| bottom          | Horizontally centered; aligned to the bottom edge vertically. |
+
+---
+
+### fps-event-interval
+
+Sets the interval for the fps event callback, in milliseconds (ms). For example, to receive an fps event every 500 ms, set the [bindfps](###bindfps) event. Not setting the event means the callback will not be triggered.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | 0             | No       |
+
+---
+
+### max-frame-rate
+
+Sets the maximum frame rate for rendering animations. For example, to achieve a maximum real-time FPS of 30, set this value accordingly.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | 60            | No       |
+
+---
+
+### ignore-attach-status
+
+Automatically stops animation playback when the `animax-view` is removed off-screen. Setting this property to `true` can disable this behavior.
+
+| Type    | Default Value | Required |
+| :------ | :------------ | :------- |
+| boolean | false         | No       |
+
+---
+
+### ignore-lynx-lifecycle
+
+When the container sends an onHide event, the animation will automatically pause to prevent animax-view from continuing to render. Sometimes this event is not precise. By setting this property to `true`, you can turn off this behavior.
+
+| Type    | Default | Required |
+| :------ | :------ | :------- |
+| boolean | false   | No       |
+
+---
+
+### video-decoder-type <AndroidOnly/>
+
+Sets the type of video decoder. The default is to use the platform-side decoder, and `tt-video-engine` will use the TTVideoEngine for decoding.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| string | -             | No       |
+
+---
+
+### video-frame-timeout <AndroidOnly/>
+
+Sets video frame timeout, if the video frame is not available in timeout ms, the video player give up current frame and wait for next frame.
+
+| Type   | Default Value | Required |
+| :----- | :------------ | :------- |
+| number | -             | No       |
+
+---
+
+### anti-aliasing
+
+Enable anti-aliasing. If you notice significant aliasing on shape layers, you can use this parameter to reduce the aliasing effect.
+
+- `none`: Disable anti-aliasing. This is the default option.
+- `fxaa` and `msaa`: Enable anti-aliasing. The current recommendation is to use `fxaa`.
+
+| Type                         | Default Value | Required |
+| :--------------------------- | :------------ | :------- |
+| enum("none", "fxaa", "msaa") | 'none'        | No       |
+
+---
+
+### display-mode
+
+:::danger
+This property is still experimental and may pose stability risks. If you need to use it, please contact us and follow the usage below:
+
+```tsx
+<animax-view
+  ...
+  tag="ANY_UNIQUE_KEY_YOU_LIKE"
+  display-mode="auto"
+  ...
+/>
+```
+
+:::
+
+Sets the rendering mode. When set to `image`, uses an independent memory buffer for rendering. **It is recommended to enable `image` mode when the animation size is smaller than 50rpx**.
+
+| Type                             | Default Value | Required |
+| :------------------------------- | :------------ | :------- |
+| enum("image", "surface", "auto") | "surface"     | No       |
+
+---
+
+### multi-thread-accelerate
+
+:::danger
+
+This property is still experimental and may carry stability risks. If you need to use it, please contact us and roll it out only via experiment controls or after thorough testing.
+
+:::
+
+Accelerates rendering through multi-threading. When set to true, the animation component will create a dedicated new rendering thread exclusively for this component, which can effectively improve rendering performance. **It is recommended to enable this feature when there are more than 8 components on the same screen**.
+
+| Type    | Default Value | Required |
+| :------ | :------------ | :------- |
+| boolean | false         | No       |
+
+---
+
+### dynamic-resource
+
+Whether to modify dynamic resource attributes. Set to `true` if needed. **Do not set this property if not required**.
+
+For usage examples, please refer to the documentation [Dynamic Properties](../../../guide/animax/dynamic_property.mdx).
+
+| Type    | Default | Required |
+| :------ | :------ | :------- |
+| boolean | false   | No       |
+
+## Event Attributes
+
+### bindcompletion
+
+```ts
+bindcompletion: (e: BaseEvent<'bindcompletion', AnimaXParam>) => {};
+```
+
+A callback triggered after playback ends. Write it as `bindcompletion="callback"`. It won't trigger when `loop` is `true`.
+
+---
+
+### bindstart
+
+```ts
+bindstart: (e: BaseEvent<'bindstart', AnimaXParam>) => {};
+```
+
+Used to listen for the start of the animation.
+
+---
+
+### bindrepeat
+
+```ts
+bindrepeat: (e: BaseEvent<'bindrepeat', AnimaXParam>) => {};
+```
+
+Used to listen for the animation repeating.
+
+---
+
+### bindcancel
+
+```ts
+bindcancel: (e: BaseEvent<'bindcancel', AnimaXParam>) => {};
+```
+
+Used to listen for the animation being canceled.
+
+---
+
+### bindready
+
+```ts
+bindready: (e: BaseEvent<'bindready', AnimaXParam>) => {};
+```
+
+Used to listen for the animation resources to finish loading.
+
+---
+
+### bindupdate
+
+```ts
+bindupdate: (e: BaseEvent<'bindupdate', AnimaXParam>) => {};
+```
+
+Used to listen for specific frames of the animation, to be used in conjunction with the methods subscribeUpdateEvent and unsubscribeUpdateEvent.
+
+---
+
+### binderror
+
+```ts
+binderror: (e: BaseEvent<'binderror', AnimaXErrorParam>) => {};
+```
+
+If `animax-view` encounters issues during loading, it will actively throw an error event, which business parties can choose to listen to for degradation fallback.
+
+---
+
+### bindfps
+
+```ts
+bindfps: (e: BaseEvent<'bindfps', AnimaXFPSParam>) => void;
+```
+
+Used to monitor the actual render FPS and drop rate. Should be used in conjunction with `fps-event-interval`.
+
+---
+
+### bindfirstframe
+
+```ts
+bindfirstframe: (e: BaseEvent<'bindfirstframe', AnimaXParam>) => void;
+```
+
+Available from Lynx version 3.1 and above.
+
+Used to listen for the first frame flushed to the surface.
+
+---
+
+### bindtaplayers
+
+Available from Lynx version 2.18 and above.
+
+Doc: [[RFC] AnimaX Support for Clickable Layer Events](https://bytedance.larkoffice.com/docx/GiPvdl2AIoeOyVxiaK5chkamnFg)
+
+```ts
+bindtaplayers: (e: BaseEvent<'bindtaplayers', AnimaXTapParam>) => {};
+```
+
+When `animax-view` is clicked, the `bindtaplayers` callback provides the frontend with a list of all layer names that were hit by the click event.
+
+## Event Definitions
+
+### BaseEvent
+
+```ts
+export interface BaseEvent<T = string, D = any> {
+  /** Event type. */
+  type: T;
+
+  /** Timestamp when the event was generated. */
+  timestamp: number;
+
+  /** Collection of attribute values of the target that triggers the event. */
+  target: Target;
+
+  /** Collection of attribute values of the target that listens to the event. */
+  currentTarget: Target;
+
+  /** Additional information. */
+  detail: D;
+}
+```
+
+### AnimaXParam
+
+```ts
+interface AnimaXParam {
+  /**
+   * The unique ID of the current animation, refreshed each time the play method is called.
+   **/
+  animationID: string;
+
+  /**
+   * The current frame.
+   **/
+  current: number;
+
+  /**
+   * The total number of frames.
+   **/
+  total: number;
+
+  /**
+   * The current loop playback index.
+   **/
+  loopindex: number;
+}
+```
+
+---
+
+### AnimaXErrorParam
+
+```ts
+interface AnimaXErrorParam {
+  /**
+   * Error code
+   */
+  code: number;
+
+  /**
+   * Corresponding error message
+   */
+  data: string;
+}
+```
+
+---
+
+### AnimaXFPSParam
+
+```ts
+interface AnimaXFPSParam extends AnimaXParam {
+  /**
+   * The FPS within the current interval
+   */
+  fps: number;
+
+  /**
+   * The max drop rate within the current interval
+   */
+  max_drop_rate: number;
+}
+```
+
+---
+
+### AnimaXReadyParam
+
+```ts
+interface AnimaXReadyParam extends AnimaXParam {
+  /**
+   * The current animax element ID, used only when updating dynamic properties
+   */
+  elementID: string;
+}
+```
+
+### AnimaXTapParam
+
+```ts
+interface AnimaXTapParam extends AnimaXParam {
+  /**
+   * List of all layer names under the current clicked position
+   */
+  layerList: array<string>;
+}
+```
+
+## UI Methods
+
+:::caution
+All UI methods should be called after the bindready callback.
+:::
+
+### play
+
+```ts
+invoke({
+  method: 'play',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Begin playing the animation from the starting position.
+
+---
+
+### stop
+
+```ts
+invoke({
+  method: 'stop',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Stop the animation.
+
+---
+
+### pause
+
+```ts
+invoke({
+  method: 'pause',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Pause the animation.
+
+---
+
+### resume
+
+```ts
+invoke({
+  method: 'resume',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Resume the animation from the last paused position.
+
+---
+
+### seek
+
+```ts
+invoke({
+  method: 'seek',
+  params: {
+    frame: <number>, // Replace with the specific frame number
+  },
+  success: function (res) {},
+  fail: function (res) {},
+})
+```
+
+Seek to a specified frame.
+
+---
+
+### getDuration
+
+```ts
+invoke({
+  method: 'getDuration',
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Get the duration of the animation.
+
+---
+
+### subscribeUpdateEvent
+
+```ts
+invoke({
+  method: 'subscribeUpdateEvent',
+  params: {
+    frame: <number>, // Replace with the specific frame number
+  },
+  success: function (res) {},
+  fail: function (res) {},
+})
+```
+
+Register to listen for a specific frame of the animation.
+
+---
+
+### unsubscribeUpdateEvent
+
+```ts
+invoke({
+  method: 'unsubscribeUpdateEvent',
+  params: {
+    frame: <number>, // Replace with the specific frame number
+  },
+  success: function (res) {},
+  fail: function (res) {},
+})
+```
+
+Unsubscribe from listening to a specified frame.
+
+---
+
+### subscribeUpdateEvents
+
+```ts
+invoke({
+  method: 'subscribeUpdateEvents',
+  params: {
+    frames: Array<number>, // Replace with an array of specific frame numbers
+  },
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Available from Lynx version 3.1 and above.
+
+Batch subscribe to updates for specified animation frames.
+
+---
+
+### unsubscribeUpdateEvents
+
+```ts
+invoke({
+  method: 'unsubscribeUpdateEvents',
+  params: {
+    frames: Array<number>, // Replace with an array of specific frame numbers
+  },
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+Available from Lynx version 3.1 and above.
+
+Batch unsubscribe from updates for specified animation frames.
+
+---
+
+### listenAnimationUpdate <AndroidOnly/>
+
+```ts
+invoke({
+  method: 'listenAnimationUpdate',
+  params: {
+    isListen: <boolean>, // true or false
+  },
+  success: function (res) {
+    // res.data will be a boolean indicating the current listening status
+  },
+  fail: function (res) {},
+})
+```
+
+Set whether to receive events subscribed by the `subscribeUpdateEvent` method. If `isListen` is true, notifications will be received when the subscribed frame is rendered.
+
+---
+
+### isAnimating
+
+```ts
+invoke({
+  method: 'isAnimating',
+  success: function (res) {
+    // res.data will be a boolean indicating whether the animation is currently playing
+  },
+  fail: function (res) {},
+});
+```
+
+Determine whether the animation is currently playing.
+
+---
+
+### getCurrentFrame
+
+```ts
+invoke({
+  method: 'getCurrentFrame',
+  success: function (res) {
+    // You will get the current frame from res
+  },
+  fail: function (res) {},
+});
+```
+
+Get the number of the currently rendered frame.
+
+---
+
+### playSegment
+
+:::info
+Please note that this method is only available in Lynx version >= 2.16. Please confirm the client version supports this method before using it.
+
+For implementation in lower versions, it is recommended to use a combination of start-frame and end-frame. See [Range Playback (Coming Soon)](#) FAQ for reference.
+
+**Note:** If playSegment(startFrame, endFrame) is set, the seek(frame) method will be constrained to the range [startFrame, endFrame].
+:::
+
+Play a specific range of animation; calling this will **interrupt** the current playback progress and start playing directly from `startFrame`.
+
+Background documentation for the requirement: [[RFC] AnimaX Support for Playing Specific Range Animations](https://bytedance.larkoffice.com/docx/HJEddE4SVoHfXdx0FsWcyiMnnNg)
+
+```ts
+invoke({
+  method: 'playSegment',
+  params: {
+    startFrame,
+    endFrame,
+  },
+  success: function (res) {},
+  fail: function (res) {},
+});
+```
+
+## Compatibility
+
+### Image Decoding
+
+The table outlines the current compatibility of image decoding capabilities with mainstream image formats across different platforms.
+
+| Image Format  | iOS                                                                                            | Android                  | HarmonyOS NEXT     |
+| :------------ | :--------------------------------------------------------------------------------------------- | :----------------------- | :----------------- |
+| **JPEG**      | ✅ Fully Supported                                                                             | ✅ Fully Supported       | ✅ Fully Supported |
+| **PNG**       | ✅ Fully Supported                                                                             | ✅ Fully Supported       | ✅ Fully Supported |
+| **GIF**       | ✅ Fully Supported                                                                             | ✅ Fully Supported       | ✅ Fully Supported |
+| **BMP**       | ✅ Fully Supported                                                                             | ✅ Fully Supported       | ✅ Fully Supported |
+| **WebP**      | 🔶 Limited Support: <br /> • Lynx < 3.5: iOS 14+ only <br /> • Lynx ≥ 3.5: Full system support | ✅ Fully Supported       | ✅ Fully Supported |
+| **HEIF/HEIC** | ✅ iOS 11+                                                                                     | ✅ Android 9.0+ (API 28) | ✅ Fully Supported |
+
+### Video Decoding
+
+The table outlines the current compatibility of video decoding capabilities with mainstream video encoding formats across different platforms.
+
+| Encoding Format | iOS                                                                                                                                                      | Android                                                                                                  | HarmonyOS NEXT                                                                                                      |
+| :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| **H.264/AVC**   | ✅ **Supported** <br/>Hardware decoding: iPhone 4+ / iPad 2+ <br/>Software decoding: All versions supported                                              | ✅ **Supported** <br/>Hardware decoding: Device hardware dependent <br/>Software decoding: Android 4.0+  | ✅ **Supported** <br/> Hardware decoding: Device hardware dependent <br/> Software decoding: All versions supported |
+| **H.265/HEVC**  | ✅ **Supported** <br/>Hardware decoding: iPhone 6s+ (A9+ chip) <br/>Software decoding: iOS 11+ <br/>**Format restriction**: Only `hvc1` format supported | ✅ **Supported** <br/>Hardware decoding: Device hardware dependent <br/> Software decoding: Android 5.0+ | ✅ **Supported** <br/> Hardware decoding: Device hardware dependent <br/> Software decoding: API 11+                |
+
+:::tip Extended Solution
+
+Some Android devices lack native HEVC/H.265 decoding support. The ByteVC1 software decoder library has been introduced to provide HEVC/H.265 compatible playback on devices without system-level support. This feature is enabled by default after [integrating the corresponding dependency (Coming Soon)](#).
+
+:::
+
+### CSS
+
+:::caution
+It is recommended to use visibility: visible/hidden to control the display/hiding of components for better performance
+
+:::
+
+#### [visibility](/api/css/properties/visibility.mdx)
+
+```css
+visibility: visible;
+visibility: hidden;
+```
+
+When the visibility is set to `hidden`, animax will become invisible and will automatically stop playing.
+
+---
+
+#### [display](/api/css/properties/display.mdx)
+
+```css
+display: none;
+```
+
+When display is set to `none`, the actual width and height of the UI will be set to 0, animax will become invisible, and will automatically stop playing.
+
+---
+
+#### [opacity](/api/css/properties/opacity.mdx)
+
+```css
+/* Fully opaque */
+opacity: 1;
+
+/* Semi-transparent */
+opacity: 0.5;
+
+/* Fully transparent */
+
+opacity: 0;
+```
+
+When opacity is set to `0`, animax will become invisible and will automatically
