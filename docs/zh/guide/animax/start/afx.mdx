@@ -1,0 +1,310 @@
+# AnimaX 导出插件
+
+## 概览
+
+AFX 是一款 Adobe After Effects 插件，简化了从创建到交付的整个动画设计工作流。它能够将 AE 合成导出为兼容 Lottie 的格式，支持 Alpha 视频以实现高级效果，并提供全面的校验、优化和预览工具。
+
+### 核心功能
+
+- **AnimaX 导出**：将 AE 合成导出为兼容 Lottie 的 AnimaX 格式
+- **Alpha 视频支持**：将不支持的 AE 效果渲染为 Alpha 视频，实现混合播放
+- **兼容性检测**：在导出前验证 AE 特性和属性
+- **产物优化**：内置图像和视频压缩工具
+- **实时预览**：在插件界面内实时预览动画
+- **Lynx 预览**：扫码使用 Lynx Viewer 在真机上预览
+
+### 系统要求
+
+- **Adobe After Effects**：推荐使用 2025 或更高版本以获得最佳兼容性
+- **操作系统**：Windows 10/11 或 macOS 10.15+
+- **内存**：最低 8GB RAM，推荐 16GB
+- **存储**：需要 500MB 可用空间以安装插件
+
+## 安装与设置
+
+### 下载 AFX
+
+下载最新版本的 AFX 插件：
+
+[com.bytedance.afx.0.0.2-beta.17-16e562b-out.zxp](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/com.bytedance.afx.0.0.2-beta.17-16e562b-out.zxp)
+
+### 使用 ZXP Installer 安装
+
+AFX 以 ZXP (ZIP Extension Package) 格式分发。请按照以下步骤安装：
+
+1. **下载 ZXP Installer**：
+
+   - **macOS**：[ZXP Installer.zip](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/zxp/ZXP_Installer.zip)
+   - **Windows**：[ZXPInstaller-Setup-1.8.2.exe](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/zxp/ZXPInstaller-Setup-1.8.2.exe)
+
+2. **安装插件**：
+   - 运行 ZXP Installer
+   - 将 AFX 的 ZXP 文件拖入安装器窗口
+   - 按照屏幕提示完成安装
+
+![ZXP Installation](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/13.png)
+
+### 首次配置
+
+#### 面板配置
+
+AFX 包含两个独立的面板，必须按顺序打开：
+
+1. **Animax Server 面板**（后台服务）：
+
+   - 提供图像压缩、Lynx 预览及产物校验功能
+   - 必须先打开并停靠在 AE 界面中
+
+2. **AFX 面板**（用户界面）：
+   - 用于导出配置和控制的主界面
+   - 须在 Server 面板运行后打开
+
+![Panel Setup](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/15.png)
+
+#### 初始配置
+
+首次启动时，请确保：
+
+- **禁用 Bodymovin 与旧版 Animax 插件**以避免冲突
+- 在 AE 首选项中**允许脚本写入文件和访问网络**
+- 确保**已下载安装 AlphaMaker 输出模板**
+
+## 核心概念与术语
+
+### AnimaX 框架
+
+AnimaX (/ˈænɪmæks/) 是一款由字节跳动自研的，基于 Skity 渲染引擎的 C++ 动画框架。它在 Lottie 的基础上扩展了功能，支持如粒子动画、3D 变换及复杂渐变等高级 AE 特性。
+
+### Alpha 视频
+
+Alpha 视频是一种将透明度信息与 RGB 数据一起存储的视频格式，这通常通过平铺原始视频实现（左侧：RGB，右侧：Alpha 通道）。它主要用于渲染 Lottie 原生无法支持的复杂 AE 效果。
+
+### 渲染与输出产物
+
+- **渲染**：将选定的合成导出为 AnimaX 格式的过程（包含 data.json、图片和视频）
+- **输出产物**：导出的文件，包括 data.json、图片和视频等
+- **产物校验**：内置图片格式、尺寸、内存储存及是否符合项目规范等的校验功能
+
+### 兼容性检测
+
+在导出前对以下内容进行验证：
+
+- 合成属性
+- 视频合成尺寸（宽高必须是 16 的倍数）
+- 不支持的图层类型
+- 不支持的图层属性
+- 不支持的效果和遮罩
+
+## AnimaX 导出模块
+
+### 快速入门
+
+#### 模块选择
+
+AnimaX 导出模块是导出 AE 合成时的主要界面。请确保在继续之前已选择正确的模块。
+
+#### 合成设置
+
+1. **选择目标合成**：
+
+   - 从下拉列表中选择要导出的合成
+   - 可以选择多个合成进行批量处理
+
+2. **配置输出路径**：
+   - 设置导出文件的目标文件夹
+   - 每个合成都可以有自己的输出目录
+
+### 渲染配置
+
+#### 图像设置
+
+点击合成名称旁的齿轮图标即可进入图像配置：
+
+- **图片压缩**：设置质量限制（默认 0-80%）。较低的设置能减小文件体积，但可能会影响画质
+- **以 Base64 格式嵌入图片**：将图片转换为 base64 格式并直接嵌入到 JSON 文件中
+  - 注意：Base64 编码会显著增加 JSON 文件的体积
+
+#### 原文件名导出
+
+**重要提示**：强烈建议文件名仅包含 ASCII 字符（字母、数字及下划线），以免出现潜在的跨平台兼容性问题。所有不支持的字符都会自动被替换为下划线。
+
+![Filename Export](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/23.png)
+
+#### 视频设置 (Alpha 视频)
+
+当合成包含嵌套合成或不受支持的 AE 效果时，可将其导出为 Alpha 视频：
+
+1. **选择需要导出 Alpha 视频的图层**：
+
+   - 为特定的合成勾选“导出为 Alpha 视频”选项
+   - 视频将保存在 `videos` 目录并在 JSON 中进行引用
+
+2. **打包 Alpha 视频导出**：
+   - MP4 文件将被压缩入 `alphaPlayer` 目录内的 ZIP 压缩包
+   - 原始的 Lottie 资源将移入 `animaxLottie` 目录
+   - 注意：这会改变原有输出文件的目录结构
+
+![Alpha Video Configuration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/24.png)
+
+#### 字体配置
+
+配置文件中有关文本图层的字体处理：
+
+- **打包字体**：将系统字体文件复制到输出的 `fonts` 目录中
+
+#### 字体配置弹窗
+
+当合成包含文本图层，且未使用“转换为形状”功能时，系统会提示配置文件：
+
+- **对于设计师**：请提供网页字体的 CDN 链接
+- **对于开发人员**：如果需要，可以稍后修改导出的 JSON 中的 `fonts` 字段
+
+### 预览与测试
+
+#### 插件内实时预览
+
+AFX 提供导出的动画在插件界面内的实时预览功能：
+
+![Live Preview](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/104.png)
+
+**当前限制**：
+
+- 暂未支持 Alpha 视频实时预览（计划在 2026 年 Q2 上线）
+- 预览效果与客户端侧渲染质量保持一致
+
+#### 扫码使用 Lynx 预览
+
+渲染完成后，可在移动设备上预览动画：
+
+1. 点击合成旁边的眼睛图标
+2. 使用抖音或 TikTok App 扫描生成的二维码
+3. 即可在 Animax Lynx Viewer 界面中查看动画
+
+![Lynx Preview](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/42.png)
+
+#### 上传 CDN 供公开预览
+
+将产物上传到 CDN 以供外部访问：
+
+1. 渲染后点击“上传至 CDN”
+2. 记录所生成的 data.json 链接以便分享
+3. 使用公开应用扫码即可（无需安装内部测试版软件）
+
+![CDN Upload](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/45.png)
+
+### 质量保证
+
+#### 兼容性检测
+
+在导出前对合成进行检查：
+
+1. 选中需要检查的合成
+2. 在兼容性检测区域点击“检查”
+3. 查看相关的错误与警告
+4. 使用“定位”按钮快速高亮显示有问题的图层
+
+![Compatibility Check](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/35.png)
+
+#### 产物校验
+
+验证导出的文件以保证项目合规性：
+
+- **图片校验**：内存大小，文件大小，留白比例以及 PNG8 格式
+
+![Artifact Validation](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/37.png)
+
+- **视频校验**：尺寸、帧率、编码器兼容性等
+
+![Artifact Validation](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images/38.png)
+
+- **双击文件名**可直接通过 Finder/文件资源管理器打开对应文件
+
+#### 优化工具
+
+##### 图片优化
+
+- 使用 `imagemin` 自动对 PNG 进行压缩
+- 自动将不透明的 PNG 文件转化成 JPG 格式
+- 可实时预览进行画质调整
+
+##### 视频优化
+
+- **集成 Handbrake 工具**：可压缩导出的视频文件
+- **参数控制**：允许设置码率，帧率以及其他相关质量配置
+- **备份管理**：如果压缩效果不理想可以恢复至原始视频版本
+
+**建议**：请始终利用瞬时或 Lynx 预览工具，在真机上测试最终的 Alpha 视频。
+
+## 故障检测与常见问题 (FAQ)
+
+### 常见问题
+
+#### 插件面板加载失败
+
+**现象**：面板无限显示“Loading...”加载中
+
+**解决方案**：
+
+1. 请确认未运行第三方 VPN 软件
+2. 检查网络配置中是否开启了虚拟网卡
+3. 重启 After Effects 并尝试按正确的顺序重新打开面板
+
+#### 图片压缩无效
+
+**现象**：修改图片品质选项不生效
+
+**解决方案**：
+
+1. 确认 Animax Server 处于正常运作状态（尝试访问 http://localhost:8862/）
+2. 如果服务器无响应，请尝试重新打开两个 AFX 面板
+3. 检查系统对于压缩相关的执行工具访问权限
+
+#### 导出的视频带有黑边
+
+**现象**：导出视频存在额外的黑边显示
+
+**原因**：合成尺寸长宽并不是 16 的倍数
+
+**解决方案**：导出前将合成的宽度和高度均设置为了 16 的倍数
+
+#### macOS 安全风险提示
+
+**现象**：持续提示“无法验证开发者”警报，如 pngquant 及 ffmpeg 相关的软件运行
+
+**解决方案**：
+
+1. 在“系统设置” → “隐私与安全性”中，允许阻止的安全程序运行
+2. 如果是针对 ffmpeg，可以在终端执行以下指令设置相应权限：
+
+```bash
+cd '/Library/Application Support/Adobe/CEP/extensions/com.bytedance.afx/ffmpeg'
+chmod +x ffmpeg
+sudo xattr -d com.apple.quarantine ffmpeg
+```
+
+### 平台专属问题
+
+#### Windows 的 VPN 冲突
+
+第三方 VPN 软件可能会创建与 AFX Server 互相干扰的虚拟网卡资源。请您前往“网络连接”面板，关掉那些并非必需存在的虚拟网卡。
+
+#### macOS 反复请求权限
+
+倘若系统 macOS 仍旧持续提示权限获取页面，直接按照上述针对 ffmpeg 所提及过的终端命令执行，以赋予必要的系统性授权。
+
+### 性能优化
+
+#### 动画文件大小建议
+
+- **图片**：应当围绕目标设备的限定内存资源进行特定优化
+- **视频**：针对当前用户预期情况，做好资源大小与最终展现结果质量之平衡
+- **内存使用**：针对目标性能考量以及实际产出文件的总量预估等问题需要综合监测
+
+#### 序列帧处理办法
+
+若某个动画暂时并不受支持导出为直出的 Lottie：
+
+1. 可首先将其转化为 MOV 的序列帧模式进行导出
+2. 此后再次把对应的 MOV 加入到全新的合成环境之中去
+3. 让相关的目标继续引用到本新增加的合成对象中去
+4. 于 AFX 中把其设定为了 Alpha 视频导出类型即可

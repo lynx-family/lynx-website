@@ -1,0 +1,195 @@
+import { Steps } from '@theme';
+
+# Video Layer
+
+AnimaX supports the concept of a “video layer,” which is an extension to the Lottie specification. It allows a certain layer in the animation to be played as a transparent video, effectively reducing performance overhead while remaining compatible with all animation features.
+
+As an animation framework, AnimaX may not support the latest advanced AE features. For incompatible features, playing them as video helps achieve support for all effects.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video.gif"
+  width="254px"
+  height="546px"
+/>
+
+:::info
+
+AnimaX also supports playing transparent video files directly (different from an animation file “containing a video layer”). After importing, AnimaX will convert it into an animation that contains only a single transparent video layer.
+
+:::
+
+:::tip
+
+Combining image assets into video layers can reduce the first-screen asset load time. For more details, see [Performance Optimization (Coming Soon)](#).
+
+:::
+
+## Key advantages
+
+To cover all effects, common solutions include using image sequences or converting the animation to a video. Compared with these two, “video layer” produces smaller outputs:
+
+- Compared to image sequences: video layers benefit from inter-frame compression, resulting in smaller export sizes.
+- Compared to full-length video: only the necessary parts are recorded as video layers, while the rest still plays via Lottie, reducing overall size.
+
+Videos are embedded into the animation as independent layers and can form hierarchy, blend, mask, and parent-child relationships with other layers; at the same time, you still get AnimaX’s playback control and interactivity, enabling more flexible combinations and control.
+
+## How to use
+
+<Steps>
+
+### Prepare the AFX plugin
+
+Refer to [AE Plugin Export](./start/afx.mdx) for details on how to install and use the AFX plugin.
+
+### Treat the entire animation as a video layer
+
+Treat the entire animation as a video layer, where the composition to be exported contains exactly one pre-composed layer.
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part1.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### [Optional] Provide interactive non-video layers
+
+If the animation needs interactive capabilities like [Dynamic Properties](./dynamic_property) or [bindtaplayers](/api/elements/built-in/animax-view.html#bindtaplayers),
+the corresponding layers cannot be converted to video layers.
+
+Layers that cannot be converted to video layers should be extracted from the pre-composition and become a parallel layer to the original pre-composition.
+
+At the same time, any parent, child, sibling, and mask layers associated with these layers must also be extracted as non-video layers.
+
+:::tip
+
+These associated layers may also need to be converted into video layers. Use two independent video layers to handle them.
+
+:::
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part2.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### [Optional] Optimize video layer size
+
+Use [Compatibility Check](#compatibility-check) to determine whether the current layer needs to be converted into a video layer.
+
+If a layer does not need to be converted into a video layer and does not overlap with the layer that truly needs conversion, it (and all related layers) can be extracted as a non-video layer.
+
+If splitting a video layer can greatly reduce the total size of videos and the number of video layers does not exceed 3, it can be split into several smaller video layers.
+
+Optimizing video layer size can reduce memory usage and improve animation performance.
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part3.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### Run compatibility checks for all layers
+
+Click Compatibility Check under each pre-composition to view the compatibility report.
+
+For the pre-composition corresponding to video layers, check whether the layer dimensions are multiples of 16; if not, adjust to an integer multiple of 16 to prevent black borders in the video.
+
+Meanwhile, the compatibility check for video layers provides information about whether each layer needs to be converted to a video layer. If a layer has no related error reports during the compatibility check, there is no need to convert it to a video layer. Based on this, and according to performance needs, you can optimize [Video Layer Size](#video-layer-size).
+
+For the pre-composition corresponding to non-video layers, focus on error information other than layer size. Use the locate button to jump to the relevant position, disable or remove unsupported features, and then preview the animation again. If the animation meets expectations, keep it as is. If it does not, consider implementing it using other AnimaX-supported methods or converting it to a video layer.
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part4.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### Export the animation
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part5.mp4"
+    type="video/mp4"
+  />
+</video>
+
+</Steps>
+
+## How it works
+
+Video layers rely on transparent video assets for playback. A transparent video is a type of video that has an alpha channel. In the figure below, the left area is the transparent channel of this video.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax_alpha_video_channel.png"
+  width="1397px"
+  height="688px"
+/>
+
+In the json file, metadata for transparent video assets and video layers is managed. They are declared and indexed similarly to image assets.
+
+```json {12,30,32}
+{
+  ...
+  assets:[
+    ...
+  ],
+  fonts:{
+    ...
+  },
+  videos:[
+    ...
+    {
+      "id": "video_1",
+      "x": 704,
+      "y": 0,
+      "w": 704,
+      "h": 704,
+      "ax": 0,
+      "ay": 0,
+      "aw": 704,
+      "ah": 704,
+      "u": "videos/",
+      "p": "video_1.mp4",
+      "sz": 863796
+    }
+  ],
+  layers:[
+    ...
+    {
+      ...
+      "ty": 1009,
+      "nm": "content",
+      "refId": "video_1",
+    }
+    ...
+  ]
+}
+```
+
+:::details What are "ax" and "ay"?
+
+In a transparent video, the alpha channel exists as an independent content area. The parameters "ax", "ay", "aw", and "ah" describe the position and size of that alpha channel within the transparent video.
+
+In general, "aw" will be half the original video width. If you plan to create transparent videos yourself or modify the json file, ensure that the metadata matches the video resolution and correctly describes the channel position.
+
+:::
+
+During playback, the video layer parses the asset, extracts the per-frame video texture, composites the transparent layer with the video, and converts the result into an image. This image is then fed into the rendering engine and composited with other layers to produce the final frame.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-process.png"
+  width="2506px"
+  height="766px"
+/>
+
+:::warning Use video layers with care
+
+- ⚠️ Every frame of a video layer requires texture updates and image composition. Overusing video layers can reduce playback smoothness.
+
+- ⚠️ Video width and height need to be integer multiples of 16 to meet decoding alignment requirements. Video layers that do not meet this requirement will produce black borders.
+
+:::

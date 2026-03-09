@@ -1,0 +1,301 @@
+import { UIApiTable } from '@lynx/index';
+
+# Dynamic Properties
+
+AnimaX provides runtime updates to animation properties for frontend developers via N-API.
+
+:::info
+
+Animation properties are divided into Layer Properties and Resource Properties. Layer properties include transform, visibility, etc., and can be modified dynamically during playback. Resource properties include image, text, and video assets, and can only be modified before playback starts.
+
+:::
+
+:::tip Want to move faster with dynamic property code?
+
+If you’re not sure which API to use, what parameters to pass, or how to debug dynamic property code, use [AnimaX MCP (Coming Soon)](#) to:
+
+- Generate dynamic property code (update text/images/fonts, find layers by name, etc.)
+- Get practical debugging steps and proven fixes from the knowledge base and past on-call cases
+
+:::
+
+## How to use
+
+### Use dynamic properties via packaged frontend components
+
+In Lynx UI, we define types related to dynamic properties and package the related APIs.
+
+In practice, it’s recommended to use dynamic property capabilities via the [packaged frontend components (Coming Soon)](#).
+
+#### Set image resources
+
+:::warning
+
+You must set autoplay={false} and dynamic-resource={true}. After playback starts, updates to resource properties will no longer take effect.
+
+:::
+
+```tsx {6-10,15-16}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateImageById(
+    'image_0',
+    'http://your.assets.com'
+  )
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Set text font resources
+
+:::warning
+
+You must set autoplay={false} and dynamic-resource={true}. After playback starts, updates to resource properties will no longer take effect.
+
+:::
+
+```tsx {6-10,15-16}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateFontByName(
+    'fontName',
+    'http://your.assets.com'
+  );
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Set Alpha video resources
+
+:::warning
+
+You must set autoplay={false} and dynamic-resource={true}. After playback starts, updates to resource properties will no longer take effect.
+
+:::
+
+```tsx {6-10,15-16}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateVideoById(
+    'videoName',
+    'http://your.assets.com'
+  );
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Submitting Resource Properties
+
+:::info
+
+Before resource properties are submitted, any attempt to render animations (such as `seek` or `resume`) is undefined behavior.
+
+In addition to explicitly submitting resource properties, you can also submit them by calling `play` or `playSegment`. Explicit submission allows you to preload resources and render a specific frame in advance, enabling seamless instant display in popup scenarios.
+
+:::
+
+```tsx {11-13,17-18}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateImageById(
+    'image_0',
+    'http://your.assets.com'
+  )
+  proxy.current?.submitResourcePropertiesUpdate(()=>{
+    animaxRef.current?.seek({frame:0})
+  })
+}
+
+<AnimaX
+  dynamic-resource={true}
+  autoplay={false}
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Update text layer properties
+
+```tsx {6-9}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateTextByLayerName("text", "YourText");
+  proxy.current?.updateTextSizeByLayerName("text", 36);
+  proxy.current?.updateTextColorByLayerName("red_text", "#acbeef");
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Update other layer properties
+
+```tsx {7-44}
+import { AnimaX, AnimaXUtils } from '@lynxjs/lynx-ui-animax'
+type LayerPropertyType = AnimaXUtils.LayerPropertyType
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current.updateLayerProperty(
+    LayerPropertyType.Visibility,
+    'layer',
+    createValueParam(true)
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformOpacity,
+    'layer',
+    createValueParam(50)
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformRotation,
+    'layer',
+    createValueParam(30)
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformPosition,
+    'layer',
+    createValueParam({
+      x: 50,
+      y: 50,
+    })
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformAnchor,
+    'layer',
+    createValueParam({
+      x: 50,
+      y: 50,
+    })
+  );
+  proxy.updateLayerProperty(
+    LayerPropertyType.TransformScale,
+    'layer',
+    createValueParam({
+      x: 1,
+      y: 2,
+    })
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Update layer properties for specific frames
+
+```tsx {6-9}
+import { AnimaX } from '@lynxjs/lynx-ui-animax'
+const animaxRef = useRef(null)
+const proxy = useRef(null)
+
+const onReady = (e){
+  proxy.current = animaxRef.current?.createCompositionElementProxy(e)
+  proxy.current?.updateTextByLayerName("text", "YourText", 0); // Update only the first frame
+  proxy.current?.updateTextSizeByLayerName("text", 36); // Update all frames by default
+  proxy.current?.updateTextColorByLayerName("red_text", "#acbeef", -1); // Update all frames
+  animaxRef.current?.play()
+}
+
+<AnimaX
+  ref={animaxRef}
+  src="http://your.example.com"
+/>
+```
+
+#### Use wildcards to update layer properties
+
+AnimaX supports wildcard updates to layer properties. When layerName is the \*_ wildcard, it will attempt to update the corresponding property for all layers, while _ attempts to match all layers at a single hierarchy level.
+When duplicated layer names are provided in layerName, all matching layers will be selected for property updates.
+
+```javascript {16,25}
+const element = useRef(null);
+
+const callback = (success: boolean, errorType: number) => {
+  if(!success){
+    console.log("Failed for type: " + errorType)
+  }
+}
+
+onReady = (e) => {
+  const app = lynx?.getApp?.()
+  const runtimeId = app?._nativeApp?.id ?? app?.nativeAppId
+  const animax = globalThis[`napiLoaderOnRT${runtimeId}`].load('animax')
+  element.current = new animax.CompositionElement(e.detail.elementID)
+  element.current?.updateLayerProperty(
+    5, // TransformScale
+    "**", // all layers
+    {
+      doubleValue: 2
+      frameIndex: 0
+    },
+    callback
+  )
+  element.current?.updateLayerProperty(
+    5, // TransformOpacity
+    "ShapeGroup.*.InvisibleLayer", // all layers that meet the condition
+    {
+      doubleValue: 0
+      frameIndex: 0
+    },
+    callback
+  )
+}
+
+...
+
+return(
+  <animax-view
+    ...
+    bindready = {onReady}
+    ...
+  />
+)
+```

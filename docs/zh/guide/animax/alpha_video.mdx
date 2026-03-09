@@ -1,0 +1,198 @@
+import { Steps } from '@theme';
+
+# 视频图层
+
+AnimaX 支持“视频图层”概念，这是对 Lottie 协议的一种扩展。它允许将动画中的某个图层以透明视频的形式播放，在兼容全部动画特性的同时有效降低性能开销。
+
+AnimaX 作为动画框架，可能无法支持最新的 AE 高级特性。对于不兼容的特性，需要支持以视频的方式播放，以达到支持所有特效的目的。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video.gif"
+  width="254px"
+  height="546px"
+/>
+
+:::info
+
+AnimaX 也支持直接播放透明视频文件（不同于“包含视频图层”的动画文件）。导入后，AnimaX 会将其转换为仅包含一个透明视频图层的动画。
+
+:::
+
+:::tip
+
+使用视频图层整合图片素材，可以降低首屏资源加载时间。更多细节参考[性能优化 (Coming Soon)](#)。
+
+:::
+
+## 核心优势
+
+为了覆盖全部特效，常见方案包括使用序列帧或将动画转为视频。相比这两种方式，“视频图层”产物体积更小：
+
+- 对比序列帧：视频图层具备帧间压缩，导出体积更低。
+- 对比整段视频：仅将需要的部分录制为视频图层，其余仍用 Lottie 播放，减少整体体积。
+
+视频以独立图层嵌入动画，可与其他图层建立层级、混合、遮罩、父子等关系；同时，仍可享受 AnimaX 提供的播放控制与交互能力，实现更灵活的组合与操控。
+
+## 使用方法
+
+<Steps>
+
+### 准备 AFX 插件
+
+你可以参阅[AE插件导出](./start/afx.mdx)，详细了解如何安装和使用 AFX 插件。
+
+### 将整个动画视作视频图层
+
+将整个动画视作视频图层，待导出的合成中有且仅有一个预合成图层。
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part1.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### [可选] 提供可交互的非视频图层
+
+如果动画需要使用[动态属性](./dynamic_property)、[bindtaplayers](/api/elements/built-in/animax-view.html#bindtaplayers)这样的交互能力，
+对应的图层不能被转化为视频图层。
+
+不能被转化为视频图层的图层应该从预合成中提取出来，成为一个与原先的预合成平行的一个图层。
+
+同时，与这些图层相关联的父图层、子图层、兄弟图层和遮罩图层，都需要被提取成非视频图层。
+
+:::tip
+
+这些关联的图层也可能需要转换为视频图层。使用两个独立的视频图层完成处理。
+
+:::
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part2.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### [可选] 优化视频图层尺寸
+
+使用[兼容检查](#兼容检查)，检查当前图层转化为视频图层的必要性。
+
+如果一个图层既没有转化为视频图层的必要，又和真正需要转化为视频图层的图层没有重叠，它（以及所有与它相关的图层）就可以被提取成一个非视频图层。
+
+如果将一个视频图层拆分，能够大幅降低视频的尺寸总和，而且视频图层数量不超过 3 个，它就可以被拆分成数个小的视频图层。
+
+优化视频图层尺寸可以减少内存占用，提高动画性能。
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part3.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### 对所有图层进行兼容检查
+
+在每一个预合成下点击兼容检查，查看兼容检查报告。
+
+对视频图层对应的预合成，关注图层尺寸是否是 16 的倍数，如果不是请调整到 16 的整数倍，以防止视频产生黑边。
+
+同时，视频图层的兼容检查提供了其中各个图层转化为视频图层的必要性信息。如果一个图层在兼容检查时没有相关错误报告，就没有转化为视频图层的必要性。
+通过这一点，根据性能需求，可以进行[视频图层尺寸](#视频图层尺寸)的优化。
+
+对非视频图层对应的预合成，关注除了图层尺寸以外的报错信息。通过定位按钮定位到相应位置，关闭或清除不支持的特性后，重新预览动画。如果动画符合预期，保持现状。
+如果动画不符合预期，请考虑用其他 AnimaX 支持的方式实现，或者转为动画图层。
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part4.mp4"
+    type="video/mp4"
+  />
+</video>
+
+### 导出动画
+
+<video width="1724" height="1076" controls>
+  <source
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-part5.mp4"
+    type="video/mp4"
+  />
+</video>
+
+</Steps>
+
+## 工作原理
+
+视频图层依赖透明视频素材进行播放。透明视频素材是一类拥有透明度通道的视频。下图中，左侧区域就是这个视频的透明通道。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax_alpha_video_channel.png"
+  width="1397px"
+  height="688px"
+/>
+
+json 文件中，管理了透明视频素材与视频图层的元信息。它们以类似于图片素材的方式被声明与索引。
+
+```json {12,30,32}
+{
+  ...
+  assets:[
+    ...
+  ],
+  fonts:{
+    ...
+  },
+  videos:[
+    ...
+    {
+      "id": "video_1",
+      "x": 704,
+      "y": 0,
+      "w": 704,
+      "h": 704,
+      "ax": 0,
+      "ay": 0,
+      "aw": 704,
+      "ah": 704,
+      "u": "videos/",
+      "p": "video_1.mp4",
+      "sz": 863796
+    }
+  ],
+  layers:[
+    ...
+    {
+      ...
+      "ty": 1009,
+      "nm": "content",
+      "refId": "video_1",
+    }
+    ...
+  ]
+}
+
+```
+
+:::details "ax","ay"是什么？
+
+在透明视频中，透明通道作为独立内容区域存在。参数 `"ax"`, `"ay"`, `"aw"`, `"ah"` 用于描述该透明通道在透明视频中的位置与尺寸。
+
+一般来说，`"aw"`会是原视频宽度的一半。如果你打算自己制作透明视频或者更改json文件，请保证元信息和视频的分辨率匹配，并描述了正确的通道位置信息。
+
+:::
+
+动画播放时，视频图层将解析资源，提取单帧视频纹理，将其中的透明层与视频进行合成后，转化为一张图片。这张图片将被输入到渲染引擎中，与其他图层一起合成此帧的最终播放画面。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-alpha-video-process.png"
+  width="2506px"
+  height="766px"
+/>
+
+:::warning 谨慎使用视频图层
+
+- ⚠️ 视频图层每一帧都需要更新纹理-合成图像。滥用视频图层会导致播放流畅度降低。
+
+- ⚠️ 视频的宽高需要为16的整数倍，以满足解码的对齐要求。不符合要求的视频图层会产生黑边。
+
+:::

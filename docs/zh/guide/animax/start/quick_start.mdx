@@ -1,0 +1,216 @@
+import { Steps } from '@theme';
+import * as NextSteps from '@lynx/NextSteps';
+import { CodeFold } from '@lynx';
+
+# 快速开始
+
+在本文档中，我们将从一个 Lynx 项目出发，运行并验证一个 AnimaX 的最小可运行示例。
+
+## 开始
+
+<Steps>
+### 准备 Lynx 项目
+
+请准备一个 Lynx 项目与示例应用（Example App）。
+如果你对此没有头绪，请参考[这个文档](../../start/quick-start.mdx) 创建并运行你的第一个 Lynx 项目。
+
+LynxExample App 已经接入了AnimaX。你也可以通过[快速接入 (Coming Soon)](#) AnimaX ，在任意已采用 Lynx 开发的应用中进行验证。
+
+:::tip
+
+💡 本文档的快速开始部分基于 ReactLynx 展示接入流程，以便更快上手。
+
+使用 AnimaX 并不要求先集成 Lynx。任意应用均可通过[原生方式 (Coming Soon)](#)直接接入 AnimaX。
+
+:::
+
+### 准备动画
+
+通常，设计师会在 AE 中借助 AFX 插件导出 Lottie 格式的资源。
+我们也提供了一个用于演示的示例资源，你可以直接使用它。
+
+<a
+  href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+  style={{ color: '#1a73e8', textDecoration: 'underline', cursor: 'pointer' }}
+>
+  下载示例资源
+</a>
+
+若对该资源的产出方式感兴趣，请参阅[插件导出](../start/afx.mdx)，了解 AFX 的导出流程与规范。
+
+::: details AnimaX如何组织Lottie动画素材？
+
+对于任意动画资源，都会配套一个符合 [Lottie 协议](https://lottiefiles.github.io/lottie-docs/)
+的 `.json` 文件，用于存储素材的元信息。
+以图片为例，Lottie 协议对其元信息的描述如下：
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "images/",
+    "p": "img_0.png",
+    "e": 0
+  }
+]
+```
+
+其中，`u`和`p`字段分别表示`id`为`image_0` 的图片资源的相对路径与文件名。
+
+图片素材也可以来自 URL，此时应将 `u` 置空，并在 `p` 中填入完整的 URL：
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "",
+    "p": "https://example.com",
+    "e": 0
+  }
+]
+```
+
+此外，还支持通过 Base64 内联图片，此时将 `e`（Embedded） 设为 `1`，并在 `p` 中放入 Base64 数据：
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "",
+    "p": "data:image/png;base64,...",
+    "e": 1
+  }
+]
+```
+
+在 AnimaX 中，你还可以通过[`src-format`](../../../api/elements/built-in/animax-view.html#src-format)
+与[`src-polyfill`](../../../api/elements/built-in/animax-view.html#src-polyfill)以格式化字符串注入素材资源，
+或借助[动态属性](../dynamic_property.mdx)在运行时按需加载资源。
+
+:::
+
+### 开始开发
+
+你可以直接使用我们提供的 CSS 样式：
+
+<CodeFold toggle>
+
+```tsx title="App.css"
+.animation-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2328;
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
+}
+
+.child-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.child-border {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+  padding: 16px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.animax-item {
+  width: 200px;
+  height: 200px;
+}
+
+```
+
+</CodeFold>
+
+在代码编辑器中打开 `src/App.tsx` 文件并进行更改。
+
+<CodeFold img='https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.gif'>
+
+```tsx title="App.tsx" {9-14}
+import './App.css';
+
+export function App() {
+  return (
+    <view className="animation-card">
+      <text className="title">AnimaX</text>
+      <view className="child-container">
+        <view className="child-border">
+          <animax-view
+            className="animax-item"
+            src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.json"
+            autoplay={true}
+            loop={true}
+          />
+        </view>
+      </view>
+    </view>
+  );
+}
+```
+
+</CodeFold>
+
+你已经成功运行了一个 AnimaX 的最小可运行示例！
+
+::: details \<animax-view\>中的src属性
+
+[`src`](../../../api/elements/built-in/animax-view.html#src) 属性接受一个 URL，可指向 `.json` 或 `.zip` 格式的文件。
+
+- 对于 `.json`：AnimaX 会截取该 URL 的前缀目录作为资源根目录，并将协议中的相对路径与该根目录拼接后加载素材。
+- 对于 `.zip`：AnimaX 以压缩包内的根目录作为资源根目录，按协议中的相对或绝对路径解析并加载资源。
+
+若使用更简化的场景，可直接通过 [`json`](../../../api/elements/built-in/animax-view.html#json) 属性传入完整的动画数据；
+此时（若包含素材）不支持通过相对路径引用外部资源。
+
+:::
+
+</Steps>
+
+## 继续学习
+
+你可以在此目录下继续学习AnimaX的进阶使用技巧，或者学习如何使用AFX插件在AE上创作动画素材。
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/animax/start/afx"
+    title="插件导出"
+    description="学习使用 AFX 插件导出适配 AnimaX 的 Lottie 资源"
+  />
+  <NextSteps.Step
+    href="/guide/animax/start/tutorial_basic"
+    title="教程：基本控制"
+    description="学习使用 <animax-view> 实现基础播放与控制"
+  />
+</NextSteps.Root>

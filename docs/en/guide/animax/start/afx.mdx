@@ -1,0 +1,310 @@
+# AnimaX Export Plugin
+
+## Overview
+
+AFX is an Adobe After Effects plugin that streamlines the entire motion design workflow, from creation to delivery. It exports AE compositions to Lottie-compatible formats with Alpha Video support for advanced effects, and provides comprehensive validation, optimization, and preview tools.
+
+### Key Features
+
+- **AnimaX Export**: Export AE compositions to AnimaX format with Lottie compatibility
+- **Alpha Video Support**: Render unsupported AE effects as Alpha Video for hybrid playback
+- **Compatibility Detection**: Pre-export validation of AE features and properties
+- **Artifact Optimization**: Built-in image and video compression tools
+- **Live Preview**: Real-time animation preview within the plugin interface
+- **Lynx Preview**: QR code scanning for device testing with Lynx Viewer
+
+### System Requirements
+
+- **Adobe After Effects**: 2025 or later recommended for optimal compatibility
+- **Operating System**: Windows 10/11 or macOS 10.15+
+- **Memory**: 8GB RAM minimum, 16GB recommended
+- **Storage**: 500MB free space for plugin installation
+
+## Installation & Setup
+
+### Downloading AFX
+
+Download the latest version of AFX from:
+
+[com.bytedance.afx.0.0.2-beta.17-16e562b-out.zxp](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/com.bytedance.afx.0.0.2-beta.17-16e562b-out.zxp)
+
+### Installing with ZXP Installer
+
+AFX is distributed as a ZXP (ZIP Extension Package) file. Follow these steps to install:
+
+1. **Download ZXP Installer**:
+
+   - **macOS**: [ZXP Installer.zip](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/zxp/ZXP_Installer.zip)
+   - **Windows**: [ZXPInstaller-Setup-1.8.2.exe](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/zxp/ZXPInstaller-Setup-1.8.2.exe)
+
+2. **Install the Plugin**:
+   - Launch ZXP Installer
+   - Drag and drop the AFX ZXP file into the installer window
+   - Follow the on-screen instructions to complete installation
+
+![ZXP Installation](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/13.png)
+
+### First-time Setup
+
+#### Panel Configuration
+
+AFX consists of two separate panels that must be opened in sequence:
+
+1. **Animax Server Panel** (Background Services):
+
+   - Provides image compression, Lynx preview, artifact validation
+   - Must be opened first and docked to the AE interface
+
+2. **AFX Panel** (User Interface):
+   - Main interface for export configuration and controls
+   - Opens after the server panel is running
+
+![Panel Setup](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/15.png)
+
+#### Initial Configuration
+
+On first launch, ensure:
+
+- **Bodymovin and legacy Animax plugins are disabled** to prevent conflicts
+- **Script write permissions** are enabled in AE preferences
+- **AlphaMaker output templates** are downloaded and installed
+
+## Core Concepts & Terminology
+
+### AnimaX Framework
+
+AnimaX (/ˈænɪmæks/) is ByteDance's proprietary C++ motion framework built on Skity rendering engine. It extends Lottie capabilities with support for advanced AE features like particle animations, 3D transformations, and complex gradients.
+
+### Alpha Video
+
+A video format where transparency information is stored alongside RGB data, typically by tiling the original video (left side: RGB, right side: alpha channel). Used to render AE effects that Lottie cannot natively support.
+
+### Rendering & Output Artifacts
+
+- **Rendering**: The process of exporting selected compositions to AnimaX format (data.json + images + videos)
+- **Output Artifacts**: The exported files including data.json, images, and videos
+- **Artifact Validation**: Built-in checks for image formats, dimensions, memory usage, and compliance with project specifications
+
+### Compatibility Checking
+
+Pre-export validation of:
+
+- Composition properties
+- Video composition dimensions (must be multiples of 16)
+- Unsupported layer types
+- Unsupported layer properties
+- Unsupported effects and masks
+
+## AnimaX Export Module
+
+### Getting Started
+
+#### Module Selection
+
+The AnimaX Export module is the primary interface for exporting AE compositions. Ensure you have selected the correct module before proceeding.
+
+#### Composition Setup
+
+1. **Select Target Composition**:
+
+   - Choose the composition you want to export from the dropdown list
+   - Multiple compositions can be selected for batch processing
+
+2. **Configure Output Location**:
+   - Set the destination folder for exported files
+   - Each composition can have its own output directory
+
+### Rendering Configuration
+
+#### Image Settings
+
+Access image configuration by clicking the gear icon next to the composition name:
+
+- **Image Compression**: Set quality limits (default 0-80%). Lower values reduce file size but may affect quality
+- **Embed images as Base64**: Convert images to base64 and embed directly in JSON file
+  - Note: Base64 encoding increases file size significantly
+
+#### Original Filename Export
+
+**Important**: It is highly recommended that filenames contain only ASCII characters (letters, numbers, and underscores) to avoid potential cross-platform compatibility issues. Any unsupported characters will be automatically replaced with underscores.
+
+![Filename Export](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/23.png)
+
+#### Video Settings (Alpha Video)
+
+When compositions contain sub-compositions or unsupported AE features, you can export them as Alpha Video:
+
+1. **Select Layers for Alpha Video Export**:
+
+   - Check the "Export as Alpha Video" option for specific compositions
+   - Videos are saved to the `videos` directory and referenced in JSON
+
+2. **Packaged Alpha Video Export**:
+   - MP4 files are compressed into ZIP archives in the `alphaPlayer` directory
+   - Original Lottie resources are moved to `animaxLottie` directory
+   - Note: This changes the output directory structure
+
+![Alpha Video Configuration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/24.png)
+
+#### Font Configuration
+
+Configure text layer font handling:
+
+- **Bundle Fonts**: Copy font files from system to output `fonts` directory
+
+#### Font Configuration Prompt
+
+When compositions contain text layers without "Convert to Shapes" enabled, you'll be prompted to configure fonts:
+
+- **For Designers**: Provide CDN URLs for web fonts
+- **For Developers**: Modify the `fonts` field in the output JSON if needed
+
+### Preview & Testing
+
+#### In-plugin Live Preview
+
+AFX provides real-time preview of exported animations directly within the plugin interface:
+
+![Live Preview](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/104.png)
+
+**Current Limitations**:
+
+- Alpha Video preview not yet supported (planned for Q2 2026)
+- Preview matches client-side rendering quality
+
+#### Lynx Preview with QR Code
+
+After rendering, preview animations on mobile devices:
+
+1. Click the eye icon next to the composition
+2. Scan the generated QR code with the Douyin or Tiktok App
+3. View animations in the Animax Lynx Viewer interface
+
+![Lynx Preview](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/42.png)
+
+#### CDN Upload for Public Preview
+
+Upload artifacts to CDN for public access:
+
+1. Click "Upload to CDN" after rendering
+2. Record the data.json URL for sharing
+3. Use public apps for scanning (no internal test versions required)
+
+![CDN Upload](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/45.png)
+
+### Quality Assurance
+
+#### Compatibility Detection
+
+Validate compositions before export:
+
+1. Select the composition to check
+2. Click "Check" in the Compatibility Detection section
+3. Review warnings and errors
+4. Use "Locate" buttons to highlight problematic layers
+
+![Compatibility Check](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/35.png)
+
+#### Artifact Validation
+
+Validate exported files for compliance:
+
+- **Image Validation**: Memory size, file size, blank space ratio, PNG8 format
+
+![Artifact Validation](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/37.png)
+
+- **Video Validation**: Dimensions, frame rate, codec compatibility
+
+![Artifact Validation](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/export/images_en/38.png)
+
+- **Double-click filenames** to open files in Finder/Explorer
+
+#### Optimization Tools
+
+##### Image Optimization
+
+- Automatic PNG compression using `imagemin`
+- Conversion of opaque PNG images to JPG format
+- Quality adjustment with real-time preview
+
+##### Video Optimization
+
+- **Handbrake Integration**: Compress exported video files
+- **Parameter Adjustment**: Bitrate, frame rate, quality settings
+- **Backup Management**: Restore original videos if compression results are unsatisfactory
+
+**Recommendation**: Always test compressed Alpha Video on actual devices using Instant or Lynx preview.
+
+## Troubleshooting & FAQ
+
+### Common Issues
+
+#### Plugin Panels Not Loading
+
+**Symptoms**: Panels show "Loading..." indefinitely
+
+**Solutions**:
+
+1. Ensure no third-party VPN software is running
+2. Check network configuration for virtual adapters
+3. Restart After Effects and reopen panels in correct sequence
+
+#### Image Compression Not Working
+
+**Symptoms**: Image quality settings have no effect
+
+**Solutions**:
+
+1. Verify Animax Server is running (check http://localhost:8862/)
+2. Restart both AFX panels if server is not responding
+3. Check system permissions for compression tools
+
+#### Video Export with Black Borders
+
+**Symptoms**: Exported videos have unwanted black borders
+
+**Cause**: Composition dimensions are not multiples of 16
+
+**Solution**: Set composition width and height to multiples of 16 before export
+
+#### macOS Security Warnings
+
+**Symptoms**: "Cannot verify developer" warnings for pngquant or ffmpeg
+
+**Solutions**:
+
+1. Allow execution in System Settings → Security & Privacy
+2. For ffmpeg, run terminal commands to modify permissions:
+
+```bash
+cd '/Library/Application Support/Adobe/CEP/extensions/com.bytedance.afx/ffmpeg'
+chmod +x ffmpeg
+sudo xattr -d com.apple.quarantine ffmpeg
+```
+
+### Platform-specific Issues
+
+#### Windows VPN Conflicts
+
+Third-party VPN software may create virtual network adapters that interfere with AFX server binding. Disable unnecessary virtual adapters in Network Connections settings.
+
+#### macOS Repeated Permissions Prompts
+
+If macOS repeatedly asks for ffmpeg permissions, execute the terminal commands above to permanently grant access.
+
+### Performance Optimization
+
+#### Recommended Animation Asset Sizes
+
+- **Images**: Optimize for target device memory constraints
+- **Videos**: Balance quality and file size based on network conditions
+- **Memory Usage**: Monitor total artifact size for performance considerations
+
+#### Sequence Frame Processing
+
+For animations that cannot be exported directly as Lottie:
+
+1. Render sequence frames to MOV files
+2. Convert MOV to AE composition
+3. Reference composition in target export
+4. Configure as Alpha Video export in AFX

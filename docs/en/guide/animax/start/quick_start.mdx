@@ -1,0 +1,212 @@
+import { Steps } from '@theme';
+import * as NextSteps from '@lynx/NextSteps';
+import { CodeFold } from '@lynx';
+
+# Quick Start
+
+In this document, we will start from a Lynx project to run and verify a minimal runnable example of AnimaX.
+
+## Get Started
+
+<Steps>
+### Prepare a Lynx Project
+
+Please prepare a Lynx project and an Example App.
+If you’re not sure how to begin, refer to [this document](../../start/quick-start.mdx) to create and run your first Lynx project.
+
+LynxExample App has already integrated AnimaX. You can also verify AnimaX in any app developed with Lynx via [Quick Integration (Coming Soon)](#).
+
+:::tip
+
+💡 The quick start section of this document uses ReactLynx to demonstrate the integration process for faster onboarding.
+
+Using AnimaX does not require prior Lynx integration. Any app can integrate AnimaX directly via the [Native Approach (Coming Soon)](#).
+
+:::
+
+### Prepare the Animation
+
+Typically, designers export Lottie resources from AE using the AFX plugin.
+We also provide a sample resource for demonstration, which you can use directly.
+
+<a
+  href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+  style={{ color: '#1a73e8', textDecoration: 'underline', cursor: 'pointer' }}
+>
+  Download sample resources
+</a>
+
+If you’re interested in how this resource is produced, see [Plugin Export](../start/afx.mdx) to learn the AFX export process and specifications.
+
+::: details How does AnimaX organize Lottie animation assets?
+
+For any animation resource, there is an accompanying `.json` file conforming to the [Lottie specification](https://lottiefiles.github.io/lottie-docs/) that stores metadata for the assets.
+For example, the metadata description for an image in the Lottie spec is as follows:
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "images/",
+    "p": "img_0.png",
+    "e": 0
+  }
+]
+```
+
+Here, the `u` and `p` fields respectively represent the relative path and file name of the image asset with `id` `image_0`.
+
+Image assets can also come from a URL; in this case, set `u` to empty and put the full URL in `p`:
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "",
+    "p": "https://example.com",
+    "e": 0
+  }
+]
+```
+
+Additionally, Base64 inline images are supported. In this case, set `e` (Embedded) to `1` and put the Base64 data in `p`:
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "",
+    "p": "data:image/png;base64,...",
+    "e": 1
+  }
+]
+```
+
+In AnimaX, you can also inject asset resources using formatted strings via [`src-format`](../../../api/elements/built-in/animax-view.html#src-format) and [`src-polyfill`](../../../api/elements/built-in/animax-view.html#src-polyfill), or load resources on demand at runtime using [Dynamic Properties](../dynamic_property.mdx).
+
+:::
+
+### Start Developing
+
+You can directly use the CSS styles we provide:
+
+<CodeFold toggle>
+
+```tsx title="App.css"
+.animation-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2328;
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
+}
+
+.child-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.child-border {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+  padding: 16px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.animax-item {
+  width: 200px;
+  height: 200px;
+}
+
+```
+
+</CodeFold>
+
+Open the `src/App.tsx` file in your code editor and make changes.
+
+<CodeFold img='https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.gif'>
+
+```tsx title="App.tsx" {9-14}
+import './App.css';
+
+export function App() {
+  return (
+    <view className="animation-card">
+      <text className="title">AnimaX</text>
+      <view className="child-container">
+        <view className="child-border">
+          <animax-view
+            className="animax-item"
+            src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.json"
+            autoplay={true}
+            loop={true}
+          />
+        </view>
+      </view>
+    </view>
+  );
+}
+```
+
+</CodeFold>
+
+You have successfully run a minimal runnable example of AnimaX!
+
+::: details The src attribute in \<animax-view\>
+
+The [`src`](../../../api/elements/built-in/animax-view.html#src) attribute accepts a URL that can point to a `.json` or `.zip` file.
+
+- For `.json`: AnimaX will take the URL’s directory prefix as the asset root, and load assets by concatenating the relative paths from the spec with this root.
+- For `.zip`: AnimaX uses the root directory within the archive as the asset root, parsing and loading assets according to the relative or absolute paths in the spec.
+
+For simpler scenarios, you can pass complete animation data directly via the [`json`](../../../api/elements/built-in/animax-view.html#json) attribute; in this case (if assets are included), referencing external resources via relative paths is not supported.
+
+:::
+
+</Steps>
+
+## Continue Learning
+
+You can continue in this section to learn advanced usage of AnimaX, or learn how to use the AFX plugin to create animation assets in AE.
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/animax/start/afx"
+    title="Plugin Export"
+    description="Learn how to use the AFX plugin to export Lottie resources compatible with AnimaX"
+  />
+  <NextSteps.Step
+    href="/guide/animax/start/tutorial_basic"
+    title="Tutorial: Basic Controls"
+    description="Learn how to use <animax-view> for basic playback and control"
+  />
+</NextSteps.Root>

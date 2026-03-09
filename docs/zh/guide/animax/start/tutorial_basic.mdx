@@ -1,0 +1,656 @@
+import { CodeFold } from '@lynx';
+
+# 教程：基本控制
+
+在本文档中，我们将学习通过 UI 方法控制、监听动画播放，实现一个动画播放器。
+
+## 准备样式和动画资源
+
+你可以继续使用[快速开始](./quick_start.html#准备动画)时我们提供的动画资源。
+
+以下是本教程使用到的所有 CSS 样式。
+
+<CodeFold toggle>
+
+```tsx title="index.css"
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.animation-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2328;
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
+}
+
+.child-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.child-border {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+  padding: 16px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.animax-item {
+  width: 200px;
+  height: 200px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns:
+  1fr
+  auto
+  auto
+  auto
+  1fr;
+  align-items: center;
+  column-gap: 3px;
+  width: 100%;
+  max-width: 720px;
+  min-height: 44px;
+  margin-top: 12px;
+}
+
+.button.left { justify-self: start; }
+.button.center { justify-self: center; }
+.button.right { justify-self: end; }
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.prev-frame {
+  width: 0; height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-left: 1px solid #1a73e8;
+  border-right: 20px solid #1a73e8;
+}
+
+.play {
+  width: 0; height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-left: 20px solid #1a73e8;
+}
+
+.next-frame {
+  width: 0; height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-left: 20px solid #1a73e8;
+  border-right: 1px solid #1a73e8;
+}
+
+.square {
+  width: 10px;
+  height: 10px;
+  background: #1a73e8;
+  border-radius: 2px;
+}
+
+.pause {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  box-sizing: border-box;
+  border-left: 6px solid #1a73e8;
+  border-right: 6px solid #1a73e8;
+
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+
+.stop {
+  width: 20px; height: 20px;
+  background: #1a73e8; border-radius: 2px;
+}
+
+.progress {
+  display: relative;
+  width: 100%;
+  height: 20px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.progress-track {
+  relative-align-left: parent;
+  width: 100%;
+  height: 100%;
+  background: #E9EEF5;
+  border-radius: inherit;
+}
+
+.progress-fill {
+  relative-align-left: parent;
+  width: 100%;
+  height: 100%;
+  background: #2563EB;
+  border-radius: inherit;
+}
+
+.progress-text {
+  relative-center: both;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #0B1220;
+}
+
+```
+
+</CodeFold>
+
+## 手动播放动画
+
+在[快速开始](./quick_start)时，我们已经通过设置 `autoplay` 的属性，实现了动画的自动播放。
+在这里，我们将通过 UI Method ，点击按钮播放动画。
+
+<CodeFold
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-play.gif"
+  height={500}
+>
+
+```tsx title="App.tsx" {9-11,13-21,32,34,45}
+import { useRef, useState } from '@lynxjs/react';
+import './index.css';
+
+export function App() {
+  const animaxRef = useRef<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  const onReady = (_e: any) => {
+    setIsReady(true);
+  };
+
+  const handleTapPlay = () => {
+    if (isReady) {
+      animaxRef.current
+        ?.invoke({
+          method: 'play',
+        })
+        .exec();
+    }
+  };
+
+  return (
+    <view className="container">
+      <view className="animation-card">
+        <text className="title">AnimaX</text>
+        <view className="child-container">
+          <view className="child-border">
+            <animax-view
+              ref={animaxRef}
+              className="animax-item"
+              bindready={onReady}
+              src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+              autoplay={false}
+              loop={true}
+            />
+          </view>
+        </view>
+      </view>
+      <view className="controls">
+        <view />
+        <view />
+        <view className="button center" bindtap={handleTapPlay}>
+          <view className="play" />
+        </view>
+        <view />
+        <view />
+      </view>
+    </view>
+  );
+}
+```
+
+</CodeFold>
+
+为了让动画的播放受控制，我们首先将 `autoplay` 设置为 `false`。
+
+同时，我们监听了 `ready` 事件。在 AnimaX 准备好用于渲染的模型与平台渲染对象后，才能够正常响应 UI Method此时会发送 `ready` 事件。
+
+```tsx {4,6}
+<animax-view
+  ref={animaxRef}
+  className="animax-item"
+  bindready={onReady}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+  autoplay={false}
+  loop={true}
+/>
+```
+
+:::details bindready与bindfirstframe
+
+在发送完 `ready` 事件后，AnimaX会继续渲染第一帧内容，并发送 `firstframe` 事件。
+
+如果需要在第一时间响应 UI Method，准备动态属性相关内容，应该监听 `ready` 事件。
+
+如果需要实现无缝切换（比如在动画没加载完成之前显示图片），减少空白帧，应该监听 `firstframe` 事件。
+
+在[这里](/api/elements/built-in/animax-view.html#事件属性)关注更多事件。
+
+:::
+
+然后，我们绑定了一个按钮，让它使用 UI Method，开始动画的播放。
+
+```tsx {3-7,14}
+const handleTapPlay = () => {
+  if(isReady){
+    animaxRef.current
+      ?.invoke(
+        {
+        method: "play"
+      }).exec()
+  }
+}
+
+...
+<view
+  className="button center"
+  bindtap = {handleTapPlay}
+>
+...
+```
+
+:::info
+
+我们通过 `ref` 属性的设置获取 `NodesRef`, 另一种方法是通过 `id` 和 `SelectorQuery` 获取，更多信息请参考[官方文档](/api/lynx-api/nodes-ref)
+
+:::
+
+## 加入暂停与停止
+
+现在，我们可以加入更多控制按钮了。
+
+<CodeFold
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-pause.gif"
+  height={500}
+>
+
+```tsx title="App.tsx" {7-8,15-28,30-48,50-55,79,81,84}
+import { useRef, useState } from '@lynxjs/react';
+import './index.css';
+
+export function App() {
+  const animaxRef = useRef<any>(null);
+  const [canPauseResume, setCanPauseResume] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  const onReady = (_e: any) => {
+    setIsReady(true);
+  };
+
+  const invokeMethod = (method: string, success: (res: any) => void) => {
+    if (!isReady) {
+      return;
+    }
+    animaxRef.current
+      ?.invoke({
+        method,
+        success(res: any) {
+          success(res);
+        },
+        fail(res: any) {
+          console.log('Failed to ', method, ', info:', res);
+        },
+      })
+      .exec();
+  };
+
+  const handleTapPlay = () => {
+    if (!canPauseResume) {
+      invokeMethod('play', (res) => {
+        setIsPlaying(true);
+        setCanPauseResume(true);
+      });
+      return;
+    }
+    if (isPlaying) {
+      invokeMethod('pause', (res) => {
+        setIsPlaying(false);
+      });
+      return;
+    }
+    invokeMethod('resume', (res) => {
+      setIsPlaying(true);
+    });
+  };
+
+  const handleTapStop = () => {
+    invokeMethod('stop', (res) => {
+      setIsPlaying(false);
+      setCanPauseResume(false);
+    });
+  };
+
+  return (
+    <view className="container">
+      <view className="animation-card">
+        <text className="title">AnimaX</text>
+        <view className="child-container">
+          <view className="child-border">
+            <animax-view
+              ref={animaxRef}
+              className="animax-item"
+              bindready={onReady}
+              src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+              autoplay={false}
+              loop={true}
+            />
+          </view>
+        </view>
+      </view>
+      <view className="controls">
+        <view />
+        <view />
+        <view className="button center" bindtap={handleTapPlay}>
+          {isPlaying && canPauseResume ? (
+            <view className="pause" />
+          ) : (
+            <view className="play" />
+          )}
+        </view>
+        <view />
+        <view className="button right" bindtap={handleTapStop}>
+          <view className="stop" />
+        </view>
+      </view>
+    </view>
+  );
+}
+```
+
+</CodeFold>
+
+在这里，我们使用了更多的 UI Method，并且通过回调更新了状态。
+
+```tsx {9-14,22-23}
+...
+
+const invokeMethod = (method:string, success:(res:any)=>void)=>{
+  if(!isReady){
+    return;
+  }
+  animaxRef.current?.invoke({
+    method,
+    success(res: any){
+      success(res)
+    },
+    fail(res: any){
+      console.log("Failed to ", method, ", info:", res)
+    }
+  }).exec()
+}
+
+...
+
+const handleTapStop = () => {
+  invokeMethod("stop", (res) => {
+    setIsPlaying(false)
+    setCanPauseResume(false)
+  })
+}
+...
+```
+
+## 实现进度条和逐帧播放
+
+[`subscribeUpdateEvents`](/api/elements/built-in/animax-view#subscribeupdateevents) 可以让我们订阅某些特定的帧，
+而[`seek`](/api/elements/built-in/animax-view#seek)可以让动画跳转到指定帧。
+
+<CodeFold
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-progress.gif"
+  height={500}
+>
+
+```tsx title="App.tsx" {10-11,14-24,27-29,74-76,78-80,82-84,104-113}
+import { useRef, useState } from '@lynxjs/react';
+import './index.css'
+
+export function App() {
+
+const animaxRef = useRef<any>(null)
+const [canPauseResume, setCanPauseResume] = useState(false)
+const [isPlaying, setIsPlaying] = useState(false)
+const [isReady, setIsReady] = useState(false)
+const [totalFrame, setTotalFrame] = useState(0)
+const [currentFrame, setCurrentFrame] = useState(0)
+
+const onReady = (e: any) => {
+  const total = Math.round(e.detail.total)
+  setTotalFrame(total)
+  animaxRef.current?.invoke({
+    method:"subscribeUpdateEvents",
+    params:{
+      frames: Array.from({length:total + 1},(_,i)=>i),
+    },
+    success(res:any){
+      setIsReady(true)
+    }
+  }).exec()
+}
+
+const onUpdate = (e:any) => {
+setCurrentFrame(Math.round(e.detail.current))
+}
+
+const invokeMethod = (method:string, params:any, success?:(res:any)=>void)=>{
+  if(!isReady){
+    return
+  }
+  animaxRef.current?.invoke({
+    method,
+    params,
+    success(res: any){
+      success?.(res)
+    },
+    fail(res: any){
+      console.log("Failed to ", method, ", info:", res)
+    }
+  }).exec()
+}
+
+const handleTapPlay = () => {
+  if(!canPauseResume){
+      invokeMethod("play",{}, (res) => {
+        setIsPlaying(true)
+        setCanPauseResume(true)
+      })
+      return
+    }
+    if(isPlaying){
+      invokeMethod("pause",{}, (res)=>{
+        setIsPlaying(false)
+      })
+      return
+    }
+    invokeMethod("resume",{}, (res) => {
+      setIsPlaying(true)
+    })
+    return
+  }
+
+const handleTapStop = () => {
+  invokeMethod("stop",{}, (res) => {
+    setIsPlaying(false)
+    setCanPauseResume(false)
+  })
+}
+
+const handleTapPrev = () => {
+  invokeMethod("seek",{frame:currentFrame > 0? currentFrame - 1 : totalFrame})
+}
+
+const handleTapNext = () => {
+  invokeMethod("seek",{frame:currentFrame < totalFrame? currentFrame + 1 : 0})
+}
+
+const handleTapProgress = (e: any) => {
+  invokeMethod("seek",{frame:Math.round((e.detail.x _ SystemInfo.pixelRatio / SystemInfo.pixelWidth) _ totalFrame)})
+}
+
+return (
+
+<view className="container">
+  <view className="animation-card">
+    <text className="title">AnimaX</text>
+    <view className="child-container">
+      <view className="child-border">
+        <animax-view
+          ref={animaxRef}
+          className="animax-item"
+          bindready={onReady}
+          bindupdate={onUpdate}
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+          autoplay={false}
+          loop={true}
+        />
+      </view>
+    </view>
+  </view>
+  {isReady && (
+    <view className="progress" bindtap={handleTapProgress}>
+      <view className="progress-track"></view>
+      <view
+        className="progress-fill"
+        style={{ width: `${(currentFrame / totalFrame) * 100}%` }}
+      ></view>
+      <text className="progress-text">
+        {currentFrame}/{totalFrame}
+      </text>
+    </view>
+  )}
+  <view className="controls">
+    <view />
+    <view className="button right" bindtap={handleTapPrev}>
+      <view className="prev-frame" />
+    </view>
+    <view className="button center" bindtap={handleTapPlay}>
+      {isPlaying && canPauseResume ? (
+        <view className="pause" />
+      ) : (
+        <view className="play" />
+      )}
+    </view>
+    <view className="button left" bindtap={handleTapNext}>
+      <view className="next-frame" />
+    </view>
+    <view className="button right" bindtap={handleTapStop}>
+      <view className="stop" />
+    </view>
+  </view>
+</view>
+); }
+
+```
+
+</CodeFold>
+
+通过在 UI Method 中传入参数，我们订阅了所有的帧。所有被订阅的帧在渲染时都会发送一个`update`事件。
+
+通过 AnimaX [事件回调参数](/api/elements/built-in/animax-view.html#事件定义)，更新总帧数和当前帧数。
+
+```tsx {2-12,15-17,23}
+const onReady = (e: any) => {
+  const total = Math.round(e.detail.total);
+  setTotalFrame(total);
+  animaxRef.current
+    ?.invoke({
+      method: 'subscribeUpdateEvents',
+      params: {
+        frames: Array.from({ length: total + 1 }, (_, i) => i),
+      },
+      success(res: any) {
+        setIsReady(true);
+      },
+    })
+    .exec();
+};
+
+const onUpdate = (e: any) => {
+  setCurrentFrame(Math.round(e.detail.current));
+};
+
+<animax-view
+  ref={animaxRef}
+  className="animax-item"
+  bindready={onReady}
+  bindupdate={onUpdate}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.zip"
+  autoplay={false}
+  loop={true}
+/>;
+```
+
+:::tip
+
+AnimaX 的渲染依赖于 UI 线程的 Vsync 同步，因此从事件回调参数获取的帧信息实际上是浮点数，可能会导致渲染内容与预期产生偏差。
+
+如果主线程比较繁忙，会跳过 1-2 帧的不进行绘制。
+如果这些被跳过的帧已经被订阅，AnimaX 将会补发 `update` 事件。
+
+:::
+
+通过 [`seek`](/api/elements/built-in/animax-view.html#seek) 方法，控制动画的跳转。
+
+```
+const handleTapPrev = () => {
+  invokeMethod("seek",{frame:currentFrame > 0? currentFrame - 1 : totalFrame})
+}
+
+const handleTapNext = () => {
+  invokeMethod("seek",{frame:currentFrame < totalFrame? currentFrame + 1 : 0})
+}
+
+const handleTapProgress = (e: any) => {
+  invokeMethod("seek",{frame:Math.round((e.detail.x * SystemInfo.pixelRatio / SystemInfo.pixelWidth) * totalFrame)})
+}
+```
