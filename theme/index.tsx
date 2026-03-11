@@ -31,12 +31,14 @@ import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
-// Match subsite by checking if any path segment exactly equals the subsite value
+// Match subsite by checking if the first meaningful path segment equals the subsite value
 const findSubsite = (pathname: string) => {
-  const segments = pathname.split('/');
-  return SUBSITES_CONFIG.find((s) =>
-    segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-  );
+  const segments = pathname.split('/').filter(Boolean);
+  // Skip lang prefix (e.g., 'zh')
+  const firstSegment = segments[0] === 'zh' ? segments[1] : segments[0];
+  if (!firstSegment) return undefined;
+  const normalized = firstSegment.replace(/\.html$/, '');
+  return SUBSITES_CONFIG.find((s) => s.value === normalized);
 };
 
 declare global {
