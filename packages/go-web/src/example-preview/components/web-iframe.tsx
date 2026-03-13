@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import '@lynx-js/web-core/index.css';
 import '@lynx-js/web-elements/index.css';
 import type { LynxView } from '@lynx-js/web-core';
@@ -39,6 +39,47 @@ function ensureRuntime() {
 // Matches .p=\"<anything>\" — handles empty, single-char, and multi-char paths
 const WEBPACK_PUBLIC_PATH_RE = /\.p=\\"[^"]*\\"/g;
 
+/**
+ * Rewrite CSS viewport units (vh/vw) in a Lynx template's styleInfo to use
+ * CSS custom properties (--lynx-vh / --lynx-vw). This fixes viewport-unit
+ * sizing inside the <lynx-view> shadow DOM, where native CSS vh/vw resolve
+ * to the browser viewport rather than the preview container.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rewriteViewportUnits(template: any): void {
+  if (!template.styleInfo) return;
+
+  const rewrite = (value: string) =>
+    value
+      .replace(/(-?\d+\.?\d*)vh/g, (_, num) => {
+        const n = Number.parseFloat(num);
+        if (n === 100) return 'var(--lynx-vh, 100vh)';
+        return `calc(var(--lynx-vh, 100vh) * ${n / 100})`;
+      })
+      .replace(/(-?\d+\.?\d*)vw/g, (_, num) => {
+        const n = Number.parseFloat(num);
+        if (n === 100) return 'var(--lynx-vw, 100vw)';
+        return `calc(var(--lynx-vw, 100vw) * ${n / 100})`;
+      });
+
+  for (const key of Object.keys(template.styleInfo)) {
+    const info = template.styleInfo[key];
+    if (info.content) {
+      info.content = info.content.map((s: string) => rewrite(s));
+    }
+    if (info.rules) {
+      for (const rule of info.rules) {
+        if (rule.decl) {
+          rule.decl = rule.decl.map(([prop, val]: [string, string]) => [
+            prop,
+            rewrite(val),
+          ]);
+        }
+      }
+    }
+  }
+}
+
 export const WebIframe = ({ show, src }: WebIframeProps) => {
   const lynxViewRef = useRef<LynxView>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,17 +96,27 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
     ensureRuntime().then(() => setReady(true));
   }, []);
 
+  // Update lynx-view dimensions to match the container.
+  // Called on initial setup and on container resize.
+  const updateDimensions = useCallback(() => {
+    if (!lynxViewRef.current || !containerRef.current) return;
+    const w = containerRef.current.clientWidth;
+    const h = containerRef.current.clientHeight;
+    // @ts-ignore
+    lynxViewRef.current.browserConfig = {
+      pixelWidth: Math.round(w * window.devicePixelRatio),
+      pixelHeight: Math.round(h * window.devicePixelRatio),
+    };
+    // @ts-ignore – update CSS custom properties for viewport-unit rewriting
+    lynxViewRef.current.injectStyleRules = [
+      `:host { --lynx-vh: ${h}px; --lynx-vw: ${w}px; }`,
+    ];
+  }, []);
+
   // Set URL only after runtime is ready AND element is mounted
   useEffect(() => {
     if (ready && show && src && lynxViewRef.current && containerRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight;
-
-      // @ts-ignore
-      lynxViewRef.current.browserConfig = {
-        pixelWidth: Math.round(containerWidth * window.devicePixelRatio),
-        pixelHeight: Math.round(containerHeight * window.devicePixelRatio),
-      };
+      updateDimensions();
 
       // @ts-ignore
       lynxViewRef.current.customTemplateLoader = async (url: string) => {
@@ -101,6 +152,9 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
           }
         }
 
+        // Rewrite vh/vw units in CSS to use container-relative custom properties
+        rewriteViewportUnits(template);
+
         return template;
       };
 
@@ -128,7 +182,16 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         mo?.disconnect();
       };
     }
-  }, [ready, show, src]);
+  }, [ready, show, src, updateDimensions]);
+
+  // Keep lynx-view dimensions in sync when the container is resized
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !ready) return;
+    const ro = new ResizeObserver(() => updateDimensions());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ready, updateDimensions]);
 
   const loading = show && (!ready || !rendered);
 
