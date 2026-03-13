@@ -82,6 +82,7 @@ export default defineConfig({
       },
     },
     source: {
+      include: [/[\\/]node_modules[\\/]@lynx-js[\\/]go-web[\\/]/],
       define: {
         'process.env': {
           // This marks the first open sourced version of Lynx.

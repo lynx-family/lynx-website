@@ -1,30 +1,43 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 import { ExampleContent } from './components';
 import { isAssetFileType } from './utils/example-data';
-import Callout from '../../Callout';
-import { SchemaOptionsData } from './hooks/use-switch-schema';
+import type { SchemaOptionsData } from './hooks/use-switch-schema';
 import { withBase } from '@rspress/core/runtime';
-import { ExamplePreview as ExamplePreviewMarkdown } from './index.server';
+import { useGoConfig } from '../config';
 
-const EXAMPLE_BASE_URL = withBase('/lynx-examples');
-
-const ErrorWrap = ({ example }: { example: string }) => {
+const DefaultErrorWrap = ({
+  example,
+  exampleBaseUrl,
+}: {
+  example: string;
+  exampleBaseUrl: string;
+}) => {
   return (
-    <Callout type="danger" title="Error Loading Example Data">
+    <div
+      style={{
+        padding: '16px',
+        border: '1px solid #e74c3c',
+        borderRadius: '8px',
+        background: '#fdf0ef',
+      }}
+    >
+      <strong>Error Loading Example Data</strong>
       <p>
         Error loading Example data for example: <code>{example}</code>
         <br />
         Please check if the file <code>example-metadata.json</code> exists in{' '}
         <code>
-          {EXAMPLE_BASE_URL}/{example}
+          {exampleBaseUrl}/{example}
         </code>{' '}
         .
       </p>
-    </Callout>
+    </div>
   );
 };
+
 export interface ExamplePreviewProps {
   example: string;
   defaultFile: string;
@@ -52,8 +65,11 @@ interface ExampleMetadata {
 }
 
 export const ExamplePreview = (props: ExamplePreviewProps) => {
-  if (import.meta.env.SSG_MD) {
-    return <ExamplePreviewMarkdown {...props} />;
+  const { exampleBasePath, ErrorComponent, SSGComponent } = useGoConfig();
+  const EXAMPLE_BASE_URL = withBase(exampleBasePath);
+
+  if (import.meta.env.SSG_MD && SSGComponent) {
+    return <SSGComponent {...props} />;
   }
 
   const {
@@ -182,7 +198,8 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
   }, [exampleData, defaultEntryFile, defaultEntryName]);
 
   if (error) {
-    return <ErrorWrap example={example} />;
+    const ErrorComp = ErrorComponent || DefaultErrorWrap;
+    return <ErrorComp example={example} exampleBaseUrl={EXAMPLE_BASE_URL} />;
   }
 
   return (

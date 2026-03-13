@@ -25,22 +25,20 @@ import { ResizableContainer } from './resizable';
 import { IconGithub, IconCopyLink } from '../utils/icon';
 import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
-import { SchemaOptionsData } from '../hooks/use-switch-schema';
+import type { SchemaOptionsData } from '../hooks/use-switch-schema';
+import { useGoConfig } from '../../config';
+
 const WebIframe = React.lazy(() =>
   import('./web-iframe').then((module) => ({ default: module.WebIframe })),
 );
 
 import s from './index.module.scss';
 
-const LYNX_EXPLORER_URL_CN =
-  process.env.LYNX_EXPLORER_URL_CN ||
+const DEFAULT_EXPLORER_URL_CN =
   '/zh/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator';
 
-const LYNX_EXPLORER_URL_EN =
-  process.env.LYNX_EXPLORER_URL_EN ||
+const DEFAULT_EXPLORER_URL_EN =
   '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator';
-
-const lynxExplorerText = process.env.LYNX_EXPLORER_TEXT || 'Lynx Explorer';
 
 enum PreviewType {
   Preview = 'Preview',
@@ -93,6 +91,11 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   exampleGitBaseUrl,
   langAlias,
 }) => {
+  const { explorerUrl, explorerText } = useGoConfig();
+  const LYNX_EXPLORER_URL_CN = explorerUrl?.cn || DEFAULT_EXPLORER_URL_CN;
+  const LYNX_EXPLORER_URL_EN = explorerUrl?.en || DEFAULT_EXPLORER_URL_EN;
+  const lynxExplorerText = explorerText || 'Lynx Explorer';
+
   const { treeData, doChangeExpand, selectedKeys, expandedKeys, entryData } =
     useTreeController({ fileNames, value: currentFileName, entry });
   const [showPreview, setShowPreview] = useState(true);
