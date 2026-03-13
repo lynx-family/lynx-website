@@ -110,11 +110,12 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
       // on its shadow root
       const el = lynxViewRef.current as unknown as HTMLElement;
       const shadow = el.shadowRoot;
+      let mo: MutationObserver | undefined;
       if (shadow) {
-        const mo = new MutationObserver(() => {
+        mo = new MutationObserver(() => {
           if (shadow.childElementCount > 0) {
             setRendered(true);
-            mo.disconnect();
+            mo?.disconnect();
           }
         });
         mo.observe(shadow, { childList: true, subtree: true });
@@ -124,6 +125,7 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
       const timer = setTimeout(() => setRendered(true), 5000);
       return () => {
         clearTimeout(timer);
+        mo?.disconnect();
       };
     }
   }, [ready, show, src]);

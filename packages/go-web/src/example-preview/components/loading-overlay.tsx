@@ -1,28 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useDark } from '@rspress/core/runtime';
 
 const LOGO_LIGHT =
   'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg';
 const LOGO_DARK =
   'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg';
 
-function useIsDark() {
-  const [dark, setDark] = useState(false);
-  useEffect(() => {
-    const check = () =>
-      setDark(document.documentElement.classList.contains('dark'));
-    check();
-    const mo = new MutationObserver(check);
-    mo.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-    return () => mo.disconnect();
-  }, []);
-  return dark;
-}
-
 export const LoadingOverlay = ({ visible }: { visible: boolean }) => {
-  const isDark = useIsDark();
+  const isDark = useDark();
   if (!visible) return null;
   return (
     <div
