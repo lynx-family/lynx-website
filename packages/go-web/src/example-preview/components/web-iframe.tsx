@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import '@lynx-js/web-core/index.css';
 import '@lynx-js/web-elements/index.css';
 import type { LynxView } from '@lynx-js/web-core';
+import { LoadingOverlay } from './loading-overlay';
 
 declare global {
   namespace JSX {
@@ -42,6 +43,12 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
   const lynxViewRef = useRef<LynxView>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  const [rendered, setRendered] = useState(false);
+
+  // Reset rendered state when src changes
+  useEffect(() => {
+    setRendered(false);
+  }, [src]);
 
   // Load web-core + web-elements eagerly on mount
   useEffect(() => {
@@ -98,8 +105,30 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
       };
 
       lynxViewRef.current.url = src;
+
+      // Detect when lynx-view has rendered content via MutationObserver
+      // on its shadow root
+      const el = lynxViewRef.current as unknown as HTMLElement;
+      const shadow = el.shadowRoot;
+      if (shadow) {
+        const mo = new MutationObserver(() => {
+          if (shadow.childElementCount > 0) {
+            setRendered(true);
+            mo.disconnect();
+          }
+        });
+        mo.observe(shadow, { childList: true, subtree: true });
+      }
+
+      // Fallback: hide loading after timeout
+      const timer = setTimeout(() => setRendered(true), 5000);
+      return () => {
+        clearTimeout(timer);
+      };
     }
   }, [ready, show, src]);
+
+  const loading = show && (!ready || !rendered);
 
   return (
     <div
@@ -113,6 +142,7 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         position: 'relative',
       }}
     >
+      <LoadingOverlay visible={loading} />
       {show && src && (
         <lynx-view
           ref={lynxViewRef}
