@@ -115,9 +115,6 @@ export const ExampleContent: FC<ExampleContentProps> = ({
     if (defaultTab === 'preview' && previewImage) return PreviewType.Preview;
     if (defaultTab === 'qrcode') return PreviewType.QRCode;
     // 'web' can't resolve synchronously (webFile loads async); handled by useEffect below
-    if (!defaultTab || defaultTab === 'web') {
-      return previewImage ? PreviewType.Preview : PreviewType.QRCode;
-    }
     return previewImage ? PreviewType.Preview : PreviewType.QRCode;
   });
 

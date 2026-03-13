@@ -25,7 +25,6 @@ const ErrorComponent = ({
 
 const config = {
   exampleBasePath: '/lynx-examples',
-  defaultTab: 'web' as const,
   explorerUrl: {
     cn:
       process.env.LYNX_EXPLORER_URL_CN ||
