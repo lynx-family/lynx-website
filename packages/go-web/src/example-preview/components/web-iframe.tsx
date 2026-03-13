@@ -34,6 +34,9 @@ function ensureRuntime() {
   return runtimeReady;
 }
 
+// Pre-compiled regex for webpack public path rewriting in customTemplateLoader
+const WEBPACK_PUBLIC_PATH_RE = /\.p=\\"\.\\"/g;
+
 /**
  * Rewrite CSS viewport units (vh/vw) in a Lynx template's styleInfo to use
  * CSS custom properties (--lynx-vh / --lynx-vw). This fixes viewport-unit
@@ -41,8 +44,8 @@ function ensureRuntime() {
  * to the browser viewport rather than the preview container.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rewriteViewportUnits(template: any): any {
-  if (!template.styleInfo) return template;
+function rewriteViewportUnits(template: any): void {
+  if (!template.styleInfo) return;
 
   const rewrite = (value: string) =>
     value
@@ -73,7 +76,6 @@ function rewriteViewportUnits(template: any): any {
       }
     }
   }
-  return template;
 }
 
 export const WebIframe = ({ show, src }: WebIframeProps) => {
@@ -138,7 +140,7 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         // Replace webpack public path assignment (e.g. .p="/") with
         // the actual base URL of the bundle directory
         const rewritten = text.replace(
-          new RegExp('\\.p=\\\\".\\\\"', 'g'),
+          WEBPACK_PUBLIC_PATH_RE,
           `.p=\\"${baseUrl}\\"`,
         );
         const template = JSON.parse(rewritten);
