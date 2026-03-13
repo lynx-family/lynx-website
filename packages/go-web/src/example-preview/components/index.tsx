@@ -1,4 +1,11 @@
-import React, { FC, Suspense, useMemo, useRef, useState } from 'react';
+import React, {
+  FC,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useI18n, useLang, withBase, NoSSR } from '@rspress/core/runtime';
 import {
   Space,
@@ -27,6 +34,7 @@ import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import type { SchemaOptionsData } from '../hooks/use-switch-schema';
 import { useGoConfig } from '../../config';
+import type { PreviewTab } from '../../config';
 
 const WebIframe = React.lazy(() =>
   import('./web-iframe').then((module) => ({ default: module.WebIframe })),
@@ -67,6 +75,7 @@ interface ExampleContentProps {
   schemaOptions?: SchemaOptionsData;
   exampleGitBaseUrl?: string;
   langAlias?: Record<string, string>;
+  defaultTab?: PreviewTab;
 }
 
 export const ExampleContent: FC<ExampleContentProps> = ({
@@ -90,6 +99,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   schemaOptions,
   exampleGitBaseUrl,
   langAlias,
+  defaultTab,
 }) => {
   const { explorerUrl, explorerText } = useGoConfig();
   const LYNX_EXPLORER_URL_CN = explorerUrl?.cn || DEFAULT_EXPLORER_URL_CN;
@@ -101,9 +111,23 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   const [showPreview, setShowPreview] = useState(true);
   const [showFileTree, setShowFileTree] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [previewType, setPreviewType] = useState(
-    previewImage ? PreviewType.Preview : PreviewType.QRCode,
-  );
+  const [previewType, setPreviewType] = useState(() => {
+    if (defaultTab === 'preview' && previewImage) return PreviewType.Preview;
+    if (defaultTab === 'qrcode') return PreviewType.QRCode;
+    // 'web' can't resolve synchronously (webFile loads async); handled by useEffect below
+    if (!defaultTab || defaultTab === 'web') {
+      return previewImage ? PreviewType.Preview : PreviewType.QRCode;
+    }
+    return previewImage ? PreviewType.Preview : PreviewType.QRCode;
+  });
+
+  // Switch to Web tab once async metadata resolves, but only if requested
+  useEffect(() => {
+    if (defaultTab === 'web' && defaultWebPreviewFile) {
+      setPreviewType(PreviewType.Web);
+    }
+  }, [defaultTab, defaultWebPreviewFile]);
+
   const [qrcodeUrlWithSchema, setQrcodeUrlWithSchema] = useState('');
   const { hasPreview, hasWebPreview } = useMemo(() => {
     const count =

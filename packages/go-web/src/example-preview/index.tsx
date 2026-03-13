@@ -7,6 +7,7 @@ import { isAssetFileType } from './utils/example-data';
 import type { SchemaOptionsData } from './hooks/use-switch-schema';
 import { withBase } from '@rspress/core/runtime';
 import { useGoConfig } from '../config';
+import type { PreviewTab } from '../config';
 
 const DefaultErrorWrap = ({
   example,
@@ -50,6 +51,15 @@ export interface ExamplePreviewProps {
   rightFooter?: React.ReactNode;
   schemaOptions?: SchemaOptionsData;
   langAlias?: Record<string, string>;
+  /**
+   * Override the default preview tab for this instance.
+   * Takes precedence over the site-level `GoConfig.defaultTab`.
+   *
+   * - `'preview'` — static screenshot (requires `img`)
+   * - `'web'`     — live web preview (requires `webFile` in metadata)
+   * - `'qrcode'`  — QR code for Lynx Explorer
+   */
+  defaultTab?: PreviewTab;
 }
 
 interface ExampleMetadata {
@@ -65,7 +75,12 @@ interface ExampleMetadata {
 }
 
 export const ExamplePreview = (props: ExamplePreviewProps) => {
-  const { exampleBasePath, ErrorComponent, SSGComponent } = useGoConfig();
+  const {
+    exampleBasePath,
+    ErrorComponent,
+    SSGComponent,
+    defaultTab: configDefaultTab,
+  } = useGoConfig();
   const EXAMPLE_BASE_URL = withBase(exampleBasePath);
 
   if (import.meta.env.SSG_MD && SSGComponent) {
@@ -84,7 +99,11 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
     rightFooter,
     schemaOptions,
     langAlias,
+    defaultTab: propsDefaultTab,
   } = props;
+
+  // Instance prop > config provider > undefined (let ExampleContent decide)
+  const defaultTab = propsDefaultTab ?? configDefaultTab;
 
   const [currentName, setCurrentName] = useState(defaultFile);
   const [currentFile, setCurrentFile] = useState('');
@@ -229,6 +248,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
       rightFooter={rightFooter}
       schemaOptions={schema ? undefined : schemaOptions}
       exampleGitBaseUrl={exampleData?.exampleGitBaseUrl}
+      defaultTab={defaultTab}
     />
   );
 };
