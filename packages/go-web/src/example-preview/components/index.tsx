@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useI18n, useLang, withBase, NoSSR } from '@rspress/core/runtime';
 import {
   Space,
   Typography,
@@ -33,7 +32,7 @@ import { IconGithub, IconCopyLink } from '../utils/icon';
 import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import type { SchemaOptionsData } from '../hooks/use-switch-schema';
-import { useGoConfig } from '../../config';
+import { useGoConfig, DEFAULT_I18N, DefaultNoSSR } from '../../config';
 import type { PreviewTab } from '../../config';
 
 const WebIframe = React.lazy(() =>
@@ -101,7 +100,14 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   langAlias,
   defaultTab,
 }) => {
-  const { explorerUrl, explorerText } = useGoConfig();
+  const {
+    explorerUrl,
+    explorerText,
+    withBase: withBaseFn = (p: string) => p,
+    useI18n: useI18nHook,
+    useLang: useLangHook,
+    NoSSR: NoSSRComponent = DefaultNoSSR,
+  } = useGoConfig();
   const LYNX_EXPLORER_URL_CN = explorerUrl?.cn || DEFAULT_EXPLORER_URL_CN;
   const LYNX_EXPLORER_URL_EN = explorerUrl?.en || DEFAULT_EXPLORER_URL_EN;
   const lynxExplorerText = explorerText || 'Lynx Explorer';
@@ -137,8 +143,9 @@ export const ExampleContent: FC<ExampleContentProps> = ({
     };
   }, [previewImage, currentEntry, defaultWebPreviewFile]);
   const [tmpCurrentFileName, setTmpCurrentFileName] = useState('');
-  const t = useI18n();
-  const lang = useLang();
+  const defaultI18n = (key: string) => DEFAULT_I18N[key] || key;
+  const t = useI18nHook ? useI18nHook() : defaultI18n;
+  const lang = useLangHook ? useLangHook() : 'en';
 
   const getContainer = () => containerRef.current as HTMLDivElement;
   const onFileSelect = (v: string) => {
@@ -255,7 +262,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                       {t('go.scan.message-1')}
                       <Typography.Text
                         link={{
-                          href: withBase(
+                          href: withBaseFn(
                             lang === 'zh'
                               ? LYNX_EXPLORER_URL_CN
                               : LYNX_EXPLORER_URL_EN,
@@ -324,14 +331,14 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   />
                 )}
                 {hasWebPreview && (
-                  <NoSSR>
+                  <NoSSRComponent>
                     <Suspense fallback={<div>Loading...</div>}>
                       <WebIframe
                         show={previewType === PreviewType.Web}
                         src={defaultWebPreviewFile || ''}
                       />
                     </Suspense>
-                  </NoSSR>
+                  </NoSSRComponent>
                 )}
               </div>
             </div>

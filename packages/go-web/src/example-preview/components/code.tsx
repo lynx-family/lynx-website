@@ -1,10 +1,9 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { CodeBlockRuntime } from '@theme';
 
 import { getHighlightLines } from '../utils/example-data';
 import { transformerNotationHighlight } from '@shikijs/transformers';
-import { transformerAddLineNumbers } from '@rspress/core/shiki-transformers';
 import { transformerRuntimeMetaHighlight } from './shiki-transformer';
+import { useGoConfig, DefaultCodeBlock } from '../../config';
 import styles from './code.module.scss';
 
 interface CodeProps {
@@ -22,6 +21,7 @@ export const Code: FC<CodeProps> = ({
   isFirstShowCode,
   setIsFirstShowCode,
 }) => {
+  const { CodeBlock = DefaultCodeBlock } = useGoConfig();
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightVal, setHighlightVal] = useState(highlight);
   const defaultValRef = useRef(val);
@@ -82,7 +82,7 @@ export const Code: FC<CodeProps> = ({
   }, [highlight]);
   return (
     <div ref={containerRef} className={styles.code}>
-      <CodeBlockRuntime
+      <CodeBlock
         lang={language}
         onRendered={() => {
           scrollToFirstHighlightLine();
@@ -91,7 +91,6 @@ export const Code: FC<CodeProps> = ({
         shikiOptions={{
           transformers: [
             transformerNotationHighlight(),
-            transformerAddLineNumbers(),
             ...(highlightVal
               ? [
                   transformerRuntimeMetaHighlight({

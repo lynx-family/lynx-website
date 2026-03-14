@@ -1,4 +1,4 @@
-import { useDark } from '@rspress/core/runtime';
+import { useGoConfig, defaultUseDark } from '../../config';
 
 const LOGO_LIGHT =
   'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg';
@@ -6,7 +6,8 @@ const LOGO_DARK =
   'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg';
 
 export const LoadingOverlay = ({ visible }: { visible: boolean }) => {
-  const isDark = useDark();
+  const { useDark: useDarkHook = defaultUseDark } = useGoConfig();
+  const isDark = useDarkHook();
   if (!visible) return null;
   return (
     <div

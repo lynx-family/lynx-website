@@ -1,5 +1,6 @@
 import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
+import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
 import { ExamplePreview as SSGComponent } from './example-preview-ssg';
 import Callout from '../Callout';
 
@@ -36,6 +37,7 @@ const config = {
   explorerText: process.env.LYNX_EXPLORER_TEXT || 'Lynx Explorer',
   ErrorComponent,
   SSGComponent,
+  ...rspressAdapter,
 };
 
 export function Go(props: GoProps) {

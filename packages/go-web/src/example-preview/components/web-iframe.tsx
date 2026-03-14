@@ -195,8 +195,6 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
 
   const loading = show && (!ready || !rendered);
 
-  const loading = show && (!ready || !rendered);
-
   return (
     <div
       ref={containerRef}

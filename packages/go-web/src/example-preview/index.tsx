@@ -5,7 +5,6 @@ import useSWRMutation from 'swr/mutation';
 import { ExampleContent } from './components';
 import { isAssetFileType } from './utils/example-data';
 import type { SchemaOptionsData } from './hooks/use-switch-schema';
-import { withBase } from '@rspress/core/runtime';
 import { useGoConfig } from '../config';
 import type { PreviewTab } from '../config';
 
@@ -62,7 +61,7 @@ export interface ExamplePreviewProps {
   defaultTab?: PreviewTab;
 }
 
-interface ExampleMetadata {
+export interface ExampleMetadata {
   name: string;
   files: string[];
   templateFiles: Array<{
@@ -80,8 +79,9 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
     ErrorComponent,
     SSGComponent,
     defaultTab: configDefaultTab,
+    withBase: withBaseFn = (p: string) => p,
   } = useGoConfig();
-  const EXAMPLE_BASE_URL = withBase(exampleBasePath);
+  const EXAMPLE_BASE_URL = withBaseFn(exampleBasePath);
 
   if (import.meta.env.SSG_MD && SSGComponent) {
     return <SSGComponent {...props} />;
