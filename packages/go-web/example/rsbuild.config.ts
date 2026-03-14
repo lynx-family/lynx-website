@@ -2,6 +2,22 @@ import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import path from 'node:path';
+import fs from 'node:fs';
+
+// Discover all examples from the docs directory so we can serve them
+// and generate an example list at build time.
+const docsExamplesDir = path.resolve(
+  __dirname,
+  '../../../docs/public/lynx-examples',
+);
+const exampleNames = fs.existsSync(docsExamplesDir)
+  ? fs
+      .readdirSync(docsExamplesDir)
+      .filter((name) =>
+        fs.statSync(path.join(docsExamplesDir, name)).isDirectory(),
+      )
+      .sort()
+  : ['hello-world'];
 
 export default defineConfig({
   plugins: [pluginReact(), pluginSass()],
@@ -13,6 +29,10 @@ export default defineConfig({
   source: {
     entry: {
       index: './src/main.tsx',
+    },
+    define: {
+      // Inject the example list as a build-time constant
+      'import.meta.env.EXAMPLES': JSON.stringify(exampleNames),
     },
   },
 
@@ -39,6 +59,15 @@ export default defineConfig({
         'node_modules/@douyinfe/semi-ui/dist/css/semi.min.css',
       ),
     },
+  },
+
+  server: {
+    // Serve example data from the docs directory so ALL examples work
+    // without copying files into the example's public/ directory.
+    publicDir: [
+      { name: path.resolve(__dirname, 'public') },
+      { name: path.resolve(__dirname, '../../../docs/public'), watch: false },
+    ],
   },
 
   tools: {

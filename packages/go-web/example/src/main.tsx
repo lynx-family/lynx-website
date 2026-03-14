@@ -8,6 +8,14 @@ import './styles.css';
 
 type Lang = 'en' | 'zh';
 
+// Build-time injected list of available examples (from docs/public/lynx-examples/)
+declare global {
+  interface ImportMeta {
+    env: { EXAMPLES: string[] };
+  }
+}
+const EXAMPLES: string[] = import.meta.env.EXAMPLES ?? ['hello-world'];
+
 // ---------------------------------------------------------------------------
 // URL State Persistence (inspired by rscexplorer)
 // Encodes storyboard controls in the URL hash so links are shareable.
@@ -215,12 +223,20 @@ function App() {
 
         <label>
           <span>Example</span>
-          <input
-            type="text"
+          <select
             value={example}
-            onChange={(e) => setExample(e.target.value)}
-            style={{ width: '120px' }}
-          />
+            onChange={(e) => {
+              setExample(e.target.value);
+              setDefaultFile('src/App.tsx');
+            }}
+            style={{ width: '160px' }}
+          >
+            {EXAMPLES.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
