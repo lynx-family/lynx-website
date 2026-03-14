@@ -228,6 +228,20 @@ function App() {
 
 ## Cross-Thread Function Calls
 
+The examples so far use `'main thread'` functions as event handlers. But what if you need to call a main thread function from the background thread, or vice versa? ReactLynx provides [`runOnMainThread()`] and [`runOnBackground()`] for bidirectional async communication.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/cross-thread-calls.lynx.bundle"
+  defaultFile="src/cross-thread-calls/App.tsx"
+  entry="src/cross-thread-calls"
+/>
+
+In this example, tapping the box triggers a round trip:
+
+1. **Main Thread** `onTap` fires, calls `runOnBackground(incrementCount)()` to update state
+2. **Background Thread** `useEffect` on `count` fires, calls `runOnMainThread(applyColor)(nextColor)` to change the box color
+
 ### Asynchronously Invoking Main Thread Functions from the Background Thread
 
 Use [`runOnMainThread()`] in the background thread to asynchronously execute a main thread function on the main thread:
@@ -300,6 +314,13 @@ function mainThreadFunction() {
 
 > [!NOTE]
 > Functions in modules imported with `with { runtime: 'shared' }` can be called by main thread functions, but they are not automatically treated as main thread functions. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.tsx"
+  entry="src/shared-module"
+/>
 
 ### Referencing Third-Party Libraries
 
