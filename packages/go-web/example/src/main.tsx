@@ -449,8 +449,12 @@ function App() {
           fontFamily: 'var(--sb-font-mono)',
         }}
       >
-        {/* Header row */}
-        <header className="toolbar-header">
+        {/* Header row — click to toggle panel */}
+        <header
+          className="toolbar-header"
+          onClick={() => setPropsOpen((v) => !v)}
+          style={{ cursor: 'pointer' }}
+        >
           <span
             style={{
               display: 'flex',
@@ -476,94 +480,90 @@ function App() {
             </span>
           </span>
 
-          <ControlGroup label="Theme">
-            <SegmentedControl
-              value={dark ? 'dark' : 'light'}
-              options={[
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
-              ]}
-              onChange={(v) => setDark(v === 'dark')}
-            />
-          </ControlGroup>
-
-          <ControlGroup label="Lang">
-            <SegmentedControl
-              value={lang}
-              options={[
-                { value: 'en', label: 'EN' },
-                { value: 'zh', label: '中文' },
-              ]}
-              onChange={(v) => setLang(v as Lang)}
-            />
-          </ControlGroup>
-
-          <ControlGroup label="Tab">
-            <SegmentedControl
-              value={defaultTab}
-              options={[
-                { value: 'web', label: 'Web' },
-                { value: 'qrcode', label: 'QR' },
-              ]}
-              onChange={(v) => setDefaultTab(v as PreviewTab)}
-            />
-          </ControlGroup>
-
-          {/* JSX button */}
-          <button
-            className="toolbar-btn"
-            onClick={() => setJsxDialogOpen(true)}
-            title="Embed code"
+          {/* Stop interactive controls from toggling the panel */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'contents' }}
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
+            <ControlGroup label="Theme">
+              <SegmentedControl
+                value={dark ? 'dark' : 'light'}
+                options={[
+                  { value: 'light', label: 'Light' },
+                  { value: 'dark', label: 'Dark' },
+                ]}
+                onChange={(v) => setDark(v === 'dark')}
+              />
+            </ControlGroup>
+
+            <ControlGroup label="Lang">
+              <SegmentedControl
+                value={lang}
+                options={[
+                  { value: 'en', label: 'EN' },
+                  { value: 'zh', label: '中文' },
+                ]}
+                onChange={(v) => setLang(v as Lang)}
+              />
+            </ControlGroup>
+
+            <ControlGroup label="Tab">
+              <SegmentedControl
+                value={defaultTab}
+                options={[
+                  { value: 'web', label: 'Web' },
+                  { value: 'qrcode', label: 'QR' },
+                ]}
+                onChange={(v) => setDefaultTab(v as PreviewTab)}
+              />
+            </ControlGroup>
+
+            {/* JSX button */}
+            <button
+              className="toolbar-btn"
+              onClick={() => setJsxDialogOpen(true)}
+              title="Embed code"
             >
-              <polyline points="5 3 1 8 5 13" />
-              <polyline points="11 3 15 8 11 13" />
-            </svg>
-          </button>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <polyline points="5 3 1 8 5 13" />
+                <polyline points="11 3 15 8 11 13" />
+              </svg>
+              <span className="btn-label">Embed</span>
+            </button>
 
-          {/* Share URL button — icon flashes accent on copy */}
-          <button
-            className={`toolbar-btn${copied ? ' toolbar-btn-flash' : ''}`}
-            onClick={copyShareLink}
-            title="Copy shareable URL"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-              {copied ? (
-                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-              ) : (
-                <>
-                  <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
-                  <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
-                </>
-              )}
-            </svg>
-          </button>
+            {/* Share URL button — icon flashes accent on copy */}
+            <button
+              className={`toolbar-btn${copied ? ' toolbar-btn-flash' : ''}`}
+              onClick={copyShareLink}
+              title="Copy shareable URL"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                {copied ? (
+                  <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                ) : (
+                  <>
+                    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
+                    <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
+                  </>
+                )}
+              </svg>
+              <span className="btn-label">Share</span>
+            </button>
+          </div>
         </header>
-
-        {/* Toggle divider */}
-        <button
-          onClick={() => setPropsOpen((v) => !v)}
-          className="toggle-divider"
-          title={propsOpen ? 'Collapse panel' : 'Expand panel'}
-        >
-          <span
-            style={{
-              display: 'inline-block',
-              transition: 'transform 0.15s',
-              transform: propsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-              fontSize: 8,
-            }}
-          >
-            ▶
-          </span>
-        </button>
 
         {/* Collapsible props content */}
         {propsOpen && (
@@ -579,7 +579,7 @@ function App() {
             <div
               style={{
                 flex: '0 0 140px',
-                padding: '10px 0 10px 12px',
+                padding: '10px 12px',
                 overflow: 'auto',
                 maxHeight: 200,
                 display: 'flex',
@@ -629,7 +629,7 @@ function App() {
             <div
               style={{
                 flex: '0 0 140px',
-                padding: '10px 0 10px 12px',
+                padding: '10px 12px',
                 borderLeft: '1px solid var(--sb-border)',
                 overflow: 'auto',
                 maxHeight: 200,
