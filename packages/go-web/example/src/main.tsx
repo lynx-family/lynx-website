@@ -620,11 +620,74 @@ function App() {
               display: 'flex',
             }}
           >
-            {/* Left: controls grid (2-up) */}
+            {/* Left: entry list */}
+            <div
+              style={{
+                flex: '0 0 140px',
+                padding: '10px 0 10px 12px',
+                overflow: 'auto',
+                maxHeight: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
+              <div
+                style={{
+                  ...panelLabelStyle,
+                  padding: '0 4px',
+                  marginBottom: 4,
+                }}
+              >
+                Entries
+              </div>
+              {metadata?.templateFiles?.map((t: any) => (
+                <button
+                  key={t.name}
+                  className="entry-list-btn"
+                  data-active={selectedEntry === t.name}
+                  onClick={() => handleEntryChange(t.name)}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 5,
+                    border: 'none',
+                    background:
+                      selectedEntry === t.name
+                        ? 'var(--sb-accent)'
+                        : 'transparent',
+                    color:
+                      selectedEntry === t.name ? '#fff' : 'var(--sb-text-dim)',
+                    fontSize: 11,
+                    fontFamily: 'var(--sb-font-mono)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap',
+                    transition: 'background 0.12s, color 0.12s',
+                  }}
+                >
+                  {t.name}
+                  {t.webFile ? '' : ' *'}
+                </button>
+              ))}
+              {!metadata && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--sb-text-dim)',
+                    padding: '3px 8px',
+                  }}
+                >
+                  {metadataLoading ? 'Loading…' : '—'}
+                </span>
+              )}
+            </div>
+
+            {/* Middle: controls grid (2-up) */}
             <div
               style={{
                 flex: '1 1 0',
                 padding: '10px 16px',
+                borderLeft: '1px solid var(--sb-border)',
                 display: 'grid',
                 gridTemplateColumns: 'auto 1fr auto 1fr',
                 gap: '5px 10px',
@@ -632,24 +695,6 @@ function App() {
                 alignContent: 'start',
               }}
             >
-              <span style={panelLabelStyle}>Entry</span>
-              <select
-                value={selectedEntry}
-                onChange={(e) => handleEntryChange(e.target.value)}
-                style={selectStyle}
-                disabled={metadataLoading || !metadata}
-              >
-                {metadata?.templateFiles?.map((t: any) => (
-                  <option key={t.name} value={t.name}>
-                    {t.name}
-                    {t.webFile ? '' : ' (no web)'}
-                  </option>
-                ))}
-                {!metadata && (
-                  <option>{metadataLoading ? 'Loading…' : '—'}</option>
-                )}
-              </select>
-
               <span style={panelLabelStyle}>File</span>
               <input
                 type="text"
