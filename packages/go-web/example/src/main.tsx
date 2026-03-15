@@ -578,6 +578,7 @@ function App() {
           <div
             style={{
               borderTop: '1px solid var(--sb-border)',
+              background: 'var(--sb-bg)',
               display: 'flex',
             }}
           >
