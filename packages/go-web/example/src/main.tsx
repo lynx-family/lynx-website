@@ -502,23 +502,6 @@ function App() {
             </span>
           </span>
 
-          <ControlGroup label="Example">
-            <select
-              value={example}
-              onChange={(e) => {
-                setExample(e.target.value);
-                setDefaultFile('src/App.tsx');
-              }}
-              style={selectStyle}
-            >
-              {EXAMPLES.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </ControlGroup>
-
           <ControlGroup label="Theme">
             <SegmentedControl
               value={dark ? 'dark' : 'light'}
@@ -627,13 +610,65 @@ function App() {
               borderTop: '1px solid var(--sb-border)',
               background: 'var(--sb-bg)',
               display: 'flex',
+              overflowX: 'auto',
             }}
           >
-            {/* Left: entry list */}
+            {/* Col 1: examples list */}
             <div
               style={{
                 flex: '0 0 140px',
                 padding: '10px 0 10px 12px',
+                overflow: 'auto',
+                maxHeight: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
+              <div
+                style={{
+                  ...panelLabelStyle,
+                  padding: '0 4px',
+                  marginBottom: 4,
+                }}
+              >
+                Examples
+              </div>
+              {EXAMPLES.map((name) => (
+                <button
+                  key={name}
+                  className="entry-list-btn"
+                  data-active={example === name}
+                  onClick={() => {
+                    setExample(name);
+                    setDefaultFile('src/App.tsx');
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 5,
+                    border: 'none',
+                    background:
+                      example === name ? 'var(--sb-accent)' : 'transparent',
+                    color: example === name ? '#fff' : 'var(--sb-text-dim)',
+                    fontSize: 11,
+                    fontFamily: 'var(--sb-font-mono)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap',
+                    transition: 'background 0.12s, color 0.12s',
+                  }}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+
+            {/* Col 2: entry list */}
+            <div
+              style={{
+                flex: '0 0 140px',
+                padding: '10px 0 10px 12px',
+                borderLeft: '1px solid var(--sb-border)',
                 overflow: 'auto',
                 maxHeight: 200,
                 display: 'flex',
@@ -815,7 +850,7 @@ function App() {
                     schema={schema || undefined}
                   />
                 </div>
-                {/* Mobile — fixed 340×766 */}
+                {/* Mobile — fixed 340×766, content renders full-width and is visually clipped */}
                 <div className="mobile-preview" style={{ flex: '0 0 340px' }}>
                   <div style={viewLabelStyle}>Mobile (340 × 766)</div>
                   <div
@@ -823,7 +858,6 @@ function App() {
                       height: 766,
                       overflow: 'hidden',
                       borderRadius: 16,
-                      border: '1px solid var(--sb-border)',
                     }}
                   >
                     <Go
