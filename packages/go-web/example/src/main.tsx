@@ -102,17 +102,15 @@ function ControlGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span
-        style={{
-          fontSize: 10,
-          textTransform: 'uppercase',
-          letterSpacing: '0.8px',
-          color: 'var(--sb-text-dim)',
-        }}
-      >
-        {label}
-      </span>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        flexShrink: 0,
+      }}
+    >
+      <span className="control-label">{label}</span>
       {children}
     </div>
   );
@@ -158,22 +156,6 @@ function SegmentedControl<T extends string>({
         </button>
       ))}
     </div>
-  );
-}
-
-function CopiedToast({ visible }: { visible: boolean }) {
-  return (
-    <span
-      style={{
-        fontSize: 11,
-        color: 'var(--sb-accent)',
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 0.2s',
-        marginLeft: 4,
-      }}
-    >
-      Copied!
-    </span>
   );
 }
 
@@ -468,15 +450,7 @@ function App() {
         }}
       >
         {/* Header row */}
-        <header
-          style={{
-            padding: '12px 16px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '10px 24px',
-            alignItems: 'center',
-          }}
-        >
+        <header className="toolbar-header">
           <span
             style={{
               display: 'flex',
@@ -539,11 +513,11 @@ function App() {
           <button
             className="toolbar-btn"
             onClick={() => setJsxDialogOpen(true)}
-            title="View JSX snippet"
+            title="Embed code"
           >
             <svg
-              width="12"
-              height="12"
+              width="14"
+              height="14"
               viewBox="0 0 16 16"
               fill="none"
               stroke="currentColor"
@@ -552,55 +526,43 @@ function App() {
               <polyline points="5 3 1 8 5 13" />
               <polyline points="11 3 15 8 11 13" />
             </svg>
-            JSX
           </button>
 
-          {/* URL copy button */}
+          {/* Share URL button — icon flashes accent on copy */}
           <button
-            className="toolbar-btn"
+            className={`toolbar-btn${copied ? ' toolbar-btn-flash' : ''}`}
             onClick={copyShareLink}
             title="Copy shareable URL"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
-              <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              {copied ? (
+                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+              ) : (
+                <>
+                  <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
+                  <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
+                </>
+              )}
             </svg>
-            URL
-            <CopiedToast visible={copied} />
           </button>
         </header>
 
-        {/* Props toggle bar */}
+        {/* Toggle divider */}
         <button
           onClick={() => setPropsOpen((v) => !v)}
-          style={{
-            width: '100%',
-            padding: '8px 16px',
-            border: 'none',
-            borderTop: '1px solid var(--sb-border)',
-            background: 'transparent',
-            color: 'inherit',
-            fontSize: 12,
-            fontFamily: 'var(--sb-font-mono)',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            textAlign: 'left',
-          }}
+          className="toggle-divider"
+          title={propsOpen ? 'Collapse panel' : 'Expand panel'}
         >
           <span
             style={{
               display: 'inline-block',
               transition: 'transform 0.15s',
               transform: propsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-              fontSize: 10,
+              fontSize: 8,
             }}
           >
             ▶
           </span>
-          Props
         </button>
 
         {/* Collapsible props content */}
@@ -726,14 +688,14 @@ function App() {
               )}
             </div>
 
-            {/* Middle: controls grid (2-up) */}
+            {/* Col 3: controls */}
             <div
               style={{
                 flex: '1 1 0',
                 padding: '10px 16px',
                 borderLeft: '1px solid var(--sb-border)',
                 display: 'grid',
-                gridTemplateColumns: 'auto 1fr auto 1fr',
+                gridTemplateColumns: 'auto 1fr',
                 gap: '5px 10px',
                 alignItems: 'center',
                 alignContent: 'start',
