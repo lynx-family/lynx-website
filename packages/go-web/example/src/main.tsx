@@ -620,14 +620,14 @@ function App() {
               display: 'flex',
             }}
           >
-            {/* Left: controls grid */}
+            {/* Left: controls grid (2-up) */}
             <div
               style={{
                 flex: '1 1 0',
-                padding: '12px 16px',
+                padding: '10px 16px',
                 display: 'grid',
-                gridTemplateColumns: 'auto 1fr',
-                gap: '6px 12px',
+                gridTemplateColumns: 'auto 1fr auto 1fr',
+                gap: '5px 10px',
                 alignItems: 'center',
                 alignContent: 'start',
               }}
@@ -710,9 +710,9 @@ function App() {
                 flex: '0 0 33.3%',
                 minWidth: 0,
                 borderLeft: '1px solid var(--sb-border)',
-                padding: '12px 16px',
+                padding: '10px 16px',
                 overflow: 'auto',
-                maxHeight: 320,
+                maxHeight: 200,
               }}
             >
               <div style={{ ...panelLabelStyle, marginBottom: 8 }}>
