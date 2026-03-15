@@ -214,6 +214,52 @@ const panelInputStyle: React.CSSProperties = {
 };
 
 // ---------------------------------------------------------------------------
+// JSX snippet builder (for copy-to-clipboard)
+// ---------------------------------------------------------------------------
+
+function buildJsxString({
+  example,
+  defaultFile,
+  defaultTab,
+  defaultEntryFile,
+  entryFilter,
+  highlight,
+  img,
+  schema,
+}: {
+  example: string;
+  defaultFile: string;
+  defaultTab: PreviewTab;
+  defaultEntryFile: string;
+  entryFilter: string;
+  highlight: string;
+  img: string;
+  schema: string;
+}): string {
+  const props: string[] = [`example="${example}"`];
+  if (defaultFile) props.push(`defaultFile="${defaultFile}"`);
+  if (defaultTab !== 'web') props.push(`defaultTab="${defaultTab}"`);
+  if (defaultEntryFile) props.push(`defaultEntryFile="${defaultEntryFile}"`);
+  if (highlight) props.push(`highlight="${highlight}"`);
+  if (entryFilter) {
+    if (entryFilter.includes(',')) {
+      props.push(
+        `entry={${JSON.stringify(entryFilter.split(',').map((s) => s.trim()))}}`,
+      );
+    } else {
+      props.push(`entry="${entryFilter}"`);
+    }
+  }
+  if (schema) props.push(`schema="${schema}"`);
+  if (img) props.push(`img="${img}"`);
+
+  if (props.length <= 2) {
+    return `<Go ${props.join(' ')} />`;
+  }
+  return `<Go\n${props.map((p) => `  ${p}`).join('\n')}\n/>`;
+}
+
+// ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 
@@ -241,6 +287,38 @@ function App() {
   const [highlight, setHighlight] = useState('');
   const [img, setImg] = useState('');
   const [schema, setSchema] = useState('');
+  const [propsOpen, setPropsOpen] = useState(true);
+  const [jsxCopied, setJsxCopied] = useState(false);
+
+  const jsxString = useMemo(
+    () =>
+      buildJsxString({
+        example,
+        defaultFile,
+        defaultTab,
+        defaultEntryFile,
+        entryFilter,
+        highlight,
+        img,
+        schema,
+      }),
+    [
+      example,
+      defaultFile,
+      defaultTab,
+      defaultEntryFile,
+      entryFilter,
+      highlight,
+      img,
+      schema,
+    ],
+  );
+
+  const copyJsx = useCallback(() => {
+    navigator.clipboard.writeText(jsxString);
+    setJsxCopied(true);
+    setTimeout(() => setJsxCopied(false), 1500);
+  }, [jsxString]);
 
   // Persist state to URL hash
   useEffect(() => {
@@ -339,256 +417,335 @@ function App() {
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
-      {/* ── Header (Mumbai v1 style) ── */}
-      <header
-        style={{
-          marginBottom: 20,
-          padding: '12px 16px',
-          borderRadius: 10,
-          background: 'var(--sb-surface)',
-          border: '1px solid var(--sb-border)',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '10px 24px',
-          alignItems: 'center',
-          fontSize: 13,
-          fontFamily: 'var(--sb-font-mono)',
-        }}
-      >
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            marginRight: 'auto',
-          }}
-        >
-          <img
-            src={dark ? LOGO_DARK : LOGO_LIGHT}
-            alt="Lynx"
-            style={{ height: 20 }}
-          />
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: 14,
-              letterSpacing: '0.5px',
-              color: 'var(--sb-text-dim)',
-            }}
-          >
-            {'<GO>'}
-          </span>
-        </span>
-
-        <ControlGroup label="Example">
-          <select
-            value={example}
-            onChange={(e) => {
-              setExample(e.target.value);
-              setDefaultFile('src/App.tsx');
-            }}
-            style={selectStyle}
-          >
-            {EXAMPLES.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </ControlGroup>
-
-        <ControlGroup label="Theme">
-          <SegmentedControl
-            value={dark ? 'dark' : 'light'}
-            options={[
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-            ]}
-            onChange={(v) => setDark(v === 'dark')}
-          />
-        </ControlGroup>
-
-        <ControlGroup label="Lang">
-          <SegmentedControl
-            value={lang}
-            options={[
-              { value: 'en', label: 'EN' },
-              { value: 'zh', label: '中文' },
-            ]}
-            onChange={(v) => setLang(v as Lang)}
-          />
-        </ControlGroup>
-
-        <ControlGroup label="Tab">
-          <SegmentedControl
-            value={defaultTab}
-            options={[
-              { value: 'web', label: 'Web' },
-              { value: 'qrcode', label: 'QR' },
-            ]}
-            onChange={(v) => setDefaultTab(v as PreviewTab)}
-          />
-        </ControlGroup>
-
-        <button
-          onClick={copyShareLink}
-          style={{
-            padding: '4px 10px',
-            borderRadius: 6,
-            border: '1px solid var(--sb-border)',
-            background: 'transparent',
-            color: 'var(--sb-text-dim)',
-            fontSize: 12,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-          title="Copy shareable URL (⌘D for dark mode)"
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
-            <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
-          </svg>
-          URL
-          <CopiedToast visible={copied} />
-        </button>
-      </header>
-
-      {/* ── Example Panel ── */}
-      <section
+      {/* ── Toolbar card (header + collapsible props) ── */}
+      <div
         style={{
           marginBottom: 20,
           borderRadius: 10,
           background: 'var(--sb-surface)',
           border: '1px solid var(--sb-border)',
-          display: 'flex',
           overflow: 'hidden',
           fontSize: 13,
           fontFamily: 'var(--sb-font-mono)',
         }}
       >
-        {/* Left: controls */}
-        <div
+        {/* Header row */}
+        <header
           style={{
-            flex: '1 1 66%',
             padding: '12px 16px',
-            display: 'grid',
-            gridTemplateColumns: 'auto 1fr',
-            gap: '6px 12px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '10px 24px',
             alignItems: 'center',
-            alignContent: 'start',
           }}
         >
-          <span style={panelLabelStyle}>Entry</span>
-          <select
-            value={selectedEntry}
-            onChange={(e) => handleEntryChange(e.target.value)}
-            style={selectStyle}
-            disabled={metadataLoading || !metadata}
+          <span
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              marginRight: 'auto',
+            }}
           >
-            {metadata?.templateFiles?.map((t: any) => (
-              <option key={t.name} value={t.name}>
-                {t.name}
-                {t.webFile ? '' : ' (no web)'}
-              </option>
-            ))}
-            {!metadata && <option>{metadataLoading ? 'Loading…' : '—'}</option>}
-          </select>
+            <img
+              src={dark ? LOGO_DARK : LOGO_LIGHT}
+              alt="Lynx"
+              style={{ height: 20 }}
+            />
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: 14,
+                letterSpacing: '0.5px',
+                color: 'var(--sb-text-dim)',
+              }}
+            >
+              {'<GO>'}
+            </span>
+          </span>
 
-          <span style={panelLabelStyle}>File</span>
-          <input
-            type="text"
-            value={defaultFile}
-            onChange={(e) => setDefaultFile(e.target.value)}
-            style={panelInputStyle}
-          />
+          <ControlGroup label="Example">
+            <select
+              value={example}
+              onChange={(e) => {
+                setExample(e.target.value);
+                setDefaultFile('src/App.tsx');
+              }}
+              style={selectStyle}
+            >
+              {EXAMPLES.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </ControlGroup>
 
-          <span style={panelLabelStyle}>Entry File</span>
-          <input
-            type="text"
-            value={defaultEntryFile}
-            onChange={(e) => setDefaultEntryFile(e.target.value)}
-            style={panelInputStyle}
-            placeholder="dist/main.lynx.bundle"
-          />
+          <ControlGroup label="Theme">
+            <SegmentedControl
+              value={dark ? 'dark' : 'light'}
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
+              onChange={(v) => setDark(v === 'dark')}
+            />
+          </ControlGroup>
 
-          <span style={panelLabelStyle}>Entry Filter</span>
-          <input
-            type="text"
-            value={entryFilter}
-            onChange={(e) => setEntryFilter(e.target.value)}
-            style={panelInputStyle}
-            placeholder="src/sizing"
-          />
+          <ControlGroup label="Lang">
+            <SegmentedControl
+              value={lang}
+              options={[
+                { value: 'en', label: 'EN' },
+                { value: 'zh', label: '中文' },
+              ]}
+              onChange={(v) => setLang(v as Lang)}
+            />
+          </ControlGroup>
 
-          <span style={panelLabelStyle}>Highlight</span>
-          <input
-            type="text"
-            value={highlight}
-            onChange={(e) => setHighlight(e.target.value)}
-            style={panelInputStyle}
-            placeholder="{5-10}"
-          />
+          <ControlGroup label="Tab">
+            <SegmentedControl
+              value={defaultTab}
+              options={[
+                { value: 'web', label: 'Web' },
+                { value: 'qrcode', label: 'QR' },
+              ]}
+              onChange={(v) => setDefaultTab(v as PreviewTab)}
+            />
+          </ControlGroup>
 
-          <span style={panelLabelStyle}>Img</span>
-          <input
-            type="text"
-            value={img}
-            onChange={(e) => setImg(e.target.value)}
-            style={panelInputStyle}
-            placeholder="https://..."
-          />
+          <button
+            onClick={copyShareLink}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--sb-border)',
+              background: 'transparent',
+              color: 'var(--sb-text-dim)',
+              fontSize: 12,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Copy shareable URL (⌘D for dark mode)"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
+              <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
+            </svg>
+            URL
+            <CopiedToast visible={copied} />
+          </button>
+        </header>
 
-          <span style={panelLabelStyle}>Schema</span>
-          <input
-            type="text"
-            value={schema}
-            onChange={(e) => setSchema(e.target.value)}
-            style={panelInputStyle}
-            placeholder="lynx://..."
-          />
-        </div>
-
-        {/* Right: metadata JSON */}
-        <div
+        {/* Props toggle bar */}
+        <button
+          onClick={() => setPropsOpen((v) => !v)}
           style={{
-            flex: '0 0 33.3%',
-            minWidth: 0,
-            borderLeft: '1px solid var(--sb-border)',
-            padding: '12px 16px',
-            overflow: 'auto',
-            maxHeight: 320,
+            width: '100%',
+            padding: '8px 16px',
+            border: 'none',
+            borderTop: '1px solid var(--sb-border)',
+            background: 'transparent',
+            color: 'inherit',
+            fontSize: 12,
+            fontFamily: 'var(--sb-font-mono)',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            textAlign: 'left',
           }}
         >
+          <span
+            style={{
+              display: 'inline-block',
+              transition: 'transform 0.15s',
+              transform: propsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+              fontSize: 10,
+            }}
+          >
+            ▶
+          </span>
+          Props
+        </button>
+
+        {/* Collapsible props content */}
+        {propsOpen && (
           <div
             style={{
-              ...panelLabelStyle,
-              marginBottom: 8,
+              borderTop: '1px solid var(--sb-border)',
+              display: 'flex',
             }}
           >
-            example-metadata.json
+            {/* Left: controls grid */}
+            <div
+              style={{
+                flex: '1 1 0',
+                padding: '12px 16px',
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: '6px 12px',
+                alignItems: 'center',
+                alignContent: 'start',
+              }}
+            >
+              <span style={panelLabelStyle}>Entry</span>
+              <select
+                value={selectedEntry}
+                onChange={(e) => handleEntryChange(e.target.value)}
+                style={selectStyle}
+                disabled={metadataLoading || !metadata}
+              >
+                {metadata?.templateFiles?.map((t: any) => (
+                  <option key={t.name} value={t.name}>
+                    {t.name}
+                    {t.webFile ? '' : ' (no web)'}
+                  </option>
+                ))}
+                {!metadata && (
+                  <option>{metadataLoading ? 'Loading…' : '—'}</option>
+                )}
+              </select>
+
+              <span style={panelLabelStyle}>File</span>
+              <input
+                type="text"
+                value={defaultFile}
+                onChange={(e) => setDefaultFile(e.target.value)}
+                style={panelInputStyle}
+              />
+
+              <span style={panelLabelStyle}>Entry File</span>
+              <input
+                type="text"
+                value={defaultEntryFile}
+                onChange={(e) => setDefaultEntryFile(e.target.value)}
+                style={panelInputStyle}
+                placeholder="dist/main.lynx.bundle"
+              />
+
+              <span style={panelLabelStyle}>Entry Filter</span>
+              <input
+                type="text"
+                value={entryFilter}
+                onChange={(e) => setEntryFilter(e.target.value)}
+                style={panelInputStyle}
+                placeholder="src/sizing"
+              />
+
+              <span style={panelLabelStyle}>Highlight</span>
+              <input
+                type="text"
+                value={highlight}
+                onChange={(e) => setHighlight(e.target.value)}
+                style={panelInputStyle}
+                placeholder="{5-10}"
+              />
+
+              <span style={panelLabelStyle}>Img</span>
+              <input
+                type="text"
+                value={img}
+                onChange={(e) => setImg(e.target.value)}
+                style={panelInputStyle}
+                placeholder="https://..."
+              />
+
+              <span style={panelLabelStyle}>Schema</span>
+              <input
+                type="text"
+                value={schema}
+                onChange={(e) => setSchema(e.target.value)}
+                style={panelInputStyle}
+                placeholder="lynx://..."
+              />
+            </div>
+
+            {/* Middle: metadata JSON */}
+            <div
+              style={{
+                flex: '0 0 280px',
+                minWidth: 0,
+                borderLeft: '1px solid var(--sb-border)',
+                padding: '12px 16px',
+                overflow: 'auto',
+                maxHeight: 320,
+              }}
+            >
+              <div style={{ ...panelLabelStyle, marginBottom: 8 }}>
+                example-metadata.json
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  fontFamily: 'var(--sb-font-mono)',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                  color: 'inherit',
+                }}
+              >
+                {metadata
+                  ? JSON.stringify(metadata, null, 2)
+                  : metadataLoading
+                    ? 'Loading…'
+                    : 'No metadata'}
+              </pre>
+            </div>
+
+            {/* Right: JSX preview with copy */}
+            <div
+              style={{
+                flex: '0 0 260px',
+                minWidth: 0,
+                borderLeft: '1px solid var(--sb-border)',
+                padding: '12px 16px',
+                position: 'relative',
+                overflow: 'auto',
+                maxHeight: 320,
+              }}
+            >
+              <div style={{ ...panelLabelStyle, marginBottom: 8 }}>JSX</div>
+              <pre
+                style={{
+                  margin: 0,
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  fontFamily: 'var(--sb-font-mono)',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                  color: 'inherit',
+                }}
+              >
+                {jsxString}
+              </pre>
+              <button
+                onClick={copyJsx}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  border: '1px solid var(--sb-border)',
+                  background: 'var(--sb-surface)',
+                  color: 'var(--sb-text-dim)',
+                  fontSize: 11,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                {jsxCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
           </div>
-          <pre
-            style={{
-              margin: 0,
-              fontSize: 11,
-              lineHeight: 1.5,
-              fontFamily: 'var(--sb-font-mono)',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              color: 'inherit',
-            }}
-          >
-            {metadata
-              ? JSON.stringify(metadata, null, 2)
-              : metadataLoading
-                ? 'Loading…'
-                : 'No metadata'}
-          </pre>
-        </div>
-      </section>
+        )}
+      </div>
 
       {/* ── Go component ── */}
       <main>
