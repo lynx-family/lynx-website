@@ -37,17 +37,6 @@ export default defineConfig({
       react: path.resolve(__dirname, 'node_modules/react'),
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
 
-      // --- Replace rspress APIs with standalone adapters ---
-      '@rspress/core/runtime': path.resolve(
-        __dirname,
-        'src/adapters/rspress-runtime.tsx',
-      ),
-      '@rspress/core/shiki-transformers': path.resolve(
-        __dirname,
-        'src/adapters/rspress-shiki-transformers.ts',
-      ),
-      '@theme': path.resolve(__dirname, 'src/adapters/theme-code-block.tsx'),
-
       // --- Semi UI CSS: bypass exports map restriction ---
       '@douyinfe/semi-ui/dist/css/semi.min.css': path.resolve(
         __dirname,

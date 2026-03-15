@@ -8,8 +8,8 @@ import React, {
 import { createRoot } from 'react-dom/client';
 import '@douyinfe/semi-ui/dist/css/semi.min.css';
 import { GoConfigProvider, Go } from '../../src/index';
-import { StandaloneRuntimeProvider } from './adapters/rspress-runtime';
 import type { PreviewTab, GoConfig } from '../../src/config';
+import type { ShikiTransformer, BundledLanguage } from 'shiki';
 import './styles.css';
 
 const LOGO_LIGHT =
@@ -18,6 +18,110 @@ const LOGO_DARK =
   'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg';
 
 type Lang = 'en' | 'zh';
+
+// ---------------------------------------------------------------------------
+// i18n translations
+// ---------------------------------------------------------------------------
+
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    'go.preview': 'Preview',
+    'go.qrcode': 'QRCode',
+    'go.files': 'Files',
+    'go.scan.message-1': 'Download ',
+    'go.scan.message-2': 'and scan the QR code to get started.',
+    'go.qrcode.copy-link': 'Copy Link',
+    'go.qrcode.copied': 'Copied',
+    'go.qrcode.entry': 'Entry',
+  },
+  zh: {
+    'go.preview': '预览',
+    'go.qrcode': '二维码',
+    'go.files': '文件',
+    'go.scan.message-1': '请下载 ',
+    'go.scan.message-2': '扫描二维码预览',
+    'go.qrcode.copy-link': '复制链接',
+    'go.qrcode.copied': '已复制',
+    'go.qrcode.entry': '入口',
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Standalone CodeBlock (shiki-based syntax highlighting)
+// ---------------------------------------------------------------------------
+
+let _codeHighlighterP: ReturnType<typeof import('shiki').then> | null = null;
+function getCodeHighlighter() {
+  if (!_codeHighlighterP) {
+    _codeHighlighterP = import('shiki').then((mod) =>
+      mod.createHighlighter({
+        themes: ['github-light', 'github-dark'],
+        langs: [],
+      }),
+    );
+  }
+  return _codeHighlighterP;
+}
+
+const StandaloneCodeBlock = ({
+  lang,
+  code,
+  onRendered,
+  shikiOptions,
+}: {
+  lang: string;
+  code: string;
+  onRendered?: () => void;
+  shikiOptions?: { transformers?: ShikiTransformer[] };
+}) => {
+  const [html, setHtml] = useState('');
+
+  useEffect(() => {
+    if (!code) return;
+    let cancelled = false;
+    getCodeHighlighter().then(async (highlighter) => {
+      if (cancelled) return;
+      const loaded = highlighter.getLoadedLanguages();
+      if (!loaded.includes(lang as BundledLanguage)) {
+        try {
+          await highlighter.loadLanguage(lang as BundledLanguage);
+        } catch {
+          // fall back to plaintext
+        }
+      }
+      const effective = highlighter
+        .getLoadedLanguages()
+        .includes(lang as BundledLanguage)
+        ? lang
+        : 'text';
+      const result = highlighter.codeToHtml(code, {
+        lang: effective,
+        themes: { light: 'github-light', dark: 'github-dark' },
+        defaultColor: false,
+        transformers: shikiOptions?.transformers ?? [],
+      });
+      if (!cancelled) setHtml(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [code, lang, shikiOptions?.transformers]);
+
+  useEffect(() => {
+    if (html && onRendered) requestAnimationFrame(() => onRendered());
+  }, [html, onRendered]);
+
+  if (!html) {
+    return (
+      <pre style={{ padding: '16px', margin: 0, overflow: 'auto' }}>
+        <code>{code}</code>
+      </pre>
+    );
+  }
+  return (
+    <div className="rp-codeblock" dangerouslySetInnerHTML={{ __html: html }} />
+  );
+};
 
 // Build-time injected list of available examples
 declare global {
@@ -497,6 +601,11 @@ function App() {
       cn: 'https://lynxjs.org/zh/guide/start/quick-start.html#download-lynx-explorer',
     },
     explorerText: 'Lynx Explorer',
+    useI18n: () => (key: string) =>
+      translations[lang]?.[key] ?? translations.en[key] ?? key,
+    useLang: () => lang,
+    useDark: () => dark,
+    CodeBlock: StandaloneCodeBlock,
   };
 
   return (
@@ -861,13 +970,42 @@ function App() {
       {/* ── Go component(s) — Desktop + Mobile ── */}
       <main>
         <PreviewErrorBoundary>
-          <StandaloneRuntimeProvider lang={lang} dark={dark}>
-            <GoConfigProvider config={goConfig}>
-              <div className="dual-view">
-                {/* Desktop */}
-                <div style={{ flex: '1 1 500px', minWidth: 0 }}>
+          <GoConfigProvider config={goConfig}>
+            <div className="dual-view">
+              {/* Desktop */}
+              <div style={{ flex: '1 1 500px', minWidth: 0 }}>
+                <Go
+                  key={`desktop-${example}-${selectedEntry}-${defaultTab}`}
+                  example={example}
+                  defaultFile={defaultFile}
+                  defaultTab={defaultTab}
+                  defaultEntryFile={defaultEntryFile || undefined}
+                  entry={entryFilter || undefined}
+                  highlight={highlight || undefined}
+                  img={img || undefined}
+                  schema={schema || undefined}
+                />
+                <div className="figure-caption">Desktop</div>
+              </div>
+              {/* Mobile — fixed 340×766 */}
+              <div
+                className="mobile-preview"
+                style={{
+                  flex: '0 0 340px',
+                  maxWidth: 340,
+                  overflow: 'hidden',
+                  containerType: 'inline-size' as any,
+                }}
+              >
+                <div
+                  style={{
+                    height: 766,
+                    overflow: 'hidden',
+                    borderRadius: 16,
+                  }}
+                >
                   <Go
-                    key={`desktop-${example}-${selectedEntry}-${defaultTab}`}
+                    key={`mobile-${example}-${selectedEntry}-${defaultTab}`}
                     example={example}
                     defaultFile={defaultFile}
                     defaultTab={defaultTab}
@@ -877,42 +1015,11 @@ function App() {
                     img={img || undefined}
                     schema={schema || undefined}
                   />
-                  <div className="figure-caption">Desktop</div>
                 </div>
-                {/* Mobile — fixed 340×766 */}
-                <div
-                  className="mobile-preview"
-                  style={{
-                    flex: '0 0 340px',
-                    maxWidth: 340,
-                    overflow: 'hidden',
-                    containerType: 'inline-size' as any,
-                  }}
-                >
-                  <div
-                    style={{
-                      height: 766,
-                      overflow: 'hidden',
-                      borderRadius: 16,
-                    }}
-                  >
-                    <Go
-                      key={`mobile-${example}-${selectedEntry}-${defaultTab}`}
-                      example={example}
-                      defaultFile={defaultFile}
-                      defaultTab={defaultTab}
-                      defaultEntryFile={defaultEntryFile || undefined}
-                      entry={entryFilter || undefined}
-                      highlight={highlight || undefined}
-                      img={img || undefined}
-                      schema={schema || undefined}
-                    />
-                  </div>
-                  <div className="figure-caption">Mobile (340 × 766)</div>
-                </div>
+                <div className="figure-caption">Mobile (340 × 766)</div>
               </div>
-            </GoConfigProvider>
-          </StandaloneRuntimeProvider>
+            </div>
+          </GoConfigProvider>
         </PreviewErrorBoundary>
       </main>
 
