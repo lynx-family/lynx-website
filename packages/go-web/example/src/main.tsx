@@ -176,6 +176,44 @@ const selectStyle: React.CSSProperties = {
   backgroundPosition: 'right 6px center',
 };
 
+// Responsive: <select> on mobile for compact header
+function useIsMobile(breakpoint = 600) {
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia(`(max-width: ${breakpoint}px)`).matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [breakpoint]);
+  return mobile;
+}
+
+function AdaptiveControl<T extends string>(props: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return (
+      <select
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value as T)}
+        style={selectStyle}
+      >
+        {props.options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  return <SegmentedControl {...props} />;
+}
+
 const inputStyle: React.CSSProperties = {
   width: 120,
   padding: '3px 8px',
@@ -186,15 +224,6 @@ const inputStyle: React.CSSProperties = {
   fontSize: 12,
   fontFamily: 'inherit',
   outline: 'none',
-};
-
-const viewLabelStyle: React.CSSProperties = {
-  fontSize: 10,
-  textTransform: 'uppercase',
-  letterSpacing: '0.8px',
-  color: 'var(--sb-text-dim)',
-  marginBottom: 6,
-  fontFamily: 'var(--sb-font-mono)',
 };
 
 const panelLabelStyle: React.CSSProperties = {
@@ -257,6 +286,23 @@ function buildJsxString({
 }
 
 // ---------------------------------------------------------------------------
+// Shiki highlighter (lazy singleton for metadata JSON)
+// ---------------------------------------------------------------------------
+
+let _highlighterP: Promise<any> | null = null;
+function getJsonHighlighter() {
+  if (!_highlighterP) {
+    _highlighterP = import('shiki').then((m) =>
+      m.createHighlighter({
+        themes: ['github-light', 'github-dark'],
+        langs: ['json'],
+      }),
+    );
+  }
+  return _highlighterP;
+}
+
+// ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 
@@ -288,6 +334,7 @@ function App() {
   const [jsxDialogOpen, setJsxDialogOpen] = useState(false);
   const [jsxCopied, setJsxCopied] = useState(false);
   const jsxPreRef = useRef<HTMLPreElement>(null);
+  const [metadataHtml, setMetadataHtml] = useState('');
 
   const jsxString = useMemo(
     () =>
@@ -402,6 +449,23 @@ function App() {
       .finally(() => setMetadataLoading(false));
   }, [example]);
 
+  // Highlight metadata JSON with shiki
+  useEffect(() => {
+    if (!metadata) {
+      setMetadataHtml('');
+      return;
+    }
+    const json = JSON.stringify(metadata, null, 2);
+    getJsonHighlighter().then((hl) => {
+      setMetadataHtml(
+        hl.codeToHtml(json, {
+          lang: 'json',
+          themes: { light: 'github-light', dark: 'github-dark' },
+        }),
+      );
+    });
+  }, [metadata]);
+
   const handleEntryChange = useCallback(
     (entryName: string) => {
       setSelectedEntry(entryName);
@@ -487,7 +551,7 @@ function App() {
             style={{ display: 'contents' }}
           >
             <ControlGroup label="Theme">
-              <SegmentedControl
+              <AdaptiveControl
                 value={dark ? 'dark' : 'light'}
                 options={[
                   { value: 'light', label: 'Light' },
@@ -498,7 +562,7 @@ function App() {
             </ControlGroup>
 
             <ControlGroup label="Lang">
-              <SegmentedControl
+              <AdaptiveControl
                 value={lang}
                 options={[
                   { value: 'en', label: 'EN' },
@@ -509,7 +573,7 @@ function App() {
             </ControlGroup>
 
             <ControlGroup label="Tab">
-              <SegmentedControl
+              <AdaptiveControl
                 value={defaultTab}
                 options={[
                   { value: 'web', label: 'Web' },
@@ -628,7 +692,7 @@ function App() {
             {/* Col 2: entry list */}
             <div
               style={{
-                flex: '0 0 140px',
+                flex: '0 0 180px',
                 padding: '10px 12px',
                 borderLeft: '1px solid var(--sb-border)',
                 overflow: 'auto',
@@ -769,23 +833,26 @@ function App() {
               <div style={{ ...panelLabelStyle, marginBottom: 8 }}>
                 example-metadata.json
               </div>
-              <pre
-                style={{
-                  margin: 0,
-                  fontSize: 11,
-                  lineHeight: 1.5,
-                  fontFamily: 'var(--sb-font-mono)',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  color: 'inherit',
-                }}
-              >
-                {metadata
-                  ? JSON.stringify(metadata, null, 2)
-                  : metadataLoading
-                    ? 'Loading…'
-                    : 'No metadata'}
-              </pre>
+              {metadataHtml ? (
+                <div
+                  className="metadata-shiki"
+                  dangerouslySetInnerHTML={{ __html: metadataHtml }}
+                />
+              ) : (
+                <pre
+                  style={{
+                    margin: 0,
+                    fontSize: 11,
+                    lineHeight: 1.5,
+                    fontFamily: 'var(--sb-font-mono)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    color: 'inherit',
+                  }}
+                >
+                  {metadataLoading ? 'Loading…' : 'No metadata'}
+                </pre>
+              )}
             </div>
           </div>
         )}
@@ -797,9 +864,8 @@ function App() {
           <StandaloneRuntimeProvider lang={lang} dark={dark}>
             <GoConfigProvider config={goConfig}>
               <div className="dual-view">
-                {/* Desktop — takes remaining space, wraps below mobile on narrow viewports */}
+                {/* Desktop */}
                 <div style={{ flex: '1 1 500px', minWidth: 0 }}>
-                  <div style={viewLabelStyle}>Desktop</div>
                   <Go
                     key={`desktop-${example}-${selectedEntry}-${defaultTab}`}
                     example={example}
@@ -811,10 +877,18 @@ function App() {
                     img={img || undefined}
                     schema={schema || undefined}
                   />
+                  <div className="figure-caption">Desktop</div>
                 </div>
-                {/* Mobile — fixed 340×766, content renders full-width and is visually clipped */}
-                <div className="mobile-preview" style={{ flex: '0 0 340px' }}>
-                  <div style={viewLabelStyle}>Mobile (340 × 766)</div>
+                {/* Mobile — fixed 340×766 */}
+                <div
+                  className="mobile-preview"
+                  style={{
+                    flex: '0 0 340px',
+                    maxWidth: 340,
+                    overflow: 'hidden',
+                    containerType: 'inline-size' as any,
+                  }}
+                >
                   <div
                     style={{
                       height: 766,
@@ -834,6 +908,7 @@ function App() {
                       schema={schema || undefined}
                     />
                   </div>
+                  <div className="figure-caption">Mobile (340 × 766)</div>
                 </div>
               </div>
             </GoConfigProvider>
