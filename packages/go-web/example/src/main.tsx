@@ -200,6 +200,19 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
+const panelLabelStyle: React.CSSProperties = {
+  fontSize: 10,
+  textTransform: 'uppercase',
+  letterSpacing: '0.8px',
+  color: 'var(--sb-text-dim)',
+  whiteSpace: 'nowrap',
+};
+
+const panelInputStyle: React.CSSProperties = {
+  ...inputStyle,
+  width: 'auto',
+};
+
 // ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
@@ -218,6 +231,16 @@ function App() {
   const [example, setExample] = useState(initial.example ?? 'hello-world');
   const [defaultFile, setDefaultFile] = useState(initial.file ?? 'src/App.tsx');
   const [copied, setCopied] = useState(false);
+
+  // Metadata & entry state
+  const [metadata, setMetadata] = useState<Record<string, any> | null>(null);
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState('');
+  const [defaultEntryFile, setDefaultEntryFile] = useState('');
+  const [entryFilter, setEntryFilter] = useState('');
+  const [highlight, setHighlight] = useState('');
+  const [img, setImg] = useState('');
+  const [schema, setSchema] = useState('');
 
   // Persist state to URL hash
   useEffect(() => {
@@ -250,6 +273,53 @@ function App() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Fetch example metadata when example changes
+  useEffect(() => {
+    setMetadata(null);
+    setMetadataLoading(true);
+    fetch(`/lynx-examples/${example}/example-metadata.json`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setMetadata(data);
+        const first = data.templateFiles?.[0];
+        if (first) {
+          setSelectedEntry(first.name);
+          setDefaultEntryFile(first.file);
+          if (data.templateFiles.length > 1) {
+            setDefaultFile(`src/${first.name}/index.tsx`);
+            setEntryFilter(`src/${first.name}`);
+          } else {
+            setEntryFilter('');
+          }
+        }
+        setHighlight('');
+        setImg(data.previewImage || '');
+        setSchema('');
+      })
+      .catch(() => setMetadata(null))
+      .finally(() => setMetadataLoading(false));
+  }, [example]);
+
+  const handleEntryChange = useCallback(
+    (entryName: string) => {
+      setSelectedEntry(entryName);
+      const entry = metadata?.templateFiles?.find(
+        (t: any) => t.name === entryName,
+      );
+      if (entry) {
+        setDefaultEntryFile(entry.file);
+        if (metadata!.templateFiles.length > 1) {
+          setDefaultFile(`src/${entryName}/index.tsx`);
+          setEntryFilter(`src/${entryName}`);
+        }
+      }
+    },
+    [metadata],
+  );
 
   const copyShareLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href);
@@ -360,15 +430,6 @@ function App() {
           />
         </ControlGroup>
 
-        <ControlGroup label="File">
-          <input
-            type="text"
-            value={defaultFile}
-            onChange={(e) => setDefaultFile(e.target.value)}
-            style={inputStyle}
-          />
-        </ControlGroup>
-
         <button
           onClick={copyShareLink}
           style={{
@@ -395,16 +456,155 @@ function App() {
         </button>
       </header>
 
+      {/* ── Example Panel ── */}
+      <section
+        style={{
+          marginBottom: 20,
+          borderRadius: 10,
+          background: 'var(--sb-surface)',
+          border: '1px solid var(--sb-border)',
+          display: 'flex',
+          overflow: 'hidden',
+          fontSize: 13,
+          fontFamily: 'var(--sb-font-mono)',
+        }}
+      >
+        {/* Left: controls */}
+        <div
+          style={{
+            flex: '1 1 66%',
+            padding: '12px 16px',
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
+            gap: '6px 12px',
+            alignItems: 'center',
+            alignContent: 'start',
+          }}
+        >
+          <span style={panelLabelStyle}>Entry</span>
+          <select
+            value={selectedEntry}
+            onChange={(e) => handleEntryChange(e.target.value)}
+            style={selectStyle}
+            disabled={metadataLoading || !metadata}
+          >
+            {metadata?.templateFiles?.map((t: any) => (
+              <option key={t.name} value={t.name}>
+                {t.name}
+                {t.webFile ? '' : ' (no web)'}
+              </option>
+            ))}
+            {!metadata && <option>{metadataLoading ? 'Loading…' : '—'}</option>}
+          </select>
+
+          <span style={panelLabelStyle}>File</span>
+          <input
+            type="text"
+            value={defaultFile}
+            onChange={(e) => setDefaultFile(e.target.value)}
+            style={panelInputStyle}
+          />
+
+          <span style={panelLabelStyle}>Entry File</span>
+          <input
+            type="text"
+            value={defaultEntryFile}
+            onChange={(e) => setDefaultEntryFile(e.target.value)}
+            style={panelInputStyle}
+            placeholder="dist/main.lynx.bundle"
+          />
+
+          <span style={panelLabelStyle}>Entry Filter</span>
+          <input
+            type="text"
+            value={entryFilter}
+            onChange={(e) => setEntryFilter(e.target.value)}
+            style={panelInputStyle}
+            placeholder="src/sizing"
+          />
+
+          <span style={panelLabelStyle}>Highlight</span>
+          <input
+            type="text"
+            value={highlight}
+            onChange={(e) => setHighlight(e.target.value)}
+            style={panelInputStyle}
+            placeholder="{5-10}"
+          />
+
+          <span style={panelLabelStyle}>Img</span>
+          <input
+            type="text"
+            value={img}
+            onChange={(e) => setImg(e.target.value)}
+            style={panelInputStyle}
+            placeholder="https://..."
+          />
+
+          <span style={panelLabelStyle}>Schema</span>
+          <input
+            type="text"
+            value={schema}
+            onChange={(e) => setSchema(e.target.value)}
+            style={panelInputStyle}
+            placeholder="lynx://..."
+          />
+        </div>
+
+        {/* Right: metadata JSON */}
+        <div
+          style={{
+            flex: '0 0 33.3%',
+            minWidth: 0,
+            borderLeft: '1px solid var(--sb-border)',
+            padding: '12px 16px',
+            overflow: 'auto',
+            maxHeight: 320,
+          }}
+        >
+          <div
+            style={{
+              ...panelLabelStyle,
+              marginBottom: 8,
+            }}
+          >
+            example-metadata.json
+          </div>
+          <pre
+            style={{
+              margin: 0,
+              fontSize: 11,
+              lineHeight: 1.5,
+              fontFamily: 'var(--sb-font-mono)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              color: 'inherit',
+            }}
+          >
+            {metadata
+              ? JSON.stringify(metadata, null, 2)
+              : metadataLoading
+                ? 'Loading…'
+                : 'No metadata'}
+          </pre>
+        </div>
+      </section>
+
       {/* ── Go component ── */}
       <main>
         <PreviewErrorBoundary>
           <StandaloneRuntimeProvider lang={lang} dark={dark}>
             <GoConfigProvider config={goConfig}>
               <Go
-                key={`${example}-${defaultTab}`}
+                key={`${example}-${selectedEntry}-${defaultTab}`}
                 example={example}
                 defaultFile={defaultFile}
                 defaultTab={defaultTab}
+                defaultEntryFile={defaultEntryFile || undefined}
+                entry={entryFilter || undefined}
+                highlight={highlight || undefined}
+                img={img || undefined}
+                schema={schema || undefined}
               />
             </GoConfigProvider>
           </StandaloneRuntimeProvider>
