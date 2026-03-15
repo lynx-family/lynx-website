@@ -1,0 +1,60 @@
+name: Sync @lynx-example packages
+
+on:
+  schedule:
+    # Run weekly on Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for new @lynx-example packages
+        id: check
+        working-directory: packages/go-web/example
+        run: |
+          output=$(node scripts/sync-examples.js --dry-run 2>&1)
+          echo "$output"
+          if echo "$output" | grep -q "new package"; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install new packages
+        if: steps.check.outputs.has_updates == 'true'
+        working-directory: packages/go-web/example
+        run: node scripts/sync-examples.js
+
+      - name: Create Pull Request
+        if: steps.check.outputs.has_updates == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore(go): sync @lynx-example packages'
+          title: 'chore(go): sync @lynx-example packages'
+          body: |
+            Automated PR to add newly published `@lynx-example/*` packages.
+
+            Triggered by the weekly sync workflow.
+          branch: chore/sync-lynx-examples
+          delete-branch: true
