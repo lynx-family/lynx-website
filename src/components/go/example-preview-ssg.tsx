@@ -1,8 +1,7 @@
 import { useLang } from '@rspress/core/runtime';
-import type { ExamplePreviewProps } from '@lynx-js/go-web';
+import { getFileCodeLanguage, type ExamplePreviewProps } from '@lynx-js/go-web';
 import fs from 'fs';
 import path from 'path';
-import { getFileCodeLanguage } from '@lynx-js/go-web/src/example-preview/utils/example-data';
 import { useMemo } from 'react';
 
 const EXAMPLE_PATH = path?.join?.(__dirname, '../../docs/public/lynx-examples');
