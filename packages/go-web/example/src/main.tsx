@@ -206,6 +206,15 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
+const viewLabelStyle: React.CSSProperties = {
+  fontSize: 10,
+  textTransform: 'uppercase',
+  letterSpacing: '0.8px',
+  color: 'var(--sb-text-dim)',
+  marginBottom: 6,
+  fontFamily: 'var(--sb-font-mono)',
+};
+
 const panelLabelStyle: React.CSSProperties = {
   fontSize: 10,
   textTransform: 'uppercase',
@@ -785,22 +794,52 @@ function App() {
         )}
       </div>
 
-      {/* ── Go component ── */}
+      {/* ── Go component(s) — Desktop + Mobile ── */}
       <main>
         <PreviewErrorBoundary>
           <StandaloneRuntimeProvider lang={lang} dark={dark}>
             <GoConfigProvider config={goConfig}>
-              <Go
-                key={`${example}-${selectedEntry}-${defaultTab}`}
-                example={example}
-                defaultFile={defaultFile}
-                defaultTab={defaultTab}
-                defaultEntryFile={defaultEntryFile || undefined}
-                entry={entryFilter || undefined}
-                highlight={highlight || undefined}
-                img={img || undefined}
-                schema={schema || undefined}
-              />
+              <div className="dual-view">
+                {/* Desktop — takes remaining space, wraps below mobile on narrow viewports */}
+                <div style={{ flex: '1 1 500px', minWidth: 0 }}>
+                  <div style={viewLabelStyle}>Desktop</div>
+                  <Go
+                    key={`desktop-${example}-${selectedEntry}-${defaultTab}`}
+                    example={example}
+                    defaultFile={defaultFile}
+                    defaultTab={defaultTab}
+                    defaultEntryFile={defaultEntryFile || undefined}
+                    entry={entryFilter || undefined}
+                    highlight={highlight || undefined}
+                    img={img || undefined}
+                    schema={schema || undefined}
+                  />
+                </div>
+                {/* Mobile — fixed 340×766 */}
+                <div className="mobile-preview" style={{ flex: '0 0 340px' }}>
+                  <div style={viewLabelStyle}>Mobile (340 × 766)</div>
+                  <div
+                    style={{
+                      height: 766,
+                      overflow: 'hidden',
+                      borderRadius: 16,
+                      border: '1px solid var(--sb-border)',
+                    }}
+                  >
+                    <Go
+                      key={`mobile-${example}-${selectedEntry}-${defaultTab}`}
+                      example={example}
+                      defaultFile={defaultFile}
+                      defaultTab={defaultTab}
+                      defaultEntryFile={defaultEntryFile || undefined}
+                      entry={entryFilter || undefined}
+                      highlight={highlight || undefined}
+                      img={img || undefined}
+                      schema={schema || undefined}
+                    />
+                  </div>
+                </div>
+              </div>
             </GoConfigProvider>
           </StandaloneRuntimeProvider>
         </PreviewErrorBoundary>
