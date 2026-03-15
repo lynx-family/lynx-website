@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createRoot } from 'react-dom/client';
 import '@douyinfe/semi-ui/dist/css/semi.min.css';
 import { GoConfigProvider, Go } from '../../src/index';
@@ -288,7 +294,9 @@ function App() {
   const [img, setImg] = useState('');
   const [schema, setSchema] = useState('');
   const [propsOpen, setPropsOpen] = useState(true);
+  const [jsxDialogOpen, setJsxDialogOpen] = useState(false);
   const [jsxCopied, setJsxCopied] = useState(false);
+  const jsxPreRef = useRef<HTMLPreElement>(null);
 
   const jsxString = useMemo(
     () =>
@@ -319,6 +327,27 @@ function App() {
     setJsxCopied(true);
     setTimeout(() => setJsxCopied(false), 1500);
   }, [jsxString]);
+
+  // Auto-select code when JSX dialog opens
+  useEffect(() => {
+    if (jsxDialogOpen && jsxPreRef.current) {
+      const range = document.createRange();
+      range.selectNodeContents(jsxPreRef.current);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [jsxDialogOpen]);
+
+  // Close dialog on Escape
+  useEffect(() => {
+    if (!jsxDialogOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setJsxDialogOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [jsxDialogOpen]);
 
   // Persist state to URL hash
   useEffect(() => {
@@ -514,22 +543,31 @@ function App() {
             />
           </ControlGroup>
 
+          {/* JSX button */}
           <button
+            className="toolbar-btn"
+            onClick={() => setJsxDialogOpen(true)}
+            title="View JSX snippet"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <polyline points="5 3 1 8 5 13" />
+              <polyline points="11 3 15 8 11 13" />
+            </svg>
+            JSX
+          </button>
+
+          {/* URL copy button */}
+          <button
+            className="toolbar-btn"
             onClick={copyShareLink}
-            style={{
-              padding: '4px 10px',
-              borderRadius: 6,
-              border: '1px solid var(--sb-border)',
-              background: 'transparent',
-              color: 'var(--sb-text-dim)',
-              fontSize: 12,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-            title="Copy shareable URL (⌘D for dark mode)"
+            title="Copy shareable URL"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
               <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
@@ -666,10 +704,10 @@ function App() {
               />
             </div>
 
-            {/* Middle: metadata JSON */}
+            {/* Right: metadata JSON */}
             <div
               style={{
-                flex: '0 0 280px',
+                flex: '0 0 33.3%',
                 minWidth: 0,
                 borderLeft: '1px solid var(--sb-border)',
                 padding: '12px 16px',
@@ -698,52 +736,6 @@ function App() {
                     : 'No metadata'}
               </pre>
             </div>
-
-            {/* Right: JSX preview with copy */}
-            <div
-              style={{
-                flex: '0 0 260px',
-                minWidth: 0,
-                borderLeft: '1px solid var(--sb-border)',
-                padding: '12px 16px',
-                position: 'relative',
-                overflow: 'auto',
-                maxHeight: 320,
-              }}
-            >
-              <div style={{ ...panelLabelStyle, marginBottom: 8 }}>JSX</div>
-              <pre
-                style={{
-                  margin: 0,
-                  fontSize: 11,
-                  lineHeight: 1.5,
-                  fontFamily: 'var(--sb-font-mono)',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  color: 'inherit',
-                }}
-              >
-                {jsxString}
-              </pre>
-              <button
-                onClick={copyJsx}
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  border: '1px solid var(--sb-border)',
-                  background: 'var(--sb-surface)',
-                  color: 'var(--sb-text-dim)',
-                  fontSize: 11,
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                }}
-              >
-                {jsxCopied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
           </div>
         )}
       </div>
@@ -768,6 +760,41 @@ function App() {
           </StandaloneRuntimeProvider>
         </PreviewErrorBoundary>
       </main>
+
+      {/* ── JSX dialog ── */}
+      {jsxDialogOpen && (
+        <div
+          className="jsx-dialog-backdrop"
+          onClick={() => setJsxDialogOpen(false)}
+        >
+          <div className="jsx-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="jsx-dialog-header">
+              <span>JSX Snippet</span>
+              <button
+                className="jsx-dialog-close"
+                onClick={() => setJsxDialogOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <pre ref={jsxPreRef}>{jsxString}</pre>
+            <div className="jsx-dialog-footer">
+              <button className="toolbar-btn" onClick={copyJsx}>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" />
+                  <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" />
+                </svg>
+                {jsxCopied ? 'Copied!' : 'Copy to Clipboard'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
