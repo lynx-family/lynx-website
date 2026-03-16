@@ -46,7 +46,7 @@ export const onRequest = async (context: CFEventContext) => {
   // Other versions → reverse-proxy to the corresponding branch deploy
   // "next" → main branch, "3.5" → release-3-5 branch
   const branch =
-    version === 'next' ? 'main' : `release-${version.replace('.', '-')}`;
+    version === 'next' ? 'next' : `release-${version.replace('.', '-')}`;
   const origin = `https://${CF_PAGES_PROJECT}-${branch}.pages.dev`;
 
   // Strip the version prefix — build output is at the root of doc_build/
