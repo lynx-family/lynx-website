@@ -11,6 +11,7 @@ import { PACKAGES } from './packages/index.js';
 import { customize as defaultCustomize } from './themes/default.js';
 import type { PackageConfig } from './types/PackageConfig.js';
 import { doGenTplWithData } from './utils/tpl.js';
+import { generateElementApiEntry } from './generate-element-api-entry.js';
 
 /**
  * This is the base configuration for typedoc-plugin-markdown.
@@ -166,6 +167,11 @@ export async function runTypeDoc(options: CliOptions): Promise<void> {
           options.packages?.find((str) => name.startsWith(str)),
       )
     : Object.entries(PACKAGES);
+
+  // Generate the element-api wrapper entry point if it will be processed
+  if (packagesToGenerate.some(([name]) => name === 'element-api')) {
+    generateElementApiEntry();
+  }
 
   // Generate documentation for each package in both locales
   for (const [packageName, packageConfig] of packagesToGenerate) {
