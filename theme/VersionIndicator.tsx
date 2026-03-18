@@ -92,10 +92,7 @@ export function VersionIndicator() {
             <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
           </button>
         </HoverCardTrigger>
-        <HoverCardContent
-          className="z-[100] min-w-[8rem] w-28 overflow-hidden p-0"
-          align="start"
-        >
+        <HoverCardContent className="w-28 p-0" align="start">
           <div className="p-2">
             {versions
               .filter((version) => version !== '3.2' && version !== '3.3')
@@ -119,7 +116,7 @@ export function VersionIndicator() {
                 menuItemClassName,
                 'versions' === displayVersion && 'bg-primary/10 text-primary',
               )}
-              onClick={viewAllVersions}
+              onClick={() => viewAllVersions()}
             >
               {t('all_versions')}
             </button>
