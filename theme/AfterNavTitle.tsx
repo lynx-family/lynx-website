@@ -8,10 +8,10 @@ import { SubsiteLogo, SubsiteView } from './subsite-ui';
 import { VersionIndicator } from './VersionIndicator';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 function NavContent({
   onSelect,
@@ -106,7 +106,6 @@ export default function AfterNavTitle() {
     );
   });
   const [isOpen, setIsOpen] = useState(false);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout>();
 
   useEffect(() => {
     const segments = pathname.split('/');
@@ -125,20 +124,6 @@ export default function AfterNavTitle() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  const handleMouseEnter = () => {
-    if (!isMobile) {
-      clearTimeout(hoverTimeout);
-      setIsOpen(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isMobile) {
-      const timeout = setTimeout(() => setIsOpen(false), 200);
-      setHoverTimeout(timeout);
-    }
-  };
 
   return (
     <div className="flex items-center gap-2">
@@ -178,16 +163,19 @@ export default function AfterNavTitle() {
           </DrawerContent>
         </Drawer>
       ) : (
-        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-          <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-            <DropdownMenuTrigger asChild>
-              <Trigger />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 p-0" align="start">
-              <NavContent onSelect={() => setIsOpen(false)} />
-            </DropdownMenuContent>
-          </div>
-        </DropdownMenu>
+        <HoverCard
+          openDelay={0}
+          closeDelay={200}
+          open={isOpen}
+          onOpenChange={setIsOpen}
+        >
+          <HoverCardTrigger asChild>
+            <Trigger />
+          </HoverCardTrigger>
+          <HoverCardContent className="w-56 p-0" align="start">
+            <NavContent onSelect={() => setIsOpen(false)} />
+          </HoverCardContent>
+        </HoverCard>
       )}
       <VersionIndicator />
     </div>
