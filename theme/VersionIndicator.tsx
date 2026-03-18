@@ -2,11 +2,11 @@ import { useLocation } from '@rspress/core/runtime';
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import { useState, useEffect } from 'react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 
 import { getLangPrefix } from '../shared-route-config';
@@ -14,10 +14,11 @@ import { getLangPrefix } from '../shared-route-config';
 import { withBase, useI18n, useLang } from '@rspress/core/runtime';
 import versionJson from '../docs/public/version.json';
 
+const menuItemClassName =
+  'relative flex w-full cursor-default select-none items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
+
 export function VersionIndicator() {
   var { pathname } = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const langPrefix = getLangPrefix(useLang());
 
   const showIndicator = () => {
@@ -60,26 +61,6 @@ export function VersionIndicator() {
     fetchVersions();
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (hoverTimeout) {
-        clearTimeout(hoverTimeout);
-      }
-    };
-  }, [hoverTimeout]);
-
-  const handleMouseEnter = () => {
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-    }
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    const timeout = setTimeout(() => setIsOpen(false), 200);
-    setHoverTimeout(timeout);
-  };
-
   const changeVersion = (version: string) => {
     const currentPath = window.location.pathname;
     const searchParams = window.location.search;
@@ -101,41 +82,50 @@ export function VersionIndicator() {
   const t = useI18n();
   return (
     showIndicator() && (
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-          <DropdownMenuTrigger asChild>
+      <HoverCard openDelay={0} closeDelay={200}>
+        <HoverCardTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
+          >
+            {displayVersion}{' '}
+            <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
+          </button>
+        </HoverCardTrigger>
+        <HoverCardContent
+          className="z-[100] min-w-[8rem] w-28 overflow-hidden p-0"
+          align="start"
+        >
+          <div className="p-2">
+            {versions
+              .filter((version) => version !== '3.2' && version !== '3.3')
+              .map((version) => (
+                <button
+                  key={version}
+                  type="button"
+                  className={cn(
+                    menuItemClassName,
+                    version === displayVersion && 'bg-primary/10 text-primary',
+                  )}
+                  onClick={() => changeVersion(version)}
+                >
+                  {version}
+                </button>
+              ))}
             <button
+              key="versions"
               type="button"
-              className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
+              className={cn(
+                menuItemClassName,
+                'versions' === displayVersion && 'bg-primary/10 text-primary',
+              )}
+              onClick={viewAllVersions}
             >
-              {displayVersion}{' '}
-              <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
+              {t('all_versions')}
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-28 p-0" align="start">
-            <div className="p-2">
-              {versions
-                .filter((version) => version !== '3.2' && version !== '3.3')
-                .map((version) => (
-                  <DropdownMenuItem
-                    key={version}
-                    className={`w-full justify-start ${version === displayVersion ? 'bg-primary/10 text-primary' : ''}`}
-                    onClick={() => changeVersion(version)}
-                  >
-                    {version}
-                  </DropdownMenuItem>
-                ))}
-              <DropdownMenuItem
-                key="versions"
-                className={`w-full justify-start ${'versions' === displayVersion ? 'bg-primary/10 text-primary' : ''}`}
-                onClick={() => viewAllVersions()}
-              >
-                {t('all_versions')}
-              </DropdownMenuItem>
-            </div>
-          </DropdownMenuContent>
-        </div>
-      </DropdownMenu>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
     )
   );
 }
