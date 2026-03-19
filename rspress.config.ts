@@ -113,6 +113,10 @@ export default defineConfig({
   },
   base: '/next',
   themeConfig: {
+    editLink: {
+      docRepoBaseUrl:
+        'https://github.com/lynx-family/lynx-website/tree/main/docs',
+    },
     enableContentAnimation: true,
     enableAppearanceAnimation: true,
     locales: [
@@ -121,19 +125,6 @@ export default defineConfig({
         title: 'Lynx',
         description: '帮助 Web 构建跨平台应用',
         label: '简体中文',
-        editLink: {
-          docRepoBaseUrl:
-            'https://github.com/lynx-family/lynx-website/tree/main/docs',
-          text: '📝 在 GitHub 上编辑此页',
-        },
-        searchNoResultsText: '未搜索到相关结果',
-        searchPlaceholderText: '搜索文档',
-        searchSuggestedQueryText: '可更换不同的关键字后重试',
-        overview: {
-          filterNameText: '过滤',
-          filterPlaceholderText: '输入关键词',
-          filterNoResultText: '未找到匹配的 API',
-        },
       },
       {
         lang: 'en',
@@ -141,11 +132,6 @@ export default defineConfig({
         description:
           'Empower the web community and invite more to build cross-platform apps',
         label: 'English',
-        editLink: {
-          docRepoBaseUrl:
-            'https://github.com/lynx-family/lynx-website/tree/main/docs',
-          text: '📝 Edit this page on GitHub',
-        },
       },
     ],
     socialLinks: [
