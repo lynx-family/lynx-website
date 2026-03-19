@@ -623,38 +623,22 @@ function calculateTimeline(
     return supportCount >= 2;
   });
 
-  // Build per-platform exclusion sets from CATEGORIES config
-  const excludedCategoriesByPlatform = new Map<PlatformName, Set<string>>();
-  for (const { path: catPath, excludePlatforms: ep } of CATEGORIES) {
-    for (const platform of ep || []) {
-      if (!excludedCategoriesByPlatform.has(platform)) {
-        excludedCategoriesByPlatform.set(platform, new Set());
-      }
-      excludedCategoriesByPlatform.get(platform)!.add(catPath);
-    }
-  }
-
   return recentVersions.map((v) => {
     const platformStats: Partial<
       Record<PlatformName, { supported: number; coverage: number }>
     > = {};
 
     for (const platform of TRACKED_PLATFORMS) {
-      const excludedCats = excludedCategoriesByPlatform.get(platform);
-      const platformFeatures = excludedCats
-        ? relevantFeatures.filter((f) => !excludedCats.has(f.category))
-        : relevantFeatures;
-
       let supported = 0;
-      for (const feature of platformFeatures) {
+      for (const feature of relevantFeatures) {
         const support = feature.support[platform];
         if (support && isVersionAtOrBefore(support.version_added, v.version)) {
           supported++;
         }
       }
       const coverage =
-        platformFeatures.length > 0
-          ? Math.round((supported / platformFeatures.length) * 100)
+        relevantFeatures.length > 0
+          ? Math.round((supported / relevantFeatures.length) * 100)
           : 0;
       platformStats[platform] = { supported, coverage };
     }
@@ -982,14 +966,6 @@ function generateStats(): APIStats {
   // Coverage is based on Lynx Platform API only (the unified spec).
   const byPlatform: Partial<Record<PlatformName, PlatformStats>> = {};
   for (const platform of TRACKED_PLATFORMS) {
-    // For platform API coverage, adjust for excludePlatforms within platform group
-    let adjustedPlatformTotal = platformApiTotal;
-    for (const { path: catPath, group, excludePlatforms: ep } of CATEGORIES) {
-      if (group === 'platform' && ep?.includes(platform)) {
-        adjustedPlatformTotal -= byCategory[catPath]?.total || 0;
-      }
-    }
-
     // Count exclusive APIs: supported ONLY by this platform (among all tracked)
     const exclusiveCount = allFeatures.filter((f) => {
       const supporters = TRACKED_PLATFORMS.filter((p) => {
@@ -1004,10 +980,9 @@ function generateStats(): APIStats {
     byPlatform[platform] = {
       supported_count: platformApiSupported[platform] || 0,
       coverage_percent:
-        adjustedPlatformTotal > 0
+        platformApiTotal > 0
           ? Math.round(
-              ((platformApiSupported[platform] || 0) / adjustedPlatformTotal) *
-                100,
+              ((platformApiSupported[platform] || 0) / platformApiTotal) * 100,
             )
           : 0,
       exclusive_count: exclusiveCount,
