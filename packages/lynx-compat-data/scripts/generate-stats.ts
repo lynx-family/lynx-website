@@ -80,10 +80,61 @@ const CATEGORIES: Array<{
     group: 'platform',
   },
   {
-    path: 'lynx-api',
-    displayName: 'Lynx API',
+    path: 'lynx-api/global',
+    displayName: 'Lynx Global API',
     docPrefix: '/api/lynx-api',
     group: 'platform',
+  },
+  {
+    path: 'lynx-api/event',
+    displayName: 'Lynx Event API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/fetch',
+    displayName: 'Lynx Fetch API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/lynx',
+    displayName: 'lynx.*',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/selector-query',
+    displayName: 'Lynx Selector Query',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/nodes-ref',
+    displayName: 'Lynx Nodes Ref',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/intersection-observer',
+    displayName: 'Lynx Intersection Observer',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/main-thread',
+    displayName: 'Lynx Main Thread API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    // Performance API measures the Lynx native rendering pipeline;
+    // these concepts do not exist on Web.
+    path: 'lynx-api/performance-api',
+    displayName: 'Lynx Performance API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+    excludePlatforms: ['web_lynx'],
   },
   {
     path: 'lynx-native-api',
@@ -333,7 +384,16 @@ function collectAPIs(
     const supportCount = TRACKED_PLATFORMS.filter(
       (p) => (supported[p] || 0) > 0,
     ).length;
-    total = supportCount >= 2 ? 1 : 0;
+    const isShared = supportCount >= 2;
+    total = isShared ? 1 : 0;
+
+    // Only count toward per-platform supported if this is a shared API.
+    // Exclusive APIs are tracked separately and should not inflate coverage.
+    if (!isShared) {
+      for (const platform of TRACKED_PLATFORMS) {
+        supported[platform] = 0;
+      }
+    }
 
     const docUrl = compat.lynx_path || generateDocUrl(apiPath, docPrefix);
     const name =

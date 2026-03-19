@@ -422,7 +422,15 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
     'css/properties',
     'css/data-type',
     'css/at-rule',
-    'lynx-api',
+    'lynx-api/global',
+    'lynx-api/event',
+    'lynx-api/fetch',
+    'lynx-api/lynx',
+    'lynx-api/selector-query',
+    'lynx-api/nodes-ref',
+    'lynx-api/intersection-observer',
+    'lynx-api/main-thread',
+    'lynx-api/performance-api',
   ];
   const otherOrder = ['lynx-native-api', 'react', 'devtool', 'errors'];
 
