@@ -33,12 +33,16 @@ const PLATFORM_NAMES = {
   clay: "Clay",
 };
 
-const CATEGORIES = [
+// Categories split by group
+const PLATFORM_API_CATEGORIES = [
   "elements",
   "css/properties",
   "css/at-rule",
   "css/data-type",
   "lynx-api",
+];
+
+const OTHER_CATEGORIES = [
   "lynx-native-api",
   "react",
   "devtool",
@@ -74,14 +78,14 @@ function fmtDeltaPct(before, after) {
 let md = "<!-- lynx-compat-data-stats -->\n";
 md += "## Lynx Compat Data Stats\n\n";
 
-// Total APIs
-const baseTotal = base?.summary?.total_apis ?? 0;
-const prTotal = pr.summary.total_apis;
+// Platform API total (used for coverage denominator)
+const baseTotal = base?.summary?.platform_api_total ?? base?.summary?.total_apis ?? 0;
+const prTotal = pr.summary.platform_api_total ?? pr.summary.total_apis;
 const totalDelta = prTotal - baseTotal;
 if (totalDelta !== 0) {
-  md += `**Total Shared APIs:** ${prTotal} (${totalDelta > 0 ? "+" : ""}${totalDelta})\n\n`;
+  md += `**Lynx Platform API:** ${prTotal} (${totalDelta > 0 ? "+" : ""}${totalDelta})\n\n`;
 } else {
-  md += `**Total Shared APIs:** ${prTotal}\n\n`;
+  md += `**Lynx Platform API:** ${prTotal}\n\n`;
 }
 
 // Platform coverage table
@@ -92,6 +96,7 @@ md += "|----------|-----------|----------|-------------|------------|\n";
 for (const p of PLATFORMS) {
   const bp = base?.summary?.by_platform?.[p];
   const pp = pr.summary.by_platform[p];
+  if (!pp) continue;
   const dSupported = fmtDelta(bp?.supported_count ?? 0, pp.supported_count);
   const dCoverage = fmtDeltaPct(bp?.coverage_percent ?? 0, pp.coverage_percent);
   md += `| ${PLATFORM_NAMES[p]} | ${pp.supported_count} | ${pp.coverage_percent}% | ${dSupported} | ${dCoverage} |\n`;
@@ -99,48 +104,64 @@ for (const p of PLATFORMS) {
 
 md += "\n";
 
-// Category breakdown
-md += "### Category Breakdown\n\n";
-md += "| Category | Total |";
-for (const p of PLATFORMS) {
-  md += ` ${PLATFORM_NAMES[p]} |`;
-}
-md += "\n";
-md += "|----------|-------|";
-for (let i = 0; i < PLATFORMS.length; i++) {
-  md += "---------|";
-}
-md += "\n";
-
-for (const cat of CATEGORIES) {
-  const bc = base?.summary?.by_category?.[cat];
-  const pc = pr.summary.by_category[cat];
-  if (!pc) continue;
-
-  // Total column with delta
-  const catTotalDelta = pc.total - (bc?.total ?? 0);
-  const totalStr =
-    catTotalDelta !== 0
-      ? `${pc.total} (${catTotalDelta > 0 ? "+" : ""}${catTotalDelta})`
-      : `${pc.total}`;
-
-  md += `| ${CATEGORY_NAMES[cat] ?? cat} | ${totalStr} |`;
-
-  // Per-platform coverage with delta
+// Helper: render a category table for a list of category keys
+function renderCategoryTable(categories) {
+  let out = "| Category | Total |";
   for (const p of PLATFORMS) {
-    const baseCov = bc?.coverage?.[p] ?? 0;
-    const prCov = pc.coverage[p];
-    const covDelta = prCov - baseCov;
-    if (covDelta !== 0) {
-      md += ` ${prCov}% (${covDelta > 0 ? "+" : ""}${covDelta}) |`;
-    } else {
-      md += ` ${prCov}% |`;
-    }
+    out += ` ${PLATFORM_NAMES[p]} |`;
   }
-  md += "\n";
+  out += "\n";
+  out += "|----------|-------|";
+  for (let i = 0; i < PLATFORMS.length; i++) {
+    out += "---------|";
+  }
+  out += "\n";
+
+  for (const cat of categories) {
+    const bc = base?.summary?.by_category?.[cat];
+    const pc = pr.summary.by_category[cat];
+    if (!pc) continue;
+
+    // Total column with delta
+    const catTotalDelta = pc.total - (bc?.total ?? 0);
+    const totalStr =
+      catTotalDelta !== 0
+        ? `${pc.total} (${catTotalDelta > 0 ? "+" : ""}${catTotalDelta})`
+        : `${pc.total}`;
+
+    out += `| ${CATEGORY_NAMES[cat] ?? cat} | ${totalStr} |`;
+
+    // Per-platform coverage with delta
+    for (const p of PLATFORMS) {
+      const prCov = pc.coverage[p];
+      if (prCov === null || prCov === undefined) {
+        out += ` N/A |`;
+        continue;
+      }
+      const baseCov = bc?.coverage?.[p] ?? 0;
+      const covDelta = prCov - baseCov;
+      if (covDelta !== 0) {
+        out += ` ${prCov}% (${covDelta > 0 ? "+" : ""}${covDelta}) |`;
+      } else {
+        out += ` ${prCov}% |`;
+      }
+    }
+    out += "\n";
+  }
+
+  return out;
 }
 
+// Category breakdown: Lynx Platform API
+md += "### Lynx Platform API\n\n";
+md += renderCategoryTable(PLATFORM_API_CATEGORIES);
 md += "\n";
+
+// Category breakdown: Other
+md += "### Other\n\n";
+md += renderCategoryTable(OTHER_CATEGORIES);
+md += "\n";
+
 md += `<sub>Generated at ${pr.generated_at}</sub>\n`;
 
 process.stdout.write(md);
