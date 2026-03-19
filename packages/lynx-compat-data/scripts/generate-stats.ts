@@ -41,7 +41,13 @@ const CLAY_SUB_PLATFORMS: PlatformName[] = [
 ];
 
 // Categories to scan with doc URL mappings
-const CATEGORIES = [
+// excludePlatforms: platforms for which this category is not applicable (e.g. DevTool on Web)
+const CATEGORIES: Array<{
+  path: string;
+  displayName: string;
+  docPrefix: string;
+  excludePlatforms?: PlatformName[];
+}> = [
   {
     path: 'elements',
     displayName: 'Elements',
@@ -69,7 +75,13 @@ const CATEGORIES = [
     docPrefix: '/api/lynx-native-api',
   },
   { path: 'react', displayName: 'ReactLynx', docPrefix: '/api/react' },
-  { path: 'devtool', displayName: 'DevTool', docPrefix: '/guide/devtool' },
+  {
+    // DevTool is N/A for Web (uses browser DevTools natively)
+    path: 'devtool',
+    displayName: 'DevTool',
+    docPrefix: '/guide/devtool',
+    excludePlatforms: ['web_lynx'],
+  },
   { path: 'errors', displayName: 'Errors', docPrefix: '/api/errors' },
 ];
 
@@ -86,7 +98,7 @@ interface APIInfo {
 interface CategoryStats {
   total: number;
   supported: Partial<Record<PlatformName, number>>;
-  coverage: Partial<Record<PlatformName, number>>;
+  coverage: Partial<Record<PlatformName, number | null>>;
   exclusive: Partial<Record<PlatformName, number>>;
 }
 
@@ -398,6 +410,7 @@ function processCategory(
   categoryPath: string,
   displayName: string,
   docPrefix: string,
+  excludePlatforms?: PlatformName[],
 ): {
   stats: CategoryStats;
   apis: string[];
@@ -456,15 +469,24 @@ function processCategory(
   processDir(fullPath);
 
   // Calculate coverage percentages
-  const coverage: Partial<Record<PlatformName, number>> = {};
+  // For excluded platforms, coverage is null (N/A — category does not apply)
+  const coverage: Partial<Record<PlatformName, number | null>> = {};
   for (const platform of TRACKED_PLATFORMS) {
-    coverage[platform] =
-      total > 0 ? Math.round(((supported[platform] || 0) / total) * 100) : 0;
+    if (excludePlatforms?.includes(platform)) {
+      coverage[platform] = null;
+    } else {
+      coverage[platform] =
+        total > 0 ? Math.round(((supported[platform] || 0) / total) * 100) : 0;
+    }
   }
 
   // Calculate missing APIs per platform (only for shared APIs, i.e. supported by >=2 platforms)
+  // Skip excluded platforms — category is N/A for them
   const missing: Partial<Record<PlatformName, APIInfo[]>> = {};
   for (const platform of TRACKED_PLATFORMS) {
+    if (excludePlatforms?.includes(platform)) {
+      continue;
+    }
     missing[platform] = apiDetails.filter((api) => {
       const supportCount = TRACKED_PLATFORMS.filter(
         (p) => api.support[p] !== false && api.support[p] !== undefined,
@@ -563,22 +585,38 @@ function calculateTimeline(
     return supportCount >= 2;
   });
 
+  // Build per-platform exclusion sets from CATEGORIES config
+  const excludedCategoriesByPlatform = new Map<PlatformName, Set<string>>();
+  for (const { path: catPath, excludePlatforms: ep } of CATEGORIES) {
+    for (const platform of ep || []) {
+      if (!excludedCategoriesByPlatform.has(platform)) {
+        excludedCategoriesByPlatform.set(platform, new Set());
+      }
+      excludedCategoriesByPlatform.get(platform)!.add(catPath);
+    }
+  }
+
   return recentVersions.map((v) => {
     const platformStats: Partial<
       Record<PlatformName, { supported: number; coverage: number }>
     > = {};
 
     for (const platform of TRACKED_PLATFORMS) {
+      const excludedCats = excludedCategoriesByPlatform.get(platform);
+      const platformFeatures = excludedCats
+        ? relevantFeatures.filter((f) => !excludedCats.has(f.category))
+        : relevantFeatures;
+
       let supported = 0;
-      for (const feature of relevantFeatures) {
+      for (const feature of platformFeatures) {
         const support = feature.support[platform];
         if (support && isVersionAtOrBefore(support.version_added, v.version)) {
           supported++;
         }
       }
       const coverage =
-        relevantFeatures.length > 0
-          ? Math.round((supported / relevantFeatures.length) * 100)
+        platformFeatures.length > 0
+          ? Math.round((supported / platformFeatures.length) * 100)
           : 0;
       platformStats[platform] = { supported, coverage };
     }
@@ -760,10 +798,15 @@ function generateStats(): APIStats {
   }
 
   let featureId = 0;
-  for (const { path: categoryPath, displayName, docPrefix } of CATEGORIES) {
+  for (const {
+    path: categoryPath,
+    displayName,
+    docPrefix,
+    excludePlatforms,
+  } of CATEGORIES) {
     console.log(`  Processing ${displayName}...`);
     const { stats, apis, apiDetails, missing, exclusiveApis, recentAPIs } =
-      processCategory(categoryPath, displayName, docPrefix);
+      processCategory(categoryPath, displayName, docPrefix, excludePlatforms);
 
     categories[categoryPath] = {
       display_name: displayName,
@@ -879,6 +922,14 @@ function generateStats(): APIStats {
   // Calculate global platform stats for ALL platforms
   const byPlatform: Partial<Record<PlatformName, PlatformStats>> = {};
   for (const platform of TRACKED_PLATFORMS) {
+    // Adjust total for this platform: subtract totals of categories that exclude it
+    let adjustedTotal = globalTotal;
+    for (const { path: catPath, excludePlatforms: ep } of CATEGORIES) {
+      if (ep?.includes(platform)) {
+        adjustedTotal -= byCategory[catPath]?.total || 0;
+      }
+    }
+
     // Count exclusive APIs: supported ONLY by this platform (among all tracked)
     const exclusiveCount = allFeatures.filter((f) => {
       const supporters = TRACKED_PLATFORMS.filter((p) => {
@@ -893,8 +944,8 @@ function generateStats(): APIStats {
     byPlatform[platform] = {
       supported_count: globalSupported[platform] || 0,
       coverage_percent:
-        globalTotal > 0
-          ? Math.round(((globalSupported[platform] || 0) / globalTotal) * 100)
+        adjustedTotal > 0
+          ? Math.round(((globalSupported[platform] || 0) / adjustedTotal) * 100)
           : 0,
       exclusive_count: exclusiveCount,
     };
@@ -935,8 +986,15 @@ function generateStats(): APIStats {
     'web_lynx',
   ] as PlatformName[]) {
     const ps = byPlatform[platform];
+    // Compute per-platform adjusted total for display
+    let displayTotal = globalTotal;
+    for (const { path: catPath, excludePlatforms: ep } of CATEGORIES) {
+      if (ep?.includes(platform)) {
+        displayTotal -= byCategory[catPath]?.total || 0;
+      }
+    }
     console.log(
-      `    ${platform}: ${ps?.supported_count}/${globalTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
+      `    ${platform}: ${ps?.supported_count}/${displayTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
     );
   }
   const clayAgg = byPlatform['clay' as PlatformName];

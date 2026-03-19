@@ -376,7 +376,8 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                       {stats.total}
                     </td>
                     {displayPlatforms.map((platform) => {
-                      const coverage = stats.coverage[platform] ?? 0;
+                      const coverage = stats.coverage[platform];
+                      const isNA = coverage === null;
                       const supported = stats.supported[platform] ?? 0;
                       const excl = stats.exclusive?.[platform] ?? 0;
                       return (
@@ -389,24 +390,32 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                               'bg-muted/10',
                           )}
                         >
-                          <div
-                            className={cn(
-                              'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
-                              getCoverageColor(coverage, highlightMode),
-                            )}
-                          >
-                            <span className="font-mono text-xs font-bold">
-                              {coverage}%
-                            </span>
-                            <span className="text-[9px] opacity-70">
-                              {supported}/{stats.total}
-                            </span>
-                            {excl > 0 && (
-                              <span className="text-[8px] opacity-50">
-                                +{excl} excl.
+                          {isNA ? (
+                            <div className="inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px] bg-muted/20 text-muted-foreground/50">
+                              <span className="font-mono text-xs font-medium">
+                                N/A
                               </span>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div
+                              className={cn(
+                                'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
+                                getCoverageColor(coverage ?? 0, highlightMode),
+                              )}
+                            >
+                              <span className="font-mono text-xs font-bold">
+                                {coverage ?? 0}%
+                              </span>
+                              <span className="text-[9px] opacity-70">
+                                {supported}/{stats.total}
+                              </span>
+                              {excl > 0 && (
+                                <span className="text-[8px] opacity-50">
+                                  +{excl} excl.
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </td>
                       );
                     })}
@@ -434,15 +443,19 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
               {sortedCategories.reduce((sum, cat) => sum + cat.stats.total, 0)}
             </td>
             {displayPlatforms.map((platform) => {
-              const totalSupported = sortedCategories.reduce(
+              // Exclude N/A categories (coverage === null) from this platform's totals
+              const applicableCategories = sortedCategories.filter(
+                (cat) => cat.stats.coverage[platform] !== null,
+              );
+              const totalSupported = applicableCategories.reduce(
                 (sum, cat) => sum + (cat.stats.supported[platform] ?? 0),
                 0,
               );
-              const totalApis = sortedCategories.reduce(
+              const totalApis = applicableCategories.reduce(
                 (sum, cat) => sum + cat.stats.total,
                 0,
               );
-              const totalExclusive = sortedCategories.reduce(
+              const totalExclusive = applicableCategories.reduce(
                 (sum, cat) => sum + (cat.stats.exclusive?.[platform] ?? 0),
                 0,
               );

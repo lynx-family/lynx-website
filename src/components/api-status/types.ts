@@ -31,7 +31,8 @@ export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
 export interface CategoryStats {
   total: number;
   supported: Partial<Record<DisplayPlatformName, number>>;
-  coverage: Partial<Record<DisplayPlatformName, number>>;
+  /** Coverage percentage per platform. `null` means the category is N/A for that platform. */
+  coverage: Partial<Record<DisplayPlatformName, number | null>>;
   exclusive: Partial<Record<DisplayPlatformName, number>>;
 }
 
