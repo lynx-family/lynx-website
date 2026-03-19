@@ -775,7 +775,7 @@ export const APIStatusDashboard: React.FC = () => {
               </h1>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="font-mono font-bold text-foreground">
-                  {summary.total_apis.toLocaleString()}
+                  {summary.platform_api_total.toLocaleString()}
                 </span>
                 <span>{t.totalApis}</span>
               </div>
@@ -1205,7 +1205,7 @@ export const APIStatusDashboard: React.FC = () => {
                         <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
                           <span>
                             {ps?.supported_count.toLocaleString()} /{' '}
-                            {summary.total_apis.toLocaleString()}
+                            {summary.platform_api_total.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1272,6 +1272,7 @@ export const APIStatusDashboard: React.FC = () => {
           <CardContent className="px-0 pt-0 pb-0">
             <CategoryTable
               categories={categories}
+              categoryGroups={stats.category_groups}
               selectedPlatforms={selectedPlatforms}
               expandedCategory={expandedCategory}
               onCategoryClick={(cat) =>

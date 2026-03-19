@@ -246,7 +246,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
             <div className="flex gap-3 items-center">
               <span className="text-base font-semibold">Lynx API Status</span>
               <span className="font-mono text-xs text-muted-foreground">
-                {stats.summary.total_apis.toLocaleString()}
+                {stats.summary.platform_api_total.toLocaleString()}
               </span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                 APIs
