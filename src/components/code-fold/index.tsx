@@ -82,8 +82,7 @@ export const CodeFold = ({
 
   return (
     <div
-      style={{ marginBottom: 10 }}
-      className={`${dark ? 'semi-always-dark' : 'semi-always-light'}`}
+      className={`code-fold-wrapper ${dark ? 'semi-always-dark' : 'semi-always-light'}`}
       ref={containerRef}
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
