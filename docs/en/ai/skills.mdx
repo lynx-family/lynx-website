@@ -19,6 +19,37 @@ Teaches agents about Lynx's dual-thread architecture patterns. Includes static a
 These rules are also documented as a standalone guide. See [Best Practices](/react/best-practices) for detailed explanations and code examples.
 :::
 
+### devtool
+
+A CLI-based skill that lets agents interact with Lynx DevTool to inspect and debug running Lynx applications on connected devices (Android, iOS, Desktop). The skill provides a Node.js CLI (`node scripts/index.mjs`) that agents invoke directly — no MCP server required.
+
+:::info DevTool Skill vs DevTool MCP
+There are two ways for coding agents to interact with Lynx DevTool:
+
+- **DevTool Skill** (this page) — CLI-based, works with any coding agent (Claude Code, Cursor, Copilot), installed via `npx skills add`.
+- **[DevTool MCP](/ai/lynx-devtool-mcp)** — MCP server protocol, works with MCP-compatible clients.
+
+Both provide similar capabilities; choose the one that fits your agent setup.
+:::
+
+**DOM inspection** — Query elements with `querySelector`, retrieve the full document tree with `getDocument`, read `getOuterHTML` and `innerText` of any node.
+
+**CSS inspection** — Read `getComputedStyle`, `getMatchedStyles`, and `getInlineStyles` for any element to understand applied styling.
+
+**Console logs** — Read console output with level filters (log, warn, error) and range filters to focus on specific time windows.
+
+**Screenshot capture** — Take screenshots of the current Lynx page for visual verification and multimodal analysis.
+
+**Touch simulation** — Simulate touch events via `emulateTouchFromMouseEvent` for automated interaction testing (tap, drag, scroll).
+
+**Page navigation** — Reload pages or redirect to a local dev-server URL during development workflows. Open arbitrary URLs in the connected Lynx app.
+
+**JavaScript evaluation** — Evaluate JavaScript expressions directly in the Lynx runtime for inspecting state or triggering actions.
+
+**Source listing** — List all parsed scripts loaded by the Lynx runtime, useful for mapping console stack traces back to source files.
+
+**Troubleshooting** — Built-in debug logging for connector and transport issues. Enable debug namespaces to diagnose connection problems between the agent and DevTool.
+
 ### lynx-error-remap
 
 Helps agents debug main-thread runtime errors by remapping minified error messages back to their original source, making stack traces actionable.
@@ -26,15 +57,6 @@ Helps agents debug main-thread runtime errors by remapping minified error messag
 ### lynx-ptrace
 
 Enables agents to analyze Lynx performance traces, identifying bottlenecks in template loading, JS App loading, cross-thread calls, and rendering pipelines.
-
-### devtool
-
-Lets agents interact with Lynx DevTool to inspect and debug running Lynx applications on connected devices (Android, iOS, Desktop):
-
-- **CDP commands** — Send Chrome DevTools Protocol commands for DOM inspection, CSS querying, console log retrieval, and taking screenshots.
-- **App commands** — Open or close pages in the connected Lynx application.
-- **Open URLs** — Launch URLs directly in Lynx for development and testing.
-- **Troubleshooting** — Built-in diagnostics for connector and transport issues between the agent and DevTool.
 
 ## Installation
 

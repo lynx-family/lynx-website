@@ -19,6 +19,37 @@ Lynx 社区在 [lynx-community/skills](https://github.com/lynx-community/skills)
 这些规则也作为独立指南进行了文档化。详细说明和代码示例请参阅[最佳实践](/react/best-practices)。
 :::
 
+### devtool
+
+基于 CLI 的 skill，让 agent 与 Lynx DevTool 交互，在已连接的设备（Android、iOS、桌面端）上检查和调试运行中的 Lynx 应用。该 skill 提供 Node.js CLI（`node scripts/index.mjs`），agent 可直接调用，无需 MCP 服务器。
+
+:::info DevTool Skill 与 DevTool MCP
+coding agent 与 Lynx DevTool 交互有两种方式：
+
+- **DevTool Skill**（本页）— 基于 CLI，适用于任何 coding agent（Claude Code、Cursor、Copilot），通过 `npx skills add` 安装。
+- **[DevTool MCP](/ai/lynx-devtool-mcp)** — MCP 服务器协议，适用于支持 MCP 的客户端。
+
+两者提供类似的能力，根据你的 agent 配置选择合适的方式。
+:::
+
+**DOM 检查** — 使用 `querySelector` 查询元素，通过 `getDocument` 获取完整文档树，读取任意节点的 `getOuterHTML` 和 `innerText`。
+
+**CSS 检查** — 读取任意元素的 `getComputedStyle`、`getMatchedStyles` 和 `getInlineStyles`，了解应用的样式。
+
+**控制台日志** — 读取控制台输出，支持按级别（log、warn、error）和时间范围过滤，聚焦特定时间窗口。
+
+**截图捕获** — 截取当前 Lynx 页面的屏幕截图，用于视觉验证和多模态分析。
+
+**触摸模拟** — 通过 `emulateTouchFromMouseEvent` 模拟触摸事件，用于自动化交互测试（点击、拖动、滚动）。
+
+**页面导航** — 在开发流程中重新加载页面或重定向到本地开发服务器 URL。在已连接的 Lynx 应用中打开任意 URL。
+
+**JavaScript 执行** — 在 Lynx 运行时中直接执行 JavaScript 表达式，用于检查状态或触发操作。
+
+**源码列表** — 列出 Lynx 运行时加载的所有已解析脚本，便于将控制台堆栈跟踪映射回源文件。
+
+**故障排查** — 内置连接器和传输问题的调试日志。启用调试命名空间来诊断 agent 与 DevTool 之间的连接问题。
+
 ### lynx-error-remap
 
 帮助 agent 调试主线程运行时错误，将压缩后的错误信息重新映射回原始源码，使堆栈跟踪变得可操作。
@@ -26,15 +57,6 @@ Lynx 社区在 [lynx-community/skills](https://github.com/lynx-community/skills)
 ### lynx-ptrace
 
 使 agent 能够分析 Lynx 性能追踪，识别模板加载、JS App 加载、跨线程调用和渲染管线中的瓶颈。
-
-### devtool
-
-让 agent 与 Lynx DevTool 交互，在已连接的设备（Android、iOS、桌面端）上检查和调试运行中的 Lynx 应用：
-
-- **CDP 命令** — 发送 Chrome DevTools Protocol 命令，用于 DOM 检查、CSS 查询、控制台日志获取和截图。
-- **App 命令** — 在已连接的 Lynx 应用中打开或关闭页面。
-- **打开 URL** — 直接在 Lynx 中打开 URL 进行开发和测试。
-- **故障排查** — 内置 agent 与 DevTool 之间的连接器和传输问题诊断。
 
 ## 安装
 
