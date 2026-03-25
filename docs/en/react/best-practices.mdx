@@ -1,0 +1,355 @@
+# Best Practices
+
+:::tip Agent Skill Available
+These best practices are also available as an [Agent Skill](/ai/skills) for your coding agents. Install with `npx skills add lynx-community/skills` to get automated detection and auto-fix in your editor.
+:::
+
+This page covers common patterns and pitfalls when developing with ReactLynx, with a focus on Lynx's dual-thread architecture.
+
+## Use `'background only'` for Native API Calls {#detect-background-only}
+
+**Severity: Critical**
+
+In Lynx's dual-thread architecture, the **main thread** handles React component rendering and JSX evaluation, while the **background thread** manages effects, event handlers, and native module calls. Calling native APIs like `lynx.getJSModule` or `NativeModules` on the main thread causes UI blocking, synchronization overhead, and degraded user experience.
+
+### Bad
+
+```tsx
+// ❌ Native API call at component top level — runs on main thread
+function App() {
+  const data = NativeModules.Storage.get('key');
+  return <text>{data}</text>;
+}
+```
+
+```tsx
+// ❌ Native API call inside render logic
+function App() {
+  return <text>{lynx.getJSModule('GlobalEventEmitter').emit('event')}</text>;
+}
+```
+
+### Good
+
+Native module calls are permitted in contexts that execute on the background thread:
+
+```tsx
+// ✅ Inside useEffect — runs on background thread
+function App() {
+  const [data, setData] = useState('');
+
+  useEffect(() => {
+    const value = NativeModules.Storage.get('key');
+    setData(value);
+  }, []);
+
+  return <text>{data}</text>;
+}
+```
+
+```tsx
+// ✅ Inside event handler — runs on background thread
+function App() {
+  function handleTap() {
+    lynx.getJSModule('GlobalEventEmitter').emit('event');
+  }
+
+  return (
+    <view bindtap={handleTap}>
+      <text>Tap me</text>
+    </view>
+  );
+}
+```
+
+```tsx
+// ✅ Using the 'background only' directive
+function fetchData() {
+  'background only';
+  return NativeModules.Storage.get('key');
+}
+```
+
+### Allowed Contexts
+
+Native module calls are safe in:
+
+- `useEffect` / `useLayoutEffect` hooks
+- `useImperativeHandle` implementations
+- Ref callbacks
+- Event handlers (`bindtap`, etc.)
+- Functions marked with `'background only'` directive
+
+### The `'background only'` Directive
+
+When a function containing native calls doesn't naturally fit into one of the above contexts, mark it with the `'background only'` directive as the first statement in the function body:
+
+```tsx
+function sendAnalytics(eventName: string) {
+  'background only';
+  lynx.getJSModule('Analytics').track(eventName);
+}
+```
+
+Both single and double quotes work: `'background only'` and `"background only"`.
+
+## Use Event Handlers Correctly {#proper-event-handlers}
+
+**Severity: Medium**
+
+Event handlers in ReactLynx run on the **background thread**, making them safe for native module calls, API requests, and heavy computations.
+
+### Event Handler Types
+
+| Attribute  | Behavior             | Use Case                            |
+| ---------- | -------------------- | ----------------------------------- |
+| `bindtap`  | Bubbles up to parent | Default choice for tap events       |
+| `catchtap` | Stops propagation    | Prevent parent handlers from firing |
+
+### Basic Usage
+
+Use function references over inline functions for better performance:
+
+```tsx
+// ✅ Function reference (recommended)
+function App() {
+  function handleTap(event) {
+    console.log('Target id:', event.target.id);
+  }
+
+  return (
+    <view id="my-view" bindtap={handleTap}>
+      Tap me
+    </view>
+  );
+}
+```
+
+### Event Propagation
+
+**Bubbling with `bindtap`:**
+
+```tsx
+function App() {
+  function handleOuterTap() {
+    console.log('outer tapped'); // Fires second
+  }
+  function handleInnerTap() {
+    console.log('inner tapped'); // Fires first
+  }
+
+  return (
+    <view bindtap={handleOuterTap}>
+      <view bindtap={handleInnerTap}>Inner</view>
+    </view>
+  );
+}
+// Clicking Inner outputs: "inner tapped", "outer tapped"
+```
+
+**Stopping propagation with `catchtap`:**
+
+```tsx
+function App() {
+  function handleOuterTap() {
+    console.log('outer tapped'); // Never fires
+  }
+  function handleInnerTap() {
+    console.log('inner tapped'); // Only this fires
+  }
+
+  return (
+    <view bindtap={handleOuterTap}>
+      <view catchtap={handleInnerTap}>Inner</view>
+    </view>
+  );
+}
+```
+
+### Using `dataset`
+
+Pass custom data via `data-` attributes instead of closures:
+
+```tsx
+function App() {
+  function handleTap(event) {
+    const { itemId, itemName } = event.currentTarget.dataset;
+    console.log(`Tapped item: ${itemId} - ${itemName}`);
+  }
+
+  return (
+    <view data-item-id="123" data-item-name="Product" bindtap={handleTap}>
+      Tap me
+    </view>
+  );
+}
+```
+
+### Tips
+
+1. **Use function references** over inline arrow functions for better performance
+2. **Use `catchtap`** only when you need to stop event propagation
+3. **Use `dataset`** to pass data instead of closures when possible
+4. **Prefer `currentTarget`** over `target` for accessing the listening element's data
+
+## Use Main Thread Scripts for Smooth Animations {#main-thread-scripts}
+
+**Severity: Medium**
+
+In Lynx's multi-threaded architecture, events are triggered on the main thread, but regular JS event handlers execute on the background thread. This round-trip causes delays that are noticeable in animations and gesture handling. Main thread scripts provide **synchronous event handling on the main thread**, eliminating response delay.
+
+### Bad
+
+```tsx
+// ❌ Scroll handler on background thread — animation lags behind gesture
+function App() {
+  const [pos, setPos] = useState(0);
+
+  function onScroll(event) {
+    setPos(event.detail.scrollTop);
+  }
+
+  return (
+    <scroll-view global-bindscroll={onScroll}>
+      <view style={{ transform: `translateY(${pos}px)` }} />
+    </scroll-view>
+  );
+}
+```
+
+### Good
+
+```tsx
+// ✅ Scroll handler on main thread — no delay
+function App() {
+  function onScroll(event: MainThread.IScrollEvent) {
+    'main thread';
+    const scrollTop = event.detail.scrollTop;
+    event.currentTarget.setStyleProperty(
+      'transform',
+      `translateY(${scrollTop}px)`,
+    );
+  }
+
+  return (
+    <scroll-view main-thread:global-bindscroll={onScroll}>
+      <view />
+    </scroll-view>
+  );
+}
+```
+
+### How to Use
+
+1. Add the `main-thread:` prefix to the event attribute:
+
+```tsx
+<view main-thread:bindtap={onTap} />
+```
+
+2. Declare the function with the `'main thread'` directive:
+
+```tsx
+function onTap(event: MainThread.ITouchEvent) {
+  'main thread';
+  event.currentTarget.setStyleProperty('background-color', 'red');
+}
+```
+
+### Using `main-thread:ref`
+
+Use `useMainThreadRef()` to get a node object usable on the main thread:
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const textRef = useMainThreadRef<MainThread.Element>();
+
+  function handleTap(event: MainThread.ITouchEvent) {
+    'main thread';
+    textRef.current?.setStyleProperty('background-color', 'red');
+  }
+
+  return (
+    <view main-thread:bindtap={handleTap}>
+      <text main-thread:ref={textRef}>This text changes</text>
+    </view>
+  );
+}
+```
+
+### Maintaining State in Main Thread
+
+Use `MainThreadRef` to persist state between main thread function calls:
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const countRef = useMainThreadRef(0);
+
+  function handleTap(event: MainThread.ITouchEvent) {
+    'main thread';
+    countRef.current++;
+    event.currentTarget.setStyleProperty(
+      'background-color',
+      countRef.current % 2 ? 'blue' : 'green',
+    );
+  }
+
+  return <view main-thread:bindtap={handleTap} />;
+}
+```
+
+### Rules
+
+| Rule                                                   | Description                       |
+| ------------------------------------------------------ | --------------------------------- |
+| Must use `'main thread'` directive                     | First statement in function body  |
+| Use `main-thread:` prefix for events                   | e.g., `main-thread:bindtap`       |
+| Captured variables must be JSON-serializable           | Passed via `JSON.stringify()`     |
+| Cannot modify captured variables                       | Read-only access from main thread |
+| `MainThreadRef.current` only accessible in main thread | Use `useMainThreadRef()`          |
+
+## Hoist Static JSX Elements {#hoist-static-jsx}
+
+**Severity: Low**
+
+When JSX elements are defined inside component functions, they get recreated on every render cycle. For static elements that never change, this is unnecessary work. Extract them as constants outside the component.
+
+### Bad
+
+```tsx
+// ❌ Static element recreated on every render
+function App({ title }) {
+  return (
+    <view>
+      <text>{title}</text>
+      <view className="animate-pulse h-20 bg-gray-200" />
+    </view>
+  );
+}
+```
+
+### Good
+
+```tsx
+// ✅ Static element hoisted outside — reused across renders
+const loadingSkeleton = <view className="animate-pulse h-20 bg-gray-200" />;
+
+function App({ title }) {
+  return (
+    <view>
+      <text>{title}</text>
+      {loadingSkeleton}
+    </view>
+  );
+}
+```
+
+This is especially helpful for large, static SVG nodes, which can be expensive to recreate.
+
+:::note
+If your project uses [React Compiler](https://react.dev/learn/react-compiler), it automatically hoists static JSX elements and optimizes component re-renders, making manual hoisting unnecessary.
+:::

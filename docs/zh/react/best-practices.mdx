@@ -1,0 +1,355 @@
+# 最佳实践
+
+:::tip Agent Skill 可用
+这些最佳实践也可作为 [Agent Skill](/ai/skills) 提供给你的 coding agent。使用 `npx skills add lynx-community/skills` 安装，即可在编辑器中获得自动检测和自动修复能力。
+:::
+
+本页介绍使用 ReactLynx 开发时的常见模式和陷阱，重点关注 Lynx 的双线程架构。
+
+## 原生 API 调用使用 `'background only'` {#detect-background-only}
+
+**严重程度：关键**
+
+在 Lynx 的双线程架构中，**主线程**负责 React 组件渲染和 JSX 求值，**后台线程**管理 effects、事件处理和原生模块调用。在主线程上调用 `lynx.getJSModule` 或 `NativeModules` 等原生 API 会导致 UI 阻塞、同步开销和用户体验下降。
+
+### 错误示例
+
+```tsx
+// ❌ 在组件顶层调用原生 API — 运行在主线程上
+function App() {
+  const data = NativeModules.Storage.get('key');
+  return <text>{data}</text>;
+}
+```
+
+```tsx
+// ❌ 在渲染逻辑中调用原生 API
+function App() {
+  return <text>{lynx.getJSModule('GlobalEventEmitter').emit('event')}</text>;
+}
+```
+
+### 正确示例
+
+原生模块调用在后台线程执行的上下文中是允许的：
+
+```tsx
+// ✅ 在 useEffect 中 — 运行在后台线程上
+function App() {
+  const [data, setData] = useState('');
+
+  useEffect(() => {
+    const value = NativeModules.Storage.get('key');
+    setData(value);
+  }, []);
+
+  return <text>{data}</text>;
+}
+```
+
+```tsx
+// ✅ 在事件处理函数中 — 运行在后台线程上
+function App() {
+  function handleTap() {
+    lynx.getJSModule('GlobalEventEmitter').emit('event');
+  }
+
+  return (
+    <view bindtap={handleTap}>
+      <text>点击我</text>
+    </view>
+  );
+}
+```
+
+```tsx
+// ✅ 使用 'background only' 指令
+function fetchData() {
+  'background only';
+  return NativeModules.Storage.get('key');
+}
+```
+
+### 允许的上下文
+
+原生模块调用在以下上下文中是安全的：
+
+- `useEffect` / `useLayoutEffect` hooks
+- `useImperativeHandle` 实现
+- Ref 回调
+- 事件处理函数（`bindtap` 等）
+- 使用 `'background only'` 指令标记的函数
+
+### `'background only'` 指令
+
+当包含原生调用的函数不自然地属于上述上下文之一时，将 `'background only'` 指令作为函数体的第一条语句：
+
+```tsx
+function sendAnalytics(eventName: string) {
+  'background only';
+  lynx.getJSModule('Analytics').track(eventName);
+}
+```
+
+单引号和双引号均可：`'background only'` 和 `"background only"`。
+
+## 正确使用事件处理函数 {#proper-event-handlers}
+
+**严重程度：中**
+
+ReactLynx 中的事件处理函数运行在**后台线程**上，因此可以安全地进行原生模块调用、API 请求和繁重计算。
+
+### 事件处理类型
+
+| 属性       | 行为         | 使用场景               |
+| ---------- | ------------ | ---------------------- |
+| `bindtap`  | 冒泡到父元素 | tap 事件的默认选择     |
+| `catchtap` | 阻止传播     | 防止父元素处理函数触发 |
+
+### 基本用法
+
+推荐使用函数引用而非内联函数以获得更好的性能：
+
+```tsx
+// ✅ 函数引用（推荐）
+function App() {
+  function handleTap(event) {
+    console.log('Target id:', event.target.id);
+  }
+
+  return (
+    <view id="my-view" bindtap={handleTap}>
+      点击我
+    </view>
+  );
+}
+```
+
+### 事件传播
+
+**使用 `bindtap` 冒泡：**
+
+```tsx
+function App() {
+  function handleOuterTap() {
+    console.log('outer tapped'); // 第二个触发
+  }
+  function handleInnerTap() {
+    console.log('inner tapped'); // 第一个触发
+  }
+
+  return (
+    <view bindtap={handleOuterTap}>
+      <view bindtap={handleInnerTap}>内部</view>
+    </view>
+  );
+}
+// 点击内部输出："inner tapped"、"outer tapped"
+```
+
+**使用 `catchtap` 阻止传播：**
+
+```tsx
+function App() {
+  function handleOuterTap() {
+    console.log('outer tapped'); // 不会触发
+  }
+  function handleInnerTap() {
+    console.log('inner tapped'); // 只有这个触发
+  }
+
+  return (
+    <view bindtap={handleOuterTap}>
+      <view catchtap={handleInnerTap}>内部</view>
+    </view>
+  );
+}
+```
+
+### 使用 `dataset`
+
+通过 `data-` 属性传递自定义数据，而非使用闭包：
+
+```tsx
+function App() {
+  function handleTap(event) {
+    const { itemId, itemName } = event.currentTarget.dataset;
+    console.log(`Tapped item: ${itemId} - ${itemName}`);
+  }
+
+  return (
+    <view data-item-id="123" data-item-name="Product" bindtap={handleTap}>
+      点击我
+    </view>
+  );
+}
+```
+
+### 要点
+
+1. **使用函数引用**而非内联箭头函数以获得更好的性能
+2. **仅在需要阻止事件传播时使用 `catchtap`**
+3. **尽可能使用 `dataset`** 传递数据而非闭包
+4. **优先使用 `currentTarget`** 而非 `target` 来访问监听元素的数据
+
+## 使用主线程脚本实现流畅动画 {#main-thread-scripts}
+
+**严重程度：中**
+
+在 Lynx 的多线程架构中，事件在主线程上触发，但常规 JS 事件处理函数在后台线程上执行。这种往返会导致动画和手势处理中明显的延迟。主线程脚本提供**主线程上的同步事件处理**，消除响应延迟。
+
+### 错误示例
+
+```tsx
+// ❌ 滚动处理在后台线程上 — 动画滞后于手势
+function App() {
+  const [pos, setPos] = useState(0);
+
+  function onScroll(event) {
+    setPos(event.detail.scrollTop);
+  }
+
+  return (
+    <scroll-view global-bindscroll={onScroll}>
+      <view style={{ transform: `translateY(${pos}px)` }} />
+    </scroll-view>
+  );
+}
+```
+
+### 正确示例
+
+```tsx
+// ✅ 滚动处理在主线程上 — 无延迟
+function App() {
+  function onScroll(event: MainThread.IScrollEvent) {
+    'main thread';
+    const scrollTop = event.detail.scrollTop;
+    event.currentTarget.setStyleProperty(
+      'transform',
+      `translateY(${scrollTop}px)`,
+    );
+  }
+
+  return (
+    <scroll-view main-thread:global-bindscroll={onScroll}>
+      <view />
+    </scroll-view>
+  );
+}
+```
+
+### 使用方法
+
+1. 为事件属性添加 `main-thread:` 前缀：
+
+```tsx
+<view main-thread:bindtap={onTap} />
+```
+
+2. 使用 `'main thread'` 指令声明函数：
+
+```tsx
+function onTap(event: MainThread.ITouchEvent) {
+  'main thread';
+  event.currentTarget.setStyleProperty('background-color', 'red');
+}
+```
+
+### 使用 `main-thread:ref`
+
+使用 `useMainThreadRef()` 获取可在主线程上使用的节点对象：
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const textRef = useMainThreadRef<MainThread.Element>();
+
+  function handleTap(event: MainThread.ITouchEvent) {
+    'main thread';
+    textRef.current?.setStyleProperty('background-color', 'red');
+  }
+
+  return (
+    <view main-thread:bindtap={handleTap}>
+      <text main-thread:ref={textRef}>这段文字会变</text>
+    </view>
+  );
+}
+```
+
+### 在主线程中维护状态
+
+使用 `MainThreadRef` 在主线程函数调用之间持久化状态：
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const countRef = useMainThreadRef(0);
+
+  function handleTap(event: MainThread.ITouchEvent) {
+    'main thread';
+    countRef.current++;
+    event.currentTarget.setStyleProperty(
+      'background-color',
+      countRef.current % 2 ? 'blue' : 'green',
+    );
+  }
+
+  return <view main-thread:bindtap={handleTap} />;
+}
+```
+
+### 规则
+
+| 规则                                       | 描述                         |
+| ------------------------------------------ | ---------------------------- |
+| 必须使用 `'main thread'` 指令              | 函数体的第一条语句           |
+| 使用 `main-thread:` 前缀绑定事件           | 例如 `main-thread:bindtap`   |
+| 捕获的变量必须可 JSON 序列化               | 通过 `JSON.stringify()` 传递 |
+| 不能修改捕获的变量                         | 主线程中只能只读访问         |
+| `MainThreadRef.current` 只能在主线程中访问 | 使用 `useMainThreadRef()`    |
+
+## 提升静态 JSX 元素 {#hoist-static-jsx}
+
+**严重程度：低**
+
+当 JSX 元素在组件函数内部定义时，它们会在每次渲染时重新创建。对于永远不会改变的静态元素，这是不必要的开销。将它们提取为组件外部的常量。
+
+### 错误示例
+
+```tsx
+// ❌ 静态元素在每次渲染时重新创建
+function App({ title }) {
+  return (
+    <view>
+      <text>{title}</text>
+      <view className="animate-pulse h-20 bg-gray-200" />
+    </view>
+  );
+}
+```
+
+### 正确示例
+
+```tsx
+// ✅ 静态元素提升到外部 — 跨渲染复用
+const loadingSkeleton = <view className="animate-pulse h-20 bg-gray-200" />;
+
+function App({ title }) {
+  return (
+    <view>
+      <text>{title}</text>
+      {loadingSkeleton}
+    </view>
+  );
+}
+```
+
+这对于大型静态 SVG 节点尤其有帮助，因为重新创建它们的成本很高。
+
+:::note
+如果你的项目使用了 [React Compiler](https://react.dev/learn/react-compiler)，它会自动提升静态 JSX 元素并优化组件重新渲染，无需手动提升。
+:::
