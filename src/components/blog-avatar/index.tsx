@@ -37,38 +37,45 @@ const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
   const role = lang === 'zh' ? author.title_zh : author.title;
 
   return (
-    <span className={styles['avatar-item']} title={role}>
+    <span className={styles['avatar-item']}>
       <img
         className={styles['avatar-img']}
         src={author?.image}
         alt={displayName}
       />
       <div className={styles['avatar-text']}>
-        <span className={styles['avatar-name']}>{displayName}</span>
-        <span className={styles['avatar-socials']}>
-          {Object.entries(author.socials).map(([key, value]) => {
-            return value?.link ? (
-              <a
-                key={key}
-                href={value.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className={styles['avatar-social-link']}
-              >
-                {brandSpList[key as BrandKey]
-                  ? brandSpList[key as BrandKey].icon
-                  : brandSpList['default'].icon}
-              </a>
-            ) : (
-              <span key={key} className={styles['avatar-social-link']}>
-                {brandSpList[key as BrandKey]
-                  ? brandSpList[key as BrandKey].icon
-                  : brandSpList['default'].icon}
-              </span>
-            );
-          })}
+        <span className={styles['avatar-name-row']}>
+          <span className={styles['avatar-name']}>{displayName}</span>
+          <span className={styles['avatar-socials']}>
+            {Object.entries(author.socials).map(([key, value]) => {
+              const icon = brandSpList[key as BrandKey]
+                ? brandSpList[key as BrandKey].icon
+                : brandSpList['default'].icon;
+              return (
+                <span
+                  key={key}
+                  className={styles['avatar-social-link']}
+                  role={value?.link ? 'link' : undefined}
+                  onClick={
+                    value?.link
+                      ? (e) => {
+                          e.stopPropagation();
+                          window.open(
+                            value.link,
+                            '_blank',
+                            'noopener,noreferrer',
+                          );
+                        }
+                      : undefined
+                  }
+                >
+                  {icon}
+                </span>
+              );
+            })}
+          </span>
         </span>
+        {role && <span className={styles['avatar-role']}>{role}</span>}
       </div>
     </span>
   );
