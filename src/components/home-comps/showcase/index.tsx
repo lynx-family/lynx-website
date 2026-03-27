@@ -67,11 +67,11 @@ export const ShowCase: React.FC = () => {
       <div className={styles['section-title']}>
         {lang === 'en' ? (
           <>
-            See Lynx <span className={styles['title-accent']}>in Action</span>
+            See <span className={styles['lynx-gradient']}>Lynx</span> in Action
           </>
         ) : (
           <>
-            Lynx <span className={styles['title-accent']}>实战</span>
+            <span className={styles['lynx-gradient']}>Lynx</span> 实战
           </>
         )}
       </div>
