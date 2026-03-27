@@ -1,0 +1,159 @@
+---
+title: 'Lynx 3.7: Desktop Support'
+date: 2026-03-28
+sidebar: false
+authors: ['lynx']
+badge_text: 'Lynx 3.7 is released!'
+description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for macOS and Windows. The full Lynx rendering engine — including 97% CSS property coverage, Flexbox, Grid, Linear Layout, animations, transitions, transforms, and filters — now runs natively on desktop. Alongside the rendering parity, Lynx 3.7 introduces desktop-specific capabilities including mouse events and window title bar customization.'
+---
+
+import { BlogHeader, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+<BlogHeader authors={['lynx']} />
+
+Lynx 3.7 is now officially released!
+
+This release brings official desktop platform support for **macOS** and **Windows**. The full Lynx rendering engine — including 97% CSS property coverage, Flexbox, Grid, Linear Layout, animations, transitions, transforms, and filters — now runs natively on desktop. Alongside the rendering parity, Lynx 3.7 introduces desktop-specific capabilities including mouse events and window title bar customization.
+
+Let's take a closer look at what's new in Lynx 3.7.
+
+## Desktop Support: macOS and Windows
+
+We [previously planned](/blog/lynx-open-source-roadmap-2025.html) to open source desktop support in Lynx 3.5, and [later decided](/blog/lynx-3-5.html#one-more-thing-desktop-support-preview) to go further and open source the full desktop stack. With Lynx 3.7, that vision is now a reality.
+
+Lynx officially supports **macOS** and **Windows** as first-class platforms. You can now build and render Lynx views inside native desktop applications, using the same front-end stack and tooling you already use for mobile and web.
+
+### Full Rendering Engine on Desktop
+
+The same rendering engine that powers Lynx on mobile is now available on macOS and Windows, with near-complete feature parity.
+
+**CSS: 97% property coverage.** Out of 319 CSS properties supported by Lynx, 311 are available on desktop:
+
+**Layout** — [Flexbox](/api/css/properties/display#flex), [Grid](/api/css/properties/display#grid), and Lynx's [Linear Layout](/api/css/properties/display#linear) all work on desktop. The full box model (`margin`, `padding`, `width`/`height`, `min-*`/`max-*`, `box-sizing`, `aspect-ratio`), positioning (`position`, `top`/`right`/`bottom`/`left`, `z-index`), and Lynx's [relative positioning](/api/css/properties/relative-id) system are all supported.
+
+**Typography** — `font-family`, `font-size`, `font-weight`, `font-style`, `font-feature-settings`, `font-variation-settings`, `text-align`, `text-decoration`, `text-shadow`, `text-overflow`, `letter-spacing`, `line-height`, `text-stroke`, `vertical-align`, and `word-break`.
+
+**Visual & Styling** — Borders and `border-radius`, `box-shadow`, `opacity`, `overflow`, `clip-path`, `mask`, and `mask-image`. Colors and backgrounds including `background-color`/`image`/`size`/`position`, and gradient functions (`linear-gradient()`, `radial-gradient()`, `conic-gradient()`). [`filter`](/api/css/properties/filter) with `blur`, `brightness`, `contrast`, `grayscale`, `hue-rotate`, `invert`, `saturate`, `sepia`, and `drop-shadow`.
+
+**Animation** — Full `animation` and `transition` shorthand and individual properties, including `@keyframes`. `transform` and `transform-origin` supporting `translateX/Y/Z`, `scaleX/Y/Z`, `rotate`, `skew`, and `perspective`.
+
+Full support for [CSS custom properties](/api/css/properties/css-variable), including inline and nested variables introduced in Lynx 3.6.
+
+**Elements: 73% attribute coverage.** 179 out of 246 element attributes are available on desktop. macOS and Windows have identical element support with no platform-specific divergence.
+
+**Fully supported** — all attributes available on desktop:
+
+| Category         | Elements                                                                                                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basic            | [`<view>`](/api/elements/built-in/view), [`<text>`](/api/elements/built-in/text), [`<nested-text>`](/api/elements/built-in/text), [`<nested-image>`](/api/elements/built-in/text) |
+| Input            | [`<input>`](/api/elements/built-in/input), [`<textarea>`](/api/elements/built-in/textarea)                                                                                        |
+| Scrolling        | [`<scroll-view>`](/api/elements/built-in/scroll-view), `<list>`, `<list-item>`                                                                                                    |
+| Media            | [`<svg>`](/api/elements/built-in/svg)                                                                                                                                             |
+| Overlay          | [`<overlay>`](/api/elements/built-in/overlay)                                                                                                                                     |
+| Paging & Folding | `<x-viewpager-ng>`, `<x-foldview-ng>`, `<x-refresh-view>`                                                                                                                         |
+
+**Partially supported** — element works, some attributes unavailable:
+
+| Element                                   | Unavailable on Desktop                            |
+| ----------------------------------------- | ------------------------------------------------- |
+| [`<image>`](/api/elements/built-in/image) | `prefetch-width`, `prefetch-height`, `tint-color` |
+
+**Not yet available** on desktop:
+
+| Element                                       | Notes                                |
+| --------------------------------------------- | ------------------------------------ |
+| [`<frame>`](/api/elements/built-in/frame)     | Embedded sub-pages not yet supported |
+| [`<refresh>`](/api/elements/built-in/refresh) | Pull-to-refresh not yet supported    |
+
+This means that most Lynx pages built for mobile can render on desktop with minimal or no changes to the front-end code. The unsupported elements are primarily mobile-oriented interaction patterns.
+
+You can check the detailed compatibility status for every API on the [API Status Dashboard](/help/dashboard), which now includes **macOS** and **Windows** columns.
+
+### Getting Started
+
+We've added step-by-step integration guides for both platforms in the [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) page, alongside the existing Android, iOS, HarmonyOS, and Web guides.
+
+Both platforms use a **CMake-based** build system and share the same C++ public API surface:
+
+<Tabs>
+<Tab label="macOS">
+
+- Language: Objective-C++ (`.mm`)
+- Parent view: `NSView`
+- Reference project: [LynxExplorer for macOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/macos/lynx_explorer)
+
+</Tab>
+<Tab label="Windows">
+
+- Language: C++ (`.cc`)
+- Parent window: `HWND`
+- Reference project: [LynxExplorer for Windows](https://github.com/lynx-family/lynx/tree/develop/explorer/windows/lynx_explorer)
+
+</Tab>
+</Tabs>
+
+The integration flow follows the same pattern on both platforms: configure dependencies, initialize the Lynx environment, construct a `LynxView`, and load a template bundle.
+
+```cpp
+// Construct LynxView — same API on macOS and Windows
+lynx::pub::LynxView::Builder builder;
+builder.SetScreenSize(width, height, scale)
+    .SetFrame(0, 0, width, height)
+    .SetParent(nativeWindow)
+    .SetGenericResourceFetcher(std::make_shared<MyResourceFetcher>());
+auto lynx_view = builder.Build();
+
+// Load a template bundle
+auto meta = std::make_shared<lynx::pub::LynxLoadMeta>();
+meta->SetUrl("https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle");
+lynx_view->LoadTemplate(meta);
+```
+
+### Desktop-Specific Capabilities
+
+Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment.
+
+#### Mouse Events
+
+Desktop applications rely on precise mouse interaction. Lynx now supports a complete set of [mouse events](/api/lynx-api/event/mouse-event):
+
+- **Event types**: `mousedown`, `mousemove`, `mouseup`, `mouseenter`, `mouseover`, `mouseleave`
+- **Button detection**: `button` (which button) and `buttons` (bit field for multiple buttons) — supporting primary, secondary, and middle mouse buttons
+- **Coordinates**: `x`/`y` (element-local), `pageX`/`pageY` (LynxView), `clientX`/`clientY` (window)
+
+```tsx
+<view
+  onMouseDown={(e) =>
+    console.log(`Button ${e.button} at (${e.clientX}, ${e.clientY})`)
+  }
+  onMouseMove={(e) => handleHover(e)}
+  onMouseLeave={() => resetState()}
+/>
+```
+
+#### `<title-bar-view>`: Window Drag Area
+
+[`<title-bar-view>`](/api/elements/built-in/title-bar-view) is a desktop-specific component for customizing the drag area of application windows. By setting the `moveable` attribute, you can define regions where users can click and drag to move the window.
+
+```tsx
+<title-bar-view moveable={true}>
+  {/* Your custom title bar content */}
+</title-bar-view>
+```
+
+#### Platform Detection
+
+[`SystemInfo.platform`](/api/lynx-api/global/system-info) returns `'macOS'` or `'windows'` on desktop, allowing you to adapt your UI logic per platform:
+
+```ts
+if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
+  // Desktop-specific logic
+}
+```
+
+## Upgrade Guide
+
+To upgrade to Lynx 3.7, follow the [integration guide](https://lynxjs.org/3.7/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions accordingly.
