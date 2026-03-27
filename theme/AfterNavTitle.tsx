@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme-original';
 import { SUBSITES_CONFIG, getLangPrefix } from '@site/shared-route-config';
+import { Separator } from '@/components/ui/separator';
 import { SubsiteLogo, SubsiteView } from './subsite-ui';
 import { VersionIndicator } from './VersionIndicator';
 
@@ -57,7 +58,10 @@ function NavContent({
       ))}
       {externalSubsites.length > 0 && (
         <>
-          <div className="mx-2 my-1 border-t border-border" />
+          <Separator />
+          <div className="px-2 pt-2 pb-1">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Ecosystem</span>
+          </div>
           {externalSubsites.map((subsite) => (
             <div
               key={subsite.value}

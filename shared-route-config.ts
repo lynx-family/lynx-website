@@ -85,21 +85,21 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '',
     url: '',
     logo: {
-      light: '/assets/vue-lynx-logo.svg',
-      dark: '/assets/vue-lynx-logo.svg',
+      light: 'https://vuejs.org/logo.svg',
+      dark: 'https://vuejs.org/logo.svg',
     },
   },
   {
     value: 'sparkling',
     label: 'Sparkling',
-    description: 'GenAI-powered native UI',
-    descriptionZh: 'GenAI 驱动的原生 UI',
+    description: 'Unlocks Lynx at TikTok Scale',
+    descriptionZh: 'TikTok 规模的 Lynx 基础设施',
     external: 'https://tiktok.github.io/sparkling',
     home: '',
     url: '',
     logo: {
-      light: '/assets/sparkling-logo.svg',
-      dark: '/assets/sparkling-logo.svg',
+      light: 'https://tiktok.github.io/sparkling/sparkling_logo_144_light.png',
+      dark: 'https://tiktok.github.io/sparkling/sparkling_logo_144.png',
     },
   },
 ];
