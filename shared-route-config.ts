@@ -79,7 +79,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
   {
     value: 'sparkling',
     label: 'Sparkling',
-    description: 'Unlocks Lynx at TikTok Scale',
+    description: 'Lynx at TikTok scale',
     descriptionZh: 'TikTok 规模的 Lynx 基础设施',
     external: 'https://tiktok.github.io/sparkling',
     home: '',
@@ -105,8 +105,8 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
   {
     value: 'reactlynx-use',
     label: 'ReactLynx Use',
-    description: 'React-style hooks for ReactLynx',
-    descriptionZh: 'ReactLynx 的 React Hooks 库',
+    description: 'Hooks for ReactLynx',
+    descriptionZh: 'ReactLynx 的 Hooks 库',
     external: 'https://hooks.lynxjs.org',
     home: '',
     url: '',
