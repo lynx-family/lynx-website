@@ -108,7 +108,7 @@ function NavContent({
 
   return (
     <div className="grid grid-cols-2 divide-x divide-border">
-      <div className="px-3 pt-0 pb-4">
+      <div className="px-3 pt-0 pb-3">
         <SectionHeader>Core</SectionHeader>
         <div className="flex flex-col gap-1 pt-1">
           {internalSubsites.map((subsite) => (
@@ -121,7 +121,7 @@ function NavContent({
           ))}
         </div>
       </div>
-      <div className="px-3 pt-0 pb-4">
+      <div className="px-3 pt-0 pb-3">
         <SectionHeader>Ecosystem</SectionHeader>
         <div className="flex flex-col gap-1 pt-1">
           {externalSubsites.map((subsite) => (
