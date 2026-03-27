@@ -17,6 +17,46 @@ import {
 const internalSubsites = SUBSITES_CONFIG.filter((s) => !s.external);
 const externalSubsites = SUBSITES_CONFIG.filter((s) => s.external);
 
+function SubsiteItem({
+  subsite,
+  onClick,
+  size,
+  showArrow,
+}: {
+  subsite: (typeof SUBSITES_CONFIG)[0];
+  onClick: () => void;
+  size: 'default' | 'large' | 'minimal';
+  showArrow?: boolean;
+}) {
+  const lang = useLang();
+  return (
+    <div
+      className="cursor-pointer hover:bg-accent rounded-md p-2 flex items-center justify-between"
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick();
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <SubsiteView subsite={subsite} lang={lang} size={size} />
+      {showArrow && (
+        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={1.5} />
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-2 pt-2 pb-1">
+      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+        {children}
+      </span>
+    </div>
+  );
+}
+
 function NavContent({
   onSelect,
   isDrawer,
@@ -36,51 +76,65 @@ function NavContent({
     onSelect();
   };
 
-  const size = isDrawer ? 'large' : 'default';
+  if (isDrawer) {
+    return (
+      <div className="flex flex-col gap-2 p-1">
+        {internalSubsites.map((subsite) => (
+          <SubsiteItem
+            key={subsite.value}
+            subsite={subsite}
+            onClick={() => handleSubsiteClick(subsite)}
+            size="large"
+          />
+        ))}
+        {externalSubsites.length > 0 && (
+          <>
+            <Separator />
+            <SectionHeader>Ecosystem</SectionHeader>
+            {externalSubsites.map((subsite) => (
+              <SubsiteItem
+                key={subsite.value}
+                subsite={subsite}
+                onClick={() => handleSubsiteClick(subsite)}
+                size="large"
+                showArrow
+              />
+            ))}
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-2 p-1">
-      {internalSubsites.map((subsite) => (
-        <div
-          key={subsite.value}
-          className="cursor-pointer hover:bg-accent rounded-md p-2"
-          onClick={() => handleSubsiteClick(subsite)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              handleSubsiteClick(subsite);
-            }
-          }}
-          role="button"
-          tabIndex={0}
-        >
-          <SubsiteView subsite={subsite} lang={lang} size={size} />
-        </div>
-      ))}
-      {externalSubsites.length > 0 && (
-        <>
-          <Separator />
-          <div className="px-2 pt-2 pb-1">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Ecosystem</span>
-          </div>
-          {externalSubsites.map((subsite) => (
-            <div
+    <div className="grid grid-cols-2 divide-x divide-border">
+      <div className="px-3 py-2">
+        <SectionHeader>Core</SectionHeader>
+        <div className="flex flex-col gap-1 pt-1">
+          {internalSubsites.map((subsite) => (
+            <SubsiteItem
               key={subsite.value}
-              className="cursor-pointer hover:bg-accent rounded-md p-2 flex items-center justify-between"
+              subsite={subsite}
               onClick={() => handleSubsiteClick(subsite)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleSubsiteClick(subsite);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              <SubsiteView subsite={subsite} lang={lang} size={size} />
-              <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
-            </div>
+              size="minimal"
+            />
           ))}
-        </>
-      )}
+        </div>
+      </div>
+      <div className="px-3 py-2">
+        <SectionHeader>Ecosystem</SectionHeader>
+        <div className="flex flex-col gap-1 pt-1">
+          {externalSubsites.map((subsite) => (
+            <SubsiteItem
+              key={subsite.value}
+              subsite={subsite}
+              onClick={() => handleSubsiteClick(subsite)}
+              size="minimal"
+              showArrow
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -214,7 +268,7 @@ export default function AfterNavTitle() {
             <DropdownMenuTrigger asChild>
               <Trigger />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-0" align="start">
+            <DropdownMenuContent className="w-[480px] p-0" align="start">
               <NavContent onSelect={() => setIsOpen(false)} />
             </DropdownMenuContent>
           </div>

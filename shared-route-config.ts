@@ -102,6 +102,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: 'https://vuejs.org/logo.svg',
     },
   },
+  {
+    value: 'reactlynx-use',
+    label: 'ReactLynx Use',
+    description: 'React-style hooks for ReactLynx',
+    descriptionZh: 'ReactLynx 的 React Hooks 库',
+    external: 'https://hooks.lynxjs.org',
+    home: '',
+    url: '',
+    logo: {
+      light: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
+    },
+  },
 ];
 
 /**
