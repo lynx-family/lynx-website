@@ -20,6 +20,8 @@ export type SubsiteConfig = {
     light: string;
     dark: string;
   };
+  /** When set, the subsite links to an external URL instead of an internal route. */
+  external?: string;
 };
 
 export const SUBSITES_CONFIG: SubsiteConfig[] = [
@@ -74,6 +76,32 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: '/assets/lynxai-logo-dark.svg',
     },
   },
+  {
+    value: 'vue-lynx',
+    label: 'Vue Lynx',
+    description: 'Build Lynx apps with Vue',
+    descriptionZh: '用 Vue 开发 Lynx 应用',
+    external: 'https://vue.lynxjs.org',
+    home: '',
+    url: '',
+    logo: {
+      light: '/assets/vue-lynx-logo.svg',
+      dark: '/assets/vue-lynx-logo.svg',
+    },
+  },
+  {
+    value: 'sparkling',
+    label: 'Sparkling',
+    description: 'GenAI-powered native UI',
+    descriptionZh: 'GenAI 驱动的原生 UI',
+    external: 'https://tiktok.github.io/sparkling',
+    home: '',
+    url: '',
+    logo: {
+      light: '/assets/sparkling-logo.svg',
+      dark: '/assets/sparkling-logo.svg',
+    },
+  },
 ];
 
 /**
@@ -81,9 +109,9 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
  * For example, "start/quick-start" will be accessible at both
  * "guide/start/quick-start" and "react/start/quick-start".
  */
-export const SHARED_SIDEBAR_PATHS = SUBSITES_CONFIG.map(
-  (config) => config.value,
-);
+export const SHARED_SIDEBAR_PATHS = SUBSITES_CONFIG.filter(
+  (config) => !config.external,
+).map((config) => config.value);
 
 const SHARED_DOC_ROOT = 'start';
 

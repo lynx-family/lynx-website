@@ -1,5 +1,5 @@
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { ChevronDown } from 'lucide-react';
+import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme-original';
@@ -13,6 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+const internalSubsites = SUBSITES_CONFIG.filter((s) => !s.external);
+const externalSubsites = SUBSITES_CONFIG.filter((s) => s.external);
+
 function NavContent({
   onSelect,
   isDrawer,
@@ -24,13 +27,19 @@ function NavContent({
   const lang = useLang();
 
   const handleSubsiteClick = (subsite: (typeof SUBSITES_CONFIG)[0]) => {
-    navigate(`${getLangPrefix(lang)}${subsite.home}`);
+    if (subsite.external) {
+      window.open(subsite.external, '_blank');
+    } else {
+      navigate(`${getLangPrefix(lang)}${subsite.home}`);
+    }
     onSelect();
   };
 
+  const size = isDrawer ? 'large' : 'default';
+
   return (
     <div className="flex flex-col gap-2 p-1">
-      {SUBSITES_CONFIG.map((subsite) => (
+      {internalSubsites.map((subsite) => (
         <div
           key={subsite.value}
           className="cursor-pointer hover:bg-accent rounded-md p-2"
@@ -43,13 +52,31 @@ function NavContent({
           role="button"
           tabIndex={0}
         >
-          <SubsiteView
-            subsite={subsite}
-            lang={lang}
-            size={isDrawer ? 'large' : 'default'}
-          />
+          <SubsiteView subsite={subsite} lang={lang} size={size} />
         </div>
       ))}
+      {externalSubsites.length > 0 && (
+        <>
+          <div className="mx-2 my-1 border-t border-border" />
+          {externalSubsites.map((subsite) => (
+            <div
+              key={subsite.value}
+              className="cursor-pointer hover:bg-accent rounded-md p-2 flex items-center justify-between"
+              onClick={() => handleSubsiteClick(subsite)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleSubsiteClick(subsite);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
+              <SubsiteView subsite={subsite} lang={lang} size={size} />
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -100,9 +127,9 @@ export default function AfterNavTitle() {
   const [currentSubsite, setCurrentSubsite] = useState(() => {
     const segments = pathname.split('/');
     return (
-      SUBSITES_CONFIG.find((s) =>
+      internalSubsites.find((s) =>
         segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-      ) || SUBSITES_CONFIG[0]
+      ) || internalSubsites[0]
     );
   });
   const [isOpen, setIsOpen] = useState(false);
@@ -111,9 +138,9 @@ export default function AfterNavTitle() {
   useEffect(() => {
     const segments = pathname.split('/');
     const subsite =
-      SUBSITES_CONFIG.find((s) =>
+      internalSubsites.find((s) =>
         segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-      ) || SUBSITES_CONFIG[0];
+      ) || internalSubsites[0];
     setCurrentSubsite(subsite);
   }, [pathname]);
 
