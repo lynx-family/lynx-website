@@ -214,7 +214,7 @@ export default function AfterNavTitle() {
             <DropdownMenuTrigger asChild>
               <Trigger />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 p-0" align="start">
+            <DropdownMenuContent className="w-64 p-0" align="start">
               <NavContent onSelect={() => setIsOpen(false)} />
             </DropdownMenuContent>
           </div>

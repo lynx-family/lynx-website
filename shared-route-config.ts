@@ -77,19 +77,6 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
   {
-    value: 'vue-lynx',
-    label: 'Vue Lynx',
-    description: 'Build Lynx apps with Vue',
-    descriptionZh: '用 Vue 开发 Lynx 应用',
-    external: 'https://vue.lynxjs.org',
-    home: '',
-    url: '',
-    logo: {
-      light: 'https://vuejs.org/logo.svg',
-      dark: 'https://vuejs.org/logo.svg',
-    },
-  },
-  {
     value: 'sparkling',
     label: 'Sparkling',
     description: 'Unlocks Lynx at TikTok Scale',
@@ -100,6 +87,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     logo: {
       light: 'https://tiktok.github.io/sparkling/sparkling_logo_144_light.png',
       dark: 'https://tiktok.github.io/sparkling/sparkling_logo_144.png',
+    },
+  },
+  {
+    value: 'vue-lynx',
+    label: 'Vue Lynx',
+    description: 'Build Lynx apps with Vue',
+    descriptionZh: '用 Vue 开发 Lynx 应用',
+    external: 'https://vue.lynxjs.org',
+    home: '',
+    url: '',
+    logo: {
+      light: 'https://vuejs.org/logo.svg',
+      dark: 'https://vuejs.org/logo.svg',
     },
   },
 ];
