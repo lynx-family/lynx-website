@@ -116,7 +116,7 @@ function NavContent({
               key={subsite.value}
               subsite={subsite}
               onClick={() => handleSubsiteClick(subsite)}
-              size="minimal"
+              size="default"
             />
           ))}
         </div>
@@ -129,7 +129,7 @@ function NavContent({
               key={subsite.value}
               subsite={subsite}
               onClick={() => handleSubsiteClick(subsite)}
-              size="minimal"
+              size="default"
               showArrow
             />
           ))}
