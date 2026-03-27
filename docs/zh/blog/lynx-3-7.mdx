@@ -1,0 +1,157 @@
+---
+title: 'Lynx 3.7：桌面端支持'
+date: 2026-03-28
+sidebar: false
+authors: ['lynx']
+badge_text: 'Lynx 3.7 发布了!'
+description: 'Lynx 3.7 已经正式发布！本次版本正式支持 macOS 和 Windows 桌面端平台。完整的 Lynx 渲染引擎——包括 97% 的 CSS 属性覆盖、Flexbox、Grid、Linear Layout、动画、过渡、变换和滤镜——现已在桌面端原生运行。在渲染能力对齐的基础上，Lynx 3.7 还引入了鼠标事件和窗口标题栏自定义等桌面端专属能力。'
+---
+
+import { BlogHeader, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
+import { Tab, Tabs } from '@rspress/core/theme';
+
+<BlogHeader authors={['lynx']} />
+
+Lynx 3.7 已经正式发布！
+
+本次版本正式支持 **macOS** 和 **Windows** 桌面端平台。完整的 Lynx 渲染引擎——包括 97% 的 CSS 属性覆盖、Flexbox、Grid、Linear Layout、动画、过渡、变换和滤镜——现已在桌面端原生运行。在渲染能力对齐的基础上，Lynx 3.7 还引入了鼠标事件和窗口标题栏自定义等桌面端专属能力。
+
+下面我们一起来看看 Lynx 3.7 带来了哪些新变化。
+
+## 桌面端支持：macOS 与 Windows
+
+我们[此前计划](/blog/lynx-open-source-roadmap-2025.html)在 Lynx 3.5 中开源桌面端支持，[随后决定](/blog/lynx-3-5.html#one-more-thing-desktop-support-preview)进一步开源完整的桌面端技术栈。在 Lynx 3.7 中，这一愿景已成为现实。
+
+Lynx 正式支持 **macOS** 和 **Windows** 作为一级平台。你现在可以在原生桌面应用中构建和渲染 Lynx 视图，使用与移动端和 Web 端完全相同的前端技术栈和工具链。
+
+### 完整的渲染引擎登陆桌面端
+
+驱动 Lynx 移动端的同一套渲染引擎现已在 macOS 和 Windows 上可用，具备近乎完整的特性对齐。
+
+**CSS：97% 属性覆盖率。** Lynx 支持的 319 个 CSS 属性中，311 个在桌面端可用：
+
+**布局** — [Flexbox](/api/css/properties/display#flex)、[Grid](/api/css/properties/display#grid) 和 Lynx 自有的 [Linear Layout](/api/css/properties/display#linear) 均可在桌面端使用。完整的盒模型（`margin`、`padding`、`width`/`height`、`min-*`/`max-*`、`box-sizing`、`aspect-ratio`）、定位（`position`、`top`/`right`/`bottom`/`left`、`z-index`）和 Lynx 的[相对定位](/api/css/properties/relative-id)系统均已支持。
+
+**排版** — `font-family`、`font-size`、`font-weight`、`font-style`、`font-feature-settings`、`font-variation-settings`、`text-align`、`text-decoration`、`text-shadow`、`text-overflow`、`letter-spacing`、`line-height`、`text-stroke`、`vertical-align` 和 `word-break`。
+
+**视觉与样式** — 边框和 `border-radius`、`box-shadow`、`opacity`、`overflow`、`clip-path`、`mask` 和 `mask-image`。颜色与背景包括 `background-color`/`image`/`size`/`position`，以及渐变函数（`linear-gradient()`、`radial-gradient()`、`conic-gradient()`）。[`filter`](/api/css/properties/filter) 支持 `blur`、`brightness`、`contrast`、`grayscale`、`hue-rotate`、`invert`、`saturate`、`sepia` 和 `drop-shadow`。
+
+**动画** — 完整的 `animation` 和 `transition` 简写及各独立属性，包括 `@keyframes`。`transform` 和 `transform-origin` 支持 `translateX/Y/Z`、`scaleX/Y/Z`、`rotate`、`skew` 和 `perspective`。
+
+完整的 [CSS 自定义属性](/api/css/properties/css-variable)支持，包括 Lynx 3.6 引入的内联和嵌套变量。
+
+**元素：73% 属性覆盖率。** 246 个元素属性中有 179 个在桌面端可用。macOS 和 Windows 的元素支持完全一致，无平台差异。
+
+**完全支持** —— 所有属性在桌面端均可用：
+
+| 类别       | 元素                                                                                                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 基础       | [`<view>`](/api/elements/built-in/view)、[`<text>`](/api/elements/built-in/text)、[`<nested-text>`](/api/elements/built-in/text)、[`<nested-image>`](/api/elements/built-in/text) |
+| 输入       | [`<input>`](/api/elements/built-in/input)、[`<textarea>`](/api/elements/built-in/textarea)                                                                                        |
+| 滚动       | [`<scroll-view>`](/api/elements/built-in/scroll-view)、`<list>`、`<list-item>`                                                                                                    |
+| 媒体       | [`<svg>`](/api/elements/built-in/svg)                                                                                                                                             |
+| 浮层       | [`<overlay>`](/api/elements/built-in/overlay)                                                                                                                                     |
+| 翻页与折叠 | `<x-viewpager-ng>`、`<x-foldview-ng>`、`<x-refresh-view>`                                                                                                                         |
+
+**部分支持** —— 元素可用，部分属性暂不可用：
+
+| 元素                                      | 桌面端不可用的属性                                |
+| ----------------------------------------- | ------------------------------------------------- |
+| [`<image>`](/api/elements/built-in/image) | `prefetch-width`、`prefetch-height`、`tint-color` |
+
+**暂不可用**：
+
+| 元素                                          | 说明               |
+| --------------------------------------------- | ------------------ |
+| [`<frame>`](/api/elements/built-in/frame)     | 嵌入子页面暂不支持 |
+| [`<refresh>`](/api/elements/built-in/refresh) | 下拉刷新暂不支持   |
+
+这意味着大多数为移动端构建的 Lynx 页面可以在桌面端渲染，几乎无需修改前端代码。不可用的元素主要是面向移动端的交互模式。
+
+你可以在 [API Status Dashboard](/help/dashboard) 上查看每个 API 的详细兼容状态，现已包含 **macOS** 和 **Windows** 列。
+
+### 快速上手
+
+我们在[将 Lynx 集成到现有应用](/guide/start/integrate-with-existing-apps)页面中新增了两个平台的详细接入指南，与现有的 Android、iOS、HarmonyOS 和 Web 指南并列。
+
+两个平台均采用 **CMake** 构建体系，并共享同一套 C++ 公共 API：
+
+<Tabs>
+<Tab label="macOS">
+
+- 语言：Objective-C++（`.mm`）
+- 父视图：`NSView`
+- 参考项目：[LynxExplorer for macOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/macos/lynx_explorer)
+
+</Tab>
+<Tab label="Windows">
+
+- 语言：C++（`.cc`）
+- 父窗口：`HWND`
+- 参考项目：[LynxExplorer for Windows](https://github.com/lynx-family/lynx/tree/develop/explorer/windows/lynx_explorer)
+
+</Tab>
+</Tabs>
+
+两个平台的接入流程保持一致：配置依赖、初始化 Lynx 环境、构造 `LynxView`、加载模板 Bundle。
+
+```cpp
+// 构造 LynxView —— macOS 和 Windows 使用相同的 API
+lynx::pub::LynxView::Builder builder;
+builder.SetScreenSize(width, height, scale)
+    .SetFrame(0, 0, width, height)
+    .SetParent(nativeWindow)
+    .SetGenericResourceFetcher(std::make_shared<MyResourceFetcher>());
+auto lynx_view = builder.Build();
+
+// 加载模板 Bundle
+auto meta = std::make_shared<lynx::pub::LynxLoadMeta>();
+meta->SetUrl("https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle");
+lynx_view->LoadTemplate(meta);
+```
+
+### 桌面端专属能力
+
+在渲染能力对齐之外，Lynx 3.7 还增加了面向桌面环境的专属能力。
+
+#### 鼠标事件
+
+桌面应用依赖精确的鼠标交互。Lynx 现已支持完整的[鼠标事件](/api/lynx-api/event/mouse-event)：
+
+- **事件类型**：`mousedown`、`mousemove`、`mouseup`、`mouseenter`、`mouseover`、`mouseleave`
+- **按键检测**：`button`（触发按键）和 `buttons`（多键位域）—— 支持主键、副键和中键
+- **坐标信息**：`x`/`y`（元素坐标系）、`pageX`/`pageY`（LynxView 坐标系）、`clientX`/`clientY`（窗口坐标系）
+
+```tsx
+<view
+  onMouseDown={(e) =>
+    console.log(`按键 ${e.button} 位置 (${e.clientX}, ${e.clientY})`)
+  }
+  onMouseMove={(e) => handleHover(e)}
+  onMouseLeave={() => resetState()}
+/>
+```
+
+#### `<title-bar-view>`：窗口拖拽区域
+
+[`<title-bar-view>`](/api/elements/built-in/title-bar-view) 是一个桌面端专属组件，用于自定义应用窗口的拖拽区域。通过设置 `moveable` 属性，你可以定义用户可以点击拖动来移动窗口的区域。
+
+```tsx
+<title-bar-view moveable={true}>{/* 自定义标题栏内容 */}</title-bar-view>
+```
+
+#### 平台检测
+
+[`SystemInfo.platform`](/api/lynx-api/global/system-info) 在桌面端会返回 `'macOS'` 或 `'windows'`，允许你根据平台适配 UI 逻辑：
+
+```ts
+if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
+  // 桌面端专属逻辑
+}
+```
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.7/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.7 版本升级。
