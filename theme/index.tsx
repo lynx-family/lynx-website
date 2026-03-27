@@ -198,6 +198,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     afterHero = (
       <>
         <Features src={routePath} /> {routePath === '/' && <ShowCase />}
+        {routePath === '/' && <TrustedBy />}
         {routePath === '/' && <Banner />}
       </>
     ),
@@ -218,7 +219,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
             </Code>
           </PreWithCodeButtonGroup>
         </div>
-        {routePath === '/' && <TrustedBy />}
       </>
     ),
   } = props;
