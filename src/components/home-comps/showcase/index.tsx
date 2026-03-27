@@ -3,6 +3,7 @@ import { useLang } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme';
 import styles from './index.module.less';
 import { MobileShow } from './mobile-show';
+import { TrustedBy } from '../trusted-by';
 
 const showCaseList = [
   {
@@ -64,6 +65,7 @@ export const ShowCase: React.FC = () => {
 
   return (
     <div className={styles['show-case-frame']}>
+      <TrustedBy />
       <div className={styles['title']}>{caseTitle[lang]}</div>
       <div className={styles['desc']}>{caseDesc[lang]}</div>
       <ul className={styles['show-case-list']}>

@@ -25,7 +25,6 @@ import {
   Footer,
   MeteorsBackground,
   ShowCase,
-  TrustedBy,
 } from '@/components/home-comps';
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
@@ -219,7 +218,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
             </Code>
           </PreWithCodeButtonGroup>
         </div>
-        <TrustedBy />
       </>
     ),
   } = props;
