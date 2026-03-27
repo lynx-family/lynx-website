@@ -38,24 +38,16 @@ const apps = [
   },
 ];
 
-// How many icons to show at once (determines spotlight effect)
-const VISIBLE_COUNT = 5;
-
 const IconList: React.FC<{ offset?: number }> = ({ offset = 0 }) => (
   <div className={styles['icon-group']}>
-    {apps.map((app, i) => (
-      <div
-        key={`${app.name}-${offset}`}
-        className={styles['icon-item']}
-        data-index={(i + offset) % apps.length}
-      >
+    {apps.map((app) => (
+      <div key={`${app.name}-${offset}`} className={styles['icon-item']}>
         <img
           className={styles['icon-img']}
           src={app.icon}
           alt={app.name}
           loading="lazy"
         />
-        <span className={styles['icon-label']}>{app.name}</span>
       </div>
     ))}
   </div>
