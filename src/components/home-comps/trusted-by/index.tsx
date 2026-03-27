@@ -18,7 +18,7 @@ const apps = [
   },
   {
     name: 'Hypic',
-    icon: 'https://www.google.com/s2/favicons?domain=hypic.com&sz=64',
+    icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/49/3b/6a/493b6a1f-8aa5-8c88-6ebe-15a0bbfe7573/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/64x64bb.jpg',
   },
   {
     name: 'Lemon8',
@@ -38,10 +38,17 @@ const apps = [
   },
 ];
 
-const IconList: React.FC = () => (
+// How many icons to show at once (determines spotlight effect)
+const VISIBLE_COUNT = 5;
+
+const IconList: React.FC<{ offset?: number }> = ({ offset = 0 }) => (
   <div className={styles['icon-group']}>
-    {apps.map((app) => (
-      <div key={app.name} className={styles['icon-item']}>
+    {apps.map((app, i) => (
+      <div
+        key={`${app.name}-${offset}`}
+        className={styles['icon-item']}
+        data-index={(i + offset) % apps.length}
+      >
         <img
           className={styles['icon-img']}
           src={app.icon}
@@ -60,10 +67,12 @@ export const TrustedBy: React.FC = () => {
   return (
     <div className={styles['trusted-by']}>
       <p className={styles.heading}>{heading[lang]}</p>
-      <div className={styles['marquee-wrapper']}>
-        <div className={styles['marquee-track']}>
-          <IconList />
-          <IconList />
+      <div className={styles['marquee-outer']}>
+        <div className={styles['marquee-wrapper']}>
+          <div className={styles['marquee-track']}>
+            <IconList offset={0} />
+            <IconList offset={0} />
+          </div>
         </div>
       </div>
     </div>
