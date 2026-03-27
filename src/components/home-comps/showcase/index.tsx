@@ -36,28 +36,26 @@ const showCaseList = [
       zh: '/zh/guide/start/tutorial-product-detail',
     },
   },
-  // {
-  //   title: {
-  //     en: 'Payment Details',
-  //     zh: 'Payment Details',
-  //   },
-  //   desc: {
-  //     en: 'Description',
-  //     zh: '描述',
-  //   },
-  //   class: 'case-2',
-  //   link: undefined,
-  // },
 ] as const;
 
-const caseTitle = {
-  zh: '上手体验',
-  en: 'Try it for yourself',
+const sectionTitle = {
+  en: 'See Lynx in Action',
+  zh: 'Lynx 实战',
 } as const;
 
-const caseDesc = {
-  en: 'Experience true native feel, instant launch, and silky interactions.',
-  zh: '体验原生质感，即刻启动，流畅交互。',
+const sectionSubtitle = {
+  en: 'Powering native experiences in the world\u2019s most popular apps',
+  zh: '驱动全球最受欢迎 App 的原生体验',
+} as const;
+
+const tryTitle = {
+  en: 'Now, try it yourself',
+  zh: '现在，轮到你了',
+} as const;
+
+const trySubtitle = {
+  en: 'Build real native UIs in minutes with our hands-on tutorials.',
+  zh: '跟随教程，几分钟内打造真正的原生界面。',
 } as const;
 
 export const ShowCase: React.FC = () => {
@@ -65,9 +63,29 @@ export const ShowCase: React.FC = () => {
 
   return (
     <div className={styles['show-case-frame']}>
+      {/* Act 1: Credibility */}
+      <div className={styles['section-title']}>
+        {lang === 'en' ? (
+          <>
+            See Lynx <span className={styles['title-accent']}>in Action</span>
+          </>
+        ) : (
+          <>
+            Lynx <span className={styles['title-accent']}>实战</span>
+          </>
+        )}
+      </div>
+      <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
       <TrustedBy />
-      <div className={styles['title']}>{caseTitle[lang]}</div>
-      <div className={styles['desc']}>{caseDesc[lang]}</div>
+
+      {/* Divider between acts */}
+      <div className={styles['section-divider']} />
+
+      {/* Act 2: Invitation */}
+      <div className={styles['try-section']}>
+        <div className={styles['try-title']}>{tryTitle[lang]}</div>
+        <p className={styles['try-subtitle']}>{trySubtitle[lang]}</p>
+      </div>
       <ul className={styles['show-case-list']}>
         {showCaseList.map((item, index) => {
           return (
@@ -80,15 +98,10 @@ export const ShowCase: React.FC = () => {
                 {item.desc[lang]}
               </div>
               {!!item.link && (
-                <Link
-                  href={item.link[lang]}
-                  style={{
-                    color: 'var(--home-showcase-item-link-color)',
-                    fontSize: '14px',
-                    lineHeight: '24px',
-                  }}
-                >
-                  {lang === 'zh' ? '跟随教程编写' : 'Learn by doing'}
+                <Link href={item.link[lang]} className={styles['item-link']}>
+                  {lang === 'zh'
+                    ? '跟随教程编写 \u2192'
+                    : 'Follow the tutorial \u2192'}
                 </Link>
               )}
             </li>

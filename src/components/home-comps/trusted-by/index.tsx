@@ -1,11 +1,5 @@
-import { useLang } from '@rspress/core/runtime';
 import React from 'react';
 import styles from './index.module.less';
-
-const heading = {
-  en: 'Trusted in production by',
-  zh: '被广泛应用于生产环境',
-};
 
 const apps = [
   {
@@ -48,22 +42,20 @@ const IconList: React.FC<{ offset?: number }> = ({ offset = 0 }) => (
           alt={app.name}
           loading="lazy"
         />
+        <span className={styles['icon-name']}>{app.name}</span>
       </div>
     ))}
   </div>
 );
 
 export const TrustedBy: React.FC = () => {
-  const lang = useLang() as 'en' | 'zh';
-
   return (
     <div className={styles['trusted-by']}>
-      <p className={styles.heading}>{heading[lang]}</p>
       <div className={styles['marquee-outer']}>
         <div className={styles['marquee-wrapper']}>
           <div className={styles['marquee-track']}>
             <IconList offset={0} />
-            <IconList offset={0} />
+            <IconList offset={1} />
           </div>
         </div>
       </div>
