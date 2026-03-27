@@ -197,27 +197,29 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   const {
     afterHero = (
       <>
-        {routePath === '/' && <TrustedBy />}
         <Features src={routePath} /> {routePath === '/' && <ShowCase />}
         {routePath === '/' && <Banner />}
       </>
     ),
     afterHeroActions = (
-      <div
-        className="rp-doc home-hero-codeblock"
-        style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
-      >
-        <PreWithCodeButtonGroup
-          containerElementClassName="language-bash"
-          codeButtonGroupProps={{
-            showCodeWrapButton: false,
-          }}
+      <>
+        <div
+          className="rp-doc home-hero-codeblock"
+          style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
         >
-          <Code className="language-bash" style={{ textAlign: 'center' }}>
-            npm create rspeedy@latest
-          </Code>
-        </PreWithCodeButtonGroup>
-      </div>
+          <PreWithCodeButtonGroup
+            containerElementClassName="language-bash"
+            codeButtonGroupProps={{
+              showCodeWrapButton: false,
+            }}
+          >
+            <Code className="language-bash" style={{ textAlign: 'center' }}>
+              npm create rspeedy@latest
+            </Code>
+          </PreWithCodeButtonGroup>
+        </div>
+        {routePath === '/' && <TrustedBy />}
+      </>
     ),
   } = props;
 
