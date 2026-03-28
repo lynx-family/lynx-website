@@ -39,8 +39,8 @@ const showCaseList = [
 ] as const;
 
 const sectionTitle = {
-  en: 'See Lynx in Action',
-  zh: 'Lynx 实战',
+  en: 'Trusted by',
+  zh: '深受信赖',
 } as const;
 
 const sectionSubtitle = {
@@ -65,15 +65,8 @@ export const ShowCase: React.FC = () => {
     <div className={styles['show-case-frame']}>
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
-        {lang === 'en' ? (
-          <>
-            See <span className={styles['lynx-gradient']}>Lynx</span> in Action
-          </>
-        ) : (
-          <>
-            <span className={styles['lynx-gradient']}>Lynx</span> 实战
-          </>
-        )}
+        {sectionTitle[lang]}{' '}
+        <span className={styles['lynx-gradient']}>Lynx</span>
       </div>
       <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
       <TrustedBy />
