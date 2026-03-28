@@ -3,13 +3,13 @@ import React from 'react';
 import styles from './index.module.less';
 
 const heading = {
-  en: 'Trusted by apps serving billions of users',
-  zh: '亿级用户规模应用的共同选择',
+  en: (lynx: React.ReactNode) => <>Trusted by billions, built with {lynx}</>,
+  zh: (lynx: React.ReactNode) => <>亿级用户信赖，基于{lynx}构建</>,
 };
 
-/** Inline TikTok wordmark — official Simplified Primary Logo, currentColor */
+/** Inline TikTok wordmark — viewBox cropped tight for optical sizing */
 const TikTokWordmark: React.FC = () => (
-  <svg viewBox="0 0 1329 533.8" height={26} aria-label="TikTok" role="img">
+  <svg viewBox="100 120 1080 300" height={48} aria-label="TikTok" role="img">
     <path
       d="M783.7,257.6h-54.2L688.4,302v-106h-45.7v195.4h45.7v-36.2l18.1-19l27.6,55h53.3l-47.2-86.7L783.7,257.6L783.7,257.6z M414.7,240.1h47.4v151.2h48.6V240.1h30.8l17.3-44.2H414.7L414.7,240.1L414.7,240.1z M570.4,391.4h45.7V257.6h-45.7V391.4z M593.1,193.5c-14.9,0-25.4,10.3-25.4,24.4s10.5,24.4,25.4,24.4s25.4-10.5,25.4-24.4S608,193.5,593.1,193.5z M1156.3,304.4l43.5-46.8h-54.2l-41.1,44.3v-106h-45.7v195.4h45.7v-36.2l18.1-19l27.6,55h53.3L1156.3,304.4L1156.3,304.4z M914.9,195.9H764.1v44.2h47.4v151.2h48.6V240.1h37.4L914.9,195.9L914.9,195.9z M961.4,241.1c-44,0-77.4,33.5-77.4,76.7s33.5,76.7,77.4,76.7s77.4-33.5,77.4-76.7S1005.4,241.1,961.4,241.1L961.4,241.1z M961.4,352.8c-19.5,0-33-14.4-33-34.9s13.4-34.9,33-34.9s33,14.4,33,34.9S981,352.8,961.4,352.8z M302.9,125.6h-45.2v192c0,25.2-18.1,41.4-40.1,41.4s-41.5-16.2-41.5-41.4c0-29.1,22.7-44.4,53-41.2v-48.6c-4.4-0.7-8.8-1-12.5-1c-49.6,0-91.1,39.8-91.1,89.2c0,52.3,41,92.3,91.4,92.3c44.2,0,91.1-32.5,91.1-93.8v-99.9c19.5,19.5,43.2,25.6,68.6,25.6v-44.9C345.4,193,310.8,172.5,302.9,125.6L302.9,125.6z"
       fill="currentColor"
@@ -17,12 +17,12 @@ const TikTokWordmark: React.FC = () => (
   </svg>
 );
 
-/** Inline CapCut wordmark — paths from capcut-wordmark.svg, currentColor */
+/** Inline CapCut wordmark */
 const CapCutWordmark: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0.5 0 127.2 24"
-    height={24}
+    height={32}
     aria-label="CapCut"
     role="img"
   >
@@ -35,17 +35,14 @@ const CapCutWordmark: React.FC = () => (
 
 export const TrustedBy: React.FC = () => {
   const lang = useLang() as 'en' | 'zh';
+  const lynxSpan = <span className={styles['lynx-text']}>Lynx</span>;
 
   return (
     <section className={styles['trusted-by']}>
-      <div className={styles.rule} />
-      <div className={styles.content}>
-        <p className={styles.heading}>{heading[lang]}</p>
-        <span className={styles.separator} aria-hidden="true" />
-        <div className={styles.logos}>
-          <TikTokWordmark />
-          <CapCutWordmark />
-        </div>
+      <p className={styles.heading}>{heading[lang](lynxSpan)}</p>
+      <div className={styles.logos}>
+        <TikTokWordmark />
+        <CapCutWordmark />
       </div>
     </section>
   );

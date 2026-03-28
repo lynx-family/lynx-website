@@ -4,3 +4,4 @@ export { ShowCase } from './showcase/index';
 export { Banner } from './banner/index';
 export { BorderBeam } from './border-beam/index';
 export { Footer } from './footer/index';
+export { TrustedBy } from './trusted-by/index';
