@@ -63,6 +63,10 @@
     width: auto;
     // The SVG has ~25% built-in padding; pull it in with negative margins
     margin: -0.51em -0.2em -0.51em -0.35em;
+    vertical-align: middle;
+    position: relative;
+    top: -0.04em;
+    animation: tiktok-glitch 4s ease-in-out infinite;
   }
 
   .tiktok-logo-light {
@@ -74,34 +78,18 @@
   }
 
   .section-subtitle {
-    color: var(--home-desc-color);
+    color: var(--home-features-item-desc-color);
     text-align: center;
     font-size: 18px;
     font-weight: 400;
     line-height: 1.6;
     margin: 0 0 48px;
-    opacity: 0.65;
-  }
-
-  // ── Divider ──
-
-  .section-divider {
-    width: 64px;
-    height: 1px;
-    background: linear-gradient(
-      to right,
-      transparent,
-      var(--major-brand-color),
-      transparent
-    );
-    margin: 56px 0 0;
-    opacity: 0.4;
   }
 
   // ── Act 2: Invitation ──
 
   .try-section {
-    margin-top: 48px;
+    margin-top: 64px;
     margin-bottom: 48px;
     display: flex;
     flex-direction: column;
@@ -118,13 +106,12 @@
   }
 
   .try-subtitle {
-    color: var(--home-desc-color);
+    color: var(--home-features-item-desc-color);
     text-align: center;
     font-size: 16px;
     font-weight: 400;
     line-height: 1.6;
     margin: 0;
-    opacity: 0.55;
   }
 
   // ── Demo showcase ──
@@ -181,7 +168,7 @@
   .show-case-frame {
     width: 100%;
     align-items: center;
-    overflow: hidden;
+    overflow-x: clip;
 
     .section-title {
       margin-left: 40px;
@@ -195,10 +182,6 @@
       margin: 0 40px 36px;
       text-align: center;
       font-size: 16px;
-    }
-
-    .section-divider {
-      margin: 40px 0 0;
     }
 
     .try-section {
@@ -260,10 +243,6 @@
       font-size: 4vw;
     }
 
-    .section-divider {
-      margin: 32px 0 0;
-    }
-
     .try-section {
       margin-left: 24px;
       margin-right: 24px;
@@ -311,4 +290,39 @@
 :global(.dark) .show-case-frame .tiktok-logo-dark {
   display: inline-block;
 }
+
+// TikTok chromatic aberration + shake — idle most of the cycle, rapid glitch burst
+// Burst: 78%→88% of 4s = 0.4s total, each step 0.08s
+@keyframes tiktok-glitch {
+  0%, 78%, 100% {
+    transform: translate(0, 0);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  80% {
+    transform: translate(-3px, 1px);
+    filter: drop-shadow(5px -2px 0 rgba(241, 32, 74, 0.8))
+            drop-shadow(-4px 2px 0 rgba(45, 204, 211, 0.8));
+  }
+  82% {
+    transform: translate(3px, -2px);
+    filter: drop-shadow(-4px 2px 0 rgba(241, 32, 74, 0.7))
+            drop-shadow(4px -1px 0 rgba(45, 204, 211, 0.7));
+  }
+  84% {
+    transform: translate(-2px, 0px);
+    filter: drop-shadow(3px 0px 0 rgba(241, 32, 74, 0.5))
+            drop-shadow(-3px 0px 0 rgba(45, 204, 211, 0.5));
+  }
+  86% {
+    transform: translate(1px, 1px);
+    filter: drop-shadow(-2px -1px 0 rgba(241, 32, 74, 0.3))
+            drop-shadow(2px 1px 0 rgba(45, 204, 211, 0.3));
+  }
+  88% {
+    transform: translate(0, 0);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+
 

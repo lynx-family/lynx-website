@@ -11,11 +11,11 @@ const showCaseList = [
   {
     title: {
       en: 'Two-Column Waterfall Gallery',
-      zh: '瀑布流的产品双列',
+      zh: '双列瀑布流',
     },
     desc: {
       en: 'Cover everything you need to know to start building with Lynx.',
-      zh: '涵盖你开始使用 Lynx 所需了解的一切。',
+      zh: '从零开始，快速上手 Lynx 开发。',
     },
     class: 'case-0',
     link: {
@@ -26,11 +26,11 @@ const showCaseList = [
   {
     title: {
       en: 'Product Detail with Carousel',
-      zh: '轮播图的产品详情',
+      zh: '商品详情轮播',
     },
     desc: {
       en: 'Deep dive into main thread scripting by building a highly responsive swiper.',
-      zh: '通过打造轮播图深入了解主线程脚本。',
+      zh: '深入主线程脚本，打造高性能轮播。',
     },
     class: 'case-1',
     link: {
@@ -41,8 +41,8 @@ const showCaseList = [
 ] as const;
 
 const sectionSubtitle = {
-  en: 'Powering native experiences in the world\u2019s most popular apps',
-  zh: '驱动全球最受欢迎 App 的原生体验',
+  en: 'Powering native experiences for billions',
+  zh: '服务数十亿用户的跨端框架',
 } as const;
 
 const tryTitle = {
@@ -51,8 +51,8 @@ const tryTitle = {
 } as const;
 
 const trySubtitle = {
-  en: 'Build real native UIs in minutes with our hands-on tutorials.',
-  zh: '跟随教程，几分钟内打造真正的原生界面。',
+  en: 'Build in minutes with our hands-on tutorials.',
+  zh: '跟随教程，几分钟上手。',
 } as const;
 
 export const ShowCase: React.FC = () => {
@@ -62,7 +62,7 @@ export const ShowCase: React.FC = () => {
     <div className={styles['show-case-frame']}>
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
-        {lang === 'zh' ? '深受' : 'Trusted by'}
+        {lang === 'zh' ? '' : 'Trusted by'}
         <img
           src={tiktokLogoBlack}
           alt="TikTok"
@@ -73,13 +73,10 @@ export const ShowCase: React.FC = () => {
           alt="TikTok"
           className={`${styles['tiktok-logo']} ${styles['tiktok-logo-dark']}`}
         />
-        {lang === 'zh' ? '信赖' : ''}
+        {lang === 'zh' ? '同款' : ''}
       </div>
       <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
       <TrustedBy />
-
-      {/* Divider between acts */}
-      <div className={styles['section-divider']} />
 
       {/* Act 2: Invitation */}
       <div className={styles['try-section']}>
@@ -100,7 +97,7 @@ export const ShowCase: React.FC = () => {
               {!!item.link && (
                 <Link href={item.link[lang]} className={styles['item-link']}>
                   {lang === 'zh'
-                    ? '跟随教程编写 \u2192'
+                    ? '开始教程 \u2192'
                     : 'Follow the tutorial \u2192'}
                 </Link>
               )}
