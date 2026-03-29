@@ -126,34 +126,17 @@ export const ChoiceTabs = ({
                 </div>
                 {platforms && platforms.length > 0 && (
                   <span className="choice-tabs__platforms">
-                    {[0, 1].map((copy) => (
-                      <span
-                        key={copy}
-                        className="choice-tabs__platforms-set"
-                        aria-hidden={copy === 1 ? true : undefined}
-                      >
-                        {platforms.map((p, i) => {
-                          const info = PLATFORM_INFO[p];
-                          if (!info) return null;
-                          return (
-                            <React.Fragment key={p}>
-                              {i > 0 && (
-                                <span className="choice-tabs__dot">
-                                  &middot;
-                                </span>
-                              )}
-                              <span className="choice-tabs__platform">
-                                <PlatformSvg
-                                  platformName={info.icon}
-                                  className="choice-tabs__platform-icon"
-                                />
-                                {info.label}
-                              </span>
-                            </React.Fragment>
-                          );
-                        })}
-                      </span>
-                    ))}
+                    {platforms.map((p) => {
+                      const info = PLATFORM_INFO[p];
+                      if (!info) return null;
+                      return (
+                        <PlatformSvg
+                          key={p}
+                          platformName={info.icon}
+                          className="choice-tabs__platform-icon"
+                        />
+                      );
+                    })}
                   </span>
                 )}
               </button>
