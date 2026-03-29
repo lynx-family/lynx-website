@@ -164,10 +164,10 @@
 }
 
 // ---------------------------------------------------------------------------
-// Platforms: compact single-line with marquee on overflow
+// Platforms: infinite seamless marquee (two duplicate sets side-by-side)
 // ---------------------------------------------------------------------------
 .choice-tabs__platforms {
-  display: block;
+  display: flex;
   font-size: 0.71875rem; // 11.5px
   font-weight: 450;
   letter-spacing: 0.005em;
@@ -175,51 +175,39 @@
   margin-top: auto;
   padding-top: 12px;
   overflow: hidden;
-  // Fade edges to hint at overflow
   mask-image: linear-gradient(
     90deg,
     transparent,
-    #000 4px,
-    #000 calc(100% - 4px),
+    #000 6px,
+    #000 calc(100% - 6px),
     transparent
   );
 }
 
-.choice-tabs__platforms-inner {
+.choice-tabs__platforms-set {
   display: inline-flex;
   align-items: center;
   flex-wrap: nowrap;
+  flex-shrink: 0;
   gap: 1px;
   white-space: nowrap;
+  // Gap between the two duplicate sets
+  padding-right: 24px;
+  animation: choice-tabs-marquee 12s linear infinite;
 }
 
-// Marquee: animate when inner content overflows the outer container
 @keyframes choice-tabs-marquee {
-  0%,
-  15% {
+  from {
     transform: translateX(0);
   }
-  50%,
-  65% {
-    transform: translateX(calc(-100% + var(--marquee-container-width, 200px)));
-  }
-  100% {
-    transform: translateX(0);
+  to {
+    transform: translateX(-100%);
   }
 }
 
-// The card sets --marquee-container-width via JS, but as a pure-CSS fallback
-// we use a hover-triggered animation: on hover the row scrolls to reveal overflow.
-.choice-tabs__card:hover .choice-tabs__platforms-inner,
-.choice-tabs__card--active .choice-tabs__platforms-inner {
-  animation: choice-tabs-marquee 6s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-// Pause marquee when not hovered/active (no jarring motion)
-.choice-tabs__card:not(:hover):not(.choice-tabs__card--active)
-  .choice-tabs__platforms-inner {
-  animation: none;
+// Pause on hover so users can read
+.choice-tabs__card:hover .choice-tabs__platforms-set {
+  animation-play-state: paused;
 }
 
 .choice-tabs__platform {
