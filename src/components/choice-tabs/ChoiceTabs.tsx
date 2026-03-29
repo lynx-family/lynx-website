@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
 import { PlatformSvg } from '@/components/platform-navigation/PlatformIcon';
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './ChoiceTabs.scss';
 
 const PLATFORM_INFO: Record<string, { label: string; icon: PlatformName }> = {
@@ -125,37 +125,35 @@ export const ChoiceTabs = ({
                   </div>
                 </div>
                 {platforms && platforms.length > 0 && (
-                  <span
-                    className="choice-tabs__platforms"
-                    ref={(el) => {
-                      if (el) {
-                        el.style.setProperty(
-                          '--marquee-container-width',
-                          `${el.offsetWidth}px`,
-                        );
-                      }
-                    }}
-                  >
-                    <span className="choice-tabs__platforms-inner">
-                      {platforms.map((p, i) => {
-                        const info = PLATFORM_INFO[p];
-                        if (!info) return null;
-                        return (
-                          <React.Fragment key={p}>
-                            {i > 0 && (
-                              <span className="choice-tabs__dot">&middot;</span>
-                            )}
-                            <span className="choice-tabs__platform">
-                              <PlatformSvg
-                                platformName={info.icon}
-                                className="choice-tabs__platform-icon"
-                              />
-                              {info.label}
-                            </span>
-                          </React.Fragment>
-                        );
-                      })}
-                    </span>
+                  <span className="choice-tabs__platforms">
+                    {[0, 1].map((copy) => (
+                      <span
+                        key={copy}
+                        className="choice-tabs__platforms-set"
+                        aria-hidden={copy === 1 ? true : undefined}
+                      >
+                        {platforms.map((p, i) => {
+                          const info = PLATFORM_INFO[p];
+                          if (!info) return null;
+                          return (
+                            <React.Fragment key={p}>
+                              {i > 0 && (
+                                <span className="choice-tabs__dot">
+                                  &middot;
+                                </span>
+                              )}
+                              <span className="choice-tabs__platform">
+                                <PlatformSvg
+                                  platformName={info.icon}
+                                  className="choice-tabs__platform-icon"
+                                />
+                                {info.label}
+                              </span>
+                            </React.Fragment>
+                          );
+                        })}
+                      </span>
+                    ))}
                   </span>
                 )}
               </button>
