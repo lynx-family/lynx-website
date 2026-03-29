@@ -1,0 +1,263 @@
+// ChoiceTabs — polished card selector with homepage design language.
+// Type scale: title 16px → desc 13.5px → platforms 11.5px → tag 9.5px (≈1.18 ratio)
+
+.choice-tabs {
+  width: 100%;
+  container-type: inline-size;
+}
+
+// ---------------------------------------------------------------------------
+// Track
+// ---------------------------------------------------------------------------
+.choice-tabs__track {
+  display: flex;
+  gap: 14px;
+  margin: 1.25rem 0 1.5rem;
+}
+
+// ---------------------------------------------------------------------------
+// Card
+// ---------------------------------------------------------------------------
+.choice-tabs__card {
+  position: relative;
+  z-index: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--home-features-item-bg, rgba(255, 255, 255, 0.5));
+  border: 1px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    border-color 0.2s ease;
+  opacity: 0.5;
+
+  &:hover:not(.choice-tabs__card--active) {
+    opacity: 0.72;
+  }
+
+  &.choice-tabs__card--active {
+    opacity: 1;
+    border: var(
+      --home-features-item-bg-border,
+      1px solid rgba(17, 17, 19, 0.08)
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Header: icon + text block
+// ---------------------------------------------------------------------------
+.choice-tabs__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.choice-tabs__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 8px;
+  border: var(--home-features-item-bg-border, 1px solid rgba(17, 17, 19, 0.08));
+  background: var(--home-features-item-action-btn-bg, #fff);
+  backdrop-filter: blur(16px);
+  // Nudge down 1px to optically center with first text line
+  margin-top: 1px;
+
+  .choice-tabs__card--active & {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 53, 26, 0.1),
+      rgba(18, 229, 229, 0.08)
+    );
+    border-color: rgba(255, 53, 26, 0.12);
+  }
+}
+
+.choice-tabs__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  color: var(--home-features-item-desc-color, rgba(17, 17, 19, 0.65));
+
+  .choice-tabs__card--active & {
+    color: var(--major-brand-color, #ff351a);
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.choice-tabs__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+// ---------------------------------------------------------------------------
+// Title row: label + inline tag
+// ---------------------------------------------------------------------------
+.choice-tabs__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: nowrap;
+}
+
+.choice-tabs__label {
+  font-size: 1rem; // 16px — clear heading weight
+  font-weight: 600; // semibold, not bold — refined at this size
+  letter-spacing: -0.01em; // tighter tracking for heading feel
+  color: var(--home-title-color, #111113);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.choice-tabs__tag {
+  display: inline-block;
+  font-size: 0.59375rem; // 9.5px — readable but clearly subordinate
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em; // wider tracking for uppercase micro-text
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  background: linear-gradient(
+    135deg,
+    var(--major-brand-color, #ff351a),
+    var(--second-brand-color, #12e5e5)
+  );
+  color: #fff;
+  line-height: 1.4;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  top: -0.5px; // optical baseline alignment with title
+}
+
+// ---------------------------------------------------------------------------
+// Description
+// ---------------------------------------------------------------------------
+.choice-tabs__desc {
+  font-size: 0.84375rem; // 13.5px — clear step down from 16px title
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--home-features-item-desc-color, rgba(17, 17, 19, 0.65));
+  line-height: 1.45;
+}
+
+// ---------------------------------------------------------------------------
+// Platforms: compact single-line indicators
+// ---------------------------------------------------------------------------
+.choice-tabs__platforms {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 1px;
+  font-size: 0.71875rem; // 11.5px — tertiary level, still legible
+  font-weight: 450; // slightly heavier than regular for small text
+  letter-spacing: 0.005em;
+  color: var(--home-features-item-desc-color, rgba(17, 17, 19, 0.65));
+  margin-top: auto;
+  padding-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.choice-tabs__platform {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.choice-tabs__platform-icon {
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px;
+  min-height: 10px;
+  background-color: currentColor;
+}
+
+.choice-tabs__dot {
+  margin: 0 4px;
+  opacity: 0.3;
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+// ---------------------------------------------------------------------------
+// Dark mode
+// ---------------------------------------------------------------------------
+// Dark mode uses the same var — already handled by --home-features-item-bg-border
+
+// ---------------------------------------------------------------------------
+// Narrow container: carousel via container query
+// ---------------------------------------------------------------------------
+@container (max-width: 680px) {
+  .choice-tabs__track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 16px;
+    padding-bottom: 6px;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .choice-tabs__card {
+    scroll-snap-align: start;
+    flex: 0 0 72%;
+    min-width: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .choice-tabs__track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 16px;
+    padding-bottom: 6px;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .choice-tabs__card {
+    scroll-snap-align: start;
+    flex: 0 0 82%;
+    min-width: 240px;
+  }
+}
