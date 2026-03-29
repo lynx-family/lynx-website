@@ -1,9 +1,9 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { BorderBeam } from '@/components/home-comps/border-beam';
 import React, { useCallback, useEffect, useState } from 'react';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
 import { PlatformName } from '@lynx-js/lynx-compat-data';
+import '../shared-tabs.scss';
 
 type Platform =
   | 'ios'
@@ -122,32 +122,28 @@ function OptionSelector({
   onSelect: (id: Platform) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-4">
-      {options.map((option) => (
-        <Card
-          key={option.id}
-          className={cn(
-            'flex-1 cursor-pointer transition-colors border-2',
-            selected === option.id
-              ? 'border-primary bg-primary/10'
-              : 'border-muted hover:bg-muted',
-          )}
-          onClick={() => onSelect(option.id)}
-        >
-          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
+    <div className="shared-tabs__track">
+      {options.map((option) => {
+        const isActive = selected === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            className={cn(
+              'shared-tabs__card',
+              isActive && 'shared-tabs__card--active',
+            )}
+            onClick={() => onSelect(option.id)}
+          >
+            {isActive && <BorderBeam duration={3} size={2} />}
             <PlatformSvg
               platformName={option.iconName}
-              className="icon bg-current h-8 w-8"
+              className="shared-tabs__card-icon"
             />
-            <Label
-              htmlFor={option.id}
-              className="cursor-pointer flex items-center gap-2"
-            >
-              {option.label}
-            </Label>
-          </CardContent>
-        </Card>
-      ))}
+            <span className="shared-tabs__card-label">{option.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
