@@ -19,7 +19,7 @@ function shouldHideVersion(version: string) {
     return true;
   }
 
-  if (!process.env.OSS) {
+  if (process.env.OSS === '1.0') {
     return false;
   }
 
