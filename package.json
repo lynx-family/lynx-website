@@ -5,10 +5,14 @@
     "start": "rspress dev",
     "dev": "rspress dev",
     "build": "NODE_OPTIONS=--max-old-space-size=8192 RSPRESS_SSG_WORKER_THREAD_COUNT=4 rspress build",
-    "prepare": "husky && pnpm --filter @lynx-js/lynx-compat-data run lint:keys && pnpm --filter @lynx-js/lynx-compat-data run gen-stats && pnpm prepare:lynx-compat-data && pnpm prepare:lynx-example-data",
+    "prepare": "husky && pnpm --filter @lynx-js/lynx-compat-data run lint:keys && pnpm --filter @lynx-js/lynx-compat-data run gen-stats && pnpm prepare:lynx-compat-data && pnpm prepare:lynx-example-data && pnpm prepare:lynx-ui-doc",
     "gen:living-spec": "node scripts/lynx-living-spec.js",
     "prepare:lynx-compat-data": "rm -rf docs/public/lynx-compat-data && ln -s $(pwd)/packages/lynx-compat-data docs/public/lynx-compat-data",
+    "preinstall": "npm run sync:lynx-ui-doc && pnpm prepare:lynx-ui-doc",
     "prepare:lynx-example-data": "node scripts/lynx-example.js",
+    "sync:lynx-ui-doc": "node scripts/sync-lynx-ui.js",
+    "sync:lynx-ui-doc-force": "rm -rf deps && node scripts/sync-lynx-ui.js",
+    "prepare:lynx-ui-doc": "node scripts/lynx-doc/lynx-ui.js",
     "preview": "rspress preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -61,6 +65,7 @@
     "*.{md,mdx}": "cspell lint -c cspell.json --no-must-find-files"
   },
   "devDependencies": {
+    "@lynx-js/lynx-ui-doc": "file:./deps/lynx-js-lynx-ui-doc-latest.tgz",
     "@lynx-js/lynx-compat-data": "workspace:*",
     "@lynx-js/react": "^0.107.1",
     "@lynx-js/rspress-plugin-llms-postprocess": "workspace:*",
