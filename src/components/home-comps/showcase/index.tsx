@@ -6,6 +6,8 @@ import { MobileShow } from './mobile-show';
 import { TrustedBy } from '../trusted-by';
 import tiktokLogoBlack from './tiktok-logo-black.svg';
 import tiktokLogoWhite from './tiktok-logo-white.svg';
+import capcutLogoBlack from './capcut-logo-black.svg';
+import capcutLogoWhite from './capcut-logo-white.svg';
 
 const showCaseList = [
   {
@@ -62,18 +64,33 @@ export const ShowCase: React.FC = () => {
     <div className={styles['show-case-frame']}>
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
-        {lang === 'zh' ? '' : 'Trusted by'}
-        <img
-          src={tiktokLogoBlack}
-          alt="TikTok"
-          className={`${styles['tiktok-logo']} ${styles['tiktok-logo-light']}`}
-        />
-        <img
-          src={tiktokLogoWhite}
-          alt="TikTok"
-          className={`${styles['tiktok-logo']} ${styles['tiktok-logo-dark']}`}
-        />
-        {lang === 'zh' ? '同款' : ''}
+        <span className={styles['title-line']}>
+          {lang === 'zh' ? '' : 'Trusted by'}
+        </span>
+        <span className={styles['title-line']}>
+          <img
+            src={tiktokLogoBlack}
+            alt="TikTok"
+            className={`${styles['tiktok-logo']} ${styles['logo-light']}`}
+          />
+          <img
+            src={tiktokLogoWhite}
+            alt="TikTok"
+            className={`${styles['tiktok-logo']} ${styles['logo-dark']}`}
+          />
+          {lang === 'zh' ? '' : <span className={styles['logo-and']}>and</span>}
+          <img
+            src={capcutLogoBlack}
+            alt="CapCut"
+            className={`${styles['capcut-logo']} ${styles['logo-light']}`}
+          />
+          <img
+            src={capcutLogoWhite}
+            alt="CapCut"
+            className={`${styles['capcut-logo']} ${styles['logo-dark']}`}
+          />
+          {lang === 'zh' ? '同款' : ''}
+        </span>
       </div>
       <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
       <TrustedBy />
