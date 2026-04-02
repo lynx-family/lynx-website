@@ -1,0 +1,626 @@
+import { UIApiTable } from "@lynx/index";
+  
+### DialogRoot 
+    The root component of the Dialog, containing all of its child components.
+  
+<UIApiTable source={[
+  {
+    "name": "children",
+    "type": "ReactNode | PresenceChildrenType",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "children"
+      }
+    ],
+    "summary_zh": "子元素",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "ReactNode | (status: {open?: boolean, closed?: boolean, leaving?: boolean, entering?: boolean, animating?: boolean)} => ReactNode"
+        }
+      ]
+    }
+  },
+  {
+    "name": "debugLog",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Display debug logs. Open it when you find a bug."
+      }
+    ],
+    "summary_zh": "显示调试日志。发现 bug 时开启。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "defaultShow",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Determines whether the dialog should be shown by default. Use this property means the Dialog is uncontrolled."
+      }
+    ],
+    "summary_zh": "确定弹窗是否默认显示。使用此属性意味着弹窗处于非受控模式。",
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "forceMount",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Mount the popper and render the content even when it's not shown. At this time, the internal state is \"closed\"."
+      }
+    ],
+    "summary_zh": "即使弹窗未显示，也会挂载弹窗并渲染内容。此时内部状态处于 closed",
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onClose",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Triggered when the popper is actually closed and the potential animation is finished."
+      }
+    ],
+    "summary_zh": "当弹出框实际关闭且可能的动画结束时触发。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onOpen",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Triggered when the popper is actually show and the potential animation is finished."
+      }
+    ],
+    "summary_zh": "当弹出框实际显示且可能的动画结束时触发。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onShowChange",
+    "type": "(open: boolean) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Triggered when the dialog is about to be closed, which can be triggered by clicking the backdrop or via a close button. In controlled mode (when "
+      },
+      {
+        "kind": "code",
+        "text": "`show`"
+      },
+      {
+        "kind": "text",
+        "text": " is provided), you should use this handler to update the state that controls the dialog's visibility. In uncontrolled mode, this handler is optional and is called before the dialog's internal state is updated."
+      }
+    ],
+    "summary_zh": "当弹窗即将关闭时触发，可通过点击背景或关闭按钮触发。在受控模式下（提供了 `show` 属性），您应该使用此处理器来更新控制弹窗可见性的状态。在非受控模式下，此处理器是可选的，会在弹窗内部状态更新之前调用。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "show",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Whether to show the popper. If this property is not set, the popper will be in controlled mode, meaning the defaultShow property will take no effects. And you have to control behavior of clicking close button and backdrop."
+      }
+    ],
+    "summary_zh": "是否显示弹出框。如果未设置此属性，弹出框将处于受控模式，这意味着 defaultShow 属性将无效。并且你必须控制点击关闭按钮和背景的行为。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  }
+]}/>
+
+### DialogBackdrop
+
+    The backdrop mask of the dialog.
+
+<UIApiTable
+  source={[
+    {
+      name: 'children',
+      type: 'ReactNode',
+      summary: [
+        {
+          kind: 'text',
+          text: 'children',
+        },
+      ],
+      summary_zh: '子元素',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'className',
+      type: 'string',
+      summary: [
+        {
+          kind: 'text',
+          text: 'className',
+        },
+      ],
+      summary_zh: '类名',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'clickToClose',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: "Determines whether clicking on the backdrop closes the dialog.\nThis prop acts as a behavior switch for the backdrop's click event.\n\nWhen ",
+        },
+        {
+          kind: 'code',
+          text: '`true`',
+        },
+        {
+          kind: 'text',
+          text: ', clicking the backdrop will trigger the ',
+        },
+        {
+          kind: 'code',
+          text: '`onClose`',
+        },
+        {
+          kind: 'text',
+          text: ' callback and close the dialog if the dialog is in uncontrolled mode (when ',
+        },
+        {
+          kind: 'code',
+          text: '`show`',
+        },
+        {
+          kind: 'text',
+          text: ' is not provided).\nWhen ',
+        },
+        {
+          kind: 'code',
+          text: '`false`',
+        },
+        {
+          kind: 'text',
+          text: ', clicking the backdrop will have no effect.',
+        },
+      ],
+      summary_zh:
+        '确定点击背景是否关闭弹窗。此属性作为背景点击事件的行为开关。当值为 `true` 时，如果弹窗处于非受控模式（未提供 `show` 属性），点击背景将触发 `onClose` 回调并关闭弹窗。当值为 `false` 时，点击背景将没有任何效果。',
+      defaultValue: 'true',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'delayed',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: 'If the content needs a delayed first screen to do first render, you need to set this property to true.',
+        },
+      ],
+      summary_zh:
+        '如果内容需要延迟首屏进行首次渲染，则需要将此属性设置为 true。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: false,
+      isSupportAndroid: false,
+      isSupportHarmony: false,
+      docTypeFallback: null,
+    },
+    {
+      name: 'dialogBackdropProps',
+      type: 'ViewProps',
+      summary: [
+        {
+          kind: 'text',
+          text: 'DialogBackdrop supports original view props to be directly spread in this prop.',
+        },
+      ],
+      summary_zh: 'DialogBackdrop 支持将原始 view 属性直接展开到这个属性中。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'onClick',
+      type: '() => void',
+      summary: [
+        {
+          kind: 'text',
+          text: 'Triggered when the backdrop is clicked.',
+        },
+      ],
+      summary_zh: '点击背景时触发。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'style',
+      type: 'CSSProperties',
+      summary: [
+        {
+          kind: 'text',
+          text: 'style',
+        },
+      ],
+      summary_zh: '样式',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'transition',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: "If set to true, the className will has the transition classes like 'ui-entering', 'ui-leaving', 'ui-animating'",
+        },
+      ],
+      summary_zh:
+        "如果设置为 true，则 className 会包含 'ui-entering', 'ui-leaving', 'ui-animating' 等动画相关类名",
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+  ]}
+/>
+
+### DialogView
+
+    View container. When 'container' is set correctly, the underlying layer will be replaced with overlay; otherwise, it will be a regular view. When the underlying layer is overlay, the 'level' property can be used to control the hierarchical relationship. For a regular view, use 'z-index' to control the hierarchical relationship. If this dialog needs to be used outside of LynxView, consider enabling overlay.
+
+<UIApiTable
+  source={[
+    {
+      name: 'children',
+      type: 'ReactNode | PresenceChildrenType',
+      summary: [
+        {
+          kind: 'text',
+          text: 'children',
+        },
+      ],
+      summary_zh: '子元素',
+      defaultValue: '',
+      isOption: false,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: {
+        tag: '@docTypeFallback',
+        content: [
+          {
+            kind: 'text',
+            text: 'ReactNode | (status: {open?: boolean, closed?: boolean, leaving?: boolean, entering?: boolean, animating?: boolean)} => ReactNode',
+          },
+        ],
+      },
+    },
+    {
+      name: 'className',
+      type: 'string',
+      summary: [
+        {
+          kind: 'text',
+          text: 'className',
+        },
+      ],
+      summary_zh: '类名',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'container',
+      type: 'string',
+      summary: [
+        {
+          kind: 'text',
+          text: 'If you want to use the poppers outside of the LynxView, you need to set this property. The value is the name of the native container.',
+        },
+      ],
+      summary_zh:
+        '如果你想在 LynxView 外部使用弹出框，则需要设置此属性。值为原生容器的名称。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'debugLog',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: 'Display debug logs. Open it when you find a bug.',
+        },
+      ],
+      summary_zh: '显示调试日志。发现 bug 时开启。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'dialogViewProps',
+      type: 'ViewProps | OverlayProps',
+      summary: [
+        {
+          kind: 'text',
+          text: 'Additional props that will be spread to the underlying OverlayView element',
+        },
+      ],
+      summary_zh:
+        '将被直接传递到底层 OverlayView 元素的额外 view 或 overlay 属性',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'id',
+      type: 'string',
+      summary: [
+        {
+          kind: 'text',
+          text: 'id',
+        },
+      ],
+      summary_zh: '标识符',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'overlayLevel',
+      type: '1 | 2 | 3 | 4',
+      summary: [
+        {
+          kind: 'text',
+          text: "Only works when the 'container' is set to non-empty string. Adjust nearby elements display level.",
+        },
+      ],
+      summary_zh:
+        "仅当 'container' 设置为非空字符串时有效。调整附近元素的显示层级。",
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'style',
+      type: 'CSSProperties',
+      summary: [
+        {
+          kind: 'text',
+          text: 'style',
+        },
+      ],
+      summary_zh: '样式',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'transition',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: "If set to true, the className will has the transition classes like 'ui-entering', 'ui-leaving', 'ui-animating'",
+        },
+      ],
+      summary_zh:
+        "如果设置为 true，则 className 会包含 'ui-entering', 'ui-leaving', 'ui-animating' 等动画相关类名",
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+  ]}
+/>
+
+### DialogContent
+
+    The main content of the dialog.
+
+<UIApiTable
+  source={[
+    {
+      name: 'children',
+      type: 'ReactNode',
+      summary: [
+        {
+          kind: 'text',
+          text: 'children',
+        },
+      ],
+      summary_zh: '子元素',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'className',
+      type: 'string',
+      summary: [
+        {
+          kind: 'text',
+          text: 'className',
+        },
+      ],
+      summary_zh: '类名',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'delayed',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: 'If the content needs a delayed first screen to do first render, you need to set this property to true.',
+        },
+      ],
+      summary_zh:
+        '如果内容需要延迟首屏进行首次渲染，则需要将此属性设置为 true。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: false,
+      isSupportAndroid: false,
+      isSupportHarmony: false,
+      docTypeFallback: null,
+    },
+    {
+      name: 'dialogContentProps',
+      type: 'ViewProps',
+      summary: [
+        {
+          kind: 'text',
+          text: 'DialogContent supports original view props to be directly spread in this prop.',
+        },
+      ],
+      summary_zh: 'DialogContent 支持将原始 view 属性直接展开到这个属性中。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'style',
+      type: 'CSSProperties',
+      summary: [
+        {
+          kind: 'text',
+          text: 'style',
+        },
+      ],
+      summary_zh: '样式',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'transition',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: "If set to true, the className will has the transition classes like 'ui-entering', 'ui-leaving', 'ui-animating'",
+        },
+      ],
+      summary_zh:
+        "如果设置为 true，则 className 会包含 'ui-entering', 'ui-leaving', 'ui-animating' 等动画相关类名",
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+  ]}
+/>

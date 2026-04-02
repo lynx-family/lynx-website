@@ -1,0 +1,100 @@
+## How to understand properties in useBounces
+
+Let's see how useBounces is implemented. This hook can be attached to any scrollable container.
+
+### Inputs and Outputs
+
+First, let's treat this hook as a black box that receives component settings and returns a series of methods to handle scroll container events:
+
+- Input: `options`
+- id: The scrollable container's id (required to avoid conflicts between identical containers on the same page).
+
+- `scrollOrientation`: Container scrolling direction (horizontal or vertical).
+
+- `bounceableOptions`: Additional hook configuration:
+
+- `enableBounces`: Whether to enable the bounce effect.
+
+- `startBounceTriggerDistance`/`endBounceTriggerDistance`: Thresholds for triggering `onScrollToBounces` (e.g., for "swipe-to-navigate" scenarios).
+
+- `enableBounceEventInFling`: Whether to trigger bounce effects during momentum scrolling.
+
+- `upperBounceItem`/`lowerBounceItem`: Content displayed in bounce areas.
+
+- `alwaysBouncing`: Enables bounce effects even when the container isn't scrollable.
+
+- `singleSidedBounce`: Restricts bounce effects to one side only.
+
+- `onScrollToBounces`: Triggered when bounce distance exceeds thresholds (filters minor bounces).
+
+- Output: Methods for binding to scroll containers:
+
+- `main-thread:bindtouchstart`/`main-thread:bindtouchend`/`main-thread:bindtouchmove`: Handles touch events.
+
+- `main-thread:bindlayoutchange`: Tracks container dimensions.
+
+- `main-thread:bindscroll`/`main-thread:bindscrollend`: Handles scroll events.
+
+- `onUpperExposure`/`onUpperDisexposure`/`onLowerExposure`/`onLowerDisexposure`: Manages container boundary states (bounce only occurs at edges).
+
+### Scroll Simulation
+
+We use `MTS` and `transform` to simulate bounce effects:
+
+1. Locate nodes via `lynx.querySelector`:
+
+```tsx
+lynx.querySelector(`#${containerID}`);
+```
+
+2. Apply `transform` based on scroll curves from touch events:
+
+useBounces divides scrolling into three phases:
+
+1. Rubber-band effect during touchmove
+
+2. Momentum scrolling
+
+3. Bounce-back effect
+
+<img
+  src={
+    useDark()
+      ? '/assets/threeBouncingStepsDark.png'
+      : '/assets/threeBouncingStepsLight.png'
+  }
+  width="100%"
+/>
+
+### Using `bounceableOptions`
+
+#### `onScrollToBounces` with distance thresholds
+
+This event triggers only after completed bounces, requiring:
+
+1. The container must be in a bounce zone at touchEnd (not in neutral area).
+
+2. The bounce effect must fully complete (container returns to edge).
+
+3. Thresholds (startBounceTriggerDistance/endBounceTriggerDistance) prevent oversensitive triggering:
+   <img
+     src={
+       useDark()
+         ? '/assets/onScrollToBouncesLight.png'
+         : '/assets/threeBouncingStepsLight.png'
+     }
+     width="100%"
+   />
+   The event fires only if the maximum bounce distance exceeds the threshold.
+
+#### `enableBounceEventInFling`
+
+When enabled (default), momentum scrolling can trigger bounces if the container reaches edges mid-fling. Disable this for bounce effects that require explicit touch gestures.
+
+#### Where will `upperBounceItem`/`lowerBounceItem` show up？
+
+These appear exclusively in bounce zones. When unset, the translated container reveals underlying content.
+
+#### `alwaysBouncing`
+
+Forces edge detection even when the container isn't scrollable, allowing bounce effects without actual scrolling.
