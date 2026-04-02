@@ -23,7 +23,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
-import { HomeLayout as LynxUIHomeLayout } from '@lynx-js/lynx-ui-doc/theme/lynx-ui';
+import { HomeLayout as LynxUIHomeLayout } from './lynx-ui';
 
 import {
   Banner,
