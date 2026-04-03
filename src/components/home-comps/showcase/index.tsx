@@ -57,7 +57,9 @@ const trySubtitle = {
   zh: '跟随教程，几分钟上手。',
 } as const;
 
-export const ShowCase: React.FC = () => {
+export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
+  showMarquee = true,
+}) => {
   const lang = useLang() as 'en' | 'zh';
 
   return (
@@ -93,7 +95,7 @@ export const ShowCase: React.FC = () => {
         </span>
       </div>
       <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
-      <TrustedBy />
+      {showMarquee && <TrustedBy />}
 
       {/* Act 2: Invitation */}
       <div className={styles['try-section']}>
