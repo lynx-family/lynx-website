@@ -67,7 +67,7 @@ export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
         <span className={`${styles['title-line']} ${styles['title-line-sub']}`}>
-          {lang === 'zh' ? '' : 'Trusted by'}
+          {lang === 'zh' ? '同款技术' : 'Trusted by'}
         </span>
         <span className={styles['title-line']}>
           <a
@@ -103,7 +103,6 @@ export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
               className={`${styles['capcut-logo']} ${styles['logo-dark']}`}
             />
           </a>
-          {lang === 'zh' ? '同款' : ''}
         </span>
       </div>
       <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
