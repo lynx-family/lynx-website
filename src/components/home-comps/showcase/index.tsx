@@ -64,7 +64,7 @@ export const ShowCase: React.FC = () => {
     <div className={styles['show-case-frame']}>
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
-        <span className={styles['title-line']}>
+        <span className={`${styles['title-line']} ${styles['title-line-sub']}`}>
           {lang === 'zh' ? '' : 'Trusted by'}
         </span>
         <span className={styles['title-line']}>
