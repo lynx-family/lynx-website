@@ -16,11 +16,10 @@ export type IconSize =
   | 'large'
   | 'extra-large';
 
-export interface IconProps
-  extends DetailedHTMLProps<
-    React.HTMLAttributes<HTMLSpanElement>,
-    HTMLSpanElement
-  > {
+export interface IconProps extends DetailedHTMLProps<
+  React.HTMLAttributes<HTMLSpanElement>,
+  HTMLSpanElement
+> {
   svg: ReactNode;
   size?: IconSize;
   spin?: boolean;

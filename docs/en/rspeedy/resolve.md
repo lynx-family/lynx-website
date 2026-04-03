@@ -3,7 +3,6 @@
 In modern front-end development, modularity has become a key approach to managing code effectively:
 
 1. **Simplified Module Imports**:
-
    - Module resolution allows you to use concise and more readable paths for importing modules, instead of cumbersome relative paths. For example, with an alias configuration, you can use `@components/Button` instead of `../../../src/components/Button`, which significantly improves code maintainability.
 
 2. **Environment-Aware Module Substitution**:
