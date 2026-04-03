@@ -1,0 +1,25 @@
+## 如何使用 `refreshOptions`
+
+useRefresh hook 是 `useBounces` hook 的扩展，它使用了 `useBounces` 的基础能力，并扩展了几个能力：
+
+1. 支持与 `upperBounceItem` 相对的 `refreshHeader` 节点。
+2. 支持回弹过程中停留在 `refreshHeader` 上，模拟上拉加载效果
+
+我们让 `useBounce` 的回弹曲线能够在 `refreshHeader`，也即刷新区域的边缘处停止，直到 `finishRefresh` 方法在刷新结束后被主动调用，再回弹至边缘。
+
+一次完整的刷新分成以下这四个阶段：
+
+<img src="/assets/useRefreshPic.png" width="90%" />
+
+### 事件
+
+上图所示的四个阶段有各自的事件触发时机：
+
+- `onStartRefresh`：最重要的事件，在阶段三的状态触发，此事件中可以进行数据的更新；
+- `onRefreshOffsetChange`：`RefreshHeader` 露出、处于刷新区域的时候会连续触发，发送当前的 `refreshHeader` 露出位置；
+- `onHeaderReleased`：从阶段二结束拖拽时触发，开始回弹至 `refreshHeader`；
+- `onRefreshStateChange`：不同阶段转移时触发，提供在一个单一事件中掌握所有状态的能力：
+  - `IDLE`：`refreshHeader` 未露出，处于正常滚动区域的状态；
+  - `OVER_DRAG_RELEASE`：与 `onHeaderReleased` 时机相同，阶段二结束拖拽时的状态；
+  - `REFRESHING`：与 `onStartRefresh` 时机相同；
+  - `DRAGGING`：拖拽并露出 `refreshHeader` 的状态下持续触发；
