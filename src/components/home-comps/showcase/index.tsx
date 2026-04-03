@@ -78,7 +78,7 @@ export const ShowCase: React.FC = () => {
             alt="TikTok"
             className={`${styles['tiktok-logo']} ${styles['logo-dark']}`}
           />
-          {lang === 'zh' ? '' : <span className={styles['logo-and']}>and</span>}
+
           <img
             src={capcutLogoBlack}
             alt="CapCut"
