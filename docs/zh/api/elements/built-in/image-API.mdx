@@ -1,41 +1,38 @@
 import { AndroidOnly, IOSOnly, ClayOnly, ClayWindowsOnly, ClayMacOSOnly, HarmonyOnly, Required, Deprecated, Go, PlatformTabs } from '@lynx';
 import { VersionBadge, APITable } from '@lynx';
 
+用于显示图像
 
-Used to display images
-
-## Attributes
+## 属性
 
 ### `auto-size`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.6</VersionBadge>
 
 ```tsx
-// @defaultValue: false
+// @默认值: false
 'auto-size'?: boolean;
 ```
 
-When set to true and the 
+当设置为 true 且 
 `<image>`
- element has no width or height,
-the size of the 
+ 元素没有宽度或高度时，
+在图像成功加载后，
 `<image>`
- will be automatically adjusted
-to match the image's original dimensions after the image is successfully loaded,
-ensuring that the aspect ratio is maintained.
-
+ 的大小将自动调整
+以匹配图像的原始尺寸，
+同时确保保持宽高比。
 
 ### `autoplay`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.11</VersionBadge>
 
 ```tsx
-// @defaultValue: true
+// @默认值: true
 autoplay?: boolean;
 ```
 
-Specifies whether the animated image should start playing automatically once it is loaded.
-
+指定动画图像加载后是否应自动开始播放。
 
 ### `blur-radius`
 
@@ -45,8 +42,7 @@ Specifies whether the animated image should start playing automatically once it 
 'blur-radius'?: string;
 ```
 
-Image blur radius
-
+图像模糊半径
 
 ### `cap-insets`
 
@@ -56,119 +52,112 @@ Image blur radius
 'cap-insets'?: string;
 ```
 
-Stretchable area for 9patch images, in percentage or decimal, four values for top, right, bottom, left
+9 切片图像的可拉伸区域，以百分比或小数表示，四个值分别对应上、右、下、左
 
 :::note
-Using cap-insets does not require the original image to be a 9-patch image.
+使用 cap-insets 不需要原始图像是 9 切片图像。
 :::
-
 
 ### `cap-insets-scale`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
 ```tsx
-// @defaultValue: 1
+// @默认值: 1
 'cap-insets-scale'?: number;
 ```
 
-Adjust the scale of stretchable area for 9patch images
-
+调整 9 切片图像可拉伸区域的比例
 
 ### `defer-src-invalidation`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.7</VersionBadge>
 
 ```tsx
-// @defaultValue: false
+// @默认值: false
 'defer-src-invalidation'?: boolean;
 ```
 
-When set to true, the 
+当设置为 true 时，
 `<image>`
- will only clear the previously displayed image resource after a new image has successfully loaded.
-The default behavior is to clear the image resource before starting a new load.
-This can resolve flickering issues when the image src is switched and reloaded. It is not recommended to enable this in scenarios where there is node reuse in views like lists.
-
+ 仅在新图像成功加载后才会清除之前显示的图像资源。
+默认行为是在开始新的加载之前清除图像资源。
+这可以解决图像 src 切换并重新加载时的闪烁问题。不建议在列表等视图中存在节点重用的场景中启用此功能。
 
 ### `image-config`
 
  <AndroidOnly /> <ClayOnly /> <VersionBadge>1.4</VersionBadge>
 
 ```tsx
-// @defaultValue: "ARGB_8888"
+// @默认值: "ARGB_8888"
 'image-config'?: 'ARGB_8888' | 'RGB_565';
 ```
 
 `ARGB_8888`
-: 32-bit memory per pixel, supports semi-transparent images.
+: 每个像素占用 32 位内存，支持半透明图像。
 
 `RGB_565`
-: 16-bit memory per pixel, reduces memory usage but loses transparency.
+: 每个像素占用 16 位内存，可减少内存使用但会失去透明度。
 
-Support PC platform since 3.5
+自 3.5 版本起支持 PC 平台
 
 :::note
 
-Affects the actual memory usage of the image bitmap.
+影响图像位图的实际内存使用。
 
-Taking an image with a resolution of 1024*768 as an example, the actual memory usage is (1024 * 768 * bits per pixel / 8) Bytes.
+以分辨率为 1024*768 的图像为例，实际内存使用量为 (1024 * 768 * 每个像素的位数 / 8) 字节。
 
-The default is ARGB_8888. Frontend developers can optimize image memory usage by setting it to RGB_565.
-
+默认值为 ARGB_8888。前端开发人员可以通过将其设置为 RGB_565 来优化图像内存使用。
 
 `ARGB_8888`
-: Each pixel occupies 32 bits of memory and includes an alpha channel.
+: 每个像素占用 32 位内存并包含一个 alpha 通道。
 
 `RGB_565`
-: Each pixel occupies 16 bits of memory, which reduces memory usage but results in the loss of transparency.
+: 每个像素占用 16 位内存，可减少内存使用但会导致透明度丢失。
 
-Setting RGB_565 may affect the display of 
+设置 RGB_565 可能会影响 
 `<image>`
-'s border-radius. You can set border-radius on the parent view of the 
+ 的 border-radius 显示。你可以在 
 `<image>`
- and add the clip-radius attribute to the parent view.
+ 的父视图上设置 border-radius 并在父视图上添加 clip-radius 属性。
 
-It is not recommended to use RGB_565 when mode="aspectFit", as it may cause black borders in the cropped area.
+当 mode="aspectFit" 时，不建议使用 RGB_565，因为这可能会在裁剪区域导致黑边。
 
 :::
-
 
 ### `loop-count`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
 ```tsx
-// @defaultValue: 0
+// @默认值: 0
 'loop-count'?: number;
 ```
 
-Number of times an animated image plays, 0 stands for infinite
-
+动画图像的播放次数，0 表示无限循环
 
 ### `mode`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>0.2</VersionBadge>
 
 ```tsx
-// @defaultValue: 'scaleToFill'
+// @默认值: 'scaleToFill'
 mode?: 'scaleToFill' | 'aspectFit' | 'aspectFill' | 'center';
 ```
 
-Specifies image cropping/scaling mode
+指定图像裁剪/缩放模式
 
 `scaleToFill`
-: Scales the image without preserving the aspect ratio, stretching the image to fill the element.
+: 不保留宽高比缩放图像，将图像拉伸以填充元素。
 
 `aspectFit`
-: Scales the image while preserving aspect ratio so that the long side is fully visible.
+: 保留宽高比缩放图像，使长边完全可见。
 
 `aspectFill`
-: Scales the image while preserving aspect ratio, ensuring the short side fills the element.
+: 保留宽高比缩放图像，确保短边填充元素。
 
 `center`
-: Does not scale the image; image is centered.
-
+: 不缩放图像；图像居中显示。
 
 ### `placeholder`
 
@@ -178,44 +167,40 @@ Specifies image cropping/scaling mode
 placeholder?: string;
 ```
 
-Placeholder image, used same as src
-
+占位图像，使用方式与 src 相同
 
 ### `prefetch-height`
 
  <AndroidOnly /> <IOSOnly /> <VersionBadge>1.4</VersionBadge>
 
 ```tsx
-// @defaultValue: "0px"
+// @默认值: "0px"
 'prefetch-height'?: string;
 ```
 
-Image won't load if its size is 0, but will load if prefetch-height is set
-
+如果图像大小为 0，则不会加载，但如果设置了 prefetch-height 则会加载
 
 ### `prefetch-width`
 
  <AndroidOnly /> <IOSOnly /> <VersionBadge>1.4</VersionBadge>
 
 ```tsx
-// @defaultValue: "0px"
+// @默认值: "0px"
 'prefetch-width'?: string;
 ```
 
-Image won't load if its size is 0, but will load if prefetch-width is set
-
+如果图像大小为 0，则不会加载，但如果设置了 prefetch-width 则会加载
 
 ### `src`
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>0.2</VersionBadge>
 
 ```tsx
-// @defaultValue: undefined
+// @默认值: undefined
 src?: string;
 ```
 
-Supports http/https/base64
-
+支持 http/https/base64
 
 ### `tint-color`
 
@@ -225,14 +210,13 @@ Supports http/https/base64
 'tint-color'?: string;
 ```
 
-Changes the color of all non-transparent pixels to the tint-color specified. The value is a 
+将所有非透明像素的颜色更改为指定的 tint-color。值为一个 
 `<color>`
-.
+。
 
+## 事件
 
-## Events
-
-Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+前端可以绑定相应的事件回调来监听元素的运行时行为，如下所示。
 
 ### `bindcurrentloopcomplete`
  <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.7</VersionBadge>
@@ -241,8 +225,7 @@ Frontend can bind corresponding event callbacks to listen for runtime behaviors 
 bindcurrentloopcomplete = (e: BaseEvent) => {};
 ```
 
-Triggered when one loop of the animated image finishes playing.
-
+当动画图像的一个循环播放完成时触发。
 
 ### `binderror`
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>0.2</VersionBadge>
@@ -251,8 +234,7 @@ Triggered when one loop of the animated image finishes playing.
 binderror = (e: ErrorEvent) => {};
 ```
 
-Image load error event
-
+图像加载错误事件
 
 ### `bindfinalloopcomplete`
  <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.7</VersionBadge>
@@ -261,12 +243,11 @@ Image load error event
 bindfinalloopcomplete = (e: BaseEvent) => {};
 ```
 
-Triggered when the animated image finishes playing all 
+当动画图像完成所有
 `loop-count`
- loops. If 
+ 循环播放时触发。如果
 `loop-count`
- is not set, this callback will not be triggered.
-
+ 未设置，则不会触发此回调。
 
 ### `bindload`
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>0.2</VersionBadge>
@@ -275,8 +256,7 @@ Triggered when the animated image finishes playing all
 bindload = (e: LoadEvent) => {};
 ```
 
-Image load success event
-
+图像加载成功事件
 
 ### `bindstartplay`
  <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.7</VersionBadge>
@@ -285,12 +265,11 @@ Image load success event
 bindstartplay = (e: BaseEvent) => {};
 ```
 
-Triggered when the animated image starts playing.
+当动画图像开始播放时触发。
 
+## 方法
 
-## Methods
-
-Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
 
 ### `pauseAnimation`
 
@@ -308,8 +287,7 @@ lynx.createSelectorQuery()
 
 ```
 
-Pauses the animation, without resetting the loop-count.
-
+暂停动画，不重置循环次数。
 
 ### `resumeAnimation`
 
@@ -327,8 +305,7 @@ lynx.createSelectorQuery()
 
 ```
 
-Resumes the animation, without resetting the loop-count.
-
+恢复动画，不重置循环次数。
 
 ### `startAnimate`
 
@@ -346,8 +323,7 @@ lynx.createSelectorQuery()
 
 ```
 
-Restart the animation playback method controlled by the front end, and the animation playback progress and loop count will be reset.
-
+重新启动前端控制的动画播放方法，动画播放进度和循环次数将被重置。
 
 ### `stopAnimation`
 
@@ -365,5 +341,5 @@ lynx.createSelectorQuery()
 
 ```
 
-Stops the animation, and it will reset the loop-count.
+停止动画，并重置循环次数。
 

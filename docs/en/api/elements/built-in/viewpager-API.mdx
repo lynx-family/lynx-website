@@ -1,0 +1,216 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  ClayWindowsOnly,
+  ClayMacOSOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## Attributes
+
+### `android-always-overscroll`
+
+<AndroidOnly />
+
+```tsx
+// @defaultValue: false
+'android-always-overscroll'?: boolean;
+```
+
+On Android, this attribute is used to control the interaction behavior when scrolling to the edges. Setting it to true enables the default bounce effect, while setting it to false disables the bounce effect. The default value is false.
+
+### `android-force-can-scroll`
+
+<AndroidOnly /> <VersionBadge>3.0</VersionBadge>
+
+```tsx
+// @defaultValue: false
+'android-force-can-scroll'?: boolean;
+```
+
+On Android, when this attribute is set to true, gestures are not passed to the parent container when the viewpager is already at the beginning or end.
+
+### `bounces`
+
+<IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: true
+bounces?: boolean;
+```
+
+Whether to enable the bounce effect. Note that this effect is not available on Android. On PC, only macOS supports this feature.
+
+### `enable-scroll`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
+
+```tsx
+// @defaultValue: true
+'enable-scroll'?: boolean;
+```
+
+Enables horizontal swipe gestures.
+
+### `initial-select-index`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
+
+```tsx
+// @defaultValue: 0
+'initial-select-index'?: number;
+```
+
+Selects the specified page during initialization, specifically when child nodes are first available.
+
+### `ios-gesture-direction`
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: false
+'ios-gesture-direction'?: boolean;
+```
+
+When enabled, horizontal swipe events from the outer container (a horizontal `UIScrollView`) can be recognized when the viewpager is already at the beginning or end.
+
+### `ios-gesture-offset`
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: 0
+'ios-gesture-offset'?: number;
+```
+
+When the finger touches within `[0, value]` from the left edge of the screen, the horizontal swipe gesture is ignored so the native iOS swipe-back gesture can respond directly. This is not available on Android.
+
+### `ios-recognized-gesture-class`
+
+<IOSOnly />
+
+```tsx
+'ios-recognized-gesture-class'?: string;
+```
+
+The class name of the `UIGestureRecognizer` that may be recognized simultaneously with the viewpager. This property is designed to let a `UIPanGesture` work together with the viewpager.
+
+### `ios-recognized-view-tag`
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: 0
+'ios-recognized-view-tag'?: number;
+```
+
+The `UIView` tag used to identify the view associated with the `UIGestureRecognizer` specified by `ios-recognized-gesture-class`. This property is designed to let a `UIPanGesture` work together with the viewpager.
+
+### `keep-item-view`
+
+<AndroidOnly /> <IOSOnly />
+
+```tsx
+// @defaultValue: false
+'keep-item-view'?: boolean;
+```
+
+Whether to enable lazy loading based on early exposure. Use it together with `lazyComponent`.
+
+## Events
+
+Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+
+### `bindchange`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindchange = (e: ViewPagerChangeEvent) => {};
+```
+
+| Field     | Type    | Optional | Default | Platforms                                                                                  | Since | Description                                           |
+| --------- | ------- | -------- | ------- | ------------------------------------------------------------------------------------------ | ----- | ----------------------------------------------------- |
+| index     | number  | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />                                   |       | Current index                                         |
+| isDragged | boolean | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.18</VersionBadge> | 2.18  | If this change event is caused by the user's dragging |
+
+Page change event. It is triggered only after the UI has fully switched to the next page.
+
+### `bindoffsetchange`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindoffsetchange = (e: ViewPagerOffsetChangeEvent) => {};
+```
+
+| Field  | Type   | Optional | Default | Platforms                                                | Since | Description          |
+| ------ | ------ | -------- | ------- | -------------------------------------------------------- | ----- | -------------------- |
+| offset | number | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |       | The scrolling offset |
+
+Callback for page transition progress. The value is expressed in page indexes. For example, moving from page 0 to page 1 yields values from 0 to 1, and moving from page 1 to page 2 yields values from 1 to 2.
+
+### `bindwillchange`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
+
+```tsx
+bindwillchange = (e: ViewPagerWillChangeEvent) => {};
+```
+
+| Field     | Type    | Optional | Default | Platforms                                                                                  | Since | Description                                           |
+| --------- | ------- | -------- | ------- | ------------------------------------------------------------------------------------------ | ----- | ----------------------------------------------------- |
+| index     | number  | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />                                   |       | Current index                                         |
+| isDragged | boolean | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.18</VersionBadge> | 2.18  | If this change event is caused by the user's dragging |
+
+Page will change event.
+
+## Methods
+
+Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+
+### `selectTab`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+.select('#id')
+.invoke({
+method: 'selectTab',
+params: {
+/**
+_ The index to be scrolled to.
+_ @Android
+_ @iOS
+_ @Harmony
+_ @PC
+_/
+index: number;
+/**
+_ Whether an animation is needed. The default value is true.
+_ @Android
+_ @iOS
+_ @Harmony
+_ @PC
+_/
+smooth: boolean;
+};
+success: function (res) {},
+fail: function (res) {},
+})
+.exec();
+
+```
+
+Scrolls to the specified page.
+```
