@@ -1,22 +1,20 @@
 ---
-title: 'Lynx 3.7: Desktop Support'
+title: 'Lynx 3.7: Desktop Support, SVG, AI, and ReactLynx Updates'
 date: 2026-03-28
 sidebar: false
 authors: ['lynx']
 badge_text: 'Lynx 3.7 is released!'
-description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for macOS and Windows. The full Lynx rendering engine — including 97% CSS property coverage, Flexbox, Grid, Linear Layout, animations, transitions, transforms, and filters — now runs natively on desktop. Alongside the rendering parity, Lynx 3.7 introduces desktop-specific capabilities including mouse events and window title bar customization.'
+description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for macOS and Windows, introduces the new SVG element, expands Lynx for AI with open-sourced skills and better observability, and updates ReactLynx with simpler External Bundle presets and shared runtime modules.'
 ---
 
-import { BlogHeader, CodeFold } from '@lynx';
-import { PackageManagerTabs } from '@theme';
-import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
-import { Tab, Tabs } from '@rspress/core/theme';
+import { BlogHeader } from '@lynx';
+import { Go } from '@lynx';
 
 <BlogHeader authors={['lynx']} />
 
 Lynx 3.7 is now officially released!
 
-This release brings official desktop platform support for **macOS** and **Windows**. The full Lynx rendering engine — including 97% CSS property coverage, Flexbox, Grid, Linear Layout, animations, transitions, transforms, and filters — now runs natively on desktop. Alongside the rendering parity, Lynx 3.7 introduces desktop-specific capabilities including mouse events and window title bar customization.
+This release brings official desktop platform support for **macOS** and **Windows**, expands **Lynx for AI** with open-sourced skills and better observability, and updates **ReactLynx** with simpler External Bundle presets and cross-thread shared modules.
 
 Let's take a closer look at what's new in Lynx 3.7.
 
@@ -28,93 +26,31 @@ Lynx officially supports **macOS** and **Windows** as first-class platforms. You
 
 ### Full Rendering Engine on Desktop
 
-The same rendering engine that powers Lynx on mobile is now available on macOS and Windows, with near-complete feature parity.
+The same rendering engine that powers Lynx on mobile is now available on macOS and Windows with near-complete feature parity.
 
-**CSS: 97% property coverage.** Out of 319 CSS properties supported by Lynx, 311 are available on desktop:
+**CSS: 97% property coverage.** 311 out of 319 supported Lynx CSS properties are now available on desktop, including:
 
-**Layout** — [Flexbox](/api/css/properties/display#flex), [Grid](/api/css/properties/display#grid), and Lynx's [Linear Layout](/api/css/properties/display#linear) all work on desktop. The full box model (`margin`, `padding`, `width`/`height`, `min-*`/`max-*`, `box-sizing`, `aspect-ratio`), positioning (`position`, `top`/`right`/`bottom`/`left`, `z-index`), and Lynx's [relative positioning](/api/css/properties/relative-id) system are all supported.
+- **Layout**: Flexbox, Grid, Linear Layout, the full box model, positioning, and relative positioning.
+- **Styling**: typography, borders, shadows, gradients, masks, filters, and [CSS custom properties](/api/css/properties/css-variable).
+- **Animation**: `animation`, `transition`, `@keyframes`, and the full transform stack.
 
-**Typography** — `font-family`, `font-size`, `font-weight`, `font-style`, `font-feature-settings`, `font-variation-settings`, `text-align`, `text-decoration`, `text-shadow`, `text-overflow`, `letter-spacing`, `line-height`, `text-stroke`, `vertical-align`, and `word-break`.
+**Elements: 73% attribute coverage.** 179 out of 246 element attributes are already available on desktop, with identical support on macOS and Windows. Most built-in elements work directly on desktop today. The current gaps are limited to a few platform-specific cases:
 
-**Visual & Styling** — Borders and `border-radius`, `box-shadow`, `opacity`, `overflow`, `clip-path`, `mask`, and `mask-image`. Colors and backgrounds including `background-color`/`image`/`size`/`position`, and gradient functions (`linear-gradient()`, `radial-gradient()`, `conic-gradient()`). [`filter`](/api/css/properties/filter) with `blur`, `brightness`, `contrast`, `grayscale`, `hue-rotate`, `invert`, `saturate`, `sepia`, and `drop-shadow`.
+- [`<image>`](/api/elements/built-in/image): desktop support currently excludes `prefetch-width` and `prefetch-height`.
+- [`<frame>`](/api/elements/built-in/frame): embedded sub-pages are not included on desktop yet.
+- [`<refresh>`](/api/elements/built-in/refresh): pull-to-refresh remains a mobile-oriented interaction pattern and is not included on desktop.
 
-**Animation** — Full `animation` and `transition` shorthand and individual properties, including `@keyframes`. `transform` and `transform-origin` supporting `translateX/Y/Z`, `scaleX/Y/Z`, `rotate`, `skew`, and `perspective`.
-
-Full support for [CSS custom properties](/api/css/properties/css-variable), including inline and nested variables introduced in Lynx 3.6.
-
-**Elements: 73% attribute coverage.** 179 out of 246 element attributes are available on desktop. macOS and Windows have identical element support with no platform-specific divergence.
-
-**Fully supported** — all attributes available on desktop:
-
-| Category         | Elements                                                                                                                                                                          |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Basic            | [`<view>`](/api/elements/built-in/view), [`<text>`](/api/elements/built-in/text), [`<nested-text>`](/api/elements/built-in/text), [`<nested-image>`](/api/elements/built-in/text) |
-| Input            | [`<input>`](/api/elements/built-in/input), [`<textarea>`](/api/elements/built-in/textarea)                                                                                        |
-| Scrolling        | [`<scroll-view>`](/api/elements/built-in/scroll-view), `<list>`, `<list-item>`                                                                                                    |
-| Media            | [`<svg>`](/api/elements/built-in/svg)                                                                                                                                             |
-| Overlay          | [`<overlay>`](/api/elements/built-in/overlay)                                                                                                                                     |
-| Paging & Folding | `<x-viewpager-ng>`, `<x-foldview-ng>`, `<x-refresh-view>`                                                                                                                         |
-
-**Partially supported** — element works, some attributes unavailable:
-
-| Element                                   | Unavailable on Desktop                            |
-| ----------------------------------------- | ------------------------------------------------- |
-| [`<image>`](/api/elements/built-in/image) | `prefetch-width`, `prefetch-height`, `tint-color` |
-
-**Not yet available** on desktop:
-
-| Element                                       | Notes                                |
-| --------------------------------------------- | ------------------------------------ |
-| [`<frame>`](/api/elements/built-in/frame)     | Embedded sub-pages not yet supported |
-| [`<refresh>`](/api/elements/built-in/refresh) | Pull-to-refresh not yet supported    |
-
-This means that most Lynx pages built for mobile can render on desktop with minimal or no changes to the front-end code. The unsupported elements are primarily mobile-oriented interaction patterns.
+In practice, most Lynx pages built for mobile can already render on desktop with minimal or no front-end changes.
 
 You can check the detailed compatibility status for every API on the [API Status Dashboard](/help/dashboard), which now includes **macOS** and **Windows** columns.
 
 ### Getting Started
 
-We've added step-by-step integration guides for both platforms in the [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) page, alongside the existing Android, iOS, HarmonyOS, and Web guides.
-
-Both platforms use a **CMake-based** build system and share the same C++ public API surface:
-
-<Tabs>
-<Tab label="macOS">
-
-- Language: Objective-C++ (`.mm`)
-- Parent view: `NSView`
-- Reference project: [LynxExplorer for macOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/macos/lynx_explorer)
-
-</Tab>
-<Tab label="Windows">
-
-- Language: C++ (`.cc`)
-- Parent window: `HWND`
-- Reference project: [LynxExplorer for Windows](https://github.com/lynx-family/lynx/tree/develop/explorer/windows/lynx_explorer)
-
-</Tab>
-</Tabs>
-
-The integration flow follows the same pattern on both platforms: configure dependencies, initialize the Lynx environment, construct a `LynxView`, and load a template bundle.
-
-```cpp
-// Construct LynxView — same API on macOS and Windows
-lynx::pub::LynxView::Builder builder;
-builder.SetScreenSize(width, height, scale)
-    .SetFrame(0, 0, width, height)
-    .SetParent(nativeWindow)
-    .SetGenericResourceFetcher(std::make_shared<MyResourceFetcher>());
-auto lynx_view = builder.Build();
-
-// Load a template bundle
-auto meta = std::make_shared<lynx::pub::LynxLoadMeta>();
-meta->SetUrl("https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle");
-lynx_view->LoadTemplate(meta);
-```
+For platform-specific integration details, see [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps), which now includes desktop guides alongside Android, iOS, HarmonyOS, and Web.
 
 ### Desktop-Specific Capabilities
 
-Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment.
+Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment, including mouse events, cursor support, and custom window drag regions.
 
 #### Mouse Events
 
@@ -138,7 +74,7 @@ These interactions should be previewed in a native desktop host. The web playgro
 
 #### `<title-bar-view>`: Window Drag Area
 
-[`<title-bar-view>`](/api/elements/built-in/title-bar-view) is a desktop-specific component for customizing the drag area of application windows. By setting the `moveable` attribute, you can define regions where users can click and drag to move the window.
+[`<title-bar-view>`](/api/elements/built-in/title-bar-view) lets you define draggable regions in a desktop window while keeping action areas interactive.
 
 Like mouse events, this capability is best demonstrated in a native macOS or Windows host rather than the web playground.
 
@@ -148,9 +84,7 @@ Like mouse events, this capability is best demonstrated in a native macOS or Win
 </title-bar-view>
 ```
 
-#### Platform Detection
-
-[`SystemInfo.platform`](/api/lynx-api/global/system-info) returns `'macOS'` or `'windows'` on desktop, allowing you to adapt your UI logic per platform:
+[`SystemInfo.platform`](/api/lynx-api/global/system-info) returns `'macOS'` or `'windows'` on desktop, so you can branch UI logic when needed:
 
 ```ts
 if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
@@ -160,8 +94,7 @@ if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
 
 ## SVG: Scalable Vector Graphics Element
 
-SVG is one of the core graphics capabilities in modern UI systems.
-It describes graphics in vector form, enabling lossless scaling, clear structure, controllable styling, and programmability. It is well suited for icons, curves, charts, decorative graphics, and interactive visual elements.
+SVG is now available as a standalone Lynx element in 3.7, bringing native vector rendering across platforms for icons, charts, and other resolution-independent graphics.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/svg-src.svg"
@@ -169,7 +102,7 @@ It describes graphics in vector form, enabling lossless scaling, clear structure
   style={{ width: '150px', height: '50px' }}
 />
 
-For a multi-platform framework like Lynx, which emphasizes high-fidelity rendering, state-driven updates, and adaptation across multiple resolutions and themes, SVG is key infrastructure for a cross-platform graphics system. In Lynx 3.7, we introduced a standalone `<svg>` element to provide native vector rendering across platforms:
+In Lynx 3.7, the standalone `<svg>` element supports both inline vector content and external SVG assets:
 
 <Go
   example="svg"
@@ -178,7 +111,7 @@ For a multi-platform framework like Lynx, which emphasizes high-fidelity renderi
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/svg_basic.png"
 />
 
-You can also load external SVG assets into a Lynx application:
+You can also load external SVG assets directly:
 
 ```ts
 <svg
@@ -187,9 +120,73 @@ You can also load external SVG assets into a Lynx application:
 />
 ```
 
-`<svg>` parses vector nodes on a dedicated thread, delivering excellent rendering performance while supporting [most SVG elements and attributes](/api/elements/built-in/svg).
+`<svg>` parses vector nodes on a dedicated thread and supports [most SVG elements and attributes](/api/elements/built-in/svg), with consistent rendering behavior across Android, iOS, HarmonyOS, macOS, Windows, and Web.
 
-In addition, Lynx guarantees full consistency between SVG parsing output and rendering command sequences at the source, and achieves highly consistent rendering behavior across Android, iOS, HarmonyOS, macOS, Windows, and Web through a lightweight platform adaptation layer.
+## Lynx for AI: Open-Sourced Skills
+
+Lynx 3.7 continues the **Lynx for AI** work introduced in 3.6, with more day-to-day workflows now available as open-source agent skills.
+
+The community skill collection at [/ai](/ai) can now be installed directly with:
+
+```bash
+npx -y skills add lynx-community/skills -s <skill-name>
+```
+
+The released skills cover three common areas:
+
+- **Page inspection and debugging** with DevTool Skill and [Lynx DevTool MCP](/ai/lynx-devtool-mcp).
+- **TypeScript and ReactLynx guidance** with setup, typing, event handling, and best-practice knowledge.
+- **Tracing and template tooling** with trace recording, trace analysis, TASM codec, and bytecode debug info mapping.
+
+The main improvement here is observability: coding agents can now inspect running pages, verify interactions, and debug their own changes with tighter feedback loops.
+
+## ReactLynx Updates
+
+Lynx 3.7 brings two practical improvements for ReactLynx projects: simpler External Bundle setup and easier code reuse across the background thread and main thread.
+
+### External Bundle Presets
+
+ReactLynx projects can now enable common external bundle settings with a single preset:
+
+```js
+import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginExternalBundle({
+      externalsPresets: {
+        reactlynx: true,
+      },
+      externals: {
+        './App.js': 'comp-lib.template.js',
+      },
+    }),
+  ],
+});
+```
+
+See the [External Bundle guide](/rspeedy/external-bundle) and the [`pluginExternalBundle`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle) API reference for more details.
+
+### Cross-Thread Shared Modules
+
+Shared modules make it easier to reuse plain logic in both runtimes through [Import Attributes](/api/react/Document.import-attributes):
+
+```js
+import { myHelper } from './utils.js' with { runtime: 'shared' };
+
+function App() {
+  useEffect(() => {
+    myHelper();
+  }, []);
+
+  function handleScroll() {
+    'main thread';
+    myHelper();
+  }
+}
+```
+
+This is a good fit for pure logic such as math utilities and formatting helpers. The module is bundled into both runtimes, but state remains isolated in each thread.
 
 ## Upgrade Guide
 
