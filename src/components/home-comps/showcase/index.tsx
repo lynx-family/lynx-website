@@ -6,6 +6,8 @@ import { MobileShow } from './mobile-show';
 import { TrustedBy } from '../trusted-by';
 import tiktokLogoBlack from './tiktok-logo-black.svg';
 import tiktokLogoWhite from './tiktok-logo-white.svg';
+import capcutLogoBlack from './capcut-logo-black.svg';
+import capcutLogoWhite from './capcut-logo-white.svg';
 
 const showCaseList = [
   {
@@ -52,31 +54,59 @@ const tryTitle = {
 
 const trySubtitle = {
   en: 'Build in minutes with our hands-on tutorials.',
-  zh: '跟随教程，几分钟上手。',
+  zh: '跟随教程，几分钟上手',
 } as const;
 
-export const ShowCase: React.FC = () => {
+export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
+  showMarquee = false,
+}) => {
   const lang = useLang() as 'en' | 'zh';
 
   return (
     <div className={styles['show-case-frame']}>
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
-        {lang === 'zh' ? '' : 'Trusted by'}
-        <img
-          src={tiktokLogoBlack}
-          alt="TikTok"
-          className={`${styles['tiktok-logo']} ${styles['tiktok-logo-light']}`}
-        />
-        <img
-          src={tiktokLogoWhite}
-          alt="TikTok"
-          className={`${styles['tiktok-logo']} ${styles['tiktok-logo-dark']}`}
-        />
-        {lang === 'zh' ? '同款' : ''}
+        <span className={`${styles['title-line']} ${styles['title-line-sub']}`}>
+          {lang === 'zh' ? '信赖之选' : 'Trusted by'}
+        </span>
+        <span className={styles['title-line']}>
+          <a
+            href="https://www.tiktok.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={tiktokLogoBlack}
+              alt="TikTok"
+              className={`${styles['tiktok-logo']} ${styles['logo-light']}`}
+            />
+            <img
+              src={tiktokLogoWhite}
+              alt="TikTok"
+              className={`${styles['tiktok-logo']} ${styles['logo-dark']}`}
+            />
+          </a>
+
+          <a
+            href="https://www.capcut.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={capcutLogoBlack}
+              alt="CapCut"
+              className={`${styles['capcut-logo']} ${styles['logo-light']}`}
+            />
+            <img
+              src={capcutLogoWhite}
+              alt="CapCut"
+              className={`${styles['capcut-logo']} ${styles['logo-dark']}`}
+            />
+          </a>
+        </span>
       </div>
       <p className={styles['section-subtitle']}>{sectionSubtitle[lang]}</p>
-      <TrustedBy />
+      {showMarquee && <TrustedBy />}
 
       {/* Act 2: Invitation */}
       <div className={styles['try-section']}>
