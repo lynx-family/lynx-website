@@ -70,27 +70,39 @@ export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
           {lang === 'zh' ? '' : 'Trusted by'}
         </span>
         <span className={styles['title-line']}>
-          <img
-            src={tiktokLogoBlack}
-            alt="TikTok"
-            className={`${styles['tiktok-logo']} ${styles['logo-light']}`}
-          />
-          <img
-            src={tiktokLogoWhite}
-            alt="TikTok"
-            className={`${styles['tiktok-logo']} ${styles['logo-dark']}`}
-          />
+          <a
+            href="https://www.tiktok.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={tiktokLogoBlack}
+              alt="TikTok"
+              className={`${styles['tiktok-logo']} ${styles['logo-light']}`}
+            />
+            <img
+              src={tiktokLogoWhite}
+              alt="TikTok"
+              className={`${styles['tiktok-logo']} ${styles['logo-dark']}`}
+            />
+          </a>
 
-          <img
-            src={capcutLogoBlack}
-            alt="CapCut"
-            className={`${styles['capcut-logo']} ${styles['logo-light']}`}
-          />
-          <img
-            src={capcutLogoWhite}
-            alt="CapCut"
-            className={`${styles['capcut-logo']} ${styles['logo-dark']}`}
-          />
+          <a
+            href="https://www.capcut.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={capcutLogoBlack}
+              alt="CapCut"
+              className={`${styles['capcut-logo']} ${styles['logo-light']}`}
+            />
+            <img
+              src={capcutLogoWhite}
+              alt="CapCut"
+              className={`${styles['capcut-logo']} ${styles['logo-dark']}`}
+            />
+          </a>
           {lang === 'zh' ? '同款' : ''}
         </span>
       </div>
