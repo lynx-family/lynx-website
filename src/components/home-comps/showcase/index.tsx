@@ -67,7 +67,7 @@ export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
       {/* Act 1: Credibility */}
       <div className={styles['section-title']}>
         <span className={`${styles['title-line']} ${styles['title-line-sub']}`}>
-          {lang === 'zh' ? '同款技术' : 'Trusted by'}
+          {lang === 'zh' ? '信赖之选' : 'Trusted by'}
         </span>
         <span className={styles['title-line']}>
           <a
