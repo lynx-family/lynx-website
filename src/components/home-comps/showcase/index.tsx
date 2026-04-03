@@ -54,7 +54,7 @@ const tryTitle = {
 
 const trySubtitle = {
   en: 'Build in minutes with our hands-on tutorials.',
-  zh: '跟随教程，几分钟上手。',
+  zh: '跟随教程，几分钟上手',
 } as const;
 
 export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
