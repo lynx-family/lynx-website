@@ -58,7 +58,7 @@ const trySubtitle = {
 } as const;
 
 export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
-  showMarquee = true,
+  showMarquee = false,
 }) => {
   const lang = useLang() as 'en' | 'zh';
 
