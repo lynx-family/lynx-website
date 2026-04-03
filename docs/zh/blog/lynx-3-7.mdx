@@ -1,22 +1,20 @@
 ---
-title: 'Lynx 3.7：桌面端支持'
+title: 'Lynx 3.7：桌面端、SVG、AI 与 ReactLynx 更新'
 date: 2026-03-28
 sidebar: false
 authors: ['lynx']
 badge_text: 'Lynx 3.7 发布了!'
-description: 'Lynx 3.7 已经正式发布！本次版本正式支持 macOS 和 Windows 桌面端平台。完整的 Lynx 渲染引擎——包括 97% 的 CSS 属性覆盖、Flexbox、Grid、Linear Layout、动画、过渡、变换和滤镜——现已在桌面端原生运行。在渲染能力对齐的基础上，Lynx 3.7 还引入了鼠标事件和窗口标题栏自定义等桌面端专属能力。'
+description: 'Lynx 3.7 已经正式发布！本次版本正式支持 macOS 和 Windows 桌面端平台，引入了新的 SVG 元件，扩展了面向 AI 的开源 Skills 与可观测性能力，并为 ReactLynx 带来了更简单的 External Bundle preset 和跨线程共享模块能力。'
 ---
 
-import { BlogHeader, CodeFold } from '@lynx';
-import { PackageManagerTabs } from '@theme';
-import { Go, Badge, Experimental, YouTubeIframe } from '@lynx';
-import { Tab, Tabs } from '@rspress/core/theme';
+import { BlogHeader } from '@lynx';
+import { Go } from '@lynx';
 
 <BlogHeader authors={['lynx']} />
 
 Lynx 3.7 已经正式发布！
 
-本次版本正式支持 **macOS** 和 **Windows** 桌面端平台。完整的 Lynx 渲染引擎——包括 97% 的 CSS 属性覆盖、Flexbox、Grid、Linear Layout、动画、过渡、变换和滤镜——现已在桌面端原生运行。在渲染能力对齐的基础上，Lynx 3.7 还引入了鼠标事件和窗口标题栏自定义等桌面端专属能力。
+本次版本正式支持 **macOS** 和 **Windows** 桌面端平台，扩展了 **Lynx for AI** 的开源 Skills 与可观测性能力，并为 **ReactLynx** 带来了更简单的 External Bundle preset 和跨线程共享模块能力。
 
 下面我们一起来看看 Lynx 3.7 带来了哪些新变化。
 
@@ -30,91 +28,29 @@ Lynx 正式支持 **macOS** 和 **Windows** 作为一级平台。你现在可以
 
 驱动 Lynx 移动端的同一套渲染引擎现已在 macOS 和 Windows 上可用，具备近乎完整的特性对齐。
 
-**CSS：97% 属性覆盖率。** Lynx 支持的 319 个 CSS 属性中，311 个在桌面端可用：
+**CSS：97% 属性覆盖率。** Lynx 支持的 319 个 CSS 属性中，311 个已在桌面端可用，包括：
 
-**布局** — [Flexbox](/api/css/properties/display#flex)、[Grid](/api/css/properties/display#grid) 和 Lynx 自有的 [Linear Layout](/api/css/properties/display#linear) 均可在桌面端使用。完整的盒模型（`margin`、`padding`、`width`/`height`、`min-*`/`max-*`、`box-sizing`、`aspect-ratio`）、定位（`position`、`top`/`right`/`bottom`/`left`、`z-index`）和 Lynx 的[相对定位](/api/css/properties/relative-id)系统均已支持。
+- **布局**：Flexbox、Grid、Linear Layout、完整盒模型、定位与相对定位。
+- **样式**：排版、边框、阴影、渐变、蒙版、滤镜，以及 [CSS 自定义属性](/api/css/properties/css-variable)。
+- **动画**：`animation`、`transition`、`@keyframes` 和完整的 transform 能力。
 
-**排版** — `font-family`、`font-size`、`font-weight`、`font-style`、`font-feature-settings`、`font-variation-settings`、`text-align`、`text-decoration`、`text-shadow`、`text-overflow`、`letter-spacing`、`line-height`、`text-stroke`、`vertical-align` 和 `word-break`。
+**元素：73% 属性覆盖率。** 246 个元素属性中已有 179 个在桌面端可用，macOS 和 Windows 的支持范围保持一致。大多数内建元件已经可以直接在桌面端使用，当前边界主要集中在少数平台特定场景：
 
-**视觉与样式** — 边框和 `border-radius`、`box-shadow`、`opacity`、`overflow`、`clip-path`、`mask` 和 `mask-image`。颜色与背景包括 `background-color`/`image`/`size`/`position`，以及渐变函数（`linear-gradient()`、`radial-gradient()`、`conic-gradient()`）。[`filter`](/api/css/properties/filter) 支持 `blur`、`brightness`、`contrast`、`grayscale`、`hue-rotate`、`invert`、`saturate`、`sepia` 和 `drop-shadow`。
+- [`<image>`](/api/elements/built-in/image)：桌面端当前暂未覆盖 `prefetch-width` 和 `prefetch-height`。
+- [`<frame>`](/api/elements/built-in/frame)：暂未纳入嵌入子页面能力。
+- [`<refresh>`](/api/elements/built-in/refresh)：下拉刷新仍然属于偏移动端的交互模式，因此当前未纳入桌面端支持范围。
 
-**动画** — 完整的 `animation` 和 `transition` 简写及各独立属性，包括 `@keyframes`。`transform` 和 `transform-origin` 支持 `translateX/Y/Z`、`scaleX/Y/Z`、`rotate`、`skew` 和 `perspective`。
-
-完整的 [CSS 自定义属性](/api/css/properties/css-variable)支持，包括 Lynx 3.6 引入的内联和嵌套变量。
-
-**元素：73% 属性覆盖率。** 246 个元素属性中有 179 个在桌面端可用。macOS 和 Windows 的元素支持完全一致，无平台差异。
-
-**完全支持** —— 所有属性在桌面端均可用：
-
-| 类别       | 元素                                                                                                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 基础       | [`<view>`](/api/elements/built-in/view)、[`<text>`](/api/elements/built-in/text)、[`<nested-text>`](/api/elements/built-in/text)、[`<nested-image>`](/api/elements/built-in/text) |
-| 输入       | [`<input>`](/api/elements/built-in/input)、[`<textarea>`](/api/elements/built-in/textarea)                                                                                        |
-| 滚动       | [`<scroll-view>`](/api/elements/built-in/scroll-view)、`<list>`、`<list-item>`                                                                                                    |
-| 媒体       | [`<svg>`](/api/elements/built-in/svg)                                                                                                                                             |
-| 浮层       | [`<overlay>`](/api/elements/built-in/overlay)                                                                                                                                     |
-| 翻页与折叠 | `<x-viewpager-ng>`、`<x-foldview-ng>`、`<x-refresh-view>`                                                                                                                         |
-
-**部分支持** —— 元素可用，部分属性暂不可用：
-
-| 元素                                      | 桌面端不可用的属性                                |
-| ----------------------------------------- | ------------------------------------------------- |
-| [`<image>`](/api/elements/built-in/image) | `prefetch-width`、`prefetch-height`、`tint-color` |
-
-**暂不可用**：
-
-| 元素                                          | 说明               |
-| --------------------------------------------- | ------------------ |
-| [`<frame>`](/api/elements/built-in/frame)     | 嵌入子页面暂不支持 |
-| [`<refresh>`](/api/elements/built-in/refresh) | 下拉刷新暂不支持   |
-
-这意味着大多数为移动端构建的 Lynx 页面可以在桌面端渲染，几乎无需修改前端代码。不可用的元素主要是面向移动端的交互模式。
+这意味着大多数为移动端构建的 Lynx 页面已经可以在桌面端渲染，前端代码通常只需极少修改甚至无需修改。
 
 你可以在 [API Status Dashboard](/help/dashboard) 上查看每个 API 的详细兼容状态，现已包含 **macOS** 和 **Windows** 列。
 
 ### 快速上手
 
-我们在[将 Lynx 集成到现有应用](/guide/start/integrate-with-existing-apps)页面中新增了两个平台的详细接入指南，与现有的 Android、iOS、HarmonyOS 和 Web 指南并列。
-
-两个平台均采用 **CMake** 构建体系，并共享同一套 C++ 公共 API：
-
-<Tabs>
-<Tab label="macOS">
-
-- 语言：Objective-C++（`.mm`）
-- 父视图：`NSView`
-- 参考项目：[LynxExplorer for macOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/macos/lynx_explorer)
-
-</Tab>
-<Tab label="Windows">
-
-- 语言：C++（`.cc`）
-- 父窗口：`HWND`
-- 参考项目：[LynxExplorer for Windows](https://github.com/lynx-family/lynx/tree/develop/explorer/windows/lynx_explorer)
-
-</Tab>
-</Tabs>
-
-两个平台的接入流程保持一致：配置依赖、初始化 Lynx 环境、构造 `LynxView`、加载模板 Bundle。
-
-```cpp
-// 构造 LynxView —— macOS 和 Windows 使用相同的 API
-lynx::pub::LynxView::Builder builder;
-builder.SetScreenSize(width, height, scale)
-    .SetFrame(0, 0, width, height)
-    .SetParent(nativeWindow)
-    .SetGenericResourceFetcher(std::make_shared<MyResourceFetcher>());
-auto lynx_view = builder.Build();
-
-// 加载模板 Bundle
-auto meta = std::make_shared<lynx::pub::LynxLoadMeta>();
-meta->SetUrl("https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle");
-lynx_view->LoadTemplate(meta);
-```
+桌面端的接入细节可直接查看[将 Lynx 集成到现有应用](/guide/start/integrate-with-existing-apps)。该页面现已包含与 Android、iOS、HarmonyOS、Web 并列的桌面端指南。
 
 ### 桌面端专属能力
 
-在渲染能力对齐之外，Lynx 3.7 还增加了面向桌面环境的专属能力。
+在渲染能力对齐之外，Lynx 3.7 还增加了面向桌面环境的专属能力，包括鼠标事件、cursor 支持以及自定义窗口拖拽区域。
 
 #### 鼠标事件
 
@@ -138,7 +74,7 @@ lynx_view->LoadTemplate(meta);
 
 #### `<title-bar-view>`：窗口拖拽区域
 
-[`<title-bar-view>`](/api/elements/built-in/title-bar-view) 是一个桌面端专属组件，用于自定义应用窗口的拖拽区域。通过设置 `moveable` 属性，你可以定义用户可以点击拖动来移动窗口的区域。
+[`<title-bar-view>`](/api/elements/built-in/title-bar-view) 用于定义桌面窗口中的可拖拽区域，同时保留按钮等操作区域的正常交互。
 
 和鼠标事件一样，这个能力更适合在原生 macOS / Windows 宿主中演示，而不是网页 playground。
 
@@ -146,9 +82,7 @@ lynx_view->LoadTemplate(meta);
 <title-bar-view moveable={true}>{/* 自定义标题栏内容 */}</title-bar-view>
 ```
 
-#### 平台检测
-
-[`SystemInfo.platform`](/api/lynx-api/global/system-info) 在桌面端会返回 `'macOS'` 或 `'windows'`，允许你根据平台适配 UI 逻辑：
+[`SystemInfo.platform`](/api/lynx-api/global/system-info) 在桌面端会返回 `'macOS'` 或 `'windows'`，便于你按平台分支 UI 逻辑：
 
 ```ts
 if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
@@ -158,8 +92,7 @@ if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
 
 ## SVG 可缩放矢量图形元件
 
-SVG 是现代 UI 系统中的核心图形能力之一。
-它以矢量形式描述图形，具备无损缩放、结构清晰、样式可控和可编程等特点，适用于图标、曲线、图表、装饰图形和交互式视觉元素等多种场景。
+Lynx 3.7 新增了独立的 `<svg>` 元件，为图标、图表和其他分辨率无关的图形场景提供跨平台的原生矢量渲染能力。
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/svg-src.svg"
@@ -167,7 +100,7 @@ SVG 是现代 UI 系统中的核心图形能力之一。
   style={{ width: '150px', height: '50px' }}
 />
 
-对于 Lynx 这样强调高保真还原、状态驱动渲染和多分辨率及主题适配的多平台适配框架而言，SVG 是跨端图形系统的关键基础设施。因此，在 Lynx 3.7 中，我们引入`<svg>`独立元件，提供跨平台的原生矢量渲染能力:
+在 Lynx 3.7 中，`<svg>` 既支持内联矢量内容，也支持加载外部 SVG 资源：
 
 <Go
   example="svg"
@@ -176,7 +109,7 @@ SVG 是现代 UI 系统中的核心图形能力之一。
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/svg_basic.png"
 />
 
-你还可以加载外部 SVG 到 Lynx 应用中：
+你也可以直接加载外部 SVG 资源：
 
 ```ts
 <svg
@@ -185,9 +118,73 @@ SVG 是现代 UI 系统中的核心图形能力之一。
 />
 ```
 
-`<svg>` 在独立的线程中解析矢量节点，在支持[绝大多数 SVG 元素及属性](/api/elements/built-in/svg)的同时，也确保了优异的渲染性能。
+`<svg>` 会在独立线程中解析矢量节点，支持[绝大多数 SVG 元素及属性](/api/elements/built-in/svg)，并在 Android、iOS、HarmonyOS、macOS、Windows 和 Web 之间保持高度一致的渲染行为。
 
-此外，Lynx 在源头保证了 SVG 解析产物和渲染指令序列的完全一致，并通过轻量化的平台适配层，实现了在 Android、iOS、HarmonyOS、macOS、Windows 和 Web 各端渲染行为的高度统一。
+## 面向 AI 的 Lynx：开源 Skills
+
+Lynx 3.7 延续了 3.6 中 **Lynx for AI** 的方向，把更多日常开发流程沉淀为可直接使用的开源 agent skills。
+
+你现在可以在 [/ai](/ai) 相关资源之外，直接通过下面的命令安装社区维护的技能集合：
+
+```bash
+npx -y skills add lynx-community/skills -s <skill-name>
+```
+
+这批已发布的 skills 主要覆盖三类任务：
+
+- **页面检查与调试**：DevTool Skill 与 [Lynx DevTool MCP](/ai/lynx-devtool-mcp)。
+- **TypeScript 与 ReactLynx 指导**：环境配置、类型、事件处理与最佳实践。
+- **追踪与模板工具链**：trace 录制、trace 分析、TASM codec 和字节码调试映射。
+
+这一轮最大的提升在于可观测性：coding agent 不仅能看代码、写代码，也能直接检查运行中的页面、验证交互并缩短自调试链路。
+
+## ReactLynx 更新
+
+Lynx 3.7 为 ReactLynx 带来了两个更偏工程效率的更新：更简单的 External Bundle 配置，以及更顺手的跨线程逻辑复用方式。
+
+### External Bundle Preset
+
+ReactLynx 项目现在可以通过一个 preset 快速启用常见的 external bundle 配置：
+
+```js
+import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginExternalBundle({
+      externalsPresets: {
+        reactlynx: true,
+      },
+      externals: {
+        './App.js': 'comp-lib.template.js',
+      },
+    }),
+  ],
+});
+```
+
+如果需要进一步自定义配置，可以结合 [External Bundle 指南](/rspeedy/external-bundle) 和 [`pluginExternalBundle`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle) API 文档使用。
+
+### 跨线程共享模块
+
+通过 [Import Attributes](/api/react/Document.import-attributes) 声明共享模块后，普通逻辑可以在两个 runtime 中直接复用：
+
+```js
+import { myHelper } from './utils.js' with { runtime: 'shared' };
+
+function App() {
+  useEffect(() => {
+    myHelper();
+  }, []);
+
+  function handleScroll() {
+    'main thread';
+    myHelper();
+  }
+}
+```
+
+这类能力非常适合数学计算、格式化逻辑等纯逻辑代码。模块会同时打包到两个 runtime 中，但各线程内的状态仍然彼此隔离。
 
 ## 升级指南
 
