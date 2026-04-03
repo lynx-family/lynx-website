@@ -39,6 +39,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
   {
+    value: 'lynx-ui',
+    label: 'Lynx UI',
+    description: 'Lynx UI component library',
+    descriptionZh: 'Lynx UI 组件库',
+    home: '/lynx-ui/',
+    url: '/lynx-ui/Guides/introduction',
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
+    },
+  },
+  {
     value: 'react',
     label: 'ReactLynx',
     description: 'Build Lynx apps with React',
@@ -111,7 +124,8 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '',
     url: '',
     logo: {
-      light: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
     },
   },

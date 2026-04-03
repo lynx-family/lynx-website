@@ -78,8 +78,19 @@ export default defineConfig({
         ),
         '@site': path.join(__dirname),
         '@': path.join(__dirname, 'src'),
-        '@assets': path.join(__dirname, 'public', 'assets'),
-        '@lynx': path.join(__dirname, 'src', 'components'),
+        '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
+        '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
+        '@lynx': [
+          path.join(__dirname, 'src', 'components'),
+          path.join(__dirname, 'src', 'lynx-ui'),
+        ],
+        '@lynx/showCases': path.join(
+          __dirname,
+          'src',
+          'lynx-ui',
+          'components',
+          'showCases',
+        ),
       },
     },
     source: {
@@ -200,7 +211,10 @@ export default defineConfig({
     defaultWrapCode: false,
     link: {
       checkDeadLinks: {
-        excludes: ['/guide/spec.html?ts=1743416098203#element%E2%91%A0'],
+        excludes: [
+          '/guide/spec.html?ts=1743416098203#element%E2%91%A0',
+          '/Components/Components/**',
+        ],
       },
     },
     shiki: {
