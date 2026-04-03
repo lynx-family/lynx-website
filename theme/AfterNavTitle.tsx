@@ -3,7 +3,12 @@ import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme-original';
-import { SUBSITES_CONFIG, getLangPrefix } from '@site/shared-route-config';
+import {
+  CORE_SUBSITES,
+  ECOSYSTEM_SUBSITES,
+  SUBSITES_CONFIG,
+  getLangPrefix,
+} from '@site/shared-route-config';
 import { Separator } from '@/components/ui/separator';
 import { SubsiteLogo, SubsiteView } from './subsite-ui';
 import { VersionIndicator } from './VersionIndicator';
@@ -14,8 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const internalSubsites = SUBSITES_CONFIG.filter((s) => !s.external);
-const externalSubsites = SUBSITES_CONFIG.filter((s) => s.external);
+const internalSubsites = CORE_SUBSITES;
+const externalSubsites = ECOSYSTEM_SUBSITES;
 
 function SubsiteItem({
   subsite,
@@ -41,7 +46,10 @@ function SubsiteItem({
     >
       <SubsiteView subsite={subsite} lang={lang} size={size} />
       {showArrow && (
-        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={1.5} />
+        <ArrowUpRight
+          className="h-3.5 w-3.5 text-muted-foreground shrink-0"
+          strokeWidth={1.5}
+        />
       )}
     </div>
   );
