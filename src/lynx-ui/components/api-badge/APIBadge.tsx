@@ -10,7 +10,7 @@
  * - useSWR or a shared contextual store to ensure we are not over-fetching.
  */
 import type LCD from './types';
-import { getNestedValue } from '../api-table/FetchingCompatTable';
+import { getNestedValue } from '@/components/api-table/FetchingCompatTable';
 import { PlatformBadge } from './PlatformBadge';
 import { StatusBadge } from './StatusBadge';
 import React from 'react';

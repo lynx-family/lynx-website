@@ -16,7 +16,7 @@ export function getFullPlatformName(platform: LCD.PlatformName): string {
 }
 
 // TODO(xuan.huang): move this to a common place.
-import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/compat-table/headers';
+import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '@/components/api-table/compat-table/headers';
 import React from 'react';
 
 /**
