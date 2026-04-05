@@ -4,6 +4,6 @@
 
 export { UIApiTable, ClassRenderPropTable } from './ui-api-table';
 
-export { GoWithSchema as Go } from './GoWithSchema';
+export { Go } from '@/components/go/Go';
 
 export { Columns } from '@/components/Columns';
