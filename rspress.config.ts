@@ -80,11 +80,9 @@ export default defineConfig({
         '@': path.join(__dirname, 'src'),
         '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
         '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
-        '@lynx': [
-          path.join(__dirname, 'src', 'components'),
-          path.join(__dirname, 'src', 'lynx-ui'),
-        ],
-        '@lynx/showCases': path.join(
+        '@lynx': path.join(__dirname, 'src', 'components'),
+        '@lynx-ui': path.join(__dirname, 'src', 'lynx-ui', 'components'),
+        '@lynx-ui/showCases': path.join(
           __dirname,
           'src',
           'lynx-ui',

@@ -98,12 +98,3 @@ export {
   Tip,
   Warning,
 } from './Callout';
-
-export {
-  UIApiTable,
-  ClassRenderPropTable,
-  DocSwitcher,
-  ConditionalDocRenderer,
-  GoIcon,
-  GoRightFooter,
-} from '../lynx-ui/components';

@@ -2,7 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import React from 'react';
 import { descriptions } from './featuresDescriptions';
@@ -28,13 +27,12 @@ export function CodeComparison({
   lightTheme,
   darkTheme,
 }: CodeComparisonProps) {
-  const { theme, systemTheme } = useTheme();
+  const isDark = useDark();
   const [highlightedBefore, setHighlightedBefore] = useState('');
   const [highlightedAfter, setHighlightedAfter] = useState('');
 
   useEffect(() => {
-    const currentTheme = theme === 'system' ? systemTheme : theme;
-    const selectedTheme = currentTheme === 'dark' ? darkTheme : lightTheme;
+    const selectedTheme = isDark ? darkTheme : lightTheme;
 
     async function highlightCode() {
       try {
@@ -56,15 +54,7 @@ export function CodeComparison({
       }
     }
     highlightCode();
-  }, [
-    theme,
-    systemTheme,
-    beforeCode,
-    afterCode,
-    language,
-    lightTheme,
-    darkTheme,
-  ]);
+  }, [isDark, beforeCode, afterCode, language, lightTheme, darkTheme]);
 
   const renderCode = (code: string, highlighted: string) => {
     if (highlighted) {

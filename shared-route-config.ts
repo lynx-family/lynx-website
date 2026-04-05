@@ -46,9 +46,8 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/lynx-ui/',
     url: '/lynx-ui/Guides/introduction',
     logo: {
-      light:
-        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
-      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
+      light: '/assets/lynx-ui-icon-color-light.svg',
+      dark: '/assets/lynx-ui-icon-color-dark.svg',
     },
   },
   {
