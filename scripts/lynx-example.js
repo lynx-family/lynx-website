@@ -53,7 +53,10 @@ const exampleGitBaseUrl =
   'https://github.com/lynx-family/lynx-examples/tree/main';
 
 const isPackCopy = true;
-const linkPath = path.join(currentDir, 'docs/public', 'lynx-examples');
+const linkPath = path.join(
+  currentDir,
+  process.env.LINK_PATH || 'docs/public/lynx-examples',
+);
 const ignoreDirs = ['node_modules', '.git', '.turbo'];
 const ignoreFiles = ['.DS_Store', 'LICENSE'];
 

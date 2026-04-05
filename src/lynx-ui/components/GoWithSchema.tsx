@@ -2,8 +2,13 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import path from 'path';
 import React, { ComponentProps } from 'react';
-import { Go } from '@/components/go/Go';
+import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
+import type { GoProps } from '@lynx-js/go-web';
+import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
+import Callout from '@/components/Callout';
+import { ExamplePreview as SSGComponent } from '@/components/go/example-preview-ssg';
 
 enum EAppType {
   'LYNX' = 'LYNX',
@@ -105,8 +110,42 @@ const optionsData = {
   },
 };
 
-type GoProps = ComponentProps<typeof Go>;
+const ErrorComponent = ({
+  example,
+  exampleBaseUrl,
+}: {
+  example: string;
+  exampleBaseUrl: string;
+}) => (
+  <Callout type="danger" title="Error Loading Example Data">
+    <p>
+      Error loading Example data for example: <code>{example}</code>
+      <br />
+      Please check if the file <code>example-metadata.json</code> exists in{' '}
+      <code>
+        {exampleBaseUrl}/{example}
+      </code>
+    </p>
+  </Callout>
+);
+
+const lynxUiConfig = {
+  ...rspressAdapter,
+  exampleBasePath: '/lynx-ui-examples',
+  ssgExampleRoot: path?.join?.(__dirname, '../../docs/public/lynx-ui-examples'),
+  explorerUrl: {
+    cn: '/zh/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
+    en: '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
+  },
+  explorerText: 'Lynx Explorer',
+  ErrorComponent,
+  SSGComponent,
+};
 
 export const GoWithSchema = (props: GoProps) => {
-  return <Go {...props} schemaOptions={optionsData} />;
+  return (
+    <GoConfigProvider config={lynxUiConfig}>
+      <GoBase {...props} schemaOptions={optionsData} />
+    </GoConfigProvider>
+  );
 };
