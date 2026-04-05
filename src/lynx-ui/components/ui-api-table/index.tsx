@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { Space, Table, Typography, Popover } from '@douyinfe/semi-ui';
-import { PlatformBadge } from '../api-badge';
+import { PlatformBadge } from '@/components/api-badge';
 import React from 'react';
 
 import { useLang } from '@rspress/core/runtime';
