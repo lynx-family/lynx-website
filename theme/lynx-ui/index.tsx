@@ -12,8 +12,6 @@ import {
 import { Banner } from '@rspress/core/theme-original';
 import { ClearAPI } from './ClearApi';
 import { Compatibility } from './Compatibility';
-import { Demos } from './Demos';
-
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
 
@@ -49,7 +47,6 @@ const HomeLayout = () => {
         <div className="home-layout-container" style={{ position: 'relative' }}>
           <BaseHomeLayout />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <Demos />
             <ClearAPI />
             <ConsistencyAndPerformance />
             <Compatibility />
