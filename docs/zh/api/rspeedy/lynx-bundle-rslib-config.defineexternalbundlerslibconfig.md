@@ -4,7 +4,7 @@
 
 ## defineExternalBundleRslibConfig() function
 
-Get the rslib config for building Lynx external bundles.
+Get the Rslib config for building Lynx external bundles.
 
 **Signature:**
 
@@ -16,73 +16,32 @@ export declare function defineExternalBundleRslibConfig(userLibConfig: ExternalB
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  userLibConfig | ExternalBundleLibConfig |  |
-|  encodeOptions | [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | _(Optional)_ |
+|  userLibConfig | [ExternalBundleLibConfig](./lynx-bundle-rslib-config.externalbundlelibconfig.md) | User-provided Rslib config. |
+|  encodeOptions | [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | Optional encode options. |
 
 **Returns:**
 
-RslibConfig
+`RslibConfig`
 
-## Example 1
+## Example
 
-If you want to build an external bundle which use in Lynx background thread, you can use the following code:
-
-```js
-// rslib.config.js
-import { defineExternalBundleRslibConfig, LAYERS } from '@lynx-js/lynx-bundle-rslib-config'
-
-export default defineExternalBundleRslibConfig({
-  id: 'utils-lib',
-  source: {
-    entry: {
-      utils: {
-        import: './src/utils.ts',
-        layer: LAYERS.BACKGROUND,
-      }
-    }
-  }
-})
-```
-Then you can use `lynx.loadScript('utils', { bundleName: 'utils-lib-bundle-url' })` in background thread.
-
-## Example 2
-
-If you want to build an external bundle which use in Lynx main thread, you can use the following code:
-
-```js
-// rslib.config.js
-import { defineExternalBundleRslibConfig, LAYERS } from '@lynx-js/lynx-bundle-rslib-config'
-
-export default defineExternalBundleRslibConfig({
-  id: 'utils-lib',
-  source: {
-    entry: {
-      utils: {
-        import: './src/utils.ts',
-        layer: LAYERS.MAIN_THREAD,
-      }
-    }
-  }
-})
-```
-Then you can use `lynx.loadScript('utils', { bundleName: 'utils-lib-bundle-url' })` in main-thread.
-
-## Example 3
-
-If you want to build an external bundle which use both in Lynx main thread and background thread. You don't need to set the layer.
-
-```js
-// rslib.config.js
+```ts
 import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config'
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 
 export default defineExternalBundleRslibConfig({
-  id: 'utils-lib',
+  id: 'comp-lib',
   source: {
     entry: {
-      utils: './src/utils.ts',
+      './App.js': './external-bundle/CompLib.tsx',
     },
-  }
+  },
+  plugins: [pluginReactLynx()],
+  output: {
+    externalsPresets: {
+      reactlynx: true,
+    },
+    globalObject: 'globalThis',
+  },
 })
 ```
-Then you can use `lynx.loadScript('utils', { bundleName: 'utils-lib-bundle-url' })` in background thread and `lynx.loadScript('utils__main-thread', { bundleName: 'utils-lib-bundle-url' })` in main-thread.
-

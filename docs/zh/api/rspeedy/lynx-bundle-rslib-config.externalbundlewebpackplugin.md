@@ -4,23 +4,22 @@
 
 ## ExternalBundleWebpackPlugin class
 
-The webpack plugin to build and emit the external bundle.
+Webpack plugin that builds and emits an external bundle.
 
 **Signature:**
 
 ```typescript
-export declare class ExternalBundleWebpackPlugin 
+export declare class ExternalBundleWebpackPlugin
 ```
 
 ## Constructors
 
-|  Constructor | Modifiers | Description |
-|  --- | --- | --- |
-|  [(constructor)(options)](./lynx-bundle-rslib-config.externalbundlewebpackplugin._constructor_.md) |  | Constructs a new instance of the <code>ExternalBundleWebpackPlugin</code> class |
+|  Constructor | Description |
+|  --- | --- |
+|  `new ExternalBundleWebpackPlugin(options)` | Constructs a new instance of `ExternalBundleWebpackPlugin`. |
 
 ## Methods
 
-|  Method | Modifiers | Description |
+|  Method | Return Type | Description |
 |  --- | --- | --- |
-|  [apply(compiler)](./lynx-bundle-rslib-config.externalbundlewebpackplugin.apply.md) |  |  |
-
+|  `apply(compiler)` | `void` | Apply the plugin to the compiler. |
