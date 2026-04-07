@@ -6,8 +6,6 @@
 
 Create a rsbuild plugin for loading external bundles.
 
-This plugin wraps the externals-loading-webpack-plugin and automatically retrieves layer names from the react-rsbuild-plugin via api.useExposed.
-
 **Signature:**
 
 ```typescript
@@ -18,17 +16,15 @@ export declare function pluginExternalBundle(options: PluginExternalBundleOption
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  options | [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) |  |
+|  options | [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) | Plugin options. |
 
 **Returns:**
 
-RsbuildPlugin
+`RsbuildPlugin`
 
 ## Example
 
-
 ```ts
-// lynx.config.ts
 import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin'
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 
@@ -36,15 +32,14 @@ export default {
   plugins: [
     pluginReactLynx(),
     pluginExternalBundle({
-      externals: {
-        lodash: {
-          url: 'http://lodash.lynx.bundle',
-          background: { sectionPath: 'background' },
-          mainThread: { sectionPath: 'mainThread' },
-        },
+      externalsPresets: {
+        reactlynx: true,
       },
+      externals: {
+        './App.js': 'comp-lib.lynx.bundle',
+      },
+      globalObject: 'globalThis',
     }),
   ],
 }
 ```
-

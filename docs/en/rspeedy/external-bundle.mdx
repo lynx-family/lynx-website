@@ -1,400 +1,256 @@
 import { PackageManagerTabs } from '@theme';
-import { VersionBadge } from '@lynx';
+import { Go, VersionBadge } from '@lynx';
 
 # External Bundle
 
 <VersionBadge v={3.5} />
 
-External Bundle packages code into standalone modules that can be dynamically loaded across different Lynx applications to reduce bundle size. The usage process involves two steps:
-
-1. **[`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config)** - Used to build External Bundle
-2. **[`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin)** - Used to load External Bundle in applications
-
 :::info
-
-Differences from [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit):
-
-1. **Thread Support**: Chunk Splitting only supports background thread code splitting, while External Bundle supports both background thread and main thread
-2. **Cross-Application Sharing**: External Bundle can be shared across multiple Lynx applications to reduce duplicate code, while Chunk Splitting artifacts are only used within the current application
-3. **Packaging Method**: Chunk Splitting is automatically split during build and deployed together with the application; External Bundle requires separate building, which can be deployed with the application artifacts or uploaded to CDN or server for dynamic loading at runtime
-4. **Use Cases**: External Bundle is suitable for common libraries shared across applications (e.g., `lodash-es`, `moment`); Chunk Splitting is suitable for code splitting optimization within a single application
-
+Loading CSS files from an External Bundle requires Lynx 3.7 or later.
 :::
 
-## 1. Building External Bundle
+External Bundle lets you build a Lynx bundle once and load it from multiple Lynx apps at runtime. Use it when you want to share ReactLynx components or common business bundles across apps.
 
-### Installation
+Compared with [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit), External Bundle is for cross-application reuse, while Chunk Splitting is for splitting code inside one app.
 
-<PackageManagerTabs command="install @lynx-js/lynx-bundle-rslib-config @rslib/core -D" />
+This workflow has two parts:
 
-### Basic Usage
+1. Use [`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config) to build the external bundle.
+2. Use [`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin) to load it in the host app.
 
-Use [`defineExternalBundleRslibConfig()`](/api/rspeedy/lynx-bundle-rslib-config.defineexternalbundlerslibconfig) in `rslib.config.ts` to define the build configuration for External Bundle.
+## Install
 
-#### Example 1: Support Both Background Thread and Main Thread
+<PackageManagerTabs command="install @lynx-js/lynx-bundle-rslib-config @lynx-js/external-bundle-rsbuild-plugin @lynx-js/react-umd @rslib/core -D" />
 
-```js title="rslib.config.ts"
+## Build An External Bundle
+
+For a ReactLynx component bundle, the recommended setup is:
+
+```ts title="rslib-comp-lib.config.ts"
 import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-
-export default defineExternalBundleRslibConfig({
-  id: 'lodash-es',
-  source: {
-    entry: {
-      'lodash-es': require.resolve('lodash-es'),
-    },
-  },
-});
-```
-
-Run the following command to build:
-
-<PackageManagerTabs command="exec rslib build" />
-
-The output file is `dist/lodash-es.lynx.bundle`, with the file name prefix determined by the `id` configuration. You can upload `.lynx.bundle` files to a CDN or server.
-
-:::tip
-Since Lynx background thread and main thread have different artifact formats, the current version builds artifacts separately for both threads. The `dist/lodash-es.lynx.bundle` artifact content looks like:
-
-```js
-{
-  'lodash-es': `// background code`,                // Background thread artifact
-  'lodash-es__main-thread': `// main-thread code`,  // `<entry>__main-thread` is an automatically generated suffix, representing the main thread artifact
-}
-```
-
-Future versions will support unified code artifacts to further reduce bundle size.
-:::
-
-:::info Section Path Naming Rules
-
-The `'lodash-es'` and `'lodash-es__main-thread'` in the artifacts above are called **section path**, which are identifiers for internal modules in `.lynx.bundle`. These section paths need to be configured through [`background.sectionPath`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle#backgroundsectionpath) and [`mainThread.sectionPath`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle#mainthreadsectionpath) when loading external bundle. We will introduce this in the following sections.
-:::
-
-#### Example 2: Background Thread Only
-
-```js title="rslib.config.ts" {12}
-import {
-  defineExternalBundleRslibConfig,
-  LAYERS,
-} from '@lynx-js/lynx-bundle-rslib-config';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-
-export default defineExternalBundleRslibConfig({
-  id: 'lodash-es',
-  source: {
-    entry: {
-      'lodash-es': {
-        import: require.resolve('lodash-es'),
-        layer: LAYERS.BACKGROUND,
-      },
-    },
-  },
-});
-```
-
-The `dist/lodash-es.lynx.bundle` artifact content looks like:
-
-```js
-{
-  'lodash-es': `// lodash-es`,
-}
-```
-
-#### Example 3: Main Thread Only
-
-```js title="rslib.config.ts" {9}
-import {
-  defineExternalBundleRslibConfig,
-  LAYERS,
-} from '@lynx-js/lynx-bundle-rslib-config';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-
-export default defineExternalBundleRslibConfig({
-  id: 'lodash-es',
-  source: {
-    entry: {
-      'lodash-es': {
-        import: require.resolve('lodash-es'),
-        layer: LAYERS.MAIN_THREAD,
-      },
-    },
-  },
-});
-```
-
-The `dist/lodash-es.lynx.bundle` artifact content looks like:
-
-```js
-{
-  'lodash-es': `// lodash-es main-thread code`,
-}
-```
-
-### Bundle Multiple Dependencies
-
-Supports packaging multiple dependencies into the same external bundle to reduce the number of runtime requests and improve performance.
-
-```js title="rslib.config.ts" {9}
-import {
-  defineExternalBundleRslibConfig,
-  LAYERS,
-} from '@lynx-js/lynx-bundle-rslib-config';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-
-export default defineExternalBundleRslibConfig({
-  id: 'lodash',
-  source: {
-    entry: {
-      'lodash.get': require.resolve('lodash.get'),
-      'lodash.isequal': require.resolve('lodash.isequal'),
-    },
-  },
-});
-```
-
-The `dist/lodash.lynx.bundle` artifact content looks like:
-
-```js
-{
-  'lodash.get': '// lodash.get background code',
-  'lodash.get__main-thread': '// lodash.get main-thread code',
-  'lodash.isequal': '// lodash.isequal background code',
-  'lodash.isequal__main-thread': '// lodash.isequal main-thread code',
-}
-```
-
-### Referencing Other External Bundles
-
-When an external bundle depends on other external bundles, you can declare these dependencies as external dependencies via [`output.externals`](https://rslib.rs/config/rsbuild/output#outputexternals) to avoid duplicate packaging:
-
-```js title="rslib.config.ts"
-import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
-
-export default defineExternalBundleRslibConfig({
-  id: 'my-components',
-  output: {
-    externals: {
-      // Read @lynx-js/react from ReactLynx.React
-      '@lynx-js/react': ['ReactLynx', 'React'],
-    },
-  },
-});
-```
-
-:::warning
-Before loading `my-components` at runtime, you must ensure that the `@lynx-js/react` external bundle has been loaded, otherwise it will cause runtime errors.
-:::
-
-### Custom Configuration
-
-`defineExternalBundleRslibConfig()` automatically applies [default configuration](https://github.com/lynx-family/lynx-stack/blob/71b9083d7c117666ae815e62ced38709c3d207e6/packages/rspeedy/lynx-bundle-rslib-config/src/externalBundleRslibConfig.ts#L42). To modify the default configuration, simply override it in the configuration object:
-
-```js title="rslib.config.ts" {4-13}
-import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
-
-export default defineExternalBundleRslibConfig({
-  id: 'my-lib',
-  source: {
-    entry: {
-      index: './src/index.ts',
-    },
-    define: {
-      __PROFILE__: false,
-      __MAIN_THREAD__: "__webpack_layer__ === 'main-thread'",
-      __BACKGROUND__: "__webpack_layer__ === 'background'",
-    },
-  },
-  autoExternal: {
-    dependencies: true, // Set dependencies as external
-  },
-});
-```
-
-### Viewing Bundle Intermediate Artifacts
-
-`.lynx.bundle` is a compiled artifact and cannot be read directly. If you need to view the pre-compiled code, add the `DEBUG=rspeedy` environment variable:
-
-```bash
-DEBUG=rspeedy npm exec rslib build
-```
-
-This will output the following intermediate artifacts:
-
-```md
-./dist
-├── lodash-es.js
-├── lodash-es.lynx.bundle
-├── lodash-es\_\_main-thread.js
-└── tasm.json
-```
-
-## 2. Loading External Bundle
-
-Based on [Webpack Externals](https://webpack.js.org/configuration/externals/) implementation. When importing an external bundle, dependencies are not bundled into the main bundle but dynamically loaded from `.lynx.bundle` files.
-
-### Installation
-
-<PackageManagerTabs command="install @lynx-js/external-bundle-rsbuild-plugin -D" />
-
-### Basic Usage
-
-If your code uses `lodash-es`:
-
-```js
-import _ from 'lodash-es';
-
-_.isEmpty([]);
-```
-
-Use the [`pluginExternalBundle`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle) plugin in `lynx.config.ts` to configure `lodash-es` in `externals`, avoiding packaging it into the main bundle:
-
-```ts title="lynx.config.ts"
-import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 
-export default {
+export default defineExternalBundleRslibConfig({
+  id: 'comp-lib',
+  source: {
+    entry: {
+      './App.js': './external-bundle/CompLib.tsx',
+    },
+  },
+  plugins: [pluginReactLynx()],
+  output: {
+    externalsPresets: {
+      reactlynx: true,
+    },
+  },
+});
+```
+
+`externalsPresets.reactlynx` maps the standard ReactLynx requests for you, so a ReactLynx component bundle can depend on the shared runtime directly.
+
+Run the build with:
+
+<PackageManagerTabs command="exec rslib build --config rslib-comp-lib.config.ts" />
+
+## Load It In The Host App
+
+Use the same request key in the app:
+
+```ts title="lynx.config.ts"
+import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
+import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@lynx-js/rspeedy';
+
+export default defineConfig({
   plugins: [
-    pluginReactLynx(), // Must be placed before
+    pluginReactLynx(),
+    pluginQRCode(),
     pluginExternalBundle({
+      externalsPresets: {
+        reactlynx: true,
+      },
       externals: {
-        'lodash-es': {
-          url: 'http://cdn.example.com/lodash-es.lynx.bundle',
-          background: { sectionPath: 'lodash-es' },
-          mainThread: { sectionPath: 'lodash-es__main-thread' },
-        },
+        './App.js': 'comp-lib.lynx.bundle',
       },
     }),
   ],
-};
+});
 ```
 
-After configuration, `lodash-es` in your code will not be bundled into the main bundle but dynamically loaded from the specified URL at runtime.
+This shorthand is equivalent to the following expanded config:
 
-### Configuring Multiple External Bundles
+```ts
+externals: {
+  './App.js': {
+    bundlePath: 'comp-lib.lynx.bundle',
+    libraryName: './App.js',
+    background: { sectionPath: './App.js' },
+    mainThread: { sectionPath: './App.js__main-thread' },
+    async: true,
+  },
+}
+```
 
-You can configure multiple external bundles in `externals`:
+If your section names already match the request key, this is the smallest recommended setup.
+
+## When To Set `globalObject`
+
+In most projects, you can omit `globalObject`.
+
+Set `globalObject: 'globalThis'` only when your app enables a shared `globalThis` across background-thread runtimes and you want later bundles to reuse externals that have already been loaded there.
+
+Use it on both sides when needed:
+
+```ts title="rslib-comp-lib.config.ts"
+output: {
+  externalsPresets: {
+    reactlynx: true,
+  },
+  globalObject: 'globalThis',
+}
+```
 
 ```ts title="lynx.config.ts"
 pluginExternalBundle({
+  externalsPresets: {
+    reactlynx: true,
+  },
   externals: {
-    '@lynx-js/react': {
-      libraryName: ['ReactLynx', 'React'],
-      url: 'http://example.com/react.lynx.bundle',
-      background: { sectionPath: 'ReactLynx' },
-      mainThread: { sectionPath: 'ReactLynx__main-thread' },
-      async: false, // Synchronous loading
+    './App.js': 'comp-lib.lynx.bundle',
+  },
+  globalObject: 'globalThis',
+});
+```
+
+## Why `@lynx-js/react-umd` Is Needed
+
+`@lynx-js/react-umd` ships the prebuilt ReactLynx runtime bundles used by the built-in `reactlynx` preset.
+
+When you enable `externalsPresets.reactlynx` in [`pluginExternalBundle()`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle), the plugin will automatically resolve `@lynx-js/react-umd/dev` or `@lynx-js/react-umd/prod` based on `NODE_ENV`, emit `react.lynx.bundle`, and load it through the current runtime public path.
+
+For most projects, this means:
+
+- install `@lynx-js/react-umd`
+- enable `reactlynx`
+- let the preset provide the ReactLynx runtime mapping
+
+## Extend Presets
+
+Use the same preset name on both sides so the bundle build and the host app stay aligned.
+
+### From The Library Side
+
+On the external bundle build side, presets live in `output.externalsPresets` and `output.externalsPresetDefinitions`:
+
+```ts title="rslib-comp-lib.config.ts"
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
+
+export default defineExternalBundleRslibConfig({
+  output: {
+    externalsPresets: {
+      reactlynxPlus: true,
     },
-    'my-components': {
-      url: 'http://example.com/comp-lib.lynx.bundle',
-      background: { sectionPath: 'components' },
-      mainThread: { sectionPath: 'components__main-thread' },
+    externalsPresetDefinitions: {
+      reactlynxPlus: {
+        extends: 'reactlynx',
+        externals: {
+          '@lynx-js/lynx-ui': ['LynxUI', 'UI'],
+        },
+      },
     },
   },
 });
 ```
 
-### Configuration Options
+This side decides how imports are mapped to external globals when the bundle is built.
 
-- **url**: External Bundle loading address (required)
-- **libraryName**: Specify global variable name, `string` / `string[]` (optional)
-- **background**: Background thread configuration, including `sectionPath` (optional)
-- **mainThread**: Main thread configuration, including `sectionPath` (optional)
-- **async**: Whether to load asynchronously, defaults to `true` (optional)
+### From The Lynx Page Side
 
-#### `libraryName`
-
-Specifies which global variable to read the external bundle's module exports from. Usually no configuration is needed, as the plugin automatically infers based on the package's import name.
-
-When external bundle is mounted to a nested object, use `string[]` to specify the access path:
+On the host app side, presets live in `pluginExternalBundle({ externalsPresets, externalsPresetDefinitions })`:
 
 ```ts title="lynx.config.ts"
-pluginExternalBundle({
-  externals: {
-    '@lynx-js/react': {
-      libraryName: ['ReactLynx', 'React'], // Read from global.ReactLynx.React
-      url: 'http://example.com/react.lynx.bundle',
-    },
-  },
-});
-```
-
-Most of the time, you can just rely on automatic inference:
-
-```ts title="lynx.config.ts"
-pluginExternalBundle({
-  externals: {
-    lodash: {
-      // Don't configure libraryName, the plugin automatically infers to 'lodash' based on the import name
-      url: 'http://example.com/lodash.lynx.bundle',
-    },
-  },
-});
-```
-
-#### `sectionPath`
-
-`sectionPath` is the path identifier for internal modules within the external bundle:
-
-- **background**: Module path used by the background thread
-- **mainThread**: Module path used by the main thread
-
-`sectionPath` must exactly match the actual output section name when building the external bundle, otherwise runtime errors will occur due to the missing corresponding module.
-
-Taking [Building External Bundle - Example 1](#example-1-support-both-background-thread-and-main-thread) as an example, the corresponding `sectionPath` configuration is as follows:
-
-```ts title="lynx.config.ts" {9,10}
 import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
 
-export default {
-  plugins: [
-    pluginExternalBundle({
-      externals: {
-        'lodash-es': {
-          url: 'http://cdn.example.com/lodash.lynx.bundle',
-          background: { sectionPath: 'lodash-es' },
-          mainThread: { sectionPath: 'lodash-es__main-thread' },
-        },
+pluginExternalBundle({
+  externalsPresets: {
+    reactlynxPlus: true,
+  },
+  externalsPresetDefinitions: {
+    reactlynxPlus: {
+      extends: 'reactlynx',
+      resolveExternals() {
+        return {
+          '@lynx-js/lynx-ui': {
+            libraryName: ['LynxUI', 'UI'],
+            bundlePath: 'lynx-ui.lynx.bundle',
+            background: { sectionPath: 'LynxUI' },
+            mainThread: { sectionPath: 'LynxUI__main-thread' },
+            async: false,
+          },
+        };
       },
-    }),
-  ],
-};
+    },
+  },
+});
 ```
 
-If your external bundle only supports a specific thread (refer to [Building External Bundle - Example 2](#example-2-background-thread-only) and [Building External Bundle - Example 3](#example-3-main-thread-only)), you only need to configure the `sectionPath` for the corresponding thread:
+This side decides where the bundle is loaded from and which section names the runtime should request.
 
-```ts title="lynx.config.ts"
-// Background thread only
+Explicit `externals` still override mappings provided by presets. Use that when a single app needs a different bundle path or section name.
+
+## When To Use The Object Form
+
+Use the full object form when you need custom section names, custom exported library names, timeouts, or a dedicated local bundle directory.
+
+The `external-bundle` example in `lynx-examples` uses that style:
+
+```ts title="lynx.config.mjs"
 pluginExternalBundle({
+  externalBundleRoot: 'dist-external-bundle',
+  externalsPresets: {
+    reactlynx: true,
+  },
   externals: {
     'lodash-es': {
-      url: 'http://cdn.example.com/lodash.lynx.bundle',
+      bundlePath: 'lodash-es.lynx.bundle',
       background: { sectionPath: 'lodash-es' },
+      mainThread: { sectionPath: 'lodash-es__main-thread' },
+      async: false,
+      timeout: 10000,
+    },
+    './components': {
+      bundlePath: 'comp.lynx.bundle',
+      background: { sectionPath: 'component' },
+      mainThread: { sectionPath: 'component__main-thread' },
+      async: true,
+      timeout: 5000,
     },
   },
+  timeout: 10000,
 });
 ```
 
-```ts title="lynx.config.ts"
-// Main thread only
-pluginExternalBundle({
-  externals: {
-    'lodash-es': {
-      url: 'http://cdn.example.com/lodash.lynx.bundle',
-      mainThread: { sectionPath: 'lodash-es' },
-    },
-  },
-});
-```
+Use this form when:
 
-## Reference Examples
+- one bundle contains multiple business modules
+- section names do not match the request key
+- bundles are built into `dist-external-bundle`
+- you want per-bundle timeout or loading behavior
 
-- [react-external-bundle-example](https://github.com/lynx-family/lynx-stack/tree/main/examples/react-externals)
+## Example
+
+The `lynx-examples` external-bundle example is available directly in the docs:
+
+<Go
+  example="external-bundle"
+  defaultFile="lynx.config.mjs"
+  defaultEntryFile="dist/index.lynx.bundle"
+/>
+
+## API Reference
+
+- [`defineExternalBundleRslibConfig()`](/api/rspeedy/lynx-bundle-rslib-config.defineexternalbundlerslibconfig)
+- [`pluginExternalBundle()`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle)
+- [`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config)
+- [`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin)

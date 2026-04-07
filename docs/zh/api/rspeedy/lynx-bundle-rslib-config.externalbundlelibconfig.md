@@ -4,11 +4,16 @@
 
 ## ExternalBundleLibConfig interface
 
+<<<<<<< HEAD
 Rslib config shape accepted by `defineExternalBundleRslibConfig`<!-- -->.
+=======
+Rslib config shape accepted by `defineExternalBundleRslibConfig`.
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 
 **Signature:**
 
 ```typescript
+<<<<<<< HEAD
 export interface ExternalBundleLibConfig extends LibConfig 
 ```
 **Extends:** LibConfig
@@ -57,3 +62,13 @@ _(Optional)_
 </td></tr>
 </tbody></table>
 
+=======
+export interface ExternalBundleLibConfig extends LibConfig
+```
+
+## Properties
+
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `output?` | [`OutputConfig`](./lynx-bundle-rslib-config.outputconfig.md) | Output config accepted by Lynx external bundle builds. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

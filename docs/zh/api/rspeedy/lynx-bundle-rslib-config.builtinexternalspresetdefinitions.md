@@ -9,5 +9,9 @@ Built-in externals preset definitions.
 **Signature:**
 
 ```typescript
+<<<<<<< HEAD
 builtInExternalsPresetDefinitions: ExternalsPresetDefinitions
+=======
+export declare const builtInExternalsPresetDefinitions: ExternalsPresetDefinitions;
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 ```

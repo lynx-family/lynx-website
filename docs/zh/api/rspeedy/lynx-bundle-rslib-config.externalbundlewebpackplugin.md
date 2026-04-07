@@ -4,16 +4,17 @@
 
 ## ExternalBundleWebpackPlugin class
 
-The webpack plugin to build and emit the external bundle.
+Webpack plugin that builds and emits an external bundle.
 
 **Signature:**
 
 ```typescript
-export declare class ExternalBundleWebpackPlugin 
+export declare class ExternalBundleWebpackPlugin
 ```
 
 ## Constructors
 
+<<<<<<< HEAD
 <table><thead><tr><th>
 
 Constructor
@@ -78,3 +79,14 @@ Description
 </td></tr>
 </tbody></table>
 
+=======
+|  Constructor | Description |
+|  --- | --- |
+|  `new ExternalBundleWebpackPlugin(options)` | Constructs a new instance of `ExternalBundleWebpackPlugin`. |
+
+## Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  `apply(compiler)` | `void` | Apply the plugin to the compiler. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

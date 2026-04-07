@@ -2,7 +2,11 @@
 
 [Home](./index.md) &gt; [@lynx-js/lynx-bundle-rslib-config](./lynx-bundle-rslib-config.md) &gt; [Externals](./lynx-bundle-rslib-config.externals.md)
 
+<<<<<<< HEAD
 ## Externals type
+=======
+## Externals type alias
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 
 External module to global-name mappings used when building Lynx external bundles.
 

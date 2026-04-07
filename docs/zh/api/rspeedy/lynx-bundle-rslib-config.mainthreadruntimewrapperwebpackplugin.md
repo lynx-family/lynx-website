@@ -4,16 +4,17 @@
 
 ## MainThreadRuntimeWrapperWebpackPlugin class
 
-The main-thread runtime wrapper for external bundle.
+Webpack plugin that wraps main-thread runtime modules for external bundles.
 
 **Signature:**
 
 ```typescript
-export declare class MainThreadRuntimeWrapperWebpackPlugin 
+export declare class MainThreadRuntimeWrapperWebpackPlugin
 ```
 
 ## Constructors
 
+<<<<<<< HEAD
 <table><thead><tr><th>
 
 Constructor
@@ -78,3 +79,14 @@ Description
 </td></tr>
 </tbody></table>
 
+=======
+|  Constructor | Description |
+|  --- | --- |
+|  `new MainThreadRuntimeWrapperWebpackPlugin(options?)` | Constructs a new instance of `MainThreadRuntimeWrapperWebpackPlugin`. |
+
+## Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  `apply(compiler)` | `void` | Apply the plugin to the compiler. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

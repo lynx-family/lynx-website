@@ -4,7 +4,7 @@
 
 ## defineExternalBundleRslibConfig() function
 
-Get the rslib config for building Lynx external bundles.
+Get the Rslib config for building Lynx external bundles.
 
 **Signature:**
 
@@ -14,6 +14,7 @@ export declare function defineExternalBundleRslibConfig(userLibConfig: ExternalB
 
 ## Parameters
 
+<<<<<<< HEAD
 <table><thead><tr><th>
 
 Parameter
@@ -61,13 +62,20 @@ _(Optional)_
 
 </td></tr>
 </tbody></table>
+=======
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  userLibConfig | [ExternalBundleLibConfig](./lynx-bundle-rslib-config.externalbundlelibconfig.md) | User-provided Rslib config. |
+|  encodeOptions | [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | Optional encode options. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 
 **Returns:**
 
-RslibConfig
+`RslibConfig`
 
-## Example 1
+## Example
 
+<<<<<<< HEAD
 If you want to build an external bundle which use in Lynx background thread, you can use the following code:
 
 ```js
@@ -116,16 +124,25 @@ If you want to build an external bundle which use both in Lynx main thread and b
 
 ```js
 // rslib.config.js
+=======
+```ts
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config'
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 
 export default defineExternalBundleRslibConfig({
-  id: 'utils-lib',
+  id: 'comp-lib',
   source: {
     entry: {
-      utils: './src/utils.ts',
+      './App.js': './external-bundle/CompLib.tsx',
     },
-  }
+  },
+  plugins: [pluginReactLynx()],
+  output: {
+    externalsPresets: {
+      reactlynx: true,
+    },
+    globalObject: 'globalThis',
+  },
 })
 ```
-Then you can use `lynx.loadScript('utils', { bundleName: 'utils-lib-bundle-url' })` in background thread and `lynx.loadScript('utils__main-thread', { bundleName: 'utils-lib-bundle-url' })` in main-thread.
-

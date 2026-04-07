@@ -4,16 +4,17 @@
 
 ## EncodeOptions interface
 
-The options for encoding the external bundle.
+Options for encoding the external bundle.
 
 **Signature:**
 
 ```typescript
-export interface EncodeOptions 
+export interface EncodeOptions
 ```
 
 ## Properties
 
+<<<<<<< HEAD
 <table><thead><tr><th>
 
 Property
@@ -56,3 +57,8 @@ _(Optional)_ The engine version of the external bundle.
 </td></tr>
 </tbody></table>
 
+=======
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `engineVersion?` | `string` | The engine version of the external bundle. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

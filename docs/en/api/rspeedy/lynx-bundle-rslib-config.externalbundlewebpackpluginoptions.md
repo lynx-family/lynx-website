@@ -4,16 +4,17 @@
 
 ## ExternalBundleWebpackPluginOptions interface
 
-The options for [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md)<!-- -->.
+Options for `ExternalBundleWebpackPlugin`.
 
 **Signature:**
 
 ```typescript
-export interface ExternalBundleWebpackPluginOptions 
+export interface ExternalBundleWebpackPluginOptions
 ```
 
 ## Properties
 
+<<<<<<< HEAD
 <table><thead><tr><th>
 
 Property
@@ -94,3 +95,10 @@ _(Optional)_ The engine version of the external bundle.
 </td></tr>
 </tbody></table>
 
+=======
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `bundleFileName` | `string` | The external bundle filename. |
+|  `encode` | `(opts: unknown) => Promise<{ buffer: Buffer; }>` | Encode method exported from the Lynx encoder package. |
+|  `engineVersion?` | `string` | The target engine version of the external bundle. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

@@ -2,7 +2,11 @@
 
 [Home](./index.md) &gt; [@lynx-js/lynx-bundle-rslib-config](./lynx-bundle-rslib-config.md) &gt; [OutputConfig](./lynx-bundle-rslib-config.outputconfig.md)
 
+<<<<<<< HEAD
 ## OutputConfig type
+=======
+## OutputConfig type alias
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 
 Output config accepted by Lynx external bundle builds.
 
@@ -10,6 +14,7 @@ Output config accepted by Lynx external bundle builds.
 
 ```typescript
 export type OutputConfig = Required<LibConfig>['output'] & {
+<<<<<<< HEAD
     externalsPresets?: ExternalsPresets;
     externalsPresetDefinitions?: ExternalsPresetDefinitions;
     externals?: Externals;
@@ -18,3 +23,20 @@ export type OutputConfig = Required<LibConfig>['output'] & {
 ```
 **References:** [ExternalsPresets](./lynx-bundle-rslib-config.externalspresets.md)<!-- -->, [ExternalsPresetDefinitions](./lynx-bundle-rslib-config.externalspresetdefinitions.md)<!-- -->, [Externals](./lynx-bundle-rslib-config.externals.md)
 
+=======
+  externalsPresets?: ExternalsPresets;
+  externalsPresetDefinitions?: ExternalsPresetDefinitions;
+  externals?: Externals;
+  globalObject?: 'lynx' | 'globalThis';
+};
+```
+
+## Properties
+
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `externals?` | [`Externals`](./lynx-bundle-rslib-config.externals.md) | Explicit external module mappings. |
+|  `externalsPresetDefinitions?` | [`ExternalsPresetDefinitions`](./lynx-bundle-rslib-config.externalspresetdefinitions.md) | Definitions for custom presets enabled by `externalsPresets`. |
+|  `externalsPresets?` | [`ExternalsPresets`](./lynx-bundle-rslib-config.externalspresets.md) | Presets for external libraries. |
+|  `globalObject?` | `'lynx' \| 'globalThis'` | Global object used to mount the built library. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

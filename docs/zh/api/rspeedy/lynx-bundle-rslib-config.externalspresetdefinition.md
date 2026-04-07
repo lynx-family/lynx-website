@@ -9,11 +9,16 @@ Definition for a named externals preset.
 **Signature:**
 
 ```typescript
+<<<<<<< HEAD
 export interface ExternalsPresetDefinition 
+=======
+export interface ExternalsPresetDefinition
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 ```
 
 ## Properties
 
+<<<<<<< HEAD
 <table><thead><tr><th>
 
 Property
@@ -75,3 +80,9 @@ _(Optional)_ Externals contributed by this preset.
 </td></tr>
 </tbody></table>
 
+=======
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `extends?` | `string \| string[]` | Other preset names to include before applying the current preset. |
+|  `externals?` | [`Externals`](./lynx-bundle-rslib-config.externals.md) | Externals contributed by this preset. |
+>>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
