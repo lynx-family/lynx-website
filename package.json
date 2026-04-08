@@ -2,22 +2,26 @@
   "name": "@lynx-js/lynx-doc",
   "version": "1.0.0",
   "scripts": {
-    "start": "rspress dev",
-    "dev": "rspress dev",
     "build": "NODE_OPTIONS=--max-old-space-size=8192 RSPRESS_SSG_WORKER_THREAD_COUNT=4 rspress build",
-    "prepare": "husky && pnpm --filter @lynx-js/lynx-compat-data run lint:keys && pnpm --filter @lynx-js/lynx-compat-data run gen-stats && pnpm prepare:lynx-compat-data && pnpm prepare:lynx-example-data",
+    "check-docs": "python3 -m scripts.check_api_doc.index",
+    "cspell:check": "cspell lint -c cspell.json \"docs/**/*.md(x)\"",
+    "dev": "rspress dev",
+    "fix-docs": "python3 -m scripts.check_api_doc.index --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:zhlint": "zhlint 'docs/zh/**/*.{md,mdx}' --fix",
     "gen:living-spec": "node scripts/lynx-living-spec.js",
+    "prepare": "husky && pnpm --filter @lynx-js/lynx-compat-data run lint:keys && pnpm --filter @lynx-js/lynx-compat-data run gen-stats && pnpm prepare:lynx-compat-data && pnpm prepare:lynx-example-data",
     "prepare:lynx-compat-data": "rm -rf docs/public/lynx-compat-data && ln -s $(pwd)/packages/lynx-compat-data docs/public/lynx-compat-data",
     "prepare:lynx-example-data": "node scripts/lynx-example.js",
     "preview": "rspress preview",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "cspell:check": "cspell lint -c cspell.json \"docs/**/*.md(x)\"",
-    "check-docs": "python3 -m scripts.check_api_doc.index",
-    "fix-docs": "python3 -m scripts.check_api_doc.index --fix",
-    "zhlint": "zhlint 'docs/zh/**/*.{md,mdx}'",
-    "format:zhlint": "zhlint 'docs/zh/**/*.{md,mdx}' --fix",
-    "typedoc": "tsx ./scripts/typedoc/index.ts"
+    "start": "rspress dev",
+    "typedoc": "tsx ./scripts/typedoc/index.ts",
+    "zhlint": "zhlint 'docs/zh/**/*.{md,mdx}'"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,md,mdx,json,yml,yaml,css,scss}": "prettier --write",
+    "*.{md,mdx}": "cspell lint -c cspell.json --no-must-find-files"
   },
   "dependencies": {
     "@douyinfe/semi-icons": "^2.74.0",
@@ -56,10 +60,6 @@
     "vaul": "^1.1.2",
     "vscode-icons-js": "^11.6.1"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,md,mdx,json,yml,yaml,css,scss}": "prettier --write",
-    "*.{md,mdx}": "cspell lint -c cspell.json --no-must-find-files"
-  },
   "devDependencies": {
     "@lynx-js/lynx-compat-data": "workspace:*",
     "@lynx-js/react": "^0.107.1",
@@ -84,6 +84,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "prettier": "^3.4.2",
+    "prettier-plugin-packagejson": "^3.0.2",
     "react-render-to-markdown": "18.3.1",
     "rsbuild-plugin-google-analytics": "^1.0.3",
     "rsbuild-plugin-open-graph": "^1.0.2",
