@@ -25,15 +25,21 @@ def main():
             
         for root, dirs, files in os.walk(base_dir):
             for file in files:
-                if file.endswith('.mdx'):
-                    file_path = os.path.join(root, file)
-                    try:
-                        error_count = process_file(file_path, fix=args.fix)
-                        if error_count > 0:
-                            total_errors += 1
-                        checked_files += 1
-                    except Exception as e:
-                        print(f"Error processing {file_path}: {e}")
+                file_name = file.lower()
+                if file_name.endswith('.md'):
+                    # `fix-docs` should not mutate plain markdown files.
+                    continue
+                if not file_name.endswith('.mdx'):
+                    continue
+
+                file_path = os.path.join(root, file)
+                try:
+                    error_count = process_file(file_path, fix=args.fix)
+                    if error_count > 0:
+                        total_errors += 1
+                    checked_files += 1
+                except Exception as e:
+                    print(f"Error processing {file_path}: {e}")
 
     print(f"\nChecked {checked_files} files.")
     if total_errors > 0:
