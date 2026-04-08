@@ -5,35 +5,13 @@
 import React from 'react';
 import './index.scss';
 import { WarpBackground } from './WarpBackground';
-import {
-  HomeLayout as BaseHomeLayout,
-  Layout as BaseLayout,
-} from '@rspress/core/theme-original';
-import { Banner } from '@rspress/core/theme-original';
+import { HomeLayout as BaseHomeLayout } from '@rspress/core/theme';
 import { ClearAPI } from './ClearApi';
 import { Compatibility } from './Compatibility';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
 
-const Layout = () => {
-  if (process.env['LYNXUIONLY']) {
-    return (
-      <BaseLayout
-        beforeNav={
-          <Banner
-            storageKey="lynx-ui-go-to-v3-1"
-            href="https://lynx.bytedance.net/v3"
-            message="This is for preview only. Please use Lynx official site."
-          />
-        }
-      />
-    );
-  } else {
-    return <BaseLayout />;
-  }
-};
-
-const HomeLayout = () => {
+export const HomeLayout = () => {
   return (
     <>
       <WarpBackground
@@ -57,5 +35,3 @@ const HomeLayout = () => {
     </>
   );
 };
-
-export { HomeLayout, Layout };
