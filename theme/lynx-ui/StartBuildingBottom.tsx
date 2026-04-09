@@ -46,7 +46,7 @@ export const StartBuilding = () => {
           height: '48px',
           marginTop: '20px',
           background:
-            'linear-gradient(275deg, var(--rp-c-brand-dark) 3%, var(--rp-c-brand-light) 97%)',
+            'linear-gradient(275deg, var(--rp-c-brand-darker) 3%, var(--rp-c-brand) 97%)',
           cursor: 'pointer',
         }}
         onClick={() => linkNavigate('Guides/Introduction')}
