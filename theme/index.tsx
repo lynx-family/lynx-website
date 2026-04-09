@@ -18,7 +18,7 @@ import {
 import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
-import { HomeLayout as LynxUIHomeLayout } from './lynx-ui';
+import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 
 import {
   Banner,
