@@ -5,7 +5,7 @@
 import React from 'react';
 import './index.scss';
 import { WarpBackground } from './WarpBackground';
-import { HomeLayout as BaseHomeLayout } from '@rspress/core/theme';
+import { HomeLayout as BaseHomeLayout } from '@rspress/core/theme-original';
 import { ClearAPI } from './ClearApi';
 import { Compatibility } from './Compatibility';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
