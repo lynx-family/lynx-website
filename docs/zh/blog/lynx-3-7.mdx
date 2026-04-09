@@ -26,6 +26,8 @@ Lynx 3.7 已经正式发布！
 我们[此前计划](/blog/lynx-open-source-roadmap-2025.html)在 Lynx 3.5 中开源桌面端支持，[随后决定](/blog/lynx-3-5.html#one-more-thing-desktop-support-preview)进一步开源完整的桌面端技术栈。在 Lynx 3.7 中，这一愿景已成为现实。
 
 Lynx 正式支持 **MacOS** 和 **Windows** 作为一级平台。你现在可以在原生桌面应用中构建和渲染 Lynx 视图，使用与移动端和 Web 端完全相同的前端技术栈和工具链。
+桌面端界面由 Lynx 自绘渲染，而不是通过系统原生控件拼装。
+我们也计划开源 Lynxtron。它是一个 Electron-like 的桌面应用框架，使用 Lynx 作为 UI 渲染层。
 
 <video
   src={bringingLynxToDesktop}
@@ -67,10 +69,11 @@ Lynx 正式支持 **MacOS** 和 **Windows** 作为一级平台。你现在可以
 ### 快速上手
 
 桌面端的接入细节可直接查看[将 Lynx 集成到现有应用](/guide/start/integrate-with-existing-apps)。该页面现已包含与 Android、iOS、HarmonyOS、Web 并列的桌面端指南。
+后续也会有一个由 Lynxtron 构建的 playground app，在 PC 上更直接地获取并运行 Lynx examples。
 
 ### 桌面端专属能力
 
-在渲染能力对齐之外，Lynx 3.7 还增加了面向桌面环境的专属能力，包括鼠标事件和 CSS `cursor` 支持。
+在渲染能力对齐之外，Lynx 3.7 还增加了面向桌面环境的专属能力，包括鼠标、键盘、滚轮事件，以及 CSS `cursor` 支持。
 
 #### 鼠标事件
 
@@ -84,6 +87,25 @@ Lynx 3.7 在桌面端已支持大部分[鼠标事件](/api/lynx-api/event/mouse-
   onMouseMove={(e) => handleHover(e)}
   onMouseLeave={() => resetState()}
 />
+```
+
+#### 键盘事件
+
+Lynx 3.7 也补充了桌面端[键盘事件](/api/lynx-api/event/key-event)支持。
+
+```tsx
+<input
+  onKeyDown={(e) => console.log(`按下按键: ${e.key}`)}
+  onKeyUp={(e) => console.log(`释放按键: ${e.key}`)}
+/>
+```
+
+#### 滚轮事件
+
+Lynx 3.7 也补充了桌面端[滚轮事件](/api/lynx-api/event/wheel-event)支持。
+
+```tsx
+<view onWheel={(e) => console.log(`滚轮偏移: ${e.deltaX}, ${e.deltaY}`)} />
 ```
 
 #### CSS `cursor`
