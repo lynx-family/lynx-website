@@ -4,9 +4,12 @@ date: 2026-03-28
 sidebar: false
 authors: ['lynx']
 badge_text: 'Lynx 3.7 is released!'
-description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for macOS and Windows, introduces the new SVG element, expands Lynx for AI with open-sourced skills and better observability, and updates ReactLynx with simpler External Bundle presets and shared runtime modules.'
+description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for MacOS and Windows, introduces the new SVG element, expands Lynx for AI with open-sourced skills and better observability, and updates ReactLynx with simpler External Bundle presets and shared runtime modules.'
 ---
 
+import bringingLynxToDesktop from '@assets/blog/lynx-3-7/bringing-lynx-to-desktop.mp4';
+import mouseCursorImg from '@assets/blog/lynx-3-7/mouse-cursor.png?url';
+import svgExampleImg from '@assets/blog/lynx-3-7/svg-example.png?url';
 import { BlogHeader } from '@lynx';
 import { Go } from '@lynx';
 
@@ -14,19 +17,40 @@ import { Go } from '@lynx';
 
 Lynx 3.7 is now officially released!
 
-This release brings official desktop platform support for **macOS** and **Windows**, expands **Lynx for AI** with open-sourced skills and better observability, and updates **ReactLynx** with simpler External Bundle presets and cross-thread shared modules.
+This release brings official desktop platform support for **MacOS** and **Windows**, expands **Lynx for AI** with open-sourced skills and better observability, and updates **ReactLynx** with simpler External Bundle presets and cross-thread shared modules.
 
 Let's take a closer look at what's new in Lynx 3.7.
 
-## Desktop Support: macOS and Windows
+## Desktop Support: MacOS and Windows
 
 We [previously planned](/blog/lynx-open-source-roadmap-2025.html) to open source desktop support in Lynx 3.5, and [later decided](/blog/lynx-3-5.html#one-more-thing-desktop-support-preview) to go further and open source the full desktop stack. With Lynx 3.7, that vision is now a reality.
 
-Lynx officially supports **macOS** and **Windows** as first-class platforms. You can now build and render Lynx views inside native desktop applications, using the same front-end stack and tooling you already use for mobile and web.
+Lynx officially supports **MacOS** and **Windows** as first-class platforms. You can now build and render Lynx views inside native desktop applications, using the same front-end stack and tooling you already use for mobile and web.
+
+<video
+  src={bringingLynxToDesktop}
+  autoPlay
+  muted
+  loop
+  playsInline
+  style={{
+    width: '100%',
+    borderRadius: '12px',
+    margin: '24px 0',
+    pointerEvents: 'none',
+  }}
+></video>
+
+<Go
+  example="mouse-cursor"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  img={mouseCursorImg}
+/>
 
 ### Full Rendering Engine on Desktop
 
-The same rendering engine that powers Lynx on mobile is now available on macOS and Windows with near-complete feature parity.
+The same rendering engine that powers Lynx on mobile is now available on MacOS and Windows with near-complete feature parity.
 
 **CSS: 97% property coverage.** 311 out of 319 supported Lynx CSS properties are now available on desktop, including:
 
@@ -34,15 +58,11 @@ The same rendering engine that powers Lynx on mobile is now available on macOS a
 - **Styling**: typography, borders, shadows, gradients, masks, filters, and [CSS custom properties](/api/css/properties/css-variable).
 - **Animation**: `animation`, `transition`, `@keyframes`, and the full transform stack.
 
-**Elements: 73% attribute coverage.** 179 out of 246 element attributes are already available on desktop, with identical support on macOS and Windows. Most built-in elements work directly on desktop today. The current gaps are limited to a few platform-specific cases:
-
-- [`<image>`](/api/elements/built-in/image): desktop support currently excludes `prefetch-width` and `prefetch-height`.
-- [`<frame>`](/api/elements/built-in/frame): embedded sub-pages are not included on desktop yet.
-- [`<refresh>`](/api/elements/built-in/refresh): pull-to-refresh remains a mobile-oriented interaction pattern and is not included on desktop.
+**Elements: 73% attribute coverage.** 179 out of 246 element attributes are already available on desktop, with identical support on MacOS and Windows. Most built-in elements work directly on desktop today.
 
 In practice, most Lynx pages built for mobile can already render on desktop with minimal or no front-end changes.
 
-You can check the detailed compatibility status for every API on the [API Status Dashboard](/help/dashboard), which now includes **macOS** and **Windows** columns.
+You can check the detailed compatibility status for every API on the [API Status Dashboard](/help/dashboard), which now includes **MacOS** and **Windows** columns.
 
 ### Getting Started
 
@@ -50,17 +70,11 @@ For platform-specific integration details, see [Integrate with Existing Apps](/g
 
 ### Desktop-Specific Capabilities
 
-Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment, including mouse events, cursor support, and custom window drag regions.
+Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment, including mouse events and CSS cursor support.
 
 #### Mouse Events
 
-Desktop applications rely on precise mouse interaction. Lynx now supports a complete set of [mouse events](/api/lynx-api/event/mouse-event):
-
-- **Event types**: `mousedown`, `mousemove`, `mouseup`, `mouseenter`, `mouseover`, `mouseleave`
-- **Button detection**: `button` (which button) and `buttons` (bit field for multiple buttons) — supporting primary, secondary, and middle mouse buttons
-- **Coordinates**: `x`/`y` (element-local), `pageX`/`pageY` (LynxView), `clientX`/`clientY` (window)
-
-These interactions should be previewed in a native desktop host. The web playground can show the code, but it does not emulate native window routing or desktop drag behavior.
+Lynx 3.7 now supports most desktop [mouse event](/api/lynx-api/event/mouse-event) capabilities.
 
 ```tsx
 <view
@@ -72,24 +86,14 @@ These interactions should be previewed in a native desktop host. The web playgro
 />
 ```
 
-#### `<title-bar-view>`: Window Drag Area
+#### CSS `cursor`
 
-[`<title-bar-view>`](/api/elements/built-in/title-bar-view) lets you define draggable regions in a desktop window while keeping action areas interactive.
-
-Like mouse events, this capability is best demonstrated in a native macOS or Windows host rather than the web playground.
+Lynx 3.7 adds [CSS `cursor`](/api/css/properties/cursor) support on desktop so you can present clearer pointer feedback for interactive UI.
 
 ```tsx
-<title-bar-view moveable={true}>
-  {/* Your custom title bar content */}
-</title-bar-view>
-```
-
-[`SystemInfo.platform`](/api/lynx-api/global/system-info) returns `'macOS'` or `'windows'` on desktop, so you can branch UI logic when needed:
-
-```ts
-if (SystemInfo.platform === 'macOS' || SystemInfo.platform === 'windows') {
-  // Desktop-specific logic
-}
+<view style={{ cursor: 'pointer' }}>
+  <text>Hover me</text>
+</view>
 ```
 
 ## SVG: Scalable Vector Graphics Element
@@ -108,7 +112,7 @@ In Lynx 3.7, the standalone `<svg>` element supports both inline vector content 
   example="svg"
   defaultFile="src/base/index.tsx"
   highlight="{19-27}"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/svg_basic.png"
+  img={svgExampleImg}
 />
 
 You can also load external SVG assets directly:
@@ -120,7 +124,7 @@ You can also load external SVG assets directly:
 />
 ```
 
-`<svg>` parses vector nodes on a dedicated thread and supports [most SVG elements and attributes](/api/elements/built-in/svg), with consistent rendering behavior across Android, iOS, HarmonyOS, macOS, Windows, and Web.
+`<svg>` parses vector nodes on a dedicated thread and supports [most SVG elements and attributes](/api/elements/built-in/svg), with consistent rendering behavior across Android, iOS, HarmonyOS, MacOS, Windows, and Web.
 
 ## Lynx for AI: Open-Sourced Skills
 
