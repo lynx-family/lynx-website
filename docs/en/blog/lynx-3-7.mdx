@@ -26,6 +26,8 @@ Let's take a closer look at what's new in Lynx 3.7.
 We [previously planned](/blog/lynx-open-source-roadmap-2025.html) to open source desktop support in Lynx 3.5, and [later decided](/blog/lynx-3-5.html#one-more-thing-desktop-support-preview) to go further and open source the full desktop stack. With Lynx 3.7, that vision is now a reality.
 
 Lynx officially supports **MacOS** and **Windows** as first-class platforms. You can now build and render Lynx views inside native desktop applications, using the same front-end stack and tooling you already use for mobile and web.
+The desktop UI is self-rendered by Lynx rather than composed from native platform widgets.
+We also plan to open source Lynxtron, an Electron-like desktop application framework that uses Lynx as its UI renderer.
 
 <video
   src={bringingLynxToDesktop}
@@ -67,10 +69,11 @@ You can check the detailed compatibility status for every API on the [API Status
 ### Getting Started
 
 For platform-specific integration details, see [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps), which now includes desktop guides alongside Android, iOS, HarmonyOS, and Web.
+A playground app built with Lynxtron is also expected to provide a more direct way to fetch and run Lynx examples on PC.
 
 ### Desktop-Specific Capabilities
 
-Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment, including mouse events and CSS cursor support.
+Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment, including mouse, keyboard, and wheel events, as well as CSS cursor support.
 
 #### Mouse Events
 
@@ -84,6 +87,25 @@ Lynx 3.7 now supports most desktop [mouse event](/api/lynx-api/event/mouse-event
   onMouseMove={(e) => handleHover(e)}
   onMouseLeave={() => resetState()}
 />
+```
+
+#### Keyboard Events
+
+Lynx 3.7 also adds desktop [keyboard event](/api/lynx-api/event/key-event) support.
+
+```tsx
+<input
+  onKeyDown={(e) => console.log(`Key down: ${e.key}`)}
+  onKeyUp={(e) => console.log(`Key up: ${e.key}`)}
+/>
+```
+
+#### Wheel Events
+
+Lynx 3.7 also adds desktop [wheel event](/api/lynx-api/event/wheel-event) support.
+
+```tsx
+<view onWheel={(e) => console.log(`Wheel delta: ${e.deltaX}, ${e.deltaY}`)} />
 ```
 
 #### CSS `cursor`
