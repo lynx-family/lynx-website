@@ -117,6 +117,12 @@ interface APISummaryProps {
   query?: string;
 }
 
+const SUMMARY_PLATFORMS: LCD.PlatformName[] = [
+  ...NATIVE_PLATFORMS,
+  'clay_macos',
+  'clay_windows',
+];
+
 export function APISummary(props: APISummaryProps) {
   if (import.meta.env.SSG_MD) {
     // TODO: support SSG-MD
@@ -307,7 +313,7 @@ export function APISummary(props: APISummaryProps) {
 
       {/* Right: Platform Badges */}
       <div className="flex flex-wrap gap-2 items-center">
-        {NATIVE_PLATFORMS.map((platform) => {
+        {SUMMARY_PLATFORMS.map((platform) => {
           const s = support[platform];
           const version = Array.isArray(s)
             ? s[0].version_added
