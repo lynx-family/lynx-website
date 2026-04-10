@@ -22,20 +22,3 @@ bool logbox_enabled = env.IsLogboxEnabled();
 env.RegisterNativeModule("DemoModule", creator, opaque);
 env.RegisterExtensionModule("DemoExtension", extension_creator, true, opaque);
 ```
-
-## Desktop (C API)
-
-```c
-const char* version = lynx_env_get_sdk_version();
-lynx_env_set_devtool_app_info("app_id", "demo");
-lynx_env_enable_devtool(1);
-int devtool_enabled = lynx_env_is_devtool_enabled();
-int connected = lynx_env_connect_devtool("ws://127.0.0.1:9229");
-lynx_env_enable_logbox(1);
-int logbox_enabled = lynx_env_is_logbox_enabled();
-lynx_env_register_native_module("DemoModule", creator, opaque);
-lynx_env_register_extension_module("DemoExtension",
-                                   extension_creator,
-                                   1,
-                                   opaque);
-```

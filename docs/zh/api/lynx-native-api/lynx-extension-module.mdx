@@ -54,7 +54,7 @@ void RegisterExtensionModule() {
 
 `LynxExtensionModule` 暴露了横跨 UI 线程和 BTS 线程的生命周期回调：
 
-- `OnLynxViewCreate(lynx_view_t* lynx_view)`：`LynxView` 实例创建时，在 UI 线程调用。
+- `OnLynxViewCreate(...)`：`LynxView` 实例创建时，在 UI 线程调用。
 - `OnLynxViewDestroy()`：`LynxView` 实例销毁前，在 UI 线程调用。
 - `OnRuntimeInit()`：BTS runtime 实例创建时，在 UI 线程调用。
 - `OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`：runtime attach 时，在 BTS 线程调用。
@@ -122,10 +122,8 @@ native view 能力归属于 Desktop extension 面，不单独作为另一套 Nat
 
 class CEFExtensionModule : public lynx::pub::LynxExtensionModule {
  public:
-  void OnLynxViewCreate(lynx_view_t* lynx_view) override {
-    if (auto* view = lynx::pub::LynxView::Unwrap(lynx_view); view != nullptr) {
-      view->RegisterNativeView<CEFWebView>("x-webview");
-    }
+  void InstallNativeView(lynx::pub::LynxView& view) {
+    view.RegisterNativeView<CEFWebView>("x-webview");
   }
 };
 ```
