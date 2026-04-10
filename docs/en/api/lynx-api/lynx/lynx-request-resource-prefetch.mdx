@@ -16,7 +16,14 @@ import { APISummary, APITable } from '@lynx';
 ## Syntax
 
 ```ts
-requestResourcePrefetch(data: object, callback: (res: object) => void) : void;
+requestResourcePrefetch(
+  data: object,
+  callback: (res: object) => void,
+  config?: {
+    awaitComplete?: boolean;
+    awaitTimeout?: number; // ms, default is 60000
+  }
+) : void;
 ```
 
 ### Parameters
@@ -49,12 +56,17 @@ The callback function called after the API is executed or fails. The inside defi
 
 - `code`: Type `number`, status code, which may take the following values:
   - `0`: Success.
-  - `11001`: Parameter error.
+  - `32101`: Parameter error.
+  - `32102`: Image prefetch helper does not exist.
+  - `32103`: Resource service does not exist.
+  - `32104`: Timed out while waiting for prefetch completion. This is only possible when `config.awaitComplete = true`.
 - `msg`: Type `string`, a global error message.
 - `details`: Type `array`, where each detail represents the preload status details of a resource, with the internal definition of detail as follows:
   - `code`: Type `number`, status code, which may take the following values:
     - `0`: Success.
-    - `11001`: Parameter error.
+    - `32101`: Parameter error.
+    - `32102`: Image prefetch helper does not exist.
+    - `32103`: Resource service does not exist.
   - `msg`: Type `string`, error message.
   - `uri`: Type `string`, represents the CDN address of the resource.
   - `type`: Type `string`, represents the type of the resource, with resource types defined as follows:
@@ -63,13 +75,23 @@ The callback function called after the API is executed or fails. The inside defi
     - `audio`: Audio resource.
     - `font`: Font resource.
 
+#### `config` (since 3.9)
+
+Controls whether the callback waits for prefetch completion and how long it waits:
+
+- `awaitComplete` (optional): Type `boolean`, default `false`. When set to `true`, the `callback` is invoked only after all resources complete prefetching; if the wait times out, the API returns `32104`.
+- `awaitTimeout` (optional): Type `number`, in milliseconds, default `60000`. This only takes effect when `awaitComplete = true`.
+
 ### Return Value
 
 None (`undefined`).
 
 ## Errors
 
-- When there is a parameter error, the `code` will return the `11001` error code, and the `msg` will contain detailed error information.
+- When there is a parameter error, the `code` returns `32101`, and the `msg` contains detailed error information.
+- When the Image prefetch helper does not exist, the `code` returns `32102`.
+- When the Resource service does not exist, the `code` returns `32103`.
+- When `awaitComplete` is enabled and waiting times out, the `code` returns `32104`.
 
 ## Example
 
@@ -125,6 +147,10 @@ function Page() {
           'prefetch status of each resource:',
           JSON.stringify(res.details),
         );
+      },
+      {
+        awaitComplete: true,
+        awaitTimeout: 3000,
       },
     );
   }, []);
