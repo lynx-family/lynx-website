@@ -36,14 +36,18 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const currentDir = process.cwd();
-const examplesDir = path.join(
-  currentDir,
-  process.env.EXAMPLES_DIR ||
+const examplesDir = (() => {
+  const envDir = process.env.EXAMPLES_DIR?.trim();
+  if (envDir) {
+    return path.isAbsolute(envDir) ? envDir : path.join(currentDir, envDir);
+  }
+  return path.join(
+    currentDir,
     'packages/lynx-example-packages/node_modules/@lynx-example',
-);
+  );
+})();
 const lynxEntryFileName = process.env.LYNX_ENTRY_FILE_NAME || '.lynx.bundle';
 const webEntryFileName = process.env.WEB_ENTRY_FILE_NAME || '.web.bundle';
 const removeLinkPath =
@@ -102,7 +106,12 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
-        execSync(`cp -Lrfp "${fullPath}" "${targetPath}"`);
+        fs.cpSync(fullPath, targetPath, {
+          dereference: true,
+          force: true,
+          preserveTimestamps: true,
+          recursive: true,
+        });
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
@@ -111,7 +120,11 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
-        execSync(`cp -Lrfp "${fullPath}" "${targetPath}"`);
+        fs.cpSync(fullPath, targetPath, {
+          dereference: true,
+          force: true,
+          preserveTimestamps: true,
+        });
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
@@ -150,15 +163,15 @@ function getTemplateFiles(allFiles) {
  * @returns {Array} - An array of sorted file paths
  */
 function sortFilesByDirectoryFirst(files) {
-  // 分离目录和文件
+  // Separate directories and files
   const directories = files.filter((file) => file.includes('/'));
   const regularFiles = files.filter((file) => !file.includes('/'));
 
-  // 按字母顺序排序
+  // Sort alphabetically
   directories.sort((a, b) => a.localeCompare(b));
   regularFiles.sort((a, b) => a.localeCompare(b));
 
-  // 合并结果
+  // Merge the results
   return [...directories, ...regularFiles];
 }
 
@@ -170,6 +183,14 @@ function parseExampleData() {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
+
+  if (!fs.existsSync(examplesDir)) {
+    console.error(
+      `examplesDir not found: ${examplesDir}\n` +
+        `Please make sure example packages are installed (run pnpm install) or set EXAMPLES_DIR to the correct directory.`,
+    );
+    process.exit(1);
+  }
 
   const examples = fs.readdirSync(examplesDir);
 
