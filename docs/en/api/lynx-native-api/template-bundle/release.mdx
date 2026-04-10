@@ -18,6 +18,24 @@ Release the `Native` memory held by the current `TemplateBundle` object. After e
 public void release();
 ```
 
+### Desktop (C++)
+
+Desktop C++ API does not expose a standalone `release()` method. `LynxTemplateBundle` releases the underlying handle in its destructor:
+
+```cpp
+{
+  lynx::pub::LynxTemplateBundle bundle(content, length, dtor, opaque);
+}  // release happens in ~LynxTemplateBundle()
+```
+
+### Desktop (C API)
+
+```c
+void lynx_template_bundle_release(lynx_template_bundle_t* bundle);
+```
+
+If the bundle has already been consumed by `lynx_view_load_template(...)`, the release may be handled by the view. Otherwise the caller is responsible for releasing it.
+
 ## Compatibility
 
 <APITable />

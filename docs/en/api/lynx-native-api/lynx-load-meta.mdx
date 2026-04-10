@@ -118,6 +118,36 @@ meta.loadOption = LynxLoadOptionDumpElement | LynxLoadOptionRecycleTemplateBundl
 meta.lynxViewConfig = nil;
 ```
 
+## Desktop (C++)
+
+Construct `LynxLoadMeta` with the default constructor and configure it through setters:
+
+```cpp
+auto meta = std::make_shared<lynx::pub::LynxLoadMeta>();
+meta->SetUrl(url);
+meta->SetBinaryData(bytes);
+meta->SetTemplateBundle(bundle);
+meta->SetInitialData(initial_data);
+meta->SetGlobalProps(global_props);
+```
+
+Desktop public API follows the same precedence for template source selection:
+
+`template_bundle > binary_data > url`
+
+## Desktop (C API)
+
+```c
+lynx_load_meta_t* meta = lynx_load_meta_create();
+lynx_load_meta_set_url(meta, url);
+lynx_load_meta_set_binary_data(meta, bytes, length, NULL, NULL);
+lynx_load_meta_set_template_bundle(meta, bundle);
+lynx_load_meta_set_initial_data(meta, initial_data);
+lynx_load_meta_set_global_props(meta, global_props);
+```
+
+Release the object with `lynx_load_meta_release(meta)` when it is no longer needed.
+
 ## Compatibility
 
 <APITable />
