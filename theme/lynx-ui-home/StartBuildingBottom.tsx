@@ -2,7 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import React from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { Ripple } from './RippleBackground';
 import { useLinkNavigate } from './hooks/use-link-navigate';
@@ -56,21 +55,5 @@ export const StartBuilding = () => {
         </div>
       </div>
     </div>
-    // <div
-    //   style={{
-    //     width: '100%',
-    //     height: '20vw',
-    //     display: 'flex',
-    //     flexDirection: 'column',
-    //     justifyContent: 'center',
-    //     alignItems: 'center',
-    //   }}
-    // >
-    //   <img
-    //     src={useDark()
-    //       ? '/assets/StartBuildingBottomDark.svg'
-    //       : '/assets/StartBuildingBottom.svg'}
-    //     style={{ position: 'absolute', zIndex: '-1', height: '20vw', marginTop: "-1.8vw" }}
-    //   />
   );
 };

@@ -5,9 +5,9 @@
 import React from 'react';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
-import ConsistencyBackgroundLight from '@assets/ConsistencyBackgroundLight.svg';
-import ConsistencyDark from '@assets/ConsistencyDark.svg';
-import ConsistencySVG from '@assets/Consistency.svg';
+import ConsistencyBackgroundLight from '@assets/lynx-ui-home/ConsistencyBackgroundLight.svg';
+import ConsistencyDark from '@assets/lynx-ui-home/ConsistencyDark.svg';
+import ConsistencySVG from '@assets/lynx-ui-home/Consistency.svg';
 export const Consistency = () => {
   const lang = useLang() as 'en' | 'zh';
   return (

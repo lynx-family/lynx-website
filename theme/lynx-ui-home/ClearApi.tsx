@@ -7,10 +7,10 @@ import { descriptions } from './featuresDescriptions';
 import { CodeComparisonBlock } from './compareBlock';
 import './index.scss';
 import { useLang } from '@rspress/core/runtime';
-import TwoHalfCircleLight from '@assets/TwoHalfCircleLight.svg';
-import RectangleLight from '@assets/RectangleLight.svg';
-import VSIconLight from '@assets/VSIconLight.svg';
-import VSIconDark from '@assets/VSIconDark.svg';
+import TwoHalfCircleLight from '@assets/lynx-ui-home/TwoHalfCircleLight.svg';
+import RectangleLight from '@assets/lynx-ui-home/RectangleLight.svg';
+import VSIconLight from '@assets/lynx-ui-home/VSIconLight.svg';
+import VSIconDark from '@assets/lynx-ui-home/VSIconDark.svg';
 
 export const ClearAPI = () => {
   const lang = useLang() as 'en' | 'zh';

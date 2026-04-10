@@ -6,9 +6,9 @@ import './index.scss';
 import React from 'react';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
-import ConsistencyBackgroundLight from '@assets/ConsistencyBackgroundLight.svg';
-import PerformanceDark from '@assets/PerformanceDark.svg';
-import PerformanceLight from '@assets/PerformanceLight.svg';
+import ConsistencyBackgroundLight from '@assets/lynx-ui-home/ConsistencyBackgroundLight.svg';
+import PerformanceDark from '@assets/lynx-ui-home/PerformanceDark.svg';
+import PerformanceLight from '@assets/lynx-ui-home/PerformanceLight.svg';
 export const Performance = () => {
   const lang = useLang() as 'en' | 'zh';
   return (

@@ -6,9 +6,9 @@ import React from 'react';
 import './index.scss';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
-import CompatibilityRight from '@assets/CompatibilityRight.svg';
-import CompatibilityDark from '@assets/CompatibilityDark.svg';
-import CompatibilitySVG from '@assets/Compatibility.svg';
+import CompatibilityRight from '@assets/lynx-ui-home/CompatibilityRight.svg';
+import CompatibilityDark from '@assets/lynx-ui-home/CompatibilityDark.svg';
+import CompatibilitySVG from '@assets/lynx-ui-home/Compatibility.svg';
 
 export const Compatibility = () => {
   const lang = useLang() as 'en' | 'zh';
