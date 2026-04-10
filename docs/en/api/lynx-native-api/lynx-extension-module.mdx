@@ -54,7 +54,7 @@ void RegisterExtensionModule() {
 
 `LynxExtensionModule` exposes lifecycle callbacks across the UI thread and BTS thread:
 
-- `OnLynxViewCreate(lynx_view_t* lynx_view)`: called on the UI thread when a `LynxView` instance is created.
+- `OnLynxViewCreate(...)`: called on the UI thread when a `LynxView` instance is created.
 - `OnLynxViewDestroy()`: called on the UI thread before the `LynxView` instance is destroyed.
 - `OnRuntimeInit()`: called on the UI thread when the BTS runtime instance is created.
 - `OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`: called on the BTS thread when the runtime is attached.
@@ -113,7 +113,7 @@ You can register a native view in three common places:
 - Per view through `LynxView::RegisterNativeView<T>(...)`
 - Inside an extension module during `OnLynxViewCreate(...)`
 
-The extension-module pattern is useful when a native view should always be installed together with the extension itself:
+The extension-module pattern is useful when a native view should always be installed together with the extension itself. In practice, this registration is usually performed from `OnLynxViewCreate(...)`:
 
 <CodeFold toggle>
 
@@ -122,10 +122,8 @@ The extension-module pattern is useful when a native view should always be insta
 
 class CEFExtensionModule : public lynx::pub::LynxExtensionModule {
  public:
-  void OnLynxViewCreate(lynx_view_t* lynx_view) override {
-    if (auto* view = lynx::pub::LynxView::Unwrap(lynx_view); view != nullptr) {
-      view->RegisterNativeView<CEFWebView>("x-webview");
-    }
+  void InstallNativeView(lynx::pub::LynxView& view) {
+    view.RegisterNativeView<CEFWebView>("x-webview");
   }
 };
 ```
