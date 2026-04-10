@@ -1,0 +1,39 @@
+# WebAssembly
+
+从 Lynx 3.8 开始，Lynx 基于 PrimJS 集成为 Android 提供了基础的 WebAssembly 支持。
+
+这项能力面向 Lynx 应用中常见的 WebAssembly 加载和执行场景。目前这项能力仅支持后台线程，主线程暂不支持。当前实现重点在于提供 JavaScript 与 WebAssembly 之间可用的互操作能力，而不是完整覆盖整个 WebAssembly JavaScript API。
+
+## 当前支持
+
+目前 Lynx 支持以下核心流程：
+
+- 使用 `new WebAssembly.Module(...)` 创建模块
+- 使用 `new WebAssembly.Instance(...)` 实例化模块
+- 在 JavaScript 中调用 WebAssembly 导出的函数
+- 在常见场景下使用 `WebAssembly.Memory`、`WebAssembly.Table` 和 `WebAssembly.Global`
+- 在实例化时传入 function、memory、table 和 global 类型的 imports
+
+## 当前限制
+
+当前支持范围是有边界的：
+
+- 目前该能力可在 Lynx 3.8 的 Android 平台中使用
+- WebAssembly 当前仅支持在后台线程中使用
+- 主线程暂不支持 WebAssembly
+- 目前尚未提供完整的 WebAssembly JavaScript API
+- `WebAssembly` 上的一些静态 API，例如 `compile`、`instantiate`、`validate` 以及 streaming 相关变体，当前暂未支持
+- 一些反射类 API 和更高级的行为仍然是部分支持
+
+在实践中，推荐优先使用基于 `WebAssembly.Module` 和 `WebAssembly.Instance` 的构造式用法。
+
+## 示例
+
+```js
+const module = new WebAssembly.Module(wasmBytes);
+const instance = new WebAssembly.Instance(module, imports);
+
+const result = instance.exports.add(1, 2);
+```
+
+更多底层运行时支持的说明，可参考 [PrimJS 的 WebAssembly 文档](https://github.com/lynx-family/primjs/blob/develop/docs/wasm.md)。

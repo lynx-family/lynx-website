@@ -4,17 +4,16 @@
 
 ## MainThreadRuntimeWrapperWebpackPluginOptions interface
 
-The options of [MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md)<!-- -->.
+Options for `MainThreadRuntimeWrapperWebpackPlugin`.
 
 **Signature:**
 
 ```typescript
-export interface MainThreadRuntimeWrapperWebpackPluginOptions 
+export interface MainThreadRuntimeWrapperWebpackPluginOptions
 ```
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [test](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.test.md) |  | BannerPlugin\['options'\]\['test'\] | Include all modules that pass test assertion. |
-
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `test` | `BannerPlugin['options']['test']` | Include all modules that pass the test assertion. |

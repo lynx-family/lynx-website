@@ -4,33 +4,44 @@
 
 ## lynx-bundle-rslib-config package
 
-`@lynx-js/lynx-bundle-rslib-config` is the package that provides the configurations for bundling Lynx bundle with [Rslib](https://rslib.rs/)<!-- -->.
+`@lynx-js/lynx-bundle-rslib-config` is the package that provides the configurations for bundling Lynx bundle with [Rslib](https://rslib.rs/).
 
 ## Classes
 
 |  Class | Description |
 |  --- | --- |
-|  [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md) | The webpack plugin to build and emit the external bundle. |
-|  [MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md) | The main-thread runtime wrapper for external bundle. |
+|  [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md) | Webpack plugin that builds and emits an external bundle. |
+|  [MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md) | Webpack plugin that wraps main-thread runtime modules for external bundles. |
 
 ## Functions
 
 |  Function | Description |
 |  --- | --- |
-|  [defineExternalBundleRslibConfig(userLibConfig, encodeOptions)](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md) | Get the rslib config for building Lynx external bundles. |
+|  [defineExternalBundleRslibConfig(userLibConfig, encodeOptions)](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md) | Get the Rslib config for building Lynx external bundles. |
 
 ## Interfaces
 
 |  Interface | Description |
 |  --- | --- |
-|  [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | The options for encoding the external bundle. |
-|  [ExternalBundleWebpackPluginOptions](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.md) | The options for [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md)<!-- -->. |
-|  [MainThreadRuntimeWrapperWebpackPluginOptions](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.md) | The options of [MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md)<!-- -->. |
+|  [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | Options for encoding the external bundle. |
+|  [ExternalBundleLibConfig](./lynx-bundle-rslib-config.externalbundlelibconfig.md) | Rslib config shape accepted by `defineExternalBundleRslibConfig`. |
+|  [ExternalBundleWebpackPluginOptions](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.md) | Options for `ExternalBundleWebpackPlugin`. |
+|  [ExternalsPresetDefinition](./lynx-bundle-rslib-config.externalspresetdefinition.md) | Definition for a named externals preset. |
+|  [MainThreadRuntimeWrapperWebpackPluginOptions](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.md) | Options for `MainThreadRuntimeWrapperWebpackPlugin`. |
+
+## Type Aliases
+
+|  Type Alias | Description |
+|  --- | --- |
+|  [Externals](./lynx-bundle-rslib-config.externals.md) | External module to global-name mappings used when building Lynx external bundles. |
+|  [ExternalsPresetDefinitions](./lynx-bundle-rslib-config.externalspresetdefinitions.md) | Available externals preset definitions. |
+|  [ExternalsPresets](./lynx-bundle-rslib-config.externalspresets.md) | Enabled externals presets. |
+|  [OutputConfig](./lynx-bundle-rslib-config.outputconfig.md) | Output config accepted by Lynx external bundle builds. |
 
 ## Variables
 
 |  Variable | Description |
 |  --- | --- |
+|  [builtInExternalsPresetDefinitions](./lynx-bundle-rslib-config.builtinexternalspresetdefinitions.md) | Built-in externals preset definitions. |
 |  [defaultExternalBundleLibConfig](./lynx-bundle-rslib-config.defaultexternalbundlelibconfig.md) | The default lib config for external bundle. |
-|  [LAYERS](./lynx-bundle-rslib-config.layers.md) | The Layer name of background and main-thread. |
-
+|  [reactLynxExternalsPreset](./lynx-bundle-rslib-config.reactlynxexternalspreset.md) | Standard ReactLynx external mappings used by the built-in `reactlynx` preset. |

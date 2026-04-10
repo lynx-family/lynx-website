@@ -4,17 +4,16 @@
 
 ## EncodeOptions interface
 
-The options for encoding the external bundle.
+Options for encoding the external bundle.
 
 **Signature:**
 
 ```typescript
-export interface EncodeOptions 
+export interface EncodeOptions
 ```
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [targetSdkVersion?](./lynx-bundle-rslib-config.encodeoptions.targetsdkversion.md) |  | string | _(Optional)_ The target SDK version of the external bundle. |
-
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `engineVersion?` | `string` | The engine version of the external bundle. |

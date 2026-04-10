@@ -130,14 +130,18 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
   },
 ];
 
+/** Subsites with internal docs routes (Lynx, ReactLynx, Rspeedy, AI). */
+export const CORE_SUBSITES = SUBSITES_CONFIG.filter((s) => !s.external);
+
+/** Subsites that link to external sites (Sparkling, Vue Lynx, ReactLynx Use). */
+export const ECOSYSTEM_SUBSITES = SUBSITES_CONFIG.filter((s) => s.external);
+
 /**
  * URL paths that share common documentation files.
  * For example, "start/quick-start" will be accessible at both
  * "guide/start/quick-start" and "react/start/quick-start".
  */
-export const SHARED_SIDEBAR_PATHS = SUBSITES_CONFIG.filter(
-  (config) => !config.external,
-).map((config) => config.value);
+export const SHARED_SIDEBAR_PATHS = CORE_SUBSITES.map((config) => config.value);
 
 const SHARED_DOC_ROOT = 'start';
 

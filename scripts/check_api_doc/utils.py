@@ -1,5 +1,3 @@
-import yaml
-
 KNOWN_COMPONENTS = {
     'APITable', 'APISummary', 'CodeFold', 'Go',
     'VersionBadge', 'PlatformBadge', 'StatusBadge', 'RuntimeBadge', 'Badge',
@@ -24,12 +22,6 @@ def parse_frontmatter(content):
 
     frontmatter = {}
     try:
-        # Use yaml loader for better parsing if available, but fallback to simple parsing if needed
-        # The original script used simple splitting, but fix_duplicate_imports used yaml
-        # Let's stick to the simple one from check-and-fix-docs-simple.py for now to avoid dependency issues if yaml isn't there
-        # But wait, fix-duplicate-imports imported yaml. 
-        # I'll use simple parsing to be robust against missing deps, or try yaml.
-        # Actually, let's just use the logic from check-and-fix-docs-simple.py as it seemed to work well.
         for line in fm_text.split('\n'):
             if ':' in line:
                 key, val = line.split(':', 1)

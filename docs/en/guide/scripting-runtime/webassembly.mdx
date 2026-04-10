@@ -1,0 +1,39 @@
+# WebAssembly
+
+Starting from Lynx 3.8, Lynx provides basic WebAssembly support on Android through the PrimJS runtime integration.
+
+This capability is designed for common WebAssembly loading and execution scenarios in Lynx applications. It is currently available on the background thread only and is not supported on the main thread. The current implementation focuses on practical interoperability between JavaScript and WebAssembly, rather than full compatibility with the complete WebAssembly JavaScript API.
+
+## What Is Supported
+
+Lynx currently supports the following core flows:
+
+- Create modules with `new WebAssembly.Module(...)`
+- Instantiate modules with `new WebAssembly.Instance(...)`
+- Call exported WebAssembly functions from JavaScript
+- Use `WebAssembly.Memory`, `WebAssembly.Table`, and `WebAssembly.Global` in common cases
+- Provide function, memory, table, and global imports during instantiation
+
+## Current Limitations
+
+The current support is intentionally scoped.
+
+- This capability is currently available on Android in Lynx 3.8
+- WebAssembly is currently available on the background thread only
+- WebAssembly is not supported on the main thread
+- The complete WebAssembly JavaScript API is not available yet
+- Some static APIs on `WebAssembly`, such as `compile`, `instantiate`, `validate`, and streaming variants, are not supported yet
+- Some advanced reflection APIs and behaviors are still partial
+
+In practice, it is recommended to use the constructor-based flow based on `WebAssembly.Module` and `WebAssembly.Instance`.
+
+## Example
+
+```js
+const module = new WebAssembly.Module(wasmBytes);
+const instance = new WebAssembly.Instance(module, imports);
+
+const result = instance.exports.add(1, 2);
+```
+
+For more details about the underlying runtime support, see the [PrimJS WebAssembly document](https://github.com/lynx-family/primjs/blob/develop/docs/wasm.md).

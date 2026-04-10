@@ -2,14 +2,23 @@
 
 [Home](./index.md) &gt; [@lynx-js/external-bundle-rsbuild-plugin](./external-bundle-rsbuild-plugin.md) &gt; [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md)
 
-## PluginExternalBundleOptions type
+## PluginExternalBundleOptions interface
 
 Options for the external-bundle-rsbuild-plugin.
 
 **Signature:**
 
 ```typescript
-export type PluginExternalBundleOptions = Pick<ExternalsLoadingPluginOptions, 'externals'>;
+export interface PluginExternalBundleOptions extends Pick<ExternalsLoadingPluginOptions, 'globalObject' | 'timeout'>
 ```
-**References:** [ExternalsLoadingPluginOptions](./externals-loading-webpack-plugin.externalsloadingpluginoptions.md)
 
+## Properties
+
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  `externalBundleRoot?` | `string` | Root directory that stores project-owned external bundles referenced by `bundlePath`. |
+|  `externals?` | `Record<string, PluginExternalConfig>` | Additional explicit externals to load. |
+|  `externalsPresetDefinitions?` | `ExternalsPresetDefinitions` | Definitions for custom externals presets enabled by `externalsPresets`. |
+|  `externalsPresets?` | [`ExternalsPresets`](./external-bundle-rsbuild-plugin.externalspresets.md) | Presets for external libraries. |
+|  `globalObject?` | `ExternalsLoadingPluginOptions['globalObject']` | Global object used to mount external libraries. |
+|  `timeout?` | `number` | Default timeout for loading external bundles. |
