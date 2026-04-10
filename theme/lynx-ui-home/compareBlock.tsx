@@ -2,10 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { useEffect, useState } from 'react';
-import React from 'react';
 import { descriptions } from './featuresDescriptions';
-import { useLang, useDark } from '@rspress/core/runtime';
+import { useLang } from '@rspress/core/runtime';
+import { CodeBlockRuntime } from '@theme';
 import './index.scss';
 
 interface CodeComparisonProps {
@@ -14,8 +13,6 @@ interface CodeComparisonProps {
   language: string;
   beforeFilename: string;
   afterFilename: string;
-  lightTheme: string;
-  darkTheme: string;
 }
 
 export function CodeComparison({
@@ -24,50 +21,7 @@ export function CodeComparison({
   language,
   beforeFilename,
   afterFilename,
-  lightTheme,
-  darkTheme,
 }: CodeComparisonProps) {
-  const isDark = useDark();
-  const [highlightedBefore, setHighlightedBefore] = useState('');
-  const [highlightedAfter, setHighlightedAfter] = useState('');
-
-  useEffect(() => {
-    const selectedTheme = isDark ? darkTheme : lightTheme;
-
-    async function highlightCode() {
-      try {
-        const { codeToHtml } = await import('shiki');
-        const before = await codeToHtml(beforeCode, {
-          lang: language,
-          theme: selectedTheme,
-        });
-        const after = await codeToHtml(afterCode, {
-          lang: language,
-          theme: selectedTheme,
-        });
-        setHighlightedBefore(before);
-        setHighlightedAfter(after);
-      } catch (error) {
-        console.error('Error highlighting code:', error);
-        setHighlightedBefore(`<pre>${beforeCode}</pre>`);
-        setHighlightedAfter(`<pre>${afterCode}</pre>`);
-      }
-    }
-    highlightCode();
-  }, [isDark, beforeCode, afterCode, language, lightTheme, darkTheme]);
-
-  const renderCode = (code: string, highlighted: string) => {
-    if (highlighted) {
-      return (
-        <div
-          className="before-code"
-          dangerouslySetInnerHTML={{ __html: highlighted }}
-        />
-      );
-    } else {
-      return <pre className="after-code">{code}</pre>;
-    }
-  };
   return (
     <div className="ui-home-code-frame">
       <div
@@ -90,7 +44,9 @@ export function CodeComparison({
             >
               {beforeFilename}
             </div>
-            {renderCode(beforeCode, highlightedBefore)}
+            <div className="before-code">
+              <CodeBlockRuntime lang={language} code={beforeCode} />
+            </div>
           </div>
           <div>
             <div
@@ -104,7 +60,9 @@ export function CodeComparison({
             >
               {afterFilename}
             </div>
-            {renderCode(afterCode, highlightedAfter)}
+            <div className="after-code">
+              <CodeBlockRuntime lang={language} code={afterCode} />
+            </div>
           </div>
         </div>
       </div>
@@ -121,8 +79,6 @@ export function CodeComparisonBlock() {
       language="typescript"
       beforeFilename={descriptions.ClearAPI.details.beforeFileName[lang]}
       afterFilename={descriptions.ClearAPI.details.afterFileName[lang]}
-      lightTheme={useDark() ? 'everforest-dark' : 'everforest-light'}
-      darkTheme="github-dark"
     ></CodeComparison>
   );
 }
