@@ -2,7 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import React from 'react';
 import { descriptions } from './featuresDescriptions';
 import { CodeComparisonBlock } from './compareBlock';
 import './index.scss';
@@ -17,62 +16,32 @@ export const ClearAPI = () => {
 
   return (
     <div className="featureBlock">
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <div className="flex flex-row items-center justify-center">
         <img
+          alt="Clear API Circle"
           src={TwoHalfCircleLight}
-          style={{
-            width: '1.5rem',
-            height: '1.5rem',
-            transform: 'rotateZ(-145deg) translateX(20px) translateY(8px)',
-          }}
+          className="h-6 w-6 -rotate-[145deg] translate-x-[20px] translate-y-[8px]"
         />
         <div className="featureTitle">{descriptions.ClearAPI.title[lang]}</div>
         <img
+          alt="Clear API Rectangle"
           src={RectangleLight}
-          style={{
-            width: '1.5rem',
-            height: '1.5rem',
-            transform: 'translateY(1rem) translateX(1rem) rotate(-25deg)',
-          }}
+          className="h-6 w-6 translate-x-4 translate-y-4 -rotate-[25deg]"
         />
       </div>
       <div className="featureDescription">
         {descriptions.ClearAPI.description[lang]}
       </div>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          position: 'relative',
-        }}
-      >
+      <div className="relative flex flex-col items-center">
         <img
-          className="compatibility-img-light"
+          alt="Clear API VS Icon Light"
           src={VSIconLight}
-          width="45vw"
-          style={{
-            position: 'relative',
-            transform: 'translateY(50%)',
-            zIndex: '100',
-          }}
+          className="compatibility-img-light relative z-[100] h-16 w-16 translate-y-1/2"
         />
         <img
-          className="compatibility-img-dark"
+          alt="Clear API VS Icon Dark"
           src={VSIconDark}
-          width="45vw"
-          style={{
-            position: 'relative',
-            transform: 'translateY(50%)',
-            zIndex: '100',
-          }}
+          className="compatibility-img-dark relative z-[100] h-16 w-16 translate-y-1/2"
         />
         <CodeComparisonBlock />
       </div>

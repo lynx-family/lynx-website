@@ -2,7 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import React from 'react';
 import './index.scss';
 import { WarpBackground } from './WarpBackground';
 import { HomeLayout as BaseHomeLayout } from '@rspress/core/theme-original';
@@ -22,9 +21,9 @@ export const HomeLayout = () => {
         gridSize={3}
         gridLineWidth={0.5}
       >
-        <div className="home-layout-container" style={{ position: 'relative' }}>
+        <div className="home-layout-container relative">
           <BaseHomeLayout />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             <ClearAPI />
             <ConsistencyAndPerformance />
             <Compatibility />

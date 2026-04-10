@@ -3,12 +3,12 @@
 // LICENSE file in the root directory of this source tree.
 
 import { useCallback } from 'react';
-import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
+import { useLang, useNavigate, usePage } from '@rspress/core/runtime';
 
 export const useLinkNavigate = () => {
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
-  const { page } = usePageData();
+  const { page } = usePage();
   const handleInteraction = useCallback(
     (path: string) => {
       if (

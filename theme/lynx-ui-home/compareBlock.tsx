@@ -24,24 +24,10 @@ export function CodeComparison({
 }: CodeComparisonProps) {
   return (
     <div className="ui-home-code-frame">
-      <div
-        className="content-frame"
-        style={{
-          borderRadius: '18px',
-          boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.05)',
-        }}
-      >
+      <div className="content-frame rounded-[18px] shadow-[0px_0px_10px_rgba(0,0,0,0.05)]">
         <div className="code-area-frame">
           <div>
-            <div
-              className="before-title"
-              style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderBottomColor: 'var(--home-section-divider)',
-                borderBottomWidth: '1px',
-              }}
-            >
+            <div className="before-title flex items-center justify-center border-b border-b-[var(--home-section-divider)]">
               {beforeFilename}
             </div>
             <div className="before-code">
@@ -49,15 +35,7 @@ export function CodeComparison({
             </div>
           </div>
           <div>
-            <div
-              className="after-title"
-              style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderBottomColor: 'var(--home-section-divider)',
-                borderBottomWidth: '1px',
-              }}
-            >
+            <div className="after-title flex items-center justify-center border-b border-b-[var(--home-section-divider)]">
               {afterFilename}
             </div>
             <div className="after-code">
@@ -79,6 +57,6 @@ export function CodeComparisonBlock() {
       language="typescript"
       beforeFilename={descriptions.ClearAPI.details.beforeFileName[lang]}
       afterFilename={descriptions.ClearAPI.details.afterFileName[lang]}
-    ></CodeComparison>
+    />
   );
 }

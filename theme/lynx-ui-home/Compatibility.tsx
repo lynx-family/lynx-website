@@ -2,7 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import React from 'react';
 import './index.scss';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
@@ -18,31 +17,25 @@ export const Compatibility = () => {
         {descriptions.Compatibility.title[lang]}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
+      <div className="flex flex-row">
         <div className="featureDescription">
           {descriptions.Compatibility.description[lang]}
         </div>
         <img
+          alt="Compatibility Right"
           src={CompatibilityRight}
-          style={{
-            transform: 'rotate(20deg)translate(10px, 5px)',
-            width: '2vw',
-            minWidth: '30px',
-          }}
+          className="w-[2vw] min-w-[30px] rotate-[20deg] translate-x-[10px] translate-y-[5px]"
         />
       </div>
-
       <img
-        className="compatibility-img-dark"
+        alt="Compatibility Dark"
+        className="compatibility-img-dark w-full border-0"
         src={CompatibilityDark}
-        width="100%"
-        style={{ borderWidth: '0px' }}
       />
       <img
-        className="compatibility-img-light"
+        alt="Compatibility"
+        className="compatibility-img-light w-full border-0"
         src={CompatibilitySVG}
-        width="100%"
-        style={{ borderWidth: '0px' }}
       />
     </div>
   );

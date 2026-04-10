@@ -10,47 +10,19 @@ export const StartBuilding = () => {
   const lang = useLang() as 'en' | 'zh';
 
   return (
-    <div
-      style={{
-        bottom: 0,
-        position: 'relative',
-        display: 'flex',
-        height: '400px',
-        width: '100%',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        // borderRadius: 'var(--radius)',
-        background: 'hsl(var(--background))',
-        borderTopWidth: '1px',
-        borderColor: 'hsl(var(--border))',
-      }}
-    >
+    <div className="relative bottom-0 flex h-[400px] w-full flex-col items-center justify-center overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--background))]">
       <Ripple mainCircleSize={300} numCircles={10} />
       <div className="startBuildingTitle">
         {lang === 'zh' ? '开始使用' : 'Start building with '}
-        <span style={{ color: 'var(--home-highlight-title-color)' }}>
+        <span className="text-[var(--home-highlight-title-color)]">
           lynx-ui
         </span>
       </div>
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: '24px',
-          width: '142px',
-          height: '48px',
-          marginTop: '20px',
-          background:
-            'linear-gradient(275deg, var(--rp-c-brand-darker) 3%, var(--rp-c-brand) 97%)',
-          cursor: 'pointer',
-        }}
+        className="mt-[20px] flex h-[48px] w-[142px] cursor-pointer flex-col items-center justify-center rounded-[24px] bg-[linear-gradient(275deg,var(--rp-c-brand-darker)_3%,var(--rp-c-brand)_97%)]"
         onClick={() => linkNavigate('Guides/Introduction')}
       >
-        <div style={{ color: 'var(--home-button-font-color)' }}>
+        <div className="text-[var(--home-button-font-color)]">
           {lang === 'zh' ? '快速开始' : 'Get Started'}
         </div>
       </div>

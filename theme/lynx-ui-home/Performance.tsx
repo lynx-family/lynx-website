@@ -3,7 +3,6 @@
 // LICENSE file in the root directory of this source tree.
 
 import './index.scss';
-import React from 'react';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
 import ConsistencyBackgroundLight from '@assets/lynx-ui-home/ConsistencyBackgroundLight.svg';
@@ -13,60 +12,29 @@ export const Performance = () => {
   const lang = useLang() as 'en' | 'zh';
   return (
     <div className="featureBlockRow">
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex flex-col items-center justify-center">
         <div className="featureBlockFont">
           {descriptions.Performance.title[lang]}
         </div>
-        <div style={{ fontSize: '1rem', marginTop: '1rem', color: 'gray' }}>
+        <div className="mt-4 text-base text-gray-500">
           {descriptions.Performance.description[lang]}
         </div>
       </div>
-      <div
-        style={{
-          position: 'relative',
-          width: '30vw',
-          height: '30vw',
-          minWidth: '336px',
-          minHeight: '330px',
-        }}
-      >
+      <div className="relative h-[30vw] w-[30vw] min-h-[330px] min-w-[336px]">
         <img
+          alt="Performance Background Light"
           src={ConsistencyBackgroundLight}
-          style={{
-            position: 'absolute',
-            height: '100%',
-            width: '100%',
-            top: '0',
-            left: '0',
-            zIndex: '-1',
-          }}
+          className="absolute inset-0 -z-10 h-full w-full"
         />
         <img
-          className="compatibility-img-dark"
+          alt="Performance Dark"
           src={PerformanceDark}
-          style={{
-            height: '100%',
-            width: '100%',
-            top: '0',
-            left: '0',
-          }}
+          className="compatibility-img-dark h-full w-full"
         />
         <img
-          className="compatibility-img-light"
+          alt="Performance"
           src={PerformanceLight}
-          style={{
-            height: '100%',
-            width: '100%',
-            top: '0',
-            left: '0',
-          }}
+          className="compatibility-img-light h-full w-full"
         />
       </div>
     </div>
