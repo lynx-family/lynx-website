@@ -4,7 +4,7 @@
 
 ## Performance.profile property
 
-Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.dev/config/other-options#profile) config of Rspack.
+Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.rs/config/other-options#profile) config of Rspack.
 
 **Signature:**
 
@@ -33,4 +33,3 @@ export default defineConfig({
   performance: { profile: true },
 })
 ```
-

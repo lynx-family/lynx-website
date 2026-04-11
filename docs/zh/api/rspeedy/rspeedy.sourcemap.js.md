@@ -16,7 +16,7 @@ js?: Rspack.DevTool | undefined | `${Exclude<Rspack.DevTool, false | 'eval'>}-de
 
 Defaults to `'cheap-module-source-map'` at development, `false` at production.
 
-See [Rspack - Devtool](https://rspack.dev/config/devtool) for details.
+See [Rspack - Devtool](https://rspack.rs/config/devtool) for details.
 
 ## Example 1
 
@@ -67,4 +67,3 @@ export default defineConfig({
   },
 })
 ```
-

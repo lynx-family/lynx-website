@@ -14,7 +14,7 @@ assetPrefix?: string | undefined;
 
 ## Remarks
 
-The functionality of [Output.assetPrefix](./rspeedy.output.assetprefix.md) is basically the same as the [output.publicPath](https://www.rspack.dev/config/output#outputpublicpath) config in Rspack. With the following differences:
+The functionality of [Output.assetPrefix](./rspeedy.output.assetprefix.md) is basically the same as the [output.publicPath](https://rspack.rs/config/output#outputpublicpath) config in Rspack. With the following differences:
 
 - `output.assetPrefix` only takes effect in the production build.
 
@@ -33,4 +33,3 @@ export default defineConfig({
   },
 })
 ```
-

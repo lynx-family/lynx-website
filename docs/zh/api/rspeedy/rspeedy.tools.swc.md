@@ -4,7 +4,7 @@
 
 ## Tools.swc property
 
-The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loader](https://rspack.dev/guide/features/builtin-swc-loader)<!-- -->.
+The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loader](https://rspack.rs/guide/features/builtin-swc-loader)<!-- -->.
 
 **Signature:**
 
