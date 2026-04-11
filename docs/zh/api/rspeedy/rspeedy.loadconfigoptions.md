@@ -50,7 +50,7 @@ string \| undefined
 
 </td><td>
 
-_(Optional)_ The config file path to load.
+_(Optional)_
 
 
 </td></tr>
@@ -69,7 +69,7 @@ string \| undefined
 
 </td><td>
 
-_(Optional)_ The working directory used to resolve the config path.
+_(Optional)_
 
 
 </td></tr>

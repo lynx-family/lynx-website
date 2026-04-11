@@ -50,7 +50,7 @@ number \| undefined
 
 </td><td>
 
-_(Optional)_ The maximum size of a chunk, unit in bytes.
+_(Optional)_ The maximum size of a chunk, unit in bytes. Defaults to `Number.POSITIVE_INFINITY`<!-- -->.
 
 
 </td></tr>
@@ -69,7 +69,7 @@ number \| undefined
 
 </td><td>
 
-_(Optional)_ The minimum size of a chunk, unit in bytes.
+_(Optional)_ The minimum size of a chunk, unit in bytes. Defaults to `10000`<!-- -->.
 
 
 </td></tr>

@@ -16,3 +16,7 @@ import?: string | string[] | undefined;
 
 `'./src/index.js'`
 
+## Remarks
+
+If no value is provided, the default value `src/index.js` will be used.
+

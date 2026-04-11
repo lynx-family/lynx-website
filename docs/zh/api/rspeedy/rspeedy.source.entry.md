@@ -16,6 +16,10 @@ entry?: Entry | undefined;
 
 `'./src/index.js'`
 
+## Remarks
+
+If no value is provided, the default value `'./src/index.js'` will be used.
+
 ## Example 1
 
 - Use a single entry:
