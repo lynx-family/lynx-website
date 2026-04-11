@@ -14,10 +14,102 @@ export interface ChunkSplitBySize
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [maxSize?](./rspeedy.chunksplitbysize.maxsize.md) |  | number \| undefined | _(Optional)_ The maximum size of a chunk, unit in bytes. Defaults to <code>Number.POSITIVE_INFINITY</code>. |
-|  [minSize?](./rspeedy.chunksplitbysize.minsize.md) |  | number \| undefined | _(Optional)_ The minimum size of a chunk, unit in bytes. Defaults to <code>10000</code>. |
-|  [override?](./rspeedy.chunksplitbysize.override.md) |  | Rspack.Configuration extends { optimization?: { splitChunks?: infer P; } \| undefined; } ? P : never | _(Optional)_ Custom Rspack chunk splitting config can be specified. |
-|  [strategy](./rspeedy.chunksplitbysize.strategy.md) |  | 'split-by-size' | The ChunkSplitting strategy. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[maxSize?](./rspeedy.chunksplitbysize.maxsize.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number \| undefined
+
+
+</td><td>
+
+_(Optional)_ The maximum size of a chunk, unit in bytes. Defaults to `Number.POSITIVE_INFINITY`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[minSize?](./rspeedy.chunksplitbysize.minsize.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number \| undefined
+
+
+</td><td>
+
+_(Optional)_ The minimum size of a chunk, unit in bytes. Defaults to `10000`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[override?](./rspeedy.chunksplitbysize.override.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.Configuration extends { optimization?: { splitChunks?: infer P; } \| undefined; } ? P : never
+
+
+</td><td>
+
+_(Optional)_ Custom Rspack chunk splitting config can be specified.
+
+
+</td></tr>
+<tr><td>
+
+[strategy](./rspeedy.chunksplitbysize.strategy.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'split-by-size'
+
+
+</td><td>
+
+The ChunkSplitting strategy.
+
+
+</td></tr>
+</tbody></table>
 

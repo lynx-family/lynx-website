@@ -14,9 +14,39 @@ export declare function loadConfig(loadConfigOptions: LoadConfigOptions): Promis
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  loadConfigOptions | [LoadConfigOptions](./rspeedy.loadconfigoptions.md) | the options of <code>loadConfig</code> method. |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+loadConfigOptions
+
+
+</td><td>
+
+[LoadConfigOptions](./rspeedy.loadconfigoptions.md)
+
+
+</td><td>
+
+the options of `loadConfig` method.
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

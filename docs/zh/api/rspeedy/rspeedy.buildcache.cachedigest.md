@@ -15,6 +15,10 @@ Add additional cache digests, the previous build cache will be invalidated when 
 cacheDigest?: Array<string | undefined> | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example
 
 Add `process.env.SOME_ENV` to the cache digest.

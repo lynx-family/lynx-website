@@ -9,13 +9,68 @@ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRsp
 **Signature:**
 
 ```typescript
-export interface CssExtract
+export interface CssExtract 
 ```
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [loaderOptions?](./rspeedy.cssextract.loaderoptions.md) |  | [CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md) \| undefined | _(Optional)_ The options of CSS extract loader. |
-|  [pluginOptions?](./rspeedy.cssextract.pluginoptions.md) |  | [CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) \| undefined | _(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
+<table><thead><tr><th>
 
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[loaderOptions?](./rspeedy.cssextract.loaderoptions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The options of CSS extract loader.
+
+
+</td></tr>
+<tr><td>
+
+[pluginOptions?](./rspeedy.cssextract.pluginoptions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+
+
+</td></tr>
+</tbody></table>

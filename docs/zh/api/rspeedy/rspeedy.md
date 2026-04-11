@@ -8,7 +8,7 @@ The document contains all the configurations of the `@lynx-js/rspeedy` package.
 
 ## Example
 
-Use `lynx.config.ts` with [defineConfig()](./rspeedy.defineconfig.md) to get better TypeScript intellisense.
+Use `lynx.config.ts` with  to get better TypeScript intellisense.
 
 ```ts
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -19,66 +19,551 @@ export default defineConfig({
 
 ## Functions
 
-|  Function | Description |
-|  --- | --- |
-|  [createRspeedy({ cwd, rspeedyConfig, loadEnv, environment, callerName, })](./rspeedy.createrspeedy.md) | The <code>createRspeedy</code> method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime. |
-|  [defineConfig(config)](./rspeedy.defineconfig.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
-|  [defineConfig(config)](./rspeedy.defineconfig_1.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
-|  [defineConfig(config)](./rspeedy.defineconfig_2.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
-|  [defineConfig(config)](./rspeedy.defineconfig_3.md) | The <code>defineConfig</code> method is a helper function used to get TypeScript intellisense. |
-|  [loadConfig(loadConfigOptions)](./rspeedy.loadconfig.md) | Load the build config by the config path. |
-|  [mergeRspeedyConfig(configs)](./rspeedy.mergerspeedyconfig.md) | Merge multiple Rspeedy configuration objects. |
+<table><thead><tr><th>
+
+Function
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[createRspeedy({ cwd, rspeedyConfig, loadEnv, environment, callerName, }, input)](./rspeedy.createrspeedy.md)
+
+
+</td><td>
+
+The `createRspeedy` method can let you create a Rspeedy instance and you can customize the build or development process in Node.js Runtime.
+
+
+</td></tr>
+<tr><td>
+
+[defineConfig(config)](./rspeedy.defineconfig.md)
+
+
+</td><td>
+
+The `defineConfig` method is a helper function used to get TypeScript intellisense.
+
+
+</td></tr>
+<tr><td>
+
+[defineConfig(config)](./rspeedy.defineconfig_1.md)
+
+
+</td><td>
+
+The `defineConfig` method is a helper function used to get TypeScript intellisense.
+
+
+</td></tr>
+<tr><td>
+
+[defineConfig(config)](./rspeedy.defineconfig_2.md)
+
+
+</td><td>
+
+The `defineConfig` method is a helper function used to get TypeScript intellisense.
+
+
+</td></tr>
+<tr><td>
+
+[defineConfig(config)](./rspeedy.defineconfig_3.md)
+
+
+</td><td>
+
+The `defineConfig` method is a helper function used to get TypeScript intellisense.
+
+
+</td></tr>
+<tr><td>
+
+[loadConfig(loadConfigOptions)](./rspeedy.loadconfig.md)
+
+
+</td><td>
+
+Load the build config by the config path.
+
+
+</td></tr>
+<tr><td>
+
+[mergeRspeedyConfig(configs)](./rspeedy.mergerspeedyconfig.md)
+
+
+</td><td>
+
+Merge multiple Rspeedy configuration objects.
+
+
+</td></tr>
+</tbody></table>
 
 ## Interfaces
 
-|  Interface | Description |
-|  --- | --- |
-|  [BuildCache](./rspeedy.buildcache.md) | <p>**_(BETA)_** Enable or configure persistent build cache.</p><p>This feature is experimental and may be changed in the future.</p> |
-|  [ChunkSplit](./rspeedy.chunksplit.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
-|  [ChunkSplitBySize](./rspeedy.chunksplitbysize.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
-|  [ChunkSplitCustom](./rspeedy.chunksplitcustom.md) | [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
-|  [Config](./rspeedy.config.md) | The <code>Config</code> is the configuration that <code>rspeedy</code> uses. |
-|  [ConfigParams](./rspeedy.configparams.md) | Parameters for the function exported from <code>lynx.config.js</code>. |
-|  [CreateRspeedyOptions](./rspeedy.createrspeedyoptions.md) | The options of <code>createRspeedy</code> method. |
-|  [CssExtract](./rspeedy.cssextract.md) | The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
-|  [CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md) | The options of CSS extract loader. |
-|  [CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md) | The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
-|  [CssLoader](./rspeedy.cssloader.md) | The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](https://github.com/webpack-contrib/css-loader)<!-- -->. |
-|  [CssLoaderModules](./rspeedy.cssloadermodules.md) | The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables the CSS Modules specification and setup basic behavior. |
-|  [CssModules](./rspeedy.cssmodules.md) | The [CssModules](./rspeedy.cssmodules.md) option is used for the customization of CSS Modules configurations. |
-|  [Decorators](./rspeedy.decorators.md) | Used to configure the decorators syntax. |
-|  [Dev](./rspeedy.dev.md) | The [Dev](./rspeedy.dev.md) option is used to control the behavior related with development. Including: HMR, DevServer, etc. |
-|  [DevClient](./rspeedy.devclient.md) | Configuration of the development client. |
-|  [DistPath](./rspeedy.distpath.md) | Set the directory of the dist files. |
-|  [EntryDescription](./rspeedy.entrydescription.md) | The <code>EntryDescription</code> describes a entry. It is useful when the project has multiple entries with different configuration. |
-|  [ExposedAPI](./rspeedy.exposedapi.md) | The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](https://rsbuild.dev/plugins/dev/core#apiuseexposed)<!-- -->. |
-|  [Filename](./rspeedy.filename.md) | The [Filename](./rspeedy.filename.md) determines the name of the JavaScript bundle file to be output. These bundles will be written to the directory specified by output.path. |
-|  [LoadConfigOptions](./rspeedy.loadconfigoptions.md) | The options of loadConfig. |
-|  [LoadConfigResult](./rspeedy.loadconfigresult.md) | The result of [loadConfig()](./rspeedy.loadconfig.md)<!-- -->. |
-|  [Minify](./rspeedy.minify.md) | The [Minify](./rspeedy.minify.md) configures whether to enable code minification in the production build, or to configure minimizer options. |
-|  [Output](./rspeedy.output.md) | The [Output](./rspeedy.output.md) option is used to set how and where should the bundles and assets output. |
-|  [Performance](./rspeedy.performance.md) | The [Performance](./rspeedy.performance.md) option is used to optimize the build-time and runtime performance. |
-|  [Resolve](./rspeedy.resolve.md) | The [Resolve](./rspeedy.resolve.md) option is used to control the resolution behavior of Rspack. |
-|  [Server](./rspeedy.server.md) | The [Server](./rspeedy.server.md) option changes the behavior of dev-server. |
-|  [Source](./rspeedy.source.md) | The [Source](./rspeedy.source.md) option changes the behavior of source files. |
-|  [SourceMap](./rspeedy.sourcemap.md) | The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate source-map for outputs. |
-|  [Tools](./rspeedy.tools.md) | The [Tools](./rspeedy.tools.md) options changes the behavior of various building tools. |
-|  [TransformImport](./rspeedy.transformimport.md) | The [TransformImport](./rspeedy.transformimport.md) option transforms the import paths to enable modular imports from subpaths of third-party packages, similar to the functionality provided by [babel-plugin-import](https://npmjs.com/package/babel-plugin-import)<!-- -->. |
+<table><thead><tr><th>
+
+Interface
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[BuildCache](./rspeedy.buildcache.md)
+
+
+</td><td>
+
+**_(BETA)_** Enable or configure persistent build cache.
+
+This feature is experimental and may be changed in the future.
+
+
+</td></tr>
+<tr><td>
+
+[ChunkSplit](./rspeedy.chunksplit.md)
+
+
+</td><td>
+
+[Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
+
+
+</td></tr>
+<tr><td>
+
+[ChunkSplitBySize](./rspeedy.chunksplitbysize.md)
+
+
+</td><td>
+
+[Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
+
+
+</td></tr>
+<tr><td>
+
+[ChunkSplitCustom](./rspeedy.chunksplitcustom.md)
+
+
+</td><td>
+
+[Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
+
+
+</td></tr>
+<tr><td>
+
+[Config](./rspeedy.config.md)
+
+
+</td><td>
+
+The `Config` is the configuration that `rspeedy` uses.
+
+
+</td></tr>
+<tr><td>
+
+[ConfigParams](./rspeedy.configparams.md)
+
+
+</td><td>
+
+Parameters for the function exported from `lynx.config.js`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[CreateRspeedyOptions](./rspeedy.createrspeedyoptions.md)
+
+
+</td><td>
+
+The options of `createRspeedy` method.
+
+
+</td></tr>
+<tr><td>
+
+[CssExtract](./rspeedy.cssextract.md)
+
+
+</td><td>
+
+The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+
+
+</td></tr>
+<tr><td>
+
+[CssExtractRspackLoaderOptions](./rspeedy.cssextractrspackloaderoptions.md)
+
+
+</td><td>
+
+The options of CSS extract loader.
+
+
+</td></tr>
+<tr><td>
+
+[CssExtractRspackPluginOptions](./rspeedy.cssextractrspackpluginoptions.md)
+
+
+</td><td>
+
+The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+
+
+</td></tr>
+<tr><td>
+
+[CssLoader](./rspeedy.cssloader.md)
+
+
+</td><td>
+
+The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](https://github.com/webpack-contrib/css-loader)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[CssLoaderModules](./rspeedy.cssloadermodules.md)
+
+
+</td><td>
+
+The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables the CSS Modules specification and setup basic behavior.
+
+
+</td></tr>
+<tr><td>
+
+[CssModules](./rspeedy.cssmodules.md)
+
+
+</td><td>
+
+The [CssModules](./rspeedy.cssmodules.md) option is used for the customization of CSS Modules configurations.
+
+
+</td></tr>
+<tr><td>
+
+[Decorators](./rspeedy.decorators.md)
+
+
+</td><td>
+
+Used to configure the decorators syntax.
+
+
+</td></tr>
+<tr><td>
+
+[Dev](./rspeedy.dev.md)
+
+
+</td><td>
+
+The [Dev](./rspeedy.dev.md) option is used to control the behavior related with development. Including: HMR, DevServer, etc.
+
+
+</td></tr>
+<tr><td>
+
+[DevClient](./rspeedy.devclient.md)
+
+
+</td><td>
+
+Configuration of the development client.
+
+
+</td></tr>
+<tr><td>
+
+[DistPath](./rspeedy.distpath.md)
+
+
+</td><td>
+
+Set the directory of the dist files.
+
+
+</td></tr>
+<tr><td>
+
+[EntryDescription](./rspeedy.entrydescription.md)
+
+
+</td><td>
+
+The `EntryDescription` describes a entry. It is useful when the project has multiple entries with different configuration.
+
+
+</td></tr>
+<tr><td>
+
+[ExposedAPI](./rspeedy.exposedapi.md)
+
+
+</td><td>
+
+The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](https://rsbuild.dev/plugins/dev/core#apiuseexposed)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[Filename](./rspeedy.filename.md)
+
+
+</td><td>
+
+The [Filename](./rspeedy.filename.md) determines the name of the JavaScript bundle file to be output. These bundles will be written to the directory specified by output.path.
+
+
+</td></tr>
+<tr><td>
+
+[LoadConfigOptions](./rspeedy.loadconfigoptions.md)
+
+
+</td><td>
+
+The options of loadConfig.
+
+
+</td></tr>
+<tr><td>
+
+[LoadConfigResult](./rspeedy.loadconfigresult.md)
+
+
+</td><td>
+
+The result of [loadConfig()](./rspeedy.loadconfig.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[Minify](./rspeedy.minify.md)
+
+
+</td><td>
+
+The [Minify](./rspeedy.minify.md) configures whether to enable code minification in the production build, or to configure minimizer options.
+
+
+</td></tr>
+<tr><td>
+
+[Output](./rspeedy.output.md)
+
+
+</td><td>
+
+The [Output](./rspeedy.output.md) option is used to set how and where should the bundles and assets output.
+
+
+</td></tr>
+<tr><td>
+
+[Performance](./rspeedy.performance.md)
+
+
+</td><td>
+
+The [Performance](./rspeedy.performance.md) option is used to optimize the build-time and runtime performance.
+
+
+</td></tr>
+<tr><td>
+
+[Resolve](./rspeedy.resolve.md)
+
+
+</td><td>
+
+The [Resolve](./rspeedy.resolve.md) option is used to control the resolution behavior of Rspack.
+
+
+</td></tr>
+<tr><td>
+
+[Server](./rspeedy.server.md)
+
+
+</td><td>
+
+The [Server](./rspeedy.server.md) option changes the behavior of dev-server.
+
+
+</td></tr>
+<tr><td>
+
+[Source](./rspeedy.source.md)
+
+
+</td><td>
+
+The [Source](./rspeedy.source.md) option changes the behavior of source files.
+
+
+</td></tr>
+<tr><td>
+
+[SourceMap](./rspeedy.sourcemap.md)
+
+
+</td><td>
+
+The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate source-map for outputs.
+
+
+</td></tr>
+<tr><td>
+
+[Tools](./rspeedy.tools.md)
+
+
+</td><td>
+
+The [Tools](./rspeedy.tools.md) options changes the behavior of various building tools.
+
+
+</td></tr>
+<tr><td>
+
+[TransformImport](./rspeedy.transformimport.md)
+
+
+</td><td>
+
+The [TransformImport](./rspeedy.transformimport.md) option transforms the import paths to enable modular imports from subpaths of third-party packages, similar to the functionality provided by [babel-plugin-import](https://npmjs.com/package/babel-plugin-import)<!-- -->.
+
+
+</td></tr>
+</tbody></table>
 
 ## Variables
 
-|  Variable | Description |
-|  --- | --- |
-|  [rspackVersion](./rspeedy.rspackversion.md) |  |
-|  [version](./rspeedy.version.md) |  |
+<table><thead><tr><th>
+
+Variable
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[rspackVersion](./rspeedy.rspackversion.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[version](./rspeedy.version.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
 
 ## Type Aliases
 
-|  Type Alias | Description |
-|  --- | --- |
-|  [ConsoleType](./rspeedy.consoletype.md) | The type of the console method. |
-|  [CssModuleLocalsConvention](./rspeedy.cssmodulelocalsconvention.md) | The style of exported class names. |
-|  [Entry](./rspeedy.entry.md) | The [Entry](./rspeedy.entry.md) option is used to set the entry module. |
-|  [RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md) |  |
-|  [RspeedyInstance](./rspeedy.rspeedyinstance.md) | The instance of Rspeedy. |
+<table><thead><tr><th>
 
+Type Alias
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ConsoleType](./rspeedy.consoletype.md)
+
+
+</td><td>
+
+The type of the console method.
+
+
+</td></tr>
+<tr><td>
+
+[CssModuleLocalsConvention](./rspeedy.cssmodulelocalsconvention.md)
+
+
+</td><td>
+
+The style of exported class names.
+
+
+</td></tr>
+<tr><td>
+
+[Entry](./rspeedy.entry.md)
+
+
+</td><td>
+
+The [Entry](./rspeedy.entry.md) option is used to set the entry module.
+
+
+</td></tr>
+<tr><td>
+
+[RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RspeedyInstance](./rspeedy.rspeedyinstance.md)
+
+
+</td><td>
+
+The instance of Rspeedy.
+
+
+</td></tr>
+</tbody></table>

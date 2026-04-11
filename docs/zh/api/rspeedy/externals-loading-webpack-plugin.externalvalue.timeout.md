@@ -11,3 +11,8 @@ The wait time in milliseconds.
 ```typescript
 timeout?: number;
 ```
+
+## Default Value
+
+`2000`
+

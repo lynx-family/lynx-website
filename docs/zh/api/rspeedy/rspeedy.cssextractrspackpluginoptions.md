@@ -9,13 +9,68 @@ The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-e
 **Signature:**
 
 ```typescript
-export interface CssExtractRspackPluginOptions
+export interface CssExtractRspackPluginOptions 
 ```
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [ignoreOrder?](./rspeedy.cssextractrspackpluginoptions.ignoreorder.md) |  | boolean \| undefined | _(Optional)_ |
-|  [pathinfo?](./rspeedy.cssextractrspackpluginoptions.pathinfo.md) |  | boolean \| undefined | _(Optional)_ |
+<table><thead><tr><th>
 
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ignoreOrder?](./rspeedy.cssextractrspackpluginoptions.ignoreorder.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
+[pathinfo?](./rspeedy.cssextractrspackpluginoptions.pathinfo.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>

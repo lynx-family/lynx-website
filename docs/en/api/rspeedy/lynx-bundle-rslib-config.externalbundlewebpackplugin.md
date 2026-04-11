@@ -14,13 +14,67 @@ export declare class ExternalBundleWebpackPlugin
 
 ## Constructors
 
-|  Constructor | Modifiers | Description |
-|  --- | --- | --- |
-|  [(constructor)(options)](./lynx-bundle-rslib-config.externalbundlewebpackplugin._constructor_.md) |  | Constructs a new instance of the <code>ExternalBundleWebpackPlugin</code> class |
+<table><thead><tr><th>
+
+Constructor
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[(constructor)(options)](./lynx-bundle-rslib-config.externalbundlewebpackplugin._constructor_.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Constructs a new instance of the `ExternalBundleWebpackPlugin` class
+
+
+</td></tr>
+</tbody></table>
 
 ## Methods
 
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [apply(compiler)](./lynx-bundle-rslib-config.externalbundlewebpackplugin.apply.md) |  |  |
+<table><thead><tr><th>
+
+Method
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[apply(compiler)](./lynx-bundle-rslib-config.externalbundlewebpackplugin.apply.md)
+
+
+</td><td>
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
 

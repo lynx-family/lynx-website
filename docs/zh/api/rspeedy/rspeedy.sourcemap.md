@@ -14,7 +14,45 @@ export interface SourceMap
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [js?](./rspeedy.sourcemap.js.md) |  | Rspack.DevTool \| undefined \| \`${Exclude&lt;Rspack.DevTool, false \| 'eval'&gt;}-debugids\` | _(Optional)_ How the source map should be generated. Setting it to <code>false</code> will disable the source map. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[js?](./rspeedy.sourcemap.js.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.DevTool \| undefined \| \`${Exclude&lt;Rspack.DevTool, false \| 'eval'&gt;}-debugids\`
+
+
+</td><td>
+
+_(Optional)_ How the source map should be generated. Setting it to `false` will disable the source map.
+
+
+</td></tr>
+</tbody></table>
 

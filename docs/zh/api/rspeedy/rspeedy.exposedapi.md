@@ -28,11 +28,121 @@ const RsbuildPlugin = {
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [config](./rspeedy.exposedapi.config.md) |  | [Config](./rspeedy.config.md) | The user config. |
-|  [debug](./rspeedy.exposedapi.debug.md) |  | (message: string \| (() =&gt; string)) =&gt; void | Print debug logs. |
-|  [exit](./rspeedy.exposedapi.exit.md) |  | (code?: number) =&gt; Promise&lt;void&gt; \| void | Exit the process. |
-|  [logger](./rspeedy.exposedapi.logger.md) |  | typeof logger | Get the Rspeedy logger. |
-|  [version](./rspeedy.exposedapi.version.md) |  | string | The version of Rspeedy. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[config](./rspeedy.exposedapi.config.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Config](./rspeedy.config.md)
+
+
+</td><td>
+
+The user config.
+
+
+</td></tr>
+<tr><td>
+
+[debug](./rspeedy.exposedapi.debug.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(message: string \| (() =&gt; string)) =&gt; void
+
+
+</td><td>
+
+Print debug logs.
+
+
+</td></tr>
+<tr><td>
+
+[exit](./rspeedy.exposedapi.exit.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(code?: number) =&gt; Promise&lt;void&gt; \| void
+
+
+</td><td>
+
+Exit the process.
+
+
+</td></tr>
+<tr><td>
+
+[logger](./rspeedy.exposedapi.logger.md)
+
+
+</td><td>
+
+
+</td><td>
+
+typeof logger
+
+
+</td><td>
+
+Get the Rspeedy logger.
+
+
+</td></tr>
+<tr><td>
+
+[version](./rspeedy.exposedapi.version.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The version of Rspeedy.
+
+
+</td></tr>
+</tbody></table>
 

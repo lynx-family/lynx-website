@@ -14,16 +14,216 @@ export interface Source
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [alias?](./rspeedy.source.alias.md) |  | Record&lt;string, string \| false \| string\[\]&gt; \| undefined | _(Optional)_ Create aliases to <code>import</code> or <code>require</code> certain modules more easily. |
-|  [assetsInclude?](./rspeedy.source.assetsinclude.md) |  | Rspack.RuleSetCondition \| undefined | _(Optional)_ Include additional files that should be treated as static assets. Defaults to be <code>undefined</code>. |
-|  [decorators?](./rspeedy.source.decorators.md) |  | [Decorators](./rspeedy.decorators.md) \| undefined | _(Optional)_ Used to configure the decorators syntax. |
-|  [define?](./rspeedy.source.define.md) |  | Record&lt;string, string \| number \| boolean \| undefined \| Record&lt;string, unknown&gt;&gt; \| undefined | _(Optional)_ The <code>define</code> options is used to define some values or expressions at compile time. |
-|  [entry?](./rspeedy.source.entry.md) |  | [Entry](./rspeedy.entry.md) \| undefined | _(Optional)_ The [Entry](./rspeedy.entry.md) option is used to set the entry module. |
-|  [exclude?](./rspeedy.source.exclude.md) |  | Rspack.RuleSetCondition\[\] \| undefined | _(Optional)_ The <code>source.exclude</code> is used to specify JavaScript files that should be excluded from compilation. |
-|  [include?](./rspeedy.source.include.md) |  | Rspack.RuleSetCondition\[\] \| undefined | _(Optional)_ The <code>source.include</code> is used to specify additional JavaScript files that need to be compiled. |
-|  [preEntry?](./rspeedy.source.preentry.md) |  | string \| string\[\] \| undefined | _(Optional)_ Add a script before the entry file of each page. This script will be executed before the page code. It can be used to execute global logics, such as injecting polyfills, setting global styles, etc. |
-|  [transformImport?](./rspeedy.source.transformimport.md) |  | [TransformImport](./rspeedy.transformimport.md)<!-- -->\[\] \| undefined | _(Optional)_ The [TransformImport](./rspeedy.transformimport.md) option transforms the import paths to enable modular imports from subpaths of third-party packages, similar to the functionality provided by [babel-plugin-import](https://npmjs.com/package/babel-plugin-import)<!-- -->. |
-|  [tsconfigPath?](./rspeedy.source.tsconfigpath.md) |  | string \| undefined | _(Optional)_ Configure a custom <code>tsconfig.json</code> file path to use, can be a relative or absolute path. Defaults to be <code>./tsconfig.json</code>. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[alias?](./rspeedy.source.alias.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, string \| false \| string\[\]&gt; \| undefined
+
+
+</td><td>
+
+_(Optional)_ Create aliases to `import` or `require` certain modules more easily.
+
+
+</td></tr>
+<tr><td>
+
+[assetsInclude?](./rspeedy.source.assetsinclude.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.RuleSetCondition \| undefined
+
+
+</td><td>
+
+_(Optional)_ Include additional files that should be treated as static assets. Defaults to be `undefined`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[decorators?](./rspeedy.source.decorators.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Decorators](./rspeedy.decorators.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ Used to configure the decorators syntax.
+
+
+</td></tr>
+<tr><td>
+
+[define?](./rspeedy.source.define.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, string \| number \| boolean \| undefined \| Record&lt;string, unknown&gt;&gt; \| undefined
+
+
+</td><td>
+
+_(Optional)_ The `define` options is used to define some values or expressions at compile time.
+
+
+</td></tr>
+<tr><td>
+
+[entry?](./rspeedy.source.entry.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Entry](./rspeedy.entry.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Entry](./rspeedy.entry.md) option is used to set the entry module.
+
+
+</td></tr>
+<tr><td>
+
+[exclude?](./rspeedy.source.exclude.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.RuleSetCondition\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The `source.exclude` is used to specify JavaScript files that should be excluded from compilation.
+
+
+</td></tr>
+<tr><td>
+
+[include?](./rspeedy.source.include.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.RuleSetCondition\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The `source.include` is used to specify additional JavaScript files that need to be compiled.
+
+
+</td></tr>
+<tr><td>
+
+[preEntry?](./rspeedy.source.preentry.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Add a script before the entry file of each page. This script will be executed before the page code. It can be used to execute global logics, such as injecting polyfills, setting global styles, etc.
+
+
+</td></tr>
+<tr><td>
+
+[transformImport?](./rspeedy.source.transformimport.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[TransformImport](./rspeedy.transformimport.md)<!-- -->\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [TransformImport](./rspeedy.transformimport.md) option transforms the import paths to enable modular imports from subpaths of third-party packages, similar to the functionality provided by [babel-plugin-import](https://npmjs.com/package/babel-plugin-import)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[tsconfigPath?](./rspeedy.source.tsconfigpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configure a custom `tsconfig.json` file path to use, can be a relative or absolute path. Defaults to be `./tsconfig.json`<!-- -->.
+
+
+</td></tr>
+</tbody></table>
 

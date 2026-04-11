@@ -14,10 +14,120 @@ export interface Resolve
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [alias?](./rspeedy.resolve.alias.md) |  | Record&lt;string, string \| false \| string\[\]&gt; \| undefined | _(Optional)_ Create aliases to <code>import</code> or <code>require</code> certain modules more easily. |
-|  [aliasStrategy?](./rspeedy.resolve.aliasstrategy.md) |  | 'prefer-tsconfig' \| 'prefer-alias' \| undefined | _(Optional)_ Set the strategy for path alias resolution, to control the priority relationship between the <code>paths</code> option in <code>tsconfig.json</code> and the <code>resolve.alias</code> option of Rsbuild. - <code>prefer-tsconfig</code> (default): The <code>paths</code> option in <code>tsconfig.json</code> will take precedence over the <code>resolve.alias</code> option of Rsbuild. - <code>prefer-alias</code>: The <code>resolve.alias</code> option of Rsbuild will take precedence over the <code>paths</code> option in <code>tsconfig.json</code>. |
-|  [dedupe?](./rspeedy.resolve.dedupe.md) |  | string\[\] \| undefined | _(Optional)_ Force to resolve the specified packages from project root, which is useful for deduplicating packages and reducing the bundle size. |
-|  [extensions?](./rspeedy.resolve.extensions.md) |  | string\[\] \| undefined | <p>_(Optional)_ Automatically resolve file extensions when importing modules. This means you can import files without explicitly writing their extensions.</p><p>Default: <code>['.ts', '.tsx', '.mjs', '.js', '.jsx', '.json', '.cjs']</code></p><p>For example, if importing './index', Rsbuild will try to resolve using the following order:</p><p>- <code>./index.ts</code></p><p>- <code>./index.tsx</code></p><p>- <code>./index.mjs</code></p><p>- <code>./index.js</code></p><p>- <code>./index.jsx</code></p><p>- <code>./index.json</code></p><p>- <code>./index.cjs</code></p> |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[alias?](./rspeedy.resolve.alias.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, string \| false \| string\[\]&gt; \| undefined
+
+
+</td><td>
+
+_(Optional)_ Create aliases to `import` or `require` certain modules more easily.
+
+
+</td></tr>
+<tr><td>
+
+[aliasStrategy?](./rspeedy.resolve.aliasstrategy.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'prefer-tsconfig' \| 'prefer-alias' \| undefined
+
+
+</td><td>
+
+_(Optional)_ Set the strategy for path alias resolution, to control the priority relationship between the `paths` option in `tsconfig.json` and the `resolve.alias` option of Rsbuild. - `prefer-tsconfig` (default): The `paths` option in `tsconfig.json` will take precedence over the `resolve.alias` option of Rsbuild. - `prefer-alias`<!-- -->: The `resolve.alias` option of Rsbuild will take precedence over the `paths` option in `tsconfig.json`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[dedupe?](./rspeedy.resolve.dedupe.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Force to resolve the specified packages from project root, which is useful for deduplicating packages and reducing the bundle size.
+
+
+</td></tr>
+<tr><td>
+
+[extensions?](./rspeedy.resolve.extensions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Automatically resolve file extensions when importing modules. This means you can import files without explicitly writing their extensions.
+
+Default: `['.ts', '.tsx', '.mjs', '.js', '.jsx', '.json', '.cjs']`
+
+For example, if importing './index', Rsbuild will try to resolve using the following order:
+
+- `./index.ts`
+
+- `./index.tsx`
+
+- `./index.mjs`
+
+- `./index.js`
+
+- `./index.jsx`
+
+- `./index.json`
+
+- `./index.cjs`
+
+
+</td></tr>
+</tbody></table>
 
