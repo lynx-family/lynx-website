@@ -9,8 +9,6 @@
 
 Enable or configure persistent build cache.
 
-This feature is experimental and may be changed in the future.
-
 **Signature:**
 
 ```typescript

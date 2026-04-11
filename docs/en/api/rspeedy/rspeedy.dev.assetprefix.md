@@ -12,7 +12,13 @@ The [Dev.assetPrefix](./rspeedy.dev.assetprefix.md) is used to set the URL prefi
 assetPrefix?: string | boolean | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
+
+During `rspeedy dev`<!-- -->, if this option is not set to `false`<!-- -->, the dev plugin normalizes it to `http://<detected-host>:<port>/` and appends `server.base` when configured.
 
 The functionality of [Dev.assetPrefix](./rspeedy.dev.assetprefix.md) is basically the same as the [output.publicPath](https://www.rspack.dev/config/output#outputpublicpath) config in Rspack. With the following differences:
 

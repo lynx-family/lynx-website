@@ -69,7 +69,7 @@ Rspack.RuleSetCondition \| undefined
 
 </td><td>
 
-_(Optional)_ Include additional files that should be treated as static assets. Defaults to be `undefined`<!-- -->.
+_(Optional)_ Include additional files that should be treated as static assets.
 
 
 </td></tr>
@@ -221,7 +221,7 @@ string \| undefined
 
 </td><td>
 
-_(Optional)_ Configure a custom `tsconfig.json` file path to use, can be a relative or absolute path. Defaults to be `./tsconfig.json`<!-- -->.
+_(Optional)_ Configure a custom `tsconfig.json` file path to use, can be a relative or absolute path.
 
 
 </td></tr>

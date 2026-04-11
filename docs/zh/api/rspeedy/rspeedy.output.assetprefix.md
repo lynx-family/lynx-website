@@ -12,6 +12,10 @@ The [Output.assetPrefix](./rspeedy.output.assetprefix.md) is used to set the URL
 assetPrefix?: string | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 The functionality of [Output.assetPrefix](./rspeedy.output.assetprefix.md) is basically the same as the [output.publicPath](https://www.rspack.dev/config/output#outputpublicpath) config in Rspack. With the following differences:

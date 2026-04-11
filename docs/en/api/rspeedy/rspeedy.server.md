@@ -71,10 +71,6 @@ boolean \| CompressOptions \| undefined
 
 _(Optional)_ Configure whether to enable [gzip compression](https://developer.mozilla.org/en-US/docs/Glossary/gzip_compression) for static assets served by the dev server or preview server.
 
-Default: true
-
-See [Rsbuild - server.compress](https://rsbuild.rs/config/server/compress) for details.
-
 
 </td></tr>
 <tr><td>
@@ -93,14 +89,6 @@ ServerConfig\['cors'\] \| undefined
 </td><td>
 
 _(Optional)_ Configure CORS for the dev server or preview server.
-
-- Set to an object to enable CORS with the specified options.
-
-- Set to `true` to enable CORS with the default options (allows all origins, not recommended).
-
-- Set to `false` to disable CORS.
-
-See [Rsbuild - server.cors](https://rsbuild.rs/config/server/cors) for details.
 
 
 </td></tr>
@@ -196,8 +184,6 @@ boolean \| undefined
 </td><td>
 
 _(Optional)_ When a port is occupied, Rspeedy will automatically increment the port number until an available port is found.
-
-Set strictPort to true and Rspeedy will throw an exception when the port is occupied.
 
 
 </td></tr>

@@ -12,6 +12,10 @@ The `define` options is used to define some values or expressions at compile tim
 define?: Record<string, string | number | boolean | undefined | Record<string, unknown>> | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 - If the value provided is a string, it will be utilized as a code fragment.

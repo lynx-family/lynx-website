@@ -12,9 +12,13 @@ Specify the host that the Rspeedy Server listens to.
 host?: string | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
-By default, the server listens on local network IP, for example, `192.168.1.50`<!-- -->, verify your local net IP by the command `ifconfig` on your system for (en0 for MacOS and eth0 for LinuxOS users). In case you have multiple local network IP(s) particularly when you are running dockers on the host machine, then you can specify your desired host IP.
+During `rspeedy dev`<!-- -->, if `server.host` is unset, the dev plugin resolves dev-server-related URLs and client host settings with a detected local IPv4 address, such as `192.168.1.50`<!-- -->. If you have multiple network interfaces, set `server.host` explicitly to choose the desired address.
 
 ## Example
 

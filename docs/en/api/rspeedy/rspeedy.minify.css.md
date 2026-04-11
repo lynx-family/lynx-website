@@ -12,6 +12,10 @@ Whether enable the CSS minification.
 css?: boolean | undefined;
 ```
 
+## Default Value
+
+When `output.minify` is enabled and `css` is unset, this defaults to `true`<!-- -->.
+
 ## Remarks
 
 When building for production, [@rsbuild/plugin-css-minimizer](https://github.com/rspack-contrib/rsbuild-plugin-css-minimizer) is used to minify CSS assets for better transmission efficiency.

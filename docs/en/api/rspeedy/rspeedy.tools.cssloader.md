@@ -12,6 +12,10 @@ The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](htt
 cssLoader?: CssLoader | undefined;
 ```
 
+## Default Value
+
+Uses defaults derived from `output.cssModules` and `output.sourceMap`<!-- -->, with `importLoaders` set to `1` for CSS files and `2` for Sass/Less files.
+
 ## Remarks
 
 The default option is as follow:

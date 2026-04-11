@@ -12,6 +12,10 @@ The `plugins` option is used to customize the build process in a variety of ways
 plugins?: RsbuildPlugins | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 Rspeedy use the plugin APIs from [Rsbuild](https://rsbuild.dev/plugins/dev/index)<!-- -->. See the corresponding document for developing a plugin.
