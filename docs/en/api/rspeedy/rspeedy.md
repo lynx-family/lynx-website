@@ -206,7 +206,7 @@ The options of `createRspeedy` method.
 
 </td><td>
 
-The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>
@@ -228,7 +228,7 @@ The options of CSS extract loader.
 
 </td><td>
 
-The options for [CssExtractRspackPlugin](./css-extract-webpack-plugin.cssextractrspackplugin.md)
+The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>
@@ -565,4 +565,3 @@ The instance of Rspeedy.
 
 </td></tr>
 </tbody></table>
-

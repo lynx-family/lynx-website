@@ -4,7 +4,7 @@
 
 ## CssExtractRspackPluginOptions interface
 
-The options for [CssExtractRspackPlugin](./css-extract-webpack-plugin.cssextractrspackplugin.md)
+The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 **Signature:**
 
@@ -74,4 +74,3 @@ _(Optional)_
 
 </td></tr>
 </tbody></table>
-
