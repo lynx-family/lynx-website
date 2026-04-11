@@ -12,9 +12,7 @@ The name of WebAssembly files.
 wasm?: Rspack.WebassemblyModuleFilename;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- `'[hash].module.wasm'`
+`'[contenthash:8].module.wasm'`
 

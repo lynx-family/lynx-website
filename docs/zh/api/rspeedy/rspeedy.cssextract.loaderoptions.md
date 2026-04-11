@@ -11,3 +11,8 @@ The options of CSS extract loader.
 ```typescript
 loaderOptions?: CssExtractRspackLoaderOptions | undefined;
 ```
+
+## Default Value
+
+undefined
+

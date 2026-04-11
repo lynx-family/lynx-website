@@ -12,9 +12,11 @@ The [Output.legalComments](./rspeedy.output.legalcomments.md) controls how to ha
 legalComments?: 'none' | 'inline' | 'linked' | undefined;
 ```
 
-## Remarks
+## Default Value
 
-If no value is provided, the default value would be `'none'`<!-- -->.
+`'none'`
+
+## Remarks
 
 This is different with Rsbuild since we normally do not want a `.LEGAL.txt` file in Lynx outputs.
 

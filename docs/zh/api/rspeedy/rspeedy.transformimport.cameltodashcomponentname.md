@@ -12,6 +12,10 @@ Whether to convert camelCase imports to kebab-case.
 camelToDashComponentName?: boolean | undefined;
 ```
 
+## Default Value
+
+Rsbuild defaults this option to `true`<!-- -->.
+
 ## Example
 
 - Input:
@@ -26,7 +30,7 @@ When set to `true`<!-- -->:
 ```js
 import ButtonGroup from 'foo/button-group'
 ```
-When set to `false` or `undefined`<!-- -->:
+When set to `false`<!-- -->:
 
 ```js
 import ButtonGroup from 'foo/ButtonGroup'

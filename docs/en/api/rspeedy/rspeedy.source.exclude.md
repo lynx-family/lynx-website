@@ -12,6 +12,10 @@ The `source.exclude` is used to specify JavaScript files that should be excluded
 exclude?: Rspack.RuleSetCondition[] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 By default, Rsbuild compiles JavaScript files in the current directory and TypeScript/JSX files in all directories. Through the `source.exclude` config, you can specify files or directories that should be excluded from compilation. The usage of `source.exclude` is consistent with [Rule.exclude](https://rspack.dev/config/module#ruleexclude) in Rspack, which supports passing in strings or regular expressions to match module paths.

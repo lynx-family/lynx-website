@@ -11,3 +11,8 @@ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRsp
 ```typescript
 cssExtract?: CssExtract | undefined;
 ```
+
+## Default Value
+
+undefined
+

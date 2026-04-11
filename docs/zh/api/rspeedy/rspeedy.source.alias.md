@@ -16,3 +16,8 @@ Create aliases to `import` or `require` certain modules more easily.
 ```typescript
 alias?: Record<string, string | false | string[]> | undefined;
 ```
+
+## Default Value
+
+undefined
+

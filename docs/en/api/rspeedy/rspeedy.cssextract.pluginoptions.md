@@ -4,10 +4,15 @@
 
 ## CssExtract.pluginOptions property
 
-The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+The options for [CssExtractRspackPlugin](./css-extract-webpack-plugin.cssextractrspackplugin.md)
 
 **Signature:**
 
 ```typescript
 pluginOptions?: CssExtractRspackPluginOptions | undefined;
 ```
+
+## Default Value
+
+undefined
+

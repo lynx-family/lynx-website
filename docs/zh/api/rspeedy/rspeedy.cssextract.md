@@ -69,8 +69,9 @@ _(Optional)_ The options of CSS extract loader.
 
 </td><td>
 
-_(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+_(Optional)_ The options for [CssExtractRspackPlugin](./css-extract-webpack-plugin.cssextractrspackplugin.md)
 
 
 </td></tr>
 </tbody></table>
+

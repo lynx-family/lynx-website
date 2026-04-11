@@ -52,8 +52,6 @@ Description
 
 **_(BETA)_** _(Optional)_ Enable or configure persistent build cache.
 
-This feature is experimental and may be changed in the future.
-
 
 </td></tr>
 <tr><td>
@@ -91,10 +89,6 @@ PerformanceConfig\['printFileSize'\] \| undefined
 </td><td>
 
 _(Optional)_ Whether to print the file sizes after production build.
-
-[Performance.printFileSize](./rspeedy.performance.printfilesize.md)
-
-See [Rsbuild - performance.printFileSize](https://rsbuild.dev/config/performance/print-file-size) for details.
 
 
 </td></tr>

@@ -12,6 +12,10 @@ The [Output.copy](./rspeedy.output.copy.md) option is used for copying files to 
 copy?: Rspack.CopyRspackPluginOptions | Rspack.CopyRspackPluginOptions['patterns'] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 For more options, see [Rspack.CopyRspackPlugin](https://rspack.dev/plugins/rspack/copy-rspack-plugin)<!-- -->.

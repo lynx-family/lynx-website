@@ -12,6 +12,10 @@ The style of exported class names.
 exportLocalsConvention?: CssModuleLocalsConvention | undefined;
 ```
 
+## Default Value
+
+`'camelCase'`
+
 ## Remarks
 
 Given the various `exportLocalsConvention` values, the behavior is described as follows:

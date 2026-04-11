@@ -12,11 +12,11 @@ The name of the bundle files.
 bundle?: string | undefined;
 ```
 
+## Default Value
+
+`'[name].[platform].bundle'`
+
 ## Remarks
-
-Default values:
-
-- `'[name].[platform].bundle'`
 
 The following placeholder is supported:
 

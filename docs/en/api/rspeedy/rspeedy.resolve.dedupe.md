@@ -12,6 +12,10 @@ Force to resolve the specified packages from project root, which is useful for d
 dedupe?: string[] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 [Resolve.dedupe](./rspeedy.resolve.dedupe.md) is implemented based on [Resolve.alias](./rspeedy.resolve.alias.md)<!-- -->, it will get the path of the specified package through `require.resolve` in the project root directory and set it to the alias.
