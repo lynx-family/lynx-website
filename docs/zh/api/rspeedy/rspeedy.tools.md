@@ -69,7 +69,7 @@ _(Optional)_ The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes t
 
 </td><td>
 
-_(Optional)_ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+_(Optional)_ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>
@@ -150,4 +150,3 @@ _(Optional)_ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [bu
 
 </td></tr>
 </tbody></table>
-
