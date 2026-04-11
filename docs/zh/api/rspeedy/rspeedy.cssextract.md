@@ -4,7 +4,7 @@
 
 ## CssExtract interface
 
-The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 **Signature:**
 
@@ -69,7 +69,7 @@ _(Optional)_ The options of CSS extract loader.
 
 </td><td>
 
-_(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+_(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>

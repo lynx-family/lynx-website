@@ -131,8 +131,6 @@ Description
 
 **_(BETA)_** Enable or configure persistent build cache.
 
-This feature is experimental and may be changed in the future.
-
 
 </td></tr>
 <tr><td>
@@ -208,7 +206,7 @@ The options of `createRspeedy` method.
 
 </td><td>
 
-The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>
@@ -230,7 +228,7 @@ The options of CSS extract loader.
 
 </td><td>
 
-The options for [CssExtractRspackPlugin](https://rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>
