@@ -4,13 +4,19 @@
 
 ## Resolve.aliasStrategy property
 
-Set the strategy for path alias resolution, to control the priority relationship between the `paths` option in `tsconfig.json` and the `resolve.alias` option of Rsbuild. - `prefer-tsconfig` (default): The `paths` option in `tsconfig.json` will take precedence over the `resolve.alias` option of Rsbuild. - `prefer-alias`<!-- -->: The `resolve.alias` option of Rsbuild will take precedence over the `paths` option in `tsconfig.json`<!-- -->.
+Set the strategy for path alias resolution, to control the priority relationship between the `paths` option in `tsconfig.json` and the `resolve.alias` option of Rsbuild.
 
 **Signature:**
 
 ```typescript
 aliasStrategy?: 'prefer-tsconfig' | 'prefer-alias' | undefined;
 ```
+
+## Default Value
+
+`'prefer-tsconfig'`
+
+- `prefer-tsconfig` (default): The `paths` option in `tsconfig.json` will take precedence over the `resolve.alias` option of Rsbuild. - `prefer-alias`<!-- -->: The `resolve.alias` option of Rsbuild will take precedence over the `paths` option in `tsconfig.json`<!-- -->.
 
 ## Example
 

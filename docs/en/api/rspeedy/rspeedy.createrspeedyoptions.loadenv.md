@@ -11,3 +11,8 @@ Rspeedy automatically loads the .env file by default, utilizing the \[Rsbuild AP
 ```typescript
 loadEnv?: CreateRsbuildOptions['loadEnv'];
 ```
+
+## Default Value
+
+true
+

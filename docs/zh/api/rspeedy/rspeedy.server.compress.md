@@ -6,15 +6,17 @@
 
 Configure whether to enable [gzip compression](https://developer.mozilla.org/en-US/docs/Glossary/gzip_compression) for static assets served by the dev server or preview server.
 
-Default: true
-
-See [Rsbuild - server.compress](https://rsbuild.rs/config/server/compress) for details.
-
 **Signature:**
 
 ```typescript
 compress?: boolean | CompressOptions | undefined;
 ```
+
+## Default Value
+
+true
+
+See [Rsbuild - server.compress](https://rsbuild.rs/config/server/compress) for details.
 
 ## Example 1
 

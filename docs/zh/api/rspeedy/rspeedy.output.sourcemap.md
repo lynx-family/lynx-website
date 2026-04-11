@@ -11,3 +11,8 @@ The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate s
 ```typescript
 sourceMap?: boolean | SourceMap | undefined;
 ```
+
+## Default Value
+
+When this option is unset, JavaScript source maps use `'cheap-module-source-map'` in development and are otherwise disabled; CSS source maps are disabled.
+

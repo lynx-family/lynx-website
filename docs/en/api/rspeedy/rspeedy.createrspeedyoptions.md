@@ -14,11 +14,121 @@ export interface CreateRspeedyOptions
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [callerName?](./rspeedy.createrspeedyoptions.callername.md) |  | string | _(Optional)_ The name of the framework or tool that is currently invoking Rsbuild. This allows plugins to tailor their behavior based on the calling context. |
-|  [cwd?](./rspeedy.createrspeedyoptions.cwd.md) |  | string | _(Optional)_ The root path of the current build. |
-|  [environment?](./rspeedy.createrspeedyoptions.environment.md) |  | CreateRsbuildOptions\['environment'\] | _(Optional)_ Only build specified environments. For example, passing <code>['lynx']</code> will only build the <code>lynx</code> environment. If not specified or passing an empty array, all environments will be built. |
-|  [loadEnv?](./rspeedy.createrspeedyoptions.loadenv.md) |  | CreateRsbuildOptions\['loadEnv'\] | _(Optional)_ Rspeedy automatically loads the .env file by default, utilizing the \[Rsbuild API\](https://rsbuild.dev/api/javascript-api/core\#load-env-variables). You can use the environment variables defined in the .env file within your code by accessing them via <code>import.meta.env.FOO</code> or <code>process.env.Foo</code>. |
-|  [rspeedyConfig?](./rspeedy.createrspeedyoptions.rspeedyconfig.md) |  | [Config](./rspeedy.config.md) | _(Optional)_ The config of Rspeedy. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[callerName?](./rspeedy.createrspeedyoptions.callername.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ The name of the framework or tool that is currently invoking Rsbuild. This allows plugins to tailor their behavior based on the calling context.
+
+
+</td></tr>
+<tr><td>
+
+[cwd?](./rspeedy.createrspeedyoptions.cwd.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ The root path of the current build.
+
+
+</td></tr>
+<tr><td>
+
+[environment?](./rspeedy.createrspeedyoptions.environment.md)
+
+
+</td><td>
+
+
+</td><td>
+
+CreateRsbuildOptions\['environment'\]
+
+
+</td><td>
+
+_(Optional)_ Only build specified environments. For example, passing `['lynx']` will only build the `lynx` environment. If not specified or passing an empty array, all environments will be built.
+
+
+</td></tr>
+<tr><td>
+
+[loadEnv?](./rspeedy.createrspeedyoptions.loadenv.md)
+
+
+</td><td>
+
+
+</td><td>
+
+CreateRsbuildOptions\['loadEnv'\]
+
+
+</td><td>
+
+_(Optional)_ Rspeedy automatically loads the .env file by default, utilizing the \[Rsbuild API\](https://rsbuild.dev/api/javascript-api/core\#load-env-variables). You can use the environment variables defined in the .env file within your code by accessing them via `import.meta.env.FOO` or `process.env.Foo`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[rspeedyConfig?](./rspeedy.createrspeedyoptions.rspeedyconfig.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Config](./rspeedy.config.md)
+
+
+</td><td>
+
+_(Optional)_ The config of Rspeedy.
+
+
+</td></tr>
+</tbody></table>
 

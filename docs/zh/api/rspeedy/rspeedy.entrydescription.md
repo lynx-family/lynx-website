@@ -18,8 +18,64 @@ It is similar with the [Entry Description Object](https://www.rspack.dev/config/
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [import?](./rspeedy.entrydescription.import.md) |  | string \| string\[\] \| undefined | _(Optional)_ The path to the entry module(s). |
-|  [publicPath?](./rspeedy.entrydescription.publicpath.md) |  | string \| undefined | _(Optional)_ This is an important option when using on-demand-loading or loading external resources like images, files, etc. If an incorrect value is specified you'll receive 404 errors while loading these resources. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[import?](./rspeedy.entrydescription.import.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The path to the entry module(s).
+
+
+</td></tr>
+<tr><td>
+
+[publicPath?](./rspeedy.entrydescription.publicpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ This is an important option when using on-demand-loading or loading external resources like images, files, etc. If an incorrect value is specified you'll receive 404 errors while loading these resources.
+
+
+</td></tr>
+</tbody></table>
 

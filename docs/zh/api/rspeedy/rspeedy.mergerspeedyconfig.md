@@ -14,9 +14,39 @@ export declare function mergeRspeedyConfig(...configs: Config[]): Config;
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  configs | [Config](./rspeedy.config.md)<!-- -->\[\] | The Rspeedy configuration objects to merge. |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+configs
+
+
+</td><td>
+
+[Config](./rspeedy.config.md)<!-- -->\[\]
+
+
+</td><td>
+
+The Rspeedy configuration objects to merge.
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

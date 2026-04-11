@@ -4,10 +4,12 @@
 
 ## ExternalValue.url property
 
-The bundle(lynx.bundle) url of the library. The library source should be placed in `customSections`<!-- -->.
+The final bundle URL to fetch directly at runtime.
+
+Use this when the external bundle is hosted outside the current build output, such as on a CDN. If both `url` and `bundlePath` are provided, `url` takes precedence because it is already the fully resolved address.
 
 **Signature:**
 
 ```typescript
-url: string;
+url?: string;
 ```

@@ -12,9 +12,11 @@ The [Output.inlineScripts](./rspeedy.output.inlinescripts.md) option controls wh
 inlineScripts?: InlineChunkConfig | undefined;
 ```
 
-## Remarks
+## Default Value
 
-If no value is provided, the default value would be `true`<!-- -->, which means all background thread scripts will be inlined.
+Rspeedy defaults this to `true` and only switches it to `false` when the user explicitly sets `performance.chunkSplit.strategy` to a value other than `'all-in-one'`<!-- -->.
+
+## Remarks
 
 This is different with [output.inlineScripts](https://rsbuild.dev/config/output/inline-scripts) since we normally want to inline scripts in Lynx bundle (`.lynx.bundle`<!-- -->).
 

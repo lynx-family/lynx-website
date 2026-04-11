@@ -4,13 +4,17 @@
 
 ## ChunkSplitBySize.minSize property
 
-The minimum size of a chunk, unit in bytes. Defaults to `10000`<!-- -->.
+The minimum size of a chunk, unit in bytes.
 
 **Signature:**
 
 ```typescript
 minSize?: number | undefined;
 ```
+
+## Default Value
+
+10000
 
 ## Example
 

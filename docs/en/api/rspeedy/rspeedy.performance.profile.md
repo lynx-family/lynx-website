@@ -12,9 +12,9 @@ Whether capture timing information in the build time and the runtime, the same a
 profile?: boolean | undefined;
 ```
 
-## Remarks
+## Default Value
 
-This option would be `true` when `DEBUG` environment variable contains `rspeedy`<!-- -->.
+Rspeedy sets this to `true` when `DEBUG` contains `rspeedy`<!-- -->; otherwise it leaves the option unset.
 
 ## Example
 

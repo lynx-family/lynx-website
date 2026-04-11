@@ -14,7 +14,37 @@ constructor(options?: Partial<MainThreadRuntimeWrapperWebpackPluginOptions>);
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | Partial&lt;[MainThreadRuntimeWrapperWebpackPluginOptions](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.md)<!-- -->&gt; | _(Optional)_ |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+options
+
+
+</td><td>
+
+Partial&lt;[MainThreadRuntimeWrapperWebpackPluginOptions](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.md)<!-- -->&gt;
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>
 
