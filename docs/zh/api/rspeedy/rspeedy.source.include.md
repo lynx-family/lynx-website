@@ -12,6 +12,10 @@ The `source.include` is used to specify additional JavaScript files that need to
 include?: Rspack.RuleSetCondition[] | undefined;
 ```
 
+## Default Value
+
+When unset, Rsbuild compiles JavaScript files in the current directory and TypeScript or JSX files in all directories, while excluding JavaScript files under `node_modules`<!-- -->.
+
 ## Remarks
 
 To avoid redundant compilation, by default, Rsbuild only compiles JavaScript files in the current directory and TypeScript and JSX files in all directories. It does not compile JavaScript files under `node_modules`<!-- -->.

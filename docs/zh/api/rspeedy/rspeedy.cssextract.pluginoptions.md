@@ -11,3 +11,7 @@ The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-ex
 ```typescript
 pluginOptions?: CssExtractRspackPluginOptions | undefined;
 ```
+
+## Default Value
+
+undefined

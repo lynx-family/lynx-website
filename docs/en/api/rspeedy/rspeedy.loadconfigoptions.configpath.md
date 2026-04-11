@@ -4,8 +4,15 @@
 
 ## LoadConfigOptions.configPath property
 
+The config file path to load.
+
 **Signature:**
 
 ```typescript
 configPath?: string | undefined;
 ```
+
+## Default Value
+
+Automatically resolves `lynx.config.ts`<!-- -->, `lynx.config.js`<!-- -->, `lynx.config.mts`<!-- -->, or `lynx.config.mjs` from `cwd`
+

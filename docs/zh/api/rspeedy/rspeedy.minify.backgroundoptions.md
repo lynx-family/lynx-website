@@ -12,6 +12,10 @@
 backgroundOptions?: Rspack.SwcJsMinimizerRspackPluginOptions | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 This option is deep-merged into [Minify.jsOptions](./rspeedy.minify.jsoptions.md)<!-- -->. It is mainly used together with ReactLynx dual-thread outputs so that main-thread and background-thread bundles can use different compress rules.

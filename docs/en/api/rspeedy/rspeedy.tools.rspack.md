@@ -12,6 +12,10 @@ The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](h
 rspack?: ToolsConfig['rspack'] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example 1
 
 - Use object config

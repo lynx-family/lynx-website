@@ -12,23 +12,9 @@ Specify the build mode for Rsbuild and Rspack, as each mode has different defaul
 mode?: 'development' | 'production' | 'none' | undefined;
 ```
 
-## Remarks
+## Default Value
 
-The default value of mode depends on the `process.env.NODE_ENV` environment variable:
-
-- If `NODE_ENV` is production, the default value is production.
-
-- If `NODE_ENV` is development, the default value is development.
-
-- If `NODE_ENV` has any other value, the default value is none.
-
-- If you set the value of mode, the value of `NODE_ENV` will be ignored.
-
-When using Rspeedy's CLI:
-
-- `rspeedy dev` and `rspeedy preview` will set the default values of `NODE_ENV` and `mode` to `'development'`<!-- -->.
-
-- `rspeedy build` will set the default values of `NODE_ENV` and `mode` to `'production'`<!-- -->.
+Depends on `process.env.NODE_ENV`<!-- -->: `'production'` when `NODE_ENV` is `'production'`<!-- -->, `'development'` when `NODE_ENV` is `'development'`<!-- -->, and `'none'` otherwise. When using Rspeedy's CLI, `rspeedy dev` and `rspeedy preview` default to `'development'`<!-- -->, while `rspeedy build` defaults to `'production'`<!-- -->.
 
 ## Example 1
 

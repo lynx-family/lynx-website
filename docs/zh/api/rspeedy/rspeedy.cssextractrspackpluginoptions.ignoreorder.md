@@ -4,9 +4,13 @@
 
 ## CssExtractRspackPluginOptions.ignoreOrder property
 
-
 **Signature:**
 
 ```typescript
 ignoreOrder?: boolean | undefined;
 ```
+
+## Default Value
+
+undefined
+

@@ -6,15 +6,19 @@
 
 Whether to print the file sizes after production build.
 
-[Performance.printFileSize](./rspeedy.performance.printfilesize.md)
-
-See [Rsbuild - performance.printFileSize](https://rsbuild.dev/config/performance/print-file-size) for details.
-
 **Signature:**
 
 ```typescript
 printFileSize?: PerformanceConfig['printFileSize'] | undefined;
 ```
+
+## Default Value
+
+true
+
+[Performance.printFileSize](./rspeedy.performance.printfilesize.md)
+
+See [Rsbuild - performance.printFileSize](https://rsbuild.dev/config/performance/print-file-size) for details.
 
 ## Example 1
 

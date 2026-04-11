@@ -12,9 +12,9 @@ The [Output.dataUriLimit](./rspeedy.output.dataurilimit.md) option is used to se
 dataUriLimit?: number | DataUriLimit | undefined;
 ```
 
-## Remarks
+## Default Value
 
-The default value of `dataUriLimit` is 2kB.
+2048
 
 ## Example 1
 

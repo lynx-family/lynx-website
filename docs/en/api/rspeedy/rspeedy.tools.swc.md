@@ -11,3 +11,8 @@ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loa
 ```typescript
 swc?: ToolsConfig['swc'] | undefined;
 ```
+
+## Default Value
+
+undefined
+

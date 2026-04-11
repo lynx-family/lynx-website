@@ -12,6 +12,10 @@ Customize the transformed path.
 customName?: string | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 You you can specify the format of the transformed path. For example, by setting it to `my-lib/{{ camelCase member }}`<!-- -->, you can convert the member into camelCase.

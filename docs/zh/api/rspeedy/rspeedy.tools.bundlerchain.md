@@ -12,6 +12,10 @@ The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of
 bundlerChain?: ToolsConfig['bundlerChain'] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example
 
 

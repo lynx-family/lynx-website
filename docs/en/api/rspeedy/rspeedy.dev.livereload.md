@@ -6,17 +6,19 @@
 
 Whether to enable live reload functionality.
 
-Defaults to `true`<!-- -->.
-
-Live reload is used as a fallback when [Dev.hmr](./rspeedy.dev.hmr.md) is disabled or cannot be used in certain scenarios. When enabled, the page will automatically refresh when source files are changed.
-
-To completely disable both HMR and live reload, set both `dev.hmr` and `dev.liveReload` to `false`<!-- -->. Then, no WebSocket requests will be made to the dev server on the page, and the page will not automatically refresh when file changes.
-
 **Signature:**
 
 ```typescript
 liveReload?: boolean | undefined;
 ```
+
+## Default Value
+
+true
+
+Live reload is used as a fallback when [Dev.hmr](./rspeedy.dev.hmr.md) is disabled or cannot be used in certain scenarios. When enabled, the page will automatically refresh when source files are changed.
+
+To completely disable both HMR and live reload, set both `dev.hmr` and `dev.liveReload` to `false`<!-- -->. Then, no WebSocket requests will be made to the dev server on the page, and the page will not automatically refresh when file changes.
 
 ## Example 1
 

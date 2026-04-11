@@ -69,7 +69,7 @@ _(Optional)_ Create aliases to `import` or `require` certain modules more easily
 
 </td><td>
 
-_(Optional)_ Set the strategy for path alias resolution, to control the priority relationship between the `paths` option in `tsconfig.json` and the `resolve.alias` option of Rsbuild. - `prefer-tsconfig` (default): The `paths` option in `tsconfig.json` will take precedence over the `resolve.alias` option of Rsbuild. - `prefer-alias`<!-- -->: The `resolve.alias` option of Rsbuild will take precedence over the `paths` option in `tsconfig.json`<!-- -->.
+_(Optional)_ Set the strategy for path alias resolution, to control the priority relationship between the `paths` option in `tsconfig.json` and the `resolve.alias` option of Rsbuild.
 
 
 </td></tr>
@@ -108,24 +108,6 @@ string\[\] \| undefined
 </td><td>
 
 _(Optional)_ Automatically resolve file extensions when importing modules. This means you can import files without explicitly writing their extensions.
-
-Default: `['.ts', '.tsx', '.mjs', '.js', '.jsx', '.json', '.cjs']`
-
-For example, if importing './index', Rsbuild will try to resolve using the following order:
-
-- `./index.ts`
-
-- `./index.tsx`
-
-- `./index.mjs`
-
-- `./index.js`
-
-- `./index.jsx`
-
-- `./index.json`
-
-- `./index.cjs`
 
 
 </td></tr>

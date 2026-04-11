@@ -12,6 +12,10 @@ Watch specified files and directories for changes. When a file change is detecte
 watchFiles?: WatchFiles | WatchFiles[] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example 1
 
 - Specify the files and directories watched for changes.

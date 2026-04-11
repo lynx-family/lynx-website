@@ -12,9 +12,7 @@ The name of the SVG images.
 svg?: Rspack.AssetModuleFilename | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- `'[name].[contenthash:8].svg'`
+`'[name].[contenthash:8].svg'`
 

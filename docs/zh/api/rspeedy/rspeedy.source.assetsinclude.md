@@ -4,13 +4,17 @@
 
 ## Source.assetsInclude property
 
-Include additional files that should be treated as static assets. Defaults to be `undefined`<!-- -->.
+Include additional files that should be treated as static assets.
 
 **Signature:**
 
 ```typescript
 assetsInclude?: Rspack.RuleSetCondition | undefined;
 ```
+
+## Default Value
+
+undefined
 
 ## Remarks
 
