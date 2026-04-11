@@ -18,7 +18,7 @@ When `output.sourceMap` is an object and `js` is unset, it defaults to `'cheap-m
 
 ## Remarks
 
-See [Rspack - Devtool](https://rspack.dev/config/devtool) for details.
+See [Rspack - Devtool](https://rspack.rs/config/devtool) for details.
 
 ## Example 1
 
@@ -69,4 +69,3 @@ export default defineConfig({
   },
 })
 ```
-

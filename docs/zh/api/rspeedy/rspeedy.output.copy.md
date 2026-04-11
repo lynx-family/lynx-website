@@ -18,7 +18,7 @@ undefined
 
 ## Remarks
 
-For more options, see [Rspack.CopyRspackPlugin](https://rspack.dev/plugins/rspack/copy-rspack-plugin)<!-- -->.
+For more options, see [Rspack.CopyRspackPlugin](https://rspack.rs/plugins/rspack/copy-rspack-plugin)<!-- -->.
 
 ## Example 1
 
@@ -53,4 +53,3 @@ export default defineConfig({
   },
 })
 ```
-

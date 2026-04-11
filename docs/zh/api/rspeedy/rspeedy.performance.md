@@ -107,7 +107,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.dev/config/other-options#profile) config of Rspack.
+_(Optional)_ Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.rs/config/other-options#profile) config of Rspack.
 
 
 </td></tr>
@@ -131,4 +131,3 @@ _(Optional)_ Whether to remove `console.[methodName]` in production build.
 
 </td></tr>
 </tbody></table>
-

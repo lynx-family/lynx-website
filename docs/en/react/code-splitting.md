@@ -2,7 +2,7 @@
 
 > Rspack supports code splitting, which allows splitting the code into other chunks. You have the full control about size and number of generated assets, which allow you to gain performance improvements in loading time.
 >
-> [Rspack - Code Splitting](https://rspack.dev/guide/optimization/code-splitting)
+> [Rspack - Code Splitting](https://rspack.rs/guide/optimization/code-splitting)
 
 ## Lazy-loading components
 

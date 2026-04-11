@@ -50,7 +50,7 @@ ToolsConfig\['bundlerChain'\] \| undefined
 
 </td><td>
 
-_(Optional)_ The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of [Rspack](https://www.rspack.dev) using [rspack-chain](https://github.com/rspack-contrib/rspack-chain)<!-- -->.
+_(Optional)_ The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of [Rspack](https://rspack.rs) using [rspack-chain](https://github.com/rspack-contrib/rspack-chain)<!-- -->.
 
 
 </td></tr>
@@ -126,7 +126,7 @@ ToolsConfig\['rspack'\] \| undefined
 
 </td><td>
 
-_(Optional)_ The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://www.rspack.dev/)<!-- -->.
+_(Optional)_ The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://rspack.rs/)<!-- -->.
 
 
 </td></tr>
@@ -145,7 +145,7 @@ ToolsConfig\['swc'\] \| undefined
 
 </td><td>
 
-_(Optional)_ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loader](https://rspack.dev/guide/features/builtin-swc-loader)<!-- -->.
+_(Optional)_ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loader](https://rspack.rs/guide/features/builtin-swc-loader)<!-- -->.
 
 
 </td></tr>

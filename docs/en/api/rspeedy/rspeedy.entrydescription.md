@@ -14,7 +14,7 @@ export interface EntryDescription
 
 ## Remarks
 
-It is similar with the [Entry Description Object](https://www.rspack.dev/config/entry#entry-description-object) of Rspack. But only a few properties that Lynx supports is allowed.
+It is similar with the [Entry Description Object](https://rspack.rs/config/entry#entry-description-object) of Rspack. But only a few properties that Lynx supports is allowed.
 
 ## Properties
 
@@ -78,4 +78,3 @@ _(Optional)_ This is an important option when using on-demand-loading or loading
 
 </td></tr>
 </tbody></table>
-

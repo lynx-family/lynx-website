@@ -4,7 +4,7 @@
 
 ## Tools.rspack property
 
-The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://www.rspack.dev/)<!-- -->.
+The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://rspack.rs/)<!-- -->.
 
 **Signature:**
 
@@ -33,7 +33,7 @@ export default defineConfig({
   },
 })
 ```
-See [Rspack - Configuration](https://www.rspack.dev/config/index) for details.
+See [Rspack - Configuration](https://rspack.rs/config/index) for details.
 
 ## Example 2
 
@@ -93,4 +93,3 @@ export default defineConfig({
 })
 ```
 See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#appendplugins) for details.
-

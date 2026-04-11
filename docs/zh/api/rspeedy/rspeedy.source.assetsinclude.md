@@ -20,7 +20,7 @@ undefined
 
 By default, Rsbuild treats common image, font, audio, and video files as static assets. Through the source.assetsInclude config, you can specify additional file types that should be treated as static assets. These added static assets are processed using the same rules as the built-in supported static assets。
 
-The usage of `source.assetsInclude` is consistent with [Condition](https://rspack.dev/config/module#condition) in Rspack, which supports passing in strings, regular expressions, arrays of conditions, or logical conditions to match the module path or assets.
+The usage of `source.assetsInclude` is consistent with [Condition](https://rspack.rs/config/module#condition) in Rspack, which supports passing in strings, regular expressions, arrays of conditions, or logical conditions to match the module path or assets.
 
 ## Example
 
@@ -33,4 +33,3 @@ export default defineConfig({
   },
 })
 ```
-

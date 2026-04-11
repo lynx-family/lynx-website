@@ -3,7 +3,6 @@
 In modern front-end development, modularity has become a key approach to managing code effectively:
 
 1. **Simplified Module Imports**:
-
    - Module resolution allows you to use concise and more readable paths for importing modules, instead of cumbersome relative paths. For example, with an alias configuration, you can use `@components/Button` instead of `../../../src/components/Button`, which significantly improves code maintainability.
 
 2. **Environment-Aware Module Substitution**:
@@ -39,7 +38,7 @@ You can refer to the [TypeScript - paths](https://typescriptlang.org/tsconfig#pa
 
 ### Use `source.alias` Configuration
 
-Rsbuild provides the [source.alias](../../api/rspeedy/rspeedy.source.alias) configuration option, which corresponds to the webpack/Rspack native [resolve.alias](https://rspack.dev/config/resolve#resolvealias) configuration. You can configure this option using an object or a function.
+Rsbuild provides the [source.alias](../../api/rspeedy/rspeedy.source.alias) configuration option, which corresponds to the webpack/Rspack native [resolve.alias](https://rspack.rs/config/resolve#resolvealias) configuration. You can configure this option using an object or a function.
 
 #### Use Cases
 
