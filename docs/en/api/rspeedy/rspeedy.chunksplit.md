@@ -14,8 +14,64 @@ export interface ChunkSplit
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [override?](./rspeedy.chunksplit.override.md) |  | Rspack.Configuration extends { optimization?: { splitChunks?: infer P; } \| undefined; } ? P : never | _(Optional)_ Custom Rspack chunk splitting config can be specified. |
-|  [strategy?](./rspeedy.chunksplit.strategy.md) |  | 'all-in-one' \| 'split-by-module' \| 'split-by-experience' \| 'single-vendor' \| undefined | _(Optional)_ The ChunkSplitting strategy. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[override?](./rspeedy.chunksplit.override.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.Configuration extends { optimization?: { splitChunks?: infer P; } \| undefined; } ? P : never
+
+
+</td><td>
+
+_(Optional)_ Custom Rspack chunk splitting config can be specified.
+
+
+</td></tr>
+<tr><td>
+
+[strategy?](./rspeedy.chunksplit.strategy.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'all-in-one' \| 'split-by-module' \| 'split-by-experience' \| 'single-vendor' \| undefined
+
+
+</td><td>
+
+_(Optional)_ The ChunkSplitting strategy.
+
+
+</td></tr>
+</tbody></table>
 

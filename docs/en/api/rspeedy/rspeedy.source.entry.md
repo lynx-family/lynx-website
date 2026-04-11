@@ -12,6 +12,10 @@ The [Entry](./rspeedy.entry.md) option is used to set the entry module.
 entry?: Entry | undefined;
 ```
 
+## Default Value
+
+`'./src/index.js'`
+
 ## Remarks
 
 If no value is provided, the default value `'./src/index.js'` will be used.

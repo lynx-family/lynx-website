@@ -14,12 +14,140 @@ export interface Tools
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [bundlerChain?](./rspeedy.tools.bundlerchain.md) |  | ToolsConfig\['bundlerChain'\] \| undefined | _(Optional)_ The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of [Rspack](https://www.rspack.dev) using [rspack-chain](https://github.com/rspack-contrib/rspack-chain)<!-- -->. |
-|  [cssExtract?](./rspeedy.tools.cssextract.md) |  | [CssExtract](./rspeedy.cssextract.md) \| undefined | _(Optional)_ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin) |
-|  [cssLoader?](./rspeedy.tools.cssloader.md) |  | [CssLoader](./rspeedy.cssloader.md) \| undefined | _(Optional)_ The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](https://github.com/webpack-contrib/css-loader)<!-- -->. |
-|  [rsdoctor?](./rspeedy.tools.rsdoctor.md) |  | [RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md) \| undefined | _(Optional)_ The [Tools.rsdoctor](./rspeedy.tools.rsdoctor.md) controls the options of [Rsdoctor](https://rsdoctor.dev/)<!-- -->. |
-|  [rspack?](./rspeedy.tools.rspack.md) |  | ToolsConfig\['rspack'\] \| undefined | _(Optional)_ The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://www.rspack.dev/)<!-- -->. |
-|  [swc?](./rspeedy.tools.swc.md) |  | ToolsConfig\['swc'\] \| undefined | _(Optional)_ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loader](https://rspack.dev/guide/features/builtin-swc-loader)<!-- -->. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[bundlerChain?](./rspeedy.tools.bundlerchain.md)
+
+
+</td><td>
+
+
+</td><td>
+
+ToolsConfig\['bundlerChain'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of [Rspack](https://www.rspack.dev) using [rspack-chain](https://github.com/rspack-contrib/rspack-chain)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[cssExtract?](./rspeedy.tools.cssextract.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[CssExtract](./rspeedy.cssextract.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+
+
+</td></tr>
+<tr><td>
+
+[cssLoader?](./rspeedy.tools.cssloader.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[CssLoader](./rspeedy.cssloader.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [CssLoader](./rspeedy.cssloader.md) controls the options of [css-loader](https://github.com/webpack-contrib/css-loader)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[rsdoctor?](./rspeedy.tools.rsdoctor.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Tools.rsdoctor](./rspeedy.tools.rsdoctor.md) controls the options of [Rsdoctor](https://rsdoctor.dev/)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[rspack?](./rspeedy.tools.rspack.md)
+
+
+</td><td>
+
+
+</td><td>
+
+ToolsConfig\['rspack'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://www.rspack.dev/)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[swc?](./rspeedy.tools.swc.md)
+
+
+</td><td>
+
+
+</td><td>
+
+ToolsConfig\['swc'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [builtin:swc-loader](https://rspack.dev/guide/features/builtin-swc-loader)<!-- -->.
+
+
+</td></tr>
+</tbody></table>
 

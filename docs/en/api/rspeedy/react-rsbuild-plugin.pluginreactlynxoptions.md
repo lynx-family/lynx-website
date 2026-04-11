@@ -14,28 +14,447 @@ export interface PluginReactLynxOptions
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [compat?](./react-rsbuild-plugin.pluginreactlynxoptions.compat.md) |  | Partial&lt;[CompatVisitorConfig](./react-rsbuild-plugin.compatvisitorconfig.md)<!-- -->&gt; &amp; { disableCreateSelectorQueryIncompatibleWarning?: boolean; } \| undefined | _(Optional)_ The <code>compat</code> option controls compatibilities with ReactLynx2.0. |
-|  [customCSSInheritanceList?](./react-rsbuild-plugin.pluginreactlynxoptions.customcssinheritancelist.md) |  | string\[\] \| undefined | _(Optional)_ When [PluginReactLynxOptions.enableCSSInheritance](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance.md) is enabled, <code>customCSSInheritanceList</code> can control which properties are inheritable, not just the default ones. |
-|  [debugInfoOutside?](./react-rsbuild-plugin.pluginreactlynxoptions.debuginfooutside.md) |  | boolean | _(Optional)_ debugInfoOutside controls whether the debug info is placed outside the template. |
-|  [defaultDisplayLinear?](./react-rsbuild-plugin.pluginreactlynxoptions.defaultdisplaylinear.md) |  | boolean | _(Optional)_ defaultDisplayLinear controls whether the default value of <code>display</code> in CSS is <code>linear</code>. |
-|  [defineDCE?](./react-rsbuild-plugin.pluginreactlynxoptions.definedce.md) |  | Partial&lt;[DefineDceVisitorConfig](./react-rsbuild-plugin.definedcevisitorconfig.md)<!-- -->&gt; \| undefined | _(Optional)_ Like <code>define</code> in various bundlers, but this one happens at transform time, and a DCE pass will be performed. |
-|  [enableAccessibilityElement?](./react-rsbuild-plugin.pluginreactlynxoptions.enableaccessibilityelement.md) |  | boolean | _(Optional)_ enableAccessibilityElement set the default value of <code>accessibility-element</code> for all <code>&lt;view /&gt;</code> elements. |
-|  [enableCSSInheritance?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance.md) |  | boolean | _(Optional)_ enableCSSInheritance enables the default inheritance properties. |
-|  [enableCSSInvalidation?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinvalidation.md) |  | boolean | _(Optional)_ CSS Invalidation refers to the process of determining which elements need to have their styles recalculated when the DOM is updated. |
-|  [enableCSSSelector?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssselector.md) |  | boolean | _(Optional)_ enableCSSSelector controls whether enabling the new CSS implementation. |
-|  [enableICU?](./react-rsbuild-plugin.pluginreactlynxoptions.enableicu.md) |  | boolean | <p>_(Optional)_ enableICU enables the Intl API to be enabled globally.</p><p>If enabled, please double check the compatibility with Lynx Share Context feature to avoid using shared Intl API from other destroyed card.</p> |
-|  [enableNewGesture?](./react-rsbuild-plugin.pluginreactlynxoptions.enablenewgesture.md) |  | boolean | _(Optional)_ enableNewGesture enables the new gesture system. |
-|  [enableParallelElement?](./react-rsbuild-plugin.pluginreactlynxoptions.enableparallelelement.md) |  | boolean | _(Optional)_ enableParallelElement enables Threaded Element Resolution. |
-|  [enableRemoveCSSScope?](./react-rsbuild-plugin.pluginreactlynxoptions.enableremovecssscope.md) |  | boolean \| undefined | <p>_(Optional)_ enableRemoveCSSScope controls whether CSS is restrict to use in the component scope.</p><p><code>true</code>: All CSS files are treated as global CSS.</p><p><code>false</code>: All CSS files are treated as scoped CSS, and only take effect in the component that explicitly imports it.</p><p><code>undefined</code>: Only use scoped CSS for CSS Modules, and treat other CSS files as global CSS. Scoped CSS is faster than global CSS, thus you can use CSS Modules to speedy up your CSS if there are performance issues.</p> |
-|  [enableSSR?](./react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md) |  | boolean | _(Optional)_ <code>enableSSR</code> enable Lynx SSR feature for this build. |
-|  [engineVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md) |  | string | _(Optional)_ <code>engineVersion</code> specifies the minimum Lynx Engine version required for an App bundle to function properly. |
-|  [experimental\_isLazyBundle?](./react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle.md) |  | boolean | **_(ALPHA)_** _(Optional)_ Generate standalone lazy bundle. |
-|  [extractStr?](./react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md) |  | Partial&lt;[ExtractStrConfig](./react-rsbuild-plugin.extractstrconfig.md)<!-- -->&gt; \| boolean | _(Optional)_ Merge same string literals in JS and Lepus to reduce output bundle size. Set to <code>false</code> to disable. |
-|  [firstScreenSyncTiming?](./react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md) |  | 'immediately' \| 'jsReady' | <p>_(Optional)_ This flag controls when MainThread (Lepus) transfers control to Background after the first screen</p><p>This flag has two options:</p><p><code>&quot;immediately&quot;</code>: Transfer immediately</p><p><code>&quot;jsReady&quot;</code>: Transfer when background (JS Runtime) is ready</p><p>After handing over control, MainThread (Lepus) runtime can no longer respond to data updates, and data updates will be forwarded to background (JS Runtime) and processed \_\_asynchronously\_\_</p> |
-|  [pipelineSchedulerConfig?](./react-rsbuild-plugin.pluginreactlynxoptions.pipelineschedulerconfig.md) |  | number | _(Optional)_ Composite configuration representing pipeline scheduling strategies, including [PluginReactLynxOptions.enableParallelElement](./react-rsbuild-plugin.pluginreactlynxoptions.enableparallelelement.md) and list batch-rendering. All newly introduced scheduling strategies will be managed by this uint64 configuration. |
-|  [removeDescendantSelectorScope?](./react-rsbuild-plugin.pluginreactlynxoptions.removedescendantselectorscope.md) |  | boolean | _(Optional)_ removeDescendantSelectorScope is used to remove the scope of descendant selectors. |
-|  [shake?](./react-rsbuild-plugin.pluginreactlynxoptions.shake.md) |  | Partial&lt;[ShakeVisitorConfig](./react-rsbuild-plugin.shakevisitorconfig.md)<!-- -->&gt; \| undefined | _(Optional)_ How main-thread code will be shaken. |
-|  [targetSdkVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.targetsdkversion.md) |  | string | _(Optional)_ targetSdkVersion is used to specify the minimal Lynx Engine version that a App bundle can run on. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[compat?](./react-rsbuild-plugin.pluginreactlynxoptions.compat.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Partial&lt;[CompatVisitorConfig](./react-rsbuild-plugin.compatvisitorconfig.md)<!-- -->&gt; &amp; { disableCreateSelectorQueryIncompatibleWarning?: boolean; } \| undefined
+
+
+</td><td>
+
+_(Optional)_ The `compat` option controls compatibilities with ReactLynx2.0.
+
+
+</td></tr>
+<tr><td>
+
+[customCSSInheritanceList?](./react-rsbuild-plugin.pluginreactlynxoptions.customcssinheritancelist.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ When [PluginReactLynxOptions.enableCSSInheritance](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance.md) is enabled, `customCSSInheritanceList` can control which properties are inheritable, not just the default ones.
+
+
+</td></tr>
+<tr><td>
+
+[debugInfoOutside?](./react-rsbuild-plugin.pluginreactlynxoptions.debuginfooutside.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ debugInfoOutside controls whether the debug info is placed outside the template.
+
+
+</td></tr>
+<tr><td>
+
+[defaultDisplayLinear?](./react-rsbuild-plugin.pluginreactlynxoptions.defaultdisplaylinear.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ defaultDisplayLinear controls whether the default value of `display` in CSS is `linear`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[defineDCE?](./react-rsbuild-plugin.pluginreactlynxoptions.definedce.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Partial&lt;[DefineDceVisitorConfig](./react-rsbuild-plugin.definedcevisitorconfig.md)<!-- -->&gt; \| undefined
+
+
+</td><td>
+
+_(Optional)_ Like `define` in various bundlers, but this one happens at transform time, and a DCE pass will be performed.
+
+
+</td></tr>
+<tr><td>
+
+[enableAccessibilityElement?](./react-rsbuild-plugin.pluginreactlynxoptions.enableaccessibilityelement.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ enableAccessibilityElement set the default value of `accessibility-element` for all `<view />` elements.
+
+
+</td></tr>
+<tr><td>
+
+[enableCSSInheritance?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ enableCSSInheritance enables the default inheritance properties.
+
+
+</td></tr>
+<tr><td>
+
+[enableCSSInvalidation?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssinvalidation.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ CSS Invalidation refers to the process of determining which elements need to have their styles recalculated when the DOM is updated.
+
+
+</td></tr>
+<tr><td>
+
+[enableCSSSelector?](./react-rsbuild-plugin.pluginreactlynxoptions.enablecssselector.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ enableCSSSelector controls whether enabling the new CSS implementation.
+
+
+</td></tr>
+<tr><td>
+
+[enableNewGesture?](./react-rsbuild-plugin.pluginreactlynxoptions.enablenewgesture.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ enableNewGesture enables the new gesture system.
+
+
+</td></tr>
+<tr><td>
+
+[enableRemoveCSSScope?](./react-rsbuild-plugin.pluginreactlynxoptions.enableremovecssscope.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ enableRemoveCSSScope controls whether CSS is restrict to use in the component scope.
+
+`true`<!-- -->: All CSS files are treated as global CSS.
+
+`false`<!-- -->: All CSS files are treated as scoped CSS, and only take effect in the component that explicitly imports it.
+
+`undefined`<!-- -->: Only use scoped CSS for CSS Modules, and treat other CSS files as global CSS. Scoped CSS is faster than global CSS, thus you can use CSS Modules to speedy up your CSS if there are performance issues.
+
+
+</td></tr>
+<tr><td>
+
+[enableSSR?](./react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ `enableSSR` enable Lynx SSR feature for this build.
+
+
+</td></tr>
+<tr><td>
+
+[engineVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ `engineVersion` specifies the minimum Lynx Engine version required for an App bundle to function properly.
+
+
+</td></tr>
+<tr><td>
+
+[experimental\_isLazyBundle?](./react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+**_(ALPHA)_** _(Optional)_ Generate standalone lazy bundle.
+
+
+</td></tr>
+<tr><td>
+
+[extractStr?](./react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Partial&lt;[ExtractStrConfig](./react-rsbuild-plugin.extractstrconfig.md)<!-- -->&gt; \| boolean
+
+
+</td><td>
+
+_(Optional)_ Merge same string literals in JS and Lepus to reduce output bundle size. Set to `false` to disable.
+
+
+</td></tr>
+<tr><td>
+
+[firstScreenSyncTiming?](./react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'immediately' \| 'jsReady'
+
+
+</td><td>
+
+_(Optional)_ This flag controls when MainThread (Lepus) transfers control to Background after the first screen
+
+This flag has two options:
+
+`"immediately"`<!-- -->: Transfer immediately
+
+`"jsReady"`<!-- -->: Transfer when background (JS Runtime) is ready
+
+After handing over control, MainThread (Lepus) runtime can no longer respond to data updates, and data updates will be forwarded to background (JS Runtime) and processed \_\_asynchronously\_\_
+
+
+</td></tr>
+<tr><td>
+
+[globalPropsMode?](./react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'reactive' \| 'event'
+
+
+</td><td>
+
+_(Optional)_ Configure the update mode of `lynx.__globalProps`<!-- -->.
+
+This flag has two options:
+
+`'reactive'`<!-- -->: `UpdateGlobalProps` will trigger update automatically.
+
+`'event'`<!-- -->: `UpdateGlobalProps` will trigger global event and users need to trigger update in the event handler.
+
+
+</td></tr>
+<tr><td>
+
+[optimizeBundleSize?](./react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| { mainThread?: boolean; background?: boolean; }
+
+
+</td><td>
+
+_(Optional)_ Optimize bundle size by removing unused code by Minify.mainThreadOptions and Minify.backgroundOptions.
+
+When optimizeBundleSize or optimizeBundleSize.mainThread is true, main-thread code will be optimized. When optimizeBundleSize or optimizeBundleSize.background is true, background code will be optimized.
+
+
+</td></tr>
+<tr><td>
+
+[removeDescendantSelectorScope?](./react-rsbuild-plugin.pluginreactlynxoptions.removedescendantselectorscope.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ removeDescendantSelectorScope is used to remove the scope of descendant selectors.
+
+
+</td></tr>
+<tr><td>
+
+[shake?](./react-rsbuild-plugin.pluginreactlynxoptions.shake.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Partial&lt;[ShakeVisitorConfig](./react-rsbuild-plugin.shakevisitorconfig.md)<!-- -->&gt; \| undefined
+
+
+</td><td>
+
+_(Optional)_ How main-thread code will be shaken.
+
+
+</td></tr>
+<tr><td>
+
+[targetSdkVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.targetsdkversion.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ targetSdkVersion is used to specify the minimal Lynx Engine version that a App bundle can run on.
+
+
+</td></tr>
+</tbody></table>
 

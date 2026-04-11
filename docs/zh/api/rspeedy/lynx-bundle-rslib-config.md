@@ -4,44 +4,247 @@
 
 ## lynx-bundle-rslib-config package
 
-`@lynx-js/lynx-bundle-rslib-config` is the package that provides the configurations for bundling Lynx bundle with [Rslib](https://rslib.rs/).
+`@lynx-js/lynx-bundle-rslib-config` is the package that provides the configurations for bundling Lynx bundle with [Rslib](https://rslib.rs/)<!-- -->.
 
 ## Classes
 
-|  Class | Description |
-|  --- | --- |
-|  [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md) | Webpack plugin that builds and emits an external bundle. |
-|  [MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md) | Webpack plugin that wraps main-thread runtime modules for external bundles. |
+<table><thead><tr><th>
+
+Class
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md)
+
+
+</td><td>
+
+The webpack plugin to build and emit the external bundle.
+
+
+</td></tr>
+<tr><td>
+
+[MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md)
+
+
+</td><td>
+
+The main-thread runtime wrapper for external bundle.
+
+
+</td></tr>
+</tbody></table>
 
 ## Functions
 
-|  Function | Description |
-|  --- | --- |
-|  [defineExternalBundleRslibConfig(userLibConfig, encodeOptions)](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md) | Get the Rslib config for building Lynx external bundles. |
+<table><thead><tr><th>
+
+Function
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[defineExternalBundleRslibConfig(userLibConfig, encodeOptions)](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md)
+
+
+</td><td>
+
+Get the rslib config for building Lynx external bundles.
+
+
+</td></tr>
+</tbody></table>
 
 ## Interfaces
 
-|  Interface | Description |
-|  --- | --- |
-|  [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | Options for encoding the external bundle. |
-|  [ExternalBundleLibConfig](./lynx-bundle-rslib-config.externalbundlelibconfig.md) | Rslib config shape accepted by `defineExternalBundleRslibConfig`. |
-|  [ExternalBundleWebpackPluginOptions](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.md) | Options for `ExternalBundleWebpackPlugin`. |
-|  [ExternalsPresetDefinition](./lynx-bundle-rslib-config.externalspresetdefinition.md) | Definition for a named externals preset. |
-|  [MainThreadRuntimeWrapperWebpackPluginOptions](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.md) | Options for `MainThreadRuntimeWrapperWebpackPlugin`. |
+<table><thead><tr><th>
 
-## Type Aliases
+Interface
 
-|  Type Alias | Description |
-|  --- | --- |
-|  [Externals](./lynx-bundle-rslib-config.externals.md) | External module to global-name mappings used when building Lynx external bundles. |
-|  [ExternalsPresetDefinitions](./lynx-bundle-rslib-config.externalspresetdefinitions.md) | Available externals preset definitions. |
-|  [ExternalsPresets](./lynx-bundle-rslib-config.externalspresets.md) | Enabled externals presets. |
-|  [OutputConfig](./lynx-bundle-rslib-config.outputconfig.md) | Output config accepted by Lynx external bundle builds. |
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md)
+
+
+</td><td>
+
+The options for encoding the external bundle.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalBundleLibConfig](./lynx-bundle-rslib-config.externalbundlelibconfig.md)
+
+
+</td><td>
+
+Rslib config shape accepted by `defineExternalBundleRslibConfig`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalBundleWebpackPluginOptions](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.md)
+
+
+</td><td>
+
+The options for [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalsPresetDefinition](./lynx-bundle-rslib-config.externalspresetdefinition.md)
+
+
+</td><td>
+
+Definition for a named externals preset.
+
+
+</td></tr>
+<tr><td>
+
+[MainThreadRuntimeWrapperWebpackPluginOptions](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.md)
+
+
+</td><td>
+
+The options of [MainThreadRuntimeWrapperWebpackPlugin](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.md)<!-- -->.
+
+
+</td></tr>
+</tbody></table>
 
 ## Variables
 
-|  Variable | Description |
-|  --- | --- |
-|  [builtInExternalsPresetDefinitions](./lynx-bundle-rslib-config.builtinexternalspresetdefinitions.md) | Built-in externals preset definitions. |
-|  [defaultExternalBundleLibConfig](./lynx-bundle-rslib-config.defaultexternalbundlelibconfig.md) | The default lib config for external bundle. |
-|  [reactLynxExternalsPreset](./lynx-bundle-rslib-config.reactlynxexternalspreset.md) | Standard ReactLynx external mappings used by the built-in `reactlynx` preset. |
+<table><thead><tr><th>
+
+Variable
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[builtInExternalsPresetDefinitions](./lynx-bundle-rslib-config.builtinexternalspresetdefinitions.md)
+
+
+</td><td>
+
+Built-in externals preset definitions.
+
+
+</td></tr>
+<tr><td>
+
+[defaultExternalBundleLibConfig](./lynx-bundle-rslib-config.defaultexternalbundlelibconfig.md)
+
+
+</td><td>
+
+The default lib config for external bundle.
+
+
+</td></tr>
+<tr><td>
+
+[reactLynxExternalsPreset](./lynx-bundle-rslib-config.reactlynxexternalspreset.md)
+
+
+</td><td>
+
+Standard ReactLynx external mappings used by the built-in `reactlynx` preset.
+
+
+</td></tr>
+</tbody></table>
+
+## Type Aliases
+
+<table><thead><tr><th>
+
+Type Alias
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[Externals](./lynx-bundle-rslib-config.externals.md)
+
+
+</td><td>
+
+External module to global-name mappings used when building Lynx external bundles.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalsPresetDefinitions](./lynx-bundle-rslib-config.externalspresetdefinitions.md)
+
+
+</td><td>
+
+Available externals preset definitions.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalsPresets](./lynx-bundle-rslib-config.externalspresets.md)
+
+
+</td><td>
+
+Enabled externals presets.
+
+Preset names are resolved from the built-in preset definitions plus any custom definitions passed to [defineExternalBundleRslibConfig()](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[OutputConfig](./lynx-bundle-rslib-config.outputconfig.md)
+
+
+</td><td>
+
+Output config accepted by Lynx external bundle builds.
+
+
+</td></tr>
+</tbody></table>
+

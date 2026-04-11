@@ -14,13 +14,167 @@ export interface Dev
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [assetPrefix?](./rspeedy.dev.assetprefix.md) |  | string \| boolean \| undefined | _(Optional)_ The [Dev.assetPrefix](./rspeedy.dev.assetprefix.md) is used to set the URL prefix for static assets during development. |
-|  [client?](./rspeedy.dev.client.md) |  | [Client](./rspeedy.devclient.md) \| undefined | _(Optional)_ Configuration of the development client. |
-|  [hmr?](./rspeedy.dev.hmr.md) |  | boolean \| undefined | _(Optional)_ Whether to enable Hot Module Replacement (HMR). |
-|  [liveReload?](./rspeedy.dev.livereload.md) |  | boolean \| undefined | <p>_(Optional)_ Whether to enable live reload functionality.</p><p>Defaults to <code>true</code>.</p><p>Live reload is used as a fallback when [Dev.hmr](./rspeedy.dev.hmr.md) is disabled or cannot be used in certain scenarios. When enabled, the page will automatically refresh when source files are changed.</p><p>To completely disable both HMR and live reload, set both <code>dev.hmr</code> and <code>dev.liveReload</code> to <code>false</code>. Then, no WebSocket requests will be made to the dev server on the page, and the page will not automatically refresh when file changes.</p> |
-|  [progressBar?](./rspeedy.dev.progressbar.md) |  | boolean \| { id?: string; } \| undefined | <p>_(Optional)_ Whether to display progress bar during compilation.</p><p>Defaults to <code>true</code>.</p> |
-|  [watchFiles?](./rspeedy.dev.watchfiles.md) |  | WatchFiles \| WatchFiles\[\] \| undefined | _(Optional)_ Watch specified files and directories for changes. When a file change is detected, it can trigger a page reload or restart the dev server. |
-|  [writeToDisk?](./rspeedy.dev.writetodisk.md) |  | boolean \| ((filename: string) =&gt; boolean) \| undefined | _(Optional)_ Used to control whether the build artifacts of the development environment are written to the disk. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[assetPrefix?](./rspeedy.dev.assetprefix.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Dev.assetPrefix](./rspeedy.dev.assetprefix.md) is used to set the URL prefix for static assets during development.
+
+
+</td></tr>
+<tr><td>
+
+[client?](./rspeedy.dev.client.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Client](./rspeedy.devclient.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configuration of the development client.
+
+
+</td></tr>
+<tr><td>
+
+[hmr?](./rspeedy.dev.hmr.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to enable Hot Module Replacement (HMR).
+
+
+</td></tr>
+<tr><td>
+
+[liveReload?](./rspeedy.dev.livereload.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to enable live reload functionality.
+
+Defaults to `true`<!-- -->.
+
+Live reload is used as a fallback when [Dev.hmr](./rspeedy.dev.hmr.md) is disabled or cannot be used in certain scenarios. When enabled, the page will automatically refresh when source files are changed.
+
+To completely disable both HMR and live reload, set both `dev.hmr` and `dev.liveReload` to `false`<!-- -->. Then, no WebSocket requests will be made to the dev server on the page, and the page will not automatically refresh when file changes.
+
+
+</td></tr>
+<tr><td>
+
+[progressBar?](./rspeedy.dev.progressbar.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| { id?: string; } \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to display progress bar during compilation.
+
+Defaults to `true`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[watchFiles?](./rspeedy.dev.watchfiles.md)
+
+
+</td><td>
+
+
+</td><td>
+
+WatchFiles \| WatchFiles\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Watch specified files and directories for changes. When a file change is detected, it can trigger a page reload or restart the dev server.
+
+
+</td></tr>
+<tr><td>
+
+[writeToDisk?](./rspeedy.dev.writetodisk.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| ((filename: string) =&gt; boolean) \| undefined
+
+
+</td><td>
+
+_(Optional)_ Used to control whether the build artifacts of the development environment are written to the disk.
+
+
+</td></tr>
+</tbody></table>
 

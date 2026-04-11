@@ -14,8 +14,64 @@ export interface LoadConfigOptions
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [configPath?](./rspeedy.loadconfigoptions.configpath.md) |  | string \| undefined | _(Optional)_ |
-|  [cwd?](./rspeedy.loadconfigoptions.cwd.md) |  | string \| undefined | _(Optional)_ |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[configPath?](./rspeedy.loadconfigoptions.configpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
+[cwd?](./rspeedy.loadconfigoptions.cwd.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>
 

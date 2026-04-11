@@ -19,9 +19,83 @@ export interface BuildCache
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [buildDependencies?](./rspeedy.buildcache.builddependencies.md) |  | string\[\] \| undefined | **_(BETA)_** _(Optional)_ An array of files containing build dependencies. Rspack will use the hash of each of these files to invalidate the persistent cache. |
-|  [cacheDigest?](./rspeedy.buildcache.cachedigest.md) |  | Array&lt;string \| undefined&gt; \| undefined | **_(BETA)_** _(Optional)_ Add additional cache digests, the previous build cache will be invalidated when any value in the array changes. |
-|  [cacheDirectory?](./rspeedy.buildcache.cachedirectory.md) |  | string \| undefined | **_(BETA)_** _(Optional)_ The output directory of the cache files. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[buildDependencies?](./rspeedy.buildcache.builddependencies.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string\[\] \| undefined
+
+
+</td><td>
+
+**_(BETA)_** _(Optional)_ An array of files containing build dependencies. Rspack will use the hash of each of these files to invalidate the persistent cache.
+
+
+</td></tr>
+<tr><td>
+
+[cacheDigest?](./rspeedy.buildcache.cachedigest.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string \| undefined&gt; \| undefined
+
+
+</td><td>
+
+**_(BETA)_** _(Optional)_ Add additional cache digests, the previous build cache will be invalidated when any value in the array changes.
+
+
+</td></tr>
+<tr><td>
+
+[cacheDirectory?](./rspeedy.buildcache.cachedirectory.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+**_(BETA)_** _(Optional)_ The output directory of the cache files.
+
+
+</td></tr>
+</tbody></table>
 

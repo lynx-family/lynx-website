@@ -9,5 +9,5 @@ Standard ReactLynx external mappings used by the built-in `reactlynx` preset.
 **Signature:**
 
 ```typescript
-export declare const reactLynxExternalsPreset: Externals;
+reactLynxExternalsPreset: Externals
 ```

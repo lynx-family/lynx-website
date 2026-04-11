@@ -14,14 +14,192 @@ export interface Server
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [base?](./rspeedy.server.base.md) |  | string \| undefined | _(Optional)_ Configure the base path of the server. |
-|  [compress?](./rspeedy.server.compress.md) |  | boolean \| CompressOptions \| undefined | <p>_(Optional)_ Configure whether to enable [gzip compression](https://developer.mozilla.org/en-US/docs/Glossary/gzip_compression) for static assets served by the dev server or preview server.</p><p>Default: true</p><p>See [Rsbuild - server.compress](https://rsbuild.rs/config/server/compress) for details.</p> |
-|  [cors?](./rspeedy.server.cors.md) |  | ServerConfig\['cors'\] \| undefined | <p>_(Optional)_ Configure CORS for the dev server or preview server.</p><p>- Set to an object to enable CORS with the specified options.</p><p>- Set to <code>true</code> to enable CORS with the default options (allows all origins, not recommended).</p><p>- Set to <code>false</code> to disable CORS.</p><p>See [Rsbuild - server.cors](https://rsbuild.rs/config/server/cors) for details.</p> |
-|  [headers?](./rspeedy.server.headers.md) |  | Record&lt;string, string \| string\[\]&gt; \| undefined | _(Optional)_ Adds headers to all responses. |
-|  [host?](./rspeedy.server.host.md) |  | string \| undefined | _(Optional)_ Specify the host that the Rspeedy Server listens to. |
-|  [port?](./rspeedy.server.port.md) |  | number \| undefined | _(Optional)_ Specify the port that the Rspeedy Server listens to. |
-|  [proxy?](./rspeedy.server.proxy.md) |  | ProxyConfig \| undefined | _(Optional)_ Configure proxy rules for the dev server or preview server to proxy requests to the specified service. |
-|  [strictPort?](./rspeedy.server.strictport.md) |  | boolean \| undefined | <p>_(Optional)_ When a port is occupied, Rspeedy will automatically increment the port number until an available port is found.</p><p>Set strictPort to true and Rspeedy will throw an exception when the port is occupied.</p> |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[base?](./rspeedy.server.base.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configure the base path of the server.
+
+
+</td></tr>
+<tr><td>
+
+[compress?](./rspeedy.server.compress.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| CompressOptions \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configure whether to enable [gzip compression](https://developer.mozilla.org/en-US/docs/Glossary/gzip_compression) for static assets served by the dev server or preview server.
+
+Default: true
+
+See [Rsbuild - server.compress](https://rsbuild.rs/config/server/compress) for details.
+
+
+</td></tr>
+<tr><td>
+
+[cors?](./rspeedy.server.cors.md)
+
+
+</td><td>
+
+
+</td><td>
+
+ServerConfig\['cors'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configure CORS for the dev server or preview server.
+
+- Set to an object to enable CORS with the specified options.
+
+- Set to `true` to enable CORS with the default options (allows all origins, not recommended).
+
+- Set to `false` to disable CORS.
+
+See [Rsbuild - server.cors](https://rsbuild.rs/config/server/cors) for details.
+
+
+</td></tr>
+<tr><td>
+
+[headers?](./rspeedy.server.headers.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, string \| string\[\]&gt; \| undefined
+
+
+</td><td>
+
+_(Optional)_ Adds headers to all responses.
+
+
+</td></tr>
+<tr><td>
+
+[host?](./rspeedy.server.host.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ Specify the host that the Rspeedy Server listens to.
+
+
+</td></tr>
+<tr><td>
+
+[port?](./rspeedy.server.port.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number \| undefined
+
+
+</td><td>
+
+_(Optional)_ Specify the port that the Rspeedy Server listens to.
+
+
+</td></tr>
+<tr><td>
+
+[proxy?](./rspeedy.server.proxy.md)
+
+
+</td><td>
+
+
+</td><td>
+
+ProxyConfig \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configure proxy rules for the dev server or preview server to proxy requests to the specified service.
+
+
+</td></tr>
+<tr><td>
+
+[strictPort?](./rspeedy.server.strictport.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ When a port is occupied, Rspeedy will automatically increment the port number until an available port is found.
+
+Set strictPort to true and Rspeedy will throw an exception when the port is occupied.
+
+
+</td></tr>
+</tbody></table>
 

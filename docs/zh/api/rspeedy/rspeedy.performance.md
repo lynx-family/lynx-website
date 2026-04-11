@@ -14,11 +14,127 @@ export interface Performance
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [buildCache?](./rspeedy.performance.buildcache.md) |  | [BuildCache](./rspeedy.buildcache.md) \| boolean \| undefined | <p>**_(BETA)_** _(Optional)_ Enable or configure persistent build cache.</p><p>This feature is experimental and may be changed in the future.</p> |
-|  [chunkSplit?](./rspeedy.performance.chunksplit.md) |  | [ChunkSplit](./rspeedy.chunksplit.md) \| [ChunkSplitBySize](./rspeedy.chunksplitbysize.md) \| [ChunkSplitCustom](./rspeedy.chunksplitcustom.md) \| undefined | _(Optional)_ [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy. |
-|  [printFileSize?](./rspeedy.performance.printfilesize.md) |  | PerformanceConfig\['printFileSize'\] \| undefined | <p>_(Optional)_ Whether to print the file sizes after production build.</p><p>[Performance.printFileSize](./rspeedy.performance.printfilesize.md)</p><p>See [Rsbuild - performance.printFileSize](https://rsbuild.dev/config/performance/print-file-size) for details.</p> |
-|  [profile?](./rspeedy.performance.profile.md) |  | boolean \| undefined | _(Optional)_ Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.dev/config/other-options#profile) config of Rspack. |
-|  [removeConsole?](./rspeedy.performance.removeconsole.md) |  | boolean \| [ConsoleType](./rspeedy.consoletype.md)<!-- -->\[\] \| undefined | _(Optional)_ Whether to remove <code>console.[methodName]</code> in production build. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[buildCache?](./rspeedy.performance.buildcache.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[BuildCache](./rspeedy.buildcache.md) \| boolean \| undefined
+
+
+</td><td>
+
+**_(BETA)_** _(Optional)_ Enable or configure persistent build cache.
+
+This feature is experimental and may be changed in the future.
+
+
+</td></tr>
+<tr><td>
+
+[chunkSplit?](./rspeedy.performance.chunksplit.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[ChunkSplit](./rspeedy.chunksplit.md) \| [ChunkSplitBySize](./rspeedy.chunksplitbysize.md) \| [ChunkSplitCustom](./rspeedy.chunksplitcustom.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
+
+
+</td></tr>
+<tr><td>
+
+[printFileSize?](./rspeedy.performance.printfilesize.md)
+
+
+</td><td>
+
+
+</td><td>
+
+PerformanceConfig\['printFileSize'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to print the file sizes after production build.
+
+[Performance.printFileSize](./rspeedy.performance.printfilesize.md)
+
+See [Rsbuild - performance.printFileSize](https://rsbuild.dev/config/performance/print-file-size) for details.
+
+
+</td></tr>
+<tr><td>
+
+[profile?](./rspeedy.performance.profile.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.dev/config/other-options#profile) config of Rspack.
+
+
+</td></tr>
+<tr><td>
+
+[removeConsole?](./rspeedy.performance.removeconsole.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| [ConsoleType](./rspeedy.consoletype.md)<!-- -->\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to remove `console.[methodName]` in production build.
+
+
+</td></tr>
+</tbody></table>
 

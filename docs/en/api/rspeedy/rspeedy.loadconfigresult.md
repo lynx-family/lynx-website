@@ -14,8 +14,64 @@ export interface LoadConfigResult
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [configPath](./rspeedy.loadconfigresult.configpath.md) |  | string | The configuration path that has been loaded. |
-|  [content](./rspeedy.loadconfigresult.content.md) |  | [Config](./rspeedy.config.md) | The configuration object that exported from the configuration file. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[configPath](./rspeedy.loadconfigresult.configpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The configuration path that has been loaded.
+
+
+</td></tr>
+<tr><td>
+
+[content](./rspeedy.loadconfigresult.content.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Config](./rspeedy.config.md)
+
+
+</td><td>
+
+The configuration object that exported from the configuration file.
+
+
+</td></tr>
+</tbody></table>
 
