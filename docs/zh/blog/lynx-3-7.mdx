@@ -4,7 +4,7 @@ date: 2026-03-28
 sidebar: false
 authors: ['lynx']
 badge_text: 'Lynx 3.7 发布了!'
-description: 'Lynx 3.7 已经正式发布！本次版本正式支持 MacOS 和 Windows 桌面端平台，引入了新的 SVG 元件，扩展了面向 AI 的开源 Skills 与可观测性能力，并为 ReactLynx 带来了更简单的 External Bundle preset 和跨线程共享模块能力。'
+description: 'Lynx 3.7 已经正式发布！本次版本正式支持 MacOS 和 Windows 桌面端平台，引入了新的 SVG 元件，扩展了面向 AI 的开源 Skills 与可观测性能力，并为 ReactLynx 带来了更简单的 External Bundle presets 和跨线程共享模块能力。'
 ---
 
 import bringingLynxToDesktop from '@assets/blog/lynx-3-7/bringing-lynx-to-desktop.mp4';
@@ -17,7 +17,7 @@ import { Go } from '@lynx';
 
 Lynx 3.7 已经正式发布！
 
-本次版本正式支持 **MacOS** 和 **Windows** 桌面端平台，扩展了 **Lynx for AI** 的开源 Skills 与可观测性能力，并为 **ReactLynx** 带来了更简单的 External Bundle preset 和跨线程共享模块能力。
+本次版本正式支持 **MacOS** 和 **Windows** 桌面端平台，扩展了 **Lynx for AI** 的开源 Skills 与可观测性能力，并为 **ReactLynx** 带来了更简单的 External Bundle presets 和跨线程共享模块能力。
 
 下面我们一起来看看 Lynx 3.7 带来了哪些新变化。
 
@@ -170,9 +170,9 @@ npx -y skills add lynx-community/skills -s <skill-name>
 
 Lynx 3.7 为 ReactLynx 带来了两个更偏工程效率的更新：更简单的 External Bundle 配置，以及更顺手的跨线程逻辑复用方式。
 
-### External Bundle Preset
+### External Bundle Presets
 
-ReactLynx 项目现在可以通过一个 preset 快速启用常见的 external bundle 配置：
+ReactLynx 项目现在可以通过 presets 快速启用常见的 external bundle 配置：
 
 ```js
 import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
@@ -184,7 +184,7 @@ export default defineConfig({
         reactlynx: true,
       },
       externals: {
-        './App.js': 'comp-lib.template.js',
+        './App.js': 'comp-lib.lynx.bundle',
       },
     }),
   ],
@@ -195,7 +195,7 @@ export default defineConfig({
 
 ### 跨线程共享模块
 
-通过 [Import Attributes](/api/react/Document.import-attributes) 声明共享模块后，普通逻辑可以在两个 runtime 中直接复用：
+通过 [Import Attributes](/api/react/Document.import-attributes) 声明共享模块后，普通逻辑可以在主线程函数中直接复用：
 
 ```js
 import { myHelper } from './utils.js' with { runtime: 'shared' };
