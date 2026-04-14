@@ -2,10 +2,12 @@
 title: 'Lynx 3.7: Desktop Support, SVG, AI, and ReactLynx Updates'
 date: 2026-03-28
 sidebar: false
-authors: ['lynx']
+authors: ['icecreamx10', 'MoonfaceX', 'upupming', 'lynx']
 badge_text: 'Lynx 3.7 is released!'
 description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for MacOS and Windows, introduces the new SVG element, expands Lynx for AI with open-sourced skills and better observability, and updates ReactLynx with simpler External Bundle presets and shared runtime modules.'
 ---
+
+<!-- cspell:ignore icecreamx -->
 
 import bringingLynxToDesktop from '@assets/blog/lynx-3-7/bringing-lynx-to-desktop.mp4';
 import mouseCursorImg from '@assets/blog/lynx-3-7/mouse-cursor.png?url';
@@ -13,7 +15,7 @@ import svgExampleImg from '@assets/blog/lynx-3-7/svg-example.png?url';
 import { BlogHeader } from '@lynx';
 import { Go } from '@lynx';
 
-<BlogHeader authors={['lynx']} />
+<BlogHeader authors={['icecreamx10', 'MoonfaceX', 'upupming', 'lynx']} />
 
 Lynx 3.7 is now officially released!
 
@@ -44,9 +46,10 @@ We also plan to open source Lynxtron, an Electron-like desktop application frame
 ></video>
 
 <Go
-  example="mouse-cursor"
-  defaultFile="src/App.tsx"
-  defaultEntryFile="dist/main.lynx.bundle"
+  example="desktop"
+  defaultFile="src/mouse-cursor/App.tsx"
+  defaultEntryFile="dist/mouse-cursor.lynx.bundle"
+  entry="src/mouse-cursor"
   img={mouseCursorImg}
 />
 
@@ -172,47 +175,46 @@ Lynx 3.7 brings two practical improvements for ReactLynx projects: simpler Exter
 
 ### External Bundle Presets
 
-ReactLynx projects can now enable common external bundle settings with a single presets:
+ReactLynx projects can now enable common external bundle settings with built-in presets. See the [External Bundle guide](/rspeedy/external-bundle).
 
-```js
-import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
+```ts
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 
-export default defineConfig({
-  plugins: [
-    pluginExternalBundle({
-      externalsPresets: {
-        reactlynx: true,
-      },
-      externals: {
-        './App.js': 'comp-lib.lynx.bundle',
-      },
-    }),
-  ],
+export default defineExternalBundleRslibConfig({
+  id: 'comp-lib',
+  source: {
+    entry: {
+      './App.js': './external-bundle/CompLib.tsx',
+    },
+  },
+  plugins: [pluginReactLynx()],
+  output: {
+    externalsPresets: {
+      reactlynx: true,
+    },
+  },
 });
 ```
 
-See the [External Bundle guide](/rspeedy/external-bundle) and the [`pluginExternalBundle`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle) API reference for more details.
+Then load that bundle in the host app. The showcase below demonstrates that host-side loading setup directly:
+
+<Go
+  example="external-bundle"
+  defaultFile="lynx.config.mjs"
+  defaultEntryFile="dist/index.lynx.bundle"
+/>
 
 ### Cross-Thread Shared Modules
 
-Shared modules make it easier to reuse plain logic in main thread functions through [Import Attributes](/api/react/Document.import-attributes):
+Shared modules make it easier to reuse plain logic in main thread functions. See [Cross-thread Shared Modules](/react/main-thread-script#cross-thread-shared-modules).
 
-```js
-import { myHelper } from './utils.js' with { runtime: 'shared' };
-
-function App() {
-  useEffect(() => {
-    myHelper();
-  }, []);
-
-  function handleScroll() {
-    'main thread';
-    myHelper();
-  }
-}
-```
-
-This is a good fit for pure logic such as math utilities and formatting helpers. The module is bundled into both runtimes, but state remains isolated in each thread.
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.tsx"
+  entry="src/shared-module"
+/>
 
 ## Upgrade Guide
 
