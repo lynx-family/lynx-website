@@ -1,10 +1,10 @@
 ---
-title: 'Lynx 3.7: Desktop Support, SVG, AI, and ReactLynx Updates'
+title: 'Lynx 3.7: Desktop Support, SVG, Skills, and ReactLynx Updates'
 date: 2026-04-16
 sidebar: false
 authors: ['icecreamx10', 'MoonfaceX', 'upupming', 'lynx']
 badge_text: 'Lynx 3.7 is released!'
-description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for macOS and Windows, introduces the new SVG element, expands Lynx for AI with open-sourced skills and better observability, and updates ReactLynx with simpler External Bundle presets and shared runtime modules.'
+description: 'Lynx 3.7 is now officially released! This release brings official desktop platform support for macOS and Windows, introduces the new SVG element, introduces new agent skills for better observability, and updates ReactLynx with simpler External Bundle presets and shared runtime modules.'
 ---
 
 import bringingLynxToDesktop from '@assets/blog/lynx-3-7/bringing-lynx-to-desktop.mp4';
@@ -17,16 +17,7 @@ import { Go } from '@lynx';
 
 Lynx 3.7 is now officially released!
 
-This release brings official desktop platform support for **macOS** and **Windows**, introduces the new **SVG** element, expands **Lynx for AI** with open-sourced skills and better observability, and updates **ReactLynx** with simpler External Bundle presets and cross-thread shared modules.
-
-Let's take a closer look at what's new in Lynx 3.7.
-
-## Desktop Support: macOS and Windows
-
-We [previously planned](/blog/lynx-open-source-roadmap-2025) to open source desktop support in Lynx 3.5, and [later decided](/blog/lynx-3-5#one-more-thing-desktop-support-preview) to go further and open source the full desktop stack. With Lynx 3.7, that vision is now a reality.
-
-Lynx officially supports **macOS** and **Windows** as first-class platforms. You can now build and render Lynx views inside native desktop applications, using the same front-end stack and tooling you already use for mobile and web. The desktop UI is powered by Lynx's own rendering engine, rather than composed from native platform widgets.
-We also plan to open source Lynxtron, an Electron-like desktop application framework that uses Lynx as its UI renderer.
+This release brings official desktop platform support for **macOS** and **Windows**, introduces the new **SVG** element, introduces new **Agent Skills** for better observability, and updates **ReactLynx** with simpler External Bundle presets and cross-thread shared modules.
 
 <video
   src={bringingLynxToDesktop}
@@ -41,6 +32,13 @@ We also plan to open source Lynxtron, an Electron-like desktop application frame
     pointerEvents: 'none',
   }}
 ></video>
+
+## Desktop Support: macOS and Windows
+
+We [previously planned](/blog/lynx-open-source-roadmap-2025) to open source desktop support in Lynx 3.5, and [later decided](/blog/lynx-3-5#one-more-thing-desktop-support-preview) to go further and open source the full desktop stack. With Lynx 3.7, that vision is now a reality.
+
+Lynx officially supports **macOS** and **Windows** as first-class platforms. You can now build and render Lynx views inside native desktop applications, using the same front-end stack and tooling you already use for mobile and web. The desktop UI is powered by [**Lynx's own rendering engine**](https://github.com/lynx-family/lynx/tree/develop/clay), rather than composed from native platform widgets.
+We also plan to open source Lynxtron soon, an Electron-like desktop application framework that uses Lynx as its UI renderer. Stay tuned!
 
 <Go
   example="desktop"
@@ -64,20 +62,11 @@ The same rendering engine that powers Lynx on mobile is now available on macOS a
 
 In practice, most Lynx pages built for mobile can already render on desktop with minimal or no front-end changes.
 
-You can check the detailed compatibility status for every API on the [API Status Dashboard](/help/dashboard), which now includes **macOS** and **Windows** columns.
-
-### Getting Started
-
-For platform-specific integration details, see [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps), which now includes desktop guides alongside Android, iOS, HarmonyOS, and Web.
-A playground app built with Lynxtron will also provide a more direct way to fetch and run Lynx examples on desktop.
+You can check the detailed compatibility status for every API on the [API Status Dashboard](https://lynxjs.org/api/status), which now includes **macOS** and **Windows** columns.
 
 ### Desktop-Specific Capabilities
 
-Beyond rendering parity, Lynx 3.7 adds capabilities designed specifically for the desktop environment, including mouse, keyboard, and wheel events, as well as CSS cursor support.
-
-#### Mouse Events
-
-Lynx 3.7 now supports most desktop [mouse event](/api/lynx-api/event/mouse-event) capabilities.
+#### [Mouse Events](/api/lynx-api/event/mouse-event)
 
 ```tsx
 <view
@@ -89,9 +78,7 @@ Lynx 3.7 now supports most desktop [mouse event](/api/lynx-api/event/mouse-event
 />
 ```
 
-#### Keyboard Events
-
-Lynx 3.7 also adds desktop [keyboard event](/api/lynx-api/event/key-event) support.
+#### [Keyboard Events](/api/lynx-api/event/key-event)
 
 ```tsx
 <input
@@ -100,17 +87,13 @@ Lynx 3.7 also adds desktop [keyboard event](/api/lynx-api/event/key-event) suppo
 />
 ```
 
-#### Wheel Events
-
-Lynx 3.7 also adds desktop [wheel event](/api/lynx-api/event/wheel-event) support.
+#### [Wheel Events](/api/lynx-api/event/wheel-event)
 
 ```tsx
 <view onWheel={(e) => console.log(`Wheel delta: ${e.deltaX}, ${e.deltaY}`)} />
 ```
 
-#### CSS `cursor`
-
-Lynx 3.7 adds [CSS `cursor`](/api/css/properties/cursor) support on desktop so you can present clearer pointer feedback for interactive UI.
+#### [CSS `cursor`](/api/css/properties/cursor)
 
 ```tsx
 <view style={{ cursor: 'pointer' }}>
@@ -118,17 +101,16 @@ Lynx 3.7 adds [CSS `cursor`](/api/css/properties/cursor) support on desktop so y
 </view>
 ```
 
-## SVG: Scalable Vector Graphics Element
+### Getting Started
 
-SVG is now available as a standalone Lynx element in 3.7, bringing native vector rendering across platforms for icons, charts, and other resolution-independent graphics.
+For platform-specific integration details, see [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps), which now includes desktop guides alongside Android, iOS, HarmonyOS, and Web.
+A playground app built with Lynxtron will also provide a more direct way to fetch and run Lynx examples on desktop.
 
-<img
-  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/svg-src.svg"
-  alt="SVG scalable vector graphics element"
-  style={{ width: '150px', height: '50px' }}
-/>
+## `<svg>`: Scalable Vector Graphics
 
-In Lynx 3.7, the standalone `<svg>` element supports both inline vector content and external SVG assets:
+[`<svg>`](/api/elements/built-in/svg) is now available as a standalone Lynx element in 3.7, bringing native vector rendering across platforms for icons, charts, and other resolution-independent graphics.
+
+The `<svg>` element supports both inline vector content and external SVG assets:
 
 <Go
   example="svg"
@@ -137,42 +119,34 @@ In Lynx 3.7, the standalone `<svg>` element supports both inline vector content 
   img={svgExampleImg}
 />
 
-You can also load external SVG assets directly:
-
-```ts
-<svg
-  style={{width: '100px', height: '100px'}}
-  src='https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/svg-src.svg'
-/>
-```
-
 `<svg>` parses vector nodes on a dedicated thread and supports [most SVG elements and attributes](/api/elements/built-in/svg), with consistent rendering behavior across Android, iOS, HarmonyOS, macOS, Windows, and Web.
 
-## Lynx for AI: Open-Sourced Skills
+## Agent Skills
 
-Lynx 3.7 continues the **Lynx for AI** work introduced in 3.6, with more day-to-day workflows now available as open-source agent skills.
-
-The community skill collection at [/ai](/ai) can now be installed directly with:
+As part of the [Lynx for AI](/ai) initiative, six [agent skills](https://github.com/lynx-community/skills) are now open-sourced. Install any skill with:
 
 ```bash
-npx -y skills add lynx-community/skills -s <skill-name>
+npx skills add lynx-community/skills -s <skill-name>
 ```
 
-The released skills cover three common areas:
+| Skill                        | What it does                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------------- |
+| **reactlynx-best-practices** | Static analysis, auto-fix, and best-practice rules for writing dual-threaded ReactLynx code. |
+| **lynx-devtool**             | Inspect DOM, console output, and runtime state of a running Lynx app via CLI.                |
+| **lynx-typescript**          | Guidance on TypeScript setup, typing, and event handling in Lynx projects.                   |
+| **trace-analysis**           | Analyze `.ptrace` files to identify rendering bottlenecks and performance regressions.       |
+| **trace-record**             | Capture Lynx performance traces with system trace and JS profiling support.                  |
+| **debug-info-remapping**     | Remap minified main-thread error positions back to original source locations.                |
 
-- **Page inspection and debugging** with DevTool Skill and [Lynx DevTool MCP](/ai/lynx-devtool-mcp).
-- **TypeScript and ReactLynx guidance** with setup, typing, event handling, and best-practice knowledge.
-- **Tracing and template tooling** with trace recording, trace analysis, TASM codec, and bytecode debug info mapping.
+Together with [Lynx DevTool MCP](/ai/lynx-devtool-mcp), coding agents can now inspect running pages, verify interactions, and debug their own changes with tighter feedback loops.
 
-The main improvement in this release is observability: coding agents can now inspect running pages, verify interactions, and debug their own changes with tighter feedback loops.
-
-## ReactLynx Updates
-
-Lynx 3.7 brings two practical improvements for ReactLynx projects: simpler External Bundle setup and easier code reuse across the background thread and main thread.
+## ReactLynx
 
 ### External Bundle Presets
 
-ReactLynx projects can now enable common external bundle settings with built-in presets. See the [External Bundle guide](/rspeedy/external-bundle).
+[External Bundle](/rspeedy/external-bundle) lets you build a Lynx bundle once and load it from multiple Lynx apps at runtime. Use it when you want to share ReactLynx components or common business bundles across apps. Unlike Chunk Splitting which splits code within a single app, External Bundle is designed for cross-application reuse.
+
+Lynx 3.7 adds built-in presets to simplify setup:
 
 ```ts
 import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
@@ -194,7 +168,7 @@ export default defineExternalBundleRslibConfig({
 });
 ```
 
-Then load that bundle in the host app. The showcase below demonstrates that host-side loading setup directly:
+Then load that bundle in the host app:
 
 <Go
   example="external-bundle"
@@ -204,7 +178,9 @@ Then load that bundle in the host app. The showcase below demonstrates that host
 
 ### Cross-Thread Shared Modules
 
-Shared modules make it easier to reuse plain logic in main thread functions. See [Cross-thread Shared Modules](/react/main-thread-script#cross-thread-shared-modules).
+By default, main thread functions cannot directly call plain functions that lack the `'main thread'` directive, making code reuse difficult. [Shared modules](/react/main-thread-script#cross-thread-shared-modules) solve this by letting you explicitly declare modules as shareable between threads.
+
+Add `with { runtime: 'shared' }` after an import statement, and the exported functions, classes, and objects in that module become directly callable from main thread functions:
 
 <Go
   example="main-thread"
