@@ -14,51 +14,6 @@ export interface MainThreadRuntimeWrapperWebpackPluginOptions
 
 ## Properties
 
-<<<<<<< HEAD
-<table><thead><tr><th>
-
-Property
-
-
-</th><th>
-
-Modifiers
-
-
-</th><th>
-
-Type
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[test](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackpluginoptions.test.md)
-
-
-</td><td>
-
-
-</td><td>
-
-BannerPlugin\['options'\]\['test'\]
-
-
-</td><td>
-
-Include all modules that pass test assertion.
-
-
-</td></tr>
-</tbody></table>
-
-=======
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  `test` | `BannerPlugin['options']['test']` | Include all modules that pass the test assertion. |
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

@@ -14,51 +14,6 @@ export interface EncodeOptions
 
 ## Properties
 
-<<<<<<< HEAD
-<table><thead><tr><th>
-
-Property
-
-
-</th><th>
-
-Modifiers
-
-
-</th><th>
-
-Type
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[engineVersion?](./lynx-bundle-rslib-config.encodeoptions.engineversion.md)
-
-
-</td><td>
-
-
-</td><td>
-
-string
-
-
-</td><td>
-
-_(Optional)_ The engine version of the external bundle.
-
-
-</td></tr>
-</tbody></table>
-
-=======
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  `engineVersion?` | `string` | The engine version of the external bundle. |
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

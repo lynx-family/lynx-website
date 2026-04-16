@@ -14,72 +14,6 @@ export declare class MainThreadRuntimeWrapperWebpackPlugin
 
 ## Constructors
 
-<<<<<<< HEAD
-<table><thead><tr><th>
-
-Constructor
-
-
-</th><th>
-
-Modifiers
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[(constructor)(options)](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin._constructor_.md)
-
-
-</td><td>
-
-
-</td><td>
-
-Constructs a new instance of the `MainThreadRuntimeWrapperWebpackPlugin` class
-
-
-</td></tr>
-</tbody></table>
-
-## Methods
-
-<table><thead><tr><th>
-
-Method
-
-
-</th><th>
-
-Modifiers
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[apply(compiler)](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.apply.md)
-
-
-</td><td>
-
-
-</td><td>
-
-
-</td></tr>
-</tbody></table>
-
-=======
 |  Constructor | Description |
 |  --- | --- |
 |  `new MainThreadRuntimeWrapperWebpackPlugin(options?)` | Constructs a new instance of `MainThreadRuntimeWrapperWebpackPlugin`. |
@@ -89,4 +23,3 @@ Description
 |  Method | Return Type | Description |
 |  --- | --- | --- |
 |  `apply(compiler)` | `void` | Apply the plugin to the compiler. |
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))

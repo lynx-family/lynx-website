@@ -2,27 +2,14 @@
 
 [Home](./index.md) &gt; [@lynx-js/lynx-bundle-rslib-config](./lynx-bundle-rslib-config.md) &gt; [ExternalsPresets](./lynx-bundle-rslib-config.externalspresets.md)
 
-<<<<<<< HEAD
-## ExternalsPresets type
-
-Enabled externals presets.
-
-Preset names are resolved from the built-in preset definitions plus any custom definitions passed to [defineExternalBundleRslibConfig()](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md)<!-- -->.
-
-=======
 ## ExternalsPresets type alias
 
 Enabled externals presets.
 
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 **Signature:**
 
 ```typescript
 export type ExternalsPresets = {
-<<<<<<< HEAD
-    reactlynx?: boolean;
-=======
   reactlynx?: boolean;
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 } & Record<string, boolean>;
 ```

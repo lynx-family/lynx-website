@@ -9,80 +9,12 @@ Definition for a named externals preset.
 **Signature:**
 
 ```typescript
-<<<<<<< HEAD
-export interface ExternalsPresetDefinition 
-=======
 export interface ExternalsPresetDefinition
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
 ```
 
 ## Properties
 
-<<<<<<< HEAD
-<table><thead><tr><th>
-
-Property
-
-
-</th><th>
-
-Modifiers
-
-
-</th><th>
-
-Type
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[extends?](./lynx-bundle-rslib-config.externalspresetdefinition.extends.md)
-
-
-</td><td>
-
-
-</td><td>
-
-string \| string\[\]
-
-
-</td><td>
-
-_(Optional)_ Other preset names to include before applying the current preset.
-
-
-</td></tr>
-<tr><td>
-
-[externals?](./lynx-bundle-rslib-config.externalspresetdefinition.externals.md)
-
-
-</td><td>
-
-
-</td><td>
-
-[Externals](./lynx-bundle-rslib-config.externals.md)
-
-
-</td><td>
-
-_(Optional)_ Externals contributed by this preset.
-
-
-</td></tr>
-</tbody></table>
-
-=======
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  `extends?` | `string \| string[]` | Other preset names to include before applying the current preset. |
 |  `externals?` | [`Externals`](./lynx-bundle-rslib-config.externals.md) | Externals contributed by this preset. |
->>>>>>> 905b555a (docs: refresh external bundle docs and API reference (#890))
