@@ -6,8 +6,6 @@ import { MobileShow } from './mobile-show';
 import { TrustedBy } from '../trusted-by';
 import tiktokLogoBlack from './tiktok-logo-black.svg';
 import tiktokLogoWhite from './tiktok-logo-white.svg';
-import capcutLogoBlack from './capcut-logo-black.svg';
-import capcutLogoWhite from './capcut-logo-white.svg';
 
 const showCaseList = [
   {
@@ -84,23 +82,6 @@ export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
               src={tiktokLogoWhite}
               alt="TikTok"
               className={`${styles['tiktok-logo']} ${styles['logo-dark']}`}
-            />
-          </a>
-
-          <a
-            href="https://www.capcut.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src={capcutLogoBlack}
-              alt="CapCut"
-              className={`${styles['capcut-logo']} ${styles['logo-light']}`}
-            />
-            <img
-              src={capcutLogoWhite}
-              alt="CapCut"
-              className={`${styles['capcut-logo']} ${styles['logo-dark']}`}
             />
           </a>
         </span>

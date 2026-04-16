@@ -12,10 +12,6 @@ const defaultApps: AppIcon[] = [
     icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f4/95/3c/f4953cfb-b350-6763-a0b4-ceed8cef74ed/TikTok_AppIcon26-0-0-1x_U007epad-0-1-0-0-85-220.png/128x128bb.jpg',
   },
   {
-    name: 'CapCut',
-    icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/a9/ad/b3/a9adb3da-005c-2255-cb06-fad14425d9a6/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/128x128bb.jpg',
-  },
-  {
     name: 'Hypic',
     icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/49/3b/6a/493b6a1f-8aa5-8c88-6ebe-15a0bbfe7573/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/128x128bb.jpg',
   },
