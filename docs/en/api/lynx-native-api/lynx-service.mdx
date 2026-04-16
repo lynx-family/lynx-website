@@ -171,6 +171,36 @@ export class YourLogService implements ILynxLogService {
 
 </Tab>
 
+<Tab label="Desktop C++">
+
+Implement a concrete Desktop service class. The following example uses `LynxHttpService`; `LynxSecurityService` and `LynxEventReporterService` follow the same pattern and override their own abstract entrypoints.
+
+<CodeFold toggle>
+
+```cpp title="YourHttpService.h"
+#include "lynx/platform/embedder/public/lynx_http_service.h"
+
+class YourHttpService : public lynx::pub::LynxHttpService {
+ public:
+  void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request,
+               std::shared_ptr<lynx::pub::LynxHttpResponse> response) override {
+    response->SetStatusCode(200);
+    response->SetStatusText("OK");
+    response->Complete();
+  }
+};
+```
+
+</CodeFold>
+
+Use the corresponding abstract class for each service type:
+
+- `LynxHttpService`: override `Request(...)`
+- `LynxSecurityService`: override `VerifyTASM(...)`
+- `LynxEventReporterService`: override `OnEvent(...)`
+
+</Tab>
+
 </Tabs>
 
 <div style={{ height: 30}} />
@@ -231,6 +261,23 @@ And delete related dependencies
 - "@lynx/lynx_log_service": "0.0.1",
 }
 ```
+
+</Tab>
+
+<Tab label="Desktop C++">
+
+Register the implemented service through `LynxServiceCenter`:
+
+```cpp
+auto service = std::make_shared<YourHttpService>();
+lynx::pub::LynxServiceCenter::GetInstance().RegisterService(service);
+```
+
+The registered service type is determined by the concrete service class:
+
+- `LynxHttpService` -> `kServiceTypeHttp`
+- `LynxSecurityService` -> `kServiceTypeSecurity`
+- `LynxEventReporterService` -> `kServiceTypeEventReporter`
 
 </Tab>
 

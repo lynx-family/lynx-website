@@ -1,0 +1,197 @@
+---
+title: 'Lynx 3.7：桌面端、SVG、Skills 与 ReactLynx 更新'
+date: 2026-04-16
+sidebar: false
+authors: ['icecreamx10', 'MoonfaceX', 'upupming', 'lynx']
+badge_text: 'Lynx 3.7 发布了!'
+description: 'Lynx 3.7 已经正式发布！本次版本正式支持 macOS 和 Windows 桌面端平台，引入了新的 SVG 元件，引入了新的 Agent Skills 以提升可观测性，并为 ReactLynx 带来了更简单的 External Bundle presets 和跨线程共享模块能力。'
+---
+
+import bringingLynxToDesktop from '@assets/blog/lynx-3-7/bringing-lynx-to-desktop.mp4';
+import mouseCursorImg from '@assets/blog/lynx-3-7/mouse-cursor.png?url';
+import svgExampleImg from '@assets/blog/lynx-3-7/svg-example.png?url';
+import { BlogHeader } from '@lynx';
+import { Go } from '@lynx';
+
+<BlogHeader authors={['icecreamx10', 'MoonfaceX', 'upupming', 'lynx']} />
+
+Lynx 3.7 已经正式发布！
+
+本次版本正式支持 **macOS** 和 **Windows** 桌面端平台，引入了新的 **SVG** 元件，引入了新的 **Agent Skills** 以提升可观测性，并为 **ReactLynx** 带来了更简单的 External Bundle presets 和跨线程共享模块能力。
+
+<video
+  src={bringingLynxToDesktop}
+  autoPlay
+  muted
+  loop
+  playsInline
+  style={{
+    width: '100%',
+    borderRadius: '12px',
+    margin: '24px 0',
+    pointerEvents: 'none',
+  }}
+></video>
+
+## 桌面端支持：macOS 与 Windows
+
+我们[此前计划](/blog/lynx-open-source-roadmap-2025)在 Lynx 3.5 中开源桌面端支持，[随后决定](/blog/lynx-3-5#one-more-thing-desktop-support-preview)进一步开源完整的桌面端技术栈。在 Lynx 3.7 中，这一愿景已成为现实。
+
+Lynx 正式支持 **macOS** 和 **Windows** 作为一级平台。你现在可以在原生桌面应用中构建和渲染 Lynx 视图，使用与移动端和 Web 端完全相同的前端技术栈和工具链。
+我们也计划在最近开源 Lynxtron，它是一个 Electron-like 的桌面应用框架，使用 Lynx 作为 UI 渲染层。敬请期待！
+
+<Go
+  example="desktop"
+  defaultFile="src/mouse-cursor/App.tsx"
+  defaultEntryFile="dist/mouse-cursor.lynx.bundle"
+  entry="src/mouse-cursor"
+  img={mouseCursorImg}
+/>
+
+### CSS 与元件支持
+
+渲染核心在各平台间复用（包括 CSS 引擎），**CSS 属性覆盖率**自然接近完整，目前达 **97%**（319 项中的 311 项）。桌面端界面由 [**Lynx 自绘渲染**](https://github.com/lynx-family/lynx/tree/develop/clay)，而不是通过系统原生控件拼装，原生元件需要基于自绘渲染器重新实现，**元素属性覆盖率**目前为 **73%**（246 项中的 179 项），macOS 与 Windows 的支持范围保持一致，并持续扩展中。已覆盖的 CSS 能力包括：
+
+- **布局**：Flexbox、Grid、Linear Layout、完整盒模型、定位与相对定位。
+- **样式**：排版、边框、阴影、渐变、蒙版、滤镜，以及 [CSS 自定义属性](/api/css/properties/css-variable)。
+- **动画**：`animation`、`transition`、`@keyframes` 和完整的 transform 能力。
+
+这意味着大多数为移动端构建的 Lynx 页面已经可以在桌面端渲染，前端代码通常只需极少修改甚至无需修改。每个 API 页面上方均提供兼容性概览，下方附有详细的兼容性表格。也可在 [API 兼容状态看板](https://lynxjs.org/api/status) 上一览全局，现已包含 **macOS** 和 **Windows** 列。
+
+### 桌面端专属能力
+
+#### [鼠标事件](/api/lynx-api/event/mouse-event)
+
+```tsx
+<view
+  onMouseDown={(e) =>
+    console.log(`按键 ${e.button} 位置 (${e.clientX}, ${e.clientY})`)
+  }
+  onMouseMove={(e) => handleHover(e)}
+  onMouseLeave={() => resetState()}
+/>
+```
+
+#### [键盘事件](/api/lynx-api/event/key-event)
+
+```tsx
+<input
+  onKeyDown={(e) => console.log(`按下按键: ${e.key}`)}
+  onKeyUp={(e) => console.log(`释放按键: ${e.key}`)}
+/>
+```
+
+#### [滚轮事件](/api/lynx-api/event/wheel-event)
+
+```tsx
+<view onWheel={(e) => console.log(`滚轮偏移: ${e.deltaX}, ${e.deltaY}`)} />
+```
+
+#### [CSS `cursor`](/api/css/properties/cursor)
+
+```tsx
+<view style={{ cursor: 'pointer' }}>
+  <text>Hover me</text>
+</view>
+```
+
+### 快速上手
+
+桌面端的接入细节可直接查看[将 Lynx 集成到现有应用](/guide/start/integrate-with-existing-apps)。该页面现已包含与 Android、iOS、HarmonyOS、Web 并列的桌面端指南。
+后续也会有一个由 Lynxtron 构建的 playground 应用，在桌面端更直接地获取并运行 Lynx 示例。
+
+## `<svg>`：可缩放矢量图形
+
+[`<svg>`](/api/elements/built-in/svg) 作为独立元件在 Lynx 3.7 中新增，为图标、图表和其他分辨率无关的图形场景提供跨平台的原生矢量渲染能力。
+
+`<svg>` 支持内联矢量内容：
+
+<Go
+  example="svg"
+  defaultFile="src/base/index.tsx"
+  highlight="{35}"
+  img={svgExampleImg}
+/>
+
+也可以直接加载外部 SVG 资源：
+
+```tsx
+<svg
+  style={{ width: '100px', height: '100px' }}
+  src="https://example.com/icon.svg"
+/>
+```
+
+`<svg>` 会在独立线程中解析矢量节点，支持[绝大多数 SVG 元素及属性](/api/elements/built-in/svg)，并在 Android、iOS、HarmonyOS、macOS、Windows 和 Web 之间保持高度一致的渲染行为。
+
+## Agent Skills
+
+作为 [Lynx for AI](/ai) 的一部分，六个 [Agent Skills](https://github.com/lynx-community/skills) 现已开源。安装任意技能：
+
+```bash
+npx skills add lynx-community/skills -s <skill-name>
+```
+
+| 技能                         | 功能                                                              |
+| ---------------------------- | ----------------------------------------------------------------- |
+| **reactlynx-best-practices** | 静态分析、自动修复，以及编写双线程 ReactLynx 代码的最佳实践规则。 |
+| **lynx-devtool**             | 通过命令行检查运行中 Lynx 应用的 DOM、控制台输出和运行时状态。    |
+| **lynx-typescript**          | Lynx 项目中 TypeScript 环境配置、类型与事件处理的指导。           |
+| **trace-analysis**           | 分析 `.ptrace` 文件，定位渲染瓶颈与性能回退。                     |
+| **trace-record**             | 采集 Lynx 性能 trace，支持系统 trace 和 JS profiling。            |
+| **debug-info-remapping**     | 将主线程压缩后的错误位置映射回原始源码。                          |
+
+配合 [Lynx DevTool MCP](/ai/lynx-devtool-mcp)，coding agent 现在可以检查运行中的页面、验证交互并缩短自调试链路。
+
+## ReactLynx
+
+### External Bundle Presets
+
+[External Bundle](/rspeedy/external-bundle) 允许你构建一次 Lynx bundle，然后在多个 Lynx 应用中运行时加载。当你需要跨应用共享 ReactLynx 组件或通用业务 bundle 时，可以使用它。与 [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit) 用于拆分单个应用内代码不同，External Bundle 专为跨应用复用而设计。
+
+Lynx 3.7 通过 [`defineExternalBundleRslibConfig`](/api/rspeedy/lynx-bundle-rslib-config) 新增了内置 presets 以简化配置：
+
+```ts
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineExternalBundleRslibConfig({
+  id: 'comp-lib',
+  source: {
+    entry: {
+      './App.js': './external-bundle/CompLib.tsx',
+    },
+  },
+  plugins: [pluginReactLynx()],
+  output: {
+    externalsPresets: {
+      reactlynx: true,
+    },
+  },
+});
+```
+
+然后在宿主应用里加载这份 bundle：
+
+<Go
+  example="external-bundle"
+  defaultFile="lynx.config.mjs"
+  defaultEntryFile="dist/index.lynx.bundle"
+/>
+
+### 跨线程共享模块
+
+默认情况下，主线程函数无法直接调用没有 [`'main thread'` 指令](/react/main-thread-script)的普通函数，这使得代码复用变得困难。[共享模块](/react/main-thread-script#跨线程共享模块)机制解决了这一限制，允许你显式声明某些模块可在主线程和后台线程之间共享。
+
+在 import 语句后添加 `with { runtime: 'shared' }`，该模块导出的函数、类和对象即可在主线程函数中直接调用：
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.tsx"
+  entry="src/shared-module"
+/>
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.7/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.7 版本升级。
