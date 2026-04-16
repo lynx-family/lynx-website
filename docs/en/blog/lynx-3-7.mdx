@@ -48,9 +48,9 @@ We also plan to open source Lynxtron soon, an Electron-like desktop application 
   img={mouseCursorImg}
 />
 
-### Full Rendering Engine on Desktop
+### CSS and Element Coverage on Desktop
 
-The same rendering engine that powers Lynx on mobile is now available on macOS and Windows with near-complete feature parity.
+Lynx's CSS pipeline and DOM tree run on the same rendering core shared across all platforms, which is why CSS support arrives on desktop at near-complete coverage. Element rendering — driven by the new Skia-based custom backend — is actively expanding.
 
 **CSS: 97% property coverage.** 311 out of 319 supported Lynx CSS properties are now available on desktop, including:
 
@@ -119,6 +119,15 @@ The `<svg>` element supports both inline vector content and external SVG assets:
   img={svgExampleImg}
 />
 
+You can also load external SVG assets directly:
+
+```tsx
+<svg
+  style={{ width: '100px', height: '100px' }}
+  src="https://example.com/icon.svg"
+/>
+```
+
 `<svg>` parses vector nodes on a dedicated thread and supports [most SVG elements and attributes](/api/elements/built-in/svg), with consistent rendering behavior across Android, iOS, HarmonyOS, macOS, Windows, and Web.
 
 ## Agent Skills
@@ -144,9 +153,9 @@ Together with [Lynx DevTool MCP](/ai/lynx-devtool-mcp), coding agents can now in
 
 ### External Bundle Presets
 
-[External Bundle](/rspeedy/external-bundle) lets you build a Lynx bundle once and load it from multiple Lynx apps at runtime. Use it when you want to share ReactLynx components or common business bundles across apps. Unlike Chunk Splitting which splits code within a single app, External Bundle is designed for cross-application reuse.
+[External Bundle](/rspeedy/external-bundle) lets you build a Lynx bundle once and load it from multiple Lynx apps at runtime. Use it when you want to share ReactLynx components or common business bundles across apps. Unlike [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit) which splits code within a single app, External Bundle is designed for cross-application reuse.
 
-Lynx 3.7 adds built-in presets to simplify setup:
+Lynx 3.7 adds built-in presets via [`defineExternalBundleRslibConfig`](/api/rspeedy/lynx-bundle-rslib-config) to simplify setup:
 
 ```ts
 import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
