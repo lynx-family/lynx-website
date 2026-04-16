@@ -12,11 +12,9 @@ The [Output.cleanDistPath](./rspeedy.output.cleandistpath.md) option determines 
 cleanDistPath?: boolean | undefined;
 ```
 
-## Remarks
+## Default Value
 
-By default, if the output directory is a subdirectory of the project root path, Rspeedy will automatically clean all files in the build directory.
-
-When [output.distPath.root](https://rsbuild.dev/config/output/dist-path#root-directory) is an external directory or the same as the project root directory, `cleanDistPath` is not enabled by default to prevent accidental deletion of files from other directories.
+Automatically enabled when `output.distPath.root` is a subdirectory of the project root; otherwise disabled.
 
 ## Example 1
 

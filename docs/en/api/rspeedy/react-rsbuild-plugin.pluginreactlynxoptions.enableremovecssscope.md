@@ -17,3 +17,8 @@ enableRemoveCSSScope controls whether CSS is restrict to use in the component sc
 ```typescript
 enableRemoveCSSScope?: boolean | undefined;
 ```
+
+## Default Value
+
+`true`
+

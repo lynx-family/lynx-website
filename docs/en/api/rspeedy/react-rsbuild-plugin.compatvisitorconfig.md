@@ -18,15 +18,197 @@ These options should only be used for migrating from ReactLynx2.0.
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [addComponentElement](./react-rsbuild-plugin.compatvisitorconfig.addcomponentelement.md) |  | boolean \| [AddComponentElementConfig](./react-rsbuild-plugin.addcomponentelementconfig.md) | Controls whether to add wrapper elements for components |
-|  [additionalComponentAttributes](./react-rsbuild-plugin.compatvisitorconfig.additionalcomponentattributes.md) |  | Array&lt;string&gt; | Specifies additional component attributes list, these attributes will be passed to the wrapped <code>&lt;view&gt;</code> instead of the component. |
-|  [componentsPkg](./react-rsbuild-plugin.compatvisitorconfig.componentspkg.md) |  | Array&lt;string&gt; | Specifies the list of component package names that need compatibility processing |
-|  [darkMode?](./react-rsbuild-plugin.compatvisitorconfig.darkmode.md) |  | boolean \| DarkModeConfig | _(Optional)_ |
-|  [disableDeprecatedWarning](./react-rsbuild-plugin.compatvisitorconfig.disabledeprecatedwarning.md) |  | boolean | Whether to disable deprecated warnings |
-|  [newRuntimePkg](./react-rsbuild-plugin.compatvisitorconfig.newruntimepkg.md) |  | string | Specifies the new runtime package name |
-|  [oldRuntimePkg](./react-rsbuild-plugin.compatvisitorconfig.oldruntimepkg.md) |  | Array&lt;string&gt; | Specifies the list of old runtime package names that need compatibility processing |
-|  [removeComponentAttrRegex?](./react-rsbuild-plugin.compatvisitorconfig.removecomponentattrregex.md) |  | string | _(Optional)_ Regular expression used to remove component attributes |
-|  [simplifyCtorLikeReactLynx2](./react-rsbuild-plugin.compatvisitorconfig.simplifyctorlikereactlynx2.md) |  | boolean | Whether to simplify constructor calls like ReactLynx 2 |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[addComponentElement](./react-rsbuild-plugin.compatvisitorconfig.addcomponentelement.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| [AddComponentElementConfig](./react-rsbuild-plugin.addcomponentelementconfig.md)
+
+
+</td><td>
+
+Controls whether to add wrapper elements for components
+
+
+</td></tr>
+<tr><td>
+
+[additionalComponentAttributes](./react-rsbuild-plugin.compatvisitorconfig.additionalcomponentattributes.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Specifies additional component attributes list, these attributes will be passed to the wrapped `<view>` instead of the component.
+
+
+</td></tr>
+<tr><td>
+
+[componentsPkg](./react-rsbuild-plugin.compatvisitorconfig.componentspkg.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Specifies the list of component package names that need compatibility processing
+
+
+</td></tr>
+<tr><td>
+
+[darkMode?](./react-rsbuild-plugin.compatvisitorconfig.darkmode.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| DarkModeConfig
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
+[disableDeprecatedWarning](./react-rsbuild-plugin.compatvisitorconfig.disabledeprecatedwarning.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+Whether to disable deprecated warnings
+
+
+</td></tr>
+<tr><td>
+
+[newRuntimePkg](./react-rsbuild-plugin.compatvisitorconfig.newruntimepkg.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+Specifies the new runtime package name
+
+
+</td></tr>
+<tr><td>
+
+[oldRuntimePkg](./react-rsbuild-plugin.compatvisitorconfig.oldruntimepkg.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Specifies the list of old runtime package names that need compatibility processing
+
+
+</td></tr>
+<tr><td>
+
+[removeComponentAttrRegex?](./react-rsbuild-plugin.compatvisitorconfig.removecomponentattrregex.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Regular expression used to remove component attributes
+
+
+</td></tr>
+<tr><td>
+
+[simplifyCtorLikeReactLynx2](./react-rsbuild-plugin.compatvisitorconfig.simplifyctorlikereactlynx2.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+Whether to simplify constructor calls like ReactLynx 2
+
+
+</td></tr>
+</tbody></table>
 

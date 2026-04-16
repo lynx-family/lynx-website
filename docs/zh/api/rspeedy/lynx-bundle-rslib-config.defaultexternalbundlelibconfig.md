@@ -9,5 +9,5 @@ The default lib config for external bundle.
 **Signature:**
 
 ```typescript
-export declare const defaultExternalBundleLibConfig: LibConfig;
+DEFAULT_EXTERNAL_BUNDLE_LIB_CONFIG: LibConfig
 ```

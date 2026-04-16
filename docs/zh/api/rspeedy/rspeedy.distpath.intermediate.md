@@ -17,9 +17,7 @@ The output directory of the intermediate files.
 intermediate?: string | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Default value:
-
-- `'.rspeedy'`
+`'.rspeedy'`
 

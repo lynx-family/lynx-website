@@ -34,7 +34,7 @@ On Android, this attribute is used to control the interaction behavior when scro
 'android-force-can-scroll'?: boolean;
 ```
 
-On Android, when this attribute is set to true, gestures are not passed to the parent container when the viewpager is already at the beginning or end.
+On Android, this attribute is used to control if at start/end of viewpager and set true, gesture can not pass to parent.
 
 ### `bounces`
 
@@ -45,7 +45,7 @@ On Android, when this attribute is set to true, gestures are not passed to the p
 bounces?: boolean;
 ```
 
-Whether to enable the bounce effect. Note that this effect is not available on Android. On PC, only macOS supports this feature.
+Is a spring effect needed. Note that this effect is not available on Android. On PC, only macOS support this feature.
 
 ### `enable-scroll`
 
@@ -57,7 +57,7 @@ Whether to enable the bounce effect. Note that this effect is not available on A
 'enable-scroll'?: boolean;
 ```
 
-Enables horizontal swipe gestures.
+Enable horizontal scroll gesture
 
 ### `initial-select-index`
 
@@ -69,7 +69,7 @@ Enables horizontal swipe gestures.
 'initial-select-index'?: number;
 ```
 
-Selects the specified page during initialization, specifically when child nodes are first available.
+Select the specified page at initialization, specifically referring to the first time when there are children.
 
 ### `ios-gesture-direction`
 
@@ -80,7 +80,7 @@ Selects the specified page during initialization, specifically when child nodes 
 'ios-gesture-direction'?: boolean;
 ```
 
-When enabled, horizontal swipe events from the outer container (a horizontal `UIScrollView`) can be recognized when the viewpager is already at the beginning or end.
+When enabled, when sliding to the head or tail, it can respond to the horizontal swipe events of the outer container (horizontal UIScrollView)
 
 ### `ios-gesture-offset`
 
@@ -91,7 +91,7 @@ When enabled, horizontal swipe events from the outer container (a horizontal `UI
 'ios-gesture-offset'?: number;
 ```
 
-When the finger touches within `[0, value]` from the left edge of the screen, the horizontal swipe gesture is ignored so the native iOS swipe-back gesture can respond directly. This is not available on Android.
+When the finger touches within [0, value] from the left edge of the screen, it doesn't respond to the horizontal swipe gesture, but it can directly respond to the iOS right swipe to return gesture. However, it's not applicable to Android.
 
 ### `ios-recognized-gesture-class`
 
@@ -101,7 +101,7 @@ When the finger touches within `[0, value]` from the left edge of the screen, th
 'ios-recognized-gesture-class'?: string;
 ```
 
-The class name of the `UIGestureRecognizer` that may be recognized simultaneously with the viewpager. This property is designed to let a `UIPanGesture` work together with the viewpager.
+UIGestureRecognizer's class name, be used to identify the UIGestureRecognizer which may be recognized simultaneously with viewpager. This property is designed to let an UIPanGesture work together with viewpager.
 
 ### `ios-recognized-view-tag`
 
@@ -112,7 +112,9 @@ The class name of the `UIGestureRecognizer` that may be recognized simultaneousl
 'ios-recognized-view-tag'?: number;
 ```
 
-The `UIView` tag used to identify the view associated with the `UIGestureRecognizer` specified by `ios-recognized-gesture-class`. This property is designed to let a `UIPanGesture` work together with the viewpager.
+UIView's tag, be used to identify the UIView of the UIGestureRecognizer which identified by
+`ios-recognized-gesture-class`
+. This property is designed to let an UIPanGesture work together with viewpager.
 
 ### `keep-item-view`
 
@@ -123,7 +125,7 @@ The `UIView` tag used to identify the view associated with the `UIGestureRecogni
 'keep-item-view'?: boolean;
 ```
 
-Whether to enable lazy loading based on early exposure. Use it together with `lazyComponent`.
+Whether to enable the lazy load mode based on early exposure, it needs to be used in conjunction with the lazyComponent.
 
 ## Events
 
@@ -142,7 +144,7 @@ bindchange = (e: ViewPagerChangeEvent) => {};
 | index     | number  | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />                                   |       | Current index                                         |
 | isDragged | boolean | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.18</VersionBadge> | 2.18  | If this change event is caused by the user's dragging |
 
-Page change event. It is triggered only after the UI has fully switched to the next page.
+Page switch event, it will only be triggered when the UI completely switches to the next page (from 100% to 200%).
 
 ### `bindoffsetchange`
 
@@ -156,7 +158,7 @@ bindoffsetchange = (e: ViewPagerOffsetChangeEvent) => {};
 | ------ | ------ | -------- | ------- | -------------------------------------------------------- | ----- | -------------------- |
 | offset | number | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |       | The scrolling offset |
 
-Callback for page transition progress. The value is expressed in page indexes. For example, moving from page 0 to page 1 yields values from 0 to 1, and moving from page 1 to page 2 yields values from 1 to 2.
+Page switch progress callback, the range is the index of each page, for example, from page 0 to page 1, it's 0~1, from the first page to the second page, it's 1~2.
 
 ### `bindwillchange`
 
@@ -172,7 +174,7 @@ bindwillchange = (e: ViewPagerWillChangeEvent) => {};
 | index     | number  | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />                                   |       | Current index                                         |
 | isDragged | boolean | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.18</VersionBadge> | 2.18  | If this change event is caused by the user's dragging |
 
-Page will change event.
+Page switch event, it will be triggered when the page is about to switch, and at this time the UI has not switched to the next page yet, so the offset is still in the range of 0~100% (from page 0 to page 1) or 100%~200% (from page 1 to page 2).
 
 ## Methods
 
@@ -197,7 +199,7 @@ _ @PC
 _/
 index: number;
 /**
-_ Whether an animation is needed. The default value is true.
+_ If a animation effect needed. The default setting is true.
 _ @Android
 _ @iOS
 _ @Harmony
@@ -212,5 +214,6 @@ fail: function (res) {},
 
 ```
 
-Scrolls to the specified page.
+Slide to the specified page.
+
 ```

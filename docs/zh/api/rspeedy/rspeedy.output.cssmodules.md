@@ -12,6 +12,10 @@ The [CssModules](./rspeedy.cssmodules.md) option is used for the customization o
 cssModules?: CssModules | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 The CSS module is enabled for `*.module.css`<!-- -->, `*.module.scss` and `*.module.less`<!-- -->. Use [CssModules.auto](./rspeedy.cssmodules.auto.md) to customize the filtering behavior.

@@ -19,3 +19,8 @@ After handing over control, MainThread (Lepus) runtime can no longer respond to 
 ```typescript
 firstScreenSyncTiming?: 'immediately' | 'jsReady';
 ```
+
+## Default Value
+
+"immediately"
+

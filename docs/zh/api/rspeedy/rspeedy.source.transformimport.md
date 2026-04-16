@@ -12,6 +12,10 @@ The [TransformImport](./rspeedy.transformimport.md) option transforms the import
 transformImport?: TransformImport[] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example
 
 When using the TUX component library, you can import components on demand with the following config:

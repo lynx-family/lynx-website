@@ -14,7 +14,45 @@ export interface PluginQRCodeOptions
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [schema?](./qrcode-rsbuild-plugin.pluginqrcodeoptions.schema.md) |  | [CustomizedSchemaFn](./qrcode-rsbuild-plugin.customizedschemafn.md) \| undefined | _(Optional)_ Customize the generated schema. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[schema?](./qrcode-rsbuild-plugin.pluginqrcodeoptions.schema.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[CustomizedSchemaFn](./qrcode-rsbuild-plugin.customizedschemafn.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ Customize the generated schema.
+
+
+</td></tr>
+</tbody></table>
 

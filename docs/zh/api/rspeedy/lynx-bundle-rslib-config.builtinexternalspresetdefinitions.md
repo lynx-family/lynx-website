@@ -9,5 +9,5 @@ Built-in externals preset definitions.
 **Signature:**
 
 ```typescript
-export declare const builtInExternalsPresetDefinitions: ExternalsPresetDefinitions;
+builtInExternalsPresetDefinitions: ExternalsPresetDefinitions
 ```

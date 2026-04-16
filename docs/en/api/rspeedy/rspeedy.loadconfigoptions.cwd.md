@@ -4,8 +4,15 @@
 
 ## LoadConfigOptions.cwd property
 
+The working directory used to resolve the config path.
+
 **Signature:**
 
 ```typescript
 cwd?: string | undefined;
 ```
+
+## Default Value
+
+`process.cwd()`
+

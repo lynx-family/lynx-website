@@ -14,7 +14,7 @@ cssOptions?: Rspack.LightningCssMinimizerRspackPluginOptions | undefined;
 
 ## Remarks
 
-For detailed configurations, please refer to [LightningCssMinimizerRspackPlugin](https://rspack.dev/plugins/rspack/lightning-css-minimizer-rspack-plugin)<!-- -->.
+For detailed configurations, please refer to [LightningCssMinimizerRspackPlugin](https://rspack.rs/plugins/rspack/lightning-css-minimizer-rspack-plugin)<!-- -->.
 
 ## Example
 
@@ -35,4 +35,3 @@ export default defineConfig({
   },
 })
 ```
-

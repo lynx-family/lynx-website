@@ -12,6 +12,10 @@ Whether to convert import statements to default imports.
 transformToDefaultImport?: boolean | undefined;
 ```
 
+## Default Value
+
+Rsbuild defaults this option to `true`<!-- -->.
+
 ## Example
 
 - Input:
@@ -26,7 +30,7 @@ When set to `true`<!-- -->:
 ```js
 import Button from 'foo/button'
 ```
-When set to `false` or `undefined`<!-- -->:
+When set to `false`<!-- -->:
 
 ```js
 import { Button } from 'foo/button'

@@ -6,6 +6,16 @@
 
 Configure CORS for the dev server or preview server.
 
+**Signature:**
+
+```typescript
+cors?: ServerConfig['cors'] | undefined;
+```
+
+## Default Value
+
+Uses Rsbuild's default CORS options.
+
 - Set to an object to enable CORS with the specified options.
 
 - Set to `true` to enable CORS with the default options (allows all origins, not recommended).
@@ -13,12 +23,6 @@ Configure CORS for the dev server or preview server.
 - Set to `false` to disable CORS.
 
 See [Rsbuild - server.cors](https://rsbuild.rs/config/server/cors) for details.
-
-**Signature:**
-
-```typescript
-cors?: ServerConfig['cors'] | undefined;
-```
 
 ## Example
 

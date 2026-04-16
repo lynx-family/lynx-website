@@ -6,8 +6,6 @@
 
 Whether to display progress bar during compilation.
 
-Defaults to `true`<!-- -->.
-
 **Signature:**
 
 ```typescript
@@ -15,6 +13,10 @@ progressBar?: boolean | {
         id?: string;
     } | undefined;
 ```
+
+## Default Value
+
+true
 
 ## Example 1
 

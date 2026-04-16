@@ -11,3 +11,8 @@ The [Server](./rspeedy.server.md) option changes the behavior of dev-server.
 ```typescript
 server?: Server | undefined;
 ```
+
+## Default Value
+
+undefined
+

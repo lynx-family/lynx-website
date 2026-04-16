@@ -4,10 +4,14 @@
 
 ## Tools.cssExtract property
 
-The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://www.rspack.dev/plugins/rspack/css-extract-rspack-plugin)
+The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 **Signature:**
 
 ```typescript
 cssExtract?: CssExtract | undefined;
 ```
+
+## Default Value
+
+undefined

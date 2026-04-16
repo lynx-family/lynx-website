@@ -4,13 +4,17 @@
 
 ## ChunkSplitBySize.maxSize property
 
-The maximum size of a chunk, unit in bytes. Defaults to `Number.POSITIVE_INFINITY`<!-- -->.
+The maximum size of a chunk, unit in bytes.
 
 **Signature:**
 
 ```typescript
 maxSize?: number | undefined;
 ```
+
+## Default Value
+
+`Number.POSITIVE_INFINITY`
 
 ## Example
 

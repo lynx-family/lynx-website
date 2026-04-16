@@ -3,7 +3,6 @@
 在现代前端开发中，模块化已成为有效管理代码的关键方式：
 
 1. **简化模块导入**：
-
    - 模块解析允许使用简洁易读的路径进行模块导入，替代冗长的相对路径。例如通过别名配置，可以使用 `@components/Button` 代替 `../../../src/components/Button`，显著提升代码可维护性。
 
 2. **环境感知的模块替换**：
@@ -39,7 +38,7 @@
 
 ### 使用 `source.alias` 配置
 
-Rsbuild 提供 [source.alias](../../api/rspeedy/rspeedy.source.alias) 配置项，对应 webpack/Rspack 原生的 [resolve.alias](https://rspack.dev/config/resolve#resolvealias) 配置。可通过对象或函数形式进行配置。
+Rsbuild 提供 [source.alias](../../api/rspeedy/rspeedy.source.alias) 配置项，对应 webpack/Rspack 原生的 [resolve.alias](https://rspack.rs/config/resolve#resolvealias) 配置。可通过对象或函数形式进行配置。
 
 #### 使用场景
 

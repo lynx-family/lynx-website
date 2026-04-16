@@ -11,3 +11,8 @@ The [Source](./rspeedy.source.md) option changes the behavior of source files.
 ```typescript
 source?: Source | undefined;
 ```
+
+## Default Value
+
+undefined
+
