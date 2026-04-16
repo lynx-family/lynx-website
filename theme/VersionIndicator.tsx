@@ -24,7 +24,7 @@ function shouldHideVersion(version: string) {
   }
 
   const parsed = Number(version);
-  return !Number.isNaN(parsed) && parsed >= 3.7;
+  return !Number.isNaN(parsed);
 }
 
 export function VersionIndicator() {
