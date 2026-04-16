@@ -177,10 +177,7 @@ lynx-view的内部排版会被强制移出外部排版流
 // 引入位置需要保证在 @lynx-js/web-core 前
 import 'remote-web-worker';
 
-import '@lynx-js/web-core';
-import '@lynx-js/web-core/index.css';
-import '@lynx-js/web-elements/all';
-import '@lynx-js/web-elements/index.css';
+import '@lynx-js/web-core/client';
 document.body.innerHTML = `
 <lynx-view
     style="height:100vh; width:100vw;"
@@ -192,3 +189,27 @@ document.body.innerHTML = `
 #### 性能优化
 
 我们提供了 RSBuild 插件来做性能优化，你可以在你的 web 工程中引入[该插件](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin)
+
+## 从旧版本迁移
+
+如果您正在升级到 `@lynx-js/web-core@0.20.0`，请注意由于架构升级，这里存在重大的破坏性变更。
+
+### 初始化变更
+
+您不再需要手动导入 CSS，也不再需要 `@lynx-js/web-elements`。初始化过程得到了简化：
+
+```ts
+// 升级前:
+import '@lynx-js/web-core/client';
+
+// 升级后:
+import '@lynx-js/web-core/client';
+```
+
+### API 变更
+
+移除了以下 `<lynx-view>` 属性，不再被支持：
+- `thread-strategy`
+- `customTemplateLoader`
+- `overrideLynxTagToHTMLTagMap`
+- `inject-head-links`
