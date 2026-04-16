@@ -35,7 +35,7 @@ export const onRequest = async (context: CFEventContext) => {
   const rest = match[2] || '/'; // remaining path
 
   // Current version → 302 strip the prefix (this site already serves it)
-  const currentVersion = context.env.CURRENT_VERSION || 'next';
+  const currentVersion = context.env.CURRENT_VERSION || '3.7';
   if (version === currentVersion) {
     return Response.redirect(
       new URL(rest + url.search, url.origin).toString(),
