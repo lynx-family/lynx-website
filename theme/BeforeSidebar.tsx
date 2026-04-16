@@ -8,8 +8,8 @@ import { useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { type SidebarData, SidebarList } from '@rspress/core/theme-original';
 import {
+  CORE_SUBSITES,
   SHARED_SIDEBAR_PATHS,
-  SUBSITES_CONFIG,
   createSharedRouteSidebar,
   getLangPrefix,
 } from '@site/shared-route-config';
@@ -33,15 +33,15 @@ function findSubsiteFromPathname(
   }
 
   if (!path) {
-    return SUBSITES_CONFIG[0];
+    return CORE_SUBSITES[0];
   }
 
   const [firstSegment] = path.split('/');
   const normalizedSegment = firstSegment.replace(/\.html$/, '');
 
   const subsite =
-    SUBSITES_CONFIG.find((s) => s.value === normalizedSegment) ||
-    SUBSITES_CONFIG[0];
+    CORE_SUBSITES.find((s) => s.value === normalizedSegment) ||
+    CORE_SUBSITES[0];
 
   return subsite;
 }
@@ -62,7 +62,7 @@ function SubsiteSelect() {
   }, [lang, pathname, selectedSubsite.value]);
 
   const handleValueChange = (value: string) => {
-    const newSubsite = SUBSITES_CONFIG.find((s) => s.value === value);
+    const newSubsite = CORE_SUBSITES.find((s) => s.value === value);
     if (newSubsite) {
       setSelectedSubsite(newSubsite);
       navigate(`${getLangPrefix(lang)}${newSubsite.url}`);
@@ -78,7 +78,7 @@ function SubsiteSelect() {
           </div>
         </SelectTrigger>
         <SelectContent className="min-w-[240px] z-[100]">
-          {SUBSITES_CONFIG.map((subsite) => (
+          {CORE_SUBSITES.map((subsite) => (
             <SelectItem
               key={subsite.value}
               value={subsite.value}

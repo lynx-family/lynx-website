@@ -47,10 +47,10 @@ Rspack/Webpack 插件需要配置在 [`tools.rspack.plugins`] 中
 
 ### Rspack 插件 API
 
-详见 [Rspack - Compiler 钩子](https://rspack.dev/api/plugin-api/compiler-hooks)和 [Rspack - Compilation 钩子](https://rspack.dev/api/plugin-api/compilation-hooks)
+详见 [Rspack - Compiler 钩子](https://rspack.rs/api/plugin-api/compiler-hooks)和 [Rspack - Compilation 钩子](https://rspack.rs/api/plugin-api/compilation-hooks)
 
 [`tools.rspack.plugins`]: ../../api/rspeedy/rspeedy.tools.rspack#example-4
-[Banner 插件]: https://rspack.dev/plugins/webpack/banner-plugin
-[Define 插件]: https://rspack.dev/plugins/webpack/define-plugin
-[Environment 插件]: https://rspack.dev/plugins/webpack/environment-plugin
-[Provide 插件]: https://rspack.dev/plugins/webpack/provide-plugin
+[Banner 插件]: https://rspack.rs/plugins/webpack/banner-plugin
+[Define 插件]: https://rspack.rs/plugins/webpack/define-plugin
+[Environment 插件]: https://rspack.rs/plugins/webpack/environment-plugin
+[Provide 插件]: https://rspack.rs/plugins/webpack/provide-plugin

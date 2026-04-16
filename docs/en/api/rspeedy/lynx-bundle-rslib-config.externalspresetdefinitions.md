@@ -2,7 +2,7 @@
 
 [Home](./index.md) &gt; [@lynx-js/lynx-bundle-rslib-config](./lynx-bundle-rslib-config.md) &gt; [ExternalsPresetDefinitions](./lynx-bundle-rslib-config.externalspresetdefinitions.md)
 
-## ExternalsPresetDefinitions type
+## ExternalsPresetDefinitions type alias
 
 Available externals preset definitions.
 
@@ -11,5 +11,3 @@ Available externals preset definitions.
 ```typescript
 export type ExternalsPresetDefinitions = Record<string, ExternalsPresetDefinition>;
 ```
-**References:** [ExternalsPresetDefinition](./lynx-bundle-rslib-config.externalspresetdefinition.md)
-

@@ -20,7 +20,7 @@ Depends on `process.env.NODE_ENV`<!-- -->: `'production'` when `NODE_ENV` is `'p
 
 If the value of `mode` is `'development'`<!-- -->:
 
-- Enable HMR and register the [HotModuleReplacementPlugin](https://rspack.dev/plugins/webpack/hot-module-replacement-plugin)<!-- -->.
+- Enable HMR and register the [HotModuleReplacementPlugin](https://rspack.rs/plugins/webpack/hot-module-replacement-plugin)<!-- -->.
 
 - Generate JavaScript source maps, but do not generate CSS source maps. See [Output.sourceMap](./rspeedy.output.sourcemap.md) for details.
 
@@ -36,7 +36,7 @@ If the value of `mode` is `'development'`<!-- -->:
 
 If the value of `mode` is `'production'`<!-- -->:
 
-- Enable JavaScript code minification and register the [SwcJsMinimizerRspackPlugin](https://rspack.dev/plugins/rspack/swc-js-minimizer-rspack-plugin)<!-- -->.
+- Enable JavaScript code minification and register the [SwcJsMinimizerRspackPlugin](https://rspack.rs/plugins/rspack/swc-js-minimizer-rspack-plugin)<!-- -->.
 
 - Generated JavaScript and CSS filenames will have hash suffixes, see [Output.filenameHash](./rspeedy.output.filenamehash.md)<!-- -->.
 
@@ -51,4 +51,3 @@ If the value of `mode` is `'production'`<!-- -->:
 - The `import.meta.env.DEV` in the source code will be replaced with `false`<!-- -->.
 
 - The `import.meta.env.PROD` in the source code will be replaced with `true`<!-- -->.
-

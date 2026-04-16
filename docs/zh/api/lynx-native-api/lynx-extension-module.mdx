@@ -1,0 +1,167 @@
+---
+api: lynx-native-api/lynx-extension-module
+---
+
+import { APISummary, APITable, CodeFold } from '@lynx';
+
+# LynxExtensionModule
+
+<APISummary />
+
+`LynxExtensionModule` 是 Desktop public embedder API 的扩展入口。它允许宿主接入 `LynxView` / BTS runtime 生命周期、暴露 NAPI exports、向 BTS 线程投递任务、监听 VSync，以及注册 native view。
+
+:::info
+
+该 API 仅支持 Desktop。目前只在 macOS 和 Windows 上提供，不属于 Android、iOS、Harmony 或 Web 的 Native API 面。
+
+:::
+
+## 快速接入
+
+通过 `LynxEnv::RegisterExtensionModule(...)` 全局注册 extension module：
+
+<CodeFold toggle>
+
+```cpp title="register_extension_module.cc"
+#include "lynx_env.h"
+#include "lynx_extension_module.h"
+#include "lynx_view.h"
+
+class DemoExtensionModule : public lynx::pub::LynxExtensionModule {
+ public:
+  void OnRuntimeAttach(
+      Napi::Env env,
+      std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer) override {
+    vsync_observer_ = std::move(vsync_observer);
+  }
+
+ private:
+  std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer_;
+};
+
+void RegisterExtensionModule() {
+  auto& env = lynx::pub::LynxEnv::GetInstance();
+  env.RegisterExtensionModule("DemoExtensionModule",
+                              &CreateDemoExtensionModule,
+                              false,
+                              nullptr);
+}
+```
+
+</CodeFold>
+
+## 生命周期
+
+`LynxExtensionModule` 暴露了横跨 UI 线程和 BTS 线程的生命周期回调：
+
+- `OnLynxViewCreate(...)`：`LynxView` 实例创建时，在 UI 线程调用。
+- `OnLynxViewDestroy()`：`LynxView` 实例销毁前，在 UI 线程调用。
+- `OnRuntimeInit()`：BTS runtime 实例创建时，在 UI 线程调用。
+- `OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`：runtime attach 时，在 BTS 线程调用。
+- `OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url)`：runtime ready 时，在 BTS 线程调用。
+- `OnRuntimeDetach()`：runtime detach 时，在 BTS 线程调用。
+- `OnEnterForeground()`：应用进入前台时，在 UI 线程调用。
+- `OnEnterBackground()`：应用进入后台时，在 UI 线程调用。
+- `Destroy()`：extension module 实例释放前，在 BTS 线程调用。
+
+## Runtime Utilities
+
+`LynxExtensionModule` 还提供了一组 Desktop runtime 辅助能力：
+
+- `PostTaskToRuntime(...)`：向 BTS 线程投递任务。
+- `IsRunningTasksOnBTSThread()`：判断当前执行是否已经位于 BTS 线程。
+- `SetNapiModuleCreator(...)`：为当前模块设置 NAPI exports creator。
+- `SetNapiInstanceData(...)` / `GetNapiInstanceData(...)`：按 key 存取 NAPI instance data。
+- `Retain()` / `Release()`：调整模块实例的生命周期。
+
+在 `OnRuntimeAttach(...)` 中拿到的 `VSyncObserver` 还提供：
+
+- `RequestAnimationFrame(...)`
+- `RequestBeforeAnimationFrame(...)`
+- `RegisterAfterAnimationFrameListener(...)`
+
+## Native View 作为 Extension 能力
+
+native view 能力归属于 Desktop extension 面，不单独作为另一套 Native API owner。
+
+当你需要把平台 view 或外部纹理嵌进 Lynx view tree 时，可以使用 `LynxNativeView`。这个 C++ 基类暴露了这些回调：
+
+- `OnCreate()`
+- `OnAttach()`
+- `OnDetach()`
+- `OnDestroy()`
+- `OnLayoutChanged(...)`
+- `OnPropertiesChanged(...)`
+- `OnMotionEvent(...)`
+- `OnFocusChanged(...)`
+- `OnMethodInvoked(...)`
+
+它同时提供这些辅助方法：
+
+- `TriggerEvent(...)`
+- `RequestFocus()`
+- `MarkDirty()`
+- `PresentSurface(...)`
+- `AcquireSurface(...)`
+- `SwapBack()`
+
+### 注册 Native View
+
+注册 native view 常见有三种方式：
+
+- 通过 `LynxView::Builder::RegisterNativeView<T>(...)` 全局或构建期注册
+- 通过 `LynxView::RegisterNativeView<T>(...)` 对单个 view 注册
+- 在 extension module 的 `OnLynxViewCreate(...)` 中注册
+
+如果某个 native view 应该和 extension 一起安装，常见做法是在 `OnLynxViewCreate(...)` 里完成注册：
+
+<CodeFold toggle>
+
+```cpp title="cef_extension_module.cc"
+#include "lynx_view.h"
+
+class CEFExtensionModule : public lynx::pub::LynxExtensionModule {
+ public:
+  void InstallNativeView(lynx::pub::LynxView& view) {
+    view.RegisterNativeView<CEFWebView>("x-webview");
+  }
+};
+```
+
+</CodeFold>
+
+一个独立的 native view 实现通常继承自 `LynxNativeView`：
+
+<CodeFold toggle>
+
+```cpp title="fake_view.h"
+#include "lynx_native_view.h"
+
+class FakeView : public lynx::pub::LynxNativeView {
+ public:
+  bool OnCreate() override { return true; }
+
+  void OnLayoutChanged(float left,
+                       float top,
+                       float width,
+                       float height,
+                       float pixel_ratio) override {
+    lynx::pub::LynxValue detail(lynx::pub::LynxValue::kCreateAsMapTag);
+    detail.SetProperty("width", lynx::pub::LynxValue(width));
+    detail.SetProperty("height", lynx::pub::LynxValue(height));
+    TriggerEvent("resize", std::move(detail));
+  }
+
+  void OnMethodInvoked(const char* method,
+                       const lynx::pub::LynxValue& attrs,
+                       std::function<void(int, lynx::pub::LynxValue&&)> callback) override {
+    callback(kSuccess, lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+  }
+};
+```
+
+</CodeFold>
+
+## 兼容性
+
+<APITable />
