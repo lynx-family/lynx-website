@@ -19,7 +19,9 @@ tag: Web
 | url                         | 是       | Rspeedy 产物的url（其它 chunk 的 url 会编译时注入产物自动启动）                                                    |
 | globalProps                 | 否       | 卡片初始化时的 [GlobalProps](/api/lynx-api/lynx/lynx-global-props.mdx)                                             |
 | initData                    | 否       | 卡片初始化时的 InitData                                                                                            |
-| overrideLynxTagToHTMLTagMap | 否       | 自定义 Lynx 标签到 HTML 标签的映射关系。不支持 React Component，只支持 HTMLElement(可以是webcomponent或者原生标签) |
+| browser-config              | 否       | 允许在实例级别动态配置 `systemInfo`，如设置 `pixelRatio`，`pixelWidth` 和 `pixelHeight`。                          |
+| transform-vw                | 否       | 开启 `vw` 转换，允许在容器级别使用 CSS 自定义属性代替 `vw` 单位，例如 `1vw` 转换为 `calc(1 * var(--vw-unit))`。    |
+| transform-vh                | 否       | 开启 `vh` 转换，允许在容器级别使用 CSS 自定义属性代替 `vh` 单位，例如 `1vh` 转换为 `calc(1 * var(--vh-unit))`。    |
 
 #### Properties
 
@@ -78,17 +80,15 @@ lynxView.onNativeModulesCall = (name, data, moduleName) => {
 };
 ```
 
-##### customTemplateLoader
+##### browserConfig
 
-允许用户实现自定义模板加载功能（默认是 fetch）：
+支持在实例级别动态配置 `systemInfo`，通过 `browserConfig` 属性进行设置：
 
 ```ts
-lynxView.customTemplateLoader = (url) => {
-  return await(
-    await fetch(url, {
-      method: 'GET',
-    }),
-  ).json();
+lynxView.browserConfig = {
+  pixelRatio: 2,
+  pixelWidth: 375,
+  pixelHeight: 812,
 };
 ```
 
@@ -164,32 +164,6 @@ lynx-view的内部排版会被强制移出外部排版流
 也就是默认情况下，您需要给 lynx-view 设置一个宽高。宽高可以是 `flex-grow` 分配的、可以是百分比指定的，但是不可以是“撑开”的。设置宽高是强烈推荐的做法，也是性能的最佳实践。
 
 有些情况下您的确需要由 lynx-view 的内容决定宽或高，您可以设置 `height="auto"` 或者 `width="auto"` 来启动自动宽高监听器。在这种情况下，lynx-view 的内部排版依旧与外部排版流独立。
-
-### 兼容性
-
-推荐配置为：**Chrome > 118, safari>18, Firefox NSR**
-
-如果你想支持 chrome < 118，safari < 18 的浏览器，需要做以下处理：
-
-1. 引入降级插件：
-
-```ts
-import '@lynx-js/web-elements-compat/LinearContainer';
-```
-
-2. 额外编译 `@lynx-js` 依赖。如果你的项目是 Rsbuild，则按照如下配置修改：
-
-```ts
-// rsbuild.config.ts
-export default {
-  source: {
-    include: [/@lynx-js/],
-  },
-  output: {
-    polyfill: 'usage',
-  },
-};
-```
 
 ### FAQ
 
