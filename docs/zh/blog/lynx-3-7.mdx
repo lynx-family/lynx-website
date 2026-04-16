@@ -48,9 +48,9 @@ Lynx 正式支持 **macOS** 和 **Windows** 作为一级平台。你现在可以
   img={mouseCursorImg}
 />
 
-### 完整的渲染引擎登陆桌面端
+### CSS 与元件支持
 
-驱动 Lynx 移动端的同一套渲染引擎现已在 macOS 和 Windows 上可用，具备近乎完整的特性对齐。**CSS 属性覆盖率达 97%**（319 项中的 311 项），**元素属性覆盖率达 73%**（246 项中的 179 项），macOS 和 Windows 的支持范围保持一致。已覆盖的 CSS 能力包括：
+Lynx 的 CSS 流水线与 DOM 树直接复用了各平台统一的渲染核心，因此 **CSS 属性覆盖率**从一开始即达 **97%**（319 项中的 311 项）。元件渲染依托全新的 Skia 自绘后端，**元素属性覆盖率**目前为 **73%**（246 项中的 179 项），macOS 与 Windows 的支持范围保持一致，并持续扩展中。已覆盖的 CSS 能力包括：
 
 - **布局**：Flexbox、Grid、Linear Layout、完整盒模型、定位与相对定位。
 - **样式**：排版、边框、阴影、渐变、蒙版、滤镜，以及 [CSS 自定义属性](/api/css/properties/css-variable)。
@@ -113,6 +113,15 @@ Lynx 正式支持 **macOS** 和 **Windows** 作为一级平台。你现在可以
   img={svgExampleImg}
 />
 
+也可以直接加载外部 SVG 资源：
+
+```tsx
+<svg
+  style={{ width: '100px', height: '100px' }}
+  src="https://example.com/icon.svg"
+/>
+```
+
 `<svg>` 会在独立线程中解析矢量节点，支持[绝大多数 SVG 元素及属性](/api/elements/built-in/svg)，并在 Android、iOS、HarmonyOS、macOS、Windows 和 Web 之间保持高度一致的渲染行为。
 
 ## Agent Skills
@@ -138,9 +147,9 @@ npx skills add lynx-community/skills -s <skill-name>
 
 ### External Bundle Presets
 
-[External Bundle](/rspeedy/external-bundle) 允许你构建一次 Lynx bundle，然后在多个 Lynx 应用中运行时加载。当你需要跨应用共享 ReactLynx 组件或通用业务 bundle 时，可以使用它。与 Chunk Splitting 用于拆分单个应用内代码不同，External Bundle 专为跨应用复用而设计。
+[External Bundle](/rspeedy/external-bundle) 允许你构建一次 Lynx bundle，然后在多个 Lynx 应用中运行时加载。当你需要跨应用共享 ReactLynx 组件或通用业务 bundle 时，可以使用它。与 [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit) 用于拆分单个应用内代码不同，External Bundle 专为跨应用复用而设计。
 
-Lynx 3.7 新增了内置 presets 以简化配置：
+Lynx 3.7 通过 [`defineExternalBundleRslibConfig`](/api/rspeedy/lynx-bundle-rslib-config) 新增了内置 presets 以简化配置：
 
 ```ts
 import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config';
