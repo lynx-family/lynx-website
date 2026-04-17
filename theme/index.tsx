@@ -1,7 +1,6 @@
 import {
   Head,
   removeBase,
-  withBase,
   useLang,
   useLocation,
   usePageData,
@@ -275,14 +274,14 @@ const Link = forwardRef(
     const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
     if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
       return (
-        <BaseLink
-          href={withBase(removeBase(href))}
+        <a
+          href={`/next${removeBase(href)}`}
           className={`rp-link ${className}`}
           ref={ref}
           {...restProps}
         >
           {children}
-        </BaseLink>
+        </a>
       );
     }
     return (
