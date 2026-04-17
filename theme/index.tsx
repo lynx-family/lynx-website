@@ -1,5 +1,6 @@
 import {
   Head,
+  Link as RouterLink,
   removeBase,
   useLang,
   useLocation,
@@ -285,17 +286,19 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   const { href, children, className, ...restProps } = props;
   const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
   // Blog links should point to the /next version where blog content lives.
-  // Use a plain <a> instead of BaseLink to avoid prepending the base path
+  // Use RouterLink (react-router-dom) instead of a plain <a> to enable
+  // client-side SPA navigation and avoid full-page reloads (闪屏).
+  // We also bypass BaseLink here to prevent it from prepending the base path
   // (e.g. /3.6), which would result in /3.6/next/blog/... and a 404.
   if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
     return (
-      <a
-        href={`/next${removeBase(href)}`}
+      <RouterLink
+        to={`/next${removeBase(href)}`}
         className={`rp-link ${className}`}
         {...restProps}
       >
         {children}
-      </a>
+      </RouterLink>
     );
   }
   return (
