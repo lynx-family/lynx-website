@@ -19,7 +19,9 @@ tag: Web
 | url                         | 是       | Rspeedy 产物的url（其它 chunk 的 url 会编译时注入产物自动启动）                                                    |
 | globalProps                 | 否       | 卡片初始化时的 [GlobalProps](/api/lynx-api/lynx/lynx-global-props.mdx)                                             |
 | initData                    | 否       | 卡片初始化时的 InitData                                                                                            |
-| overrideLynxTagToHTMLTagMap | 否       | 自定义 Lynx 标签到 HTML 标签的映射关系。不支持 React Component，只支持 HTMLElement(可以是webcomponent或者原生标签) |
+| browser-config              | 否       | 允许在实例级别动态配置 `systemInfo`，如设置 `pixelRatio`，`pixelWidth` 和 `pixelHeight`。                          |
+| transform-vw                | 否       | 开启 `vw` 转换，允许在容器级别使用 CSS 自定义属性代替 `vw` 单位，例如 `1vw` 转换为 `calc(1 * var(--vw-unit))`。    |
+| transform-vh                | 否       | 开启 `vh` 转换，允许在容器级别使用 CSS 自定义属性代替 `vh` 单位，例如 `1vh` 转换为 `calc(1 * var(--vh-unit))`。    |
 
 #### Properties
 
@@ -78,17 +80,15 @@ lynxView.onNativeModulesCall = (name, data, moduleName) => {
 };
 ```
 
-##### customTemplateLoader
+##### browserConfig
 
-允许用户实现自定义模板加载功能（默认是 fetch）：
+支持在实例级别动态配置 `systemInfo`，通过 `browserConfig` 属性进行设置：
 
 ```ts
-lynxView.customTemplateLoader = (url) => {
-  return await(
-    await fetch(url, {
-      method: 'GET',
-    }),
-  ).json();
+lynxView.browserConfig = {
+  pixelRatio: 2,
+  pixelWidth: 375,
+  pixelHeight: 812,
 };
 ```
 
@@ -165,32 +165,6 @@ lynx-view的内部排版会被强制移出外部排版流
 
 有些情况下您的确需要由 lynx-view 的内容决定宽或高，您可以设置 `height="auto"` 或者 `width="auto"` 来启动自动宽高监听器。在这种情况下，lynx-view 的内部排版依旧与外部排版流独立。
 
-### 兼容性
-
-推荐配置为：**Chrome > 118, safari>18, Firefox NSR**
-
-如果你想支持 chrome < 118，safari < 18 的浏览器，需要做以下处理：
-
-1. 引入降级插件：
-
-```ts
-import '@lynx-js/web-elements-compat/LinearContainer';
-```
-
-2. 额外编译 `@lynx-js` 依赖。如果你的项目是 Rsbuild，则按照如下配置修改：
-
-```ts
-// rsbuild.config.ts
-export default {
-  source: {
-    include: [/@lynx-js/],
-  },
-  output: {
-    polyfill: 'usage',
-  },
-};
-```
-
 ### FAQ
 
 #### 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
@@ -203,10 +177,7 @@ export default {
 // 引入位置需要保证在 @lynx-js/web-core 前
 import 'remote-web-worker';
 
-import '@lynx-js/web-core';
-import '@lynx-js/web-core/index.css';
-import '@lynx-js/web-elements/all';
-import '@lynx-js/web-elements/index.css';
+import '@lynx-js/web-core/client';
 document.body.innerHTML = `
 <lynx-view
     style="height:100vh; width:100vw;"
@@ -218,3 +189,27 @@ document.body.innerHTML = `
 #### 性能优化
 
 我们提供了 RSBuild 插件来做性能优化，你可以在你的 web 工程中引入[该插件](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin)
+
+## 从旧版本迁移
+
+如果您正在升级到 `@lynx-js/web-core@0.20.0`，请注意由于架构升级，这里存在重大的破坏性变更。
+
+### 初始化变更
+
+您不再需要手动导入 CSS，也不再需要 `@lynx-js/web-elements`。初始化过程得到了简化：
+
+```ts
+// 升级前:
+import '@lynx-js/web-core/client';
+
+// 升级后:
+import '@lynx-js/web-core/client';
+```
+
+### API 变更
+
+移除了以下 `<lynx-view>` 属性，不再被支持：
+- `thread-strategy`
+- `customTemplateLoader`
+- `overrideLynxTagToHTMLTagMap`
+- `inject-head-links`
