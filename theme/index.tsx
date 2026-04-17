@@ -286,13 +286,13 @@ const Link = (props: React.ComponentProps<typeof BaseLink>) => {
   const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
   if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
     return (
-      <BaseLink
+      <a
         href={`/next${removeBase(href)}`}
         className={`rp-link ${className}`}
         {...restProps}
       >
         {children}
-      </BaseLink>
+      </a>
     );
   }
   return (
