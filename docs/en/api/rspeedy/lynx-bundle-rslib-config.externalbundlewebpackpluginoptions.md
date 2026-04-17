@@ -4,18 +4,93 @@
 
 ## ExternalBundleWebpackPluginOptions interface
 
-Options for `ExternalBundleWebpackPlugin`.
+The options for [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externalbundlewebpackplugin.md)<!-- -->.
 
 **Signature:**
 
 ```typescript
-export interface ExternalBundleWebpackPluginOptions
+export interface ExternalBundleWebpackPluginOptions 
 ```
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `bundleFileName` | `string` | The external bundle filename. |
-|  `encode` | `(opts: unknown) => Promise<{ buffer: Buffer; }>` | Encode method exported from the Lynx encoder package. |
-|  `engineVersion?` | `string` | The target engine version of the external bundle. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[bundleFileName](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.bundlefilename.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The external bundle filename.
+
+
+</td></tr>
+<tr><td>
+
+[encode](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.encode.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(opts: unknown) =&gt; Promise&lt;{ buffer: Buffer; }&gt;
+
+
+</td><td>
+
+The encode method which is exported from lynx-tasm package.
+
+
+</td></tr>
+<tr><td>
+
+[engineVersion?](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.engineversion.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The engine version of the external bundle.
+
+
+</td></tr>
+</tbody></table>
+

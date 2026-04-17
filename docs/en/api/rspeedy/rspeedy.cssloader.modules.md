@@ -12,6 +12,10 @@ The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables t
 modules?: boolean | CssLoaderModules | undefined;
 ```
 
+## Default Value
+
+Enables CSS Modules with automatic `*.module.*` detection, camelCase exports, `namedExport: false`<!-- -->, and `localIdentName` inherited from `output.cssModules.localIdentName`<!-- -->.
+
 ## Example 1
 
 Using `false` value to increase performance because we avoid parsing CSS Modules features, it will be useful for developers who use vanilla css or use other technologies.

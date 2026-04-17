@@ -12,7 +12,7 @@ The path to websocket.
 websocketTransport?: string | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Defaults to `require.resolve('@lynx-js/websocket')`
+`require.resolve('@lynx-js/websocket')`
 

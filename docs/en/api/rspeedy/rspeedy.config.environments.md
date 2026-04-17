@@ -12,6 +12,10 @@ The [Config.environments](./rspeedy.config.environments.md) option is used to se
 environments?: RsbuildConfig['environments'] | undefined;
 ```
 
+## Default Value
+
+When this option is unset, Rspeedy passes `{ lynx: {} }` to Rsbuild.
+
 ## Remarks
 
 Normally you don't need this if you are not using Lynx for Web.

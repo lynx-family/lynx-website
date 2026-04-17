@@ -14,18 +14,254 @@ export interface Output
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [assetPrefix?](./rspeedy.output.assetprefix.md) |  | string \| undefined | _(Optional)_ The [Output.assetPrefix](./rspeedy.output.assetprefix.md) is used to set the URL prefix for static assets. |
-|  [cleanDistPath?](./rspeedy.output.cleandistpath.md) |  | boolean \| undefined | _(Optional)_ The [Output.cleanDistPath](./rspeedy.output.cleandistpath.md) option determines whether all files in the output directory (default: <code>dist</code>) are removed before the build starts. |
-|  [copy?](./rspeedy.output.copy.md) |  | Rspack.CopyRspackPluginOptions \| Rspack.CopyRspackPluginOptions\['patterns'\] \| undefined | _(Optional)_ The [Output.copy](./rspeedy.output.copy.md) option is used for copying files to the dist directory. |
-|  [cssModules?](./rspeedy.output.cssmodules.md) |  | [CssModules](./rspeedy.cssmodules.md) \| undefined | _(Optional)_ The [CssModules](./rspeedy.cssmodules.md) option is used for the customization of CSS Modules configurations. |
-|  [dataUriLimit?](./rspeedy.output.dataurilimit.md) |  | number \| DataUriLimit \| undefined | _(Optional)_ The [Output.dataUriLimit](./rspeedy.output.dataurilimit.md) option is used to set the size threshold to inline static assets such as images and fonts. |
-|  [distPath?](./rspeedy.output.distpath.md) |  | [DistPath](./rspeedy.distpath.md) \| undefined | _(Optional)_ Set the directory of the dist files. |
-|  [filename?](./rspeedy.output.filename.md) |  | string \| [Filename](./rspeedy.filename.md) \| undefined | _(Optional)_ The [Filename](./rspeedy.filename.md) determines the name of the JavaScript bundle file to be output. These bundles will be written to the directory specified by output.path. |
-|  [filenameHash?](./rspeedy.output.filenamehash.md) |  | boolean \| string \| undefined | _(Optional)_ The [Output.filenameHash](./rspeedy.output.filenamehash.md) option controls whether to add a hash value to the filename after the production build. |
-|  [inlineScripts?](./rspeedy.output.inlinescripts.md) |  | InlineChunkConfig \| undefined | _(Optional)_ The [Output.inlineScripts](./rspeedy.output.inlinescripts.md) option controls whether to inline scripts into Lynx bundle (<code>.lynx.bundle</code>). |
-|  [legalComments?](./rspeedy.output.legalcomments.md) |  | 'none' \| 'inline' \| 'linked' \| undefined | _(Optional)_ The [Output.legalComments](./rspeedy.output.legalcomments.md) controls how to handle the legal comment. |
-|  [minify?](./rspeedy.output.minify.md) |  | [Minify](./rspeedy.minify.md) \| boolean \| undefined | _(Optional)_ The [Minify](./rspeedy.minify.md) configures whether to enable code minification in the production build, or to configure minimizer options. |
-|  [sourceMap?](./rspeedy.output.sourcemap.md) |  | boolean \| [SourceMap](./rspeedy.sourcemap.md) \| undefined | _(Optional)_ The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate source-map for outputs. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[assetPrefix?](./rspeedy.output.assetprefix.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.assetPrefix](./rspeedy.output.assetprefix.md) is used to set the URL prefix for static assets.
+
+
+</td></tr>
+<tr><td>
+
+[cleanDistPath?](./rspeedy.output.cleandistpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.cleanDistPath](./rspeedy.output.cleandistpath.md) option determines whether all files in the output directory (default: `dist`<!-- -->) are removed before the build starts.
+
+
+</td></tr>
+<tr><td>
+
+[copy?](./rspeedy.output.copy.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.CopyRspackPluginOptions \| Rspack.CopyRspackPluginOptions\['patterns'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.copy](./rspeedy.output.copy.md) option is used for copying files to the dist directory.
+
+
+</td></tr>
+<tr><td>
+
+[cssModules?](./rspeedy.output.cssmodules.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[CssModules](./rspeedy.cssmodules.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [CssModules](./rspeedy.cssmodules.md) option is used for the customization of CSS Modules configurations.
+
+
+</td></tr>
+<tr><td>
+
+[dataUriLimit?](./rspeedy.output.dataurilimit.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number \| DataUriLimit \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.dataUriLimit](./rspeedy.output.dataurilimit.md) option is used to set the size threshold to inline static assets such as images and fonts.
+
+
+</td></tr>
+<tr><td>
+
+[distPath?](./rspeedy.output.distpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[DistPath](./rspeedy.distpath.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ Set the directory of the dist files.
+
+
+</td></tr>
+<tr><td>
+
+[filename?](./rspeedy.output.filename.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| [Filename](./rspeedy.filename.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Filename](./rspeedy.filename.md) determines the name of the JavaScript bundle file to be output. These bundles will be written to the directory specified by output.path.
+
+
+</td></tr>
+<tr><td>
+
+[filenameHash?](./rspeedy.output.filenamehash.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.filenameHash](./rspeedy.output.filenamehash.md) option controls whether to add a hash value to the filename after the production build.
+
+
+</td></tr>
+<tr><td>
+
+[inlineScripts?](./rspeedy.output.inlinescripts.md)
+
+
+</td><td>
+
+
+</td><td>
+
+InlineChunkConfig \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.inlineScripts](./rspeedy.output.inlinescripts.md) option controls whether to inline scripts into Lynx bundle (`.lynx.bundle`<!-- -->).
+
+
+</td></tr>
+<tr><td>
+
+[legalComments?](./rspeedy.output.legalcomments.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'none' \| 'inline' \| 'linked' \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Output.legalComments](./rspeedy.output.legalcomments.md) controls how to handle the legal comment.
+
+
+</td></tr>
+<tr><td>
+
+[minify?](./rspeedy.output.minify.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[Minify](./rspeedy.minify.md) \| boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [Minify](./rspeedy.minify.md) configures whether to enable code minification in the production build, or to configure minimizer options.
+
+
+</td></tr>
+<tr><td>
+
+[sourceMap?](./rspeedy.output.sourcemap.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| [SourceMap](./rspeedy.sourcemap.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [SourceMap](./rspeedy.sourcemap.md) configures whether and how to generate source-map for outputs.
+
+
+</td></tr>
+</tbody></table>
 

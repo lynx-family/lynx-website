@@ -48,10 +48,10 @@ See [Rsbuild - Plugin Hooks](https://rsbuild.dev/plugins/dev/hooks) for more det
 
 ### Rspack Plugin API
 
-See [Rspack - Compiler Hooks](https://rspack.dev/api/plugin-api/compiler-hooks) and [Rspack - Compilation Hooks](https://rspack.dev/api/plugin-api/compilation-hooks) for more details.
+See [Rspack - Compiler Hooks](https://rspack.rs/api/plugin-api/compiler-hooks) and [Rspack - Compilation Hooks](https://rspack.rs/api/plugin-api/compilation-hooks) for more details.
 
 [`tools.rspack.plugins`]: /api/rspeedy/rspeedy.tools.rspack#example-4
-[BannerPlugin]: https://rspack.dev/plugins/webpack/banner-plugin
-[DefinePlugin]: https://rspack.dev/plugins/webpack/define-plugin
-[EnvironmentPlugin]: https://rspack.dev/plugins/webpack/environment-plugin
-[ProvidePlugin]: https://rspack.dev/plugins/webpack/provide-plugin
+[BannerPlugin]: https://rspack.rs/plugins/webpack/banner-plugin
+[DefinePlugin]: https://rspack.rs/plugins/webpack/define-plugin
+[EnvironmentPlugin]: https://rspack.rs/plugins/webpack/environment-plugin
+[ProvidePlugin]: https://rspack.rs/plugins/webpack/provide-plugin

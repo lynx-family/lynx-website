@@ -12,9 +12,13 @@ Specify the port that the Rspeedy Server listens to.
 port?: number | undefined;
 ```
 
+## Default Value
+
+Rsbuild defaults this option to `3000`<!-- -->.
+
 ## Remarks
 
-By default, the server listens on port `3000` and automatically increments the port number when the port is occupied.
+By default, the server automatically increments the port number when the configured port is occupied.
 
 ## Example
 

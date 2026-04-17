@@ -1,0 +1,190 @@
+---
+tag: 'XElement'
+api: elements/scroll-coordinator
+---
+
+import {
+  AndroidOnly,
+  Deprecated,
+  Go,
+  IOSOnly,
+  Required,
+  APITable,
+} from '@lynx';
+
+# `<scroll-coordinator>`
+
+`<scroll-coordinator>` is a nested scroll coordination component for implementing coordinated scrolling between multiple scrollable containers. It is commonly used in sticky-header page layouts found in mainstream apps, and is typically combined with `<viewpager>` and `<list>` to build composite scenarios involving nested scrolling and tabbed paging.
+
+:::info
+`<scroll-coordinator>` coordinates nested structures through `<scroll-coordinator-header>` and `<scroll-coordinator-slot>`, achieving the following behavior:
+
+- When the outer layer scrolls to the bottom, scroll control is automatically handed over to the inner layer
+- When the inner layer scrolls to the top, scroll control is automatically returned to the outer layer
+- The handover of scroll control is smooth and seamless
+
+```tsx
+// ❌ Not supported: directly nesting scrollable containers
+<scroll-view id="outer">
+  <list id="inner" />
+</scroll-view>
+
+// ✅ Supported: using scroll-coordinator for coordinated nested scrolling
+<scroll-coordinator>
+  <scroll-coordinator-header id="outer" />
+  <scroll-coordinator-slot>
+    <list id="inner" />
+  </scroll-coordinator-slot>
+</scroll-coordinator>
+```
+
+:::
+
+## Usage
+
+The core layout requirement of `<scroll-coordinator>` is to control via CSS: **`scroll-coordinator` height == `scroll-coordinator-slot` height + toolbar height**.
+
+### Layout Guidelines
+
+- `<scroll-coordinator>`: vertical flex layout, **`display: flex; flex-direction: column;`**
+- `<scroll-coordinator-header>`: out of normal flow, **`position: absolute;`**
+- `<scroll-coordinator-toolbar>`: participates in layout, **`display: flex;`**
+- `<scroll-coordinator-slot>`: fills remaining space, **`flex: 1;`**
+
+```css
+.coordinator {
+  width: 100%;
+  height: 100%
+  display: flex;
+  flex-direction: column;
+}
+
+.coordinator-toolbar {
+  display: flex;
+  width: 100%;
+}
+
+.coordinator-header {
+  position: absolute;
+  width: 100%;
+}
+
+.coordinator-slot {
+  width: 100%;
+  flex-direction: column;
+  flex: 1;
+}
+```
+
+### Vertical Coordinated Scrolling
+
+> A `<list>` must be placed inside `<scroll-coordinator-slot>` to enable vertical coordinated scrolling
+>
+> ```tsx
+> <scroll-coordinator class="coordinator">
+>   <scroll-coordinator-header class="coordinator-header">
+>     <Header />
+>   </scroll-coordinator-header>
+>   <scroll-coordinator-slot class="coordinator-slot">
+>     <list />
+>   </scroll-coordinator-slot>
+> </scroll-coordinator>
+> ```
+
+<Go
+  example="scroll-coordinator"
+  defaultFile="src/base/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/scroll-coordinator-base.gif"
+/>
+
+### Horizontal Paged Scrolling
+
+> `<scroll-coordinator-slot>` can detect `<viewpager>` page switch events and re-bind the nested scroll relationship with the `<list>` inside.
+>
+> ```tsx
+> <scroll-coordinator class="coordinator">
+>   <scroll-coordinator-header class="coordinator-header">
+>     <Header />
+>   </scroll-coordinator-header>
+>   <scroll-coordinator-slot class="coordinator-slot">
+>     <Tabs />
+>     <viewpager>
+>       <viewpager-item>
+>         <list />
+>       </viewpager-item>
+>     </viewpager>
+>   </scroll-coordinator-slot>
+> </scroll-coordinator>
+> ```
+
+<Go
+  example="scroll-coordinator"
+  defaultFile="src/viewpager/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/scroll-coordinator-viewpager.gif"
+/>
+
+### Full-Page Pull-to-Refresh
+
+> Wrap `<scroll-coordinator>` with `<refresh>` and set `refresh-mode="fold" bounces={true}` to enable full-page pull-to-refresh
+>
+> ```tsx
+> <refresh>
+>   <refresh-header>
+>     <Loading />
+>   </refresh-header>
+>   <scroll-coordinator class="coordinator" bounces={true} refresh-mode="fold">
+>     <scroll-coordinator-header class="coordinator-header">
+>       <Header />
+>     </scroll-coordinator-header>
+>     <scroll-coordinator-slot class="coordinator-slot">
+>       <viewpager>
+>         <viewpager-item>
+>           <list />
+>         </viewpager-item>
+>       </viewpager>
+>     </scroll-coordinator-slot>
+>   </scroll-coordinator>
+> </refresh>
+> ```
+
+<Go
+  example="scroll-coordinator"
+  defaultFile="src/refresh/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/scroll-coordinator-refresh.gif"
+/>
+
+### Per-Tab Pull-to-Refresh
+
+> Wrap the `<list>` inside `<scroll-coordinator-slot>` with `<refresh>` and set `refresh-mode="page" bounces={false}` to enable per-tab pull-to-refresh
+>
+> ```tsx
+> <scroll-coordinator class="coordinator" bounces={false} refresh-mode="page">
+>   <scroll-coordinator-header class="coordinator-header">
+>     <Header />
+>   </scroll-coordinator-header>
+>   <scroll-coordinator-slot class="coordinator-slot">
+>     <viewpager>
+>       <viewpager-item>
+>         <refresh>
+>           <refresh-header />
+>           <list />
+>         </refresh>
+>       </viewpager-item>
+>     </viewpager>
+>   </scroll-coordinator-slot>
+> </scroll-coordinator>
+> ```
+
+<Go
+  example="scroll-coordinator"
+  defaultFile="src/refresh-inner/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/scroll-coordinator-refresh-inner.gif"
+/>
+
+import APIReference from './scroll-coordinator-API.mdx';
+
+<APIReference />
+
+## Compatibility
+
+<APITable />

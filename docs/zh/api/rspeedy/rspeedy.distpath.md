@@ -19,7 +19,45 @@ More options can be found at [Rsbuild - distPath](https://rsbuild.dev/config/out
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [intermediate?](./rspeedy.distpath.intermediate.md) |  | string \| undefined | _(Optional)_ The output directory of the intermediate files. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[intermediate?](./rspeedy.distpath.intermediate.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The output directory of the intermediate files.
+
+
+</td></tr>
+</tbody></table>
 

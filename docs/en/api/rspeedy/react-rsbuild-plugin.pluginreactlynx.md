@@ -14,9 +14,39 @@ export declare function pluginReactLynx(userOptions?: PluginReactLynxOptions): R
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  userOptions | [PluginReactLynxOptions](./react-rsbuild-plugin.pluginreactlynxoptions.md) | _(Optional)_ |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+userOptions
+
+
+</td><td>
+
+[PluginReactLynxOptions](./react-rsbuild-plugin.pluginreactlynxoptions.md)
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

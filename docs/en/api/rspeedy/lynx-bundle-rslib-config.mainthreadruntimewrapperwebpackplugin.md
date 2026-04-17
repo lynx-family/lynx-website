@@ -4,22 +4,77 @@
 
 ## MainThreadRuntimeWrapperWebpackPlugin class
 
-Webpack plugin that wraps main-thread runtime modules for external bundles.
+The main-thread runtime wrapper for external bundle.
 
 **Signature:**
 
 ```typescript
-export declare class MainThreadRuntimeWrapperWebpackPlugin
+export declare class MainThreadRuntimeWrapperWebpackPlugin 
 ```
 
 ## Constructors
 
-|  Constructor | Description |
-|  --- | --- |
-|  `new MainThreadRuntimeWrapperWebpackPlugin(options?)` | Constructs a new instance of `MainThreadRuntimeWrapperWebpackPlugin`. |
+<table><thead><tr><th>
+
+Constructor
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[(constructor)(options)](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin._constructor_.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Constructs a new instance of the `MainThreadRuntimeWrapperWebpackPlugin` class
+
+
+</td></tr>
+</tbody></table>
 
 ## Methods
 
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  `apply(compiler)` | `void` | Apply the plugin to the compiler. |
+<table><thead><tr><th>
+
+Method
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[apply(compiler)](./lynx-bundle-rslib-config.mainthreadruntimewrapperwebpackplugin.apply.md)
+
+
+</td><td>
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
+

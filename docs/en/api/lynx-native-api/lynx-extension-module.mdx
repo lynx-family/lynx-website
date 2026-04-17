@@ -1,0 +1,167 @@
+---
+api: lynx-native-api/lynx-extension-module
+---
+
+import { APISummary, APITable, CodeFold } from '@lynx';
+
+# LynxExtensionModule
+
+<APISummary />
+
+`LynxExtensionModule` is the Desktop-only extension entry in the public embedder API. It lets the host hook into `LynxView` and BTS runtime lifecycle, expose NAPI exports, schedule BTS tasks, observe VSync, and register native views.
+
+:::info
+
+This API is Desktop only. It is supported on macOS and Windows, and is not part of the Android, iOS, Harmony, or Web native API surfaces.
+
+:::
+
+## Quick Access
+
+Register an extension module globally through `LynxEnv::RegisterExtensionModule(...)`:
+
+<CodeFold toggle>
+
+```cpp title="register_extension_module.cc"
+#include "lynx_env.h"
+#include "lynx_extension_module.h"
+#include "lynx_view.h"
+
+class DemoExtensionModule : public lynx::pub::LynxExtensionModule {
+ public:
+  void OnRuntimeAttach(
+      Napi::Env env,
+      std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer) override {
+    vsync_observer_ = std::move(vsync_observer);
+  }
+
+ private:
+  std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer_;
+};
+
+void RegisterExtensionModule() {
+  auto& env = lynx::pub::LynxEnv::GetInstance();
+  env.RegisterExtensionModule("DemoExtensionModule",
+                              &CreateDemoExtensionModule,
+                              false,
+                              nullptr);
+}
+```
+
+</CodeFold>
+
+## Lifecycle
+
+`LynxExtensionModule` exposes lifecycle callbacks across the UI thread and BTS thread:
+
+- `OnLynxViewCreate(...)`: called on the UI thread when a `LynxView` instance is created.
+- `OnLynxViewDestroy()`: called on the UI thread before the `LynxView` instance is destroyed.
+- `OnRuntimeInit()`: called on the UI thread when the BTS runtime instance is created.
+- `OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`: called on the BTS thread when the runtime is attached.
+- `OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url)`: called on the BTS thread when the runtime is ready.
+- `OnRuntimeDetach()`: called on the BTS thread when the runtime is detached.
+- `OnEnterForeground()`: called on the UI thread when the application enters foreground.
+- `OnEnterBackground()`: called on the UI thread when the application enters background.
+- `Destroy()`: called on the BTS thread before the extension module instance is released.
+
+## Runtime Utilities
+
+`LynxExtensionModule` also exposes Desktop runtime helpers:
+
+- `PostTaskToRuntime(...)`: posts work to the BTS thread.
+- `IsRunningTasksOnBTSThread()`: checks whether the current execution is already on the BTS thread.
+- `SetNapiModuleCreator(...)`: installs the NAPI exports creator for the module.
+- `SetNapiInstanceData(...)` / `GetNapiInstanceData(...)`: stores and reads keyed NAPI instance data.
+- `Retain()` / `Release()`: adjusts the lifetime of the module instance.
+
+`VSyncObserver`, received in `OnRuntimeAttach(...)`, provides:
+
+- `RequestAnimationFrame(...)`
+- `RequestBeforeAnimationFrame(...)`
+- `RegisterAfterAnimationFrameListener(...)`
+
+## Native View as Extension Capability
+
+Native view capability belongs to the Desktop extension surface rather than a separate native API owner.
+
+Use `LynxNativeView` when you need to embed a platform view or external texture inside the Lynx view tree. The C++ base class exposes these callbacks:
+
+- `OnCreate()`
+- `OnAttach()`
+- `OnDetach()`
+- `OnDestroy()`
+- `OnLayoutChanged(...)`
+- `OnPropertiesChanged(...)`
+- `OnMotionEvent(...)`
+- `OnFocusChanged(...)`
+- `OnMethodInvoked(...)`
+
+It also exposes helper methods such as:
+
+- `TriggerEvent(...)`
+- `RequestFocus()`
+- `MarkDirty()`
+- `PresentSurface(...)`
+- `AcquireSurface(...)`
+- `SwapBack()`
+
+### Register Native View
+
+You can register a native view in three common places:
+
+- Globally through `LynxView::Builder::RegisterNativeView<T>(...)`
+- Per view through `LynxView::RegisterNativeView<T>(...)`
+- Inside an extension module during `OnLynxViewCreate(...)`
+
+The extension-module pattern is useful when a native view should always be installed together with the extension itself. In practice, this registration is usually performed from `OnLynxViewCreate(...)`:
+
+<CodeFold toggle>
+
+```cpp title="cef_extension_module.cc"
+#include "lynx_view.h"
+
+class CEFExtensionModule : public lynx::pub::LynxExtensionModule {
+ public:
+  void InstallNativeView(lynx::pub::LynxView& view) {
+    view.RegisterNativeView<CEFWebView>("x-webview");
+  }
+};
+```
+
+</CodeFold>
+
+A standalone native view implementation typically subclasses `LynxNativeView`:
+
+<CodeFold toggle>
+
+```cpp title="fake_view.h"
+#include "lynx_native_view.h"
+
+class FakeView : public lynx::pub::LynxNativeView {
+ public:
+  bool OnCreate() override { return true; }
+
+  void OnLayoutChanged(float left,
+                       float top,
+                       float width,
+                       float height,
+                       float pixel_ratio) override {
+    lynx::pub::LynxValue detail(lynx::pub::LynxValue::kCreateAsMapTag);
+    detail.SetProperty("width", lynx::pub::LynxValue(width));
+    detail.SetProperty("height", lynx::pub::LynxValue(height));
+    TriggerEvent("resize", std::move(detail));
+  }
+
+  void OnMethodInvoked(const char* method,
+                       const lynx::pub::LynxValue& attrs,
+                       std::function<void(int, lynx::pub::LynxValue&&)> callback) override {
+    callback(kSuccess, lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+  }
+};
+```
+
+</CodeFold>
+
+## Compatibility
+
+<APITable />

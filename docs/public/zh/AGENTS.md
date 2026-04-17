@@ -158,6 +158,7 @@
 - **开发调试**：`pnpm dev` 启动 Rspeedy Dev Server，终端输出二维码，使用 LynxExample App（iOS/Android/Harmony 模拟器）扫描即可热更新预览。（参考：[Quick Start](/zh/rspeedy/start/quick-start.md)）
 - **DevTool 调试**：连接设备后使用 Lynx DevTool 桌面端调试 JS、查看节点、性能记录。（参考：[Lynx DevTool](/zh/guide/devtool.md)）
 - **构建产物**：Rspeedy 输出的 Bundle 包含后台线程脚本（文本）、主线程字节码、样式等资源；需要 `DEBUG=rspeedy` 环境变量以输出中间产物（组成Lynx Bundle 的后台线程脚本（文本）、主线程字节码、样式、SourceMap 等）到 `dist/.rspeedy` 目录，否则只会输出最终的 Lynx Bundle 文件。（参考：[Output Files](/zh/rspeedy/output.md)）
+- **文档资源引用**：在 MDX 中引用本地图片或文件时，优先使用 `@assets` alias（例如 `import demoImg from '@assets/foo.png?url'`），再传给 `<Go img={demoImg} />` 这类组件。不要在 MDX 的组件参数里直接硬编码 `/assets/...` 路径。
 
 ## 16. 与 Web 的关键差异清单
 

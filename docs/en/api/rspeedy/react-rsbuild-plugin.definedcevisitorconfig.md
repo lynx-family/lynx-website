@@ -14,7 +14,45 @@ export interface DefineDceVisitorConfig
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [define](./react-rsbuild-plugin.definedcevisitorconfig.define.md) |  | Record&lt;string, string&gt; | Replaces variables in your code with other values or expressions at compile time. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[define](./react-rsbuild-plugin.definedcevisitorconfig.define.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, string&gt;
+
+
+</td><td>
+
+Replaces variables in your code with other values or expressions at compile time.
+
+
+</td></tr>
+</tbody></table>
 

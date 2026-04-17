@@ -12,6 +12,10 @@ Whether to remove `console.[methodName]` in production build.
 removeConsole?: boolean | ConsoleType[] | undefined;
 ```
 
+## Default Value
+
+false
+
 ## Example 1
 
 - Remove all `console` methods

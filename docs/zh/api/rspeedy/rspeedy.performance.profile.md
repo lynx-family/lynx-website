@@ -4,7 +4,7 @@
 
 ## Performance.profile property
 
-Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.dev/config/other-options#profile) config of Rspack.
+Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.rs/config/other-options#profile) config of Rspack.
 
 **Signature:**
 
@@ -12,9 +12,9 @@ Whether capture timing information in the build time and the runtime, the same a
 profile?: boolean | undefined;
 ```
 
-## Remarks
+## Default Value
 
-This option would be `true` when `DEBUG` environment variable contains `rspeedy`<!-- -->.
+Rspeedy sets this to `true` when `DEBUG` contains `rspeedy`<!-- -->; otherwise it leaves the option unset.
 
 ## Example
 
@@ -33,4 +33,3 @@ export default defineConfig({
   performance: { profile: true },
 })
 ```
-

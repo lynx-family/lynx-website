@@ -12,6 +12,10 @@ Set the directory of the dist files.
 distPath?: DistPath | undefined;
 ```
 
+## Default Value
+
+Uses Rsbuild's default distPath configuration with `root: 'dist'`<!-- -->.
+
 ## Remarks
 
 More options can be found at [Rsbuild - distPath](https://rsbuild.dev/config/output/dist-path)<!-- -->.

@@ -12,6 +12,10 @@ Enables/disables ES modules named export for locals.
 namedExport?: boolean | undefined;
 ```
 
+## Default Value
+
+false
+
 ## Example
 
 - `style.css`

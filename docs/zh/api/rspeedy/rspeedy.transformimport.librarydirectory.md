@@ -12,9 +12,9 @@ Used to splice the transformed path, the splicing rule is `${libraryName}/${libr
 libraryDirectory?: string | undefined;
 ```
 
-## Remarks
+## Default Value
 
-The default value is `'lib'`<!-- -->.
+`'lib'`
 
 ## Example
 
