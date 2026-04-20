@@ -16,6 +16,7 @@ import {
 } from '@shikijs/transformers';
 import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
+import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import {
@@ -198,6 +199,10 @@ export default defineConfig({
   ],
   markdown: {
     defaultWrapCode: false,
+    // Replace "{versionJson.X}" placeholders inside fenced/inline code.
+    // MDX does not evaluate JS expressions inside code fences, so without this
+    // users would see the raw placeholder text in the rendered output.
+    remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
       checkDeadLinks: {
         excludes: ['/guide/spec.html?ts=1743416098203#element%E2%91%A0'],
@@ -214,6 +219,32 @@ export default defineConfig({
   },
   llms: true,
 });
+
+function remarkReplaceVersionJsonPlaceholders() {
+  const replacements: Array<[string, string]> = [
+    ['{versionJson.LYNX_VERSION}', String(versionJson.LYNX_VERSION ?? '')],
+    ['{versionJson.PRIMJS_VERSION}', String(versionJson.PRIMJS_VERSION ?? '')],
+  ];
+
+  const applyReplacements = (input: string) => {
+    let out = input;
+    for (const [from, to] of replacements) {
+      if (from && to) out = out.split(from).join(to);
+    }
+    return out;
+  };
+
+  return (tree: unknown) => {
+    visit(tree as any, (node: any) => {
+      if (
+        (node?.type === 'code' || node?.type === 'inlineCode') &&
+        typeof node.value === 'string'
+      ) {
+        node.value = applyReplacements(node.value);
+      }
+    });
+  };
+}
 
 function mapNonGuideSharedSectionsToGuide(
   lang: string,
