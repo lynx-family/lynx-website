@@ -1,6 +1,447 @@
-import { UIApiTable } from '@lynx-ui/index';
+import { UIApiTable } from "@lynx-ui/index";
+  
+### SheetRoot 
+    The root component of the Sheet, containing all of its child components.
+  
+<UIApiTable source={[
+  {
+    "name": "children",
+    "type": "ReactNode",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "children"
+      }
+    ],
+    "summary_zh": "子元素",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "ReactNode"
+        }
+      ]
+    }
+  },
+  {
+    "name": "claimedGestureAngles",
+    "type": "undefined[]",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Angle ranges (in degrees) where gestures should be claimed by the Sheet.\nEach entry is [minAngle, maxAngle]. Gestures within these angle ranges\nwill trigger sheet movement, while gestures outside these ranges are passed through.\nsee https://lynxjs.org/api/elements/built-in/view#consume-slide-event for more"
+      }
+    ],
+    "summary_zh": "Sheet 声明处理的手势角度范围（度数）。每个条目为 [最小角度, 最大角度]。在这些角度范围内的手势会触发 Sheet 移动，范围外的手势会传递给子组件。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "className",
+    "type": "string",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "className"
+      }
+    ],
+    "summary_zh": "类名",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "defaultShow",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Whether the sheet should be shown by default. Use this for uncontrolled mode."
+      }
+    ],
+    "summary_zh": "Sheet 是否默认显示。使用此属性表示 Sheet 处于非受控模式。",
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "dismissThreshold",
+    "type": "number",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "The threshold to dismiss the Sheet."
+      }
+    ],
+    "summary_zh": "Sheet 关闭的阈值。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "dragDisabled",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Whether to disable dragging on the Sheet."
+      }
+    ],
+    "summary_zh": "是否禁用 Sheet 的拖拽。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "enableDragToClose",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Whether to enable dragging to close the Sheet.\nIf true, dragging down from the lowest snap point will move the sheet linearly and allow dismissal.\nIf false, dragging down will trigger rubber band effect and snap back."
+      }
+    ],
+    "summary_zh": "是否允许拖拽关闭 Sheet。\n如果为 true，从最低吸附点向下拉动将线性移动并允许关闭。\n如果为 false，向下拉动将触发橡皮筋效果并回弹。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "forceMount",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Mount the sheet and render its content even when not shown. The sheet remains in closed state."
+      }
+    ],
+    "summary_zh": "即使 Sheet 未显示也挂载并渲染内容。Sheet 仍保持关闭状态。",
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "handleOnly",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Whether to restrict dragging to the handle only."
+      }
+    ],
+    "summary_zh": "是否仅允许通过手柄拖拽。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "initialSnap",
+    "type": "number",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "The initial snap point index."
+      }
+    ],
+    "summary_zh": "初始吸附点索引。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onClose",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Called when the sheet has fully closed and any exit animation has finished."
+      }
+    ],
+    "summary_zh": "当 Sheet 完全关闭且退出动画结束时触发。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onOpen",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Called when the sheet has fully opened and any enter animation has finished."
+      }
+    ],
+    "summary_zh": "当 Sheet 完全打开且入场动画结束时触发。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onShowChange",
+    "type": "(open: boolean) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Called when the sheet's visibility is about to change (e.g., backdrop click, swipe dismiss, close button).\nIn controlled mode, use this to update your state. In uncontrolled mode, this is optional."
+      }
+    ],
+    "summary_zh": "当 Sheet 可见性即将改变时触发（例如点击背景、滑动关闭、关闭按钮）。\n在受控模式下，使用此回调更新状态。在非受控模式下，此回调可选。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onSnapChange",
+    "type": "(index: number, value: number) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Callback when the snap point changes.\n"
+      },
+      {
+        "kind": "code",
+        "text": "`value`"
+      },
+      {
+        "kind": "text",
+        "text": " is the resolved snap point in pixels."
+      }
+    ],
+    "summary_zh": "吸附点变化时的回调。\nvalue 为换算后的像素值。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "rubberBand",
+    "type": "number | boolean | [object Object]",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "The rubber band effect configuration.\nIf true, enables default rubber band effect (coefficient 0.5).\nIf false, disables rubber band effect.\nIf number, enables rubber band effect with the specified coefficient.\nIf object, allows specifying coefficient and max distance."
+      }
+    ],
+    "summary_zh": "橡皮筋效果配置。\n如果为 true，启用默认橡皮筋效果（系数 0.5）。\n如果为 false，禁用橡皮筋效果。\n如果为数字，启用指定系数的橡皮筋效果。\n如果为对象，允许指定系数和最大距离。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "screenHeight",
+    "type": "number",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "The height of the Sheet container (screen height)."
+      }
+    ],
+    "summary_zh": "Sheet 容器的高度（屏幕高度）。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "show",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Whether to show the sheet. If this property is set, the sheet will be in controlled mode,\nmeaning the defaultShow property will have no effect. You must control the visibility\nby updating this prop based on user interactions."
+      }
+    ],
+    "summary_zh": "是否显示 Sheet。如果设置此属性，Sheet 将处于受控模式，defaultShow 属性将不生效。\n您必须根据用户交互更新此属性来控制可见性。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "snapPoints",
+    "type": "undefined[]",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "The snap points of the Sheet. Can be pixel numbers, percentages, or 'fit'.\n- Numbers are treated as pixel values\n- Percentages (e.g., '50%') are relative to screen height\n- 'fit' dynamically resolves to the measured content height\nThe index order follows the order of this array."
+      }
+    ],
+    "summary_zh": "Sheet 的吸附点。可以是像素数值、百分比或 'fit'。\n- 数字被视为像素值\n- 百分比（例如 '50%'）相对于屏幕高度\n- 'fit' 动态解析为测量的内容高度\n索引顺序与该数组顺序一致。",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "style",
+    "type": "CSSProperties",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "style"
+      }
+    ],
+    "summary_zh": "样式",
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  }
+]}/>
 
-## SheetViewProps
+### SheetBackdrop
+
+    The backdrop mask of the Sheet.
+
+<UIApiTable
+  source={[
+    {
+      name: 'children',
+      type: 'ReactNode',
+      summary: [
+        {
+          kind: 'text',
+          text: 'children',
+        },
+      ],
+      summary_zh: '子元素',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'className',
+      type: 'string',
+      summary: [
+        {
+          kind: 'text',
+          text: 'className',
+        },
+      ],
+      summary_zh: '类名',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'clickToClose',
+      type: 'boolean',
+      summary: [
+        {
+          kind: 'text',
+          text: 'Whether to close the Sheet when the overlay is clicked.',
+        },
+      ],
+      summary_zh: '点击遮罩时是否关闭 Sheet。',
+      defaultValue: 'true',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'onClick',
+      type: '() => void',
+      summary: [
+        {
+          kind: 'text',
+          text: 'Triggered when the backdrop is clicked.',
+        },
+      ],
+      summary_zh: '点击背景时触发。',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+    {
+      name: 'style',
+      type: 'CSSProperties',
+      summary: [
+        {
+          kind: 'text',
+          text: 'style',
+        },
+      ],
+      summary_zh: '样式',
+      defaultValue: '',
+      isOption: true,
+      isSupportIOS: true,
+      isSupportAndroid: true,
+      isSupportHarmony: true,
+      docTypeFallback: null,
+    },
+  ]}
+/>
+
+### SheetView
+
+    The view container of Sheet. Can be x-overlay-ng or view. Controls the z-index of the dialog.
 
 <UIApiTable
   source={[
@@ -136,400 +577,9 @@ import { UIApiTable } from '@lynx-ui/index';
   ]}
 />
 
-### SheetRootProps
+### SheetContent
 
-<UIApiTable
-  source={[
-    {
-      name: 'children',
-      type: 'ReactNode',
-      summary: [
-        {
-          kind: 'text',
-          text: 'children',
-        },
-      ],
-      summary_zh: '子元素',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: {
-        tag: '@docTypeFallback',
-        content: [
-          {
-            kind: 'text',
-            text: 'ReactNode',
-          },
-        ],
-      },
-    },
-    {
-      name: 'claimedGestureAngles',
-      type: 'undefined[]',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Angle ranges (in degrees) where gestures should be claimed by the Sheet.\nEach entry is [minAngle, maxAngle]. Gestures within these angle ranges\nwill trigger sheet movement, while gestures outside these ranges are passed through.\nsee https://lynxjs.org/api/elements/built-in/view#consume-slide-event for more',
-        },
-      ],
-      summary_zh:
-        'Sheet 声明处理的手势角度范围（度数）。每个条目为 [最小角度, 最大角度]。在这些角度范围内的手势会触发 Sheet 移动，范围外的手势会传递给子组件。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'className',
-      type: 'string',
-      summary: [
-        {
-          kind: 'text',
-          text: 'className',
-        },
-      ],
-      summary_zh: '类名',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'defaultShow',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Whether the sheet should be shown by default. Use this for uncontrolled mode.',
-        },
-      ],
-      summary_zh: 'Sheet 是否默认显示。使用此属性表示 Sheet 处于非受控模式。',
-      defaultValue: 'false',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'dismissThreshold',
-      type: 'number',
-      summary: [
-        {
-          kind: 'text',
-          text: 'The threshold to dismiss the Sheet.',
-        },
-      ],
-      summary_zh: 'Sheet 关闭的阈值。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'dragDisabled',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Whether to disable dragging on the Sheet.',
-        },
-      ],
-      summary_zh: '是否禁用 Sheet 的拖拽。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'enableDragToClose',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Whether to enable dragging to close the Sheet.\nIf true, dragging down from the lowest snap point will move the sheet linearly and allow dismissal.\nIf false, dragging down will trigger rubber band effect and snap back.',
-        },
-      ],
-      summary_zh:
-        '是否允许拖拽关闭 Sheet。\n如果为 true，从最低吸附点向下拉动将线性移动并允许关闭。\n如果为 false，向下拉动将触发橡皮筋效果并回弹。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'forceMount',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Mount the sheet and render its content even when not shown. The sheet remains in closed state.',
-        },
-      ],
-      summary_zh: '即使 Sheet 未显示也挂载并渲染内容。Sheet 仍保持关闭状态。',
-      defaultValue: 'false',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'handleOnly',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Whether to restrict dragging to the handle only.',
-        },
-      ],
-      summary_zh: '是否仅允许通过手柄拖拽。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'initialSnap',
-      type: 'number',
-      summary: [
-        {
-          kind: 'text',
-          text: 'The initial snap point index.',
-        },
-      ],
-      summary_zh: '初始吸附点索引。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'onClose',
-      type: '() => void',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Called when the sheet has fully closed and any exit animation has finished.',
-        },
-      ],
-      summary_zh: '当 Sheet 完全关闭且退出动画结束时触发。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'onOpen',
-      type: '() => void',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Called when the sheet has fully opened and any enter animation has finished.',
-        },
-      ],
-      summary_zh: '当 Sheet 完全打开且入场动画结束时触发。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'onShowChange',
-      type: '(open: boolean) => void',
-      summary: [
-        {
-          kind: 'text',
-          text: "Called when the sheet's visibility is about to change (e.g., backdrop click, swipe dismiss, close button).\nIn controlled mode, use this to update your state. In uncontrolled mode, this is optional.",
-        },
-      ],
-      summary_zh:
-        '当 Sheet 可见性即将改变时触发（例如点击背景、滑动关闭、关闭按钮）。\n在受控模式下，使用此回调更新状态。在非受控模式下，此回调可选。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'onSnapChange',
-      type: '(index: number, value: number) => void',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Callback when the snap point changes.\n',
-        },
-        {
-          kind: 'code',
-          text: '`value`',
-        },
-        {
-          kind: 'text',
-          text: ' is the resolved snap point in pixels.',
-        },
-      ],
-      summary_zh: '吸附点变化时的回调。\nvalue 为换算后的像素值。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'rubberBand',
-      type: 'number | boolean | [object Object]',
-      summary: [
-        {
-          kind: 'text',
-          text: 'The rubber band effect configuration.\nIf true, enables default rubber band effect (coefficient 0.5).\nIf false, disables rubber band effect.\nIf number, enables rubber band effect with the specified coefficient.\nIf object, allows specifying coefficient and max distance.',
-        },
-      ],
-      summary_zh:
-        '橡皮筋效果配置。\n如果为 true，启用默认橡皮筋效果（系数 0.5）。\n如果为 false，禁用橡皮筋效果。\n如果为数字，启用指定系数的橡皮筋效果。\n如果为对象，允许指定系数和最大距离。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'screenHeight',
-      type: 'number',
-      summary: [
-        {
-          kind: 'text',
-          text: 'The height of the Sheet container (screen height).',
-        },
-      ],
-      summary_zh: 'Sheet 容器的高度（屏幕高度）。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'show',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Whether to show the sheet. If this property is set, the sheet will be in controlled mode,\nmeaning the defaultShow property will have no effect. You must control the visibility\nby updating this prop based on user interactions.',
-        },
-      ],
-      summary_zh:
-        '是否显示 Sheet。如果设置此属性，Sheet 将处于受控模式，defaultShow 属性将不生效。\n您必须根据用户交互更新此属性来控制可见性。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'snapPoints',
-      type: 'undefined[]',
-      summary: [
-        {
-          kind: 'text',
-          text: "The snap points of the Sheet. Can be pixel numbers, percentages, or 'fit'.\n- Numbers are treated as pixel values\n- Percentages (e.g., '50%') are relative to screen height\n- 'fit' dynamically resolves to the measured content height\nThe index order follows the order of this array.",
-        },
-      ],
-      summary_zh:
-        "Sheet 的吸附点。可以是像素数值、百分比或 'fit'。\n- 数字被视为像素值\n- 百分比（例如 '50%'）相对于屏幕高度\n- 'fit' 动态解析为测量的内容高度\n索引顺序与该数组顺序一致。",
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'style',
-      type: 'CSSProperties',
-      summary: [
-        {
-          kind: 'text',
-          text: 'style',
-        },
-      ],
-      summary_zh: '样式',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-  ]}
-/>
-
-### SheetHandleProps
-
-<UIApiTable
-  source={[
-    {
-      name: 'className',
-      type: 'string',
-      summary: [
-        {
-          kind: 'text',
-          text: 'className',
-        },
-      ],
-      summary_zh: '类名',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'style',
-      type: 'CSSProperties',
-      summary: [
-        {
-          kind: 'text',
-          text: 'style',
-        },
-      ],
-      summary_zh: '样式',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-  ]}
-/>
-
-### SheetContentProps
+    The main content of the Sheet.
 
 <UIApiTable
   source={[
@@ -676,165 +726,6 @@ import { UIApiTable } from '@lynx-ui/index';
       isSupportIOS: true,
       isSupportAndroid: true,
       isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-  ]}
-/>
-
-### SheetBackdropProps
-
-<UIApiTable
-  source={[
-    {
-      name: 'children',
-      type: 'ReactNode',
-      summary: [
-        {
-          kind: 'text',
-          text: 'children',
-        },
-      ],
-      summary_zh: '子元素',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'className',
-      type: 'string',
-      summary: [
-        {
-          kind: 'text',
-          text: 'className',
-        },
-      ],
-      summary_zh: '类名',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'clickToClose',
-      type: 'boolean',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Whether to close the Sheet when the overlay is clicked.',
-        },
-      ],
-      summary_zh: '点击遮罩时是否关闭 Sheet。',
-      defaultValue: 'true',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'onClick',
-      type: '() => void',
-      summary: [
-        {
-          kind: 'text',
-          text: 'Triggered when the backdrop is clicked.',
-        },
-      ],
-      summary_zh: '点击背景时触发。',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-    {
-      name: 'style',
-      type: 'CSSProperties',
-      summary: [
-        {
-          kind: 'text',
-          text: 'style',
-        },
-      ],
-      summary_zh: '样式',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: true,
-      isSupportAndroid: true,
-      isSupportHarmony: true,
-      docTypeFallback: null,
-    },
-  ]}
-/>
-
-## SheetRootRef
-
-<UIApiTable
-  source={[
-    {
-      name: 'close',
-      type: '(opts: Record<string, unknown>) => void',
-      summary: null,
-      summary_zh: '',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'collapse',
-      type: '(opts: Record<string, unknown>) => void',
-      summary: null,
-      summary_zh: '',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'expand',
-      type: '(opts: Record<string, unknown>) => void',
-      summary: null,
-      summary_zh: '',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'open',
-      type: '(opts: Record<string, unknown>) => void',
-      summary: null,
-      summary_zh: '',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
-      docTypeFallback: null,
-    },
-    {
-      name: 'snapTo',
-      type: '(index: number, opts: Record<string, unknown>) => void',
-      summary: null,
-      summary_zh: '',
-      defaultValue: '',
-      isOption: true,
-      isSupportIOS: false,
-      isSupportAndroid: false,
-      isSupportHarmony: false,
       docTypeFallback: null,
     },
   ]}
