@@ -22,7 +22,9 @@ After completing the above integration, you can achieve more flexible interactio
 | url                         | Yes      | URL of the Rspeedy output (URLs of other chunks will be automatically injected and launched during compilation)                                       |
 | globalProps                 | No       | [GlobalProps](/api/lynx-api/lynx/lynx-global-props.mdx) for card initialization                                                                       |
 | initData                    | No       | InitData for card initialization                                                                                                                      |
-| overrideLynxTagToHTMLTagMap | No       | Custom mapping relationship from Lynx tags to HTML tags. React Components are not supported, only HTMLElements (can be web components or native tags) |
+| browser-config              | No       | Configuring `pixelRatio`, `pixelWidth`, `pixelHeight` allowing the `systemInfo` payload to be dynamically configured at the instance level.           |
+| transform-vw                | No       | Enable `vw` transformation, enabling container relative custom properties for `vw` units. E.g. `1vw` will be transformed to `calc(1 * var(--vw-unit))`. |
+| transform-vh                | No       | Enable `vh` transformation, enabling container relative custom properties for `vh` units. E.g. `1vh` will be transformed to `calc(1 * var(--vh-unit))`. |
 
 ### Properties
 
@@ -81,17 +83,15 @@ lynxView.onNativeModulesCall = (name, data, moduleName) => {
 };
 ```
 
-#### customTemplateLoader
+#### browserConfig
 
-Allows users to implement custom template loading functionality (default is fetch):
+Set `browserConfig` allowing the `systemInfo` payload to be dynamically configured at the instance level.
 
 ```ts
-lynxView.customTemplateLoader = (url) => {
-  return await(
-    await fetch(url, {
-      method: 'GET',
-    }),
-  ).json();
+lynxView.browserConfig = {
+  pixelRatio: 2,
+  pixelWidth: 375,
+  pixelHeight: 812,
 };
 ```
 
@@ -168,32 +168,6 @@ That is, by default, you need to set a width and height for lynx-view. The width
 
 In some cases where you really need the width or height to be determined by the content of lynx-view, you can set `height="auto"` or `width="auto"` to enable the automatic width/height listener. In this case, the internal layout of lynx-view remains independent of the external layout flow.
 
-## Compatibility
-
-The recommended configuration is: **Chrome > 118, Safari > 18, Firefox NSR**
-
-If you want to support browsers with Chrome < 118 and Safari < 18, you need to do the following:
-
-1. Import the compatibility plugin:
-
-```ts
-import '@lynx-js/web-elements-compat/LinearContainer';
-```
-
-2. Additionally compile the `@lynx-js` dependencies. If your project uses Rsbuild, modify the configuration as follows:
-
-```ts
-// rsbuild.config.ts
-export default {
-  source: {
-    include: [/@lynx-js/],
-  },
-  output: {
-    polyfill: 'usage',
-  },
-};
-```
-
 ## FAQ
 
 ### Runtime error: `Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'.`
@@ -206,10 +180,7 @@ This can be solved by introducing [remote-web-worker](https://github.com/jantimo
 // The import position must be before @lynx-js/web-core
 import 'remote-web-worker';
 
-import '@lynx-js/web-core';
-import '@lynx-js/web-core/index.css';
-import '@lynx-js/web-elements/all';
-import '@lynx-js/web-elements/index.css';
+import '@lynx-js/web-core/client';
 document.body.innerHTML = `
 <lynx-view
     style="height:100vh; width:100vw;"
@@ -225,3 +196,29 @@ We provide an RSBuild plugin for performance optimization. You can introduce [th
 ## Compatibility
 
 <APITable />
+## Migrating from older versions
+
+If you are upgrading to `@lynx-js/web-core@0.20.0`, notice that there are significant breaking changes due to an architectural upgrade.
+
+### Changes to initialization
+
+You no longer need to import CSS manually, nor do you need `@lynx-js/web-elements`. The initialization is simplified:
+
+```ts
+// Before:
+import '@lynx-js/web-core/index.css';
+import '@lynx-js/web-elements/index.css';
+import '@lynx-js/web-core';
+import '@lynx-js/web-elements/all';
+
+// After:
+import '@lynx-js/web-core/client';
+```
+
+### Changes to API
+
+The following `<lynx-view>` properties are removed and no longer supported:
+- `thread-strategy`
+- `customTemplateLoader`
+- `overrideLynxTagToHTMLTagMap`
+- `inject-head-links`
