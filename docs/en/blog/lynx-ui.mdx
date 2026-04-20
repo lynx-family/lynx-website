@@ -18,30 +18,45 @@ import { Tab, Tabs } from '@rspress/core/theme';
 
 The component problem isn't solved. Not for native.
 
-- Web offers shadcn/ui and Radix UI with great DX, composability, and customization. Still, the platform ceiling remains low.
-- Native has high-fidelity UX (120fps scroll, physics, system gestures) but zero composability and zero iteration speed.
-- This forces a compromise. Lynx UI is built to eliminate it.
+Native developers are constantly seeking the balance between User Experience (UX) and Developer Experience (DX). The Web offers libraries like shadcn/ui and Radix UI with great DX, but it struggles to match seamless interactions and fluid animations. Conversely, native development delivers high-fidelity UX (120fps scroll, physics, system gestures) but suffers from poor composability and slow iteration speed across multiple platforms (iOS, Android, HarmonyOS).
 
-> Lynx UI: ready-to-use components that preserve native user experience while delivering the velocity of the web.
+This forces a compromise. Lynx UI is built to eliminate it.
 
 ## Built on Native Ground
 
-Before any JS, the foundation matters.
+Before any JS, the foundation matters. Lynx UI is not merely a simple wrapper around existing Web components, but the result of our deep exploration into bridging the mental model gap between Web and Native.
 
-- Lynx engine provides high-performance native primitives: `scroll-view`, `list`, `scroll-coordinator`
-- These render to actual native views, enabling behaviors that are structurally impossible on mobile web
-- For example, scroll-coordinator collapses the header before the inner content begins to scroll—a seamless behavior on mobile that isn't achievable on the web.
-- This is the foundation of Lynx UI
+- Lynx engine provides high-performance native primitives: `scroll-view`, `list`, `scroll-coordinator`.
+- These render to actual native views, enabling behaviors that are structurally impossible on the mobile web.
+- For example, `scroll-coordinator` collapses the header before the inner content begins to scroll—a natural behavior on mobile that isn't achievable on the web.
 
-## Main Thread Scripts (MTS): Interaction Without Latency
+Our mission is to enable developers to effortlessly drive powerful native rendering capabilities using a familiar Web-like paradigm.
+
+## Interaction Without Latency
 
 The hardest part of native-quality interaction is timing.
 
 - Lynx uses a dual-thread model: the main thread handles graphics rendering, while the background thread runs JavaScript (JS).
 - Normally, handling events in the background thread introduces a delay as messages pass between threads, which can make interactions feel slow and noticeable.
-- MTS moves interaction logic to the main thread, resulting in zero-latency response to user input
-- Swiper as example: `delta in, transform out`, per frame, synchronously on the main thread
+- MTS moves interaction logic to the main thread, resulting in zero-latency response to user input.
+- Swiper as example: `delta in, transform out`, per frame, synchronously on the main thread.
 - This enables fully programmable per-frame callbacks for properties such as rotation, scale, opacity, or any other adjustable property.
+
+## Component Highlights: Beyond Functionality
+
+We have re-examined every high-frequency interaction scenario from both Web and Native perspectives, distilling them into a series of components that embody best practices:
+
+- **Composability First**: Drawing inspiration from libraries like Radix UI, we rejected the "black-box" component model. Instead of adding endless props to a monolithic component, Lynx UI exposes underlying primitives (e.g., `DialogRoot`, `DialogTrigger`, `DialogContent`). This structural design gives you complete control over layout and styling while we handle the complex native states.
+- **ScrollView & List**: Provide true native scrolling and a 120fps fluid experience, along with high-performance virtualization capabilities designed for long lists.
+- **ViewPager / Swiper / Tab**: View switching containers with precise scroll snap behavior, ensuring smooth transitions whether you are building carousels or tab switches.
+- **SwipeAction**: Implements side-swipe operations for list items, providing delicate damping and rebound effects.
+- **Input / TextArea**: Built-in powerful keyboard avoidance logic that automatically handles the position of input fields within scrolling views, saying goodbye to tedious manual calculations.
+- **FeedList**: Combined with MTS capabilities, it easily implements complex feed flow interactions such as pull-to-refresh and infinite loading.
+- **Dialog / Popover / Overlay**: Provide popup solutions that manage complex hierarchies and states from the ground up.
+- **Form, Radio/Checkbox, Switch**: A complete form component ecosystem that simplifies data management.
+- **Sortable**: Implements natural and fluid drag-and-drop sorting.
+- **LazyComponent**: Built for performance optimization, implementing lazy loading of components.
+- **Presence**: Provides practical "enter/exit" animations.
 
 ## Components
 
