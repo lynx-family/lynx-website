@@ -239,7 +239,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   ];
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="floating">
       <SidebarHeader className="px-4 pt-4 pb-2">
         {!isCollapsed && (
           <div className="flex flex-col min-w-0">
