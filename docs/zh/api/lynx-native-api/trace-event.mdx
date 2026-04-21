@@ -299,6 +299,55 @@ const args: Record<string, string> = {
 TraceEvent.instant(TraceCategory.Other, "request-finished", args);
 ```
 
+## Desktop (C API)
+
+Desktop public embedder API 通过 C API 宏暴露 trace 辅助能力。
+
+### beginSection
+
+标记 trace section 的开始。需要使用相同的 category 和 name 与 `LYNX_CAPI_TRACE_END` 成对调用。
+
+```c
+LYNX_CAPI_TRACE_BEGIN(category, name);
+```
+
+### endSection
+
+标记 trace section 的结束。
+
+```c
+LYNX_CAPI_TRACE_END(category, name);
+```
+
+### instant
+
+记录即时 trace event。
+
+```c
+LYNX_CAPI_TRACE_INSTANT(category, name);
+```
+
+### counter
+
+记录 counter trace event。
+
+```c
+LYNX_CAPI_TRACE_COUNTER(category, name, value, incremental);
+```
+
+#### 示例
+
+```c
+void DecodeImage() {
+  LYNX_CAPI_TRACE_BEGIN("image", "DecodeImage");
+  // ... 你的代码 ...
+  LYNX_CAPI_TRACE_END("image", "DecodeImage");
+}
+
+LYNX_CAPI_TRACE_INSTANT("network", "RequestStarted");
+LYNX_CAPI_TRACE_COUNTER("cache", "EntryCount", 42, false);
+```
+
 ## 兼容性
 
 <APITable />
