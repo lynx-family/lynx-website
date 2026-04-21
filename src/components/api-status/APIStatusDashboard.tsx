@@ -757,10 +757,12 @@ export const APIStatusDashboard: React.FC = () => {
   const selectedColors =
     PLATFORM_CONFIG[firstPlatform]?.colors || PLATFORM_CONFIG.web_lynx.colors;
   const platformStats = summary.by_platform[firstPlatform];
-  const generatedDate = new Date(stats.generated_at).toLocaleDateString(
-    lang === 'zh' ? 'zh-CN' : 'en-US',
-    { month: 'short', day: 'numeric' },
-  );
+  const generatedDate = stats.generated_at
+    ? new Date(stats.generated_at).toLocaleDateString(
+        lang === 'zh' ? 'zh-CN' : 'en-US',
+        { month: 'short', day: 'numeric' },
+      )
+    : undefined;
 
   return (
     <TooltipProvider>
@@ -781,12 +783,14 @@ export const APIStatusDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-3 items-center text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <ClockIcon className="w-3 h-3" />
-                <span>
-                  {t.generatedAt} {generatedDate}
-                </span>
-              </div>
+              {generatedDate && (
+                <div className="flex items-center gap-1.5">
+                  <ClockIcon className="w-3 h-3" />
+                  <span>
+                    {t.generatedAt} {generatedDate}
+                  </span>
+                </div>
+              )}
               <a
                 href={withBase(
                   lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',

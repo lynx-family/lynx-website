@@ -98,7 +98,7 @@ export interface TimelinePoint {
 }
 
 export interface APIStats {
-  generated_at: string;
+  generated_at?: string;
   summary: {
     total_apis: number;
     /** Total APIs in Lynx Platform API categories only (used for coverage). */

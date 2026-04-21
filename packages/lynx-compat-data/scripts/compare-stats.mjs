@@ -178,6 +178,6 @@ md += "### Other\n\n";
 md += renderCategoryTable(OTHER_CATEGORIES);
 md += "\n";
 
-md += `<sub>Generated at ${pr.generated_at}</sub>\n`;
+md += `<sub>Generated at ${new Date().toISOString()}</sub>\n`;
 
 process.stdout.write(md);

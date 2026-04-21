@@ -222,10 +222,12 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     PLATFORM_CONFIG.android.colors;
 
   // Format date
-  const updatedDate = new Date(stats.generated_at).toLocaleDateString(
-    lang === 'zh' ? 'zh-CN' : 'en-US',
-    { month: 'short', day: 'numeric' },
-  );
+  const updatedDate = stats.generated_at
+    ? new Date(stats.generated_at).toLocaleDateString(
+        lang === 'zh' ? 'zh-CN' : 'en-US',
+        { month: 'short', day: 'numeric' },
+      )
+    : undefined;
 
   const pages: {
     id: PageType;
@@ -589,7 +591,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   <HelpCircleIcon className="w-4 h-4" />
                   <span>Help</span>
                 </div>
-                {!isCollapsed && (
+                {!isCollapsed && updatedDate && (
                   <span className="text-[10px] text-muted-foreground/70 font-mono">
                     {updatedDate}
                   </span>
