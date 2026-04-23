@@ -5,10 +5,6 @@ import { Go, VersionBadge } from '@lynx';
 
 <VersionBadge v={3.5} />
 
-:::info
-Loading CSS files from an External Bundle requires Lynx 3.7 or later.
-:::
-
 External Bundle lets you build a Lynx bundle once and load it from multiple Lynx apps at runtime. Use it when you want to share ReactLynx components or common business bundles across apps.
 
 Compared with [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit), External Bundle is for cross-application reuse, while Chunk Splitting is for splitting code inside one app.
@@ -18,9 +14,22 @@ This workflow has two parts:
 1. Use [`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config) to build the external bundle.
 2. Use [`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin) to load it in the host app.
 
+The responsibilities are equally simple:
+
+- the library build emits the `.lynx.bundle`
+- the host app declares where the bundle is loaded from and which section the runtime should request
+
 ## Install
 
 <PackageManagerTabs command="install @lynx-js/lynx-bundle-rslib-config @lynx-js/external-bundle-rsbuild-plugin @lynx-js/react-umd @rslib/core -D" />
+
+:::note Why `@lynx-js/react-umd` is needed
+`@lynx-js/react-umd` provides the ReactLynx runtime bundles required by the built-in `reactlynx` preset.
+
+When you enable `externalsPresets.reactlynx`, the plugin resolves `@lynx-js/react-umd/dev` or `@lynx-js/react-umd/prod` based on `NODE_ENV`, emits `react.lynx.bundle`, and loads it through the current runtime public path.
+
+For most projects, installing `@lynx-js/react-umd` and enabling the `reactlynx` preset is enough.
+:::
 
 ## Build An External Bundle
 
@@ -51,6 +60,31 @@ export default defineExternalBundleRslibConfig({
 Run the build with:
 
 <PackageManagerTabs command="exec rslib build --config rslib-comp-lib.config.ts" />
+
+After a successful build, you will get an output directory like this:
+
+```text
+├── dist-external-bundle
+│   └── comp-lib.template.js
+```
+
+### Bundle CSS
+
+<VersionBadge v={3.7} />
+
+If you need to run CSS from the External Bundle, set `engineVersion: '3.7'` when building that bundle:
+
+```ts title="rslib-comp-lib.config.ts"
+export default defineExternalBundleRslibConfig({
+  plugins: [
+    pluginReactLynx({
+      engineVersion: '3.7',
+    }),
+  ],
+});
+```
+
+Pure JS / TS External Bundles do not need this.
 
 ## Load It In The Host App
 
@@ -94,7 +128,17 @@ externals: {
 
 If your section names already match the request key, this is the smallest recommended setup.
 
-## When To Set `globalObject`
+## Verify It Works
+
+After the configuration above, use these signals to confirm that the External Bundle is wired up correctly:
+
+- the host app successfully requests `comp-lib.lynx.bundle` at runtime
+- when `externalsPresets.reactlynx` is enabled, the runtime also loads `react.lynx.bundle` automatically
+- components from the External Bundle render normally, without section mismatch or bundle loading failures
+
+If it still does not run, check whether the request key, bundle path, and section names in `externals` are aligned.
+
+## Advanced: When To Set `globalObject`
 
 In most projects, you can omit `globalObject`.
 
@@ -122,18 +166,6 @@ pluginExternalBundle({
   globalObject: 'globalThis',
 });
 ```
-
-## Why `@lynx-js/react-umd` Is Needed
-
-`@lynx-js/react-umd` ships the prebuilt ReactLynx runtime bundles used by the built-in `reactlynx` preset.
-
-When you enable `externalsPresets.reactlynx` in [`pluginExternalBundle()`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle), the plugin will automatically resolve `@lynx-js/react-umd/dev` or `@lynx-js/react-umd/prod` based on `NODE_ENV`, emit `react.lynx.bundle`, and load it through the current runtime public path.
-
-For most projects, this means:
-
-- install `@lynx-js/react-umd`
-- enable `reactlynx`
-- let the preset provide the ReactLynx runtime mapping
 
 ## Extend Presets
 
@@ -199,7 +231,7 @@ This side decides where the bundle is loaded from and which section names the ru
 
 Explicit `externals` still override mappings provided by presets. Use that when a single app needs a different bundle path or section name.
 
-## When To Use The Object Form
+## Advanced: When To Use The Object Form
 
 Use the full object form when you need custom section names, custom exported library names, timeouts, or a dedicated local bundle directory.
 
