@@ -6,7 +6,9 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
+import useIfMobile from '@site/theme/hooks/use-if-mobile';
 import { ChevronDown } from 'lucide-react';
 
 import { getLangPrefix } from '../shared-route-config';
@@ -32,6 +34,9 @@ function shouldHideVersion(version: string) {
 export function VersionIndicator() {
   var { pathname } = useLocation();
   const langPrefix = getLangPrefix(useLang());
+  const [versions, setVersions] = useState<string[]>(['next']);
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIfMobile();
 
   const showIndicator = () => {
     if (pathname.startsWith('/zh')) {
@@ -53,8 +58,6 @@ export function VersionIndicator() {
     return !specificPath;
   };
 
-  const [versions, setVersions] = useState<string[]>(['next']);
-
   useEffect(() => {
     const fetchVersions = async () => {
       try {
@@ -74,6 +77,7 @@ export function VersionIndicator() {
   }, []);
 
   const changeVersion = (version: string) => {
+    setIsOpen(false);
     const currentPath = window.location.pathname;
     const searchParams = window.location.search;
 
@@ -87,54 +91,76 @@ export function VersionIndicator() {
   };
 
   const viewAllVersions = () => {
+    setIsOpen(false);
     window.open(`/next${langPrefix}/versions`, '_blank');
   };
 
   const displayVersion = versionJson.current_version;
   const t = useI18n();
+  const filteredVersions = versions.filter(
+    (version) => !shouldHideVersion(version),
+  );
+
+  const versionMenu = (
+    <div className="p-2" role="menu" aria-orientation="vertical">
+      {filteredVersions.map((version) => (
+        <button
+          key={version}
+          type="button"
+          role="menuitem"
+          className={cn(
+            menuItemClassName,
+            version === displayVersion && 'bg-primary/10 text-primary',
+          )}
+          onClick={() => changeVersion(version)}
+        >
+          {version}
+        </button>
+      ))}
+      <button
+        type="button"
+        role="menuitem"
+        className={menuItemClassName}
+        onClick={() => viewAllVersions()}
+      >
+        {t('all_versions')}
+      </button>
+    </div>
+  );
+
+  const trigger = (
+    <button
+      type="button"
+      aria-expanded={isOpen}
+      aria-haspopup={isMobile ? 'dialog' : 'menu'}
+      className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
+    >
+      {displayVersion}{' '}
+      <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
+    </button>
+  );
+
   return (
-    showIndicator() && (
-      <HoverCard openDelay={0} closeDelay={200}>
-        <HoverCardTrigger asChild>
-          <button
-            type="button"
-            className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
-          >
-            {displayVersion}{' '}
-            <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
-          </button>
-        </HoverCardTrigger>
-        <HoverCardContent className="w-28 p-0" align="start">
-          <div className="p-2">
-            {versions
-              .filter((version) => !shouldHideVersion(version))
-              .map((version) => (
-                <button
-                  key={version}
-                  type="button"
-                  className={cn(
-                    menuItemClassName,
-                    version === displayVersion && 'bg-primary/10 text-primary',
-                  )}
-                  onClick={() => changeVersion(version)}
-                >
-                  {version}
-                </button>
-              ))}
-            <button
-              key="versions"
-              type="button"
-              className={cn(
-                menuItemClassName,
-                'versions' === displayVersion && 'bg-primary/10 text-primary',
-              )}
-              onClick={() => viewAllVersions()}
-            >
-              {t('all_versions')}
-            </button>
-          </div>
+    showIndicator() &&
+    (isMobile ? (
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+        <DrawerContent>
+          <div className="py-5 px-4 pb-7">{versionMenu}</div>
+        </DrawerContent>
+      </Drawer>
+    ) : (
+      <HoverCard
+        openDelay={0}
+        closeDelay={200}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+      >
+        <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
+        <HoverCardContent className="z-[100] w-28 p-0" align="start">
+          {versionMenu}
         </HoverCardContent>
       </HoverCard>
-    )
+    ))
   );
 }
