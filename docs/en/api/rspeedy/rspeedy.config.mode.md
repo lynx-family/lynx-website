@@ -12,29 +12,15 @@ Specify the build mode for Rsbuild and Rspack, as each mode has different defaul
 mode?: 'development' | 'production' | 'none' | undefined;
 ```
 
-## Remarks
+## Default Value
 
-The default value of mode depends on the `process.env.NODE_ENV` environment variable:
-
-- If `NODE_ENV` is production, the default value is production.
-
-- If `NODE_ENV` is development, the default value is development.
-
-- If `NODE_ENV` has any other value, the default value is none.
-
-- If you set the value of mode, the value of `NODE_ENV` will be ignored.
-
-When using Rspeedy's CLI:
-
-- `rspeedy dev` and `rspeedy preview` will set the default values of `NODE_ENV` and `mode` to `'development'`<!-- -->.
-
-- `rspeedy build` will set the default values of `NODE_ENV` and `mode` to `'production'`<!-- -->.
+Depends on `process.env.NODE_ENV`<!-- -->: `'production'` when `NODE_ENV` is `'production'`<!-- -->, `'development'` when `NODE_ENV` is `'development'`<!-- -->, and `'none'` otherwise. When using Rspeedy's CLI, `rspeedy dev` and `rspeedy preview` default to `'development'`<!-- -->, while `rspeedy build` defaults to `'production'`<!-- -->.
 
 ## Example 1
 
 If the value of `mode` is `'development'`<!-- -->:
 
-- Enable HMR and register the [HotModuleReplacementPlugin](https://rspack.dev/plugins/webpack/hot-module-replacement-plugin)<!-- -->.
+- Enable HMR and register the [HotModuleReplacementPlugin](https://rspack.rs/plugins/webpack/hot-module-replacement-plugin)<!-- -->.
 
 - Generate JavaScript source maps, but do not generate CSS source maps. See [Output.sourceMap](./rspeedy.output.sourcemap.md) for details.
 
@@ -50,7 +36,7 @@ If the value of `mode` is `'development'`<!-- -->:
 
 If the value of `mode` is `'production'`<!-- -->:
 
-- Enable JavaScript code minification and register the [SwcJsMinimizerRspackPlugin](https://rspack.dev/plugins/rspack/swc-js-minimizer-rspack-plugin)<!-- -->.
+- Enable JavaScript code minification and register the [SwcJsMinimizerRspackPlugin](https://rspack.rs/plugins/rspack/swc-js-minimizer-rspack-plugin)<!-- -->.
 
 - Generated JavaScript and CSS filenames will have hash suffixes, see [Output.filenameHash](./rspeedy.output.filenamehash.md)<!-- -->.
 
@@ -65,4 +51,3 @@ If the value of `mode` is `'production'`<!-- -->:
 - The `import.meta.env.DEV` in the source code will be replaced with `false`<!-- -->.
 
 - The `import.meta.env.PROD` in the source code will be replaced with `true`<!-- -->.
-

@@ -1,0 +1,52 @@
+name: Compat Data Stats
+
+on:
+  pull_request:
+    paths:
+      - 'packages/lynx-compat-data/**'
+
+jobs:
+  generate-stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get base branch stats
+        run: |
+          git show origin/${{ github.event.pull_request.base.ref }}:packages/lynx-compat-data/api-stats.json > /tmp/base-stats.json || echo '{}' > /tmp/base-stats.json
+
+      - name: Generate PR stats
+        run: pnpm --filter @lynx-js/lynx-compat-data run gen-stats
+
+      - name: Generate comparison
+        run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json packages/lynx-compat-data/api-stats.json > /tmp/comment.md
+
+      - name: Save PR number
+        run: echo "${{ github.event.pull_request.number }}" > /tmp/pr-number.txt
+
+      - name: Upload comment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compat-data-stats-comment
+          path: |
+            /tmp/comment.md
+            /tmp/pr-number.txt
+          retention-days: 1

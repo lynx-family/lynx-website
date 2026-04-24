@@ -14,11 +14,121 @@ export interface TransformImport
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [camelToDashComponentName?](./rspeedy.transformimport.cameltodashcomponentname.md) |  | boolean \| undefined | _(Optional)_ Whether to convert camelCase imports to kebab-case. |
-|  [customName?](./rspeedy.transformimport.customname.md) |  | string \| undefined | _(Optional)_ Customize the transformed path. |
-|  [libraryDirectory?](./rspeedy.transformimport.librarydirectory.md) |  | string \| undefined | _(Optional)_ Used to splice the transformed path, the splicing rule is <code>${libraryName}/${libraryDirectory}/${member}</code>, where member is the imported member. |
-|  [libraryName](./rspeedy.transformimport.libraryname.md) |  | string | The original import path that needs to be transformed. |
-|  [transformToDefaultImport?](./rspeedy.transformimport.transformtodefaultimport.md) |  | boolean \| undefined | _(Optional)_ Whether to convert import statements to default imports. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[camelToDashComponentName?](./rspeedy.transformimport.cameltodashcomponentname.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to convert camelCase imports to kebab-case.
+
+
+</td></tr>
+<tr><td>
+
+[customName?](./rspeedy.transformimport.customname.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ Customize the transformed path.
+
+
+</td></tr>
+<tr><td>
+
+[libraryDirectory?](./rspeedy.transformimport.librarydirectory.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ Used to splice the transformed path, the splicing rule is `${libraryName}/${libraryDirectory}/${member}`<!-- -->, where member is the imported member.
+
+
+</td></tr>
+<tr><td>
+
+[libraryName](./rspeedy.transformimport.libraryname.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The original import path that needs to be transformed.
+
+
+</td></tr>
+<tr><td>
+
+[transformToDefaultImport?](./rspeedy.transformimport.transformtodefaultimport.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to convert import statements to default imports.
+
+
+</td></tr>
+</tbody></table>
 

@@ -79,6 +79,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
       <div className="p-0">
         <CategoryTable
           categories={categories}
+          categoryGroups={stats.category_groups}
           selectedPlatforms={selectedPlatforms}
           expandedCategory={expandedCategory}
           onCategoryClick={(cat) =>

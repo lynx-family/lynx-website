@@ -1,5 +1,21 @@
+.code-fold-wrapper {
+  margin-bottom: 10px;
+}
+
 .code-in-tab div[class*='language-'] {
   margin: 0 !important;
+}
+
+// When CodeFold is inside Rspress Tabs, mirror the reset that Rspress
+// applies to direct-child code blocks (.rp-tabs__content__item > .rp-codeblock:only-child)
+.rp-tabs__content__item > .code-fold-wrapper:only-child {
+  margin: 0 -1rem;
+
+  .code-in-tab > .rp-codeblock:only-child {
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
 }
 
 .image-frame {
@@ -8,31 +24,103 @@
   align-items: center;
 }
 
-.btn-frame {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  z-index: 9;
-  cursor: pointer;
+.codefold-scroll-area {
+  height: 100%;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
 }
 
-.area-footer-mask {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.9)
-  );
-  z-index: 9;
-  width: 100%;
-  height: 52px;
+.semi-always-dark .codefold-scroll-area {
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+.codefold-gradient-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.95)
+  );
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.25s ease;
+
   &.dark {
     background: linear-gradient(
       to bottom,
-      rgba(36, 36, 36, 0),
-      rgba(27, 27, 27, 0.9)
+      rgba(27, 27, 27, 0),
+      rgba(27, 27, 27, 0.95)
     );
   }
+}
+
+.codefold-toggle-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  line-height: 1;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: rgba(0, 0, 0, 0.75);
+    border-color: rgba(0, 0, 0, 0.15);
+  }
+
+  &.dark {
+    background: rgba(40, 40, 40, 0.85);
+    color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background: rgba(50, 50, 50, 0.95);
+      color: rgba(255, 255, 255, 0.8);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+
+.codefold-toggle-icon {
+  transition: transform 0.25s ease;
 }

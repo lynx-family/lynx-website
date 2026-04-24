@@ -18,16 +18,216 @@ If a string is provided, it will be used as [Filename.bundle](./rspeedy.filename
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [assets?](./rspeedy.filename.assets.md) |  | Rspack.AssetModuleFilename | _(Optional)_ The name of other assets, except for above (image, svg, font, html, wasm...) |
-|  [bundle?](./rspeedy.filename.bundle.md) |  | string \| undefined | _(Optional)_ The name of the bundle files. |
-|  [css?](./rspeedy.filename.css.md) |  | Rspack.CssFilename \| undefined | _(Optional)_ The name of the CSS files. |
-|  [font?](./rspeedy.filename.font.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of the font files. |
-|  [image?](./rspeedy.filename.image.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of non-SVG images. |
-|  [js?](./rspeedy.filename.js.md) |  | Rspack.Filename \| undefined | _(Optional)_ The name of the JavaScript files. |
-|  [media?](./rspeedy.filename.media.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of media assets, such as video. |
-|  [svg?](./rspeedy.filename.svg.md) |  | Rspack.AssetModuleFilename \| undefined | _(Optional)_ The name of the SVG images. |
-|  [template?](./rspeedy.filename.template.md) |  | string \| undefined | _(Optional)_ The name of the template files. |
-|  [wasm?](./rspeedy.filename.wasm.md) |  | Rspack.WebassemblyModuleFilename | _(Optional)_ The name of WebAssembly files. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[assets?](./rspeedy.filename.assets.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.AssetModuleFilename
+
+
+</td><td>
+
+_(Optional)_ The name of other assets, except for above (image, svg, font, html, wasm...)
+
+
+</td></tr>
+<tr><td>
+
+[bundle?](./rspeedy.filename.bundle.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of the bundle files.
+
+
+</td></tr>
+<tr><td>
+
+[css?](./rspeedy.filename.css.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.CssFilename \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of the CSS files.
+
+
+</td></tr>
+<tr><td>
+
+[font?](./rspeedy.filename.font.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.AssetModuleFilename \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of the font files.
+
+
+</td></tr>
+<tr><td>
+
+[image?](./rspeedy.filename.image.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.AssetModuleFilename \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of non-SVG images.
+
+
+</td></tr>
+<tr><td>
+
+[js?](./rspeedy.filename.js.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.Filename \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of the JavaScript files.
+
+
+</td></tr>
+<tr><td>
+
+[media?](./rspeedy.filename.media.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.AssetModuleFilename \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of media assets, such as video.
+
+
+</td></tr>
+<tr><td>
+
+[svg?](./rspeedy.filename.svg.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.AssetModuleFilename \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of the SVG images.
+
+
+</td></tr>
+<tr><td>
+
+[template?](./rspeedy.filename.template.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The name of the template files.
+
+
+</td></tr>
+<tr><td>
+
+[wasm?](./rspeedy.filename.wasm.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.WebassemblyModuleFilename
+
+
+</td><td>
+
+_(Optional)_ The name of WebAssembly files.
+
+
+</td></tr>
+</tbody></table>
 

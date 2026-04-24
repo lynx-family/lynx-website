@@ -14,9 +14,102 @@ export interface ShakeVisitorConfig
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [pkgName](./react-rsbuild-plugin.shakevisitorconfig.pkgname.md) |  | Array&lt;string&gt; | Package names to identify runtime imports that need to be processed |
-|  [removeCallParams](./react-rsbuild-plugin.shakevisitorconfig.removecallparams.md) |  | Array&lt;string&gt; | Function names whose parameters should be removed during transformation |
-|  [retainProp](./react-rsbuild-plugin.shakevisitorconfig.retainprop.md) |  | Array&lt;string&gt; | Properties that should be retained in the component class |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[pkgName](./react-rsbuild-plugin.shakevisitorconfig.pkgname.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Package names to identify runtime imports that need to be processed
+
+
+</td></tr>
+<tr><td>
+
+[removeCall](./react-rsbuild-plugin.shakevisitorconfig.removecall.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Function names whose calls should be replaced with `undefined` during transformation
+
+
+</td></tr>
+<tr><td>
+
+[removeCallParams](./react-rsbuild-plugin.shakevisitorconfig.removecallparams.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Function names whose parameters should be removed during transformation
+
+
+</td></tr>
+<tr><td>
+
+[retainProp](./react-rsbuild-plugin.shakevisitorconfig.retainprop.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Array&lt;string&gt;
+
+
+</td><td>
+
+Properties that should be retained in the component class
+
+
+</td></tr>
+</tbody></table>
 

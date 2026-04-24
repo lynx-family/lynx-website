@@ -12,9 +12,13 @@
 jsOptions?: Rspack.SwcJsMinimizerRspackPluginOptions | undefined;
 ```
 
+## Default Value
+
+When JavaScript minification is enabled and `jsOptions` is unset, this defaults to `{}`<!-- -->.
+
 ## Remarks
 
-For detailed configurations, please refer to [SwcJsMinimizerRspackPlugin](https://rspack.dev/plugins/rspack/swc-js-minimizer-rspack-plugin)<!-- -->.
+For detailed configurations, please refer to [SwcJsMinimizerRspackPlugin](https://rspack.rs/plugins/rspack/swc-js-minimizer-rspack-plugin)<!-- -->.
 
 ## Example
 
@@ -35,4 +39,3 @@ export default defineConfig({
   },
 })
 ```
-

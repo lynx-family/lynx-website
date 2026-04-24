@@ -40,38 +40,134 @@ const CLAY_SUB_PLATFORMS: PlatformName[] = [
   'clay_windows',
 ];
 
+// Category groups: 'platform' categories define the unified Lynx Platform API
+// spec that all platforms should implement. 'other' categories contain
+// platform-specific, framework, or tooling APIs that don't belong in the
+// cross-platform coverage metric.
+type CategoryGroup = 'platform' | 'other';
+
 // Categories to scan with doc URL mappings
-const CATEGORIES = [
+// excludePlatforms: platforms for which this category is not applicable (e.g. DevTool on Web)
+const CATEGORIES: Array<{
+  path: string;
+  displayName: string;
+  docPrefix: string;
+  group: CategoryGroup;
+  excludePlatforms?: PlatformName[];
+}> = [
   {
     path: 'elements',
     displayName: 'Elements',
     docPrefix: '/api/elements/built-in',
+    group: 'platform',
   },
   {
     path: 'css/properties',
     displayName: 'CSS Properties',
     docPrefix: '/api/css/properties',
+    group: 'platform',
   },
   {
     path: 'css/at-rule',
     displayName: 'CSS At-Rules',
     docPrefix: '/api/css/at-rule',
+    group: 'platform',
   },
   {
     path: 'css/data-type',
     displayName: 'CSS Data Types',
     docPrefix: '/api/css/data-type',
+    group: 'platform',
   },
-  { path: 'lynx-api', displayName: 'Lynx API', docPrefix: '/api/lynx-api' },
+  {
+    path: 'lynx-api/global',
+    displayName: 'Lynx Global API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/event',
+    displayName: 'Lynx Event API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/fetch',
+    displayName: 'Lynx Fetch API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/lynx',
+    displayName: 'lynx.*',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/selector-query',
+    displayName: 'Lynx Selector Query',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/nodes-ref',
+    displayName: 'Lynx Nodes Ref',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/intersection-observer',
+    displayName: 'Lynx Intersection Observer',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    path: 'lynx-api/main-thread',
+    displayName: 'Lynx Main Thread API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+  },
+  {
+    // Performance API measures the Lynx native rendering pipeline;
+    // these concepts do not exist on Web.
+    path: 'lynx-api/performance-api',
+    displayName: 'Lynx Performance API',
+    docPrefix: '/api/lynx-api',
+    group: 'platform',
+    excludePlatforms: ['web_lynx'],
+  },
   {
     path: 'lynx-native-api',
     displayName: 'Lynx Native API',
     docPrefix: '/api/lynx-native-api',
+    group: 'other',
   },
-  { path: 'react', displayName: 'ReactLynx', docPrefix: '/api/react' },
-  { path: 'devtool', displayName: 'DevTool', docPrefix: '/guide/devtool' },
-  { path: 'errors', displayName: 'Errors', docPrefix: '/api/errors' },
+  {
+    path: 'react',
+    displayName: 'ReactLynx',
+    docPrefix: '/api/react',
+    group: 'other',
+  },
+  {
+    // DevTool is N/A for Web (uses browser DevTools natively)
+    path: 'devtool',
+    displayName: 'DevTool',
+    docPrefix: '/guide/devtool',
+    group: 'other',
+    excludePlatforms: ['web_lynx'],
+  },
+  {
+    path: 'errors',
+    displayName: 'Errors',
+    docPrefix: '/api/errors',
+    group: 'other',
+  },
 ];
+
+// Set of category paths that belong to the Lynx Platform API
+const PLATFORM_API_CATEGORIES = new Set(
+  CATEGORIES.filter((c) => c.group === 'platform').map((c) => c.path),
+);
 
 // Recent versions to track for "recently added" APIs
 const RECENT_VERSIONS = ['3.4', '3.5'];
@@ -86,7 +182,7 @@ interface APIInfo {
 interface CategoryStats {
   total: number;
   supported: Partial<Record<PlatformName, number>>;
-  coverage: Partial<Record<PlatformName, number>>;
+  coverage: Partial<Record<PlatformName, number | null>>;
   exclusive: Partial<Record<PlatformName, number>>;
 }
 
@@ -140,12 +236,16 @@ interface TimelinePoint {
 }
 
 interface APIStats {
-  generated_at: string;
+  generated_at?: string;
   summary: {
     total_apis: number;
+    /** Total APIs in Lynx Platform API categories only (used for coverage). */
+    platform_api_total: number;
     by_category: Record<string, CategoryStats>;
     by_platform: Partial<Record<PlatformName, PlatformStats>>;
   };
+  /** Which group each category belongs to: 'platform' or 'other'. */
+  category_groups: Record<string, 'platform' | 'other'>;
   categories: Record<string, CategoryDetail>;
   recent_apis: RecentAPI[];
   features: FeatureInfo[];
@@ -284,7 +384,16 @@ function collectAPIs(
     const supportCount = TRACKED_PLATFORMS.filter(
       (p) => (supported[p] || 0) > 0,
     ).length;
-    total = supportCount >= 2 ? 1 : 0;
+    const isShared = supportCount >= 2;
+    total = isShared ? 1 : 0;
+
+    // Only count toward per-platform supported if this is a shared API.
+    // Exclusive APIs are tracked separately and should not inflate coverage.
+    if (!isShared) {
+      for (const platform of TRACKED_PLATFORMS) {
+        supported[platform] = 0;
+      }
+    }
 
     const docUrl = compat.lynx_path || generateDocUrl(apiPath, docPrefix);
     const name =
@@ -398,6 +507,7 @@ function processCategory(
   categoryPath: string,
   displayName: string,
   docPrefix: string,
+  excludePlatforms?: PlatformName[],
 ): {
   stats: CategoryStats;
   apis: string[];
@@ -456,15 +566,24 @@ function processCategory(
   processDir(fullPath);
 
   // Calculate coverage percentages
-  const coverage: Partial<Record<PlatformName, number>> = {};
+  // For excluded platforms, coverage is null (N/A — category does not apply)
+  const coverage: Partial<Record<PlatformName, number | null>> = {};
   for (const platform of TRACKED_PLATFORMS) {
-    coverage[platform] =
-      total > 0 ? Math.round(((supported[platform] || 0) / total) * 100) : 0;
+    if (excludePlatforms?.includes(platform)) {
+      coverage[platform] = null;
+    } else {
+      coverage[platform] =
+        total > 0 ? Math.round(((supported[platform] || 0) / total) * 100) : 0;
+    }
   }
 
   // Calculate missing APIs per platform (only for shared APIs, i.e. supported by >=2 platforms)
+  // Skip excluded platforms — category is N/A for them
   const missing: Partial<Record<PlatformName, APIInfo[]>> = {};
   for (const platform of TRACKED_PLATFORMS) {
+    if (excludePlatforms?.includes(platform)) {
+      continue;
+    }
     missing[platform] = apiDetails.filter((api) => {
       const supportCount = TRACKED_PLATFORMS.filter(
         (p) => api.support[p] !== false && api.support[p] !== undefined,
@@ -554,8 +673,9 @@ function calculateTimeline(
   // Only use recent versions (last 10)
   const recentVersions = versionHistory.slice(-10);
 
-  // Only count shared features (supported by at least 2 platforms)
+  // Only count shared features in Platform API categories (supported by at least 2 platforms)
   const relevantFeatures = allFeatures.filter((f) => {
+    if (!PLATFORM_API_CATEGORIES.has(f.category)) return false;
     const supportCount = TRACKED_PLATFORMS.filter((p) => {
       const support = f.support[p];
       return support && isSupported(support.version_added);
@@ -654,11 +774,13 @@ function addClayAggregate(stats: APIStats): void {
     });
   }
 
-  // 2. Add to summary.by_platform
-  const totalSupported = Object.values(stats.categories).reduce(
-    (sum, cat) => sum + (cat.stats.supported[clay] || 0),
-    0,
-  );
+  // 2. Add to summary.by_platform (coverage uses Platform API categories only)
+  let platformApiSupported = 0;
+  for (const [catPath, cat] of Object.entries(stats.categories)) {
+    if (PLATFORM_API_CATEGORIES.has(catPath)) {
+      platformApiSupported += cat.stats.supported[clay] || 0;
+    }
+  }
 
   // Count exclusive APIs for clay aggregate: supported by clay but no non-clay platform
   const clayExclusiveCount = stats.features
@@ -677,11 +799,12 @@ function addClayAggregate(stats: APIStats): void {
       }).length
     : 0;
 
+  const platformApiTotal = stats.summary.platform_api_total;
   stats.summary.by_platform[clay] = {
-    supported_count: totalSupported,
+    supported_count: platformApiSupported,
     coverage_percent:
-      stats.summary.total_apis > 0
-        ? Math.round((totalSupported / stats.summary.total_apis) * 100)
+      platformApiTotal > 0
+        ? Math.round((platformApiSupported / platformApiTotal) * 100)
         : 0,
     exclusive_count: clayExclusiveCount,
   };
@@ -712,9 +835,10 @@ function addClayAggregate(stats: APIStats): void {
       clayVersions.length > 0 ? getEarliestVersion(clayVersions) : false;
   }
 
-  // 5. Add to timeline (must recompute properly per version)
+  // 5. Add to timeline (must recompute properly per version, platform API only)
   if (stats.timeline && stats.features) {
     const relevantFeatures = stats.features.filter((f) => {
+      if (!PLATFORM_API_CATEGORIES.has(f.category)) return false;
       const supportCount = TRACKED_PLATFORMS.filter((p) => {
         const support = f.support[p];
         return support && isSupported(support.version_added);
@@ -760,10 +884,15 @@ function generateStats(): APIStats {
   }
 
   let featureId = 0;
-  for (const { path: categoryPath, displayName, docPrefix } of CATEGORIES) {
+  for (const {
+    path: categoryPath,
+    displayName,
+    docPrefix,
+    excludePlatforms,
+  } of CATEGORIES) {
     console.log(`  Processing ${displayName}...`);
     const { stats, apis, apiDetails, missing, exclusiveApis, recentAPIs } =
-      processCategory(categoryPath, displayName, docPrefix);
+      processCategory(categoryPath, displayName, docPrefix, excludePlatforms);
 
     categories[categoryPath] = {
       display_name: displayName,
@@ -876,7 +1005,25 @@ function generateStats(): APIStats {
     }
   }
 
-  // Calculate global platform stats for ALL platforms
+  // Calculate Lynx Platform API total (only 'platform' group categories)
+  let platformApiTotal = 0;
+  const platformApiSupported: Partial<Record<PlatformName, number>> = {};
+  for (const platform of TRACKED_PLATFORMS) {
+    platformApiSupported[platform] = 0;
+  }
+  for (const { path: catPath, group } of CATEGORIES) {
+    if (group === 'platform') {
+      platformApiTotal += byCategory[catPath]?.total || 0;
+      for (const platform of TRACKED_PLATFORMS) {
+        platformApiSupported[platform] =
+          (platformApiSupported[platform] || 0) +
+          (byCategory[catPath]?.supported[platform] || 0);
+      }
+    }
+  }
+
+  // Calculate global platform stats
+  // Coverage is based on Lynx Platform API only (the unified spec).
   const byPlatform: Partial<Record<PlatformName, PlatformStats>> = {};
   for (const platform of TRACKED_PLATFORMS) {
     // Count exclusive APIs: supported ONLY by this platform (among all tracked)
@@ -891,10 +1038,12 @@ function generateStats(): APIStats {
     }).length;
 
     byPlatform[platform] = {
-      supported_count: globalSupported[platform] || 0,
+      supported_count: platformApiSupported[platform] || 0,
       coverage_percent:
-        globalTotal > 0
-          ? Math.round(((globalSupported[platform] || 0) / globalTotal) * 100)
+        platformApiTotal > 0
+          ? Math.round(
+              ((platformApiSupported[platform] || 0) / platformApiTotal) * 100,
+            )
           : 0,
       exclusive_count: exclusiveCount,
     };
@@ -907,13 +1056,20 @@ function generateStats(): APIStats {
   const versionHistory = loadVersionHistory();
   const timeline = calculateTimeline(allFeatures, versionHistory);
 
+  // Build category_groups map
+  const categoryGroups: Record<string, 'platform' | 'other'> = {};
+  for (const { path: catPath, group } of CATEGORIES) {
+    categoryGroups[catPath] = group;
+  }
+
   const stats: APIStats = {
-    generated_at: new Date().toISOString(),
     summary: {
       total_apis: globalTotal,
+      platform_api_total: platformApiTotal,
       by_category: byCategory,
       by_platform: byPlatform,
     },
+    category_groups: categoryGroups,
     categories,
     recent_apis: allRecentAPIs.slice(0, 100),
     features: allFeatures,
@@ -925,9 +1081,10 @@ function generateStats(): APIStats {
 
   console.log(`\nSummary:`);
   console.log(`  Total APIs: ${globalTotal}`);
+  console.log(`  Platform API Total: ${platformApiTotal}`);
   console.log(`  Features: ${allFeatures.length}`);
   console.log(`  Timeline points: ${timeline.length}`);
-  console.log(`\n  Native Platforms:`);
+  console.log(`\n  Native Platforms (coverage = Platform API only):`);
   for (const platform of [
     'android',
     'ios',
@@ -936,13 +1093,13 @@ function generateStats(): APIStats {
   ] as PlatformName[]) {
     const ps = byPlatform[platform];
     console.log(
-      `    ${platform}: ${ps?.supported_count}/${globalTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
+      `    ${platform}: ${ps?.supported_count}/${platformApiTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
     );
   }
   const clayAgg = byPlatform['clay' as PlatformName];
   console.log(`\n  Clay (Aggregate):`);
   console.log(
-    `    clay: ${clayAgg?.supported_count}/${globalTotal} (${clayAgg?.coverage_percent}%) +${clayAgg?.exclusive_count} exclusive`,
+    `    clay: ${clayAgg?.supported_count}/${platformApiTotal} (${clayAgg?.coverage_percent}%) +${clayAgg?.exclusive_count} exclusive`,
   );
   console.log(`\n  Clay Platforms:`);
   for (const platform of [
@@ -953,7 +1110,7 @@ function generateStats(): APIStats {
   ] as PlatformName[]) {
     const ps = byPlatform[platform];
     console.log(
-      `    ${platform}: ${ps?.supported_count}/${globalTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
+      `    ${platform}: ${ps?.supported_count}/${platformApiTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
     );
   }
 

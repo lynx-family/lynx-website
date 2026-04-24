@@ -14,7 +14,45 @@ export interface Client
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [websocketTransport?](./rspeedy.devclient.websockettransport.md) |  | string \| undefined | _(Optional)_ The path to websocket. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[websocketTransport?](./rspeedy.devclient.websockettransport.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| undefined
+
+
+</td><td>
+
+_(Optional)_ The path to websocket.
+
+
+</td></tr>
+</tbody></table>
 

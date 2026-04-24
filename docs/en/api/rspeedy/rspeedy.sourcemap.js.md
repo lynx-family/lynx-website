@@ -12,11 +12,13 @@ How the source map should be generated. Setting it to `false` will disable the s
 js?: Rspack.DevTool | undefined | `${Exclude<Rspack.DevTool, false | 'eval'>}-debugids`;
 ```
 
+## Default Value
+
+When `output.sourceMap` is an object and `js` is unset, it defaults to `'cheap-module-source-map'` in development and `false` in production.
+
 ## Remarks
 
-Defaults to `'cheap-module-source-map'` at development, `false` at production.
-
-See [Rspack - Devtool](https://rspack.dev/config/devtool) for details.
+See [Rspack - Devtool](https://rspack.rs/config/devtool) for details.
 
 ## Example 1
 
@@ -67,4 +69,3 @@ export default defineConfig({
   },
 })
 ```
-

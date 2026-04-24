@@ -33,46 +33,49 @@ type BrandKey = keyof typeof brandSpList;
 
 const HoverCard = ({ author }: { author: (typeof originListData)[0] }) => {
   const lang = useLang();
+  const displayName = lang === 'zh' ? author.name_zh : author.name;
+  const role = lang === 'zh' ? author.title_zh : author.title;
 
   return (
     <span className={styles['avatar-item']}>
       <img
         className={styles['avatar-img']}
         src={author?.image}
-        alt={author.name}
+        alt={displayName}
       />
       <div className={styles['avatar-text']}>
-        <div className="text-sm leading-none font-medium">
-          {lang === 'zh' ? author.name_zh : author.name}
-        </div>
-        <div className="text-xs leading-none text-[color:var(--text-secondary)]">
-          {lang === 'zh' ? author.title_zh : author.title}
-        </div>
-        <div className={styles['avatar-socials']}>
-          {Object.entries(author.socials).map(([key, value]) => {
-            return value?.link ? (
-              <span
-                key={key}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  window.open(value?.link, '_blank');
-                }}
-                className="cursor-pointer"
-              >
-                {brandSpList[key as BrandKey]
-                  ? brandSpList[key as BrandKey].icon
-                  : brandSpList['default'].icon}
-              </span>
-            ) : (
-              <span key={key}>
-                {brandSpList[key as BrandKey]
-                  ? brandSpList[key as BrandKey].icon
-                  : brandSpList['default'].icon}
-              </span>
-            );
-          })}
-        </div>
+        <span className={styles['avatar-name-row']}>
+          <span className={styles['avatar-name']}>{displayName}</span>
+          <span className={styles['avatar-socials']}>
+            {Object.entries(author.socials).map(([key, value]) => {
+              const icon = brandSpList[key as BrandKey]
+                ? brandSpList[key as BrandKey].icon
+                : brandSpList['default'].icon;
+              return (
+                <span
+                  key={key}
+                  className={styles['avatar-social-link']}
+                  role={value?.link ? 'link' : undefined}
+                  onClick={
+                    value?.link
+                      ? (e) => {
+                          e.stopPropagation();
+                          window.open(
+                            value.link,
+                            '_blank',
+                            'noopener,noreferrer',
+                          );
+                        }
+                      : undefined
+                  }
+                >
+                  {icon}
+                </span>
+              );
+            })}
+          </span>
+        </span>
+        {role && <span className={styles['avatar-role']}>{role}</span>}
       </div>
     </span>
   );

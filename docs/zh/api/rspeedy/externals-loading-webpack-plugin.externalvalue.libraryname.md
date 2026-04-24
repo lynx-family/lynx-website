@@ -76,6 +76,10 @@ externals: {
 libraryName?: string | string[];
 ```
 
+## Default Value
+
+`undefined`
+
 ## Example
 
 `Lodash`

@@ -222,10 +222,12 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     PLATFORM_CONFIG.android.colors;
 
   // Format date
-  const updatedDate = new Date(stats.generated_at).toLocaleDateString(
-    lang === 'zh' ? 'zh-CN' : 'en-US',
-    { month: 'short', day: 'numeric' },
-  );
+  const updatedDate = stats.generated_at
+    ? new Date(stats.generated_at).toLocaleDateString(
+        lang === 'zh' ? 'zh-CN' : 'en-US',
+        { month: 'short', day: 'numeric' },
+      )
+    : undefined;
 
   const pages: {
     id: PageType;
@@ -246,7 +248,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
             <div className="flex gap-3 items-center">
               <span className="text-base font-semibold">Lynx API Status</span>
               <span className="font-mono text-xs text-muted-foreground">
-                {stats.summary.total_apis.toLocaleString()}
+                {stats.summary.platform_api_total.toLocaleString()}
               </span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                 APIs
@@ -589,7 +591,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
                   <HelpCircleIcon className="w-4 h-4" />
                   <span>Help</span>
                 </div>
-                {!isCollapsed && (
+                {!isCollapsed && updatedDate && (
                   <span className="text-[10px] text-muted-foreground/70 font-mono">
                     {updatedDate}
                   </span>

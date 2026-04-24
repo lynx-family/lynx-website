@@ -223,6 +223,20 @@ function App() {
 
 ## 跨线程函数调用
 
+到目前为止的示例都将 `'main thread'` 函数用作事件处理器。但如果你需要从后台线程调用主线程函数，或反过来呢？ReactLynx 提供了 [`runOnMainThread()`] 和 [`runOnBackground()`] 来实现双向异步通信。
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/cross-thread-calls.lynx.bundle"
+  defaultFile="src/cross-thread-calls/App.tsx"
+  entry="src/cross-thread-calls"
+/>
+
+在这个示例中，点击方块会触发一个往返调用：
+
+1. **主线程** `onTap` 触发，调用 `runOnBackground(incrementCount)()` 来更新状态
+2. **后台线程** `count` 的 `useEffect` 触发，调用 `runOnMainThread(applyColor)(nextColor)` 来改变方块颜色
+
 ### 在后台线程中发起对主线程函数的异步调用
 
 在后台线程使用 [`runOnMainThread()`] 来异步地在主线程执行主线程函数：
@@ -295,6 +309,13 @@ function mainThreadFunction() {
 
 > [!NOTE]
 > 以 `with { runtime: 'shared' }` 引入的模块中的函数虽然能够被主线程函数调用，但其本身并不会被自动识别为主线程函数。如果其中使用了 `MainThreadRef` 等主线程特有能力，仍需手动标记 `'main thread'`。
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.tsx"
+  entry="src/shared-module"
+/>
 
 ### 引用第三方库
 

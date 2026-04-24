@@ -12,9 +12,7 @@ The name of the font files.
 font?: Rspack.AssetModuleFilename | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- `'[name].[contenthash:8][ext]'`
+`'[name].[contenthash:8][ext]'`
 

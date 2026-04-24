@@ -21,7 +21,15 @@ export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   'css/data-type': 'CSS Data Types',
   'css/at-rule': 'CSS At-Rules',
   elements: 'Elements',
-  'lynx-api': 'Lynx API',
+  'lynx-api/global': 'Lynx Global API',
+  'lynx-api/event': 'Lynx Event API',
+  'lynx-api/fetch': 'Lynx Fetch API',
+  'lynx-api/lynx': 'lynx.*',
+  'lynx-api/selector-query': 'Lynx Selector Query',
+  'lynx-api/nodes-ref': 'Lynx Nodes Ref',
+  'lynx-api/intersection-observer': 'Lynx Intersection Observer',
+  'lynx-api/main-thread': 'Lynx Main Thread API',
+  'lynx-api/performance-api': 'Lynx Performance API',
   'lynx-native-api': 'Lynx Native API',
   react: 'ReactLynx',
   devtool: 'DevTools',
@@ -31,7 +39,8 @@ export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
 export interface CategoryStats {
   total: number;
   supported: Partial<Record<DisplayPlatformName, number>>;
-  coverage: Partial<Record<DisplayPlatformName, number>>;
+  /** Coverage percentage per platform. `null` means the category is N/A for that platform. */
+  coverage: Partial<Record<DisplayPlatformName, number | null>>;
   exclusive: Partial<Record<DisplayPlatformName, number>>;
 }
 
@@ -89,12 +98,16 @@ export interface TimelinePoint {
 }
 
 export interface APIStats {
-  generated_at: string;
+  generated_at?: string;
   summary: {
     total_apis: number;
+    /** Total APIs in Lynx Platform API categories only (used for coverage). */
+    platform_api_total: number;
     by_category: Record<string, CategoryStats>;
     by_platform: Partial<Record<DisplayPlatformName, PlatformSummary>>;
   };
+  /** Which group each category belongs to: 'platform' (Lynx Platform API) or 'other'. */
+  category_groups: Record<string, 'platform' | 'other'>;
   categories: Record<string, CategoryDetail>;
   recent_apis: RecentAPI[];
   features?: FeatureInfo[];

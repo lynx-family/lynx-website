@@ -12,6 +12,10 @@ Whether enable the JavaScript minification.
 js?: boolean | undefined;
 ```
 
+## Default Value
+
+When `output.minify` is enabled and `js` is unset, this defaults to `true`<!-- -->.
+
 ## Example
 
 - Disable the JavaScript minification.

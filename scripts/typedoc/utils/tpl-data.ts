@@ -1,5 +1,9 @@
 import * as fs from 'node:fs';
 
+const doGetTagContent = (tagObject) => {
+  return Array.isArray(tagObject?.content) ? tagObject.content : [];
+};
+
 const doFindObjectWithTagValue = (obj, tagName, tagValue) => {
   function recursiveSearch(currentObj) {
     for (let key in currentObj) {
@@ -181,19 +185,30 @@ const doMoreForItem = (item) => {
     ? true
     : false;
   // 描述信息
-  const summary = doFindObjectWithTag(item, 'summary');
+  const summary = doFindObjectWithTag(item, 'summary') ?? [];
+  // 中文描述信息
+  const summary_zh_tag = doFindObjectWithTagValue(item, 'tag', '@zh');
+  const summary_zh = summary_zh_tag ? doGetTagContent(summary_zh_tag) : [];
   // 默认值
   const defaultValue = doFindObjectWithTagValue(item, 'tag', '@defaultValue');
+  // typeDoc 复杂类型的 fallback 处理
+  const docTypeFallback = doFindObjectWithTagValue(
+    item,
+    'tag',
+    '@docTypeFallback',
+  );
 
   return {
     name,
     type: doTypeCalc(type),
     summary,
+    summary_zh,
     defaultValue: doDefaultValueCalc(defaultValue),
     isOption,
     isSupportIOS,
     isSupportAndroid,
     isSupportHarmony,
+    docTypeFallback,
   };
 };
 

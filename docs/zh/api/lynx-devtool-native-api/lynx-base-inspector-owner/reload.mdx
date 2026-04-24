@@ -1,0 +1,45 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/reload
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# reload
+
+<APISummary />
+
+重新加载当前页面，或加载一个全新的模板来替换当前页面。
+
+## 语法
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)reloadLynxView:(BOOL)ignoreCache;
+- (void)reloadLynxView:(BOOL)ignoreCache
+          withTemplate:(nullable NSString *)templateBin
+         fromFragments:(BOOL)fromFragments
+              withSize:(int32_t)size;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void reload(boolean ignoreCache);
+void reload(boolean ignoreCache, String templateBin, boolean fromTemplateFragments, int templateSize);
+```
+
+### 参数说明
+
+- `ignoreCache`: 是否忽略缓存。如果为 `true`，则会清空渲染相关的缓存。
+- `templateBin`: Base64 编码的 Lynx 模板字符串。可以为 `null` 或空字符串。
+  - **当调用第一个 `reload` 方法，或此参数为 `null`、空字符串时**: 重新加载页面原来的模板。
+  - **当此参数为有效的 Base64 字符串时**: 加载该字符串中包含的新模板，可用于实现重定向等能力。
+- `fromFragments` / `fromTemplateFragments`: 是否通过 USB 分片段传输模板文件。
+  - **仅供内部使用**，外部调用时应始终设置为 `false`。
+- `size` / `templateSize`: 当 `fromFragments` 为 `true` 时，指定模板文件的总大小（字节）。
+  - **仅供内部使用**，外部调用时应始终设置为 `0`。
+
+## 兼容性
+
+<APITable />

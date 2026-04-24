@@ -757,10 +757,12 @@ export const APIStatusDashboard: React.FC = () => {
   const selectedColors =
     PLATFORM_CONFIG[firstPlatform]?.colors || PLATFORM_CONFIG.web_lynx.colors;
   const platformStats = summary.by_platform[firstPlatform];
-  const generatedDate = new Date(stats.generated_at).toLocaleDateString(
-    lang === 'zh' ? 'zh-CN' : 'en-US',
-    { month: 'short', day: 'numeric' },
-  );
+  const generatedDate = stats.generated_at
+    ? new Date(stats.generated_at).toLocaleDateString(
+        lang === 'zh' ? 'zh-CN' : 'en-US',
+        { month: 'short', day: 'numeric' },
+      )
+    : undefined;
 
   return (
     <TooltipProvider>
@@ -775,18 +777,20 @@ export const APIStatusDashboard: React.FC = () => {
               </h1>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="font-mono font-bold text-foreground">
-                  {summary.total_apis.toLocaleString()}
+                  {summary.platform_api_total.toLocaleString()}
                 </span>
                 <span>{t.totalApis}</span>
               </div>
             </div>
             <div className="flex gap-3 items-center text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <ClockIcon className="w-3 h-3" />
-                <span>
-                  {t.generatedAt} {generatedDate}
-                </span>
-              </div>
+              {generatedDate && (
+                <div className="flex items-center gap-1.5">
+                  <ClockIcon className="w-3 h-3" />
+                  <span>
+                    {t.generatedAt} {generatedDate}
+                  </span>
+                </div>
+              )}
               <a
                 href={withBase(
                   lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',
@@ -1205,7 +1209,7 @@ export const APIStatusDashboard: React.FC = () => {
                         <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
                           <span>
                             {ps?.supported_count.toLocaleString()} /{' '}
-                            {summary.total_apis.toLocaleString()}
+                            {summary.platform_api_total.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1272,6 +1276,7 @@ export const APIStatusDashboard: React.FC = () => {
           <CardContent className="px-0 pt-0 pb-0">
             <CategoryTable
               categories={categories}
+              categoryGroups={stats.category_groups}
               selectedPlatforms={selectedPlatforms}
               expandedCategory={expandedCategory}
               onCategoryClick={(cat) =>

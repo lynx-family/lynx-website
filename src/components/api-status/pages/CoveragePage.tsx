@@ -274,7 +274,7 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
                   <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
                     <span>
                       {platformStats?.supported_count.toLocaleString()} /{' '}
-                      {summary.total_apis.toLocaleString()} {t.shared}
+                      {summary.platform_api_total.toLocaleString()} {t.shared}
                     </span>
                     {(platformStats?.exclusive_count ?? 0) > 0 && (
                       <span className="opacity-60">

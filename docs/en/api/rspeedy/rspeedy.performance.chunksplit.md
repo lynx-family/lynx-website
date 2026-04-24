@@ -11,3 +11,8 @@
 ```typescript
 chunkSplit?: ChunkSplit | ChunkSplitBySize | ChunkSplitCustom | undefined;
 ```
+
+## Default Value
+
+For web builds, Rsbuild currently uses `{ strategy: 'split-by-experience' }` when this option is unset.
+

@@ -15,6 +15,8 @@ import {
   transformerNotationHighlight,
 } from '@shikijs/transformers';
 import * as path from 'node:path';
+import versionJson from './docs/public/version.json';
+import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import {
@@ -111,8 +113,12 @@ export default defineConfig({
       'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
-  base: '/next',
+  base: `/${versionJson.current_version}`,
   themeConfig: {
+    editLink: {
+      docRepoBaseUrl:
+        'https://github.com/lynx-family/lynx-website/tree/main/docs',
+    },
     enableContentAnimation: true,
     enableAppearanceAnimation: true,
     locales: [
@@ -121,19 +127,6 @@ export default defineConfig({
         title: 'Lynx',
         description: '帮助 Web 构建跨平台应用',
         label: '简体中文',
-        editLink: {
-          docRepoBaseUrl:
-            'https://github.com/lynx-family/lynx-website/tree/main/docs',
-          text: '📝 在 GitHub 上编辑此页',
-        },
-        searchNoResultsText: '未搜索到相关结果',
-        searchPlaceholderText: '搜索文档',
-        searchSuggestedQueryText: '可更换不同的关键字后重试',
-        overview: {
-          filterNameText: '过滤',
-          filterPlaceholderText: '输入关键词',
-          filterNoResultText: '未找到匹配的 API',
-        },
       },
       {
         lang: 'en',
@@ -141,11 +134,6 @@ export default defineConfig({
         description:
           'Empower the web community and invite more to build cross-platform apps',
         label: 'English',
-        editLink: {
-          docRepoBaseUrl:
-            'https://github.com/lynx-family/lynx-website/tree/main/docs',
-          text: '📝 Edit this page on GitHub',
-        },
       },
     ],
     socialLinks: [
@@ -211,6 +199,10 @@ export default defineConfig({
   ],
   markdown: {
     defaultWrapCode: false,
+    // Replace "{versionJson.X}" placeholders inside fenced/inline code.
+    // MDX does not evaluate JS expressions inside code fences, so without this
+    // users would see the raw placeholder text in the rendered output.
+    remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
       checkDeadLinks: {
         excludes: ['/guide/spec.html?ts=1743416098203#element%E2%91%A0'],
@@ -227,6 +219,32 @@ export default defineConfig({
   },
   llms: true,
 });
+
+function remarkReplaceVersionJsonPlaceholders() {
+  const replacements: Array<[string, string]> = [
+    ['{versionJson.LYNX_VERSION}', String(versionJson.LYNX_VERSION ?? '')],
+    ['{versionJson.PRIMJS_VERSION}', String(versionJson.PRIMJS_VERSION ?? '')],
+  ];
+
+  const applyReplacements = (input: string) => {
+    let out = input;
+    for (const [from, to] of replacements) {
+      if (from && to) out = out.split(from).join(to);
+    }
+    return out;
+  };
+
+  return (tree: unknown) => {
+    visit(tree as any, (node: any) => {
+      if (
+        (node?.type === 'code' || node?.type === 'inlineCode') &&
+        typeof node.value === 'string'
+      ) {
+        node.value = applyReplacements(node.value);
+      }
+    });
+  };
+}
 
 function mapNonGuideSharedSectionsToGuide(
   lang: string,

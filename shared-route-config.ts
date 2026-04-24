@@ -20,6 +20,8 @@ export type SubsiteConfig = {
     light: string;
     dark: string;
   };
+  /** When set, the subsite links to an external URL instead of an internal route. */
+  external?: string;
 };
 
 export const SUBSITES_CONFIG: SubsiteConfig[] = [
@@ -74,16 +76,60 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: '/assets/lynxai-logo-dark.svg',
     },
   },
+  {
+    value: 'sparkling',
+    label: 'Sparkling',
+    description: 'Lynx at TikTok scale',
+    descriptionZh: 'TikTok 规模的 Lynx 基础设施',
+    external: 'https://tiktok.github.io/sparkling',
+    home: '',
+    url: '',
+    logo: {
+      light: 'https://tiktok.github.io/sparkling/sparkling_logo_144_light.png',
+      dark: 'https://tiktok.github.io/sparkling/sparkling_logo_144.png',
+    },
+  },
+  {
+    value: 'vue-lynx',
+    label: 'Vue Lynx',
+    description: 'Build Lynx apps with Vue',
+    descriptionZh: '用 Vue 开发 Lynx 应用',
+    external: 'https://vue.lynxjs.org',
+    home: '',
+    url: '',
+    logo: {
+      light: 'https://vuejs.org/logo.svg',
+      dark: 'https://vuejs.org/logo.svg',
+    },
+  },
+  {
+    value: 'reactlynx-use',
+    label: 'ReactLynx Use',
+    description: 'Hooks for ReactLynx',
+    descriptionZh: 'ReactLynx 的 Hooks 库',
+    external: 'https://hooks.lynxjs.org',
+    home: '',
+    url: '',
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
+    },
+  },
 ];
+
+/** Subsites with internal docs routes (Lynx, ReactLynx, Rspeedy, AI). */
+export const CORE_SUBSITES = SUBSITES_CONFIG.filter((s) => !s.external);
+
+/** Subsites that link to external sites (Sparkling, Vue Lynx, ReactLynx Use). */
+export const ECOSYSTEM_SUBSITES = SUBSITES_CONFIG.filter((s) => s.external);
 
 /**
  * URL paths that share common documentation files.
  * For example, "start/quick-start" will be accessible at both
  * "guide/start/quick-start" and "react/start/quick-start".
  */
-export const SHARED_SIDEBAR_PATHS = SUBSITES_CONFIG.map(
-  (config) => config.value,
-);
+export const SHARED_SIDEBAR_PATHS = CORE_SUBSITES.map((config) => config.value);
 
 const SHARED_DOC_ROOT = 'start';
 

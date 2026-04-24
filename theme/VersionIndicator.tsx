@@ -17,6 +17,18 @@ import versionJson from '../docs/public/version.json';
 const menuItemClassName =
   'relative flex w-full cursor-default select-none items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
 
+function shouldHideVersion(version: string) {
+  if (version === '3.2' || version === '3.3') {
+    return true;
+  }
+
+  if (process.env.OSS === '1.0') {
+    return false;
+  }
+
+  return false;
+}
+
 export function VersionIndicator() {
   var { pathname } = useLocation();
   const langPrefix = getLangPrefix(useLang());
@@ -95,7 +107,7 @@ export function VersionIndicator() {
         <HoverCardContent className="w-28 p-0" align="start">
           <div className="p-2">
             {versions
-              .filter((version) => version !== '3.2' && version !== '3.3')
+              .filter((version) => !shouldHideVersion(version))
               .map((version) => (
                 <button
                   key={version}

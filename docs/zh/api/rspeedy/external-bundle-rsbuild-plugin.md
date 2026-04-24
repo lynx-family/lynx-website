@@ -10,11 +10,29 @@ A rsbuild plugin for loading external bundles using externals-loading-webpack-pl
 
 |  Function | Description |
 |  --- | --- |
-|  [pluginExternalBundle(options)](./external-bundle-rsbuild-plugin.pluginexternalbundle.md) | <p>Create a rsbuild plugin for loading external bundles.</p><p>This plugin wraps the externals-loading-webpack-plugin and automatically retrieves layer names from the react-rsbuild-plugin via api.useExposed.</p> |
+|  [normalizeBundlePath(bundlePath)](./external-bundle-rsbuild-plugin.normalizebundlepath.md) | Normalize a public bundle path by removing leading slashes. |
+|  [pluginExternalBundle(options)](./external-bundle-rsbuild-plugin.pluginexternalbundle.md) | Create a rsbuild plugin for loading external bundles. |
+
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [ExternalsPresetContext](./external-bundle-rsbuild-plugin.externalspresetcontext.md) | Context passed to externals preset resolvers. |
+|  [ExternalsPresetDefinition](./external-bundle-rsbuild-plugin.externalspresetdefinition.md) | Definition for a named externals preset. |
+|  [ExternalsPresets](./external-bundle-rsbuild-plugin.externalspresets.md) | Presets for external bundle dependencies. |
+|  [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) | Options for the external-bundle-rsbuild-plugin. |
+|  [PluginExternalValue](./external-bundle-rsbuild-plugin.pluginexternalvalue.md) | External bundle reference accepted by `pluginExternalBundle`. |
+|  [ReactLynxExternalsPresetOptions](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.md) | Options for the built-in `reactlynx` externals preset. |
 
 ## Type Aliases
 
 |  Type Alias | Description |
 |  --- | --- |
-|  [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) | Options for the external-bundle-rsbuild-plugin. |
+|  [ExternalsPresetDefinitions](./external-bundle-rsbuild-plugin.externalspresetdefinitions.md) | Available externals preset definitions. |
+|  [PluginExternalConfig](./external-bundle-rsbuild-plugin.pluginexternalconfig.md) | External bundle shorthand accepted by `pluginExternalBundle`. |
 
+## Variables
+
+|  Variable | Description |
+|  --- | --- |
+|  [builtInExternalsPresetDefinitions](./external-bundle-rsbuild-plugin.builtinexternalspresetdefinitions.md) | Built-in externals preset definitions. |

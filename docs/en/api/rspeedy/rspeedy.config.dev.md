@@ -11,3 +11,8 @@ The [Dev](./rspeedy.dev.md) option is used to control the behavior related with 
 ```typescript
 dev?: Dev | undefined;
 ```
+
+## Default Value
+
+undefined
+

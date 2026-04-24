@@ -14,10 +14,53 @@ export declare function defineExternalBundleRslibConfig(userLibConfig: ExternalB
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  userLibConfig | ExternalBundleLibConfig |  |
-|  encodeOptions | [EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md) | _(Optional)_ |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+userLibConfig
+
+
+</td><td>
+
+[ExternalBundleLibConfig](./lynx-bundle-rslib-config.externalbundlelibconfig.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+encodeOptions
+
+
+</td><td>
+
+[EncodeOptions](./lynx-bundle-rslib-config.encodeoptions.md)
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 
@@ -29,7 +72,7 @@ If you want to build an external bundle which use in Lynx background thread, you
 
 ```js
 // rslib.config.js
-import { defineExternalBundleRslibConfig, LAYERS } from '@lynx-js/lynx-bundle-rslib-config'
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config'
 
 export default defineExternalBundleRslibConfig({
   id: 'utils-lib',
@@ -37,7 +80,7 @@ export default defineExternalBundleRslibConfig({
     entry: {
       utils: {
         import: './src/utils.ts',
-        layer: LAYERS.BACKGROUND,
+        layer: 'background',
       }
     }
   }
@@ -51,7 +94,7 @@ If you want to build an external bundle which use in Lynx main thread, you can u
 
 ```js
 // rslib.config.js
-import { defineExternalBundleRslibConfig, LAYERS } from '@lynx-js/lynx-bundle-rslib-config'
+import { defineExternalBundleRslibConfig } from '@lynx-js/lynx-bundle-rslib-config'
 
 export default defineExternalBundleRslibConfig({
   id: 'utils-lib',
@@ -59,7 +102,7 @@ export default defineExternalBundleRslibConfig({
     entry: {
       utils: {
         import: './src/utils.ts',
-        layer: LAYERS.MAIN_THREAD,
+        layer: 'main-thread',
       }
     }
   }

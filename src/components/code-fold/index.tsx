@@ -4,11 +4,9 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './index.scss';
 import { useDark } from '@rspress/core/runtime';
-import { Button } from '@douyinfe/semi-ui';
-import { IconExpand, IconShrink } from '@douyinfe/semi-icons';
 
 /**
  * Props for the CodeFold component
@@ -43,39 +41,48 @@ export const CodeFold = ({
   }
   const dark = useDark();
   const containerRef = useRef<HTMLDivElement>(null);
-  const toggleRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState('example');
-  const [toggleHeight, setToggleHeight] = useState<number | undefined>(
-    undefined,
-  );
+  const [expanded, setExpanded] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
 
-  const doBackToView = useCallback(() => {
-    if (containerRef.current) {
-      const offsetTop = document.documentElement.scrollTop;
-      const top = containerRef.current.getBoundingClientRect().top;
+  const collapsedHeight = Math.max(setHeight ?? 0, 300);
 
-      document.documentElement.scrollTo({
-        top: offsetTop + top - containerRef.current.clientHeight / 2,
-        behavior: 'smooth',
-      });
-    }
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const update = () => setContentHeight(el.scrollHeight);
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
-  const doToggle = useCallback(() => {
-    if (!toggleHeight && !!toggleRef.current) {
-      setToggleHeight(toggleRef.current?.clientHeight);
-    } else {
-      setToggleHeight(undefined);
-      setTimeout(() => {
-        doBackToView();
-      }, 0);
-    }
-  }, [toggleHeight]);
+  const needsFold =
+    toggle && contentHeight > 0 && contentHeight > collapsedHeight;
+  const panelHeight = needsFold && expanded ? contentHeight : collapsedHeight;
+
+  const handleToggle = useCallback(() => {
+    setExpanded((prev) => {
+      if (prev) {
+        setTimeout(() => {
+          if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            if (rect.top < 0) {
+              containerRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+              });
+            }
+          }
+        }, 0);
+      }
+      return !prev;
+    });
+  }, []);
 
   return (
     <div
-      style={{ marginBottom: 10 }}
-      className={`${dark ? 'semi-always-dark' : 'semi-always-light'}`}
+      className={`code-fold-wrapper ${dark ? 'semi-always-dark' : 'semi-always-light'}`}
       ref={containerRef}
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -91,23 +98,53 @@ export const CodeFold = ({
               style={{
                 position: 'relative',
                 aspectRatio: (16 / 9) * (1 / 0.25),
-                overflow: !toggle ? 'scroll' : 'hidden',
-                height: toggleHeight ?? Math.max(setHeight ?? 0, 300),
+                overflow: 'hidden',
+                height: panelHeight,
+                transition: needsFold
+                  ? 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+                  : undefined,
               }}
             >
-              {toggle && toggleHeight === undefined && (
-                <div className={`area-footer-mask ${dark ? 'dark' : ''}`} />
-              )}
-              {toggle && (
-                <Button
-                  onClick={doToggle}
-                  className="btn-frame"
-                  icon={toggleHeight ? <IconShrink /> : <IconExpand />}
-                ></Button>
-              )}
-              <div className="code-in-tab" ref={toggleRef}>
-                {children}
+              <div className="codefold-scroll-area">
+                <div className="code-in-tab" ref={contentRef}>
+                  {children}
+                </div>
               </div>
+
+              {needsFold && (
+                <div
+                  className={`codefold-gradient-overlay ${dark ? 'dark' : ''}`}
+                  style={{ opacity: expanded ? 0 : 1 }}
+                />
+              )}
+
+              {needsFold && (
+                <button
+                  onClick={handleToggle}
+                  className={`codefold-toggle-btn ${dark ? 'dark' : ''}`}
+                  aria-label={expanded ? 'Collapse code' : 'Expand code'}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    className="codefold-toggle-icon"
+                    style={{
+                      transform: expanded ? 'rotate(180deg)' : undefined,
+                    }}
+                  >
+                    <path
+                      d="M4 6L8 10L12 6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{expanded ? 'Collapse' : 'Expand'}</span>
+                </button>
+              )}
             </ResizablePanel>
             {img && <ResizableHandle className="mx-2" />}
             {img && (
@@ -115,7 +152,10 @@ export const CodeFold = ({
                 <div
                   className="image-frame"
                   style={{
-                    height: toggleHeight ?? Math.max(setHeight ?? 0, 300),
+                    height: panelHeight,
+                    transition: needsFold
+                      ? 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+                      : undefined,
                     ...imageFrameStyle,
                   }}
                 >

@@ -14,9 +14,127 @@ export interface ExternalsLoadingPluginOptions
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [backgroundLayer](./externals-loading-webpack-plugin.externalsloadingpluginoptions.backgroundlayer.md) |  | string | The name of the background layer. |
-|  [externals](./externals-loading-webpack-plugin.externalsloadingpluginoptions.externals.md) |  | Record&lt;string, [ExternalValue](./externals-loading-webpack-plugin.externalvalue.md)<!-- -->&gt; | Specify the externals to be loaded. The externals should be Lynx Bundles. |
-|  [mainThreadLayer](./externals-loading-webpack-plugin.externalsloadingpluginoptions.mainthreadlayer.md) |  | string | The name of the main thread layer. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[backgroundLayer](./externals-loading-webpack-plugin.externalsloadingpluginoptions.backgroundlayer.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The name of the background layer.
+
+
+</td></tr>
+<tr><td>
+
+[externals](./externals-loading-webpack-plugin.externalsloadingpluginoptions.externals.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, [ExternalValue](./externals-loading-webpack-plugin.externalvalue.md)<!-- -->&gt;
+
+
+</td><td>
+
+Specify the externals to be loaded. The externals should be Lynx Bundles.
+
+
+</td></tr>
+<tr><td>
+
+[globalObject?](./externals-loading-webpack-plugin.externalsloadingpluginoptions.globalobject.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'lynx' \| 'globalThis' \| undefined
+
+
+</td><td>
+
+_(Optional)_ This option indicates what global object will be used to mount the library.
+
+In Lynx, the library will be mounted to `lynx[Symbol.for("__LYNX_EXTERNAL_GLOBAL__")]` by default.
+
+If you have enabled share js context and want to reuse the library by mounting to the global object, you can set this option to `'globalThis'`<!-- -->.
+
+ 'lynx'
+
+
+</td></tr>
+<tr><td>
+
+[mainThreadLayer](./externals-loading-webpack-plugin.externalsloadingpluginoptions.mainthreadlayer.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The name of the main thread layer.
+
+
+</td></tr>
+<tr><td>
+
+[timeout?](./externals-loading-webpack-plugin.externalsloadingpluginoptions.timeout.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number \| undefined
+
+
+</td><td>
+
+_(Optional)_ The timeout in milliseconds for loading the externals.
+
+
+</td></tr>
+</tbody></table>
 

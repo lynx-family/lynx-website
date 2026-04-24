@@ -4,6 +4,7 @@
 
 ## ExternalValue interface
 
+The value item of the externals.
 
 **Signature:**
 
@@ -13,11 +14,107 @@ export interface ExternalValue
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [async?](./externals-loading-webpack-plugin.externalvalue.async.md) |  | boolean | _(Optional)_ Whether the source should be loaded asynchronously or not. |
-|  [background?](./externals-loading-webpack-plugin.externalvalue.background.md) |  | [LayerOptions](./externals-loading-webpack-plugin.layeroptions.md) | _(Optional)_ The options of the background layer. |
-|  [libraryName?](./externals-loading-webpack-plugin.externalvalue.libraryname.md) |  | string \| string\[\] | <p>_(Optional)_ The name of the library. Same as https://webpack.js.org/configuration/externals/\#string.</p><p>By default, the library name is the same as the externals key. For example:</p><p>The config</p>
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[async?](./externals-loading-webpack-plugin.externalvalue.async.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Whether the source should be loaded asynchronously or not.
+
+
+</td></tr>
+<tr><td>
+
+[background?](./externals-loading-webpack-plugin.externalvalue.background.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[LayerOptions](./externals-loading-webpack-plugin.layeroptions.md)
+
+
+</td><td>
+
+_(Optional)_ The options of the background layer.
+
+
+</td></tr>
+<tr><td>
+
+[bundlePath?](./externals-loading-webpack-plugin.externalvalue.bundlepath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ The bundle path resolved against the runtime public path.
+
+Prefer this over `url` when the bundle should follow the active `publicPath`<!-- -->. The runtime will load it with `publicPath + bundlePath`<!-- -->, which keeps external bundle resolution aligned with the current build output without hard-coding an absolute URL into the generated runtime code.
+
+
+</td></tr>
+<tr><td>
+
+[libraryName?](./externals-loading-webpack-plugin.externalvalue.libraryname.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| string\[\]
+
+
+</td><td>
+
+_(Optional)_ The name of the library. Same as https://webpack.js.org/configuration/externals/\#string.
+
+By default, the library name is the same as the externals key. For example:
+
+The config
+
 ```js
 ExternalsLoadingPlugin({
   externals: {
@@ -27,13 +124,15 @@ ExternalsLoadingPlugin({
   }
 })
 ```
-<p>Will generate the following webpack externals config:</p>
+Will generate the following webpack externals config:
+
 ```js
 externals: {
   lodash: 'lynx[Symbol.for("__LYNX_EXTERNAL_GLOBAL__")].lodash',
 }
 ```
-<p>If one external bundle contains multiple modules, should set the same library name to ensure it's loaded only once. For example:</p>
+If one external bundle contains multiple modules, should set the same library name to ensure it's loaded only once. For example:
+
 ```js
 ExternalsLoadingPlugin({
   externals: {
@@ -48,14 +147,16 @@ ExternalsLoadingPlugin({
   }
 })
 ```
-<p>Will generate the following webpack externals config:</p>
+Will generate the following webpack externals config:
+
 ```js
 externals: {
   lodash: 'lynx[Symbol.for("__LYNX_EXTERNAL_GLOBAL__")].Lodash',
   'lodash-es': 'lynx[Symbol.for("__LYNX_EXTERNAL_GLOBAL__")].Lodash',
 }
 ```
-<p>You can pass an array to specify subpath of the external. Same as https://webpack.js.org/configuration/externals/\#string-1. For example:</p>
+You can pass an array to specify subpath of the external. Same as https://webpack.js.org/configuration/externals/\#string-1. For example:
+
 ```js
 ExternalsLoadingPlugin({
   externals: {
@@ -66,14 +167,74 @@ ExternalsLoadingPlugin({
   }
 })
 ```
-<p>Will generate the following webpack externals config:</p>
+Will generate the following webpack externals config:
+
 ```js
 externals: {
   preact: 'lynx[Symbol.for("__LYNX_EXTERNAL_GLOBAL__")].ReactLynx.Preact',
 }
 ```
- |
-|  [mainThread?](./externals-loading-webpack-plugin.externalvalue.mainthread.md) |  | [LayerOptions](./externals-loading-webpack-plugin.layeroptions.md) | _(Optional)_ The options of the main-thread layer. |
-|  [timeout?](./externals-loading-webpack-plugin.externalvalue.timeout.md) |  | number | _(Optional)_ The wait time in milliseconds. |
-|  [url](./externals-loading-webpack-plugin.externalvalue.url.md) |  | string | The bundle(lynx.bundle) url of the library. The library source should be placed in <code>customSections</code>. |
+
+
+</td></tr>
+<tr><td>
+
+[mainThread?](./externals-loading-webpack-plugin.externalvalue.mainthread.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[LayerOptions](./externals-loading-webpack-plugin.layeroptions.md)
+
+
+</td><td>
+
+_(Optional)_ The options of the main-thread layer.
+
+
+</td></tr>
+<tr><td>
+
+[timeout?](./externals-loading-webpack-plugin.externalvalue.timeout.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+_(Optional)_ The wait time in milliseconds.
+
+
+</td></tr>
+<tr><td>
+
+[url?](./externals-loading-webpack-plugin.externalvalue.url.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ The final bundle URL to fetch directly at runtime.
+
+Use this when the external bundle is hosted outside the current build output, such as on a CDN. If both `url` and `bundlePath` are provided, `url` takes precedence because it is already the fully resolved address.
+
+
+</td></tr>
+</tbody></table>
 

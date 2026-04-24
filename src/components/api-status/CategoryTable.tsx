@@ -18,6 +18,8 @@ interface CategoryTableProps {
       exclusive?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
     }
   >;
+  /** Which group each category belongs to: 'platform' or 'other'. */
+  categoryGroups?: Record<string, 'platform' | 'other'>;
   selectedPlatforms?: DisplayPlatformName[];
   expandedCategory?: string | null;
   onCategoryClick?: (category: string) => void;
@@ -258,41 +260,269 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({
   );
 };
 
+// i18n for group headers
+const groupTexts = {
+  en: {
+    platformApi: 'Lynx Platform API',
+    other: 'Other',
+    total: 'Total',
+  },
+  zh: {
+    platformApi: 'Lynx 平台 API',
+    other: '其他',
+    total: '合计',
+  },
+};
+
+// Render a single category row
+const CategoryRow: React.FC<{
+  catKey: string;
+  stats: CategoryStats;
+  displayName: string;
+  missing?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+  exclusive?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+  displayPlatforms: DisplayPlatformName[];
+  isExpanded: boolean;
+  onCategoryClick?: (category: string) => void;
+  highlightMode: HighlightMode;
+  colSpan: number;
+  selectedPlatforms: DisplayPlatformName[];
+  rowIndex: number;
+}> = ({
+  catKey,
+  stats,
+  displayName,
+  missing,
+  exclusive,
+  displayPlatforms,
+  isExpanded,
+  onCategoryClick,
+  highlightMode,
+  colSpan,
+  selectedPlatforms,
+  rowIndex,
+}) => {
+  const totalMissingCount = displayPlatforms.reduce(
+    (sum, p) => sum + (missing?.[p]?.length || 0),
+    0,
+  );
+  const totalExclusiveCount = displayPlatforms.reduce(
+    (sum, p) => sum + (exclusive?.[p]?.length || 0),
+    0,
+  );
+
+  return (
+    <React.Fragment>
+      <tr
+        className={cn(
+          'border-b hover:bg-muted/30 transition-colors cursor-pointer',
+          rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+          isExpanded && 'bg-muted/40',
+        )}
+        onClick={() => onCategoryClick?.(catKey)}
+      >
+        <td className="px-1 py-2 text-center sm:px-2 sm:py-3">
+          <ChevronRightIcon
+            className={cn(
+              'w-3 h-3 sm:w-4 sm:h-4 transition-transform text-muted-foreground',
+              isExpanded && 'rotate-90',
+            )}
+          />
+        </td>
+        <td className="px-2 py-2 pr-1 sm:px-4 sm:py-3">
+          <div className="flex flex-col min-w-0 gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-[11px] sm:text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
+              {CATEGORY_DISPLAY_NAMES[catKey] || displayName}
+            </span>
+            <div className="flex gap-1 self-start">
+              {totalMissingCount > 0 && (
+                <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-status-partial/20 text-status-partial-strong whitespace-nowrap">
+                  {totalMissingCount} gaps
+                </span>
+              )}
+              {totalExclusiveCount > 0 && (
+                <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground whitespace-nowrap">
+                  {totalExclusiveCount} excl.
+                </span>
+              )}
+            </div>
+          </div>
+        </td>
+        <td className="px-3 py-3 font-mono text-xs text-center text-muted-foreground">
+          {stats.total}
+        </td>
+        {displayPlatforms.map((platform) => {
+          const coverage = stats.coverage[platform];
+          const isNA = coverage === null;
+          const supported = stats.supported[platform] ?? 0;
+          const excl = stats.exclusive?.[platform] ?? 0;
+          return (
+            <td
+              key={platform}
+              className={cn(
+                'text-center px-2 py-2',
+                (CLAY_PLATFORMS.includes(platform as any) ||
+                  platform === 'clay') &&
+                  'bg-muted/10',
+              )}
+            >
+              {isNA ? (
+                <div className="inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px] bg-muted/20 text-muted-foreground/50">
+                  <span className="font-mono text-xs font-medium">N/A</span>
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
+                    getCoverageColor(coverage ?? 0, highlightMode),
+                  )}
+                >
+                  <span className="font-mono text-xs font-bold">
+                    {coverage ?? 0}%
+                  </span>
+                  <span className="text-[9px] opacity-70">
+                    {supported}/{stats.total}
+                  </span>
+                  {excl > 0 && (
+                    <span className="text-[8px] opacity-50">+{excl} excl.</span>
+                  )}
+                </div>
+              )}
+            </td>
+          );
+        })}
+      </tr>
+      {isExpanded && (
+        <ExpandedRow
+          missingMap={missing}
+          exclusiveMap={exclusive}
+          colSpan={colSpan}
+          selectedPlatforms={selectedPlatforms}
+          category={catKey}
+        />
+      )}
+    </React.Fragment>
+  );
+};
+
 export const CategoryTable: React.FC<CategoryTableProps> = ({
   categories,
+  categoryGroups,
   selectedPlatforms = ['web_lynx'],
   expandedCategory = null,
   onCategoryClick,
   highlightMode = 'green',
 }) => {
-  const categoryOrder = [
+  const lang = useLang();
+  const gt = lang === 'zh' ? groupTexts.zh : groupTexts.en;
+
+  // Platform API categories first, then other
+  const platformApiOrder = [
+    'elements',
     'css/properties',
     'css/data-type',
     'css/at-rule',
-    'elements',
-    'lynx-api',
-    'lynx-native-api',
-    'react',
-    'devtool',
-    'errors',
+    'lynx-api/global',
+    'lynx-api/event',
+    'lynx-api/fetch',
+    'lynx-api/lynx',
+    'lynx-api/selector-query',
+    'lynx-api/nodes-ref',
+    'lynx-api/intersection-observer',
+    'lynx-api/main-thread',
+    'lynx-api/performance-api',
   ];
+  const otherOrder = ['lynx-native-api', 'react', 'devtool', 'errors'];
 
-  // Use selectedPlatforms directly for columns
   const displayPlatforms = selectedPlatforms;
 
-  const sortedCategories = categoryOrder
-    .filter((cat) => categories[cat])
-    .map((cat) => ({ key: cat, ...categories[cat] }));
+  const makeCategoryList = (order: string[]) =>
+    order
+      .filter((cat) => categories[cat])
+      .map((cat) => ({ key: cat, ...categories[cat] }));
+
+  const platformApiCategories = makeCategoryList(platformApiOrder);
+  const otherCategories = makeCategoryList(otherOrder);
 
   const colSpan = 3 + displayPlatforms.length;
 
-  if (sortedCategories.length === 0) {
+  if (platformApiCategories.length === 0 && otherCategories.length === 0) {
     return (
       <div className="p-4 text-center text-red-500">
         No categories found. Keys: {Object.keys(categories).join(', ')}
       </div>
     );
   }
+
+  // Group header row
+  const GroupHeader: React.FC<{ label: string }> = ({ label }) => (
+    <tr className="bg-muted/30">
+      <td colSpan={colSpan} className="px-4 py-1.5">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+      </td>
+    </tr>
+  );
+
+  // Summary row for platform API group
+  const PlatformApiSummary = () => (
+    <tr className="font-semibold bg-muted/50 border-t border-b">
+      <td className="px-2 py-3"></td>
+      <td className="px-4 py-3">{gt.total}</td>
+      <td className="px-3 py-3 font-mono text-xs text-center">
+        {platformApiCategories.reduce((sum, cat) => sum + cat.stats.total, 0)}
+      </td>
+      {displayPlatforms.map((platform) => {
+        // Only platform API categories, excluding N/A
+        const applicable = platformApiCategories.filter(
+          (cat) => cat.stats.coverage[platform] !== null,
+        );
+        const totalSupported = applicable.reduce(
+          (sum, cat) => sum + (cat.stats.supported[platform] ?? 0),
+          0,
+        );
+        const totalApis = applicable.reduce(
+          (sum, cat) => sum + cat.stats.total,
+          0,
+        );
+        const totalExclusive = applicable.reduce(
+          (sum, cat) => sum + (cat.stats.exclusive?.[platform] ?? 0),
+          0,
+        );
+        const coverage =
+          totalApis > 0 ? Math.round((totalSupported / totalApis) * 100) : 0;
+        return (
+          <td
+            key={platform}
+            className={cn(
+              'text-center px-2 py-2',
+              (CLAY_PLATFORMS.includes(platform as any) ||
+                platform === 'clay') &&
+                'bg-muted/30',
+            )}
+          >
+            <div
+              className={cn(
+                'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
+                getCoverageColor(coverage, highlightMode),
+              )}
+            >
+              <span className="font-mono text-xs font-bold">{coverage}%</span>
+              <span className="text-[9px] opacity-70">
+                {totalSupported}/{totalApis}
+              </span>
+              {totalExclusive > 0 && (
+                <span className="text-[8px] opacity-50">
+                  +{totalExclusive} excl.
+                </span>
+              )}
+            </div>
+          </td>
+        );
+      })}
+    </tr>
+  );
 
   return (
     <div className="overflow-x-auto" role="region" aria-label="Category Table">
@@ -322,167 +552,55 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {sortedCategories.map(
-            ({ key, stats, display_name, missing, exclusive }, index) => {
-              const isExpanded = expandedCategory === key;
-
-              // Calculate missing count across all selected platforms
-              const totalMissingCount = displayPlatforms.reduce((sum, p) => {
-                return sum + (missing?.[p]?.length || 0);
-              }, 0);
-
-              const totalExclusiveCount = displayPlatforms.reduce((sum, p) => {
-                return sum + (exclusive?.[p]?.length || 0);
-              }, 0);
-
-              return (
-                <React.Fragment key={key}>
-                  <tr
-                    className={cn(
-                      'border-b hover:bg-muted/30 transition-colors cursor-pointer',
-                      index % 2 === 0 ? 'bg-background' : 'bg-muted/10',
-                      isExpanded && 'bg-muted/40',
-                    )}
-                    onClick={() => onCategoryClick?.(key)}
-                  >
-                    <td className="px-1 py-2 text-center sm:px-2 sm:py-3">
-                      <ChevronRightIcon
-                        className={cn(
-                          'w-3 h-3 sm:w-4 sm:h-4 transition-transform text-muted-foreground',
-                          isExpanded && 'rotate-90',
-                        )}
-                      />
-                    </td>
-                    <td className="px-2 py-2 pr-1 sm:px-4 sm:py-3">
-                      <div className="flex flex-col min-w-0 gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-[11px] sm:text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
-                          {CATEGORY_DISPLAY_NAMES[key] || display_name}
-                        </span>
-                        <div className="flex gap-1 self-start">
-                          {totalMissingCount > 0 && (
-                            <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-status-partial/20 text-status-partial-strong whitespace-nowrap">
-                              {totalMissingCount} gaps
-                            </span>
-                          )}
-                          {totalExclusiveCount > 0 && (
-                            <span className="text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground whitespace-nowrap">
-                              {totalExclusiveCount} excl.
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 font-mono text-xs text-center text-muted-foreground">
-                      {stats.total}
-                    </td>
-                    {displayPlatforms.map((platform) => {
-                      const coverage = stats.coverage[platform] ?? 0;
-                      const supported = stats.supported[platform] ?? 0;
-                      const excl = stats.exclusive?.[platform] ?? 0;
-                      return (
-                        <td
-                          key={platform}
-                          className={cn(
-                            'text-center px-2 py-2',
-                            (CLAY_PLATFORMS.includes(platform as any) ||
-                              platform === 'clay') &&
-                              'bg-muted/10',
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
-                              getCoverageColor(coverage, highlightMode),
-                            )}
-                          >
-                            <span className="font-mono text-xs font-bold">
-                              {coverage}%
-                            </span>
-                            <span className="text-[9px] opacity-70">
-                              {supported}/{stats.total}
-                            </span>
-                            {excl > 0 && (
-                              <span className="text-[8px] opacity-50">
-                                +{excl} excl.
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                  {isExpanded && (
-                    <ExpandedRow
-                      missingMap={missing}
-                      exclusiveMap={exclusive}
-                      colSpan={colSpan}
-                      selectedPlatforms={selectedPlatforms}
-                      category={key}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            },
+          {/* Lynx Platform API group */}
+          <GroupHeader label={gt.platformApi} />
+          {platformApiCategories.map(
+            ({ key, stats, display_name, missing, exclusive }, index) => (
+              <CategoryRow
+                key={key}
+                catKey={key}
+                stats={stats}
+                displayName={display_name}
+                missing={missing}
+                exclusive={exclusive}
+                displayPlatforms={displayPlatforms}
+                isExpanded={expandedCategory === key}
+                onCategoryClick={onCategoryClick}
+                highlightMode={highlightMode}
+                colSpan={colSpan}
+                selectedPlatforms={selectedPlatforms}
+                rowIndex={index}
+              />
+            ),
+          )}
+          {/* Platform API subtotal */}
+          <PlatformApiSummary />
+          {/* Other group */}
+          {otherCategories.length > 0 && (
+            <>
+              <GroupHeader label={gt.other} />
+              {otherCategories.map(
+                ({ key, stats, display_name, missing, exclusive }, index) => (
+                  <CategoryRow
+                    key={key}
+                    catKey={key}
+                    stats={stats}
+                    displayName={display_name}
+                    missing={missing}
+                    exclusive={exclusive}
+                    displayPlatforms={displayPlatforms}
+                    isExpanded={expandedCategory === key}
+                    onCategoryClick={onCategoryClick}
+                    highlightMode={highlightMode}
+                    colSpan={colSpan}
+                    selectedPlatforms={selectedPlatforms}
+                    rowIndex={index}
+                  />
+                ),
+              )}
+            </>
           )}
         </tbody>
-        {/* Summary Row */}
-        <tfoot>
-          <tr className="font-semibold bg-muted/50 border-t-0">
-            <td className="px-2 py-3"></td>
-            <td className="px-4 py-3">Total</td>
-            <td className="px-3 py-3 font-mono text-xs text-center">
-              {sortedCategories.reduce((sum, cat) => sum + cat.stats.total, 0)}
-            </td>
-            {displayPlatforms.map((platform) => {
-              const totalSupported = sortedCategories.reduce(
-                (sum, cat) => sum + (cat.stats.supported[platform] ?? 0),
-                0,
-              );
-              const totalApis = sortedCategories.reduce(
-                (sum, cat) => sum + cat.stats.total,
-                0,
-              );
-              const totalExclusive = sortedCategories.reduce(
-                (sum, cat) => sum + (cat.stats.exclusive?.[platform] ?? 0),
-                0,
-              );
-              const coverage =
-                totalApis > 0
-                  ? Math.round((totalSupported / totalApis) * 100)
-                  : 0;
-              return (
-                <td
-                  key={platform}
-                  className={cn(
-                    'text-center px-2 py-2',
-                    (CLAY_PLATFORMS.includes(platform as any) ||
-                      platform === 'clay') &&
-                      'bg-muted/30',
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'inline-flex flex-col items-center rounded-md px-2 py-1 min-w-[50px]',
-                      getCoverageColor(coverage, highlightMode),
-                    )}
-                  >
-                    <span className="font-mono text-xs font-bold">
-                      {coverage}%
-                    </span>
-                    <span className="text-[9px] opacity-70">
-                      {totalSupported}/{totalApis}
-                    </span>
-                    {totalExclusive > 0 && (
-                      <span className="text-[8px] opacity-50">
-                        +{totalExclusive} excl.
-                      </span>
-                    )}
-                  </div>
-                </td>
-              );
-            })}
-          </tr>
-        </tfoot>
       </table>
     </div>
   );

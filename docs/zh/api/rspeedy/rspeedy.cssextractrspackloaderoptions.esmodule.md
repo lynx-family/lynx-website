@@ -12,6 +12,10 @@ The same as [https://github.com/webpack-contrib/mini-css-extract-plugin\#esModul
 esModule?: boolean | undefined;
 ```
 
+## Default Value
+
+true
+
 ## Example
 
 You can enable a CommonJS syntax using:
