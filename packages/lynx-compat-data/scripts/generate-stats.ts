@@ -236,7 +236,7 @@ interface TimelinePoint {
 }
 
 interface APIStats {
-  generated_at: string;
+  generated_at?: string;
   summary: {
     total_apis: number;
     /** Total APIs in Lynx Platform API categories only (used for coverage). */
@@ -1063,7 +1063,6 @@ function generateStats(): APIStats {
   }
 
   const stats: APIStats = {
-    generated_at: new Date().toISOString(),
     summary: {
       total_apis: globalTotal,
       platform_api_total: platformApiTotal,

@@ -5,10 +5,6 @@ import { Go, VersionBadge } from '@lynx';
 
 <VersionBadge v={3.5} />
 
-:::info
-加载 External Bundle 中的 CSS 文件需要 Lynx 3.7 及以上版本。
-:::
-
 External Bundle 用来把 Lynx 代码打成一份可复用的独立 bundle，并在多个 Lynx 应用里按需加载。它适合抽离 ReactLynx 组件库或跨应用共享的业务 bundle。
 
 和 [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit) 的区别可以简单理解为：External Bundle 解决跨应用复用，Chunk Splitting 解决单应用内拆包。
@@ -18,9 +14,24 @@ External Bundle 用来把 Lynx 代码打成一份可复用的独立 bundle，并
 1. 用 [`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config) 构建 external bundle。
 2. 用 [`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin) 在宿主应用里加载它。
 
+对应的职责也很简单：
+
+- 构建侧负责产出 `.lynx.bundle`
+- 宿主侧负责声明 bundle 从哪里加载，以及运行时该请求哪个 section
+
 ## 安装
 
 <PackageManagerTabs command="install @lynx-js/lynx-bundle-rslib-config @lynx-js/external-bundle-rsbuild-plugin @lynx-js/react-umd @rslib/core -D" />
+
+:::note 为什么需要 @lynx-js/react-umd
+
+`@lynx-js/react-umd` 提供的是 `reactlynx` 内置 preset 依赖的 ReactLynx 运行时 bundle。
+
+当你开启 `externalsPresets.reactlynx` 时，插件会根据 `NODE_ENV` 自动解析 `@lynx-js/react-umd/dev` 或 `@lynx-js/react-umd/prod`，产出 `react.lynx.bundle`，并通过当前运行时 public path 去加载它。
+
+对大多数项目来说，安装 `@lynx-js/react-umd` 并开启 `reactlynx` preset 就够了。
+
+:::
 
 ## 构建 External Bundle
 
@@ -51,6 +62,31 @@ export default defineExternalBundleRslibConfig({
 执行构建：
 
 <PackageManagerTabs command="exec rslib build --config rslib-comp-lib.config.ts" />
+
+构建成功后，会得到类似下面的产物目录：
+
+```text
+├── dist-external-bundle
+│   └── comp-lib.template.js
+```
+
+### 打包 CSS
+
+<VersionBadge v={3.7} />
+
+如果需要运行 External Bundle 中的 CSS，需要在构建该 bundle 时指定 `engineVersion: '3.7'`：
+
+```ts title="rslib-comp-lib.config.ts"
+export default defineExternalBundleRslibConfig({
+  plugins: [
+    pluginReactLynx({
+      engineVersion: '3.7',
+    }),
+  ],
+});
+```
+
+纯 JS / TS 的 External Bundle 不受这个要求影响。
 
 ## 在宿主应用中加载
 
@@ -94,7 +130,17 @@ externals: {
 
 如果 section name 和 request key 本来就一致，这就是最简洁的推荐写法。
 
-## 什么时候配置 `globalObject`
+## 验证是否生效
+
+完成上面的配置后，可以用下面几个信号快速确认 External Bundle 已经接入成功：
+
+- 宿主应用在运行时成功请求到 `comp-lib.lynx.bundle`
+- 开启 `externalsPresets.reactlynx` 时，运行时能自动加载 `react.lynx.bundle`
+- 页面中的 External Bundle 组件能正常渲染，没有出现 section 不匹配或 bundle 加载失败
+
+如果此时仍然无法运行，再回头检查 `externals` 中的 request key、bundle path 和 section name 是否一致。
+
+## 进阶：什么时候配置 `globalObject`
 
 大多数项目都不需要配置 `globalObject`。
 
@@ -122,18 +168,6 @@ pluginExternalBundle({
   globalObject: 'globalThis',
 });
 ```
-
-## 为什么需要 `@lynx-js/react-umd`
-
-`@lynx-js/react-umd` 提供的是 `reactlynx` 内置 preset 依赖的 ReactLynx 运行时 bundle。
-
-当你在 [`pluginExternalBundle()`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle) 里开启 `externalsPresets.reactlynx` 时，插件会根据 `NODE_ENV` 自动解析 `@lynx-js/react-umd/dev` 或 `@lynx-js/react-umd/prod`，产出 `react.lynx.bundle`，并通过当前运行时 public path 去加载它。
-
-对大多数项目来说，推荐路径就是：
-
-- 安装 `@lynx-js/react-umd`
-- 开启 `reactlynx`
-- 让 preset 提供 ReactLynx 运行时映射
 
 ## 扩展 Presets
 
@@ -199,7 +233,7 @@ pluginExternalBundle({
 
 如果某个应用需要覆盖 preset 结果，依然可以直接写显式 `externals`。
 
-## 什么时候用对象形式的 `externals`
+## 进阶：什么时候用对象形式的 `externals`
 
 当你需要自定义 section name、自定义导出 library name、设置 timeout，或者本地 bundle 输出到独立目录时，使用完整对象形式。
 
