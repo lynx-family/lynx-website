@@ -11,6 +11,55 @@ import { useLang } from '@rspress/core/runtime';
 import './style.css';
 const { Paragraph, Title } = Typography;
 
+type SummaryToken = {
+  kind: 'text' | 'code';
+  text: string;
+};
+
+type DocTypeFallback = {
+  content: Array<{ text: unknown }>;
+};
+
+type IntegratedType = {
+  type?: unknown;
+  desc?: unknown;
+  docTypeFallback?: DocTypeFallback | null;
+  zhSummary?: unknown;
+};
+
+type UIApiRecord = {
+  name?: unknown;
+  defaultValue?: unknown;
+  isSupportIOS?: boolean;
+  isSupportAndroid?: boolean;
+  isSupportHarmony?: boolean;
+  integratedType?: IntegratedType;
+  [key: string]: unknown;
+};
+
+function renderSummaryTokens(tokens: unknown): React.ReactNode[] {
+  if (!Array.isArray(tokens)) return [];
+
+  return tokens
+    .map<React.ReactNode>((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+      const kind = (item as SummaryToken).kind;
+      const text = (item as SummaryToken).text;
+      if (typeof text !== 'string') return null;
+
+      if (kind === 'code') {
+        return <code key={index}>{text.replace(/`/g, '')}</code>;
+      }
+
+      if (kind === 'text') {
+        return <React.Fragment key={index}>{text}</React.Fragment>;
+      }
+
+      return null;
+    })
+    .filter((n): n is Exclude<React.ReactNode, null> => n !== null);
+}
+
 const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
   if (import.meta.env.SSG_MD) {
     // TODO: support ssg-md
@@ -18,14 +67,22 @@ const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
   }
   const isZh = useLang() === 'zh';
 
-  const newSource = source.map((item) => {
+  const newSource: UIApiRecord[] = source.map((item) => {
+    const record = item as UIApiRecord & {
+      type?: unknown;
+      summary?: unknown;
+      docTypeFallback?: unknown;
+      summary_zh?: unknown;
+    };
     return {
-      ...item,
+      ...record,
       integratedType: {
-        type: item.type,
-        desc: item.summary,
-        docTypeFallback: item.docTypeFallback,
-        zhSummary: item['summary_zh'],
+        type: record.type,
+        desc: record.summary,
+        docTypeFallback:
+          (record.docTypeFallback as DocTypeFallback | null | undefined) ??
+          null,
+        zhSummary: record.summary_zh,
       },
     };
   });
@@ -34,7 +91,7 @@ const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
     {
       title: isZh ? '名称' : 'Name',
       dataIndex: 'name',
-      render: (title, record) => {
+      render: (title: React.ReactNode, record: UIApiRecord) => {
         return (
           <Space>
             <Popover
@@ -59,9 +116,9 @@ const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
       title: isZh ? '默认值' : 'Default Value',
       width: 100,
       dataIndex: 'defaultValue',
-      render: (defaultValue) => {
+      render: (defaultValue: unknown) => {
         return defaultValue ? (
-          <div className="api-table-default">{defaultValue}</div>
+          <div className="api-table-default">{String(defaultValue)}</div>
         ) : (
           '-'
         );
@@ -70,35 +127,39 @@ const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
     {
       title: isZh ? '类型' : 'type',
       dataIndex: 'integratedType',
-      render: (integratedType) => {
+      render: (integratedType: IntegratedType) => {
         const { type, desc, docTypeFallback, zhSummary } = integratedType;
 
         let normalizedType = type;
 
-        if (typeof type === 'object') {
-          normalizedType = type.value;
+        if (typeof type === 'object' && type && 'value' in type) {
+          normalizedType = (type as { value?: unknown }).value;
         }
 
-        if (docTypeFallback && docTypeFallback.content.length > 0) {
-          normalizedType = docTypeFallback.content[0].text;
+        if (docTypeFallback?.content?.length) {
+          normalizedType = docTypeFallback.content[0]?.text;
         }
 
         const paraCollection =
-          isZh && zhSummary && zhSummary.length > 0
-            ? zhSummary
-            : desc?.map((item) => {
-                if (item.kind === 'text') {
-                  return item.text;
-                } else if (item.kind === 'code') {
-                  const text = item.text.replaceAll('`', '');
-                  return <code>{text}</code>;
-                }
-              });
+          isZh && Array.isArray(zhSummary) && zhSummary.length > 0
+            ? renderSummaryTokens(zhSummary)
+            : renderSummaryTokens(desc);
+
+        const renderableType = React.isValidElement(normalizedType)
+          ? normalizedType
+          : typeof normalizedType === 'string' ||
+              typeof normalizedType === 'number'
+            ? normalizedType
+            : normalizedType
+              ? String(normalizedType)
+              : '-';
         const typeBlock = (
-          <div className="api-table-type">{normalizedType}</div>
+          <div className="api-table-type">{renderableType}</div>
         );
         const descBlock = (
-          <Paragraph spacing="extended">{paraCollection}</Paragraph>
+          <Paragraph spacing="extended">
+            {paraCollection.length > 0 ? paraCollection : '-'}
+          </Paragraph>
         );
 
         return (
