@@ -1,0 +1,110 @@
+## Advanced Usage
+
+`<Swiper>` supports complete customization of layout and animations, with the key features being `customAnimation` and `mode`
+
+import { Columns, Go } from '@lynx-ui/index';
+import CustomAnimationValue0Pic from '@assets/Swiper/custom_animation_value_0.png';
+import ModeNormalPic from '@assets/Swiper/mode_normal.png';
+import ModeCustomPic from '@assets/Swiper/mode_custom.png';
+import DemoCustomPic from '@assets/Swiper/Custom.webp';
+
+### Understanding `customAnimation`
+
+```
+type customAnimation = (value: number, index: number) => CSSProperties
+```
+
+`customAnimation` is a main thread function. When `<Swiper>` is scrolling, each `<SwiperItem>` will run the `customAnimation` function and update its style based on the return value.
+
+The function parameter `value` represents the distance of this `<SwiperItem>` relative to the selected `<SwiperItem>`.
+
+<Columns>
+<img
+src={CustomAnimationValue0Pic}
+width="60%"
+/>
+
+<div>
+In this example, when `<Swiper>`'s progress is 2:
+- `<SwiperItem>-2` receives a `value` of 0
+- `<SwiperItem>-1` receives a `value` of -1
+- `<SwiperItem>-3` receives a `value` of 1
+</div>
+
+</Columns>
+
+<Columns>
+<img
+src={CustomAnimationValue0Pic}
+width="60%"
+/>
+
+<div>
+Furthermore, when `<Swiper>`'s progress is updated to 3:
+- `<SwiperItem>-2` receives a `value` of -1
+- `<SwiperItem>-1` receives a `value` of -2
+- `<SwiperItem>-3` receives a `value` of 0
+</div>
+
+</Columns>
+
+After getting the position of `<SwiperItem>`, you can determine its position and style based on the location.
+
+### Practice with `customAnimation`
+
+<Go
+  img={DemoCustomPic}
+  example="lynx-ui-swiper"
+  defaultEntryName="SwiperCustom"
+  entry="Custom"
+/>
+
+## Understanding `mode`
+
+`<Swiper>` supports two `mode` options: `normal` and `custom`. Their differences are as follows:
+
+<Columns>
+<img
+src={ModeNormalPic}
+width="60%"
+/>
+
+<div>
+`mode='normal'`
+
+- `<SwiperItem>`s are arranged sequentially in the direction
+- Provides center alignment, right alignment, and other capabilities through `modeConfig`
+
+</div>
+
+</Columns>
+
+<Columns>
+<img
+src={ModeCustomPic}
+width="60%"
+/>
+
+<div>
+`mode='custom'`
+
+- The position of `<SwiperItem>` needs to be specified through [`customAnimation`](#understanding-customanimation)
+- Offers higher customization capabilities
+
+</div>
+
+</Columns>
+
+To summarize:
+
+- `normal` mode handles the position of `<SwiperItem>`s, making it more suitable for horizontal sliding scenarios and easier to use
+- `custom` mode requires manual position calculation but offers higher extensibility
+
+### Practice with `customAnimation` when `mode='custom'`
+
+<Go
+  img={DemoCustomPic}
+  example="lynx-ui-swiper"
+  defaultEntryName="SwiperCustomScale"
+  entry="CustomScale"
+/>

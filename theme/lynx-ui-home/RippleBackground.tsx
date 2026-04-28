@@ -1,0 +1,67 @@
+// Copyright 2025 The Lynx Authors. All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+
+import React, { ComponentPropsWithoutRef, CSSProperties } from 'react';
+
+interface RippleProps extends ComponentPropsWithoutRef<'div'> {
+  mainCircleSize?: number;
+  mainCircleOpacity?: number;
+  numCircles?: number;
+}
+
+export const Ripple = React.memo(function Ripple({
+  mainCircleSize = 210,
+  mainCircleOpacity = 0.24,
+  numCircles = 8,
+  className,
+  ...props
+}: RippleProps) {
+  return (
+    <div
+      className={[
+        'pointer-events-none absolute inset-0 select-none [mask-image:linear-gradient(to_bottom,white,transparent)]',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      {...props}
+    >
+      {Array.from({ length: numCircles }, (_, i) => {
+        const size = mainCircleSize + i * 100;
+        const opacity = mainCircleOpacity * (1 - i / numCircles);
+        const animationDelay = `${i * 0.06}s`;
+        const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
+        const borderOpacity = 5 + i * 5;
+
+        return (
+          <div
+            key={i}
+            // className={`[--i: absolute animate-ripple rounded-full border bg-foreground/25 shadow-xl${i}]`}
+            style={
+              {
+                width: `${size}px`,
+                height: `${size}px`,
+                opacity,
+                animationDelay,
+                borderStyle,
+                borderWidth: '1px',
+                borderColor: `hsl(var(--foreground), ${borderOpacity / 100})`,
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%) scale(1)',
+                position: 'absolute',
+                animation:
+                  'ripple var(--duration, 4s)ease calc(var(--i, 0)* .4s) infinite',
+                borderRadius: '9999px',
+                backgroundColor: 'hsl(var(--foreground) / .25)',
+              } as CSSProperties
+            }
+          />
+        );
+      })}
+    </div>
+  );
+});
+
+Ripple.displayName = 'Ripple';

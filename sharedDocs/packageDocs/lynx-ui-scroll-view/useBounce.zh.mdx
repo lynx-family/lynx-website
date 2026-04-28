@@ -1,0 +1,86 @@
+import { Go } from '@lynx-ui/index';
+import ThreeBouncingStepsDark from '@assets/ScrollView/threeBouncingStepsDark.png';
+import ThreeBouncingStepsLight from '@assets/ScrollView/threeBouncingStepsLight.png';
+import OnScrollToBouncesLight from '@assets/ScrollView/onScrollToBouncesLight.png';
+
+## 属性解析
+
+让我们来看看 useBounces 是如何实现的。这个 hooks 能绑定在任何一个可滚动容器上。
+
+## 输入和输出
+
+首先让我们把这个 hooks 当作一个黑盒，这个盒子会接收组件设置，然后返回一系列能够响应滚动容器事件的操作方法：
+
+- 输入：`options`
+- `id`: 可滚动容器的 `id`。我们认为这个 `id` 是必须设置的，这是为了避免同一页面下存在相同的可滚动容器之间的混淆。
+- `scrollOrientation`: 可滚动容器的方向。可以为横向或纵向。
+- `bounceableOptions`: 对 hook 的额外设置属性，包括这一些子项：
+  - `enableBounces`: 是否开启弹性效果。
+  - `startBounceTriggerDistance`/`endBounceTriggerDistance`: `onScrollToBounces` 的设置，只有当弹性效果超出该阈值，这个事件才会触发。一般用于 ”右滑跳转“ 这种场景。
+  - `enableBounceEventInFling`: 是否在滚动容器的惯性滚动过程中触发弹性效果。
+  - `upperBounceItem`/`lowerBounceItem`: 出现在弹性区域的内容。
+  - `alwaysBouncing`: 在滚动容器实际不可滚动时是否也能够出现弹性效果。
+  - `singleSidedBounce`: 让弹性效果只在单端生效。
+  - `onScrollToBounces`: 在弹性效果超出指定阈值后触发事件，让小幅度的回弹效果不触发这个事件。
+
+- 输出：一系列用于绑定在滚动容器上的函数。
+  - `main-thread:bindtouchstart`/`main-thread:bindtouchend`/`main-thread:bindtouchmove`: 用于接收滚动容器的**触摸事件**并进行处理。
+  - `main-thread:bindlayoutchange`: 用于获取滚动容器的**实际宽高**。
+  - `main-thread:bindscroll`/`main-thread:bindscrollend`: 用于接收滚动容器的**滚动事件**并进行处理。
+  - `onUpperExposure`/`onUpperDisexposure`/`onLowerExposure`/`onLowerDisexposure`: 用于处理滚动容器**是否处于边界**，弹性效果仅出现在滚动容器触边的情况下。
+
+## 如何形成滚动
+
+我们在这里使用了 `MTS` 调用 `transform` 来模拟弹性效果。
+
+1. 使用 `id`，通过 `lynx.querySelector` 找到节点。
+
+```tsx
+lynx.querySelector(`#${containerID}`);
+```
+
+2. 从滚动曲线函数中获取 `touchmove` 所对应的滚动曲线，然后进行相应 `transform`。
+
+useBounces 将滚动曲线分为了三段：
+
+1. 响应 `touchmove` 的橡皮筋效果
+2. 惯性滚动效果
+3. 回弹效果
+
+<img
+  className="compatibility-img-light"
+  src={ThreeBouncingStepsLight}
+  width="100%"
+/>
+<img
+  className="compatibility-img-dark"
+  src={ThreeBouncingStepsDark}
+  width="100%"
+/>
+
+## bounceableOptions 的各属性如何使用？
+
+### `onScrollToBounces` 事件和 `startBounceTriggerDistance`/`endBounceTriggerDistance`
+
+该事件只在**完成回弹效果**之后触发，这代表着它需要两个前提条件：
+
+1. touchEnd 时滚动容器处于顶部回弹区域或底部回弹区域，不在正常区域。这保证了回弹可以触发，需要在这个事件里完成的效果都应在真实的回弹效果触发之后。如果用户拖动到回弹区域，又再次拖拽至非回弹区域，这意味着对 `onScrollToBounces` 事件的取消，这个事件不应被触发。
+2. 当前这个回弹效果已经结束，滚动容器重新处于正常滚动区域边缘。
+
+为了不让微小的回弹效果也能触发这个事件，导致事件触发过于灵敏，我们为它添加了回弹距离阈值，也就是 `startBounceTriggerDistance`/`endBounceTriggerDistance`。
+
+<img src={OnScrollToBouncesLight} width="100%" />
+比如这个图，只有当**最远的回弹距离**远于 `endBounceTriggerDistance`
+时，这次回弹结束时才会触发 `onScrollToBounces` 事件。
+
+### `enableBounceEventInFling`
+
+滚动容器在正常滚动区域发生触摸滑动时，如果在触摸结束时滚动容器的速度过大，就会进入惯性滚动阶段。在这个惯性滚动阶段中，滚动容器也可能中途滚动到边缘。这种情况下，我们可以让这个惯性滚动的剩余速度直接触发回弹效果，`enableBounceEventInFling`属性将为你触发这种回弹模式，这也是默认的回弹模式。考虑到有一些场景可能需求更明确的回弹交互 —— 回弹效果不能发生在一次惯性滚动中，而必须由一次触摸滑动行为触发，我们将这个行为设定成了可配置项。
+
+### `upperBounceItem`/`lowerBounceItem` 会出现在哪里？
+
+它们只会出现在回弹区域。一旦弹性效果触发，用户将能看到你在这里渲染的节点。它们不是必须设置的，在未设置的情况下，回弹区域将展示滚动容器下层渲染的内容，因为滚动容器仍然被 translate，离开了原本的位置。
+
+### `alwaysBouncing`
+
+在一些情况下，滚动容器本身可能并不能滚动。开启这个属性能让回弹效果的边缘检测仍然生效，这意味着即使滚动容器无法真正发生滚动行为，它仍然能够出现回弹效果。

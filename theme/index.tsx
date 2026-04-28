@@ -18,6 +18,7 @@ import {
 import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
+import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 
 import {
   Banner,
@@ -87,7 +88,7 @@ declare global {
   }
 }
 
-function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   if (import.meta.env.SSG_MD) {
     return <BaseHomeLayout {...props} />;
   }
@@ -108,15 +109,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [page]);
 
   useBlogBtnDom(routePath);
-
-  // Update theme based on URL
-  useEffect(() => {
-    const subsite = findSubsite(pathname);
-    document.documentElement.setAttribute(
-      'data-subsite',
-      subsite ? subsite.value : 'guide',
-    );
-  }, [pathname]);
 
   const updateText = useCallback(() => {
     const titleEle = document.querySelector('.rp-home-hero__title');
@@ -234,6 +226,34 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       </div>
     </>
   );
+}
+
+function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  const { pathname } = useLocation();
+  const { page } = usePageData();
+
+  // Update theme based on URL
+  useEffect(() => {
+    const subsite = findSubsite(pathname);
+    document.documentElement.setAttribute(
+      'data-subsite',
+      subsite ? subsite.value : 'guide',
+    );
+  }, [pathname]);
+
+  if (
+    page.pagePath.startsWith('en/lynx-ui') ||
+    page.pagePath.startsWith('zh/lynx-ui') ||
+    page.pagePath.startsWith('lynx-ui')
+  ) {
+    return (
+      <div className="lynx-ui-home-layout-container">
+        <LynxUIHomeLayout />
+      </div>
+    );
+  }
+
+  return <MainHomeLayout {...props} />;
 }
 
 const Search = () => {
