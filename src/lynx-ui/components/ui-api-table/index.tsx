@@ -132,6 +132,7 @@ interface DataSourceItem {
   'Render Prop': string;
   item: {
     type: string;
+    description_zh: string;
     description: string;
   };
 }
@@ -152,7 +153,9 @@ const ClassRenderPropTable = ({ source }: { source: DataSourceItem[] }) => {
             <code>{row.item.type}</code>
           </div>
           {row.item.description && (
-            <div className="ui-api-item-desc">{row.item.description}</div>
+            <div className="ui-api-item-desc">
+              {isZh ? row.item.description_zh : row.item.description}
+            </div>
           )}
         </div>
       ))}
