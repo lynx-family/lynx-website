@@ -39,6 +39,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
   {
+    value: 'react',
+    label: 'ReactLynx',
+    description: 'Build Lynx apps with React',
+    descriptionZh: '用 React 开发 Lynx 应用',
+    home: '/react/',
+    url: '/react/introduction',
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
+    },
+  },
+  {
     value: 'lynx-ui',
     label: 'Lynx UI',
     description: 'Lynx UI component library',
@@ -51,17 +64,16 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
   {
-    value: 'react',
-    label: 'ReactLynx',
-    description: 'Build Lynx apps with React',
-    home: '/react/',
-    url: '/react/introduction',
+    value: 'ai',
+    label: 'AI',
+    description: 'Lynx for AI',
+    descriptionZh: '面向 AI 的 Lynx',
+    home: '/ai/',
+    url: '/ai/',
     logo: {
-      light:
-        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
-      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
+      light: '/assets/lynxai-logo-light.svg',
+      dark: '/assets/lynxai-logo-dark.svg',
     },
-    descriptionZh: '用 React 开发 Lynx 应用',
   },
   {
     value: 'rspeedy',
@@ -74,18 +86,6 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       light:
         'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
-    },
-  },
-  {
-    value: 'ai',
-    label: 'AI',
-    description: 'Lynx for AI',
-    descriptionZh: '面向 AI 的 Lynx',
-    home: '/ai/',
-    url: '/ai/',
-    logo: {
-      light: '/assets/lynxai-logo-light.svg',
-      dark: '/assets/lynxai-logo-dark.svg',
     },
   },
   {

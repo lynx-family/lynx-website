@@ -6,6 +6,8 @@ import { Badge } from '@rspress/core/theme';
 import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/compat-table/headers';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
 
+import './PlatformBadge.css';
+
 /**
  * Maps a platform name to its corresponding icon name.
  * @param platform The platform name to map.
@@ -56,13 +58,18 @@ function PlatformBadgeInner({
   type = 'info',
 }: PlatformBadgeInnerProps) {
   return (
-    <Badge type={type}>
-      <PlatformSvg
-        platformName={platform}
-        className={`bg-current w-[0.9rem] h-[0.9rem]`}
-      />
-      {badgeText}
-    </Badge>
+    <span
+      className={`platform-badge-${platform}`}
+      style={{ display: 'contents' }}
+    >
+      <Badge type={type}>
+        <PlatformSvg
+          platformName={platform}
+          className={`bg-current w-[0.9rem] h-[0.9rem]`}
+        />
+        {badgeText}
+      </Badge>
+    </span>
   );
 }
 
