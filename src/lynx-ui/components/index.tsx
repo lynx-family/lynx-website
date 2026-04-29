@@ -4,6 +4,8 @@
 
 export { UIApiTable, ClassRenderPropTable } from './ui-api-table';
 
+export { ClassRenderPropPreamble } from './class-render-prop-preamble';
+
 export { Go } from '@/components/go/Go';
 
 export { Columns } from '@/components/Columns';
