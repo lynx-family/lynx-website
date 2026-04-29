@@ -18,6 +18,7 @@ export {
   ResponsiveDualColumn,
 } from './containers/ResponsiveDualColumn';
 export { PlatformTabs } from './platform-tabs/PlatformTabs';
+export { ChoiceTabs } from './choice-tabs/ChoiceTabs';
 
 // ----------------------------------------------------------------------------
 // API Documentation (Tables, Badges)
