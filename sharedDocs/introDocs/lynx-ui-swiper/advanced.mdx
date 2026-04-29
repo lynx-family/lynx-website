@@ -1,12 +1,14 @@
 ## Advanced Usage
 
-`<Swiper>` supports complete customization of layout and animations, with the key features being `customAnimation` and `mode`
+Use the advanced APIs when the default slide layout is not enough. `customAnimation`
+lets each item respond to swipe progress, while `mode` decides whether Swiper
+places items for you or leaves placement to your animation function.
 
 import { Columns, Go } from '@lynx-ui/index';
 import CustomAnimationValue0Pic from '@assets/Swiper/custom_animation_value_0.png';
 import ModeNormalPic from '@assets/Swiper/mode_normal.png';
 import ModeCustomPic from '@assets/Swiper/mode_custom.png';
-import DemoCustomPic from '@assets/Swiper/Custom.webp';
+import { swiperCustomDemoMeta, swiperCustomScaleDemoMeta } from './demoMeta.ts';
 
 ### Understanding `customAnimation`
 
@@ -14,15 +16,14 @@ import DemoCustomPic from '@assets/Swiper/Custom.webp';
 type customAnimation = (value: number, index: number) => CSSProperties
 ```
 
-`customAnimation` is a main thread function. When `<Swiper>` is scrolling, each `<SwiperItem>` will run the `customAnimation` function and update its style based on the return value.
+`customAnimation` is a main thread function. While Swiper is scrolling, each
+`SwiperItem` receives its distance from the active item and returns the style it
+should use for that frame.
 
 The function parameter `value` represents the distance of this `<SwiperItem>` relative to the selected `<SwiperItem>`.
 
 <Columns>
-<img
-src={CustomAnimationValue0Pic}
-width="60%"
-/>
+<img src={CustomAnimationValue0Pic} width="60%" />
 
 <div>
 In this example, when `<Swiper>`'s progress is 2:
@@ -30,14 +31,10 @@ In this example, when `<Swiper>`'s progress is 2:
 - `<SwiperItem>-1` receives a `value` of -1
 - `<SwiperItem>-3` receives a `value` of 1
 </div>
-
 </Columns>
 
 <Columns>
-<img
-src={CustomAnimationValue0Pic}
-width="60%"
-/>
+<img src={CustomAnimationValue0Pic} width="60%" />
 
 <div>
 Furthermore, when `<Swiper>`'s progress is updated to 3:
@@ -45,18 +42,23 @@ Furthermore, when `<Swiper>`'s progress is updated to 3:
 - `<SwiperItem>-1` receives a `value` of -2
 - `<SwiperItem>-3` receives a `value` of 0
 </div>
-
 </Columns>
 
-After getting the position of `<SwiperItem>`, you can determine its position and style based on the location.
+Use this value as a stable input for interpolation. For example, `0` is the
+active item, `-1` is the previous item, and `1` is the next item.
 
 ### Practice with `customAnimation`
 
+This pattern is useful when Swiper should keep its normal layout but the items
+need visual treatment such as scale, opacity, or rotation.
+
 <Go
-  img={DemoCustomPic}
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/v0/lynx-ui-cover-swiper_custom.webm"
   example="lynx-ui-swiper"
   defaultEntryName="SwiperCustom"
   entry="Custom"
+  defaultFile="Custom/index.tsx"
+  highlight={swiperCustomDemoMeta.highlight}
 />
 
 ## Understanding `mode`
@@ -64,10 +66,7 @@ After getting the position of `<SwiperItem>`, you can determine its position and
 `<Swiper>` supports two `mode` options: `normal` and `custom`. Their differences are as follows:
 
 <Columns>
-<img
-src={ModeNormalPic}
-width="60%"
-/>
+<img src={ModeNormalPic} width="60%" />
 
 <div>
 `mode='normal'`
@@ -76,14 +75,10 @@ width="60%"
 - Provides center alignment, right alignment, and other capabilities through `modeConfig`
 
 </div>
-
 </Columns>
 
 <Columns>
-<img
-src={ModeCustomPic}
-width="60%"
-/>
+<img src={ModeCustomPic} width="60%" />
 
 <div>
 `mode='custom'`
@@ -92,7 +87,6 @@ width="60%"
 - Offers higher customization capabilities
 
 </div>
-
 </Columns>
 
 To summarize:
@@ -102,9 +96,14 @@ To summarize:
 
 ### Practice with `customAnimation` when `mode='custom'`
 
+Use `custom` mode when item placement itself is part of the design. In this
+mode, the animation function should return both position and visual style.
+
 <Go
-  img={DemoCustomPic}
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/v0/lynx-ui-cover-swiper_custom-scale.webm"
   example="lynx-ui-swiper"
   defaultEntryName="SwiperCustomScale"
   entry="CustomScale"
+  defaultFile="CustomScale/index.tsx"
+  highlight={swiperCustomScaleDemoMeta.highlight}
 />
