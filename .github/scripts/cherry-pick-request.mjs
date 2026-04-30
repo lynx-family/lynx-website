@@ -25,6 +25,12 @@ const STATE_LABELS = [
   'cherry-pick:failed',
   'cherry-pick:invalid',
 ];
+const TERMINAL_STATE_LABELS = new Set([
+  'cherry-pick:pr-created',
+  'cherry-pick:partial',
+  'cherry-pick:failed',
+  'cherry-pick:invalid',
+]);
 const SUCCESS_RESULTS = new Set([
   'Created',
   'Created with warning',
@@ -327,12 +333,21 @@ function isBotActor(comment) {
   );
 }
 
+function isGitHubActionsBot(user) {
+  return user?.login === 'github-actions[bot]';
+}
+
 function labelsOf(issue) {
   return new Set((issue.labels || []).map((label) => label.name || label));
 }
 
 function hasLabel(issue, label) {
   return labelsOf(issue).has(label);
+}
+
+function hasTerminalStateLabel(issue) {
+  const labels = labelsOf(issue);
+  return [...TERMINAL_STATE_LABELS].some((label) => labels.has(label));
 }
 
 function issuePath(repo, issueNumber) {
@@ -789,6 +804,20 @@ async function validateCommand() {
   }
 
   if (event.action === 'unlabeled' && event.label?.name === APPROVED_LABEL) {
+    if (isGitHubActionsBot(event.sender)) {
+      console.log(
+        'Approval label was removed by github-actions[bot]; no-op.',
+      );
+      setOutput('should_execute', 'false');
+      return;
+    }
+    if (hasTerminalStateLabel(issue)) {
+      console.log(
+        'Approval label removal arrived after a terminal state; no-op.',
+      );
+      setOutput('should_execute', 'false');
+      return;
+    }
     if (hasLabel(issue, 'cherry-pick:running')) {
       console.log(
         'Approval label was removed while execution is running; no-op.',
