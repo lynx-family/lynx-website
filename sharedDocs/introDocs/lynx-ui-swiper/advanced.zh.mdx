@@ -1,13 +1,15 @@
 ## 进阶用法
 
-`<Swiper>`支持布局和动画的完全自定义，其中的关键是 `customAnimation` 和 `mode`
+当默认滑动布局不够用时，可以使用进阶 API。`customAnimation` 让每个
+item 根据滑动进度更新样式，`mode` 决定 Swiper 是负责 item 的位置，还是
+把位置完全交给动画函数。
 
 import { Columns, Go } from '@lynx-ui/index';
 
 import CustomAnimationValue0Pic from '@assets/Swiper/custom_animation_value_0.png';
 import ModeNormalPic from '@assets/Swiper/mode_normal.png';
 import ModeCustomPic from '@assets/Swiper/mode_custom.png';
-import DemoCustomPic from '@assets/Swiper/Custom.webp';
+import { swiperCustomDemoMeta, swiperCustomScaleDemoMeta } from './demoMeta.ts';
 
 ### 理解 `customAnimation`
 
@@ -15,15 +17,13 @@ import DemoCustomPic from '@assets/Swiper/Custom.webp';
 type customAnimation = (value: number, index: number) => CSSProperties
 ```
 
-`customAnimation`是一个主线程函数。在`<Swiper>`滚动时，每一个`<SwiperItem>`都会运行`customAnimation`函数，并根据其返回值更新自己的样式。
+`customAnimation` 是一个主线程函数。Swiper 滚动时，每个 `SwiperItem`
+都会收到自己相对当前选中项的距离，并根据函数返回值更新当前帧的样式。
 
 其中，函数入参`value`表示这个`<SwiperItem>`相对于选中`<SwiperItem>`的距离。
 
 <Columns>
-<img
-src={CustomAnimationValue0Pic}
-width="60%"
-/>
+<img src={CustomAnimationValue0Pic} width="60%" />
 
 <div>
 在这个例子中，`<Swiper>`的进度为 2，于是：
@@ -31,14 +31,10 @@ width="60%"
 - `<SwiperItem>-1`收到的`value`是 -1
 - `<SwiperItem>-3`收到的`value`是 1
 </div>
-
 </Columns>
 
 <Columns>
-<img
-src={CustomAnimationValue0Pic}
-width="60%"
-/>
+<img src={CustomAnimationValue0Pic} width="60%" />
 
 <div>
 更进一步，`<Swiper>`的进度被更新到 3 时，会有：
@@ -46,18 +42,23 @@ width="60%"
 - `<SwiperItem>-1`收到的`value`是 -2
 - `<SwiperItem>-3`收到的`value`是 0
 </div>
-
 </Columns>
 
-拿到`<SwiperItem>`的位置之后，可以根据位置决定这个`<SwiperItem>`的位置与样式。
+可以把这个值作为插值输入来理解：`0` 表示当前选中项，`-1` 表示前一项，
+`1` 表示后一项。
 
 ### `customAnimation`的实践
 
+当 Swiper 仍然使用默认布局，而 item 只需要缩放、透明度或旋转等视觉效果
+时，使用这种方式即可。
+
 <Go
-  img={DemoCustomPic}
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/v0/lynx-ui-cover-swiper_custom.webm"
   example="lynx-ui-swiper"
   defaultEntryName="SwiperCustom"
   entry="Custom"
+  defaultFile="Custom/index.tsx"
+  highlight={swiperCustomDemoMeta.highlight}
 />
 
 ## 理解 `mode`
@@ -65,10 +66,7 @@ width="60%"
 `<Swiper>`支持`normal`和`custom`两种`mode`。他们的区别如下：
 
 <Columns>
-<img
-src={ModeNormalPic}
-width="60%"
-/>
+<img src={ModeNormalPic} width="60%" />
 
 <div>
 `mode='normal'`
@@ -77,14 +75,10 @@ width="60%"
 - 根据 `modeConfig` 提供了居中，向右对齐等能力
 
 </div>
-
 </Columns>
 
 <Columns>
-<img
-src={ModeCustomPic}
-width="60%"
-/>
+<img src={ModeCustomPic} width="60%" />
 
 <div>
 `mode='custom'`
@@ -93,7 +87,6 @@ width="60%"
 - 自定义的能力更高
 
 </div>
-
 </Columns>
 
 总结起来
@@ -103,9 +96,14 @@ width="60%"
 
 ### `mode='custom'` 时 `customAnimation` 的实践
 
+当 item 的位置本身就是设计的一部分时，使用 `custom` mode。在这种模式
+下，动画函数需要同时返回位置和视觉样式。
+
 <Go
-  img={DemoCustomPic}
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/v0/lynx-ui-cover-swiper_custom-scale.webm"
   example="lynx-ui-swiper"
   defaultEntryName="SwiperCustomScale"
   entry="CustomScale"
+  defaultFile="CustomScale/index.tsx"
+  highlight={swiperCustomScaleDemoMeta.highlight}
 />
