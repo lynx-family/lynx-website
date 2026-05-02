@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const blockedDomains = new Set(['tosv-sg.tiktok-row.org']);
+const blockedDomains = new Set(['tosv-sg.tiktok-row.org', 'tosv.byted.org']);
 
 const textExts = new Set([
   '.cjs',
@@ -31,10 +31,46 @@ const ignoreFiles = new Set(['scripts/ci/check-asset-urls.mjs']);
 
 const urlPattern = /https?:\/\/[^\s"'<>)]*/g;
 
+const trailingTrimChars = new Set([
+  ',',
+  '.',
+  ';',
+  ':',
+  '!',
+  '?',
+  ']',
+  '}',
+  '>',
+]);
+
+function canParseUrl(value) {
+  if (typeof URL.canParse === 'function') {
+    return URL.canParse(value);
+  }
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeUrlCandidate(value) {
+  let v = value;
+  for (let i = 0; i < 16; i += 1) {
+    if (canParseUrl(v)) return v;
+    const last = v.at(-1);
+    if (!last || !trailingTrimChars.has(last)) return v;
+    v = v.slice(0, -1);
+  }
+  return v;
+}
+
 function isBlockedUrl(value) {
+  const normalizedValue = normalizeUrlCandidate(value);
   let hostname;
   try {
-    hostname = new URL(value).hostname;
+    hostname = new URL(normalizedValue).hostname;
   } catch {
     return false;
   }
