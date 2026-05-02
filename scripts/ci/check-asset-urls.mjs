@@ -39,6 +39,11 @@ function isBlockedUrl(value) {
     return false;
   }
 
+  hostname = hostname.toLowerCase();
+  if (hostname.endsWith('.')) {
+    hostname = hostname.slice(0, -1);
+  }
+
   for (const domain of blockedDomains) {
     if (hostname === domain || hostname.endsWith(`.${domain}`)) {
       return true;

@@ -7,43 +7,44 @@ on:
 
 jobs:
   generate-stats:
+    name: Generate Stats
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup PNPM
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
         with:
           node-version-file: '.node-version'
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Get base branch stats
+      - name: Get Base Branch Stats
         run: |
           git show origin/${{ github.event.pull_request.base.ref }}:packages/lynx-compat-data/api-stats.json > /tmp/base-stats.json || echo '{}' > /tmp/base-stats.json
 
-      - name: Generate PR stats
+      - name: Generate PR Stats
         run: pnpm --filter @lynx-js/lynx-compat-data run gen-stats
 
-      - name: Generate comparison
+      - name: Generate Comparison
         run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json packages/lynx-compat-data/api-stats.json > /tmp/comment.md
 
-      - name: Save PR number
+      - name: Save PR Number
         run: echo "${{ github.event.pull_request.number }}" > /tmp/pr-number.txt
 
-      - name: Upload comment artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Comment Artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: compat-data-stats-comment
           path: |
