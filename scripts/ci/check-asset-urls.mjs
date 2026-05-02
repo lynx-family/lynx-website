@@ -27,10 +27,7 @@ const textExts = new Set([
   '.yml',
 ]);
 
-const ignoreFiles = new Set([
-  'scripts/ci/check-asset-urls.mjs',
-  '.github/workflows/ci.yml',
-]);
+const ignoreFiles = new Set(['scripts/ci/check-asset-urls.mjs']);
 
 const urlPattern = /https?:\/\/[^\s"'<>)]*/g;
 
