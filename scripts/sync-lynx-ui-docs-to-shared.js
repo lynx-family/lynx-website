@@ -1,17 +1,33 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
-const LYNX_UI_DIR = path.resolve(
-  __dirname,
-  '../node_modules/@lynx-js/lynx-ui/packages',
-);
-const LYNX_UI_REPO_DIR = path.resolve(LYNX_UI_DIR, '..');
+
+const resolveLynxUiPackagesDir = () => {
+  const candidates = ['@lynx-js/lynx-ui-repo'];
+  for (const candidate of candidates) {
+    try {
+      const pkgJsonPath = require.resolve(`${candidate}/package.json`);
+      const repoRoot = path.dirname(pkgJsonPath);
+      const packagesDir = path.join(repoRoot, 'packages');
+      if (fs.existsSync(packagesDir)) {
+        return { packagesDir, repoRoot, candidate };
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+};
+
+const resolved = resolveLynxUiPackagesDir();
+const LYNX_UI_DIR = resolved?.packagesDir;
 const SHARED_DOCS_DIR = path.resolve(__dirname, '../sharedDocs/packageDocs');
 
 console.log('🔄 Syncing docs from @lynx-js/lynx-ui to sharedDocs...');
 
-if (!fs.existsSync(LYNX_UI_DIR)) {
-  console.warn(`⚠️ Warning: ${LYNX_UI_DIR} not found. Skipping docs sync.`);
+if (!LYNX_UI_DIR || !fs.existsSync(LYNX_UI_DIR)) {
+  console.warn(
+    '⚠️ Warning: lynx-ui packages directory not found. Skipping docs sync.',
+  );
   process.exit(0);
 }
 
@@ -40,6 +56,83 @@ const copyRecursiveSync = (src, dest) => {
   }
 };
 
+const collectFilesRecursively = (dir) => {
+  const result = [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...collectFilesRecursively(fullPath));
+    } else {
+      result.push(fullPath);
+    }
+  }
+  return result;
+};
+
+const hoistMdxImports = (filePath) => {
+  if (!filePath.endsWith('.mdx')) {
+    return;
+  }
+
+  const original = fs.readFileSync(filePath, 'utf8');
+  const lines = original.split(/\r?\n/);
+
+  let inCodeFence = false;
+  let contentStarted = false;
+  let hasNonTopLevelImports = false;
+  const imports = [];
+  const body = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('```')) {
+      inCodeFence = !inCodeFence;
+      body.push(line);
+      continue;
+    }
+
+    const isImportExport =
+      !inCodeFence && (/^import\s/.test(line) || /^export\s/.test(line));
+    if (isImportExport) {
+      if (contentStarted) {
+        hasNonTopLevelImports = true;
+      }
+      imports.push(line);
+      continue;
+    }
+
+    if (!inCodeFence && trimmed.length > 0) {
+      contentStarted = true;
+    }
+    body.push(line);
+  }
+
+  if (imports.length === 0) {
+    return;
+  }
+
+  if (!hasNonTopLevelImports) {
+    return;
+  }
+
+  const seen = new Set();
+  const uniqueImports = imports.filter((l) => {
+    if (seen.has(l)) return false;
+    seen.add(l);
+    return true;
+  });
+
+  const bodyText = body.join('\n').replace(/^\n+/, '');
+  const next = `${uniqueImports.join('\n')}\n\n${bodyText}`;
+
+  if (next !== original) {
+    fs.writeFileSync(filePath, next, 'utf8');
+  }
+};
+
+const ENABLE_MDX_HOIST = (process.env.LYNX_UI_MDX_HOIST ?? 'true') !== 'false';
+
 let copiedCount = 0;
 const packages = fs.readdirSync(LYNX_UI_DIR);
 
@@ -54,6 +147,11 @@ packages.forEach((pkgName) => {
     }
 
     copyRecursiveSync(pkgDocsDir, targetDir);
+    if (ENABLE_MDX_HOIST) {
+      for (const filePath of collectFilesRecursively(targetDir)) {
+        hoistMdxImports(filePath);
+      }
+    }
     copiedCount++;
   }
 });

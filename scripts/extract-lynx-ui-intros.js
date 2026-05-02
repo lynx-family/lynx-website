@@ -1,16 +1,32 @@
 const fs = require('fs');
 const path = require('path');
 
-const packagesDir = path.resolve(
-  __dirname,
-  '../node_modules/@lynx-js/lynx-ui/packages',
-);
+const resolveLynxUiPackagesDir = () => {
+  const candidates = ['@lynx-js/lynx-ui-repo'];
+  for (const candidate of candidates) {
+    try {
+      const pkgJsonPath = require.resolve(`${candidate}/package.json`);
+      const repoRoot = path.dirname(pkgJsonPath);
+      const packagesDir = path.join(repoRoot, 'packages');
+      if (fs.existsSync(packagesDir)) {
+        return packagesDir;
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+};
+
+const packagesDir = resolveLynxUiPackagesDir();
 /** @type {Record<string, string>} */
 const result = {};
 
-if (!fs.existsSync(packagesDir)) {
-  console.error('Packages directory not found:', packagesDir);
-  process.exit(1);
+if (!packagesDir || !fs.existsSync(packagesDir)) {
+  console.warn(
+    'Packages directory not found for lynx-ui. Skipping intros extraction.',
+  );
+  process.exit(0);
 }
 
 const packages = fs.readdirSync(packagesDir);
