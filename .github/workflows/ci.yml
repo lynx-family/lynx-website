@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
@@ -52,11 +52,13 @@ jobs:
 
       # Temporary mode: if main still has legacy unformatted files, running repo-wide prettier --check
       # would block this PR. Only check changed files for now; after repo-wide pnpm format lands,
-      # switch back to repo-wide checks (see the commented steps below).
+      # switch back to repo-wide checks.
       - name: Prettier (changed)
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           python3 - <<'PY'
           import os
@@ -65,18 +67,44 @@ jobs:
           import subprocess
           import sys
 
+          ZERO_SHA = "0" * 40
+
           event_name = os.environ.get("GITHUB_EVENT_NAME", "")
           base_ref = os.environ.get("GITHUB_BASE_REF", "")
+          before = os.environ.get("GITHUB_BEFORE", "")
+          sha = os.environ.get("GITHUB_SHA", "HEAD")
+
+          def git(*args: str) -> str:
+            return subprocess.check_output(["git", *args], text=True).strip()
+
+          def commit_exists(rev: str) -> bool:
+            if not rev or rev == ZERO_SHA:
+              return False
+            return subprocess.call(
+              ["git", "cat-file", "-e", f"{rev}^{{commit}}"],
+              stdout=subprocess.DEVNULL,
+              stderr=subprocess.DEVNULL,
+            ) == 0
 
           if event_name == "pull_request" and base_ref:
             subprocess.check_call(["git", "fetch", "origin", base_ref, "--depth=1"])
             diff_range = f"origin/{base_ref}...HEAD"
+          elif event_name == "push":
+            # For push events, use the full payload range so multi-commit pushes are checked.
+            # On branch creation or unusual history cases where `before` is unavailable,
+            # fall back to checking the pushed commit/tree itself.
+            if commit_exists(before):
+              diff_range = f"{before}..{sha}"
+            else:
+              diff_range = sha
           else:
-            try:
-              subprocess.check_output(["git", "rev-parse", "HEAD^"], text=True).strip()
+            # Fallback for manually re-used workflows or unexpected events.
+            if commit_exists("HEAD^"):
               diff_range = "HEAD^..HEAD"
-            except subprocess.CalledProcessError:
+            else:
               diff_range = "HEAD"
+
+          print(f"Changed-file diff range: {diff_range}")
 
           out = subprocess.check_output(
             ["git", "diff", "--name-only", "--diff-filter=ACMRT", diff_range],
@@ -103,7 +131,7 @@ jobs:
             print("No files to check with Prettier.")
             sys.exit(0)
 
-          cmd = ["pnpm", "exec", "prettier", "--check", *files]
+          cmd = ["pnpm", "exec", "prettier", "--check", "--", *files]
           print("+ " + " ".join(shlex.quote(c) for c in cmd))
           sys.exit(subprocess.call(cmd))
           PY
