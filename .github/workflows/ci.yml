@@ -18,26 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Case Check
-        run: |
-          python3 - <<'PY'
-          import collections
-          import subprocess
-          import sys
-
-          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
-          by_lower = collections.defaultdict(list)
-          for f in files:
-            by_lower[f.lower()].append(f)
-
-          collisions = {k: v for k, v in by_lower.items() if len(v) > 1}
-          if collisions:
-            print("Case-insensitive path collisions detected:")
-            for _, paths in sorted(collisions.items()):
-              print("  - " + " | ".join(paths))
-            sys.exit(1)
-          PY
-
       - name: Setup PNPM
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
 
@@ -47,99 +27,30 @@ jobs:
           node-version-file: '.node-version'
           cache: 'pnpm'
 
+      - name: Case Check
+        run: node scripts/ci/check-case-collisions.mjs
+
+      - name: Asset URL Check
+        run: node scripts/ci/check-asset-urls.mjs
+
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      # Temporary mode: if main still has legacy unformatted files, running repo-wide prettier --check
-      # would block this PR. Only check changed files for now; after repo-wide pnpm format lands,
-      # switch back to repo-wide checks.
-      - name: Prettier (changed)
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_REF: ${{ github.base_ref }}
-          GITHUB_BEFORE: ${{ github.event.before }}
-          GITHUB_SHA: ${{ github.sha }}
-        run: |
-          python3 - <<'PY'
-          import os
-          import pathlib
-          import shlex
-          import subprocess
-          import sys
+      - name: Format Check
+        run: pnpm run format:check
 
-          ZERO_SHA = "0" * 40
+      - name: Build
+        run: pnpm run build
 
-          event_name = os.environ.get("GITHUB_EVENT_NAME", "")
-          base_ref = os.environ.get("GITHUB_BASE_REF", "")
-          before = os.environ.get("GITHUB_BEFORE", "")
-          sha = os.environ.get("GITHUB_SHA", "HEAD")
+  done:
+    name: Done
+    needs:
+      - checks
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions: {}
 
-          def git(*args: str) -> str:
-            return subprocess.check_output(["git", *args], text=True).strip()
-
-          def commit_exists(rev: str) -> bool:
-            if not rev or rev == ZERO_SHA:
-              return False
-            return subprocess.call(
-              ["git", "cat-file", "-e", f"{rev}^{{commit}}"],
-              stdout=subprocess.DEVNULL,
-              stderr=subprocess.DEVNULL,
-            ) == 0
-
-          if event_name == "pull_request" and base_ref:
-            subprocess.check_call(["git", "fetch", "origin", base_ref, "--depth=1"])
-            diff_range = f"origin/{base_ref}...HEAD"
-          elif event_name == "push":
-            # For push events, use the full payload range so multi-commit pushes are checked.
-            # On branch creation or unusual history cases where `before` is unavailable,
-            # fall back to checking the pushed commit/tree itself.
-            if commit_exists(before):
-              diff_range = f"{before}..{sha}"
-            else:
-              diff_range = sha
-          else:
-            # Fallback for manually re-used workflows or unexpected events.
-            if commit_exists("HEAD^"):
-              diff_range = "HEAD^..HEAD"
-            else:
-              diff_range = "HEAD"
-
-          print(f"Changed-file diff range: {diff_range}")
-
-          out = subprocess.check_output(
-            ["git", "diff", "--name-only", "--diff-filter=ACMRT", diff_range],
-            text=True,
-          )
-          files = [f.strip() for f in out.splitlines() if f.strip()]
-
-          exts = {
-            ".js",
-            ".jsx",
-            ".ts",
-            ".tsx",
-            ".md",
-            ".mdx",
-            ".json",
-            ".yml",
-            ".yaml",
-            ".css",
-            ".scss",
-          }
-          files = [f for f in files if pathlib.Path(f).suffix in exts]
-
-          if not files:
-            print("No files to check with Prettier.")
-            sys.exit(0)
-
-          cmd = ["pnpm", "exec", "prettier", "--check", "--", *files]
-          print("+ " + " ".join(shlex.quote(c) for c in cmd))
-          sys.exit(subprocess.call(cmd))
-          PY
-
-      # Repo-wide mode (enable after main is clean):
-      #
-      # - name: Format Check
-      #   run: pnpm run format:check
-      #
-      # - name: Build
-      #   run: pnpm run build
+    steps:
+      - name: Fail if any job did not succeed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
