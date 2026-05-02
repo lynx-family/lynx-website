@@ -86,54 +86,54 @@ Example after cleanup:
 
 ## Scan Summary
 
-| Metric | Count |
-| --- | ---: |
-| Unique Native API doc queries | 86 |
-| Compat entries for doc queries | 86 |
-| Missing compat entries | 0 |
-| Compat desktop supported but no MDX Desktop docs | 5 |
-| Compat desktop supported but some locale MDX lacks Desktop docs | 0 |
-| MDX Desktop docs present but no compat desktop support | 0 |
-| MDX Desktop docs present but compat desktop support is partial | 0 |
-| Compat desktop supported and MDX has Desktop docs | 26 |
+| Metric                                                          | Count |
+| --------------------------------------------------------------- | ----: |
+| Unique Native API doc queries                                   |    86 |
+| Compat entries for doc queries                                  |    86 |
+| Missing compat entries                                          |     0 |
+| Compat desktop supported but no MDX Desktop docs                |     5 |
+| Compat desktop supported but some locale MDX lacks Desktop docs |     0 |
+| MDX Desktop docs present but no compat desktop support          |     0 |
+| MDX Desktop docs present but compat desktop support is partial  |     0 |
+| Compat desktop supported and MDX has Desktop docs               |    26 |
 
 ## Cleanup Verification
 
 After applying the cleanup, the same Native API alignment scan reports:
 
-| Metric | Count |
-| --- | ---: |
-| Compat desktop supported but no MDX Desktop docs | 0 |
-| Compat desktop supported but some locale MDX lacks Desktop docs | 0 |
-| MDX Desktop docs present but no compat desktop support | 0 |
-| MDX Desktop docs present but compat desktop support is partial | 0 |
+| Metric                                                          | Count |
+| --------------------------------------------------------------- | ----: |
+| Compat desktop supported but no MDX Desktop docs                |     0 |
+| Compat desktop supported but some locale MDX lacks Desktop docs |     0 |
+| MDX Desktop docs present but no compat desktop support          |     0 |
+| MDX Desktop docs present but compat desktop support is partial  |     0 |
 
 ## Group Counts
 
 ### Compat Desktop Supported But No MDX Desktop Docs By Module
 
-| Group | Count |
-| --- | ---: |
-| `lynx-native-api/lynx-view` | 4 |
-| `lynx-native-api` | 1 |
+| Group                       | Count |
+| --------------------------- | ----: |
+| `lynx-native-api/lynx-view` |     4 |
+| `lynx-native-api`           |     1 |
 
 ### Compat Desktop Supported But Some Locale MDX Lacks Desktop Docs By Module
 
-| Group | Count |
-| --- | ---: |
-| _none_ | 0 |
+| Group  | Count |
+| ------ | ----: |
+| _none_ |     0 |
 
 ### MDX Desktop Docs Present But No Compat Desktop Support By Module
 
-| Group | Count |
-| --- | ---: |
-| _none_ | 0 |
+| Group  | Count |
+| ------ | ----: |
+| _none_ |     0 |
 
 ### MDX Desktop Docs Present But Partial Compat Desktop Support By Module
 
-| Group | Count |
-| --- | ---: |
-| _none_ | 0 |
+| Group  | Count |
+| ------ | ----: |
+| _none_ |     0 |
 
 ## Compat Desktop Supported But No MDX Desktop Docs
 

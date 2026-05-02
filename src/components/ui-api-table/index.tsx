@@ -39,11 +39,11 @@ function normalizeSummary(summary: unknown): SummaryToken[] {
   return summary.filter((item): item is SummaryToken => {
     return Boolean(
       item &&
-        typeof item === 'object' &&
-        'kind' in item &&
-        'text' in item &&
-        (item.kind === 'text' || item.kind === 'code') &&
-        typeof item.text === 'string',
+      typeof item === 'object' &&
+      'kind' in item &&
+      'text' in item &&
+      (item.kind === 'text' || item.kind === 'code') &&
+      typeof item.text === 'string',
     );
   });
 }
