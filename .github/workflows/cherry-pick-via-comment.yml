@@ -15,7 +15,7 @@ jobs:
       issues: write
 
     steps:
-      - name: Comment on PR with results
+      - name: Post Start Comment
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,8 +31,8 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments" \
             -d "{\"body\": \"$comment\"}"
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0 # Get complete history for cherry-pick
@@ -42,7 +42,7 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Get PR and Comment info
+      - name: Get PR and Comment Info
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
           PR_NUMBER: ${{ github.event.issue.number }}
@@ -51,7 +51,7 @@ jobs:
           echo "Comment: $COMMENT_BODY"
           echo "PR Number: $PR_NUMBER"
 
-      - name: Extract target branches
+      - name: Extract Target Branches
         id: extract-branches
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
@@ -71,7 +71,7 @@ jobs:
             echo "branches=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get merged commit SHA
+      - name: Get Merged Commit SHA
         id: get-commit
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
@@ -99,7 +99,7 @@ jobs:
           echo "Merge commit SHA: $merge_commit_sha"
           echo "commit_sha=$merge_commit_sha" >> $GITHUB_OUTPUT
 
-      - name: Cherry-pick to target branches
+      - name: Cherry-pick to Target Branches
         id: cherry-pick
         env:
           TARGET_BRANCHES: ${{ steps.extract-branches.outputs.branches }}
@@ -111,7 +111,7 @@ jobs:
 
           for branch in $TARGET_BRANCHES; do
             echo "Processing branch: $branch"
-            
+
             # Check if target branch exists
             if ! git show-ref --verify --quiet refs/remotes/origin/$branch; then
               echo "Warning: Branch $branch does not exist, skipping"
@@ -121,17 +121,17 @@ jobs:
             # Create new branch name with timestamp to avoid duplicates
             timestamp=$(date +%s)
             new_branch="cherry-pick-$branch-pr-$PR_NUMBER-$timestamp"
-            
+
             # Create and switch to new branch
             git checkout -b "$new_branch" "origin/$branch"
-            
+
             # Execute cherry-pick
             if git cherry-pick -x "$MERGE_COMMIT_SHA"; then
               echo "Successfully cherry-picked to $branch"
-              
+
               # Push new branch
               git push origin "$new_branch"
-              
+
               # Create PR
               pr_response=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
@@ -142,16 +142,16 @@ jobs:
                   \"head\": \"$new_branch\",
                   \"base\": \"$branch\"
                 }")
-              
+
               pr_url=$(echo "$pr_response" | grep -o '"html_url":"[^"]*' | cut -d'"' -f4)
               echo "Created PR: $pr_url"
-              
+
               created_prs="$created_prs\n- $pr_url"
             else
               echo "Failed to cherry-pick to $branch, conflicts may exist"
               git cherry-pick --abort
             fi
-            
+
             # Return to initial state
             git checkout -
           done
@@ -161,7 +161,7 @@ jobs:
             echo "pr_list=$created_prs" >> $GITHUB_OUTPUT
           fi
 
-      - name: Comment on PR with results
+      - name: Post Result Comment
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
