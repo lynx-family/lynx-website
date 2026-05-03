@@ -2,49 +2,28 @@
 // Do not edit manually.
 
 const lynxUiIntros: Record<string, string> = {
-  'lynx-ui':
-    '`@lynx-js/lynx-ui` is the official headless UI library for ReactLynx, provided as a reference for building flexible, universal, and high-performance ReactLynx components.',
-  'lynx-ui-button':
-    'A headless Button component for ReactLynx. It provides press state tracking (`active`) and render props for custom styling.',
-  'lynx-ui-checkbox':
-    'A headless Checkbox component for ReactLynx. It supports controlled/uncontrolled checked state and indeterminate mode.',
-  'lynx-ui-common':
-    'Common utilities, hooks, and types shared across `@lynx-js/lynx-ui` components.',
-  'lynx-ui-dialog':
-    'A headless Dialog (modal) component for ReactLynx. It provides backdrop overlay, open/close state management, and enter/exit animations via Presence.',
-  'lynx-ui-draggable':
-    'A headless Draggable component for ReactLynx. It provides drag-and-drop primitives via main-thread execution.',
-  'lynx-ui-feed-list':
-    'A FeedList component for ReactLynx. Designed to render lists with complex layouts and infinite scrolling.',
-  'lynx-ui-form':
-    'A headless Form component for ReactLynx. It provides form context and a submit button that collects field values.',
-  'lynx-ui-input':
-    'A headless Input component for ReactLynx. It provides primitives for text entry and keyboard awareness.',
-  'lynx-ui-lazy-component':
-    'A LazyComponent for ReactLynx. It defers the loading of non-critical UI elements.',
-  'lynx-ui-list':
-    'A virtualized List component for ReactLynx. Designed to render long lists of data.',
-  'lynx-ui-overlay':
-    'An Overlay component for ReactLynx. It renders content in a native overlay layer above the main view tree.',
-  'lynx-ui-popover':
-    'A headless Popover component for ReactLynx. It provides primitives for positioning and anchor tracking.',
-  'lynx-ui-presence':
-    'A Presence component for ReactLynx. It animates elements entering and leaving the view tree.',
-  'lynx-ui-radio-group':
-    'A headless RadioGroup component for ReactLynx. It manages single-selection state across a group of radio buttons.',
-  'lynx-ui-scroll-view':
-    'A ScrollView component for ReactLynx. It provides scrolling primitives and bounce handling.',
-  'lynx-ui-sheet':
-    'A directional Sheet component for ReactLynx. It supports bottom-sheet and side-drawer semantics with drag interactions and snap point primitives.',
-  'lynx-ui-slider': 'A primitives-first slider component package for lynx-ui.',
-  'lynx-ui-sortable':
-    'A headless Sortable list component for ReactLynx. It provides list reordering primitives via main-thread animations.',
-  'lynx-ui-swipe-action':
-    'A SwipeAction component for ReactLynx. It provides swipeable list item primitives via main-thread gestures.',
-  'lynx-ui-swiper':
-    'A Swiper (carousel) component for ReactLynx. It provides pagination and gesture-handling primitives.',
-  'lynx-ui-switch':
-    'A headless Switch (toggle) component for ReactLynx. It provides unstyled primitives for toggle states.',
+  "lynx-ui": "`@lynx-js/lynx-ui` is the official headless UI library for ReactLynx, provided as a reference for building flexible, universal, and high-performance ReactLynx components.",
+  "lynx-ui-button": "A headless Button component for ReactLynx. It provides press state tracking (`active`) and render props for custom styling.",
+  "lynx-ui-checkbox": "A headless Checkbox component for ReactLynx. It supports controlled/uncontrolled checked state and indeterminate mode.",
+  "lynx-ui-common": "Common utilities, hooks, and types shared across `@lynx-js/lynx-ui` components.",
+  "lynx-ui-dialog": "A headless Dialog (modal) component for ReactLynx. It provides backdrop overlay, open/close state management, and enter/exit animations via Presence.",
+  "lynx-ui-draggable": "A headless Draggable component for ReactLynx. It provides drag-and-drop primitives via main-thread execution.",
+  "lynx-ui-feed-list": "A FeedList component for ReactLynx. Designed to render lists with complex layouts and infinite scrolling.",
+  "lynx-ui-form": "A headless Form component for ReactLynx. It provides form context and a submit button that collects field values.",
+  "lynx-ui-input": "A headless Input component for ReactLynx. It provides primitives for text entry and keyboard awareness.",
+  "lynx-ui-lazy-component": "A LazyComponent for ReactLynx. It defers the loading of non-critical UI elements.",
+  "lynx-ui-list": "A virtualized List component for ReactLynx. Designed to render long lists of data.",
+  "lynx-ui-overlay": "An Overlay component for ReactLynx. It renders content in a native overlay layer above the main view tree.",
+  "lynx-ui-popover": "A headless Popover component for ReactLynx. It provides primitives for positioning and anchor tracking.",
+  "lynx-ui-presence": "A Presence component for ReactLynx. It animates elements entering and leaving the view tree.",
+  "lynx-ui-radio-group": "A headless RadioGroup component for ReactLynx. It manages single-selection state across a group of radio buttons.",
+  "lynx-ui-scroll-view": "A ScrollView component for ReactLynx. It provides scrolling primitives and bounce handling.",
+  "lynx-ui-sheet": "A directional Sheet component for ReactLynx. It supports bottom-sheet and side-drawer semantics with drag interactions and snap point primitives.",
+  "lynx-ui-slider": "A primitives-first slider component package for lynx-ui.",
+  "lynx-ui-sortable": "A headless Sortable list component for ReactLynx. It provides list reordering primitives via main-thread animations.",
+  "lynx-ui-swipe-action": "A SwipeAction component for ReactLynx. It provides swipeable list item primitives via main-thread gestures.",
+  "lynx-ui-swiper": "A Swiper (carousel) component for ReactLynx. It provides pagination and gesture-handling primitives.",
+  "lynx-ui-switch": "A headless Switch (toggle) component for ReactLynx. It provides unstyled primitives for toggle states."
 };
 
 export default lynxUiIntros;
