@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { renderInlineMarkdown } from '@rspress/core/theme';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
@@ -38,19 +39,26 @@ function BlogCard({
 }) {
   const isFeatured = variant === 'featured';
   const latestBlogPath = toLatestBlogPath(link);
+  const [isBeamActive, setIsBeamActive] = useState(false);
 
   return (
     <a
       href={latestBlogPath}
       className={`${styles.card} ${isFeatured ? styles.featured : styles.gridItem}`}
       data-tilt-card
+      onMouseEnter={() => setIsBeamActive(true)}
+      onMouseLeave={() => setIsBeamActive(false)}
+      onFocus={() => setIsBeamActive(true)}
+      onBlur={() => setIsBeamActive(false)}
     >
-      <BorderBeam
-        className={styles.beam}
-        color="#3b82f6"
-        size={2}
-        duration={3}
-      />
+      {isBeamActive && (
+        <BorderBeam
+          className={styles.beam}
+          color="#3b82f6"
+          size={2}
+          duration={3}
+        />
+      )}
       {date && (
         <span className={styles.date}>
           {new Intl.DateTimeFormat(lang, {
