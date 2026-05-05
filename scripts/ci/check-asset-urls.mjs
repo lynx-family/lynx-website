@@ -2,7 +2,13 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const blockedDomains = new Set(['tosv-sg.tiktok-row.org', 'tosv.byted.org']);
+const blockedDomains = new Set([
+  'tosv-sg.tiktok-row.org',
+  'tosv.byted.org',
+  'bits.bytedance.net',
+  'code.byted.org',
+  'lynx.bytedance.net',
+]);
 
 const textExts = new Set([
   '.cjs',
