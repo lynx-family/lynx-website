@@ -13,7 +13,7 @@ Pnpm: 执行 `corepack enable` 即可
 ```
 npm install turbo --global
 
-git clone git@code.byted.org:lynx/lynx-ui.git
+git clone https://github.com/lynx-family/lynx-ui.git
 
 cd lynx-ui
 
@@ -142,19 +142,6 @@ turbo watch dev
 
 主要是文档的 Guide 部分, 包含组件介绍，使用方法，示例等
 
-markdown 中可以使用`internal-website`的组件(比如`Go`)
-
-```
-<Go
-  img="https://lf0-fast-deliver-inner.bytedance.net/obj/eden-internal/zalzzh-ukj-lapzild-shpjpmmv-eufs/ljhwZthlaukjlkulzlp/lynx_ui_action_sheet_customized.webp"
-  example="ActionSheet"
-  defaultEntryFile="dist/ActionSheetCustomized/template.js"
-  entry="Customized"
-/>
-```
-
-详情参考[internal-website](https://bits.bytedance.net/code/lynx/internal_website/)
-
 #### 5. 添加测试
 
 组件使用 headless lynx 进行基本的元素检查，请在 apps/examples/**tests**/headless.test.ts 中的 `TEST_COMPONENTS` 添加需要测试的组件样例
@@ -165,64 +152,12 @@ markdown 中可以使用`internal-website`的组件(比如`Go`)
 
 #### 6. 提交代码
 
-### 生成组件文档
+1. 从 `master` 分支切出新分支并完成修改
+2. 本地运行测试与 lint
+3. 如果改动影响发布包，执行 `pnpm changeset` 并提交生成的 changeset 文件
+4. 在 GitHub 上发起 Pull Request
 
-> 需要本地有`internal-website`项目用于文档预览， refer to [Generate Document](https://bits.bytedance.net/code/lynx/internal_website/blob/master/scripts/typedoc/README.md)，如有新增组件，请在[配置文件](https://code.byted.org/lynx/internal_website/blob/master/scripts/typedoc/packages/lynx-ui.ts)中手动添加
-
-## MR 规范
-
-- 每个 MR 有且仅有 1 个 commit
-
-## 提交流程
-
-### feature
-
-> 通常新 feature 使用，跟车 `master` 发版
-
-1. 从 `master` 分支切出，修改代码
-2. 执行 `pnpm changeset`，选择需要升级的包（根据提交内容来选择 patch 或者 minor），编写描述信息
-3. 将代码和生成的`changeset`文件一起提交
-4. 找 Code Owner 和 Release Owner 进行 review
-5. 合入 `master` 分支
-6. Release Owner 会定时(每周)发版
-
-### hotfix
-
-> 代码提交者
-
-1. 从 `master` 分支切出，修改代码
-2. 执行 `pnpm changeset`，选择需要升级的包，选择 patch 升级，编写该 Change 的描述信息
-3. 将代码和生成的`changeset`文件一起提交
-4. 找 Code Owner 和 Release Owner 进行 review
-5. 合入 `master` 分支
-
-> Release Owner
-
-6. 定时（每天或立即）从 `master` 分支切出
-7. 执行 `pnpm changeset version`，检查版本号变更是否符合预期
-8. 提交`package.json`和 `CHANGELOG.md` 的变更
-
-## 版本发布
-
-### Snapshot 版本
-
-提交 MR 后, CI 会自动发布 Snapshot 版本
-
-Snapshot 版本可以用来测试，不建议在生产环境使用.
-
-Snapshot 版本采用了不同的包名，在原包名后加`-canary`后缀, 比如`@lynx-js/lynx-ui-button`的 Snapshot 版本为`@lynx-js/lynx-ui-button-canary`.
-
-合入后，CI 界面会有 Snapshot 版本的报告，Lark 也会收到通知
-![ci_report](https://lf0-fast-deliver-inner.bytedance.net/obj/eden-internal/uhfyeh7nuhfnuhd/tmp/ci_report.jpeg)
-![lark_report](https://lf0-fast-deliver-inner.bytedance.net/obj/eden-internal/uhfyeh7nuhfnuhd/tmp/lark_report.jpeg)
-
-### 正式版本
-
-正式版本需要 Release Owner 进行发布.
-
-需求或者 bugfix 合入 master 后，CI 会将改动同步到`changeset-release/next`分支, 同时生成版本和 changelog
-
-Release Owner 只需要合入`changeset-release/next`分支, 合入后 CI 会自动发布正式版本, 同时 Lark 会收到通知
+正式版本由维护者统一发布。如需测试预发布构建，可使用 CI 产物或 canary 构建（如有提供）。
 
 ## FAQ
 
