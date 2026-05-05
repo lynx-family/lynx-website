@@ -15,5 +15,5 @@ hero:
       link: ./Guides/introduction.html#快速开始
     - theme: alt
       text: 组件
-      link: ./Components/
+      link: ./Components/Button
 ---

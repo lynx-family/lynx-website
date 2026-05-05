@@ -15,5 +15,5 @@ hero:
       link: ./Guides/introduction.html#quick-start
     - theme: alt
       text: Components
-      link: ./Components/
+      link: ./Components/Button
 ---
