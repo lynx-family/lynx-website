@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { useLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
-import { toLatestBlogPath } from '@site/src/lib/utils';
 
 type ConfigKey = '/' | '/react/' | '/rspeedy/';
 
@@ -79,7 +78,7 @@ const useBlogBtnDom = (src: string) => {
     if (isExternal) {
       window.open(blogLink, '_blank');
     } else {
-      navigate(toLatestBlogPath(blogLink));
+      navigate(blogLink);
     }
   }, [navigate, blogLink, isExternal]);
 
