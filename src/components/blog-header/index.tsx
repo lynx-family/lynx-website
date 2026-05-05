@@ -1,4 +1,5 @@
 import { useLang, usePageData } from '@rspress/core/runtime';
+import { getLatestBlogIndexPath } from '@site/src/lib/utils';
 import { LlmsContainer, LlmsCopyButton, LlmsViewOptions } from '@theme';
 import { BlogAvatar } from '../blog-avatar';
 import styles from './index.module.less';
@@ -7,6 +8,7 @@ export function BlogHeader() {
   const lang = useLang();
   const { page } = usePageData();
   const authors = (page.frontmatter?.authors as string[]) ?? [];
+  const blogIndexPath = getLatestBlogIndexPath(lang);
   const date = page.frontmatter?.date
     ? new Date(page.frontmatter.date as string)
     : undefined;
@@ -21,7 +23,7 @@ export function BlogHeader() {
 
   return (
     <>
-      <a href=".." className={styles.backLink}>
+      <a href={blogIndexPath} className={styles.backLink}>
         ← {lang === 'zh' ? '所有文章' : 'All Posts'}
       </a>
       <div className={styles.blogHeader}>

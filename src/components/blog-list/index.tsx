@@ -1,11 +1,9 @@
+import { useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
-import {
-  getCustomMDXComponent,
-  renderInlineMarkdown,
-} from '@rspress/core/theme';
+import { renderInlineMarkdown } from '@rspress/core/theme';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
 import { useBlogPages, useTiltEffect } from '@site/src/hooks';
-import { useState } from 'react';
+import { toLatestBlogPath } from '@site/src/lib/utils';
 import { BlogAvatar } from '../blog-avatar';
 import { MeteorsBackground } from '../home-comps/meteors-background';
 import { BorderBeam } from '../home-comps/border-beam';
@@ -29,7 +27,6 @@ function BlogCard({
   title,
   authors,
   lang,
-  A,
   variant = 'grid',
 }: {
   date?: Date;
@@ -38,20 +35,30 @@ function BlogCard({
   title?: string;
   authors?: string[];
   lang: string;
-  A: React.ComponentType<React.AnchorHTMLAttributes<HTMLAnchorElement>>;
   variant?: 'featured' | 'grid';
 }) {
-  const [isHovered, setIsHovered] = useState(false);
   const isFeatured = variant === 'featured';
+  const latestBlogPath = toLatestBlogPath(link);
+  const [isBeamActive, setIsBeamActive] = useState(false);
 
   return (
-    <A
-      href={link}
+    <a
+      href={latestBlogPath}
       className={`${styles.card} ${isFeatured ? styles.featured : styles.gridItem}`}
       data-tilt-card
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setIsBeamActive(true)}
+      onMouseLeave={() => setIsBeamActive(false)}
+      onFocus={() => setIsBeamActive(true)}
+      onBlur={() => setIsBeamActive(false)}
     >
+      {isBeamActive && (
+        <BorderBeam
+          className={styles.beam}
+          color="#3b82f6"
+          size={2}
+          duration={3}
+        />
+      )}
       {date && (
         <span className={styles.date}>
           {new Intl.DateTimeFormat(lang, {
@@ -84,13 +91,11 @@ function BlogCard({
           />
         </div>
       )}
-      {isHovered && <BorderBeam size={2} duration={3} />}
-    </A>
+    </a>
   );
 }
 
 export function BlogList({ limit }: { limit?: number }) {
-  const { a: A } = getCustomMDXComponent();
   const blogPages = useBlogPages();
   const lang = useLang() as 'en' | 'zh';
   const isMobile = useIfMobile();
@@ -131,7 +136,7 @@ export function BlogList({ limit }: { limit?: number }) {
 
       {featuredPost && (
         <section className={styles.featuredSection}>
-          <BlogCard {...featuredPost} lang={lang} A={A} variant="featured" />
+          <BlogCard {...featuredPost} lang={lang} variant="featured" />
         </section>
       )}
 
@@ -142,7 +147,6 @@ export function BlogList({ limit }: { limit?: number }) {
               key={post.link || index}
               {...post}
               lang={lang}
-              A={A}
               variant="grid"
             />
           ))}
