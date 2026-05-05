@@ -51,7 +51,7 @@ function normalizeSummary(summary: unknown): SummaryToken[] {
 function renderSummary(summary: SummaryToken[]) {
   return summary.map((item, index) => {
     if (item.kind === 'code') {
-      return <code key={index}>{item.text.replaceAll('`', '')}</code>;
+      return <code key={index}>{item.text.replace(/`/g, '')}</code>;
     }
 
     return <React.Fragment key={index}>{item.text}</React.Fragment>;
@@ -61,9 +61,12 @@ function renderSummary(summary: SummaryToken[]) {
 function normalizeType(
   type: unknown,
   docTypeFallback?: DocTypeFallback | null,
-): React.ReactNode {
+): string | number | '' {
   if (docTypeFallback?.content?.length) {
-    return docTypeFallback.content[0]?.text ?? '';
+    const fallbackText = docTypeFallback.content[0]?.text;
+    return typeof fallbackText === 'string' || typeof fallbackText === 'number'
+      ? fallbackText
+      : '';
   }
 
   if (typeof type === 'string' || typeof type === 'number') {

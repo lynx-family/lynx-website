@@ -42,6 +42,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     value: 'react',
     label: 'ReactLynx',
     description: 'Build Lynx apps with React',
+    descriptionZh: '用 React 开发 Lynx 应用',
     home: '/react/',
     url: '/react/introduction',
     logo: {
@@ -49,19 +50,17 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
         'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
     },
-    descriptionZh: '用 React 开发 Lynx 应用',
   },
   {
-    value: 'rspeedy',
-    label: 'Rspeedy',
-    description: 'The Lynx build tool',
-    descriptionZh: 'Lynx 构建工具',
-    home: '/rspeedy/',
-    url: '/rspeedy/cli',
+    value: 'lynx-ui',
+    label: 'Lynx UI',
+    description: 'Lynx UI component library',
+    descriptionZh: 'Lynx UI 组件库',
+    home: '/lynx-ui/',
+    url: '/lynx-ui/Guides/introduction',
     logo: {
-      light:
-        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
-      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
+      light: '/assets/lynx-ui-icon-color-light.svg',
+      dark: '/assets/lynx-ui-icon-color-dark.svg',
     },
   },
   {
@@ -74,6 +73,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     logo: {
       light: '/assets/lynxai-logo-light.svg',
       dark: '/assets/lynxai-logo-dark.svg',
+    },
+  },
+  {
+    value: 'rspeedy',
+    label: 'Rspeedy',
+    description: 'The Lynx build tool',
+    descriptionZh: 'Lynx 构建工具',
+    home: '/rspeedy/',
+    url: '/rspeedy/cli',
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
     },
   },
   {

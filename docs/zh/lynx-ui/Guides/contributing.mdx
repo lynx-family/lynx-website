@@ -1,0 +1,237 @@
+# Contributing
+
+Lynx UI 欢迎 Lynx 社区中的同学参与贡献代码，符合规范的 PR 和 issue 我们都会认真处理。
+
+## Developing
+
+### Setup
+
+NodeJS: 安装 node 版本 >= 20
+
+Pnpm: 执行 `corepack enable` 即可
+
+```
+npm install turbo --global
+
+git clone git@code.byted.org:lynx/lynx-ui.git
+
+cd lynx-ui
+
+corepack enable
+
+pnpm i
+```
+
+## Develop
+
+Lynx UI 中每个组件都有自己的目录，目录包含以下内容:
+
+```bash
+template
+ ┣ __tests__    # 单元测试
+ ┣ src        # 组件代码
+ ┣ types        # 类型定义
+ ┃ ┣ index.d.ts   # 组件类型定义
+ ┃ ┣ index.docs.d.ts  # 组件类型定义入口，包含interface和type, 用于生成API Reference
+ ┃ ┗ index.docs.zh.d.ts  # 中文组件文档类型定义入口，包含interface和type, 用于生成API Reference
+ ┣ README.md  # 组件文档，主要包含组件描述，Demo等
+ ┣ README.zh.md  # 组件文档的中文版本
+ ┣ package.json
+ ┗ tsconfig.json
+```
+
+### 开发新组件
+
+在接下来的文档中，我们以新增一个`toast`组件为例
+
+#### 1. 生成组件目录
+
+执行`makeNewComponent`命令生成组件目录
+
+```
+// In root directory
+pnpm run makeNewComponent --create toast
+```
+
+可以看到，生成了`packages/lynx-ui-toast`目录
+
+#### 2. 完成组件代码开发
+
+##### Step 1: 完成组件类型定义
+
+在`packages/lynx-ui-toast/types`目录下完成组件类型定义.
+
+`index.docs.d.ts`文件包含所有可用于文档生成的类型定义。 通常包含`props`和`ref`的定义，以及组件的入口函数.
+
+`index.docs.zh.d.ts`文件包含所有可用于中文文档生成的类型定义，需要与`index.docs.ts`保证同步.
+
+`index.d.ts`会 reexport 所有`index.docs.d.ts`和`index.docs.zh.d.ts`的类型定义，代码实现会依赖`index.d.ts`中定义的类型.
+
+```
+// types/index.docs.d.ts
+export interface ToastProps {}
+
+export interface ToastRef {}
+
+export type Toast = (props: ToastProps) => React.ReactElement
+```
+
+```
+// types/index.d.ts
+export * from './index.docs'
+```
+
+##### Step 2: 完成组件代码开发
+
+在`packages/lynx-ui-toast/src`目录下完成组件代码开发
+
+```
+// src/index.ts
+import type { Toast as ToastType, ToastProps, ToastRef } from './index.docs'
+
+const Toast: ToastType = () => {
+  return <view>Toast</view>
+}
+
+export { Toast }
+export type { ToastProps, ToastRef }
+```
+
+#### 3. 添加组件示例
+
+##### Step 1: 添加组件示例代码
+
+在`apps/examples/src`目录下添加组件示例代码
+
+```
+// In apps/examples/src/toast/Basic/index.tsx
+import { Toast } from '@lynx-js/lynx-ui-toast';
+
+const App = () => {
+  return <Toast>Click me</Toast>;
+};
+```
+
+##### Step 2: 增加示例入口
+
+在`apps/examples/lynx.config.mjs`中增加示例入口
+
+```
+// In apps/examples/lynx.config.mjs
+{
+  ...
+  'toast-basic': './src/toast/Basic/index.tsx',
+}
+```
+
+##### Step 3: 验证组件示例
+
+运行 examples 中的实例，验证效果
+
+```
+// In root directory
+turbo watch dev --filter 'examples'
+
+// Or in packages/examples folder
+turbo watch dev
+```
+
+#### 4. 完善组件使用文档
+
+组件使用文档位于`packages/<component-name>/README.md`. 最终生成的文档会由`README.md`和`index.docs.d.ts`合并完成
+
+主要是文档的 Guide 部分, 包含组件介绍，使用方法，示例等
+
+markdown 中可以使用`internal-website`的组件(比如`Go`)
+
+```
+<Go
+  img="https://lf0-fast-deliver-inner.bytedance.net/obj/eden-internal/zalzzh-ukj-lapzild-shpjpmmv-eufs/ljhwZthlaukjlkulzlp/lynx_ui_action_sheet_customized.webp"
+  example="ActionSheet"
+  defaultEntryFile="dist/ActionSheetCustomized/template.js"
+  entry="Customized"
+/>
+```
+
+详情参考[internal-website](https://bits.bytedance.net/code/lynx/internal_website/)
+
+#### 5. 添加测试
+
+组件使用 headless lynx 进行基本的元素检查，请在 apps/examples/**tests**/headless.test.ts 中的 `TEST_COMPONENTS` 添加需要测试的组件样例
+
+本地使用 `pnpm run test` 执行测试
+
+如需更新基准文件，请执行 `pnpm run test --update`
+
+#### 6. 提交代码
+
+### 生成组件文档
+
+> 需要本地有`internal-website`项目用于文档预览， refer to [Generate Document](https://bits.bytedance.net/code/lynx/internal_website/blob/master/scripts/typedoc/README.md)，如有新增组件，请在[配置文件](https://code.byted.org/lynx/internal_website/blob/master/scripts/typedoc/packages/lynx-ui.ts)中手动添加
+
+## MR 规范
+
+- 每个 MR 有且仅有 1 个 commit
+
+## 提交流程
+
+### feature
+
+> 通常新 feature 使用，跟车 `master` 发版
+
+1. 从 `master` 分支切出，修改代码
+2. 执行 `pnpm changeset`，选择需要升级的包（根据提交内容来选择 patch 或者 minor），编写描述信息
+3. 将代码和生成的`changeset`文件一起提交
+4. 找 Code Owner 和 Release Owner 进行 review
+5. 合入 `master` 分支
+6. Release Owner 会定时(每周)发版
+
+### hotfix
+
+> 代码提交者
+
+1. 从 `master` 分支切出，修改代码
+2. 执行 `pnpm changeset`，选择需要升级的包，选择 patch 升级，编写该 Change 的描述信息
+3. 将代码和生成的`changeset`文件一起提交
+4. 找 Code Owner 和 Release Owner 进行 review
+5. 合入 `master` 分支
+
+> Release Owner
+
+6. 定时（每天或立即）从 `master` 分支切出
+7. 执行 `pnpm changeset version`，检查版本号变更是否符合预期
+8. 提交`package.json`和 `CHANGELOG.md` 的变更
+
+## 版本发布
+
+### Snapshot 版本
+
+提交 MR 后, CI 会自动发布 Snapshot 版本
+
+Snapshot 版本可以用来测试，不建议在生产环境使用.
+
+Snapshot 版本采用了不同的包名，在原包名后加`-canary`后缀, 比如`@lynx-js/lynx-ui-button`的 Snapshot 版本为`@lynx-js/lynx-ui-button-canary`.
+
+合入后，CI 界面会有 Snapshot 版本的报告，Lark 也会收到通知
+![ci_report](https://lf0-fast-deliver-inner.bytedance.net/obj/eden-internal/uhfyeh7nuhfnuhd/tmp/ci_report.jpeg)
+![lark_report](https://lf0-fast-deliver-inner.bytedance.net/obj/eden-internal/uhfyeh7nuhfnuhd/tmp/lark_report.jpeg)
+
+### 正式版本
+
+正式版本需要 Release Owner 进行发布.
+
+需求或者 bugfix 合入 master 后，CI 会将改动同步到`changeset-release/next`分支, 同时生成版本和 changelog
+
+Release Owner 只需要合入`changeset-release/next`分支, 合入后 CI 会自动发布正式版本, 同时 Lark 会收到通知
+
+## FAQ
+
+### 如何 lint 代码
+
+lynx-ui 使用 biome 和 eslint 进行代码检查。 CI 和本地都会对变更代码进行检查
+
+> 变更指相对于稳定分支（master 或 next 分支）的变更
+
+代码在 commit 时，会自动运行相关 lint。
+
+你也可以使用 `pnpm check:changed` 检查变更代码

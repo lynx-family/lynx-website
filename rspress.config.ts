@@ -79,8 +79,10 @@ export default defineConfig({
         ),
         '@site': path.join(__dirname),
         '@': path.join(__dirname, 'src'),
-        '@assets': path.join(__dirname, 'public', 'assets'),
+        '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
+        '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
+        '@lynx-ui': path.join(__dirname, 'src', 'lynx-ui', 'components'),
       },
     },
     source: {
@@ -205,7 +207,10 @@ export default defineConfig({
     remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
       checkDeadLinks: {
-        excludes: ['/guide/spec.html?ts=1743416098203#element%E2%91%A0'],
+        excludes: [
+          '/guide/spec.html?ts=1743416098203#element%E2%91%A0',
+          '/Components/Components/**',
+        ],
       },
     },
     shiki: {
