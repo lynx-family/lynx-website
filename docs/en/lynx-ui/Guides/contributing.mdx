@@ -1,178 +1,100 @@
 # Contributing
 
-Lynx UI welcomes code contributions from members of the Lynx community. We will carefully review all PRs and issues that meet our standards.
+lynx-ui welcomes contributions from the community. This page focuses on the component development
+workflow and the checks that commonly block pull requests. For the full workflow, see the
+[lynx-ui contributing guide](https://github.com/lynx-family/lynx-ui/blob/main/CONTRIBUTING.md).
 
-## Developing
+## Prerequisites
 
-### Setup
-
-NodeJS: Install node version >= 20
-
-Pnpm: Run `corepack enable`
-
-```
-npm install turbo --global
-
-git clone https://github.com/lynx-family/lynx-ui.git
-
-cd lynx-ui
-
-corepack enable
-
-pnpm i
-```
-
-## Develop
-
-Each component in Lynx UI has its own directory containing the following:
+- Use **Node.js >= 24.0.0**.
+- Use the pnpm version pinned by the repository. Run `corepack enable` before installing dependencies.
+- Install dependencies from the repository root with `pnpm install`.
 
 ```bash
-template
- ┣ __tests__    # Unit tests
- ┣ src          # Component code
- ┣ types        # Type definitions
- ┃ ┣ index.d.ts         # Component type definitions
- ┃ ┣ index.docs.d.ts    # Component type definition entry, including interface and type, for generating API Reference
- ┃ ┗ index.docs.zh.d.ts # Chinese component documentation type definition entry
- ┣ README.md    # Component documentation, mainly includes component description, Demo, etc.
- ┣ README.zh.md # Chinese version of component documentation
- ┣ package.json
- ┗ tsconfig.json
+git clone https://github.com/lynx-family/lynx-ui.git
+cd lynx-ui
+corepack enable
+pnpm install
+pnpm build
 ```
 
-### Developing New Components
+## Component Development
 
-In the following documentation, we'll use creating a new `toast` component as an example
+Each component lives in `packages/<component-name>` and usually contains:
 
-#### 1. Generate Component Directory
+- `src`: component source code
+- `types`: public type definitions, including docs entries
+- `README.md`: component-level usage notes
 
-Execute the `makeNewComponent` command to generate the component directory
+To scaffold a new component with the expected package structure, run:
 
-```
-// In root directory
-pnpm run makeNewComponent --create toast
-```
-
-You'll see a new `packages/lynx-ui-toast` directory created
-
-#### 2. Complete Component Development
-
-##### Step 1: Complete Component Type Definitions
-
-Complete the component type definitions in the `packages/lynx-ui-toast/types` directory.
-
-`index.docs.d.ts` contains all type definitions available for documentation generation. Usually includes `props` and `ref` definitions, as well as component entry functions.
-
-`index.docs.zh.d.ts` contains all type definitions for Chinese documentation generation, needs to be synchronized with `index.docs.ts`.
-
-`index.d.ts` will reexport all types from `index.docs.d.ts` and `index.docs.zh.d.ts`. Code implementation will depend on types defined in `index.d.ts`.
-
-```typescript
-// types/index.docs.d.ts
-export interface ToastProps {}
-
-export interface ToastRef {}
-
-export type Toast = (props: ToastProps) => React.ReactElement;
+```bash
+pnpm make-new-component --create <component-name>
+# Example: pnpm make-new-component --create toast
 ```
 
-```typescript
-// types/index.d.ts
-export * from './index.docs';
+This creates:
+
+```text
+packages/lynx-ui-<component-name>
 ```
 
-##### Step 2: Complete Component Code Development
+## Examples
 
-Complete the component code development in the `packages/lynx-ui-toast/src` directory
+Add or update examples for component changes so reviewers can verify the behavior visually.
 
-```typescript
-// src/index.ts
-import type { Toast as ToastType, ToastProps, ToastRef } from "./index.docs";
+To scaffold example files:
 
-const Toast: ToastType = () => {
-  return <view>Toast</view>;
-};
-
-export { Toast };
-export type { ToastProps, ToastRef };
+```bash
+pnpm makeNewComponent --example <component-name>
+# Example: pnpm makeNewComponent --example toast
 ```
 
-#### 3. Add Component Examples
+Before running an example, check its package name in:
 
-##### Step 1: Add Component Example Code
-
-Add component example code in the `apps/examples/src` directory
-
-```typescript
-// In apps/examples/src/toast/Basic/index.tsx
-import { Toast } from "@lynx-js/lynx-ui-toast";
-
-const App = () => {
-  return <Toast>Click me</Toast>;
-};
+```text
+apps/examples/src/<Component>/package.json
 ```
 
-##### Step 2: Add Example Entry
+Then run the matching example package:
 
-Add example entry in `apps/examples/lynx.config.mjs`
-
-```javascript
-// In apps/examples/lynx.config.mjs
-{
-  ...
-  'toast-basic': './src/toast/Basic/index.tsx',
-}
+```bash
+# Example: run button examples
+npx turbo watch dev --filter '@lynx-example/lynx-ui-button'
 ```
 
-##### Step 3: Verify Component Example
+## Before Opening a Pull Request
 
-Run examples to verify the code
+Run the relevant checks locally before submitting:
 
-```
-// In root directory
-turbo watch dev --filter 'examples'
-
-// Or in packages/examples folder
-turbo watch dev
+```bash
+pnpm check
+pnpm check:changed
+pnpm test
 ```
 
-#### 4. Complete Component Documentation
+Use `pnpm fix:all` or `pnpm check:changed:unsafe` only when you have reviewed the affected files.
 
-Component documentation is located in `packages/<component-name>/README.md`. The final documentation will be generated by combining `README.md` and `index.docs.d.ts`
+## Release Notes and Versioning
 
-Focus on the Guide section of the documentation, including component introduction, usage methods, examples, etc.
+lynx-ui uses Changesets for package versioning. Add a changeset for any user-facing change, including
+component behavior, APIs, package dependencies, documentation shipped with a component, or example
+packages.
 
-#### 5. Add Tests
+```bash
+pnpm changeset
+```
 
-Basic element checks for components are done using headless lynx. Please add the component samples that need to be tested to TEST_COMPONENTS in apps/examples/tests/headless.test.ts.
+Example packages are published with the component release. After an example package is released, the
+matching example version in the
+[lynx-website](https://github.com/lynx-family/lynx-website) repository must be updated manually.
 
-Run tests locally using `pnpm run test`.
+## Pull Request Requirements
 
-To update baseline files, please execute `pnpm run test --update`.
-
-#### 6. Verify Package Dependencies
-
-Run `pnpm dlx @manypkg/cli check` to check the lint of your package.json files. If it fails, run `pnpm dlx @manypkg/cli fix` to fix the lint.
-
-Run `pnpm dlx sherif@latest` to check the dependencies. If it fails, run `pnpm dlx sherif@latest --fix` to fix the dependencies.
-
-#### 7. Submit Code
-
-1. Create a branch from `master` and make your changes
-2. Run tests and lint locally
-3. Run `pnpm changeset` if your change affects published packages
-4. Open a pull request on GitHub
-
-Releases are handled by maintainers. For testing pre-release builds, use CI artifacts or canary builds if available.
-
-## FAQ
-
-### How to lint code
-
-lynx-ui uses biome and eslint for code linting. CI and local linting will be performed on changed code
-
-> Changed code refers to code changes relative to the stable branch (master or next branch)
-
-Code will be linted automatically when committing.
-
-You can also use `pnpm check:changed` to check changed code
+- Pull requests are squash-merged. The final merged PR must become a single commit.
+- The final commit message should follow
+  [Conventional Commits](https://www.conventionalcommits.org/).
+- User-facing changes need a changeset.
+- Contributions are licensed under the
+  [Apache-2.0 License](https://github.com/lynx-family/lynx-ui/blob/main/LICENSE). If a CLA check is
+  shown on your pull request, complete it before requesting review.

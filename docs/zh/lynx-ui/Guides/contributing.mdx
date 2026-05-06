@@ -1,172 +1,95 @@
-# Contributing
+# 参与贡献
 
-Lynx UI 欢迎 Lynx 社区中的同学参与贡献代码，符合规范的 PR 和 issue 我们都会认真处理。
+lynx-ui 欢迎社区贡献。本文优先说明组件开发流程，以及容易阻塞 PR 的关键要求；完整开发流程请参考
+[lynx-ui 贡献指南](https://github.com/lynx-family/lynx-ui/blob/main/CONTRIBUTING.md)。
 
-## Developing
+## 环境要求
 
-### Setup
-
-NodeJS: 安装 node 版本 >= 20
-
-Pnpm: 执行 `corepack enable` 即可
-
-```
-npm install turbo --global
-
-git clone https://github.com/lynx-family/lynx-ui.git
-
-cd lynx-ui
-
-corepack enable
-
-pnpm i
-```
-
-## Develop
-
-Lynx UI 中每个组件都有自己的目录，目录包含以下内容:
+- 使用 **Node.js >= 24.0.0**。
+- 使用仓库锁定的 pnpm 版本。安装依赖前先执行 `corepack enable`。
+- 在仓库根目录执行 `pnpm install` 安装依赖。
 
 ```bash
-template
- ┣ __tests__    # 单元测试
- ┣ src        # 组件代码
- ┣ types        # 类型定义
- ┃ ┣ index.d.ts   # 组件类型定义
- ┃ ┣ index.docs.d.ts  # 组件类型定义入口，包含interface和type, 用于生成API Reference
- ┃ ┗ index.docs.zh.d.ts  # 中文组件文档类型定义入口，包含interface和type, 用于生成API Reference
- ┣ README.md  # 组件文档，主要包含组件描述，Demo等
- ┣ README.zh.md  # 组件文档的中文版本
- ┣ package.json
- ┗ tsconfig.json
+git clone https://github.com/lynx-family/lynx-ui.git
+cd lynx-ui
+corepack enable
+pnpm install
+pnpm build
 ```
 
-### 开发新组件
+## 组件开发
 
-在接下来的文档中，我们以新增一个`toast`组件为例
+每个组件位于 `packages/<component-name>`，通常包含：
 
-#### 1. 生成组件目录
+- `src`：组件源码
+- `types`：公开类型定义，包括文档入口类型
+- `README.md`：组件级使用说明
 
-执行`makeNewComponent`命令生成组件目录
+如需按标准结构创建新组件，执行：
 
-```
-// In root directory
-pnpm run makeNewComponent --create toast
-```
-
-可以看到，生成了`packages/lynx-ui-toast`目录
-
-#### 2. 完成组件代码开发
-
-##### Step 1: 完成组件类型定义
-
-在`packages/lynx-ui-toast/types`目录下完成组件类型定义.
-
-`index.docs.d.ts`文件包含所有可用于文档生成的类型定义。 通常包含`props`和`ref`的定义，以及组件的入口函数.
-
-`index.docs.zh.d.ts`文件包含所有可用于中文文档生成的类型定义，需要与`index.docs.ts`保证同步.
-
-`index.d.ts`会 reexport 所有`index.docs.d.ts`和`index.docs.zh.d.ts`的类型定义，代码实现会依赖`index.d.ts`中定义的类型.
-
-```
-// types/index.docs.d.ts
-export interface ToastProps {}
-
-export interface ToastRef {}
-
-export type Toast = (props: ToastProps) => React.ReactElement
+```bash
+pnpm make-new-component --create <component-name>
+# 示例：pnpm make-new-component --create toast
 ```
 
-```
-// types/index.d.ts
-export * from './index.docs'
-```
+该命令会创建：
 
-##### Step 2: 完成组件代码开发
-
-在`packages/lynx-ui-toast/src`目录下完成组件代码开发
-
-```
-// src/index.ts
-import type { Toast as ToastType, ToastProps, ToastRef } from './index.docs'
-
-const Toast: ToastType = () => {
-  return <view>Toast</view>
-}
-
-export { Toast }
-export type { ToastProps, ToastRef }
+```text
+packages/lynx-ui-<component-name>
 ```
 
-#### 3. 添加组件示例
+## 示例
 
-##### Step 1: 添加组件示例代码
+组件行为发生变化时，请添加或更新示例，方便 Review 时验证效果。
 
-在`apps/examples/src`目录下添加组件示例代码
+如需生成示例文件，执行：
 
-```
-// In apps/examples/src/toast/Basic/index.tsx
-import { Toast } from '@lynx-js/lynx-ui-toast';
-
-const App = () => {
-  return <Toast>Click me</Toast>;
-};
+```bash
+pnpm makeNewComponent --example <component-name>
+# 示例：pnpm makeNewComponent --example toast
 ```
 
-##### Step 2: 增加示例入口
+运行示例前，先确认具体示例包名：
 
-在`apps/examples/lynx.config.mjs`中增加示例入口
-
-```
-// In apps/examples/lynx.config.mjs
-{
-  ...
-  'toast-basic': './src/toast/Basic/index.tsx',
-}
+```text
+apps/examples/src/<Component>/package.json
 ```
 
-##### Step 3: 验证组件示例
+然后运行对应示例包：
 
-运行 examples 中的实例，验证效果
-
-```
-// In root directory
-turbo watch dev --filter 'examples'
-
-// Or in packages/examples folder
-turbo watch dev
+```bash
+# 示例：运行 button 示例
+npx turbo watch dev --filter '@lynx-example/lynx-ui-button'
 ```
 
-#### 4. 完善组件使用文档
+## 提交 PR 前
 
-组件使用文档位于`packages/<component-name>/README.md`. 最终生成的文档会由`README.md`和`index.docs.d.ts`合并完成
+提交前请在本地运行相关检查：
 
-主要是文档的 Guide 部分, 包含组件介绍，使用方法，示例等
+```bash
+pnpm check
+pnpm check:changed
+pnpm test
+```
 
-#### 5. 添加测试
+仅在确认影响范围后使用 `pnpm fix:all` 或 `pnpm check:changed:unsafe` 自动修复文件。
 
-组件使用 headless lynx 进行基本的元素检查，请在 apps/examples/**tests**/headless.test.ts 中的 `TEST_COMPONENTS` 添加需要测试的组件样例
+## 版本与 Changeset
 
-本地使用 `pnpm run test` 执行测试
+lynx-ui 使用 Changesets 管理包版本。任何面向用户的改动都需要添加 changeset，包括组件行为、API、包依赖、随组件发布的文档或示例包。
 
-如需更新基准文件，请执行 `pnpm run test --update`
+```bash
+pnpm changeset
+```
 
-#### 6. 提交代码
+示例包会随组件一起发布。示例包发布后，需要在
+[lynx-website](https://github.com/lynx-family/lynx-website) 仓库中手动更新对应示例版本。
 
-1. 从 `master` 分支切出新分支并完成修改
-2. 本地运行测试与 lint
-3. 如果改动影响发布包，执行 `pnpm changeset` 并提交生成的 changeset 文件
-4. 在 GitHub 上发起 Pull Request
+## PR 要求
 
-正式版本由维护者统一发布。如需测试预发布构建，可使用 CI 产物或 canary 构建（如有提供）。
-
-## FAQ
-
-### 如何 lint 代码
-
-lynx-ui 使用 biome 和 eslint 进行代码检查。 CI 和本地都会对变更代码进行检查
-
-> 变更指相对于稳定分支（master 或 next 分支）的变更
-
-代码在 commit 时，会自动运行相关 lint。
-
-你也可以使用 `pnpm check:changed` 检查变更代码
+- PR 会通过 squash merge 合入，最终合入主分支时应只有一个提交。
+- 最终提交信息应遵循 [Conventional Commits](https://www.conventionalcommits.org/)。
+- 面向用户的改动需要提交 changeset。
+- 贡献内容会按照
+  [Apache-2.0 License](https://github.com/lynx-family/lynx-ui/blob/main/LICENSE) 授权。如果 PR 中出现
+  CLA 检查，请先完成 CLA 后再请求 Review。
