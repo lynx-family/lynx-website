@@ -328,3 +328,176 @@ export function App() {
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/i18n/switch-language.gif"
   entry="src/index.tsx"
 />
+
+## Extracting Translations
+
+If you downloaded many translations but your project only uses some of them, you may need to extract the translations to reduce the bundle size.
+
+There are two ways to extract the translations used in your source code.
+
+### Plugin (Recommended)
+
+You can use the [`rsbuild-plugin-i18next-extractor`](https://github.com/rstackjs/rsbuild-plugin-i18next-extractor) to extract the translations used in the source code. This plugin is based on [i18next-cli](https://github.com/i18next/i18next-cli), and uses the Rspack module graph to extract i18n messages from modules that are actually imported by the current build. This allows it to extract translations on demand, avoid bundling unused messages, and reduce the risk of missing translations that are used through imported dependencies.
+
+:::tip
+This plugin requires Node.js 22 or above.
+:::
+
+First, install the plugin and its `i18next-cli` peer dependency:
+
+<PackageManagerTabs command="install rsbuild-plugin-i18next-extractor i18next-cli -D" />
+
+Enable the plugin in `lynx.config.ts` and specify the `localesDir` option, which is the directory path of the raw translations:
+
+The examples below assume your raw translations live in `src/locales/`.
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+    }),
+  ],
+});
+```
+
+You should import the translations from the `localesDir` which you specify above:
+
+```ts title="src/i18n.ts"
+import i18next from 'i18next';
+import type { i18n } from 'i18next';
+
+import enTranslation from './locales/en.json';
+
+const localI18nInstance: i18n = i18next.createInstance();
+
+localI18nInstance.init({
+  lng: 'en',
+  resources: {
+    en: {
+      translation: enTranslation,
+    },
+  },
+});
+```
+
+:::tip
+After running `DEBUG=rsbuild:i18next rspeedy dev` or `DEBUG=rsbuild:i18next rspeedy build`, you can view the extracted translations in the `node_modules/.rsbuild-plugin-i18next-extractor` directory.
+:::
+
+#### Configuration Options
+
+The plugin scans `node_modules` by default. You can exclude files using the `i18nextToolkitConfig.extract.ignore` option:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+      i18nextToolkitConfig: {
+        extract: {
+          ignore: ['node_modules/**'],
+        },
+      },
+    }),
+  ],
+});
+```
+
+You can also provide a callback for missing translation keys:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+      onKeyNotFound: (key, locale, localeFilePath, entryName) => {
+        console.warn(`Missing translation key: ${key} for locale: ${locale}`);
+      },
+    }),
+  ],
+});
+```
+
+#### Advanced: Dedupe translations in Lynx bundles
+
+For Lynx apps, it is recommended to use [`@lynx-js/i18next-translation-dedupe`](https://github.com/lynx-family/lynx-stack/tree/main/packages/i18n/i18next-translation-dedupe) together with `rsbuild-plugin-i18next-extractor` to avoid bundling the same translations twice.
+
+`@lynx-js/i18next-translation-dedupe` reads the translations extracted by `rsbuild-plugin-i18next-extractor`, skips the extractor's default rendered asset, and writes the translations into the Lynx bundle `customSections` for runtime loading.
+
+First, install the package:
+
+<PackageManagerTabs command="install @lynx-js/i18next-translation-dedupe -D" />
+
+Then add `pluginLynxI18nextTranslationDedupe()`:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginLynxI18nextTranslationDedupe } from '@lynx-js/i18next-translation-dedupe';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+    }),
+    pluginLynxI18nextTranslationDedupe(),
+  ],
+});
+```
+
+At runtime, load the extracted translations from the Lynx bundle `customSections`:
+
+```ts title="src/i18n.ts"
+import i18next from 'i18next';
+import type { i18n } from 'i18next';
+import { loadI18nextTranslations } from '@lynx-js/i18next-translation-dedupe';
+
+const localI18nInstance: i18n = i18next.createInstance();
+
+localI18nInstance.init({
+  lng: 'en',
+  resources: loadI18nextTranslations(),
+});
+```
+
+### CLI
+
+You can also use the [i18next-cli](https://github.com/i18next/i18next-cli) to extract translations.
+
+:::tip
+The i18next-cli requires Node.js 22 or above.
+:::
+
+First, install the CLI:
+
+<PackageManagerTabs command="install i18next-cli -D" />
+
+Add an `i18next.config.ts` file at the project root. For example:
+
+```ts title="i18next.config.ts"
+import { defineConfig } from 'i18next-cli';
+
+export default defineConfig({
+  locales: ['en', 'zh'],
+  extract: {
+    input: ['src/**/*.{js,jsx,ts,tsx}'],
+    output: 'src/locales/{{language}}.json',
+  },
+});
+```
+
+You can adjust `locales`, `extract.input`, and `extract.output` to match your project structure. If you use multiple namespaces, include `{{namespace}}` in the output pattern.
+
+Then run the following command to extract translations:
+
+<PackageManagerTabs command="i18next-cli extract" />

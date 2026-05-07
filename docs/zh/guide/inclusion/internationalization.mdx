@@ -325,3 +325,176 @@ export function App() {
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/i18n/switch-language.gif"
   entry="src/index.tsx"
 />
+
+## 提取翻译
+
+如果你下载了很多翻译资源，但项目中只使用了其中一部分，就可以通过提取来减小产物体积。
+
+提取源码中实际用到的翻译资源有两种方式。
+
+### 插件方式（推荐）
+
+你可以使用 [`rsbuild-plugin-i18next-extractor`](https://github.com/rstackjs/rsbuild-plugin-i18next-extractor) 来提取源码中用到的翻译资源。这个插件基于 [i18next-cli](https://github.com/i18next/i18next-cli)，并利用 Rspack 的模块图提取当前构建中实际导入模块里的 i18n 消息。这样可以按需提取翻译，避免打包未使用的消息，并降低依赖中使用了翻译但遗漏提取的风险。
+
+:::tip
+这个插件要求 Node.js 22 或更高版本。
+:::
+
+首先安装插件以及它的 `i18next-cli` peer dependency：
+
+<PackageManagerTabs command="install rsbuild-plugin-i18next-extractor i18next-cli -D" />
+
+在 `lynx.config.ts` 中启用该插件，并指定 `localesDir` 选项，也就是原始翻译资源所在的目录：
+
+下面的示例统一假设原始翻译资源放在 `src/locales/` 中。
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+    }),
+  ],
+});
+```
+
+然后从上一步指定的 `localesDir` 中导入翻译资源：
+
+```ts title="src/i18n.ts"
+import i18next from 'i18next';
+import type { i18n } from 'i18next';
+
+import enTranslation from './locales/en.json';
+
+const localI18nInstance: i18n = i18next.createInstance();
+
+localI18nInstance.init({
+  lng: 'en',
+  resources: {
+    en: {
+      translation: enTranslation,
+    },
+  },
+});
+```
+
+:::tip
+在执行 `DEBUG=rsbuild:i18next rspeedy dev` 或 `DEBUG=rsbuild:i18next rspeedy build` 之后，你可以在 `node_modules/.rsbuild-plugin-i18next-extractor` 目录中查看提取结果。
+:::
+
+#### 配置项
+
+该插件默认会扫描 `node_modules`。你可以使用 `i18nextToolkitConfig.extract.ignore` 选项忽略文件：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+      i18nextToolkitConfig: {
+        extract: {
+          ignore: ['node_modules/**'],
+        },
+      },
+    }),
+  ],
+});
+```
+
+你还可以通过回调处理缺失的翻译键：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+      onKeyNotFound: (key, locale, localeFilePath, entryName) => {
+        console.warn(`Missing translation key: ${key} for locale: ${locale}`);
+      },
+    }),
+  ],
+});
+```
+
+#### 进阶：去重 Lynx 产物中的翻译
+
+对于 Lynx 应用，建议将 [`@lynx-js/i18next-translation-dedupe`](https://github.com/lynx-family/lynx-stack/tree/main/packages/i18n/i18next-translation-dedupe) 与 `rsbuild-plugin-i18next-extractor` 一起使用，以避免重复打包相同的翻译。
+
+`@lynx-js/i18next-translation-dedupe` 会读取 `rsbuild-plugin-i18next-extractor` 提取出的翻译，跳过提取器默认生成的资源文件，并将翻译写入 Lynx 产物的 `customSections` 中，供运行时加载。
+
+首先安装该包：
+
+<PackageManagerTabs command="install @lynx-js/i18next-translation-dedupe -D" />
+
+然后添加 `pluginLynxI18nextTranslationDedupe()`：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginLynxI18nextTranslationDedupe } from '@lynx-js/i18next-translation-dedupe';
+import { pluginI18nextExtractor } from 'rsbuild-plugin-i18next-extractor';
+
+export default defineConfig({
+  plugins: [
+    pluginI18nextExtractor({
+      localesDir: './src/locales',
+    }),
+    pluginLynxI18nextTranslationDedupe(),
+  ],
+});
+```
+
+运行时，从 Lynx 产物的 `customSections` 中加载提取出来的翻译：
+
+```ts title="src/i18n.ts"
+import i18next from 'i18next';
+import type { i18n } from 'i18next';
+import { loadI18nextTranslations } from '@lynx-js/i18next-translation-dedupe';
+
+const localI18nInstance: i18n = i18next.createInstance();
+
+localI18nInstance.init({
+  lng: 'en',
+  resources: loadI18nextTranslations(),
+});
+```
+
+### 命令行方式
+
+你也可以使用 [i18next-cli](https://github.com/i18next/i18next-cli) 来提取翻译。
+
+:::tip
+i18next-cli 要求 Node.js 22 或更高版本。
+:::
+
+首先安装 CLI：
+
+<PackageManagerTabs command="install i18next-cli -D" />
+
+在项目根目录下新增一个 `i18next.config.ts` 文件，例如：
+
+```ts title="i18next.config.ts"
+import { defineConfig } from 'i18next-cli';
+
+export default defineConfig({
+  locales: ['en', 'zh'],
+  extract: {
+    input: ['src/**/*.{js,jsx,ts,tsx}'],
+    output: 'src/locales/{{language}}.json',
+  },
+});
+```
+
+你可以根据项目结构调整 `locales`、`extract.input` 和 `extract.output`。如果你使用多个 namespace，可以把 `{{namespace}}` 加回到输出路径中。
+
+然后运行下面的命令来提取翻译：
+
+<PackageManagerTabs command="i18next-cli extract" />
