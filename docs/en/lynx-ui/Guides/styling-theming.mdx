@@ -1,0 +1,321 @@
+---
+title: Styling and Theming
+---
+
+import { Go } from '@lynx';
+
+# Styling and Theming
+
+`lynx-ui` is a headless component library. Its primitives handle behavior,
+state, and composition, but they do not impose a visual design. You are
+responsible for everything you see on screen: size, layout, color, motion,
+and how the component looks across its various states.
+
+This page walks through how to style `lynx-ui` primitives in practice, using a
+single `Switch` example that we evolve from a bare composition into a reusable
+themed wrapper.
+
+## Overview
+
+There are three layers worth distinguishing when you style `lynx-ui`:
+
+1. **Styling the parts.** Each rendered part of a primitive accepts your
+   classes and styles. This is where appearance lives.
+2. **Consuming tokens.** Instead of hard-coding colors and other visual
+   constants, you reference semantic tokens that can be themed centrally.
+3. **Composing wrappers.** When a styled pattern stabilizes, you wrap it into
+   a reusable component with sensible defaults.
+
+It is also useful to separate two related but distinct ideas.
+
+**Styling** defines the appearance of a component instance: its size,
+spacing, transitions, and state-specific visuals. **Theming** defines reusable
+semantic tokens that many components consume, so a single change to the token
+layer propagates everywhere.
+
+In this repository, `lynx-ui` provides the headless composition layer, and
+LUNA is the recommended theme layer that supplies semantic tokens. LUNA is
+recommended, not required; you can bring your own token system or none at
+all. The examples below use LUNA so the same token names work whether you
+write plain CSS or Tailwind.
+
+## Styling the Parts
+
+Every part of a `lynx-ui` component is intended to be styled by the
+application. You render the part and attach your own classes. There is no
+hidden built-in visual to override.
+
+Using `Switch`:
+
+```tsx
+import { Switch, SwitchThumb, SwitchTrack } from '@lynx-js/lynx-ui';
+
+export function ExampleSwitch() {
+  return (
+    <Switch className="switch">
+      <SwitchTrack className="switch-track" />
+      <SwitchThumb className="switch-thumb" />
+    </Switch>
+  );
+}
+```
+
+:::note
+
+If you are styling with plain CSS and want LUNA tokens available as CSS
+variables, install `@lynx-js/luna-styles` and import the themes you need.
+
+:::
+
+The primitive supplies interaction and state. Your code supplies the visual
+rules: root size and layout, track and thumb appearance, and how the
+component responds to its various states.
+
+The same composition works equivalently with Tailwind utilities. The only
+difference is where the styling rules live:
+
+```tsx
+<Switch className="flex items-center w-[48px] h-[28px] rounded-full overflow-hidden">
+  <SwitchTrack className="w-full h-full" />
+  <SwitchThumb className="absolute w-[22px] h-[22px] rounded-full" />
+</Switch>
+```
+
+:::note
+
+Tailwind on Lynx requires `@lynx-js/tailwind-preset` for runtime
+compatibility. The Lynx preset also brings forward Tailwind v4's
+arbitrary-value `transform-[...]` syntax, which is why transforms in this
+guide are written as `transform-[translateX(...)]` rather than
+`translate-x-[...]`. The latter relies on CSS variables that have known issues
+in Lynx's lower-version runtime when used with transitions or animations.
+
+The `lynx-ui` examples in this guide additionally use `@lynx-js/luna-tailwind`,
+which exposes LUNA tokens as utilities such as `bg-primary` and `text-content`.
+This preset is only needed if you choose LUNA as your token layer.
+
+```ts
+// tailwind.config.ts
+import { LunaPreset } from '@lynx-js/luna-tailwind';
+import LynxPreset from '@lynx-js/tailwind-preset';
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [],
+  presets: [LynxPreset, LunaPreset],
+};
+
+export default config;
+```
+
+:::
+
+A note on platform props: when a primitive needs to expose lower-level
+platform attributes, it does so through explicit props such as `switchProps`
+rather than mixing them into the styling API. This keeps the className surface
+predictable while still allowing platform-level customization where needed.
+
+## Styling States
+
+Stateful primitives expose styling hooks for component state. This serves the
+same purpose as the `data-*` state attributes used by libraries such as Radix
+UI and Headless UI, and the `data-*` variants commonly used in Tailwind. In
+`lynx-ui`, these hooks are exposed as **UI Variants**, implemented as UI state
+classes:
+
+- `ui-checked`
+- `ui-active`
+- `ui-disabled`
+
+This is what makes headless primitives easy to style without hardcoding design
+inside the component implementation.
+
+In plain CSS, you target these states with selectors:
+
+```css
+.switch.ui-disabled {
+  opacity: 0.5;
+}
+.switch-track.ui-checked {
+  background-color: var(--primary);
+}
+.switch-track.ui-active {
+  background-color: var(--primary-2);
+}
+.switch-thumb.ui-checked {
+  transform: translateX(23px);
+}
+.switch-thumb.ui-active {
+  width: 33px;
+}
+.switch-thumb.ui-checked.ui-active {
+  transform: translateX(12px);
+}
+```
+
+In Tailwind, the same states are expressed with variant chains:
+
+```tsx
+<SwitchTrack
+  className="bg-neutral-faint
+    ui-checked:bg-primary
+    ui-active:bg-primary-2"
+/>
+<SwitchThumb
+  className="bg-primary-content
+    ui-checked:translate-[translateX(23px)]
+    ui-active:w-[33px]
+    ui-checked:ui-active:translate-[translateX(12px)]"
+/>
+```
+
+When multiple states can be active at the same time, such as checked _and_
+pressed, make priority explicit. The `ui-checked:ui-active:` chain above is
+intentional: it overrides the plain `ui-checked` translation when both states
+apply, so the visual stays coherent during interaction. Whether you use
+selectors or utilities, treat overlapping states as a design decision rather
+than something to leave to specificity.
+
+<Go
+  example="lynx-ui-switch"
+  defaultEntryName="SwitchBasicTailwind"
+  entry="BasicTailwind"
+  defaultFile="BasicTailwind/styled-switch.tsx"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  defaultTab="web"
+  webPreviewMode="auto"
+/>
+
+## Consuming Tokens
+
+Notice that the styles above never write a literal color. They reference
+tokens (`var(--primary)` in CSS, `bg-primary` in Tailwind) that resolve to
+the same semantic value.
+
+Tokens matter for two reasons:
+
+- **Consistency.** A `Switch`, a `Button`, and a `Tab` that all read from
+  `--primary` stay in sync automatically. Changing the token changes every
+  surface that uses it.
+- **Themeability.** Light mode, dark mode, and brand variants become a matter
+  of swapping token values, not editing every component.
+
+LUNA, the token layer used throughout these examples, defines semantic token
+names, exposes them as CSS variables, and maps the same tokens into Tailwind
+utilities. That is why the same primitive can be styled in either syntax
+without losing the shared visual language. `var(--primary)` and `bg-primary`
+resolve to the same value, and a themed wrapper built on top inherits it
+automatically.
+
+For token names, surface hierarchy, and theme generation, see the [LUNA
+Themes and Tokens](./luna-themes-tokens.mdx) documentation.
+
+## Composing Themed Wrappers
+
+Once a styling pattern repeats, the next step is to compose a themed wrapper
+on top of the primitive. This gives you a stable, product-facing API without
+losing the flexibility of the underlying parts.
+
+The pattern is to wrap each part separately, encode your defaults in those
+wrappers, and export a convenience composition for the common case:
+
+```tsx
+import {
+  Switch as SwitchPrimitive,
+  SwitchThumb as SwitchThumbPrimitive,
+  SwitchTrack as SwitchTrackPrimitive,
+} from '@lynx-js/lynx-ui';
+import type {
+  SwitchProps,
+  SwitchThumbProps,
+  SwitchTrackProps,
+} from '@lynx-js/lynx-ui';
+import { clsx } from 'clsx';
+
+export function ThemedSwitch(props: SwitchProps) {
+  return (
+    <ThemedSwitchRoot {...props}>
+      <ThemedSwitchTrack />
+      <ThemedSwitchThumb />
+    </ThemedSwitchRoot>
+  );
+}
+
+export function ThemedSwitchRoot({ className, ...props }: SwitchProps) {
+  return (
+    <SwitchPrimitive
+      className={clsx(
+        'flex flex-row items-center w-[48px] h-[28px] rounded-full overflow-hidden',
+        'ui-disabled:opacity-50',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ThemedSwitchTrack({ className }: SwitchTrackProps) {
+  return (
+    <SwitchTrackPrimitive
+      className={clsx(
+        'size-full transition-colors duration-150 ease-out',
+        'bg-neutral-faint ui-checked:bg-primary ui-active:bg-primary-2',
+        className,
+      )}
+    />
+  );
+}
+
+export function ThemedSwitchThumb({ className }: SwitchThumbProps) {
+  return (
+    <SwitchThumbPrimitive
+      className={clsx(
+        'absolute size-[22px] rounded-full bg-primary-content shadow',
+        'transition-all duration-150 ease-out transform-[translateX(3px)]',
+        'ui-checked:transform-[translateX(23px)]',
+        'ui-active:w-[33px]',
+        'ui-checked:ui-active:transform-[translateX(12px)]',
+        className,
+      )}
+    />
+  );
+}
+```
+
+A few things to notice in this final form:
+
+- Each part is wrapped individually, so consumers can still override any one
+  of them without rebuilding the rest.
+- The convenience `ThemedSwitch` covers the common case but does not block
+  the part-level API.
+- Defaults for sizing, transitions, and state visuals are encoded once and reused everywhere.
+- The token layer (`bg-primary`, `bg-neutral-faint`, `bg-primary-content`)
+  carries through unchanged; the wrapper adds defaults, not new colors.
+
+This is a typical shadcn-style composition pattern: primitives stay public and composable, while themed components become the default product-facing implementation.
+
+<Go
+  example="lynx-ui-switch"
+  defaultEntryName="SwitchThemed"
+  entry="Themed"
+  defaultFile="Themed/index.tsx"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  defaultTab="web"
+  webPreviewMode="auto"
+/>
+
+## Best Practices
+
+- Keep primitives visually unopinionated. The application owns appearance.
+- Style each rendered part explicitly rather than relying on hidden defaults.
+- Prefer semantic tokens over literal colors, even early in development.
+- Make state priority explicit when multiple states can overlap.
+- Promote a styled pattern to a wrapper only after it repeats, not before.
+- Treat theming as a shared vocabulary across surfaces, not as a color dump.
+
+## Summary
+
+`lynx-ui` primitives give you full control over styling without taking
+behavior away from you. Style the parts directly with plain CSS or Tailwind,
+consume semantic tokens from a layer like LUNA so visual decisions stay
+consistent, and compose themed wrappers when a pattern is ready to be reused.

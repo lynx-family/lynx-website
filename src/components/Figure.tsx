@@ -1,4 +1,40 @@
-import type { CSSProperties, ImgHTMLAttributes, ReactNode } from 'react';
+import type {
+  CSSProperties,
+  HTMLAttributes,
+  ImgHTMLAttributes,
+  ReactNode,
+} from 'react';
+
+export type CaptionProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
+  children: ReactNode;
+  align?: CSSProperties['textAlign'];
+  size?: number;
+  tone?: 'secondary' | 'primary';
+};
+
+export const Caption = ({
+  children,
+  align = 'center',
+  size = 14,
+  tone = 'secondary',
+  style,
+  ...rest
+}: CaptionProps) => {
+  return (
+    <div
+      style={{
+        marginTop: '12px',
+        fontSize: size,
+        textAlign: align,
+        color: tone === 'primary' ? 'var(--rp-c-text-2)' : 'var(--rp-c-text-3)',
+        ...style,
+      }}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
+};
 
 export interface FigureProps extends Omit<
   ImgHTMLAttributes<HTMLImageElement>,
@@ -12,6 +48,7 @@ export interface FigureProps extends Omit<
   width?: number | string;
   /** Optional caption rendered below the image. */
   caption?: ReactNode;
+  tone?: 'secondary' | 'primary';
   /** Container className for layout overrides. */
   className?: string;
   /** Container style for layout overrides. */
@@ -24,6 +61,7 @@ export const Figure = ({
   height,
   width = '100%',
   caption,
+  tone = 'secondary',
   className,
   containerStyle,
   style,
@@ -55,7 +93,9 @@ export const Figure = ({
           style={{
             marginTop: 8,
             fontSize: 14,
-            color: 'var(--color-text-secondary, #666)',
+            textAlign: 'center',
+            color:
+              tone === 'primary' ? 'var(--rp-c-text-2)' : 'var(--rp-c-text-3)',
           }}
         >
           {caption}

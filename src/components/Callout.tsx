@@ -3,31 +3,33 @@ import {
   type CalloutProps,
 } from '@rspress/core/theme-original';
 
-export function Note(props: CalloutProps) {
+type CalloutPropsWithoutType = Omit<CalloutProps, 'type'>;
+
+export function Note(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="note" title={props.title ?? 'NOTE'} />;
 }
 
-export function Warning(props: CalloutProps) {
+export function Warning(props: CalloutPropsWithoutType) {
   return (
     <CalloutBase {...props} type="warning" title={props.title ?? 'WARNING'} />
   );
 }
 
-export function Danger(props: CalloutProps) {
+export function Danger(props: CalloutPropsWithoutType) {
   return (
     <CalloutBase {...props} type="danger" title={props.title ?? 'DANGER'} />
   );
 }
 
-export function Tip(props: CalloutProps) {
+export function Tip(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="tip" title={props.title ?? 'TIP'} />;
 }
 
-export function Info(props: CalloutProps) {
+export function Info(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="info" title={props.title ?? 'INFO'} />;
 }
 
-export function Details(props: CalloutProps) {
+export function Details(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="details" />;
 }
 

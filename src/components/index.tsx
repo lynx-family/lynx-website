@@ -70,6 +70,7 @@ export { Go } from './go/Go';
 // Media & Visuals
 // ----------------------------------------------------------------------------
 
+export { Caption, Figure } from './Figure';
 export { default as Mermaid } from './Mermaid/Mermaid';
 export { VideoList } from './VideoList';
 export { YouTubeIframe } from './YoutubeIframe';

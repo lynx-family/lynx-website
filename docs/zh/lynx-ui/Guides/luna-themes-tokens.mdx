@@ -1,0 +1,295 @@
+---
+title: LUNA 主题与 Token
+---
+
+import { LunaStudio } from '@luna';
+import { Details, Caption } from '@lynx';
+
+# LUNA 主题与 Token
+
+LUNA 是 `lynx-ui` 示例所使用的主题基础。它提供一套小而语义化的 token 系统，
+可以通过 CSS 变量、Tailwind utility 或 themed wrapper 组件来消费。
+
+<LunaStudio />
+<Caption> L.U.N.A Studio </Caption>
+
+如果你希望多个界面共享同一套视觉语言，而不是把颜色硬编码进每个组件里，
+LUNA 会是一个合适的起点。
+
+给按钮、sheet 或 switch 做样式时，你不再直接使用零散的 hex 值，而是使用
+`paper`、`content`、`primary`、`line` 这样的语义角色。即使主题切换后视觉表达
+发生变化，这些角色本身依然稳定。
+
+LUNA 目前内置四个主题：
+
+| 主题 Key        | Variant   | 模式 |
+| --------------- | --------- | ---- |
+| `luna-light`    | `luna`    | 浅色 |
+| `luna-dark`     | `luna`    | 深色 |
+| `lunaris-light` | `lunaris` | 浅色 |
+| `lunaris-dark`  | `lunaris` | 深色 |
+
+- `luna` 是偏中性的产品 UI 基底。
+- `lunaris` 是带有签名渐变的表达型主题，更适合强调品牌感的 surface。
+- `light` 与 `dark` 共享同一套语义 token 契约，因此组件在两种模式下可以保持
+  相同的样式逻辑。
+
+本页内嵌了 LUNA Studio，你可以直接交互式预览本指南中的主题契约、token 分组，
+以及推荐的覆写方式。
+
+<Details title="什么时候选 luna，什么时候选 lunaris？">
+
+- 偏中性、强调可读性的产品 UI，优先使用 `luna`。
+- 更强调品牌表达或视觉识别的 surface，尤其是 container 较多的 demo，更适合使用 `lunaris`。
+- 如果需要，也可以在子树级别挂载不同主题 class，将两者混用。
+
+</Details>
+
+## 核心 Token 组
+
+LUNA 提供的 token 数量比大多数应用在初期真正需要的更多，但其中有一小组核心
+token，已经足够覆盖绝大多数产品 surface。
+
+如果你正在为 `lynx-ui` 组件做样式，或者希望用 AI 生成 UI，建议优先从这些 token
+开始。
+
+### Surface
+
+Surface token 用于定义界面的背景层级。
+
+| Token            | 用途                                               |
+| ---------------- | -------------------------------------------------- |
+| `canvas`         | 应用背景与大块布局 surface                         |
+| `canvas-ambient` | 位于所有内容之下的深层环境背景                     |
+| `paper`          | 卡片、面板等主要内容 surface                       |
+| `paper-clear`    | 浮于 `paper` 之上的 surface，比如 popover 与 sheet |
+| `paper-veil`     | 向背景后退的柔和半透明层                           |
+| `paper-film`     | 极轻的半透明 surface 处理                          |
+
+在加入强调色之前，建议先使用 surface token 建立界面层次。
+
+大多数情况下：
+
+- `canvas` 定义页面环境
+- `paper` 定义内容区域
+- `paper-clear` 用于 popover、sheet 等浮层 surface
+
+### Content
+
+Content token 用于定义文字与图标的视觉存在感。
+
+| Token            | 用途                            |
+| ---------------- | ------------------------------- |
+| `content`        | 主要文字与图标                  |
+| `content-2`      | 次级文字与辅助强调              |
+| `content-muted`  | 提示文字与低强调内容            |
+| `content-subtle` | placeholder 与安静的 UI 文案    |
+| `content-faint`  | 接近背景的装饰性前景            |
+| `content-faded`  | 彩色 surface 上弱化存在感的前景 |
+
+如果不确定该用什么：
+
+- 主文案优先使用 `content`
+- 辅助文案优先使用 `content-2` 或 `content-muted`
+
+### Primary
+
+Primary token 用于定义高强调度的操作与激活态。
+
+| Token                   | 用途                               |
+| ----------------------- | ---------------------------------- |
+| `primary`               | 主强调色、选中态、重点操作         |
+| `primary-2`             | `primary` 的 active 态变体         |
+| `primary-muted`         | 柔和的 primary 背景                |
+| `primary-content`       | primary surface 上的文字与图标     |
+| `primary-content-faded` | primary surface 上弱化存在感的前景 |
+
+`primary` 应该用于强调操作，而不是替代所有 surface 的默认颜色。
+
+### Neutral
+
+Neutral token 用于提供结构性对比与低强调度填充。
+
+| Token             | 用途                     |
+| ----------------- | ------------------------ |
+| `neutral`         | 强中性 surface           |
+| `neutral-2`       | 更柔和的中性 surface     |
+| `neutral-subtle`  | 安静的结构性填充         |
+| `neutral-faint`   | 低强调度填充与未激活状态 |
+| `neutral-ambient` | 接近背景的结构性填充     |
+| `neutral-content` | 中性 surface 上的前景    |
+| `neutral-veil`    | 更强调存在感的强半透明层 |
+| `neutral-film`    | 更轻的半透明层           |
+
+实际使用中，`neutral-faint` 是最常用的 token 之一，非常适合表单控件、轨道以及辅助性 UI chrome。
+
+### 分隔与 Backdrop
+
+这一组 token 用于处理分隔线与屏幕级覆盖层。
+
+| Token             | 用途                                 |
+| ----------------- | ------------------------------------ |
+| `line`            | 按钮、输入框、卡片等组件外围的轻轮廓 |
+| `rule`            | section、列表项之间的区域分隔线      |
+| `backdrop-subtle` | popover 与 tooltip 的轻覆盖层        |
+| `backdrop`        | dialog 与 sheet 的标准覆盖层         |
+| `backdrop-heavy`  | 沉浸式或关键场景中的强覆盖层         |
+
+`line` 用于勾勒组件本身，`rule` 用于划分区域。
+
+它们的区别在于语义角色，而不是粗细。
+
+### Gradient
+
+Gradient token 是可选的，但它们能帮助 container 较多的 `lynx-ui` 示例建立更清晰的视觉识别。
+
+这一组 token 定义的是 Lunaris 的签名渐变表达。
+
+| Token                                                  | 用途                            |
+| ------------------------------------------------------ | ------------------------------- |
+| `gradient-a`、`gradient-b`、`gradient-c`、`gradient-d` | 渐变停色                        |
+| `gradient-content`                                     | 渐变 surface 上的前景           |
+| `gradient-content-faded`                               | 渐变 surface 上的低强调前景     |
+| `gradient-content-trace`                               | 渐变 surface 上极弱存在感的细节 |
+
+如果你做的是偏中性的产品 UI，可能不会频繁使用这些 token。
+
+但如果你做的是强调品牌感或表达性的 surface，这组 token 通常会成为视觉核心。
+
+## 推荐起步集合
+
+如果你想为示例、产品 UI 或 AI 提示词准备一套小而完整的 token 契约，可以从下面
+这个子集开始：
+
+- Surface：`canvas`、`paper`、`paper-clear`
+- 文字：`content`、`content-2`、`content-muted`
+- 操作：`primary`、`primary-2`、`primary-content`
+- 结构：`neutral-faint`、`line`、`rule`
+- 覆盖层：`backdrop`、`backdrop-heavy`
+
+这个集合是刻意收敛过的。
+
+它已经足够构建一套协调的 UI，同时不会迫使每个场景都从完整 token 列表中做选择。
+
+## Token 用法
+
+同一套 token，可以根据你的技术栈以不同方式消费。
+
+### CSS 变量
+
+```css
+.card {
+  color: var(--content);
+  background-color: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.card-title {
+  color: var(--content);
+}
+
+.card-description {
+  color: var(--content-muted);
+}
+```
+
+### Tailwind Utility
+
+```tsx
+<view className="bg-paper text-content border border-line">
+  <text className="text-content">卡片标题</text>
+  <text className="text-content-muted">辅助说明文字</text>
+</view>
+```
+
+即使从 `luna-light` 切换到 `lunaris-dark`，这些 token 的语义角色也不会变化。
+
+## 覆写 Token
+
+LUNA 的设计目标之一，就是让品牌定制从 token 层开始。
+
+相比重写组件样式，更推荐通过覆写组件所消费的语义 token 来定义产品主题。
+
+### 直接使用内置主题
+
+如果你直接使用某个内置主题，而不做修改，只需要挂载对应 class：
+
+```tsx
+<view className="lunaris-dark">{/* themed content */}</view>
+```
+
+### 定义自己的主题
+
+一旦开始覆写 token，就应该为主题定义一个独立名称。
+
+把它视为与内置主题同级的主题，而不是叠加在某个内置主题上的修饰层：
+
+```css
+.my-brand-dark {
+  --primary: #ff4f8b;
+  --primary-2: #ff2f73;
+  --primary-content: #ffffff;
+  --paper: #141414;
+  --content: #f8f8f8;
+  /* 其余 token 从某个内置主题继承 */
+}
+```
+
+```tsx
+<view className="my-brand-dark">{/* branded content */}</view>
+```
+
+这样能让 className 层保持清晰：一个 class 名，对应一个完整定义好的主题。
+
+浅色与深色是品牌自身的一部分，而不是在标记层临时借用某个内置主题。
+
+### 覆写原则
+
+- 优先覆写语义 token，而不是直接重写组件 class。
+- 从少量关键 token 开始，比如 `primary`、`paper`、`content`。
+- 保持前景与背景配对一致，比如 `primary` 与 `primary-content`。
+- 尽量在浅色与深色模式中保持相同的 token 名称。
+
+## AI 生成 UI 指南
+
+如果你把 LUNA 作为 AI 生成 UI 的视觉契约，建议保持提示词简单、稳定且语义化。
+
+目标并不是把所有 token 都暴露给模型，而是提供一套能稳定映射到真实主题变量的词汇系统。
+
+### Do 与 Don't
+
+| Do                                                          | Don't                                     |
+| ----------------------------------------------------------- | ----------------------------------------- |
+| 使用 `bg-paper`、`text-content` 这样的语义 token            | 硬编码 hex 值，或临时发明不存在的颜色名   |
+| 保持前景与 surface 配对（如 `primary` + `primary-content`） | 打破前景与背景的配对关系                  |
+| 标准分隔线使用 `border-line`                                | 把 `primary` 这类强调色滥用于所有 surface |
+| 在加入强调色之前先建立 surface 层级                         | 没有层次逻辑地混用不同 surface            |
+
+### Token 词汇表
+
+对于大多数生成式 UI，下面这组 token 已经足够：
+
+- Surface：`canvas`、`paper`、`paper-clear`
+- 文字：`content`、`content-2`、`content-muted`
+- 操作：`primary`、`primary-2`、`primary-content`
+- 结构：`neutral-faint`、`line`
+- 覆盖层：`backdrop`
+
+直接把意图映射到 token：
+
+| 意图             | Token           |
+| ---------------- | --------------- |
+| 页面背景         | `canvas`        |
+| 卡片 Surface     | `paper`         |
+| 悬浮界面 Surface | `paper-clear`   |
+| 主操作           | `primary`       |
+| 辅助文案         | `content-muted` |
+| 未激活控件轨道   | `neutral-faint` |
+
+### 推荐提示词
+
+<Details title="复制一段简短的 AI 提示词">
+
+> 所有颜色都使用 LUNA 语义 token。优先使用 `canvas`、`paper`、`content`、`content-muted`、`primary`、`primary-content`、`line`、`backdrop`。不要使用 hex 值。
+
+</Details>

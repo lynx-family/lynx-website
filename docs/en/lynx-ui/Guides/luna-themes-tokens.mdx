@@ -1,0 +1,291 @@
+---
+title: LUNA Themes and Tokens
+---
+
+import { LunaStudio } from '@luna';
+import { Details, Caption } from '@lynx';
+
+# LUNA Themes and Tokens
+
+LUNA is the theme foundation used across the `lynx-ui` examples. It provides a
+small, semantic token system that can be consumed through CSS variables,
+Tailwind utilities, or themed wrapper components.
+
+<LunaStudio />
+<Caption> L.U.N.A Studio </Caption>
+
+Use LUNA when you want a shared visual language across screens without
+hard-coding colors into every component. Instead of styling a button, sheet, or
+switch with one-off hex values, you style it with semantic roles such as
+`paper`, `content`, `primary`, and `line`. Those roles remain stable even when
+the visual expression changes between themes.
+
+LUNA currently ships four built-in themes:
+
+| Theme Key       | Variant   | Mode  |
+| --------------- | --------- | ----- |
+| `luna-light`    | `luna`    | Light |
+| `luna-dark`     | `luna`    | Dark  |
+| `lunaris-light` | `lunaris` | Light |
+| `lunaris-dark`  | `lunaris` | Dark  |
+
+- `luna` is the neutral foundation for product UI.
+- `lunaris` is the signature gradient expression for more branded surfaces.
+- `light` and `dark` preserve the same semantic token contract, so components
+  can keep the same styling logic across modes.
+
+This page includes LUNA Studio, an interactive preview of the theme contract described in this guide: theme variants, token groups, and the recommended override surface.
+
+<Details title="When should I choose luna vs. lunaris?">
+
+- Use `luna` for neutral product UI and readability-first surfaces.
+- Use `lunaris` for branded or expressive surfaces, especially when container-heavy demos need stronger visual identity.
+- Mix them by applying a theme class to a subtree when needed.
+
+</Details>
+
+## Core Token Groups
+
+LUNA contains more tokens than most applications need on day one, but a small
+set of core groups covers most product surfaces. If you are styling
+`lynx-ui` components or generating UI with AI, start with these groups first.
+
+### Surface
+
+Surface tokens define the background layers of the interface.
+
+| Token            | Use For                                                                |
+| ---------------- | ---------------------------------------------------------------------- |
+| `canvas`         | App background and large layout surfaces                               |
+| `canvas-ambient` | Deep ambient background below all content                              |
+| `paper`          | Primary content surfaces such as cards and panels                      |
+| `paper-clear`    | Floating surfaces that lift above `paper`, such as popovers and sheets |
+| `paper-veil`     | Soft translucent layer that recedes toward the background              |
+| `paper-film`     | Very light translucent surface treatment                               |
+
+Use surface tokens to establish hierarchy before adding accent color. In most
+layouts, `canvas` defines the page environment, `paper` defines where content
+lives, and `paper-clear` lifts above `paper` for floating surfaces such as
+popovers and sheets.
+
+### Content
+
+Content tokens define text and icon presence.
+
+| Token            | Use For                                         |
+| ---------------- | ----------------------------------------------- |
+| `content`        | Primary text and icons                          |
+| `content-2`      | Secondary text and supporting emphasis          |
+| `content-muted`  | Helper text and lower-emphasis content          |
+| `content-subtle` | Placeholder and quiet UI copy                   |
+| `content-faint`  | Decorative or near-background foreground        |
+| `content-faded`  | Reduced-presence foreground on colored surfaces |
+
+When in doubt, start with `content` for main text and `content-2` or
+`content-muted` for supporting copy.
+
+### Primary
+
+Primary tokens define high-emphasis actions and active states.
+
+| Token                   | Use For                                            |
+| ----------------------- | -------------------------------------------------- |
+| `primary`               | Main accent, selected states, emphasized actions   |
+| `primary-2`             | Variant of `primary` used for active states        |
+| `primary-muted`         | Soft primary backgrounds                           |
+| `primary-content`       | Text and icons placed on primary surfaces          |
+| `primary-content-faded` | Reduced-presence text or icons on primary surfaces |
+
+Use `primary` for action emphasis, not as a replacement for every surface in
+the interface.
+
+### Neutral
+
+Neutral tokens provide structural contrast and low-emphasis fills.
+
+| Token             | Use For                                  |
+| ----------------- | ---------------------------------------- |
+| `neutral`         | Strong neutral surfaces                  |
+| `neutral-2`       | Slightly softened neutral surfaces       |
+| `neutral-subtle`  | Quiet structural fills                   |
+| `neutral-faint`   | Low-emphasis fills and inactive states   |
+| `neutral-ambient` | Near-background structural fill          |
+| `neutral-content` | Foreground on neutral surfaces           |
+| `neutral-veil`    | Strong translucent layer toward presence |
+| `neutral-film`    | Light translucent layer toward presence  |
+
+In practice, `neutral-faint` is one of the most useful tokens for form controls,
+tracks, and supporting UI chrome.
+
+### Lines and Backdrop
+
+These tokens handle separation and screen-level overlays.
+
+| Token             | Use For                                                                  |
+| ----------------- | ------------------------------------------------------------------------ |
+| `line`            | Thin, airy outlines around components such as buttons, inputs, and cards |
+| `rule`            | Dividers that separate regions, such as list items or sections           |
+| `backdrop-subtle` | Light overlays for popovers and tooltips                                 |
+| `backdrop`        | Standard overlays for dialogs and sheets                                 |
+| `backdrop-heavy`  | Strong overlays for immersive or critical contexts                       |
+
+Use `line` to outline a component, and `rule` to separate one region from
+another. The distinction is about role, not weight.
+
+### Gradient
+
+Gradients are optional, but they can make container-heavy `lynx-ui` examples more comprehensible by giving surfaces a clear visual identity.
+
+Gradient tokens define the signature Lunaris expression.
+
+| Token                                                  | Use For                                        |
+| ------------------------------------------------------ | ---------------------------------------------- |
+| `gradient-a`, `gradient-b`, `gradient-c`, `gradient-d` | Gradient stop colors                           |
+| `gradient-content`                                     | Foreground on gradient surfaces                |
+| `gradient-content-faded`                               | Lower-emphasis foreground on gradient surfaces |
+| `gradient-content-trace`                               | Minimal-presence detail on gradient surfaces   |
+
+If you are building neutral product UI, you may not need these tokens often.
+If you are building branded or expressive surfaces, these are the first tokens
+to reach for.
+
+## Suggested Starting Set
+
+If you want a small token contract for examples, product UI, or AI prompts,
+start with this subset:
+
+- Surfaces: `canvas`, `paper`, `paper-clear`
+- Text: `content`, `content-2`, `content-muted`
+- Actions: `primary`, `primary-2`, `primary-content`
+- Structure: `neutral-faint`, `line`, `rule`
+- Overlays: `backdrop`, `backdrop-heavy`
+
+This set is intentionally small. It is enough to build a coherent UI without
+forcing every use case to choose from the full token inventory.
+
+## Token Usage
+
+You can consume the same tokens in different ways depending on your stack.
+
+### CSS Variables
+
+```css
+.card {
+  color: var(--content);
+  background-color: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.card-title {
+  color: var(--content);
+}
+
+.card-description {
+  color: var(--content-muted);
+}
+```
+
+### Tailwind Utilities
+
+```tsx
+<view className="bg-paper text-content border border-line">
+  <text className="text-content">Card title</text>
+  <text className="text-content-muted">Supporting description</text>
+</view>
+```
+
+The semantic roles stay the same even if you switch from `luna-light` to
+`lunaris-dark`.
+
+## Overriding Tokens
+
+LUNA is designed to make branding start at the token layer. Instead of
+rewriting component styles, define a product theme by overriding the semantic
+tokens those components consume.
+
+### Apply a Built-In Theme As-Is
+
+When you are using a built-in theme without modification, apply its class
+directly:
+
+```tsx
+<view className="lunaris-dark">{/* themed content */}</view>
+```
+
+### Define Your Own Theme
+
+Once you start overriding tokens, give your theme its own name. Treat it as a
+peer of the built-in themes, not a modifier layered on top of one:
+
+```css
+.my-brand-dark {
+  --primary: #ff4f8b;
+  --primary-2: #ff2f73;
+  --primary-content: #ffffff;
+  --paper: #141414;
+  --content: #f8f8f8;
+  /* inherit remaining tokens from a built-in theme of your choice */
+}
+```
+
+```tsx
+<view className="my-brand-dark">{/* branded content */}</view>
+```
+
+This keeps the className surface honest: a single class name corresponds to a
+single, fully-defined theme. Light and dark are properties of your brand, not
+borrowed from a built-in theme at the markup layer.
+
+### Override Principles
+
+- Prefer overriding semantic tokens over rewriting component classes.
+- Start with a small set of brand-defining tokens such as `primary`, `paper`,
+  and `content`.
+- Keep foreground and background pairs aligned, such as `primary` with
+  `primary-content`.
+- Preserve the same token names across light and dark modes whenever possible.
+
+## AI Gen UI Guidelines
+
+If you are using LUNA as the visual contract for AI-generated UI, keep the
+instructions simple and semantic. The goal is not to expose every available
+token. The goal is to give the model a stable vocabulary that maps cleanly to
+real theme variables.
+
+### Do and Don't
+
+| Do                                                                   | Don't                                                  |
+| -------------------------------------------------------------------- | ------------------------------------------------------ |
+| Use semantic tokens like `bg-paper` and `text-content`               | Hard-code hex colors or invent one-off color names     |
+| Pair foregrounds with their surfaces (`primary` + `primary-content`) | Break foreground/background pairs                      |
+| Use `border-line` for standard separators                            | Use accent tokens like `primary` for every surface     |
+| Establish surface hierarchy before adding accent color               | Mix unrelated surface roles without a hierarchy reason |
+
+### Token Vocabulary
+
+For most generated UI, this set is enough:
+
+- Surfaces: `canvas`, `paper`, `paper-clear`
+- Text: `content`, `content-2`, `content-muted`
+- Actions: `primary`, `primary-2`, `primary-content`
+- Structure: `neutral-faint`, `line`
+- Overlays: `backdrop`
+
+Map intent to tokens directly:
+
+| Intent                 | Token           |
+| ---------------------- | --------------- |
+| Page background        | `canvas`        |
+| Card surface           | `paper`         |
+| Floating surface       | `paper-clear`   |
+| Primary call to action | `primary`       |
+| Supporting copy        | `content-muted` |
+| Inactive control track | `neutral-faint` |
+
+### Recommended Prompt Guidance
+
+<Details title="Copy a short AI prompt">
+
+> Use LUNA semantic tokens for all colors. Prefer `canvas`, `paper`, `content`, `content-muted`, `primary`, `primary-content`, `line`, and `backdrop`. Do not use hex values.
+
+</Details>
