@@ -12,8 +12,8 @@ hero:
   actions:
     - theme: brand
       text: Quick Start
-      link: ./Guides/introduction.html#quick-start
+      link: ./guides/introduction.html#quick-start
     - theme: alt
       text: Components
-      link: ./Components/Button
+      link: ./components/button
 ---
