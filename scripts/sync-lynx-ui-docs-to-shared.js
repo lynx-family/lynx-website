@@ -114,53 +114,6 @@ const hoistMdxImports = (filePath) => {
   }
 };
 
-const lynxUiRouteReplacements = [
-  [/\/lynx-ui\/Components\/List\.html/g, '/lynx-ui/components/list.html'],
-  [
-    /\/lynx-ui\/Components\/LazyComponent\.html/g,
-    '/lynx-ui/components/lazy-component.html',
-  ],
-  [/\/lynx-ui\/Components\/Swiper\.html/g, '/lynx-ui/components/swiper.html'],
-  [
-    /\/lynx-ui\/Guides\/MainThreadScript\.html/g,
-    '/lynx-ui/guides/main-thread-script.html',
-  ],
-  [
-    /\/zh\/lynx-ui\/Guides\/MainThreadScript\.html/g,
-    '/zh/lynx-ui/guides/main-thread-script.html',
-  ],
-];
-
-const normalizeLynxUiRoutes = (filePath) => {
-  if (!filePath.endsWith('.mdx')) {
-    return;
-  }
-
-  const original = fs.readFileSync(filePath, 'utf8');
-  let next = original;
-
-  for (const [from, to] of lynxUiRouteReplacements) {
-    next = next.replace(from, to);
-  }
-
-  if (next !== original) {
-    fs.writeFileSync(filePath, next, 'utf8');
-  }
-};
-
-const cleanMdxWhitespace = (filePath) => {
-  if (!filePath.endsWith('.mdx')) {
-    return;
-  }
-
-  const original = fs.readFileSync(filePath, 'utf8');
-  const next = original.replace(/[ \t]+$/gm, '').replace(/\n+$/g, '\n');
-
-  if (next !== original) {
-    fs.writeFileSync(filePath, next, 'utf8');
-  }
-};
-
 const ENABLE_MDX_HOIST = (process.env.LYNX_UI_MDX_HOIST ?? 'true') !== 'false';
 
 let copiedCount = 0;
@@ -181,10 +134,6 @@ packages.forEach((pkgName) => {
       for (const filePath of collectFilesRecursively(targetDir)) {
         hoistMdxImports(filePath);
       }
-    }
-    for (const filePath of collectFilesRecursively(targetDir)) {
-      normalizeLynxUiRoutes(filePath);
-      cleanMdxWhitespace(filePath);
     }
     copiedCount++;
   }
