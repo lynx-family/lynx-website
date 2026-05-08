@@ -1,5 +1,5 @@
 export const checkboxBasicDemoMeta = {
-  highlight: '{31-39,48-60,69-81}',
+  highlight: '{31-40,49-61,70-82}',
   description:
     'highlight uncontrolled, controlled, and disabled checkbox patterns',
   content: [
@@ -9,4 +9,8 @@ export const checkboxBasicDemoMeta = {
     '<Checkbox checked={checked} onChange={setChecked}>...</Checkbox>',
     '<Checkbox disabled checked className="checkbox">...</Checkbox>',
   ],
+};
+
+export const checkboxInterdeterminateDemoMeta = {
+  highlight: '{54-64}',
 };
