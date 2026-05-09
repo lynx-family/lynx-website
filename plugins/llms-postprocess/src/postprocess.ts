@@ -9,7 +9,6 @@ import type {
   Root,
   RootContentMap,
 } from 'mdast';
-import { encodingForModel } from 'js-tiktoken';
 
 const COMMON_TO_MARKDOWN_OPTIONS = {
   bulletOther: '-',
@@ -77,22 +76,52 @@ function forEachType<T extends keyof RootContentMap>(
   }
 }
 
-const enc = encodingForModel('gpt-4o');
+function estimateTokens(text: string): number {
+  let tokens = 0;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code > 0x4e00) {
+      tokens += 2;
+    } else if (code > 0x7f) {
+      tokens += 1.5;
+    } else {
+      tokens += 0.3;
+    }
+  }
+  return Math.ceil(tokens);
+}
+
+function truncateToTokenBudget(text: string, maxTokens: number): string {
+  if (estimateTokens(text) <= maxTokens) return text;
+  let result = '';
+  let tokens = 0;
+  const budget = maxTokens - 1;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    let cost: number;
+    if (code > 0x4e00) {
+      cost = 2;
+    } else if (code > 0x7f) {
+      cost = 1.5;
+    } else {
+      cost = 0.3;
+    }
+    if (tokens + cost > budget) break;
+    tokens += cost;
+    result += char;
+  }
+  return result.trimEnd() + '…';
+}
 
 function truncateLongDescriptions(markdown: string, maxTokens: number): string {
-  const ellipsis = '…';
-  const ellipsisTokens = enc.encode(ellipsis).length;
   return markdown
     .split('\n')
     .map((line) => {
       const match = line.match(/^(\* \[[^\]]*\]\([^)]+\)): (.+)$/);
       if (!match) return line;
       const [, prefix, desc] = match;
-      const tokens = enc.encode(desc);
-      if (tokens.length <= maxTokens) return line;
-      const truncatedTokens = tokens.slice(0, maxTokens - ellipsisTokens);
-      const truncated = enc.decode(truncatedTokens);
-      return `${prefix}: ${truncated}${ellipsis}`;
+      if (estimateTokens(desc) <= maxTokens) return line;
+      return `${prefix}: ${truncateToTokenBudget(desc, maxTokens)}`;
     })
     .join('\n');
 }
