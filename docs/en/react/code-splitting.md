@@ -1,3 +1,7 @@
+---
+description: 'Split code into lazy-loaded chunks using Rspack in ReactLynx.'
+---
+
 # Code Splitting
 
 > Rspack supports code splitting, which allows splitting the code into other chunks. You have the full control about size and number of generated assets, which allow you to gain performance improvements in loading time.

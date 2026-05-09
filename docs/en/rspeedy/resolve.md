@@ -1,3 +1,7 @@
+---
+description: 'Configure path aliases and module resolution in Rspeedy.'
+---
+
 # Module Resolution
 
 In modern front-end development, modularity has become a key approach to managing code effectively:

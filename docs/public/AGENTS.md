@@ -226,6 +226,12 @@ The following official Lynx tutorials cover scenarios from beginner to advancedâ
 - [`<frame>` element](/api/elements/built-in/frame.md)
 - [`<input>` element](/api/elements/built-in/input.md)
 - [`<textarea>` element](/api/elements/built-in/textarea.md)
+- [`<overlay>` element](/api/elements/built-in/overlay.md)
+- [`<refresh>` element](/api/elements/built-in/refresh.md)
+- [`<scroll-coordinator>` element](/api/elements/built-in/scroll-coordinator.md)
+- [`<svg>` element](/api/elements/built-in/svg.md)
+- [`<title-bar-view>` element](/api/elements/built-in/title-bar-view.md)
+- [`<viewpager>` element](/api/elements/built-in/viewpager.md)
 
 ---
 

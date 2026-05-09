@@ -1,3 +1,7 @@
+---
+description: 'Ledger tracking Native API desktop documentation alignment and cleanup tasks.'
+---
+
 # Native API Desktop Documentation Cleanup Ledger
 
 This document records Native API alignment issues between compat desktop support and MDX Desktop-specific documentation. Do not remove entries while cleaning; mark resolved entries in place so the cleanup history remains reviewable.

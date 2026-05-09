@@ -1,3 +1,7 @@
+---
+description: 'Extend Rspeedy with Rsbuild and Rspack plugins.'
+---
+
 # Plugin
 
 Rsbuild provides a powerful plugin system that allows for user extension.

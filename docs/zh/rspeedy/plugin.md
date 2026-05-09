@@ -1,3 +1,7 @@
+---
+description: '使用 Rsbuild 插件扩展 Rspeedy。'
+---
+
 # 插件
 
 Rsbuild 提供了一套强大的插件系统，允许用户进行功能扩展。Rspeedy 直接继承了这套插件系统。
