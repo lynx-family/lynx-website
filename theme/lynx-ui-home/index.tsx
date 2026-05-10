@@ -10,7 +10,6 @@ import {
 } from '@rspress/core/theme-original';
 import { useRef } from 'react';
 import { ClearAPI } from './ClearApi';
-import { Compatibility } from './Compatibility';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
 
@@ -74,7 +73,6 @@ export const HomeLayout = () => {
         <div className="flex flex-col">
           <ClearAPI />
           <ConsistencyAndPerformance />
-          <Compatibility />
           <StartBuilding />
         </div>
       </div>

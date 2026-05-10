@@ -55,7 +55,6 @@ export const descriptions = {
       beforeCode: `<list list-type="single"
       column-count={1}
       vertical-orientation
-
       android-new-scroll-top
       ios-scroll-emitter-helper
       android-enable-item-prefetch
@@ -66,18 +65,17 @@ export const descriptions = {
       lower-threshold={20}
       experimental-disable-filter-scroll
       experimental-disable-platform-implementation
-
       custom-list-name="list-container"
       enable-async-list
       ios-index-as-z-index
       scroll-bar-enable={false}
 />`,
       afterCode: `<List
-      style={{ width: '100vw', height: '500px' }}
       listId='listBasic'
       listType='flow'
       spanCount={2}
-      scrollOrientation='vertical'/>`,
+      scrollOrientation='vertical'
+      />`,
     },
   },
   BestPractice: {

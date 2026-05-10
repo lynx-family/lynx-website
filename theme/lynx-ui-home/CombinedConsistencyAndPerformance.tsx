@@ -4,12 +4,17 @@
 
 import { Consistency } from './Consistency';
 import { Performance } from './Performance';
+import { Compatibility } from './Compatibility';
+import featureStyles from '@/components/home-comps/features/index.module.less';
 
 export const ConsistencyAndPerformance = () => {
   return (
-    <div className="featureBlockSpan">
-      <Consistency />
-      <Performance />
+    <div className={featureStyles['features-frame']}>
+      <div className={featureStyles['list-frame']}>
+        <Consistency />
+        <Performance />
+        <Compatibility />
+      </div>
     </div>
   );
 };

@@ -1,9 +1,14 @@
 @use './hero-text';
 @use './home-layout-var';
+@use './shiki';
 @use '../semi.scss';
 @use './sidebar-badge';
 
 :root[data-subsite='lynx-ui'] {
+  .rp-home-feature {
+    display: none;
+  }
+
   .sectionDivider {
     border-top-width: 1px;
     border-color: var(--home-section-divider);
@@ -13,8 +18,6 @@
     display: flex;
     flex-direction: column;
     padding: 4rem;
-    border-width: 1px;
-    border-color: var(--home-section-divider);
     align-items: center;
   }
 
@@ -50,8 +53,7 @@
     width: 50%;
     justify-content: center;
     align-items: center;
-    border-width: 1px;
-    border-color: var(--home-section-divider);
+    border: none;
     margin-top: -1px;
     padding: 3vw;
     display: flex;
@@ -121,9 +123,103 @@
       var(--gradient-brand-color)
     );
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgb(from #fff r g b / 18%);
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  .ui-home-compat-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+
+  .ui-home-compat-visual {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    border-radius: 20px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, transparent, var(--luna-paper-50));
+    background-clip: border-box;
+  }
+
+  .ui-home-compat-rows {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ui-home-compat-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .ui-home-compat-row-pills {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .ui-home-compat-column-pills {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ui-home-compat-pill {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ui-home-compat-pill--muted {
+    background: var(--luna-neutral-ambient);
+    color: hsl(var(--foreground));
+  }
+
+  @media (min-width: 1016px) {
+    .ui-home-compat-visual {
+      position: absolute;
+      right: 40px;
+      bottom: 40px;
+      width: 260px;
+      height: 160px;
+      padding: 14px 16px;
+    }
+
+    .ui-home-compat-row {
+      flex-wrap: nowrap;
+    }
+  }
+
+  @media (max-width: 1015px) {
+    .ui-home-compat-pill {
+      font-size: 0.8125rem;
+      height: 32px;
+    }
   }
 
   .startBuildingTitle {
@@ -150,8 +246,8 @@
       position: relative;
       width: 100%;
       overflow: hidden;
-      border-radius: calc(var(--radius) - 2px);
-      border-color: hsl(var(--border));
+      border-radius: 24px;
+      border-color: var(--luna-line);
       border-width: 1px;
     }
 
@@ -160,7 +256,24 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       column-gap: 1px;
-      background-color: hsl(var(--border));
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 12%;
+        transform: translateX(-50%);
+        width: 1px;
+        height: 80%;
+        background-image: repeating-linear-gradient(
+          to bottom,
+          var(--luna-line),
+          var(--luna-line) 6px,
+          transparent 6px,
+          transparent 12px
+        );
+        pointer-events: none;
+      }
 
       .before-title {
         display: flex;
@@ -170,7 +283,6 @@
         /* 14px */
         line-height: 1.25rem;
         /* 20px */
-        background-color: hsl(var(--background));
       }
 
       .after-title {
@@ -183,13 +295,11 @@
         /* 14px */
         line-height: 1.25rem;
         /* 20px */
-        background-color: hsl(var(--background));
       }
 
       .before-code {
         height: 100%;
         overflow: auto;
-        background-color: hsl(var(--background));
         font-family:
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           'Liberation Mono', 'Courier New', monospace;
@@ -220,7 +330,6 @@
       .after-code {
         height: 100%;
         overflow: auto;
-        background-color: hsl(var(--background));
         font-family:
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           'Liberation Mono', 'Courier New', monospace;

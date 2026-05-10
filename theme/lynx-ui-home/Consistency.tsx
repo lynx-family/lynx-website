@@ -7,34 +7,33 @@ import { useLang } from '@rspress/core/runtime';
 import ConsistencyBackgroundLight from '@assets/lynx-ui-home/ConsistencyBackgroundLight.svg';
 import ConsistencyDark from '@assets/lynx-ui-home/ConsistencyDark.svg';
 import ConsistencySVG from '@assets/lynx-ui-home/Consistency.svg';
+import featureStyles from '@/components/home-comps/features/index.module.less';
 
 export const Consistency = () => {
   const lang = useLang() as 'en' | 'zh';
   return (
-    <div className="featureBlockRow">
-      <div className="flex flex-col items-center justify-center">
-        <div className="featureBlockFont">
-          {descriptions.consistency.title[lang]}
-        </div>
-        <div className="mt-4 text-center text-base text-gray-500">
-          {descriptions.consistency.description[lang]}
-        </div>
+    <div className={featureStyles['list-item']}>
+      <div className={featureStyles['title']}>
+        {descriptions.consistency.title[lang]}
       </div>
-      <div className="relative h-[30vw] w-[30vw] min-h-[330px] min-w-[336px]">
+      <div className={featureStyles['desc']}>
+        {descriptions.consistency.description[lang]}
+      </div>
+      <div className="relative mt-auto h-[220px] w-full">
         <img
           alt="Consistency Background Light"
           src={ConsistencyBackgroundLight}
-          className="absolute inset-0 h-full w-full"
+          className="absolute inset-0 h-full w-full object-contain"
         />
         <img
           alt="Consistency Dark"
           src={ConsistencyDark}
-          className="compatibility-img-dark absolute inset-0 h-full w-full"
+          className="compatibility-img-dark absolute inset-0 h-full w-full object-contain"
         />
         <img
           alt="Consistency"
           src={ConsistencySVG}
-          className="compatibility-img-light absolute inset-0 h-full w-full"
+          className="compatibility-img-light absolute inset-0 h-full w-full object-contain"
         />
       </div>
     </div>

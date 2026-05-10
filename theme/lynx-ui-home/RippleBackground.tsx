@@ -20,7 +20,7 @@ export const Ripple = React.memo(function Ripple({
   return (
     <div
       className={[
-        'pointer-events-none absolute inset-0 select-none [mask-image:linear-gradient(to_bottom,white,transparent)]',
+        'pointer-events-none absolute inset-0 select-none [mask-image:linear-gradient(to_bottom,white,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,white,transparent)]',
         className,
       ]
         .filter(Boolean)
@@ -32,12 +32,10 @@ export const Ripple = React.memo(function Ripple({
         const opacity = mainCircleOpacity * (1 - i / numCircles);
         const animationDelay = `${i * 0.06}s`;
         const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
-        const borderOpacity = 5 + i * 5;
 
         return (
           <div
             key={i}
-            // className={`[--i: absolute animate-ripple rounded-full border bg-foreground/25 shadow-xl${i}]`}
             style={
               {
                 width: `${size}px`,
@@ -46,15 +44,15 @@ export const Ripple = React.memo(function Ripple({
                 animationDelay,
                 borderStyle,
                 borderWidth: '1px',
-                borderColor: `hsl(var(--foreground), ${borderOpacity / 100})`,
+                borderColor: `var(--luna-line)`,
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%) scale(1)',
                 position: 'absolute',
                 animation:
-                  'ripple var(--duration, 4s)ease calc(var(--i, 0)* .4s) infinite',
+                  'ripple var(--duration, 4s) ease calc(var(--i, 0)* .4s) infinite',
                 borderRadius: '9999px',
-                backgroundColor: 'hsl(var(--foreground) / .25)',
+                backgroundColor: `var(--luna-neutral-ambient)`,
               } as CSSProperties
             }
           />

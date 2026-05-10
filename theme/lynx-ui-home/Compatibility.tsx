@@ -5,38 +5,52 @@
 import './index.scss';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
-import CompatibilityRight from '@assets/lynx-ui-home/CompatibilityRight.svg';
-import CompatibilityDark from '@assets/lynx-ui-home/CompatibilityDark.svg';
-import CompatibilitySVG from '@assets/lynx-ui-home/Compatibility.svg';
+import featureStyles from '@/components/home-comps/features/index.module.less';
+import cls from 'classnames';
 
 export const Compatibility = () => {
   const lang = useLang() as 'en' | 'zh';
   return (
-    <div className="featureBlock">
-      <div className="featureTitle">
-        {descriptions.Compatibility.title[lang]}
-      </div>
-
-      <div className="flex flex-row">
-        <div className="featureDescription">
+    <div
+      className={cls(
+        featureStyles['list-item'],
+        featureStyles['row-set'],
+        'ui-home-compat-card',
+      )}
+    >
+      <div className="ui-home-compat-content">
+        <div className={featureStyles['title']}>
+          {descriptions.Compatibility.title[lang]}
+        </div>
+        <div className={featureStyles['desc']}>
           {descriptions.Compatibility.description[lang]}
         </div>
-        <img
-          alt="Compatibility Right"
-          src={CompatibilityRight}
-          className="w-[2vw] min-w-[30px] rotate-[20deg] translate-x-[10px] translate-y-[5px]"
-        />
       </div>
-      <img
-        alt="Compatibility Dark"
-        className="compatibility-img-dark w-full border-0"
-        src={CompatibilityDark}
-      />
-      <img
-        alt="Compatibility"
-        className="compatibility-img-light w-full border-0"
-        src={CompatibilitySVG}
-      />
+      <div className="ui-home-compat-visual" aria-hidden="true">
+        <div className="ui-home-compat-rows">
+          <div className="ui-home-compat-row">
+            <div className="ui-home-compat-row-pills">
+              <div className="ui-home-compat-pill ui-home-compat-pill--muted">
+                Lynx 3.2
+              </div>
+              <div className="ui-home-compat-pill ui-home-compat-pill--muted">
+                Lynx 3.7
+              </div>
+            </div>
+          </div>
+
+          <div className="ui-home-compat-row">
+            <div className="ui-home-compat-column-pills">
+              <div className="ui-home-compat-pill ui-home-compat-pill--muted">
+                @lynx-js/react@0.105
+              </div>
+              <div className="ui-home-compat-pill ui-home-compat-pill--muted">
+                @lynx-js/react@0.120
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
