@@ -8,8 +8,6 @@ import './index.scss';
 import { useLang } from '@rspress/core/runtime';
 import TwoHalfCircleLight from '@assets/lynx-ui-home/TwoHalfCircleLight.svg';
 import RectangleLight from '@assets/lynx-ui-home/RectangleLight.svg';
-import VSIconLight from '@assets/lynx-ui-home/VSIconLight.svg';
-import VSIconDark from '@assets/lynx-ui-home/VSIconDark.svg';
 
 export const ClearAPI = () => {
   const lang = useLang() as 'en' | 'zh';
@@ -20,7 +18,7 @@ export const ClearAPI = () => {
         <img
           alt="Clear API Circle"
           src={TwoHalfCircleLight}
-          className="h-6 w-6 -rotate-[145deg] translate-x-[20px] translate-y-[8px]"
+          className="h-6 w-6 -rotate-[145deg] -translate-x-4 -translate-y-4"
         />
         <div className="featureTitle">{descriptions.ClearAPI.title[lang]}</div>
         <img
@@ -33,16 +31,9 @@ export const ClearAPI = () => {
         {descriptions.ClearAPI.description[lang]}
       </div>
       <div className="relative flex flex-col items-center">
-        <img
-          alt="Clear API VS Icon Light"
-          src={VSIconLight}
-          className="compatibility-img-light relative z-[100] h-16 w-16 translate-y-1/2"
-        />
-        <img
-          alt="Clear API VS Icon Dark"
-          src={VSIconDark}
-          className="compatibility-img-dark relative z-[100] h-16 w-16 translate-y-1/2"
-        />
+        <div className="ui-home-vs-badge translate-y-1/2" aria-hidden="true">
+          VS
+        </div>
         <CodeComparisonBlock />
       </div>
     </div>

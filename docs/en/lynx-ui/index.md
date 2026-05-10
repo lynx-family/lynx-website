@@ -5,9 +5,8 @@ hero:
   badge: 'lynx-ui v3 is officially released'
   tagline: Pack the best Lynx for you, one component at a time
   text: <span class="hero-title">
-    <span class="normal">Out-of-the-box </span>
-    <span class="brand-ani">Lynx </span>
-    <span class="normal">Component Library </span>
+    <span class="normal">UI Components for</span>
+    <span class="brand-ani">Lynx</span>
     </span>
   actions:
     - theme: brand

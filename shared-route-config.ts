@@ -59,8 +59,8 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/lynx-ui/',
     url: '/lynx-ui/guides/introduction',
     logo: {
-      light: '/assets/lynx-ui-icon-color-light.svg',
-      dark: '/assets/lynx-ui-icon-color-dark.svg',
+      light: '/assets/lynx-ui-icon-dark.svg',
+      dark: '/assets/lynx-ui-icon-light.svg',
     },
   },
   {

@@ -15,7 +15,14 @@ import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import './index.scss';
 import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
@@ -183,6 +190,10 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
+  const copyElementRef = useRef<HTMLDivElement | null>(null);
+  const CodeWithRef = Code as unknown as React.ComponentType<
+    React.ComponentProps<typeof Code> & { ref?: React.Ref<HTMLDivElement> }
+  >;
 
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
@@ -202,12 +213,17 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
             codeButtonGroupProps={{
+              copyElementRef,
               showCodeWrapButton: false,
             }}
           >
-            <Code className="language-bash" style={{ textAlign: 'center' }}>
+            <CodeWithRef
+              ref={copyElementRef}
+              className="language-bash"
+              style={{ textAlign: 'center' }}
+            >
               npm create rspeedy@latest
-            </Code>
+            </CodeWithRef>
           </PreWithCodeButtonGroup>
         </div>
       </>
@@ -298,14 +314,19 @@ const Link = forwardRef(
           href={`/next${removeBase(href)}`}
           className={`rp-link ${className}`}
           ref={ref}
-          {...restProps}
+          {...(restProps as any)}
         >
           {children}
         </BaseLink>
       );
     }
     return (
-      <BaseLink href={href} className={className} ref={ref} {...restProps}>
+      <BaseLink
+        href={href}
+        className={className}
+        ref={ref}
+        {...(restProps as any)}
+      >
         {children}
       </BaseLink>
     );

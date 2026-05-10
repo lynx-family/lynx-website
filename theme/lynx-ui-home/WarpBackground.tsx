@@ -6,7 +6,8 @@ import { motion } from 'motion/react';
 import React, { HTMLAttributes, useCallback, useMemo } from 'react';
 
 interface WarpBackgroundProps extends HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  warpHeight?: React.CSSProperties['height'];
   perspective?: number;
   beamsPerSide?: number;
   beamSize?: number;
@@ -57,6 +58,7 @@ const Beam = ({
 
 export const WarpBackground: React.FC<WarpBackgroundProps> = ({
   children,
+  warpHeight,
   perspective = 100,
   className,
   beamsPerSide = 3,
@@ -69,6 +71,9 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
   gridLineWidth = 1,
   ...props
 }) => {
+  const { style, ...restProps } = props;
+  const resolvedHeight = warpHeight ?? style?.height ?? '80vh';
+
   const generateBeams = useCallback(() => {
     const beams = [];
     const cellsPerSide = Math.floor(100 / beamSize);
@@ -102,9 +107,7 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
 
   const containerStyles: React.CSSProperties = {
     position: 'relative',
-    borderRadius: '0.25rem',
-    // border: '1px solid transparent',
-    // padding: '5rem'
+    ...style,
   };
 
   const warpContainerStyles = {
@@ -118,7 +121,7 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
     containerType: 'size' as const,
     perspective: `${perspective}px`,
     transformStyle: 'preserve-3d' as const,
-    height: '70vh',
+    height: resolvedHeight,
     ['--perspective' as string]: `${perspective}px`,
     ['--grid-color' as string]: gridColor,
     ['--grid-size' as string]: `${gridSize}%`,
@@ -173,7 +176,7 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
   };
 
   return (
-    <div className={className} style={containerStyles} {...props}>
+    <div className={className} style={containerStyles} {...restProps}>
       <div style={warpContainerStyles}>
         {/* top side */}
         <div style={topSideStyles}>
@@ -224,7 +227,9 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
           ))}
         </div>
       </div>
-      <div style={childContainerStyles}>{children}</div>
+      {children == null ? null : (
+        <div style={childContainerStyles}>{children}</div>
+      )}
     </div>
   );
 };
