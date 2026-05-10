@@ -17,9 +17,9 @@ import { StartBuilding } from './StartBuildingBottom';
 export const HomeLayout = () => {
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
-  const copyElementRef = useRef<HTMLDivElement | null>(null);
+  const copyElementRef = useRef<HTMLElement | null>(null);
   const CodeWithRef = Code as unknown as React.ComponentType<
-    React.ComponentProps<typeof Code> & { ref?: React.Ref<HTMLDivElement> }
+    React.ComponentProps<typeof Code> & { ref?: React.Ref<HTMLElement> }
   >;
 
   const afterHeroActions = (
@@ -30,7 +30,8 @@ export const HomeLayout = () => {
       <PreWithCodeButtonGroup
         containerElementClassName="language-bash"
         codeButtonGroupProps={{
-          copyElementRef,
+          copyElementRef:
+            copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
           showCodeWrapButton: false,
         }}
       >
