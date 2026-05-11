@@ -4,12 +4,12 @@
  *
  * Typical use case:
  * - You have one or more installed demo packages under node_modules, e.g.
- *   node_modules/<scope>/<pkg>
+ *   packages/luna-packages/node_modules/<scope>/<pkg>
  * - You want them materialized under docs/public/lynx-examples/<pkgName>
  *
  * Usage:
  *   LINK_PATH=docs/public/lynx-examples \
- *   LUNA_SOURCE_DIR=node_modules \
+ *   LUNA_SOURCE_DIR=packages/luna-packages/node_modules \
  *   LUNA_MODE=copy \
  *   node scripts/luna-demo.js
  *
@@ -18,7 +18,7 @@
  *   1) A node_modules directory (will scan one level and scope directories), or
  *   2) A scope directory containing multiple packages (each with package.json), or
  *   3) A single package directory (contains package.json)
- *   Default: node_modules
+ *   Default: packages/luna-packages/node_modules
  * - LINK_PATH: Target root directory.
  *   Default: docs/public/lynx-examples
  * - LUNA_MODE: "copy" (default) or "symlink".
@@ -35,7 +35,7 @@ const path = require('path');
 const currentDir = process.cwd();
 const sourceDir = path.join(
   currentDir,
-  process.env.LUNA_SOURCE_DIR || 'node_modules',
+  process.env.LUNA_SOURCE_DIR || 'packages/luna-packages/node_modules',
 );
 const linkPath = path.join(
   currentDir,
