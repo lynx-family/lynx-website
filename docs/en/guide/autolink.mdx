@@ -50,19 +50,31 @@ plugins {
 }
 ```
 
-After Gradle sync, Autolink generates `com.<app>.generated.extensions.ExtensionRegistry`. Call the generated registry when setting up Lynx:
+After Gradle sync, Autolink generates `com.<app>.generated.extensions.ExtensionRegistry`. Choose one setup path based on where the extension should be available.
+
+For app-wide Autolink, call `setupGlobal(Context)` once during application initialization. This registers extension entries globally and initializes services through the global service center:
 
 ```java
-import android.content.Context;
+import android.app.Application;
+import com.example.app.generated.extensions.ExtensionRegistry;
+
+public final class LynxApp extends Application {
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    ExtensionRegistry.setupGlobal(this);
+  }
+}
+```
+
+For view-specific Autolink, call `setup(LynxViewBuilder)` on the builder that should receive the extension registrations:
+
+```java
 import com.example.app.generated.extensions.ExtensionRegistry;
 import com.lynx.tasm.LynxViewBuilder;
 
-public final class LynxSetup {
-  public static void setupGlobal(Context context) {
-    ExtensionRegistry.setupGlobal(context);
-  }
-
-  public static LynxViewBuilder createBuilder() {
+public final class LynxViewFactory {
+  public LynxViewBuilder createBuilder() {
     LynxViewBuilder builder = new LynxViewBuilder();
     ExtensionRegistry.setup(builder);
     return builder;
@@ -70,7 +82,7 @@ public final class LynxSetup {
 }
 ```
 
-`setupGlobal(Context)` registers global entries and services. `setup(LynxViewBuilder)` applies view-level entries such as Elements and Native Modules to the builder.
+Use the global path when an extension should be visible to every Lynx view in the app. Use the builder path when only selected views should receive the extension registrations.
 
 </PlatformTabs.Tab>
 

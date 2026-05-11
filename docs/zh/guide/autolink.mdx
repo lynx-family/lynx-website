@@ -50,19 +50,31 @@ plugins {
 }
 ```
 
-Gradle sync 后，Autolink 会生成 `com.<app>.generated.extensions.ExtensionRegistry`。初始化 Lynx 时调用生成的 registry：
+Gradle sync 后，Autolink 会生成 `com.<app>.generated.extensions.ExtensionRegistry`。根据扩展生效范围选择一种接入方式。
+
+如果需要应用级全局接入，在应用初始化阶段调用一次 `setupGlobal(Context)`。它会把扩展注册到全局路径，并通过全局 service center 初始化 Service：
 
 ```java
-import android.content.Context;
+import android.app.Application;
+import com.example.app.generated.extensions.ExtensionRegistry;
+
+public final class LynxApp extends Application {
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    ExtensionRegistry.setupGlobal(this);
+  }
+}
+```
+
+如果只希望某个 `LynxViewBuilder` 使用 Autolink 扩展，在创建该 builder 时调用 `setup(LynxViewBuilder)`：
+
+```java
 import com.example.app.generated.extensions.ExtensionRegistry;
 import com.lynx.tasm.LynxViewBuilder;
 
-public final class LynxSetup {
-  public static void setupGlobal(Context context) {
-    ExtensionRegistry.setupGlobal(context);
-  }
-
-  public static LynxViewBuilder createBuilder() {
+public final class LynxViewFactory {
+  public LynxViewBuilder createBuilder() {
     LynxViewBuilder builder = new LynxViewBuilder();
     ExtensionRegistry.setup(builder);
     return builder;
@@ -70,7 +82,7 @@ public final class LynxSetup {
 }
 ```
 
-`setupGlobal(Context)` 用于注册 Service 等全局能力。`setup(LynxViewBuilder)` 用于把元件、原生模块等视图级能力应用到 builder。
+当扩展需要对应用内所有 Lynx view 可见时，使用全局接入；当只想让部分 view 使用这些扩展注册时，使用 builder 接入。
 
 </PlatformTabs.Tab>
 
