@@ -53,11 +53,11 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
   },
   {
     value: 'lynx-ui',
-    label: 'Lynx UI',
-    description: 'Lynx UI component library',
-    descriptionZh: 'Lynx UI 组件库',
+    label: 'lynx-ui',
+    description: 'lynx-ui component library',
+    descriptionZh: 'lynx-ui 组件库',
     home: '/lynx-ui/',
-    url: '/lynx-ui/guides/introduction',
+    url: '/lynx-ui/introduction',
     logo: {
       light: '/assets/lynx-ui-icon-dark.svg',
       dark: '/assets/lynx-ui-icon-light.svg',
