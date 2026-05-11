@@ -34,11 +34,45 @@ spacing, transitions, and state-specific visuals. **Theming** defines reusable
 semantic tokens that many components consume, so a single change to the token
 layer propagates everywhere.
 
-In this repository, `lynx-ui` provides the headless composition layer, and
-LUNA is the recommended theme layer that supplies semantic tokens. LUNA is
-recommended, not required; you can bring your own token system or none at
-all. The examples below use LUNA so the same token names work whether you
-write plain CSS or Tailwind.
+In the examples throughout this guide, `lynx-ui` provides the headless
+composition layer, while LUNA acts as the theme layer that supplies semantic
+tokens. LUNA is recommended, not required; you can bring your own token system
+or none at all.
+
+## Setup
+
+For plain CSS, import LUNA styles so token variables are available as CSS variables at
+runtime.
+
+```css
+@import '@lynx-js/luna-styles/index.css';
+```
+
+For Tailwind, use LUNA tailwind preset to further expose the same tokens
+as utilities such as `bg-primary` and `text-content`. Tailwind on Lynx requires
+`@lynx-js/tailwind-preset` for runtime compatibility.
+
+```ts
+// tailwind.config.ts
+import { LunaPreset } from '@lynx-js/luna-tailwind';
+import LynxPreset from '@lynx-js/tailwind-preset';
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  presets: [LynxPreset, LunaPreset],
+};
+
+export default config;
+```
+
+:::note
+
+Some Tailwind integrations can provide source scanning automatically, so the
+`content` field may not be required in every setup. The examples in this guide
+use an additional integration layer beyond the basic Tailwind setup.
+
+:::
 
 ## Styling the Parts
 
@@ -61,13 +95,6 @@ export function ExampleSwitch() {
 }
 ```
 
-:::note
-
-If you are styling with plain CSS and want LUNA tokens available as CSS
-variables, install `@lynx-js/luna-styles` and import the themes you need.
-
-:::
-
 The primitive supplies interaction and state. Your code supplies the visual
 rules: root size and layout, track and thumb appearance, and how the
 component responds to its various states.
@@ -81,35 +108,6 @@ difference is where the styling rules live:
   <SwitchThumb className="absolute w-[22px] h-[22px] rounded-full" />
 </Switch>
 ```
-
-:::note
-
-Tailwind on Lynx requires `@lynx-js/tailwind-preset` for runtime
-compatibility. The Lynx preset also brings forward Tailwind v4's
-arbitrary-value `transform-[...]` syntax, which is why transforms in this
-guide are written as `transform-[translateX(...)]` rather than
-`translate-x-[...]`. The latter relies on CSS variables that have known issues
-in Lynx's lower-version runtime when used with transitions or animations.
-
-The `lynx-ui` examples in this guide additionally use `@lynx-js/luna-tailwind`,
-which exposes LUNA tokens as utilities such as `bg-primary` and `text-content`.
-This preset is only needed if you choose LUNA as your token layer.
-
-```ts
-// tailwind.config.ts
-import { LunaPreset } from '@lynx-js/luna-tailwind';
-import LynxPreset from '@lynx-js/tailwind-preset';
-import type { Config } from 'tailwindcss';
-
-const config: Config = {
-  content: [],
-  presets: [LynxPreset, LunaPreset],
-};
-
-export default config;
-```
-
-:::
 
 A note on platform props: when a primitive needs to expose lower-level
 platform attributes, it does so through explicit props such as `switchProps`
@@ -164,11 +162,23 @@ In Tailwind, the same states are expressed with variant chains:
 />
 <SwitchThumb
   className="bg-primary-content
-    ui-checked:translate-[translateX(23px)]
+    ui-checked:transform-[translateX(23px)]
     ui-active:w-[33px]
-    ui-checked:ui-active:translate-[translateX(12px)]"
+    ui-checked:ui-active:transform-[translateX(12px)]"
 />
 ```
+
+:::note
+
+This guide uses `transform-[translateX(...)]` instead of `translate-x-[...]`
+for transform values.
+
+`@lynx-js/tailwind-preset` is currently built on top of Tailwind v3, but it
+adds support for this transform syntax. `translate-x-[...]` relies on CSS
+variables, which have known issues in lower-version Lynx runtimes when used
+with transitions or animations.
+
+:::
 
 When multiple states can be active at the same time, such as checked _and_
 pressed, make priority explicit. The `ui-checked:ui-active:` chain above is
