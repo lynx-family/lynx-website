@@ -10,7 +10,7 @@ export default {
   content: [
     './src/**/*.{js,ts,jsx,tsx}',
     './theme/**/*.{js,ts,jsx,tsx}',
-    './packages/luna-packages/src/**/*.{js,ts,jsx,tsx}',
+    './src/luna/**/*.{js,ts,jsx,tsx}',
   ],
   // Use class-based dark mode to sync with Rspress's toggle (adds .dark to <html>)
   darkMode: 'class',
