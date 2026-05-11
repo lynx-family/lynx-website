@@ -1,0 +1,423 @@
+import { AndroidOnly, IOSOnly, ClayOnly, ClayWindowsOnly, ClayMacOSOnly, HarmonyOnly, Required, Deprecated, Go, PlatformTabs } from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## Attributes
+
+### `bounces`
+
+ <IOSOnly />
+
+```tsx
+// @defaultValue: false
+bounces?: boolean;
+```
+
+Enable bounce effect
+
+
+### `cookies`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+cookies?: any;
+```
+
+Preset cookies
+
+
+### `enable-debug`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: false
+'enable-debug'?: boolean;
+```
+
+Enable WebView debugging in Android so that it can be debugged in Chrome DevTools
+
+
+### `html`
+
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.6</VersionBadge>
+
+```tsx
+html?: string;
+```
+
+A string that represents the html content to load. Automatically trigger content refresh when the html changes. Priority lower than 
+`src`
+.
+
+
+### `initjs`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+initjs?: string;
+```
+
+Execute javascript when document ready
+
+
+### `params`
+
+ <AndroidOnly /> <IOSOnly />
+
+```tsx
+params?: object;
+```
+
+Params for external webview implementation
+
+
+### `scroll-bar-enable`
+
+ <IOSOnly />
+
+```tsx
+// @defaultValue: false
+'scroll-bar-enable'?: boolean;
+```
+
+Enable scrollbar
+
+
+### `src`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+src?: string;
+```
+
+A string that represents the location of a resource on a remote server. Automatically trigger content refresh when the src changes
+
+
+### `use-osr`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+// @defaultValue: false
+'use-osr'?: boolean;
+```
+
+Whether enable offscreen rendering mode
+
+
+### `webview-type`
+
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: 'default'
+'webview-type'?: string;
+```
+
+Specify the type of webview, it could be a implementation of a webview inject from LynxService
+
+
+## Events
+
+Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+
+### `binderror`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+binderror = (e: WebviewErrorEvent) => {};
+```
+
+| Field | Type | Optional | Default | Platforms | Since | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| errorCode | number | No | – |  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |  | A number that represents the error code |
+| errorMsg | string | No | – |  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |  | A string that represents the error message |
+
+
+Error event
+
+
+### `bindload`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindload = (e: BaseEvent) => {};
+```
+
+Load success event
+
+
+### `bindlocationchange`
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+bindlocationchange = (e: WebviewUrlEvent) => {};
+```
+
+| Field | Type | Optional | Default | Platforms | Since | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| url | string | No | – |  <ClayOnly /> |  | A string that represents the target url |
+
+
+location change event
+
+
+### `bindmessage`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindmessage = (e: WebviewMessageEvent) => {};
+```
+
+| Field | Type | Optional | Default | Platforms | Since | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| msg | string | No | – |  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |  | A string that represents the message |
+
+
+Message post from javascript
+
+
+### `bindopenwindow`
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+bindopenwindow = (e: WebviewUrlEvent) => {};
+```
+
+| Field | Type | Optional | Default | Platforms | Since | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| url | string | No | – |  <ClayOnly /> |  | A string that represents the target url |
+
+
+open window event
+
+
+## Methods
+
+Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+
+### `cookies.flushStore`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.flushStore',
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+Write any unwritten cookies data to disk for webview
+
+
+### `cookies.get`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.get',
+      params: {
+        /**
+         * Retrieves cookies whose domains match or are subdomains of domains
+         * @PC
+         */
+        domain?: string;
+        /**
+         * Filters cookies by httpOnly
+         * @PC
+         */
+        httpOnly?: boolean;
+        /**
+         * Filters cookies by name
+         * @PC
+         */
+        name?: string;
+        /**
+         * Retrieves cookies whose path matches path
+         * @PC
+         */
+        path?: string;
+        /**
+         * Filters cookies by their Secure property
+         * @PC
+         */
+        secure?: boolean;
+        /**
+         * Filters out session or persistent cookies
+         * @PC
+         */
+        session?: boolean;
+        /**
+         * Retrieves cookies which are associated with url. Empty implies retrieving cookies of all URLs
+         * @PC
+         */
+        url?: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+Get cookies from webview
+
+
+### `cookies.remove`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.remove',
+      params: {
+        /**
+         * The name of cookie to remove.
+         * @PC
+         */
+        name?: string;
+        /**
+         * The URL associated with the cookie.
+         * @PC
+         */
+        url: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+Removes the cookies matching url and name
+
+
+### `cookies.set`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.set',
+      params: {
+        /**
+         * The domain of the cookie. Empty by default if omitted
+         * @PC
+         */
+        domain?: string;
+        /**
+         * The expiration date of the cookie as the number of seconds since the UNIX epoch
+         * @PC
+         */
+        expirationDate?: number;
+        /**
+         * Whether the cookie should be marked as HTTP only
+         * @PC
+         * @defaultValue false
+         */
+        httpOnly?: boolean;
+        /**
+         * The name of the cookie
+         * @PC
+         */
+        name: string;
+        /**
+         * The path of the cookie. Empty by default if omitted
+         * @PC
+         */
+        path?: string;
+        /**
+         * The Same Site policy to apply to this cookie. Can be unspecified, no_restriction, lax or strict
+         * @PC
+         * @defaultValue 'lax'
+         */
+        sameSite?: string;
+        /**
+         * Whether the cookie should be marked as secure
+         * @PC
+         * @defaultValue false
+         */
+        secure?: boolean;
+        /**
+         * The URL to associate the cookie with
+         * @PC
+         */
+        url: string;
+        /**
+         * The value of the cookie. Empty by default if omitted
+         * @PC
+         */
+        value?: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+Set a cookie to webview
+
+
+### `eval`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'eval',
+      params: {
+        /**
+         * Name of the function: `javascriptFunc(arg1, arg2)`.
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        func: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+Call js function
+
+
+### `reload`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'reload',
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+Reload the webview
+
