@@ -95,12 +95,13 @@ A JSON-formatted string containing detailed error information, including:
 ### JavaScript
 
 ```js
-lynx.onError((err) => {
-  if (err.getLevel() === 'Fatal') {
+lynx.onError = (error) => {
+  const detail = JSON.parse(error.message);
+  if (detail.level === 'Fatal') {
     // Possibly reload or fallback to home
-    console.error('Critical error occurred:', err.getMsg());
+    console.error('Critical error occurred:', detail.message);
   }
-});
+};
 ```
 
 ### Kotlin
