@@ -135,9 +135,7 @@ function replaceBufferContent(buffer, from, to) {
   const toBuffer = Buffer.from(to);
 
   if (fromBuffer.length !== toBuffer.length) {
-    throw new Error(
-      `Fixup replacement length mismatch: "${from}" -> "${to}"`,
-    );
+    throw new Error(`Fixup replacement length mismatch: "${from}" -> "${to}"`);
   }
 
   let index = buffer.indexOf(fromBuffer);
