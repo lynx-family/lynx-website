@@ -26,6 +26,28 @@ If one of these packages cannot be resolved from your configured registries, you
 
 :::
 
+## Host App Project Structure
+
+Before enabling Autolink, make sure the host app has a project root that can install npm packages and expose the native app build entry points. A typical host app looks like this:
+
+```text
+lynx-app/
+├── package.json
+├── android/
+│   ├── settings.gradle
+│   └── app/
+│       └── build.gradle
+├── ios/
+│   └── Podfile
+└── src/
+```
+
+- `package.json` is required so the app can declare Autolink extension packages as dependencies.
+- For Android, the project needs a Gradle settings file, such as `settings.gradle` or `settings.gradle.kts`, and an Android application build file, such as `app/build.gradle` or `app/build.gradle.kts`.
+- For iOS, the project needs a CocoaPods entry point, usually `Podfile`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-extension` gem in `Gemfile`.
+
+After you install dependencies, Autolink scans the installed npm packages for `lynx.ext.json` files at package roots. A lockfile such as `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` is recommended for reproducible installs, but it is not required by Autolink.
+
 ## Set Up Autolink in an App
 
 Set up Autolink once in the host app. After that, installed extension packages can be discovered from `node_modules` and registered through the generated registry.
