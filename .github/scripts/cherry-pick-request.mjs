@@ -530,7 +530,7 @@ function renderValidationFailureComment(errors, workflowUrl, options = {}) {
     ? 'Cherry-pick request is invalid for automatic execution.'
     : options.reopened
       ? 'Cherry-pick request was reopened and revalidated, but it is still invalid.'
-    : 'Cherry-pick request is invalid and will not execute yet.';
+      : 'Cherry-pick request is invalid and will not execute yet.';
   const nextSteps = hasWorkflowFiles
     ? [
         'Handle this backport manually, or use a separately approved process with a token that has workflow permission.',
@@ -805,9 +805,7 @@ async function validateCommand() {
 
   if (event.action === 'unlabeled' && event.label?.name === APPROVED_LABEL) {
     if (isGitHubActionsBot(event.sender)) {
-      console.log(
-        'Approval label was removed by github-actions[bot]; no-op.',
-      );
+      console.log('Approval label was removed by github-actions[bot]; no-op.');
       setOutput('should_execute', 'false');
       return;
     }
@@ -1130,15 +1128,13 @@ function formatConflictList(files) {
 }
 
 function isWorkflowPermissionPushError(error) {
-  const text = [
-    error?.message,
-    error?.git?.stdout,
-    error?.git?.stderr,
-  ]
+  const text = [error?.message, error?.git?.stdout, error?.git?.stderr]
     .filter(Boolean)
     .join('\n');
   return (
-    text.includes('refusing to allow a GitHub App to create or update workflow') ||
+    text.includes(
+      'refusing to allow a GitHub App to create or update workflow',
+    ) ||
     text.includes('without `workflows` permission') ||
     text.includes('without `workflow` permission')
   );
@@ -1244,7 +1240,14 @@ async function findExistingGeneratedPr(
     `&head=${head}&base=${encodeURIComponent(target)}`,
   );
   const open = openPulls.find((pr) =>
-    prHasGeneratedIdentity(pr, repo, sourcePr, target, requestIssue, branchName),
+    prHasGeneratedIdentity(
+      pr,
+      repo,
+      sourcePr,
+      target,
+      requestIssue,
+      branchName,
+    ),
   );
   if (open) return { kind: 'open', pr: open };
 
@@ -1254,7 +1257,14 @@ async function findExistingGeneratedPr(
     `&head=${head}&base=${encodeURIComponent(target)}`,
   );
   const closed = closedPulls.find((pr) =>
-    prHasGeneratedIdentity(pr, repo, sourcePr, target, requestIssue, branchName),
+    prHasGeneratedIdentity(
+      pr,
+      repo,
+      sourcePr,
+      target,
+      requestIssue,
+      branchName,
+    ),
   );
   if (closed)
     return {
