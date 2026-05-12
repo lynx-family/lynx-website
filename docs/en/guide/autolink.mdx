@@ -1,0 +1,474 @@
+import { PlatformTabs } from '@lynx';
+
+# Autolink Native Extensions
+
+Autolink helps a Lynx app discover native extension packages from `node_modules` and register their Android and iOS capabilities automatically. Extension packages declare their native entry points in `lynx.ext.json`; the host app enables the Autolink build integration once, then uses the generated registry instead of manually wiring each Element, Native Module, or Service.
+
+Autolink currently covers native Android and iOS extensions only. It does not generate Web or HarmonyOS integration code.
+
+:::info Prerequisites
+
+✅ Completed [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps)
+
+✅ Familiar with [Native Modules](/guide/use-native-modules) and [Custom Native Element](/guide/custom-native-component)
+
+:::
+
+:::note Tooling Availability
+
+Use Autolink tooling from the same Lynx release channel as your app. The package and plugin names are:
+
+- npm: `create-lynx-extension` and `@lynx-js/autolink-codegen` (`lynx-autolink-codegen` binary)
+- Android: Gradle plugins `org.lynxsdk.extension-settings` and `org.lynxsdk.extension-build`
+- iOS: Ruby gem `cocoapods-lynx-extension`
+
+If one of these packages cannot be resolved from your configured registries, your current Lynx SDK release does not include Native Autolink in that registry yet. Keep using the existing manual native registration flow until the matching release is available.
+
+:::
+
+## Set Up Autolink in an App
+
+Set up Autolink once in the host app. After that, installed extension packages can be discovered from `node_modules` and registered through the generated registry.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="android">
+
+Enable the settings plugin in `settings.gradle` so extension Android projects can be discovered from `lynx.ext.json` and included:
+
+```groovy
+plugins {
+  id 'org.lynxsdk.extension-settings'
+}
+```
+
+Enable the build plugin in the Android application project so the generated registry is added to the app and extension projects are wired as dependencies:
+
+```groovy
+plugins {
+  id 'com.android.application'
+  id 'org.lynxsdk.extension-build'
+}
+```
+
+After Gradle sync, Autolink generates `com.<app>.generated.extensions.ExtensionRegistry`. Choose one setup path based on where the extension should be available.
+
+For app-wide Autolink, call `setupGlobal(Context)` once during application initialization. This registers extension entries globally and initializes services through the global service center:
+
+```java
+import android.app.Application;
+import com.example.app.generated.extensions.ExtensionRegistry;
+
+public final class LynxApp extends Application {
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    ExtensionRegistry.setupGlobal(this);
+  }
+}
+```
+
+For view-specific Autolink, call `setup(LynxViewBuilder)` on the builder that should receive the extension registrations:
+
+```java
+import com.example.app.generated.extensions.ExtensionRegistry;
+import com.lynx.tasm.LynxViewBuilder;
+
+public final class LynxViewFactory {
+  public LynxViewBuilder createBuilder() {
+    LynxViewBuilder builder = new LynxViewBuilder();
+    ExtensionRegistry.setup(builder);
+    return builder;
+  }
+}
+```
+
+Use the global path when an extension should be visible to every Lynx view in the app. Use the builder path when only selected views should receive the extension registrations.
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="ios">
+
+Install the `cocoapods-lynx-extension` gem in your iOS build environment. Then add the CocoaPods plugin to the app's Podfile and call `use_lynx_extension!` so installed extension podspecs and the generated registry pod are added during `pod install`:
+
+```ruby
+plugin 'cocoapods-lynx-extension'
+
+target 'LynxApp' do
+  use_lynx_extension!
+end
+```
+
+Autolink generates `generated/lynx-extension/ExtensionRegistry.h` and `ExtensionRegistry.m`. Import the generated registry and apply it to your `LynxConfig`:
+
+```objc
+#import "ExtensionRegistry.h"
+#import <Lynx/LynxConfig.h>
+
+LynxConfig *config = [[LynxConfig alloc] init];
+ExtensionRegistry *registry = [[ExtensionRegistry alloc] init];
+[registry setup:config];
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+## Use an Extension
+
+After the app has set up Autolink, install the extension package in your Lynx app:
+
+```bash
+npm install @example/lynx-button
+```
+
+Each extension package exposes a `lynx.ext.json` manifest at the package root. Autolink scans installed npm packages for this file.
+
+```json
+{
+  "platforms": {
+    "android": {
+      "packageName": "com.example.button",
+      "sourceDir": "android"
+    },
+    "ios": {
+      "sourceDir": "ios",
+      "podspecPath": "ios/build.podspec"
+    }
+  }
+}
+```
+
+For Android, `platforms.android.packageName` is required, and `sourceDir` defaults to `android`. For iOS, `sourceDir` defaults to `ios`, and `podspecPath` defaults to the first `.podspec` found under the iOS source directory.
+
+After installing or updating an extension package, sync/build the Android app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-extension manual registration code in the app.
+
+## Extension Package Role and Structure
+
+An Autolink extension package is an npm package that bundles the JavaScript facade, type declarations, native implementation, and Autolink manifest for one reusable capability. App teams install the package as a normal dependency; the Android Gradle plugins and iOS CocoaPods plugin read `lynx.ext.json` and link the native code into the host app.
+
+A typical extension package looks like this:
+
+```text
+lynx-button/
+├── package.json
+├── lynx.ext.json
+├── types/
+│   └── index.d.ts
+├── src/
+│   └── index.ts
+├── generated/
+│   └── ButtonModule.ts
+├── android/
+│   └── src/main/java/com/example/button/
+│       ├── ButtonElement.java
+│       ├── ButtonModule.java
+│       ├── ButtonService.java
+│       └── generated/ButtonModuleSpec.java
+├── ios/
+│   ├── build.podspec
+│   └── src/
+│       ├── ButtonElement.m
+│       ├── ButtonModule.m
+│       ├── ButtonService.m
+│       └── generated/
+│           ├── ButtonModuleSpec.h
+│           └── ButtonModuleSpec.m
+└── example/
+```
+
+- `package.json` makes the package installable from npm and usually provides the `codegen` script.
+- `lynx.ext.json` is the Autolink contract. It tells the host app where Android and iOS source code lives.
+- `types/index.d.ts` describes the Native Module API that codegen uses to create platform specs and the JavaScript facade.
+- `src/index.ts` exports the JavaScript API that app code imports.
+- `android/` and `ios/` contain native implementations and generated native specs.
+- `example/` is a local app used by the extension author to verify the package.
+
+## Create an Extension
+
+Create a new extension package interactively:
+
+```bash
+npm create lynx-extension
+```
+
+For scripts and tests, the same scaffold can run without prompts:
+
+```bash
+npm create lynx-extension -- \
+  --dir ./lynx-button \
+  --types native-module,element,service \
+  --package-name @example/lynx-button \
+  --android-package com.example.button \
+  --module-name ButtonModule \
+  --element-name x-button \
+  --service-name ButtonService
+```
+
+The generated package includes:
+
+- `package.json` with `"codegen": "lynx-autolink-codegen"`
+- `lynx.ext.json` for Android and iOS Autolink discovery
+- `types/index.d.ts` for Native Module type declarations
+- `src/index.ts` for the JavaScript facade
+- `android/` and `ios/` native source folders
+- `example/`, `tsconfig.json`, and `README.md`
+
+Run codegen from the extension root:
+
+```bash
+npm run codegen
+```
+
+`lynx-autolink-codegen` reads `lynx.ext.json` and scans `types/**/*.d.ts` for `@lynxmodule` declarations:
+
+```ts
+/** @lynxmodule */
+export declare class ButtonModule {
+  getLabel(id: string): string;
+  setEnabled(id: string, enabled: boolean): void;
+}
+```
+
+It generates:
+
+- `generated/<ModuleName>.ts` for the JavaScript facade
+- Android `<ModuleName>Spec.java`
+- iOS `<ModuleName>Spec.h` and `<ModuleName>Spec.m`
+
+The first version supports `void`, `string`, `number`, `boolean`, and nullable unions with `null`.
+
+## Write Native APIs
+
+Use the Autolink annotations and markers in extension packages. Native Modules usually extend the spec generated by `lynx-autolink-codegen`; Elements and Services are discovered from their native markers.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="android">
+
+Native Module example:
+
+```java
+package com.example.button;
+
+import com.example.button.generated.ButtonModuleSpec;
+import com.lynx.jsbridge.LynxAutolinkNativeModule;
+import com.lynx.jsbridge.LynxMethod;
+import com.lynx.tasm.behavior.LynxContext;
+import java.util.HashMap;
+import java.util.Map;
+
+@LynxAutolinkNativeModule(name = "ButtonModule")
+public final class ButtonModule extends ButtonModuleSpec {
+  private final Map<String, Boolean> enabledState = new HashMap<>();
+
+  public ButtonModule(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  @LynxMethod
+  public String getLabel(String id) {
+    return "Button " + id;
+  }
+
+  @Override
+  @LynxMethod
+  public void setEnabled(String id, boolean enabled) {
+    enabledState.put(id, enabled);
+  }
+}
+```
+
+Element example:
+
+```java
+package com.example.button;
+
+import android.content.Context;
+import android.view.Gravity;
+import android.widget.TextView;
+import com.lynx.tasm.behavior.LynxAutolinkElement;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.LynxProp;
+import com.lynx.tasm.behavior.ui.LynxUI;
+
+@LynxAutolinkElement(name = "x-button")
+public final class ButtonElement extends LynxUI<TextView> {
+  public ButtonElement(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  protected TextView createView(Context context) {
+    TextView view = new TextView(context);
+    view.setGravity(Gravity.CENTER);
+    view.setText("x-button");
+    return view;
+  }
+
+  @LynxProp(name = "text")
+  public void setText(String text) {
+    mView.setText(text == null ? "" : text);
+  }
+}
+```
+
+Service example:
+
+```java
+package com.example.button;
+
+import android.content.Context;
+import com.lynx.tasm.service.IServiceProvider;
+import com.lynx.tasm.service.LynxAutolinkService;
+
+@LynxAutolinkService
+public final class ButtonService implements IServiceProvider {
+  private Context appContext;
+
+  @Override
+  public Class<? extends IServiceProvider> getServiceClass() {
+    return ButtonService.class;
+  }
+
+  @Override
+  public void onInitialize(Context context) {
+    appContext = context.getApplicationContext();
+  }
+
+  public void recordClick(String id) {
+    // Send analytics or call platform capabilities here.
+  }
+}
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="ios">
+
+Native Module example:
+
+```objc
+// ButtonModule.h
+#import <Foundation/Foundation.h>
+#import <Lynx/LynxModule.h>
+#import "generated/ButtonModuleSpec.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@LynxAutolinkNativeModule("ButtonModule")
+@interface ButtonModule : NSObject <ButtonModuleSpec>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// ButtonModule.m
+#import "ButtonModule.h"
+
+@implementation ButtonModule {
+  NSMutableDictionary<NSString *, NSNumber *> *_enabledState;
+}
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _enabledState = [NSMutableDictionary dictionary];
+  }
+  return self;
+}
+
+- (NSString *)getLabel:(NSString *)buttonId {
+  return [NSString stringWithFormat:@"Button %@", buttonId];
+}
+
+- (void)setEnabled:(NSString *)buttonId enabled:(BOOL)enabled {
+  _enabledState[buttonId] = @(enabled);
+}
+
+@end
+```
+
+Element example:
+
+```objc
+// ButtonElement.h
+#import <UIKit/UIKit.h>
+#import <Lynx/LynxUI.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface ButtonElement : LynxUI<UILabel *>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// ButtonElement.m
+#import "ButtonElement.h"
+#import <Lynx/LynxPropsProcessor.h>
+
+@LynxAutolinkUI("x-button")
+@implementation ButtonElement
+
+LYNX_PROP_SETTER("text", setText, NSString *) {
+  self.view.text = value ?: @"";
+}
+
+- (UILabel *)createView {
+  UILabel *label = [[UILabel alloc] init];
+  label.textAlignment = NSTextAlignmentCenter;
+  label.text = @"x-button";
+  return label;
+}
+
+@end
+```
+
+Service example:
+
+```objc
+// ButtonService.h
+#import <Foundation/Foundation.h>
+#import <LynxServiceAPI/ServiceAPI.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol ButtonServiceProtocol <LynxServiceProtocol>
+
+- (void)recordClick:(NSString *)buttonId;
+
+@end
+
+@interface ButtonService : NSObject <ButtonServiceProtocol>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// ButtonService.m
+#import "ButtonService.h"
+
+@LynxAutolinkService(ButtonService, ButtonServiceProtocol)
+@implementation ButtonService
+
++ (instancetype)sharedInstance {
+  static ButtonService *service;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    service = [[ButtonService alloc] init];
+  });
+  return service;
+}
+
+- (void)recordClick:(NSString *)buttonId {
+  // Send analytics or call platform capabilities here.
+}
+
+@end
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+Autolink uses the `LynxAutolink` names as its public extension authoring API.
+
+For iOS packages that already use Lynx native registration macros, Autolink also scans existing `LYNX_LAZY_REGISTER_UI`, `LYNX_LAZY_REGISTER_SHADOW_NODE`, and `@LynxServiceRegister(...)` declarations so those packages can be linked without rewriting their native code.
