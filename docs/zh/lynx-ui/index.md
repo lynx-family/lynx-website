@@ -6,7 +6,7 @@ hero:
   tagline: 为你打包最好的 Lynx 组件，一次一个
   text: <span class="hero-title">
     <span class="normal">开箱即用的 </span>
-    <span class="brand-ani">Lynx </span>
+    <span class="brand-ani">ReactLynx </span>
     <span class="normal">组件库 </span>
     </span>
   actions:
