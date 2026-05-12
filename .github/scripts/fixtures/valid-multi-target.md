@@ -1,0 +1,18 @@
+### Source PR
+
+#879
+
+### Target release branches
+
+- [x] release/3.7
+- [x] release/3.6
+- [ ] release/3.5
+- [ ] release/3.4
+
+### Why is this cherry-pick needed?
+
+Fixes a release blocker for the docs site.
+
+### Risk level
+
+Medium
