@@ -26,6 +26,28 @@ Autolink 当前只覆盖 Android 和 iOS 原生扩展，不生成 Web 或 Harmon
 
 :::
 
+## 宿主应用项目结构
+
+接入 Autolink 前，需要先确保宿主应用有一个可以安装 npm 包的项目根目录，并暴露原生应用的构建入口。典型结构如下：
+
+```text
+lynx-app/
+├── package.json
+├── android/
+│   ├── settings.gradle
+│   └── app/
+│       └── build.gradle
+├── ios/
+│   └── Podfile
+└── src/
+```
+
+- `package.json` 是必需的，用来声明 Autolink 扩展包依赖。
+- Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
+- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-extension` gem。
+
+安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.ext.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
+
 ## 在应用中接入 Autolink
 
 宿主应用只需要接入一次 Autolink。接入完成后，已安装的扩展包会从 `node_modules` 中被发现，并通过生成的 registry 自动注册。
