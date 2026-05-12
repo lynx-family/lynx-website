@@ -59,6 +59,14 @@ const linkPath = path.join(
 );
 const ignoreDirs = ['node_modules', '.git', '.turbo'];
 const ignoreFiles = ['.DS_Store', 'LICENSE'];
+const exampleFixups = {
+  layout: [
+    {
+      from: 'gird item 3',
+      to: 'grid item 3',
+    },
+  ],
+};
 
 /**
  * Get all files in the specified directory
@@ -118,6 +126,55 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
+    }
+  });
+}
+
+function replaceBufferContent(buffer, from, to) {
+  const fromBuffer = Buffer.from(from);
+  const toBuffer = Buffer.from(to);
+
+  if (fromBuffer.length !== toBuffer.length) {
+    throw new Error(
+      `Fixup replacement length mismatch: "${from}" -> "${to}"`,
+    );
+  }
+
+  let index = buffer.indexOf(fromBuffer);
+  if (index === -1) {
+    return { buffer, changed: false };
+  }
+
+  const nextBuffer = Buffer.from(buffer);
+  while (index !== -1) {
+    toBuffer.copy(nextBuffer, index);
+    index = nextBuffer.indexOf(fromBuffer, index + toBuffer.length);
+  }
+
+  return { buffer: nextBuffer, changed: true };
+}
+
+function applyExampleFixups(example, exampleDir) {
+  const fixups = exampleFixups[example];
+  if (!fixups?.length) {
+    return;
+  }
+
+  const files = getAllFiles(exampleDir, []);
+  files.forEach((filePath) => {
+    let buffer = fs.readFileSync(filePath);
+    let changed = false;
+
+    fixups.forEach(({ from, to }) => {
+      const result = replaceBufferContent(buffer, from, to);
+      if (result.changed) {
+        changed = true;
+        buffer = result.buffer;
+      }
+    });
+
+    if (changed) {
+      fs.writeFileSync(filePath, buffer);
     }
   });
 }
@@ -194,6 +251,7 @@ function parseExampleData() {
     const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, 'utf8'));
     // ln example files
     lnExampleFiles(exampleDir, lnExampleDir);
+    applyExampleFixups(example, lnExampleDir);
     // get all files
     const allFiles = getAllFiles(exampleDir, []);
 
