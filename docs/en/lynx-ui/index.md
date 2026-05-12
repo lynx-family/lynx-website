@@ -6,7 +6,7 @@ hero:
   tagline: Pack the best Lynx for you, one component at a time
   text: <span class="hero-title">
     <span class="normal">UI Components for</span>
-    <span class="brand-ani">Lynx</span>
+    <span class="brand-ani">ReactLynx</span>
     </span>
   actions:
     - theme: brand

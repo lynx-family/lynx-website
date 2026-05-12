@@ -70,12 +70,11 @@ export const descriptions = {
       ios-index-as-z-index
       scroll-bar-enable={false}
 />`,
-      afterCode: `<List
-      listId='listBasic'
+      afterCode: `<List listId='listBasic'
       listType='flow'
       spanCount={2}
       scrollOrientation='vertical'
-      />`,
+/>`,
     },
   },
   BestPractice: {
