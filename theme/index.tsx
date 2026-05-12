@@ -55,7 +55,10 @@ declare global {
   }
 }
 
-function Layout(props: Parameters<typeof BaseLayout>[0]) {
+function Layout({
+  afterNavTitle = <AfterNavTitle />,
+  ...props
+}: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
   const subsite = findSubsite(pathname);
   const normalizedPath = removeBase(pathname);
@@ -72,7 +75,7 @@ function Layout(props: Parameters<typeof BaseLayout>[0]) {
       </Head>
       <BaseLayout
         {...props}
-        afterNavTitle={<AfterNavTitle />}
+        afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
         bottom={<Footer />}
       />
