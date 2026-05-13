@@ -2,7 +2,7 @@ import { PlatformTabs } from '@lynx';
 
 # Autolink 原生扩展
 
-Autolink 会让 Lynx 应用从 `node_modules` 中发现原生扩展包，并自动注册它们在 Android 和 iOS 上提供的能力。扩展包在包根目录声明 `lynx.ext.json`；宿主应用只需要接入一次 Autolink 构建集成，就可以使用生成的 registry，避免为每个元件、原生模块或 Service 手动写注册代码。
+Autolink 会让 Lynx 应用从 `node_modules` 中发现原生扩展包，并自动注册它们在 Android 和 iOS 上提供的能力。扩展包在包根目录声明 `lynx.ext.json`；宿主应用只需要接入一次 Autolink 构建集成，生成的 registry 就会随 Lynx 初始化自动生效，避免为每个元件、原生模块或 Service 手动写注册代码。
 
 Autolink 当前只覆盖 Android 和 iOS 原生扩展，不生成 Web 或 HarmonyOS 的接入代码。
 
@@ -50,7 +50,7 @@ lynx-app/
 
 ## 在应用中接入 Autolink
 
-宿主应用只需要接入一次 Autolink。接入完成后，已安装的扩展包会从 `node_modules` 中被发现，并通过生成的 registry 自动注册。
+宿主应用只需要接入一次 Autolink。接入完成后，已安装的扩展包会从 `node_modules` 中被发现，并在 Lynx 初始化时通过生成的 registry 自动注册。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -72,39 +72,7 @@ plugins {
 }
 ```
 
-Gradle sync 后，Autolink 会生成 `com.<app>.generated.extensions.ExtensionRegistry`。根据扩展生效范围选择一种接入方式。
-
-如果需要应用级全局接入，在应用初始化阶段调用一次 `setupGlobal(Context)`。它会把扩展注册到全局路径，并通过全局 service center 初始化 Service：
-
-```java
-import android.app.Application;
-import com.example.app.generated.extensions.ExtensionRegistry;
-
-public final class LynxApp extends Application {
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    ExtensionRegistry.setupGlobal(this);
-  }
-}
-```
-
-如果只希望某个 `LynxViewBuilder` 使用 Autolink 扩展，在创建该 builder 时调用 `setup(LynxViewBuilder)`：
-
-```java
-import com.example.app.generated.extensions.ExtensionRegistry;
-import com.lynx.tasm.LynxViewBuilder;
-
-public final class LynxViewFactory {
-  public LynxViewBuilder createBuilder() {
-    LynxViewBuilder builder = new LynxViewBuilder();
-    ExtensionRegistry.setup(builder);
-    return builder;
-  }
-}
-```
-
-当扩展需要对应用内所有 Lynx view 可见时，使用全局接入；当只想让部分 view 使用这些扩展注册时，使用 builder 接入。
+Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，扩展提供的元件、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
 
 </PlatformTabs.Tab>
 
@@ -120,16 +88,7 @@ target 'LynxApp' do
 end
 ```
 
-Autolink 会生成 `generated/lynx-extension/ExtensionRegistry.h` 和 `ExtensionRegistry.m`。导入生成的 registry，并把它应用到 `LynxConfig`：
-
-```objc
-#import "ExtensionRegistry.h"
-#import <Lynx/LynxConfig.h>
-
-LynxConfig *config = [[LynxConfig alloc] init];
-ExtensionRegistry *registry = [[ExtensionRegistry alloc] init];
-[registry setup:config];
-```
+执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，扩展提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
 
 </PlatformTabs.Tab>
 </PlatformTabs>

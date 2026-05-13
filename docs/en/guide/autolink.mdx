@@ -2,7 +2,7 @@ import { PlatformTabs } from '@lynx';
 
 # Autolink Native Extensions
 
-Autolink helps a Lynx app discover native extension packages from `node_modules` and register their Android and iOS capabilities automatically. Extension packages declare their native entry points in `lynx.ext.json`; the host app enables the Autolink build integration once, then uses the generated registry instead of manually wiring each Element, Native Module, or Service.
+Autolink helps a Lynx app discover native extension packages from `node_modules` and register their Android and iOS capabilities automatically. Extension packages declare their native entry points in `lynx.ext.json`; the host app enables the Autolink build integration once, then the generated registry takes effect during Lynx initialization instead of requiring manual wiring for each Element, Native Module, or Service.
 
 Autolink currently covers native Android and iOS extensions only. It does not generate Web or HarmonyOS integration code.
 
@@ -50,7 +50,7 @@ After you install dependencies, Autolink scans the installed npm packages for `l
 
 ## Set Up Autolink in an App
 
-Set up Autolink once in the host app. After that, installed extension packages can be discovered from `node_modules` and registered through the generated registry.
+Set up Autolink once in the host app. After that, installed extension packages can be discovered from `node_modules` and registered through the generated registry during Lynx initialization.
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -72,39 +72,7 @@ plugins {
 }
 ```
 
-After Gradle sync, Autolink generates `com.<app>.generated.extensions.ExtensionRegistry`. Choose one setup path based on where the extension should be available.
-
-For app-wide Autolink, call `setupGlobal(Context)` once during application initialization. This registers extension entries globally and initializes services through the global service center:
-
-```java
-import android.app.Application;
-import com.example.app.generated.extensions.ExtensionRegistry;
-
-public final class LynxApp extends Application {
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    ExtensionRegistry.setupGlobal(this);
-  }
-}
-```
-
-For view-specific Autolink, call `setup(LynxViewBuilder)` on the builder that should receive the extension registrations:
-
-```java
-import com.example.app.generated.extensions.ExtensionRegistry;
-import com.lynx.tasm.LynxViewBuilder;
-
-public final class LynxViewFactory {
-  public LynxViewBuilder createBuilder() {
-    LynxViewBuilder builder = new LynxViewBuilder();
-    ExtensionRegistry.setup(builder);
-    return builder;
-  }
-}
-```
-
-Use the global path when an extension should be visible to every Lynx view in the app. Use the builder path when only selected views should receive the extension registrations.
+After Gradle sync/build, Autolink generates a fixed Android registry entry and adds it to the app sources. When the app initializes `LynxEnv`, that entry is loaded automatically, and extension Elements, Native Modules, and Services are registered app-wide. App code does not need any additional native initialization.
 
 </PlatformTabs.Tab>
 
@@ -120,16 +88,7 @@ target 'LynxApp' do
 end
 ```
 
-Autolink generates `generated/lynx-extension/ExtensionRegistry.h` and `ExtensionRegistry.m`. Import the generated registry and apply it to your `LynxConfig`:
-
-```objc
-#import "ExtensionRegistry.h"
-#import <Lynx/LynxConfig.h>
-
-LynxConfig *config = [[LynxConfig alloc] init];
-ExtensionRegistry *registry = [[ExtensionRegistry alloc] init];
-[registry setup:config];
-```
+After `pod install`, Autolink generates the registry pod and hooks it into the Lynx initialization flow. When the app creates `LynxConfig` or initializes `LynxEnv`, extension Elements, Native Modules, and Services are registered automatically. App code does not need to import generated files or add extra native initialization.
 
 </PlatformTabs.Tab>
 </PlatformTabs>
