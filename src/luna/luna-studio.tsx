@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { withBase } from '@rspress/core/runtime';
 import { useContainerResize } from '@dugyu/luna-stage';
 import { Choreography } from '@dugyu/luna-studio';
@@ -8,6 +8,9 @@ import type {
   LunaThemeVariant,
   StudioViewMode,
 } from '@dugyu/luna-studio';
+
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import {
   createDemoInteractionHandler,
@@ -21,6 +24,26 @@ const VIEW_MODES: StudioViewMode[] = ['compare', 'focus', 'lineup'];
 const resolveFocusKey = createDemoResolveFocusKey(lunaStudioDemoLayout);
 
 const BUNDLE_ROOT = withBase('/lynx-examples/luna-demo-bundles/dist/');
+
+function ChipButton(props: {
+  active: boolean;
+  onClick: () => void;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <Button
+      className={props.className}
+      onClick={props.onClick}
+      size="sm"
+      type="button"
+      variant="ghost"
+      aria-pressed={props.active}
+    >
+      {props.children}
+    </Button>
+  );
+}
 
 function LunaStudio() {
   const [viewMode, setViewMode] = useState<StudioViewMode>('compare');
@@ -78,25 +101,22 @@ function LunaStudio() {
   const dividerClassName =
     themeMode === 'light' ? 'bg-black/10' : 'bg-white/10';
 
-  const chipBaseClassName =
-    'rounded-full border px-4 py-2 text-sm transition-colors';
-
   const chipClassName = (active: boolean) => {
     if (themeMode === 'light') {
-      return [
-        chipBaseClassName,
+      return cn(
+        'h-auto rounded-full border px-4 py-2 text-sm font-normal transition-colors',
         active
-          ? 'border-black bg-black text-white'
-          : 'border-black/20 bg-transparent text-black',
-      ].join(' ');
+          ? 'border-black bg-black !text-white hover:bg-black/90 hover:!text-white'
+          : 'border-black/20 bg-transparent !text-black hover:bg-black/5 hover:!text-black',
+      );
     }
 
-    return [
-      chipBaseClassName,
+    return cn(
+      'h-auto rounded-full border px-4 py-2 text-sm font-normal transition-colors',
       active
-        ? 'border-white bg-white text-black'
-        : 'border-white/20 bg-transparent text-white',
-    ].join(' ');
+        ? 'border-white/60 bg-white/10 !text-white hover:bg-white/15 hover:!text-white'
+        : 'border-white/20 bg-transparent !text-white/80 hover:bg-white/10 hover:!text-white',
+    );
   };
 
   return (
@@ -130,51 +150,46 @@ function LunaStudio() {
         {VIEW_MODES.map((mode) => {
           const active = mode === viewMode;
           return (
-            <button
+            <ChipButton
               key={mode}
+              active={active}
               className={chipClassName(active)}
               onClick={() => setViewMode(mode)}
-              type="button"
-              {...{ 'aria-pressed': active }}
             >
               {mode}
-            </button>
+            </ChipButton>
           );
         })}
         <div className={['mx-2 h-6 w-px', dividerClassName].join(' ')} />
-        <button
+        <ChipButton
+          active={themeVariant === 'luna'}
           className={chipClassName(themeVariant === 'luna')}
           onClick={() => setStudioThemeVariant('luna')}
-          type="button"
-          {...{ 'aria-pressed': themeVariant === 'luna' }}
         >
           luna
-        </button>
-        <button
+        </ChipButton>
+        <ChipButton
+          active={themeVariant === 'lunaris'}
           className={chipClassName(themeVariant === 'lunaris')}
           onClick={() => setStudioThemeVariant('lunaris')}
-          type="button"
-          {...{ 'aria-pressed': themeVariant === 'lunaris' }}
         >
           lunaris
-        </button>
+        </ChipButton>
         <div className={['mx-2 h-6 w-px', dividerClassName].join(' ')} />
-        <button
+        <ChipButton
+          active={themeMode === 'light'}
           className={chipClassName(themeMode === 'light')}
           onClick={() => setStudioThemeMode('light')}
-          type="button"
-          {...{ 'aria-pressed': themeMode === 'light' }}
         >
           light
-        </button>
-        <button
+        </ChipButton>
+        <ChipButton
+          active={themeMode === 'dark'}
           className={chipClassName(themeMode === 'dark')}
           onClick={() => setStudioThemeMode('dark')}
-          type="button"
-          {...{ 'aria-pressed': themeMode === 'dark' }}
         >
           dark
-        </button>
+        </ChipButton>
       </div>
     </div>
   );

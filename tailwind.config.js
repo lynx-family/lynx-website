@@ -12,13 +12,14 @@ export default {
     './theme/**/*.{js,ts,jsx,tsx}',
     './src/luna/**/*.{js,ts,jsx,tsx}',
   ],
-  // Use class-based dark mode to sync with Rspress's toggle (adds .dark to <html>)
-  darkMode: 'class',
+  // Use class-based dark mode to sync with Rspress's toggle
+  // Rspress may use either `.dark` or `.rp-dark` on <html> depending on theme pipeline
+  darkMode: ['class', ':is(.dark, .rp-dark)'],
   // When there is no explicit usage of the `.dark` class in project files,
   // tailwind will not include dark mode styles in the final bundle.
   // Adding 'dark' to safelist ensures the dark mode classes are preserved.
   // See: https://github.com/shadcn-ui/ui/issues/313#issuecomment-1927525155
-  safelist: ['dark'],
+  safelist: ['dark', 'rp-dark'],
   theme: {
     container: {
       center: true,
