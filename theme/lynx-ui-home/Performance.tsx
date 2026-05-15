@@ -5,7 +5,6 @@
 import './index.scss';
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
-import ConsistencyBackgroundLight from '@assets/lynx-ui-home/ConsistencyBackgroundLight.svg';
 import PerformanceDark from '@assets/lynx-ui-home/PerformanceDark.svg';
 import PerformanceLight from '@assets/lynx-ui-home/PerformanceLight.svg';
 import featureStyles from '@/components/home-comps/features/index.module.less';
@@ -20,11 +19,6 @@ export const Performance = () => {
         {descriptions.Performance.description[lang]}
       </div>
       <div className="relative mt-auto h-[220px] w-full">
-        <img
-          alt="Performance Background Light"
-          src={ConsistencyBackgroundLight}
-          className="absolute inset-0 h-full w-full object-contain"
-        />
         <img
           alt="Performance Dark"
           src={PerformanceDark}

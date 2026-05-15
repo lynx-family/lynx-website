@@ -4,9 +4,8 @@
 
 import { descriptions } from './featuresDescriptions';
 import { useLang } from '@rspress/core/runtime';
-import ConsistencyBackgroundLight from '@assets/lynx-ui-home/ConsistencyBackgroundLight.svg';
 import ConsistencyDark from '@assets/lynx-ui-home/ConsistencyDark.svg';
-import ConsistencySVG from '@assets/lynx-ui-home/Consistency.svg';
+import ConsistencyLight from '@assets/lynx-ui-home/ConsistencyLight.svg';
 import featureStyles from '@/components/home-comps/features/index.module.less';
 
 export const Consistency = () => {
@@ -21,18 +20,13 @@ export const Consistency = () => {
       </div>
       <div className="relative mt-auto h-[220px] w-full">
         <img
-          alt="Consistency Background Light"
-          src={ConsistencyBackgroundLight}
-          className="absolute inset-0 h-full w-full object-contain"
-        />
-        <img
           alt="Consistency Dark"
           src={ConsistencyDark}
           className="compatibility-img-dark absolute inset-0 h-full w-full object-contain"
         />
         <img
-          alt="Consistency"
-          src={ConsistencySVG}
+          alt="Consistency Light"
+          src={ConsistencyLight}
           className="compatibility-img-light absolute inset-0 h-full w-full object-contain"
         />
       </div>

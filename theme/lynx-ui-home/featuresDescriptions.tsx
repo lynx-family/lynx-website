@@ -21,7 +21,7 @@ export const descriptions = {
     },
     description: {
       zh: '平台差异能够在这一层轻松地被抹平，将历史一致性解决方案沉淀下来，提供长期一致性保障',
-      en: 'Smoothed out platform differencesat at this layer. Accumulating multi-platform solutions refined through historical experience, providing long-term consistency assurance.',
+      en: 'Platform differences are handled at this layer, with battle-tested solutions ensuring long-term consistency.',
     },
   },
   Compatibility: {
@@ -89,8 +89,8 @@ export const descriptions = {
   },
   Performance: {
     title: {
-      zh: 'Lynx 的顶级性能实现',
-      en: 'We provide a top-notch performance experience of Lynx',
+      zh: '高性能 Lynx 体验实现',
+      en: 'Built for performant Lynx experiences',
     },
     description: {
       zh: '我们的代码将为你提供最好的 Lynx API 实践',
