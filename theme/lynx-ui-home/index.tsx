@@ -73,7 +73,7 @@ export const HomeLayout = () => {
       />
       <div className="home-layout-container relative z-10">
         <BaseHomeLayout afterHeroActions={afterHeroActions} />
-        <div className="w-full md:px-4 lg:px-8">
+        <div className="luna-studio-showcase-home w-full md:px-4 lg:px-8">
           <LunaStudioShowcase
             className="px-4 md:px-6 lg:px-8 py-8 md:py-4"
             defaultViewMode="lineup"

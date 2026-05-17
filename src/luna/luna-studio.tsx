@@ -35,6 +35,12 @@ import {
 
 const VIEW_MODES: StudioViewMode[] = ['compare', 'focus', 'lineup'];
 
+const NEXT_VIEW_MODE: Record<StudioViewMode, StudioViewMode> = {
+  compare: 'focus',
+  focus: 'lineup',
+  lineup: 'compare',
+};
+
 const resolveFocusKey = createDemoResolveFocusKey(lunaStudioDemoLayout);
 
 const BUNDLE_ROOT = withBase('/lynx-examples/luna-demo-bundles/dist/');
@@ -109,11 +115,14 @@ function IconToggleButton(props: {
       size="icon"
       variant="ghost"
       aria-pressed={props.active}
+      aria-label={props.label}
       onClick={props.onClick}
       title={props.label}
       className={cn(
-        'h-9 w-9 rounded-full border transition-all hover:scale-110 focus-visible:ring-0 focus-visible:ring-offset-0',
-        isLight ? 'border-black/10' : 'border-white/10',
+        'h-9 w-9 rounded-full border transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-offset-2',
+        isLight
+          ? 'border-black/10 focus-visible:ring-black/30 focus-visible:ring-offset-white'
+          : 'border-white/10 focus-visible:ring-white/40 focus-visible:ring-offset-black',
         props.active ? activeClassName : inactiveClassName,
         props.className,
       )}
@@ -157,14 +166,7 @@ function LunaStudio() {
       if (params.suggestedViewMode !== undefined) {
         return params.suggestedViewMode;
       }
-
-      const nextViewMode: Record<StudioViewMode, StudioViewMode> = {
-        compare: 'focus',
-        focus: 'lineup',
-        lineup: 'compare',
-      };
-
-      return nextViewMode[prevMode] ?? 'compare';
+      return NEXT_VIEW_MODE[prevMode] ?? 'compare';
     });
   };
 
@@ -189,7 +191,7 @@ function LunaStudio() {
         'h-auto rounded-full border px-4 py-2 text-sm font-normal transition-colors',
         active
           ? 'border-black bg-black !text-white hover:bg-black/90 hover:!text-white'
-          : 'border-black/20 dark:border-white/20 bg-transparent !text-black hover:bg-black/5 hover:!text-black',
+          : 'border-black/20 bg-transparent !text-black hover:bg-black/5 hover:!text-black',
       );
     }
 
@@ -309,12 +311,12 @@ function LunaStudioShowcase({
   const handleRequestViewModeChange = (params: {
     suggestedViewMode?: StudioViewMode;
   }) => {
-    if (params.suggestedViewMode !== undefined) {
-      setViewMode(params.suggestedViewMode);
-      return;
-    }
-
-    setViewMode(defaultViewMode);
+    setViewMode((prevMode) => {
+      if (params.suggestedViewMode !== undefined) {
+        return params.suggestedViewMode;
+      }
+      return NEXT_VIEW_MODE[prevMode] ?? defaultViewMode;
+    });
   };
 
   const handleInteraction = createDemoInteractionHandler({
@@ -334,13 +336,13 @@ function LunaStudioShowcase({
     <div
       ref={containerRef}
       className={cn(
-        'relative w-full overflow-hidden rounded-[24px]',
+        'relative isolate w-full overflow-hidden rounded-[24px]',
         containerClassName,
         className,
       )}
       style={{ height: containerHeight }}
     >
-      <div className="relative h-full w-full p-6 px-4">
+      <div className="relative z-0 h-full w-full p-6 px-4">
         <Choreography
           bundleRoot={BUNDLE_ROOT}
           className="gap-4"
@@ -361,7 +363,7 @@ function LunaStudioShowcase({
 
       <div
         className={cn(
-          'absolute bottom-4 right-4 z-10 rounded-full shadow-sm backdrop-blur',
+          'absolute bottom-4 right-4 z-50 rounded-full shadow-sm backdrop-blur transform-gpu',
           controlsBgClassName,
         )}
       >
