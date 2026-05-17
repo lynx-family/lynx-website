@@ -9,11 +9,14 @@ import {
   getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
 import { useRef } from 'react';
+import { useDark } from '@rspress/core/runtime';
 import { ClearAPI } from './ClearApi';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
+import { LunaStudioShowcase } from '@site/src/luna';
 
 export const HomeLayout = () => {
+  const dark = useDark();
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
   const copyElementRef = useRef<HTMLElement | null>(null);
@@ -70,6 +73,13 @@ export const HomeLayout = () => {
       />
       <div className="home-layout-container relative z-10">
         <BaseHomeLayout afterHeroActions={afterHeroActions} />
+        <div className="w-full md:px-4 lg:px-8">
+          <LunaStudioShowcase
+            className="px-4 md:px-6 lg:px-8 py-8 md:py-4"
+            defaultViewMode="lineup"
+            defaultThemeMode={dark ? 'dark' : 'light'}
+          />
+        </div>
         <div className="flex flex-col">
           <ClearAPI />
           <ConsistencyAndPerformance />

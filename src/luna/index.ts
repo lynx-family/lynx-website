@@ -1,1 +1,1 @@
-export { LunaStudio } from './luna-studio';
+export { LunaStudio, LunaStudioShowcase } from './luna-studio';

@@ -22,7 +22,7 @@ const stagePool: Record<string, StudioStage> = {
   },
   Dialog: {
     id: 'Dialog',
-    entry: 'OffstageActDialog',
+    entry: 'ActDialog',
     theme: 'luna-dark',
     focusKey: 'dialog',
   },
@@ -45,7 +45,7 @@ const stagePool: Record<string, StudioStage> = {
   },
   Popover: {
     id: 'Popover',
-    entry: 'OffstageActPopover',
+    entry: 'ActPopover',
     theme: 'luna-light',
     focusKey: 'popover',
   },
@@ -63,7 +63,7 @@ const stagePool: Record<string, StudioStage> = {
   },
   Sheet: {
     id: 'Sheet',
-    entry: 'ActOneDark',
+    entry: 'ActOne',
     theme: 'lunaris-dark',
     focusKey: 'sheet',
   },
@@ -98,7 +98,13 @@ const layoutSpec: StudioLayout = {
     { id: 'Swiper', style: { gridColumn: '2 / 4', gridRow: '1 / 2' } },
     { id: 'Dialog', style: { gridColumn: '2 / 4', gridRow: '1 / 2' } },
     { id: 'Popover', style: { gridColumn: '2 / 4', gridRow: '1 / 2' } },
-    { id: 'MoonRise', style: { gridColumn: '2 / 4', gridRow: '1 / 2' } },
+    {
+      id: 'MoonRise',
+      style: {
+        gridColumn: '2 / 4',
+        gridRow: '1 / 2',
+      },
+    },
     { id: 'Bloom', style: { gridColumn: '1 / 2', gridRow: '1 / 2' } },
   ],
   lineup: [
@@ -114,9 +120,32 @@ const layoutSpec: StudioLayout = {
     { id: 'MoonRise', style: { gridColumn: '2 / 3', gridRow: '2 / 3' } },
   ],
 };
+
+const layoutSpecShowcase: StudioLayout = {
+  ...layoutSpec,
+  focus: layoutSpec.focus.map((item) => {
+    if (item.id !== 'MoonRise') return item;
+    return {
+      ...item,
+      style: {
+        ...item.style,
+        backdropFilter: 'blur(2px)',
+      },
+    };
+  }),
+};
+
 const lunaStudioDemoLayout: StudioResolvedLayout = resolveStudioLayout({
   stagePool,
   layoutSpec,
 });
+const lunaStudioShowcaseLayout: StudioResolvedLayout = resolveStudioLayout({
+  stagePool,
+  layoutSpec: layoutSpecShowcase,
+});
 
-export { lunaStudioDemoLayout, lunaStudioDemoModeGrid };
+export {
+  lunaStudioDemoLayout,
+  lunaStudioDemoModeGrid,
+  lunaStudioShowcaseLayout,
+};
