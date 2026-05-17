@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { withBase } from '@rspress/core/runtime';
+import { useDark, withBase } from '@rspress/core/runtime';
 import { useContainerResize } from '@dugyu/luna-stage';
 import { Choreography } from '@dugyu/luna-studio';
 import type {
@@ -11,6 +11,8 @@ import type {
 import {
   Columns2,
   GalleryHorizontalEnd,
+  Lock,
+  LockOpen,
   Moon,
   Sparkle,
   Grid2x2,
@@ -100,6 +102,7 @@ function IconToggleButton(props: {
   icon: LucideIcon;
   themeMode: LunaThemeMode;
   className?: string;
+  disabled?: boolean;
 }) {
   const isLight = props.themeMode === 'light';
   const activeClassName = isLight
@@ -116,6 +119,7 @@ function IconToggleButton(props: {
       variant="ghost"
       aria-pressed={props.active}
       aria-label={props.label}
+      disabled={props.disabled}
       onClick={props.onClick}
       title={props.label}
       className={cn(
@@ -283,15 +287,23 @@ function LunaStudioShowcase({
   className,
   defaultViewMode = 'lineup',
   defaultThemeMode,
+  defaultThemeModeLocked = true,
 }: {
   className?: string;
   defaultViewMode?: StudioViewMode;
   defaultThemeMode?: LunaThemeMode;
+  defaultThemeModeLocked?: boolean;
 }) {
+  const pageIsDark = useDark();
+  const pageThemeMode: LunaThemeMode = pageIsDark ? 'dark' : 'light';
+
   const [viewMode, setViewMode] = useState<StudioViewMode>(defaultViewMode);
   const [themeVariant, setThemeVariant] = useState<LunaThemeVariant>('lunaris');
-  const [themeMode, setThemeMode] = useState<LunaThemeMode>(
-    defaultThemeMode ?? 'dark',
+  const [themeModeLocked, setThemeModeLocked] = useState<boolean>(
+    defaultThemeModeLocked,
+  );
+  const [localThemeMode, setLocalThemeMode] = useState<LunaThemeMode>(
+    defaultThemeMode ?? pageThemeMode,
   );
   const [studioAutoplay, setStudioAutoplay] = useState(false);
 
@@ -306,6 +318,7 @@ function LunaStudioShowcase({
           ? 580
           : 640;
 
+  const themeMode = themeModeLocked ? pageThemeMode : localThemeMode;
   const studioThemeKey: LunaThemeKey = `${themeVariant}-${themeMode}`;
 
   const handleRequestViewModeChange = (params: {
@@ -320,7 +333,9 @@ function LunaStudioShowcase({
   };
 
   const handleInteraction = createDemoInteractionHandler({
-    onThemeModeChange: setThemeMode,
+    onThemeModeChange: (mode) => {
+      if (!themeModeLocked) setLocalThemeMode(mode);
+    },
     onThemeVariantChange: setThemeVariant,
     onAutoplayChange: setStudioAutoplay,
     onRequestViewModeChange: handleRequestViewModeChange,
@@ -363,7 +378,7 @@ function LunaStudioShowcase({
 
       <div
         className={cn(
-          'absolute bottom-4 right-4 z-50 rounded-full shadow-sm backdrop-blur transform-gpu',
+          'absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full shadow-sm backdrop-blur transform-gpu md:left-auto md:right-4 md:translate-x-0',
           controlsBgClassName,
         )}
       >
@@ -381,7 +396,7 @@ function LunaStudioShowcase({
 
           <div
             className={cn(
-              'mx-2 h-px w-6 md:mx-0 md:h-6 md:w-px',
+              'mx-1 h-px w-2 md:mx-0 md:h-6 md:w-px',
               isLight ? 'bg-black/10' : 'bg-white/10',
             )}
           />
@@ -399,7 +414,7 @@ function LunaStudioShowcase({
 
           <div
             className={cn(
-              'mx-2 h-px w-6 md:mx-0 md:h-6 md:w-px',
+              'mx-1 h-px w-2 md:mx-0 md:h-6 md:w-px',
               isLight ? 'bg-black/10' : 'bg-white/10',
             )}
           />
@@ -411,9 +426,31 @@ function LunaStudioShowcase({
               icon={item.icon}
               label={item.label}
               themeMode={themeMode}
-              onClick={() => setThemeMode(item.value)}
+              disabled={themeModeLocked}
+              onClick={() => setLocalThemeMode(item.value)}
             />
           ))}
+
+          <div
+            className={cn(
+              'mx-1 h-px w-1 md:mx-0 md:h-6 md:w-px',
+              isLight ? 'bg-black/10' : 'bg-white/10',
+            )}
+          />
+
+          <IconToggleButton
+            active={themeModeLocked}
+            icon={themeModeLocked ? Lock : LockOpen}
+            label={themeModeLocked ? 'Theme synced' : 'Theme local'}
+            themeMode={themeMode}
+            onClick={() => {
+              setThemeModeLocked((prev) => {
+                const next = !prev;
+                if (prev) setLocalThemeMode(pageThemeMode);
+                return next;
+              });
+            }}
+          />
         </div>
       </div>
     </div>

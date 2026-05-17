@@ -9,14 +9,12 @@ import {
   getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
 import { useRef } from 'react';
-import { useDark } from '@rspress/core/runtime';
 import { ClearAPI } from './ClearApi';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
 import { LunaStudioShowcase } from '@site/src/luna';
 
 export const HomeLayout = () => {
-  const dark = useDark();
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
   const copyElementRef = useRef<HTMLElement | null>(null);
@@ -66,7 +64,7 @@ export const HomeLayout = () => {
           zIndex: 0,
         }}
         beamSize={0.5}
-        beamsPerSide={5}
+        beamsPerSide={7}
         perspective={500}
         gridSize={3}
         gridLineWidth={0.5}
@@ -77,7 +75,6 @@ export const HomeLayout = () => {
           <LunaStudioShowcase
             className="px-4 md:px-6 lg:px-8 py-8 md:py-4"
             defaultViewMode="lineup"
-            defaultThemeMode={dark ? 'dark' : 'light'}
           />
         </div>
         <div className="flex flex-col">

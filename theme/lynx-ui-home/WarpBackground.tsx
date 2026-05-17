@@ -3,7 +3,13 @@
 // LICENSE file in the root directory of this source tree.
 
 import { motion } from 'motion/react';
-import React, { HTMLAttributes, useCallback, useMemo } from 'react';
+import React, {
+  HTMLAttributes,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 interface WarpBackgroundProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
@@ -14,25 +20,102 @@ interface WarpBackgroundProps extends HTMLAttributes<HTMLDivElement> {
   beamDelayMax?: number;
   beamDelayMin?: number;
   beamDuration?: number;
+  beamOpacity?: number;
+  beamColorVars?: readonly string[];
   gridColor?: string;
+  gridOpacity?: number;
   gridSize?: number;
   gridLineWidth?: number;
 }
+
+type Rgb = { r: number; g: number; b: number };
+
+const DEFAULT_BEAM_COLOR_VARS = [
+  '--major-brand-color',
+  '--gradient-brand-color',
+  '--second-brand-color',
+] as const;
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+const parseHexColor = (value: string): Rgb | null => {
+  const raw = value.trim();
+  if (!raw.startsWith('#')) return null;
+  const hex = raw.slice(1);
+  if (hex.length === 3) {
+    const r = parseInt(hex[0] + hex[0], 16);
+    const g = parseInt(hex[1] + hex[1], 16);
+    const b = parseInt(hex[2] + hex[2], 16);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
+    return { r, g, b };
+  }
+  if (hex.length === 6) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
+    return { r, g, b };
+  }
+  return null;
+};
+
+const mixRgb = (a: Rgb, b: Rgb, t: number): Rgb => {
+  const tt = clamp(t, 0, 1);
+  return {
+    r: Math.round(lerp(a.r, b.r, tt)),
+    g: Math.round(lerp(a.g, b.g, tt)),
+    b: Math.round(lerp(a.b, b.b, tt)),
+  };
+};
+
+const readCssVar = (varName: string) => {
+  if (typeof window === 'undefined') return '';
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
+};
+
+const pickThemeRgbPalette = (varNames: string[]): Rgb[] => {
+  const rgbs = varNames
+    .map((name) => parseHexColor(readCssVar(name)))
+    .filter((v): v is Rgb => v != null);
+
+  if (rgbs.length > 0) return rgbs;
+
+  return [
+    { r: 255, g: 61, b: 99 },
+    { r: 255, g: 93, b: 153 },
+    { r: 61, g: 213, b: 233 },
+  ];
+};
+
+const randomLerpedColor = (palette: Rgb[]) => {
+  const a = palette[Math.floor(Math.random() * palette.length)];
+  const b = palette[Math.floor(Math.random() * palette.length)];
+  const t = Math.random();
+  return mixRgb(a, b, t);
+};
 
 const Beam = ({
   width,
   x,
   delay,
   duration,
+  color,
+  opacity,
+  aspectRatio,
 }: {
   width: string | number;
   x: string | number;
   delay: number;
   duration: number;
+  color: string;
+  opacity: number;
+  aspectRatio: string;
 }) => {
-  const hue = Math.floor(Math.random() * 360);
-  const ar = Math.floor(Math.random() * 10) + 1;
-
   return (
     <motion.div
       style={{
@@ -40,9 +123,10 @@ const Beam = ({
         left: `${x}`,
         top: 0,
         width: `${width}`,
-        aspectRatio: `1/${ar}`,
-        background: `linear-gradient(hsl(${hue} 80% 60%), transparent)`,
+        aspectRatio,
+        background: `linear-gradient(${color}, transparent)`,
         transform: 'translateX(-50%)',
+        opacity,
       }}
       initial={{ y: '100cqmax', x: '-50%' }}
       animate={{ y: '-100%', x: '-50%' }}
@@ -66,13 +150,52 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
   beamDelayMax = 3,
   beamDelayMin = 0,
   beamDuration = 3,
-  gridColor = 'hsl(var(--border))',
+  beamOpacity = 0.6,
+  beamColorVars = DEFAULT_BEAM_COLOR_VARS,
+  gridColor,
+  gridOpacity = 1,
   gridSize = beamSize,
   gridLineWidth = 1,
   ...props
 }) => {
   const { style, ...restProps } = props;
   const resolvedHeight = warpHeight ?? style?.height ?? '80vh';
+
+  const [beamPalette, setBeamPalette] = useState<Rgb[]>(() =>
+    pickThemeRgbPalette([...beamColorVars]),
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () =>
+      setBeamPalette(pickThemeRgbPalette([...beamColorVars]));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-subsite'],
+    });
+    return () => observer.disconnect();
+  }, [beamColorVars]);
+
+  const resolvedGridColor =
+    gridColor ?? `hsl(var(--border) / ${clamp(gridOpacity, 0, 1)})`;
+
+  const buildBeamSpec = useCallback(
+    (x: number) => {
+      const delay =
+        Math.random() * (beamDelayMax - beamDelayMin) + beamDelayMin;
+      const ar = Math.floor(Math.random() * 10) + 1;
+      const rgb = randomLerpedColor(beamPalette);
+      return {
+        x,
+        delay,
+        aspectRatio: `1/${ar}`,
+        color: `rgb(${rgb.r} ${rgb.g} ${rgb.b})`,
+      };
+    },
+    [beamDelayMax, beamDelayMin, beamPalette],
+  );
 
   const generateBeams = useCallback(() => {
     const beams = [];
@@ -81,29 +204,32 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
 
     for (let i = 0; i < beamsPerSide; i++) {
       const x = Math.floor(i * step);
-      const delay =
-        Math.random() * (beamDelayMax - beamDelayMin) + beamDelayMin;
-      beams.push({ x, delay });
+      beams.push(buildBeamSpec(x));
     }
     return beams;
-  }, [beamsPerSide, beamSize, beamDelayMax, beamDelayMin]);
+  }, [beamsPerSide, beamSize, buildBeamSpec]);
 
   const generateBeamsHorizontal = useCallback(() => {
     const beams = [];
-    const beamX = [0, 22, 46, 70, 100];
+    const cellsPerSide = Math.floor(100 / beamSize);
+    const step = beamsPerSide > 1 ? cellsPerSide / (beamsPerSide - 1) : 0;
     for (let i = 0; i < beamsPerSide; i++) {
-      const x = beamX[i];
-      const delay =
-        Math.random() * (beamDelayMax - beamDelayMin) + beamDelayMin;
-      beams.push({ x, delay });
+      const x = Math.floor(i * step);
+      beams.push(buildBeamSpec(x));
     }
     return beams;
-  }, [beamsPerSide, beamSize, beamDelayMax, beamDelayMin]);
+  }, [beamsPerSide, beamSize, buildBeamSpec]);
 
   const topBeams = useMemo(() => generateBeams(), [generateBeams]);
-  const rightBeams = useMemo(() => generateBeamsHorizontal(), [generateBeams]);
+  const rightBeams = useMemo(
+    () => generateBeamsHorizontal(),
+    [generateBeamsHorizontal],
+  );
   const bottomBeams = useMemo(() => generateBeams(), [generateBeams]);
-  const leftBeams = useMemo(() => generateBeamsHorizontal(), [generateBeams]);
+  const leftBeams = useMemo(
+    () => generateBeamsHorizontal(),
+    [generateBeamsHorizontal],
+  );
 
   const containerStyles: React.CSSProperties = {
     position: 'relative',
@@ -123,7 +249,7 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
     transformStyle: 'preserve-3d' as const,
     height: resolvedHeight,
     ['--perspective' as string]: `${perspective}px`,
-    ['--grid-color' as string]: gridColor,
+    ['--grid-color' as string]: resolvedGridColor,
     ['--grid-size' as string]: `${gridSize}%`,
     ['--2-grid-size' as string]: `${2 * gridSize}%`,
     ['--grid-line-width' as string]: `${gridLineWidth}px`,
@@ -187,6 +313,9 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
               x={`${beam.x * beamSize}%`}
               delay={beam.delay}
               duration={beamDuration}
+              color={beam.color}
+              opacity={beamOpacity}
+              aspectRatio={beam.aspectRatio}
             />
           ))}
         </div>
@@ -199,6 +328,9 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
               x={`${beam.x * beamSize}%`}
               delay={beam.delay}
               duration={beamDuration}
+              color={beam.color}
+              opacity={beamOpacity}
+              aspectRatio={beam.aspectRatio}
             />
           ))}
         </div>
@@ -211,6 +343,9 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
               x={`${beam.x * beamSize}%`}
               delay={beam.delay}
               duration={beamDuration}
+              color={beam.color}
+              opacity={beamOpacity}
+              aspectRatio={beam.aspectRatio}
             />
           ))}
         </div>
@@ -223,6 +358,9 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
               x={`${beam.x * beamSize}%`}
               delay={beam.delay}
               duration={beamDuration}
+              color={beam.color}
+              opacity={beamOpacity}
+              aspectRatio={beam.aspectRatio}
             />
           ))}
         </div>

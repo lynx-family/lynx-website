@@ -2,7 +2,7 @@
 pageType: home
 
 hero:
-  badge: 'lynx-ui v3 版本正式发布'
+  badge: 'lynx-ui 正式发布'
   tagline: 为你打包最好的 Lynx 组件，一次一个
   text: <span class="hero-title">
     <span class="normal">开箱即用的 </span>

@@ -2,7 +2,7 @@
 pageType: home
 
 hero:
-  badge: 'lynx-ui v3 is officially released'
+  badge: 'lynx-ui is officially released'
   tagline: Pack the best Lynx for you, one component at a time
   text: <span class="hero-title">
     <span class="normal">UI Components for</span>

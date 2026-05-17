@@ -95,7 +95,9 @@ const useBlogBtnDom = (src: string) => {
   useEffect(() => {
     if (page.pageType !== 'home') return;
 
-    const badgeElement = document.querySelector('.rp-home-hero__badge');
+    const badgeElement = document.querySelector<HTMLElement>(
+      '.rp-home-hero__badge',
+    );
 
     const h1 = document.querySelector('.rp-home-hero__title');
     if (!h1) return;
@@ -109,7 +111,7 @@ const useBlogBtnDom = (src: string) => {
         ? `rp-home-hero__badge active-hover`
         : `rp-home-hero__badge`;
     badgeElement.textContent = displayText;
-    badgeElement.setAttribute('style', 'opacity: 1;');
+    badgeElement.style.opacity = '1';
 
     if (configKey === '/') {
       badgeElement.addEventListener('click', handleInteraction);
