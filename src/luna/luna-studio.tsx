@@ -307,17 +307,6 @@ function LunaStudioShowcase({
   );
   const [studioAutoplay, setStudioAutoplay] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const { width: containerWidth } = useContainerResize({ ref: containerRef });
-  const containerHeight =
-    containerWidth === undefined
-      ? 420
-      : containerWidth < 640
-        ? 520
-        : containerWidth < 800
-          ? 580
-          : 640;
-
   const themeMode = themeModeLocked ? pageThemeMode : localThemeMode;
   const studioThemeKey: LunaThemeKey = `${themeVariant}-${themeMode}`;
 
@@ -360,13 +349,11 @@ function LunaStudioShowcase({
 
   return (
     <div
-      ref={containerRef}
       className={cn(
-        'relative isolate w-full overflow-hidden rounded-[24px] transition-all duration-300',
+        'relative isolate w-full overflow-hidden rounded-[24px] transition-all duration-300 h-[420px] sm:h-[520px] md:h-[580px] lg:h-[640px] xl:h-[700px] 2xl:h-[760px]',
         containerClassName,
         className,
       )}
-      style={{ height: containerHeight }}
     >
       <div className="relative z-0 h-full w-full p-6 px-4">
         <Choreography
