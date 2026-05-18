@@ -14,21 +14,21 @@ import { Tab, Tabs } from '@rspress/core/theme';
 
 <BlogHeader authors={['lynx']} />
 
-## Native UX, Web Velocity
+## Native Foundations, Component Flexibility
 
-The component problem isn't solved. Not for native.
+Built-in elements are powerful, but they cannot solve every product problem on their own.
 
-Native developers are constantly seeking the balance between User Experience (UX) and Developer Experience (DX). The Web offers libraries like shadcn/ui and Radix UI with great DX, but it struggles to match seamless interactions and fluid animations. Conversely, native development delivers high-fidelity UX (120fps scroll, physics, system gestures) but suffers from poor composability and slow iteration speed across multiple platforms (iOS, Android, HarmonyOS).
+Lynx's [built-in elements](/guide/ui/elements-components.html#built-in-elements) and [XElement](/guide/ui/elements-components.html#xelement) provide the atomic capabilities that make an interface feel truly native: fast scrolling, precise gestures, [platform-level rendering](/guide/ui/elements-components.html#behind-the-elements-native-rendering), and predictable behavior across iOS, Android, and HarmonyOS. But real products need more than atoms. They need components that can adapt to different scenarios, absorb platform differences, encode interaction patterns, and leave enough room for each team to express its own design system.
 
-This forces a compromise. Lynx UI is built to eliminate it.
+That is where the [frontend component layer](/guide/ui/elements-components.html#components-composition-of-elements) belongs. Native provides the performance-critical foundation; [JavaScript](/guide/scripting-runtime/index.html) provides the extension layer for composition, state, styling, and product-specific behavior. Lynx UI is built around this boundary, so teams can keep the performance of native primitives while gaining the flexibility and iteration speed of frontend development.
 
 ## Built on Native Ground
 
-Before any JS, the foundation matters. Lynx UI is not merely a simple wrapper around existing Web components, but the result of our deep exploration into bridging the mental model gap between Web and Native.
+That boundary only works if the native side is strong. Lynx UI is not merely a simple wrapper around existing Web components, but the result of our deep exploration into bridging the mental model gap between Web and Native.
 
-- Lynx engine provides high-performance native primitives: `scroll-view`, `list`, `scroll-coordinator`.
-- These render to actual native views, enabling behaviors that are structurally impossible on the mobile web.
-- For example, `scroll-coordinator` collapses the header before the inner content begins to scroll—a natural behavior on mobile that isn't achievable on the web.
+- Lynx provides high-performance element primitives: [`scroll-view`](/api/elements/built-in/scroll-view), [`list`](/api/elements/built-in/list), [`overlay`](/api/elements/built-in/overlay).
+- These render to actual native views or native rendering layers, enabling behaviors that are structurally difficult on the mobile web.
+- For example, `overlay` detaches dialog content from the Lynx document flow and promotes it to a separate rendering layer, making full-page native overlays possible when Lynx is embedded in native surfaces.
 
 Our mission is to enable developers to effortlessly drive powerful native rendering capabilities using a familiar Web-like paradigm.
 
@@ -36,9 +36,9 @@ Our mission is to enable developers to effortlessly drive powerful native render
 
 The hardest part of native-quality interaction is timing.
 
-- Lynx uses a dual-thread model: the main thread handles graphics rendering, while the background thread runs JavaScript (JS).
+- Lynx uses a [dual-thread model](/guide/scripting-runtime/index.html#javascript-runtime): the main thread handles graphics rendering, while the background thread runs JavaScript (JS).
 - Normally, handling events in the background thread introduces a delay as messages pass between threads, which can make interactions feel slow and noticeable.
-- MTS moves interaction logic to the main thread, resulting in zero-latency response to user input.
+- [MTS](/react/main-thread-script.html) moves interaction logic to the main thread, resulting in zero-latency response to user input.
 - Swiper as example: `delta in, transform out`, per frame, synchronously on the main thread.
 - This enables fully programmable per-frame callbacks for properties such as rotation, scale, opacity, or any other adjustable property.
 
