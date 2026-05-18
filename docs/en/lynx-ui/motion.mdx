@@ -1,0 +1,104 @@
+---
+description: 'Use @lynx-js/motion for main-thread animations, motion values, staggered effects, and gesture-driven UI in Lynx.'
+---
+
+import { Go } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import {
+  motionBasicDemoMeta,
+  motionGestureDemoMeta,
+  motionSpringDemoMeta,
+  motionValueDemoMeta,
+} from '../../../sharedDocs/introDocs/lynx-ui-motion/demoMeta.ts';
+
+# @lynx-js/motion
+
+`@lynx-js/motion` runs Motion-style animations on the Lynx main thread. Use it for interactions that should update visual properties immediately, without waiting for React state updates on the background thread.
+
+Use it when you need:
+
+- Imperative animation controls such as `stop()`.
+- CSS-like values, including transforms, colors, unit strings, and keyframes.
+- Spring motion, gesture-driven effects, or values shared across main-thread handlers.
+- `styleEffect()` and derived values that update element styles without rerendering React.
+
+For numeric-only animations with the smallest runtime, use [Motion Mini](./motion-mini).
+
+## Install
+
+<PackageManagerTabs command="install @lynx-js/motion" />
+
+Import from the main package entry:
+
+```ts
+import { animate, motionValue, styleEffect } from '@lynx-js/motion';
+```
+
+Animation work should run inside a function marked with `'main thread';`. If you start the animation from React lifecycle code or a background-thread event handler, call the main-thread function with `runOnMainThread()`.
+
+## Animate an element ref
+
+The usual pattern is:
+
+1. Create a main-thread element ref with `useMainThreadRef()`.
+2. Attach it to the element with `main-thread:ref`.
+3. Start `animate()` inside a main-thread function.
+4. Store the animation controls in another main-thread ref so cleanup can call `stop()`.
+
+<Go
+  example="motion"
+  defaultFile="src/Basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+  entry="src/Basic"
+  highlight={motionBasicDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+Use the full package when the animated target is not just a number. For example, `@lynx-js/motion` can animate strings such as `width: '120px'`, colors such as `backgroundColor: '#0d63f8'`, and transform strings.
+
+## Use Springs
+
+Set `type: 'spring'` when a value should settle with spring physics instead of following a fixed-duration easing curve.
+
+<Go
+  example="motion"
+  defaultFile="src/Spring/index.tsx"
+  defaultEntryFile="dist/spring.lynx.bundle"
+  entry="src/Spring"
+  highlight={motionSpringDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+## Use Motion Values
+
+`motionValue()` stores a value, can be animated directly with `animate()`, and lets you subscribe to changes. Use it when multiple effects or event handlers need a shared animated value.
+
+<Go
+  example="motion"
+  defaultFile="src/MotionValue/index.tsx"
+  defaultEntryFile="dist/motion-value.lynx.bundle"
+  entry="src/MotionValue"
+  highlight={motionValueDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+## Build Gesture Effects
+
+For high-frequency touch input, keep the event handlers on the main thread with `main-thread:bindtouchstart`, `main-thread:bindtouchmove`, and `main-thread:bindtouchend`. Use motion values with `styleEffect()` to derive visual state from gesture state.
+
+<Go
+  example="motion"
+  defaultFile="src/iOSSlider/index.tsx"
+  defaultEntryFile="dist/gesture.lynx.bundle"
+  entry="src/iOSSlider"
+  highlight={motionGestureDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+## Choose the right API
+
+Use CSS transitions or keyframes for static style changes declared in CSS. Use the built-in `lynx.animate()` API for small imperative effects that do not need Motion primitives.
+
+Use `@lynx-js/motion` when you need Motion-style controls, motion values, interpolation, spring options, selector animation, staggered groups, or gesture-driven effects.
+
+For numeric-only interactions where bundle size is the main concern, prefer [Motion Mini](./motion-mini).

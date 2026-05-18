@@ -1,0 +1,108 @@
+---
+description: 'Use @lynx-js/motion/mini for lightweight main-thread numeric animations in Lynx.'
+---
+
+import { Go } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { motionMiniDemoMeta } from '../../../sharedDocs/introDocs/lynx-ui-motion/demoMeta.ts';
+
+# Motion Mini
+
+Motion Mini is the lightweight entry of `@lynx-js/motion`. Use it when the animation only needs numeric values and direct main-thread style updates.
+
+Use Motion Mini when:
+
+- The animated values are numbers.
+- You want better version compatibility and a smaller bundle than the full `@lynx-js/motion` package.
+- You can write the final style string yourself, such as `translateX(${x}px) scale(${scale})`.
+
+Use [the full motion package](./motion) when you want the higher-level animation APIs. Use Motion Mini when version compatibility and bundle size are the priority.
+
+## Install
+
+<PackageManagerTabs command="install @lynx-js/motion" />
+
+Import from the mini entry:
+
+```ts
+import {
+  animate,
+  useMotionValueRef,
+  useMotionValueRefEvent,
+} from '@lynx-js/motion/mini';
+```
+
+## Basic Pattern
+
+The Mini pattern is:
+
+1. Store each animated number in `useMotionValueRef()`.
+2. Subscribe to changes with `useMotionValueRefEvent()`.
+3. Write the final style in that subscription.
+4. Start `animate()` from a main-thread function.
+
+The example has a separate `mini` entry so the bundle only includes the mini runtime.
+
+<Go
+  example="motion"
+  defaultFile="src/Mini/index.tsx"
+  defaultEntryFile="dist/mini.lynx.bundle"
+  entry="src/Mini"
+  highlight={motionMiniDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+`useMotionValueRef()` creates a main-thread ref that owns a MotionValue. The value can be read and written inside main-thread functions without rerendering React.
+
+```tsx
+const x = useMotionValueRef(0);
+const scale = useMotionValueRef(1);
+```
+
+Use one motion value for each independent numeric dimension. In the example, `x` controls translation and `scale` controls scale.
+
+`useMotionValueRefEvent()` listens to value changes from the main thread. Use it to apply the latest numeric value to a node.
+
+The callback in this example writes a complete transform string:
+
+```ts
+boxRef.current?.setStyleProperties({
+  transform: `translateX(${xValue}px) scale(${scaleValue})`,
+});
+```
+
+That explicit style write is the tradeoff for the smaller runtime. Motion Mini animates numbers; your code maps those numbers to element styles.
+
+## Start Animations
+
+Background-thread event handlers can call `runOnMainThread()` to start a main-thread animation. The animation itself should be created inside the main-thread function.
+
+Use spring options for physical motion:
+
+```ts
+animate(x.current, target, {
+  type: 'spring',
+  stiffness: 200,
+  damping: 20,
+});
+```
+
+Use a duration and easing function for deterministic timing:
+
+```ts
+animate(scale.current, target, {
+  duration: 0.4,
+  ease: (t) => t,
+});
+```
+
+## Choose Motion Mini
+
+Motion Mini is the practical choice when you need better version compatibility and a lower bundle size. It keeps the runtime small by animating numeric values and leaving the final style write to your code.
+
+Good Mini targets include:
+
+- `0` to `200`
+- `1` to `1.5`
+- Progress values such as `0` to `1`
+- Pixel offsets after you map them into a style string
