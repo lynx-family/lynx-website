@@ -1,0 +1,155 @@
+---
+description: 'Use @lynx-js/motion for main-thread animations, motion values, staggered effects, and gesture-driven UI in Lynx.'
+---
+
+import { Go } from '@lynx';
+
+# @lynx-js/motion
+
+`@lynx-js/motion` is the Lynx adapter for Motion. Use it when an interaction should update visual properties on the main thread without waiting for background-thread React updates.
+
+It is a good fit for:
+
+- Element animations that should start from React lifecycle code.
+- Repeating animations that need `stop()` for cleanup or user input.
+- Animating CSS-like values such as transforms, colors, units, and keyframes.
+- Motion values that feed style effects or gesture calculations.
+
+For the smallest possible main-thread animation runtime, use [Motion Mini](./motion-mini) instead.
+
+## Install
+
+```bash
+pnpm add @lynx-js/motion
+```
+
+Use the regular package entry for the full adapter:
+
+```ts
+import { animate, motionValue, stagger } from '@lynx-js/motion';
+```
+
+Most `@lynx-js/motion` calls should run inside a function marked with `'main thread';`. From React lifecycle code on the background thread, schedule that function with `runOnMainThread()`.
+
+## Animate an element ref
+
+The most direct pattern is to attach `main-thread:ref` to an element, start the animation on the main thread, and keep the animation controls in another main-thread ref so cleanup can stop it.
+
+<Go
+  example="motion"
+  defaultFile="src/Basic/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/Basic"
+  highlight="{7-24,26-36,41-55}"
+  defaultTab="web"
+/>
+
+## Animate dimensions and units
+
+The full adapter accepts string values with units. Use this when the animated property is not a plain number, such as a width in pixels or a transform string.
+
+<Go
+  example="motion"
+  defaultFile="src/BasicPercent/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/BasicPercent"
+  highlight="{14-24,39-51}"
+  defaultTab="web"
+/>
+
+## Animate by selector
+
+When the target is not conveniently available as a ref, `animate()` can target nodes with a selector. Selector-based animation is useful for groups owned by the same component, but refs are usually easier to reason about for single elements.
+
+<Go
+  example="motion"
+  defaultFile="src/BasicSelector/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/BasicSelector"
+  highlight="{10-22,37-50}"
+  defaultTab="web"
+/>
+
+## Animate colors
+
+Use the full package when you need interpolation for strings such as colors. Motion Mini intentionally avoids this larger feature set.
+
+<Go
+  example="motion"
+  defaultFile="src/ColorInterception/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/ColorInterception"
+  highlight="{13-25,40-51}"
+  defaultTab="web"
+/>
+
+## Use spring motion
+
+Set `type: 'spring'` when a value should settle with spring physics instead of following a fixed-duration easing curve.
+
+<Go
+  example="motion"
+  defaultFile="src/Spring/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/Spring"
+  highlight="{13-20,35-46}"
+  defaultTab="web"
+/>
+
+## Stagger a group
+
+Use `stagger()` with a selector result to offset the start time for a list of nodes. This keeps the sequencing on the main thread and avoids pushing per-item state through React.
+
+<Go
+  example="motion"
+  defaultFile="src/Stagger/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/Stagger"
+  highlight="{9-18,33-40}"
+  defaultTab="web"
+/>
+
+## Drive UI from motion values
+
+`motionValue()` stores a value, exposes velocity-aware updates, and lets you subscribe to changes. Use it when multiple effects or event handlers need a shared animated value.
+
+<Go
+  example="motion"
+  defaultFile="src/MotionValue/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/MotionValue"
+  highlight="{16-25,27-34,36-48}"
+  defaultTab="web"
+/>
+
+## Animate non-style output
+
+`animate()` can also animate a number and use `onUpdate` to write it somewhere else. This pattern is useful for counters, text attributes, progress labels, and custom native attributes.
+
+<Go
+  example="motion"
+  defaultFile="src/Text/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/Text"
+  highlight="{13-24,39-43}"
+  defaultTab="web"
+/>
+
+## Build gesture-driven effects
+
+For high-frequency touch input, keep the event handlers on the main thread with `main-thread:bindtouchstart`, `main-thread:bindtouchmove`, and `main-thread:bindtouchend`. Use motion values and `styleEffect()` to derive the visual state.
+
+<Go
+  example="motion"
+  defaultFile="src/iOSSlider/index.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src/iOSSlider"
+  highlight="{31-64,70-103,107-132}"
+  defaultTab="web"
+/>
+
+## Choose the right API
+
+Use CSS transitions or keyframes for static style changes declared in CSS. Use the built-in `lynx.animate()` API for small imperative effects that do not need Motion primitives. Use `@lynx-js/motion` when you need Motion-style controls, values, interpolation, spring options, or gesture-driven effects.
+
+For numeric-only interactions where bundle size is the main concern, prefer [Motion Mini](./motion-mini).
