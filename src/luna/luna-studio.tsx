@@ -125,8 +125,8 @@ function IconToggleButton(props: {
       className={cn(
         'h-9 w-9 rounded-full border transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-offset-2',
         isLight
-          ? 'border-black/10 focus-visible:ring-black/30 focus-visible:ring-offset-white'
-          : 'border-white/10 focus-visible:ring-white/40 focus-visible:ring-offset-black',
+          ? 'border-black/10 focus-visible:ring-black/30 focus-visible:ring-offset-background'
+          : 'border-white/10 focus-visible:ring-white/40 focus-visible:ring-offset-background',
         props.active ? activeClassName : inactiveClassName,
         props.className,
       )}
@@ -342,16 +342,27 @@ function LunaStudioShowcase({
   });
 
   const isLight = themeMode === 'light';
-  const containerClassName = isLight
-    ? 'bg-[#f5f5f5] text-black'
-    : 'bg-[#000000] text-white';
-  const controlsBgClassName = isLight ? 'bg-[#ffffffbb]' : 'bg-[#0000001a]';
+  const containerClassName = themeModeLocked
+    ? 'bg-canvas-ambient text-foreground'
+    : isLight
+      ? 'bg-[#f5f5f5] text-black'
+      : 'bg-[#000000] text-white';
+  const dividerClassName = themeModeLocked
+    ? 'bg-rule'
+    : isLight
+      ? 'bg-black/10'
+      : 'bg-white/10';
+  const controlsBgClassName = themeModeLocked
+    ? 'bg-soft'
+    : isLight
+      ? 'bg-[#ffffffbb]'
+      : 'bg-[#0000001a]';
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        'relative isolate w-full overflow-hidden rounded-[24px]',
+        'relative isolate w-full overflow-hidden rounded-[24px] transition-all duration-300',
         containerClassName,
         className,
       )}
@@ -397,7 +408,7 @@ function LunaStudioShowcase({
           <div
             className={cn(
               'mx-1 h-px w-2 md:mx-0 md:h-6 md:w-px',
-              isLight ? 'bg-black/10' : 'bg-white/10',
+              dividerClassName,
             )}
           />
 
@@ -415,7 +426,7 @@ function LunaStudioShowcase({
           <div
             className={cn(
               'mx-1 h-px w-2 md:mx-0 md:h-6 md:w-px',
-              isLight ? 'bg-black/10' : 'bg-white/10',
+              dividerClassName,
             )}
           />
 
@@ -434,7 +445,7 @@ function LunaStudioShowcase({
           <div
             className={cn(
               'mx-1 h-px w-1 md:mx-0 md:h-6 md:w-px',
-              isLight ? 'bg-black/10' : 'bg-white/10',
+              dividerClassName,
             )}
           />
 

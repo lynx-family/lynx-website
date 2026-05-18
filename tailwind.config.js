@@ -41,6 +41,11 @@ export default {
         ring: 'var(--rp-c-brand)',
         background: 'var(--rp-c-bg)',
         foreground: 'var(--rp-c-text-1)',
+        canvas: {
+          DEFAULT: 'var(--rp-c-bg)',
+          ambient: 'var(--rp-c-bg-alt)',
+        },
+        rule: 'var(--rp-c-divider-secondary)',
         primary: {
           DEFAULT: 'var(--rp-c-brand)',
           foreground: 'var(--rp-c-text-1)',
