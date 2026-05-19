@@ -3,7 +3,7 @@ title: 样式与主题
 description: 'lynx-ui 无头组件的样式与主题定制。'
 ---
 
-import { Go } from '@lynx';
+import { Details, Go } from '@lynx';
 
 # 样式与主题
 
@@ -171,7 +171,7 @@ transform 写法。
 
 :::
 
-当多个状态可能同时生效时，比如 checked 和 pressed，需要明确设计状态优先级。
+当多个状态可能同时生效时，比如 `checked` 和 `pressed`，需要明确设计状态优先级。
 
 上面的 `ui-checked:ui-active:` 是有意设计的：当两个状态同时存在时，它会覆盖单独
 `ui-checked` 的 translation，从而保证交互过程中的视觉连续性。
@@ -190,27 +190,66 @@ transform 写法。
   webPreviewMode="auto"
 />
 
-## 消费 Token
+## 使用 Token
 
-注意，上面的样式从来没有直接写字面颜色。它们引用的是 token：在 CSS 中是
-`var(--primary)`，在 Tailwind 中是 `bg-primary`，最终都会解析为同一个语义化值。
+注意，上面的样式并没有硬编码具体颜色值，而是引用语义化 token，例如 `primary` 和
+`content`。
 
-token 的价值主要体现在两个方面：
+语义化 token 命名的是一个值在界面中的意图，而不是这个值本身。例如，`primary`
+表示“当前主题下的主要强调色”，`content` 表示“主要前景内容”。
 
-- **一致性。** 如果 `Switch`、`Button`、`Tab` 都引用 `--primary`，它们的视觉
-  表现会自动保持一致。修改 token，就等于修改所有引用它的组件。
-- **可主题化。** 深色模式、浅色模式，以及不同品牌主题，本质上都只是 token 值
-  的替换，而不需要逐个修改组件。
+在这篇指南中，你最常看到的是两种消费方式：在 CSS 属性值中使用
+`var(--primary)`、`var(--content)`，或在 Tailwind 中使用 `bg-primary`、
+`text-content` 等原子类。它们最终都会解析到同一套运行时 token 值。
 
-LUNA 是本文示例使用的 token 层。它定义语义化 token 名称，将它们暴露为 CSS
-变量，同时也映射到 Tailwind utility 中。
+语义化 token 的价值主要体现在两个方面：
 
-因此，同一个 primitive 无论使用 plain CSS 还是 Tailwind，都能共享同一套视觉语
-言：`var(--primary)` 与 `bg-primary` 最终解析的是同一个值，基于它们构建的
-themed wrapper 也会自然继承这一点。
+- **一致性。** 如果 `Button`、`Switch` 和 `Checkbox` 都引用 `primary`，它们的视觉表现会自动保持一致。修改 token，就会同步更新所有引用它的组件。
+- **可主题化。** 组件依赖的是 `primary`、`content` 这类语义角色，而不是具体颜色。主题可以在浅色、深色或品牌变体中改变这些角色的实际取值，而不需要重写组件样式。
 
-关于 token 命名、surface 层级以及主题生成方式，可以参考
-[LUNA 主题与 Token](./luna-themes-tokens.mdx)。
+在实际使用中，这些语义角色的具体取值由祖先节点上的主题作用域提供。这与
+[自定义主题指南](/zh/guide/styling/custom-theming.html) 中描述的模式一致：在容器层应用主题 class，让子树中的样式在同一个主题作用域下解析。
+
+因此，不推荐按主题为每个组件分叉写样式：
+
+```tsx
+<Button className="bg-pink-500 dark:bg-pink-300 text-white dark:text-black" />
+```
+
+<Details title="优先使用语义化 token，而不是色阶">
+
+在 Tailwind 工具类中，前缀描述的是 CSS 属性，例如 `bg-` 表示背景色，`text-` 表示文本颜色。真正与主题相关的是前缀后面的取值。
+
+`pink-500`、`pink-300` 这类取值也可能来自一套设计色阶，但这套色阶通常是全局的：无论当前是浅色、深色，还是品牌主题，`pink-500` 都指向同一个具体颜色。因此，它不太适合需要适配多主题的组件样式。
+
+相比之下，`primary`、`primary-content` 这类语义化取值描述的是样式角色。至于这些角色最终对应什么颜色，则由当前激活的主题决定。这样组件样式可以保持稳定，而视觉结果会随主题变化。
+
+</Details>
+
+组件应该保持稳定，只消费语义化 token：
+
+```tsx
+<Button className="bg-primary text-primary-content" />
+```
+
+主题切换则发生在容器层：
+
+```tsx
+<view className="lunaris-dark">
+  <Button className="bg-primary text-primary-content" />
+  <Switch className="switch">
+    <SwitchTrack className="switch-track" />
+    <SwitchThumb className="switch-thumb" />
+  </Switch>
+</view>
+```
+
+当祖先节点上的主题 class 从 `lunaris-dark` 切换为 `lunaris-light` 时，整棵子树的 token 值都会更新，而不需要重写单个组件样式。
+
+在 `lynx-ui` 中，这种容器级主题切换模型由 LUNA 实现。LUNA 提供了四个内置主题 class：`luna-light`、`luna-dark`、`lunaris-light`
+和 `lunaris-dark`。
+
+关于 token 命名、surface 层级以及主题覆写方式，可以参考 [LUNA 主题与 Token](./luna-themes-tokens.mdx)。
 
 ## 组合 Themed Wrapper
 
