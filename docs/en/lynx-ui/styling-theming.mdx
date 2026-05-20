@@ -3,7 +3,7 @@ description: 'How to style and theme lynx-ui headless components.'
 title: Styling and Theming
 ---
 
-import { Go } from '@lynx';
+import { Details, Go } from '@lynx';
 
 # Styling and Theming
 
@@ -180,8 +180,7 @@ with transitions or animations.
 
 :::
 
-When multiple states can be active at the same time, such as checked _and_
-pressed, make priority explicit. The `ui-checked:ui-active:` chain above is
+When multiple states can be active at the same time, such as `checked` and `pressed`, make priority explicit. The `ui-checked:ui-active:` chain above is
 intentional: it overrides the plain `ui-checked` translation when both states
 apply, so the visual stays coherent during interaction. Whether you use
 selectors or utilities, treat overlapping states as a design decision rather
@@ -200,27 +199,87 @@ than something to leave to specificity.
 
 ## Consuming Tokens
 
-Notice that the styles above never write a literal color. They reference
-tokens (`var(--primary)` in CSS, `bg-primary` in Tailwind) that resolve to
-the same semantic value.
+Notice that the styles above never hard-code literal colors. Instead, they
+reference semantic tokens such as `primary` and `content`.
 
-Tokens matter for two reasons:
+Semantic tokens name the intent of a value in the interface, not the raw value
+itself. For example, `primary` means “the main accent in the current theme”,
+and `content` means “primary foreground content”.
 
-- **Consistency.** A `Switch`, a `Button`, and a `Tab` that all read from
-  `--primary` stay in sync automatically. Changing the token changes every
-  surface that uses it.
-- **Themeability.** Light mode, dark mode, and brand variants become a matter
-  of swapping token values, not editing every component.
+In this guide, you will most often see those tokens consumed as CSS property
+values (`var(--primary)` and `var(--content)`) or Tailwind utilities
+(`bg-primary` and `text-content`). These forms all resolve to the same runtime
+token values.
 
-LUNA, the token layer used throughout these examples, defines semantic token
-names, exposes them as CSS variables, and maps the same tokens into Tailwind
-utilities. That is why the same primitive can be styled in either syntax
-without losing the shared visual language. `var(--primary)` and `bg-primary`
-resolve to the same value, and a themed wrapper built on top inherits it
-automatically.
+Semantic tokens matter for two reasons:
 
-For token names, surface hierarchy, and theme generation, see the [LUNA
-Themes and Tokens](./luna-themes-tokens.mdx) documentation.
+- **Consistency.** A `Button`, a `Switch`, and a `Checkbox` that all read from
+  `primary` stay in sync automatically. Changing the token updates every
+  surface that consumes it.
+- **Themeability.** Components depend on roles such as `primary` and `content`,
+  rather than concrete colors. A theme can change what those roles resolve to
+  across light, dark, or brand variants without rewriting component styles.
+
+In practice, this means the concrete values for these semantic roles are
+provided by the active theme scope on an ancestor node, following the same ancestor-based
+theme switching pattern described in the [custom theming guide](/guide/styling/custom-theming.html),
+where a theme class is applied at the container level and descendant styles resolve against that
+shared theme scope.
+
+Instead of branching styles per theme:
+
+```tsx
+<Button className="bg-pink-500 dark:bg-pink-300 text-white dark:text-black" />
+```
+
+<Details title="Prefer semantic tokens over color scales">
+
+In Tailwind utilities, the prefix describes the CSS property, such as `bg-` for
+background color or `text-` for text color. The value after the prefix is what
+matters for theming.
+
+Values such as `pink-500` and `pink-300` may still come from a design scale,
+but that scale is usually global: `pink-500` means the same concrete color
+regardless of whether the current theme is light, dark, or brand-specific.
+This makes it less suitable for components that need to adapt across multiple
+themes.
+
+Semantic values such as `primary` and `primary-content` describe the role of a
+style instead. The active theme decides what those roles resolve to, so the
+same component style can stay stable while the visual result changes with the
+theme.
+
+</Details>
+
+Components should consume semantic tokens and stay visually stable:
+
+```tsx
+<Button className="bg-primary text-primary-content" />
+```
+
+Theme switching then happens at the container level:
+
+```tsx
+<view className="lunaris-dark">
+  {/* themed subtree */}
+  <Button className="bg-primary text-primary-content" />
+  <Switch className="switch">
+    <SwitchTrack className="switch-track" />
+    <SwitchThumb className="switch-thumb" />
+  </Switch>
+</view>
+```
+
+Changing the ancestor theme class, for example from `lunaris-dark` to
+`lunaris-light`, updates the token values for the entire subtree without
+rewriting individual component styles.
+
+In `lynx-ui`, this container-scoped theme model is implemented by LUNA, which
+provides four built-in theme classes: `luna-light`, `luna-dark`,
+`lunaris-light`, and `lunaris-dark`.
+
+For token names, surface hierarchy, and theme overriding,
+see the [LUNA Themes and Tokens](./luna-themes-tokens.mdx) documentation.
 
 ## Composing Themed Wrappers
 
@@ -304,9 +363,11 @@ A few things to notice in this final form:
 - The token layer (`bg-primary`, `bg-neutral-faint`, `bg-primary-content`)
   carries through unchanged; the wrapper adds defaults, not new colors.
 
-This is a typical shadcn-style composition pattern: primitives stay public and composable, while themed components become the default product-facing implementation.
+This is a typical shadcn-style composition pattern: primitives stay public and composable, while
+themed components become the default product-facing implementation.
 
-The example below applies the pattern in a real UI: a controlled switch drives container theme, and nested surfaces can override theme independently. The same demo is embedded on the [`<Switch>`](./components/switch.mdx) page.
+The example below applies the pattern in a real UI: a controlled switch drives container theme,
+and nested surfaces can override theme independently. The same demo is embedded on the [`<Switch>`](./components/switch.mdx) page.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-switch_themed.webm"
