@@ -105,45 +105,11 @@ But products are not built from atoms alone. That is where the [frontend compone
   webPreviewMode="auto"
 />
 
-## Headless Components
+## Composability and Unlocking Design Systems
 
 Abstraction only becomes truly useful when it stays composable. lynx-ui does not treat components as black boxes with endlessly growing prop surfaces. Instead, it exposes structured primitives that let teams decide how pieces fit together in their own product context. A dialog is not a single opaque component, but a composition of roles such as trigger, content, and state boundary. This model unlocks more than flexibility. It gives teams a stable way to compose behavior, structure, and state without turning components into rigid black boxes. lynx-ui provides the interaction logic and native integration, while leaving product teams free to decide how each piece should be assembled in real scenarios.
 
-{/* TODO(@fzx2666-fz): Replace the static code block below with a `<Go>` interactive example. Use one of the pre-existing lynx-ui examples (e.g. lynx-ui-popover) to demonstrate composability with highlighted source. */}
-
 Take `Popover` as an example. Its behavior is split into explicit structural parts, so teams can keep the interaction model while freely shaping the surface:
-
-```tsx
-import {
-  PopoverRoot,
-  PopoverTrigger,
-  PopoverAnchor,
-  PopoverPositioner,
-  PopoverContent,
-  PopoverArrow,
-} from '@lynx-js/lynx-ui';
-
-export function BrandedPopover() {
-  return (
-    <PopoverRoot>
-      <PopoverTrigger>
-        <view className="trigger">
-          <text className="trigger-label">Open menu</text>
-        </view>
-      </PopoverTrigger>
-
-      <PopoverAnchor>
-        <PopoverPositioner placement="bottom-start" sideOffset={8}>
-          <PopoverContent className="popover-content">
-            <view className="popover-card" />
-            <PopoverArrow className="popover-arrow" />
-          </PopoverContent>
-        </PopoverPositioner>
-      </PopoverAnchor>
-    </PopoverRoot>
-  );
-}
-```
 
 <Go
   example="lynx-ui-popover"
@@ -157,13 +123,15 @@ export function BrandedPopover() {
 
 The important part is not the visual style of this example, but the separation of responsibilities: `PopoverRoot` owns state, `PopoverTrigger` defines intent, `PopoverPositioner` handles placement, and `PopoverContent` stays structurally independent. That is the kind of composition model that makes advanced reuse natural instead of fragile.
 
-## Main-Thread Interaction
+## Low-Latency Interaction
 
-The difference between good and great is not only in the curve, but also in the timing.
+A design system does not stop at pixels. The way an interface responds to touch is part of the system too.
 
-Lynx uses a dual-thread model: the main thread handles graphics rendering, while the background thread runs JavaScript. In a traditional setup, interactions must cross that boundary, which introduces latency and makes advanced motion feel less direct than it should.
+That matters especially for components built around continuous input. A swipe, drag, or snap is judged frame by frame. If the visual response trails behind the gesture, the component may still work, but it no longer feels native.
 
-MTS moves interaction logic onto the main thread. That means gesture input, per-frame updates, and visual response can stay in sync, making interactions feel immediate instead of approximate. Swiper is a simple example: `delta in, transform out`, frame by frame, directly on the main thread.
+Lynx's dual-thread model gives lynx-ui a way to handle that tradeoff. The main thread handles graphics rendering, while the background thread runs JavaScript. For interaction-heavy components, MTS can move the high-frequency part of the interaction onto the main thread, keeping gesture input and visual updates close to the frame.
+
+`Swiper` shows the idea directly: drag input feeds transform updates frame by frame, so the card follows the gesture instead of catching up to it later.
 
 <Go
   example="lynx-ui-swiper"
@@ -174,17 +142,23 @@ MTS moves interaction logic onto the main thread. That means gesture input, per-
   webPreviewMode="auto"
 />
 
-## Motion
+### Motion
 
-With native foundations and main thread interaction in place, motion becomes practical, not just decorative.
+Once interaction and rendering stay close together, motion can become part of the component itself.
 
-And that is exactly where Motion.js comes in:
+That is the role of Motion in lynx-ui. `@lynx-js/motion`, Lynx's adaptation of [Motion](https://motion.dev/), brings Motion's imperative API into Lynx components. It supports spring-based and bezier-based transitions, so a component can feel physically responsive when it should, and precisely timed when the product needs more deliberate pacing.
+{/* TODO: Insert a `@lynx-js/motion` final doc link */}
 
-- Motion curves encode physical intuition: a spring animation feels alive; a bezier curve feels designed
-- Partnered with TikTok's design team to bring physics-based motion to more surfaces
-- Adapted the Motion.js imperative API fully into Lynx
-- **Same code. Same API. Web and native.**
-- We're now sponsoring the Motion.js project
+`Sheet` shows why that matters. Drag, resistance, release, and settling need to read as one continuous behavior. With MTS keeping interaction close to rendering and Motion defining how the surface moves, the sheet feels held, not just played back.
+
+<Go
+  example="lynx-ui-sheet"
+  defaultFile="Basic/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-sheet.webm"
+  defaultEntryFile="dist/SheetBasic.lynx.bundle"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  webPreviewMode="auto"
+/>
 
 ## LUNA
 
