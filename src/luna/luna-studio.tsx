@@ -288,11 +288,13 @@ function LunaStudioShowcase({
   defaultViewMode = 'lineup',
   defaultThemeMode,
   defaultThemeModeLocked = true,
+  responsiveMode = 'viewport',
 }: {
   className?: string;
   defaultViewMode?: StudioViewMode;
   defaultThemeMode?: LunaThemeMode;
   defaultThemeModeLocked?: boolean;
+  responsiveMode?: 'viewport' | 'container';
 }) {
   const pageIsDark = useDark();
   const pageThemeMode: LunaThemeMode = pageIsDark ? 'dark' : 'light';
@@ -347,15 +349,44 @@ function LunaStudioShowcase({
       ? 'bg-[#ffffffbb]'
       : 'bg-[#0000001a]';
 
+  const isContainerResponsive = responsiveMode === 'container';
+  const rootBaseClassName =
+    'relative isolate w-full overflow-hidden rounded-[24px] transition-all duration-300';
+  const rootClassName = cn(
+    rootBaseClassName,
+    isContainerResponsive ? '@container' : undefined,
+    containerClassName,
+    className,
+  );
+
+  const rootViewportClassName =
+    'p-8 px-4 md:px-6 md:py-6 h-[420px] sm:h-[520px] md:h-[580px] lg:h-[640px] xl:h-[700px] 2xl:h-[760px]';
+  const rootContainerClassName =
+    'p-8 px-10 @xl:px-12 @3xl:px-14 h-[360px] @sm:h-[400px] @md:h-[440px] @lg:h-[480px] @xl:h-[500px] @2xl:h-[520px] @3xl:h-[580px]';
+
+  const stageWrapperClassName = cn(
+    'relative z-0 w-full',
+    isContainerResponsive ? rootContainerClassName : rootViewportClassName,
+  );
+
+  const controlsWrapperClassName = cn(
+    'absolute z-50 rounded-full shadow-sm backdrop-blur transform-gpu',
+    isContainerResponsive
+      ? 'bottom-2 left-1/2 -translate-x-1/2 @3xl:left-auto @3xl:right-2 @3xl:translate-x-0'
+      : 'bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:right-4 md:translate-x-0',
+    controlsBgClassName,
+  );
+
+  const controlsInnerClassName = cn(
+    'flex items-center gap-1 px-2 py-2',
+    isContainerResponsive
+      ? '@3xl:flex-col @3xl:justify-between @3xl:gap-2 @3xl:px-2 @3xl:py-3'
+      : 'md:flex-col md:justify-between md:gap-2 md:px-2 md:py-3',
+  );
+
   return (
-    <div
-      className={cn(
-        'relative isolate w-full overflow-hidden rounded-[24px] transition-all duration-300 h-[420px] sm:h-[520px] md:h-[580px] lg:h-[640px] xl:h-[700px] 2xl:h-[760px]',
-        containerClassName,
-        className,
-      )}
-    >
-      <div className="relative z-0 h-full w-full p-6 px-4">
+    <div className={rootClassName}>
+      <div className={stageWrapperClassName}>
         <Choreography
           bundleRoot={BUNDLE_ROOT}
           className="gap-4"
@@ -374,13 +405,8 @@ function LunaStudioShowcase({
         />
       </div>
 
-      <div
-        className={cn(
-          'absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full shadow-sm backdrop-blur transform-gpu md:left-auto md:right-4 md:translate-x-0',
-          controlsBgClassName,
-        )}
-      >
-        <div className="flex items-center gap-1 px-2 py-2 md:flex-col md:justify-between md:gap-2 md:px-2 md:py-3">
+      <div className={controlsWrapperClassName}>
+        <div className={controlsInnerClassName}>
           {VIEW_MODE_ITEMS.map((item) => (
             <IconToggleButton
               key={item.value}
@@ -394,7 +420,10 @@ function LunaStudioShowcase({
 
           <div
             className={cn(
-              'mx-1 h-px w-2 md:mx-0 md:h-6 md:w-px',
+              'mx-1 h-px w-2',
+              isContainerResponsive
+                ? '@3xl:mx-0 @3xl:h-6 @3xl:w-px'
+                : 'md:mx-0 md:h-6 md:w-px',
               dividerClassName,
             )}
           />
@@ -412,7 +441,10 @@ function LunaStudioShowcase({
 
           <div
             className={cn(
-              'mx-1 h-px w-2 md:mx-0 md:h-6 md:w-px',
+              'mx-1 h-px w-2',
+              isContainerResponsive
+                ? '@3xl:mx-0 @3xl:h-6 @3xl:w-px'
+                : 'md:mx-0 md:h-6 md:w-px',
               dividerClassName,
             )}
           />
@@ -431,7 +463,10 @@ function LunaStudioShowcase({
 
           <div
             className={cn(
-              'mx-1 h-px w-1 md:mx-0 md:h-6 md:w-px',
+              'mx-1 h-px w-1',
+              isContainerResponsive
+                ? '@3xl:mx-0 @3xl:h-6 @3xl:w-px'
+                : 'md:mx-0 md:h-6 md:w-px',
               dividerClassName,
             )}
           />
