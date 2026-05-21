@@ -71,6 +71,7 @@ export { Go } from './go/Go';
 // ----------------------------------------------------------------------------
 
 export { Caption, Figure } from './Figure';
+export { ImageWall } from './ImageWall';
 export { default as Mermaid } from './Mermaid/Mermaid';
 export { VideoList } from './VideoList';
 export { YouTubeIframe } from './YoutubeIframe';
