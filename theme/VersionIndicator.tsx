@@ -157,7 +157,7 @@ export function VersionIndicator() {
         onOpenChange={setIsOpen}
       >
         <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
-        <HoverCardContent className="z-[100] w-28 p-0" align="start">
+        <HoverCardContent className="w-28 p-0" align="start">
           {versionMenu}
         </HoverCardContent>
       </HoverCard>
