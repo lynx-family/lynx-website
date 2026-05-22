@@ -22,45 +22,30 @@ export type SubsiteConfig = {
   };
   /** When set, the subsite links to an external URL instead of an internal route. */
   external?: string;
+  /** Category for dropdown column grouping. */
+  category?: 'core' | 'js-framework' | 'native-framework';
+  /** When set, this subsite is shown as a sub-item under the given parent in the dropdown. */
+  parentValue?: string;
+  /** Optional badge shown next to the label in the dropdown (e.g. "OSS", "Coming Soon"). */
+  badge?: string;
+  /** When true, the subsite is shown in the dropdown but interaction is disabled. */
+  disabled?: boolean;
 };
 
 export const SUBSITES_CONFIG: SubsiteConfig[] = [
+  // ── Core ──────────────────────────────────────────────────────
   {
     value: 'guide',
     label: 'Lynx',
-    description: 'The fundamental of Lynx',
+    description: 'Lynx Fundamentals',
     descriptionZh: 'Lynx 基础',
     home: '/',
     url: '/guide/ui/elements-components',
+    category: 'core',
     logo: {
       light:
         'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
-    },
-  },
-  {
-    value: 'react',
-    label: 'ReactLynx',
-    description: 'Build Lynx apps with React',
-    descriptionZh: '用 React 开发 Lynx 应用',
-    home: '/react/',
-    url: '/react/introduction',
-    logo: {
-      light:
-        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
-      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
-    },
-  },
-  {
-    value: 'lynx-ui',
-    label: 'lynx-ui',
-    description: 'UI component library for ReactLynx',
-    descriptionZh: 'ReactLynx UI 组件库',
-    home: '/lynx-ui/',
-    url: '/lynx-ui/introduction',
-    logo: {
-      light: '/assets/lynx-ui-icon-dark.svg',
-      dark: '/assets/lynx-ui-icon-light.svg',
     },
   },
   {
@@ -70,6 +55,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     descriptionZh: '面向 AI 的 Lynx',
     home: '/ai/',
     url: '/ai/',
+    category: 'core',
     logo: {
       light: '/assets/lynxai-logo-light.svg',
       dark: '/assets/lynxai-logo-dark.svg',
@@ -78,63 +64,130 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
   {
     value: 'rspeedy',
     label: 'Rspeedy',
-    description: 'The Lynx build tool',
+    description: 'Build Tool for Lynx',
     descriptionZh: 'Lynx 构建工具',
     home: '/rspeedy/',
     url: '/rspeedy/cli',
+    category: 'core',
     logo: {
       light:
         'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
     },
   },
+
+  // ── JavaScript Framework ──────────────────────────────────────
   {
-    value: 'sparkling',
-    label: 'Sparkling',
-    description: 'Lynx at TikTok scale',
-    descriptionZh: 'TikTok 规模的 Lynx 基础设施',
-    external: 'https://tiktok.github.io/sparkling',
-    home: '',
-    url: '',
-    logo: {
-      light: 'https://tiktok.github.io/sparkling/sparkling_logo_144_light.png',
-      dark: 'https://tiktok.github.io/sparkling/sparkling_logo_144.png',
-    },
-  },
-  {
-    value: 'vue-lynx',
-    label: 'Vue Lynx',
-    description: 'Build Lynx apps with Vue',
-    descriptionZh: '用 Vue 开发 Lynx 应用',
-    external: 'https://vue.lynxjs.org',
-    home: '',
-    url: '',
-    logo: {
-      light: 'https://vuejs.org/logo.svg',
-      dark: 'https://vuejs.org/logo.svg',
-    },
-  },
-  {
-    value: 'reactlynx-use',
-    label: 'ReactLynx Use',
-    description: 'Hooks for ReactLynx',
-    descriptionZh: 'ReactLynx 的 Hooks 库',
-    external: 'https://hooks.lynxjs.org',
-    home: '',
-    url: '',
+    value: 'react',
+    label: 'ReactLynx',
+    description: 'React to Lynx',
+    descriptionZh: '用 React 开发 Lynx 应用',
+    home: '/react/',
+    url: '/react/introduction',
+    category: 'js-framework',
     logo: {
       light:
         'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
     },
   },
+  {
+    value: 'lynx-ui',
+    label: 'lynx-ui',
+    description: 'UI for ReactLynx',
+    descriptionZh: 'ReactLynx 组件库',
+    home: '/lynx-ui/',
+    url: '/lynx-ui/introduction',
+    category: 'js-framework',
+    parentValue: 'react',
+    logo: {
+      light: '/assets/lynx-ui-icon-dark.svg',
+      dark: '/assets/lynx-ui-icon-light.svg',
+    },
+  },
+  {
+    value: 'reactlynx-use',
+    label: 'ReactLynx Use',
+    description: 'Hooks for ReactLynx',
+    descriptionZh: 'ReactLynx Hooks 库',
+    external: 'https://hooks.lynxjs.org',
+    home: '',
+    url: '',
+    category: 'js-framework',
+    parentValue: 'react',
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-light.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/reactlynx-logo-dark.svg',
+    },
+  },
+  {
+    value: 'vue-lynx',
+    label: 'Vue Lynx',
+    description: 'Vue to Lynx',
+    descriptionZh: '用 Vue 开发 Lynx 应用',
+    external: 'https://vue.lynxjs.org',
+    home: '',
+    url: '',
+    category: 'js-framework',
+    logo: {
+      light: 'https://vuejs.org/logo.svg',
+      dark: 'https://vuejs.org/logo.svg',
+    },
+  },
+
+  // ── Native Framework ──────────────────────────────────────────
+  {
+    value: 'lynxtron',
+    label: 'Lynxtron',
+    description: 'Desktop apps with Lynx',
+    descriptionZh: '使用 Lynx 构建桌面应用',
+    home: '/lynxtron/',
+    url: '/lynxtron/index',
+    category: 'native-framework',
+    badge: 'Coming Soon',
+    disabled: true,
+    logo: {
+      light: '/assets/lynxtron/lynxtron-icon-light.svg',
+      dark: '/assets/lynxtron/lynxtron-icon-dark.svg',
+    },
+  },
+  {
+    value: 'sparkling',
+    label: 'Sparkling',
+    description: 'Lynx at TikTok scale',
+    descriptionZh: 'TikTok 级 Lynx 设施',
+    external: 'https://tiktok.github.io/sparkling',
+    home: '',
+    url: '',
+    category: 'native-framework',
+    logo: {
+      light: 'https://tiktok.github.io/sparkling/sparkling_logo_144_light.png',
+      dark: 'https://tiktok.github.io/sparkling/sparkling_logo_144.png',
+    },
+  },
 ];
 
-/** Subsites with internal docs routes (Lynx, ReactLynx, Rspeedy, AI). */
-export const CORE_SUBSITES = SUBSITES_CONFIG.filter((s) => !s.external);
+/** Subsites with internal docs routes, excluding disabled ones (for sidebar). */
+export const CORE_SUBSITES = SUBSITES_CONFIG.filter(
+  (s) => !s.external && !s.disabled,
+);
 
-/** Subsites that link to external sites (Sparkling, Vue Lynx, ReactLynx Use). */
+/** Subsites that link to external sites. */
 export const ECOSYSTEM_SUBSITES = SUBSITES_CONFIG.filter((s) => s.external);
+
+// ── Dropdown column helpers ─────────────────────────────────────
+/** Top-level items (non-sub-items) for a given category. */
+const topLevel = (cat: SubsiteConfig['category']) =>
+  SUBSITES_CONFIG.filter((s) => s.category === cat && !s.parentValue);
+
+/** Sub-items nested under a parent value. */
+export const getSubItems = (parentValue: string) =>
+  SUBSITES_CONFIG.filter((s) => s.parentValue === parentValue);
+
+export const DROPDOWN_CORE = topLevel('core');
+export const DROPDOWN_JS_FRAMEWORK = topLevel('js-framework');
+export const DROPDOWN_NATIVE_FRAMEWORK = topLevel('native-framework');
 
 /**
  * URL paths that share common documentation files.
