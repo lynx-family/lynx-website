@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { useLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
 
-type ConfigKey = '/' | '/react/' | '/rspeedy/';
+type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynx-ui/';
 
 /**
  * Configuration for the blog button on different subsites.
@@ -48,6 +48,15 @@ const config: Record<
       en: 'Rspeedy',
     },
   },
+  '/lynx-ui/': {
+    text: {
+      zh: 'lynx-ui 正式发布',
+      en: 'lynx-ui is officially released',
+    },
+    latestBlogConfig: {
+      filename: 'lynx-ui',
+    },
+  },
 };
 
 const useBlogBtnDom = (src: string) => {
@@ -61,7 +70,9 @@ const useBlogBtnDom = (src: string) => {
         ? '/react/'
         : src.startsWith('/rspeedy/')
           ? '/rspeedy/'
-          : '/'
+          : src.startsWith('/lynx-ui/')
+            ? '/lynx-ui/'
+            : '/'
     ) as ConfigKey;
   }, [src]);
 
@@ -82,15 +93,17 @@ const useBlogBtnDom = (src: string) => {
     }
   }, [navigate, blogLink, isExternal]);
 
+  const hasLinkedBlog = !!latestBlogConfig;
+
   // Determine the display text
   const displayText = useMemo(() => {
-    if (configKey === '/') {
-      // For main site, use dynamic blog text or fallback
+    if (hasLinkedBlog) {
+      // Use dynamic blog text or fallback
       return blogText || config[configKey].text[lang];
     }
-    // For subsites, use static text
+    // For subsites without blog config, use static text
     return config[configKey].text[lang];
-  }, [configKey, blogText, lang]);
+  }, [hasLinkedBlog, configKey, blogText, lang]);
 
   useEffect(() => {
     if (page.pageType !== 'home') return;
@@ -106,14 +119,13 @@ const useBlogBtnDom = (src: string) => {
     if (!targetElement) return;
     if (!badgeElement) return;
 
-    badgeElement.className =
-      configKey === '/'
-        ? `rp-home-hero__badge active-hover`
-        : `rp-home-hero__badge`;
+    badgeElement.className = hasLinkedBlog
+      ? `rp-home-hero__badge active-hover`
+      : `rp-home-hero__badge`;
     badgeElement.textContent = displayText;
     badgeElement.style.opacity = '1';
 
-    if (configKey === '/') {
+    if (hasLinkedBlog) {
       badgeElement.addEventListener('click', handleInteraction);
       badgeElement.addEventListener('touchstart', handleInteraction);
     }
