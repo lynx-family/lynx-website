@@ -1,39 +1,27 @@
 ---
-title: 样式与主题
-description: 'lynx-ui 无头组件的样式与主题定制。'
+title: Primitives 与主题
+description: 'Unstyled primitives 以及如何为它们做样式和主题。'
 ---
 
 import { Details, Go } from '@lynx';
 
-# 样式与主题
+# Primitives 与主题
 
-`lynx-ui` 是一个 headless 组件库。它的 primitive 负责行为、状态与组合能力，
-但不提供固定的视觉设计。组件最终呈现出的尺寸、布局、颜色、动效，以及不同状态
-下的外观，都由应用层定义。
+`lynx-ui` 是一个 **unstyled** 组件库（也称 **headless**）。受 [Radix Primitives](https://www.radix-ui.com/primitives) 和 [Base UI](https://base-ui.com/) 启发，每个组件被拆分为两层：
 
-本文会以 `Switch` 为例，演示如何从最基础的 primitive 组合，逐步演进到可复用的
-themed wrapper，并说明在实践中如何为 `lynx-ui` 做样式。
+- **Primitive** 是你导入的顶层组件，如 `Switch`、`Popover`、`Sheet`。每个 primitive 完整处理一种交互模式，但不决定外观。
+- **Part** 是组成 primitive 的结构化部件。`Switch` 由 `SwitchTrack` 和 `SwitchThumb` 组成，每个 part 独立渲染、独立样式化。
 
-## 概览
+Primitive 不附带任何视觉设计，外观通过两种机制控制：
 
-为 `lynx-ui` 做样式时，可以分成三个层次：
+- **Styling** 定义单个组件实例的外观：尺寸、间距、过渡，以及不同状态下的视觉表现。
+- **Theming** 定义多个组件共享的语义化 token，token 一旦调整，所有引用它的地方都会同步更新。
 
-1. **为 part 做样式。** primitive 渲染出的每个 part 都接受你的 className 和
-   style，组件的视觉表现定义在这一层。
-2. **消费 token。** 不要直接写颜色或其它视觉常量，而是使用语义化 token，让
-   视觉系统可以集中调整。
-3. **组合 wrapper。** 当一种样式模式逐渐稳定后，再将它封装成带默认值的可复用
-   组件。
+本文以 `Switch` 为例，用 [LUNA](/lynx-ui/luna-themes-tokens) 作为主题层（你也可以用自己的 token 系统），从最基础的 primitive 组合逐步演进到可复用的 themed wrapper，分三步走：
 
-另外，还有两个容易混淆但本质不同的概念。
-
-**Styling（样式）** 关注的是单个组件实例的外观，比如尺寸、间距、过渡，以及不
-同状态下的视觉表现。**Theming（主题）** 关注的是被多个组件共同使用的语义化
-token：token 一旦调整，所有引用它的组件都会同步更新。
-
-在这一节的示例中，`lynx-ui` 负责提供 headless 的组合能力，而 LUNA 则作为主题层，
-用于提供语义化 token。LUNA 是推荐方案，但并不是必须；你完全可以使用自己的
-token 系统，或者不使用 token。
+1. [为 Part 做样式](#为-part-做样式)
+2. [使用 Token](#使用-token)
+3. [组合 Themed Wrapper](#组合-themed-wrapper)
 
 ## 准备
 

@@ -1,43 +1,27 @@
 ---
-description: 'How to style and theme lynx-ui headless components.'
-title: Styling and Theming
+description: 'Unstyled primitives and how to style and theme them.'
+title: Primitives and Themes
 ---
 
 import { Details, Go } from '@lynx';
 
-# Styling and Theming
+# Primitives and Themes
 
-`lynx-ui` is a headless component library. Its primitives handle behavior,
-state, and composition, but they do not impose a visual design. You are
-responsible for everything you see on screen: size, layout, color, motion,
-and how the component looks across its various states.
+`lynx-ui` is an **unstyled** component library (also known as **headless**). Inspired by [Radix Primitives](https://www.radix-ui.com/primitives) and [Base UI](https://base-ui.com/), it splits each component into two layers:
 
-This page walks through how to style `lynx-ui` primitives in practice, using a
-single `Switch` example that we evolve from a bare composition into a reusable
-themed wrapper.
+- **Primitives** are the top-level components you import, such as `Switch`, `Popover`, or `Sheet`. Each primitive handles one interaction pattern end to end, but makes no decisions about appearance.
+- **Parts** are the structural pieces that make up a primitive. A `Switch` is composed of `SwitchTrack` and `SwitchThumb`. Each part is a separate element you render and style independently.
 
-## Overview
+Since primitives ship with no visual design, you control appearance through two mechanisms:
 
-There are three layers worth distinguishing when you style `lynx-ui`:
+- **Styling** defines the appearance of a component instance: its size, spacing, transitions, and state-specific visuals.
+- **Theming** defines reusable semantic tokens that many components consume, so a single change to the token layer propagates everywhere.
 
-1. **Styling the parts.** Each rendered part of a primitive accepts your
-   classes and styles. This is where appearance lives.
-2. **Consuming tokens.** Instead of hard-coding colors and other visual
-   constants, you reference semantic tokens that can be themed centrally.
-3. **Composing wrappers.** When a styled pattern stabilizes, you wrap it into
-   a reusable component with sensible defaults.
+This guide walks through both in practice, using [LUNA](/lynx-ui/luna-themes-tokens) as the theme layer (you can bring your own) and a single `Switch` example that evolves from a bare composition into a reusable themed wrapper, in three steps:
 
-It is also useful to separate two related but distinct ideas.
-
-**Styling** defines the appearance of a component instance: its size,
-spacing, transitions, and state-specific visuals. **Theming** defines reusable
-semantic tokens that many components consume, so a single change to the token
-layer propagates everywhere.
-
-In the examples throughout this guide, `lynx-ui` provides the headless
-composition layer, while LUNA acts as the theme layer that supplies semantic
-tokens. LUNA is recommended, not required; you can bring your own token system
-or none at all.
+1. [Styling the parts](#styling-the-parts)
+2. [Consuming tokens](#consuming-tokens)
+3. [Composing themed wrappers](#composing-themed-wrappers)
 
 ## Setup
 
@@ -363,8 +347,7 @@ A few things to notice in this final form:
 - The token layer (`bg-primary`, `bg-neutral-faint`, `bg-primary-content`)
   carries through unchanged; the wrapper adds defaults, not new colors.
 
-This is a typical shadcn-style composition pattern: primitives stay public and composable, while
-themed components become the default product-facing implementation.
+This is a typical [shadcn/ui](https://ui.shadcn.com/)-style composition pattern: primitives stay public and composable, while themed components become the default product-facing implementation.
 
 The example below applies the pattern in a real UI: a controlled switch drives container theme,
 and nested surfaces can override theme independently. The same demo is embedded on the [`<Switch>`](./components/switch.mdx) page.
@@ -391,7 +374,4 @@ and nested surfaces can override theme independently. The same demo is embedded 
 
 ## Summary
 
-`lynx-ui` primitives give you full control over styling without taking
-behavior away from you. Style the parts directly with plain CSS or Tailwind,
-consume semantic tokens from a layer like LUNA so visual decisions stay
-consistent, and compose themed wrappers when a pattern is ready to be reused.
+`lynx-ui` primitives are unstyled: they give you full control over appearance without taking behavior away from you. Style the parts directly with plain CSS or Tailwind, consume semantic tokens from a layer like LUNA so visual decisions stay consistent, and compose themed wrappers when a pattern is ready to be reused.
