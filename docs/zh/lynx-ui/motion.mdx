@@ -13,16 +13,24 @@ import {
 
 # @lynx-js/motion
 
-`@lynx-js/motion` 可以在 Lynx 主线程中运行 Motion 风格的动画。适合用于需要立即更新视觉状态、而不应等待后台线程 React 状态更新的交互。
+`@lynx-js/motion` 是一个轻量适配层，直接复用 [Motion](https://motion.dev) 的源码，将其命令式 JavaScript API 带到 Lynx。所有 API 都运行在[主线程脚本](/react/main-thread-script)环境中，动画可以立即更新视觉属性，无需经过后台线程中转。如果你在 Web 上用过 Motion 的 [`animate()`](https://motion.dev/docs/animate)、[`motionValue()`](https://motion.dev/docs/motion-value) 和 [`spring`](https://motion.dev/docs/spring)，在 Lynx 中的用法完全一样。如果你还不熟悉 Motion，可以先阅读 [Motion 快速上手指南](https://motion.dev/docs/quick-start)。
 
-适合使用它的场景包括：
+:::details 什么是 Mini 入口，什么时候应该使用它？
 
-- 需要 `stop()` 等命令式动画控制。
-- 需要动画化 transform、颜色、带单位的字符串和关键帧等 CSS 风格的值。
-- 需要弹簧动画、手势驱动效果，或者需要在多个主线程事件处理函数之间共享值。
-- 需要通过 `styleEffect()` 和派生值更新元素样式，而不触发 React 重新渲染。
+这个包提供两个入口。完整入口尚未达到与 Motion 的完全特性对等，且引擎版本要求较高。[Mini](./motion-mini) 是裁剪版本，兼容性更广，也是目前 lynx-ui 使用的入口。
 
-如果只需要数字动画，并且希望主线程动画运行时代码尽可能小，请使用 [Motion Mini](./motion-mini)。
+|                                                           | `@lynx-js/motion`                            | `@lynx-js/motion/mini`（[Mini](./motion-mini)） |
+| --------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------- |
+| [**Animation**](https://motion.dev/docs/animate)          | 数字、颜色、带单位字符串、关键帧数组         | 仅数字                                          |
+| [**Motion values**](https://motion.dev/docs/motion-value) | `motionValue()`（`useMotionValue` 暂不支持） | `useMotionValueRef()`                           |
+| [**Spring**](https://motion.dev/docs/spring)              | `type: 'spring'`                             | `type: 'spring'`                                |
+| [**Stagger**](https://motion.dev/docs/stagger)            | `stagger()` + 选择器                         | --                                              |
+| **styleEffect**                                           | 从 motion value 派生样式                     | --                                              |
+| **Lynx Engine**                                           | >= 3.5                                       | 无最低要求                                      |
+| **ReactLynx**                                             | >= 0.115.2                                   | 无最低要求                                      |
+| **Bundle 体积**                                           | ~275 KB                                      | ~135 KB                                         |
+
+:::
 
 ## 安装
 
@@ -34,15 +42,15 @@ import {
 import { animate, motionValue, styleEffect } from '@lynx-js/motion';
 ```
 
-动画逻辑应放在带有 `'main thread';` 指令的函数中。如果需要从 React 生命周期或后台线程事件处理函数启动动画，请使用 `runOnMainThread()` 调用主线程函数。
+## 为元素添加动画
 
-## 动画化元素引用
+`animate()` 函数接受与 Web 端 Motion 相同的[选项](https://motion.dev/docs/animate#options)，包括 `duration`、`ease`、`delay`、`repeat` 和 `type: 'spring'`。完整选项列表见 [Motion `animate()` 参考](https://motion.dev/docs/animate)。
 
 常见用法如下：
 
 1. 使用 `useMainThreadRef()` 创建主线程元素引用。
 2. 通过 `main-thread:ref` 绑定到元素。
-3. 在主线程函数中调用 `animate()` 启动动画。
+3. 在主线程函数中调用 [`animate()`](https://motion.dev/docs/animate) 启动动画。
 4. 将动画控制对象保存在另一个主线程引用中，方便清理时调用 `stop()`。
 
 <Go
@@ -54,11 +62,9 @@ import { animate, motionValue, styleEffect } from '@lynx-js/motion';
   defaultTab="web"
 />
 
-当动画目标不只是数字时，应使用完整包。例如，`@lynx-js/motion` 可以动画化 `width: '120px'`、`backgroundColor: '#0d63f8'` 这样的颜色值，以及 transform 字符串。
-
 ## 使用弹簧动画
 
-当值需要以物理弹簧效果收敛，而不是按固定时长的缓动曲线变化时，设置 `type: 'spring'`。
+当值需要以弹簧物理效果收敛，而不是按固定时长的缓动曲线变化时，设置 `type: 'spring'`。Motion 的所有 [spring 选项](https://motion.dev/docs/spring)均受支持，包括 `stiffness`、`damping`、`mass` 和 `bounce`。
 
 <Go
   example="motion"
@@ -71,7 +77,7 @@ import { animate, motionValue, styleEffect } from '@lynx-js/motion';
 
 ## 使用 MotionValue
 
-`motionValue()` 用于保存值，可以直接传给 `animate()` 做动画，并且可以订阅变化。当多个效果或事件处理函数需要共享同一个动画值时，可以使用它。
+[`motionValue()`](https://motion.dev/docs/motion-value) 用于保存值，可以直接传给 `animate()` 做动画，并且可以订阅变化。当多个效果或事件处理函数需要共享同一个动画值时，可以使用它。
 
 <Go
   example="motion"
@@ -95,10 +101,6 @@ import { animate, motionValue, styleEffect } from '@lynx-js/motion';
   defaultTab="web"
 />
 
-## 选择合适的 API
-
-对于在 CSS 中声明的静态样式变化，使用 CSS transition 或 keyframes。对于不需要 Motion 原语的小型命令式动画，可以使用内置的 `lynx.animate()` API。
-
-当你需要 Motion 风格的控制对象、MotionValue、插值、弹簧选项、选择器动画、交错列表动画或手势驱动效果时，使用 `@lynx-js/motion`。
-
-如果交互只依赖数字值，并且更关注包体积，请优先使用 [Motion Mini](./motion-mini)。
+:::info
+Motion 的 Web 专属手势 API，如 [`scroll()`](https://motion.dev/docs/scroll)、[`inView()`](https://motion.dev/docs/inview)、[`hover()`](https://motion.dev/docs/hover) 和 [`press()`](https://motion.dev/docs/press)，不包含在 `@lynx-js/motion` 中。请使用上方展示的主线程触摸事件。
+:::
