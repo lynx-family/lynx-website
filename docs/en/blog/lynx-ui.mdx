@@ -1,10 +1,10 @@
 ---
-title: 'Introducing lynx-ui'
+title: 'Announcing lynx-ui'
 date: 2026-05-22
 sidebar: false
-authors: ['lynx']
-badge_text: 'lynx-ui is here!'
-description: 'Introducing lynx-ui, a set of ready-to-use components that preserve native user experience while delivering the velocity of the web. With LUNA, Motion.js, and support for iOS, Android, and HarmonyOS.'
+authors: ['fzx2666-fz', 'f0rdream', 'AdrianLCA', 'MoonfaceX', 'Dugyu', 'huxpro']
+badge_text: 'lynx-ui is released!'
+description: 'Announcing lynx-ui, a set of ready-to-use components that preserve native user experience while delivering the velocity of the web. With LUNA, Motion.js, and support for iOS, Android, and HarmonyOS.'
 ---
 
 import { BlogHeader, Go, ImageWall } from '@lynx';
@@ -12,7 +12,7 @@ import { LunaStudioShowcase } from '@luna';
 
 <BlogHeader />
 
-`lynx-ui` is official released!
+Since we gave an early preview at [React Advanced London](https://reactadvanced.com/) last December, [lynx-ui](https://github.com/lynx-family/lynx-ui) has been quietly open-sourced. Since then we have been polishing components, building the documentation site, and adding examples. Today, we are excited to announce it as generally available.
 
 <ImageWall
   rows={2}
@@ -88,312 +88,130 @@ import { LunaStudioShowcase } from '@luna';
   ]}
 />
 
-## Native Foundations, Component Flexibility
+<center>
+  <span>
+    <small>lynx-ui components at a glance</small>
+  </span>
+</center>
 
-Lynx's native elements are powerful, but they cannot solve every product problem on their own.
+## Native Foundations, Web Velocity
 
-[Built-in elements](/guide/ui/elements-components.html#built-in-elements) and [XElement](/guide/ui/elements-components.html#xelement) give Lynx the low-level capabilities that matter on mobile: fast scrolling, precise gestures, [platform-level rendering](/guide/ui/elements-components.html#behind-the-elements-native-rendering), and predictable behavior across iOS, Android, HarmonyOS, Web and PC.
+[Built-in elements](/guide/ui/elements-components.html#built-in-elements) and [XElement](/guide/ui/elements-components.html#xelement) give Lynx the low-level capabilities that matter: fast scrolling, precise gestures, and [native rendering](/guide/ui/elements-components.html#behind-the-elements-native-rendering). But products are not built from atoms alone. That is where [components](/guide/ui/elements-components.html#components-composition-of-elements) belong. At Lynx, native provides the foundation; the web-inspired frontend stack provides the extension layer for composition, state, styling, and product-specific behavior.
 
-But products are not built from atoms alone. That is where the [frontend component layer](/guide/ui/elements-components.html#components-composition-of-elements) belongs. Native provides the performance-critical foundation; [JavaScript](/guide/scripting-runtime/index.html) provides the extension layer for composition, state, styling, and product-specific behavior. lynx-ui is built around this boundary, so teams can keep the performance of native primitives while gaining the flexibility and iteration speed of frontend development.
+lynx-ui delivers on this layering principle: **preserve native user experience, deliver the velocity of the web.**
 
 <Go
   example="lynx-ui-scroll-view"
   defaultFile="Basic/index.tsx"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-scroll-view.webm"
   defaultEntryFile="dist/ScrollViewBasic.lynx.bundle"
+  highlight="{17-23}"
   schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
   webPreviewMode="auto"
 />
 
-## Composability and Unlocking Design Systems
+<center>
+  <span>
+    <small>
+      lynx-ui's [<code>ScrollView</code>](/lynx-ui/components/scroll-view) is
+      built on top of the native [<code>&lt;scroll-view&gt;</code>
+      ](/api/elements/built-in/scroll-view) primitive
+    </small>
+  </span>
+</center>
 
-Abstraction only becomes truly useful when it stays composable. lynx-ui does not treat components as black boxes with endlessly growing prop surfaces. Instead, it exposes structured primitives that let teams decide how pieces fit together in their own product context. A dialog is not a single opaque component, but a composition of roles such as trigger, content, and state boundary. This model unlocks more than flexibility. It gives teams a stable way to compose behavior, structure, and state without turning components into rigid black boxes. lynx-ui provides the interaction logic and native integration, while leaving product teams free to decide how each piece should be assembled in real scenarios.
+## Composable Primitives
 
-Take `Popover` as an example. Its behavior is split into explicit structural parts, so teams can keep the interaction model while freely shaping the surface:
+Encapsulation can become a trap. lynx-ui does not treat components as black boxes with endlessly growing prop surfaces. Instead, it exposes structured primitives that let teams decide how pieces fit together in their own product context.
+
+[`Popover`](/lynx-ui/components/popover) shows the idea. It is not a single opaque component, but a composition of responsibilities: `PopoverRoot` owns state, `PopoverTrigger` defines intent, `PopoverPositioner` handles placement, and `PopoverContent` stays structurally independent.
 
 <Go
   example="lynx-ui-popover"
   defaultFile="Basic/index.tsx"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-popover.webm"
   defaultEntryFile="dist/PopoverBasic.lynx.bundle"
+  highlight="{20-38}"
   schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
   webPreviewMode="auto"
   webPreview={false}
 />
 
-The important part is not the visual style of this example, but the separation of responsibilities: `PopoverRoot` owns state, `PopoverTrigger` defines intent, `PopoverPositioner` handles placement, and `PopoverContent` stays structurally independent. That is the kind of composition model that makes advanced reuse natural instead of fragile.
-
-## Low-Latency Interaction
-
-A design system does not stop at pixels. The way an interface responds to touch is part of the system too.
-
-That matters especially for components built around continuous input. A swipe, drag, or snap is judged frame by frame. If the visual response trails behind the gesture, the component may still work, but it no longer feels native.
-
-Lynx's dual-thread model gives lynx-ui a way to handle that tradeoff. The main thread handles graphics rendering, while the background thread runs JavaScript. For interaction-heavy components, MTS can move the high-frequency part of the interaction onto the main thread, keeping gesture input and visual updates close to the frame.
-
-`Swiper` shows the idea directly: drag input feeds transform updates frame by frame, so the card follows the gesture instead of catching up to it later.
-
-<Go
-  example="lynx-ui-swiper"
-  defaultFile="CustomTinder/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-swiper.webm"
-  defaultEntryFile="dist/SwiperCustomTinder.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-### Motion
-
-Once interaction and rendering stay close together, motion can become part of the component itself.
-
-That is the role of Motion in lynx-ui. `@lynx-js/motion`, Lynx's adaptation of [Motion](https://motion.dev/), brings Motion's imperative API into Lynx components. It supports spring-based and bezier-based transitions, so a component can feel physically responsive when it should, and precisely timed when the product needs more deliberate pacing.
-{/* TODO: Insert a `@lynx-js/motion` final doc link */}
-
-`Sheet` shows why that matters. Drag, resistance, release, and settling need to read as one continuous behavior. With MTS keeping interaction close to rendering and Motion defining how the surface moves, the sheet feels held, not just played back.
-
-<Go
-  example="lynx-ui-sheet"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-sheet.webm"
-  defaultEntryFile="dist/SheetBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
+<center>
+  <span>
+    <small>Composition is all you need.</small>
+  </span>
+</center>
 
 ## LUNA
 
-The sections above form the stable, headless foundation of `lynx-ui`. With LUNA, we begin exploring a shared design language for how `lynx-ui` appears in real interfaces.
+The same composable model creates a foundation for design systems. lynx-ui components are [headless by default](/lynx-ui/styling-theming), with no opinions on visual style. [LUNA](/lynx-ui/luna-themes-tokens) is a reference design language built on top of that foundation.
 
-It grows from Lynx's signature gradient, adapting the brand expression into a softer palette for UI: warm pinks and rose tones moving into lavender and aqua.
-In LUNA, gradients act as first-class visual materials for expressing form and movement, giving components a sense of changing mediums.
-That sensitivity also carries into token names: LUNA describes how surfaces are felt, not where they are placed:
-`ambient` dissolves into the background, `faint` sits near the threshold of perception, `veil` and `film` create soft translucent layers.
-
-This is still an early answer, shaped by today's constraints. Interfaces are expanding across platforms and modalities, into the spaces and environments around us, and the vocabulary for that is still being written.
-
-We hope LUNA can be a starting point for that conversation.
+It grows from Lynx's signature gradient, adapting the brand expression into a softer palette for UI: warm pinks and rose tones moving into lavender and aqua. In LUNA, gradients act as first-class visual materials for expressing form and movement, giving components a sense of changing mediums. That sensitivity also carries into token names: LUNA describes how surfaces are felt, not where they are placed. `ambient` dissolves into the background, `faint` sits near the threshold of perception, `veil` and `film` create soft translucent layers.
 
 <LunaStudioShowcase responsiveMode="container" defaultViewMode="compare" />
 
-## Try it today
+<center>
+  <span>
+    <small>The LUNA stage demonstrates theme variants</small>
+  </span>
+</center>
 
-lynx-ui is available on iOS, Android, and HarmonyOS today, with partial web support and Lynx Desktop support on the horizon. The packages are published under [`@lynx-js/lynx-ui-*`](https://www.npmjs.com/package/@lynx-js/lynx-ui).
+## Programmable Interaction
 
-To get a feel for lynx-ui, try the components in action. Grab [Lynx Explorer](/guide/start/quick-start.html#prepare-lynx-explorer), scan the QR codes in the [demo](/lynx-ui/components/button), and you can see them running right away. Or bring it into your own Lynx app and try it in a real product flow.
+Components built around continuous input need two things at once: highly customizable behavior and low-latency response. A swipe, drag, or snap is judged frame by frame. If the visual response trails behind the gesture, the component may still work, but it no longer feels native.
 
-We want lynx-ui to grow from the way real apps are built. If it feels great, gets in your way, or leaves something missing, let us know in the [lynx-family/lynx-ui repository](https://github.com/lynx-family/lynx-ui) and help shape what comes next.
-
-## Components (Archived)
-
-17 components across four families. Each one native underneath, composable on top.
-
-### Form & Input
-
-The building blocks of user intent.
-
-`button` · `checkbox` · `switch` · `radio-group` · `input` · `form`
-
-{/* <Go> examples */}
-
-#### `button`
-
-<Go
-  example="lynx-ui-button"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-button.webm"
-  entry="Basic"
-  defaultEntryFile="dist/ButtonBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-#### `checkbox`
-<Go
-  example="lynx-ui-checkbox"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-checkbox.webm"
-  defaultEntryFile="dist/CheckboxBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `switch`
-
-<Go
-  example="lynx-ui-switch"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-switch.webm"
-  defaultEntryFile="dist/SwitchBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `radio-group`
-
-<Go
-  example="lynx-ui-radio-group"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-radio-group.webm"
-  defaultEntryFile="dist/RadioGroupBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `input`
-
-<Go
-  example="lynx-ui-input"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-input.webm"
-  defaultEntryFile="dist/InputBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-/>
-
-#### `form`
-
-<Go
-  example="lynx-ui-form"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-form.webm"
-  defaultEntryFile="dist/FormBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-### Overlay & Prompt
-
-Components that interrupt, inform, and anchor.
-
-`popover` · `dialog`
-
-#### `popover`
-
-<Go
-  example="lynx-ui-popover"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-popover.webm"
-  defaultEntryFile="dist/PopoverBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `dialog`
-
-<Go
-  example="lynx-ui-dialog"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-dialog.webm"
-  defaultEntryFile="dist/DialogBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-### Motion & Gesture
-
-Built around continuous input: drag, swipe, flick, snap.
-
-`swiper` · `draggable` · `swipe-action` · `sortable` · `sheet`
-
-#### `swiper`
+Lynx's [dual-thread model](/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity) defaults JavaScript to the background thread, keeping the main thread free for rendering. But [Main-Thread Script](/react/main-thread-script.html) can move interaction logic onto the main thread when it matters, making per-frame behavior fully programmable without crossing a thread boundary. [`Swiper`](/lynx-ui/components/swiper) shows the idea directly: drag input feeds transform updates frame by frame, so the card follows the gesture instead of catching up to it later.
 
 <Go
   example="lynx-ui-swiper"
   defaultFile="CustomTinder/index.tsx"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-swiper.webm"
   defaultEntryFile="dist/SwiperCustomTinder.lynx.bundle"
+  highlight="{22-36}"
   schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
   webPreviewMode="auto"
 />
 
-#### `sheet`
+<center>
+  <span>
+    <small>
+      A <code>'main thread'</code> function passed to{' '}
+      <code>main-thread:customAnimation</code> runs per-frame logic on the main
+      thread
+    </small>
+  </span>
+</center>
+
+## Motion
+
+[Motion](https://motion.dev/) is one of the most popular animation libraries in the Web community, known for its spring-based and bezier-based transitions. Thanks to the programmability that [Main-Thread Script](/react/main-thread-script.html) brings, we adapted Motion for Lynx as `@lynx-js/motion`, a thin layer that reuses Motion's source directly, and ship an experimental version together with lynx-ui. If you know Motion on the web, you already know how to use it in Lynx.
+
+[`Sheet`](/lynx-ui/components/sheet) shows why that matters. Drag, resistance, release, and settling need to read as one continuous behavior. With [Main-Thread Script](/react/main-thread-script.html) keeping interaction close to rendering and Motion defining how the surface moves, the sheet feels held, not just played back.
 
 <Go
   example="lynx-ui-sheet"
   defaultFile="Basic/index.tsx"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-sheet.webm"
   defaultEntryFile="dist/SheetBasic.lynx.bundle"
+  highlight="{30-43}"
   schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
   webPreviewMode="auto"
 />
 
-#### `swipe-action`
+<center>
+  <span>
+    <small>
+      <code>Sheet</code> uses <code>@lynx-js/motion</code> under the hood for
+      spring-driven drag and settle transitions
+    </small>
+  </span>
+</center>
 
-<Go
-  example="lynx-ui-swipe-action"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-swipe-action.webm"
-  defaultEntryFile="dist/SwipeActionBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
+## Try it today
 
-#### `sortable`
+lynx-ui is available on iOS, Android, and HarmonyOS today, with partial Web and Desktop support on the horizon. Read the [introduction](/lynx-ui/) to get oriented, or jump straight to the [quick start](/lynx-ui/introduction.html#quick-start) to install [`@lynx-js/lynx-ui-*`](https://www.npmjs.com/package/@lynx-js/lynx-ui).
 
-<Go
-  example="lynx-ui-sortable"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-sortable.webm"
-  defaultEntryFile="dist/SortableBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
+To see the components in action, grab [Lynx Explorer](/guide/start/quick-start.html#prepare-lynx-explorer), scan the QR codes in the [component demos](/lynx-ui/components/button), and see them running right away. Or bring it into your own Lynx app and try it in a real product flow.
 
-#### `draggable`
-
-<Go
-  example="lynx-ui-draggable"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-draggable.webm"
-  defaultEntryFile="dist/DraggableBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-### Structure & Scroll
-
-Layout components that handle volume.
-
-`scroll-view` · `feed-list` · `lazy-component` · `list`
-
-#### `scroll-view`
-
-<Go
-  example="lynx-ui-scroll-view"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-scroll-view.webm"
-  defaultEntryFile="dist/ScrollViewBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `feed-list`
-
-<Go
-  example="lynx-ui-feed-list"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-feed-list.webm"
-  defaultEntryFile="dist/FeedListBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `lazy-component`
-
-<Go
-  example="lynx-ui-lazy-component"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-lazy-component.webm"
-  defaultEntryFile="dist/LazyComponentBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
-
-#### `list`
-
-<Go
-  example="lynx-ui-list"
-  defaultFile="Basic/index.tsx"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-list.webm"
-  defaultEntryFile="dist/ListBasic.lynx.bundle"
-  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
-  webPreviewMode="auto"
-/>
+We want lynx-ui to grow from the way real apps are built. If it feels great, gets in your way, or leaves something missing, let us know in the [lynx-family/lynx-ui repository](https://github.com/lynx-family/lynx-ui). Help shape what comes next.

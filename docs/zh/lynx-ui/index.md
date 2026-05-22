@@ -12,8 +12,8 @@ hero:
   actions:
     - theme: brand
       text: 快速开始
-      link: ./introduction.html#快速开始
+      link: /lynx-ui/introduction.html#快速开始
     - theme: alt
       text: 组件
-      link: ./components/button
+      link: /lynx-ui/components/button
 ---

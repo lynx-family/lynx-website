@@ -11,8 +11,8 @@ hero:
   actions:
     - theme: brand
       text: Quick Start
-      link: ./introduction.html#quick-start
+      link: /lynx-ui/introduction.html#quick-start
     - theme: alt
       text: Components
-      link: ./components/button
+      link: /lynx-ui/components/button
 ---
