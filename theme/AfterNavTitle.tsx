@@ -427,7 +427,7 @@ export default function AfterNavTitle() {
             <Trigger />
           </DrawerTrigger>
           <DrawerContent>
-            <div className="py-5 px-4 pb-7">
+            <div className="py-5 px-4 pb-7 max-h-[70dvh] overflow-y-auto">
               <NavContent onSelect={() => setIsOpen(false)} isDrawer />
             </div>
           </DrawerContent>
