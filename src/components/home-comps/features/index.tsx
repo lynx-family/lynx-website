@@ -10,7 +10,14 @@ import { useLang } from '@rspress/core/runtime';
 import { BorderBeam } from '../border-beam';
 import { ActionBtn } from './action-btn';
 import { FeatureItem } from './feature-item';
-import { IconAndroid, IconHarmony, IconIOS, IconWeb } from './icon';
+import {
+  IconAndroid,
+  IconHarmony,
+  IconIOS,
+  IconMacOS,
+  IconWeb,
+  IconWindows,
+} from './icon';
 import { FeatureIconItem } from './item-icon';
 type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
 const featuresConfig: Record<
@@ -79,6 +86,17 @@ const featuresConfig: Record<
           ),
           size: 'large',
           link: 'guide/start/integrate-with-existing-apps.html?platform=web',
+        },
+        {
+          text: (
+            <Space>
+              <IconMacOS />
+              <IconWindows />
+              Desktop
+            </Space>
+          ),
+          size: 'large',
+          link: 'guide/start/integrate-with-existing-apps.html?platform=macos',
         },
       ],
     },
