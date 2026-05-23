@@ -75,6 +75,7 @@ export const HomeLayout = () => {
           <LunaStudioShowcase
             className="px-4 md:px-6 lg:px-8 py-8 md:py-4"
             defaultViewMode="lineup"
+            responsiveMode="viewport"
           />
         </div>
         <div className="flex flex-col">

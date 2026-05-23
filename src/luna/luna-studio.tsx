@@ -288,7 +288,7 @@ function LunaStudioShowcase({
   defaultViewMode = 'lineup',
   defaultThemeMode,
   defaultThemeModeLocked = true,
-  responsiveMode = 'viewport',
+  responsiveMode = 'container',
 }: {
   className?: string;
   defaultViewMode?: StudioViewMode;
