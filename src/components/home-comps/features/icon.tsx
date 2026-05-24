@@ -1,6 +1,6 @@
 import React from 'react';
 import AndroidIcon from '@assets/home/home-icon-android.svg?react';
-import WebIcon from '@assets/home/home-icon-web.svg?react';
+import WebIcon from '@/components/api-table/compat-table/assets/icons/web.svg?react';
 import AppleIcon from '@assets/home/home-icon-apple.svg?react';
 import HarmonyIcon from '@assets/home/harmony.svg?react';
 import MacOSIcon from '@/components/api-table/compat-table/assets/icons/macos-text.svg?react';
@@ -16,7 +16,7 @@ const IconIOS = () => {
 };
 
 const IconWeb = () => {
-  return <WebIcon />;
+  return <WebIcon className={styles['web-icon']} />;
 };
 
 const IconHarmony = () => {
