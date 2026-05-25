@@ -1,8 +1,11 @@
 ---
 description: 'Tutorial: implementing a high-performance swiper component in Lynx.'
+sidebar: false
 ---
 
-import { Go, Details } from '@lynx';
+import { Go, Details, LearnTutorialTabs } from '@lynx';
+
+<LearnTutorialTabs active="product-detail" />
 
 # Tutorial: Product Detail
 
@@ -123,7 +126,7 @@ function Swiper() {
 }
 ```
 
-Next, we use [Node Manipulation](../interaction/event-handling/manipulating-element.react.mdx) to get the `swiper-container` node and use [`setNativeProps`](../../api/lynx-api/nodes-ref/nodes-ref-set-native-props.mdx) to update the `transform` property, thereby updating the scroll position.
+Next, we use [Node Manipulation](/guide/interaction/event-handling/manipulating-element.react) to get the `swiper-container` node and use [`setNativeProps`](/api/lynx-api/nodes-ref/nodes-ref-set-native-props) to update the `transform` property, thereby updating the scroll position.
 
 ```tsx title="index.tsx" "{5-9,14}"
 function Swiper() {
@@ -170,7 +173,7 @@ function Swiper() {
 
 However, in scenarios requiring frequent updates, this approach would cause constant component re-rendering, affecting performance. A better approach is to directly manipulate nodes, as shown in the example.
 
-You can refer to [Direct Node Manipulation](../interaction/event-handling/manipulating-element.react.mdx) to learn more.
+You can refer to [Direct Node Manipulation](/guide/interaction/event-handling/manipulating-element.react) to learn more.
 :::
 
 ### Simplifying Code with Hooks
@@ -218,7 +221,7 @@ Finally, the code is more concise.
 
 You may have noticed that sometimes the scrolling doesn't feel smooth. This is because touch events occur in the **main thread**, while event listener code runs in the **background thread**, causing delayed touch event responses. This phenomenon is particularly noticeable on low-end devices.
 
-We can use [Main Thread Script](../../react/main-thread-script.mdx) to optimize this issue. After converting to main thread script, the scrolling becomes much smoother!
+We can use [Main Thread Script](/react/main-thread-script) to optimize this issue. After converting to main thread script, the scrolling becomes much smoother!
 
 <Go
   defaultTab="web"
@@ -293,7 +296,7 @@ Pass `swiperContainerRef` to `<view>` through the `main-thread:ref` attribute to
 <view main-thread:ref={swiperContainerRef}>{/* ... */}</view>
 ```
 
-The main thread node provides many capabilities, as shown in [`MainThread.Element`](../../api/lynx-api/main-thread/main-thread-element.mdx). Here we call the `setStyleProperties` method to modify the `transform` property, updating the `<Swiper>` component's position.
+The main thread node provides many capabilities, as shown in [`MainThread.Element`](/api/lynx-api/main-thread/main-thread-element). Here we call the `setStyleProperties` method to modify the `transform` property, updating the `<Swiper>` component's position.
 
 ```tsx title="useUpdateSwiperStyle.ts"
 function useUpdateSwiperStyle() {
@@ -404,8 +407,8 @@ But wait, why is there an error?!
 :::info Main Thread and Background Thread Functions Need Special APIs to Call Each Other
 Main thread script and background thread script run in separate runtimes. Functions in one runtime cannot directly call functions in another runtime. They need "special bridges" to communicate:
 
-- From background to main thread: Use [`runOnMainThread`](../../api/react/Function.runOnMainThread.mdx)
-- From main thread to background: Use [`runOnBackground`](../../api/react/Function.runOnBackground.mdx)
+- From background to main thread: Use [`runOnMainThread`](/api/react/Function.runOnMainThread)
+- From main thread to background: Use [`runOnBackground`](/api/react/Function.runOnBackground)
 
 :::
 

@@ -1,8 +1,11 @@
 ---
 description: '教程：实现高性能轮播组件。'
+sidebar: false
 ---
 
-import { Go, Details } from '@lynx';
+import { Go, Details, LearnTutorialTabs } from '@lynx';
+
+<LearnTutorialTabs active="product-detail" />
 
 # 教程：产品详情
 
@@ -123,7 +126,7 @@ function Swiper() {
 }
 ```
 
-接下来，我们使用[操作节点](../interaction/event-handling/manipulating-element.react.mdx)获取 `swiper-container` 的节点，并使用 [`setNativeProps`](../../api/lynx-api/nodes-ref/nodes-ref-set-native-props.mdx) 更新 `transform` 属性，从而更新滚动位置。
+接下来，我们使用[操作节点](/guide/interaction/event-handling/manipulating-element.react)获取 `swiper-container` 的节点，并使用 [`setNativeProps`](/api/lynx-api/nodes-ref/nodes-ref-set-native-props) 更新 `transform` 属性，从而更新滚动位置。
 
 ```tsx title="index.tsx" "{5-9,14}"
 function Swiper() {
@@ -170,7 +173,7 @@ function Swiper() {
 
 但是，在需要频繁更新的场景下，这种方式会导致组件不断重渲染，影响性能。更好的方式是直接操作节点，就像示例中那样。
 
-你可以参考[直接操作节点](../interaction/event-handling/manipulating-element.react.mdx)了解更多。
+你可以参考[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)了解更多。
 :::
 
 ### 用 hooks 简化代码
@@ -218,7 +221,7 @@ function Swiper() {
 
 你可能已经注意到，当手指滚动时，有时会有不跟手的感觉。这是因为触摸事件发生在<b>主线程</b>，事件监听代码运行在<b>后台线程</b>，导致触摸事件的响应不够及时。这个现象在低端机上尤为明显。
 
-我们可以使用[主线程脚本](../../react/main-thread-script.mdx)来优化这个问题。可以看到，改造成主线程脚本后，滚动变得更加跟手了！
+我们可以使用[主线程脚本](/react/main-thread-script)来优化这个问题。可以看到，改造成主线程脚本后，滚动变得更加跟手了！
 
 <Go
   defaultTab="web"
@@ -294,7 +297,7 @@ function useUpdateSwiperStyle() {
 <view main-thread:ref={swiperContainerRef}>{/* ... */}</view>
 ```
 
-主线程获取的节点提供了很多能力，可以参考 [`MainThread.Element`](../../api/lynx-api/main-thread/main-thread-element.mdx)。这里我们调用 `setStyleProperties` 方法修改 `transform` 属性，更新 `<Swiper>` 组件的位置。
+主线程获取的节点提供了很多能力，可以参考 [`MainThread.Element`](/api/lynx-api/main-thread/main-thread-element)。这里我们调用 `setStyleProperties` 方法修改 `transform` 属性，更新 `<Swiper>` 组件的位置。
 
 ```tsx title="useUpdateSwiperStyle.ts"
 function useUpdateSwiperStyle() {
@@ -405,8 +408,8 @@ const { handleTouchMove } = useOffset({
 :::info 主线程函数与后台线程函数需要特殊 API 才能互相调用
 主线程脚本与后台线程脚本在两个独立运行时中运行，一个运行时内的函数不能直接调用另一个运行时中的函数，他们之间需要“特殊的桥梁”才能互相通信:
 
-- 从后台到主线程: 使用 [`runOnMainThread`](../../api/react/Function.runOnMainThread.mdx)
-- 从主线程到后台: 使用 [`runOnBackground`](../../api/react/Function.runOnBackground.mdx)
+- 从后台到主线程: 使用 [`runOnMainThread`](/api/react/Function.runOnMainThread)
+- 从主线程到后台: 使用 [`runOnBackground`](/api/react/Function.runOnBackground)
 
 :::
 
