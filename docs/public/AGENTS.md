@@ -203,13 +203,13 @@ Common APIs:
 
 The following official Lynx tutorials cover scenarios from beginner to advanced—work through them hands-on:
 
-- Product gallery — build a two-column product page step by step: [Tutorial Gallery](/guide/start/tutorial-gallery.md). You will learn to:
+- Product gallery — build a two-column product page step by step: [Tutorial Gallery](/learn/gallery.md). You will learn to:
   - Build foundational UI with styling and interactions
   - Componentize the layout
   - Render high-performance long lists with the `<list />` element
   - Manipulate nodes directly via `NodesRef.invoke` to implement auto-scrolling
   - Customize scrollbars and leverage [Main Thread Script](/react/main-thread-script.md) to optimize scrolling performance
-- Product detail — implement a carousel component to practice high-performance interaction code: [Tutorial Product Detail](/guide/start/tutorial-product-detail.md). You will learn to:
+- Product detail — implement a carousel component to practice high-performance interaction code: [Tutorial Product Detail](/learn/product-detail.md). You will learn to:
   - Manipulate nodes directly with `NodesRef.setNativeProps` to update styles and attributes
   - Use [Main Thread Script](/react/main-thread-script.md) to reduce latency
   - Call between main-thread and background-thread functions

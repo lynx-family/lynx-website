@@ -203,13 +203,13 @@
 
 以下是一些 Lynx 官方 Tutorial，涵盖从基础到进阶的多种使用场景，推荐跟随学习：
 
-- 产品列表——本教程将引导你逐步实现一个产品双列页面：[Tutorial Gallery](/zh/guide/start/tutorial-gallery.md)，你将学到：
+- 产品列表——本教程将引导你逐步实现一个产品双列页面：[Tutorial Gallery](/zh/learn/gallery.md)，你将学到：
   - 构建基本UI并添加样式、交互
   - 组件化
   - 使用 `<list />` 元件实现高性能长列表渲染
   - 直接操作节点：使用 `NodesRef.invoke` 实现自动滚动
   - 自定义滚动条，并使用 [Main Thread Script](/zh/react/main-thread-script.md) 优化滚动性能
-- 产品详情——本教程将通过实现一个轮播组件，带你学习如何编写高性能的交互代码：[Tutorial Product Detail](/zh/guide/start/tutorial-product-detail.md)，你将学到：
+- 产品详情——本教程将通过实现一个轮播组件，带你学习如何编写高性能的交互代码：[Tutorial Product Detail](/zh/learn/product-detail.md)，你将学到：
   - 直接操作节点：使用 `NodesRef.setNativeProps` 更新元件的样式和属性
   - 使用 [Main Thread Script](/zh/react/main-thread-script.md) 降低延迟
   - 主线程函数与后台线程函数互相调用
