@@ -1,5 +1,5 @@
 export const feedListBasicDemoMeta = {
-  highlight: '{85-120}',
+  highlight: '{79-113}',
   description: 'highlight FeedList configuration and direct list-item children',
   content: [
     '<FeedList',
@@ -15,7 +15,7 @@ export const feedListBasicDemoMeta = {
 };
 
 export const feedListFooterDemoMeta = {
-  highlight: '{34-57,72-81,97-98}',
+  highlight: '{28-51,66-75,91-92}',
   description:
     'highlight load-more and no-more footer renderers plus status switching',
   content: [
@@ -28,7 +28,7 @@ export const feedListFooterDemoMeta = {
 };
 
 export const feedListDirectRefreshDemoMeta = {
-  highlight: '{17,59-69,92-96}',
+  highlight: '{17,45-62,73-77}',
   description:
     'highlight the ref, refresh handler, and refreshOptions connection',
   content: [
@@ -44,7 +44,7 @@ export const feedListDirectRefreshDemoMeta = {
 };
 
 export const feedListRefreshOptionsDemoMeta = {
-  highlight: '{22-31,59-69,92-96}',
+  highlight: '{32-35,45-62,73-77}',
   description:
     'highlight the refresh header, refresh handler, and refreshOptions wiring',
   content: [
