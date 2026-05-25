@@ -164,6 +164,35 @@ export default defineConfig({
           from: '/react/routing.html',
           to: '/react/routing/react-router.html',
         },
+        // Integrate with Existing Apps was folded into Quick Start as the
+        // building-block tab. Send legacy URLs to the corresponding tab.
+        // Patterns are anchored regex so the optional `.html` does not leak
+        // into the destination after `?approach=...`.
+        {
+          from: '^/guide/start/integrate-with-existing-apps(\\.html)?$',
+          to: '/guide/start/quick-start.html?approach=building-block',
+        },
+        {
+          from: '^/zh/guide/start/integrate-with-existing-apps(\\.html)?$',
+          to: '/zh/guide/start/quick-start.html?approach=building-block',
+        },
+        // Tutorials moved out of Get Started into top-level /learn/<slug>.
+        {
+          from: '^/guide/start/tutorial-gallery(\\.html)?$',
+          to: '/learn/gallery.html',
+        },
+        {
+          from: '^/zh/guide/start/tutorial-gallery(\\.html)?$',
+          to: '/zh/learn/gallery.html',
+        },
+        {
+          from: '^/guide/start/tutorial-product-detail(\\.html)?$',
+          to: '/learn/product-detail.html',
+        },
+        {
+          from: '^/zh/guide/start/tutorial-product-detail(\\.html)?$',
+          to: '/zh/learn/product-detail.html',
+        },
       ],
     }),
     sharedSidebarPlugin(),
