@@ -20,6 +20,12 @@ interface ChoiceTabProps {
   /** Platform IDs to show as compact inline indicators, e.g. ['ios', 'android'] */
   platforms?: string[];
   tag?: string;
+  /**
+   * Canonical standalone URL for this tab's content. When set, the SSG-MD
+   * output replaces the inline tab body with a link to this URL so each
+   * approach gets its own focused .md file in `llms.txt`.
+   */
+  href?: string;
   children: React.ReactNode;
 }
 
@@ -51,6 +57,31 @@ export const ChoiceTabs = ({
     }
     return acc;
   }, []);
+
+  // SSG-MD path: emit a compact bullet list with one link per approach so
+  // each tab's content lives in its own focused `.md` file rather than
+  // concatenating every approach into a single mega-file.
+  if (import.meta.env.SSG_MD) {
+    return (
+      <ul>
+        {tabs.map((tab) => {
+          const { value, label, description, href } = tab.props;
+          return (
+            <li key={value}>
+              {href ? (
+                <strong>
+                  <a href={href}>{label}</a>
+                </strong>
+              ) : (
+                <strong>{label}</strong>
+              )}
+              {description ? ` — ${description}` : null}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
 
   const defaultTab = defaultValue || tabs[0]?.props.value || '';
 

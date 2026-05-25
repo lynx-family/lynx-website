@@ -201,20 +201,8 @@ const SHARED_DOC_ROOT = 'start';
 // Map of localized titles for shared documentation files
 const SHARED_DOC_TITLES = {
   'quick-start': {
-    en: 'Quick Start',
-    zh: '快速上手',
-  },
-  'integrate-with-existing-apps': {
-    en: 'Integrate with Existing Apps',
-    zh: '接入现有应用',
-  },
-  'tutorial-gallery': {
-    en: 'Tutorial: Product Gallery',
-    zh: '教程：产品列表',
-  },
-  'tutorial-product-detail': {
-    en: 'Tutorial: Product Detail',
-    zh: '教程：产品详情',
+    en: 'Get Started',
+    zh: '起步',
   },
 } as const;
 
@@ -289,27 +277,20 @@ export const createSharedRouteSidebar = (
 
   const fullPrefix = `${getLangPrefix(lang)}${pathPrefix}/${SHARED_DOC_ROOT}`;
 
-  // Generate sidebar items from shared doc titles
-  const sidebarItems = Object.entries(SHARED_DOC_TITLES).map(
+  // Render shared docs as flat top-level entries (one per file).
+  // After collapsing Get Started to a single Quick Start page, there is no
+  // longer a section-with-sub-items layer; each shared doc renders directly.
+  const flatItems: SidebarData = Object.entries(SHARED_DOC_TITLES).map(
     ([filename, texts]) => ({
       text: texts[lang === 'zh' ? 'zh' : 'en'],
       link: `${fullPrefix}/${filename}`,
     }),
   );
 
-  // Define shared sidebar sections with localized text
-  const sharedSections: SidebarData = [
-    {
-      text: lang === 'zh' ? '开始' : 'Get Started',
-      items: sidebarItems,
-      collapsible: true,
-      // Collapse section if not currently viewing pages under shared root
-      collapsed: !pathname.includes(`/${SHARED_DOC_ROOT}/`),
-    },
+  return [
+    ...flatItems,
     {
       dividerType: 'solid',
     },
   ];
-
-  return sharedSections;
 };
