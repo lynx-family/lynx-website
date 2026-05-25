@@ -56,17 +56,17 @@ const PLATFORM_OPTIONS: Array<{
   {
     id: 'macos',
     label: 'macOS',
-    iconName: 'ios',
+    iconName: 'macos' as PlatformName,
   },
   {
     id: 'macos-arm64',
     label: 'macOS (arm64)',
-    iconName: 'ios',
+    iconName: 'macos' as PlatformName,
   },
   {
     id: 'macos-intel',
     label: 'macOS (x86_64)',
-    iconName: 'ios',
+    iconName: 'macos' as PlatformName,
   },
   {
     id: 'reactlynx',

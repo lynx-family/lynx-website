@@ -21,8 +21,8 @@ const showCaseList = [
     },
     class: 'case-0',
     link: {
-      en: '/guide/start/tutorial-gallery',
-      zh: '/zh/guide/start/tutorial-gallery',
+      en: '/learn/gallery',
+      zh: '/zh/learn/gallery',
     },
   },
   {
@@ -36,8 +36,8 @@ const showCaseList = [
     },
     class: 'case-1',
     link: {
-      en: '/guide/start/tutorial-product-detail',
-      zh: '/zh/guide/start/tutorial-product-detail',
+      en: '/learn/product-detail',
+      zh: '/zh/learn/product-detail',
     },
   },
 ] as const;

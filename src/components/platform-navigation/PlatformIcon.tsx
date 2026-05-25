@@ -4,11 +4,14 @@ import { mapPlatformNameToIconName } from '../api-table/compat-table/headers';
 import { PlatformIconProps } from './types';
 import './icon.scss';
 import AndroidIcon from '@assets/home/home-icon-android.svg';
-import WebIcon from '@assets/home/home-icon-web.svg';
 import WindowsIcon from '@assets/home/windows.svg';
 import IosIcon from '@assets/home/home-icon-apple.svg';
 import HarmonyIcon from '@assets/home/harmony.svg';
 import ClayIcon from '@assets/home/clay.svg';
+// Use the same HTML5 web icon and macOS text mark as the homepage features
+// section so platform indicators stay consistent across the site.
+import WebIcon from '@/components/api-table/compat-table/assets/icons/web.svg';
+import MacosIcon from '@/components/api-table/compat-table/assets/icons/macos-text.svg';
 
 const toPlatformName = (platform: string): PlatformName => {
   switch (platform) {
@@ -32,13 +35,25 @@ export const PlatformSvg = ({
   className,
   key,
 }: {
-  platformName: PlatformName | 'clay';
+  // Accept extra string ids ('clay', 'macos', 'macos-arm64', 'macos-intel',
+  // 'windows') alongside the canonical PlatformName so PlatformTabs and
+  // ChoiceTabs can use the homepage-aligned icon set without TS friction.
+  platformName: PlatformName | string;
   className?: string;
   key?: string;
 }) => {
   var svgUrl;
   if (platformName === 'clay') {
     svgUrl = ClayIcon;
+  } else if (
+    platformName === 'macos' ||
+    platformName === 'macos-arm64' ||
+    platformName === 'macos-intel' ||
+    platformName === 'clay_macos'
+  ) {
+    // Use the dedicated "macOS" text mark so macOS is visually distinct from
+    // iOS (which both share the Apple glyph).
+    svgUrl = MacosIcon;
   } else {
     switch (mapPlatformNameToIconName(platformName)) {
       case 'android':

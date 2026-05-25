@@ -11,7 +11,14 @@ const PLATFORM_INFO: Record<string, { label: string; icon: PlatformName }> = {
   android: { label: 'Android', icon: 'android' },
   harmony: { label: 'HarmonyOS', icon: 'harmony' },
   web: { label: 'Web', icon: 'web_lynx' },
+  // macos and windows aren't in PlatformName, but PlatformSvg accepts
+  // these as strings and resolves to the right SVG.
+  macos: { label: 'macOS', icon: 'macos' as PlatformName },
+  windows: { label: 'Windows', icon: 'windows' as PlatformName },
 };
+
+/** Separator marker inside a platforms array. Renders a "|" between groups. */
+const PLATFORM_GROUP_SEP = '|';
 
 interface ChoiceTabProps {
   value: string;
@@ -80,7 +87,18 @@ export const ChoiceTabs = ({
               </div>
               {platforms && platforms.length > 0 && (
                 <span className="choice-tabs__platforms">
-                  {platforms.map((p) => {
+                  {platforms.map((p, idx) => {
+                    if (p === PLATFORM_GROUP_SEP) {
+                      return (
+                        <span
+                          key={`sep-${idx}`}
+                          className="choice-tabs__platform-sep"
+                          aria-hidden="true"
+                        >
+                          |
+                        </span>
+                      );
+                    }
                     const info = PLATFORM_INFO[p];
                     if (!info) return null;
                     return (
