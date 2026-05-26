@@ -256,18 +256,10 @@ export const PlatformTabs = ({
   }, [activePlatform]);
 
   useEffect(() => {
-    // On mount: prefer hash anchor; otherwise, if we arrived with ?<queryKey>=
-    // (e.g. from a homepage card), scroll the tabs strip into view.
+    // Wait for the component to load, then jump to the hash anchor if any.
     requestAnimationFrame(() => {
-      const hash = window.location.hash?.slice(1);
-      if (hash) {
-        document.getElementById(hash)?.scrollIntoView({ behavior: 'auto' });
-        return;
-      }
-      const params = new URLSearchParams(window.location.search);
-      if (params.has(queryKey)) {
-        trackRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
-      }
+      const element = document.getElementById(window.location.hash?.slice(1));
+      element?.scrollIntoView({ behavior: 'auto' });
     });
   }, []);
 

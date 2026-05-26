@@ -4,6 +4,9 @@ import { PlatformSvg } from '@/components/platform-navigation/PlatformIcon';
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { Link } from '@rspress/core/theme';
 import React from 'react';
+// Visual treatment for the card (--tab-card-* custom properties) lives in
+// shared-tabs.scss so ChoiceTabs and PlatformTabs stay locked in sync.
+import '../shared-tabs.scss';
 import './ChoiceTabs.scss';
 
 const PLATFORM_INFO: Record<string, { label: string; icon: PlatformName }> = {

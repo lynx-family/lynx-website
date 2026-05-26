@@ -1,5 +1,25 @@
-// shared-tabs.scss — shared card selector styles for ChoiceTabs and PlatformTabs.
-// Provides glassmorphic cards with border beam, dimming, and carousel behavior.
+// shared-tabs.scss — visual treatment shared between ChoiceTabs and
+// PlatformTabs. The two components stay locked in sync by reading the same
+// --tab-card-* custom properties below. If you want to tweak the look,
+// tweak the variables. The rspress --home-features-item-bg resolves to
+// rgba(255,255,255,0.5) in light mode (invisible on the white page), so
+// we use currentColor mixes that trace the outline in BOTH themes.
+
+:root {
+  --tab-card-bg: color-mix(in srgb, currentColor 5%, transparent);
+  --tab-card-border-color: color-mix(in srgb, currentColor 10%, transparent);
+  --tab-card-border-color-hover: color-mix(
+    in srgb,
+    currentColor 16%,
+    transparent
+  );
+  --tab-card-border-color-active: color-mix(
+    in srgb,
+    currentColor 20%,
+    transparent
+  );
+  --tab-card-opacity-inactive: 0.5;
+}
 
 .shared-tabs__track {
   display: flex;
@@ -17,38 +37,26 @@
   gap: 6px;
   padding: 12px 14px;
   border-radius: 14px;
-  // Tint via currentColor so the card outline traces in BOTH themes.
-  // The rspress --home-features-item-bg resolves to rgba(255,255,255,0.5)
-  // in light mode which disappears against the white page, so we don't
-  // use it here.
-  background: color-mix(in srgb, currentColor 5%, transparent);
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  background: var(--tab-card-bg);
+  border: 1px solid var(--tab-card-border-color);
   overflow: hidden;
   cursor: pointer;
   text-align: center;
   font-family: inherit;
+  opacity: var(--tab-card-opacity-inactive);
   transition:
-    background-color 0.2s ease,
+    opacity 0.2s ease,
     border-color 0.2s ease;
 
   &:hover:not(.shared-tabs__card--active) {
-    background: color-mix(in srgb, currentColor 8%, transparent);
-    border-color: color-mix(in srgb, currentColor 20%, transparent);
+    opacity: 1;
+    border-color: var(--tab-card-border-color-hover);
   }
 
   &.shared-tabs__card--active {
-    // Brand-tinted fill + border gives clear focus without relying on a
-    // theme var that may render invisibly in one mode.
-    background: color-mix(
-      in srgb,
-      var(--major-brand-color, #ff351a) 7%,
-      transparent
-    );
-    border-color: color-mix(
-      in srgb,
-      var(--major-brand-color, #ff351a) 28%,
-      transparent
-    );
+    opacity: 1;
+    border-color: var(--tab-card-border-color-active);
+    cursor: default;
   }
 }
 
