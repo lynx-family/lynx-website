@@ -2,10 +2,10 @@
 description: '使用 Lynx Explorer 沙盒应用快速体验 Lynx，无需配置原生工具链。'
 ---
 
-import { ChoiceTabs } from '@lynx';
+import { QRCodeSVG } from 'qrcode.react';
+import { PackageManagerTabs, Steps } from '@theme';
+import { ChoiceTabs, Go, PlatformTabs } from '@lynx';
 import * as NextSteps from '@lynx/NextSteps';
-
-import ApproachExplorer from './fragments/approach-explorer.mdx';
 
 # 用 Explorer 体验
 
@@ -33,7 +33,169 @@ import ApproachExplorer from './fragments/approach-explorer.mdx';
   />
 </ChoiceTabs>
 
-<ApproachExplorer />
+使用 [Lynx Explorer](https://github.com/lynx-family/lynx)（一个预构建的沙盒应用）来即时开发和预览 Lynx 页面，无需配置原生工具链。非常适合学习、原型开发和日常开发。要部署到生产环境，请[集成到现有应用](/zh/guide/start/integrate-with-existing-apps)或[使用应用框架从零构建](/zh/guide/start/build-with-app-framework)。
+
+### 系统要求
+
+- [Node.js 18](https://nodejs.org/zh-cn) 或更新的版本
+  - 当使用 TypeScript 作为配置文件时，需要使用 Node.js 18.19 或更新的版本
+
+<Steps>
+
+### 创建一个 Lynx 项目
+
+在 Lynx 项目中，我们使用 Rspeedy（一个基于 Rspack 的 Lynx 构建工具）来构建源码。
+
+推荐通过 [`create-rspeedy`](https://npmjs.com/create-rspeedy) 来快速创建一个 Lynx 项目，执行：
+
+<PackageManagerTabs command="create rspeedy@latest" />
+
+跟随提示来创建一个 Lynx 项目。
+
+### 准备 Lynx Explorer
+
+Lynx Explorer 是一个可以快速试用 Lynx 的沙盒环境。
+
+<PlatformTabs queryKey="explorer-platform">
+
+<PlatformTabs.Tab platform="ios-simulator">
+
+目前我们仅提供 iOS 模拟器的预编译二进制文件。如果你需要在真实 iOS 设备上运行 Lynx Explorer，则需要从源代码构建。请参考[为 iOS 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) 指南。
+
+:::info
+社区贡献者在 [App Store](https://apps.apple.com/us/app/lynx-go-dev-explorer/id6743227790) 上提供了 Lynx Explorer 的版本。
+虽然此版本未经 Lynx 团队审核和维护，但我们感谢社区让开发者能够更方便地在 iOS 上尝试 Lynx。
+:::
+
+1. **安装 Xcode**
+
+打开 Mac App Store，搜索 [Xcode](https://apps.apple.com/us/app/xcode/id497799835)，点击安装（如果已安装则点击更新）。
+
+2. **<div id="download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator">下载 LynxExplorer</div>**
+
+<PlatformTabs queryKey="ios-simulator-platform">
+
+<PlatformTabs.Tab platform="macos-arm64">
+
+下载 [`LynxExplorer-arm64.app.tar.gz`](https://github.com/lynx-family/lynx/releases/download/3.7.0/LynxExplorer-arm64.app.tar.gz)。
+
+然后，解压下载的压缩包：
+
+```bash
+mkdir -p LynxExplorer-arm64.app/
+tar -zxf LynxExplorer-arm64.app.tar.gz -C LynxExplorer-arm64.app/
+```
+
+3. **在模拟器上安装 LynxExplorer**
+
+打开 Xcode，从 Xcode 菜单中选择 **Open Developer Tool**。点击 **Simulator** 选项以启动一个模拟器，然后将 LynxExplorer-arm64.app 拖入模拟器中完成安装。
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="macos-intel">
+
+下载 [`LynxExplorer-x86_64.app.tar.gz`](https://github.com/lynx-family/lynx/releases/download/3.7.0/LynxExplorer-x86_64.app.tar.gz)。
+
+然后，解压下载的压缩包：
+
+```bash
+mkdir -p LynxExplorer-x86_64.app/
+tar -zxf LynxExplorer-x86_64.app.tar.gz -C LynxExplorer-x86_64.app/
+```
+
+3. **在模拟器上安装 LynxExplorer**
+
+打开 Xcode，从 Xcode 菜单中选择 **Open Developer Tool**。点击 **Simulator** 选项以启动一个模拟器，然后将 LynxExplorer-x86_64.app 拖入模拟器中完成安装。
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+扫描二维码从 [GitHub Release 3.7.0](https://github.com/lynx-family/lynx/releases/tag/3.7.0) 下载预编译应用。
+
+<QRCodeSVG
+  style={{ border: '2px solid #fff' }}
+  size={220}
+  value="https://github.com/lynx-family/lynx/releases/download/3.7.0/LynxExplorer-noasan-release.apk"
+/>
+
+或者，你可以按照[为 Android 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/android) 指南从源代码构建。
+
+:::info
+社区贡献者在 [Play Store](https://play.google.com/store/apps/details?id=com.funcs.io.lynx.go) 上提供了 Lynx Explorer 的版本。
+虽然此版本未经 Lynx 团队审核和维护，但我们感谢社区让开发者能够更方便地在 Android 上尝试 Lynx。
+:::
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+目前我们仅提供 Harmony 模拟器的预编译二进制文件。如果你需要在真实 Harmony 设备上运行 Lynx Explorer，则需要从源代码构建。请参考[为 Harmony 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony) 指南。
+
+1. **安装 DevEco Studio**
+
+从 [官网](https://developer.huawei.com/consumer/cn/deveco-studio/) 下载最新的 DevEco Studio。
+
+2. **<div id="download-lynx-explorer">下载 Lynx Explorer</div>**
+
+下载预编译应用 [`lynx_explorer-default-unsigned.hap`](https://github.com/lynx-family/lynx/releases/download/3.7.0/lynx_explorer-default-unsigned.hap)。
+
+或者，你可以按照[为 Harmony 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/harmony) 指南从源代码构建。
+
+3. **在模拟器上安装 Lynx Explorer**
+
+```bash
+hdc install lynx_explorer-default-unsigned.hap
+```
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+### 开始开发
+
+1. 进入 Lynx 项目：
+
+```bash
+cd <project-name>
+```
+
+2. 安装依赖：
+
+<PackageManagerTabs command="install" />
+
+3. 启动开发服务器：
+
+<PackageManagerTabs command="run dev" />
+
+您将看到终端中出现一个二维码，请使用您的 Lynx Explorer 应用扫描。如果您正在使用模拟器，只需复制捆绑 URL 并粘贴到 Lynx Explorer 应用中的"Enter Card URL"输入框中，然后点击"Go"。
+
+4. 进行第一次更改：
+
+在代码编辑器中打开 `src/App.tsx` 文件并进行更改。
+
+你应该会看到 Lynx Explorer 上的 UI 自动更新。
+
+<Go
+  example="hello-world"
+  defaultFile="src/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-ios.png"
+  defaultEntryFile="dist/main.lynx.bundle"
+  defaultTab="web"
+/>
+
+<br />
+
+### 调试应用
+
+访问 [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) 下载并打开 Lynx DevTool 桌面应用，使用数据线连接正在运行 Lynx 的设备，开始调试应用。
+
+访问[调试工具](/guide/devtool/panels.html)，学习如何调试应用。
+
+</Steps>
 
 ## 下一步
 

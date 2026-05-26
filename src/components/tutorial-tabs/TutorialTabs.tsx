@@ -1,7 +1,8 @@
 import { cn } from '@/lib/utils';
 import { Link } from '@rspress/core/theme';
-import { useI18n } from '@rspress/core/runtime';
+import { useI18n, useLang, withBase } from '@rspress/core/runtime';
 import { BorderBeam } from '@/components/home-comps/border-beam';
+import { getLangPrefix } from '../../../shared-route-config';
 import './TutorialTabs.scss';
 
 export interface TutorialTabItem {
@@ -71,9 +72,11 @@ export const LearnTutorialTabs = ({
   className,
 }: LearnTutorialTabsProps) => {
   const t = useI18n();
+  const lang = useLang();
+  const langPrefix = getLangPrefix(lang);
   const tabs: TutorialTabItem[] = DEFAULT_TABS.map((d) => ({
     slug: d.slug,
-    href: d.path,
+    href: withBase(`${langPrefix}${d.path}`),
     label: t(d.labelKey as any) as string,
   }));
   return <TutorialTabs tabs={tabs} active={active} className={className} />;

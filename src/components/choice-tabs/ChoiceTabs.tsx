@@ -55,9 +55,21 @@ export const ChoiceTabs = ({
     return acc;
   }, []);
 
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const activeCardRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    const track = trackRef.current;
+    const card = activeCardRef.current;
+    if (!track || !card) return;
+    if (track.scrollWidth <= track.clientWidth) return;
+    track.scrollLeft =
+      card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
+  }, [active]);
+
   return (
     <div className={cn('choice-tabs', className)}>
-      <div className="choice-tabs__track">
+      <div className="choice-tabs__track" ref={trackRef}>
         {tabs.map((tab) => {
           const { value, label, description, icon, platforms, tag, href } =
             tab.props;
@@ -115,7 +127,12 @@ export const ChoiceTabs = ({
           );
           if (isActive) {
             return (
-              <span key={value} className={cardClass} aria-current="page">
+              <span
+                key={value}
+                ref={activeCardRef as React.Ref<HTMLSpanElement>}
+                className={cardClass}
+                aria-current="page"
+              >
                 {cardBody}
               </span>
             );

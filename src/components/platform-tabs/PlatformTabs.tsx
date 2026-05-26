@@ -112,22 +112,23 @@ const PlatformTab = ({ platform, children }: PlatformTabProps) => {
   return <div data-platform={platform}>{children}</div>;
 };
 
-function OptionSelector({
-  options,
-  selected,
-  onSelect,
-}: {
-  options: typeof PLATFORM_OPTIONS;
-  selected: Platform;
-  onSelect: (id: Platform) => void;
-}) {
+const OptionSelector = React.forwardRef<
+  HTMLDivElement,
+  {
+    options: typeof PLATFORM_OPTIONS;
+    selected: Platform;
+    onSelect: (id: Platform) => void;
+    activeCardRef?: React.Ref<HTMLButtonElement>;
+  }
+>(({ options, selected, onSelect, activeCardRef }, ref) => {
   return (
-    <div className="shared-tabs__track">
+    <div className="shared-tabs__track" ref={ref}>
       {options.map((option) => {
         const isActive = selected === option.id;
         return (
           <button
             key={option.id}
+            ref={isActive ? activeCardRef : undefined}
             type="button"
             className={cn(
               'shared-tabs__card',
@@ -146,7 +147,7 @@ function OptionSelector({
       })}
     </div>
   );
-}
+});
 
 //  FIXME: this is a hack for hook Rspress update the TOC */
 let renderCountForTocUpdate = 0;
@@ -241,11 +242,32 @@ export const PlatformTabs = ({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activePlatform, getPlatformFromQuery]);
 
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const activeCardRef = React.useRef<HTMLButtonElement>(null);
+
+  // Horizontal: center the active tab inside the strip when it overflows.
   useEffect(() => {
-    // Wait for the component to load
+    const track = trackRef.current;
+    const card = activeCardRef.current;
+    if (!track || !card) return;
+    if (track.scrollWidth <= track.clientWidth) return;
+    track.scrollLeft =
+      card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
+  }, [activePlatform]);
+
+  useEffect(() => {
+    // On mount: prefer hash anchor; otherwise, if we arrived with ?<queryKey>=
+    // (e.g. from a homepage card), scroll the tabs strip into view.
     requestAnimationFrame(() => {
-      const element = document.getElementById(window.location.hash?.slice(1));
-      element?.scrollIntoView({ behavior: 'auto' });
+      const hash = window.location.hash?.slice(1);
+      if (hash) {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'auto' });
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      if (params.has(queryKey)) {
+        trackRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
     });
   }, []);
 
@@ -273,6 +295,8 @@ export const PlatformTabs = ({
     <>
       <div className={cn('w-full space-y-4', className)}>
         <OptionSelector
+          ref={trackRef}
+          activeCardRef={activeCardRef}
           options={availableOptions}
           selected={activePlatform}
           onSelect={setActivePlatform}
