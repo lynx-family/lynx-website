@@ -6,6 +6,8 @@
 // we use currentColor mixes that trace the outline in BOTH themes.
 
 :root {
+  // Inactive card chrome — flat currentColor tint that traces the silhouette
+  // in both themes without competing with the active card.
   --tab-card-bg: color-mix(in srgb, currentColor 5%, transparent);
   --tab-card-border-color: color-mix(in srgb, currentColor 10%, transparent);
   --tab-card-border-color-hover: color-mix(
@@ -13,12 +15,22 @@
     currentColor 16%,
     transparent
   );
-  --tab-card-border-color-active: color-mix(
-    in srgb,
-    currentColor 20%,
-    transparent
-  );
   --tab-card-opacity-inactive: 0.5;
+
+  // Active card uses the homepage features-card surface (glassy radial
+  // gradient + hairline border) plus a soft drop shadow so it visibly lifts
+  // off the dimmed siblings. This is where the "selected" feel comes from.
+  --tab-card-active-bg: var(--home-features-item-bg);
+  --tab-card-active-border: var(--home-features-item-bg-border);
+  --tab-card-active-shadow:
+    0 1px 0 rgba(17, 17, 19, 0.04), 0 12px 28px -6px rgba(17, 17, 19, 0.14);
+}
+
+:root.dark {
+  // In dark mode, drop shadows over a dark surface read poorly; pair a deep
+  // shadow with a thin inner top highlight to suggest light from above.
+  --tab-card-active-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 28px -6px rgba(0, 0, 0, 0.5);
 }
 
 .shared-tabs__track {
@@ -46,7 +58,8 @@
   opacity: var(--tab-card-opacity-inactive);
   transition:
     opacity 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover:not(.shared-tabs__card--active) {
     opacity: 1;
@@ -55,7 +68,9 @@
 
   &.shared-tabs__card--active {
     opacity: 1;
-    border-color: var(--tab-card-border-color-active);
+    background: var(--tab-card-active-bg);
+    border: var(--tab-card-active-border);
+    box-shadow: var(--tab-card-active-shadow);
     cursor: default;
   }
 }
