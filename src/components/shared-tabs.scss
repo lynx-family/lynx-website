@@ -17,36 +17,37 @@
   gap: 6px;
   padding: 12px 14px;
   border-radius: 14px;
-  // 5% tint of currentColor gives a visible tab shape in both light mode
-  // (subtle dark on white) and dark mode (subtle light on black), avoiding
-  // the previous "white-on-white" invisibility of inactive cards in light
-  // mode. The rspress theme var still wins when set by the host theme.
-  background: var(
-    --home-features-item-bg,
-    color-mix(in srgb, currentColor 5%, transparent)
-  );
-  border: 1px solid transparent;
+  // Tint via currentColor so the card outline traces in BOTH themes.
+  // The rspress --home-features-item-bg resolves to rgba(255,255,255,0.5)
+  // in light mode which disappears against the white page, so we don't
+  // use it here.
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
   overflow: hidden;
   cursor: pointer;
   text-align: center;
   font-family: inherit;
   transition:
-    transform 0.2s ease,
-    opacity 0.2s ease,
+    background-color 0.2s ease,
     border-color 0.2s ease;
-  // 0.8 keeps inactive cards visibly faded vs the active one (opacity 1)
-  // without erasing the background tint that gives the card its shape.
-  opacity: 0.8;
 
   &:hover:not(.shared-tabs__card--active) {
-    opacity: 0.92;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    border-color: color-mix(in srgb, currentColor 20%, transparent);
   }
 
   &.shared-tabs__card--active {
-    opacity: 1;
-    border: var(
-      --home-features-item-bg-border,
-      1px solid rgba(17, 17, 19, 0.08)
+    // Brand-tinted fill + border gives clear focus without relying on a
+    // theme var that may render invisibly in one mode.
+    background: color-mix(
+      in srgb,
+      var(--major-brand-color, #ff351a) 7%,
+      transparent
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--major-brand-color, #ff351a) 28%,
+      transparent
     );
   }
 }
