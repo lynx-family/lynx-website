@@ -1,0 +1,51 @@
+---
+description: '帮助 agent 直接使用 FiberElement 和 Element PAPI API 构建 Lynx 应用的技能。'
+---
+
+# lynx-fiber-element
+
+帮助 coding agent 直接使用 `@lynx-js/type-element-api` 中的 FiberElement 和 Element PAPI API 构建 Lynx 应用，而不依赖 ReactLynx JSX 或其他 UI 框架。
+
+适合在以下场景使用：
+
+- 构建不使用 ReactLynx、JSX 或框架的 Lynx 应用
+- 使用 Element PAPI 或 FiberElement API，例如 `__CreatePage`、`__CreateView`、`__CreateText`、`__AppendElement`、`__SetAttribute` 或 `__FlushElementTree`
+- 组装 template-webpack 风格的 Lynx bundle，并显式拆分后台线程、主线程和 CSS 资源
+- 在非 React 的 Lynx 应用中排查主线程渲染、事件分发或双线程数据同步问题
+
+## 安装
+
+```bash
+npx skills add lynx-community/skills -s lynx-fiber-element
+```
+
+这会安装 `lynx-fiber-element` skill，让兼容的 coding agent 自动加载它的工作流规则、参考资料和示例。
+
+## 包含内容
+
+`lynx-fiber-element` 按渐进读取方式组织：
+
+- `SKILL.md`：无框架 Lynx 应用的入口和工作流规则
+- `references/template-webpack-build.md`：项目初始化和 bundle 组装方式
+- `references/main-thread-rendering.md`：主线程 UI 树创建和更新
+- `references/double-thread-data-sync.md`：后台线程事件处理与 patch 同步
+- `examples/counter.md`：template-webpack 路径下的最小应用脚手架
+- `examples/todo-list.md`：覆盖首屏数据、patch 重渲染、条件切换、列表渲染、筛选和后台事件处理的组合示例
+
+## 推荐工作流
+
+在实现无框架 Lynx 应用前，让 agent 优先使用 `lynx-fiber-element`。
+
+1. 先阅读 `references/template-webpack-build.md`，确认项目结构和 bundle 输出。
+2. 再阅读 `references/main-thread-rendering.md`，理解 UI 树创建和更新模式。
+3. 然后阅读 `references/double-thread-data-sync.md`，处理事件分发和跨线程同步。
+4. 需要脚手架或最小复现时，使用 `examples/counter.md`。
+5. 需要更完整的 patch 驱动示例时，使用 `examples/todo-list.md`。
+
+除非用户明确要求，否则 agent 应避免使用 ReactLynx、JSX、虚拟 DOM 和浏览器 DOM API。
+
+## 了解更多
+
+- [GitHub 上的 lynx-community/skills](https://github.com/lynx-community/skills)
+- [lynx-fiber-element skill 页面](https://github.com/lynx-community/skills/tree/release/skills/lynx-fiber-element)
+- [Agent Skills 规范](https://github.com/anthropics/skills)
