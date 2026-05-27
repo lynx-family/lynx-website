@@ -2,7 +2,7 @@
 
 [Home](./index.md) &gt; [@lynx-js/external-bundle-rsbuild-plugin](./external-bundle-rsbuild-plugin.md) &gt; [ExternalsPresetDefinitions](./external-bundle-rsbuild-plugin.externalspresetdefinitions.md)
 
-## ExternalsPresetDefinitions type alias
+## ExternalsPresetDefinitions type
 
 Available externals preset definitions.
 
@@ -11,3 +11,5 @@ Available externals preset definitions.
 ```typescript
 export type ExternalsPresetDefinitions = Record<string, ExternalsPresetDefinition>;
 ```
+**References:** [ExternalsPresetDefinition](./external-bundle-rsbuild-plugin.externalspresetdefinition.md)
+

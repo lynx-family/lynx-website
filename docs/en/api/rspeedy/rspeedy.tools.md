@@ -150,3 +150,4 @@ _(Optional)_ The [Tools.swc](./rspeedy.tools.swc.md) controls the options of [bu
 
 </td></tr>
 </tbody></table>
+

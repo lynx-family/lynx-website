@@ -9,7 +9,7 @@ The `define` options is used to define some values or expressions at compile tim
 **Signature:**
 
 ```typescript
-define?: Record<string, string | number | boolean | undefined | Record<string, unknown>> | undefined;
+define?: Rspack.DefinePluginOptions;
 ```
 
 ## Default Value

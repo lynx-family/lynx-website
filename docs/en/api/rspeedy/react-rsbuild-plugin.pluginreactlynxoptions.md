@@ -109,6 +109,8 @@ boolean
 
 _(Optional)_ defaultDisplayLinear controls whether the default value of `display` in CSS is `linear`<!-- -->.
 
+If `defaultDisplayLinear === false`<!-- -->, the default `display` would be `flex` instead of `linear`<!-- -->.
+
 
 </td></tr>
 <tr><td>
@@ -271,6 +273,25 @@ _(Optional)_ `enableSSR` enable Lynx SSR feature for this build.
 </td></tr>
 <tr><td>
 
+[enableUiSourceMap?](./react-rsbuild-plugin.pluginreactlynxoptions.enableuisourcemap.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Enable UI source map generation and debug-metadata asset emission.
+
+
+</td></tr>
+<tr><td>
+
 [engineVersion?](./react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md)
 
 
@@ -304,6 +325,25 @@ boolean
 </td><td>
 
 **_(ALPHA)_** _(Optional)_ Generate standalone lazy bundle.
+
+
+</td></tr>
+<tr><td>
+
+[experimental\_useElementTemplate?](./react-rsbuild-plugin.pluginreactlynxoptions.experimental_useelementtemplate.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Enable Element Template compile and runtime entries.
 
 
 </td></tr>

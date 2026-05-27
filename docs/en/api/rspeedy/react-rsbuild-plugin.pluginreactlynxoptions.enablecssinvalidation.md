@@ -12,6 +12,10 @@ CSS Invalidation refers to the process of determining which elements need to hav
 enableCSSInvalidation?: boolean;
 ```
 
+## Default Value
+
+`true`
+
 ## Remarks
 
 When using combinator to determine the styles of various elements (including descendants, adjacent siblings, etc.), it is recommended to enable this feature. Otherwise, only the initial class setting can match the corresponding combinator, and subsequent updates will not recalculate the related styles.

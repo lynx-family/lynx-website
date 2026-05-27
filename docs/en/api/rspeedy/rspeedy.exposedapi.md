@@ -4,7 +4,7 @@
 
 ## ExposedAPI interface
 
-The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](https://rsbuild.dev/plugins/dev/core#apiuseexposed)<!-- -->.
+The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](https://rsbuild.rs/plugins/dev/core#apiuseexposed)<!-- -->.
 
 **Signature:**
 
@@ -84,6 +84,25 @@ The user config.
 </td><td>
 
 Print debug logs.
+
+
+</td></tr>
+<tr><td>
+
+[entries?](./rspeedy.exposedapi.entries.md)
+
+
+</td><td>
+
+
+</td><td>
+
+RsbuildEntry
+
+
+</td><td>
+
+_(Optional)_ Used for plugin qrcode get entry points from self-defined environments rather than default lynx environment.
 
 
 </td></tr>

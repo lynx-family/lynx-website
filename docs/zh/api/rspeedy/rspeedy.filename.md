@@ -68,7 +68,7 @@ _(Optional)_ The name of other assets, except for above (image, svg, font, html,
 
 </td><td>
 
-string \| undefined
+[BundleFilename](./rspeedy.bundlefilename.md) \| undefined
 
 
 </td><td>

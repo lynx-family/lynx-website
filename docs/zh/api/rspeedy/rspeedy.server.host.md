@@ -14,7 +14,7 @@ host?: string | undefined;
 
 ## Default Value
 
-undefined
+"0.0.0.0"
 
 ## Remarks
 

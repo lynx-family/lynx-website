@@ -56,7 +56,7 @@ The merged Rspeedy configuration object.
 
 ## Remarks
 
-This is actually an alias of [mergeRsbuildConfig](https://rsbuild.dev/api/javascript-api/core#mergersbuildconfig)<!-- -->.
+This is actually an alias of [mergeRsbuildConfig](https://rsbuild.rs/api/javascript-api/core#mergersbuildconfig)<!-- -->.
 
 ## Example
 

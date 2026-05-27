@@ -2,10 +2,60 @@
 
 [Home](./index.md) &gt; [@lynx-js/rspeedy](./rspeedy.md) &gt; [RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md)
 
-## RsdoctorRspackPluginOptions type
+## RsdoctorRspackPluginOptions interface
+
+Simplified options type for `tools.rsdoctor`<!-- -->.
+
+Keep this type free of deeply nested/intersection utility types to ensure typia can generate validators from `Config`<!-- -->.
 
 **Signature:**
 
 ```typescript
-export type RsdoctorRspackPluginOptions = ConstructorParameters<typeof RsdoctorRspackPlugin<[]>>[0];
+export interface RsdoctorRspackPluginOptions extends Omit<RawRsdoctorRspackPluginOptions<[]>, 'linter'> 
 ```
+**Extends:** Omit&lt;RawRsdoctorRspackPluginOptions&lt;\[\]&gt;, 'linter'&gt;
+
+## Properties
+
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[linter?](./rspeedy.rsdoctorrspackpluginoptions.linter.md)
+
+
+</td><td>
+
+
+</td><td>
+
+{ rules?: Record&lt;string, unknown&gt;; level?: 'Ignore' \| 'Warn' \| 'Error'; extends?: unknown\[\]; }
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>
+

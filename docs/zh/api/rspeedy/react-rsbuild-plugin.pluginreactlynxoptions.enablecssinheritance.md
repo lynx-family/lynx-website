@@ -12,6 +12,10 @@ enableCSSInheritance enables the default inheritance properties.
 enableCSSInheritance?: boolean;
 ```
 
+## Default Value
+
+`false`
+
 ## Remarks
 
 The following properties are inherited by default:

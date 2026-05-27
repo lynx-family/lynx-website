@@ -16,3 +16,8 @@ targetSdkVersion is used to specify the minimal Lynx Engine version that a App b
 ```typescript
 targetSdkVersion?: string;
 ```
+
+## Default Value
+
+`'3.2'`
+

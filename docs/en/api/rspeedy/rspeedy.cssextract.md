@@ -50,7 +50,7 @@ Description
 
 </td><td>
 
-_(Optional)_ The options of CSS extract loader.
+_(Optional)_
 
 
 </td></tr>
@@ -69,8 +69,9 @@ _(Optional)_ The options of CSS extract loader.
 
 </td><td>
 
-_(Optional)_ The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
+_(Optional)_
 
 
 </td></tr>
 </tbody></table>
+

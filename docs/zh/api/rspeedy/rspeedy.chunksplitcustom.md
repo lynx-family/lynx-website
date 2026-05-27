@@ -4,6 +4,11 @@
 
 ## ChunkSplitCustom interface
 
+> Warning: This API is now obsolete.
+> 
+> Use the top-level [Config.splitChunks](./rspeedy.config.splitchunks.md) option instead.
+> 
+
 [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
 
 **Signature:**

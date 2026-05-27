@@ -11,3 +11,8 @@ How main-thread code will be shaken.
 ```typescript
 shake?: Partial<ShakeVisitorConfig> | undefined;
 ```
+
+## Default Value
+
+`undefined`
+

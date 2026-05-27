@@ -11,3 +11,8 @@ enableAccessibilityElement set the default value of `accessibility-element` for 
 ```typescript
 enableAccessibilityElement?: boolean;
 ```
+
+## Default Value
+
+`false`
+

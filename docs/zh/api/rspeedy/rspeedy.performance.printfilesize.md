@@ -18,7 +18,7 @@ true
 
 [Performance.printFileSize](./rspeedy.performance.printfilesize.md)
 
-See [Rsbuild - performance.printFileSize](https://rsbuild.dev/config/performance/print-file-size) for details.
+See [Rsbuild - performance.printFileSize](https://rsbuild.rs/config/performance/print-file-size) for details.
 
 ## Example 1
 

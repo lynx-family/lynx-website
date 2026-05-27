@@ -102,7 +102,7 @@ _(Optional)_ Used to configure the decorators syntax.
 
 </td><td>
 
-Record&lt;string, string \| number \| boolean \| undefined \| Record&lt;string, unknown&gt;&gt; \| undefined
+Rspack.DefinePluginOptions
 
 
 </td><td>

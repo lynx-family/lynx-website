@@ -53,7 +53,7 @@ export default defineConfig({
   },
 })
 ```
-See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#env) for details.
+See [Rsbuild - tools.rspack](https://rsbuild.rs/config/tools/rspack#env) for details.
 
 ## Example 3
 
@@ -74,7 +74,7 @@ export default defineConfig({
   },
 })
 ```
-See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#mergeconfig) for details.
+See [Rsbuild - tools.rspack](https://rsbuild.rs/config/tools/rspack#mergeconfig) for details.
 
 ## Example 4
 
@@ -92,4 +92,5 @@ export default defineConfig({
   },
 })
 ```
-See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#appendplugins) for details.
+See [Rsbuild - tools.rspack](https://rsbuild.rs/config/tools/rspack#appendplugins) for details.
+

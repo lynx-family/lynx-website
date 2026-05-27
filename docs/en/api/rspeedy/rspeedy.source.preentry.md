@@ -18,7 +18,7 @@ undefined
 
 ## Remarks
 
-See [source.preEntry](https://rsbuild.dev/config/source/pre-entry) for more details.
+See [source.preEntry](https://rsbuild.rs/config/source/pre-entry) for more details.
 
 ## Example
 

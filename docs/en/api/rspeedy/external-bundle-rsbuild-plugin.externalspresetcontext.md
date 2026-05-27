@@ -9,11 +9,50 @@ Context passed to externals preset resolvers.
 **Signature:**
 
 ```typescript
-export interface ExternalsPresetContext
+export interface ExternalsPresetContext 
 ```
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `rootPath` | `string` | The current Rsbuild project root path. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[rootPath](./external-bundle-rsbuild-plugin.externalspresetcontext.rootpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The current Rsbuild project root path.
+
+
+</td></tr>
+</tbody></table>
+

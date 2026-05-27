@@ -31,3 +31,4 @@ export default defineConfig({
 })
 ```
 See [rspack-chain](https://github.com/rspack-contrib/rspack-chain) for details.
+

@@ -11,3 +11,8 @@ Like `define` in various bundlers, but this one happens at transform time, and a
 ```typescript
 defineDCE?: Partial<DefineDceVisitorConfig> | undefined;
 ```
+
+## Default Value
+
+`undefined`
+

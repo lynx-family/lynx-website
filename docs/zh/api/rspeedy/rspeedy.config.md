@@ -208,6 +208,25 @@ _(Optional)_ The [Source](./rspeedy.source.md) option changes the behavior of so
 </td></tr>
 <tr><td>
 
+[splitChunks?](./rspeedy.config.splitchunks.md)
+
+
+</td><td>
+
+
+</td><td>
+
+RsbuildConfig\['splitChunks'\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ Configure chunk splitting.
+
+
+</td></tr>
+<tr><td>
+
 [tools?](./rspeedy.config.tools.md)
 
 

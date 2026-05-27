@@ -6,13 +6,15 @@
 
 defaultDisplayLinear controls whether the default value of `display` in CSS is `linear`<!-- -->.
 
+If `defaultDisplayLinear === false`<!-- -->, the default `display` would be `flex` instead of `linear`<!-- -->.
+
 **Signature:**
 
 ```typescript
 defaultDisplayLinear?: boolean;
 ```
 
-## Remarks
+## Default Value
 
-If `defaultDisplayLinear === false`<!-- -->, the default `display` would be `flex` instead of `linear`<!-- -->.
+`true`
 

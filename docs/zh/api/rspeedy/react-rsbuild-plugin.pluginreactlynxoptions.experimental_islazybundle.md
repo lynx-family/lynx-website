@@ -14,3 +14,8 @@ Generate standalone lazy bundle.
 ```typescript
 experimental_isLazyBundle?: boolean;
 ```
+
+## Default Value
+
+`false`
+
