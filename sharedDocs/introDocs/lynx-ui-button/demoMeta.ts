@@ -1,5 +1,5 @@
 export const buttonBasicDemoMeta = {
-  highlight: '{18-36}',
+  highlight: '{19-27,29-34}',
   description: 'highlight active-state render props and custom button content',
   content: [
     "<Button onClick={() => console.info('clicked')} className='button-root'>",
