@@ -66,27 +66,74 @@ const BASE_TYPEDOC_OPTIONS: Partial<Configuration.TypeDocOptions> = {
 const SITE_URL = 'https://lynxjs.org';
 
 /**
- * Rewrites absolute links pointing at the docs site itself
- * (`](https://lynxjs.org/...)`) into site-relative links (`](/...)`).
+ * Rewrites markdown links pointing at the docs site itself
+ * (`](https://lynxjs.org/...)`) into site-relative links (`](/...)`), dropping
+ * a leading `/zh/` locale segment so links resolve to the reader's current
+ * locale via rspress routing. Matches the long-standing hand-maintained
+ * convention for these `@generated` files.
  *
- * The leading `/zh/` locale segment is dropped as well so links resolve to the
- * reader's current locale via rspress routing, matching the long-standing
- * hand-maintained convention for these `@generated` files. External links
+ * `/living-spec/...` is intentionally left absolute: it's a static asset
+ * (embedded via `<HtmlViewer>` elsewhere), not an rspress route, so a relative
+ * link would be flagged as a dead link by the build. External links
  * (react.dev, github.com, ...) are left untouched.
  */
-function rewriteSiteLinks(dir: string): void {
+function rewriteSiteLinks(content: string): string {
+  return content
+    .replace(
+      new RegExp(`\\]\\(${SITE_URL}/(?:zh/)?(?!living-spec/)`, 'g'),
+      '](/',
+    )
+    .replace(new RegExp(`\\]\\(${SITE_URL}\\)`, 'g'), '](/)');
+}
+
+/**
+ * Escapes MDX-breaking curly braces in prose. typedoc-plugin-markdown emits
+ * `.mdx` but does not escape `{`/`}`, so brace literals in TSDoc comments
+ * (e.g. `{queryFallbacks: true}`) make the MDX/acorn parser fail. We escape
+ * braces outside of fenced code, inline code, and the leading JSX comment
+ * block at the top of each file, where they are rendered as literal text.
+ */
+function escapeMdxBraces(content: string): string {
+  const lines = content.split('\n');
+  let inFence = false;
+  let inHeaderComment = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (line.includes('{/*')) inHeaderComment = true;
+    const skip = inHeaderComment;
+    if (line.includes('*/}')) inHeaderComment = false;
+    if (skip) continue;
+    // Escape only outside inline-code spans (odd-indexed segments are code).
+    const parts = line.split('`');
+    for (let j = 0; j < parts.length; j += 2) {
+      parts[j] = parts[j].replace(/\\?\{/g, '\\{').replace(/\\?\}/g, '\\}');
+    }
+    lines[i] = parts.join('`');
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Post-processes generated docs in place: normalize site links and escape
+ * MDX-breaking braces so the output builds cleanly and doesn't require manual
+ * fixups after each regeneration.
+ */
+function postProcessGeneratedDocs(dir: string): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      rewriteSiteLinks(full);
+      postProcessGeneratedDocs(full);
     } else if (entry.name.endsWith('.mdx') || entry.name.endsWith('.md')) {
       const original = fs.readFileSync(full, 'utf8');
-      const rewritten = original
-        .replaceAll(`](${SITE_URL}/zh/`, '](/')
-        .replaceAll(`](${SITE_URL}/`, '](/')
-        .replaceAll(`](${SITE_URL})`, '](/)');
-      if (rewritten !== original) {
-        fs.writeFileSync(full, rewritten);
+      let out = rewriteSiteLinks(original);
+      if (entry.name.endsWith('.mdx')) out = escapeMdxBraces(out);
+      if (out !== original) {
+        fs.writeFileSync(full, out);
       }
     }
   }
@@ -181,8 +228,8 @@ export async function runTypeDocForPackage(
 
     await app.generateDocs(project, absoluteOutputDir);
 
-    // Normalize absolute site links to site-relative ones in the output.
-    rewriteSiteLinks(absoluteOutputDir);
+    // Normalize site links and escape MDX-breaking braces in the output.
+    postProcessGeneratedDocs(absoluteOutputDir);
   }
 
   return app;
