@@ -9,7 +9,7 @@ The name of the bundle files.
 **Signature:**
 
 ```typescript
-bundle?: string | undefined;
+bundle?: BundleFilename | undefined;
 ```
 
 ## Default Value
@@ -49,6 +49,29 @@ export default defineConfig({
   output: {
     filename: {
       bundle: '[name].[contenthash:8].bundle',
+    },
+  },
+})
+```
+
+## Example 3
+
+- Using a function to control the main bundle and the lazy bundles separately (e.g. emit lazy bundles into another directory with a git commit hash appended):
+
+```js
+import { execSync } from 'node:child_process'
+
+import { defineConfig } from '@lynx-js/rspeedy'
+
+const gitHash = execSync('git rev-parse --short HEAD').toString().trim()
+
+export default defineConfig({
+  output: {
+    filename: {
+      bundle: ({ lazyBundle, platform }) =>
+        lazyBundle
+          ? `my-lazy-bundles/[name].[fullhash]-${gitHash}.bundle`
+          : `[name].${platform}.bundle`,
     },
   },
 })

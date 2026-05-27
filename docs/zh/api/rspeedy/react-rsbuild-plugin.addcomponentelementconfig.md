@@ -18,7 +18,45 @@ Default value: `false`
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [compilerOnly](./react-rsbuild-plugin.addcomponentelementconfig.compileronly.md) |  | boolean | Whether to only add component element during compilation |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[compilerOnly](./react-rsbuild-plugin.addcomponentelementconfig.compileronly.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+Whether to only add component element during compilation
+
+
+</td></tr>
+</tbody></table>
 

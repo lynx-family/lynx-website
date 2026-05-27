@@ -11,3 +11,8 @@ enableCSSSelector controls whether enabling the new CSS implementation.
 ```typescript
 enableCSSSelector?: boolean;
 ```
+
+## Default Value
+
+`true`
+

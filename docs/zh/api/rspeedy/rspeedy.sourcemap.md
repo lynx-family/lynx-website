@@ -37,6 +37,25 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[css?](./rspeedy.sourcemap.css.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to generate CSS source maps.
+
+
+</td></tr>
+<tr><td>
+
 [js?](./rspeedy.sourcemap.js.md)
 
 

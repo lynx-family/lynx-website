@@ -4,7 +4,6 @@
 
 ## CssExtractRspackLoaderOptions interface
 
-The options of CSS extract loader.
 
 **Signature:**
 

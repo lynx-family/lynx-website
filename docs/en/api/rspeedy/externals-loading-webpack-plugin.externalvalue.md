@@ -198,6 +198,25 @@ _(Optional)_ The options of the main-thread layer.
 </td></tr>
 <tr><td>
 
+[retries?](./externals-loading-webpack-plugin.externalvalue.retries.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+_(Optional)_ The number of additional attempts when fetching the external bundle times out (`response.code === -2`<!-- -->).
+
+
+</td></tr>
+<tr><td>
+
 [timeout?](./externals-loading-webpack-plugin.externalvalue.timeout.md)
 
 

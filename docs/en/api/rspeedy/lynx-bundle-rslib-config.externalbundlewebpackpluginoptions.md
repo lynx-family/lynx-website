@@ -92,5 +92,24 @@ _(Optional)_ The engine version of the external bundle.
 
 
 </td></tr>
+<tr><td>
+
+[mainThreadChunks?](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.mainthreadchunks.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The main thread chunks of the external bundle.
+
+
+</td></tr>
 </tbody></table>
 

@@ -18,7 +18,7 @@ Uses Rsbuild's default distPath configuration with `root: 'dist'`<!-- -->.
 
 ## Remarks
 
-More options can be found at [Rsbuild - distPath](https://rsbuild.dev/config/output/dist-path)<!-- -->.
+More options can be found at [Rsbuild - distPath](https://rsbuild.rs/config/output/dist-path)<!-- -->.
 
 ## Example
 

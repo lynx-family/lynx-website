@@ -135,6 +135,17 @@ Description
 </td></tr>
 <tr><td>
 
+[BundleFilenameContext](./rspeedy.bundlefilenamecontext.md)
+
+
+</td><td>
+
+The context passed to the [Filename.bundle](./rspeedy.filename.bundle.md) function.
+
+
+</td></tr>
+<tr><td>
+
 [ChunkSplit](./rspeedy.chunksplit.md)
 
 
@@ -217,7 +228,6 @@ The [CssExtract](./rspeedy.cssextract.md) controls the options of [CssExtractRsp
 
 </td><td>
 
-The options of CSS extract loader.
 
 
 </td></tr>
@@ -228,7 +238,6 @@ The options of CSS extract loader.
 
 </td><td>
 
-The options for [CssExtractRspackPlugin](https://rspack.rs/plugins/rspack/css-extract-rspack-plugin)
 
 
 </td></tr>
@@ -327,7 +336,7 @@ The `EntryDescription` describes a entry. It is useful when the project has mult
 
 </td><td>
 
-The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](https://rsbuild.dev/plugins/dev/core#apiuseexposed)<!-- -->.
+The exposed API of Rspeedy. Can be used in Rsbuild plugin with [api.useExposed](https://rsbuild.rs/plugins/dev/core#apiuseexposed)<!-- -->.
 
 
 </td></tr>
@@ -405,6 +414,19 @@ The [Performance](./rspeedy.performance.md) option is used to optimize the build
 </td><td>
 
 The [Resolve](./rspeedy.resolve.md) option is used to control the resolution behavior of Rspack.
+
+
+</td></tr>
+<tr><td>
+
+[RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md)
+
+
+</td><td>
+
+Simplified options type for `tools.rsdoctor`<!-- -->.
+
+Keep this type free of deeply nested/intersection utility types to ensure typia can generate validators from `Config`<!-- -->.
 
 
 </td></tr>
@@ -513,6 +535,19 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[BundleFilename](./rspeedy.bundlefilename.md)
+
+
+</td><td>
+
+The name of the bundle files.
+
+It can be a string with placeholders (`[name]`<!-- -->, `[contenthash]`<!-- -->, `[platform]`<!-- -->), or a function that returns a string based on the [BundleFilenameContext](./rspeedy.bundlefilenamecontext.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
 [ConsoleType](./rspeedy.consoletype.md)
 
 
@@ -546,15 +581,6 @@ The [Entry](./rspeedy.entry.md) option is used to set the entry module.
 </td></tr>
 <tr><td>
 
-[RsdoctorRspackPluginOptions](./rspeedy.rsdoctorrspackpluginoptions.md)
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
 [RspeedyInstance](./rspeedy.rspeedyinstance.md)
 
 
@@ -565,3 +591,4 @@ The instance of Rspeedy.
 
 </td></tr>
 </tbody></table>
+

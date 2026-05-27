@@ -14,11 +14,11 @@ inlineScripts?: InlineChunkConfig | undefined;
 
 ## Default Value
 
-Rspeedy defaults this to `true` and only switches it to `false` when the user explicitly sets `performance.chunkSplit.strategy` to a value other than `'all-in-one'`<!-- -->.
+Rspeedy defaults this to `true` and only switches it to `false` when the user explicitly enables the top-level `splitChunks` option.
 
 ## Remarks
 
-This is different with [output.inlineScripts](https://rsbuild.dev/config/output/inline-scripts) since we normally want to inline scripts in Lynx bundle (`.lynx.bundle`<!-- -->).
+This is different with [output.inlineScripts](https://rsbuild.rs/config/output/inline-scripts) since we normally want to inline scripts in Lynx bundle (`.lynx.bundle`<!-- -->).
 
 There are two points that need to be especially noted:
 

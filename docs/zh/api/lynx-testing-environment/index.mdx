@@ -18,8 +18,9 @@ The Element PAPI implementation is based on jsdom, for example `__CreateElement`
 
 ```js
 import { LynxTestingEnv } from '@lynx-js/testing-environment';
+import { JSDOM } from 'jsdom';
 
-const lynxTestingEnv = new LynxTestingEnv();
+const lynxTestingEnv = new LynxTestingEnv({ window: new JSDOM().window });
 ```
 
 To use `@lynx-js/testing-environment`, you will primarily use the `LynxTestingEnv` constructor, which is a named export of the package. You will get back a `LynxTestingEnv` instance, which has a number of methods of useful properties, notably `switchToMainThread` and `switchToBackgroundThread`, which allow you to switch between the main thread and background thread.
@@ -75,6 +76,14 @@ If you want to use `@lynx-js/testing-environment` for unit testing in ReactLynx,
 
 Please refer to [ReactLynx Testing Library](/react/reactlynx-testing-library.html) to inherit the configuration from `@lynx-js/react/testing-library`.
 
+### Use in Rstest
+
+If your runner already provides a `window` global via jsdom, you can load the shared Lynx test environment with:
+
+```js
+import '@lynx-js/testing-environment/env/rstest';
+```
+
 ## Credits
 
 Thanks to:
@@ -88,6 +97,7 @@ notably the [Element PAPI](/api/engine/element-api) and [Dual-threaded Model](/g
 
 | Class | 描述 |
 | ------ | ------ |
+| [GlobalEventEmitter](/api/lynx-testing-environment/Class.GlobalEventEmitter.mdx) | The Lynx `GlobalEventEmitter` module, accessible via `lynx.getJSModule('GlobalEventEmitter')`. |
 | [LynxTestingEnv](/api/lynx-testing-environment/Class.LynxTestingEnv.mdx) | A pure-JavaScript implementation of the [Lynx Spec](/guide/spec.html), notably the [Element PAPI](/api/engine/element-api) and [Dual-threaded Model](/guide/spec#dual-threaded-model) for use with Node.js. |
 
 ## 接口
@@ -95,6 +105,7 @@ notably the [Element PAPI](/api/engine/element-api) and [Dual-threaded Model](/g
 | Interface | 描述 |
 | ------ | ------ |
 | [LynxElement](/api/lynx-testing-environment/Interface.LynxElement.mdx) | Any Lynx Element, such as `view`, `text`, `image`, etc. |
+| [LynxEnv](/api/lynx-testing-environment/Interface.LynxEnv.mdx) | The host environment used to initialize `LynxTestingEnv`. |
 | [LynxGlobalThis](/api/lynx-testing-environment/Interface.LynxGlobalThis.mdx) | The `globalThis` object of Lynx dual thread environment. |
 
 ## 类型别名
@@ -111,3 +122,5 @@ notably the [Element PAPI](/api/engine/element-api) and [Dual-threaded Model](/g
 | Function | 描述 |
 | ------ | ------ |
 | [initElementTree](/api/lynx-testing-environment/Function.initElementTree.mdx) | - |
+| [installLynxTestingEnv](/api/lynx-testing-environment/Function.installLynxTestingEnv.mdx) | Installs a `LynxTestingEnv` instance and its required globals onto a target. |
+| [uninstallLynxTestingEnv](/api/lynx-testing-environment/Function.uninstallLynxTestingEnv.mdx) | Removes the globals installed by `installLynxTestingEnv`. |

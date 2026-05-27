@@ -4,17 +4,79 @@
 
 ## PluginExternalValue interface
 
-External bundle reference accepted by `pluginExternalBundle`.
+External bundle reference accepted by `pluginExternalBundle`<!-- -->.
 
 **Signature:**
 
 ```typescript
-export interface PluginExternalValue extends Omit<ExternalValue, 'url'>
+export interface PluginExternalValue extends Omit<ExternalValue, 'url'> 
 ```
+**Extends:** Omit&lt;[ExternalValue](./externals-loading-webpack-plugin.externalvalue.md)<!-- -->, 'url'&gt;
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `bundlePath?` | `string` | Bundle path resolved against the runtime public path. |
-|  `url?` | `string` | Deprecated. Prefer `bundlePath` unless the bundle is hosted outside the current build output. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[bundlePath?](./external-bundle-rsbuild-plugin.pluginexternalvalue.bundlepath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Bundle path resolved against the runtime public path.
+
+Prefer this over `url` when the external bundle should be emitted or served as part of the current project. `pluginExternalBundle` can use this information to manage local bundle files, while the runtime keeps the final URL aligned with the active `publicPath`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[url?](./external-bundle-rsbuild-plugin.pluginexternalvalue.url.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Bundle URL.
+
+Use this only when the external bundle lives outside the current build output and should not be emitted or served by `pluginExternalBundle`<!-- -->.
+
+
+</td></tr>
+</tbody></table>
+

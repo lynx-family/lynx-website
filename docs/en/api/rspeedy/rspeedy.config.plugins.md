@@ -18,5 +18,5 @@ undefined
 
 ## Remarks
 
-Rspeedy use the plugin APIs from [Rsbuild](https://rsbuild.dev/plugins/dev/index)<!-- -->. See the corresponding document for developing a plugin.
+Rspeedy uses the plugin APIs from [Rsbuild](https://rsbuild.rs/plugins/dev/index)<!-- -->. See the corresponding document for developing a plugin.
 

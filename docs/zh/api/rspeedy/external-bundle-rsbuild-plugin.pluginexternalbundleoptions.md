@@ -9,16 +9,114 @@ Options for the external-bundle-rsbuild-plugin.
 **Signature:**
 
 ```typescript
-export interface PluginExternalBundleOptions extends Pick<ExternalsLoadingPluginOptions, 'globalObject' | 'timeout'>
+export interface PluginExternalBundleOptions extends Pick<ExternalsLoadingPluginOptions, 'globalObject' | 'timeout' | 'retries'> 
 ```
+**Extends:** Pick&lt;[ExternalsLoadingPluginOptions](./externals-loading-webpack-plugin.externalsloadingpluginoptions.md)<!-- -->, 'globalObject' \| 'timeout' \| 'retries'&gt;
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `externalBundleRoot?` | `string` | Root directory that stores project-owned external bundles referenced by `bundlePath`. |
-|  `externals?` | `Record<string, PluginExternalConfig>` | Additional explicit externals to load. |
-|  `externalsPresetDefinitions?` | `ExternalsPresetDefinitions` | Definitions for custom externals presets enabled by `externalsPresets`. |
-|  `externalsPresets?` | [`ExternalsPresets`](./external-bundle-rsbuild-plugin.externalspresets.md) | Presets for external libraries. |
-|  `globalObject?` | `ExternalsLoadingPluginOptions['globalObject']` | Global object used to mount external libraries. |
-|  `timeout?` | `number` | Default timeout for loading external bundles. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[externalBundleRoot?](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.externalbundleroot.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Root directory that stores project-owned external bundles referenced by `bundlePath`<!-- -->.
+
+`pluginExternalBundle` uses this directory for both development serving and build-time asset emission. Prefer setting this explicitly when external bundles are built into a separate output folder, such as `dist-external-bundle`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[externals?](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.externals.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Record&lt;string, [PluginExternalConfig](./external-bundle-rsbuild-plugin.pluginexternalconfig.md)<!-- -->&gt;
+
+
+</td><td>
+
+_(Optional)_ Additional explicit externals to load.
+
+
+</td></tr>
+<tr><td>
+
+[externalsPresetDefinitions?](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.externalspresetdefinitions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[ExternalsPresetDefinitions](./external-bundle-rsbuild-plugin.externalspresetdefinitions.md)
+
+
+</td><td>
+
+_(Optional)_ Definitions for custom externals presets enabled by `externalsPresets`<!-- -->.
+
+Use this to add business-specific presets such as `lynxUi`<!-- -->, or to extend a built-in preset through `extends`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[externalsPresets?](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.externalspresets.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[ExternalsPresets](./external-bundle-rsbuild-plugin.externalspresets.md)
+
+
+</td><td>
+
+_(Optional)_ Presets for external libraries.
+
+Same as https://rspack.rs/config/externals\#externalspresets but for Lynx.
+
+
+</td></tr>
+</tbody></table>
+

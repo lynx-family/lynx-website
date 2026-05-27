@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { Application, Configuration, TSConfigReader } from 'typedoc';
@@ -55,6 +56,41 @@ const BASE_TYPEDOC_OPTIONS: Partial<Configuration.TypeDocOptions> = {
     '@alias',
   ],
 };
+
+/**
+ * The canonical URL of the published docs site. Source READMEs and TSDoc
+ * comments hardcode absolute links to this host; we rewrite them to
+ * site-relative links so the generated docs stay portable and consistent with
+ * the rest of the site (and don't 404 on preview/inhouse deployments).
+ */
+const SITE_URL = 'https://lynxjs.org';
+
+/**
+ * Rewrites absolute links pointing at the docs site itself
+ * (`](https://lynxjs.org/...)`) into site-relative links (`](/...)`).
+ *
+ * The leading `/zh/` locale segment is dropped as well so links resolve to the
+ * reader's current locale via rspress routing, matching the long-standing
+ * hand-maintained convention for these `@generated` files. External links
+ * (react.dev, github.com, ...) are left untouched.
+ */
+function rewriteSiteLinks(dir: string): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      rewriteSiteLinks(full);
+    } else if (entry.name.endsWith('.mdx') || entry.name.endsWith('.md')) {
+      const original = fs.readFileSync(full, 'utf8');
+      const rewritten = original
+        .replaceAll(`](${SITE_URL}/zh/`, '](/')
+        .replaceAll(`](${SITE_URL}/`, '](/')
+        .replaceAll(`](${SITE_URL})`, '](/)');
+      if (rewritten !== original) {
+        fs.writeFileSync(full, rewritten);
+      }
+    }
+  }
+}
 
 /**
  * Generates TypeDoc documentation for a single package with the specified configuration.
@@ -144,6 +180,9 @@ export async function runTypeDocForPackage(
     }
 
     await app.generateDocs(project, absoluteOutputDir);
+
+    // Normalize absolute site links to site-relative ones in the output.
+    rewriteSiteLinks(absoluteOutputDir);
   }
 
   return app;

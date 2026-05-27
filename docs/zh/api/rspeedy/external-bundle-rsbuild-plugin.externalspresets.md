@@ -9,12 +9,50 @@ Presets for external bundle dependencies.
 **Signature:**
 
 ```typescript
-export interface ExternalsPresets
+export interface ExternalsPresets 
 ```
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `reactlynx?` | `boolean \| ReactLynxExternalsPresetOptions` | Load the ReactLynx runtime bundle and wire its standard module globals. |
-|  `[presetName: string]` | `boolean \| object \| undefined` | Additional custom preset flags. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[reactlynx?](./external-bundle-rsbuild-plugin.externalspresets.reactlynx.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| [ReactLynxExternalsPresetOptions](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.md)
+
+
+</td><td>
+
+_(Optional)_ Load the ReactLynx runtime bundle and wire its standard module globals.
+
+
+</td></tr>
+</tbody></table>
+

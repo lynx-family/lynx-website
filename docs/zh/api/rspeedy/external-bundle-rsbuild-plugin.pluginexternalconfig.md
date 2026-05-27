@@ -2,18 +2,16 @@
 
 [Home](./index.md) &gt; [@lynx-js/external-bundle-rsbuild-plugin](./external-bundle-rsbuild-plugin.md) &gt; [PluginExternalConfig](./external-bundle-rsbuild-plugin.pluginexternalconfig.md)
 
-## PluginExternalConfig type alias
+## PluginExternalConfig type
 
-External bundle shorthand accepted by `pluginExternalBundle`.
+External bundle shorthand accepted by `pluginExternalBundle`<!-- -->.
 
-When a string is provided, it is treated as `bundlePath` and the plugin infers:
-
-- `libraryName`: the external request key
-- `background.sectionPath`: the external request key
-- `mainThread.sectionPath`: `${request}__main-thread`
+When a string is provided, it is treated as `bundlePath` and the plugin will infer: - `libraryName`<!-- -->: the external request key - `background.sectionPath`<!-- -->: the external request key - `mainThread.sectionPath`<!-- -->: `${request}__main-thread`
 
 **Signature:**
 
 ```typescript
 export type PluginExternalConfig = PluginExternalValue | string;
 ```
+**References:** [PluginExternalValue](./external-bundle-rsbuild-plugin.pluginexternalvalue.md)
+

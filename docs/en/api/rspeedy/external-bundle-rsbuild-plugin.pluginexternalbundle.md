@@ -6,6 +6,8 @@
 
 Create a rsbuild plugin for loading external bundles.
 
+This plugin wraps the externals-loading-webpack-plugin and automatically retrieves layer names from the react-rsbuild-plugin via api.useExposed.
+
 **Signature:**
 
 ```typescript
@@ -14,17 +16,47 @@ export declare function pluginExternalBundle(options: PluginExternalBundleOption
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) | Plugin options. |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+options
+
+
+</td><td>
+
+[PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 
-`RsbuildPlugin`
+RsbuildPlugin
 
 ## Example
 
+
 ```ts
+// lynx.config.ts
 import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin'
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 
@@ -32,14 +64,15 @@ export default {
   plugins: [
     pluginReactLynx(),
     pluginExternalBundle({
-      externalsPresets: {
-        reactlynx: true,
-      },
       externals: {
-        './App.js': 'comp-lib.lynx.bundle',
+        lodash: {
+          bundlePath: 'lodash.lynx.bundle',
+          background: { sectionPath: 'background' },
+          mainThread: { sectionPath: 'mainThread' },
+        },
       },
-      globalObject: 'globalThis',
     }),
   ],
 }
 ```
+

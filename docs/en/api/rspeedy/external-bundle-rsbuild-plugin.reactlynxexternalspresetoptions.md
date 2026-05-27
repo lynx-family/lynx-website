@@ -9,13 +9,94 @@ Options for the built-in `reactlynx` externals preset.
 **Signature:**
 
 ```typescript
-export interface ReactLynxExternalsPresetOptions
+export interface ReactLynxExternalsPresetOptions 
 ```
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `bundlePath?` | `string` | Emit the ReactLynx runtime bundle into the current build output and load it through the runtime public path. |
-|  `reactUmdPackageName?` | `string` | Package name that provides the ReactLynx runtime bundle. |
-|  `url?` | `string` | Deprecated. Override the runtime bundle URL directly. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[bundlePath?](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.bundlepath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Emit the ReactLynx runtime bundle into the current build output and load it through the generated runtime public path.
+
+Prefer this over `url` for normal Rspeedy projects. In addition to letting the runtime resolve the final URL from `publicPath`<!-- -->, the plugin will also copy the corresponding `@lynx-js/react-umd` bundle into the emitted assets, so application bundles can reference it without requiring an extra manual copy step when publishing.
+
+
+</td></tr>
+<tr><td>
+
+[reactUmdPackageName?](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.reactumdpackagename.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Package name that provides the ReactLynx runtime bundle.
+
+Override this when wrapping the plugin for another distribution, such as `@byted-lynx/react-umd`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[url?](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.url.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ Override the runtime bundle URL directly.
+
+Use this only when the ReactLynx runtime is hosted outside the current build output, for example on a CDN. Unlike `bundlePath`<!-- -->, this does not emit any extra asset into the current compilation.
+
+
+</td></tr>
+</tbody></table>
+

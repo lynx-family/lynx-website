@@ -12,6 +12,10 @@ When [PluginReactLynxOptions.enableCSSInheritance](./react-rsbuild-plugin.plugin
 customCSSInheritanceList?: string[] | undefined;
 ```
 
+## Default Value
+
+`undefined`
+
 ## Example
 
 By setting `customCSSInheritanceList: ['direction', 'overflow']`<!-- -->, only the `direction` and `overflow` properties are inheritable.

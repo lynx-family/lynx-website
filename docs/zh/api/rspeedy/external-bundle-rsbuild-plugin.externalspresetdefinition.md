@@ -9,13 +9,88 @@ Definition for a named externals preset.
 **Signature:**
 
 ```typescript
-export interface ExternalsPresetDefinition
+export interface ExternalsPresetDefinition 
 ```
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  `extends?` | `string \| string[]` | Other preset names to apply before the current preset. |
-|  `resolveExternals?` | `(value: boolean \| object, context: ExternalsPresetContext) => ExternalsLoadingPluginOptions['externals']` | Resolve external request mappings contributed by this preset. |
-|  `resolveManagedAssets?` | `(value: boolean \| object, context: ExternalsPresetContext) => Map<string, string> \| Record<string, string>` | Resolve managed bundle assets contributed by this preset. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[extends?](./external-bundle-rsbuild-plugin.externalspresetdefinition.extends.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| string\[\]
+
+
+</td><td>
+
+_(Optional)_ Other preset names to apply before the current preset.
+
+
+</td></tr>
+<tr><td>
+
+[resolveExternals?](./external-bundle-rsbuild-plugin.externalspresetdefinition.resolveexternals.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(value: boolean \| object, context: [ExternalsPresetContext](./external-bundle-rsbuild-plugin.externalspresetcontext.md)<!-- -->) =&gt; [ExternalsLoadingPluginOptions](./externals-loading-webpack-plugin.externalsloadingpluginoptions.md)<!-- -->\['externals'\]
+
+
+</td><td>
+
+_(Optional)_ Resolve external request mappings contributed by this preset.
+
+
+</td></tr>
+<tr><td>
+
+[resolveManagedAssets?](./external-bundle-rsbuild-plugin.externalspresetdefinition.resolvemanagedassets.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(value: boolean \| object, context: [ExternalsPresetContext](./external-bundle-rsbuild-plugin.externalspresetcontext.md)<!-- -->) =&gt; Map&lt;string, string&gt; \| Record&lt;string, string&gt;
+
+
+</td><td>
+
+_(Optional)_ Resolve managed bundle assets contributed by this preset.
+
+
+</td></tr>
+</tbody></table>
+
