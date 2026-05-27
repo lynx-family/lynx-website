@@ -2,6 +2,8 @@
 description: 'Agent skill for inspecting and debugging running Lynx apps via DevTool.'
 ---
 
+import { Tab, Tabs } from '@rspress/core/theme';
+
 # lynx-devtool
 
 Lets agents interact with Lynx DevTool to inspect and debug running Lynx applications on connected devices (Android, iOS, Desktop):
@@ -18,6 +20,43 @@ npx skills add lynx-community/skills -s lynx-devtool
 ```
 
 This adds the skill rules to your project so that compatible coding agents (such as Claude Code, Cursor, or Copilot) can automatically apply them.
+
+## Codex
+
+When using this skill with Codex, make sure network access is enabled. Lynx DevTool needs network access to discover and connect to running clients.
+
+Put one of the following configuration snippets in your project config at `<project>/.codex/config.toml` or in your global config at `~/.codex/config.toml`.
+
+<Tabs groupId="codex-cli-version">
+<Tab label="Codex CLI >= 0.133.0">
+
+Use a dedicated permission profile:
+
+```toml
+default_permissions = "lynx-devtool"
+
+[permissions.lynx-devtool]
+extends = ":workspace"
+
+[permissions.lynx-devtool.network]
+enabled = true
+```
+
+</Tab>
+<Tab label="Older Codex CLI">
+
+Enable network access in the workspace-write sandbox:
+
+```toml
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+network_access = true
+```
+
+</Tab>
+</Tabs>
 
 ## Learn More
 

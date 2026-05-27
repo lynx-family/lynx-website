@@ -2,6 +2,8 @@
 description: 'AI 技能：使用 Lynx DevTool 调试应用'
 ---
 
+import { Tab, Tabs } from '@rspress/core/theme';
+
 # lynx-devtool
 
 让 agent 与 Lynx DevTool 交互，在已连接的设备（Android、iOS、桌面端）上检查和调试运行中的 Lynx 应用：
@@ -18,6 +20,43 @@ npx skills add lynx-community/skills -s lynx-devtool
 ```
 
 这会将 skill 规则添加到你的项目中，以便兼容的 coding agent（如 Claude Code、Cursor 或 Copilot）能够自动应用它们。
+
+## Codex
+
+在 Codex 中使用这个 skill 时，请确保已启用网络访问。Lynx DevTool 需要网络访问来发现并连接正在运行的客户端。
+
+将以下配置片段之一放到项目配置 `<project>/.codex/config.toml`，或全局配置 `~/.codex/config.toml` 中。
+
+<Tabs groupId="codex-cli-version">
+<Tab label="Codex CLI >= 0.133.0">
+
+使用专用的权限配置：
+
+```toml
+default_permissions = "lynx-devtool"
+
+[permissions.lynx-devtool]
+extends = ":workspace"
+
+[permissions.lynx-devtool.network]
+enabled = true
+```
+
+</Tab>
+<Tab label="旧版 Codex CLI">
+
+在 workspace-write sandbox 中启用网络访问：
+
+```toml
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+network_access = true
+```
+
+</Tab>
+</Tabs>
 
 ## 了解更多
 
