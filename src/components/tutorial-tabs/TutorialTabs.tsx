@@ -35,10 +35,10 @@ export const TutorialTabs = ({
           );
           if (isActive) {
             return (
-              <span key={tab.slug} className={cls} aria-current="page">
+              <div key={tab.slug} className={cls} aria-current="page">
                 <BorderBeam duration={3} size={2} />
                 <span className="tutorial-tabs__label">{tab.label}</span>
-              </span>
+              </div>
             );
           }
           return (

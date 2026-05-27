@@ -101,7 +101,7 @@ export const ChoiceTabs = ({
                 </div>
               </div>
               {platforms && platforms.length > 0 && (
-                <span className="choice-tabs__platforms">
+                <div className="choice-tabs__platforms">
                   {platforms.map((p, idx) => {
                     if (p === PLATFORM_GROUP_SEP) {
                       return (
@@ -124,20 +124,20 @@ export const ChoiceTabs = ({
                       />
                     );
                   })}
-                </span>
+                </div>
               )}
             </>
           );
           if (isActive) {
             return (
-              <span
+              <div
                 key={value}
-                ref={activeCardRef as React.Ref<HTMLSpanElement>}
+                ref={activeCardRef as React.Ref<HTMLDivElement>}
                 className={cardClass}
                 aria-current="page"
               >
                 {cardBody}
-              </span>
+              </div>
             );
           }
           return (
