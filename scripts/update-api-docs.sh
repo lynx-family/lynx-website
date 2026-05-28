@@ -3,7 +3,7 @@
 # Regenerate the lynx-stack-derived API reference docs in place, against a
 # lynx-stack checkout. Covers two pipelines:
 #
-#   1. rspeedy/*           – Microsoft API Extractor + API Documenter, run
+#   1. rspeedy/*, genui    – Microsoft API Extractor + API Documenter, run
 #                            inside the lynx-stack `website/` workspace.
 #   2. reactlynx-testing-library, lynx-testing-environment – TypeDoc, run here
 #                            in lynx-website (`pnpm run typedoc`), reading the
@@ -21,6 +21,18 @@ STACK_ARG="${1:?usage: scripts/update-api-docs.sh <lynx-stack-dir>}"
 STACK="$(cd "$STACK_ARG" && pwd)"
 WEBSITE="$(cd "$(dirname "$0")/.." && pwd)"
 
+if [ -n "${PNPM_BIN:-}" ]; then
+  PNPM_CMD=("$PNPM_BIN")
+elif command -v corepack >/dev/null 2>&1; then
+  PNPM_CMD=(corepack pnpm)
+elif command -v pnpm >/dev/null 2>&1; then
+  PNPM_CMD=(pnpm)
+else
+  echo "error: neither corepack nor pnpm is available in PATH." >&2
+  echo "Set PNPM_BIN=/absolute/path/to/pnpm and rerun the script." >&2
+  exit 1
+fi
+
 # rspeedy-related packages mirrored under docs/api/rspeedy, with the package
 # directories that hold their api-extractor config.
 RSPEEDY_PKG_DIRS=(
@@ -31,6 +43,9 @@ RSPEEDY_PKG_DIRS=(
   packages/rspeedy/lynx-bundle-rslib-config
   packages/webpack/externals-loading-webpack-plugin
 )
+GENUI_PKG_DIRS=(
+  packages/genui
+)
 BUILD_FILTERS=(
   --filter @lynx-js/rspeedy
   --filter @lynx-js/react-rsbuild-plugin
@@ -38,47 +53,99 @@ BUILD_FILTERS=(
   --filter @lynx-js/qrcode-rsbuild-plugin
   --filter @lynx-js/lynx-bundle-rslib-config
   --filter @lynx-js/externals-loading-webpack-plugin
+  --filter @lynx-js/genui
   # Needed for the TypeDoc packages below.
   --filter @lynx-js/react
   --filter @lynx-js/testing-environment
 )
 
+ensure_stack_paths_exist() {
+  local missing=0
+  local path
+  for path in "$@"; do
+    if [ ! -e "$STACK/$path" ]; then
+      echo "error: expected '$STACK/$path' to exist, but it does not." >&2
+      missing=1
+    fi
+  done
+  if [ "$missing" -ne 0 ]; then
+    echo "The lynx-stack checkout may be too old for this script. Please update it and retry." >&2
+    exit 1
+  fi
+}
+
+generate_api_extractor_docs() {
+  local name="$1"
+  shift
+  local pkg_dirs=("$@")
+
+  echo "::group::Generate $name docs (API Extractor + API Documenter)"
+  pushd "$STACK" >/dev/null
+  rm -rf website/temp website/docs/en/api website/docs/zh/api
+  mkdir -p website/temp
+  for dir in "${pkg_dirs[@]}"; do
+    (cd "$dir" && "${PNPM_CMD[@]}" run api-extractor)
+  done
+  (cd website && "${PNPM_CMD[@]}" run docs)
+  popd >/dev/null
+  echo "::endgroup::"
+}
+
+sync_api_extractor_docs() {
+  local name="$1"
+  local target="$2"
+  local preserve_index="$3"
+
+  echo "::group::Sync $name docs into lynx-website"
+  for loc in en zh; do
+    local gen="$STACK/website/docs/$loc/api"
+    local web="$WEBSITE/docs/$loc/api/$target"
+
+    mkdir -p "$web"
+
+    shopt -s nullglob
+    for f in "$web"/*.md; do
+      local bn
+      bn="$(basename "$f")"
+      if [ "$preserve_index" = "true" ] && [ "$bn" = "index.md" ]; then
+        continue
+      fi
+      [ -f "$gen/$bn" ] || rm "$f"
+    done
+
+    for f in "$gen"/*.md; do
+      local bn
+      bn="$(basename "$f")"
+      if [ "$preserve_index" = "true" ] && [ "$bn" = "index.md" ]; then
+        continue
+      fi
+      cp "$f" "$web/$bn"
+    done
+    shopt -u nullglob
+  done
+  echo "::endgroup::"
+}
+
 echo "::group::Build lynx-stack packages"
 pushd "$STACK" >/dev/null
-corepack enable
-corepack pnpm install --frozen-lockfile
-corepack pnpm exec turbo run build "${BUILD_FILTERS[@]}"
+ensure_stack_paths_exist \
+  "packages/rspeedy/core" \
+  "packages/rspeedy/plugin-react" \
+  "packages/rspeedy/plugin-external-bundle" \
+  "packages/rspeedy/plugin-qrcode" \
+  "packages/rspeedy/lynx-bundle-rslib-config" \
+  "packages/webpack/externals-loading-webpack-plugin" \
+  "packages/genui"
+"${PNPM_CMD[@]}" install --frozen-lockfile
+"${PNPM_CMD[@]}" exec turbo run build "${BUILD_FILTERS[@]}"
 popd >/dev/null
 echo "::endgroup::"
 
-echo "::group::Generate rspeedy docs (API Extractor + API Documenter)"
-pushd "$STACK" >/dev/null
-rm -rf website/temp && mkdir -p website/temp
-for dir in "${RSPEEDY_PKG_DIRS[@]}"; do
-  (cd "$dir" && corepack pnpm run api-extractor)
-done
-(cd website && rm -rf docs/en/api docs/zh/api && corepack pnpm run docs)
-popd >/dev/null
-echo "::endgroup::"
+generate_api_extractor_docs "rspeedy" "${RSPEEDY_PKG_DIRS[@]}"
+sync_api_extractor_docs "rspeedy" "rspeedy" "true"
 
-echo "::group::Sync rspeedy docs into lynx-website (preserving custom index.md)"
-for loc in en zh; do
-  gen="$STACK/website/docs/$loc/api"
-  web="$WEBSITE/docs/$loc/api/rspeedy"
-  # Drop docs whose API member no longer exists.
-  for f in "$web"/*.md; do
-    bn="$(basename "$f")"
-    [ "$bn" = "index.md" ] && continue
-    [ -f "$gen/$bn" ] || rm "$f"
-  done
-  # Copy current docs (index.md is the hand-written overview, leave it).
-  for f in "$gen"/*.md; do
-    bn="$(basename "$f")"
-    [ "$bn" = "index.md" ] && continue
-    cp "$f" "$web/$bn"
-  done
-done
-echo "::endgroup::"
+generate_api_extractor_docs "genui" "${GENUI_PKG_DIRS[@]}"
+sync_api_extractor_docs "genui" "genui" "false"
 
 echo "::group::Overlay built packages into node_modules for TypeDoc"
 # TypeDoc reads node_modules. Overlay the freshly built source so the docs
@@ -98,4 +165,4 @@ pnpm run typedoc
 echo "::endgroup::"
 
 echo "API docs regenerated. Review the diff and update docs/{en,zh}/api/_meta.json"
-echo "if API members were added or removed."
+echo "if API groups or members were added or removed."
