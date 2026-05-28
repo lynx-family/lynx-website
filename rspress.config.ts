@@ -14,6 +14,7 @@ import {
   transformerNotationFocus,
   transformerNotationHighlight,
 } from '@shikijs/transformers';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
@@ -172,6 +173,7 @@ export default defineConfig({
         },
       ],
     }),
+    genuiDocsPlugin(),
     sharedSidebarPlugin(),
     pluginSitemap({
       siteUrl: PUBLISH_URL,
@@ -262,6 +264,136 @@ function sharedSidebarPlugin(): RspressPlugin {
         ) || [];
 
       return pages;
+    },
+  };
+}
+
+type GenUIDocPage = {
+  lang: 'en' | 'zh';
+  routePath: string;
+  sources: string[];
+};
+
+const GENUI_PACKAGE_ROOT = path.join(
+  __dirname,
+  'node_modules',
+  '@lynx-js',
+  'genui',
+);
+
+const GENUI_DOC_ROOTS = [
+  process.env.GENUI_SOURCE_ROOT,
+  path.join(__dirname, '..', 'lynx-stack', 'packages', 'genui'),
+  path.join(__dirname, '..', 'lynx-stack-upstream0', 'packages', 'genui'),
+  GENUI_PACKAGE_ROOT,
+].filter((root): root is string => Boolean(root));
+
+const GENUI_DOC_PAGES: GenUIDocPage[] = [
+  {
+    lang: 'en',
+    routePath: '/en/react/genui/index',
+    sources: ['README.md', 'readme.md'],
+  },
+  {
+    lang: 'en',
+    routePath: '/en/react/genui/a2ui',
+    sources: ['a2ui/README.md', 'a2ui/readme.md'],
+  },
+  {
+    lang: 'zh',
+    routePath: '/zh/react/genui/index',
+    sources: ['README_zh.md', 'readme_zh.md', 'README.md', 'readme.md'],
+  },
+  {
+    lang: 'zh',
+    routePath: '/zh/react/genui/a2ui',
+    sources: [
+      'a2ui/README_zh.md',
+      'a2ui/readme_zh.md',
+      'a2ui/README.md',
+      'a2ui/readme.md',
+    ],
+  },
+];
+
+function getGenUIDocUrl(lang: GenUIDocPage['lang'], page: string) {
+  const langPrefix = lang === 'zh' ? '/zh' : '';
+  return `${langPrefix}/react/genui/${page}.html`;
+}
+
+function resolveGenUIDocSource(sources: string[]) {
+  for (const root of GENUI_DOC_ROOTS) {
+    for (const source of sources) {
+      const filepath = path.join(root, source);
+      if (fs.existsSync(filepath)) {
+        return filepath;
+      }
+    }
+  }
+
+  throw new Error(
+    `Unable to find any @lynx-js/genui documentation source: ${sources.join(
+      ', ',
+    )}. Checked roots: ${GENUI_DOC_ROOTS.join(', ')}.`,
+  );
+}
+
+function normalizeGenUIDocLinks(content: string, lang: GenUIDocPage['lang']) {
+  const pageUrls = {
+    a2ui: getGenUIDocUrl(lang, 'a2ui'),
+    a2uiZh: getGenUIDocUrl('zh', 'a2ui'),
+  };
+
+  return content
+    .replace(
+      /A2UI rendering, OpenUI rendering, A2UI prompt\/catalog utilities, and the CLI/g,
+      'A2UI rendering, A2UI prompt/catalog utilities, and the CLI',
+    )
+    .replace(/^\s*createOpenUiLibrary,\n\s*createStreamingParser,\n/gm, '')
+    .replace(/^- OpenUI parser, library, and renderer APIs\.\n/gm, '')
+    .replace(
+      /^import \{ createOpenUiLibrary \} from '@lynx-js\/genui\/openui';\n/gm,
+      '',
+    )
+    .replace(
+      / New\nscripts should prefer the namespace-first `genui a2ui \.\.\.` form so OpenUI\ncommands can be added under `genui openui \.\.\.` later\./g,
+      ' Prefer the namespace-first `genui a2ui ...` form for new scripts.',
+    )
+    .replace(/^## OpenUI[\s\S]*?(?=^## CLI)/m, '')
+    .replace(
+      /\[([^\]]+)\]\(\.\/openui\/(?:README_zh|readme_zh|README|readme)\.md\)/g,
+      '$1',
+    )
+    .replace(
+      /\[([^\]]+)\]\((?:\.\/)?(?:docs\/(?:architecture|catalogs|custom-components)(?:_zh)?|src\/catalog\/(?:README_zh|readme_zh|README|readme))\.md\)/g,
+      '$1',
+    )
+    .replace(
+      /\[([^\]]+)\]\(\.\.\/a2ui-playground\/examples\/(?:README_zh|readme_zh|README|readme)\.md\)/g,
+      '$1',
+    )
+    .replace(/\]\(\.\/(?:README|readme)\.md\)/g, `](${pageUrls.a2ui})`)
+    .replace(/\]\(\.\/(?:README_zh|readme_zh)\.md\)/g, `](${pageUrls.a2uiZh})`)
+    .replace(/\]\(\.\/a2ui\/(?:README|readme)\.md\)/g, `](${pageUrls.a2ui})`)
+    .replace(
+      /\]\(\.\/a2ui\/(?:README_zh|readme_zh)\.md\)/g,
+      `](${pageUrls.a2uiZh})`,
+    );
+}
+
+function genuiDocsPlugin(): RspressPlugin {
+  return {
+    name: 'rspress:genui-docs',
+    addPages() {
+      return GENUI_DOC_PAGES.map((page) => {
+        const filepath = resolveGenUIDocSource(page.sources);
+        const content = fs.readFileSync(filepath, 'utf-8');
+
+        return {
+          routePath: page.routePath,
+          content: normalizeGenUIDocLinks(content, page.lang),
+        };
+      });
     },
   };
 }
