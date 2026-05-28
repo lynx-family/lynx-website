@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function Icon(props: IconProps): import('@lynx-js/react').ReactNode;
+export declare function Icon(
+  props: IconProps,
+): import('@lynx-js/react').ReactNode;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function Icon(props: IconProps): import('@lynx-js/react').ReactNo
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 IconProps
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ IconProps
 **Returns:**
 
 import('@lynx-js/react').ReactNode
-

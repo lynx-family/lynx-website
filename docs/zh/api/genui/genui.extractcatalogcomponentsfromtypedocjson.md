@@ -7,7 +7,10 @@
 **Signature:**
 
 ```typescript
-export declare function extractCatalogComponentsFromTypeDocJson(project: TypeDocProject, options?: ExtractCatalogFromTypeDocOptions): CatalogComponent[];
+export declare function extractCatalogComponentsFromTypeDocJson(
+  project: TypeDocProject,
+  options?: ExtractCatalogFromTypeDocOptions,
+): CatalogComponent[];
 ```
 
 ## Parameters
@@ -16,46 +19,37 @@ export declare function extractCatalogComponentsFromTypeDocJson(project: TypeDoc
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 project
 
-
 </td><td>
 
 [TypeDocProject](./genui.typedocproject.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 options
 
-
 </td><td>
 
 [ExtractCatalogFromTypeDocOptions](./genui.extractcatalogfromtypedocoptions.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -63,4 +57,3 @@ _(Optional)_
 **Returns:**
 
 [CatalogComponent](./genui.extractedcatalogcomponent.md)<!-- -->\[\]
-

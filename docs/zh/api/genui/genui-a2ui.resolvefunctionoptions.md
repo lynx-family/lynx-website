@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface ResolveFunctionOptions 
+export interface ResolveFunctionOptions
 ```
 
 ## Properties
@@ -16,60 +16,47 @@ export interface ResolveFunctionOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [functions?](./genui-a2ui.resolvefunctionoptions.functions.md)
 
-
 </td><td>
-
 
 </td><td>
 
 readonly [CatalogFunctionEntry](./genui-a2ui.catalogfunctionentry.md)<!-- -->\[\] \| undefined
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [registry?](./genui-a2ui.resolvefunctionoptions.registry.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [FunctionRegistry](./genui-a2ui.functionregistry.md) \| undefined
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

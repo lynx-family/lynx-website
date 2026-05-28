@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocSignature 
+export interface TypeDocSignature
 ```
 
 ## Properties
@@ -16,136 +16,107 @@ export interface TypeDocSignature
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [comment?](./genui.typedocsignature.comment.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocComment](./genui.typedoccomment.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kind?](./genui.typedocsignature.kind.md)
 
-
 </td><td>
-
 
 </td><td>
 
 number
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kindString?](./genui.typedocsignature.kindstring.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name?](./genui.typedocsignature.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [parameters?](./genui.typedocsignature.parameters.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui.typedocreflection.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type?](./genui.typedocsignature.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function extractCatalogFunctions(options: ExtractCatalogOptions): Promise<CatalogFunction[]>;
+export declare function extractCatalogFunctions(
+  options: ExtractCatalogOptions,
+): Promise<CatalogFunction[]>;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function extractCatalogFunctions(options: ExtractCatalogOptions):
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 [ExtractCatalogOptions](./genui-a2ui-catalog-extractor.extractcatalogoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ options
 **Returns:**
 
 Promise&lt;[CatalogFunction](./genui-a2ui-catalog-extractor.catalogfunction.md)<!-- -->\[\]&gt;
-

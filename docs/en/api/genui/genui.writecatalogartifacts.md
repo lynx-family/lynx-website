@@ -9,7 +9,9 @@ Bootstrap TypeDoc once and emit both component and function catalog files. Prefe
 **Signature:**
 
 ```typescript
-export declare function writeCatalogArtifacts(options: WriteComponentCatalogOptions): Promise<CatalogArtifacts>;
+export declare function writeCatalogArtifacts(
+  options: WriteComponentCatalogOptions,
+): Promise<CatalogArtifacts>;
 ```
 
 ## Parameters
@@ -18,30 +20,24 @@ export declare function writeCatalogArtifacts(options: WriteComponentCatalogOpti
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 [WriteComponentCatalogOptions](./genui.writecomponentcatalogoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ options
 **Returns:**
 
 Promise&lt;[CatalogArtifacts](./genui.catalogartifacts.md)<!-- -->&gt;
-

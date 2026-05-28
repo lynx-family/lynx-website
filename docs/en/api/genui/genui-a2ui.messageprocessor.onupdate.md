@@ -16,30 +16,24 @@ onUpdate(callback: (data: Record<string, unknown>) => void): () => void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 callback
 
-
 </td><td>
 
 (data: Record&lt;string, unknown&gt;) =&gt; void
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ callback
 **Returns:**
 
 () =&gt; void
-

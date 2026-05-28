@@ -7,8 +7,9 @@
 **Signature:**
 
 ```typescript
-export interface WriteComponentCatalogOptions extends ExtractCatalogOptions 
+export interface WriteComponentCatalogOptions extends ExtractCatalogOptions
 ```
+
 **Extends:** [ExtractCatalogOptions](./genui.extractcatalogoptions.md)
 
 ## Properties
@@ -17,39 +18,30 @@ export interface WriteComponentCatalogOptions extends ExtractCatalogOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [outDir](./genui.writecomponentcatalogoptions.outdir.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

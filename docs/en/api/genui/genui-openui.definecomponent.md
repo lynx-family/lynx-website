@@ -8,10 +8,10 @@
 
 ```typescript
 export declare function defineComponent<T extends $ZodObject>(config: {
-    name: string;
-    props: T;
-    description: string;
-    component: ComponentRenderer<z.infer<T>>;
+  name: string;
+  props: T;
+  description: string;
+  component: ComponentRenderer<z.infer<T>>;
 }): DefinedComponent<T>;
 ```
 
@@ -21,30 +21,24 @@ export declare function defineComponent<T extends $ZodObject>(config: {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 config
 
-
 </td><td>
 
 { name: string; props: T; description: string; component: [ComponentRenderer](./genui-openui.componentrenderer.md)<!-- -->&lt;z.infer&lt;T&gt;&gt;; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -52,4 +46,3 @@ config
 **Returns:**
 
 [DefinedComponent](./genui-openui.definedcomponent.md)<!-- -->&lt;T&gt;
-

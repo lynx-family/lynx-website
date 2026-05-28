@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocCommentDisplayPart 
+export interface TypeDocCommentDisplayPart
 ```
 
 ## Properties
@@ -16,136 +16,107 @@ export interface TypeDocCommentDisplayPart
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [code?](./genui.typedoccommentdisplaypart.code.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [content?](./genui.typedoccommentdisplaypart.content.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocCommentDisplayPart](./genui.typedoccommentdisplaypart.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kind?](./genui.typedoccommentdisplaypart.kind.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [tag?](./genui.typedoccommentdisplaypart.tag.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [target?](./genui.typedoccommentdisplaypart.target.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [text?](./genui.typedoccommentdisplaypart.text.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

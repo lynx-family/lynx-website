@@ -13,7 +13,7 @@ Protocol-aware processing — surfaces, signals, resources, action dispatch — 
 **Signature:**
 
 ```typescript
-export interface MessageStore 
+export interface MessageStore
 ```
 
 ## Properties
@@ -22,63 +22,51 @@ export interface MessageStore
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [getSnapshot](./genui.messagestore.getsnapshot.md)
 
-
 </td><td>
 
 `readonly`
-
 
 </td><td>
 
 () =&gt; readonly [ServerToClientMessage](./genui.servertoclientmessage.md)<!-- -->\[\]
 
-
 </td><td>
 
 `useSyncExternalStore` getSnapshot contract — stable between pushes.
-
 
 </td></tr>
 <tr><td>
 
 [subscribe](./genui.messagestore.subscribe.md)
 
-
 </td><td>
 
 `readonly`
-
 
 </td><td>
 
 (cb: () =&gt; void) =&gt; () =&gt; void
 
-
 </td><td>
 
 `useSyncExternalStore` subscribe contract.
-
 
 </td></tr>
 </tbody></table>
@@ -89,34 +77,27 @@ Description
 
 Method
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [clear()](./genui.messagestore.clear.md)
 
-
 </td><td>
 
 Reset the buffer. Notifies subscribers.
-
 
 </td></tr>
 <tr><td>
 
 [push(message)](./genui.messagestore.push.md)
 
-
 </td><td>
 
 Append one or more raw messages to the buffer. Notifies subscribers once per call (batches a single array argument into a single notify).
 
-
 </td></tr>
 </tbody></table>
-

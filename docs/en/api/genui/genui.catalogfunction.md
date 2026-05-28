@@ -9,8 +9,9 @@ A function discovered in source via `@a2uiFunction`<!-- -->, with its origin pat
 **Signature:**
 
 ```typescript
-export interface CatalogFunction extends FunctionDefinition 
+export interface CatalogFunction extends FunctionDefinition
 ```
+
 **Extends:** [FunctionDefinition](./genui.functiondefinition.md)
 
 ## Properties
@@ -19,39 +20,30 @@ export interface CatalogFunction extends FunctionDefinition
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [filePath](./genui.catalogfunction.filepath.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

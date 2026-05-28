@@ -9,9 +9,13 @@ Tag messages with the given messageId and report whether any of them carries a n
 **Signature:**
 
 ```typescript
-export declare function prepareMessagesForProcessing(rawMessages: ServerToClientMessage[], messageId: string, activeSurfaceIds: Set<string>): {
-    messages: ServerToClientMessage[];
-    hasComponentUpdate: boolean;
+export declare function prepareMessagesForProcessing(
+  rawMessages: ServerToClientMessage[],
+  messageId: string,
+  activeSurfaceIds: Set<string>,
+): {
+  messages: ServerToClientMessage[];
+  hasComponentUpdate: boolean;
 };
 ```
 
@@ -21,58 +25,46 @@ export declare function prepareMessagesForProcessing(rawMessages: ServerToClient
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 rawMessages
 
-
 </td><td>
 
 [ServerToClientMessage](./genui.servertoclientmessage.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 messageId
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 activeSurfaceIds
 
-
 </td><td>
 
 Set&lt;string&gt;
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -80,4 +72,3 @@ Set&lt;string&gt;
 **Returns:**
 
 { messages: [ServerToClientMessage](./genui.servertoclientmessage.md)<!-- -->\[\]; hasComponentUpdate: boolean; }
-

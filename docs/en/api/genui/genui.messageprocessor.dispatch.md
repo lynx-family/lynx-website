@@ -16,30 +16,24 @@ dispatch(message: Record<string, unknown>): Promise<unknown>;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 message
 
-
 </td><td>
 
 Record&lt;string, unknown&gt;
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ Record&lt;string, unknown&gt;
 **Returns:**
 
 Promise&lt;unknown&gt;
-

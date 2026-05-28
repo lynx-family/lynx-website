@@ -9,5 +9,5 @@
 ```typescript
 export type FunctionManifest = Record<string, CatalogFunctionDefinition>;
 ```
-**References:** [CatalogFunctionDefinition](./genui-a2ui.catalogfunctiondefinition.md)
 
+**References:** [CatalogFunctionDefinition](./genui-a2ui.catalogfunctiondefinition.md)

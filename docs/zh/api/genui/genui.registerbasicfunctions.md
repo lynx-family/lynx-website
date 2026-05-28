@@ -11,7 +11,7 @@ Manual escape hatch for consumers who build their own renderer and don't go thro
 ```typescript
 export declare function registerBasicFunctions(): void;
 ```
+
 **Returns:**
 
 void
-

@@ -7,10 +7,13 @@
 **Signature:**
 
 ```typescript
-export declare function writeCatalogComponents(components: CatalogComponent[], options: {
+export declare function writeCatalogComponents(
+  components: CatalogComponent[],
+  options: {
     cwd?: string;
     outDir: string;
-}): void;
+  },
+): void;
 ```
 
 ## Parameters
@@ -19,44 +22,35 @@ export declare function writeCatalogComponents(components: CatalogComponent[], o
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 components
 
-
 </td><td>
 
 [CatalogComponent](./genui-a2ui-catalog-extractor.catalogcomponent.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 options
 
-
 </td><td>
 
 { cwd?: string; outDir: string; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -64,4 +58,3 @@ options
 **Returns:**
 
 void
-

@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface A2UIFunctionSpec 
+export declare interface A2UIFunctionSpec
 ```
 
 ## Properties
@@ -16,92 +16,71 @@ export declare interface A2UIFunctionSpec
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [description?](./genui.a2uifunctionspec.description.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui.a2uifunctionspec.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [parameters](./genui.a2uifunctionspec.parameters.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui.a2uipromptjsonschema.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [returnType](./genui.a2uifunctionspec.returntype.md)
 
-
 </td><td>
-
 
 </td><td>
 
 'string' \| 'number' \| 'boolean' \| 'array' \| 'object' \| 'any' \| 'void'
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

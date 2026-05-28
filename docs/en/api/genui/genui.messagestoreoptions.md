@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface MessageStoreOptions 
+export interface MessageStoreOptions
 ```
 
 ## Properties
@@ -16,41 +16,32 @@ export interface MessageStoreOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [initialMessages?](./genui.messagestoreoptions.initialmessages.md)
 
-
 </td><td>
-
 
 </td><td>
 
 readonly [ServerToClientMessage](./genui.servertoclientmessage.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_ Optional initial buffer contents. Useful when rehydrating a previous agent response or replaying a fixture stream.
 
-
 </td></tr>
 </tbody></table>
-

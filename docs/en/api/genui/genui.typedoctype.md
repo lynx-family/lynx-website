@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocType 
+export interface TypeDocType
 ```
 
 ## Properties
@@ -16,191 +16,150 @@ export interface TypeDocType
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [declaration?](./genui.typedoctype.declaration.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui.typedocreflection.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [elementType?](./genui.typedoctype.elementtype.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name?](./genui.typedoctype.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [qualifiedName?](./genui.typedoctype.qualifiedname.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [target?](./genui.typedoctype.target.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type](./genui.typedoctype.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [typeArguments?](./genui.typedoctype.typearguments.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui.typedoctype.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [types?](./genui.typedoctype.types.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui.typedoctype.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [value?](./genui.typedoctype.value.md)
 
-
 </td><td>
-
 
 </td><td>
 
 bigint \| boolean \| number \| string \| null
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

@@ -9,7 +9,7 @@
 ```typescript
 clearSurfaces(): void;
 ```
+
 **Returns:**
 
 void
-

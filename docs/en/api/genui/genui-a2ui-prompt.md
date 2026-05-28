@@ -10,47 +10,37 @@
 
 Function
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [buildA2UISystemPrompt(opts)](./genui-a2ui-prompt.builda2uisystemprompt.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [createA2UICatalogFromManifests(options)](./genui-a2ui-prompt.createa2uicatalogfrommanifests.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [readA2UICatalogFromDirectory(options)](./genui-a2ui-prompt.reada2uicatalogfromdirectory.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [renderCatalogReference(catalog)](./genui-a2ui-prompt.rendercatalogreference.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -61,83 +51,65 @@ Description
 
 Interface
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [A2UICatalog](./genui-a2ui-prompt.a2uicatalog.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [A2UIComponentProp](./genui-a2ui-prompt.a2uicomponentprop.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [A2UIComponentSpec](./genui-a2ui-prompt.a2uicomponentspec.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [A2UIExample](./genui-a2ui-prompt.a2uiexample.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [A2UIFunctionSpec](./genui-a2ui-prompt.a2uifunctionspec.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [BuildSystemPromptOptions](./genui-a2ui-prompt.buildsystempromptoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [JsonSchema](./genui-a2ui-prompt.jsonschema.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [ReadA2UICatalogDirectoryOptions](./genui-a2ui-prompt.reada2uicatalogdirectoryoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -148,57 +120,44 @@ Description
 
 Variable
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td>
 
-[A2UI\_PROTOCOL\_VERSION](./genui-a2ui-prompt.a2ui_protocol_version.md)
-
+[A2UI_PROTOCOL_VERSION](./genui-a2ui-prompt.a2ui_protocol_version.md)
 
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
-[A2UI\_SYSTEM\_PROMPT](./genui-a2ui-prompt.a2ui_system_prompt.md)
-
+[A2UI_SYSTEM_PROMPT](./genui-a2ui-prompt.a2ui_system_prompt.md)
 
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
-[BASIC\_CATALOG\_EXAMPLES](./genui-a2ui-prompt.basic_catalog_examples.md)
-
+[BASIC_CATALOG_EXAMPLES](./genui-a2ui-prompt.basic_catalog_examples.md)
 
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
-[BASIC\_CATALOG\_ID](./genui-a2ui-prompt.basic_catalog_id.md)
-
+[BASIC_CATALOG_ID](./genui-a2ui-prompt.basic_catalog_id.md)
 
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
-[BASIC\_CATALOG](./genui-a2ui-prompt.basic_catalog.md)
-
+[BASIC_CATALOG](./genui-a2ui-prompt.basic_catalog.md)
 
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

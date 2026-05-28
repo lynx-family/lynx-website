@@ -16,30 +16,24 @@ export declare function renderCatalogReference(catalog: A2UICatalog): string;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 catalog
 
-
 </td><td>
 
 [A2UICatalog](./genui-a2ui-prompt.a2uicatalog.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ catalog
 **Returns:**
 
 string
-

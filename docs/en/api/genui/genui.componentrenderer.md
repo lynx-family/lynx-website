@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export type ComponentRenderer<P = Record<string, unknown>> = React.FC<ComponentRenderProps<P>>;
+export type ComponentRenderer<P = Record<string, unknown>> = React.FC<
+  ComponentRenderProps<P>
+>;
 ```
-**References:** [ComponentRenderProps](./genui.componentrenderprops.md)
 
+**References:** [ComponentRenderProps](./genui.componentrenderprops.md)

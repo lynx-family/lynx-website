@@ -16,46 +16,37 @@ getSignal(path: string, initialValue?: unknown): Signal<unknown>;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 path
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 initialValue
 
-
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -63,4 +54,3 @@ _(Optional)_
 **Returns:**
 
 Signal&lt;unknown&gt;
-

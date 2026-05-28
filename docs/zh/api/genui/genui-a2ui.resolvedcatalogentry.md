@@ -9,7 +9,7 @@ A resolved catalog entry. Internal representation; consumers don't usually const
 **Signature:**
 
 ```typescript
-export interface ResolvedCatalogEntry 
+export interface ResolvedCatalogEntry
 ```
 
 ## Properties
@@ -18,75 +18,58 @@ export interface ResolvedCatalogEntry
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [component](./genui-a2ui.resolvedcatalogentry.component.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [CatalogComponent](./genui-a2ui.catalogcomponent.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui-a2ui.resolvedcatalogentry.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [schema?](./genui-a2ui.resolvedcatalogentry.schema.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [CatalogSchema](./genui-a2ui.catalogschema.md)
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

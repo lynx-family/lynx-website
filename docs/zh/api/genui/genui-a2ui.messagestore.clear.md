@@ -11,7 +11,7 @@ Reset the buffer. Notifies subscribers.
 ```typescript
 clear(): void;
 ```
+
 **Returns:**
 
 void
-

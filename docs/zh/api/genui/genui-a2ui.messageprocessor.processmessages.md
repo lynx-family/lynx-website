@@ -16,30 +16,24 @@ processMessages(messages: ServerToClientMessage[]): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 messages
 
-
 </td><td>
 
 [ServerToClientMessage](./genui-a2ui.servertoclientmessage.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ messages
 **Returns:**
 
 void
-

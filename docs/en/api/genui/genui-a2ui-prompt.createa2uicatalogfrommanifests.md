@@ -8,13 +8,13 @@
 
 ```typescript
 export declare function createA2UICatalogFromManifests(options: {
-    catalogId: string;
-    componentManifests: Record<string, JsonSchema>[];
-    examples?: A2UIExample[];
-    extraRules?: string[];
-    functions?: A2UIFunctionSpec[];
-    label?: string;
-    version?: string;
+  catalogId: string;
+  componentManifests: Record<string, JsonSchema>[];
+  examples?: A2UIExample[];
+  extraRules?: string[];
+  functions?: A2UIFunctionSpec[];
+  label?: string;
+  version?: string;
 }): A2UICatalog;
 ```
 
@@ -24,30 +24,24 @@ export declare function createA2UICatalogFromManifests(options: {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 { catalogId: string; componentManifests: Record&lt;string, [JsonSchema](./genui-a2ui-prompt.jsonschema.md)<!-- -->&gt;\[\]; examples?: [A2UIExample](./genui-a2ui-prompt.a2uiexample.md)<!-- -->\[\]; extraRules?: string\[\]; functions?: [A2UIFunctionSpec](./genui-a2ui-prompt.a2uifunctionspec.md)<!-- -->\[\]; label?: string; version?: string; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -55,4 +49,3 @@ options
 **Returns:**
 
 [A2UICatalog](./genui-a2ui-prompt.a2uicatalog.md)
-

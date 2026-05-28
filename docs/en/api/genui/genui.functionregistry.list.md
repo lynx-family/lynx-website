@@ -9,7 +9,7 @@
 ```typescript
 list(): FunctionEntry[];
 ```
+
 **Returns:**
 
 [FunctionEntry](./genui.functionentry.md)<!-- -->\[\]
-

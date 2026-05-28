@@ -18,30 +18,24 @@ export declare function mergeCatalogs(...catalogs: Catalog[]): Catalog;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 catalogs
 
-
 </td><td>
 
 [Catalog](./genui-a2ui.catalog.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +43,3 @@ catalogs
 **Returns:**
 
 [Catalog](./genui-a2ui.catalog.md)
-

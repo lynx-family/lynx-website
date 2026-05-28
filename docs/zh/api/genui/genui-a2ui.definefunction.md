@@ -9,7 +9,10 @@ Build a function entry for `defineCatalog`<!-- -->. Either pair the impl with th
 **Signature:**
 
 ```typescript
-export declare function defineFunction(impl: FunctionImpl, manifest?: FunctionManifest): CatalogFunctionEntry;
+export declare function defineFunction(
+  impl: FunctionImpl,
+  manifest?: FunctionManifest,
+): CatalogFunctionEntry;
 ```
 
 ## Parameters
@@ -18,46 +21,37 @@ export declare function defineFunction(impl: FunctionImpl, manifest?: FunctionMa
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 impl
 
-
 </td><td>
 
 [FunctionImpl](./genui-a2ui.functionimpl.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 manifest
 
-
 </td><td>
 
 [FunctionManifest](./genui-a2ui.functionmanifest.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -69,4 +63,3 @@ _(Optional)_
 ## Example
 
 const requiredEntry = defineFunction(required, requiredManifest); const catalog = defineCatalog(\[Text, Button, requiredEntry\]);
-

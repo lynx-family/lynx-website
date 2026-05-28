@@ -16,30 +16,24 @@ register(entry: FunctionEntry): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 entry
 
-
 </td><td>
 
 [FunctionEntry](./genui.functionentry.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ entry
 **Returns:**
 
 void
-

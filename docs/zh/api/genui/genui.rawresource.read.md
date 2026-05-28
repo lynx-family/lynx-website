@@ -5,9 +5,8 @@
 ## RawResource.read property
 
 > Warning: This API is now obsolete.
-> 
+>
 > Read `value` / `status` directly. Retained for backwards compatibility; in the success state it returns the value, otherwise it returns undefined. It does not throw.
-> 
 
 **Signature:**
 

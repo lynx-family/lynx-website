@@ -18,30 +18,24 @@ export declare function defineCatalog(inputs: readonly CatalogInput[]): Catalog;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 inputs
 
-
 </td><td>
 
 readonly [CatalogInput](./genui-a2ui.cataloginput.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -55,4 +49,3 @@ readonly [CatalogInput](./genui-a2ui.cataloginput.md)<!-- -->\[\]
 import { Text, Button } from '<!-- -->@<!-- -->lynx-js/genui/a2ui'; import { defineCatalog, defineFunction } from '<!-- -->@<!-- -->lynx-js/genui/a2ui'; import { required } from '<!-- -->@<!-- -->lynx-js/genui/a2ui/functions'; import textManifest from '<!-- -->@<!-- -->lynx-js/genui/a2ui/catalog/Text/catalog.json' with { type: 'json' }<!-- -->;
 
 const catalog = defineCatalog(\[ \[Text, textManifest\], Button, defineFunction(required), \]);
-

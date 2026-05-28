@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocReflection 
+export interface TypeDocReflection
 ```
 
 ## Properties
@@ -16,229 +16,180 @@ export interface TypeDocReflection
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [children?](./genui.typedocreflection.children.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui.typedocreflection.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [comment?](./genui.typedocreflection.comment.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocComment](./genui.typedoccomment.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [flags?](./genui.typedocreflection.flags.md)
 
-
 </td><td>
-
 
 </td><td>
 
 { isOptional?: boolean; }
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [inheritedFrom?](./genui.typedocreflection.inheritedfrom.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kind?](./genui.typedocreflection.kind.md)
 
-
 </td><td>
-
 
 </td><td>
 
 number
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kindString?](./genui.typedocreflection.kindstring.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui.typedocreflection.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [parameters?](./genui.typedocreflection.parameters.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui.typedocreflection.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [signatures?](./genui.typedocreflection.signatures.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocSignature](./genui.typedocsignature.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [sources?](./genui.typedocreflection.sources.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocSource](./genui.typedocsource.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type?](./genui.typedocreflection.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

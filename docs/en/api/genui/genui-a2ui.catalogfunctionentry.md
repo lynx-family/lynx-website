@@ -9,7 +9,7 @@ A function entry — pair an impl with its name, plus an optional manifest so th
 **Signature:**
 
 ```typescript
-export interface CatalogFunctionEntry 
+export interface CatalogFunctionEntry
 ```
 
 ## Properties
@@ -18,92 +18,71 @@ export interface CatalogFunctionEntry
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [definition?](./genui-a2ui.catalogfunctionentry.definition.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [CatalogFunctionDefinition](./genui-a2ui.catalogfunctiondefinition.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [impl](./genui-a2ui.catalogfunctionentry.impl.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [FunctionImpl](./genui-a2ui.functionimpl.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [kind](./genui-a2ui.catalogfunctionentry.kind.md)
 
-
 </td><td>
-
 
 </td><td>
 
 'function'
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui-a2ui.catalogfunctionentry.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

@@ -8,7 +8,7 @@
 
 ```typescript
 components: Array<{
-        name: string;
-        schema?: CatalogSchema;
-    }>;
+  name: string;
+  schema?: CatalogSchema;
+}>;
 ```

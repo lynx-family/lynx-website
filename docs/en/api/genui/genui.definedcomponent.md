@@ -7,7 +7,8 @@
 **Signature:**
 
 ```typescript
-export type DefinedComponent<T extends $ZodObject = $ZodObject> = CoreDefinedComponent<T, ComponentRenderer<z.infer<T>>>;
+export type DefinedComponent<T extends $ZodObject = $ZodObject> =
+  CoreDefinedComponent<T, ComponentRenderer<z.infer<T>>>;
 ```
-**References:** [ComponentRenderer](./genui.componentrenderer.md)
 
+**References:** [ComponentRenderer](./genui.componentrenderer.md)

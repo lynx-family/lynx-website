@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function Card(props: CardProps): import('@lynx-js/react').ReactNode;
+export declare function Card(
+  props: CardProps,
+): import('@lynx-js/react').ReactNode;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function Card(props: CardProps): import('@lynx-js/react').ReactNo
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 CardProps
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ CardProps
 **Returns:**
 
 import('@lynx-js/react').ReactNode
-

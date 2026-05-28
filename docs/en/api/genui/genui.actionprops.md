@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface ActionProps 
+export interface ActionProps
 ```
 
 ## Properties
@@ -16,75 +16,58 @@ export interface ActionProps
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [dataContext?](./genui.actionprops.datacontext.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string \| undefined
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [id](./genui.actionprops.id.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [surfaceId](./genui.actionprops.surfaceid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

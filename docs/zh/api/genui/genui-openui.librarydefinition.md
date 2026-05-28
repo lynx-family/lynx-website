@@ -9,5 +9,5 @@
 ```typescript
 export type LibraryDefinition = CoreLibraryDefinition<ComponentRenderer<any>>;
 ```
-**References:** [ComponentRenderer](./genui-openui.componentrenderer.md)
 
+**References:** [ComponentRenderer](./genui-openui.componentrenderer.md)

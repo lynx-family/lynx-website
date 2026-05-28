@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function createOpenUiLibrary(options?: CreateOpenUiLibraryOptions): Library;
+export declare function createOpenUiLibrary(
+  options?: CreateOpenUiLibraryOptions,
+): Library;
 ```
 
 ## Parameters
@@ -16,32 +18,26 @@ export declare function createOpenUiLibrary(options?: CreateOpenUiLibraryOptions
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 [CreateOpenUiLibraryOptions](./genui.createopenuilibraryoptions.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ _(Optional)_
 **Returns:**
 
 [Library](./genui.library.md)
-

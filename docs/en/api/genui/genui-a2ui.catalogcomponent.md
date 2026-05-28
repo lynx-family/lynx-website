@@ -11,5 +11,5 @@ Loose component type — entries receive runtime-shaped props from the protocol 
 ```typescript
 export type CatalogComponent = ComponentType<GenericComponentProps>;
 ```
-**References:** [GenericComponentProps](./genui-a2ui.genericcomponentprops.md)
 
+**References:** [GenericComponentProps](./genui-a2ui.genericcomponentprops.md)

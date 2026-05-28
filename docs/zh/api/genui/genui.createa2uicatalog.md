@@ -8,10 +8,10 @@
 
 ```typescript
 export declare function createA2UICatalog(options: {
-    catalogId: string;
-    components: CatalogComponent[] | Record<string, JsonSchema>;
-    functions?: FunctionDefinition[];
-    theme?: Record<string, JsonSchema>;
+  catalogId: string;
+  components: CatalogComponent[] | Record<string, JsonSchema>;
+  functions?: FunctionDefinition[];
+  theme?: Record<string, JsonSchema>;
 }): A2UICatalog;
 ```
 
@@ -21,30 +21,24 @@ export declare function createA2UICatalog(options: {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 { catalogId: string; components: [CatalogComponent](./genui.extractedcatalogcomponent.md)<!-- -->\[\] \| Record&lt;string, [JsonSchema](./genui.extractedjsonschema.md)<!-- -->&gt;; functions?: [FunctionDefinition](./genui.functiondefinition.md)<!-- -->\[\]; theme?: Record&lt;string, [JsonSchema](./genui.extractedjsonschema.md)<!-- -->&gt;; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -52,4 +46,3 @@ options
 **Returns:**
 
 [A2UICatalog](./genui.extracteda2uicatalog.md)
-

@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface CatalogComponent 
+export interface CatalogComponent
 ```
 
 ## Properties
@@ -16,90 +16,69 @@ export interface CatalogComponent
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [filePath](./genui-a2ui-catalog-extractor.catalogcomponent.filepath.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [interfaceName](./genui-a2ui-catalog-extractor.catalogcomponent.interfacename.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui-a2ui-catalog-extractor.catalogcomponent.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [schema](./genui-a2ui-catalog-extractor.catalogcomponent.schema.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

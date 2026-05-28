@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface A2UICatalog 
+export declare interface A2UICatalog
 ```
 
 ## Properties
@@ -16,149 +16,116 @@ export declare interface A2UICatalog
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [components](./genui.a2uipromptcatalog.components.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [A2UIComponentSpec](./genui.a2uicomponentspec.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [examples?](./genui.a2uipromptcatalog.examples.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [A2UIExample](./genui.a2uiexample.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [extraRules?](./genui.a2uipromptcatalog.extrarules.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [functions?](./genui.a2uipromptcatalog.functions.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [A2UIFunctionSpec](./genui.a2uifunctionspec.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [id](./genui.a2uipromptcatalog.id.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [label](./genui.a2uipromptcatalog.label.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [version?](./genui.a2uipromptcatalog.version.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

@@ -9,7 +9,9 @@ Build a single-Text fallback message stream from a plain string. Used by transpo
 **Signature:**
 
 ```typescript
-export declare function createFallbackMessagesFromPlainText(text: string): ServerToClientMessage[];
+export declare function createFallbackMessagesFromPlainText(
+  text: string,
+): ServerToClientMessage[];
 ```
 
 ## Parameters
@@ -18,30 +20,24 @@ export declare function createFallbackMessagesFromPlainText(text: string): Serve
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 text
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ string
 **Returns:**
 
 [ServerToClientMessage](./genui-a2ui.servertoclientmessage.md)<!-- -->\[\]
-

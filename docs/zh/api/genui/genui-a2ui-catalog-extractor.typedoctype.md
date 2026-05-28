@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocType 
+export interface TypeDocType
 ```
 
 ## Properties
@@ -16,191 +16,150 @@ export interface TypeDocType
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [declaration?](./genui-a2ui-catalog-extractor.typedoctype.declaration.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui-a2ui-catalog-extractor.typedocreflection.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [elementType?](./genui-a2ui-catalog-extractor.typedoctype.elementtype.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui-a2ui-catalog-extractor.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name?](./genui-a2ui-catalog-extractor.typedoctype.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [qualifiedName?](./genui-a2ui-catalog-extractor.typedoctype.qualifiedname.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [target?](./genui-a2ui-catalog-extractor.typedoctype.target.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui-a2ui-catalog-extractor.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type](./genui-a2ui-catalog-extractor.typedoctype.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [typeArguments?](./genui-a2ui-catalog-extractor.typedoctype.typearguments.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui-a2ui-catalog-extractor.typedoctype.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [types?](./genui-a2ui-catalog-extractor.typedoctype.types.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui-a2ui-catalog-extractor.typedoctype.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [value?](./genui-a2ui-catalog-extractor.typedoctype.value.md)
 
-
 </td><td>
-
 
 </td><td>
 
 bigint \| boolean \| number \| string \| null
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

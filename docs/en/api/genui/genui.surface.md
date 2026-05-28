@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface Surface 
+export interface Surface
 ```
 
 ## Properties
@@ -16,166 +16,129 @@ export interface Surface
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [catalogId?](./genui.surface.catalogid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [components](./genui.surface.components.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Map&lt;string, [ComponentInstance](./genui.componentinstance.md)<!-- -->&gt;
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [resources](./genui.surface.resources.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Map&lt;string, [Resource](./genui.resource.md)<!-- -->&gt;
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [rootComponentId?](./genui.surface.rootcomponentid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string \| null
 
-
 </td><td>
 
 _(Optional)_ id of the root component for this surface (must be 'root').
-
 
 </td></tr>
 <tr><td>
 
 [sendDataModel?](./genui.surface.senddatamodel.md)
 
-
 </td><td>
-
 
 </td><td>
 
 boolean \| undefined
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [store](./genui.surface.store.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [SignalStore](./genui.signalstore.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [surfaceId](./genui.surface.surfaceid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [SurfaceId](./genui.surfaceid.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [theme?](./genui.surface.theme.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Readonly&lt;Record&lt;string, unknown&gt;&gt;
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

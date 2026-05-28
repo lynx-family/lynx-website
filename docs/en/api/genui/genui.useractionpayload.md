@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface UserActionPayload 
+export interface UserActionPayload
 ```
 
 ## Properties
@@ -16,107 +16,82 @@ export interface UserActionPayload
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [context](./genui.useractionpayload.context.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;string, unknown&gt;
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui.useractionpayload.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [sourceComponentId](./genui.useractionpayload.sourcecomponentid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [surfaceId](./genui.useractionpayload.surfaceid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [timestamp](./genui.useractionpayload.timestamp.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

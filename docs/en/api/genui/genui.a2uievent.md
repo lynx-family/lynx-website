@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface A2UIEvent 
+export interface A2UIEvent
 ```
 
 ## Properties
@@ -16,56 +16,43 @@ export interface A2UIEvent
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [message](./genui.a2uievent.message.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;string, unknown&gt;
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [resolve](./genui.a2uievent.resolve.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (response: unknown) =&gt; void
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

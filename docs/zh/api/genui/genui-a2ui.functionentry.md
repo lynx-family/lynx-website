@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface FunctionEntry 
+export interface FunctionEntry
 ```
 
 ## Properties
@@ -16,75 +16,58 @@ export interface FunctionEntry
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [definition?](./genui-a2ui.functionentry.definition.md)
 
-
 </td><td>
-
 
 </td><td>
 
 FunctionDefinition \| undefined
 
-
 </td><td>
 
 _(Optional)_ Optional function definition announced to the agent as part of the handshake.
-
 
 </td></tr>
 <tr><td>
 
 [impl](./genui-a2ui.functionentry.impl.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [FunctionImpl](./genui-a2ui.functionimpl.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui-a2ui.functionentry.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

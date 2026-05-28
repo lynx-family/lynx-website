@@ -9,7 +9,13 @@ Resolve arguments, look the function up in the registry, and invoke it. When no 
 **Signature:**
 
 ```typescript
-export declare function executeFunctionCall(processor: MessageProcessor, fn: v0_9.FunctionCall, surfaceId: string, dataContextPath?: string, options?: ResolveFunctionOptions): unknown;
+export declare function executeFunctionCall(
+  processor: MessageProcessor,
+  fn: v0_9.FunctionCall,
+  surfaceId: string,
+  dataContextPath?: string,
+  options?: ResolveFunctionOptions,
+): unknown;
 ```
 
 ## Parameters
@@ -18,90 +24,72 @@ export declare function executeFunctionCall(processor: MessageProcessor, fn: v0_
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 processor
 
-
 </td><td>
 
 [MessageProcessor](./genui-a2ui.messageprocessor.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 fn
 
-
 </td><td>
 
-v0\_9.FunctionCall
-
+v0_9.FunctionCall
 
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 surfaceId
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 dataContextPath
 
-
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 options
 
-
 </td><td>
 
 [ResolveFunctionOptions](./genui-a2ui.resolvefunctionoptions.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -109,4 +97,3 @@ _(Optional)_
 **Returns:**
 
 unknown
-

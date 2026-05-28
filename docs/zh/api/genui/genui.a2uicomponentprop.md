@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface A2UIComponentProp 
+export declare interface A2UIComponentProp
 ```
 
 ## Properties
@@ -16,132 +16,103 @@ export declare interface A2UIComponentProp
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [description?](./genui.a2uicomponentprop.description.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [enums?](./genui.a2uicomponentprop.enums.md)
 
-
 </td><td>
-
 
 </td><td>
 
 readonly string\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui.a2uicomponentprop.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [required?](./genui.a2uicomponentprop.required.md)
 
-
 </td><td>
-
 
 </td><td>
 
 boolean
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [schema?](./genui.a2uicomponentprop.schema.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui.a2uipromptjsonschema.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type](./genui.a2uicomponentprop.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

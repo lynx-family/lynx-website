@@ -11,5 +11,5 @@ The shape produced by the extractor as `dist/catalog/<Name>/catalog.json`<!-- --
 ```typescript
 export type CatalogManifest = Record<string, CatalogSchema>;
 ```
-**References:** [CatalogSchema](./genui-a2ui.catalogschema.md)
 
+**References:** [CatalogSchema](./genui-a2ui.catalogschema.md)

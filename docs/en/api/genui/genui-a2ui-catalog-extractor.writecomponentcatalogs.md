@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function writeComponentCatalogs(options: WriteComponentCatalogOptions): Promise<CatalogComponent[]>;
+export declare function writeComponentCatalogs(
+  options: WriteComponentCatalogOptions,
+): Promise<CatalogComponent[]>;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function writeComponentCatalogs(options: WriteComponentCatalogOpt
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 [WriteComponentCatalogOptions](./genui-a2ui-catalog-extractor.writecomponentcatalogoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ options
 **Returns:**
 
 Promise&lt;[CatalogComponent](./genui-a2ui-catalog-extractor.catalogcomponent.md)<!-- -->\[\]&gt;
-

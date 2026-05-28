@@ -7,7 +7,12 @@
 **Signature:**
 
 ```typescript
-export declare function useDataBinding<T = unknown>(dynamicValue: unknown, surface: Surface | undefined, dataContextPath?: string, fallbackValue?: T): [T | undefined, (newValue: T) => void, string | undefined];
+export declare function useDataBinding<T = unknown>(
+  dynamicValue: unknown,
+  surface: Surface | undefined,
+  dataContextPath?: string,
+  fallbackValue?: T,
+): [T | undefined, (newValue: T) => void, string | undefined];
 ```
 
 ## Parameters
@@ -16,76 +21,61 @@ export declare function useDataBinding<T = unknown>(dynamicValue: unknown, surfa
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 dynamicValue
 
-
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 surface
 
-
 </td><td>
 
 [Surface](./genui.surface.md) \| undefined
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 dataContextPath
 
-
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 fallbackValue
 
-
 </td><td>
 
 T
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -93,4 +83,3 @@ _(Optional)_
 **Returns:**
 
 \[T \| undefined, (newValue: T) =&gt; void, string \| undefined\]
-

@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-NodeRenderer: typeof NodeRendererImpl
+NodeRenderer: typeof NodeRendererImpl;
 ```

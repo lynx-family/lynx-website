@@ -7,8 +7,9 @@
 **Signature:**
 
 ```typescript
-export interface ComponentRenderProps<P = Record<string, unknown>> extends CoreRenderProps<P, ReactNode> 
+export interface ComponentRenderProps<P = Record<string, unknown>> extends CoreRenderProps<P, ReactNode>
 ```
+
 **Extends:** CoreRenderProps&lt;P, ReactNode&gt;
 
 ## Properties
@@ -17,41 +18,32 @@ export interface ComponentRenderProps<P = Record<string, unknown>> extends CoreR
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [onAction?](./genui.componentrenderprops.onaction.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (event: CoreActionEvent) =&gt; void
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

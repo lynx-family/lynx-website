@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function TextField(props: TextFieldProps): import('@lynx-js/react').ReactNode;
+export declare function TextField(
+  props: TextFieldProps,
+): import('@lynx-js/react').ReactNode;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function TextField(props: TextFieldProps): import('@lynx-js/react
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 TextFieldProps
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ TextFieldProps
 **Returns:**
 
 import('@lynx-js/react').ReactNode
-

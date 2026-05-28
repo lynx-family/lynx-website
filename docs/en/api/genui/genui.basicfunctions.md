@@ -15,4 +15,3 @@ basicFunctions: readonly CatalogFunctionEntry[]
 ## Example
 
 &lt;<!-- -->A2UI catalogs=<!-- -->{<!-- -->\[Text, Button, ...basicFunctions\]<!-- -->} ... /<!-- -->&gt;
-

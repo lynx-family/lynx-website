@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function buildA2UISystemPrompt(opts?: BuildSystemPromptOptions): string;
+export declare function buildA2UISystemPrompt(
+  opts?: BuildSystemPromptOptions,
+): string;
 ```
 
 ## Parameters
@@ -16,32 +18,26 @@ export declare function buildA2UISystemPrompt(opts?: BuildSystemPromptOptions): 
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 opts
 
-
 </td><td>
 
 [BuildSystemPromptOptions](./genui.buildsystempromptoptions.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ _(Optional)_
 **Returns:**
 
 string
-

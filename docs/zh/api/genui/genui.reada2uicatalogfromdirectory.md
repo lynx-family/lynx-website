@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function readA2UICatalogFromDirectory(options: ReadA2UICatalogDirectoryOptions): A2UICatalog;
+export declare function readA2UICatalogFromDirectory(
+  options: ReadA2UICatalogDirectoryOptions,
+): A2UICatalog;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function readA2UICatalogFromDirectory(options: ReadA2UICatalogDir
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 [ReadA2UICatalogDirectoryOptions](./genui.reada2uicatalogdirectoryoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ options
 **Returns:**
 
 [A2UICatalog](./genui.a2uipromptcatalog.md)
-

@@ -9,7 +9,9 @@ Normalize an arbitrary payload (string, array, object) into a flat list of `Serv
 **Signature:**
 
 ```typescript
-export declare function normalizePayloadToMessages(payload: unknown): ServerToClientMessage[];
+export declare function normalizePayloadToMessages(
+  payload: unknown,
+): ServerToClientMessage[];
 ```
 
 ## Parameters
@@ -18,30 +20,24 @@ export declare function normalizePayloadToMessages(payload: unknown): ServerToCl
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 payload
 
-
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ unknown
 **Returns:**
 
 [ServerToClientMessage](./genui-a2ui.servertoclientmessage.md)<!-- -->\[\]
-

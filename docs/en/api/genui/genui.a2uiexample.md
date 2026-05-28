@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface A2UIExample 
+export declare interface A2UIExample
 ```
 
 ## Properties
@@ -16,73 +16,56 @@ export declare interface A2UIExample
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [messages](./genui.a2uiexample.messages.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui.a2uiexample.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [user](./genui.a2uiexample.user.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

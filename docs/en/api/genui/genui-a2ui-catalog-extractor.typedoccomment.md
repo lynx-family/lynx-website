@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocComment 
+export interface TypeDocComment
 ```
 
 ## Properties
@@ -16,79 +16,62 @@ export interface TypeDocComment
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [blockTags?](./genui-a2ui-catalog-extractor.typedoccomment.blocktags.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocCommentTag](./genui-a2ui-catalog-extractor.typedoccommenttag.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [modifierTags?](./genui-a2ui-catalog-extractor.typedoccomment.modifiertags.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Iterable&lt;string&gt; \| Record&lt;string, boolean&gt;
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [summary?](./genui-a2ui-catalog-extractor.typedoccomment.summary.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocCommentDisplayPart](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

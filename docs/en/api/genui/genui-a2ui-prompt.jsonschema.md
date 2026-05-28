@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface JsonSchema 
+export declare interface JsonSchema
 ```
 
 ## Properties
@@ -16,174 +16,137 @@ export declare interface JsonSchema
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [additionalProperties?](./genui-a2ui-prompt.jsonschema.additionalproperties.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [description?](./genui-a2ui-prompt.jsonschema.description.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [enum?](./genui-a2ui-prompt.jsonschema.enum.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [items?](./genui-a2ui-prompt.jsonschema.items.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui-a2ui-prompt.jsonschema.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [oneOf?](./genui-a2ui-prompt.jsonschema.oneof.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui-a2ui-prompt.jsonschema.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [properties?](./genui-a2ui-prompt.jsonschema.properties.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;string, [JsonSchema](./genui-a2ui-prompt.jsonschema.md)<!-- -->&gt;
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [required?](./genui-a2ui-prompt.jsonschema.required.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type?](./genui-a2ui-prompt.jsonschema.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

@@ -16,30 +16,24 @@ resolveSignal(value: unknown): Signal<unknown>;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 value
 
-
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ unknown
 **Returns:**
 
 Signal&lt;unknown&gt;
-

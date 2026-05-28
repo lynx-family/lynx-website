@@ -16,30 +16,24 @@ onEvent(callback: (event: A2UIEvent) => void): () => void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 callback
 
-
 </td><td>
 
 (event: [A2UIEvent](./genui.a2uievent.md)<!-- -->) =&gt; void
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ callback
 **Returns:**
 
 () =&gt; void
-

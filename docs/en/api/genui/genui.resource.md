@@ -9,5 +9,5 @@
 ```typescript
 export type Resource = GenericResource<ResourceInfo>;
 ```
-**References:** [GenericResource](./genui.rawresource.md)<!-- -->, [ResourceInfo](./genui.resourceinfo.md)
 
+**References:** [GenericResource](./genui.rawresource.md)<!-- -->, [ResourceInfo](./genui.resourceinfo.md)

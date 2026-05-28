@@ -19,30 +19,24 @@ updateBatch(updates: {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 updates
 
-
 </td><td>
 
 { path: string; value: unknown; }\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -50,4 +44,3 @@ updates
 **Returns:**
 
 void
-

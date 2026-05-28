@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface JsonSchema 
+export interface JsonSchema
 ```
 
 ## Properties
@@ -16,231 +16,182 @@ export interface JsonSchema
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [$ref?](./genui-a2ui-catalog-extractor.jsonschema._ref.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [additionalProperties?](./genui-a2ui-catalog-extractor.jsonschema.additionalproperties.md)
 
-
 </td><td>
-
 
 </td><td>
 
 boolean \| [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [default?](./genui-a2ui-catalog-extractor.jsonschema.default.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [deprecated?](./genui-a2ui-catalog-extractor.jsonschema.deprecated.md)
 
-
 </td><td>
-
 
 </td><td>
 
 boolean
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [description?](./genui-a2ui-catalog-extractor.jsonschema.description.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [enum?](./genui-a2ui-catalog-extractor.jsonschema.enum.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Array&lt;boolean \| number \| string&gt;
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [items?](./genui-a2ui-catalog-extractor.jsonschema.items.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [oneOf?](./genui-a2ui-catalog-extractor.jsonschema.oneof.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [properties?](./genui-a2ui-catalog-extractor.jsonschema.properties.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;string, [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)<!-- -->&gt;
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [required?](./genui-a2ui-catalog-extractor.jsonschema.required.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type?](./genui-a2ui-catalog-extractor.jsonschema.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

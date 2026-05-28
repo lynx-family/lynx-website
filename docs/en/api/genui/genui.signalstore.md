@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare class SignalStore 
+export declare class SignalStore
 ```
 
 ## Methods
@@ -16,53 +16,40 @@ export declare class SignalStore
 
 Method
 
-
 </th><th>
 
 Modifiers
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [getSignal(path, initialValue)](./genui.signalstore.getsignal.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [update(path, value)](./genui.signalstore.update.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [updateBatch(updates)](./genui.signalstore.updatebatch.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface ExtractCatalogFromTypeDocOptions 
+export interface ExtractCatalogFromTypeDocOptions
 ```
 
 ## Properties
@@ -16,41 +16,32 @@ export interface ExtractCatalogFromTypeDocOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [cwd?](./genui-a2ui-catalog-extractor.extractcatalogfromtypedocoptions.cwd.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

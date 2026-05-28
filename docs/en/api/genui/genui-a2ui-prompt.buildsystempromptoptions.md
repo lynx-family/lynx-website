@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface BuildSystemPromptOptions 
+export declare interface BuildSystemPromptOptions
 ```
 
 ## Properties
@@ -16,60 +16,47 @@ export declare interface BuildSystemPromptOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [appendix?](./genui-a2ui-prompt.buildsystempromptoptions.appendix.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [catalog?](./genui-a2ui-prompt.buildsystempromptoptions.catalog.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [A2UICatalog](./genui-a2ui-prompt.a2uicatalog.md)
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

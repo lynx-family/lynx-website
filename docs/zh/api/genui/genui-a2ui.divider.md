@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function Divider(props: DividerProps): import('@lynx-js/react').ReactNode;
+export declare function Divider(
+  props: DividerProps,
+): import('@lynx-js/react').ReactNode;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function Divider(props: DividerProps): import('@lynx-js/react').R
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 DividerProps
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ DividerProps
 **Returns:**
 
 import('@lynx-js/react').ReactNode
-

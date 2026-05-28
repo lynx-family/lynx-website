@@ -8,6 +8,6 @@
 
 ```typescript
 export type ServerToClientMessage = v0_9.A2uiMessage & {
-    messageId?: string;
+  messageId?: string;
 };
 ```

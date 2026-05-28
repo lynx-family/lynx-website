@@ -9,7 +9,9 @@ Build a name → component lookup map from a catalog. The renderer uses this to 
 **Signature:**
 
 ```typescript
-export declare function resolveCatalog(catalog: Catalog): ReadonlyMap<string, CatalogComponent>;
+export declare function resolveCatalog(
+  catalog: Catalog,
+): ReadonlyMap<string, CatalogComponent>;
 ```
 
 ## Parameters
@@ -18,30 +20,24 @@ export declare function resolveCatalog(catalog: Catalog): ReadonlyMap<string, Ca
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 catalog
 
-
 </td><td>
 
 [Catalog](./genui-a2ui.catalog.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ catalog
 **Returns:**
 
 ReadonlyMap&lt;string, [CatalogComponent](./genui-a2ui.catalogcomponent.md)<!-- -->&gt;
-

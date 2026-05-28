@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-functionRegistry: FunctionRegistry
+functionRegistry: FunctionRegistry;
 ```

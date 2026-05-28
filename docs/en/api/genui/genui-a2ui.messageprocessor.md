@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare class MessageProcessor 
+export declare class MessageProcessor
 ```
 
 ## Constructors
@@ -16,30 +16,24 @@ export declare class MessageProcessor
 
 Constructor
 
-
 </th><th>
 
 Modifiers
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [(constructor)()](./genui-a2ui.messageprocessor._constructor_.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Constructs a new instance of the `MessageProcessor` class
-
 
 </td></tr>
 </tbody></table>
@@ -50,38 +44,30 @@ Constructs a new instance of the `MessageProcessor` class
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [surfaces](./genui-a2ui.messageprocessor.surfaces.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Map&lt;string, [Surface](./genui-a2ui.surface.md)<!-- -->&gt;
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -92,109 +78,83 @@ Map&lt;string, [Surface](./genui-a2ui.surface.md)<!-- -->&gt;
 
 Method
 
-
 </th><th>
 
 Modifiers
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [clearSurfaces()](./genui-a2ui.messageprocessor.clearsurfaces.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [dispatch(message)](./genui-a2ui.messageprocessor.dispatch.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [getOrCreateSurface(surfaceId)](./genui-a2ui.messageprocessor.getorcreatesurface.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [getSurfaces()](./genui-a2ui.messageprocessor.getsurfaces.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [onEvent(callback)](./genui-a2ui.messageprocessor.onevent.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [onUpdate(callback)](./genui-a2ui.messageprocessor.onupdate.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [processMessages(messages)](./genui-a2ui.messageprocessor.processmessages.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [resolvePath(path, dataContextPath)](./genui-a2ui.messageprocessor.resolvepath.md)
 
-
 </td><td>
-
 
 </td><td>
 
@@ -202,7 +162,5 @@ Resolve a JSON Pointer taking into account the current data context.
 
 - Absolute paths (starting with '/') are returned as-is. - Relative paths are resolved against the provided dataContextPath.
 
-
 </td></tr>
 </tbody></table>
-

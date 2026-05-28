@@ -7,7 +7,13 @@
 **Signature:**
 
 ```typescript
-export declare function resolveDynamicValue(processor: MessageProcessor, value: unknown, surfaceId: string, dataContextPath?: string, options?: ResolveDynamicValueOptions): unknown;
+export declare function resolveDynamicValue(
+  processor: MessageProcessor,
+  value: unknown,
+  surfaceId: string,
+  dataContextPath?: string,
+  options?: ResolveDynamicValueOptions,
+): unknown;
 ```
 
 ## Parameters
@@ -16,90 +22,72 @@ export declare function resolveDynamicValue(processor: MessageProcessor, value: 
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 processor
 
-
 </td><td>
 
 [MessageProcessor](./genui-a2ui.messageprocessor.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 value
 
-
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 surfaceId
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 dataContextPath
 
-
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 options
 
-
 </td><td>
 
 ResolveDynamicValueOptions
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -107,4 +95,3 @@ _(Optional)_
 **Returns:**
 
 unknown
-

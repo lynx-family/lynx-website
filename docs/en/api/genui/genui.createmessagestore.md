@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function createMessageStore(options?: MessageStoreOptions): MessageStore;
+export declare function createMessageStore(
+  options?: MessageStoreOptions,
+): MessageStore;
 ```
 
 ## Parameters
@@ -16,32 +18,26 @@ export declare function createMessageStore(options?: MessageStoreOptions): Messa
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 [MessageStoreOptions](./genui.messagestoreoptions.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +45,3 @@ _(Optional)_
 **Returns:**
 
 [MessageStore](./genui.messagestore.md)
-

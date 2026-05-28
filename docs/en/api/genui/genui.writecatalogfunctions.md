@@ -7,10 +7,13 @@
 **Signature:**
 
 ```typescript
-export declare function writeCatalogFunctions(functions: CatalogFunction[], options: {
+export declare function writeCatalogFunctions(
+  functions: CatalogFunction[],
+  options: {
     cwd?: string;
     outDir: string;
-}): void;
+  },
+): void;
 ```
 
 ## Parameters
@@ -19,44 +22,35 @@ export declare function writeCatalogFunctions(functions: CatalogFunction[], opti
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 functions
 
-
 </td><td>
 
 [CatalogFunction](./genui.catalogfunction.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 options
 
-
 </td><td>
 
 { cwd?: string; outDir: string; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -64,4 +58,3 @@ options
 **Returns:**
 
 void
-

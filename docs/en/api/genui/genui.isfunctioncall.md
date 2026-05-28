@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function isFunctionCall(value: unknown): value is v0_9.FunctionCall;
+export declare function isFunctionCall(
+  value: unknown,
+): value is v0_9.FunctionCall;
 ```
 
 ## Parameters
@@ -16,35 +18,28 @@ export declare function isFunctionCall(value: unknown): value is v0_9.FunctionCa
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 value
 
-
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 
 **Returns:**
 
-value is v0\_9.FunctionCall
-
+value is v0_9.FunctionCall

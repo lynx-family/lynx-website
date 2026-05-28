@@ -9,7 +9,7 @@
 ```typescript
 getSurfaces(): ReadonlyMap<string, Surface>;
 ```
+
 **Returns:**
 
 ReadonlyMap&lt;string, [Surface](./genui.surface.md)<!-- -->&gt;
-

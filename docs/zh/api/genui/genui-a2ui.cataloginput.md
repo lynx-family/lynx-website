@@ -9,7 +9,11 @@ What the developer passes into `defineCatalog`<!-- -->. Components and function 
 **Signature:**
 
 ```typescript
-export type CatalogInput = CatalogComponent | readonly [CatalogComponent, CatalogManifest] | ResolvedCatalogEntry | CatalogFunctionEntry;
+export type CatalogInput =
+  | CatalogComponent
+  | readonly [CatalogComponent, CatalogManifest]
+  | ResolvedCatalogEntry
+  | CatalogFunctionEntry;
 ```
-**References:** [CatalogComponent](./genui-a2ui.catalogcomponent.md)<!-- -->, [CatalogManifest](./genui-a2ui.catalogmanifest.md)<!-- -->, [ResolvedCatalogEntry](./genui-a2ui.resolvedcatalogentry.md)<!-- -->, [CatalogFunctionEntry](./genui-a2ui.catalogfunctionentry.md)
 
+**References:** [CatalogComponent](./genui-a2ui.catalogcomponent.md)<!-- -->, [CatalogManifest](./genui-a2ui.catalogmanifest.md)<!-- -->, [ResolvedCatalogEntry](./genui-a2ui.resolvedcatalogentry.md)<!-- -->, [CatalogFunctionEntry](./genui-a2ui.catalogfunctionentry.md)

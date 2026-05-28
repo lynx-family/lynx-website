@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface FunctionDefinition 
+export interface FunctionDefinition
 ```
 
 ## Properties
@@ -16,92 +16,71 @@ export interface FunctionDefinition
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [description?](./genui-a2ui-catalog-extractor.functiondefinition.description.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui-a2ui-catalog-extractor.functiondefinition.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [parameters](./genui-a2ui-catalog-extractor.functiondefinition.parameters.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [returnType](./genui-a2ui-catalog-extractor.functiondefinition.returntype.md)
 
-
 </td><td>
-
 
 </td><td>
 
 'string' \| 'number' \| 'boolean' \| 'array' \| 'object' \| 'any' \| 'void'
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

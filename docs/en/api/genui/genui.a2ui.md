@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-A2UI: import("react").MemoExoticComponent<typeof A2UIImpl>
+A2UI: import('react').MemoExoticComponent<typeof A2UIImpl>;
 ```

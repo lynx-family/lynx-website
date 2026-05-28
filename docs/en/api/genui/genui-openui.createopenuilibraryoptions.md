@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface CreateOpenUiLibraryOptions 
+export interface CreateOpenUiLibraryOptions
 ```
 
 ## Properties
@@ -16,79 +16,62 @@ export interface CreateOpenUiLibraryOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [componentGroups?](./genui-openui.createopenuilibraryoptions.componentgroups.md)
 
-
 </td><td>
-
 
 </td><td>
 
 ComponentGroup\[\]
 
-
 </td><td>
 
 _(Optional)_ Replace or extend the built-in component groups.
-
 
 </td></tr>
 <tr><td>
 
 [components?](./genui-openui.createopenuilibraryoptions.components.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [DefinedComponent](./genui-openui.definedcomponent.md)<!-- -->&lt;any&gt;\[\]
 
-
 </td><td>
 
 _(Optional)_ Replace or extend the built-in component set.
-
 
 </td></tr>
 <tr><td>
 
 [root?](./genui-openui.createopenuilibraryoptions.root.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_ Override the root component name. Defaults to `'Stack'`<!-- -->.
 
-
 </td></tr>
 </tbody></table>
-

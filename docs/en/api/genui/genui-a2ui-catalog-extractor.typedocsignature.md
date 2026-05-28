@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocSignature 
+export interface TypeDocSignature
 ```
 
 ## Properties
@@ -16,136 +16,107 @@ export interface TypeDocSignature
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [comment?](./genui-a2ui-catalog-extractor.typedocsignature.comment.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocComment](./genui-a2ui-catalog-extractor.typedoccomment.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kind?](./genui-a2ui-catalog-extractor.typedocsignature.kind.md)
 
-
 </td><td>
-
 
 </td><td>
 
 number
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kindString?](./genui-a2ui-catalog-extractor.typedocsignature.kindstring.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name?](./genui-a2ui-catalog-extractor.typedocsignature.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [parameters?](./genui-a2ui-catalog-extractor.typedocsignature.parameters.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui-a2ui-catalog-extractor.typedocreflection.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [type?](./genui-a2ui-catalog-extractor.typedocsignature.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocType](./genui-a2ui-catalog-extractor.typedoctype.md)
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

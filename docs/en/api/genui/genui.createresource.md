@@ -16,30 +16,24 @@ export declare function createResource<T = unknown>(id: string): Resource<T>;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 id
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ string
 **Returns:**
 
 [Resource](./genui.rawresource.md)<!-- -->&lt;T&gt;
-

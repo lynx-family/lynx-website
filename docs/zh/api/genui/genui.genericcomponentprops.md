@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface GenericComponentProps 
+export interface GenericComponentProps
 ```
 
 ## Properties
@@ -16,115 +16,90 @@ export interface GenericComponentProps
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [dataContextPath?](./genui.genericcomponentprops.datacontextpath.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [id?](./genui.genericcomponentprops.id.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [sendAction?](./genui.genericcomponentprops.sendaction.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (action: Record&lt;string, unknown&gt;) =&gt; void
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [setValue?](./genui.genericcomponentprops.setvalue.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (key: string, value: unknown) =&gt; void
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [surface](./genui.genericcomponentprops.surface.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [Surface](./genui.surface.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

@@ -8,10 +8,10 @@
 
 ```typescript
 export type ComponentInstance = v0_9.AnyComponent & {
-    dataContextPath?: string;
-    __template?: {
-        componentId: v0_9.ComponentId;
-        path: string;
-    };
+  dataContextPath?: string;
+  __template?: {
+    componentId: v0_9.ComponentId;
+    path: string;
+  };
 };
 ```

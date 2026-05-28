@@ -10,12 +10,12 @@ Evaluate an input component's `checks` array reactively. Returns the current out
 
 ```typescript
 export declare function useChecks(options: {
-    checks: CheckLike[] | undefined;
-    componentId: string;
-    surface: Surface | undefined;
-    dataContextPath?: string | undefined;
+  checks: CheckLike[] | undefined;
+  componentId: string;
+  surface: Surface | undefined;
+  dataContextPath?: string | undefined;
 }): CheckOutcome & {
-    firstFailureMessage: string | undefined;
+  firstFailureMessage: string | undefined;
 };
 ```
 
@@ -25,30 +25,24 @@ export declare function useChecks(options: {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 options
 
-
 </td><td>
 
 { checks: [CheckLike](./genui.checklike.md)<!-- -->\[\] \| undefined; componentId: string; surface: [Surface](./genui.surface.md) \| undefined; dataContextPath?: string \| undefined; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -56,4 +50,3 @@ options
 **Returns:**
 
 CheckOutcome &amp; { firstFailureMessage: string \| undefined; }
-

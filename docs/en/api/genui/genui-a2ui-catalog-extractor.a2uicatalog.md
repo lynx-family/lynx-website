@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface A2UICatalog 
+export interface A2UICatalog
 ```
 
 ## Properties
@@ -16,96 +16,75 @@ export interface A2UICatalog
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [catalogId](./genui-a2ui-catalog-extractor.a2uicatalog.catalogid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [components?](./genui-a2ui-catalog-extractor.a2uicatalog.components.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;string, [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)<!-- -->&gt;
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [functions?](./genui-a2ui-catalog-extractor.a2uicatalog.functions.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [FunctionDefinition](./genui-a2ui-catalog-extractor.functiondefinition.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [theme?](./genui-a2ui-catalog-extractor.a2uicatalog.theme.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;string, [JsonSchema](./genui-a2ui-catalog-extractor.jsonschema.md)<!-- -->&gt;
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

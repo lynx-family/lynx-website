@@ -18,30 +18,24 @@ export declare function serializeCatalog(catalog: Catalog): SerializedCatalog;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 catalog
 
-
 </td><td>
 
 [Catalog](./genui-a2ui.catalog.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +43,3 @@ catalog
 **Returns:**
 
 [SerializedCatalog](./genui-a2ui.serializedcatalog.md)
-

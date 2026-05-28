@@ -9,7 +9,7 @@ The serialized payload sent to the agent during channel handshake.
 **Signature:**
 
 ```typescript
-export interface SerializedCatalog 
+export interface SerializedCatalog
 ```
 
 ## Properties
@@ -18,75 +18,58 @@ export interface SerializedCatalog
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [components](./genui-a2ui.serializedcatalog.components.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Array&lt;{ name: string; schema?: [CatalogSchema](./genui-a2ui.catalogschema.md)<!-- -->; }&gt;
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [functions?](./genui-a2ui.serializedcatalog.functions.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [CatalogFunctionDefinition](./genui-a2ui.catalogfunctiondefinition.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [version](./genui-a2ui.serializedcatalog.version.md)
 
-
 </td><td>
-
 
 </td><td>
 
 '0.9'
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

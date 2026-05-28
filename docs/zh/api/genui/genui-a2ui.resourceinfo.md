@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface ResourceInfo 
+export interface ResourceInfo
 ```
 
 ## Properties
@@ -16,94 +16,73 @@ export interface ResourceInfo
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [component?](./genui-a2ui.resourceinfo.component.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [ComponentInstance](./genui-a2ui.componentinstance.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [surface](./genui-a2ui.resourceinfo.surface.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [Surface](./genui-a2ui.surface.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [surfaceId](./genui-a2ui.resourceinfo.surfaceid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [type](./genui-a2ui.resourceinfo.type.md)
 
-
 </td><td>
-
 
 </td><td>
 
 'beginRendering' \| 'surfaceUpdate' \| 'deleteSurface'
 
-
 </td><td>
 
 Internal event type emitted by the processor.
 
-
 </td></tr>
 </tbody></table>
-

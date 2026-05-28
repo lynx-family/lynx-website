@@ -8,7 +8,7 @@
 
 ```typescript
 export declare function useAction(props: ActionProps): {
-    sendAction: (action: v0_9.Action) => Promise<unknown>;
+  sendAction: (action: v0_9.Action) => Promise<unknown>;
 };
 ```
 
@@ -18,35 +18,28 @@ export declare function useAction(props: ActionProps): {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 [ActionProps](./genui.actionprops.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 
 **Returns:**
 
-{ sendAction: (action: v0\_9.Action) =&gt; Promise&lt;unknown&gt;; }
-
+{ sendAction: (action: v0_9.Action) =&gt; Promise&lt;unknown&gt;; }

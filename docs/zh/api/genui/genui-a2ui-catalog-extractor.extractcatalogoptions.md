@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface ExtractCatalogOptions 
+export interface ExtractCatalogOptions
 ```
 
 ## Properties
@@ -16,77 +16,60 @@ export interface ExtractCatalogOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [cwd?](./genui-a2ui-catalog-extractor.extractcatalogoptions.cwd.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [sourceFiles](./genui-a2ui-catalog-extractor.extractcatalogoptions.sourcefiles.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [tsconfig?](./genui-a2ui-catalog-extractor.extractcatalogoptions.tsconfig.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

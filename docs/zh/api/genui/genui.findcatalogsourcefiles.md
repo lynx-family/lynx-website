@@ -16,30 +16,24 @@ export declare function findCatalogSourceFiles(inputPath: string): string[];
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 inputPath
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +41,3 @@ string
 **Returns:**
 
 string\[\]
-

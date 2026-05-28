@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface ReadA2UICatalogDirectoryOptions 
+export declare interface ReadA2UICatalogDirectoryOptions
 ```
 
 ## Properties
@@ -16,113 +16,88 @@ export declare interface ReadA2UICatalogDirectoryOptions
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [catalogDir](./genui.reada2uicatalogdirectoryoptions.catalogdir.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [catalogId](./genui.reada2uicatalogdirectoryoptions.catalogid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [cwd?](./genui.reada2uicatalogdirectoryoptions.cwd.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [label?](./genui.reada2uicatalogdirectoryoptions.label.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [version?](./genui.reada2uicatalogdirectoryoptions.version.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

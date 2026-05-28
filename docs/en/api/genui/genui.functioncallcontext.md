@@ -9,7 +9,7 @@ Runtime context passed to client-side function implementations. It mirrors the s
 **Signature:**
 
 ```typescript
-export interface FunctionCallContext 
+export interface FunctionCallContext
 ```
 
 ## Properties
@@ -18,74 +18,58 @@ export interface FunctionCallContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [dataContextPath?](./genui.functioncallcontext.datacontextpath.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string \| undefined
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [processor](./genui.functioncallcontext.processor.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [MessageProcessor](./genui.messageprocessor.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [surfaceId](./genui.functioncallcontext.surfaceid.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -96,39 +80,30 @@ string
 
 Method
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [resolveDynamicValue(value)](./genui.functioncallcontext.resolvedynamicvalue.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [resolveSignal(value)](./genui.functioncallcontext.resolvesignal.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [set(path, value)](./genui.functioncallcontext.set.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

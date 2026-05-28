@@ -7,13 +7,16 @@
 **Signature:**
 
 ```typescript
-export type A2UIClientEventMessage = string | {
-    text?: string;
-    sessionId?: string;
-} | {
-    userAction: UserActionPayload;
-    sessionId?: string;
-};
+export type A2UIClientEventMessage =
+  | string
+  | {
+      text?: string;
+      sessionId?: string;
+    }
+  | {
+      userAction: UserActionPayload;
+      sessionId?: string;
+    };
 ```
-**References:** [UserActionPayload](./genui.useractionpayload.md)
 
+**References:** [UserActionPayload](./genui.useractionpayload.md)

@@ -8,11 +8,11 @@
 
 ```typescript
 export declare function OpenUiRenderer(props: {
-    result: ParseResult | null;
-    library: Library;
-    onAction?: (event: ActionEvent) => void;
-    isStreaming?: boolean;
-}): import("@lynx-js/react").JSX.Element | null;
+  result: ParseResult | null;
+  library: Library;
+  onAction?: (event: ActionEvent) => void;
+  isStreaming?: boolean;
+}): import('@lynx-js/react').JSX.Element | null;
 ```
 
 ## Parameters
@@ -21,30 +21,24 @@ export declare function OpenUiRenderer(props: {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 { result: ParseResult \| null; library: [Library](./genui.library.md)<!-- -->; onAction?: (event: ActionEvent) =&gt; void; isStreaming?: boolean; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -52,4 +46,3 @@ props
 **Returns:**
 
 import("@lynx-js/react").JSX.Element \| null
-

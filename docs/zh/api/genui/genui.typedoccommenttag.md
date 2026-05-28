@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocCommentTag 
+export interface TypeDocCommentTag
 ```
 
 ## Properties
@@ -16,58 +16,45 @@ export interface TypeDocCommentTag
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [content?](./genui.typedoccommenttag.content.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocCommentDisplayPart](./genui.typedoccommentdisplaypart.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [tag](./genui.typedoccommenttag.tag.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

@@ -10,38 +10,30 @@
 
 Function
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [createOpenUiLibrary(options)](./genui-openui.createopenuilibrary.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [defineComponent(config)](./genui-openui.definecomponent.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [OpenUiRenderer(props)](./genui-openui.openuirenderer.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -52,29 +44,23 @@ Description
 
 Interface
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [ComponentRenderProps](./genui-openui.componentrenderprops.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [CreateOpenUiLibraryOptions](./genui-openui.createopenuilibraryoptions.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -85,48 +71,37 @@ Description
 
 Type Alias
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [ComponentRenderer](./genui-openui.componentrenderer.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [DefinedComponent](./genui-openui.definedcomponent.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [Library](./genui-openui.library.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [LibraryDefinition](./genui-openui.librarydefinition.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

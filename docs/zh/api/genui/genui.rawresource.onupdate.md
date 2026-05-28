@@ -5,9 +5,8 @@
 ## RawResource.onUpdate property
 
 > Warning: This API is now obsolete.
-> 
+>
 > Use `subscribe`<!-- -->. Behaves identically.
-> 
 
 **Signature:**
 

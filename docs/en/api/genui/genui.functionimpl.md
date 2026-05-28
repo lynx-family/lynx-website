@@ -9,7 +9,10 @@ Function implementations live on the client; the agent only references functions
 **Signature:**
 
 ```typescript
-export type FunctionImpl = (args: Record<string, unknown>, context?: FunctionCallContext) => unknown;
+export type FunctionImpl = (
+  args: Record<string, unknown>,
+  context?: FunctionCallContext,
+) => unknown;
 ```
-**References:** [FunctionCallContext](./genui.functioncallcontext.md)
 
+**References:** [FunctionCallContext](./genui.functioncallcontext.md)

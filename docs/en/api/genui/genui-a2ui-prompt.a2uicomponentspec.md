@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare interface A2UIComponentSpec 
+export declare interface A2UIComponentSpec
 ```
 
 ## Properties
@@ -16,111 +16,86 @@ export declare interface A2UIComponentSpec
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [containerShape?](./genui-a2ui-prompt.a2uicomponentspec.containershape.md)
 
-
 </td><td>
-
 
 </td><td>
 
 'children' \| 'child' \| 'tabs' \| 'trigger-content' \| 'none'
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [name](./genui-a2ui-prompt.a2uicomponentspec.name.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [props](./genui-a2ui-prompt.a2uicomponentspec.props.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [A2UIComponentProp](./genui-a2ui-prompt.a2uicomponentprop.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [requiresAction?](./genui-a2ui-prompt.a2uicomponentspec.requiresaction.md)
 
-
 </td><td>
-
 
 </td><td>
 
 boolean
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [summary](./genui-a2ui-prompt.a2uicomponentspec.summary.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

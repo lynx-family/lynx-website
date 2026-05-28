@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface Catalog 
+export interface Catalog
 ```
 
 ## Properties
@@ -16,60 +16,47 @@ export interface Catalog
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [components](./genui-a2ui.catalog.components.md)
 
-
 </td><td>
 
 `readonly`
-
 
 </td><td>
 
 readonly [ResolvedCatalogEntry](./genui-a2ui.resolvedcatalogentry.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [functions](./genui-a2ui.catalog.functions.md)
 
-
 </td><td>
 
 `readonly`
-
 
 </td><td>
 
 readonly [CatalogFunctionEntry](./genui-a2ui.catalogfunctionentry.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface CatalogArtifacts 
+export interface CatalogArtifacts
 ```
 
 ## Properties
@@ -16,56 +16,43 @@ export interface CatalogArtifacts
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [components](./genui.catalogartifacts.components.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [CatalogComponent](./genui.extractedcatalogcomponent.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [functions](./genui.catalogartifacts.functions.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [CatalogFunction](./genui.catalogfunction.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

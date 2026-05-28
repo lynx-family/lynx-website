@@ -4,12 +4,12 @@
 
 ## CheckLike interface
 
-A v0.9 `CheckRule` is `{ condition, message }` where `condition` is a boolean, a `DataBinding`<!-- -->, or a `FunctionCall`<!-- -->. We accept the loose `unknown` shape so component props don't have to import the v0\_9 types just to pass them through.
+A v0.9 `CheckRule` is `{ condition, message }` where `condition` is a boolean, a `DataBinding`<!-- -->, or a `FunctionCall`<!-- -->. We accept the loose `unknown` shape so component props don't have to import the v0_9 types just to pass them through.
 
 **Signature:**
 
 ```typescript
-export interface CheckLike 
+export interface CheckLike
 ```
 
 ## Properties
@@ -18,56 +18,43 @@ export interface CheckLike
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [condition](./genui-a2ui.checklike.condition.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [message](./genui-a2ui.checklike.message.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
-

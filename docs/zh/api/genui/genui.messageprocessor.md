@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare class MessageProcessor 
+export declare class MessageProcessor
 ```
 
 ## Constructors
@@ -16,30 +16,24 @@ export declare class MessageProcessor
 
 Constructor
 
-
 </th><th>
 
 Modifiers
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [(constructor)()](./genui.messageprocessor._constructor_.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Constructs a new instance of the `MessageProcessor` class
-
 
 </td></tr>
 </tbody></table>
@@ -50,38 +44,30 @@ Constructs a new instance of the `MessageProcessor` class
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [surfaces](./genui.messageprocessor.surfaces.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Map&lt;string, [Surface](./genui.surface.md)<!-- -->&gt;
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -92,109 +78,83 @@ Map&lt;string, [Surface](./genui.surface.md)<!-- -->&gt;
 
 Method
 
-
 </th><th>
 
 Modifiers
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [clearSurfaces()](./genui.messageprocessor.clearsurfaces.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [dispatch(message)](./genui.messageprocessor.dispatch.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [getOrCreateSurface(surfaceId)](./genui.messageprocessor.getorcreatesurface.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [getSurfaces()](./genui.messageprocessor.getsurfaces.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [onEvent(callback)](./genui.messageprocessor.onevent.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [onUpdate(callback)](./genui.messageprocessor.onupdate.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [processMessages(messages)](./genui.messageprocessor.processmessages.md)
 
-
 </td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 [resolvePath(path, dataContextPath)](./genui.messageprocessor.resolvepath.md)
 
-
 </td><td>
-
 
 </td><td>
 
@@ -202,7 +162,5 @@ Resolve a JSON Pointer taking into account the current data context.
 
 - Absolute paths (starting with '/') are returned as-is. - Relative paths are resolved against the provided dataContextPath.
 
-
 </td></tr>
 </tbody></table>
-

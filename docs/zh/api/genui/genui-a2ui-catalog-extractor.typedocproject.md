@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocProject 
+export interface TypeDocProject
 ```
 
 ## Properties
@@ -16,41 +16,32 @@ export interface TypeDocProject
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [children?](./genui-a2ui-catalog-extractor.typedocproject.children.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocReflection](./genui-a2ui-catalog-extractor.typedocreflection.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

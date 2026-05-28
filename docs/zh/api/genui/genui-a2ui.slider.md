@@ -7,7 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare function Slider(props: SliderProps): import('@lynx-js/react').ReactNode;
+export declare function Slider(
+  props: SliderProps,
+): import('@lynx-js/react').ReactNode;
 ```
 
 ## Parameters
@@ -16,30 +18,24 @@ export declare function Slider(props: SliderProps): import('@lynx-js/react').Rea
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 SliderProps
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -47,4 +43,3 @@ SliderProps
 **Returns:**
 
 import('@lynx-js/react').ReactNode
-

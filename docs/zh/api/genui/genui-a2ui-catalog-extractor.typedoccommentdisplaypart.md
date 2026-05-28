@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface TypeDocCommentDisplayPart 
+export interface TypeDocCommentDisplayPart
 ```
 
 ## Properties
@@ -16,136 +16,107 @@ export interface TypeDocCommentDisplayPart
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [code?](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.code.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [content?](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.content.md)
 
-
 </td><td>
-
 
 </td><td>
 
 [TypeDocCommentDisplayPart](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.md)<!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [kind?](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.kind.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [tag?](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.tag.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [target?](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.target.md)
 
-
 </td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 [text?](./genui-a2ui-catalog-extractor.typedoccommentdisplaypart.text.md)
 
-
 </td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 </tbody></table>
-

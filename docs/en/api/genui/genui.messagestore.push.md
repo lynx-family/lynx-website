@@ -18,30 +18,24 @@ push(message: ServerToClientMessage | readonly ServerToClientMessage[]): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 message
 
-
 </td><td>
 
 [ServerToClientMessage](./genui.servertoclientmessage.md) \| readonly [ServerToClientMessage](./genui.servertoclientmessage.md)<!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -49,4 +43,3 @@ message
 **Returns:**
 
 void
-

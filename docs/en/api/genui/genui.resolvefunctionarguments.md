@@ -7,7 +7,13 @@
 **Signature:**
 
 ```typescript
-export declare function resolveFunctionArguments(processor: MessageProcessor, args: Record<string, unknown> | undefined, surfaceId: string, dataContextPath?: string, options?: ResolveFunctionOptions): Record<string, unknown>;
+export declare function resolveFunctionArguments(
+  processor: MessageProcessor,
+  args: Record<string, unknown> | undefined,
+  surfaceId: string,
+  dataContextPath?: string,
+  options?: ResolveFunctionOptions,
+): Record<string, unknown>;
 ```
 
 ## Parameters
@@ -16,90 +22,72 @@ export declare function resolveFunctionArguments(processor: MessageProcessor, ar
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 processor
 
-
 </td><td>
 
 [MessageProcessor](./genui.messageprocessor.md)
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 args
 
-
 </td><td>
 
 Record&lt;string, unknown&gt; \| undefined
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 surfaceId
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 dataContextPath
 
-
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 options
 
-
 </td><td>
 
 [ResolveFunctionOptions](./genui.resolvefunctionoptions.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
@@ -107,4 +95,3 @@ _(Optional)_
 **Returns:**
 
 Record&lt;string, unknown&gt;
-
