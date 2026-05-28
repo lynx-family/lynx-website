@@ -1,10 +1,10 @@
 import { PlatformTabs } from '@lynx';
 
-# Autolink 原生扩展
+# Autolink 原生库
 
-Autolink 会让 Lynx 应用从 `node_modules` 中发现原生扩展包，并自动注册它们在 Android 和 iOS 上提供的能力。扩展包在包根目录声明 `lynx.ext.json`；宿主应用只需要接入一次 Autolink 构建集成，生成的 registry 就会随 Lynx 初始化自动生效，避免为每个元件、原生模块或 Service 手动写注册代码。
+Autolink 会让 Lynx 应用从 `node_modules` 中发现原生库，并自动注册它们在 Android 和 iOS 上提供的能力。库在包根目录声明 `lynx.lib.json`；宿主应用只需要接入一次 Autolink 构建集成，生成的 registry 就会随 Lynx 初始化自动生效，避免为每个元件、原生模块或 Service 手动写注册代码。
 
-Autolink 当前只覆盖 Android 和 iOS 原生扩展，不生成 Web 或 HarmonyOS 的接入代码。
+Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
 
 :::info 开始前的准备
 
@@ -18,9 +18,9 @@ Autolink 当前只覆盖 Android 和 iOS 原生扩展，不生成 Web 或 Harmon
 
 请使用与应用 Lynx SDK 同一发布渠道的 Autolink 工具。相关 package 和 plugin 名称如下：
 
-- npm：`create-lynx-extension` 和 `@lynx-js/autolink-codegen`（`lynx-autolink-codegen` binary）
-- Android：Gradle plugin `org.lynxsdk.extension-settings` 和 `org.lynxsdk.extension-build`
-- iOS：Ruby gem `cocoapods-lynx-extension`
+- npm：`create-lynx-library` 和 `@lynx-js/autolink-codegen`（`lynx-autolink-codegen` binary）
+- Android：Gradle plugin `org.lynxsdk.library-settings` 和 `org.lynxsdk.library-build`
+- iOS：Ruby gem `cocoapods-lynx-library`
 
 如果当前配置的 registry 还无法解析其中某个包，说明你使用的 Lynx SDK 发布版本尚未在该 registry 中包含 Native Autolink。此时请继续使用既有手动原生注册方式，等待匹配版本发布后再接入。
 
@@ -42,66 +42,66 @@ lynx-app/
 └── src/
 ```
 
-- `package.json` 是必需的，用来声明 Autolink 扩展包依赖。
+- `package.json` 是必需的，用来声明 Autolink 库依赖。
 - Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
-- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-extension` gem。
+- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
 
-安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.ext.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
+安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.lib.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
 
 ## 在应用中接入 Autolink
 
-宿主应用只需要接入一次 Autolink。接入完成后，已安装的扩展包会从 `node_modules` 中被发现，并在 Lynx 初始化时通过生成的 registry 自动注册。
+宿主应用只需要接入一次 Autolink。接入完成后，已安装的库会从 `node_modules` 中被发现，并在 Lynx 初始化时通过生成的 registry 自动注册。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
 
-在 `settings.gradle` 中启用 settings plugin，让扩展的 Android 工程可以通过 `lynx.ext.json` 被发现并 include 进来：
+在 `settings.gradle` 中启用 settings plugin，让库的 Android 工程可以通过 `lynx.lib.json` 被发现并 include 进来：
 
 ```groovy
 plugins {
-  id 'org.lynxsdk.extension-settings'
+  id 'org.lynxsdk.library-settings'
 }
 ```
 
-在 Android application 工程中启用 build plugin，让生成的 registry 加入应用源码，并自动把扩展工程接入为依赖：
+在 Android application 工程中启用 build plugin，让生成的 registry 加入应用源码，并自动把库工程接入为依赖：
 
 ```groovy
 plugins {
   id 'com.android.application'
-  id 'org.lynxsdk.extension-build'
+  id 'org.lynxsdk.library-build'
 }
 ```
 
-Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，扩展提供的元件、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
+Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，库提供的元件、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
 
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="ios">
 
-在 iOS 构建环境中安装 `cocoapods-lynx-extension` gem。然后在应用的 Podfile 中加入 CocoaPods plugin，并调用 `use_lynx_extension!`。执行 `pod install` 时，插件会加入扩展 podspec 和生成的 registry pod：
+在 iOS 构建环境中安装 `cocoapods-lynx-library` gem。然后在应用的 Podfile 中加入 CocoaPods plugin，并调用 `use_lynx_library!`。执行 `pod install` 时，插件会加入库的 podspec 和生成的 registry pod：
 
 ```ruby
-plugin 'cocoapods-lynx-extension'
+plugin 'cocoapods-lynx-library'
 
 target 'LynxApp' do
-  use_lynx_extension!
+  use_lynx_library!
 end
 ```
 
-执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，扩展提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
+执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
 
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-## 使用扩展包
+## 使用库
 
-应用接入 Autolink 后，在 Lynx 应用中安装扩展包：
+应用接入 Autolink 后，在 Lynx 应用中安装库：
 
 ```bash
 npm install @example/lynx-button
 ```
 
-每个扩展包都会在包根目录暴露 `lynx.ext.json` manifest。Autolink 会扫描已安装 npm 包中的这个文件。
+每个库都会在包根目录暴露 `lynx.lib.json` manifest。Autolink 会扫描已安装 npm 包中的这个文件。
 
 ```json
 {
@@ -120,18 +120,18 @@ npm install @example/lynx-button
 
 Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 `android`。iOS 侧 `sourceDir` 默认是 `ios`，`podspecPath` 默认使用 iOS 源码目录下找到的第一个 `.podspec` 文件。
 
-安装或更新扩展包后，Android 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个扩展再写手动注册代码。
+安装或更新库后，Android 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
 
-## 扩展包的作用和结构
+## 库的作用和结构
 
-Autolink 扩展包是一个 npm 包，用来把 JavaScript facade、类型声明、原生实现和 Autolink 清单封装成一个可复用能力。应用侧像安装普通依赖一样安装它；Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.ext.json`，把原生代码链接进宿主应用。
+Autolink 库是一个 npm 包，用来把 JavaScript facade、类型声明、原生实现和 Autolink 清单封装成一个可复用能力。应用侧像安装普通依赖一样安装它；Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用。
 
-一个典型的扩展包结构如下：
+一个典型的库结构如下：
 
 ```text
 lynx-button/
 ├── package.json
-├── lynx.ext.json
+├── lynx.lib.json
 ├── types/
 │   └── index.d.ts
 ├── src/
@@ -156,25 +156,25 @@ lynx-button/
 └── example/
 ```
 
-- `package.json` 让扩展可以通过 npm 安装，并通常提供 `codegen` 脚本。
-- `lynx.ext.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里。
+- `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
+- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里。
 - `types/index.d.ts` 描述原生模块 API，codegen 会基于它生成平台 spec 和 JavaScript facade。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
 - `android/` 和 `ios/` 放置原生实现以及生成的原生 spec。
-- `example/` 是扩展作者用于本地验证的示例应用。
+- `example/` 是库作者用于本地验证的示例应用。
 
-## 创建扩展包
+## 创建库
 
-使用交互式命令创建扩展包：
+使用交互式命令创建库：
 
 ```bash
-npm create lynx-extension
+npm create lynx-library
 ```
 
 在脚本或测试中，也可以用 flags 直接生成：
 
 ```bash
-npm create lynx-extension -- \
+npm create lynx-library -- \
   --dir ./lynx-button \
   --types native-module,element,service \
   --package-name @example/lynx-button \
@@ -184,22 +184,22 @@ npm create lynx-extension -- \
   --service-name ButtonService
 ```
 
-生成的扩展包会包含：
+生成的库会包含：
 
 - 带有 `"codegen": "lynx-autolink-codegen"` 的 `package.json`
-- 用于 Android 和 iOS Autolink 发现的 `lynx.ext.json`
+- 用于 Android 和 iOS Autolink 发现的 `lynx.lib.json`
 - 用于原生模块类型声明的 `types/index.d.ts`
 - JavaScript facade 入口 `src/index.ts`
 - 原生源码目录 `android/` 和 `ios/`
 - `example/`、`tsconfig.json` 和 `README.md`
 
-在扩展根目录运行 codegen：
+在库根目录运行 codegen：
 
 ```bash
 npm run codegen
 ```
 
-`lynx-autolink-codegen` 会读取 `lynx.ext.json`，并扫描 `types/**/*.d.ts` 中带有 `@lynxmodule` 的声明：
+`lynx-autolink-codegen` 会读取 `lynx.lib.json`，并扫描 `types/**/*.d.ts` 中带有 `@lynxmodule` 的声明：
 
 ```ts
 /** @lynxmodule */
@@ -219,7 +219,7 @@ export declare class ButtonModule {
 
 ## 编写 Native API
 
-扩展包应使用 Autolink 注解和标记。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
+库应使用 Autolink 注解和标记。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -450,6 +450,6 @@ NS_ASSUME_NONNULL_END
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-Autolink 对外使用 `LynxAutolink` 命名作为扩展作者 API。
+Autolink 对外使用 `LynxAutolink` 命名作为库作者 API。
 
 对于已经使用 Lynx 既有原生注册宏的 iOS 包，Autolink 也会继续扫描 `LYNX_LAZY_REGISTER_UI`、`LYNX_LAZY_REGISTER_SHADOW_NODE` 和 `@LynxServiceRegister(...)`，让这些包无需改写原生代码即可被链接进来。

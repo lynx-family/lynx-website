@@ -1,10 +1,10 @@
 import { PlatformTabs } from '@lynx';
 
-# Autolink Native Extensions
+# Autolink Native Libraries
 
-Autolink helps a Lynx app discover native extension packages from `node_modules` and register their Android and iOS capabilities automatically. Extension packages declare their native entry points in `lynx.ext.json`; the host app enables the Autolink build integration once, then the generated registry takes effect during Lynx initialization instead of requiring manual wiring for each Element, Native Module, or Service.
+Autolink helps a Lynx app discover native library packages from `node_modules` and register their Android and iOS capabilities automatically. Library packages declare their native entry points in `lynx.lib.json`; the host app enables the Autolink build integration once, then the generated registry takes effect during Lynx initialization instead of requiring manual wiring for each Element, Native Module, or Service.
 
-Autolink currently covers native Android and iOS extensions only. It does not generate Web or HarmonyOS integration code.
+Autolink currently covers native Android and iOS libraries only. It does not generate Web or HarmonyOS integration code.
 
 :::info Prerequisites
 
@@ -18,9 +18,9 @@ Autolink currently covers native Android and iOS extensions only. It does not ge
 
 Use Autolink tooling from the same Lynx release channel as your app. The package and plugin names are:
 
-- npm: `create-lynx-extension` and `@lynx-js/autolink-codegen` (`lynx-autolink-codegen` binary)
-- Android: Gradle plugins `org.lynxsdk.extension-settings` and `org.lynxsdk.extension-build`
-- iOS: Ruby gem `cocoapods-lynx-extension`
+- npm: `create-lynx-library` and `@lynx-js/autolink-codegen` (`lynx-autolink-codegen` binary)
+- Android: Gradle plugins `org.lynxsdk.library-settings` and `org.lynxsdk.library-build`
+- iOS: Ruby gem `cocoapods-lynx-library`
 
 If one of these packages cannot be resolved from your configured registries, your current Lynx SDK release does not include Native Autolink in that registry yet. Keep using the existing manual native registration flow until the matching release is available.
 
@@ -42,66 +42,66 @@ lynx-app/
 └── src/
 ```
 
-- `package.json` is required so the app can declare Autolink extension packages as dependencies.
+- `package.json` is required so the app can declare Autolink library packages as dependencies.
 - For Android, the project needs a Gradle settings file, such as `settings.gradle` or `settings.gradle.kts`, and an Android application build file, such as `app/build.gradle` or `app/build.gradle.kts`.
-- For iOS, the project needs a CocoaPods entry point, usually `Podfile`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-extension` gem in `Gemfile`.
+- For iOS, the project needs a CocoaPods entry point, usually `Podfile`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-library` gem in `Gemfile`.
 
-After you install dependencies, Autolink scans the installed npm packages for `lynx.ext.json` files at package roots. A lockfile such as `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` is recommended for reproducible installs, but it is not required by Autolink.
+After you install dependencies, Autolink scans the installed npm packages for `lynx.lib.json` files at package roots. A lockfile such as `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` is recommended for reproducible installs, but it is not required by Autolink.
 
 ## Set Up Autolink in an App
 
-Set up Autolink once in the host app. After that, installed extension packages can be discovered from `node_modules` and registered through the generated registry during Lynx initialization.
+Set up Autolink once in the host app. After that, installed library packages can be discovered from `node_modules` and registered through the generated registry during Lynx initialization.
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
 
-Enable the settings plugin in `settings.gradle` so extension Android projects can be discovered from `lynx.ext.json` and included:
+Enable the settings plugin in `settings.gradle` so library Android projects can be discovered from `lynx.lib.json` and included:
 
 ```groovy
 plugins {
-  id 'org.lynxsdk.extension-settings'
+  id 'org.lynxsdk.library-settings'
 }
 ```
 
-Enable the build plugin in the Android application project so the generated registry is added to the app and extension projects are wired as dependencies:
+Enable the build plugin in the Android application project so the generated registry is added to the app and library projects are wired as dependencies:
 
 ```groovy
 plugins {
   id 'com.android.application'
-  id 'org.lynxsdk.extension-build'
+  id 'org.lynxsdk.library-build'
 }
 ```
 
-After Gradle sync/build, Autolink generates a fixed Android registry entry and adds it to the app sources. When the app initializes `LynxEnv`, that entry is loaded automatically, and extension Elements, Native Modules, and Services are registered app-wide. App code does not need any additional native initialization.
+After Gradle sync/build, Autolink generates a fixed Android registry entry and adds it to the app sources. When the app initializes `LynxEnv`, that entry is loaded automatically, and Elements, Native Modules, and Services from installed libraries are registered app-wide. App code does not need any additional native initialization.
 
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="ios">
 
-Install the `cocoapods-lynx-extension` gem in your iOS build environment. Then add the CocoaPods plugin to the app's Podfile and call `use_lynx_extension!` so installed extension podspecs and the generated registry pod are added during `pod install`:
+Install the `cocoapods-lynx-library` gem in your iOS build environment. Then add the CocoaPods plugin to the app's Podfile and call `use_lynx_library!` so podspecs from installed libraries and the generated registry pod are added during `pod install`:
 
 ```ruby
-plugin 'cocoapods-lynx-extension'
+plugin 'cocoapods-lynx-library'
 
 target 'LynxApp' do
-  use_lynx_extension!
+  use_lynx_library!
 end
 ```
 
-After `pod install`, Autolink generates the registry pod and hooks it into the Lynx initialization flow. When the app creates `LynxConfig` or initializes `LynxEnv`, extension Elements, Native Modules, and Services are registered automatically. App code does not need to import generated files or add extra native initialization.
+After `pod install`, Autolink generates the registry pod and hooks it into the Lynx initialization flow. When the app creates `LynxConfig` or initializes `LynxEnv`, Elements, Native Modules, and Services from installed libraries are registered automatically. App code does not need to import generated files or add extra native initialization.
 
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-## Use an Extension
+## Use a Library
 
-After the app has set up Autolink, install the extension package in your Lynx app:
+After the app has set up Autolink, install the library package in your Lynx app:
 
 ```bash
 npm install @example/lynx-button
 ```
 
-Each extension package exposes a `lynx.ext.json` manifest at the package root. Autolink scans installed npm packages for this file.
+Each library package exposes a `lynx.lib.json` manifest at the package root. Autolink scans installed npm packages for this file.
 
 ```json
 {
@@ -120,18 +120,18 @@ Each extension package exposes a `lynx.ext.json` manifest at the package root. A
 
 For Android, `platforms.android.packageName` is required, and `sourceDir` defaults to `android`. For iOS, `sourceDir` defaults to `ios`, and `podspecPath` defaults to the first `.podspec` found under the iOS source directory.
 
-After installing or updating an extension package, sync/build the Android app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-extension manual registration code in the app.
+After installing or updating a library package, sync/build the Android app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
 
-## Extension Package Role and Structure
+## Library Package Role and Structure
 
-An Autolink extension package is an npm package that bundles the JavaScript facade, type declarations, native implementation, and Autolink manifest for one reusable capability. App teams install the package as a normal dependency; the Android Gradle plugins and iOS CocoaPods plugin read `lynx.ext.json` and link the native code into the host app.
+An Autolink library package is an npm package that bundles the JavaScript facade, type declarations, native implementation, and Autolink manifest for one reusable capability. App teams install the package as a normal dependency; the Android Gradle plugins and iOS CocoaPods plugin read `lynx.lib.json` and link the native code into the host app.
 
-A typical extension package looks like this:
+A typical library package looks like this:
 
 ```text
 lynx-button/
 ├── package.json
-├── lynx.ext.json
+├── lynx.lib.json
 ├── types/
 │   └── index.d.ts
 ├── src/
@@ -157,24 +157,24 @@ lynx-button/
 ```
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
-- `lynx.ext.json` is the Autolink contract. It tells the host app where Android and iOS source code lives.
+- `lynx.lib.json` is the Autolink contract. It tells the host app where Android and iOS source code lives.
 - `types/index.d.ts` describes the Native Module API that codegen uses to create platform specs and the JavaScript facade.
 - `src/index.ts` exports the JavaScript API that app code imports.
 - `android/` and `ios/` contain native implementations and generated native specs.
-- `example/` is a local app used by the extension author to verify the package.
+- `example/` is a local app used by the library author to verify the package.
 
-## Create an Extension
+## Create a Library
 
-Create a new extension package interactively:
+Create a new library package interactively:
 
 ```bash
-npm create lynx-extension
+npm create lynx-library
 ```
 
 For scripts and tests, the same scaffold can run without prompts:
 
 ```bash
-npm create lynx-extension -- \
+npm create lynx-library -- \
   --dir ./lynx-button \
   --types native-module,element,service \
   --package-name @example/lynx-button \
@@ -187,19 +187,19 @@ npm create lynx-extension -- \
 The generated package includes:
 
 - `package.json` with `"codegen": "lynx-autolink-codegen"`
-- `lynx.ext.json` for Android and iOS Autolink discovery
+- `lynx.lib.json` for Android and iOS Autolink discovery
 - `types/index.d.ts` for Native Module type declarations
 - `src/index.ts` for the JavaScript facade
 - `android/` and `ios/` native source folders
 - `example/`, `tsconfig.json`, and `README.md`
 
-Run codegen from the extension root:
+Run codegen from the library root:
 
 ```bash
 npm run codegen
 ```
 
-`lynx-autolink-codegen` reads `lynx.ext.json` and scans `types/**/*.d.ts` for `@lynxmodule` declarations:
+`lynx-autolink-codegen` reads `lynx.lib.json` and scans `types/**/*.d.ts` for `@lynxmodule` declarations:
 
 ```ts
 /** @lynxmodule */
@@ -219,7 +219,7 @@ The first version supports `void`, `string`, `number`, `boolean`, and nullable u
 
 ## Write Native APIs
 
-Use the Autolink annotations and markers in extension packages. Native Modules usually extend the spec generated by `lynx-autolink-codegen`; Elements and Services are discovered from their native markers.
+Use the Autolink annotations and markers in library packages. Native Modules usually extend the spec generated by `lynx-autolink-codegen`; Elements and Services are discovered from their native markers.
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -450,6 +450,6 @@ NS_ASSUME_NONNULL_END
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-Autolink uses the `LynxAutolink` names as its public extension authoring API.
+Autolink uses the `LynxAutolink` names as its public library authoring API.
 
 For iOS packages that already use Lynx native registration macros, Autolink also scans existing `LYNX_LAZY_REGISTER_UI`, `LYNX_LAZY_REGISTER_SHADOW_NODE`, and `@LynxServiceRegister(...)` declarations so those packages can be linked without rewriting their native code.
