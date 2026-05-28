@@ -14,6 +14,19 @@ import { getLangPrefix } from '../shared-route-config';
 import { withBase, useI18n, useLang } from '@rspress/core/runtime';
 import versionJson from '../docs/public/version.json';
 
+function shouldHideVersion(version: string) {
+  if (version === '3.2' || version === '3.3') {
+    return true;
+  }
+
+  if (process.env.OSS === '1.0') {
+    return false;
+  }
+
+  const parsed = Number(version);
+  return !Number.isNaN(parsed) && parsed >= 3.7;
+}
+
 export function VersionIndicator() {
   var { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -118,7 +131,7 @@ export function VersionIndicator() {
           <DropdownMenuContent className="sh-w-28 sh-p-0" align="start">
             <div className="sh-p-2">
               {versions
-                .filter((version) => version !== '3.2' && version !== '3.3')
+                .filter((version) => !shouldHideVersion(version))
                 .map((version) => (
                   <DropdownMenuItem
                     key={version}
