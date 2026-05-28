@@ -2,7 +2,7 @@ import { PlatformTabs } from '@lynx';
 
 # Autolink Native Libraries
 
-Autolink helps a Lynx app discover native library packages from `node_modules` and register their Android and iOS capabilities automatically. Library packages declare their native entry points in `lynx.lib.json`; the host app enables the Autolink build integration once, then the generated registry takes effect during Lynx initialization instead of requiring manual wiring for each Element, Native Module, or Service.
+Autolink helps a Lynx app discover native libraries from `node_modules` and register their Android and iOS capabilities automatically. Each library is an npm package that declares its native entry points in `lynx.lib.json`; the host app enables the Autolink build integration once, then the generated registry takes effect during Lynx initialization instead of requiring manual wiring for each Element, Native Module, or Service.
 
 Autolink currently covers native Android and iOS libraries only. It does not generate Web or HarmonyOS integration code.
 
@@ -158,7 +158,7 @@ lynx-button/
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
 - `lynx.lib.json` is the Autolink contract. It tells the host app where Android and iOS source code lives.
-- `types/index.d.ts` describes the Native Module API that codegen uses to create platform specs and the JavaScript facade.
+- `types/index.d.ts` describes typed Native Module APIs, if the library exposes any. Codegen uses these declarations to create platform specs and the JavaScript facade.
 - `src/index.ts` exports the JavaScript API that app code imports.
 - `android/` and `ios/` contain native implementations and generated native specs.
 - `example/` is a local app used by the library author to verify the package.
@@ -188,7 +188,7 @@ The generated package includes:
 
 - `package.json` with `"codegen": "lynx-autolink-codegen"`
 - `lynx.lib.json` for Android and iOS Autolink discovery
-- `types/index.d.ts` for Native Module type declarations
+- `types/index.d.ts` for typed Native Module declarations, when the library exposes Native Modules
 - `src/index.ts` for the JavaScript facade
 - `android/` and `ios/` native source folders
 - `example/`, `tsconfig.json`, and `README.md`
@@ -199,7 +199,7 @@ Run codegen from the library root:
 npm run codegen
 ```
 
-`lynx-autolink-codegen` reads `lynx.lib.json` and scans `types/**/*.d.ts` for `@lynxmodule` declarations:
+`lynx-autolink-codegen` reads `lynx.lib.json`. For Native Modules, it scans `types/**/*.d.ts` for `@lynxmodule` declarations:
 
 ```ts
 /** @lynxmodule */
@@ -450,6 +450,6 @@ NS_ASSUME_NONNULL_END
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-Autolink uses the `LynxAutolink` names as its public library authoring API.
+Autolink exposes the `LynxAutolink*` annotations and markers as the public authoring API for Lynx libraries.
 
 For iOS packages that already use Lynx native registration macros, Autolink also scans existing `LYNX_LAZY_REGISTER_UI`, `LYNX_LAZY_REGISTER_SHADOW_NODE`, and `@LynxServiceRegister(...)` declarations so those packages can be linked without rewriting their native code.

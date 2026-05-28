@@ -2,7 +2,7 @@ import { PlatformTabs } from '@lynx';
 
 # Autolink 原生库
 
-Autolink 会让 Lynx 应用从 `node_modules` 中发现原生库，并自动注册它们在 Android 和 iOS 上提供的能力。库在包根目录声明 `lynx.lib.json`；宿主应用只需要接入一次 Autolink 构建集成，生成的 registry 就会随 Lynx 初始化自动生效，避免为每个元件、原生模块或 Service 手动写注册代码。
+Autolink 会让 Lynx 应用从 `node_modules` 中发现原生库，并自动注册它们在 Android 和 iOS 上提供的能力。每个库都是一个 npm 包，并通过包根目录下的 `lynx.lib.json` 声明原生入口；宿主应用只需要接入一次 Autolink 构建集成，生成的 registry 就会随 Lynx 初始化自动生效，避免为每个元件、原生模块或 Service 手动写注册代码。
 
 Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
 
@@ -101,7 +101,7 @@ end
 npm install @example/lynx-button
 ```
 
-每个库都会在包根目录暴露 `lynx.lib.json` manifest。Autolink 会扫描已安装 npm 包中的这个文件。
+每个库包都会在包根目录暴露 `lynx.lib.json` manifest。Autolink 会扫描已安装 npm 包中的这个文件。
 
 ```json
 {
@@ -158,7 +158,7 @@ lynx-button/
 
 - `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
 - `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里。
-- `types/index.d.ts` 描述原生模块 API，codegen 会基于它生成平台 spec 和 JavaScript facade。
+- `types/index.d.ts` 描述库中可选的原生模块类型声明；如果库暴露原生模块，codegen 会基于这些声明生成平台 spec 和 JavaScript facade。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
 - `android/` 和 `ios/` 放置原生实现以及生成的原生 spec。
 - `example/` 是库作者用于本地验证的示例应用。
@@ -188,7 +188,7 @@ npm create lynx-library -- \
 
 - 带有 `"codegen": "lynx-autolink-codegen"` 的 `package.json`
 - 用于 Android 和 iOS Autolink 发现的 `lynx.lib.json`
-- 用于原生模块类型声明的 `types/index.d.ts`
+- `types/index.d.ts`，在库暴露原生模块时用于声明类型
 - JavaScript facade 入口 `src/index.ts`
 - 原生源码目录 `android/` 和 `ios/`
 - `example/`、`tsconfig.json` 和 `README.md`
@@ -199,7 +199,7 @@ npm create lynx-library -- \
 npm run codegen
 ```
 
-`lynx-autolink-codegen` 会读取 `lynx.lib.json`，并扫描 `types/**/*.d.ts` 中带有 `@lynxmodule` 的声明：
+`lynx-autolink-codegen` 会读取 `lynx.lib.json`。对于原生模块，它会扫描 `types/**/*.d.ts` 中带有 `@lynxmodule` 的声明：
 
 ```ts
 /** @lynxmodule */
@@ -450,6 +450,6 @@ NS_ASSUME_NONNULL_END
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-Autolink 对外使用 `LynxAutolink` 命名作为库作者 API。
+Autolink 通过 `LynxAutolink*` 注解和标记，为 Lynx 库作者提供公开 API。
 
 对于已经使用 Lynx 既有原生注册宏的 iOS 包，Autolink 也会继续扫描 `LYNX_LAZY_REGISTER_UI`、`LYNX_LAZY_REGISTER_SHADOW_NODE` 和 `@LynxServiceRegister(...)`，让这些包无需改写原生代码即可被链接进来。
