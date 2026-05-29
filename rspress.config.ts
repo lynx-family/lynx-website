@@ -25,6 +25,11 @@ import {
 } from './shared-route-config.js';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
+const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
+const IS_LIGHTWEIGHT_BUILD =
+  process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
+  NETLIFY_CONTEXT === 'branch-deploy' ||
+  NETLIFY_CONTEXT === 'deploy-preview';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -184,38 +189,42 @@ export default defineConfig({
       ],
     }),
     sharedSidebarPlugin(),
-    pluginSitemap({
-      siteUrl: PUBLISH_URL,
-    }),
-    pluginRss({
-      siteUrl: PUBLISH_URL,
-      feed: [
-        {
-          id: 'blog-rss',
-          test: '/blog',
-          title: 'Lynx Blog',
-          language: 'en',
-          output: {
-            type: 'rss',
-            filename: 'blog-rss.xml',
-          },
-        },
-        {
-          id: 'blog-rss-zh',
-          test: '/zh/blog',
-          title: 'Lynx 博客',
-          language: 'zh-CN',
-          output: {
-            type: 'rss',
-            filename: 'blog-rss-zh.xml',
-          },
-        },
-      ],
-    }),
+    ...(!IS_LIGHTWEIGHT_BUILD
+      ? [
+          pluginSitemap({
+            siteUrl: PUBLISH_URL,
+          }),
+          pluginRss({
+            siteUrl: PUBLISH_URL,
+            feed: [
+              {
+                id: 'blog-rss',
+                test: '/blog',
+                title: 'Lynx Blog',
+                language: 'en',
+                output: {
+                  type: 'rss',
+                  filename: 'blog-rss.xml',
+                },
+              },
+              {
+                id: 'blog-rss-zh',
+                test: '/zh/blog',
+                title: 'Lynx 博客',
+                language: 'zh-CN',
+                output: {
+                  type: 'rss',
+                  filename: 'blog-rss-zh.xml',
+                },
+              },
+            ],
+          }),
+          pluginLLMsPostprocess(),
+        ]
+      : []),
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
-    pluginLLMsPostprocess(),
   ],
   markdown: {
     defaultWrapCode: false,
@@ -240,7 +249,7 @@ export default defineConfig({
       ],
     },
   },
-  llms: true,
+  llms: !IS_LIGHTWEIGHT_BUILD,
 });
 
 function remarkReplaceVersionJsonPlaceholders() {
