@@ -12,27 +12,24 @@ The [A2UI community](https://a2ui.org/ecosystem/renderers/) has already produced
 [@lynx-js/genui/a2ui](https://www.npmjs.com/package/@lynx-js/genui) is the A2UI rendering implementation for ReactLynx.
 Protocol messages produced by the Agent are mapped to native components through Lynx's rendering pipeline and can directly reuse the component library, design system, and theming infrastructure of an existing Lynx app. As a result, generated UI remains consistent with existing UI in both visuals and interaction experience.
 
-## Core Concepts and Use Cases
+You can start with the [Mock Example](#mock-example), then explore the [Playground](#try-the-playground), and finally read the [Integration Guide](#learn-the-details); if you want to better understand the principles behind the Agent + Catalog collaboration model, continue with [Core Concepts and Use Cases](#core-concepts-and-use-cases).
 
-If this is your first time encountering A2UI, think of it as a **controlled way to generate UI**:
+## Mock Example
 
-- **Developers prepare the menu**: Define reusable components, styles, interactions, and Function capabilities, then organize them into a Catalog the Agent can understand.
-- **The Agent orders from the menu**: Choose components based on user intent, fill in data, and call Functions when results are needed.
-- **ReactLynx cooks and serves**: Render the Agent's choices into a native interface while reusing the existing component system, themes, and interaction capabilities.
+The example below simulates the full workflow of a weather-query Agent:
 
-The key point is that A2UI does not let the model generate UI code freely. It lets the model compose UI dynamically within an authorized scope, while the business still controls components, visual style, callable capabilities, and safety boundaries.
+- The Renderer first exposes Catalog entries such as weather cards and city buttons to the Agent, and establishes a connection with the Agent.
+- The Agent uses that information to choose the corresponding components and progressively generate A2UI protocol messages.
+- After the Renderer receives those messages, it writes them into the A2UI runtime. A2UI validates the components and data, then hands them to ReactLynx to render the weather cards.
+- When you click a different city, the page sends that operation back to the Agent as an Action.
+- The Agent continues generating protocol messages for the new city, and A2UI parses those messages into updated component data to refresh the page.
 
-After the interface is generated, user actions can follow two paths:
-
-- **Agent-handled Actions**: Best for operations that should affect the next round of generation. The action is sent back to the Agent in a structured form, and the Agent continues reasoning and returns new protocol messages.
-- **Client Actions**: Best for operations that can be completed directly within the page, such as navigation, analytics, or calling local capabilities, without waiting for the Agent to join the next turn.
-
-A2UI is a good fit when you want to bring Agent-generated UI capabilities into a ReactLynx application in the following scenarios:
-
-- **Dynamic UI composition**: Compose cards, buttons, lists, and other UI structures in real time based on user intent, instead of predefining every possible page state.
-- **Progressive generation experience**: The server returns protocol messages incrementally, and the Renderer renders them as they arrive, so the interface keeps updating like a conversation.
-- **Controlled generation boundaries**: The Catalog scopes the components and parameters the Agent can use, preventing the model from emitting unconstrained code or accessing capabilities outside its sandbox.
-- **Flexible interaction loop**: Important actions can be sent back to the Agent to trigger the next round of generation, while local actions can still be handled directly by the page, balancing intelligent generation with business control.
+<Go
+  example="a2ui"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+/>
 
 ## Try the Playground
 
@@ -50,19 +47,24 @@ If you plan to integrate A2UI into a ReactLynx application, we recommend reading
 - [Architecture](https://lynx-stack.dev/guide/genui/a2ui/architecture): A walkthrough of the Renderer architecture, key modules, and exposed capabilities, helping you understand the full data flow of protocol messages from enqueue to render.
 - [Catalog Usage and Extension](https://lynx-stack.dev/guide/genui/a2ui/catalogs): The end-to-end engineering workflow around the A2UI Catalog, covering Manifest organization, syncing JSON Schemas to the Agent, registering custom Catalogs, and composing the built-in Catalog on demand.
 
-## Mock Example
+## Core Concepts and Use Cases
 
-The example below simulates the full workflow of a weather-query Agent:
+If this is your first time encountering A2UI, think of it as a **controlled way to generate UI**:
 
-- The Renderer first exposes Catalog entries such as weather cards and city buttons, and establishes a connection with the Agent.
-- The Agent uses that information to choose the corresponding components and progressively generate A2UI protocol messages.
-- After the Renderer receives those messages, it writes them into the A2UI runtime. A2UI validates the components and data, then hands them to ReactLynx to render the weather cards.
-- When you click a different city, the page sends that operation back to the Agent as an Action.
-- The Agent continues generating protocol messages for the new city, and A2UI parses those messages into updated component data to refresh the page.
+- **Developers prepare the menu**: Define reusable components, styles, interactions, and Function capabilities, then organize them into a Catalog the Agent can understand.
+- **The Agent orders from the menu**: Choose components based on user intent, fill in data, and call Functions when results are needed.
+- **ReactLynx cooks and serves**: Render the Agent's choices into a native interface while reusing the existing component system, themes, and interaction capabilities.
 
-<Go
-  example="a2ui"
-  defaultFile="src/App.tsx"
-  defaultEntryFile="dist/main.lynx.bundle"
-  entry="src"
-/>
+The key point is that A2UI does not let the model generate UI code freely. Instead, it lets the model compose UI dynamically within an authorized scope. Components, visual style, callable capabilities, and safety boundaries remain under business control.
+
+After the interface is generated, user actions can follow two paths:
+
+- **Agent-handled Actions**: Best for operations that should affect the next round of generation. The action is sent back to the Agent in a structured form, and the Agent continues reasoning and returns new protocol messages.
+- **Client Actions**: Best for operations that can be completed directly within the page, such as navigation, analytics, or calling local capabilities, without waiting for the Agent to join the next turn.
+
+A2UI is a good fit when you want to bring Agent-generated UI capabilities into a ReactLynx application in the following scenarios:
+
+- **Dynamic UI composition**: Compose cards, buttons, lists, and other UI structures in real time based on user intent, instead of predefining every possible page state.
+- **Progressive generation experience**: The server returns protocol messages incrementally, and the Renderer renders them as they arrive, so the interface keeps updating like a conversation.
+- **Controlled generation boundaries**: The Catalog scopes the components and parameters the Agent can use, preventing the model from emitting unconstrained code or accessing capabilities outside its sandbox.
+- **Flexible interaction loop**: Important actions can be sent back to the Agent to trigger the next round of generation, while local actions can still be handled directly by the page, balancing intelligent generation with business control.
