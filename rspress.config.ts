@@ -55,6 +55,8 @@ export default defineConfig({
   builderConfig: {
     performance: {
       buildCache: false,
+      // Avoid generating the file size report to reduce peak memory during build.
+      printFileSize: false,
     },
     plugins: [
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
