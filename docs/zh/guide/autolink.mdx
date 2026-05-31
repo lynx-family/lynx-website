@@ -2,7 +2,7 @@ import { PlatformTabs } from '@lynx';
 
 # Autolink 原生库
 
-Autolink 是一种机制，让 Lynx 应用自动发现 `node_modules` 中原生库提供的元件、原生模块和 Service，并在 Android 和 iOS 上随 Lynx 初始化统一完成注册。每个库都是一个 npm 包，并通过包根目录下的 `lynx.lib.json` 声明原生入口；宿主应用只需要接入一次 Autolink 构建集成，生成的 registry 就会取代逐库的手动注册代码。
+Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android 和 iOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
 
 Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
 
@@ -26,7 +26,23 @@ Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS
 
 :::
 
-## 宿主应用项目结构
+## 什么是 Lynx 原生库
+
+一个库就是一个 npm 包，可以包含以下能力的任意组合：
+
+- **元件**：Lynx 渲染的自定义原生 UI 元件，例如 `<x-button>`。
+- **原生模块**：可以在 Lynx 应用代码中调用的、带类型声明的 JavaScript-to-native API。
+- **Service**：应用级的原生单例，可以被库内的其他能力依赖。
+
+每个库都通过包根目录下的 `lynx.lib.json` manifest 声明原生入口。这三类能力相互独立：一个库可以只暴露元件、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
+
+应用侧像安装普通 npm 依赖一样安装库。Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。
+
+## 使用库
+
+本节面向把一个或多个库集成进宿主 Lynx 应用的应用团队。
+
+### 宿主应用项目结构
 
 接入 Autolink 前，需要先确保宿主应用有一个可以安装 npm 包的项目根目录，并暴露原生应用的构建入口。典型结构如下：
 
@@ -48,7 +64,7 @@ lynx-app/
 
 安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.lib.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
 
-## 在应用中接入 Autolink
+### 接入 Autolink
 
 宿主应用只需要接入一次 Autolink。接入完成后，已安装的库会从 `node_modules` 中被发现，并在 Lynx 初始化时通过生成的 registry 自动注册。
 
@@ -93,7 +109,7 @@ end
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-## 使用库
+### 安装库
 
 应用接入 Autolink 后，在 Lynx 应用中安装库：
 
@@ -122,9 +138,11 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 安装或更新库后，Android 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
 
-## 库的作用和结构
+## 开发库
 
-Autolink 库是一个 npm 包，用来把 JavaScript facade、类型声明、原生实现和 Autolink 清单封装成一个可复用能力。应用侧像安装普通依赖一样安装它；Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用。
+本节面向开发可复用原生库供其他 Lynx 应用安装的库作者。
+
+### 库包结构
 
 一个典型的库结构如下：
 
@@ -163,7 +181,7 @@ lynx-button/
 - `android/` 和 `ios/` 放置原生实现以及生成的原生 spec。
 - `example/` 是库作者用于本地验证的示例应用。
 
-## 创建库
+### 创建库
 
 使用交互式命令创建库：
 
@@ -217,9 +235,9 @@ export declare class ButtonModule {
 
 第一版支持 `void`、`string`、`number`、`boolean`，以及带 `null` 的 nullable union。
 
-## 编写 Native API
+### 编写 Native API
 
-库应使用 Autolink 注解和标记。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
+Autolink 通过 `LynxAutolink*` 注解和标记，为 Lynx 库作者提供公开 API。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -450,6 +468,12 @@ NS_ASSUME_NONNULL_END
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-Autolink 通过 `LynxAutolink*` 注解和标记，为 Lynx 库作者提供公开 API。
-
 对于已经使用 Lynx 既有原生注册宏的 iOS 包，Autolink 也会继续扫描 `LYNX_LAZY_REGISTER_UI`、`LYNX_LAZY_REGISTER_SHADOW_NODE` 和 `@LynxServiceRegister(...)`，让这些包无需改写原生代码即可被链接进来。
+
+### 发布库
+
+像发布普通 npm 包一样发布库：选一个包名，通常是带 scope 的 `@example/lynx-button`，在 `package.json` 中设置版本号，然后执行 `npm publish`。应用团队把发布版本写入自己的 `package.json`，下次安装依赖时 Autolink 会自动识别。建议在库的 `peerDependencies` 中固定兼容的 Lynx SDK 版本范围，这样当库和宿主 SDK 出现版本错配时，应用团队能够第一时间收到清晰提示。
+
+## Autolink 工作原理
+
+Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` manifest，然后生成一份对应当前应用的 registry，列出所有已安装库暴露的元件、原生模块和 Service。Android 侧的 registry 生成由 Gradle settings plugin 和 build plugin 配合完成；iOS 侧由 CocoaPods plugin 完成并产出 registry pod。宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
