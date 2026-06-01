@@ -314,20 +314,6 @@ type BaseLinkRestProps = Omit<
 const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   const { href, children, className, style, ...restProps } = props;
   const safeRestProps = restProps as BaseLinkRestProps;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
-    return (
-      <BaseLink
-        href={`/next${removeBase(href)}`}
-        className={className ? `rp-link ${className}` : 'rp-link'}
-        ref={ref}
-        style={style as any}
-        {...safeRestProps}
-      >
-        {children}
-      </BaseLink>
-    );
-  }
   return (
     <BaseLink
       href={href}

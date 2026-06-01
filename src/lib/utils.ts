@@ -1,22 +1,30 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import versionJson from '../../docs/public/version.json';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function toLatestBlogPath(link?: string) {
-  if (!link) {
-    return '/next/blog/';
-  }
+const currentVersionBase = `/${versionJson.current_version}`;
+const versionPrefixPattern = /^\/(?:next|\d+\.\d+)(?:\/|$)/;
 
-  if (/^(https?:)?\/\//.test(link) || link.startsWith('/next/')) {
+function withCurrentVersionBase(link: string) {
+  if (/^(https?:)?\/\//.test(link) || versionPrefixPattern.test(link)) {
     return link;
   }
 
-  return `/next${link.startsWith('/') ? link : `/${link}`}`;
+  return `${currentVersionBase}${link.startsWith('/') ? link : `/${link}`}`;
+}
+
+export function toLatestBlogPath(link?: string) {
+  if (!link) {
+    return withCurrentVersionBase('/blog/');
+  }
+
+  return withCurrentVersionBase(link);
 }
 
 export function getLatestBlogIndexPath(lang: string) {
-  return lang === 'zh' ? '/next/zh/blog/' : '/next/blog/';
+  return withCurrentVersionBase(lang === 'zh' ? '/zh/blog/' : '/blog/');
 }
