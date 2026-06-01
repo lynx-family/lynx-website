@@ -103,7 +103,8 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     return <BaseHomeLayout {...props} />;
   }
   const { pathname } = useLocation();
-  const isZh = pathname.startsWith('/zh/');
+  const normalizedPathname = removeBase(pathname);
+  const isZh = normalizedPathname.startsWith('/zh/');
   const { page } = usePageData();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -120,35 +121,55 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   useBlogBtnDom(routePath);
 
-  const updateText = useCallback(() => {
-    const titleEle = document.querySelector('.rp-home-hero__title');
-    const titleTextSpan = document.querySelector('.rp-home-hero__title > span');
-    if (!titleEle) return;
-    if (!titleTextSpan) return;
+  const getDynamicText = useCallback(
+    (value: string) => {
+      const suffix = isZh ? zhSuffix : enSuffix;
+      return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
+    },
+    [isZh],
+  );
 
+  const applyHeroTitleText = useCallback(
+    (dynamicText: string) => {
+      const suffix = isZh ? zhSuffix : enSuffix;
+      const titleTextSpan = document.querySelector<HTMLElement>(
+        '.rp-home-hero__title-brand',
+      );
+      if (!titleTextSpan) return false;
+
+      let dynamicSpan =
+        titleTextSpan.querySelector<HTMLElement>('.dynamic-text');
+      let suffixSpan = titleTextSpan.querySelector<HTMLElement>('.suffix-text');
+
+      if (!dynamicSpan || !suffixSpan) {
+        titleTextSpan.textContent = '';
+        dynamicSpan = document.createElement('span');
+        dynamicSpan.className = 'dynamic-text';
+        suffixSpan = document.createElement('span');
+        suffixSpan.className = 'suffix-text';
+        titleTextSpan.append(dynamicSpan, suffixSpan);
+      }
+
+      dynamicSpan.textContent = dynamicText;
+      suffixSpan.textContent = suffix;
+      return true;
+    },
+    [isZh],
+  );
+
+  const updateText = useCallback(() => {
     const words = isZh ? zhWords : enWords;
     const suffix = isZh ? zhSuffix : enSuffix;
 
     const currentWord = words[currentWordIndex];
-    const currentLength = text.replace(suffix, '').length;
+    const currentLength = getDynamicText(text).length;
     const dynamicText = isDeleting
       ? currentWord.substring(0, currentLength - 1)
       : currentWord.substring(0, currentLength + 1);
 
     const fullText = `${dynamicText}${suffix}`;
     setText(fullText);
-
-    const dynamicSpan = titleTextSpan.querySelector('.dynamic-text');
-    const suffixSpan = titleTextSpan.querySelector('.suffix-text');
-
-    if (!dynamicSpan || !suffixSpan) {
-      titleTextSpan.innerHTML = `
-        <span class="dynamic-text">${dynamicText}</span><span class="suffix-text">${suffix}</span>
-      `;
-    } else {
-      dynamicSpan.textContent = dynamicText;
-      suffixSpan.textContent = suffix;
-    }
+    if (!applyHeroTitleText(dynamicText)) return;
 
     if (!isDeleting && dynamicText === currentWord) {
       if (!isPaused) {
@@ -164,7 +185,23 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       setCurrentWordIndex((prev) => (prev + 1) % words.length);
       setDelta(140);
     }
-  }, [currentWordIndex, isDeleting, text, isPaused, isZh]);
+  }, [
+    applyHeroTitleText,
+    currentWordIndex,
+    getDynamicText,
+    isDeleting,
+    text,
+    isPaused,
+    isZh,
+  ]);
+
+  useEffect(() => {
+    if (routePath !== '/') {
+      return;
+    }
+
+    applyHeroTitleText(getDynamicText(text));
+  }, [applyHeroTitleText, getDynamicText, routePath, text]);
 
   // Reset animation when language changes or when returning to home page
   useEffect(() => {
@@ -178,7 +215,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       setDelta(200);
       setText(isZh ? `${zhWords[0]}${zhSuffix}` : `${enWords[0]}${enSuffix}`);
     }
-  }, [isZh, page]); // Watch both language and path changes
+  }, [isZh, routePath]); // Watch both language and path changes
 
   useEffect(() => {
     const isHomePage = routePath === '/';
@@ -189,7 +226,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
     const ticker = setInterval(updateText, delta);
     return () => clearInterval(ticker);
-  }, [updateText, delta, page]);
+  }, [updateText, delta, routePath]);
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
@@ -314,20 +351,6 @@ type BaseLinkRestProps = Omit<
 const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   const { href, children, className, style, ...restProps } = props;
   const safeRestProps = restProps as BaseLinkRestProps;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
-    return (
-      <BaseLink
-        href={`/next${removeBase(href)}`}
-        className={className ? `rp-link ${className}` : 'rp-link'}
-        ref={ref}
-        style={style as any}
-        {...safeRestProps}
-      >
-        {children}
-      </BaseLink>
-    );
-  }
   return (
     <BaseLink
       href={href}

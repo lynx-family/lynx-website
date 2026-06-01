@@ -3,7 +3,7 @@ import { useLang } from '@rspress/core/runtime';
 import { renderInlineMarkdown } from '@rspress/core/theme';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
 import { useBlogPages, useTiltEffect } from '@site/src/hooks';
-import { toLatestBlogPath } from '@site/src/lib/utils';
+import { toLatestBlogPath } from '@site/src/lib/blog-paths';
 import { BlogAvatar } from '../blog-avatar';
 import { MeteorsBackground } from '../home-comps/meteors-background';
 import { BorderBeam } from '../home-comps/border-beam';

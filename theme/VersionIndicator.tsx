@@ -28,6 +28,7 @@ function shouldHideVersion(version: string) {
 
 export function VersionIndicator() {
   var { pathname } = useLocation();
+  const displayVersion = versionJson.current_version;
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const langPrefix = getLangPrefix(useLang());
@@ -52,7 +53,19 @@ export function VersionIndicator() {
     return !specificPath;
   };
 
-  const [versions, setVersions] = useState<string[]>(['next']);
+  const normalizeVersions = (versions?: Array<{ version_number?: string }>) => {
+    const versionNumbers = versions
+      ?.map((item) => item.version_number)
+      .filter((version): version is string => Boolean(version));
+
+    return Array.from(
+      new Set(['next', displayVersion, ...(versionNumbers ?? [])]),
+    );
+  };
+
+  const [versions, setVersions] = useState<string[]>(() =>
+    normalizeVersions(versionJson.versions),
+  );
 
   useEffect(() => {
     const fetchVersions = async () => {
@@ -63,7 +76,7 @@ export function VersionIndicator() {
         }
         const data = await response.json();
         if (data.versions && Array.isArray(data.versions)) {
-          setVersions(data.versions.map((item: any) => item.version_number));
+          setVersions(normalizeVersions(data.versions));
         }
       } catch (error) {
         console.error('Error fetching versions:', error);
@@ -109,12 +122,16 @@ export function VersionIndicator() {
     window.open(`/next${langPrefix}/versions`, '_blank');
   };
 
-  const displayVersion = versionJson.current_version;
   const t = useI18n();
   return (
     showIndicator() && (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onPointerEnter={handleMouseEnter}
+          onPointerLeave={handleMouseLeave}
+        >
           <DropdownMenuTrigger asChild>
             <button
               type="button"
@@ -124,7 +141,14 @@ export function VersionIndicator() {
               <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-28 p-0" align="start">
+          <DropdownMenuContent
+            className="w-28 p-0"
+            align="start"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onPointerEnter={handleMouseEnter}
+            onPointerLeave={handleMouseLeave}
+          >
             <div className="p-2">
               {versions
                 .filter((version) => !shouldHideVersion(version))

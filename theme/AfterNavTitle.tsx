@@ -434,11 +434,23 @@ export default function AfterNavTitle() {
         </Drawer>
       ) : (
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-          <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+          <div
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onPointerEnter={handleMouseEnter}
+            onPointerLeave={handleMouseLeave}
+          >
             <DropdownMenuTrigger asChild>
               <Trigger />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[720px] p-0" align="start">
+            <DropdownMenuContent
+              className="w-[720px] p-0"
+              align="start"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onPointerEnter={handleMouseEnter}
+              onPointerLeave={handleMouseLeave}
+            >
               <NavContent onSelect={() => setIsOpen(false)} />
             </DropdownMenuContent>
           </div>

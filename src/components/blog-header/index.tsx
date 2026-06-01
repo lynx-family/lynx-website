@@ -1,5 +1,5 @@
 import { useLang, usePageData } from '@rspress/core/runtime';
-import { getLatestBlogIndexPath } from '@site/src/lib/utils';
+import { getLatestBlogIndexPath } from '@site/src/lib/blog-paths';
 import { LlmsContainer, LlmsCopyButton, LlmsViewOptions } from '@theme';
 import { BlogAvatar } from '../blog-avatar';
 import styles from './index.module.less';
