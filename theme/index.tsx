@@ -4,6 +4,7 @@ import {
   useLang,
   useLocation,
   usePageData,
+  withBase,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -311,18 +312,32 @@ type BaseLinkRestProps = Omit<
   'href' | 'children' | 'className' | 'style'
 >;
 
+function getRootRelativeHref(fromPath: string, toPath: string) {
+  const normalizedFromPath = withBase(removeBase(fromPath));
+  const fromDirectory = normalizedFromPath.endsWith('/')
+    ? normalizedFromPath
+    : normalizedFromPath.replace(/\/[^/]*$/, '/');
+  const depth = fromDirectory.split('/').filter(Boolean).length;
+  return `${'../'.repeat(depth)}${toPath.replace(/^\//, '')}`;
+}
+
 const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   const { href, children, className, style, ...restProps } = props;
   const safeRestProps = restProps as BaseLinkRestProps;
+  const { pathname } = useLocation();
+  const lang = useLang();
   const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+  if (href && href.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <BaseLink
-        href={`/next${removeBase(href)}`}
+        href={getRootRelativeHref(pathname, `/next${removeBase(href)}`)}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
         style={style as any}
         {...safeRestProps}
+        // Blog crosses the current version basename, so it must not be handled
+        // as an in-app navigation by the current version router.
+        target="_top"
       >
         {children}
       </BaseLink>

@@ -30,6 +30,19 @@ const IS_LIGHTWEIGHT_BUILD =
   process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
   NETLIFY_CONTEXT === 'branch-deploy' ||
   NETLIFY_CONTEXT === 'deploy-preview';
+const ROOT_REDIRECT_SCRIPT = `<script>
+(function () {
+  var pathname = window.location.pathname;
+  var suffix = window.location.search + window.location.hash;
+  if (pathname === '/' || pathname === '/index.html') {
+    window.location.replace('/${versionJson.current_version}/' + suffix);
+    return;
+  }
+  if (pathname === '/zh' || pathname === '/zh/' || pathname === '/zh/index.html') {
+    window.location.replace('/${versionJson.current_version}/zh/' + suffix);
+  }
+})();
+</script>`;
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -46,6 +59,7 @@ export default defineConfig({
   title: 'Lynx',
   description:
     'Empower the web community and invite more to build cross-platform apps',
+  head: [ROOT_REDIRECT_SCRIPT],
   icon: '/assets/favicon.png',
   lang: 'en',
   globalStyles: path.join(__dirname, 'src', 'styles', 'global.css'),
