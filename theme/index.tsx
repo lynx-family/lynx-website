@@ -37,6 +37,7 @@ import {
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
+import { GithubStars } from './GithubStars';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
 // Match subsite by checking if any path segment exactly equals the subsite value
@@ -76,6 +77,7 @@ function Layout({
       <BaseLayout
         {...props}
         afterNavTitle={afterNavTitle}
+        afterNavMenu={<GithubStars />}
         beforeSidebar={<BeforeSidebar />}
         bottom={<Footer />}
       />

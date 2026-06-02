@@ -147,11 +147,6 @@ export default defineConfig({
     ],
     socialLinks: [
       {
-        icon: 'github',
-        mode: 'link',
-        content: 'https://github.com/lynx-family',
-      },
-      {
         icon: 'discord',
         mode: 'link',
         content: 'https://discord.gg/mXk7jqdDXk',
