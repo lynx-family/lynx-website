@@ -1,0 +1,78 @@
+// Visual treatment for the SubsiteRow icons.
+//
+// Inactive icons sit transparent and dim. The active icon mirrors the
+// home-features / ChoiceTab card "lifted card" treatment — tinted surface
+// + 1px border + soft shadow — but the border, surface, and shadow all
+// pick up `--rp-c-brand`, which rspress retargets per `data-subsite`
+// on <html>. So:
+//   /guide/...  → active icon reads red  (Lynx brand)
+//   /react/...  → active icon reads blue (ReactLynx brand)
+//   /rspeedy/.. → active icon reads orange
+//   etc.
+//
+// The 1px transparent border on the inactive state prevents layout shift
+// when an icon becomes active.
+
+.subsite-icon {
+  --brand: var(--rp-c-brand, #ff351a);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--rp-c-text-2, #6a6a73);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    border-color 0.15s ease-out,
+    color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+
+  &:hover:not(.subsite-icon--active) {
+    color: var(--rp-c-text-1, #111113);
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    border-color: color-mix(in srgb, currentColor 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+.subsite-icon--active {
+  color: var(--rp-c-text-1, #111113);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 38%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--brand) 10%, transparent),
+    0 4px 10px -2px color-mix(in srgb, var(--brand) 22%, transparent);
+
+  // Darker surfaces eat low-opacity tints; nudge the wash and glow up so the
+  // active state stays as confident as it reads in light mode.
+  :root.dark & {
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--brand) 14%, transparent),
+      0 4px 12px -2px color-mix(in srgb, var(--brand) 30%, transparent);
+  }
+}
+
+.subsite-icon__logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+
+  // Inactive icons read dim; active gets full color.
+  opacity: 0.7;
+
+  .subsite-icon--active &,
+  .subsite-icon:hover & {
+    opacity: 1;
+  }
+}

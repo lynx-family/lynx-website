@@ -10,6 +10,7 @@ import type { SubsiteConfig } from '@site/shared-route-config';
 import { cn } from '@/lib/utils';
 
 import { SubsiteLogo } from './subsite-ui';
+import './SubsiteRow.scss';
 
 function findSubsiteFromPathname(
   pathname: string,
@@ -58,34 +59,13 @@ export function SubsiteRow() {
                   aria-label={subsite.label}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'group relative flex h-9 w-9 items-center justify-center rounded-md',
-                    'transition-colors duration-150 ease-out',
-                    'hover:bg-accent/60',
-                    isActive
-                      ? 'text-foreground'
-                      : 'text-foreground/70 hover:text-foreground',
+                    'subsite-icon',
+                    isActive && 'subsite-icon--active',
                   )}
                 >
-                  <span
-                    className={cn(
-                      'block h-5 w-5 transition-opacity duration-150',
-                      isActive
-                        ? 'opacity-100'
-                        : 'opacity-70 group-hover:opacity-100',
-                    )}
-                  >
+                  <span className="subsite-icon__logo">
                     <SubsiteLogo subsite={subsite} />
                   </span>
-                  {isActive && (
-                    <span
-                      className="pointer-events-none absolute -bottom-1 left-1/2 h-[2px] w-4 -translate-x-1/2 rounded-full"
-                      style={{
-                        background:
-                          'var(--rp-c-brand, var(--major-brand-color, #ff351a))',
-                      }}
-                      aria-hidden="true"
-                    />
-                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent
