@@ -7,6 +7,7 @@ import {
   getLangPrefix,
 } from '@site/shared-route-config';
 import './index.scss';
+import './SubsiteRow.scss';
 
 import { SubsiteRow } from './SubsiteRow';
 
@@ -43,10 +44,20 @@ export default function BeforeSidebar() {
     return null;
   }
 
+  // Drop the trailing divider that createSharedRouteSidebar appends — we
+  // group Get Started + SubsiteRow as a single "nav header" unit and place
+  // the divider *under* the unit instead of between its two halves.
+  const navLinks = sidebarData.filter(
+    (item) => !('dividerType' in item),
+  ) as SidebarData;
+
   return (
     <div id="before-sidebar">
-      <SidebarList sidebarData={sidebarData} setSidebarData={setSidebarData} />
-      <SubsiteRow />
+      <div className="sidebar-nav-header">
+        <SidebarList sidebarData={navLinks} setSidebarData={setSidebarData} />
+        <SubsiteRow />
+      </div>
+      <div className="rp-sidebar-divider sidebar-nav-header__divider" />
     </div>
   );
 }
