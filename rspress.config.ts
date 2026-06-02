@@ -146,6 +146,15 @@ export default defineConfig({
       },
     ],
     socialLinks: [
+      // GitHub also renders as <GithubStars> via the afterNavMenu slot above
+      // 1280px. Below 1280px, the inline button is hidden and this entry
+      // surfaces the icon inside the hamburger dropdown / mobile drawer.
+      // The desktop duplicate is suppressed by CSS in `theme/index.scss`.
+      {
+        icon: 'github',
+        mode: 'link',
+        content: 'https://github.com/lynx-family/lynx',
+      },
       {
         icon: 'discord',
         mode: 'link',
