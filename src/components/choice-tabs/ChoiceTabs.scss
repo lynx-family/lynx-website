@@ -219,11 +219,14 @@
     -webkit-overflow-scrolling: touch;
     scroll-padding: 0 16px;
     // overflow-x:auto implicitly turns overflow-y into a clip. The active
-    // card's --tab-card-active-shadow extends ~22px below the card; without
-    // this padding it gets sliced at the track edge. The negative margins
-    // cancel the visual height delta so surrounding content doesn't shift.
+    // card's --tab-card-active-shadow extends ~22px below the card, so
+    // padding-top/bottom give the shadow room before the track clips it.
+    // The margin is set so the *visual* spacing to surrounding content
+    // matches the row-mode track's `1.25rem 0 1.5rem` (20px / 24px):
+    //   cards-top  = prev-bottom + 12 (margin) + 8 (padding) = +20px
+    //   cards-bot  → next-top via 24 (padding) + 0 (margin)  = +24px
     padding: 8px 16px 24px;
-    margin: -8px -16px -24px;
+    margin: 12px -16px 0;
     scrollbar-width: none;
     &::-webkit-scrollbar {
       display: none;
@@ -244,7 +247,7 @@
     -webkit-overflow-scrolling: touch;
     scroll-padding: 0 16px;
     padding: 8px 16px 24px;
-    margin: -8px -16px -24px;
+    margin: 12px -16px 0;
     scrollbar-width: none;
     &::-webkit-scrollbar {
       display: none;
