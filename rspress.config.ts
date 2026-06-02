@@ -28,7 +28,6 @@ const PUBLISH_URL = 'https://lynxjs.org/';
 const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
 const IS_LIGHTWEIGHT_BUILD =
   process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
-  NETLIFY_CONTEXT === 'branch-deploy' ||
   NETLIFY_CONTEXT === 'deploy-preview';
 
 export default defineConfig({

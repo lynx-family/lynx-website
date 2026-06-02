@@ -10,8 +10,18 @@ import { APISummary, APITable } from '@lynx';
 
 表示鼠标事件，继承自 [`Event`](./event)，是一类描述用户与鼠标交互行为的事件。比如鼠标单击等。
 
-:::warning
-在 Lynx 3.7 及以下版本中，`MouseEvent` 的行为与 W3C Web 标准尚未完全一致。我们计划在 Lynx 3.8 中与 Web 标准对齐。
+:::info
+从 Lynx 3.8 起，可以在 `pageConfig` 中开启 `MouseEvent` 与 W3C Web 标准对齐的行为。
+
+```js
+// pageConfig
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+pluginReactLynx({
+  alignMouseEventWithW3C: true,
+});
+```
+
 :::
 
 ## 实例属性
@@ -22,13 +32,13 @@ import { APISummary, APITable } from '@lynx';
 button: number;
 ```
 
-当鼠标事件触发时，如果有任意鼠标按键被按下或松开，将会返回一个代表该键的数值。例如用户按下左键时，[mousedown](./mouse-event#mousedown) 触发，该参数值为 1。数值代表的含义见下表。
+开启 `alignMouseEventWithW3C` 后，当鼠标事件触发时，如果有任意鼠标按键被按下或松开，将会返回一个代表该键的数值。例如用户按下左键时，[mousedown](./mouse-event#mousedown) 触发，该参数值为 0。数值代表的含义见下表。
 
 | 值  | 含义               |
 | --- | ------------------ |
-| 1   | 主键（通常是左键） |
+| 0   | 主键（通常是左键） |
+| 1   | 中键               |
 | 2   | 次键（通常是右键） |
-| 3   | 中键               |
 
 ### buttons
 
@@ -36,7 +46,7 @@ button: number;
 buttons: number;
 ```
 
-当鼠标事件触发时，如果有一个或多个鼠标按键被按下，将会返回一个数值，每个 bit 代表一个鼠标按键, 被按下的键对应的 bit 将会置为 1。
+开启 `alignMouseEventWithW3C` 后，当鼠标事件触发时，如果有一个或多个鼠标按键被按下，将会返回一个数值，每个 bit 代表一个鼠标按键, 被按下的键对应的 bit 将会置为 1。
 
 | Bit | 含义               |
 | --- | ------------------ |
