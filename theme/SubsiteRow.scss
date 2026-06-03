@@ -1,4 +1,51 @@
-// Visual treatment for the SubsiteRow icons.
+// ─── Scrollable icon rail ────────────────────────────────────────────────
+//
+// As more subsites join the family, the icon row will outgrow the sidebar's
+// natural inner width (sidebar content area = 320px sidebar - 2×20px own
+// padding = 280px; each icon ≈ 36 + 4 gap = 40px, so ~7 icons fit before
+// overflow). The rail handles this by going horizontally scrollable with
+// CSS scroll-snap, so the row never wraps and each icon naturally lands
+// in a readable position.
+//
+// Full-bleed compensation:
+//   The rspress sidebar applies `padding: var(--rp-sidebar-padding, 20px)`
+//   on all sides. The scroll rail uses negative inline margins to extend
+//   PAST that padding, so the scrollable area spans the sidebar's actual
+//   window edges. The rail's own inline padding restores the visible
+//   start/end inset, keeping the first/last icon aligned with menu-item
+//   text alignment when at rest. `scroll-padding-inline` mirrors the same
+//   value so snap points land at the visible content edge, not the
+//   negative-margin edge.
+
+.subsite-row-scroll {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  // Full-bleed: -20px inline margin + 20px inline padding cancels for
+  // resting layout but lets the scroll rail (with overflow-x: auto) run
+  // edge-to-edge across the sidebar window.
+  margin-inline: calc(-1 * var(--rp-sidebar-padding, 20px));
+  padding-inline: var(--rp-sidebar-padding, 20px);
+  padding-block: 8px;
+
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--rp-sidebar-padding, 20px);
+  -webkit-overflow-scrolling: touch;
+
+  // Hide scrollbar — the rail is for navigation, not for scroll affordance.
+  // The user discovers overflow either by horizontal trackpad/touch drag
+  // or by tabbing through the buttons (each focus shifts the scroll
+  // position automatically because the buttons are scroll-snap targets).
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// ─── Subsite icons ──────────────────────────────────────────────────────
 //
 // Inactive icons sit transparent and dim. The active icon mirrors the
 // home-features / ChoiceTab card "lifted card" treatment — tinted surface
@@ -20,6 +67,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  scroll-snap-align: start;
   width: 36px;
   height: 36px;
   border-radius: 8px;
@@ -64,92 +113,273 @@
 }
 
 // ─── Get Started CTA ─────────────────────────────────────────────────────
-// Primary action that lives below the icon row. Uses a *different* visual
-// language than the active subsite icon on purpose:
-//   - Icon row: subtle wash (low-opacity brand bg + 38% brand border).
-//     Reads as "you are here."
-//   - CTA: ghost button (transparent bg, full-saturation brand border +
-//     brand text). Reads as "do this next."
-// Same brand color, two clearly distinct weights — secondary identity
-// vs primary action, never the dual-active redundancy of the old design.
 //
-// Hidden when the reader is on the Quick Start page (the icon row's active
-// Lynx already says "you're here"; a CTA back to the same page would be
-// noise).
+// Sits ABOVE the subsite icon row as the privileged first element of the
+// sidebar. This is the single most-clicked entry on the docs — every
+// Lynx-family journey funnels through Quick Start — so it gets its own
+// visual vocabulary, distinct from menu items.
+//
+//   Specialization (not a menu item):
+//     • Card chrome: subtle base border + faint surface wash, so it
+//       reads as a button at rest, not a link.
+//     • Heavier label typography (14px / 600) than ordinary sidebar text.
+//     • Custom arrow with motion.
+//
+//   Distinctive hover signature:
+//     • Animated GRADIENT BORDER (mask trick — only the 1px outer ring
+//       picks up the sweep). This is the same DNA as the original
+//       SubsiteSwitcher dropdown trigger and exists nowhere else in the
+//       sidebar, so it's the structural tell: "this is THE entry."
+//     • Brand glow + 1px lift + arrow tint/slide on top.
+//
+//   Connection to active Lynx icon (only on Quick Start):
+//     • Solid brand chrome (border + wash) replaces the resting card.
+//     • A 2px brand stem drops from the CTA's bottom edge to the Lynx
+//       icon's top edge below — visually anchoring the pair as one
+//       compound "you're in the Lynx entry" element.
+//
+// Layering (within an isolated stacking context):
+//   .__shine  — animated gradient border ring          absolute, z: 0
+//   .__label / .__arrow — content                      relative, z: 1
+//   .__stem   — 2px downward connector (active only)   below CTA bottom
 
 .quick-start-cta {
   --brand: var(--rp-c-brand, #ff351a);
-  // Pull the brand toward the active foreground so the text stays readable
-  // even on the lighter brands. 80/20 keeps hue identity (orange reads as
-  // orange, pink as pink) while clearing WCAG AA-large 3:1 across all
-  // four brands and AA-normal 4.5:1 across three. Rspeedy orange is
-  // intrinsically luminous and sits at ~3.3:1 — chasing AA-normal with a
-  // harder mix drifts it into brown/terracotta and loses identity. The
-  // right structural fix is a darker Rspeedy brand token; until then, the
-  // CTA reads AA-large which is acceptable for this button size and
-  // weight.
-  --brand-on-surface: color-mix(in srgb, var(--brand) 80%, var(--rp-c-text-1));
 
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 2px 8px 4px;
-  padding: 7px 12px;
-  border: 1.5px solid var(--brand);
+  justify-content: space-between;
+  gap: 10px;
+  // Match the rest of the sidebar's vocabulary — rspress's .rp-sidebar-item
+  // uses no horizontal margin, padding: 6px 12px, margin-top: 2px,
+  // border-radius: 8px. Adopting the same geometry keeps the CTA's left
+  // and right edges (and label's left offset) aligned with the menu items
+  // below it. The bottom margin (4px) + icon row's own py-2 (8px) gives
+  // the stem a 12px gap to bridge down to the Lynx icon's top edge.
+  margin: 2px 0 4px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--rp-c-text-1) 9%, transparent);
   border-radius: 8px;
-  background: transparent;
-  color: var(--brand-on-surface);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
+  background: color-mix(in srgb, var(--rp-c-text-1) 2.5%, transparent);
+  color: var(--rp-c-text-1, #111113);
   text-decoration: none;
   cursor: pointer;
+  isolation: isolate;
   transition:
-    background-color 0.15s ease-out,
-    box-shadow 0.15s ease-out,
-    transform 0.12s ease-out;
+    border-color 0.25s ease-out,
+    background-color 0.25s ease-out,
+    box-shadow 0.25s ease-out,
+    transform 0.18s ease-out;
+}
 
-  &:hover {
-    text-decoration: none;
-    background: color-mix(in srgb, var(--brand) 8%, transparent);
-    box-shadow:
-      0 1px 0 color-mix(in srgb, var(--brand) 14%, transparent),
-      0 4px 10px -2px color-mix(in srgb, var(--brand) 28%, transparent);
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: none;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  // The ghost border at full saturation can read a bit hot in dark mode
-  // against the near-black surface; ease it back so the CTA still feels
-  // confident but doesn't outshine the active icon.
-  :root.dark & {
-    border-color: color-mix(in srgb, var(--brand) 78%, transparent);
-
-    &:hover {
-      background: color-mix(in srgb, var(--brand) 14%, transparent);
-      border-color: var(--brand);
-    }
-  }
+.quick-start-cta__label {
+  position: relative;
+  z-index: 1;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  // Match .rp-sidebar-item's line-height (24px), so the CTA's total
+  // height (6 + 24 + 6 = 36px) lines up with the active highlight pill
+  // shown on regular menu items below.
+  line-height: 24px;
+  color: var(--rp-c-text-1, #111113);
 }
 
 .quick-start-cta__arrow {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.2s ease-out;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: var(--rp-c-text-2, #6a6a73);
+  transition:
+    transform 0.22s ease-out,
+    color 0.22s ease-out;
 }
 
-.quick-start-cta:hover .quick-start-cta__arrow {
-  transform: translateX(2px);
+// ─── Animated gradient border (the structural tell) ──────────────────
+//
+// The mask trick: the pseudo-shine layer is a full rectangle painted with
+// the brand-band gradient, but the mask cuts out the inner content-box,
+// leaving only a 1px outer ring visible. That ring then picks up the
+// horizontal sweep via background-position animation — same DNA as the
+// original SubsiteSwitcher trigger, now structural to this CTA alone.
+
+.quick-start-cta__shine {
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    transparent 20%,
+    color-mix(in srgb, var(--brand) 70%, transparent) 40%,
+    color-mix(in srgb, var(--brand) 25%, transparent) 50%,
+    color-mix(in srgb, var(--brand) 70%, transparent) 60%,
+    transparent 80%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  background-position: 200% 50%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+@keyframes quick-start-cta-shine {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
+}
+
+.quick-start-cta:hover {
+  text-decoration: none;
+  border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+  background: color-mix(in srgb, var(--brand) 4%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--brand) 8%, transparent),
+    0 6px 18px -6px color-mix(in srgb, var(--brand) 55%, transparent);
+  transform: translateY(-1px);
+
+  .quick-start-cta__shine {
+    opacity: 1;
+    @media (prefers-reduced-motion: no-preference) {
+      animation: quick-start-cta-shine 4.5s linear infinite;
+    }
+  }
+  .quick-start-cta__arrow {
+    color: var(--brand);
+    transform: translateX(3px);
+  }
+}
+
+.quick-start-cta:active {
+  transform: translateY(0);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+.quick-start-cta:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+// ─── Active state (on /guide/start/quick-start) ──────────────────────
+//
+// The shine is a "wake me up" affordance — once you're on the page we
+// resolve to a steady, solid brand chrome that mirrors the active icon's
+// vocabulary. No animation: this is a settled state.
+
+.quick-start-cta--active {
+  border-color: color-mix(in srgb, var(--brand) 55%, transparent);
+  background: color-mix(in srgb, var(--brand) 9%, transparent);
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--brand) 38%, transparent);
+
+  .quick-start-cta__arrow {
+    color: var(--brand);
+  }
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--brand) 70%, transparent);
+    background: color-mix(in srgb, var(--brand) 13%, transparent);
+    transform: translateY(-1px);
+  }
+}
+
+// ─── The stem ─────────────────────────────────────────────────────────
+//
+// 2px brand line that drops from the CTA's bottom edge into the icon row
+// below, terminating at the Lynx icon's top edge. left:18px positions it
+// at the Lynx icon's horizontal center within the row (the icon row uses
+// px-2 = 8px padding, then a 36px icon; the CTA's own left margin is also
+// 8px, so the row and the CTA share a left edge — the icon center sits
+// at 8 + 18 = 26px from sidebar edge, which is 18px from the CTA's left).
+// The stem visually binds the CTA + Lynx icon into one compound element.
+
+.quick-start-cta__stem {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 18px;
+  width: 2px;
+  height: 12px;
+  border-radius: 0 0 1px 1px;
+  background: linear-gradient(
+    to bottom,
+    var(--brand) 0%,
+    color-mix(in srgb, var(--brand) 30%, transparent) 100%
+  );
+  pointer-events: none;
+  // Retract upward into the CTA when scrolled — top-center origin makes
+  // the squish-and-fade read as the stem being pulled back into the
+  // card it came from, rather than just dimming in place.
+  transform-origin: top center;
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.25s ease-out;
+}
+
+// When the icon row has scrolled away from start, the Lynx icon is no
+// longer at the stem's anchor position. The literal connection is broken,
+// so retract the stem instead of letting it point at whatever icon now
+// happens to occupy that x-position.
+.quick-start-cta--row-scrolled .quick-start-cta__stem {
+  opacity: 0;
+  transform: scaleY(0.35) translateY(-2px);
+}
+
+// ─── Dark mode ────────────────────────────────────────────────────────
+// Against a near-black surface, the rest border + wash both need a bit
+// more presence to stay legible without bleeding into background noise.
+// The shine peaks read hotter on dark surfaces so we let them push higher.
+
+:root.dark .quick-start-cta {
+  color: var(--rp-c-text-1, #f1f1f3);
+  border-color: color-mix(in srgb, var(--rp-c-text-1) 12%, transparent);
+  background: color-mix(in srgb, var(--rp-c-text-1) 4%, transparent);
+
+  .quick-start-cta__shine {
+    background: linear-gradient(
+      120deg,
+      transparent 0%,
+      transparent 20%,
+      color-mix(in srgb, var(--brand) 85%, transparent) 40%,
+      color-mix(in srgb, var(--brand) 35%, transparent) 50%,
+      color-mix(in srgb, var(--brand) 85%, transparent) 60%,
+      transparent 80%,
+      transparent 100%
+    );
+  }
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--brand) 42%, transparent);
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--brand) 14%, transparent),
+      0 6px 22px -6px color-mix(in srgb, var(--brand) 70%, transparent);
+  }
+}
+
+:root.dark .quick-start-cta--active {
+  border-color: color-mix(in srgb, var(--brand) 65%, transparent);
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--brand) 80%, transparent);
+    background: color-mix(in srgb, var(--brand) 20%, transparent);
+  }
 }
 
 .subsite-icon__logo {

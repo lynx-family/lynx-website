@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme';
 import {
@@ -42,19 +43,75 @@ export function SubsiteRow() {
   const lang = useLang();
   const current = findSubsiteFromPathname(pathname, lang);
   const quickStartHref = `${getLangPrefix(lang)}${QUICK_START_PATH}`;
-  // Hide the "Get Started" CTA when the reader is already on Quick Start.
-  // The Lynx icon's active brand chrome already carries "you're here";
-  // showing a CTA back to the same page on top of that would be noise.
+  // Quick Start is the single most-clicked entry on the docs — every
+  // Lynx-family journey passes through it — so the CTA stays mounted on
+  // every page, above the subsite icon row. When the reader IS on Quick
+  // Start, it picks up a solid brand wash + a stem dropping down to the
+  // active Lynx icon below, so the pair reads as one compound element.
   const isOnQuickStart = pathname
     .replace(/\.html$/, '')
     .endsWith(QUICK_START_PATH);
 
+  // Track horizontal scroll on the icon row so the stem can retract when
+  // Lynx scrolls off-start. The stem is positioned inside the CTA (above
+  // the scroll container, in a different stacking context), so it can't
+  // follow Lynx visually via overflow — and `overflow-x: auto` implicitly
+  // clips overflow-y, ruling out a vertical stem element inside the row.
+  // Fading on scroll is the honest move: when Lynx isn't at the start
+  // anymore, the connection is broken, so we acknowledge it.
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [isRowScrolled, setIsRowScrolled] = useState(false);
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    // 4px threshold absorbs subpixel jitter and the natural overscroll
+    // bounce on touchpads — the stem shouldn't blink during a 1px wobble.
+    const onScroll = () => setIsRowScrolled(el.scrollLeft > 4);
+    onScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={0}>
+      <Link
+        href={quickStartHref}
+        aria-current={isOnQuickStart ? 'page' : undefined}
+        className={cn(
+          'quick-start-cta',
+          isOnQuickStart && 'quick-start-cta--active',
+          isOnQuickStart && isRowScrolled && 'quick-start-cta--row-scrolled',
+        )}
+      >
+        {/* Animated gradient border — reused mask trick from the original
+            SubsiteSwitcher dropdown trigger. Lives behind the content. */}
+        <span className="quick-start-cta__shine" aria-hidden="true" />
+        <span className="quick-start-cta__label">
+          {lang === 'zh' ? '开始使用' : 'Get Started'}
+        </span>
+        <svg
+          className="quick-start-cta__arrow"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M3 8h10M9 4l4 4-4 4"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        {isOnQuickStart && (
+          <span className="quick-start-cta__stem" aria-hidden="true" />
+        )}
+      </Link>
       <div
+        ref={rowRef}
         role="navigation"
         aria-label="Subsite switcher"
-        className="flex items-center gap-1 px-2 py-2"
+        className="subsite-row-scroll"
       >
         {CORE_SUBSITES.map((subsite) => {
           const isActive = subsite.value === current.value;
@@ -107,27 +164,6 @@ export function SubsiteRow() {
           );
         })}
       </div>
-      {!isOnQuickStart && (
-        <Link href={quickStartHref} className="quick-start-cta">
-          <span className="quick-start-cta__label">
-            {lang === 'zh' ? '开始使用' : 'Get Started'}
-          </span>
-          <svg
-            className="quick-start-cta__arrow"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M3 8h10M9 4l4 4-4 4"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
-      )}
     </TooltipProvider>
   );
 }
