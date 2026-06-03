@@ -15,6 +15,9 @@ import {
   IconHarmony,
   IconIOS,
   IconMacOS,
+  IconMisoLynx,
+  IconReactLynx,
+  IconVueLynx,
   IconWeb,
   IconWindows,
 } from './icon';
@@ -27,6 +30,14 @@ const featuresConfig: Record<
     desc: { en: string; zh: string };
     class?: string;
     isRowSet?: boolean | number;
+    /**
+     * Render the card's action buttons as a full-width vertical stack
+     * (one button per row) instead of the default horizontal wrap with
+     * fixed 191/390px widths. Use for cards whose actions are the focal
+     * content — e.g. the platform picker on Write Once, Render Anywhere
+     * or the framework picker on Framework Agnostic.
+     */
+    stackedActions?: boolean;
     iconClass?: string;
     actions?: {
       text: string | React.ReactNode;
@@ -38,6 +49,7 @@ const featuresConfig: Record<
 > = {
   '/': [
     {
+      stackedActions: true,
       title: {
         en: 'Write Once, Render Anywhere',
         zh: '一次编写，多端渲染',
@@ -101,6 +113,7 @@ const featuresConfig: Record<
       ],
     },
     {
+      stackedActions: true,
       title: {
         en: 'Performance at Scale',
         zh: '高性能，规模化',
@@ -112,8 +125,7 @@ const featuresConfig: Record<
       customRender: <WriteOnceRunAllPlatform />,
     },
     {
-      isRowSet: true,
-      // class: 'item2',
+      stackedActions: true,
       title: {
         en: 'Web-Inspired Design',
         zh: 'Web 启发',
@@ -123,6 +135,49 @@ const featuresConfig: Record<
         zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 React 等技术，复用知识与生态。',
       },
       customRender: <Moon />,
+    },
+    {
+      stackedActions: true,
+      title: {
+        en: 'Framework Agnostic',
+        zh: '不止于一个框架',
+      },
+      desc: {
+        en: "Lynx isn't limited to React. ReactLynx is the official flavor, while Vue and Miso for Haskell come from the community. More frameworks welcome.",
+        zh: 'Lynx 不止于 React。ReactLynx 是官方框架，Vue 与适用于 Haskell 的 Miso 由社区驱动，欢迎更多框架加入。',
+      },
+      actions: [
+        {
+          text: (
+            <Space>
+              <IconReactLynx />
+              React
+            </Space>
+          ),
+          size: 'large',
+          link: '/react/',
+        },
+        {
+          text: (
+            <Space>
+              <IconVueLynx />
+              Vue
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://vue.lynxjs.org/',
+        },
+        {
+          text: (
+            <Space>
+              <IconMisoLynx />
+              Miso (Haskell)
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://github.com/haskell-miso/miso-lynx',
+        },
+      ],
     },
   ],
   '/react/': [
@@ -262,6 +317,7 @@ const Features = ({ src = '/' }: { src?: string }) => {
             className={cls(
               styles['list-item'],
               !!item.isRowSet && styles['row-set'],
+              item.stackedActions && styles['stacked-actions'],
             )}
             key={index}
             id="hover-feature-item"

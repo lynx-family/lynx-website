@@ -1,3 +1,16 @@
 packages:
   - 'packages/*'
   - 'plugins/*'
+
+# pnpm 11's minimumReleaseAge supply-chain policy rejects very recently published
+# packages. The Lynx example/runtime packages are first-party and published
+# frequently, so exempt our own OSS scopes to avoid blocking fresh releases.
+minimumReleaseAgeExclude:
+  - '@lynx-example/*'
+  - '@lynx-js/*'
+
+# pnpm 11 no longer runs dependency build scripts unless explicitly allowed
+# (else ERR_PNPM_IGNORED_BUILDS). Allow the trusted deps that need a build step.
+allowBuilds:
+  core-js: true
+  esbuild: true

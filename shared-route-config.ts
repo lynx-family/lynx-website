@@ -2,8 +2,6 @@
  * Sub-sites and shared docs configuration
  */
 
-import type { SidebarData } from '@rspress/core/theme';
-
 /**
  * Metadata for each subsites. This is used to
  * - generate the sidebar subsite selector dropdown UI.
@@ -173,6 +171,22 @@ export const CORE_SUBSITES = SUBSITES_CONFIG.filter(
   (s) => !s.external && !s.disabled,
 );
 
+/**
+ * Canonical Quick Start URL.
+ *
+ * The page lives under `/guide/` because Lynx is the platform every other
+ * subsite is defined relative to (Rspeedy = build tool for Lynx, ReactLynx
+ * = React on Lynx, lynx-ui = UI for ReactLynx, …). The page itself is a
+ * branching switcher (ChoiceTabs) that fans *out* into framework-specific
+ * tracks — its job is to send you somewhere, not to belong somewhere — so
+ * routing it under the platform is the honest framing.
+ *
+ * Clicking the Lynx icon in SubsiteRow and every subsite home-page CTA
+ * land here. Historical `/{ai,react,rspeedy,lynx-ui}/start/quick-start`
+ * URLs are 301'd to this canonical in netlify.toml.
+ */
+export const QUICK_START_PATH = '/guide/start/quick-start';
+
 /** Subsites that link to external sites. */
 export const ECOSYSTEM_SUBSITES = SUBSITES_CONFIG.filter((s) => s.external);
 
@@ -190,32 +204,10 @@ export const DROPDOWN_JS_FRAMEWORK = topLevel('js-framework');
 export const DROPDOWN_NATIVE_FRAMEWORK = topLevel('native-framework');
 
 /**
- * URL paths that share common documentation files.
- * For example, "start/quick-start" will be accessible at both
- * "guide/start/quick-start" and "react/start/quick-start".
+ * First-segment values that count as a "subsite" — used by BeforeSidebar to
+ * decide whether to render the SubsiteRow nav header.
  */
 export const SHARED_SIDEBAR_PATHS = CORE_SUBSITES.map((config) => config.value);
-
-const SHARED_DOC_ROOT = 'start';
-
-// Map of localized titles for shared documentation files
-const SHARED_DOC_TITLES = {
-  'quick-start': {
-    en: 'Get Started',
-    zh: '起步',
-  },
-} as const;
-
-/**
- * List of documentation files that are shared between URL paths.
- * Each file exists once but is accessible from multiple paths.
- * For example, "start/quick-start" can be accessed at both:
- * - /guide/start/quick-start
- * - /react/start/quick-start
- */
-export const SHARED_DOC_FILES = Object.keys(SHARED_DOC_TITLES).map(
-  (filename) => `${SHARED_DOC_ROOT}/${filename}`,
-);
 
 /**
  * Gets the current URL path prefix from the pathname.
@@ -259,38 +251,3 @@ export function getLangPrefix(lang: string) {
   // The constant here must match the configured lang in rspress.config.ts.
   return lang === 'en' ? '' : `/${lang}`;
 }
-
-/**
- * Creates sidebar data structure for shared documentation files.
- * Handles both internationalization and dynamic route generation.
- *
- * @param lang - Current language code
- * @param pathname - Current URL pathname
- * @returns Sidebar configuration for shared documentation sections
- */
-export const createSharedRouteSidebar = (
-  lang: string,
-  pathname: string,
-): SidebarData => {
-  const pathPrefix = getUrlPathPrefix(pathname, SHARED_SIDEBAR_PATHS);
-  if (!pathPrefix) return [];
-
-  const fullPrefix = `${getLangPrefix(lang)}${pathPrefix}/${SHARED_DOC_ROOT}`;
-
-  // Render shared docs as flat top-level entries (one per file).
-  // After collapsing Get Started to a single Quick Start page, there is no
-  // longer a section-with-sub-items layer; each shared doc renders directly.
-  const flatItems: SidebarData = Object.entries(SHARED_DOC_TITLES).map(
-    ([filename, texts]) => ({
-      text: texts[lang === 'zh' ? 'zh' : 'en'],
-      link: `${fullPrefix}/${filename}`,
-    }),
-  );
-
-  return [
-    ...flatItems,
-    {
-      dividerType: 'solid',
-    },
-  ];
-};

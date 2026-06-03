@@ -1,135 +1,30 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select';
-import { useEffect, useState } from 'react';
-import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
+import { useLang, useLocation } from '@rspress/core/runtime';
 import { type SidebarData, SidebarList } from '@rspress/core/theme-original';
-import {
-  CORE_SUBSITES,
-  SHARED_SIDEBAR_PATHS,
-  createSharedRouteSidebar,
-  getLangPrefix,
-} from '@site/shared-route-config';
+import { SHARED_SIDEBAR_PATHS, getLangPrefix } from '@site/shared-route-config';
 import './index.scss';
+import './SubsiteRow.scss';
 
-import type { SubsiteConfig } from '@site/shared-route-config';
+import { SubsiteRow } from './SubsiteRow';
 
-import { SubsiteView } from './subsite-ui';
-
-function findSubsiteFromPathname(
-  pathname: string,
-  lang: string,
-): SubsiteConfig {
-  const langPrefix = getLangPrefix(lang);
-  let path = pathname;
-
-  if (langPrefix && path.startsWith(`${langPrefix}/`)) {
-    path = path.slice(langPrefix.length + 1);
-  } else if (!langPrefix && path.startsWith('/')) {
-    path = path.slice(1);
-  }
-
-  if (!path) {
-    return CORE_SUBSITES[0];
-  }
-
-  const [firstSegment] = path.split('/');
-  const normalizedSegment = firstSegment.replace(/\.html$/, '');
-
-  const subsite =
-    CORE_SUBSITES.find((s) => s.value === normalizedSegment) ||
-    CORE_SUBSITES[0];
-
-  return subsite;
-}
-
-function SubsiteSelect() {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const lang = useLang();
-  const [selectedSubsite, setSelectedSubsite] = useState<SubsiteConfig>(() =>
-    findSubsiteFromPathname(pathname, lang),
-  );
-
-  useEffect(() => {
-    const subsite = findSubsiteFromPathname(pathname, lang);
-    if (subsite.value !== selectedSubsite.value) {
-      setSelectedSubsite(subsite);
-    }
-  }, [lang, pathname, selectedSubsite.value]);
-
-  const handleValueChange = (value: string) => {
-    const newSubsite = CORE_SUBSITES.find((s) => s.value === value);
-    if (newSubsite) {
-      setSelectedSubsite(newSubsite);
-      navigate(`${getLangPrefix(lang)}${newSubsite.url}`);
-    }
-  };
-
-  return (
-    <div className="w-full">
-      <Select onValueChange={handleValueChange} value={selectedSubsite.value}>
-        <SelectTrigger className="h-auto border-0 bg-transparent px-4 py-2 shadow-none [&>span]:flex [&>span]:flex-1 relative before:pointer-events-none before:absolute before:inset-0 before:size-full before:rounded-md before:p-[1px] before:will-change-[background-position] before:content-[''] before:[-webkit-mask-composite:xor] before:[mask-composite:exclude] before:bg-shine before:bg-[length:300%_300%] before:[mask:linear-gradient(white_0_0)_content-box,linear-gradient(white_0_0)] before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 hover:motion-safe:before:animate-shine transition-all hover:shadow-[0_0_12px_-3px_var(--rp-c-brand)] hover:translate-y-[-1px]">
-          <div className="flex w-full items-center gap-2 relative">
-            <SubsiteView subsite={selectedSubsite} lang={lang} size="minimal" />
-          </div>
-        </SelectTrigger>
-        <SelectContent className="min-w-[240px] z-[100]">
-          {CORE_SUBSITES.map((subsite) => (
-            <SelectItem
-              key={subsite.value}
-              value={subsite.value}
-              className="!pl-3 py-2 [&>span:first-child]:hidden"
-            >
-              <SubsiteView subsite={subsite} lang={lang} />
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
+// Render the divider through SidebarList so its geometry (border, margin)
+// is byte-identical to every other rp-sidebar-divider rspress emits in
+// the sidebar — instead of a hand-rolled <div> whose spacing we'd have to
+// keep in sync as rspress evolves.
+const HEADER_DIVIDER: SidebarData = [{ dividerType: 'solid' }];
 
 export default function BeforeSidebar() {
   const lang = useLang();
   const { pathname } = useLocation();
 
-  // Initialize sidebar data based on current path and language
-  const [sidebarData, setSidebarData] = useState<SidebarData>(() =>
-    createSharedRouteSidebar(lang, pathname),
+  const isSharedPath = SHARED_SIDEBAR_PATHS.some((prefix) =>
+    pathname.startsWith(`${getLangPrefix(lang)}/${prefix}`),
   );
-
-  useEffect(() => {
-    // Check if current path should show shared sidebar
-    const isSharedPath = SHARED_SIDEBAR_PATHS.some((prefix) =>
-      pathname.startsWith(`${getLangPrefix(lang)}/${prefix}`),
-    );
-
-    // Update sidebar data based on path:
-    // - For shared paths: generate new sidebar data
-    // - For non-shared paths: set to empty to hide sidebar
-    //
-    // Since the container component (Sidebar) re-renders in useEffect (next tick),
-    // we need to reset here to ensure both components update in the same tick.
-    // This avoids UI jump when switching in/out of shared paths.
-    const newSidebarData = isSharedPath
-      ? createSharedRouteSidebar(lang, pathname)
-      : [];
-    setSidebarData(newSidebarData);
-  }, [lang, pathname]);
-
-  // Only render if we have sidebar data and it's not empty
-  if (!sidebarData || sidebarData.length === 0) {
-    return null;
-  }
+  if (!isSharedPath) return null;
 
   return (
     <div id="before-sidebar">
-      <SidebarList sidebarData={sidebarData} setSidebarData={setSidebarData} />
-      <SubsiteSelect />
+      <SubsiteRow />
+      <SidebarList sidebarData={HEADER_DIVIDER} setSidebarData={() => {}} />
     </div>
   );
 }
