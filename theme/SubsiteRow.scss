@@ -63,6 +63,95 @@
   }
 }
 
+// ─── Get Started CTA ─────────────────────────────────────────────────────
+// Primary action that lives below the icon row. Uses a *different* visual
+// language than the active subsite icon on purpose:
+//   - Icon row: subtle wash (low-opacity brand bg + 38% brand border).
+//     Reads as "you are here."
+//   - CTA: ghost button (transparent bg, full-saturation brand border +
+//     brand text). Reads as "do this next."
+// Same brand color, two clearly distinct weights — secondary identity
+// vs primary action, never the dual-active redundancy of the old design.
+//
+// Hidden when the reader is on the Quick Start page (the icon row's active
+// Lynx already says "you're here"; a CTA back to the same page would be
+// noise).
+
+.quick-start-cta {
+  --brand: var(--rp-c-brand, #ff351a);
+  // Pull the brand toward the active foreground so the text stays readable
+  // even on the lighter brands. 80/20 keeps hue identity (orange reads as
+  // orange, pink as pink) while clearing WCAG AA-large 3:1 across all
+  // four brands and AA-normal 4.5:1 across three. Rspeedy orange is
+  // intrinsically luminous and sits at ~3.3:1 — chasing AA-normal with a
+  // harder mix drifts it into brown/terracotta and loses identity. The
+  // right structural fix is a darker Rspeedy brand token; until then, the
+  // CTA reads AA-large which is acceptable for this button size and
+  // weight.
+  --brand-on-surface: color-mix(in srgb, var(--brand) 80%, var(--rp-c-text-1));
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 8px 4px;
+  padding: 7px 12px;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brand-on-surface);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    box-shadow 0.15s ease-out,
+    transform 0.12s ease-out;
+
+  &:hover {
+    text-decoration: none;
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--brand) 14%, transparent),
+      0 4px 10px -2px color-mix(in srgb, var(--brand) 28%, transparent);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  // The ghost border at full saturation can read a bit hot in dark mode
+  // against the near-black surface; ease it back so the CTA still feels
+  // confident but doesn't outshine the active icon.
+  :root.dark & {
+    border-color: color-mix(in srgb, var(--brand) 78%, transparent);
+
+    &:hover {
+      background: color-mix(in srgb, var(--brand) 14%, transparent);
+      border-color: var(--brand);
+    }
+  }
+}
+
+.quick-start-cta__arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease-out;
+}
+
+.quick-start-cta:hover .quick-start-cta__arrow {
+  transform: translateX(2px);
+}
+
 .subsite-icon__logo {
   display: block;
   width: 20px;

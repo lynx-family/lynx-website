@@ -1,4 +1,5 @@
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
+import { Link } from '@rspress/core/theme';
 import {
   Tooltip,
   TooltipContent,
@@ -40,6 +41,13 @@ export function SubsiteRow() {
   const navigate = useNavigate();
   const lang = useLang();
   const current = findSubsiteFromPathname(pathname, lang);
+  const quickStartHref = `${getLangPrefix(lang)}${QUICK_START_PATH}`;
+  // Hide the "Get Started" CTA when the reader is already on Quick Start.
+  // The Lynx icon's active brand chrome already carries "you're here";
+  // showing a CTA back to the same page on top of that would be noise.
+  const isOnQuickStart = pathname
+    .replace(/\.html$/, '')
+    .endsWith(QUICK_START_PATH);
 
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={0}>
@@ -99,6 +107,27 @@ export function SubsiteRow() {
           );
         })}
       </div>
+      {!isOnQuickStart && (
+        <Link href={quickStartHref} className="quick-start-cta">
+          <span className="quick-start-cta__label">
+            {lang === 'zh' ? '开始使用' : 'Get Started'}
+          </span>
+          <svg
+            className="quick-start-cta__arrow"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 8h10M9 4l4 4-4 4"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+      )}
     </TooltipProvider>
   );
 }
