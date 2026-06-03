@@ -2,8 +2,6 @@
  * Sub-sites and shared docs configuration
  */
 
-import type { SidebarData } from '@rspress/core/theme';
-
 /**
  * Metadata for each subsites. This is used to
  * - generate the sidebar subsite selector dropdown UI.
@@ -183,9 +181,9 @@ export const CORE_SUBSITES = SUBSITES_CONFIG.filter(
  * tracks — its job is to send you somewhere, not to belong somewhere — so
  * routing it under the platform is the honest framing.
  *
- * Every subsite's "Get Started" sidebar link and home-page CTA points here.
- * Historical `/{ai,react,rspeedy,lynx-ui}/start/quick-start` URLs are 301'd
- * to this canonical in netlify.toml.
+ * Clicking the Lynx icon in SubsiteRow and every subsite home-page CTA
+ * land here. Historical `/{ai,react,rspeedy,lynx-ui}/start/quick-start`
+ * URLs are 301'd to this canonical in netlify.toml.
  */
 export const QUICK_START_PATH = '/guide/start/quick-start';
 
@@ -207,7 +205,7 @@ export const DROPDOWN_NATIVE_FRAMEWORK = topLevel('native-framework');
 
 /**
  * First-segment values that count as a "subsite" — used by BeforeSidebar to
- * decide whether to render the SubsiteRow + Get Started header.
+ * decide whether to render the SubsiteRow nav header.
  */
 export const SHARED_SIDEBAR_PATHS = CORE_SUBSITES.map((config) => config.value);
 
@@ -253,30 +251,3 @@ export function getLangPrefix(lang: string) {
   // The constant here must match the configured lang in rspress.config.ts.
   return lang === 'en' ? '' : `/${lang}`;
 }
-
-const GET_STARTED_LABEL = {
-  en: 'Get Started',
-  zh: '起步',
-} as const;
-
-/**
- * Sidebar entries shown above the SubsiteRow in every subsite's sidebar.
- * Today this is just one link — Get Started — pointing at the canonical
- * Quick Start URL regardless of which subsite the user is currently in.
- * The trailing divider is rendered separately by BeforeSidebar so the
- * "Get Started + SubsiteRow" header reads as one unit above the divider.
- */
-export const createSharedRouteSidebar = (
-  lang: string,
-  pathname: string,
-): SidebarData => {
-  const pathPrefix = getUrlPathPrefix(pathname, SHARED_SIDEBAR_PATHS);
-  if (!pathPrefix) return [];
-
-  return [
-    {
-      text: GET_STARTED_LABEL[lang === 'zh' ? 'zh' : 'en'],
-      link: `${getLangPrefix(lang)}${QUICK_START_PATH}`,
-    },
-  ];
-};

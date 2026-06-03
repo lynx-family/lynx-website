@@ -5,7 +5,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { CORE_SUBSITES, getLangPrefix } from '@site/shared-route-config';
+import {
+  CORE_SUBSITES,
+  QUICK_START_PATH,
+  getLangPrefix,
+} from '@site/shared-route-config';
 import type { SubsiteConfig } from '@site/shared-route-config';
 import { cn } from '@/lib/utils';
 
@@ -48,14 +52,17 @@ export function SubsiteRow() {
           const isActive = subsite.value === current.value;
           const description =
             lang === 'zh' ? subsite.descriptionZh : subsite.description;
+          // Lynx is the platform every other subsite is defined relative to,
+          // so its "subsite landing" is the same Quick Start page everyone
+          // gets sent to. The other subsites land on their own intro page.
+          const target =
+            subsite.value === 'guide' ? QUICK_START_PATH : subsite.url;
           return (
             <Tooltip key={subsite.value}>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={() =>
-                    navigate(`${getLangPrefix(lang)}${subsite.url}`)
-                  }
+                  onClick={() => navigate(`${getLangPrefix(lang)}${target}`)}
                   aria-label={subsite.label}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
