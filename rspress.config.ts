@@ -19,10 +19,6 @@ import versionJson from './docs/public/version.json';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
-import {
-  SHARED_DOC_FILES,
-  SHARED_SIDEBAR_PATHS,
-} from './shared-route-config.js';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
@@ -189,7 +185,6 @@ export default defineConfig({
         },
       ],
     }),
-    sharedSidebarPlugin(),
     ...(!IS_LIGHTWEIGHT_BUILD
       ? [
           pluginSitemap({
@@ -276,38 +271,5 @@ function remarkReplaceVersionJsonPlaceholders() {
         node.value = applyReplacements(node.value);
       }
     });
-  };
-}
-
-function mapNonGuideSharedSectionsToGuide(
-  lang: string,
-  routes: string[],
-  filenames: string[],
-) {
-  return routes
-    .filter((route) => route !== 'guide')
-    .flatMap((route) =>
-      filenames.map((filename) => ({
-        routePath: `/${lang}/${route}/${filename}`,
-        filepath: path.join(__dirname, `docs/${lang}/guide`, `${filename}.mdx`),
-      })),
-    );
-}
-
-function sharedSidebarPlugin(): RspressPlugin {
-  return {
-    name: 'rspeedy:shared-sidebar',
-    addPages(config, isProd) {
-      const pages =
-        config.themeConfig?.locales?.flatMap(({ lang }) =>
-          mapNonGuideSharedSectionsToGuide(
-            lang,
-            SHARED_SIDEBAR_PATHS,
-            SHARED_DOC_FILES,
-          ),
-        ) || [];
-
-      return pages;
-    },
   };
 }

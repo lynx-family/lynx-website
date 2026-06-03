@@ -47,32 +47,23 @@ export type SubsiteConfig = {
     ```
 3.  **配置侧边栏**：创建 `docs/en/my-framework/_meta.json` 以定义其特定的侧边栏结构。
 
-## 共享文档
+## 共享入口：Quick Start
 
-为了避免在多个子站点之间重复内容（如“快速上手”指南），我们使用共享文档系统。
+历史上 `SHARED_DOC_TITLES` 曾收纳过多份跨子站点共享的文档（教程、集成指南等），并通过虚拟路由把它们映射到 `/<subsite>/start/<filename>` 下。今天这些文档要么已被合并进 ChoiceTabs，要么已迁出至顶层 `/learn/*`，只剩 Quick Start 一篇真正属于"所有子站点共享的入口"。
+
+我们把它的规范 URL 固定在 `shared-route-config.ts` 中的 `QUICK_START_PATH`（=`/guide/start/quick-start`）。之所以放在 `/guide/` 之下，是因为 Lynx 是所有其他子站点的运行时底座（Rspeedy = Lynx 构建工具，ReactLynx = React on Lynx，等等），把 Quick Start 安放在平台根目录下是诚实的做法——它的工作就是把读者分流到具体框架的入口。
 
 ### 工作原理
 
-1.  **事实来源**：共享文件物理位置在 `docs/en/guide/start/`。
-2.  **虚拟路由**：`rspress.config.ts` 中的 `sharedSidebarPlugin` 动态地为其他子站点创建虚拟页面（例如 `react/start/quick-start`），指向相同的内容。
-3.  **统一侧边栏**：`BeforeSidebar` 组件（在 `theme/BeforeSidebar.tsx` 中）自动将共享的“开始”部分注入每个子站点的侧边栏。
-
-### 管理共享内容
-
-要修改哪些文件被共享，请更新 `shared-route-config.ts` 中的 `SHARED_DOC_TITLES`。
-
-```typescript
-const SHARED_DOC_TITLES = {
-  'quick-start': { en: 'Quick Start', zh: '快速上手' },
-  // ...
-};
-```
+1.  **事实来源**：物理文件位于 `docs/{en,zh}/guide/start/quick-start.mdx`。
+2.  **侧边栏入口**：`BeforeSidebar` 渲染的 Get Started 链接总是指向 `QUICK_START_PATH`，不论用户当前所处的子站点。
+3.  **历史 URL 兼容**：旧的 `/<ai|react|rspeedy|lynx-ui>/start/*` URL 通过 `netlify.toml` 中的 301 重定向跳转到 `/guide/start/*`，确保旧书签与已被 LLM 爬取的引用仍可访问。
 
 ## 子站点 UI
 
 子站点导航和身份由自定义主题组件处理：
 
-- **`SubsiteSelect`** (`theme/BeforeSidebar.tsx`)：侧边栏顶部的下拉菜单允许用户在子站点之间切换。
+- **`SubsiteRow`** (`theme/SubsiteRow.tsx`)：侧边栏顶部的横向图标行，展示所有子站点，活动子站点以品牌色描边高亮。
 - **`SubsiteLogo`** (`theme/subsite-ui.tsx`)：渲染当前子站点和主题模式的正确 Logo。
 
 这些组件直接从 `SUBSITES_CONFIG` 读取，因此其中的任何更改都会立即反映在 UI 中。

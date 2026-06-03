@@ -47,32 +47,23 @@ To add a new subsite (e.g., `my-framework`):
     ```
 3.  **Configure Sidebar**: Create `docs/en/my-framework/_meta.json` to define its specific sidebar structure.
 
-## Shared Documentation
+## The shared entry: Quick Start
 
-To avoid duplicating content (like "Quick Start" guides) across multiple subsites, we use a shared documentation system.
+`SHARED_DOC_TITLES` historically held several cross-subsite docs (tutorials, integration guides, …) and the build mapped them to virtual `/<subsite>/start/<filename>` routes. Those docs have since either been folded into ChoiceTabs or lifted out to top-level `/learn/*`. Quick Start is the only one that still genuinely belongs to "everyone's first-run experience."
 
-### How it Works
+Its canonical URL is pinned in `shared-route-config.ts` as `QUICK_START_PATH` (= `/guide/start/quick-start`). We park it under `/guide/` because Lynx is the runtime substrate every other subsite is defined relative to (Rspeedy = build tool for Lynx, ReactLynx = React on Lynx, …), so routing the platform's onboarding doorway under the platform is the honest framing — the page's job is to _send_ you into a framework, not to _belong_ to one.
 
-1.  **Source of Truth**: Shared files are physically located in `docs/en/guide/start/`.
-2.  **Virtual Routes**: The `sharedSidebarPlugin` in `rspress.config.ts` dynamically creates virtual pages for other subsites (e.g., `react/start/quick-start`) that point to the same content.
-3.  **Unified Sidebar**: The `BeforeSidebar` component (in `theme/BeforeSidebar.tsx`) automatically injects the shared "Start" section into the sidebar of every subsite.
+### How it works
 
-### Managing Shared Content
-
-To modify which files are shared, update `SHARED_DOC_TITLES` in `shared-route-config.ts`.
-
-```typescript
-const SHARED_DOC_TITLES = {
-  'quick-start': { en: 'Quick Start', zh: '快速上手' },
-  // ...
-};
-```
+1.  **Source of truth**: the file lives at `docs/{en,zh}/guide/start/quick-start.mdx`.
+2.  **Sidebar entry**: `BeforeSidebar`'s Get Started link always points to `QUICK_START_PATH` regardless of which subsite the reader is currently in.
+3.  **Historical-URL compatibility**: legacy `/<ai|react|rspeedy|lynx-ui>/start/*` URLs are 301'd to `/guide/start/*` in `netlify.toml`, so bookmarks and LLM-cached references keep resolving.
 
 ## Subsite UI
 
-The subsite navigation and identity are handled by custom theme components:
+Subsite navigation and identity are handled by custom theme components:
 
-- **`SubsiteSelect`** (`theme/BeforeSidebar.tsx`): The dropdown menu at the top of the sidebar allows users to switch between subsites.
-- **`SubsiteLogo`** (`theme/subsite-ui.tsx`): Renders the correct logo for the current subsite and theme mode.
+- **`SubsiteRow`** (`theme/SubsiteRow.tsx`): horizontal row of all subsite icons at the top of the sidebar; the active subsite gets a brand-themed border.
+- **`SubsiteLogo`** (`theme/subsite-ui.tsx`): renders the correct logo for the current subsite and theme mode.
 
 These components read directly from `SUBSITES_CONFIG`, so any changes there are immediately reflected in the UI.
