@@ -25,12 +25,14 @@ type ExtendedPlatformName = LCD.PlatformName | 'clay';
 
 /**
  * Maps a platform name to its full name.
- * @param platform The platform name to map.
- * @returns The full name of the given platform.
+ *
+ * Note: bare `clay` renders as "Desktop" in user-facing badges while the
+ * underlying type stays `clay` (component exports, APIStatus, compat tables
+ * keep the technical name). Temporary until the desktop branding settles.
  */
 function mapPlatformNameToFullName(platform: ExtendedPlatformName) {
   if (platform === 'clay') {
-    return 'Clay';
+    return 'Desktop';
   }
   if (platform === 'harmony') {
     return 'Harmony';
@@ -46,10 +48,21 @@ type PlatformBadgeInnerProps = {
   type?: BadgeProps['type'];
 };
 
+// Maps the semantic `type` to a visual modifier class. The CSS in
+// PlatformBadge.css decides what each modifier looks like — default keeps the
+// platform color, `--only` emphasizes via a tinted ring, `--no` mutes the
+// platform color and strikes the label so support/non-support don't read as
+// the same chip in different words.
+const TYPE_TO_MODIFIER: Record<NonNullable<BadgeProps['type']>, string> = {
+  info: '',
+  warning: 'platform-badge--only',
+  danger: 'platform-badge--no',
+  tip: '',
+  note: '',
+};
+
 /**
  * Internal component for rendering a platform badge.
- * @param props The properties for the PlatformBadgeInner component.
- * @returns A Badge component with platform-specific styling.
  * @internal
  */
 function PlatformBadgeInner({
@@ -57,17 +70,18 @@ function PlatformBadgeInner({
   badgeText,
   type = 'info',
 }: PlatformBadgeInnerProps) {
+  const modifier = TYPE_TO_MODIFIER[type] ?? '';
   return (
     <span
-      className={`platform-badge-${platform}`}
+      className={`platform-badge-${platform} ${modifier}`.trim()}
       style={{ display: 'contents' }}
     >
       <Badge type={type}>
         <PlatformSvg
           platformName={platform}
-          className={`bg-current w-[0.9rem] h-[0.9rem]`}
+          className="platform-badge__icon bg-current w-[0.9rem] h-[0.9rem]"
         />
-        {badgeText}
+        <span className="platform-badge__label">{badgeText}</span>
       </Badge>
     </span>
   );
@@ -143,7 +157,7 @@ function createNoPlatformComponent(platform: ExtendedPlatformName) {
     return (
       <PlatformBadgeInner
         platform={platform}
-        badgeText={`no ${mapPlatformNameToFullName(platform)}`}
+        badgeText={`No ${mapPlatformNameToFullName(platform)}`}
         type="danger"
       />
     );
