@@ -1,34 +1,29 @@
-import { Badge } from '@rspress/core/theme';
+import { Badge, Tag } from '@rspress/core/theme';
 
 /**
  * Renders a badge indicating that a feature is deprecated.
- * @param {Object} props - The component props.
- * @param {string} [props.since] - The version since which the feature was deprecated.
- * @returns {JSX.Element} A Badge component with "Deprecated" text.
- * @example
- * // Render a deprecated badge without version
- * <Deprecated />
  *
- * // Render a deprecated badge with version
- * <Deprecated since="2.0.0" />
+ * Delegates to Rspress's built-in `Tag` so the badge picks up Rspress's
+ * deprecated icon and stays in lockstep with the frontmatter
+ * `tag: deprecated` rendering.
+ * @example
+ * <Deprecated />
  */
-export function Deprecated({ since }: { since?: string }) {
-  return (
-    <Badge
-      text={since ? `Deprecated in ${since}` : 'Deprecated'}
-      type="danger"
-    />
-  );
+export function Deprecated() {
+  return <Tag tag="deprecated" />;
 }
 
 /**
  * Renders a badge indicating that a feature is experimental.
- * @returns {JSX.Element} A Badge component with "Experimental" text.
+ *
+ * Delegates to Rspress's built-in `Tag` so the badge picks up the
+ * Rspress experimental flask icon and stays in lockstep with the
+ * frontmatter `tag: experimental` rendering.
  * @example
  * <Experimental />
  */
 export function Experimental() {
-  return <Badge text={'Experimental'} type="warning" />;
+  return <Tag tag="experimental" />;
 }
 
 /**
