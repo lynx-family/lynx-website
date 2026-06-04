@@ -1,0 +1,421 @@
+---
+tag: 'XElement'
+api: elements/markdown
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Deprecated,
+  Go,
+  IOSOnly,
+  Required,
+} from '@lynx';
+
+# `<markdown>`
+
+<APISummary />
+
+用于在 Lynx 视图内渲染 Markdown 内容。
+
+## 使用指南
+
+`<markdown>` 是一个扩展元件，用于将 Markdown 格式的文本渲染为原生视图。它支持丰富的样式定制、打字机动画、选择复制、图片插入等功能。
+
+以下示例展示了 `<markdown>` 元件在不同场景下的应用。
+
+### 展示一个 Markdown
+
+将 Markdown 格式的文本传给 `<markdown>` 的 `content` 属性即可渲染静态 Markdown 页面。
+
+<Go
+  img="/assets/doc/markdown/basic.png"
+  example="markdown"
+  defaultFile="src/basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+/>
+
+### 修改样式
+
+`<markdown>` 内部的元素不是 Lynx 元素，无法通过 CSS 赋予样式，但可以通过 `markdown-style` 属性修改内部元素的样式。`markdown-style` 是一系列 tag 到样式配置项的映射。
+
+<Go
+  img="/assets/doc/markdown/style.png"
+  example="markdown"
+  defaultFile="src/style/index.tsx"
+  defaultEntryFile="dist/style.lynx.bundle"
+/>
+
+### `<span>` 标签
+
+通过 `<span>` 标签配合 class 可以为特定文本片段设置独立样式，而不影响同类型的其他文本。
+
+<Go
+  img="/assets/doc/markdown/span_style.png"
+  example="markdown"
+  defaultFile="src/span_style/index.tsx"
+  defaultEntryFile="dist/span_style.lynx.bundle"
+/>
+
+### `<p>` 标签
+
+使用 `<p>` 标签可以设置段落的样式，例如行高、对齐方式。
+
+<Go
+  img="/assets/doc/markdown/paragraph_style.png"
+  example="markdown"
+  defaultFile="src/paragraph_style/index.tsx"
+  defaultEntryFile="dist/paragraph_style.lynx.bundle"
+/>
+
+:::note
+
+`<markdown>` 只支持 `<span>` 标签用于设置文本样式以及 `<p>` 标签用于设置段落样式，**不支持**其他 HTML 标签。标签的样式**不支持**内嵌，只能通过 class 在 `markdown-style` 中设置。
+
+:::
+
+### 插入图片
+
+在 `<markdown>` 中插入图片的语法与标准 Markdown 一致。支持通过 URL 后添加 `width` 和 `height` 控制图片大小。
+
+<Go
+  img="/assets/doc/markdown/image.png"
+  example="markdown"
+  defaultFile="src/image/index.tsx"
+  defaultEntryFile="dist/image.lynx.bundle"
+/>
+
+### 插入 Lynx View
+
+通过 `inlineview://` 协议可以在 Markdown 内容中嵌入自定义的 Lynx 视图。
+
+<Go
+  img="/assets/doc/markdown/inline_view.png"
+  example="markdown"
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryFile="dist/inline_view.lynx.bundle"
+/>
+
+:::note
+
+内联视图**必须**是 `<markdown>` 的子 view，并且设置 `flatten` 为 `false`，否则会有渲染问题。
+
+:::
+
+### 添加高亮/下划线
+
+#### 使用 `<span>`
+
+`<span>` 支持通过 `backgroundImage` 设置渐变或纯色背景实现高亮效果，也可以使用 `textDecorationLine` 等属性添加下划线效果。
+
+<Go
+  img="/assets/doc/markdown/span_mark.png"
+  example="markdown"
+  defaultFile="src/span_mark/index.tsx"
+  defaultEntryFile="dist/span_mark.lynx.bundle"
+/>
+
+#### 使用 `text-mark-attachments`
+
+对于需要多段重叠高亮的复杂场景，可以使用 `text-mark-attachments` 属性为指定范围的文本添加高亮及划线效果，无需修改原文。
+
+<Go
+  img="/assets/doc/markdown/text_mark_attachments.png"
+  example="markdown"
+  defaultFile="src/text_mark_attachments/index.tsx"
+  defaultEntryFile="dist/text_mark_attachments.lynx.bundle"
+/>
+
+### 超出截断
+
+通过 `text-maxline` 属性控制文本的最大行数，通过 `height` 样式控制最大高度。
+
+<Go
+  img="/assets/doc/markdown/truncation.png"
+  example="markdown"
+  defaultFile="src/truncation/index.tsx"
+  defaultEntryFile="dist/truncation.lynx.bundle"
+/>
+
+### 打字机动画
+
+将 `animation-type` 设置为 `typewriter` 即可开启打字机动画，通过 `animation-velocity` 设置速度（字符数/秒）。
+
+<Go
+  img="/assets/doc/markdown/typewriter.png"
+  example="markdown"
+  defaultFile="src/typewriter/index.tsx"
+  defaultEntryFile="dist/typewriter.lynx.bundle"
+/>
+
+#### 自定义光标
+
+通过 `markdown-style` 中的 `typewriterCursor` 配置自定义打字机光标。
+
+<Go
+  img="/assets/doc/markdown/typewriter_cursor.png"
+  example="markdown"
+  defaultFile="src/typewriter_cursor/index.tsx"
+  defaultEntryFile="dist/typewriter_cursor.lynx.bundle"
+/>
+
+### 选择复制
+
+将 `text-selection` 属性设置为 `true` 即可开启文本选择复制功能。
+
+<Go
+  img="/assets/doc/markdown/text_selection.png"
+  example="markdown"
+  defaultFile="src/text_selection/index.tsx"
+  defaultEntryFile="dist/text_selection.lynx.bundle"
+/>
+
+## 属性
+
+### `content`
+
+```ts
+content: string;
+```
+
+Markdown 源内容文本。
+
+### `markdown-style`
+
+```ts
+'markdown-style'?: object;
+```
+
+Markdown 的样式配置对象，是 tag 到样式配置项的映射。支持的 tag 包括：`normalText`、`h1`-`h6`、`link`、`inlineCode`、`codeBlock`、`quote`、`orderedList`、`unorderedList`、`table`、`tableCell`、`split`、`typewriterCursor`、`truncation`、`listItem`、`tableHeader`、`image`、`quoteBorderLine`、`unorderedListMarker`、`orderedListNumber`、`imageCaption` 等。
+
+### `animation-type`
+
+```ts
+'animation-type'?: 'none' | 'typewriter';
+```
+
+动画类型。设置为 `typewriter` 开启打字机效果，默认为 `none`。
+
+### `animation-velocity`
+
+```ts
+'animation-velocity'?: number;
+```
+
+打字机动画速度，单位为字符数/秒，默认为 1。
+
+### `text-maxline`
+
+```ts
+'text-maxline'?: number;
+```
+
+文本最大行数，超出后截断。
+
+### `content-complete`
+
+```ts
+'content-complete'?: boolean;
+```
+
+标明当前 `content` 是否完整。为 `true` 时动画结束后隐藏光标，为 `false` 时光标一直显示。默认为 `true`。
+
+### `typewriter-dynamic-height`
+
+```ts
+'typewriter-dynamic-height'?: boolean;
+```
+
+配置打字机效果是否动态改变元素高度，默认为 `false`。
+
+### `text-selection`
+
+```ts
+'text-selection'?: boolean;
+```
+
+配置 Markdown 内容是否可选择，默认为 `false`。
+
+### `text-mark-attachments`
+
+```ts
+'text-mark-attachments'?: MarkAttachment[];
+```
+
+用于在指定字符范围内添加高亮或下划线。支持多段重叠和渐变色。
+
+### `content-range`
+
+```ts
+'content-range'?: number[];
+```
+
+配置 Markdown 内容的解析范围，默认为 `[0, INT32_MAX]`。
+
+### `markdown-effect`
+
+```ts
+'markdown-effect'?: object;
+```
+
+配置额外的 Markdown 效果，如文本渐隐蒙层。
+
+### `enable-gif`
+
+```ts
+'enable-gif'?: boolean;
+```
+
+配置 iOS 是否开启 GIF 动画支持，Android 默认支持。默认为 `false`。
+
+### `initial-animation-step`
+
+```ts
+'initial-animation-step'?: number;
+```
+
+指定动画开始的位置，默认为 0。
+
+### `typewriter-height-transition-duration`
+
+```ts
+'typewriter-height-transition-duration'?: number;
+```
+
+打字机高度变化时的渐变时间，单位为秒，默认为 0。
+
+### `content-id`
+
+```ts
+'content-id'?: string;
+```
+
+作为 `content` 的唯一标识符，用于在事件中消费。
+
+## 事件
+
+### `binddrawStart`
+
+```ts
+binddrawStart?: (e: BaseEvent) => void;
+```
+
+Markdown 开始绘制时触发。
+
+### `binddrawEnd`
+
+```ts
+binddrawEnd?: (e: BaseEvent) => void;
+```
+
+Markdown 结束绘制时触发。
+
+### `bindanimationStep`
+
+```ts
+bindanimationStep?: (e: BaseEvent<'bindanimationStep', {
+  animationStep: number;
+  maxAnimationStep: number;
+}>) => void;
+```
+
+每次动画帧的回调事件。
+
+### `bindoverflow`
+
+```ts
+bindoverflow?: (e: BaseEvent<'bindoverflow', {
+  type: 'ellipsis' | 'clip';
+}>) => void;
+```
+
+文本溢出时触发。
+
+### `bindlink`
+
+```ts
+bindlink?: (e: BaseEvent<'bindlink', {
+  url: string;
+  content: string;
+}>) => void;
+```
+
+链接被点击时触发。
+
+### `bindselectionchange`
+
+```ts
+bindselectionchange?: (e: BaseEvent<'bindselectionchange', {
+  start: number;
+  end: number;
+}>) => void;
+```
+
+选中区域变化时触发。
+
+### `bindimageTap`
+
+```ts
+bindimageTap?: (e: BaseEvent<'bindimageTap', {
+  url: string;
+}>) => void;
+```
+
+图片被点击时触发。
+
+### `bindparseEnd`
+
+```ts
+bindparseEnd?: (e: BaseEvent) => void;
+```
+
+Markdown 内容解析完成时触发。
+
+### `bindtextClick`
+
+```ts
+bindtextClick?: (e: BaseEvent<'bindtextClick', {
+  text: string;
+}>) => void;
+```
+
+文本被点击时触发。
+
+## 方法
+
+### `pauseAnimation`
+
+暂停打字机动画。
+
+### `resumeAnimation`
+
+恢复打字机动画。
+
+### `getContent`
+
+获取当前渲染的内容。
+
+### `getSelectedText`
+
+获取当前选中区域的文本。
+
+### `setTextSelection`
+
+设置选中区域。参数包括 `startX`、`startY`、`endX`、`endY`，以及可选的 `selectionTextType`（`char` | `word` | `sentence` | `paragraph`）。
+
+### `getTextBoundingRect`
+
+获取指定范围文本的位置信息。参数为 `start` 和 `end`，返回 `TextBoundingRect` 对象。
+
+### `getImages`
+
+获取 Markdown 中所有图片的信息。
+
+### `getParseResult`
+
+获取 Markdown 的解析结果。
+
+## 兼容性
+
+<APITable />
