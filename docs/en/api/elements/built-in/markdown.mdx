@@ -1,0 +1,421 @@
+---
+tag: 'XElement'
+api: elements/markdown
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Deprecated,
+  Go,
+  IOSOnly,
+  Required,
+} from '@lynx';
+
+# `<markdown>`
+
+<APISummary />
+
+Used to render Markdown content within a Lynx view.
+
+## Usage Guide
+
+`<markdown>` is an extension element for rendering Markdown-formatted text as native views. It supports rich style customization, typewriter animation, text selection and copy, image insertion, and more.
+
+The following examples demonstrate `<markdown>` in different scenarios.
+
+### Display a Markdown
+
+Pass Markdown-formatted text to the `content` prop of `<markdown>` to render a static Markdown page.
+
+<Go
+  img="/assets/doc/markdown/basic.png"
+  example="markdown"
+  defaultFile="src/basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+/>
+
+### Modify Styles
+
+The inner elements of `<markdown>` are not Lynx elements, so they cannot be styled using CSS. However, you can use the `markdown-style` prop to modify internal element styles. `markdown-style` is a mapping of tags to style configurations.
+
+<Go
+  img="/assets/doc/markdown/style.png"
+  example="markdown"
+  defaultFile="src/style/index.tsx"
+  defaultEntryFile="dist/style.lynx.bundle"
+/>
+
+### `<span>` Tag
+
+Use the `<span>` tag with a class to apply independent styles to specific text fragments without affecting other text of the same type.
+
+<Go
+  img="/assets/doc/markdown/span_style.png"
+  example="markdown"
+  defaultFile="src/span_style/index.tsx"
+  defaultEntryFile="dist/span_style.lynx.bundle"
+/>
+
+### `<p>` Tag
+
+Use the `<p>` tag to set paragraph styles such as line height and alignment.
+
+<Go
+  img="/assets/doc/markdown/paragraph_style.png"
+  example="markdown"
+  defaultFile="src/paragraph_style/index.tsx"
+  defaultEntryFile="dist/paragraph_style.lynx.bundle"
+/>
+
+:::note
+
+`<markdown>` only supports the `<span>` tag for text styling and the `<p>` tag for paragraph styling. Other HTML tags are **not supported**. Tag styles **cannot** be inlined and must be set via class in `markdown-style`.
+
+:::
+
+### Insert Images
+
+Image insertion syntax in `<markdown>` follows standard Markdown. You can also add `width` and `height` after the URL to control image size.
+
+<Go
+  img="/assets/doc/markdown/image.png"
+  example="markdown"
+  defaultFile="src/image/index.tsx"
+  defaultEntryFile="dist/image.lynx.bundle"
+/>
+
+### Insert Lynx View
+
+Use the `inlineview://` protocol to embed custom Lynx views within Markdown content.
+
+<Go
+  img="/assets/doc/markdown/inline_view.png"
+  example="markdown"
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryFile="dist/inline_view.lynx.bundle"
+/>
+
+:::note
+
+Inline views **must** be child views of `<markdown>` and have `flatten` set to `false`, otherwise rendering issues will occur.
+
+:::
+
+### Add Highlight/Underline
+
+#### Using `<span>`
+
+`<span>` supports setting gradient or solid backgrounds via `backgroundImage` for highlight effects, and `textDecorationLine` for underline effects.
+
+<Go
+  img="/assets/doc/markdown/span_mark.png"
+  example="markdown"
+  defaultFile="src/span_mark/index.tsx"
+  defaultEntryFile="dist/span_mark.lynx.bundle"
+/>
+
+#### Using `text-mark-attachments`
+
+For complex scenarios with multiple overlapping highlights, use the `text-mark-attachments` prop to add highlighting and line effects to specified text ranges without modifying the original content.
+
+<Go
+  img="/assets/doc/markdown/text_mark_attachments.png"
+  example="markdown"
+  defaultFile="src/text_mark_attachments/index.tsx"
+  defaultEntryFile="dist/text_mark_attachments.lynx.bundle"
+/>
+
+### Text Truncation
+
+Use the `text-maxline` prop to control the maximum number of text lines, and `height` style to control the maximum height.
+
+<Go
+  img="/assets/doc/markdown/truncation.png"
+  example="markdown"
+  defaultFile="src/truncation/index.tsx"
+  defaultEntryFile="dist/truncation.lynx.bundle"
+/>
+
+### Typewriter Animation
+
+Set `animation-type` to `typewriter` to enable typewriter animation, and use `animation-velocity` to set the speed (characters per second).
+
+<Go
+  img="/assets/doc/markdown/typewriter.png"
+  example="markdown"
+  defaultFile="src/typewriter/index.tsx"
+  defaultEntryFile="dist/typewriter.lynx.bundle"
+/>
+
+#### Custom Cursor
+
+Configure a custom typewriter cursor via `typewriterCursor` in `markdown-style`.
+
+<Go
+  img="/assets/doc/markdown/typewriter_cursor.png"
+  example="markdown"
+  defaultFile="src/typewriter_cursor/index.tsx"
+  defaultEntryFile="dist/typewriter_cursor.lynx.bundle"
+/>
+
+### Text Selection
+
+Set the `text-selection` prop to `true` to enable text selection and copy.
+
+<Go
+  img="/assets/doc/markdown/text_selection.png"
+  example="markdown"
+  defaultFile="src/text_selection/index.tsx"
+  defaultEntryFile="dist/text_selection.lynx.bundle"
+/>
+
+## Props
+
+### `content`
+
+```ts
+content: string;
+```
+
+The Markdown source content text.
+
+### `markdown-style`
+
+```ts
+'markdown-style'?: object;
+```
+
+Style configuration object for Markdown, a mapping of tags to style configurations. Supported tags include: `normalText`, `h1`-`h6`, `link`, `inlineCode`, `codeBlock`, `quote`, `orderedList`, `unorderedList`, `table`, `tableCell`, `split`, `typewriterCursor`, `truncation`, `listItem`, `tableHeader`, `image`, `quoteBorderLine`, `unorderedListMarker`, `orderedListNumber`, `imageCaption`, etc.
+
+### `animation-type`
+
+```ts
+'animation-type'?: 'none' | 'typewriter';
+```
+
+Animation type. Set to `typewriter` to enable typewriter effect. Defaults to `none`.
+
+### `animation-velocity`
+
+```ts
+'animation-velocity'?: number;
+```
+
+Typewriter animation speed in characters per second. Defaults to 1.
+
+### `text-maxline`
+
+```ts
+'text-maxline'?: number;
+```
+
+Maximum number of text lines before truncation.
+
+### `content-complete`
+
+```ts
+'content-complete'?: boolean;
+```
+
+Indicates whether the current `content` is complete. When `true`, the cursor hides after animation ends. When `false`, the cursor remains visible. Defaults to `true`.
+
+### `typewriter-dynamic-height`
+
+```ts
+'typewriter-dynamic-height'?: boolean;
+```
+
+Whether the typewriter effect dynamically changes element height. Defaults to `false`.
+
+### `text-selection`
+
+```ts
+'text-selection'?: boolean;
+```
+
+Whether Markdown content is selectable. Defaults to `false`.
+
+### `text-mark-attachments`
+
+```ts
+'text-mark-attachments'?: MarkAttachment[];
+```
+
+Used to add highlights or underlines within specified character ranges. Supports overlapping ranges and gradients.
+
+### `content-range`
+
+```ts
+'content-range'?: number[];
+```
+
+Specifies the parsing range of Markdown content. Defaults to `[0, INT32_MAX]`.
+
+### `markdown-effect`
+
+```ts
+'markdown-effect'?: object;
+```
+
+Configures additional Markdown effects, such as text fade masks.
+
+### `enable-gif`
+
+```ts
+'enable-gif'?: boolean;
+```
+
+Enables GIF animation support on iOS. Android supports GIF by default. Defaults to `false`.
+
+### `initial-animation-step`
+
+```ts
+'initial-animation-step'?: number;
+```
+
+Specifies the animation start position. Defaults to 0.
+
+### `typewriter-height-transition-duration`
+
+```ts
+'typewriter-height-transition-duration'?: number;
+```
+
+Transition duration for typewriter height changes, in seconds. Defaults to 0.
+
+### `content-id`
+
+```ts
+'content-id'?: string;
+```
+
+Unique identifier for `content`, used in event consumption.
+
+## Events
+
+### `binddrawStart`
+
+```ts
+binddrawStart?: (e: BaseEvent) => void;
+```
+
+Triggered when Markdown starts drawing.
+
+### `binddrawEnd`
+
+```ts
+binddrawEnd?: (e: BaseEvent) => void;
+```
+
+Triggered when Markdown finishes drawing.
+
+### `bindanimationStep`
+
+```ts
+bindanimationStep?: (e: BaseEvent<'bindanimationStep', {
+  animationStep: number;
+  maxAnimationStep: number;
+}>) => void;
+```
+
+Callback after each animation frame.
+
+### `bindoverflow`
+
+```ts
+bindoverflow?: (e: BaseEvent<'bindoverflow', {
+  type: 'ellipsis' | 'clip';
+}>) => void;
+```
+
+Triggered when text overflows.
+
+### `bindlink`
+
+```ts
+bindlink?: (e: BaseEvent<'bindlink', {
+  url: string;
+  content: string;
+}>) => void;
+```
+
+Triggered when a link is tapped.
+
+### `bindselectionchange`
+
+```ts
+bindselectionchange?: (e: BaseEvent<'bindselectionchange', {
+  start: number;
+  end: number;
+}>) => void;
+```
+
+Triggered when the selection range changes.
+
+### `bindimageTap`
+
+```ts
+bindimageTap?: (e: BaseEvent<'bindimageTap', {
+  url: string;
+}>) => void;
+```
+
+Triggered when an image is tapped.
+
+### `bindparseEnd`
+
+```ts
+bindparseEnd?: (e: BaseEvent) => void;
+```
+
+Triggered when Markdown content parsing is complete.
+
+### `bindtextClick`
+
+```ts
+bindtextClick?: (e: BaseEvent<'bindtextClick', {
+  text: string;
+}>) => void;
+```
+
+Triggered when text is tapped.
+
+## Methods
+
+### `pauseAnimation`
+
+Pauses the typewriter animation.
+
+### `resumeAnimation`
+
+Resumes the typewriter animation.
+
+### `getContent`
+
+Gets the currently rendered content.
+
+### `getSelectedText`
+
+Gets the text of the current selection.
+
+### `setTextSelection`
+
+Sets the selection range. Parameters include `startX`, `startY`, `endX`, `endY`, and optional `selectionTextType` (`char` | `word` | `sentence` | `paragraph`).
+
+### `getTextBoundingRect`
+
+Gets the bounding rect of specified text range. Parameters are `start` and `end`, returns a `TextBoundingRect` object.
+
+### `getImages`
+
+Gets information about all images in the Markdown content.
+
+### `getParseResult`
+
+Gets the Markdown parsing result.
+
+## Compatibility
+
+<APITable />
