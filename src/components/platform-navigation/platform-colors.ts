@@ -5,12 +5,12 @@
 // perceived lightness, which is what lets the icons hum at the same volume.
 //
 // Brand mapping:
-//   apple family (ios, macos) → zinc       — Apple system silver/space gray
-//   android                   → emerald    — Android green
-//   harmony                   → rose       — Huawei red (brand cue)
-//   web / web_lynx            → orange     — Lynx-on-web warmth
-//   windows                   → sky        — Microsoft blue
-//   clay umbrella + variants  → cyan       — Clay/Desktop signature
+//   apple family ios and macos -> zinc       Apple system silver/space gray
+//   android                    -> emerald    Android green
+//   harmony                    -> rose       Huawei red, the brand cue
+//   web and web_lynx           -> orange     Lynx-on-web warmth
+//   windows                    -> sky        Microsoft blue
+//   clay umbrella and variants -> cyan       Clay/Desktop signature
 //
 // `clay_<platform>` reuses the underlying-platform icon glyph, so the color
 // is the only thing keeping `ClayAndroidOnly` and `AndroidOnly` visually

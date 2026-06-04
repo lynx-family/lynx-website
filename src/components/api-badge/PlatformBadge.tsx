@@ -24,20 +24,30 @@ function mapPlatformNameToIconName(platform: ExtendedPlatformName) {
 type ExtendedPlatformName = LCD.PlatformName | 'clay';
 
 /**
- * Maps a platform name to its full name.
- *
- * Note: bare `clay` renders as "Desktop" in user-facing badges while the
- * underlying type stays `clay` (component exports, APIStatus, compat tables
- * keep the technical name). Temporary until the desktop branding settles.
+ * Technical, stable platform name. Used to derive the exported component keys
+ * (`ClayOnly`, `NoHarmony`, etc.) so MDX imports stay valid no matter how the
+ * user-facing label moves around.
  */
-function mapPlatformNameToFullName(platform: ExtendedPlatformName) {
+function mapPlatformNameToTechnicalName(platform: ExtendedPlatformName) {
   if (platform === 'clay') {
-    return 'Desktop';
+    return 'Clay';
   }
   if (platform === 'harmony') {
     return 'Harmony';
   }
   return getFullPlatformName(platform);
+}
+
+/**
+ * User-facing label rendered inside the badge. Bare `clay` renders as
+ * "Desktop" while the desktop branding is in flux. APIStatus and compat
+ * tables keep the technical name; this only affects the badge chip.
+ */
+function mapPlatformNameToLabel(platform: ExtendedPlatformName) {
+  if (platform === 'clay') {
+    return 'Desktop';
+  }
+  return mapPlatformNameToTechnicalName(platform);
 }
 
 type BadgeProps = React.ComponentProps<typeof Badge>;
@@ -49,7 +59,7 @@ type PlatformBadgeInnerProps = {
 };
 
 // Maps the semantic `type` to a visual modifier class. The CSS in
-// PlatformBadge.css decides what each modifier looks like — default keeps the
+// PlatformBadge.css decides what each modifier looks like: default keeps the
 // platform color, `--only` emphasizes via a tinted ring, `--no` mutes the
 // platform color and strikes the label so support/non-support don't read as
 // the same chip in different words.
@@ -109,7 +119,7 @@ export function PlatformBadge({
   version,
   type = 'info',
 }: PlatformBadgeProps) {
-  const platformName = mapPlatformNameToFullName(platform);
+  const platformName = mapPlatformNameToLabel(platform);
   const badgeText = version ? `${platformName} ${version}+` : platformName;
 
   return (
@@ -140,7 +150,7 @@ function createPlatformOnlyComponent(platform: ExtendedPlatformName) {
     return (
       <PlatformBadgeInner
         platform={platform}
-        badgeText={mapPlatformNameToFullName(platform)}
+        badgeText={mapPlatformNameToLabel(platform)}
         type="warning"
       />
     );
@@ -157,7 +167,7 @@ function createNoPlatformComponent(platform: ExtendedPlatformName) {
     return (
       <PlatformBadgeInner
         platform={platform}
-        badgeText={`No ${mapPlatformNameToFullName(platform)}`}
+        badgeText={`No ${mapPlatformNameToLabel(platform)}`}
         type="danger"
       />
     );
@@ -168,7 +178,10 @@ function createNoPlatformComponent(platform: ExtendedPlatformName) {
 const generatedComponents: Record<string, React.FC> = {};
 
 for (const platform of platformNames) {
-  const name = mapPlatformNameToFullName(platform)
+  // Component name derivation MUST use the technical name so `ClayOnly` and
+  // `NoClay` exports stay valid even while the user-facing label says
+  // "Desktop". Don't switch this to mapPlatformNameToLabel.
+  const name = mapPlatformNameToTechnicalName(platform)
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join('');
