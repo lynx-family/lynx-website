@@ -87,10 +87,7 @@ function PlatformBadgeInner({
       style={{ display: 'contents' }}
     >
       <Badge type={type}>
-        <PlatformSvg
-          platformName={platform}
-          className="platform-badge__icon bg-current w-[0.9rem] h-[0.9rem]"
-        />
+        <PlatformSvg platformName={platform} className="platform-badge__icon" />
         <span className="platform-badge__label">{badgeText}</span>
       </Badge>
     </span>
