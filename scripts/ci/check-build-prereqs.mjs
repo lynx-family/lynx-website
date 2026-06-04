@@ -10,23 +10,29 @@ const required = [
 const missing = required.filter((p) => !existsSync(p));
 if (missing.length === 0) process.exit(0);
 
-console.warn("Required public assets are missing - the `prepare` lifecycle hook did not run.");
-console.warn("Missing:");
+console.warn(
+  'Required public assets are missing - the `prepare` lifecycle hook did not run.',
+);
+console.warn('Missing:');
 for (const p of missing) console.warn(`  - ${p}`);
-console.warn("This typically means a CI cache hit short-circuited install. Auto-recovering...\n");
+console.warn(
+  'This typically means a CI cache hit short-circuited install. Auto-recovering...\n',
+);
 
 try {
   execSync('pnpm run prepare', { stdio: 'inherit' });
 } catch {
-  console.error("\nAuto-recovery failed: `pnpm run prepare` exited non-zero.");
+  console.error('\nAuto-recovery failed: `pnpm run prepare` exited non-zero.');
   process.exit(1);
 }
 
 const stillMissing = required.filter((p) => !existsSync(p));
 if (stillMissing.length > 0) {
-  console.error("\nRecovery did not restore expected files:");
+  console.error('\nRecovery did not restore expected files:');
   for (const p of stillMissing) console.error(`  - ${p}`);
   process.exit(1);
 }
 
-console.warn("Prepare didn't run pre-build, auto-recovered. Continuing with build.\n");
+console.warn(
+  "Prepare didn't run pre-build, auto-recovered. Continuing with build.\n",
+);
