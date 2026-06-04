@@ -237,7 +237,7 @@ export declare class ButtonModule {
 
 ### 编写 Native API
 
-Autolink 通过 `LynxAutolink*` 注解和标记，为 Lynx 库作者提供公开 API。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
+在原生源码中使用 Lynx 注解和注册宏，Autolink 就能发现库提供的能力。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -248,13 +248,13 @@ Autolink 通过 `LynxAutolink*` 注解和标记，为 Lynx 库作者提供公开
 package com.example.button;
 
 import com.example.button.generated.ButtonModuleSpec;
-import com.lynx.jsbridge.LynxAutolinkNativeModule;
+import com.lynx.jsbridge.LynxNativeModule;
 import com.lynx.jsbridge.LynxMethod;
 import com.lynx.tasm.behavior.LynxContext;
 import java.util.HashMap;
 import java.util.Map;
 
-@LynxAutolinkNativeModule(name = "ButtonModule")
+@LynxNativeModule(name = "ButtonModule")
 public final class ButtonModule extends ButtonModuleSpec {
   private final Map<String, Boolean> enabledState = new HashMap<>();
 
@@ -284,12 +284,12 @@ package com.example.button;
 import android.content.Context;
 import android.view.Gravity;
 import android.widget.TextView;
-import com.lynx.tasm.behavior.LynxAutolinkElement;
+import com.lynx.tasm.behavior.LynxElement;
 import com.lynx.tasm.behavior.LynxContext;
 import com.lynx.tasm.behavior.LynxProp;
 import com.lynx.tasm.behavior.ui.LynxUI;
 
-@LynxAutolinkElement(name = "x-button")
+@LynxElement(name = "x-button")
 public final class ButtonElement extends LynxUI<TextView> {
   public ButtonElement(LynxContext context) {
     super(context);
@@ -317,9 +317,9 @@ package com.example.button;
 
 import android.content.Context;
 import com.lynx.tasm.service.IServiceProvider;
-import com.lynx.tasm.service.LynxAutolinkService;
+import com.lynx.tasm.service.LynxService;
 
-@LynxAutolinkService
+@LynxService
 public final class ButtonService implements IServiceProvider {
   private Context appContext;
 
@@ -353,7 +353,7 @@ public final class ButtonService implements IServiceProvider {
 
 NS_ASSUME_NONNULL_BEGIN
 
-@LynxAutolinkNativeModule("ButtonModule")
+@LynxNativeModuleRegister("ButtonModule")
 @interface ButtonModule : NSObject <ButtonModuleSpec>
 
 @end
@@ -405,7 +405,7 @@ NS_ASSUME_NONNULL_END
 #import "ButtonElement.h"
 #import <Lynx/LynxPropsProcessor.h>
 
-@LynxAutolinkUI("x-button")
+@LynxUIRegister("x-button")
 @implementation ButtonElement
 
 LYNX_PROP_SETTER("text", setText, NSString *) {
@@ -446,7 +446,7 @@ NS_ASSUME_NONNULL_END
 // ButtonService.m
 #import "ButtonService.h"
 
-@LynxAutolinkService(ButtonService, ButtonServiceProtocol)
+@LynxServiceRegister(ButtonService, ButtonServiceProtocol)
 @implementation ButtonService
 
 + (instancetype)sharedInstance {
@@ -468,7 +468,7 @@ NS_ASSUME_NONNULL_END
 </PlatformTabs.Tab>
 </PlatformTabs>
 
-对于已经使用 Lynx 既有原生注册宏的 iOS 包，Autolink 也会继续扫描 `LYNX_LAZY_REGISTER_UI`、`LYNX_LAZY_REGISTER_SHADOW_NODE` 和 `@LynxServiceRegister(...)`，让这些包无需改写原生代码即可被链接进来。
+在 iOS 侧，Autolink 会扫描库源码中的 `@LynxNativeModuleRegister(...)`、`@LynxUIRegister(...)` 和 `@LynxServiceRegister(...)` 声明，并把发现的能力加入生成的 registry。
 
 ### 发布库
 
