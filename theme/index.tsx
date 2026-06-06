@@ -39,6 +39,23 @@ import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
+const SITE_ORIGIN = 'https://lynxjs.org';
+const SITE_BASE = '/next';
+
+const API_SUBSITE_CONFIG = {
+  value: 'api',
+  label: 'API',
+  description: 'API reference',
+  descriptionZh: 'API 参考',
+  home: '/api/',
+  url: '/api/',
+  logo: {
+    light:
+      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
+    dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
+  },
+};
+
 // Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
   const segments = pathname.split('/');
@@ -60,14 +77,62 @@ function Layout({
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
+  const lang = useLang();
+  const { page } = usePageData();
   const subsite = findSubsite(pathname);
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
+  const effectiveLang = lang === 'zh' ? 'zh' : 'en';
+  const pathNoLangNoHtml = pathNoLang
+    .replace(/\/index\.html$/, '/')
+    .replace(/\.html$/, '');
+  const isApiRoute =
+    pathNoLangNoHtml === '/api' || pathNoLangNoHtml.startsWith('/api/');
+  const blogMatch = pathNoLangNoHtml.match(/^\/blog\/([^/]+)$/);
+  const isBlogPost = Boolean(blogMatch);
+  const blogSlug = blogMatch?.[1] ?? '';
+  const ogImagePath = isBlogPost
+    ? `/og/blog/${effectiveLang}/${blogSlug}.png`
+    : isApiRoute
+      ? `/og/covers/${effectiveLang}/api.png`
+      : `/og/covers/${effectiveLang}/${subsite?.value ?? 'guide'}.png`;
+  const ogImageUrl = `${SITE_ORIGIN}${SITE_BASE}${ogImagePath}`;
+  const canonicalUrl = `${SITE_ORIGIN}${SITE_BASE}${normalizedPath}`;
+  const pageTitle = page.title?.trim() || 'Lynx';
+  const ogTitle = page.title ? `${pageTitle} - Lynx` : 'Lynx';
+  const currentSubsiteConfig =
+    (isApiRoute ? API_SUBSITE_CONFIG : subsite) ||
+    SUBSITES_CONFIG.find((s) => s.value === 'guide') ||
+    SUBSITES_CONFIG[0];
+  const fallbackDescription =
+    effectiveLang === 'zh'
+      ? currentSubsiteConfig.descriptionZh
+      : currentSubsiteConfig.description;
+  const rawDescription =
+    typeof page.frontmatter?.description === 'string'
+      ? page.frontmatter.description
+      : fallbackDescription;
+  const ogDescription = rawDescription
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 160);
+  const ogType = isBlogPost ? 'article' : 'website';
 
   return (
     <>
       <Head>
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        <meta property="og:type" content={ogType} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={ogImageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@LynxJS_org" />
+        <meta name="twitter:image" content={ogImageUrl} />
         <htmlAttrs
           data-subsite={subsite ? subsite.value : 'guide'}
           data-scroll-locked={isStatusRoute ? 'true' : null}

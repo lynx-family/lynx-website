@@ -18,25 +18,16 @@ if (!fs.existsSync(OG_DIR)) {
   fs.mkdirSync(OG_DIR, { recursive: true });
 }
 
-// Load font
-// We'll use a fetch to get a font if we don't have one locally easily accessible
-// For now, let's try to find a system font or fetch one.
-// To keep it simple and self-contained, I'll fetch Inter from Google Fonts.
+const FONTSOURCE_INTER_DIR = path.join(
+  process.cwd(),
+  'node_modules',
+  '@fontsource',
+  'inter',
+  'files',
+);
 
-async function fetchFont() {
-  const response = await fetch(
-    'https://github.com/google/fonts/raw/main/ofl/inter/Inter-Bold.ttf',
-  );
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
-}
-
-async function fetchRegularFont() {
-  const response = await fetch(
-    'https://github.com/google/fonts/raw/main/ofl/inter/Inter-Regular.ttf',
-  );
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+async function loadFont(filename: string): Promise<Buffer> {
+  return fs.promises.readFile(path.join(FONTSOURCE_INTER_DIR, filename));
 }
 
 async function generateOgImage(
@@ -216,15 +207,18 @@ async function processDirectory(
 }
 
 async function main() {
-  console.log('Fetching fonts...');
-  const fontData = await fetchFont();
-  const fontRegularData = await fetchRegularFont();
+  console.log('Loading fonts...');
+  const fontData = await loadFont('inter-latin-700-normal.woff');
+  const fontRegularData = await loadFont('inter-latin-400-normal.woff');
 
   console.log('Processing English blog posts...');
-  await processDirectory(BLOG_EN_DIR, 'blog', fontData, fontRegularData);
+  await processDirectory(BLOG_EN_DIR, 'blog/en', fontData, fontRegularData);
 
   console.log('Processing Chinese blog posts...');
-  await processDirectory(BLOG_ZH_DIR, 'zh/blog', fontData, fontRegularData);
+  await processDirectory(BLOG_ZH_DIR, 'blog/zh', fontData, fontRegularData);
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
