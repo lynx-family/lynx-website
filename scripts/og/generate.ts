@@ -49,9 +49,12 @@ type Author = { id: string; name?: string; name_zh?: string };
 let AUTHORS: Author[] = [];
 try {
   AUTHORS = JSON.parse(readFileSync(AUTHORS_JSON, 'utf8'));
-} catch {
+} catch (err) {
   // Bylines are optional; degrade gracefully rather than failing the build.
-  console.warn('[og] authors.json missing or invalid; bylines will be empty');
+  console.warn(
+    '[og] authors.json missing or invalid; bylines will be empty',
+    err,
+  );
 }
 const authorById = new Map(AUTHORS.map((a) => [a.id, a]));
 
