@@ -46,7 +46,13 @@ const AUTHORS_JSON = join(
 const FORCE = process.argv.includes('--force');
 
 type Author = { id: string; name?: string; name_zh?: string };
-const AUTHORS: Author[] = JSON.parse(readFileSync(AUTHORS_JSON, 'utf8'));
+let AUTHORS: Author[] = [];
+try {
+  AUTHORS = JSON.parse(readFileSync(AUTHORS_JSON, 'utf8'));
+} catch {
+  // Bylines are optional; degrade gracefully rather than failing the build.
+  console.warn('[og] authors.json missing or invalid; bylines will be empty');
+}
 const authorById = new Map(AUTHORS.map((a) => [a.id, a]));
 
 let written = 0;
@@ -146,14 +152,19 @@ async function generateBlogLang(lang: 'en' | 'zh') {
     (f) => f.endsWith('.mdx') && f !== 'index.mdx',
   );
   for (const file of files) {
-    const slug = file.replace(/\.mdx$/, '');
-    const { data } = matter(readFileSync(join(dir, file), 'utf8'));
-    const title = String(data.title ?? slug).trim();
-    const byline = buildByline(data, lang);
-    const out = join(OUT_BLOG, lang, `${slug}.png`);
-    await emit(out, { lang, title, byline }, () =>
-      renderPng(blogTemplate({ title, byline }, lang)),
-    );
+    try {
+      const slug = file.replace(/\.mdx$/, '');
+      const { data } = matter(readFileSync(join(dir, file), 'utf8'));
+      const title = String(data.title ?? slug).trim();
+      const byline = buildByline(data, lang);
+      const out = join(OUT_BLOG, lang, `${slug}.png`);
+      await emit(out, { lang, title, byline }, () =>
+        renderPng(blogTemplate({ title, byline }, lang)),
+      );
+    } catch (err) {
+      // Isolate a bad post so it can't block OG generation for the rest.
+      console.warn(`[og] skipping ${lang}/blog/${file}:`, err);
+    }
   }
 }
 

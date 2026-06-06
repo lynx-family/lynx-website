@@ -165,6 +165,18 @@ export type OgSelection =
  * Deterministically select the OG image for a route. Pure: derived only from
  * the path + language so it matches what the generator emits.
  *
+ * A leading `zh` segment is stripped before classifying. Precedence:
+ *   1. blog   — a `blog` segment followed by a slug (the blog index is not a post)
+ *   2. api    — first effective segment is `api`
+ *   3. subsite — first segment matching a cover (react/rspeedy/lynx-ui/ai)
+ *   4. guide  — fallback
+ *
+ * Examples (imagePath via ogBlogPath/ogCoverPath):
+ *   `/blog/lynx-3-5`        → { kind: 'blog', slug: 'lynx-3-5' }
+ *   `/api/hooks/useState`   → { kind: 'cover', value: 'api' }
+ *   `/react/introduction`   → { kind: 'cover', value: 'react' }
+ *   `/zh/guide/...` (zh)    → { kind: 'cover', value: 'guide' }
+ *
  * @param pathnameNoBase  pathname with the site base already removed,
  *                        e.g. `/blog/lynx-3-5.html`, `/zh/api/index.html`,
  *                        `/react/introduction`.

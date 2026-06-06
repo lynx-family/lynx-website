@@ -68,6 +68,7 @@ export default function OgHead() {
   return (
     <Head>
       <link rel="canonical" href={canonical} />
+      <meta property="og:site_name" content={siteData?.title || 'Lynx'} />
       <meta property="og:title" content={title} />
       {description ? (
         <meta property="og:description" content={description} />

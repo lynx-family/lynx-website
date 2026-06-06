@@ -115,6 +115,14 @@ async function main() {
   for (const [value, src] of Object.entries(SOURCES)) {
     const out = join(ASSETS_DIR, `${value}.png`);
     try {
+      const provided = [src.remotePng, src.localSvg, src.remoteSvg].filter(
+        Boolean,
+      );
+      if (provided.length !== 1) {
+        throw new Error(
+          `expected exactly one source (remotePng|localSvg|remoteSvg), got ${provided.length}`,
+        );
+      }
       if (src.remotePng) {
         const png = await fetchBytes(src.remotePng);
         writeFileSync(out, src.native ? png : rasterizePngAsWhite(png));
