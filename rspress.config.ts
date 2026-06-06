@@ -18,7 +18,6 @@ import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
-import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
 const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
@@ -55,19 +54,9 @@ export default defineConfig({
     },
     plugins: [
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
-      pluginOpenGraph({
-        title: 'Lynx',
-        type: 'website',
-        url: PUBLISH_URL,
-        image:
-          'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/og-image.png',
-        description:
-          'Empower the web community and invite more to build cross-platform apps',
-        twitter: {
-          site: '@LynxJS_org',
-          card: 'summary_large_image',
-        },
-      }),
+      // Open Graph / Twitter Card meta is injected per-page by the theme
+      // (theme/OgHead.tsx) so each route gets its build-time OG image and
+      // canonical URL. A global plugin here would emit a duplicate og:image.
       pluginSvgr(),
       pluginSass(),
       pluginLess(),

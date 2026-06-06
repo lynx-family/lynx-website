@@ -37,6 +37,7 @@ import {
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
+import OgHead from './OgHead';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
 // Match subsite by checking if any path segment exactly equals the subsite value
@@ -73,6 +74,7 @@ function Layout({
           data-scroll-locked={isStatusRoute ? 'true' : null}
         />
       </Head>
+      <OgHead />
       <BaseLayout
         {...props}
         afterNavTitle={afterNavTitle}
@@ -267,13 +269,21 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     page.pagePath.startsWith('lynx-ui')
   ) {
     return (
-      <div className="lynx-ui-home-layout-container">
-        <LynxUIHomeLayout />
-      </div>
+      <>
+        <OgHead />
+        <div className="lynx-ui-home-layout-container">
+          <LynxUIHomeLayout />
+        </div>
+      </>
     );
   }
 
-  return <MainHomeLayout {...props} />;
+  return (
+    <>
+      <OgHead />
+      <MainHomeLayout {...props} />
+    </>
+  );
 }
 
 const Search = () => {
