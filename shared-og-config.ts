@@ -12,16 +12,18 @@
  *   - a unique image per blog post:              `/og/blog/<lang>/<slug>.png`
  */
 import { SUBSITES_CONFIG } from './shared-route-config';
+import versionJson from './docs/public/version.json';
 
 /** Published site origin (no trailing slash). OG/canonical URLs are absolute. */
 export const OG_SITE_ORIGIN = 'https://lynxjs.org';
 
 /**
- * Site base path. Mirrors `base: \`/${versionJson.current_version}\`` in
- * rspress.config.ts (currently `/next`). Public asset and canonical URLs are
- * prefixed with this.
+ * Site base path — derived from the same source as rspress.config.ts's
+ * `base: \`/${versionJson.current_version}\``, so canonical/og:image URLs stay
+ * correct if `current_version` changes (currently `/next`). Public asset and
+ * canonical URLs are prefixed with this.
  */
-export const OG_BASE = '/next';
+export const OG_BASE = `/${versionJson.current_version}`;
 
 /**
  * Brand anchors. Values match the home hero gradient in theme/home-layout-var.scss
@@ -150,7 +152,7 @@ export const ogCoverPath = (lang: string, value: string) =>
   `${OG_BASE}/og/covers/${ogLang(lang)}/${value}.png`;
 /** Base-relative blog image URL, e.g. `/next/og/blog/en/lynx-3-5.png`. */
 export const ogBlogPath = (lang: string, slug: string) =>
-  `${OG_BASE}/og/blog/${lang}/${slug}.png`;
+  `${OG_BASE}/og/blog/${ogLang(lang)}/${slug}.png`;
 /** Absolutize a base-relative path against the published origin. */
 export const ogAbsolute = (path: string) => `${OG_SITE_ORIGIN}${path}`;
 
