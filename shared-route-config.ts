@@ -28,6 +28,8 @@ export type SubsiteConfig = {
   badge?: string;
   /** When true, the subsite is shown in the dropdown but interaction is disabled. */
   disabled?: boolean;
+  /** When true, the subsite is registered for routing/OG but hidden from nav UI. */
+  hidden?: boolean;
 };
 
 export const SUBSITES_CONFIG: SubsiteConfig[] = [
@@ -162,6 +164,20 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     logo: {
       light: 'https://tiktok.github.io/sparkling/sparkling_logo_144_light.png',
       dark: 'https://tiktok.github.io/sparkling/sparkling_logo_144.png',
+    },
+  },
+  {
+    value: 'api',
+    label: 'API',
+    description: 'API reference',
+    descriptionZh: 'API 参考',
+    home: '/api/',
+    url: '/api/',
+    hidden: true,
+    logo: {
+      light:
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
+      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
     },
   },
 ];
