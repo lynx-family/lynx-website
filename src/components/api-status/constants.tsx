@@ -4,7 +4,7 @@ import { PlatformSvg } from '@/components/platform-navigation/PlatformIcon';
 
 export interface PlatformConfig {
   label: string;
-  icon: React.FC<{ className?: string }>;
+  icon: React.FC<{ className?: string; style?: React.CSSProperties }>;
   colors: {
     bg: string;
     border: string;
@@ -14,11 +14,14 @@ export interface PlatformConfig {
   };
 }
 
-const makeIcon = (platformName: string): React.FC<{ className?: string }> => {
-  return ({ className }) => (
+const makeIcon = (
+  platformName: string,
+): React.FC<{ className?: string; style?: React.CSSProperties }> => {
+  return ({ className, style }) => (
     <PlatformSvg
       platformName={platformName}
       className={cn('bg-current shrink-0', className)}
+      style={style}
     />
   );
 };

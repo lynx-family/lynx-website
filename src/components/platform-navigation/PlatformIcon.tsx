@@ -49,10 +49,12 @@ export const PlatformSvg = ({
   platformName,
   className,
   key,
+  style,
 }: {
   platformName: PlatformName | string;
   className?: string;
   key?: string;
+  style?: React.CSSProperties;
 }) => {
   const svgUrl = toIconUrl(platformName);
   return (
@@ -62,6 +64,7 @@ export const PlatformSvg = ({
       style={{
         maskImage: `url(${svgUrl})`,
         WebkitMaskImage: `url(${svgUrl})`,
+        ...style,
       }}
     />
   );
