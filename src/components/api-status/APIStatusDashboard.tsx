@@ -345,7 +345,7 @@ export const APIItem: React.FC<APIItemProps> = ({
                   <div
                     key={platform}
                     className={cn(
-                      'inline-flex items-center gap-px px-0.5 py-px rounded text-[9px] [--icon-size:0.5rem]',
+                      'inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] [--icon-size:0.625rem]',
                       isSupported
                         ? 'bg-status-supported/20 text-status-supported-strong'
                         : 'bg-status-unsupported/20 text-status-unsupported-strong',
@@ -355,7 +355,7 @@ export const APIItem: React.FC<APIItemProps> = ({
                     {Icon && <Icon />}
                     <span
                       className={cn(
-                        'inline-block w-1 h-1 rounded-full',
+                        'inline-block w-1.5 h-1.5 rounded-full',
                         isSupported
                           ? 'bg-status-supported'
                           : 'bg-status-unsupported',
