@@ -1,24 +1,56 @@
 import React, { useState } from 'react';
+import { useLang } from '@rspress/core/runtime';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../ui/sidebar';
 import { TooltipProvider } from '../ui/tooltip';
 import { APIStatusSidebar, type PageType } from './APIStatusSidebar';
+import { PLATFORM_CONFIG } from './constants';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { CoveragePage } from './pages/CoveragePage';
 import { RecentPage } from './pages/RecentPage';
 import { SearchPage } from './pages/SearchPage';
 import type { APIStats, DisplayPlatformName } from './types';
+import './APIStatusLayout.scss';
 
 // Import the generated stats
 import apiStats from '@lynx-js/lynx-compat-data/api-stats.json';
 
 const stats = apiStats as APIStats;
 
-// Page titles for header
-const PAGE_TITLES: Record<PageType, { en: string; zh: string }> = {
-  search: { en: 'Search APIs', zh: '搜索 API' },
-  coverage: { en: 'Platform Coverage', zh: '平台覆盖率' },
-  categories: { en: 'API Categories', zh: 'API 分类' },
-  recent: { en: 'Recently Added', zh: '最近添加' },
+// Per-page header copy. Each page gets a short subtitle that explains what
+// the user is looking at — keeps the title bar load-bearing rather than
+// decorative.
+const PAGE_META: Record<
+  PageType,
+  { title: { en: string; zh: string }; sub: { en: string; zh: string } }
+> = {
+  search: {
+    title: { en: 'Search APIs', zh: '搜索 API' },
+    sub: {
+      en: 'Filter by name, category, or support state.',
+      zh: '按名称、分类或支持状态过滤。',
+    },
+  },
+  coverage: {
+    title: { en: 'Coverage trend', zh: '覆盖率趋势' },
+    sub: {
+      en: 'Per-platform parity and version-by-version progression.',
+      zh: '按平台的覆盖率与版本演进。',
+    },
+  },
+  categories: {
+    title: { en: 'Categories', zh: '分类' },
+    sub: {
+      en: 'API surface area grouped by feature category.',
+      zh: '按功能分类的 API 表面。',
+    },
+  },
+  recent: {
+    title: { en: 'Recently added', zh: '最近添加' },
+    sub: {
+      en: 'Latest APIs landed per platform, grouped by version.',
+      zh: '各平台最新发布的 API，按版本分组。',
+    },
+  },
 };
 
 export const APIStatusLayout: React.FC = () => {
@@ -34,8 +66,9 @@ export const APIStatusLayout: React.FC = () => {
 
   // Page navigation state
   const [activePage, setActivePage] = useState<PageType>('search');
+  const lang = useLang();
+  const t = lang === 'zh' ? 'zh' : 'en';
 
-  // Render the active page content
   const renderPage = () => {
     switch (activePage) {
       case 'search':
@@ -61,6 +94,25 @@ export const APIStatusLayout: React.FC = () => {
     }
   };
 
+  const meta = PAGE_META[activePage];
+  const updatedDate = stats.generated_at
+    ? new Date(stats.generated_at).toLocaleDateString(
+        t === 'zh' ? 'zh-CN' : 'en-US',
+        { month: 'short', day: 'numeric', year: 'numeric' },
+      )
+    : undefined;
+
+  // The header's right-side meta strip shows which platforms drive the
+  // current view + their share of the total API surface. Reads as a quick
+  // "what am I looking at" line without forcing the user back to the rail.
+  const surfaceCount = selectedPlatforms.length;
+  // Total native surfaces in the dataset (= dataset size of selectable
+  // platforms minus the clay aggregate, since that's a roll-up not its own
+  // surface). Kept defensively in case the schema gains new ones.
+  const totalSurfaces = Object.keys(stats.summary.by_platform).filter(
+    (p) => p !== 'clay',
+  ).length;
+
   return (
     <TooltipProvider>
       <SidebarProvider
@@ -77,17 +129,43 @@ export const APIStatusLayout: React.FC = () => {
           onPageChange={setActivePage}
         />
         <SidebarInset className="overflow-hidden min-h-0">
-          {/* Header with sidebar trigger */}
-          <header className="flex gap-2 items-center px-4 h-14 border-b shrink-0">
-            <SidebarTrigger className="-ml-1" />
-            <div className="w-px h-4 bg-border" />
-            <h1 className="text-sm font-semibold">
-              {PAGE_TITLES[activePage]?.en || 'API Status'}
-            </h1>
+          {/* Header — title bar with brand-stem accent + meta strip. The
+              left block holds the trigger, page title, and short subtitle;
+              the right block surfaces the dataset stats so the user always
+              knows the scale of what they're filtering against. */}
+          <header className="aps-header">
+            <SidebarTrigger className="aps-header__trigger" />
+            <div className="aps-header__title-block">
+              <div className="aps-header__title-row">
+                <h1 className="aps-header__title">{meta.title[t]}</h1>
+                <span className="aps-header__brand-stem" aria-hidden />
+              </div>
+              <p className="aps-header__sub">{meta.sub[t]}</p>
+            </div>
+            {/* Single quiet meta line — no mono-uppercase double-cell stat
+                strip (that would be a mini hero-metric pattern). Body weight,
+                muted color, dots between fragments for rhythm. */}
+            <p className="aps-header__meta-line">
+              {updatedDate && (
+                <>
+                  <span>
+                    {t === 'zh' ? '更新于' : 'Updated'} {updatedDate}
+                  </span>
+                  <span className="aps-header__meta-sep" aria-hidden>
+                    ·
+                  </span>
+                </>
+              )}
+              <span>
+                {t === 'zh'
+                  ? `${surfaceCount} / ${totalSurfaces} 平台`
+                  : `${surfaceCount} of ${totalSurfaces} platforms`}
+              </span>
+            </p>
           </header>
 
           {/* Page content */}
-          <main className="overflow-auto flex-1 p-4">{renderPage()}</main>
+          <main className="aps-main">{renderPage()}</main>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

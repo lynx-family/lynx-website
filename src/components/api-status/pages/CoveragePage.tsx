@@ -1,40 +1,44 @@
-import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Progress } from '../../ui/progress';
 import { PLATFORM_CONFIG } from '../constants';
 import type { APIStats, DisplayPlatformName, TimelinePoint } from '../types';
 
 const i18n = {
   en: {
-    coverage: 'Coverage',
-    trend: 'Coverage Trend',
-    supported: 'Supported',
-    total: 'Total APIs',
-    exclusive: 'exclusive',
-    shared: 'shared',
+    exclusive: 'EXCL',
+    parityLegend: 'Coverage by platform across the Lynx Platform API surface.',
+    trendLegend: 'Coverage progression across released versions.',
   },
   zh: {
-    coverage: '覆盖率',
-    trend: '覆盖率趋势',
-    supported: '已支持',
-    total: '总 API 数',
     exclusive: '独占',
-    shared: '共有',
+    parityLegend: 'Lynx Platform API 表面下各平台的覆盖率。',
+    trendLegend: '各发布版本中的覆盖率演进。',
   },
 };
 
-// Platform icon
-const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
-  platform,
-  className,
-}) => {
+const PlatformIcon: React.FC<{
+  platform: string;
+  className?: string;
+  style?: React.CSSProperties;
+}> = ({ platform, className, style }) => {
   const Icon = PLATFORM_CONFIG[platform]?.icon;
-  return Icon ? <Icon className={className} /> : null;
+  return Icon ? <Icon className={className} style={style} /> : null;
 };
 
-// Trend Chart
+const platformVars = (platform: string): React.CSSProperties => {
+  const line =
+    PLATFORM_CONFIG[platform]?.colors.line ||
+    PLATFORM_CONFIG.android.colors.line;
+  return { ['--platform' as any]: line };
+};
+
+// ─── Trend chart ─────────────────────────────────────────────────────────
+//
+// Fills its plate full-width via a wide viewBox (1200×320) — preserveAspectRatio
+// scales it down on narrow viewports without distorting strokes. Each platform
+// line gets a sub-pixel Y offset (index * 1) so identical values don't render
+// as a single line — the user always sees every selected platform.
+
 interface ParityChartProps {
   timeline: TimelinePoint[];
   selectedPlatforms: DisplayPlatformName[];
@@ -48,21 +52,30 @@ const ParityChart: React.FC<ParityChartProps> = ({
 
   if (!timeline || timeline.length < 2) return null;
 
-  const w = 500;
-  const h = 180;
-  const padX = 40;
-  const padY = 24;
+  const w = 1200;
+  const h = 320;
+  const padX = 56;
+  // Extra room on the right for end-of-line platform labels (up to ~110
+  // viewBox units of text — "HarmonyOS" is the worst case).
+  const padRight = 130;
+  const padTop = 28;
+  const padBottom = 36;
 
-  // Generate points for each platform
-  const platformPoints = selectedPlatforms.map((platform) => {
+  // Y offset per platform separates overlapping lines so each selected
+  // platform is always visible. Centered around 0 so the visual mean
+  // tracks the data, not the rendering order.
+  const platformPoints = selectedPlatforms.map((platform, idx) => {
+    const offset = (idx - (selectedPlatforms.length - 1) / 2) * 3.5;
     return {
       platform,
       points: timeline.map((t, i) => ({
-        x: padX + (i * (w - padX * 2)) / Math.max(1, timeline.length - 1),
+        x:
+          padX + (i * (w - padX - padRight)) / Math.max(1, timeline.length - 1),
         y:
-          padY +
+          padTop +
           (1 - Math.min(1, (t.platforms[platform]?.coverage ?? 0) / 100)) *
-            (h - padY * 2),
+            (h - padTop - padBottom) +
+          offset,
         version: t.version,
         coverage: t.platforms[platform]?.coverage ?? 0,
       })),
@@ -77,40 +90,39 @@ const ParityChart: React.FC<ParityChartProps> = ({
         }))
       : null;
 
-  const lastPoints = platformPoints.map((p) => ({
-    platform: p.platform,
-    point: p.points[p.points.length - 1],
-  }));
-
   return (
     <div className="relative">
       <svg
-        className="w-full h-[180px]"
+        className="w-full"
+        style={{ display: 'block', height: 'min(40vh, 360px)' }}
         viewBox={`0 0 ${w} ${h}`}
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
         onMouseLeave={() => setHoveredIndex(null)}
       >
-        {/* Grid */}
+        {/* Horizontal grid */}
         {[0, 25, 50, 75, 100].map((v) => {
-          const y = padY + (1 - v / 100) * (h - padY * 2);
+          const y = padTop + (1 - v / 100) * (h - padTop - padBottom);
           return (
             <g key={v}>
               <line
                 x1={padX}
                 y1={y}
-                x2={w - padX}
+                x2={w - padRight}
                 y2={y}
                 stroke="currentColor"
-                strokeOpacity="0.08"
+                strokeOpacity={v === 100 || v === 0 ? 0.18 : 0.08}
                 strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+                strokeDasharray={v === 50 ? '0' : v % 50 === 0 ? '0' : '3 4'}
               />
               <text
-                x={padX - 6}
-                y={y + 3}
-                fontSize="10"
+                x={padX - 10}
+                y={y + 4}
+                fontSize="12"
                 fill="currentColor"
                 fillOpacity="0.4"
                 textAnchor="end"
+                style={{ vectorEffect: 'non-scaling-stroke' }}
               >
                 {v}%
               </text>
@@ -118,7 +130,7 @@ const ParityChart: React.FC<ParityChartProps> = ({
           );
         })}
 
-        {/* Lines */}
+        {/* Per-platform line + interactive points */}
         {platformPoints.map(({ platform, points }) => {
           const polyline = points
             .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
@@ -129,7 +141,6 @@ const ParityChart: React.FC<ParityChartProps> = ({
 
           return (
             <React.Fragment key={platform}>
-              {/* Line */}
               <polyline
                 points={polyline}
                 fill="none"
@@ -137,27 +148,41 @@ const ParityChart: React.FC<ParityChartProps> = ({
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                opacity={0.8}
+                opacity={0.9}
+                vectorEffect="non-scaling-stroke"
               />
-              {/* Interactive points */}
               {points.map((p, i) => (
                 <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r="16"
+                    r="18"
                     fill="transparent"
                     className="cursor-pointer"
                   />
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r={hoveredIndex === i ? 6 : 4}
+                    r={hoveredIndex === i ? 6 : 3.5}
                     fill={colors.line}
                     className="transition-all"
+                    style={{ vectorEffect: 'non-scaling-stroke' }}
                   />
                 </g>
               ))}
+              {/* End-of-line label — quiet platform tag right of the last
+                  point so each line is identifiable without a separate
+                  legend. */}
+              <text
+                x={points[points.length - 1].x + 10}
+                y={points[points.length - 1].y + 4}
+                fontSize="13"
+                fontWeight="600"
+                fill={colors.line}
+                style={{ vectorEffect: 'non-scaling-stroke' }}
+              >
+                {PLATFORM_CONFIG[platform]?.label || platform}
+              </text>
             </React.Fragment>
           );
         })}
@@ -165,57 +190,61 @@ const ParityChart: React.FC<ParityChartProps> = ({
         {/* X axis labels */}
         <text
           x={padX}
-          y={h - 6}
-          fontSize="10"
+          y={h - 10}
+          fontSize="12"
           fill="currentColor"
-          fillOpacity="0.5"
+          fillOpacity="0.55"
         >
-          {timeline[0].version}
+          v{timeline[0].version}
         </text>
         <text
-          x={w - padX}
-          y={h - 6}
-          fontSize="10"
+          x={w - padRight}
+          y={h - 10}
+          fontSize="12"
           fill="currentColor"
-          fillOpacity="0.5"
+          fillOpacity="0.55"
           textAnchor="end"
         >
-          {timeline[timeline.length - 1].version}
+          v{timeline[timeline.length - 1].version}
         </text>
       </svg>
 
-      {/* Hover tooltip */}
       {hovered && (
         <div
           className="absolute bg-popover border rounded-md px-2.5 py-1.5 text-xs shadow-lg pointer-events-none z-10"
           style={{
-            left: hovered[0].point.x,
-            top: 0, // Top of chart area
+            left: `${(hovered[0].point.x / w) * 100}%`,
+            top: 0,
             transform: 'translateX(-50%)',
           }}
         >
           <div className="font-mono text-[10px] text-muted-foreground mb-1 border-b pb-1">
             v{hovered[0].point.version}
           </div>
-          {hovered.map(({ platform, point }) => (
-            <div key={platform} className="flex items-center gap-2">
-              <div
-                className={cn(
-                  'w-1.5 h-1.5 rounded-full',
-                  PLATFORM_CONFIG[platform]?.colors.bg,
-                )}
-              />
-              <span>{PLATFORM_CONFIG[platform]?.label || platform}</span>
-              <span className="font-mono font-semibold ml-auto">
-                {point.coverage}%
-              </span>
-            </div>
-          ))}
+          {hovered.map(({ platform, point }) => {
+            const colors =
+              PLATFORM_CONFIG[platform]?.colors ||
+              PLATFORM_CONFIG.web_lynx.colors;
+            return (
+              <div key={platform} className="flex items-center gap-2">
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: colors.line }}
+                />
+                <span>{PLATFORM_CONFIG[platform]?.label || platform}</span>
+                <span className="font-mono font-semibold ml-auto">
+                  {point.coverage}%
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 };
+
+// ─── Page ────────────────────────────────────────────────────────────────
 
 interface CoveragePageProps {
   stats: APIStats;
@@ -228,122 +257,116 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
 }) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
-
   const { summary, timeline } = stats;
 
   return (
-    <div className="space-y-6">
-      {/* Platform Coverage Cards - Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {selectedPlatforms.map((platform) => {
-          const platformStats = summary.by_platform[platform];
-          const colors =
-            PLATFORM_CONFIG[platform]?.colors ||
-            PLATFORM_CONFIG.web_lynx.colors;
-
-          return (
-            <Card
-              key={platform}
-              className={cn('transition-all', colors.bg, colors.border)}
-            >
-              <CardContent className="p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <PlatformIcon
-                    platform={platform}
-                    className={cn('w-4 h-4', colors.text)}
-                  />
-                  <span className={cn('text-sm font-medium', colors.text)}>
-                    {PLATFORM_CONFIG[platform]?.label || platform}
-                  </span>
-                </div>
-
-                <div>
-                  <div
-                    className={cn(
-                      'text-3xl font-bold font-mono leading-none mb-2',
-                      colors.text,
-                    )}
-                  >
-                    {platformStats?.coverage_percent}%
-                  </div>
-                  <Progress
-                    value={platformStats?.coverage_percent || 0}
-                    className="h-1.5 bg-black/5 dark:bg-white/10"
-                    indicatorClassName={colors.progress}
-                  />
-                  <div className="mt-1.5 text-[10px] font-mono opacity-70 flex justify-between">
-                    <span>
-                      {platformStats?.supported_count.toLocaleString()} /{' '}
-                      {summary.platform_api_total.toLocaleString()} {t.shared}
+    <div className="flex flex-col gap-4">
+      {/* Parity strip — one row per platform, full-width bar dominant.
+          Replaces the previous stat-card grid (which was the hero-metric
+          trope). Reads as a ranked list, not a card array. */}
+      <div className="aps-plate">
+        <div className="aps-plate__head">
+          <p
+            style={{
+              margin: 0,
+              fontSize: 12,
+              color: 'var(--rp-c-text-3, #8e8e98)',
+              letterSpacing: 0,
+              lineHeight: 1.4,
+            }}
+          >
+            {t.parityLegend}
+          </p>
+        </div>
+        <div className="aps-plate__body" style={{ padding: '4px 16px' }}>
+          <div className="aps-parity-list">
+            {selectedPlatforms.map((platform) => {
+              const ps = summary.by_platform[platform];
+              if (!ps) return null;
+              return (
+                <div
+                  key={platform}
+                  className="aps-parity-row"
+                  style={platformVars(platform)}
+                >
+                  <div className="aps-parity-row__id">
+                    <PlatformIcon
+                      platform={platform}
+                      className="aps-parity-row__icon"
+                    />
+                    <span className="aps-parity-row__label">
+                      {PLATFORM_CONFIG[platform]?.label || platform}
                     </span>
-                    {(platformStats?.exclusive_count ?? 0) > 0 && (
-                      <span className="opacity-60">
-                        +{platformStats?.exclusive_count} {t.exclusive}
+                  </div>
+                  <div className="aps-parity-row__bar">
+                    {/* Quiet 25/50/75% tick marks for quantitative reference */}
+                    <span
+                      className="aps-parity-row__bar-tick"
+                      style={{ left: '25%' }}
+                    />
+                    <span
+                      className="aps-parity-row__bar-tick"
+                      style={{ left: '50%' }}
+                    />
+                    <span
+                      className="aps-parity-row__bar-tick"
+                      style={{ left: '75%' }}
+                    />
+                    <span
+                      className="aps-parity-row__bar-fill"
+                      style={{
+                        ['--pct' as any]: `${ps.coverage_percent}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="aps-parity-row__numbers">
+                    <span className="aps-parity-row__pct">
+                      {ps.coverage_percent}%
+                    </span>
+                    <span className="aps-parity-row__counts">
+                      {ps.supported_count.toLocaleString()}
+                      <span style={{ opacity: 0.55 }}>
+                        {' / '}
+                        {summary.platform_api_total.toLocaleString()}
                       </span>
-                    )}
+                      {(ps.exclusive_count ?? 0) > 0 && (
+                        <span className="aps-parity-row__exclusive">
+                          +{ps.exclusive_count} {t.exclusive}
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Trend Chart */}
+      {/* Trend chart — full-bleed inside the plate. End-of-line labels
+          identify each platform without needing a separate legend strip. */}
       {timeline && timeline.length >= 2 && (
-        <Card>
-          <CardHeader className="py-2 px-4">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <svg
-                className="w-4 h-4 text-primary"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline
-                  points="22 7 13.5 15.5 8.5 10.5 2 17"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <polyline
-                  points="16 7 22 7 22 13"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {t.trend}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 px-2 pb-2">
+        <div className="aps-plate">
+          <div className="aps-plate__head">
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                color: 'var(--rp-c-text-3, #8e8e98)',
+                letterSpacing: 0,
+                lineHeight: 1.4,
+              }}
+            >
+              {t.trendLegend}
+            </p>
+          </div>
+          <div className="aps-plate__body" style={{ padding: '8px 8px 4px' }}>
             <ParityChart
               timeline={timeline}
               selectedPlatforms={selectedPlatforms}
             />
-            {/* Bottom figures - Platform Legend */}
-            <div className="flex flex-wrap justify-center gap-4 mt-2">
-              {selectedPlatforms.map((platform) => {
-                const ps = summary.by_platform[platform];
-                const colors =
-                  PLATFORM_CONFIG[platform]?.colors ||
-                  PLATFORM_CONFIG.web_lynx.colors;
-                return (
-                  <div key={platform} className="flex items-center gap-1.5">
-                    <div
-                      className={cn('w-2 h-2 rounded-full', colors.progress)}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {PLATFORM_CONFIG[platform]?.label || platform}
-                    </span>
-                    <span className="text-xs font-mono font-bold">
-                      {ps?.coverage_percent}%
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

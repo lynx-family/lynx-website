@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
 import React, { useMemo, useState } from 'react';
-import { Input } from '../../ui/input';
 import {
   Select,
   SelectContent,
@@ -15,7 +14,7 @@ import { CATEGORY_DISPLAY_NAMES } from '../types';
 
 const i18n = {
   en: {
-    searchPlaceholder: 'Search APIs...',
+    searchPlaceholder: 'Search APIs by name or path…',
     category: 'Category',
     state: 'State',
     all: 'All',
@@ -26,11 +25,11 @@ const i18n = {
     matches: 'results',
     apiList: 'API List',
     noResults: 'No APIs match the current filters',
-    showAll: 'Show All',
-    showLess: 'Show Less',
+    showAll: 'Show all',
+    showLess: 'Show less',
   },
   zh: {
-    searchPlaceholder: '搜索 API...',
+    searchPlaceholder: '按名称或路径搜索 API…',
     category: '分类',
     state: '状态',
     all: '全部',
@@ -53,9 +52,11 @@ const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="m21 21-4.35-4.35" />
   </svg>
 );
 
@@ -81,7 +82,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   const { categories, features } = stats;
   const categoryOptions = ['all', ...Object.keys(categories)];
 
-  // Unified filtering for all API displays
   const filteredFeatures = useMemo(() => {
     if (!features) return [];
     const q = searchQuery.trim().toLowerCase();
@@ -95,7 +95,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       )
         return false;
       if (stateFilter !== 'all') {
-        // Check support across all selected platforms
         const supportedCount = selectedPlatforms.filter((p) => {
           const s = f.support[p];
           return (
@@ -113,78 +112,72 @@ export const SearchPage: React.FC<SearchPageProps> = ({
     });
   }, [features, searchQuery, categoryFilter, stateFilter, selectedPlatforms]);
 
-  // Show up to 100 features by default, or all if user requests
   const shownFeatures = showAllResults
     ? filteredFeatures
     : filteredFeatures.slice(0, 100);
   const hasMoreResults = filteredFeatures.length > 100;
 
   return (
-    <div className="space-y-4">
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1 min-w-0">
-          <SearchIcon className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input
-            className="pl-8 h-9 text-sm font-mono"
+    <div className="flex flex-col gap-4">
+      {/* Search bar — input + filter dropdowns wrapped in a single plate
+          so they read as one surface. The plate picks up a brand-tinted
+          focus ring when the user is typing. */}
+      <div className="aps-search-bar">
+        <div className="aps-search-input-wrap">
+          <SearchIcon className="aps-search-input-icon" />
+          <input
+            className="aps-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchPlaceholder}
           />
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="flex-1 sm:flex-none sm:w-[140px]">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder={t.category} />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryOptions.map((c) => (
-                  <SelectItem key={c} value={c} className="text-xs">
-                    {c === 'all' ? t.all : CATEGORY_DISPLAY_NAMES[c] || c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-1 sm:flex-none sm:w-[120px]">
-            <Select
-              value={stateFilter}
-              onValueChange={(v) => setStateFilter(v as any)}
-            >
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder={t.state} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">
-                  {t.all}
+        <div className="flex items-center gap-2 shrink-0">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="h-8 text-xs w-[140px] border-transparent bg-transparent hover:bg-[color-mix(in_srgb,currentColor_6%,transparent)]">
+              <SelectValue placeholder={t.category} />
+            </SelectTrigger>
+            <SelectContent>
+              {categoryOptions.map((c) => (
+                <SelectItem key={c} value={c} className="text-xs">
+                  {c === 'all' ? t.all : CATEGORY_DISPLAY_NAMES[c] || c}
                 </SelectItem>
-                <SelectItem value="supported" className="text-xs">
-                  {t.supported}
-                </SelectItem>
-                <SelectItem value="unsupported" className="text-xs">
-                  {t.unsupported}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={stateFilter}
+            onValueChange={(v) => setStateFilter(v as any)}
+          >
+            <SelectTrigger className="h-8 text-xs w-[120px] border-transparent bg-transparent hover:bg-[color-mix(in_srgb,currentColor_6%,transparent)]">
+              <SelectValue placeholder={t.state} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">
+                {t.all}
+              </SelectItem>
+              <SelectItem value="supported" className="text-xs">
+                {t.supported}
+              </SelectItem>
+              <SelectItem value="unsupported" className="text-xs">
+                {t.unsupported}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Results Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">
-          {t.apiList}
-        </span>
+      {/* Results meta — quiet line above the grid */}
+      <div className="aps-results-meta">
+        <span>{t.apiList}</span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {t.showing} {shownFeatures.length} {t.of} {filteredFeatures.length}{' '}
-            {t.matches}
+          <span className="aps-results-meta__count">
+            {shownFeatures.length} / {filteredFeatures.length} {t.matches}
           </span>
           {hasMoreResults && (
             <button
               onClick={() => setShowAllResults(!showAllResults)}
-              className="text-xs text-primary hover:underline font-medium"
+              className="aps-results-meta__action"
             >
               {showAllResults ? t.showLess : t.showAll}
             </button>
@@ -192,15 +185,12 @@ export const SearchPage: React.FC<SearchPageProps> = ({
         </div>
       </div>
 
-      {/* API Grid */}
       {shownFeatures.length === 0 ? (
-        <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
-          {t.noResults}
-        </div>
+        <div className="aps-empty">{t.noResults}</div>
       ) : (
         <div
           className={cn(
-            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5 pr-1',
+            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5',
           )}
         >
           {shownFeatures.map((f) => (

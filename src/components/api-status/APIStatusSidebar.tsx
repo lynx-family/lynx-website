@@ -5,13 +5,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
   useSidebar,
 } from '../ui/sidebar';
@@ -22,20 +16,12 @@ import {
   type APIStats,
   type DisplayPlatformName,
 } from './types';
+import './APIStatusSidebar.scss';
 
-// Platform icons
-const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({
-  platform,
-  className,
-}) => {
-  const Icon = PLATFORM_CONFIG[platform]?.icon;
-  return Icon ? <Icon className={className} /> : null;
-};
+// ─── Local icon set ──────────────────────────────────────────────────────
+// Stroke icons used for the page nav rail and footer. Kept lightweight —
+// matching the 1.75px stroke vocabulary the rest of the docs sidebar uses.
 
-// Page types
-export type PageType = 'search' | 'coverage' | 'categories' | 'recent';
-
-// Page icons
 const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     className={className}
@@ -43,9 +29,11 @@ const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="m21 21-4.35-4.35" />
   </svg>
 );
 
@@ -56,17 +44,11 @@ const TrendingUpIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
-    <polyline
-      points="22 7 13.5 15.5 8.5 10.5 2 17"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <polyline
-      points="16 7 22 7 22 13"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+    <polyline points="16 7 22 7 22 13" />
   </svg>
 );
 
@@ -77,6 +59,8 @@ const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
     <path d="m22 12.5-8.97 4.08a2 2 0 0 1-1.66 0L2.4 12.5" />
@@ -90,22 +74,27 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
   </svg>
 );
 
-interface APIStatusSidebarProps {
-  stats: APIStats;
-  selectedPlatforms: DisplayPlatformName[];
-  onPlatformsChange: (platforms: DisplayPlatformName[]) => void;
-  showClayDetails: boolean;
-  onShowClayDetailsChange: (show: boolean) => void;
-  activePage: PageType;
-  onPageChange: (page: PageType) => void;
-}
+const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.25"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
 
-// Help icon
 const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     className={className}
@@ -113,10 +102,12 @@ const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <circle cx="12" cy="12" r="10" />
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
-    <path d="M12 17h.01" strokeLinecap="round" />
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    <path d="M12 17h.01" />
   </svg>
 );
 
@@ -127,11 +118,74 @@ const EyeIcon: React.FC<{ className?: string }> = ({ className }) => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
+
+// ─── Page model ──────────────────────────────────────────────────────────
+export type PageType = 'search' | 'coverage' | 'categories' | 'recent';
+
+interface PageConfig {
+  id: PageType;
+  label: { en: string; zh: string };
+  icon: React.FC<{ className?: string }>;
+}
+
+const PAGES: PageConfig[] = [
+  {
+    id: 'search',
+    label: { en: 'Search APIs', zh: '搜索 API' },
+    icon: SearchIcon,
+  },
+  {
+    id: 'categories',
+    label: { en: 'Categories', zh: '分类' },
+    icon: LayersIcon,
+  },
+  {
+    id: 'coverage',
+    label: { en: 'Coverage trend', zh: '覆盖率趋势' },
+    icon: TrendingUpIcon,
+  },
+  {
+    id: 'recent',
+    label: { en: 'Recently added', zh: '最近添加' },
+    icon: SparklesIcon,
+  },
+];
+
+// ─── Platform icon (bg-mask via PLATFORM_CONFIG icon component) ──────────
+const PlatformIcon: React.FC<{
+  platform: string;
+  className?: string;
+  style?: React.CSSProperties;
+}> = ({ platform, className, style }) => {
+  const Icon = PLATFORM_CONFIG[platform]?.icon;
+  return Icon ? <Icon className={className} style={style} /> : null;
+};
+
+// Each cell carries its own brand color through the `--platform` CSS var,
+// so the active wash, border, glow, and % all track from one source.
+const platformVars = (platform: string): React.CSSProperties => {
+  const line =
+    PLATFORM_CONFIG[platform]?.colors.line ||
+    PLATFORM_CONFIG.android.colors.line;
+  return { ['--platform' as any]: line };
+};
+
+interface APIStatusSidebarProps {
+  stats: APIStats;
+  selectedPlatforms: DisplayPlatformName[];
+  onPlatformsChange: (platforms: DisplayPlatformName[]) => void;
+  showClayDetails: boolean;
+  onShowClayDetailsChange: (show: boolean) => void;
+  activePage: PageType;
+  onPageChange: (page: PageType) => void;
+}
 
 export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   stats,
@@ -146,10 +200,10 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   const lang = useLang();
   const isCollapsed = state === 'collapsed';
 
-  // Colorblind mode state
+  // Colorblind mode flips a class on <html> so the existing color-blind
+  // palette (defined elsewhere) takes over. Kept identical to the previous
+  // sidebar's behavior.
   const [isColorblindMode, setIsColorblindMode] = React.useState(false);
-
-  // Toggle colorblind mode class on document root
   React.useEffect(() => {
     if (isColorblindMode) {
       document.documentElement.classList.add('colorblind-mode');
@@ -158,7 +212,8 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     }
   }, [isColorblindMode]);
 
-  // Toggle platform selection
+  // Toggle selection. Keep at least one platform on so the dashboard has
+  // something to render — clearing the last item is a no-op.
   const togglePlatform = (platform: DisplayPlatformName) => {
     if (selectedPlatforms.includes(platform)) {
       if (selectedPlatforms.length > 1) {
@@ -169,10 +224,11 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     }
   };
 
-  // Toggle between Clay aggregate and Clay detail view
+  // Clay aggregate ↔ Clay 4-detail toggle. Same migration logic as before:
+  // swap the aggregate id for the four sub-platform ids (or vice versa) so
+  // the user's selection survives the view change.
   const toggleClayDetails = () => {
     if (!showClayDetails) {
-      // Switching to details: replace aggregate 'clay' with 4 sub-platforms
       const hasClayAggregate = selectedPlatforms.includes('clay');
       const withoutClay = selectedPlatforms.filter((p) => p !== 'clay');
       onPlatformsChange(
@@ -183,7 +239,6 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
             : ['web_lynx'],
       );
     } else {
-      // Switching to aggregate: replace any Clay sub-platforms with aggregate 'clay'
       const hasAnyClayDetail = selectedPlatforms.some((p) =>
         CLAY_PLATFORMS.includes(p as any),
       );
@@ -201,27 +256,16 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
     onShowClayDetailsChange(!showClayDetails);
   };
 
-  // Select all visible platforms
   const selectAll = () => {
     const allVisible: DisplayPlatformName[] = showClayDetails
       ? [...NATIVE_PLATFORMS, ...CLAY_PLATFORMS]
       : [...NATIVE_PLATFORMS, 'clay'];
     onPlatformsChange(allVisible.filter((p) => stats.summary.by_platform[p]));
   };
-
-  // Clear to just the first platform
   const clearSelection = () => {
     onPlatformsChange([NATIVE_PLATFORMS[0]]);
   };
 
-  // Get first selected platform for header display
-  const firstSelectedPlatform = selectedPlatforms[0] || 'android';
-  const currentPlatformStats = stats.summary.by_platform[firstSelectedPlatform];
-  const currentPlatformColors =
-    PLATFORM_CONFIG[firstSelectedPlatform]?.colors ||
-    PLATFORM_CONFIG.android.colors;
-
-  // Format date
   const updatedDate = stats.generated_at
     ? new Date(stats.generated_at).toLocaleDateString(
         lang === 'zh' ? 'zh-CN' : 'en-US',
@@ -229,377 +273,269 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
       )
     : undefined;
 
-  const pages: {
-    id: PageType;
-    label: string;
-    icon: React.FC<{ className?: string }>;
-  }[] = [
-    { id: 'search', label: 'Search', icon: SearchIcon },
-    { id: 'categories', label: 'Categories', icon: LayersIcon },
-    { id: 'coverage', label: 'Trend', icon: TrendingUpIcon },
-    { id: 'recent', label: 'Recently added', icon: SparklesIcon },
-  ];
+  const visibleNative = NATIVE_PLATFORMS.filter(
+    (p) => stats.summary.by_platform[p],
+  );
+  const hasClay = !!stats.summary.by_platform['clay'];
+  const railCols = visibleNative.length + (hasClay ? 1 : 0);
+  const clayColor = PLATFORM_CONFIG.clay?.colors.line || '#14b8a6';
 
+  // Total visible platforms accounts for the clay aggregate (1) vs the
+  // four sub-platforms when expanded, so the X/Y count stays truthful.
+  const totalVisible = showClayDetails
+    ? visibleNative.length +
+      CLAY_PLATFORMS.filter((p) => stats.summary.by_platform[p]).length
+    : railCols;
+
+  // ─── Render ────────────────────────────────────────────────────────────
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="px-4 pt-4 pb-2">
-        {!isCollapsed && (
-          <div className="flex flex-col min-w-0">
-            <div className="flex gap-3 items-center">
-              <span className="text-base font-semibold">Lynx API Status</span>
-              <span className="font-mono text-xs text-muted-foreground">
-                {stats.summary.platform_api_total.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                APIs
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5 text-[11px] font-medium">
-              {selectedPlatforms.length === 1 ? (
-                <>
-                  <PlatformIcon
-                    platform={firstSelectedPlatform}
-                    className={cn('h-3 w-3', currentPlatformColors.text)}
-                  />
-                  <span className={currentPlatformColors.text}>
-                    {PLATFORM_CONFIG[firstSelectedPlatform]?.label ||
-                      firstSelectedPlatform}{' '}
-                    {currentPlatformStats?.coverage_percent}%
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">
-                  {selectedPlatforms.length} platforms selected
-                </span>
-              )}
-            </div>
+    // The sidebar container is positioned `fixed` by shadcn at `top-14`
+    // (56px) — that assumes a 56px-tall top nav. rspress's nav on this
+    // site is 64px tall, so override to `top-16` so the sidebar's top
+    // edge aligns with the SidebarInset's top edge on the right. Without
+    // this the two header bars would be at different Y positions.
+    <Sidebar collapsible="icon" className="!top-16">
+      {/* Header — title + total + status chip (matches the homepage typographic
+          rhythm: 14px / 600 / -0.01em title, mono caption, brand-tinted pill) */}
+      {/* Sidebar header — Tailwind utilities override shadcn's flex-col
+          gap-2 p-2 defaults so the bar lays out as a 64px-tall single row
+          (same as the page header on the right). The .aps-side-header
+          class adds the bottom border + dark-mode tints. */}
+      <SidebarHeader className="aps-side-header !flex-row !items-center !h-16 !p-0 !px-4 !gap-2">
+        <div className="aps-heading">
+          <div className="aps-heading__title">
+            <span>Lynx API Status</span>
+            <span className="aps-heading__total">
+              {stats.summary.platform_api_total.toLocaleString()}
+            </span>
           </div>
-        )}
+        </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        {/* Platform Selector - Multi-Select */}
-        <SidebarGroup>
-          <div className="flex items-center justify-between px-2">
-            <SidebarGroupLabel className="mb-0">
-              Platforms ({selectedPlatforms.length})
-            </SidebarGroupLabel>
-            {!isCollapsed && (
-              <div className="flex items-center gap-1">
+      <SidebarContent className="px-2 py-3">
+        {/* Page nav — full-width lifted-card rows. Active row picks up
+            --rp-c-brand wash + brand-tinted icon; no chevron caret (the
+            wash + bold text already say "active"). No "PAGES" eyebrow
+            label — the icon + label per row is self-evidently a nav. */}
+        <div className="aps-section">
+          <div className="aps-pages">
+            {PAGES.map((page) => {
+              const isActive = activePage === page.id;
+              return (
                 <button
-                  onClick={selectAll}
-                  className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted/50 transition-colors"
+                  key={page.id}
+                  type="button"
+                  onClick={() => onPageChange(page.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  title={
+                    isCollapsed
+                      ? page.label[lang === 'zh' ? 'zh' : 'en']
+                      : undefined
+                  }
+                  className={cn('aps-page', isActive && 'aps-page--active')}
                 >
-                  All
+                  <span className="aps-page__icon">
+                    <page.icon className="w-full h-full" />
+                  </span>
+                  <span className="aps-page__label">
+                    {page.label[lang === 'zh' ? 'zh' : 'en']}
+                  </span>
                 </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Platform rail — icon cells with coverage % below. The whole
+            grammar is one .aps-cell class that reads its brand color from
+            a CSS var, so adding a platform is just adding a config entry. */}
+        <div className="aps-section">
+          <div className="aps-section-head">
+            <span>
+              Platforms{' '}
+              <span className="aps-section-count">
+                {selectedPlatforms.length}/{totalVisible}
+              </span>
+            </span>
+            <div className="aps-section-actions">
+              <button
+                type="button"
+                className="aps-section-action"
+                onClick={selectAll}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className="aps-section-action"
+                onClick={clearSelection}
+              >
+                One
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="aps-rail"
+            style={{ ['--rail-cols' as any]: railCols }}
+          >
+            {visibleNative.map((platform) => {
+              const ps = stats.summary.by_platform[platform];
+              if (!ps) return null;
+              const isSelected = selectedPlatforms.includes(platform);
+              return (
                 <button
-                  onClick={clearSelection}
-                  className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted/50 transition-colors"
+                  key={platform}
+                  type="button"
+                  onClick={() => togglePlatform(platform)}
+                  aria-pressed={isSelected}
+                  title={`${PLATFORM_CONFIG[platform]?.label} ${ps.coverage_percent}%`}
+                  className={cn('aps-cell', isSelected && 'aps-cell--active')}
+                  style={platformVars(platform)}
                 >
-                  Clear
+                  <PlatformIcon
+                    platform={platform}
+                    className="aps-cell__icon"
+                  />
+                  <span className="aps-cell__pct">{ps.coverage_percent}%</span>
                 </button>
-              </div>
+              );
+            })}
+
+            {hasClay && !showClayDetails && (
+              <button
+                key="clay"
+                type="button"
+                onClick={() => togglePlatform('clay')}
+                aria-pressed={selectedPlatforms.includes('clay')}
+                title={`Clay ${stats.summary.by_platform.clay?.coverage_percent}%`}
+                className={cn(
+                  'aps-cell',
+                  selectedPlatforms.includes('clay') && 'aps-cell--active',
+                )}
+                style={platformVars('clay')}
+              >
+                <PlatformIcon platform="clay" className="aps-cell__icon" />
+                <span className="aps-cell__pct">
+                  {stats.summary.by_platform.clay?.coverage_percent}%
+                </span>
+              </button>
             )}
           </div>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {NATIVE_PLATFORMS.map((platform) => {
-                const ps = stats.summary.by_platform[platform];
-                if (!ps) return null;
-                const colors =
-                  PLATFORM_CONFIG[platform]?.colors ||
-                  PLATFORM_CONFIG.android.colors;
-                const isSelected = selectedPlatforms.includes(platform);
-                return (
-                  <SidebarMenuItem key={platform}>
-                    <SidebarMenuButton
-                      isActive={isSelected}
-                      onClick={() => togglePlatform(platform)}
-                      tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
-                    >
-                      {/* Checkbox indicator */}
-                      <div
-                        className={cn(
-                          'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
-                          isSelected
-                            ? `${colors.border} ${colors.bg}`
-                            : 'border-muted-foreground/30',
-                        )}
-                      >
-                        {isSelected && (
-                          <svg
-                            className={cn('w-3 h-3', colors.text)}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <polyline
-                              points="20 6 9 17 4 12"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                      <PlatformIcon
-                        platform={platform}
-                        className={cn('h-4 w-4', colors.text)}
-                      />
-                      <span className="flex-1">
-                        {PLATFORM_CONFIG[platform]?.label || platform}
-                      </span>
-                      <span className={cn('text-xs font-mono', colors.text)}>
-                        {ps.coverage_percent}%
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
 
-              {/* Clay: aggregate or detail view */}
-              {!showClayDetails ? (
-                <>
-                  {/* Aggregate Clay entry */}
-                  {(() => {
-                    const ps = stats.summary.by_platform['clay'];
-                    if (!ps) return null;
-                    const colors =
-                      PLATFORM_CONFIG['clay']?.colors ||
-                      PLATFORM_CONFIG.clay_android.colors;
-                    const isSelected = selectedPlatforms.includes('clay');
-                    return (
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
-                          isActive={isSelected}
-                          onClick={() => togglePlatform('clay')}
-                          tooltip={`Clay (${ps.coverage_percent}%)`}
-                        >
-                          <div
-                            className={cn(
-                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
-                              isSelected
-                                ? `${colors.border} ${colors.bg}`
-                                : 'border-muted-foreground/30',
-                            )}
-                          >
-                            {isSelected && (
-                              <svg
-                                className={cn('w-3 h-3', colors.text)}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                              >
-                                <polyline
-                                  points="20 6 9 17 4 12"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                          <PlatformIcon
-                            platform="clay"
-                            className={cn('h-4 w-4', colors.text)}
-                          />
-                          <span className="flex-1">Clay</span>
-                          <span
-                            className={cn('text-xs font-mono', colors.text)}
-                          >
-                            {ps.coverage_percent}%
-                          </span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })()}
-                  {/* Expand to details */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={toggleClayDetails}
-                      tooltip="Clay Details"
-                      className="pl-6"
-                    >
-                      <svg
-                        className="w-3 h-3 text-muted-foreground"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path
-                          d="m9 18 6-6-6-6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <span className="text-muted-foreground">
-                        Clay Details
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </>
-              ) : (
-                <>
-                  {/* Clay detail header with collapse */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={toggleClayDetails}
-                      tooltip="Clay Summary"
-                    >
-                      <PlatformIcon
-                        platform="clay"
-                        className="w-4 h-4 text-primary"
-                      />
-                      <span className="flex-1 text-primary">Clay</span>
-                      <svg
-                        className="w-3 h-3 text-muted-foreground"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path
-                          d="m15 18-6-6 6-6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  {/* Individual Clay platforms */}
-                  {CLAY_PLATFORMS.map((platform) => {
-                    const ps = stats.summary.by_platform[platform];
-                    if (!ps) return null;
-                    const colors =
-                      PLATFORM_CONFIG[platform]?.colors ||
-                      PLATFORM_CONFIG.clay_android.colors;
-                    const isSelected = selectedPlatforms.includes(platform);
-                    return (
-                      <SidebarMenuItem key={platform}>
-                        <SidebarMenuButton
-                          isActive={isSelected}
+          {/* Clay detail toggle — discoverable affordance below the rail.
+              The button reads "Show Clay surfaces ↓" when collapsed and
+              "Hide Clay surfaces ↑" when expanded. Tinted teal so it
+              visually belongs to the Clay cell above. */}
+          {hasClay && (
+            <button
+              type="button"
+              onClick={toggleClayDetails}
+              className={cn(
+                'aps-clay-toggle',
+                showClayDetails && 'aps-clay-toggle--open',
+              )}
+              style={{ ['--clay-tint' as any]: clayColor }}
+              aria-expanded={showClayDetails}
+            >
+              <span className="aps-clay-toggle__label">
+                {showClayDetails
+                  ? lang === 'zh'
+                    ? '收起 Clay 子平台'
+                    : 'Hide Clay surfaces'
+                  : lang === 'zh'
+                    ? '展开 Clay 子平台'
+                    : 'Show Clay surfaces'}
+              </span>
+              <ChevronDownIcon className="aps-clay-toggle__icon" />
+            </button>
+          )}
+
+          {/* Clay detail tray — animated open via grid-template-rows so the
+              row above stays put and content reflows from zero height. */}
+          {hasClay && (
+            <div
+              className={cn('aps-tray', showClayDetails && 'aps-tray--open')}
+              aria-hidden={!showClayDetails}
+              style={{ ['--clay-tint' as any]: clayColor }}
+            >
+              <div className="aps-tray__inner">
+                <div className="aps-tray__body">
+                  <div className="aps-rail">
+                    {CLAY_PLATFORMS.map((platform) => {
+                      const ps = stats.summary.by_platform[platform];
+                      if (!ps) return null;
+                      const isSelected = selectedPlatforms.includes(platform);
+                      return (
+                        <button
+                          key={platform}
+                          type="button"
                           onClick={() => togglePlatform(platform)}
-                          tooltip={`${PLATFORM_CONFIG[platform]?.label || platform} (${ps.coverage_percent}%)`}
-                          className="pl-6"
+                          aria-pressed={isSelected}
+                          title={`${PLATFORM_CONFIG[platform]?.label} ${ps.coverage_percent}%`}
+                          className={cn(
+                            'aps-cell',
+                            isSelected && 'aps-cell--active',
+                          )}
+                          style={platformVars(platform)}
                         >
-                          <div
-                            className={cn(
-                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
-                              isSelected
-                                ? `${colors.border} ${colors.bg}`
-                                : 'border-muted-foreground/30',
-                            )}
-                          >
-                            {isSelected && (
-                              <svg
-                                className={cn('w-3 h-3', colors.text)}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                              >
-                                <polyline
-                                  points="20 6 9 17 4 12"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            )}
-                          </div>
                           <PlatformIcon
                             platform={platform}
-                            className={cn('h-4 w-4', colors.text)}
+                            className="aps-cell__icon"
                           />
-                          <span className="flex-1">
-                            {PLATFORM_CONFIG[platform]?.label || platform}
-                          </span>
-                          <span
-                            className={cn('text-xs font-mono', colors.text)}
-                          >
+                          <span className="aps-cell__pct">
                             {ps.coverage_percent}%
                           </span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Page Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Pages</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {pages.map((page) => (
-                <SidebarMenuItem key={page.id}>
-                  <SidebarMenuButton
-                    isActive={activePage === page.id}
-                    onClick={() => onPageChange(page.id)}
-                    tooltip={page.label}
-                  >
-                    <page.icon className="w-4 h-4" />
-                    <span>{page.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t space-y-1">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => setIsColorblindMode(!isColorblindMode)}
-              tooltip="Colorblind Mode"
-              className={cn(
-                'h-8 text-muted-foreground hover:text-foreground',
-                isColorblindMode && 'text-primary bg-sidebar-accent',
-              )}
-            >
-              <div className="flex justify-between items-center w-full">
-                <div className="flex gap-2 items-center">
-                  <EyeIcon className="w-4 h-4" />
-                  <span>Colorblind Mode</span>
-                </div>
-                {!isCollapsed && isColorblindMode && (
-                  <span className="text-[10px] font-mono text-primary font-medium">
-                    ON
-                  </span>
-                )}
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Help"
-              className="h-8 text-muted-foreground hover:text-foreground"
-            >
-              <a
-                href={withBase(
-                  lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',
-                )}
-                className="flex justify-between items-center w-full"
-              >
-                <div className="flex gap-2 items-center">
-                  <HelpCircleIcon className="w-4 h-4" />
-                  <span>Help</span>
-                </div>
-                {!isCollapsed && updatedDate && (
-                  <span className="text-[10px] text-muted-foreground/70 font-mono">
-                    {updatedDate}
-                  </span>
-                )}
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      {/* Footer utilities — colorblind toggle + help link. Same row vocabulary
+          as page nav but lighter — no brand wash by default, no caret. */}
+      <SidebarFooter className="p-0">
+        <div className="aps-foot">
+          <button
+            type="button"
+            onClick={() => setIsColorblindMode((v) => !v)}
+            className={cn(
+              'aps-foot-row',
+              isColorblindMode && 'aps-foot-row--on',
+            )}
+            title={lang === 'zh' ? '色盲模式' : 'Colorblind mode'}
+          >
+            <span className="aps-foot-row__icon">
+              <EyeIcon className="w-full h-full" />
+            </span>
+            <span className="aps-foot-row__label">
+              {lang === 'zh' ? '色盲模式' : 'Colorblind mode'}
+            </span>
+            {isColorblindMode && <span className="aps-foot-row__meta">ON</span>}
+          </button>
+          <a
+            href={withBase(
+              lang === 'zh' ? '/zh/help/dashboard' : '/help/dashboard',
+            )}
+            className="aps-foot-row"
+            title={lang === 'zh' ? '帮助' : 'Help'}
+          >
+            <span className="aps-foot-row__icon">
+              <HelpCircleIcon className="w-full h-full" />
+            </span>
+            <span className="aps-foot-row__label">
+              {lang === 'zh' ? '帮助' : 'Help'}
+            </span>
+            {updatedDate && (
+              <span className="aps-foot-row__meta">{updatedDate}</span>
+            )}
+          </a>
+        </div>
       </SidebarFooter>
 
       <SidebarRail />
