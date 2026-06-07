@@ -345,17 +345,17 @@ export const APIItem: React.FC<APIItemProps> = ({
                   <div
                     key={platform}
                     className={cn(
-                      'flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px]',
+                      'inline-flex items-center gap-px px-0.5 py-px rounded text-[9px]',
                       isSupported
                         ? 'bg-status-supported/20 text-status-supported-strong'
                         : 'bg-status-unsupported/20 text-status-unsupported-strong',
                     )}
                     title={`${PLATFORM_CONFIG[platform]?.label || platform}: ${isSupported ? 'Supported' : 'Not supported'}`}
                   >
-                    {Icon && <Icon className="w-2.5 h-2.5" />}
+                    {Icon && <Icon className="w-2 h-2" />}
                     <span
                       className={cn(
-                        'w-1.5 h-1.5 rounded-full',
+                        'w-1 h-1 rounded-full',
                         isSupported
                           ? 'bg-status-supported'
                           : 'bg-status-unsupported',
