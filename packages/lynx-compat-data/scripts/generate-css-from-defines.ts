@@ -5,8 +5,13 @@
  * extracts the `compat_data` field, wraps it in the lynx-compat-data BCD format
  * (`css.properties.<name>`), and writes it to `css/properties/<name>.json`.
  *
+ * After generating from css-defines, it copies any hand-maintained files from
+ * `css/properties-manual/` into `css/properties/`. The manual directory is the
+ * single source of truth for properties not yet covered by css-defines; a
+ * filename collision between the two sources is treated as a hard error.
+ *
  * This makes @lynx-js/css-defines the source of truth for CSS property
- * compatibility data.
+ * compatibility data, with `css/properties-manual/` as an explicit escape hatch.
  */
 
 import fs from 'node:fs/promises';
@@ -36,6 +41,10 @@ const cssDefinesDir = findCssDefinesDir();
 
 // Output directory for generated CSS property compat data
 const outputDir = path.join(__dirname, '..', 'css', 'properties');
+
+// Source directory for hand-maintained property files (properties not yet
+// covered by @lynx-js/css-defines). Tracked in git; copied into outputDir.
+const manualDir = path.join(__dirname, '..', 'css', 'properties-manual');
 
 /**
  * Generate CSS property compat data files from @lynx-js/css-defines.
@@ -103,6 +112,28 @@ async function generateCssProperties(): Promise<void> {
   if (skipped > 0) {
     console.log(`Skipped ${skipped} files`);
   }
+
+  // Copy hand-maintained files. The directory listing IS the allowlist —
+  // no name is hardcoded here. Conflicts with css-defines fail the build.
+  let copied = 0;
+  if (existsSync(manualDir)) {
+    const manualFiles = (await fs.readdir(manualDir)).filter((f) =>
+      f.endsWith('.json'),
+    );
+    for (const file of manualFiles) {
+      const dst = path.join(outputDir, file);
+      if (existsSync(dst)) {
+        throw new Error(
+          `Property "${file}" exists in both css-defines and css/properties-manual/. ` +
+            `Remove it from properties-manual/ now that css-defines covers it.`,
+        );
+      }
+      await fs.copyFile(path.join(manualDir, file), dst);
+      copied++;
+    }
+    console.log(`Copied ${copied} hand-maintained files from properties-manual/`);
+  }
+
   console.log(`Output directory: ${outputDir}`);
 }
 
