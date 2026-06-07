@@ -2,7 +2,6 @@ import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess'
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
-import type { RspressPlugin } from '@rspress/core';
 import { defineConfig } from '@rspress/core';
 import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transformers';
 import { pluginAlgolia } from '@rspress/plugin-algolia';
@@ -53,6 +52,7 @@ export default defineConfig({
       printFileSize: false,
     },
     plugins: [
+      rsbuildPluginDisableFileSizeReport(),
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       // Open Graph / Twitter Card meta is injected per-page by the theme
       // (theme/OgHead.tsx) so each route gets its build-time OG image and
@@ -244,6 +244,31 @@ export default defineConfig({
   },
   llms: !IS_LIGHTWEIGHT_BUILD,
 });
+
+function rsbuildPluginDisableFileSizeReport() {
+  return {
+    name: 'disable-file-size-report',
+    setup(api: RsbuildPluginApi) {
+      api.modifyEnvironmentConfig((config) => {
+        config.performance ??= {};
+        config.performance.printFileSize = false;
+        return config;
+      });
+    },
+  };
+}
+
+type RsbuildEnvironmentConfig = {
+  performance?: {
+    printFileSize?: boolean;
+  };
+};
+
+type RsbuildPluginApi = {
+  modifyEnvironmentConfig: (
+    modify: (config: RsbuildEnvironmentConfig) => RsbuildEnvironmentConfig,
+  ) => void;
+};
 
 function remarkReplaceVersionJsonPlaceholders() {
   const replacements: Array<[string, string]> = [
