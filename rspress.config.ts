@@ -23,6 +23,11 @@ const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
 const IS_LIGHTWEIGHT_BUILD =
   process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
   NETLIFY_CONTEXT === 'deploy-preview';
+const DISABLE_FILE_SIZE_REPORT = {
+  performance: {
+    printFileSize: false,
+  },
+};
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -56,16 +61,15 @@ export default defineConfig({
       // set performance.printFileSize after the top-level config is merged.
       // Keep these environment overrides until Rspress moves the default to the
       // top-level performance config.
-      node: {
-        performance: {
-          printFileSize: false,
-        },
-      },
-      node_md: {
-        performance: {
-          printFileSize: false,
-        },
-      },
+      node: DISABLE_FILE_SIZE_REPORT,
+      // Lightweight deploy previews disable llms, so Rspress does not create a
+      // node_md environment there. Adding one would make Rsbuild fall back to
+      // its default ./src entry.
+      ...(!IS_LIGHTWEIGHT_BUILD
+        ? {
+            node_md: DISABLE_FILE_SIZE_REPORT,
+          }
+        : {}),
     },
     plugins: [
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
