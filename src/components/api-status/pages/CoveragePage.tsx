@@ -34,10 +34,13 @@ const platformVars = (platform: string): React.CSSProperties => {
 
 // ─── Trend chart ─────────────────────────────────────────────────────────
 //
-// Fills its plate full-width via a wide viewBox (1200×320) — preserveAspectRatio
-// scales it down on narrow viewports without distorting strokes. Each platform
-// line gets a sub-pixel Y offset (index * 1) so identical values don't render
-// as a single line — the user always sees every selected platform.
+// Fills its plate full-width via a wide viewBox (1200×320) +
+// preserveAspectRatio="none", which stretches the SVG horizontally to the
+// plate width regardless of aspect ratio. Stroke widths stay constant via
+// vectorEffect="non-scaling-stroke" so lines don't get distorted by the
+// stretch. Each platform line gets a per-index Y offset of ±3.5 viewBox
+// units so identical values don't render as a single line — the user
+// always sees every selected platform.
 
 interface ParityChartProps {
   timeline: TimelinePoint[];

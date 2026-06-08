@@ -3,12 +3,16 @@ import { useLang } from '@rspress/core/runtime';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../ui/sidebar';
 import { TooltipProvider } from '../ui/tooltip';
 import { APIStatusSidebar, type PageType } from './APIStatusSidebar';
-import { PLATFORM_CONFIG } from './constants';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { CoveragePage } from './pages/CoveragePage';
 import { RecentPage } from './pages/RecentPage';
 import { SearchPage } from './pages/SearchPage';
-import type { APIStats, DisplayPlatformName } from './types';
+import {
+  CLAY_PLATFORMS,
+  NATIVE_PLATFORMS,
+  type APIStats,
+  type DisplayPlatformName,
+} from './types';
 import './APIStatusLayout.scss';
 
 // Import the generated stats
@@ -105,13 +109,20 @@ export const APIStatusLayout: React.FC = () => {
   // The header's right-side meta strip shows which platforms drive the
   // current view + their share of the total API surface. Reads as a quick
   // "what am I looking at" line without forcing the user back to the rail.
+  // Mirror the sidebar rail's logic: in aggregate Clay mode the user sees
+  // N native + 1 clay aggregate cell; in detail mode N native + 4 clay_*
+  // sub-cells. The header's denominator should match what the rail shows,
+  // or "X of Y platforms" would disagree with the sidebar's "X/Y" count.
   const surfaceCount = selectedPlatforms.length;
-  // Total native surfaces in the dataset (= dataset size of selectable
-  // platforms minus the clay aggregate, since that's a roll-up not its own
-  // surface). Kept defensively in case the schema gains new ones.
-  const totalSurfaces = Object.keys(stats.summary.by_platform).filter(
-    (p) => p !== 'clay',
+  const visibleNativeCount = NATIVE_PLATFORMS.filter(
+    (p) => stats.summary.by_platform[p],
   ).length;
+  const visibleClayCount = showClayDetails
+    ? CLAY_PLATFORMS.filter((p) => stats.summary.by_platform[p]).length
+    : stats.summary.by_platform['clay']
+      ? 1
+      : 0;
+  const totalSurfaces = visibleNativeCount + visibleClayCount;
 
   return (
     <TooltipProvider>

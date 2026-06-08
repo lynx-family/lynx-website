@@ -126,10 +126,12 @@ export const SearchPage: React.FC<SearchPageProps> = ({
         <div className="aps-search-input-wrap">
           <SearchIcon className="aps-search-input-icon" />
           <input
+            type="search"
             className="aps-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchPlaceholder}
+            aria-label={t.searchPlaceholder}
           />
         </div>
         <div className="flex items-center gap-2 shrink-0">
