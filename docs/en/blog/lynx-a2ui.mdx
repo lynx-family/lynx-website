@@ -1,12 +1,141 @@
 ---
-title: 'Lynx A2UI'
-date: 2026-06-07
+title: 'Lynx A2UI: Controlled Agent-Generated UI for ReactLynx'
+date: 2026-06-08
 sidebar: false
 authors: ['lynx']
-badge_text: 'Lynx A2UI'
-description: 'Lynx A2UI.'
+badge_text: 'Lynx A2UI is released!'
+description: 'Introducing Lynx A2UI, the ReactLynx rendering implementation for A2UI that lets Agents compose trusted native UI from an explicit Catalog while reusing existing Lynx components, themes, actions, and tooling.'
 ---
 
-import { BlogHeader } from '@lynx';
+import { BlogHeader, Caption, Go } from '@lynx';
 
 <BlogHeader />
+
+Today, we are excited to introduce **Lynx A2UI**, the A2UI rendering implementation for [ReactLynx](/react/introduction). It brings Agent-generated UI into Lynx applications without asking teams to give up the component systems, design languages, themes, native rendering paths, and interaction contracts they already rely on.
+
+Generative UI is often described as a model "creating an interface." For production apps, the harder question is not whether a model can produce something visual. It is whether the generated interface stays inside the product's rules: which components are allowed, which data can be shown, which actions can run, how the surface is styled, how it updates, and how the whole flow can be tested and improved over time.
+
+Lynx A2UI is built around that boundary. The Agent generates protocol messages. The app defines a Catalog. The ReactLynx renderer turns approved messages into real Lynx UI.
+
+## A Protocol, Not a New UI Stack
+
+[A2UI](https://a2ui.org/introduction/what-is-a2ui/) (Agent-to-UI) is a protocol for Agent-generated interfaces. Instead of asking an Agent to emit arbitrary UI code, A2UI asks it to emit declarative JSON messages that follow a schema. A renderer validates those messages against a pre-authorized [Catalog](https://a2ui.org/concepts/catalogs/) and maps them into a UI tree.
+
+That distinction matters. A2UI does not replace your rendering framework. It gives an Agent a structured language for describing an interface, while the runtime implementation still decides how that interface is rendered, styled, and connected to platform capabilities.
+
+For Lynx, that runtime is [`@lynx-js/genui/a2ui`](https://www.npmjs.com/package/@lynx-js/genui). It consumes A2UI v0.9 server-to-client messages and renders trusted ReactLynx components through the Lynx rendering pipeline. Generated UI can reuse the same component library, design system, theme tokens, and interaction model as the rest of the app.
+
+## The Catalog Is the Contract
+
+The easiest way to understand A2UI is to think of it as a controlled way to generate UI:
+
+- Developers prepare the menu.
+- The Agent orders from the menu.
+- ReactLynx cooks and serves.
+
+The "menu" is the Catalog. It lists the components the renderer is allowed to instantiate and the functions it can call when resolving dynamic values, formatting text, validating inputs, or preparing action payloads. If a component or function is not in the Catalog, the Agent cannot rely on it.
+
+That turns generated UI from "model writes code" into "model composes approved capabilities." The Catalog can contain built-in A2UI components such as `Text`, `Button`, `Card`, `Row`, `Column`, `List`, `Image`, `TextField`, `ChoicePicker`, `LineChart`, and `Tabs`. It can also contain your own ReactLynx components, paired with JSON Schema manifests so the Agent sees the same prop contract the client renders.
+
+This explicitness is intentional. Lynx A2UI does not provide a hidden `catalog/all` shortcut. Apps import and register the exact components they want generated UI to use, keeping bundle cost and product boundaries visible at the integration site.
+
+## From Agent Messages to Native UI
+
+The client loop is small:
+
+```tsx
+import { A2UI, Button, Text, createMessageStore } from '@lynx-js/genui/a2ui';
+
+const messageStore = createMessageStore();
+
+export function GenUIScreen() {
+  return (
+    <A2UI
+      messageStore={messageStore}
+      catalogs={[Text, Button]}
+      onAction={(action) => {
+        // Forward the action to your Agent service, then push the returned
+        // A2UI messages back into the same messageStore.
+      }}
+    />
+  );
+}
+```
+
+Your transport layer can be REST, SSE, WebSocket, or an in-process mock. It sends user prompts and generated UI actions to your Agent service, then pushes the returned A2UI messages into `MessageStore`. `<A2UI>` subscribes to that store, processes new messages, renders the active surface, and emits user actions through `onAction`.
+
+The renderer is deliberately not an Agent host. It does not call an LLM, own a backend route, or decide what to render. Your application owns the Agent service and transport. Lynx A2UI owns the client runtime: the message store, message processor, catalog resolution, data binding, function execution, action dispatch, and ReactLynx rendering.
+
+This separation keeps the responsibilities crisp:
+
+- The server decides what should be shown.
+- The Catalog defines what may be shown.
+- The client renders the result as real ReactLynx UI.
+
+## Progressive Surfaces and Actions
+
+A2UI messages can create a surface, update components, update the data model, and delete a surface. That makes progressive UI generation possible: the Agent can send a surface skeleton first, then stream in richer component data or update the same surface after a user action.
+
+Inside the renderer, `MessageProcessor` applies those messages to per-surface state. Components can reference children by id, bind props to data model paths, and use templated children for repeated lists. When the data model changes, Lynx A2UI can expand templates into concrete component instances and update the rendered tree without requiring the Agent to resend every static node.
+
+Actions complete the loop. A button tap, picker selection, or other generated UI event becomes a structured user action. The app can handle it locally, forward it to the Agent, or do both. Agent responses return as more A2UI messages, so the same surface can continue evolving across turns.
+
+The example below simulates a weather Agent that renders forecast cards, sends city changes back as actions, and refreshes the UI with new protocol messages:
+
+<Go
+  example="a2ui"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+/>
+
+<Caption>A2UI messages rendered as ReactLynx UI</Caption>
+
+## Prompt, Schema, and Tooling
+
+The Catalog is also what lets the Agent understand the UI vocabulary. With the GenUI CLI, teams can generate catalog artifacts and system prompts from their component contracts:
+
+```bash
+genui a2ui generate catalog \
+  --catalog-dir src/catalog \
+  --source src/functions \
+  --out-dir dist/catalog
+
+genui a2ui generate prompt \
+  --catalog-dir dist/catalog \
+  --out dist/a2ui-system-prompt.txt
+```
+
+The generated prompt includes A2UI protocol rules, message ordering, data binding rules, action rules, component schemas, function signatures, hard constraints, and validated examples. The Agent receives a precise description of what it can produce; the client receives messages that map back to the same contracts.
+
+This is where A2UI becomes an engineering workflow instead of a one-off demo. You can tune the Catalog, adjust prompt instructions, replay examples, and compare output quality, token usage, latency, and render timing against the same renderer behavior.
+
+## Try the Playground
+
+The [Lynx A2UI Playground](https://lynx-stack.dev/a2ui/) is the fastest way to see the full loop.
+
+- [Create](https://lynx-stack.dev/a2ui/#/a2ui/create) lets you chat with a model and watch Agent messages drive live UI updates.
+- [Examples](https://lynx-stack.dev/a2ui/#/a2ui/examples) collects generated scenarios that you can edit, replay, and inspect.
+- [Catalog](https://lynx-stack.dev/a2ui/#/a2ui/catalog) shows the built-in component set with props, usage JSON, and a live phone preview.
+
+The Playground also surfaces metrics such as Agent output time, render time, FCP, FMP, TTI, and token usage. Those numbers help make generated UI iteration less subjective: prompt changes, model choices, and Catalog size can be compared against both output quality and runtime cost.
+
+## Where It Fits
+
+Lynx A2UI is a good fit when a product needs UI that adapts to user intent more dynamically than a fixed set of page states can cover, but still needs production controls.
+
+That includes search and answer surfaces, shopping and booking cards, itinerary planners, data summaries, support flows, and other mobile-first experiences where the right interface depends on the user's current goal. A product team can expose a focused Catalog for that domain, keep visual and interaction quality aligned with the app, and let the Agent compose within those boundaries.
+
+The key is to start small. A compact Catalog often gives the Agent a clearer shape to work with, reduces prompt and output cost, and makes failures easier to inspect. As the product needs more expressive UI, teams can add components and functions intentionally, measuring the tradeoff between capability, latency, and quality.
+
+## Start Building
+
+Install the GenUI package in a ReactLynx app:
+
+```bash
+pnpm add @lynx-js/genui @lynx-js/react
+```
+
+Then read the [Lynx A2UI documentation](/react/genui/a2ui), open the [Playground](https://lynx-stack.dev/a2ui/), and try a small Catalog first. A few components are enough to build useful generated surfaces, and the explicit Catalog gives you room to grow without losing control.
+
+We see Lynx A2UI as one step toward AI-ready cross-platform development: Agents can help compose the interface, while Lynx keeps the rendering native, the components trusted, and the product experience under your control.

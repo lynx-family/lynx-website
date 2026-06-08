@@ -1,12 +1,141 @@
 ---
-title: 'Lynx A2UI'
-date: 2026-06-07
+title: 'Lynx A2UI：面向 ReactLynx 的受控 Agent 生成界面'
+date: 2026-06-08
 sidebar: false
 authors: ['lynx']
-badge_text: 'Lynx A2UI'
-description: 'Lynx A2UI。'
+badge_text: 'Lynx A2UI 发布了!'
+description: 'Lynx A2UI 是 A2UI 协议在 ReactLynx 上的渲染实现，让 Agent 在明确的 Catalog 边界内组合可信的原生 UI，并复用现有 Lynx 组件、主题、交互和工具链。'
 ---
 
-import { BlogHeader } from '@lynx';
+import { BlogHeader, Caption, Go } from '@lynx';
 
 <BlogHeader />
+
+今天，我们很高兴介绍 **Lynx A2UI**：A2UI 协议在 [ReactLynx](/react/introduction) 上的渲染实现。它把 Agent 生成界面的能力带到 Lynx 应用中，同时不要求团队放弃已有的组件体系、设计语言、主题样式、原生渲染链路和交互契约。
+
+生成式 UI 常常被描述成“模型创建一个界面”。但对生产应用来说，更难的问题不是模型能不能生成一个看起来像界面的东西，而是生成结果能不能留在产品规则内：哪些组件可以用，哪些数据可以展示，哪些动作可以触发，界面如何应用样式，状态如何更新，以及整条链路如何测试、回放和持续优化。
+
+Lynx A2UI 正是围绕这条边界构建的。Agent 生成协议消息，应用定义 Catalog，ReactLynx Renderer 把经过授权的消息渲染成真实的 Lynx UI。
+
+## 协议，而不是新的 UI 栈
+
+[A2UI](https://a2ui.org/introduction/what-is-a2ui/)（Agent-to-UI）是一种面向 Agent 生成界面的协议。它不让 Agent 直接生成任意 UI 代码，而是要求 Agent 产出符合 schema 的声明式 JSON messages。Renderer 再根据预先授权的 [Catalog](https://a2ui.org/concepts/catalogs/) 对消息进行校验，并映射为 UI 树。
+
+这个区别很重要。A2UI 并不会替代你的渲染框架。它给 Agent 一种结构化描述界面的语言，而真正的渲染方式、样式系统和平台能力仍然由具体 runtime 实现决定。
+
+在 Lynx 里，这个 runtime 就是 [`@lynx-js/genui/a2ui`](https://www.npmjs.com/package/@lynx-js/genui)。它消费 A2UI v0.9 的 server-to-client messages，并通过 Lynx 渲染管线渲染可信的 ReactLynx 组件。生成界面可以复用和应用内其他界面相同的组件库、设计系统、主题 token 和交互模型。
+
+## Catalog 是双方的契约
+
+理解 A2UI 最简单的方式，是把它看成一种受控的界面生成方式：
+
+- 开发者备菜单。
+- Agent 点菜单。
+- ReactLynx 出餐。
+
+这里的“菜单”就是 Catalog。它列出 Renderer 可以实例化哪些组件、可以调用哪些函数，以及如何在动态值解析、文本格式化、表单校验和 action payload 生成时使用这些能力。如果某个组件或函数不在 Catalog 里，Agent 就不能依赖它。
+
+这样一来，生成式 UI 就不再是“模型写代码”，而是“模型组合经过授权的能力”。Catalog 可以包含 A2UI 内置组件，比如 `Text`、`Button`、`Card`、`Row`、`Column`、`List`、`Image`、`TextField`、`ChoicePicker`、`LineChart` 和 `Tabs`。它也可以包含你自己的 ReactLynx 组件，并通过 JSON Schema manifest 把 prop contract 同步给 Agent。
+
+这种显式性是刻意设计的。Lynx A2UI 不提供隐藏成本的 `catalog/all` 捷径。应用需要在接入处明确 import 和注册希望生成式 UI 使用的组件，让包体成本和产品边界都保持可见。
+
+## 从 Agent 消息到原生 UI
+
+客户端循环很小：
+
+```tsx
+import { A2UI, Button, Text, createMessageStore } from '@lynx-js/genui/a2ui';
+
+const messageStore = createMessageStore();
+
+export function GenUIScreen() {
+  return (
+    <A2UI
+      messageStore={messageStore}
+      catalogs={[Text, Button]}
+      onAction={(action) => {
+        // 将 action 转发给你的 Agent service，再把返回的
+        // A2UI messages 推回同一个 messageStore。
+      }}
+    />
+  );
+}
+```
+
+你的传输层可以是 REST、SSE、WebSocket，也可以是进程内 mock。它把用户 prompt 和生成界面里的 action 发送给 Agent service，再把返回的 A2UI messages 推进 `MessageStore`。`<A2UI>` 订阅这个 store，处理新增消息，渲染当前 surface，并通过 `onAction` 把用户操作抛给应用。
+
+Renderer 本身刻意不扮演 Agent host。它不会调用 LLM，不拥有后端路由，也不决定要渲染什么。你的应用拥有 Agent service 和传输层；Lynx A2UI 负责客户端 runtime：message store、message processor、catalog resolution、data binding、function execution、action dispatch 和 ReactLynx 渲染。
+
+这样职责边界非常清晰：
+
+- 服务端决定展示什么。
+- Catalog 定义什么可以被展示。
+- 客户端把结果渲染成真实的 ReactLynx UI。
+
+## 渐进式 Surface 与 Action
+
+A2UI messages 可以创建 surface、更新组件、更新 data model，也可以删除 surface。这意味着生成界面可以渐进式到达：Agent 可以先发一个 surface 骨架，再逐步补充更丰富的组件数据；也可以在用户操作之后继续更新同一个 surface。
+
+在 Renderer 内部，`MessageProcessor` 会把这些消息应用到每个 surface 的状态上。组件可以通过 id 引用子节点，把 props 绑定到 data model path，也可以为重复列表使用模板化 children。当 data model 改变时，Lynx A2UI 可以把模板展开成具体组件实例，并更新已渲染的树，而不需要 Agent 重新发送所有静态节点。
+
+Action 则把这条链路闭环。按钮点击、选择器变化或其他生成界面的事件，会变成结构化的 user action。应用可以在本地处理，也可以转发给 Agent，或者两者都做。Agent 的响应仍然作为新的 A2UI messages 回到客户端，所以同一个 surface 可以在多轮交互中持续演进。
+
+下面的示例模拟了一个天气查询 Agent：它渲染天气卡片，把城市切换作为 action 回传，并用新的协议消息刷新界面：
+
+<Go
+  example="a2ui"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+/>
+
+<Caption>A2UI messages 渲染为 ReactLynx UI</Caption>
+
+## Prompt、Schema 与工具链
+
+Catalog 也是 Agent 理解 UI 词汇的来源。借助 GenUI CLI，团队可以从组件契约生成 catalog artifacts 和 system prompt：
+
+```bash
+genui a2ui generate catalog \
+  --catalog-dir src/catalog \
+  --source src/functions \
+  --out-dir dist/catalog
+
+genui a2ui generate prompt \
+  --catalog-dir dist/catalog \
+  --out dist/a2ui-system-prompt.txt
+```
+
+生成出的 prompt 会包含 A2UI 协议规则、消息顺序、data binding 规则、action 规则、组件 schema、函数签名、硬约束和经过验证的示例。Agent 拿到的是一份精确的“可生成内容说明书”，客户端收到的消息也能映射回同一套契约。
+
+这让 A2UI 不只是一次性的 demo，而是一套工程工作流。你可以调整 Catalog、调优 prompt instruction、回放示例，并用同一个 Renderer 行为对比输出质量、token 消耗、生成延迟和渲染耗时。
+
+## 在 Playground 里试用
+
+[Lynx A2UI Playground](https://lynx-stack.dev/a2ui/) 是体验完整链路最快的入口。
+
+- [Create](https://lynx-stack.dev/a2ui/#/a2ui/create)：直接与模型对话，观察 Agent messages 如何驱动实时 UI 更新。
+- [Examples](https://lynx-stack.dev/a2ui/#/a2ui/examples)：查看内置生成场景，支持编辑、回放和检查协议消息。
+- [Catalog](https://lynx-stack.dev/a2ui/#/a2ui/catalog)：浏览内置组件集合，查看 props、编辑 usage JSON，并在手机预览里实时渲染。
+
+Playground 也会展示 Agent 输出耗时、Render 耗时、FCP、FMP、TTI 和 token usage 等指标。这些数据能让生成式 UI 的迭代更少依赖主观感觉：prompt 变化、模型选择和 Catalog 规模，都可以同时从输出质量和运行成本两个维度比较。
+
+## 适合哪些场景
+
+当产品需要比固定页面状态更动态的 UI，但又必须保留生产控制时，Lynx A2UI 会很合适。
+
+例如搜索与问答结果页、购物和预订卡片、旅行计划、数据摘要、客服流程，以及其他移动端优先的体验：界面形态取决于用户当前目标，但视觉、交互和安全边界仍然必须归业务掌控。产品团队可以为具体领域暴露一个聚焦的 Catalog，让 Agent 在边界内组合界面，同时保持和应用整体体验一致。
+
+关键是从小 Catalog 开始。紧凑的 Catalog 往往能让 Agent 更聚焦，降低 prompt 和输出成本，也让失败更容易定位。当业务需要更强表达力时，再有意识地加入组件和函数，并衡量能力、延迟和质量之间的取舍。
+
+## 开始构建
+
+在 ReactLynx 应用中安装 GenUI package：
+
+```bash
+pnpm add @lynx-js/genui @lynx-js/react
+```
+
+然后阅读 [Lynx A2UI 文档](/react/genui/a2ui)，打开 [Playground](https://lynx-stack.dev/a2ui/)，先用一个小 Catalog 试起来。少量组件就足以构建有价值的生成界面，而显式 Catalog 会让你在扩展能力的同时保持控制。
+
+我们认为 Lynx A2UI 是 AI-ready 跨平台开发的一步：Agent 可以帮助组合界面，而 Lynx 继续保证渲染原生、组件可信、产品体验可控。
