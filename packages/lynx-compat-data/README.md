@@ -35,6 +35,11 @@ Data for Lynx elements e.g. `<view>`, `<text>`, `<image>`, etc.
 
 Data for CSS e.g. properties like `background`, `color`, etc.
 
+> **Note**: CSS property compatibility data (`css/properties/*`) is generated at build time and is **not** tracked in git. There are two sources, merged by `pnpm run gen-css`:
+>
+> 1. **`@lynx-js/css-defines`** — the primary source of truth. To update a property, change the upstream definition and bump the dependency, then regenerate.
+> 2. **`css/properties-manual/`** — hand-maintained files for properties not yet covered by `css-defines` (e.g. `css-variable`, `custom-property`, `filter-properties`). The directory listing itself is the allowlist; no name is hardcoded in the generator. A filename collision between the two sources fails the build, so once `css-defines` adds coverage, remove the corresponding file from `properties-manual/`.
+
 #### [`lynx-api`](./lynx-api)
 
 Data for Lynx APIs, e.g. `setTimeout`.
@@ -159,10 +164,16 @@ The linter checks for:
 
 ### Build
 
-The build process consists of two steps:
+The build process consists of the following steps:
 
-1. Generate TypeScript declarations for all JSON data files.
-2. Generate platforms data.
+1. **Generate CSS property data** from `@lynx-js/css-defines`:
+   ```bash
+   pnpm run gen-css
+   ```
+2. **Generate TypeScript declarations** for all JSON data files.
+3. **Generate platforms data**.
+
+Run all build steps at once:
 
 ```bash
 pnpm run build
