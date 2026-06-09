@@ -50,7 +50,9 @@ const manualDir = path.join(__dirname, '..', 'css', 'properties-manual');
  * Generate CSS property compat data files from @lynx-js/css-defines.
  */
 async function generateCssProperties(): Promise<void> {
-  // Ensure output directory exists
+  // Clean output directory to avoid stale files from previous runs
+  // colliding with the manual copy collision check below.
+  await fs.rm(outputDir, { recursive: true, force: true });
   await fs.mkdir(outputDir, { recursive: true });
 
   // Read all definition files from css-defines
