@@ -10,8 +10,19 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    env:
+      VERSION: ${{ github.event.client_payload.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate version format
+        run: |
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$'; then
+            echo "Invalid version format: $VERSION"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -25,7 +36,7 @@ jobs:
             const dep = (pkg.devDependencies && pkg.devDependencies['@lynx-js/css-defines']) || (pkg.dependencies && pkg.dependencies['@lynx-js/css-defines']) || '';
             dep.replace(/^[\\^~]/, '');
           ")
-          if [ "$CURRENT" = "${{ github.event.client_payload.version }}" ]; then
+          if [ "$CURRENT" = "$VERSION" ]; then
             echo "already-synced=true" >> $GITHUB_OUTPUT
           else
             echo "already-synced=false" >> $GITHUB_OUTPUT
@@ -43,7 +54,7 @@ jobs:
         if: steps.check.outputs.already-synced != 'true'
         run: |
           cd packages/lynx-compat-data
-          pnpm add -D @lynx-js/css-defines@"${{ github.event.client_payload.version }}"
+          pnpm add -D @lynx-js/css-defines@"$VERSION"
 
       - name: Create Pull Request
         if: steps.check.outputs.already-synced != 'true'
