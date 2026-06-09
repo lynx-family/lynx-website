@@ -24,17 +24,31 @@ const __dirname = path.dirname(__filename);
 
 function findCssDefinesDir(): string {
   const candidates = [
-    path.join(__dirname, '..', 'node_modules', '@lynx-js', 'css-defines', 'css_defines'),
-    path.join(__dirname, '..', '..', '..', 'node_modules', '@lynx-js', 'css-defines', 'css_defines'),
+    path.join(
+      __dirname,
+      '..',
+      'node_modules',
+      '@lynx-js',
+      'css-defines',
+      'css_defines',
+    ),
+    path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'node_modules',
+      '@lynx-js',
+      'css-defines',
+      'css_defines',
+    ),
   ];
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
       return candidate;
     }
   }
-  throw new Error(
-    'Could not find @lynx-js/css-defines/css_defines directory',
-  );
+  throw new Error('Could not find @lynx-js/css-defines/css_defines directory');
 }
 
 const cssDefinesDir = findCssDefinesDir();
@@ -133,7 +147,9 @@ async function generateCssProperties(): Promise<void> {
       await fs.copyFile(path.join(manualDir, file), dst);
       copied++;
     }
-    console.log(`Copied ${copied} hand-maintained files from properties-manual/`);
+    console.log(
+      `Copied ${copied} hand-maintained files from properties-manual/`,
+    );
   }
 
   console.log(`Output directory: ${outputDir}`);

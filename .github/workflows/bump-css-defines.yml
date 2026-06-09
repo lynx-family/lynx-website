@@ -1,0 +1,64 @@
+name: Bump CSS Defines
+
+on:
+  repository_dispatch:
+    types: [bump-css-defines]
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check if version already synced
+        id: check
+        run: |
+          CURRENT=$(node -p "
+            const pkg = require('./packages/lynx-compat-data/package.json');
+            const dep = (pkg.devDependencies && pkg.devDependencies['@lynx-js/css-defines']) || (pkg.dependencies && pkg.dependencies['@lynx-js/css-defines']) || '';
+            dep.replace(/^[\\^~]/, '');
+          ")
+          if [ "$CURRENT" = "${{ github.event.client_payload.version }}" ]; then
+            echo "already-synced=true" >> $GITHUB_OUTPUT
+          else
+            echo "already-synced=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install pnpm
+        if: steps.check.outputs.already-synced != 'true'
+        run: npm install -g pnpm@11.5.0
+
+      - name: Install workspace dependencies
+        if: steps.check.outputs.already-synced != 'true'
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Update @lynx-js/css-defines
+        if: steps.check.outputs.already-synced != 'true'
+        run: |
+          cd packages/lynx-compat-data
+          pnpm add -D @lynx-js/css-defines@"${{ github.event.client_payload.version }}"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.already-synced != 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): bump @lynx-js/css-defines to ${{ github.event.client_payload.version }}'
+          title: 'chore(deps): bump @lynx-js/css-defines to ${{ github.event.client_payload.version }}'
+          body: |
+            Automated dependency update triggered by [css-defines-publish](https://github.com/lynx-family/lynx/actions/workflows/css-defines-publish.yml).
+
+            - **Package:** `@lynx-js/css-defines`
+            - **New version:** `${{ github.event.client_payload.version }}`
+          branch: auto/bump-css-defines-${{ github.event.client_payload.version }}
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
