@@ -1,0 +1,98 @@
+---
+title: 'Lynx A2UI 正式发布'
+date: 2026-06-08
+sidebar: false
+authors:
+  [
+    'HuJean',
+    'PupilTong',
+    'Sherry-hue',
+    'gaoachao',
+    'fzx2666-fz',
+    'MoonfaceX',
+    'huxpro',
+  ]
+badge_text: 'Lynx A2UI 正式发布！'
+description: 'Lynx A2UI 正式发布：基于 A2UI 协议，让 AI Agent 生成的界面拥有原生体验，并支持流式渲染与可定制组件目录。'
+---
+
+import { BlogHeader, Go } from '@lynx';
+import { EmbedIframe } from '@/components/EmbedIframe';
+import { ThemedImage } from '@/components/ThemedImage';
+
+<BlogHeader />
+
+[A2UI](https://a2ui.org/) 是由 Google 发起的开放协议，让 AI Agent 能够安全地生成富交互界面，而无需执行任意代码。自发布以来，它在 Generative UI 领域获得了广泛关注，已有 Angular、Flutter、Lit、React 等多个渲染器实现。
+
+今天，我们正式发布 **Lynx A2UI** —— 基于 Lynx 的 A2UI 渲染器。它让 AI Agent 生成的界面拥有真正的原生体验，并能可靠地嵌入现有应用。
+
+<ThemedImage
+  lightSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_zh.png"
+  darkSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_zh_dark.png"
+  alt="Lynx A2UI Overview"
+/>
+
+## 流式生成，原生渲染
+
+A2UI 协议天然支持[流式传输](https://a2ui.org/concepts/data-flow/)：
+Agent 一边推理一边发送 UI 片段，客户端逐步渲染。
+这种渐进式的交互模式让用户不再面对空白等待，而是看着界面随 Agent 的输出逐步成型。
+
+Lynx A2UI 充分利用了 Lynx 的 [双线程架构](/react/thinking-in-reactlynx) 来实现这一能力：
+A2UI 协议消息在后台线程（Background Thread）完成解析，UI 更新则提交到主线程（Main Thread）呈现，两者并行互不阻塞。
+即使 Agent 高频输出大量 UI 片段，界面依然保持流畅响应。
+
+<Go
+  example="a2ui"
+  defaultFile="src/gallery/Gallery.tsx"
+  defaultEntryFile="dist/gallery.lynx.bundle"
+  defaultTab="web"
+  entry="src"
+  highlight={{
+    'src/gallery/Gallery.tsx': '{150-160}',
+  }}
+/>
+
+## 可定制的 Catalog
+
+A2UI 的核心机制是 [能力目录（Catalog）](https://a2ui.org/concepts/catalogs/)：
+客户端向 Agent 声明自己支持哪些组件、函数和参数，Agent 只能在授权范围内选择。
+这既约束了生成边界，也让渲染内容可自然嵌入现有应用，与原生界面保持一致。
+
+Lynx A2UI 内置了一套基于 [lynx-ui](/lynx-ui/) 的 [默认组件目录](https://lynx-stack.dev/a2ui/#/a2ui/catalog)，涵盖按钮、列表、弹窗等常见组件，开箱即用。
+当默认目录无法满足复杂需求时，开发者也可以 [定义自己的组件](https://lynx-stack.dev/zh/guide/genui/a2ui/catalog-guide)，将现有能力注册到 Catalog 中，供 Agent 在对话中按需调用。
+
+<EmbedIframe
+  src={(theme) =>
+    `https://lynx-stack.dev/a2ui/?embed=1&theme=${theme}#/a2ui/catalog`
+  }
+  title="Lynx A2UI Catalog"
+/>
+
+## 灵活的交互响应
+
+A2UI 通过 [`Action` 机制](https://a2ui.org/concepts/actions/) 来处理用户交互：组件可以用结构化方式描述用户意图，而不是执行任意代码。
+跳转、埋点或客户端 Function 调用等本地 Action 可以即时响应；真正需要继续推理的 Action 则可以交还给 Agent，在保证安全边界的同时兼顾体验与灵活性。
+
+Lynx A2UI 通过 `<A2UI>` 渲染容器暴露了 `onAction` 回调，开发者可以更灵活地控制 UI 交互：既可以将用户操作转发给 Agent，也可以直接在渲染侧消费并驱动更新。
+
+<Go
+  example="a2ui"
+  defaultFile="src/actions/Actions.tsx"
+  defaultEntryFile="dist/actions.lynx.bundle"
+  defaultTab="web"
+  entry="src"
+  highlight={{
+    'src/actions/Actions.tsx': '{62-65,67-73}',
+  }}
+/>
+
+## 立即体验
+
+[Lynx A2UI Playground](https://lynx-stack.dev/a2ui) 提供了完整的交互体验，覆盖从模型对话到 UI 渲染的全链路。
+无需本地搭建，打开浏览器即可与 Agent 对话并实时观察界面逐步生成。如果想在真机上感受原生渲染的效果，下载 [Lynx Explorer](/guide/start/quick-start.html#prepare-lynx-explorer)，扫描页面中的二维码即可在移动设备上实时体验。
+
+阅读 [A2UI 概述](/react/genui/a2ui) 了解整体设计，或直接参考 [Lynx A2UI 接入文档](https://lynx-stack.dev/zh/guide/genui/a2ui) 将 Lynx A2UI 集成到你的应用中。
+如果你在使用中遇到问题、有功能建议，或想分享你的实践案例，欢迎在 [GitHub](https://github.com/lynx-family/lynx-stack) 上提交 Issue 或参与讨论。
+
+我们相信，AI 时代的跨平台框架不应只是能运行 AI 生成的代码，而应当为 Agent 提供一条安全、高效、原生的界面通道。Lynx A2UI 是我们在这个方向上迈出的第一步，期待与社区一起探索 Generative UI 的更多可能。
