@@ -54,6 +54,8 @@ const BASE_TYPEDOC_OPTIONS: Partial<Configuration.TypeDocOptions> = {
     '@Android',
     '@Harmony',
     '@alias',
+    '@a2uiCatalog',
+    '@a2uiFunction',
   ],
 };
 

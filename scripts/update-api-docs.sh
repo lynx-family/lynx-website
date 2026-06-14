@@ -3,11 +3,11 @@
 # Regenerate the lynx-stack-derived API reference docs in place, against a
 # lynx-stack checkout. Covers two pipelines:
 #
-#   1. rspeedy/*, genui    – Microsoft API Extractor + API Documenter, run
-#                            inside the lynx-stack `website/` workspace.
-#   2. reactlynx-testing-library, lynx-testing-environment – TypeDoc, run here
-#                            in lynx-website (`pnpm run typedoc`), reading the
-#                            freshly built lynx-stack packages.
+#   1. rspeedy/* – Microsoft API Extractor + API Documenter, run inside the
+#                  lynx-stack `website/` workspace.
+#   2. genui, reactlynx-testing-library, lynx-testing-environment – TypeDoc,
+#                  run here in lynx-website (`pnpm run typedoc`), reading the
+#                  freshly built lynx-stack packages.
 #
 # NOT covered: docs/{en,zh}/api/react (bespoke: custom intro + projectDocuments
 # whose sources don't ship) and docs/{en,zh}/api/_meta.json (hand-curated
@@ -42,9 +42,6 @@ RSPEEDY_PKG_DIRS=(
   packages/rspeedy/plugin-qrcode
   packages/rspeedy/lynx-bundle-rslib-config
   packages/webpack/externals-loading-webpack-plugin
-)
-GENUI_PKG_DIRS=(
-  packages/genui
 )
 BUILD_FILTERS=(
   --filter @lynx-js/rspeedy
@@ -144,23 +141,53 @@ echo "::endgroup::"
 generate_api_extractor_docs "rspeedy" "${RSPEEDY_PKG_DIRS[@]}"
 sync_api_extractor_docs "rspeedy" "rspeedy" "true"
 
-generate_api_extractor_docs "genui" "${GENUI_PKG_DIRS[@]}"
-sync_api_extractor_docs "genui" "genui" "false"
-
 echo "::group::Overlay built packages into node_modules for TypeDoc"
 # TypeDoc reads node_modules. Overlay the freshly built source so the docs
 # reflect main — including the testing-library README the published
-# @lynx-js/react omits, and @lynx-js/testing-environment (unpublished).
+# @lynx-js/react omits, @lynx-js/genui source comments, and
+# @lynx-js/testing-environment (unpublished).
 react_nm="$WEBSITE/node_modules/@lynx-js/react"
+genui_nm="$WEBSITE/node_modules/@lynx-js/genui"
 te_nm="$WEBSITE/node_modules/@lynx-js/testing-environment"
 cp -R "$STACK/packages/react/types/." "$react_nm/types/"
 cp -R "$STACK/packages/react/testing-library/." "$react_nm/testing-library/"
+mkdir -p "$genui_nm"
+cp -f "$STACK/packages/genui/package.json" "$genui_nm/package.json"
+cp -f "$STACK/packages/genui/index.ts" "$genui_nm/index.ts"
+rm -rf \
+  "$genui_nm/dist" \
+  "$genui_nm/a2ui/src" \
+  "$genui_nm/a2ui/dist" \
+  "$genui_nm/a2ui-prompt/src" \
+  "$genui_nm/a2ui-prompt/dist" \
+  "$genui_nm/a2ui-catalog-extractor/src" \
+  "$genui_nm/a2ui-catalog-extractor/dist" \
+  "$genui_nm/openui/src" \
+  "$genui_nm/openui/dist" \
+  "$genui_nm/server/agent"
+mkdir -p \
+  "$genui_nm/a2ui" \
+  "$genui_nm/a2ui-prompt" \
+  "$genui_nm/a2ui-catalog-extractor" \
+  "$genui_nm/openui" \
+  "$genui_nm/server"
+cp -R "$STACK/packages/genui/dist" "$genui_nm/dist"
+cp -R "$STACK/packages/genui/a2ui/src" "$genui_nm/a2ui/src"
+cp -R "$STACK/packages/genui/a2ui/dist" "$genui_nm/a2ui/dist"
+cp -R "$STACK/packages/genui/a2ui-prompt/src" "$genui_nm/a2ui-prompt/src"
+cp -R "$STACK/packages/genui/a2ui-prompt/dist" "$genui_nm/a2ui-prompt/dist"
+cp -R "$STACK/packages/genui/a2ui-catalog-extractor/src" "$genui_nm/a2ui-catalog-extractor/src"
+cp -R "$STACK/packages/genui/a2ui-catalog-extractor/dist" "$genui_nm/a2ui-catalog-extractor/dist"
+cp -R "$STACK/packages/genui/openui/src" "$genui_nm/openui/src"
+cp -R "$STACK/packages/genui/openui/dist" "$genui_nm/openui/dist"
+cp -R "$STACK/packages/genui/server/agent" "$genui_nm/server/agent"
 cp -R "$STACK/packages/testing-library/testing-environment/dist/." "$te_nm/dist/"
 cp -f "$STACK/packages/testing-library/testing-environment/README.md" "$te_nm/README.md"
 echo "::endgroup::"
 
 echo "::group::Generate TypeDoc docs"
 cd "$WEBSITE"
+rm -rf docs/en/api/genui docs/zh/api/genui
 pnpm run typedoc
 echo "::endgroup::"
 
