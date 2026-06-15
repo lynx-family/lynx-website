@@ -72,6 +72,14 @@ jobs:
         continue-on-error: true
         run: pnpm run build
 
+      - name: Validate generated docs
+        # The Create Pull Request step below runs with HUSKY=0, which skips the
+        # whole pre-commit hook. cspell/prettier are noise on auto-generated
+        # docs, but check-asset-urls.mjs is a real guard against internal asset
+        # URLs leaking into the public site — and GITHUB_TOKEN PRs don't trigger
+        # CI, so re-run it explicitly here as a hard gate before the PR is made.
+        run: node scripts/ci/check-asset-urls.mjs $(find docs/en/api docs/zh/api -type f)
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         # The action runs its own `git commit`, which triggers the husky
