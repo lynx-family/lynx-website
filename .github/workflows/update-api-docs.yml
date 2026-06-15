@@ -74,6 +74,12 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        # The action runs its own `git commit`, which triggers the husky
+        # pre-commit hook (lint-staged → cspell/prettier). On auto-generated
+        # docs that hook can fail on harmless unknown words and abort the run.
+        # HUSKY=0 skips the hook for this commit — equivalent to `git commit -n`.
+        env:
+          HUSKY: '0'
         with:
           branch: bot/update-api-docs
           delete-branch: true
