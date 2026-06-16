@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 
+import { customize as genuiCustomize } from '../themes/genui.js';
 import type { PackageConfig } from '../types/PackageConfig.js';
 
 const GENUI_PACKAGE_ROOT = 'node_modules/@lynx-js/genui';
@@ -42,6 +43,7 @@ export const PACKAGES: Record<string, PackageConfig> = {
   genui: {
     out: 'api/genui',
     tsconfig: 'scripts/typedoc/tsconfigs/genui.json',
+    customize: genuiCustomize,
     shared: {
       entryPoints: genuiEntryPoints(),
       options: {
