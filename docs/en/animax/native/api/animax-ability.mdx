@@ -1,0 +1,178 @@
+---
+description: 'AnimaXAbility API reference for iOS BaseAnimaXAbility and Android BaseAbility service and event APIs.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXAbility
+
+Ability objects manage services, event listeners, and monitoring capabilities for a single animation instance. Use them for extensions that are bound to a specific `AnimaXView`.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Creation
+
+### init
+
+Creates a `BaseAnimaXAbility` instance. The default implementation uses the default service scope.
+
+**Returns**
+
+`BaseAnimaXAbility *`
+
+## Service Management
+
+### getService
+
+Gets the service implementation for a protocol. Lookup checks the local registry first, then falls back to the global `AnimaXServiceCenter`.
+
+**Parameters**
+
+| Name    | Type         | Description       |
+| ------- | ------------ | ----------------- |
+| `proto` | `Protocol *` | Service protocol. |
+
+**Returns**
+
+`id<AnimaXService>` or `nil`.
+
+### registerService
+
+Registers a service in this ability's local registry. The service only affects animation instances bound to this ability.
+
+**Parameters**
+
+| Name    | Type                | Description             |
+| ------- | ------------------- | ----------------------- |
+| `proto` | `Protocol *`        | Service protocol.       |
+| `impl`  | `id<AnimaXService>` | Service implementation. |
+
+### unregisterService
+
+Removes a service from this ability's local registry.
+
+**Parameters**
+
+| Name    | Type         | Description                 |
+| ------- | ------------ | --------------------------- |
+| `proto` | `Protocol *` | Service protocol to remove. |
+
+## Event Listeners
+
+### addAnimationListener
+
+Adds an animation event listener. Listeners are stored as weak references.
+
+**Parameters**
+
+| Name       | Type                                                         | Description               |
+| ---------- | ------------------------------------------------------------ | ------------------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | Animation event listener. |
+
+### removeAnimationListener
+
+Removes an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                         | Description         |
+| ---------- | ------------------------------------------------------------ | ------------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | Listener to remove. |
+
+### allListeners
+
+Returns all animation event listeners registered on this ability.
+
+**Returns**
+
+[`NSHashTable<id<AnimaXAnimationListener>> *`](./animax-animation-listener)
+
+## Monitoring and Scope
+
+### getMonitorDelegate
+
+Returns the monitor delegate associated with this ability.
+
+**Returns**
+
+`AnimaXMonitorAbilityDelegate *`
+
+### getServiceScope
+
+Returns the service scope used by this ability. The default implementation returns the default scope; custom abilities can override it to isolate services.
+
+**Returns**
+
+[`AnimaXServiceScope *`](./animax-service-scope)
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Service Management
+
+### getService
+
+Gets the service implementation for a type. Lookup is handled by the instance-level `ServiceRegistry` and can fall back to the global service center.
+
+**Parameters**
+
+| Name           | Type       | Description             |
+| -------------- | ---------- | ----------------------- |
+| `serviceClass` | `Class<T>` | Service interface type. |
+
+**Returns**
+
+`T` or `null`.
+
+### registerService
+
+Registers a service in this ability's instance-level registry. The service only affects animation instances bound to this ability.
+
+**Parameters**
+
+| Name       | Type       | Description             |
+| ---------- | ---------- | ----------------------- |
+| `clazz`    | `Class<T>` | Service interface type. |
+| `instance` | `T`        | Service instance.       |
+
+### unregisterService
+
+Removes a service from this ability's instance-level registry.
+
+**Parameters**
+
+| Name    | Type       | Description                       |
+| ------- | ---------- | --------------------------------- |
+| `clazz` | `Class<T>` | Service interface type to remove. |
+
+## Event Listeners
+
+### addAnimationListener
+
+Adds an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                | Description               |
+| ---------- | --------------------------------------------------- | ------------------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | Animation event listener. |
+
+### removeAnimationListener
+
+Removes an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                | Description         |
+| ---------- | --------------------------------------------------- | ------------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | Listener to remove. |
+
+## Resource Release
+
+### release
+
+Releases resources held by this ability, including the monitor delegate, instance-level service registry, and event listener list. Do not reuse the ability after calling it.
+
+</PlatformTabs.Tab>
+</PlatformTabs>

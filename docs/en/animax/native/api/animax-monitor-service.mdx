@@ -1,0 +1,91 @@
+---
+description: 'AnimaXMonitorService API reference for receiving AnimaX errors and performance events on iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXMonitorService
+
+`AnimaXMonitorService` receives errors and performance metrics from AnimaX. Register it with [AnimaXServiceCenter](./animax-service-center) or an instance-level [AnimaXAbility](./animax-ability).
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+Implement this protocol to receive monitoring events from AnimaX.
+
+## Report Monitoring Events
+
+### reportError
+
+Reports error information.
+
+**Parameters**
+
+| Name     | Type             | Description          |
+| -------- | ---------------- | -------------------- |
+| `params` | `NSDictionary *` | Error event payload. |
+
+### reportPerformance
+
+Reports performance metrics.
+
+**Parameters**
+
+| Name     | Type             | Description                |
+| -------- | ---------------- | -------------------------- |
+| `params` | `NSDictionary *` | Performance event payload. |
+
+## Registration
+
+```objc
+[[AnimaXServiceCenter sharedInstance] registerService:@protocol(AnimaXMonitorService)
+                                             withImpl:myMonitor];
+```
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Runtime Context
+
+### setCurrentUrl
+
+Sets the current animation URL. Later error and performance events can use this context.
+
+**Parameters**
+
+| Name  | Type     | Description  |
+| ----- | -------- | ------------ |
+| `url` | `String` | Current URL. |
+
+## Report Monitoring Events
+
+### reportError
+
+Reports error information.
+
+**Parameters**
+
+| Name        | Type               | Description        |
+| ----------- | ------------------ | ------------------ |
+| `errorInfo` | `AnimaXErrorParam` | Error information. |
+
+### reportPerformanceMetrics
+
+Reports performance metrics.
+
+**Parameters**
+
+| Name      | Type                   | Description          |
+| --------- | ---------------------- | -------------------- |
+| `metrics` | `MetricsAndEventStore` | Performance metrics. |
+
+## Registration
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXMonitorService.class,
+    myMonitor);
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>

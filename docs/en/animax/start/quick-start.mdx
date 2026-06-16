@@ -1,0 +1,133 @@
+import { Steps } from '@theme';
+import * as NextSteps from '@lynx/NextSteps';
+import { Go } from '@lynx';
+
+In this document, we will start from a Lynx project to run and verify a minimal runnable example of AnimaX.
+
+## Get Started
+
+<Steps>
+### Prepare a Lynx Project
+
+Please prepare a Lynx project and an Example App.
+If you’re not sure how to begin, refer to [this document](/guide/start/quick-start) to create and run your first Lynx project.
+
+You can verify AnimaX through the Lynx [`<animax-view>`](/api/elements/built-in/animax-view), or try AnimaX with the open-source native [Android](https://github.com/lynx-family/animax/blob/develop/example/android/README.md) and [iOS](https://github.com/lynx-family/animax/blob/develop/example/darwin/ios/README.md) example guides.
+
+:::tip
+
+💡 The quick start section of this document uses ReactLynx to demonstrate the integration process for faster onboarding.
+
+Using AnimaX does not require prior Lynx integration. Any app can integrate AnimaX directly with the native examples in the [lynx-family/animax](https://github.com/lynx-family/animax) repository.
+
+:::
+
+### Prepare the Animation
+
+Typically, designers export Lottie resources from AE using the AFX plugin.
+
+If you’re interested in how this resource is produced, see [Export Plugin](../afx) to learn the AFX export process and specifications.
+
+::: details How does AnimaX organize Lottie animation assets?
+
+For any animation resource, there is an accompanying `.json` file conforming to the [Lottie specification](https://lottiefiles.github.io/lottie-docs/) that stores metadata for the assets.
+For example, the metadata description for an image in the Lottie spec is as follows:
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "images/",
+    "p": "img_0.png",
+    "e": 0
+  }
+]
+```
+
+Here, the `u` and `p` fields respectively represent the relative path and file name of the image asset with `id` `image_0`.
+
+Image assets can also come from a URL; in this case, set `u` to empty and put the full URL in `p`:
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "",
+    "p": "https://example.com",
+    "e": 0
+  }
+]
+```
+
+Additionally, Base64 inline images are supported. In this case, set `e` (Embedded) to `1` and put the Base64 data in `p`:
+
+```json {6-7}
+"assets": [
+  {
+    "id": "image_0",
+    "w": 926,
+    "h": 172,
+    "u": "",
+    "p": "data:image/png;base64,...",
+    "e": 1
+  }
+]
+```
+
+In AnimaX, you can also inject asset resources using formatted strings via [`src-format`](/api/elements/built-in/animax-view.html#src-format) and [`src-polyfill`](/api/elements/built-in/animax-view.html#src-polyfill), or load resources on demand at runtime using [Dynamic Properties](../dynamic-property).
+
+:::
+
+### Start Developing
+
+The example package already includes the shared styles in `src/App.css`.
+Open `src/basic/index.tsx` in your code editor and focus on the highlighted `<animax-view>` block.
+
+<Go
+  example="animax"
+  defaultTab="preview"
+  webPreview={false}
+  defaultFile="src/basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+  entry="src/basic"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic_v3.gif"
+  highlight={{
+    'src/basic/index.tsx': '{15-20}',
+  }}
+/>
+
+You have successfully run a minimal runnable example of AnimaX!
+
+::: details The src attribute in \<animax-view\>
+
+The [`src`](/api/elements/built-in/animax-view.html#src) attribute accepts a URL that can point to a `.json` or `.zip` file.
+
+- For `.json`: AnimaX will take the URL’s directory prefix as the asset root, and load assets by concatenating the relative paths from the spec with this root.
+- For `.zip`: AnimaX uses the root directory within the archive as the asset root, parsing and loading assets according to the relative or absolute paths in the spec.
+
+For simpler scenarios, you can pass complete animation data directly via the [`json`](/api/elements/built-in/animax-view.html#json) attribute; in this case (if assets are included), referencing external resources via relative paths is not supported.
+
+:::
+
+</Steps>
+
+## Continue Learning
+
+You can continue learning advanced AnimaX usage, or learn how to use the AFX plugin to create animation assets in AE.
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/animax/afx"
+    title="Export Plugin"
+    description="Learn how to use the AFX plugin to export Lottie resources compatible with AnimaX"
+  />
+  <NextSteps.Step
+    href="/animax/tutorial/basic-controls"
+    title="Tutorial: Basic Controls"
+    description="Learn the <animax-view> API for basic playback and control"
+  />
+</NextSteps.Root>
