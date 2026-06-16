@@ -1,0 +1,168 @@
+# Android Native API
+
+This page describes the native Android API for embedding AnimaX directly in an Android app. The Lynx [`<animax-view>` API](/api/elements/built-in/animax-view) is coming soon for Lynx page integration.
+
+## Core component
+
+`AnimaXView` is the Android playback view for AnimaX. It provides resource loading, playback control, seeking, events, and status APIs.
+
+### XML layout
+
+```xml
+<com.lynx.animax.ui.AnimaXView
+    android:id="@+id/animax_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:animax_autoPlay="true"
+    app:animax_loop="true"
+    app:animax_objectFit="contain" />
+```
+
+### Create in code
+
+```java
+AnimaXView animaxView = new AnimaXView(context);
+animaxView.setSrc("https://example.com/animation.json");
+parentView.addView(animaxView);
+```
+
+## Attributes
+
+| Attribute             | Method                    | Default   | Description                                                             |
+| --------------------- | ------------------------- | --------- | ----------------------------------------------------------------------- |
+| `animax_autoPlay`     | `setAutoPlay(boolean)`    | `true`    | Whether to start playback automatically after loading.                  |
+| `animax_loop`         | `setLoop(boolean)`        | `false`   | Whether to loop playback.                                               |
+| `animax_animationUrl` | `setSrc(String)`          | -         | Animation resource URL.                                                 |
+| `animax_objectFit`    | `setObjectFit(ObjectFit)` | `contain` | Content fit mode: `contain`, `cover`, `fill`, `center`, or `scaleDown`. |
+| `animax_progress`     | `setProgress(float)`      | `0.0`     | Initial playback progress in the range `[0.0, 1.0]`.                    |
+| `animax_speed`        | `setSpeed(float)`         | `1.0`     | Playback speed multiplier.                                              |
+
+## Methods
+
+`AnimaXView` delegates core playback capabilities to the AnimaX player interface.
+
+:::caution
+
+Call playback and status methods after the ready callback. Before the animation resource is loaded, methods such as `play`, `seek`, `getCurrentFrame`, and `getDurationMs` may not have stable results.
+
+:::
+
+### Playback control
+
+- `play()`: Start playback from the current position.
+- `pause()`: Pause at the current frame.
+- `resume()`: Resume from the paused position.
+- `stop()`: Stop playback and reset to the start.
+- `seek(int frame)`: Jump to a specific frame.
+- `playSegment(int startFrame, int endFrame)`: Play a frame range.
+
+### Resource loading
+
+:::tip
+
+Set playback options such as `loop` and `autoPlay` before calling `setSrc`, `setJson`, or `setComposition`.
+
+:::
+
+- `setSrc(String src)`: Load an animation resource from a URL or supported URI.
+- `setJson(String json)`: Load animation data directly from a JSON string.
+- `setComposition(AnimaXComposition composition)`: Use a preloaded composition, which can be useful for reuse-heavy scenarios.
+
+### Configuration
+
+- `setLoop(boolean loop)`: Set whether playback loops.
+- `setLoopCount(int count)`: Set loop count. `0` means infinite loop.
+- `setAutoPlay(boolean auto)`: Set whether playback starts automatically.
+- `setSpeed(float speed)`: Set playback speed.
+- `setScaleType(ScaleType type)`: Set scale type.
+- `setObjectFit(ObjectFit objectFit)`: Set content fit mode.
+- `setObjectPosition(ObjectPosition position)`: Set content alignment.
+- `setEnableTapLayerEvent(boolean enable)`: Enable layer hit-test callbacks.
+
+### Status
+
+- `isAnimating()`: Return whether playback is currently running.
+- `getCurrentFrame()`: Get the current rendered frame number.
+- `getDurationMs()`: Get the total duration in milliseconds.
+- `getComposition()`: Get the current `AnimaXComposition`.
+
+## Events
+
+Add an animation listener with `addAnimationListener(IAnimationListener listener)`. Use `AnimationListenerAdapter` when you only need a subset of callbacks.
+
+```java
+animaxView.addAnimationListener(new AnimationListenerAdapter() {
+    @Override
+    public void onReady(AnimaXParam param) {
+        // Resources are loaded. Playback and status APIs are ready.
+    }
+
+    @Override
+    public void onStart(AnimaXParam param) {
+        // Playback started.
+    }
+
+    @Override
+    public void onComplete(AnimaXParam param) {
+        // Playback completed.
+    }
+
+    @Override
+    public void onRepeat(AnimaXParam param) {
+        // One loop completed and the next loop started.
+    }
+
+    @Override
+    public void onCancel(AnimaXParam param) {
+        // Playback was cancelled.
+    }
+
+    @Override
+    public void onError(AnimaXErrorParam param) {
+        // Loading or playback failed.
+    }
+
+    @Override
+    public void onUpdate(AnimaXParam param) {
+        // Frame update. Subscribe to update events before relying on this.
+    }
+
+    @Override
+    public void onFPS(AnimaXFPSParam param) {
+        // FPS sample. Avoid very small sampling intervals in production.
+    }
+
+    @Override
+    public void onTapLayers(AnimaXTapParam param) {
+        // Layer tap callback. Enable layer tap events first.
+    }
+});
+```
+
+## Capability injection
+
+`AnimaXServiceCenter` is a global service registry for shared capabilities such as resource loaders or image decoders.
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXResourceFactoryService.class,
+    new IAnimaXResourceFactoryService() {
+        @Override
+        public List<IAnimaXLoader> createAnimaXLoaders() {
+            return Collections.singletonList(new HttpLoader());
+        }
+    }
+);
+```
+
+For per-view behavior, create the view with a custom ability.
+
+```java
+public class MyCustomAbility extends NativeAbility {
+    // Override or extend capabilities here.
+}
+
+AnimaXContext animaxContext =
+    new AnimaXContext.Builder(new MyCustomAbility(), context).build();
+AnimaXView animaxView = new AnimaXView(animaxContext);
+```

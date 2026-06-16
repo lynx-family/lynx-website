@@ -1,0 +1,134 @@
+# iOS Native API
+
+This page describes the native iOS API for embedding AnimaX directly in an iOS app. The Lynx [`<animax-view>` API](/api/elements/built-in/animax-view) is coming soon for Lynx page integration.
+
+## Core component
+
+`AnimaXView` is the iOS playback view for AnimaX. It inherits from `UIView` and provides resource loading, playback control, seeking, events, and status APIs.
+
+### Create in code
+
+```objective-c
+#import <AnimaX/AnimaXView.h>
+#import <AnimaX/AnimaXContext.h>
+
+AnimaXContext *context = [[AnimaXContext alloc] init];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+animaxView.frame = CGRectMake(0, 0, 300, 300);
+
+[animaxView setSrc:@"https://example.com/animation.json"];
+[self.view addSubview:animaxView];
+```
+
+## Properties
+
+`AnimaXView` implements the player protocol. Common properties are configured through methods.
+
+| Method                      | Description                                                    |
+| --------------------------- | -------------------------------------------------------------- |
+| `setAutoplay:(BOOL)`        | Whether to start playback automatically after loading.         |
+| `setLoop:(BOOL)`            | Whether to loop playback.                                      |
+| `setSrc:(NSString *)`       | Set the animation resource URL.                                |
+| `setObjectfit:(NSString *)` | Set content fit mode: `contain`, `cover`, `fill`, or `center`. |
+| `setSpeed:(double)`         | Set playback speed multiplier.                                 |
+| `setProgress:(double)`      | Set playback progress in the range `[0.0, 1.0]`.               |
+
+## Methods
+
+:::caution
+
+Call playback and status methods after the ready callback. Before the animation resource is loaded, methods such as `play`, `seekTo:`, `currentFrame`, and `durationInMS` may not have stable results.
+
+:::
+
+### Playback control
+
+- `play`: Start playback from the current position.
+- `pause`: Pause at the current frame.
+- `resume`: Resume from the paused position.
+- `stop`: Stop playback and reset to the start.
+- `seekTo:(double)frame`: Jump to a specific frame.
+- `playFrom:(double)startFrame to:(double)endFrame`: Play a frame range.
+
+### Resource loading
+
+:::tip
+
+Set playback options such as `loop` and `autoplay` before calling `setSrc`, `setJson`, or `setComposition`.
+
+:::
+
+- `setSrc:(NSString *)src`: Load an animation resource URL.
+- `setJson:(NSString *)json`: Load animation data directly from a JSON string.
+- `setComposition:(AnimaXComposition *)composition`: Use a preloaded composition.
+
+### Configuration
+
+- `setLoopCount:(int)count`: Set loop count.
+- `setStartFrame:(double)frame`: Set the start frame.
+- `setEndFrame:(double)frame`: Set the end frame.
+- `setAutoReverse:(BOOL)enable`: Reverse playback on repeats.
+- `setFPSEventInterval:(long)interval`: Set FPS sampling interval in milliseconds.
+- `subscribeUpdateEvent:(int)frame`: Subscribe to updates for a specific frame.
+
+### Status
+
+- `isAnimating`: Return whether playback is currently running.
+- `currentFrame`: Get the current rendered frame number.
+- `durationInMS`: Get the total duration in milliseconds.
+
+## Events
+
+Add a listener with `addAnimationEventListener:(id<AnimaXAnimationListener>)listener`.
+
+```objective-c
+@interface MyListener : NSObject <AnimaXAnimationListener>
+@end
+
+@implementation MyListener
+
+- (void)onReady:(NSDictionary *)params {
+    // Resources are loaded. Playback and status APIs are ready.
+}
+
+- (void)onStart:(NSDictionary *)params {
+    // Playback started.
+}
+
+- (void)onCompletion:(NSDictionary *)params {
+    // Playback completed.
+}
+
+- (void)onRepeat:(NSDictionary *)params {
+    // One loop completed.
+}
+
+- (void)onError:(NSDictionary *)params {
+    // Loading or playback failed.
+}
+
+- (void)onUpdate:(NSDictionary *)params {
+    // Frame update. Subscribe to update events before relying on this.
+}
+
+- (void)onFps:(NSDictionary *)params {
+    // FPS sample. Avoid very small sampling intervals in production.
+}
+
+- (void)onTapLayers:(NSDictionary *)params {
+    // Layer tap callback.
+}
+
+@end
+
+[animaxView addAnimationEventListener:[[MyListener alloc] init]];
+```
+
+## Capability injection
+
+`AnimaXServiceCenter` is a global service registry for shared native capabilities.
+
+Common operations include:
+
+- `registerService:withImpl:`: Register a service implementation.
+- `getService:`: Get a registered service.

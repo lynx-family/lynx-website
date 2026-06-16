@@ -1,0 +1,146 @@
+# FAQ
+
+This page covers common rendering, control, asset, and font issues when using AnimaX.
+
+:::info
+
+Links to `<animax-view>` refer to the upcoming Lynx integration API.
+
+:::
+
+## Rendering issues
+
+### Android or iOS rendering differs from web preview
+
+Web previews are often rendered by `lottie-web`, which may support a different feature set from native animation runtimes. A Lottie file can therefore look correct in a browser preview but render differently on Android or iOS.
+
+Use the [AFX export guide](./start/afx) and compatibility checks during authoring to catch unsupported features early.
+
+### Some frames are skipped or not rendered
+
+Mobile rendering is usually synchronized to a frame interval around 16 ms for 60 FPS. If the main thread is busy, the actual interval can become longer, so some frames may not be rendered.
+
+If an animation relies on many very short frames, increase each frame's duration where possible. If it uses many image-sequence frames, consider converting suitable parts to a [video layer](./alpha-video).
+
+### Text layer layout is inconsistent
+
+Text layout in Lottie clients can differ across platforms. When preparing text layers in After Effects:
+
+1. Use centered paragraph alignment.
+2. Set the text layer anchor point to the center of the layer.
+3. Keep baseline shift at `0`.
+4. Adjust the layer position after the first three constraints are satisfied.
+
+These constraints reduce cross-platform layout differences.
+
+## Control issues
+
+### The animation stops unexpectedly
+
+If the animation is mounted inside a popup or overlay, try setting [`ignore-attach-status`](/api/elements/built-in/animax-view.html#ignore-attach-status) to `true`. If the issue is lifecycle-related, also check [`ignore-lynx-lifecycle`](/api/elements/built-in/animax-view.html#ignore-lynx-lifecycle).
+
+If playback still stops, check whether business logic calls `pause`, `stop`, or `cancel`, and use [`bindcancel`](/api/elements/built-in/animax-view.html#bindcancel) to help trace cancellation.
+
+### `autoplay={false}` is set and manual `play` does not start
+
+Call `play` after the [`bindready`](/api/elements/built-in/animax-view.html#bindready) callback. The animation can only be played after the resource has loaded and parsed.
+
+### Poster image switches to animation with stretching
+
+Keep the poster image display mode aligned with the AnimaX fit mode. For example, `objectfit="cover"` should use an image mode that also fills the container proportionally.
+
+```tsx
+const [isFrameReady, setIsFrameReady] = useState(false);
+
+const handleFirstFrame = () => {
+  setIsFrameReady(true);
+};
+
+return (
+  <view className="container">
+    <animax-view
+      className="animax-item"
+      bindfirstframe={handleFirstFrame}
+      src="https://example.com/animation.json"
+      objectfit="cover"
+    />
+    {!isFrameReady && (
+      <image
+        className="poster-item"
+        src="https://example.com/poster.png"
+        mode="aspectFill"
+      />
+    )}
+  </view>
+);
+```
+
+See [`objectfit`](/api/elements/built-in/animax-view.html#objectfit) for details.
+
+## Asset issues
+
+### Animation JSON and image assets are not bundled
+
+When using local files, make sure the assets are included in your build output and that the animation JSON references the final deployed asset paths. See Rspeedy output and asset configuration for details.
+
+### `src-polyfill` replacement does not work
+
+Check [`src-polyfill`](/api/elements/built-in/animax-view.html#src-polyfill) and [`src-format`](/api/elements/built-in/animax-view.html#src-format). Both properties must be used together, and the target asset field in the Lottie JSON must be prepared with a `%s` placeholder.
+
+For more complex runtime replacement, prefer [Dynamic Properties](./dynamic-property).
+
+### Video layers show black borders
+
+For video layers, make sure the video width and height are integer multiples of 16. Some decoders require this alignment and can pad non-aligned videos, causing black borders.
+
+If borders still appear after using aligned dimensions, expand the source video by a few transparent pixels so the padded area remains transparent.
+
+### Font file loading fails
+
+Check the `origin` value under `fonts.list` in the Lottie JSON.
+
+```json
+{
+  "fonts": {
+    "list": [
+      {
+        "origin": 3,
+        "fPath": "",
+        "fFamily": "Example Font"
+      }
+    ]
+  }
+}
+```
+
+In the [Lottie specification](https://lottiefiles.github.io/lottie-docs/constants/#font-path-origin), `origin: 3` means the font is loaded from a remote resource. Make sure `fPath` is a valid URL, or set the font resource through Dynamic Properties before playback starts.
+
+If you only need a system fallback font, use `origin: 0` so the runtime does not request a remote font file.
+
+### Custom fonts are needed for text layers
+
+Use the AFX export flow when possible. If you need to adjust the JSON manually, set `origin` and `fPath` explicitly.
+
+```json
+{
+  "fonts": {
+    "list": [
+      {
+        "origin": 3,
+        "fPath": "https://example.com/fonts/example.ttf",
+        "fFamily": "Example Font"
+      }
+    ]
+  }
+}
+```
+
+## Other issues
+
+### iOS implicit animation affects playback
+
+Set [`implicit-animation={false}`](/api/elements/built-in/animax-view.html#implicit-animation) when implicit native animations interfere with AnimaX playback.
+
+### How do I inspect metrics and errors?
+
+See [Monitoring](./monitoring) for public metric fields and error-code definitions.

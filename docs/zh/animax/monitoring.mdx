@@ -1,0 +1,106 @@
+# 监控
+
+AnimaX 会暴露性能和错误信息，宿主可以通过事件、原生回调或自己的监控管线采集。本文只说明可公开使用的指标字段和错误码，便于搭建看板或排查线上问题，不依赖任何内部监控平台。
+
+:::info
+
+文中指向 `<animax-view>` 事件的链接属于即将推出的 Lynx 集成 API。
+
+:::
+
+## 性能指标
+
+核心指标：
+
+- `AnimaXFCP`：从资源开始加载到首帧渲染完成的耗时。
+- `FPS`：播放期间平均帧率。
+- `PrepareResourceTime`：总资源加载耗时。
+- `PrepareCompositionTime`：动画 composition 加载或解析耗时。
+- `PrepareAssetsTime`：图片、字体、视频等子资源加载耗时。
+
+| 指标                 | 含义                             | 字段                     |
+| -------------------- | -------------------------------- | ------------------------ |
+| 首帧完成             | 从开始加载到首帧渲染完成的耗时   | `AnimaXFCP`              |
+| 资源加载耗时         | 总资源加载耗时                   | `PrepareResourceTime`    |
+| Composition 加载耗时 | JSON 或 composition 加载耗时     | `PrepareCompositionTime` |
+| 子资源加载耗时       | 图片、字体、视频等子资源加载耗时 | `PrepareAssetsTime`      |
+| 平均 FPS             | 平均播放帧率                     | `FPS`                    |
+| 首帧耗时             | 首帧渲染耗时                     | `FirstFrameTime`         |
+| 平均帧耗时           | 平均单帧渲染耗时                 | `MeanFrameTime`          |
+| 最大帧耗时           | 最长单帧渲染耗时                 | `MaxFrameTime`           |
+
+### 常见字段
+
+| 字段                     | 类型    | 说明                                     |
+| ------------------------ | ------- | ---------------------------------------- |
+| `page_url`               | string  | 当前页面 URL 或页面标识。                |
+| `src_url`                | string  | 动画资源 URL。                           |
+| `FPS`                    | number  | 播放期间平均帧率。                       |
+| `PrepareResourceTime`    | number  | 总资源加载耗时，单位为毫秒。             |
+| `PrepareCompositionTime` | number  | Composition 加载或解析耗时，单位为毫秒。 |
+| `PrepareAssetsTime`      | number  | 子资源加载耗时，单位为毫秒。             |
+| `FirstFrameTime`         | number  | 首帧渲染耗时，单位为毫秒。               |
+| `MeanFrameTime`          | number  | 平均单帧渲染耗时，单位为毫秒。           |
+| `MaxFrameTime`           | number  | 最长单帧渲染耗时，单位为毫秒。           |
+| `has_cancelled`          | boolean | 是否发生取消。                           |
+| `has_updated`            | boolean | 是否触发 update 回调。                   |
+| `has_started`            | boolean | 是否开始播放。                           |
+| `has_completed`          | boolean | 是否播放完成。                           |
+| `has_repeated`           | boolean | 是否发生重复播放。                       |
+| `is_ready`               | boolean | 是否触发 ready 回调。                    |
+| `had_errors`             | boolean | 是否发生错误。                           |
+
+## 错误指标
+
+AnimaX 错误信息通常包含错误 `code`、`msg` 和资源上下文。
+
+| 字段       | 类型   | 说明                      |
+| ---------- | ------ | ------------------------- |
+| `page_url` | string | 当前页面 URL 或页面标识。 |
+| `src_url`  | string | 动画资源 URL。            |
+| `code`     | string | AnimaX 主错误码。         |
+| `msg`      | string | 详细错误信息。            |
+
+### 主错误码
+
+| Code  | 说明                       |
+| ----- | -------------------------- |
+| `0`   | 无错误。                   |
+| `1`   | 资源不存在或资源加载失败。 |
+| `10`  | Surface 初始化错误。       |
+| `100` | 视频播放器错误。           |
+| `101` | 视频播放器播放失败。       |
+
+当 `code` 为 `1` 或 `10` 时，会触发 [`binderror`](/api/elements/built-in/animax-view.html#binderror)，并且不会触发 [`bindready`](/api/elements/built-in/animax-view.html#bindready)。
+
+### 资源加载子错误码
+
+子错误码可能出现在 `msg` 字段中。
+
+| Code   | 说明                   |
+| ------ | ---------------------- |
+| `0`    | 成功。                 |
+| `100`  | 无效加载请求。         |
+| `101`  | 无效 loader。          |
+| `102`  | 无效 callback。        |
+| `103`  | 无效参数。             |
+| `104`  | 未找到 loader。        |
+| `400`  | 文件不存在。           |
+| `401`  | 无文件访问权限。       |
+| `402`  | 文件 I/O 失败。        |
+| `500`  | 参考错误信息。         |
+| `600`  | 无效图片。             |
+| `601`  | 无效图片数据。         |
+| `602`  | Bitmap 错误。          |
+| `700`  | 用户自定义错误。       |
+| `800`  | 解压失败。             |
+| `900`  | Loader 未处理请求。    |
+| `1000` | 无效原始数据。         |
+| `1100` | 无效文件路径。         |
+| `1200` | Composition 解析错误。 |
+
+## 采集建议
+
+- 监听 [`binderror`](/api/elements/built-in/animax-view.html#binderror) 采集加载和播放失败。
+- 仅在需要 FPS 样本时监听 [`bindfps`](/api/elements/built-in/animax-view.html#bindfps)，生产环境不要设置过小的采样间隔。
+- 在宿主监控中带上 `src_url`、页面标识、设备型号和应用版本，便于聚合与复现问题。

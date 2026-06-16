@@ -87,6 +87,7 @@ const CompactAvatar = ({
   authors: (typeof originListData)[0][];
 }) => {
   const lang = useLang();
+  const separator = lang === 'zh' ? '、' : ', ';
 
   return (
     <span className={styles['compact-authors']}>
@@ -106,7 +107,9 @@ const CompactAvatar = ({
         ))}
       </span>
       <span className={styles['compact-names']}>
-        {authors.map((a) => (lang === 'zh' ? a.name_zh : a.name)).join(', ')}
+        {authors
+          .map((a) => (lang === 'zh' ? a.name_zh : a.name))
+          .join(separator)}
       </span>
     </span>
   );

@@ -1,0 +1,106 @@
+# Monitoring
+
+AnimaX exposes performance and error information that hosts can collect through events, native callbacks, or their own telemetry pipeline. This page documents the public metric fields and error codes so you can build dashboards or debug production issues without depending on an internal monitoring platform.
+
+:::info
+
+Links to `<animax-view>` events refer to the upcoming Lynx integration API.
+
+:::
+
+## Performance metrics
+
+Key metrics:
+
+- `AnimaXFCP`: Time from resource loading start to first-frame render completion.
+- `FPS`: Average frame rate during playback.
+- `PrepareResourceTime`: Total resource loading time.
+- `PrepareCompositionTime`: Time to load or parse the animation composition.
+- `PrepareAssetsTime`: Time to load sub-resources such as images, fonts, or videos.
+
+| Metric                 | Meaning                                      | Field                    |
+| ---------------------- | -------------------------------------------- | ------------------------ |
+| First-frame completion | Time from load start to first rendered frame | `AnimaXFCP`              |
+| Resource load duration | Total resource loading time                  | `PrepareResourceTime`    |
+| Composition load time  | JSON or composition load time                | `PrepareCompositionTime` |
+| Asset load time        | Sub-resource load time                       | `PrepareAssetsTime`      |
+| Average FPS            | Average playback frame rate                  | `FPS`                    |
+| First frame time       | First-frame render time                      | `FirstFrameTime`         |
+| Mean frame time        | Average per-frame render time                | `MeanFrameTime`          |
+| Max frame time         | Longest per-frame render time                | `MaxFrameTime`           |
+
+### Common fields
+
+| Field                    | Type    | Description                                          |
+| ------------------------ | ------- | ---------------------------------------------------- |
+| `page_url`               | string  | Current page URL or page identifier.                 |
+| `src_url`                | string  | Animation resource URL.                              |
+| `FPS`                    | number  | Average frame rate during playback.                  |
+| `PrepareResourceTime`    | number  | Total resource loading time in milliseconds.         |
+| `PrepareCompositionTime` | number  | Composition loading or parsing time in milliseconds. |
+| `PrepareAssetsTime`      | number  | Sub-resource loading time in milliseconds.           |
+| `FirstFrameTime`         | number  | First-frame render time in milliseconds.             |
+| `MeanFrameTime`          | number  | Average frame render time in milliseconds.           |
+| `MaxFrameTime`           | number  | Longest frame render time in milliseconds.           |
+| `has_cancelled`          | boolean | Whether cancellation occurred.                       |
+| `has_updated`            | boolean | Whether update callbacks occurred.                   |
+| `has_started`            | boolean | Whether playback started.                            |
+| `has_completed`          | boolean | Whether playback completed.                          |
+| `has_repeated`           | boolean | Whether playback repeated.                           |
+| `is_ready`               | boolean | Whether the ready callback fired.                    |
+| `had_errors`             | boolean | Whether an error occurred.                           |
+
+## Error metrics
+
+AnimaX error reports usually include an error `code`, a `msg`, and resource context.
+
+| Field      | Type   | Description                          |
+| ---------- | ------ | ------------------------------------ |
+| `page_url` | string | Current page URL or page identifier. |
+| `src_url`  | string | Animation resource URL.              |
+| `code`     | string | Primary AnimaX error code.           |
+| `msg`      | string | Detailed error message.              |
+
+### Primary error codes
+
+| Code  | Description                                    |
+| ----- | ---------------------------------------------- |
+| `0`   | No error.                                      |
+| `1`   | Resource not found or resource loading failed. |
+| `10`  | Surface initialization error.                  |
+| `100` | Video player error.                            |
+| `101` | Video player encountered an error.             |
+
+When `code` is `1` or `10`, the [`binderror`](/api/elements/built-in/animax-view.html#binderror) callback is triggered and [`bindready`](/api/elements/built-in/animax-view.html#bindready) is not triggered.
+
+### Resource loading sub-error codes
+
+Sub-error codes can appear in the `msg` field.
+
+| Code   | Description                    |
+| ------ | ------------------------------ |
+| `0`    | Success.                       |
+| `100`  | Invalid load request.          |
+| `101`  | Invalid loader.                |
+| `102`  | Invalid callback.              |
+| `103`  | Invalid parameters.            |
+| `104`  | Loader not found.              |
+| `400`  | File does not exist.           |
+| `401`  | No permission to access file.  |
+| `402`  | File I/O failure.              |
+| `500`  | See error message for details. |
+| `600`  | Invalid image.                 |
+| `601`  | Invalid image data.            |
+| `602`  | Bitmap error.                  |
+| `700`  | User-defined error.            |
+| `800`  | Decompression failed.          |
+| `900`  | Loader did not handle request. |
+| `1000` | Invalid raw data.              |
+| `1100` | Invalid file path.             |
+| `1200` | Composition parsing error.     |
+
+## Collection tips
+
+- Listen to [`binderror`](/api/elements/built-in/animax-view.html#binderror) for load and playback failures.
+- Listen to [`bindfps`](/api/elements/built-in/animax-view.html#bindfps) only when you need FPS samples. Avoid very small sampling intervals in production.
+- Include `src_url`, page identity, device model, and app version in host telemetry so issues can be grouped and reproduced.

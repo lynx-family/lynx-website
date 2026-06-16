@@ -1,0 +1,138 @@
+---
+title: 'Announcing AnimaX'
+date: 2026-06-15
+sidebar: false
+authors: ['RickAi', 'WATER1350', 'liyunrainbow', 'XianruoLi', 'cait7']
+badge_text: 'AnimaX is released!'
+description: 'Announcing AnimaX, a high-performance cross-platform animation engine built in C++ with full Lottie compatibility, Alpha Video support, and mixed vector/video rendering for iOS, Android, and Lynx apps.'
+---
+
+import { BlogHeader, Caption, ImageWall } from '@lynx';
+
+<BlogHeader />
+
+[AnimaX](https://github.com/lynx-family/animax) is now available as an
+open-source animation engine for teams that need more than basic vector
+playback. It is built in C++ around a self-rendering pipeline, is compatible
+with Lottie, and adds first-class support for Alpha Video and mixed animation
+layers.
+
+AnimaX is also published in the
+[lynx-family/animax](https://github.com/lynx-family/animax) repository, with
+native Android and iOS examples available from the project. For Lynx apps, the
+new [`<animax-view>`](/api/elements/built-in/animax-view) element brings the
+same runtime into the component tree; this Lynx integration is coming soon.
+
+<ImageWall
+  rows={2}
+  cols={3}
+  maxItems={6}
+  colsResponsive={{ base: 2, md: 3 }}
+  tileAspectRatio={9 / 16}
+  srcBase="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/"
+  images={[
+    {
+      filePath: 'vector.mp4',
+      alt: 'Vector Layer',
+    },
+    {
+      filePath: 'image.mp4',
+      alt: 'Image Layer',
+    },
+    {
+      filePath: 'text.mp4',
+      alt: 'Text Layer',
+    },
+    {
+      filePath: 'alpha_video.mp4',
+      alt: 'Alpha Video Layer',
+    },
+    {
+      filePath: 'vector2.mp4',
+      alt: 'Vector Layer',
+    },
+    {
+      filePath: 'mixed.mp4',
+      alt: 'Mixed Layer',
+    },
+  ]}
+/>
+
+<Caption>Animations rendered by AnimaX across different layer types</Caption>
+
+## When Lottie Is Not Enough
+
+Lottie made vector animation portable across mobile and web, but production
+motion often reaches beyond pure vectors. Complex After Effects scenes may use
+images, text, particles, glow, or video-like effects. Traditional Lottie
+workflows can force teams to trade visual fidelity for file size, platform
+consistency, or runtime performance.
+
+AnimaX is designed for that gap. Existing Lottie JSON files can be parsed and
+played directly, while richer assets can combine vector, image, text, and Alpha
+Video layers in one animation.
+
+## A Unified Renderer
+
+AnimaX uses a unified C++ renderer powered by
+[Skity](https://github.com/lynx-family/skity). Instead of delegating to
+different platform renderers, the engine owns parsing, rendering, and playback
+across iOS and Android. This keeps output consistent and lets expensive
+graphics work move away from the main thread.
+
+That architecture matters most when animations become part of product UI:
+onboarding scenes, rewards, creator tools, commerce effects, game-like
+interactions, and any place where animation needs to be both expressive and
+repeatable.
+
+## Mixed Animation Layers
+
+Alpha Video is the key capability that unlocks a different class of effects.
+With transparency preserved in the video layer, designers can bring in complex
+visuals that are difficult to rebuild as pure vectors, then compose them with
+normal Lottie layers.
+
+The result is a practical motion pipeline:
+
+- designers keep the After Effects workflow they already know;
+- AFX exports Lottie-compatible artifacts, including Alpha Video layers when
+  needed;
+- AnimaX plays the exported assets through one engine;
+- apps can still update animation properties at runtime through dynamic
+  properties.
+
+## Use It In Lynx Or Native Apps
+
+In a Lynx page, AnimaX is exposed through `<animax-view>`. This Lynx integration
+is coming soon:
+
+```tsx
+<animax-view
+  className="animax-item"
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.json"
+  autoplay={true}
+  loop={true}
+/>
+```
+
+The `src` attribute can load a `.json` or `.zip` animation resource. For
+simpler cases, animation data can also be provided directly through the `json`
+attribute. See the [`<animax-view>` API](/api/elements/built-in/animax-view) for
+properties, events, and runtime controls.
+
+AnimaX can also be integrated directly as a native library. For platform-level
+usage, see the [Android native API reference](/animax/reference/android) and
+[iOS native API reference](/animax/reference/ios), which cover view creation,
+resource loading, playback control, events, and status APIs.
+
+## Try It Today
+
+Start with the [AnimaX introduction](/animax/introduction) to understand the
+runtime, then follow the [quick start](/animax/start/quick-start) to run a
+minimal Lynx example. If you author motion assets in After Effects, continue
+with the [AFX export guide](/animax/start/afx) to learn how Alpha Video layers
+are produced.
+
+AnimaX is Apache-2.0 licensed and developed in the open. File bugs, propose
+features, or join the discussion in the
+[lynx-family/animax repository](https://github.com/lynx-family/animax).

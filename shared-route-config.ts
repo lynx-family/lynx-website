@@ -75,6 +75,19 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
     },
   },
+  {
+    value: 'animax',
+    label: 'AnimaX',
+    description: 'Animation Framework',
+    descriptionZh: '跨平台动效框架',
+    home: '/animax/',
+    url: '/animax/start/quick-start',
+    category: 'core',
+    logo: {
+      light: '/assets/animax/animax-logo-black.svg',
+      dark: '/assets/animax/animax-logo-white.svg',
+    },
+  },
 
   // ── JavaScript Framework ──────────────────────────────────────
   {
@@ -194,7 +207,9 @@ export const DROPDOWN_NATIVE_FRAMEWORK = topLevel('native-framework');
  * For example, "start/quick-start" will be accessible at both
  * "guide/start/quick-start" and "react/start/quick-start".
  */
-export const SHARED_SIDEBAR_PATHS = CORE_SUBSITES.map((config) => config.value);
+export const SHARED_SIDEBAR_PATHS = CORE_SUBSITES.filter(
+  (config) => config.value !== 'animax',
+).map((config) => config.value);
 
 const SHARED_DOC_ROOT = 'start';
 

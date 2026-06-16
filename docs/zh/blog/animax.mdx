@@ -1,0 +1,120 @@
+---
+title: 'AnimaX 正式发布'
+date: 2026-06-15
+sidebar: false
+authors: ['RickAi', 'WATER1350', 'liyunrainbow', 'XianruoLi', 'cait7']
+badge_text: 'AnimaX 正式发布！'
+description: 'AnimaX 正式发布，一个基于 C++ 自渲染架构的高性能跨平台动画引擎，兼容 Lottie，支持 Alpha Video，并可在 iOS、Android 和 Lynx 应用中混合渲染矢量与视频图层。'
+---
+
+import { BlogHeader, Caption, ImageWall } from '@lynx';
+
+<BlogHeader />
+
+[AnimaX](https://github.com/lynx-family/animax)
+正式开源发布。它面向那些不止需要基础矢量播放的动画场景：底层由 C++
+自渲染管线驱动，兼容 Lottie，同时支持 Alpha Video
+以及矢量、图片、文本、视频图层的混合渲染。
+
+AnimaX 也已发布在
+[lynx-family/animax](https://github.com/lynx-family/animax)
+仓库中，并提供了 Android 和 iOS 原生示例。对于 Lynx 应用，新的
+[`<animax-view>`](/api/elements/built-in/animax-view)
+元素可以直接把同一套运行时带入组件树；这部分 Lynx 集成能力即将推出。
+
+<ImageWall
+  rows={2}
+  cols={3}
+  maxItems={6}
+  colsResponsive={{ base: 2, md: 3 }}
+  tileAspectRatio={9 / 16}
+  srcBase="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/"
+  images={[
+    {
+      filePath: 'vector.mp4',
+      alt: '矢量图层',
+    },
+    {
+      filePath: 'image.mp4',
+      alt: '图片图层',
+    },
+    {
+      filePath: 'text.mp4',
+      alt: '文本图层',
+    },
+    {
+      filePath: 'alpha_video.mp4',
+      alt: 'Alpha 视频图层',
+    },
+    {
+      filePath: 'vector2.mp4',
+      alt: '矢量图层',
+    },
+    {
+      filePath: 'mixed.mp4',
+      alt: '混合图层',
+    },
+  ]}
+/>
+
+<Caption>AnimaX 在不同图层类型上的渲染效果</Caption>
+
+## 当 Lottie 不再够用
+
+Lottie 让矢量动画可以方便地跨移动端和 Web 分发，但真实产品里的动效往往不只是矢量。复杂的 After
+Effects 场景可能包含图片、文本、粒子、发光效果，甚至接近视频的视觉表现。传统
+Lottie 工作流常常需要在视觉还原、文件体积、跨平台一致性和运行时性能之间取舍。
+
+AnimaX 正是为这个缺口而设计。已有的 Lottie JSON
+可以直接解析播放；更复杂的资源则可以在同一个动画中混合矢量、图片、文本和 Alpha
+Video 图层。
+
+## 统一的自渲染引擎
+
+AnimaX 使用由 [Skity](https://github.com/lynx-family/skity)
+驱动的统一 C++ 渲染器。它不依赖各平台各自的渲染实现，而是在引擎层统一负责解析、渲染和播放，使 iOS
+和 Android 的输出更一致，也让耗时的图形工作可以从主线程中移出。
+
+当动画成为产品 UI 的一部分时，这一点尤其重要：新手引导、奖励动效、创作工具、电商氛围、游戏化交互，或者任何既要表现力又要稳定复现的场景，都需要可靠的运行时。
+
+## 混合动画图层
+
+Alpha Video 是 AnimaX 最关键的能力之一。视频图层保留透明通道后，设计师可以把纯矢量难以复现的复杂视觉直接带进动画，再与普通 Lottie
+图层组合在一起。
+
+这形成了一条更实用的动效生产链路：
+
+- 设计师继续使用熟悉的 After Effects 工作流；
+- AFX 导出与 Lottie 兼容的产物，并在需要时产出 Alpha Video 图层；
+- AnimaX 通过同一个引擎播放导出资源；
+- 应用仍然可以通过动态属性在运行时更新动画内容。
+
+## 在 Lynx 或原生应用中使用
+
+在 Lynx 页面里，AnimaX 通过 `<animax-view>` 暴露；这部分 Lynx 集成能力即将推出：
+
+```tsx
+<animax-view
+  className="animax-item"
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/animax-starter.json"
+  autoplay={true}
+  loop={true}
+/>
+```
+
+`src` 可以加载 `.json` 或 `.zip` 动画资源。更简单的场景下，也可以通过 `json`
+属性直接传入动画数据。属性、事件和运行时控制能力可以参考
+[`<animax-view>` API](/api/elements/built-in/animax-view)。
+
+AnimaX 也可以作为独立原生库集成。平台侧用法可以参考
+[Android 原生 API 参考](/animax/reference/android)和
+[iOS 原生 API 参考](/animax/reference/ios)，其中覆盖 view 创建、资源加载、播放控制、事件和状态查询能力。
+
+## 立即体验
+
+先从 [AnimaX 简介](/animax/introduction)了解运行时能力，再跟随[快速开始](/animax/start/quick-start)跑通最小 Lynx
+示例。如果你的动画资源来自 After Effects，可以继续阅读
+[AFX 导出指南](/animax/start/afx)，了解 Alpha Video 图层如何被生产出来。
+
+AnimaX 使用 Apache-2.0 许可证，并在开源仓库中持续演进。欢迎在
+[lynx-family/animax 仓库](https://github.com/lynx-family/animax)提交问题、讨论需求或参与贡献。

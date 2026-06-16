@@ -1,0 +1,168 @@
+# Android 原生 API
+
+本文介绍在 Android 应用中直接集成 AnimaX 时可使用的原生 API。用于 Lynx 页面集成的 [`<animax-view>` API](/api/elements/built-in/animax-view) 即将推出。
+
+## 核心组件
+
+`AnimaXView` 是 AnimaX 在 Android 上的播放视图，提供资源加载、播放控制、跳帧、事件和状态查询能力。
+
+### XML 布局
+
+```xml
+<com.lynx.animax.ui.AnimaXView
+    android:id="@+id/animax_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:animax_autoPlay="true"
+    app:animax_loop="true"
+    app:animax_objectFit="contain" />
+```
+
+### 代码创建
+
+```java
+AnimaXView animaxView = new AnimaXView(context);
+animaxView.setSrc("https://example.com/animation.json");
+parentView.addView(animaxView);
+```
+
+## 属性
+
+| 属性                  | 方法                      | 默认值    | 说明                                                                |
+| --------------------- | ------------------------- | --------- | ------------------------------------------------------------------- |
+| `animax_autoPlay`     | `setAutoPlay(boolean)`    | `true`    | 加载完成后是否自动播放。                                            |
+| `animax_loop`         | `setLoop(boolean)`        | `false`   | 是否循环播放。                                                      |
+| `animax_animationUrl` | `setSrc(String)`          | -         | 动画资源 URL。                                                      |
+| `animax_objectFit`    | `setObjectFit(ObjectFit)` | `contain` | 内容适配模式：`contain`、`cover`、`fill`、`center` 或 `scaleDown`。 |
+| `animax_progress`     | `setProgress(float)`      | `0.0`     | 初始播放进度，范围为 `[0.0, 1.0]`。                                 |
+| `animax_speed`        | `setSpeed(float)`         | `1.0`     | 播放速度倍率。                                                      |
+
+## 方法
+
+`AnimaXView` 将核心播放能力委托给 AnimaX player 接口。
+
+:::caution
+
+请在 ready 回调之后调用播放和状态查询方法。在动画资源加载完成前，`play`、`seek`、`getCurrentFrame`、`getDurationMs` 等方法的结果可能不稳定。
+
+:::
+
+### 播放控制
+
+- `play()`：从当前位置开始播放。
+- `pause()`：暂停在当前帧。
+- `resume()`：从暂停位置继续播放。
+- `stop()`：停止播放并重置到起始位置。
+- `seek(int frame)`：跳转到指定帧。
+- `playSegment(int startFrame, int endFrame)`：播放指定帧区间。
+
+### 资源加载
+
+:::tip
+
+建议先设置 `loop`、`autoPlay` 等播放选项，再调用 `setSrc`、`setJson` 或 `setComposition`。
+
+:::
+
+- `setSrc(String src)`：从 URL 或支持的 URI 加载动画资源。
+- `setJson(String json)`：直接从 JSON 字符串加载动画数据。
+- `setComposition(AnimaXComposition composition)`：使用预加载的 composition，适合复用较多的场景。
+
+### 配置项
+
+- `setLoop(boolean loop)`：设置是否循环播放。
+- `setLoopCount(int count)`：设置循环次数，`0` 表示无限循环。
+- `setAutoPlay(boolean auto)`：设置是否自动播放。
+- `setSpeed(float speed)`：设置播放速度。
+- `setScaleType(ScaleType type)`：设置缩放类型。
+- `setObjectFit(ObjectFit objectFit)`：设置内容适配模式。
+- `setObjectPosition(ObjectPosition position)`：设置内容对齐方式。
+- `setEnableTapLayerEvent(boolean enable)`：开启图层点击回调。
+
+### 状态查询
+
+- `isAnimating()`：返回当前是否正在播放。
+- `getCurrentFrame()`：获取当前渲染帧。
+- `getDurationMs()`：获取总时长，单位为毫秒。
+- `getComposition()`：获取当前 `AnimaXComposition`。
+
+## 事件
+
+通过 `addAnimationListener(IAnimationListener listener)` 添加动画监听器。只关心部分回调时，可使用 `AnimationListenerAdapter`。
+
+```java
+animaxView.addAnimationListener(new AnimationListenerAdapter() {
+    @Override
+    public void onReady(AnimaXParam param) {
+        // 资源已加载，播放和状态查询 API 可用。
+    }
+
+    @Override
+    public void onStart(AnimaXParam param) {
+        // 播放开始。
+    }
+
+    @Override
+    public void onComplete(AnimaXParam param) {
+        // 播放完成。
+    }
+
+    @Override
+    public void onRepeat(AnimaXParam param) {
+        // 一次循环结束并开始下一次循环。
+    }
+
+    @Override
+    public void onCancel(AnimaXParam param) {
+        // 播放被取消。
+    }
+
+    @Override
+    public void onError(AnimaXErrorParam param) {
+        // 加载或播放失败。
+    }
+
+    @Override
+    public void onUpdate(AnimaXParam param) {
+        // 帧更新。依赖该回调前，需要先订阅 update 事件。
+    }
+
+    @Override
+    public void onFPS(AnimaXFPSParam param) {
+        // FPS 采样。生产环境中不要设置过小的采样间隔。
+    }
+
+    @Override
+    public void onTapLayers(AnimaXTapParam param) {
+        // 图层点击回调。需要先开启图层点击事件。
+    }
+});
+```
+
+## 能力注入
+
+`AnimaXServiceCenter` 是全局服务注册中心，可用于注入资源加载、图片解码等共享能力。
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXResourceFactoryService.class,
+    new IAnimaXResourceFactoryService() {
+        @Override
+        public List<IAnimaXLoader> createAnimaXLoaders() {
+            return Collections.singletonList(new HttpLoader());
+        }
+    }
+);
+```
+
+如需为单个 view 提供定制能力，可以用自定义 ability 创建 `AnimaXView`。
+
+```java
+public class MyCustomAbility extends NativeAbility {
+    // 在这里覆盖或扩展能力。
+}
+
+AnimaXContext animaxContext =
+    new AnimaXContext.Builder(new MyCustomAbility(), context).build();
+AnimaXView animaxView = new AnimaXView(animaxContext);
+```

@@ -64,12 +64,14 @@ function Layout({
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
+  const isAnimaxHomeRoute = /^\/animax(?:\/|\.html)?$/.test(pathNoLang);
 
   return (
     <>
       <Head>
         <htmlAttrs
           data-subsite={subsite ? subsite.value : 'guide'}
+          data-animax-home={isAnimaxHomeRoute ? 'true' : null}
           data-scroll-locked={isStatusRoute ? 'true' : null}
         />
       </Head>
@@ -77,7 +79,7 @@ function Layout({
         {...props}
         afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
-        bottom={<Footer />}
+        bottom={isAnimaxHomeRoute ? null : <Footer />}
       />
     </>
   );
@@ -255,9 +257,17 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   // Update theme based on URL
   useEffect(() => {
     const subsite = findSubsite(pathname);
+    const normalizedPath = removeBase(pathname);
+    const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
+    const isAnimaxHomeRoute = /^\/animax(?:\/|\.html)?$/.test(pathNoLang);
+
     document.documentElement.setAttribute(
       'data-subsite',
       subsite ? subsite.value : 'guide',
+    );
+    document.documentElement.toggleAttribute(
+      'data-animax-home',
+      isAnimaxHomeRoute,
     );
   }, [pathname]);
 

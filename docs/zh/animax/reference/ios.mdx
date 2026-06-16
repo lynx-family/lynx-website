@@ -1,0 +1,134 @@
+# iOS 原生 API
+
+本文介绍在 iOS 应用中直接集成 AnimaX 时可使用的原生 API。用于 Lynx 页面集成的 [`<animax-view>` API](/api/elements/built-in/animax-view) 即将推出。
+
+## 核心组件
+
+`AnimaXView` 是 AnimaX 在 iOS 上的播放视图，继承自 `UIView`，提供资源加载、播放控制、跳帧、事件和状态查询能力。
+
+### 代码创建
+
+```objective-c
+#import <AnimaX/AnimaXView.h>
+#import <AnimaX/AnimaXContext.h>
+
+AnimaXContext *context = [[AnimaXContext alloc] init];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+animaxView.frame = CGRectMake(0, 0, 300, 300);
+
+[animaxView setSrc:@"https://example.com/animation.json"];
+[self.view addSubview:animaxView];
+```
+
+## 属性
+
+`AnimaXView` 实现了播放器协议，常用属性通过方法配置。
+
+| 方法                        | 说明                                                       |
+| --------------------------- | ---------------------------------------------------------- |
+| `setAutoplay:(BOOL)`        | 加载完成后是否自动播放。                                   |
+| `setLoop:(BOOL)`            | 是否循环播放。                                             |
+| `setSrc:(NSString *)`       | 设置动画资源 URL。                                         |
+| `setObjectfit:(NSString *)` | 设置内容适配模式：`contain`、`cover`、`fill` 或 `center`。 |
+| `setSpeed:(double)`         | 设置播放速度倍率。                                         |
+| `setProgress:(double)`      | 设置播放进度，范围为 `[0.0, 1.0]`。                        |
+
+## 方法
+
+:::caution
+
+请在 ready 回调之后调用播放和状态查询方法。在动画资源加载完成前，`play`、`seekTo:`、`currentFrame`、`durationInMS` 等方法的结果可能不稳定。
+
+:::
+
+### 播放控制
+
+- `play`：从当前位置开始播放。
+- `pause`：暂停在当前帧。
+- `resume`：从暂停位置继续播放。
+- `stop`：停止播放并重置到起始位置。
+- `seekTo:(double)frame`：跳转到指定帧。
+- `playFrom:(double)startFrame to:(double)endFrame`：播放指定帧区间。
+
+### 资源加载
+
+:::tip
+
+建议先设置 `loop`、`autoplay` 等播放选项，再调用 `setSrc`、`setJson` 或 `setComposition`。
+
+:::
+
+- `setSrc:(NSString *)src`：加载动画资源 URL。
+- `setJson:(NSString *)json`：直接从 JSON 字符串加载动画数据。
+- `setComposition:(AnimaXComposition *)composition`：使用预加载的 composition。
+
+### 配置项
+
+- `setLoopCount:(int)count`：设置循环次数。
+- `setStartFrame:(double)frame`：设置起始帧。
+- `setEndFrame:(double)frame`：设置结束帧。
+- `setAutoReverse:(BOOL)enable`：设置重复播放时是否反向播放。
+- `setFPSEventInterval:(long)interval`：设置 FPS 采样间隔，单位为毫秒。
+- `subscribeUpdateEvent:(int)frame`：订阅指定帧的 update 回调。
+
+### 状态查询
+
+- `isAnimating`：返回当前是否正在播放。
+- `currentFrame`：获取当前渲染帧。
+- `durationInMS`：获取总时长，单位为毫秒。
+
+## 事件
+
+通过 `addAnimationEventListener:(id<AnimaXAnimationListener>)listener` 添加监听器。
+
+```objective-c
+@interface MyListener : NSObject <AnimaXAnimationListener>
+@end
+
+@implementation MyListener
+
+- (void)onReady:(NSDictionary *)params {
+    // 资源已加载，播放和状态查询 API 可用。
+}
+
+- (void)onStart:(NSDictionary *)params {
+    // 播放开始。
+}
+
+- (void)onCompletion:(NSDictionary *)params {
+    // 播放完成。
+}
+
+- (void)onRepeat:(NSDictionary *)params {
+    // 一次循环结束。
+}
+
+- (void)onError:(NSDictionary *)params {
+    // 加载或播放失败。
+}
+
+- (void)onUpdate:(NSDictionary *)params {
+    // 帧更新。依赖该回调前，需要先订阅 update 事件。
+}
+
+- (void)onFps:(NSDictionary *)params {
+    // FPS 采样。生产环境中不要设置过小的采样间隔。
+}
+
+- (void)onTapLayers:(NSDictionary *)params {
+    // 图层点击回调。
+}
+
+@end
+
+[animaxView addAnimationEventListener:[[MyListener alloc] init]];
+```
+
+## 能力注入
+
+`AnimaXServiceCenter` 是全局服务注册中心，可用于注入原生共享能力。
+
+常用操作包括：
+
+- `registerService:withImpl:`：注册服务实现。
+- `getService:`：获取已注册服务。

@@ -46,6 +46,26 @@ function findSubsiteFromPathname(
   return subsite;
 }
 
+function hasSubsitePath(pathname: string, lang: string) {
+  const langPrefix = getLangPrefix(lang);
+  let path = pathname;
+
+  if (langPrefix && path.startsWith(`${langPrefix}/`)) {
+    path = path.slice(langPrefix.length + 1);
+  } else if (!langPrefix && path.startsWith('/')) {
+    path = path.slice(1);
+  }
+
+  if (!path) {
+    return false;
+  }
+
+  const [firstSegment] = path.split('/');
+  const normalizedSegment = firstSegment.replace(/\.html$/, '');
+
+  return CORE_SUBSITES.some((s) => s.value === normalizedSegment);
+}
+
 function SubsiteSelect() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -96,6 +116,7 @@ function SubsiteSelect() {
 export default function BeforeSidebar() {
   const lang = useLang();
   const { pathname } = useLocation();
+  const shouldShowSubsiteSelect = hasSubsitePath(pathname, lang);
 
   // Initialize sidebar data based on current path and language
   const [sidebarData, setSidebarData] = useState<SidebarData>(() =>
@@ -121,15 +142,20 @@ export default function BeforeSidebar() {
     setSidebarData(newSidebarData);
   }, [lang, pathname]);
 
-  // Only render if we have sidebar data and it's not empty
-  if (!sidebarData || sidebarData.length === 0) {
+  // Only render if we have injected shared data or a subsite selector to show.
+  if ((!sidebarData || sidebarData.length === 0) && !shouldShowSubsiteSelect) {
     return null;
   }
 
   return (
     <div id="before-sidebar">
-      <SidebarList sidebarData={sidebarData} setSidebarData={setSidebarData} />
-      <SubsiteSelect />
+      {sidebarData && sidebarData.length > 0 && (
+        <SidebarList
+          sidebarData={sidebarData}
+          setSidebarData={setSidebarData}
+        />
+      )}
+      {shouldShowSubsiteSelect && <SubsiteSelect />}
     </div>
   );
 }
