@@ -50,6 +50,11 @@ export const PACKAGES: Record<string, PackageConfig> = {
         excludeInternal: true,
         readme: 'none',
         skipErrorChecking: true,
+        // Nest output by module/kind. Each public subpackage gets its
+        // own folder under docs/{en,zh}/api/genui/<module>/, with members
+        // grouped under Function/, Interface/, Class/, TypeAlias/,
+        // Variable/. Easier to skim than a flat 100-file directory.
+        flattenOutputFiles: false,
       },
     },
   },

@@ -1,19 +1,23 @@
 /**
  * Customization for the @lynx-js/genui docs.
  *
- * Wraps the default customize() and additionally drops reflections whose
- * declarations are public TS exports but don't belong on this page:
+ * Wraps the default customize() and:
  *
- *   - The 20 A2UI catalog component primitives re-exported from
- *     @lynx-js/genui/a2ui. They are public, but their per-component prop
- *     reference lives elsewhere; this page is about the renderer / store /
- *     catalog framework.
+ *   - Renames each entry-point module from its source path (a2ui/src,
+ *     openui/src/core, ...) to its public subpath under @lynx-js/genui
+ *     (a2ui, openui, ...). The /src segment is an accident of pointing
+ *     TypeDoc at source for the JSDoc; it's noise to readers.
  *
- *   - The TypeDoc* interface mirrors re-exported from
- *     @lynx-js/genui/a2ui-catalog-extractor. Consumers wiring up
- *     `extractCatalog*FromTypeDocJson` may type their input with them, but
- *     surfacing them as Interfaces alongside the extractor's own API
- *     dominates the index for no reader benefit.
+ *   - Drops reflections whose declarations are public TS exports but don't
+ *     belong on this page:
+ *       - the 20 A2UI catalog component primitives (Button, Card, ...,
+ *         TextField) re-exported from @lynx-js/genui/a2ui; their
+ *         per-component prop reference lives elsewhere.
+ *       - the TypeDoc* interface mirrors re-exported from
+ *         @lynx-js/genui/a2ui-catalog-extractor; consumers wiring up
+ *         `extractCatalog*FromTypeDocJson` may type their input with them,
+ *         but surfacing them as Interfaces dominates the index for no
+ *         reader benefit.
  */
 
 import { Converter, ReflectionKind } from 'typedoc';
@@ -55,22 +59,36 @@ const HIDDEN_CATALOG_EXTRACTOR_TYPEDOC_MIRRORS = new Set([
   'TypeDocType',
 ]);
 
+const MODULE_RENAMES: Record<string, string> = {
+  'a2ui/src': 'a2ui',
+  'openui/src/core': 'openui',
+  'a2ui-prompt/src': 'a2ui-prompt',
+  'a2ui-catalog-extractor/src': 'a2ui-catalog-extractor',
+};
+
 export function customize(app: MarkdownApplication, outputDir: string) {
   defaultCustomize(app, outputDir);
 
   app.converter.on(Converter.EVENT_RESOLVE_BEGIN, (context) => {
+    // Rename module reflections first so the hide filter below can match
+    // on the new names.
+    for (const refl of context.project.children ?? []) {
+      const renamed = MODULE_RENAMES[refl.name];
+      if (renamed) refl.name = renamed;
+    }
+
     const all = context.project.getReflectionsByKind(ReflectionKind.All);
     for (const refl of [...all]) {
       const parentName = refl.parent?.name ?? '';
       if (
-        parentName.startsWith('a2ui/src') &&
+        parentName === 'a2ui' &&
         HIDDEN_A2UI_CATALOG_COMPONENTS.has(refl.name)
       ) {
         context.project.removeReflection(refl);
         continue;
       }
       if (
-        parentName.startsWith('a2ui-catalog-extractor/src') &&
+        parentName === 'a2ui-catalog-extractor' &&
         HIDDEN_CATALOG_EXTRACTOR_TYPEDOC_MIRRORS.has(refl.name)
       ) {
         context.project.removeReflection(refl);
