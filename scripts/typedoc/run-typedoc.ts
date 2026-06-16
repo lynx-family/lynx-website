@@ -31,6 +31,11 @@ const BASE_TYPEDOC_PLUGIN_MARKDOWN_OPTIONS: Partial<PluginOptions> = {
   parametersFormat: 'table',
   interfacePropertiesFormat: 'list',
   classPropertiesFormat: 'list',
+  // Drop the kind prefix from member page titles ("Function: foo" → "foo").
+  // The breadcrumb, URL, and signature already convey the kind.
+  textContentMappings: {
+    'title.memberPage': '{name}',
+  },
 };
 
 /**
@@ -44,6 +49,9 @@ const BASE_TYPEDOC_PLUGIN_MARKDOWN_OPTIONS: Partial<PluginOptions> = {
 const BASE_TYPEDOC_OPTIONS: Partial<Configuration.TypeDocOptions> = {
   plugin: ['typedoc-plugin-include-example', 'typedoc-plugin-markdown'],
   requiredToBeDocumented: ['Class', 'Function', 'Interface'],
+  // Group members by kind, then alphabetically within a kind. Source-order
+  // is unstable across re-exports and produces a random-looking index.
+  sort: ['kind', 'alphabetical'],
   blockTags: [
     ...Configuration.OptionDefaults.blockTags,
     '@platform',

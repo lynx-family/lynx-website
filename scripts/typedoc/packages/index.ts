@@ -3,83 +3,31 @@ import * as fs from 'node:fs';
 import type { PackageConfig } from '../types/PackageConfig.js';
 
 const GENUI_PACKAGE_ROOT = 'node_modules/@lynx-js/genui';
-const GENUI_SOURCE_ROOT = `${GENUI_PACKAGE_ROOT}`;
-const GENUI_DIST_ROOT = `${GENUI_PACKAGE_ROOT}`;
 
-const GENUI_A2UI_COMPONENTS = [
-  'Button',
-  'Card',
-  'CheckBox',
-  'ChoicePicker',
-  'Column',
-  'DateTimeInput',
-  'Divider',
-  'Icon',
-  'Image',
-  'LineChart',
-  'List',
-  'Loading',
-  'Modal',
-  'PieChart',
-  'RadioGroup',
-  'Row',
-  'Slider',
-  'Tabs',
-  'Text',
-  'TextField',
-];
-
+// One entry point per public subpath of @lynx-js/genui. Each becomes its own
+// TypeDoc module ("@lynx-js/genui/a2ui", ".../openui", ...), so the index
+// page surfaces the four public subpackages instead of a wall of internals.
+// When the lynx-stack source overlay is in place we prefer .ts (richer TSDoc);
+// otherwise we fall back to the published .d.ts ship.
 function genuiEntryPoints(): string[] {
   const hasSourceOverlay = fs.existsSync(
-    `${GENUI_SOURCE_ROOT}/a2ui/src/react/A2UI.tsx`,
+    `${GENUI_PACKAGE_ROOT}/a2ui/src/index.ts`,
   );
 
   if (!hasSourceOverlay) {
     return [
-      `${GENUI_DIST_ROOT}/dist/index.d.ts`,
-      `${GENUI_DIST_ROOT}/a2ui/dist/index.d.ts`,
-      `${GENUI_DIST_ROOT}/a2ui-prompt/dist/index.d.ts`,
-      `${GENUI_DIST_ROOT}/a2ui-catalog-extractor/dist/index.d.ts`,
-      `${GENUI_DIST_ROOT}/openui/dist/core/index.d.ts`,
+      `${GENUI_PACKAGE_ROOT}/a2ui/dist/index.d.ts`,
+      `${GENUI_PACKAGE_ROOT}/openui/dist/core/index.d.ts`,
+      `${GENUI_PACKAGE_ROOT}/a2ui-prompt/dist/index.d.ts`,
+      `${GENUI_PACKAGE_ROOT}/a2ui-catalog-extractor/dist/index.d.ts`,
     ];
   }
 
   return [
-    `${GENUI_SOURCE_ROOT}/index.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/react/A2UI.tsx`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/react/A2UIRenderer.tsx`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/react/useAction.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/react/useChecks.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/react/useDataBinding.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/MessageStore.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/MessageProcessor.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/Resource.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/SignalStore.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/types.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/FunctionRegistry.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/payloadNormalizer.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/resolveFunctionCall.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/resolveDynamic.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/store/utils.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui/src/catalog/defineCatalog.ts`,
-    ...GENUI_A2UI_COMPONENTS.map(
-      (component) =>
-        `${GENUI_SOURCE_ROOT}/a2ui/src/catalog/${component}/index.tsx`,
-    ),
-    `${GENUI_SOURCE_ROOT}/a2ui/src/functions/index.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui-catalog-extractor/src/index.ts`,
-    `${GENUI_SOURCE_ROOT}/a2ui-prompt/src/index.ts`,
-    `${GENUI_SOURCE_ROOT}/server/agent/a2ui-catalog.ts`,
-    `${GENUI_SOURCE_ROOT}/server/agent/a2ui-examples.ts`,
-    `${GENUI_SOURCE_ROOT}/server/agent/a2ui-prompt.ts`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/createLibrary.tsx`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/library.tsx`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/context.tsx`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/renderer.tsx`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/runtime/reactive.ts`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/hooks/useFormValidation.ts`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/hooks/useOpenUIState.ts`,
-    `${GENUI_SOURCE_ROOT}/openui/src/core/hooks/useStateField.ts`,
+    `${GENUI_PACKAGE_ROOT}/a2ui/src/index.ts`,
+    `${GENUI_PACKAGE_ROOT}/openui/src/core/index.ts`,
+    `${GENUI_PACKAGE_ROOT}/a2ui-prompt/src/index.ts`,
+    `${GENUI_PACKAGE_ROOT}/a2ui-catalog-extractor/src/index.ts`,
   ];
 }
 
@@ -100,7 +48,6 @@ export const PACKAGES: Record<string, PackageConfig> = {
         excludeInternal: true,
         readme: 'none',
         skipErrorChecking: true,
-        sort: ['source-order'],
       },
     },
   },
