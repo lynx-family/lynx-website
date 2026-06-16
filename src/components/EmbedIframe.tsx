@@ -28,6 +28,7 @@ export function EmbedIframe({ src, title, height = 500 }: EmbedIframeProps) {
       <iframe
         src={iframeSrc}
         title={title}
+        sandbox="allow-scripts allow-same-origin"
         style={{
           display: 'block',
           width: '100%',
