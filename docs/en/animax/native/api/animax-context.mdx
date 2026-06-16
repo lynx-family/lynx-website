@@ -1,0 +1,157 @@
+---
+description: 'AnimaXContext API reference for context creation and runtime configuration on iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXContext
+
+`AnimaXContext` stores runtime configuration for an animation instance. `AnimaXView` binds to a context and uses it to access ability, platform context, and rendering options.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Creation
+
+### contextWithDefaultAbility
+
+Creates a context with the default ability. Use this when you do not need custom instance-level services.
+
+**Returns**
+
+`AnimaXContext *`
+
+### initWithAbility
+
+Creates a context with a specific ability. Use this when a single animation instance needs custom services, event listeners, or monitoring behavior.
+
+**Parameters**
+
+| Name      | Type                  | Description                  |
+| --------- | --------------------- | ---------------------------- |
+| `ability` | `BaseAnimaXAbility *` | Custom ability. Can be null. |
+
+**Returns**
+
+`AnimaXContext *`
+
+## Properties
+
+### ability
+
+The ability bound to this context. AnimaX uses it to manage instance-level services and animation event listeners.
+
+**Type**
+
+`BaseAnimaXAbility *`
+
+### enableMultiThreadAccelerate
+
+Whether to enable multi-threaded rendering acceleration. Defaults to `NO`.
+
+**Type**
+
+`BOOL`
+
+### disablePlaybackOnAssetLoadFailure
+
+Whether playback should fail when an asset fails to load. Defaults to `NO`, which allows internal fallback behavior.
+
+**Type**
+
+`BOOL`
+
+### enableDownsampleVideo
+
+Whether to downsample video textures to reduce memory usage. Defaults to `NO`.
+
+**Type**
+
+`BOOL`
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Creation
+
+### AnimaXContext.Builder
+
+Creates an `AnimaXContext.Builder`. Android creates contexts through the Builder pattern and requires both an ability and an Android `Context`.
+
+**Parameters**
+
+| Name      | Type          | Description                                              |
+| --------- | ------------- | -------------------------------------------------------- |
+| `ability` | `BaseAbility` | Ability for instance-level services and event listeners. |
+| `context` | `Context`     | Android context.                                         |
+
+**Returns**
+
+`AnimaXContext.Builder`
+
+### multiThreadAccelerate
+
+Sets whether multi-threaded rendering acceleration is enabled. Defaults to `false`.
+
+**Parameters**
+
+| Name     | Type      | Description                                             |
+| -------- | --------- | ------------------------------------------------------- |
+| `enable` | `boolean` | `true` to enable multi-threaded rendering acceleration. |
+
+**Returns**
+
+`AnimaXContext.Builder`
+
+### build
+
+Creates the `AnimaXContext` instance.
+
+**Returns**
+
+`AnimaXContext`
+
+## Instance Methods
+
+### getAbility
+
+Returns the `BaseAbility` bound to this context.
+
+**Returns**
+
+`BaseAbility`
+
+### getContext
+
+Returns the Android `Context` passed to the builder.
+
+**Returns**
+
+`Context`
+
+### multiThreadAccelerate
+
+Returns whether multi-threaded rendering acceleration is enabled.
+
+**Returns**
+
+`boolean`
+
+### disablePlaybackOnAssetLoadFailure
+
+Returns whether playback should fail when an asset fails to load. The value comes from runtime configuration associated with the current ability.
+
+**Returns**
+
+`boolean`
+
+### getDeviceDensity
+
+Returns the current device density. The value is read from Android resources and cached on first access.
+
+**Returns**
+
+`float`
+
+</PlatformTabs.Tab>
+</PlatformTabs>

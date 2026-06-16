@@ -7,8 +7,8 @@ shared with the theme.
 
 ## Outputs (`docs/public/og/`, git-ignored, regenerated each build)
 
-- `covers/<lang>/<subsite>.png` — one shared cover per subsite (`guide`, `react`,
-  `rspeedy`, `lynx-ui`, `ai`, `api`) per language (`en`/`zh`), reused across
+- `covers/<lang>/<subsite>.png` — one shared cover per subsite (`guide`, `animax`,
+  `react`, `rspeedy`, `lynx-ui`, `ai`, `api`) per language (`en`/`zh`), reused across
   every URL in that subsite+language. Label is language-neutral; the description,
   footer URL, and "Documentation/文档" label localize.
 - `blog/<lang>/<slug>.png` — a unique image per blog post (en + zh).

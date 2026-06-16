@@ -1,0 +1,752 @@
+---
+description: 'Guide: integrate AnimaX into your native iOS or Android app, inject network and image capabilities, create AnimaXView, and control playback.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# Native Integration Guide
+
+This document walks through embedding AnimaX directly in a native app. You will learn how to add dependencies, inject basic capabilities such as network requests and image loading, create an `AnimaXView`, and control playback with code.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Add dependencies
+
+AnimaX iOS SDK is published via CocoaPods. Add the following to your `Podfile`:
+
+```ruby
+platform :ios, '12.0'
+
+target 'YourApp' do
+  # Core + rendering backend
+  pod 'AnimaX', '<animax_version>', :subspecs => [
+    'Core',
+    'Framework',
+    'RenderBackend/Skity',
+    'Textra',      # Required for complex text layout and multilingual text layers
+    'ThirdParty'
+  ]
+
+  # Rendering engine
+  pod 'skity', '<skity_version>'
+
+  # Text rendering
+  pod 'LynxTextra', '<textra_version>'
+
+  # Base framework
+  pod 'LynxBase/Framework', '<lynx_version>'
+end
+```
+
+Then run:
+
+```bash
+pod install
+```
+
+## Initialize AnimaX
+
+AnimaX on iOS does not require a global initialization step. The framework is initialized when you create the first `AnimaXView` with an `AnimaXContext`.
+
+Service registration can be done at app launch or lazily before the first view is created:
+
+```objc
+// In AppDelegate or before creating the first AnimaXView
+#import <AnimaX/AnimaXServiceCenter.h>
+
+// Register services — see next section
+// [[AnimaXServiceCenter sharedInstance] registerService:@protocol(...) withImpl:...];
+```
+
+## Inject basic capabilities
+
+AnimaX uses a service-registry pattern for capabilities such as network resource loading and image decoding. Without these services, AnimaX can only load assets from local files and the app bundle.
+
+### Network resource loader
+
+Implement [`AnimaXLoaderProtocol`](./api/animax-loader-protocol) to handle network requests. Here is an example using `NSURLSession`:
+
+```objc
+// HttpLoader.h
+#import <AnimaX/AnimaXLoaderProtocol.h>
+
+@interface HttpLoader : NSObject <AnimaXLoaderProtocol>
+@end
+
+// HttpLoader.m
+#import "HttpLoader.h"
+#import <AnimaX/AnimaXLoaderResponse.h>
+
+@implementation HttpLoader
+
+- (void)handleRequest:(AnimaXLoaderRequest *)request
+           completion:(AnimaXLoaderCompletionHandler)completion {
+    NSURL *url = [NSURL URLWithString:request.url];
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithURL:url
+        completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            if (error) {
+                AnimaXLoaderResponse *resp =
+                    [AnimaXLoaderResponse responseWithError:error];
+                completion(resp);
+                return;
+            }
+            AnimaXLoaderResponse *resp =
+                [AnimaXLoaderResponse responseWithPayload:data];
+            completion(resp);
+        }];
+    [task resume];
+}
+
+- (AnimaXLoaderScheme)getScheme {
+    return AnimaXLoaderSchemeHttp;
+}
+
+@end
+```
+
+Register the loader via [`AnimaXResourceFactoryService`](./api/animax-resource-factory-service):
+
+```objc
+#import <AnimaX/AnimaXServiceCenter.h>
+#import <AnimaX/AnimaXResourceFactoryService.h>
+
+// In AppDelegate or before first view creation
+@interface MyResourceFactory : NSObject <AnimaXResourceFactoryService>
+@end
+
+@implementation MyResourceFactory
+- (NSArray<id<AnimaXLoaderProtocol>> *)createAnimaXLoaders {
+    return @[[[HttpLoader alloc] init]];
+}
+@end
+
+[[AnimaXServiceCenter sharedInstance]
+    registerService:@protocol(AnimaXResourceFactoryService)
+           withImpl:[[MyResourceFactory alloc] init]];
+```
+
+### Image loading service
+
+On iOS, implement [`AnimaXImageDecoderService`](./api/animax-image-service) to provide custom image decoding:
+
+```objc
+#import <AnimaX/AnimaXImageDecoderService.h>
+
+@interface MyImageDecoderService : NSObject <AnimaXImageDecoderService>
+@end
+
+@implementation MyImageDecoderService
+
+- (UIImage *)loadImageData:(NSData *)data {
+    // Use your image pipeline (SDWebImage, Kingfisher, etc.) to decode.
+    // Return nil to fall back to the default UIImage decoding.
+    return [UIImage imageWithData:data];
+}
+
+@end
+```
+
+Register it:
+
+```objc
+[[AnimaXServiceCenter sharedInstance]
+    registerService:@protocol(AnimaXImageDecoderService)
+           withImpl:[[MyImageDecoderService alloc] init]];
+```
+
+## Create AnimaXView and play
+
+```objc
+#import <AnimaX/AnimaXView.h>
+#import <AnimaX/AnimaXContext.h>
+#import <AnimaX/BaseAnimaXAbility.h>
+
+// 1. Create an ability (capability container)
+BaseAnimaXAbility *ability = [[BaseAnimaXAbility alloc] init];
+
+// 2. Create a context with the ability
+AnimaXContext *context = [[AnimaXContext alloc] initWithAbility:ability];
+
+// 3. Create the view
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+animaxView.frame = CGRectMake(0, 0, 300, 300);
+
+// 4. Configure and load
+[animaxView setLoop:YES];
+[animaxView setAutoplay:YES];
+[animaxView setObjectfit:@"contain"];
+
+// Load from a URL (requires network loader service)
+[animaxView setSrc:@"https://example.com/animation.json"];
+
+// Or load from bundle
+NSString *path = [[NSBundle mainBundle] pathForResource:@"my_anim" ofType:@"json"];
+[animaxView setSrc:[NSURL fileURLWithPath:path].absoluteString];
+
+// 5. Add to view hierarchy
+[self.view addSubview:animaxView];
+```
+
+Or use the convenience factory for the default case:
+
+```objc
+AnimaXContext *context = [AnimaXContext contextWithDefaultAbility];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+```
+
+## Basic playback control
+
+After the animation is loaded (`onReady`), you can control playback:
+
+```objc
+// Start playback from the current position
+[animaxView play];
+
+// Pause at the current frame
+[animaxView pause];
+
+// Resume from paused position
+[animaxView resume];
+
+// Stop and reset to the first frame
+[animaxView stop];
+
+// Seek to a specific frame
+[animaxView seekTo:30];
+
+// Play a segment (frames 15 to 75)
+[animaxView playFrom:15 to:75];
+
+// Check if playing
+BOOL isPlaying = [animaxView isAnimating];
+
+// Get current frame (can be fractional)
+double currentFrame = [animaxView currentFrame];
+
+// Get total duration in milliseconds
+double durationMs = [animaxView durationInMS];
+```
+
+### Configure playback properties
+
+```objc
+[animaxView setLoop:YES];              // Loop indefinitely
+[animaxView setLoopCount:3];           // Loop 3 times
+[animaxView setSpeed:2.0];             // 2x speed
+[animaxView setAutoReverse:YES];       // Ping-pong on repeat
+[animaxView setStartFrame:24];         // Start frame
+[animaxView setEndFrame:144];          // End frame
+[animaxView setProgress:0.5];          // Initial position (0.0 - 1.0)
+[animaxView setMaxFrameRate:60];       // Cap frame rate
+[animaxView setObjectfit:@"contain"];  // Content fit mode
+```
+
+### Listen to events
+
+```objc
+// Conform to AnimaXAnimationListener
+@interface MyViewController () <AnimaXAnimationListener>
+@end
+
+@implementation MyViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // ... create animaxView ...
+
+    // Add self as listener (on the ability)
+    BaseAnimaXAbility *ability = animaxView.getAnimaXContext.ability;
+    [ability addAnimationListener:self];
+}
+
+- (void)onReady:(NSDictionary *)params {
+    // Animation is loaded; playback APIs are ready.
+    NSNumber *total = params[@"total"];
+}
+
+- (void)onStart:(NSDictionary *)params {
+    // Playback started
+}
+
+- (void)onCompletion:(NSDictionary *)params {
+    // Playback completed (non-looping)
+}
+
+- (void)onRepeat:(NSDictionary *)params {
+    // Loop completed and next started
+}
+
+- (void)onError:(NSDictionary *)params {
+    NSString *msg = params[@"msg"];
+    NSNumber *code = params[@"code"];
+}
+
+- (void)onUpdate:(NSDictionary *)params {
+    // Frame update — subscribe to frames first
+    NSNumber *current = params[@"current"];
+}
+
+- (void)onFps:(NSDictionary *)params {
+    NSNumber *fps = params[@"fps"];
+}
+
+- (void)onTapLayers:(NSDictionary *)params {
+    NSArray *layers = params[@"layerList"];
+}
+
+@end
+```
+
+:::info
+
+On iOS, you can add event listeners either directly on the view (`[animaxView addAnimationEventListener:self]`) or on the ability (`[ability addAnimationListener:self]`). The view method internally forwards to the ability, so both approaches work.
+
+:::
+
+### Subscribe to frame updates
+
+```objc
+// Subscribe to specific frames
+[animaxView subscribeUpdateEvent:0];
+[animaxView subscribeUpdateEvent:30];
+[animaxView subscribeUpdateEvent:60];
+
+// Or subscribe to all frames
+NSMutableArray *frames = [NSMutableArray array];
+for (int i = 0; i < totalFrames; i++) {
+    [frames addObject:@(i)];
+}
+[animaxView subscribeUpdateEvents:frames subscribe:YES];
+
+// Set FPS reporting interval (ms)
+[animaxView setFPSEventInterval:500];
+```
+
+## Memory management
+
+AnimaXView is a `UIView` — it is released when removed from the view hierarchy and deallocated. If you need to explicitly clean up, call `release` on the player:
+
+```objc
+- (void)dealloc {
+    // View and its resources are cleaned up automatically
+}
+```
+
+## Inject instance-level capabilities
+
+For most apps, the global `AnimaXServiceCenter` is sufficient. If you need instance-level capability injection, such as different image loading strategies for different screens, create a custom ability.
+
+```objc
+// CustomAbility.h
+#import <AnimaX/BaseAnimaXAbility.h>
+
+@interface CustomAbility : BaseAnimaXAbility
+@end
+
+// CustomAbility.m
+#import "CustomAbility.h"
+#import <AnimaX/AnimaXServiceCenter.h>
+
+@implementation CustomAbility
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        // Register services scoped to this view instance
+        // [self registerService:@protocol(...) withImpl:...];
+    }
+    return self;
+}
+
+@end
+
+// Use the custom ability
+CustomAbility *ability = [[CustomAbility alloc] init];
+AnimaXContext *context = [[AnimaXContext alloc] initWithAbility:ability];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+```
+
+:::info
+
+Services registered on an ability via `registerService` take priority over global services from `AnimaXServiceCenter`.
+
+:::
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+## Add dependencies
+
+AnimaX Android SDK is published to Maven Central. Add the following to your module-level `build.gradle`:
+
+```groovy
+dependencies {
+    // Core SDK
+    implementation "org.lynxsdk.lynx:animax-sdk:<animax_version>"
+
+    // Text rendering (optional, required for text layers)
+    implementation "org.lynxsdk.lynx:animax-textra:<animax_version>"
+
+    // Native runtime libraries
+    runtimeOnly "org.lynxsdk.lynx:lynx-base:<lynx_version>"
+    runtimeOnly "org.lynxsdk.lynx:skity-native:<skity_version>"
+    runtimeOnly "org.lynxsdk.lynx:lynxtextra:<textra_version>"
+}
+```
+
+If your app targets multiple ABI architectures, configure the `ndk` block:
+
+```groovy
+android {
+    defaultConfig {
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
+        }
+    }
+    packagingOptions {
+        pickFirsts = [
+            "lib/arm64-v8a/libanimax.so",
+            "lib/arm64-v8a/libanimax_textra.so",
+            "lib/arm64-v8a/liblynxbase.so",
+            "lib/arm64-v8a/libskity.so",
+            "lib/arm64-v8a/liblynxtextra.so",
+            "lib/arm64-v8a/libc++_shared.so",
+        ]
+    }
+}
+```
+
+## Initialize AnimaX
+
+Initialize AnimaX once in your `Application.onCreate()`. This loads the native libraries and sets up the application context.
+
+```java
+public class MyApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // (Optional) Register services before init — see next section
+        // AnimaXServiceCenter.inst().registerService(...);
+
+        // Initialize AnimaX. You can call it from a background thread.
+        AnimaX.inst().init(this);
+    }
+}
+```
+
+:::tip
+
+Register services (network loaders, image services) **before** calling `AnimaX.inst().init()` to ensure they are available when the first animation loads.
+
+:::
+
+## Inject basic capabilities
+
+AnimaX uses a service-registry pattern for capabilities such as network resource loading and image decoding. Without these services, AnimaX can only load assets from local files and the app bundle.
+
+### Network resource loader
+
+Implement [`IAnimaXLoader`](./api/animax-loader-protocol) to handle network requests. Here is an example using OkHttp:
+
+```java
+public class HttpLoader implements IAnimaXLoader {
+    private final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
+
+    @Override
+    public void load(IAnimaXLoaderRequest request,
+                     IAnimaXLoaderCompletionHandler completionHandler) {
+        String uri = request.getUri();
+        Request httpRequest = new Request.Builder().url(uri).build();
+
+        client.newCall(httpRequest).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                completionHandler.onComplete(
+                    AnimaXLoaderResponse.createErrorResponse(e));
+            }
+
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    completionHandler.onComplete(
+                        AnimaXLoaderResponse.createErrorResponse(
+                            new Exception("HTTP " + response.code())));
+                    return;
+                }
+                byte[] bytes = response.body().bytes();
+                completionHandler.onComplete(
+                    AnimaXLoaderResponse.createByteArrayResponse(bytes));
+            }
+        });
+    }
+
+    @Override
+    public AnimaXLoaderScheme getScheme() {
+        return AnimaXLoaderScheme.HTTP;
+    }
+}
+```
+
+Register the loader via [`IAnimaXResourceFactoryService`](./api/animax-resource-factory-service) in `Application.onCreate()`:
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXResourceFactoryService.class,
+    new IAnimaXResourceFactoryService() {
+        @Override
+        public List<IAnimaXLoader> createAnimaXLoaders() {
+            return Collections.singletonList(new HttpLoader());
+        }
+    }
+);
+```
+
+### Image loading service
+
+AnimaX delegates image loading to [`IAnimaXImageService`](./api/animax-image-service). This lets you use your app's existing image pipeline (Fresco, Glide, Coil, etc.).
+
+```java
+public class MyImageService implements IAnimaXImageService {
+    @Override
+    public boolean loadImage(IAnimaXLoaderRequest request,
+                             IAnimaXLoaderCompletionHandler completionHandler) {
+        // Delegate to your image library here.
+        // Return true if this service handles the request, false to fall through
+        // to the resource loader chain.
+        String uri = request.getUri();
+        // ... load bitmap and call completionHandler.onComplete(...)
+        return false;
+    }
+}
+```
+
+Register it in `Application.onCreate()`:
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXImageService.class,
+    new MyImageService()
+);
+```
+
+## Create AnimaXView and play
+
+### Create in code
+
+```java
+AnimaXView animaxView = new AnimaXView(this);
+animaxView.setAutoPlay(true);
+animaxView.setLoop(true);
+animaxView.setObjectFit(ObjectFit.CONTAIN);
+
+// Load from a URL (requires network loader service)
+animaxView.setSrc("https://example.com/animation.json");
+
+// Or load from assets
+animaxView.setSrc(UriUtil.fromLocalAsset("animations/my_anim.json"));
+
+// Or load from a file path
+animaxView.setSrc(UriUtil.fromLocalFile("/path/to/animation.json"));
+
+// Add to layout
+FrameLayout container = findViewById(R.id.animation_container);
+container.addView(animaxView,
+    new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        (int) (280 * getResources().getDisplayMetrics().density)
+    )
+);
+```
+
+### Use from code
+
+```xml
+<com.lynx.animax.ui.AnimaXView
+    android:id="@+id/animax_view"
+    android:layout_width="match_parent"
+    android:layout_height="280dp"
+    app:animax_autoPlay="true"
+    app:animax_loop="true"
+    app:animax_objectFit="contain" />
+```
+
+Then in code:
+
+```java
+AnimaXView animaxView = findViewById(R.id.animax_view);
+animaxView.setSrc("https://example.com/animation.json");
+```
+
+:::tip
+
+`UriUtil.fromLocalAsset()` and `UriUtil.fromLocalFile()` are helper methods that build properly formatted URI strings for the resource loader.
+
+:::
+
+## Basic playback control
+
+After the animation is loaded (`onReady`), you can control playback:
+
+```java
+// Start playback from the current position
+animaxView.getPlayer().play();
+
+// Pause at the current frame
+animaxView.getPlayer().pause();
+
+// Resume from paused position
+animaxView.getPlayer().resume();
+
+// Stop and reset to the first frame
+animaxView.getPlayer().stop();
+
+// Seek to a specific frame
+animaxView.getPlayer().seek(30);
+
+// Play a segment (frames 15 to 75)
+animaxView.getPlayer().playSegment(15, 75);
+
+// Check if playing
+boolean isPlaying = animaxView.getPlayer().isAnimating();
+
+// Get current frame (can be fractional)
+double currentFrame = animaxView.getPlayer().getCurrentFrame();
+
+// Get total duration in milliseconds
+double durationMs = animaxView.getPlayer().getDurationMs();
+```
+
+### Configure playback properties
+
+```java
+animaxView.setLoop(true);                       // Loop indefinitely
+animaxView.getPlayer().setLoopCount(3);         // Loop 3 times (0 = infinite)
+animaxView.getPlayer().setSpeed(2.0f);          // 2x speed
+animaxView.getPlayer().setAutoReverse(true);    // Ping-pong on repeat
+animaxView.getPlayer().setStartFrame(24);       // Start frame
+animaxView.getPlayer().setEndFrame(144);        // End frame
+animaxView.getPlayer().setProgress(0.5f);       // Initial position (0.0 - 1.0)
+animaxView.getPlayer().setKeepLastFrame(true);  // Keep last frame after stop
+```
+
+### Listen to events
+
+```java
+animaxView.getPlayer().addAnimationListener(new AnimationListenerAdapter() {
+    @Override
+    public void onReady(AnimaXParam param) {
+        // Animation is loaded; playback APIs are ready.
+        double totalFrames = param.getTotalFrame();
+    }
+
+    @Override
+    public void onStart(AnimaXParam param) {
+        // Playback started
+    }
+
+    @Override
+    public void onComplete(AnimaXParam param) {
+        // Playback completed (non-looping)
+    }
+
+    @Override
+    public void onRepeat(AnimaXParam param) {
+        // Loop completed and next started
+    }
+
+    @Override
+    public void onError(AnimaXErrorParam param) {
+        String msg = param.getErrorMessage();
+        int code = param.getErrorCode();
+    }
+
+    @Override
+    public void onUpdate(AnimaXParam param) {
+        // Frame update — subscribe to frames first:
+        // animaxView.getPlayer().subscribeUpdateEvent(30);
+    }
+
+    @Override
+    public void onFPS(AnimaXFPSParam param) {
+        float fps = param.getFPS();
+    }
+
+    @Override
+    public void onTapLayers(AnimaXTapParam param) {
+        List<String> layers = param.getLayerNames();
+    }
+});
+```
+
+### Subscribe to frame updates
+
+```java
+// Subscribe to specific frames
+animaxView.getPlayer().subscribeUpdateEvent(0);
+animaxView.getPlayer().subscribeUpdateEvent(30);
+animaxView.getPlayer().subscribeUpdateEvent(60);
+
+// Or subscribe to all frames
+int totalFrames = (int) animaxView.getPlayer().getDurationMs() / 16;
+int[] frames = new int[totalFrames];
+for (int i = 0; i < totalFrames; i++) frames[i] = i;
+animaxView.getPlayer().subscribeUpdateEvents(frames, true);
+
+// Set FPS reporting interval (ms)
+animaxView.getPlayer().setFpsEventInterval(500);
+```
+
+### Memory management
+
+When the view is no longer needed, release it:
+
+```java
+@Override
+protected void onDestroy() {
+    super.onDestroy();
+    animaxView.release();
+}
+```
+
+## Inject instance-level capabilities
+
+For most apps, the global `AnimaXServiceCenter` is sufficient. If you need instance-level capabilities, such as different image loading strategies for different screens, create a custom ability.
+
+```java
+public class MyCustomAbility extends NativeAbility {
+
+    public MyCustomAbility() {
+        super();
+        // Register services scoped to this view instance
+        registerService(IAnimaXImageService.class, new MyScopedImageService());
+    }
+}
+
+// Use the custom ability when creating the context
+AnimaXContext context = new AnimaXContext.Builder(
+    new MyCustomAbility(), this
+).build();
+AnimaXView animaxView = new AnimaXView(context);
+```
+
+:::info
+
+Services registered on an ability take priority over global services from `AnimaXServiceCenter`, allowing instance-level services to override global services.
+
+:::
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+## Next steps
+
+- For complete API signatures, see [Native API Reference](./api/animax-view).
+- For runnable examples, check the [AnimaX demo app](https://github.com/RickAi/animax-demo).

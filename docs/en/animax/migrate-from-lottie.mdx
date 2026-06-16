@@ -1,0 +1,63 @@
+---
+description: 'Migrate Lottie animations to AnimaX and integrate them with AnimaXView in native pages.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# Migrate from Lottie to AnimaX
+
+This page explains how to replace an existing Lottie solution with AnimaX.
+
+When migrating, the animation asset itself can continue to be passed as the source: move the resource path originally passed to Lottie in Android Java or iOS Swift to the AnimaXView src entry.
+
+AnimaX is compatible with Lottie features and supports more advanced features. See [Feature Support](./feature-support) for more information.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+**Lottie**
+
+```swift {1}
+let animationView = LottieAnimationView(animation: LottieAnimation.named("loading")!)
+animationView.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
+animationView.loopMode = .loop
+animationView.play()
+```
+
+**AnimaX**
+
+```swift {5}
+let animaxView = AnimaXView(context: AnimaXContext(ability: BaseAnimaXAbility()))
+animaxView.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
+animaxView.setLoop(true)
+animaxView.setAutoplay(true)
+animaxView.setSrc("loading.json", in: Bundle.main)
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+**Lottie**
+
+```java {4}
+LottieAnimationView view = new LottieAnimationView(this);
+view.setLayoutParams(new ViewGroup.LayoutParams(dp(120), dp(120)));
+view.setRepeatCount(ValueAnimator.INFINITE);
+view.setAnimationFromJson(readAssetUnchecked("loading.json"), null);
+view.playAnimation();
+```
+
+**AnimaX**
+
+```java {6}
+AnimaXView view = new AnimaXView(
+    new AnimaXContext.Builder(new NativeAbility(), this).build());
+view.setLayoutParams(new ViewGroup.LayoutParams(dp(120), dp(120)));
+view.setAutoPlay(true);
+view.setLoop(true);
+view.setSrc(UriUtil.fromLocalAsset("loading.json"));
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>

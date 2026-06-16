@@ -1,0 +1,178 @@
+---
+description: 'AnimaXAbility API 参考，包含 iOS BaseAnimaXAbility 和 Android BaseAbility 的服务与事件接口。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXAbility
+
+Ability 对象负责管理单个动画实例内的服务注册、事件监听和监控能力。它适合承载与某个 `AnimaXView` 绑定的实例级扩展。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 创建
+
+### init
+
+创建 `BaseAnimaXAbility` 实例。默认实现使用默认服务作用域。
+
+**返回值**
+
+`BaseAnimaXAbility *`
+
+## 服务管理
+
+### getService
+
+获取指定协议对应的服务。查找顺序为：先查当前 ability 的本地注册表，再回退到全局 `AnimaXServiceCenter`。
+
+**参数**
+
+| 名称    | 类型         | 说明       |
+| ------- | ------------ | ---------- |
+| `proto` | `Protocol *` | 服务协议。 |
+
+**返回值**
+
+`id<AnimaXService>` 或 `nil`。
+
+### registerService
+
+在当前 ability 的本地注册表中注册服务。该服务只影响绑定到此 ability 的动画实例。
+
+**参数**
+
+| 名称    | 类型                | 说明       |
+| ------- | ------------------- | ---------- |
+| `proto` | `Protocol *`        | 服务协议。 |
+| `impl`  | `id<AnimaXService>` | 服务实现。 |
+
+### unregisterService
+
+从当前 ability 的本地注册表移除服务。
+
+**参数**
+
+| 名称    | 类型         | 说明               |
+| ------- | ------------ | ------------------ |
+| `proto` | `Protocol *` | 要移除的服务协议。 |
+
+## 事件监听
+
+### addAnimationListener
+
+添加动画事件监听器。监听器以弱引用形式保存。
+
+**参数**
+
+| 名称       | 类型                                                         | 说明             |
+| ---------- | ------------------------------------------------------------ | ---------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | 动画事件监听器。 |
+
+### removeAnimationListener
+
+移除动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                         | 说明             |
+| ---------- | ------------------------------------------------------------ | ---------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | 要移除的监听器。 |
+
+### allListeners
+
+返回当前 ability 中注册的所有动画事件监听器。
+
+**返回值**
+
+[`NSHashTable<id<AnimaXAnimationListener>> *`](./animax-animation-listener)
+
+## 监控与作用域
+
+### getMonitorDelegate
+
+返回当前 ability 关联的监控代理。
+
+**返回值**
+
+`AnimaXMonitorAbilityDelegate *`
+
+### getServiceScope
+
+返回当前 ability 使用的服务作用域。默认实现返回默认作用域，自定义 ability 可以覆盖它以隔离服务。
+
+**返回值**
+
+[`AnimaXServiceScope *`](./animax-service-scope)
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 服务管理
+
+### getService
+
+获取指定类型对应的服务。查找顺序由实例级 `ServiceRegistry` 处理，并可回退到全局服务中心。
+
+**参数**
+
+| 名称           | 类型       | 说明           |
+| -------------- | ---------- | -------------- |
+| `serviceClass` | `Class<T>` | 服务接口类型。 |
+
+**返回值**
+
+`T` 或 `null`。
+
+### registerService
+
+在当前 ability 的实例级注册表中注册服务。该服务只影响绑定到此 ability 的动画实例。
+
+**参数**
+
+| 名称       | 类型       | 说明           |
+| ---------- | ---------- | -------------- |
+| `clazz`    | `Class<T>` | 服务接口类型。 |
+| `instance` | `T`        | 服务实例。     |
+
+### unregisterService
+
+从当前 ability 的实例级注册表移除服务。
+
+**参数**
+
+| 名称    | 类型       | 说明                   |
+| ------- | ---------- | ---------------------- |
+| `clazz` | `Class<T>` | 要移除的服务接口类型。 |
+
+## 事件监听
+
+### addAnimationListener
+
+添加动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                | 说明             |
+| ---------- | --------------------------------------------------- | ---------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | 动画事件监听器。 |
+
+### removeAnimationListener
+
+移除动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                | 说明             |
+| ---------- | --------------------------------------------------- | ---------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | 要移除的监听器。 |
+
+## 资源释放
+
+### release
+
+释放 ability 持有的资源，包括监控代理、实例级服务注册表和事件监听器列表。释放后不应继续复用当前 ability。
+
+</PlatformTabs.Tab>
+</PlatformTabs>
