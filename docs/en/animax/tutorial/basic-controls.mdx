@@ -1,0 +1,309 @@
+---
+description: 'Tutorial: control AnimaX playback with UI Methods, events, and frame updates.'
+---
+
+import { Go } from '@lynx';
+
+# Tutorial: Basic Controls
+
+Learn how to control animation playback with UI Methods, listen to runtime events, subscribe to frame updates, and seek to a specific frame.
+
+## Manual playback
+
+In [Quick Start](../start/quick-start), we used the `autoplay` attribute to start the animation automatically. Here, playback is triggered by a button, so the example sets `autoplay={false}` and calls a UI Method after the `ready` event.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/controls/index.tsx"
+  defaultEntryFile="dist/controls.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/animax-controls-play.gif"
+  entry={['src/controls/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/controls/index.tsx': '{24-42,77-80,237-249}',
+  }}
+/>
+
+To make playback controllable, first disable automatic playback.
+
+At the same time, listen for `ready`. AnimaX can respond to UI Methods only after it has prepared the rendering model and the platform rendering object.
+
+```tsx {4,6}
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  className="animax"
+  src={CONTROLS_SHAPE_LOTTIE_SRC}
+  autoplay={false}
+  loop={true}
+  objectfit="contain"
+  bindready={handleReady}
+/>
+```
+
+:::details ready and firstframe
+
+After sending the `ready` event, AnimaX continues to render the first frame and then sends a `firstframe` event.
+
+If you need to respond to UI Methods as early as possible or prepare dynamic property content, listen for `ready`.
+
+If you need a seamless transition, such as showing an image before the animation finishes loading to avoid blank frames, listen for `firstframe`.
+
+See more events in [`<animax-view>` event attributes](/api/elements/built-in/animax-view.html#event-attributes).
+
+:::
+
+Then bind a button to start playback through a UI Method.
+
+```tsx {1-19,27}
+function invokeControlMethod(
+  method: AnimaXMethod,
+  params?: Record<string, unknown>,
+  success?: () => void,
+) {
+  lynx
+    .createSelectorQuery()
+    .select(`#${ANIMAX_VIEW_ID}`)
+    .invoke({
+      method,
+      params,
+      success() {
+        success?.();
+      },
+      fail(res) {
+        console.log(`[animax] ${method} fail`, JSON.stringify(res));
+      },
+    })
+    .exec();
+}
+
+const handleTapPlay = () => {
+  if (!isReady) {
+    return;
+  }
+
+  invokeControlMethod('play', undefined, () => {
+    setIsPlaying(true);
+    setCanPauseResume(true);
+    setStatus('playing');
+  });
+};
+```
+
+:::info
+
+This example uses `SelectorQuery` to find the `<animax-view>` node and call `invoke`. You can also use `ref` to obtain a `NodesRef` and call [`NodesRef.invoke()`](/api/lynx-api/nodes-ref/nodes-ref-invoke).
+
+:::
+
+## Add pause and stop
+
+Now we can add more control buttons.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/controls/index.tsx"
+  defaultEntryFile="dist/controls.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/animax-controls-pause.gif"
+  entry={['src/controls/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/controls/index.tsx': '{127,136,143,154,224-230}',
+  }}
+/>
+
+Here we use more UI Methods and update the player state from callbacks and runtime events.
+
+The play button switches between three states:
+
+1. Before playback starts, it calls `play`.
+2. While the animation is playing, it calls `pause`.
+3. After pausing, it calls `resume`.
+
+The stop button calls `stop`, clears the playback state, and resets the displayed frame.
+
+```tsx {7,16,23,34}
+const handleTapPlay = () => {
+  if (!isReady) {
+    return;
+  }
+
+  if (!canPauseResume) {
+    invokeControlMethod('play', undefined, () => {
+      setIsPlaying(true);
+      setCanPauseResume(true);
+      setStatus('playing');
+    });
+    return;
+  }
+
+  if (isPlaying) {
+    invokeControlMethod('pause', undefined, () => {
+      setIsPlaying(false);
+      setStatus(`paused: ${formatFrame(currentFrame)}`);
+    });
+    return;
+  }
+
+  invokeControlMethod('resume', undefined, () => {
+    setIsPlaying(true);
+    setStatus('playing');
+  });
+};
+
+const handleTapStop = () => {
+  if (!isReady) {
+    return;
+  }
+
+  invokeControlMethod('stop', undefined, handleCancel);
+};
+```
+
+The same state is also updated from runtime events. This keeps the UI in sync even when playback starts, completes, or is cancelled outside the button callback path.
+
+```tsx {19-24}
+const handleStart = () => {
+  setStatus('playing');
+  setIsPlaying(true);
+  setCanPauseResume(true);
+};
+
+const handleCompletion = () => {
+  setStatus('complete');
+  setIsPlaying(false);
+};
+
+const handleCancel = () => {
+  setStatus('stopped');
+  setIsPlaying(false);
+  setCanPauseResume(false);
+  setCurrentFrame(0);
+};
+
+<animax-view
+  bindstart={handleStart}
+  bindcancel={handleCancel}
+  bindcompletion={handleCompletion}
+/>;
+```
+
+## Implement a progress bar and frame-by-frame playback
+
+[`subscribeUpdateEvents`](/api/elements/built-in/animax-view.html#subscribeupdateevents) lets us subscribe to specific frames, and [`seek`](/api/elements/built-in/animax-view.html#seek) lets the animation jump to a specified frame.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/controls/index.tsx"
+  defaultEntryFile="dist/controls.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/animax-controls-progress.gif"
+  entry={['src/controls/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/controls/index.tsx': '{77-80,87-89,115,207-210,237-249}',
+  }}
+/>
+
+By passing parameters to UI Methods, we subscribe to all frames. Every subscribed frame emits an `update` event when rendered.
+
+Use AnimaX [event callback parameters](/api/elements/built-in/animax-view.html#event-definitions) to update the total frame count and the current frame count.
+
+```tsx {6-8,16-18,20}
+const handleReady = (e: AnimaXReadyEvent) => {
+  const total = ceilFrame(e.detail.total);
+  setTotalFrame(total);
+  setCurrentFrame(clampFrame(ceilFrame(e.detail.current), total));
+
+  invokeControlMethod(
+    'subscribeUpdateEvents',
+    { frames: Array.from({ length: total + 1 }, (_, index) => index) },
+    () => {
+      setIsReady(true);
+      setStatus(`ready: ${formatFrame(total)} frames`);
+    },
+  );
+};
+
+const handleUpdate = (e: AnimaXUpdateEvent) => {
+  setCurrentFrame(clampFrame(ceilFrame(e.detail.current), totalFrame));
+};
+
+<animax-view bindready={handleReady} bindupdate={handleUpdate} />;
+```
+
+:::tip
+
+AnimaX rendering relies on UI-thread Vsync synchronization, so frame values from event callbacks may be floating-point values.
+
+If the main thread is busy, 1-2 frames may be skipped. If those skipped frames were subscribed, AnimaX will make up for them by sending `update` events.
+
+:::
+
+Control jumps through the [`seek`](/api/elements/built-in/animax-view.html#seek) method.
+
+```tsx {7}
+const seekToFrame = (frame: number) => {
+  if (!isReady) {
+    return;
+  }
+
+  const target = clampFrame(frame, totalFrame);
+  invokeControlMethod('seek', { frame: target }, () => {
+    setCurrentFrame(target);
+    setStatus(`seek: ${formatFrame(target)}`);
+  });
+};
+
+const handleTapPrev = () => {
+  seekToFrame(currentFrame > 0 ? currentFrame - 1 : totalFrame);
+};
+
+const handleTapNext = () => {
+  seekToFrame(currentFrame < totalFrame ? currentFrame + 1 : 0);
+};
+
+const handleTapProgress = (e: Lynx.CommonEvent) => {
+  if (!isReady || totalFrame <= 0) {
+    return;
+  }
+
+  const tapX = typeof e.detail.x === 'number' ? e.detail.x : 0;
+
+  lynx
+    .createSelectorQuery()
+    .select(`#${PROGRESS_ID}`)
+    .invoke({
+      method: 'boundingClientRect',
+      success(res) {
+        const rect = readRect(res);
+        const width =
+          rect?.width ?? SystemInfo.pixelWidth / SystemInfo.pixelRatio;
+        const left = rect?.left ?? 0;
+        const ratio =
+          width > 0 ? Math.max(0, Math.min((tapX - left) / width, 1)) : 0;
+
+        seekToFrame(Math.round(ratio * totalFrame));
+      },
+    })
+    .exec();
+};
+```
+
+## Pass animation data with json
+
+You can also provide animation data through the [`json`](/api/elements/built-in/animax-view.html#json) attribute instead of `src`. `src` lets AnimaX fetch a `.json` or `.zip` resource by URL, while `json` passes the animation content directly from the frontend. Use `json` when the page already owns the content string or wants to control the fetch step itself.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/basic-json/index.tsx"
+  defaultEntryFile="dist/basic-json.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic-json.gif"
+  entry={['src/basic-json/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/basic-json/index.tsx': '{23,70-77}',
+  }}
+/>

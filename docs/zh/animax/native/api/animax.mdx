@@ -1,0 +1,98 @@
+---
+description: 'AnimaX 在 iOS 和 Android 平台上的全局引擎入口 API 参考。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaX
+
+`AnimaX` 是 AnimaX 渲染引擎的全局入口类。在 Android 上用于初始化引擎；iOS 无需执行全局初始化。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 获取实例
+
+### shareInstance
+
+返回 `AnimaX` 共享实例。不能直接调用 `new` 或 `init`。
+
+**返回值**
+
+`AnimaX *`
+
+## 注册日志能力
+
+### registerLoggerOnce
+
+注册 AnimaX 日志能力。该方法可多次调用，但只有首次调用会执行注册。
+
+**返回值**
+
+`void`
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 获取实例
+
+### inst
+
+返回全局唯一的 `AnimaX` 单例。
+
+**返回值**
+
+`AnimaX`
+
+## 初始化
+
+### init
+
+初始化 AnimaX 渲染引擎。建议在 `Application.onCreate()` 中调用 `init(Context)`，并确保在使用 `AnimaXView` 或 `AnimaXPlayer` 前完成初始化。重复调用不会重复初始化 native 库。
+
+**可用签名**
+
+| 签名                                                            | 说明                                             |
+| --------------------------------------------------------------- | ------------------------------------------------ |
+| `init(Context applicationContext)`                              | 推荐。使用应用 Context 初始化。                  |
+| `init(Context applicationContext, INativeLibraryLoader loader)` | 使用应用 Context 和自定义加载器初始化。          |
+| `init()`                                                        | 已弃用。不传入应用 Context 进行初始化。          |
+| `init(INativeLibraryLoader loader)`                             | 已弃用。仅使用自定义 native 库加载器进行初始化。 |
+
+**参数**
+
+| 名称                 | 类型                   | 说明                                                 |
+| -------------------- | ---------------------- | ---------------------------------------------------- |
+| `applicationContext` | `Context`              | 由 AnimaX 持有的应用 Context。                       |
+| `loader`             | `INativeLibraryLoader` | 自定义 native 库加载器；传入 `null` 时使用默认实现。 |
+
+### hasInitialized
+
+返回引擎是否已完成初始化。
+
+**返回值**
+
+`boolean`
+
+## Native 库加载
+
+### INativeLibraryLoader
+
+自定义 native 库加载接口。当应用需要从非标准路径加载 `libanimax.so` 时，可实现此接口并传入 `init()`。
+
+### loadLibrary
+
+加载指定名称的 native 库。
+
+**参数**
+
+| 名称      | 类型     | 说明          |
+| --------- | -------- | ------------- |
+| `libName` | `String` | native 库名。 |
+
+**返回值**
+
+`void`
+
+</PlatformTabs.Tab>
+</PlatformTabs>
