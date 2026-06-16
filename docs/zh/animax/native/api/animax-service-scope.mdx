@@ -1,0 +1,100 @@
+---
+description: 'AnimaXServiceScope API 参考，包含 iOS 和 Android 服务作用域的创建、默认值与隔离机制说明。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXServiceScope
+
+`AnimaXServiceScope` 表示服务注册的作用域。不同作用域中的服务互相隔离，允许按业务、页面或动画实例维度注册不同的服务实现。
+
+作用域的核心价值在于服务隔离：例如全局注册一个默认的 `MonitorService`，同时为特定页面的动画实例注册另一个实现，两者互不影响。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 获取作用域
+
+### defaultScope
+
+返回默认服务作用域。未显式传入作用域时，服务会注册到此作用域。
+
+**类型**
+
+`AnimaXServiceScope *`
+
+### scopeWithValue
+
+根据字符串值创建自定义服务作用域。
+
+**参数**
+
+| 名称    | 类型         | 说明                                                                             |
+| ------- | ------------ | -------------------------------------------------------------------------------- |
+| `value` | `NSString *` | 作用域标识字符串。每次调用都会创建新对象；仅字母大小写不同的值对应的作用域相等。 |
+
+**返回值**
+
+`AnimaXServiceScope *`
+
+## 使用示例
+
+```objc
+// 创建自定义作用域
+AnimaXServiceScope *scope = [AnimaXServiceScope scopeWithValue:@"my_feature"];
+
+// 在该作用域中注册服务
+[[AnimaXServiceCenter sharedInstance] registerServiceWithScope:scope
+                                                      protocol:@protocol(AnimaXMonitorService)
+                                                      withImpl:myMonitor];
+```
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 获取作用域
+
+### DEFAULT
+
+默认服务作用域。未显式传入作用域时，服务会注册到此作用域。
+
+**类型**
+
+`ServiceScope`
+
+### of
+
+根据字符串值创建自定义服务作用域。`value` 会转为小写后参与比较。
+
+**参数**
+
+| 名称    | 类型     | 说明                                                                             |
+| ------- | -------- | -------------------------------------------------------------------------------- |
+| `value` | `String` | 作用域标识字符串。每次调用都会创建新对象；仅字母大小写不同的值对应的作用域相等。 |
+
+**返回值**
+
+`ServiceScope`
+
+## 使用示例
+
+```java
+ServiceScope scope = ServiceScope.of("my_feature");
+
+AnimaXServiceCenter.inst().registerService(scope,
+    IAnimaXMonitorService.class, myMonitor);
+```
+
+## 作用域查找顺序
+
+当 `AnimaXAbility` 或 `AnimaXView` 需要获取服务时，查找顺序为：
+
+1. 实例级注册表（通过 `ability.registerService()` 注册的服务）
+2. 当前 ability 关联的作用域
+
+找到第一个匹配的服务即停止查找。`BaseAbility` 通过受保护的 `getScope()` 方法确定该作用域。此方法默认返回 `ServiceScope.DEFAULT`，子类可以重写它。
+
+自定义作用域不会自动回退到 `ServiceScope.DEFAULT`。如需在自定义作用域中使用某项服务，请将服务注册到该作用域；如果 ability 应使用注册在 `ServiceScope.DEFAULT` 下的服务，则让它继续使用默认作用域。
+
+</PlatformTabs.Tab>
+</PlatformTabs>

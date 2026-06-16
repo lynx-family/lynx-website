@@ -1,0 +1,340 @@
+---
+title: 'AnimaX Is Released'
+date: 2026-07-06
+sidebar: false
+authors: ['RickAi', 'WATER1350', 'liyunrainbow', 'XianruoLi', 'cait7']
+badge_text: 'AnimaX is released!'
+description: 'AnimaX is released as a cross-platform animation framework built with C++ and the Skity self-rendering engine. It keeps the Lottie workflow while adding Alpha Video layers, runtime dynamic properties, multithreaded rendering, and consistent rendering across Lynx and native apps.'
+---
+
+import { BlogHeader, Caption, Go, ImageWall } from '@lynx';
+
+<BlogHeader />
+
+## Overview
+
+[AnimaX](/animax/) is now open source. It is a
+cross-platform animation framework built by the Lynx team, powered by a C++
+runtime and the [Skity](https://github.com/lynx-family/skity) self-rendering
+engine.
+
+AnimaX does not introduce a new animation workflow or a new output format.
+Instead, it keeps the Lottie workflow designers already know: motion is still
+authored in After Effects, exported through plugins into Lottie-compatible
+artifacts, and then integrated by engineers.
+
+On top of that familiar path, AnimaX adds the pieces teams often need in
+production: complex layers, consistent rendering, runtime dynamic properties,
+and multithreaded rendering. For teams already using Lottie, it is meant to be a
+low-friction upgrade path, not a request to rebuild the motion pipeline
+from scratch.
+
+AnimaX is available in the
+[lynx-family/animax](https://github.com/lynx-family/animax) repository, with
+native Android and iOS examples included. In Lynx apps, AnimaX animations can be
+played directly through the
+[`<animax-view>`](/api/elements/built-in/animax-view) element. The docs also
+include examples you can preview and try.
+
+The examples below cover common AnimaX layer types, including shape, image, text
+and transparent video layers. With the right motion breakdown and layer
+structure, designers can bring much more of their After Effects work into real
+product surfaces.
+
+<ImageWall
+  rows={2}
+  cols={3}
+  maxItems={6}
+  colsResponsive={{ base: 2, md: 3 }}
+  tileAspectRatio={9 / 16}
+  srcBase="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/"
+  images={[
+    {
+      filePath: 'vector.mp4',
+      alt: 'Shape Layer',
+    },
+    {
+      filePath: 'image.mp4',
+      alt: 'Image Layer',
+    },
+    {
+      filePath: 'text.mp4',
+      alt: 'Text Layer',
+    },
+    {
+      filePath: 'alpha_video.mp4',
+      alt: 'Alpha Video Layer',
+    },
+    {
+      filePath: 'vector2.mp4',
+      alt: 'Shape Layer',
+    },
+    {
+      filePath: 'mixed.mp4',
+      alt: 'Mixed Layers',
+    },
+  ]}
+/>
+
+<Caption>AnimaX rendering across different layer types</Caption>
+
+## Why AnimaX?
+
+Lottie made vector animation much easier to ship across mobile and Web, while
+letting designers keep After Effects as the authoring tool. In real product
+work, though, once motion gets close to the complexity of campaign pages,
+commerce scenes, onboarding flows, or creator tools, the same problems tend to
+come back.
+
+1. Platform support is uneven. Android, iOS, and Web often rely on different
+   Lottie implementations, with different drawing capabilities and maintenance
+   schedules. The same asset may look correct on one platform and lose detail on
+   another. Blur on shape layers, masks, mattes, and blend modes are common
+   examples: one platform may support them well, while another may fall back or
+   fail to render them. The more platforms you support, the more expensive this
+   drift becomes.
+2. The main thread gets crowded. Many traditional players do a large amount of
+   work on the UI thread. When a complex animation brings in masks, mattes, path
+   calculation, or image sequences, it starts competing with layout, scrolling,
+   and user interaction. Teams often respond by reducing the animation
+   complexity or converting the effect into image sequences, which then creates
+   new costs in package size, memory, and loading time.
+3. After Effects fidelity is limited. Lottie was not designed to cover every
+   After Effects feature. Complex effects, text and image composition, lighting,
+   and video-like motion are hard to reproduce with pure Lottie alone. Designers
+   adjust the creative, engineers patch the missing UI by hand, and the final
+   animation becomes split across assets, code, and product logic.
+
+AnimaX is designed to solve these problems without breaking the Lottie workflow.
+It uses one C++ runtime for parsing, scheduling, and rendering, relies on Skity
+for cross-platform self-rendering, and combines Alpha Video, image, text, shape
+layers, and runtime properties into a playable and controllable animation
+runtime.
+
+### Full Lottie Compatibility
+
+Lottie compatibility is not an extra feature of AnimaX. It is the starting
+point.
+
+Many teams already have a complete pipeline around After Effects, Lottie JSON,
+preview tools, and release workflows. If stronger rendering required a new
+format, both designers and developers would need to relearn the process, and
+existing assets would be hard to reuse. AnimaX keeps parsing Lottie-compatible
+artifacts so existing JSON files can enter the new runtime directly.
+
+This lets teams start by using AnimaX as a more capable Lottie player, then
+gradually introduce Alpha Video, dynamic properties, and mixed layers where they
+make sense. Designers still organize motion in After Effects. Developers still
+load animation assets, control playback, and listen to state changes. The main
+difference is that the playback pipeline underneath is now a more unified C++
+renderer.
+
+In practice, existing Lottie assets in a project can be handed to AnimaX for
+playback without asking designers to export them again from After Effects.
+
+<Go
+  example="animax"
+  defaultTab="preview"
+  webPreview={false}
+  defaultFile="src/basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+  entry="src/basic"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic_v3.gif"
+  highlight={{
+    'src/basic/index.tsx': '{15-20}',
+  }}
+/>
+
+For Lynx apps, use [`<animax-view>`](../api/elements/built-in/animax-view) to
+play AnimaX assets directly. For native apps, start with
+[Migrate from Lottie to AnimaX](../animax/migrate-from-lottie) if you are
+replacing an existing Lottie player, then follow the
+[Native Integration Guide](../animax/native/guide) to wire AnimaX into iOS or
+Android.
+
+### Support for Complex Effects
+
+Pure vector layers cannot represent every After Effects effect. Real motion
+often combines shape layers, images, text, blur, masks, lighting, and 3D-like
+visuals. Forcing all of that into image sequences inside Lottie usually leads to
+large files, unstable fidelity, and platform-specific rendering gaps.
+
+AnimaX provides two paths.
+
+1. It keeps extending vector rendering. With
+   [Skity](https://github.com/lynx-family/skity) as the self-rendering engine,
+   AnimaX can support more drawing features and advanced motion through one
+   graphics pipeline, reducing its dependence on the differences between native
+   platform renderers. AnimaX supports more After Effects features than Lottie
+   in several categories; see [Feature Support](../animax/feature-support) for
+   the full comparison.
+
+2. It supports [Alpha Video](../animax/alpha-video) layers. For effects that are
+   too complex for vectors today, or simply better expressed as video, designers
+   can follow the [AFX export guide](/animax/afx) to organize and export those
+   layers as transparent video. AnimaX then plays them together with Lottie
+   shape, image, and text layers. This keeps the expressive power of After
+   Effects without forcing every visual detail into pure vector data.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/alpha-video-basic/index.tsx"
+  defaultEntryFile="dist/alpha-video-basic.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/alpha-video-basic.gif"
+  entry={[
+    'src/alpha-video-basic/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/alpha-video-basic/index.tsx': '{15-20}',
+    'src/shared/animation.ts': '{17}',
+  }}
+/>
+
+### Consistent Rendering
+
+The hardest part of cross-platform animation is often not whether an asset can
+play, but whether it plays the same way everywhere.
+
+In a traditional setup, Android, iOS, and Web often rely on separate rendering
+implementations. An effect that works through Skia on Android may look different
+when iOS draws it through Core Graphics or another stack. Even a blur on a shape
+layer may be correct on one platform and missing on another. As support expands
+to HarmonyOS, Desktop, or more embedded containers, those differences multiply.
+
+AnimaX moves the core logic into C++ and uses
+[Skity](https://github.com/lynx-family/skity) to unify drawing behavior.
+Platform code only needs to provide the necessary window, texture, resource
+loading, and event capabilities. Animation parsing, layer calculation, draw
+order, and most rendering behavior are handled by the same engine. This does not
+erase every platform difference, but it keeps those differences inside a much
+smaller boundary instead of asking every platform to maintain a separate player.
+
+### Runtime Dynamic Properties
+
+Once animation enters a product page, it is rarely just something that plays
+once and ends. A page may need to replace images based on user state, switch
+text for localization, update colors for themes, or change a layer property in
+response to interaction.
+
+AnimaX optimizes these runtime updates and provides direct APIs for replacing
+images, fonts, text, and other resources. Product code can treat an animation as
+a configurable runtime layer, rather than a closed video or a set of UI pieces
+that cannot be reused. Designers can still build the motion in After Effects,
+while developers inject real product data at runtime.
+
+See [Dynamic Properties](../animax/dynamic-property) for the Lynx component APIs
+and native API entry points.
+
+### Reduced Main-Thread Work
+
+Complex animation usually hurts page performance through continuous layer
+calculation, mask processing, blending, and drawing. If all of that stays on the
+UI thread, it competes with scrolling, layout, and gesture handling. The problem
+is especially visible on lower-end devices.
+
+AnimaX's self-rendering architecture allows expensive rendering work to run off
+the UI thread. For animations with many mattes, masks, effects, and layer
+compositing, this can significantly reduce main-thread pressure and move the
+risk of jank out of the main interaction path.
+
+The [AnimaX Lottie Benchmark](https://github.com/RickAi/animax-lottie-benchmark)
+uses the animation and test method from the
+[Callstack article](https://www.callstack.com/blog/lottie-vs-rive-optimizing-mobile-app-animation)
+to run a fixed scenario comparison. The test devices were a Pixel 4 on Android
+10 and an iPhone 12 Mini on iOS 15.4.
+
+The FPS results are below. GPU Render FPS refers to the offscreen rendering frame
+rate on the GPU thread. Lottie does not record the corresponding metric, so it
+is marked as `-`.
+
+| Platform | Engine | UI FPS | GPU Render FPS |
+| -------- | ------ | -----: | -------------: |
+| Android  | AnimaX |   60.0 |           60.0 |
+| Android  | Lottie |   37.2 |              - |
+| iOS      | AnimaX |   60.0 |           60.1 |
+| iOS      | Lottie |   60.0 |              - |
+
+On Android, AnimaX keeps both UI FPS and GPU Render FPS stable at 60.0, while
+Lottie reaches 37.2 UI FPS. This difference shows the value of AnimaX's
+self-rendering pipeline for animations with heavy masks and composition work:
+rendering no longer continuously occupies the UI thread, leaving more headroom
+for interaction, layout, and business logic. On iOS, both engines stay at 60
+FPS, which matches Lottie iOS's Core Animation path, where part of the playback
+work can be handed to the system rendering infrastructure.
+
+Memory is worth looking at separately. The following numbers are the memory
+delta after entering the animation scene relative to the baseline, in MB.
+Because Android and iOS expose different memory metrics, they are listed by
+platform.
+
+Android data:
+
+| Engine | Native Heap Delta | Java Heap Delta | Graphics Delta | TOTAL PSS Delta |
+| ------ | ----------------: | --------------: | -------------: | --------------: |
+| AnimaX |              8.14 |            0.68 |          65.73 |           76.64 |
+| Lottie |             11.39 |            3.69 |          19.07 |           36.13 |
+
+iOS data:
+
+| Engine | Resident Delta | Phys Footprint Delta | Internal Delta |
+| ------ | -------------: | -------------------: | -------------: |
+| AnimaX |          21.90 |                60.37 |          17.13 |
+| Lottie |          26.63 |                20.47 |          20.38 |
+
+The memory results need to be read with each platform's accounting model in
+mind. On Android, AnimaX has lower Native Heap and Java Heap deltas, but a
+higher Graphics delta. That is a typical result for a self-rendering engine
+whose working set lives in graphics buffers, textures, and renderer caches. On
+iOS, AnimaX has lower Resident and Internal deltas than Lottie, but a higher
+Phys Footprint.
+
+## Use It in Lynx or Native Apps
+
+In Lynx pages, AnimaX is exposed through
+[`<animax-view>`](/api/elements/built-in/animax-view). The most common usage is
+to load a `.json` or `.zip` animation resource directly:
+
+```tsx
+<animax-view
+  className="animax-item"
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_url/logo.json"
+  autoplay
+  loop
+/>
+```
+
+See the
+[`<animax-view>` API](/api/elements/built-in/animax-view) for properties,
+events, and runtime controls.
+
+AnimaX can also be integrated as a standalone native library. Platform-level
+usage is covered in the [Native API reference](/animax/native/api/animax-view), including
+view creation, resource loading, playback control, events, and status queries.
+
+## Upcoming Releases
+
+More platform support is also planned:
+
+- HarmonyOS and Web support are expected to roll out in Q3 2026. In the same period, we will also package and release the LynxUI AnimaX component, allowing AnimaX to integrate into the LynxUI ecosystem through a more unified component model.
+- Desktop support is planned to be open-sourced in Q4 2026.
+
+## Try It Now
+
+Start with the [AnimaX introduction](/animax/introduction) to understand the
+runtime, then follow the [quick start](/animax/start/quick-start) to run a
+minimal example. If your assets come from After Effects, continue with the
+[AFX export guide](/animax/afx) to see how Alpha Video layers are produced
+and played together with Lottie artifacts.
+
+AnimaX is licensed under Apache-2.0 and continues to evolve in the open. You are
+welcome to file issues, discuss requirements, or contribute in the
+[lynx-family/animax repository](https://github.com/lynx-family/animax).
+
+AnimaX is not trying to replace the Lottie workflow designers already know. It
+keeps that workflow and adds the rendering, composition, and runtime control
+needed to deliver complex motion reliably across platforms. For teams shipping
+animation-heavy product experiences, it offers a more controlled path forward.

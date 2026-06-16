@@ -105,6 +105,20 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
 
+  {
+    value: 'animax',
+    label: 'AnimaX',
+    description: 'Animation Framework',
+    descriptionZh: '跨平台动效框架',
+    home: '/animax/',
+    url: '/animax/start/quick-start',
+    category: 'core',
+    logo: {
+      light: '/assets/animax/animax-logo-black.svg',
+      dark: '/assets/animax/animax-logo-white.svg',
+    },
+  },
+
   // ── JavaScript Framework ──────────────────────────────────────
   {
     value: 'react',
