@@ -28,7 +28,7 @@ import { renderPng } from './lib';
 import { coverTemplate, blogTemplate } from './templates';
 
 /** Bump to invalidate every cached image after a template/layout change. */
-const TEMPLATE_VERSION = 'og-v8';
+const TEMPLATE_VERSION = 'og-v9';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
@@ -140,7 +140,7 @@ function buildByline(
 ): string {
   const raw = frontmatter.authors ?? frontmatter.author;
   const ids = (Array.isArray(raw) ? raw : raw ? [raw] : []).map(String);
-  const names = ids.slice(0, 3).map((id) => authorName(id, lang));
+  const names = ids.map((id) => authorName(id, lang));
   const by = names.length
     ? `${lang === 'zh' ? '作者：' : 'By '}${names.join(lang === 'zh' ? '、' : ', ')}`
     : '';
