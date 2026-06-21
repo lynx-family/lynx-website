@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[fullscreen?](./qrcode-rsbuild-plugin.pluginqrcodeoptions.fullscreen.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Opt in to the fullscreen variant of the Lynx bundle URL (appends `?fullscreen=true`<!-- -->, opening the bundle in LynxExplorer with the in-app navigation chrome stripped).
+
+When enabled, the plugin: - Appends a `fullscreen` entry to the schema rotation — the QR keeps opening on your default schema; press `a` in the dev console to switch to the `fullscreen` variant. - Appends an `∟ Fullscreen` URL line under each Lynx bundle URL printed by the dev server.
+
+
+</td></tr>
+<tr><td>
+
 [schema?](./qrcode-rsbuild-plugin.pluginqrcodeoptions.schema.md)
 
 
