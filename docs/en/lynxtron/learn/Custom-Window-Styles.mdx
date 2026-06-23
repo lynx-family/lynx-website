@@ -1,0 +1,101 @@
+import { Go } from '@lynx';
+import floatingClockGif from '@assets/lynxtron/floating-clock2.gif?url';
+
+# Building a Custom Window
+
+## Electron Capability Mapping
+
+Lynxtron's custom window support is aligned with Electron's custom / frameless window support.
+
+Window shape is controlled by window creation options, and draggable regions are declared through CSS. The difference is that Electron uses `BrowserWindow` and Web pages for these capabilities, while Lynxtron uses `LynxWindow` and Lynx UI.
+
+| Capability                        | Electron                                                                                              | Lynxtron                                                                                       |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Window shape options              | `new BrowserWindow(options)`, such as `frame`, `transparent`, `titleBarStyle`, `trafficLightPosition` | `new LynxWindow(options)` with the same option names                                           |
+| Declare a custom draggable region | CSS: `-webkit-app-region: drag`                                                                       | CSS: `-x-app-region: drag`, or use [`<title-bar-view>`](/api/elements/built-in/title-bar-view) |
+
+The draggable region CSS is:
+
+```css
+/* Electron */
+.titlebar {
+  -webkit-app-region: drag;
+}
+
+/* Lynxtron */
+.titlebar {
+  -x-app-region: drag;
+}
+```
+
+## Example: Floating Clock Window
+
+<Go
+  img={floatingClockGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="Open in Lynxtron Go"
+/>
+
+This demo uses a floating clock to show a custom window: the window itself is frameless and transparent, the clock UI is drawn by the app, and a custom draggable title bar appears when the mouse hovers over the window.
+
+### Define the Window Shape
+
+The window shape is controlled by `LynxWindow` creation options. Common options include:
+
+- `frame: false`: remove the system default border and title bar.
+- `transparent: true`: create a transparent window.
+- `titleBarStyle`: hide or adjust the system title bar.
+- `trafficLightPosition`: adjust the macOS traffic light button position in frameless windows.
+
+For example, create a frameless transparent window:
+
+```typescript
+import { app, LynxWindow } from 'lynxtron';
+
+const win = new LynxWindow({
+  width: 960,
+  height: 640,
+  frame: false,
+  transparent: true,
+});
+
+app.whenReady().then(() => {
+  win.show();
+});
+```
+
+### Define UI Draggable Regions
+
+After the system title bar is removed, a frameless window no longer has a default system draggable region. You need to explicitly declare which regions in Lynx UI can drag the window.
+
+You can use [`<title-bar-view>`](/api/elements/built-in/title-bar-view), or use the `-x-app-region: drag` CSS property. The following example declares a custom title bar region with CSS:
+
+```tsx {3}
+export function CustomTitleBar() {
+  return (
+    <view className="title-bar">
+      <view className="title-bar-button" bindtap={handleClose}>
+        <text className="title-bar-button-text">×</text>
+      </view>
+    </view>
+  );
+}
+```
+
+```css
+.title-bar {
+  display: flex;
+  ...
+  -x-app-region: drag;
+}
+```
+
+Buttons such as close, minimize, and maximize in a custom title bar can call main-process window APIs through [Node.js and Lynx communication](/lynxtron/learn/Communication-Between-Node-And-Lynx).
+
+## Related APIs
+
+- [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx)
+- [`LynxWindowConstructorOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx)
+- [`<title-bar-view>`](/api/elements/built-in/title-bar-view)

@@ -1,0 +1,124 @@
+[lynxtron](/lynxtron/api/@lynx-js/lynxtron/index.mdx) / Protocol
+
+# Interface: Protocol
+
+Controls custom resource protocol handling and request rewriting for Lynx
+resource loading.
+
+## Methods
+
+### handle()
+
+```ts
+handle(scheme: string, handler: ProtocolHandler): void
+```
+
+Register a resource handler for a URL scheme such as `app`.
+
+Schemes are normalized before use: a trailing `:` is accepted, and the scheme
+name is lower-cased. A valid scheme must start with a letter and may contain
+letters, digits, `+`, `-`, and `.`.
+
+Returning `false` or `undefined` from the handler falls back to the normal Lynx
+resource loading path. The handler may also return a `Promise<ResourceResponse>`.
+Responses must include `statusCode` and `Buffer` data; invalid responses fall
+back to normal loading.
+
+#### Parameters
+
+| Parameter | Type              |
+| --------- | ----------------- |
+| `scheme`  | `string`          |
+| `handler` | `ProtocolHandler` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+lynxtron/apis/api/protocol.d.ts
+
+---
+
+### isProtocolHandled()
+
+```ts
+isProtocolHandled(scheme: string): boolean
+```
+
+Whether a handler is registered for `scheme`.
+
+The scheme is normalized before lookup. Invalid schemes return `false`.
+
+#### Parameters
+
+| Parameter | Type     |
+| --------- | -------- |
+| `scheme`  | `string` |
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+lynxtron/apis/api/protocol.d.ts
+
+---
+
+### unhandle()
+
+```ts
+unhandle(scheme: string): void
+```
+
+Remove the handler registered for `scheme`.
+
+The scheme is normalized before removal.
+
+#### Parameters
+
+| Parameter | Type     |
+| --------- | -------- |
+| `scheme`  | `string` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+lynxtron/apis/api/protocol.d.ts
+
+---
+
+### setRequestRewriter()
+
+```ts
+setRequestRewriter(handler: ProtocolRequestRewriter | null | undefined): void
+```
+
+Set a request URL rewriter that runs before protocol handlers and fallback
+loaders.
+
+> [!NOTE]
+> This is a Lynxtron-specific API.
+
+Pass `null` or `undefined` to clear the current rewriter. When a rewriter
+returns a string, that string is used as the new URL. Returning `false`,
+`undefined`, or any non-string value keeps the original URL.
+
+#### Parameters
+
+| Parameter | Type                                           |
+| --------- | ---------------------------------------------- |
+| `handler` | `ProtocolRequestRewriter \| null \| undefined` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+lynxtron/apis/api/protocol.d.ts

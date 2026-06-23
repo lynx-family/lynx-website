@@ -1,0 +1,110 @@
+import { PackageManagerTabs } from '@theme';
+
+# Lynx 原生能力库
+
+Lynx 原生能力库是一个 npm 包，用来向 Lynx runtime 提供能力。它可以包含：
+
+- `native-module`：在 Lynx JS 中通过 `NativeModules.<ModuleName>` 调用的原生 API。
+- `element`：在 Lynx UI 中使用的自定义原生元件，例如 `<x-hello>`。
+
+Lynxtron 通过在 host 进程加载共享库来消费这类包。共享库被加载后，其中的
+Lynx 静态注册会生效，`native-module` 和 `element` 注册的能力即可被 Lynx
+runtime 使用。
+
+AutoLink 是 Lynxtron 应用中推荐的 host 侧加载代码生成方式。它只是围绕
+静态注册和 `process.dlopen(...)` 模型的构建辅助，不是另一套注册 API。library
+创建和包结构说明请查看
+[原生库与 Autolink](/zh/guide/autolink.html?platform=lynxtron)。
+
+## 运行时边界
+
+Lynxtron 同时有 Node.js host 和 Lynx JS runtime，原生能力库需要区分这两个环境。
+
+| 环境                  | 作用                                  | API                                                     |
+| --------------------- | ------------------------------------- | ------------------------------------------------------- |
+| Lynxtron Node.js host | 通过 `process.dlopen(...)` 加载共享库 | host 侧原生库 loader                                    |
+| Lynx JS runtime       | 运行 Lynx UI，调用 weak N-API 方法    | `NativeModules.<ModuleName>`                            |
+| Lynx embedder         | 在共享库加载或链接后注册能力          | `LYNX_REGISTER_NATIVE_MODULE` / `LYNX_REGISTER_ELEMENT` |
+
+## 配置 Lynxtron AutoLink
+
+在 Lynxtron 应用中安装 library 包：
+
+<PackageManagerTabs command="install hello-lynx-library" />
+
+在 host 侧 Rsbuild/Rspack 配置中启用 Lynxtron AutoLink plugin：
+
+```ts
+import { pluginLynxtronAutoLink } from '@lynx-js/lynxtron-autolink/rsbuild';
+
+export default {
+  target: 'electron-main',
+  plugins: [pluginLynxtronAutoLink()],
+};
+```
+
+启用 plugin 后，host bundle 会在 Lynx UI 使用包能力前加载对应的原生库。
+
+## 在 Lynx UI 中使用
+
+host 加载共享库后，Lynx UI 可以使用该包声明的 module 和 element：
+
+```tsx
+export function App() {
+  const onTap = () => {
+    NativeModules.HelloModule.setValue('message', 'hello');
+    const message = NativeModules.HelloModule.getValue('message');
+    console.log(message);
+  };
+
+  return (
+    <view>
+      <text bindtap={onTap}>Read native module</text>
+      <x-hello />
+    </view>
+  );
+}
+```
+
+也可以从 npm 包中 import 生成的 JS facade。生成的 facade 会 guard
+`NativeModules`，避免模块初始化早于 Lynx runtime 注入 native modules 时直接报错。
+
+## C/C++ 注册
+
+共享原生库通过静态注册宏注册能力：
+
+```cpp
+#include <lynx/registration.h>
+
+#include "shared/modules/HelloModule.h"
+#include "shared/elements/HelloElement.h"
+
+LYNX_REGISTER_NATIVE_MODULE(
+    "HelloModule",
+    CreateHelloModule,
+    nullptr)
+
+LYNX_REGISTER_ELEMENT(
+    "HelloElementModule",
+    "x-hello",
+    CreateHelloElementNativeView,
+    false,
+    nullptr)
+```
+
+`native-module` 和 `element` 的注册分别放在各自 feature 源码旁边。一个包可以只包含
+其中一种 feature，也可以同时包含两种。
+
+对于 element，宏的 opaque 参数传 `nullptr` 时，helper 会把当前 `lynx_view_t*` 传给 native view creator。生成工程默认使用这个方式，方便 native UI 实现拿到平台父窗口。
+
+## 头文件包
+
+生成工程使用 `@lynx-js/lynx-library-headers`。这个包只提供头文件：
+
+- Lynx embedder C API 头文件。
+- Lynx C++ wrapper，例如 `lynx_native_view.h`、`lynx_value.h`、`lynx_view.h`。
+- weak N-API 头文件。
+- `lynx/registration.h` 静态注册宏。
+
+它不提供 Lynxtron 专用 addon 宏。Lynxtron 通过 `process.dlopen(...)` 加载共享库；
+AutoLink 可以为 host 构建生成这段加载代码。

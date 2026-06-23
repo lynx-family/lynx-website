@@ -1,0 +1,270 @@
+import { Go } from '@lynx';
+import fileExplorerGif from '@assets/lynxtron/file-explorer.gif?url';
+import systemMonitorGif from '@assets/lynxtron/system-monitor.gif?url';
+
+# Communication Between Node.js and Lynx in Lynxtron
+
+If you are familiar with Electron, you can first understand Lynxtron communication needs in two categories:
+
+1. **Bidirectional message communication between the Node main process and UI**: similar to IPC between Electron's main process and a [`BrowserWindow`](https://www.electronjs.org/docs/latest/api/browser-window) renderer.
+2. **Using Node.js capabilities directly in UI code**: Electron technically supports [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions) for calling Node.js capabilities directly in Web code, but enabling it directly is generally not recommended. Lynxtron instead enhances [preload scripts](#use-preload-scripts) so they can use Node.js in an isolated context and expose JS objects for Lynx UI to call.
+
+Lynxtron provides corresponding capabilities for both needs:
+
+- Use `NativeModules.bridge` channels, [`LynxWindow.on('-lynx-invoke')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200), [`LynxWindow.on('-lynx-message')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221), and [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent) for communication between the Node main process and Lynx.
+- Use Lynxtron [preload scripts](#use-preload-scripts). In a preload script, call [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) to expose Node.js-side JS objects to [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) in Lynx UI.
+
+## Electron Capability Mapping
+
+| Need                                              | Electron                                                                                                                                                                                                                                                                                                                                  | Lynxtron                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UI uses Node.js capabilities                      | [preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`contextBridge.exposeInMainWorld()`](https://www.electronjs.org/docs/latest/api/context-bridge#contextbridgeexposeinmainworldapikey-api) / [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions) | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload) + [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) + [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) |
+| Node main process pushes messages to UI           | [`webContents.send()`](https://www.electronjs.org/docs/latest/api/web-contents#contentssendchannel-args)                                                                                                                                                                                                                                  | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                                                                                                                                                                                                                                           |
+| UI calls Node main process and waits for a result | [`ipcRenderer.invoke()`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args) + [`ipcMain.handle()`](https://www.electronjs.org/docs/latest/api/ipc-main#ipcmainhandlechannel-listener)                                                                                                                 | `NativeModules.bridge.call()` + [`LynxWindow.on('-lynx-invoke')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200)                                                                                                                                                                                                               |
+| UI sends one-way messages to Node main process    | [`ipcRenderer.send()`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrenderersendchannel-args) + [`ipcMain.on()`](https://www.electronjs.org/docs/latest/api/ipc-main#ipcmainonchannel-listener)                                                                                                                             | `NativeModules.bridge.send()` + [`LynxWindow.on('-lynx-message')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221)                                                                                                                                                                                                              |
+
+## Use Preload Scripts
+
+Lynxtron's [preload scripts](#use-preload-scripts) can be understood as an enhancement of [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) model for Lynx BTS: a preload script can use Node.js APIs directly and expose methods or objects for Lynx UI to call.
+
+In Electron, the preload script and the Web page are in isolated JS contexts. The preload script and Web eventually communicate across contexts through [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) or IPC, with values serialized, proxied, or copied according to Electron's rules; the Web side cannot directly use the original JS objects from the preload script context.
+
+In Lynxtron, Lynx BTS and preload scripts both run in Node.js, but in isolated JS contexts. The preload script context has Node.js capabilities and can expose JS objects through [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) for Lynx BTS to access directly.
+
+### Configure Preload Scripts
+
+When creating a window, specify the preload script through [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload):
+
+```typescript
+// main.ts
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import path from 'path';
+
+app.whenReady().then(() => {
+  const win = new LynxWindow({
+    width: 800,
+    height: 600,
+    lynxPreference: {
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+
+  win.loadFile('main.lynx.bundle');
+});
+```
+
+### Expose Node.js APIs from a Preload Script
+
+The preload script can use Node.js APIs directly, then expose them to Lynx with [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts):
+
+```typescript
+// preload.ts
+import { contextBridge } from '@lynx-js/lynxtron/context-bridge';
+import fs from 'fs';
+import path from 'path';
+
+type ExposedNodeApi = {
+  readTextFileWithTransform: (
+    filePath: string,
+    transform: (content: string) => string,
+  ) => Promise<string>;
+  createReader: (baseDir: string) => {
+    read: (relativePath: string) => Promise<string>;
+  };
+};
+
+const nodeApi: ExposedNodeApi = {
+  readTextFileWithTransform: async (filePath, transform) => {
+    const content = await fs.promises.readFile(filePath, 'utf8');
+    return transform(content);
+  },
+
+  createReader: (baseDir: string) => {
+    return {
+      read: (relativePath: string) => {
+        return fs.promises.readFile(path.join(baseDir, relativePath), 'utf8');
+      },
+    };
+  },
+};
+
+contextBridge.exposeInLynxBTS(nodeApi);
+```
+
+### Call Exposed APIs from Lynx
+
+Lynx BTS accesses these APIs through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed):
+
+The exposed JS object can contain functions. Functions can take other functions as parameters, use closures from the preload script context, and return Promises. Lynx UI can call them as regular asynchronous JS APIs.
+
+```tsx
+// App.tsx
+const api = NativeModules.nodejs.exposed;
+
+const title = await api.readTextFileWithTransform(
+  '/Users/example/notes.txt',
+  (text) => text.split('\n')[0],
+);
+
+const reader = api.createReader('/Users/example');
+const todo = await reader.read('todo.txt');
+```
+
+### Example: File Explorer
+
+This example demonstrates using Node.js capabilities exposed by a preload script in Lynx UI:
+
+- The preload script exposes APIs such as `readdir` and `homedir` with [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts).
+- Lynx UI calls these APIs through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) to browse directories and view file content.
+
+<Go
+  img={fileExplorerGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="Open in Lynxtron Go"
+/>
+
+## Bidirectional Message Communication Between Node Main Process and Lynx
+
+Use this option for window control, system services, database access, main-process state management, and similar tasks. Node.js capabilities stay in the main process, while Lynx calls them through messages.
+
+### Push Messages from Node.js to Lynx
+
+The Node main process can send events to Lynx with [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent):
+
+```typescript
+// main.ts
+import { LynxWindow } from '@lynx-js/lynxtron';
+
+const win = new LynxWindow();
+
+win.sendGlobalEvent('systemInfoUpdate', {
+  cpuUsage: 32,
+  memoryUsage: 68,
+});
+```
+
+The Lynx side listens with [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter):
+
+```tsx
+// App.tsx
+import { useEffect, useState } from '@lynx-js/react';
+
+export function App() {
+  const [systemInfo, setSystemInfo] = useState(null);
+
+  useEffect(() => {
+    const emitter = lynx.getJSModule('GlobalEventEmitter');
+    const handleUpdate = (data) => {
+      setSystemInfo(data);
+    };
+
+    emitter.addListener('systemInfoUpdate', handleUpdate);
+    return () => {
+      emitter.removeListener('systemInfoUpdate', handleUpdate);
+    };
+  }, []);
+
+  return <view>{/* render systemInfo */}</view>;
+}
+```
+
+### Call Node.js from Lynx and Wait for a Result
+
+Use `bridge.call` to make the call, since you need to wait for Node.js to return data.
+
+```tsx
+// App.tsx
+const info = await NativeModules.bridge.call('getSystemInfo', {
+  includeCpuDetail: true,
+});
+setSystemInfo(info);
+```
+
+The Node main process listens for the [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) event to handle `bridge.call` calls, and returns the result through `event.sendReply`:
+
+```typescript
+// main.ts
+import { LynxWindow } from '@lynx-js/lynxtron';
+
+const win = new LynxWindow();
+
+win.on('-lynx-invoke', (event, methodName, params) => {
+  if (methodName === 'getSystemInfo') {
+    event.sendReply(getSystemInfo(params));
+  }
+});
+```
+
+### Send One-Way Messages from Lynx to Node.js
+
+Notify Node.js with `bridge.send` (one-way, no return value needed).
+
+```tsx
+// App.tsx
+NativeModules.bridge.send('refreshIntervalChanged', { interval: 1000 });
+```
+
+The Node main process listens for the [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) event to handle notifications sent by `bridge.send`:
+
+```typescript
+// main.ts
+import { LynxWindow } from '@lynx-js/lynxtron';
+
+const win = new LynxWindow();
+
+win.on('-lynx-message', (methodName, params) => {
+  if (methodName === 'refreshIntervalChanged') {
+    console.log('refresh interval:', params.interval);
+  }
+});
+```
+
+### Example: System Resource Monitor
+
+This example demonstrates bidirectional message communication between the Node main process and Lynx:
+
+- The Node.js side uses the `os` module to get CPU, memory, and other system information, then pushes updates to Lynx with [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent).
+- The Lynx side receives updates through [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter), and can also actively request the latest data with `NativeModules.bridge.call()`.
+- Notifications that do not need a return value, such as refresh interval changes, can be sent to the Node main process with `NativeModules.bridge.send()`.
+
+<Go
+  img={systemMonitorGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="Open in Lynxtron Go"
+/>
+
+## Capability Reference
+
+| Capability                                                              | API                                                                                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Configure the window-level preload script                               | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload)                                |
+| Expose Node.js methods or objects from preload scripts to Lynx          | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) |
+| Call Node.js methods or objects exposed by preload scripts from Lynx UI | [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)                     |
+| Push events from the Node main process to Lynx                          | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          |
+| Call the Node main process from Lynx and wait for a result              | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) event           |
+| Send one-way messages from Lynx to the Node main process                | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) event          |
+
+## Why Lynxtron Is Designed This Way
+
+Lynxtron uses two channels to cover the two common Electron capabilities because they solve different problems:
+
+- [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed): direct access from Lynx BTS to JS objects exposed by preload scripts, corresponding to using Node.js capabilities in UI through [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions).
+- `NativeModules.bridge` + [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) events: message communication between Lynx and the Node main process, corresponding to common Electron-style IPC.
+
+The key difference is not which global object the API is mounted on, but that Lynxtron provides a JS-object exposure path for Lynx BTS.
+
+## API and Spec Links
+
+| API / Spec                                                                                                                      | Description                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx)                                                            | Creates windows and loads Lynx bundles                                                              |
+| [`LynxWindowConstructorOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx)                    | Configures window options such as `lynxPreference`                                                  |
+| [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) | Exposes JS objects from preload scripts to Lynx BTS                                                 |
+| [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          | Pushes global events from the Node main process to Lynx                                             |
+| [`LynxtronNodejs`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx)                                           | Type of [`NativeModules.nodejs`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx) |
+| [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter)                              | Listens for global events in Lynx BTS                                                               |
+| [`lynx.getJSModule()`](/api/lynx-api/lynx/lynx-get-js-module.mdx)                                                               | Gets modules such as `GlobalEventEmitter`                                                           |

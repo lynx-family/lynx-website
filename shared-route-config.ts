@@ -143,8 +143,6 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     home: '/lynxtron/',
     url: '/lynxtron/index',
     category: 'native-framework',
-    badge: 'Coming Soon',
-    disabled: true,
     logo: {
       light: '/assets/lynxtron/lynxtron-icon-light.svg',
       dark: '/assets/lynxtron/lynxtron-icon-dark.svg',
