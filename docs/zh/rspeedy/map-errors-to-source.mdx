@@ -188,10 +188,10 @@ GET <publicPath>/.rspeedy/<entry>/debug-metadata.json?field=bytecode-debug-info&
 
 Lynx 只定义格式、产出文件，不负责托管，也没有内置上传，上面那些 URL 改写也只发生在 dev server。线上的反解需要你自己接入，具体怎么接取决于你的堆栈如何找到对应的元数据，有两种做法：
 
-- 模型 A，后端按 release 索引：构建时把文件传到你自己的服务。`release` 是构建自动注入产物的（出错时运行时会带上它），同一个值也存在文件里，所以后端读出它来建索引，出错时按 `release` 找回文件。产物里不用再加别的东西。
-- 模型 B，让产物指向你的托管地址：再把 `debugMetadataUrl` / `templateDebugUrl` 写进随包发布的模板（并改写 JS 的 `sourceMappingURL` 注释），这样 devtools 或反解服务能直接 fetch 到文件。
+- 方案 1，后端按 release 索引：构建时把文件传到你自己的服务。`release` 是构建自动注入产物的（出错时运行时会带上它），同一个值也存在文件里，所以后端读出它来建索引，出错时按 `release` 找回文件。产物里不用再加别的东西。
+- 方案 2，让产物指向你的托管地址：再把 `debugMetadataUrl` / `templateDebugUrl` 写进随包发布的模板（并改写 JS 的 `sourceMappingURL` 注释），这样 devtools 或反解服务能直接 fetch 到文件。
 
-### 模型 A：上传并托管
+### 方案 1：上传并托管
 
 默认插件会在构建的最末尾（`PROCESS_ASSETS_STAGE_REPORT + 1`）删除 `debug-metadata.json`。在前一个 stage tap 即可读到它并交给你的上传逻辑：
 
@@ -277,7 +277,7 @@ export default defineConfig({
 
 :::
 
-### 模型 B：让产物指向你的托管地址
+### 方案 2：让产物指向你的托管地址
 
 要让 devtools 或反解服务自动 fetch 到文件，你得在模板被编码之前把 URL 写进去。这意味着要 tap `LynxTemplatePlugin.beforeEncode`，而它通过 DSL 插件发布的 exposure 拿到：
 
@@ -426,13 +426,17 @@ pluginHostDebugMetadata({
 });
 ```
 
-产出的 Lynx Bundle 现在带有 `compilerOptions.templateDebugUrl` 和 `sourceContent.config.debugMetadataUrl`，均指向 `<baseUrl>/<key>/debug-metadata.json`，每个 JS 的 `sourceMappingURL` 注释也改写到了同一托管地址。URL 里的 `key` 与你上传所用的 `key` 一致，所以链接始终能解析。
+产出的 Lynx Bundle 现在带两个指向托管地址的字段，注意它们形态不一样：`sourceContent.config.debugMetadataUrl` 是裸链接 `<baseUrl>/<key>/debug-metadata.json`，给 devtools 或你自己的反解服务整份拉取；`compilerOptions.templateDebugUrl` 指向同一个文件，但带上了取数 query（`?field=bytecode-debug-info&filename=<main-thread.js>`）。
+
+`templateDebugUrl` 带 query 是有意的：Lynx 自带的红屏反解会读这个字段，主线程抛错时直接按链接拉到 `bytecode-debug-info` 做反解。所以只要把它写进模板，就能复用 Lynx 内置的调试能力，红屏里直接显示源码位置，不用你再接一套。
+
+每个 JS 的 `sourceMappingURL` 注释也改写到了同一托管地址。URL 里的 `key` 与你上传所用的 `key` 一致，所以链接始终能解析。
 
 > `beforeEncode` 时读到的是富化前的内容；默认插件会在之后（`beforeEmit`）富化该文件。所以这个 `key` 派生自那份在途内容，把它当作一个不透明的唯一 id，不是最终落盘字节的哈希。
 
 ### 在出错时反解
 
-线上堆栈到来时，对存好的文件做反解：用 [`resolveField`](#消费该文件) 取出对应的 `source-map` / `bytecode-debug-info`（模型 A 按 release 定位文件，模型 B 跟随产物里的 `debugMetadataUrl`），或者用 [`lynx-debug-info-remapping`](https://github.com/lynx-community/skills/tree/release/skills/lynx-debug-info-remapping) skill 处理主线程的 `function_id:pc` backtrace。
+线上堆栈到来时，对存好的文件做反解：用 [`resolveField`](#消费该文件) 取出对应的 `source-map` / `bytecode-debug-info`（方案 1 按 release 定位文件，方案 2 跟随产物里的 `debugMetadataUrl`），或者用 [`lynx-debug-info-remapping`](https://github.com/lynx-community/skills/tree/release/skills/lynx-debug-info-remapping) skill 处理主线程的 `function_id:pc` backtrace。
 
 ## 消费该文件
 
@@ -488,7 +492,7 @@ function App() {
 }
 ```
 
-构建并运行，分别触发两个错误。下文里的 `metadata` 就是这次构建的 `debug-metadata.json`（用 `JSON.parse` 解析，按 release 从你的存储取回，[模型 A](#模型-a上传并托管)）。
+构建并运行，分别触发两个错误。下文里的 `metadata` 就是这次构建的 `debug-metadata.json`（用 `JSON.parse` 解析，按 release 从你的存储取回，[方案 1](#方案-1上传并托管)）。
 
 ### 后台错误（一步）
 

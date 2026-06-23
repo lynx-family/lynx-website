@@ -7,7 +7,7 @@ import { Mermaid } from '@lynx';
 
 它分三步：
 
-1. 构建：打开 [`enableUiSourceMap`](#1-开启开关)，让构建把 UI source map 写进 [`debug-metadata.json`](./map-errors-to-source)，并给元素打上 `nodeIndex`。
+1. 构建：打开 [`enableUiSourceMap`](#1-开启开关)，把 UI source map 写进 [`debug-metadata.json`](./map-errors-to-source)，并给元素打上 `nodeIndex`。
 2. 导出：让 Lynx 客户端把[运行时 UI 树序列化](#2-从客户端导出-ui-树)成 JSON。
 3. 反解：把这份 JSON 加上 `debug-metadata.json` 喂给 [`remapUiTree`](#3-反解这棵树)，它会给每个节点标注源码位置。
 
@@ -46,11 +46,11 @@ interface UiSourceMapData {
 }
 ```
 
-要让运行时指向这个文件，模板里还得带上它的 `debugMetadataUrl`：对着 dev server 时这是自动的，生产环境则需要你自己注入（见 [线上错误反解 → 模型 B](./map-errors-to-source#模型-b让产物指向你的托管地址)）。否则导出的节点 `debugMetadataUrl` 为空，没法反解。
+要让运行时指向这个文件，模板里还得带上它的 `debugMetadataUrl`：连到 dev server 时会自动写入，生产环境则要你自己注入（见 [线上错误反解 → 方案 2](./map-errors-to-source#方案-2让产物指向你的托管地址)）。否则导出的节点 `debugMetadataUrl` 为空，没法反解。
 
 ## 2. 从客户端导出 UI 树
 
-三端用法一致：从 `LynxView` 异步拿到根 `LynxElement`，再对它调 `toJSONString` 把整棵树序列化出来。两个 callback 都在 UI / 主线程回调。
+三端用法一致：从 `LynxView` 异步拿到根 `LynxElement`，再对它调 `toJSONString` 把整棵树序列化出来。两个 callback 都会回调到 UI 线程（主线程）。
 
 <Tabs>
 <Tab label="iOS (Objective-C)">
@@ -147,6 +147,6 @@ const remapped = await remapUiTree(flatten(tree), async (debugMetadataUrl) => {
 });
 ```
 
-凡是 `nodeIndex` 能被其 `debugMetadataUrl` 的 `uiSourceMap` 命中的节点，都会获得 `repo` / `source` / `line` / `column`；解析不出的节点和其它字段原样保留。`remapUiTree` 对每个不同的 `debugMetadataUrl` 只调用一次 loader。
+凡是 `nodeIndex` 能在对应 `debugMetadataUrl` 的 `uiSourceMap` 里命中的节点，都会拿到 `repo` / `source` / `line` / `column`；命中不了的节点，连同节点上原有的其它字段，都原样保留。`remapUiTree` 对每个不同的 `debugMetadataUrl` 只调用一次 loader。
 
 `npx @lynx-js/debug-metadata remap --ui <tree.json>` CLI 做的是同样的事，适用于节点已经在顶层带有 `nodeIndex` / `debugMetadataUrl` 的树。更底层的 `buildUiSourceMapLookup`（`nodeIndex → 位置`）和 `normalizeRepo`（git remote → `owner/repo`）辅助函数也都有导出。

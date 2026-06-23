@@ -490,11 +490,21 @@ pluginHostDebugMetadata({
 });
 ```
 
-The emitted Lynx bundle now carries `compilerOptions.templateDebugUrl` and
-`sourceContent.config.debugMetadataUrl` pointing at
-`<baseUrl>/<key>/debug-metadata.json`, and each JS `sourceMappingURL` trailer is
-rewritten to the same host. The `key` in the URL and the `key` you upload under
-are the same, so the links always resolve.
+The emitted Lynx bundle now carries two fields pointing at the host, and they
+are shaped differently. `sourceContent.config.debugMetadataUrl` is the bare link
+`<baseUrl>/<key>/debug-metadata.json`, which devtools or your own remap service
+fetch whole. `compilerOptions.templateDebugUrl` points at the same file but with
+a fetch query appended (`?field=bytecode-debug-info&filename=<main-thread.js>`).
+
+The query on `templateDebugUrl` is deliberate: Lynx's built-in red-screen decode
+reads this field, so when the main thread throws it pulls `bytecode-debug-info`
+straight from that link and decodes the frame. Writing it into the template is
+all it takes to reuse Lynx's built-in debugging; the red screen shows source
+locations with nothing extra to wire up.
+
+Each JS `sourceMappingURL` trailer is also rewritten to the same host. The `key`
+in the URL and the `key` you upload under are the same, so the links always
+resolve.
 
 > The content read at `beforeEncode` is the pre-enrichment version; the default
 > plugin enriches the file afterward (in `beforeEmit`). The `key` is therefore
