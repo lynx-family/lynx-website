@@ -432,8 +432,6 @@ pluginHostDebugMetadata({
 
 每个 JS 的 `sourceMappingURL` 注释也改写到了同一托管地址。URL 里的 `key` 与你上传所用的 `key` 一致，所以链接始终能解析。
 
-> `beforeEncode` 这个时机读到的 `debug-metadata.json` 还不完整：默认插件要到更晚的 `beforeEmit` 才往里补上 `bytecode-debug-info` 等内容。所以你在这里算出来的 `key` 是基于这份没补全的中间内容，和最终落盘文件的字节对不上。别把它当成最终文件的哈希，当成一个唯一 id 就行（上传时用同一个值，链接照样对得上）。
-
 ### 在出错时反解
 
 线上堆栈到来时，对存好的文件做反解：用 [`resolveField`](#消费该文件) 取出对应的 `source-map` / `bytecode-debug-info`（方案 1 按 release 定位文件，方案 2 跟随产物里的 `debugMetadataUrl`），或者用 [`lynx-debug-info-remapping`](https://github.com/lynx-community/skills/tree/release/skills/lynx-debug-info-remapping) skill 处理主线程的 `function_id:pc` backtrace。
