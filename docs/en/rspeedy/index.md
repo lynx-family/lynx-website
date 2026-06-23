@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /guide/start/quick-start.html
+      link: /rspeedy/cli.html
     - theme: alt
       text: API
       link: /api/rspeedy.html
