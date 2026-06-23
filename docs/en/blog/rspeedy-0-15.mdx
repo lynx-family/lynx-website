@@ -1,0 +1,199 @@
+---
+title: 'Lynx × Rspack 2.0: Faster, Smaller, Closer to the Web'
+date: 2026-06-23
+sidebar: false
+authors: ['upupming', 'luhc228', 'HuJean', 'jkzing', 'colinaaa']
+badge_text: 'New: Lynx × Rspack 2.0 — Faster, Smaller, Closer to the Web'
+description: 'Rspeedy 0.15 upgrades to Rspack 2.0 and Rsbuild 2.0, delivering up to 39% faster builds and smaller bundles, alongside PrimJS-tuned output, an AI-native bundle-size skill, and more flexible code splitting and dynamic loading.'
+---
+
+import { BlogHeader } from '@lynx';
+
+<BlogHeader />
+
+We're excited to announce the release of Rspeedy 0.15!
+
+[Rspeedy](/rspeedy/) is Lynx's official build tool, powered by [Rsbuild](https://rsbuild.rs/) and [Rspack](https://rspack.rs/), with everything you need to build for Lynx built in.
+
+Since Lynx was open-sourced in March 2025, Rspeedy has followed Rstack's evolution closely, so every Lynx app gets the performance and capabilities of the upstream toolchain as soon as they land.
+
+This release is no exception. With [Rspack 2.0](https://rspack.rs/blog/announcing-2-0) and [Rsbuild 2.0](https://rsbuild.rs/blog/v2-0) out, Rspeedy 0.15 brings this largest-yet upgrade to Lynx — and on top of it, we've made a series of optimizations tailored to Lynx's own runtime.
+
+Highlights of Rspeedy 0.15:
+
+- Foundation: [Upgrade to Rspack 2.0 and Rsbuild 2.0](#rspack-rsbuild-2)
+- Faster: [17–39% faster builds](#build-speed), [lowering `let` / `const` to `var`](#var-lowering)
+- Smaller: [2–9% smaller bundles](#bundle-size), [ES2017 background target](#es2017), [bundle-size skill](#bundle-size-skill)
+- Code splitting & dynamic loading: [Lazy Bundle](#lazy-bundle), [External Bundle](#external-bundle), [top-level `splitChunks`](#code-splitting)
+- Easier debugging: [precise error de-mapping (main + background thread)](#debugging)
+- Breaking changes: [Node.js 20.19+ / 22.12+](#bc-node), [`source.alias` → `resolve.alias`](#bc-alias), [`performance.chunkSplit` → `splitChunks`](#bc-chunksplit), [decorators default `2023-11`](#bc-decorators), [webpack plugins now Rspack-only](#bc-webpack)
+
+## Upgrade to Rspack 2.0 and Rsbuild 2.0 \{#rspack-rsbuild-2}
+
+Thanks to the Rspack → Rsbuild → Rspeedy layering, most of the upgrade is transparent: most projects get the benefits without any config changes. The few breaking changes are mostly config renames, covered one by one in the [migration guide](#migration) at the end.
+
+For the changes that Rspack 2.0 and Rsbuild 2.0 themselves bring, see the [Rsbuild 2.0 blog](https://rsbuild.rs/blog/v2-0).
+
+## Faster \{#faster}
+
+### Faster builds \{#build-speed}
+
+Across a set of production Lynx apps, we measured build-time reductions of 17–39% with no config changes:
+
+| Project (anonymized) | From version | Before | After | Speedup |
+| -------------------- | ------------ | ------ | ----- | ------- |
+| App A                | 0.9.11       | 19.1s  | 11.6s | −39%    |
+| App B                | 0.9.10       | 22.7s  | 14.2s | −37%    |
+| App C                | 0.9.10       | 40.8s  | 28.2s | −31%    |
+| App D                | 0.11.3       | 15.3s  | 11.2s | −27%    |
+| App E                | 0.11.3       | 33.3s  | 27.2s | −18%    |
+| App F                | 0.13.6       | 32.1s  | 26.8s | −17%    |
+| App G                | 0.14.3       | 21.7s  | 21.9s | ≈ flat  |
+
+The speedup isn't only from Rspack 2.0: multi-page apps also benefit from parallel Lynx Bundle encoding — we run each entry's tasm encode ([`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm)) in a parallel worker pool.
+
+### Lowering `let` / `const` to `var` \{#var-lowering}
+
+Beyond build time, we also made the output parse faster in Lynx's runtime. On Android, Lynx's background thread runs on the [PrimJS](https://github.com/lynx-family/primjs) engine, and we found PrimJS parses `var` noticeably faster than block-scoped `let` / `const`. So 0.15 enables SWC's [`transform-block-scoping`](https://github.com/swc-project/swc/tree/main/crates/swc_ecma_compat_es2015/src/block_scoping) on both the main- and background-thread layers by default, lowering `let` / `const` to `var`, and sets `output.environment.const` to `false` so the bundler's own runtime code uses `var` too.
+
+## Smaller \{#smaller}
+
+### Smaller bundles \{#bundle-size}
+
+After upgrading to Rspack 2.0, bundle size shrank as well. Across the intermediate `main-thread.js`, `background.js`, and the final Lynx Bundle, `main-thread.js` and the Lynx Bundle dropped by 2–9%, up to about 11%.
+
+| Project (anonymized) | `background.js`        | `main-thread.js`      | Lynx Bundle           |
+| -------------------- | ---------------------- | --------------------- | --------------------- |
+| App A                | 0.47 → 0.48MB (+1.3%)  | 0.46 → 0.43MB (−6.7%) | 1.14 → 1.10MB (−3.1%) |
+| App B                | 0.82 → 0.77MB (−6.0%)  | 0.93 → 0.84MB (−9.5%) | 2.13 → 1.95MB (−8.5%) |
+| App C                | 2.05 → 1.98MB (−3.6%)  | 2.16 → 2.01MB (−7.0%) | 5.03 → 4.74MB (−5.8%) |
+| App D                | 0.30 → 0.30MB (−1.1%)  | 0.51 → 0.47MB (−7.2%) | 0.82 → 0.79MB (−3.3%) |
+| App E                | 0.49 → 0.50MB (+1.4%)  | 2.98 → 2.79MB (−6.5%) | 4.63 → 4.48MB (−3.1%) |
+| App F                | 1.60 → 1.59MB (−1.1%)  | 0.98 → 0.93MB (−5.0%) | 2.93 → 2.86MB (−2.4%) |
+| App G                | 3.04 → 2.69MB (−11.4%) | 1.93 → 1.83MB (−5.4%) | 5.43 → 5.08MB (−6.4%) |
+
+<small>
+  Sizes are per-page totals of DEBUG-mode intermediate artifacts, before →
+  after.
+</small>
+
+### Background target raised to ES2017 \{#es2017}
+
+We raised the background-thread output target from ES2015 to ES2017 (the main thread stays at ES2019). As low-end devices age out, a higher baseline means less down-leveling and smaller, faster output. If you still need to down-level specific syntax, add the matching transform to [`tools.swc`](/api/rspeedy/rspeedy.tools.swc)'s `env.include`:
+
+```js
+import { defineConfig } from '@lynx-js/rspeedy';
+
+export default defineConfig({
+  tools: {
+    swc: {
+      env: {
+        include: ['transform-async-to-generator'],
+      },
+    },
+  },
+});
+```
+
+### An AI-native bundle-size optimization skill \{#bundle-size-skill}
+
+Pinpointing where the bytes are is often harder than the optimization itself — it takes understanding Lynx's artifact format and Rspeedy's dual-thread build. [`rspeedy-bundle-size`](https://github.com/lynx-community/skills) bakes exactly that knowledge into an Agent skill: it teaches the AI how a Lynx dual-thread bundle's size breaks down, and follows a measure-first principle — first measure where an app's size actually is, then attack the highest-ROI parts first (assets, background JS, redundant code that leaked into the main thread).
+
+Install it into your agent (Claude Code, Codex, etc.):
+
+```bash
+npx skills add lynx-community/skills -s rspeedy-bundle-size
+```
+
+Then just describe the goal in natural language, e.g. "break down this app's bundle and tell me where it's big and how to shrink it." The skill runs [Rsdoctor](https://rsdoctor.rs/), reports the per-layer breakdown, and hands back a prioritized plan — only touching code once you confirm. In real projects, this workflow has cut page size by 10–13%, mainly by correctly marking [background-only](/react/thinking-in-reactlynx) code (logging, network requests, telemetry, and the like) that had leaked into the main-thread render path and moving it out, plus de-duplicating packages via aliases.
+
+## More flexible code splitting and dynamic loading \{#code-splitting}
+
+Rspeedy offers three increasingly powerful ways to split an app. Each has a counterpart in the web ecosystem, adapted by Rspeedy to Lynx's artifact format:
+
+| Scenario                   | Web ecosystem                                                               | Rspeedy / Lynx                                                                                                  |
+| -------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Build-time splitting       | Chunk Split (`splitChunks`)                                                 | [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) (same config name, Lynx-tuned presets)                 |
+| In-app on-demand loading   | dynamic `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | dynamic `import()` + ReactLynx `lazy()`, output as [Lazy Bundle](/react/code-splitting#lazy-loading-components) |
+| External / cross-app reuse | webpack `externals`                                                         | [External Bundle](/rspeedy/external-bundle)                                                                     |
+
+Chunk Split is common (its config moved from `performance.chunkSplit.strategy` to the top-level [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks), see the [migration guide](#migration)), so we won't expand on it here; below we focus on Lazy Bundle and External Bundle.
+
+### Lazy Bundle \{#lazy-bundle}
+
+Lazy Bundle defers part of a single app, loaded on demand with ReactLynx's [`lazy()`](/react/code-splitting#lazy-loading-components) — just like dynamic `import()` on the web:
+
+```ts
+import { Suspense, lazy } from '@lynx-js/react';
+
+const LazyComponent = lazy(() => import('./LazyComponent.jsx'));
+```
+
+On top of this, we're adding per-import control over when a lazy bundle loads: powered by Rspack 2.0's [import attribute](https://rspack.rs/config/module-rules#ruleswith) support, you'll be able to specify per import whether it loads synchronously (for first-screen direct rendering) or asynchronously (background-driven, the default). The usage will look roughly like:
+
+```ts
+lazy(() => import('./X', { with: { mode: 'sync' } })); // first-screen direct render
+lazy(() => import('./X', { with: { mode: 'async' } })); // background-driven (default)
+```
+
+This capability is in progress and will land in a future release.
+
+### External Bundle \{#external-bundle}
+
+External Bundle goes one step further — it's a separately built Lynx Bundle that another app can fetch and render at runtime, enabling cross-app reuse. The producer side is built with [Rslib](https://rslib.rs/) via [`defineExternalBundleRslibConfig`](/rspeedy/external-bundle); the consumer side uses the Rsbuild plugin [`pluginExternalBundle`](/rspeedy/external-bundle).
+
+## Easier debugging \{#debugging}
+
+0.15 lets production errors resolve precisely back to your source: it generates a unified `debug-metadata.json` per Lynx entry that brings the JS, CSS, and UI source maps together, so both main-thread and background-thread errors can find the right de-mapping info.
+
+## Migration \{#migration}
+
+For migration steps, see the [Rspeedy upgrade guide](/rspeedy/upgrade). `@lynx-js/rspeedy@0.15` introduces the following breaking changes with the Rspack 2.0 / Rsbuild 2.0 upgrade, worth noting:
+
+### Node.js \{#bc-node}
+
+The minimum is now 20.19+ or 22.12+; Node.js 18 is no longer supported.
+
+### `source.alias` → `resolve.alias` \{#bc-alias}
+
+Move aliases from [`source.alias`](/api/rspeedy/rspeedy.source.alias) to [`resolve.alias`](/api/rspeedy/rspeedy.resolve.alias):
+
+```diff
+export default defineConfig({
+-  source: {
++  resolve: {
+    alias: {
+      '@': './src',
+    },
+  },
+})
+```
+
+### `performance.chunkSplit` → `splitChunks` \{#bc-chunksplit}
+
+Move [`performance.chunkSplit.strategy`](/api/rspeedy/rspeedy.chunksplit.strategy) to the top-level [`splitChunks.preset`](/api/rspeedy/rspeedy.config.splitchunks):
+
+```diff
+export default defineConfig({
+-  performance: {
+-    chunkSplit: {
+-      strategy: 'single-vendor',
+-    },
+-  },
++  splitChunks: {
++    preset: 'single-vendor',
++  },
+})
+```
+
+### Default decorators version `2023-11` \{#bc-decorators}
+
+[`source.decorators.version`](/api/rspeedy/rspeedy.decorators.version) now defaults to `2023-11` (was `2022-03`); set it explicitly to keep the old behavior.
+
+### webpack plugins are now Rspack-only \{#bc-webpack}
+
+The underlying `@lynx-js/*-webpack-plugin` packages are now Rspack-only: webpack is no longer supported, and their public types come from `@rspack/core`. Most projects use them indirectly through Rspeedy and need no changes; but if you depend on these plugins directly, you'll need to adjust accordingly.
+
+For the full list, see the [Rspeedy CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md), the [Rsbuild v1 → v2 guide](https://rsbuild.rs/guide/upgrade/v1-to-v2), and the [Rspack v1 → v2 migration guide](https://rspack.rs/guide/migration/rspack_1.x).
+
+Try it on an existing project. If you hit anything or have suggestions, open an Issue or join the discussion on [GitHub](https://github.com/lynx-family/lynx-stack).
