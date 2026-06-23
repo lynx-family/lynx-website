@@ -506,10 +506,12 @@ Each JS `sourceMappingURL` trailer is also rewritten to the same host. The `key`
 in the URL and the `key` you upload under are the same, so the links always
 resolve.
 
-> The content read at `beforeEncode` is the pre-enrichment version; the default
-> plugin enriches the file afterward (in `beforeEmit`). The `key` is therefore
-> derived from that in-flight content; treat it as an opaque unique id, not a
-> hash of the final stored bytes.
+> The `debug-metadata.json` you read at `beforeEncode` is not complete yet: the
+> default plugin only fills in `bytecode-debug-info` and the like later, at
+> `beforeEmit`. So the `key` you compute here is based on that partial
+> intermediate content and won't match the bytes of the final file on disk.
+> Don't treat it as a hash of the final file; treat it as a unique id (upload
+> under the same value and the links still resolve).
 
 ### Remap at error time
 

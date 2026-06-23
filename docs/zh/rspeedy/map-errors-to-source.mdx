@@ -432,7 +432,7 @@ pluginHostDebugMetadata({
 
 每个 JS 的 `sourceMappingURL` 注释也改写到了同一托管地址。URL 里的 `key` 与你上传所用的 `key` 一致，所以链接始终能解析。
 
-> `beforeEncode` 时读到的是富化前的内容；默认插件会在之后（`beforeEmit`）富化该文件。所以这个 `key` 派生自那份在途内容，把它当作一个不透明的唯一 id，不是最终落盘字节的哈希。
+> `beforeEncode` 这个时机读到的 `debug-metadata.json` 还不完整：默认插件要到更晚的 `beforeEmit` 才往里补上 `bytecode-debug-info` 等内容。所以你在这里算出来的 `key` 是基于这份没补全的中间内容，和最终落盘文件的字节对不上。别把它当成最终文件的哈希，当成一个唯一 id 就行（上传时用同一个值，链接照样对得上）。
 
 ### 在出错时反解
 
