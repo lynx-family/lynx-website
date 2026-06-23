@@ -604,9 +604,12 @@ originalPositionFor(new TraceMap(map), { line: 247, column: 77 });
 // → { source: 'src/App.tsx', line: 14, column: 2 }
 ```
 
-`background.js:247:77` maps to `src/App.tsx:14`, the `if (crashRender)` line. The
-bundle's source map resolves the `throw` to its enclosing statement, so the
-frame lands on line 14 (the `if`), not the `throw` on line 15.
+`background.js:247:77` maps to `src/App.tsx:14`, the `if (crashRender)` line; the
+real `throw` is on line 15. Being one line off is source-map imprecision: the
+bundle collapses `if (crashRender) { throw ... }` onto a single line and only
+records a mapping for the start of that statement, so the decode lands on the
+outer `if`. The production red screen decodes to the same line, which is close
+enough to find the bug.
 
 ### Main-thread error: two steps
 

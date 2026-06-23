@@ -521,7 +521,7 @@ originalPositionFor(new TraceMap(map), { line: 247, column: 77 });
 // → { source: 'src/App.tsx', line: 14, column: 2 }
 ```
 
-`background.js:247:77` 映射回 `src/App.tsx:14`，也就是 `if (crashRender)` 那行。source map 会把 `throw` 归到它所在的外层语句，所以落在第 14 行（`if`），不是第 15 行的 `throw`。
+`background.js:247:77` 映射回 `src/App.tsx:14`，也就是 `if (crashRender)` 那行；真正的 `throw` 在第 15 行。差这一行是 source map 的精度问题：产物把 `if (crashRender) { throw ... }` 压成了一行，map 只对这条语句的开头记了映射，反解就落在外层的 `if` 上。线上红屏的反解也是停在上一行，定位问题已经够用了。
 
 ### 主线程错误（两步）
 
