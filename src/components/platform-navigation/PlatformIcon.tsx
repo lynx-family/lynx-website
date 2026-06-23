@@ -1,6 +1,6 @@
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import { cn } from '../../lib/utils';
-import { mapPlatformNameToIconName } from '../api-table/compat-table/headers';
+import { mapPlatformNameToIconName } from '../../lib/platform';
 import { PlatformIconProps } from './types';
 import './icon.scss';
 
