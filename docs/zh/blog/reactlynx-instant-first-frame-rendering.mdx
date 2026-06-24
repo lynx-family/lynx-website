@@ -1,0 +1,368 @@
+---
+title: '深入 ReactLynx：从后台渲染到首帧直出优化'
+date: 2026-06-24
+sidebar: false
+authors: ['lynx']
+description: 'ReactLynx 把后台 React 更新编码成 Patch，再由主线程通过 Element PAPI 落到 Native 视图；首帧直出则把启动第一帧从这条等待链路里拆出来。'
+---
+
+import { BlogHeader, Mermaid } from '@lynx';
+
+<BlogHeader />
+
+在 Web React 里，[render 和 commit](https://react.dev/learn/render-and-commit) 基本发生在同一套浏览器环境中：React 算出新的 UI，再把变化提交到 DOM。到了 [ReactLynx](/react/)，这条路径会被 Lynx 的[双线程](/react/thinking-in-reactlynx)模型拆开：后台线程运行 React 业务逻辑，主线程负责 Native 视图绘制。这样业务 JS 不会直接卡住主线程，但也多了一道边界：后台 React 没法直接拿主线程上的 Element 引用去 commit，它能传给主线程的，就只有一份可序列化的数据。
+
+这份数据就是后面会反复出现的 Patch。页面稳定运行时，这条链路会很顺畅：后台线程完成 render / diff，把 UI 变化编码成 Patch；主线程收到后，再解析成 Lynx Element 操作，最终修改 Native 视图。问题出在启动阶段。如果第一帧也完全等这条链路跑完，主线程就得先等后台 JS 运行时初始化、业务代码加载、React 首轮 render / diff，以及第一批 Patch 跨线程送回来。
+
+所以要看懂[首帧直出](/guide/interaction/ifr)，不妨先把这条常规提交链路理顺：Patch 如何描述后台更新，主线程又如何通过 [Element PAPI](/api/engine/element-api) 把它落到 Native 视图。这部分看清楚之后，再回到启动阶段，双端构建和 [Hydration](/react/lifecycle) 为什么能把第一帧提前出来，就会自然很多。
+
+## 后台渲染
+
+在常规后台渲染模式下，ReactLynx 的更新路径本质上是一次跨线程的异步提交。React 的 render 和 diff 发生在后台线程，产生的更新结果被编码成 Patch；主线程收到 Patch 后，再解析并调用本地 Element 操作。
+
+<Mermaid title="后台渲染的异步提交路径">
+  flowchart LR
+    %% 占位图，后续替换为正式图
+    A["React render / diff"] --> B["生成 Patch"]
+    B --> C["跨线程发送"]
+    C --> D["主线程解析 Patch"]
+    D --> E["Lynx Element 操作"]
+    E --> F["Lynx Element 树"]
+</Mermaid>
+
+看一个典型的 ReactLynx 卡片组件。它和普通 React 组件很接近，只是元素从 `div`、`span` 换成了 Lynx 的 [`view`](/api/elements/built-in/view)、[`text`](/api/elements/built-in/text)，事件绑定也写成 [`bindtap`](/guide/interaction/event-handling)。代码里还出现了两个跨线程分流标记：[`'background only'` 指示符](/api/react/Document.directives)表示这段函数逻辑只在后台线程保留，[`__MAIN_THREAD__`](/api/react/Document.built-in-macros) 则用来区分主线程和后台线程的条件分支。在后台线程渲染时，组件会完整运行，`__MAIN_THREAD__` 会落到 `background` 分支；到后面的主线程构建里，才会看到 `main` 分支。这个分支是为了后文演示结构不匹配时的兜底路径，实际首屏代码应尽量让主线程和后台结构保持一致。
+
+```tsx
+import { useEffect, useState } from '@lynx-js/react';
+
+function fetchProfile() {
+  'background only';
+  console.log('fetchProfile');
+}
+
+export default function App({ initialCount }) {
+  const [count, setCount] = useState(initialCount);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  function handleTap() {
+    'background only';
+    setCount(count + 1);
+  }
+
+  return (
+    <view className="card" bindtap={handleTap}>
+      <text>ReactLynx</text>
+      <text>{count}</text>
+      {__MAIN_THREAD__ ? <text>main</text> : <text>background</text>}
+    </view>
+  );
+}
+```
+
+### 可序列化 Patch
+
+后台线程不能把函数或 Element 引用直接发给主线程。跨线程能稳定传递的是结构化数据，所以 ReactLynx 会把 UI 变化编码成 Patch。Patch 描述的是“这次变化是什么”，而不是一棵完整的新 UI 树。
+
+为了让这份数据适合跨线程传输，Patch 会被组织成扁平的操作码流：主线程可以用一个游标从左到右扫描，先读到操作码，再按这个操作消费后面的固定参数，接着继续读下一条操作。因此 Patch 看起来更像一串数字，而不是一棵嵌套 JSON。
+
+源码里的[操作枚举](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatch.ts)可以简化理解为几类：
+
+```plaintext
+0  CreateElement
+1  InsertBefore
+2  RemoveChild
+3  SetAttribute
+4  SetAttributes
+```
+
+先从最小的状态更新看起：前面的卡片组件点击后把 `count` 从 `0` 更新到 `1`，后台线程可以把这次文本变化编码成一段紧凑的数字流：
+
+```js
+patch: [3, instanceId, 0, 1];
+```
+
+这里的 `3` 表示 `SetAttribute`，`instanceId` 是运行时用来标识视图实例的 ID，不是 React `key`，也不是 Element 引用本身；主线程会靠它在本地映射表里找到要更新的视图实例。`0` 是编译期给 `{count}` 预留的动态位置编号。有了这个编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”，主线程就能完成文本更新。
+
+Patch 也能表达结构变化。除了前面的动态值更新，如果某个位置需要先删掉旧 child，再创建并插入新 child，对应的操作也会继续落在同一套数字流里。这里的 `parentId`、`oldChildId`、`newChildId` 仍然是 ReactLynx 运行时维护的视图实例 ID，用来让主线程在本地映射表里找到对应 Element：
+
+```js
+patch: [
+  2, // RemoveChild(parentId, oldChildId)
+  parentId,
+  oldChildId,
+  0, // CreateElement(type, newChildId)
+  'text',
+  newChildId,
+  1, // InsertBefore(parentId, newChildId, beforeId, childPosition)
+  parentId,
+  newChildId,
+  null,
+  childPosition,
+];
+```
+
+这里的 `null` 表示这次插入没有 before 节点，也就是插到当前位置末尾；`childPosition` 描述的是新 child 在父节点子节点列表里的结构位置，和前面动态文本里的位置编号不是同一类编号。每条操作先给出 opcode，再跟着固定数量的参数，主线程解析时会按这个顺序一段一段消费。后台线程提交的是可序列化的 UI 增量，主线程再把它还原成实际的视图操作。
+
+### 从 Patch 到 Element PAPI
+
+Patch 过了线程边界之后，还需要在主线程本地落到具体 Element 上。跨线程数据只保留 `instanceId`、位置编号、结构位置和新值；真实 Element 引用仍然留在主线程 JS 上下文里。
+
+主线程收到 Patch 后，会先解析操作码，再通过本地实例映射和编译期留下的位置规则，找到这次更新真正落到哪个 Element、哪个属性或哪个子节点位置。这里的位置规则来自编译转换阶段：组件里的动态文本、动态子树会被记录成稳定的位置，后续 Patch 只需要携带编号和值。最后一步才会进入 Element PAPI，也就是 Lynx 提供给主线程 JS 的 Element 操作入口，例如 `__CreateElement`、`__SetAttribute`、`__AppendElement`、`__InsertElementBefore`、`__RemoveElement`。如果想对照源码，可以看 ReactLynx runtime 里的 [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts) 全局声明，以及 [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts) 里的 Patch 应用入口。
+
+文本 Patch `[3, instanceId, 0, 1]` 到达主线程时，应用路径可以简化成这样：
+
+```js
+const target = resolveAttributeTarget(instanceId, 0);
+// 先根据 instanceId 找到主线程本地视图实例，
+// 再用位置编号 0 找到显示 count 的 Text Element。
+
+__SetAttribute(target.element, target.name, 1);
+```
+
+结构 Patch 也会落到同一层。主线程会顺着操作码流向后读，而不是先把整段 Patch 还原成一棵树：
+
+```js
+const reader = createPatchReader(patch);
+
+while (reader.hasNext()) {
+  const op = reader.readOpcode();
+
+  switch (op) {
+    case 2: {
+      const parent = resolveElement(reader.readId());
+      const child = resolveElement(reader.readId());
+      __RemoveElement(parent, child);
+      break;
+    }
+
+    case 0: {
+      const type = reader.readString();
+      const newChildId = reader.readId();
+      const child = __CreateElement(type, ownerComponentId);
+      rememberElement(newChildId, child);
+      break;
+    }
+
+    case 1: {
+      const parent = resolveElement(reader.readId());
+      const child = resolveElement(reader.readId());
+      const before = resolveElementOrNull(reader.readId());
+      const childPosition = reader.readPosition();
+      rememberChildPosition(child, childPosition);
+      __InsertElementBefore(parent, child, before);
+      break;
+    }
+  }
+}
+```
+
+这段代码只是在说明 Patch 的应用路径：`reader`、`resolveElement` 和 `rememberElement` 都是示意名，不是业务可调用的 API；`ownerComponentId` 代表创建 Element 时所需的主线程上下文。关键在于，主线程一边扫描 Patch，一边把 ID 还原成本地 Element。创建新 Element 后，它也会把新 ID 和子节点结构位置记回本地映射，后续 Patch 才能继续用 ID 和位置找到它。
+
+在页面稳定运行期，这套增量提交很自然：更新在后台算，主线程只收到可以执行的 UI 增量。放到启动阶段，第一帧就会被后台首轮计算和跨线程提交拖住。
+
+## 主线程首帧直出
+
+在首屏启动时，主线程已经具备 Native 绘制能力，却还拿不到第一屏的视图结构。它必须等后台完成初始化、加载业务代码、首轮 render / diff，并送回第一批首屏 Patch。这段等待可以简化成这样：
+
+<Mermaid title="只依赖后台渲染时的首帧等待">
+  flowchart LR
+    %% 占位图，后续替换为正式图
+    Start["页面启动"]
+
+    subgraph BG["后台线程"]
+      direction TB
+      B1["初始化 JS 运行时"] --> B2["加载业务代码"]
+      B2 --> B3["React render / diff"]
+      B3 --> B4["生成首屏 Patch"]
+    end
+
+    subgraph Main["主线程"]
+      direction TB
+      M1["具备 Native 绘制能力"] --> M2["等待首屏输入"]
+      M2 --> M3["应用 Patch / Element PAPI"]
+      M3 --> M4["首帧绘制"]
+    end
+
+    Start --> B1
+    Start --> M1
+    B4 -- "跨线程提交" --> M2
+
+</Mermaid>
+
+ReactLynx 的首帧直出（Instant First-Frame Rendering）优化的就是这段启动等待。它会为第一帧拆出一条主线程可以先走的短路径：主线程执行裁剪后的首屏产物，先创建初始 Native 视图；后台线程同时启动完整 React，并继续负责后续业务逻辑。等后台首轮结果准备好后，Hydration 再认领已有视图，并把后续更新接回 Background Rendering 那套 Patch -> Element PAPI 链路。
+
+<Mermaid title="首帧直出后的启动路径">
+  flowchart LR
+    %% 占位图，后续替换为正式图
+    Start["页面启动"]
+
+    Start --> M1["执行 main-thread.js"]
+    M1 --> M2["创建首帧 Native 视图"]
+    M2 --> M3["首帧绘制"]
+
+    Start --> B1["加载 background.js"]
+    B1 --> B2["React 首轮 render / diff"]
+    B2 --> H["Hydration 接管已有视图"]
+    M2 --> H
+    H --> P["后续 Patch / Element PAPI"]
+
+</Mermaid>
+
+这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：首屏先呈现出来，完整 React 启动后再认领已有视图。区别在于，ReactLynx 先呈现的不是 HTML，而是主线程已经创建好的 Native 视图。
+
+主线程不运行业务逻辑仍然能先画首帧，是因为首帧直出只让主线程运行一段轻量的首屏求值代码，用来计算初始文本、预留必要的事件绑定位置，并创建第一帧 Native 节点。这条路径不带完整 React Reconciler / Scheduler，也不承担后续更新调度。`useEffect` 这类副作用、请求、订阅和真实事件处理仍然留给后台完整 React；第一帧之后，点击事件回到后台 handler，数据变化触发后台状态更新，effect 也在后台执行。
+
+### 双端构建与代码裁剪
+
+两端职责分开后，同一个 React entry 就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一个 entry 做双端构建：主线程侧生成 `main-thread.js`，只服务首屏建树；后台侧生成 `background.js`，保留完整 React 逻辑。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
+
+<Mermaid title="同一个 React entry 的两条构建路径">
+  flowchart LR
+    %% 占位图，后续替换为正式图
+    A["React entry"] --> B["主线程编译路径"]
+    A --> C["后台编译路径"]
+    B --> D["main-thread.js：首屏建树路径"]
+    C --> E["background.js：完整 React 逻辑"]
+    D --> F["lynx.bundle"]
+    E --> F
+</Mermaid>
+
+沿用前面那段同时包含副作用、事件、动态文本和 `__MAIN_THREAD__` 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样。这里的 `__card` 和 `__main_text` 是编译生成的首屏结构占位名，示例不展开它们的内部格式：
+
+```js
+const __card = '...';
+const __main_text = '...';
+
+export default function App({ initialCount }) {
+  const [count] = useState(initialCount);
+
+  function handleTap() {} // 无引用空壳，生产压缩后可清理。
+
+  return _jsx(__card, {
+    values: [
+      1, // tap 绑定占位，真实 handler 在后台产物中
+    ],
+    $0: count,
+    $1: _jsx(__main_text, {}),
+  });
+}
+```
+
+这段主线程产物只保留第一帧要用到的执行路径。`useEffect` 和 `fetchProfile` 不再出现；`handleTap` 因为 `'background only'` 指示符的作用，只剩一个能在后续压缩中被清掉的空壳。主线程产物里仍然有 `useState(initialCount)`，看起来有点反直觉，但它并不表示主线程会承担后续状态调度。主线程运行时只提供首帧求值所需的轻量实现，让组件函数同步拿到初始值；点击后由 `setCount` 触发的更新逻辑，会随事件逻辑一起留在后台完整 React。
+
+主线程产物留下来的，是首帧建树需要的描述和启动时要填入的动态值。这个例子里，`values[0]` 里的数字 `1` 是一个事件存在性标记，只表示这个节点存在 tap 绑定；主线程用它保留事件绑定位置，真实 handler 仍在后台产物中，接管后才参与事件处理。`$0`、`$1` 对应动态文本或动态子树；Rspeedy 在主线程构建中会将 `__MAIN_THREAD__` 置为 `true`，所以最后一个分支会落到 `__main_text`。这些生成变量名不需要逐个记住，真正要对齐的是两端产物对动态位置的顺序描述；Hydration 后面正是靠这组顺序关系建立映射。
+
+把这些动态值填回对应位置后，主线程第一帧得到的视图可以简化成这样：
+
+```plaintext
+view.card
+├─ text "ReactLynx"
+├─ text count
+└─ text "main"
+```
+
+相比之下，后台产物不参与主线程首帧建树，它保留的是接管之后需要的完整 React 逻辑：
+
+```js
+function fetchProfile() {
+  console.log('fetchProfile');
+}
+
+const __card = '...';
+const __background_text = '...';
+
+export default function App({ initialCount }) {
+  // setCount 仅在后台线程保留；主线程只读取 count。
+  const [count, setCount] = useState(initialCount);
+
+  // effect 回调仅在后台线程保留。
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  function handleTap() {
+    // 真实 handler 仅在后台线程保留；主线程只保留 tap 绑定占位。
+    setCount(count + 1);
+  }
+
+  return _jsx(__card, {
+    values: [
+      handleTap, // 真实 handler，仅在后台线程保留；主线程里对应为数字 1 占位
+    ],
+    $0: count,
+    $1: _jsx(__background_text, {}), // 主线程同一位置折叠为 __main_text
+  });
+}
+```
+
+后台包则保留完整 `useEffect`、`fetchProfile`、`handleTap` 和 `setCount`。事件 handler 和动态文本仍然按同一组动态位置组织，只是条件分支在后台构建中会落到 `__background_text`。有了这两份职责不同、位置仍能对应的产物，下一步 Hydration 才能接管主线程已经画出来的视图。
+
+### Hydration 接管已有视图
+
+首帧之后，ReactLynx 要对齐两棵树：一棵已经在主线程创建了 Native 视图，另一棵是后台完整 React 首轮 render 的结果。Hydration 的目标只有一个：让后台实例知道后续要更新哪一个主线程视图。围绕这个目标，接管过程会先确认两端 ID 不冲突，再用编译期保留的动态位置匹配共同节点，最后让 Patch 和事件都复用这份匹配结果。
+
+这里的 ID 不是 React `key`，只是 Patch 和事件后面用来定位视图实例的运行时数字。接管前主线程和后台会各自建树，所以 ReactLynx 用负数和正数把两端 ID 隔开；真正决定“谁接谁”的，是同一个 React entry 在两端编译时留下的首屏结构和动态位置顺序。这里的 `$0`、`$1` 是编译期给动态表达式留下的位置编号：`$0` 是 `count` 文本，`$1` 是条件分支所在的子树。拿前面的 `App` 简化一下，Hydration 要处理的关系是这样的：
+
+```plaintext
+Hydration 前：
+
+  主线程已有 Native 视图             后台首轮渲染结果
+  -1 view.card                      1 view.card
+    text "ReactLynx"                  text "ReactLynx"
+    -2 text count ($0)                2 text count ($0)
+    -3 text "main" ($1)               3 text "background" ($1)
+
+Hydration 结果：
+
+  view.card:        1 -> -1
+  text count ($0):  2 -> -2
+  $1 分支:           跳过绑定，交给差异 Patch
+
+后续 count 从 0 更新到 1：
+
+  后台 render / diff 生成文本更新 Patch
+  Patch 通过绑定后的 ID 命中主线程已有的 text count
+  主线程更新 -2 对应的 Native 文本节点
+```
+
+绑定完成后，后台侧会对共同节点改用主线程已有 ID，后续 Patch 里的目标 ID 就能被主线程侧的实例映射表找到。Hydration 同时会比对两端动态值。正常情况下，主线程首帧和后台首轮 render 使用同一组初始输入，动态文本和属性应该一致；如果某个共同节点上的动态值已经不同，后台会把这次差异编码成普通属性 Patch，让主线程把已有视图补到后台期望的值。
+
+事件也复用同一份接管关系。主线程首帧只声明 tap 绑定位置，不携带 `handleTap` 的真实逻辑；后台产物里保留的 handler 会按“节点 ID + 动态位置”登记。如果用户在 Hydration 完成前已经触发事件，后台侧会先把事件标识和数据暂存起来。等首屏树对齐完成后，运行时用接管时得到的 ID 映射修正这个事件标识，再交给后台的 `publishEvent` 按 ID 和动态位置找到真正的 `handleTap` 执行。这样首帧可以先显示出来，交互又不会丢到一棵还没接管完成的树上。
+
+### 接管差异如何回到 Patch
+
+上面的 `$1` 是共同节点之外的剩余问题。如果主线程首帧和后台首轮 render 来自同一份结构、同一组初始输入，Hydration 基本只需要建立绑定；必要时补普通属性 Patch，不需要结构 Patch。结构 Patch 是兜底路径：当代码显式写了主线程 / 后台条件分支，导致同一个位置编译出的子树不同，Hydration 就不能把两个不一致的节点强行绑定成共同节点。
+
+以示例里的 `__MAIN_THREAD__` 分支为例，主线程已经创建了 `main` 分支，后台首轮 render 期望的是 `background` 分支。这个位置在两端都叫 `$1`，但它下面已经不是可以直接认领的同一棵子树。Hydration 会跳过共同节点绑定，把差异重新编码成 Patch：
+
+```js
+// 简化示意：省略与这个差异无关的字段。
+patch: [
+  2, // RemoveChild
+  parentId,
+  mainBranchTextId, // 主线程已有的旧节点，在本例中是 -3
+  0, // CreateElement
+  'text',
+  backgroundBranchTextId, // 后台期望的新节点，在本例中是 3
+  1, // InsertBefore
+  parentId,
+  backgroundBranchTextId,
+  null, // 没有 before 节点
+  branchChildPosition,
+];
+```
+
+这里的 `mainBranchTextId` 是主线程上已经画出来、但后台结果不再需要的旧节点；`backgroundBranchTextId` 是后台期望插入的新节点；`branchChildPosition` 用来让主线程把新 child 放回父节点的对应位置。主线程收到这段 Patch 后，仍然按前面的 Element PAPI 路径执行：先移除旧节点，再创建后台期望的新节点，最后插回父节点。
+
+这类 Patch 只在接管阶段出现结构不一致时用于一次性对齐。处理完差异后，页面进入后台 React 主导的稳定运行阶段：点击、数据变化或 `setState` 会继续生成常规增量 Patch，主线程解析后落到 Element PAPI。
+
+这也是为什么前面的 `__MAIN_THREAD__` 分支只适合作为示例。结构不匹配会把原本可以直接认领的节点退化成移除旧节点、创建新节点、再插回父节点的 Native 操作；实际首屏代码应尽量保证主线程和后台首轮 render 的结构一致。
+
+## 总结
+
+归结起来，ReactLynx 的启动和运行其实是同一套提交模型在两个阶段的分工。页面稳定运行后，后台 React 计算更新，Patch 跨过线程边界，主线程再通过 Element PAPI 修改 Lynx Element 树。页面启动时，主线程先拿到一份裁剪后的首屏路径，把第一帧画出来；后台 React 准备好后，再通过 Hydration 接管这些已有视图。
+
+首帧直出真正缩短的，就是用户看到第一帧之前那段等待。写首屏组件时，越能把首屏表达成初始数据和可直接创建的视图，主线程路径就越短；请求、副作用、真实事件处理和后续状态更新继续交给后台 React 就好。理解这层分工后，首帧直出就不只是一个开关，而是一个可以主动利用的 ReactLynx 启动模型。
