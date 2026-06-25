@@ -41,11 +41,11 @@ function App() {
 }
 ```
 
-完整规则见 [ReactLynx 编程思想](./thinking-in-reactlynx.mdx)；所有宏的列表见自动生成的 [built-in-macros](/api/react/Document.built-in-macros.mdx) 参考。
+真正需要手写的是另一种情况：一段在渲染期执行的代码（渲染会同时在两个线程上跑）要按线程访问不同的东西——比如某个值在后台线程是真正调用原生能力的实现、在主线程则换成空操作——这时用 `__BACKGROUND__` / `__MAIN_THREAD__` 显式分支，让每个线程的产物只保留对它有效的代码。[built-in-macros](/api/react/Document.built-in-macros.mdx) 参考里有一个 `__BACKGROUND__` 的完整例子；完整规则见 [ReactLynx 编程思想](./thinking-in-reactlynx.mdx)。
 
 ## 模式宏
 
-这些宏用来整体开关某一类开发期行为。它们在开发环境为 `true`、生产环境为 `false`，所以只用于开发的代码不会进入产物。
+这些宏用来整体开关某一类开发期行为。它们在开发环境为 `true`、生产环境为 `false`，因此仅用于开发的代码不会被打进生产产物。
 
 ### `__DEV__`
 
