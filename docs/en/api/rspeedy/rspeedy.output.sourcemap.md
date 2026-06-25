@@ -14,5 +14,5 @@ sourceMap?: boolean | SourceMap | undefined;
 
 ## Default Value
 
-When this option is unset, JavaScript source maps use `'cheap-module-source-map'` in development and are otherwise disabled; CSS source maps are disabled.
+When this option is unset in Lynx builds, JavaScript source maps use `'cheap-module-source-map'` in development and `'source-map'` in production; CSS source maps are also generated. All `.map` assets are removed before emit.
 

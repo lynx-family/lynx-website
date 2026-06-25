@@ -14,7 +14,7 @@ css?: boolean | undefined;
 
 ## Remarks
 
-Defaults to `true`<!-- -->.
+Defaults to `true`<!-- -->. In Lynx builds, all `.map` assets are removed before emit.
 
 ## Example
 

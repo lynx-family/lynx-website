@@ -14,7 +14,7 @@ js?: Rspack.DevTool | undefined | `${Exclude<Rspack.DevTool, false | 'eval'>}-de
 
 ## Default Value
 
-When `output.sourceMap` is an object and `js` is unset, it defaults to `'cheap-module-source-map'` in development and `false` in production.
+When `output.sourceMap` is an object and `js` is unset, it defaults to `'cheap-module-source-map'` in development. In production, it defaults to `'source-map'` for Lynx environments and `false` otherwise.
 
 ## Remarks
 

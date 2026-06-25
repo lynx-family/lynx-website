@@ -54,5 +54,26 @@ _(Optional)_ The engine version of the external bundle.
 
 
 </td></tr>
+<tr><td>
+
+[target?](./lynx-bundle-rslib-config.encodeoptions.target.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'web' \| 'tasm'
+
+
+</td><td>
+
+_(Optional)_ The output format of the encoded bundle.
+
+- `'tasm'`<!-- -->: the native TASM bundle via `@lynx-js/tasm`<!-- -->. - `'web'`<!-- -->: a web binary bundle via `@lynx-js/web-core/encode`<!-- -->, decodable by the web platform. Sections are emitted as raw JS (the web runtime wraps them at `lynx.loadScript` time), and CSS is folded into the StyleInfo section.
+
+
+</td></tr>
 </tbody></table>
 
