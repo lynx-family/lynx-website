@@ -1,6 +1,6 @@
 # Build-time Macros
 
-ReactLynx's compiler plugin ([`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin), built on [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)) replaces a set of **build-time macros** when it compiles your app. Each macro is a global identifier that gets swapped for a constant value. Once it's a constant, any branch guarded by a macro that's `false` is removed by dead-code elimination, so it costs nothing at runtime and adds nothing to the bundle:
+[ReactLynx](./introduction.mdx)'s compiler plugin ([`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin), built on [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)) replaces a set of **build-time macros** when it compiles your app. Each macro is a global identifier that gets swapped for a constant value. Once it's a constant, any branch guarded by a macro that's `false` is removed by dead-code elimination, so it costs nothing at runtime and adds nothing to the bundle:
 
 ```tsx
 if (__DEV__) {
@@ -10,7 +10,7 @@ if (__DEV__) {
 ```
 
 :::tip
-`@lynx-js/react` declares every macro as a TypeScript global, so you can reference them directly without a `Cannot find name '__DEV__'` error.
+[`@lynx-js/react`](https://www.npmjs.com/package/@lynx-js/react) declares every macro as a TypeScript global, so you can reference them directly without a `Cannot find name '__DEV__'` error.
 :::
 
 ## Thread macros
@@ -51,7 +51,7 @@ Turns on performance instrumentation. When it's on, the runtime wraps key phases
 
 ### `__REACT_DEVTOOL__`
 
-Turns on the development-only runtime hooks that [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) needs, such as the snapshot-to-element mapping. It defaults to on in development. To use devtools in a production build, set `REACT_DEVTOOL=true`. That also keeps a user-imported `@lynx-js/preact-devtools` from being stripped out of the bundle.
+Turns on the development-only runtime hooks that [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) needs, such as the snapshot-to-element mapping. It defaults to on in development. To use devtools in a production build, set `REACT_DEVTOOL=true`. That also keeps a user-imported [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools) from being stripped out of the bundle.
 
 ## Logging macros
 
@@ -69,14 +69,14 @@ Finer-grained: it logs every [Element PAPI](/api/engine/element-api.md) call, th
 
 These come from ReactLynx plugin options rather than environment variables, and most are framework-internal:
 
-| Macro                                                    | Type                         | What it does                                                                                                                                                                           |
-| -------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `__ENABLE_SSR__`                                         | `boolean`                    | Guards server-side-rendering code (encode on the server, hydrate on the client). Controlled by `enableSSR`.                                                                            |
-| `__EXTRACT_STR__`                                        | `boolean`                    | Enables the "extract string" optimization, which deduplicates string literals shared between the background (JS) and main-thread bundles to shrink output. Controlled by `extractStr`. |
-| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | When the first screen is flushed: as early as possible (`immediately`), or after the background JS is ready (`jsReady`). Controlled by `firstScreenSyncTiming`.                        |
-| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | How [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) updates are delivered: reactive (context-based) or event-based. Controlled by `globalPropsMode`.                        |
-| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | Suppresses the development warning about the deprecated `createSelectorQuery` / ref APIs. Controlled by `disableCreateSelectorQueryIncompatibleWarning`.                               |
-| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | Experimental. Enables precompiled Element Templates. Controlled by `experimental_useElementTemplate`.                                                                                  |
+| Macro                                                    | Type                         | What it does                                                                                                                                                                                                                                                |
+| -------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `__ENABLE_SSR__`                                         | `boolean`                    | Guards server-side-rendering code (encode on the server, hydrate on the client). Controlled by [`enableSSR`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md).                                                                        |
+| `__EXTRACT_STR__`                                        | `boolean`                    | Enables the "extract string" optimization, which deduplicates string literals shared between the background and main-thread bundles to shrink output. Controlled by [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md). |
+| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | When the first screen is flushed: as early as possible (`immediately`), or after the background JS is ready (`jsReady`). Controlled by [`firstScreenSyncTiming`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md).        |
+| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | How [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) updates are delivered: reactive (context-based) or event-based. Controlled by [`globalPropsMode`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode.md).              |
+| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | Suppresses the development warning about the deprecated `createSelectorQuery` / ref APIs. Controlled by `disableCreateSelectorQueryIncompatibleWarning`.                                                                                                    |
+| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | Experimental. Enables precompiled Element Templates. Controlled by [`experimental_useElementTemplate`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_useelementtemplate.md).                                                        |
 
 ## Environment variables
 

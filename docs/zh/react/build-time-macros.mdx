@@ -1,6 +1,6 @@
 # 编译时宏
 
-ReactLynx 的编译插件（[`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin)，基于 [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)）会在编译你的应用时替换一组**编译时宏**。每个宏都是一个全局标识符，编译期会被替换成一个常量。一旦变成常量，被取值为 `false` 的宏所守卫的分支就会被 dead-code elimination 删掉，因此它们不产生运行时开销，也不增加包体积：
+[ReactLynx](./introduction.mdx) 的编译插件（[`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin)，基于 [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)）会在编译你的应用时替换一组**编译时宏**。每个宏都是一个全局标识符，编译期会被替换成一个常量。一旦变成常量，被取值为 `false` 的宏所守卫的分支就会被 dead-code elimination 删掉，因此它们不产生运行时开销，也不增加包体积：
 
 ```tsx
 if (__DEV__) {
@@ -10,7 +10,7 @@ if (__DEV__) {
 ```
 
 :::tip
-`@lynx-js/react` 把每个宏都声明成了 TypeScript 全局变量，所以你可以直接用它们，不会报 `Cannot find name '__DEV__'`。
+[`@lynx-js/react`](https://www.npmjs.com/package/@lynx-js/react) 把每个宏都声明成了 TypeScript 全局变量，所以你可以直接用它们，不会报 `Cannot find name '__DEV__'`。
 :::
 
 ## 线程宏
@@ -51,7 +51,7 @@ function App() {
 
 ### `__REACT_DEVTOOL__`
 
-开启 [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) 需要的、只在开发期存在的运行时钩子，比如 snapshot 到 element 的映射。开发环境默认开启。如果想在生产构建里用 devtools，设置 `REACT_DEVTOOL=true`，它同时会保留你引入的 `@lynx-js/preact-devtools`，不让它被裁掉。
+开启 [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) 需要的、只在开发期存在的运行时钩子，比如 snapshot 到 element 的映射。开发环境默认开启。如果想在生产构建里用 devtools，设置 `REACT_DEVTOOL=true`，它同时会保留你引入的 [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools)，不让它被裁掉。
 
 ## 日志宏
 
@@ -69,14 +69,14 @@ ALog 是 Lynx 的原生日志通道。通过它打出来的日志会进入平台
 
 这些宏来自 ReactLynx 的插件选项，而不是环境变量，大多是框架内部使用：
 
-| 宏                                                       | 类型                         | 作用                                                                                                                                   |
-| -------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `__ENABLE_SSR__`                                         | `boolean`                    | 守卫服务端渲染相关代码（服务端 encode、客户端 hydrate）。由 `enableSSR` 控制。                                                         |
-| `__EXTRACT_STR__`                                        | `boolean`                    | 开启「字符串提取」优化，对后台（JS）产物与主线程产物之间共享的字符串字面量去重，减小产物体积。由 `extractStr` 控制。                   |
-| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | 首屏什么时候刷新：尽量早（`immediately`），或等后台 JS 就绪后（`jsReady`）。由 `firstScreenSyncTiming` 控制。                          |
-| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) 更新怎么派发：响应式（基于 context）或基于事件。由 `globalPropsMode` 控制。 |
-| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | 抑制关于已废弃的 `createSelectorQuery` / ref API 的开发期警告。由 `disableCreateSelectorQueryIncompatibleWarning` 控制。               |
-| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | 实验性。开启预编译的 Element Template。由 `experimental_useElementTemplate` 控制。                                                     |
+| 宏                                                       | 类型                         | 作用                                                                                                                                                                                                                  |
+| -------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `__ENABLE_SSR__`                                         | `boolean`                    | 守卫服务端渲染相关代码（服务端 encode、客户端 hydrate）。由 [`enableSSR`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md) 控制。                                                               |
+| `__EXTRACT_STR__`                                        | `boolean`                    | 开启「字符串提取」优化，对后台产物与主线程产物之间共享的字符串字面量去重，减小产物体积。由 [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md) 控制。                              |
+| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | 首屏什么时候刷新：尽量早（`immediately`），或等后台 JS 就绪后（`jsReady`）。由 [`firstScreenSyncTiming`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md) 控制。                    |
+| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) 更新怎么派发：响应式（基于 context）或基于事件。由 [`globalPropsMode`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode.md) 控制。 |
+| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | 抑制关于已废弃的 `createSelectorQuery` / ref API 的开发期警告。由 `disableCreateSelectorQueryIncompatibleWarning` 控制。                                                                                              |
+| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | 实验性。开启预编译的 Element Template。由 [`experimental_useElementTemplate`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_useelementtemplate.md) 控制。                                     |
 
 ## 环境变量
 
