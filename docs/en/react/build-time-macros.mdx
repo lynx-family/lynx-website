@@ -15,7 +15,7 @@ if (__DEV__) {
 
 ## Thread macros
 
-ReactLynx splits your code across two threads, the main thread and the background thread (see [Thinking in ReactLynx](./thinking-in-reactlynx.mdx)). These macros mark which thread a piece of code belongs to, so the other thread's bundle can drop it.
+ReactLynx compiles your code into two bundles, one for the main thread and one for the background thread (see [Thinking in ReactLynx](./thinking-in-reactlynx.mdx)). These macros mark which thread a piece of code belongs to, so the other thread's bundle can drop it.
 
 | Macro             | Type      | Meaning                                  |
 | ----------------- | --------- | ---------------------------------------- |
@@ -24,18 +24,24 @@ ReactLynx splits your code across two threads, the main thread and the backgroun
 | `__LEPUS__`       | `boolean` | Alias of `__MAIN_THREAD__` (deprecated). |
 | `__JS__`          | `boolean` | Alias of `__BACKGROUND__` (deprecated).  |
 
-`bindtap` handlers run on the background thread. If a handler calls a background-only API, guard it with `__BACKGROUND__` so it never reaches the main-thread bundle:
+You rarely write these by hand. The compiler already treats event handlers (`bindtap` and the like), effects (`useEffect`), `ref`s, and code marked `'background only'` as background-only, so none of it ends up in the main-thread bundle:
 
-```tsx
+```jsx
+import { useEffect } from '@lynx-js/react';
+
 function App() {
-  const onTap = __BACKGROUND__
-    ? () => bridge.call('showToast', { message: 'tapped' })
-    : undefined;
-  return <view bindtap={onTap} />;
+  useEffect(() => console.log('effects are background-only'));
+  return (
+    <view bindtap={(e) => console.log('event handlers are background-only')}>
+      <text ref={(ref) => console.log('refs are background-only')}>
+        Hello, ReactLynx!
+      </text>
+    </view>
+  );
 }
 ```
 
-For more examples, see the generated [built-in-macros](/api/react/Document.built-in-macros.mdx) reference.
+See [Thinking in ReactLynx](./thinking-in-reactlynx.mdx) for the full rules, and the generated [built-in-macros](/api/react/Document.built-in-macros.mdx) reference for the complete list.
 
 ## Mode macros
 
@@ -51,7 +57,7 @@ Turns on performance instrumentation. When it's on, the runtime wraps key phases
 
 ### `__REACT_DEVTOOL__`
 
-Turns on the development-only runtime hooks that [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) needs, such as the snapshot-to-element mapping. It defaults to on in development. To use devtools in a production build, set `REACT_DEVTOOL=true`. That also keeps a user-imported [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools) from being stripped out of the bundle.
+Turns on the runtime hooks that [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) needs, such as the snapshot-to-element mapping. It defaults to on in development. To use Preact DevTools in a production build, set `REACT_DEVTOOL=true`; that also keeps a user-imported [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools) from being stripped out of the bundle.
 
 ## Logging macros
 
@@ -71,7 +77,7 @@ These come from ReactLynx plugin options rather than environment variables, and 
 
 | Macro                                                    | Type                         | What it does                                                                                                                                                                                                                                                |
 | -------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `__ENABLE_SSR__`                                         | `boolean`                    | Guards server-side-rendering code (encode on the server, hydrate on the client). Controlled by [`enableSSR`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md).                                                                        |
+| `__ENABLE_SSR__`                                         | `boolean`                    | `true` when SSR is enabled. Controlled by [`enableSSR`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md).                                                                                                                             |
 | `__EXTRACT_STR__`                                        | `boolean`                    | Enables the "extract string" optimization, which deduplicates string literals shared between the background and main-thread bundles to shrink output. Controlled by [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md). |
 | `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | When the first screen is flushed: as early as possible (`immediately`), or after the background JS is ready (`jsReady`). Controlled by [`firstScreenSyncTiming`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md).        |
 | `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | How [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) updates are delivered: reactive (context-based) or event-based. Controlled by [`globalPropsMode`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode.md).              |
