@@ -1,86 +1,86 @@
 # 编译时宏
 
-ReactLynx 的编译插件（`@lynx-js/react-rsbuild-plugin`，基于 `@lynx-js/react-webpack-plugin`）会在编译你的应用时替换一组**编译时宏**——一些特殊的全局标识符，会在编译期间被替换为常量值。由于这些值是常量，任何被取值为 `false` 的宏所守卫的代码分支都会被 dead-code elimination 移除，因此它们**不产生任何运行时开销，也不增加包体积**：
+ReactLynx 的编译插件（[`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin)，基于 [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)）会在编译你的应用时替换一组**编译时宏**。每个宏都是一个全局标识符，编译期会被替换成一个常量。一旦变成常量，被取值为 `false` 的宏所守卫的分支就会被 dead-code elimination 删掉，因此它们不产生运行时开销，也不增加包体积：
 
 ```tsx
 if (__DEV__) {
-  // 整段代码会在生产构建中被移除。
+  // 这段代码会在生产构建中被移除。
   console.log('debug only');
 }
 ```
 
 :::tip
-每个宏都由 `@lynx-js/react` 声明为 TypeScript 全局变量，因此你可以直接使用它们，而不会出现 `Cannot find name '__DEV__'` 的报错。
+`@lynx-js/react` 把每个宏都声明成了 TypeScript 全局变量，所以你可以直接用它们，不会报 `Cannot find name '__DEV__'`。
 :::
 
 ## 线程宏
 
-ReactLynx 会把你的代码分布到两个线程上运行——**主线程**与**后台线程**（参见 [主线程脚本](./main-thread-script.mdx)）。这些宏告诉编译器某段代码属于哪个线程，从而让另一个线程的产物可以将其整段移除。
+ReactLynx 会把代码分到两个线程上运行：主线程和后台线程（参见 [ReactLynx 编程思想](./thinking-in-reactlynx.mdx)）。这些宏用来标记一段代码属于哪个线程，这样另一个线程的产物就能把它删掉。
 
 | 宏                | 类型      | 含义                                 |
 | ----------------- | --------- | ------------------------------------ |
-| `__MAIN_THREAD__` | `boolean` | 在主线程产物中为 `true`。            |
-| `__BACKGROUND__`  | `boolean` | 在后台线程产物中为 `true`。          |
-| `__LEPUS__`       | `boolean` | _已废弃_——`__MAIN_THREAD__` 的别名。 |
-| `__JS__`          | `boolean` | _已废弃_——`__BACKGROUND__` 的别名。  |
+| `__MAIN_THREAD__` | `boolean` | 主线程产物中为 `true`。              |
+| `__BACKGROUND__`  | `boolean` | 后台线程产物中为 `true`。            |
+| `__LEPUS__`       | `boolean` | `__MAIN_THREAD__` 的别名（已废弃）。 |
+| `__JS__`          | `boolean` | `__BACKGROUND__` 的别名（已废弃）。  |
 
-例如，原生 bridge 调用只在后台线程上有意义，用 `__BACKGROUND__` 守卫它，它就不会被打进主线程产物：
+`bindtap` 处理函数只在后台线程执行。如果某个处理函数调用了只有后台才有的 API，用 `__BACKGROUND__` 把它包起来，它就不会进入主线程产物：
 
 ```tsx
 function App() {
-  const showToast = __BACKGROUND__
-    ? (message: string) => bridge.call('showToast', { message })
-    : () => {};
-  // ...
+  const onTap = __BACKGROUND__
+    ? () => bridge.call('showToast', { message: 'tapped' })
+    : undefined;
+  return <view bindtap={onTap} />;
 }
 ```
 
-更多示例参见自动生成的 [built-in-macros](/api/react/Document.built-in-macros.mdx) 参考文档。
+更多示例见自动生成的 [built-in-macros](/api/react/Document.built-in-macros.mdx) 参考。
 
 ## 模式宏
 
-这些宏用于整体开启或关闭某一类开发期行为。它们在开发环境为 `true`、生产环境为 `false`，因此仅用于开发的插桩代码永远不会进入产物。
+这些宏用来整体开关某一类开发期行为。它们在开发环境为 `true`、生产环境为 `false`，所以只用于开发的代码不会进入产物。
 
 ### `__DEV__`
 
-开发环境为 `true`，生产环境为 `false`（跟随构建模式 / `NODE_ENV`）。用于守卫仅开发期的代码，例如 prop 校验、不变量断言、更友好的错误信息。`if (__DEV__) { … }` 内的所有内容都会在生产构建中被移除。
+开发环境为 `true`，生产环境为 `false`（跟随构建模式 / `NODE_ENV`）。用它来包裹只在开发期需要的代码，比如 prop 校验、不变量断言、更友好的报错信息。`if (__DEV__) { … }` 里的内容在生产构建中都会被删掉。
 
 ### `__PROFILE__`
 
-开启性能插桩。开启时，运行时会用性能标记（`profileStart` / `profileEnd`）包裹关键阶段——hydration、渲染、生命周期事件——这些标记会接入 Lynx 的 trace 与 [Profiler](./performance/profiling.mdx)。开发环境默认开启，方便你本地做性能分析；生产环境默认关闭，以避免额外开销。可在开发环境用 `REACT_PROFILE=false` 关闭，或用插件的 `profile` 选项强制开启。
+开启性能插桩。开启后，运行时会用性能标记把关键阶段（hydration、渲染、生命周期事件）包起来，这些标记会出现在 Lynx 的 trace 里。参见 [性能分析](./performance/profiling.mdx) 和 [运行时性能分析](/rspeedy/runtime-profiling.md)。开发环境默认开启，方便你本地分析；生产环境默认关闭，避免额外开销。开发环境可以用 `REACT_PROFILE=false` 关掉，也可以用插件的 `profile` 选项强制开启。
 
 ### `__REACT_DEVTOOL__`
 
-开启 Preact DevTools 集成所依赖的、仅开发期的运行时钩子（例如 snapshot ↔ element 的映射）。开发环境默认开启。若要在**生产**构建中使用 devtools，设置 `REACT_DEVTOOL=true`——它同时会保留用户引入的 `@lynx-js/preact-devtools`，使其不被从产物中裁剪掉。
+开启 [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) 需要的、只在开发期存在的运行时钩子，比如 snapshot 到 element 的映射。开发环境默认开启。如果想在生产构建里用 devtools，设置 `REACT_DEVTOOL=true`，它同时会保留你引入的 `@lynx-js/preact-devtools`，不让它被裁掉。
 
 ## 日志宏
 
-ALog 是 Lynx 的原生日志通道（"App Log"）；通过它输出的消息会出现在平台的原生日志里，即使在 `console.log` 不可见的环境中也是如此。这些宏**默认关闭**，因为输出非常冗长——仅在调试时开启。
+ALog 是 Lynx 的原生日志通道。通过它打出来的日志会进入平台的原生日志，即使在 `console.log` 看不到的环境也能看到。下面两个宏默认都关着，因为输出很啰嗦；需要时自己设置环境变量打开。
 
 ### `__ALOG__`
 
-开启后，运行时会在关键时刻于**两个线程**上输出详细的 `[ReactLynxDebug]` 诊断信息——例如主线程 → 后台线程的 `OnLifecycleEvent` 数据，以及首屏 hydration 前后的 snapshot 树。这对调试跨线程数据流与 hydration 不一致很有用。用 `REACT_ALOG=true` 开启。
+开启后，运行时会在两个线程上打出详细的 `[ReactLynxDebug]` 诊断日志，方便你追踪框架在做什么。用 `REACT_ALOG=true` 开启。
 
 ### `__ALOG_ELEMENT_API__`
 
-更细粒度：记录**每一次 Element PAPI 调用**——即框架在主线程上执行的底层元素 create / append / update 操作——让你能看清元素树究竟是如何被构建的。输出极为冗长；用 `REACT_ALOG_ELEMENT_API=true` 开启。
+更细一层：它会记录每一次 [Element PAPI](/api/engine/element-api.md) 调用，也就是框架在主线程上执行的底层 create / append / update 操作，让你看清元素树到底是怎么搭起来的。输出非常多。用 `REACT_ALOG_ELEMENT_API=true` 开启。
 
 ## 插件选项宏
 
-这些宏来源于 ReactLynx 插件选项而非环境变量，且大多由框架内部使用：
+这些宏来自 ReactLynx 的插件选项，而不是环境变量，大多是框架内部使用：
 
-| 宏                                                       | 类型                         | 作用                                                                                                                                                   |
-| -------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `__ENABLE_SSR__`                                         | `boolean`                    | 守卫服务端渲染相关代码（服务端 encode、客户端 hydrate）。由 `enableSSR` 决定。                                                                         |
-| `__EXTRACT_STR__`                                        | `boolean`                    | 开启「字符串提取」优化，对后台（JS）产物与主线程（Lepus）产物之间共享的字符串字面量去重，以减小产物体积。由 `extractStr` 决定。                        |
-| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | 控制首屏何时刷新——尽可能早（`immediately`）或等后台 JS 就绪后（`jsReady`）。由 `firstScreenSyncTiming` 决定。                                          |
-| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | 选择 `useGlobalProps` 更新的派发方式——响应式（基于 context）或基于事件。由 `globalPropsMode` 决定。                                                    |
-| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | 抑制关于已废弃的 `createSelectorQuery` / ref API（在 ReactLynx 3.0 中行为不同）的开发期警告。由 `disableCreateSelectorQueryIncompatibleWarning` 决定。 |
-| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | _实验性_——开启预编译的 Element Template。由 `experimental_useElementTemplate` 决定。                                                                   |
+| 宏                                                       | 类型                         | 作用                                                                                                                                   |
+| -------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `__ENABLE_SSR__`                                         | `boolean`                    | 守卫服务端渲染相关代码（服务端 encode、客户端 hydrate）。由 `enableSSR` 控制。                                                         |
+| `__EXTRACT_STR__`                                        | `boolean`                    | 开启「字符串提取」优化，对后台（JS）产物与主线程产物之间共享的字符串字面量去重，减小产物体积。由 `extractStr` 控制。                   |
+| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | 首屏什么时候刷新：尽量早（`immediately`），或等后台 JS 就绪后（`jsReady`）。由 `firstScreenSyncTiming` 控制。                          |
+| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) 更新怎么派发：响应式（基于 context）或基于事件。由 `globalPropsMode` 控制。 |
+| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | 抑制关于已废弃的 `createSelectorQuery` / ref API 的开发期警告。由 `disableCreateSelectorQueryIncompatibleWarning` 控制。               |
+| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | 实验性。开启预编译的 Element Template。由 `experimental_useElementTemplate` 控制。                                                     |
 
 ## 环境变量
 
-部分宏由构建时读取的环境变量决定：
+有几个宏由构建时读取的环境变量决定：
 
 | 变量                     | 宏                     | 示例                                        |
 | ------------------------ | ---------------------- | ------------------------------------------- |
