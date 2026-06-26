@@ -107,7 +107,7 @@ CreateRsbuildOptions\['loadEnv'\]
 
 </td><td>
 
-_(Optional)_ Rspeedy automatically loads the .env file by default, utilizing the \[Rsbuild API\](https://rsbuild.rs/api/javascript-api/core\#load-env-variables). You can use the environment variables defined in the .env file within your code by accessing them via `import.meta.env.FOO` or `process.env.Foo`<!-- -->.
+_(Optional)_ Rspeedy automatically loads the .env file by default, utilizing the [Rsbuild API](https://rsbuild.rs/api/javascript-api/core#load-env-variables). You can use the environment variables defined in the .env file within your code by accessing them via `import.meta.env.FOO` or `process.env.Foo`<!-- -->.
 
 
 </td></tr>
@@ -131,4 +131,3 @@ _(Optional)_ The config of Rspeedy.
 
 </td></tr>
 </tbody></table>
-

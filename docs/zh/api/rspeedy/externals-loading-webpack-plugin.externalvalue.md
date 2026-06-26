@@ -109,7 +109,7 @@ string \| string\[\]
 
 </td><td>
 
-_(Optional)_ The name of the library. Same as https://webpack.js.org/configuration/externals/\#string.
+_(Optional)_ The name of the library. Same as https://webpack.js.org/configuration/externals/#string.
 
 By default, the library name is the same as the externals key. For example:
 
@@ -155,7 +155,7 @@ externals: {
   'lodash-es': 'lynx[Symbol.for("__LYNX_EXTERNAL_GLOBAL__")].Lodash',
 }
 ```
-You can pass an array to specify subpath of the external. Same as https://webpack.js.org/configuration/externals/\#string-1. For example:
+You can pass an array to specify subpath of the external. Same as https://webpack.js.org/configuration/externals/#string-1. For example:
 
 ```js
 ExternalsLoadingPlugin({
@@ -256,4 +256,3 @@ Use this when the external bundle is hosted outside the current build output, su
 
 </td></tr>
 </tbody></table>
-

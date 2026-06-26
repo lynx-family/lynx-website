@@ -99,7 +99,7 @@ export function VersionTable({ type }: VersionTableProps) {
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                 {item.release_blog ? (
-                  <Link href={'https://lynxjs.org/' + item.release_blog}>
+                  <Link href={'https://lynxjs.org' + item.release_blog}>
                     blog
                   </Link>
                 ) : (

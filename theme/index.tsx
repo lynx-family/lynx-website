@@ -48,6 +48,28 @@ const findSubsite = (pathname: string) => {
   );
 };
 
+const NULL_BYTE_RE = /\u0000/g;
+
+const sanitizeHeadingAnchors = () => {
+  document
+    .querySelectorAll<HTMLElement>(
+      '.rspress-doc h1[id], .rspress-doc h2[id], .rspress-doc h3[id], .rspress-doc h4[id], .rspress-doc h5[id], .rspress-doc h6[id]',
+    )
+    .forEach((heading) => {
+      if (heading.id.includes('\u0000')) {
+        heading.id = heading.id.replace(NULL_BYTE_RE, '');
+      }
+
+      const anchor = heading.querySelector<HTMLAnchorElement>(
+        'a.rp-header-anchor[href]',
+      );
+      const href = anchor?.getAttribute('href');
+      if (anchor && href?.includes('\u0000')) {
+        anchor.setAttribute('href', href.replace(NULL_BYTE_RE, ''));
+      }
+    });
+};
+
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -65,6 +87,10 @@ function Layout({
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
+
+  useEffect(() => {
+    sanitizeHeadingAnchors();
+  }, [pathname]);
 
   return (
     <>
@@ -324,11 +350,23 @@ type BaseLinkRestProps = Omit<
 const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   const { href, children, className, style, ...restProps } = props;
   const safeRestProps = restProps as BaseLinkRestProps;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+  const lang = useLang();
+  const { pathname, search } = useLocation();
+  const getLangPrefix = (value: string) => (value === 'en' ? '' : `/${value}`);
+  let normalizedHref = href;
+
+  if (
+    href &&
+    safeRestProps.rel === 'alternate' &&
+    safeRestProps.lang === lang
+  ) {
+    normalizedHref = removeBase(`${pathname}${search}`);
+  }
+
+  if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <BaseLink
-        href={`/next${removeBase(href)}`}
+        href={`/next${removeBase(normalizedHref)}`}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
         style={style as any}
@@ -340,7 +378,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   }
   return (
     <BaseLink
-      href={href}
+      href={normalizedHref}
       className={className}
       ref={ref}
       style={style as any}

@@ -1,3 +1,4 @@
+// cspell:ignore shikijs
 import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
@@ -13,6 +14,7 @@ import {
   transformerNotationFocus,
   transformerNotationHighlight,
 } from '@shikijs/transformers';
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
 import { visit } from 'unist-util-visit';
@@ -218,6 +220,7 @@ export default defineConfig({
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
+    pluginSanitizeGeneratedHtml(),
   ],
   markdown: {
     defaultWrapCode: false,
@@ -256,6 +259,138 @@ function rsbuildPluginDisableFileSizeReport() {
       });
     },
   };
+}
+
+// Some broken links are introduced only after Rspress renders the final HTML:
+// generated spec content may contain NUL bytes, language alternates can point
+// at missing localized routes, and living-spec emits one stale fragment link.
+// Sanitize those generated artifacts here so the source docs stay unchanged.
+function pluginSanitizeGeneratedHtml() {
+  return {
+    name: 'sanitize-generated-html',
+    async afterBuild(config: { outDir?: string }) {
+      const outDir = path.resolve(__dirname, config.outDir ?? 'doc_build');
+      const files = await collectHtmlFiles(outDir);
+      // Compare links against the generated route set because redirects,
+      // locale prefixes, and the version base are resolved during the build.
+      const routes = new Set(
+        files.map((file) => routeForHtmlFile(outDir, file)),
+      );
+
+      await Promise.all(
+        files.map(async (file) => {
+          const html = await fs.readFile(file, 'utf8');
+          let sanitized = html.replaceAll('\u0000', '');
+          if (routeForHtmlFile(outDir, file) === '/living-spec') {
+            // The generated living spec links to #ref, but the actual section
+            // id in the built page is #references.
+            sanitized = sanitized.replaceAll(
+              'href="#ref"',
+              'href="#references"',
+            );
+          }
+          sanitized = removeBrokenAlternateLinks(sanitized, routes);
+          if (sanitized !== html) {
+            await fs.writeFile(file, sanitized);
+          }
+        }),
+      );
+    },
+  };
+}
+
+async function collectHtmlFiles(dir: string): Promise<string[]> {
+  let entries: Awaited<ReturnType<typeof fs.readdir>>;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  }
+
+  const nested = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) return collectHtmlFiles(entryPath);
+      if (entry.isFile() && entry.name.endsWith('.html')) return [entryPath];
+      return [];
+    }),
+  );
+  return nested.flat();
+}
+
+function routeForHtmlFile(root: string, file: string) {
+  return normalizeGeneratedRoute(path.relative(root, file));
+}
+
+// Match the route shape Rspress serves for generated HTML files: both
+// `foo.html` and `foo/index.html` resolve to `/foo`.
+function normalizeGeneratedRoute(route: string) {
+  let normalized = route.replace(/\\/g, '/');
+  if (normalized.endsWith('.html')) normalized = normalized.slice(0, -5);
+  normalized = normalized.replace(/\/index$/, '');
+  if (normalized === 'index') normalized = '';
+  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
+  normalized = normalized.replace(/\/+/g, '/');
+  if (normalized.length > 1) normalized = normalized.replace(/\/+$/, '');
+  return normalized || '/';
+}
+
+// Rspress renders alternate-language links even when the target locale page was
+// not generated. Drop invalid head alternates and make visible switcher entries
+// inert so crawlers and users do not follow missing routes.
+function removeBrokenAlternateLinks(html: string, routes: Set<string>) {
+  const withoutBrokenHeadLinks = html.replace(/<link\b[^>]*>/g, (tag) => {
+    if (!/\brel=["']alternate["']/.test(tag)) return tag;
+    const href = tag.match(/\bhref=["']([^"']+)["']/)?.[1];
+    if (!isMissingGeneratedRoute(href, routes)) return tag;
+    return '';
+  });
+
+  return withoutBrokenHeadLinks.replace(
+    /<a\b(?=[^>]*\brel=["']alternate["'])[^>]*>[\s\S]*?<\/a>/g,
+    (tag) => {
+      const href = tag.match(/\bhref=["']([^"']+)["']/)?.[1];
+      if (!isMissingGeneratedRoute(href, routes)) return tag;
+      return tag
+        .replace(/^<a\b/, '<span')
+        .replace(/<\/a>$/, '</span>')
+        .replace(/\s+href=["'][^"']*["']/, '')
+        .replace(/\s+rel=["']alternate["']/, '')
+        .replace(/\s+hrefLang=["'][^"']*["']/, '')
+        .replace(
+          /\s+class=["']([^"']*)\brp-link\b([^"']*)["']/,
+          ' class="$1$2"',
+        )
+        .replace(/<span\b/, '<span aria-disabled="true"');
+    },
+  );
+}
+
+function isMissingGeneratedRoute(
+  href: string | undefined,
+  routes: Set<string>,
+) {
+  if (!href) return false;
+  const route = routeFromGeneratedHref(href);
+  return Boolean(route && !routes.has(route));
+}
+
+function routeFromGeneratedHref(href: string) {
+  try {
+    const url = new URL(href, PUBLISH_URL);
+    if (url.origin !== new URL(PUBLISH_URL).origin) return null;
+    let pathname = decodeURIComponent(url.pathname);
+    // Alternate links include the published version base (`/next` today), but
+    // generated routes are stored without that base.
+    if (pathname.startsWith(`/${versionJson.current_version}`)) {
+      pathname =
+        pathname.slice(`/${versionJson.current_version}`.length) || '/';
+    }
+    return normalizeGeneratedRoute(pathname);
+  } catch {
+    return null;
+  }
 }
 
 type RsbuildEnvironmentConfig = {
