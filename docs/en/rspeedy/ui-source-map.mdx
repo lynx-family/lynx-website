@@ -1,0 +1,182 @@
+# Map the UI Tree to Source
+
+import { Tab, Tabs } from '@rspress/core/theme';
+import { Mermaid } from '@lynx';
+
+At runtime a Lynx page is a tree of UI nodes: the elements the engine actually
+rendered. The UI source map lets you take that runtime tree and map each
+node back to the JSX that created it (`repo`, `source`, `line`, `column`).
+
+It has three parts:
+
+1. Build: turn on [`enableUiSourceMap`](#1-enable-it) so the build emits the
+   UI source map into [`debug-metadata.json`](./map-errors-to-source) and tags elements
+   with a `nodeIndex`.
+2. Dump: ask the Lynx client to
+   [serialize the runtime UI tree](#2-dump-the-ui-tree-from-the-client) as JSON.
+3. Remap: feed that JSON plus the `debug-metadata.json` to
+   [`remapUiTree`](#3-remap-the-tree), which annotates every node with its source
+   location.
+
+<Mermaid title="From UI tree to source">{`
+flowchart LR
+  A["LynxView"] -->|"getLynxElementRoot + toJSONString"| B["UI tree JSON  (nodeIndex, debugMetadataUrl)"]
+  B -->|"flatten + remapUiTree"| C["annotated tree  repo/source/line/column"]
+  D["debug-metadata.json  uiSourceMap"] --> C
+`}</Mermaid>
+
+## 1. Enable it
+
+UI source-map generation is off by default. Turn it on in `pluginReactLynx`:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      enableUiSourceMap: true,
+    }),
+  ],
+});
+```
+
+With it on, the main-thread transform tags each created element with a
+`nodeIndex` and records a `nodeIndex → (source, line, column)` table. That table
+is emitted as the `uiSourceMap` field of `debug-metadata.json`:
+
+```ts
+interface UiSourceMapData {
+  version: 1;
+  sources: string[]; // authored files
+  mappings: [number, number, number][]; // [sourceIndex, line, column]
+  uiMaps: number[]; // uiMaps[i] is a nodeIndex; mappings[i] is its location
+}
+```
+
+For the runtime to point at this file you also need its `debugMetadataUrl` baked
+into the template: that happens automatically against the dev server, and in
+production you inject it yourself (see
+[Map Production Errors to Source → Model B](./map-errors-to-source#model-b-also-point-the-bundle-at-your-host)).
+Without it, the dumped nodes carry an empty `debugMetadataUrl` and can't be
+resolved.
+
+## 2. Dump the UI tree from the client
+
+The API is the same on every platform: from a `LynxView`, asynchronously get the
+root `LynxElement`, then call `toJSONString` on it to serialize the whole tree.
+Both callbacks fire on the UI / main thread.
+
+<Tabs>
+<Tab label="iOS (Objective-C)">
+
+```objc
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxElement.h>
+
+[lynxView getLynxElementRoot:^(LynxElement *_Nullable root) {
+  if (root == nil) return;
+  [root toJSONString:^(NSString *_Nullable json) {
+    if (json == nil) return;
+    NSLog(@"LynxElement tree json: %@", json);
+  }];
+}];
+```
+
+</Tab>
+<Tab label="Android (Java)">
+
+```java
+import com.lynx.tasm.LynxElement;
+import com.lynx.tasm.LynxView;
+
+lynxView.getLynxElementRoot(root -> {
+  if (root == null) return;
+  root.toJSONString(json -> {
+    if (json == null) return;
+    Log.i("LynxElement", json);
+  });
+});
+```
+
+</Tab>
+<Tab label="Harmony (ArkTS)">
+
+```ts
+import { LynxView, LynxElement } from '@lynx/lynx';
+
+lynxView.getLynxElementRoot((root: LynxElement | null) => {
+  if (!root) return;
+  root.toJSONString((json: string | null) => {
+    if (!json) return;
+    console.info(`LynxElement tree json: ${json}`);
+  });
+});
+```
+
+</Tab>
+</Tabs>
+
+Each serialized node looks like this. The two fields remapping needs,
+`nodeIndex` and `debugMetadataUrl`, are nested under `debugInfo`:
+
+```jsonc
+{
+  "tag": "view",
+  "nodeId": 11,
+  "position": { "x": 0, "y": 0, "width": 300, "height": 80 },
+  "events": [],
+  "debugInfo": {
+    "nodeIndex": 100,
+    "debugMetadataUrl": "https://your-cdn.example.com/dm/<key>/debug-metadata.json",
+  },
+  "children": [
+    { "tag": "text", "debugInfo": { "nodeIndex": 200 }, "children": [] },
+  ],
+}
+```
+
+`nodeIndex` is the compile-time identity from step 1; `debugMetadataUrl` is the
+URL baked into the template. Nodes without a `debugInfo.nodeIndex` (e.g. raw
+text) simply won't be resolved.
+
+## 3. Remap the tree
+
+`remapUiTree` from
+[`@lynx-js/debug-metadata`](https://www.npmjs.com/package/@lynx-js/debug-metadata)
+reads `nodeIndex` and
+`debugMetadataUrl` at the top level of each node, while the engine nests them
+under `debugInfo`, so hoist them up first, then remap. Its second argument is a
+loader you supply that turns a `debugMetadataUrl` into its `DebugMetadataAsset`:
+
+```ts
+import { remapUiTree } from '@lynx-js/debug-metadata';
+
+// lift the engine's nested `debugInfo` fields to the top level
+function flatten(node) {
+  const { debugInfo, children, ...rest } = node;
+  return {
+    ...rest,
+    nodeIndex: debugInfo?.nodeIndex,
+    debugMetadataUrl: debugInfo?.debugMetadataUrl,
+    children: children?.map(flatten),
+  };
+}
+
+const tree = JSON.parse(jsonFromClient);
+const remapped = await remapUiTree(flatten(tree), async (debugMetadataUrl) => {
+  const res = await fetch(debugMetadataUrl);
+  return res.json(); // a DebugMetadataAsset
+});
+```
+
+Every node whose `nodeIndex` is known to its `debugMetadataUrl`'s `uiSourceMap`
+gains `repo` / `source` / `line` / `column`; unresolvable nodes and all other
+fields pass through unchanged. `remapUiTree` calls the loader once per distinct
+`debugMetadataUrl`.
+
+The `npx @lynx-js/debug-metadata remap --ui <tree.json>` CLI does the same, for a
+tree whose nodes already carry top-level `nodeIndex` / `debugMetadataUrl`. The
+lower-level `buildUiSourceMapLookup` (`nodeIndex → location`) and `normalizeRepo`
+(git remote → `owner/repo`) helpers are exported too.

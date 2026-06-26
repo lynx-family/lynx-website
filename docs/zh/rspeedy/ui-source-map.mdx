@@ -1,0 +1,152 @@
+# 反解 UI 节点树
+
+import { Tab, Tabs } from '@rspress/core/theme';
+import { Mermaid } from '@lynx';
+
+运行时一个 Lynx 页面就是一棵 UI 节点树，也就是引擎真正渲染出来的那些元素。UI source map 让你把树里的每个节点映射回创建它的 JSX（`repo`、`source`、`line`、`column`）。
+
+它分三步：
+
+1. 构建：打开 [`enableUiSourceMap`](#1-开启开关)，把 UI source map 写进 [`debug-metadata.json`](./map-errors-to-source)，并给元素打上 `nodeIndex`。
+2. 导出：让 Lynx 客户端把[运行时 UI 树序列化](#2-从客户端导出-ui-树)成 JSON。
+3. 反解：把这份 JSON 加上 `debug-metadata.json` 喂给 [`remapUiTree`](#3-反解这棵树)，它会给每个节点标注源码位置。
+
+<Mermaid title="从 UI 树到源码">{`
+flowchart LR
+  A["LynxView"] -->|"getLynxElementRoot + toJSONString"| B["UI 树 JSON  (nodeIndex, debugMetadataUrl)"]
+  B -->|"flatten + remapUiTree"| C["带源码位置的树  repo/source/line/column"]
+  D["debug-metadata.json  uiSourceMap"] --> C
+`}</Mermaid>
+
+## 1. 开启开关
+
+UI source map 生成默认是关的。在 `pluginReactLynx` 里打开：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      enableUiSourceMap: true,
+    }),
+  ],
+});
+```
+
+打开后，主线程的 transform 会给每个创建出来的元素打上 `nodeIndex`，并记录一张 `nodeIndex → (source, line, column)` 表。这张表会作为 `debug-metadata.json` 的 `uiSourceMap` 字段产出：
+
+```ts
+interface UiSourceMapData {
+  version: 1;
+  sources: string[]; // 源文件
+  mappings: [number, number, number][]; // [sourceIndex, line, column]
+  uiMaps: number[]; // uiMaps[i] 是一个 nodeIndex；mappings[i] 是它的位置
+}
+```
+
+要让运行时指向这个文件，模板里还得带上它的 `debugMetadataUrl`：连到 dev server 时会自动写入，生产环境则要你自己注入（见 [线上错误反解 → 方案 2](./map-errors-to-source#方案-2让产物指向你的托管地址)）。否则导出的节点 `debugMetadataUrl` 为空，没法反解。
+
+## 2. 从客户端导出 UI 树
+
+三端用法一致：从 `LynxView` 异步拿到根 `LynxElement`，再对它调 `toJSONString` 把整棵树序列化出来。两个 callback 都会回调到 UI 线程（主线程）。
+
+<Tabs>
+<Tab label="iOS (Objective-C)">
+
+```objc
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxElement.h>
+
+[lynxView getLynxElementRoot:^(LynxElement *_Nullable root) {
+  if (root == nil) return;
+  [root toJSONString:^(NSString *_Nullable json) {
+    if (json == nil) return;
+    NSLog(@"LynxElement tree json: %@", json);
+  }];
+}];
+```
+
+</Tab>
+<Tab label="Android (Java)">
+
+```java
+import com.lynx.tasm.LynxElement;
+import com.lynx.tasm.LynxView;
+
+lynxView.getLynxElementRoot(root -> {
+  if (root == null) return;
+  root.toJSONString(json -> {
+    if (json == null) return;
+    Log.i("LynxElement", json);
+  });
+});
+```
+
+</Tab>
+<Tab label="Harmony (ArkTS)">
+
+```ts
+import { LynxView, LynxElement } from '@lynx/lynx';
+
+lynxView.getLynxElementRoot((root: LynxElement | null) => {
+  if (!root) return;
+  root.toJSONString((json: string | null) => {
+    if (!json) return;
+    console.info(`LynxElement tree json: ${json}`);
+  });
+});
+```
+
+</Tab>
+</Tabs>
+
+序列化出来的每个节点长这样，反解需要的 `nodeIndex` 和 `debugMetadataUrl` 这两个字段嵌在 `debugInfo` 里：
+
+```jsonc
+{
+  "tag": "view",
+  "nodeId": 11,
+  "position": { "x": 0, "y": 0, "width": 300, "height": 80 },
+  "events": [],
+  "debugInfo": {
+    "nodeIndex": 100,
+    "debugMetadataUrl": "https://your-cdn.example.com/dm/<key>/debug-metadata.json",
+  },
+  "children": [
+    { "tag": "text", "debugInfo": { "nodeIndex": 200 }, "children": [] },
+  ],
+}
+```
+
+`nodeIndex` 是第 1 步里给的编译期标识；`debugMetadataUrl` 是写进模板的那个 URL。没有 `debugInfo.nodeIndex` 的节点（比如纯文本）不会被反解。
+
+## 3. 反解这棵树
+
+[`@lynx-js/debug-metadata`](https://www.npmjs.com/package/@lynx-js/debug-metadata) 的 `remapUiTree` 读取的是每个节点顶层的 `nodeIndex` 和 `debugMetadataUrl`，而引擎把它们嵌在 `debugInfo` 里，所以先把它们提上来再反解。它的第二个参数是一个由你提供的 loader，负责把一个 `debugMetadataUrl` 取成对应的 `DebugMetadataAsset`：
+
+```ts
+import { remapUiTree } from '@lynx-js/debug-metadata';
+
+// 把引擎嵌套的 `debugInfo` 字段提到顶层
+function flatten(node) {
+  const { debugInfo, children, ...rest } = node;
+  return {
+    ...rest,
+    nodeIndex: debugInfo?.nodeIndex,
+    debugMetadataUrl: debugInfo?.debugMetadataUrl,
+    children: children?.map(flatten),
+  };
+}
+
+const tree = JSON.parse(jsonFromClient);
+const remapped = await remapUiTree(flatten(tree), async (debugMetadataUrl) => {
+  const res = await fetch(debugMetadataUrl);
+  return res.json(); // 一个 DebugMetadataAsset
+});
+```
+
+凡是 `nodeIndex` 能在对应 `debugMetadataUrl` 的 `uiSourceMap` 里命中的节点，都会拿到 `repo` / `source` / `line` / `column`；命中不了的节点，连同节点上原有的其它字段，都原样保留。`remapUiTree` 对每个不同的 `debugMetadataUrl` 只调用一次 loader。
+
+`npx @lynx-js/debug-metadata remap --ui <tree.json>` CLI 做的是同样的事，适用于节点已经在顶层带有 `nodeIndex` / `debugMetadataUrl` 的树。更底层的 `buildUiSourceMapLookup`（`nodeIndex → 位置`）和 `normalizeRepo`（git remote → `owner/repo`）辅助函数也都有导出。
