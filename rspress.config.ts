@@ -23,6 +23,11 @@ const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
 const IS_LIGHTWEIGHT_BUILD =
   process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
   NETLIFY_CONTEXT === 'deploy-preview';
+const DISABLE_FILE_SIZE_REPORT = {
+  performance: {
+    printFileSize: false,
+  },
+};
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -51,8 +56,22 @@ export default defineConfig({
       // Avoid generating the file size report to reduce peak memory during build.
       printFileSize: false,
     },
+    environments: {
+      // Temporary workaround for Rspress 2.0.13: its internal SSR environments
+      // set performance.printFileSize after the top-level config is merged.
+      // Keep these environment overrides until Rspress moves the default to the
+      // top-level performance config.
+      node: DISABLE_FILE_SIZE_REPORT,
+      // Lightweight deploy previews disable llms, so Rspress does not create a
+      // node_md environment there. Adding one would make Rsbuild fall back to
+      // its default ./src entry.
+      ...(!IS_LIGHTWEIGHT_BUILD
+        ? {
+            node_md: DISABLE_FILE_SIZE_REPORT,
+          }
+        : {}),
+    },
     plugins: [
-      rsbuildPluginDisableFileSizeReport(),
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       // Open Graph / Twitter Card meta is injected per-page by the theme
       // (theme/OgHead.tsx) so each route gets its build-time OG image and
@@ -244,31 +263,6 @@ export default defineConfig({
   },
   llms: !IS_LIGHTWEIGHT_BUILD,
 });
-
-function rsbuildPluginDisableFileSizeReport() {
-  return {
-    name: 'disable-file-size-report',
-    setup(api: RsbuildPluginApi) {
-      api.modifyEnvironmentConfig((config) => {
-        config.performance ??= {};
-        config.performance.printFileSize = false;
-        return config;
-      });
-    },
-  };
-}
-
-type RsbuildEnvironmentConfig = {
-  performance?: {
-    printFileSize?: boolean;
-  };
-};
-
-type RsbuildPluginApi = {
-  modifyEnvironmentConfig: (
-    modify: (config: RsbuildEnvironmentConfig) => RsbuildEnvironmentConfig,
-  ) => void;
-};
 
 function remarkReplaceVersionJsonPlaceholders() {
   const replacements: Array<[string, string]> = [
