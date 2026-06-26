@@ -169,7 +169,7 @@
           "description": "A boolean value that indicates whether the feature is no longer recommended. It might be removed in the future or might only be kept for compatibility purposes. Avoid using this functionality."
         }
       },
-      "required": ["experimental", "deprecated"],
+      "minProperties": 1,
       "additionalProperties": false
     },
     "support_block": {
@@ -215,7 +215,7 @@
         },
         "lynx_path": {
           "type": "string",
-          "pattern": "^[a-zA-Z0-9_\\-/]+$",
+          "pattern": "^[a-zA-Z0-9_\\-/.#]+$",
           "description": "A URI that points to the lynx docs page documenting the feature. This URI is left in relative form to allow for converting into both internal and external URIs in the future."
         },
         "spec_url": {
@@ -262,19 +262,18 @@
         "__compat": {
           "type": "object",
           "$ref": "#/definitions/compat_statement",
-          "required": ["status"],
           "description": "A feature is described by an identifier containing the `__compat` property.\n\nIn other words, identifiers without `__compat` aren't necessarily features, but help to nest the features properly.\n\nWhen an identifier has a `__compat` block, it represents its basic support, indicating that a minimal implementation of a functionality is included.\n\nWhat it represents exactly depends of the evolution of the feature over time, both in terms of specifications and of Lynx support.",
           "tsType": "CompatStatement"
         }
       },
       "patternProperties": {
-        "^(?!__compat)[a-zA-Z_0-9-$@]*$": {
+        "^(?!__compat$)(?=\\S)[ A-Za-z0-9_\\-$@.()`&*,=\\[\\]^]+(?<=\\S)$": {
           "$ref": "#/definitions/identifier"
         }
       },
       "additionalProperties": false,
       "errorMessage": {
-        "additionalProperties": "Feature names can only contain alphanumerical characters or the following symbols: _-$@"
+        "additionalProperties": "Feature names must contain only printable ASCII characters from [A-Za-z0-9 _\\-$@.()`&*,=\\[\\]^], have no leading or trailing whitespace, and not be the literal string __compat"
       },
       "tsType": "{[key: string]: Identifier} & {__compat?: CompatStatement};"
     },
@@ -286,14 +285,14 @@
         }
       },
       "patternProperties": {
-        "^(?!__compat)[a-zA-Z_0-9-$@]*$": {
+        "^(?!__compat$)(?=\\S)[ A-Za-z0-9_\\-$@.()`&*,=\\[\\]^]+(?<=\\S)$": {
           "$ref": "#/definitions/lynx_extensions_identifier",
           "tsType": "Identifier"
         }
       },
       "additionalProperties": false,
       "errorMessage": {
-        "additionalProperties": "Feature names can only contain alphanumerical characters or the following symbols: _-$@"
+        "additionalProperties": "Feature names must contain only printable ASCII characters from [A-Za-z0-9 _\\-$@.()`&*,=\\[\\]^], have no leading or trailing whitespace, and not be the literal string __compat"
       },
       "tsType": "{[key: string]: Identifier} & {__compat?: CompatStatement}"
     }

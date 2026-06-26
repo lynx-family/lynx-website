@@ -30,6 +30,7 @@ export function isPlatformName(name: string): name is PlatformName {
     'clay_ios',
     'clay_macos',
     'clay_windows',
+    'harmony',
     'ios',
     'web_lynx',
   ];
@@ -133,14 +134,17 @@ export function isCompatStatement(obj: unknown): obj is CompatStatement {
  * @returns True if the object is a valid StatusBlock, false otherwise
  */
 export function isStatusBlock(obj: unknown): obj is StatusBlock {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'experimental' in obj &&
-    typeof obj.experimental === 'boolean' &&
-    'deprecated' in obj &&
-    typeof obj.deprecated === 'boolean'
-  );
+  if (typeof obj !== 'object' || obj === null) return false;
+  const keys = Object.keys(obj);
+  if (!keys.every((k) => k === 'experimental' || k === 'deprecated')) {
+    return false;
+  }
+  if (!('experimental' in obj) && !('deprecated' in obj)) return false;
+  if ('experimental' in obj && typeof obj.experimental !== 'boolean') {
+    return false;
+  }
+  if ('deprecated' in obj && typeof obj.deprecated !== 'boolean') return false;
+  return true;
 }
 
 /**
