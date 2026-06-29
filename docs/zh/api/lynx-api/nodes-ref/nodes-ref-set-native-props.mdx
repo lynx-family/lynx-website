@@ -1,0 +1,134 @@
+---
+title: setNativeProps()
+api: lynx-api/nodes-ref/setNativeProps
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef: setNativeProps() method
+
+<APISummary />
+
+直接设定选定节点的属性。
+
+:::warning 什么时候使用 setNativeProps 呢？
+在（不得不）频繁刷新而又遇到了性能瓶颈的时候。
+直接操作组件并不是应该经常使用的工具。一般来说只是用来创建连续的动画，同时避免渲染组件结构和同步太多视图变化所带来的大量开销。`setNativeProps` 是一个“简单粗暴”的方法，它直接在元件而不是 Lynx 组件中记录 `state`，这样会使代码逻辑难以理清。所以在使用这个方法之前，请尽量先尝试用 [`useState`](../../../api/react/Function.useState.mdx) 方法来解决问题。
+:::
+
+## 语法
+
+```ts
+setNativeProps(nativeProps: Record<string, any>): SelectorQuery;
+```
+
+### 参数
+
+#### nativeProps
+
+一个 `Record<string, any>`，描述了需要设置的属性。
+属性可以是 UI 节点的任意属性，包括 CSS 属性与 `attributes`。
+
+注意不可以将 `style` 作为一个整体进行设置（`nativeProps` 的 key 不能为 `style`）。
+
+### 返回值
+
+包含了该任务的 `SelectorQuery` 对象。调用 `exec()` 来执行任务。
+
+### 示例
+
+1. 设置 text 节点的 text 内容
+
+```jsx
+function App() {
+  return (
+    <view
+      bindtap={() => {
+        lynx
+          .createSelectorQuery()
+          .select('#intro')
+          .setNativeProps({
+            text: 'Hello, Lynx!',
+          })
+          .exec();
+      }}
+    >
+      <text id="intro">Hello, World!</text>
+    </view>
+  );
+}
+```
+
+2. 设置 `<scroll-view />` 的 `upper-threshold` 属性
+
+```jsx
+function App() {
+  return (
+    <scroll-view id="intro">
+      <text
+        bindtap={() => {
+          lynx
+            .createSelectorQuery()
+            .select('#intro')
+            .setNativeProps({
+              'upper-threshold': '10px',
+            })
+            .exec();
+        }}
+      >
+        Hello, World!
+      </text>
+    </scroll-view>
+  );
+}
+```
+
+3. 设置 `<view />` 的背景色
+
+```jsx
+function App() {
+  return (
+    <view id="intro">
+      <text
+        bindtap={() => {
+          lynx
+            .createSelectorQuery()
+            .select('#intro')
+            .setNativeProps({
+              'background-color': 'red',
+            })
+            .exec();
+        }}
+      >
+        Hello, World!
+      </text>
+    </view>
+  );
+}
+```
+
+4. Modify the `transform` properties
+
+```jsx
+function App() {
+  return (
+    <view
+      bindtap={() => {
+        lynx
+          .createSelectorQuery()
+          .select('#intro')
+          .setNativeProps({
+            transform: 'translateY(3px)',
+          })
+          .exec();
+      }}
+    >
+      <text id="intro">Hello, World!</text>
+    </view>
+  );
+}
+```
+
+## 兼容性
+
+<APITable />

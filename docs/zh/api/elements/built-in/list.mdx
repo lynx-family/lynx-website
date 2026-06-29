@@ -1,0 +1,983 @@
+---
+api: elements/list
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Go,
+  IOSOnly,
+  Required,
+  VersionBadge,
+} from '@lynx';
+
+import { Tab, Tabs } from '@theme';
+
+# `<list>`
+
+<APISummary />
+
+`<list>` 组件是一个高性能的可滚动容器，通过元素回收和懒加载机制优化性能和内存使用。它支持横向和纵向滚动，可实现单列、网格和瀑布流布局，非常适合无限滚动的信息流等应用场景。
+
+## 使用指南
+
+### 单列布局
+
+**1. 设置宽高**：`<list>` 的宽高代表了其可视区域的大小，因此需要是确定的值，不能由内部内容撑开，只有在可视区域内可见的子节点才会被渲染。
+
+**2. 设置滚动方向与布局形式**：设置属性 [`scroll-orientation`](#scroll-orientation) 指定布局与滚动方向，设置 [`list-type`](#list-type) 与 [`span-count`](#span-count) 指定布局形式。
+
+**3. 配置子节点**：使用标签 `<list-item>` 作为 `<list>` 直接子节点，并且给 `<list-item>` 设置 [`item-key`](#item-key) 与 [`key`](#key)，并且需要保持一致。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-base.gif"
+  example="list"
+  defaultFile="src/base/index.tsx"
+  defaultEntryFile="dist/base.lynx.bundle"
+  highlight="{11-13,23-26}"
+/>
+
+### 多列布局
+
+**1. 设置布局方式与列数**: 设置布局形式 [`list-type`](#list-type) 为 `flow` (网格布局) 或者 `waterfall` (瀑布流布局)，并设置 [`span-count`](#span-count) >= 2。
+
+**2. 多列布局下实现独占一行的子节点**: 为 `<list-item/>` 设置 [`full-span`](#full-span) 属性，可以使其在布局中独占一行或者一列。
+
+网格布局案例：
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-flow.gif"
+  example="list"
+  defaultFile="src/flow/index.tsx"
+  defaultEntryFile="dist/flow.lynx.bundle"
+  entry="src/flow"
+  highlight="{14-15,24}"
+/>
+
+瀑布流布局示例
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-waterfall.gif"
+  example="list"
+  defaultFile="src/waterfall/index.tsx"
+  defaultEntryFile="dist/waterfall.lynx.bundle"
+  entry="src/waterfall"
+  highlight="{14-15}"
+/>
+
+## List 相关 CSS 属性
+
+:::note
+
+List 相关 CSS 属性是专门为 `<list>` 组件设计的，例如 `list-main-axis-gap` 和 `list-cross-axis-gap`，可以对 `<list>` 内元素的布局和间距进行精细控制。需要注意的是，这些属性只在 `<list>` 上生效，在其他任何组件上都将被忽略。
+
+:::
+
+### `list-main-axis-gap`
+
+```tsx
+// DefaultValue: null
+list-main-axis-gap?: ${number}px | ${number}rpx
+
+<list
+  style={{listMainAxisGap:'10px'}}
+/>
+```
+
+指定了在主轴方向上，`<list>` 子节点的间距，需要写在 style 中。
+
+### `list-cross-axis-gap`
+
+```tsx
+// DefaultValue: null
+list-cross-axis-gap?: ${number}px | ${number}rpx
+
+<list
+  style={{listCrossAxisGap:'10px'}}
+/>
+```
+
+指定了在副轴方向上，`<list>` 子节点的间距，需要写在 style 中。
+
+## 属性
+
+### `list-type` <Required/> \{#required-list-type}
+
+```tsx
+list-type: 'single' | 'flow' | 'waterfall'
+```
+
+控制 `<list>` 组件的布局类型，需要与 [`span-count`](#span-count) 配合使用。
+
+| 值          | 说明                                                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `single`    | 单列/单行布局                                                                                                                                                                               |
+| `flow`      | 多列/多行网格布局。网格布局会充分体现其归整性，左右两列中，相邻位置子节点的 `top` 是一致的，因此使用场景通常为大小一致的子节点。子节点宽度由 `<list>` 的宽度和 `span-count` 决定            |
+| `waterfall` | 多列/多行瀑布流布局。内容是连续填充的，子节点元件是从上到下填充到最短的列，实现视觉上的连续和动态性，因此使用场景通常为大小不一致的子节点。子节点宽度由 `<list>` 的宽度和 `span-count` 决定 |
+
+你可以通过查看[多列布局指南](#多列布局) 中的真实案例更清晰地看出 `flow` 和 `waterfall` 的布局差异。
+
+### `span-count` <Required/> \{#required-span-count}
+
+```tsx
+span-count: number
+```
+
+设置 `<list>` 组件的布局列数或者行数。
+
+### `scroll-orientation` <Required/> \{#required-scroll-orientation}
+
+```tsx
+// DefaultValue: "vertical"
+scroll-orientation?: 'vertical' ｜ 'horizontal'
+```
+
+设置 `<list>` 组件的滚动方向与布局方向。
+
+### `item-key` <Required/> \{#required-item-key}
+
+```tsx
+// DefaultValue: null
+item-key: string
+
+<list-item item-key="item"/>
+```
+
+`item-key` 是 `<list-item>` 上必须传入的属性。
+
+:::note
+
+开发者需要为每一个 `<list>` 子节点设置唯一的 `item-key`，其会被用来帮助 `<list>` 识别哪些 `<list>` 子节点已更改、添加或删除。因此开发者需要保证正确设置 `item-key`，如设置有误，将会导致错乱、闪动问题。
+
+:::
+
+### `key` <Required/> \{#required-key}
+
+```tsx
+// DefaultValue: null
+key: string
+
+<list-item
+  item-key="item-0"
+  key="item-0"
+/>
+```
+
+使用 `key` 属性来帮助框架识别哪些元件已更改、添加或删除。
+
+:::note
+
+在 list 场景下，`key` 和 `item-key` 保持一致。
+
+:::
+
+### `enable-scroll`
+
+```tsx
+// DefaultValue: true
+enable-scroll?: boolean
+```
+
+是否允许 `<list>` 组件滚动。
+
+### `enable-nested-scroll`
+
+```tsx
+// DefaultValue: true
+enable-nested-scroll?: boolean
+```
+
+是否允许 `<list>` 与其他滚动容器实现嵌套滚动，开启后先滚动内层容器，再滚动外层容器。
+
+### `sticky`
+
+```tsx
+// DefaultValue: false
+sticky?: boolean
+```
+
+声明在 `<list>` 组件上，控制 `<list>` 组件整体是否允许吸顶或者吸底。
+
+### `sticky-offset`
+
+```tsx
+// DefaultValue: 0
+sticky-offset?: number
+```
+
+吸顶或者吸底位置距离 `<list>` 顶部或者底部的偏移，单位为 `px`。
+
+### `sticky-top`
+
+```tsx
+// DefaultValue: false
+sticky-top?: boolean
+```
+
+声明在子节点 `<list-item>` 上，控制该节点是否会吸顶。
+
+### `sticky-bottom`
+
+```tsx
+// DefaultValue: false
+sticky-bottom?: boolean
+```
+
+声明在子节点 `<list-item>` 上，控制该节点是否会吸底。
+
+### `recyclable`
+
+```tsx
+// DefaultValue: true
+recyclable?: boolean
+```
+
+```json
+"dependencies": {
+  "@lynx-js/react": "^0.112.2"
+}
+```
+
+声明在子节点 `<list-item>` 上，控制该节点是否会被回收，如果 `recyclable` 设置为 `false`，则 `<list-item>` 被滑出 `<list>` 可视区域后不会被回收。
+
+### `bounces`
+
+```ts
+// DefaultValue: true
+bounces?: boolean
+```
+
+开启边缘回弹效果。
+
+### `initial-scroll-index`
+
+```tsx
+// DefaultValue: 0
+initial-scroll-index?: number
+```
+
+指定 `<list>` 在渲染后自动定位到的节点位置，仅首次生效。
+
+### `need-visible-item-info`
+
+```tsx
+// DefaultValue: false
+need-visible-item-info?: boolean
+```
+
+控制滚动事件回调参数中是否包含当前正在渲染节点的位置信息，这里滚动事件包含：[`scroll`](#scroll)，[`scrolltoupper`](#scrolltoupper)，[`scrolltolower`](#scrolltolower)。
+
+滚动事件回调参数格式：
+
+```tsx
+interface ListScrollInfo {
+  // 距上次滚动的横向滚动偏移量，单位 px
+  deltaX: number;
+  // 距上次滚动的纵向滚动偏移量，单位 px
+  deltaY: number;
+  // 当前横向滚动偏移量，单位 px
+  scrollLeft: number;
+  // 当前纵向滚动偏移量，单位 px
+  scrollTop: number;
+  // 当前内容区域宽度，单位 px
+  scrollWidth: number;
+  // 当前内容区域高度，单位 px
+  scrollHeight: number;
+  // `<list>`宽度，单位 px
+  listWidth: number;
+  // `<list>`高度，单位 px
+  listHeight: number;
+  // 滚动事件源
+  eventSource: ListEventSource;
+  // 当前正在渲染节点的位置信息
+  attachedCells: [
+    {
+      id: number; // 节点 id
+      itemKey: string; // 节点 item-key
+      index: number; // 节点在 list 中的 index
+      left: number; // 节点左边界相对于 list 的位置，单位 px
+      top: number; // 节点上边界相对于 list 的位置，单位 px
+      right: number; // 节点右边界相对于 list 的位置，单位 px
+      bottom: number; // 节点下边界相对于 list 的位置，单位 px
+    },
+  ];
+}
+```
+
+### `upper-threshold-item-count`
+
+```tsx
+// DefaultValue: 0
+upper-threshold-item-count?: number
+```
+
+当 `<list>` 顶部剩余可展示的子节点个数首次小于 [`upper-threshold-item-count`](#upper-threshold-item-count) 时，触发一次 [`scrolltoupper`](#scrolltoupper) 事件。
+
+### `lower-threshold-item-count`
+
+```tsx
+// DefaultValue: 0
+lower-threshold-item-count?: number
+```
+
+当 `<list>` 底部剩余可展示的子节点个数首次小于 [`lower-threshold-item-count`](#lower-threshold-item-count) 时，触发一次 [`scrolltolower`](#scrolltolower) 事件。
+
+### `scroll-event-throttle`
+
+```tsx
+// DefaultValue: 200
+scroll-event-throttle?: number
+```
+
+用于设置 `<list>` 回调 [`scroll`](#scroll) 事件的时间间隔，单位为毫秒（ms）。其默认 200 ms 回调一次滚动事件。
+
+:::note
+
+当 `engineVersion` 版本小于 <VersionBadge v={3.4} />，该属性无法生效，因此不会拦截 [`scroll`](#scroll) 事件回调。当 `engineVersion` 版本大于等于 <VersionBadge v={3.4} />，如果不设置改属性，则使用默认值 200 ms。
+
+:::
+
+### `item-snap`
+
+```tsx
+// defaultValue: undefined
+'item-snap'?: ListItemSnapAlignment;
+
+interface ListItemSnapAlignment {
+  factor: number;
+  offset: number;
+}
+```
+
+控制 `<list>` 实现分页滚动的效果。
+
+分页参数
+
+- `factor`: 分页定位锚定位置的参数，取值范围 `[0, 1]`
+  - 取值为 `0` 代表分页滚动的 `<list>` 子节点和 `<list>` 顶部对齐
+  - 取值为 `1` 代表分页滚动的 `<list>` 子节点和 `<list>` 底部对齐
+- `offset`: 额外增加偏移参数，在 `factor` 的基础之上再进一步添加偏移量
+
+:::note
+
+当 `engineVersion` 版本小于 `3.2` 时，列表滚动速率会存在不一致问题。
+
+:::
+
+### `update-animation`
+
+```tsx
+update-animation?: "default" | "none"
+```
+
+该属性用于控制在数据源更新时，列表是否运行动画。当前支持插入、删除和更新动画。
+
+<table
+  rules="none"
+  align="center"
+  width="100%"
+  style={{ tableLayout: 'fixed' }}
+>
+  <tr style={{ height: '300px' }}>
+    <td style={{ padding: '5px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_delete.gif"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+        <br />
+        <span>delete</span>
+      </center>
+    </td>
+    <td style={{ padding: '5px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_update.gif"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+        <br />
+        <span>update</span>
+      </center>
+    </td>
+    <td style={{ padding: '5px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/5_insert.gif"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+        <br />
+        <span>insert</span>
+      </center>
+    </td>
+  </tr>
+</table>
+
+:::note
+
+当前 `update-animation` 只能在 `list-type` 为 `single` 或 `flow` 时生效。
+
+:::
+
+### `need-layout-complete-info`
+
+控制 [`layoutcomplete`](#layoutcomplete) 事件中是否包含本次 `layout` 前后的节点排版信息，触发本次排版的 `<list>` Diff 信息，以及当前 `<list>` 的滚动状态信息。
+
+```tsx
+export interface LayoutCompleteEvent extends BaseEvent<'layoutcomplete', {}> {
+  detail: {
+    'layout-id': number;
+    // 开启 need-layout-complete-info
+    scrollInfo: ListScrollInfo;
+    // 开启 need-layout-complete-info
+    diffResult?: {
+      insertions: number[];
+      move_from: number[];
+      move_to: number[];
+      removals: number[];
+      update_from: number[];
+      update_to: number[];
+    };
+    // 开启 need-layout-complete-info
+    visibleCellsAfterUpdate?: ListItemInfo[];
+    // 开启 need-layout-complete-info
+    visibleCellsBeforeUpdate?: ListItemInfo[];
+  };
+}
+```
+
+### `layout-id`
+
+```tsx
+// defaultValue: -1
+layout-id?: number
+```
+
+用于标记本次数据源更新的唯一标识，会在 [`layoutcomplete`](#layoutcomplete) 事件回调中返回这个 id。
+
+### `preload-buffer-count`
+
+```tsx
+// DefaultValue: 0
+preload-buffer-count?: number
+```
+
+该属性可以控制 `<list>` 提前加载 `<list>` 外节点的个数。
+
+:::note
+
+- `preload-buffer-count` 的值越大，可以提前加载的屏外节点越多，但是也会增加 `<list>` 内存占用。
+
+- `preload-buffer-count` 的取值建议为占满 `<list>` 一屏的节点个数。
+
+- 仅 `list-type='single'/'flow'` 时生效。
+
+:::
+
+### `scroll-bar-enable`
+
+```tsx
+// DefaultValue: true
+scroll-bar-enable?: boolean
+```
+
+是否显示 `<list>` 组件滚动条
+
+### `harmony-scroll-edge-effect`
+
+```tsx
+// DefaultValue: true
+harmony-scroll-edge-effect: boolean
+```
+
+在 Harmony 上，当 contentSize 小于自身容器大小，设置是否开启滑动效果。
+
+### `reuse-identifier`
+
+```tsx
+// DefaultValue: null
+reuse-identifier: string
+
+<list>
+  <list-item
+    reuse-identifier="type1"
+  >
+  <list-item
+    reuse-identifier="type2"
+  >
+</list>
+```
+
+设置 `<list-item>` 复用 id，`<list>` 组件在渲染子节点时，会根据 `<list-item>` 的 `reuse-identifier` 属性值对 `<list-item>` 进行复用，只有设置了相同的 `reuse-identifier` 属性值的 `<list-item>` 才会被复用。
+
+默认情况下，开发者不提供需要 `reuse-identifier`，而是由框架在编译阶段确定，比如：当 `<list-item>` 处于循环内（例如 `Array.prototype.map` 等）时，由于它们在编译阶段的形态和位置相同，我们会为它们生成相同的 `reuse-identifier`，我们会认为这一组 `<list-item>` 可以互相复用。
+
+:::note
+
+使用场景：结构差异非常大的 `<list-item>` 在复用时性能比较差，因此建议为它们设置不同的 `reuse-identifier`，以避免它们之前被相互复用。
+
+:::
+
+### `full-span`
+
+```tsx
+// DefaultValue: false
+full-span?: boolean
+
+<list>
+  <list-item full-span={true}/>
+</list>
+```
+
+属性 `full-span` 用于标识 `<list-item>` 独占一行或者一列。
+
+### `estimated-main-axis-size-px`
+
+```tsx
+// DefaultValue: -1
+estimated-main-axis-size-px?: number
+
+<list-item
+  estimated-main-axis-size-px={100}
+/>
+```
+
+用于指定 `<list-item>` 还未渲染完成时，在主轴方向上的占位大小，单位为 `px`，如果不设置，默认值为 `<list>` 在主轴方向上的大小。
+
+:::note
+
+强烈建议开发者设置与子节点真实大小相近的 `estimated-main-axis-size-px`。
+
+:::
+
+### `experimental-recycle-sticky-item`
+
+```tsx
+// DefaultValue: true
+experimental-recycle-sticky-item?: boolean
+```
+
+`<list>` 中存在多个吸顶或者吸底的节点时，当吸顶或吸底的节点被其他吸顶或吸底的节点推出 `<list>` 区域后回收该节点，以解决吸顶或者吸底的节点过多导致的内存开销问题。此优化在 `engineVersion` 版本大于等于 <VersionBadge v={3.4} /> 时 默认开启。
+
+<table rules="none" align="center" width="100%" style={{tableLayout:"fixed"}}>
+  <tr style={{height: '300px'}}>
+    <td style={{padding: '5px'}}>
+      <center>
+        <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/not-recycle-sticky-1.gif" style={{width: "100%"}}/>
+        <br/>
+        <span>吸顶的节点不回收，`<list-item>` 数量会不断增长</span>
+      </center>
+    </td>
+    <td style={{padding: '5px'}}>
+      <center>
+        <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/recycle-sticky-1.gif" style={{width: "100%"}}/>
+        <br/>
+         <span>吸顶的节点回收，`<list-item>` 会被复用，数量不会增长</span>
+      </center>
+    </td>
+  </tr>
+</table>
+
+## 事件
+
+前端可以在元件上绑定相应事件回调来监听元件的运行时行为，使用方法如下。
+
+### `scroll`
+
+```tsx
+bindscroll?: EventHandler<ListScrollEvent>;
+
+interface ListScrollEvent {
+  // 距上次滚动的横向滚动偏移量，单位 px
+  deltaX: number;
+  // 距上次滚动的纵向滚动偏移量，单位 px
+  deltaY: number;
+  // 当前横向滚动偏移量，单位 px
+  scrollLeft: number;
+  // 当前纵向滚动偏移量，单位 px
+  scrollTop: number;
+  // 当前内容区域宽度，单位 px
+  scrollWidth: number;
+  // 当前内容区域高度，单位 px
+  scrollHeight: number;
+  // `<list>`宽度，单位 px
+  listWidth: number;
+  // `<list>`高度，单位 px
+  listHeight: number;
+  // 滚动事件源
+  eventSource: ListEventSource;
+  // 当前正在渲染节点的位置信息
+  attachedCells: [
+    {
+      "id": number,        // 节点 id
+      "itemKey": string,   // 节点 item-key
+      "index": number,     // 节点在 list 中的 index
+      "left": number,      // 节点左边界相对于 list 的位置，单位 px
+      "top": number,       // 节点上边界相对于 list 的位置，单位 px
+      "right": number,     // 节点右边界相对于 list 的位置，单位 px
+      "bottom": number,    // 节点下边界相对于 list 的位置，单位 px
+    },
+  ];
+}
+
+enum ListEventSource {
+  DIFF = 0,
+  LAYOUT = 1,
+  SCROLL = 2,
+}
+```
+
+`<list>` 滚动事件。
+
+:::note
+
+- 滚动事件触发频率可由 [`scroll-event-throttle`](#scroll-event-throttle) 控制。
+
+- 如果 `<list>` 开启 [`need-visible-item-info`](#need-visible-item-info)，则回调参数中才会包含当前渲染子节点的位置信息。
+
+:::
+
+### `scrolltoupper`
+
+```tsx
+bindscrolltoupper?: EventHandler<ListScrollEvent>;
+```
+
+滚动到 `<list>` 顶部时触发的回调。该回调触发的位置可以由 [`upper-threshold-item-count`](#upper-threshold-item-count) 控制。
+
+### `scrolltolower`
+
+```tsx
+bindscrolltolower?: EventHandler<ListScrollEvent>;
+```
+
+滚动到 `<list>` 底部时触发的回调。该回调触发的位置可以由 [`lower-threshold-item-count`](#lower-threshold-item-count) 控制。
+
+### `scrollstatechange`
+
+```tsx
+bindscrollstatechange?: EventHandler<ListScrollStateChangeEvent>;
+
+interface ScrollStateChangeEvent extends CustomEvent {
+  detail: {
+    // 本次滑动的滑动状态，取值说明
+    //   1 - 静止
+    //   2 - 拖拽
+    //   3 - 惯性滚动
+    //   4 - 动画滚动
+    state: number;
+  };
+}
+```
+
+`<list>` 滚动状态变化时触发的回调。事件参数的字段 `detail` 里的 `state` 分别取值: `1`、`2`、`3`、`4`，分别表示 `<list>` 滚动状态为：静止、拖拽、惯性滚动、动画滚动。
+
+### `layoutcomplete`
+
+```tsx
+bindlayoutcomplete?: EventHandler<ListLayoutFinishEvent>;
+
+interface LayoutCompleteEvent extends BaseEvent<'layoutcomplete', {}> {
+  detail: {
+    'layout-id': number;
+    // 需要开启 need-layout-complete-info
+    scrollInfo: ListScrollInfo;
+    // 需要开启 need-layout-complete-info
+    diffResult?: {
+      insertions: number[];
+      move_from: number[];
+      move_to: number[];
+      removals: number[];
+      update_from: number[];
+      update_to: number[];
+    };
+    // 需要开启 need-layout-complete-info
+    visibleCellsAfterUpdate?: ListItemInfo[];
+    // 需要开启 need-layout-complete-info
+    visibleCellsBeforeUpdate?: ListItemInfo[];
+  };
+}
+
+interface ListItemInfo {
+  // 子节点高度
+  height: number;
+  // 子节点宽度
+  width: number;
+  // 子节点 itemKey
+  itemKey: string;
+  // 子节点是否处于渲染状态
+  isBinding: boolean;
+  // 子节点相对于全部滚动区域的 x 坐标位置
+  originX: number;
+  // 子节点相对于全部滚动区域的 y 坐标位置
+  originY: number;
+  // 子节点是否存被更新
+  updated: boolean;
+}
+```
+
+`<list>` 布局完成后触发回调。
+
+### `snap`
+
+```tsx
+bindsnap?: EventHandler<ListSnapEvent>;
+
+interface ListSnapEvent extends common.BaseEvent<'snap', {}> {
+  detail: {
+    // 将会分页滚动到的节点索引
+    position: number;
+    // 当前横向滚动偏移量，单位 px
+    currentScrollLeft: number;
+    // 当前纵向滚动偏移量，单位 px
+    currentScrollTop: number;
+    // 分页滚动的目标横向滚动偏移量，单位 px
+    targetScrollLeft: number;
+    // 分页滚动的目标纵向滚动偏移量，单位 px
+    targetScrollTop: number;
+  };
+};
+```
+
+即将发生分页滚动时的回调。
+
+## 方法
+
+### `scrollToPosition`
+
+```tsx
+this.createSelectorQuery()
+  .select('#id_of_list')
+  .invoke({
+    method: 'scrollToPosition',
+    params: {
+      position: 10,
+      offset: 100,
+      alignTo: 'top',
+      itemKey: `${itemKey}`
+      smooth: true,
+    },
+    success: function (res) {},
+    fail: function (res) {},
+  })
+  .exec();
+```
+
+将 `<list>` 组件滚动到指定的位置，参数说明：
+
+| 参数名   | 类型    | 默认值 | 必填 | 简介                                                                                                                                                                                                                                                                                                            |
+| :------- | :------ | :----- | :--- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| position | number  | 无     | 是   | 指定要滚动到的节点的 index, 取值范围为`[0, 数据源个数)`                                                                                                                                                                                                                                                         |
+| offset   | number  | 无     | 否   | 在应用 `alignTo` 对齐后，继续滚动 `offset` 长度                                                                                                                                                                                                                                                                 |
+| alignTo  | string  | null   | 是   | 滚动后目标节点在视图中的位置. <br/><br/>`"bottom"`: 滑动至该节点在 `<list>` 中完全可见，且该节点的底部和 `<list>` 的底部对齐<br/><br/>`"top"`: 滑动至该节点在 `<list>` 中完全可见，且该节点的顶部和 `<list>` 的顶部对齐<br/><br/>`"middle"`: 滑动至该节点在 `<list>` 中完全可见，且该节点在 `<list>` 中垂直居中 |
+| itemKey  | string  | null   | 否   | 指定要滚动到的节点的 `item-key`，如果同时设置了 `item-key` 和 `position` 参数，则优先滚动到 `item-key` 对应的节点                                                                                                                                                                                               |
+| smooth   | boolean | false  | 否   | 滑动过程中是否有动画                                                                                                                                                                                                                                                                                            |
+
+### `autoScroll`
+
+```tsx
+this.createSelectorQuery()
+  .select('#id_of_list')
+  .invoke({
+    method: 'autoScroll',
+    params: {
+      rate: string, //  每一秒滚动的间距，支持正负。间距支持单位"px/rpx/ppx" default->null (iOS 取值必须大于 1/screen.scale px)
+      start: bool, //  开始/暂停自动滚动 default->false
+      autoStop: bool, // 滑到底部是否自动停止 default->true
+    },
+    success: function (res) {},
+    fail: function (res) {},
+  })
+  .exec();
+```
+
+触发 `<list>` 自动滚动，参数说明：
+
+| 参数名   | 类型   | 默认值 | 必填  | 简介                                                              |
+| :------- | :----- | :----- | :---- | :---------------------------------------------------------------- |
+| rate     | string | 无     | null  | 每一秒滚动的间距，支持正负，可设置单位：`px/rpx/ppx`              |
+| start    | bool   | 无     | false | 开始或者暂停自动滚动，`true`: 开始自动滚动，`false`: 暂停自动滚动 |
+| autoStop | bool   | 无     | true  | 滑到底部是否自动停止                                              |
+
+### `getVisibleCells`
+
+```tsx
+lynx
+  .createSelectorQuery()
+  .select('#id_of_list')
+  .invoke({
+    method: 'getVisibleCells',
+    success(res) {
+      console.log('succ ');
+    },
+    fail(res) {
+      console.log('err ');
+    },
+  })
+  .exec();
+```
+
+获取当前展示的所有 `<list>` 子节点的信息。返回信息如下：
+
+```tsx
+attachedCells: [
+  {
+    id: number, // 节点 id
+    itemKey: string, // 节点 item-key
+    index: number, // 节点在 list 中的 index
+    left: number, // 节点左边界相对于 list 的位置，单位 px
+    top: number, // 节点上边界相对于 list 的位置，单位 px
+    right: number, // 节点右边界相对于 list 的位置，单位 px
+    bottom: number, // 节点下边界相对于 list 的位置，单位 px
+  },
+];
+```
+
+### `scrollBy`
+
+```tsx
+lynx
+  .createSelectorQuery()
+  .select('#id_of_list')
+  .invoke({
+    method: 'scrollBy',
+    params: {
+      offset: number,
+    },
+    success(res) {
+      console.log('succ ');
+    },
+    fail(res) {
+      console.log('err ');
+    },
+  })
+  .exec();
+```
+
+在现有偏移量的基础上继续滚动 `offset` 指定的距离，单位 `px`，返回的信息如下：
+
+```tsx
+{
+  "consumedX" : number,  // 水平方向滚动的距离，单位 px
+  "consumedY" : number,  // 竖直方向滚动的距离，单位 px
+  "unconsumedX" : number,  // 水平方向未滚动的距离，单位 px
+  "unconsumedY" : number,  // 竖直方向未滚动的距离，单位 px
+}
+```
+
+## 更多功能
+
+### 实现节点吸顶或者吸底
+
+在 `<list>` 组件中，可以通过设置 `<list-item>` 的 [`sticky-top`](#sticky-top) 或 [`sticky-bottom`](#sticky-bottom) 属性来实现节点吸顶或者吸底效果。
+
+确保 `<list>` 组件的 [`sticky`](#sticky) 属性设置为 `true`，以允许子节点吸顶，并且可以设置 [`sticky-offset`](#sticky-offet) 来确定吸顶或者吸底位置距离 `<list>` 顶部或者底部的偏移。
+
+```tsx
+<list
+  className="list-container"
+  sticky={true}
+  sticky-offset={50}
+  list-type="single"
+  span-count={1}
+  scroll-orientation="vertical"
+>
+```
+
+在 `<list-item>` 上设置 [`sticky-top`](#sticky-top) 或 [`sticky-bottom`](#sticky-bottom) 属性，使该节点在滚动时吸顶或者吸底。由于吸顶或者吸底节点一定是独占一行的节点，因此也需要给该节点设置 [`full-span`](#full-span) 属性。
+
+```tsx
+<list-item
+  className="sticky-top-item"
+  full-span={true}
+  sticky-top={true}
+  item-key={`list-item-${index}`}
+  key={`list-item-${index}`}
+/>
+```
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-sticky.gif"
+  example="list"
+  defaultFile="src/sticky/index.tsx"
+  defaultEntryFile="dist/sticky.lynx.bundle"
+  entry="src/sticky"
+  highlight="{16,25-26}"
+/>
+
+### 实现滚动到底部加载更多数据
+
+在 `<list>` 组件中，你可以实现无限滚动加载的功能。这需要两个步骤:
+
+1. 设置 [`lower-threshold-item-count`](#lower-threshold-item-count) 属性来控制触发时机。当列表滚动到距离底部还剩指定数量的 item 时,就会触发加载。
+
+2. 监听 [`scrolltolower`](#scrolltolower) 事件。当触发条件满足时,该事件会被调用,你可以在回调函数中请求新数据并添加到列表中。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-loadmore.gif"
+  example="list"
+  defaultFile="src/loadmore/index.tsx"
+  defaultEntryFile="dist/loadmore.lynx.bundle"
+  entry="src/loadmore"
+  highlight="{44-47}"
+/>
+
+### 利用 `item-snap` 实现分页滚动
+
+通过设置 `factor` 来确定分页滚动定位的参数，取值范围 `[0, 1]`. 以竖直方向为例，`0` 代表 `<list-item>` 和 `<list>` 顶部对齐，`1` 代表 `<list-item>` 和 `<list>` 底部对齐，还可以通过设置 `offset`，从而在 `factor` 的基础上添加滚动偏移量。
+
+竖直方向：
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-item-snap.gif"
+  example="list"
+  defaultFile="src/itemsnap/index.tsx"
+  defaultEntryFile="dist/itemsnap.lynx.bundle"
+  entry="src/itemsnap"
+  highlight="{19}"
+/>
+
+水平方向：
+
+<Go
+  img="/assets/list_horizontal_snap.gif"
+  example="list"
+  defaultFile="src/horizontal-snap/index.tsx"
+  defaultEntryFile="dist/horizontal-snap.lynx.bundle"
+  entry="src/horizontal-snap"
+  highlight="{19,26}"
+/>
+
+### 使用 `z-index`
+
+<Go
+  img="/assets/list-oss-zIndex.gif"
+  example="list"
+  defaultFile="src/zIndex/index.tsx"
+  defaultEntryFile="dist/zIndex.lynx.bundle"
+  entry="src/zIndex"
+  highlight="{20,23,31}"
+/>
+
+### 实现 `<list-item>` 不回收
+
+通过给 `<list-item>` 设置 [`recyclable`](#recyclable) 为 `false` 来实现该节点不回收。在这个例子中，我们给第一个 `<list-item>` 中添加了一个溢出且带背景色的 `<view>` 节点，当这个 `<list-item>` 被滑动出屏幕后，我们依然可以看到这个带背景色的 `<view>` 在屏幕上。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/20250828-213840.gif"
+  example="list"
+  defaultFile="src/recyclable/index.tsx"
+  defaultEntryFile="dist/recyclable.lynx.bundle"
+  entry="src/recyclable"
+  highlight="{25}"
+/>
+
+## 兼容性
+
+### `<list>`
+
+<APITable />
+
+### `<list-item>`
+
+<APITable query="elements/list-item" />

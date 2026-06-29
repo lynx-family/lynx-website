@@ -1,0 +1,40 @@
+# `__CreateElement`
+
+## Introduction
+
+Creates an Element object.
+
+## Syntax
+
+```jsx
+__CreateElement(tagName: string, parentComponentUniqueID: number, info?: object) : Element;
+```
+
+### Parameters
+
+|           Key           | Description                                                                                                                                                                                                                  |
+| :---------------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         tagName         | A string that specifies the type of Element to create, which corresponds to the LynxUI tagName, such as input. Built-in Elements like view, image, etc. cannot use this interface and must use their respective Create APIs. |
+| parentComponentUniqueID | The Unique Component ID of the ComponentElement that creates this Element, which is a number.                                                                                                                                |
+|          info           | Additional information required when creating the Element; this parameter can be omitted.                                                                                                                                    |
+
+### Return Value
+
+The return value is currently a Value_RefCounted type of `lepus::Value`, which is implemented as `base::scoped_refptr<Element>`.
+
+::: tip Note
+`base::scoped_refptr<Element>` manages the lifecycle of the Element based on reference counting. Therefore, the frontend framework can hold this return value to manage the Element's lifecycle. The Element will only be destroyed when the frontend framework no longer holds it and the Element is removed from the tree.
+:::
+
+## Example
+
+The frontend framework can process the corresponding frontend tags into render directives as follows.
+
+```jsx
+<input />
+```
+
+```jsx
+// main-thread.js
+let element = __CreateElement('input', 0, {});
+```

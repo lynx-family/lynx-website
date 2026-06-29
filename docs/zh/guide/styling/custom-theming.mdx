@@ -1,0 +1,246 @@
+import { Go } from '@lynx';
+
+# 多主题
+
+Lynx 支持了较丰富的 [CSS 属性](/api/css/properties)，配合 [CSS 选择器](/api/css/selectors)、[CSS 变量](/api/css/properties/css-variable)以及 可选择的 CSS 继承能力，可轻松实现多样化的主题样式，为用户界面提供一致且优雅的外观和风格。通过定义和管理不同的主题变量，开发者可以方便地切换不同的配色方案、字体风格以及其他视觉元件，确保用户获得最佳的视觉体验和互动感受。
+
+## 使用 CSS 后代选择器切换主题
+
+与 Web 开发类似，利用后代选择器可以通过切换父级元件的 class，来影响其所有后代节点的样式，从而实现多种主题样式的切换。
+
+### 定义 CSS 主题
+
+首先需要定义多个主题的 CSS 样式，不同主题会有不同的颜色、背景等属性。
+比如我们可以定义浅色和深色两种主题样式，浅色模式通过 `.theme-light .content` 定义样式，深色模式通过 `.theme-dark .content` 定义样式。
+
+```css
+/* 浅色主题 */
+.theme-light .content {
+  color: black;
+  background-color: white;
+}
+
+/* 深色主题 */
+.theme-dark .content {
+  color: white;
+  background-color: black;
+}
+```
+
+### 应用 CSS 样式
+
+在页面中，对父节点（可以定义在[根节点](/api/elements/built-in/page#显式使用-page)）class 为 `theme-dark` 或 `theme-light`，对后代节点设置 class 为 `content`，这样后代节点
+就能被应用到 `.theme-light .content` 或者 `.theme-dark .content` 的样式。
+
+```tsx
+function App() {
+  return (
+    <view className="theme-dark">
+      <view>
+        <text className="content">text</text>
+      </view>
+    </view>
+  );
+}
+```
+
+### 切换主题样式
+
+当主题发生变化时，切换顶层的节点的 class 为 `theme-dark` 或 `theme-light`，即可让后代节点的样式发生更新。在 Lynx 开发场景中，前端多主题的值可以由客户端通知前端，比如客户端可以通过更新 [globalProps](/api/lynx-api/lynx/lynx-global-props) 来通知前端主题变化。
+
+前端对应写法：
+
+```tsx
+import { useMemo } from '@lynx-js/react';
+import './App.css';
+
+export function App() {
+  const themeClass = useMemo(
+    () => `theme-${lynx.__globalProps.appTheme}`,
+    [lynx.__globalProps.appTheme],
+  );
+
+  return (
+    //themeClass 的值为theme-dark或theme-light
+    <view className={themeClass}>
+      <view>
+        ...
+        <text className="content">Hello Theme</text>
+        ...
+      </view>
+    </view>
+  );
+}
+```
+
+### 例子
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/descendant-class-theme.gif"
+  example="css"
+  defaultFile="src/descendant_selectors_theme/index.tsx"
+  defaultEntryFile="dist/descendant_selectors_theme.lynx.bundle"
+  entry="src/descendant_selectors_theme"
+></Go>
+
+## 使用 CSS 变量切换主题
+
+使用后代选择器切换多主题时，我们需要预先定义不同主题样式的选择器，在主题种类较多的场景下不够灵活。
+
+可以使用 [CSS Variable](/api/css/properties/css-variable.mdx) 来定义主题样式，直接修改变量的值来实现主题切换。
+
+### 定义 CSS 主题
+
+同样我们定义需要变化的主题样式变量，对相同的变量定义不同的值。
+比如不同的主题下，`color` 和 `background-color` 需要能跟随主题变化，那么需要定义两个 CSS 变量 `--color` 和 `--bg`，后代节点可以在样式表中通过 `var(--color)`、`var(--bg)` 来获取这些变量的值。
+
+```css
+.theme-light {
+  --color: black;
+  --bg: white;
+}
+
+.content {
+  color: var(--color);
+  background-color: var(--bg);
+}
+```
+
+### 应用 CSS 样式
+
+注意 CSS 变量需要被挂载到顶层节点 (可以定义在[根节点](/api/elements/built-in/page#显式使用-page))，这样其子孙节点可以在对应的样式表里使用到该变量。
+
+其后代节点在 `.content` 中通过 `var(--*)` 的方式应用变量的值。
+
+```tsx
+function App() {
+  return (
+    <view id="root" className="theme-light">
+      <view>
+        <text className="content">text</text>
+      </view>
+    </view>
+  );
+}
+```
+
+### 切换主题样式
+
+#### JS 直接修改 CSS 变量的值
+
+通过 JS API ([`setProperty`](/api/css/properties/css-variable#modifying-css-variables-via-javascript-api)) 来直接修改 CSS 变量值，这样可以灵活的批量更新 CSS 变量。
+
+```tsx
+import './App.css';
+
+export function App() {
+  const handleClick = () => {
+    lynx.getElementById('root').setProperty({
+      '--color': 'white',
+      '--bg': 'black',
+    });
+  };
+
+  return (
+    <view id="root" className="theme-light" bindtap={handleClick}>
+      <text className="content">Hello Variable</text>
+    </view>
+  );
+}
+```
+
+#### 切换 class 间接修改变量的值
+
+当然也可以在需要切换主题时，通过切换祖先节点上定义了不同的 [CSS 变量](/api/css/properties/css-variable#通过修改声明了-css-变量的选择器)的 class，间接修改变量的值，从而触发所有应用到该变量的子节点的样式更新。
+
+比如用 `.theme-light` 和 `.theme-dark` 来定义不同主题需要的 CSS 变量的值：
+
+```css
+.theme-light {
+  --color: black;
+  --bg: white;
+}
+
+.theme-dark {
+  --color: white;
+  --bg: black;
+}
+
+.content {
+  color: var(--color);
+  background-color: var(--bg);
+}
+```
+
+切换顶层节点 `.theme-light` 或者 `.theme-dark`，就是切换了 `--color` 和 `--bg` 的值，从而让对应 `.content` 的样式表的属性值更新。
+
+```tsx
+import { useMemo } from '@lynx-js/react';
+
+import './App.css';
+
+export function App() {
+  const themeClass = useMemo(
+    () => `theme-${lynx.__globalProps.appTheme}`,
+    [lynx.__globalProps.appTheme],
+  );
+
+  return (
+    //themeClass 的值为theme-dark或theme-light
+    <view className={themeClass}>
+      <text id="test" className="content">
+        Hello Variable
+      </text>
+    </view>
+  );
+}
+```
+
+### 例子
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-var-theme.gif"
+  example="css"
+  defaultFile="src/css_variable_theme/index.tsx"
+  defaultEntryFile="dist/css_variable_theme.lynx.bundle"
+  entry="src/css_variable_theme"
+  highlight="{23-43}"
+></Go>
+
+## 按需使用 CSS 继承
+
+在复杂样式的页面中，使用 CSS 继承会有助于简化开发，但实现属性继承逻辑，一定程度上增加了样式处理流程的复杂度，从而会带来一定的性能开销。
+为优化性能，Lynx 默认不启用普通 CSS 属性的继承，开发者需按需启用。CSS 自定义属性（也称 CSS 变量）则默认可被后代节点继承。
+
+### CSS 自定义属性的继承
+
+[CSS 自定义属性](/api/css/properties/css-variable)（CSS 变量，如 `--primary-color`）遵循 Web 标准，默认可被后代节点继承，无需额外配置。开发者可通过在祖先节点中定义 CSS 自定义属性，实现动态样式管理。
+
+### 常规（非自定义）CSS 属性的继承
+
+需要配置 [`enableCSSInheritance`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance) 来启用继承能力。
+
+#### 默认继承的属性
+
+开启 `enableCSSInheritance` 后，默认情况下只有这些属性可以被继承：
+
+[`direction`](/api/css/properties/direction.mdx),[`color`](/api/css/properties/color.mdx),[`font-family`](/api/css/properties/font-family.mdx),[`font-size`](/api/css/properties/font-size.mdx),[`font-style`](/api/css/properties/font-style.mdx),[`font-weight`](/api/css/properties/font-weight.mdx),[`letter-spacing`](/api/css/properties/letter-spacing.mdx),[`line-height`](/api/css/properties/line-height.mdx),[`text-align`](/api/css/properties/text-align.mdx),[`text-decoration`](/api/css/properties/text-decoration.mdx),[`text-shadow`](/api/css/properties/text-shadow.mdx)
+
+默认继承属性的继承行为对齐 [🌐W3C 继承行为](https://www.w3.org/TR/css-cascade-3/#inheriting)
+
+#### 自定义可继承的属性
+
+除了默认可继承属性之外，可以在页面配置 [`customCSSInheritanceList`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.customcssinheritancelist) 自定义可继承的 CSS 属性。
+当有自定义继承的声明时，仅有在自定义继承列表里面的 CSS 属性才可以继承。
+
+范例：
+
+```json
+"customCSSInheritanceList":["font-size","flex-direction"]
+```
+
+#### CSS 继承的功能局限
+
+1. `position:fixed` 的元件永远只继承 page 的属性。
+2. 不支持关键字 "inherit"
+3. 除了默认可继承属性外，只有类型为枚举或者布尔值的 CSS 属性支持自定义继承。

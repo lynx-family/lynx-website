@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "definitions": {
+    "platform_type": {
+      "type": "string",
+      "enum": ["native", "web", "clay"]
+    },
+    "platform_status": {
+      "type": "string",
+      "enum": ["retired", "current", "beta", "planned"]
+    },
+    "platforms": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/platform_statement"
+      },
+      "minProperties": 1,
+      "maxProperties": 1,
+      "errorMessage": {
+        "minProperties": "A platform must be described within the file.",
+        "maxProperties": "Each platform JSON file may only describe one platform."
+      },
+      "tsType": "Record<PlatformName, PlatformStatement>"
+    },
+    "platform_statement": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The platform brand name (e.g. iOS, Android, HarmonyOS, Web, etc.)."
+        },
+        "type": {
+          "$ref": "#/definitions/platform_type",
+          "description": "The type of the platform (e.g. native, web, or clay).",
+          "tsType": "PlatformType"
+        },
+        "releases": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/release_statement"
+          },
+          "description": "The known versions of this platform.",
+          "tsType": "{ [version: string]: ReleaseStatement };"
+        }
+      },
+      "required": ["name", "type", "releases"],
+      "additionalProperties": false
+    },
+    "release_statement": {
+      "type": "object",
+      "properties": {
+        "release_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date on which this version was released, formatted as `YYYY-MM-DD`."
+        },
+        "release_notes": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "description": "A link to the release notes or changelog for a given release."
+        },
+        "status": {
+          "$ref": "#/definitions/platform_status",
+          "description": "A property indicating where in the lifetime cycle this release is in (e.g. current, retired, beta, nightly).",
+          "tsType": "PlatformStatus"
+        }
+      },
+      "required": ["status"],
+      "additionalProperties": false
+    }
+  },
+  "title": "PlatformDataFile",
+  "type": "object",
+  "properties": {
+    "platforms": {
+      "$ref": "#/definitions/platforms"
+    }
+  },
+  "additionalProperties": false
+}

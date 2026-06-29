@@ -1,0 +1,104 @@
+---
+api: css/properties/display
+---
+
+import { APISummary, APITable, Deprecated, Go } from '@lynx';
+
+# display
+
+<APISummary />
+
+## 介绍
+
+Lynx 的 `display` 只决定了元件内部的显示类型（如何布局子元件），不参与决定外部显示类型（元件是否被视为[块级元件](https://developer.mozilla.org/zh-CN/docs/Glossary/Block-level_content)或[行级元件](https://developer.mozilla.org/zh-CN/docs/Glossary/Inline-level_content)）。
+
+Lynx 没有[流式布局（Flow）](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_flow_layout)，不支持 `display: block`、`display: inline` 的语法。Lynx 元件都是[块级元件](https://developer.mozilla.org/zh-CN/docs/Glossary/Block-level_content)，除了在 `<text>` 组件内的元件。
+
+:::info
+[线性布局](/guide/ui/layout/linear-layout.mdx)是 Lynx 的默认布局，可以通过设置 `defaultDisplayLinear: false` 来将默认的布局改为[弹性布局](/guide/ui/layout/flexible-box-layout.mdx)。
+:::
+
+## 使用示例
+
+<Go
+  example="css-api"
+  entry="src/display"
+  defaultFile="src/display/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/display.jpg"
+  defaultEntryFile="dist/display.lynx.bundle"
+  entry="src/display"
+/>
+
+## 取值
+
+### `flex`
+
+见[弹性布局](/guide/ui/layout/flexible-box-layout.mdx)。
+
+### `linear`
+
+指定容器采用[线性布局](/guide/ui/layout/linear-layout.mdx)。线性布局在 Lynx 所有布局中**性能**表现最佳。
+
+:::info
+`<scroll-view>` 会被强制指定为线性布局，此时 `<scroll-view>` 会被当作一个普通的线性布局进行布局，对齐属性和 [`linear-weight`](./linear-weight) 都会生效。而且 `scroll-x`/`scroll-y` 会分别把主轴方向改成横向、竖向。（实际是通过是否设置 `scroll-x`/`scroll-y` 而进行强制转化判定。）
+:::
+
+### `none`
+
+此元件不会显示。
+
+:::info
+如果在 `<text>` 元件的父元件设置为 `display:none` 的情况下，`<text>` 元件仍然会被渲染显示出来，那么请添加 [`overflow:hidden`](./overflow) 到相应的父元件。我们将在后续修复这个问题。
+:::
+
+### `grid`
+
+指定容器采用[网格布局](/guide/ui/layout/grid-layout.mdx)。
+
+### `relative`
+
+Lynx 自研的布局模型。指定容器采用[相对布局](/guide/ui/layout/relative-layout.mdx)。相对布局是一个以相对位置显示子视图的布局方式，每个视图的位置可以指定为相对于同级元件的位置（例如，在另一个视图的左侧或下方）或相对于父级区域的位置（例如在底部、左侧或中心对齐）。
+
+## 语法
+
+```css
+display: flex;
+display: none;
+display: linear;
+display: relative;
+display: grid;
+```
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      <code>linear</code>
+    </>
+  }
+  appliesTo={<>所有元件</>}
+  inherited="否"
+/>
+
+## 形式语法
+
+```
+display = none | linear | flex | grid | relative
+```
+
+## 与 Web 的区别
+
+- 线性布局和相对布局是 Lynx 自研的布局模型。
+- Lynx 的 `display` 只决定了元件内部的显示类型（如何布局子元件），不参与决定外部显示类型（元件是否被视为[块级元件](https://developer.mozilla.org/zh-CN/docs/Glossary/Block-level_content)或[行级元件](https://developer.mozilla.org/zh-CN/docs/Glossary/Inline-level_content)）；
+- 不支持 `block`、`inline`、`inline-block`、`inline-flex`、`inline-grid` 等预组合值；
+
+## 兼容性
+
+<APITable />
+
+## 常见问题
+
+- `<scroll-view>` 会被强制指定为线性布局，此时 `<scroll-view>` 会被当作一个普通的线性布局进行布局，对齐属性和 [`linear-weight`](./linear-weight) 都会生效。而且 `scroll-x`/`scroll-y` 会分别把主轴方向改成横向、竖向。（实际是通过是否设置 `scroll-x`/`scroll-y` 而进行强制转化判定。）

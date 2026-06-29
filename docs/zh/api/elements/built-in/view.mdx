@@ -1,0 +1,779 @@
+---
+api: elements/view
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Deprecated,
+  Go,
+  IOSOnly,
+  Required,
+} from '@lynx';
+
+import { Badge } from '@theme';
+
+# `<view>`
+
+<APISummary />
+
+一个类似 HTML `<div>` 的容器元素。与 `<div>` 类似，`<view>` 是一个多功能的容器元素，可以容纳其他元素，并作为构建布局的基础。所有 `<view>` 上可用的属性、事件和方法都可以被其他元素使用。
+
+## 使用指南
+
+### 作为绘制容器
+
+<Go
+  example="view"
+  defaultFile="src/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/view_render.jpeg"
+  highlight="{7-22}"
+/>
+
+### 作为布局容器
+
+<Go
+  example="view"
+  defaultFile="src/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/view_layout.jpeg"
+  highlight="{24-56}"
+/>
+
+## 属性
+
+属性名和属性值用于描述元件的行为和外观。
+
+### `name`
+
+```ts
+// DefaultValue undefined
+name?: string
+```
+
+用来指定组件的名字，一般是供 native 通过 `findViewByName` 来从 native 侧操作对应的节点。
+
+### `id`
+
+```ts
+// DefaultValue undefined
+id?: string;
+```
+
+用来指定组件唯一的身份标识，可供前端 API 来查找并操作对应的节点，比如 [`invoke`](../../lynx-api/nodes-ref/nodes-ref-invoke)。
+
+```ts
+id?: string;
+```
+
+### `style`
+
+```ts
+style?: string;
+```
+
+用于在元件上应用行内（inline）样式。
+
+### `class`
+
+```ts
+class?: string;
+```
+
+用于为元件指定一个或多个类名，这些类名可以在 CSS 中使用来应用样式。
+
+### `className` <Badge text="ReactLynx" />
+
+```ts
+className?: string;
+```
+
+在 ReactLynx 中请使用 `className` 来设置 CSS 的类名，用法同 [`class`](#class)。
+
+### `data-*`
+
+```ts
+data-*?: any;
+```
+
+用于为元件指定额外的信息，这些信息可以在 [Event](../../lynx-api/event/event.mdx#target) 中获取。
+
+### `flatten` <AndroidOnly/>
+
+```ts
+flatten?: boolean;
+```
+
+只有 Android 平台可以生效，用来强制将特定的节点创建对应的 Android View。
+
+### `exposure-id`
+
+```ts
+// DefaultValue: undefined
+exposure-id?: string
+```
+
+指定目标节点是否需要监听[曝光/反曝光事件](../../../guide/interaction/visibility-detection/exposure-ability.mdx#监听全页面的曝光)。
+
+### `exposure-scene`
+
+```ts
+// DefaultValue: undefined
+exposure-scene?: string
+```
+
+指定目标节点的曝光场景，与 [`exposure-id`](#exposure-id) 一起用于对需要监听曝光的节点进行唯一标识。
+
+### `exposure-ui-margin-*`
+
+```ts
+// DefaultValue: '0px'
+exposure-ui-margin-top?: string;
+exposure-ui-margin-right?: string;
+exposure-ui-margin-bottom?: string;
+exposure-ui-margin-left?: string;
+```
+
+指定曝光检测中目标节点自身的边界缩放值，影响目标节点的视口交叉判断，每一个节点可以有自己的自身边界缩放值。
+
+:::tip
+Android 和 iOS 平台都需要对当前节点设置 [`enable-exposure-ui-margin`](#enable-exposure-ui-margin)，否则不生效。HarmonyOS 平台不需要设置[`enable-exposure-ui-margin`](#enable-exposure-ui-margin) 即可生效。
+:::
+
+### `exposure-screen-margin-*`
+
+```ts
+// DefaultValue: '0px'
+exposure-screen-margin-top?: string;
+exposure-screen-margin-right?: string;
+exposure-screen-margin-bottom?: string;
+exposure-screen-margin-left?: string;
+```
+
+指定曝光检测任务中目标节点参考的屏幕边界缩放值，影响目标节点的视口交叉判断，每一个节点可以有自己的屏幕边界缩放值。
+
+:::tip
+Android 和 iOS 平台都需要对当前节点设置 [`enable-exposure-ui-margin`](#enable-exposure-ui-margin)，否则正值表示目标节点自身边界缩放值，负值表示屏幕边界缩放值。HarmonyOS 平台不需要设置[`enable-exposure-ui-margin`](#enable-exposure-ui-margin) 即可生效。
+:::
+
+### `exposure-area`
+
+```ts
+// DefaultValue: '0%'
+exposure-area?: string
+```
+
+指定目标节点可以触发曝光事件的视口交叉比例，大于该比例时触发曝光事件，小于该比例时触发反曝光事件，默认目标节点露出即触发曝光事件。
+
+### `enable-exposure-ui-margin`
+
+```ts
+// DefaultValue: false
+enable-exposure-ui-margin?: boolean
+```
+
+指定目标节点是否支持 [`exposure-ui-margin-*`](#exposure-ui-margin-) 属性。
+
+:::tip
+设置为 `true` 会改变 Android 和 iOS 平台 [`exposure-screen-margin-*`](#exposure-screen-margin-) 的行为，可能导致可滚动容器的懒加载失效。
+:::
+
+### `enable-exposure-ui-clip`
+
+```ts
+// DefaultValue: false
+enable-exposure-ui-clip?: boolean
+```
+
+指定曝光检测任务中是否考虑父节点的视口裁剪。当设置为 `true` 时，父节点视口外的节点无法触发曝光，当设置为 `false` 时，父节点视口外的节点可以触发曝光。
+
+:::tip
+默认情况下，曝光检测只考虑可滚动的父级节点的视口裁剪，其他有宽高且 overflow: visible 的父级节点视口裁剪对曝光检测无影响。通过给这些父级节点设置 `enable-exposure-ui-clip` 可以实现更加合理的视口裁剪判断。
+:::
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/enable-exposure-ui-clip-en.png"
+  width="100%"
+  height="100%"
+/>
+
+### `accessibility-element`
+
+```ts
+// DefaultValue: image 和 text 节点默认是 true，其他节点默认值为 false
+accessibility-element?: boolean
+```
+
+设置节点是否支持无障碍。
+
+### `accessibility-label`
+
+```ts
+// DefaultValue: undefined
+accessibility-label?: string
+```
+
+设置节点语音播报的内容。
+
+如果 `<text/>` 节点不设置该属性，则 `<text/>` 节点默认 `accessibility-label` 是 `<text/>` 的内容。
+
+当一个节点开启 `accessibility-element` 属性后，建议同时设置 `accessibility-label`，这样可以更清楚地表达当前节点的含义。
+
+### `accessibility-trait`
+
+```ts
+// DefaultValue: "none"
+accessibility-traits?: "none" | "button" | "image" | "text"
+```
+
+设置节点的类型特征。系统对不同类型的节点，播放内容会有特定的补充。
+
+### `accessibility-elements`
+
+```ts
+// DefaultValue: undefined
+accessibility-elements?: string
+```
+
+自定义子节点的聚焦顺序。该属性设置在父节点上，其子节点的聚焦顺序会根据 `accessibility-elements` 属性指定子节点 `id` 的顺序进行聚焦。
+
+如果父节点设置了 `accessibility-elements` 属性，那么仅可访问 `accessibility-elements` 属性指定 `id` 的子节点，其他子节点则不可以聚焦。
+
+```tsx
+<view
+  style={{
+    width: '100%',
+    height: '250px',
+    marginTop: '20px',
+    display: 'linear',
+    backgroundColor: 'grey',
+  }}
+  accessibility-elements="view-3,view-2,view-5,view-1,view-4"
+>
+  {[1, 2, 3, 4, 5].map((value) => {
+    return (
+      <view
+        style={`height: 40px; margin: 5px; background-color: white;`}
+        id={`view-${value}`}
+        accessibility-element="true"
+        accessibility-label={`view-${value}`}
+      >
+        <text>text-{value}</text>
+      </view>
+    );
+  })}
+</view>
+```
+
+### `accessibility-elements-a11y`
+
+```ts
+// DefaultValue: undefined
+accessibility-elements-a11y?: string
+```
+
+作用等同于 `accessibility-elements`, 但是对应的 `id` 是 `a11y-id`。
+
+### `accessibility-elements-hidden`
+
+```ts
+// DefaultValue: false
+accessibility-elements-hidden?: boolean
+```
+
+标记当前节点及其所有子节点都不会成为无障碍节点。
+
+### `accessibility-exclusive-focus`
+
+```ts
+// DefaultValue: false
+accessibility-exclusive-focus?: boolean
+```
+
+该属性可以被任何节点设置，在无障碍模式下，顺序导航只会聚焦到这些节点下的子节点。
+
+:::tip
+使用场景：解决弹窗蒙层焦点穿透问题：可以给蒙层节点设置该属性为 true，使得焦点在蒙层节点内部循环，不会穿透到蒙层下其他节点。
+
+```tsx
+<view
+  accessibility-element={false}
+  style={{
+    flexDirection: 'column',
+    backgroundColor: backgroundColor,
+    opacity: opacity,
+    height: '200px',
+  }}
+>
+  <view
+    accessibility-element={false}
+    accessibility-exclusive-focus={true}
+    style={{
+      flexDirection: 'column',
+      backgroundColor: 'grey',
+      opacity: 0.6,
+      position: 'absolute',
+      alignItems: 'center',
+      width: '100%',
+      top: '20px',
+    }}
+  >
+    // 当前节点设置了 accessibility-exclusive-focus 为 //
+    true，则只会聚焦到它内部的三个 text 节点
+    <text style={{ fontSize: '20px' }}>overlap text 1</text>
+    <text style={{ fontSize: '20px' }}>overlap text 2</text>
+    <text style={{ fontSize: '20px' }}>overlap text 3</text>
+  </view>
+  <text style={{ fontSize: '20px', width: '30%' }}>bottom text 1</text>
+  <text style={{ fontSize: '20px', width: '30%' }}>bottom text 2</text>
+  <text style={{ fontSize: '20px', width: '30%' }}>bottom text 3</text>
+</view>
+```
+
+:::
+
+### `a11y-id`
+
+```ts
+// DefaultValue: undefined
+a11y-id?: string
+```
+
+区别于 `id`，用于单独标识无障碍节点。
+
+### `ios-platform-accessibility-id` <IOSOnly />
+
+```ts
+// DefaultValue: undefined
+ios-platform-accessibility-id?: string
+```
+
+用于指定 iOS 中一个 `UIView` 的无障碍标识符，仅限平台层无障碍框架接入时才需使用。
+
+### `user-interaction-enabled`
+
+```ts
+// DefaultValue: true
+user-interaction-enabled?: boolean
+```
+
+指定目标节点及其子节点是否能够响应 Lynx 的触摸事件，该属性不会影响平台层手势（比如 `scroll-view` 的滚动）。
+
+:::tip
+推荐使用 [`pointer-events`](../../css/properties/pointer-events.mdx) 代替 `user-interaction-enabled`。
+:::
+
+### `native-interaction-enabled`
+
+```ts
+// DefaultValue: true for iOS and Harmony, false for Android
+native-interaction-enabled?: boolean
+```
+
+指定目标节点是否消费平台层的触摸事件，影响平台层手势（比如 `scroll-view` 的滚动），不影响 Lynx 的触摸事件，可以实现类似平台层手势穿透/拦截的效果。
+
+:::tip
+Android 平台只支持在 `view` 元件上设置生效，并且需要节点创建对应的 Android View，可能需要同时设置 [`flatten`](#flatten) 为 `false` 才能生效。
+
+手势拦截效果只能作用于兄弟节点，不能作用于父子节点。
+:::
+
+### `pan-intercept-direction`
+
+```ts
+// DefaultValue: 2 /* none */
+pan-intercept-direction?:
+[ 0 /* horizontal */
+| 1 /* vertical */
+| 2 /* none */ ]
+```
+
+指定阻止特定方向的平台层滑动手势，需配合 [`pan-intercept-scope`](#pan-intercept-scope) 使用。当滑动方向和 `pan-intercept-direction` 一致时，会根据 [`pan-intercept-scope`](#pan-intercept-scope) 来判断是否拦截对应节点上的平台层滑动手势。
+
+比如 `pan-intercept-direction` 设置为 `0` 时，表示滑动方向为水平方向时，会根据[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上距离用户最近的设置了 `pan-intercept-direction` 为 `0` 的节点的 [`pan-intercept-scope`](#pan-intercept-scope) 来判断是否拦截对应节点上的平台层滑动手势。
+
+:::tip
+Android 平台只支持在 `view`、`scroll-view`、`list` 元件上设置生效，并且需要节点创建对应的 Android View，可能需要同时设置 [`flatten`](#flatten) 为 `false` 才能生效。
+:::
+
+### `pan-intercept-scope`
+
+```ts
+// DefaultValue: 6 /* none */
+pan-intercept-scope?:
+[ 0 /* self */
+| 1 /* ancestors */
+| 2 /* descendants */
+| 3 /* self-and-ancestors */
+| 4 /* self-and-descendants */
+| 5 /* all */
+| 6 /* none */ ]
+```
+
+指定阻止特定方向的平台层滑动手势生效的范围，需配合 [`pan-intercept-direction`](#pan-intercept-direction) 使用。比如 `pan-intercept-scope` 设置为 `0` 时，表示仅拦截目标节点上的平台层滑动手势，设置为 `1` 时，表示拦截目标节点的所有祖先节点上的平台层滑动手势。
+
+### `block-native-event`
+
+```ts
+// DefaultValue: false
+block-native-event?: boolean
+```
+
+指定目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上时是否阻止 Lynx 外的平台层手势，可以实现类似阻止平台层侧滑返回的效果。
+
+### `block-native-event-areas`
+
+```ts
+// DefaultValue: []
+block-native-event-areas?: [string, string, string, string][]
+```
+
+指定阻止 Lynx 外平台层手势生效的触摸区域，当目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且触摸在目标节点的指定区域时，平台层手势将被阻止，可以实现类似阻止平台层侧滑返回的效果。
+
+该二维数组内是若干个包含 `4` 个元素的数组，`4` 个元素依次为 `x`、`y`、`width`、`height`，单位为 `px` 或 `%`，表示触摸区域在目标节点中的位置和宽高。
+
+比如 `[['0px', '0px', '50%', '50%'], ['50%', '50%', '50%', '50%']]` 表示触摸在节点的左上和右下区域时，Lynx 外的平台层手势会被阻止。
+
+### `consume-slide-event`
+
+```ts
+// DefaultValue: []
+consume-slide-event?: [number, number][]
+```
+
+指定阻止所有平台层滑动手势生效的角度范围，当目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上并且滑动角度在角度范围内时，所有平台层滑动手势将被阻止，但 Lynx 的触摸事件依旧生效，可以实现消费指定方向滑动的前端滚动容器，此时基于平台层手势的原生滚动会被阻止。
+
+该二维数组是若干个包含 `2` 个元素的数组，`2` 个元素依次为 `start`、`end`，表示起始角度和结束角度，滑动角度由手指按下的位置和手指移动的位置确定。
+
+比如 `[[-180, -135], [-45, 45], [135, 180]]` 表示滑动方向为横向时，所有平台层滑动手势将被阻止，但滑动方向为纵向时，平台层滑动手势可以生效。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/consume_slide_event.jpg"
+  width="70%"
+  height="70%"
+/>
+
+### `event-through`
+
+```ts
+// DefaultValue: false
+event-through?: boolean
+```
+
+指定触摸在目标节点上时 Lynx 是否消费平台层的触摸事件，可以实现类似只展示不交互的效果。
+
+该属性支持继承，即子节点未设置 `event-through` 时，会继承父节点的 `event-through` 值。其生效区域受 [`event-through-active-regions`](#event-through-active-regions) 的影响，未设置时默认为目标节点的所有区域。
+
+:::tip
+该属性设置为 `true` 只能保证 Lynx 不消费平台层的触摸事件，但 Lynx 的父节点可能消费触摸事件导致穿透失效。
+:::
+
+### `event-through-active-regions`
+
+```ts
+// DefaultValue: []
+event-through-active-regions?: [string, string, string, string][]
+```
+
+指定 [`event-through`](#event-through) 的生效区域。
+
+该二维数组内是若干个包含 `4` 个元素的数组，`4` 个元素依次为 `x`、`y`、`width`、`height`，单位为 `px` 或 `%`，表示触摸区域在目标节点中的位置和宽高。
+
+比如 `[['0px', '0px', '50%', '50%']]` 表示触摸在节点的左上区域时，Lynx 不消费平台层的触摸事件。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event-through-active-regions.png"
+  width="100%"
+  height="100%"
+/>
+
+### `enable-touch-pseudo-propagation`
+
+```ts
+// DefaultValue: true
+enable-touch-pseudo-propagation?: boolean
+```
+
+指定目标节点是否支持 `:active` 伪类在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上继续向上冒泡。
+
+### `hit-slop`
+
+```ts
+// DefaultValue: '0px' 或 {top: '0px', left: '0px', right: '0px', bottom: '0px'}
+hit-slop?: object | string
+```
+
+指定目标节点的触摸事件响应热区，不影响平台层手势。
+
+比如 `{top: '10px', left: '10px', right: '10px', bottom: '10px'}` 或 `10px` 表示节点的触摸热区扩大 `10px`。
+
+:::tip
+其他更高优先级的因素可能导致热区修改失效，比如节点的视图层级（[`z-index`](../../css/properties/z-index)、[`translateZ`](../../css/properties/transform)、[`fixed`](../../css/properties/position.mdx#fixed)）比较高、父节点的 [`overflow`](../../css/properties/overflow.mdx) 为 `hidden` 等。
+:::
+
+### `ignore-focus`
+
+```ts
+// DefaultValue: false
+ignore-focus?: boolean
+```
+
+指定触摸在目标节点上时是否不抢占焦点，默认点击在节点上时节点会抢占焦点，可以实现类似点击其他区域时键盘不收起的效果。
+
+该属性支持继承，即子节点未设置 `ignore-focus` 时，会继承父节点的 `ignore-focus` 值。
+
+### `ios-enable-simultaneous-touch` <IOSOnly />
+
+```ts
+// DefaultValue: false
+ios-enable-simultaneous-touch?: boolean
+```
+
+指定目标节点在[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上时是否强制触发 [`touchend`](#touchend) 事件，可以解决部分场景下 iOS 端不触发 [`touchend`](#touchend) 事件但触发 [`touchcancel`](#touchcancel) 事件（[`touchmove`](#touchmove) 事件也没有连续）的问题。
+
+### `__lynx_timing_flag`
+
+```ts
+__lynx_timing_flag?: string;
+```
+
+标记并监控渲染该元件的 [Lynx Pipeline](/guide/spec#lynx-pipeline)。当 Lynx Pipeline 中出现 [`__lynx_timing_flag`](/guide/performance/monitor-performance/timing-flag) 变化，并且该 Lynx Pipeline 触发最终渲染时，将产生 [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 性能事件，可通过 [`PerformanceObserver()`](/api/lynx-api/performance-api/performance-observer) 接收相关性能事件。
+
+`__lynx_timing_flag` 可以设置为任意字符串：
+
+- 设置为 `undefined` 或空字符串时，无作用。
+- 设置为 `__lynx_timing_actual_fmp` 时，可用于统计 `ActualFmp` 指标，会产生 [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry) 性能指标事件和 [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 渲染流水线性能事件。
+- 设置为其他字符串时，监控并产生 [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry) 性能事件。
+
+## 事件
+
+前端可以在元件上设置[事件处理器属性](../../../guide/interaction/event-handling/event-propagation.mdx#事件处理器属性)来监听元件的运行时行为。
+
+### `touchstart`
+
+```ts
+touchstart: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指开始接触触摸平面时触发。
+
+### `touchmove`
+
+```ts
+touchmove: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上移动时触发。
+
+### `touchend`
+
+```ts
+touchend: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指从触摸平面上离开时触发。
+
+### `touchcancel`
+
+```ts
+touchcancel: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，触摸事件被系统或 Lynx 外部手势中断时触发。
+
+### `tap`
+
+```ts
+tap: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上单击时触发。
+
+:::tip
+该事件和 [`longpress`](#longpress) 事件在事件监听上互斥，即前端同时监听两个事件，则两个事件不会同时触发，[`longpress`](#longpress) 优先。
+:::
+
+### `longpress`
+
+```ts
+longpress: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上长按时触发，长按触发的时间间隔为 `500 ms`。
+
+### `click`
+
+```ts
+click: TouchEvent;
+```
+
+属于[触摸事件](../../lynx-api/event/touch-event)，手指在触摸平面上单击时触发。
+
+:::tip
+该事件和 [`tap`](#tap) 事件稍微有区别，主要在于事件的阻断距离阈值和 [target](../../lynx-api/event/event.mdx#target) 不同，具体参考 [click](../../lynx-api/event/touch-event.mdx#click)。
+:::
+
+### `layoutchange`
+
+```ts
+layoutchange: LayoutChangeDetailEvent;
+```
+
+属于[自定义事件](../../lynx-api/event/custom-event)，目标节点排版完成时触发，返回目标节点相对于 LynxView 视口坐标系的位置信息。
+
+### `uiappear`
+
+```ts
+uiappear: UIAppearanceDetailEvent;
+```
+
+属于[自定义事件](../../lynx-api/event/custom-event)，目标节点在屏幕上出现时触发。
+
+### `uidisappear`
+
+```ts
+uidisappear: UIAppearanceDetailEvent;
+```
+
+属于[自定义事件](../../lynx-api/event/custom-event)，目标节点在屏幕上消失时触发。
+
+### `animationstart`
+
+```ts
+animationstart: AnimationEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Animation 动画开始时会触发。
+
+### `animationend`
+
+```ts
+animationend: AnimationEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Animation 动画结束时会触发。
+
+### `animationcancel`
+
+```ts
+animationcancel: AnimationEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Animation 动画取消时会触发。
+
+### `animationiteration`
+
+```ts
+animationiteration: AnimationEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Animation 动画每次循环执行时会触发。
+
+### `transitionstart`
+
+```ts
+transitionstart: TransitionEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Transition 动画开始时触发。
+
+### `transitionend`
+
+```ts
+transitionend: TransitionEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Transition 动画结束时触发。
+
+### `transitioncancel`
+
+```ts
+transitioncancel: TransitionEvent;
+```
+
+属于[动画事件](../../lynx-api/event/animation-event)，在 Transition 动画取消时触发。
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行元件的方法。
+
+### `boundingClientRect`
+
+```tsx
+lynx
+  .createSelectorQuery()
+  .select('#box')
+  .invoke({
+    method: 'boundingClientRect',
+    params: {
+      iOSEnableAnimationProps: false, // 指定 iOS 上计算位置时是否考虑 animation 属性，默认为 false
+      androidEnableTransformProps: true, // 指定 Android 上计算位置时是否考虑 transform 属性，默认为 false
+      relativeTo: null, // 指定参考节点（通过 idSelector 选择节点），默认相对于 LynxView，也可以设置为 "screen" 表示相对于屏幕坐标系
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+  })
+  .exec();
+```
+
+前端可以调用该方法来获取目标节点的宽高和位置信息。
+
+### `takeScreenshot`
+
+```tsx
+lynx
+  .createSelectorQuery()
+  .select('#my-view')
+  .invoke({
+    method: 'takeScreenshot',
+    params: {
+      format: 'jpeg', // 指定图片格式，支持 jpeg、png，默认为 jpeg
+      scale: 0.5, // 指定图片质量，0 < scale <= 1，默认为 1，越小越模糊，体积也越小
+      androidEnablePixelCopy: false, // 指定 Android 上是否用 PixelCopy 方式截图，默认为 false
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (res) {
+      console.log(res.code, res.data);
+    },
+  })
+  .exec();
+```
+
+前端可以调用该方法来获取目标节点的 base64 图片。
+
+:::tip
+该操作会占用主线程耗时，需要注意调用频率。
+
+Android 上使用时需要在对应节点设置 [`flatten`](#flatten) 为 `false`。在 SDK 版本大于等于 3.5 支持 `androidEnablePixelCopy` 用 [PixelCopy](https://developer.android.com/reference/android/view/PixelCopy)方式截图，解决 Video/Surface 场景无法截图的问题。
+:::
+
+### `requestAccessibilityFocus`
+
+```ts
+lynx
+  .createSelectorQuery()
+  .select('#customId')
+  .invoke({
+    method: 'requestAccessibilityFocus',
+    params: {},
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (res) {
+      console.log(res);
+    },
+  })
+  .exec();
+```
+
+前端可以调用该方法将无障碍焦点聚焦到某个无障碍元件。
+
+## 兼容性
+
+<APITable />

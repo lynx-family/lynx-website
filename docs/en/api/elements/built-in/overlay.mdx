@@ -1,0 +1,93 @@
+---
+tag: 'XElement'
+api: elements/overlay
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Deprecated,
+  Go,
+  IOSOnly,
+  Required,
+} from '@lynx';
+
+# `<overlay>`
+
+<APISummary />
+
+`<overlay>` is a container that does not participate in page layout. It occupies no space itself and requires neither width nor height.
+
+When rendered, the content inside `<overlay>` is completely detached from the Lynx document flow and promoted to a rendering layer outside of Lynx.
+
+By default, the only child of `<overlay>` uses the screen dimensions as its width and height. It is recommended to treat it as an independent drawing container for the full overlay content.
+
+:::info
+
+**Use cases**
+
+- When embedding a Lynx sub-module in a native page, use `<overlay>` to build a dialog that covers the entire page.
+- When the page is built entirely with Lynx, **do not** use `<overlay>`; simply use `position: fixed` instead.
+
+:::
+
+## Usage
+
+### Requirements
+
+- `<overlay>` **can only have one direct child node**.
+- `<overlay>` **itself must set `position: fixed`**.
+
+### Recommended Usage
+
+- Use the only child node of `<overlay>` as the backdrop container:
+  - Even if the background is transparent, it is still recommended to render it.
+  - Explicitly set the size: **`width: 100%; height: 100%`**.
+  - Explicitly create an independent stacking context: **`z-index: 0`**.
+
+```tsx
+<overlay class="overlay">
+  <view class="backdrop">
+    // Dialog Content
+    <Dialog class="dialog-content" />
+  </view>
+</overlay>
+```
+
+```css
+.overlay {
+  overflow: visible;
+  position: fixed;
+}
+
+.backdrop {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+```
+
+- To adjust the dialog’s visual size, control it inside the backdrop (e.g. with `margin`) instead of changing the backdrop’s own size.
+
+```css
+.dialog-content {
+  margin: 100px;
+  position: absolute;
+}
+```
+
+<Go
+  example="overlay"
+  defaultFile="src/base/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/overlay.gif"
+  highlight="{19-72}"
+/>
+
+import APIReference from './overlay-API.mdx';
+
+<APIReference />
+
+## Compatibility
+
+<APITable />

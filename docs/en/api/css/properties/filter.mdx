@@ -1,0 +1,98 @@
+---
+title: filter
+api: css/properties/filter
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The `filter` CSS property applies graphical effects like blur or color shift to an element.
+
+:::info
+
+Currently only the `blur`, `grayscale`, `brightness`, `contrast` and `saturate` functions are supported.
+
+If you use `opacity`, you can directly set properties for the view, [link](./opacity.mdx)
+
+Views with the `grayscale` attribute added on Android will create off-screen buffer on the GPU. A large number of off-screen buffer will cause rendering performance to decrease. It is recommended to replace `filter: grayscale(0)` with `filter: none` to remove off-screen caching when grayscale is not needed.
+
+:::
+
+:::info Android blur (OS Version \< 12)
+
+When using blur, you can add `blur-sampling` property (an int value) to the node to set the downsampling ratio to improve performance.
+
+Setting the blur area may cause performance issues if content is updated all the time.
+
+For higher blur efficiency, it is recommended that the actual size of the blur-radius should not exceed 25, that is, the maximum write 25ppx or 25/density px.
+
+:::
+
+## Examples
+
+<Go
+  example="css-api"
+  entry="src/filter"
+  defaultFile="src/filter/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/filter2.0.jpg"
+  defaultEntryFile="dist/filter.lynx.bundle"
+  entry="src/filter"
+/>
+
+## Syntax
+
+```css
+filter: grayscale(100%);
+filter: blur(5px);
+filter: brightness(0.6);
+filter: contrast(0.7);
+filter: saturate(0.8);
+```
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>none</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="yes"
+/>
+
+## Formal Syntax
+
+```
+filter = <filter-function>
+
+<filter-function> =
+  <blur()>         |
+  <grayscale()>    |
+
+<blur()> =
+  blur( <length>? )
+
+<grayscale()> =
+  grayscale( [ <percentage> ]? )
+
+<brightness()> =
+  brightness( [ <number> | <percentage> ]? )
+
+<contrast()> =
+  contrast( [ <number> | <percentage> ]? )
+
+<saturate()> =
+  saturate( [ <number> | <percentage> ]? )
+
+```
+
+## Differences from the Web
+
+- Only one filter function is allowed per declaration
+- Only supports `blur`, `grayscale`, `brightness`, `contrast` and `saturate` functions
+
+## Compatibility
+
+<APITable />

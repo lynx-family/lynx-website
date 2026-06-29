@@ -1,0 +1,47 @@
+import { PackageManagerTabs } from '@theme';
+
+# Valtio
+
+## Using `valtio`
+
+[Valtio](https://valtio.dev/) is a simple and powerful proxy-based state management solution, offering fine-grained subscriptions and reactivity.
+
+### Installation
+
+<PackageManagerTabs command="install valtio" />
+
+### Example
+
+```tsx
+import { useEffect } from '@lynx-js/react';
+import { proxy, useSnapshot, subscribe } from 'valtio';
+
+const state = proxy<{ count: number }>({ count: 0 });
+
+export function App() {
+  const snap = useSnapshot(state);
+
+  const handleTap = () => {
+    state.count++;
+  };
+
+  useEffect(() => {
+    const unsubscribe = subscribe(state, () => {
+      console.log('state changed: ', state.count);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <view>
+      <text>{snap.count}</text>
+      <text bindtap={handleTap}>Tap</text>
+    </view>
+  );
+}
+```
+
+See [valtio - basic](https://valtio.dev/docs/api/basic/proxy) for details.

@@ -1,0 +1,68 @@
+---
+title: observe()
+api: lynx-api/intersection-observer/observe
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# IntersectionObserver: observe() method
+
+<APISummary />
+
+`observe` specifies the target node and callback, and the target node is specified according to `id`.
+
+## grammar
+
+```ts
+observe(selector: string, callback: Function): void;
+```
+
+### Parameters
+
+#### selector
+
+```ts
+selector: string;
+```
+
+Specify the id used when searching for the target node. The `id` will be searched first in the `component` passed in when creating the `IntersectionObserver` object. If not found, the global search will be performed. If the global search is not found, the specification will be invalid.
+
+#### callback
+
+```ts
+callback: (res) => {};
+```
+
+Specify the callback triggered when the intersection status of the target node and the reference node changes.
+The format of the callback parameter `res` is as follows:
+
+```ts
+{
+     "isIntersecting": boolean, // Whether the target node intersects with the reference node
+     "intersectionRatio": number, // The intersection ratio between the target node and the reference node
+     "intersectionRect": object, // The intersection area between the target node and the reference node
+     "boundingClientRect": object, // The intersection area of the target node
+     "relativeRect": object, // The intersection area of the reference node
+     "observerId": string, // The id of the target node
+     "time": number, // timestamp during intersection detection (not implemented, now returns are all 0)
+}
+```
+
+The structures of `intersectionRect`, `boundingClientRect` and `relativeRect` are the same. The coordinate systems are all relative to `LynxView`, that is, the upper left corner of `LynxView` is the origin of the coordinate system, with the horizontal direction to the right being the positive direction of the `x`-axis, and the vertical direction being downwards being the positive direction of the `y`-axis:
+
+```ts
+{
+     "left": number | 0, // left boundary of the intersection area
+     "right": number | 0, // Right boundary of the intersection area
+     "top": number | 0, // The upper boundary of the intersection area
+     "bottom": number | 0, // The lower boundary of the intersection area
+}
+```
+
+### return value
+
+None (`undefined`).
+
+## Compatibility
+
+<APITable />

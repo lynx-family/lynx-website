@@ -1,0 +1,773 @@
+### Integrate Lynx with Existing Apps (Android)
+
+import { Info, CodeFold } from '@lynx';
+import { Steps } from '@theme';
+import { Tab, Tabs } from '@theme';
+import { Link } from '@theme';
+import versionJson from '@site/docs/public/version.json';
+
+<Info title="Lynx for Android">
+  - This article assumes that you are familiar with the basic concepts of native Android application development.
+  - You can refer to the project: <Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link> for all the code mentioned below.
+</Info>
+
+## 1. Dependency configuration
+
+<Steps>
+
+### Configuring Gradle
+
+1. **Lynx**
+
+The core capabilities of [Lynx Engine](/guide/spec.html#engine) include basic capabilities such as parsing [Bundle](/guide/spec.html#lynx-bundle-or-bundle), style parsing, layout, rendering views and the basic code of the javascript runtime that Lynx pages rely on
+
+<Tabs groupId='integrating-lynx-with-existing-app-android-build'>
+<Tab label="build.gradle">
+```groovy title=build.gradle {3-6}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}"
+}
+```
+</Tab>
+<Tab label="build.gradle.kts">
+```groovy title=build.gradle.kts {3-6}
+dependencies {
+    // lynx dependencies
+    implementation("org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}")
+}
+```
+</Tab>
+</Tabs>
+
+2. **Lynx Service**
+
+Lynx Service includes `LynxImageService`, `LynxLogService`, etc. It aims to provide the ability to strongly correlate some host App features, allowing the App to inject custom Services at runtime, or use the default implementation provided by the official.For example, `LynxImageService` is implemented using the [Fresco](https://github.com/facebook/fresco) image library by default. Apps that do not integrate Fresco components can rely on other image libraries, such as [Glide](https://github.com/bumptech/glide) to implement Image Service.
+Lynx provides standard native Image, Log, and Http service capabilities, which can be quickly accessed and used by the access party;
+
+:::note
+Since [Fresco](https://github.com/facebook/fresco) depends on [AndroidX](https://developer.android.com/jetpack/androidx), you also need to configure the following in gradle.properties:
+
+```groovy
+android.useAndroidX=true
+```
+
+:::
+
+<Tabs groupId='integrating-lynx-with-existing-app-android-build'>
+<Tab label="build.gradle">
+<CodeFold height={360} toggle>
+```groovy title=build.gradle {8-24}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}"
+
+    // integrating image-service
+    implementation "org.lynxsdk.lynx:lynx-service-image:{versionJson.LYNX_VERSION}"
+
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation "com.facebook.fresco:fresco:2.3.0"
+    implementation "com.facebook.fresco:animated-gif:2.3.0"
+    implementation "com.facebook.fresco:animated-webp:2.3.0"
+    implementation "com.facebook.fresco:webpsupport:2.3.0"
+    implementation "com.facebook.fresco:animated-base:2.3.0"
+
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+
+    // integrating log-service
+    implementation "org.lynxsdk.lynx:lynx-service-log:{versionJson.LYNX_VERSION}"
+
+    // integrating http-service
+    implementation "org.lynxsdk.lynx:lynx-service-http:{versionJson.LYNX_VERSION}"
+}
+```
+</CodeFold>
+</Tab>
+
+<Tab label="build.gradle.kts">
+<CodeFold height={360} toggle>
+```groovy title=build.gradle.kts {8-24}
+dependencies {
+    // lynx dependencies
+    implementation("org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}")
+
+    // integrating image-service
+    implementation("org.lynxsdk.lynx:lynx-service-image:{versionJson.LYNX_VERSION}")
+
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation("com.facebook.fresco:fresco:2.3.0")
+    implementation("com.facebook.fresco:animated-gif:2.3.0")
+    implementation("com.facebook.fresco:animated-webp:2.3.0")
+    implementation("com.facebook.fresco:webpsupport:2.3.0")
+    implementation("com.facebook.fresco:animated-base:2.3.0")
+
+    // integrating log-service
+    implementation("org.lynxsdk.lynx:lynx-service-log:{versionJson.LYNX_VERSION}")
+
+    // integrating http-service
+    implementation("org.lynxsdk.lynx:lynx-service-http:{versionJson.LYNX_VERSION}")
+
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+}
+```
+</CodeFold>
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### Configure obfuscation rules ([Proguard](https://developer.android.com/build/shrink-code))
+
+The obfuscation rules for` Lynx Engine` are as follows. It is recommended to refer to the latest source code configuration.
+
+<CodeFold height={360} toggle>
+
+```groovy title=proguard-rules.pro
+# LYNX START
+# use @Keep to annotate retained classes.
+-dontwarn android.support.annotation.Keep
+-keep @android.support.annotation.Keep class **
+-keep @android.support.annotation.Keep class ** {
+    @android.support.annotation.Keep <fields>;
+    @android.support.annotation.Keep <methods>;
+}
+-dontwarn androidx.annotation.Keep
+-keep @androidx.annotation.Keep class **
+-keep @androidx.annotation.Keep class ** {
+    @androidx.annotation.Keep <fields>;
+    @androidx.annotation.Keep <methods>;
+}
+# native method call
+-keepclasseswithmembers,includedescriptorclasses class * {
+    native <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.tasm.base.CalledByNative <methods>;
+}
+
+# to customize a module, you need to keep the class name and the method annotated as LynxMethod.
+-keepclasseswithmembers class * {
+    @com.lynx.jsbridge.LynxMethod <methods>;
+}
+
+-keepclassmembers class *  {
+    @com.lynx.tasm.behavior.LynxProp <methods>;
+    @com.lynx.tasm.behavior.LynxPropGroup <methods>;
+    @com.lynx.tasm.behavior.LynxUIMethod <methods>;
+}
+
+-keepclassmembers class com.lynx.tasm.behavior.ui.UIGroup {
+    public boolean needCustomLayout();
+}
+
+# in case R8 compiler may remove mLoader in bytecode.
+# as mLoader is not used in java and passed as a WeakRef in JNI.
+-keepclassmembers class com.lynx.tasm.LynxTemplateRender {
+    private com.lynx.tasm.core.resource.LynxResourceLoader mLoader;
+    private com.lynx.tasm.core.resource.LynxResourceLoader mResourceLoader;
+}
+
+# the automatically generated setter classes use the class names of LynxBaseUI and ShadowNode and their subclasses.
+-keep class com.lynx.tasm.behavior.ui.LynxBaseUI
+-keep class com.lynx.tasm.behavior.shadow.ShadowNode
+-keep class com.lynx.jsbridge.LynxModule { *; }
+-keep class * extends com.lynx.tasm.behavior.ui.LynxBaseUI
+-keep class * extends com.lynx.tasm.behavior.shadow.ShadowNode
+-keep class * extends com.lynx.jsbridge.LynxModule { *; }
+-keep class * extends com.lynx.jsbridge.LynxContextModule
+-keep class * implements com.lynx.tasm.behavior.utils.Settable
+-keep class * implements com.lynx.tasm.behavior.utils.LynxUISetter
+-keep class * implements com.lynx.tasm.behavior.utils.LynxUIMethodInvoker
+-keep class com.lynx.tasm.rendernode.compat.**{
+    *;
+}
+-keep class com.lynx.tasm.rendernode.compat.RenderNodeFactory{
+    *;
+}
+# LYNX END
+```
+
+</CodeFold>
+
+</Steps>
+
+## 2. Environment Initialization
+
+<Steps>
+
+### Lynx Service Initialization
+
+- Lynx Service provides host feature-related capabilities and it is recommended to complete the initialization of Lynx Service during the `Application#onCreate` lifecycle of the application.
+- Lynx Service needs to be actively injected
+
+:::tip
+
+Please specify your custom Application class in the AndroidManifest.xml file, since Lynx needs to perform some global initialization operations when the application starts.
+
+```xml title="/app/src/main/AndroidManifest.xml" {2}
+<application
+  android:name=".YourApplication">
+</application>
+```
+
+:::
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+  <Tab label="Java">
+
+<CodeFold height={360} toggle>
+```java title=YourApplication.java {17,20-30}
+import android.app.Application;
+
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.imagepipeline.core.ImagePipelineConfig;
+import com.facebook.imagepipeline.memory.PoolConfig;
+import com.facebook.imagepipeline.memory.PoolFactory;
+import com.lynx.service.http.LynxHttpService;
+import com.lynx.service.image.LynxImageService;
+import com.lynx.service.log.LynxLogService;
+import com.lynx.tasm.service.LynxServiceCenter;
+
+public class YourApplication extends Application {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        initLynxService();
+    }
+
+    private void initLynxService() {
+        // init Fresco which is needed by LynxImageService
+        final PoolFactory factory = new PoolFactory(PoolConfig.newBuilder().build());
+        ImagePipelineConfig.Builder builder =
+                ImagePipelineConfig.newBuilder(getApplicationContext()).setPoolFactory(factory);
+        Fresco.initialize(getApplicationContext(), builder.build());
+
+        LynxServiceCenter.inst().registerService(LynxImageService.getInstance());
+        LynxServiceCenter.inst().registerService(LynxLogService.INSTANCE);
+        LynxServiceCenter.inst().registerService(LynxHttpService.INSTANCE);
+    }
+}
+```
+</CodeFold>
+
+  </Tab>
+  <Tab label="Kotlin">
+
+<CodeFold height={360} toggle>
+```kotlin title=YourApplication.kt {15,18-27}
+import android.app.Application
+import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.core.ImagePipelineConfig
+import com.facebook.imagepipeline.memory.PoolConfig
+import com.facebook.imagepipeline.memory.PoolFactory
+import com.lynx.service.http.LynxHttpService
+import com.lynx.service.image.LynxImageService
+import com.lynx.service.log.LynxLogService
+import com.lynx.tasm.service.LynxServiceCenter
+
+class YourApplication : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        initLynxService()
+    }
+
+    private fun initLynxService() {
+        // init Fresco which is needed by LynxImageService
+        val factory = PoolFactory(PoolConfig.newBuilder().build())
+        val builder = ImagePipelineConfig.newBuilder(applicationContext).setPoolFactory(factory)
+        Fresco.initialize(applicationContext, builder.build())
+
+        LynxServiceCenter.inst().registerService(LynxImageService.getInstance())
+        LynxServiceCenter.inst().registerService(LynxLogService)
+        LynxServiceCenter.inst().registerService(LynxHttpService)
+    }
+}
+```
+</CodeFold>
+
+  </Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### LynxEnv Initialization
+
+LynxEnv provides the global initialization interface for the Lynx Engine. Please ensure that the initialization of LynxEnv occurs before any interface calls to the Lynx Engine. It is recommended to complete the initialization of LynxEnv during the Application#onCreate lifecycle of the application.
+
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+  <Tab label="Java">
+
+<CodeFold height={360} toggle>
+```java title=YourApplication.java {9,12-19}
+import com.lynx.tasm.LynxEnv;
+
+public class YourApplication extends Application {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        initLynxService();
+        initLynxEnv();
+    }
+
+    private void initLynxEnv() {
+        LynxEnv.inst().init(
+            this,
+            null,
+            null,
+            null
+        );
+    }
+}
+```
+</CodeFold>
+
+</Tab>
+
+  <Tab label="Kotlin">
+
+<CodeFold height={360} toggle>
+```kotlin title=YourApplication.kt {8,11-18}
+import com.lynx.tasm.LynxEnv
+
+class YourApplication : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        initLynxService()
+        initLynxEnv()
+    }
+
+    private fun initLynxEnv() {
+        LynxEnv.inst().init(
+            this,
+            null,
+            null,
+            null
+        )
+    }
+}
+```
+</CodeFold>
+
+</Tab>
+</Tabs>
+
+
+:::tip
+
+The parameters for the LynxEnv initialization method are described as follows:
+- **appContext**: The context object for the application lifecycle, i.e., ApplicationContext.
+- **libraryLoader**: The loader for native so files, the default value can be null, which will use the system default loader.
+- **templateProvider**: The global AppBundle loader, the default value can be null;
+- **behaviorBundle**: The list of custom components, the default value can be null. If there are customization requirements, please refer to [custom-native-component](/guide/custom-native-component)
+
+:::
+
+</Steps>
+
+## 3. Render LynxView
+
+<Steps>
+
+### Create Bundle Loader
+Lynx Engine itself does not have the ability to integrate downloading resources, so the existing app needs to provide the specific implementation of `AbsTemplateProvider`, and inject it when initializing LynxEnv or constructing [LynxView](/guide/spec.html#lynxview). Lynx will use the injected resource loader to obtain the Bundle content
+
+You can use various methods to obtain the contents of the Bundle. Here, we choose to embed the contents of the Bundle within the application.
+
+1. First, please place the Bundle file generated in the [Quick Start](/guide/start/quick-start) stage in the src/main/assets directory, or you can download the file below to your local machine and place it in the same directory:
+
+:::note
+Bundle Example:
+**https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
+:::
+
+```
+app
+└── src
+    └── main
+        ├── java
+        ├── res
+        └── assets
+            └── main.lynx.bundle
+```
+
+2. Impl Bundle Loader
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+<Tab label="Java">
+
+<CodeFold height={360} toggle>
+
+```java title="DemoTemplateProvider.java" {}
+import android.content.Context;
+import com.lynx.tasm.provider.AbsTemplateProvider;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class DemoTemplateProvider extends AbsTemplateProvider {
+    private Context mContext;
+
+    DemoTemplateProvider(Context context) {
+        this.mContext = context.getApplicationContext();
+    }
+
+    @Override
+    public void loadTemplate(String uri, Callback callback) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try (InputStream inputStream = mContext.getAssets().open(uri);
+                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = inputStream.read(buffer)) != -1) {
+                        byteArrayOutputStream.write(buffer, 0, length);
+                    }
+                    callback.onSuccess(byteArrayOutputStream.toByteArray());
+                } catch (IOException e) {
+                    callback.onFailed(e.getMessage());
+                }
+            }
+        }).start();
+    }
+}
+```
+
+</CodeFold>
+
+</Tab>
+<Tab label="Kotlin">
+
+<CodeFold height={360} toggle>
+
+```kotlin title="DemoTemplateProvider.kt" {}
+import android.content.Context
+import com.lynx.tasm.provider.AbsTemplateProvider
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+
+class DemoTemplateProvider(context: Context) : AbsTemplateProvider() {
+
+    private var mContext: Context = context.applicationContext
+
+    override fun loadTemplate(uri: String, callback: Callback) {
+        Thread {
+            try {
+                mContext.assets.open(uri).use { inputStream ->
+                    ByteArrayOutputStream().use { byteArrayOutputStream ->
+                        val buffer = ByteArray(1024)
+                        var length: Int
+                        while ((inputStream.read(buffer).also { length = it }) != -1) {
+                            byteArrayOutputStream.write(buffer, 0, length)
+                        }
+                        callback.onSuccess(byteArrayOutputStream.toByteArray())
+                    }
+                }
+            } catch (e: IOException) {
+                callback.onFailed(e.message)
+            }
+        }.start()
+    }
+}
+```
+
+</CodeFold>
+
+</Tab>
+</Tabs>
+
+### Construct LynxView
+
+`LynxView` is the basic rendering view provided by `Lynx Engine`. `LynxView` inherits from the native Android [View](https://developer.android.com/reference/android/view/View). You can quickly construct a LynxView and add it arbitrarily to the native Android view tree.
+
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+<Tab label="Java">
+```java title=MainActivity.java {12-13,16-20}
+import android.app.Activity;
+import android.os.Bundle;
+
+import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxViewBuilder;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LynxView lynxView = buildLynxView();
+        setContentView(lynxView);
+    }
+
+    private LynxView buildLynxView() {
+        LynxViewBuilder viewBuilder = new LynxViewBuilder();
+        viewBuilder.setTemplateProvider(new DemoTemplateProvider(this));
+        return viewBuilder.build(this);
+    }
+}
+```
+</Tab>
+
+<Tab label="Kotlin">
+```kotlin title=MainActivity.kt {11-12,15-19}
+import android.app.Activity
+import android.os.Bundle
+import com.lynx.tasm.LynxView
+import com.lynx.tasm.LynxViewBuilder
+
+
+class MainActivity : Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val lynxView = buildLynxView()
+        setContentView(lynxView)
+    }
+
+    private fun buildLynxView(): LynxView {
+        val viewBuilder = LynxViewBuilder()
+        viewBuilder.setTemplateProvider(DemoTemplateProvider(this))
+        return viewBuilder.build(this)
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+3. **More Elements**
+
+​​XElement​​ is an extend native elements library maintained by the Lynx team. It provides richer component capabilities, enabling faster adoption of Lynx in production environments and enhancing the vibrancy of the Lynx ecosystem.
+
+<Tabs groupId='integrating-lynx-with-existing-app-android-build'>
+<Tab label="build.gradle">
+<CodeFold height={360} toggle>
+
+```groovy title=build.gradle {20-32}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}"
+    // integrating image-service
+    implementation "org.lynxsdk.lynx:lynx-service-image:{versionJson.LYNX_VERSION}"
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation "com.facebook.fresco:fresco:2.3.0"
+    implementation "com.facebook.fresco:animated-gif:2.3.0"
+    implementation "com.facebook.fresco:animated-webp:2.3.0"
+    implementation "com.facebook.fresco:webpsupport:2.3.0"
+    implementation "com.facebook.fresco:animated-base:2.3.0"
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+    // integrating log-service
+    implementation "org.lynxsdk.lynx:lynx-service-log:{versionJson.LYNX_VERSION}"
+    // integrating http-service
+    implementation "org.lynxsdk.lynx:lynx-service-http:{versionJson.LYNX_VERSION}"
+    // Required when using any XElement.
+    implementation "org.lynxsdk.lynx:xelement:{versionJson.LYNX_VERSION}"
+    // Required when templates use <input> or <textarea>.
+    implementation "org.lynxsdk.lynx:xelement-input:{versionJson.LYNX_VERSION}"
+    // Required when templates use <overlay>.
+    implementation "org.lynxsdk.lynx:xelement-overlay:{versionJson.LYNX_VERSION}"
+    // Required when templates use <svg>; servalsvg provides the SVG renderer.
+    implementation "org.lynxsdk.lynx:xelement-svg:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:servalsvg:0.0.1-alpha.3"
+    // Required when templates use <markdown>; lynxtextra provides native text layout and serval_markdown provides the Markdown renderer.
+    implementation "org.lynxsdk.lynx:lynxtextra:0.1.1"
+    implementation "org.lynxsdk.lynx:serval_markdown:0.1.1"
+}
+```
+
+</CodeFold>
+</Tab>
+
+<Tab label="build.gradle.kts">
+<CodeFold height={360} toggle>
+
+```groovy title=build.gradle.kts {26-38}
+dependencies {
+    // lynx dependencies
+    implementation("org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}")
+
+    // integrating image-service
+    implementation("org.lynxsdk.lynx:lynx-service-image:{versionJson.LYNX_VERSION}")
+
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation("com.facebook.fresco:fresco:2.3.0")
+    implementation("com.facebook.fresco:animated-gif:2.3.0")
+    implementation("com.facebook.fresco:animated-webp:2.3.0")
+    implementation("com.facebook.fresco:webpsupport:2.3.0")
+    implementation("com.facebook.fresco:animated-base:2.3.0")
+
+    // integrating log-service
+    implementation("org.lynxsdk.lynx:lynx-service-log:{versionJson.LYNX_VERSION}")
+
+    // integrating http-service
+    implementation("org.lynxsdk.lynx:lynx-service-http:{versionJson.LYNX_VERSION}")
+
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+
+    // Required when using any XElement.
+    implementation("org.lynxsdk.lynx:xelement:{versionJson.LYNX_VERSION}")
+    // Required when templates use <input> or <textarea>.
+    implementation("org.lynxsdk.lynx:xelement-input:{versionJson.LYNX_VERSION}")
+    // Required when templates use <overlay>.
+    implementation("org.lynxsdk.lynx:xelement-overlay:{versionJson.LYNX_VERSION}")
+    // Required when templates use <svg>; servalsvg provides the SVG renderer.
+    implementation("org.lynxsdk.lynx:xelement-svg:{versionJson.LYNX_VERSION}")
+    implementation("org.lynxsdk.lynx:servalsvg:0.0.1-alpha.3")
+    // Required when templates use <markdown>; lynxtextra provides native text layout and serval_markdown provides the Markdown renderer.
+    implementation("org.lynxsdk.lynx:lynxtextra:0.1.1")
+    implementation("org.lynxsdk.lynx:serval_markdown:0.1.1")
+
+}
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### Introduce XElement
+XElement requires additional importation in the `LynxViewBuilder`:
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+<Tab label="Java">
+
+```java title=MainActivity.java {6,19}
+import android.app.Activity;
+import android.os.Bundle;
+
+import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxViewBuilder;
+import com.lynx.xelement.XElementBehaviors;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LynxView lynxView = buildLynxView();
+        setContentView(lynxView);
+    }
+
+    private LynxView buildLynxView() {
+        LynxViewBuilder viewBuilder = new LynxViewBuilder();
+        viewBuilder.addBehaviors(new XElementBehaviors().create());
+        viewBuilder.setTemplateProvider(new DemoTemplateProvider(this));
+        return viewBuilder.build(this);
+    }
+}
+```
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin title=MainActivity.kt {5,17}
+import android.app.Activity
+import android.os.Bundle
+import com.lynx.tasm.LynxView
+import com.lynx.tasm.LynxViewBuilder
+import com.lynx.xelement.XElementBehaviors
+
+class MainActivity : Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val lynxView = buildLynxView()
+        setContentView(lynxView)
+    }
+
+    private fun buildLynxView(): LynxView {
+        val viewBuilder: LynxViewBuilder = LynxViewBuilder()
+        viewBuilder.addBehaviors(XElementBehaviors().create())
+        viewBuilder.setTemplateProvider(DemoTemplateProvider(this))
+        return viewBuilder.build(this)
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### 4 Render view
+
+After completing the above steps, all the work of initializing LynxView have been completed. Call the `lynxView.renderTemplateUrl` method to render the corresponding Bundle onto the LynxView view.
+
+
+<Tabs groupId='integrating-lynx-with-existing-app-android'>
+<Tab label="Java">
+
+```java title=MainActivity.java {9-10}
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LynxView lynxView = buildLynxView();
+        setContentView(lynxView);
+
+        String url = "main.lynx.bundle";
+        lynxView.renderTemplateUrl(url, "");
+    }
+}
+```
+
+</Tab>
+<Tab label="Kotlin">
+
+```kotlin title=MainActivity.kt {8-9}
+class MainActivity : Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val lynxView = buildLynxView()
+        setContentView(lynxView)
+
+        val uri = "main.lynx.bundle";
+        lynxView.renderTemplateUrl(uri, "")
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+Then you will see the following interface on the screen:
+
+<center>
+  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-android.png" width="200" />
+</center>
+
+</Steps>
+
+Congratulations, you have now completed all the work of rendering the LynxView!
+
+## 4. Now what?
+
+At this stage, you have successfully integrated Lynx into your App. Refer to our [developing](/guide/start/quick-start) and [debugging](/guide/devtool/panels) docs for in-depth insights on working with Lynx.

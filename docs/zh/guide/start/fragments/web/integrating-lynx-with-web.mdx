@@ -1,0 +1,152 @@
+### 将 Lynx 集成到 Web 平台
+
+import { PackageManagerTabs, Steps } from '@theme';
+import { Info } from '@lynx';
+
+<Info title="Lynx for Web">
+  Lynx for Web 在 Web 浏览器中实现了 Lynx 引擎。通过 Lynx for
+  Web，你可以轻松地将 Lynx 应用集成到任何现有的 Web 项目中，无论该项目使用的是
+  React、Vue、Svelte 还是纯 HTML。
+</Info>
+
+## 1. 开发调试
+
+我们需要你已经阅读并按照[快速开始](/guide/start/quick-start)创建了一个 Lynx 项目。
+
+<Steps>
+
+### 添加 web 配置
+
+1. 进入 Lynx 项目：
+
+```bash
+cd <lynx-project-name>
+```
+
+2. `lynx.config.ts` 增加 web 配置（`environments.web`）：
+
+```ts
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [pluginReactLynx()],
+  environments: {
+    web: {},
+    lynx: {},
+  },
+});
+```
+
+### 启动开发服务器
+
+执行：
+
+<PackageManagerTabs command="run dev" />
+
+即可在本地访问开发页面。
+
+### 构建与预览
+
+你也可以使用 Web Explorer 来快速预览生产模式下的某个页面的 web bundle。
+
+首先，执行构建：
+
+<PackageManagerTabs command="run build" />
+
+你将会看到项目中多出了 `dist/main.web.bundle` 文件，它就是最终的 web 构建产物。
+
+打开 [Lynx Explorer Web 版](https://www.unpkg.com/@lynx-js/web-explorer@latest/index.html)，填写你的产物可访问的 URL，即可看到生产模式下的效果。
+
+</Steps>
+
+## 2. 接入 web 项目
+
+目前你已经有了一份 Lynx for Web 构建产物，接下来我们需要创建一个 web 工程去使用它，这里使用 Rsbuild。
+
+<Steps>
+
+### 创建一个 web 项目
+
+在上述的 Lynx 项目**同级**，创建一个新的工程，执行：
+
+<PackageManagerTabs command="create rsbuild@latest" />
+
+跟随提示来创建一个 React 项目。
+
+### 配置工程
+
+1. 进入 Web 项目：
+
+```bash
+cd <web-project-name>
+```
+
+2. 安装依赖：
+
+<PackageManagerTabs command="install @lynx-js/web-core" />
+
+3. 在 `src/App.tsx` 引入这些依赖：
+
+```tsx
+import './App.css';
+import '@lynx-js/web-core/client';
+import type { LynxViewElement as LynxView } from '@lynx-js/web-core/client';
+
+const App = () => {
+  return (
+    <lynx-view
+      style={{ height: '100vh', width: '100vw' }}
+      url="/main.web.bundle"
+    ></lynx-view>
+  );
+};
+
+export default App;
+```
+
+4. 更新 `rsbuild.config.ts`
+
+:::warning
+`server.publicDir` 需要更换为你实际的 Lynx 项目路径。
+:::
+
+```ts
+import { defineConfig } from '@rsbuild/core';
+import { pluginReact } from '@rsbuild/plugin-react';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default defineConfig({
+  plugins: [pluginReact()],
+  server: {
+    publicDir: [
+      {
+        name: path.join(
+          __dirname,
+          '../',
+          // 这里请替换为你实际的 Lynx 项目名称
+          'lynx-project',
+          'dist',
+        ),
+      },
+    ],
+  },
+});
+```
+
+### 启动工程
+
+执行：
+
+<PackageManagerTabs command="run dev" />
+
+访问 `http://localhost:3000` 即能看到你的 Lynx 应用。
+
+</Steps>
+
+## 3. API 参考
+
+更多 API 细节请参阅 [LynxView](/api/lynx-native-api/lynx-view/lynx-view)。

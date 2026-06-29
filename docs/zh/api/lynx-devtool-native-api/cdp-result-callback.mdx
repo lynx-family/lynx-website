@@ -1,0 +1,70 @@
+---
+api: lynx-devtool-native-api/cdp-result-callback
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# CDPResultCallback
+
+<APISummary />
+
+用于接收 [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk) 异步返回结果的回调。
+
+## 语法
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+typedef void (^CDPResultCallback)(NSString *result);
+```
+
+### Android
+
+```java title="CDPResultCallback.java"
+public interface CDPResultCallback {
+  void onResult(String result);
+}
+```
+
+### 参数说明
+
+- `result`: 包含 CDP Method 返回结果的 JSON 字符串。
+
+## 返回数据格式
+
+JSON 格式的字符串。
+
+| 字段   | 类型   | 说明                                                                                                                                     |
+| :----- | :----- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| id     | number | 消息 ID，与 [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk#请求数据格式) 中传入的值一致 |
+| result | object | Method 返回值，请参考 [CDP](https://chromedevtools.github.io/devtools-protocol/)                                                         |
+
+例如，[`DOM.getDocument`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument) 的返回数据如下：
+
+```json
+{
+  "id" : 1,
+  "result" : {
+    "root" : {
+      "attributes" : [],
+      "backendNodeId" : 11,
+      "childNodeCount" : 1,
+      "children" : [
+         ...
+      ],
+      "localName" : "",
+      "nodeId" : 11,
+      "nodeName" : "#document",
+      "nodeType" : 9,
+      "nodeValue" : ""
+   }
+}
+```
+
+## 使用示例
+
+请参考 [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk#使用示例)。
+
+## 兼容性
+
+<APITable />

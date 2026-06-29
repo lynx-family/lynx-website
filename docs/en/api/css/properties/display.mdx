@@ -1,0 +1,106 @@
+---
+title: display
+api: css/properties/display
+---
+
+import { APISummary, APITable, Deprecated, Go } from '@lynx';
+
+<APISummary />
+
+## Introduction
+
+In Lynx, the `display` only determines the internal display type of the element (how to layout the child elements), and does not determine the external display type (whether the element is considered a [block-level element](https://developer.mozilla.org/en-US/docs/Glossary/Block-level_content) or an [inline-level element](https://developer.mozilla.org/en-US/docs/Glossary/Inline-level_content)).
+
+Lynx does not have [flow layout](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_flow_layout) and does not support the `display: block/inline` syntax. All Lynx elements are [block-level element](https://developer.mozilla.org/en-US/docs/Glossary/Block-level_content), except for the elements inside the `<text>` component.
+
+:::info
+[Linear layout](/guide/ui/layout/linear-layout.mdx) is the default layout for elements in Lynx. You can set `defaultDisplayLinear: false` in the project configuration to change the default layout to [flexible box layout].
+:::
+
+## Examples
+
+<Go
+  example="css-api"
+  entry="src/display"
+  defaultFile="src/display/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/display.jpg"
+  defaultEntryFile="dist/display.lynx.bundle"
+  entry="src/display"
+/>
+
+## Syntax
+
+```css
+display: flex;
+display: none;
+display: linear;
+display: relative;
+display: grid;
+```
+
+### Values
+
+- `flex`
+
+  See more in [flexible box layout](/guide/ui/layout/flexible-box-layout.mdx).
+
+- `linear`
+
+  [linear layout](/guide/ui/layout/linear-layout.mdx) is the default Layout model developed by Lynx. It has best **performance** in all types of layout in Lynx.
+
+  :::info
+  `<scroll-view>` is forced to be a linear layout, in which case `<scroll-view>` is formatted as a normal linear view. Both the alignment attribute and [linear-weight](./linear-weight) take effect. And `scroll-x`/`scroll-y` will change the main axis to horizontal and vertical respectively. (The actual conversion is determined by whether to set `scroll-x`/`scroll-y`.)
+  :::
+
+- `none`
+
+  Element and its descents will be resized to 0x0.
+
+  :::info
+  If the parent element of the `<text>` element is set to `display:none` and the `<text>` element is still rendered visible, please add [`overflow:hidden`](./overflow) to the corresponding parent element. We will fix this issue in the future.
+  :::
+
+- `grid`
+
+  Element will layout according to the grid layout layout model.
+
+- `relative`
+
+  Relative layout is a Layout model developed by Lynx.
+
+  Element will layout according to the relative layout model. Relative layout is a layout that displays children in relative positions, where each view's position can be specified relative to sibling elements (for example, to the left or below another view) or relative to the parent's area (e.g. align at bottom, left or center).
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      <code>linear</code>
+    </>
+  }
+  appliesTo={<>all elements</>}
+  inherited="no"
+/>
+
+## Formal syntax
+
+```
+display = none | linear | flex | grid | relative
+```
+
+## Difference with the web
+
+- In Lynx, the `display` only determines the internal display type of the element (how to layout the child elements), and does not determine the external display type (whether the element is considered a [block-level element](https://developer.mozilla.org/en-US/docs/Glossary/Block-level_content) or an [inline-level element](https://developer.mozilla.org/en-US/docs/Glossary/Inline-level_content)).
+- [relative layout](/guide/ui/layout/relative-layout.mdx) and [linear layout](/guide/ui/layout/linear-layout.mdx) are Layout models developed by Lynx.
+- Lynx does not have [flow layout](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_flow_layout) and does not support the `display: block/inline` syntax. All Lynx elements are [block-level element](https://developer.mozilla.org/en-US/docs/Glossary/Block-level_content), except for the elements inside the `<text>` component.
+- `inline-block`, `inline-flex`, `inline-grid` are not supported.
+
+## Compatibility
+
+<APITable />
+
+## FAQ
+
+- `<scroll-view>` is forced to be a linear layout, in which case `<scroll-view>` is formatted as a normal linear view. Both the alignment attribute and [`linear-weight`](./linear-weight) take effect. And `scroll-x`/`scroll-y` will change the main axis to horizontal and vertical respectively. (The actual conversion is determined by whether to set `scroll-x`/`scroll-y`.)

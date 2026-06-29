@@ -1,0 +1,67 @@
+---
+title: invoke()
+api: lynx-api/nodes-ref/invoke
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef: invoke() method
+
+<APISummary />
+
+执行选定元件的方法。
+
+注意 UI 函数是客户端提供的函数，通常直接控制 UI 功能，如播放器的播放或停止。
+不能使用 `invoke` 调用自定义组件的 js 函数。
+
+## 语法
+
+```ts
+invoke(options: Record<string, any>): SelectorQuery;
+```
+
+### 参数
+
+### options
+
+`options` 参数是一个 `Record<string, any>`，包含了元件的方法执行所需的信息。其 key 列表如下：
+
+- `method`
+  - 一个 `string`，调用的元件的方法名
+
+- `params`（可选）
+  - 一个 `Record<string, any>`，调用的元件的方法参数
+
+- `success`（可选）
+
+  -元件的方法执行成功时调用的回调函数，其第一个参数为元件的方法返回的结果
+
+- `fail`（可选）-元件的方法执行失败时调用的回调函数，其第一个参数类型为 `{code: number, data: any}`，内容为元件的方法返回的错误码和错误信息
+  - 如不提供 fail 回调函数，则在元件的方法执行失败时，会产生红屏报错提示
+
+### 返回值
+
+包含了该任务的 `SelectorQuery` 对象。调用 `exec()` 来执行任务。
+
+## 示例
+
+```javascript
+var params = {
+  method: 'seekTo',
+  params: {
+    duration: 1000,
+  },
+  success: function (res) {
+    console.log(res);
+  },
+  fail: function (data) {
+    console.log(data.code, data.data);
+  },
+};
+
+lynx.createSelectorQuery().select('#video').invoke(params).exec();
+```
+
+## 兼容性
+
+<APITable />

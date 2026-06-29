@@ -1,0 +1,125 @@
+---
+tag: BTS
+api: lynx-api/event/GlobalEvent
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# GlobalEvent
+
+<APISummary />
+
+Represents a global event object, which is an array that can be passed between different elements and components, or between the client and the front end.
+
+Developers can listen to this event based on [`GlobalEventEmitter`](../../../guide/interaction/event-handling/event-propagation.mdx#globaleventemitter).
+
+## GlobalEvent Type
+
+### keyboardstatuschanged
+
+Represents the keyboard status change caused by input method focus or user operation.
+
+```json
+[
+  status: ['on', 'off'],    // indicates the status of the keyboard
+  height: number,           // indicates the height of the keyboard, in px
+  compatHeight: number,     // indicates the height of compatible keyboards, in px
+]
+```
+
+**Example:**
+
+```javascript
+// Listen to keyboard status changes
+useLynxGlobalEventListener(
+  'keyboardstatuschanged',
+  (status, height, compatHeight) => {
+    console.log(
+      `status: ${status}, height: ${height}, compatHeight: ${compatHeight}`,
+    );
+  },
+);
+```
+
+### onWindowResize
+
+Indicates the change in Lynx page size due to screen rotation or external typesetting.
+
+```json
+[
+  width?: number,    // indicates the width of the Lynx page after the change, in px
+  height?: number,          // indicates the height of the Lynx page after the change, in px
+]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('onWindowResize', (width, height) => {
+  console.log(`Window resized to: ${width}x${height}px`);
+});
+```
+
+### exposure
+
+Indicates that a node in the exposure data source has generated exposure, that is, the visibility of the node has changed from invisible to visible.
+
+```json
+[
+  {
+    "exposure-id": string,      // exposure-id set on the target node
+    "exposure-scene": string,   // exposure-scene set on the target node
+    "sign": string,             // uid of the target node
+    "dataset": object,          // "data-" field set on the target node
+    //......
+  },
+  //......
+]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('exposure', (exposures) => {
+  // The argument is an Array of exposure items
+  exposures.forEach((item) => {
+    console.log(
+      `Node exposed: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
+```
+
+### disexposure
+
+Indicates that a node in the exposure data source has generated a reverse exposure, that is, the visibility of the node has changed from visible to invisible.
+
+```json
+[
+  {
+    "exposure-id": string,      // exposure-id set on the target node
+    "exposure-scene": string,   // exposure-scene set on the target node
+    "sign": string,             // uid of the target node
+    "dataset": object,          // "data-" field set on the target node
+    //......
+  },
+  //......
+]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('disexposure', (disexposures) => {
+  // The argument is an Array of disexposure items
+  disexposures.forEach((item) => {
+    console.log(
+      `Node hidden: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
+```
+
+## Compatibility
+
+<APITable />

@@ -1,0 +1,864 @@
+import { Steps, Tabs, Tab } from '@theme';
+import { CodeFold } from '@lynx';
+import versionJson from '@site/docs/public/version.json';
+
+### 自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理样式与属性、事件绑定等。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，简要介绍自定义元件的实现流程。
+
+完整实现参见 [LynxExplorer/input 模块](https://github.com/lynx-family/lynx/tree/develop/explorer/android/lynx_explorer/src/main/java/com/lynx/explorer/input)查看。通过编译运行 [LynxExplorer 示例项目](https://github.com/lynx-family/lynx/tree/develop/explorer/android)可实时预览自定义元件效果。
+
+<Steps>
+
+### 集成 LynxProcessor 模块
+
+在`build.gradle(.kts)`文件中添加下面的配置：
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+```java
+compileOnly project('org.lynxsdk.lynx:lynx-processor:{versionJson.LYNX_VERSION}')
+annotationProcessor project('org.lynxsdk.lynx:lynx-processor:{versionJson.LYNX_VERSION}')
+```
+
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
+    id("kotlin-kapt")
+}
+//dependency
+kapt('org.lynxsdk.lynx:lynx-processor:{versionJson.LYNX_VERSION}')
+implementation("androidx.appcompat:appcompat:1.7.0")
+```
+
+</Tab>
+</Tabs>
+
+### 声明并注册元件
+
+#### 声明自定义元件
+
+下面是 `<explorer-input>` 自定义元件的实现，需要继承自 `LynxUI`。
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+```java title="LynxExplorerInput.java"
+
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.ui.LynxUI;
+import androidx.appcompat.widget.AppCompatEditText;
+
+
+public class LynxExplorerInput extends LynxUI<AppCompatEditText> {
+
+  public LynxExplorerInput(LynxContext context) {
+    super(context);
+  }
+  //...
+
+}
+
+
+```
+
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin title="LynxExplorerInput.kt"
+
+import com.lynx.tasm.behavior.LynxContext
+import com.lynx.tasm.behavior.ui.LynxUI
+import androidx.appcompat.widget.AppCompatEditText
+
+
+class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(context) {
+
+   //...
+
+}
+
+```
+
+</Tab>
+</Tabs>
+
+#### 注册自定义元件
+
+元件注册有两种方式：全局注册和局部注册。
+
+##### 全局注册
+
+全局注册的元件可以在多个 `LynxView` 实例中共享。
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+```java
+
+import com.lynx.tasm.LynxEnv;
+import com.lynx.tasm.behavior.Behavior;
+
+LynxEnv.inst().addBehavior(new Behavior("explorer-input"){
+      @Override
+      public LynxExplorerInput createUI(LynxContext context) {
+        return new LynxExplorerInput(context);
+      }
+    });
+
+```
+
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin
+
+import com.lynx.tasm.LynxEnv
+import com.lynx.tasm.behavior.Behavior
+
+LynxEnv.inst().addBehavior(object : Behavior("explorer-input") {
+    override fun createUI(context: LynxContext): LynxExplorerInput {
+        return LynxExplorerInput(context)
+    }
+})
+
+```
+
+</Tab>
+</Tabs>
+
+##### 局部注册
+
+局部注册的元件仅适用于当前 `LynxView` 实例。
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+```java
+
+LynxViewBuilder lynxViewBuilder = new LynxViewBuilder();
+lynxViewBuilder.addBehavior(new Behavior("explorer-input") {
+      @Override
+      public LynxExplorerInput createUI(LynxContext context) {
+        return new LynxExplorerInput(context);
+      }
+    });
+
+```
+
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin
+
+    val lynxViewBuilder = LynxViewBuilder()
+    lynxViewBuilder.addBehavior(object : Behavior("explorer-input") {
+      override fun createUI(context: LynxContext): LynxExplorerInput {
+        return LynxExplorerInput(context)
+      }
+    })
+
+```
+
+</Tab>
+
+</Tabs>
+
+其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元件并创建实例。
+
+### 创建原生 `View` 实例
+
+每个自定义元件都需要实现 `createView` 方法，该方法返回一个与之对应的原生 `View` 实例。
+
+以下是 `<explorer-input>` 元件的实现：
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+```java title="LynxExplorerInput.java" {12-17}
+
+import android.content.Context;
+import androidx.appcompat.widget.AppCompatEditText;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.ui.LynxUI;
+
+public class LynxExplorerInput extends LynxUI<AppCompatEditText> {
+
+  public LynxExplorerInput(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  protected AppCompatEditText createView(Context context) {
+    AppCompatEditText view = new AppCompatEditText(context);
+    //...
+    return view;
+  }
+
+}
+
+
+```
+
+</Tab>
+
+<Tab label="Kotlin">
+
+```kotlin title="LynxExplorerInput.kt" {9-13}
+
+import android.content.Context
+import androidx.appcompat.widget.AppCompatEditText
+import com.lynx.tasm.behavior.LynxContext
+import com.lynx.tasm.behavior.ui.LynxUI
+
+
+class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(context) {
+
+  override fun createView(context: Context): AppCompatEditText {
+    return AppCompatEditText(context).apply {
+      //...
+    }
+  }
+}
+
+```
+
+</Tab>
+
+</Tabs>
+
+### 处理前端更新的样式和属性
+
+你可以使用 `@LynxProp` 注解来监听前端传入的属性变化，并更新原生视图。例如，处理 `<explorer-input>` 元件的 value 属性：
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+<CodeFold toggle height={540}>
+
+```java {4,13-18} title="LynxExplorerInput.java"
+
+import android.content.Context;
+import androidx.appcompat.widget.AppCompatEditText;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.LynxProp;
+import com.lynx.tasm.behavior.ui.LynxUI;
+
+public class LynxExplorerInput extends LynxUI<AppCompatEditText> {
+
+  public LynxExplorerInput(LynxContext context) {
+    super(context);
+  }
+
+  @LynxProp(name = "value")
+  public void setValue(String value) {
+    if (!value.equals(mView.getText().toString())) {
+      mView.setText(value);
+    }
+  }
+
+  @Override
+  protected AppCompatEditText createView(Context context) {
+    AppCompatEditText view = new AppCompatEditText(context);
+    //...
+    return view;
+  }
+
+
+
+}
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Kotlin">
+
+<CodeFold toggle height={540}>
+
+```kotlin {4,15-20} title="LynxExplorerInput.kt"
+
+import android.content.Context
+import androidx.appcompat.widget.AppCompatEditText
+import com.lynx.tasm.behavior.LynxContext
+import com.lynx.tasm.behavior.LynxProp
+import com.lynx.tasm.behavior.ui.LynxUI
+
+class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(context) {
+
+  override fun createView(context: Context): AppCompatEditText {
+    return AppCompatEditText(context).apply {
+      //...
+    }
+  }
+
+  @LynxProp(name = "value")
+  fun setValue(value: String) {
+    if (value != mView.text.toString()) {
+      mView.setText(value)
+    }
+  }
+}
+
+```
+
+</CodeFold>
+
+</Tab>
+
+</Tabs>
+
+### 处理排版信息（可选）
+
+#### 处理 Lynx Engine 的排版结果
+
+通常，Lynx Engine 会自动计算并更新 `View` 的排版信息，无需开发者手动处理。但在某些特殊情况下，例如需要对 `View` 进行额外调整时，
+可以在 `onLayoutUpdated` 回调中获取最新的排版信息，并应用自定义逻辑。
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+<CodeFold toggle height={570}>
+
+```java title="LynxExplorerInput.java" {13-21}
+
+import android.content.Context;
+import androidx.appcompat.widget.AppCompatEditText;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.LynxProp;
+import com.lynx.tasm.behavior.ui.LynxUI;
+
+public class LynxExplorerInput extends LynxUI<AppCompatEditText> {
+
+  public LynxExplorerInput(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  public void onLayoutUpdated() {
+    super.onLayoutUpdated();
+    int paddingTop = mPaddingTop + mBorderTopWidth;
+    int paddingBottom = mPaddingBottom + mBorderBottomWidth;
+    int paddingLeft = mPaddingLeft + mBorderLeftWidth;
+    int paddingRight = mPaddingRight + mBorderRightWidth;
+    mView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+  }
+
+  @Override
+  protected AppCompatEditText createView(Context context) {
+    AppCompatEditText view = new AppCompatEditText(context);
+    //...
+    return view;
+  }
+
+  @LynxProp(name = "value")
+  public void setValue(String value) {
+    if (!value.equals(mView.getText().toString())) {
+      mView.setText(value);
+    }
+  }
+
+}
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Kotlin">
+
+<CodeFold toggle height={570}>
+
+```kotlin title="LynxExplorerInput.kt" {10-17}
+
+import android.content.Context
+import androidx.appcompat.widget.AppCompatEditText
+import com.lynx.tasm.behavior.LynxContext
+import com.lynx.tasm.behavior.LynxProp
+import com.lynx.tasm.behavior.ui.LynxUI
+
+
+class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(context) {
+
+  override fun onLayoutUpdated() {
+    super.onLayoutUpdated()
+    val paddingTop = mPaddingTop + mBorderTopWidth
+    val paddingBottom = mPaddingBottom + mBorderBottomWidth
+    val paddingLeft = mPaddingLeft + mBorderLeftWidth
+    val paddingRight = mPaddingRight + mBorderRightWidth
+    mView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+  }
+
+  override fun createView(context: Context): AppCompatEditText {
+    return AppCompatEditText(context).apply {
+      //...
+    }
+  }
+
+  @LynxProp(name = "value")
+  fun setValue(value: String) {
+    if (value != mView.text.toString()) {
+      mView.setText(value)
+    }
+  }
+}
+
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+</Tabs>
+
+### 处理事件绑定（可选）
+
+在某些场景中，前端可能需要响应自定义元件的事件。例如，当用户在文本框中输入内容时，前端可能需要获取并处理这些输入数据。
+
+以下示例演示了如何实现从 `<explorer-input>` 元件向前端发送文本输入事件，以及前端如何监听该事件。
+
+#### 客户端事件发送
+
+客户端通过监听原生视图的文本输入回调，当文本变更时使用 `getEventEmitter().sendCustomEvent(detail)` 将事件发送到前端，以便前端进行相应的处理。
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+<CodeFold toggle height={850}>
+
+```java title="LynxExplorerInput.java" {2-3,8-10,14-22,27-43}
+import android.content.Context;
+import android.text.Editable;
+import android.text.TextWatcher;
+import androidx.appcompat.widget.AppCompatEditText;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.LynxProp;
+import com.lynx.tasm.behavior.ui.LynxUI;
+import com.lynx.tasm.event.LynxCustomEvent;
+import java.util.HashMap;
+import java.util.Map;
+
+public class LynxExplorerInput extends LynxUI<AppCompatEditText> {
+
+  private void emitEvent(String name, Map<String, Object> value) {
+    LynxCustomEvent detail = new LynxCustomEvent(getSign(), name);
+    if (value != null) {
+      for (Map.Entry<String, Object> entry : value.entrySet()) {
+        detail.addDetail(entry.getKey(), entry.getValue());
+      }
+    }
+    getLynxContext().getEventEmitter().sendCustomEvent(detail);
+  }
+
+  @Override
+  protected AppCompatEditText createView(Context context) {
+    AppCompatEditText view = new AppCompatEditText(context);
+    view.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        emitEvent("input", new HashMap<String, Object>() {
+          {
+            put("value", s.toString());
+          }
+        });
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+    });
+    return view;
+
+  }
+
+  public LynxExplorerInput(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  public void onLayoutUpdated() {
+    super.onLayoutUpdated();
+    int paddingTop = mPaddingTop + mBorderTopWidth;
+    int paddingBottom = mPaddingBottom + mBorderBottomWidth;
+    int paddingLeft = mPaddingLeft + mBorderLeftWidth;
+    int paddingRight = mPaddingRight + mBorderRightWidth;
+    mView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+  }
+
+  @LynxProp(name = "value")
+  public void setValue(String value) {
+    if (!value.equals(mView.getText().toString())) {
+      mView.setText(value);
+    }
+  }
+
+}
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Kotlin">
+
+<CodeFold toggle height={850}>
+
+```kotlin title="LynxExplorerInput.kt" {2-3,8,15-23,27-33}
+
+import android.content.Context
+import android.text.Editable
+import android.text.TextWatcher
+import androidx.appcompat.widget.AppCompatEditText
+import com.lynx.tasm.behavior.LynxContext
+import com.lynx.tasm.behavior.LynxProp
+import com.lynx.tasm.behavior.ui.LynxUI
+import com.lynx.tasm.event.LynxCustomEvent
+
+
+class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(context) {
+
+  override fun createView(context: Context): AppCompatEditText {
+    return AppCompatEditText(context).apply {
+      addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        override fun afterTextChanged(s: Editable?) {
+          emitEvent("input", mapOf("value" to (s?.toString() ?: "")))
+        }
+      })
+    }
+  }
+
+  private fun emitEvent(name: String, value: Map<String, Any>?) {
+    val detail = LynxCustomEvent(sign, name)
+    value?.forEach { (key, v) ->
+      detail.addDetail(key, v)
+    }
+    lynxContext.eventEmitter.sendCustomEvent(detail)
+  }
+
+
+  override fun onLayoutUpdated() {
+    super.onLayoutUpdated()
+    val paddingTop = mPaddingTop + mBorderTopWidth
+    val paddingBottom = mPaddingBottom + mBorderBottomWidth
+    val paddingLeft = mPaddingLeft + mBorderLeftWidth
+    val paddingRight = mPaddingRight + mBorderRightWidth
+    mView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+  }
+
+  @LynxProp(name = "value")
+  fun setValue(value: String) {
+    if (value != mView.text.toString()) {
+      mView.setText(value)
+    }
+  }
+}
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+</Tabs>
+
+#### 前端 DSL 事件绑定
+
+在前端，需要绑定相应的文本框输入事件。通过以下代码，前端将监听客户端发送的事件，并根据需要处理输入的数据。
+
+```jsx title="App.tsx"
+const handleInput = (e) => {
+  const currentValue = e.detail.value.trim();
+  setInputValue(currentValue);
+};
+
+<explorer-input
+  className="input-box"
+  style={{ width: '100px', height: '100px' }}
+  bindinput={handleInput}
+  value={inputValue}
+/>;
+```
+
+> **注意**：前端 DSL 使用 `bindxxx` 进行事件绑定，例如 `bindinput` 绑定 `input` 事件。
+
+### 支持直接操作元件（可选）
+
+在某些情况下，前端可能需要通过命令式 API 直接操作自定义元件，你可以通过 `@LynxUIMethod` 让元件支持这些操作。
+
+#### 前端调用示例
+
+以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `focus` 方法让 `<explorer-input>` 元件获取焦点：
+
+```jsx title="App.tsx"
+lynx
+  .createSelectorQuery()
+  .select('#input-id')
+  .invoke({
+    method: 'focus',
+    params: {},
+    success: function (res) {
+      console.log('lynx', 'request focus success');
+    },
+    fail: function (res) {
+      console.log('lynx', 'request focus fail');
+    },
+  })
+  .exec();
+```
+
+#### 客户端实现
+
+在客户端，需要使用 `@LynxUIMethod` 为自定义元件添加 `focus` 方法，确保它能够正确处理前端的调用，
+
+<Tabs groupId='custom-component-android'>
+
+<Tab label="Java">
+
+<CodeFold toggle height={950}>
+
+```java title="LynxExplorerInput.java" {4,6-7,10-11,20-24,26-37}
+import android.content.Context;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.inputmethod.InputMethodManager;
+import androidx.appcompat.widget.AppCompatEditText;
+import com.lynx.react.bridge.Callback;
+import com.lynx.react.bridge.ReadableMap;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.LynxProp;
+import com.lynx.tasm.behavior.LynxUIMethod;
+import com.lynx.tasm.behavior.LynxUIMethodConstants;
+import com.lynx.tasm.behavior.ui.LynxUI;
+import com.lynx.tasm.event.LynxCustomEvent;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class LynxExplorerInput extends LynxUI<AppCompatEditText> {
+
+  private boolean showSoftInput() {
+    InputMethodManager imm = (InputMethodManager) getLynxContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+    return imm.showSoftInput(mView,
+      InputMethodManager.SHOW_IMPLICIT, null);
+  }
+
+  @LynxUIMethod
+  public void focus(ReadableMap params, Callback callback) {
+    if (mView.requestFocus()) {
+      if (showSoftInput()) {
+        callback.invoke(LynxUIMethodConstants.SUCCESS);
+      } else {
+        callback.invoke(LynxUIMethodConstants.UNKNOWN, "fail to show keyboard");
+      }
+    } else {
+      callback.invoke(LynxUIMethodConstants.UNKNOWN, "fail to focus");
+    }
+  }
+
+
+  private void emitEvent(String name, Map<String, Object> value) {
+    LynxCustomEvent detail = new LynxCustomEvent(getSign(), name);
+    if (value != null) {
+      for (Map.Entry<String, Object> entry : value.entrySet()) {
+        detail.addDetail(entry.getKey(), entry.getValue());
+      }
+    }
+    getLynxContext().getEventEmitter().sendCustomEvent(detail);
+  }
+
+  @Override
+  protected AppCompatEditText createView(Context context) {
+    AppCompatEditText view = new AppCompatEditText(context);
+    view.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        emitEvent("input", new HashMap<String, Object>() {
+          {
+            put("value", s.toString());
+          }
+        });
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+    });
+    return view;
+
+  }
+
+  public LynxExplorerInput(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  public void onLayoutUpdated() {
+    super.onLayoutUpdated();
+    int paddingTop = mPaddingTop + mBorderTopWidth;
+    int paddingBottom = mPaddingBottom + mBorderBottomWidth;
+    int paddingLeft = mPaddingLeft + mBorderLeftWidth;
+    int paddingRight = mPaddingRight + mBorderRightWidth;
+    mView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+  }
+
+  @LynxProp(name = "value")
+  public void setValue(String value) {
+    if (!value.equals(mView.getText().toString())) {
+      mView.setText(value);
+    }
+  }
+
+}
+
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Kotlin">
+
+<CodeFold toggle height={950}>
+
+```kotlin title="LynxExplorerInput.kt" {4,6-7,18-21,23-34}
+
+import android.content.Context
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.widget.AppCompatEditText
+import com.lynx.react.bridge.Callback
+import com.lynx.react.bridge.ReadableMap
+import com.lynx.tasm.behavior.LynxContext
+import com.lynx.tasm.behavior.LynxProp
+import com.lynx.tasm.behavior.LynxUIMethod
+import com.lynx.tasm.behavior.LynxUIMethodConstants
+import com.lynx.tasm.behavior.ui.LynxUI
+import com.lynx.tasm.event.LynxCustomEvent
+
+
+class LynxExplorerInput(context: LynxContext) : LynxUI<AppCompatEditText>(context) {
+
+  private fun showSoftInput(): Boolean {
+    val imm = lynxContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    return imm.showSoftInput(mView, InputMethodManager.SHOW_IMPLICIT, null)
+  }
+
+  @LynxUIMethod
+  fun focus(params: ReadableMap, callback: Callback) {
+    if (mView.requestFocus()) {
+      if (showSoftInput()) {
+        callback.invoke(LynxUIMethodConstants.SUCCESS)
+      } else {
+        callback.invoke(LynxUIMethodConstants.UNKNOWN, "fail to show keyboard")
+      }
+    } else {
+      callback.invoke(LynxUIMethodConstants.UNKNOWN, "fail to focus")
+    }
+  }
+
+  override fun createView(context: Context): AppCompatEditText {
+    return AppCompatEditText(context).apply {
+      addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        override fun afterTextChanged(s: Editable?) {
+          emitEvent("input", mapOf("value" to (s?.toString() ?: "")))
+        }
+      })
+    }
+  }
+
+  private fun emitEvent(name: String, value: Map<String, Any>?) {
+    val detail = LynxCustomEvent(sign, name)
+    value?.forEach { (key, v) ->
+      detail.addDetail(key, v)
+    }
+    lynxContext.eventEmitter.sendCustomEvent(detail)
+  }
+
+  override fun onLayoutUpdated() {
+    super.onLayoutUpdated()
+    val paddingTop = mPaddingTop + mBorderTopWidth
+    val paddingBottom = mPaddingBottom + mBorderBottomWidth
+    val paddingLeft = mPaddingLeft + mBorderLeftWidth
+    val paddingRight = mPaddingRight + mBorderRightWidth
+    mView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+  }
+
+  @LynxProp(name = "value")
+  fun setValue(value: String) {
+    if (value != mView.text.toString()) {
+      mView.setText(value)
+    }
+  }
+}
+
+
+
+```
+
+</CodeFold>
+
+</Tab>
+
+</Tabs>
+
+#### 方法回调返回值
+
+在实现 `focus` 方法时，元件开发者需要向前端返回一个状态码，以表明操作是否成功。例如，前端调用可能会失败，此时应返回相应的错误状态，以便前端在 `fail` 回调进行处理。
+
+Lynx Engine 预定义了一些常见的错误码，元件开发者可以在方法回调中返回相应的状态码：
+
+```java
+enum LynxUIMethodErrorCode {
+  kUIMethodSuccess, // 调用成功
+  kUIMethodUnknown, // 未知错误
+  kUIMethodNodeNotFound, // 无法找到对应的元件
+  kUIMethodMethodNotFound, // 该元件上没有对应的 Method
+  kUIMethodParamInvalid, // 方法参数无效
+  kUIMethodSelectorNotSupported, // 该选择器暂时不支持
+}
+```
+
+</Steps>

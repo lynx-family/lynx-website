@@ -1,0 +1,394 @@
+import { Go } from '@lynx';
+
+# Main Thread Script
+
+The Main Thread Script is a JS script that can be executed on the main thread. The most common use cases for the main thread script are smooth animations and gesture handling. It is primarily used to address the response delay issue in Lynx's multi-threaded architecture, aiming to achieve a near-native interactive experience.
+
+## Event Response Delay in Lynx
+
+Here is a simple animation: a small square that moves in sync with a `scroll-view`. In the small square component, we listen to the scroll event of the `scroll-view`, retrieve the current scroll position from the event parameters, and update its position immediately:
+
+<Go
+  example="main-thread"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/bg-draggable.gif"
+  defaultEntryFile="dist/background-draggable.lynx.bundle"
+  defaultFile="src/background-draggable/BackgroundDraggable.tsx"
+  entry="src/background-draggable"
+/>
+
+You can try scrolling the scroll-view on the left side of the example. The blue square on the right side of the page will follow the scroll-view's movement. However, you might notice that its movement has an unpredictable delay, especially on devices with lower performance. This delay will also increase as the complexity of the page increases.
+
+This is because in Lynx's architecture, events are triggered on the main thread, while regular JS event handlers can only be executed on background threads. Therefore, if you use regular touch events to trigger animations, the event trigger -> event handling -> rendering process will involve multiple thread switches, resulting in untimely responses and animations lagging behind gestures.
+
+![mts-threads-1.png](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/mts-threads-1.png)
+
+The main thread script provides the capability to handle events synchronously on the main thread, ensuring synchronous event responses.
+
+![mts-threads-2.png](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/mts-threads-2.png)
+
+## Use Main Thread Functions to Eliminate Event Response Delay
+
+### Implementing Animations with Main Thread Script
+
+Synchronizing events using main thread script is very simple. Here we try to modify the previous example.
+
+First, we inform the framework that we want to handle this event on the main thread by adding a main-thread namespace to the event attribute name:
+
+```tsx
+<view main-thread:bindscroll={onScroll} />
+```
+
+Since the onScroll function is now a main thread event handler, we also need to declare the event handler as a main thread function.
+This is done by adding a `main thread` directive as the first line inside the function body:
+
+```ts
+let onScroll = (event) => {
+  'main thread';
+  // ...
+};
+```
+
+After declaring it as a main thread function, we can no longer call it from the background thread.
+
+Finally, we can now directly manipulate the element's properties on the main thread, so there's no need to use a state to change the position.
+When using a main thread function as an event handler, the main thread function accepts an `event` parameter that contains basic information about the event.
+The `event.target` and `event.currentTarget` parameters differ from those in regular event handlers;
+they are [`MainThread.Element`] objects.
+This object allows you to conveniently synchronize the retrieval and setting of node properties, such as using `setStyleProperty()` in the example.
+
+```tsx
+let onScroll = (event) => {
+  'main thread';
+  const detail = event.detail.scrollTop;
+  const newPos = {
+    x: 0,
+    y: 500 - detail,
+  };
+  event.currentTarget.setStyleProperty(
+    'transform',
+    `translate(${newPos.x}px, ${newPos.y}px)`,
+  );
+};
+```
+
+That's all the changes needed. We will place the components before and after the modification in the same example for you to compare the effects. You may notice that the animation delay has disappeared!
+
+<Go
+  example="main-thread"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/mt-draggable.gif"
+  defaultEntryFile="dist/main-thread-draggable.lynx.bundle"
+  defaultFile="src/main-thread-draggable/MainThreadDraggable.tsx"
+  entry="src/main-thread-draggable"
+/>
+
+## Retrieving Data from the Background Thread
+
+You may have noticed that designating a function as a main thread function isolates it from its surrounding context, making it feel like an "island."
+Its runtime environment is different from other functions, meaning it cannot freely communicate with the background thread or other main-thread scripts.
+However, we sometimes still need data from the background thread.
+
+Fortunately, obtaining data from the background thread inside a main thread function is straightforward: just use it directly, as if it were a normal function.
+
+```tsx
+export default function App() {
+  const red = 'red';
+
+  function addBackgroundColor(event: MainThread.ITouchEvent) {
+    'main thread';
+    event.currentTarget.setStyleProperty('background-color', red);
+  }
+
+  return (
+    <view main-thread:bindtap={addBackgroundColor}>
+      <text>Hello World!</text>
+      <text>Hello World!</text>
+    </view>
+  );
+}
+```
+
+When the main thread function is defined, it automatically captures external variables from the background thread,
+such as the red variable in the example above.
+However, you cannot directly modify the values in the background thread.
+
+The values captured by the main thread function are not updated in real time.
+Instead, they are synchronized from the background thread to the main thread only after the component containing the main thread function re-renders.
+Additionally, the synchronization requires that the captured values be serializable using `JSON.stringify()`.
+
+To summarize the precautions:
+
+- Main thread functions can and must only run on the main thread. Main thread functions can call each other.
+- Captured variables need to be passed between threads using `JSON.stringify()`, so they must be serializable to JSON.
+- Main thread functions do not support nested definitions.
+- The constructor, getter, and setter of class components do not support being specified as main thread functions.
+- You cannot modify variables captured from the external scope within a main thread function.
+
+## Using `main-thread:ref` to Obtain Node Objects
+
+In the example above, clicking on the text would change the color of both lines of text. If we want to change the color of only the first line of text when clicking on the text, it is not easy to achieve this with just `event.target` and `event.currentTarget`. In this case, you can use `main-thread:ref` to obtain a node object usable on the main thread ([`MainThread.Element`]).
+
+Create a [`MainThreadRef`] using the [`useMainThreadRef()`] Hook, and then assign it to the target node's `main-thread:ref` attribute:
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+export default function App() {
+  const red = 'red';
+  const textRef = useMainThreadRef<MainThread.Element>();
+
+  function addBackgroundColor(event: MainThread.ITouchEvent) {
+    'main thread';
+    textRef.current?.setStyleProperty('background-color', red);
+  }
+
+  return (
+    <view main-thread:bindtap={addBackgroundColor}>
+      <text main-thread:ref={textRef}>Hello World!</text>
+      <text>Hello World!</text>
+    </view>
+  );
+}
+```
+
+Note that the `current` property of [`MainThreadRef`] can only be accessed within a main thread function.
+
+### Passing a Main Thread Function to `main-thread:ref`
+
+Similar to a regular `ref`, you can also pass a main thread function to `main-thread:ref`:
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+export function App() {
+  let eleRef = useMainThreadRef<MainThread.Element>();
+
+  function handleTapMainThread() {
+    'main thread';
+    eleRef.current?.setStyleProperty('height', '30px');
+  }
+
+  return (
+    <view main-thread:bindtap={handleTapMainThread}>
+      <view
+        main-thread:ref={(ele: MainThread.Element) => {
+          'main thread';
+          eleRef.current = ele;
+        }}
+      />
+    </view>
+  );
+}
+```
+
+You can also return a cleanup function in the main thread function passed to `main-thread:ref`, just like when using a regular `ref`.
+
+### Using `main-thread:ref` in Class Components
+
+If you are using traditional class components, you cannot use the [`useMainThreadRef()`] Hook. Instead, you can directly create a [`MainThreadRef`] object:
+
+```tsx
+import { MainThreadRef } from '@lynx-js/react';
+
+class App extends Component {
+  eleRef = new MainThreadRef<MainThread.Element>();
+
+  handleTapMainThread(event: MainThread.ITouchEvent) {
+    'main thread';
+    this.eleRef.current?.setStyleProperty('height', '30px');
+  }
+
+  render() {
+    // ...
+  }
+}
+```
+
+## Maintaining State in Main Thread Functions
+
+Main thread functions cannot modify captured variables. Therefore, if you need to maintain state between main thread functions, you should use [`MainThreadRef`].
+
+For example, changing the background color of a node based on the number of clicks:
+
+```jsx
+import { useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const countRef = useMainThreadRef(0);
+
+  function handleTapMainThread(event: MainThread.ITouchEvent) {
+    'main thread';
+    event.currentTarget.setStyleProperty('background-color', ++countRef.current % 2 ? 'blue' : 'green');
+  }
+
+  return (
+    // ...
+  );
+}
+```
+
+## Cross-Thread Function Calls
+
+The examples so far use `'main thread'` functions as event handlers. But what if you need to call a main thread function from the background thread, or vice versa? ReactLynx provides [`runOnMainThread()`] and [`runOnBackground()`] for bidirectional async communication.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/cross-thread-calls.lynx.bundle"
+  defaultFile="src/cross-thread-calls/App.tsx"
+  entry="src/cross-thread-calls"
+/>
+
+In this example, tapping the box triggers a round trip:
+
+1. **Main Thread** `onTap` fires, calls `runOnBackground(incrementCount)()` to update state
+2. **Background Thread** `useEffect` on `count` fires, calls `runOnMainThread(applyColor)(nextColor)` to change the box color
+
+### Asynchronously Invoking Main Thread Functions from the Background Thread
+
+Use [`runOnMainThread()`] in the background thread to asynchronously execute a main thread function on the main thread:
+
+```jsx
+import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';
+
+function App() {
+  const countRef = useMainThreadRef(0);
+
+  const addCount = (value) => {
+    'main thread';
+    countRef.current += value;
+    return countRef.current;
+  };
+
+  const increaseMainThreadCount = async () => {
+    const result = await runOnMainThread(addCount)(1);
+    console.log(result);
+  };
+}
+```
+
+### Asynchronously Invoking Non-Main Thread Functions from the Main Thread
+
+Use [`runOnBackground()`] on the main thread to asynchronously execute a regular function on the background thread.
+
+```jsx
+import { runOnBackground, useState } from '@lynx-js/react';
+
+function App() {
+  const [current, setCurrent] = useState(0);
+
+  const syncIndexToBackground = runOnBackground((nextIndex) => {
+    setCurrent(nextIndex);
+    return `Current index updated to ${nextIndex}`;
+  });
+
+  const onScrollMainThread = async (event) => {
+    'main thread';
+    const index = Math.round(event.detail.scrollTop / 300);
+    const result = await syncIndexToBackground(index);
+    console.log(result);
+  };
+
+  return (
+    <view>
+      <scroll-view main-thread:bindscroll={onScrollMainThread} />
+      <text>Current index: {current}</text>
+    </view>
+  );
+}
+```
+
+## Cross-thread Shared Modules
+
+By default, main thread functions cannot directly call plain functions that do not have the `'main thread'` directive. This makes code reuse difficult.
+To address this limitation, ReactLynx introduces the `shared-module` mechanism, allowing you to explicitly declare certain modules as shareable between the main thread and the background thread.
+
+Add `with { runtime: 'shared' }` after the `import` statement, and the exported variables (including functions, classes, objects, etc.) in that module can be directly called in main thread functions.
+
+```javascript
+import { func } from './utils.js' with { runtime: 'shared' }; // `func` is a plain function
+
+function mainThreadFunction() {
+  'main thread';
+  func(); // Allows calling plain functions in a main thread function
+}
+```
+
+> [!NOTE]
+> Functions in modules imported with `with { runtime: 'shared' }` can be called by main thread functions, but they are not automatically treated as main thread functions. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.tsx"
+  entry="src/shared-module"
+/>
+
+### Referencing Third-Party Libraries
+
+Usually, third-party libraries (e.g., `motion-dom`) contain plain JavaScript functions. If called directly in a main thread function, they will report an error due to the missing `'main thread'` directive.
+
+We can use the Shared Runtime mechanism to import them as shared modules.
+
+```javascript
+// Import and use directly
+import { animate } from 'motion-dom' with { runtime: 'shared' };
+
+function onScroll() {
+  'main thread';
+  // Can be called directly in a main thread function
+  animate(element, { opacity: 0 });
+}
+```
+
+To facilitate reuse or avoid the [limitations](#limitations) of Shared Runtime (e.g., losing the shared characteristic after assignment), we recommend **wrapping** it in a main thread function:
+
+```ts
+// src/utils/motion.ts
+// 1. Import the original function as shared
+import { animate as _animate } from 'motion-dom' with { runtime: 'shared' };
+
+// 2. Export a new main thread function for encapsulation
+export function animate(...args) {
+  'main thread';
+  return _animate(...args);
+}
+```
+
+In this way, `animate` becomes a standard main thread function that can be freely used in any main thread function, no longer restricted by static analysis.
+
+```ts
+// src/App.tsx
+import { animate } from './utils/motion';
+
+function onTap() {
+  'main thread';
+  // This is a standard main thread function, which can be assigned or passed freely
+  const myAnimate = animate;
+  myAnimate(element, { x: 100 });
+}
+```
+
+### Limitations
+
+Only identifiers identifiers directly imported via `import` are recognized as "shared". Assigning to a new variable will cause it to lose the shared characteristic.
+
+```javascript
+import { func } from './utils.js' with { runtime: 'shared' };
+const anotherFunc = func;
+
+function mainThreadFunction() {
+  'main thread';
+  anotherFunc(); // ❌ Cannot be analyzed at compile time, call fails
+}
+```
+
+### State Isolation
+
+**Variables and states in a Shared Module are completely isolated between the two threads, each possessing independent instances.**
+
+This means that if you modify a variable in a shared module on the main thread, the background thread cannot perceive it, and vice versa. Shared Module only solves the "code sharing" problem, not the "state sharing" problem.
+
+[`MainThread.Element`]: /api/lynx-api/main-thread/main-thread-element.mdx
+[`MainThreadRef`]: /api/react/Class.MainThreadRef.mdx
+[`useMainThreadRef()`]: /api/react/Function.useMainThreadRef.mdx
+[`runOnMainThread()`]: /api/react/Function.runOnMainThread.mdx
+[`runOnBackground()`]: /api/react/Function.runOnBackground.mdx

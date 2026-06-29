@@ -1,0 +1,95 @@
+---
+title: fields()
+api: lynx-api/nodes-ref/fields
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef: fields() method
+
+<APISummary />
+
+Query the attributes of the selected node.
+
+## Syntax
+
+```ts
+fields(fields: Record<string, boolean>, callback: (data: object, status: object) => void): SelectorQuery;
+```
+
+### Parameters
+
+#### fields
+
+A `Record<string, boolean>`, describing whether it is necessary to query the corresponding type of property.
+The range of queryable property types is as follows, and values outside this range will be ignored:
+
+- `attribute` (optional)
+  - Only custom attributes will be returned, attributes such as `id`, `class`, `style`, `dataset` will not be returned.
+  - Attributes with values `null` / `undefined` / `function` will not be returned.
+  - The key of the returned value is in kebab case.
+
+- `class` (optional)
+
+- `dataset` (optional)
+
+- `id` (optional)
+
+- `index` (optional)
+
+- `query` (optional)
+  - The `SelectorQuery` object with this node as the root node
+    - The query performed on this `SelectorQuery` object is limited to this node and its descendant nodes.
+    - Calling `selectRoot()` on this `SelectorQuery` object will return the `NodesRef` object representing this node.
+
+- `tag` (optional)
+
+- `unique_id` (optional)
+
+#### callback
+
+A callback function, the query result will be returned as the parameter of the callback function. The callback function has two parameters:
+
+The first parameter returns the query result.
+
+- If the `NodesRef` represents one single node, it returns a `Record<string, any>` object containing the query result. If the node is not found, it returns `null`.
+- If the `NodesRef` represents multiple nodes, it returns an array of `Record<string, any>` objects, each element in the array corresponds to the query result of a node. If no nodes are found, it returns an empty array.
+
+The second parameter returns the status of the query (error message).
+
+### Return Value
+
+Contains the `SelectorQuery` object for this task. Call `exec()` to execute the task.
+
+## Examples
+
+```javascript
+lynx
+  .createSelectorQuery()
+  .select('#id')
+  .fields(
+    {
+      id: true,
+      dataset: true,
+      tag: true,
+    },
+    (data, status) => {
+      console.log(data, status);
+    },
+  )
+  .exec();
+```
+
+Possible output;
+
+```javascript
+// data
+{"tag":"text","dataset":{"hello":"world"},"id":"my-id"}
+
+// status
+{"data":"success","code":0}
+```
+
+## Compatibility
+
+<APITable />

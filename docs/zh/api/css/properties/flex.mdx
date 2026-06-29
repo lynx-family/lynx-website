@@ -1,0 +1,145 @@
+---
+api: css/properties/flex
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# flex
+
+<APISummary />
+
+## 介绍
+
+`flex` 简写属性设置了弹性项目如何增大或缩小以适应其弹性容器中可用的空间，是 [`flex-grow`](./flex-grow.mdx)，[`flex-shrink`](./flex-shrink.mdx) 和 [`flex-basis`](./flex-basis.mdx) 的简写属性。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/flex/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/flex.jpg"
+  entry="src/flex"
+  defaultEntryFile="dist/flex.lynx.bundle"
+/>
+
+## 语法
+
+```css
+flex: auto;
+flex: none;
+
+/* 单值，无单位数字：flex-grow
+flex-basis 此时等于 0。 */
+flex: 2;
+
+/* 单值，宽度/高度：flex-basis */
+flex: 10em;
+flex: 30px;
+
+/* 双值：flex-grow | flex-basis */
+flex: 1 30px;
+
+/* 双值：flex-grow | flex-shrink */
+flex: 2 2;
+
+/* 三值：flex-grow | flex-shrink | flex-basis */
+flex: 2 2 10%;
+```
+
+可以使用一个，两个或三个值来指定 `flex` 属性。
+
+- **单值语法**：值必须是以下之一：
+  - 一个无单位数 [`<number>`](/api/css/data-type/number.mdx)，它会被当作 [`<flex-grow>`] 的值。此时简写会扩展为 `flex: <flex-grow> 1 0`。
+  - 一个有效的长度 [`<length>`](/api/css/data-type/length.mdx) 值或百分比 [`<percentage>`](/api/css/data-type/percentage.mdx) 或关键字 `auto`，它会被当作 [`<flex-basis>`](./flex-basis.mdx) 的值。此时简写会扩展为 `flex: 1 1 <flex-basis>`。
+
+- **双值语法**：
+  - 第一个值必须是一个 [`<flex-grow>`] 的有效值。
+  - 第二个值必须是以下之一：
+    - 一个无单位数 [`<number>`](/api/css/data-type/number.mdx)，它会被当作 [`<flex-shrink>`](./flex-shrink.mdx) 的值。此时简写会扩展为 `flex: <flex-grow> <flex-shrink> 0`。
+    - 一个有效的长度 [`<length>`](/api/css/data-type/length.mdx) 值或百分比 [`<percentage>`](/api/css/data-type/percentage.mdx) 或关键字 `auto`，它会被当作 [`<flex-basis>`](./flex-basis.mdx) 的值。此时简写会扩展为 `flex: <flex-grow> 1 <flex-basis>`。
+
+- **三值语法**：值必须按照以下顺序指定：
+  - 第一个值必须为一个无单位数 [`<number>`](/api/css/data-type/number.mdx)，它会被当作 [`<flex-grow>`] 的值。
+  - 第二个值必须为一个无单位数 [`<number>`](/api/css/data-type/number.mdx)，它会被当作 [`<flex-shrink>`](./flex-shrink.mdx) 的值。
+  - 第三个值必须为一个有效的长度 [`<length>`](/api/css/data-type/length.mdx) 值或百分比 [`<percentage>`](/api/css/data-type/percentage.mdx) 或关键字 `auto`，它会被当作 [`<flex-basis>`](./flex-basis.mdx) 的值
+
+### 取值
+
+- `0 1 auto`
+
+  **默认值**。元件会根据自身宽高设置尺寸。它会缩短自身以适应 `flex` 容器，但不会伸长并吸收 `flex` 容器中的额外自由空间来适应 `flex` 容器。
+
+- `auto`
+
+  元件会根据自身的宽度与高度来确定尺寸，但是会伸长并吸收 `flex` 容器中额外的自由空间，也会缩短自身来适应 `flex` 容器。这相当于将属性设置为 "`flex: 1 1 auto`"。
+
+- `none`
+
+  元件会根据自身宽高来设置尺寸。它是完全非弹性的：既不会缩短，也不会伸长来适应 `flex` 容器。相当于将属性设置为 "`flex: 0 0 auto`"。
+
+- `<flex-grow>`
+
+  定义 `flex` 项的 [`flex-grow`] 属性。负值无效。省略时默认值为 `0`。
+
+- `<flex-shrink>`
+
+  定义 `flex` 项的 [`flex-shrink`](./flex-shrink.mdx) 属性。负值无效。省略时默认值为 `1`。
+
+- `<flex-basis>`
+
+  定义 `flex` 项的 [`flex-basis`](./flex-basis.mdx) 属性。若值为 `0`，则必须加上单位，以免被视作伸缩性。省略时默认值为 `auto`。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      as each of the properties of the shorthand: <br />
+      <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem' }}>
+        <li>
+          <code>flex-grow: 0</code>
+        </li>
+        <li>
+          <code>flex-shrink: 1</code>
+        </li>
+        <li>
+          <code>flex-basis: auto</code>
+        </li>
+      </ul>
+    </>
+  }
+  appliesTo={<>flex items</>}
+  inherited="no"
+/>
+
+## 形式语法
+
+```
+flex =
+  none                                                |
+  [ <'flex-grow'> <'flex-shrink'>? || <'flex-basis'> ]
+
+<flex-grow> =
+  <number [0,∞]>
+
+<flex-shrink> =
+  <number [0,∞]>
+
+<flex-basis> = <'width'>
+
+<width> =
+  auto                                      |
+  <length-percentage [0,∞]>                 |
+  max-content                               |
+  fit-content( <length-percentage [0,∞]> )
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+```
+
+## 兼容性
+
+<APITable />

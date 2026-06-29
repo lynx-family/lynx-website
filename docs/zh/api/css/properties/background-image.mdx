@@ -1,0 +1,140 @@
+---
+api: css/properties/background-image
+---
+
+import { APISummary, APITable, AndroidOnly, Go } from '@lynx';
+
+# background-image
+
+<APISummary />
+
+## 介绍
+
+`background-image` 属性用于为一个元件设置一个或多个背景图像。<br />
+在绘制的时候，图像以 z 方向堆叠的方式进行。先指定的图像会在之后指定的图像上面绘制。因此指定的第一个图像 "最接近用户"。<br />
+元件的边框 [border](./border.mdx) 会在他们之上被绘制，而 [`background-color`](./background-color.mdx) 会在它们之下绘制。图像的绘制与元件边界和边框 (_border_) 之间的关系，需要在 CSS 属性 [`background-clip`](./background-clip.mdx) 和 [`background-origin`](./background-origin.mdx) 中定义。<br />
+如果一个指定的图像无法被绘制 (例如：被指定的 URL 所对应的资源无法被加载)，绘制时会等同于其值被设置为 `none`。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/background-image/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background-image.jpg"
+  defaultEntryFile="dist/background-image.lynx.bundle"
+  entry="src/background-image"
+/>
+
+## 语法
+
+```css
+background-image:
+  linear-gradient(to bottom, rgba(255, 255, 0, 0.5), rgba(0, 0, 255, 0.5)),
+  url('https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/catfront.png');
+```
+
+### 取值
+
+每个背景图像被明确规定为关键字 `none` 或者一个 `<image>`。<br />
+可以提供由逗号分隔的多个值来指定多个背景图像:
+
+- `none`
+  是一个表示无背景图的关键字。
+
+- `<image>`
+  用来标记将要显示的图片，支持多个背景叠加，背景之间以逗号隔开。
+  background-image 支持的图片格式与 image 一致，支持 jpg、png、gif、webp 等，参考[图片支持格式](/api/elements/built-in/image.html#%E5%9B%BE%E7%89%87%E6%A0%BC%E5%BC%8F)
+
+## 事件介绍
+
+| 事件名称      | 类型     | 必填 | 说明                 |
+| ------------- | -------- | ---- | -------------------- |
+| `bindbgload`  | function | 否   | 监听背景图片加载成功 |
+| `bindbgerror` | function | 否   | 监听背景图片加载失败 |
+
+## 关联 view 属性介绍
+
+| 属性名称                        | 类型    | 默认值 | 示例 | 必填 | 说明                                                                                                       |
+| ------------------------------- | ------- | ------ | ---- | ---- | ---------------------------------------------------------------------------------------------------------- |
+| <AndroidOnly/> skip-redirection | boolean | false  | true | 否   | background-image使用`<url()>`且是cdn图片时才需要设置，当设置为true时可以跳过容器重定向的逻辑，优化相关耗时 |
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>none</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+background-image = <bg-image>#
+
+<bg-image> = none | <image>
+
+<image> = <url()> | <gradient>
+
+<url()> = url(<string>)
+
+<gradient> = <linear-gradient()> | <radial-gradient()> | <conic-gradient()>
+
+<linear-gradient()> =
+  linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )
+
+<radial-gradient()> =
+  radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )
+
+<conic-gradient()> =
+  conic-gradient( [ from [ <angle> | <zero> ] ]? [ at <position> ]? , <color-stop-list> )
+
+<side-or-corner> =
+  [ left | right ] || [ top | bottom ]
+
+<ending-shape> =
+  circle | ellipse
+
+<size> =
+  closest-side       |
+  farthest-side      |
+  closest-corner     |
+  farthest-corner    |
+  <length>           |
+  <length-percentage>{2}
+
+<position> =
+  [ left | center | right ] || [ top | center | bottom ]                            |
+  [ left | center | right | <length-percentage> ]
+    [ top | center | bottom | <length-percentage> ]?                                |
+  [ [ left | right ] <length-percentage> ] &&
+    [ [ top | bottom ] <length-percentage> ]
+
+<color-stop-list> = <linear-color-stop> ( ',' <linear-color-stop> )*
+
+<linear-color-stop> = <color>
+
+<length-percentage> = <length> | <percentage>
+
+```
+
+## 与 Web 的区别
+
+- `<image>`
+  只支持 `<url()>` 和 `<gradient>` 两种方式。
+
+- `<gradient>`
+  目前支持 `linear-gradient`，`radial-gradient` 和 `conic-gradient`（3.6 版本开始支持）。
+
+- `<linear-color-stop>`
+  不支持 [`linear-color-hint`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/background-image#linear-color-hint)
+
+  不支持 [`color-interpolation-method`](https://www.w3.org/TR/css-images-4/#linear-gradients)
+
+  不支持通过 [`<length>`](/api/css/data-type/length) 设置位置
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,88 @@
+---
+title: createIntersectionObserver()
+api: lynx-api/lynx/createIntersectionObserver
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: createIntersectionObserver() static method
+
+<APISummary />
+
+The `lynx.createIntersectionObserver` method can be used to create an `IntersectionObserver` object. The object behavior can be customized by passing in parameters. Once the object is created, it cannot be modified.
+
+## grammar
+
+```ts
+lynx.createIntersectionObserver(
+   component: BaseInstance,
+   options ? options : {
+     thresholds : [0],
+     initialRatio: 0,
+     observeAll : false,
+   }
+): IntersectionObserver;
+```
+
+### Parameters
+
+#### component
+
+```ts
+component: BaseInstance;
+```
+
+For front-end custom `component` or `card` instances, the target node and reference node are searched first in this `component`. If not found, the global search is performed.
+
+#### options
+
+```ts
+options
+  ? options
+  : {
+      thresholds: [0],
+      initialRatio: 0,
+      observeAll: false,
+    };
+```
+
+Specify the behavior of `IntersectionObserver` objects:
+
+- `thresholds`: The valid range of each array element is `[0, 1]`, specifying a threshold list for intersection state changes. When the intersection ratio of the target node and the reference node passes one of the thresholds, a callback is triggered, and the old intersection ratio is represented. and the new intersection ratio is on either side of the threshold or the intersection ratio is equal to the threshold
+- `initialRatio`: The valid range is `[0, 1]`, which specifies the threshold for triggering the callback when detected for the first time. The callback is triggered when the intersection ratio of the first detection is greater than the threshold.
+- `observeAll`: Specify whether to observe multiple target nodes at the same time
+
+### return value
+
+[IntersectionObserver object](../intersection-observer.mdx).
+
+## Example
+
+You can observe changes in the intersection status of the target node and the reference node through the following three steps:
+
+1. Create an `IntersectionObserver` object and specify a threshold list for intersection state changes
+2. Call the `relativeTo*` method of the `IntersectionObserver` object to specify the reference node
+3. Call the `observe` method of the `IntersectionObserver` object to specify the target node and callback
+4. Call the `disconnect` method of the `IntersectionObserver` object to clear the target node and callback
+
+```tsx
+// 1. Create IntersectionObserver object
+const observer = lynx.createIntersectionObserver(this, {
+  thresholds: [0, 0.25, 0.5, 0.75, 1.0],
+});
+
+// 2. Call the relativeTo method to specify the reference node
+observer.relativeTo('#refNode', { left: 10, right: 10 });
+
+// 3. Call the observer method to specify the target node and callback
+observer.observe('#targetNode', (res) => {
+  console.log('IntersectionObserver: ', JSON.stringify(res));
+});
+
+// 4. Call the disconnect method to clear the target node and callback
+observer.disconnect();
+```
+
+## Compatibility
+
+<APITable />

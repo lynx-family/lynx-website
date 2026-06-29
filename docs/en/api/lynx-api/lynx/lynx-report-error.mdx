@@ -1,0 +1,122 @@
+---
+title: reportError()
+api: lynx-api/lynx/reportError
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: reportError() static method
+
+<APISummary />
+
+The `lynx.reportError` method is used to manually report an error from JavaScript.
+
+## Syntax
+
+```ts
+reportError(error: string | Error, options?: {level: 'warning' | 'error' | 'fatal'}): void;
+```
+
+### Parameters
+
+#### error
+
+`lynx.reportError` the first arg can receive a string or a JavaScript Error object. The second arg can receive an object with a `level` property,where `level` indicates the level of the error, with the `fatal` level interrupting the execution environment to prevent further chaining of errors.
+
+If a string is passed, `reportError` will construct an error object with `JSON.stringify(error)` as the message.
+
+Which means
+
+```js
+lynx.reportError('foo');
+```
+
+is equivalent with
+
+```js
+lynx.reportError(new Error('foo'));
+```
+
+### Return Value
+
+None (`undefined`).
+
+## Examples
+
+```tsx
+try {
+  const { data } = JSON.parse(content);
+} catch (error) {
+  lynx.reportError(error);
+}
+```
+
+### Async error with original stack
+
+A common use case is when an exception occurs in an asynchronous callback:
+
+```javascript
+import fetch from '@fetch';
+
+export function getData(params) {
+  return new Promise((resolve, reject) => {
+    fetch(
+      {
+        url: HOST,
+        method: 'GET',
+        params,
+      },
+      function cb(res) {
+        if (res?.status_code === 0) {
+          lynx.reportError('fetch error: ' + res?.status_code);
+          reject(res);
+        } else {
+          resolve(res);
+        }
+      },
+    );
+  });
+}
+```
+
+But this will result in an error stack like this:
+
+```
+at Lynx.reportError (file://shared/lynx_core.js:9821:48)
+at cb (file://view/app-service.js:284:27)
+```
+
+This first frame points to the `lynx.reportError` method and the second frame points to the callback passed to `fetch`. No more information could be found from the error stack. We could never know who calls the `getData` method from the reported error stack.
+
+This is because Lynx uses polyfilled `Promise` and does not track asynchronous call stacks.
+To get a readable error stack, we could construct an error object before entering asynchronous process.
+
+```javascript
+import fetch from '@fetch';
+
+export function getData(params) {
+  const error = new Error(); // construct the error synchronously
+  return new Promise((resolve, reject) => {
+    fetch(
+      {
+        url: 'HOST',
+        method: 'GET',
+        params,
+      },
+      (res) => {
+        if (res?.status_code === 0) {
+          error.message = 'fetch error: ' + res?.status_code;
+          lynx.reportError(error);
+          reject(res);
+        } else {
+          resolve(res);
+        }
+      },
+    );
+  });
+}
+```
+
+## Compatibility
+
+<APITable />

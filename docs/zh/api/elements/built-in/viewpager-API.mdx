@@ -1,0 +1,217 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  ClayWindowsOnly,
+  ClayMacOSOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## 属性
+
+### `android-always-overscroll`
+
+<AndroidOnly />
+
+```tsx
+// @默认值: false
+'android-always-overscroll'?: boolean;
+```
+
+在 Android 系统中，此属性用于控制滚动到边缘时的交互行为。将其设置为 true 可启用默认的回弹效果，设置为 false 则禁用回弹效果。默认值为 false。
+
+### `android-force-can-scroll`
+
+<AndroidOnly /> <VersionBadge>3.0</VersionBadge>
+
+```tsx
+// @默认值: false
+'android-force-can-scroll'?: boolean;
+```
+
+在 Android 系统中，此属性用于控制当处于 ViewPager 起始/结束位置且设置为 true 时，手势不会传递给父容器。
+
+### `bounces`
+
+<IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @默认值: true
+bounces?: boolean;
+```
+
+是否需要弹簧效果。请注意，此效果在 Android 系统上不可用。在 PC 上，仅 macOS 支持此功能。
+
+### `enable-scroll`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
+
+```tsx
+// @默认值: true
+'enable-scroll'?: boolean;
+```
+
+启用水平滚动手势
+
+### `initial-select-index`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
+
+```tsx
+// @默认值: 0
+'initial-select-index'?: number;
+```
+
+在初始化时选择指定页面，具体指首次有子项时。
+
+### `ios-gesture-direction`
+
+<IOSOnly />
+
+```tsx
+// @默认值: false
+'ios-gesture-direction'?: boolean;
+```
+
+启用后，当滑动到头部或尾部时，可响应外部容器（水平 UIScrollView）的水平滑动事件。
+
+### `ios-gesture-offset`
+
+<IOSOnly />
+
+```tsx
+// @默认值: 0
+'ios-gesture-offset'?: number;
+```
+
+当手指在距离屏幕左边缘 [0, 值] 范围内触摸时，不响应水平滑动手势，但可直接响应 iOS 右滑返回手势。不过，此功能不适用于 Android。
+
+### `ios-recognized-gesture-class`
+
+<IOSOnly />
+
+```tsx
+'ios-recognized-gesture-class'?: string;
+```
+
+UIGestureRecognizer 的类名，用于识别可能与 ViewPager 同时识别的 UIGestureRecognizer。此属性旨在让 UIPanGesture 与 ViewPager 协同工作。
+
+### `ios-recognized-view-tag`
+
+<IOSOnly />
+
+```tsx
+// @默认值: 0
+'ios-recognized-view-tag'?: number;
+```
+
+UIView 的标签，用于识别由 `ios-recognized-gesture-class` 识别的 UIGestureRecognizer 对应的 UIView。此属性旨在让 UIPanGesture 与 ViewPager 协同工作。
+
+### `keep-item-view`
+
+<AndroidOnly /> <IOSOnly />
+
+```tsx
+// @默认值: false
+'keep-item-view'?: boolean;
+```
+
+是否启用基于提前曝光的懒加载模式，需要与 lazyComponent 配合使用。
+
+## 事件
+
+前端可以绑定相应的事件回调来监听元素的运行时行为，如下所示。
+
+### `bindchange`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindchange = (e: ViewPagerChangeEvent) => {};
+```
+
+| 字段      | 类型   | 是否可选 | 默认值 | 平台                                                                                       | 版本 | 描述                         |
+| --------- | ------ | -------- | ------ | ------------------------------------------------------------------------------------------ | ---- | ---------------------------- |
+| index     | 数字   | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />                                   |      | 当前索引                     |
+| isDragged | 布尔值 | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.18</VersionBadge> | 2.18 | 此更改事件是否由用户拖动引起 |
+
+页面切换事件，只有当 UI 完全切换到下一页（从 100% 到 200%）时才会触发。
+
+### `bindoffsetchange`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindoffsetchange = (e: ViewPagerOffsetChangeEvent) => {};
+```
+
+| 字段   | 类型 | 是否可选 | 默认值 | 平台                                                     | 版本 | 描述       |
+| ------ | ---- | -------- | ------ | -------------------------------------------------------- | ---- | ---------- |
+| offset | 数字 | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |      | 滚动偏移量 |
+
+页面切换进度回调，范围是每个页面的索引，例如，从第 0 页到第 1 页，范围是 0~1，从第一页到第二页，范围是 1~2。
+
+### `bindwillchange`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
+
+```tsx
+bindwillchange = (e: ViewPagerWillChangeEvent) => {};
+```
+
+| 字段      | 类型   | 是否可选 | 默认值 | 平台                                                                                       | 版本 | 描述                         |
+| --------- | ------ | -------- | ------ | ------------------------------------------------------------------------------------------ | ---- | ---------------------------- |
+| index     | 数字   | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />                                   |      | 当前索引                     |
+| isDragged | 布尔值 | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.18</VersionBadge> | 2.18 | 此更改事件是否由用户拖动引起 |
+
+页面即将切换事件。
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
+
+### `selectTab`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+.select('#id')
+.invoke({
+method: 'selectTab',
+params: {
+/**
+_ 要滚动到的索引。
+_ @Android
+_ @iOS
+_ @Harmony
+_ @PC
+_/
+index: number;
+/**
+_ 是否需要动画效果。默认设置为 true。
+_ @Android
+_ @iOS
+_ @Harmony
+_ @PC
+_/
+smooth: boolean;
+};
+success: function (res) {},
+fail: function (res) {},
+})
+.exec();
+
+```
+
+滑动到指定页面。
+
+```

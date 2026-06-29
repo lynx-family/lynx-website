@@ -1,0 +1,72 @@
+.blogHeader {
+  margin-bottom: 1rem;
+
+  :global(.rp-llms-container) {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Override BlogAvatar's default margins inside the header */
+.avatars {
+  margin-top: 0 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/*
+ * Position the back link above the <h1> without converting .rp-doc to a
+ * flex container (which would break margin collapsing between <p> tags).
+ * We add top padding to .rp-doc for the back link, then absolutely
+ * position the link in that space.
+ */
+:global(.rp-doc):has(.blogHeader) {
+  position: relative;
+  padding-top: 2.5rem;
+}
+
+.backLink {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  font-size: 0.875rem;
+  color: var(--rp-c-text-2);
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--rp-c-brand);
+  }
+}
+
+.date {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--rp-c-text-2);
+  margin-bottom: 1rem;
+}
+
+/*
+ * Hide the auto-injected LLM "Copy Markdown" button that Rspress places
+ * between <h1> and BlogHeader. We re-render the same components inside
+ * BlogHeader so the button appears after the author avatars instead.
+ */
+
+:global(.rp-llms-container):has(+ .backLink) {
+  display: none;
+}
+
+/*
+ * Tighten spacing on blog pages: reduce H1's default 2rem bottom margin
+ * so the date text sits closer to the title.
+ */
+:global(.rp-doc):has(.blogHeader) > :global(h1) {
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+  :global(.rp-doc):has(.blogHeader) > :global(h1) {
+    font-size: 2.5rem;
+  }
+}

@@ -1,0 +1,247 @@
+import { APISummary, APITable, Go, Tip } from '@lynx';
+
+# 自定义属性（`--*`）：CSS 变量
+
+<APISummary />
+
+## 介绍
+
+自定义属性标记设定值 (比如: `--main-color: black`), 由 `var()` 函数来获取值 (比如: `color: var(--main-color)`); 自定义属性在某个地方定义值，然后在其他地方引用它。
+
+## 使用示例
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-var-theme.gif"
+  example="css"
+  defaultFile="src/css_variable_theme/index.tsx"
+  defaultEntryFile="dist/css_variable_theme.lynx.bundle"
+  entry="src/css_variable_theme"
+  highlight="{23-43}"
+></Go>
+
+## 语法
+
+```css
+/* 声明 CSS 变量*/
+--somekeyword: left;
+--somecolor: #0000ff;
+
+/* 引用 CSS 变量 */
+background: var(--somecolor);
+```
+
+## 基本用法
+
+### 声明
+
+CSS 变量是一个名称以两个连字符 (`-`) 开头的属性，如 `--foo`。定义之后可以使用 `var()` 引用的变量。
+
+你可以在选择器中声明一个 CSS 变量：
+
+```css
+:root {
+  --main-bg-color: yellow; /* [!code highlight] */
+}
+
+.two {
+  --main-height: 200px; /* [!code highlight] */
+  color: white;
+  background-color: black;
+  width: 100%;
+  height: 100%;
+}
+```
+
+也可以在内联样式中定义 CSS 变量{/* enable hints */}：
+
+```tsx
+<view
+  style={{
+    '--main-bg-color': 'yellow', // [!code highlight]
+    '--main-height': '200px', // [!code highlight]
+    color: 'white',
+    width: '100%',
+  }}
+/>
+```
+
+:::info
+CSS Variable 可以定义在 `:root` 选择器中表示可以对全局生效，也可以定义在单独的选择器中表示对应用的元件及其子元件生效。
+:::
+
+### 引用 CSS 变量
+
+可以在选择器中的引用 CSS 变量对属性进行赋值：
+
+```css
+.three {
+  /* --main-bg-color: blue; */
+  color: white;
+  background-color: var(--main-bg-color); /* [!code highlight] */
+  width: 50%;
+  border: 1px blue solid;
+}
+```
+
+也可以在内联样式中引用 CSS 变量对属性进行赋值{/* enable hints */}：
+
+```tsx
+<view
+  style={{
+    color: 'var(--main-bg-color)', // [!code highlight]
+    width: '100%',
+  }}
+/>
+```
+
+你也可以通过引用一个 CSS 变量来对另外的 CSS 变量赋值，以在选择器中为例：
+
+```css
+.nested-variables {
+  --first-var: blue;
+
+  /* 嵌套引用 */
+  --nested-reference: var(--first-var); /* [!code highlight] */
+}
+```
+
+#### 默认值
+
+当 CSS 变量无法查找到已定义的 CSS 变量值时，可以使用预先设置的默认值：
+
+```css
+.two {
+  width: var(--view-width, 100px);
+}
+```
+
+:::info
+`var()` 函数第一个逗号以后得部分作为整体返回，用作 `var()` 的备用值。
+:::
+
+#### 搭配 Calc 表达式
+
+在 CSS Variable 声明中，属性值不能直接进行数学运算，需要借助 `calc()` 函数，类似：
+
+```css
+.four {
+  background-color: var(--main-bg-color);
+  width: 25%;
+  height: calc(var(--main-height) - 100px);
+}
+```
+
+#### CSS Variable 作用域
+
+跟普通属性一样，CSS 变量的继承，优先级同样遵循 CSS 级联规则。一个元件上没有定义 CSS 变量，该变量的值会继承其父元件。按照层叠关系向上查找。最终查找到根元件，也即前面例子中用到的: root 选择器所定义的变量。因此，变量的作用域就是它所在的选择器的有效范围。
+
+:::info
+由于 CSS Variable 定义在选择器中，作用范围与选择器一致，当选择器应用于某个元件时，选择器上的 CSS 变量也会应用于该元件。
+:::
+
+```html
+<view className="one" bindtap="tap1">
+  <view className="two">
+    <view className="three"></view>
+    <view className="four"></view>
+    <comp></comp>
+  </view>
+</view>
+```
+
+```css
+:root {
+  --main-bg-color: yellow;
+}
+
+.one {
+  color: white;
+  width: 100%;
+  height: 100%;
+}
+
+.two {
+  --main-bg-color: red;
+  --main-height: 200px;
+  color: white;
+  background-color: black;
+  width: 100%;
+  height: 100%;
+}
+
+.three {
+  --main-bg-color: blue;
+  color: white;
+  background-color: var(--main-bg-color);
+  width: 50%;
+  border: 1px blue solid;
+}
+
+.four {
+  background-color: var(--main-bg-color);
+  width: 25%;
+  height: calc(var(--main-height) - 100px);
+}
+```
+
+对于上面的例子，`var(--main-bg-color)` 变量的值分别为：
+
+- 对于 `class="three"` 的元件：blue;
+- 对于 `class="four"` 的元件：red;
+
+### 修改 CSS 变量的值
+
+#### 通过 JavaScript API 修改
+
+你也可以通过在 JS 侧采用 API 来修改 `css-variable` 的值：
+通过 [`lynx.getElementById().setProperty`](/api/lynx-api/lynx/lynx-get-element-by-id) 方法获取某个元件节点，修改该节点上 `css-var` 的值：
+
+```javascript
+// 一次性修改一个 CSS 变量
+lynx.getElementById('test').setProperty('--main-height', '300px');
+
+// 批次修改css变量
+lynx.getElementById('test').setProperty({
+  '--main-height1': '300px',
+  '--main-height2': '400px',
+});
+```
+
+:::warning
+
+`setProperty` 的参数必须为 `Object` 或者 `String`。
+
+:::
+
+#### 通过修改声明了 CSS 变量的选择器
+
+在选择器中可以声明 CSS 变量的值，那么切换对应的祖先节点应用的选择器，则可以修改其对应的值
+
+```css
+.a {
+  --main-bg-color: red;
+}
+
+.b {
+  --main-bg-color: blue;
+}
+
+.child {
+  background-color: var(--main-bg-color);
+  width: 25%;
+}
+```
+
+```html
+<view class={{flag ? 'a' : 'b'}}>
+  <view >
+    <view className="child"></view>
+  </view>
+</view>
+```
+
+对于上面的例子，通过切换 class 'a' 或者 'b' 可以达到修改对应变量 `--main-bg-color` 的效果。
+
+## 兼容性
+
+<APITable query={'css/properties/custom-property'} />

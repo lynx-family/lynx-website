@@ -1,0 +1,156 @@
+---
+api: css/properties/background
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# background
+
+<APISummary />
+
+## 介绍
+
+`background` 是一种 CSS 简写属性，用于一次性集中定义各种背景属性，包括 color,image,origin 与 size,repeat 方式等等。
+这是一个简写属性，可以在一次声明中定义一个或多个属性：[`background-clip`](./background-clip.mdx), [`background-color`](./background-color.mdx), [`background-image`](./background-image.mdx), [`background-origin`](./background-origin.mdx), [`background-position`](./background-position.mdx), [`background-repeat`](./background-repeat.mdx), [`background-size`](./background-size.mdx)
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/background/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background.jpg"
+  defaultEntryFile="dist/background.lynx.bundle"
+  entry="src/background"
+/>
+
+## 语法
+
+```css
+/* 使用 <background-color> */
+background: green;
+
+/* 使用 <bg-image> 和 <repeat-style> */
+background: url('test.jpg') repeat-y;
+
+/* 使用 <box> 和 <background-color> */
+background: border-box red;
+
+/* 将背景设置为一张居中放大的图片 */
+background: no-repeat center / 80% url('../img/image.png');
+```
+
+### 取值
+
+当 `background` 属性被指定多个背景层时，使用逗号分隔每个背景层。<br />
+每一次的语法如下：
+
+- 在每一层中，下列的值可以出现 0 次或 1 次：
+  - [`<bg-image>`](#bg-image)
+  - [`<position>`](#position)
+  - [`<bg-size>`](#bg-size)
+  - [`<repeat-style>`](#repeat-style)
+- `<bg-size>` 只能紧接着 `<position>` 出现，以“/”分割，如：`"center/80%"`.
+- [`<box>`](#box) 可能出现 0 次、1 次或 2 次。如果出现 1 次，它同时设置 [`background-origin`](./background-origin.mdx) 和 [`background-clip`](./background-clip.mdx)。如果出现 2 次，第一次的出现设置 [`background-origin`](./background-origin.mdx)，第二次的出现设置 [`background-clip`](./background-clip.mdx)。
+
+> **注意：[`background-color`](./background-color.mdx) 只能在 background 的最后一个属性上定义，因为整个元件只有一种背景色**
+
+#### `<box>` \{#box}
+
+参见 [`background-clip`](./background-clip.mdx) 和 [`background-origin`](./background-origin.mdx)
+
+#### `<background-color>` \{#background-color"}
+
+参见 [`background-color`](./background-color.mdx)
+
+#### `<bg-image>` \{#bg-image}
+
+参见 [`background-image`](./background-image.mdx)
+
+#### `<position>` \{#position}
+
+参见 [`background-position`](./background-position.mdx)
+
+#### `<repeat-style>` \{#repeat-style}
+
+参见 [`background-repeat`](./background-repeat.mdx)
+
+#### `<bg-size>` \{#bg-size}
+
+参见 [`background-size`](./background-size.mdx)
+
+## 注意事项
+
+- color 必须写在最后一个 image 中，否则 parser 会认为这是一个无效 background
+  例如: `background: red url('./a.png'), url('./b.png);'` 会被当作错误的写法直接忽略。
+  正确的写法应该是：`background: url('./a.png'),red url('./b.png);`
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      background-image: none
+      <br />
+      background-position: 0% 0%
+      <br />
+      background-size: auto auto
+      <br />
+      background-repeat: repeat
+      <br />
+      background-origin: padding-box
+      <br />
+      background-clip: border-box
+      <br />
+      background-color: transparent
+    </>
+  }
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+[ <bg-layer> , ]* <final-bg-layer>
+
+where
+
+<bg-layer> = <bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <box> || <box>
+<final-bg-layer> = <'background-color'> || <bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <attachment> || <box> || <box>
+
+where
+
+<bg-image> = none | <image>
+<bg-position> = [ [ left | center | right | top | bottom | <length-percentage> ] | [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ] | [ center | [ left | right ] <length-percentage>? ] && [ center | [ top | bottom ] <length-percentage>? ] ]
+<bg-size> = [ <length-percentage> | auto ]{1,2} | cover | contain
+<repeat-style> = repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1, 2}
+<box> = border-box | padding-box | content-box
+
+where
+
+<image> = <url> | <gradient>
+<length-percentage> = <length> | <percentage>
+
+where
+
+<gradient> = <linear-gradient> | <radial-gradient>
+
+```
+
+## 与 Web 的区别
+
+- `<bg-layer>`
+  中不支持 [`<attachment>`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/background#attachment) 属性。<br/>
+- `<image>`
+  中只支持 `<url>` 和 `<gradient>`
+  > _标准 web 中还支持 `<image-set>`、`<element()>`、`<paint()>`、`<cross-fade()>` 等自定义绘图属性。_<br/>
+- `<gradient>`
+  中目前只支持 `<linear-gradient>` 和 `<radial-gradient>`
+  > _标准 web 中还支持 `<repeating-linear-gradient()>`, `<radial-gradient()>`, `<repeating-radial-gradient()>`, `<conic-gradient()>`_
+
+## 兼容性
+
+<APITable />

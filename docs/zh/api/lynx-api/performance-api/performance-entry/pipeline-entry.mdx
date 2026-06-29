@@ -1,0 +1,228 @@
+---
+api: lynx-api/performance-api/performance-entry/pipeline-entry
+---
+
+import { APISummary, APITable, Go, RuntimeBadge, Deprecated } from '@lynx';
+
+# PipelineEntry
+
+<APISummary />
+
+`PipelineEntry` 负责记录 [Lynx Pipeline](/guide/spec#lynx-pipeline) 中[框架渲染（Framework Rendering）](/guide/spec#framework-rendering)和[引擎渲染（Pixel Pipeline）](/guide/spec#pixel-pipeline)关键时刻的性能数据，继承自 [`PerformanceEntry`](../performance-entry)。
+
+Lynx Pipeline 是指从渲染触发到最终显示的完整流程。该流程分为四个主要部分：加载（Load）、解析（Parse）、框架渲染（FrameworkPipeline）、引擎渲染（PixelPipeline）。
+
+由于 Lynx Pipeline 触发频繁，框架仅统计以下两种情况：
+
+1. **被 [`__lynx_timing_flag`](/guide/performance/monitor-performance/timing-flag) 标记的 Lynx Pipeline**，产生的性能数据为 `PipelineEntry`。
+2. **加载执行 [TemplateBundle](/api/lynx-native-api/template-bundle) 触发的 Lynx Pipeline**，产生的性能数据为 [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry)。
+
+以下是 `PipelineEntry` 的流程图：
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/pipeline-entry-3-7-compressed.png" />
+
+## 示例
+
+该示例展示了如何产生和获取 `PipelineEntry`。
+
+<Go
+  example="performance-api"
+  defaultFile="src/pipeline-entry/index.tsx"
+  defaultEntryFile="dist/pipeline-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/exmaple-pipeline-entry-new.png"
+  entry="src/pipeline-entry"
+  highlight="{11-21,34}"
+/>
+
+## 实例属性
+
+### [entryType](/api/lynx-api/performance-api/performance-entry#entryType)
+
+```ts
+entryType: string;
+```
+
+性能事件的类型，当前类所有实例的值均固定为 `pipeline`。
+
+### [name](/api/lynx-api/performance-api/performance-entry#name)
+
+```ts
+name: string;
+```
+
+性能事件的具体名称，此处用于区分 Pipeline 的触发源，取值如下：
+
+- `loadBundle`
+- `reloadBundleFromNative`
+- `reloadBundleFromBts`
+- `updateTriggeredByBts`
+- `updateTriggeredByNative`
+- `updateGlobalProps`
+- `setNativeProps`
+
+### identifier
+
+```ts
+identifier: string;
+```
+
+某条 Lynx Pipeline 的标记。有以下两种取值情况：
+
+1. 被 `__lynx_timing_flag` 标记的 Lynx Pipeline，**`identifier` 等于 `__lynx_timing_flag` 的值**。
+2. 加载执行 `TemplateBundle` 触发的 Lynx Pipeline，**`identifier` 为空字符串**。
+
+### pipelineStart
+
+```ts
+pipelineStart: number;
+```
+
+渲染流水线的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### pipelineEnd
+
+```ts
+pipelineEnd: number;
+```
+
+渲染流水线的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### mtsRenderStart
+
+```ts
+mtsRenderStart: number;
+```
+
+执行[主线程脚本](/guide/spec#main-thread-script-or-mts)构建 [Element Tree](/guide/spec#element-tree) 的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### mtsRenderEnd
+
+```ts
+mtsRenderEnd: number;
+```
+
+执行[主线程脚本](/guide/spec#main-thread-script-or-mts)构建 [Element Tree](/guide/spec#element-tree) 的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### resolveStart
+
+```ts
+resolveStart: number;
+```
+
+计算 [Element](/guide/spec#element) 样式的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### resolveEnd
+
+```ts
+resolveEnd: number;
+```
+
+计算 [Element](/guide/spec#element) 样式的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutStart
+
+```ts
+layoutStart: number;
+```
+
+[布局](/guide/spec#layout)计算的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutEnd
+
+```ts
+layoutEnd: number;
+```
+
+[布局](/guide/spec#layout)计算的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### paintingUiOperationExecuteStart
+
+```ts
+paintingUiOperationExecuteStart: number;
+```
+
+执行绘制相关 [UI 操作](/guide/spec#ui-op)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### paintingUiOperationExecuteEnd
+
+```ts
+paintingUiOperationExecuteEnd: number;
+```
+
+执行绘制相关 [UI 操作](/guide/spec#ui-op)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutUiOperationExecuteStart
+
+```ts
+layoutUiOperationExecuteStart: number;
+```
+
+执行布局相关 [UI 操作](/guide/spec#ui-op)的开始时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### layoutUiOperationExecuteEnd
+
+```ts
+layoutUiOperationExecuteEnd: number;
+```
+
+执行布局相关 [UI 操作](/guide/spec#ui-op)的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### paintEnd
+
+```ts
+paintEnd: number;
+```
+
+基于 UI 和 UITree，完成最终像素化的结束时间戳。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### frameworkPipelineTiming
+
+```ts
+frameworkPipelineTiming:  FrameworkPipelineTiming[keyof FrameworkPipelineTiming];
+```
+
+[框架渲染](/guide/spec#framework-rendering)中关键阶段的性能数据， 类型为 [`FrameworkPipelineTiming`](/api/lynx-api/performance-api/framework-pipeline-timing)。
+
+### hostPlatformTiming
+
+```ts
+hostPlatformTiming: AndroidHostPlatformTiming |
+  HarmonyHostPlatformTiming |
+  IOSHostPlatformTiming;
+```
+
+[Lynx Pipeline](/guide/spec#lynx-pipeline) 中不同平台特有的关键阶段的性能数据， 类型为 [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing)。
+
+### actualFmp
+
+```ts
+actualFmp?: PerformanceMetric;
+```
+
+从准备 [TemplateBundle](/api/lynx-native-api/template-bundle) 至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`actualFmp = PipelineEntry.paintEnd - InitContainerEntry.prepareTemplateStart`。
+
+### lynxActualFmp
+
+```ts
+lynxActualFmp?: PerformanceMetric;
+```
+
+从加载 [TemplateBundle](/api/lynx-native-api/template-bundle) 至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`lynxActualFmp = PipelineEntry.paintEnd - LoadBundleEntry.loadBundleStart`。
+
+### totalActualFmp
+
+```ts
+totalActualFmp?: PerformanceMetric;
+```
+
+从用户打开页面至带有 `__lynx_timing_flag="__lynx_timing_actual_fmp"` 元件与标签渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`totalActualFmp = PipelineEntry.paintEnd - InitContainerEntry.openTime`。
+
+## 兼容性
+
+<APITable />

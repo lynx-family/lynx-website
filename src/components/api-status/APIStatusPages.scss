@@ -1,0 +1,622 @@
+// APIStatusPages.scss — shared chrome used across Coverage / Categories /
+// Recent / Search. Same color-mix + brand-token vocabulary as the sidebar
+// (SubsiteRow / shared-tabs / APIStatusSidebar.scss), so the page interior
+// reads as one design system rather than a sidebar redesign bolted onto
+// admin-template cards.
+
+// ─── Section heading (page-internal, not the layout header) ──────────────
+//
+// Used at the top of pages like Coverage to label a content group. Reads
+// quieter than the layout header — small uppercase eyebrow + body label.
+
+.aps-page-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.aps-page-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aps-page-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--rp-c-text-1, #111113);
+}
+
+.aps-page-section__eyebrow {
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rp-c-text-3, #8e8e98);
+}
+
+// ─── Stat card — lifted brand-tinted card with per-platform brand ────────
+//
+// Drop-in replacement for the old shadcn Card + `colors.bg`/`colors.border`
+// Tailwind shorthand used in CoveragePage and RecentPage. Each instance
+// sets its `--platform` CSS var to the platform line color (same source as
+// the sidebar rail cells), so the wash, border, and shadow track that one
+// source of truth.
+
+.aps-stat-card {
+  --platform: var(--rp-c-text-2, #6a6a73);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--platform) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--platform) 22%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--platform) 6%, transparent),
+    0 6px 18px -8px color-mix(in srgb, var(--platform) 22%, transparent);
+  overflow: hidden;
+  isolation: isolate;
+  // Cards are static visual objects, not interactive — no hover lift here.
+  // (Interactive lift is reserved for sidebar rows that respond to click.)
+}
+
+.aps-stat-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aps-stat-card__icon {
+  width: 16px;
+  height: 16px;
+  background-color: var(--platform);
+}
+
+.aps-stat-card__label {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--platform);
+}
+
+.aps-stat-card__primary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Coverage % — large, mono, brand-tinted. NOT a gradient. Sizes step
+// from 28px at body→headline, stopping well short of the AI "hero metric"
+// trope at 64px+. Confident, not loud.
+.aps-stat-card__pct {
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--platform);
+}
+
+// Slim progress track. Track is currentColor at low alpha so it sits on
+// any background; the fill picks up the platform color.
+.aps-stat-card__progress {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  overflow: hidden;
+}
+
+.aps-stat-card__progress-fill {
+  position: absolute;
+  inset: 0;
+  width: var(--pct, 0%);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--platform) 80%, transparent),
+    var(--platform)
+  );
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aps-stat-card__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--platform) 80%, var(--rp-c-text-3));
+  opacity: 0.85;
+}
+
+.aps-stat-card__meta-exclusive {
+  opacity: 0.7;
+}
+
+// ─── Parity row — flat per-platform stat row, NOT a card ─────────────────
+//
+// Replaces the previous stat-card grid on the Coverage page. One row per
+// platform, full-width bar is the dominant element, dense layout. Bars
+// stack vertically with subtle dividers so the rhythm reads as ranked
+// list — not a templated card grid.
+//
+// Each row sets its own `--platform` var; the bar fill, label color, and
+// % text all read from it. The label column is wide enough to fit Harmony
+// or Clay Windows without truncation; the bar gets the rest of the width.
+
+.aps-parity-list {
+  display: flex;
+  flex-direction: column;
+  // No gap — rows separated by 1px hairline so the rhythm is one
+  // continuous strip, not floating items.
+}
+
+.aps-parity-row {
+  --platform: var(--rp-c-text-2, #6a6a73);
+
+  display: grid;
+  grid-template-columns: 156px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 4px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.aps-parity-row__id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.aps-parity-row__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: var(--platform);
+}
+
+.aps-parity-row__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--platform);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aps-parity-row__bar {
+  position: relative;
+  height: 8px;
+  border-radius: 2px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  overflow: hidden;
+}
+
+.aps-parity-row__bar-fill {
+  position: absolute;
+  inset: 0;
+  width: var(--pct, 0%);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--platform) 65%, transparent),
+    var(--platform)
+  );
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+// Tick marks at 25/50/75% on the track — quiet quantitative reference
+// without a full axis. Match the trend chart's grid lines so the two
+// visualizations read as one system.
+.aps-parity-row__bar-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  pointer-events: none;
+}
+
+.aps-parity-row__numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+}
+
+.aps-parity-row__pct {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--platform);
+  line-height: 1;
+  // Fixed-width so each row's number column aligns visually.
+  min-width: 44px;
+  text-align: right;
+}
+
+.aps-parity-row__counts {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--rp-c-text-3, #8e8e98);
+  min-width: 80px;
+  text-align: right;
+}
+
+.aps-parity-row__exclusive {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--platform) 70%, var(--rp-c-text-3));
+  margin-left: 4px;
+  opacity: 0.85;
+}
+
+// Narrow viewports collapse the row to two-line: id on top, numbers below
+// the bar, so the bar always reads at full width.
+@container (max-width: 540px) {
+  .aps-parity-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 4px 12px;
+  }
+  .aps-parity-row__numbers {
+    justify-content: space-between;
+  }
+  .aps-parity-row__counts {
+    min-width: 0;
+    text-align: left;
+  }
+}
+
+// ─── Plate — generic content card, no brand color ────────────────────────
+//
+// Used for the trend chart, category table wrapper, search filter bar,
+// and similar non-brand-specific containers. Same lifted-card chrome as
+// the stat cards but with neutral currentColor tinting.
+
+.aps-plate {
+  position: relative;
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  border-radius: 14px;
+  overflow: hidden;
+  // The plate is the container query target. Children (the parity-row
+  // grid and any future content that adapts to plate width) use
+  // `@container (max-width: 540px)` to know when to collapse layout.
+  // Without this `container-type` declaration the container queries
+  // never match and the row stays in its 3-column grid on narrow plates.
+  container-type: inline-size;
+}
+
+.aps-plate__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.aps-plate__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--rp-c-text-1, #111113);
+}
+
+.aps-plate__title-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--rp-c-brand, #ff351a);
+}
+
+.aps-plate__body {
+  padding: 14px 16px;
+}
+
+.aps-plate__body--flush {
+  padding: 0;
+}
+
+// ─── Categories page — flat header row, no plate ─────────────────────────
+//
+// CategoryTable brings its own table structure (header / group eyebrow /
+// zebra rows). Wrapping it in a plate stacks outer border + bg tint over
+// the table's own dividers and reads as busy. The flat head row sits
+// directly above the table with just a hairline separator.
+
+.aps-cat {
+  display: flex;
+  flex-direction: column;
+}
+
+.aps-cat__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 4px 14px;
+}
+
+.aps-cat__legend {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--rp-c-text-3, #8e8e98);
+  letter-spacing: 0;
+}
+
+// ─── Pill toggle group ───────────────────────────────────────────────────
+//
+// Used for the highlight-good / highlight-gaps toggle in Categories and
+// the supported/unsupported state filter in Search. Adopts the lifted-card
+// vocabulary: inactive cells dim, active cell picks up a tinted wash.
+
+.aps-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  border-radius: 8px;
+}
+
+.aps-pill {
+  --tint: var(--rp-c-text-2, #6a6a73);
+
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--rp-c-text-2, #6a6a73);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    color: var(--rp-c-text-1, #111113);
+  }
+}
+
+.aps-pill--active {
+  color: var(--tint);
+  background: color-mix(in srgb, var(--tint) 14%, transparent);
+  cursor: default;
+}
+
+// ─── Version chip ────────────────────────────────────────────────────────
+//
+// Replaces the `bg-primary/10 text-primary` Tailwind chip used to label
+// version groups in RecentPage. Brand-tinted, mono numeric, modest tracking.
+
+// Inherits --platform from the surrounding .aps-stat-card so the chip
+// reads in the parent platform's brand color — keeps the "one color per
+// surface" cohesion the rest of the dashboard relies on.
+.aps-version-chip {
+  --tint: var(--platform, var(--rp-c-brand, #ff351a));
+
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--tint) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tint) 26%, transparent);
+  color: var(--tint);
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+// ─── Legend chip (for the trend chart bottom row) ────────────────────────
+//
+// Each legend entry is a tiny stat card-ish chip: dot + label + %, with
+// the brand color of its platform. Adopts the same `--platform` var as
+// the stat cards.
+
+.aps-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 6px 4px;
+}
+
+.aps-legend-chip {
+  --platform: var(--rp-c-text-2, #6a6a73);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--platform) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--platform) 22%, transparent);
+  color: var(--platform);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.aps-legend-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.aps-legend-chip__pct {
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+// ─── Search bar chrome ───────────────────────────────────────────────────
+//
+// Wraps the input + filter row into a single plate so they read as one
+// surface — the same lifted-card vocabulary the stat cards use.
+
+.aps-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  border-radius: 12px;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+
+  &:focus-within {
+    border-color: color-mix(
+      in srgb,
+      var(--rp-c-brand, #ff351a) 38%,
+      transparent
+    );
+    background: color-mix(in srgb, var(--rp-c-brand, #ff351a) 3%, transparent);
+  }
+}
+
+.aps-search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.aps-search-input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--rp-c-text-3, #8e8e98);
+  pointer-events: none;
+}
+
+.aps-search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px 0 32px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--rp-c-text-1, #111113);
+
+  &::placeholder {
+    color: var(--rp-c-text-3, #8e8e98);
+    font-family: inherit;
+  }
+}
+
+// ─── Results meta line ───────────────────────────────────────────────────
+.aps-results-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 4px 2px;
+  font-size: 11px;
+  color: var(--rp-c-text-3, #8e8e98);
+}
+
+.aps-results-meta__count {
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.aps-results-meta__action {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--rp-c-brand, #ff351a);
+  background: none;
+  border: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--rp-c-brand, #ff351a) 8%, transparent);
+  }
+}
+
+// ─── Empty state ─────────────────────────────────────────────────────────
+.aps-empty {
+  padding: 36px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--rp-c-text-3, #8e8e98);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  border: 1px dashed color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 12px;
+}
+
+// ─── Recent-page version block ──────────────────────────────────────────
+.aps-version-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  & + & {
+    margin-top: 18px;
+  }
+}
+
+.aps-version-block__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aps-version-block__count {
+  font-size: 10.5px;
+  color: var(--rp-c-text-3, #8e8e98);
+  font-family: var(--rp-font-mono, ui-monospace, monospace);
+}
+
+.aps-version-block__rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, currentColor 14%, transparent),
+    transparent
+  );
+}

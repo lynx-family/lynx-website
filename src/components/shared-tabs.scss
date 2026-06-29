@@ -1,0 +1,162 @@
+// shared-tabs.scss — visual treatment shared between ChoiceTabs and
+// PlatformTabs. The two components stay locked in sync by reading the same
+// --tab-card-* custom properties below. If you want to tweak the look,
+// tweak the variables. The rspress --home-features-item-bg resolves to
+// rgba(255,255,255,0.5) in light mode (invisible on the white page), so
+// we use currentColor mixes that trace the outline in BOTH themes.
+
+:root {
+  // Inactive card chrome — flat currentColor tint that traces the silhouette
+  // in both themes without competing with the active card.
+  --tab-card-bg: color-mix(in srgb, currentColor 5%, transparent);
+  --tab-card-border-color: color-mix(in srgb, currentColor 10%, transparent);
+  --tab-card-border-color-hover: color-mix(
+    in srgb,
+    currentColor 16%,
+    transparent
+  );
+  --tab-card-opacity-inactive: 0.5;
+
+  // Active card uses the homepage features-card surface (glassy radial
+  // gradient + hairline border) plus a soft drop shadow so it visibly lifts
+  // off the dimmed siblings. This is where the "selected" feel comes from.
+  --tab-card-active-bg: var(--home-features-item-bg);
+  --tab-card-active-border: var(--home-features-item-bg-border);
+  --tab-card-active-shadow:
+    0 1px 0 rgba(17, 17, 19, 0.04), 0 12px 28px -6px rgba(17, 17, 19, 0.14);
+}
+
+:root.dark {
+  // The dark-mode --home-features-item-bg is white@3% — fainter than the
+  // currentColor@5% the inactive tabs use, so inheriting it would invert
+  // the hierarchy (active reading as the dimmer card). Override the active
+  // surface and border so the dark mode lift matches light mode contrast:
+  // a brighter surface than the page, a defined edge, plus a deep drop
+  // shadow with an inner top highlight that suggests light from above.
+  --tab-card-active-bg: rgba(255, 255, 255, 0.07);
+  --tab-card-active-border: 1px solid rgba(255, 255, 255, 0.16);
+  --tab-card-active-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 28px -6px rgba(0, 0, 0, 0.5);
+}
+
+.shared-tabs__track {
+  display: flex;
+  gap: 10px;
+}
+
+.shared-tabs__card {
+  position: relative;
+  z-index: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--tab-card-bg);
+  border: 1px solid var(--tab-card-border-color);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  opacity: var(--tab-card-opacity-inactive);
+  transition:
+    opacity 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover:not(.shared-tabs__card--active) {
+    opacity: 1;
+    border-color: var(--tab-card-border-color-hover);
+  }
+
+  &.shared-tabs__card--active {
+    opacity: 1;
+    background: var(--tab-card-active-bg);
+    border: var(--tab-card-active-border);
+    box-shadow: var(--tab-card-active-shadow);
+    cursor: default;
+  }
+}
+
+.shared-tabs__card-icon {
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  color: var(--home-features-item-desc-color, rgba(17, 17, 19, 0.65));
+
+  .shared-tabs__card--active & {
+    color: var(--major-brand-color, #ff351a);
+  }
+}
+
+.shared-tabs__card-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--home-title-color, #111113);
+  line-height: 1.3;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+// Narrow viewports: with up to 6 platform tabs (iOS, Android, HarmonyOS,
+// Web, Windows, macOS) the labels start to crowd. Step the type down once
+// at 720px while still fitting everything in the viewport.
+@media (max-width: 720px) {
+  .shared-tabs__card {
+    padding: 10px 8px;
+    gap: 4px;
+  }
+  .shared-tabs__card-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .shared-tabs__card-label {
+    font-size: 0.6875rem;
+  }
+}
+
+// Below ~540px the labels would have to shrink past the legibility floor
+// to fit six tabs in the row. Switch to a scroll-snap carousel instead,
+// matching the ChoiceTabs above so the page has one consistent narrow-
+// width pattern. Each tab keeps a fixed readable size; the row scrolls.
+@media (max-width: 540px) {
+  .shared-tabs__track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 4px;
+    // overflow-x:auto implicitly clips overflow-y. The active card's
+    // --tab-card-active-shadow extends ~22px below the card; without
+    // vertical room it gets sliced at the track edge. Negative margins
+    // cancel the height delta so the carousel doesn't push content.
+    padding: 8px 4px 24px;
+    margin: -8px -4px -24px;
+    gap: 8px;
+
+    // Hide the scrollbar; the snap stops convey scrollability.
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .shared-tabs__card {
+    flex: 0 0 auto;
+    min-width: 92px;
+    scroll-snap-align: start;
+    padding: 10px 12px;
+  }
+
+  .shared-tabs__card-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .shared-tabs__card-label {
+    font-size: 0.75rem;
+    letter-spacing: 0;
+  }
+}

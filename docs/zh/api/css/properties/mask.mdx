@@ -1,0 +1,192 @@
+---
+api: css/properties/mask
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# mask
+
+<APISummary />
+
+## 介绍
+
+CSS 属性 `mask` 允许使用者通过遮罩或者裁切特定区域的图片的方式来隐藏一个元件的部分或者全部可见区域。
+
+## 属性组成
+
+该属性是以下 CSS 属性的缩写:
+
+- mask-clip
+- mask-image
+- mask-origin
+- mask-position
+- mask-repeat
+- mask-size
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/mask/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/mask.jpg"
+  entry="src/mask"
+  defaultEntryFile="dist/mask.lynx.bundle"
+/>
+
+```css
+/* Keyword values */
+mask: none;
+
+/* Image values */
+mask: url(mask.png); /* 使用位图来做遮罩 */
+
+/* Combined values */
+mask: url(mask.png) 40px 20px; /* 使用位图来做遮罩并设定它的位置：离上边缘 40px，离左边缘 20px */
+mask: url(mask.png) 0 0/50px 50px; /* 使用位图来做遮罩并设定它的位置和大小：长宽都是 50px */
+mask: url(mask.png) repeat-x; /* 使用位图作为水平方向重复的遮罩 */
+mask: url(mask.png) border-box; /* 使用位图作为遮罩, 延伸到边框包围的区域 */
+
+/* 多个遮罩 */
+mask:
+  url(masks.png) left / 16px repeat-y,
+  /* 在左侧使用位图作为遮罩，宽度为16px，垂直方向重复 */ url(masks.png) right /
+    16px repeat-y; /* 在右侧使用位图作为遮罩，宽度为16px，垂直方向重复 */
+```
+
+### 取值
+
+#### `<mask-reference>`
+
+设置遮罩图片的路径. 详见 [mask-image](./mask-image).
+
+#### `<position>`
+
+设置遮罩图片的位置。详见 [mask-position](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-position).
+
+#### `<bg-size>`
+
+设置遮罩的大小。详见 [mask-size](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-size).
+
+#### `<repeat-style>`
+
+设置遮罩图片的重复性。详见 [mask-repeat](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-repeat).
+
+#### `<geometry-box>`
+
+如果只有一个 `<geometry-box>` 值被赋予，他将会设置 [mask-origin](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-origin) and [mask-clip](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-clip). 如果两个 `<geometry-box>` 值显示，第一个值代表 `mask-origin`, 第二个值代表 `mask-clip`.
+
+#### `<geometry-box> | no-clip`
+
+设置区域，会被遮罩图片影响。详见 [mask-clip](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-clip).
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      as each of the properties of the shorthand: <br />
+      <ul>
+        <li>mask-image: none</li>
+        <li>mask-repeat: repeat</li>
+        <li>mask-position: center</li>
+        <li>mask-clip: border-box</li>
+        <li>mask-origin: border-box</li>
+        <li>mask-size: auto</li>
+      </ul>
+    </>
+  }
+  appliesTo={
+    <>
+      Views only. It may work on some other elements, but it is recommended that
+      only use it on <code>{'<view>'}</code>
+    </>
+  }
+  inherited="no"
+  percentages={
+    <>
+      as each of the properties of the shorthand: <br />
+      <ul>
+        <li>
+          mask-position: refer to size of mask painting area minus size of mask
+          layer image (see the text for background-position)
+        </li>
+      </ul>
+    </>
+  }
+/>
+
+## 形式语法
+
+```
+mask =
+  <mask-layer>#
+
+<mask-layer> =
+  <mask-reference>               ||
+  <position> [ / <bg-size> ]?    ||
+  <repeat-style>                 ||
+  <box>                          ||
+  <compositing-operator>         ||
+  <masking-mode>
+
+<mask-reference> =
+  none       |
+  <image>
+
+<image> =
+  <url()>   |
+  <gradient>
+
+<url()> =
+  url( <string> )
+
+<position> =
+  [ left | center | right ] && [ top | center | bottom ]            |
+  [ left | center | right | <length-percentage> ]
+    [ top | center | bottom | <length-percentage> ]?                |
+  [ [ left | right ] <length-percentage> ] &&
+    [ [ top | bottom ] <length-percentage> ]
+
+<bg-size> =
+  [ <length-percentage> | auto ]{1,2}  |
+  cover                                |
+  contain
+
+<repeat-style> =
+  repeat-x                             |
+  repeat-y                             |
+  [ repeat | space | round | no-repeat ]{1,2}
+
+<box> =
+  border-box     |
+  padding-box    |
+  content-box
+
+<compositing-operator> =
+  add        |
+  subtract   |
+  intersect  |
+  exclude
+
+<masking-mode> =
+  alpha         |
+  luminance     |
+  match-source
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+
+```
+
+## 与 Web 的区别
+
+1. `mask-type` 和 `mask-composite` 不支持.
+2. `mask-image` 中不支持使用 SVG 中的元件.
+3. `<box>` 的取值只接受 `border-box`, `padding-box` 和 `content-box`.
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,144 @@
+---
+api: css/properties/grid-template-rows
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# grid-template-rows
+
+<APISummary />
+
+## 介绍
+
+`grid-template-rows` 是基于**网格行**的维度，去定义[网格布局](/guide/ui/layout/grid-layout.mdx)中网格轨道的尺寸大小。此属性作用在网格容器上。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/grid-template-rows/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/grid-template-rows.jpeg"
+  defaultEntryFile="dist/grid-template-rows.lynx.bundle"
+  entry="src/grid-template-rows"
+/>
+
+## 语法
+
+```css
+/* auto values*/
+grid-template-rows: auto auto;
+/* <length> values */
+grid-template-rows: 120px auto;
+/* repeat func */
+grid-template-rows: repeat(2, 100px) auto;
+grid-template-rows: repeat(2, 100px auto) 200px;
+```
+
+### 取值
+
+- `<length>`
+
+  [`<length>`](/api/css/data-type/length.mdx) 定义了非负值的长度大小。
+
+- `<percentage>`
+
+  非负值且相对于网格容器**高度**的 [`<percentage>`](/api/css/data-type/percentage.mdx)。建议在网格容器的高度尺寸是确定值情况下使用。不然，如果网格容器的高度大小依赖网格轨道的大小，则可能会有不符合预期的表现。
+
+- `<flex>`
+
+  非负值，用单位 `fr` 来定义网格轨道大小的弹性系数。每个定义了 `<flex>` 的网格轨道会按比例分配剩余的可用空间。当外层用一个 `minmax()` 表示时，它将是一个自动最小值（即 `minmax(auto, <flex>)`）。
+
+- `max-content`
+
+  是一个用来表示以网格项的最大的内容来占据网格轨道的关键字。
+
+- `minmax(min, max)`
+
+  是一个来定义大小范围的属性，大于等于 min 值，并且小于等于 max 值。如果 max 值小于 min 值，则该值会被视为 min 值。最大值可以设置为网格轨道系数值 `<flex>`，但最小值则不行。
+
+- `auto`
+
+  如果该网格轨道为最大时，该属性等同于 `<max-content>`，为最小时，则等同于 `<min-content>`。
+
+  网格轨道大小为 `auto`（且只有为 `auto`）时，才可以被属性 [`align-content`](./align-content.mdx)（`align-content` 默认值是 `stretch`）拉伸。
+
+- `fit-content( [ <length> | <percentage> ] )`
+
+  相当于公式 `min(max-content, max(auto, argument))`，类似于 `auto` 的计算（即 `minmax(auto, max-content)`），除了网格轨道大小值是确定下来的，否则该值都大于 `auto` 的最小值。
+
+- `repeat(<positive-integer>, [<length> | <percentage> | auto])`
+
+  表示网格轨道的重复部分，以一种更简洁的方式去表示大量而且重复列的表达式。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+import { Link } from '@theme';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      表示不明确的网格。所有的行和其大小都将由
+      <Link href="/api/css/properties/grid-auto-rows">
+        <code>grid-auto-rows</code>
+      </Link>
+      属性隐式的指定。
+    </>
+  }
+  appliesTo={<>网格容器</>}
+  inherited="否"
+  percentages={<>refer to corresponding dimension of the content area</>}
+/>
+
+## 形式语法
+
+```
+grid-template-rows =
+  <track-list>
+
+<track-list> =
+   <track-size> | <track-repeat>
+
+<track-size> =
+  <track-breadth>                                   |
+  minmax( <inflexible-breadth> , <track-breadth> )  |
+  fit-content( <length-percentage [0,∞]> )
+
+<track-repeat> =
+  repeat([ <integer [1,∞]> ] , <track-size>)
+
+<fixed-size> =
+  <fixed-breadth>                                   |
+  minmax( <fixed-breadth> , <track-breadth> )       |
+  minmax( <inflexible-breadth> , <fixed-breadth> )
+
+<fixed-repeat> =
+  repeat( [ <integer [1,∞]> ] , <fixed-size>)
+
+<track-breadth> =
+  <length-percentage [0,∞]>  |
+  <flex [0,∞]>               |
+  max-content                |
+  auto
+
+<inflexible-breadth> =
+  <length-percentage [0,∞]>  |
+  max-content                |
+  auto
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+
+<fixed-breadth> =
+  <length-percentage [0,∞]>
+```
+
+## 与 Web 的区别
+
+- 不支持 [`[linename]`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_grid_layout/Grid_layout_using_named_grid_lines)；
+- 不支持 `min-content`、`none`、`subgrid`、`masonry`；
+
+## 兼容性
+
+<APITable />

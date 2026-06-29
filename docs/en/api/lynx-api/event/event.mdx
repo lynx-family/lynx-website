@@ -1,0 +1,124 @@
+---
+api: lynx-api/event/Event
+---
+
+import { APISummary, APITable, Go, RuntimeBadge } from '@lynx';
+
+# Event
+
+<APISummary />
+
+`Event` represents the event object when the event is triggered, which contains the state information when the event is triggered. Developers can listen through the [Event Handler Property](../../../guide/interaction/event-handling/event-propagation.mdx#event-handler-property).
+
+Lynx has many different types of event objects, all of which are directly or indirectly inherited from `Event`. `Event` itself contains properties and methods applicable to all event objects.
+
+## `Event` type
+
+[`TouchEvent`](./touch-event.mdx)
+
+`TouchEvent` represents a touch event object, which describes the state change of a finger on a touch surface (such as a touch screen).
+
+[`CustomEvent`](./custom-event.mdx)
+
+`CustomEvent` represents a custom event object, which describes the state change of a custom component.
+
+[`AnimationEvent`](./animation-event.mdx)
+
+`AnimationEvent` represents an animation event object, describing the state changes of the CSS animation life cycle.
+
+[`MouseEvent`](./mouse-event.mdx)
+
+`MouseEvent` represents a mouse event, describing the user's interaction with the mouse.
+
+[`KeyEvent`](./key-event.mdx)
+
+`KeyEvent` represents a keyboard event, describing the user's interaction with the keyboard.
+
+[`WheelEvent`](./wheel-event.mdx)
+
+`WheelEvent` represents a mouse wheel event, describing the user scrolling the mouse wheel or touchpad.
+
+## Instance property
+
+### type
+
+```ts
+type: string;
+```
+
+Indicates the type of event.
+
+### timestamp
+
+```ts
+timestamp: number;
+```
+
+Indicates the timestamp when the event was generated.
+
+### target
+
+```ts
+target: {
+  id: string,
+  uid: number,
+  dataset: [key: string]: any,
+}
+```
+
+Indicates a collection of some attribute values ​​of `element` that triggered the event.
+
+- `id`: `element`'s `id` selector.
+- `uid`: `element`'s unique identifier in Lynx Engine.
+- `dataset`: A collection of custom attributes starting with [`data-`](../../elements/built-in/view.mdx#data-) on `element`.
+
+### currentTarget
+
+```ts
+currentTarget: {
+  id: string,
+  uid: number,
+  dataset: [key: string]: any,
+}
+```
+
+A collection of attribute values ​​of `element` that listens to events.
+
+- `id`: `element`'s `id` selector.
+- `uid`: `element`'s unique identifier in Lynx Engine.
+- `dataset`: A collection of custom attributes starting with [`data-`](../../elements/built-in/view.mdx#data-) on `element`.
+
+## Instance method
+
+### stopPropagation <RuntimeBadge type="mts" />
+
+```ts
+stopPropagation(): void;
+```
+
+Stop bubbling and prevent the event from continuing to bubble up the touch response chain.
+
+Calling it in the [main thread script](../../../react/main-thread-script.mdx) can affect both event bubbling and event handler triggering in `JS`.
+
+<Go
+  example="event"
+  defaultFile="src/event_stop_propagation/index.tsx"
+  defaultEntryFile="dist/event_stop_propagation.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event_stop.webp"
+  highlight="{34}"
+  entry="src/event_stop_propagation"
+/>
+
+### stopImmediatePropagation <RuntimeBadge type="mts" />
+
+```ts
+stopImmediatePropagation(): void;
+```
+
+Stop bubbling, prevent the event from continuing to bubble in the event response chain, and prevent other event handlers of the same event on the current node from being triggered.
+
+Calling it in the [main thread script](../../../react/main-thread-script.mdx) can affect both event bubbling and event handler triggering in `JS`.
+
+## Compatibility
+
+<APITable />

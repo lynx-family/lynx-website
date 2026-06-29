@@ -1,0 +1,269 @@
+import { Steps, Tabs, Tab, PackageManagerTabs } from '@theme'
+import { CodeFold } from '@lynx'
+
+#### Prepare Your Xcode Project
+
+First, follow the [Build Lynx Explorer for iOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) guide to create a Lynx Explorer project locally and open it with Xcode.
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step1.png)
+
+Next, right-click on the `modules` folder in the Lynx Explorer project and select `New File...` to create the header and source files for the native module.
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step2.png)
+
+Then, use the `Cocoa Touch Class` template.
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step3.png)
+
+Name the class `NativeLocalStorageModule`. You can choose to create it in either `Objective-C` or `Swift`. Then click `Next` to complete the file creation.
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step4.png)
+
+#### Implement Your Native Module
+
+:::info
+You need to implement an additional static method `name` in the native module to return the exported name of your native module. Also, implement an additional static method `methodLookup` in the native module to map the names of the methods to be exported to their corresponding selectors.
+:::
+
+<Tabs groupId='native-module'>
+<Tab label="Objective-C">
+
+```objective-c {6} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.h"
+
+#import <Foundation/Foundation.h>
+#import <Lynx/LynxModule.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface NativeLocalStorageModule : NSObject <LynxModule>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+```
+
+<CodeFold height={360} toggle>
+
+```objective-c {18-20,22-27} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.m"
+#import "NativeLocalStorageModule.h"
+
+@interface NativeLocalStorageModule()
+@property (strong, nonatomic) NSUserDefaults *localStorage;
+@end
+
+@implementation NativeLocalStorageModule
+
+static NSString *const NativeLocalStorageKey = @"MyLocalStorage";
+
+- (instancetype)init {
+    if (self = [super init]) {
+        _localStorage = [[NSUserDefaults alloc] initWithSuiteName:NativeLocalStorageKey];
+    }
+    return self;
+}
+
++ (NSString *)name {
+    return @"NativeLocalStorageModule";
+}
+
++ (NSDictionary<NSString *, NSString *> *)methodLookup {
+    return @{
+        @"setStorageItem": NSStringFromSelector(@selector(setStorageItem:value:)),
+        @"getStorageItem": NSStringFromSelector(@selector(getStorageItem:callback:)),
+        @"clearStorage": NSStringFromSelector(@selector(clearStorage))
+    };
+}
+
+- (void)setStorageItem:(NSString *)key value:(NSString *)value {
+    [self.localStorage setObject:value forKey:key];
+}
+
+- (void)getStorageItem:(NSString *)key callback:(void(^)(NSString *value)) callback{
+    NSString *value = [self.localStorage stringForKey:key];
+    callback(value);
+}
+
+- (void)clearStorage {
+    NSDictionary *keys = [self.localStorage dictionaryRepresentation];
+    for (NSString *key in keys) {
+        [self.localStorage removeObjectForKey:key];
+    }
+}
+
+@end
+
+```
+
+</CodeFold>
+
+
+</Tab>
+<Tab label="Swift">
+
+
+:::tip
+Lynx Explorer is a project built with Objective-C. If you wish to implement a native module with Swift, please refer to [Importing Objective-C into Swift](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift) to import the required Lynx header file `LynxModule.h`.
+:::
+
+```swift title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/LynxExplorer-Bridging-Header.h"
+
+//
+//  Use this file to import your target's public headers that you would like to expose to Swift.
+//
+
+#import <Lynx/LynxModule.h>
+
+
+```
+
+<CodeFold height={360} toggle>
+
+```swift {6-8,10-16} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.swift"
+
+import Foundation
+
+@objcMembers
+public final class NativeLocalStorageModule: NSObject, LynxModule {
+
+    public static var name: String {
+        return "NativeLocalStorageModule"
+    }
+
+    public static var methodLookup: [String : String] {
+        return [
+            "setStorageItem": NSStringFromSelector(#selector(setStorageItem(_:value:))),
+            "getStorageItem": NSStringFromSelector(#selector(getStorageItem(_:completion:))),
+            "clearStorage": NSStringFromSelector(#selector(clearStorage))
+        ]
+    }
+
+    private let localStorage: UserDefaults
+    private static let storageKey = "MyLocalStorage"
+
+    public init(param: Any) {
+      guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
+          fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
+      }
+      localStorage = suite
+      super.init()
+    }
+
+    public override init() {
+        guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
+            fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
+        }
+        localStorage = suite
+        super.init()
+    }
+
+    func setStorageItem(_ key: String, value: String) {
+        localStorage.set(value, forKey: key)
+    }
+
+    objc func getStorageItem(_ key: String, completion:(NSString) -> Void) {
+      if let value = localStorage.string(forKey: key) {
+          completion(value as NSString)
+      } else {
+          completion("" as NSString)
+      }
+    }
+
+    func clearStorage() {
+        localStorage.dictionaryRepresentation().keys.forEach {
+            localStorage.removeObject(forKey: $0)
+        }
+    }
+
+}
+
+```
+
+</CodeFold>
+
+
+</Tab>
+</Tabs>
+
+Next, you need to register your native module into the Lynx runtime environment.
+
+Add the following registration code to the `setupLynxEnv` method in the `explorer/darwin/ios/lynx_explorer/LynxExplorer/LynxInitProcessor.m` file of the Lynx Explorer project to register your native module with the global configuration of the Lynx runtime environment.
+
+
+
+
+<Tabs groupId='native-module'>
+<Tab label="Objective-C">
+
+
+<CodeFold height={360} toggle>
+
+```objective-c {7} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/LynxInitProcessor.m"
+
+#import "NativeLocalStorageModule.h"
+
+- (void)setupLynxEnv {
+  // ...
+
+  // register global JS module
+  [globalConfig registerModule:NativeLocalStorageModule.class];
+
+  // ...
+}
+
+
+NS_ASSUME_NONNULL_END
+
+```
+
+</CodeFold>
+
+</Tab>
+<Tab label="Swift">
+
+:::tip
+Lynx Explorer is a project built with Objective-C. If you want to use Swift native modules in Objective-C files, please refer to [Importing Swift into Objective-C](https://developer.apple.com/documentation/swift/importing-swift-into-objective-c) to generate and import the `LynxExplorer-Swift.h` header file.
+:::
+
+<CodeFold height={360} toggle>
+
+```objective-c {7} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/LynxInitProcessor.m"
+
+#import "LynxExplorer-Swift.h"
+
+- (void)setupLynxEnv {
+  // ...
+
+  // register global JS module
+  [globalConfig registerModule:NativeLocalStorageModule.class];
+
+  // ...
+  }
+
+NS_ASSUME_NONNULL_END
+
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+#### Run Your Code
+
+Once you've prepared everything, you can now build and run your code.
+
+First, follow the [Build and Run iOS Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios#build-ios-app) guide to build Lynx Explorer and install it on your phone.
+
+Next, refer to the [Install Dependencies & Start the Development Server](../start/quick-start#start-developing) guide to install dependencies and start the development server in the root directory of your Lynx project.
+
+Install dependencies:
+
+<PackageManagerTabs command="install" />
+
+Start the development server:
+
+<PackageManagerTabs command="run dev" />
+
+You'll see a QR code and an artifact link in the console. Use Lynx Explorer to scan the QR code or enter the artifact link to open your Lynx page.
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-demo-ios-en.gif)

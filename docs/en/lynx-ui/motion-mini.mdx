@@ -1,0 +1,89 @@
+---
+description: 'Use @lynx-js/motion/mini for lightweight main-thread numeric animations in Lynx.'
+---
+
+import { Go } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { motionMiniDemoMeta } from '../../../sharedDocs/introDocs/lynx-ui-motion/demoMeta.ts';
+
+# @lynx-js/motion/mini
+
+`@lynx-js/motion/mini` is the lightweight entry of [`@lynx-js/motion`](./motion). It only animates **numbers** and leaves the final style write to your code, for example `translateX(${x}px) scale(${scale})`. This covers most interaction-driven animations and is the entry used by lynx-ui today. See the [full entry](./motion) page for the complete [Motion](https://motion.dev) adaptation and a [comparison table](./motion#what-is-mini-and-when-should-i-use-it).
+
+## Install
+
+<PackageManagerTabs command="install @lynx-js/motion" />
+
+Import from the mini entry:
+
+```ts
+import {
+  animate,
+  useMotionValueRef,
+  useMotionValueRefEvent,
+} from '@lynx-js/motion/mini';
+```
+
+## Basic Pattern
+
+The Mini pattern is:
+
+1. Store each animated number in `useMotionValueRef()`.
+2. Subscribe to changes with `useMotionValueRefEvent()`.
+3. Write the final style in that subscription.
+4. Start `animate()` from a main-thread function.
+
+The example has a separate `mini` entry so the bundle only includes the mini runtime.
+
+<Go
+  example="motion"
+  defaultFile="src/Mini/index.tsx"
+  defaultEntryFile="dist/mini.lynx.bundle"
+  entry="src/Mini"
+  highlight={motionMiniDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+`useMotionValueRef()` creates a main-thread ref that owns a MotionValue. The value can be read and written inside main-thread functions without rerendering React.
+
+```tsx
+const x = useMotionValueRef(0);
+const scale = useMotionValueRef(1);
+```
+
+Use one motion value for each independent numeric dimension. In the example, `x` controls translation and `scale` controls scale.
+
+`useMotionValueRefEvent()` listens to value changes from the main thread. Use it to apply the latest numeric value to a node.
+
+The callback in this example writes a complete transform string:
+
+```ts
+boxRef.current?.setStyleProperties({
+  transform: `translateX(${xValue}px) scale(${scaleValue})`,
+});
+```
+
+That explicit style write is the tradeoff for the smaller runtime. Motion Mini animates numbers; your code maps those numbers to element styles.
+
+## Start Animations
+
+Background-thread event handlers can call `runOnMainThread()` to start a main-thread animation. The animation itself should be created inside the main-thread function.
+
+Use spring options for physical motion:
+
+```ts
+animate(x.current, target, {
+  type: 'spring',
+  stiffness: 200,
+  damping: 20,
+});
+```
+
+Use a duration and easing function for deterministic timing:
+
+```ts
+animate(scale.current, target, {
+  duration: 0.4,
+  ease: (t) => t,
+});
+```

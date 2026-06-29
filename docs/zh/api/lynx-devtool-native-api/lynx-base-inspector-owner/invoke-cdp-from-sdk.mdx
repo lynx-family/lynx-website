@@ -1,0 +1,153 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# invokeCDPFromSDK
+
+<APISummary />
+
+向 DevTool 发送一条 [CDP](https://chromedevtools.github.io/devtools-protocol/) **Method**，并异步接收其返回结果。
+
+可以和 [DevTool 桌面应用](/guide/devtool#在开发设备上运行-devtool-桌面应用) 同时使用，互不干扰。
+
+## 语法
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)invokeCDPFromSDK:(NSString *)msg withCallback:(CDPResultCallback)callback;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void invokeCDPFromSDK(final String cdpMsg, final CDPResultCallback callback);
+```
+
+### 参数说明
+
+- `msg` / `cdpMsg`: 要发送的消息，符合 CDP Method 格式的 JSON 字符串。
+- `callback`: 符合 [`CDPResultCallback`](/api/lynx-devtool-native-api/cdp-result-callback) 定义的回调，用于接收返回结果。
+
+## 请求数据格式
+
+JSON 格式的字符串。
+
+| 字段   | 类型   | 说明                                                                           |
+| :----- | :----- | :----------------------------------------------------------------------------- |
+| id     | number | 消息 ID                                                                        |
+| method | string | Method 名称，请参考 [CDP](https://chromedevtools.github.io/devtools-protocol/) |
+| params | object | Method 参数，请参考 [CDP](https://chromedevtools.github.io/devtools-protocol/) |
+
+例如，[`DOM.getDocument`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument) 的请求数据如下：
+
+```json
+{
+  "id": 1,
+  "method": "DOM.getDocument",
+  "params": {}
+}
+```
+
+## 使用示例
+
+### 使用步骤
+
+1. [实现 `CDPResultCallback`](/api/lynx-devtool-native-api/cdp-result-callback)。
+2. [获取 `LynxBaseInspectorOwner` 实例](/api/lynx-devtool-native-api/lynx-base-inspector-owner#获取-lynxbaseinspectorowner-实例)。
+3. 调用 [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk#语法) 方法，发送消息。
+
+### 代码示例
+
+下列示例代码展示了在 `LynxView` 加载成功后，调用 `DOM.getDocument` 这个 CDP Method 的完整流程。
+
+#### iOS
+
+```objective-c title="ViewController.m" {2,11,14-21,34-36}
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+@interface LynxViewLifecycleClient : NSObject <LynxViewLifecycle>
+@property(nonatomic, weak) LynxView* lynxView;
+@end
+
+@implementation LynxViewLifecycleClient
+
+- (void)lynxView:(LynxView *)view didLoadFinishedWithUrl:(NSString *)url {
+  [self invokeCDPMethod];
+}
+
+- (void)invokeCDPMethod {
+  __strong LynxView* view = self.lynxView;
+  id<LynxBaseInspectorOwner> owner = [view baseInspectorOwner];
+  NSString *method = @"{\"id\":1,\"method\":\"DOM.getDocument\",\"params\":{}}";
+  [owner invokeCDPFromSDK:method withCallback:^(NSString* result){
+           NSLog(@"CDPResultCallback: %@", result);
+         }];
+}
+
+@end
+
+@implementation ViewController {
+  LynxViewLifecycleClient *_client;
+}
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  _client = [LynxViewLifecycleClient new];
+  _client.lynxView = lynxView;
+  [lynxView addLifecycleClient:_client];
+}
+
+@end
+```
+
+#### Android
+
+```java title="MainActivity.java" {3-4,15,18,23-35}
+import android.util.Log;
+
+import com.lynx.devtoolwrapper.CDPResultCallback;
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwner;
+import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxViewClient;
+
+public class MainActivity extends Activity {
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ...
+
+    lynxView.addLynxViewClient(new LynxViewClient() {
+      @Override
+      public void onLoadSuccess() {
+        invokeCDPMethod(lynxView);
+      }
+    });
+  }
+
+  private void invokeCDPMethod(LynxView lynxView) {
+    LynxBaseInspectorOwner owner = lynxView.getBaseInspectorOwner();
+    if (owner == null) {
+      return;
+    }
+    String method = "{\"id\":1,\"method\":\"DOM.getDocument\",\"params\":{}}";
+    owner.invokeCDPFromSDK(method, new CDPResultCallback() {
+      @Override
+      public void onResult(String result) {
+        Log.i("MainActivity", "CDPResultCallback: " + result);
+      }
+    });
+  }
+}
+```
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,350 @@
+---
+api: lynx-api/performance-api/performance-entry/load-bundle-entry
+---
+
+import { APISummary, APITable, Go, RuntimeBadge } from '@lynx';
+
+# LoadBundleEntry
+
+<APISummary />
+
+_LoadBundle_ refers to the initial frame rendering pipeline triggered by [LynxView](/guide/spec#lynxview) loading and executing the [TemplateBundle](/api/lynx-native-api/template-bundle). `LoadBundleEntry` is used to record the performance data of this rendering pipeline and inherits from [`PipelineEntry`](./pipeline-entry).
+
+The LoadBundle process flowchart is as follows:
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/load-bundle-entry-3-7-compressed.png" />
+
+:::tip
+
+If you fail to receive `LoadBundleEntry`, it may be due to the following reasons:
+
+**1. Rendering not triggered**
+
+The rendering pipeline is not executed, typically because:
+
+- **LynxView container state issues**: Width/Height is 0, not in the viewport, or not added to the window.
+- **Business logic renders no content**: For example, in ReactLynx, the component's `render()` function returns `null` because data is not ready.
+
+**2. Listener registered too late**
+
+`LoadBundleEntry` is triggered only once upon completion of initial rendering. It is recommended to register the listener as early as possible:
+
+- Register in `constructor` for class components.
+- register in `useMemo` for functional components.
+
+:::
+
+## Example
+
+This example demonstrates how to obtain a `LoadBundleEntry`.
+
+<Go
+  example="performance-api"
+  defaultFile="src/load-bundle-entry/index.tsx"
+  defaultEntryFile="dist/load-bundle-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/exmaple-load-bundle-entry.jpeg"
+  entry="src/load-bundle-entry"
+  highlight="{10-20}"
+/>
+
+## Instance properties
+
+### [entryType](/api/lynx-api/performance-api/performance-entry#entryType)
+
+```ts
+entryType: string;
+```
+
+The type of the performance event; the value for all instances of this class is fixed as `pipeline`.
+
+### [name](/api/lynx-api/performance-api/performance-entry#name)
+
+```ts
+name: string;
+```
+
+The specific name of the performance event; the value for all instances of this class is fixed as `loadBundle`.
+
+### identifier
+
+```ts
+identifier: string;
+```
+
+A marker for a particular rendering pipeline; the value for all instances of this class is fixed as an empty string.
+
+### loadBundleStart
+
+```ts
+loadBundleStart: number;
+```
+
+The timestamp for the start of loading and executing the [TemplateBundle](/api/lynx-native-api/template-bundle). This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### loadBundleEnd
+
+```ts
+loadBundleEnd: number;
+```
+
+The timestamp for the end of loading and executing the [TemplateBundle](/api/lynx-native-api/template-bundle). This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### parseStart
+
+```ts
+parseStart: number;
+```
+
+The timestamp for the start of parsing the [TemplateBundle](/api/lynx-native-api/template-bundle). This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### parseEnd
+
+```ts
+parseEnd: number;
+```
+
+The timestamp for the end of parsing the [TemplateBundle](/api/lynx-native-api/template-bundle). This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### loadBackgroundStart
+
+```ts
+loadBackgroundStart: number;
+```
+
+The timestamp for the start of loading and executing the [background thread scripts](/guide/spec#background-thread-script-or-bts) in the [TemplateBundle](/api/lynx-native-api/template-bundle). This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### loadBackgroundEnd
+
+```ts
+loadBackgroundEnd: number;
+```
+
+The timestamp for the end of loading and executing the [background thread scripts](/guide/spec#background-thread-script-or-bts) in the [TemplateBundle](/api/lynx-native-api/template-bundle). This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### pipelineStart
+
+```ts
+pipelineStart: number;
+```
+
+The timestamp for the start of the rendering pipeline. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### pipelineEnd
+
+```ts
+pipelineEnd: number;
+```
+
+The timestamp for the end of the rendering pipeline. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### mtsRenderStart
+
+```ts
+mtsRenderStart: number;
+```
+
+The timestamp for the start of executing the [main thread scripts](/guide/spec#main-thread-script-or-mts) to build the Element Tree. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### mtsRenderEnd
+
+```ts
+mtsRenderEnd: number;
+```
+
+The timestamp for the end of executing the [main thread scripts](/guide/spec#main-thread-script-or-mts) to build the Element Tree. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### resolveStart
+
+```ts
+resolveStart: number;
+```
+
+The timestamp for the start of calculating [Element](/guide/spec#element) styles. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### resolveEnd
+
+```ts
+resolveEnd: number;
+```
+
+The timestamp for the end of calculating [Element](/guide/spec#element) styles. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### layoutStart
+
+```ts
+layoutStart: number;
+```
+
+The timestamp for the start of [layout](/guide/spec#layout) calculations. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### layoutEnd
+
+```ts
+layoutEnd: number;
+```
+
+The timestamp for the end of [layout](/guide/spec#layout) calculations. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### paintingUiOperationExecuteStart
+
+```ts
+paintingUiOperationExecuteStart: number;
+```
+
+The timestamp for the start of executing [UI operations](/guide/spec#ui-op) related to painting. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### paintingUiOperationExecuteEnd
+
+```ts
+paintingUiOperationExecuteEnd: number;
+```
+
+The timestamp for the end of executing [UI operations](/guide/spec#ui-op) related to painting. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### layoutUiOperationExecuteStart
+
+```ts
+layoutUiOperationExecuteStart: number;
+```
+
+The timestamp for the start of executing [UI operations](/guide/spec#ui-op) related to layout. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### layoutUiOperationExecuteEnd
+
+```ts
+layoutUiOperationExecuteEnd: number;
+```
+
+The timestamp for the end of executing [UI operations](/guide/spec#ui-op) related to layout. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### paintEnd
+
+```ts
+paintEnd: number;
+```
+
+The timestamp for the end of completing the final pixelation based on UI and UITree. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### frameworkPipelineTiming
+
+```ts
+frameworkPipelineTiming: FrameworkPipelineTiming[keyof FrameworkPipelineTiming];
+```
+
+Performance data for key stages in [Framework Rendering](/guide/spec#framework-rendering). The type is [`FrameworkPipelineTiming`](/api/lynx-api/performance-api/framework-pipeline-timing).
+
+### hostPlatformTiming
+
+```ts
+hostPlatformTiming: AndroidHostPlatformTiming |
+  HarmonyHostPlatformTiming |
+  IOSHostPlatformTiming;
+```
+
+Performance data for platform-specific key stages in [Lynx Pipeline](/guide/spec#lynx-pipeline), with type [`AndroidHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/android-host-platform-timing) | [`HarmonyHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/harmony-host-platform-timing) | [`IOSHostPlatformTiming`](/api/lynx-api/performance-api/host-platform-timing/ios-host-platform-timing).
+
+### loadCoreStart
+
+```ts
+loadCoreStart: number;
+```
+
+The timestamp for the start of initializing the [background thread runtime](/guide/spec#background-thread-runtime) environment. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### loadCoreEnd
+
+```ts
+loadCoreEnd: number;
+```
+
+The timestamp for the end of initializing the [background thread runtime](/guide/spec#background-thread-runtime) environment. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### openTime
+
+```ts
+openTime?: number;
+```
+
+The time when the container starts opening the Lynx page. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### containerInitStart
+
+```ts
+containerInitStart?: number;
+```
+
+The timestamp for the start of container initialization. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### containerInitEnd
+
+```ts
+containerInitEnd?: number;
+```
+
+The timestamp for the end of container initialization. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### prepareTemplateStart
+
+```ts
+prepareTemplateStart?: number;
+```
+
+The time when the container starts preparing the [TemplateBundle](/guide/spec#app-bundle-aka-template-bundle). "Preparation" refers to the container obtaining the TemplateBundle through any means such as network download or loading local cache. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### prepareTemplateEnd
+
+```ts
+prepareTemplateEnd?: number;
+```
+
+The time when the container completes preparing the [TemplateBundle](/guide/spec#app-bundle-aka-template-bundle). "Preparation" refers to the container obtaining the TemplateBundle through any means such as network download or loading local cache. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### createLynxStart
+
+```ts
+createLynxStart: number;
+```
+
+The timestamp for the start of creating the LynxView. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### createLynxEnd
+
+```ts
+createLynxEnd: number;
+```
+
+The timestamp for the end of creating the LynxView. This timestamp is represented as a floating-point Unix timestamp (in milliseconds) with three decimal places. For example: 1739594612307.429.
+
+### fcp
+
+```ts
+fcp?: PerformanceMetric;
+```
+
+The time taken from preparing the [TemplateBundle](/api/lynx-native-api/template-bundle) to completing the first rendering, with data type [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `fcp = LoadBundleEntry.paintEnd - InitContainerEntry.prepareTemplateStart`.
+
+### lynxFcp
+
+```ts
+lynxFcp: PerformanceMetric;
+```
+
+The time taken from loading the [TemplateBundle](/api/lynx-native-api/template-bundle) to completing the first rendering, with data type [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `lynxFcp = LoadBundleEntry.paintEnd - LoadBundleEntry.loadBundleStart`.
+
+### totalFcp
+
+```ts
+totalFcp?: PerformanceMetric;
+```
+
+The time taken from the user opening the page to completing the first rendering, with data type [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `totalFcp = LoadBundleEntry.paintEnd - InitContainerEntry.openTime`.
+
+## Compatibility
+
+<APITable />

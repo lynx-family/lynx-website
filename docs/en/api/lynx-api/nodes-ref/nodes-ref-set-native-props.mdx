@@ -1,0 +1,137 @@
+---
+title: setNativeProps()
+api: lynx-api/nodes-ref/setNativeProps
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef: setNativeProps() method
+
+<APISummary />
+
+Directly set the attributes of the selected node.
+
+:::warning When should you use setNativeProps?
+When you have to refresh frequently and encounter performance bottlenecks.
+
+Directly operating components is not a tool that should be used often.
+Generally, it is only used to create continuous animations, while avoiding the large overhead brought about by rendering component structures and synchronizing too many view changes.
+`setNativeProps` is a "simple and crude" method, it directly records the state at element instead of in the Lynx component, which makes the code logic difficult to understand.
+So before using this method, please try to solve the problem with [`useState`](../../../api/react/Function.useState.mdx) method first.
+:::
+
+## Syntax
+
+```ts
+setNativeProps(nativeProps: Record<string, any>): SelectorQuery;
+```
+
+### Parameters
+
+#### nativeProps
+
+A `Record<string, any>`, describes the properties that need to be set. Properties can be any attribute of the UI node, including CSS properties and `attributes`.
+
+Note that `style` cannot be set as a whole (the key of `nativeProps` cannot be `style`).
+
+### Return Value
+
+Contains the `SelectorQuery` object for this task. Call `exec()` to execute the task.
+
+## Examples
+
+1.  Set the text content of the text node.
+
+```jsx
+function App() {
+  return (
+    <view
+      bindtap={() => {
+        lynx
+          .createSelectorQuery()
+          .select('#intro')
+          .setNativeProps({
+            text: 'Hello, Lynx!',
+          })
+          .exec();
+      }}
+    >
+      <text id="intro">Hello, World!</text>
+    </view>
+  );
+}
+```
+
+2.  Set the `upper-threshold` attribute of `<scroll-view />`.
+
+```jsx
+function App() {
+  return (
+    <scroll-view id="intro">
+      <text
+        bindtap={() => {
+          lynx
+            .createSelectorQuery()
+            .select('#intro')
+            .setNativeProps({
+              'upper-threshold': '10px',
+            })
+            .exec();
+        }}
+      >
+        Hello, World!
+      </text>
+    </scroll-view>
+  );
+}
+```
+
+3.  Set the background color of the `<view />`.
+
+```jsx
+function App() {
+  return (
+    <view id="intro">
+      <text
+        bindtap={() => {
+          lynx
+            .createSelectorQuery()
+            .select('#intro')
+            .setNativeProps({
+              'background-color': 'red',
+            })
+            .exec();
+        }}
+      >
+        Hello, World!
+      </text>
+    </view>
+  );
+}
+```
+
+4. Modify the transform properties
+
+```jsx
+function App() {
+  return (
+    <view
+      bindtap={() => {
+        lynx
+          .createSelectorQuery()
+          .select('#intro')
+          .setNativeProps({
+            transform: 'translateY(3px)',
+          })
+          .exec();
+      }}
+    >
+      <text id="intro">Hello, World!</text>
+    </view>
+  );
+}
+```
+
+## Compatibility
+
+<APITable />

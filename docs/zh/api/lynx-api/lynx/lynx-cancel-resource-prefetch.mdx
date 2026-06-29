@@ -1,0 +1,127 @@
+---
+title: cancelResourcePrefetch()
+api: lynx-api/lynx/cancelResourcePrefetch
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: cancelResourcePrefetch() static method
+
+<APISummary />
+
+- 该 API 用于取消 [requestResourcePrefetch](./lynx-request-resource-prefetch) 发起的资源预加载。
+
+## 语法
+
+```ts
+cancelResourcePrefetch(data: object, callback: (res: object) => void) : void;
+```
+
+### 参数
+
+#### `data`
+
+一个描述了所有要取消预加载的资源详情的合集，它的 key 定义如下：
+
+- `data`：类型 `array`，`array` 内部每个 item 对应一个资源。每个 item 内的 key 定义如下
+  - `uri`：类型 `string`，表示资源的 CDN 地址。
+  - `type`：类型 `string`，表示资源的类型，支持的资源类型定义如下
+    - `video`：音视频资源（暂不支持 image、font 资源的取消预加载）
+  - `params`：取消预加载的自定义控制参数，支持的参数如下
+    - `preloadKey`：仅用于 `video` 类型的资源。表示标识该资源的唯一的 key。需要保证这里传递的 `preloadKey` 与调用 [requestResourcePrefetch](./lynx-request-resource-prefetch) 时一致。必选参数。
+
+#### callback
+
+API 执行完成或失败后调用的回调函数。它的回参内部定义如下：
+
+- `code`：类型 `number`，状态码，它可能取值如下
+  - `0`：成功
+  - `11001`：参数错误
+- `msg`：类型 `string`，全局错误信息
+- `details`：类型 `array`，里面每个 detail 表示一个资源的取消预加载状态详情，detail 内部定义如下
+  - `code`：类型 `number`，状态码，它可能取值如下
+    - `0`：成功
+    - `11001`：参数错误
+  - `msg`：类型 `string`，错误信息
+  - `uri`：类型 `string`，表示资源的 CDN 地址。
+  - `type`：类型 `string`，表示资源的类型，资源类型定义如下
+    - `video`：音视频资源
+
+### 返回值
+
+无（`undefined`）。
+
+## 异常
+
+- 当出现参数错误时，`code` 会返回 `11001` 错误码，并且在 `msg` 中有详细错误信息。
+
+## 示例
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function Page() {
+  // 我们需要预加载两段视频。
+  // 首先准备好资源参数，给视频指定必需的 preloadKey。
+  let resData = [
+    {
+      uri: 'https://zzzzz1.mp4',
+      type: 'video',
+      params: { preloadKey: 'zzzzz1' },
+    },
+    {
+      uri: 'https://zzzzz2.mp4',
+      type: 'video',
+      params: { preloadKey: 'zzzzz2' },
+    },
+  ];
+
+  useEffect(() => {
+    // 组件挂载时提前发起资源预加载
+    lynx.requestResourcePrefetch?.(
+      {
+        data: resData,
+      },
+      (res) => {
+        if (res.code == 0) {
+          console.log('success!');
+        } else {
+          console.log('fail! ', res.msg);
+        }
+        console.log(
+          'prefetch status of each resource:',
+          JSON.stringify(res.details),
+        );
+      },
+    );
+  }, []);
+
+  const handleTap = () => {
+    // 点击取消资源预加载
+    lynx.cancelResourcePrefetch?.(
+      {
+        data: resData,
+      },
+      (res) => {
+        if (res.code == 0) {
+          console.log('success!');
+        } else {
+          console.log('fail! ', res.msg);
+        }
+        console.log(
+          'cancel status of each resource:',
+          JSON.stringify(res.details),
+        );
+      },
+    );
+  };
+
+  return <view onTap={handleTap}>{/* 组件的内容 */}</view>;
+}
+
+export default Page;
+```
+
+## 兼容性
+
+<APITable />

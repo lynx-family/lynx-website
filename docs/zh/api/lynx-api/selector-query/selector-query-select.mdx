@@ -1,0 +1,193 @@
+---
+title: select()
+api: lynx-api/selector-query/select
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# SelectorQuery: select() method
+
+<APISummary />
+
+在 `SelectorQuery` 指定的根节点的后代中选择第一个匹配指定选择器的节点。
+
+## 语法
+
+```ts
+select(selector: string): NodesRef;
+```
+
+### 参数
+
+#### selector
+
+用于匹配节点的 CSS 选择器组合。第一个匹配指定选择器组合的节点将会返回。
+
+用于匹配节点的 CSS 选择器必须满足下列语法：
+
+##### 选择器
+
+- Id 选择器 `#`
+
+```tsx
+// '#my-id'
+<view id="my-id" />
+```
+
+- Class 选择器 `.`
+
+```tsx
+// '.class1'
+<view className="class1" />
+```
+
+- Tag 选择器 `tag`
+
+```tsx
+// 'view'
+<view />
+```
+
+- Attribute 选择器（注意自定义组件的 `props` 不属于 `attribute`，因此无法使用 `attribute` 选择器匹配自定义组件的 `props`）
+  - `[attribute]`：表示带有以 attr 命名的属性的元件。
+  - `[attribute=value]`：表示带有以 attr 命名的属性，且属性值为 value 的元件。
+  - `[attribute*=value]`：表示带有以 attr 命名的属性，且属性值至少包含一个 value 值的元件。
+  - `[attribute^=value]`：表示带有以 attr 命名的属性，且属性值是以 value 开头的元件。
+  - `[attribute$=value]`：表示带有以 attr 命名的属性，且属性值是以 value 结尾的元件。
+
+```tsx
+// '[src]'
+// '[src=xxx]'
+// '[data-x]'
+// '[data-x=xxx]'
+<image src="xxx" data-x="xxx" />
+```
+
+- 以上选择器的自由组合
+
+```tsx
+// 'image#my-id[src=xxx].class1.class2'
+<image id="my-id" className="class1 class2" src="xxx" data-x="xxx" />
+```
+
+##### 组合器
+
+- 子元件组合器 `>`
+  - 查找父节点的直接子节点。
+
+```tsx
+// '.the-parent > .the-child'
+<view className="the-parent">
+  <view className="the-child" />
+</view>
+```
+
+- 后代组合器 ` `（空格）
+
+  -查找父节点的后代节点。
+
+```tsx
+// GOOD: '.the-ancestor   .the-descendant'
+// BAD:  '.the-ancestor > .the-descendant'
+<view className="the-ancestor">
+  <view>
+    <view className="the-descendant" />
+  </view>
+</view>
+```
+
+- 多选择器的并集 `,`
+
+```tsx
+#id1, #id2;
+```
+
+### 返回值
+
+代表该查询结果的 `NodesRef` 对象实例。
+
+注意此时 `SelectorQuery` 只会将用户提供的查询参数保存在 `NodesRef` 对象中，并不会立即执行查询。
+因此，通过以下方式查看节点信息或判断节点是否能够找到是**不可行**的：
+
+```js
+let nodesRef = lynx.createSelectorQuery().select('#the-id');
+console.log(nodesRef); // always returning a valid NodesRef object
+```
+
+## 注意事项
+
+### 不要在 id 中使用数字、字母、横线和下划线以外的特殊字符
+
+特殊字符可能会被解析为 CSS 选择器或组合器的一部分。
+
+例如，`select('#m.x')` 会被解析为查找同时具有 `id=m` 和 `class=x` 属性的元件，而不是查找 `id` 为 `m.x` 的元件。
+
+## 问题排查
+
+节点操作在 `exec()` 执行后才会**异步进行**。
+因此，通过以下方式查看节点信息或判断节点是否能够找到是不可行的：
+
+```js
+let nodesRef = lynx.createSelectorQuery().select('#the-id');
+console.log(nodesRef); // always returning a valid NodesRef object
+```
+
+正确的方法是，查看用户调用的节点操作函数返回的错误信息。
+
+### 常见错误码定义
+
+```jsx
+enum ErrorCode {
+  SUCCESS = 0,
+  UNKNOWN = 1,
+  NODE_NOT_FOUND = 2,          // 节点在节点树上未找到
+  METHOD_NOT_FOUND = 3,        // 找到的 UI 节点上没有指定方法
+  PARAM_INVALID = 4,           // 参数非法，由组件的实现者判定
+  SELECTOR_NOT_SUPPORTED = 5,  // 使用了不支持的选择器
+  NO_UI_FOR_NODE = 6,          // 节点在节点树上找到，但没有对应的 UI
+}
+```
+
+### 错误代码 2，并且提示 no node found for selector
+
+常见原因：
+
+- 节点查找进行时，节点尚未渲染。
+
+#### 节点查找进行时，节点尚未渲染
+
+一种常见的找不到节点的情况是，在 `exec()` 函数调用时节点没有渲染，例如此时节点在条件不满足的条件语句中。
+
+例如以下伪代码中，首屏渲染时，由于 `should_render` 为 `false`，`<view id="xxx">` 节点不会渲染。此时在 `componentDidMount()` 中进行节点获取会失败。
+
+```js
+this.state = {
+  should_render: false,
+}
+
+componentDidMount() {
+  lynx.createSelectorQuery().select("#xxx").invoke(...).exec();
+}
+
+render() {
+  return should_render ? (<view id="xxx"> : null);
+}
+```
+
+### 错误代码 3
+
+找到了指定节点，但节点上没有对应的元件的方法。检查：
+
+- 节点是否确实有对应元件的方法。
+- 方法名拼写是否正确。
+- 是否有同名节点存在，导致实际查找到了另一个节点。
+
+### 错误代码 6
+
+目标节点在节点树上存在，但是不具备实际的 UI 节点。
+这种问题通常发生在 `view` 节点上，原因是 lynx 内部出于性能考虑，对这个节点做了优化，没有在 UI 层实际创建这个节点。
+如果希望阻止这种优化，可以尝试给目标节点添加一个 `id`。
+
+## 兼容性
+
+<APITable />

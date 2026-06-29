@@ -1,0 +1,250 @@
+import { Details } from '@lynx';
+
+# ReactLynx 编程思想
+
+ReactLynx 遵循 React 的编程模型，但通过利用 Lynx 提供的**双线程运行时**，结合自身的编程范式（或规则）来实现更好的性能和用户体验。
+
+## 你的代码运行在两个线程上
+
+当组件 `<HelloComponent />` 被渲染时，你可能会在控制台看到 "Hello" 被打印两次。
+
+```jsx
+const HelloComponent = () => {
+  console.log('Hello'); // 这行会被打印两次
+  return <text>Hello</text>;
+};
+```
+
+这是因为它的代码会在两个线程上运行：**主线程**和**后台线程**，它们都是 Lynx 双线程运行时的一部分。
+
+1. **主线程**负责渲染初始界面和应用后续的 UI 更新。
+   这使得用户能尽快看到第一屏内容，同时减轻主线程的负担。
+2. **后台线程**运行完整的 React 运行时，负责处理组件的生命周期和其他副作用。由于无法完全与单线程 React 保持一致，我们有一个修改后的组件生命周期，详见[组件生命周期](./lifecycle.mdx)。
+
+### 并非所有代码都能在两个线程上运行
+
+然而，并非所有代码都能在两个线程上运行。
+考虑以下向 `GlobalEventEmitter` 添加监听器的示例：
+
+```jsx
+const EventListenerComponent = () => {
+  lynx.getJSModule('GlobalEventEmitter').addListener('myHappyEvent', () => {
+    console.log('myHappyEvent triggered!');
+  });
+  return <text>Hello</text>;
+};
+```
+
+当组件 `<EventListenerComponent />` 被渲染时，你会看到 "not a function" 的错误。这是因为 lynx 在两个线程渲染了这个组件，但实际上 `lynx.getJSModule('GlobalEventEmitter')` 不能在主线程执行。
+
+<Details title="❓ 为什么会出现这个错误？">
+
+这仍然与 Lynx 的双线程运行时架构有关，`<EventListenerComponent />` 的代码会在两个线程上执行：
+
+- 对于后台线程：
+
+  `lynx.getJSModule` 函数是 Lynx `GlobalEventEmitter` API 的一部分。因此，在这里执行 `lynx.getJSModule('GlobalEventEmitter')` 不会有问题。
+
+- 对于主线程：
+
+  相反，`getJSModule` 函数在主线程上并不存在。因此，当这段代码在主线程上执行时，`lynx.getJSModule` 会被判定为 `undefined`，导致 "not a function" 错误。
+
+</Details>
+
+## 某些代码只能在后台线程运行
+
+通常渲染无关的副作用不能在主线程执行，如数据更新、事件监听、定时器、网络请求等。
+在主线程执行这些副作用会导致运行时错误。
+我们称这种只会在后台线程被执行的代码为
+**后台专属（background only）**
+代码。
+通过标注后台专属代码，我们能够帮助编译器更好地优化代码，并避免在主线程执行这些副作用。
+
+后台专属代码有以下关键规则：
+
+1. [规则一：满足这些条件之一的代码被视为后台专属代码](#rule-1)。
+2. [规则二：后台专属代码只能在其他后台专属代码中使用](#rule-2)。
+3. [规则三：只被后台专属代码使用的代码被视为后台专属](#rule-3)。
+
+### 规则一：满足这些条件之一的代码被视为后台专属代码 \{#rule-1}
+
+Lynx 默认将满足这些条件之一的代码视为后台专属代码：
+
+1. 事件处理器（如 `bindtap` / `catchtap`）
+2. Effect（如 `useEffect` / `useLayoutEffect`）
+3. `ref` 属性和 `useImperativeHandle`
+4. 标注 [`'background only'`] 指令的函数
+5. 标注 `import 'background-only'` 指令的模块
+
+例如，以下示例中所有这些内含 `console.log` 的函数都被视为后台专属的。这些函数既不会被打包进主线程代码中，也不会在主线程执行。
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function App() {
+  useEffect(() => console.log('Effect 是后台专属的'));
+  return (
+    <view bindtap={(e) => console.log('事件处理是后台专属的')}>
+      <text ref={(ref) => console.log('Ref 是后台专属的')}>
+        Hello, ReactLynx!
+      </text>
+    </view>
+  );
+}
+
+function backgroundOnly() {
+  'background only';
+  console.log('指令标记的函数是后台专属的');
+}
+```
+
+```js
+import 'background-only';
+
+export const env = NativeModules.env;
+console.log('指令标记的模块是后台专属的');
+```
+
+遵循这个规则，我们可以知道刚才的 `<EventListenerComponent />` 应该把使用 `GlobalEventEmitter` 的代码移到 `useEffect` 中。
+这样可以确保这部分代码只在后台线程上运行，在那里可以访问到 `GlobalEventEmitter` API：
+
+```js
+import { useEffect } from '@lynx-js/react';
+
+const EventListenerComponent = () => {
+  useEffect(() => {
+    lynx.getJSModule('GlobalEventEmitter').addListener('myHappyEvent', () => {
+      console.log('myHappyEvent triggered!');
+    });
+  }, []);
+  return <text>Hello</text>;
+};
+```
+
+### 规则二：后台专属代码只能在其他后台专属代码中使用 \{#rule-2}
+
+当涉及到**依赖关系**时，情况会变得更复杂。
+简单来说，后台专属代码只能被其他后台专属代码调用。
+
+```jsx
+import { backgroundOnlyFunction } from 'external-module';
+
+backgroundOnlyFunction(); // ❌ 错误：在顶层调用后台专属代码
+
+export function App() {
+  function backgroundOnly() {
+    'background only';
+    fetch();
+    NativeModules.call();
+    backgroundOnlyFunction(); // ✅ 正确：在后台专属函数内调用后台专属 API
+  }
+
+  backgroundOnly(); // ❌ 错误：在渲染函数中调用后台专属代码
+
+  useEffect(() => {
+    backgroundOnly(); // ✅ 正确：从后台专属代码中调用后台专属代码
+  }, []);
+
+  return <view />;
+}
+```
+
+### 规则三：只被后台专属代码使用的代码被视为后台专属 \{#rule-3}
+
+通常，元件的事件回调函数会被视为后台专属的。`handleTap` 虽然没有标记 `'background only'` 指令，但会被视为后台专属代码，因为它仅在 `bindtap` 事件中作为处理器被调用。
+
+```jsx
+function App() {
+  function handleTap() {
+    // 不需要标记这个函数，因为 `bindtap` 被视为后台专属
+  }
+  return <view bindtap={handleTap} />;
+}
+```
+
+`backgroundOnly` 函数也会被视为后台专属的，因为它只在 `useEffect` 的回调函数中被调用。
+
+```jsx
+function App() {
+  function backgroundOnly() {
+    // 不需要标记这个函数
+    // 因为 `useEffect` 被视为后台专属
+    // `backgroundOnly` 会被优化器识别为未使用并移除
+  }
+  useEffect(() => {
+    backgroundOnly();
+  });
+  return <view />;
+}
+```
+
+#### 例外
+
+受编译器的分析能力和编译期性能所限，这条规则有一些例外。我们会尽力在未来的版本中解决这些问题。
+
+当事件处理函数被作为 props 传递时，必须添加 [`'background only'`] 指令，否则编译器无法识别 `handleTap` 为后台专属代码，并会将其打包进主线程代码中：
+
+```jsx
+function App() {
+  function handleTap() {
+    'background only';
+    // 不幸的是，现在你必须标记事件回调
+  }
+  return <Button onClick={handleTap} />;
+}
+
+function Button({ onClick }) {
+  return <view bindtap={onClick} />;
+}
+```
+
+当你使用自定义 Hook 时，必须添加 [`'background only'`] 指令，否则 `backgroundOnly` 会被视为非后台专属代码并被打包进主线程代码中。
+这是因为编译器不知道 `useMount` 的回调函数是否只在后台专属代码中使用。
+
+```jsx
+function useMount(effect) {
+  useEffect(() => {
+    effect();
+  }, []);
+}
+
+function App() {
+  function backgroundOnly() {
+    // 不需要标记这个函数
+    // 因为 `backgroundOnly` 只在 `useMount` 的回调函数中使用
+  }
+  useMount(() => {
+    'background only';
+    // 你需要标记这个函数
+    backgroundOnly();
+  });
+  return <view />;
+}
+```
+
+[`'background only'`]: ../api/react/Document.directives.mdx#background-only
+
+## 某些代码只能在主线程运行
+
+正如某些代码（如 `GlobalEventEmitter`）只能在后台线程工作一样，也有一些代码只能在主线程上执行。
+
+### 主线程脚本
+
+主线程脚本（MTS）是在主线程上执行的脚本。
+
+```js
+function toRed(event) {
+  'main thread';
+  event.currentTarget.setStyleProperty('background-color', 'red');
+}
+```
+
+关于 MTS 的更多详情，包括使用示例和在主线程处理动画与手势的最佳实践，请参考[主线程脚本](./main-thread-script.mdx)。
+
+### Element PAPI
+
+Lynx 引擎还提供了称为 [Element PAPI] 的底层 API。
+
+通常，Element PAPI 调用由 ReactLynx 编译生成，你不需要手动编写任何 Element PAPI 代码。
+
+[Element PAPI]: /api/engine/element-api

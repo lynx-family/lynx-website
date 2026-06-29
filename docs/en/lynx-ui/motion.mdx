@@ -1,0 +1,106 @@
+---
+description: 'Use @lynx-js/motion for main-thread animations, motion values, staggered effects, and gesture-driven UI in Lynx.'
+---
+
+import { Go } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import {
+  motionBasicDemoMeta,
+  motionGestureDemoMeta,
+  motionSpringDemoMeta,
+  motionValueDemoMeta,
+} from '../../../sharedDocs/introDocs/lynx-ui-motion/demoMeta.ts';
+
+# @lynx-js/motion
+
+`@lynx-js/motion` is a thin adaptation layer that reuses [Motion](https://motion.dev)'s source directly to bring its imperative JavaScript APIs to Lynx. All APIs run in the [main-thread script](/react/main-thread-script) environment, so animations update visual properties immediately without round-tripping through the background thread. If you know Motion's [`animate()`](https://motion.dev/docs/animate), [`motionValue()`](https://motion.dev/docs/motion-value), and [`spring`](https://motion.dev/docs/spring) on the web, you already know how to use them in Lynx. If you are new to Motion, the [Motion quick-start guide](https://motion.dev/docs/quick-start) covers the fundamentals.
+
+:::details What is Mini and when should I use it?
+
+The package ships two entries. The full entry has not yet reached full feature parity with Motion and has higher engine requirements. [Mini](./motion-mini) is a trimmed-down build with broader compatibility, and is the entry used by lynx-ui today.
+
+|                                                           | `@lynx-js/motion`                                    | `@lynx-js/motion/mini` ([Mini](./motion-mini)) |
+| --------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| [**Animation**](https://motion.dev/docs/animate)          | numbers, colors, unit strings, keyframe arrays       | numbers only                                   |
+| [**Motion values**](https://motion.dev/docs/motion-value) | `motionValue()` (`useMotionValue` not yet supported) | `useMotionValueRef()`                          |
+| [**Spring**](https://motion.dev/docs/spring)              | `type: 'spring'`                                     | `type: 'spring'`                               |
+| [**Stagger**](https://motion.dev/docs/stagger)            | `stagger()` with selectors                           | --                                             |
+| **styleEffect**                                           | derive styles from motion values                     | --                                             |
+| **Lynx Engine**                                           | >= 3.5                                               | no minimum                                     |
+| **ReactLynx**                                             | >= 0.115.2                                           | no minimum                                     |
+| **Bundle size**                                           | ~275 KB                                              | ~135 KB                                        |
+
+:::
+
+## Install
+
+<PackageManagerTabs command="install @lynx-js/motion" />
+
+Import from the main package entry:
+
+```ts
+import { animate, motionValue, styleEffect } from '@lynx-js/motion';
+```
+
+## Animate an element ref
+
+The `animate()` function accepts the same [options](https://motion.dev/docs/animate#options) as Motion on the web, including `duration`, `ease`, `delay`, `repeat`, and `type: 'spring'`. See the [Motion `animate()` reference](https://motion.dev/docs/animate) for the full option list.
+
+The usual pattern is:
+
+1. Create a main-thread element ref with `useMainThreadRef()`.
+2. Attach it to the element with `main-thread:ref`.
+3. Start [`animate()`](https://motion.dev/docs/animate) inside a main-thread function.
+4. Store the animation controls in another main-thread ref so cleanup can call `stop()`.
+
+<Go
+  example="motion"
+  defaultFile="src/Basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+  entry="src/Basic"
+  highlight={motionBasicDemoMeta.highlight}
+  webPreview={false}
+/>
+
+## Use Springs
+
+Set `type: 'spring'` when a value should settle with spring physics instead of following a fixed-duration easing curve. All [spring options](https://motion.dev/docs/spring) from Motion are supported, including `stiffness`, `damping`, `mass`, and `bounce`.
+
+<Go
+  example="motion"
+  defaultFile="src/Spring/index.tsx"
+  defaultEntryFile="dist/spring.lynx.bundle"
+  entry="src/Spring"
+  highlight={motionSpringDemoMeta.highlight}
+  webPreview={false}
+/>
+
+## Use Motion Values
+
+[`motionValue()`](https://motion.dev/docs/motion-value) stores a value, can be animated directly with `animate()`, and lets you subscribe to changes. Use it when multiple effects or event handlers need a shared animated value.
+
+<Go
+  example="motion"
+  defaultFile="src/MotionValue/index.tsx"
+  defaultEntryFile="dist/motion-value.lynx.bundle"
+  entry="src/MotionValue"
+  highlight={motionValueDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+## Build Gesture Effects
+
+For high-frequency touch input, keep the event handlers on the main thread with `main-thread:bindtouchstart`, `main-thread:bindtouchmove`, and `main-thread:bindtouchend`. Use motion values with `styleEffect()` to derive visual state from gesture state.
+
+<Go
+  example="motion"
+  defaultFile="src/iOSSlider/index.tsx"
+  defaultEntryFile="dist/gesture.lynx.bundle"
+  entry="src/iOSSlider"
+  highlight={motionGestureDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+:::info
+Motion's web-only gesture APIs such as [`scroll()`](https://motion.dev/docs/scroll), [`inView()`](https://motion.dev/docs/inview), [`hover()`](https://motion.dev/docs/hover), and [`press()`](https://motion.dev/docs/press) are not part of `@lynx-js/motion`. Use the main-thread touch events shown above instead.
+:::

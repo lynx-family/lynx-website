@@ -1,0 +1,341 @@
+import {
+  Callout,
+  Badge,
+  PlatformTabs,
+  AndroidOnly,
+  IOSOnly,
+  WebOnly,
+  HarmonyOnly,
+  CodeFold,
+  BrowserContainer,
+  ResponsiveDualColumn,
+  FlexItem,
+  APIBadge,
+  PlatformBadge,
+  RuntimeBadge,
+  StatusBadge,
+  VersionBadge,
+  Deprecated,
+  Experimental,
+  Required,
+  Columns,
+  Mermaid,
+  YouTubeIframe,
+  Go,
+  BlogList,
+  BlogAvatar,
+  VideoList,
+  EditThis,
+  VersionTable,
+} from '@lynx';
+
+# MDX 组件参考
+
+本页作为 Lynx 文档中可用自定义组件的参考。您可以从 `@lynx` 导入这些组件。
+
+## 标注与警告 (Callout & Alerts)
+
+用于突出显示重要信息。您可以使用标准 Markdown 语法 `:::type` 来创建标注。
+
+```markdown
+:::info
+这是一个信息标注。
+:::
+
+:::warning
+这是一个警告标注。
+:::
+
+:::tip
+这是一个提示标注。
+:::
+
+:::danger
+这是一个危险标注。
+:::
+```
+
+:::info
+这是一个信息标注。
+:::
+
+:::warning
+这是一个警告标注。
+:::
+
+:::tip
+这是一个提示标注。
+:::
+
+:::danger
+这是一个危险标注。
+:::
+
+## 徽章 (Badges)
+
+### 平台徽章 (Platform Badges)
+
+指示平台支持情况。
+
+```tsx
+<AndroidOnly />
+<IOSOnly />
+<WebOnly />
+<HarmonyOnly />
+```
+
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  <AndroidOnly />
+  <IOSOnly />
+  <WebOnly />
+  <HarmonyOnly />
+</div>
+
+### 状态徽章 (Status Badges)
+
+指示 API 或功能状态。
+
+```tsx
+<Deprecated />
+<Experimental />
+<Required />
+```
+
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  <Deprecated />
+  <Experimental />
+  <Required />
+</div>
+
+### 运行时徽章 (Runtime Badges)
+
+指示脚本在哪个线程上运行。
+
+```tsx
+<RuntimeBadge type="mts" />
+<RuntimeBadge type="bts" />
+```
+
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  <RuntimeBadge type="mts" />
+  <RuntimeBadge type="bts" />
+</div>
+
+### 版本徽章 (Version Badge)
+
+指示引入某个功能的 Lynx 版本。
+
+```tsx
+<VersionBadge v={2.5} />
+<VersionBadge>2.5.1</VersionBadge>
+```
+
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  <VersionBadge v={2.5} />
+  <VersionBadge>2.5.1</VersionBadge>
+</div>
+
+### 通用徽章 (Generic Badges)
+
+标准 Rspress 徽章。
+
+```tsx
+<Badge type="tip" text="Recommended" />
+<Badge type="warning" text="Deprecated" />
+```
+
+<div style={{ display: 'flex', gap: '8px' }}>
+  <Badge type="tip" text="Recommended" />
+  <Badge type="warning" text="Deprecated" />
+</div>
+
+## 布局与容器 (Layout & Containers)
+
+### 平台选项卡 (Platform Tabs)
+
+按平台组织内容。
+
+```tsx
+<PlatformTabs defaultPlatform="ios" queryKey="platform">
+  <PlatformTabs.Tab platform="ios">iOS 内容</PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">Android 内容</PlatformTabs.Tab>
+</PlatformTabs>
+```
+
+<PlatformTabs defaultPlatform="ios" queryKey="platform">
+  <PlatformTabs.Tab platform="ios">iOS 内容</PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">Android 内容</PlatformTabs.Tab>
+</PlatformTabs>
+
+### 列 (Columns)
+
+将内容分为多列。传递 `titles` 属性以设置列标题。
+
+```tsx
+<Columns titles={['左列', '右列']}>
+  <div>左列内容。</div>
+  <div>右列内容。</div>
+</Columns>
+```
+
+<Columns titles={['左列', '右列']}>
+  <div>左列内容。</div>
+  <div>右列内容。</div>
+</Columns>
+
+### 响应式双列 (Responsive Dual Column)
+
+一种在小屏幕上切换为单列的布局。使用 `FlexItem` 控制宽度。
+
+```tsx
+<ResponsiveDualColumn>
+  <FlexItem minWidth={300}>
+    <div>左侧内容 (min 300px)</div>
+  </FlexItem>
+  <FlexItem minWidth={300}>
+    <div>右侧内容 (min 300px)</div>
+  </FlexItem>
+</ResponsiveDualColumn>
+```
+
+<ResponsiveDualColumn>
+  <FlexItem minWidth={300}>
+    <div style={{ background: 'var(--rp-c-bg-mute)', padding: '1rem' }}>
+      左侧内容 (min 300px)
+    </div>
+  </FlexItem>
+  <FlexItem minWidth={300}>
+    <div style={{ background: 'var(--rp-c-bg-mute)', padding: '1rem' }}>
+      右侧内容 (min 300px)
+    </div>
+  </FlexItem>
+</ResponsiveDualColumn>
+
+### 浏览器容器 (Browser Container)
+
+将内容包装在类浏览器窗口框架中。
+
+```tsx
+<BrowserContainer>
+  <div style={{ padding: '20px', textAlign: 'center' }}>浏览器内容</div>
+</BrowserContainer>
+```
+
+<BrowserContainer>
+  <div style={{ padding: '20px', textAlign: 'center' }}>浏览器内容</div>
+</BrowserContainer>
+
+### 代码折叠 (CodeFold)
+
+可折叠的代码块，可选择包含图像。
+
+````tsx
+<CodeFold toggle>```ts console.log('隐藏代码'); ```</CodeFold>
+````
+
+<CodeFold toggle>
+
+```ts
+console.log('隐藏代码');
+```
+
+</CodeFold>
+
+## 媒体与嵌入 (Media & Embeds)
+
+### YouTube
+
+```tsx
+<YouTubeIframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" />
+```
+
+<YouTubeIframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" />
+
+### 视频列表 (Video List)
+
+显示带有标题的视频列表。
+
+```tsx
+<VideoList
+  videos={[
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/ifr_fib.mp4',
+      title: '演示视频',
+    },
+  ]}
+  playbackRate={1.0}
+/>
+```
+
+<VideoList
+  videos={[
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/ifr_fib.mp4',
+      title: '演示视频',
+    },
+  ]}
+  playbackRate={1.0}
+/>
+
+### Mermaid 图表 (Mermaid Diagrams)
+
+```tsx
+<Mermaid>
+  graph TD;
+  A-->B;
+  A-->C;
+  B-->D;
+  C-->D;
+</Mermaid>
+```
+
+<Mermaid>graph TD; A-->B; A-->C; B-->D; C-->D;</Mermaid>
+
+## 复杂组件 (Complex Components)
+
+### 博客与社交 (Blog & Social)
+
+有关 `<BlogList>` 和 `<BlogAvatar>` 的详细信息，请参阅 [编写博客文章](./blog)。
+
+```tsx
+<BlogList />
+<BlogAvatar list={['lynx']} />
+```
+
+### 交互式示例 (Interactive Example)
+
+有关 `<Go>` 的详细信息，请参阅 [管理交互式示例](./example)。
+
+```tsx
+<Go example="view" defaultFile="src/App.tsx" />
+```
+
+### API 表格 (API Tables)
+
+有关 `<APITable>` 和 `<APISummary>` 的详细信息，请参阅 [记录 API](./api)。
+
+```tsx
+<APITable query="lynx-api/global/fetch" />
+```
+
+## 文档实用工具 (Documentation Utilities)
+
+### 编辑此页 (Edit This)
+
+渲染“编辑源文件”和“在云 IDE 中编辑”链接。
+
+```tsx
+<EditThis />
+```
+
+<EditThis />
+
+### 版本表 (Version Table)
+
+渲染 Lynx 版本表。
+
+```tsx
+<VersionTable type="latest" />
+```
+
+<VersionTable type="latest" />

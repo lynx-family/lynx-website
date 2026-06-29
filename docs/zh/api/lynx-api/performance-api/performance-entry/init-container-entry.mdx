@@ -1,0 +1,97 @@
+---
+api: lynx-api/performance-api/performance-entry/init-container-entry
+---
+
+import { APISummary, APITable, Go, Deprecated } from '@lynx';
+
+# <Deprecated/> InitContainerEntry
+
+:::warning
+该事件在 Lynx SDK 3.7 版本已废弃，相关数据可从 [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) / [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry) 中获取.
+:::
+
+<APISummary />
+
+`InitContainerEntry` 接口提供了 Lynx 页面显示前[容器](/guide/spec#container)准备工作的关键时间点，它继承自 [`PerformanceEntry`](/api/lynx-api/performance-api/performance-entry)。
+
+在初始化流程中，指标的定义如下图：
+![container 初始化的关键时间](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/init-container-entry.png)
+
+:::info
+该事件内的时间戳依赖容器通过 [`LynxView.setExtraTiming`](/api/lynx-native-api/lynx-view/set-extra-timing) 提供。
+:::
+
+## 示例
+
+该示例展示了如何获取 `InitContainerEntry`。
+
+<Go
+  example="performance-api"
+  defaultFile="src/init-container-entry/index.tsx"
+  defaultEntryFile="dist/init-container-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/init-container-entry-demo.jpeg"
+  entry="src/init-container-entry"
+  highlight="{10-22}"
+/>
+
+## 实例属性
+
+### [entryType](/api/lynx-api/performance-api/performance-entry#entryType)
+
+```tsx
+entryType: string;
+```
+
+性能事件的类型，当前类所有实例的值均固定为 `init`。
+
+### [name](/api/lynx-api/performance-api/performance-entry#name)
+
+```tsx
+name: string;
+```
+
+性能事件的名称，当前类所有实例的值均固定为 `container`。
+
+### openTime
+
+```tsx
+openTime: number;
+```
+
+容器开始打开 Lynx 页面的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### containerInitStart
+
+```tsx
+containerInitStart: number;
+```
+
+容器初始化开始的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### containerInitEnd
+
+```tsx
+containerInitEnd: number;
+```
+
+容器初始化完毕的时间。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### prepareTemplateStart
+
+```tsx
+prepareTemplateStart: number;
+```
+
+容器开始准备 [TemplateBundle](/guide/spec#app-bundle-aka-template-bundle) 的时间。“准备”指容器通过网络下载、加载本地缓存等任意方式获得 TemplateBundle。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+### prepareTemplateEnd
+
+```tsx
+prepareTemplateEnd: number;
+```
+
+容器准备完 [TemplateBundle](/guide/spec#app-bundle-aka-template-bundle) 的时间。“准备”指容器通过通过网络下载、加载本地缓存等任意方式获得 TemplateBundle。该时间戳是一个表示为浮点型的 Unix 时间戳（单位：毫秒），精确到小数点后三位。例如：1739594612307.429。
+
+## 兼容性
+
+<APITable />

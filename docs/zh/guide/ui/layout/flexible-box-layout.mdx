@@ -1,0 +1,110 @@
+import { Go, Details } from '@lynx';
+import { Columns } from '@/components/Columns.jsx';
+
+# 弹性布局
+
+如果你需要创建一个响应式布局，如增加子元件尺寸以填满未使用的空间，或收缩子元件尺寸以避免溢出，请选择**弹性布局（flex）**。这是一种 Web 中常见的布局方式。
+只需在希望应用弹性布局的元件上设置 `display: flex`，即会对其所有直接子元件进行弹性布局。
+
+::: info
+要了解更多信息，请查阅 MDN 上的 [CSS 弹性盒子布局](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_flexible_box_layout)。Lynx 支持了常见的弹性布局属性，并在绝大多数情况下与 Web 标准保持一致。有关支持的属性，请参见[参考](#参考)部分。
+:::
+
+**以下示例展示了弹性布局的典型特性。**
+
+## 典型特性
+
+### 通过 `flex-grow` 填充父元件
+
+[`flex-grow`] 属性帮助你将父元件的剩余空间按照 `flex-grow` 声明的权重分配给子元件的大小。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_flex_grow.png"
+  example="layout"
+  defaultEntryFile="dist/flex_grow.lynx.bundle"
+  defaultFile="src/flex_grow/index.tsx"
+  entry="src/flex_grow"
+/>
+
+### 通过 `flex-shrink` 压缩子元件
+
+使用 [`flex-shrink`] 属性，可以在你的子元件将要溢出父元件时，按照 `flex-shrink` 声明的权重压缩元件，从而适应父元件大小。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_flex_shrink.png"
+  example="layout"
+  defaultEntryFile="dist/flex_shrink.lynx.bundle"
+  defaultFile="src/flex_shrink/index.tsx"
+  entry="src/flex_shrink"
+/>
+
+<Details title={<span>Lynx 在子元件压缩的最小值上和 Web 的表现有差异。</span>}>
+Lynx 当前不支持 [`min-content`](https://developer.mozilla.org/en-US/docs/Web/CSS/min-content)，因此暂时视作 `0px`。这意味着，当需要压缩子元件大小以适应父元件时，Web 可以保证子元件不小于其最小内容宽度，但 Lynx 目前无法保证这点。
+<Columns titles={['代码', 'Web 和 Lynx 表现不一致']}>
+
+```html
+<div
+  style="width:100px;
+            height:70px;
+            display:flex;
+            background-color:rgb(0, 235, 235);"
+>
+  <div
+    style="display:flex;
+              height:50px;
+              background-color:rgb(255, 53, 26);"
+  >
+    <div
+      style="width:150px;
+                height:50px;"
+    ></div>
+  </div>
+</div>
+```
+
+<center>
+  <img width="70%" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_min_content.png" />
+</center>
+</Columns>
+</Details>
+
+### 通过 `flex-wrap` 进行换行
+
+[`flex-wrap`] 属性可以将一行显示不下的内容展示到下一行。该属性指定弹性元件是单行显示还是多行显示。当允许换行时，该属性可以控制行的堆叠方向。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_flex_wrap.png"
+  example="layout"
+  defaultEntryFile="dist/flex_wrap.lynx.bundle"
+  defaultFile="src/flex_wrap/index.tsx"
+  entry="src/flex_wrap"
+/>
+
+## 参考
+
+目前，Lynx 支持以下常见的弹性布局属性：
+
+- **CSS 属性**
+  - [`flex`](/api/css/properties/flex.mdx)
+  - [`flex-basis`](/api/css/properties/flex-basis.mdx)
+  - [`flex-direction`](/api/css/properties/flex-direction.mdx)
+  - [`flex-flow`](/api/css/properties/flex-flow.mdx)
+  - [`flex-grow`](/api/css/properties/flex-grow.mdx)
+  - [`flex-shrink`](/api/css/properties/flex-shrink.mdx)
+  - [`flex-wrap`](/api/css/properties/flex-wrap.mdx)
+  - [`order`](/api/css/properties/order.mdx)
+
+- **对齐属性**
+  - [`align-content`](/api/css/properties/align-content.mdx)
+  - [`align-items`](/api/css/properties/align-items.mdx)
+  - [`align-self`](/api/css/properties/align-self.mdx)
+  - [`justify-content`](/api/css/properties/justify-content.mdx)
+  - [`row-gap`](/api/css/properties/row-gap)
+  - [`column-gap`](/api/css/properties/column-gap)
+  - [`gap`](/api/css/properties/gap)
+
+要了解更多用法，请参考 MDN 上的 [CSS 弹性盒子布局](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_flexible_box_layout)。
+
+[`flex-grow`]: /api/css/properties/flex-grow.mdx
+[`flex-shrink`]: /api/css/properties/flex-shrink.mdx
+[`flex-wrap`]: /api/css/properties/flex-wrap.mdx

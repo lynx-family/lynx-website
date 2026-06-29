@@ -1,0 +1,226 @@
+---
+title: transform
+api: css/properties/transform
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The transform CSS property lets you rotate, scale, skew, or translate an element.
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/transform/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/transform.jpg"
+  entry="src/transform"
+  defaultEntryFile="dist/transform.lynx.bundle"
+/>
+
+## Syntax
+
+```scss
+/* Function values */
+transform: rotate(0.5turn);
+transform: rotateX(10deg);
+transform: rotateY(10deg);
+transform: translate(12px, 50%);
+transform: translate3d(12px, 50%, 3em);
+transform: translateX(2em);
+transform: translateY(3px);
+transform: translateZ(2px);
+transform: scale(2, 0.5);
+transform: scaleX(2);
+transform: scaleY(0.5);
+
+// equal to transform: translate(50px, 100px);
+transform: matrix(1, 0, 0, 1, 50, 100);
+// equal to transform: translateX(100px);
+transform: matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 0, 0, 1);
+
+/* Multiple function values */
+transform: translateX(10px) rotate(10deg) translateY(5px);
+transform: translate3d(10px, 0, 20px) rotateY(3deg);
+```
+
+The value of the `transform` can be one or more `<function>`, which are separated by spaces. For details, see [function standard syntax](#function-standard-syntax)
+
+### function standard syntax
+
+- **translate**
+
+```
+translate( <length> | <percentage> , <length> | <percentage>? )
+```
+
+- **translateX**
+
+```
+translateX( <length> | <percentage> )
+```
+
+- **translateY**
+
+```
+translateY( <length> | <percentage> )
+```
+
+- **translateZ**
+
+```
+translateZ( <length> )
+```
+
+:::info
+When using translateZ, it is recommended to set `flatten={false}` on the parent node of the node, otherwise it may cause the `overflow:hidden` of the parent node to fail on Android.
+At the same time, if translateZ does not take effect on Android, you can try to set other sibling nodes of the same parent node to `transform: translateZ(0)`.
+:::
+
+- **translate3d**
+
+```
+translate3d( <length> | <percentage> , <length> | <percentage> , <length> )
+```
+
+- **rotate**
+
+```
+rotate( [ <angle> | <zero> ] )
+```
+
+- **rotateZ**
+
+```
+rotateZ( [ <angle> | <zero> ] )
+```
+
+- **rotateX**
+
+```
+rotateX( [ <angle> | <zero> ] )
+```
+
+- **rotateY**
+
+```
+rotateY( [ <angle> | <zero> ] )
+```
+
+- **scale**
+
+```
+scale( <number> , <number>? )
+```
+
+- **scaleX**
+
+```
+scaleX( <number> )
+```
+
+- **scaleY**
+
+```
+scaleY( <number> )
+```
+
+- **skew**
+
+```
+skew( [ <angle> | <zero> ], [ <angle> | <zero> ] )
+```
+
+- **skewX**
+
+```
+skewX( [ <angle> | <zero> ] )
+```
+
+- **skewY**
+
+```
+skewY( [ <angle> | <zero> ] )
+```
+
+- **matrix**
+
+```
+matrix(a, b, c, d, tx, ty)
+```
+
+- **matrix3d**
+
+```
+matrix3d(a1, b1, c1, d1, a2, b2, c2, d2, a3, b3, c3, d3, a4, b4, c4, d4);
+```
+
+::: info
+
+- `matrix(a, b, c, d, tx, ty)` is shorthand for `matrix3d(a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1)`.
+
+- The `matrix3d()` function is specified with 16 arguments. These parameters are described in column-dominated order.
+  - `a1`, `b1`, `c1`, `d1`
+    define the first vector and are responsible for the X-axis scaling, rotation, and shear transformations;
+  - `a2`, `b2`, `c2`, `d2`
+    define the second vector and are responsible for the Y-axis scaling, rotation, and shear transformations;
+  - `a3`, `b3`, `c3`, `d3`
+    define the third vector and are responsible for the Z-axis scaling, rotation, and shear transformations;
+  - `a4`, `b4`, `c4`, `d4`
+    define the third vector, `a4`, `b4` and `c4` realize the translation transformation of x, y and z axes, and `d4` is generally set to 1, which is a value to keep the calculated weight stable.
+
+:::
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>empty value</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="yes"
+/>
+
+## Note
+
+:::info
+
+- If you want 3D effect when transform rotateX and rotateY rotate, you need to cooperate with [perspective property](./perspective.mdx).
+
+- On iOS, if there is jaggedness in rotate, anti-aliasing can be turned on by adding the `allow-edge-antialiasing` attribute to the node.
+
+```jsx
+<view allow-edge-antialiasing={true}></view>
+```
+
+- `iOS` will penetrate other sibling nodes in the same layer when rendering `rotateX/rotateY`. If you do not want this penetration effect, wrap the node with a Wrapper View so that it is not in the same layer as its sibling nodes. Since an empty Wrapper View will be optimized and deleted by layout only, without generating an actual node, please add a default `transform` property value to the Wrapper View (e.g. `transform: translate(0,0)`) to prevent it from being layout only.
+
+:::
+
+:::info
+
+- The transform property is order-dependent, and the order of translate, rotate, and scale will affect the final rendering effect.
+
+- The table below shows whether Lynx considers the order of transform in various scenarios:
+
+| Scenario                    | Consideration of Transform Order |
+| --------------------------- | -------------------------------- |
+| Static transform in Android | Yes                              |
+| Static transform in iOS     | Yes                              |
+| Transform in Android        | Yes                              |
+| Transform in iOS            | Yes                              |
+
+- _What is a static transform: It refers to the transform property that is rendered directly without animation in CSS._
+
+:::
+
+## Difference from W3C
+
+- not support rotate3d, scale3d
+
+## Compatibility
+
+<APITable />

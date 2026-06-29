@@ -1,0 +1,97 @@
+---
+title: position
+api: css/properties/position
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The `position` CSS property sets how an element is positioned in a document. The [`top`](./top.mdx), [`right`](./right.mdx), [`bottom`](./bottom.mdx), and [`left`](./left.mdx) properties determine the final location of positioned elements.
+
+## Types of positioning
+
+- A positioned element is an element whose computed position value is either `relative`, `absolute`, `fixed`, or `sticky`.
+
+- A relatively positioned element is an element whose computed position value is relative. The [`top`](./top.mdx) and [`bottom`](./bottom.mdx) properties specify the vertical offset from its normal position; the [`left`](./left.mdx) and [`right`](./right.mdx)properties specify the horizontal offset.
+
+- An absolutely positioned element is an element whose computed position value is `absolute` or `fixed`. The `top`, `right`, `bottom`, and `left` properties specify offsets from the edges of the element's containing block. (The containing block is the ancestor relative to which the element is positioned.) If the element has margins, they are added to the offset. The element establishes a new block formatting context (BFC) for its contents.
+
+- A stickily positioned element is an element whose computed position value is sticky. It's treated as relatively positioned until its containing block crosses a specified threshold (such as setting top to value other than auto) within its flow root (or the container it scrolls within), at which point it is treated as "stuck" until meeting the opposite edge of its containing block.
+
+Most of the time, absolutely positioned elements that have [`height`](./height.mdx) and [`width`](./width.mdx) set to auto are sized so as to fit their contents. However, absolutely positioned elements can be made to fill the available vertical space by specifying both `top` and `bottom` and leaving `height` unspecified (that is, `auto`). They can likewise be made to fill the available horizontal space by specifying both `left` and `right` and leaving width as `auto`.
+
+Except for the case just described (of absolutely positioned elements filling the available space):
+
+If both `top` and `bottom` are specified (technically, not auto), `top` wins.
+If both `left` and `right` are specified, `left` wins when direction is `ltr` (English, horizontal Japanese, etc.) and `right` wins when `direction` is `rtl` (Persian, Arabic, Hebrew, etc.).
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/position/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/position.jpg"
+  entry="src/position"
+  defaultEntryFile="dist/position.lynx.bundle"
+/>
+
+## Syntax
+
+```css
+position: relative;
+position: fixed;
+position: absolute;
+position: sticky;
+```
+
+### Values
+
+#### `relative`
+
+**default value**. The element is positioned according to the normal flow of the document, and then offset relative to itself based on the values of `top`, `right`, `bottom`, and `left`. The offset does not affect the position of any other elements.
+
+#### `absolute`
+
+The element is removed from the normal document flow, and no space is created for the element in the page layout. It is positioned relative to the containing block of its parent element. Its final position is determined by the values of `top`, `right`, `bottom`, and `left`.
+
+#### `fixed`
+
+The element is will be treated as a direct child of root node with the property `position` as `absolute`. Its final position is determined by the values of top, right, bottom, and left.
+
+#### `sticky`
+
+`sticky` is only supported on the children elements of a `scroll-view`. Is The element is positioned according to the normal flow of the document, and then offset relative to its parent scroll-view and containing block (nearest block-level ancestor), based on the values of top, right, bottom, and left. The offset does not affect the position of any other elements.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      <code>relative</code>
+    </>
+  }
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Formal syntax
+
+## Difference with the Web
+
+[mdn:position](https://developer.mozilla.org/en-US/docs/Web/CSS/position)
+
+1. Lynx does not support `static` and default value is `relative`.
+2. `sticky` is only supported on the children elements of a `scroll-view`
+
+## Compatibility
+
+<APITable />
+
+## FAQ
+
+1. If using [`z-index`](./z-index.mdx) in `position: absolute` element, please set `z-index: 0` in parent element at the same time.

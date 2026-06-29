@@ -1,0 +1,74 @@
+#!/bin/sh
+# From Gerrit Code Review 3.9.1-699-g5cce1703c7
+#
+# Part of Gerrit Code Review (https://www.gerritcodereview.com/)
+#
+# Copyright (C) 2009 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -u
+
+# avoid [[ which is not POSIX sh.
+if test "$#" != 1 ; then
+  echo "$0 requires an argument."
+  exit 1
+fi
+
+if test ! -f "$1" ; then
+  echo "file does not exist: $1"
+  exit 1
+fi
+
+# Do not create a change id if requested
+case "$(git config --get gerrit.createChangeId)" in
+  false)
+    exit 0
+    ;;
+  always)
+    ;;
+  *)
+    # Do not create a change id for squash/fixup commits.
+    if head -n1 "$1" | LC_ALL=C grep -q '^[a-z][a-z]*! '; then
+      exit 0
+    fi
+    ;;
+esac
+
+
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+  refhash="$(git rev-parse HEAD)"
+else
+  refhash="$(git hash-object -t tree /dev/null)"
+fi
+
+random=$({ git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "$1"; } | git hash-object --stdin)
+
+# Do not edit change id if commit message is empty
+if test "$(sed -e '/>8/q' < "$1" | git stripspace --strip-comments | wc -l)" -eq 0 ; then
+  exit 1
+fi
+
+token="Change-Id"
+value="I$random"
+pattern=".*"
+
+if git interpret-trailers --parse < "$1" | grep -q "^$token: $pattern$" ; then
+  exit 0
+fi
+
+if ! git interpret-trailers --if-exists doNothing \
+      --trailer "$token:$value" --in-place "$1" ; then
+  echo "cannot insert change-id line in $1"
+  exit 1
+fi

@@ -1,0 +1,65 @@
+---
+title: createSelectorQuery()
+api: lynx-api/lynx/createSelectorQuery
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: createSelectorQuery() static method
+
+<APISummary />
+
+Create a [`SelectorQuery`] with the root node of the page as the root.
+
+## Syntax
+
+```ts
+createSelectorQuery(): SelectorQuery;
+```
+
+### Parameter
+
+None.
+
+### Return Value
+
+A [`SelectorQuery`] object with the root node of the page as the root.
+
+## Examples
+
+Obtain the position and size of the specified `text` node:
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function App() {
+  useEffect(() => {
+    lynx
+      .createSelectorQuery() // create SelectorQuery
+      .select('#my-id') // Specify the selector of the target node
+      .invoke({
+        // Specify the operation for the target node
+        method: 'boundingClientRect',
+        success: function (res) {
+          console.log(res);
+        },
+        fail: function (res) {
+          console.log(res.code, res.data);
+        },
+      })
+      .exec(); // Execute the query
+  }, []);
+
+  return (
+    <view>
+      <text id="my-id">Hello, ReactLynx</text>
+    </view>
+  );
+}
+```
+
+[`SelectorQuery`]: ../selector-query.mdx
+
+## Compatibility
+
+<APITable />

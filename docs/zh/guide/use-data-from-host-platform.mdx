@@ -1,0 +1,337 @@
+import { Details, PlatformTabs, CodeFold, Go } from '@lynx';
+
+# 使用宿主平台数据
+
+Lynx 允许宿主平台在页面加载时提供一份初始数据，并且在之后随时对这些数据进行更新。
+这份初始数据被称为 `initData`。
+
+## 提供和更新数据
+
+:::note 前置步骤
+你需要完成[接入现有应用](/guide/start/integrate-with-existing-apps.html)中的指引，以确保你的应用已经集成了 Lynx，并对 Lynx 的 Native API 有基本的了解。
+:::
+
+在使用 [`LynxView.loadTemplate()`] 加载一个 [Bundle](/guide/spec.html#app-bundle-aka-template-bundle) 的时候，你有机会传入一些数据：
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">
+
+    ```objc {5}
+    LynxLoadMeta* meta = [LynxLoadMeta init];
+    // meta.url = @"";
+    // meta.binaryData = nil;
+    // meta.templateBundle = nil;
+    meta.initialData = __YOUR_DATA__;
+    // meta.loadOption = LynxLoadOptionDumpElement | LynxLoadOptionRecycleTemplateBundle;
+    [lynxView loadTemplate:meta];
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">
+
+    ```java {5}
+    LynxLoadMeta.Builder builder = new LynxLoadMeta.Builder();
+    // builder.setUrl();
+    // builder.setBinaryData();
+    // builder.setTemplateBundle();
+    builder.setInitialData(__YOUR_DATA__);
+    // builder.addLoadOption();
+    LynxLoadMeta meta = builder.build();
+    lynxView.loadTemplate(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4,11}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
+    ```
+
+  </PlatformTabs.Tab>
+</PlatformTabs>
+
+你可以在后续需要的时机通过 [`LynxView.updateData()`] (或 HarmonyOS 平台的 [`LynxContext.updateData()`]) 来更新这些数据：
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">
+
+    ```objc {2}
+    LynxUpdateMeta* meta = [LynxUpdateMeta init];
+    meta.data = __YOUR_DATA__;
+    [lynxView updateData:meta];
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">
+
+    ```java {2}
+    LynxUpdateMeta.Builder builder = new LynxUpdateMeta.Builder();
+    builder.setUpdatedData(__YOUR_DATA__);
+    LynxUpdateMeta meta = builder.build();
+    lynxView.updateMetaData(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4-5,13-16}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+      private context?: LynxContext;
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+            onCreate: (context: LynxContext) => {
+              this.context = context;
+              this.context.updateMetaData(new MetaData(new TemplateData(__YOUR_DATA__)));
+            }
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
+    ```
+
+  </PlatformTabs.Tab>
+</PlatformTabs>
+
+你在加载时传入的数据和后续更新时传入的数据都可以在前端使用，下面是如何在前端使用这些数据。
+
+## 使用数据
+
+前端可以通过 [`useInitData()`] 来获取 `initData`。
+在宿主平台更新数据时，这些组件会自动重新渲染。
+
+```tsx title="src/App.jsx"
+import { useInitData } from '@lynx-js/react';
+
+function App() {
+  const initData = useInitData();
+  return (
+    <view>
+      <text>{initData.greeting}</text>
+    </view>
+  );
+}
+```
+
+如果你使用传统的类组件，那么可以使用 [`InitDataConsumer`]。
+
+```tsx
+import { Component, InitDataProvider, InitDataConsumer } from '@lynx-js/react';
+
+class C extends Component {
+  render() {
+    return (
+      <InitDataConsumer>
+        {(initData) => (
+          <view>
+            <text>{initData.greeting}</text>
+          </view>
+        )}
+      </InitDataConsumer>
+    );
+  }
+}
+```
+
+注意 [`InitDataConsumer`] 必须作为 [`InitDataProvider`] 的子节点使用。
+
+```tsx
+<InitDataProvider>
+  <view>
+    <C />
+  </view>
+</InitDataProvider>
+```
+
+## 使用数据前进行预处理
+
+虽然 [`useInitData()`] 会从宿主平台为你提供 `initData`，但它可能不是你期望的格式。
+
+想象一下，你有以下混乱的 `initData`：
+
+- 在 Android 或 HarmonyOS 上：
+
+  ```json
+  {
+    "pageTitle": "Hello Lynx"
+  }
+  ```
+
+- 但是，在 iOS 上：
+
+  ```json
+  {
+    "page_title": "Hello Lynx"
+  }
+  ```
+
+如果你想要兼容这些平台，你的代码可能会变得不那么干净：
+
+```tsx {7}
+import { useInitData } from '@lynx-js/react';
+
+export function App() {
+  const initData = useInitData();
+  return (
+    <view>
+      <text>{initData.pageTitle || initData.page_title}</text>
+    </view>
+  );
+}
+```
+
+上述场景只是示例，但 Lynx 确实提供了一种在使用之前处理 `initData` 的方法，它被称为 `dataProcessor`。
+
+### 使用默认 `dataProcessor`
+
+如果你（或宿主平台开发人员）没有指定 `processorName`，Lynx 将使用 `defaultDataProcessor` 来处理 `initData`。
+
+:::info
+前往 [`lynx.registerDataProcessors`] 查看更多示例。
+:::
+
+```tsx title="src/index.tsx" {4-12}
+import { root } from '@lynx-js/react';
+import { App } from './App.js';
+
+lynx.registerDataProcessors({
+  defaultDataProcessor: function (rawInitData) {
+    const { pageTitle, page_title, ...rest } = rawInitData;
+    return {
+      ...rest,
+      pageTitle: pageTitle || page_title,
+    };
+  },
+});
+root.render(<App />);
+
+if (import.meta.webpackHot) {
+  import.meta.webpackHot.accept();
+}
+```
+
+然后，在你的组件中，你可以直接使用 `initData`：
+
+```tsx title="src/App.jsx" {7}
+import { useInitData } from '@lynx-js/react';
+
+export function App() {
+  const initData = useInitData();
+  return (
+    <view>
+      <text>{initData.pageTitle}</text>
+    </view>
+  );
+}
+```
+
+### 使用命名的 `dataProcessor`
+
+你（或宿主平台开发人员）还可以在调用 [`LynxView.updateData()`] (或 HarmonyOS 平台的 [`LynxContext.updateData()`]) 时指定 `processorName`：
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">
+
+    ```objc
+    LynxUpdateMeta *meta = [[LynxUpdateMeta alloc] init];
+
+    [lynxView updateData:meta];
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">
+
+    ```java
+    LynxUpdateMeta meta = new LynxUpdateMeta();
+
+    lynxView.updateMetaData(meta);
+    ```
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    ```typescript {4-5,14-16}
+    @Entry
+    @Component
+    struct Index {
+      private metaData: MetaData = new MetaData(new TemplateData(__YOUR_DATA__));
+      private context?: LynxContext;
+
+      build() {
+        Column() {
+          LynxView({
+            // url: this.url,
+            // buffer: this.buffer,
+            metadata: this.metaData,
+            onCreate: (context: LynxContext) => {
+              const templateData: TemplateData = new TemplateData('', 'someDataProcessor');
+              this.context = context;
+              this.context.updateMetaData(new MetaData(templateData));
+            }
+          }).width('100%').height('100%');
+        }
+        .size({ width: '100%', height: '100%' })
+      }
+    }
+    ```
+
+  </PlatformTabs.Tab>
+</PlatformTabs>
+
+因此，你定义的一个命名的 `dataProcessor` 将被调用来处理 `initData`，你可以使用以下语法定义多个 `dataProcessor`：
+
+```tsx title="src/index.tsx" {5-14}
+import { root } from '@lynx-js/react';
+import { App } from './App.js';
+
+lynx.registerDataProcessors({
+  dataProcessors: {
+    someDataProcessor: function (rawInitData) {
+      // process rawInitData
+      returnprocessedInitData;
+    },
+    anotherDataProcessor: function (rawInitData) {
+      // process rawInitData
+      returnprocessedInitData;
+    },
+  },
+});
+root.render(<App />);
+
+if (import.meta.webpackHot) {
+  import.meta.webpackHot.accept();
+}
+```
+
+如果业务逻辑需要，这允许你（或宿主平台开发人员）在宿主平台上决定使用哪个 `dataProcessor`。
+
+[`LynxView.loadTemplate()`]: /api/lynx-native-api/lynx-view/load-template
+[`LynxView.updateData()`]: /api/lynx-native-api/lynx-view/update-meta-data
+[`useInitData()`]: /api/react/Function.useInitData
+[`InitDataConsumer`]: /api/react/Function.InitDataConsumer
+[`InitDataProvider`]: /api/react/Function.InitDataProvider
+[`lynx.registerdataprocessors`]: /api/react/Interface.Lynx#registerdataprocessors
+[`LynxContext.updateData()`]: /api/lynx-native-api/lynx-context/update-meta-data

@@ -1,0 +1,70 @@
+---
+tag: BTS
+api: lynx-api/nodes-ref/NodesRef
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef
+
+<APISummary />
+
+表示对一个或多个 UI 节点的引用。可用来对 UI 节点进行方法调用、属性获取和设置。
+
+`NodesRef` 内部只保存查找节点所需的信息（例如 CSS 选择器），并不真正地指向某一个特定节点。实际的节点查找在 `SelectorQuery.prototype.exec()` 执行时才进行。
+因此，`NodesRef` 指向的节点可能实际并不存在。在这种情况下，会在 `exec()` 调用时报错。
+
+## 实例方法
+
+[`NodesRef.fields()`](./nodes-ref/nodes-ref-fields.mdx)
+
+查询选定节点的属性。
+
+[`NodesRef.invoke()`](./nodes-ref/nodes-ref-invoke.mdx)
+
+执行选定元件的方法。
+
+[`NodesRef.path()`](./nodes-ref/nodes-ref-path.mdx)
+
+查询节点到页面根节点的路径信息。
+
+[`NodesRef.setNativeProps()`](./nodes-ref/nodes-ref-set-native-props.mdx)
+
+直接设定选定节点的属性。
+
+## 示例
+
+获取指定 `text` 节点的位置和大小：
+
+```tsx
+class Page extends Component {
+  componentDidMount() {
+    lynx
+      .createSelectorQuery() // 创建 SelectorQuery
+      .select('#my-id') // 指定目标节点的选择器
+      .invoke({
+        // 指定对目标节点的操作
+        method: 'boundingClientRect',
+        success: function (res) {
+          console.log(res);
+        },
+        fail: function (res) {
+          console.log(res.code, res.data);
+        },
+      })
+      .exec(); // 执行查询
+  }
+
+  render() {
+    return (
+      <view>
+        <text id="my-id">...</text>
+      </view>
+    );
+  }
+}
+```
+
+## 兼容性
+
+<APITable />

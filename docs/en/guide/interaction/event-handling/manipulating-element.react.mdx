@@ -1,0 +1,151 @@
+import { Go } from '@lynx';
+
+# Direct Manipulation of Elements
+
+In daily development, modern front-end frameworks handle most element tree and node property updates for us. However, there are times when you need to manipulate elements directly, such as controlling media players, manipulating view behavior, getting element information, or directly modifying styles.
+
+These functionalities are typically implemented by components on the client side, and you need to access them through element references.
+
+## Manipulating Elements in Background Thread
+
+### Example: Auto-scrolling
+
+Let's try a simple requirement - auto-scrolling the page. We need to call the [`autoScroll`] method of the `<scroll-view />` element:
+
+<Go
+  example="element-manipulation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/element-manipulation/ref.gif"
+  defaultEntryFile="dist/ref-background.lynx.bundle"
+  defaultFile="src/ref-background/App.tsx"
+  entry="src/ref-background"
+  highlight="{7,10-18,28}"
+/>
+
+This example demonstrates two steps for manipulating elements: creating a reference using `useRef` and binding it to the target element using `ref={scrollRef}`, then calling the element method using `invoke()` in the event handler.
+
+### Obtaining a Reference to an Element Using `ref`
+
+If you're familiar with React, you'll find that using `ref` is very similar:
+
+```tsx
+const nodeRef = useRef<NodesRef>(null);
+// ...
+<text ref={nodeRef} />;
+```
+
+However, note that in Lynx, the type of node reference is [`NodesRef`], which is different from React. If you want to learn more about using references, you can refer to [Manipulating the Element with Refs](https://react.dev/learn/manipulating-the-dom-with-refs).
+
+### Manipulating an Element via Its Reference
+
+After obtaining a node reference, let's see how to use it. [`NodesRef`] provides a series of useful APIs.
+
+For example, you can use [`NodesRef.invoke()`](/api/lynx-api/nodes-ref/nodes-ref-invoke) to call the element's methods. Each component provides specific methods that are implemented on the client side and exposed for front-end use.
+
+When calling a method, you can pass required parameters through `params`, handle successful results using the `success` callback, and handle potential errors using the `fail` callback. Remember to call [`exec()`](/api/lynx-api/selector-query/selector-query-exec) at the end to submit the operation for actual execution:
+
+```tsx
+ref
+  .invoke({
+    method: 'boundingClientRect',
+    params: {
+      relativeTo: 'screen',
+    },
+    success: (res) => {
+      // Handle successful result
+      const { left, top, width, height } = res;
+    },
+    fail: (err) => {
+      // Handle potential errors
+      console.error('Failed to get element position:', err);
+    },
+  })
+  .exec();
+```
+
+## Manipulating Elements in Main Thread
+
+If you want better performance and more intuitive code, you can consider manipulating elements in the main thread. It offers lower operation latency with faster UI response and more natural API calls.
+
+Let's see how to implement the same functionality in the main thread:
+
+<Go
+  example="element-manipulation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/element-manipulation/ref.gif"
+  defaultEntryFile="dist/ref-main-thread.lynx.bundle"
+  defaultFile="src/ref-main-thread/App.tsx"
+  entry="src/ref-main-thread"
+  highlight="{7,10-14,19,25}"
+/>
+
+The main changes here are: node operations need to be written in [main thread functions](/api/react/Document.directives.html#main-thread); using [`useMainThreadRef`] and `main-thread:ref` to get the main thread node reference; the node reference type becomes [`MainThread.Element`], which provides various methods for manipulating nodes; and we used [`MainThread.Element.invoke()`] to call the node's [`autoScroll`] method.
+
+## Obtaining Element References via Selectors
+
+In certain scenarios, such as when you need to batch operate on elements or dynamically find elements, using selectors can be particularly useful.
+
+### Background Thread
+
+In the background thread, we can use the [`SelectorQuery`] API to find elements. Let's look at an example:
+
+<Go
+  example="element-manipulation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/element-manipulation/ref.gif"
+  defaultEntryFile="dist/selector-query-background.lynx.bundle"
+  defaultFile="src/selector-query-background/App.tsx"
+  entry="src/selector-query-background"
+  highlight="{5-6}"
+/>
+
+Using selectors is simple: first create a query object using [`lynx.createSelectorQuery()`], then use methods like [`select()`] to find elements. To learn about all supported selectors, you can check our [API documentation](/api/lynx-api/selector-query).
+
+### Main Thread
+
+When manipulating elements in the main thread, things become even simpler. You can use the browser-like [`lynx.querySelector()`] API:
+
+<Go
+  example="element-manipulation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/element-manipulation/ref.gif"
+  defaultEntryFile="dist/selector-query-main-thread.lynx.bundle"
+  defaultFile="src/selector-query-main-thread/App.tsx"
+  entry="src/selector-query-main-thread"
+  highlight="{6-9}"
+/>
+
+## Obtaining a Reference to the Event Target Element
+
+When handling events, we often need to manipulate the element that triggered the event.
+
+### Main Thread
+
+In the main thread, you can get the element reference directly from the event object. Similar to browsers, we provide [`target`] and [`currentTarget`] properties:
+
+<Go
+  example="element-manipulation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/element-manipulation/color.gif"
+  defaultEntryFile="dist/event-main-thread.lynx.bundle"
+  defaultFile="src/event-main-thread/App.tsx"
+  entry="src/event-main-thread"
+  highlight="{6-9}"
+/>
+
+Here we used [`MainThread.Element.setStyleProperty()`] to modify styles.
+
+## Using `getElementById` API
+
+[`getElementById`] is currently our main API for handling animations and CSS variables. Although this is a traditional interface, it's still the best choice when you need to execute JavaScript animations or dynamically modify CSS variable values.
+
+To learn more about usage, you can check [Animation API documentation](/api/lynx-api/lynx/lynx-animate-api) and [CSS Variables Operation Guide](/api/css/properties/css-variable.mdx). We are developing more modern APIs to replace [`getElementById`], stay tuned.
+
+[`autoScroll`]: /api/elements/built-in/scroll-view.html#autoscroll
+[`currentTarget`]: /api/lynx-api/event/event.html#currentTarget
+[`getElementById`]: /api/lynx-api/lynx/lynx-get-element-by-id
+[`lynx.createSelectorQuery()`]: /api/lynx-api/lynx/lynx-create-selector-query
+[`lynx.querySelector()`]: /api/lynx-api/main-thread/lynx-query-selector
+[`MainThread.Element`]: /api/lynx-api/main-thread/main-thread-element
+[`MainThread.Element.invoke()`]: /api/lynx-api/main-thread/main-thread-element.html#elementinvoke
+[`MainThread.Element.setStyleProperty()`]: /api/lynx-api/main-thread/main-thread-element.html#elementsetstyleproperty
+[`NodesRef`]: /api/lynx-api/nodes-ref
+[`select()`]: /api/lynx-api/selector-query/selector-query-select
+[`SelectorQuery`]: /api/lynx-api/selector-query
+[`target`]: /api/lynx-api/event/event.html#target
+[`useMainThreadRef`]: /api/react/Function.useMainThreadRef

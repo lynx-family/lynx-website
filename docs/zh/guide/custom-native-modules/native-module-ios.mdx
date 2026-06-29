@@ -1,0 +1,248 @@
+import { Steps, Tabs, Tab, PackageManagerTabs } from '@theme';
+import { CodeFold } from '@lynx'
+
+#### 准备 Xcode 项目
+
+首先参照[为 iOS 构建 Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) 指南在本地创建 Lynx Explorer 项目，并用 Xcode 打开项目。
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step1.png)
+
+接着在 Lynx Explorer 项目的 `modules` 文件夹上右键点击，选择 `New Fie...` 创建原生模块代码文件。
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step2.png)
+
+然后使用 `Cocoa Touch Class` 模板。
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step3.png)
+
+将类命名为 `NativeLocalStorageModule`，语言你可以选择创建 `Objective-C`，也可以选择 `Swift`。接着点击 `Next`，完成文件的创建。
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-ios-step4.png)
+
+#### 实现原生模块
+
+:::info
+原生模块需要实现额外的静态方法 `name`，返回原生模块的导出名字；实现额外的静态方法 `methodLookup`，将需要导出的方法名和对应的选择器进行映射。
+:::
+
+<Tabs groupId='native-module'>
+<Tab label="Objective-C">
+
+```objective-c {6} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.h"
+#import <Foundation/Foundation.h>
+#import <Lynx/LynxModule.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface NativeLocalStorageModule : NSObject <LynxModule>
+
+@end
+
+NS_ASSUME_NONNULL_END
+```
+
+<CodeFold height={360} toggle>
+
+```objective-c {18-20,22-27} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.m"
+#import "NativeLocalStorageModule.h"
+
+@interface NativeLocalStorageModule()
+@property (strong, nonatomic) NSUserDefaults *localStorage;
+@end
+
+@implementation NativeLocalStorageModule
+
+static NSString *const NativeLocalStorageKey = @"MyLocalStorage";
+
+- (instancetype)init {
+    if (self = [super init]) {
+        _localStorage = [[NSUserDefaults alloc] initWithSuiteName:NativeLocalStorageKey];
+    }
+    return self;
+}
+
++ (NSString *)name {
+    return @"NativeLocalStorageModule";
+}
+
++ (NSDictionary<NSString *, NSString *> *)methodLookup {
+    return @{
+        @"setStorageItem": NSStringFromSelector(@selector(setStorageItem:value:)),
+        @"getStorageItem": NSStringFromSelector(@selector(getStorageItem:callback:)),
+        @"clearStorage": NSStringFromSelector(@selector(clearStorage))
+    };
+}
+
+- (void)setStorageItem:(NSString *)key value:(NSString *)value {
+    [self.localStorage setObject:value forKey:key];
+}
+
+- (void)getStorageItem:(NSString *)key callback:(void(^)(NSString *value)) callback{
+    NSString *value = [self.localStorage stringForKey:key];
+    callback(value);
+}
+
+- (void)clearStorage {
+    NSDictionary *keys = [self.localStorage dictionaryRepresentation];
+    for (NSString *key in keys) {
+        [self.localStorage removeObjectForKey:key];
+    }
+}
+
+@end
+```
+</CodeFold>
+
+</Tab>
+<Tab label="Swift">
+
+
+:::tip
+Lynx Explorer 是使用 Objective-C 构建的项目，如果你希望在 Swift 文件中实现原生模块，请参考 [Importing Objective-C into Swift](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift) 引入所需的 Lynx 头文件 `LynxModule.h`。
+:::
+
+```swift title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/LynxExplorer-Bridging-Header.h"
+
+//
+//  Use this file to import your target's public headers that you would like to expose to Swift.
+//
+
+#import <Lynx/LynxModule.h>
+
+
+```
+
+<CodeFold height={360} toggle>
+
+```swift {6-8,10-16} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/modules/NativeLocalStorageModule.swift"
+
+import Foundation
+
+@objcMembers
+public final class NativeLocalStorageModule: NSObject, LynxModule {
+
+    public static var name: String {
+        return "NativeLocalStorageModule"
+    }
+
+    public static var methodLookup: [String : String] {
+        return [
+            "setStorageItem": NSStringFromSelector(#selector(setStorageItem(_:value:))),
+            "getStorageItem": NSStringFromSelector(#selector(getStorageItem(_:completion:))),
+            "clearStorage": NSStringFromSelector(#selector(clearStorage))
+        ]
+    }
+
+    private let localStorage: UserDefaults
+    private static let storageKey = "MyLocalStorage"
+
+    public init(param: Any) {
+      guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
+          fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
+      }
+      localStorage = suite
+      super.init()
+    }
+
+    public override init() {
+        guard let suite = UserDefaults(suiteName: NativeLocalStorageModule.storageKey) else {
+            fatalError("Failed to initialize UserDefaults with suiteName: \(NativeLocalStorageModule.storageKey)")
+        }
+        localStorage = suite
+        super.init()
+    }
+
+    func setStorageItem(_ key: String, value: String) {
+        localStorage.set(value, forKey: key)
+    }
+
+    objc func getStorageItem(_ key: String, completion:(NSString) -> Void) {
+      if let value = localStorage.string(forKey: key) {
+          completion(value as NSString)
+      } else {
+          completion("" as NSString)
+      }
+    }
+
+    func clearStorage() {
+        localStorage.dictionaryRepresentation().keys.forEach {
+            localStorage.removeObject(forKey: $0)
+        }
+    }
+
+}
+
+```
+
+</CodeFold>
+
+
+</Tab>
+</Tabs>
+
+接下来将原生模块注册到 Lynx 运行时环境中。
+
+在 Lynx Explorer 工程的 `explorer/darwin/ios/lynx_explorer/LynxExplorer/LynxInitProcessor.m` 文件的 `setupLynxEnv` 方法中添加如下注册代码，将原生模块注册到 Lynx 运行时环境的全局配置中。
+
+
+
+<Tabs groupId='native-module'>
+<Tab label="Objective-C">
+
+```objective-c {7} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/LynxInitProcessor.m"
+
+#import "NativeLocalStorageModule.h"
+
+- (void)setupLynxEnv {
+  // ...
+
+  // register global JS module
+  [globalConfig registerModule:NativeLocalStorageModule.class];
+
+  // ...
+}
+```
+
+</Tab>
+<Tab label="Swift">
+
+:::tip
+Lynx Explorer 是使用 Objective-C 构建的项目，如果你希望在 Objective-C 文件中使用 swift 原生模块，请参考 [Importing Swift into Objective-C](https://developer.apple.com/documentation/swift/importing-swift-into-objective-c) 生成 `LynxExplorer-Swift.h` 头文件并引入。
+:::
+
+```objective-c {7} title="explorer/darwin/ios/lynx_explorer/LynxExplorer/LynxInitProcessor.m"
+
+#import "LynxExplorer-Swift.h"
+
+- (void)setupLynxEnv {
+    // ...
+
+    // register global JS module
+    [globalConfig registerModule:NativeLocalStorageModule.class];
+
+    // ...
+}
+```
+</Tab>
+</Tabs>
+
+
+#### 运行代码
+
+准备好所有内容后，现在可以构建运行你的代码：
+
+首先参照[编译和运行 iOS Lynx Explorer](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios#build-ios-app) 指南构建 Lynx Explorer，并安装到你的手机上。
+
+接着参考[安装依赖&启动开发服务器](../start/quick-start#开始开发)指南，在 Lynx 项目根目录下安装依赖并且启动开发服务器。
+
+安装依赖：
+
+<PackageManagerTabs command="install" />
+
+启动开发服务器：
+
+<PackageManagerTabs command="run dev" />
+
+你将会看到控制台中看到二维码和产物链接，使用 Lynx Explorer 扫描二维码或者填写产物链接即可打开你的 Lynx 页面。
+
+![demo](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-demo-ios-en.gif)

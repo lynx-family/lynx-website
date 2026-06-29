@@ -1,0 +1,554 @@
+---
+api: elements/image
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# `<image>`
+
+<APISummary />
+
+import {
+  AndroidOnly,
+  IOSOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+
+用于展示不同类型的图片，包括网络图片、静态资源和本地存储的图片。
+
+:::tip
+
+本功能依赖 [Lynx Service](/guide/start/integrate-with-existing-apps) 提供的图片加载服务
+
+:::
+
+## 使用指南
+
+`<image>` 是一个[空元件](/guide/ui/elements-components.html#空元件)，不再支持子节点。
+
+:::note
+
+要正常显示图片，必须设置非空的 [src](/api/elements/built-in/image.html#required-src) 属性，并至少提供以下之一：
+
+- 大于 0 的 [width](/api/css/properties/width.html) 和 [height](/api/css/properties/width.html)
+
+- [auto-size](/api/elements/built-in/image.html#auto-size)
+
+:::
+
+以下示例展示了 `<image>` 元件在不同场景下的应用。
+
+### 展示不同裁剪/缩放模式的图片
+
+支持使用 [mode](/api/elements/built-in/image.html#mode) 控制图片裁剪/缩放模式。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_basic_demo.png"
+  example="image"
+  defaultFile="src/App.tsx"
+  highlight="{30-42}"
+/>
+
+### 图片添加边框、圆角和背景
+
+可通过 CSS 样式设置图片的边框、圆角和背景颜色。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_style_demo.png"
+  highlight="{44-73}"
+  example="image"
+  defaultFile="src/App.tsx"
+/>
+
+### 图片添加特殊绘制效果
+
+支持高斯模糊等特殊绘制效果。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_filter_demo.png"
+  highlight="{75-89}"
+  example="image"
+  defaultFile="src/App.tsx"
+/>
+
+### 自适应原图宽高比例
+
+支持使用 [auto-size](/api/elements/built-in/image.html#auto-size) 自动调整 `<image>` 尺寸以匹配原图比例。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_auto_demo.png"
+  highlight="{18-28}"
+  example="image"
+  defaultFile="src/App.tsx"
+/>
+
+### 监听图片加载成功/失败
+
+可通过绑定[事件](/api/elements/built-in/image.html#事件)监听图片的加载状态。
+
+<Go highlight="{91-111}" example="image" defaultFile="src/App.tsx" />
+
+## 属性
+
+### `src` <Required /> \{#required-src}
+
+```tsx
+src: string;
+```
+
+指定要显示的图片 [URL](https://developer.mozilla.org/en-US/docs/Glossary/URL)。
+
+当前支持的图片格式包括：`png`、`jpg`、`jpeg`、`bmp`、`gif` 和 `webp`。
+
+暂不支持 `svg` 格式。如需渲染 `svg`，可参考[自定义元件](../../../guide/custom-native-component.mdx)自行实现。
+
+::: note
+
+前端内置资源请参照[静态资源处理](../../../rspeedy/assets.md)进行配置，否则发布后图片可能会无法正确展示。
+
+:::
+
+### `mode`
+
+```tsx
+// DefaultValue: 'scaleToFill'
+mode?: 'scaleToFill' | 'aspectFit' | 'aspectFill' | 'center';
+```
+
+指定图片裁剪/缩放模式：
+
+- `scaleToFill`（默认）：不保持纵横比，拉伸图片以填满 `<image>`。
+
+- `aspectFit`：保持纵横比缩放，使图片的完整内容可见。
+
+- `aspectFill`：保持纵横比缩放，使短边填充 `<image>` 元件，可能导致部分内容裁剪。
+
+- `center`：不对图片进行缩放，图片将居中显示。
+
+### `placeholder`
+
+```tsx
+placeholder?: string;
+```
+
+需要展示的占位图的路径，具体使用方法和限制与 `src` 相同。
+
+### `blur-radius`
+
+```tsx
+// DefaultValue: '0px'
+blur-radius?: string;
+```
+
+图片高斯模糊的模糊半径。
+
+### `prefetch-width/prefetch-height`
+
+```tsx
+// DefaultValue: '0px'
+prefetch-width/prefetch-height?: string;
+```
+
+提供图片排版宽高为0时发起请求的能力。
+
+一般在需要提前加载图片的场景使用，设置大小建议和实际排版宽高大小保持一致。
+
+### `cap-insets`
+
+```tsx
+// DefaultValue: '0px 0px 0px 0px'
+cap-insets?: string;
+```
+
+9patch 图缩放区域，四个值分别是上、右、下、左，需要是具体数值，不支持百分比和小数。
+
+```tsx
+// 代表从原图[14 * ${cap-insets-scale}，imageWidth - 14 * ${cap-insets-scale}]之间的像素位置开始拉伸图片。
+ cap-insets="0px 14px 0 14px"
+```
+
+:::note
+
+使用 cap-insets 并不需要原图是 [9patch](https://developer.android.com/studio/write/draw9patch) 图
+
+:::
+
+### `cap-insets-scale`
+
+```tsx
+// DefaultValue: 1
+cap-insets-scale?: number;
+```
+
+配合 `cap-insets` 一同使用，调整最后拉伸时计算的像素位置。
+
+### `loop-count`
+
+```tsx
+// DefaultValue: 0
+loop-count?: number;
+```
+
+动图播放次数，默认为循环播放。
+
+### `image-config` <AndroidOnly />
+
+```tsx
+// DefaultValue: 'ARGB_8888'
+image-config?: 'RGB_565' | 'ARGB_8888';
+```
+
+指定图像数据格式，有两种取值：
+
+`ARGB_8888`：每个像素占用 32 位内存，支持半透明图片（包含 alpha 通道）。
+
+`RGB_565`：每个像素占用 16 位内存，可以减少内存占用，但会丢失透明度。
+
+PC 平台自 3.5 起支持。
+
+::: note
+
+影响图片 bitmap 的实际内存占用。
+
+以一个分辨率为 1024\*768 的图片为例，实际占用内存大小为（1024\*768\*像素位数/8）Bytes。
+
+默认值为 ARGB_8888。前端可以通过设置为 RGB_565 来优化图片内存占用。
+
+`ARGB_8888`：每个像素占用 32 bits 内存，并包含 alpha 通道。
+
+`RGB_565`：每个像素占用 16 bits 内存，可以减少内存占用，但会导致透明度丢失。
+
+设置为 RGB_565 可能会影响 `<image>` 的 border-radius 展示。你可以将 border-radius 设置在 `<image>` 的父 view 上，并在父 view 上添加 clip-radius 属性。
+
+不建议在 mode="aspectFit" 时使用 RGB_565，因为可能会在裁剪区域出现黑边。
+
+:::
+
+### `auto-size`
+
+```tsx
+// DefaultValue: false
+auto-size?: boolean;
+```
+
+当该属性为 `true` 且 `<image>` 没有宽或高时，在图片下载成功后会根据图片大小重新计算并修改 `<image>` 大小，保证 `<image>` 宽高比和图片宽高比一致。
+
+### `defer-src-invalidation`
+
+```tsx
+// DefaultValue: false
+defer-src-invalidation ?: boolean;
+```
+
+当该属性为 true 时，`<image>` 会在一次新的加载成功后才清除已展示的图片资源。
+
+默认行为是在新一次加载发起前清除。
+
+可以解决图片 src 切换之后重新加载导致的闪烁问题，list 等存在视图节点复用的场景不建议打开。
+
+### `autoplay`
+
+```tsx
+// DefaultValue: true
+autoplay?: boolean;
+```
+
+是否在动图加载完成之后自动开始播放，默认为自动开始播放。
+
+### `tint-color`
+
+```tsx
+tint-color?: string;
+```
+
+将所有非透明像素的颜色更改为 tint-color 声明的颜色，属性取值为 [color](/api/css/data-type/color.html)。
+
+## 事件
+
+前端可以在元件上绑定相应事件回调来监听元件的运行时行为，使用方法如下。
+
+### `bindstartplay`
+
+动图开始播放时触发。
+
+```tsx
+bindstartplay = (e: BaseEvent) => {};
+```
+
+### `bindcurrentloopcomplete`
+
+动图播放完成一轮时触发。
+
+```tsx
+bindcurrentloopcomplete = (e: BaseEvent) => {};
+```
+
+### `bindfinalloopcomplete`
+
+动图播放完成所有 `loop-count` 次数时触发。如果未设置 `loop-count`，该回调不会触发。
+
+```tsx
+bindfinalloopcomplete = (e: BaseEvent) => {};
+```
+
+### `bindload`
+
+如果图片发起了图片请求，且图片请求成功后，会触发该事件回调，并输出图片宽高。
+
+```tsx
+bindload = (e: ImageLoadEvent) => {};
+
+interface ImageLoadEvent {
+  detail: {
+    width: number;
+    height: number;
+  };
+}
+```
+
+### `binderror`
+
+如果图片发起了图片请求，且图片请求失败后，会触发该事件回调，并输出错误信息和错误码。
+
+```tsx
+binderror = (e: ImageErrorEvent) => {};
+
+interface ImageErrorEvent {
+  detail: {
+    errMsg: string; //错误信息
+    error_code: number;
+    lynx_categorized_code: number;
+  };
+}
+```
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行元件的方法。
+
+### `startAnimate`
+
+```ts
+
+lynx.createSelectorQuery()
+     .select('#gifs')
+     .invoke({
+      method: 'startAnimate'，
+    })
+    .exec();
+
+```
+
+由前端控制的重启动图播放方法，动图播放进度和 loop-count 均会被重置。
+
+### `pauseAnimation`
+
+```ts
+
+lynx.createSelectorQuery()
+     .select('#gifs')
+     .invoke({
+      method: 'pauseAnimation'，
+    })
+    .exec();
+
+```
+
+暂停动图播放，loop-count 不会被重置。
+
+### `resumeAnimation`
+
+```ts
+
+lynx.createSelectorQuery()
+     .select('#gifs')
+     .invoke({
+      method: 'resumeAnimation'，
+    })
+    .exec();
+
+```
+
+播放动图，loop-count 不会被重置。
+
+### `stopAnimation`
+
+```ts
+
+lynx.createSelectorQuery()
+     .select('#gifs')
+     .invoke({
+      method: 'stopAnimation'，
+    })
+    .exec();
+
+```
+
+停止动图播放，loop-count 会被重置。
+
+## 进阶功能
+
+### 请求 URL 重定向映射
+
+#### 功能说明
+
+通过实现请求 URL 重定向机制，开发者可拦截指定的图片 URL，并将其映射到特定的资源路径。这种能力适用于以下场景：
+
+- 提升静态资源加载速度
+- 支持自定义图片协议访问方案
+- 保护敏感资源访问路径
+
+#### 实现原理
+
+本功能基于 [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) 接口实现，核心流程分为两个阶段：
+
+1. **资源类型检测** (`isLocalResource`)
+
+   - 判断请求 URL 是否符合自定义协议
+   - 返回布尔值标识是否进行本地处理
+
+2. **路径转换** (`shouldRedirectUrl`)
+   - 解析原始 URL
+   - 转换为有效资源路径
+   - 返回最终可访问的 URL 地址
+
+以下示例演示如何将类似 `http://localhost/xxx` 的 URL 映射到应用内置资源路径：
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+```objective-c
+/// 本地资源处理器头文件
+#import <LynxMediaResourceFetcher/LynxMediaResourceFetcher.h>
+
+@interface LocalMediaFetcher : NSObject <LynxMediaResourceFetcher>
+
+- (NSString *)shouldRedirectUrl:(LynxResourceRequest *)request;
+
+- (LynxResourceOptionalBool)isLocalResource:(NSURL *)url;
+
+@end
+```
+
+```objective-c
+/// 本地资源处理器实现
+#import "LocalMediaFetcher.h"
+
+@implementation LocalMediaFetcher
+
+/**
+ * 资源路径转换方法
+ * @param request 资源请求对象
+ * @return 本地文件路径或空字符串
+ */
+- (NSString *)shouldRedirectUrl:(LynxResourceRequest *)request {
+  NSURL *url = [NSURL URLWithString:request.url];
+  NSString *fileType = [url pathExtension];
+  NSString *fileName = [[url URLByDeletingPathExtension] lastPathComponent];
+  NSString *subdir = [[[url URLByDeletingLastPathComponent] absoluteString] stringByReplacingOccurrencesOfString:@"http://localhost" withString:@""];
+  NSString *path = [[NSBundle mainBundle] pathForResource:fileName ofType:fileType inDirectory:subdir];
+  return path ? [NSString stringWithFormat:@"file://%@", path] : @"";
+}
+
+/**
+ * 本地资源判断方法
+ * @param url 请求的原始URL
+ * @return LynxResourceOptionalBoolTrue 需要重定向的请求
+ */
+- (LynxResourceOptionalBool)isLocalResource:(NSURL *)url {
+    return [url.absoluteString hasPrefix:@"http://localhost"] ?
+           LynxResourceOptionalBoolTrue :
+           LynxResourceOptionalBoolFalse;
+}
+
+@end
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+import com.lynx.tasm.resourceprovider.LynxResourceRequest
+import com.lynx.tasm.resourceprovider.media.LynxMediaResourceFetcher
+import com.lynx.tasm.resourceprovider.media.OptionalBool
+
+/**
+ * 自定义媒体资源处理器
+ *
+ * @property protocol 需要拦截的协议头 "http://localhost"
+ * @property scheme 目标资源协议头 "asset://"
+ */
+class LocalMediaFetcher : LynxMediaResourceFetcher() {
+
+    /**
+     * 判断是否本地资源
+     * @param url 请求的原始URL
+     * @return OptionalBool.TRUE 需要重定向的请求
+     */
+    override fun isLocalResource(url: String?): OptionalBool {
+        return if (url?.startsWith("http://localhost") == true) {
+            OptionalBool.TRUE
+        } else {
+            OptionalBool.FALSE
+        }
+    }
+
+    /**
+     * 执行URL重定向
+     * @param request 资源请求对象
+     * @return 转换后的有效资源路径
+     */
+    override fun shouldRedirectUrl(request: LynxResourceRequest?): String {
+        return request?.url?.replace(
+            oldValue = "http://localhost",
+            newValue = "asset://",
+            ignoreCase = true
+        ) ?: ""
+    }
+}
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```typescript
+import {
+  LynxMediaResourceFetcher,
+  LynxResourceRequest,
+  LynxOptionalBool,
+} from '@lynx/lynx';
+
+// 本地资源处理器实现
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+  // 资源路径转换方法
+  // @param request 资源请求对象
+  // @return 本地文件路径或空字符串
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    return request.url?.replace('http://localhost', 'file://') ?? '';
+  }
+
+  // 判断是否本地资源
+  // @param url 请求的原始URL
+  // @return LynxOptionalBool.TRUE 需要重定向的请求
+  isLocalResource(url: string): LynxOptionalBool {
+    if (url.startsWith('http://localhost')) {
+      return LynxOptionalBool.TRUE;
+    }
+    return LynxOptionalBool.FALSE;
+  }
+}
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+更多详细信息请参考 [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) 的 API 文档。
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,141 @@
+---
+api: errors/lynx-error
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# LynxError API
+
+<APISummary />
+
+`LynxError` is the standard error object returned by the Lynx runtime to indicate runtime failures, warnings, or recoverable issues in your app.
+
+It contains both **machine-readable information** (error code, subcode, severity level) and a **human-readable message** to help with debugging and recovery.
+
+## Use Cases
+
+- Display meaningful errors in debug or development mode
+- Trigger fallback UI or navigation for fatal runtime issues
+- Report errors for analytics or bug tracking
+
+---
+
+## Core Concepts
+
+### Error Code
+
+A **3–4 digit number** identifying the category or behavior of an error.
+For example, `301` represents an image loading error.
+
+Refer to the [Error Codes documentation](/api/errors/error-code) for a full list of codes and their meanings.
+
+### Subcode
+
+A **5–6 digit number** derived from the error code, used to specify the exact cause of the error.
+For example, `30101` indicates that the loaded image is too large.
+
+Refer to the [Error Codes documentation](/api/errors/error-code) for details on individual subcodes.
+
+### Level
+
+`LynxError` defines four levels: `Fatal`, `Error`, `Warn`, and `Undecided`.
+
+| Level       | Meaning                | Suggested Action             |
+| ----------- | ---------------------- | ---------------------------- |
+| `Fatal`     | App is likely unusable | Reload or fallback UI        |
+| `Error`     | Recoverable issue      | Log and retry                |
+| `Warn`      | Non-blocking warning   | Log and continue             |
+| `Undecided` | Not yet categorized    | Handle gracefully, log issue |
+
+### Message
+
+A JSON-formatted string containing detailed error information, including:
+
+- `code`
+- `subcode`
+- `level`
+- `message`
+- `suggestion` (optional)
+
+---
+
+## Platform Methods
+
+### Android
+
+| Method           | Return Type | Description            |
+| ---------------- | ----------- | ---------------------- |
+| `getErrorCode()` | `int`       | Returns the error code |
+| `getSubCode()`   | `int`       | Returns the subcode    |
+| `getLevel()`     | `String`    | Returns the level      |
+| `getMsg()`       | `String`    | Returns the message    |
+
+### iOS
+
+| Property / Method | Type            | Description                                                                                       |
+| ----------------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `errorCode`       | `NSInteger`     | Returns the error code                                                                            |
+| `subcode`         | `NSInteger`     | Returns the subcode                                                                               |
+| `level`           | `NSString*`     | Returns the level                                                                                 |
+| `userInfo()`      | `NSDictionary*` | Returns a dictionary where the message can be queried using the key `LynxErrorUserInfoKeyMessage` |
+
+### HarmonyOS
+
+| Method           | Type             | Description            |
+| ---------------- | ---------------- | ---------------------- |
+| `getErrorCode()` | `number`         | Returns the error code |
+| `getSubCode()`   | `number`         | Returns the subcode    |
+| `getLevel()`     | `LynxErrorLevel` | Returns the level      |
+| `getMsg()`       | `string`         | Returns the message    |
+
+---
+
+## Example
+
+### JavaScript
+
+```js
+lynx.onError = (error) => {
+  const detail = JSON.parse(error.message);
+  if (detail.level === 'Fatal') {
+    // Possibly reload or fallback to home
+    console.error('Critical error occurred:', detail.message);
+  }
+};
+```
+
+### Kotlin
+
+```kotlin
+fun onLynxError(error: LynxError) {
+  if (error.level == "Fatal") {
+    println("Fatal error: ${error.msg}")
+  }
+}
+```
+
+### Swift
+
+```swift
+func onLynxError(_ error: LynxError) {
+  if error.level == "Fatal" {
+    print("Fatal error: \(error.msg)")
+  }
+}
+```
+
+### ETS
+
+```ts
+onLynxError(error: LynxError) {
+  if (error.level == LynxErrorLevel.Fatal) {
+    console.error('Fatal error:', error.getMsg());
+  }
+}
+```
+
+---
+
+## Compatibility
+
+<APITable />

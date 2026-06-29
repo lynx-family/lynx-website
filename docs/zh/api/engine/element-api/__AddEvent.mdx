@@ -1,0 +1,46 @@
+# `__AddEvent`
+
+## 介绍
+
+新增 Event Listener 至 Element 对象。
+
+## 语法
+
+```jsx
+__AddEvent(element: Element, type: string, name: string, listener: string|Function) : void;
+```
+
+### 参数
+
+|   Key    | 说明                                                            |
+| :------: | --------------------------------------------------------------- |
+| element  | 任意的 Element 对象。                                           |
+|   type   | 表示监听事件类型的大小写敏感的字符串。                          |
+|   name   | 表示监听事件名称的大小写敏感的字符串。                          |
+| listener | listener 可以为一个大小写敏感的字符串，或者为 null，undefined。 |
+
+- 当 listener 为一个大小写敏感的字符串时，当所监听的事件触发时，Lynx SDK 会将当前 Element 的 parentComponentUniqueID，listener，event 发送到后台线程。
+- 当 listener 为 null 或者 undefined 时，LynxSDK 会从 Element 对象的 listener 中移除相应 type 和 name 所对应的 listener。
+
+::: tip 备注
+由于 LynxSDK 的限制，目前同一 type 和 name 只能添加一个 listener，为相同的 type 和 name 重复添加 listener 会覆盖之前添加的 listener。
+:::
+
+### 返回值
+
+无返回值。
+
+## 示例
+
+前端框架可以按下如下的方法生成 render 指令
+
+```jsx
+<view src="xxx" bindtap="onTap" />
+```
+
+```jsx
+// main-thread.js
+let element = __CreateElement('view', 0, {});
+__SetAttribute(element, 'src', 'xx');
+__AddEvent(element, 'bindEvent', 'tap', 'onTap');
+```

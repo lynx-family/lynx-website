@@ -1,0 +1,632 @@
+---
+description: '教程：实现高性能轮播组件。'
+sidebar: false
+---
+
+import { Go, Details, LearnTutorialTabs } from '@lynx';
+
+<LearnTutorialTabs active="product-detail" />
+
+# 教程：产品详情
+
+本教程将通过实现一个轮播组件，带你学习如何编写高性能的交互代码。你将学到:
+
+- [直接操作节点](#直接操作节点)：学习如何监听手势并更新节点样式
+- [使用主线程脚本降低延迟](#使用主线程脚本降低延迟)：学习如何使用主线程脚本优化滚动性能
+- [主线程函数与后台线程函数互相调用](#主线程函数与后台线程函数互相调用)：学习如何让主线程函数与后台线程函数互相调用
+- [主线程脚本与后台线程脚本值的传递](#主线程脚本与后台线程脚本值的传递)：学习主线程脚本与后台线程脚本一起使用时的数据流
+
+## 我们要构建什么？
+
+让我们先看看这个应用的最终效果！要体验实际效果，请先下载安装 [Lynx Explorer App](/guide/start/quick-start.html#ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator)，然后用它扫描下面的二维码。
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/Swiper/App.tsx"
+  defaultEntryFile="dist/Swiper.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/Swiper.webp"
+  entry={['src/Swiper', 'src/utils']}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+## 教程设置
+
+请查看我们详细的[安装](/guide/start/quick-start)文档，该文档将指导你创建一个新的 Lynx 项目。
+
+你可能会注意到该项目使用的是 TypeScript。虽然 Lynx 和 ReactLynx 都支持 TypeScript 和普通 JavaScript，但我们推荐使用 TypeScript，以提供更好的开发体验，包括静态类型检查和更好的编辑器智能感知。
+
+这个教程中将展示很多漂亮图片，我们为你准备了一些基准图片，你可以在[这里](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/download/product_detail_assets.zip)下载资源包，并在搭建中使用它们。
+
+## 直接操作节点
+
+这里是一个产品详情页的实例，它包含一个轮播图和一些商品信息。其中，轮播图接受一个图片列表，并将其平铺展示。现在它没有办法滚动，让我们来让它动起来。
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/SwiperEmpty/App.tsx"
+  defaultEntryFile="dist/SwiperEmpty.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/SwiperEmpty.webp"
+  entry={['src/SwiperEmpty', 'src/utils/pics.ts']}
+  highlight="{10}"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+为此，我们需要完成下面两件事情：
+
+1. 监听手指触摸
+2. 更新滚动位置
+
+### 监听手指触摸
+
+让我们首先通过监听手指触摸，计算出当前的滚动进度。
+
+在触摸开始时，我们记录手指触摸的起始坐标，这样在手指移动时，我们可以计算出手指移动的距离，用 `delta` 表示。
+
+```tsx title="index.tsx" "{4-6,8-10}"
+function Swiper() {
+  const touchStartXRef = useRef<number>(0);
+
+  function handleTouchStart(e: TouchEvent) {
+    touchStartXRef.current = e.touches[0].clientX;
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    const delta = e.touches[0].clientX - touchStartXRef.current;
+  }
+
+  return (
+    <view
+      class="swiper-container"
+      bindtouchstart={handleTouchStart}
+      bindtouchmove={handleTouchMove}
+    >
+      {/* ... */}
+    </view>
+  );
+}
+```
+
+接下来，我们使用 `currentOffsetRef` 来记录轮播组件的偏移量，与 `delta` 相加，得到最终的偏移量。
+
+```tsx title="index.tsx" "{13}"
+function Swiper() {
+  const currentOffsetRef = useRef<number>(0);
+  const touchStartXRef = useRef<number>(0);
+  const touchStartCurrentOffsetRef = useRef<number>(0);
+
+  function handleTouchStart(e: TouchEvent) {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartCurrentOffsetRef.current = currentOffsetRef.current;
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    const delta = e.touches[0].clientX - touchStartXRef.current;
+    const offset = touchStartCurrentOffsetRef.current + delta;
+  }
+}
+```
+
+### 更新滚动位置
+
+获取到偏移量后，我们就可以更新滚动位置了。增加 `updateSwiperOffset` 函数，在手指移动时调用它。
+
+```tsx title="index.tsx" "{9}"
+function Swiper() {
+  function updateSwiperOffset(offset: number) {
+    // 更新滚动位置
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    const delta = e.touches[0].clientX - touchStartXRef.current;
+    const offset = touchStartCurrentOffsetRef.current + delta;
+    updateSwiperOffset(offset);
+  }
+}
+```
+
+接下来，我们使用[操作节点](/guide/interaction/event-handling/manipulating-element.react)获取 `swiper-container` 的节点，并使用 [`setNativeProps`](/api/lynx-api/nodes-ref/nodes-ref-set-native-props) 更新 `transform` 属性，从而更新滚动位置。
+
+```tsx title="index.tsx" "{5-9,14}"
+function Swiper() {
+  const containerRef = useRef<NodesRef>(null);
+
+  function updateSwiperOffset(offset: number) {
+    containerRef.current
+      ?.setNativeProps({
+        style: {
+          transform: `translateX(${offset}px)`,
+        },
+      })
+      .exec();
+  }
+
+  return <view ref={containerRef}></view>;
+}
+```
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/UpdateOffset/Swiper.tsx"
+  defaultEntryFile="dist/UpdateOffset.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/UpdateOffset.webp"
+  entry={['src/UpdateOffset', 'src/utils/pics.ts']}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+现在，`<Swiper>` 组件可以跟随手指滚动了！
+
+::: details 为什么不使用 state 更新进度？
+你可能会想到使用 `state` 来更新进度，像这样：
+
+```tsx title="Swiper.tsx"
+function Swiper() {
+  const [offset, setOffset] = useState(0);
+
+  return (
+    <view style={{ transform: `translateX(${offset}px)` }}>{/* ... */}</view>
+  );
+}
+```
+
+但是，在需要频繁更新的场景下，这种方式会导致组件不断重渲染，影响性能。更好的方式是直接操作节点，就像示例中那样。
+
+你可以参考[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)了解更多。
+:::
+
+### 用 hooks 简化代码
+
+`<Swiper>` 组件的代码已经比较复杂了，我们可以用 hooks 将上面的逻辑封装为两部分，简化组件代码，提高代码的可维护性：
+
+1. 将[监听手指触摸](#监听手指触摸)中的代码封装为 `useOffset`，所有滚动相关的逻辑都集中在这个 hook 中
+2. 将[更新滚动位置](#更新滚动位置)中的代码封装为 `useUpdateSwiperStyle`，所有更新 `<Swiper>` 组件样式的逻辑都集中在这个 hook 中
+
+```tsx title="Swiper.tsx"
+function Swiper() {
+  const { updateSwiperStyle, swiperContainerRef } = useUpdateSwiperStyle();
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useOffset({
+    onOffsetUpdate: updateSwiperStyle,
+  });
+
+  return (
+    <view
+      class="swiper-container"
+      ref={swiperContainerRef}
+      bindtouchstart={handleTouchStart}
+      bindtouchmove={handleTouchMove}
+      bindtouchend={handleTouchEnd}
+    >
+      {/* ... */}
+    </view>
+  );
+}
+```
+
+最终，代码变得更简洁了。
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/SwiperHooks/Swiper.tsx"
+  defaultEntryFile="dist/SwiperHooks.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/UpdateOffset.webp"
+  entry={['src/SwiperHooks', 'src/utils/pics.ts']}
+  highlight="{13-16}"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+## 使用主线程脚本降低延迟
+
+你可能已经注意到，当手指滚动时，有时会有不跟手的感觉。这是因为触摸事件发生在<b>主线程</b>，事件监听代码运行在<b>后台线程</b>，导致触摸事件的响应不够及时。这个现象在低端机上尤为明显。
+
+我们可以使用[主线程脚本](/react/main-thread-script)来优化这个问题。可以看到，改造成主线程脚本后，滚动变得更加跟手了！
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/SwiperMTS/Swiper.tsx"
+  defaultEntryFile="dist/SwiperMTS.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/SwiperMTS.webp"
+  entry={['src/SwiperMTS', 'src/utils/pics.ts']}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+为了实现这个效果，我们需要将频繁触发的代码迁移到主线程脚本中，这包括:
+
+1. 事件监听代码
+2. 更新节点位置的代码
+
+接下来我们分别对 `useOffset` 和 `useUpdateSwiperStyle` 进行改造。
+
+### `useOffset`
+
+为 `handleTouchStart` 和 `handleTouchMove` 增加 `main thread` 标识，将它们改造成<b>主线程函数</b>。
+
+```tsx title="useOffset.ts"
+function useOffset() {
+  const touchStartXRef = useMainThreadRef<number>(0);
+
+  function handleTouchStart(e: TouchEvent) {
+    'main thread'
+    ...
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    'main thread'
+    ...
+  }
+
+}
+```
+
+将 `bindtouchstart` 和 `bindtouchmove` 改造成 `main-thread:bindtouchstart` 和 `main-thread:bindtouchmove`，这样就可以在主线程脚本中监听事件。
+
+```tsx title="index.tsx"
+<view
+  main-thread:bindtouchstart={handleTouchStart}
+  main-thread:bindtouchmove={handleTouchMove}
+>
+  {/* ... */}
+</view>
+```
+
+### `useUpdateSwiperStyle`
+
+将 `useRef` 改造为 `useMainThreadRef`。
+
+```tsx title="useUpdateSwiperStyle.ts" "{2}"
+function useUpdateSwiperStyle() {
+  const swiperContainerRef = useMainThreadRef<MainThread.Element>(null);
+
+  function updateSwiperStyle(offset: number) {
+   'main thread'
+    ...
+  }
+
+  return {
+    swiperContainerRef,
+  }
+}
+```
+
+将 `swiperContainerRef` 通过 `main-thread:ref` 属性传递给 `<view>`，这样就可以在主线程获取这个节点。
+
+```tsx title="index.tsx"
+<view main-thread:ref={swiperContainerRef}>{/* ... */}</view>
+```
+
+主线程获取的节点提供了很多能力，可以参考 [`MainThread.Element`](/api/lynx-api/main-thread/main-thread-element)。这里我们调用 `setStyleProperties` 方法修改 `transform` 属性，更新 `<Swiper>` 组件的位置。
+
+```tsx title="useUpdateSwiperStyle.ts"
+function useUpdateSwiperStyle() {
+  const swiperContainerRef = useMainThreadRef<MainThread.Element>(null);
+
+  function updateSwiperStyle(offset: number) {
+    'main thread';
+    swiperContainerRef.current?.setStyleProperties({
+      transform: `translateX(${offset}px)`,
+    });
+  }
+}
+```
+
+这样，我们完成了主线程脚本改造。现在高频触发的函数在主线程中运行，更加跟手了。
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/SwiperMTS/Swiper.tsx"
+  defaultEntryFile="dist/SwiperMTS.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/SwiperMTS.webp"
+  entry={['src/SwiperMTS', 'src/utils/pics.ts']}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+::: details 节制地使用主线程脚本
+在遇到频繁触发的事件导致的响应延迟问题时，再使用主线程脚本！
+
+- 引入主线程脚本会增加代码的复杂度。这是因为主线程脚本与后台线程脚本处于隔离的两个环境中，它们之间需要“特殊的桥梁”才能互相通信。
+
+- 主线程脚本将高频触发的代码在主线程中运行，加重了主线程的负担，如果滥用，可能会导致主线程卡顿。
+
+:::
+
+## 主线程函数与后台线程函数互相调用
+
+这里是一个进度指示器的示例，当手指滚动时，进度指示器会显示当前处于哪一页。
+
+现在它只有样式，缺少更新进度的逻辑。我们通过这个例子演示如何让主线程与后台线程相互通信：
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/MTSIndicatorEmpty/Swiper.tsx"
+  defaultEntryFile="dist/MTSIndicatorEmpty.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/MTSIndicatorEmpty.webp"
+  entry={['src/MTSIndicatorEmpty', 'src/utils/pics.ts']}
+  highlight="{33}"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+### 主线程调用后台线程
+
+进度指示器的核心是 `<Indicator>` 组件，它接收一个 `current` prop，表示当前处于哪一页。
+
+```tsx title="Swiper.tsx" "{7}"
+function Swiper() {
+  const [current, setCurrent] = useState(0);
+
+  return (
+    <view>
+      {/* ... */}
+      <Indicator current={current} />
+    </view>
+  );
+}
+```
+
+现在，我们只需要在手指滚动时，更新 `current` 即可。
+
+我们为 `useOffset` 增加 `onIndexChange` 回调，当手指滚动时，更新 `current`。
+
+```tsx title="useOffset.ts" "{12}"
+function useOffset({
+  itemWidth,
+  onIndexUpdate,
+}) {
+  const currentIndexRef = useMainThreadRef<number>(0);
+
+  function updateOffset(offset: number) {
+    ...
+    const index = Math.round(offset / itemWidth);
+    if (currentIndexRef.current !== index) {
+      currentIndexRef.current = index;
+      onIndexUpdate(index);
+    }
+  }
+}
+```
+
+并将 `setCurrent` 作为 `onIndexUpdate` 的回调传递给 `useOffset`。
+
+```tsx title="Swiper.tsx" "{4}"
+const [current, setCurrent] = useState(0);
+
+const { handleTouchMove } = useOffset({
+  onIndexUpdate: setCurrent,
+});
+```
+
+这样，当手指滚动时超过一页时，`useOffset` 会调用 `onIndexUpdate` 更新 `current`，从而更新进度指示器。
+
+但是等等，为什么会有报错？！
+
+![Error](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/MTSIndicatorWrong.png)
+
+:::info 主线程函数与后台线程函数需要特殊 API 才能互相调用
+主线程脚本与后台线程脚本在两个独立运行时中运行，一个运行时内的函数不能直接调用另一个运行时中的函数，他们之间需要“特殊的桥梁”才能互相通信:
+
+- 从后台到主线程: 使用 [`runOnMainThread`](/api/react/Function.runOnMainThread)
+- 从主线程到后台: 使用 [`runOnBackground`](/api/react/Function.runOnBackground)
+
+:::
+
+`onIndexUpdate` 是一个后台线程函数，在主线程函数中调用时，需要使用 `runOnBackground`
+
+```tsx title="useOffset.ts" "{12}"
+function useOffset({
+  itemWidth,
+  onIndexUpdate,
+}) {
+  const currentIndexRef = useMainThreadRef<number>(0);
+
+  function updateOffset(offset: number) {
+    ...
+    const index = Math.round(offset / itemWidth);
+    if (currentIndexRef.current !== index) {
+      currentIndexRef.current = index;
+      runOnBackground(onIndexUpdate)(index);
+    }
+  }
+}
+```
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/MTSIndicatorCurrent/Swiper.tsx"
+  defaultEntryFile="dist/MTSIndicatorCurrent.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/MTSIndicatorCurrent.webp"
+  entry={['src/MTSIndicatorCurrent', 'src/utils/pics.ts']}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+现在，随着手指滚动，进度指示器会自动更新了！
+
+### 后台线程调用主线程
+
+一个好用的进度指示器还需要支持点击跳转到对应页面，下面我们为 `<Indicator>` 组件增加点击跳转的功能。
+
+在 `useOffset` 中增加 `updateIndex` 方法，通过 `runOnMainThread` 调用 `updateOffset` 更新组件位置。
+
+```tsx title="useOffset.ts" "{4}"
+function useOffset({ itemWidth, onIndexUpdate }) {
+  function updateIndex(index: number) {
+    const offset = index * itemWidth;
+    runOnMainThread(updateOffset)(offset);
+  }
+
+  return {
+    updateIndex,
+  };
+}
+```
+
+完整的代码如下
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/MTSIndicator/useOffset.ts"
+  defaultEntryFile="dist/MTSIndicator.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/MTSIndicator.webp"
+  entry={['src/MTSIndicator', 'src/utils/pics.ts']}
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+非常好，现在进度指示器已经支持点击跳转了。
+
+## 主线程脚本与后台线程脚本值的传递
+
+在下面的例子中，我们为 `<Swiper>` 组件增加了吸附动画，现在它的动画效果不够好，需要传入一些参数定制。
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/EasingDefault/useOffset.ts"
+  defaultEntryFile="dist/EasingDefault.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/EasingDefault.webp"
+  entry={['src/EasingDefault', 'src/utils']}
+  highlight="{66-73}"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+我们通过这个例子演示主线程与后台线程脚本中值的传递。
+
+### 主线程脚本使用后台线程脚本的值
+
+首先，我们为 `<Swiper>` 组件增加 `duration` 属性，来控制吸附动画的持续时间。
+
+```tsx title="index.tsx"
+<Swiper duration={300} />
+```
+
+让我们看看内部是如何实现的。触摸结束时，`useOffset` 会调用 `animate` 函数，通过动画效果更新组件位置。`animate` 函数是一个主线程函数，接受初始值和目标值，并以动画曲线按照 `duration` 时间更新组件位置。
+
+```tsx title="useOffset.ts" {15-19}
+function useOffset({
+  duration,
+}) {
+  const currentOffsetRef = useMainThreadRef<number>(0);
+
+  function updateOffset(offset: number) {
+    'main thread'
+    // Update Component Offset
+  }
+
+  ...
+  function handleTouchEnd() {
+    'main thread'
+    ...
+    animate({
+      from: currentOffsetRef.current,
+      to: calcNearestPage(currentOffsetRef.current),
+      onUpdate: updateOffset,
+      duration,
+    })
+  }
+}
+```
+
+这里，`animate` 和 `handleTouchEnd` 都是主线程函数，他们可以访问后台线程的值 `duration`。
+
+:::info 主线程函数可以使用后台线程的值
+主线程脚本和后台线程脚本在两个独立的运行时中运行，他们之间是互相隔离的。
+
+但是，为了简化主线程脚本的开发，Lynx 会自动将主线程函数<b>依赖</b>的后台线程的值传递给主线程函数，不过这个过程存在一些限制：
+
+- 依赖的后台线程值必须可序列化，因此，函数，`Promise` 等不可序列化的值不能被传递。
+- 值的传递只会在组件 `render` 时发生，如果后台线程的值在 `render` 后发生变化，主线程函数不会感知到这个更新。
+
+:::
+
+### 后台线程传递主线程中的值
+
+接下来，我们为 `<Swiper>` 组件增加 `main-thread:easing` 属性，让用户可以自定义动画曲线。
+
+```tsx title="index.tsx" {6}
+function easeInOut(x: number) {
+  'main thread';
+  return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+}
+
+<Swiper main-thread:easing={easeInOut} />;
+```
+
+在组件内部，主线程函数 `easeInOut` 被传递给后台线程的 hooks `useOffset`
+
+```tsx title="Swiper.tsx" {2,6}
+function Swiper({
+  'main-thread:easing': MTEasing,
+}) {
+  ...
+  const { handleTouchStart, ... } = useOffset({
+    MTEasing,
+  });
+}
+```
+
+并在 `useOffset` 中被传递给主线程函数 `animate` 使用。
+
+```tsx title="useOffset.ts" {3,11}
+function useOffset({
+  duration,
+  MTEasing,
+}) {
+  ...
+  function handleTouchEnd(e: MainThread.TouchEvent) {
+    "main thread";
+    // ...
+    animate({
+      duration,
+      easing: MTEasing,
+    });
+  }
+}
+```
+
+:::info 主线程中的值可以被后台线程传递，但是不能被后台线程使用
+主线程中的值，比如 `MainThreadRef`，主线程函数，不能被后台线程直接使用。
+
+但是它们可以被后台线程传递，比如作为 `props` 传入组件，或是通过函数入参传递给其他 hooks 或者函数，并最终在主线程中使用。
+
+:::
+
+:::details 为需要传入主线程函数的 props 增加 main-thread: 前缀
+你可能已经注意到，将主线程函数或是 `MainThreadRef` 作为 attribute 传入时，都需要加上 `main-thread:` 前缀，比如 `main-thread:ref` 和 `main-thread:bindtouchstart`。
+
+按照约定，当一个 prop 预期接受主线程函数时，这个 props 需要有 `main-thread:` 前缀，比如 `main-thread:easing`。我们推荐对自定义组件也遵循这个约定。这样可以让组件用户了解这个属性需要传入主线程函数。
+
+不过，因为 JavaScript 中包含冒号 `:` 的变量名是非法的，组件内部使用这个 prop 时需要重命名。
+
+```tsx title="Swiper.tsx"
+function Swiper({ 'main-thread:easing': MTEasing }) {}
+```
+
+:::
+
+最终，我们拥有了一个可以自定义动画曲线的吸附动画。
+
+<Go
+  defaultTab="web"
+  example="swiper"
+  defaultFile="src/Swiper/App.tsx"
+  defaultEntryFile="dist/Swiper.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/tutorial/Swiper/Swiper.webp"
+  entry={['src/Swiper', 'src/utils']}
+  highlight="{15}"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title_color=ffffff"
+/>
+
+## 总结
+
+在本教程中，我们从一个简单的 `<Swiper>` 组件开始，逐步优化它的性能，并最终实现了一个可以自定义动画曲线的吸附动画。
+
+我们学习了以下内容：
+
+- 使用直接操作节点的方式优化性能
+- 利用主线程脚本进一步提升交互体验
+- 实现主线程与后台线程的通信
+- 学习了主线程脚本与后台线程脚本中值的传递

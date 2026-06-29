@@ -1,0 +1,50 @@
+import { Go } from '@lynx';
+
+# Rendering Process and Lifecycle
+
+Due to Lynx's dual-thread architecture, ReactLynx's rendering process and component lifecycle differ from traditional React. This design aims to address mobile performance bottlenecks by properly distributing tasks between threads to ensure rendering performance and interaction fluidity.
+
+## Rendering Process
+
+![Lifecycle Flowchart](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lifecycle-init-render-v3.png)
+
+### First-Screen Rendering Optimization
+
+To solve the slow first-screen loading problem of traditional web applications, Lynx adopts an innovative rendering strategy: when the application starts, the main thread completes the first-screen rendering to ensure the fastest possible initial display. Meanwhile, the background thread performs a parallel rendering and builds a node tree structure, then compares the tree structures from both threads to ensure consistency for handling subsequent updates and synchronizing to the main thread's node tree.
+
+### Dual-Thread Architecture Design
+
+After the first-screen rendering is complete, ReactLynx's dual-thread architecture enhances overall performance through clear responsibility division.
+Component lifecycle management and user code execution will only occur in the background thread. After the node tree is updated in the background thread, the background thread will send a message to notify the main thread.
+The main thread is responsible for updating the main thread's node tree structure according to instructions from the background thread, calculating layouts, rendering the UI, and executing user-written main thread scripts.
+
+This precise division of labor allows each thread to focus on its core responsibilities, preventing complex user logic from blocking UI responses, ensuring the normal operation of component lifecycles and state management.
+
+### Lifecycle Specifics
+
+In ReactLynx, all lifecycle hooks execute asynchronously in the background thread, so they do not have synchronous blocking render characteristics. This means ReactLynx does not support `useLayoutEffect`. As a current alternative, you can use the element's [`main-thread:bindlayoutchange`](/api/elements/built-in/view.html#bindlayoutchange) event to obtain layout results and set corresponding properties.
+
+Here's a simple example modified from [Measuring layout before the browser repaints the screen](https://react.dev/reference/react/useLayoutEffect#measuring-layout-before-the-browser-repaints-the-screen) to help you use this more easily:
+
+<Go
+  example="react-lifecycle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/react/react-lifecycle-measure.gif"
+  defaultEntryFile="dist/measuring-layout.lynx.bundle"
+  defaultFile="src/measuring-layout/Tooltip.tsx"
+  entry="src/measuring-layout"
+  highlight="{4-18}"
+/>
+
+## Special Characteristics of `<list />` Child Components
+
+The [`<list />`] element has on-demand loading and node reuse characteristics. When a [`<list />`] element is created, all its child component JS object instances are created together, but the corresponding actual elements ([UI]) are not immediately generated. Instead, they are created or reused only when the [`<list />`] is about to scroll to the corresponding position. Therefore, special attention is needed regarding the timing of child component lifecycle triggers.
+
+### Timing of `useEffect` and `ref` Callbacks
+
+The `useEffect` callback function will strictly execute after component creation and data updates; the `ref` attribute will also be assigned when the element is created or destroyed. Even if the component is not displayed on the screen (resulting in the actual [UI] node not being created or having entered the reuse pool), both the `useEffect` callback function and `ref` will still be triggered.
+
+Specifically for [UI] elements inside a [`<list />`], the [`main-thread:ref`] attribute accurately reflects their state. When an element is about to scroll into view, the [`main-thread:ref`] callback function is triggered, and when the element scrolls out of view, the [`main-thread:ref`] cleanup function is triggered.
+
+[`<list />`]: /api/elements/built-in/list
+[UI]: /guide/spec.html#ui
+[`main-thread:ref`]: /react/main-thread-script.html#usingmain-threadref-to-obtain-node-objects

@@ -1,0 +1,235 @@
+---
+title: SystemInfo
+api: lynx-api/global/SystemInfo
+---
+
+import { APISummary, APITable } from '@lynx';
+
+import { Tab, Tabs } from '@theme';
+
+# SystemInfo
+
+<APISummary />
+
+`SystemInfo` 是一个普通的 JavaScript 对象，其中含有当前系统和设备的相关信息。
+
+## 语法
+
+```ts
+declare const SystemInfo: {
+  /**
+   * The version of the Lynx Engine.
+   *
+   * @example '3.2'
+   */
+  readonly engineVersion: string;
+
+  /**
+   * The version of the Lynx Engine.
+   * @example '3.2'
+   * @deprecated Use `SystemInfo.engineVersion` instead
+   */
+  readonly lynxSdkVersion: string;
+
+  /**
+   * The current operating system version.
+   */
+  readonly osVersion: string;
+
+  /**
+   * The physical pixel height of the real device.
+   */
+  readonly pixelHeight: number;
+
+  /**
+   * The physical pixel width of the real device.
+   */
+  readonly pixelWidth: number;
+
+  /**
+   * The physical pixel ratio of the main screen.
+   */
+  readonly pixelRatio: number;
+
+  /**
+   * The platform of the current device.
+   */
+  readonly platform: 'Android' | 'iOS' | 'macOS' | 'windows' | 'headless';
+
+  /**
+   * The JavaScript engine currently used.
+   * @note Not available in lepus
+   */
+  readonly runtimeType: 'v8' | 'jsc' | 'quickjs';
+};
+```
+
+### 属性
+
+#### engineVersion
+
+当前 Lynx Engine 版本号，格式为 `major.minor`。
+
+例如：`3.2`。
+
+#### ~~lynxSdkVersion~~
+
+当前 Lynx Engine 版本号，格式为 `major.minor`。
+
+例如：`3.2`。
+
+#### osVersion
+
+当前操作系统版本。
+
+<Tabs groupId="os">
+  <Tab value="ios" label="iOS" default>
+
+    > [systemVersion | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uidevice/1620043-systemversion?language=objc)
+
+    ```objc
+    [[UIDevice currentDevice].systemVersion UTF8String]
+    ```
+
+  </Tab>
+  <Tab value="android" label="Android">
+
+    等于 [`Build.VERSION.SDK_INT`](https://developer.android.com/reference/android/os/Build.VERSION#SDK_INT)。
+
+    > [API Levels | Android NDK | Android Developers](https://developer.android.com/ndk/reference/group/apilevels#android_get_device_api_level)
+
+    ```cpp
+    std::to_string(android_get_device_api_level())
+    ```
+
+  </Tab>
+</Tabs>
+
+#### pixelHeight
+
+当前设备屏幕的绝对高度，以物理像素为单位。
+
+<Tabs groupId="os">
+  <Tab value="ios" label="iOS" default>
+
+    > [UIScreen | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscreen?language=objc)
+
+```objc
+CGSize screenSize;
+if (!CGSizeEqualToSize(builder.screenSize, CGSizeZero)) {
+  screenSize = builder.screenSize;
+} else {
+  screenSize = [UIScreen mainScreen].bounds.size;
+}
+const CGFloat scale = [UIScreen mainScreen].scale;
+// highlight-next-line
+const CGFloat pixelHeight = screenSize.height * scale;
+```
+
+  </Tab>
+  <Tab value="android" label="Android">
+
+    > [DisplayMetrics | Android Developers](https://developer.android.com/reference/android/util/DisplayMetrics)
+
+```java
+DisplayMetrics dm = context.getResources().getDisplayMetrics();
+// highlight-next-line
+int pixelHeight = dm.heightPixels;
+```
+
+  </Tab>
+</Tabs>
+
+#### pixelWidth
+
+当前设备屏幕的绝对宽度，以物理像素为单位。
+
+<Tabs groupId="os">
+  <Tab value="ios" label="iOS" default>
+
+    > [UIScreen | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscreen?language=objc)
+
+```objc
+CGSize screenSize;
+if (!CGSizeEqualToSize(builder.screenSize, CGSizeZero)) {
+  screenSize = builder.screenSize;
+} else {
+  screenSize = [UIScreen mainScreen].bounds.size;
+}
+const CGFloat scale = [UIScreen mainScreen].scale;
+// highlight-next-line
+const CGFloat pixelWidth = screenSize.width * scale;
+
+```
+
+  </Tab>
+  <Tab value="android" label="Android">
+
+    > [DisplayMetrics | Android Developers](https://developer.android.com/reference/android/util/DisplayMetrics)
+
+```java
+DisplayMetrics dm = context.getResources().getDisplayMetrics();
+// highlight-next-line
+int pixelWidth = dm.widthPixels;
+```
+
+  </Tab>
+</Tabs>
+
+#### pixelRatio
+
+当前设备的像素比例。
+
+<Tabs groupId="os">
+  <Tab value="ios" label="iOS" default>
+
+    > [UIScreen | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscreen?language=objc)
+
+    ```objc
+    const CGFloat pixelRatio = [UIScreen mainScreen].scale;
+    ```
+
+  </Tab>
+  <Tab value="android" label="Android">
+
+    > [DisplayMetrics | Android Developers](https://developer.android.com/reference/android/util/DisplayMetrics#density)
+
+    ```java
+    DisplayMetrics dm = context.getResources().getDisplayMetrics();
+    // highlight-next-line
+    float pixelRatio = dm.density;
+    ```
+
+  </Tab>
+</Tabs>
+
+#### platform
+
+当前设备对应的平台。
+
+可能的值：
+
+1. `iOS`
+1. `Android`
+1. `macOS`
+1. `windows`
+
+#### runtimeType
+
+目前使用的 JavaScript 引擎。
+
+:::info
+该值只能在后台线程获得，在主线程为 `undefined`。
+:::
+
+可能的值：
+
+1. `quickjs`
+1. `jsc`
+1. `v8`
+
+更对细节内容见 [JavaScript 环境](/guide/scripting-runtime/index)。
+
+## 兼容性
+
+<APITable />

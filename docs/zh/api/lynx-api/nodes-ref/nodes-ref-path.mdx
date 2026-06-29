@@ -1,0 +1,86 @@
+---
+title: path()
+api: lynx-api/nodes-ref/path
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef: path() method
+
+<APISummary />
+
+查询节点到页面根节点的路径信息。
+
+## 语法
+
+```ts
+path(callback: (data: object, status: object) => void): SelectorQuery;
+```
+
+### 参数
+
+#### callback
+
+一个回调函数，查询结果将作为回调函数的参数返回。回调函数有两个参数：
+
+第一个参数返回查询结果。
+
+- 如果该 `NodesRef` 表示一个节点，则返回包含查询结果的 `Record<string, any>` 对象。如果节点未找到，则返回 `null`。
+- 如果该 `NodesRef` 表示多个节点，则返回一个 `Record<string, any>` 对象的数组，数组内的每一个元件对应一个节点的查询结果。如果节点均未找到，则返回空数组。
+
+第二个参数返回查询的状态（错误信息）。
+
+### 返回值
+
+包含了该任务的 `SelectorQuery` 对象。调用 `exec()` 来执行任务。
+
+## 示例
+
+```javascript
+lynx
+  .createSelectorQuery()
+  .select('#target')
+  .path((res, status) => {
+    console.log(JSON.stringify(res));
+    console.log(JSON.stringify(status));
+  })
+  .exec();
+```
+
+可能的输出：
+
+```javascript
+// res
+{
+    // array from target to root
+    "path":
+    [
+        {
+            tag:"",
+            id:"",
+            class:[],
+            dataSet:{},
+            // index of parent's children
+            index:0,
+        },
+        ...
+        {
+            tag:"page",
+            id:"",
+            class:[],
+            dataSet:{},
+            index:0,
+        }
+    ]
+}
+
+// status
+{
+  "data": "succeed",
+  "code": 0
+}
+```
+
+## 兼容性
+
+<APITable />

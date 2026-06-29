@@ -1,0 +1,89 @@
+---
+api: lynx-api/performance-api/performance-entry/metric-fcp-entry
+---
+
+import { APISummary, APITable, Go, RuntimeBadge, Deprecated } from '@lynx';
+
+# <Deprecated/> MetricFcpEntry
+
+:::warning
+该事件在 Lynx SDK 3.7 版本已废弃，相关数据可从 [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) / [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry) 中获取.
+:::
+
+<APISummary />
+
+FCP 是衡量页面首次渲染完成所需时间的关键性能指标。它指的是用户第一次看到 Lynx 页面中任意内容（如文本、图片等）所需的时间。`MetricFcpEntry` 是用于描述该指标的数据类型，继承自 [`PerformanceEntry`](../performance-entry)。
+
+FCP 事件在 Lynx 绘制完页面第一帧时触发。对于依赖网络请求或异步 IO 获取数据的页面，FCP 通常监测到的状态是 Loading 页或框架图，如下图：
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/performance-metrics-fcp.png" />
+
+根据不同起始点，Lynx 提供了 `fcp`、`lynxFcp`、`totalFcp` 三个指标。在渲染流程中，每个指标的定义如下图：
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/metric-fcp-entry.png" />
+
+## 示例
+
+该示例展示了如何获取 `MetricFcpEntry`。
+
+Lynx 在首帧渲染完成时计算 FCP。如果已经通过 [LynxView.setExtraTiming](/api/lynx-native-api/lynx-view/set-extra-timing) 提供了[容器](/guide/spec#container)时间戳，那么收到的 `MetricFcpEntry` 里会包含 `fcp`、`lynxFcp` 和 `totalFcp` 三项指标。否则，`MetricFcpEntry` 只包含 `lynxFcp`。补充容器时间戳后，其余指标将被重新计算。重新计算完成后，Lynx 将发送一个新的包含所有指标的 `MetricFcpEntry`。
+
+<Go
+  example="performance-api"
+  defaultFile="src/fcp-entry/index.tsx"
+  defaultEntryFile="dist/fcp-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/metric-fcp-entry-demo.jpeg"
+  entry="src/fcp-entry"
+  highlight="{10-20}"
+/>
+## 实例属性
+
+### [entryType](/api/lynx-api/performance-api/performance-entry#entryType)
+
+```ts
+entryType: string;
+```
+
+性能事件的类型，当前类所有实例的值均固定为 `metric`。
+
+### [name](/api/lynx-api/performance-api/performance-entry#name)
+
+```ts
+name: string;
+```
+
+性能事件的具体名称，当前类所有实例的值均固定为 `fcp`。
+
+### fcp
+
+```ts
+fcp?: PerformanceMetric;
+```
+
+从准备 [TemplateBundle](/api/lynx-native-api/template-bundle) 至首次渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`fcp = LoadBundleEntry.paintEnd - InitContainerEntry.prepareTemplateStart`。
+
+### lynxFcp
+
+```ts
+lynxFcp: PerformanceMetric;
+```
+
+从加载 [TemplateBundle](/api/lynx-native-api/template-bundle) 至首次渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`lynxFcp = LoadBundleEntry.paintEnd - LoadBundleEntry.loadBundleStart`。
+
+### totalFcp
+
+```ts
+totalFcp?: PerformanceMetric;
+```
+
+从用户打开页面至首次渲染完成的耗时，数据类型为 [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric)。
+
+计算公式为：`totalFcp = LoadBundleEntry.paintEnd - InitContainerEntry.openTime`。
+
+## 兼容性
+
+<APITable />

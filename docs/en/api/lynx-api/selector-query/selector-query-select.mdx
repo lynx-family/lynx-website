@@ -1,0 +1,198 @@
+---
+title: select()
+api: lynx-api/selector-query/select
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# SelectorQuery: select() method
+
+<APISummary />
+
+Select the first node that matches the specified selector in the descendants of the root node specified in `SelectorQuery`.
+
+## Syntax
+
+```ts
+select(selector: string): NodesRef;
+```
+
+### Parameters
+
+#### selector
+
+CSS selector combination used for matching nodes. The first node that matches the specified selector combination will be returned.
+
+The CSS selector used for matching nodes must satisfy the following syntax:
+
+##### Selectors
+
+- Id selector `#`
+
+```tsx
+// '#my-id'
+<view id="my-id" />
+```
+
+- Class selector `.`
+
+```tsx
+// '.class1'
+<view className="class1" />
+```
+
+- Tag selector `tag`
+
+```tsx
+// 'view'
+<view />
+```
+
+- Attribute selector (The `props` of a custom component do not belong to `attribute`, therefore the `attribute` selector cannot be used to match the `props` of a custom component.)
+- `[attribute]`: Represents elements with an attribute name of attr.
+- `[attribute=value]`: Represents elements with an attribute name of attr whose value is exactly value.
+- `[attribute*=value]`: Represents elements with an attribute name of attr whose value contains at least one occurrence of value within the string.
+- `[attribute^=value]`: Represents elements with an attribute name of attr whose value is prefixed (preceded) by value.
+- `[attribute$=value]`: Represents elements with an attribute name of attr whose value is suffixed (followed) by value.
+
+```tsx
+// '[src]'
+// '[src=xxx]'
+// '[data-x]'
+// '[data-x=xxx]'
+<image src="xxx" data-x="xxx" />
+```
+
+- The free combination of the above selectors
+
+```tsx
+// 'image#my-id[src=xxx].class1.class2'
+<image id="my-id" className="class1 class2" src="xxx" data-x="xxx" />
+```
+
+##### Combinators
+
+- Child Element Combinator `>`
+  - Search for the direct child nodes of the parent node.
+
+```tsx
+// '.the-parent > .the-child'
+<view className="the-parent">
+  <view className="the-child" />
+</view>
+```
+
+- Descendant combinator ` ` (space)
+  - Search for the descendant nodes of the parent node.
+
+```tsx
+// GOOD: '.the-ancestor   .the-descendant'
+// BAD:  '.the-ancestor > .the-descendant'
+<view className="the-ancestor">
+  <view>
+    <view className="the-descendant" />
+  </view>
+</view>
+```
+
+- The union of multiple selectors `,`
+
+```tsx
+#id1, #id2;
+```
+
+### Return Value
+
+A `NodesRef` object instance representing this query result.
+
+Please note that at this time, `SelectorQuery` will only save the query parameters provided by the user in the `NodesRef` object and will not execute the query immediately. Therefore, it is **NOT feasible** to view node information or determine whether the node can be found in the following way:
+
+```js
+let nodesRef = lynx.createSelectorQuery().select('#the-id');
+console.log(nodesRef); // always returning a valid NodesRef object
+```
+
+## Notices
+
+### Do not use special characters other than numbers, letters, hyphens, and underscores in the id
+
+Special characters may be parsed as part of a CSS selector or combinator.
+
+For example, `select('#m.x')` will be parsed as looking for elements with both `id=m` and `class=x` attributes, rather than looking for an element with `id` as `m.x`.
+
+## Troubleshooting
+
+Element manipulations are performed **asynchronously** after [`exec()`](/api/lynx-api/selector-query/selector-query-exec) is executed.
+Therefore, it is not feasible to view element information or determine if an element can be found using the following methods:
+
+```js
+let nodesRef = lynx.createSelectorQuery().select('#the-id');
+console.log(nodesRef); // always returning a valid NodesRef object
+```
+
+The correct approach is to examine the error information returned by the node operation functions invoked by the user.
+
+### Common Error Code Definitions
+
+```jsx
+enum ErrorCode {
+  SUCCESS = 0,
+  UNKNOWN = 1,
+  NODE_NOT_FOUND = 2,          // Node not found in the element tree
+  METHOD_NOT_FOUND = 3,        // The specified method is not present on the found UI node
+  PARAM_INVALID = 4,           // Invalid arguments as determined by the component implementer
+  SELECTOR_NOT_SUPPORTED = 5,  // Usage of unsupported selectors
+  NO_UI_FOR_NODE = 6,          // Node found in the element tree, but there is no corresponding UI
+}
+```
+
+### Error Code 2 with the message "no node found for selector"
+
+Common reasons include:
+
+- An incorrect CSS selector was used;
+- The node has not been rendered at the time of the node search.
+
+#### Node Has Not Been Rendered at the Time of the Node Search
+
+A common situation where a node cannot be found is when the node has not been rendered at the time the [`exec()`](/api/lynx-api/selector-query/selector-query-exec) function is called, such as when the node is within a conditional statement that is not satisfied.
+
+For example, in the pseudocode below, during the initial render, since `show` is `false`, the `<view id="xxx" />` node will not be rendered. Therefore, attempting to obtain the node in `useEffect()` will fail.
+
+```jsx
+import { useEffect, useState } from '@lynx-js/react';
+
+function App() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    lynx
+      .createSelectorQuery()
+      .select('#xxx')
+      .invoke({
+        /** Args */
+      })
+      .exec();
+  }, []);
+
+  return show ? <view id="xxx" /> : null;
+}
+```
+
+### Error Code 3
+
+The specified node was found, but it does not have the corresponding UI method. Check:
+
+- Whether the node indeed has the corresponding UI method.
+- If the method name is spelled correctly.
+- Whether there is another node with the same name, leading to the actual search finding a different node.
+
+### Error Code 6
+
+The target node exists in the element tree but lacks an actual UI node.
+This issue usually occurs with `view` nodes because, for performance reasons, lynx may have optimized the node internally and not actually created it at the UI layer.
+If you want to prevent this optimization, try adding an `id` to the target node.
+
+## Compatibility
+
+<APITable />

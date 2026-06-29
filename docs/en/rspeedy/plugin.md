@@ -1,0 +1,61 @@
+---
+description: 'Extend Rspeedy with Rsbuild and Rspack plugins.'
+---
+
+# Plugin
+
+Rsbuild provides a powerful plugin system that allows for user extension.
+Rspeedy leverages this plugin system directly.
+
+Plugins written by developers can modify the default behavior of Rspeedy/Rsbuild and add various additional features, including but not limited to:
+
+- Register lifecycle hooks
+- Transform module source code
+- Modify Rsbuild configuration
+- Modify Rspack configuration
+
+## Find Plugins
+
+Before finding plugin, you may want to check if the feature you want is already included in [Rspeedy Configuration](../../api/rspeedy/rspeedy.md).
+
+### Rsbuild Plugins
+
+The following Rsbuild plugins can be used in Rspeedy.
+
+- [Sass Plugin](https://rsbuild.dev/plugins/list/plugin-sass): Use Sass as the CSS preprocessor.
+- [Less Plugin](https://rsbuild.dev/plugins/list/plugin-less): Use Less as the CSS preprocessor.
+- [ESLint Plugin](https://github.com/rspack-contrib/rsbuild-plugin-eslint): Run ESLint checks during the compilation.
+- [Type Check Plugin](https://github.com/rspack-contrib/rsbuild-plugin-type-check): Run TypeScript type checker on a separate process.
+- [Image Compress Plugin](https://github.com/rspack-contrib/rsbuild-plugin-image-compress): Compress the image assets.
+- [Typed CSS Modules Plugin](https://github.com/rspack-contrib/rsbuild-plugin-typed-css-modules): Generate TypeScript declaration file for CSS Modules.
+- [Tailwind CSS Plugin](https://github.com/rspack-contrib/rsbuild-plugin-tailwindcss): Integrate with Tailwind CSS V3
+
+### Rspack/Webpack Plugins
+
+The following Rspack/Webpack plugins can be used in Rspeedy.
+
+:::info
+Rspack/Webpack plugins should be placed in [`tools.rspack.plugins`].
+:::
+
+- [BannerPlugin]: Add a banner to the top or bottom of the output.
+- [EnvironmentPlugin]: Use `process.env` with [DefinePlugin].
+- [ProvidePlugin]: Automatically load modules instead of having to `import` them everywhere.
+
+## Write Plugins
+
+If none of the existing ecosystem plugins meet your requirements, you might consider writing your own plugin.
+
+### Rsbuild Plugin API
+
+See [Rsbuild - Plugin Hooks](https://rsbuild.dev/plugins/dev/hooks) for more details.
+
+### Rspack Plugin API
+
+See [Rspack - Compiler Hooks](https://rspack.rs/api/plugin-api/compiler-hooks) and [Rspack - Compilation Hooks](https://rspack.rs/api/plugin-api/compilation-hooks) for more details.
+
+[`tools.rspack.plugins`]: /api/rspeedy/rspeedy.tools.rspack#example-4
+[BannerPlugin]: https://rspack.rs/plugins/webpack/banner-plugin
+[DefinePlugin]: https://rspack.rs/plugins/webpack/define-plugin
+[EnvironmentPlugin]: https://rspack.rs/plugins/webpack/environment-plugin
+[ProvidePlugin]: https://rspack.rs/plugins/webpack/provide-plugin

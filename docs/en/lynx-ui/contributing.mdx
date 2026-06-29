@@ -1,0 +1,109 @@
+---
+description: 'Guide to contributing components and code to lynx-ui.'
+---
+
+# Contributing
+
+lynx-ui welcomes contributions from the community. This page focuses on the component development
+workflow and the checks that commonly block pull requests. For the full workflow, see the
+[lynx-ui contributing guide](https://github.com/lynx-family/lynx-ui/blob/main/CONTRIBUTING.md).
+
+## Prerequisites
+
+- Use **Node.js >= 24.0.0**.
+- Use the pnpm version pinned by the repository. Run `corepack enable` before installing dependencies.
+- Install dependencies from the repository root with `pnpm install`.
+
+```bash
+git clone https://github.com/lynx-family/lynx-ui.git
+cd lynx-ui
+corepack enable
+pnpm install
+pnpm build
+```
+
+## Component Development
+
+Each component package lives in `packages/lynx-ui-<component-name>` and usually contains:
+
+- `src`: component source code
+- `types`: public type definitions, including docs entries
+- `README.md`: component-level usage notes
+
+To scaffold a new component with the expected package structure, run:
+
+```bash
+pnpm make-new-component --create <component-name>
+# Example: pnpm make-new-component --create toast
+```
+
+This creates:
+
+```text
+packages/lynx-ui-<component-name>
+```
+
+## Examples
+
+Add or update examples for component changes so reviewers can verify the behavior visually.
+
+To scaffold example files:
+
+```bash
+pnpm make-new-component --example <component-name>
+# Example: pnpm make-new-component --example toast
+```
+
+Before running an example, check its package name in:
+
+```text
+apps/examples/src/<Component>/package.json
+```
+
+For detailed instructions, see
+[apps/examples/README.md](https://github.com/lynx-family/lynx-ui/blob/main/apps/examples/README.md)
+in the lynx-ui repository. Then run the matching example package:
+
+```bash
+# Example: run button examples
+npx turbo watch dev --filter '@lynx-example/lynx-ui-button'
+```
+
+## Before Opening a Pull Request
+
+Run the relevant checks locally before submitting:
+
+```bash
+pnpm check
+pnpm check:changed
+pnpm test
+```
+
+Use `pnpm fix:all` or `pnpm check:changed:unsafe` only when you have reviewed the affected files.
+
+## Release Notes and Versioning
+
+lynx-ui uses Changesets for package versioning. Add a changeset for any user-facing change, including
+component behavior, APIs, package dependencies, documentation shipped with a component, or example
+packages.
+
+```bash
+pnpm changeset
+```
+
+Example packages are published with the component release. After an example package is released, the
+matching example version in the
+[lynx-website](https://github.com/lynx-family/lynx-website) repository must be updated manually.
+Make sure the stable version of the example package has been published before updating the website,
+so the docs do not reference a version that is not available on the registry yet.
+
+## Pull Request Requirements
+
+- Pull requests are usually squash-merged. The final merged PR should become a single commit on the
+  target branch.
+- The final commit message should follow
+  [Conventional Commits](https://www.conventionalcommits.org/).
+- User-facing changes need a changeset.
+- Contributions are licensed under the
+  [Apache-2.0 License](https://github.com/lynx-family/lynx-ui/blob/main/LICENSE). If a CLA check is
+  shown on your pull request, complete it before requesting review.

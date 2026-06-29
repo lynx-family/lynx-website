@@ -1,0 +1,121 @@
+[build]
+  command = "node scripts/ci/check-build-prereqs.mjs && pnpm gen:og && NODE_OPTIONS=--max-old-space-size=3072 RSPRESS_SSG_WORKER_THREAD_COUNT=1 pnpm exec rspress build"
+  publish = "doc_build"
+
+[context.deploy-preview.environment]
+  RSPRESS_LIGHTWEIGHT_BUILD = "true"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    access-control-allow-origin = "https://www.unpkg.com"
+
+# Tutorials moved from /guide/start/tutorial-* to top-level /learn/*. The
+# /next/* rewrite at the bottom doesn't chain into these — direct hits to
+# the /next/ form need their own rules. The trailing splat catches the bare
+# URL plus the .html and .md variants in one rule.
+[[redirects]]
+  from = "/guide/start/tutorial-gallery*"
+  to = "/learn/gallery:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/guide/start/tutorial-gallery*"
+  to = "/zh/learn/gallery:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/start/tutorial-product-detail*"
+  to = "/learn/product-detail:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/guide/start/tutorial-product-detail*"
+  to = "/zh/learn/product-detail:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/next/guide/start/tutorial-gallery*"
+  to = "/next/learn/gallery:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/next/zh/guide/start/tutorial-gallery*"
+  to = "/next/zh/learn/gallery:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/next/guide/start/tutorial-product-detail*"
+  to = "/next/learn/product-detail:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/next/zh/guide/start/tutorial-product-detail*"
+  to = "/next/zh/learn/product-detail:splat"
+  status = 301
+  force = true
+
+# Quick Start lived at /<subsite>/start/quick-start for every subsite while
+# we had multiple shared docs (see shared-route-config.ts history). Today
+# the canonical is /guide/start/quick-start; redirect historical alternates
+# so bookmarks and crawler-cached URLs still resolve.
+[[redirects]]
+  from = "/ai/start/*"
+  to = "/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/ai/start/*"
+  to = "/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/react/start/*"
+  to = "/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/react/start/*"
+  to = "/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/rspeedy/start/*"
+  to = "/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/rspeedy/start/*"
+  to = "/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/lynx-ui/start/*"
+  to = "/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/lynx-ui/start/*"
+  to = "/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+# Serve everything under /next/ from the site root.
+[[redirects]]
+  from = "/next/*"
+  to = "/:splat"
+  status = 200

@@ -1,0 +1,284 @@
+# JavaScript Runtime and WebAssembly
+
+import { Tab, Tabs } from '@rspress/core/theme';
+
+## JavaScript Runtime
+
+One of biggest features of Lynx is [Dual-Thread Architecture](/guide/spec.html#scripting-facing-threading-abstraction)(read [Thinking in ReactLynx](/react/thinking-in-reactlynx.html) for more information), JavaScript code runs on two threads: the [main thread](/guide/spec.html#main-thread-or-lynx-main-thread) and the [background thread](/guide/spec.html#background-thread-aka-off-main-thread). The two threads use different JavaScript engines as their runtime.
+
+### [Main Thread](/guide/spec.html#main-thread-or-lynx-main-thread)
+
+The Lynx main thread is responsible for handling tasks that directly affect the screen [pixel-pipeline](/guide/spec.html#enginepixeling-the-pixel-pipeline), including executing [main thread scripts](/react/main-thread-script.html), handling layout, and rendering graphics.
+
+The main thread uses [PrimJS](/guide/scripting-runtime/main-thread-runtime.html#primjs), maintained by the Lynx team, as its runtime. PrimJS is a lightweight, high-performance JavaScript engine based on QuickJS, providing excellent runtime performance for the main thread.
+
+### [Background Thread](/guide/spec.html#background-thread-aka-off-main-thread)
+
+As opposed to the main thread, Lynx's background threads handle tasks that do not directly affect the display of screen pixels. This includes scripts and tasks that run in the background, separate from the main thread. This allows the main thread to focus on handling user interaction and rendering, which improves overall performance.
+
+- Android: for a combination of package size and performance considerations, we use [PrimJS](/guide/scripting-runtime/main-thread-runtime.html#primjs) by default
+- iOS: we use [JavaScriptCore](https://trac.webkit.org/wiki/JavaScriptCore) by default, unless you need to use the [PrimJS](/guide/scripting-runtime/main-thread-runtime.html#primjs) for debugging
+
+While these environments are very similar, you may end up hitting some inconsistencies. It is best to avoid relying on specifics of any runtime.
+
+## WebAssembly
+
+Starting from Lynx 3.8, Lynx provides basic WebAssembly support on Android through the PrimJS runtime integration.
+
+This support is intended for common module loading and execution scenarios, and is currently available on the background thread only. At the moment, Lynx does not expose the complete WebAssembly JavaScript API surface. See [WebAssembly](/guide/scripting-runtime/webassembly.html) for the supported scope and current limitations.
+
+## JavaScript Syntax Transformers
+
+The Lynx dual-thread runtime supports the following maximum ECMAScript versions:
+
+- Main thread: [ECMAScript 2019 (ES10)](https://tc39.es/ecma262/2019/)
+- Background thread: [ECMAScript 2015 (ES6)](https://262.ecma-international.org/6.0/)
+
+Of course, you can use new JavaScript syntax to write your code. During the build process, [SWC](https://swc.rs/) will be used as Syntax Transformer to transform your code, so you don't have to wait for JavaScript runtime support.
+
+## JavaScript Polyfills
+
+:::info
+Only injects polyfills on iOS.
+
+A full list of Lynx's polyfills can be found in [Lynx repository](https://github.com/lynx-family/lynx/blob/develop/js_libraries/lynx-polyfill/src/index.js)
+:::
+
+Besides syntax transformers, many built-in objects and standard functions are also available. Including:
+
+### Built-in Objects
+
+- [Map](https://tc39.es/ecma262/#sec-map-constructor)
+- [Set](https://tc39.es/ecma262/#sec-set-constructor)
+- [WeakMap](https://tc39.es/ecma262/#sec-weakmap-constructor)
+- [WeakSet](https://tc39.es/ecma262/#sec-weakset-constructor)
+
+### Array
+
+- [Array.prototype.concat](https://tc39.es/ecma262/#sec-array.prototype.concat)
+- [Array.prototype.filter](https://tc39.es/ecma262/#sec-array.prototype.filter)
+- [Array.prototype.flat](https://tc39.es/ecma262/#sec-array.prototype.flat)
+- [Array.prototype.flatMap](https://tc39.es/ecma262/#sec-array.prototype.flatmap)
+- [Array.prototype.includes](https://tc39.es/ecma262/#sec-array.prototype.includes)
+- [Array.prototype[@@iterator]](https://ts39.es/ecma262/#sec-array.prototype-@@iterator)
+- [Array.prototype.map](https://tc39.es/ecma262/#sec-array.prototype.map)
+- [Array.prototype.reverse](https://tc39.es/ecma262/#sec-array.prototype.reverse)
+- [Array.prototype.slice](https://tc39.es/ecma262/#sec-array.prototype.slice)
+- [Array.prototype.sort](https://tc39.es/ecma262/#sec-array.prototype.sort)
+- [Array.prototype.species](https://tc39.es/ecma262/#sec-array.prototype.species)
+- [Array.prototype.splice](https://tc39.es/ecma262/#sec-array.prototype.splice)
+- [Array.prototype[@@unscopables].flat](https://ts39.es/ecma262/#sec-array.prototype-@@unscopables)
+- [Array.prototype[@@unscopables].flatMap](https://ts39.es/ecma262/#sec-array.prototype-@@unscopables)
+
+### ArrayBuffer
+
+- [ArrayBuffer](https://tc39.es/ecma262/#sec-arraybuffer-objects)
+- [ArrayBuffer.prototype.slice](https://tc39.es/ecma262/#sec-arraybuffer.prototype.slice)
+
+### Date
+
+- [Date.prototype.toJSON](https://tc39.es/ecma262/#sec-date.prototype.tojson)
+- [Date.prototype[@@toPrimitive]](https://tc39.es/ecma262/#sec-date.prototype-@@toprimitive)
+
+### Number
+
+- [Number.parseFloat](https://ts39.es/ecma262/#sec-number.parseFloat)
+
+### Object
+
+- [Object.entries](https://tc39.es/ecma262/#sec-object.entries)
+- [Object.fromEntries](https://tc39.es/ecma262/#sec-object.fromentries)
+- [Object.getOwnPropertyDescriptors](https://tc39.es/ecma262/#sec-object.getownpropertydescriptors)
+- [Object.toString](https://tc39.es/ecma262/#sec-object.tostring)
+- [Object.values](https://tc39.es/ecma262/#sec-object.values)
+
+### Promise
+
+- [Promise](https://tc39.es/ecma262/#sec-promise-constructor)
+- [Promise.all](https://tc39.es/ecma262/#sec-promise.all)
+- [Promise.race](https://tc39.es/ecma262/#sec-promise.race)
+- [Promise.reject](https://tc39.es/ecma262/#sec-promise.reject)
+- [Promise.resolve](https://tc39.es/ecma262/#sec-promise.resolve)
+- [Promise.prototype.catch](https://tc39.es/ecma262/#sec-promise.prototype.catch)
+- [Promise.prototype.finally](https://tc39.es/ecma262/#sec-promise.prototype.finally)
+- [Promise.prototype.then](https://tc39.es/ecma262/#sec-promise.prototype.then)
+
+### Reflect
+
+- [Reflect.apply](https://tc39.es/ecma262/#sec-reflect.apply)
+- [Reflect.construct](https://tc39.es/ecma262/#sec-reflect.construct)
+- [Reflect.defineProperty](https://tc39.es/ecma262/#sec-reflect.defineproperty)
+- [Reflect.deleteProperty](https://tc39.es/ecma262/#sec-reflect.deleteproperty)
+- [Reflect.get](https://tc39.es/ecma262/#sec-reflect.get)
+- [Reflect.getOwnPropertyDescriptors](https://tc39.es/ecma262/#sec-reflect.getownpropertydescriptor)
+- [Reflect.getPrototypeOf](https://tc39.es/ecma262/#sec-reflect.getprototypeof)
+- [Reflect.has](https://tc39.es/ecma262/#sec-reflect.has)
+- [Reflect.isExtensible](https://tc39.es/ecma262/#sec-reflect.isextensible)
+- [Reflect.ownKeys](https://tc39.es/ecma262/#sec-reflect.ownkeys)
+- [Reflect.preventExtensions](https://tc39.es/ecma262/#sec-reflect.preventextensions)
+- [Reflect.set](https://tc39.es/ecma262/#sec-reflect.set)
+- [Reflect.setPrototypeOf](https://tc39.es/ecma262/#sec-reflect.setprototypeof)
+
+### RegExp
+
+- [RegExp](https://ts39.es/ecma262/#sec-regexp-constructor)
+- [RegExp.prototype.exec](https://tc39.es/ecma262/#sec-regexp.prototype.exec)
+- [RegExp.prototype.sticky](https://tc39.es/ecma262/#sec-regexp.prototype.sticky)
+- [RegExp.prototype.test](https://tc39.es/ecma262/#sec-regexp.prototype.test)
+- [RegExp.prototype.toString](https://tc39.es/ecma262/#sec-regexp.prototype.tostring)
+
+### String
+
+- [String.prototype.endsWith](https://tc39.es/ecma262/#sec-string.prototype.endswith)
+- [String.prototype.includes](https://tc39.es/ecma262/#sec-string.prototype.includes)
+- [String.prototype.match](https://tc39.es/ecma262/#sec-string.prototype.match)
+- [String.prototype.matchAll](https://tc39.es/ecma262/#sec-string.prototype.matchall)
+- [String.prototype.padEnd](https://tc39.es/ecma262/#sec-string.prototype.padend)
+- [String.prototype.padStart](https://tc39.es/ecma262/#sec-string.prototype.padstart)
+- [String.prototype.replace](https://tc39.es/ecma262/#sec-string.prototype.replace)
+- [String.prototype.search](https://tc39.es/ecma262/#sec-string.prototype.search)
+- [String.prototype.split](https://tc39.es/ecma262/#sec-string.prototype.split)
+- [String.prototype.startsWith](https://tc39.es/ecma262/#sec-string.prototype.startswith)
+- [String.prototype.trim](https://tc39.es/ecma262/#sec-string.prototype.trim)
+- [String.prototype.trimEnd](https://tc39.es/ecma262/#sec-string.prototype.trimend)
+- [String.prototype.trimStart](https://tc39.es/ecma262/#sec-string.prototype.trimstart)
+
+### Symbol
+
+- [Symbol](https://tc39.es/ecma262/#sec-symbol-constructor)
+- [Symbol.prototype.description](https://tc39.es/ecma262/#sec-symbol-prototype.description)
+- [Symbol.asyncIterator](https://tc39.es/ecma262/#sec-symbol.asynciterator)
+- [Symbol.hasInstance](https://tc39.es/ecma262/#sec-symbol.hasinstance)
+- [Symbol.isConcatSpreadable](https://tc39.es/ecma262/#sec-symbol.isconcatspreadable)
+- [Symbol.match](https://tc39.es/ecma262/#sec-symbol.match)
+- [Symbol.matchAll](https://tc39.es/ecma262/#sec-symbol.matchall)
+- [Symbol.replace](https://tc39.es/ecma262/#sec-symbol.replace)
+- [Symbol.search](https://tc39.es/ecma262/#sec-symbol.search)
+- [Symbol.species](https://tc39.es/ecma262/#sec-symbol.species)
+- [Symbol.split](https://tc39.es/ecma262/#sec-symbol.split)
+- [Symbol.toPrimitive](https://tc39.es/ecma262/#sec-symbol.toprimitive)
+- [Symbol.toStringTag](https://tc39.es/ecma262/#sec-symbol-prototype.tostringtag)
+
+## Module
+
+You can use JavaScript module when developing Lynx project.
+
+Lynx currently supports [ESModule](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) and [CommonJS](https://en.wikipedia.org/wiki/CommonJS). The usage of ESModule and CommonJS can be mixed.
+
+It is recommended to use ESModule, which allows for better [Tree Shaking](https://webpack.js.org/guides/tree-shaking/).
+
+### Module Names
+
+Both ESModule and CommonJS, a module name needs to be specified. It can be one of:
+
+- Relative path: `./common.js`
+- Name of a npm package: `lodash` (C++ addon and NodeJS builtin packages are not supported)
+- Path with [alias](/api/rspeedy/rspeedy.source.alias): `@common/foo.js`
+
+### CommonJS
+
+CommonJS uses `require(path)` to import a module. Uses `module.exports` or `exports` to export a module.
+
+<Tabs>
+  <Tab label="common.js">
+
+```js title="common.js" {1,10-11}
+const lodash = require('lodash'); // can require npm packages
+function hello(name) {
+  console.log(`Hello ${lodash.capitalize(name)} !`);
+}
+
+function goodbye(name) {
+  console.log(`Goodbye ${name} !`);
+}
+
+module.exports.hello = hello;
+exports.goodbye = goodbye;
+```
+
+  </Tab>
+  <Tab label="ReactLynx">
+
+```jsx {1,6,10}
+const { Component } = require('@lynx-js/react'); // can require npm packages
+
+export default App extends Component {
+  constructor(props) {
+    super(props);
+    const common = require('./common.js'); // can require relative path
+    common.hello('world');
+  }
+  componentDidMount() {
+    const common = require('./common.js'); // can require relative path
+    common.goodbye('world');
+  }
+  render() {
+    return <view><text>Hello, world!</text></view>;
+  }
+}
+```
+
+  </Tab>
+</Tabs>
+
+:::tip
+
+- `require` can be anywhere in your code, not required to be at top.
+
+- `require` will **synchronously** execute the target module.
+
+- `require` will cache the returned object. Multiple `require` to the same path will return the **same** value. e.g:
+
+```js
+require('foo') === require('foo'); // true
+```
+
+:::
+
+### ESModule
+
+ESModule uses `import` to import a module. Uses `export` to export a module.
+`import` and `export` must be placed at the top level of source file.
+
+ESModule can also use `import()` to dynamically import a module.
+
+<Tabs>
+  <Tab label="utils.js">
+
+```js title="utils.js"
+export function getAge() {
+  return 11;
+}
+
+export default function (add1, add2) {
+  return add1 + add2;
+}
+```
+
+  </Tab>
+  <Tab label="ReactLynx">
+
+```jsx {1-2,8,13}
+import { Component } from '@lynx-js/react'; // can import npm packages
+import { capitalize } from 'lodash';
+
+export default App extends Component {
+  constructor(props) {
+    super(props);
+    // can dynamic import relative path
+    import('./utils.js').then(utils => {
+      capitalize(utils.getSum());
+    });
+  }
+  async componentDidMount() {
+    const utils = await import('./utils.js'); // can dynamic import relative path
+    utils.getAge();
+  }
+  render() {
+    return <view><text>Hello, world!</text></view>;
+  }
+}
+```
+
+  </Tab>
+</Tabs>

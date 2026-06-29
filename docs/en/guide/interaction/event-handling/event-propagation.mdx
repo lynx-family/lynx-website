@@ -1,0 +1,230 @@
+import { PlatformTabs, Go, NoWeb } from '@lynx';
+
+# Event Propagation
+
+When an event is triggered, it will propagate along the event response chain. If the corresponding type of event handler property is set on the node, the node can listen to the corresponding event or even intercept it during the event propagation process.
+
+In addition, Lynx also provides cross-component event monitoring, event aspect interface, and `GlobalEventEmitter` to implement special event propagation.
+
+## Event handler property
+
+By setting the event handler properties, developers can decide at which stage (or across components) of event propagation to listen or intercept the event, and specify the processing function to be called when the event is triggered. The names of these event handler properties are usually composed of the bound event type and event name.
+
+| Event Type      | Description                                                                         |
+| --------------- | ----------------------------------------------------------------------------------- |
+| `bind`          | Listen to events in the bubbling stage, and do not intercept event bubbling.        |
+| `catch`         | Listen to events in the bubbling stage and intercept event bubbling.                |
+| `capture-bind`  | Listen to events in the capture phase, do not intercept event capture and bubbling. |
+| `capture-catch` | Listen to events in the capture phase, intercept event capture and bubbling.        |
+| `global-bind`   | Listen to events across components.                                                 |
+
+In particular, when the event handler is a [main thread script](../../../react/main-thread-script.mdx), you need to add the `main-thread:` prefix before the event handler property name to ensure that the handler is executed in the main thread.
+
+## Event response chain
+
+The event response chain refers to a linked list of nodes that can respond to events. Generally speaking, the event response chain consists of the path from the root node of the page to the node where the action is actually triggered. However, for non-[touch events](../../../api/lynx-api/event/touch-event.mdx), the event response chain only contains the node where the action is actually triggered.
+
+**Example 1:**
+
+<Go
+  example="event"
+  defaultFile="src/event_chain/index.tsx"
+  defaultEntryFile="dist/event_chain.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_chain.gif"
+  highlight="{50,65,78,95,108}"
+  entry="src/event_chain"
+/>
+
+In the above example, when the user clicks on the page, the background color of the node on the event response chain will be set to orange.
+
+## Event capture
+
+The event will go through two stages in the event response chain: event capture and event bubbling. In the event capture stage, the event will start from the root node of the page and propagate down along the event response chain until the node where the action is actually triggered. In the event capture stage, nodes with the event handler property of the `capture-bind` type set can listen to the corresponding event.
+
+**Example 2:**
+
+<Go
+  example="event"
+  defaultFile="src/event_capture/index.tsx"
+  defaultEntryFile="dist/event_capture.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_capture.gif"
+  highlight="{7-9,14}"
+  entry="src/event_capture"
+/>
+
+In the above example, since event propagation starts from the capture phase, and the capture phase starts from the root node, when the user clicks on the page, the root node can always listen to the `tap` event, thereby realizing the function of counting the number of page clicks.
+
+## Event bubble
+
+In the event bubbling phase, the event will propagate upward along the event response chain from the node where the action is actually triggered, until the root node of the page. In the event bubbling phase, nodes with the `bind` type event handler attribute set can listen to the corresponding event.
+
+**Example 3**
+
+<Go
+  example="event"
+  defaultFile="src/event_bubble/index.tsx"
+  defaultEntryFile="dist/event_bubble.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_bubble.gif"
+  highlight="{7-12,23}"
+  entry="src/event_bubble"
+/>
+
+In the above example, when the user clicks any node on the page, the event will bubble from the child node to the parent node by default. Therefore, the parent node can always listen to the `tap` event and change the background color of the node.
+
+## Event interception
+
+During the process of event propagation, the event can be intercepted midway to prevent the event from continuing to propagate. When the `catch` type event handler property is set on the node, the event will be intercepted when it propagates to the node and will no longer propagate.
+
+**Example 4**
+
+<Go
+  example="event"
+  defaultFile="src/event_static_catch/index.tsx"
+  defaultEntryFile="dist/event_static_catch.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_static_catch.gif"
+  highlight="{7-12,23,34}"
+  entry="src/event_static_catch"
+/>
+
+In the above example, since the `click me` area sets the static interception `tap` event, the event will bubble to the parent node and the background color of the node will change only when the non-`click me` area is clicked.
+
+## Prevent Event Propagation in Main Thread Script
+
+When used with [Main Thread Script](../../../react/main-thread-script.mdx), event propagation can be prevented by calling the [`stopPropagation`](../../../api/lynx-api/event/event.mdx#stoppropagation) method of the event object.
+
+**Example 5:**
+
+<Go
+  example="event"
+  defaultFile="src/event_stop_propagation/index.tsx"
+  defaultEntryFile="dist/event_stop_propagation.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event_stop.webp"
+  highlight="{34}"
+  entry="src/event_stop_propagation"
+/>
+
+In the above example, click the inner will not trigger the `tap` event of the outer.
+
+## Cross-component event listening <NoWeb />
+
+Generally speaking, when a node is not on the event response chain, the event cannot be monitored. Lynx provides a way to monitor cross-component events, allowing developers to register event monitoring on any node and receive corresponding events.
+
+For example, developers can set the event handler property of the `global-bind` type on a node to listen to the `tap` event. When any node is clicked, the node can listen to the `tap` event, thereby realizing the function of counting the number of page clicks.
+
+**Example 5:**
+
+<Go
+  example="event"
+  defaultFile="src/event_global_bind/index.tsx"
+  defaultEntryFile="dist/event_global_bind.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_global_bind.gif"
+  highlight="{8-10,12-14,19-20,47-48}"
+  entry="src/event_global_bind"
+/>
+
+It should be noted that for non-[touch events](../../../api/lynx-api/event/touch-event.mdx), the event handler property of the non-cross-component event listening type needs to be set on the monitored node. In addition, developers can also set `global-target` on the node to specify that only events with a specific value of the node [`id`](../../../api/elements/built-in/view.mdx#id) are listened (type is `string`, multiple [`id`](../../../api/elements/built-in/view.mdx#id) can be specified, separated by commas).
+
+## Event aspect interface
+
+Sometimes, developers may need to uniformly listen to and handle events of a specific type somewhere, and do not rely on component registration event listeners. For example, count all triggered `tap` events on the page. At this time, developers can use the event aspect interface ([`beforePublishEvent`](../../../api/lynx-api/lynx/lynx-before-publish-event.mdx)) provided by Lynx to implement the corresponding function.
+
+**Example 6:**
+
+<Go
+  example="event"
+  defaultFile="src/event_aop/index.tsx"
+  defaultEntryFile="dist/event_aop.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_aop.gif"
+  highlight="{7-12,65}"
+  entry="src/event_aop"
+/>
+
+The event aspect interface is a type of aspect programming. By injecting the corresponding interface at the event trigger point, the event is forwarded to a certain place when a specific event is triggered. This interface is only implemented in the BTS context. Therefore, it can only be used in the background thread, and the corresponding event can only be listened to when the event processing function is triggered.
+
+## `GlobalEventEmitter`
+
+Sometimes, developers may need to pass events between different elements and components, or need to pass events between the client and the front end, and do not rely on the element to register event listeners. At this time, developers can use `GlobalEventEmitter` to achieve global scope transmission of events in a page.
+
+Developers can obtain the `GlobalEventEmitter` object through [`lynx.getJSModule`](../../../api/lynx-api/lynx/lynx-get-js-module.mdx), which provides the following interfaces:
+
+| Function name        | Function description                                                                        | Function parameter                |
+| -------------------- | ------------------------------------------------------------------------------------------- | --------------------------------- |
+| `addListener`        | Subscribe to events and register event listeners.                                           | `(eventName, listener, context?)` |
+| `removeListener`     | Remove the specified listener for a specific event.                                         | `(eventName, listener)`           |
+| `removeAllListeners` | Remove all listeners for a specific event.                                                  | `(eventName)`                     |
+| `toggle`             | Broadcast an event with a specified event name, supporting multiple transparent parameters. | `(eventName, ...data)`            |
+| `trigger`            | Broadcasts an event with a specified event name, supporting a transparent parameter.        | `(eventName, params)`             |
+
+Note that `GlobalEventEmitter` is only supported in the BTS context, so it can only be used in background threads.
+
+### Event broadcast
+
+Developers can broadcast events through `GlobalEventEmitter` to send events to the front end.
+
+In the following example, when the user clicks on the page, the developer broadcasts the event by calling the `toggle` method of `GlobalEventEmitter`, so that the click event is propagated from component `ComponentA` to `ComponentB`.
+
+**Example 7:**
+
+<Go
+  example="event"
+  defaultFile="src/event_emitter_toggle/index.tsx"
+  defaultEntryFile="dist/event_emitter_toggle.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_emitter_toggle.gif"
+  highlight="{8-10,22-24,41}"
+  entry="src/event_emitter_toggle"
+/>
+
+For the client, the example is as follows:
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+```objective-c
+// You can call the sendGlobalEvent function of LynxContext
+// The first parameter is the event name monitored by the front end, and the second parameter is the data received by the front end
+[LynxContext sendGlobalEvent:@"eventName" withParams:args];
+// Or call the sendGlobalEvent function of LynxView
+[LynxView sendGlobalEvent:@"eventName" withParams:args];
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+// You can call the sendGlobalEvent function of LynxContext
+// The first parameter is the event name monitored by the front end, and the second parameter is the data received by the front end
+LynxContext.sendGlobalEvent("eventName", args);
+// Or call the sendGlobalEvent function of LynxView
+LynxView.sendGlobalEvent("eventName", args);
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```js
+// You can call the sendGlobalEvent function of LynxContext
+// The first parameter is the event name monitored by the front end, and the second parameter is the data received by the front end
+LynxContext.sendGlobalEvent('eventName', args);
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+### Event subscribe
+
+Developers can also subscribe to events through the `addListener` method of `GlobalEventEmitter` to receive events from the front end and client.
+
+In the following example, users can receive the [`onWindowResize`](../../../api/lynx-api/event/global-event.mdx#onwindowresize) event sent by Lynx, which is triggered when the Lynx page size changes.
+
+**Example 8:**
+
+<Go
+  example="event"
+  defaultFile="src/event_emitter_listen/index.tsx"
+  defaultEntryFile="dist/event_emitter_listen.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_emitter_listen.gif"
+  highlight="{7-9}"
+  entry="src/event_emitter_listen"
+/>

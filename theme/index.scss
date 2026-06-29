@@ -1,0 +1,264 @@
+@use 'sass:color';
+@use './external-links';
+@use './blog-btn.scss';
+@use './home-layout-var';
+@use './hero-text';
+@use './semi';
+@use './llms-button';
+
+.rspress-doc {
+  @include external-links.external-links;
+}
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+$major-brand-color: #ff351a;
+$second-color: #00ebeb;
+$react-brand-light: #1f92b9;
+$react-brand-dark: #42b8d2;
+$link-color: #0078fd;
+$link-color-dark: rgba(84, 169, 255, 1);
+
+// Base theme mixin with common properties
+@mixin theme-base($brand-color) {
+  --rp-c-brand: #{$brand-color};
+  --rp-c-brand-dark: #{$brand-color};
+  --rp-c-brand-darker: #{color.adjust($brand-color, $lightness: -10%)};
+  --rp-c-brand-light: #{color.adjust($brand-color, $lightness: 10%)};
+  --rp-c-brand-lighter: #{color.adjust($brand-color, $lightness: 20%)};
+  --rp-c-link: var(--rp-c-brand);
+  --rp-c-brand-tint: #{color.adjust($brand-color, $alpha: -0.85)};
+  --rp-c-custom-block-info-bg: rgba(128, 128, 128, 0.05);
+  --rp-c-custom-block-info-border: rgba(128, 128, 128, 0.5);
+  --rp-c-divider-secondary: #{$second-color};
+  --rp-c-divider-gradient: linear-gradient(
+    120deg,
+    var(--rp-c-brand),
+    #{$second-color}
+  );
+}
+
+// Guide/home theme with major-to-second gradient
+@mixin guide-theme($brand-color) {
+  @include theme-base($brand-color);
+  --rp-home-hero-name-background: rgba(0, 0, 0, 0);
+  --rp-home-mask-background-image: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--rp-c-brand-light) 0deg,
+    180deg,
+    #{$second-color} 0deg
+  );
+  --rp-c-divider-gradient: linear-gradient(
+    120deg,
+    #{$major-brand-color},
+    #{$second-color}
+  );
+}
+
+// Subsite theme with subsite-to-major gradient
+@mixin subsite-theme($brand-color) {
+  @include theme-base($brand-color);
+  --rp-home-hero-name-background: linear-gradient(
+    120deg,
+    #{$brand-color},
+    #{$major-brand-color}
+  );
+  --rp-home-mask-background-image: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--rp-c-brand-light) 0deg,
+    180deg,
+    #{$major-brand-color} 0deg
+  );
+  --rp-c-divider-gradient: linear-gradient(
+    120deg,
+    #{$brand-color},
+    #{$major-brand-color}
+  );
+}
+
+:root {
+  @include guide-theme($major-brand-color);
+}
+
+:root[data-subsite='guide'] {
+  @include guide-theme($major-brand-color);
+}
+
+:root[data-subsite='rspeedy'] {
+  @include subsite-theme(#ff8b00);
+}
+
+:root[data-subsite='lynx-ui'] {
+  @include subsite-theme(#ff1a6e);
+  --rp-c-bg: #ffffff;
+  --rp-c-bg-alt: #f5f5f5;
+  --rp-c-text-1: #010101;
+  --rp-c-divider-secondary: rgba(0, 0, 0, 0.1);
+  &,
+  & *,
+  & *::before,
+  & *::after {
+    --tw-ring-color: #0101013a;
+  }
+  .lynx-ui-home-warp {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+    color: hsl(var(--foreground));
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+}
+
+.dark[data-subsite='lynx-ui'] {
+  @include subsite-theme(#ff8ab5);
+  --rp-c-bg: #0a0a0a;
+  --rp-c-bg-alt: #000000;
+  --rp-c-text-1: #f8f8f8;
+  --rp-c-divider-secondary: rgba(255, 255, 255, 0.1);
+  --tw-ring-color: #f8f8f8;
+  &,
+  & *,
+  & *::before,
+  & *::after {
+    --tw-ring-color: #f8f8f84d;
+  }
+  --rp-c-bg-mute: rgba(255, 255, 255, 0.06);
+  --rp-c-bg-soft: rgba(255, 255, 255, 0.04);
+  .lynx-ui-home-warp {
+    --background: 0 0% 0%;
+    --foreground: 213 31% 91%;
+  }
+
+  .rp-home-hero .rp-button--brand {
+    color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+:root[data-subsite='react'] {
+  @include subsite-theme($react-brand-light);
+}
+
+.dark[data-subsite='react'] {
+  @include subsite-theme($react-brand-dark);
+}
+
+// #region ===== custom-link-color start
+// in doc main content, we want to keep the link color blue
+@mixin custom-link-color($color) {
+  --custom-link-color: #{$color};
+}
+
+:root[data-subsite='guide'] {
+  .rspress-doc {
+    @include custom-link-color($link-color);
+    --rp-c-link: var(--custom-link-color);
+    a > code:not(.rp-overview *) {
+      color: var(--custom-link-color);
+    }
+  }
+}
+.dark[data-subsite='guide'] {
+  .rspress-doc {
+    @include custom-link-color($link-color-dark);
+    --rp-c-link: var(--custom-link-color);
+    a > code:not(.rp-overview *) {
+      color: var(--custom-link-color);
+    }
+  }
+}
+// #endregion ===== custom-link-color end
+
+// #region ======== home layout =========
+:root {
+  --rp-home-background-bg: none;
+  --rp-home-hero-title-bg: linear-gradient(
+    275deg,
+    var(--rp-c-brand-dark) 3%,
+    var(--rp-c-brand-light) 97%
+  );
+}
+
+.home-layout-container {
+  .rp-home-hero__container {
+    position: relative;
+    &::before {
+      content: '';
+      background-image: var(--rp-home-mask-background-image);
+      filter: blur(80px);
+      opacity: 0.05;
+      z-index: 1000;
+      border-radius: 100%;
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
+
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      -webkit-user-select: none;
+      user-select: none;
+      pointer-events: none;
+    }
+  }
+
+  // When rendering the first screen, keep the typing animation transparent when it's not enabled.
+  .rp-home-hero__title-brand {
+    background: none;
+  }
+
+  @media (max-width: 1000px) {
+    .rp-home-hero {
+      margin-top: 54px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .rp-home-hero .rp-home-hero__title {
+      font-size: 2rem;
+    }
+  }
+}
+
+// #endregion ======== home layout =========
+
+.home-hero-codeblock .rp-codeblock {
+  background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
+
+  @media (max-width: 640px) {
+    margin: 6px 0 !important;
+    background-color: transparent !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+:lang(cn) em {
+  // for italic
+  padding-right: 0.1em;
+}
+
+// #region ======== blog =========
+// For left-aligned blog page
+@media (min-width: 1280px) {
+  .rp-doc-layout__sidebar-placeholder {
+    width: 150px;
+  }
+}
+// #endregion ======== blog =========
+
+// #region ======== overview =========
+.rp-overview-group__item__content__item__link {
+  word-break: break-all;
+}
+// #endregion ======== overview =========

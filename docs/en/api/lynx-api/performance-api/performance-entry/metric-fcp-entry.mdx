@@ -1,0 +1,90 @@
+---
+api: lynx-api/performance-api/performance-entry/metric-fcp-entry
+---
+
+import { APISummary, APITable, Go, RuntimeBadge, Deprecated } from '@lynx';
+
+# <Deprecated/> MetricFcpEntry
+
+:::warning
+This event has been deprecated since Lynx SDK 3.7. Related data can be obtained from [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry) / [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry).
+:::
+
+<APISummary />
+
+FCP is a key performance metric that measures the time taken for the [first-screen rendering](/guide/spec#first-screen-rendering-or-fsr) of lynx app to complete. It refers to the time taken for users to see any content (such as text or images) on a lynx app for the first time. `MetricFcpEntry` interface provides timing information about this metric, inheriting from [`PerformanceEntry`](../performance-entry).
+
+The FCP event is triggered when Lynx completes the rendering of the first frame of the lynx app. For lynx apps that rely on network requests or asynchronous I/O to fetch data, the typical state monitored at FCP is the loading page or a placeholder, as shown in the diagram below:
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/performance-metrics-fcp.png" />
+
+Depending on different starting points, Lynx provides three metrics: `fcp`, `lynxFcp`, and `totalFcp`. Each metric's definition in the rendering process is illustrated in the diagram below:
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/metric-fcp-entry.png" />
+
+## Example
+
+This example demonstrates how to obtain a `MetricFcpEntry`.
+
+Lynx calculates the FCP upon completion of the first frame rendering. If you have provided container-related timestamps using [LynxView.setExtraTiming](/api/lynx-native-api/lynx-view/set-extra-timing), the `MetricFcpEntry` includes `fcp`, `lynxFcp`, and `totalFcp`. Otherwise, the `MetricFcpEntry` only contains `lynxFcp`. After supplementing the [container](/guide/spec#container) timestamp, the remaining metrics will be recalculated. Once recalculation is complete, Lynx will send a new `MetricFcpEntry` containing all the metrics.
+
+<Go
+  example="performance-api"
+  defaultFile="src/fcp-entry/index.tsx"
+  defaultEntryFile="dist/fcp-entry.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/metric-fcp-entry-demo.jpeg"
+  entry="src/fcp-entry"
+  highlight="{10-20}"
+/>
+
+## Instance Properties
+
+### [entryType](/api/lynx-api/performance-api/performance-entry#entryType)
+
+```ts
+entryType: string;
+```
+
+The type of performance event; the value for all instances of this class is fixed as `metric`.
+
+### [name](/api/lynx-api/performance-api/performance-entry#name)
+
+```ts
+name: string;
+```
+
+The specific name of the performance event; the value for all instances of this class is fixed as `fcp`.
+
+### fcp
+
+```ts
+fcp?: PerformanceMetric;
+```
+
+The time taken from preparing the [TemplateBundle](/api/lynx-native-api/template-bundle) to the completion of the first rendering, with a data type of [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `fcp = LoadBundleEntry.paintEnd - InitContainerEntry.prepareTemplateStart`.
+
+### lynxFcp
+
+```ts
+lynxFcp: PerformanceMetric;
+```
+
+The time taken from loading the [TemplateBundle](/api/lynx-native-api/template-bundle) to the completion of the first rendering, with a data type of [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `lynxFcp = LoadBundleEntry.paintEnd - LoadBundleEntry.loadBundleStart`.
+
+### totalFcp
+
+```ts
+totalFcp?: PerformanceMetric;
+```
+
+The time taken from the user opening the page to the completion of the first rendering, with a data type of [`PerformanceMetric`](/api/lynx-api/performance-api/performance-metric).
+
+Calculation formula: `totalFcp = LoadBundleEntry.paintEnd - InitContainerEntry.openTime`.
+
+## Compatibility
+
+<APITable />

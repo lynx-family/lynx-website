@@ -1,0 +1,49 @@
+---
+title: selectAll()
+api: lynx-api/selector-query/selectAll
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# SelectorQuery: selectAll() method
+
+<APISummary />
+
+Select all nodes that match the specified CSS selector under the root node specified by `SelectorQuery`.
+
+## Syntax
+
+```ts
+selectAll(selector: string): NodesRef;
+```
+
+### Parameters
+
+#### selector
+
+CSS selector combination used for matching nodes. All nodes that match the specified selector combination will be returned.
+
+The CSS selector used for matching nodes must be [CSS selectors supported by `select()`](./selector-query-select.mdx#selector).
+
+### Return Value
+
+A `NodesRef` object instance representing this query result.
+
+Please note that at this time, `SelectorQuery` will only save the query parameters provided by the user in the `NodesRef` object and will not execute the query immediately. Therefore, it is **NOT feasible** to view node information or determine whether the node can be found in the following way:
+
+```js
+let nodesRef = lynx.createSelectorQuery().selectAll('#the-id');
+console.log(nodesRef); // always returning a valid NodesRef object
+```
+
+## Notices
+
+### Do not use special characters other than numbers, letters, hyphens, and underscores in the id
+
+Special characters may be parsed as part of a CSS selector or combinator.
+
+For example, `selectAll('#m.x')` will be parsed as looking for elements with both `id=m` and `class=x` attributes, rather than looking for an element with `id` as `m.x`.
+
+## Compatibility
+
+<APITable />

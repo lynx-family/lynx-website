@@ -1,0 +1,40 @@
+# `__CreateElement`
+
+## 介绍
+
+创建 Element 对象。
+
+## 语法
+
+```jsx
+__CreateElement(tagName: string, parentComponentUniqueID: number, info?: object) : Element;
+```
+
+### 参数
+
+|           Key           | 说明                                                                                                                                                      |
+| :---------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         tagName         | 指定要创建 Element 类型的字符串，即 LynxUI 的 tagName，比如 input 。对于 view，image 等内建 Element，不能调用该接口，必须各自 Element 对应的 Create API。 |
+| parentComponentUniqueID | 指创建该 Element 的 ComponentElement 的 Unique Component ID，是一个 number。                                                                              |
+|          info           | Element 创建时所需的一些额外信息，该参数可以省略。                                                                                                        |
+
+### 返回值
+
+目前返回值是一个 Value_RefCounted 类型的 lepus::Value，该 lepus::Value 实现是 `base::scoped_refptr<Element>`。
+
+::: tip 备注
+`base::scoped_refptr<Element>` 基于引用计数来管理 Element 的生命周期。因此前端框架可以持有该返回值来管理 Element 的生命周期。只有当前端框架不再持有该 Element 并且 Element 从树上移除后，Element 才会被销毁。
+:::
+
+## 示例
+
+前端框架可以把对应的前端标签编译期处理为如下所示 render 指令
+
+```jsx
+<input />
+```
+
+```jsx
+// main-thread.js
+let element = __CreateElement('input', 0, {});
+```

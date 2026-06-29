@@ -1,0 +1,86 @@
+---
+title: path()
+api: lynx-api/nodes-ref/path
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef: path() method
+
+<APISummary />
+
+Query the path information from the node to the root node of the page.
+
+## Syntax
+
+```ts
+path(callback: (data: object, status: object) => void): SelectorQuery;
+```
+
+### Parameters
+
+#### callback
+
+A callback function, the query result will be returned as the parameter of the callback function. The callback function has two parameters:
+
+The first parameter returns the query result.
+
+- If the `NodesRef` represents one single node, it returns a `Record<string, any>` object containing the query result. If the node is not found, it returns `null`.
+- If the `NodesRef` represents multiple nodes, it returns an array of `Record<string, any>` objects, each element in the array corresponds to the query result of a node. If no nodes are found, it returns an empty array.
+
+The second parameter returns the status of the query (error message).
+
+### Return Value
+
+Contains the `SelectorQuery` object for this task. Call `exec()` to execute the task.
+
+## Examples
+
+```javascript
+lynx
+  .createSelectorQuery()
+  .select('#target')
+  .path((res, status) => {
+    console.log(JSON.stringify(res));
+    console.log(JSON.stringify(status));
+  })
+  .exec();
+```
+
+Possible output:
+
+```javascript
+// res
+{
+    // array from target to root
+    "path":
+    [
+        {
+            tag:"",
+            id:"",
+            class:[],
+            dataSet:{},
+            // index of parent's children
+            index:0,
+        },
+        ...
+        {
+            tag:"page",
+            id:"",
+            class:[],
+            dataSet:{},
+            index:0,
+        }
+    ]
+}
+
+// status
+{
+  "data": "succeed",
+  "code": 0
+}
+```
+
+## Compatibility
+
+<APITable />

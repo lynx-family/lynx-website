@@ -1,0 +1,88 @@
+---
+api: css/properties/background-size
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# background-size
+
+<APISummary />
+
+## 介绍
+
+`background-size` 设置背景图片大小。图片可以保有原始尺寸，或者拉伸到新的尺寸，或者在保持宽高比的同时缩放到元件的可用空间的尺寸。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/background-size/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background-size.jpg"
+  defaultEntryFile="dist/background-size.lynx.bundle"
+  entry="src/background-size"
+/>
+
+## 语法
+
+```css
+background-size: contain;
+
+background-size: 50%;
+background-size: 3em;
+
+background-size: auto 1em;
+background-size: 50% 25%;
+```
+
+### 取值
+
+- `cover` <br/>
+  缩放背景图片以完全覆盖背景区，可能背景图片部分看不见。和 `contain` 值相反，`cover` 值尽可能大的缩放背景图像并保持图像的宽高比例（图像不会被压扁）。该背景图以它的全部宽或者高覆盖所在容器。当容器和背景图大小不同时，背景图的左/右或者上/下部分会被裁剪。
+
+- `contain` <br/>
+  缩放背景图片以完全装入背景区，可能背景区部分空白。`contain` 尽可能的缩放背景并保持图像的宽高比例（图像不会被压缩）。该背景图会填充所在的容器。当背景图和容器的大小的不同时，容器的空白区域（上/下或者左/右）会显示由 [`background-color`](./background-color.mdx) 设置的背景颜色。
+
+- 默认值 **auto** <br />
+  以背景图片的比例缩放背景图片。
+
+- [`<length>`](/api/css/data-type/length.mdx) <br/>
+  指定图片的固定大小。不能为负值。
+
+- [`<percentage>`](/api/css/data-type/percentage.mdx) <br/>
+  指定图片相对背景区域的百分比。背景区域由 [`background-origin`](./background-origin.mdx) 设置，默认为 CSS 盒模型的内容区与内边距 (padding-box)。**不能为负值**。
+
+### 背景图大小计算
+
+- 如果指定了 `background-size` 的两个值并且不是 `auto`: <br/>
+  背景图片按指定大小渲染
+
+- `contain` 或 `cover`: <br/>
+  在保留宽高比的同时，尽可能铺满背景区。如果图像没有固定比例 (例如 `gradient`)，则忽略此属性，直接铺满整个背景区。
+
+- 一个为 `auto` 另一个不是 `auto`: <br/>
+  指定长度的纬度使用固定值大小，`auto` 对应的纬度通过图像宽高比缩放。
+
+## 注意事项
+
+如果使用渐变色作为背景，并且对它使用了 `background-size`，不要使用 `auto` 或者只指定一个宽度值。否则背景图的显示可能出现错误。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>auto auto</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+<bg-size> = (<length-percentage> | auto){1,2} | cover | contain
+```
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,102 @@
+// ─── TutorialTabs ────────────────────────────────────────────────────────
+//
+// The track is `inline-flex` so the rounded container hugs its tabs at
+// rest. On narrow viewports the labels ("Tutorial: Product Gallery") run
+// wider than the doc body — without scroll the second tab clips off the
+// right edge and reads as broken. Below 720px we cap the track at the
+// parent width, allow horizontal scroll, and snap each tab into view.
+// The container chrome (rounded bg + border) survives because the track
+// itself does the scrolling; the active tab's BorderBeam still renders
+// because we don't clip vertically.
+
+.tutorial-tabs {
+  width: 100%;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.tutorial-tabs__track {
+  display: inline-flex;
+  // `max-width: 100%` lets the inline-flex track shrink to fit the parent
+  // when the natural content width would exceed it. Without this, inline-
+  // flex sizes to its intrinsic content and just overflows the page.
+  max-width: 100%;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--home-features-item-bg, rgba(255, 255, 255, 0.5));
+  border: var(--home-features-item-bg-border, 1px solid rgba(17, 17, 19, 0.08));
+}
+
+.tutorial-tabs__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  // Tabs must not shrink — they should keep their natural width and the
+  // overflowing tabs scroll into view via the snap carousel below.
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rp-c-text-2, #57606a);
+  text-decoration: none;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.72;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+
+  &:hover,
+  &:hover:visited {
+    text-decoration: none;
+    border-bottom-width: 0;
+  }
+
+  &:hover:not(.tutorial-tabs__tab--active) {
+    opacity: 1;
+    background: color-mix(
+      in srgb,
+      var(--home-features-item-action-btn-bg, #fff) 45%,
+      transparent
+    );
+  }
+}
+
+.tutorial-tabs__tab--active {
+  opacity: 1;
+  color: var(--rp-c-text-1, #1f2328);
+  background: var(--home-features-item-action-btn-bg, #fff);
+  cursor: default;
+}
+
+.tutorial-tabs__label {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+// ─── Narrow viewport: scroll-snap carousel ───────────────────────────────
+//
+// Below 720px the two "Tutorial: …" labels exceed the doc body width on
+// most phones. Switch the track into a horizontally scrollable snap rail
+// so each tab snaps into view. The scrollbar is hidden — the snap stops
+// + the visible second-tab edge convey scrollability.
+
+@media (max-width: 720px) {
+  .tutorial-tabs__track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .tutorial-tabs__tab {
+    scroll-snap-align: start;
+  }
+}

@@ -1,0 +1,57 @@
+---
+description: 'Detecting node visibility using exposure and intersection observer in Lynx.'
+---
+
+import { Go } from '@lynx';
+
+# Visibility detection
+
+Lynx provides two capabilities for detecting node visibility. One is Lynx's unique exposure capability, which allows developers to easily monitor whether a node is exposed. The other is a Web-like intersection observer, which is a more atomic capability that allows developers to monitor the intersection positions of nodes.
+
+## Detect whether a node is exposed
+
+When developers are mainly concerned about whether multiple nodes are on the screen and not the intersection of nodes, and want to write code quickly, they can use [exposure ability](./visibility-detection/exposure-ability.mdx).
+
+[Exposure ability](./visibility-detection/exposure-ability.mdx) is a declarative interface. Developers can specify the nodes that need to monitor exposure through the [`exposure-id`](../../api/elements/built-in/view.mdx#exposure-id) attribute. When the node appears, the exposure event `exposure` is triggered, and when the node disappears, the anti-exposure event `disexposure` is triggered.
+
+In the following example, the developer monitors whether the node is exposed/anti-exposed and displays the node [`exposure-id`](../../api/elements/built-in/view.mdx#exposure-id) visible on the screen in real time.
+
+**Example 2:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_expose/index.tsx"
+  defaultEntryFile="dist/visibility_expose.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_expose.gif"
+  highlight="{8-12,14-21,62}"
+  entry="src/visibility_expose"
+/>
+
+Since the exposure capability focuses on whether the node is visible, the node visibility requirement here is more stringent. In addition, since [exposure capability](./visibility-detection/exposure-ability.mdx) is a declarative interface, when developers need to monitor the exposure of multiple nodes, they only need to add the [`exposure-id`](../../api/elements/built-in/view.mdx#exposure-id) attribute to the node.
+
+## Detect whether nodes intersect
+
+When developers only need to check whether nodes intersect, and do not care whether the nodes are on the screen, they can use the [intersection observer](./visibility-detection/intersection-observer.mdx).
+
+The [intersection observer](./visibility-detection/intersection-observer.mdx) is used to detect whether the target node intersects with the reference node and the target node intersects with the ancestor node. Developers can flexibly specify the reference node, reference node boundary scaling value, node intersection ratio threshold, etc., to achieve a more flexible definition of node visibility.
+
+In the following example, the developer monitors whether the parent node and the child node intersect, and outputs the intersecting child node [`id`](../../api/elements/built-in/view.mdx#id) and the intersection position when they intersect.
+
+**Example 1:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_intersection/index.tsx"
+  defaultEntryFile="dist/visibility_intersection.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_intersection.gif"
+  highlight="{8-24}"
+  entry="src/visibility_intersection"
+/>
+
+The node visibility here only requires the target node and the reference node to intersect, without requiring the target node to be on the screen, and there is no need to specify the reference node as a scroll container. In addition, since the [intersection observer](./visibility-detection/intersection-observer.mdx) is an imperative interface, when developers need to monitor the intersection of multiple nodes, redundant code needs to be written.
+
+## Summary
+
+So far, you have learned how to detect whether nodes are intersecting or whether nodes are exposed.
+
+For developers, when the focus is on whether a node is on the screen and you want to easily write exposure monitoring code for multiple nodes, you can use [Exposure Ability](./visibility-detection/exposure-ability.mdx). when the focus is on whether nodes intersect and where they intersect, or when you need to flexibly define the visibility of nodes, you can use [Intersection Observer](./visibility-detection/intersection-observer.mdx).

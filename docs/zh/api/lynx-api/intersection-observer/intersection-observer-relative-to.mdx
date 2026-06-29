@@ -1,0 +1,68 @@
+---
+title: relativeTo()
+api: lynx-api/intersection-observer/relativeTo
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# IntersectionObserver: relativeTo() method
+
+<APISummary />
+
+`relativeTo` 方法可以被用来指定参照节点，参照节点根据 `id` 指定，参照节点的视窗可以根据 `margins` 进行缩放。
+
+## 语法
+
+```ts
+relativeTo(
+  selector: string,
+  margins ? margins : {left: 0, right: 0, top: 0, bottom: 0}
+): IntersectionObserver;
+```
+
+### 参数
+
+#### selector
+
+```ts
+selector: string;
+```
+
+指定查找参照节点时使用的 `id`，优先在创建 `IntersectionObserver` 对象时传入的 `component` 中查找，查找不到再进行全局查找，全局查找不到则以 `LynxView` 作为参照节点。
+
+#### margins
+
+```ts
+margins ? margins : { left: 0, right: 0, top: 0, bottom: 0 };
+```
+
+指定参照节点视窗的放缩值，该值只影响交叉状态的检测，不会影响真正的视图显示。正值表示拓展参照节点视窗边界，负值表示收缩参照节点视窗边界。
+
+| 属性名称 | 类型               | 描述                   |
+| -------- | ------------------ | ---------------------- |
+| `left`   | `number ｜ string` | 目标节点左边界的放缩值 |
+| `right`  | `number ｜ string` | 目标节点右边界的放缩值 |
+| `top`    | `number ｜ string` | 目标节点上边界的放缩值 |
+| `bottom` | `number ｜ string` | 目标节点下边界的放缩值 |
+
+### 返回值
+
+[IntersectionObserver 对象](../intersection-observer.mdx)。
+
+### 注意事项
+
+目标节点与参照节点及目标节点与祖先节点的交叉状态定义为如下最小的一个相交比例：
+
+1. 当参照节点有效时，即参照节点是目标节点的祖先节点，选取以下最小的
+
+- 目标节点和参照节点（经过 `margins` 放缩）的相交比例
+- 目标节点和祖先节点的相交比例，祖先节点包含目标节点到参照节点路径上的节点，祖先节点设置 `overflow: visible` 时会被忽略
+
+2. 当参照节点无效时，即参照节点不是目标节点的祖先节点或不存在设置了该 `id` 的节点，选取以下最小的
+
+- 目标节点和 `LynxView`（经过 `margins` 放缩）的相交比例
+- 目标节点和祖先节点的相交比例，祖先节点包含目标节点到 `LynxView` 路径上的节点，祖先节点设置 `overflow: visible` 时会被忽略
+
+## 兼容性
+
+<APITable />

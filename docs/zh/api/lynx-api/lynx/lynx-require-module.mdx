@@ -1,0 +1,72 @@
+---
+title: requireModule()
+api: lynx-api/lynx/requireModule
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: requireModule() static method
+
+<APISummary />
+
+引入一个模块，类似 NodeJS 的 [`require`](https://nodejs.org/docs/latest/api/modules.html#requireid) 函数。
+
+`requireModule` 会**同步**加载模块，在此期间，JavaScript 线程会被挂起，不会执行任何 JavaScript 代码。
+
+## 语法
+
+```ts
+requireModule<T>(path: string): T;
+```
+
+### 参数
+
+#### path
+
+模块路径，可以是远程路径，也可以是模板内的路径。
+
+### 返回值
+
+模块实际的导出值。
+
+## 异常
+
+当出现网络错误，或者模块执行失败时，`requireModule` 会抛出异常，可以通过 `try-catch` 来捕获并处理异常。
+
+### 超时异常
+
+当加载远程路径时，为了避免网络超时导致 JS 线程一直处于挂起状态，`requireModule` 在网络请求发出 5 秒后会抛出超时异常。
+
+## 示例
+
+### 加载远程资源
+
+```tsx
+const foo = lynx.requireModule('https://example.com/path/to/chunk');
+```
+
+### 超时重试
+
+```js
+let result = null;
+(function () {
+  let retry = 0;
+  function requireModule(path) {
+    try {
+      result = lynx.requireModule(path);
+    } catch (error) {
+      retry += 1;
+      if (retry < 3) {
+        requireModule(path);
+      } else {
+        throw error;
+      }
+    }
+  }
+  requireModule('path/to/chunk');
+})();
+```
+
+## 兼容性
+
+<APITable />

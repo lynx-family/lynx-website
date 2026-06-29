@@ -1,0 +1,112 @@
+import { Go } from '@lynx';
+import { Deprecated } from '@lynx';
+
+# Linear Layout
+
+If you want to arrange children sequentially without dealing with the complexities of [flexible box](./flexible-box-layout.mdx) and [grid](./grid-layout.mdx) layouts (such as shrink and placement issues), consider using **linear layout**. This layout is inspired by [linear layout](https://developer.android.com/develop/ui/views/layout/linear) in Android.
+
+The default layout direction of a linear layout is vertical. You can also use Web's alignment properties such as [`align-items`](/api/css/properties/align-items.mdx), [`align-self`](/api/css/properties/align-self.mdx), and [`justify-content`](/api/css/properties/justify-content.mdx) with this layout. For the supported properties, please refer to the [Reference section](#reference).
+
+## How to Build a Linear Layout?
+
+### Step 1: Apply `display: linear`
+
+To implement a linear layout, modify the `display` property of the parent element to use a linear layout for its children.
+
+```css
+display: linear;
+```
+
+### Step 2: Set the Layout Direction
+
+A linear layout arranges elements along the main and cross axes, similar to a [flexible box layout](./flexible-box-layout.mdx). The **main axis** refers to the direction in which elements are aligned, whereas the **cross axis** is perpendicular to it.
+
+You can adjust the layout direction by altering the [`linear-direction`](/api/css/properties/linear-direction.mdx) property of the parent container, akin to the [`flex-direction`](/api/css/properties/flex-direction.mdx) property in flexible box layouts. By default, `linear-direction` is set to `column`.
+
+```css
+linear-direction: column;
+```
+
+<center>
+  <img
+    width="50%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/linear_main_axis.png"
+  />
+</center>
+
+### Step 3: Align Children Along the Main Axis
+
+To control the position of child elements along the main axis, use the [`justify-content`](/api/css/properties/justify-content.mdx) property. In the demo below, the main axis is vertical.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/linear_justify_content.png"
+  example="layout"
+  defaultEntryFile="dist/linear_justify_content.lynx.bundle"
+  defaultFile="src/linear_justify_content/index.tsx"
+  highlight="{9,16,23}"
+  entry="src/linear_justify_content"
+/>
+
+### Step 4: Align Children Along the Cross Axis
+
+To align items within a container along the cross axis, apply [`align-items`](/api/css/properties/align-items.mdx) to the container or [`align-self`](/api/css/properties/align-items.mdx) to children.
+
+In the example below, the cross axis is vertical, with `align-items: center` used in the container to center children along this axis.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/linear_align_items.png"
+  example="layout"
+  defaultEntryFile="dist/linear_align_items.lynx.bundle"
+  defaultFile="src/linear_align_items/index.tsx"
+  highlight="{27}"
+  entry="src/linear_align_items"
+/>
+
+By adjusting the `align-self` property on a child, you can override `align-items` behavior, as shown with the first block below the parent element.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/linear_align_self.png"
+  example="layout"
+  defaultEntryFile="dist/linear_align_self.lynx.bundle"
+  defaultFile="src/linear_align_self/index.tsx"
+  highlight="{17,27}"
+  entry="src/linear_align_self"
+/>
+
+::: info
+Please note that when the cross-axis size of the parent element (such as the `width` when `linear-direction: column`) is set, and if the size of the child element in this direction is not specified (or `auto`), the children's size along the cross-axis will expand to fill the container.
+:::
+
+### Step 5: Specify Dynamic Sizes Along the Main Axis
+
+Linear layout allows for the [`linear-weight`](/api/css/properties/linear-weight.mdx) attribute, enabling adaptive sizing along the main axis based on assigned weight ratios and available space.
+
+Set the [`linear-weight`](/api/css/properties/linear-weight.mdx) for each child to define its size share along the main axis. The parent container adjusts every child's dimensions to fit proportions derived from their respective weight values relative to available space.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/linear_linear_weight.png"
+  example="layout"
+  defaultEntryFile="dist/linear_weight.lynx.bundle"
+  defaultFile="src/linear_weight/index.tsx"
+  highlight="{33,42,51}"
+  entry="src/linear_weight"
+/>
+
+In the above example, `linear-weight` specifies a scale value without unit representing the amount of space available for each child element along the main axis. The three child elements will have a 0.5 : 2 : 0.5 ratio of the main axis space.
+
+## Reference
+
+Currently, the linear layout supports the following layout properties:
+
+- **Specific CSS Properties**
+  - [`linear-direction`](/api/css/properties/linear-direction.mdx)
+  - [`linear-weight`](/api/css/properties/linear-weight.mdx)
+
+- **Alignment Properties**
+  - [`justify-content`](/api/css/properties/justify-content.mdx)
+  - [`align-items`](/api/css/properties/align-items.mdx)
+  - [`align-self`](/api/css/properties/align-self.mdx)
+
+- **Other Properties**
+
+  Other properties such as [`order`](/api/css/properties/order.mdx), [`aspect-ratio`](/api/css/properties/aspect-ratio.mdx), etc., are not listed individually here; for specific property support, refer to the [API Reference](/api/css/properties.mdx).

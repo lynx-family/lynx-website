@@ -1,0 +1,86 @@
+---
+title: background-size
+api: css/properties/background-size
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The `background-size` CSS property sets the size of the element's background image. The image can be left to its natural size, stretched, or constrained to fit the available space.
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/background-size/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background-size.jpg"
+  defaultEntryFile="dist/background-size.lynx.bundle"
+  entry="src/background-size"
+/>
+
+## Syntax
+
+```css
+background-size: contain;
+
+background-size: 50%;
+background-size: 3em;
+
+background-size: auto 1em;
+background-size: 50% 25%;
+```
+
+### Values
+
+- `cover` <br/>
+  Scales the image as large as possible within its container without cropping or stretching the image. If the container is larger than the image, this will result in image tiling, unless the [`background-repeat`](./background-repeat.mdx) property is set to `no-repeat`.
+
+- `contain` <br/>
+  Scales the image (while preserving its ratio) to the smallest possible size to fill the container (that is: both its height and width completely cover the container), leaving no empty space. If the proportions of the background differ from the element, the image is cropped either vertically or horizontally.
+
+- Default value **auto** <br />
+  Scales the background image in the corresponding direction such that its intrinsic proportions are maintained.
+
+- [`<length>`](/api/css/data-type/length.mdx) <br/>
+  Stretches the image in the corresponding dimension to the specified length. Negative values are not allowed.
+
+- [`<percentage>`](/api/css/data-type/percentage.mdx) <br/>
+  Stretches the image in the corresponding dimension to the specified percentage of the background positioning area. The background positioning area is determined by the value of [`background-origin`](./background-origin.mdx) (by default, the padding box).
+
+### Size Calculation
+
+- If both components of `background-size` are specified and are not `auto`: <br/>
+  The background image is rendered at the specified size.
+
+- `contain` or `cover`: <br/>
+  While preserving its intrinsic proportions, the image is rendered at the largest size contained within, or covering, the background positioning area. If the image has no intrinsic proportions, then it's rendered at the size of the background positioning area.
+
+- If the background-size has one `auto` component and one `non-auto` component: <br/>
+  The image stretched to the specified dimension. The unspecified dimension is computed using the specified dimension and the intrinsic proportions.
+
+## Notes
+
+Do not use `auto` with `<gradient>`. It may cause some rendering issue in old version SDK.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>auto auto</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Formal Syntax
+
+```
+<bg-size> = (<length-percentage> | auto){1,2} | cover | contain
+```
+
+## Compatibility
+
+<APITable />

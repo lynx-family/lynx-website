@@ -1,0 +1,255 @@
+<style jsx>{`
+  .inline-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .inline-content img {
+    margin: 0 5px;
+    height: 2rem;
+  }
+  .margin {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  .margin2 {
+    margin-top: 0.5rem;
+  }
+`}</style>
+
+# Console Panel
+
+## Overview
+
+Use the **Console** panel to [view logged messages](#view-logged-messages) and [run JavaScript](#run-javascript). Before you start debugging, please take some time to familiarize yourself with the [Lynx JavaScript Runtime](/guide/scripting-runtime/index#javascript-runtime).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/console-panel.png"
+  alt="Console panel"
+  style={{ width: 800 }}
+/>
+
+### Open the Console Panel
+
+The Console can be opened as a panel or as a tab in the Drawer.
+
+#### Open in the Drawer
+
+If you want to view the Console panel while using other panels, you can open the Console in the Drawer.
+
+Please refer to [Open the Console in the Drawer | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#drawer).
+
+### Console Settings
+
+<div class="inline-content margin">
+  <span>Click **Console Settings** </span>
+  <img
+    src={
+      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/console-settings.png'
+    }
+    alt="Console settings"
+  />
+  <span> in the top-right corner of the **Console** panel.</span>
+</div>
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/console-settings-pane.png"
+  alt="Console settings pane"
+  style={{ width: 800 }}
+/>
+
+The following links explain each setting:
+
+- [Selected context only](#filter-messages-from-different-contexts)
+- [Group similar messages in console](#disable-message-grouping)
+- [Eager evaluation](#disable-eager-evaluation)
+- [Autocomplete from history](#disable-autocomplete-from-history)
+
+### Console Sidebar
+
+Please refer to [Open the Console Sidebar | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#sidebar).
+
+## View Logged messages
+
+The types of logs currently can be viewed include:
+
+1. **JavaScript logs**. Including the main thread and the background thread.
+   - By default, logs from the background thread are displayed in full format, while logs from the main thread are serialized as strings with the `[main-thread.js]` prefix.
+   - When [Main Thread Debugging](./sources-panel.mdx#debug-the-main-thread) is enabled, logs from the main thread will also be displayed in full format.
+
+2. **Some client logs**.
+
+   Currently, client runtime errors and some other client logs are serialized as strings and displayed in the Console panel.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/log-type.png"
+  alt="Log type"
+  style={{ width: 800 }}
+/>
+
+### Log Sources
+
+For JavaScript logs, the `App.tsx:11` on the right side of the log represents where it logged. Clicking it will open the [Sources](./sources-panel.mdx) panel and highlight the line of code that caused the message to get logged to the Console.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/call-stack.png"
+  alt="Call stack"
+  style={{ width: 800 }}
+/>
+
+### Disable Message Grouping
+
+DevTool enables **Group similar messages in console** by default, which aggregates similar messages logged consecutively.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/group-similar-log.png"
+  alt="Group similar log"
+  style={{ width: 800 }}
+/>
+
+Open [Console Settings](#console-settings) and disable this option to expand the logs that were originally grouped.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/disable-group-similar-log.png"
+  alt="Disable group similar log"
+  style={{ width: 800 }}
+/>
+
+### View Stack Traces
+
+<div class="inline-content margin">
+  <span>For JavaScript errors and warnings, click **Expand** </span>
+  <img
+    src={
+      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/stack-trace-expand.png'
+    }
+    alt="Stack trace expand"
+  />
+  <span> to view the stack trace.</span>
+</div>
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/stack-trace.png"
+  alt="Stack trace"
+  style={{ width: 800 }}
+/>
+
+### Filter messages
+
+#### Filter by Log Level
+
+Please refer to [Filter by log level | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#level).
+
+:::tip
+When the sidebar is open, you cannot click the log level drop-down.
+:::
+
+#### Filter by Text
+
+Please refer to [Filter by text | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/log#text).
+
+#### Filter by Regular Expressions
+
+Please refer to [Filter by regular expression | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/log#regex).
+
+#### Filter by URL
+
+Please refer to [Filter messages by URL | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#url).
+
+#### Filter Messages from Different [Contexts](/guide/spec#scripting-runtime-enviroment①)
+
+By default, all logs are displayed within the context of the background thread. When [Main thread debugging](./sources-panel.mdx#debug-the-main-thread) is enabled, an additional context of the main thread will be added.
+
+As shown in the figure, `Background:-1` represents the background thread, and `Main` represents the main thread.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/filter-by-context.png"
+  alt="Filter by context"
+  style={{ width: 800 }}
+/>
+
+When you [run JavaScript in the Console](#run-javascript), it will execute only within the currently selected context.
+
+Open [Console Settings](#console-settings) and enable **Selected context only** checkbox to display logs only from the currently selected context.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/selected-context-only.png"
+  alt="Filter by context"
+  style={{ width: 800 }}
+/>
+
+### Search for Text
+
+Please refer to [Search for text in logs | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#search).
+
+## Run JavaScript
+
+The Console is a **REPL**, which stands for "Read, Evaluate, Print, and Loop." It reads the JavaScript you enter, evaluates your code, outputs the result of the expression, and then loops back to the first step.
+
+You can enter expressions related to the current page in the Console, such as `this`.
+
+You can also enter expressions unrelated to the current page, such as `1+2`.
+
+Press Enter to get the result, and the Console will output the result of the expression below the code.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/run-script.png"
+  alt="Run script"
+  style={{ width: 800 }}
+/>
+
+### String Copy Options
+
+Please refer to [String copy options | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#string-copy-options).
+
+<img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/copy-string.png" alt="Copy string" style={{width:800}} />
+For example, in this case, the results of copying are as follows:
+```javascript
+{"a":123,"b":"string"}
+'{"a":123,"b":"string"}'
+"{\"a\":123,\"b\":\"string\"}"
+```
+
+### Re-run Expressions from History
+
+Please refer to [Re-run expressions from history | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#history).
+
+### Watch Expression Values in Real-Time
+
+Please refer to [Watch JavaScript values in real time with Live Expressions | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/live-expressions).
+
+### Disable Eager Evaluation
+
+Please refer to [Disable Eager Evaluation | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#eagereval).
+
+### Disable Autocomplete from History
+
+Please refer to [Disable autocomplete from history | Chrome DevTools](https://developer.chrome.com/docs/devtools/console/reference#autocomplete).
+
+## Clear the Console
+
+You can use any of the following workflows to clear the Console:
+
+- <div class="inline-content margin2">
+    <span>Click **Clear Console**</span>
+    <img
+      src={
+        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/clear-console-button.png'
+      }
+      alt="Clear console button"
+    />
+    <span>.</span>
+  </div>
+- Right-click a log and select **Clear Console**.
+- When the Console is in focus, press Control+L or Command+K.
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/console/clear-console.png"
+    alt="Clear console"
+    style={{ width: 800 }}
+  />
+
+## Compatibility
+
+import { APITable } from '@lynx';
+
+<APITable query="devtool/panels.console" />

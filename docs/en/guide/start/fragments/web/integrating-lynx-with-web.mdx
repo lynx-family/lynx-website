@@ -1,0 +1,152 @@
+### Integrate Lynx with Existing Apps (Web)
+
+import { PackageManagerTabs, Steps } from '@theme';
+import { Info } from '@lynx';
+
+<Info title="Lynx for Web">
+  Lynx for Web implements the Lynx engine in web browsers. With Lynx for Web,
+  you can easily integrate Lynx apps into any existing web project, regardless
+  of whether the project uses React, Vue, Svelte, or plain HTML.
+</Info>
+
+## 1. Development & Debugging
+
+We need you to have read and created a Lynx project according to [Quick Start](/guide/start/quick-start).
+
+<Steps>
+
+### Add web configuration
+
+1. Enter the previously created Lynx project:
+
+```bash
+cd <lynx-project-name>
+```
+
+2. Add web configuration (`environments.web`) to `lynx.config.ts`:
+
+```ts
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [pluginReactLynx()],
+  environments: {
+    web: {},
+    lynx: {},
+  },
+});
+```
+
+### Start development server
+
+Run:
+
+<PackageManagerTabs command="run dev" />
+
+You can now visit the development page locally.
+
+### Build & Preview
+
+You can also use Web Explorer to quickly preview the web bundle of a page in production mode.
+
+First, run:
+
+<PackageManagerTabs command="run build" />
+
+You will see an additional `dist/main.web.bundle` file in this project, which is the final web build artifact.
+
+Open [Lynx Explorer Web Edition](https://www.unpkg.com/@lynx-js/web-explorer@latest/index.html), fill in the accessible URL of your artifact, and you can see the effect in production mode.
+
+</Steps>
+
+## 2. Integrate with a new web project
+
+Now that you have a Lynx for Web build artifact, we need to create a web project to use it. Here we use Rsbuild.
+
+<Steps>
+
+### Create a web project
+
+Create a new project at the same level as the Lynx project above and run:
+
+<PackageManagerTabs command="create rsbuild@latest" />
+
+Follow the prompts to create a React project.
+
+### Configure the project
+
+1. Navigate to the created project:
+
+```bash
+cd <web-project-name>
+```
+
+2. Install dependencies
+
+<PackageManagerTabs command="install @lynx-js/web-core" />
+
+3. Import these dependencies in `src/App.tsx`
+
+```tsx
+import './App.css';
+import '@lynx-js/web-core/client';
+import type { LynxViewElement as LynxView } from '@lynx-js/web-core/client';
+
+const App = () => {
+  return (
+    <lynx-view
+      style={{ height: '100vh', width: '100vw' }}
+      url="/main.web.bundle"
+    ></lynx-view>
+  );
+};
+
+export default App;
+```
+
+4. Update `rsbuild.config.ts`
+
+:::warning
+`server.publicDir` needs to be replaced with your actual Lynx project path.
+:::
+
+```ts
+import { defineConfig } from '@rsbuild/core';
+import { pluginReact } from '@rsbuild/plugin-react';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default defineConfig({
+  plugins: [pluginReact()],
+  server: {
+    publicDir: [
+      {
+        name: path.join(
+          __dirname,
+          '../',
+          // Please replace this with your actual Lynx project name
+          'lynx-project',
+          'dist',
+        ),
+      },
+    ],
+  },
+});
+```
+
+### Start the project
+
+Run:
+
+<PackageManagerTabs command="run dev" />
+
+Visit `http://localhost:3000` to see your Lynx application.
+
+</Steps>
+
+## 3. API Reference
+
+See [LynxView](/api/lynx-native-api/lynx-view/lynx-view) for more API details.

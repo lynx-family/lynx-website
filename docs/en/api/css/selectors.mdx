@@ -1,0 +1,284 @@
+# Selectors
+
+CSS selectors specify which elements a CSS rule applies to. Pedantically speaking, CSS selectors is an umbrella term that includes Selectors, Combinators, Pseudo-elements, and Pseudo-classes.
+
+## Selectors
+
+### Type selector
+
+The CSS type selector matches elements by node name. In other words, it selects all elements of the given type.
+
+#### Syntax
+
+```css
+element { property declarations }
+```
+
+#### Example Usage
+
+```css
+/* To match all <input> elements */
+input {
+  ...
+}
+
+```
+
+#### Using `page` to Select the Root Node
+
+Unlike on the Web, in Lynx, the `page` element is used to select the root node instead of `body`.
+
+### Class selector
+
+The CSS class selector matches elements based on the contents of their class attribute.
+
+#### Syntax
+
+```css
+.className { property declarations }
+```
+
+#### Example Usage
+
+```css
+/* All elements with class="index" */
+.index{
+  ...
+}
+```
+
+### Multiple Class Selectors
+
+To select elements using multiple class names, specify that an element must contain all these classes by concatenating the class names together.
+
+#### Syntax
+
+```css
+.className1.className2 { property declarations }
+
+element.className1.className2 { property declarations }
+```
+
+#### Example Usage
+
+```css
+/* To match any input elements with a class that contains both "a" and "b". */
+input.a.b{
+  ...
+}
+
+/* element */
+<input className="a b" /> /* selected */
+```
+
+### ID selector
+
+The CSS ID selector matches an element based on the value of the element's id attribute. In order for the element to be selected, its id attribute must match exactly the value given in the selector.
+
+#### Syntax
+
+```css
+#idName {  property declarations }
+```
+
+### Universal selector
+
+The CSS universal selector (\*) matches elements of any type.
+
+#### Syntax
+
+```css
+* {  property declarations }
+```
+
+## Combinator
+
+### Descendant Combinator
+
+e descendant combinator — typically represented by a single space (" ") character — combines two selectors such that elements matched by the second selector are selected if they have an ancestor (parent, parent's parent, parent's parent's parent, etc.) element matching the first selector. Selectors that utilize a descendant combinator are called descendant selectors.
+
+**Compared to the old selector, it no longer restricts the levels of matched elements to two levels.**
+
+#### Syntax
+
+```css
+selector1 selector2 selector3 {
+  property declarations
+}
+```
+
+#### Example Usage
+
+```css
+/* Match all "b" elements that are descendants of the "a" list. */
+view.a .b{
+   ...
+}
+
+/* element */
+<view className="a" >
+ <text className="b">hello</text> /* selected */
+</view>
+```
+
+### Child Combinator
+
+The child combinator (`>`) is placed between two CSS selectors. It matches only those elements matched by the second selector that are the direct children of elements matched by the first.
+
+#### Syntax
+
+```css
+element1 > element2 {
+  property declarations
+}
+```
+
+#### Example Usage
+
+```css
+/* Match all text elements that are direct children of "a" view */
+view.a > text {
+  ...
+}
+
+/* element */
+<view className="a" >
+  <text>hello</text> /*selected*/
+</view>
+```
+
+### Subsequent-sibling Combinator
+
+The subsequent-sibling combinator (`~`, a tilde) separates two selectors and matches all instances of the second element that follow the first element (not necessarily immediately) and share the same parent element.
+
+#### Syntax
+
+```css
+former_element ~ target_element { property declarations }
+```
+
+#### Example Usage
+
+```css
+/* Match all sibling text elements following view. */
+view ~ text {
+  ...
+}
+
+/* element */
+<view className="a" />
+<text />  /* selected */
+...
+<text />  /* selected */
+```
+
+### Next-sibling Combinator
+
+The next-sibling combinator (`+`) separates two selectors and matches the second element only if it immediately follows the first element, and both are children of the same parent element.
+
+#### Syntax
+
+```css
+former_element + target_element { property declarations }
+```
+
+#### Example Usage
+
+```css
+/*  Match the text element that come immediately after a view */
+view + text {
+  ...
+}
+
+/* element */
+<view className="a" />
+<text />  /*selected*/
+<text />  /*not selected*/
+```
+
+### Selector list
+
+The CSS selector list (`,`) selects all the matching nodes. A selector list is a comma-separated list of selectors.
+
+#### Syntax
+
+```css
+selector1,selector2 { property declarations }
+```
+
+#### Example Usage
+
+```css
+/* All matching elements are selected. */
+ selector1, selector2 {
+  ...
+}
+
+Equivalent to
+
+selector1 {
+  ...
+}
+
+selector2 {
+  ...
+}
+```
+
+## Pseudo
+
+### Pseudo-class
+
+A `:` pseudo-class is a type of selector used to select elements in a specific state.
+
+Supports
+
+- `:active`
+- `:not()`
+- `:root`
+
+#### `:not()`
+
+Used to match elements that do not meet the conditions. Usage aligns with [W3C :not()](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:not)
+
+#### `:root` \{#root-selector}
+
+Similar to the `page` selector used to match the root node. Usage aligns with [W3C :root](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:root)
+
+#### `:active`
+
+When a node is pressed, it gets activated and selected. Releasing the finger deactivates it. Usage aligns with [W3C :active](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:active)
+
+#### Example Usage
+
+```css
+/* Elements that are not <view> and not <text> elements */
+root :not(view):not(text) {
+  font-weight: bold;
+}
+
+/* Elements that are not .crazy or .fancy
+   Note that this syntax is not well supported yet. */
+body :not(.crazy, .fancy) {
+  font-family: sans-serif;
+}
+```
+
+## Pseudo-element
+
+Lynx doesn't have pseudo-element support yet.
+
+## Troubleshooting
+
+### `!important` support
+
+By default, Lynx does not support `!important`. However, **since engineVersion 3.9**, you can enable it by setting the `engineVersion` to `'3.9'` or higher in your plugin options.
+
+When enabled, `!important` gives a declaration higher priority than non-`!important` ones. If multiple `!important` declarations apply to the same element, the winner is still determined by specificity and source order. For more details, refer to the [MDN documentation on !important](https://developer.mozilla.org/en-US/docs/Web/CSS/important).
+
+<center>
+  <img
+    width="50%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-priority.png"
+  />
+</center>

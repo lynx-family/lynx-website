@@ -1,0 +1,180 @@
+---
+title: requestResourcePrefetch()
+api: lynx-api/lynx/requestResourcePrefetch
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: requestResourcePrefetch() static method
+
+<APISummary />
+
+- 该 API 用于前端主动发起 CDN 资源的预加载，目前只支持 _image_, _video_, _audio_, _font_ 四种资源类型。
+- 预加载的资源并不会通过此 API 返回给前端，而是保留在内存或磁盘中。因此预加载完成后，需要通过一个**唯一的 key** 给组件指定资源：
+  - image 资源的 key 与其预加载时的 uri 参数一致。渲染时，将这个 key 传给 \<image\> 组件的 [src](/api/elements/built-in/image#src) 属性，使得组件能够找到该资源。
+
+## 语法
+
+```ts
+requestResourcePrefetch(
+  data: object,
+  callback: (res: object) => void,
+  config?: {
+    awaitComplete?: boolean;
+    awaitTimeout?: number; // ms, default is 60000
+  }
+) : void;
+```
+
+### 参数
+
+#### `data`
+
+一个描述了所有要预加载的资源详情的合集，它的 key 定义如下：
+
+- `data`：类型 `array`，`array` 内部每个 item 对应一个资源。每个 item 内的 key 定义如下
+  - `uri`：类型 `string`，表示资源的 CDN 地址。
+  - `type`：类型 `string`，表示资源的类型，支持的资源类型定义如下
+    - `image`：图片资源（iOS 需要打开 Image 组件的 [trailNewImage](/api/elements/built-in/image.html#trailnewimage--) 开关才能预加载图片）
+    - `video`：视频资源
+    - `audio`：音频资源
+    - `font`：字体资源
+  - `params`（可选）：资源预加载的自定义控制参数，支持的参数如下
+    - `priority`（可选）：仅用于 `image` 类型的资源。表示网络请求优先级。如果请求优先级为 high，那么在图片库预加载这些图片时，其他的图片的请求会被阻塞等待，可能导致其他图片的展示变慢。所以如果预加载的这些图片如果不是马上需要展示的，可以把优先级调低。支持的选项如下
+      - `high`：高优先级
+      - `medium`：中优先级
+      - `low`：低优先级，这是默认值
+    - `cacheTarget`（可选）：仅用于 `image` 类型的资源。表示资源保存的形式。支持的选项如下
+      - `disk`：资源预加载完成后保存于磁盘，这是默认值。
+      - `bitmap`：资源预加载后解码成 bitmap 保存于内存。（** 注：现在 Android bitmap 缓存暂不能生效 **）
+    - `preloadKey`：仅用于 `video`, `audio` 类型的资源。表示标识该资源的唯一的 key。渲染 \<view-engine\> 组件时，需要为其指定这个 key，这样组件才能找到预加载的资源缓存。必选参数。
+    - `size`（可选）：仅用于 `video` 类型的资源。表示预加载的尺寸大小，默认值为 500 \* 1024（字节）
+
+#### callback
+
+API 执行完成或失败后调用的回调函数。它的回参内部定义如下：
+
+- `code`：类型 `number`，状态码，它可能取值如下
+  - `0`：成功
+  - `32101`：参数错误
+  - `32102`：Image prefetch helper 不存在
+  - `32103`：Resource service 不存在
+  - `32104`：等待预加载完成超时（仅当 `config.awaitComplete = true` 时可能返回）
+- `msg`：类型 `string`，全局错误信息
+- `details`：类型 `array`，里面每个 detail 表示一个资源的预加载状态详情，detail 内部定义如下
+  - `code`：类型 `number`，状态码，它可能取值如下
+    - `0`：成功
+    - `32101`：参数错误
+    - `32102`：Image prefetch helper 不存在
+    - `32103`：Resource service 不存在
+  - `msg`：类型 `string`，错误信息
+  - `uri`：类型 `string`，表示资源的 CDN 地址。
+  - `type`：类型 `string`，表示资源的类型，资源类型定义如下
+    - `image`：图片资源
+    - `video`：视频资源
+    - `audio`：音频资源
+    - `font`：字体资源
+
+#### `config`（since 3.9）
+
+控制是否需要等待预加载完成，以及等待的超时时间：
+
+- `awaitComplete`（可选）：类型 `boolean`，默认 `false`。为 `true` 时，`callback` 会等待所有资源预加载完成后再触发；若超时则会返回 `32104`。
+- `awaitTimeout`（可选）：类型 `number`，单位 ms，默认 `60000`。仅在 `awaitComplete = true` 时生效。
+
+### 返回值
+
+无（`undefined`）。
+
+## 异常
+
+- 当出现参数错误时，`code` 会返回 `32101` 错误码，并且在 `msg` 中有详细错误信息。
+- 当 Image prefetch helper 不存在时，`code` 会返回 `32102`。
+- 当 Resource service 不存在时，`code` 会返回 `32103`。
+- 当开启 `awaitComplete` 且等待超时时，`code` 会返回 `32104`。
+
+## 示例
+
+```jsx
+import { useState, useEffect } from '@lynx-js/react';
+
+function Page() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    // 在页面 DidMount 时我们提前发起资源预加载
+    // 我们需要预加载一批资源，包括两张图片和两段视频。
+    // 首先准备好资源参数，给图片指定 priority 和 cacheTarget，给视频指定必需的 preloadKey。
+    let resData = [
+      {
+        uri: 'https://xxxxx1.jpg',
+        type: 'image',
+        params: { priority: 'high', cacheTarget: 'disk' },
+      },
+      {
+        uri: 'https://xxxxx2.jpg',
+        type: 'image',
+        params: { cacheTarget: 'bitmap' },
+      },
+      {
+        uri: 'https://zzzzz1.mp4',
+        type: 'video',
+        params: { preloadKey: 'zzzzz1' },
+      },
+      {
+        uri: 'https://zzzzz2.mp4',
+        type: 'video',
+        params: { preloadKey: 'zzzzz2' },
+      },
+      {
+        uri: 'https://my-font-src',
+        type: 'font',
+      },
+    ];
+
+    // 调用 requestResourcePrefetch 发起预加载
+    lynx.requestResourcePrefetch?.(
+      {
+        data: resData,
+      },
+      (res) => {
+        if (res.code == 0) {
+          console.log('success!');
+        } else {
+          console.log('fail! ', res.msg);
+        }
+        console.log(
+          'prefetch status of each resource:',
+          JSON.stringify(res.details),
+        );
+      },
+      {
+        awaitComplete: true,
+        awaitTimeout: 3000,
+      },
+    );
+  }, []);
+
+  const handleTap = () => {
+    // 通过setShow改变show状态，控制图片、视频的展示
+    setShow(!show);
+  };
+
+  return (
+    <view onTap={handleTap}>
+      {/* 根据 show 状态来决定是否展示图片，注意这里 src 是上述的唯一的 key，这里应该保持 src 和预加载时一致 */}
+      {show && <image src="https://xxxxx1.jpg" />}
+      {show && <image src="https://xxxxx2.jpg" />}
+      {/* 根据 show 状态来决定是否展示视频，注意这里 preload-key 是上述唯一的 key，这里应该保持 preload-key 和预加载时一致 */}
+      {show && <view-pro src="https://zzzzz1.mp4" preload-key="zzzzz1" />}
+      {show && <view-pro src="https://zzzzz2.mp4" preload-key="zzzzz2" />}
+    </view>
+  );
+}
+
+export default Page;
+```
+
+## 兼容性
+
+<APITable />

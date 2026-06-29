@@ -1,0 +1,75 @@
+---
+api: lynx-api/performance-api/performance-observer/observe
+---
+
+import { APISummary, APITable, Go, RuntimeBadge } from '@lynx';
+
+# PerformanceObserver: observe() method
+
+<APISummary />
+
+Specifies types of performance events to observe and starts observing. The callback function set when creating the `PerformanceObserver` will be invoked when a matching
+[`PerformanceEntry`](/api/lynx-api/performance-api/performance-entry) is received.
+
+## Syntax
+
+```ts
+observe(entryIdentifiers: string[]): void
+```
+
+### Parameters
+
+#### entryIdentifiers
+
+```ts
+entryIdentifiers: string[];
+```
+
+A string list of identifiers for the `PerformanceEntry` to be observed.
+
+You can use **entryType** or **entryType.name** as identifiers. For example, you can use `"metric"` to listen to performance events for the entire metric type,
+including [`MetricFcpEntry`](/api/lynx-api/performance-api/performance-entry/metric-fcp-entry) and [`MetricActualFmpEntry`](/api/lynx-api/performance-api/performance-entry/metric-actual-fmp-entry). Alternatively, you can use `"metric.fcp"` to listen only to the `MetricFcpEntry` performance event.
+
+Refer to [`PerformanceEntry.entryType`](/api/lynx-api/performance-api/performance-entry#entryType) and [`PerformanceEntry.name`](/api/lynx-api/performance-api/performance-entry#name) for available types
+and names. Unrecognized types will be ignored. If no valid types are found, `observe()` will not function.
+
+:::tip
+It is recommended to call this method during initialization, such as in the constructor of a root component or within the [`useMemo`](/api/react/Function.useMemo) Hook,
+to ensure it is called as early as possible when the component or page loads, to avoid missing any data.
+:::
+
+### Return Value
+
+None (`undefined`)
+
+## Examples
+
+### Observing all performance events under certain entryTypes
+
+This example creates a `PerformanceObserver` that observes the entire `PerformanceEntry` of types through `["metric", "pipeline"]`.
+
+<Go
+  example="performance-api"
+  defaultFile="src/performance-observer-observe/index.tsx"
+  defaultEntryFile="dist/performance-observer-observe.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/performance-observer-observe-demo.jpeg"
+  entry="src/performance-observer-observe"
+  highlight="{12-38}"
+/>
+
+### Observing specific performance events
+
+This example creates a `PerformanceObserver` that observes `MetricFcpEntry` and the entire `PerformanceEntry` of type `pipeline` through `["metric.fcp", "pipeline"]`.
+
+<Go
+  example="performance-api"
+  defaultFile="src/performance-observer-observe/index.tsx"
+  defaultEntryFile="dist/performance-observer-observe.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/performance-observer-observe-demo.jpeg"
+  entry="src/performance-observer-observe"
+  highlight="{42-61}"
+/>
+
+## Compatibility
+
+<APITable />

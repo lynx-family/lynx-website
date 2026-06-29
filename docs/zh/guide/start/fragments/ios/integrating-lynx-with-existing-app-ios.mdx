@@ -1,0 +1,500 @@
+### 将 Lynx 集成到 iOS 平台
+
+import { CodeFold, Info } from '@lynx';
+import { Link, Steps, Tab, Tabs } from '@theme';
+import versionJson from '@site/docs/public/version.json';
+
+<Info title="Lynx for iOS">
+  - 本文假设你已熟悉原生 iOS 应用开发的基本概念。
+  - 下文中的所有代码，你都可以参考项目:<Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link>
+</Info>
+
+## 1. 依赖配置
+
+使用 [Cocoapods](https://cocoapods.org/) 可以方便的将 Lynx 集成到你的应用中
+
+<Info title="推荐版本">
+
+- Cocoapods: >= 1.11.3
+- Ruby: >= 2.6.10
+
+</Info>
+
+<Steps>
+
+### 配置依赖
+
+1. **Lynx**
+
+[Lynx Engine](/guide/spec.html#engine) 核心能力，包含了解析 [Bundle](/guide/spec.html#lynx-bundle-or-bundle)、样式解析、排版以及渲染视图等基础能力。
+
+从 Cocoapods 中获取 Lynx 的最新版本。然后将 Lynx 添加到你的 Podfile 中：
+
+<CodeFold height={360} toggle>
+```ruby title="Podfile" {1,6-8,10}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+  pod 'Lynx', '{versionJson.LYNX_VERSION}', :subspecs => [
+    'Framework',
+  ]
+
+  pod 'PrimJS', '{versionJson.PRIMJS_VERSION}', :subspecs => ['quickjs', 'napi']
+end
+```
+</CodeFold>
+
+2. **Lynx Service**
+
+Lynx Service 包括 `LynxImageService`、`LynxLogService` 等，旨在提供一些宿主应用特性强相关的能力，允许宿主应用在运行时注入自定义实现 Image Service 默认是使用 [SDWebImage](https://github.com/SDWebImage/SDWebImage) 图片库实现，在没有集成 SDWebImage 组件的宿主应用上则可以依赖其他图片库。
+Lynx 提供了标准的原生 Image、Log、Http 服务的能力，接入方可以快速接入并使用;
+
+从 Cocoapods 中获取 Lynx Service 的最新版本。然后将 Lynx Service 添加到你的 Podfile 中：
+
+<CodeFold height={360} toggle>
+```ruby title="Podfile" {13-17,20-21}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+  pod 'Lynx', '{versionJson.LYNX_VERSION}', :subspecs => [
+    'Framework',
+  ]
+
+  pod 'PrimJS', '{versionJson.PRIMJS_VERSION}', :subspecs => ['quickjs', 'napi']
+
+  # integrate image-service, log-service, and http-service
+  pod 'LynxService', '{versionJson.LYNX_VERSION}', :subspecs => [
+      'Image',
+      'Log',
+      'Http',
+  ]
+
+  # ImageService
+  pod 'SDWebImage','5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+end
+```
+</CodeFold>
+
+3. **More Elements**
+
+XElement 是 Lynx 团队维护的客户端扩展元件集合，提供更丰富的元件能力，能够让 Lynx 能够更快速的被用到生产环境中，提升 Lynx 生态的活力。
+
+从 Cocoapods 中获取 XElement 的最新版本。然后将 XElement 添加到你的 Podfile 中：
+
+<CodeFold height={360} toggle>
+```ruby title="Podfile" {23}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+  pod 'Lynx', '{versionJson.LYNX_VERSION}', :subspecs => [
+    'Framework',
+  ]
+
+  pod 'PrimJS', '{versionJson.PRIMJS_VERSION}', :subspecs => ['quickjs', 'napi']
+
+  # integrate image-service, log-service, and http-service
+  pod 'LynxService', '{versionJson.LYNX_VERSION}', :subspecs => [
+      'Image',
+      'Log',
+      'Http',
+  ]
+
+  # ImageService
+  pod 'SDWebImage','5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+
+  pod 'XElement', '{versionJson.LYNX_VERSION}'
+end
+```
+</CodeFold>
+
+
+### 安装依赖
+
+运行 `pod install` 安装依赖，然后打开你的 XCode 工程，同时需要确保关闭 Sandbox Scripting 能力。
+
+:::note
+
+为了关闭 **Sandbox Scripting** 能力，在 XCode 中点击应用，切换至 **Build Settings**。过滤 **script** 关键字，并且将 **User Script Sandboxing** 置为 **NO**。
+
+<img
+  height="180px"
+  width="640px"
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/integration_ios_warning.png"
+/>
+:::
+
+</Steps>
+
+## 2. Lynx 环境初始化
+
+<Steps>
+
+### LynxEnv 初始化
+
+LynxEnv 提供了 Lynx Engine 的全局初始化接口。请保证 LynxEnv 的初始化发生在 Lynx Engine 的任何接口调用之前；例如可以在 AppDelegate 中完成初始化
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+
+```objective-c title=AppDelegate.m {6}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxView.h>
+
+@implementation AppDelegate
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+  [LynxEnv sharedInstance];
+  return YES;
+}
+```
+
+</Tab>
+<Tab label="Swift">
+
+```swift title=AppDelegate.swift {8}
+import UIKit
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  var window: UIWindow?
+
+  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    LynxEnv.sharedInstance()
+    return true
+  }
+}
+
+```
+
+</Tab>
+</Tabs>
+
+</Steps>
+
+## 3. 渲染 LynxView
+
+LynxView 是 Lynx Engine 提供的渲染基本单元，LynxView 是一个继承自 iOS 原生 [UIView](https://developer.apple.com/documentation/uikit/uiview) 的实现，你可以快速的构造一个 LynxView，并将其添加到 [ViewController](https://developer.apple.com/documentation/uikit/uitab/viewcontroller/) 的视图上。
+
+<Steps>
+
+### 创建 Bundle 加载器
+
+Lynx Engine 自身并没有资源加载的能力，因此需要在初始化 LynxEnv，或者构造 [LynxView](/guide/spec.html#lynxview) 时传入 `LynxTemplateProvider` 协议的具体实现，Lynx 会采用注入的资源加载器来获取真实的 Bundle 内容
+
+你可以使用多种方式获取 Bundle 的资源内容，在这里我们选择将 Bundle 的内容内置在应用中:
+
+1. 首先请将[快速上手](/guide/start/quick-start)阶段生成的 Bundle 文件或者将下面的文件下载到本机上，然后按照如下步骤将文件内置：
+
+:::note
+
+Bundle 示例:
+**https://unpkg.com/@lynx-example/hello-world/dist/main.lynx.bundle**
+
+:::
+
+
+:::note
+
+内置文件步骤：
+- 在项目的目标设置中，选择目标 Target;
+- 选择 Build Phases 选项卡;
+- 在 Copy Bundle Resources 部分，点击加号按钮（+）以添加文件;
+
+:::
+
+
+2. 实现 Bundle 加载器
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+
+```objective-c title="DemoLynxProvider.h"
+#import <Foundation/Foundation.h>
+#import <Lynx/LynxTemplateProvider.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface DemoLynxProvider : NSObject <LynxTemplateProvider>
+
+@end
+
+NS_ASSUME_NONNULL_END
+```
+
+</Tab>
+<Tab label="Swift">
+
+:::tip
+
+Lynx 是使用 Objective-C 构建的项目，如果你使用的是 Swift 工程，请使用 [Bridging Header](https://developer.apple.com/documentation/swift/importing-objective-c-into-swift) 引入所需的 Lynx 头文件。
+
+:::
+
+``` objective-c title="YourTarget-Bridging-Header.h"
+#import <Lynx/LynxConfig.h>
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxTemplateProvider.h>
+#import <Lynx/LynxView.h>
+```
+
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 20 }} />
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+<CodeFold height={360} toggle>
+
+```objective-c title="DemoLynxProvider.m"
+#import <Foundation/Foundation.h>
+
+#import "DemoLynxProvider.h"
+
+@implementation DemoLynxProvider
+
+- (void)loadTemplateWithUrl:(NSString*)url onComplete:(LynxTemplateLoadBlock)callback {
+    NSString *filePath = [[NSBundle mainBundle] pathForResource:url ofType:@"bundle"];
+    if (filePath) {
+      NSError *error;
+      NSData *data = [NSData dataWithContentsOfFile:filePath options:0 error:&error];
+      if (error) {
+        NSLog(@"Error reading file: %@", error.localizedDescription);
+        callback(nil, error);
+      } else {
+        callback(data, nil);
+      }
+    } else {
+      NSError *urlError = [NSError errorWithDomain:@"com.lynx"
+                                                  code:400
+                                                userInfo:@{NSLocalizedDescriptionKey : @"Invalid URL."}];
+      callback(nil, urlError);
+    }
+}
+
+@end
+```
+
+</CodeFold>
+</Tab>
+
+<Tab label="Swift">
+<CodeFold height={360} toggle>
+
+```swift title="DemoLynxProvider.swift"
+import Foundation
+
+class DemoLynxProvider: NSObject, LynxTemplateProvider {
+  func loadTemplate(withUrl url: String!, onComplete callback: LynxTemplateLoadBlock!) {
+    if let filePath = Bundle.main.path(forResource: url, ofType: "bundle") {
+      do {
+        let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
+        callback(data, nil)
+      } catch {
+        print("Error reading file: \(error.localizedDescription)")
+        callback(nil, error)
+      }
+    } else {
+      let urlError = NSError(domain: "com.lynx", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid URL."])
+      callback(nil, urlError)
+    }
+  }
+}
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### 构造基础 LynxView
+
+按照如下的方式构造一个最基础的 LynxView 实例：
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+<CodeFold height={360} toggle>
+
+```objective-c title="ViewController.m" {9-17}
+#import <Lynx/LynxView.h>
+#import "ViewController.h"
+#import "DemoLynxProvider.h"
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    LynxView *lynxView = [[LynxView alloc] initWithBuilderBlock:^(LynxViewBuilder *builder) {
+      builder.config = [[LynxConfig alloc] initWithProvider:[[DemoLynxProvider alloc] init]];
+      builder.screenSize = self.view.frame.size;
+      builder.fontScale = 1.0;
+    }];
+    lynxView.preferredLayoutWidth = self.view.frame.size.width;
+    lynxView.preferredLayoutHeight = self.view.frame.size.height;
+    lynxView.layoutWidthMode = LynxViewSizeModeExact;
+    lynxView.layoutHeightMode = LynxViewSizeModeExact;
+}
+@end
+```
+
+</CodeFold>
+</Tab>
+<Tab label="Swift">
+<CodeFold height={360} toggle>
+
+```swift title=ViewController.swift {8-17}
+import UIKit
+
+class ViewController: UIViewController {
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    let lynxView = LynxView { builder in
+      builder.config = LynxConfig(provider: DemoLynxProvider())
+      builder.screenSize = self.view.frame.size
+      builder.fontScale = 1.0
+    }
+
+    lynxView.preferredLayoutWidth = self.view.frame.size.width
+    lynxView.preferredLayoutHeight = self.view.frame.size.height
+    lynxView.layoutWidthMode = .exact
+    lynxView.layoutHeightMode = .exact
+  }
+}
+
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### 将 LynxView 添加到视图
+
+然后将 LynxView 添加到应用视图中：
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+<CodeFold height={360} toggle>
+
+```objective-c title="ViewController.m" {13}
+#import <Lynx/LynxView.h>
+
+#import "ViewController.h"
+#import "DemoLynxProvider.h"
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  [self.view addSubview:lynxView];
+}
+
+@end
+```
+
+</CodeFold>
+</Tab>
+<Tab label="Swift">
+<CodeFold height={360} toggle>
+
+```swift title="ViewController.swift" {10}
+import UIKit
+
+class ViewController: UIViewController {
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    // ...
+
+    self.view.addSubview(lynxView)
+  }
+}
+
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+<div style={{ marginBottom: 30 }} />
+
+### 渲染视图
+
+当你完成以上步骤之后，你就已经完成了 LynxView 初始化的全部工作，调用 `lynxView.loadTemplateFromURL` 方法，即可将对应的 Bundle 渲染到 LynxView 视图上，
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+<CodeFold height={360} toggle>
+
+```objective-c title="ViewController.m" {13}
+#import <Lynx/LynxView.h>
+
+#import "ViewController.h"
+#import "DemoLynxProvider.h"
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  [lynxView loadTemplateFromURL:@"main.lynx" initData:nil];
+}
+
+@end
+```
+
+</CodeFold>
+</Tab>
+<Tab label="Swift">
+<CodeFold height={360} toggle>
+
+```swift title="ViewController.swift" {10}
+import UIKit
+
+class ViewController: UIViewController {
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    // ...
+
+    lynxView.loadTemplate(fromURL: "main.lynx", initData: nil)
+  }
+}
+
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+然后你将在屏幕上看到如下内容：
+
+<center>
+  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/hello-world-showcase-ios.png" width="200" />
+</center>
+
+</Steps>
+
+恭喜你，现在你现在已经完成了 Lynx Engine 集成的全部工作！
+
+## 4. 进入 Lynx 世界
+
+现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/devtool/panels)文档进一步在 Lynx 的世界里遨游吧！

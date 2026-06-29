@@ -1,0 +1,127 @@
+---
+title: 'Lynx: Unlock Native for More'
+date: 2025-03-05
+sidebar: false
+authors: ['huxpro', 'lynx']
+description: "Today, we're excited to introduce Lynx, a family of technologies empowering developers to use their existing web skills to create truly native UIs for both mobile and web from a single codebase..."
+---
+
+import { BlogHeader, Go, VideoList } from '@lynx';
+
+<BlogHeader authors={['huxpro', 'lynx']} />
+
+Today, we're excited to introduce **Lynx**, a _family_ of technologies empowering developers to use their existing web skills to create truly native UIs for both mobile and web from a single codebase. Designed for diverse use cases and rich interactivity, Lynx delivers vibrant and engaging UIs for large-scale apps like TikTok, featuring a speedy, versatile rendering engine, performance-driven dual-threaded UI programming, modern Rust-based tooling, and more!
+
+We deeply appreciate all the prior arts that have shaped the field of cross-platform development, and aspire to contribute to this movement by **open sourcing** Lynx today, inviting more developers to build applications with more freedom and productivity.
+
+## Ship Native at Scale and Velocity
+
+For the generation of digital natives, mobile phones—and the apps on them—are their first digital experiences. For these app-centric users, a non-native experience isn't just inconvenient; it's a red flag. A blank screen, a 0.1s lag in a "like" animation, or an unfamiliar UI pattern can make an interface feel "cheap" or untrustworthy. We believe that native primitives and responsiveness aren't just nice-to-haves—**_native is a necessity_**.
+
+Despite the rapid growth of the app economy, delivering such experiences at _scale_ and _velocity_ remains to be a challenge. The growing diversity of form factors and platforms forces developers to rebuild the same experiences multiple times, leading to wasted effort, siloed teams, and delayed time-to-market. We believe that by enabling developers to build once and reach more platforms, _we can deliver joys **for more users, faster**_.
+
+TikTok, known and loved as a mobile-first platform, continuously brings innovative and engaging experiences to diverse and dynamic users around the world. To meet these demands, it gradually adopted Lynx and has increasingly bet on it. Today, Lynx powers an extremely wide spectrum of surfaces—from the lightweight, high-frequency **Search** panel to full-fledged [TikTok Studio](https://support.tiktok.com/en/using-tiktok/creating-videos/tiktok-studio) app; from complex e-commerce storefronts like **Shop** that demand reliability and trust, to highly engaging experiences like **LIVE**, as well as powering high-profile events and cultural moments such as [Disney100 on TikTok](https://newsroom.tiktok.com/en-us/disney-100) and [The Met Gala on TikTok](https://newsroom.tiktok.com/en-us/tiktok-goes-to-the-met-gala).
+
+![lynx-in-tiktok](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-in-tiktok.jpg)
+
+<center>
+  <span>
+    <small>TikTok's extensive use of Lynx</small>
+  </span>
+</center>
+
+We believe _scale_ and _velocity_ mean more than just applying a feature, bug fix, or optimization across all platforms to improve cost efficiency. It also means the _versatility_ to adapt the same shared technological foundation to a broad spectrum of scenarios—without the need to build new teams or reinvent the wheel for every unique use case.
+
+## Inspire and Enrich the Web community
+
+The web platform was historically created for [documents](https://www.w3.org/People/Berners-Lee/WorldWideWeb.html) and then [gradually](https://extensiblewebmanifesto.org/#signatories) [evolved](https://infrequently.org/2015/06/progressive-apps-escaping-tabs-without-losing-our-soul/) into a development platform. Yet, it continues to [face constraints](https://infrequently.org/2020/06/platform-adjacency-theory/) that slow down its ability to adapt and innovate quickly. Therefore, shaping the web technologies for cross-platform development has become a defining norm in the industry. Since 2008, PhoneGap (later [Cordova](https://cordova.apache.org/)) [strived to keep the Web as cross-platform solution](https://web.archive.org/web/20161210233245/http://phonegap.com/blog/2012/05/09/phonegap-beliefs-goals-and-philosophy/) by augmenting Webview with native capabilities. In 2015, [React Native pioneered bridging native UI with web technologies](https://reactnative.dev/blog/2015/03/26/react-native-bringing-modern-web-techniques-to-mobile), enabling declarative UI with React.js on mobile. That same year, [Flutter](https://developers.googleblog.com/en/flutter-10-googles-portable-ui-toolkit/), with its web heritage, adopted a similar declarative UI model and introduced a new approach using a custom rendering engine.
+
+Lynx followed a similar spirit—you can think of it as an **_"alternative Web tailored for app development_"**. It aims to honor the assets of web technologies while taking an opinionated approach, supporting web-like APIs and adding constraints and extensions with clear intent.
+
+To illustrate this balance, let me share two examples: one where we choose to follow the web and another where we intentionally make a difference.
+
+### Craft Designs with Markups and CSS as Usual
+
+At its core, UI technologies exist to deliver exceptional product design. Lynx embraces the familiarity of web development, allowing developers to write markup and CSS just as they would for the web. Lynx natively supports [CSS animations and transitions](/guide/styling/animation.html), [CSS selectors and variables for theming](/guide/styling/custom-theming.html), and modern CSS visual effects like [gradients](/guide/styling/appearance.html#gradient), [clipping, and masking](/guide/styling/appearance.html#clipping-and-masking)—all designed to unlock the creativity of the web community to achieve trending _design engineering_.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/guide-mask-image-circle.png"
+  example="css"
+  defaultFile="src/mask_image_circle_gradient/index.tsx"
+  defaultEntryFile="dist/mask_image_circle_gradient.lynx.bundle"
+  highlight="{14}"
+  entry="src/mask_image_circle_gradient"
+></Go>
+
+<center>
+  <span>
+    <small>
+      Using <code>mask-image</code> to create a circle area with fading edge
+    </small>
+  </span>
+</center>
+
+### Use the Main Thread Responsibly for Interactivity
+
+One of Lynx's most notable architectural decisions is its **statically-enforced division** of user scripting into two distinct runtimes: a _[main-thread](/guide/spec.html#main-thread-or-lynx-main-thread) runtime_, powered by [**PrimJS**](https://github.com/lynx-family/primjs), a custom JavaScript engine specifically optimized for Lynx, dedicated to privileged, synchronous UI tasks like initial launch and high-priority event handling, and a _[background](/guide/spec.html#background-thread-aka-off-main-thread) runtime_ as the default for user code, ensuring the main thread remains low workload and _non-blocking_. This enables two killer features of Lynx:
+
+1. [_Instant First-Frame Rendering (IFR)_](/guide/interaction/ifr.html): Backed by [usability research](https://www.nngroup.com/articles/response-times-3-important-limits/), if rendering is fast enough—and Lynx is—no special intermediate feedback is needed. By briefly blocking the main thread until the first frame is fully rendered, Lynx eliminates blank screens, creating a perceived instant experience.
+
+1. [_Main-Thread Scripting (MTS)_](/react/main-thread-script.html): A small, statically scheduled piece of code, privileged to run on the main thread, handles high-priority events and gestures—making it ideal for implementing silky-smooth, highly responsive interfaces that feels native.
+
+<VideoList
+  videos={[
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
+      title: 'IFR',
+    },
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+      title: 'MTS',
+    },
+  ]}
+  playbackRate={1}
+/>
+
+Do you notice how instant the _IFR_ feels and how snappy the _MTS_ is?
+Let's **slow them down by 4x** so we can take a closer look!
+
+<VideoList
+  videos={[
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
+      title: 'IFR (0.25x)',
+    },
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+      title: 'MTS (0.25x)',
+    },
+  ]}
+  playbackRate={0.25}
+/>
+
+Internally, we've seen surfaces migrating from Web to Lynx often achieve a **2–4× reduction in launch times** across the board. Our in-house benchmarks also show that Lynx consistently launches faster on Android while remaining competitive with similar technologies on iOS.
+
+## Open Sourcing Lynx
+
+Lynx was originally developed by an engineering team of ByteDance, which continue to drive its development. As a significant user of Lynx, TikTok recognizes the innovation and potential of Lynx and has been making extensive use of it in a series of TikTok applications. TikTok will facilitate the open-source release of Lynx, offering support in several areas, including funding, technical enhancement, community promotion, and ecosystem growth.
+
+### Democratize Cross-Platform Technologies
+
+For years, cross-platform development for web developers has been defined by the patterns and solutions established by a few dominant players. While we celebrate their remarkable contribution, there is a growing demand for greater diversity in approaches. Lynx seeks to change that by not open-sourcing a single fixed solution, but a **_meta-infrastructure_** that enables teams and businesses facing similar scale and velocity challenges to build their own cross-platform solutions.
+
+We are open-sourcing [**ReactLynx**](/react/) ("React on Lynx") as Lynx's initial frontend framework flavor, enabling componentized, declarative UI on Lynx. _However, Lynx isn't limited to React_. In fact, other frameworks already represent roughly half of Lynx's overall usage, demonstrating its neutrality in hosting different flavors. As modern apps grow increasingly complex, with dozens or even hundreds of developers collaborating on a single app, Lynx ships with [**Rspeedy**](/rspeedy/), a toolchain based on the popular Rust-based bundler [Rspack](https://rspack.rs/), to enable fast builds and pave the way for a multi-framework [micro-frontend](https://en.wikipedia.org/wiki/Micro_frontend) future via [Module Federation](https://module-federation.io/). We are eager to work with the open-source JavaScript framework community to bring even greater diversity to cross-platform development.
+
+Not only is [the core engine](https://github.com/lynx-family/lynx) of Lynx framework-agnostic, but it's also agnostic to host platforms and rendering backends. Drawing inspiration from a spectrum of projects like [Chromium](https://www.chromium.org/chromium-projects/), [Flutter](https://github.com/flutter), and [React Native](https://github.com/facebook/react-native), it's designed to adapt to new platform primitives, and it's flexible enough to switch to a _custom renderer_, enabling pixel-perfect, consistent rendering across any platforms with a graphics interface. With [**Lynx for Web**](https://github.com/lynx-family/lynx-stack/tree/main/packages/web-platform), Lynx can even run natively within web browsers. Together, they give Lynx ultimate flexibilities in how it can expand to even more platforms, such as Desktop, TV, or IoT devices.
+
+### This Is Not the End, But a New Beginning
+
+Lynx is _production-ready_ and already powers an incredible number of businesses. What we are open-sourcing today is the exact version we use in production, which is why it starts at version 3.x. It even includes legacy code and APIs we intend to deprecate, but we believe in opening source what we actually rely on. In fact, **we are moving all development to** **GitHub**, making it open and transparent to the community.
+
+This release marks only the beginning. What we are open sourcing today is _not_ everything. Many peripherals that we're proud of—including additional UI components, advanced built-in graphics capabilities, the custom renderer, and other frameworks—are yet to come.
+
+More importantly, this is the beginning of the journey because, as a relatively young team in the open-source space, we know we have much to learn about working, collaborating, and growing with the community. But we are glad we took this step, because we believe open source is the right path forward—**to foster collaboration, push the boundaries of what's possible in cross-platform development, and give back to the community that has given us so much**. We invite you to join us on this exciting journey and welcome your feedback and contributions.
+
+_What will you build with Lynx?_
+
+![lynx-unlock-native-for-more](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-unlock-native-for-more.png)

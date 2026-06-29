@@ -1,0 +1,156 @@
+import { Go } from '@lynx';
+
+# 文字排版
+
+## Lynx 中的文字
+
+在 Lynx 中，文本内容需要写在 [`<text>`](/api/elements/built-in/text) 元件内部，这与 HTML 中可直接在 `<div>` 里写文本不同，来看一个简单的例子：
+
+```tsx
+//❌ 不会生效
+<view>hello world</view>
+
+//✅ 使用 <text> 元件
+<text>hello world</text>
+```
+
+你可以在 `<text>` 元件上添加样式来改变文字效果，例如修改文字的颜色：
+
+```tsx
+<text style={{ color: 'red' }}>hello world</text>
+```
+
+类似地，修改文字的大小和使文字倾斜：
+
+```tsx
+<text style={{ fontSize:"30px" }}>hello world</text>
+<text style={{ fontStyle:"italic" }}>hello world</text>
+```
+
+Lynx 也支持通过设置 [`text-shadow`](/api/css/properties/text-shadow) 和 [`text-stroke`](/api/css/properties/text-stroke) 属性给文字添加阴影或添加描边来丰富展示效果：
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/shadow-and-stroke-demo.jpeg"
+  example="text"
+  defaultFile="src/shadow_and_stroke/index.tsx"
+  defaultEntryFile="dist/shadow_and_stroke.lynx.bundle"
+  entry="src/shadow_and_stroke"
+  highlight="{15-20}"
+/>
+
+## 不同样式文字混排
+
+日常文本排版常需突出部分文本，比如给关键词加粗、变色。假设要将文本“This is an important word”中的“important word”加粗标红。可以将“important word”放到一个嵌套 `<text>` 中，并且设置 `color` 和 `font-weight` 属性。
+
+```tsx
+<view>
+  <text>
+    This is an
+    <text style={{ color: 'red', fontWeight: 'bold' }}>important word</text>
+  </text>
+</view>
+```
+
+你可以通过 CSS 文本模块中的属性来控制文本该如何显示，例如换行、对齐、空白符处理等来实现更丰富的文字排版效果。如用通过 [`text-indent`](/api/css/properties/text-indent) 控制文本的首行缩进、[`word-break`](/api/css/properties/word-break) 控制单词的换行行为、[`text-align`](/api/css/properties/text-align) 控制文本内容的水平对齐方式等。
+
+下面是综合运用属性例子，你也可以参考[文本相关属性](/api/elements/built-in/text#文本相关-css-属性)。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/text-layout-demo.jpeg"
+  example="text"
+  defaultFile="src/text_layout/index.tsx"
+  defaultEntryFile="dist/text_layout.lynx.bundle"
+  entry="src/text_layout"
+/>
+
+## 图文混排实现
+
+为了实现更为丰富多彩的页面，时常需要在文本中嵌入图片。下面介绍如何将文本和图片混合排版。以下图为例：
+
+<p align="center">
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+    width="300"
+  />
+</p>
+
+第一步，使用 `<text>` 和 `<image>` 元件搭建页面结构，它们相互配合构建基础框架。
+
+```tsx
+<text>
+  <image />
+  <text>
+    This is a warning message.This is a warning message.This is a warning
+    message.
+  </text>
+</text>
+```
+
+第二步，设置 `<image>` 元件的样式，重点是设定宽高，保证图片在页面呈现合适，与文本适配。同时在 `<text>` 元件上设置 `text-align` 属性使文本水平居中。
+
+<Go
+  example="text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+  defaultFile="src/inline_image/index.tsx"
+  defaultEntryFile="dist/inline_image.lynx.bundle"
+  highlight="{8-18}"
+  entry="src/inline_image"
+/>
+
+第三步，调整图片在行内的垂直位置。`<image>` 元件底部默认会和文本基准线对齐，你可以使用 [`vertical-align`](/api/css/properties/vertical-align) 属性来精准调节 `<image>` 元件在行内的垂直位置。
+
+<Go
+  example="text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+  defaultFile="src/inline_image/index.tsx"
+  defaultEntryFile="dist/inline_image.lynx.bundle"
+  highlight="{15}"
+  entry="src/inline_image"
+/>
+
+除了图片以外，你也可以在 `<text>` 组件中嵌套 `<view>` 来实现更为复杂的页面。
+
+<Go
+  example="text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-view-demo.gif"
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryFile="dist/inline_view.lynx.bundle"
+  highlight="{11-26}"
+  entry="src/inline_view"
+/>
+
+## 文本截断和省略
+
+文本内容长空间有限时，需用省略技巧让页面简洁，避免信息杂乱。在 Lynx 中，可用 [`text-overflow`](/api/css/properties/text-overflow) 属性给文本截断处添加省略效果，选 `ellipsis` 自动加省略号，或用 `clip` 按规则截断。
+
+具体实现时，先限定 `<text>` 元件显示行数或高度，文本超出范围就触发省略效果，再设置 `text-overflow` 属性控制呈现方式：
+
+```tsx
+<text text-maxline={'1'} style={{ textOverflow: 'ellipsis' }}>
+  This is an extremely long text.
+</text>
+```
+
+虽然 `text-overflow` 不能直接指定截断处显示内容，但 Lynx 提供的 `<inline-truncation>` 元件有很强自定义能力，能在截断处展示图片、`<view>` 等各种内容。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-truncation-demo.png"
+  example="text"
+  defaultFile="src/inline_truncation/index.tsx"
+  defaultEntryFile="dist/inline_truncation.lynx.bundle"
+  entry="src/inline_truncation"
+/>
+
+## 自定义字体设置
+
+你可以直接使用 [`@font-face`](/api/css/at-rule/font-face) 来指定自定义的字体资源（需要[客户端支持字体资源加载器](/api/elements/built-in/text#加载自定义字体)），同时在 `<text>` 上设置对应的 `font-family`。
+
+此外，如果你需要在 JS 中尝试加载一个字体文件，你可以通过借鉴 Web Font Loading 设计的 addFont API。该模块提供了 FontFace 类，以及全局对象 lynx 上的 [addFont](/api/lynx-api/lynx/lynx-add-font) 方法。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/font-style-bold-normal-digit.png"
+  example="text"
+  defaultFile="src/custom_font/index.tsx"
+  defaultEntryFile="dist/custom_font.lynx.bundle"
+  entry="src/custom_font"
+/>

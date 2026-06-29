@@ -1,0 +1,134 @@
+---
+description: "文档中编程语言代码块的配置。"
+---
+
+import versionJson from '@site/docs/public/version.json';
+
+# 文档编程语言验证
+
+对于文档中中的编程语言，补齐独立的引用展示，保证在 doc 文档中通过组件使用时可以支持正常语法高亮等。
+
+## 验证
+
+### Swift
+```swift
+import Markdown
+
+let markdownText = "# Hello, Swift Markdown!\nThis is a sample paragraph."
+do {
+    let document = try Document(parsing: markdownText)
+    document.children.forEach { element in
+        print(element)
+    }
+} catch {
+    print("Failed to parse Markdown: \(error)")
+}
+```
+
+### Objective-C
+```objective-c
+#import <Foundation/Foundation.h>
+
+#import "DemoLynxTemplateProvider.h"
+
+@implementation DemoLynxProvider
+
+- (void)loadTemplateWithUrl:(NSString*)url onComplete:(LynxTemplateLoadBlock)callback {
+  // your logic for fetching resources.
+  if (!url || [url length] == 0) {
+    NSError *urlError = [NSError errorWithDomain:@"com.lynx"
+                                            code:400
+                                        userInfo:@{NSLocalizedDescriptionKey : @"Invalid URL."}];
+    callback(nil, urlError);
+    return;
+  }
+
+  NSURL *urlObject = [NSURL URLWithString:url];
+  if (!urlObject) {
+    NSError *urlParseError =
+        [NSError errorWithDomain:@"com.lynx"
+                            code:401
+                        userInfo:@{NSLocalizedDescriptionKey : @"Malformed URL."}];
+    callback(nil, urlParseError);
+    return;
+  }
+
+  NSURLSession *session = [NSURLSession sharedSession];
+  NSURLSessionDataTask *dataTask = [session
+        dataTaskWithURL:urlObject
+      completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
+                          NSError *_Nullable error) {
+        if (error) {
+          NSError *downloadError =
+              [NSError errorWithDomain:@"com.lynx"
+                                  code:error.code
+                              userInfo:@{NSLocalizedDescriptionKey : error.localizedDescription}];
+          callback(nil, downloadError);
+          return;
+        }
+
+        if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+          NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+          if (httpResponse.statusCode != 200) {
+            NSError *httpError = [NSError
+                errorWithDomain:@"com.lynx"
+                           code:httpResponse.statusCode
+                       userInfo:@{
+                         NSLocalizedDescriptionKey : [NSString
+                             stringWithFormat:@"HTTP Error: %ld", (long)httpResponse.statusCode]
+                       }];
+            callback(nil, httpError);
+            return;
+          }
+        }
+
+        if (!data || data.length == 0) {
+          NSError *emptyDataError =
+              [NSError errorWithDomain:@"com.lynx"
+                                  code:402
+                              userInfo:@{NSLocalizedDescriptionKey : @"Downloaded data is empty."}];
+          callback(nil, emptyDataError);
+          return;
+        }
+
+        callback(data, nil);
+      }];
+
+  [dataTask resume];
+}
+
+@end
+
+```
+### Kotlin
+```kotlin
+fun main() {
+  println("Hello, World!")
+}
+```
+
+### ruby
+```ruby title="Podfile" {1,2,7-9,11}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+  pod 'Lynx', '{versionJson.LYNX_VERSION}', :subspecs => [
+    'Framework',
+  ]
+
+  pod 'PrimJS', '{versionJson.PRIMJS_VERSION}', :subspecs => ['quickjs', 'napi']
+end
+```
+
+### groovy
+```groovy title=build.gradle {3-6}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:lynx-trace:{versionJson.LYNX_VERSION}"
+    implementation "org.lynxsdk.lynx:primjs:{versionJson.PRIMJS_VERSION}"
+}
+```

@@ -1,0 +1,150 @@
+---
+title: background
+api: css/properties/background
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The `background` shorthand CSS property sets all background style properties at once, such as [`background-clip`](./background-clip.mdx),[`background-color`](./background-color.mdx),[`background-image`](./background-image.mdx),[`background-origin`](./background-origin.mdx),[`background-position`](./background-position.mdx),[`background-repeat`](./background-repeat.mdx),[`background-size`](./background-size.mdx).
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/background/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background.jpg"
+  defaultEntryFile="dist/background.lynx.bundle"
+  entry="src/background"
+/>
+
+## Syntax
+
+```css
+/* Using a <background-color> */
+background: green;
+
+/* Using a <bg-image> and <repeat-style> */
+background: url('test.jpg') repeat-y;
+
+/* Using a <box> and <background-color> */
+background: border-box red;
+
+/* A single image, centered and scaled */
+background: no-repeat center / 80% url('../img/image.png');
+```
+
+The background property is specified as one or more background layers, separated by commas.
+
+The syntax of each layer is as follows:
+
+- [`<bg-image>`](#bg-image)
+- [`<position>`](#position)
+- [`<bg-size>`](#bg-size)
+- [`<repeat-style>`](#repeat-style)
+- The `<bg-size>` value may only be included immediately after `<position>`, separated with the '/' character, like this: `"center/80%"`.
+- The `<box>` value may be included zero, one, or two times. If included once, it sets both [`background-origin`](./background-origin.mdx) and [`background-clip`](./background-clip.mdx). If it is included twice, the first occurrence sets [`background-origin`](./background-origin.mdx), and the second sets [`background-clip`](./background-clip.mdx).
+
+> **The [`background-color`](./background-color.mdx) value may only be included in the last layer specified.**
+
+## Values
+
+#### `<box>` \{#box}
+
+See [`background-clip`](./background-clip.mdx) and [`background-origin`](./background-origin.mdx)
+
+#### `<background-color>` \{#background-color}
+
+See [`background-color`](./background-color.mdx)
+
+#### `<bg-image>` \{#bg-image}
+
+See [`background-image`](./background-image.mdx)
+
+#### `<position>` \{#position}
+
+See [`background-position`](./background-position.mdx)
+
+#### `<repeat-style>` \{#repeat-style}
+
+See [`background-repeat`](./background-repeat.mdx)
+
+#### `<bg-size>` \{#bg-size}
+
+See [`background-size`](./background-size.mdx)
+
+## Note
+
+- The background-color must be written in the last image, otherwise the parser will consider it an invalid background.
+  For example: `background: red url('./a.png'), url('./b.png);'` will be ignored as an error.
+  The correct way to write it should be: `background: url('./a.png'),red url('./b.png);`
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      background-image: none
+      <br />
+      background-position: 0% 0%
+      <br />
+      background-size: auto auto
+      <br />
+      background-repeat: repeat
+      <br />
+      background-origin: padding-box
+      <br />
+      background-clip: border-box
+      <br />
+      background-color: transparent
+    </>
+  }
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Formal Syntax
+
+```
+[ <bg-layer> , ]* <final-bg-layer>
+
+where
+
+<bg-layer> = <bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <box> || <box>
+<final-bg-layer> = <'background-color'> || <bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <attachment> || <box> || <box>
+
+where
+
+<bg-image> = none | <image>
+<bg-position> = [ [ left | center | right | top | bottom | <length-percentage> ] | [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ] | [ center | [ left | right ] <length-percentage>? ] && [ center | [ top | bottom ] <length-percentage>? ] ]
+<bg-size> = [ <length-percentage> | auto ]{1,2} | cover | contain
+<repeat-style> = repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1, 2}
+<box> = border-box | padding-box | content-box
+
+where
+
+<image> = <url> | <gradient>
+<length-percentage> = <length> | <percentage>
+
+where
+
+<gradient> = <linear-gradient> | <radial-gradient>
+
+```
+
+## Difference between web
+
+- `<bg-layer>` does not support the [`<attachment>`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/background#attachment)
+- `<image>` only support `<url>` and `<gradient>`
+  > _These properties are also supported in web such as `<image-set>`、`<element()>`、`<paint()>`、`<cross-fade()>` _<br/>
+- `<gradient>` only support `<linear-gradient>` and `<radial-gradient>`
+  > _These properties are also supported in web such as `<repeating-linear-gradient()>`,`<radial-gradient()>`,`<repeating-radial-gradient()>`,`<conic-gradient()>`_
+
+## Compatibility
+
+<APITable />

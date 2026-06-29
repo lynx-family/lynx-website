@@ -1,0 +1,128 @@
+---
+title: 'Lynx：迈向原生体验'
+date: 2025-03-05
+sidebar: false
+authors: ['huxpro', 'lynx']
+description: '今天，我们很高兴向大家介绍 Lynx 全家桶，它们是一系列希望帮助 Web 开发者复用现有经验，通过一套代码同时创建移动端原生界面与 Web 端界面的技术……'
+---
+
+import { BlogHeader, Go, VideoList } from '@lynx';
+
+<BlogHeader authors={['huxpro', 'lynx']} />
+
+今天，我们很高兴向大家介绍 **Lynx** _全家桶_——一套帮助 Web 开发者复用现有经验，通过一份代码同时构建移动端原生界面与 Web 端界面的技术方案。Lynx 专为多样化、富交互的场景打造，得以在 TikTok 这样量级的应用中支撑那些生动且吸引人的界面。它有着高性能、多功能的渲染引擎、性能优先的双线程 UI 编程范式、以及基于 Rust 的现代工具链等诸多特性。
+
+我们非常感谢跨平台开发领域先驱们的探索与积累，并希望通过**开源** Lynx 进一步推动这个领域的发展，让更多的开发者能够以更高效、更自由的方式开发应用。
+
+## 规模化、高效地交付原生体验
+
+对于这一代数字原住民而言，手机及其上的应用构成了他们人生中的第一次数字体验。对于这些习惯了以应用为中心的用户来说，非原生体验不仅仅是不便，更是一种警示。一个空白屏幕、点赞动画的 0.1 秒的延迟、一个不熟悉的交互方式，都可能让用户对界面的感受大打折扣，产生不信任感。我们相信，原生的界面体验和性能不仅仅是锦上添花而已——**_原生体验是必需品_**。
+
+尽管移动应用市场仍在高速增长，但如何应对*规模*和*效率*仍然是一个挑战。设备形态和平台的日益多样化，迫使开发者重复重写同样的界面，不仅浪费精力、还导致割裂的团队，更晚的产品上线时间。我们相信，如果能让开发者做到“一次编写，多端运行”，_我们就可以**更快地让体验触达更多用户**_。
+
+TikTok，作为一个移动优先的平台，凭借持续创新且富有吸引力的体验，备受全球多元化用户的喜爱。为了满足不断变化的需求，TikTok 逐步引入了 Lynx，并对其愈发寄予厚望。如今，Lynx 已广泛支撑其众多场景——从轻量化、超高频使用的**搜索**，到功能完整的独立应用 [TikTok Studio](https://support.tiktok.com/en/using-tiktok/creating-videos/tiktok-studio)；从强调可靠性和信任感的**电商**场景，到高度互动的**直播**体验，甚至助力了诸如[迪士尼 100 周年](https://newsroom.tiktok.com/en-us/disney-100)和 [Met Gala](https://newsroom.tiktok.com/en-us/tiktok-goes-to-the-met-gala) 这样高知名度的活动与文化盛事。
+
+![lynx-in-tiktok](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-in-tiktok.jpg)
+
+<center>
+  <span>
+    <small>TikTok 对 Lynx 的广泛使用</small>
+  </span>
+</center>
+
+我们认为，*规模*和*效率*不仅仅意味着一个功能、一个 Bug 修复、或一次性能优化能应用到所有平台上提升成本效率，它还意味着*多功能性*——能够在同一套技术基建上适配于广泛的应用场景，而无需为每个独特的需求另起炉灶、重新组建团队或重复造轮子。
+
+## 激励并丰富 Web 社区
+
+Web 平台最初为[文档](https://www.w3.org/People/Berners-Lee/WorldWideWeb.html)而建，[一点一点](https://extensiblewebmanifesto.org/#signatories)[演变](https://infrequently.org/2015/06/progressive-apps-escaping-tabs-without-losing-our-soul/)成了今天大家认知里的一个开发平台。然而，它依然[面临很多挑战](https://infrequently.org/2020/06/platform-adjacency-theory/)，限制了其快速适应和创新的能力。因此，将 Web 技术重塑成跨平台开发技术，便成为了行业的一个主流趋势。自 2008 年以来，PhoneGap（后来的 [Cordova](https://cordova.apache.org/)）就致力于通过增强 Webview 的原生能力[让 Web 能继续作为跨平台开发的解决方案](https://web.archive.org/web/20161210233245/http://phonegap.com/blog/2012/05/09/phonegap-beliefs-goals-and-philosophy/)。2015 年，[React Native 率先将原生 UI 与 Web 技术桥接](https://reactnative.dev/blog/2015/03/26/react-native-bringing-modern-web-techniques-to-mobile)，使得在移动端使用 React.js 实现声明式 UI 成为可能。同年，[Flutter](https://developers.googleblog.com/en/flutter-10-googles-portable-ui-toolkit/) 带着 Web 的技术背景，采用了类似的声明式 UI 模型，并带来了一种全新的基于自定义渲染引擎的跨端思路。
+
+Lynx 继承了相似的理念——你甚至可以将它视作“**专为应用开发定制的另一种 Web**”。它旨在尊重 Web 技术的优势和资产，但同时有自己的主见：一方面支持类 Web 的 API，一方面有意图地添加约束和扩展。
+
+为了说明这种平衡，我们来看两个例子：一个是我们选择遵循 Web 标准的场景，另一个则是我们有意做出的不同设计。
+
+### 像往常一样使用标签和 CSS 描绘界面
+
+从本质上讲，UI 技术的使命是能够出色地实现产品设计。Lynx 拥抱了大家熟悉的 Web 开发范式，使开发者能够像在 Web 上一样继续使用标记语言和 CSS。Lynx 原生支持了 [CSS 动画和过渡](/guide/styling/animation.html)、[CSS 选择器和变量用于主题化定制](/guide/styling/custom-theming.html)，以及[渐变](/guide/styling/appearance.html#gradient)、[裁剪和遮罩](/guide/styling/appearance.html#clipping-and-masking)这样的现代 CSS 视效能力——所有的这一切，都是为了能够继续释放 Web 社区的创造力，以实现最前沿的设计。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/guide-mask-image-circle.png"
+  example="css"
+  defaultFile="src/mask_image_circle_gradient/index.tsx"
+  defaultEntryFile="dist/mask_image_circle_gradient.lynx.bundle"
+  highlight="{14}"
+  entry="src/mask_image_circle_gradient"
+></Go>
+
+<center>
+  <span>
+    <small>
+      使用<code>mask-image</code>实现边缘淡出
+    </small>
+  </span>
+</center>
+
+### 让主线程专责服务于交互体验
+
+Lynx 最具代表性的架构决策之一是**静态强制划分**用户脚本的运行环境，将用户脚本拆分跑在了两个独立的运行时上：一个[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)运行时，它由 [**PrimJS**](https://github.com/lynx-family/primjs) 这个专为 Lynx 优化的 JavaScript 引擎驱动，有着独享的同步 UI 操作权限，用于处理初始启动和高优事件处理等任务；另一个则是[后台](/guide/spec.html#background-thread-aka-off-main-thread)运行时，作为用户代码的默认执行环境，以确保主线程的低负载和*非阻塞*。这一架构带来了 Lynx 的两大杀手锏：
+
+1. [_首帧直出 (Instant First-Frame Rendering，IFR)_](/guide/interaction/ifr.html)：[用研表明](https://www.nngroup.com/articles/response-times-3-important-limits/)：如果渲染足够快（而 Lynx 正是如此），那么在界面过渡时就无需多余的反馈。Lynx 通过短暂阻塞主线程，确保首帧一次性完整呈现，因为用户不会看到空白，可以给用户带来一种即刻响应的感知体验。
+
+1. [_主线程脚本 (Main Thread Script，MTS)_](/react/main-thread-script.html)：它是一小段静态调度的代码，被授予在主线程运行的权力，用于处理高优的事件和手势行为，非常适合那些要求极致跟手、快速响应的场景，以实现原生交互触感。
+
+<VideoList
+  videos={[
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
+      title: 'IFR',
+    },
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+      title: 'MTS',
+    },
+  ]}
+  playbackRate={1}
+/>
+
+如果在上图中没能看清 _IFR_ 的首帧有多快，或是 _MTS_ 的跟手有多丝滑的话，就让我们
+**_放慢 4 倍_**
+，再看一遍：
+
+<VideoList
+  videos={[
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
+      title: 'IFR (0.25x)',
+    },
+    {
+      src: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+      title: 'MTS (0.25x)',
+    },
+  ]}
+  playbackRate={0.25}
+/>
+
+在内部实践中，我们观察到许多从 Web 迁移到 Lynx 的界面，普遍能缩短 **2–4 倍的启动时间**。我们的内部性能测试同时表明，相比同类技术，Lynx 在 iOS 上不相上下，在安卓上则持续领先。
+
+## 开源 Lynx
+
+Lynx 最初由字节跳动的工程团队开发，并将由该团队继续推进其演进。作为在一系列应用中广泛使用 Lynx 的重要用户，TikTok 认可 Lynx 的创新与潜力，促进 Lynx 的开源发布，在资金、技术优化、社区推广和生态建设等方面提供支持。
+
+### 让跨平台技术真正普惠
+
+多年来，Web 开发者可以使用的跨平台开发技术，一直被少数几家主导者的方案定义。尽管我们对他们的卓越贡献表示敬意，但市场对更多样化的方法的需求也日益增长。Lynx 希望改变这一现状——我们开源的并非某个固定的单一方案，而是一个**元基础设施（meta-infrastructure）**，让面临类似规模和速度挑战的团队和企业，都能够构建自己的跨平台解决方案。
+
+我们开源了 [**ReactLynx**](/react/)（“Lynx 上的 React”），作为 Lynx 的首个前端框架，带来 Lynx 上的组件化、声明式 UI 能力。_然而，Lynx 并不局限于 React_。事实上，其他框架也占据了 Lynx 整体使用量的一半，充分证明了其对不同技术栈的兼容性和中立性。随着现代应用的复杂度不断提升，单个应用往往需要数十甚至上百名开发者协同开发，Lynx 为此配备了 [**Rspeedy**](/rspeedy/)，一个基于高性能打包工具 [Rspack](https://rspack.rs/) 的构建工具链，支持 Lynx 的快速构建，为后续基于[模块联邦](https://module-federation.io/)的多框架[微前端](https://en.wikipedia.org/wiki/Micro_frontend)未来铺平道路。我们非常期待，能与开源 JavaScript 框架社区携手合作，为跨平台开发带来更丰富的选择。
+
+不仅 Lynx 的[核心引擎](https://github.com/lynx-family/lynx)不绑定任何特定前端框架，它对宿主平台和渲染后端也保持开放性。Lynx 从 [Chromium](https://www.chromium.org/chromium-projects/)、[Flutter](https://github.com/flutter) 和 [React Native](https://github.com/facebook/react-native) 等一系列项目中汲取灵感，具备快速适配一个新平台的灵活性，并且灵活到可以切换至*自渲染*，从而在任何具有图形接口的平台上实现像素级一致的渲染效果。这还没完，通过 [**Lynx for Web**](https://github.com/lynx-family/lynx-stack/tree/main/packages/web-platform)，Lynx 还可以原生运行在 Web 浏览器中。这些特性共同赋予了 Lynx 在扩展到更多平台（如桌面、电视或物联网设备）时的极强适应性。
+
+### 这不是终点，而是新的起点
+
+肩负着大量业务的 Lynx 必须得是**生产就绪**的，我们今天开源的正是我们在生产环境中实际使用的版本，这也是为什么它直接从 3.x 版本起步的原因。它甚至包含了一些我们计划废弃的遗留代码和 API，但我们相信，真正的开源就是应该开源我们实际依赖的代码。**我们会将所有开发迁移到 GitHub**，使其对社区完全开放和透明。
+
+这次发布仅仅是一个开始。今天开源的内容也*并非* Lynx 的全部。许多我们引以为豪的功能——包括更丰富的 UI 组件、先进的内置图形能力、自定义渲染器和其他框架等——还都在路上。
+
+更重要的是，这是我们一段新旅程的开始。作为一个在开源领域相对年轻的团队，我们深知在开放协作、社区共建和生态成长方面将会有许多需要学习的地方。但我们依然很坚定地迈出了这一步，因为我们相信，开源是正确的道路——**它将促进协作，为跨平台技术带来新的可能性，并对给予了我们如此之多的开源社区进行回馈**。我们邀请你一同加入这段旅程，期待你的反馈和贡献。
+
+_你会用 Lynx 创造些什么呢？_
+
+![lynx-unlock-native-for-more](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-unlock-native-for-more.png)

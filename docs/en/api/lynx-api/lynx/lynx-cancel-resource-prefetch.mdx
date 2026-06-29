@@ -1,0 +1,128 @@
+---
+title: cancelResourcePrefetch()
+api: lynx-api/lynx/cancelResourcePrefetch
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: cancelResourcePrefetch() static method
+
+<APISummary />
+
+- This API is used to cancel resource preloading initiated by [requestResourcePrefetch](./lynx-request-resource-prefetch).
+
+## Syntax
+
+```ts
+cancelResourcePrefetch(data: object, callback: (res: object) => void) : void;
+```
+
+### Parameters
+
+#### `data`
+
+A collection that describes the details of all resources to be canceled for preloading, with its keys defined as follows:
+
+- `data`: Type `array`, each item inside the array corresponds to a resource. The keys for each item are defined as follows:
+  - `uri`: Type `string`, represents the CDN address of the resource.
+  - `type`: Type `string`, represents the type of resource. The supported resource types are defined as follows:
+    - `video`: Audio/video resources (preloading cancellation for image and font resources is currently not supported)
+  - `params`: Custom control parameters for canceling preloading, the supported parameters are as follows:
+    - `preloadKey`: Only for `video` type resources. Represents a unique key that identifies the resource. It is necessary to ensure that the `preloadKey` passed here is consistent with that used when calling [requestResourcePrefetch](./lynx-request-resource-prefetch). This is a required parameter.
+
+#### `callback`
+
+The callback function that is called after the API execution is completed or fails. The structure of its return parameters is as follows:
+
+- `code`: Type `number`, status code, which may take the following values:
+  - `0`: Success
+  - `11001`: Parameter error
+- `msg`: Type `string`, a global error message
+- `details`: Type `array`, where each detail represents the cancelation status details of a resource. The structure of each detail is as follows:
+  - `code`: Type `number`, status code, which may take the following values:
+    - `0`: Success
+    - `11001`: Parameter error
+  - `msg`: Type `string`, error message
+  - `uri`: Type `string`, represents the CDN address of the resource.
+  - `type`: Type `string`, represents the type of the resource, defined as follows:
+    - `video`: Audio/video resources
+
+### Return Value
+
+None (`undefined`).
+
+## Exceptions
+
+- When there is a parameter error, `code` will return the `11001` error code, and the `msg` will contain detailed error information.
+
+## Example
+
+```js
+import { useEffect } from '@lynx-js/react';
+
+function Page() {
+  // We need to preload two videos.
+  // First, prepare the resource parameters, assigning the necessary preloadKey to the videos.
+  let resData = [
+    {
+      uri: 'https://zzzzz1.mp4',
+      type: 'video',
+      params: { preloadKey: 'zzzzz1' },
+    },
+    {
+      uri: 'https://zzzzz2.mp4',
+      type: 'video',
+      params: { preloadKey: 'zzzzz2' },
+    },
+  ];
+
+  useEffect(() => {
+    // Call requestResourcePrefetch to initiate preloading
+    lynx.requestResourcePrefetch?.(
+      {
+        data: resData,
+      },
+      (res) => {
+        if (res.code == 0) {
+          console.log('success!');
+        } else {
+          console.log('fail! ', res.msg);
+        }
+        console.log(
+          'prefetch status of each resource:',
+          JSON.stringify(res.details),
+        );
+      },
+    );
+  }, []);
+
+  const handleTap = () => {
+    // Trigger the cancellation of resource preloading on click
+    // Call cancelResourcePrefetch to cancel the preloading
+    lynx.cancelResourcePrefetch?.(
+      {
+        data: resData,
+      },
+      (res) => {
+        if (res.code == 0) {
+          console.log('success!');
+        } else {
+          console.log('fail! ', res.msg);
+        }
+        console.log(
+          'cancel status of each resource:',
+          JSON.stringify(res.details),
+        );
+      },
+    );
+  };
+
+  return <view onTap={handleTap}>{/* ... */}</view>;
+}
+
+export default Page;
+```
+
+## Compatibility
+
+<APITable />

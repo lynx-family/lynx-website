@@ -1,0 +1,234 @@
+---
+title: SystemInfo
+api: lynx-api/global/SystemInfo
+---
+
+import { APISummary, APITable } from '@lynx';
+
+import { Tab, Tabs } from '@theme';
+
+<APISummary />
+
+# SystemInfo
+
+`SystemInfo` is a plain JavaScript object that contains information of the current system.
+
+## Syntax
+
+```ts
+declare const SystemInfo: {
+  /**
+   * The version of the Lynx Engine.
+   *
+   * @example '3.2'
+   */
+  readonly engineVersion: string;
+
+  /**
+   * The version of the Lynx Engine.
+   * @example '3.2'
+   * @deprecated Use `SystemInfo.engineVersion` instead
+   */
+  readonly lynxSdkVersion: string;
+
+  /**
+   * The current operating system version.
+   */
+  readonly osVersion: string;
+
+  /**
+   * The physical pixel height of the real device.
+   */
+  readonly pixelHeight: number;
+
+  /**
+   * The physical pixel width of the real device.
+   */
+  readonly pixelWidth: number;
+
+  /**
+   * The physical pixel ratio of the main screen.
+   */
+  readonly pixelRatio: number;
+
+  /**
+   * The platform of the current device.
+   */
+  readonly platform: 'Android' | 'iOS' | 'macOS' | 'windows' | 'headless';
+
+  /**
+   * The JavaScript engine currently used.
+   * @note Not avaliable in lepus
+   */
+  readonly runtimeType: 'v8' | 'jsc' | 'quickjs';
+};
+```
+
+### Fields
+
+#### engineVersion
+
+The Lynx Engine version, in format `major.minor`.
+
+E.g.: `3.2`.
+
+#### ~~lynxSdkVersion~~
+
+The Lynx Engine version, in format `major.minor`.
+
+E.g.: `3.2`.
+
+#### osVersion
+
+A string representing the current version of the operating system.
+
+<Tabs groupId="os">
+<Tab value="ios" label="iOS">
+
+> [systemVersion | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uidevice/1620043-systemversion?language=objc)
+
+```objc
+[[UIDevice currentDevice].systemVersion UTF8String]
+```
+
+</Tab>
+<Tab value="android" label="Android">
+
+Equivalent to the Java [`Build.VERSION.SDK_INT`](https://developer.android.com/reference/android/os/Build.VERSION#SDK_INT) API.
+
+> [API Levels | Android NDK | Android Developers](https://developer.android.com/ndk/reference/group/apilevels#android_get_device_api_level)
+
+```cpp
+std::to_string(android_get_device_api_level())
+```
+
+</Tab>
+</Tabs>
+
+#### pixelHeight
+
+The absolute height of the available display size in pixels.
+
+<Tabs groupId="os">
+<Tab value="ios" label="iOS">
+
+> [UIScreen | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscreen?language=objc)
+
+```objc
+CGSize screenSize;
+if (!CGSizeEqualToSize(builder.screenSize, CGSizeZero)) {
+  screenSize = builder.screenSize;
+} else {
+  screenSize = [UIScreen mainScreen].bounds.size;
+}
+const CGFloat scale = [UIScreen mainScreen].scale;
+// highlight-next-line
+const CGFloat pixelHeight = screenSize.height * scale;
+```
+
+</Tab>
+<Tab value="android" label="Android">
+
+> [DisplayMetrics | Android Developers](https://developer.android.com/reference/android/util/DisplayMetrics)
+
+```java
+DisplayMetrics dm = context.getResources().getDisplayMetrics();
+// highlight-next-line
+int pixelHeight = dm.heightPixels;
+```
+
+</Tab>
+</Tabs>
+
+#### pixelWidth
+
+The absolute width of the available display size in pixels.
+
+<Tabs groupId="os">
+<Tab value="ios" label="iOS">
+
+> [UIScreen | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscreen?language=objc)
+
+```objc
+CGSize screenSize;
+if (!CGSizeEqualToSize(builder.screenSize, CGSizeZero)) {
+  screenSize = builder.screenSize;
+} else {
+  screenSize = [UIScreen mainScreen].bounds.size;
+}
+const CGFloat scale = [UIScreen mainScreen].scale;
+// highlight-next-line
+const CGFloat pixelWidth = screenSize.width * scale;
+```
+
+</Tab>
+<Tab value="android" label="Android">
+
+> [DisplayMetrics | Android Developers](https://developer.android.com/reference/android/util/DisplayMetrics)
+
+```java
+DisplayMetrics dm = context.getResources().getDisplayMetrics();
+// highlight-next-line
+int pixelWidth = dm.widthPixels;
+```
+
+</Tab>
+</Tabs>
+
+#### pixelRatio
+
+The natural scale factor associated with the screen.
+
+<Tabs groupId="os">
+<Tab value="ios" label="iOS">
+
+> [UIScreen | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscreen?language=objc)
+
+```objc
+const CGFloat pixelRatio = [UIScreen mainScreen].scale;
+```
+
+</Tab>
+<Tab value="android" label="Android">
+
+> [DisplayMetrics | Android Developers](https://developer.android.com/reference/android/util/DisplayMetrics#density)
+
+```java
+DisplayMetrics dm = context.getResources().getDisplayMetrics();
+// highlight-next-line
+float pixelRatio = dm.density;
+```
+
+</Tab>
+</Tabs>
+
+#### platform
+
+The platform of the current device.
+
+Candidate values:
+
+1. `iOS`
+1. `Android`
+1. `macOS`
+1. `windows`
+
+#### runtimeType
+
+The JavaScript engine currently used.
+
+:::info
+This is only avaliable in the background thread.
+:::
+
+Candidate values:
+
+1. `quickjs`
+1. `jsc`
+1. `v8`
+
+See [JavaScript Environment](/guide/scripting-runtime/index) for more details.
+
+## Compatibility
+
+<APITable />

@@ -1,0 +1,245 @@
+import { Go } from '@lynx';
+
+# Theming
+
+Lynx supports a wide range of [CSS properties](/api/css/properties), enabling seamless integration with [CSS selectors](/api/css/selectors), [CSS variables](/api/css/properties/css-variable), and opt-in CSS inheritance. By defining and managing different theme variables, developers can easily switch between various color schemes, font styles, and other visual elements, ensuring an optimal visual experience and interaction for users.
+
+## Using CSS Descendant Selectors to Switch Themes
+
+Similar to web development, using descendant selectors by toggling the class of a parent element can affect the styles of all its descendant nodes, thus enabling the switching of multiple theme styles.
+
+### Defining CSS Themes
+
+First, multiple theme CSS styles need to be defined, with different themes having different properties such as colors and backgrounds. For example, we can define both light and dark theme styles, with the light mode defined using `.theme-light .content` and the dark mode defined using `.theme-dark .content`.
+
+```css
+/* light theme */
+.theme-light .content {
+  color: black;
+  background-color: white;
+}
+
+/* dark theme */
+.theme-dark .content {
+  color: white;
+  background-color: black;
+}
+```
+
+### Applying CSS Styles
+
+In the page, set the class of the ancestor node (can be defined in the [`page`](/api/elements/built-in/page#using-page-element-explicitly)) to `theme-dark` or `theme-light`, and set the class of the descendant nodes to `content`. In this way, the descendant nodes can be styled with `.theme-light .content` or `.theme-dark .content` styles.
+
+```tsx
+function App() {
+  return (
+    <view className="theme-dark">
+      <view>
+        <text className="content">text</text>
+      </view>
+    </view>
+  );
+}
+```
+
+### Switching Theme Styles
+
+When the theme changes, switch the class of the ancestor node to `theme-dark` or `theme-light`, which will update the styles of the descendant nodes. In the Lynx development scenario, the front-end themes can be notified by the native client. For example, the native client can notify the front-end of theme changes by updating [globalProps](/api/lynx-api/lynx/lynx-global-props).
+
+The corresponding front-end implementation:
+
+```tsx
+import { useMemo } from '@lynx-js/react';
+import './App.css';
+
+export function App() {
+  const themeClass = useMemo(
+    () => `theme-${lynx.__globalProps.appTheme}`,
+    [lynx.__globalProps.appTheme],
+  );
+
+  return (
+    //themeClass's value is 'theme-dark' or 'theme-light'
+    <view className={themeClass}>
+      <view>
+        ...
+        <text className="content">Hello Theme</text>
+        ...
+      </view>
+    </view>
+  );
+}
+```
+
+### Example
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/descendant-class-theme.gif"
+  example="css"
+  defaultFile="src/descendant_selectors_theme/index.tsx"
+  defaultEntryFile="dist/descendant_selectors_theme.lynx.bundle"
+  entry="src/descendant_selectors_theme"
+></Go>
+
+## Using CSS Variables to Switch Themes
+
+When using descendant selectors for theme switching, we need to predefine selectors for different theme styles, which lacks flexibility when dealing with multiple themes.
+
+Using [CSS Variable](/api/css/properties/css-variable.mdx) to define theme styles and achieve theme switching by directly modifying the variable values.
+
+### Defining CSS Themes
+
+Similarly, we define the theme style variables that need to change and assign different values to the same variables.
+
+For example, under different themes, `color` and `background-color` need to change with the theme. Therefore, two CSS variables `--color` and `--bg` need to be defined.
+
+The descendant nodes can obtain the values of these variables in the stylesheet using `var(--color)` and `var(--bg)`.
+
+```css
+.theme-light {
+  --color: black;
+  --bg: white;
+}
+
+.content {
+  color: var(--color);
+  background-color: var(--bg);
+}
+```
+
+### Applying CSS Styles
+
+Note that CSS variables need to be mounted on the ancestor node (can be defined in the [`page`](/api/elements/built-in/page#using-page-element-explicitly)) so that their descendant nodes can use these variables in their respective stylesheets.
+
+The descendant nodes can apply the values of these variables in `.content` using the `var(--*)` syntax.
+
+```tsx
+function App() {
+  return (
+    <view id="root" className="theme-light">
+      <view>
+        <text className="content">text</text>
+      </view>
+    </view>
+  );
+}
+```
+
+### Switching Theme Styles
+
+#### Directly Changing CSS Variable Values with JS
+
+Use JS API ([`setProperty`](/api/css/properties/css-variable#modifying-css-variables-via-javascript-api)) to directly modify CSS variable values, allowing flexible batch updates of CSS variables.
+
+```tsx
+import './App.css';
+
+export function App() {
+  const handleClick = () => {
+    lynx.getElementById('root').setProperty({
+      '--color': 'white',
+      '--bg': 'black',
+    });
+  };
+
+  return (
+    <view id="root" className="theme-light" bindtap={handleClick}>
+      <text className="content">Hello Variable</text>
+    </view>
+  );
+}
+```
+
+#### Indirectly Changing Variable Values by Switching Classes
+
+Alternatively, you can indirectly modify variable values by switching classes on the ancestor node that define different [CSS variables](/api/css/properties/css-variable#modifying-the-selector-that-declares-css-variables), triggering style updates for all child nodes using these variables when theme switching is needed.
+
+For example, use `.theme-light` and `.theme-dark` to define CSS variable values for different themes:
+
+```css
+.theme-light {
+  --color: black;
+  --bg: white;
+}
+
+.theme-dark {
+  --color: white;
+  --bg: black;
+}
+
+.content {
+  color: var(--color);
+  background-color: var(--bg);
+}
+```
+
+Switching between `.theme-light` or `.theme-dark` on the ancestor node changes the values of `--color` and `--bg`, which updates the styles for corresponding `.content` elements.
+
+```tsx
+import { useMemo } from '@lynx-js/react';
+
+import './App.css';
+
+export function App() {
+  const themeClass = useMemo(
+    () => `theme-${lynx.__globalProps.appTheme}`,
+    [lynx.__globalProps.appTheme],
+  );
+
+  return (
+    //themeClass's value is 'theme-dark' or 'theme-light'
+    <view className={themeClass}>
+      <text id="test" className="content">
+        Hello Variable
+      </text>
+    </view>
+  );
+}
+```
+
+### Example
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-var-theme.gif"
+  example="css"
+  defaultFile="src/css_variable_theme/index.tsx"
+  defaultEntryFile="dist/css_variable_theme.lynx.bundle"
+  entry="src/css_variable_theme"
+  highlight="{23-43}"
+></Go>
+
+## Leveraging CSS Inheritance As Needed
+
+In pages with complex styles, using CSS inheritance can simplify development. However, implementing inheritance logic adds complexity to the style processing flow and can introduce some performance overhead. To optimize performance, Lynx does not enable inheritance for ordinary CSS properties by default, developers must enable it as needed. CSS custom properties (also known as CSS variables) are inherited by descendant nodes by default.
+
+### Inheritance of CSS Custom Properties
+
+[CSS Custom Properties](/api/css/properties/css-variable) (CSS variables, e.g., `--primary-color`) adhere to Web standards and are inherited by descendant nodes by default without additional configuration. Developers can define CSS custom properties in ancestor nodes to achieve dynamic style management.
+
+### Inheritance of Regular (Non-Custom) Properties
+
+To enable inheritance, configure[`enableCSSInheritance`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance).
+
+#### Default-Inheritable Properties
+
+After enabling `enableCSSInheritance`, these properties can be inherited:
+
+[`direction`](/api/css/properties/direction.mdx),[`color`](/api/css/properties/color.mdx),[`font-family`](/api/css/properties/font-family.mdx),[`font-size`](/api/css/properties/font-size.mdx),[`font-style`](/api/css/properties/font-style.mdx),[`font-weight`](/api/css/properties/font-weight.mdx),[`letter-spacing`](/api/css/properties/letter-spacing.mdx),[`line-height`](/api/css/properties/line-height.mdx),[`text-align`](/api/css/properties/text-align.mdx),[`text-decoration`](/api/css/properties/text-decoration.mdx),[`text-shadow`](/api/css/properties/text-shadow.mdx)
+
+Default inherited properties inherit behavior alignment with [🌐W3C definition](https://www.w3.org/TR/css-cascade-3/#inheriting)
+
+#### Custom-Inheritable Properties
+
+In addition to the default inheritable properties, you can configure the page with [`customCSSInheritanceList`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.customcssinheritancelist)to define custom inheritable CSS properties. When there are custom inheritance declarations, only the CSS properties listed in the `customCSSInheritanceList` will be inheritable.
+
+Example:
+
+```json
+"customCSSInheritanceList":["font-size","flex-direction"]
+```
+
+#### Limitations of CSS Inheritance
+
+1. Elements with `position: fixed` will always inherit properties only from the page.
+2. The keyword "inherit" is not supported.
+3. In addition to the default inheritable properties, only CSS properties with types enum or boolean support custom inheritance.

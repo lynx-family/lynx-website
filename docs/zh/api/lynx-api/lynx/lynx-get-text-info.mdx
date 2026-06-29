@@ -1,0 +1,80 @@
+---
+api: lynx-api/lynx/getTextInfo
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# getTextInfo()
+
+<APISummary />
+
+用于测量文本内容的宽度。
+
+## 语法
+
+```ts
+export interface TextInfo {
+  fontSize: string;
+  fontFamily?: string;
+  maxWidth?: string;
+  maxLine?: number;
+}
+
+export interface TextMetrics {
+  width: number;
+  content:  Array<string>;
+}
+
+getTextInfo(text: string, info: TextInfo): TextMetrics;
+```
+
+### 参数
+
+#### text
+
+需要测量的文本字符串。
+
+#### info
+
+设置在文本上的属性信息，支持设置 fontSize、fontFamily、maxWidth 和 maxLine，其中 fontSize 是必选项，fontSize 和 maxWidth 只支持 px 单位。
+
+### 返回值
+
+文本测量的结果，包含宽度和每行的文本字符串，返回宽度 width 单位为 px。
+
+## 示例
+
+```ts
+// default font family
+const { width } = lynx.getTextInfo('text content', { fontSize: '14px' });
+
+const { width } = lynx.getTextInfo('text content', {
+  fontSize: '14px',
+  fontFamily: 'PingFang SC',
+});
+
+const { content } = lynx.getTextInfo('text content', {
+  fontSize: '14px',
+  fontFamily: 'PingFang SC',
+  maxWidth: '100px',
+  maxLine: 2,
+});
+```
+
+::: tip
+
+- 强烈建议检测传递的参数，非预期内的数据建议过滤掉减少非预期的耗时。例如 fontSize 为 0，1 这类无实际意义的数据，maxWidth 为 0、1、2 这类过小的数据。
+
+- fontFamily 暂时只支持内置字体，不支持通过 font-face 设置的自定义字体，不设置 fontFamily 时使用默认字体。
+
+- 暂不支持 letterSpacing、fontWeight 等未显示声明支持的属性。
+
+- 如果 maxLine 设置为 1，则返回的 TextMetrics 里不会包含 content，此时传输 content 无意义，避免一次传输开销。
+
+- 入参不符合要求的情况，比如 `maxLine > 1 && maxWidth < 1` 或者 `fontSize <= 0` 或者 textContent 是空则会返回 `TextMetrics {width: 0}`。
+
+:::
+
+## 兼容性
+
+<APITable />

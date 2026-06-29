@@ -1,0 +1,93 @@
+---
+api: css/properties/background-clip
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# background-clip
+
+<APISummary />
+
+## 介绍
+
+`background-clip` 设置元件的背景 (目前只支持背景图片) 是否延伸到边框 (`border`)、内边距盒子 (`padding-box`)、内容盒子 (`content-box`) 下面。<br />
+如果没有设置 ([`background-image`](./background-image.mdx))，那么这个属性只有在边框 ([`border`](./border.mdx)) 被设置为非实心 (solid)、透明或半透明时才能看到视觉效果，否则，本属性产生的样式变化会被边框覆盖。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/background-clip/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background-clip.jpg"
+  defaultEntryFile="dist/background-clip.lynx.bundle"
+  entry="src/background-clip"
+/>
+
+## 语法
+
+```css
+background-clip: border-box;
+background-clip: padding-box;
+background-clip: content-box;
+background-clip: border-area;
+
+background-clip: border-box, content-box, padding-box, border-area;
+```
+
+### 取值
+
+- **`border-box`** <br/>
+  背景延伸至边框外沿 (但是在边框下层)。
+
+- **`padding-box`** <br/>
+  背景延伸至内边距 ([`padding`](./padding.mdx)) 外沿。不会绘制到边框处。
+
+- **`content-box`**
+  背景被裁剪至内容区 (content box) 外沿。
+
+- **`border-area`**
+  背景被裁切到边框绘制的区域，该区域会考虑 [`border-width`](./border-width.mdx) 的值。
+
+- 默认值
+  **border-box**
+
+## 注意事项
+
+当指定多个 `background-clip` 时，如果指定的 clip 的数量比 [`background-image`](./background-image.mdx) 的数量少时。第一个 clip 的值会作用在剩下的 [`background-image`](./background-image.mdx) 上。
+
+:::warning
+此属性对 `background-color` 不生效
+:::
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>border-box</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+<background-clip> = <box> | border-area
+
+where
+
+<box> = border-box | padding-box | content-box
+
+```
+
+## 与 Web 的区别
+
+- 只支持关键字 `border-box`、`padding-box`、`content-box` <br />
+  css 标准中还支持 `inherit`、`initial` 和 `unset`
+
+- `border-area` 只考虑 `border-width` 不考虑 `border-style`
+
+## 兼容性
+
+<APITable />

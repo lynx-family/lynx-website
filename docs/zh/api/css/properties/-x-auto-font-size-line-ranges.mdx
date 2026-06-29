@@ -1,0 +1,74 @@
+---
+api: css/properties/-x-auto-font-size-line-ranges
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# -x-auto-font-size-line-ranges
+
+<APISummary />
+
+## 介绍
+
+`-x-auto-font-size-line-ranges` 属性为文本字号自适应定义基于行数的字号范围规则。它需要与 `-x-auto-font-size: true` 配合使用，用于为不同的实际渲染行数指定不同的字号搜索区间。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/-x-auto-font-size-line-ranges/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/auto-font-size-line-ranges.jpeg"
+  defaultEntryFile="dist/-x-auto-font-size-line-ranges.lynx.bundle"
+  entry="src/-x-auto-font-size-line-ranges"
+/>
+
+## 语法
+
+```css
+-x-auto-font-size: true;
+-x-auto-font-size-line-ranges:
+  line-range(1, 18px, 22px), line-range(2, 16px, 18px),
+  line-range(3 to infinity, 14px);
+```
+
+### 取值
+
+- `line-range(<line-count>, <min-size>[, <max-size>])`
+  - 定义一条行数规则。
+  - `<line-count>` 可以是精确的正整数，例如 `1`，也可以是开放区间，例如 `3 to infinity`。
+  - `<min-size>` 为必填项，类型是 [`<length>`](/api/css/data-type/length.mdx)。
+  - `<max-size>` 为可选项，类型是 [`<length>`](/api/css/data-type/length.mdx)。如果省略，则默认等于 `<min-size>`，表示命中该规则时使用固定字号。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>[]</>}
+  appliesTo={<>text</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+-x-auto-font-size-line-ranges = <line-range-function>#
+
+<line-range-function> = line-range( <line-count> , <length> [, <length>]? )
+<line-count> = <integer> | <integer> to infinity
+```
+
+## 与 Web 的区别
+
+- Lynx 特有的属性。
+
+## 注意事项
+
+- 此属性仅在 `-x-auto-font-size` 开启时生效。
+- 此属性会覆盖 `-x-auto-font-size` 中的最小字号和最大字号设置。
+- 当此属性被设置后，`-x-auto-font-size-preset-sizes` 不生效。
+
+## 兼容性
+
+<APITable />

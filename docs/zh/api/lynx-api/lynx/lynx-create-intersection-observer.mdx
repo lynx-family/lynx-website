@@ -1,0 +1,88 @@
+---
+title: createIntersectionObserver()
+api: lynx-api/lynx/createIntersectionObserver
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: createIntersectionObserver() static method
+
+<APISummary />
+
+`lynx.createIntersectionObserver` 方法可以被用来创建一个 `IntersectionObserver` 对象，可以通过传入参数定制对象行为，对象一旦创建便不可修改。
+
+## 语法
+
+```ts
+lynx.createIntersectionObserver(
+  component: BaseInstance,
+  options ? options : {
+    thresholds : [0],
+    initialRatio : 0,
+    observeAll : false,
+  }
+): IntersectionObserver;
+```
+
+### 参数
+
+#### component
+
+```ts
+component: BaseInstance;
+```
+
+前端自定义 `component` 或 `card` 实例，目标节点和参照节点的查找优先在该 `component` 中查找，如果查找不到再进行全局查找。
+
+#### options
+
+```ts
+options
+  ? options
+  : {
+      thresholds: [0],
+      initialRatio: 0,
+      observeAll: false,
+    };
+```
+
+指定 `IntersectionObserver` 对象的行为：
+
+- `thresholds`：每个数组元件的有效范围是 `[0, 1]`，指定交叉状态变化的阈值列表，当目标节点与参照节点的相交比例经过其中的某个阈值时触发回调，经过表示旧的相交比例和新的相交比例在阈值的两边或相交比例等于阈值
+- `initialRatio`：有效范围是 `[0, 1]`，指定首次检测时触发回调的阈值，当首次检测的相交比例大于该阈值时触发回调
+- `observeAll`：指定是否同时观察多个目标节点
+
+### 返回值
+
+[IntersectionObserver 对象](../intersection-observer.mdx)。
+
+## 示例
+
+可以通过以下三个步骤来观察目标节点与参照节点交叉状态的变化：
+
+1. 创建 `IntersectionObserver` 对象，指定交叉状态变化的阈值列表
+2. 调用 `IntersectionObserver` 对象的 `relativeTo*` 方法指定参照节点
+3. 调用 `IntersectionObserver` 对象的 `observe` 方法指定目标节点与回调
+4. 调用 `IntersectionObserver` 对象的 `disconnect` 方法清除目标节点与回调
+
+```tsx
+// 1. 创建 IntersectionObserver 对象
+const observer = lynx.createIntersectionObserver(this, {
+  thresholds: [0, 0.25, 0.5, 0.75, 1.0],
+});
+
+// 2. 调用 relativeTo 方法指定参照节点
+observer.relativeTo('#refNode', { left: 10, right: 10 });
+
+// 3. 调用 observer 方法指定目标节点与回调
+observer.observe('#targetNode', (res) => {
+  console.log('IntersectionObserver: ', JSON.stringify(res));
+});
+
+// 4. 调用 disconnect 方法清除目标节点与回调
+observer.disconnect();
+```
+
+## 兼容性
+
+<APITable />

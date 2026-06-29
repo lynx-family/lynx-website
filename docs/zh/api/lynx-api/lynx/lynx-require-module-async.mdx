@@ -1,0 +1,74 @@
+---
+title: requireModuleAsync()
+api: lynx-api/lynx/requireModuleAsync
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: requireModuleAsync() static method
+
+<APISummary />
+
+引入一个模块，类似 [`requireModule`](./lynx-require-module.mdx) 函数，但是加载过程是异步进行的，加载过程中会执行其他 JavaScript 代码。
+
+`requireModuleAsync` 加载的模块需要使用特定的格式，可以使用 [`@lynx-js/runtime-wrapper-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/runtime-wrapper-webpack-plugin) 来生成可以被 `requireModuleAsync` 加载的模块。
+
+## 语法
+
+```ts
+requireModuleAsync<T>(path: string, callback: (error: Error | null, exports?: T) => void): void;
+```
+
+### 参数
+
+#### path
+
+模块路径，可以是远程路径，也可以是模板内的路径。
+
+#### callback
+
+模块加载完成或失败后调用的回调函数。
+
+- 如果加载过程中发生了错误，一个 `error` 对象会作为第一个参数被传入
+- 其他情况下，`null` 会作为第一个参数被传入，模块的导出值会作为第二个参数被传入
+
+### 返回值
+
+无（`undefined`）。
+
+## 异常
+
+当出现网络错误，或者模块执行失败时，`requireModuleAsync` 会将异常作为第一个参数传给回调函数。
+
+## 示例
+
+### 加载远程资源
+
+```tsx
+lynx.requireModuleAsync('https://example.com/path/to/chunk', (err, exports) => {
+  if (err) {
+    return;
+  }
+  // use exports
+});
+```
+
+### Promisify
+
+```js
+const requireModulePromise = (path) =>
+  new Promise((resolve, reject) => {
+    lynx.requireModuleAsync(path, (err, exports) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(exports);
+    });
+  });
+
+await requireModulePromise('path/to/chunk');
+```
+
+## 兼容性
+
+<APITable />

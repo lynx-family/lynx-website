@@ -1,0 +1,32 @@
+@mixin badge-style {
+  @apply inline-flex items-center justify-center rounded-full text-xs
+    bg-secondary font-semibold px-2.5 h-6 gap-1 text-xs;
+  padding: 0.125rem 0.5rem;
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+$lynx-ui-badge-names: (
+  'New': 'New',
+  'Deprecated': 'Deprecated',
+);
+
+// Scope to lynx-ui subsite to avoid leaking into main site sidebar
+[data-subsite='lynx-ui'] {
+  @each $context, $label in $lynx-ui-badge-names {
+    .rspress-sidebar-collapse[data-context='#{$context}'],
+    .rspress-sidebar-item[data-context='#{$context}']:not(
+        :has(.rspress-sidebar-item)
+      )
+      div {
+      position: relative;
+
+      &:after {
+        content: '#{$label}';
+        @include badge-style;
+      }
+    }
+  }
+}

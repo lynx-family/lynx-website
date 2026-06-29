@@ -1,0 +1,65 @@
+---
+title: relativeTo()
+api: lynx-api/intersection-observer/relativeTo
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# IntersectionObserver: relativeTo() method
+
+<APISummary />
+
+The `relativeTo` method can be used to specify a reference node. The reference node is specified by `id`. The viewport of the reference node can be scaled according to `margins`.
+
+## grammar
+
+```ts
+relativeTo(
+   selector: string,
+   margins ? margins : {left: 0, right: 0, top: 0, bottom: 0}
+): IntersectionObserver;
+```
+
+### Parameters
+
+#### selector
+
+```ts
+selector: string;
+```
+
+Specify the `id` used when searching for the reference node. It will first search in the `component` passed in when creating the `IntersectionObserver` object. If not found, the global search will be performed. If the global search is not found, `LynxView` will be used as the reference node.
+
+#### margins
+
+```ts
+margins ? margins : { left: 0, right: 0, top: 0, bottom: 0 };
+```
+
+Specifies the zoom value of the reference node window. This value only affects the detection of the intersection state and does not affect the actual view display. A positive value means expanding the reference node window boundary, and a negative value means shrinking the reference node window boundary.
+
+| Property name | Type               | Description                                                |
+| ------------- | ------------------ | ---------------------------------------------------------- |
+| `left`        | `number ｜ string` | The scaling value of the left boundary of the target node  |
+| `right`       | `number ｜ string` | The scaling value of the right boundary of the target node |
+| `top`         | `number ｜ string` | The scaling value of the upper boundary of the target node |
+| `bottom`      | `number ｜ string` | The scaling value of the lower boundary of the target node |
+
+### return value
+
+[IntersectionObserver object](../intersection-observer.mdx).
+
+### Precautions
+
+The intersection state between the target node and the reference node and the target node and the ancestor node is defined as the smallest intersection ratio as follows:
+
+1. When the reference node is valid, that is, the reference node is the ancestor node of the target node, select the smallest
+   - The intersection ratio of the target node and the reference node (scaled by `margins`)
+   - The intersection ratio between the target node and the ancestor node. The ancestor node includes the nodes on the path from the target node to the reference node. The ancestor node will be ignored when `overflow: visible` is set.
+2. When the reference node is invalid, that is, the reference node is not the ancestor node of the target node or there is no node with the `id` set, select the smallest one below
+   - The intersection ratio between the target node and `LynxView` (scaled by `margins`)
+   - The intersection ratio between the target node and the ancestor node. The ancestor node includes the nodes on the path from the target node to `LynxView`. The ancestor node will be ignored when `overflow: visible` is set.
+
+## Compatibility
+
+<APITable />

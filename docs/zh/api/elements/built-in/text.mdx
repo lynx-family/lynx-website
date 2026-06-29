@@ -1,0 +1,707 @@
+---
+api: elements/text
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+
+# `<text>`
+
+<APISummary />
+
+`<text>` 是 Lynx 内置元件，用来显示文本内容。支持指定文字样式，支持绑定点击事件回调。`<text>` 内部可以嵌套 `<text>`, [`<image>`](/api/elements/built-in/image.mdx), 以及 [`<view>`](/api/elements/built-in/view.mdx)，以实现相对复杂的图文内容展示。
+
+## 使用指南
+
+`<text>` 元件具有自己的布局上下文，类似于 Web 中的[行内格式化上下文](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_inline_layout/Inline_formatting_context)。与 `<view>` 不同,它不支持 `display` 等属性。如需了解更多关于 `<text>` 元件的文本样式设置,请参阅[文本与排版指南](/guide/styling/text-and-typography)。
+
+### 嵌套 `<text>`
+
+嵌套 `<text>` 指的是在 `<text>` 元素标签内部嵌套另一个 `<text>` 元素标签。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-text-demo.jpeg"
+  example="text"
+  defaultFile="src/inline_text/index.tsx"
+  defaultEntryFile="dist/inline_text.lynx.bundle"
+  entry="src/inline_text"
+/>
+
+由于 Lynx 默认[不开启 CSS 继承](/guide/styling/custom-theming#按需使用-css-继承)，子节点并不会继承父节点的文本相关属性。我们建议在子节点上显示声明需要的样式。
+
+```tsx
+// 未开启 CSS 继承时父节点的 font-size 不会应用到子 <text> 节点上
+<view style={{ fontSize: '20px' }}>
+  <text>hello world</text>
+</view>
+```
+
+但是，嵌套 `<text>` 比较特殊，未开启 CSS 继承时也会应用父 `<text>` 的 `<color>` 和 `<font-family>` 属性，为保持一致建议在內联 `<text>` 显式覆盖父 `<text>` 的属性。
+
+```tsx
+<text style={{ color: 'red' }}>
+  red
+  <text>red</text>
+  <text style={{ color: 'blue' }}>blue</text>
+</text>
+```
+
+### 嵌套 `<image>`
+
+嵌套 `<image>` 指的是在 `<text>` 元素标签内部嵌套另一个 `<image>` 元素标签，可以用于实现图文混排。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+  example="text"
+  defaultFile="src/inline_image/index.tsx"
+  defaultEntryFile="dist/inline_image.lynx.bundle"
+  entry="src/inline_image"
+/>
+
+### 嵌套 `<view>`
+
+写在 `<text>` 元件内部的 `<view>` 会具有內联的特性，参与文本的布局。并且内部可以支持 `<view>` 标签的所有功能，内部可以添加边框、圆角以及其他任意元件内容。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-view-demo.gif"
+  example="text"
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryFile="dist/inline_view.lynx.bundle"
+  entry="src/inline_view"
+/>
+
+### `<inline-truncation>`
+
+`<inline-truncation>` 标签用于自定义文本出现省略时需要显示在文本末尾的内容。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-truncation-demo.png"
+  example="text"
+  defaultFile="src/inline_truncation/index.tsx"
+  defaultEntryFile="dist/inline_truncation.lynx.bundle"
+  entry="src/inline_truncation"
+/>
+
+### RTL 适配
+
+`<text>` 元件支持 RTL 语言的排版显示，在默认情况下，`<text>` 元件会根据文本内容判断文本语言，进而使用对应的排版方式。开发者也可以通过设置 `direction` 样式指定使用 RTL 排版。
+
+:::tip
+
+当 `direction` 设置为 `rtl` 或 `lynx-rtl` 时，`text-align:start` 会被转换成 `text-align:right`，同理 `text-align:end` 会被转换成 `text-align:left`。
+当 `direction` 设置为 `lynx-rtl` 时，`text-align:left` 会被转换成 `text-align:right`，同理 `text-align:right` 会被转换成 `text-align:left`。
+
+:::
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/text_direction_rtl_demo.jpeg"
+  highlight="{303-356}"
+  example="text"
+  defaultFile="src/text_style/index.tsx"
+  defaultEntryFile="dist/text_style.lynx.bundle"
+  entry="src/text_style"
+/>
+
+## 属性
+
+属性名和属性值用于描述元件的行为和外观
+
+### `text-maxline`
+
+```tsx
+
+// DefaultValue: '-1'
+text-maxline?: number;
+
+```
+
+限制文本内容显示的最大行数，同时需要设置 `overflow:hidden`
+
+### `include-font-padding` <AndroidOnly />
+
+```tsx
+
+// DefaultValue: false
+include-font-padding?: boolean;
+
+```
+
+开启安卓文本上下增加额外的 padding，开启会导致部分场景双端不一致
+
+### `tail-color-convert`
+
+```tsx
+
+// DefaultValue: false
+tail-color-convert?: boolean;
+
+```
+
+默认情况下，如果文字发生截断，插入的 `...` 所显示的颜色会是由最接近的 inline text 上的 style 指定的，如果开启该属性，`...` 的颜色会由最外层的 `text` 标签上的 style 中指定
+
+### `text-single-line-vertical-align`
+
+```tsx
+
+// DefaultValue: 'normal'
+text-single-line-vertical-align?: 'normal' | 'top' | 'center' | 'bottom';
+
+```
+
+用于设置单行纯文本行内居中和对齐，可通过设置 'top' | 'center' | 'bottom' 改变其行为。建议仅在默认字体不满足居中对齐要求时使用，会增加文本测量耗时
+
+### `text-selection`
+
+```tsx
+
+// DefaultValue: false
+text-selection?: boolean;
+
+```
+
+设置是否开启文本选择功能，开启时需要同时设置 `flatten={false}`
+
+### `custom-context-menu`
+
+```tsx
+
+// DefaultValue: false
+custom-context-menu?: boolean;
+
+```
+
+在开启 `text-selection` 之后生效，用于设置选择复制之后是否开启自定义弹出的上下文菜单
+
+### `custom-text-selection`
+
+```tsx
+
+// DefaultValue: false
+custom-text-selection?: boolean;
+
+```
+
+在开启 `text-selection` 之后生效，用于设置是否开启自定义文本选择功能，开启时元件不再处理选择复制相关手势逻辑，需要开发者通过 `setTextSelection` 等 API 控制
+
+## 事件
+
+前端可以在元件上绑定相应事件回调来监听元件的运行时行为。支持所有[基础事件](/api/elements/built-in/view.mdx#事件)。
+
+### `layout`
+
+```ts
+bindlayout = (e: layoutEvent) => {};
+
+interface LineInfo {
+  /**
+   * 该行相对整段文本的起始偏移量
+   */
+  start: number;
+  /**
+   * 该行相对整段文本的结束偏移量
+   */
+  end: number;
+  /**
+   * 行内文本被截断的字符数量. 如果不为0,说明整段文本在这一行发生了截断.
+   */
+  ellipsisCount: number;
+}
+
+interface layoutEvent extends CustomEvent {
+  detail: {
+    /**
+     * 文本布局之后,可以显示的文本行数
+     */
+    lineCount: number;
+    /**
+     * 详细的布局行内信息
+     */
+    lines: LineInfo[];
+    /**
+     * text 元件宽高
+     */
+    size: { width: number; height: number };
+  };
+}
+```
+
+layout 事件会返回文本布局后的结果信息，其中包含当前文本的行数，以及每行的文字在整段文本中的起始和结束位置。
+
+### `selectionchange`
+
+```ts
+bindselectionchange = (e: selectionChangeEvent) => {};
+
+interface selectionChangeEvent extends CustomEvent {
+  detail: {
+    /**
+     * 选中文本字符串的开始索引，非选择状态时为 -1
+     */
+    start;
+    /**
+     * 选中文本字符串的结束索引，非选择状态时为 -1
+     */
+    end;
+    /**
+     * 选择的方向，forward | backward
+     */
+    direction;
+  };
+}
+```
+
+文本选中范围变化时触发该事件。
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行组件的方法。
+
+### `setTextSelection`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "setTextSelection",
+    params: {
+      startX,  //相对元件的选中文本开始坐标x
+      startY,  //相对元件的选中文本开始坐标y
+      endX,  //相对元件的选中文本结束坐标x
+      endY,  //相对元件的选中文本结束坐标y
+      showStartHandle, //是否显示开始位置的浮标
+      showEndHandle,  //是否显示结束位置的浮标
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+通过开始和结束位置设置文本选中内容，并且可以控制开始和结束浮标是否显示，回调参数 `res` 的格式如下：
+
+```ts
+interface Rect {
+  left: number  //左边界
+  right: number  //右边界
+  top: number  //上边界
+  bottom: number  //下边界
+  width: number  //宽度
+  height: number  //高度
+}
+
+interface Handle {
+  x: number  //浮标中心x坐标
+  y: number  //浮标中心y坐标
+  radius: number //浮标默认响应触摸的半径
+}
+
+{
+  /**
+  * 选择文本的包围盒
+  */
+  boundingRect: Rect
+  /**
+  * 选择文本的行包围盒
+  */
+  boxes: Rect[]
+  /**
+  * 浮标位置和默认响应半径
+  */
+  handles: Handle[]
+}
+```
+
+### `getTextBoundingRect`
+
+```ts
+<text id="test"></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getTextBoundingRect",
+    params: {
+      start,
+      end,
+    },
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+获取指定范围文本的包围盒，，回调参数 `res` 的格式如下：
+
+```ts
+{
+  /**
+  * 选择文本的包围盒
+  */
+  boundingRect: Rect
+  /**
+  * 选择文本的行包围盒
+  */
+  boxes: Rect[]
+}
+```
+
+### `getSelectedText`
+
+```ts
+<text id="test" text-selection={true} flatten={false}></text>
+
+lynx.createSelectorQuery()
+  .select('#test')
+  .invoke({
+    method: "getSelectedText",
+    params: {},
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (error) {
+      console.log(error);
+    },
+}).exec();
+```
+
+获取选中文本的字符串
+
+## 加载自定义字体
+
+可以通过 [`@font-face`](/api/css/at-rule/font-face) 来指定自定义的字体资源，然后通过 [`font-family`](/api/css/properties/font-family) 属性来使用。
+需要客户端通过 [`GenericResourceFetcher`](/api/lynx-native-api/lynx-generic-resource-fetcher/fetch-resource.html) 实现对应的字体资源加载器，用来下载网络字体资源。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+```objective-c
+@interface ExampleGenericResourceFetcher : NSObject <LynxGenericResourceFetcher>
+
+- (void)fetchResource:(LynxResourceRequest *)request
+           onComplete:(LynxGenericResourceCompletionBlock)callback;
+
+@end
+```
+
+```objective-c
+@implementation ExampleGenericResourceFetcher
+
+NSURL *url = [NSURL URLWithString:request.url];
+NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url
+                                             cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                         timeoutInterval:5];
+
+[NSURLConnection sendAsynchronousRequest:urlRequest
+                                   queue:[NSOperationQueue mainQueue]
+                       completionHandler:^(NSURLResponse * _Nullable response,
+                                           NSData * _Nullable data,
+                                           NSError * _Nullable connectionError) {
+    if (!connectionError) {
+        // Notify font data
+        callback(data, nil);
+    } else {
+        callback(data, connectionError);
+    }
+}];
+@end
+
+// 构造`LynxView`时注册
+LynxViewBuilder.genericResourceFetcher = [[ExampleGenericResourceFetcher alloc] init];
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+public class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  @Override
+  public void fetchResource(LynxResourceRequest request, LynxResourceCallback<byte[]> callback) {
+    ...
+      // download font file through http
+      byte[] data = new byte[(int) file.length()];
+
+      // notify the font data if success
+      callback.onResponse(LynxResourceResponse.onSuccess(data));
+
+    ...
+  }
+}
+
+// 构造`LynxView`时注册
+LynxViewBuilder.setGenericResourceFetcher(new ExampleGenericResourceFetcher(context));
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```typescript
+import {
+  LynxError,
+  LynxSubErrorCode,
+  LynxGenericResourceFetcher,
+  LynxResourceRequest,
+  LynxResourceType,
+} from '@lynx/lynx';
+
+export class ExampleGenericResourceFetcher extends LynxGenericResourceFetcher {
+  fetchResource(
+    request: LynxResourceRequest,
+    callback: AsyncCallback<ArrayBuffer, void>,
+  ): void {
+    // download font file through http
+    let data: http.HttpResponse;
+    // notify the font data if success
+    callback.onResponse(LynxResourceResponse.onSuccess(data));
+  }
+}
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+## 大字模式
+
+客户端可以通过字体缩放相关 API，在用户更改系统或者应用字体大小之后，来修改字体的缩放比例，同时会发送 `onFontScaleChanged` 事件到前端。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/big-font-flow.png"
+  width="75%"
+  height="75%"
+/>
+
+### 使用方式
+
+1. 客户端: 在创建 LynxView 时使用 `LynxViewBuilder.setFontScale()` 设置字体缩放大小；
+   通过 `LynxView.updateFontScale()` 更新字体缩放大小。
+
+2. 前端: 设置的 `font-size` 和 `line-height` 会根据客户端设置的 `fontScale` 等比例放大缩小。
+   同时前端可通过监听 `onFontScaleChanged` 事件, 获取到客户端更新的 `fontScale`。
+
+前端监听 `onFontScaleChanged` 事件:
+
+```jsx
+const YourComponent = () => {
+  const [touchCount, setTouchCount] = useState(0);
+
+  useEffect(() => {
+    const eventEmitter = getJSModule('GlobalEventEmitter');
+    const listener = (msg) => {
+      console.log('onFontScaleChanged testGlobalEvent:', msg);
+      setTouchCount((prevCount) => prevCount + 1);
+    };
+
+    eventEmitter.addListener('onFontScaleChanged', listener);
+
+    return () => {
+      eventEmitter.removeListener('onFontScaleChanged', listener);
+    };
+  }, []);
+
+  return (
+    <view>
+      <text>touch: {touchCount}</text>
+    </view>
+  );
+};
+```
+
+## 更多功能
+
+### `<text>` 元件内选择复制
+
+`<text>` 元件支持文本选择复制能力。可以通过在 `<text>` 元件上设置 `text-selection` 属性开启此能力，同时需要设置 `flatten={false}`。
+
+```tsx
+<text text-selection={true} flatten={false}>
+  hello world
+</text>
+```
+
+长按文字即可高亮选中文本，同时弹出默认的上下文菜单，包含全选和复制按钮。
+
+:::note
+选择复制目前不支持 RTL
+:::
+
+如果开发者需要自定义的上下文菜单，需要设置 `custom-context-menu` 属性，并且通过绑定 `selectionchange` 事件和 `getTextBoundingRect` 方法来确定自定义上下文菜单的显示位置。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/sigle-text-copy.gif"
+  example="text"
+  defaultFile="src/text_selection/index.tsx"
+  entry="src/text_selection"
+  highlight="{26-48,128}"
+/>
+
+### 跨 `<text>` 元件选择复制 {#crosstext-selection-and-copying}
+
+如果需求是支持跨多个 `<text>` 元件进行选中并复制内容，需开发者自定义文本选择逻辑：
+
+1. 开启自定义文本选择模式
+
+需要在 `<text>` 元件上设置 `custom-text-selection` 属性，开启之后元件不再处理选择复制相关手势逻辑。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/cross-text-select.gif"
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  entry="src/cross_text_selection"
+  highlight="{270}"
+/>
+
+2. 在外层 `<view>` 上绑定手势事件
+
+在外层 `<view>` 上绑定长按、点击和触摸事件，用于控制选择复制相关手势逻辑。
+
+```jsx
+<view
+  id="container"
+  style={{ width: '90vw' }}
+  className="Container"
+  bindlongpress={handleLongPress}
+  bindtouchstart={handleTouchStart}
+  bindtouchmove={handleTouchMove}
+  bindtouchend={handleTouchEnd}
+  bindtap={handleTap}
+>
+  <text
+    id="0"
+    text-selection={true}
+    custom-text-selection={true}
+    flatten={false}
+    className="Title"
+  >
+    This is title
+  </text>
+  <view className="SplitLine" />
+</view>
+```
+
+3. 处理选择复制交互逻辑
+
+- 获取所有文本节点信息：组件挂载时获取所有可选中的文本节点信息，包含节点的 id 和宽高位置等信息
+
+```jsx
+const CrossTextSelection = () => {
+  useEffect(() => {
+    getTextNodeRect();
+}, []);
+
+// Asynchronous function to get the bounding rectangles of text nodes
+async function getTextNodeRect() {
+  // 1.Use lynx.createSelectorQuery () to get the required text node.
+  // 2.Call boundingClientRect method of the text node to get the rect of the node.
+}
+
+```
+
+- 用户长按：开始选区
+  长按后触发 `handleLongPress()` 进入文本选中状态，记录文本选中的开始位置，并且进行第一次选区更新。
+
+```jsx
+// Handle long press event to start text selection
+const handleLongPress = (e) => {
+  isSelecting = true;
+  startPosition.x = e.detail.x;
+  startPosition.y = e.detail.y;
+  setSelection(e.detail.x, e.detail.y, e.detail.x, e.detail.y);
+};
+```
+
+- 拖动手势：实时更新选中区域
+
+拖动中触发 `handleTouchMove()`，如果处于选中状态则更新选中区域
+
+```jsx
+// Handle touch move event to update the selection area
+const handleTouchMove = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+};
+```
+
+- 抬起手指：结束选区
+
+手指抬起触发 `handleTouchEnd()`，确定最终的选择区域，并且清除选中状态
+
+```jsx
+// Handle touch end event to finalize the selection
+const handleTouchEnd = (e) => {
+  if (isSelecting) {
+    setSelection(startPosition.x, startPosition.y, e.detail.x, e.detail.y);
+  }
+  isSelecting = false;
+};
+```
+
+单击空白：清除选区
+
+```jsx
+// Handle tap event to clear the selection
+const handleTap = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  setSelection(-1, -1, -1, -1);
+};
+```
+
+- 拖拽浮标：调整选区
+
+在 `handleTouchStart()` 中判断浮标中心和触摸位置是否在可拖拽的范围内，如果在则开始更新选中区域
+
+```jsx
+// Handle touch start event to check if the touch is on a handler
+const handleTouchStart = (e) => {
+  if (handlers.length === 0) {
+    return;
+  }
+  const { x, y } = e.detail;
+  for (const [index, handler] of handlers.entries()) {
+    if (
+      Math.pow(handler.x - x, 2) + Math.pow(handler.y - y, 2) <
+      Math.pow(handler.radius, 2)
+    ) {
+      isSelecting = true;
+      const another = handlers[(index + 1) % 2];
+      startPosition = { x: another.startX, y: another.startY };
+      break;
+    }
+  }
+};
+```
+
+## 兼容性
+
+### `<text>`
+
+<APITable />
+
+### 嵌套 `<text>`
+
+<APITable query="elements/nested-text" />
+
+### 嵌套 `<image>`
+
+<APITable query="elements/nested-image" />
+
+### `<inline-truncation>`
+
+<APITable query="elements/inline-truncation" />

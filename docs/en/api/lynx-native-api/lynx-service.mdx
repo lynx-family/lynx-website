@@ -1,0 +1,289 @@
+---
+api: lynx-native-api/lynx-service/lynx-service
+---
+
+import { APISummary, APITable, CodeFold } from '@lynx';
+import versionJson from '@site/docs/public/version.json';
+
+# LynxService API
+
+<APISummary />
+
+import { Tab, Tabs, Steps } from '@theme';
+
+## Introduction
+
+Lynx Service provides Lynx Engine with host-specific capabilities, including image, log, and [FetchAPI](/guide/interaction/networking.html#fetch-api) capabilities.
+Different hosts have specific requirements for their own image, log, and network libraries, so Lynx Engine opens up autonomous access capabilities for such scenarios through the LynxService API.
+
+## Overall Design
+
+Lynx Engine and Lynx Service adopt a dependency-separation design. In terms of the dependency relationship, Lynx Service depends on the LynxService API provided by Lynx Engine to implement itself, while Lynx Engine does not depend on LynxService. At runtime, Lynx Engine will search for the registered Lynx Service through the service lookup mechanism and call it via the LynxService API.
+
+## LynxService API
+
+The LynxService API is provided by Lynx Engine and is designed to specify the capabilities of LynxService. Lynx Service needs to correctly implement itself in accordance with the requirements of the LynxService API to ensure that Lynx Engine can properly use this basic capability.
+
+## 1. Quick Access
+
+Lynx provides a default implementation of Lynx Service, which can be directly [accessed](/guide/start/integrate-with-existing-apps)
+
+## 2. Lynx Service Customization
+
+If there are custom requirements, you can also quickly implement and register relevant content according to your own needs. The following will take log service as an example to introduce how to implement and register a custom Lynx Service:
+
+<Steps>
+
+### Interface Implementation
+
+<Tabs groupId="lynx-service-api">
+
+<Tab label="iOS">
+
+- 1. Implement `LynxServiceLogProtocol`
+
+```objective-c title="YourLogService.h"
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceLogProtocol.h>
+
+// Implement LynxServiceLogProtocol
+@interface YourLogService : NSObject <LynxServiceLogProtocol>
+@end
+```
+
+- 2. Use the `LynxServiceRegister` to achieve automatic registration.
+- 3. Implement `serviceBizID` and `serviceScope`. These two methods have no practical significance and will be removed later.
+- 4. Implement `serviceType`. It is required to return the type implemented by this Service. See LynxService.h for details.
+- 5. (Recommended) Implement `sharedInstance` to make it a singleton class. Based on the current Lynx Service design, only one instance of a certain type of Service will be used globally. It is recommended to implement it as a singleton class.
+- 6. Implement all the interfaces required by `LynxServiceLogProtocol`.
+
+<CodeFold toggle>
+
+```objective-c title="YourLogService.mm"
+#import "YourLogService.h"
+
+[[maybe_unused]] void logWrite(unsigned int level, const char *tag, const char *format) {
+  if (format == NULL) {
+    return;
+  }
+  NSLog(@"[%s] %s", tag == NULL ? "" : tag, format);
+}
+
+// Use the LynxServiceRegister macro to achieve automatic registration
+@LynxServiceRegister(LynxLogService);
+
+// Implement LynxLogService
+@implementation LynxLogService
+
+// Irrelevant property, will be removed later
++ (NSString*)serviceBizID {
+  return DEFAULT_LYNX_SERVICE;
+}
+
+// Irrelevant property, will be removed later
++ (LynxServiceScope)serviceScope {
+  return LynxServiceScopeDefault;
+}
+
+// Return the corresponding service type for runtime lookup
++ (NSUInteger)serviceType {
+  return kLynxServiceLog;
+}
+
+// Recommended: Implement as a singleton
++ (instancetype)sharedInstance {
+  static dispatch_once_t onceToken;
+  static YourLogService *logService;
+  dispatch_once(&onceToken, ^{
+    logService = [[YourLogService alloc] init];
+  });
+  return logService;
+}
+
+// Implement all the interfaces required by LynxServiceLogProtocol
+- (void *)getWriteFunction {
+  return (void *)logWrite;
+}
+
+@end
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Android">
+
+Implement `ILynxLogService`:
+
+<CodeFold toggle>
+
+```kotlin title="YourLogService.kt"
+object YourLogService : ILynxLogService {
+  private var logOutputChannel: LogOutputChannelType = LogOutputChannelType.Platform
+
+  override fun logByPlatform(
+    level: Int,
+    tag: String,
+    msg: String,
+  ) {
+    // Implemention
+  }
+
+  override fun isLogOutputByPlatform(): Boolean = logOutputChannel == LogOutputChannelType.Platform
+
+  override fun getDefaultWriteFunction(): Long = 0
+
+  override fun switchLogToSystem(enableSystemLog: Boolean) {}
+
+  override fun getLogToSystemStatus(): Boolean = false
+}
+```
+</CodeFold>
+
+</Tab>
+
+<Tab label="Harmony">
+
+Implement `ILynxLogService`:
+
+<CodeFold toggle>
+
+```typescript title="YourLogService.ets"
+import { ILynxLogService } from '@lynx/lynx';
+
+export class YourLogService implements ILynxLogService {
+  static instance = new YourLogService();
+
+  logByPlatform(level: number, tag: string, message: string): void {
+    console.log(`level: ${level} tag: ${tag} message: ${message}`);
+  }
+
+  isLogOutputByPlatform(): boolean {
+    return true;
+  }
+
+  getDefaultWriteFunction(): number {
+    return 0;
+  }
+}
+```
+</CodeFold>
+
+</Tab>
+
+<Tab label="Desktop C++">
+
+Implement a concrete Desktop service class. The following example uses `LynxHttpService`; `LynxSecurityService` and `LynxEventReporterService` follow the same pattern and override their own abstract entrypoints.
+
+<CodeFold toggle>
+
+```cpp title="YourHttpService.h"
+#include "lynx/platform/embedder/public/lynx_http_service.h"
+
+class YourHttpService : public lynx::pub::LynxHttpService {
+ public:
+  void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request,
+               std::shared_ptr<lynx::pub::LynxHttpResponse> response) override {
+    response->SetStatusCode(200);
+    response->SetStatusText("OK");
+    response->Complete();
+  }
+};
+```
+
+</CodeFold>
+
+Use the corresponding abstract class for each service type:
+
+- `LynxHttpService`: override `Request(...)`
+- `LynxSecurityService`: override `VerifyTASM(...)`
+- `LynxEventReporterService`: override `OnEvent(...)`
+
+</Tab>
+
+</Tabs>
+
+<div style={{ height: 30}} />
+
+### Service Register
+
+<Tabs groupId="lynx-service-api">
+
+<Tab label="iOS">
+
+Lynx Service has an automatic registration mechanism in iOS. In the implementation stage, the `LynxServiceRegister` macro has been used to complete the quick automatic registration.
+
+If you use your own implementation of Lynx Service, please delete the [default implementation](/guide/start/integrate-with-existing-apps.html?platform=ios) provided by Lynx.
+
+```diff title="Podfile" {1-5}
+pod 'LynxService', '{versionJson.LYNX_VERSION}', :subspecs => [
+      'Image',
+-     'Log',
+      'Http',
+  ]
+```
+
+</Tab>
+
+<Tab label="Android">
+
+Replace the implementation of log service in `LynxServiceCenter` in the [integration documentation](/guide/start/integrate-with-existing-apps.html?platform=android) with your implementation.
+
+```diff
+- LynxServiceCenter.inst().registerService(ILynxLogService::class.java, LynxLogService)
++ LynxServiceCenter.inst().registerService(ILynxLogService::class.java, YourLogService)
+```
+
+And delete related dependencies
+
+```diff title="build.gradle"
+dependencies {
+-   // integrating log-service
+-   implementation "engineer.lynx.test2:lynx-service-log:0.0.1"
+}
+```
+
+</Tab>
+
+<Tab label="Harmony">
+
+Replace the implementation of log service in `LynxServiceCenter` in the [integration documentation](/guide/start/integrate-with-existing-apps.html?platform=harmony) with your implementation.
+
+```diff
+- LynxServiceCenter.registerService(LynxServiceType.Log, LynxLogService.instance);
++ LynxServiceCenter.registerService(LynxServiceType.Log, YourLogService.instance);
+```
+
+And delete related dependencies
+
+```diff title="oh-package.json5"
+"dependencies": {
+- "@lynx/lynx_log_service": "0.0.1",
+}
+```
+
+</Tab>
+
+<Tab label="Desktop C++">
+
+Register the implemented service through `LynxServiceCenter`:
+
+```cpp
+auto service = std::make_shared<YourHttpService>();
+lynx::pub::LynxServiceCenter::GetInstance().RegisterService(service);
+```
+
+The registered service type is determined by the concrete service class:
+
+- `LynxHttpService` -> `kServiceTypeHttp`
+- `LynxSecurityService` -> `kServiceTypeSecurity`
+- `LynxEventReporterService` -> `kServiceTypeEventReporter`
+
+</Tab>
+
+</Tabs>
+
+</Steps>
+
+<APITable />

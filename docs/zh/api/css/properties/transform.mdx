@@ -1,0 +1,227 @@
+---
+api: css/properties/transform
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# transform
+
+<APISummary />
+
+## 介绍
+
+`transform` CSS 属性能够让你平移、旋转、缩放一个页面元件。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/transform/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/transform.jpg"
+  entry="src/transform"
+  defaultEntryFile="dist/transform.lynx.bundle"
+/>
+
+## 语法
+
+```scss
+/* Function values */
+transform: rotate(0.5turn);
+transform: rotateX(10deg);
+transform: rotateY(10deg);
+transform: translate(12px, 50%);
+transform: translate3d(12px, 50%, 3em);
+transform: translateX(2em);
+transform: translateY(3px);
+transform: translateZ(2px);
+transform: scale(2, 0.5);
+transform: scaleX(2);
+transform: scaleY(0.5);
+
+// equal to transform: translate(50px, 100px);
+transform: matrix(1, 0, 0, 1, 50, 100);
+// equal to transform: translateX(100px);
+transform: matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 0, 0, 1);
+
+/* Multiple function values */
+transform: translateX(10px) rotate(10deg) translateY(5px);
+transform: translate3d(10px, 0, 20px) rotateY(3deg);
+```
+
+`transform` 属性的值可以为一个或多个 `<function>`，它们之间使用空格分隔，详细介绍见 [function 标准语法](#function标准语法)
+
+### function 标准语法
+
+- **translate**
+
+```
+translate( <length> | <percentage> , <length> | <percentage>? )
+```
+
+- **translateX**
+
+```
+translateX( <length> | <percentage> )
+```
+
+- **translateY**
+
+```
+translateY( <length> | <percentage> )
+```
+
+- **translateZ**
+
+```
+translateZ( <length> )
+```
+
+:::info
+使用 translateZ 时，建议将该节点的父节点设置 `flatten={false}`，否则在 Android 上可能会导致父亲节点的 `overflow:hidden` 失效。
+同时，Android 上如果出现 translateZ 不生效的情况，可以试着将同一父节点的其他兄弟节点设置为 `transform: translateZ(0)`。
+:::
+
+- **translate3d**
+
+```
+translate3d( <length> | <percentage> , <length> | <percentage> , <length> )
+```
+
+- **rotate**
+
+```
+rotate( [ <angle> | <zero> ] )
+```
+
+- **rotateZ**
+
+```
+rotateZ( [ <angle> | <zero> ] )
+```
+
+- **rotateX**
+
+```
+rotateX( [ <angle> | <zero> ] )
+```
+
+- **rotateY**
+
+```
+rotateY( [ <angle> | <zero> ] )
+```
+
+- **scale**
+
+```
+scale( <number> , <number>? )
+```
+
+- **scaleX**
+
+```
+scaleX( <number> )
+```
+
+- **scaleY**
+
+```
+scaleY( <number> )
+```
+
+- **skew**
+
+```
+skew( [ <angle> | <zero> ], [ <angle> | <zero> ] )
+```
+
+- **skewX**
+
+```
+skewX( [ <angle> | <zero> ] )
+```
+
+- **skewY**
+
+```
+skewY( [ <angle> | <zero> ] )
+```
+
+- **matrix**
+
+```
+matrix(a, b, c, d, tx, ty)
+```
+
+- **matrix3d**
+
+```
+matrix3d(a1, b1, c1, d1, a2, b2, c2, d2, a3, b3, c3, d3, a4, b4, c4, d4);
+```
+
+::: info
+
+- `matrix(a, b, c, d, tx, ty)` 是 `matrix3d(a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1)` 的简写。
+
+- `matrix3d()` 函数由 16 个参数指定。这些参数以列为主的顺序进行描述。
+  - a1, b1, c1, d1
+    定义了第一个向量，主要负责 x 轴的缩放，旋转和错切等变换；
+  - a2, b2, c2, d2
+    定义了第二个向量，主要负责 y 轴的缩放，旋转和错切等变换；
+  - a3, b3, c3, d3
+    定义了第三个向量，主要负责 z 轴的缩放，旋转和错切等变换；
+  - a4, b4, c4, d4
+    定义了第四个向量，其中 a4, b4, c4 实现了 x, y, z 轴的平移变换，d4 一般设为 1，为保持计算权重稳定的一个数值。
+
+:::
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>空值</>}
+  appliesTo={<>所有元件</>}
+  inherited="no"
+  animatable="yes"
+/>
+
+## 注意事项
+
+:::info
+
+- transform rotateX 和 rotateY 旋转时若想要 3D 效果，需要 [perspective 属性](./perspective.mdx)配合。
+
+- **iOS** rotate 若有锯齿，通过给该节点添加 `allow-edge-antialiasing = true` 属性，打开抗锯齿。
+
+```
+Demo:
+<view allow-edge-antialiasing={true}></view>
+```
+
+:::
+
+:::info
+
+- transform 属性是顺序有关的，translate、rotate、scale 的顺序会影响最终的渲染效果。
+
+- 下面是各种情况下 Lynx 是否考虑 Transform 顺序的情况表：
+
+| 场景                      | 是否考虑Transform顺序 |
+| ------------------------- | --------------------- |
+| Android 静态transform     | 是                    |
+| iOS 静态transform         | 是                    |
+| Android 动画中的transform | 是                    |
+| iOS 动画中的transform     | 是                    |
+
+- _什么是静态 transform：就是 CSS 中没有动画，直接渲染的 transform 属性。_
+
+:::
+
+## 与 Web 的区别
+
+- 不支持 rotate3d, scale3d
+
+## 兼容性
+
+<APITable />

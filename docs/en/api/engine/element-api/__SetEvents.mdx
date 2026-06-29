@@ -1,0 +1,44 @@
+# `__SetEvents`
+
+## Introduction
+
+Sets event listeners for a specific Element node.
+
+## Syntax
+
+```jsx
+__SetEvents(element: Element, listeners: Array<Record<string, any>>) : void;
+```
+
+### Parameters
+
+|    Key    | Description                                                                                                                                                                 |
+| :-------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  element  | Any Element object.                                                                                                                                                         |
+| listeners | An array of listeners that describes the event listeners to add. Each element is a map that represents a specific event listener and must contain the following three keys: |
+
+- type: A case-sensitive string representing the event type to listen for.
+- name: A case-sensitive string representing the event name to listen for.
+- function: The function can be a case-sensitive string or null/undefined.
+  - When the function is a case-sensitive string, the Lynx SDK will send the current Element's parentComponentUniqueID, function, and event to the background thread to call the corresponding entry function when the event is triggered.
+  - When the function is null or undefined, the Lynx SDK will remove the corresponding listener based on the type and name from the Element object's listeners.
+
+### Return Value
+
+No return value.
+
+## Example
+
+The frontend framework can generate render instructions as follows.
+
+```jsx
+<view src="xxx" bindtap="onTap" />
+```
+
+```javascript
+// main-thread.js
+let element = __CreateElement('view', 0, {});
+__SetAttribute(element, 'src', 'xx');
+
+__SetEvents(element, [{ type: 'bindEvent', name: 'tap', function: 'onTap' }]);
+```

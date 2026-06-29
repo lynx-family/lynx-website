@@ -1,0 +1,301 @@
+---
+description: "文档中可用的交互式组件说明。"
+---
+
+import * as Lynx from '@lynx';
+
+# 文档组件
+
+Lynx 文档组件是在 `@lynx` 下声明的组件，可以导入并嵌入在 `.mdx` 格式文档中，从而使文档具有交互性，更有表现性。
+
+```tsx
+// 独立导入
+import { APITable } from '@lynx';
+<APITable />;
+
+// 导入所有组件为 Lynx 对象
+import * as Lynx from '@lynx';
+<Lynx.APITable />;
+```
+
+## API 兼容性表格
+
+### `lynx-compat-data`
+
+Lynx 兼容性数据（"LCD"）项目包含了 Lynx 技术的机器可读兼容性数据，涵盖了不同平台和版本的 Lynx API、元素、组件和功能。我们的目标是记录 Lynx 技术的准确兼容性信息，使开发者能够更轻松地在 Lynx 生态系统中创建跨平台兼容的应用程序。
+
+见 `packages/lynx-compat-table/README.md` 了解更多。
+
+### `<APITable>`
+
+使用 `<APITable />` 有两种方式。
+
+你可以使用 `<APITable />` 来明确指定 API 查询：
+
+```tsx
+<APITable query="your/api/path" />
+```
+
+或者你可以在当前页面的 frontmatter 中使用 `api` 字段，如果没有提供 `<APITable />` 的 `query` 属性，它将自动被读取作为查询。
+
+```md
+---
+api: your/api/path
+---
+
+<APITable />
+```
+
+### `<APITable>` Explorer
+
+以下是一个探索器，可以帮助你测试 API 查询并查看渲染输出。
+
+<Lynx.APITableExplorer />
+
+## API 徽章
+
+### `<VersionBadge>`
+
+```tsx
+// Using the `v` prop
+<VersionBadge v={2.5} />
+
+// Using children
+<VersionBadge>2.5.1</VersionBadge>
+```
+
+<Lynx.VersionBadge v={2.5} />
+<Lynx.VersionBadge>2.5.1</Lynx.VersionBadge>
+
+### `<PlatformBadge>`
+
+```tsx
+// Render a badge for Android
+<PlatformBadge platform="android" />
+
+// Render a badge for iOS with version
+<PlatformBadge platform="ios" version="14.0" />
+
+// X-only badges and No-X badges
+<AndroidOnly />
+<IOSOnly />
+```
+
+<Lynx.PlatformBadge platform="android" />
+<Lynx.PlatformBadge platform="ios" version="14.0" />
+<Lynx.AndroidOnly />
+<Lynx.IOSOnly />
+
+### `<StatusBadge>`
+
+```tsx
+// Render a deprecated badge
+<StatusBadge status="deprecated" />
+
+// Render an experimental badge
+<StatusBadge status="experimental" />
+
+// Render a required badge
+<StatusBadge status="required" />
+
+// Shorthand
+<Deprecated />
+<Experimental />
+<Required />
+```
+
+<Lynx.Deprecated />
+<Lynx.Experimental />
+<Lynx.Required />
+
+### `<RuntimeBadge>`
+
+```tsx
+// Render a mts badge
+<RuntimeBadge type="mts" />
+
+// Render an bts badge
+<RuntimeBadge status="bts" />
+
+```
+
+<Lynx.RuntimeBadge type="mts"/>
+<Lynx.RuntimeBadge type="bts"/>
+
+### `<Badge>`
+
+对于任意内容，可以使用 Rspress 的默认 [`<Badge>`](https://rspress.dev/api/client-api/api-components#badge) 组件，我们也导出在了 `@lynx` 下。
+
+```tsx
+<Badge>任意内容</Badge>
+```
+
+<Lynx.Badge>任意内容</Lynx.Badge>
+
+## Blog 组件
+
+### `<BlogAvatar>`
+
+```tsx
+// list: author-id
+<BlogAvatar list={['huxpro', 'minalwws']} />
+```
+
+<Lynx.BlogAvatar list={['huxpro', 'minalwws']} />
+
+## 可交互示例
+
+### `<CodeFold>`
+
+对于 Lynx 的示例展示，如需要设置内嵌代码的高度和可折叠，可以使用 `<CodeFold>` 组件。
+
+````mdx
+<CodeFold img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/view_render.jpeg" height={420} toggle>
+  ```tsx
+  /** example code */
+  ```
+</CodeFold>
+````
+
+<Lynx.CodeFold height={420}>
+  ```jsx
+  /** example code: 左侧代码， 设置 height， 不开启折叠 */
+
+  export default function App() {
+    return (
+      <view
+        style={{
+          flexDirection: 'column',
+          background: 'linear-gradient(rgb(255,53,26), rgb(0,235,235))',
+          marginTop: '50%',
+          transform: 'translate(-50%, -50%)',
+          marginLeft: '50%',
+          width: '150px',
+          height: '150px',
+          clipPath: 'inset(30px super-ellipse 3 3 50px/50px)',
+        }}
+      ></view>
+    );
+  }
+  ```
+</Lynx.CodeFold>
+
+<Lynx.CodeFold toggle>
+```swift
+/** example code: 左侧代码， 设置 toggle，支持折叠 */
+
+import Markdown
+
+let markdownText = "# Hello, Swift Markdown!\nThis is a sample paragraph."
+do {
+    let document = try Document(parsing: markdownText)
+    document.children.forEach { element in
+        print(element)
+    }
+} catch {
+    print("Failed to parse Markdown: \(error)")
+}
+```
+</Lynx.CodeFold>
+
+#### 参数说明
+
+```tsx
+interface CodeFoldProps = {
+  /** Child components to render */
+  children: React.ReactNode;
+  /** Optional URL of the example image */
+  img?: string;
+  /** Optional number for code-area\image-area height, default is 300 */
+  height?: number;
+  /** Optional boolean for toggle code-area\image-area */
+  toggle?: boolean;
+};
+```
+
+### `<Go>`
+
+对于 Lynx 的示例展示，可以使用 `<Go>` 组件，它可以展示示例的截图、二维码以及代码示例。
+
+```tsx
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list_waterfall.webp"
+  example="list"
+  defaultFile="src/waterfall/index.tsx"
+  defaultEntryFile="dist/waterfall.lynx.bundle"
+  entry="src/waterfall"
+  highlight="{10-25}"
+/>
+```
+
+<Lynx.Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list_waterfall.webp"
+  example="list"
+  defaultFile="src/waterfall/index.tsx"
+  defaultEntryFile="dist/waterfall.lynx.bundle"
+  entry="src/waterfall"
+  highlight="{10-25}"
+/>
+
+#### 参数说明
+
+```tsx
+interface Props {
+  /**
+   * 示例名称
+   *
+   * @example
+   * example="view"
+   */
+  example: string;
+  /**
+   * 默认展示的文件
+   *
+   * @example
+   * defaultFile="src/App.tsx"
+   */
+  defaultFile: string;
+  /**
+   * 示例截图, 如果未提供，则默认使用 example/preview-image.png 作为截图，支持多种格式 /^preview-image\.(png|jpg|jpeg|webp|gif)$/
+   *
+   * @example
+   * img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/view_render.jpeg"
+   */
+  img?: string;
+  /**
+   * 默认展示的入口文件, 如果未提供，则默认使用 example/**.lynx.bundle 作为入口文件
+   *
+   * @example
+   * defaultEntryFile="dist/main.lynx.bundle"
+   */
+  defaultEntryFile?: string;
+  /**
+   * 高亮代码行, 仅对 defaultFile 有效
+   *
+   * @example
+   * highlight="{1,3-5}"
+   * or
+   * highlight={{
+   *   "src/waterfall/index.tsx": "{1,3-5}",
+   *   "src/waterfall/App.tsx": "{1,3-5}",
+   * }}
+   */
+  highlight?: string | Record<string,string>;
+  /**
+   * 重点高亮某个目录或绝对路径，将展示该目录下的所有文件 tabs，可以快速切换，适用多 entry 场景
+   *
+   * @example
+   * entry="src/waterfall"
+   * or
+   * entry={["src/waterfall", "src/utils/link.ts"]}
+   */
+  entry?: string | string[];
+  /**
+   * 示例的 schema，将用于生成示例的二维码
+   *
+   * @example
+   * schema="{{{url}}}?bar_color=000000&back_button_style=dark"
+   */
+  schema?: string;
+}
+```

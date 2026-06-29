@@ -1,0 +1,51 @@
+---
+title: getElementById()
+api: lynx-api/lynx/getElementById
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# getElementById()
+
+<APISummary />
+
+## 介绍
+
+`getElementById` 是一个用于在当前[页面](/guide/spec.html#page)中根据指定 id 获取元件节点引用的方法。这个方法通过 id 选择器作为参数，返回对应元件节点引用。
+请注该引用无法让后台线程可以持有元件，后台线程只能利用该引用[跨线程调用](/guide/spec.html#inter-thread-call-or-itc)[元件方法](/guide/spec.html#element-method)，
+同时该引用不会影响元件的生命周期。
+
+## 语法
+
+```js
+let element = lynx.getElementById(id);
+```
+
+### 参数
+
+#### id
+
+String 类型，需要获取的元件的 id 选择器。
+
+### 返回值
+
+返回一个 NodeRef: 如果找到对应元件，则返回该元件的引用；若无对应元件，返回 null
+
+## 示例
+
+```js
+let ele = lynx.getElementById('id');
+```
+
+::: tip
+
+`getElementById` 未能选中节点的原因可能是：
+
+- ID 选择器不正确
+- ID 选择器的值依赖复杂 JS 表达式，导致 ID 选择器的值无法在首屏得到，此时若 getElementById 的时机过早 (如在 ComponentDidMount)，则可能找不到节点
+
+:::
+
+## 兼容性
+
+<APITable />

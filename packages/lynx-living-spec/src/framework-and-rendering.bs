@@ -1,0 +1,63 @@
+# <dfn for=FrameworkRendering>Framework and Rendering</dfn>
+
+## Framework and DSL
+
+### <dfn for=FrameworkRendering>DSL</dfn> (<dfn for=FrameworkRendering>Domain-specific Language</dfn>)
+
+A [=FrameworkRendering/DSL=] in the context of Lynx development is a [=Scripting/scripting=] interface designed to provide a specialized syntax for describing UIs and interactions, allowing [=Lynx/Lynx developers=] to define [=ElementsComponents/components=] and intuitively interact with [=EnginePixeling/pixel pipeline=].
+Instances of [=FrameworkRendering/DSL=] include [=FrameworkRendering/ReactLynx=].
+
+### <dfn for=FrameworkRendering>Framework</dfn>
+
+The [=FrameworkRendering/framework=] comprises [=FrameworkRendering/DSL=] and builds upon it, encapsulating the above-mentioned [=CommonInfrastructure/Lynx platform=] APIs and constructs into idiomatic [=FrameworkRendering/DSL=]-specific APIs, to provide a cohesive experience building production-ready Lynx [=CommonInfrastructure/apps=].
+The implementation of [=FrameworkRendering/framework=] is considered native-coupled, and is loaded on-demand from disk or memory, together with the userland app code.
+
+## Rendering
+
+### <dfn for=FrameworkRendering>Rendering</dfn>
+
+The act of executing the [=CommonInfrastructure/lynx pipeline=]. When used alone, it typically refers to [=FrameworkRendering/framework rendering=] because the pipeline almost always starts with it.
+
+### <dfn for=FrameworkRendering>Framework Rendering</dfn>
+
+The process within the [=FrameworkRendering/framework=] where the application [=Scripting/scripting|scripts=] are evaluated to create and synchronize its internal representation of the UI, often represented as [=ElementsComponents/components=], with the actual [=ElementsComponents/element tree=] in the [=EnginePixeling/engine=] through element manipulation.
+
+<p style="justify-content:center;align-items:center;display:flex;">
+    <img alt="rendering" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/spec/rendering.png" width="80%" height="80%">
+</p>
+
+### <dfn for=FrameworkRendering>Main Thread Rendering</dfn>
+
+The type of [=FrameworkRendering/rendering=] where both [=FrameworkRendering/framework rendering=] and [=EnginePixeling/pixeling=] occur on the [=Threading/main thread=].
+
+Note:
+Explainers to [=Lynx/Lynx developers=]
+This approach allows synchronous UI updates, with the risks that long [=Scripting/scripting=] tasks may block the [=Threading/main thread=], causing the UI to be unresponsive.
+
+### <dfn for=FrameworkRendering>Background-driven Rendering</dfn>
+
+The type of [=FrameworkRendering/rendering=] where the [=FrameworkRendering/framework rendering=] is initiated (and primarily executed) on a [=Threading/background thread=], then transferred to the [=Threading/main thread=] to complete the [=EnginePixeling/pixeling=].
+
+Note:
+Explainers to [=Lynx/Lynx developers=]
+This approach can improve the responsiveness of the [=Threading/main thread=] by utilizing parallelism and offloading heavy [=FrameworkRendering/framework rendering=] tasks to [=Threading/background thread=], but can introduce potential latency in UI updates.
+
+### <dfn for=FrameworkRendering>First-screen Rendering</dfn> (or <dfn for=FrameworkRendering>FSR</dfn>)
+
+A special type of [=FrameworkRendering/main thread rendering=] occurs during the load of Lynx [=CommonInfrastructure/apps=] to improve the first load experience.
+
+### <dfn for=FrameworkRendering>Re-rendering</dfn>
+
+The type of [=FrameworkRendering/rendering=] that occurs after [=FrameworkRendering/first-screen rendering=], can be either [=FrameworkRendering/main thread rendering=] or [=FrameworkRendering/background-driven rendering=].
+
+## Instances of Framework
+
+### <dfn for=FrameworkRendering>ReactLynx</dfn>
+
+A [=FrameworkRendering/framework=] featuring React-like [=FrameworkRendering/DSL=] adapted to Lynx's [=Threading/dual-threaded model=].
+
+#### Rendering Patterns
+
+- Renders [=ElementsComponents/components=] in the [=Scripting/main thread runtime=] to achieve [=FrameworkRendering/first-screen rendering=], and
+- Typically, [=FrameworkRendering/re-rendering=] [=ElementsComponents/components=] via [=FrameworkRendering/background-driven rendering=].
+- By opting into [=Scripting/main thread script=] features: allows for short-circuiting to [=FrameworkRendering/main thread rendering=] via [=Threading/main thread=] event handling and [=ElementsComponents/EOM=] without [=FrameworkRendering/re-rendering=] [=ElementsComponents/components=].

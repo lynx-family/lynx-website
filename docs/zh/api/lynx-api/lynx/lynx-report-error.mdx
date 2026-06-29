@@ -1,0 +1,123 @@
+---
+title: reportError()
+api: lynx-api/lynx/reportError
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: reportError() static method
+
+<APISummary />
+
+`lynx.reportError` 方法可以被用来手动在 JavaScript 中上报一个错误。
+
+## 语法
+
+```ts
+reportError(error: string | Error, options?: {level: 'warning' | 'error' | 'fatal'}): void;
+```
+
+### 参数
+
+#### error
+
+`lynx.reportError` 第一个参数可以接收一个字符串或者一个 Error 对象。第二个参数可以接收一个可选的 options 对象，其中的 `level` 表明错误的级别，其中 `fatal` 级别会中断执行环境的运行，避免引发更多连锁错误。
+
+如果传入一个字符串，会使用该字符串作为 `message` 来构造一个 `Error` 对象。
+
+也就是说，这种写法
+
+```js
+lynx.reportError('foo');
+```
+
+和下面的写法有着相同的作用
+
+```js
+lynx.reportError(new Error('foo'));
+```
+
+### 返回值
+
+无（`undefined`）。
+
+## 示例
+
+```tsx
+try {
+  const { data } = JSON.parse(content);
+} catch (error) {
+  lynx.reportError(error);
+}
+```
+
+### 上报异步错误的同步堆栈
+
+一个常见的使用方式是，上报一个异步函数的回调中产生的错误。
+
+```javascript
+import fetch from '@fetch';
+
+export function getData(params) {
+  return new Promise((resolve, reject) => {
+    fetch(
+      {
+        url: HOST,
+        method: 'GET',
+        params,
+      },
+      function cb(res) {
+        if (res?.status_code === 0) {
+          lynx.reportError('fetch error: ' + res?.status_code);
+          reject(res);
+        } else {
+          resolve(res);
+        }
+      },
+    );
+  });
+}
+```
+
+但是这样会得到一个这样的错误堆栈：
+
+```
+at Lynx.reportError (file://shared/lynx_core.js:9821:48)
+at cb (file://view/app-service.js:284:27)
+```
+
+堆栈的第一帧指向 `lynx.reportError` 方法，第二帧指向传入 `fetch` 的 `cb` 方法，没有更多的堆栈信息了。
+无法从堆栈中得知，什么方法调用了 `getData`。
+
+这是因为 Lynx 中的 `Promise` 是通过 `setTimeout` 来实现的，无法获取异步任务的堆栈信息。
+而这个问题可以通过提前构造一个 `Error` 对象来解决。
+
+```javascript
+import fetch from '@fetch';
+
+export function getData(params) {
+  const error = new Error(); // construct the error synchronously
+  return new Promise((resolve, reject) => {
+    fetch(
+      {
+        url: 'HOST',
+        method: 'GET',
+        params,
+      },
+      (res) => {
+        if (res?.status_code === 0) {
+          error.message = 'fetch error: ' + res?.status_code;
+          lynx.reportError(error);
+          reject(res);
+        } else {
+          resolve(res);
+        }
+      },
+    );
+  });
+}
+```
+
+## 兼容性
+
+<APITable />

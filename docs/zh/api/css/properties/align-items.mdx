@@ -1,0 +1,116 @@
+---
+api: css/properties/align-items
+---
+
+import { APISummary, APITable, Deprecated, Go } from '@lynx';
+
+# align-items
+
+<APISummary />
+
+## 介绍
+
+`align-items` 属性将所有直接子节点上的 [`align-self`](./align-self.mdx) 值设置为一个组。在[弹性布局](/guide/ui/layout/flexible-box-layout.mdx)和[线性布局](/guide/ui/layout/linear-layout.mdx)中，它控制子元件在**交叉轴**方向上的对齐。在[网格布局](/guide/ui/layout/grid-layout.mdx)中，它控制子元件在其网格区域（grid area）内的**块向轴**上的对齐。
+
+对于[弹性布局](/guide/ui/layout/flexible-box-layout.mdx)，如果任何子元件的交叉轴方向 [`margin`](./margin.mdx) 值设置为 `auto`，则会忽略 `align-item`。
+
+:::info
+对于[网格布局](/guide/ui/layout/grid-layout.mdx)，Lynx 不支持 `writing-mode`，所以块轴就是垂直轴。
+:::
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/align-items/App.tsx"
+  defaultEntryFile="dist/align-items.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/align-items.jpg"
+  entry="src/align-items"
+/>
+
+## 语法
+
+```css
+/* 基本关键字 */
+align-items: stretch;
+align-items: auto;
+
+/* 定位对齐 */
+align-items: center;
+align-items: flex-start;
+align-items: flex-end;
+align-items: start;
+align-items: end;
+
+/* 基线对齐 */
+align-items: baseline;
+```
+
+### 取值
+
+#### `stretch`
+
+**默认值**。元件在**交叉轴**（网格布局是块轴）方向上未设置尺寸（高度/宽度）或设为 `auto`，会被拉伸到与行相同的高度或列相同的宽度。同时这些元件仍然保持其宽高比例的约束。
+
+#### `center`
+
+在弹性布局和线性布局中，元件在交叉轴居中。
+
+在网格布局中，元件在网格区域的块轴方向上居中。
+
+:::info
+在[弹性布局](/guide/ui/layout/flexible-box-layout.mdx)中，如果元件的交叉轴尺寸大于弹性容器，它将在两个方向上等距溢出。
+:::
+
+#### `start`
+
+在弹性布局和线性布局中，元件在交叉轴上对齐起始位置。
+
+在网格布局中，元件在块轴上与网格区域的起始边缘对齐。
+
+#### `end`
+
+在弹性布局和线性布局中，元件在交叉轴上对齐结尾位置。
+
+在网格布局中，元件在块轴上与网格区域的结束边缘对齐。
+
+#### `flex-start`
+
+同 `start` 表现一致。
+
+#### `flex-end`
+
+同 `end` 表现一致。
+
+#### `baseline`
+
+所有弹性项目都对齐，以使它们的弹性容器基线对齐。距离其交叉轴起点和基线之间最远的元件与行的交叉轴起点对齐。暂时只支持[弹性布局](/guide/ui/layout/flexible-box-layout.mdx)。
+
+#### `auto` <Deprecated/>
+
+等同于 `stretch`。不推荐使用，Web 无该取值。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>stretch</>}
+  appliesTo={<>弹性容器，线性容器和网格容器</>}
+  inherited="否"
+  animatable="否"
+/>
+
+## 形式语法
+
+```
+align-items = stretch | center | start | end | flex-start | flex-end | baseline | auto
+```
+
+## 与 Web 的区别
+
+- 不支持 `normal`、`self-start` 和 `self-end`。默认值为 `stretch`。
+
+## 兼容性
+
+<APITable />

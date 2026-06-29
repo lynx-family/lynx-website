@@ -1,0 +1,156 @@
+import { Go } from '@lynx';
+
+# Typography
+
+## Text in Lynx
+
+In Lynx, the text content needs to be written inside the [`<text>`](/api/elements/built-in/text) element. This is different from HTML, where text can be directly written inside a `<div>`. Let's look at a simple example:
+
+```tsx
+//❌ This won't work
+<view>hello world</view>
+
+//✅ Use the <text> component
+<text>hello world</text>
+```
+
+You can add styles to the `<text>` element to change the text effect. For example, to change the text color:
+
+```tsx
+<text style={{ color: 'red' }}>hello world</text>
+```
+
+Similarly, to change the text size and make the text italic:
+
+```tsx
+<text style={{ fontSize:"30px" }}>hello world</text>
+<text style={{ fontStyle:"italic" }}>hello world</text>
+```
+
+Lynx also supports adding shadows or strokes to the text by setting the [`text-shadow`](/api/css/properties/text-shadow) and [`text-stroke`](/api/css/properties/text-stroke) properties to enrich the display effect:
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/shadow-and-stroke-demo.jpeg"
+  example="text"
+  defaultFile="src/shadow_and_stroke/index.tsx"
+  defaultEntryFile="dist/shadow_and_stroke.lynx.bundle"
+  entry="src/shadow_and_stroke"
+  highlight="{15-20}"
+/>
+
+## Mixing Text with Different Styles
+
+In daily text layout, it is often necessary to highlight some parts of the text, such as making keywords bold and changing their color. Suppose we want to make "important word" in the text "This is an important word" bold and red. We can put "important word" into an nested `<text>` and set the `color` and `font-weight` properties.
+
+```tsx
+<view>
+  <text>
+    This is an
+    <text style={{ color: 'red', fontWeight: 'bold' }}>important word</text>
+  </text>
+</view>
+```
+
+You can use the properties in the CSS text module to control how text is displayed, such as line-breaking, alignment, and whitespace handling, to achieve more diverse text layout effects. For example, use [`text-indent`](/api/css/properties/text-indent) to control the first-line indentation of text, [`word-break`](/api/css/properties/word-break) to control the line-breaking behavior of words, and [`text-align`](/api/css/properties/text-align) to control the horizontal alignment of text content.
+
+The following is an example of the comprehensive use of properties. You can also refer to [text-related properties](/api/elements/built-in/text#text-related-css-properties).
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/text-layout-demo.jpeg"
+  example="text"
+  defaultFile="src/text_layout/index.tsx"
+  defaultEntryFile="dist/text_layout.lynx.bundle"
+  entry="src/text_layout"
+/>
+
+## Implementing Text-Image Mixing Layout
+
+To create more colorful pages, it is often necessary to embed images in text. The following describes how to mix text and images in layout. Take the following figure as an example:
+
+<p align="center">
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+    width="300"
+  />
+</p>
+
+The first step is to use the `<text>` and `<image>` elements to build the page structure. They cooperate with each other to construct the basic framework.
+
+```tsx
+<text>
+  <image />
+  <text>
+    This is a warning message.This is a warning message.This is a warning
+    message.
+  </text>
+</text>
+```
+
+The second step is to set the style of the `<image>` element. The key is to set the width and height to ensure that the image is presented appropriately on the page and is compatible with the text. At the same time, set the `text-align` property on the `<text>` element to center the text horizontally.
+
+<Go
+  example="text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+  defaultFile="src/inline_image/index.tsx"
+  defaultEntryFile="dist/inline_image.lynx.bundle"
+  highlight="{8-18}"
+  entry="src/inline_image"
+/>
+
+The third step is to adjust the vertical position of the image within the line. By default, the bottom of the `<image>` element aligns with the text baseline. You can use the [`vertical-align`](/api/css/properties/vertical-align) property to precisely adjust the vertical position of the `<image>` element within the line.
+
+<Go
+  example="text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-image-demo.png"
+  defaultFile="src/inline_image/index.tsx"
+  defaultEntryFile="dist/inline_image.lynx.bundle"
+  highlight="{15}"
+  entry="src/inline_image"
+/>
+
+In addition to images, you can also nest `<view>` within the `<text>` component to create more complex pages.
+
+<Go
+  example="text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-view-demo.gif"
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryFile="dist/inline_view.lynx.bundle"
+  highlight="{11-26}"
+  entry="src/inline_view"
+/>
+
+## Text Truncation and Ellipsis
+
+When the text content is long and the space is limited, it is necessary to use ellipsis techniques to make the page concise and avoid information clutter. In Lynx, the [`text-overflow`](/api/css/properties/text-overflow) property can be used to add an ellipsis effect at the text truncation point. You can choose `ellipsis` to automatically add an ellipsis, or use `clip` to truncate according to the rules.
+
+In specific implementation, first limit the number of lines or height of the `<text>` element. When the text exceeds the range, the ellipsis effect will be triggered. Then set the `text-overflow` property to control the presentation method:
+
+```tsx
+<text text-maxline={'1'} style={{ textOverflow: 'ellipsis' }}>
+  This is an extremely long text.
+</text>
+```
+
+Although `text-overflow` cannot directly specify the content displayed at the truncation point, the `<inline-truncation>` element provided by Lynx has strong customization capabilities and can display various contents such as images and `<view>` at the truncation point.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/inline-truncation-demo.png"
+  example="text"
+  defaultFile="src/inline_truncation/index.tsx"
+  defaultEntryFile="dist/inline_truncation.lynx.bundle"
+  entry="src/inline_truncation"
+/>
+
+## Custom Font Settings
+
+You can directly use [`@font-face`](/api/css/at-rule/font-face) to specify custom font resources (the [client needs to support the font resource loader](/api/elements/built-in/text#loading-custom-fonts)). At the same time, set the corresponding `font-family` on the `<text>` element.
+
+In addition, if you need to load a font file in JS, you can refer to the addFont API designed based on Web Font Loading. This module provides the FontFace class and the [addFont](/api/lynx-api/lynx/lynx-add-font) method on the global object `lynx`.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/font-style-bold-normal-digit.png"
+  example="text"
+  defaultFile="src/custom_font/index.tsx"
+  defaultEntryFile="dist/custom_font.lynx.bundle"
+  entry="src/custom_font"
+/>

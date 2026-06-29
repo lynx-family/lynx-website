@@ -1,0 +1,42 @@
+# `__SetEvents`
+
+## 介绍
+
+设置 event listeners 给特定的 Element 节点。
+
+## 语法
+
+```jsx
+__SetEvents(element: Element, listeners: Array<Record<string, any>>) : void;
+```
+
+### 参数
+
+|    Key    | 说明                                                                                                                                                |
+| :-------: | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  element  | 任意的 Element 对象。                                                                                                                               |
+| listeners | listeners 是一个数组，用来描述需要添加的 event listener，每一个元素都是一个 map，可以表示一个具体的 event listener，每一个 map 需要包含如下三个 key |
+
+- type：表示监听事件类型的大小写敏感的字符串。
+- name：表示监听事件名称的大小写敏感的字符串。
+- function：function 可以为一个大小写敏感的字符串，或者为 null，undefined。
+  - 当 function 为一个大小写敏感的字符串时，当所监听的事件触发时，Lynx SDK 会将当前 Element 的 parentComponentUniqueID，function，event 发送到后台线程，调用相应的入口函数。
+  - 当 function 为 null 或者 undefined 时，LynxSDK 会从 Element 对象的 listener 中移除相应 type 和 name 所对应的 listener。
+
+### 返回值
+
+无返回值。
+
+## 示例
+
+前端框架可以按下如下的方法生成 render 指令。
+
+```jsx
+<view src="xxx" bindtap="onTap" />;
+
+// main-thread.js
+let element = __CreateElement('view', 0, {});
+__SetAttribute(element, 'src', 'xx');
+
+__SetEvents(element, [{ type: 'bindEvent', name: 'tap', function: 'onTap' }]);
+```

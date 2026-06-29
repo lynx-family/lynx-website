@@ -1,0 +1,109 @@
+---
+api: lynx-api/event/TouchEvent
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# TouchEvent
+
+<APISummary />
+
+Represents a touch event object, inherited from [`Event`](./event), used to describe the state changes of a finger on a touch surface (such as a touch screen), such as finger movement, click, long press, etc.
+
+This event object contains one or more touch points, through which developers can understand the state changes of fingers on the touch surface.
+
+## Instance property
+
+### detail
+
+```ts
+detail: {
+  x: number,
+  y: number,
+}
+```
+
+Represents the touch point position of the first finger.
+
+- `x`: The horizontal axis position of the touch point in the current `LynxView` coordinate system.
+- `y`: The vertical axis position of the touch point in the current `LynxView` coordinate system.
+
+### touches
+
+```ts
+touches: Touch []
+```
+
+Represents the `Touch` object currently on the touch plane. Each `Touch` object describes the touch point information of the corresponding finger. The format is as follows:
+
+```ts
+{
+  identifier: number,   // Unique identifier of the touch point, which remains unchanged during the same touch process
+  x: number,            // The horizontal position of the touch point in the coordinate system of the element actually touched
+  y: number,            // The vertical position of the touch point in the coordinate system of the element actually touched
+  pageX: number,        // The horizontal position of the touch point in the current LynxView coordinate system
+  pageY: number,        // The vertical position of the touch point in the current LynxView coordinate system
+  clientX: number,      // The horizontal position of the touch point in the current window coordinate system
+  clientY: number,      // The horizontal position of the touch point in the current window coordinate system
+}
+```
+
+### changedTouches
+
+```ts
+changedTouches: Touch []
+```
+
+Indicates a `Touch` object whose state has changed compared to the last touch event, such as from nothing to something, position change, from something to nothing. The format of [`changesTouches`](#changedtouches) is the same as that of [`touches`](#touches).
+
+## TouchEvent type
+
+### touchstart
+
+Indicates that the finger begins to touch the touch surface. [`target`](./event#target) is the `element` that contains the touch point and is closest to the user.
+
+### touchmove
+
+Indicates that the finger moves on the touch surface. [`target`](./event#target) is always the same as [`target`](./event#target) of [`touchstart`](#touchstart).
+
+### touchend
+
+Indicates that the finger leaves the touch surface. [`target`](./event#target) is the same as [`target`](./event#target) of [`touchstart`](#touchstart). The touch point that has left the screen can be found in [`changedTouches`](#changedtouches).
+
+### touchcancel
+
+Indicates that the touch event is interrupted by the system or `Lynx` external gesture, such as system pop-up window or incoming call. [`target`](./event#target) is the same as [`target`](./event#target) of [`touchstart`](#touchstart). The interrupted touch point can be found in [`changedTouches`](#changedtouches).
+
+### tap
+
+This indicates a single tap on the touch surface. The [`target`](./event#target) is the `element` containing the touch point and closest to the user. Only the first finger can trigger this event.
+
+If the finger moves beyond a certain distance threshold, or if an `element` in the [`event response chain`](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) slides, the `tap` event will not trigger.
+
+This event and the [`longpress`](#longpress) event are mutually exclusive in event listening. That is, if the front-end listens for both events simultaneously, they will not trigger concurrently; [`longpress`](#longpress) takes precedence.
+
+### longpress
+
+This indicates a long press on the touch surface. The [`target`](./event#target) is the `element` containing the touch point and closest to the user. Only the first finger can trigger this event. The `longpress` event will not trigger if the finger moves beyond a certain threshold or the long press time interval is less than `500 ms`.
+
+### click
+
+This indicates a single click on the touch plane. [`target`](./event#target) is the `element` containing the touch point, closest to the user, and listening for the `click` event. Only the first finger can trigger this event.
+
+This event differs slightly from the [`tap`](#tap) event, primarily in its blocking distance threshold and the [`target`](./event#target):
+
+- The [`target`](./event#target) for [`tap`](#tap) event is the node closest to the user during the actual touch; while the [`target`](./event#target) for `click` event is the node closest to the user that is listening for the `click` event.
+
+- The blocking distance threshold for [`tap`](#tap) event is fixed; it won't trigger if the finger moves beyond a certain distance. The blocking distance threshold for `click` event depends on the touch hotspot of [`target`](./event#target); it won't trigger if the finger moves outside the touch hotspot.
+
+- When an element slides on the [`event response chain`](../../../guide/interaction/event-handling/event-propagation.mdx#event-response-chain) corresponding to [`target`](./event#target), the [`tap`](#tap) or `click` event cannot be triggered.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/tap_and_click.png"
+  width="100%"
+  height="100%"
+/>
+
+## Compatibility
+
+<APITable />

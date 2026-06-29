@@ -1,0 +1,91 @@
+---
+title: linear-weight-sum
+api: css/properties/linear-weight-sum
+---
+
+import { APISummary, APITable, Deprecated, Go } from '@lynx';
+
+# <Deprecated /> linear-weight-sum
+
+<APISummary />
+
+:::warning
+This API is deprecated.
+:::
+
+## Introduction
+
+Child element's weight sum in [linear](/guide/ui/layout/linear-layout.mdx).
+
+When `linear-weight-sum` property of the [linear](/guide/ui/layout/linear-layout.mdx) view is non-zero.
+
+- The linear-layout first lays out all the child elements whose [`linear-weight:0`](./linear-weight.mdx), and calculates the width of these child elements in the layout direction.
+- The remaining `linear-weight` non-zero child elements will be allocated the remaining width(linear layout view width minus the width of all `linear-weight:0` child elements) in the main axis according to their `linear-weight`. For ease of presentation, we view "the sum of the children `linear-weight` " as symbol "S".
+  - When `linear-weight-sum` \<= S:
+
+    main size of child = corresponding linear-weight ÷ S ✖️ remaining main size width
+
+  - When `linear-weight-sum` \> S:
+
+    main size of child = corresponding linear-weight ÷ linear-weight-sum ✖️ remaining main size width
+
+:::tip
+1.linear container's main axis size need set a fixed value;
+
+2.It is not supported to use a fixed value and weight at the same time. If there is a `linear-weight`, the fixed value is automatically ignored (performance first);
+:::
+
+## Examples
+
+In the figure, the width of the parent element is 400px, the first element is fixed at 100px, and the remaining width is 300px. The second and third elements specify the size, and are allocated according to the weight. The second element is 200px wide and the third element is 100px wide.
+
+<Go
+  example="css-api"
+  defaultFile="src/linear-weight-sum/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/linear-weight-sum.png"
+  defaultEntryFile="dist/linear-weight-sum.lynx.bundle"
+  entry="src/linear-weight-sum"
+/>
+
+## Syntax
+
+```css
+linear-weight-sum: 2;
+linear-weight-sum: 5.5;
+```
+
+### Values
+
+- [`<number>`](/api/css/data-type/number.mdx)
+
+  Negative values are invalid. **Default value is 0**.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>0</>}
+  appliesTo={<>linear containers</>}
+  inherited="no"
+/>
+
+## Formal syntax
+
+```
+linear-weight-sum = <number>
+```
+
+## Difference between web
+
+- No such style in Web.
+
+## Compatibility
+
+<APITable />
+
+## FAQ
+
+- linear container's main axis size need set a fixed value;
+
+- It is not supported to use a fixed value and weight at the same time. If there is a linear-weight, the fixed value is automatically ignored (performance first);

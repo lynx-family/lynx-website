@@ -1,0 +1,230 @@
+import { PlatformTabs, Go, NoWeb } from '@lynx';
+
+# 事件传播
+
+当一个事件被触发后，它会沿着事件响应链进行传播。如果节点上设置了相应类型的事件处理器属性，则节点可以在事件传播过程中监听到对应事件甚至进行拦截。
+
+除此之外，Lynx 还提供了跨元件事件监听、事件切面接口、`GlobalEventEmitter` 来实现特殊的事件传播。
+
+## 事件处理器属性
+
+通过设置事件处理器属性，开发者可以决定在事件传播的哪个阶段（或跨元件）监听或拦截该事件，并指定事件触发时调用的处理函数。这些事件处理器属性的命名通常由绑定的事件类型和事件名称组成。
+
+| 事件类型        | 说明                                     |
+| --------------- | ---------------------------------------- |
+| `bind`          | 冒泡阶段监听事件，不拦截事件冒泡。       |
+| `catch`         | 冒泡阶段监听事件，拦截事件冒泡。         |
+| `capture-bind`  | 捕获阶段监听事件，不拦截事件捕获和冒泡。 |
+| `capture-catch` | 捕获阶段监听事件，拦截事件捕获和冒泡。   |
+| `global-bind`   | 跨元件监听事件。                         |
+
+特别地，当事件处理函数是[主线程脚本](../../../react/main-thread-script.mdx)时，需要在事件处理器属性名称前添加 `main-thread:` 前缀，以确保该处理函数在主线程中执行。
+
+## 事件响应链
+
+事件响应链是指由可以响应事件的节点组成的一个链表。一般来说，事件响应链由页面根节点到动作实际触发的节点的路径组成。然而，对于非[触摸事件](../../../api/lynx-api/event/touch-event.mdx)，事件响应链只包含动作实际触发的节点。
+
+**示例 1:**
+
+<Go
+  example="event"
+  defaultFile="src/event_chain/index.tsx"
+  defaultEntryFile="dist/event_chain.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_chain.gif"
+  highlight="{50,65,78,95,108}"
+  entry="src/event_chain"
+/>
+
+在上面这个例子中，当用户点击页面，事件响应链上的节点背景色会被置为橙色。
+
+## 事件捕获
+
+事件在事件响应链上会依次经过事件捕获和事件冒泡两个阶段。事件在事件捕获阶段会从页面根节点开始，沿着事件响应链向下传播，直到动作实际触发的节点。在事件捕获阶段，设置了 `capture-bind` 类型的事件处理器属性的节点能够监听到相应事件。
+
+**示例 2:**
+
+<Go
+  example="event"
+  defaultFile="src/event_capture/index.tsx"
+  defaultEntryFile="dist/event_capture.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_capture.gif"
+  highlight="{7-9,14}"
+  entry="src/event_capture"
+/>
+
+在上面这个例子中，由于事件传播是从捕获阶段开始的，并且捕获阶段从根节点开始，因此，当用户点击页面时，根节点始终能够监听到 `tap` 事件，进而实现统计页面点击次数的功能。
+
+## 事件冒泡
+
+在事件冒泡阶段，事件会从动作实际触发的节点，沿着事件响应链向上传播，直到页面根节点。在事件冒泡阶段，设置了 `bind` 类型的事件处理器属性的节点能够监听到相应事件。
+
+**示例 3**
+
+<Go
+  example="event"
+  defaultFile="src/event_bubble/index.tsx"
+  defaultEntryFile="dist/event_bubble.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_bubble.gif"
+  highlight="{7-12,23}"
+  entry="src/event_bubble"
+/>
+
+在上面这个例子中，当用户点击页面任意节点时，事件会默认从子节点冒泡到父节点，因此，父节点始终能够监听到 `tap` 事件进而改变节点的背景颜色。
+
+## 事件拦截
+
+在事件传播的过程中，事件可以被中途拦截，从而阻止事件继续传播。当节点上设置了 `catch` 类型的事件处理器属性时，事件在传播到该节点时会被拦截，不再继续传播。
+
+**示例 4**
+
+<Go
+  example="event"
+  defaultFile="src/event_static_catch/index.tsx"
+  defaultEntryFile="dist/event_static_catch.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_static_catch.gif"
+  highlight="{7-12,23,34}"
+  entry="src/event_static_catch"
+/>
+
+在上面这个例子中，由于 `click me` 区域设置了静态拦截 `tap` 事件，所以仅当点击非 `click me` 区域，事件才会冒泡到父节点，节点的背景颜色才会改变。
+
+## 在主线程脚本中阻止事件冒泡
+
+当与[主线程脚本](../../../react/main-thread-script.mdx)一起使用时，可以通过调用事件对象的 [`stopPropagation`](../../../api/lynx-api/event/event.mdx#stoppropagation) 方法来阻止事件冒泡。
+
+**示例 5:**
+
+<Go
+  example="event"
+  defaultFile="src/event_stop_propagation/index.tsx"
+  defaultEntryFile="dist/event_stop_propagation.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/event_stop.webp"
+  highlight="{34}"
+  entry="src/event_stop_propagation"
+/>
+
+在上面的示例中，点击内部元素不会触发外部元素的 `tap` 事件。
+
+## 跨元件事件监听 <NoWeb />
+
+一般来说，当节点不在事件响应链上时，事件无法被监听到。Lynx 提供了一种跨元件事件监听的方式，使得开发者能够在任意节点上注册事件监听并接收到相应事件。
+
+例如，开发者可以在某个节点上设置 `global-bind` 类型的事件处理器属性来监听 `tap` 事件，当任意节点被点击时，该节点能够监听到 `tap` 事件，进而实现统计页面点击次数的功能。
+
+**示例 5:**
+
+<Go
+  example="event"
+  defaultFile="src/event_global_bind/index.tsx"
+  defaultEntryFile="dist/event_global_bind.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_global_bind.gif"
+  highlight="{8-10,12-14,19-20,47-48}"
+  entry="src/event_global_bind"
+/>
+
+需要注意的是，对于非[触摸事件](../../../api/lynx-api/event/touch-event.mdx)，需要被监听节点设置了非跨元件事件监听类型的事件处理器属性。另外，开发者还可以在节点上设置 `global-target` 来指定仅监听节点 [`id`](../../../api/elements/built-in/view.mdx#id) 为特定值的事件（类型为 `string`，可以指定多个 [`id`](../../../api/elements/built-in/view.mdx#id)，用逗号分隔）。
+
+## 事件切面接口
+
+有时候，开发者可能需要在某处统一监听并处理特定类型的事件，并且不依赖元件注册事件监听。例如，统计页面上所有触发的 `tap` 事件。这时，开发者可以通过 Lynx 提供的事件切面接口（[`beforePublishEvent`](../../../api/lynx-api/lynx/lynx-before-publish-event.mdx)）来实现相应功能。
+
+**示例 6:**
+
+<Go
+  example="event"
+  defaultFile="src/event_aop/index.tsx"
+  defaultEntryFile="dist/event_aop.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_aop.gif"
+  highlight="{7-12,65}"
+  entry="src/event_aop"
+/>
+
+事件切面接口是一种切面编程，通过在事件触发处注入相应接口，实现触发特定事件时将事件同时转发到某处。该接口仅在 BTS 上下文中实现的，因此，只有在后台线程中才能使用，并且只有事件处理函数触发时才能监听到对应事件。
+
+## `GlobalEventEmitter`
+
+有时候，开发者可能需要在不同的元件、组件之间传递事件，或者需要在客户端和前端之间传递事件，并且不依赖元件注册事件监听。这时，开发者可以通过 `GlobalEventEmitter` 来实现一个页面中事件的全局范围传递。
+
+开发者可以通过 [`lynx.getJSModule`](../../../api/lynx-api/lynx/lynx-get-js-module.mdx) 获取 `GlobalEventEmitter` 对象，其提供如下接口：
+
+| 函数名称             | 函数说明                                   | 函数传参                          |
+| -------------------- | ------------------------------------------ | --------------------------------- |
+| `addListener`        | 订阅事件，注册事件监听器。                 | `(eventName, listener, context?)` |
+| `removeListener`     | 移除特定事件的指定监听器。                 | `(eventName, listener)`           |
+| `removeAllListeners` | 移除特定事件的所有监听器。                 | `(eventName)`                     |
+| `toggle`             | 广播指定事件名称的事件，支持多个透传参数。 | `(eventName, ...data)`            |
+| `trigger`            | 广播指定事件名称的事件，支持一个透传参数。 | `(eventName, params)`             |
+
+需要注意的是，`GlobalEventEmitter` 只在 BTS 上下文中支持，因此，只有在后台线程中才能使用。
+
+### 事件广播
+
+开发者可以通过 `GlobalEventEmitter` 广播事件，将事件发送给前端。
+
+在下面这个例子中，当用户点击页面时，开发者通过调用 `GlobalEventEmitter` 的 `toggle` 方法来广播事件，实现点击事件由组件 `ComponentA` 传播到 `ComponentB`。
+
+**示例 7:**
+
+<Go
+  example="event"
+  defaultFile="src/event_emitter_toggle/index.tsx"
+  defaultEntryFile="dist/event_emitter_toggle.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_emitter_toggle.gif"
+  highlight="{8-10,22-24,41}"
+  entry="src/event_emitter_toggle"
+/>
+
+对于客户端，示例如下：
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+```objective-c
+// 可以调用 LynxContext 的 sendGlobalEvent 函数
+// 第一个参数为前端监听的事件名称，第二个参数为前端接收到的数据
+[LynxContext sendGlobalEvent:@"eventName" withParams:args];
+// 或者调用 LynxView 的 sendGlobalEvent 函数
+[LynxView sendGlobalEvent:@"eventName" withParams:args];
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+// 可以调用 LynxContext 的 sendGlobalEvent 函数
+// 第一个参数为前端监听的事件名称，第二个参数为前端接收到的数据
+LynxContext.sendGlobalEvent("eventName", args);
+// 或者调用 LynxView 的sendGlobalEvent 函数
+LynxView.sendGlobalEvent("eventName", args);
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```js
+// 可以调用 LynxContext 的 sendGlobalEvent 函数
+// 第一个参数为前端监听的事件名称，第二个参数为前端接收到的数据
+LynxContext.sendGlobalEvent('eventName', args);
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+### 事件订阅
+
+开发者也可以通过 `GlobalEventEmitter` 的 `addListener` 方法来订阅事件，接收来自于前端、客户端的事件。
+
+在下面这个例子中，用户可以接收到 Lynx 发送的 [`onWindowResize`](../../../api/lynx-api/event/global-event.mdx#onwindowresize) 事件，该事件在 Lynx 页面大小变化时触发。
+
+**示例 8:**
+
+<Go
+  example="event"
+  defaultFile="src/event_emitter_listen/index.tsx"
+  defaultEntryFile="dist/event_emitter_listen.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_emitter_listen.gif"
+  highlight="{7-9}"
+  entry="src/event_emitter_listen"
+/>

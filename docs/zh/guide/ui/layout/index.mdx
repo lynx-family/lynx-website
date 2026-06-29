@@ -1,0 +1,182 @@
+import { Go, Tip, Details } from '@lynx';
+import { Columns } from '@/components/Columns.jsx';
+
+# 理解布局
+
+Lynx 提供了：
+
+- [`width`]、[`height`]、[`margin`]、[`padding`] 等属性，用于描述元件的大小。
+- [`display`] 属性及[线性布局]、[弹性布局]、[网格布局]、[相对布局]，用于对元件进行布局。
+- 包含 [`align-items`]、[`justify-content`] 等的对齐属性，用于对齐元件。
+- [`position`] 及 [`left`]、[`right`]、[`top`]、[`bottom`] 属性，用于定位元件。
+- [`direction`] 及[逻辑属性]，用于支持布局的国际化。
+
+Lynx 支持的布局属性与 Web 中同名的属性在行为上表现一致。但两者设计思路存在差异：Web 的布局是以文本为主体，而 Lynx 的布局则是以**元件**（`<view>`、`<text>`、`<image>` 等）作为基本布局单位。这意味着 Lynx 的布局元件都是[块级元件](https://developer.mozilla.org/zh-CN/docs/Glossary/Block-level_content)。
+
+下面教程将展示如何在 Lynx 中完成元件的布局。
+
+## 调整元件大小
+
+你可以使用 [`width`]、[`height`]、[`max-width`]、[`min-width`]、[`max-height`]、[`min-height`]、[`margin`]、[`padding`] 和 [`border-width`] 描述元件大小与盒模型，这些属性支持 `px`、`%`、`vh` 等多种[长度单位](/api/css/data-type/length.html#units)。同时 `width` 和 `height` 支持 [`fit-content`] 和 [`max-content`] 的取值，用于元件的大小根据其内容自行撑开。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/sizing.png"
+  example="layout"
+  defaultEntryFile="dist/sizing.lynx.bundle"
+  defaultFile="src/sizing/index.tsx"
+  entry="src/sizing"
+/>
+
+<Details
+  title={
+    <span>
+      在 Lynx 中，<code>box-sizing</code> 的默认值为 <code>border-box</code>
+      ，且不具备外边距折叠的表现。
+    </span>
+  }
+>
+  Lynx 的大小属性 `width`、`height`、`max-width`
+  等默认情况下描述的是含边框大小，即包含 `border` 与 `padding` 的内容大小，和
+  Web 默认表现不一致。 同时，Lynx 不具备 Web 的
+  [外边距折叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_box_model/Mastering_margin_collapsing)
+  的表现。
+</Details>
+
+## 布局元件
+
+[`<view>`] 元件可以用于布局子元件，且可以通过在 `<view>` 元件上设置 [`display`] 属性，来控制其对子元件的布局方式。`display` 支持 `linear`、`flex`、`grid`、`relative`、`none` 五种取值。
+
+### 线性布局（linear）
+
+如果你想要简单的按顺序排列元件。则可以将 [`display`] 属性设置为 `linear`，使用 Lynx 的默认布局--[线性布局]。线性布局（受 Android [Linear Layout](https://developer.android.com/develop/ui/views/layout/linear) 的启发）可以按照你声明的方向将元件按顺序排列。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/linear.png"
+  example="layout"
+  defaultEntryFile="dist/linear.lynx.bundle"
+  defaultFile="src/linear/index.tsx"
+  entry="src/linear"
+/>
+
+### 弹性布局（flex）
+
+如果需要在顺序排列元件的基础上，让子元件的大小自适应父元件的大小（如增加子元件尺寸以填满未使用的空间，收缩子元件尺寸以避免溢出），则可以将 [`display`] 属性设置为 `flex`，使用[弹性布局]。Lynx 中的弹性布局和 Web 中的功能和行为上一致。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/flex.png"
+  example="layout"
+  defaultEntryFile="dist/flex.lynx.bundle"
+  defaultFile="src/flex/index.tsx"
+  entry="src/flex"
+/>
+
+### 网格布局（grid）
+
+如果想要将多个元件同时在垂直和水平方向上交错排列，形成一个二维的布局方式，则可以将 [`display`] 属性设置为 `grid`，使用[网格布局]。网格布局是 Web 中的一种布局，可以将空间划分为二维网格，将元件放到指定的行列上。Lynx 支持其能力的子集。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_grid_new.png"
+  example="layout"
+  defaultEntryFile="dist/grid.lynx.bundle"
+  defaultFile="src/grid/index.tsx"
+  entry="src/grid"
+/>
+
+### 相对布局（relative）
+
+如果你希望通过元件间的相对位置关系来描述布局，则可以通过将 [`display`] 属性设置为 `relative`，使用[相对布局]。相对布局（受 Android [Relative Layout](https://developer.android.com/develop/ui/views/layout/relative) 的启发）可以通过描述元件之间的位置关系（例如，一个元件位于另一个元件的左侧）来声明布局。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_relative_demo.png"
+  example="layout"
+  defaultEntryFile="dist/relative.lynx.bundle"
+  defaultFile="src/relative_layout/index.tsx"
+  entry="src/relative_layout"
+/>
+
+### 文字与行内布局
+
+[`<view>`] 组件内不能直接插入文字，且 Lynx 的 [`display`] 属性不支持 `inline` 与 `block` 的取值。而 [`<text>`] 元件可以完成文字展示，以及元件的行内布局。详细参考[文字排版](/guide/styling/text-and-typography.mdx)。
+
+## 对齐元件
+
+你可以使用 [`align-items`]、[`align-self`]、[`justify-content`]、[`align-content`]、[`justify-items`] 和 [`justify-self`] 属性，对齐 [`<view>`] 中布局的元件.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/align.png"
+  example="layout"
+  defaultEntryFile="dist/align.lynx.bundle"
+  defaultFile="src/align/index.tsx"
+  entry="src/align"
+  highlight="{10,13,18,29}"
+/>
+
+## 位移和绝对定位
+
+通过设置 [`top`]、[`left`]、[`bottom`]、[`right`] 属性，你可以将元件在原有位置的基础上进行位移。同时可以配合对 [`position`] 属性配置，完成对元件的绝对定位.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/position.png"
+  example="layout"
+  defaultEntryFile="dist/position.lynx.bundle"
+  defaultFile="src/position/index.tsx"
+  entry="src/position"
+  highlight="{12,26-28,43}"
+/>
+
+## 国际化
+
+你可以通过 [`direction`](/api/css/properties/direction.mdx) 属性和[逻辑属性]，来使你的页面同时支持从左至右书写的语言（如中文）和从右至左书写的语言（如阿拉伯文）。逻辑属性指 `XX-inline-start`、`XX-inline-end` 等一系列属性（如 [`inset-inline-start`](/api/css/properties/inset-inline-start.mdx)）。
+
+<Tip title={`启用 CSS 属性继承和逻辑属性`}>
+  请参考 [CSS
+  继承](/guide/styling/custom-theming#how-to-enable-css-inheritance), 使用
+  [`enableCSSInheritance`] 配置，允许 `direction` 属性被继承，以及使用依赖于
+  `direction` 的逻辑属性。
+</Tip>
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/direction.png"
+  example="layout"
+  defaultEntryFile="dist/direction.lynx.bundle"
+  defaultFile="src/direction/index.tsx"
+  entry="src/direction"
+/>
+
+[`width`]: /api/css/properties/width.mdx
+[`height`]: /api/css/properties/height.mdx
+[`min-width`]: /api/css/properties/min-width.mdx
+[`min-height`]: /api/css/properties/min-height.mdx
+[`max-width`]: /api/css/properties/max-width.mdx
+[`max-height`]: /api/css/properties/max-height.mdx
+[`flex-grow`]: /api/css/properties/flex-grow.mdx
+[`flex-shrink`]: /api/css/properties/flex-shrink.mdx
+[`direction`]: /api/css/properties/direction.mdx
+[`display`]: /api/css/properties/display.mdx
+[`margin`]: /api/css/properties/margin.mdx
+[`padding`]: /api/css/properties/padding.mdx
+[`position`]: /api/css/properties/position.mdx
+[`border-width`]: /api/css/properties/border-width.mdx
+[`inset-inline-start`]: /api/css/properties/inset-inline-start.mdx
+[`top`]: /api/css/properties/top.mdx
+[`bottom`]: /api/css/properties/bottom.mdx
+[`max-content`]: /api/css/data-type/max-content.mdx
+[`fit-content`]: /api/css/data-type/fit-content.mdx
+[`justify-self`]: /api/css/properties/justify-self.mdx
+[`justify-items`]: /api/css/properties/justify-items.mdx
+[`align-self`]: /api/css/properties/align-self.mdx
+[`align-content`]: /api/css/properties/align-content.mdx
+[`justify-content`]: /api/css/properties/justify-content.mdx
+[`align-items`]: /api/css/properties/align-items.mdx
+[`left`]: /api/css/properties/left.mdx
+[`right`]: /api/css/properties/right.mdx
+[`<view>`]: /api/elements/built-in/view.mdx
+[`<text>`]: /api/elements/built-in/text.mdx
+[length units]: /api/css/data-type/length-percentage.mdx
+[relative layout]: /guide/ui/layout/relative-layout.mdx
+[线性布局]: /guide/ui/layout/linear-layout.mdx
+[相对布局]: /guide/ui/layout/relative-layout.mdx
+[弹性布局]: /guide/ui/layout/flexible-box-layout.mdx
+[网格布局]: /guide/ui/layout/grid-layout.mdx
+[逻辑属性]: https://developer.mozilla.org/zh/docs/Web/CSS/CSS_logical_properties_and_values
+[`enableCSSInheritance`]: /api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablecssinheritance#pluginreactlynxoptionsenablecssinheritance-property

@@ -1,0 +1,20 @@
+name: Cherry-pick Config Check
+
+on:
+  pull_request:
+    paths:
+      - '.github/cherry-pick-config.json'
+      - '.github/ISSUE_TEMPLATE/cherry_pick_request.yml'
+      - '.github/scripts/cherry-pick-request.mjs'
+      - '.github/workflows/cherry-pick-request.yml'
+      - '.github/workflows/cherry-pick-config-check.yml'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node .github/scripts/cherry-pick-request.mjs check-config

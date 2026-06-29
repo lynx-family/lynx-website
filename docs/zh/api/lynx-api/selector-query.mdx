@@ -1,0 +1,73 @@
+---
+tag: BTS
+api: lynx-api/selector-query/SelectorQuery
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# SelectorQuery
+
+<APISummary />
+
+用于获得指定节点的引用，以便对其进行 UI 操作，例如调用其元件的方法、获取或设置节点属性。
+
+根据创建方式的不同，每个 `SelectorQuery` 对象都会被指定一个根节点。任何节点查找的范围都会被限制在该节点的叶子结点中。
+
+## 实例方法
+
+[`SelectorQuery.exec()`](./selector-query/selector-query-exec.mdx)
+
+执行所有已提交的 UI 节点操作任务。
+
+[`SelectorQuery.select()`](./selector-query/selector-query-select.mdx)
+
+在 `SelectorQuery` 指定的根节点下选择第一个匹配指定 CSS 选择器的节点。
+
+[`SelectorQuery.selectAll()`](./selector-query/selector-query-select-all.mdx)
+
+在 `SelectorQuery` 所指定的根节点下选择所有匹配指定 CSS 选择器的节点。
+
+[`SelectorQuery.selectRoot()`](./selector-query/selector-query-select-root.mdx)
+
+选择 `SelectorQuery` 所指定的根节点。
+
+[`SelectorQuery.selectUniqueID()`](./selector-query/selector-query-select-unique-id.mdx)
+
+通过指定 `uid` 选择节点。
+
+## 示例
+
+获取指定 `text` 节点的位置和大小：
+
+```tsx
+class Page extends Component {
+  componentDidMount() {
+    lynx
+      .createSelectorQuery() // 创建 SelectorQuery
+      .select('#my-id') // 指定目标节点的选择器
+      .invoke({
+        // 指定对目标节点的操作
+        method: 'boundingClientRect',
+        success: function (res) {
+          console.log(res);
+        },
+        fail: function (res) {
+          console.log(res.code, res.data);
+        },
+      })
+      .exec(); // 执行查询
+  }
+
+  render() {
+    return (
+      <view>
+        <text id="my-id">...</text>
+      </view>
+    );
+  }
+}
+```
+
+## 兼容性
+
+<APITable />

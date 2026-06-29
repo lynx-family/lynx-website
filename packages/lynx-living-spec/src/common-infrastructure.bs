@@ -1,0 +1,81 @@
+# <dfn for=CommonInfrastructure>Common Infrastructure</dfn>
+
+## High-level Concept
+
+The following diagram gives a simplified overview of the pieces that form the Lynx tech stack. It clarifies where key terms (e.g. [=EnginePixeling/engine=] and [=FrameworkRendering/framework=]) sit in this stack and highlights the API boundaries.
+
+<p style="justify-content:center;align-items:center;display:flex;">
+    <img alt="common_infrastructure" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/spec/common_infrastructure.png" width="50%" height="50%">
+</p>
+
+### <dfn for=CommonInfrastructure>APP</dfn>
+
+It is where [=Lynx/Lynx developers=] own and program with the [=CommonInfrastructure/Lynx platform=] APIs and [=FrameworkRendering/framework=] to build UIs and implement business logic.
+An App may consist of one or multiple [=pages=], with each page being loaded from an entrypoint [=bundle=], and potentially additional [=lazy bundles=] as needed.
+
+### <dfn for=CommonInfrastructure>Container</dfn>
+
+It is a self-contained module within an [=App=] responsible for managing the lifecycle of [=LynxView=] instances. Key responsibilities of the Container include:
+managing LynxView instances, loading page resources (e.g., [=bundle=], medias, etc.), and handling navigation controls.
+
+### <dfn for=CommonInfrastructure>SDK</dfn>
+
+It is a collection of tools and libraries provided by [=Lynx/Lynx contributors=] that enable [=Lynx/Lynx developers=] to build [=CommonInfrastructure/apps=] for Lynx. It primarily encapsulates two layers: [=EnginePixeling/engine=] and [=FrameworkRendering/framework=].
+
+### <dfn for=CommonInfrastructure>Lynx Platform</dfn>
+
+Much like the Web platform (wikipedia), it refers to the collection of technologies and APIs that allows [=Lynx/Lynx developers=] to create Lynx pages or applications that run on the Lynx [=EnginePixeling/engine=].
+
+### <dfn for=CommonInfrastructure>Lynx Pipeline</dfn>
+
+The [=CommonInfrastructure/lynx pipeline=] in Lynx development refers to the sequence of steps a Lynx [=CommonInfrastructure/app=] takes to convert its internal [=CommonInfrastructure/structures=] into the visual representation that users see and interact with on their screens.
+In practice, the [=CommonInfrastructure/lynx pipeline=] is an iterative loop where user inputs can continuously trigger various phases of the process. This pipeline is divided into four main parts: load, parse, [=FrameworkRendering/framework rendering=] and [=EnginePixeling/pixeling=].
+
+### <dfn for=CommonInfrastructure>Host Platform</dfn>
+The Host Platform refers to the underlying operating system and its supporting services that provide the foundational runtime environment and platform specific capabilities for the engine.
+
+## <dfn for=CommonInfrastructure>Structure</dfn>
+
+### <dfn for=CommonInfrastructure>Lynx Bundle</dfn> (or <dfn for=CommonInfrastructure>Bundle</dfn>)
+
+Where all necessary resources needed for a Lynx [=CommonInfrastructure/App=] to run are bundled together.
+This usually comprises of:
+- [=Styling/style sheet=]
+- [=Scripting/script=]
+- serialized [=ElementsComponents/element tree=]
+
+### <dfn for=CommonInfrastructure>Lazy Bundle</dfn>
+
+Where all necessary resources needed for a [=ElementsComponents/component=] to run are bundled together, has similar composition to [=CommonInfrastructure/bundle=]. It is usually lazy loaded at runtime.
+
+### <dfn for=CommonInfrastructure>Scripting Agent</dfn>
+Similar to the agent in ECMA-262 and W3C.
+
+### <dfn for=CommonInfrastructure>LynxView</dfn>
+Similar to WebView in native developing. Renders [=bundle=] within host application's context.
+
+### Page
+Similar to the document in W3C. It is the root [=ElementsComponents/element=] of Lynx [=App=].
+
+### The `Lynx` Object
+A binding object, offering some common capabilities to script developers. It is provided in [=main thread runtime=] and [=background thread runtime=].
+
+
+### <dfn for=CommonInfrastructure>Lynx Group</dfn>
+
+When multiple [=LynxView=] is hosted on a shared [=CommonInfrastructure/scripting agent=].
+
+## Running Scenarios
+
+### <dfn for=CommonInfrastructure>Standalone</dfn>
+
+When Lynx is used independently, i.e. not mixed with another UI system , such as:
+
+- Single page
+- Full screen
+
+### <dfn for=CommonInfrastructure>Embedded</dfn>
+
+When Lynx is used as a part of, or is integrated within, another UI system, such as:
+
+- Multiple cards within a feed

@@ -1,0 +1,104 @@
+---
+api: css/properties/filter
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# filter
+
+<APISummary />
+
+## 介绍
+
+`filter` 属性可以将模糊或颜色偏移等图形效果应用于元件
+
+:::tip 常见问题
+
+在 Android & iOS 平台上，该属性只作用于 view 上，如果 image 组件需要使用 blur 效果，可以直接使用 image 的 [blur-radius](/api/elements/built-in/image.mdx#blur-radius)
+
+目前只支持 `blur`、`grayscale`、`brightness`、`contrast` 和 `saturate`函数。
+
+如果使用 opacity 可以直接给 view 设置属性，[相关链接](./opacity.mdx)
+
+在 Android 上添加了 grayscale 属性的 view 会创建 GPU 上的离屏缓存，大量的离屏缓存会导致渲染性能下降。在不需要 grayscale 时建议将 `filter: grayscale(0)` 替换为 `filter: none` 来移除离屏缓存。
+
+:::
+
+:::info Android blur 说明（OS 版本 \< 12）
+
+在使用的时候可以给节点添加 `blur-sampling` 属性（int 值）设置降采样比例，会提升性能
+
+设置 blur 的区域如果一直更新内容可能会产生性能问题
+
+为了更高的 blur 效率建议 blur-radius 实际大小不超过 25，即最大写 25ppx 或者 25/density 的 px
+:::
+
+## 使用示例
+
+<Go
+  example="css-api"
+  entry="src/filter"
+  defaultFile="src/filter/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/filter2.0.jpg"
+  defaultEntryFile="dist/filter.lynx.bundle"
+  entry="src/filter"
+/>
+
+## 语法
+
+```css
+filter: grayscale(100%);
+filter: blur(5px);
+filter: brightness(0.6);
+filter: contrast(0.7);
+filter: saturate(0.8);
+```
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>none</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="yes"
+/>
+
+## 形式语法
+
+```
+filter = <filter-function>
+
+<filter-function> =
+  <blur()>         |
+  <grayscale()>    |
+  <brightness()>   |
+  <contrast()>     |
+  <saturate()>
+
+<blur()> =
+  blur( <length>? )
+
+<grayscale()> =
+  grayscale( [ <percentage> ]? )
+
+<brightness()> =
+  brightness( [ <number> | <percentage> ]? )
+
+<contrast()> =
+  contrast( [ <number> | <percentage> ]? )
+
+<saturate()> =
+  saturate( [ <number> | <percentage> ]? )
+
+```
+
+## 与 Web 的区别
+
+- 在一个声明中只能使用一个函数
+- 只支持 `blur`、`grayscale`、`brightness`、`contrast` 和 `saturate`函数
+
+## 兼容性
+
+<APITable />

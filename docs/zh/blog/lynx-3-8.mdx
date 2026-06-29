@@ -1,0 +1,141 @@
+---
+title: 'Lynx 3.8：Android 上的 WebAssembly、自适应布局与更多能力'
+date: 2026-05-31
+sidebar: false
+authors: ['mitchell', 'lynx']
+badge_text: 'Lynx 3.8 发布了!'
+description: 'Lynx 3.8 开启月度发布节奏，带来 Android 上的 WebAssembly、自适应布局与文本适配、HarmonyOS SessionStorage、LynxEngine 复用和 DevTool 协议支持。'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+Lynx 3.8 已经正式发布！
+
+正如 [2026 路线图](/blog/lynx-open-source-roadmap-2026)中提到的规划，Lynx 3.8 开启了新的月度发布节奏。切换到月度发布后，每个版本都会更小、更聚焦。3.8 的重点包括 Android 上的 **WebAssembly**、`<frame>` 自适应尺寸、按行数调整字号、HarmonyOS SessionStorage、`LynxEngine` 复用和 DevTool 协议更新。
+
+进入 3.8 之前，也别错过我们最近发布的 [lynx-ui](/blog/lynx-ui)：一套开箱即用的组件库，帮助你构建跨平台 Lynx 界面。
+
+## Android 上的 WebAssembly
+
+本次发布通过 PrimJS 运行时集成，在 Android 上引入了 [WebAssembly](/guide/scripting-runtime/webassembly) 初步支持。Lynx 应用现在可以在后台线程加载和执行 WebAssembly 模块，让计算密集型逻辑在 JavaScript 性能不够时获得另一种实现选择。
+
+当前实现主要覆盖常见的构造函数式使用方式：
+
+```js
+const module = new WebAssembly.Module(wasmBytes);
+const instance = new WebAssembly.Instance(module, imports);
+
+const result = instance.exports.add(1, 2);
+```
+
+下面这个完整的 Lynx 页面示例展示了同样的调用流程：
+
+<Go
+  example="webassembly"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+/>
+
+当前实现完整支持 `WebAssembly.Module` 和 `WebAssembly.Instance`，并覆盖 `WebAssembly.Memory`、`WebAssembly.Table` 和 `WebAssembly.Global` 的常见用法。
+
+## 自适应布局、文本适配与平台行为
+
+本次版本改进了 Lynx 内容对宿主容器的适配、受限布局中的文本呈现，并补齐了一些平台行为差异。
+
+### `<frame>` 自适应尺寸与加载指标
+
+[`<frame>`](/api/elements/built-in/frame) 现在可以通过新的 `auto-width` 和 `auto-height` 属性，根据嵌入 Lynx 页面的内容确定自身尺寸，减少宿主侧手动计算尺寸的需要。
+
+```tsx
+<frame src={url} auto-width auto-height />
+```
+
+它也增强了启动和可观测性支持，包括预设布局、更好的 `data` 与 `global-props` 传递、通过 `layoutchange` 上报固有尺寸，以及 Android 和 iOS 上的 `<frame>` 加载指标。
+
+### 按行数调整字号
+
+新的 [`-x-auto-font-size-line-ranges`](/api/css/properties/-x-auto-font-size-line-ranges) CSS 属性可以根据实际渲染行数，为不同文本行数设置不同的字号搜索范围。配合 `-x-auto-font-size: true` 使用：
+
+```css
+.title {
+  -x-auto-font-size: true;
+  -x-auto-font-size-line-ranges:
+    line-range(1, 18px, 22px), line-range(2, 16px, 18px),
+    line-range(3 to infinity, 14px);
+}
+```
+
+这适用于标题、卡片和信息流等场景，让单行、双行和多行文本分别使用更合适的字号范围。
+
+<Go
+  example="css-api"
+  defaultFile="src/-x-auto-font-size-line-ranges/index.scss"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/auto-font-size-line-ranges.jpeg"
+  defaultEntryFile="dist/-x-auto-font-size-line-ranges.lynx.bundle"
+  entry="src/-x-auto-font-size-line-ranges"
+  highlight="{20-23}"
+/>
+
+### 桌面端曝光
+
+macOS 和 Windows 现在支持 [`enable-exposure-ui-clip`](/api/elements/built-in/view.html#enable-exposure-ui-clip)，让开发者可以在复杂布局中更精细地控制曝光计算。
+
+## 原生侧集成
+
+### LynxViewGroup 中的引擎复用
+
+在 Android 上，`LynxViewGroup` 现在可以为同一个组创建出的 `LynxView` 缓存并复用 `LynxEngine`。当应用反复基于同一个 template bundle 创建视图时，例如多页面或嵌入式视图场景，这一能力会很有用。
+
+不少应用里，用户会反复离开并重新进入同一个 Lynx 页面。此时，缓存 `LynxEngine` 可以避免反复创建和销毁引擎，并复用引擎已经完成的工作，例如已经构建好的 UI 树，从而让页面再次进入时更快完成渲染。
+
+应用无需直接管理 `LynxEngine`。创建启用缓存的 group，将它传给每个 `LynxViewBuilder`，并在不再需要时释放即可：
+
+```java
+ILynxViewGroup group = new LynxViewGroupBuilder()
+    .setContext(context)
+    .setTemplateBundle(templateBundle)
+    .setGlobalProps(globalProps)
+    .setEnableCacheEngine(true) // 启用缓存。
+    .build();
+
+LynxView first = new LynxViewBuilder()
+    .setLynxViewGroup(group)
+    .build(context);
+
+// 稍后，使用同一个 group 创建的另一个 LynxView 可以复用缓存的引擎。
+LynxView second = new LynxViewBuilder()
+    .setLynxViewGroup(group)
+    .build(context);
+
+group.release();
+```
+
+### 资源加载回调
+
+`LynxViewClientV2` 新增 `onResourceLoaded` 回调，使客户端可以在原生侧观察资源加载过程。这为宿主应用提供了统一入口，用来收集资源耗时、成功或失败状态以及其他诊断信息。
+
+### HarmonyOS 上的 SessionStorage
+
+HarmonyOS 现在支持 SessionStorage API，可用于跨页面数据共享。前端代码可以在 HarmonyOS 上使用已有的 [`lynx.setSessionStorageItem`](/api/lynx-api/lynx/lynx-set-session-storage)、[`lynx.getSessionStorageItem`](/api/lynx-api/lynx/lynx-get-session-storage)、[`lynx.subscribeSessionStorage`](/api/lynx-api/lynx/lynx-subscribe-session-storage) 和 [`lynx.unsubscribeSessionStorage`](/api/lynx-api/lynx/lynx-unsubscribe-session-storage) API，管理 session 级的跨页面状态。
+
+## DevTool 协议与调试
+
+DevTool 协议和调试能力改进包括：
+
+- MTS 调试现在支持已预执行、已预解码的 `MTSRuntime` 实例。
+- CDP 支持新增 `DOM.describeNode`。
+- `DOM.getDocument` 现在支持 `depth` 参数。
+- DevTool 可以通过 CDP Performance domain 查询 `PerformanceEntry` 数据。
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.8/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.8 版本升级。
+
+## 感谢
+
+Lynx 3.8 是月度发布节奏的第一步：更小的版本、更清晰的升级路径，也让我们更快响应反馈。
+
+感谢每一位正在使用 Lynx、尽早试用新版本、提交 issue，并帮助项目在开放社区中持续进步的开发者。下次月度发布再见。

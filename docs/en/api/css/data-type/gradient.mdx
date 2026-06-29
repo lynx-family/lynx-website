@@ -1,0 +1,136 @@
+---
+api: css/data-type/gradient
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# `<gradient>`
+
+<APISummary />
+
+The `<gradient>` CSS data type is a special type of `<image>` that consists of a progressive transition between two or more colors.
+
+## Syntax
+
+The `<gradient>` data type is defined with one of the function types listed below.
+
+### Linear gradient
+
+Linear gradients transition colors progressively along an imaginary line. They are generated with the `linear-gradient()` function.
+
+```css
+/* A gradient tilted 45 degrees, starting blue and finishing red */
+linear-gradient(45deg, blue, red);
+/* A gradient going from the bottom right to the top left corner, starting blue and finishing red */
+linear-gradient(to left top, blue, red);
+/* Color stop: A gradient going from the bottom to top, starting blue, turning green at 40% of its length, and finishing red */
+linear-gradient(0deg, blue, green 40%, red);
+```
+
+#### Formal Syntax
+
+```
+linear-gradient([ <angle> | to <side-or-corner> ,]? <color-stop> [ , <color-stop> ]+ )
+```
+
+#### Values
+
+- `<side-or-corner>`
+  The position of the gradient line's starting point. If specified, it consists of the word `to` and up to two keywords: one indicates the horizontal side (`left` or `right`), and the other the vertical side (`top` or `bottom`). The order of the side keywords does not matter. If unspecified, it defaults to `to bottom`. <br />
+  The values `to top`, `to bottom`, `to left`, and `to right` are equivalent to the angles `0deg`, `180deg`, `270deg`, and `90deg`, respectively. The other values are translated into an angle.
+
+- `<angle>`
+  The gradient line's angle of direction. A value of `0deg` is equivalent to `to top`; increasing values rotate clockwise from there.
+
+- `<color-stop>`
+  A color-stop's [`<color>`](./color) value, followed by at most one optional stop position, a [`<percentage>`](./percentage) or `<number>` value along the gradient's axis. Note that unlike the Web standard, Lynx does not support multiple positions after a single color. If a unitless `<number>` is used, it is treated as a percentage by multiplying it by 100 (e.g., `0.5` is treated as `50%`). Color stops without an explicit position are distributed linearly between known positions.
+
+### Radial Gradient
+
+Radial gradients transition colors progressively from a center point (origin). They are generated with the `radial-gradient()` function.
+
+```css
+radial-gradient(#e66465, #9198e5);
+
+radial-gradient(closest-side, #3f87a6, #ebf8e1, #f69d3c);
+
+radial-gradient(circle at 100%, #333, #333 50%, #eee 75%, #333 75%);
+
+radial-gradient(ellipse at top, #e66465, transparent);
+```
+
+#### Formal Syntax
+
+```
+radial-gradient(
+  [ [ circle || <length> ]                         [ at <position> ]? , |
+    [ ellipse || [ <length> | <percentage> ]{2} ]  [ at <position> ]? , |
+    [ [ circle | ellipse ] || <extent-keyword> ] [at <position> ]? , |
+    at <position> ,
+  ]?
+  <color-stop> [ , <color-stop> ]+
+)
+```
+
+#### Values
+
+- `<position>`
+  The position of the gradient, interpreted in the same way as [`background-position`](/api/css/properties/background-position) or [`transform-origin`](/api/css/properties/transform-origin). If unspecified, it defaults to center.
+
+- `<ending-shape>`
+  The gradient's ending-shape. The value can be `circle` (meaning that the gradient's shape is a circle with a constant radius) or `ellipse` (meaning that the shape is an axis-aligned ellipse). If unspecified, it defaults to `ellipse`.
+
+- `<size>`
+  Determines the size of the gradient's ending shape. <br />
+  If omitted it defaults to farthest-corner. It can be given explicitly or by keyword. For the purpose of the keyword definitions, consider the gradient box edges as extending infinitely in both directions, rather than being finite line segments.
+
+  | **Keyword**       | **Description**                                                                                                                                                                 |
+  | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `closest-side`    | The gradient's ending shape meets the side of the box closest to its center (for circles) or meets both the vertical and horizontal sides closest to the center (for ellipses). |
+  | `closest-corner`  | The gradient's ending shape is sized so that it exactly meets the closest corner of the box from its center.                                                                    |
+  | `farthest-side`   | Similar to `closest-side`, except the ending shape is sized to meet the side of the box farthest from its center (or vertical and horizontal sides).                            |
+  | `farthest-corner` | The default value, the gradient's ending shape is sized so that it exactly meets the farthest corner of the box from its center.                                                |
+
+- `<color-stop>`
+  Same as `linear-gradient`
+
+### Conic Gradient
+
+Conic gradients transition colors progressively around a center point (origin). They are generated with the `conic-gradient()` function.
+
+```css
+/* Starting from 0deg (default), center at 50% 50% (default) */
+conic-gradient(red, blue);
+/* Starting from 45deg */
+conic-gradient(from 45deg, red, blue);
+/* Center at top left */
+conic-gradient(at top left, red, blue);
+/* Starting from 90deg, center at 20% 30% */
+conic-gradient(from 90deg at 20% 30%, red 0%, blue 50%, green 100%);
+```
+
+#### Formal Syntax
+
+```
+conic-gradient(
+  [ [ from <angle> ]? [ at <position> ]? , ]?
+  <color-stop-list>
+)
+```
+
+#### Values
+
+- `<angle>`
+  The starting angle of the gradient, preceded by the keyword `from`. The default value is `0deg`. Supported units include `deg`, `grad`, `rad`, and `turn`. Unitless numbers are only accepted if the value is `0` or if the `enable_transform_legacy` compatibility mode is enabled.
+
+- `<position>`
+  The center point of the gradient, preceded by the keyword `at`. The default value is `50% 50%` (`center`). It supports one or two values, using the same syntax as [`background-position`](/api/css/properties/background-position):
+  - Keywords: `left`, `center`, `right`, `top`, `bottom`.
+  - Length or percentage: `<length-percentage>` (e.g., `20px`, `30%`).
+
+- `<color-stop-list>`
+  A comma-separated list of at least two color stops. Each color stop consists of a `<color>` followed by at most one optional position (`<percentage>` or `<number>`). Note that unlike the Web standard, Lynx does not support multiple positions after a single color. If a unitless `<number>` is used, it is treated as a percentage by multiplying it by 100 (e.g., `0.5` is treated as `50%`). Color stops without an explicit position are distributed linearly between known positions.
+
+## Compatibility
+
+<APITable />

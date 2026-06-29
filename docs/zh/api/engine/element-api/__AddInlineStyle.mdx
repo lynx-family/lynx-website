@@ -1,0 +1,39 @@
+# `__AddInlineStyle`
+
+## 介绍
+
+新增内联样式至 Element 对象。
+
+## 语法
+
+```jsx
+__AddInlineStyle(element: Element, id: number, value: string|null|undefined) : void;
+```
+
+### 参数
+
+|   Key   | 说明                                                                                                                                                                                                                                         |
+| :-----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| element | 任意的 Element 对象。                                                                                                                                                                                                                        |
+|   id    | 是一个 number 对象，每一个 number 会对应一个 style key，比如 0 对应 style top。                                                                                                                                                              |
+|  value  | 要设置的 style value，可以为 string，null 或者 undefined。为 string 时，LynxSDK 会将该 key 和 value 设置给对应的 Element，如果之前设置过，则会覆盖之前设置的值。为 null 或者 undefined 时，LynxSDK 会从 Element 对象的内联样式中删除该 key。 |
+
+### 返回值
+
+无返回值。
+
+## 示例
+
+前端框架可以把对应的前端标签编译期处理为如下所示 render 指令。
+
+```jsx
+<view src="xxx" style={{ top: '10px' }} />
+```
+
+```jsx
+// main-thread.js
+let element = __CreateElement('view', 0, {});
+__SetAttribute(element, 'src', 'xx');
+
+__AddInlineStyle(element, 0, '10px');
+```

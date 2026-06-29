@@ -1,0 +1,420 @@
+import { AndroidOnly, IOSOnly, ClayOnly, ClayWindowsOnly, ClayMacOSOnly, HarmonyOnly, Required, Deprecated, Go, PlatformTabs } from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## 属性
+
+### `bounces`
+
+ <IOSOnly />
+
+```tsx
+// @defaultValue: false
+bounces?: boolean;
+```
+
+启用弹性效果
+
+
+### `cookies`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+cookies?: any;
+```
+
+预设 cookies
+
+
+### `enable-debug`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: false
+'enable-debug'?: boolean;
+```
+
+启用 WebView 调试，可在 Chrome DevTools 中进行调试
+
+
+### `html`
+
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>3.6</VersionBadge>
+
+```tsx
+html?: string;
+```
+
+表示要加载的 HTML 内容的字符串。当 html 变化时会自动触发内容刷新。优先级低于 `src`。
+
+
+### `initjs`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+initjs?: string;
+```
+
+在文档就绪时执行的 JavaScript
+
+
+### `params`
+
+ <AndroidOnly /> <IOSOnly />
+
+```tsx
+params?: object;
+```
+
+外部 webview 实现的参数
+
+
+### `scroll-bar-enable`
+
+ <IOSOnly />
+
+```tsx
+// @defaultValue: false
+'scroll-bar-enable'?: boolean;
+```
+
+启用滚动条
+
+
+### `src`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+src?: string;
+```
+
+表示远程服务器上资源位置的字符串。当 src 变化时会自动触发内容刷新。
+
+
+### `use-osr`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+// @defaultValue: false
+'use-osr'?: boolean;
+```
+
+是否启用离屏渲染模式
+
+
+### `webview-type`
+
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: 'default'
+'webview-type'?: string;
+```
+
+指定 webview 的类型，可以是通过 LynxService 注入的 webview 实现
+
+
+## 事件
+
+前端可以绑定对应的事件回调来监听元素的运行时行为，如下所示。
+
+### `binderror`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+binderror = (e: WebviewErrorEvent) => {};
+```
+
+| 字段 | 类型 | 可选 | 默认值 | 平台 | 起始版本 | 描述 |
+| --- | --- | --- | --- | --- | --- | --- |
+| errorCode | number | 否 | – |  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |  | 表示错误码的数字 |
+| errorMsg | string | 否 | – |  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |  | 表示错误信息的字符串 |
+
+
+加载错误事件
+
+
+### `bindload`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindload = (e: BaseEvent) => {};
+```
+
+加载成功事件
+
+
+### `bindlocationchange`
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+bindlocationchange = (e: WebviewUrlEvent) => {};
+```
+
+| 字段 | 类型 | 可选 | 默认值 | 平台 | 起始版本 | 描述 |
+| --- | --- | --- | --- | --- | --- | --- |
+| url | string | 否 | – |  <ClayOnly /> |  | 表示目标 URL 的字符串 |
+
+
+页面地址变化事件
+
+
+### `bindmessage`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindmessage = (e: WebviewMessageEvent) => {};
+```
+
+| 字段 | 类型 | 可选 | 默认值 | 平台 | 起始版本 | 描述 |
+| --- | --- | --- | --- | --- | --- | --- |
+| msg | string | 否 | – |  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |  | 表示消息内容的字符串 |
+
+
+来自 JavaScript 的消息事件
+
+
+### `bindopenwindow`
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+
+```tsx
+bindopenwindow = (e: WebviewUrlEvent) => {};
+```
+
+| 字段 | 类型 | 可选 | 默认值 | 平台 | 起始版本 | 描述 |
+| --- | --- | --- | --- | --- | --- | --- |
+| url | string | 否 | – |  <ClayOnly /> |  | 表示目标 URL 的字符串 |
+
+
+打开新窗口事件
+
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
+
+### `cookies.flushStore`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.flushStore',
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+将所有未写入的 cookies 数据刷新到磁盘
+
+
+### `cookies.get`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.get',
+      params: {
+        /**
+         * 获取域名匹配或为其子域名的 cookies
+         * @PC
+         */
+        domain?: string;
+        /**
+         * 按 httpOnly 过滤 cookies
+         * @PC
+         */
+        httpOnly?: boolean;
+        /**
+         * 按名称过滤 cookies
+         * @PC
+         */
+        name?: string;
+        /**
+         * 获取路径匹配的 cookies
+         * @PC
+         */
+        path?: string;
+        /**
+         * 按 Secure 属性过滤 cookies
+         * @PC
+         */
+        secure?: boolean;
+        /**
+         * 过滤会话 cookie 或持久化 cookie
+         * @PC
+         */
+        session?: boolean;
+        /**
+         * 获取与指定 URL 关联的 cookies。为空则获取所有 URL 的 cookies
+         * @PC
+         */
+        url?: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+从 webview 获取 cookies
+
+
+### `cookies.remove`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.remove',
+      params: {
+        /**
+         * 要删除的 cookie 名称
+         * @PC
+         */
+        name?: string;
+        /**
+         * 与 cookie 关联的 URL
+         * @PC
+         */
+        url: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+删除匹配 url 和 name 的 cookies
+
+
+### `cookies.set`
+
+ <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'cookies.set',
+      params: {
+        /**
+         * cookie 的域名。省略时默认为空
+         * @PC
+         */
+        domain?: string;
+        /**
+         * cookie 的过期时间，为 UNIX 纪元以来的秒数
+         * @PC
+         */
+        expirationDate?: number;
+        /**
+         * cookie 是否标记为 HTTP only
+         * @PC
+         * @defaultValue false
+         */
+        httpOnly?: boolean;
+        /**
+         * cookie 的名称
+         * @PC
+         */
+        name: string;
+        /**
+         * cookie 的路径。省略时默认为空
+         * @PC
+         */
+        path?: string;
+        /**
+         * 应用于此 cookie 的 Same Site 策略。可为 unspecified、no_restriction、lax 或 strict
+         * @PC
+         * @defaultValue 'lax'
+         */
+        sameSite?: string;
+        /**
+         * cookie 是否标记为 secure
+         * @PC
+         * @defaultValue false
+         */
+        secure?: boolean;
+        /**
+         * 关联 cookie 的 URL
+         * @PC
+         */
+        url: string;
+        /**
+         * cookie 的值。省略时默认为空
+         * @PC
+         */
+        value?: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+为 webview 设置 cookie
+
+
+### `eval`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'eval',
+      params: {
+        /**
+         * 函数名称：`javascriptFunc(arg1, arg2)`。
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        func: string;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+调用 JavaScript 函数
+
+
+### `reload`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'reload',
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+重新加载 webview

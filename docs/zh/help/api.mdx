@@ -1,0 +1,91 @@
+import { APITableExplorer, APITable, APISummary } from '@lynx';
+
+# 记录 API
+
+Lynx 文档依赖于一个结构化系统，以确保 API 参考准确且一致。
+
+## 兼容性数据 (`lynx-compat-data`)
+
+平台兼容性的真实来源存储在 `packages/lynx-compat-data` 中。这是一个类似于 MDN browser-compat-data 的 JSON 数据库。
+
+### 添加新 API
+
+1. 导航至 `packages/lynx-compat-data`。
+2. 找到合适的 JSON 文件（例如 `lynx-api/global/console/log.json`）。
+3. 按照模式添加您的 API 定义。
+
+## 显示 API 表格
+
+要在文档中显示兼容性表格，请使用 `<APITable>` 组件。
+
+### 使用 Frontmatter（推荐）
+
+推荐在 Frontmatter 中定义 `api` 字段。
+
+```yaml
+---
+api: lynx-api/global/console/log
+---
+```
+
+然后在 MDX 文件中放置 `<APITable />`。它会自动读取 `api` 字段。
+
+```tsx
+<APITable />
+```
+
+### 多个表格（显式查询）
+
+当您需要在一个页面上显示多个表格时，可以显式传递 `query` 属性。
+
+例如，在 [fetch](../../api/lynx-api/global/fetch.mdx) 中，`Headers`、`Request` 和 `Response` 使用了单独的表格：
+
+```tsx
+### Headers
+
+<APITable query="lynx-api/fetch/Headers" />
+
+### Request
+
+<APITable query="lynx-api/fetch/Request" />
+```
+
+<APITable query="lynx-api/fetch/Headers" />
+
+您可以使用下方的 [交互式浏览器](#interactive-explorer) 验证有效的查询。
+
+## API 摘要
+
+要获取 API 组（如方法、属性、事件）的高级视图，请使用 `<APISummary>`。与 `<APITable>` 类似，它默认从 `api` Frontmatter 字段读取。
+
+```tsx
+<APISummary />
+```
+
+## 交互式浏览器
+
+您可以使用下面的浏览器查找有效的 API 查询并预览其表格。
+
+<APITableExplorer />
+
+## 验证文档
+
+我们提供了一个脚本来确保您的 API 文档与兼容性数据匹配。
+
+```bash
+pnpm run check-docs
+```
+
+该脚本 (`scripts/check_api_doc`) 检查：
+
+- 无效的 `api` Frontmatter 键。
+- 已定义 API 缺少文档。
+
+## TypeDoc 生成
+
+API 参考页面是使用 TypeDoc 从 TypeScript 源代码自动生成的。
+
+- **配置**: `scripts/typedoc/`
+- **命令**: `pnpm run typedoc`
+
+请勿手动编辑由 TypeDoc 生成的文件（通常在 `docs/en/api/...` 中），因为它们会被覆盖。请编辑源注释。

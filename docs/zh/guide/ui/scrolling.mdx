@@ -1,0 +1,145 @@
+---
+description: '管理溢出内容和滚动容器的使用方法。'
+---
+
+import { AndroidOnly, IOSOnly, KnownBug, Required, Go, Details } from '@lynx';
+
+# 管理滚动
+
+溢出行为是指元件的内容（自身内容与子元件）超出了元件自身的大小，在搭建页面的过程中不可避免的会遇到溢出的情况。
+你可以通过 [`overflow`](/api/css/properties/overflow) 属性来裁切溢出的内容,
+也可以通过[滚动容器](#滚动容器)来让溢出的内容可以滚动，并通过 `scroll-orientation` 属性来控制内容的滚动方向：
+
+<table
+  rules="none"
+  align="center"
+  width="100%"
+  style={{ tableLayout: 'fixed' }}
+>
+  <thead align="center">
+    <th colSpan={2}>
+      <span style={{ fontWeight: 'bold' }}>
+        非滚动容器
+      </span>
+    </th>
+    <th colSpan={2}>
+      <span style={{ fontWeight: 'bold' }}>
+        滚动容器
+      </span>
+    </th>
+  </thead>
+  <tr >
+    <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/style-guide-overflow-visible.png"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/style-guide-overflow-hidden.png"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/guide-scroll-orientation-vertical.gif"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/guide-scroll-orientation-horizontal.gif"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+
+  </tr>
+
+  <tr >
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <span>发生了内容溢出</span>
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <span>通过 <code>overflow: hidden</code> 裁切溢出内容</span>
+      </center>
+    </td>
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <span><code>scroll-orientation: vertical</code> 的纵向滚动容器 </span>
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <span><code>scroll-orientation: horizontal</code> 的横向滚动容器</span>
+      </center>
+    </td>
+  </tr>
+</table>
+
+<Details title={<span>不支持<code>overflow:scroll</code>实现滚动效果</span>}>
+  `Lynx`中，`view` 组件不支持像 Web 中通过 `overflow:scroll`来实现滑动效果， 只有`<scroll-view>` 和 `<list>` 等滑动容器具备滑动效果。
+</Details>
+
+## 滚动容器
+
+对于一些 `<view>` 基础组件，不支持滚动效果，请使用专门的滚动容器元件 [`<scroll-view>`](/api/elements/built-in/scroll-view) 或 [`<list>`](/api/elements/built-in/list)。
+
+### 使用 `<scroll-view>` 实现基础滚动
+
+`<scroll-view>` 是 `Lynx` 中基础滚动组件，允许用户在固定的视窗区域内上下或左右滚动内容。以下图为例，当内部子节点高度超过了父容器 `<scroll-view>` 时，只需要将排版方向 `scroll-orientation` 设置为 `vertical` 就可以实现竖直方向的滚动效果。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_vertical.webp"
+  example="scroll-view"
+  defaultFile="src/vertical/index.tsx"
+  defaultEntryFile="dist/vertical.lynx.bundle"
+  highlight="{9}"
+  entry="src/vertical"
+/>
+
+### 使用 `<list>` 处理大量数据
+
+`<scroll-view>` 用于展示少量数据数据, 简单直观。`<list>` 则适合展示大量数据的场景，或者无限下滑加载更多场景，它能采用按需加载形式, 只渲染可见区域内容。
+
+{' '}
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-base.gif"
+  example="list"
+  defaultFile="src/base/index.tsx"
+  defaultEntryFile="dist/base.lynx.bundle"
+  highlight="{12-14}"
+/>
+
+### 使用 `<list>` 处理复杂布局
+
+`<scroll-view>` 只具备线性布局的能力，通过线性排列让元件有序呈现。然而面对复杂的界面时，`<list>` 排版选项丰富，可以选择[网格](/api/elements/built-in/list#网格)和[瀑布流](/api/elements/built-in/list#瀑布流)等不同布局来灵活定制业务需求。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-waterfall.gif"
+  example="list"
+  defaultFile="src/waterfall/index.tsx"
+  defaultEntryFile="dist/waterfall.lynx.bundle"
+  entry="src/waterfall"
+  highlight="{14-16}"
+/>
+
+### 其他功能
+
+- 吸顶能力：`<scroll-view>` [吸顶](/api/elements/built-in/scroll-view.html#吸顶能力)；`<list>` [吸顶](/api/elements/built-in/list.html#节点吸顶)
+
+- `<list>` [分页滚动](/api/elements/built-in/list.html#分页滚动)
+
+- `<list>` [下滑加载更多](/api/elements/built-in/list.html#加载更多)

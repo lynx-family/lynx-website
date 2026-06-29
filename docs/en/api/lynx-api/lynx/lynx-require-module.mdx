@@ -1,0 +1,78 @@
+---
+title: requireModule()
+api: lynx-api/lynx/requireModule
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: requireModule() static method
+
+<APISummary />
+
+Used to import modules. Just like NodeJS's [`require`](https://nodejs.org/docs/latest/api/modules.html#requireid).
+
+`requireModule` will load the module **synchronously**. During the loading, the JavaScript thread will be hang. No JavaScript code will be executed.
+
+## Syntax
+
+```ts
+requireModule<T>(path: string): T;
+```
+
+### Parameters
+
+#### path
+
+The path of the module. Can be a remote path, or a path inside the template.
+
+### Return Value
+
+The exported value of the module.
+
+## Exception
+
+`requireModule` will throw an exception when:
+
+- Network error
+- Module execute error
+- Timeout
+
+The error can be catch and handled by using `try-catch`.
+
+### Timeout
+
+To avoid JavaScript thread hang forever when loading remote resources, `requireModule` will throw an exception 5 seconds after the request is sent.
+
+## Examples
+
+### Loading remote resources
+
+```tsx
+const foo = lynx.requireModule('https://example.com/path/to/chunk');
+```
+
+### Re-try on timeout
+
+```js
+let result = null;
+(function () {
+  let retry = 0;
+  function requireModule(path) {
+    try {
+      result = lynx.requireModule(path);
+    } catch (error) {
+      retry += 1;
+      if (retry < 3) {
+        requireModule(path);
+      } else {
+        throw error;
+      }
+    }
+  }
+  requireModule('path/to/chunk');
+})();
+```
+
+## Compatibility
+
+<APITable />

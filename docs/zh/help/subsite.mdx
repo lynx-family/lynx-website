@@ -1,0 +1,69 @@
+---
+description: '子站点架构与配置指南。'
+---
+
+# 多子站点架构
+
+Lynx 网站作为一个“迷你子站点”（例如 **Lynx**、**ReactLynx**、**Rspeedy**）的集合运行，这些子站点都位于同一个仓库中。这种架构允许每个子站点拥有自己的身份（Logo、主页、侧边栏），同时共享公共文档和基础设施。
+
+## 配置
+
+子站点的中心配置位于 [`shared-route-config.ts`](https://github.com/lynx-family/lynx-website/blob/main/shared-route-config.ts)。此文件作为单一事实来源：
+
+1.  **子站点元数据**：定义可用子站点的列表。
+2.  **共享路由**：定义哪些文档部分在子站点之间共享。
+
+### `SubsiteConfig`
+
+每个子站点由 `SubsiteConfig` 对象定义：
+
+```typescript
+export type SubsiteConfig = {
+  value: string; // 唯一 ID (例如 'guide')
+  label: string; // 显示名称 (例如 'Lynx')
+  description: string; // 简短描述
+  home: string; // 根路径 (例如 '/')
+  url: string; // 落地页 URL
+  logo: {
+    // Logo 资源
+    light: string;
+    dark: string;
+  };
+};
+```
+
+## 添加新子站点
+
+要添加新子站点（例如 `my-framework`）：
+
+1.  **创建目录**：创建 `docs/en/my-framework/`（和 `docs/zh/my-framework/`）。
+2.  **更新配置**：在 `shared-route-config.ts` 的 `SUBSITES_CONFIG` 中添加新条目。
+    ```typescript
+    {
+      value: 'my-framework',
+      label: 'My Framework',
+      // ...
+    }
+    ```
+3.  **配置侧边栏**：创建 `docs/en/my-framework/_meta.json` 以定义其特定的侧边栏结构。
+
+## 共享入口：Quick Start
+
+历史上 `SHARED_DOC_TITLES` 曾收纳过多份跨子站点共享的文档（教程、集成指南等），并通过虚拟路由把它们映射到 `/<subsite>/start/<filename>` 下。今天这些文档要么已被合并进 ChoiceTabs，要么已迁出至顶层 `/learn/*`，只剩 Quick Start 一篇真正属于"所有子站点共享的入口"。
+
+我们把它的规范 URL 固定在 `shared-route-config.ts` 中的 `QUICK_START_PATH`（=`/guide/start/quick-start`）。之所以放在 `/guide/` 之下，是因为 Lynx 是所有其他子站点的运行时底座（Rspeedy = Lynx 构建工具，ReactLynx = React on Lynx，等等），把 Quick Start 安放在平台根目录下是诚实的做法——它的工作就是把读者分流到具体框架的入口。
+
+### 工作原理
+
+1.  **事实来源**：物理文件位于 `docs/{en,zh}/guide/start/quick-start.mdx`。
+2.  **侧边栏入口**：在 `SubsiteRow` 中点击 Lynx 图标会跳转到 `QUICK_START_PATH`，而不是 Lynx 子站点的 `url`；其他图标仍跳转到各自子站点的入口页。
+3.  **历史 URL 兼容**：旧的 `/<ai|react|rspeedy|lynx-ui>/start/*` URL 通过 `netlify.toml` 中的 301 重定向跳转到 `/guide/start/*`，确保旧书签与已被 LLM 爬取的引用仍可访问。
+
+## 子站点 UI
+
+子站点导航和身份由自定义主题组件处理：
+
+- **`SubsiteRow`** (`theme/SubsiteRow.tsx`)：侧边栏顶部的横向图标行，展示所有子站点，活动子站点以品牌色描边高亮。
+- **`SubsiteLogo`** (`theme/subsite-ui.tsx`)：渲染当前子站点和主题模式的正确 Logo。
+
+这些组件直接从 `SUBSITES_CONFIG` 读取，因此其中的任何更改都会立即反映在 UI 中。

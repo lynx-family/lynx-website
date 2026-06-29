@@ -1,0 +1,50 @@
+---
+title: selectAll()
+api: lynx-api/selector-query/selectAll
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# SelectorQuery: selectAll() method
+
+<APISummary />
+
+在 `SelectorQuery` 指定的根节点的后代中选择所有匹配指定选择器的节点。
+
+## 语法
+
+```ts
+selectAll(selector: string): NodesRef;
+```
+
+### 参数
+
+#### selector
+
+用于匹配节点的 CSS 选择器组合。所有匹配指定选择器组合的节点将会返回。
+
+用于匹配节点的 CSS 选择器必须满足指定语法，详见 [`select()` API 支持的 CSS 选择器语法](./selector-query-select.mdx#selector)。
+
+### 返回值
+
+代表该查询结果的 `NodesRef` 对象实例。
+
+注意此时 `SelectorQuery` 只会将用户提供的查询参数保存在 `NodesRef` 对象中，并不会立即执行查询。
+因此，通过以下方式查看节点信息或判断节点是否能够找到是**不可行**的：
+
+```js
+let nodesRef = lynx.createSelectorQuery().selectAll('#the-id');
+console.log(nodesRef); // always returning a valid NodesRef object
+```
+
+## 注意事项
+
+### 不要在 id 中使用数字、字母、横线和下划线以外的特殊字符
+
+特殊字符可能会被解析为 CSS 选择器或组合器的一部分。
+
+例如，`selectAll('#m.x')` 会被解析为查找同时具有 `id=m` 和 `class=x` 属性的元件，而不是查找 `id` 为 `m.x` 的元件。
+
+## 兼容性
+
+<APITable />

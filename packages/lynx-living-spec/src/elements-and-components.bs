@@ -1,0 +1,140 @@
+# <dfn for=ElementsComponents>Element, Layout Node and Platform UI</dfn>
+
+## Definition
+
+### <dfn for=ElementsComponents>Element Tag</dfn>
+An element tag is an abstraction notion, which is a static markup structure in [=DSL=],
+composed of tags wrapped in angle brackets (such as &lt;view&gt;),
+used to describe the structure and semantics of the [=page=].
+
+### <dfn for=ElementsComponents>Element</dfn>
+Element is implemented natively on the host platform.
+It is a native object created during the [=Framework Rendering=] phase,
+consisting of nodes (Node) that form a tree structure
+and provide an interface for script access to and manipulation of [=page=] content.
+
+### <dfn for=ElementsComponents>Component</dfn>
+An abstraction notion describing reusable, encapsulated pieces of UI that can be defined upon [=ElementsComponents/elements=].
+[=ElementsComponents/Components=] are almost always implemented in [=FrameworkRendering/DSL=]-specific [=Scripting/scripting=].
+
+### <dfn for=ElementsComponents>Layout Node</dfn>
+Layout Node is a node which holds the [=layout related computed style=].
+It converts the layout related computed style into data that layou engine can consume.
+
+### <dfn for=ElementsComponents>Platform UI</dfn>
+The Platform UI is the platform-level node used to carry the paint and layout result.
+In the subsequent paint phase, platform UI will use this result to complete the pixeling.
+
+## Element
+### <dfn for=ElementsComponents>Built-in Element</dfn>
+
+[=ElementsComponents/Elements=] available to [=Lynx/scripting developers=] without any extra configurations, such as &lt;page/&gt;, &lt;view/&gt;, &lt;image/&gt;.
+
+### <dfn for=ElementsComponents>Custom Element</dfn>
+
+[=ElementsComponents/Elements=] available to [=Lynx/scripting developers=] usually after manual installation.
+
+### <dfn for=ElementsComponents>Element Tree</dfn>
+Element tree is a multi-branch tree composed of [=ElementsComponents/elements=].
+
+### <dfn for=ElementsComponents>Element Attribute</dfn> (or <dfn for=ElementsComponents>Attribute</dfn>)
+Attribute refers to all properties asigned to [=ElementsComponents/element=].
+
+#### <dfn for=ElementsComponents>Selector</dfn>
+Selectors, similar to web css selectors, currently include [=tag selector=], [=ElementsComponents/id selector=], and [=ElementsComponents/class selector=].
+
+#### <dfn for=ElementsComponents>ID Selector</dfn>
+An id selector matches an element based on the content of that element's id property. For an element to be selected, its id property must exactly match the value given in the selector.
+
+#### <dfn for=ElementsComponents>Tag Selector</dfn>
+Tag selector matches an element based on the content of that element's name. For an element to be selected, its name must exactly match the value given in the selector.
+
+#### <dfn for=ElementsComponents>Class Selector</dfn>
+Class selector matches elements based on the contents of their class property.
+
+#### <dfn for=ElementsComponents>Inline Style</dfn>
+Inline style is used to get as well as set the style property of an element with [=ElementsComponents/Element PAPI=].
+
+#### <dfn for=ElementsComponents>Dataset</dfn>
+The dataset property of the element provides read/write access to custom data property (data-*) on elements with [=ElementsComponents/Element PAPI=].
+
+#### <dfn for=ElementsComponents>Event Listener</dfn>
+The event listener property of the element provides add/remove access to event listener property (bind/catch*) on elements with [=ElementsComponents/Element PAPI=].
+
+### <dfn for=ElementsComponents>Element Tree Operation</dfn>
+Element Tree Operation refers to various operations on an [=element tree=].
+
+#### <dfn for=ElementsComponents>Element Tree Mutation</dfn>
+Element Tree Mutation refers to [=element tree operations=] that insert, delete, or replace [=ElementsComponents/elements=] within the [=ElementsComponents/element tree=].
+
+#### <dfn for=ElementsComponents>Selector Query</dfn>
+Selector Query is a type of [=element tree operation=],
+which will perform a method steps which are to return the first result or all results of running scope-match a specific [=ElementsComponents/selector=] or [=ElementsComponents/attribute=] against the target [=ElementsComponents/element=].
+
+### <dfn for=ElementsComponents>Element Operation</dfn>
+Element Tree Operation refers to various operations on an element.
+
+#### <dfn for=ElementsComponents>Element Mutation</dfn>
+Element Tree Mutation refers to [=element tree operations=] that set, get [=ElementsComponents/element=]'s attribute within the [=ElementsComponents/element=].
+
+#### <dfn for=ElementsComponents>Element Method</dfn>
+Element Method refers to the methods provided by the [=ElementsComponents/element=] that can be used to retrieve information about the [=ElementsComponents/element=] or manipulate the [=ElementsComponents/element=], such as boundingClientRect, animate, and other methods.
+
+### <dfn for=ElementsComponents>Element Related API</dfn>
+#### <dfn for=ElementsComponents>Element PAPI</dfn>
+The [=MTS=] environment exposes APIs based on [=PAPI=] to scripting framework developers. Using these APIs, the developers can perform [=element tree operations=] and [=element operations=].
+
+#### <dfn for=ElementsComponents>Element Object Model</dfn> (or <dfn for=ElementsComponents>EOM</dfn>)
+EOM is the Object Model encapsulated based on [=Element PAPI=] exposed to script developers in the [=MTS=] environment. Based on EOM, developers can perform [=element tree operations=] and [=element operations=].
+
+#### <dfn for=ElementsComponents>Element Inter Thread Call</dfn> (or <dfn for=ElementsComponents>Element ITC</dfn>)
+Element ITC is the [=inter thread call=] exposed to script developers in the [=BTS=] environment. Based on this, developers can perform [=element tree operations=] and [=element operations=] across threads.
+
+#### <dfn for=ElementsComponents>Element Selector Query API</dfn>
+Element Selector Query API is an implementation of [=Element ITC=], allowing script developers to use it to generate an element handle in the background thread
+for [=inter thread call=] of [=element methods=].
+
+### <dfn for=ElementsComponents>Computed Style</dfn>
+Computed style is the final style that [=EnginePixeling/pixel pipeline=] aggregates from all the [=ElementsComponents/selector=] and [=inline style=] of an element according to the [=Styling/style sheet=].
+
+#### <dfn for=ElementsComponents>Paint Related Computed Style</dfn>
+Paint Related Computed Style refers to styles related to paint, such as background, color, and etc.
+
+#### <dfn for=ElementsComponents>Layout Related Computed Style</dfn>
+Layout Related Computed Style refers to styles related to layout, such as width, height, and etc.
+
+### <dfn for=ElementsComponents>Prop Bundle</dfn>
+Prop Bundle consists of the [=ElementsComponents/element=]'s [=ElementsComponents/attribute=] and [=paint related computed style=].
+
+## Layout Node
+
+### <dfn for=ElementsComponents>Layout Node Tree</dfn>
+Layout Node Tree is a multi-branch tree composed of [=layout nodes=].
+
+### <dfn for=ElementsComponents>Platform Layout Node</dfn>
+Platform Layout Node is created and held by [=layout node=]. Some specific element nodes, such as text, inline-text, inline-view, and etc require platform capabilities for measurement. For these types of element nodes, a platform layout node will be created.
+
+Note:
+Explainers to [=Lynx/Lynx developers=] in Lynx development, the layout engine of Lynx is named as starlight,
+which is an independent layout engine that supports various layout algorithms,
+including flex, linear, grid and etc. It also exposes capabilities for custom measure and custom layout,
+providing users with the flexibility to extend its functionality.
+
+## Platform UI
+
+### <dfn for=ElementsComponents>Platform UI Primitives</dfn>
+Platform UI Primitives refer to the host platform objects that are actually used for pixeling. On Android, the primitives are the native Android Views, and on iOS, they are the UIView objects provided by iOS UIKit.
+
+### <dfn for=ElementsComponents>Platform UI Tree</dfn>
+UI Tree is a multi-branch tree composed of [=platform UIs=].
+
+### <dfn for=ElementsComponents>Platform UI Operations</dfn> (or <dfn for=ElementsComponents>UI OP</dfn>)
+Platform UI Operations refers to the operations on the [=platform UI=] and [=platform UI Tree=] generated during [=EnginePixeling/pixel pipeline=].
+It consists of [=platform UI paint operations=] and [=platform UI layout operations=].
+
+#### <dfn for=ElementsComponents>Platform UI Paint Operations</dfn> (or <dfn for=ElementsComponents>UI Paint OP</dfn>)
+UI Paint OP is composed of [=platform UI=] mutation operations and [=platform UI tree=] mutation operations.
+
+#### <dfn for=ElementsComponents>Platform UI Layout Operations</dfn> (or <dfn for=ElementsComponents>UI Layout OP</dfn>)
+UI Layout OP currently only includes the operations to update measure and layout info to [=platform UI=].
+

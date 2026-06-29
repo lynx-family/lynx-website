@@ -1,0 +1,100 @@
+---
+description: '观察节点可见性变化并触发曝光事件。'
+---
+
+import { Go } from '@lynx';
+
+# 曝光能力
+
+曝光能力提供了一种观察目标节点可见性变化的能力，当目标节点由不可见变为可见时，触发曝光事件，反之，则触发反曝光事件。
+
+开发者可以通过对需要观察的目标节点设置相关属性即可监听节点的曝光/反曝光事件，进而实现诸如埋点上报、`UI` 懒加载的需求。
+
+曝光能力通过定时的曝光检测任务来观察节点可见性的变化，节点的可见性取决于以下因素：
+
+- 目标节点的可见性：目标节点本身有宽高且不透明，并且父节点没有宽或高为零的裁剪。
+- 目标节点的视口交叉：目标节点与父级滚动容器、`Lynxview`、屏幕的视口存在交集。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/exposure-ability.png"
+  width="40%"
+  height="40%"
+/>
+
+## 监听全页面的曝光
+
+当开发者需要监听全页面中节点的曝光/反曝光事件时，可以通过 [`GlobalEventEmitter`](../event-handling/event-propagation.mdx#globaleventemitter) 订阅设置了 [`exposure-id`](../../../api/elements/built-in/view.mdx#exposure-id) 属性的节点的曝光事件 [`exposure`](../../../api/lynx-api/event/global-event.mdx#exposure) 和反曝光事件 [`disexposure`](../../../api/lynx-api/event/global-event.mdx#disexposure)。
+
+在下面这个例子中，开发者通过 [`GlobalEventEmitter`](../event-handling/event-propagation.mdx#globaleventemitter) 监听 `ComponentA` 中的节点是否曝光，并在曝光时输出曝光的节点 [`exposure-id`](../../../api/elements/built-in/view.mdx#exposure-id)。
+
+**示例 1:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_expose_global/index.tsx"
+  defaultEntryFile="dist/visibility_expose_global.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_expose_global.gif"
+  highlight="{8-12,14-21,56}"
+  entry="src/visibility_expose_global"
+/>
+
+曝光/反曝光事件的格式为一个数组，数组包含了每个触发曝光/反曝光事件的目标节点信息。
+
+```json
+[
+  {
+    "exposure-id": string,        // 目标节点上设置的 exposure-id
+    "exposure-scene": string,     // 目标节点上设置的 exposure-scene
+    "sign": string,               // 目标节点的 uid
+    "dataset": object,            // 目标节点上设置的 "data-" 字段
+    //......
+  },
+  //......
+]
+```
+
+## 监听某个节点的曝光
+
+当开发者只需要监听某个节点的曝光/反曝光事件时，可以通过设置[事件处理器属性](../event-handling/event-propagation.mdx#事件处理器属性)监听节点的 [`uiappear`](../../../api/elements/built-in/view.mdx#binduiappear) 和 [`uidisappear`](../../../api/elements/built-in/view.mdx#binduidisappear) 事件。
+
+在下面这个例子中，开发者通过设置[事件处理器属性](../event-handling/event-propagation.mdx#事件处理器属性)监听节点是否曝光，并在曝光时输出曝光的节点 [`id`](../../../api/elements/built-in/view.mdx#id)。
+
+**示例 2:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_expose_custom/index.tsx"
+  defaultEntryFile="dist/visibility_expose_custom.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_expose_custom.gif"
+  highlight="{7-9,11-16,57-59}"
+  entry="src/visibility_expose_custom"
+/>
+
+事件参数 `e.detail` 中包含了节点的信息。
+
+```json
+{
+  "type": string                    // 事件名称
+  "detail":
+    {
+      "exposure-id": string,        // 目标节点上设置的 exposure-id
+      "exposure-scene": string,     // 目标节点上设置的 exposure-scene
+      "unique-id": string,          // 目标节点的 uid
+      "dataset": object,            // 目标节点上设置的 "data-" 字段
+      //......
+    },
+  //......
+}
+```
+
+## 控制曝光检测
+
+Lynx 还提供了一些属性和方法来控制曝光检测任务的执行。
+
+例如，开发者可以通过以下方法来控制曝光检测任务是否开启、停止和执行频率。
+
+- [`lynx.stopExposure [BTS]`](../../../api/lynx-api/lynx/lynx-stop-exposure) 或 [`lynx.stopExposure [MTS]`](../../../api/lynx-api/main-thread/lynx-stop-exposure)：在主线程或后台线程调用，用来停止曝光检测，即不再检测目标节点的可见性，后续不会再触发曝光/反曝光事件。
+- [`lynx.resumeExposure [BTS]`](../../../api/lynx-api/lynx/lynx-resume-exposure) 或 [`lynx.resumeExposure [MTS]`](../../../api/lynx-api/main-thread/lynx-resume-exposure)：在主线程或后台线程调用，用来开启曝光检测，即重新开始检测目标节点的可见性，后续正常触发曝光/反曝光事件。
+- [`lynx.setObserverFrameRate`](../../../api/lynx-api/lynx/lynx-set-observer-frame-rate)：用来设置曝光检测的频率。
+
+除此之外，开发者还可以通过设置节点上的曝光相关属性来控制节点的曝光检测逻辑，比如 [`exposure-screen-margin-*`](../../../api/elements/built-in/view.mdx#exposure-screen-margin-)、[`exposure-ui-margin-*`](../../../api/elements/built-in/view.mdx#exposure-ui-margin-)、[`exposure-area`](../../../api/elements/built-in/view.mdx#exposure-area) 等。

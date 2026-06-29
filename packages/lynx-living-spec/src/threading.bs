@@ -1,0 +1,68 @@
+# <dfn for=Threading>Threading</dfn>
+
+## Definition
+
+### <dfn for=Threading>Physical Thread</dfn>
+
+The actual thread provided by the OS (operating system).
+
+### <dfn for=Threading>Task</dfn>
+
+A unit of work to be processed. Effectively a function pointer with optionally associated state (i.e. A closure).
+
+### <dfn for=Threading>Virtual Thread</dfn>
+
+A Lynx-managed "thread of execution" that provides sequential execution of [=Threading/tasks=].
+N.B. It may or may not have a one-one correspondence with [=Threading/physical thread=].
+
+### <dfn for=Threading>Threading Model</dfn> (or <dfn for=Threading>Threading Strategy</dfn>)
+
+Define how [=Threading/virtual threads=] correspond to [=Threading/physical threads=].
+
+## [=Threading/Virtual Thread=]
+
+### <dfn for=Threading>UI Thread</dfn>
+
+The [=Threading/virtual thread=] corresponds to the [=Threading/physical thread=] regarded as the OS Main Thread.
+
+### <dfn for=Threading>Background Scripting Thread</dfn> (historically known as "<dfn for=Threading>JS Thread</dfn>")
+
+The [=Threading/virtual thread=] where [=Scripting/script=] is executed asynchronously.
+
+### <dfn for=Threading>Engine Thread</dfn> (historically known as "<dfn for=Threading>Tasm Thread</dfn>")
+
+The [=Threading/virtual thread=] that drives [=EnginePixeling/pixel pipeline=].
+
+### <dfn for=Threading>Layout Thread</dfn>
+
+The [=Threading/virtual thread=] where the [=EnginePixeling/layout=] step of [=EnginePixeling/pixel pipeline=] is performed.
+
+Note:
+Implementors' Note:
+In the actual implementation of Lynx, [=Threading/Virtual Threads=] are implemented as Task Runners (or Looper) onto which Tasks can be posted.
+
+## Scripting-facing Threading Abstraction
+
+### <dfn for=Threading>Scriptable Thread</dfn>
+
+An abstract notion refers to any [=Threading/virtual threads=] that can be controlled or manipulated through [=Scripting/scripting=], abstracting away the [=Threading/threading strategy=] away from [=Lynx/scripting developers=].
+
+### <dfn for=Threading>Main Thread</dfn> (or <dfn for=Threading>Lynx Main Thread</dfn>)
+
+The [=Threading/scriptable thread=] corresponds to any [=Threading/virtual threads=] that handles [=Threading/tasks=] that directly affect [=EnginePixeling/pixel pipeline=]. From a developer's perspective, any [=Scripting/scripts=] evaluated on this abstract thread can potentially block [=EnginePixeling/pixel pipeline=].
+
+Note:
+Explainers to [=Lynx/Lynx developers=]
+In Lynx development, the “main thread” refers to the primary thread on which a Lynx page runs.
+The main thread is where Lynx processes user events and emit "paints". By default, the Lynx engine uses a single thread to run [=Scripting/main thread scripts=], as well as to perform layout, paints, etc.. This means that long-running [=Scripting/main thread scripts=] can block the thread, leading to an unresponsive page and a bad user experience.
+--- forked from https://developer.mozilla.org/en-US/docs/Glossary/Main_thread
+
+### <dfn for=Threading>Background Thread</dfn> (a.k.a. <dfn for=Threading>Off-Main-Thread</dfn>)
+
+The [=Threading/scriptable thread=](s) corresponds to any [=Threading/virtual threads=] that handle [=Threading/tasks=] outside of [=EnginePixeling/pixel pipeline=].
+Currently, only [=Threading/background scripting thread=] and [=Scripting/workers=] spawned from there are considered background threads.
+
+### <dfn for=Threading>Dual-threaded Model</dfn>
+
+This refers to the programming model in Lynx development, which [=Lynx/scripting developers=] can perceive and program with both the [=Threading/main thread=] and the [=Threading/background thread=].
+This model allows [=Lynx/scripting developers=] and [=FrameworkRendering/framework=] to improve performance and maintain responsiveness by managing how and where [=Scripting/scripts=] are executed.

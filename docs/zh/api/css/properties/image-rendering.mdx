@@ -1,0 +1,83 @@
+---
+api: css/properties/image-rendering
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# image-rendering
+
+<APISummary />
+
+## 简介
+
+`image-rendering`
+
+用于设置图像缩放算法。目前仅适用于 `<image>` 上展示的图片和 `background-image`
+
+目前只应用于元件本身，不会在子元件上生效。
+
+当前端指定的尺寸不是图像的原始尺寸时，图像将发生缩放。举个例子，如果有一张物理像素尺寸为 100×100 的图片，但实际宽高尺寸被设置为 200×200px（或 50×50px），然后，图片便会根据 image-rendering 指定的算法，缩小或放大到新尺寸。此属性对于未缩放的图像没有影响。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/image-rendering/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/image-rendering.jpg"
+  entry="src/image-rendering"
+  defaultEntryFile="dist/image-rendering.lynx.bundle"
+/>
+
+## 语法
+
+```css
+image-rendering: auto;
+image-rendering: crisp-edges;
+image-rendering: pixelated;
+```
+
+### 取值
+
+#### `auto`
+
+默认值，平台层默认设置。一般实现为双线性插值
+
+#### `crisp-edges`
+
+必须使用可有效保留对比度和图像中的边缘的算法来对图像进行缩放，并且，该算法既不会平滑颜色，又不会在处理过程中为图像引入模糊。此属性值适用于像素艺术作品，例如一些网页游戏中的图像。
+这个是为像素游戏设计的（参考 Pixel-art scaling algorithms），主流的浏览器并没有实现。
+目前 lynx 暂未支持，效果与 auto 一致。
+
+#### `pixelated`
+
+放大和缩小图像时，使用最近邻居算法，因此，图像看着像是由大块像素组成的。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>auto</>}
+  appliesTo={
+    <>
+      <code>image</code> 展示的图片, <code>background-image</code>
+    </>
+  }
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+image-rendering = auto | crisp-edges | pixelated
+```
+
+## 与 Web 的区别
+
+1. 仅对元件本身生效，不会在子元件生效。
+2. 不支持全局属性值，例如 inherit, unset 等。
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,248 @@
+import { Details } from '@lynx';
+
+# Thinking in ReactLynx
+
+ReactLynx follows React's programming model, but leverages the _**dual-threaded runtimes**_ provided by Lynx to achieve better performance and user experience through its own idioms (or rules).
+
+## Your code runs on two threads
+
+When the component `<HelloComponent />` is rendered, you will see "Hello" printed twice in the Console.
+
+```jsx
+const HelloComponent = () => {
+  console.log('Hello'); // This will be printed twice
+  return <text>Hello</text>;
+};
+```
+
+This happens because the code runs on two threads: **main thread** and **background thread**, which are part of Lynx's dual-threaded runtime.
+
+1. The **main thread** is responsible for rendering the initial screen and applying subsequent UI updates.
+   This allows users to see the first screen as quickly as possible while reducing the main thread's workload.
+2. The **background thread** runs with a complete React runtime, handling component lifecycles and other side effects. Since complete consistency with single-threaded React is not possible, we have a modified component lifecycle as shown in [Component Lifecycle](./lifecycle.mdx).
+
+### Not all code can run on both threads
+
+However, not all code can be executed on both threads.
+Consider the following example that adds a listener to `GlobalEventEmitter`:
+
+```jsx
+const EventListenerComponent = () => {
+  lynx.getJSModule('GlobalEventEmitter').addListener('myHappyEvent', () => {
+    console.log('myHappyEvent triggered!');
+  });
+  return <text>Hello</text>;
+};
+```
+
+When the component `<EventListenerComponent />` is rendered, you will see a "not a function" error. This occurs because while Lynx renders this component on both threads, `lynx.getJSModule('GlobalEventEmitter')` cannot be executed on the main thread.
+
+<Details title="❓ Why does this error occur?">
+
+The reason relates to Lynx's dual-threaded runtime architecture, where the code for `<EventListenerComponent />` executes on both threads:
+
+- On the background thread:
+
+  The `lynx.getJSModule` function is available as part of the Lynx `GlobalEventEmitter` API. Therefore, executing `lynx.getJSModule('GlobalEventEmitter')` works without issues.
+
+- On the main thread:
+
+  The `getJSModule` function does not exist on the main thread. Thus, when this code executes on the main thread, `lynx.getJSModule` is evaluated as `undefined`, leading to the "not a function" error.
+
+</Details>
+
+## Some code can only run on the background thread
+
+Typically, side effects unrelated to rendering cannot be executed on the main thread, such as data updates, event listeners, timers, and network requests.
+Executing these side effects on the main thread will result in runtime errors.
+We call code that only executes on the background thread **background only** code.
+By marking background only code, we help the compiler optimize code and prevent these side effects from executing on the main thread.
+
+There are three key rules for background only code:
+
+1. [Rule 1: Code that meets any of these conditions is considered background only](#rule-1).
+2. [Rule 2: Background only code can only be used within other background only code](#rule-2).
+3. [Rule 3: Code that is only used by background only code is considered background only](#rule-3).
+
+### Rule 1: Code that meets any of these conditions is considered background only \{#rule-1}
+
+Lynx considers code that meets any of these conditions as background only:
+
+1. Event handlers (e.g. `bindtap` / `catchtap`)
+2. Effects (e.g. `useEffect` / `useLayoutEffect`)
+3. `ref` prop and `useImperativeHandle`
+4. Functions with [`'background only'`] directive
+5. Modules with `import 'background-only'` directive
+
+For example, all these functions with `console.log` in the following example are considered background only. These functions will neither be bundled into main thread code nor executed on the main thread.
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function App() {
+  useEffect(() => console.log('Effect is background only'));
+  return (
+    <view bindtap={(e) => console.log('Event is background only')}>
+      <text ref={(ref) => console.log('Ref is background only')}>
+        Hello, ReactLynx!
+      </text>
+    </view>
+  );
+}
+
+function backgroundOnly() {
+  'background only';
+  console.log('Directive marked function is background only');
+}
+```
+
+```js
+import 'background-only';
+
+export const env = NativeModules.env;
+console.log('Directive marked module is background only');
+```
+
+Following this rule, we can see that the earlier `<EventListenerComponent />` should move its `GlobalEventEmitter` usage into `useEffect`.
+This ensures this code only runs on the background thread where the `GlobalEventEmitter` API is available:
+
+```js
+import { useEffect } from '@lynx-js/react';
+
+const EventListenerComponent = () => {
+  useEffect(() => {
+    lynx.getJSModule('GlobalEventEmitter').addListener('myHappyEvent', () => {
+      console.log('myHappyEvent triggered!');
+    });
+  }, []);
+  return <text>Hello</text>;
+};
+```
+
+### Rule 2: Background only code can only be used within other background only code \{#rule-2}
+
+When **dependencies** are involved, things become more complicated.
+Simply put, background only code can only be called by other background only code.
+
+```jsx
+import { backgroundOnlyFunction } from 'external-module';
+
+backgroundOnlyFunction(); // ❌ Error: calling background only at top level
+
+export function App() {
+  function backgroundOnly() {
+    'background only';
+    fetch();
+    NativeModules.call();
+    backgroundOnlyFunction(); // ✅ Correct: calling background only API inside background only function
+  }
+
+  backgroundOnly(); // ❌ Error: calling background only code in render function
+
+  useEffect(() => {
+    backgroundOnly(); // ✅ Correct: calling background only code from background only code
+  }, []);
+
+  return <view />;
+}
+```
+
+### Rule 3: Code that is only used by background only code is considered background only \{#rule-3}
+
+Usually, event callbacks of elements are considered background only. `handleTap` doesn't need the `'background only'` directive but will be considered background only code because it's only used as a handler in the `bindtap` event.
+
+```jsx
+function App() {
+  function handleTap() {
+    // No need to mark this function since `bindtap` is considered background only
+  }
+  return <view bindtap={handleTap} />;
+}
+```
+
+The `backgroundOnly` function will also be considered background only because it's only called in the `useEffect` callback.
+
+```jsx
+function App() {
+  function backgroundOnly() {
+    // No need to mark this function
+    // since `useEffect` is considered background only
+    // `backgroundOnly` will be identified as unused and removed by the optimizer
+  }
+  useEffect(() => {
+    backgroundOnly();
+  });
+  return <view />;
+}
+```
+
+#### Exceptions
+
+Due to limitations in compiler analysis capabilities and compile-time performance, there are some exceptions to this rule. We will work to address these issues in future versions.
+
+When event handlers are passed as props, you must add the [`'background only'`] directive. Otherwise, the compiler cannot identify `handleTap` as background only code and will include it in the main thread bundle:
+
+```jsx
+function App() {
+  function handleTap() {
+    'background only';
+    // Unfortunately, you must mark event callbacks here
+  }
+  return <Button onClick={handleTap} />;
+}
+
+function Button({ onClick }) {
+  return <view bindtap={onClick} />;
+}
+```
+
+When using custom Hooks, you must add the [`'background only'`] directive. Otherwise, `backgroundOnly` will be treated as non-background only code and included in the main thread bundle.
+This occurs because the compiler cannot determine if the callback of `useMount` is only used in background only code.
+
+```jsx
+function useMount(effect) {
+  useEffect(() => {
+    effect();
+  }, []);
+}
+
+function App() {
+  function backgroundOnly() {
+    // No need to mark this function
+    // since `backgroundOnly` is only used in `useMount` callback
+  }
+  useMount(() => {
+    'background only';
+    // You need to mark this function
+    backgroundOnly();
+  });
+  return <view />;
+}
+```
+
+[`'background only'`]: ../api/react/Document.directives.mdx#background-only
+
+## Some code can only run on the main thread
+
+Just as some code (like `GlobalEventEmitter`) only works on the background thread, there is also code that can only be executed on the main thread.
+
+### Main Thread Script
+
+Main Thread Script (MTS) is script executed on the main thread.
+
+```js
+function toRed(event) {
+  'main thread';
+  event.currentTarget.setStyleProperty('background-color', 'red');
+}
+```
+
+For more details about MTS, including usage examples and best practices for handling animations and gestures on the main thread, please refer to [Main Thread Script](./main-thread-script.mdx).
+
+### Element PAPIs
+
+Lynx Engine also provides low-level APIs called [Element PAPI].
+
+Usually, Element PAPI calls are compiled by ReactLynx and you should not need to write any Element PAPI code.
+
+[Element PAPI]: /api/engine/element-api

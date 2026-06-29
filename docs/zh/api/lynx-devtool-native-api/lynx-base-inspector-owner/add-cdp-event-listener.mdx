@@ -1,0 +1,48 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/add-cdp-event-listener
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# addCDPEventListener
+
+<APISummary />
+
+添加一个 [CDP](https://chromedevtools.github.io/devtools-protocol/) **Event** 消息的监听器。
+
+可以配合 [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk) 方法使用，实现监听 DevTool 发出的 CDP 消息。
+
+## 语法
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)addCDPEventListener:(nonnull NSString *)name
+               withListener:(nonnull id<CDPEventListener>)listener;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void addCDPEventListener(final String name, final CDPEventListener listener);
+```
+
+### 参数说明
+
+- `name`: listener 的唯一标识符，用于后续[移除监听](/api/lynx-devtool-native-api/lynx-base-inspector-owner/remove-cdp-event-listener)。
+- `listener`: 实现了 [`CDPEventListener`](/api/lynx-devtool-native-api/cdp-event-listener) 的对象，用于接收 Event 消息。
+
+:::warning
+
+1. DevTool 内部只会持有 `CDPEventListener` 的弱引用，开发者需要自行管理其生命周期。
+2. 支持多次调用此方法设置多个 listener，但如果设置了同名的 listener，之前设置的将被覆盖。
+
+:::
+
+## 使用示例
+
+请参考 [`CDPEventListener`](/api/lynx-devtool-native-api/cdp-event-listener#使用示例)。
+
+## 兼容性
+
+<APITable />

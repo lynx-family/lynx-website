@@ -1,0 +1,143 @@
+---
+description: 'Managing scrolling and overflow content using scroll-view and list elements in Lynx.'
+---
+
+import { AndroidOnly, IOSOnly, KnownBug, Required, Go, Details } from '@lynx';
+
+# Managing Scrolling
+
+Overflow behavior occurs when the content of an element (its own content and child elements) exceeds the size of the element itself. During the process of building a page, it is inevitable to encounter situations of overflow. You can use the [`overflow`](/api/css/properties/overflow) property to crop the overflowing content, or use a [scrollable element](#scrollable element to make the overflowing content scrollable, and control the scrolling direction of the content through the `scroll-orientation` property.
+
+<table
+  rules="none"
+  align="center"
+  width="100%"
+  style={{ tableLayout: 'fixed' }}
+>
+  <thead align="center">
+    <th colSpan={2}>
+      <span style={{ fontWeight: 'bold' }}>
+      non-scrollable element
+      </span>
+    </th>
+    <th colSpan={2}>
+      <span style={{ fontWeight: 'bold' }}>
+        scrollable element
+      </span>
+    </th>
+  </thead>
+  <tr >
+    <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/style-guide-overflow-visible.png"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/style-guide-overflow-hidden.png"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/guide-scroll-orientation-vertical.gif"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <img
+          src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/guide-scroll-orientation-horizontal.gif"
+          style={{ width: '70%', aspectRatio: '1/1' }}
+        />
+      </center>
+    </td>
+
+  </tr>
+
+  <tr >
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <span>Content overflow has occurred.</span>
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <span>crop the overflowing content through <code>overflow: hidden</code></span>
+      </center>
+    </td>
+  <td style={{ padding: '15px 0 15px 15px' }}>
+      <center>
+        <span><code>scroll-orientation: vertical</code> scrollable element </span>
+      </center>
+    </td>
+    <td style={{ padding: '15px 15px 15px 0' }}>
+      <center>
+        <span><code>scroll-orientation: horizontal</code> scrollable element</span>
+      </center>
+    </td>
+  </tr>
+</table>
+
+<Details title={<span>Doesn't support<code>overflow:scroll</code>for scrolling effect !</span>}>
+
+In `Lynx`, the `view` component doesn't support the scrolling effect achieved by `overflow: scroll` as in the Web. Only scrolling containers like `<scroll-view>` and `<list>` have the scrolling effect.
+
+</Details>
+
+## scrollable element
+
+For some basic `<view>` element, the scrolling effect is not supported. Please use dedicated scroll container components [`<scroll-view>`](/api/elements/built-in/scroll-view) or [`<list>`](/api/elements/built-in/list).
+
+### use `<scroll-view>` for basic scrolling
+
+`<scroll-view>` is a basic scrolling component in `Lynx`. It allows users to scroll content vertically or horizontally within a fixed viewport area. Take the following figure as an example. When the height of the internal child nodes exceeds that of the parent `<scroll-view>` container, you only need to set the layout direction `scroll-orientation` to `vertical` to achieve the vertical scrolling effect.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_vertical.webp"
+  example="scroll-view"
+  defaultFile="src/vertical/index.tsx"
+  defaultEntryFile="dist/vertical.lynx.bundle"
+  highlight="{9}"
+  entry="src/event"
+/>
+
+### use `<list>` to manage large amount of data
+
+`<scroll-view>` is used to display a small amount of data in a simple and intuitive way. On the other hand, `<list>` is suitable for scenarios where a large amount of data needs to be presented, or in scenarios with infinite scrolling for loading more content. It can adopt an on-demand loading way, rendering only the content in the visible area.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-base.gif"
+  example="list"
+  defaultFile="src/base/index.tsx"
+  defaultEntryFile="dist/base.lynx.bundle"
+  highlight="{12-14}"
+/>
+
+### use `<list>` to handle complex layout
+
+`<scroll-view>` only has the ability of linear layout, presenting elements in an orderly manner through linear arrangement. However, when facing complex interfaces, `<list>` offers a wide range of layout options. You can choose different layouts such as [flow](/api/elements/built-in/list#flow) and [waterfall](/api/elements/built-in/list#waterfall) to flexibly customize business requirements.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/list-oss-waterfall.gif"
+  example="list"
+  defaultFile="src/waterfall/index.tsx"
+  defaultEntryFile="dist/waterfall.lynx.bundle"
+  entry="src/waterfall"
+  highlight="{14-16}"
+/>
+
+### Additional Features
+
+- sticky capability：`<scroll-view>`[sticky](/api/elements/built-in/scroll-view.html#sticky-capability)；`<list>`[sticky](/api/elements/built-in/list.html#implementing-sticky-nodes)
+
+- `<list>` [paginated scrolling](/api/elements/built-in/list.html#implementing-paginated-scrolling)
+
+- `<list>` [load more](/api/elements/built-in/list.html#implementing-load-more)

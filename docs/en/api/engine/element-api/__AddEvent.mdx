@@ -1,0 +1,46 @@
+# `__AddEvent`
+
+## Introduction
+
+Adds an Event Listener to the Element object.
+
+## Syntax
+
+```jsx
+__AddEvent(element: Element, type: string, name: string, listener: string|Function) : void;
+```
+
+### Parameters
+
+|   Key    | Description                                                                  |
+| :------: | ---------------------------------------------------------------------------- |
+| element  | Any Element object.                                                          |
+|   type   | A case-sensitive string representing the type of the event to listen for.    |
+|   name   | A case-sensitive string representing the name of the event to listen for.    |
+| listener | The listener can be a case-sensitive string, or it can be null or undefined. |
+
+- When the listener is a case-sensitive string, upon triggering the listened event, the Lynx SDK will send the current Element's `parentComponentUniqueID`, `listener`, and `event` to the background thread.
+- When the listener is null or undefined, the Lynx SDK will remove the corresponding listener for the specified type and name from the Element object.
+
+::: tip Note
+Due to limitations of the Lynx SDK, currently, only one listener can be added for the same type and name. Adding a listener with the same type and name again will overwrite the previously added listener.
+:::
+
+### Return Value
+
+No return value.
+
+## Example
+
+The frontend framework can generate render directives in the following way.
+
+```jsx
+<view src="xxx" bindtap="onTap" />
+```
+
+```jsx
+// main-thread.js
+let element = __CreateElement('view', 0, {});
+__SetAttribute(element, 'src', 'xx');
+__AddEvent(element, 'bindEvent', 'tap', 'onTap');
+```

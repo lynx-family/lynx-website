@@ -1,0 +1,416 @@
+---
+description: '接入 Lynx DevTool 进行页面调试'
+---
+
+import { Tab, Tabs, Steps } from '@theme';
+import { Details, PlatformTabs, CodeFold } from '@lynx';
+import * as NextSteps from '@lynx/NextSteps';
+import versionJson from '@site/docs/public/version.json';
+
+# 接入 Lynx DevTool
+
+当你开发 Lynx 页面遇到问题时，可以使用 [DevTool](/guide/devtool/panels.mdx) 进行调试。
+但你需要先按照以下步骤接入 DevTool。
+
+:::info
+推荐在非生产环境下接入 DevTool，让生产环境的应用更轻量。
+
+- **包体积**：DevTool 会增加包体积。
+- **运行时**：相关模块在开启后懒加载，会增加内存开销，部分功能可能影响加载性能。
+
+下文中的所有代码，你都可以在 [integrating-lynx-demo-projects 项目](https://github.com/lynx-family/integrating-lynx-demo-projects/tree/main) 中找到
+:::
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+<Steps>
+
+### 引入依赖
+
+你需要新增以下组件：`LynxService` 的 `Devtool` 子组件、 `LynxDevTool` 和 `DebugRouter`。
+
+```ruby title="Podfile" {2-8}
+target 'YourTarget' do
+  pod 'LynxService', '{versionJson.LYNX_VERSION}', :subspecs => [
+      'Devtool',
+  ]
+  pod 'LynxDevtool', '{versionJson.LYNX_VERSION}'
+
+  pod 'DebugRouter', '5.0.15'
+  pod 'DebugRouter/MessageTransceiverEnable', '5.0.15'
+end
+```
+
+### 打开 DevTool
+
+DevTool 提供了一些调试功能开关，
+其中有三个比较重要的开关：
+
+- `Lynx Debug` 是 DevTool 的总开关，其控制 DevTool 的所有调试功能。
+- `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
+- `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
+
+<Details title="这些开关均默认关闭，需要主动打开">
+
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
+- LogBox 可以帮助你快速发现问题
+
+</Details>
+
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+
+<Tabs groupId='integrating-lynx-with-existing-app-ios'>
+<Tab label="Objective-C">
+
+```objective-c title=AppDelegate.m {9-18}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+  // ...
+  LynxEnv *lynxEnv = [LynxEnv sharedInstance];
+  // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
+  [LynxService(LynxServiceDevToolProtocol) enableAllSessions];
+  // 打开 Lynx Debug 开关
+  lynxEnv.lynxDebugEnabled = YES;
+  // 打开 Lynx DevTool 开关
+  lynxEnv.devtoolEnabled = YES;
+  // 打开 Lynx LogBox 开关
+  [LynxService(LynxServiceDevToolProtocol) setLogBoxPresetValue:YES];
+  lynxEnv.logBoxEnabled = YES;
+  return YES;
+}
+```
+
+</Tab>
+<Tab label="Swift">
+
+```objective-c title="YourTarget-Bridging-Header.h"
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxService.h>
+#import <Lynx/LynxServiceDevToolProtocol.h>
+```
+
+```swift title=AppDelegate.swift {5-14}
+class AppDelegate: UIResponder, UIApplicationDelegate {
+
+  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    // ...
+    let lynxEnv = LynxEnv.sharedInstance()
+    // 允许 DevTool 调试所有 Lynx 页面（连接 DevTool 桌面应用必需）
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.enableAllSessions()
+    // 打开 Lynx Debug 开关
+    lynxEnv.lynxDebugEnabled = true
+    // 打开 Lynx DevTool 开关
+    lynxEnv.devtoolEnabled = true
+    // 打开 Lynx LogBox 开关
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.logBoxPresetValue = true
+    lynxEnv.logBoxEnabled = true
+    return true
+  }
+}
+```
+
+</Tab>
+</Tabs>
+
+:::info
+除了前面介绍的三个开关外，还有更多开关可以帮助你控制 DevTool 的行为，请参考 [Lynx DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+:::
+
+ </Steps>
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+  <Steps>
+### 引入依赖
+
+你需要接入这两个组件：`lynx-service-devtool` 和 `lynx-devtool`
+
+<Tabs groupId='impl-android'>
+<Tab label="build.gradle">
+
+```groovy
+// Lynx DevTool 接入时请保证和 Lynx 相同版本
+dependencies {
+  implementation "org.lynxsdk.lynx:lynx-devtool:{versionJson.LYNX_VERSION}"
+  implementation "org.lynxsdk.lynx:lynx-service-devtool:{versionJson.LYNX_VERSION}"
+}
+```
+
+</Tab>
+<Tab label="build.gradle.kts">
+
+```kotlin
+// Lynx DevTool 接入时请保证和 Lynx 相同版本
+dependencies {
+  implementation ("org.lynxsdk.lynx:lynx-devtool:{versionJson.LYNX_VERSION}")
+  implementation ("org.lynxsdk.lynx:lynx-service-devtool:{versionJson.LYNX_VERSION}")
+}
+```
+
+</Tab>
+</Tabs>
+
+:::info
+推荐接入时使用最新 [Lynx 版本](https://github.com/lynx-family/lynx/releases)
+:::
+
+### 注册 DevTool Service
+
+DevTool Service 提供了一些预设值，以控制默认是否接入不同的调试功能，可以根据实际需求进行配置。
+
+在下一章节中，将详细介绍它们的作用和使用场景。
+
+<Tabs groupId='register-devtool-service-android'>
+<Tab label="Java">
+
+```java title=YourApplication.java {3-13}
+private void initLynxService() {
+  // ...
+  // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
+  LynxDevToolService.getINSTANCE().enableAllSessions();
+
+  // register DevTool service
+  LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
+
+  // set DevTool preset values
+  LynxDevToolService.getINSTANCE().setLynxDebugPresetValue(true);
+  LynxDevToolService.getINSTANCE().setLogBoxPresetValue(true);
+  LynxDevToolService.getINSTANCE().setLoadQJSBridge(true);
+  LynxDevToolService.getINSTANCE().setLoadV8Bridge(true);
+}
+
+```
+
+</Tab>
+<Tab label="Kotlin">
+
+```kotlin title=YourApplication.kt {3-13}
+private fun initLynxService() {
+  // ...
+  // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
+  LynxDevToolService.INSTANCE.enableAllSessions()
+
+  // register DevTool service
+  LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
+
+  // set DevTool preset values
+  LynxDevToolService.INSTANCE.setLynxDebugPresetValue(true)
+  LynxDevToolService.INSTANCE.setLogBoxPresetValue(true)
+  LynxDevToolService.INSTANCE.setLoadQJSBridge(true)
+  LynxDevToolService.INSTANCE.setLoadV8Bridge(true)
+}
+```
+
+</Tab>
+</Tabs>
+
+### 打开 DevTool
+
+DevTool 提供了一些调试功能开关，
+其中有三个比较重要的开关：
+
+- `Lynx Debug` 是 DevTool 的总开关，其控制 DevTool 的所有调试功能。
+- `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
+- `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
+
+<Details title="这些开关均默认关闭，需要主动打开">
+
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
+  - 如果需要使用 JavaScript 调试功能，还需要设置 `LoadQJSBridge` 或 `LoadV8Bridge` 预设值为 `true`
+    - `LoadQJSBridge` 控制加载 PrimJS 引擎调试库
+    - `LoadV8Bridge` 控制加载 V8 引擎调试库
+- LogBox 可以帮助你快速发现问题
+
+</Details>
+
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+
+<Tabs groupId='turn-on-switches-android'>
+<Tab label="Java">
+
+```java title=YourApplication.java {3-8}
+private void initLynxEnv() {
+  LynxEnv.inst().init(this, null, null, null);
+  // 打开 Lynx Debug 开关
+  LynxEnv.inst().enableLynxDebug(true);
+  // 打开 Lynx DevTool 开关
+  LynxEnv.inst().enableDevtool(true);
+  // 打开 Lynx LogBox 开关
+  LynxEnv.inst().enableLogBox(true);
+}
+
+```
+
+</Tab>
+<Tab label="Kotlin">
+
+```kotlin title=YourApplication.kt {3-8}
+private fun initLynxEnv() {
+  LynxEnv.inst().init(this, null, null, null)
+  // 打开 Lynx Debug 开关
+  LynxEnv.inst().enableLynxDebug(true)
+  // 打开 Lynx DevTool 开关
+  LynxEnv.inst().enableDevtool(true)
+  // 打开 Lynx LogBox 开关
+  LynxEnv.inst().enableLogBox(true)
+}
+```
+
+</Tab>
+</Tabs>
+
+:::info
+除了前面介绍的三个开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+:::
+
+</Steps>
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+  <Steps>
+### 引入依赖
+
+你需要接入这两个组件：`@lynx/lynx_devtool` 和 `@lynx/lynx_devtool_service`。
+
+<Tabs groupId='impl-harmony'>
+<Tab label="oh-package.json5">
+
+```json5
+// Lynx DevTool 接入时请保证和 Lynx 相同版本
+"dependencies": {
+  "@lynx/lynx_devtool": "@param:dependencies.lynx_version",
+  "@lynx/lynx_devtool_service": "@param:dependencies.lynx_version"
+}
+```
+
+</Tab>
+<Tab label="build-profile.json5">
+
+```json5
+// 由于 `@lynx/lynx_devtool` 是通过变量动态 import，为了将 devtool 模块加入编译，
+// 还需要额外在 build-profile.json5 中的 buildOption 额外增加一个 runtimeOnly 的 buildOption 配置。
+"buildOption": {
+    "arkOptions": {
+      "runtimeOnly": {
+        "packages": [
+          "@lynx/lynx_devtool"
+        ]
+      }
+    },
+}
+```
+
+</Tab>
+</Tabs>
+
+:::info
+推荐接入时使用最新 [Lynx 版本](https://github.com/lynx-family/lynx/releases)
+:::
+
+### 注册 DevTool Service
+
+<Tabs groupId="register-devtool-service-harmony">
+<Tab label="ETS">
+
+```ts title=YourEntryAbility.ets {2 - 3}
+// Initialize LynxDevToolService first, as LynxEnv initialization
+// depends on LynxDevToolService from LynxService
+LynxServiceCenter.registerService(
+  LynxServiceType.DevTool,
+  LynxDevToolService.instance,
+);
+```
+
+</Tab>
+</Tabs>
+
+### 打开 DevTool
+
+DevTool 提供了一些调试功能开关，
+其中有三个比较重要的开关：
+
+- `Lynx Debug` 是 DevTool 的总开关，其控制 DevTool 的所有调试功能。
+- `Lynx DevTool` 控制 DevTool 的基础调试功能：元件审查和 JavaScript 调试。
+- `Lynx LogBox` 控制 [LogBox](/guide/devtool/handle-errors.html) 功能。
+
+<Details title="Lynx Debug 与 Lynx LogBox 开关是默认开启的，Lynx DevTool 开关默认关闭，建议开启 Lynx DevTool 开关">
+
+- 打开 `Lynx Debug` 后，`Lynx DevTool` 和 `Lynx LogBox` 开关才能够生效
+- 使用 DevTool 桌面应用调试 Lynx 页面时，需要打开 `Lynx DevTool` 开关
+- LogBox 可以帮助你快速发现问题
+
+</Details>
+
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+
+<Tabs groupId='turn-on-switches-harmony'>
+<Tab label="ETS">
+
+```ts title=YourEntryAbility.ets {4-9}
+public initLynxEnv() {
+  LynxEnv.initialize(this.context);
+
+  // 打开 Lynx Debug 开关
+  LynxEnv.enableLynxDebug(true);
+  // 打开 Lynx DevTool 开关
+  LynxEnv.enableDevtool(true);
+  // 打开 Lynx LogBox 开关
+  LynxEnv.setLogBoxEnabled(true);
+}
+
+```
+
+</Tab>
+</Tabs>
+
+:::info
+除了前面介绍的三个开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+:::
+
+</Steps>
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+恭喜你！至此你已经完成了 DevTool 的接入。打开 Lynx DevTool 桌面应用，
+使用 USB 线连接 app，即可开始调试。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/devtool_connected_success.png"
+  alt="Lynx DevTool 接入成功"
+  width={800}
+/>
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/start/integrate-lynx-devtool-advanced"
+  title="更多 DevTool 开关"
+  description="需要更多的 DevTool 进阶开关吗？"
+/>
+
+</NextSteps.Root>
+
+## 兼容性
+
+import { APITable } from '@lynx';
+
+<APITable query="devtool/integration" />
+
+## 下一步
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/guide/devtool/panels.html"
+    title="使用调试工具"
+    description="学习如何使用 Lynx DevTool 桌面应用，深入了解调试功能"
+  />
+</NextSteps.Root>

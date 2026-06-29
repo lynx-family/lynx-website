@@ -1,0 +1,101 @@
+# <dfn for=Scripting>Scripting</dfn>
+
+## Script
+
+### <dfn for=Scripting>Script</dfn>
+
+An abstract notion of code, represented often as files or other forms of binaries.
+
+### <dfn for=Scripting>JavaScript Script</dfn>
+
+A kind of [=Scripting/script=] that is compliant to ECMA-262.
+
+## Scripting Engine
+
+### <dfn for=Scripting>Scripting Engine</dfn> (a.k.a <dfn for=Scripting>VM</dfn>, or <dfn for=Scripting>Virtual Machine</dfn>)
+
+An abstract machine in which [=Scripting/script=] is executed.
+
+### <dfn for=Scripting>JavaScript Engine</dfn>
+
+A kind of [=Scripting/scripting engine=] that can execute [=Scripting/JavaScript script=].
+
+### Instances of Scripting Engine
+
+#### <dfn for=Scripting>V8</dfn>, <dfn for=Scripting>JavaScript Core</dfn>, <dfn>QuickJS</dfn>, <dfn for=Scripting>Hermes</dfn>, etc.
+These are some of the industry-acknowledged [=Scripting/JavaScript engine=].
+
+#### <dfn for=Scripting>PrimJS VM</dfn>
+An [open-sourced](https://github.com/lynx-family/primjs) [=Scripting/scripting engine=] designed specifically for Lynx.
+
+## <dfn for=Scripting>JavaScript FFI</dfn>
+A Foreign Function Interface (FFI) is a mechanism by which a program written in one programming language can call routines or make use of services written or compiled in another one.
+JavaScript FFI here refers to the mechanism by which JavaScript calls to Native.
+
+### <dfn for=Scripting>Node-API</dfn> (or <dfn for=Scripting>N-API</dfn>)
+Node-API (formerly N-API) is an API for building native Addons. It is independent from the underlying JavaScript runtime (for example, V8).
+Native developers can implement JavaScript FFI based on Node-API.
+
+### <dfn for=Scripting>JavaScript Interface</dfn> (or <dfn for=Scripting>JSI</dfn>)
+JavaScript Interface(JSI) is an interface that allows JavaScript to hold a reference to host platform object and vice-versa. Native developers can implement JavaScript FFI based on JSI.
+
+### <dfn for=Scripting>PrimJS API</dfn> (or <dfn for=Scripting>PAPI</dfn>)
+The PrimJS API is the API provided by PrimJS for native developers to implement JavaScript FFI.
+It offers a special HostRef that can be created and held at high performance.
+This HostRef is not an Object in JavaScript, and script developers cannot manipulate the HostRef directly; they can only pass it as a parameter to the FFI.
+
+## Scripting Runtime Environment
+
+### <dfn for=Scripting>Scripting Runtime Environment</dfn>
+
+An abstract environment comprises a [=Scripting/scripting engine=] that executes [=Scripting/scripts=], along with a series of APIs and libraries accessible to the [=Scripting/scripts=].
+
+### Main Thread Scripting
+
+#### <dfn for=Scripting>Main Thread Runtime</dfn>
+
+The [=Scripting/scripting runtime environment=] used by the [=Threading/main thread=]. It comprises of
+
+- [=Scripting/PrimJS VM=], and
+- APIs exposed from [=EnginePixeling/pixel pipeline=], such as [=ElementsComponents/Element PAPI=].
+
+#### <dfn for=Scripting>Main Thread Script</dfn> (or <dfn for=Scripting>MTS</dfn>)
+
+A kind of [=Scripting/script=] intended to be executed on the [=Scripting/main thread runtime=], typically for performingelement manipulation to trigger [=EnginePixeling/pixeling=].
+
+#### Instances of [=Scripting/main thread script=]
+
+1. [=Scripting/Scripts=] within the [=CommonInfrastructure/bundle=] intended to be initially loaded and executed on the [=Scripting/main thread runtime=] as the entry point of an App. e.g. main-thread.js
+2. [=Scripting/Scripts=] within the [=CommonInfrastructure/bundle=] intended to be lazily evaluated on the [=Scripting/main thread runtime=] on demand by the [=FrameworkRendering/framework=]. The specific APIs for this are determined by the [=FrameworkRendering/framework=].
+
+### Background Thread Scripting
+
+#### <dfn for=Scripting>Background Thread Runtime</dfn>
+
+A [=Scripting/scripting runtime environment=] comprises of
+
+- An instance of [=Scripting/JavaScript engine=], and
+- Extended scripting APIs such as those exposed by JSB (JavaScript Bridge, to be further defined).
+
+#### <dfn for=Scripting>Background Thread Script</dfn> (or <dfn for=Scripting>BTS</dfn>)
+
+A kind of [=Scripting/script=] that is intended to be executed under the [=Scripting/background thread runtime=].
+
+- e.g. app-service.js, background.js, worker.js
+
+## <dfn for=Scripting>Procedure Call</dfn> (or <dfn for=Scripting>Call</dfn>)
+In Lynx Engine, there are dual threads and dual [=scripting runtime environment=]. And there are FFI calls from Runtime to Native, as well as calls from Native to Runtime. These cross-environment or cross-thread calls are referred to as Procedure Call, or simply as Call.
+
+### <dfn for=Scripting>Sync Call</dfn>
+Sync call specifically refers to cross-environment [=calls=] that occur in the same thread, including calls from runtime to native and from native to runtime.
+
+### <dfn for=Scripting>Inter Thread Call</dfn> (or <dfn for=Scripting>ITC</dfn>)
+Inter Thread Call refers to [=calls=] between threads, including cross-thread calls between native and native, between runtime and native, between runtime and runtime.
+
+## <dfn for=Scripting>Native Module</dfn>
+
+Native Module is a host object implemented in the background thread runtime based on [=Node-API=] or [=JSI=].
+Native developers can register host platform capabilities to Native Module, which allows script developers to [=call=] host platform capabilities in the background thread runtime.
+
+## <dfn for=Scripting>Worker</dfn>
+Similar to the worker in W3C.

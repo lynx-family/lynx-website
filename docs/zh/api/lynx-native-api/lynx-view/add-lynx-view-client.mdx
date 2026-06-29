@@ -1,0 +1,74 @@
+---
+api: lynx-native-api/lynx-view/add-lynx-view-client
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# addLynxViewClient
+
+<APISummary />
+
+为 `LynxView` 注册生命周期事件监听。
+
+## 语法
+
+### Android
+
+```java
+public void addLynxViewClient(LynxViewClient client);
+```
+
+#### 参数说明
+
+- `client`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调。
+
+### iOS
+
+```objc
+- (void)addLifecycleClient:(nonnull id<LynxViewBaseLifecycle>)lifecycleClient;
+```
+
+#### 参数说明
+
+- `lifecycleClient`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调。
+
+### Harmony
+
+#### 成员
+
+LynxView 包含 clients 成员：
+
+- `clients: LynxViewClient[]`: 客户端实现的结构，并注册给 `LynxView` 实例，用于获取 `LynxView` 生命周期各流程回调。
+
+在 HarmonyOS 平台上, 你需要在 LynxView 初始化时传入你实现的 LynxViewClient 作为参数：
+
+```typescript
+@Entry
+@Component
+struct Index {
+  private clients: EntryLynxClient[] = [new EntryLynxClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        clients: this.clients,
+      }).width('100%').height('100%');
+    }
+    .size({ width: '100%', height: '100%' })
+  }
+}
+```
+
+### Desktop (C++)
+
+```cpp
+void AddClient(std::shared_ptr<lynx::pub::LynxViewClient> client);
+```
+
+#### 参数说明
+
+- `client`: 注册到 `LynxView` 实例上的生命周期监听对象。同一个 client 实例会被 `LynxView` 持有，直到被移除。
+
+## 兼容性
+
+<APITable />

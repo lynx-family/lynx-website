@@ -1,0 +1,146 @@
+import { Go, NoWeb } from '@lynx';
+
+# 相对布局 <NoWeb />
+
+如果你需要一种布局，在不使用复杂的层次结构的情况下，可以轻松控制子元件与父或兄弟元件的相对位置，那么 Lynx 自研的**相对布局**（relative layout）是最佳选择。
+
+相对布局允许显示子元件在相对位置，每个元件的位置可以相对于兄弟元件（例如，位于另一个元件的左侧或下方）或相对于父区域来指定（例如，对齐底部、左侧或中心）。有关支持的属性，请参见[参考](#参考)部分。
+
+## 如何构建一个相对布局？
+
+以下示例展示了“用户名”（user name）和“用户名下面的描述”（user description）之间的位置关系，以及“用户名”与左侧的“头像”（avatar）的关系。此外，还有“关注”（follow）、“用户等级”（lv）和“关闭按钮”（close）之间的位置关系。该图用虚线和箭头表示了它们的相对位置关系。
+
+<center>
+  <img
+    width="70%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/relative_demo_1.png"
+  />
+</center>
+
+**使用相对布局实现上述效果，步骤如下：**
+
+### 第一步：应用 `display: relative`
+
+要使用相对布局，只需将 `display: relative` 应用于你想要进行相对布局的父元件。
+
+```css
+display: relative;
+```
+
+### 第二步：为子元件编号
+
+通过使用 [`relative-id`](/api/css/properties/relative-id)（非 `0` 的整数）为相对布局中的子元件声明 ID，以便更好地识别每个元件。
+
+```css
+// avatar
+relative-id: 1;
+// user_name
+relative-id: 2;
+// user_description
+relative-id: 3;
+// user_lv
+relative-id: 4;
+// close
+relative-id: 5;
+// follow
+relative-id: 6;
+```
+
+### 第三步：设置边缘对齐样式
+
+使用以下**边缘对齐样式**，将当前元件与**父或兄弟元件**的某个边缘对齐。例如，使用 [`relative-align-top`](/api/css/properties/relative-align-top.mdx) 可指定当前元件与目标元件的上边缘对齐。
+
+物理属性：
+
+- [`relative-align-top`](/api/css/properties/relative-align-top.mdx)、[`relative-align-right`](/api/css/properties/relative-align-right.mdx)、[`relative-align-bottom`](/api/css/properties/relative-align-bottom.mdx)、[`relative-align-left`](/api/css/properties/relative-align-left.mdx)
+
+逻辑属性：
+
+- [`relative-align-inline-start`](/api/css/properties/relative-align-inline-start.mdx)、[`relative-align-inline-end`](/api/css/properties/relative-align-inline-end.mdx)
+
+### 第四步：设置相对位置样式
+
+使用以下**相对位置样式**，指定元件与**兄弟元件**的相对位置。例如，使用 [`relative-left-of`](/api/css/properties/relative-left-of.mdx) 指定当前元件的右边缘紧靠着目标兄弟元件的左边缘。
+
+物理属性：
+
+- [`relative-left-of`](/api/css/properties/relative-left-of.mdx)、[`relative-right-of`](/api/css/properties/relative-right-of.mdx)、[`relative-top-of`](/api/css/properties/relative-top-of.mdx)、[`relative-bottom-of`](/api/css/properties/relative-bottom-of.mdx)
+
+逻辑属性：
+
+- [`relative-inline-start-of`](/api/css/properties/relative-inline-start-of.mdx)、[`relative-inline-end-of`](/api/css/properties/relative-inline-end-of.mdx)
+
+### 第五步：设置居中样式
+
+使用 [`relative-center`](/api/css/properties/relative-center.mdx) 可以指定子元件在容器中的居中方式。通过设置 `vertical` 实现垂直居中，设置 `horizontal` 实现水平居中，或者设置 `both` 同时实现垂直和水平居中。
+
+### 示例
+
+<center>
+  <img
+    width="100%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/lynx_layout_relative_demo.png"
+  />
+</center>
+
+该示例中，容器的宽度是固定的，高度则会依据内容变化。
+
+根据渲染效果需求，可以为每个元件赋予相应属性。需要设置元件之间的间隙时，可使用 `margin`。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/layout_relative_demo.png"
+  example="layout"
+  defaultEntryFile="dist/relative.lynx.bundle"
+  defaultFile="src/relative_layout/index.tsx"
+  entry="src/relative_layout"
+/>
+
+- 最佳实践
+
+  使用相对布局可以为开发者带来便捷、高效的布局方案。开发时建议遵循以下原则：
+  1. 相对于父容器的定位不会影响性能，可以自由使用。
+
+  2. 当在兄弟间进行定位时，建议开启 [`relative-layout-once`](/api/css/properties/relative-layout-once) 属性（默认开启）。
+
+  3. 非必要时，避免使用 a 依赖 b 的横向与 b 依赖 a 的纵向这种循环依赖，因为对性能影响较大。
+
+  4. 请勿出现不能解决的循环依赖，这会导致布局失败。
+
+  5. 尽量使用逻辑属性，如 [`relative-align-inline-start`](/api/css/properties/relative-align-inline-start.mdx) 和 [`relative-inline-start-of`](/api/css/properties/relative-inline-start-of.mdx) 以支持页面国际化。
+
+## 参考
+
+目前，相对布局支持以下特有的布局属性：
+
+- 编号
+  - [`relative-id`](/api/css/properties/relative-id)
+
+- 边缘对齐样式
+
+  物理属性
+  - [`relative-align-top`](/api/css/properties/relative-align-top.mdx)
+  - [`relative-align-right`](/api/css/properties/relative-align-right.mdx)
+  - [`relative-align-bottom`](/api/css/properties/relative-align-bottom.mdx)
+  - [`relative-align-left`](/api/css/properties/relative-align-left.mdx)
+
+  逻辑属性
+  - [`relative-align-inline-start`](/api/css/properties/relative-align-inline-start.mdx)
+  - [`relative-align-inline-end`](/api/css/properties/relative-align-inline-end.mdx)
+
+- 相对位置样式
+
+  物理属性
+  - [`relative-left-of`](/api/css/properties/relative-left-of.mdx)
+  - [`relative-right-of`](/api/css/properties/relative-right-of.mdx)
+  - [`relative-top-of`](/api/css/properties/relative-top-of.mdx)
+  - [`relative-bottom-of`](/api/css/properties/relative-bottom-of.mdx)
+
+  逻辑属性
+  - [`relative-inline-start-of`](/api/css/properties/relative-inline-start-of.mdx)
+  - [`relative-inline-end-of`](/api/css/properties/relative-inline-end-of.mdx)
+
+- 居中样式
+  - [`relative-center`](/api/css/properties/relative-center.mdx)
+
+- 布局优化开关
+  - [`relative-layout-once`](/api/css/properties/relative-layout-once)

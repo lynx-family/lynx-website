@@ -1,0 +1,73 @@
+---
+tag: BTS
+api: lynx-api/selector-query/SelectorQuery
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# SelectorQuery
+
+<APISummary />
+
+Gets a reference to the specified node in order to call its methods or get its properties.
+
+Depending on the method of creation, each `SelectorQuery` object will be assigned a root node. The scope of any node search will be limited to the leaf nodes of that node.
+
+## Instance Methods
+
+[`SelectorQuery.exec()`](./selector-query/selector-query-exec.mdx)
+
+Execute all submitted UI node operation tasks.
+
+[`SelectorQuery.select()`](./selector-query/selector-query-select.mdx)
+
+Select the first node that matches the specified CSS selector under the root node specified by `SelectorQuery`.
+
+[`SelectorQuery.selectAll()`](./selector-query/selector-query-select-all.mdx)
+
+Select all nodes that match the specified CSS selector under the root node specified by `SelectorQuery`.
+
+[`SelectorQuery.selectRoot()`](./selector-query/selector-query-select-root.mdx)
+
+Select the root node specified by `SelectorQuery`.
+
+[`SelectorQuery.selectUniqueID()`](./selector-query/selector-query-select-unique-id.mdx)
+
+Select nodes by specifying `uid`.
+
+## Example
+
+Get the position and size of the specified `text` node:
+
+```tsx
+class Page extends Component {
+  componentDidMount() {
+    lynx
+      .createSelectorQuery() // create SelectorQuery
+      .select('#my-id') // Specify the selector of the target node
+      .invoke({
+        // Specify the operation for the target node
+        method: 'boundingClientRect',
+        success: function (res) {
+          console.log(res);
+        },
+        fail: function (res) {
+          console.log(res.code, res.data);
+        },
+      })
+      .exec(); // Execute the query
+  }
+
+  render() {
+    return (
+      <view>
+        <text id="my-id">...</text>
+      </view>
+    );
+  }
+}
+```
+
+## Compatibility
+
+<APITable />

@@ -1,0 +1,142 @@
+import { Details, Go } from '@lynx';
+import * as NextSteps from '@lynx/NextSteps';
+
+# ReactLynx 是什么？
+
+ReactLynx 是 Lynx 的官方 React 框架。它允许你用 React 的心智模型开发 Lynx 原生应用。
+
+和在 Web 上使用 React 一样，使用 ReactLynx 时，你可以[使用 JSX 和 React 组件](https://react.dev/learn/describing-the-ui)来构建你的 UI。ReactLynx 会将你的 React 代码转换为对 [Lynx Engine](/guide/spec.html#engine) 命令式 API 的调用，从而实现原生 UI 的渲染。
+
+## 主要功能
+
+ReactLynx 本身是“地道”的 React，但也开创性地引入了类似“双线程 React”、“JSX 常量折叠”等优化，
+
+- **“地道”React**：ReactLynx 是 React 的一个实现，本质上基于 [Preact](https://github.com/preactjs/preact)，因此和 React 有基本一致的 API 和行为，此一致性使得很多生态建设可以复用。
+- **[双线程编程思想](./thinking-in-reactlynx.mdx)**：ReactLynx 遵循 React 的编程模型，但通过利用 Lynx 提供的**双线程运行时**，结合自身的编程范式（或规则）来实现更好的性能和用户体验。
+  - **[Off-main-thread](/guide/spec.html#background-thread-aka-off-main-thread) Reconciliation**：ReactLynx 通过将部分 Reconciliation 逻辑放到后台线程，以减少主线程的计算量，提升性能。
+  - **[双线程架构下的生命周期](./lifecycle.mdx)**：由于 Lynx 的双线程架构特点，ReactLynx 的生命周期与传统 React 在调用时机上存在一些差异。
+- **JSX 常量折叠**：ReactLynx 会在编译时折叠 JSX 常量，以减少运行时的计算。
+
+## 如果你是 React Web 开发者
+
+### 需修改包名
+
+由于和 [`react`](https://www.npmjs.com/package/react) 有基本一致的 API，你可以直接将 `react` 替换为 `@lynx-js/react`，然后继续使用你熟悉的 React API。
+
+```diff
+- import { useState } from 'react';
++ import { useState } from '@lynx-js/react';
+```
+
+有关 ReactLynx 实现的 API 的完整列表，请参阅 [`@lynx-js/react` API 文档](/api/react/index.html)。
+
+### 不同的元件集合
+
+不同于 Web 上的 `div`、`span` 等元素，Lynx 提供了一套元素标签集合，例如 `view`、`text`、`image` 等（[完整列表](/api/elements/built-in/view.html)）。
+在 ReactLynx 中，你可以[组合使用](/guide/ui/elements-components.html)这些元素标签来构建你的原生应用。
+
+```diff
+- <div className="..." />
++ <view className="..." />
+```
+
+虽然元件的命名类似于 React Native，但是 ReactLynx 有一些不同之处：
+
+```diff
+- import {View, Text, Image} from 'react-native';
+- <View style={{...}} />
++ <view style={{...}} />
+```
+
+### 不同的事件命名
+
+基于 Lynx，ReactLynx 使用了一套不同于 Web 的事件命名（前往[事件](/guide/interaction/event-handling.html)了解更多）。
+
+<Details title="事件传播也有所不同">
+
+对于 Web 上常用的 `e.stopPropagation()` 和 `e.preventDefault()` 等方法，Lynx 仅在[主线程脚本](./main-thread-script.html)中支持 [`e.stopPropagation()`](/api/lynx-api/event/event.html#stoppropagation)。
+但是 Lynx 的[事件传播机制](/guide/interaction/event-handling/event-propagation.html)仍允许你实现和 Web 上类似的功能或效果。
+
+</Details>
+
+```diff
+- <button onTouchStart={...} />
++ <view bindtouchstart={...} catchtouchstart={...}/>
+```
+
+### 没有 `document` 和 `window`
+
+Lynx 尚未提供 `document` 和 `window` 对象，因此 ReactLynx 也不支持这两个对象。
+
+<Details title="没有“DOM”？">
+
+Lynx Engine 提供了一套 Low Level 的 Element API，
+允许[框架开发者](/guide/spec.html#scripting-framework-developer)通过运行在[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)的 JavaScript 创建 UI。
+但这套 API 并不向所有开发者开放。
+Lynx 鼓励开发者尽可能使用声明式的方式来构建 UI，而不是直接操作 DOM。
+但也提供[直接操作节点](/guide/interaction/event-handling/manipulating-element.react.html)的能力和[主线程脚本](./main-thread-script.html)，
+一般用来帮助开发者在实现一些复杂交互时，依然可以保持接近原生的用户体验。
+
+</Details>
+
+这意味着你无法使用任何依赖于 `document` 或 `window` 的库。
+
+一般来说，你可以通过以下两种方式来解决这个差异：
+
+- 大多数情况下，Lynx 以不同的 API 提供某个功能，例如你可以使用 `lynx` 对象下的 API，以 [`lynx.reload`](/api/lynx-api/lynx/lynx-reload.html) 替代 `window.location.reload()`。
+- 偶尔 Lynx 并未提供某个功能，你可以使用 Lynx 的 [NativeModules](/guide/use-native-modules.mdx) 和[自定义元件](/guide/custom-native-component.mdx)来扩展 Lynx 的能力。
+
+## 下一步
+
+### 进一步学习 ReactLynx
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/react/thinking-in-reactlynx"
+    title="Thinking in ReactLynx"
+    description="学习 ReactLynx 编程思想"
+  />
+  <NextSteps.Step
+    href="/react/lifecycle"
+    title="Rendering Process and Lifecycle"
+    description="理解 ReactLynx 的渲染流程和生命周期"
+  />
+</NextSteps.Root>
+
+### 学习 Lynx 基础
+
+磨刀不误砍柴工。
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/ui/elements-components"
+  title="使用元件"
+  description="学习如何在 Lynx 中使用内置元件"
+/>
+
+<NextSteps.Step
+  href="/guide/ui/styling"
+  title="添加样式"
+  description="学习如何在 Lynx 中编写样式"
+/>
+
+</NextSteps.Root>
+
+<br />
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/ui/layout"
+  title="理解布局"
+  description="学习如何在 Lynx 中进行排版"
+/>
+
+<NextSteps.Step
+  href="/guide/ui/scrolling"
+  title="处理滚动"
+  description="学习如何在 Lynx 中使用可滚动元件"
+/>
+
+</NextSteps.Root>

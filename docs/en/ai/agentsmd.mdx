@@ -1,0 +1,58 @@
+# `AGENTS.md` for Lynx
+
+[`AGENTS.md`](https://agents.md) is a project-level instruction file for coding agents, similar to how `README.md` is for human developers.
+
+## Getting Started
+
+New Lynx projects created via [Quick Start](/guide/start/quick-start#create-a-new-lynx-project) already include an `AGENTS.md`. For existing projects, copy the template and adapt it to your project:
+
+- [`AGENTS.md` in Lynx Template Project](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/create-rspeedy/template-common/AGENTS.md)
+
+## Point Agents to Lynx Docs
+
+The most important thing to add is a pointer to [llms.txt](https://lynxjs.org/llms.txt), which serves as an entry point to all Lynx documentation in an LLM-friendly format. Add a section like this to your `AGENTS.md`:
+
+```markdown
+## Read in Advance
+
+Read the docs below in advance to help you understand the library or frameworks this project depends on.
+
+- Lynx: [llms.txt](https://lynxjs.org/llms.txt).
+  While dealing with a Lynx task, an agent **MUST** read this doc because it is an entry point of all available docs about Lynx.
+```
+
+This isn't a magic incantation. It works because the snippet gives the agent a concrete URL to fetch, and the strong language ("MUST") tells it to prioritize the docs over guessing from training data.
+
+If agents still ignore the documentation, you can inline the full contents of `llms.txt` directly into your `AGENTS.md`:
+
+```bash
+curl https://lynxjs.org/llms.txt > AGENTS.md
+```
+
+To keep it up-to-date automatically, add this command to your `prepare` script in `package.json` and gitignore the generated file.
+
+## Monorepo Setup
+
+In a monorepo, place a root `AGENTS.md` for global guidelines and per-package files for project-specific context. Agents read the closest file first, then walk up.
+
+```bash
+$ tree
+.
+├── AGENTS.md           # global guidelines
+├── README.md
+└── packages
+    ├── web
+    │   ├── AGENTS.md   # web-specific
+    │   ├── package-a
+    │   │   └── AGENTS.md
+    │   └── package-b
+    │       └── AGENTS.md
+    └── lynx
+        ├── AGENTS.md   # lynx-specific
+        ├── package-c
+        │   └── AGENTS.md
+        └── package-d
+            └── AGENTS.md
+```
+
+Place Lynx-specific guidance in `packages/lynx/AGENTS.md`. Keep information consistent across files to avoid conflicting instructions.

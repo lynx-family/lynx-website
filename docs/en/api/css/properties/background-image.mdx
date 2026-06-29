@@ -1,0 +1,137 @@
+---
+title: background-image
+api: css/properties/background-image
+---
+
+import { APISummary, APITable, AndroidOnly, Go } from '@lynx';
+
+<APISummary />
+
+## Introduction
+
+The `background-image` CSS property sets one or more background images on an element. <br />
+The background images are drawn on stacking context layers on top of each other. The first layer specified is drawn as if it is closest to the user. <br />
+The [border](./border.mdx) of the element are then drawn on top of them, and the [`background-color`](./background-color.mdx) is drawn beneath them. How the images are drawn relative to the box and its borders is defined by the [`background-clip`](./background-clip.mdx) and [`background-origin`](./background-origin.mdx) CSS properties. <br />
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/background-image/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/background-image.jpg"
+  defaultEntryFile="dist/background-image.lynx.bundle"
+  entry="src/background-image"
+/>
+
+## Syntax
+
+```css
+background-image:
+  linear-gradient(to bottom, rgba(255, 255, 0, 0.5), rgba(0, 0, 255, 0.5)),
+  url('https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/catfront.png');
+```
+
+### Values
+
+Each background image is specified either as the keyword `none` or as an `<image>` value. <br />
+
+- `none`
+  Is a keyword denoting the absence of images.
+
+- `<image>`
+  Is an `<image>` denoting the image to display. There can be several of them, separated by commas.
+  The supported image formats for background-image are the same as those for image, including jpg, png, gif, webp, etc. Refer to [Supported Image Formats](/api/elements/built-in/image.html#compatibility)
+
+## Events
+
+| Name        | Type     | Essential | Description     |
+| ----------- | -------- | --------- | --------------- |
+| bindbgload  | function | NO        | Loading succeed |
+| bindbgerror | function | NO        | Loading failed  |
+
+## Related properties of view
+
+| Name                            | Type    | Default | Example | Essential | Description                                                                                                                                                                                     |
+| ------------------------------- | ------- | ------- | ------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <AndroidOnly/> skip-redirection | boolean | false   | true    | NO        | It only needs to be set when the background-image uses `<url()>` and is a CDN image. When set to true, the logic of container redirection can be skipped to optimize the related time-consuming |
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>none</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Formal Syntax
+
+```
+background-image = <bg-image>#
+
+<bg-image> = none | <image>
+
+<image> = <url()> | <gradient>
+
+<url()> = url(<string>)
+
+<gradient> = <linear-gradient()> | <radial-gradient()> | <conic-gradient()>
+
+<linear-gradient()> =
+  linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )
+
+<radial-gradient()> =
+  radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )
+
+<conic-gradient()> =
+  conic-gradient( [ from [ <angle> | <zero> ] ]? [ at <position> ]? , <color-stop-list> )
+
+<side-or-corner> =
+  [ left | right ] || [ top | bottom ]
+
+<ending-shape> =
+  circle | ellipse
+
+<size> =
+  closest-side       |
+  farthest-side      |
+  closest-corner     |
+  farthest-corner    |
+  <length>           |
+  <length-percentage>{2}
+
+<position> =
+  [ left | center | right ] || [ top | center | bottom ]                            |
+  [ left | center | right | <length-percentage> ]
+    [ top | center | bottom | <length-percentage> ]?                                |
+  [ [ left | right ] <length-percentage> ] &&
+    [ [ top | bottom ] <length-percentage> ]
+
+<color-stop-list> = <linear-color-stop> ( ',' <linear-color-stop> )*
+
+<linear-color-stop> = <color>
+
+<length-percentage> = <length> | <percentage>
+
+```
+
+## Difference between web
+
+- `<image>`
+  Only support `<url()>` and `<gradient>`.
+
+- `<gradient>`
+  Support `linear-gradient`, `radial-gradient`, and `conic-gradient`(since version 3.6).
+
+- `<linear-color-stop>`
+  Not support [`linear-color-hint`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/background-image#linear-color-hint)
+
+  Not support [`color-interpolation-method`](https://www.w3.org/TR/css-images-4/#linear-gradients)
+
+  Not support [`<length>`](/api/css/data-type/length) value for position
+
+## Compatibility
+
+<APITable />

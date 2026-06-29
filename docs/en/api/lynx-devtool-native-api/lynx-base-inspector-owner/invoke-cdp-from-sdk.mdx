@@ -1,0 +1,153 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# invokeCDPFromSDK
+
+<APISummary />
+
+Sends a [CDP](https://chromedevtools.github.io/devtools-protocol/) **Method** to DevTool and asynchronously receives the result.
+
+This can be used simultaneously with the [DevTool desktop application](/guide/devtool#running-the-devtool-desktop-application-on-a-development-device) without interfering with each other.
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)invokeCDPFromSDK:(NSString *)msg withCallback:(CDPResultCallback)callback;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void invokeCDPFromSDK(final String cdpMsg, final CDPResultCallback callback);
+```
+
+### Parameters
+
+- `msg` / `cdpMsg`: The message to send, a JSON string formatted as a CDP Method.
+- `callback`: A callback that conforms to the [`CDPResultCallback`](/api/lynx-devtool-native-api/cdp-result-callback) definition, used to receive the result.
+
+## Request Data Format
+
+A JSON-formatted string.
+
+| Field  | Type   | Description                                                                                   |
+| :----- | :----- | :-------------------------------------------------------------------------------------------- |
+| id     | number | Message ID                                                                                    |
+| method | string | Method name, please refer to [CDP](https://chromedevtools.github.io/devtools-protocol/)       |
+| params | object | Method parameters, please refer to [CDP](https://chromedevtools.github.io/devtools-protocol/) |
+
+For example, the request data for [`DOM.getDocument`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument) is as follows:
+
+```json
+{
+  "id": 1,
+  "method": "DOM.getDocument",
+  "params": {}
+}
+```
+
+## Usage Example
+
+### Implementation Steps
+
+1. [Implement `CDPResultCallback`](/api/lynx-devtool-native-api/cdp-result-callback).
+2. [Get the `LynxBaseInspectorOwner` instance](/api/lynx-devtool-native-api/lynx-base-inspector-owner#get-the-lynxbaseinspectorowner-instance).
+3. Call the [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk#syntax) method to send the message.
+
+### Code Example
+
+The following example code demonstrates the complete process of calling the `DOM.getDocument` CDP Method after the `LynxView` has successfully loaded.
+
+#### iOS
+
+```objective-c title="ViewController.m" {2,11,14-21,34-36}
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+@interface LynxViewLifecycleClient : NSObject <LynxViewLifecycle>
+@property(nonatomic, weak) LynxView* lynxView;
+@end
+
+@implementation LynxViewLifecycleClient
+
+- (void)lynxView:(LynxView *)view didLoadFinishedWithUrl:(NSString *)url {
+  [self invokeCDPMethod];
+}
+
+- (void)invokeCDPMethod {
+  __strong LynxView* view = self.lynxView;
+  id<LynxBaseInspectorOwner> owner = [view baseInspectorOwner];
+  NSString *method = @"{\"id\":1,\"method\":\"DOM.getDocument\",\"params\":{}}";
+  [owner invokeCDPFromSDK:method withCallback:^(NSString* result){
+           NSLog(@"CDPResultCallback: %@", result);
+         }];
+}
+
+@end
+
+@implementation ViewController {
+  LynxViewLifecycleClient *_client;
+}
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  _client = [LynxViewLifecycleClient new];
+  _client.lynxView = lynxView;
+  [lynxView addLifecycleClient:_client];
+}
+
+@end
+```
+
+#### Android
+
+```java title="MainActivity.java" {3-4,15,18,23-35}
+import android.util.Log;
+
+import com.lynx.devtoolwrapper.CDPResultCallback;
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwner;
+import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxViewClient;
+
+public class MainActivity extends Activity {
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ...
+
+    lynxView.addLynxViewClient(new LynxViewClient() {
+      @Override
+      public void onLoadSuccess() {
+        invokeCDPMethod(lynxView);
+      }
+    });
+  }
+
+  private void invokeCDPMethod(LynxView lynxView) {
+    LynxBaseInspectorOwner owner = lynxView.getBaseInspectorOwner();
+    if (owner == null) {
+      return;
+    }
+    String method = "{\"id\":1,\"method\":\"DOM.getDocument\",\"params\":{}}";
+    owner.invokeCDPFromSDK(method, new CDPResultCallback() {
+      @Override
+      public void onResult(String result) {
+        Log.i("MainActivity", "CDPResultCallback: " + result);
+      }
+    });
+  }
+}
+```
+
+## Compatibility
+
+<APITable />

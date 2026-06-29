@@ -1,0 +1,204 @@
+import { CodeFold, Details, Go, PlatformTabs } from '@lynx';
+import { Badge, PackageManagerTabs, Steps, Tab, Tabs } from '@theme';
+
+import NativeModuleAndroid from './custom-native-modules/native-module-android.mdx';
+import NativeModuleHarmony from './custom-native-modules/native-module-harmony.mdx';
+import NativeModuleIOS from './custom-native-modules/native-module-ios.mdx';
+import NativeModuleDesktops from './custom-native-modules/native-module-desktops.mdx';
+
+# Native Modules
+
+When developing Lynx applications, you may encounter scenarios where you need to interact with native platform APIs not covered by Lynx. Or, you might want to reuse existing native platform code in your Lynx application. Regardless of the reason, you can use [**Native Modules**](/guide/spec.html#nativemodules) to seamlessly connect your JavaScript code with native code, allowing you to call native platform functions and APIs from your JavaScript code. The following will detail how to write a native module.
+
+The basic steps for writing a native module are as follows:
+
+1. Use TypeScript to **declare your typed interface specification**.
+2. Use your interface specification to **write your Lynx application code**.
+3. Follow your interface specification to **write your native platform code** and connect your native code to the Lynx runtime environment.
+
+Next, this guide will demonstrate these steps through an example of building a native module.
+
+:::info
+Currently, native modules can only be used in [Background Thread Scripting](/guide/spec.html#background-thread-scripting).
+:::
+
+## Local Persistent Storage Module
+
+This guide aims to show you how to write a local persistent storage module that enables your Lynx application to use JavaScript code to store data persistently locally.
+
+To implement local persistent storage on different platforms, use the matching platform native API or the Lynx C/C++ APIs:
+
+- Android: [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences)
+- iOS: [NSUserDefaults](https://developer.apple.com/documentation/foundation/nsuserdefaults)
+- HarmonyOS: [Preferences](https://developer.huawei.com/consumer/en/doc/harmonyos-references/_preferences)
+- Desktops(Node-API): Lynx C/C++ APIs and the weak-node-api C++ wrapper
+
+<Steps>
+### Declare a Typed Interface Specification
+
+The interface specification of a native module serves as a bridge between the native code and the Lynx JavaScript runtime, defining the methods and data types passed between them.
+
+The steps to declare an interface specification are as follows:
+
+1. **Create a Lynx project**: Refer to the [Create a Lynx Project](/guide/start/quick-start#create-a-new-lynx-project) guide to create your Lynx project.
+2. **Create a new type declaration file**: Create a new file named `src/typing.d.ts` in your Lynx project.
+3. **Implement the interface specification**: Implement the interface specification of the native module in the `typing.d.ts` file.
+
+:::info
+You can view the types available in the specification and their corresponding native types in the [Type Mapping Table](#type-mapping-table).
+:::
+
+The following is the implementation of the interface specification for the local persistent storage module:
+
+```typescript title="typing.d.ts"
+declare let NativeModules: {
+  NativeLocalStorageModule: {
+    setStorageItem(key: string, value: string): void;
+    getStorageItem(key: string, callback: (value: string) => void): void;
+    clearStorage(): void;
+  };
+};
+```
+
+`NativeModules` is a global built-in object provided by Lynx in the JavaScript runtime. It serves as the access point for all native modules, and all native module declarations must be defined within it.
+
+### Write Your Lynx Application Code
+
+Next, write your application code in `src/App.tsx` within your Lynx project.
+
+The following is the `App.tsx` for the local persistent storage module. It includes an area to display the content read from local storage and three buttons for reading, writing, and clearing local storage.
+
+<Go
+  highlight="{11,19,24}"
+  example="local-storage"
+  defaultFile="src/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-demo-preview.png"
+></Go>
+
+### Write Your Native Platform Code
+
+Now, you can start writing the native platform code.
+
+<PlatformTabs queryKey="platform">
+  <PlatformTabs.Tab platform="ios">
+
+    <NativeModuleIOS />
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="android">
+
+    <NativeModuleAndroid />
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="harmony">
+
+    <NativeModuleHarmony />
+
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="node-api">
+
+    <NativeModuleDesktops />
+
+  </PlatformTabs.Tab>
+</PlatformTabs>
+
+</Steps>
+
+Congratulations! You have successfully created a native module. If you want to create a native module in your application, you first need to integrate Lynx by referring to the [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) guide, and then follow the steps above to create the native module.
+
+## Type Mapping Table
+
+| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     | weak-Node-API |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- | -------------------- |
+| `null`          | `nil`                                             | `null`                                            | `null`                                            | `Napi::Value` / `env.Null()` |
+| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            | `Napi::Value` / `env.Undefined()` |
+| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` | `Napi::Boolean` |
+| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   | `Napi::Number` |
+| `string`        | `NSString`                                        | `String`                                          | `string`                                          | `Napi::String` |
+| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    | `Napi::BigInt` |
+| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          | `Napi::ArrayBuffer` |
+| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               | `Napi::Object` |
+| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             | `Napi::Array` |
+| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  | `Napi::Function` |
+
+## Native Module Permission Verification (Experimental)
+
+Starting from Lynx SDK 3.5, developers can use `LynxViewBuilder` to set a native module validator for the current `LynxView`, thereby controlling all native module calls within the `LynxView`. Currently, this feature is only supported on Android and iOS, with HarmonyOS support to be added in the future.
+
+<PlatformTabs queryKey="platform">
+
+  <PlatformTabs.Tab platform="android">
+
+    When creating a `LynxView` using `LynxViewBuilder`, register a native module validator through the `registerModuleAuthValidator` interface. The validator will apply to all native module calls within the current `LynxView`.
+
+    **Native Module Validator Interface**
+
+    ```java title=""
+
+    /**
+    * LynxMethod verification interface, used to verify whether the LynxMethod is allowed to be
+    * called
+    */
+    public interface AuthValidator {
+    /**
+     *
+     * @param moduleName The name of the called native module
+     * @param methodName The name of the called native module method
+     * @param methodParams The parameters of the called native module method
+     * @return
+     * true: Verification passed, the native module call will be executed
+     * false: Verification failed, the native module call will not be executed, and a JS error will be generated
+     */
+    boolean verify(String moduleName, String methodName, JavaOnlyArray methodParams);
+  }
+
+    ```
+
+    **Native Module Validator Registration Method**
+
+    ```java title=""
+
+    LynxViewBuilder builder = LynxView.builder()
+    // Register the validator instance with LynxViewBuilder
+    .registerModuleAuthValidator(new LynxModule.AuthValidator() {
+    void validate(@NonNull String moduleName, @NonNull String moduleName, @NonNull ReadableMap params) {
+    //Validation logic
+    return result;
+  }
+  }
+    LynxView view = builder.build(context);
+
+    ```
+  </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="ios">
+    When creating a `LynxView` using `LynxViewBuilder`, register a native module validator through the `registerMethodAuth` interface. The validator will apply to all native module calls within the current `LynxView`.
+
+    **Native Module Validator Interface**
+
+    ```objective-c title=""
+
+    /**
+    *
+    * @param method: The name of the called native module method
+    * @param module: The called native module
+    * @param invoke_session: The timestamp of the native module call
+    * @param inv：The dynamic invocation method for this call
+    * @return
+    * true: Verification passed, the native module call will be executed
+    * false: Verification failed, the native module call will not be executed, and a JS error will be generated
+    */
+    typedef BOOL (^LynxMethodBlock)(NSString *method, NSString *module, NSString *invoke_session,
+    NSInvocation *inv);
+
+    ```
+    **Native Module Validator Registration Method**
+
+    ```objective-c title=""
+
+    // Register the validator instance with LynxViewBuilder
+    LynxViewBuilder *builder = GetLynxViewBuilder();
+    [builder.config registerMethodAuth:validtorBlock];
+
+    ```
+  </PlatformTabs.Tab>
+</PlatformTabs>

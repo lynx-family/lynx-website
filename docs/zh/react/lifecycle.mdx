@@ -1,0 +1,50 @@
+import { Go } from '@lynx';
+
+# 渲染流程与生命周期
+
+Lynx 采用双线程架构设计，这使得 ReactLynx 的渲染流程和组件生命周期与传统 React 有所不同。这种设计旨在解决移动端性能瓶颈，通过合理的线程分工来确保渲染性能和交互流畅度。
+
+## 渲染流程
+
+![生命周期流程图](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lifecycle-init-render-v3.png)
+
+### 首屏渲染优化
+
+为了解决传统 Web 应用首屏加载慢的问题，Lynx 采用了创新的渲染策略：应用启动时由主线程完成第一屏渲染，藉由 Lynx 的多种优化手段来确保最快的首屏展现速度。与此同时，后台线程会并行执行一次渲染并构建节点树结构，随后对比两个线程的树结构以确保一致性，以便处理后续的更新和向主线程的节点树同步。
+
+### 双线程架构设计
+
+第一屏渲染完成后，ReactLynx 的双线程架构通过明确的职责划分来提升整体性能。
+组件生命周期的管理和用户代码的执行将仅在后台线程进行。在后台线程的节点树更新后，后台线程会向主线程发送消息通知主线程。
+而主线程负责根据后台线程的指令更新主线程的节点树结构、计算布局并绘制 UI，以及执行用户编写的主线程脚本。
+
+这种精确的分工机制使得每个线程都能专注于自己的核心职责，避免复杂的用户逻辑阻塞 UI 响应，确保组件生命周期和状态管理的正常运行。
+
+### 生命周期的特殊性
+
+在 ReactLynx 中，所有生命周期钩子都在后台线程异步执行，因此不具备同步阻塞渲染的特性。这意味着 ReactLynx 不支持 `useLayoutEffect`。作为目前的替代方案，你可以使用元件的 [`main-thread:bindlayoutchange`](/api/elements/built-in/view.html#bindlayoutchange) 事件来获取布局结果并进行相应的属性设置。
+
+这里有一个从 [Measuring layout before the browser repaints the screen](https://react.dev/reference/react/useLayoutEffect#measuring-layout-before-the-browser-repaints-the-screen) 修改而来的简单示例，来帮助你更轻松地切换：
+
+<Go
+  example="react-lifecycle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/react/react-lifecycle-measure.gif"
+  defaultEntryFile="dist/measuring-layout.lynx.bundle"
+  defaultFile="src/measuring-layout/Tooltip.tsx"
+  entry="src/measuring-layout"
+  highlight="{4-18}"
+/>
+
+## `<list />` 子组件的特殊性
+
+[`<list />`] 元件具有按需加载和节点复用的特性。当 [`<list />`] 元件创建时，其所有子组件的 JS 对象实例会一并创建，但对应的实际元件（[UI]）并不会立即生成，而是会在 [`<list />`] 即将滚动到相应位置时才被创建或复用。因此，在使用时需要特别注意其子组件生命周期的触发时机。
+
+### `useEffect` 与 `ref` 回调函数的触发时机
+
+`useEffect` 回调函数与 `ref` 会严格在组件创建和数据更新后执行，`ref` 属性也会在元素创建或销毁时被赋值。即使组件并未在屏幕上显示（导致实际 [UI] 节点未创建或已进入复用池的情况），`useEffect` 回调函数和 `ref` 仍然会触发。
+
+如果需要准确反映 [`<list />`] 内部元件 [UI] 的状态的时机，可以使用 [`main-thread:ref`] 属性。当元件即将滚入屏幕时会触发 [`main-thread:ref`] 的回调函数，而当元件滚出屏幕后则会触发 [`main-thread:ref`] 的清理函数。
+
+[`<list />`]: /api/elements/built-in/list
+[UI]: /guide/spec.html#ui
+[`main-thread:ref`]: /react/main-thread-script.html#通过main-threadref-获取节点对象

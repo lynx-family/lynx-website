@@ -1,0 +1,136 @@
+import { Columns, Mermaid } from '@lynx';
+import APITableExplorer from '@lynx/api-table-explorer/APITableExplorer.tsx';
+
+# Compatibility
+
+This article explains how to ensure version compatibility between [Bundle] and [Lynx Engine], and how to handle challenges that come with Lynx Engine version evolution.
+
+## Build from Source
+
+A simple way to ensure compatibility is to **always build the Bundle with the Host application from source**.
+
+- Bundle can fully utilize all features of the current Lynx Engine version
+- Compatibility can be fully verified during development, what you see is what you get
+
+## Multi-version Compatibility
+
+However, in a complex project, the relationship between Bundle and Lynx Engine is not one-to-one:
+
+- A Bundle might run in applications with different Lynx Engine versions
+
+- An application can run multiple Bundles maintained by different teams
+
+In this case, you need to set the [`engineVersion`] to ensure compatibility.
+
+:::info Engine Version
+When the Bundle's [`engineVersion`] is greater than the Lynx Engine version, it will not be able to run.
+:::
+
+For example: a Bundle with [`engineVersion`] 3.3 can run on Lynx Engine 3.3 and later versions, but cannot run on 3.2.
+
+<Mermaid title="Version Compatibility Diagram">
+  {`
+graph TB
+    subgraph Bundle["🎯 Bundle"]
+        B10["Engine Version 3.3"]
+    end
+    subgraph Engine["⚙️ Lynx Engine"]
+        E12["Version 3.5"]
+        E11["Version 3.4"]
+        E10["Version 3.3"]
+        E09["Version 3.2"]
+    end
+    B10 -.->|❌ Not Supported| E09
+    B10 ==>|✅ Can Run| E10
+    B10 ==>|✅ Can Run| E11
+    B10 ==>|✅ Can Run| E12
+    %% Node styles
+    style E12 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E11 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E10 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E09 fill:#2b5a83,stroke:#4a90e2,stroke-width:2px,rx:10px,stroke-dasharray:5,5
+    style B10 fill:#2d5a1e,stroke:#7ed321,stroke-width:3px,rx:10px
+    %% Subgraph styles
+    style Bundle fill:transparent,stroke:#7ed321,stroke-width:2px,rx:10px
+    style Engine fill:transparent,stroke:#4a90e2,stroke-width:2px,rx:10px
+    %% Default styles
+    classDef default fill:#23272f,color:#ccc,font-family:system-ui
+    %% Connection line label styles
+    linkStyle default stroke-width:2px
+`}
+</Mermaid>
+
+When a Bundle needs to run on multiple Lynx Engine versions, its [`engineVersion`] must be lower than all Lynx Engine versions.
+
+When running multiple Bundles on a single Lynx Engine version, each Bundle can set different [`engineVersion`]s, but none can be greater than the Lynx Engine version.
+
+### Version Incompatibility Handling
+
+If you try to run a Bundle on a lower version of the Lynx Engine, a Fatal level error with code [10204](/api/errors/error-code.mdx#subcode-10204) will occur, and the rendering process will stop. This mechanism prevents potential runtime issues caused by version incompatibility.
+
+### Configuring Engine Version
+
+The [`engineVersion`] is a string containing two version numbers, and you can specify it in your configuration file:
+
+```js title="lynx.config.js"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      engineVersion: '3.2',
+    }),
+  ],
+});
+```
+
+## Upgrading Lynx Engine
+
+As Lynx Engine evolves, new features are added and some features may be deprecated. Their compatibility is also managed by [`engineVersion`].
+
+### New Features
+
+Some new features **_will not_** affect existing Bundles, but if [`engineVersion`] is lower than the version where they were introduced, runtime detection is needed, for example:
+
+```js
+// Detect if `lynx.newlyAddedMethod` can be called
+if (lynx.newlyAddedMethod) {
+  lynx.newlyAddedMethod();
+}
+```
+
+While some new features cannot run on lower versions of the Lynx Engine at all, so they will only be enabled when [`engineVersion`] is greater than or equal to the corresponding version.
+
+### Deprecated Features
+
+Some features may be deprecated during iteration, and their behavior may change when a higher [`engineVersion`] is set.
+
+- If only the Lynx Engine version is upgraded without upgrading the Bundle's [`engineVersion`], there will be no compatibility issues
+- If both Lynx Engine and Bundle's [`engineVersion`] are upgraded, you need to read the CHANGELOG to ensure there are no unexpected behavior changes
+
+## API Compatibility
+
+Lynx provides comprehensive compatibility information for each API, built-in component, and CSS property. We offer two paired components to help you understand platform support:
+
+### APISummary
+
+The `<APISummary />` component provides a quick, high-level overview of an API's availability across platforms. It shows a summary status (e.g., "Widely available") and badges for supported platforms. Clicking on this summary card will automatically jump to the detailed compatibility table.
+
+### APITable
+
+The `<APITable />` component displays detailed, version-specific support information for each platform. It breaks down support by OS (Android, iOS) and Web, including specific version numbers where applicable.
+
+### Interactive Explorer
+
+Use the interactive explorer below to search and discover compatibility information using both components:
+
+- **CSS Properties**: Enter paths like `css/properties/gap`
+- **Built-in Elements**: Enter paths like `elements/view` to see element compatibility
+- **Nested APIs**: Use dot notation to access nested identifiers, e.g., `css/properties/align-self.supported_in_flex_layout`
+
+<APITableExplorer />
+
+[Bundle]: /guide/spec#app-bundle-aka-template-bundle
+[Lynx Engine]: /guide/spec#engine
+[`engineVersion`]: /api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.targetsdkversion

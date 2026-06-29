@@ -1,0 +1,163 @@
+import { Go } from '@lynx';
+
+# 网格布局
+
+如果你想要一个响应式布局，并且包含多个元件同时在垂直和水平方向上交错排列，**网格布局**（grid）是最佳选择。该布局基于二维网格，是 Web 中最强大的 CSS 布局方式。
+
+:::info
+要了解更多信息，请查阅 MDN 上的[网格布局](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_grid_layout)。
+在 Lynx 中，网格布局在很大程度上与 Web 标准保持一致。目前，Lynx 不支持 [`[line-names]`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_grid_layout/Grid_layout_using_named_grid_lines) 和 [`grid-area`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-area)。有关支持的属性，请参见[参考](#参考)部分。
+:::
+
+以下是关于网格布局的一些基本操作介绍。
+
+## 如何构建一个网格布局？
+
+在构建网格布局前，先了解一下基本概念。
+
+### 基本概念
+
+- **容器和网格项（grid container、grid item）**
+
+  采用网格布局的父元件，称为“容器”（container）。容器内部采用网格定位的子元件，称为“网格项”（grid item）。
+
+- **网格线（grid line）**
+
+  划分网格布局的线，称为“网格线”（grid line），一般来说，x 行有 x + 1 根水平网格线，y 列有 y + 1 根垂直网格线，比如下图中有 6 根水平网格线，4 根垂直网格线。
+
+- **行和列（row、column）**
+
+  网格轨道（grid track）是两条网格线之间的空间。容器里面的水平轨道称为“行”（row），垂直轨道称为“列”（column）。
+
+- **网格（grid cell）**
+
+  行和列交叉形成了网格。
+
+- **网格区域（grid area）**
+
+  网格项占据的一个或多个网格区域称为网格区域。
+
+- **行轴（inline axis）、块轴（block axis）**
+
+  由于 Lynx 不支持 [`writing-mode`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/writing-mode)，所以行轴是水平轴，块轴是竖直轴。
+
+<center>
+  <img
+    width="100%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/grid_define.png"
+  />
+</center>
+
+### 第一步：应用 `display: grid`
+
+要应用网格布局，只需在父元件上设置 `display: grid`。
+
+```css
+display: grid;
+```
+
+### 第二步：指定行列的大小
+
+设置 [`grid-template-columns`] 和 [`grid-template-rows`] 确定列宽和行高。假如行列未显式指定时，网格布局使用 [`grid-auto-columns`] 和 [`grid-auto-rows`] 设置列宽和行高。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/grid_size.png"
+  example="layout"
+  defaultEntryFile="dist/grid_size.lynx.bundle"
+  defaultFile="src/grid_size/index.tsx"
+  entry="src/grid_size"
+/>
+
+### 第三步：指定网格间距
+
+网格间距是网格内容轨道之间的间距，可通过 [`column-gap`] 指定列间距、[`row-gap`] 指定行间距，或 [`gap`] 同时指定行列间距。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/grid_gap.png"
+  example="layout"
+  defaultEntryFile="dist/grid_gap.lynx.bundle"
+  defaultFile="src/grid_gap/index.tsx"
+  entry="src/grid_gap"
+/>
+
+### 第四步：对齐网格轨道到行轴和块轴
+
+通过使用 [`justify-content`] 和 [`align-content`] 分别对齐网格轨道到行轴（水平轴）和块轴（竖直轴）。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/grid_axis_alignment.png"
+  example="layout"
+  defaultEntryFile="dist/grid_axis_alignment.lynx.bundle"
+  defaultFile="src/grid_axis_alignment/index.tsx"
+  entry="src/grid_axis_alignment"
+/>
+
+### 第五步：指定网格项所在的网格线
+
+通过 [`grid-column-start`]、[`grid-column-end`] 确定网格项所在的列，通过 [`grid-row-start`]、[`grid-row-end`] 确定所在的行。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/grid_placement.png"
+  example="layout"
+  defaultEntryFile="dist/grid_placement.lynx.bundle"
+  defaultFile="src/grid_placement/index.tsx"
+  entry="src/grid_placement"
+/>
+
+### 第六步：对齐网格项到网格区域
+
+通过 [`align-items`]、[`align-self`] 在块轴方向对齐网格项到网格区域，通过 [`justify-items`]、[`justify-self`] 在块轴方向对齐网格项。其中，网格项的 `align-self` 和 `justify-self` 会覆盖容器的 `align-items` 和 `justify-items`。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/layout/grid_area_alignment.png"
+  example="layout"
+  defaultEntryFile="dist/grid_area_alignment.lynx.bundle"
+  defaultFile="src/grid_area_alignment/index.tsx"
+  entry="src/grid_area_alignment"
+/>
+
+## 参考
+
+目前，Lynx 支持以下常见的网格布局属性：
+
+- **CSS 属性**
+  - [`grid-template-columns`](/api/css/properties/grid-template-columns.mdx)
+  - [`grid-template-rows`](/api/css/properties/grid-template-rows.mdx)
+  - [`grid-auto-columns`](/api/css/properties/grid-auto-columns.mdx)
+  - [`grid-auto-rows`](/api/css/properties/grid-auto-rows.mdx)
+  - [`grid-auto-flow`](/api/css/properties/grid-auto-flow.mdx)
+  - [`grid-row-start`](/api/css/properties/grid-row-start.mdx)
+  - [`grid-row-end`](/api/css/properties/grid-row-end.mdx)
+  - [`grid-column-start`](/api/css/properties/grid-column-start.mdx)
+  - [`grid-column-end`](/api/css/properties/grid-column-end.mdx)
+
+- **对齐属性**
+  - [`align-content`](/api/css/properties/align-content.mdx)
+  - [`align-items`](/api/css/properties/align-items.mdx)
+  - [`align-self`](/api/css/properties/align-self.mdx)
+  - [`justify-content`](/api/css/properties/justify-content.mdx)
+  - [`justify-items`](/api/css/properties/justify-items.mdx)
+  - [`justify-self`](/api/css/properties/justify-self.mdx)
+  - [`row-gap`](/api/css/properties/row-gap)
+  - [`column-gap`](/api/css/properties/column-gap)
+  - [`gap`](/api/css/properties/gap)
+
+要了解更多用法，请参考 MDN 上的[网格布局](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_grid_layout)。
+
+[`grid-template-columns`]: /api/css/properties/grid-template-columns.mdx
+[`grid-template-rows`]: /api/css/properties/grid-template-rows.mdx
+[`grid-auto-columns`]: /api/css/properties/grid-auto-columns.mdx
+[`gap`]: /api/css/properties/gap.mdx
+[`column-gap`]: /api/css/properties/column-gap.mdx
+[`row-gap`]: /api/css/properties/row-gap.mdx
+[`grid-auto-rows`]: /api/css/properties/grid-auto-rows.mdx
+[`grid-column-start`]: /api/css/properties/grid-column-start.mdx
+[`grid-column-end`]: /api/css/properties/grid-column-end.mdx
+[`grid-row-start`]: /api/css/properties/grid-row-start.mdx
+[`grid-row-end`]: /api/css/properties/grid-row-end.mdx
+[`justify-content`]: /api/css/properties/justify-content.mdx
+[`align-content`]: /api/css/properties/align-content.mdx
+[`align-items`]: /api/css/properties/align-items.mdx
+[`align-self`]: /api/css/properties/align-self.mdx
+[`justify-items`]: /api/css/properties/justify-items.mdx
+[`justify-self`]: /api/css/properties/justify-self.mdx

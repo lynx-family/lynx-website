@@ -1,0 +1,124 @@
+---
+api: lynx-api/event/GlobalEvent
+---
+
+import { APISummary, APITable, RuntimeBadge } from '@lynx';
+
+# GlobalEvent
+
+<APISummary />
+
+表示全局事件对象，是一个数组，可以在不同的元件、组件之间传递，或者在客户端和前端之间传递。
+
+开发者可以基于 [`GlobalEventEmitter`](../../../guide/interaction/event-handling/event-propagation.mdx#globaleventemitter) 监听该事件。
+
+## GlobalEvent 的类型
+
+### keyboardstatuschanged
+
+表示由于输入法焦点或用户操作导致的键盘状态变化。
+
+```json
+[
+  status: ['on', 'off'],          // 表示键盘的状态
+  height: number,                 // 表示键盘的高度，单位为 px
+  compatHeight: number,           // 表示兼容键盘的高度，单位为 px
+]
+```
+
+**Example:**
+
+```javascript
+// Listen to keyboard status changes
+useLynxGlobalEventListener(
+  'keyboardstatuschanged',
+  (status, height, compatHeight) => {
+    console.log(
+      `status: ${status}, height: ${height}, compatHeight: ${compatHeight}`,
+    );
+  },
+);
+```
+
+### onWindowResize
+
+表示由于屏幕旋转或外部排版导致的 Lynx 页面大小变化。
+
+```json
+[
+  width?: number,          // 表示 Lynx 页面变化后的宽度，单位为 px
+  height?: number,                // 表示 Lynx 页面变化后的高度，单位为 px
+]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('onWindowResize', (width, height) => {
+  console.log(`Window resized to: ${width}x${height}px`);
+});
+```
+
+### exposure
+
+表示曝光数据源里有节点产生了曝光，即节点的可见性从不可见变为可见。
+
+```json
+[
+  {
+    "exposure-id": string,        // 目标节点上设置的 exposure-id
+    "exposure-scene": string,     // 目标节点上设置的 exposure-scene
+    "sign": string,               // 目标节点的 uid
+    "dataset": object,            // 目标节点上设置的 "data-" 字段
+    //......
+  },
+  //......
+]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('exposure', (exposures) => {
+  // The argument is an Array of exposure items
+  exposures.forEach((item) => {
+    console.log(
+      `Node exposed: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
+```
+
+### disexposure
+
+表示曝光数据源里有节点产生了反曝光，即节点的可见性从可见变为不可见。
+
+```json
+[
+  {
+    "exposure-id": string,        // 目标节点上设置的 exposure-id
+    "exposure-scene": string,     // 目标节点上设置的 exposure-scene
+    "sign": string,               // 目标节点的 uid
+    "dataset": object,            // 目标节点上设置的 "data-" 字段
+    //......
+  },
+  //......
+]
+```
+
+**Example:**
+
+```javascript
+useLynxGlobalEventListener('disexposure', (disexposures) => {
+  // The argument is an Array of disexposure items
+  disexposures.forEach((item) => {
+    console.log(
+      `Node hidden: ${item['exposure-id']}, scene: ${item['exposure-scene']}`,
+    );
+  });
+});
+```
+
+## 兼容性
+
+<APITable />

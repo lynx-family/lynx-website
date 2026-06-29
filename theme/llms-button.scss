@@ -1,0 +1,172 @@
+// ─── LLM tool buttons (Copy Markdown + view-options trigger) ──────────────
+//
+// Rspress ships `.rp-llms-button` (Copy Markdown) and
+// `.rp-llms-view-options__trigger` (caret) as 36px-tall pills with the
+// generic divider-light border + plain bg + ambient shadow on hover.
+// On a doc page that lands right under the H1, and on the blog page where
+// the surrounding type scale is small, they feel oversized and templated.
+//
+// Restyle them as a sibling of the SubsiteRow icon rail:
+//   • 30px geometry (~83% of the original), 7px radius matches subsite-icon
+//   • color-mix tints sourced from `--rp-c-text-1` and `--rp-c-brand` so
+//     the family rides whatever subsite theme is active
+//   • caret becomes a square 30×30 dim icon button (subsite-icon vocab)
+//   • container gap 8 → 4, so the pair reads as one compound object
+//   • the success state stays green for unambiguous feedback, but slim
+//
+// Specificity notes: rspress uses `.rp-llms-copy-button--success.rp-llms-copy-button`
+// for the success treatment, so the same chained form is used here to win.
+
+.rp-llms-container {
+  gap: 4px;
+}
+
+.rp-llms-button {
+  height: 30px;
+  padding: 0 10px;
+  gap: 5px;
+
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--rp-c-text-1) 9%, transparent);
+  background: color-mix(in srgb, var(--rp-c-text-1) 2.5%, transparent);
+  color: var(--rp-c-text-2);
+
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+
+  // Tighter, springier ease — matches the subsite-icon rail's 0.15s out
+  transition:
+    background-color 0.18s ease-out,
+    border-color 0.18s ease-out,
+    color 0.18s ease-out,
+    box-shadow 0.2s ease-out,
+    transform 0.15s ease-out;
+
+  &:hover {
+    color: var(--rp-c-text-1);
+    border-color: color-mix(in srgb, var(--rp-c-brand) 28%, transparent);
+    background: color-mix(in srgb, var(--rp-c-brand) 4%, transparent);
+    // Replace the generic ambient shadow with a brand-tinted glow —
+    // same DNA as `.subsite-icon--active`'s lifted-card treatment.
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--rp-c-brand) 6%, transparent),
+      0 4px 10px -3px color-mix(in srgb, var(--rp-c-brand) 22%, transparent);
+  }
+
+  &:active {
+    background: color-mix(in srgb, var(--rp-c-brand) 7%, transparent);
+    box-shadow: none;
+    transform: translateY(0.5px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--rp-c-brand);
+    outline-offset: 2px;
+  }
+}
+
+// Icon wrappers + svg ride down to 14px to keep optical balance with the
+// 12.5px label and the tighter 30px chrome.
+.rp-llms-copy-button__icon-wrapper,
+.rp-llms-copy-button__icon-copy,
+.rp-llms-copy-button__icon-success {
+  width: 14px;
+  height: 14px;
+}
+
+// Caret trigger: a square icon-button (no label), mirroring `.subsite-icon`
+.rp-llms-view-options__trigger {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+
+  // The arrow svg sits at 16px in the rspress default — bring it down so
+  // the caret reads as a dim affordance, not a chunky chevron.
+  .rp-llms-view-options__arrow {
+    width: 13px;
+    height: 13px;
+  }
+
+  &--active {
+    color: var(--rp-c-text-1);
+    border-color: color-mix(in srgb, var(--rp-c-brand) 32%, transparent);
+    background: color-mix(in srgb, var(--rp-c-brand) 6%, transparent);
+  }
+}
+
+// Success state: keep the green semantic but with the new slim chrome.
+// The chained class form matches rspress's own specificity.
+.rp-llms-copy-button--success.rp-llms-copy-button {
+  color: var(--rp-c-green-1, #10b981);
+  border-color: color-mix(
+    in srgb,
+    var(--rp-c-green-1, #10b981) 38%,
+    transparent
+  );
+  background: color-mix(in srgb, var(--rp-c-green-1, #10b981) 6%, transparent);
+  box-shadow: none;
+}
+
+// ─── Dropdown menu refinements ────────────────────────────────────────────
+//
+// Tighten the menu to match the new trigger size: narrower min-width, a
+// tighter offset under the caret, and a brand-aware hover state on items
+// so the menu reads as part of the same family, not a generic popover.
+
+.rp-llms-view-options__menu {
+  min-width: 200px;
+  top: calc(100% + 5px);
+  padding: 5px;
+  border-radius: 9px;
+  border-color: color-mix(in srgb, var(--rp-c-text-1) 10%, transparent);
+}
+
+.rp-llms-view-options__menu-item {
+  padding: 7px 9px;
+  font-size: 13px;
+  border-radius: 6px;
+
+  &:hover {
+    color: var(--rp-c-brand);
+    background: color-mix(in srgb, var(--rp-c-brand) 7%, transparent);
+  }
+
+  &:active {
+    background: color-mix(in srgb, var(--rp-c-brand) 11%, transparent);
+  }
+}
+
+// External-link affordance — dim it; it's a signal, not a button.
+.rp-llms-view-options__external-icon {
+  opacity: 0.5;
+  width: 13px;
+  height: 13px;
+}
+
+// ─── Dark mode ───────────────────────────────────────────────────────────
+// On a near-black surface the rest border + wash both need a bit more
+// presence to read; mirrors the SubsiteRow dark-mode bump.
+//
+// `:where(.dark, .rp-dark)` is the defensive pattern documented in
+// `tailwind.config.js`: rspress may apply either class on `<html>`
+// depending on the theme pipeline.
+
+:root:where(.dark, .rp-dark) {
+  .rp-llms-button {
+    border-color: color-mix(in srgb, var(--rp-c-text-1) 14%, transparent);
+    background: color-mix(in srgb, var(--rp-c-text-1) 4%, transparent);
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--rp-c-brand) 42%, transparent);
+      background: color-mix(in srgb, var(--rp-c-brand) 8%, transparent);
+      box-shadow:
+        0 1px 0 color-mix(in srgb, var(--rp-c-brand) 10%, transparent),
+        0 4px 12px -3px color-mix(in srgb, var(--rp-c-brand) 32%, transparent);
+    }
+  }
+
+  .rp-llms-view-options__menu {
+    border-color: color-mix(in srgb, var(--rp-c-text-1) 16%, transparent);
+  }
+}

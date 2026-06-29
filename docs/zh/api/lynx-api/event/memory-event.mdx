@@ -1,0 +1,46 @@
+---
+api: lynx-api/event/MemoryEvent
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# MemoryEvent
+
+<APISummary />
+
+原生内存压力事件，由宿主环境触发，通过 native 上下文派发到前端。事件名为 `__OnLowMemory`，参数为单个 `MemoryPressureLevel` 枚举值。
+
+## 参数说明
+
+### MemoryPressureLevel
+
+```ts
+enum MemoryPressureLevel {
+  MEMORY_PRESSURE_LEVEL_NONE = 0,
+  MEMORY_PRESSURE_LEVEL_MODERATE = 1,
+  MEMORY_PRESSURE_LEVEL_CRITICAL = 2,
+}
+```
+
+## 使用方式
+
+```ts
+// 可注册多个监听
+lynx
+  .getNative()
+  .addEventListener('__OnLowMemory', (level: MemoryPressureLevel) => {
+    if (level === MemoryPressureLevel.MEMORY_PRESSURE_LEVEL_CRITICAL) {
+      // 处理严重的内存压力
+    }
+  });
+
+lynx
+  .getNative()
+  .addEventListener('__OnLowMemory', (level: MemoryPressureLevel) => {
+    // 并行监听者
+  });
+```
+
+## 兼容性
+
+<APITable />

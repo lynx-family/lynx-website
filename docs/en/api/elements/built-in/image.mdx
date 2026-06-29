@@ -1,0 +1,260 @@
+---
+api: elements/image
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# `<image>`
+
+<APISummary />
+
+import {
+  AndroidOnly,
+  IOSOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+
+Used to display different types of images, including web images, static resources, and locally stored images.
+
+:::tip
+
+This feature depends on the image loading service provided by [Lynx Service](/guide/start/integrate-with-existing-apps).
+
+:::
+
+## Usage Guide
+
+`<image>` is an [empty element](/guide/ui/elements-components.html#empty-elements) and no longer supports child nodes.
+
+:::note
+
+To display the image correctly, the non-empty [src](/api/elements/built-in/image.html#required-src) attribute must be set, and at least one of the following must be provided:
+
+- A [width](/api/css/properties/width.html) and [height](/api/css/properties/width.html) greater than 0
+- [auto-size](/api/elements/built-in/image.html#auto-size)
+
+:::
+
+The following examples show how the `<image>` element is used in different scenarios.
+
+### Displaying images with different cropping/scaling modes
+
+Supports controlling the image cropping/scaling mode using [mode](/api/elements/built-in/image.html#mode).
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_basic_demo.png"
+  example="image"
+  defaultFile="src/App.tsx"
+  highlight="{30-42}"
+/>
+
+### Adding borders, rounded corners, and backgrounds to the image
+
+You can set the image's borders, rounded corners, and background colors using CSS styles.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_style_demo.png"
+  highlight="{44-73}"
+  example="image"
+  defaultFile="src/App.tsx"
+/>
+
+### Adding special drawing effects to the image
+
+Supports special drawing effects like Gaussian blur.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_filter_demo.png"
+  highlight="{75-89}"
+  example="image"
+  defaultFile="src/App.tsx"
+/>
+
+### Adapting to the original image aspect ratio
+
+Use [auto-size](/api/elements/built-in/image.html#auto-size) to automatically adjust the `<image>` size to match the original image aspect ratio.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/image_auto_demo.png"
+  highlight="{18-28}"
+  example="image"
+  defaultFile="src/App.tsx"
+/>
+
+### Listening to image load success/failure
+
+You can bind [events](/api/elements/built-in/image.html#events) to listen for the image load state.
+
+<Go highlight="{91-111}" example="image" defaultFile="src/App.tsx" />
+
+import APIReference from './image-API.mdx';
+
+<APIReference />
+
+## Advanced Features
+
+### Request URL Redirection Mapping
+
+#### Feature Description
+
+By implementing a URL redirection mechanism, developers can intercept specific image URLs and map them to specific resource paths. This ability is useful for the following scenarios:
+
+- Improving static resource loading speed
+- Supporting custom image protocol access schemes
+- Protecting sensitive resource access paths
+
+#### Implementation Principle
+
+This feature is implemented based on the [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) interface, with the core process divided into two stages:
+
+1. **Resource Type Detection** (`isLocalResource`)
+
+   - Determines if the request URL matches the custom protocol
+   - Returns a boolean indicating whether to handle it locally
+
+2. **Path Conversion** (`shouldRedirectUrl`)
+   - Parses the original URL
+   - Converts it into a valid resource path
+   - Returns the final accessible URL address
+
+The following example shows how to map a URL like `http://localhost/xxx` to an app's built-in resource path:
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+```objective-c
+/// Local resource handler header
+#import <LynxMediaResourceFetcher/LynxMediaResourceFetcher.h>
+
+@interface LocalMediaFetcher : NSObject <LynxMediaResourceFetcher>
+
+- (NSString *)shouldRedirectUrl:(LynxResourceRequest *)request;
+
+- (LynxResourceOptionalBool)isLocalResource:(NSURL *)url;
+
+@end
+```
+
+```objective-c
+/// Local resource handler implementation
+#import "LocalMediaFetcher.h"
+
+@implementation LocalMediaFetcher
+
+/**
+ * Resource path conversion method
+ * @param request Resource request object
+ * @return Local file path or empty string
+ */
+- (NSString *)shouldRedirectUrl:(LynxResourceRequest *)request {
+  NSURL *url = [NSURL URLWithString:request.url];
+  NSString *fileType = [url pathExtension];
+  NSString *fileName = [[url URLByDeletingPathExtension] lastPathComponent];
+  NSString *subdir = [[[url URLByDeletingLastPathComponent] absoluteString] stringByReplacingOccurrencesOfString:@"http://localhost" withString:@""];
+  NSString *path = [[NSBundle mainBundle] pathForResource:fileName ofType:fileType inDirectory:subdir];
+  return path ? [NSString stringWithFormat:@"file://%@", path] : @"";
+}
+
+/**
+ * Local resource detection method
+ * @param url The original request URL
+ * @return LynxResourceOptionalBoolTrue indicates the request needs redirection
+ */
+- (LynxResourceOptionalBool)isLocalResource:(NSURL *)url {
+    return [url.absoluteString hasPrefix:@"http://localhost"] ?
+           LynxResourceOptionalBoolTrue :
+           LynxResourceOptionalBoolFalse;
+}
+
+@end
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+```java
+import com.lynx.tasm.resourceprovider.LynxResourceRequest
+import com.lynx.tasm.resourceprovider.media.LynxMediaResourceFetcher
+import com.lynx.tasm.resourceprovider.media.OptionalBool
+
+/**
+ * Custom media resource handler
+ *
+ * @property protocol The protocol to intercept "http://localhost"
+ * @property scheme The target resource protocol "asset://"
+ */
+class LocalMediaFetcher : LynxMediaResourceFetcher() {
+
+    /**
+     * Determines if the resource is local
+     * @param url The original request URL
+     * @return OptionalBool.TRUE indicates the request needs redirection
+     */
+    override fun isLocalResource(url: String?): OptionalBool {
+        return if (url?.startsWith("http://localhost") == true) {
+            OptionalBool.TRUE
+        } else {
+            OptionalBool.FALSE
+        }
+    }
+
+    /**
+     * Performs URL redirection
+     * @param request The resource request object
+     * @return The converted valid resource path
+     */
+    override fun shouldRedirectUrl(request: LynxResourceRequest?): String {
+        return request?.url?.replace(
+            oldValue = "http://localhost",
+            newValue = "asset://",
+            ignoreCase = true
+        ) ?: ""
+    }
+}
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+```typescript
+import {
+  LynxMediaResourceFetcher,
+  LynxResourceRequest,
+  LynxOptionalBool,
+} from '@lynx/lynx';
+
+// Local resource handler implementation
+export class ExampleMediaResourceFetcher extends LynxMediaResourceFetcher {
+  // Resource path conversion method
+  // @param request Resource request object
+  // @return Local file path or empty string
+  shouldRedirectUrl(request: LynxResourceRequest): string {
+    return request.url?.replace('http://localhost', 'file://') ?? '';
+  }
+
+  // Determines if the resource is local
+  // @param url The original request URL
+  // @return LynxOptionalBool.TRUE indicates the request needs redirection
+  isLocalResource(url: string): LynxOptionalBool {
+    if (url.startsWith('http://localhost')) {
+      return LynxOptionalBool.TRUE;
+    }
+    return LynxOptionalBool.FALSE;
+  }
+}
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+Read the API reference of [`MediaResourceFetcher`](/api/lynx-native-api/lynx-media-resource-fetcher/should-redirect-url.html) for more details.
+
+## Compatibility
+
+<APITable />
+```

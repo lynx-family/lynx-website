@@ -1,0 +1,47 @@
+import { PackageManagerTabs } from '@theme';
+
+# Valtio
+
+## 使用 `valtio`
+
+[Valtio](https://valtio.dev/) 是一个轻量灵活的状态管理库，提供细粒度订阅和响应式更新。
+
+### 安装依赖
+
+<PackageManagerTabs command="install valtio" />
+
+### 示例
+
+```tsx
+import { useEffect } from '@lynx-js/react';
+import { proxy, useSnapshot, subscribe } from 'valtio';
+
+const state = proxy<{ count: number }>({ count: 0 });
+
+export function App() {
+  const snap = useSnapshot(state);
+
+  const handleTap = () => {
+    state.count++;
+  };
+
+  useEffect(() => {
+    const unsubscribe = subscribe(state, () => {
+      console.log('state changed: ', state.count);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <view>
+      <text>{snap.count}</text>
+      <text bindtap={handleTap}>Tap</text>
+    </view>
+  );
+}
+```
+
+更多细节请参考 [valtio - basic](https://valtio.dev/docs/api/basic/proxy)

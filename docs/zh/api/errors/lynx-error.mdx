@@ -1,0 +1,141 @@
+---
+api: errors/lynx-error
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# LynxError API
+
+<APISummary />
+
+`LynxError` 是 Lynx 运行时返回的标准错误对象，用于表示应用运行时的失败、警告或可恢复问题。
+
+它同时包含**机器可读的信息**（错误码、子错误码、严重级别）和**人类可读的信息**（错误消息），方便调试与错误处理。
+
+## 使用场景
+
+- 在调试或开发模式下显示有意义的错误信息
+- 当出现致命错误时触发回退界面或导航逻辑
+- 将错误上报到分析或错误追踪系统中
+
+---
+
+## 核心概念
+
+### 错误码（Error Code）
+
+错误码是一个 **3–4 位数字**，用于表示错误的行为或类型。
+例如，代码 `301` 表示图像加载错误。
+
+可参考 [错误码文档](/api/errors/error-code)了解每个错误码的具体含义。
+
+### 子错误码（Sub Code）
+
+子错误码是一个 **5–6 位数字**，由错误码扩展而来，用于标识错误的具体原因。
+例如，子错误码 `30101` 表示加载的图像过大。
+
+可参考 [错误码文档](/api/errors/error-code)了解每个子错误码所代表的具体原因。
+
+### 级别（Level）
+
+`LynxError` 定义了四种错误级别：`Fatal`、`Error`、`Warn` 和 `Undecided`。
+
+| 级别        | 含义                 | 建议操作               |
+| ----------- | -------------------- | ---------------------- |
+| `Fatal`     | 应用可能无法继续使用 | 重新加载或显示回退界面 |
+| `Error`     | 可恢复的错误         | 记录日志并重试操作     |
+| `Warn`      | 不阻塞的警告         | 记录日志并继续执行     |
+| `Undecided` | 尚未分类的错误       | 优雅地处理并记录问题   |
+
+### 消息（Message）
+
+所有错误信息以 JSON 字符串的形式表示，包括以下内容：
+
+- `code`（错误码）
+- `subcode`（子错误码）
+- `level`（错误级别）
+- `message`（错误消息）
+- `suggestion`（修复建议，可选）
+
+---
+
+## 各平台方法
+
+### Android
+
+| 方法             | 返回类型 | 描述         |
+| ---------------- | -------- | ------------ |
+| `getErrorCode()` | `int`    | 返回错误码   |
+| `getSubCode()`   | `int`    | 返回子错误码 |
+| `getLevel()`     | `String` | 返回错误级别 |
+| `getMsg()`       | `String` | 返回错误信息 |
+
+### iOS
+
+| 属性 / 方法  | 类型            | 描述                                                                         |
+| ------------ | --------------- | ---------------------------------------------------------------------------- |
+| `errorCode`  | `NSInteger`     | 返回错误码                                                                   |
+| `subcode`    | `NSInteger`     | 返回子错误码                                                                 |
+| `level`      | `NSString*`     | 返回错误级别                                                                 |
+| `userInfo()` | `NSDictionary*` | 返回一个 `NSDictionary`，可通过键 `LynxErrorUserInfoKeyMessage` 获取错误消息 |
+
+### HarmonyOS
+
+| 方法名           | 类型             | 描述         |
+| ---------------- | ---------------- | ------------ |
+| `getErrorCode()` | `number`         | 返回错误码   |
+| `getSubCode()`   | `number`         | 返回子错误码 |
+| `getLevel()`     | `LynxErrorLevel` | 返回错误级别 |
+| `getMsg()`       | `string`         | 返回错误信息 |
+
+---
+
+## 示例
+
+### JavaScript
+
+```js
+lynx.onError = (error) => {
+  const detail = JSON.parse(error.message);
+  if (detail.level === 'Fatal') {
+    // Possibly reload or fallback to home
+    console.error('Critical error occurred:', detail.message);
+  }
+};
+```
+
+### Kotlin
+
+```kotlin
+fun onLynxError(error: LynxError) {
+  if (error.level == "Fatal") {
+    println("Fatal error: ${error.msg}")
+  }
+}
+```
+
+### Swift
+
+```swift
+func onLynxError(_ error: LynxError) {
+  if error.level == "Fatal" {
+    print("Fatal error: \(error.msg)")
+  }
+}
+```
+
+### ETS
+
+```ts
+onLynxError(error: LynxError) {
+  if (error.level == LynxErrorLevel.Fatal) {
+    console.error('Fatal error:', error.getMsg());
+  }
+}
+```
+
+---
+
+## 兼容性
+
+<APITable />

@@ -1,0 +1,70 @@
+# <dfn for=UserInteraction>User Interaction</dfn>
+
+## <dfn for=UserInteraction>Event</dfn>
+
+An event is an abstraction notion describing the signal that triggers an action in the system.
+This action may be triggered by the [=Lynx/scripting developer=], the [=Lynx/native developer=] or the users' interaction.
+
+### <dfn for=UserInteraction>Event Object</dfn>
+
+An Event object is an object that contains state information related to an [=UserInteraction/event=].
+It is implemented natively on the host platform.
+
+### <dfn for=UserInteraction>Main Thread Event Object</dfn>
+Main Thread Event is a script object initialized by the [=main thread runtime=] based on the event object, and it is not a host object.
+
+### <dfn for=UserInteraction>Background Thread Event Object</dfn>
+Background Thread Event is an object passed to [=background thread runtime=] by the [=engine=] based on the event object with [=inter thread call=], and it is also not a binding object.
+
+## <dfn for=UserInteraction>Event Listening</dfn>
+
+[=ElementsComponents/elements=] listen for [=UserInteraction/events=] by setting the [=UserInteraction/event handler=].
+
+### <dfn for=UserInteraction>Event Handler</dfn>
+Event Handler is the value of the [=ElementsComponents/element=]'s [=ElementsComponents/event listener=], which serves as a handle for the [=MTS=] closure or [=BTS=] closure.
+When an event is triggered, the corresponding [=procedure call=] will be invoked based on the event handler.
+
+#### <dfn for=UserInteraction>Main Thread Event Handler</dfn>
+When the closure handled by the [=UserInteraction/event handler=] is an [=MTS=] closure, it is referred to as the Main Thread Event Handler.
+
+#### <dfn for=UserInteraction>Background Thread Event Handler</dfn>
+When the closure handled by the [=UserInteraction/event handler=] is an [=BTS=] closure, it is referred to as the Background Thread Event Handler.
+
+### <dfn for=UserInteraction>Event Handler Function</dfn>
+Event handler function is a [=Scripting/BTS=] or [=Scripting/MTS=] closure that accepts an [=UserInteraction/event object=].
+
+#### <dfn for=UserInteraction>Main Thread Event Handler Function</dfn>
+Event handler function is a [=Scripting/MTS=] closure that accepts an [=UserInteraction/main thread event object=].
+
+#### <dfn for=UserInteraction>Background Thread Event Handler Function</dfn>
+Event handler function is a [=Scripting/BTS=] closure that accepts an [=UserInteraction/background thread event object=].
+
+## <dfn for=UserInteraction>Event Propagation</dfn>
+
+When an [=UserInteraction/event=] is triggered, it will propagate on the [=UserInteraction/event respond chain=], triggering the corresponding [=UserInteraction/event handler function=] according to the [=UserInteraction/event handler=].
+
+### <dfn for=UserInteraction>Event Respond Chain</dfn>
+
+The event response chain consists of a series of [=ElementsComponents/elements=] that can respond to [=UserInteraction/events=]. It generally contains [=ElementsComponents/elements=] on the path from the root [=ElementsComponents/element=] to the [=ElementsComponents/element=] where the action actually occurs.
+
+### <dfn for=UserInteraction>Event Capture</dfn>
+
+In the event capture stage, the [=UserInteraction/event=] will start from the root [=ElementsComponents/element=] and propagate down along the [=UserInteraction/event respond chain=] until the [=ElementsComponents/element=] where the action is actually triggered.
+
+### <dfn for=UserInteraction>Event Bubble</dfn>
+
+In the event bubbling phase, the [=UserInteraction/event=] will propagate upward along the [=UserInteraction/event respond chain=] from the [=ElementsComponents/element=] where the action is actually triggered, until the root [=ElementsComponents/element=].
+
+### <dfn for=UserInteraction>Event Interception</dfn>
+
+During the process of [=UserInteraction/event propagation=], the [=UserInteraction/event=] can be intercepted midway to prevent the [=UserInteraction/event=] from continuing to propagate.
+
+<!--
+### <dfn for=UserInteraction>Event Aspect Interface</dfn>
+
+The event aspect interface is a type of aspect programming in [=Scripting/background thread runtime=]. By injecting the corresponding interface at the event trigger point, the [=UserInteraction/event=] is forwarded to a certain place when a specific [=UserInteraction/event=] is triggered.
+
+### <dfn for=UserInteraction>GlobalEventEmitter</dfn>
+
+GlobalEventEmitter is an object in [=Scripting/background thread runtime=] that can be accessed by the [=Lynx/scripting developer=] and the [=Lynx/native developer=] and is used to transmit information in [=Scripting/background thread runtime=] and between [=Scripting/background thread runtime=] and the client.
+-->

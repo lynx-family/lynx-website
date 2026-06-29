@@ -1,0 +1,590 @@
+import * as NextSteps from '@lynx/NextSteps';
+import { Steps } from '@theme';
+import { CodeFold } from '@lynx';
+import { Tab, Tabs } from '@theme';
+
+自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理样式与属性、事件绑定等。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，简要介绍自定义元件的实现流程。
+
+完整实现参见 [LynxExplorer/input 模块](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios/lynx_explorer/LynxExplorer/input)查看。通过编译运行 [LynxExplorer 示例项目](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios)可实时预览自定义元件效果。
+
+<Steps>
+
+### 声明并注册元件
+
+#### 声明自定义元件
+
+下面是 `<explorer-input>` 自定义元件的实现，需要继承自 `LynxUI`。
+
+```objc title="LynxExplorerInput.h" {1,11}
+
+#import <Lynx/LynxUI.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface LynxTextField : UITextField
+
+@property(nonatomic, assign) UIEdgeInsets padding;
+
+@end
+
+@interface LynxExplorerInput : LynxUI <LynxTextField *> <UITextFieldDelegate>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+
+```
+
+<CodeFold toggle height={200}>
+
+```objc title="LynxExplorerInput.m"
+
+#import "LynxExplorerInput.h"
+
+@implementation LynxExplorerInput
+
+//...
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+
+
+
+
+```
+
+</CodeFold>
+
+#### 注册自定义元件
+
+元件注册有两种方式：全局注册和局部注册。
+
+##### 全局注册
+
+全局注册的元件可以在多个 `LynxView` 实例中共享。
+
+<CodeFold toggle height={200}>
+
+```objc title="LynxExplorerInput.m" {2,6}
+
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+##### 局部注册
+
+局部注册的元件仅适用于当前 `LynxView` 实例。
+
+```objc {7}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxView.h>
+
+  LynxView *lynxView = [[LynxView alloc] initWithBuilderBlock:^(LynxViewBuilder *builder) {
+    builder.config =
+        [[LynxConfig alloc] initWithProvider:[LynxEnv sharedInstance].config.templateProvider];
+    [builder.config registerUI:[LynxExplorerInput class] withName:@"explorer-input"];
+  }];
+
+```
+
+其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元件并创建实例。
+
+### 创建原生 `View` 实例
+
+每个自定义元件都需要实现 `createView` 方法，该方法返回一个与之对应的原生 `View` 实例。
+
+以下是 `<explorer-input>` 元件的实现：
+
+<CodeFold toggle height={500}>
+
+```objc title="LynxExplorerInput.m" {10-15}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  return textField;
+}
+
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+
+```
+
+</CodeFold>
+
+### 处理前端更新的样式和属性
+
+你可以使用 `LYNX_PROP_SETTER` 宏来监听前端传入的属性变化，并更新原生视图。例如，处理 `<explorer-input>` 元件的 value 属性：
+
+<CodeFold toggle height={500}>
+
+```objc title="LynxExplorerInput.m" {3,9-11}
+
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+LYNX_PROP_SETTER("value", setValue, NSString *) {
+    self.view.text = value;
+}
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  return textField;
+}
+
+
+
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+
+
+
+```
+
+</CodeFold>
+
+### 处理排版信息（可选）
+
+#### 处理 Lynx Engine 的排版结果
+
+通常，Lynx Engine 会自动计算并更新 `View` 的排版信息，无需开发者手动处理。但在某些特殊情况下，例如需要对 `View` 进行额外调整时，
+可以在 `layoutDidFinished` 回调中获取最新的排版信息，并应用自定义逻辑。
+
+<CodeFold toggle height={500}>
+
+```objc title="LynxExplorerInput.m" {9-11}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+- (void)layoutDidFinished {
+  self.view.padding = self.padding;
+  }
+
+LYNX_PROP_SETTER("value", setValue, NSString \*) {
+self.view.text = value;
+}
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  return textField;
+  }
+
+@end
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+  }
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  \_padding = padding;
+  [self setNeedsLayout];
+  }
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+  }
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+  }
+  @end
+
+```
+
+</CodeFold>
+
+### 处理事件绑定（可选）
+
+在某些场景中，前端可能需要响应自定义元件的事件。例如，当用户在文本框中输入内容时，前端可能需要获取并处理这些输入数据。
+
+以下示例演示了如何实现从 `<explorer-input>` 元件向前端发送文本输入事件，以及前端如何监听该事件。
+
+#### 客户端事件发送
+
+客户端通过监听原生视图的文本输入回调，当文本变更时使用 `[self.context.eventEmitter dispatchCustomEvent:eventInfo]` 将事件发送到前端，以便前端进行相应的处理。
+
+<CodeFold toggle height={850}>
+
+```objc title="LynxExplorerInput.m" {13-16,20-25,27-32}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                        selector:@selector(textFieldDidChange:)
+                                        name:UITextFieldTextDidChangeNotification
+                                        object:textField];
+  return textField;
+}
+
+- (void)emitEvent:(NSString *)name detail:(NSDictionary *)detail {
+  LynxCustomEvent *eventInfo = [[LynxDetailEvent alloc] initWithName:name
+                                                          targetSign:[self sign]
+                                                              detail:detail];
+  [self.context.eventEmitter dispatchCustomEvent:eventInfo];
+}
+
+- (void)textFieldDidChange:(NSNotification *)notification {
+  [self emitEvent:@"input"
+           detail:@{
+             @"value": [self.view text] ?: @"",
+           }];
+}
+
+- (void)layoutDidFinished {
+    self.view.padding = self.padding;
+}
+
+LYNX_PROP_SETTER("value", setValue, NSString *) {
+    self.view.text = value;
+}
+
+
+
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+
+
+```
+
+</CodeFold>
+
+#### 前端 DSL 事件绑定
+
+在前端，需要绑定相应的文本框输入事件。通过以下代码，前端将监听客户端发送的事件，并根据需要处理输入的数据。
+
+```jsx title="App.tsx"
+const handleInput = (e) => {
+  const currentValue = e.detail.value.trim();
+  setInputValue(currentValue);
+};
+
+<explorer-input
+  className="input-box"
+  style={{ width: '100px', height: '100px' }}
+  bindinput={handleInput}
+  value={inputValue}
+/>;
+```
+
+> **注意**：前端 DSL 使用 `bindxxx` 进行事件绑定，例如 `bindinput` 绑定 `input` 事件。
+
+### 支持直接操作元件（可选）
+
+在某些情况下，前端可能需要通过命令式 API 直接操作自定义元件，你可以通过 `LYNX_UI_METHOD` 让元件支持这些操作。
+
+#### 前端调用示例
+
+以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `focus` 方法让 `<explorer-input>` 元件获取焦点：
+
+```jsx title="App.tsx"
+lynx
+  .createSelectorQuery()
+  .select('#input-id')
+  .invoke({
+    method: 'focus',
+    params: {},
+    success: function (res) {
+      console.log('lynx', 'request focus success');
+    },
+    fail: function (res : {code: number, data: any}) {
+      console.log('lynx', 'request focus fail');
+    },
+  })
+  .exec();
+```
+
+#### 客户端实现
+
+在客户端，需要使用 `LYNX_UI_METHOD` 为自定义元件添加 `focus` 方法，确保它能够正确处理前端的调用，
+
+<CodeFold toggle height={600}>
+
+```objc title="LynxExplorerInput.m" {4,11-17}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+#import <Lynx/LynxUIMethodProcessor.h>
+
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+LYNX_UI_METHOD(focus) {
+    if ([self.view becomeFirstResponder]) {
+        callback(kUIMethodSuccess, nil);
+    } else {
+        callback(kUIMethodUnknown, @"fail to focus");
+    }
+}
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                        selector:@selector(textFieldDidChange:)
+                                        name:UITextFieldTextDidChangeNotification
+                                        object:textField];
+  return textField;
+}
+
+- (void)emitEvent:(NSString *)name detail:(NSDictionary *)detail {
+  LynxCustomEvent *eventInfo = [[LynxDetailEvent alloc] initWithName:name
+                                                          targetSign:[self sign]
+                                                              detail:detail];
+  [self.context.eventEmitter dispatchCustomEvent:eventInfo];
+}
+
+- (void)textFieldDidChange:(NSNotification *)notification {
+  [self emitEvent:@"input"
+           detail:@{
+             @"value": [self.view text] ?: @"",
+           }];
+}
+
+- (void)layoutDidFinished {
+    self.view.padding = self.padding;
+}
+
+LYNX_PROP_SETTER("value", setValue, NSString *) {
+    self.view.text = value;
+}
+
+
+
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+
+
+```
+
+</CodeFold>
+
+#### 方法回调返回值
+
+在实现 `focus` 方法时，元件开发者需要向前端返回一个状态码，以表明操作是否成功。例如，前端调用可能会失败，此时应返回相应的错误状态，以便前端在 `fail` 回调进行处理。
+
+Lynx Engine 预定义了一些常见的错误码，元件开发者可以在方法回调中返回相应的状态码：
+
+```objc
+enum LynxUIMethodErrorCode {
+  kUIMethodSuccess = 0, // 调用成功
+  kUIMethodUnknown, // 未知错误
+  kUIMethodNodeNotFound, // 无法找到对应的元件
+  kUIMethodMethodNotFound, // 该元件上没有对应的 Method
+  kUIMethodParamInvalid, // 方法参数无效
+  kUIMethodSelectorNotSupported, // 该选择器暂时不支持
+};
+```
+
+</Steps>

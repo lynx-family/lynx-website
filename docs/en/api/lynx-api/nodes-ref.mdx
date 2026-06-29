@@ -1,0 +1,72 @@
+---
+tag: BTS
+api: lynx-api/nodes-ref/NodesRef
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# NodesRef
+
+<APISummary />
+
+Represents a reference to one or more UI nodes. It can be used to invoke UI methods, get and set properties on UI nodes.
+
+`NodesRef` only saves the information needed to find nodes (such as CSS selectors), and does not actually reference a specific node.
+The actual node search is only carried out when `SelectorQuery.prototype.exec()` is executed.
+Therefore, the node that `NodesRef` reference may not actually exist. In this case, an error will be reported when `exec()` is called.
+
+## Instance Method
+
+[`NodesRef.fields()`](./nodes-ref/nodes-ref-fields.mdx)
+
+Query the attributes of the selected node.
+
+[`NodesRef.invoke()`](./nodes-ref/nodes-ref-invoke.mdx)
+
+Execute the UI method of the selected node.
+
+[`NodesRef.path()`](./nodes-ref/nodes-ref-path.mdx)
+
+Query the path information from the node to the root node of the page.
+
+[`NodesRef.setNativeProps()`](./nodes-ref/nodes-ref-set-native-props.mdx)
+.mdx)
+
+Directly set the attributes of the selected node.
+
+## Examples
+
+Obtain the position and size of the specified `text` node:
+
+```tsx
+class Page extends Component {
+  componentDidMount() {
+    lynx
+      .createSelectorQuery() // create SelectorQuery
+      .select('#my-id') // Specify the selector of the target node
+      .invoke({
+        // Specify the operation for the target node
+        method: 'boundingClientRect',
+        success: function (res) {
+          console.log(res);
+        },
+        fail: function (res) {
+          console.log(res.code, res.data);
+        },
+      })
+      .exec(); // Execute the query
+  }
+
+  render() {
+    return (
+      <view>
+        <text id="my-id">...</text>
+      </view>
+    );
+  }
+}
+```
+
+## Compatibility
+
+<APITable />

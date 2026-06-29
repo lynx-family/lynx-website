@@ -1,0 +1,80 @@
+---
+api: lynx-api/lynx/getTextInfo
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# getTextInfo()
+
+<APISummary />
+
+Used to measure the width of text content.
+
+## Syntax
+
+```ts
+export interface TextInfo {
+  fontSize: string;
+  fontFamily?: string;
+  maxWidth?: string;
+  maxLine?: number;
+}
+
+export interface TextMetrics {
+  width: number;
+  content:  Array<string>;
+}
+
+getTextInfo(text: string, info: TextInfo): TextMetrics;
+```
+
+### Parameters
+
+#### text
+
+The text string to be measured.
+
+#### info
+
+The attribute information set on the text, supports setting fontSize, fontFamily, maxWidth and maxLine, among which fontSize is mandatory, fontSize and maxWidth only support px unit.
+
+### Return Value
+
+The result of text measurement, including width and the text string of each line, the returned width unit is px.
+
+## Example
+
+```ts
+// default font family
+const { width } = lynx.getTextInfo('text content', { fontSize: '14px' });
+
+const { width } = lynx.getTextInfo('text content', {
+  fontSize: '14px',
+  fontFamily: 'PingFang SC',
+});
+
+const { content } = lynx.getTextInfo('text content', {
+  fontSize: '14px',
+  fontFamily: 'PingFang SC',
+  maxWidth: '100px',
+  maxLine: 2,
+});
+```
+
+::: tip
+
+- It is strongly recommended to check the passed parameters, data not expected should be filtered out to reduce unexpected time consumption. For example, fontSize is 0, 1, these data with no actual meaning, maxWidth is 0, 1, 2, these data are too small.
+
+- fontFamily currently only supports built-in fonts, does not support custom fonts set through font-face, use the default font when fontFamily is not set.
+
+- Does not currently support letterSpacing, fontWeight and other properties that are not explicitly declared supported.
+
+- If maxLine is set to 1, the returned TextMetrics will not contain content, at this time the transmission of content is meaningless, avoid one transmission overhead.
+
+- In case of non-compliant input, such as `maxLine > 1 && maxWidth < 1` or `fontSize <= 0` or textContent is empty, it will return `TextMetrics {width: 0}`.
+
+:::
+
+## Compatibility
+
+<APITable />

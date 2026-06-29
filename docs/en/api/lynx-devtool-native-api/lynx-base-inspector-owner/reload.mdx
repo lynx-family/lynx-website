@@ -1,0 +1,45 @@
+---
+api: lynx-devtool-native-api/lynx-base-inspector-owner/reload
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# reload
+
+<APISummary />
+
+Reloads the current page, or loads a new template to replace the current page.
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+- (void)reloadLynxView:(BOOL)ignoreCache;
+- (void)reloadLynxView:(BOOL)ignoreCache
+          withTemplate:(nullable NSString *)templateBin
+         fromFragments:(BOOL)fromFragments
+              withSize:(int32_t)size;
+```
+
+### Android
+
+```java title="LynxBaseInspectorOwner.java"
+void reload(boolean ignoreCache);
+void reload(boolean ignoreCache, String templateBin, boolean fromTemplateFragments, int templateSize);
+```
+
+### Parameters
+
+- `ignoreCache`: Whether to ignore the cache. If `true`, rendering-related caches will be cleared.
+- `templateBin`: A Base64-encoded Lynx template string (nullable or empty).
+  - **When calling the first `reload` method, or when this parameter is `null` or an empty string**: The page's original template is reloaded.
+  - **When this parameter is a valid Base64 string**: The new template contained in the string is loaded, which can be used for redirection.
+- `fromFragments` / `fromTemplateFragments`: Whether to load the template file in fragments.
+  - **For internal use only.** External calls should always set this to `false`.
+- `size` / `templateSize`: When `fromFragments` is `true`, specifies the total size of the template file in bytes.
+  - **For internal use only.** External calls should always set this to `0`.
+
+## Compatibility
+
+<APITable />

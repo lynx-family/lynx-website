@@ -1,0 +1,79 @@
+---
+title: requireModuleAsync()
+api: lynx-api/lynx/requireModuleAsync
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: requireModuleAsync() static method
+
+<APISummary />
+
+Used to import modules. Just like the [`requireModule`](./lynx-require-module.mdx) method, but loading asynchronously.
+
+During the loading, the other JavaScript code can be executed.
+
+The module loaded by `requireModuleAsync` needs to use a specific format. Use [`@lynx-js/runtime-wrapper-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/runtime-wrapper-webpack-plugin) to generate modules that are `requireModuleAsync`-loadable.
+
+## Syntax
+
+```ts
+requireModuleAsync<T>(path: string, callback: (error: Error | null, exports?: T) => void): void;
+```
+
+### Parameters
+
+#### path
+
+The path of the module. Can be a remote path, or a path inside the template.
+
+#### callback
+
+The callback to be executed after the require is finished
+
+- If any error occurs, an error will be passed as the first parameter.
+- Otherwise, a `null` will be passed as the first parameter, and the exported value of the module will be passed as the second parameter.
+
+### Return Value
+
+None (`undefined`).
+
+## Exception
+
+`requireModuleAsync` will return an error in callback when:
+
+- Network error
+- Module execute error
+
+## Examples
+
+### Loading remote resources
+
+```tsx
+lynx.requireModuleAsync('https://example.com/path/to/chunk', (err, exports) => {
+  if (err) {
+    return;
+  }
+  // use exports
+});
+```
+
+### Promisify
+
+```js
+const requireModulePromise = (path) =>
+  new Promise((resolve, reject) => {
+    lynx.requireModuleAsync(path, (err, exports) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(exports);
+    });
+  });
+
+await requireModulePromise('path/to/chunk');
+```
+
+## Compatibility
+
+<APITable />

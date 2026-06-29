@@ -1,0 +1,34 @@
+### `onMeasure` 里得到大小约束
+
+Android 系统有给视图提供 [onMeasure](<https://developer.android.com/reference/android/view/View#onMeasure(int,%20int)>) 周期，在这个阶段可以得到外层视图给 LynxView 的大小约束，Lynx 会在系统的 onMeasure 函数内完成所有节点的排版，并计算出 LynxView 的大小，以便通过 [setMeasuredDimension](<https://developer.android.com/reference/android/view/View#setMeasuredDimension(int,%20int)>) 设置正确的值。
+
+具体的 [View.MeasureSpec](https://developer.android.com/reference/android/view/View.MeasureSpec) 如下：
+
+- `UNSPECIFIED`
+
+  LynxView 的宽或高完全由其 [Page](/api/elements/built-in/page) 的内容决定，父容器不给任何约束。
+
+- `EXACTLY`
+
+  LynxView 的宽或高为指定的固定值，即 Page 节点的大小固定。
+
+- `AT_MOST`
+
+  LynxView 的宽或高的最大值，即 Page 节点大小的最大值。
+
+在页面的内容需要重新排版时，Lynx 通过调用系统的 [requestLayout](<https://developer.android.com/reference/android/view/View#requestLayout()>)，触发 `onMeasure` 重新执行。
+
+### 预设宽高，提前触发排版
+
+你也可以在创建 LynxView 时，预设通过 `LynxViewBuilder#setPresetMeasuredSpec` 来预设给 LynxView 的大小约束，参数与 `onMeasure` 一致。这样可以在[渲染周期](/guide/spec#pipeline)内就触发排版，而不用等到 `onMeasure` 的执行。
+当检测到 `measureSpec` 变化后，仍然会重新触发排版，保证 LynxView 的大小是正确的。
+
+比如，通过下面的代码可以预设一个固定 400\*200 大小：
+
+```java
+LynxViewBuilder viewBuilder = new LynxViewBuilder();
+viewBuilder = viewBuilder.setPresetMeasuredSpec(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+        View.MeasureSpec.makeMeasureSpec(200, View.MeasureSpec.EXACTLY));
+
+LynxView lynxview = viewBuilder.build(this);;
+```

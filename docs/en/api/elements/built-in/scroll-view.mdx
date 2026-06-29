@@ -1,0 +1,88 @@
+---
+api: elements/scroll-view
+---
+
+import {
+  APISummary,
+  APITable,
+  AndroidOnly,
+  Deprecated,
+  Go,
+  IOSOnly,
+  Required,
+} from '@lynx';
+
+# `<scroll-view>`
+
+<APISummary />
+
+Basic scrolling component supporting both horizontal and vertical scrolling. When its content area is larger than its visible area, it allows users to scroll to reveal more content.
+
+## Usage
+
+### Horizontal and Vertical Scrolling
+
+`<scroll-view>` supports both horizontal and vertical scrolling, implemented through the `scroll-orientation` properties.
+`<scroll-view>` always uses the [linear](/guide/ui/layout/linear-layout.mdx) layout, and the layout direction is determined by the `scroll-orientation` attributes.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_basic.webp"
+  example="scroll-view"
+  defaultFile="src/base/App.tsx"
+  highlight="{15,24}"
+  entry="src/base"
+/>
+
+### Scroll Events
+
+Use event callbacks such as [`bindscroll`](#bindscroll), [`bindscrolltoupper`](#bindscrolltoupper), and [`bindscrolltolower`](#bindscrolltolower) to monitor changes in scroll progress.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_events.webp"
+  example="scroll-view"
+  defaultFile="src/event/index.tsx"
+  highlight="{16-24}"
+  entry="src/event"
+/>
+
+### Sticky Capability
+
+As a child node of `<scroll-view>`, you can set the `sticky` attribute making the child node remain at a certain distance from the top of the `<scroll-view>` and not continue scrolling with the content.
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_sticky.webp"
+  example="scroll-view"
+  defaultFile="src/sticky/index.tsx"
+  entry="src/sticky"
+/>
+
+:::tip
+`sticky` can only be set for direct child nodes of `<scroll-view>`. On <AndroidOnly />, you need to add the `flatten={false}` attribute to `sticky` nodes.
+
+The direct child nodes of `<scroll-view>` only support `linear` and `sticky`. If you need more complex layouts, such as child nodes adapting to expand, it is recommended to provide a single child view to the `<scroll-view>` and implement more robust CSS capabilities within that single child node.
+
+```javascript
+<scroll-view> scroll-y>
+  <view> // do anything you want
+  {...}
+  </view>
+</scroll-view>
+```
+
+:::
+
+import APIReference from './scroll-view-API.mdx';
+
+<APIReference />
+
+## Performance Optimization Suggestions
+
+`<scroll-view>` creates all of its child nodes at once, potentially causing severe first-screen load times. Use exposure events to drive it to create only visible child nodes.
+
+`<scroll-view>` lacks any reuse mechanism. If content is too extensive, it may consume an exceptionally large amount of memory, possibly causing OOM and other stability problems.
+
+For data exceeding three screens, use `<list>` to optimize performance, or simulate `<VisualizedList>` logic based on exposure events.
+
+## Compatibility
+
+<APITable />

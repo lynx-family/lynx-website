@@ -1,0 +1,138 @@
+---
+api: css/properties/grid-auto-rows
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# grid-auto-rows
+
+<APISummary />
+
+## 介绍
+
+指定[网格布局](/guide/ui/layout/grid-layout.mdx)的隐式网格横向轨道（track）的宽度。此属性作用在网格容器上。
+
+如果定位到某行中的网格元件没有使用 [`grid-template-rows`](./grid-template-rows) 来指定大小，则会隐式创建网格轨道来保存它。这可能在显示定位到超出范围的行，或者由自动放置算法创建额外的行时发生。新增的行大小将由 `grid-auto-rows` 列表循环指定。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/grid-auto-rows/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/grid-auto-rows.png"
+  defaultEntryFile="dist/grid-auto-rows.lynx.bundle"
+  entry="src/grid-auto-rows"
+/>
+
+## 语法
+
+```css
+/* Keyword values */
+grid-auto-rows: max-content;
+grid-auto-rows: auto;
+
+/* <length> values */
+grid-auto-rows: 100px;
+
+/* <percentage> values */
+grid-auto-rows: 10%;
+grid-auto-rows: 33.3%;
+
+/* <flex> values */
+grid-auto-rows: 0.5fr;
+grid-auto-rows: 3fr;
+
+/* minmax() values */
+grid-auto-rows: minmax(100px, auto);
+grid-auto-rows: minmax(max-content, 2fr);
+
+/* multiple track-size values */
+grid-auto-rows: 100px 150px 390px;
+grid-auto-rows: 10% 33.3%;
+grid-auto-rows: 0.5fr 3fr 1fr;
+grid-auto-rows: 100px minmax(100px, auto) 10% 0.5fr fit-content(400px);
+```
+
+### 取值
+
+- `auto`
+
+  **默认值**。
+
+  如果该网格轨道为最大时，该属性等同于 `<max-content>`，为最小时，则等同于 `<min-content>`。
+
+  网格轨道大小为 `auto`（且只有为 `auto`）时，才可以被属性 [`align-content`](./align-content.mdx)（`align-content` 默认值是 `stretch`）拉伸。
+
+- `<length>`
+
+  [`<length>`](/api/css/data-type/length.mdx) 定义了非负值的长度大小。
+
+- `<percentage>`
+
+  非负值且相对于网格容器高度的 [`<percentage>`](/api/css/data-type/percentage.mdx)。建议在网格容器的高度尺寸是确定值情况下使用。不然，如果网格容器的尺寸大小依赖网格轨道的大小，则可能会有不符合预期的表现。
+
+- `<flex>`
+
+  非负值，用单位 `fr` 来定义网格轨道大小的弹性系数。每个定义了 `<flex>` 的网格轨道会按比例分配剩余的可用空间。当外层用一个 `minmax()` 表示时，它将是一个自动最小值（即 `minmax(auto, <flex>)`）。
+
+- `max-content`
+
+  是一个用来表示以网格项的最大的内容来占据网格轨道的关键字。
+
+- `minmax(min, max)`
+
+  是一个来定义大小范围的属性，大于等于 min 值，并且小于等于 max 值。如果 max 值小于 min 值，则该值会被视为 min 值。最大值可以设置为网格轨道系数值 `<flex>`，但最小值则不行。
+
+- `fit-content( [ <length> | <percentage> ] )`
+
+  相当于公式 `min(max-content, max(auto, argument))`，类似于 `auto` 的计算（即 `minmax(auto, max-content)`），除了网格轨道大小值是确定下来的，否则该值都大于 `auto` 的最小值。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      <code>auto</code>
+    </>
+  }
+  appliesTo={<>网格容器</>}
+  inherited="否"
+  percentages={<>refer to corresponding dimension of the content area</>}
+/>
+
+## 形式语法
+
+```
+grid-auto-rows =
+  <track-size>+
+
+<track-size> =
+  <track-breadth>                                   |
+  minmax( <inflexible-breadth> , <track-breadth> )  |
+  fit-content( <length-percentage [0,∞]> )
+
+<track-breadth> =
+  <length-percentage [0,∞]>  |
+  <flex [0,∞]>               |
+  max-content                |
+  auto
+
+<inflexible-breadth> =
+  <length-percentage [0,∞]>  |
+  min-content                |
+  auto
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+```
+
+## 与 Web 的区别
+
+- 不支持 `min-content`、`none`、`subgrid`、`masonry`；
+
+## 兼容性
+
+<APITable />

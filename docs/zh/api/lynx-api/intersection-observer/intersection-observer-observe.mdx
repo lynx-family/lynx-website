@@ -1,0 +1,68 @@
+---
+title: observe()
+api: lynx-api/intersection-observer/observe
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# IntersectionObserver: observe() method
+
+<APISummary />
+
+`observe` 指定目标节点与回调，目标节点根据 `id` 指定。
+
+## 语法
+
+```ts
+observe(selector: string, callback: Function): void;
+```
+
+### 参数
+
+#### selector
+
+```ts
+selector: string;
+```
+
+指定查找目标节点时使用的 `id`，优先在创建 `IntersectionObserver` 对象时传入的 `component` 中查找，查找不到再进行全局查找，全局查找不到则指定失效。
+
+#### callback
+
+```ts
+callback: (res) => {};
+```
+
+指定目标节点与参照节点的交叉状态发生变化时触发的回调。
+回调参数 `res` 的格式如下：
+
+```ts
+{
+    "isIntersecting": boolean,      // 目标节点与参照节点是否相交
+    "intersectionRatio": number,    // 目标节点与参照节点的相交比例
+    "intersectionRect": object,     // 目标节点与参照节点的相交区域
+    "boundingClientRect": object,   // 目标节点的相交区域
+    "relativeRect": object,         // 参照节点的相交区域
+    "observerId": string,           // 目标节点的 id
+    "time": number,                 // 相交检测时的时间戳（未实现，现在返回均为 0）
+}
+```
+
+其中 `intersectionRect`、`boundingClientRect` 和 `relativeRect` 的结构相同，坐标系均是相对于 `LynxView`，即 `LynxView` 左上角为坐标系原点，以水平向右为 `x` 轴正向，竖直向下为 `y` 轴正向：
+
+```ts
+{
+    "left": number | 0,             // 相交区域的左边界
+    "right": number | 0,            // 相交区域的右边界
+    "top": number | 0,              // 相交区域的上边界
+    "bottom": number | 0,           // 相交区域的下边界
+}
+```
+
+### 返回值
+
+无（`undefined`）。
+
+## 兼容性
+
+<APITable />

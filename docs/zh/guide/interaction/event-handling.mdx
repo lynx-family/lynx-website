@@ -1,0 +1,108 @@
+import { Go, Details } from '@lynx';
+
+# 响应事件
+
+Lynx 提供了一种类似于 Web 的事件机制，使开发者能够根据事件来设计和实现自定义的交互逻辑。
+
+然而，与 Web 系统不同的是，Lynx 的事件响应机制支持双线程处理。这意味着事件处理函数可以根据需要，在主线程或后台线程中执行，从而优化性能和响应速度。
+
+## 什么是事件
+
+事件是系统中触发某种动作的信号，当事件触发时，开发者可以通过监听该事件，并执行相应的代码来实现相应的逻辑。例如，开发者可以监听点击事件，当用户点击页面时修改节点的背景颜色。
+
+**示例 1:**
+
+<Go
+  example="event"
+  defaultFile="src/event_bubble/index.tsx"
+  defaultEntryFile="dist/event_bubble.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_bubble.gif"
+  highlight="{7-12,23}"
+  entry="src/event_bubble"
+/>
+
+## 监听用户的点击
+
+当用户在页面上进行点击操作时，系统将触发 `tap` 事件。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_handling.png"
+  width="100%"
+  height="40%"
+/>
+
+如图所示，开发者可以选择在主线程或后台线程中处理该事件。
+
+- 当不需要及时的事件响应时，可以选择在后台线程处理事件，并且后台线程的事件处理不会阻塞主线程。
+- 当需要及时的事件响应时，可以选择在主线程处理事件，这可以避免跨线程导致的事件延迟，但需要注意的是，过重的事件处理可能导致主线程繁忙。
+
+具体来说，如果开发者想监听某个节点的点击事件，可以在该节点上设置 `bind` 类型的事件处理器属性：
+
+```tsx
+<view bindtap={handleTap} />
+```
+
+如果事件处理函数运行在主线程上，则需要在事件处理器属性前额外添加 `main-thread:` 前缀，例如：
+
+```tsx
+<view main-thread:bindtap={handleTapInMTS} />
+```
+
+<Details title="如何拦截或者特别监听一个事件？">
+  在 Lynx
+  中，事件处理器属性还可以实现事件拦截、跨元件事件监听的功能，具体可以参考[事件传播](/guide/interaction/event-handling/event-propagation)。
+</Details>
+
+## 处理用户的点击
+
+当一个事件在节点上触发时，事件处理器属性设置的事件处理函数将被调用。这个函数将接收一个事件对象作为参数，其中包含了关于该事件的详细信息。
+
+<Details title="事件对象都有哪些？">
+  所有的事件对象都继承自
+  [Event](/api/lynx-api/event/event)，开发者可以在事件处理函数中根据事件对象来编写事件处理逻辑。
+</Details>
+
+当事件处理函数是一个[主线程脚本](../../react/main-thread-script.mdx)时，需要在函数体的首行添加一个 [`'main thread'`](../../api/react/Document.directives.mdx#main-thread) 指令表明该函数运行在主线程上。
+
+### 主线程事件处理
+
+在 Lynx 中，主线程和后台线程的事件对象是不同的，后台线程的事件对象是一个纯 `json` 对象，而主线程的事件对象是一个可以操作的 `Event Object`。
+
+<Details title="如何根据事件对象操作节点？">
+  Lynx
+  提供了多种操作节点的方式，具体参考[操作节点](/guide/interaction/event-handling/manipulating-element.react)。
+</Details>
+
+例如，针对**示例 1**，当开发者选择在主线程处理事件时，可以直接在[主线程脚本](../../react/main-thread-script.mdx)中拿到 [`e.currentTarget`](../../../api/lynx-api/event/event.mdx#currenttarget) 并调用 [`setStyleProperty`](../../api/lynx-api/main-thread/main-thread-element.mdx#elementsetstyleproperty) 修改节点的背景颜色。
+
+**示例 2**
+
+<Go
+  example="event"
+  defaultFile="src/event_node_eom/index.tsx"
+  defaultEntryFile="dist/event_node_eom.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_node_eom.gif"
+  highlight="{4-11,16}"
+  entry="src/event_node_eom"
+/>
+
+### 后台线程事件处理
+
+而对于后台线程的事件处理函数，开发者无法通过 [`e.currentTarget`](../../../api/lynx-api/event/event.mdx#currenttarget) 直接操作节点，但可以通过 [`SelectorQuery`](../../../api/lynx-api/selector-query.mdx) 获取节点引用，再调用 [`setNativeProps`](../../api/lynx-api/nodes-ref/nodes-ref-set-native-props.mdx) 修改节点的背景颜色。
+
+**示例 3:**
+
+<Go
+  example="event"
+  defaultFile="src/event_node_sq/index.tsx"
+  defaultEntryFile="dist/event_node_sq.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/event_node_sq.gif"
+  highlight="{5-16,21}"
+  entry="src/event_node_sq"
+/>
+
+## 总结
+
+至此，你已经学会了如何监听用户的点击并根据事件对象执行相应的操作。
+
+对于开发者来说，Lynx 的事件提供了类似于 Web 的 API，但又具有独特的双线程事件响应机制，使得开发者可以根据需要，选择在主线程或后台线程中执行事件处理，从而优化性能和响应速度。

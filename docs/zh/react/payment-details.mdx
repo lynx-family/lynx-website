@@ -1,0 +1,510 @@
+---
+description: '教程：构建支付详情页的高级交互。'
+---
+
+import { Columns } from '@/components/Columns.jsx';
+import { Go } from '@lynx';
+
+# 教程：Payment Details
+
+在完成 [Gallery](/learn/gallery) 教程后，相信你已经掌握了 Lynx 的基础用法。接下来，让我们通过一个支付详情页面来学习一些更进阶的功能，包括：
+
+- 搭建可交互的滚动列表
+- 如何制作 3D 交互动画效果
+- 如何在不同组件之间传递数据
+
+## 我们要构建什么？
+
+让我们先看看这个应用的最终效果。要体验实际效果，请先下载安装 [Lynx Explorer App](/guide/start/quick-start.html#ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator)，然后用它扫描下面的二维码。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_detail_final.gif"
+  example="bankcards"
+  defaultFile="src/final/index.tsx"
+  defaultEntryFile="dist/final.lynx.bundle"
+  entry="src/final"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Payment details&title_color=ffffff"
+/>
+
+## 让我们开始吧
+
+我们先来看看这个页面的组成，如果你想搭建一个这样的页面，可以将它拆成这样的三个组成部分，然后一步步实现它：
+
+<Columns>
+<img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_cards.gif"
+    alt="card"
+  />
+
+1. 卡片详情
+   - 卡片可以实现翻转动画
+   - 这里我们会学习如何使用 CSS 动画来实现平滑的翻转效果
+
+</Columns>
+
+<Columns>
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_bankcards.gif"
+  alt="card"
+/>
+
+2. 卡片列表，这个组件我们用 [scroll-view](/api/elements/built-in/scroll-view) 元件来包裹
+   - 可以上下滚动浏览所有卡片
+   - 点击某张卡片后，顶部的卡片详情会更新对应的卡号信息
+   - 这里我们会学习如何搭建可交互的滚动列表，以及如何在组件之间传递数据
+
+<view style={{ height: '20px' }} />
+
+</Columns>
+
+<Columns>
+
+<div margin-top="20px">
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_amount.jpeg"
+    alt="card"
+  />
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_pay.jpg"
+    alt="card"
+  />
+</div>
+
+3. 顶部的金额以及底部的按钮，这些组件比较简单，我们用 [view](/api/elements/built-in/view) 元件来实现即可。
+
+</Columns>
+
+让我们重点关注三个技术要点：搭建可交互的滚动列表，3D 翻转动画效果实现和组件间的数据传递。
+
+### 搭建一个可交互的卡片列表
+
+首先，我们来创建一个银行卡列表。这个列表需要展示每张卡片的基本信息，包括：
+
+- 银行类型（比如 Bac, Boc 等等）
+- 卡号（显示前后四位）
+- 持卡人姓名
+- 是否为主卡
+
+我们先把这些信息整理成一个数据结构：
+
+```tsx title="BankCardScrollView.tsx"
+export interface BankCard {
+  type: string; // 银行类型（比如 Bac, Boc等等）
+  number: string; // 卡号
+  name: string; // 持卡人姓名
+}
+```
+
+然后，准备一些卡片数据用于展示：
+
+```tsx title="BankCardScrollView.tsx"
+
+const cards = [
+  { type: "bac", number: "4558 **** **** 6767", name: "Alex Quentin" },
+  { type: "boc", number: "6222 **** **** 8058", name: "Alex Quentin" },
+  ...
+];
+
+```
+
+接下来，我们用 `<scroll-view>` 元件来创建一个可以上下滑动的列表，把所有卡片信息展示出来：
+
+```tsx title="BankCardScrollView.tsx {6}"
+export default function BankCardScrollView() {
+  return (
+    <view className="payment-wrapper">
+      <text className="title">Payment method</text>
+      <view className="payment-container">
+        <scroll-view scroll-y className="payment-sv">
+          {cards.map((card, idx) => (
+            <view
+              key={idx}
+              className="card"
+              bindtap={() => handleCardSelect(card)}
+            >
+              <view className="card-info">
+                <image className="card-icon" src={getUrlByType(card.type)} />
+                <view className="card-details">
+                  <text className="card-name">
+                    {card.type.charAt(0).toUpperCase() + card.type.slice(1)}
+                  </text>
+                </view>
+              </view>
+            </view>
+          ))}
+        </scroll-view>
+      </view>
+    </view>
+  );
+}
+```
+
+为了让用户知道自己选中了哪张卡片，我们需要添加一个图标来表示已经被选中：
+
+```scss title="BankCardScrollView.tsx"
+<image className="check-icon" src={checkIcon} />
+```
+
+然后，我们需要定义一个 `selectedCard` 状态，用于记录当前选中的卡片。
+
+```tsx title="BankCardScrollView.tsx"
+const [selectedCard, setSelectedCard] = useState(cards[0]);
+```
+
+添加完成后，我们需要在 `<BankCardScrollView>` 组件中添加一个 `handleCardSelect` 函数，用于处理选中卡片的事件。
+
+```tsx title="BankCardScrollView.tsx"
+const handleCardSelect = (card: BankCard) => {
+  setSelectedCard(card);
+};
+```
+
+当用户点击某个卡片时，就会触发 `handleCardSelect` 函数，这个函数会更新 `selectedCard` 的状态。
+
+```tsx title="BankCardScrollView.tsx" {3}
+<view
+  className={`card ${selectedCard === card ? 'selected' : ''}`}
+  bindtap={() => handleCardSelect(card)}
+>
+  ...
+</view>
+```
+
+我们把上面逻辑组合一下，当用户选中某张卡片时，右侧会出现一个小小的勾选标记，以此来标识当前选中状态：
+
+```tsx title="BankCardScrollView.tsx {5,17}"
+export default function BankCardScrollView() {
+  const [selectedCard, setSelectedCard] = useState(cards[0]);
+
+  const handleCardSelect = (card: BankCard) => {
+    setSelectedCard(card);
+  };
+
+  return (
+    <view className="payment-wrapper">
+      <text className="title">Payment method</text>
+      <view className="payment-container">
+        <scroll-view scroll-y className="payment-sv">
+          {cards.map((card, idx) => (
+            <view
+              key={idx}
+              className="card"
+              bindtap={() => handleCardSelect(card)}
+            >
+              <view className="card-info">
+                <image className="card-icon" src={getUrlByType(card.type)} />
+                <view className="card-details">
+                  <text className="card-name">
+                    {card.type.charAt(0).toUpperCase() + card.type.slice(1)}
+                  </text>
+                </view>
+              </view>
+              {selectedCard === card && (
+                <image className="check-icon" src={checkIcon} />
+              )}
+            </view>
+          ))}
+        </scroll-view>
+      </view>
+    </view>
+  );
+}
+```
+
+现在，我们已经完成了这个可交互的卡片列表的搭建，让我们一起来看看效果吧！
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_detail_step_1.gif"
+  example="bankcards"
+  defaultFile="src/step_1/index.tsx"
+  defaultEntryFile="dist/step_1.lynx.bundle"
+  entry="src/step_1"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Payment details&title_color=ffffff"
+/>
+
+### 3D 翻转特效
+
+现在让我们来重现这个有趣的 3D 翻转效果，首先需要了解实现这个效果的关键步骤 —— CSS 动画。
+
+:::info 在 Lynx 中支持的 CSS 动画集合
+Lynx 支持多种 CSS 动画集合，想了解更多动画玩法，可以看看 [CSS Animation](../../api/css/properties/animation.mdx)。
+:::
+
+为了实现这个翻转效果，我们需要两个关键步骤：
+
+我们先创建一个 `<Card/>` 组件
+
+1. 定义翻转动画：
+   - 使用 [keyframes](../../api/css/at-rule/keyframes.mdx) 来描述卡片从正面翻到背面（以及反向）的过程，其中包含了旋转的关键帧。
+   - [transform](../../api/css/properties/transform.mdx) 属性则定义了元件的旋转角度。
+
+```scss title="Cards.scss" {11,15,21,25}
+.front {
+  animation: backToFront 0.5s both;
+}
+
+.back {
+  animation: frontToBack 0.5s both;
+}
+
+@keyframes frontToBack {
+  0% {
+    transform: rotateY(0deg) translateZ(1);
+  }
+
+  100% {
+    transform: rotateY(180deg) translateZ(0);
+  }
+}
+
+@keyframes backToFront {
+  0% {
+    transform: rotateY(-180deg) translateZ(0);
+  }
+
+  100% {
+    transform: rotateY(0deg) translateZ(1);
+  }
+}
+```
+
+2. 让卡片响应点击：
+
+- 当用户点击底部按钮时，触发翻转动画
+- 通过切换 className 来控制卡片是显示正面还是背面
+
+```tsx title="Cards.tsx" {5,10}
+export default function Card({ isFront, isFirstRender }: CardProps) {
+  return (
+    <view className="card-content">
+      <view className={`card-back ${isFront ? 'back' : 'front'}`}>...</view>
+      <view
+        className={`card-front ${!isFirstRender ? (isFront ? 'front' : 'back') : ''}`}
+      >
+        ...
+      </view>
+    </view>
+  );
+}
+```
+
+这样，我们就实现了一个既实用又好玩的卡片翻转效果！用户每次点击底部按钮时，都能看到流畅的翻转动画，让整个交互体验更加生动有趣。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_detail_step_2.gif"
+  example="bankcards"
+  defaultFile="src/step_2/index.tsx"
+  defaultEntryFile="dist/step_2.lynx.bundle"
+  entry="src/step_2"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Payment details&title_color=ffffff"
+/>
+
+### 跨组件数据交互
+
+相信你也发现了一个问题，就是在点击卡片列表时，卡片详情并不会更新卡号，我们还需要解决卡片详情的同步更新问题。
+
+在这个应用中，我们有两个主要组件：
+
+- 卡片列表：展示所有可选的银行卡的 `<BankCardScrollView/>` 组件
+- 卡片详情：显示当前选中卡片的详细信息的 `<Card/>` 组件
+
+当用户在列表中点击某张卡片时，顶部的卡片详情需要同步更新显示该卡片的信息。为了实现这个功能，我们需要让这两个组件能够传递数据。
+
+首先，我们定义一个回调函数，用来通知其他组件用户选择了哪张卡片：
+
+```tsx title="BankCardScrollView.tsx" {9}
+export interface BankCardScrollViewProps {
+  onCardSelect?: (card: BankCard) => void;
+}
+```
+
+然后，我们在之前定义的 `handleCardSelect` 函数中调用这个回调函数：
+
+```tsx title="BankCardScrollView.tsx" {3}
+const handleCardSelect = (card: BankCard) => {
+  setSelectedCard(card);
+  onCardSelect?.(card);
+};
+```
+
+接着，我们把 `onCardSelect` 作为属性，定义在 `<BankCardScrollView>` 组件中：
+
+```tsx title="BankCardScrollView.tsx" {2}
+export default function BankCardScrollView({
+  onCardSelect,
+}: BankCardScrollViewProps) {
+  const [selectedCard, setSelectedCard] = useState(cards[0]);
+
+  const handleCardSelect = (card: BankCard) => {
+    setSelectedCard(card);
+    onCardSelect?.(card);
+  };
+
+  return (
+    <view className="payment-wrapper">
+      <text className="title">Payment method</text>
+      <view className="payment-container">
+        <scroll-view scroll-y className="payment-sv">
+          {cards.map((card, idx) => (
+            <view
+              key={idx}
+              className="card"
+              bindtap={() => handleCardSelect(card)}
+            >
+              ...
+            </view>
+          ))}
+        </scroll-view>
+      </view>
+    </view>
+  );
+}
+```
+
+处理完了 `<BankCardScrollView>` 组件, 我们需要继续处理 `<Card>` 组件用来在切换列表时更新卡号。
+
+它接收一个 `selectedCard` 属性，用于展示用户当前选中的卡片详情，并把卡号前后四位展示出来。
+
+```tsx title="Card.tsx" {4}
+interface CardProps {
+  isFront: boolean;
+  isFirstRender: boolean;
+  selectedCard: BankCard;
+}
+```
+
+我们接着再定义一个工具函数，用于截取前后四位的卡号
+
+```tsx title="Card.tsx"
+const getCardNumberParts = (number: string) => {
+  const parts = number?.split(' ') || [];
+  return {
+    firstFour: parts[0] || '4558',
+    lastFour: parts[3] || '6767',
+  };
+};
+```
+
+通过工具函数，我们把 `selectedCard` 中卡号的前后四位展示出来。
+
+```tsx title="Card.tsx" {17,19}
+export default function Card({
+  selectedCard,
+  isFront,
+  isFirstRender,
+}: CardProps) {
+  const { firstFour, lastFour } = getCardNumberParts(selectedCard.number);
+
+  return (
+    <view className="card-content">
+      <view
+        className={`card-back ${!isFirstRender ? (isFront ? 'back' : 'front') : ''}`}
+      >
+        ...
+      </view>
+
+      <view
+        className={`card-front ${!isFirstRender ? (isFront ? 'front' : 'back') : ''}`}
+      >
+        <view className="card-number">
+          <text className="first-digits">{firstFour}</text>
+          <text className="middle-digits">**** ****</text>
+          <text className="last-digits">{lastFour}</text>
+        </view>
+        <view className="card-info">
+          <text>{selectedCard?.name || 'Card holder'}</text>
+        </view>
+      </view>
+    </view>
+  );
+}
+```
+
+最后，在父组件中组合这两个组件：
+
+1. 使用 `selectedCard` 状态存储当前选中的卡片
+2. 当卡片列表 `<BankCardScrollView>` 的 `onCardSelect` 通知有新卡片被选中时，更新这个状态
+3. 将这个状态传给卡片详情 `<Card>`，用于展示选中的卡片的信息
+
+```tsx title="index.tsx" {12,26}
+function BankCards() {
+  const [selectedCard, setSelectedCard] = useState<BankCard>({
+    type: 'visa',
+    number: '4558 **** **** 6767',
+    name: 'Alex Quentin',
+  });
+
+  const [isFront, setIsFront] = useState(true);
+  const [isFirstRender, setIsFirstRender] = useState(true);
+
+  const handleCardSelect = (card: BankCard) => {
+    setSelectedCard(card);
+    setIsFront(true);
+  };
+
+  const handlePayNow = () => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+    }
+    setIsFront(!isFront);
+  };
+
+  return (
+    <view class="page">
+      <Card
+        selectedCard={selectedCard}
+        isFront={isFront}
+        isFirstRender={isFirstRender}
+      />
+      <BankCardScrollView onCardSelect={handleCardSelect} />
+      <BottomNode onPayNow={handlePayNow} />
+    </view>
+  );
+}
+```
+
+这样，我们就建立了一个高效的协作机制：
+
+1. 用户在卡片列表中选择卡片
+2. 卡片列表立即通知父组件
+3. 父组件更新状态并通知卡片详情组件
+4. 卡片详情组件立即更新显示内容
+
+让我们看看这个组件联动的效果：
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_detail_step_3.gif"
+  example="bankcards"
+  defaultFile="src/step_3/index.tsx"
+  defaultEntryFile="dist/step_3.lynx.bundle"
+  entry="src/step_3"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Payment details&title_color=ffffff"
+/>
+
+我们再添加顶部的展示金额，就大功告成了！
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_amount.jpeg"
+  alt="card"
+  width="40%"
+/>
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/payment_detail_final.gif"
+  example="bankcards"
+  defaultFile="src/final/index.tsx"
+  defaultEntryFile="dist/final.lynx.bundle"
+  entry="src/final"
+  schema="{{{url}}}?bar_color=000000&back_button_style=dark&title=Payment details&title_color=ffffff"
+/>
+
+## 总结
+
+通过这个支付详情页面的实现，你已经掌握了以下核心技术点：
+
+- 可交互列表的构建
+- 复杂 CSS 动画效果的开发
+- 组件间数据传递的实现方法
+
+现在你已经可以使用 Lynx 开发更复杂的应用了。

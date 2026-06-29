@@ -1,0 +1,153 @@
+---
+title: grid-template-columns
+api: css/properties/grid-template-columns
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The `grid-template-columns` CSS property defines track sizing functions of the grid columns.
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/grid-template-columns/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/grid-template-columns.jpeg"
+  defaultEntryFile="dist/grid-template-columns.lynx.bundle"
+  entry="src/grid-template-columns"
+/>
+
+## Syntax
+
+```css
+/* Keyword value */
+grid-template-columns: none;
+
+/* <track-list> values */
+grid-template-columns: 100px 1fr;
+grid-template-columns: minmax(100px, 1fr);
+grid-template-columns: fit-content(40%);
+grid-template-columns: repeat(3, 200px);
+```
+
+### Values
+
+- `<length>`
+
+  [`<length>`](/api/css/data-type/length.mdx) is a non-negative length, giving the width of the column.
+
+- `<percentage>`
+
+  Is a non-negative [`<percentage>`](/api/css/data-type/percentage.mdx) value relative to the inline size of the grid container.
+
+- `<flex>`
+
+  Is a non-negative dimension with the unit `fr` specifying the track's flex factor. Each `<flex>`-sized track takes a share of the remaining space in proportion to its flex factor.
+
+  When appearing outside a `minmax()` notation, it implies an automatic minimum (i.e. `minmax(auto, <flex>)`).
+
+- `max-content`
+
+  Is a keyword representing the largest maximal content contribution of the grid items occupying the grid track.
+
+- `auto`
+
+  As a maximum represents the largest `max-content` size of the items in that track.
+
+  As a minimum represents the largest minimum size of items in that track (specified by the [`min-width`](./min-width)/[`min-height`](./min-height) of the items). This is often, though not always, the [`min-content`](https://developer.mozilla.org/en-US/docs/Web/CSS/min-content) size.
+
+  If used outside of [`minmax()`](https://developer.mozilla.org/en-US/docs/Web/CSS/minmax) notation, `auto` represents the range between the minimum and maximum described above.
+
+  :::info
+  `auto` track sizes (and only `auto` track sizes) can be stretched by the [`align-content`](./align-content.mdx) and [`justify-content`](./justify-content.mdx) properties. Therefore by default, an `auto` sized track will take up any remaining space in the grid container.
+  :::
+
+- `minmax(min, max)`
+
+  Is a functional notation that defines a size range, greater than or equal to min, and less than or equal to max. If max is smaller than min, then max is ignored and the function is treated as min. As a maximum, a `<flex>` value sets the track's flex factor. It is invalid as a minimum.
+
+- `fit-content( [ <length> | <percentage> ] )`
+
+  Represents the formula `max(minimum, min(limit, max-content))`, where minimum represents an `auto` minimum (which is often, but not always, equal to a `min-content` minimum), and limit is the track sizing function passed as an argument to fit-content(). This is essentially calculated as the smaller of `minmax(auto, max-content)` and `minmax(auto, limit)`.
+
+- `repeat(<positive-integer>, [<length> | <percentage> | auto])`
+
+  Represents a repeated fragment of the track list, allowing a large number of columns that exhibit a recurring pattern to be written in a more compact form.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+import { Link } from '@theme';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      Indicates that there is no explicit grid. Any columns will be implicitly
+      generated and their size will be determined by the
+      <Link href="/api/css/properties/grid-auto-columns">
+        <code>grid-auto-columns</code>
+      </Link>
+      property
+    </>
+  }
+  appliesTo={<>grid containers</>}
+  inherited="no"
+  percentages={<>refer to corresponding dimension of the content area</>}
+/>
+
+## Formal syntax
+
+```
+grid-template-columns =
+  <track-list>
+
+<track-list> =
+   <track-size> | <track-repeat>
+
+<track-size> =
+  <track-breadth>                                   |
+  minmax( <inflexible-breadth> , <track-breadth> )  |
+  fit-content( <length-percentage [0,∞]> )
+
+<track-repeat> =
+  repeat([ <integer [1,∞]> ] , <track-size>)
+
+<fixed-size> =
+  <fixed-breadth>                                   |
+  minmax( <fixed-breadth> , <track-breadth> )       |
+  minmax( <inflexible-breadth> , <fixed-breadth> )
+
+<fixed-repeat> =
+  repeat( [ <integer [1,∞]> ] , <fixed-size>)
+
+<track-breadth> =
+  <length-percentage [0,∞]>  |
+  <flex [0,∞]>               |
+  max-content                |
+  auto
+
+<inflexible-breadth> =
+  <length-percentage [0,∞]>  |
+  max-content                |
+  auto
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+
+<fixed-breadth> =
+  <length-percentage [0,∞]>
+```
+
+## Difference between web
+
+- [`[line-names]`](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout/Grid_layout_using_named_grid_lines) is not supported.
+- `none` is not supported.
+- `masonry` and `subgrid` are not supported.
+
+## Compatibility
+
+<APITable />

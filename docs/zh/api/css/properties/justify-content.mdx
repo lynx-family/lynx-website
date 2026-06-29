@@ -1,0 +1,137 @@
+---
+api: css/properties/justify-content
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# justify-content
+
+<APISummary />
+
+## 介绍
+
+`justify-content` 定义如何沿着[弹性布局](https://developer.mozilla.org/zh/docs/Web/CSS/CSS_flexible_box_layout)、[线性布局](/guide/ui/layout/linear-layout.mdx)容器的**主轴**分配内容元件之间和周围的空间。
+
+在[网格布局](/guide/ui/layout/grid-layout.mdx)中，`justify-content` 定义了如何对齐网格轨道到**行轴**。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/justify-content/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/justify-content.jpg"
+  entry="src/justify-content"
+  defaultEntryFile="dist/justify-content.lynx.bundle"
+/>
+
+## 语法
+
+```css
+/* Positional alignment */
+justify-content: center; /* 居中排列 */
+justify-content: start; /* Pack items from the start */
+justify-content: end; /* Pack items from the end */
+justify-content: flex-start; /* 从行首起始位置开始排列 */
+justify-content: flex-end; /* 从行尾位置开始排列 */
+
+/* Distributed alignment */
+justify-content: space-between; /* 均匀排列每个元件
+                                   首个元件放置于起点，末尾元件放置于终点 */
+justify-content: space-around; /* 均匀排列每个元件
+                                   每个元件周围分配相同的空间 */
+justify-content: space-evenly; /* 均匀排列每个元件
+                                   每个元件之间的间隔相等 */
+justify-content: stretch; /* 均匀排列每个元件
+                                   'auto'-sized 的元件会被拉伸以适应容器的大小 */
+```
+
+### 取值
+
+#### `stretch`
+
+**默认值**。如果元件沿主轴（[网格布局](/guide/ui/layout/grid-layout.mdx)是行轴）的组合尺寸小于对齐容器的尺寸，任何尺寸设置为 `auto` 的元件都会等比例地增加其尺寸（而不是按比例增加），同时仍然遵守由 [`max-height`](./max-height.mdx)/[`max-width`](./max-width.mdx)（或相应功能）施加的约束，以便沿主轴（[网格布局](/guide/ui/layout/grid-layout.mdx)是行轴）完全填充对齐容器的组合尺寸。
+
+:::info
+虽然[弹性布局](https://developer.mozilla.org/zh/docs/Web/CSS/CSS_flexible_box_layout)支持 `stretch` 属性，但将其应用于弹性盒子时，由于拉伸是由 [`flex-grow`](./flex-grow.mdx) 控制的，所以 `stretch` 的行为与 `start`/`flex-start` 相同。
+
+[线性布局](/guide/ui/layout/linear-layout.mdx)的 `stretch` 行为和 `start` 相同。
+:::
+
+#### `start`
+
+从行首开始排列。每行第一个元件与行首对齐，同时所有后续的元件与前一个对齐。
+
+#### `end`
+
+从行尾开始排列。每行最后一个元件与行尾对齐，同时所有前面的元件与后一个对齐。
+
+#### `flex-start`
+
+表现同 `start`。建议只在 flexible box layout 布局上使用。
+
+#### `flex-end`
+
+表现同 `end`。建议只在 flexible box layout 布局上使用。
+
+#### `center`
+
+元件向每行中点排列。每行第一个元件到行首的距离将与每行最后一个元件到行尾的距离相同。
+
+#### `space-between`
+
+在每行上均匀分配元件。相邻元件间距离相同。每行第一个元件与行首对齐，每行最后一个元件与行尾对齐。
+
+#### `space-around`
+
+在每行上均匀分配元件。相邻元件间距离相同。每行第一个元件到行首的距离和每行最后一个元件到行尾的距离将会是相邻元件之间距离的一半。
+
+:::info
+[线性布局](/guide/ui/layout/linear-layout.mdx) `space-around` 行为和 `start` 相同。
+:::
+
+#### `space-evenly`
+
+项都沿着主轴（[网格布局](/guide/ui/layout/grid-layout.mdx)是行轴）均匀分布在指定的对齐容器中。相邻项之间的间距，主轴（[网格布局](/guide/ui/layout/grid-layout.mdx)是行轴）起始位置到第一个项的间距，主轴（[网格布局](/guide/ui/layout/grid-layout.mdx)是行轴）结束位置到最后一个项的间距，都完全一样。
+
+:::info
+[线性布局](/guide/ui/layout/linear-layout.mdx) `space-evenly` 行为和 `start` 相同。
+:::
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>stretch</>}
+  appliesTo={<>弹性容器，线性容器和网格容器</>}
+  inherited="否"
+/>
+
+## 形式语法
+
+```
+justify-content = <content-distribution> | <content-position>
+
+<content-distribution> =
+  space-between  |
+  space-around   |
+  space-evenly   |
+  stretch
+
+<content-position> =
+  center      |
+  start       |
+  end         |
+  flex-start  |
+  flex-end
+```
+
+## 与 Web 的区别
+
+- 在 Lynx 中，`start` 的行为与 `flex-start` 相同，`end` 的行为与 `flex-end` 相同。而 Web 中，`start` 和 `end` 不会响应 [`flex-direction:row-reverse`](./flex-direction.mdx) 行为，后续会修复该行为。
+- 不支持 `normal`。默认值为 `stretch`。
+- 不支持 `left` 和 `right`。
+
+## 兼容性
+
+<APITable />

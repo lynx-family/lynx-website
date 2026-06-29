@@ -1,0 +1,57 @@
+---
+description: '使用曝光能力和交叉观察器检测节点可见性。'
+---
+
+import { Go } from '@lynx';
+
+# 可见性检测
+
+Lynx 提供了两种检测节点可见性的能力，一种是 Lynx 独有的曝光能力，开发者可以据此便捷地监听节点是否曝光；另一种是类 Web 的交叉观察器，这是一种更加原子的能力，开发者可以通过它来监听节点的交叉位置。
+
+## 检测节点是否曝光
+
+当开发者主要关注多个节点是否在屏幕上而不关注节点交叉位置，并且希望快速地编写代码时，可以使用[曝光能力](./visibility-detection/exposure-ability.mdx)。
+
+[曝光能力](./visibility-detection/exposure-ability.mdx)是一个声明式接口，开发者可以通过 [`exposure-id`](../../api/elements/built-in/view.mdx#exposure-id) 属性来指定需要监听曝光的节点，当节点出现时，会触发曝光事件 `exposure`，当节点消失时，会触发反曝光事件 `disexposure`。
+
+在下面这个例子中，开发者监听节点是否曝光/反曝光，实时显示在屏幕上可见的节点 [`exposure-id`](../../api/elements/built-in/view.mdx#exposure-id)。
+
+**示例 2:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_expose/index.tsx"
+  defaultEntryFile="dist/visibility_expose.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_expose.gif"
+  highlight="{8-12,14-21,62}"
+  entry="src/visibility_expose"
+/>
+
+由于曝光能力侧重于节点是否可见，因此，这里的节点可见性要求更加严格。另外，由于[曝光能力](./visibility-detection/exposure-ability.mdx)是一个声明式接口，当开发者需要监听多个节点的曝光时，只需要在节点上添加 [`exposure-id`](../../api/elements/built-in/view.mdx#exposure-id) 属性即可。
+
+## 检测节点是否交叉
+
+当开发者只需要检查节点之间是否交叉，而不关心节点是否在屏幕上时，可以使用[交叉观察器](./visibility-detection/intersection-observer.mdx)。
+
+[交叉观察器](./visibility-detection/intersection-observer.mdx)用于检测目标节点与参照节点及目标节点与祖先节点之间是否交叉，开发者可以灵活地指定参照节点、参照节点边界缩放值、节点交叉比例阈值等，进而实现更加灵活的节点可见性定义。
+
+在下面这个例子中，开发者监听父节点与子节点是否交叉，并在交叉时输出交叉的子节点 [`id`](../../api/elements/built-in/view.mdx#id) 和交叉的位置。
+
+**示例 1:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_intersection/index.tsx"
+  defaultEntryFile="dist/visibility_intersection.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_intersection.gif"
+  highlight="{8-24}"
+  entry="src/visibility_intersection"
+/>
+
+这里的节点可见性只要求目标节点和参照节点交叉即可，而不需要目标节点在屏幕上，并且也不需要指定参照节点为滚动容器。另外，由于[交叉观察器](./visibility-detection/intersection-observer.mdx)是一个命令式接口，当开发者需要监听多个节点的交叉时，需要冗余的代码编写。
+
+## 总结
+
+至此，你已经学会了如何检测节点之间是否交叉或者节点是否曝光。
+
+对于开发者来说，当重点关注节点是否在屏幕上，并且希望便捷地编写多个节点曝光监听的代码时，可以使用[曝光能力](./visibility-detection/exposure-ability.mdx)；当重点关注节点之间是否交叉和交叉的位置，或者需要灵活的定义节点的可见性时，可以使用[交叉观察器](./visibility-detection/intersection-observer.mdx)。

@@ -1,0 +1,107 @@
+---
+api: lynx-api/event/TouchEvent
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# TouchEvent
+
+<APISummary />
+
+表示触摸事件对象，继承自 [`Event`](./event)，用于描述手指在触摸平面（如触摸屏）的状态变化，比如手指移动、点击、长按等。
+
+该事件对象包含一个或多个触摸点，开发者可以通过它了解触摸平面上手指的状态变化。
+
+## 实例属性
+
+### detail
+
+```ts
+detail: {
+  x: number,
+  y: number,
+}
+```
+
+表示第一根手指的触摸点位置。
+
+- `x`: 触摸点在当前 `LynxView` 坐标系下的横轴位置。
+- `y`: 触摸点在当前 `LynxView` 坐标系下的竖轴位置。
+
+### touches
+
+```ts
+touches: Touch []
+```
+
+表示当前停留在触摸平面上的 `Touch` 对象，每个 `Touch` 对象描述了对应手指的触摸点信息，格式如下：
+
+```ts
+{
+  identifier: number,       // 触摸点的唯一标识符，在同一次触摸过程中保持不变
+  x: number,                // 触摸点在实际触摸的 element 坐标系下的横轴位置
+  y: number,                // 触摸点在实际触摸的 element 坐标系下的竖轴位置
+  pageX: number,            // 触摸点在当前 LynxView 坐标系下的横轴位置
+  pageY: number,            // 触摸点在当前 LynxView 坐标系下的竖轴位置
+  clientX: number,          // 触摸点在当前 窗口 坐标系下的横轴位置
+  clientY: number,          // 触摸点在当前 窗口 坐标系下的横轴位置
+}
+```
+
+### changedTouches
+
+```ts
+changedTouches: Touch []
+```
+
+表示相比于上次触摸事件，状态发生变化的 `Touch` 对象，比如从无到有、位置变化、从有到无，[`changesTouches`](#changedtouches) 的格式与 [`touches`](#touches) 的格式相同。
+
+## TouchEvent 的类型
+
+### touchstart
+
+表示手指开始接触触摸平面，[`target`](./event#target) 是包含触摸点且距离用户最近的 `element`。
+
+### touchmove
+
+表示手指在触摸平面上移动，[`target`](./event#target) 始终与 [`touchstart`](#touchstart) 的 [`target`](./event#target) 相同。
+
+### touchend
+
+表示手指从触摸平面上离开，[`target`](./event#target) 与 [`touchstart`](#touchstart) 的 [`target`](./event#target) 相同，已经离开屏幕的触摸点可以在 [`changedTouches`](#changedtouches) 中找到。
+
+### touchcancel
+
+表示触摸事件被系统或 `Lynx` 外部手势中断，比如系统弹窗、来电，[`target`](./event#target) 与 [`touchstart`](#touchstart) 的 [`target`](./event#target) 相同，已经被中断的触摸点可以在 [`changedTouches`](#changedtouches) 中找到。
+
+### tap
+
+表示手指在触摸平面上单击，[`target`](./event#target) 是包含触摸点且距离用户最近的 `element`，仅第一根手指可以触发。
+
+当手指移动超过一定距离阈值时，或该 `element` 的[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上有 `element` 发生了滑动，`tap` 事件无法触发。
+
+该事件和 [`longpress`](#longpress) 事件在事件监听上互斥，即前端同时监听两个事件，则两个事件不会同时触发，[`longpress`](#longpress) 优先。
+
+### longpress
+
+表示手指在触摸平面上长按，[`target`](./event#target) 是包含触摸点且距离用户最近的 `element`，仅第一根手指可以触发。当手指移动超过一定阈值时，或长按间隔不足 `500 ms`，`longpress` 事件无法触发。
+
+### click
+
+表示手指在触摸平面上单击，[`target`](./event#target) 是包含触摸点且距离用户最近且监听了 `click` 事件的 `element`，仅第一根手指可以触发。
+
+该事件和 [`tap`](#tap) 事件稍微有区别，主要在于事件的阻断距离阈值和 [target](../../lynx-api/event/event.mdx#target) 不同：
+
+- [`tap`](#tap) 的 [`target`](./event#target) 是实际触摸的距离用户最近的节点；而 `click` 的 [`target`](./event#target) 是距离用户最近且监听了 `click` 事件的节点。
+- [`tap`](#tap) 的阻断距离阈值是固定的，手指移动距离超过某个值后无法触发；而 `click` 的阻断距离阈值取决于 [`target`](./event#target) 的触摸热区，手指移出触摸热区后无法触发。
+- 当 [`target`](./event#target) 对应的[事件响应链](../../../guide/interaction/event-handling/event-propagation.mdx#事件响应链)上有 `element` 发生了滑动，[`tap`](#tap) 或 `click` 事件无法触发。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/tap_and_click.png"
+  width="100%"
+  height="100%"
+/>
+
+## 兼容性
+
+<APITable />

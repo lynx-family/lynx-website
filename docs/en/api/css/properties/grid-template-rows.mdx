@@ -1,0 +1,152 @@
+---
+title: grid-template-rows
+api: css/properties/grid-template-rows
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+## Introduction
+
+The `grid-template-rows` CSS property defines track sizing functions of the grid rows.
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/grid-template-rows/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/grid-template-rows.jpeg"
+  defaultEntryFile="dist/grid-template-rows.lynx.bundle"
+  entry="src/grid-template-rows"
+/>
+
+## Syntax
+
+```css
+/* auto values*/
+grid-template-rows: auto auto;
+/* <length> values */
+grid-template-rows: 120px auto;
+/* repeat func */
+grid-template-rows: repeat(2, 100px) auto;
+grid-template-rows: repeat(2, 100px auto) 200px;
+```
+
+### Values
+
+- `<length>`
+
+  [`<length>`](/api/css/data-type/length.mdx) is a non-negative length, giving the width of the row.
+
+- `<percentage>`
+
+  Is a non-negative [`<percentage>`](/api/css/data-type/percentage.mdx) value relative to the block size of the grid container.
+
+- `<flex>`
+
+  Is a non-negative dimension with the unit `fr` specifying the track's flex factor. Each `<flex>`-sized track takes a share of the remaining space in proportion to its flex factor.
+
+  When appearing outside a `minmax()` notation, it implies an automatic minimum (i.e. `minmax(auto, <flex>)`).
+
+- `max-content`
+
+  Is a keyword representing the largest maximal content contribution of the grid items occupying the grid track.
+
+- `auto`
+
+  As a maximum represents the largest `max-content` size of the items in that track.
+
+  As a minimum represents the largest minimum size of items in that track (specified by the [`min-width`](./min-width)/[`min-height`](./min-height) of the items). This is often, though not always, the [`min-content`](https://developer.mozilla.org/en-US/docs/Web/CSS/min-content) size.
+
+  If used outside of [`minmax()`](https://developer.mozilla.org/en-US/docs/Web/CSS/minmax) notation, `auto` represents the range between the minimum and maximum described above.
+
+  :::info
+  `auto` track sizes (and only `auto` track sizes) can be stretched by the [`align-content`](./align-content.mdx) and [`justify-content`](./justify-content.mdx) properties. Therefore by default, an `auto` sized track will take up any remaining space in the grid container.
+  :::
+
+- `minmax(min, max)`
+
+  Is a functional notation that defines a size range, greater than or equal to min, and less than or equal to max. If max is smaller than min, then max is ignored and the function is treated as min. As a maximum, a `<flex>` value sets the track's flex factor. It is invalid as a minimum.
+
+- `fit-content( [ <length> | <percentage> ] )`
+
+  Represents the formula `min(max-content, max(auto, argument))`, which is calculated similar to `auto` (i.e. `minmax(auto, max-content)`), except that the track size is clamped at argument if it is greater than the `auto` minimum.
+
+- `repeat(<positive-integer>, [<length> | <percentage> | auto])`
+
+  Represents a repeated fragment of the track list, allowing a large number of columns that exhibit a recurring pattern to be written in a more compact form.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+import { Link } from '@theme';
+
+<PropertyDefinition
+  initialValue={
+    <>
+      Is a keyword meaning that there is no explicit grid. Any rows will be
+      implicitly generated and their size will be determined by the
+      <Link href="/api/css/properties/grid-auto-rows">
+        <code>grid-auto-rows</code>
+      </Link>
+      property
+    </>
+  }
+  appliesTo={<>grid containers</>}
+  inherited="no"
+  percentages={<>refer to corresponding dimension of the content area</>}
+/>
+
+## Formal syntax
+
+```
+grid-template-rows =
+  <track-list>
+
+<track-list> =
+   <track-size> | <track-repeat>
+
+<track-size> =
+  <track-breadth>                                   |
+  minmax( <inflexible-breadth> , <track-breadth> )  |
+  fit-content( <length-percentage [0,∞]> )
+
+<track-repeat> =
+  repeat([ <integer [1,∞]> ] , <track-size>)
+
+<fixed-size> =
+  <fixed-breadth>                                   |
+  minmax( <fixed-breadth> , <track-breadth> )       |
+  minmax( <inflexible-breadth> , <fixed-breadth> )
+
+<fixed-repeat> =
+  repeat( [ <integer [1,∞]> ] , <fixed-size>)
+
+<track-breadth> =
+  <length-percentage [0,∞]>  |
+  <flex [0,∞]>               |
+  max-content                |
+  auto
+
+<inflexible-breadth> =
+  <length-percentage [0,∞]>  |
+  max-content                |
+  auto
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+
+<fixed-breadth> =
+  <length-percentage [0,∞]>
+```
+
+## Difference between web
+
+- [`[line-names]`](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout/Grid_layout_using_named_grid_lines) is not supported.
+- `none` is not supported.
+- `masonry` and `subgrid` are not supported.
+
+## Compatibility
+
+<APITable />

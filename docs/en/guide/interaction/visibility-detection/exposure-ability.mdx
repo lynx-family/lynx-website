@@ -1,0 +1,100 @@
+---
+description: 'Observing node visibility changes with the exposure capability in Lynx.'
+---
+
+import { Go } from '@lynx';
+
+# Exposure Ability
+
+The exposure capability provides a capability to observe changes in the visibility of a target node. When a target node changes from invisible to visible, an exposure event is triggered. Otherwise, an anti-exposure event is triggered.
+
+Developers can monitor the exposure/anti-exposure events of nodes by setting relevant properties for the target nodes to be observed, thereby achieving requirements such as point reporting and `UI` lazy loading.
+
+The exposure capability observes changes in node visibility through timed exposure detection tasks. The visibility of a node depends on the following factors:
+
+- Visibility of the target node: The target node itself has width and height and is opaque, and the parent node has no clipping with zero width or height.
+- Viewport intersection of the target node: The target node intersects with the parent scroll container, `Lynxview`, and the viewport of the screen.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/exposure-ability.png"
+  width="40%"
+  height="40%"
+/>
+
+## Monitor exposure of the entire page
+
+When developers need to monitor exposure/anti-exposure events of nodes in the entire page, they can subscribe to the exposure event [`exposure`](../../../api/lynx-api/event/global-event.mdx#exposure) and anti-exposure event [`disexposure`](../../../api/lynx-api/event/global-event.mdx#disexposure) of the node with the [`exposure-id`](../../../api/elements/built-in/view.mdx#exposure-id) attribute set through [`GlobalEventEmitter`](../event-handling/event-propagation.mdx#globaleventemitter).
+
+In the following example, the developer uses [`GlobalEventEmitter`](../event-handling/event-propagation.mdx#globaleventemitter) to monitor whether the node in `ComponentA` is exposed, and outputs the exposed node [`exposure-id`](../../../api/elements/built-in/view.mdx#exposure-id) when it is exposed.
+
+**Example 1:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_expose_global/index.tsx"
+  defaultEntryFile="dist/visibility_expose_global.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_expose_global.gif"
+  highlight="{8-12,14-21,56}"
+  entry="src/visibility_expose_global"
+/>
+
+The format of the exposure/anti-exposure event is an array, which contains the target node information of each triggering exposure/anti-exposure event.
+
+```json
+[
+  {
+    "exposure-id": string,        // exposure-id set on the target node
+    "exposure-scene": string,     // exposure-scene set on the target node
+    "sign": string,               // uid of the target node
+    "dataset": object,            // "data-" field set on the target node
+    //......
+  },
+  //......
+]
+```
+
+## Monitor the exposure of a certain node
+
+When the developer only needs to listen to the exposure/anti-exposure events of a certain node, you can set the [event handler](../event-handling/event-propagation.mdx#event-handler-property) to listen to the node's [`uiappear`](../../../api/elements/built-in/view.mdx#binduiappear) and [`uidisappear`](../../../api/elements/built-in/view.mdx#binduidisappear) events.
+
+In the following example, the developer sets the [event handler](../event-handling/event-propagation.mdx#event-handler-property) to listen to whether the node is exposed, and outputs the exposed node [`id`](../../../api/elements/built-in/view.mdx#id) when it is exposed.
+
+**Example 2:**
+
+<Go
+  example="event"
+  defaultFile="src/visibility_expose_custom/index.tsx"
+  defaultEntryFile="dist/visibility_expose_custom.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/event/visibility_expose_custom.gif"
+  highlight="{7-9,11-16,57-59}"
+  entry="src/visibility_expose_custom"
+/>
+
+The event parameter `e.detail` contains the node information.
+
+```json
+{
+  "type": string                    // event name
+  "detail":
+    {
+      "exposure-id": string,        // exposure-id set on the target node
+      "exposure-scene": string,     // exposure-scene set on the target node
+      "unique-id": string,          // uid of the target node
+      "dataset": object,            // "data-" field set on the target node
+      //......
+    },
+  //......
+}
+```
+
+## Control exposure detection
+
+Lynx also provides some properties and methods to control the execution of exposure detection tasks.
+
+For example, developers can use the following methods to control whether the exposure detection task is started, stopped, and the execution frequency.
+
+- [`lynx.stopExposure [BTS]`](../../../api/lynx-api/lynx/lynx-stop-exposure) or [`lynx.stopExposure [MTS]`](../../../api/lynx-api/main-thread/lynx-stop-exposure): Called in the main thread or background thread to stop exposure detection, that is, no longer detect the visibility of the target node, and no exposure/anti-exposure events will be triggered later.
+- [`lynx.resumeExposure [BTS]`](../../../api/lynx-api/lynx/lynx-resume-exposure) or [`lynx.resumeExposure [MTS]`](../../../api/lynx-api/main-thread/lynx-resume-exposure): Called in the main thread or background thread to start exposure detection, that is, restart the visibility detection of the target node, and then trigger the exposure/anti-exposure events normally.
+- [`lynx.setObserverFrameRate`](../../../api/lynx-api/lynx/lynx-set-observer-frame-rate): used to set the frequency of exposure detection.
+
+In addition, developers can also control the exposure detection logic of the node by setting exposure-related properties on the node, such as [`exposure-screen-margin-*`](../../../api/elements/built-in/view.mdx#exposure-screen-margin-), [`exposure-ui-margin-*`](../../../api/elements/built-in/view.mdx#exposure-ui-margin-), [`exposure-area`](../../../api/elements/built-in/view.mdx#exposure-area), etc.

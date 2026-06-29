@@ -1,0 +1,137 @@
+---
+api: lynx-api/event/MouseEvent
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# MouseEvent
+
+<APISummary />
+
+表示鼠标事件，继承自 [`Event`](./event)，是一类描述用户与鼠标交互行为的事件。比如鼠标单击等。
+
+:::info
+从 Lynx 3.8 起，可以在 `pageConfig` 中开启 `MouseEvent` 与 W3C Web 标准对齐的行为。
+
+```js
+// pageConfig
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+pluginReactLynx({
+  alignMouseEventWithW3C: true,
+});
+```
+
+:::
+
+## 实例属性
+
+### button
+
+```ts
+button: number;
+```
+
+开启 `alignMouseEventWithW3C` 后，当鼠标事件触发时，如果有任意鼠标按键被按下或松开，将会返回一个代表该键的数值。例如用户按下左键时，[mousedown](./mouse-event#mousedown) 触发，该参数值为 0。数值代表的含义见下表。
+
+| 值  | 含义               |
+| --- | ------------------ |
+| 0   | 主键（通常是左键） |
+| 1   | 中键               |
+| 2   | 次键（通常是右键） |
+
+### buttons
+
+```ts
+buttons: number;
+```
+
+开启 `alignMouseEventWithW3C` 后，当鼠标事件触发时，如果有一个或多个鼠标按键被按下，将会返回一个数值，每个 bit 代表一个鼠标按键, 被按下的键对应的 bit 将会置为 1。
+
+| Bit | 含义               |
+| --- | ------------------ |
+| 0   | 主键（通常是左键） |
+| 1   | 次键（通常是右键） |
+| 2   | 中键               |
+
+### x
+
+```ts
+x: number;
+```
+
+表示鼠标指针相对距离用户最近的 `element` 元素的 X 轴坐标。
+
+### y
+
+```ts
+y: number;
+```
+
+表示鼠标指针相对距离用户最近的 `element` 元素的 Y 轴坐标。
+
+### pageX
+
+```ts
+pageX: number;
+```
+
+表示鼠标指针在当前 `LynxView` 坐标系下的 X 轴坐标。
+
+### pageY
+
+```ts
+pageY: number;
+```
+
+表示鼠标指针在当前 `LynxView` 坐标系下的 Y 轴坐标。
+
+### clientX
+
+```ts
+clientX: number;
+```
+
+表示鼠标指针在当前窗口坐标系下的 X 轴位置。
+
+### clientY
+
+```ts
+clientY: number;
+```
+
+表示鼠标指针在当前窗口坐标系下的 Y 轴位置。
+
+## MouseEvent 的类型
+
+### mousedown
+
+表示鼠标按键按下（主键或次键），[`target`](./event#target) 是包含鼠标指针且距离用户最近的 `element`。
+
+### mousemove
+
+表示鼠标指针在元素上移动，[`target`](./event#target) 是包含鼠标指针且距离用户最近的 `element`。
+
+### mouseup
+
+表示鼠标在元素上释放，[`target`](./event#target) 是包含鼠标指针且距离用户最近的 `element`。
+
+### mouseenter
+
+表示鼠标首次移动到 [`target`](./event#target) 的激活区域内，[`target`](./event#target) 是包含鼠标指针且距离用户最近的 `element`。
+
+注意: `mouseenter` 事件不会冒泡，也无法使用 [`capture-`](../../../guide/interaction/event-handling/event-propagation.mdx#事件处理器属性) API捕获。
+
+### mouseover
+
+表示鼠标指针移动到 [`target`](./event#target) 或其子元素上。[`target`](./event#target) 是包含鼠标指针且距离用户最近的 `element`。
+
+### mouseleave
+
+表示鼠标首次移出 [`target`](./event#target) 的激活区域内，[`target`](./event#target) 是鼠标指针刚离开的 `element`。
+
+注意: `mouseleave` 事件不会冒泡，也无法使用 [`capture-`](../../../guide/interaction/event-handling/event-propagation.mdx#事件处理器属性) API捕获。
+
+## 兼容性
+
+<APITable />

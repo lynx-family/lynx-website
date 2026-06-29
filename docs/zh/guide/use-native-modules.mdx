@@ -1,0 +1,212 @@
+import { Details, PlatformTabs, CodeFold, Go } from '@lynx';
+import { Tab, Tabs, Badge, PackageManagerTabs, Steps } from '@theme';
+
+import NativeModuleIOS from './custom-native-modules/native-module-ios.mdx';
+import NativeModuleAndroid from './custom-native-modules/native-module-android.mdx';
+import NativeModuleHarmony from './custom-native-modules/native-module-harmony.mdx';
+import NativeModuleDesktops from './custom-native-modules/native-module-desktops.mdx';
+
+# 原生模块
+
+在开发 Lynx 应用时，可能会遇到需要与 Lynx 未涵盖的原生平台 API 进行交互的场景。或者，你或许希望复用现有的原生平台代码到 Lynx 应用中。无论出于何种原因，都可以借助[**原生模块**](/guide/spec.html#nativemodules)，实现 JavaScript 代码与原生代码的无缝连接，进而在 JavaScript 代码里调用原生平台的功能和 API。下面将详细介绍如何编写一个原生模块。
+
+编写原生模块的基本步骤：
+
+1. **使用 TypeScript 声明类型化接口规范**：通过 TypeScript 为原生模块定义清晰的接口规范，明确原生代码与 Lynx JavaScript 运行时之间传递的方法和数据类型。
+2. **依据接口规范编写 Lynx 应用代码**：按照已声明的接口规范，在 Lynx 项目中编写具体的应用代码。
+3. **遵循接口规范编写原生平台代码并连接到 Lynx 运行时**：根据接口规范完成原生平台代码的编写，然后将其与 Lynx 运行时环境进行连接。
+
+下面，将通过构建一个原生模块示例，逐步展示这些步骤。
+
+:::info
+原生模块目前只能在 [Background Thread Scripting](/guide/spec.html#background-thread-scripting) 中使用。
+:::
+
+## 本地持久存储模块
+
+本指南旨在展示如何编写一个本地持久存储模块，让 Lynx 应用能够利用 JavaScript 代码在本地持久地存储数据。
+
+要在不同平台上实现本地持久存储功能，需要借助对应平台的原生 API 或 Lynx C/C++ API：
+
+- Android: [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences)
+- iOS: [NSUserDefaults](https://developer.apple.com/documentation/foundation/nsuserdefaults)
+- HarmonyOS: [Preferences](https://developer.huawei.com/consumer/en/doc/harmonyos-references/_preferences)
+- Desktops(Node-API): Lynx C/C++ API 和 weak-node-api C++ wrapper
+
+<Steps>
+### 声明类型化的接口规范
+原生模块的接口规范是连接原生代码和 Lynx JavaScript 运行时的桥梁，它定义了两者之间传递的方法和数据类型。
+
+声明接口规范的步骤如下：
+
+1. **创建 Lynx 项目**：参照[创建一个 Lynx 项目](/guide/start/quick-start#创建一个-lynx-项目)指南，创建自己的 Lynx 项目。
+2. **新建类型声明文件**：在 Lynx 项目中创建一个名为 `src/typing.d.ts` 的新文件。
+3. **实现接口规范**：在 `typing.d.ts` 文件中实现原生模块的接口规范。
+
+:::info
+可以在[类型对照表](#类型对照表)中查看规范中可用的类型以及对应的原生类型。
+:::
+
+以下是本地持久存储模块的接口规范实现：
+
+```typescript title="typing.d.ts"
+declare let NativeModules: {
+  NativeLocalStorageModule: {
+    setStorageItem(key: string, value: string): void;
+    getStorageItem(key: string, callback: (value: string) => void): void;
+    clearStorage(): void;
+  };
+};
+```
+
+`NativeModules` 是 Lynx 在 JavaScript 运行时中提供的全局内建对象，它是所有原生模块的访问入口，所有原生模块的声明需定义在其中。
+
+### 编写 Lynx 应用代码
+
+接下来，在 Lynx 项目的 src/App.tsx 文件中编写应用代码。
+
+以下是本地持久存储模块的 App.tsx 示例，它包含一个用于显示本地存储内容的区域，以及三个用于读写和清除本地存储的按钮。
+
+<Go
+  highlight="{11,19,24}"
+  example="local-storage"
+  defaultFile="src/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/native-modules-demo-preview.png"
+></Go>
+
+### 编写原生平台代码
+
+现在可以开始编写原生平台代码了。
+
+<PlatformTabs queryKey="platform">
+
+<PlatformTabs.Tab platform="ios">
+
+<NativeModuleIOS />
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+<NativeModuleAndroid />
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+  <NativeModuleHarmony />
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="node-api">
+
+  <NativeModuleDesktops />
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+</Steps>
+
+恭喜你，成功创建了原生模块！如果你想在你的应用中创建原生模块，首先需要参考[接入现有应用](/guide/start/integrate-with-existing-apps)指南集成 Lynx，然后参照上述步骤创建原生模块。
+
+## 类型对照表
+
+| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     | weak-Node-API |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- | -------------------- |
+| `null`          | `nil`                                             | `null`                                            | `null`                                            | `Napi::Value` / `env.Null()` |
+| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            | `Napi::Value` / `env.Undefined()` |
+| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` | `Napi::Boolean` |
+| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   | `Napi::Number` |
+| `string`        | `NSString`                                        | `String`                                          | `string`                                          | `Napi::String` |
+| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    | `Napi::BigInt` |
+| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          | `Napi::ArrayBuffer` |
+| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               | `Napi::Object` |
+| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             | `Napi::Array` |
+| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  | `Napi::Function` |
+
+## 原生模块权限验证（实验性）
+
+在Lynx SDK 3.5之后，开发者可以通过`LynxViewBuilder`设置针对当前`LynxView`的原生模块验证器，从而对该`LynxView`中的所有的原生模块调用进行管控。目前仅支持Android与iOS，后续将逐步支持鸿蒙。
+<PlatformTabs queryKey="platform">
+
+  <PlatformTabs.Tab platform="android">
+    在使用`LynxViewBuilder`创建`LynxView`时，通过`registerModuleAuthValidator`接口注册原生模块验证器，验证器对当前`LynxView`中所有原生模块调用生效。
+
+    **原生模块验证器接口**
+
+    ```java title=""
+
+    /**
+    * LynxMethod verification interface, used to verify whether the LynxMethod is allowed to be
+    * called
+    */
+    public interface AuthValidator {
+    /**
+     *
+     * @param moduleName 被调用的原生模块名
+     * @param methodName 被调用的原生模块方法名
+     * @param methodParams 被调用的原生模块方法参数
+     * @return
+     * true: 验证通过，该原生模块调用将执行
+     * false: 验证失败，原声模块调用不会执行，产生JS错误
+     */
+    boolean verify(String moduleName, String methodName, JavaOnlyArray methodParams);
+    }
+
+    ```
+    **原生模块验证器注册方式**
+
+    ```java title=""
+
+    LynxViewBuilder builder = LynxView.builder()
+        // 向LynxViewBuilder中注册验证器实例
+        .registerModuleAuthValidator(new LynxModule.AuthValidator() {
+            void validate(@NonNull String moduleName, @NonNull String moduleName, @NonNull ReadableMap params) {
+               //验证逻辑
+               return result;
+            }
+       }
+    LynxView view = builder.build(context);
+
+    ```
+
+  </PlatformTabs.Tab>
+
+  <PlatformTabs.Tab platform="ios">
+
+    在使用`LynxViewBuilder`创建`LynxView`时，通过`registerMethodAuth`接口注册原生模块验证器，验证器对当前`LynxView`中所有原生模块调用生效。
+
+    **原生模块验证器接口**
+
+    ```objective-c title=""
+
+    /**
+    *
+    * @param method:被调用的原生模块名方法名
+    * @param module:被调用的原生模块
+    * @param invoke_session:原生模块调用时间戳
+    * @param inv：该次调用的动态调用方法
+    * @return
+    * true: 验证通过，该原生模块调用将执行
+    * false: 验证失败，原声模块调用不会执行，产生JS错误
+    */
+    typedef BOOL (^LynxMethodBlock)(NSString *method, NSString *module, NSString *invoke_session,
+    NSInvocation *inv);
+
+    ```
+
+    **原生模块验证器注册方式**
+
+    ```objective-c title=""
+
+    // 向LynxViewBuilder中注册验证器实例
+    LynxViewBuilder *builder = GetLynxViewBuilder();
+    [builder.config registerMethodAuth:validtorBlock];
+
+    ```
+
+  </PlatformTabs.Tab>
+
+
+</PlatformTabs>

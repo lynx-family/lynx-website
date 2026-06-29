@@ -1,0 +1,55 @@
+# <dfn for=EnginePixeling>Engine and Pixeling</dfn>
+
+## Definition
+
+### <dfn for=EnginePixeling>Engine</dfn>
+
+It refers to the part of the SDK that is responsible for [=EnginePixeling/pixeling=] the Lynx [=CommonInfrastructure/apps=] into UIs that can be seen and interacted with by end users, and needs to be integrated natively and bundled together with the host application.
+Technically,
+
+- it is largely written in C++ and other host-platform-dependent native technologies (e.g. Objective-C for iOS, Java/Kotlin for Android, etc.), ensuring high performance and direct access to underlying system resources.
+- It also bundled a small amount of native-coupled [=Scripting/script=] as core scripting runtime libraries that implement and constitute the [=CommonInfrastructure/Lynx platform=] APIs.
+- It's also responsible for integrating with other native extensions (e.g. custom elements) developed by [=Lynx/native developers=].
+
+Note:
+Implementors' Note:
+By being native-coupled, it means that a [=Scripting/script=] has direct, unprotected access to native code through unstable scripting environment bindings (e.g. those defined in lynx.cc, lynx_app.cc), meaning changes to native code may break the interaction with those [=Scripting/scripts=]. Therefore, they often need to be updated together to ensure runtime safety.
+
+### <dfn for=EnginePixeling>Engine FFI</dfn>
+Engine FFI refers to all the [=JavaScript FFI=] provided by [=Node-API=], [=JSI=], and [=PAPI=] in the [=engine=].
+
+### <dfn for=EnginePixeling>Pixeling</dfn>
+The act of executing the pixel pipeline. Try changes within the bundle's structures, such as the modifications to the [=element tree=], known as element manipulation.
+
+### <dfn for=EnginePixeling>Pixel Pipeline</dfn>
+
+At a high-level, this is the main process of the [=engine=].
+It's where the Lynx engine processes [=ElementsComponents/element tree=] into pixels that are displayed on the users' screen.
+
+## [=Pixel Pipeline=]
+The Pixel Pipeline consists of the following stages.
+
+### <dfn for=EnginePixeling>Resolve</dfn>
+At this stage, based on the [=ElementsComponents/attribute=] of the [=ElementsComponents/element=],
+the [=computed style=] and [=prop bundle=] of the element are generated and synchronized to the [=layout node=].
+This stage will also create and modify [=layout node tree=]. At the same time, it will also generate [=UI paint op=].
+
+#### <dfn for=EnginePixeling>Parallel Resolve</dfn>
+Parallel resolve is a [=EnginePixeling/resolve=] process such that the pixel pipeline will spilt resolve tasks into independent sub-tasks and executing the tasks in parallel on multiple threads.
+
+#### <dfn for=EnginePixeling>Serial Resolve</dfn>
+In contrast, Serial resolve is a [=EnginePixeling/resolve=] process where all resolve tasks are executed on a single thread.
+
+### <dfn for=EnginePixeling>Layout</dfn>
+This stage is based on [=layout node tree=] to complete the layout process, and finally synchronize the layout results to element. Element adjusts the layout results and generate [=UI layout op=].
+
+### <dfn for=EnginePixeling>Execute UI OP</dfn>
+
+#### <dfn for=EnginePixeling>Execute UI Paint OP</dfn>
+Execute the [=UI Paint OP=] generated during the pre-order stages.
+
+#### <dfn for=EnginePixeling>Execute UI Layout OP</dfn>
+Execute the [=UI Layout OP=] generated during the pre-order stages.
+
+### <dfn for=EnginePixeling>Paint</dfn>
+Based on [=platform UI=] and [=platform UI Tree=], complete the final pixeling.

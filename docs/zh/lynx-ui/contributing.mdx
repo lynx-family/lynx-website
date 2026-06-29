@@ -1,0 +1,103 @@
+---
+description: 'lynx-ui 组件贡献开发指南。'
+---
+
+# 参与贡献
+
+lynx-ui 欢迎社区贡献。本文优先说明组件开发流程，以及容易阻塞 PR 的关键要求；完整开发流程请参考
+[lynx-ui 贡献指南](https://github.com/lynx-family/lynx-ui/blob/main/CONTRIBUTING.md)。
+
+## 环境要求
+
+- 使用 **Node.js >= 24.0.0**。
+- 使用仓库锁定的 pnpm 版本。安装依赖前先执行 `corepack enable`。
+- 在仓库根目录执行 `pnpm install` 安装依赖。
+
+```bash
+git clone https://github.com/lynx-family/lynx-ui.git
+cd lynx-ui
+corepack enable
+pnpm install
+pnpm build
+```
+
+## 组件开发
+
+每个组件包位于 `packages/lynx-ui-<component-name>`，通常包含：
+
+- `src`：组件源码
+- `types`：公开类型定义，包括文档入口类型
+- `README.md`：组件级使用说明
+
+如需按标准结构创建新组件，执行：
+
+```bash
+pnpm make-new-component --create <component-name>
+# 示例：pnpm make-new-component --create toast
+```
+
+该命令会创建：
+
+```text
+packages/lynx-ui-<component-name>
+```
+
+## 示例
+
+组件行为发生变化时，请添加或更新示例，方便 Review 时验证效果。
+
+如需生成示例文件，执行：
+
+```bash
+pnpm make-new-component --example <component-name>
+# 示例：pnpm make-new-component --example toast
+```
+
+运行示例前，先确认具体示例包名：
+
+```text
+apps/examples/src/<Component>/package.json
+```
+
+更完整的示例运行说明请参考 lynx-ui 仓库中的
+[apps/examples/README.md](https://github.com/lynx-family/lynx-ui/blob/main/apps/examples/README.md)。
+
+然后运行对应示例包：
+
+```bash
+# 示例：运行 button 示例
+npx turbo watch dev --filter '@lynx-example/lynx-ui-button'
+```
+
+## 提交 PR 前
+
+提交前请在本地运行相关检查：
+
+```bash
+pnpm check
+pnpm check:changed
+pnpm test
+```
+
+仅在确认影响范围后使用 `pnpm fix:all` 或 `pnpm check:changed:unsafe` 自动修复文件。
+
+## 版本与 Changeset
+
+lynx-ui 使用 Changesets 管理包版本。任何面向用户的改动都需要添加 changeset，包括组件行为、API、包依赖、随组件发布的文档或示例包。
+
+```bash
+pnpm changeset
+```
+
+示例包会随组件一起发布。示例包发布后，需要在
+[lynx-website](https://github.com/lynx-family/lynx-website) 仓库中手动更新对应示例版本。
+更新 website 前，请确认示例包的稳定版本已经发布，避免文档引用尚未发布到 registry 的版本。
+
+## PR 要求
+
+- PR 通常会通过 squash merge 合入，最终进入目标分支时应只有一个提交。
+- 最终提交信息应遵循 [Conventional Commits](https://www.conventionalcommits.org/)。
+- 面向用户的改动需要提交 changeset。
+- 贡献内容会按照
+  [Apache-2.0 License](https://github.com/lynx-family/lynx-ui/blob/main/LICENSE) 授权。如果 PR 中出现
+  CLA 检查，请先完成 CLA 后再请求 Review。

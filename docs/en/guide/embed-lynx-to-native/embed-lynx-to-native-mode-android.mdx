@@ -1,0 +1,36 @@
+### Get size constraints in the `onMeasure` method.
+
+Android system provides an [onMeasure](<https://developer.android.com/reference/android/view/View#onMeasure(int,%20int)>) for views, during which LynxView receives size constraints from its parent view.
+Lynx will complete the layout of all elements and calculate the size of LynxView within the system's `onMeasure` function, and then set the correct value using [setMeasuredDimension](<https://developer.android.com/reference/android/view/View#setMeasuredDimension(int,%20int)>).
+
+[View.MeasureSpec](https://developer.android.com/reference/android/view/View.MeasureSpec) values:
+
+- `UNSPECIFIED`
+
+  LynxView's size is determined by Page content, with no parent constraints.
+
+- `EXACTLY`
+
+  LynxView's size is fixed, same as the Page element's size.
+
+- `AT_MOST`
+
+  LynxView's maximum width or height.
+
+When the content of the page needs to be re-layout, Lynx will call the system's [requestLayout](<https://developer.android.com/reference/android/view/View#requestLayout()>), which triggers `onMeasure` to execute again.
+
+### Preset Width and Height, Trigger Layout Early
+
+When creating LynxView, you can preset its size constraints using `LynxViewBuilder#setPresetMeasuredSpec`, with parameters identical to`onMeasure`. This triggers layout during the [rendering pipeline](/guide/spec#pipeline) instead of waiting for `onMeasure`.
+
+If a change in `measureSpec` is detected, the layout will re-trigger to ensure LynxView's size is correct.
+
+For example, you can preset a fixed size of 400x200 with the following code:
+
+```java
+LynxViewBuilder viewBuilder = new LynxViewBuilder();
+viewBuilder = viewBuilder.setPresetMeasuredSpec(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+        View.MeasureSpec.makeMeasureSpec(200, View.MeasureSpec.EXACTLY));
+
+LynxView lynxview = viewBuilder.build(this);;
+```

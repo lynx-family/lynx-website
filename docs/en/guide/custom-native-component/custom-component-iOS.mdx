@@ -1,0 +1,555 @@
+import { Steps } from '@theme';
+import { CodeFold } from '@lynx';
+import { Tab, Tabs } from '@theme';
+import * as NextSteps from '@lynx/NextSteps';
+
+The implementation of custom native elements can be broken down into several steps, including: declaring and registering elements, creating native views, handling styles and properties, event binding, etc. Let's take a simple custom input element `<explorer-input>` as an example to briefly introduce the implementation process of custom elements.
+
+The complete implementation can be found in the [LynxExplorer/input module](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios/lynx_explorer/LynxExplorer/input). You can compile and run the [LynxExplorer sample project](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios) to preview element behavior in real-time.
+
+<Steps>
+
+### Declare and Register Elements
+
+#### Declare Custom Elements
+
+A declared custom element needs to inherit from `LynxUI`. Below is the implementation of the `<explorer-input>` element:
+
+```objc title="LynxExplorerInput.h" {1,11}
+
+#import <Lynx/LynxUI.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface LynxTextField : UITextField
+
+@property(nonatomic, assign) UIEdgeInsets padding;
+
+@end
+
+@interface LynxExplorerInput : LynxUI <LynxTextField *> <UITextFieldDelegate>
+
+@end
+
+NS_ASSUME_NONNULL_END
+```
+
+<CodeFold toggle height={200}>
+
+```objc title="LynxExplorerInput.m"
+
+#import "LynxExplorerInput.h"
+
+@implementation LynxExplorerInput
+
+//...
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+#### Register Custom Element
+
+Elements can be registered in two ways: globally and locally.
+
+##### Global Registration
+
+Globally registered elements can be shared across multiple `LynxView` instances.
+
+<CodeFold toggle height={200}>
+
+```objc title="LynxExplorerInput.m" {2,6}
+
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+@end
+
+
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+##### Local Registration
+
+Locally registered elements are only applicable to the current `LynxView` instance.
+
+```objc {7}
+#import <Lynx/LynxEnv.h>
+#import <Lynx/LynxView.h>
+
+  LynxView *lynxView = [[LynxView alloc] initWithBuilderBlock:^(LynxViewBuilder *builder) {
+    builder.config =
+        [[LynxConfig alloc] initWithProvider:[LynxEnv sharedInstance].config.templateProvider];
+    [builder.config registerUI:[LynxExplorerInput class] withName:@"explorer-input"];
+  }];
+```
+
+Where `"explorer-input"` corresponds to the tag name in the front-end DSL. When Lynx Engine parses this tag, it will look for the registered native element and create an instance.
+
+### Create Native `View` Instance
+
+Each custom element needs to implement the `createView` method, which returns a corresponding native `View` instance.
+
+Here is the implementation for the `<explorer-input>` element:
+
+<CodeFold toggle height={500}>
+
+```objc title="LynxExplorerInput.m" {8-13}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  return textField;
+}
+
+@end
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+### Handle Front-End Style and Property Updates
+
+You can use the `LYNX_PROP_SETTER` macro to listen for property changes passed from the front end and update the native view. For example, handling the `value` property of the `<explorer-input>` element:
+
+<CodeFold toggle height={500}>
+
+```objc title="LynxExplorerInput.m" {3,9-11}
+
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+LYNX_PROP_SETTER("value", setValue, NSString *) {
+    self.view.text = value;
+}
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  return textField;
+}
+
+@end
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+### Handle Layout Information (Optional)
+
+#### Handle Lynx Engine Layout Results
+
+Typically, Lynx Engine automatically calculates and updates the `View` layout information, so developers do not need to manually handle this. However, in some special cases, such as when additional adjustments to the `View` are required, you can obtain the latest layout information in the `layoutDidFinished` callback and apply custom logic.
+
+<CodeFold toggle height={500}>
+
+```objc title="LynxExplorerInput.m" {9-11}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+- (void)layoutDidFinished {
+  self.view.padding = self.padding;
+  }
+
+LYNX_PROP_SETTER("value", setValue, NSString \*) {
+self.view.text = value;
+}
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  return textField;
+  }
+
+@end
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+  }
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  \_padding = padding;
+  [self setNeedsLayout];
+  }
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+  }
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+  }
+  @end
+
+```
+
+</CodeFold>
+
+### Handle Event Binding (Optional)
+
+In some scenarios, the front-end may need to respond to events from custom elements. For example, when the user types in the input box, the front-end might
+
+need to capture and process the input data.
+
+Here is an example of how to send a text input event from the `<explorer-input>` element to the front-end and how the front-end listens for the event.
+
+#### Client-Side Event Sending
+
+The client listens to text input callbacks from the native view, and when the text changes, it uses `[self.context.eventEmitter dispatchCustomEvent:eventInfo]` to send the event to the front-end for handling.
+
+<CodeFold toggle height={850}>
+
+```objc title="LynxExplorerInput.m" {13-16,20-25,27-32}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                        selector:@selector(textFieldDidChange:)
+                                        name:UITextFieldTextDidChangeNotification
+                                        object:textField];
+  return textField;
+}
+
+- (void)emitEvent:(NSString *)name detail:(NSDictionary *)detail {
+  LynxCustomEvent *eventInfo = [[LynxDetailEvent alloc] initWithName:name
+                                                          targetSign:[self sign]
+                                                              detail:detail];
+  [self.context.eventEmitter dispatchCustomEvent:eventInfo];
+}
+
+- (void)textFieldDidChange:(NSNotification *)notification {
+  [self emitEvent:@"input"
+           detail:@{
+             @"value": [self.view text] ?: @"",
+           }];
+}
+
+- (void)layoutDidFinished {
+    self.view.padding = self.padding;
+}
+
+LYNX_PROP_SETTER("value", setValue, NSString *) {
+    self.view.text = value;
+}
+
+@end
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+#### Front-End DSL Event Binding
+
+On the front-end, bind the corresponding input event to listen for and handle the text input data sent by the client.
+
+```jsx title="App.tsx"
+const handleInput = (e) => {
+  const currentValue = e.detail.value.trim();
+  setInputValue(currentValue);
+};
+
+<explorer-input
+  className="input-box"
+  style={{ width: '100px', height: '100px' }}
+  bindinput={handleInput}
+  value={inputValue}
+/>;
+```
+
+> **Note**: The front-end DSL uses `bindxxx` for event binding, such as `bindinput` to bind the `input` event.
+
+### Support Direct Element Manipulation (Optional)
+
+In some cases, the front-end may need to directly manipulate custom elements via imperative APIs. You can make elements support such operations with `LYNX_UI_METHOD`.
+
+#### Front-End Call Example
+
+The following code shows how to use [SelectorQuery](/api/lynx-api/selector-query) to call the `focus` method and focus the `<explorer-input>` element:
+
+```jsx title="App.tsx"
+lynx
+  .createSelectorQuery()
+  .select('#input-id')
+  .invoke({
+    method: 'focus',
+    params: {},
+    success: function (res) {
+      console.log('lynx', 'request focus success');
+    },
+    fail: function (res) {
+      console.log('lynx', 'request focus fail');
+    },
+  })
+  .exec();
+```
+
+#### Client-Side Implementation
+
+On the client side, use `LYNX_UI_METHOD` to add a `focus` method to the custom element to handle the front-end call.
+
+<CodeFold toggle height={600}>
+
+```objc title="LynxExplorerInput.m" {4,10-16}
+#import "LynxExplorerInput.h"
+#import <Lynx/LynxComponentRegistry.h>
+#import <Lynx/LynxPropsProcessor.h>
+#import <Lynx/LynxUIMethodProcessor.h>
+
+@implementation LynxExplorerInput
+
+LYNX_LAZY_REGISTER_UI("explorer-input")
+
+LYNX_UI_METHOD(focus) {
+    if ([self.view becomeFirstResponder]) {
+        callback(kUIMethodSuccess, nil);
+    } else {
+        callback(kUIMethodUnknown, @"fail to focus");
+    }
+}
+
+- (UITextField *)createView {
+  UITextField *textField = [[LynxTextField alloc] init];
+  //...
+  textField.delegate = self;
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                        selector:@selector(textFieldDidChange:)
+                                        name:UITextFieldTextDidChangeNotification
+                                        object:textField];
+  return textField;
+}
+
+- (void)emitEvent:(NSString *)name detail:(NSDictionary *)detail {
+  LynxCustomEvent *eventInfo = [[LynxDetailEvent alloc] initWithName:name
+                                                          targetSign:[self sign]
+                                                              detail:detail];
+  [self.context.eventEmitter dispatchCustomEvent:eventInfo];
+}
+
+- (void)textFieldDidChange:(NSNotification *)notification {
+  [self emitEvent:@"input"
+           detail:@{
+             @"value": [self.view text] ?: @"",
+           }];
+}
+
+- (void)layoutDidFinished {
+    self.view.padding = self.padding;
+}
+
+LYNX_PROP_SETTER("value", setValue, NSString *) {
+    self.view.text = value;
+}
+
+@end
+
+@implementation LynxTextField
+
+- (UIEditingInteractionConfiguration)editingInteractionConfiguration API_AVAILABLE(ios(13.0)) {
+  return UIEditingInteractionConfigurationNone;
+}
+
+- (void)setPadding:(UIEdgeInsets)padding {
+  _padding = padding;
+  [self setNeedsLayout];
+}
+
+- (CGRect)textRectForBounds:(CGRect)bounds {
+  CGFloat x = self.padding.left;
+  CGFloat y = self.padding.top;
+  CGFloat width = bounds.size.width - self.padding.left - self.padding.right;
+  CGFloat height = bounds.size.height - self.padding.top - self.padding.bottom;
+
+  return CGRectMake(x, y, width, height);
+}
+
+- (CGRect)editingRectForBounds:(CGRect)bounds {
+  return [self textRectForBounds:bounds];
+}
+@end
+```
+
+</CodeFold>
+
+#### Method Callback Return Values
+
+When implementing the focus method, component developers need to return a status code to the frontend to indicate whether the operation was successful. For instance, the frontend call might fail, in which case an appropriate error status should be returned so that the frontend can handle it in the `fail` callback.
+
+Lynx Engine defines several common error codes, and developers can return the appropriate status code in the method callback:
+
+```objc
+enum LynxUIMethodErrorCode {
+  kUIMethodSuccess = 0, // Succeeded
+  kUIMethodUnknown, // Unknown error
+  kUIMethodNodeNotFound, // Cannot find corresponding element
+  kUIMethodMethodNotFound, // No corresponding method on this element
+  kUIMethodParamInvalid, // Invalid method parameters
+  kUIMethodSelectorNotSupported, // Selector not supported
+};
+```
+
+</Steps>

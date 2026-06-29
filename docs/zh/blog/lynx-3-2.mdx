@@ -1,0 +1,345 @@
+---
+title: 'Lynx 3.2 发布公告'
+date: 2025-05-14
+sidebar: false
+authors: ['shiwentao', 'lynx']
+description: 'Lynx 3.2 对框架、引擎和工具进行了全面更新，包括 ReactLynx 测试工具、`llms.txt` 支持、Grid 布局新特性、对 `<list>` 和 `<text>` 的优化等。'
+---
+
+import { BlogHeader, CodeFold } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { Go, Badge } from '@lynx';
+import { Tab, Tabs } from '@theme';
+
+<BlogHeader authors={['shiwentao', 'lynx']} />
+
+![lynx-in-3-2](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/lynx-3-2.png)
+
+今天，我很高兴地与大家分享我们自 2025 年 3 月[开源](/blog/lynx-unlock-native-for-more)以来第一个稳定版本 Lynx 3.2，现已正式发布！
+
+Lynx 3.2 对框架、引擎和工具进行了全面更新，包括 [ReactLynx 测试工具](#reactlynx-testing-library)、[`llms.txt` 支持](#网站llmstxt-支持)、[Grid 布局新特性](#css-网格布局minmaxmax-contentfit-content)、对 [`<list>`](#list-元件优化) 和 [`<text>`](#text-可被定制为跨节点选择) 的优化等等，旨在为开发者带来更熟悉的开发体验和更多的能力。该版本拥有来自 61 位贡献者（包括一些首次贡献者）的超过 [296 次提交](https://github.com/lynx-family/lynx/releases/)。让我们一起来看看有哪些新特性！
+
+## ReactLynx Testing Library
+
+我们将 JavaScript 社区广受欢迎的 UI 组件测试工具 [Testing Library](https://testing-library.com/) 引入到了 Lynx 中。新增的 [`@lynx-js/react/testing-library/`](/api/reactlynx-testing-library/index) 包提供了 [`render`](/api/reactlynx-testing-library/Function.render.html) 等测试工具函数。同时，它也可以与官方的 [`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) 搭配使用，让你能够使用 `toBeInTheDocument` 等匹配器来验证元素是否存在及其行为表现。
+
+```js
+import '@testing-library/jest-dom';
+import { expect, it } from 'vitest';
+import { render } from '@lynx-js/react/testing-library';
+
+it('renders', () => {
+  const Wrapper = ({ children }) => (
+    <view data-testid="wrapper">{children}</view>
+  );
+  const Comp = () => (
+    <view data-testid="inner" style="background-color: yellow;" />
+  );
+  const { container, getByTestId } = render(<Comp />, { wrapper: Wrapper });
+
+  expect(getByTestId('wrapper')).toBeInTheDocument();
+  expect(container.firstChild).toMatchInlineSnapshot(`
+    <view data-testid="wrapper">
+      <view data-testid="inner" style="background-color: yellow;"/>
+    </view>
+  `);
+});
+```
+
+[了解更多关于 ReactLynx Testing Library 的使用指南](/zh/react/reactlynx-testing-library.mdx)。
+
+## 网站: `llms.txt` 支持
+
+通过升级到 [Rspress v2](https://v2.rspress.dev/) 并利用新的 [LLM 插件](https://x.com/rspack_dev/status/1917844832149725695)，Lynx 网站现已完全支持 [https://lynxjs.org/llms.txt](https://lynxjs.org/llms.txt) 和 [https://lynxjs.org/llms-full.txt](https://lynxjs.org/llms-full.txt)，以帮助 AI 更好地理解 Lynx，提升你使用 AI 辅助编程的体验。对于每个页面，你都可以通过将 `.html` 扩展名替换为 `.md` 来获取原始的 markdown 文件。
+
+[了解更多关于 `llms.txt` 的信息](https://llmstxt.org/)。
+
+## CSS 网格布局: `minmax()`, `max-content`, `fit-content` <Badge>Web 友好</Badge>
+
+Lynx 3.2 添加了三个 CSS 函数 `minmax()`、`max-content` 和 `fit-content`，以帮助你在 [CSS 网格布局](/guide/ui/layout/grid-layout.html)中更好地控制网格大小。你可以在 `grid-template-columns`、`grid-template-rows`、`grid-auto-columns` 和 `grid-auto-rows` 中使用它们。
+
+让我们来看一个三列布局的例子，使用 `grid-template-columns: 20% max-content minmax(50px, max-content)` 来实现：
+
+- 第一列固定为容器宽度的 20%
+- 第二列宽度自动适应其内容的最大宽度
+- 第三列的宽度在最小 50px 和最大内容宽度之间动态调整，同时受容器宽度约束
+
+<Go
+  example="css"
+  defaultFile="src/grid_layout/index.tsx"
+  defaultEntryFile="dist/grid_layout.lynx.bundle"
+  highlight="{24}"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/grid-minmax.png"
+  entry="src/grid_layout"
+/>
+
+## `<list>` 元件优化
+
+### 使用 `item-snap` 进行滚动吸附
+
+使用 [`item-snap` 滚动吸附](/api/elements/built-in/list.html#item-snap) 在 Lynx 3.2 中已经成为一个稳定特性。它可以在所有平台上提供了流畅且易用的分页功能，使开发者能够创建具有精确滚动交互的信息流或轮播图。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/list-snap.gif"
+  example="list"
+  defaultFile="src/horizontal-snap/index.tsx"
+  defaultEntryFile="dist/horizontal-snap.lynx.bundle"
+  highlight="{26}"
+  entry="src/horizontal-snap"
+/>
+
+[学习如何使用 `item-snap` 实现分页。](/api/elements/built-in/list.html#pagination-withitem-snap)
+
+### 新增 `<list-item>` 的 `z-index` 支持
+
+增加对 `<list-item>` 上 [**z-index**](/zh/api/css/properties/z-index.html) 的支持，能够更方便的调整列表项的视图层级。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/list-z-index.gif"
+  example="list"
+  defaultFile="src/zIndex/index.tsx"
+  defaultEntryFile="dist/zIndex.lynx.bundle"
+  highlight="{23}"
+  entry="src/zIndex"
+/>
+
+## `<text>` 可被定制为跨节点选择 <Badge>Web 友好</Badge>
+
+在长文章场景下，通过新增的 [`custom-text-selection`](/api/elements/built-in/text.html#custom-text-selection) 特性，你可以 [自定义实现跨文本节点的选择和复制功能](/api/elements/built-in/text.html#crosstext-selection-and-copying)，使文本选择体验更接近 Web。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/cross-text-select.gif"
+  example="text"
+  defaultFile="src/cross_text_selection/index.tsx"
+  defaultEntryFile="dist/cross_text_selection.lynx.bundle"
+  highlight="{30}"
+  entry="src/cross_text_selection"
+/>
+
+## 微任务 <Badge>Web 友好</Badge>
+
+在 Lynx 3.2 之前，Lynx 并不支持微任务，以下代码的行为与Web 浏览器并不一致。Lynx 3.2 中支持了基于微任务的 `Promise`，并新增了 API [`lynx.queueMicrotask`](/api/lynx-api/lynx/lynx-queue-microtask)。
+
+```js
+setTimeout(() => {
+  console.log('this is a timeout, will exec after');
+}, 0);
+
+Promise.resolve().then((value) => {
+  console.log('this is a Promise, will exec before');
+});
+```
+
+| 3.2 之前 Lynx 运行结果                                                                                                   | Chrome 运行结果                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/lynx-test-result.png) | ![](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/chrome-test-result.png) |
+
+## `console` API 完善 <Badge>Web 友好</Badge>
+
+Lynx 3.2 进一步实现了大部分符合 [W3C 标准](https://developer.mozilla.org/en-US/docs/Web/API/console)的 `console` API，提供了更全面的调试体验。更多详情请参阅 [API 参考](/api/lynx-api/global/console/assert.html)。
+
+<center>
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/lynx-console.gif"
+    width="400"
+    height="400"
+    align="center"
+  />
+</center>
+
+## Rspeedy: Rslib 与 Rspack 1.3
+
+Rspeedy [v0.9.0](https://github.com/lynx-family/lynx-stack/discussions/482) 已发布，默认打包库使用 [Rslib](https://lib.rsbuild.dev/)，整体安装体积减少了超过 50%。同时该版本将 [Rspack](https://rspack.rs/) 升级至 [1.3](https://rspack.rs/blog/announcing-1-3) 带来了更多增强功能，例如更快的代码拆分、更小的打包体积、更低的内存消耗。此外，该版本还包含一些其他改进，如新增配置项等功能。有关这些更改的完整概述，请查看 [`@lynx-js/rspeedy v0.9.0`](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md#090) 变更日志。
+
+若要体验 Rspeedy v0.9.0 版本的新功能，您可以在 Rspeedy 项目中使用以下命令进行升级：
+
+```js
+npx upgrade-rspeedy@latest
+```
+
+## DevTool 支持清晰度切换
+
+使用过 DevTool 的 Lynx 开发者会发现 DevTool 的左侧有一个投屏区域，用于镜像显示调试设备上的 Lynx 页面。在新的版本中新增了一个分辨率切换开关，可切换至高清 (HD) 或标清 (SD) 模式。当设备连接不稳定时，可使用标清模式减少数据传输带宽，使画面更流畅。
+
+如要体验该功能，访问 [DevTool Release 记录](https://github.com/lynx-family/lynx-devtool/releases/tag/v0.0.2) 下载最新 Lynx DevTool 桌面应用程序。
+
+<center>
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/news-in-3.2/devtoolsopt.gif"
+    width="800"
+    height="800"
+  />
+</center>
+
+## 升级到 Lynx 3.2
+
+### Android
+
+参照官网[接入 Lynx 到现有应用](/zh/guide/start/integrate-with-existing-apps.html?platform=ios)，更新 Lynx 以及 LynxService 依赖版本，完成 Lynx 3.2 版本升级。
+
+在工程的 `build.gradle` 或 `build.gradle.kts` 中，升级 Lynx 依赖至如下版本：
+
+<Tabs groupId='update-lynx-3-2-with-existing-app'>
+<Tab label="build.gradle">
+
+```groovy title=build.gradle {3-6}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:3.2.0"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:3.2.0"
+    implementation "org.lynxsdk.lynx:lynx-trace:3.2.0"
+    implementation "org.lynxsdk.lynx:primjs:2.12.0"
+}
+```
+
+</Tab>
+<Tab label="build.gradle.kts">
+
+```groovy title=build.gradle.kts {3-6}
+dependencies {
+    // lynx dependencies
+    implementation("org.lynxsdk.lynx:lynx:3.2.0")
+    implementation("org.lynxsdk.lynx:lynx-jssdk:3.2.0")
+    implementation("org.lynxsdk.lynx:lynx-trace:3.2.0")
+    implementation("org.lynxsdk.lynx:primjs:2.12.0")
+}
+```
+
+</Tab>
+</Tabs>
+
+在工程的 `build.gradle` 或 `build.gradle.kts` 中，升级 LynxService 依赖至如下版本：
+
+<Tabs groupId='update-lynx-3-2-with-existing-app'>
+<Tab label="build.gradle">
+<CodeFold height={360} toggle>
+
+```groovy title=build.gradle {8-24}
+dependencies {
+    // lynx dependencies
+    implementation "org.lynxsdk.lynx:lynx:3.2.0"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:3.2.0"
+    implementation "org.lynxsdk.lynx:lynx-trace:3.2.0"
+    implementation "org.lynxsdk.lynx:primjs:2.12.0"
+
+    // integrating image-service
+    implementation "org.lynxsdk.lynx:lynx-service-image:3.2.0"
+
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation "com.facebook.fresco:fresco:2.3.0"
+    implementation "com.facebook.fresco:animated-gif:2.3.0"
+    implementation "com.facebook.fresco:animated-webp:2.3.0"
+    implementation "com.facebook.fresco:webpsupport:2.3.0"
+    implementation "com.facebook.fresco:animated-base:2.3.0"
+
+    // integrating log-service
+    implementation "org.lynxsdk.lynx:lynx-service-log:3.2.0"
+
+    // integrating http-service
+    implementation "org.lynxsdk.lynx:lynx-service-http:3.2.0"
+
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+
+}
+```
+
+</CodeFold>
+</Tab>
+
+<Tab label="build.gradle.kts">
+<CodeFold height={360} toggle>
+
+```groovy title=build.gradle.kts {8-24}
+dependencies {
+    // lynx dependencies
+    implementation("org.lynxsdk.lynx:lynx:3.2.0")
+    implementation("org.lynxsdk.lynx:lynx-jssdk:3.2.0")
+    implementation("org.lynxsdk.lynx:lynx-trace:3.2.0")
+    implementation("org.lynxsdk.lynx:primjs:2.12.0")
+
+    // integrating image-service
+    implementation("org.lynxsdk.lynx:lynx-service-image:3.2.0-")
+
+    // image-service dependencies, if not added, images cannot be loaded; if the host APP needs to use other image libraries, you can customize the image-service and remove this dependency
+    implementation("com.facebook.fresco:fresco:2.3.0")
+    implementation("com.facebook.fresco:animated-gif:2.3.0")
+    implementation("com.facebook.fresco:animated-webp:2.3.0")
+    implementation("com.facebook.fresco:webpsupport:2.3.0")
+    implementation("com.facebook.fresco:animated-base:2.3.0")
+
+    // integrating log-service
+    implementation("org.lynxsdk.lynx:lynx-service-log:3.2.0")
+
+    // integrating http-service
+    implementation("org.lynxsdk.lynx:lynx-service-http:3.2.0")
+
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+}
+```
+
+</CodeFold>
+</Tab>
+</Tabs>
+
+### iOS
+
+在项目的 `Podfile` 中，更新 Lynx 依赖至如下版本：
+
+<CodeFold height={360} toggle>
+
+```ruby title="Podfile" {1,6-8,10}
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '10.0'
+
+target 'YourTarget' do
+pod 'Lynx', '3.2.0', :subspecs => [
+'Framework',
+]
+
+pod 'PrimJS', '2.12.0', :subspecs => ['quickjs', 'napi']
+end
+
+```
+
+</CodeFold>
+
+在项目的 `Podfile` 中，更新 LynxService 依赖至如下版本：
+
+<CodeFold height={360} toggle>
+
+```ruby title="Podfile" {8-13,15-17}
+source 'https://cdn.cocoapods.org/'
+platform :ios, '10.0'
+target 'YourTarget' do
+  pod 'Lynx', '3.2.0', :subspecs => [
+    'Framework',
+  ]
+  pod 'PrimJS', '2.12.0', :subspecs => ['quickjs', 'napi']
+  # integrate image-service, log-service, and http-service
+  pod 'LynxService', '3.2.0', :subspecs => [
+      'Image',
+      'Log',
+      'Http',
+  ]
+
+  # ImageService
+  pod 'SDWebImage','5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+
+end
+```
+
+</CodeFold>
+
+## 写在最后
+
+感谢 Lynx 社区全体成员对 Lynx 3.2 版本发布的支持！Lynx 作为一个开源项目的新成员，我们对其未来满怀憧憬，也迫切地期待社区成员基于 Lynx 开发的应用程序早日亮相。
+
+未来，我们将与社区携手共进，按[规划](/blog/lynx-open-source-roadmap-2025.html)陆续推出更多功能支持，例如新增 Input 等组件、适配鸿蒙与 PC 等更多平台。
+
+请查阅[版本说明和更新](https://github.com/lynx-family/lynx/releases/tag/3.2.0)，开启您全新的 Lynx 开发构建之旅！
+
+---
+
+_感谢[黄玄](https://x.com/huxpro)、[张磊](https://x.com/zoolsher)和[刘守群](https://x.com/liushouqun)在撰写此博客时提供的帮助。_

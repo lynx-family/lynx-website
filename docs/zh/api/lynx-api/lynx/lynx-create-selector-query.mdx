@@ -1,0 +1,65 @@
+---
+title: createSelectorQuery()
+api: lynx-api/lynx/createSelectorQuery
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx: createSelectorQuery() static method
+
+<APISummary />
+
+创建一个以页面根节点为根的 [`SelectorQuery`]。
+
+## 语法
+
+```ts
+createSelectorQuery(): SelectorQuery;
+```
+
+### 参数
+
+无。
+
+### 返回值
+
+以页面根节点为根的 [`SelectorQuery`] 对象。
+
+## 示例
+
+获取指定 text 节点的位置和大小：
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function App() {
+  useEffect(() => {
+    lynx
+      .createSelectorQuery() // 创建 SelectorQuery
+      .select('#my-id') // 指定目标节点的选择器
+      .invoke({
+        // 指定对目标节点的操作
+        method: 'boundingClientRect',
+        success: function (res) {
+          console.log(res);
+        },
+        fail: function (res) {
+          console.log(res.code, res.data);
+        },
+      })
+      .exec(); // 执行查询
+  }, []);
+
+  return (
+    <view>
+      <text id="my-id">Hello, ReactLynx</text>
+    </view>
+  );
+}
+```
+
+[`SelectorQuery`]: ../selector-query.mdx
+
+## 兼容性
+
+<APITable />

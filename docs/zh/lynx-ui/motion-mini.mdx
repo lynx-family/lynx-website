@@ -1,0 +1,89 @@
+---
+description: '使用 @lynx-js/motion/mini 在 Lynx 中实现轻量级主线程数字动画。'
+---
+
+import { Go } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import { motionMiniDemoMeta } from '../../../sharedDocs/introDocs/lynx-ui-motion/demoMeta.ts';
+
+# @lynx-js/motion/mini
+
+`@lynx-js/motion/mini` 是 [`@lynx-js/motion`](./motion) 的轻量入口，只对**数字**做动画，由你自行拼接最终样式字符串，例如 `translateX(${x}px) scale(${scale})`。这已经能覆盖大多数交互驱动的动画场景，也是目前 lynx-ui 使用的入口。完整的 [Motion](https://motion.dev) 适配和[对照表](./motion#什么是-mini-入口什么时候应该使用它)见[完整入口](./motion)页面。
+
+## 安装
+
+<PackageManagerTabs command="install @lynx-js/motion" />
+
+从 mini 入口导入：
+
+```ts
+import {
+  animate,
+  useMotionValueRef,
+  useMotionValueRefEvent,
+} from '@lynx-js/motion/mini';
+```
+
+## 基本模式
+
+Motion Mini 的基本模式是：
+
+1. 使用 `useMotionValueRef()` 保存每个独立的动画数字。
+2. 使用 `useMotionValueRefEvent()` 订阅值变化。
+3. 在订阅回调中写入最终样式。
+4. 从主线程函数中启动 `animate()`。
+
+示例使用单独的 `mini` 入口，因此 bundle 只包含 mini 运行时。
+
+<Go
+  example="motion"
+  defaultFile="src/Mini/index.tsx"
+  defaultEntryFile="dist/mini.lynx.bundle"
+  entry="src/Mini"
+  highlight={motionMiniDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+`useMotionValueRef()` 会创建拥有 MotionValue 的主线程引用。这个值可以在主线程函数中读取和写入，不会触发 React 重新渲染。
+
+```tsx
+const x = useMotionValueRef(0);
+const scale = useMotionValueRef(1);
+```
+
+每个独立的数字维度使用一个 motion value。在示例中，`x` 控制位移，`scale` 控制缩放。
+
+`useMotionValueRefEvent()` 会在主线程中监听值变化。使用它可以将最新数字值应用到节点上。
+
+示例中的回调会写入完整的 transform 字符串：
+
+```ts
+boxRef.current?.setStyleProperties({
+  transform: `translateX(${xValue}px) scale(${scaleValue})`,
+});
+```
+
+这就是更小运行时带来的取舍：Motion Mini 只负责驱动数字变化，你的代码负责将数字映射到元素样式。
+
+## 启动动画
+
+后台线程事件处理函数可以调用 `runOnMainThread()` 来启动主线程动画。动画本身应在主线程函数中创建。
+
+使用弹簧选项可以获得物理运动效果：
+
+```ts
+animate(x.current, target, {
+  type: 'spring',
+  stiffness: 200,
+  damping: 20,
+});
+```
+
+使用时长和缓动函数可以获得确定性的时间控制：
+
+```ts
+animate(scale.current, target, {
+  duration: 0.4,
+  ease: (t) => t,
+});
+```

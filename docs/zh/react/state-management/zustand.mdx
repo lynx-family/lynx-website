@@ -1,0 +1,48 @@
+import { PackageManagerTabs } from '@theme';
+
+# Zustand
+
+## 使用 `zustand`
+
+[Zustand](https://zustand-demo.pmnd.rs/) 是一个轻量、敏捷且可扩展的状态管理解决方案，基于 React Hooks 提供简洁易用的 API，既灵活又具备一定的规范性。
+
+### 安装依赖
+
+<PackageManagerTabs command="install zustand" />
+
+### 示例
+
+```tsx
+import { useEffect } from '@lynx-js/react';
+import { create } from 'zustand';
+
+type State = {
+  count: number;
+};
+
+type Action = {
+  increment: () => void;
+};
+
+const useStore = create<State & Action>((set) => ({
+  count: 0,
+  increment: () => set((state) => ({ count: state.count + 1 })),
+}));
+
+export function App() {
+  const { count, increment } = useStore();
+
+  useEffect(() => {
+    console.log('count changed:', count);
+  }, [count]);
+
+  return (
+    <view>
+      <text>{count}</text>
+      <text bindtap={increment}>Tap</text>
+    </view>
+  );
+}
+```
+
+更多细节请参考 [zustand - guides](https://zustand.docs.pmnd.rs/guides/updating-state)

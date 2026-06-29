@@ -1,0 +1,231 @@
+---
+api: css/properties/clip-path
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# clip-path
+
+<APISummary />
+
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=android"
+/>
+
+## Introduction
+
+The `clip-path` CSS property creates a clipping region that sets what part of an element should be shown. Parts that are inside the region are shown, while those outside are hidden.
+
+:::warning
+
+- `clip-path` takes effect only on `<view>` elements.
+
+- <span className="material-symbols-outlined">android</span> If this property is
+  not work on Android，try to add a transparent background `background-color:
+  transparent` to avoid the clipping process from being skipped by system.
+
+:::
+
+## Examples
+
+### **inset**
+
+{' '}
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/super-ellipse.png"
+  example="css-api"
+  defaultFile="src/clip_path/inset/index.tsx"
+  defaultEntryFile="dist/clip_path_inset.lynx.bundle"
+  highlight="{10}"
+  entry="src/clip_path/inset"
+></Go>
+
+### **circle**
+
+{' '}
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/circle.png"
+  example="css-api"
+  defaultFile="src/clip_path/circle/index.tsx"
+  defaultEntryFile="dist/clip_path_circle.lynx.bundle"
+  highlight="{10}"
+  entry="src/clip_path/circle"
+></Go>
+
+### **ellipse**
+
+{' '}
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/ellipse.png"
+  example="css-api"
+  defaultFile="src/clip_path/ellipse/index.tsx"
+  defaultEntryFile="dist/clip_path_ellipse.lynx.bundle"
+  highlight="{11}"
+  entry="src/clip_path/ellipse"
+></Go>
+
+### **path**
+
+{' '}
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/path.png"
+  example="css-api"
+  defaultFile="src/clip_path/path/index.tsx"
+  highlight="{11,12}"
+  defaultEntryFile="dist/clip_path_path.lynx.bundle"
+  entry="src/clip_path/path"
+></Go>
+
+## Syntax
+
+```css
+/* Keyword values */
+clip-path: none;
+
+/* <basic-shape> values */
+clip-path: inset(30px super-ellipse 3 3 50px/50px);
+clip-path: circle(50px at 0 100px);
+clip-path: ellipse(50px 60px at 10% 20%);
+clip-path: path(
+  'M0.5,1 C0.5,1,0,0.7,0,0.3 A0.25,0.25,1,1,1,0.5,0.3 A0.25,0.25,1,1,1,1,0.3 C1,0.7,0.5,1,0.5,1 Z'
+);
+```
+
+### Values
+
+The `clip-path` property is specified as one of the values listed below.
+
+`none`
+
+No clipping path is created.
+
+`<basic-shape>`
+
+A shape whose size and position is defined by its `border-box`. One of:
+
+- `inset()`
+
+Defines an inset rectangle.
+
+```
+inset( <length-percentage>{1, 4} [ round | (super-ellipse <exponents>) <border-radius>]?)
+
+<length-percentage> =
+  <length>
+  <percentage>
+
+<exponents> = <number>{2}
+
+<border-radius> =
+  <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
+```
+
+`<length-percentage>{1, 4}`
+
+They represent the top, right, bottom, and left offsets from the `border-box` that defines the positions of the edges of the inset rectangle. These arguments follow the syntax of the margin shorthand, which let
+you set all four insets with one, two or four values.
+
+`round | (super-ellipse <exponents>) <border-radius>`
+
+Optional arguments to define the rounded corners for the inset rectangle. When the shape is `round`, the corner radius acts like `<border-radius>`. When the shapes is `super-ellipse <exponent>`, the corner curve will be an [lame curve](https://en.wikipedia.org/wiki/Superellipse) 。`<border-radius>` using the border-radius shorthand syntax.
+
+`<exponent>`
+
+The two number are the exponents on the two dimensions, first is for x-axis and next for y-axis.
+
+- `circle()`
+
+Defines a circle using a radius and a position.
+
+```
+circle(<length-percentage> [at <position>]?)
+
+<length-percentage> =
+  <length [0,∞]>                |
+  <percentage [0,∞]>
+
+<position> =
+  [ left | center | right | top | bottom | <length-percentage> ]  |
+  [ left | center | right ] && [ top | center | bottom ]  |
+  [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
+  [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
+```
+
+`<length-percentage>`
+
+This may be a `<length>`, or a `<percentage>` defining the radius of the circle.
+
+`<position>`
+
+Moves the center of the circle. May be a `<length>`, or a `<percentage>`, or a values such as `left`. The `<position>` value defaults to center if omitted.
+
+- `ellipse()`
+
+Defines an ellipse using two radii and a position.
+
+An ellipse is essentially a squashed circle and so ellipse() acts in a very similar way to circle() except that we have to specify two radii x and y.
+
+```
+<ellipse()> =
+  ellipse( <radial-size>? [ at <position> ]? )
+
+<radial-size> =
+  <length-percentage [0,∞]>{2}
+
+<position> =
+  [ left | center | right | top | bottom | <length-percentage> ]  |
+  [ left | center | right ] && [ top | center | bottom ]  |
+  [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
+  [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
+
+<length-percentage> =
+  <length>      |
+  <percentage>
+```
+
+`<radial-size>`
+
+Two radii, x and y in that order. These may be a `<length>`, or a `<percentage>`.
+
+`<position>`
+
+Moves the center of the ellipse. May be a `<length>`, or a `<percentage>`, or a values such as left. The `<position>` value defaults to center if omitted.
+
+- `path()`
+
+Defines a shape using an SVG path definition.
+
+```
+  <path()> =
+    path(<string> )
+```
+
+`path()`
+
+The `path()` function takes [SVG path string](https://developer.mozilla.org/zh-CN/docs/Web/SVG/Attribute/d) as argument.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>none</>}
+  appliesTo={<>view</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Difference with the Web
+
+1. `inset()` function accepts `super-ellipse` as corner shape.
+2. `polygon()` function is not supported.
+3. `<clip-rule>` for `path()` function is not supported.
+
+## Compatibility
+
+<APITable />

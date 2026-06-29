@@ -1,0 +1,296 @@
+# 选择器
+
+CSS 选择器规定了 CSS 规则会被应用到哪些元件上。严格来说，CSS 选择器是一个涵盖选择器、组合器、伪元素和伪类的总称。
+
+## 选择器（Selectors）
+
+### 类型选择器（Type selector）
+
+CSS 类型选择器通过节点名称匹配元件。换句话说，它选择一个文件中所有给定类型的元件。
+
+#### 语法
+
+```css
+element { property declarations }
+```
+
+#### 使用示例
+
+```css
+/* 匹配所有 <input> 元件 */
+input {
+  ...
+}
+
+```
+
+#### 通过 `page` 来选择根节点
+
+与 Web 不同，Lynx 里使用 `page` 来选择根节点，而非 `body`。
+
+### 类选择器（Class selector）
+
+按照给定的 `class` 属性的值，选择所有匹配的元件。
+
+#### 语法
+
+```css
+.className { property declarations }
+```
+
+#### 使用示例
+
+```css
+/* 匹配任何 class 属性中含有 "index" 的元件 */
+.index{
+  ...
+}
+```
+
+### 多类选择器 (Multiple Class Selectors)
+
+使用多个类名来选择元件，通过将多个类名连在一起的方法来指定一个元件必须同时包含这些类
+
+#### 语法
+
+```css
+.className1.className2 { property declarations }
+
+element.className1.className2 { property declarations }
+```
+
+#### 使用示例
+
+```css
+/* 匹配任何 input元件且同时 class 中含有 "a b" 的元件 */
+input.a.b{
+  ...
+}
+
+/* element */
+<input className="a b" /> /* 被选中 */
+```
+
+### ID 选择器（ID selector）
+
+按照 `id` 属性选择一个与之匹配的元件。需要注意的是，一个文档中，每个 `ID` 属性都应当是唯一的。
+
+#### 语法
+
+```css
+#idName {  property declarations }
+```
+
+### 通配符选择器（Universal selector）
+
+星号（\*）就是一个通配选择器，它可以匹配任意类型的元件。
+
+#### 语法
+
+```css
+* {  property declarations }
+```
+
+## 组合器 (Combinator)
+
+### 后代选择器 (descendant Combinator)
+
+通过空格组合了两个选择器，如果第二个选择器匹配的元件具有与第一个选择器匹配的祖先（父母，父母的父母，父母的父母的父母等）元件，则它们将被选择。
+
+#### 语法
+
+```css
+selector1 selector2 selector3 {
+  property declarations
+}
+```
+
+#### 使用示例
+
+```css
+/* 匹配任何祖先满足 view.a 且自身是 b 的元件 */
+view.a .b{
+   ...
+}
+
+/* element */
+<view className="a" >
+ <text className="b">hello</text> /*selected*/
+</view>
+```
+
+### 子代组合器 (Child Combinator)
+
+子组合器（`>`）被放在两个 CSS 选择器之间。它只匹配那些被第二个选择器匹配的元件，这些元件是被第一个选择器匹配的元件的**直接**子元件。
+
+#### 语法
+
+```css
+element1 > element2 {
+  property declarations
+}
+```
+
+#### 使用示例
+
+```css
+/* 选择属于“a”类的 view 元件的直接子元件（text） */
+view.a > text {
+  ...
+}
+
+/* element */
+<view className="a" >
+  <text>hello</text> /* 被选中 */
+</view>
+```
+
+### 后续兄弟组合器 (Subsequent-sibling Combinator)
+
+后续兄弟选择器（`~`）将两个选择器分开，并匹配第二个选择器的所有迭代元件，位置无须紧邻于第一个元件，只须有相同的父级元件。
+
+#### 语法
+
+```css
+former_element ~ target_element { property declarations }
+```
+
+#### 使用示例
+
+```css
+/* 选择 view 后续的所有 text 兄弟元件 */
+view ~ text {
+  ...
+}
+
+/* element */
+<view className="a" />
+<text />  /* 被选中 */
+...
+<text />  /* 被选中 */
+```
+
+### 紧邻兄弟组合器 (Next-sibling Combinator)
+
+接续兄弟选择器（`+`）介于两个选择器之间，当第二个元件紧跟在第一个元件之后，并且两个元件都是属于同一个父元件的子元件，则第二个元件将被选中。
+
+#### 语法
+
+```css
+former_element + target_element { property declarations }
+```
+
+#### 使用示例
+
+```css
+/* view 紧邻的 text 兄弟元件被选中 */
+view + text {
+  ...
+}
+
+/* element */
+<view className="a" />
+<text />  /* 被选中 */
+<text />  /* 未被选中 */
+```
+
+### 选择器列表 (Selector list)
+
+CSS 选择器列表（`,`）选择所有匹配的节点。选择器列表是以逗号分隔的多个选择器所组成的列表。
+
+#### 语法
+
+```css
+selector1,selector2 { property declarations }
+```
+
+#### 使用示例
+
+```css
+/* 所有匹配的元件都被选中 */
+ selector1, selector2 {
+  ...
+}
+
+等效于
+selector1 {
+  ...
+}
+
+selector2 {
+  ...
+}
+```
+
+## 伪类 (Pseudo-class)
+
+`:` 伪类是选择器的一种，它用于选择处于特定状态的元件。
+
+支持:
+
+- `:not()`
+- `:root`
+- `:active`
+
+#### `:not()`
+
+用来匹配不符合条件的元件，用法对齐 [W3C `:not()`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:not)
+
+#### `:root` \{#root-selector}
+
+与 `page` 选择器类似，用来匹配根节点, 用法对齐 [W3C `:root`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:root)
+
+#### `:active`
+
+节点被用户按压后，会被激活选中，松开手指则不被激活，用法对齐 [W3C `:active`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:active)
+
+#### 使用示例
+
+```css
+/* 选中所有既不是 <view> 也不是 <text> 的元件 */
+:root :not(view):not(text) {
+  font-weight: bold;
+}
+
+/* 不是 .crazy 或 .fancy 的元件 */
+page :not(.crazy, .fancy) {
+  font-family: sans-serif;
+}
+```
+
+## 伪元素 (Pseudo-element)
+
+伪元素是一个附加至选择器末的关键词，允许你对被选择元件的特定部分修改样式。目前支持 `::selection` 伪元素。
+
+### `::selection`
+
+`::selection` 用于设置文本选中后高亮的样式，支持的属性包括 `background-color`，用于设置高亮背景色，`-x-handle-size` 和 `-x-handle-color` 属性用于设置浮标样式。
+
+#### 使用示例
+
+```html
+<style>
+  .light::selection {
+    background-color: yellow;
+    -x-handle-color: blue;
+    -x-handle-size: 12px;
+  }
+</style>
+
+<text class="light">hello world</text>
+```
+
+## 常见问题
+
+### `!important` 支持
+
+默认情况下，Lynx 不支持 `!important`。不过，**从 engineVersion 3.9 开始**，你可以通过在插件选项中将 `engineVersion` 设置为 `'3.9'` 或更高版本来启用此功能。
+
+启用后，`!important` 会让声明优先于非 `!important` 的声明。如果多个 `!important` 声明同时作用于同一元素，最终优先级仍由特异性和源码顺序决定。更多详情请参考 [MDN 关于 !important 的文档](https://developer.mozilla.org/zh-CN/docs/Web/CSS/important)。
+
+<center>
+  <img
+    width="50%"
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css-priority.png"
+  />
+</center>

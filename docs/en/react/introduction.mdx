@@ -1,0 +1,141 @@
+import { Details, Go } from '@lynx';
+import * as NextSteps from '@lynx/NextSteps';
+
+# What is ReactLynx?
+
+ReactLynx is the official React framework for Lynx. It allows you to develop Lynx native apps with a React mental model.
+
+With ReactLynx, you can build your UI [using JSX and React components](https://react.dev/learn/describing-the-ui), just like you would on the web. ReactLynx turns your React code into calls to the [Lynx Engine](/guide/spec.html#engine) imperative API to render the native UI.
+
+## Main Features
+
+ReactLynx itself is an "idiomatic" React, but it also pioneered optimizations such as "dual-threaded React" and "JSX constant folding".
+
+- **"Idiomatic" React**: ReactLynx is an implementation of React, under the hood it is based on [Preact](https://github.com/preactjs/preact), so it has basically the same API and behavior as React, and this consistency allows many ecosystem constructions to be reused.
+- **[Dual-threaded in Mind](./thinking-in-reactlynx.mdx)**: ReactLynx follows the programming model of React, but by utilizing the **dual-threaded runtime** provided by Lynx, combined with its own programming paradigm (or rules) to achieve better performance and user experience.
+  - **[Off-main-thread](/guide/spec.html#background-thread-aka-off-main-thread) Reconciliation**: ReactLynx puts some Reconciliation logic into the background thread to reduce the amount of calculation in the main thread and improve performance.
+  - **[Lifecycle under dual-thread architecture](./lifecycle.mdx)**: Due to the dual-thread architecture of Lynx, the lifecycle of ReactLynx is slightly different from that of traditional React in terms of calling timing.
+- **JSX constant folding**: ReactLynx folds JSX constants at compile time to reduce runtime calculations.
+
+## For React Web Developers
+
+### Change your `import`
+
+Since it has the same API as [`react`](https://www.npmjs.com/package/react), you can directly replace `react` with `@lynx-js/react`, and continue to use the React API you are familiar with.
+
+```diff
+- import { useState } from 'react';
++ import { useState } from '@lynx-js/react';
+```
+
+For a full list of APIs ReactLynx implemented, please refer to the [`@lynx-js/react` API documentation](/api/react/index.html).
+
+### Different component sets
+
+Unlike elements such as `div` and `span` on the Web, Lynx provides a set of native component sets, such as `view`, `text`, `image`, etc ([full list](/api/elements/built-in/view.html)).
+In ReactLynx, you can [combine](/guide/ui/elements-components.html) these elements to build your native UI.
+
+```diff
+- <div className="..." />
++ <view className="..." />
+```
+
+While the naming of native components is similar to React Native, ReactLynx do have some differences:
+
+```diff
+- import {View, Text, Image} from 'react-native';
+- <View style={{...}} />
++ <view style={{...}} />
+```
+
+### Different event naming
+
+Based on Lynx, ReactLynx uses a different set of event naming than the Web (go to [Events](/guide/interaction/event-handling.html) to learn more).
+
+<Details title="Event propagation is also different">
+
+For commonly used Web methods such as `e.stopPropagation()` and `e.preventDefault()`, Lynx only supports [`e.stopPropagation()`](/api/lynx-api/event/event.html#stoppropagation) in [Main Thread Scripts](./main-thread-script.html). But Lynx's [Event Propagation Mechanism](/guide/interaction/event-handling/event-propagation.html) allows you to implement similar functions or effects as on the Web.
+
+</Details>
+
+```diff
+- <button onTouchStart={...} />
++ <view bindtouchstart={...} catchtouchstart={...}/>
+```
+
+### No `document` and `window`
+
+Lynx does not yet provide `document` and `window` objects, so ReactLynx does not support these two objects either.
+
+<Details title='No "DOM"?'>
+
+Lynx Engine provides a set of Low Level Element APIs that allow [Framework Developers](/guide/spec.html#scripting-framework-developer) to create UI through JavaScript running in the [Main Thread](/guide/spec.html#main-thread-or-lynx-main-thread).
+But this set of APIs is not open to all developers.
+Lynx encourages developers to use declarative methods to build UI as much as possible,
+rather than directly manipulating the DOM.
+But Lynx also provides the ability to [Directly Manipulate Elements](/guide/interaction/event-handling/manipulating-element.react.html) and [Main Thread Scripts](./main-thread-script.html),
+which are generally used to help developers maintain a near-native user experience when implementing some complex interactions.
+
+</Details>
+
+This means that you cannot use any libraries that depend on `document` or `window`.
+
+There are basically two ways for this difference:
+
+- Most of the time, Lynx provides the feature with a different API. For example, you can use the APIs under the `lynx` object like [`lynx.reload`](/api/lynx-api/lynx/lynx-reload.html) to replace `window.location.reload()`.
+- Occasionally, Lynx does not provide the feature. You can use Lynx's [NativeModules](/guide/use-native-modules.mdx) and [Custom Elements](/guide/custom-native-component.mdx) to extend Lynx's capabilities.
+
+## Next Steps
+
+### Further Learning ReactLynx
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/react/thinking-in-reactlynx"
+    title="Thinking in ReactLynx"
+    description="Learn how to think in the ReactLynx framework"
+  />
+  <NextSteps.Step
+    href="/react/lifecycle"
+    title="Rendering Process and Lifecycle"
+    description="Understand the rendering process and lifecycle of ReactLynx"
+  />
+</NextSteps.Root>
+
+### Learn Lynx Basics
+
+If you haven't already, you should learn the basics of Lynx.
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/ui/elements-components"
+  title="Elements"
+  description="Check out the built-in elements that Lynx provides"
+/>
+
+<NextSteps.Step
+  href="/guide/ui/styling"
+  title="Styling"
+  description="Learn how to apply different styles in Lynx"
+/>
+
+</NextSteps.Root>
+
+<br />
+
+<NextSteps.Root>
+
+<NextSteps.Step
+  href="/guide/ui/layout"
+  title="Layout"
+  description="Layout your elements and Components"
+/>
+
+<NextSteps.Step
+  href="/guide/ui/scrolling"
+  title="Scrolling"
+  description="Learn how to use scrollable elements in Lynx"
+/>
+
+</NextSteps.Root>

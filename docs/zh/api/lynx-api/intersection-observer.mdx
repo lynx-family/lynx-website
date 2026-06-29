@@ -1,0 +1,71 @@
+---
+tag: BTS
+api: lynx-api/intersection-observer/IntersectionObserver
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# IntersectionObserver
+
+<APISummary />
+
+`IntersectionObserver` 用于观察目标节点与参照节点及目标节点与祖先节点的交叉状态，当交叉状态发生变化时，触发相应回调，可以基于此实现监听目标节点是否曝光/反曝光。
+
+## 实例方法
+
+[`IntersectionObserver.relativeTo()`](./intersection-observer/intersection-observer-relative-to.mdx)
+
+指定参照节点，参照节点根据 `id` 指定。
+
+[`IntersectionObserver.relativeToViewport()`](./intersection-observer/intersection-observer-relative-to-viewport.mdx)
+
+指定 `LynxView` 作为参照节点。
+
+[`IntersectionObserver.relativeToScreen()`](./intersection-observer/intersection-observer-relative-to-screen.mdx)
+
+指定屏幕作为参照节点。
+
+[`IntersectionObserver.observe()`](./intersection-observer/intersection-observer-observe.mdx)
+
+指定目标节点与回调，目标节点根据 `id` 指定。
+
+[`IntersectionObserver.disconnect()`](./intersection-observer/intersection-observer-disconnect.mdx)
+
+清除目标节点与回调，不再观察目标节点，也不会触发相应回调。
+
+## 示例
+
+可以通过以下三个步骤来观察目标节点与参照节点交叉状态的变化：
+
+1. 创建 `IntersectionObserver` 对象，指定交叉状态变化的阈值列表
+2. 调用 `IntersectionObserver` 对象的 `relativeTo*` 方法指定参照节点
+3. 调用 `IntersectionObserver` 对象的 `observe` 方法指定目标节点与回调
+4. 调用 `IntersectionObserver` 对象的 `disconnect` 方法清除目标节点与回调
+
+```tsx
+// 1. 创建 IntersectionObserver 对象
+const observer = lynx.createIntersectionObserver(this, {
+  thresholds: [0, 0.25, 0.5, 0.75, 1.0],
+});
+
+// 2. 调用 relativeTo 方法指定参照节点
+observer.relativeTo('#refNode', { left: 10, right: 10 });
+
+// 3. 调用 observe 方法指定目标节点与回调
+observer.observe('#targetNode', (res) => {
+  console.log('IntersectionObserver: ', JSON.stringify(res));
+});
+
+// 4. 调用 disconnect 方法清除目标节点与回调
+observer.disconnect();
+```
+
+## 注意事项
+
+- 推荐设置页面开关 `enableNewIntersectionObserver` 为 `true`，否则需要可滚动容器绑定相应滚动事件（如 `scroll`）才能触发相应的回调
+- 使用 `relativeTo` 和 `observe` 方法需要注意调用时机，确保调用时候参照节点和目标节点已经创建，否则会导致观察失效，即始终无法触发相应回调
+- 开启 `enableNewIntersectionObserver` 时，Android 端的横滑 `scroll-view` 的子节点在滑动时无法触发相应回调，需要在子节点上设置 [`flatten`](../elements/built-in/view.mdx#flatten) 为 `false` 才能触发回调。
+
+## 兼容性
+
+<APITable />
