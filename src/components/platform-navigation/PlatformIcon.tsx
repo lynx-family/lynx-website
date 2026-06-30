@@ -1,4 +1,5 @@
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
+import { withBase } from '@rspress/core/runtime';
 import { cn } from '../../lib/utils';
 import { mapPlatformNameToIconName } from '../api-table/compat-table/headers';
 import { PlatformIconProps } from './types';
@@ -15,6 +16,8 @@ import MacosIcon from '@/components/api-table/compat-table/assets/icons/macos-te
 import ClayIcon from '@/components/api-table/compat-table/assets/icons/clay.svg';
 import ReactlynxIcon from '@/components/api-table/compat-table/assets/icons/reactlynx.svg';
 
+const LynxtronIcon = withBase('/assets/lynxtron/lynxtron-icon-light.svg');
+
 const ICON_NAME_TO_URL: Record<string, string> = {
   apple: AppleIcon,
   android: AndroidIcon,
@@ -24,6 +27,7 @@ const ICON_NAME_TO_URL: Record<string, string> = {
   'macos-text': MacosIcon,
   clay: ClayIcon,
   reactlynx: ReactlynxIcon,
+  lynxtron: LynxtronIcon,
 };
 
 const toIconUrl = (platformName: PlatformName | string): string => {
@@ -38,6 +42,7 @@ const toIconUrl = (platformName: PlatformName | string): string => {
   }
   if (platformName === 'web') return WebIcon;
   if (platformName === 'windows') return WindowsIcon;
+  if (platformName === 'lynxtron') return ICON_NAME_TO_URL.lynxtron;
 
   // BCD-known platform names route through compat-table's mapping so we stay
   // consistent with the APITable headers (clay_macos → macos-text etc.).
@@ -70,7 +75,7 @@ export const PlatformSvg = ({
   );
 };
 
-const toPlatformName = (platform: string): PlatformName => {
+const toPlatformName = (platform: string): PlatformName | string => {
   switch (platform) {
     case 'ios':
     case 'ios-simulator':
@@ -82,6 +87,10 @@ const toPlatformName = (platform: string): PlatformName => {
       return 'android';
     case 'web':
       return 'web_lynx';
+    case 'lynxtron':
+      return 'lynxtron';
+    case 'pc':
+      return 'windows';
     default:
       return 'web_lynx';
   }

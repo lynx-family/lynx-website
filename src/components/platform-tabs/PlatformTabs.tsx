@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
 import React, { useCallback, useEffect, useState } from 'react';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
-import { PlatformName } from '@lynx-js/lynx-compat-data';
+import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import '../shared-tabs.scss';
 
 type Platform =
@@ -11,6 +11,9 @@ type Platform =
   | 'android'
   | 'harmony'
   | 'web'
+  | 'lynxtron'
+  | 'desktops'
+  | 'node-api'
   | 'windows'
   | 'macos'
   | 'macos-arm64'
@@ -20,7 +23,7 @@ type Platform =
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
   label: string;
-  iconName: PlatformName;
+  iconName: PlatformName | string;
 }> = [
   {
     id: 'ios',
@@ -47,6 +50,21 @@ const PLATFORM_OPTIONS: Array<{
     id: 'web',
     label: 'Web',
     iconName: 'web_lynx',
+  },
+  {
+    id: 'lynxtron',
+    label: 'Lynxtron',
+    iconName: 'lynxtron',
+  },
+  {
+    id: 'desktops',
+    label: 'Desktops',
+    iconName: 'windows',
+  },
+  {
+    id: 'node-api',
+    label: 'Desktops(Node-API)',
+    iconName: 'windows',
   },
   {
     id: 'windows',

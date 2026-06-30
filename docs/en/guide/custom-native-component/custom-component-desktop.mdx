@@ -1,0 +1,927 @@
+import { CodeFold } from '@lynx';
+import { Steps, Tab, Tabs } from '@theme';
+
+The implementation of custom native elements can be broken down into several steps, including: declaring and registering elements, creating native views, handling layout, and using the element in Lynx pages. On Desktops, native elements are implemented with the Lynx C/C++ APIs. Let's take a simple custom input element `<explorer-input>` as an example.
+
+<Steps>
+
+### Declare and Register Elements
+
+#### Declare Custom Elements
+
+A declared custom element needs to inherit from `LynxNativeView`. Below is the declaration of the `<explorer-input>` element:
+
+```cpp title="shared/elements/ExplorerInputView.h"
+#include <capi/lynx_view_capi.h>
+#include <lynx_native_view.h>
+
+class ExplorerInputView : public lynx::pub::LynxNativeView {
+ public:
+  explicit ExplorerInputView(lynx_view_t* lynx_view) : lynx_view_(lynx_view) {}
+
+  bool OnCreate() override;
+  void OnDetach() override;
+  void OnLayoutChanged(float left,
+                       float top,
+                       float width,
+                       float height,
+                       float pixel_ratio) override;
+  void OnDestroy() override;
+
+ private:
+  lynx_view_t* lynx_view_ = nullptr;
+  void* host_ = nullptr;
+  void* input_ = nullptr;
+};
+```
+
+#### Register Custom Element
+
+Desktops native elements are registered with `LYNX_REGISTER_ELEMENT`. Once the native library is linked into the host app or loaded by the host process, the static registration makes the tag available to Lynx pages.
+
+##### Static Registration
+
+When the last argument is `nullptr`, the creator receives the current `lynx_view_t*` as `opaque`, which can be used to resolve the platform host window:
+
+```cpp title="shared/elements/ExplorerInputElementRegistration.cc"
+#include <lynx/registration.h>
+
+#include "shared/elements/ExplorerInputView.h"
+
+lynx_native_view_t* CreateExplorerInputElement(void* opaque) {
+  auto* view = new ExplorerInputView(static_cast<lynx_view_t*>(opaque));
+  return view->native_view();
+}
+
+LYNX_REGISTER_ELEMENT(
+    "ExplorerInputElementModule",
+    "explorer-input",
+    CreateExplorerInputElement,
+    false,
+    nullptr)
+```
+
+Where `"explorer-input"` corresponds to the tag name in the front-end DSL. When Lynx Engine parses this tag, it will look for the registered native element and create an instance.
+
+### Create Native `View` Instance
+
+Each custom element creates or attaches a corresponding platform native view. On Desktops, a custom element can be implemented with either a native UI control or a texture surface.
+
+<Tabs groupId="custom-component-desktop-platform">
+
+<Tab label="macOS">
+
+<Tabs groupId="custom-component-desktop-macos-impl">
+
+<Tab label="Native UI">
+
+The native UI option attaches a platform control and updates its frame in `OnLayoutChanged`. For `<explorer-input>`, the implementation attaches a minimal text input control.
+
+On macOS, attach an `NSTextField`:
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/native-ui/macos/ExplorerInputView.mm"
+#import <Cocoa/Cocoa.h>
+
+#include "shared/elements/ExplorerInputView.h"
+
+namespace {
+
+void RunOnMainThreadSync(dispatch_block_t block) {
+  if ([NSThread isMainThread]) {
+    block();
+    return;
+  }
+  dispatch_sync(dispatch_get_main_queue(), block);
+}
+
+NSView* AttachToParent(NSView* lynx_parent, NSTextField* input) {
+  if (lynx_parent == nil || input == nil) {
+    return nil;
+  }
+
+  NSView* parent =
+      lynx_parent.window.contentView != nil ? lynx_parent.window.contentView
+                                            : lynx_parent;
+  if (input.superview != parent) {
+    [input removeFromSuperview];
+    [parent addSubview:input positioned:NSWindowAbove relativeTo:nil];
+  }
+  return parent;
+}
+
+}  // namespace
+
+bool ExplorerInputView::OnCreate() {
+  RunOnMainThreadSync(^{
+    auto* input = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    input.placeholderString = @"explorer-input";
+    input.stringValue = @"";
+    input.editable = YES;
+    input.selectable = YES;
+    input.bezeled = YES;
+    input.bezelStyle = NSTextFieldRoundedBezel;
+    input.textColor = [NSColor blackColor];
+    input_ = (__bridge_retained void*)input;
+  });
+  return input_ != nullptr;
+}
+
+void ExplorerInputView::OnDetach() {
+  auto* input = (__bridge NSTextField*)input_;
+  RunOnMainThreadSync(^{
+    [input removeFromSuperview];
+  });
+}
+
+void ExplorerInputView::OnLayoutChanged(
+    float left,
+    float top,
+    float width,
+    float height,
+    float pixel_ratio) {
+  (void)pixel_ratio;
+  auto* input = (__bridge NSTextField*)input_;
+  if (!input) {
+    return;
+  }
+
+  RunOnMainThreadSync(^{
+    auto* lynx_parent = (__bridge NSView*)lynx_view_get_native_window(
+        lynx_view_);
+    NSView* parent = AttachToParent(lynx_parent, input);
+    if (lynx_parent == nil || parent == nil) {
+      return;
+    }
+
+    const NSRect frame_in_lynx = NSMakeRect(left, top, width, height);
+    input.frame = [lynx_parent convertRect:frame_in_lynx toView:parent];
+  });
+}
+
+void ExplorerInputView::OnDestroy() {
+  RunOnMainThreadSync(^{
+    auto* input = (__bridge_transfer NSTextField*)input_;
+    [input removeFromSuperview];
+    input_ = nullptr;
+  });
+}
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Texture">
+
+Implementing a text input as a texture element is possible, but it requires text editing, cursor, selection, and IME handling. The example below keeps the texture path focused: it draws a native texture and accepts a `setMessage` UI method from Lynx.
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/TextureMessageElement.cc"
+#include <algorithm>
+#include <string>
+
+#include <lynx/registration.h>
+#include <lynx_native_view.h>
+
+bool DrawTextureMessageSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message);
+
+namespace {
+
+constexpr float kYFlipTransform[3 * 3] = {1, 0, 0, 0, -1, 1, 0, 0, 1};
+
+class TextureMessageView : public lynx::pub::LynxNativeView {
+ public:
+  bool IsSurfaceEnabled() override { return true; }
+
+  lynx_surface_buffer_mode_t SurfaceBufferMode() override {
+    return kTripleBuffer;
+  }
+
+  void OnAttach() override {
+    attached_ = true;
+    Render();
+  }
+
+  void OnDetach() override { attached_ = false; }
+
+  void OnLayoutChanged(
+      float left,
+      float top,
+      float width,
+      float height,
+      float pixel_ratio) override {
+    (void)left;
+    (void)top;
+    const float ratio = pixel_ratio > 0 ? pixel_ratio : 1;
+    width_px_ = std::max(1, static_cast<int>(width * ratio + 0.5f));
+    height_px_ = std::max(1, static_cast<int>(height * ratio + 0.5f));
+    Render();
+  }
+
+  void OnMethodInvoked(
+      const char* method,
+      const lynx::pub::LynxValue& params,
+      std::function<void(int, lynx::pub::LynxValue&&)> callback) override {
+    if (method != nullptr && std::string(method) == "setMessage") {
+      if (!params.HasProperty("message")) {
+        callback(kInvalidParameter,
+                 lynx::pub::LynxValue(
+                     lynx::pub::LynxValue::kCreateAsNullTag));
+        return;
+      }
+
+      message_ = params.GetProperty("message").StdString();
+      Render();
+      callback(kSuccess,
+               lynx::pub::LynxValue(
+                   lynx::pub::LynxValue::kCreateAsNullTag));
+      return;
+    }
+
+    callback(kMethodNotFound,
+             lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+  }
+
+ private:
+  void Render() {
+    if (!attached_ || width_px_ <= 0 || height_px_ <= 0) {
+      return;
+    }
+
+    lynx_surface_handle_t* surface = AcquireSurface(width_px_, height_px_);
+    if (surface == nullptr) {
+      return;
+    }
+
+    if (DrawTextureMessageSurface(
+            surface,
+            width_px_,
+            height_px_,
+            message_.c_str())) {
+      PresentSurface(width_px_, height_px_, kYFlipTransform, surface);
+    }
+  }
+
+  bool attached_ = false;
+  int width_px_ = 0;
+  int height_px_ = 0;
+  std::string message_ = "texture-message";
+};
+
+}  // namespace
+
+lynx_native_view_t* CreateTextureMessageElement(void* opaque) {
+  (void)opaque;
+  auto* view = new TextureMessageView();
+  return view->native_view();
+}
+
+LYNX_REGISTER_ELEMENT(
+    "TextureMessageElementModule",
+    "texture-message",
+    CreateTextureMessageElement,
+    false,
+    nullptr)
+```
+
+</CodeFold>
+
+On macOS, draw into the IOSurface-backed surface. This demo maps the received message to colored bars so the texture visibly changes after `setMessage`:
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/texture/macos/TextureMessageElement.mm"
+#include <lynx_extension.h>
+
+#import <CoreGraphics/CoreGraphics.h>
+#import <IOSurface/IOSurface.h>
+
+#include <algorithm>
+#include <cstring>
+
+bool DrawTextureMessageSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message) {
+  if (handle == nullptr || width_px <= 0 || height_px <= 0) {
+    return false;
+  }
+
+  IOSurfaceRef surface = reinterpret_cast<IOSurfaceRef>(handle);
+  uint32_t seed = 0;
+  if (IOSurfaceLock(surface, 0, &seed) != kIOReturnSuccess) {
+    return false;
+  }
+
+  void* base = IOSurfaceGetBaseAddress(surface);
+  const size_t bytes_per_row = IOSurfaceGetBytesPerRow(surface);
+  CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context = CGBitmapContextCreate(
+      base,
+      width_px,
+      height_px,
+      8,
+      bytes_per_row,
+      color_space,
+      kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+  CGColorSpaceRelease(color_space);
+
+  if (context == nullptr) {
+    IOSurfaceUnlock(surface, 0, &seed);
+    return false;
+  }
+
+  CGContextSetRGBFillColor(context, 1, 1, 1, 1);
+  CGContextFillRect(context, CGRectMake(0, 0, width_px, height_px));
+
+  const char* label = message != nullptr && message[0] != '\0'
+                          ? message
+                          : "texture-message";
+  const size_t count = std::min<size_t>(std::strlen(label), 12);
+  for (size_t i = 0; i < count; ++i) {
+    const unsigned char value = static_cast<unsigned char>(label[i]);
+    CGContextSetRGBFillColor(
+        context,
+        ((value * 37) % 255) / 255.0,
+        ((value * 67) % 255) / 255.0,
+        ((value * 97) % 255) / 255.0,
+        1.0);
+    CGContextFillRect(
+        context,
+        CGRectMake(8 + i * 14, 8, 10, std::max(1, height_px - 16)));
+  }
+
+  CGContextRelease(context);
+  IOSurfaceUnlock(surface, 0, &seed);
+  return true;
+}
+```
+
+</CodeFold>
+
+Call the UI method with [`SelectorQuery.invoke()`](/api/lynx-api/nodes-ref/nodes-ref-invoke) to update the message and request a repaint.
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+<Tab label="Windows">
+
+<Tabs groupId="custom-component-desktop-windows-impl">
+
+<Tab label="Native UI">
+
+The native UI option attaches a platform control and updates its frame in `OnLayoutChanged`. For `<explorer-input>`, the implementation attaches a minimal text input control.
+
+On Windows, attach an `EDIT` control:
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/native-ui/windows/ExplorerInputView.cc"
+#include <algorithm>
+
+#define NOMINMAX
+#include <windows.h>
+
+#include "shared/elements/ExplorerInputView.h"
+
+namespace {
+
+constexpr wchar_t kHostClassName[] = L"ExplorerInputViewHost";
+
+int Scale(float value, float pixel_ratio) {
+  const float ratio = pixel_ratio > 0 ? pixel_ratio : 1;
+  return static_cast<int>(value * ratio);
+}
+
+bool EnsureHostClassRegistered() {
+  static bool registered = false;
+  if (registered) {
+    return true;
+  }
+
+  WNDCLASSEXW window_class{};
+  window_class.cbSize = sizeof(window_class);
+  window_class.lpfnWndProc = DefWindowProcW;
+  window_class.hInstance = GetModuleHandleW(nullptr);
+  window_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
+  window_class.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+  window_class.lpszClassName = kHostClassName;
+  registered = RegisterClassExW(&window_class) != 0 ||
+      GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
+  return registered;
+}
+
+struct MainWindowSearch {
+  DWORD process_id = 0;
+  HWND hwnd = nullptr;
+};
+
+BOOL CALLBACK FindMainWindowCallback(HWND hwnd, LPARAM data) {
+  auto* search = reinterpret_cast<MainWindowSearch*>(data);
+  DWORD window_process_id = 0;
+  GetWindowThreadProcessId(hwnd, &window_process_id);
+  if (window_process_id == search->process_id && IsWindowVisible(hwnd) &&
+      GetWindow(hwnd, GW_OWNER) == nullptr) {
+    search->hwnd = hwnd;
+    return FALSE;
+  }
+  return TRUE;
+}
+
+HWND FindMainWindow() {
+  MainWindowSearch search{GetCurrentProcessId(), nullptr};
+  EnumWindows(FindMainWindowCallback, reinterpret_cast<LPARAM>(&search));
+  return search.hwnd != nullptr ? search.hwnd : GetActiveWindow();
+}
+
+}  // namespace
+
+bool ExplorerInputView::OnCreate() {
+  return EnsureHostClassRegistered();
+}
+
+void ExplorerInputView::OnDetach() {
+  if (host_) {
+    ::ShowWindow(static_cast<HWND>(host_), SW_HIDE);
+  }
+}
+
+void ExplorerInputView::OnLayoutChanged(
+    float left,
+    float top,
+    float width,
+    float height,
+    float pixel_ratio) {
+  HWND parent = FindMainWindow();
+  if (!parent || !EnsureHostClassRegistered()) {
+    return;
+  }
+
+  const int x = Scale(left, pixel_ratio);
+  const int y = Scale(top, pixel_ratio);
+  const int w = std::max(1, Scale(width, pixel_ratio));
+  const int h = std::max(1, Scale(height, pixel_ratio));
+  POINT origin{x, y};
+  ::ClientToScreen(parent, &origin);
+
+  if (!host_) {
+    host_ = ::CreateWindowExW(
+        WS_EX_TOOLWINDOW,
+        kHostClassName,
+        L"",
+        WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+        origin.x,
+        origin.y,
+        w,
+        h,
+        parent,
+        nullptr,
+        ::GetModuleHandleW(nullptr),
+        nullptr);
+  }
+
+  auto* host = static_cast<HWND>(host_);
+  if (!host) {
+    return;
+  }
+
+  if (!input_) {
+    input_ = ::CreateWindowExW(
+        0,
+        L"EDIT",
+        L"explorer-input",
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+        0,
+        0,
+        w,
+        h,
+        host,
+        nullptr,
+        ::GetModuleHandleW(nullptr),
+        nullptr);
+  }
+
+  auto* input = static_cast<HWND>(input_);
+  if (!input) {
+    return;
+  }
+
+  ::SetWindowPos(host,
+                 HWND_TOP,
+                 origin.x,
+                 origin.y,
+                 w,
+                 h,
+                 SWP_SHOWWINDOW | SWP_NOACTIVATE);
+  ::SetWindowPos(input,
+                 HWND_TOP,
+                 0,
+                 0,
+                 w,
+                 h,
+                 SWP_SHOWWINDOW);
+}
+
+void ExplorerInputView::OnDestroy() {
+  if (input_) {
+    ::DestroyWindow(static_cast<HWND>(input_));
+    input_ = nullptr;
+  }
+  if (host_) {
+    ::DestroyWindow(static_cast<HWND>(host_));
+    host_ = nullptr;
+  }
+}
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Texture">
+
+Implementing a text input as a texture element is possible, but it requires text editing, cursor, selection, and IME handling. The example below is self-contained: it first declares the shared texture element, then implements the Windows surface painter.
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/TextureMessageElement.cc"
+#include <algorithm>
+#include <string>
+
+#include <lynx/registration.h>
+#include <lynx_native_view.h>
+
+bool DrawTextureMessageSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message);
+
+namespace {
+
+constexpr float kYFlipTransform[3 * 3] = {1, 0, 0, 0, -1, 1, 0, 0, 1};
+
+class TextureMessageView : public lynx::pub::LynxNativeView {
+ public:
+  bool IsSurfaceEnabled() override { return true; }
+
+  lynx_surface_buffer_mode_t SurfaceBufferMode() override {
+    return kTripleBuffer;
+  }
+
+  void OnAttach() override {
+    attached_ = true;
+    Render();
+  }
+
+  void OnDetach() override { attached_ = false; }
+
+  void OnLayoutChanged(
+      float left,
+      float top,
+      float width,
+      float height,
+      float pixel_ratio) override {
+    (void)left;
+    (void)top;
+    const float ratio = pixel_ratio > 0 ? pixel_ratio : 1;
+    width_px_ = std::max(1, static_cast<int>(width * ratio + 0.5f));
+    height_px_ = std::max(1, static_cast<int>(height * ratio + 0.5f));
+    Render();
+  }
+
+  void OnMethodInvoked(
+      const char* method,
+      const lynx::pub::LynxValue& params,
+      std::function<void(int, lynx::pub::LynxValue&&)> callback) override {
+    if (method != nullptr && std::string(method) == "setMessage") {
+      if (!params.HasProperty("message")) {
+        callback(kInvalidParameter,
+                 lynx::pub::LynxValue(
+                     lynx::pub::LynxValue::kCreateAsNullTag));
+        return;
+      }
+
+      message_ = params.GetProperty("message").StdString();
+      Render();
+      callback(kSuccess,
+               lynx::pub::LynxValue(
+                   lynx::pub::LynxValue::kCreateAsNullTag));
+      return;
+    }
+
+    callback(kMethodNotFound,
+             lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+  }
+
+ private:
+  void Render() {
+    if (!attached_ || width_px_ <= 0 || height_px_ <= 0) {
+      return;
+    }
+
+    lynx_surface_handle_t* surface = AcquireSurface(width_px_, height_px_);
+    if (surface == nullptr) {
+      return;
+    }
+
+    if (DrawTextureMessageSurface(
+            surface,
+            width_px_,
+            height_px_,
+            message_.c_str())) {
+      PresentSurface(width_px_, height_px_, kYFlipTransform, surface);
+    }
+  }
+
+  bool attached_ = false;
+  int width_px_ = 0;
+  int height_px_ = 0;
+  std::string message_ = "texture-message";
+};
+
+}  // namespace
+
+lynx_native_view_t* CreateTextureMessageElement(void* opaque) {
+  (void)opaque;
+  auto* view = new TextureMessageView();
+  return view->native_view();
+}
+
+LYNX_REGISTER_ELEMENT(
+    "TextureMessageElementModule",
+    "texture-message",
+    CreateTextureMessageElement,
+    false,
+    nullptr)
+```
+
+</CodeFold>
+
+On Windows, the surface handle is a D3D shared handle. Import it as an `ID3D11Texture2D`, update its pixels, and let `TextureMessageView` present it back to Lynx:
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/texture/windows/TextureMessageElement.cc"
+#include <lynx_extension.h>
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <d3d11.h>
+#include <windows.h>
+#include <wrl/client.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
+#include <vector>
+
+using Microsoft::WRL::ComPtr;
+
+namespace {
+
+std::vector<std::uint32_t> DrawMessagePixels(
+    int width_px,
+    int height_px,
+    const char* message) {
+  std::vector<std::uint32_t> pixels(
+      static_cast<size_t>(width_px) * height_px,
+      0xffffffff);
+
+  const char* label = message != nullptr && message[0] != '\0'
+                          ? message
+                          : "texture-message";
+  const size_t count = std::min<size_t>(std::strlen(label), 12);
+  for (size_t i = 0; i < count; ++i) {
+    const unsigned char value = static_cast<unsigned char>(label[i]);
+    const std::uint32_t color =
+        0xff000000 |
+        (((value * 37) % 255) << 16) |
+        (((value * 67) % 255) << 8) |
+        ((value * 97) % 255);
+    const int x0 = 8 + static_cast<int>(i) * 14;
+    const int x1 = std::min(width_px, x0 + 10);
+    for (int y = 8; y < std::max(8, height_px - 8); ++y) {
+      for (int x = x0; x < x1; ++x) {
+        pixels[static_cast<size_t>(y) * width_px + x] = color;
+      }
+    }
+  }
+  return pixels;
+}
+
+}  // namespace
+
+bool DrawTextureMessageSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message) {
+  if (handle == nullptr || width_px <= 0 || height_px <= 0) {
+    return false;
+  }
+
+  ComPtr<ID3D11Device> device;
+  ComPtr<ID3D11DeviceContext> context;
+  D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+  auto hr = D3D11CreateDevice(
+      nullptr,
+      D3D_DRIVER_TYPE_HARDWARE,
+      nullptr,
+      0,
+      nullptr,
+      0,
+      D3D11_SDK_VERSION,
+      device.GetAddressOf(),
+      &feature_level,
+      context.GetAddressOf());
+  if (FAILED(hr)) {
+    return false;
+  }
+
+  ComPtr<ID3D11Texture2D> texture;
+  hr = device->OpenSharedResource(
+      reinterpret_cast<HANDLE>(handle),
+      IID_PPV_ARGS(texture.GetAddressOf()));
+  if (FAILED(hr) || !texture) {
+    return false;
+  }
+
+  const auto pixels = DrawMessagePixels(width_px, height_px, message);
+  context->UpdateSubresource(
+      texture.Get(),
+      0,
+      nullptr,
+      pixels.data(),
+      static_cast<UINT>(width_px * sizeof(std::uint32_t)),
+      0);
+  context->Flush();
+  return true;
+}
+```
+
+</CodeFold>
+
+Production code should also match the active Windows graphics backend and handle synchronization primitives exposed by the imported texture.
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+</Tabs>
+
+After the native code is ready, compile it into the host app or into a Desktops native library that the host can load. Once the library is loaded, the registered tag can be used in Lynx pages.
+
+### Handle Front-End Style and Property Updates
+
+Override `OnPropertiesChanged` to receive property and event information from the front end. The `attrs` value contains the latest properties, and `events` contains the event bindings declared on the element.
+
+```cpp title="shared/elements/ExplorerInputView.cc"
+void ExplorerInputView::OnPropertiesChanged(
+    const lynx::pub::LynxValue& attrs,
+    const lynx::pub::LynxValue& events) {
+  (void)events;
+  if (!attrs.HasProperty("value")) {
+    return;
+  }
+
+  std::string value = attrs.GetProperty("value").StdString();
+  // Update the platform input control with value.
+}
+```
+
+### Handle Layout Information (Optional)
+
+#### Handle Lynx Engine Layout Results
+
+Lynx Engine sends the element's layout result through `OnLayoutChanged`. Use this callback to move or resize the platform view, or to resize the texture surface before rendering.
+
+```cpp title="shared/elements/ExplorerInputView.cc"
+void ExplorerInputView::OnLayoutChanged(
+    float left,
+    float top,
+    float width,
+    float height,
+    float pixel_ratio) {
+  // Convert the Lynx layout result to platform coordinates and update the
+  // native view frame or texture size.
+}
+```
+
+### Handle Event Binding (Optional)
+
+In some scenarios, the front end may need to respond to events from custom elements. For example, when the user types in the input box, the native element can trigger an `input` event.
+
+#### Client-Side Event Sending
+
+Use `TriggerEvent` to send a custom event from the native element to the Lynx page.
+
+```cpp title="shared/elements/ExplorerInputView.cc"
+void ExplorerInputView::EmitInputEvent(const std::string& value) {
+  lynx::pub::LynxValue detail(lynx::pub::LynxValue::kCreateAsMapTag);
+  detail.SetProperty("value", lynx::pub::LynxValue(value));
+  TriggerEvent("input", std::move(detail));
+}
+```
+
+#### Front-End DSL Event Binding
+
+On the front end, bind the corresponding event to listen for and handle the data sent by the native element.
+
+```jsx title="App.tsx"
+const handleInput = (e) => {
+  const currentValue = e.detail.value.trim();
+  setInputValue(currentValue);
+};
+
+<explorer-input
+  style={{ width: '100px', height: '100px' }}
+  bindinput={handleInput}
+  value={inputValue}
+/>;
+```
+
+> **Note**: The front-end DSL uses `bindxxx` for event binding, such as `bindinput` to bind the `input` event.
+
+### Support Direct Element Manipulation (Optional)
+
+In some cases, the front end may need to directly manipulate custom elements via imperative APIs. Implement `OnMethodInvoked` to handle these calls on Desktops.
+
+#### Front-End Call Example
+
+The following code shows how to use [SelectorQuery](/api/lynx-api/selector-query) to call the `focus` method and focus the `<explorer-input>` element:
+
+```jsx title="App.tsx"
+lynx
+  .createSelectorQuery()
+  .select('#input-id')
+  .invoke({
+    method: 'focus',
+    params: {},
+    success: function (res) {
+      console.log('lynx', 'request focus success');
+    },
+    fail: function (res) {
+      console.log('lynx', 'request focus fail');
+    },
+  })
+  .exec();
+```
+
+#### Client-Side Implementation
+
+On the client side, override `OnMethodInvoked` to handle the method call and invoke the callback with a status code.
+
+```cpp title="shared/elements/ExplorerInputView.cc"
+#include <string>
+
+void ExplorerInputView::OnMethodInvoked(
+    const char* method,
+    const lynx::pub::LynxValue& attrs,
+    std::function<void(int, lynx::pub::LynxValue&&)> callback) {
+  (void)attrs;
+  if (method != nullptr && std::string(method) == "focus") {
+    RequestFocus();
+    callback(kSuccess,
+             lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+    return;
+  }
+
+  callback(kMethodNotFound,
+           lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+}
+```
+
+#### Method Callback Return Values
+
+When implementing a method, return a status code to the front end so it can handle success or failure in the corresponding callback.
+
+`LynxNativeView` defines several common status codes:
+
+```cpp
+static constexpr int kSuccess = 0;
+static constexpr int kUnknown = 1;
+static constexpr int kMethodNotFound = 3;
+static constexpr int kInvalidParameter = 4;
+static constexpr int kInvalidStateError = 7;
+```
+
+</Steps>
