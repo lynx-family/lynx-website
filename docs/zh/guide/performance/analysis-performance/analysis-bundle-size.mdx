@@ -1,0 +1,104 @@
+---
+description: '理解 Lynx 双线程架构下的产物结构，学会用 Rsdoctor 与分层视角分析产物体积，并掌握主线程瘦身、依赖去重、资源压缩等优化手段。'
+---
+
+# 产物体积
+
+产物体积直接影响下载、解析与首屏到达时间，却最容易被忽视：一次依赖升级、一张未压缩的图片、一段本该只跑在后台却漏进首屏渲染路径的代码，都会让产物悄悄变大。
+
+和普通 Web 应用不同，Lynx 应用因为**双线程架构**，产物结构有其特殊性——理解这套结构，是分析和优化体积的前提。Rspeedy 基于 [Rsbuild](https://rsbuild.rs/) 与 [Rspack](https://rspack.rs/) 构建，它们的体积优化经验大多可以复用；本页先讲清 Lynx 特有的产物结构，再给出分析方法与优化方向，并指向更深入的文档。
+
+## 理解 Lynx 的产物结构
+
+### 双线程架构：两层 JS 产物
+
+ReactLynx 把 React 拆到**双线程**上运行（详见 [ReactLynx 编程思想](/react/thinking-in-reactlynx)）：
+
+- **主线程**：轻量的 UI 驱动，负责[首帧直出（IFR）](/guide/interaction/ifr)、界面更新、以及跟手动画与手势处理。它在渲染关键路径上，必须保持精简。
+- **后台线程**：逻辑与状态中心，承载完整渲染、生命周期、`setState`、数据请求、埋点等。
+
+对应地，构建会按入口产出**两份 JS 编译中间产物**，再编码合成为最终交付的二进制产物：
+
+| 层           | 编译中间产物                            | 说明                                                         |
+| ------------ | --------------------------------------- | ------------------------------------------------------------ |
+| 主线程产物   | `main-thread.js`（`react:main-thread`） | 首屏渲染路径代码，体积对首屏影响最大                         |
+| 后台线程产物 | `background.js`（`react:background`）   | 业务逻辑代码，同时产出 CSS；不阻塞首屏，但计入下载与解析成本 |
+| 静态资源     | 图片 / 字体 / 媒体                      | 往往是单个产物中体积最大的部分                               |
+
+两份 JS 经过编码合成为一个二进制的 `.lynx.bundle`（生产构建后位于 `dist/`，详见 [构建输出文件](/rspeedy/output)），这才是 Lynx 引擎真正加载的交付产物，也是衡量体积时应当盯住的最终指标。
+
+:::tip 主线程产物 ≠ 主线程脚本
+这里的「主线程产物 / `main-thread.js`」指的是**主线程层的编译产物**。它和 [主线程脚本（Main Thread Script）](/react/main-thread-script)——那套用 `'main thread'` 指示符编写、用于跟手动画与手势的编程模型——不是一回事，注意区分。
+:::
+
+### 查看可读的中间产物
+
+`.lynx.bundle` 是二进制，无法直接阅读。想查看可读的 `main-thread.js` / `background.js`，可以用 `DEBUG` 构建，它会把中间产物保留在 `dist/.rspeedy/<entry>/` 下：
+
+```bash
+DEBUG=rspeedy rspeedy build
+```
+
+（开发构建同样会在 `dist/.rspeedy/` 下生成这些中间产物，详见 [构建输出文件](/rspeedy/output)。）
+
+### 代码裁剪：为什么主线程产物应该很小
+
+既然主线程在渲染关键路径上，只有后台才需要的代码（网络请求、[原生模块（NativeModule）](/guide/performance/analysis-performance/analysis-native-module)调用、日志、埋点、生命周期等）一旦被**打包进主线程产物**，就会同时拖大包体积和首帧成本。
+
+ReactLynx 会**自动裁剪**不该在主线程运行的代码：默认情况下 `useEffect`、`useLayoutEffect` 的回调以及部分事件处理函数会从 `main-thread.js` 中移除（详见 [ReactLynx 编程思想](/react/thinking-in-reactlynx)）。当编译器无法静态判断某段代码归属哪个线程时，需要你手动标注：
+
+- 用 [`'background only'` 指示符](/api/react/Document.directives) 把一个函数体标记为只在后台线程保留。
+- 用 [`__BACKGROUND__` / `__MAIN_THREAD__` 内置宏](/api/react/Document.built-in-macros) 按线程裁剪代码块。
+
+这套裁剪机制，正是后面「给主线程产物瘦身」这条优化手段的基础。
+
+## 分析产物体积
+
+核心原则是**先测量、再优化**：先用数据确认字节到底在哪一层，再决定动哪里，而不是凭猜测改代码。推荐按「静态资源 / 后台线程产物 / 主线程产物」三层拆解。
+
+### 使用 Rsdoctor
+
+[Rsdoctor](/rspeedy/use-rsdoctor) 是一个构建分析工具，可以可视化资源列表、模块依赖关系、重复模块等信息。在基于 Rspeedy 的项目中开启：
+
+```bash
+RSDOCTOR=true rspeedy build
+```
+
+构建完成后会自动打开分析页面。它的模块信息带有 `layer` 字段，可据此把字节归到 `react:main-thread` 与 `react:background` 两层，从而定位体积最大的模块，并通过真实的模块引用关系（module graph）追踪「某个模块为什么被打进了产物里」，而不是凭直觉判断。完整用法见 [使用 Rsdoctor](/rspeedy/use-rsdoctor)。
+
+### 使用 rspeedy-bundle-size Skill
+
+如果你使用支持 Agent Skills 的 AI 编码工具，可以加载 [`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) skill。它会按「先测量再优化」的流程，自动读取你的构建方式、生成体积分布、分层定位字节去向，并按收益优先级给出优化建议——适合在不熟悉构建细节时快速得到一份有依据的分析报告。
+
+## 优化产物体积
+
+定位到体积来源后，按层选择手段。也可参考 Rsbuild 的 [缩小产物体积](https://rsbuild.rs/zh/guide/optimization/optimize-bundle) 指南。
+
+### 给主线程产物瘦身（裁掉后台专属代码）
+
+这是 Lynx 特有、也最该优先检查的一层。把只在后台需要的代码（请求 / NativeModule 调用 / 日志 / 监控 SDK）用 [`'background only'`](/api/react/Document.directives) 或 [`__BACKGROUND__`](/api/react/Document.built-in-macros) 移出渲染路径，避免它被打包进 `main-thread.js`。若这类代码来自你无法修改的第三方库，则需要推动库侧在定义处加上标注。
+
+### 精简后台线程产物
+
+- **减少重复依赖**：用 Rsdoctor 的重复包检测找出被多份打包的依赖，再用 [`resolve.dedupe`](/api/rspeedy/rspeedy.resolve.dedupe) 或 `pnpm dedupe` 收敛。
+- **使用更轻量的库**：用 Rsdoctor 找出体积最大的依赖，评估替代品（例如用 `dayjs` 替换 `moment`），或改为按需引入。
+
+### 压缩静态资源
+
+图片、字体、媒体通常是单个产物中最大的部分。优先在源头压缩、使用合适尺寸的资源，并把体积大、非首屏必需的资源拆出主产物。
+
+### 拆分与懒加载
+
+区分**首屏体积**与**总体积**：首屏只需要主线程产物与首屏资源，把非首屏内容拆出去能显著改善启动体验。
+
+- 用 [代码拆分](/react/code-splitting) 把非首屏组件延迟到真正渲染时再加载。
+- 通过 [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) 调整分包策略（底层即 Rspack 的 [代码分割](https://rspack.rs/zh/guide/optimization/code-splitting)）。
+- 用 [External Bundle](/rspeedy/external-bundle) 把可复用的部分独立出去。
+
+### 编译层选项
+
+- [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr)：合并重复的字符串字面量来减小体积，对 i18n 文案、类名等「在主线程与后台线程两层中重复」的字符串尤其有效。
+
+---
+
+更系统的清单与更底层的能力，可以从 Rsbuild 的 [缩小产物体积](https://rsbuild.rs/zh/guide/optimization/optimize-bundle) 与 Rspack 的 [优化指南](https://rspack.rs/zh/guide/optimization/code-splitting) 继续深入。
