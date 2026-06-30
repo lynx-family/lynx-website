@@ -365,7 +365,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
 
   if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
-      <BaseLink
+      <a
         href={`/next${removeBase(normalizedHref)}`}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
@@ -373,7 +373,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
         {...safeRestProps}
       >
         {children}
-      </BaseLink>
+      </a>
     );
   }
   return (
