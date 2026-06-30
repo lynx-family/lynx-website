@@ -23,7 +23,7 @@ import { BlogHeader } from '@lynx';
 
 - 来自 [Rspack 2.0](#rspack)：[构建提速 17～39%](#rspack-faster)、[产物体积下降 2～9%](#rspack-smaller)
 - 来自 [Rsbuild 2.0](#rsbuild)：配置向 Web 通行约定对齐（[`resolve.alias`](#bc-alias)、顶层 [`splitChunks`](#bc-chunksplit)）
-- 来自 [Rspeedy](#rspeedy)：[面向 PrimJS 的产物调优](#rspeedy-primjs)、[默认 ES2017](#rspeedy-es2017)、[Lynx Bundle 并行编码](#rspeedy-parallel)、[精确错误反解](#rspeedy-debug)、[包体积优化 Skill](#rspeedy-skill)、[更灵活的分包与动态加载](#rspeedy-splitting)
+- 来自 [Rspeedy](#rspeedy)：[AI 原生的包体积优化 Skill](#rspeedy-skill)、[面向 PrimJS 的产物调优](#rspeedy-primjs)、[默认 ES2017](#rspeedy-es2017)、[Lynx Bundle 并行编码](#rspeedy-parallel)、[精确错误反解](#rspeedy-debug)、[更灵活的分包与动态加载](#rspeedy-splitting)
 
 ## Rspack 2.0 \{#rspack}
 
@@ -111,6 +111,20 @@ export default defineConfig({
 
 在 Rspack 与 Rsbuild 之上，Rspeedy 针对 Lynx 的双线程运行时与产物格式做了一系列增强。这一层是我们投入最多、也最贴近 Lynx 自身的部分。
 
+### AI 原生的包体积优化 Skill \{#rspeedy-skill}
+
+准确定位体积瓶颈，往往比优化本身更难——这需要理解 Lynx 的产物格式，以及 Rspeedy 的双线程构建机制。[`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) 正是把这部分知识固化进了一个 Agent Skill：它让 AI 理解 Lynx 双线程产物的体积构成，并秉持「先测量、后优化」的原则——先量清楚一个应用的体积究竟大在哪，再按收益与成本排序、优先处理回报最高的部分（资源、后台 JS、主线程产物中的冗余代码）。
+
+![Lynx 双线程产物的体积构成](/assets/blog/rspeedy-0-15/lynx-bundle-anatomy.zh.png)
+
+把它安装到你的 Agent（Claude Code、Codex 等）中：
+
+```bash
+npx skills add lynx-community/skills -s rspeedy-bundle-size
+```
+
+之后用自然语言描述目标即可，例如「帮我拆解下这个应用的包体积，到底大在哪、怎么减」。Skill 会运行 [Rsdoctor](https://rsdoctor.rs/zh/)、按层给出体积拆解，并产出一张带优先级的优化清单，只有在你确认后才动手改代码。在真实业务中，这套工作流把页面体积减小了 10～13%，主要手段是把本应只在后台运行、却被打进了主线程的[后台专属（background only）](/react/thinking-in-reactlynx)代码（如日志、网络请求、监控埋点等）正确标记并移出主线程，并通过 alias 去重重复打包的依赖。
+
 ### 面向 PrimJS：`let` / `const` 降级为 `var` \{#rspeedy-primjs}
 
 除了构建期更快，我们也让产物在 Lynx 的运行时里解析得更快。在 Android 上，Lynx 的后台线程运行在 [PrimJS](https://github.com/lynx-family/primjs) 引擎上，而我们发现 PrimJS 解析 `var` 的速度明显优于块级作用域的 `let` / `const`。因此 0.15 默认在主线程与后台线程两层都开启了 SWC 的 [`transform-block-scoping`](https://github.com/swc-project/swc/tree/main/crates/swc_ecma_compat_es2015/src/block_scoping)，把 `let` / `const` 降级为 `var`，并将 `output.environment.const` 设为 `false`，让打包器自身生成的运行时代码也使用 `var`。
@@ -140,18 +154,6 @@ export default defineConfig({
 ### 精确的错误反解 \{#rspeedy-debug}
 
 0.15 让线上错误能精确反解回源码：为每个 Lynx entry 生成统一的 `debug-metadata.json`，整合 JS、CSS、UI 三类 Source Map，主线程与后台线程的报错都能找到正确的反解信息、还原到原始代码。具体做法见[线上错误反解](/rspeedy/map-errors-to-source)。
-
-### AI 原生的包体积优化 Skill \{#rspeedy-skill}
-
-准确定位体积瓶颈，往往比优化本身更难——这需要理解 Lynx 的产物格式，以及 Rspeedy 的双线程构建机制。[`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) 正是把这部分知识固化进了一个 Agent Skill：它让 AI 理解 Lynx 双线程产物的体积构成，并秉持「先测量、后优化」的原则——先量清楚一个应用的体积究竟大在哪，再按收益与成本排序、优先处理回报最高的部分（资源、后台 JS、主线程产物中的冗余代码）。
-
-把它安装到你的 Agent（Claude Code、Codex 等）中：
-
-```bash
-npx skills add lynx-community/skills -s rspeedy-bundle-size
-```
-
-之后用自然语言描述目标即可，例如「帮我拆解下这个应用的包体积，到底大在哪、怎么减」。Skill 会运行 [Rsdoctor](https://rsdoctor.rs/zh/)、按层给出体积拆解，并产出一张带优先级的优化清单，只有在你确认后才动手改代码。在真实业务中，这套工作流把页面体积减小了 10～13%，主要手段是把本应只在后台运行、却被打进了主线程的[后台专属（background only）](/react/thinking-in-reactlynx)代码（如日志、网络请求、监控埋点等）正确标记并移出主线程，并通过 alias 去重重复打包的依赖。
 
 ### 更灵活的分包与动态加载 \{#rspeedy-splitting}
 

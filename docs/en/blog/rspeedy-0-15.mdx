@@ -23,7 +23,7 @@ Thanks to the Rspack → Rsbuild → Rspeedy layering, most of the upgrade is tr
 
 - From [Rspack 2.0](#rspack): [17–39% faster builds](#rspack-faster), [2–9% smaller bundles](#rspack-smaller)
 - From [Rsbuild 2.0](#rsbuild): config aligned with web conventions ([`resolve.alias`](#bc-alias), top-level [`splitChunks`](#bc-chunksplit))
-- From [Rspeedy](#rspeedy): [PrimJS-tuned output](#rspeedy-primjs), [ES2017 by default](#rspeedy-es2017), [parallel Lynx Bundle encoding](#rspeedy-parallel), [precise error de-mapping](#rspeedy-debug), [bundle-size skill](#rspeedy-skill), [more flexible code splitting and dynamic loading](#rspeedy-splitting)
+- From [Rspeedy](#rspeedy): [AI-native bundle-size skill](#rspeedy-skill), [PrimJS-tuned output](#rspeedy-primjs), [ES2017 by default](#rspeedy-es2017), [parallel Lynx Bundle encoding](#rspeedy-parallel), [precise error de-mapping](#rspeedy-debug), [more flexible code splitting and dynamic loading](#rspeedy-splitting)
 
 ## Rspack 2.0 \{#rspack}
 
@@ -114,6 +114,20 @@ export default defineConfig({
 
 On top of Rspack and Rsbuild, Rspeedy adds a series of enhancements tailored to Lynx's dual-thread runtime and artifact format. This is the layer we invest the most in, and the part closest to Lynx itself.
 
+### An AI-native bundle-size optimization skill \{#rspeedy-skill}
+
+Pinpointing where the bytes are is often harder than the optimization itself — it takes understanding Lynx's artifact format and Rspeedy's dual-thread build. [`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) bakes exactly that knowledge into an Agent skill: it teaches the AI how a Lynx dual-thread bundle's size breaks down, and follows a measure-first principle — first measure where an app's size actually is, then attack the highest-ROI parts first (assets, background JS, redundant code that leaked into the main thread).
+
+![Anatomy of a Lynx dual-thread bundle](/assets/blog/rspeedy-0-15/lynx-bundle-anatomy.en.png)
+
+Install it into your agent (Claude Code, Codex, etc.):
+
+```bash
+npx skills add lynx-community/skills -s rspeedy-bundle-size
+```
+
+Then just describe the goal in natural language, e.g. "break down this app's bundle and tell me where it's big and how to shrink it." The skill runs [Rsdoctor](https://rsdoctor.rs/), reports the per-layer breakdown, and hands back a prioritized plan — only touching code once you confirm. In real projects, this workflow has cut page size by 10–13%, mainly by correctly marking [background-only](/react/thinking-in-reactlynx) code (logging, network requests, telemetry, and the like) that had leaked into the main-thread render path and moving it out, plus de-duplicating packages via aliases.
+
 ### PrimJS-tuned output: lowering `let` / `const` to `var` \{#rspeedy-primjs}
 
 Beyond build time, we also made the output parse faster in Lynx's runtime. On Android, Lynx's background thread runs on the [PrimJS](https://github.com/lynx-family/primjs) engine, and we found PrimJS parses `var` noticeably faster than block-scoped `let` / `const`. So 0.15 enables SWC's [`transform-block-scoping`](https://github.com/swc-project/swc/tree/main/crates/swc_ecma_compat_es2015/src/block_scoping) on both the main- and background-thread layers by default, lowering `let` / `const` to `var`, and sets `output.environment.const` to `false` so the bundler's own runtime code uses `var` too.
@@ -143,18 +157,6 @@ For multi-page apps, the speedup isn't only from Rspack 2.0: we run each entry's
 ### Precise error de-mapping \{#rspeedy-debug}
 
 0.15 lets production errors resolve precisely back to your source: it generates a unified `debug-metadata.json` per Lynx entry that brings the JS, CSS, and UI source maps together, so both main-thread and background-thread errors can find the right de-mapping info. See [Map Production Errors to Source](/rspeedy/map-errors-to-source) for how it works.
-
-### An AI-native bundle-size optimization skill \{#rspeedy-skill}
-
-Pinpointing where the bytes are is often harder than the optimization itself — it takes understanding Lynx's artifact format and Rspeedy's dual-thread build. [`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) bakes exactly that knowledge into an Agent skill: it teaches the AI how a Lynx dual-thread bundle's size breaks down, and follows a measure-first principle — first measure where an app's size actually is, then attack the highest-ROI parts first (assets, background JS, redundant code that leaked into the main thread).
-
-Install it into your agent (Claude Code, Codex, etc.):
-
-```bash
-npx skills add lynx-community/skills -s rspeedy-bundle-size
-```
-
-Then just describe the goal in natural language, e.g. "break down this app's bundle and tell me where it's big and how to shrink it." The skill runs [Rsdoctor](https://rsdoctor.rs/), reports the per-layer breakdown, and hands back a prioritized plan — only touching code once you confirm. In real projects, this workflow has cut page size by 10–13%, mainly by correctly marking [background-only](/react/thinking-in-reactlynx) code (logging, network requests, telemetry, and the like) that had leaked into the main-thread render path and moving it out, plus de-duplicating packages via aliases.
 
 ### More flexible code splitting and dynamic loading \{#rspeedy-splitting}
 
