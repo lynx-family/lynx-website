@@ -22,8 +22,8 @@ Before finding plugin, you may want to check if the feature you want is already 
 
 The following Rsbuild plugins can be used in Rspeedy.
 
-- [Sass Plugin](https://rsbuild.dev/plugins/list/plugin-sass): Use Sass as the CSS preprocessor.
-- [Less Plugin](https://rsbuild.dev/plugins/list/plugin-less): Use Less as the CSS preprocessor.
+- [Sass Plugin](https://rsbuild.rs/plugins/list/plugin-sass): Use Sass as the CSS preprocessor.
+- [Less Plugin](https://rsbuild.rs/plugins/list/plugin-less): Use Less as the CSS preprocessor.
 - [ESLint Plugin](https://github.com/rspack-contrib/rsbuild-plugin-eslint): Run ESLint checks during the compilation.
 - [Type Check Plugin](https://github.com/rspack-contrib/rsbuild-plugin-type-check): Run TypeScript type checker on a separate process.
 - [Image Compress Plugin](https://github.com/rspack-contrib/rsbuild-plugin-image-compress): Compress the image assets.

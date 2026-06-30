@@ -1,0 +1,48 @@
+---
+description: 'Measure and reduce Rspeedy or ReactLynx bundle size with rsdoctor, stats.json, and layer-aware optimization.'
+---
+
+# rspeedy-bundle-size
+
+Helps coding agents analyze and reduce the shipped `.lynx.bundle` size of Rspeedy and ReactLynx apps. It is a measure-first skill: agents should identify where the bytes live before recommending or applying optimizations.
+
+Use it when an agent needs to:
+
+- explain why a Rspeedy or ReactLynx bundle is large
+- break bundle size down across media assets, background-thread JavaScript, and main-thread JavaScript
+- inspect `rsdoctor` or `stats.json` output before choosing an optimization
+- reduce main-thread leakage by moving background-only code out of the render path
+- evaluate size levers such as media compression, duplicate-package cleanup, `extractStr`, lazy bundles, or dynamic component splitting
+
+## Installation
+
+```bash
+npx skills add lynx-community/skills -s rspeedy-bundle-size
+```
+
+This installs the `rspeedy-bundle-size` skill so compatible coding agents can load its measurement workflow, gotchas, and bundled analysis helpers.
+
+## What It Covers
+
+- **Measurement discipline** — using Rspeedy stats or `rsdoctor` data before proposing fixes.
+- **Layer-aware analysis** — separating media assets, `react:background`, and `react:main-thread` weight.
+- **Importer tracing** — using real module graph edges instead of guessing why a module is bundled.
+- **Optimization levers** — prioritizing assets, background JS, main-thread leakage, and compile-layer knobs by expected impact.
+- **Bundle optimization logs** — recording before/after `.lynx.bundle` size, build commands, caveats, and shipped changes.
+
+## Recommended Workflow
+
+Ask the agent to use `rspeedy-bundle-size` before changing code for a bundle-size request.
+
+1. Read the repository build setup and use the native build command, such as Rush, wrapper tooling, or a package script.
+2. Generate a real size breakdown with `rsdoctor` or Rspeedy stats.
+3. Report the largest lever first, with evidence and tradeoffs.
+4. Change app code only when requested, and keep every applied optimization backed by a reproducible before/after measurement.
+
+## Learn More
+
+- [Rspeedy build analysis with Rsdoctor](/rspeedy/use-rsdoctor)
+- [Rspeedy output files](/rspeedy/output)
+- [lynx-community/skills on GitHub](https://github.com/lynx-community/skills)
+- [rspeedy-bundle-size skill source](https://github.com/lynx-community/skills/tree/release/skills/rspeedy-bundle-size)
+- [Agent Skills specification](https://github.com/anthropics/skills)

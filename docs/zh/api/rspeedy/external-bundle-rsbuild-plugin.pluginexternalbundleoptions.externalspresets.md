@@ -6,7 +6,7 @@
 
 Presets for external libraries.
 
-Same as https://rspack.rs/config/externals\#externalspresets but for Lynx.
+Same as https://rspack.rs/config/externals#externalspresets but for Lynx.
 
 **Signature:**
 

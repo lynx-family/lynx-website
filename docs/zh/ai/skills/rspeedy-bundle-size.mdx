@@ -1,0 +1,48 @@
+---
+description: '使用 rsdoctor、stats.json 和分层分析来衡量并缩小 Rspeedy 或 ReactLynx 包体积。'
+---
+
+# rspeedy-bundle-size
+
+帮助 coding agent 分析并缩小 Rspeedy 与 ReactLynx 应用最终交付的 `.lynx.bundle` 体积。它强调先测量再优化：先确认字节在哪里，再提出或实施改动。
+
+适合在以下场景使用：
+
+- 解释 Rspeedy 或 ReactLynx bundle 为什么变大
+- 按媒体资源、后台线程 JavaScript、主线程 JavaScript 拆分包体积
+- 在选择优化手段前分析 `rsdoctor` 或 `stats.json` 输出
+- 通过把 background-only 代码移出渲染路径，减少主线程泄漏
+- 评估媒体压缩、重复包清理、`extractStr`、lazy bundle、动态组件拆分等体积优化手段
+
+## 安装
+
+```bash
+npx skills add lynx-community/skills -s rspeedy-bundle-size
+```
+
+这会安装 `rspeedy-bundle-size` skill，让兼容的 coding agent 自动加载它的测量流程、常见陷阱和分析辅助工具。
+
+## 包含内容
+
+- **测量优先**：在提出修复前，先使用 Rspeedy stats 或 `rsdoctor` 数据确认体积分布。
+- **分层分析**：区分媒体资源、`react:background` 和 `react:main-thread` 的体积。
+- **导入链追踪**：使用真实 module graph 边，而不是猜测某个模块为什么被打进包里。
+- **优化杠杆**：按收益优先级处理资源、后台 JS、主线程泄漏和编译层选项。
+- **优化日志**：记录 `.lynx.bundle` 优化前后体积、构建命令、测量 caveat 和已落地改动。
+
+## 推荐工作流
+
+在包体积问题中改代码前，让 agent 先使用 `rspeedy-bundle-size`。
+
+1. 读取仓库构建方式，使用 Rush、封装工具或 package script 等原生命令入口。
+2. 通过 `rsdoctor` 或 Rspeedy stats 生成真实体积分布。
+3. 先报告最大收益项，并给出证据和取舍。
+4. 只有在明确要求改代码时才动手，并为每个落地优化保留可复现的前后对比。
+
+## 了解更多
+
+- [Rspeedy 使用 Rsdoctor 分析构建](/zh/rspeedy/use-rsdoctor)
+- [Rspeedy 产物说明](/zh/rspeedy/output)
+- [GitHub 上的 lynx-community/skills](https://github.com/lynx-community/skills)
+- [rspeedy-bundle-size skill 源码](https://github.com/lynx-community/skills/tree/release/skills/rspeedy-bundle-size)
+- [Agent Skills 规范](https://github.com/anthropics/skills)

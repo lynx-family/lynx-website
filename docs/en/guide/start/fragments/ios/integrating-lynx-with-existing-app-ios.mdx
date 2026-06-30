@@ -6,6 +6,8 @@ import { Tab, Tabs } from '@theme';
 import { Link } from '@theme';
 import versionJson from '@site/docs/public/version.json';
 
+{/* cspell:ignore CPLUSPLUSFLAGS */}
+
 <Info title="Lynx for iOS">
   - This article assumes that you are familiar with the basic concepts of native iOS application development.
   - You can refer to the project: <Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link> for all the code mentioned below.
@@ -132,6 +134,30 @@ In order to disable the **Sandbox scripting**, in Xcode click on your app, then 
   width="640px"
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/integration_ios_warning.png"
 />
+:::
+
+:::tip
+
+If you build with Xcode 26.x and the Lynx pod fails because warnings are treated as errors, add a `post_install` hook to your Podfile to demote the affected warnings:
+
+```ruby title="Podfile"
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+
+      disable = ['-Wno-error', '-Wno-c99-designator',
+                 '-Wno-deprecated-declarations', '-Wno-deprecated-implementations']
+      ['OTHER_CPLUSPLUSFLAGS', 'OTHER_CFLAGS'].each do |key|
+        flags = config.build_settings[key] || ['$(inherited)']
+        flags = [flags] unless flags.is_a?(Array)
+        config.build_settings[key] = flags + disable
+      end
+    end
+  end
+end
+```
+
 :::
 
 </Steps>
