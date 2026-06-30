@@ -49,16 +49,14 @@ dist/
 ├── .rspeedy
 │   ├── async
 │   │   └── [name]
-│   │       ├── debug-info.json
+│   │       ├── debug-metadata.json
 │   │       ├── tasm.json
 │   │       └── [name].css
 │   ├── [name]
 │   │   ├── background.js
-│   │   ├── background.js.map
-│   │   ├── debug-info.json
+│   │   ├── debug-metadata.json
 │   │   ├── [name].css
 │   │   ├── main-thread.js
-│   │   ├── main-thread.js.map
 │   │   └── tasm.json
 │   └── rspeedy.config.js
 ├── [name].lynx.bundle
@@ -69,10 +67,8 @@ dist/
     └── js
         ├── [id].[hash].js
         │   └── async
-        │       ├── [id].[hash].js
-        │       └── [id].[hash].js.map
-        ├── lib-preact.[hash].js
-        └── lib-preact.[hash].js.map
+        │       └── [id].[hash].js
+        └── lib-preact.[hash].js
 ```
 
 开发环境额外生成的文件包括：
