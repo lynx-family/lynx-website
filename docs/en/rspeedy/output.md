@@ -63,8 +63,8 @@ dist/
     └── js
         ├── [id].[hash].js
         │   └── async
-        │       ├── [id].[hash].js
-        ├── lib-preact.[hash].js
+        │       └── [id].[hash].js
+        └── lib-preact.[hash].js
 ```
 
 In addition, Rspeedy generates some extra files in development:
