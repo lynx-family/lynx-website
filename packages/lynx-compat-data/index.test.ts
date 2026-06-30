@@ -64,6 +64,36 @@ describe('API', () => {
 
 describe('Util functions', () => {
   it('should work', () => {
-    expect(getSupportedPlatforms(sTO.__compat)).toEqual(['android', 'ios']);
+    expect(getSupportedPlatforms(sTO.__compat)).toEqual([
+      'android',
+      'ios',
+      'harmony',
+      'clay_macos',
+      'clay_windows',
+      'web_lynx',
+    ]);
+  });
+});
+
+describe('isStatusBlock', () => {
+  it('accepts partial status with only experimental or only deprecated', () => {
+    expect(isStatusBlock({ experimental: true })).toBe(true);
+    expect(isStatusBlock({ deprecated: false })).toBe(true);
+    expect(isStatusBlock({ experimental: true, deprecated: false })).toBe(true);
+  });
+
+  it('rejects an object with no known status key', () => {
+    expect(isStatusBlock({})).toBe(false);
+    expect(isStatusBlock({ foo: 1 })).toBe(false);
+    expect(isStatusBlock({ standard_track: false })).toBe(false);
+  });
+
+  it('rejects objects that mix unknown keys in with known ones', () => {
+    expect(isStatusBlock({ experimental: true, foo: 1 })).toBe(false);
+  });
+
+  it('rejects non-boolean values for known keys', () => {
+    expect(isStatusBlock({ experimental: 'yes' })).toBe(false);
+    expect(isStatusBlock({ deprecated: 1 })).toBe(false);
   });
 });
