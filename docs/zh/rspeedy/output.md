@@ -75,7 +75,7 @@ dist/
 
 - 后台线程脚本（Background Thread Script）：内联到 Bundle 中的脚本，默认输出到 `.rspeedy/[name]/background.js`
 - 主线程脚本（MainThread Thread Script）：默认输出到 `.rspeedy/[name]/main-thread.js`
-- Source Map 文件：与 JS 文件同目录，以 `.map` 为后缀
+- Debug Metadata：反解线上错误所需的元数据（包含 source map、字节码调试信息、UI source map 与构建信息），默认输出到 `.rspeedy/[name]/debug-metadata.json`，详见 [线上错误反解](./map-errors-to-source)
 
 ## 修改目录结构
 

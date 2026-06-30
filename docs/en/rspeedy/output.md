@@ -71,7 +71,7 @@ In addition, Rspeedy generates some extra files in development:
 
 - Background Thread Script(BTS): The background script file that is inlined into the bundle, default output to `.rspeedy/[name]/background.js`.
 - MainThread Thread Script(MTS): The main-thread script file that is inlined into the bundle, default output to `.rspeedy/[name]/main-thread.js`.
-- Source Map files: contains the source code mappings, which is output to the same level directory of JS files and adds a `.map` suffix.
+- Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.rspeedy/[name]/debug-metadata.json`. See [Map Production Errors to Source](./map-errors-to-source).
 
 ## Modify the Directory
 
