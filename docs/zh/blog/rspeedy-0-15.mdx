@@ -2,36 +2,37 @@
 title: 'Lynx × Rspack 2.0：更快、更小、更贴近 Web'
 date: 2026-06-30
 sidebar: false
-authors: ['upupming', 'luhc228', 'chenjiahan', 'colinaaa', 'HuJean', 'jkzing']
+authors:
+  [
+    'upupming',
+    'luhc228',
+    'colinaaa',
+    'HuJean',
+    'jkzing',
+    'chenjiahan',
+    'huxpro',
+  ]
 badge_text: '新：Lynx × Rspack 2.0，更快、更小、更贴近 Web'
-description: 'Rspeedy 0.15 将底层升级到 Rspack 2.0 与 Rsbuild 2.0，带来最高 39% 的构建提速与更小的产物，同时面向 PrimJS 调优输出、引入 AI 原生的包体积优化 Skill，并提供更灵活的分包与动态加载能力。'
+description: 'Rspeedy 0.15 将底层升级到 Rspack 2.0 与 Rsbuild 2.0，带来最高 39% 的构建提速与更小的产物，同时面向 PrimJS 调优输出、引入包体积优化 Agent Skill，并提供更灵活的分包与动态加载能力。'
 ---
 
 import { BlogHeader } from '@lynx';
 
 <BlogHeader />
 
-我们很高兴地宣布 Rspeedy 0.15 已经正式发布！
+Lynx 基于 Rstack（[Rsbuild](https://rsbuild.rs/zh/) 与 [Rspack](https://rspack.rs/zh/)）构建了自己的工具链 [Rspeedy](/rspeedy/)，让每一个 Lynx 应用都能同步获得上游工具链的性能与能力。
 
-[Rspeedy](/rspeedy/) 是 Lynx 的官方构建工具，由 [Rsbuild](https://rsbuild.rs/zh/) 与 [Rspack](https://rspack.rs/zh/) 驱动，内置了 Lynx 开发所需的全部构建能力。
+随着 [Rspack 2.0](https://rspack.rs/zh/blog/announcing-2-0) 与 [Rsbuild 2.0](https://rsbuild.rs/zh/blog/v2-0) 相继发布，Lynx 免费获得了上游的一系列优化：[构建提速 18～39%](#rspack-faster)、[产物体积下降 3～9%](#rspack-smaller)，以及向 Web 通行约定对齐的配置，如 [`resolve.alias`](#bc-alias) 和顶层 [`splitChunks`](#bc-chunksplit)。在此之上，我们针对 Lynx 做了一系列定制：[更灵活的分包与动态加载](#rspeedy-splitting)、[面向 PrimJS 的产物调优](#rspeedy-primjs)、[默认 ES2017](#rspeedy-es2017)、[Lynx Bundle 并行编码](#rspeedy-parallel)，以及[精确错误反解](#rspeedy-debug)。我们还引入了一个用于包体积优化的 [Agent Skill](#rspeedy-skill)，帮你系统化地优化应用体积。
 
-自 2025 年 3 月 Lynx 开源以来，Rspeedy 始终紧跟 Rstack 的演进，让每一个 Lynx 应用都能第一时间享受到上游工具链带来的性能与能力提升。
-
-这一次也不例外。随着 [Rspack 2.0](https://rspack.rs/zh/blog/announcing-2-0) 与 [Rsbuild 2.0](https://rsbuild.rs/zh/blog/v2-0) 的发布，Rspeedy 0.15 把这次幅度最大的升级带到了 Lynx；在它之上，我们还针对 Lynx 自身的运行环境做了一系列优化。
-
-得益于「Rspack → Rsbuild → Rspeedy」的分层，绝大多数升级对你是透明的，多数项目无需改动配置即可直接获益。下面我们就按这三层来介绍这次发布——每一层各自来自哪里、带来了哪些收益，以及你需要注意的破坏性变更：
-
-- 来自 [Rspack 2.0](#rspack)：[构建提速 17～39%](#rspack-faster)、[产物体积下降 2～9%](#rspack-smaller)
-- 来自 [Rsbuild 2.0](#rsbuild)：配置向 Web 通行约定对齐（[`resolve.alias`](#bc-alias)、顶层 [`splitChunks`](#bc-chunksplit)）
-- 来自 [Rspeedy](#rspeedy)：[AI 原生的包体积优化 Skill](#rspeedy-skill)、[面向 PrimJS 的产物调优](#rspeedy-primjs)、[默认 ES2017](#rspeedy-es2017)、[Lynx Bundle 并行编码](#rspeedy-parallel)、[精确错误反解](#rspeedy-debug)、[更灵活的分包与动态加载](#rspeedy-splitting)
+这些能力从 Rspeedy 0.15 起可用。我们预计绝大多数项目无需改动配置即可获得这些收益，需要迁移的部分见下文[升级指南](#migration)。
 
 ## Rspack 2.0 \{#rspack}
 
-Rspack 是最底层的打包引擎。这次升级到 2.0，带来了最直接的性能与体积收益，绝大多数项目无需改动配置即可获得。Rspack 2.0 与 Rsbuild 2.0 本身的完整变更，可参考 [Rsbuild 2.0 博客](https://rsbuild.rs/zh/blog/v2-0)了解。
+Rspack 是最底层的打包引擎。这次升级到 2.0，带来了最直接的性能与体积收益，绝大多数项目无需改动配置即可获得。Rspack 2.0 本身的完整变更，可参考 [Rspack 2.0 发布博客](https://rspack.rs/zh/blog/announcing-2-0)了解。
 
-### 构建提速 17～39% \{#rspack-faster}
+### 构建提速 18～39% \{#rspack-faster}
 
-在一组生产环境的 Lynx 应用上，我们测得构建耗时下降 17～39%，且不需要任何配置改动：
+在一组生产环境的 Lynx 应用上，我们测得构建耗时下降 18～39%，且不需要任何配置改动：
 
 | 项目（已脱敏） | 升级前版本 | 升级前 | 升级后 | 构建提速 |
 | -------------- | ---------- | ------ | ------ | -------- |
@@ -40,36 +41,36 @@ Rspack 是最底层的打包引擎。这次升级到 2.0，带来了最直接的
 | App C          | 0.9.10     | 40.8s  | 28.2s  | −31%     |
 | App D          | 0.11.3     | 15.3s  | 11.2s  | −27%     |
 | App E          | 0.11.3     | 33.3s  | 27.2s  | −18%     |
-| App F          | 0.13.6     | 32.1s  | 26.8s  | −17%     |
-| App G          | 0.14.3     | 21.7s  | 21.9s  | ≈ 持平   |
 
-其中，核心提速来自 Rspack 2.0 的引擎优化；多页应用还会进一步受益于 [Lynx Bundle 的并行编码](#rspeedy-parallel)。
+核心提速来自 Rspack 2.0 的引擎优化；多页应用还会进一步受益于 [Lynx Bundle 的并行编码](#rspeedy-parallel)。
 
-### 产物体积下降 2～9% \{#rspack-smaller}
+### 产物体积下降 3～9% \{#rspack-smaller}
 
-升级后产物体积也随之收敛。在中间产物 `main-thread.js`、`background.js` 与最终的 Lynx Bundle 中，`main-thread.js` 与 Lynx Bundle 普遍下降 2～9%。
+升级后产物体积也随之下降。在中间产物 `main-thread.js`、`background.js` 与最终的 Lynx Bundle 中，`main-thread.js` 与 Lynx Bundle 普遍下降 3～9%。
 
-| 项目（已脱敏） | `background.js`         | `main-thread.js`       | Lynx Bundle            |
-| -------------- | ----------------------- | ---------------------- | ---------------------- |
-| App A          | 0.47 → 0.48MB（+1.3%）  | 0.46 → 0.43MB（−6.7%） | 1.14 → 1.10MB（−3.1%） |
-| App B          | 0.82 → 0.77MB（−6.0%）  | 0.93 → 0.84MB（−9.5%） | 2.13 → 1.95MB（−8.5%） |
-| App C          | 2.05 → 1.98MB（−3.6%）  | 2.16 → 2.01MB（−7.0%） | 5.03 → 4.74MB（−5.8%） |
-| App D          | 0.30 → 0.30MB（−1.1%）  | 0.51 → 0.47MB（−7.2%） | 0.82 → 0.79MB（−3.3%） |
-| App E          | 0.49 → 0.50MB（+1.4%）  | 2.98 → 2.79MB（−6.5%） | 4.63 → 4.48MB（−3.1%） |
-| App F          | 1.60 → 1.59MB（−1.1%）  | 0.98 → 0.93MB（−5.0%） | 2.93 → 2.86MB（−2.4%） |
-| App G          | 3.04 → 2.69MB（−11.4%） | 1.93 → 1.83MB（−5.4%） | 5.43 → 5.08MB（−6.4%） |
+| 项目（已脱敏） | `background.js`        | `main-thread.js`       | Lynx Bundle            |
+| -------------- | ---------------------- | ---------------------- | ---------------------- |
+| App A          | 0.47 → 0.48MB（+1.3%） | 0.46 → 0.43MB（−6.7%） | 1.14 → 1.10MB（−3.1%） |
+| App B          | 0.82 → 0.77MB（−6.0%） | 0.93 → 0.84MB（−9.5%） | 2.13 → 1.95MB（−8.5%） |
+| App C          | 2.05 → 1.98MB（−3.6%） | 2.16 → 2.01MB（−7.0%） | 5.03 → 4.74MB（−5.8%） |
+| App D          | 0.30 → 0.30MB（−1.1%） | 0.51 → 0.47MB（−7.2%） | 0.82 → 0.79MB（−3.3%） |
+| App E          | 0.49 → 0.50MB（+1.4%） | 2.98 → 2.79MB（−6.5%） | 4.63 → 4.48MB（−3.1%） |
 
 <small>以上为 DEBUG 模式下中间产物的全页面汇总体积，升级前 → 升级后。</small>
 
-这部分收益来自 Rspack 2.0 更强的 tree-shaking，以及我们把[后台产物默认目标提升至 ES2017](#rspeedy-es2017) 的共同作用。
+这部分收益来自 Rspack 2.0 更强的 tree-shaking，以及我们把[后台产物默认目标提升至 ES2017](#rspeedy-es2017)。
 
 ### Node.js 版本要求提升 \{#bc-node}
 
 最低要求提升至 Node.js 20.19+ 或 22.12+，不再支持 Node.js 18。
 
+### `@lynx-js/*-webpack-plugin` 不再支持 webpack \{#bc-webpack}
+
+既然 Rspack 已经足够成熟，我们也将底层 `@lynx-js/*-webpack-plugin` 系列插件转为 Rspack-only：公开类型统一从 `@rspack/core` 导出。绝大多数项目通过 Rspeedy 间接使用，无需改动；如果你直接依赖这些插件，需要相应调整。
+
 ## Rsbuild 2.0 \{#rsbuild}
 
-Rsbuild 在 Rspack 之上提供开箱即用的构建配置。2.0 让这些配置进一步向 Web 生态的通行约定靠拢——这一层的变更主要集中在配置项的命名与位置调整上，语义保持不变，迁移成本很低。
+Rsbuild 在 Rspack 之上提供开箱即用的构建配置。2.0 让这些配置进一步向 Web 生态的通行约定靠拢；这一层的变更主要集中在配置项的命名与位置调整上，语义保持不变。完整变更可参考 [Rsbuild 2.0 发布博客](https://rsbuild.rs/zh/blog/v2-0)。
 
 ### `source.alias` → `resolve.alias` \{#bc-alias}
 
@@ -107,27 +108,48 @@ export default defineConfig({
 
 [`source.decorators.version`](/api/rspeedy/rspeedy.decorators.version) 的默认值由 `2022-03` 变更为 `2023-11`，如需保持旧行为请显式配置。
 
-## Rspeedy \{#rspeedy}
+## 面向 Lynx 的定制优化 \{#rspeedy}
 
-在 Rspack 与 Rsbuild 之上，Rspeedy 针对 Lynx 的双线程运行时与产物格式做了一系列增强。这一层是我们投入最多、也最贴近 Lynx 自身的部分。
+在 Rspack 与 Rsbuild 之上，Rspeedy 做了一系列针对 Lynx 双线程运行时与产物格式的优化。
 
-### AI 原生的包体积优化 Skill \{#rspeedy-skill}
+### 更灵活的分包与动态加载 \{#rspeedy-splitting}
 
-准确定位体积瓶颈，往往比优化本身更难——这需要理解 Lynx 的产物格式，以及 Rspeedy 的双线程构建机制。[`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) 正是把这部分知识固化进了一个 Agent Skill：它让 AI 理解 Lynx 双线程产物的体积构成，并秉持「先测量、后优化」的原则——先量清楚一个应用的体积究竟大在哪，再按收益与成本排序、优先处理回报最高的部分（资源、后台 JS、主线程产物中的冗余代码）。
+Lynx 提供了由弱到强的三种拆分手段，它们在 Web 生态中都有对应的概念，并由 Rspeedy 适配到了 Lynx 的产物形态上：
 
-![Lynx 双线程产物的体积构成](/assets/blog/rspeedy-0-15/lynx-bundle-anatomy.zh.png)
+| 场景              | Web 生态                                                                 | Lynx                                                                                          |
+| ----------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| 构建期拆包        | Chunk Split（`splitChunks`）                                             | [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks)（同名配置，提供 Lynx 适配的 preset） |
+| 应用内按需加载    | 动态 `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | 动态 `import()` + ReactLynx `lazy()`，产物为 [Lazy Bundle](/react/code-splitting#懒加载组件)  |
+| 外部 / 跨应用复用 | webpack `externals`                                                      | [External Bundle](/rspeedy/external-bundle)                                                   |
 
-把它安装到你的 Agent（Claude Code、Codex 等）中：
+构建期拆包的 `splitChunks` 较为常见（配置迁移见 [`performance.chunkSplit` → `splitChunks`](#bc-chunksplit)），这里不再展开；下面重点说说 Lazy Bundle 和 External Bundle。
 
-```bash
-npx skills add lynx-community/skills -s rspeedy-bundle-size
+#### Lazy Bundle
+
+Lazy Bundle（懒加载分包）把单个应用的一部分延后加载，用 ReactLynx 的 [`lazy()`](/react/code-splitting#懒加载组件) 按需拉取，体验与 Web 中的动态 `import()` 一致：
+
+```ts
+import { Suspense, lazy } from '@lynx-js/react';
+
+const LazyComponent = lazy(() => import('./LazyComponent.jsx'));
 ```
 
-之后用自然语言描述目标即可，例如「帮我拆解下这个应用的包体积，到底大在哪、怎么减」。Skill 会运行 [Rsdoctor](https://rsdoctor.rs/zh/)、按层给出体积拆解，并产出一张带优先级的优化清单，只有在你确认后才动手改代码。在真实业务中，这套工作流把页面体积减小了 10～13%，主要手段是把本应只在后台运行、却被打进了主线程的[后台专属（background only）](/react/thinking-in-reactlynx)代码（如日志、网络请求、监控埋点等）正确标记并移出主线程，并通过 alias 去重重复打包的依赖。
+在此基础上，我们正在为 Lazy Bundle 增加按 import 控制加载时机的能力：借助 Rspack 2.0 的 [import attribute](https://rspack.rs/zh/config/module-rules#ruleswith) 支持，为每个 import 单独指定同步加载（用于[首帧直出 IFR](/guide/interaction/ifr)）或异步加载（后台驱动，默认）。届时的用法大致如下：
+
+```ts
+lazy(() => import('./LazyComponent.jsx', { with: { mode: 'sync' } })); // 同步，用于首帧直出
+lazy(() => import('./LazyComponent.jsx', { with: { mode: 'async' } })); // 后台驱动（默认）
+```
+
+该能力正在开发中，将在后续版本提供。
+
+#### External Bundle
+
+External Bundle 是一个单独构建出来的 Lynx Bundle，可以被另一个应用在运行时拉取并渲染，从而实现跨应用复用。生产侧基于 [Rslib](https://rslib.rs/zh/) 构建，用 [`defineExternalBundleRslibConfig`](/rspeedy/external-bundle) 产出；消费侧则使用 Rsbuild 插件 [`pluginExternalBundle`](/rspeedy/external-bundle) 接入。
 
 ### 面向 PrimJS：`let` / `const` 降级为 `var` \{#rspeedy-primjs}
 
-除了构建期更快，我们也让产物在 Lynx 的运行时里解析得更快。在 Android 上，Lynx 的后台线程运行在 [PrimJS](https://github.com/lynx-family/primjs) 引擎上，而我们发现 PrimJS 解析 `var` 的速度明显优于块级作用域的 `let` / `const`。因此 0.15 默认在主线程与后台线程两层都开启了 SWC 的 [`transform-block-scoping`](https://github.com/swc-project/swc/tree/main/crates/swc_ecma_compat_es2015/src/block_scoping)，把 `let` / `const` 降级为 `var`，并将 `output.environment.const` 设为 `false`，让打包器自身生成的运行时代码也使用 `var`。
+除了构建期更快，我们也让产物在 Lynx 的运行时里解析得更快。在 Android 上，Lynx 的后台线程运行在 [PrimJS](https://github.com/lynx-family/primjs) 引擎上，而我们发现 PrimJS 解析 `var` 的速度明显优于块级作用域的 `let` / `const`。因此 Rspeedy 0.15 默认在主线程与后台线程两层都开启了 SWC 的 [`transform-block-scoping`](https://github.com/swc-project/swc/tree/main/crates/swc_ecma_compat_es2015/src/block_scoping)，把 `let` / `const` 降级为 `var`，并将 `output.environment.const` 设为 `false`，让打包器自身生成的运行时代码也使用 `var`。
 
 ### 默认目标提升至 ES2017 \{#rspeedy-es2017}
 
@@ -149,50 +171,25 @@ export default defineConfig({
 
 ### Lynx Bundle 并行编码 \{#rspeedy-parallel}
 
-对多页应用，构建提速不止来自 Rspack 2.0：我们在一个并行的 worker 池中运行各 entry 的 tasm encode（[`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm)），把原本串行的 Lynx Bundle 编码并行化，进一步缩短构建耗时。
+对多页应用，构建提速不止来自 Rspack 2.0：Rspeedy 在一个并行的 worker 池中运行各 entry 的 tasm encode（[`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm)），把原本串行的 Lynx Bundle 编码并行化，进一步缩短构建耗时。
 
 ### 精确的错误反解 \{#rspeedy-debug}
 
-0.15 让线上错误能精确反解回源码：为每个 Lynx entry 生成统一的 `debug-metadata.json`，整合 JS、CSS、UI 三类 Source Map，主线程与后台线程的报错都能找到正确的反解信息、还原到原始代码。具体做法见[线上错误反解](/rspeedy/map-errors-to-source)。
+Rspeedy 0.15 让线上错误能精确反解回源码：为每个 Lynx entry 生成统一的 `debug-metadata.json`，整合 JS、CSS、UI 三类 Source Map，主线程与后台线程的报错都能找到正确的反解信息、还原到原始代码。具体做法见[线上错误反解](/rspeedy/map-errors-to-source)。
 
-### 更灵活的分包与动态加载 \{#rspeedy-splitting}
+## One More Thing：包体积优化 Agent Skill \{#rspeedy-skill}
 
-Rspeedy 提供了由弱到强的三种拆分手段。它们在 Web 生态中都有对应的概念，Rspeedy 把这些能力适配到了 Lynx 的产物形态上：
+准确定位体积瓶颈，往往比优化本身更难，这需要理解 Lynx 的产物格式和 Rspeedy 的双线程构建机制。[`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) 把这套知识封装成了一个 Agent Skill：它让 AI 理解 Lynx 双线程产物的体积构成，按「先测量、后优化」的方式工作：先量清楚一个应用的体积大在哪，再按回报高低排序，优先处理收益最大的部分（资源、后台 JS、主线程产物中的冗余代码）。
 
-| 场景              | Web 生态                                                                 | Rspeedy / Lynx                                                                                |
-| ----------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| 构建期拆包        | Chunk Split（`splitChunks`）                                             | [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks)（同名配置，提供 Lynx 适配的 preset） |
-| 应用内按需加载    | 动态 `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | 动态 `import()` + ReactLynx `lazy()`，产物为 [Lazy Bundle](/react/code-splitting#懒加载组件)  |
-| 外部 / 跨应用复用 | webpack `externals`                                                      | [External Bundle](/rspeedy/external-bundle)                                                   |
+![Lynx 双线程产物的体积构成](/assets/blog/rspeedy-0-15/lynx-bundle-anatomy.zh.png)
 
-构建期拆包的 `splitChunks` 较为常见（配置迁移见 [`performance.chunkSplit` → `splitChunks`](#bc-chunksplit)），这里不再展开；下面重点说说 Lazy Bundle 和 External Bundle。
+把它安装到你的 Agent（Claude Code、Codex 等）中：
 
-#### Lazy Bundle
-
-Lazy Bundle（懒加载分包）把单个应用的一部分延后加载，用 ReactLynx 的 [`lazy()`](/react/code-splitting#懒加载组件) 按需拉取，体验与 Web 中的动态 `import()` 一致：
-
-```ts
-import { Suspense, lazy } from '@lynx-js/react';
-
-const LazyComponent = lazy(() => import('./LazyComponent.jsx'));
+```bash
+npx skills add lynx-community/skills -s rspeedy-bundle-size
 ```
 
-在此基础上，我们正在为 Lazy Bundle 增加按 import 控制加载时机的能力：借助 Rspack 2.0 的 [import attribute](https://rspack.rs/zh/config/module-rules#ruleswith) 支持，为每个 import 单独指定同步加载（用于首帧直接渲染）或异步加载（后台驱动，默认）。届时的用法大致如下：
-
-```ts
-lazy(() => import('./LazyComponent.jsx', { with: { mode: 'sync' } })); // 首帧直接渲染
-lazy(() => import('./LazyComponent.jsx', { with: { mode: 'async' } })); // 后台驱动（默认）
-```
-
-该能力正在支持中，将在后续版本提供。
-
-#### External Bundle
-
-External Bundle 则更进一步——它是一个单独构建出来的 Lynx Bundle，可以被另一个应用在运行时拉取并渲染，从而实现跨应用复用。生产侧基于 [Rslib](https://rslib.rs/zh/) 构建，用 [`defineExternalBundleRslibConfig`](/rspeedy/external-bundle) 产出；消费侧则使用 Rsbuild 插件 [`pluginExternalBundle`](/rspeedy/external-bundle) 接入。
-
-### `@lynx-js/*-webpack-plugin` 不再支持 webpack \{#bc-webpack}
-
-为了不再同时维护 webpack 与 Rspack 两套实现（这会带来类型上的困扰），底层的 `@lynx-js/*-webpack-plugin` 系列插件移除了 webpack 支持，全面转为 Rspack-only：公开类型统一从 `@rspack/core` 导出。绝大多数项目通过 Rspeedy 间接使用，无需改动；但如果你直接依赖这些插件，需要相应调整。
+之后用自然语言描述目标即可，例如「帮我拆解下这个应用的包体积，到底大在哪、怎么减」。Skill 会运行 [Rsdoctor](https://rsdoctor.rs/zh/)、按层给出体积拆解，并产出一张带优先级的优化清单，只有在你确认后才动手改代码。在真实业务中，这套工作流把页面体积减小了 10～13%，主要手段是把本应只在后台运行、却被打进了主线程的[后台专属（background only）](/react/thinking-in-reactlynx)代码（如日志、网络请求、监控埋点等）正确标记并移出主线程，并通过 alias 去除重复打包的依赖。
 
 ## 升级指南 \{#migration}
 
@@ -200,10 +197,8 @@ External Bundle 则更进一步——它是一个单独构建出来的 Lynx Bund
 
 ## 接下来 \{#whats-next}
 
-0.15 也是一个方向的开始：让 Lynx 的构建越来越贴近 Web。接下来，我们会和 Rstack 团队一起，把 Rspeedy 更深地融入 Rsbuild 与 Rspack：
+我们会继续和 Rstack 团队一起优化构建性能与产物性能，同时让更多 Web 上已经成熟的能力可以在 Lynx 上开箱即用，例如 Module Federation。
 
-- 共建上游、能力下沉：把 Lynx 构建所需的能力尽量以 Rsbuild 插件与 Rspack 特性的形式沉淀到 Rstack，与社区共建，而不是停留在 Rspeedy 这一层。
-- 复用 Web 生态：让 Rsbuild 在 Web 上已经成熟的能力在 Lynx 上开箱即用，并争取让双线程等 Lynx 特性获得上游的原生支持，从而减少 Lynx 专属的配置、概念与文档。
-- 逐步消除「Rspeedy」这一层：长远来看，你将可以直接用 Rsbuild 配置 Lynx 项目——构建一个 Lynx 应用的体验，会越来越接近构建一个 Web 应用。
+你可能也注意到了上文 Rspack → Rsbuild → Rspeedy 的三层结构有些绕，我们也有同感。接下来我们会探索如何消除 Rspeedy 这一层：把双线程模型等 Lynx 特性沉淀到上游 Rstack，减少 Lynx 专属的配置、概念与文档，让长远来看你可以直接用 Rsbuild 配置和构建 Lynx 项目。
 
 在你现有的项目上升级试试看吧。如果遇到问题或有建议，欢迎在 [GitHub](https://github.com/lynx-family/lynx-stack) 上提 Issue 或参与讨论。
