@@ -117,7 +117,9 @@ After `pod install`, Autolink generates the registry pod and hooks it into the L
 
 <PlatformTabs.Tab platform="lynxtron">
 
-Use `pluginLynxtron()` in the Lynxtron host-side Rspack config. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, stages matching native library packages under the host output, and prepends generated code that requires each staged package's `./lynxtron` entry. For packages declared with `platforms.lynxtron.path`, direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the staged package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
+Lynxtron enables Autolink for Desktop native libraries. Not every Lynx-embedded Desktop host supports Autolink out of the box; this is a Lynxtron-provided integration.
+
+In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, copies matching native library packages into the host output, and injects code that imports each copied package's `./lynxtron` entry. For packages declared with `platforms.lynxtron.path`, direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -132,6 +134,8 @@ export default {
   ],
 };
 ```
+
+The `entry` field is the Lynxtron host's own bundle entry, and `pluginLynxtron()` stages native library packages relative to it. See the `@lynx-js/lynxtron-dev-plugins` package for the full option shape.
 
 After Lynxtron loads a native library, its Lynx static registrations become available to Lynx UI. The library author does not need a Lynxtron-specific registration macro.
 
@@ -537,10 +541,10 @@ On iOS, Autolink scans `@LynxNativeModule(...)`, `@LynxElement(...)`, and `@Lynx
 
 <PlatformTabs.Tab platform="lynxtron">
 
-Lynxtron native libraries use the shared Lynx C/C++ extension APIs and static registration macros. This page only covers how Autolink discovers and loads packages. For implementation details, use the Desktops(Node-API) tab for Native Modules and the Desktops tab for Custom Native Elements:
+Lynxtron native libraries use the shared Lynx C/C++ extension APIs and static registration macros. This page only covers how Autolink discovers and loads packages. For implementation details, use the Desktop (Node-API) tab for Native Modules and the Desktop tab for Custom Native Elements:
 
-- [Native Modules for Desktops(Node-API)](/guide/use-native-modules?platform=node-api)
-- [Custom Native Elements for Desktops](/guide/custom-native-component?platform=desktops)
+- [Native Modules for Desktop (Node-API)](/guide/use-native-modules?platform=node-api)
+- [Custom Native Elements for Desktop](/guide/custom-native-component?platform=desktops)
 
 </PlatformTabs.Tab>
 </PlatformTabs>

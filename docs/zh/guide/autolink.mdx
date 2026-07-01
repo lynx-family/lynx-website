@@ -117,7 +117,9 @@ end
 
 <PlatformTabs.Tab platform="lynxtron">
 
-在 Lynxtron host 侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，把匹配到的 native library package stage 到 host 输出目录，并前置生成代码 require 每个 staged package 的 `./lynxtron` 入口。对于声明了 `platforms.lynxtron.path` 的 package，业务代码直接 import `<package>/lynxtron` 时，也会被 alias 到生成的 proxy，并在运行时解析 staged package。`./lynxtron` 入口负责加载当前 host 对应的 `.node` 产物。
+Lynxtron 为桌面端原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的桌面宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
+
+在 Lynxtron 宿主的 Rspack 配置里加入 `pluginLynxtron()`。该插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，把匹配到的原生库包复制到宿主产物目录，并在宿主 bundle 中注入代码，引入每个复制过来的包的 `./lynxtron` 入口。对于声明了 `platforms.lynxtron.path` 的包，业务代码里直接 `import '<package>/lynxtron'` 也会被别名到一个自动生成的代理模块，在运行时解析已复制的包。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -133,7 +135,9 @@ export default {
 };
 ```
 
-Lynxtron 加载原生库后，其中的 Lynx 静态注册会对 Lynx UI 生效。库作者不需要 Lynxtron 专用注册宏。
+`entry` 是 Lynxtron 宿主自身的 bundle 入口，`pluginLynxtron()` 会以它为基准放置复制过来的原生库包。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
+
+Lynxtron 加载原生库后，其中的 Lynx 静态注册即对 Lynx UI 生效。库作者不需要 Lynxtron 专用的注册宏。
 
 </PlatformTabs.Tab>
 </PlatformTabs>
@@ -537,10 +541,10 @@ NS_ASSUME_NONNULL_END
 
 <PlatformTabs.Tab platform="lynxtron">
 
-Lynxtron 原生库使用共享的 Lynx C/C++ extension API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块请看 Desktops(Node-API) tab，自定义元件请看 Desktops tab：
+Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块的实现请看 Desktop (Node-API) 标签页，自定义元件的实现请看 Desktop 标签页：
 
-- [原生模块 Desktops(Node-API) 说明](/guide/use-native-modules?platform=node-api)
-- [自定义元件 Desktops 说明](/guide/custom-native-component?platform=desktops)
+- [原生模块 Desktop (Node-API) 说明](/guide/use-native-modules?platform=node-api)
+- [自定义元件 Desktop 说明](/guide/custom-native-component?platform=desktops)
 
 </PlatformTabs.Tab>
 </PlatformTabs>

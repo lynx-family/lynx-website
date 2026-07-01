@@ -1,16 +1,15 @@
 import { CodeFold } from '@lynx'
 
-On Desktops(Node-API), use the Lynx C/C++ APIs to register native capabilities
+On Desktop (Node-API), use the Lynx C/C++ APIs to register native capabilities
 with the Lynx runtime. Native Module methods are exposed to `NativeModules`
-through the weak N-API environment owned by the Lynx JavaScript runtime, and the
-registration entry point is `LYNX_REGISTER_NATIVE_MODULE`.
+through the Weak Node-API environment owned by the Lynx JavaScript runtime, and
+the registration entry point is `LYNX_REGISTER_NATIVE_MODULE`.
 
-The weak-node-api headers, including `napi.h`, `node_api.h`,
-`weak_napi_defines.h`, and `weak_napi_undefs.h`, are published through the
-[`@lynx-js/weak-node-api`](https://www.npmjs.com/package/@lynx-js/weak-node-api)
-npm package. Add this package to your native library project and include the
-package's `headers/` directory in your build so the code can use the `Napi::`
-C++ wrapper types.
+The [`@lynx-js/weak-node-api`](https://www.npmjs.com/package/@lynx-js/weak-node-api)
+npm package publishes the Weak Node-API headers, including `napi.h`,
+`node_api.h`, `weak_napi_defines.h`, and `weak_napi_undefs.h`. Add it to your
+native library project and include its `headers/` directory in the build so
+your code can use the `Napi::` C++ wrapper types.
 
 The example below matches the TypeScript declaration above and exports
 `NativeLocalStorageModule`.
@@ -139,8 +138,18 @@ LYNX_REGISTER_NATIVE_MODULE(
 </CodeFold>
 
 After the native code is ready, compile it into the host app or into a desktop
-native library that the host can load. Once the library is loaded, the static
-registration exposes `NativeLocalStorageModule` through `NativeModules`.
+native library that the host can load. See [Native Libraries and
+Autolink](/guide/autolink?platform=lynxtron) for how to distribute the library
+and wire it into a Lynxtron host. Once the library is loaded, the static
+registration exposes `NativeLocalStorageModule` through `NativeModules`, so a
+Lynx page can call it directly:
+
+```ts title="src/App.tsx"
+NativeModules.NativeLocalStorageModule.setStorageItem('language', 'JavaScript');
+NativeModules.NativeLocalStorageModule.getStorageItem('language', (value) => {
+  console.log(value); // 'JavaScript'
+});
+```
 
 If the same desktop native library also exposes a custom Element, see the
-[Desktops platform section of Custom Element](/guide/custom-native-component?platform=desktops).
+[Desktop platform section of Custom Element](/guide/custom-native-component?platform=desktops).

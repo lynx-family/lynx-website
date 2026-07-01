@@ -20,10 +20,11 @@ type Platform =
   | 'macos-intel'
   | 'reactlynx';
 
+type IconRef = PlatformName | string;
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
   label: string;
-  iconName: PlatformName | string;
+  iconName: IconRef | IconRef[];
 }> = [
   {
     id: 'ios',
@@ -58,13 +59,13 @@ const PLATFORM_OPTIONS: Array<{
   },
   {
     id: 'desktops',
-    label: 'Desktops',
-    iconName: 'windows',
+    label: 'Desktop',
+    iconName: ['macos', 'windows'],
   },
   {
     id: 'node-api',
-    label: 'Desktops(Node-API)',
-    iconName: 'windows',
+    label: 'Desktop (Node-API)',
+    iconName: ['macos', 'windows'],
   },
   {
     id: 'windows',
@@ -155,10 +156,22 @@ const OptionSelector = React.forwardRef<
             onClick={() => onSelect(option.id)}
           >
             {isActive && <BorderBeam duration={3} size={2} />}
-            <PlatformSvg
-              platformName={option.iconName}
-              className="shared-tabs__card-icon"
-            />
+            {Array.isArray(option.iconName) ? (
+              <div className="shared-tabs__card-icons">
+                {option.iconName.map((icon, i) => (
+                  <PlatformSvg
+                    key={`${option.id}-${i}`}
+                    platformName={icon}
+                    className="shared-tabs__card-icon"
+                  />
+                ))}
+              </div>
+            ) : (
+              <PlatformSvg
+                platformName={option.iconName}
+                className="shared-tabs__card-icon"
+              />
+            )}
             <span className="shared-tabs__card-label">{option.label}</span>
           </button>
         );

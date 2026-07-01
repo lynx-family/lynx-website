@@ -1,14 +1,13 @@
 import { CodeFold } from '@lynx'
 
-Desktops(Node-API) 平台使用 Lynx C/C++ API 把原生能力注册到 Lynx 运行时。原生模块的方法通过
-Lynx 内部 JavaScript 运行时的 weak N-API 暴露给 `NativeModules`，注册入口使用
+Desktop (Node-API) 平台使用 Lynx C/C++ API 把原生能力注册到 Lynx 运行时。原生模块的方法通过
+Lynx 内部 JavaScript 运行时的 Weak Node-API 环境暴露给 `NativeModules`，注册入口使用
 `LYNX_REGISTER_NATIVE_MODULE`。
 
-weak-node-api 头文件包括 `napi.h`、`node_api.h`、`weak_napi_defines.h` 和
-`weak_napi_undefs.h`，通过
-[`@lynx-js/weak-node-api`](https://www.npmjs.com/package/@lynx-js/weak-node-api)
-npm 包发布。在原生库工程中添加这个包，并在构建系统中 include 这个包的 `headers/`
-目录，即可使用 `Napi::` C++ wrapper 类型。
+npm 包 [`@lynx-js/weak-node-api`](https://www.npmjs.com/package/@lynx-js/weak-node-api)
+发布了 Weak Node-API 头文件，包括 `napi.h`、`node_api.h`、`weak_napi_defines.h`
+和 `weak_napi_undefs.h`。在原生库工程中安装该包，并把它的 `headers/` 目录接入构建系统，
+即可使用 `Napi::` C++ 包装类型。
 
 下面的示例保持和前面的 TypeScript 声明一致，导出 `NativeLocalStorageModule`。
 
@@ -135,8 +134,17 @@ LYNX_REGISTER_NATIVE_MODULE(
 
 </CodeFold>
 
-准备好原生代码后，将它编译进宿主应用，或编译成可被宿主加载的桌面端原生库。库被加载后，静态注册会把
-`NativeLocalStorageModule` 暴露到 `NativeModules`。
+准备好原生代码后，将它编译进宿主应用，或编译成可被宿主加载的桌面端原生库。可以参考
+[原生库与 Autolink](/guide/autolink?platform=lynxtron) 了解如何发布库、
+并把它接入 Lynxtron 宿主。库加载完成后，静态注册会把 `NativeLocalStorageModule`
+暴露到 `NativeModules`，Lynx 页面即可直接调用：
+
+```ts title="src/App.tsx"
+NativeModules.NativeLocalStorageModule.setStorageItem('language', 'JavaScript');
+NativeModules.NativeLocalStorageModule.getStorageItem('language', (value) => {
+  console.log(value); // 'JavaScript'
+});
+```
 
 如果同一个桌面端原生库还需要暴露自定义元件，请参考
-[自定义元件的 Desktops 平台说明](/guide/custom-native-component?platform=desktops)。
+[自定义元件的 Desktop 平台说明](/guide/custom-native-component?platform=desktops)。

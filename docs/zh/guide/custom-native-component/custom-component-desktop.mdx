@@ -1,7 +1,9 @@
 import { CodeFold } from '@lynx';
 import { Steps, Tab, Tabs } from '@theme';
 
-自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理布局、在 Lynx 页面中使用等。Desktops 平台通过 Lynx C/C++ API 实现原生元件。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，介绍自定义元件的实现流程。
+自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理布局、在 Lynx 页面中使用等。Desktop 平台通过 Lynx C/C++ API 实现原生元件。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，介绍自定义元件的实现流程。
+
+下文用到的扩展头文件，包括 `capi/lynx_view_capi.h`、`lynx_native_view.h` 和 `lynx/registration.h`，由 npm 包 [`@lynx-js/lynx-library-headers`](https://www.npmjs.com/package/@lynx-js/lynx-library-headers) 提供。在原生库工程中安装该包，把它的 `include/` 目录加入 include 路径即可；由 [`create-lynx-library`](/guide/autolink?platform=lynxtron) 生成的 CMake 已经完成了这一步。
 
 <Steps>
 
@@ -9,7 +11,7 @@ import { Steps, Tab, Tabs } from '@theme';
 
 #### 声明自定义元件
 
-把所有 Desktops backend 共享的行为放在 element header 中。各平台 backend 继承这个类，只实现展示相关的部分。
+把所有 Desktop backend 共享的行为放在 element header 中。各平台 backend 继承这个类，只实现展示相关的部分。
 
 <CodeFold toggle height={500}>
 
@@ -84,7 +86,7 @@ class ExplorerInputElementView : public lynx::pub::LynxNativeView {
 
 #### 注册自定义元件
 
-Desktops 原生元件通过 `LYNX_REGISTER_ELEMENT` 注册。原生库被编译进宿主应用或被宿主进程加载后，静态注册会把 tag 暴露给 Lynx 页面使用。
+Desktop 原生元件通过 `LYNX_REGISTER_ELEMENT` 注册。这是一次进程级的静态注册：原生库被编译进宿主应用或被宿主进程加载后，进程内每个 `LynxView` 都可以使用注册的 tag。
 
 最后一个参数传 `nullptr` 时，creator 收到的 `opaque` 是当前 `lynx_view_t*`，可以用它解析平台宿主窗口：
 
@@ -107,7 +109,7 @@ LYNX_REGISTER_ELEMENT(
 
 ### 创建原生 `View` 实例
 
-每个自定义元件都会被创建为一个 `LynxNativeView`。上面的声明、属性处理、方法处理和静态注册对所有 Desktops 实现都是共享的。backend 决定 view 创建之后持有什么：Native UI 持有平台控件，Texture 持有 Lynx surface。
+每个自定义元件都会被创建为一个 `LynxNativeView`。上面的声明、属性处理、方法处理和静态注册对所有 Desktop 实现都是共享的。backend 决定 view 创建之后持有什么：Native UI 持有平台控件，Texture 持有 Lynx surface。
 
 下面的示例使用同一个注册 creator 名称展示两种可选 backend 实现。实际构建时选择一种 backend，让 `CreateExplorerInputElementNativeView` 只解析到一个实现。
 
@@ -735,7 +737,7 @@ bool DrawExplorerInputElementTextureSurface(
 
 ### 构建并使用元件
 
-准备好原生代码后，将它编译进宿主应用或可被宿主加载的 Desktops 原生库。如果包里同时包含 Native UI 和 Texture 两套实现，需要在构建系统中选择一种，让注册的 creator 只解析到一个实现。
+准备好原生代码后，将它编译进宿主应用或可被宿主加载的 Desktop 原生库。如果包里同时包含 Native UI 和 Texture 两套实现，需要在构建系统中选择一种，让注册的 creator 只解析到一个实现。
 
 原生库被 link 或加载后，即可在 Lynx 中使用注册好的 tag：
 
@@ -813,7 +815,7 @@ const handleInput = (e) => {
 
 ### 支持直接操作元件（可选）
 
-在某些情况下，前端可能需要通过命令式 API 直接操作自定义元件。Desktops 上可以通过实现 `OnMethodInvoked` 处理这些调用。
+在某些情况下，前端可能需要通过命令式 API 直接操作自定义元件。Desktop 上可以通过实现 `OnMethodInvoked` 处理这些调用。
 
 #### 前端调用示例
 
