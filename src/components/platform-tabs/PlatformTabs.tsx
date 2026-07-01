@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
 import React, { useCallback, useEffect, useState } from 'react';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
-import { PlatformName } from '@lynx-js/lynx-compat-data';
+import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import '../shared-tabs.scss';
 
 type Platform =
@@ -11,16 +11,20 @@ type Platform =
   | 'android'
   | 'harmony'
   | 'web'
+  | 'lynxtron'
+  | 'desktops'
+  | 'node-api'
   | 'windows'
   | 'macos'
   | 'macos-arm64'
   | 'macos-intel'
   | 'reactlynx';
 
+type IconRef = PlatformName | string;
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
   label: string;
-  iconName: PlatformName;
+  iconName: IconRef | IconRef[];
 }> = [
   {
     id: 'ios',
@@ -47,6 +51,21 @@ const PLATFORM_OPTIONS: Array<{
     id: 'web',
     label: 'Web',
     iconName: 'web_lynx',
+  },
+  {
+    id: 'lynxtron',
+    label: 'Lynxtron',
+    iconName: 'lynxtron',
+  },
+  {
+    id: 'desktops',
+    label: 'Desktop',
+    iconName: ['macos', 'windows'],
+  },
+  {
+    id: 'node-api',
+    label: 'Desktop (Node-API)',
+    iconName: ['macos', 'windows'],
   },
   {
     id: 'windows',
@@ -137,10 +156,22 @@ const OptionSelector = React.forwardRef<
             onClick={() => onSelect(option.id)}
           >
             {isActive && <BorderBeam duration={3} size={2} />}
-            <PlatformSvg
-              platformName={option.iconName}
-              className="shared-tabs__card-icon"
-            />
+            {Array.isArray(option.iconName) ? (
+              <div className="shared-tabs__card-icons">
+                {option.iconName.map((icon, i) => (
+                  <PlatformSvg
+                    key={`${option.id}-${i}`}
+                    platformName={icon}
+                    className="shared-tabs__card-icon"
+                  />
+                ))}
+              </div>
+            ) : (
+              <PlatformSvg
+                platformName={option.iconName}
+                className="shared-tabs__card-icon"
+              />
+            )}
             <span className="shared-tabs__card-label">{option.label}</span>
           </button>
         );
