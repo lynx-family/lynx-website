@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -402,7 +402,7 @@ let FILES = {} // basename -> text, for dropped bundle files
 
 const $ = (sel) => document.querySelector(sel)
 const esc = (s) =>
-  String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+  String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const basename = (p) => p.split('/').pop()
 const fnLineCol = (fn) => fn.line_col || (fn.line_col_info && fn.line_col_info.line_col) || []
 
@@ -540,8 +540,9 @@ async function selectArtifact(art, keepFocus) {
   GENERATED = FILES[name] || ''
   GENERATED_LINES = GENERATED ? GENERATED.split('\n') : []
 
+  const kindClass = ['background', 'main-thread', 'css', 'source'].includes(art.kind) ? art.kind : 'source'
   $('#genHd').innerHTML =
-    `<span class="tag ${art.kind}">${art.kind}</span> <span class="fp">${esc(name)}</span>` +
+    `<span class="tag ${kindClass}">${esc(art.kind)}</span> <span class="fp">${esc(name)}</span>` +
     (GENERATED ? '' : ' <span style="color:var(--muted)">(source-map only — drop the bundle to show generated code)</span>')
 
   // Source selector: sources referenced by segments.
