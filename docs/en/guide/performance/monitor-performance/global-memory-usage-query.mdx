@@ -1,0 +1,121 @@
+# Global Lynx Memory Query
+
+Use the global Lynx memory query when you need a current, one-shot snapshot of Lynx-attributed memory across live Lynx instances in the current process.
+
+This API is designed for active diagnostics: memory pressure handling, quick high-memory triage, and deciding whether a deeper heap investigation is needed. It is not a high-frequency monitor and does not release memory by itself.
+
+## What It Measures
+
+The query collects memory from all live Lynx instances in the current process, aggregates Element, UI/View, main-thread runtime, and background-thread runtime memory, and returns a structured result.
+
+It differs from passive or periodic memory reporting: passive reporting is useful for dashboards and historical analysis, while this API asks the current process for a fresh snapshot at the moment the caller needs it.
+
+It also differs from heap snapshots. Heap snapshots can prove JavaScript retainer chains. This query gives a fast memory inventory and points to the largest pages, instances, or categories.
+
+## Native API
+
+### iOS
+
+```objective-c
+[[LynxMemoryUsageQuery sharedInstance]
+    queryLynxGlobalMemoryUsageAsync:^(LynxGlobalMemoryUsageResult *result) {
+      int64_t lynxBytes = result.totalBytes;
+      int64_t appBytes = result.appBytes;
+      LynxMemoryCollectionStatus status = result.collectionStatus;
+    }];
+```
+
+Use the overload with `timeoutMs` when you need a custom collection timeout:
+
+```objective-c
+[[LynxMemoryUsageQuery sharedInstance]
+    queryLynxGlobalMemoryUsageAsync:^(LynxGlobalMemoryUsageResult *result) {
+      // Handle result on the report thread.
+    }
+                         timeoutMs:5000];
+```
+
+### Android
+
+```java
+LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
+    new LynxGlobalMemoryUsageCallback() {
+      @Override
+      public void onResult(@NonNull LynxGlobalMemoryUsageResult result) {
+        long lynxBytes = result.getTotalBytes();
+        long appBytes = result.getAppBytes();
+        LynxMemoryCollectionStatus status = result.getCollectionStatus();
+      }
+    });
+```
+
+Use the overload with `timeoutMs` when you need a custom collection timeout:
+
+```java
+LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
+    result -> {
+      // Handle result on the report thread.
+    },
+    5000);
+```
+
+When `timeoutMs <= 0`, the platform uses the default timeout of `2000` ms.
+
+## Result Fields
+
+### Global Result
+
+| Field                          | Type             | Description                                                                                                                     |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `collectionStartMs`            | `long`           | Wall-clock collection start time in milliseconds.                                                                               |
+| `collectionStatus`             | enum             | `completed` when all instances in this request completed, or `timeout` when the timeout was reached first.                      |
+| `collectionDurationMs`         | `long`           | Elapsed collection time in milliseconds.                                                                                        |
+| `collectionTimeoutMs`          | `long`           | Timeout used by this request.                                                                                                   |
+| `expectedInstanceCount`        | `int`            | Number of live Lynx instances identified when the request started.                                                              |
+| `completedInstanceCount`       | `int`            | Number of instances that completed collection and are included in this result.                                                  |
+| `totalBytes`                   | `long`           | Global Lynx-attributed bytes. This counts only Lynx-attributed memory; `appBytes` is app-level context, not part of this value. |
+| `appBytes`                     | `long`           | Current app memory footprint sampled by the platform.                                                                           |
+| `ratioToApp`                   | `double`         | `totalBytes / appBytes`, or `0` when app bytes are unavailable.                                                                 |
+| `elementBytes`                 | `long`           | Aggregated Element tree memory.                                                                                                 |
+| `elementNodeCount`             | `long` / `int32` | Aggregated Element node count.                                                                                                  |
+| `viewBytes`                    | `long`           | Aggregated UI/View memory.                                                                                                      |
+| `mainThreadRuntimeBytes`       | `long`           | Aggregated main-thread runtime memory.                                                                                          |
+| `backgroundThreadRuntimeBytes` | `long`           | Aggregated background-thread runtime memory, with shared background runtime groups deduplicated.                                |
+| `instances`                    | list             | Completed instance list sorted by `totalBytes` descending.                                                                      |
+
+### Instance Result
+
+| Field                          | Type             | Description                                                                                                                    |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `instanceId`                   | `int32`          | LynxShell instance ID.                                                                                                         |
+| `pageId`                       | string           | Page identity when available. Current implementations may use a temporary view-derived identity.                               |
+| `url`                          | string           | Current template URL captured when the instance completes collection.                                                          |
+| `totalBytes`                   | `long`           | Instance-attributed total: Element + View + main runtime + background runtime. Do not sum instance totals as the global total. |
+| `elementBytes`                 | `long`           | Element tree memory for this instance.                                                                                         |
+| `elementNodeCount`             | `long` / `int32` | Element node count for this instance.                                                                                          |
+| `viewBytes`                    | `long`           | UI/View memory for this instance.                                                                                              |
+| `viewDetail`                   | object           | UI memory records keyed by view category, tag, or view key. This is not a nested child LynxView tree.                          |
+| `mainThreadRuntimeBytes`       | `long`           | Main-thread runtime heap snapshot bytes.                                                                                       |
+| `backgroundThreadRuntimeBytes` | `long`           | Background-thread runtime heap snapshot bytes.                                                                                 |
+| `btsRuntimeGroupId`            | string           | Background runtime group ID used for global deduplication.                                                                     |
+
+## Collection Semantics
+
+- The API is asynchronous. On initialized native runtimes, callbacks run on the Lynx report thread. Dispatch to the main thread before touching platform View objects.
+- Each request fixes its collection scope at the start: only Lynx instances already alive at that point are included. Instances created during the request are not mixed into the current result and appear in a later query.
+- Concurrent calls are coalesced into the query already in progress. They share the same instance scope, timeout, and final result.
+- If no live Lynx instances exist, the callback still receives an asynchronous `completed` result with zero Lynx-attributed bytes.
+- If `collectionStatus` is `timeout`, only completed instance results are included. Treat totals as partial when `completedInstanceCount < expectedInstanceCount`.
+- Background runtime bytes are deduplicated globally by non-empty BTS runtime group ID. The non-shared group ID `-1` is charged per instance.
+
+## Interpreting The Result
+
+Start with collection quality: `collectionStatus`, `collectionDurationMs`, `expectedInstanceCount`, and `completedInstanceCount`.
+
+Then compare category totals:
+
+- High `elementBytes` with high `elementNodeCount` points to Element tree or node-count growth.
+- High `viewBytes` points to platform UI/View weight. Use `viewDetail` to identify dominant view categories.
+- High `mainThreadRuntimeBytes` or `backgroundThreadRuntimeBytes` points to runtime memory. Use heap snapshots when retainer evidence is needed.
+
+For lifecycle confidence, take repeated snapshots: before opening the target page, after reproducing high memory, and after exiting the page. If the exited page remains in `instances[]` and the numbers do not drop, treat it as suspicious lifecycle residue and move to heap snapshot analysis.
