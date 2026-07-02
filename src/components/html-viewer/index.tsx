@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation, withBase } from '@rspress/core/runtime';
+import { useI18n, useLocation, withBase } from '@rspress/core/runtime';
 import styles from './index.module.less';
 
 const doUpdataParentHash = (event: MessageEvent) => {
@@ -24,6 +24,7 @@ function formatUrlWithBase(url: string): string {
 
 const HtmlViewer = ({ path }: { path: string }) => {
   const location = useLocation();
+  const t = useI18n();
   const formattedPath = formatUrlWithBase(path);
 
   useEffect(() => {
@@ -44,10 +45,22 @@ const HtmlViewer = ({ path }: { path: string }) => {
     };
   }, []);
 
+  const iframeSrc = `${formattedPath}?ts=${Date.now()}${location.hash}`;
+
   return (
     <div className={styles['html-viewer-frame']}>
+      <div className={styles['open-link-bar']}>
+        <a
+          href={iframeSrc}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles['open-link']}
+        >
+          {t('html-viewer.open-in-new-tab')}
+        </a>
+      </div>
       <iframe
-        src={`${formattedPath}?ts=${Date.now()}${location.hash}`}
+        src={iframeSrc}
         className={styles['iframe-frame']}
       />
     </div>
