@@ -1,0 +1,121 @@
+# 全局 Lynx 内存查询
+
+当用户需要获取当前进程内所有存活 Lynx 实例的 Lynx 归因内存快照时，可以使用全局 Lynx 内存查询。
+
+这个 API 面向主动诊断场景：内存压力处理、快速定位高内存页面、判断是否需要进一步抓取 heap snapshot。它不是高频监控接口，也不会主动释放内存。
+
+## 查询内容
+
+一次查询会针对当前进程内所有存活 Lynx Instance 发起采集，聚合 Element、UI/View、主线程 runtime、后台线程 runtime 内存，并返回结构化结果。
+
+它与周期性或被动上报不同：被动上报适合大盘和历史分析；这个 API 会在调用方需要决策的时刻，主动向当前进程获取一份新快照。
+
+它也不同于 heap snapshot。heap snapshot 用于证明 JavaScript 对象 retain 链；本查询提供的是快速内存盘点，用来指出最大的页面、实例或分类。
+
+## 原生 API
+
+### iOS
+
+```objective-c
+[[LynxMemoryUsageQuery sharedInstance]
+    queryLynxGlobalMemoryUsageAsync:^(LynxGlobalMemoryUsageResult *result) {
+      int64_t lynxBytes = result.totalBytes;
+      int64_t appBytes = result.appBytes;
+      LynxMemoryCollectionStatus status = result.collectionStatus;
+    }];
+```
+
+如果需要自定义采集超时，可以使用带 `timeoutMs` 的重载：
+
+```objective-c
+[[LynxMemoryUsageQuery sharedInstance]
+    queryLynxGlobalMemoryUsageAsync:^(LynxGlobalMemoryUsageResult *result) {
+      // Callback 运行在 report thread。
+    }
+                         timeoutMs:5000];
+```
+
+### Android
+
+```java
+LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
+    new LynxGlobalMemoryUsageCallback() {
+      @Override
+      public void onResult(@NonNull LynxGlobalMemoryUsageResult result) {
+        long lynxBytes = result.getTotalBytes();
+        long appBytes = result.getAppBytes();
+        LynxMemoryCollectionStatus status = result.getCollectionStatus();
+      }
+    });
+```
+
+如果需要自定义采集超时，可以使用带 `timeoutMs` 的重载：
+
+```java
+LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
+    result -> {
+      // Callback 运行在 report thread。
+    },
+    5000);
+```
+
+当 `timeoutMs <= 0` 时，平台使用默认超时时间 `2000` ms。
+
+## 返回字段
+
+### 全局结果
+
+| 字段                           | 类型             | 说明                                                                                             |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------ |
+| `collectionStartMs`            | `long`           | 采集开始的墙钟时间戳，单位毫秒。                                                                 |
+| `collectionStatus`             | enum             | `completed` 表示本次请求范围内的实例均已完成采集；`timeout` 表示达到超时时间后先返回结果。       |
+| `collectionDurationMs`         | `long`           | 本次采集耗时，单位毫秒。                                                                         |
+| `collectionTimeoutMs`          | `long`           | 本次请求使用的超时时间。                                                                         |
+| `expectedInstanceCount`        | `int`            | 本次请求开始时识别到的存活 Lynx 实例数量。                                                       |
+| `completedInstanceCount`       | `int`            | 本次结果中已完成采集的实例数量。                                                                 |
+| `totalBytes`                   | `long`           | 全局 Lynx 归因总内存。仅统计 Lynx 归因内存，`appBytes` 是用于对比的 App 总内存采样，不计入该值。 |
+| `appBytes`                     | `long`           | 平台采样到的当前 App 内存 footprint。                                                            |
+| `ratioToApp`                   | `double`         | `totalBytes / appBytes`；当 app bytes 不可用时为 `0`。                                           |
+| `elementBytes`                 | `long`           | 聚合后的 Element tree 内存。                                                                     |
+| `elementNodeCount`             | `long` / `int32` | 聚合后的 Element 节点数。                                                                        |
+| `viewBytes`                    | `long`           | 聚合后的 UI/View 内存。                                                                          |
+| `mainThreadRuntimeBytes`       | `long`           | 聚合后的主线程 runtime 内存。                                                                    |
+| `backgroundThreadRuntimeBytes` | `long`           | 聚合后的后台线程 runtime 内存，会对共享后台 runtime group 去重。                                 |
+| `instances`                    | list             | 已完成采集的实例列表，按 `totalBytes` 降序排列。                                                 |
+
+### 单实例结果
+
+| 字段                           | 类型             | 说明                                                                                                             |
+| ------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `instanceId`                   | `int32`          | LynxShell instance ID。                                                                                          |
+| `pageId`                       | string           | 可用时表示页面身份。当前实现可能使用临时的 view-derived identity。                                               |
+| `url`                          | string           | 实例完成采集时捕获的当前 template URL。                                                                          |
+| `totalBytes`                   | `long`           | 实例归因总量：Element + View + 主线程 runtime + 后台线程 runtime。不要把 instance totals 相加当成 global total。 |
+| `elementBytes`                 | `long`           | 该实例的 Element tree 内存。                                                                                     |
+| `elementNodeCount`             | `long` / `int32` | 该实例的 Element 节点数。                                                                                        |
+| `viewBytes`                    | `long`           | 该实例的 UI/View 内存。                                                                                          |
+| `viewDetail`                   | object           | 按 view category、tag 或 view key 聚合的 UI memory records。它不是嵌套 child LynxView 树。                       |
+| `mainThreadRuntimeBytes`       | `long`           | 主线程 runtime heap 快照字节数。                                                                                 |
+| `backgroundThreadRuntimeBytes` | `long`           | 后台线程 runtime heap 快照字节数。                                                                               |
+| `btsRuntimeGroupId`            | string           | 用于全局去重的后台 runtime group ID。                                                                            |
+
+## 采集语义
+
+- API 是异步的。Native runtime 初始化后，callback 运行在 Lynx report thread；触碰平台 View 对象前必须切回主线程。
+- 每次请求都会固定本轮采集范围：只统计请求开始时已经存活的 Lynx 实例；请求过程中创建的实例不会混入本次结果，会在后续查询中体现。
+- 并发调用会合并到当前正在进行的查询，共享同一份实例范围、超时时间和最终结果。
+- 如果当前没有存活 Lynx 实例，callback 仍会异步收到 `completed` 结果，Lynx 归因内存为 0。
+- 如果 `collectionStatus` 是 `timeout`，结果只包含已完成的 instance。`completedInstanceCount < expectedInstanceCount` 时，应将 totals 视为不完整结果。
+- 后台 runtime 内存会按非空 BTS runtime group ID 全局去重。非共享 group ID `-1` 会按实例分别计入。
+
+## 如何解读
+
+先看采集质量：`collectionStatus`、`collectionDurationMs`、`expectedInstanceCount` 和 `completedInstanceCount`。
+
+再比较分类内存：
+
+- `elementBytes` 和 `elementNodeCount` 同时偏高，通常指向 Element tree 或节点数增长。
+- `viewBytes` 偏高，通常指向平台 UI/View 侧较重。可以通过 `viewDetail` 看主导 view 类别。
+- `mainThreadRuntimeBytes` 或 `backgroundThreadRuntimeBytes` 偏高，通常指向 runtime 内存；需要 retain 证据时再抓 heap snapshot。
+
+如果要判断生命周期是否正常，建议做多次快照：打开目标页面前、复现高内存后、退出页面并等待清理后。如果已退出页面仍出现在 `instances[]` 中，且内存没有下降，可以认为存在可疑生命周期残留，再进入 heap snapshot 分析。
