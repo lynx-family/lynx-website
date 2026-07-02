@@ -1,0 +1,471 @@
+[@lynx-js/lynxtron](/lynxtron/api/@lynx-js/lynxtron/index.mdx) / Dialog
+
+# 接口: Dialog
+
+定义于: [lynxtron/apis/api/dialog.d.ts:387](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L387)
+
+## 方法
+
+### showErrorBox()
+
+```ts
+showErrorBox(title: string, content: string): void;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:396](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L396)
+
+Displays a modal dialog that shows an error message.
+
+This API can be called safely before the `ready` event the `app` module emits,
+it is usually used to report errors in early stage of startup. If called before
+the app `ready`event on Linux, the message will be emitted to stderr, and no GUI
+dialog will appear.
+
+#### 参数
+
+| 参数      | 类型     |
+| --------- | -------- |
+| `title`   | `string` |
+| `content` | `string` |
+
+#### 返回
+
+`void`
+
+---
+
+### showMessageBox()
+
+#### 调用签名
+
+```ts
+showMessageBox(window: BaseWindow, options: MessageBoxOptions): Promise<MessageBoxReturnValue>;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:409](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L409)
+
+resolves with a promise containing the following properties:
+
+- `response` number - The index of the clicked button.
+- `checkboxChecked` boolean - The checked state of the checkbox if
+  `checkboxLabel` was set. Otherwise `false`.
+
+Shows a message box.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+##### 参数
+
+| 参数      | 类型                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `window`  | [`BaseWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.BaseWindow.mdx)                   |
+| `options` | [`MessageBoxOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.MessageBoxOptions.mdx) |
+
+##### 返回
+
+`Promise`\<[`MessageBoxReturnValue`](/lynxtron/api/@lynx-js/lynxtron/Interface.MessageBoxReturnValue.mdx)\>
+
+#### 调用签名
+
+```ts
+showMessageBox(options: MessageBoxOptions): Promise<MessageBoxReturnValue>;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:425](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L425)
+
+resolves with a promise containing the following properties:
+
+- `response` number - The index of the clicked button.
+- `checkboxChecked` boolean - The checked state of the checkbox if
+  `checkboxLabel` was set. Otherwise `false`.
+
+Shows a message box.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+##### 参数
+
+| 参数      | 类型                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `options` | [`MessageBoxOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.MessageBoxOptions.mdx) |
+
+##### 返回
+
+`Promise`\<[`MessageBoxReturnValue`](/lynxtron/api/@lynx-js/lynxtron/Interface.MessageBoxReturnValue.mdx)\>
+
+---
+
+### showMessageBoxSync()
+
+#### 调用签名
+
+```ts
+showMessageBoxSync(window: BaseWindow, options: MessageBoxSyncOptions): number;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:436](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L436)
+
+the index of the clicked button.
+
+Shows a message box, it will block the process until the message box is closed.
+It returns the index of the clicked button.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal. If `window` is not shown dialog will not be attached to it. In
+such case it will be displayed as an independent window.
+
+##### 参数
+
+| 参数      | 类型                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `window`  | [`BaseWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.BaseWindow.mdx)                           |
+| `options` | [`MessageBoxSyncOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.MessageBoxSyncOptions.mdx) |
+
+##### 返回
+
+`number`
+
+#### 调用签名
+
+```ts
+showMessageBoxSync(options: MessageBoxSyncOptions): number;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:450](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L450)
+
+the index of the clicked button.
+
+Shows a message box, it will block the process until the message box is closed.
+It returns the index of the clicked button.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal. If `window` is not shown dialog will not be attached to it. In
+such case it will be displayed as an independent window.
+
+##### 参数
+
+| 参数      | 类型                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `options` | [`MessageBoxSyncOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.MessageBoxSyncOptions.mdx) |
+
+##### 返回
+
+`number`
+
+---
+
+### showOpenDialog()
+
+#### 调用签名
+
+```ts
+showOpenDialog(window: BaseWindow, options: OpenDialogOptions): Promise<OpenDialogReturnValue>;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:480](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L480)
+
+Resolve with an object containing the following:
+
+- `canceled` boolean - whether or not the dialog was canceled.
+- `filePaths` string[] - An array of file paths chosen by the user. If the
+  dialog is cancelled this will be an empty array.
+- `bookmarks` string[] (optional) _macOS_ _mas_ - An array matching the
+  `filePaths` array of base64 encoded strings which contains security scoped
+  bookmark data. `securityScopedBookmarks` must be enabled for this to be
+  populated. (For return values, see table here.)
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed or selected
+when you want to limit the user to a specific type. For example:
+
+The `extensions` array should contain extensions without wildcards or dots (e.g.
+`'png'` is good but `'.png'` and `'*.png'` are bad). To show all files, use the
+`'*'` wildcard (no other wildcard is supported).
+
+> [!NOTE] On Windows and Linux an open dialog can not be both a file selector
+> and a directory selector, so if you set `properties` to `['openFile',
+'openDirectory']` on these platforms, a directory selector will be shown.
+
+> [!NOTE] On Linux `defaultPath` is not supported when using portal file chooser
+> dialogs unless the portal backend is version 4 or higher. You can use
+> `--xdg-portal-required-version` command-line switch to force gtk or kde dialogs.
+
+##### 参数
+
+| 参数      | 类型                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `window`  | [`BaseWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.BaseWindow.mdx)                   |
+| `options` | [`OpenDialogOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.OpenDialogOptions.mdx) |
+
+##### 返回
+
+`Promise`\<[`OpenDialogReturnValue`](/lynxtron/api/@lynx-js/lynxtron/Interface.OpenDialogReturnValue.mdx)\>
+
+#### 调用签名
+
+```ts
+showOpenDialog(options: OpenDialogOptions): Promise<OpenDialogReturnValue>;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:513](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L513)
+
+Resolve with an object containing the following:
+
+- `canceled` boolean - whether or not the dialog was canceled.
+- `filePaths` string[] - An array of file paths chosen by the user. If the
+  dialog is cancelled this will be an empty array.
+- `bookmarks` string[] (optional) _macOS_ _mas_ - An array matching the
+  `filePaths` array of base64 encoded strings which contains security scoped
+  bookmark data. `securityScopedBookmarks` must be enabled for this to be
+  populated. (For return values, see table here.)
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed or selected
+when you want to limit the user to a specific type. For example:
+
+The `extensions` array should contain extensions without wildcards or dots (e.g.
+`'png'` is good but `'.png'` and `'*.png'` are bad). To show all files, use the
+`'*'` wildcard (no other wildcard is supported).
+
+> [!NOTE] On Windows and Linux an open dialog can not be both a file selector
+> and a directory selector, so if you set `properties` to `['openFile',
+'openDirectory']` on these platforms, a directory selector will be shown.
+
+> [!NOTE] On Linux `defaultPath` is not supported when using portal file chooser
+> dialogs unless the portal backend is version 4 or higher. You can use
+> `--xdg-portal-required-version` command-line switch to force gtk or kde dialogs.
+
+##### 参数
+
+| 参数      | 类型                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `options` | [`OpenDialogOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.OpenDialogOptions.mdx) |
+
+##### 返回
+
+`Promise`\<[`OpenDialogReturnValue`](/lynxtron/api/@lynx-js/lynxtron/Interface.OpenDialogReturnValue.mdx)\>
+
+---
+
+### showOpenDialogSync()
+
+#### 调用签名
+
+```ts
+showOpenDialogSync(window: BaseWindow, options: OpenDialogSyncOptions): string[] | undefined;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:536](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L536)
+
+the file paths chosen by the user; if the dialog is cancelled it returns
+`undefined`.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed or selected
+when you want to limit the user to a specific type. For example:
+
+The `extensions` array should contain extensions without wildcards or dots (e.g.
+`'png'` is good but `'.png'` and `'*.png'` are bad). To show all files, use the
+`'*'` wildcard (no other wildcard is supported).
+
+> [!NOTE] On Windows and Linux an open dialog can not be both a file selector
+> and a directory selector, so if you set `properties` to `['openFile',
+'openDirectory']` on these platforms, a directory selector will be shown.
+
+> [!NOTE] On Linux `defaultPath` is not supported when using portal file chooser
+> dialogs unless the portal backend is version 4 or higher. You can use
+> `--xdg-portal-required-version` command-line switch to force gtk or kde dialogs.
+
+##### 参数
+
+| 参数      | 类型                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `window`  | [`BaseWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.BaseWindow.mdx)                           |
+| `options` | [`OpenDialogSyncOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.OpenDialogSyncOptions.mdx) |
+
+##### 返回
+
+`string`[] \| `undefined`
+
+#### 调用签名
+
+```ts
+showOpenDialogSync(options: OpenDialogSyncOptions): string[] | undefined;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:562](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L562)
+
+the file paths chosen by the user; if the dialog is cancelled it returns
+`undefined`.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed or selected
+when you want to limit the user to a specific type. For example:
+
+The `extensions` array should contain extensions without wildcards or dots (e.g.
+`'png'` is good but `'.png'` and `'*.png'` are bad). To show all files, use the
+`'*'` wildcard (no other wildcard is supported).
+
+> [!NOTE] On Windows and Linux an open dialog can not be both a file selector
+> and a directory selector, so if you set `properties` to `['openFile',
+'openDirectory']` on these platforms, a directory selector will be shown.
+
+> [!NOTE] On Linux `defaultPath` is not supported when using portal file chooser
+> dialogs unless the portal backend is version 4 or higher. You can use
+> `--xdg-portal-required-version` command-line switch to force gtk or kde dialogs.
+
+##### 参数
+
+| 参数      | 类型                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `options` | [`OpenDialogSyncOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.OpenDialogSyncOptions.mdx) |
+
+##### 返回
+
+`string`[] \| `undefined`
+
+---
+
+### showSaveDialog()
+
+#### 调用签名
+
+```ts
+showSaveDialog(window: BaseWindow, options: SaveDialogOptions): Promise<SaveDialogReturnValue>;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:582](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L582)
+
+Resolve with an object containing the following:
+
+- `canceled` boolean - whether or not the dialog was canceled.
+- `filePath` string - If the dialog is canceled, this will be an empty string.
+- `bookmark` string (optional) _macOS_ _mas_ - Base64 encoded string which
+  contains the security scoped bookmark data for the saved file.
+  `securityScopedBookmarks` must be enabled for this to be present. (For return
+  values, see table here.)
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed, see
+`dialog.showOpenDialog` for an example.
+
+> [!NOTE] On macOS, using the asynchronous version is recommended to avoid
+> issues when expanding and collapsing the dialog.
+
+##### 参数
+
+| 参数      | 类型                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `window`  | [`BaseWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.BaseWindow.mdx)                   |
+| `options` | [`SaveDialogOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.SaveDialogOptions.mdx) |
+
+##### 返回
+
+`Promise`\<[`SaveDialogReturnValue`](/lynxtron/api/@lynx-js/lynxtron/Interface.SaveDialogReturnValue.mdx)\>
+
+#### 调用签名
+
+```ts
+showSaveDialog(options: SaveDialogOptions): Promise<SaveDialogReturnValue>;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:605](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L605)
+
+Resolve with an object containing the following:
+
+- `canceled` boolean - whether or not the dialog was canceled.
+- `filePath` string - If the dialog is canceled, this will be an empty string.
+- `bookmark` string (optional) _macOS_ _mas_ - Base64 encoded string which
+  contains the security scoped bookmark data for the saved file.
+  `securityScopedBookmarks` must be enabled for this to be present. (For return
+  values, see table here.)
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed, see
+`dialog.showOpenDialog` for an example.
+
+> [!NOTE] On macOS, using the asynchronous version is recommended to avoid
+> issues when expanding and collapsing the dialog.
+
+##### 参数
+
+| 参数      | 类型                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `options` | [`SaveDialogOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.SaveDialogOptions.mdx) |
+
+##### 返回
+
+`Promise`\<[`SaveDialogReturnValue`](/lynxtron/api/@lynx-js/lynxtron/Interface.SaveDialogReturnValue.mdx)\>
+
+---
+
+### showSaveDialogSync()
+
+#### 调用签名
+
+```ts
+showSaveDialogSync(window: BaseWindow, options: SaveDialogSyncOptions): string;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:616](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L616)
+
+the path of the file chosen by the user; if the dialog is cancelled it returns
+an empty string.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed, see
+`dialog.showOpenDialog` for an example.
+
+##### 参数
+
+| 参数      | 类型                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `window`  | [`BaseWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.BaseWindow.mdx)                           |
+| `options` | [`SaveDialogSyncOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.SaveDialogSyncOptions.mdx) |
+
+##### 返回
+
+`string`
+
+#### 调用签名
+
+```ts
+showSaveDialogSync(options: SaveDialogSyncOptions): string;
+```
+
+定义于: [lynxtron/apis/api/dialog.d.ts:630](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/api/dialog.d.ts#L630)
+
+the path of the file chosen by the user; if the dialog is cancelled it returns
+an empty string.
+
+The `window` argument allows the dialog to attach itself to a parent window,
+making it modal.
+
+The `filters` specifies an array of file types that can be displayed, see
+`dialog.showOpenDialog` for an example.
+
+##### 参数
+
+| 参数      | 类型                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| `options` | [`SaveDialogSyncOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.SaveDialogSyncOptions.mdx) |
+
+##### 返回
+
+`string`

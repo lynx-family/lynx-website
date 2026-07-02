@@ -1,0 +1,119 @@
+[lynxtron](/lynxtron/api/@lynx-js/lynxtron/index.mdx) / Protocol
+
+# 接口：Protocol
+
+用于在 Lynx 资源加载过程中处理自定义资源协议并重写请求。
+
+## 方法
+
+### handle()
+
+```ts
+handle(scheme: string, handler: ProtocolHandler): void
+```
+
+为 `app` 这类 URL scheme 注册资源处理器。
+
+使用前会先规范化 scheme：允许末尾带 `:`，并会将名称转为小写。有效的 scheme
+必须以字母开头，且只能包含字母、数字、`+`、`-` 和 `.`。
+
+处理器返回 `false` 或 `undefined` 时，会回退到正常的 Lynx 资源加载流程。处理器也可以返回
+`Promise<ResourceResponse>`。响应必须包含 `statusCode` 和 `Buffer` 类型的
+`data`；无效响应会回退到正常加载流程。
+
+#### 参数
+
+| 参数      | 类型              |
+| --------- | ----------------- |
+| `scheme`  | `string`          |
+| `handler` | `ProtocolHandler` |
+
+#### 返回
+
+`void`
+
+#### 定义于
+
+lynxtron/apis/api/protocol.d.ts
+
+---
+
+### isProtocolHandled()
+
+```ts
+isProtocolHandled(scheme: string): boolean
+```
+
+检查 `scheme` 是否已注册处理器。
+
+查询前会先规范化 scheme。无效 scheme 返回 `false`。
+
+#### 参数
+
+| 参数     | 类型     |
+| -------- | -------- |
+| `scheme` | `string` |
+
+#### 返回
+
+`boolean`
+
+#### 定义于
+
+lynxtron/apis/api/protocol.d.ts
+
+---
+
+### unhandle()
+
+```ts
+unhandle(scheme: string): void
+```
+
+移除为 `scheme` 注册的处理器。
+
+移除前会先规范化 scheme。
+
+#### 参数
+
+| 参数     | 类型     |
+| -------- | -------- |
+| `scheme` | `string` |
+
+#### 返回
+
+`void`
+
+#### 定义于
+
+lynxtron/apis/api/protocol.d.ts
+
+---
+
+### setRequestRewriter()
+
+```ts
+setRequestRewriter(handler: ProtocolRequestRewriter | null | undefined): void
+```
+
+设置请求 URL 重写器，它会先于 `protocol.handle()` 注册的处理函数和 Lynx 默认资源加载流程运行。
+
+> [!NOTE]
+> 这是 Lynxtron 特有 API。
+
+传入 `null` 或 `undefined` 会清除当前重写器。重写器返回字符串时，该字符串会作为新的
+URL 使用；返回 `false`、`undefined` 或任意非字符串值时，则保留原始 URL。
+
+#### 参数
+
+| 参数      | 类型                                           |
+| --------- | ---------------------------------------------- |
+| `handler` | `ProtocolRequestRewriter \| null \| undefined` |
+
+#### 返回
+
+`void`
+
+#### 定义于
+
+lynxtron/apis/api/protocol.d.ts

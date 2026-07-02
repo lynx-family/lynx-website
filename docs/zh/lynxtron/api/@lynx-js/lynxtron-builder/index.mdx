@@ -1,0 +1,38 @@
+# @lynx-js/lynxtron-builder
+
+`@lynx-js/lynxtron-builder` 是 Lynxtron 应用的打包入口。它基于 `electron-builder`，可以继续读取项目根目录下的 `electron-builder.yml`，但会把 Electron runtime 下载配置替换为当前 Lynxtron 依赖对应的 Lynxtron runtime。
+
+## 安装
+
+```bash
+npm install -D @lynx-js/lynxtron-builder
+```
+
+## 用法
+
+```bash
+npx lynxtron-builder --publish never
+```
+
+常见脚本配置：
+
+```json
+{
+  "scripts": {
+    "pack": "npm run build && lynxtron-builder --publish never"
+  }
+}
+```
+
+## 配置读取
+
+- 默认读取项目根目录的 `electron-builder.yml`。
+- 如果配置中没有 `electronDownload`，会根据当前安装的 Lynxtron 版本生成 Lynxtron runtime 下载配置。
+- 命令行参数会继续传给 `electron-builder`。
+- 传入 `--universal`，或在 macOS 配置中使用 `universal` target 时，会分别构建 `x64` 和 `arm64` 产物并合并为 universal app。
+
+## 与 electron-builder 的关系
+
+`lynxtron-builder` 不是一套新的打包配置格式。迁移 Electron 项目时，通常可以保留 `electron-builder.yml` 的大部分字段，只需要确认应用入口目录、文件列表、Lynx bundle 产物和原生模块构建流程已经指向 Lynxtron 应用。
+
+更多迁移说明见 [从 Electron 迁移到 Lynxtron](/lynxtron/learn/Migrating-From-Electron#处理原生模块构建和打包)。

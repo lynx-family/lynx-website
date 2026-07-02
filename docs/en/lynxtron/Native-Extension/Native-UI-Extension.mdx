@@ -1,0 +1,121 @@
+import { PackageManagerTabs } from '@theme';
+
+# Lynx Native Libraries
+
+A Lynx native library is an npm package that provides capabilities to the Lynx
+runtime. It can contain:
+
+- `native-module`: native APIs exposed to Lynx JS through
+  `NativeModules.<ModuleName>`.
+- `element`: custom native elements used in Lynx UI, such as `<x-hello>`.
+
+Lynxtron consumes these packages by loading their shared libraries in the host
+process. Loading the library is enough because the native library uses Lynx
+static registration; its `native-module` and `element` registrations become
+available after the library is loaded.
+
+AutoLink is the recommended way to generate the host-side loading code for
+Lynxtron apps. It is a build helper around this static-registration and
+`process.dlopen(...)` model, not a separate registration API. For library
+authoring and package layout details, see
+[Native Libraries and Autolink](/guide/autolink.html?platform=lynxtron).
+
+## Runtime Boundaries
+
+Lynxtron has both a Node.js host and a Lynx JS runtime. A native library must keep
+these two environments separate.
+
+| Environment           | Purpose                                                            | API                                                     |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| Lynxtron Node.js host | Loads the shared library with `process.dlopen(...)`                | Host-side native library loader                         |
+| Lynx JS runtime       | Runs Lynx UI and calls weak N-API methods                          | `NativeModules.<ModuleName>`                            |
+| Lynx embedder         | Registers capabilities when the shared library is loaded or linked | `LYNX_REGISTER_NATIVE_MODULE` / `LYNX_REGISTER_ELEMENT` |
+
+## Configure Lynxtron AutoLink
+
+Install the library package in the Lynxtron app:
+
+<PackageManagerTabs command="install hello-lynx-library" />
+
+Enable the Lynxtron AutoLink plugin in the host-side Rsbuild/Rspack config:
+
+```ts
+import { pluginLynxtronAutoLink } from '@lynx-js/lynxtron-autolink/rsbuild';
+
+export default {
+  target: 'electron-main',
+  plugins: [pluginLynxtronAutoLink()],
+};
+```
+
+With the plugin enabled, the host bundle loads the native library before Lynx UI
+uses the package capabilities.
+
+## Use in Lynx UI
+
+Once the host loads the native library, Lynx UI can use the module and element
+declared by that package:
+
+```tsx
+export function App() {
+  const onTap = () => {
+    NativeModules.HelloModule.setValue('message', 'hello');
+    const message = NativeModules.HelloModule.getValue('message');
+    console.log(message);
+  };
+
+  return (
+    <view>
+      <text bindtap={onTap}>Read native module</text>
+      <x-hello />
+    </view>
+  );
+}
+```
+
+Generated JS facades may also be imported from the npm package. They guard
+`NativeModules` during module initialization so the import itself does not fail
+before the Lynx runtime injects native modules.
+
+## C/C++ Registration
+
+Shared native libraries register capabilities with static registration macros:
+
+```cpp
+#include <lynx/registration.h>
+
+#include "shared/modules/HelloModule.h"
+#include "shared/elements/HelloElement.h"
+
+LYNX_REGISTER_NATIVE_MODULE(
+    "HelloModule",
+    CreateHelloModule,
+    nullptr)
+
+LYNX_REGISTER_ELEMENT(
+    "HelloElementModule",
+    "x-hello",
+    CreateHelloElementNativeView,
+    false,
+    nullptr)
+```
+
+`native-module` and `element` registrations live beside their own feature
+sources. A package can contain either feature or both.
+
+For elements, passing `nullptr` as the macro opaque argument lets the helper pass the current `lynx_view_t*` to the native view creator. This is the default for generated libraries and is useful when a native UI implementation needs the platform parent window.
+
+## Header Package
+
+Generated projects use `@lynx-js/lynx-library-headers`. This package only
+provides headers:
+
+- Lynx embedder C API headers.
+- Lynx C++ wrappers such as `lynx_native_view.h`, `lynx_value.h`, and
+  `lynx_view.h`.
+- Weak N-API headers.
+- `lynx/registration.h` static registration macros.
+
+It does not provide a Lynxtron-specific addon macro. Lynxtron loads the shared
+library with `process.dlopen(...)`; AutoLink can generate that loading code for
+the host build.

@@ -76,6 +76,7 @@ export default defineConfig({
         '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
         '@lynx-ui': path.join(__dirname, 'src', 'lynx-ui', 'components'),
+        '@lynxtron': path.join(__dirname, 'src', 'lynxtron', 'components'),
         '@luna': path.join(__dirname, 'src', 'luna', 'index.ts'),
       },
     },
