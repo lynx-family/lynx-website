@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lynx DebugMetadata Visualization</title>
+  <style>
+/* Lynx DebugMetadata Visualization — evan-style light theme */
+:root {
+  --bg: #ffffff;
+  --panel: #f4f5f7;
+  --border: rgba(120, 128, 140, 0.32);
+  --fg: #222;
+  --muted: #6b7280;
+  --gutter: #aeb4be;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+  font: 13px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  height: 46px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.005em; white-space: nowrap; }
+header h1 small { margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--border); font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--muted); }
+
+select {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 30px 6px 11px;
+  max-width: 320px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 10px center;
+}
+select:hover { border-color: #b9c0cc; }
+select:focus { outline: none; border-color: #4c9aff; box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.15); }
+
+#upload { font: inherit; font-size: 12.5px; color: var(--fg); background: #fff; border: 1px solid var(--border); border-radius: 7px; padding: 6px 13px; cursor: pointer; }
+#upload:hover { border-color: #4c9aff; background: #f7faff; }
+#upload:focus { outline: none; border-color: #4c9aff; box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.15); }
+
+/* antd-style searchable select for the bytecode function picker */
+.sel-wrap { position: relative; min-width: 0; }
+#fnSelect { flex: 1 1 auto; }
+.sel-pc { flex: 0 0 78px; }
+.sel-input { width: 100%; font: inherit; font-size: 12px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--fg); text-transform: none; letter-spacing: 0; }
+.sel-input::placeholder { color: #aab0ba; }
+.sel-input:focus { outline: none; border-color: #4c9aff; box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.15); }
+#fnSel { padding-right: 26px; background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23aab0ba" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>') no-repeat right 8px center; }
+
+.sel-dropdown { position: fixed; z-index: 30; max-height: 340px; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 22px rgba(24, 32, 48, 0.16); padding: 4px; }
+.sel-dropdown[hidden] { display: none; }
+.sel-option { padding: 6px 10px; border-radius: 6px; font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: var(--fg); }
+.sel-option:hover { background: #f2f5f9; }
+.sel-option.active { background: #e8f1ff; }
+.sel-option.selected { background: #eaf1fb; }
+.sel-option .dim { color: var(--muted); }
+.sel-empty { padding: 8px 10px; color: var(--muted); font-size: 12px; }
+
+.build { margin-left: auto; font-size: 11px; text-align: right; color: var(--muted); }
+.build code { color: var(--fg); }
+
+.tag { flex: none; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.tag.background { background: #dceaff; color: #1b5fa8; }
+.tag.main-thread { background: #ecdfff; color: #6b3fb0; }
+.tag.css, .tag.source { background: #d9f2e5; color: #1f7a4d; }
+
+#drop {
+  position: absolute;
+  inset: 46px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+#drop.hot { background: #eef5ff; }
+#drop h2 { color: var(--fg); }
+#drop h2 a { color: inherit; text-decoration: underline; text-decoration-color: #b9c0cc; text-underline-offset: 3px; }
+#drop h2 a:hover { text-decoration-color: #1b6fc2; }
+#drop label { color: #1b6fc2; cursor: pointer; text-decoration: underline; }
+
+#app { display: none; position: relative; height: calc(100% - 46px); }
+#app.ready { display: block; }
+
+.viz { display: flex; height: 100%; }
+.pane { flex: 1; min-width: 0; overflow: auto; position: relative; background: #fff; }
+.pane.gen, .pane.bc { border-left: 1px solid var(--border); }
+.pane.bc { flex: 0 0 340px; }
+.pane .phd {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 40px;
+  padding: 7px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.phd .fp { overflow: hidden; text-overflow: ellipsis; text-transform: none; letter-spacing: 0; font-family: var(--mono); font-size: 11.5px; color: var(--fg); }
+
+.code { padding: 6px 0 45vh; font-family: var(--mono); font-size: 12.5px; cursor: default; }
+.ln { display: flex; }
+.ln > .g { flex: none; width: 50px; padding-right: 10px; text-align: right; color: var(--gutter); user-select: none; }
+.ln > .t { flex: 1; white-space: pre-wrap; word-break: break-all; }
+
+.seg, .srcmark { border-radius: 2px; cursor: pointer; }
+.seg.hot, .srcmark.hot { outline: 2px solid; outline-offset: -1px; }
+.ws { color: #cfd4dc; }
+
+#bcList { padding: 4px 0 45vh; }
+.pcrow {
+  display: flex;
+  gap: 8px;
+  padding: 2px 12px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.pcrow:hover, .pcrow.hot { background: rgba(120, 128, 140, 0.14); }
+.pcrow.hot { outline: 1px solid #6b3fb0; outline-offset: -1px; }
+.pcrow .pc { flex: none; width: 62px; color: #6b3fb0; }
+.pcrow .enc { color: var(--muted); }
+.pcrow.dim .enc { color: #c2c7d0; }
+.pcrow.dim .pc { opacity: .5; }
+
+svg#wire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+svg#wire path { fill: none; stroke-width: 2; opacity: 0; }
+
+/* evan-style caret: the insertion point (between characters), not a selection */
+#caret { position: fixed; width: 0; border-left: 1.5px solid #e5484d; pointer-events: none; z-index: 6; display: none; }
+
+#info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 38px;
+  padding: 9px 16px;
+  background: rgba(244, 245, 247, 0.98);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(4px);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+#info b { color: var(--fg); font-weight: 600; }
+#info .gen { color: #1b6fc2; }
+#info .src { color: #1f7a4d; }
+#info .nm { color: #9a6a00; }
+#info .bc { color: #6b3fb0; }
+#info .arrow { color: #9aa1ad; }
+#info .none { color: var(--muted); }
+#info .warn { color: #b3600a; }
+#cursorPos { margin-left: auto; padding-left: 12px; white-space: nowrap; color: var(--muted); }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Lynx&nbsp;DebugMetadata <small>generated&nbsp;·&nbsp;bytecode&nbsp;→&nbsp;source</small></h1>
+    <select id="artSel" style="display:none"></select>
+    <select id="srcSel" style="display:none"></select>
+    <button id="upload">Upload</button>
+    <input id="file" type="file" accept=".json,.js" multiple hidden />
+    <div class="build" id="build"></div>
+  </header>
+
+  <div id="drop">
+    <h2><a id="docsLink" href="../rspeedy/map-errors-to-source" target="_blank" rel="noreferrer">Drop a <code>debug-metadata.json</code></a></h2>
+    <div>Drop its <code>.js</code> / <code>.css</code> bundles alongside it to see the generated side (bundle names depend on your build entry)</div>
+    <div style="margin-top:12px">or <label for="file">choose files</label> (select the json + bundles together)</div>
+  </div>
+
+  <div id="app">
+    <div class="viz">
+      <div class="pane src">
+        <div class="phd" id="srcHd">Source</div>
+        <div class="code" id="srcCode"></div>
+      </div>
+      <div class="pane gen">
+        <div class="phd" id="genHd">Generated</div>
+        <div class="code" id="genCode"></div>
+      </div>
+      <div class="pane bc" id="bcPane" style="display:none">
+        <div class="phd"><span class="tag main-thread">bytecode</span><div id="fnSelect" class="sel-wrap"><input id="fnSel" class="sel-input" placeholder="function" spellcheck="false" autocomplete="off" /></div><div id="pcSelect" class="sel-wrap sel-pc"><input id="pcSel" class="sel-input" placeholder="pc" spellcheck="false" autocomplete="off" /></div></div>
+        <div class="code" id="bcList"></div>
+      </div>
+    </div>
+    <svg id="wire"><path id="w1"></path><path id="w2"></path></svg>
+    <div id="caret"></div>
+    <div id="info">
+      <span id="infoMain" class="none">Hover a colored token (or a pc on the right) to see its mapping; click to jump to it</span>
+      <span id="cursorPos"></span>
+    </div>
+  </div>
+
+  <script>
+// Lynx DebugMetadata Visualization
+//
+// A zero-dependency, static-HTML tool to inspect the source maps and
+// bytecode-debug-info inside a Lynx `debug-metadata.json`, in the spirit of
+// Evan Wallace's source-map-visualization (https://evanw.github.io/source-map-visualization/).
+//
+// - Background bundles: two panes, source (left) <-> generated (right), with
+//   every source-map segment colored by its ORIGINAL line, ranges highlighted
+//   on both sides, hover to connect.
+// - Main-thread bundles: three panes, source | encoded main-thread.js |
+//   bytecode (function_id:pc), visualizing the two-step reversal
+//   `function_id:pc -> encoded line:col -> source`.
+//
+// Column convention: rendered columns are 1-based (the internal source-map
+// columns are 0-based, +1 on display). The live cursor readout reports a CARET
+// position (the insertion point between characters), which is what an engine's
+// error column points at.
+
+'use strict'
+
+// ---------------------------------------------------------------------------
+// VLQ + source-map decoding
+// ---------------------------------------------------------------------------
+
+const BASE64 =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+const BASE64_MAP = (() => {
+  const map = {}
+  for (let i = 0; i < BASE64.length; i++) map[BASE64[i]] = i
+  return map
+})()
+
+function decodeVLQ(str) {
+  const out = []
+  let shift = 0
+  let value = 0
+  for (const ch of str) {
+    const digit = BASE64_MAP[ch]
+    const continuation = digit & 32
+    value += (digit & 31) << shift
+    if (continuation) {
+      shift += 5
+    } else {
+      const negative = value & 1
+      value >>= 1
+      out.push(negative ? -value : value)
+      value = 0
+      shift = 0
+    }
+  }
+  return out
+}
+
+// Decode a v3 `mappings` string into flat segments. Each segment:
+//   { gl, gc, si, sl, sc, ni }  (generated line/col, source index, source
+//   line/col, name index; source fields are null for a generated-only segment)
+// Generated line is 1-based; all columns are 0-based, matching v3.
+function decodeMappings(mappings) {
+  const segments = []
+  let genLine = 1
+  let genCol = 0
+  let srcIdx = 0
+  let srcLine = 0
+  let srcCol = 0
+  let nameIdx = 0
+
+  mappings.split(';').forEach((line, i) => {
+    genLine = i + 1
+    genCol = 0
+    for (const field of line.split(',')) {
+      if (!field) continue
+      const v = decodeVLQ(field)
+      genCol += v[0]
+      const seg = { gl: genLine, gc: genCol, si: null, sl: null, sc: null, ni: null }
+      if (v.length >= 4) {
+        srcIdx += v[1]
+        srcLine += v[2]
+        srcCol += v[3]
+        seg.si = srcIdx
+        seg.sl = srcLine
+        seg.sc = srcCol
+        if (v.length >= 5) {
+          nameIdx += v[4]
+          seg.ni = nameIdx
+        }
+      }
+      segments.push(seg)
+    }
+  })
+  return segments
+}
+
+// Reverse lookup: the segment with the greatest (genLine, genCol) <= target,
+// and on a generated-column tie the FIRST one. `segments` is in generated
+// order, so this is a binary search plus a walk back to the first of any
+// duplicates.
+//
+// This matters for `new Error(...)` -> `Error(...)` minification: dropping
+// `new` collapses two mappings onto one generated column. Taking the first is
+// deterministic and stable across builds, unlike `source-map`'s
+// `originalPositionFor`, whose tie-break depends on where its binary search
+// lands.
+function glb(segments, genLine, genCol) {
+  let lo = 0
+  let hi = segments.length - 1
+  let ans = -1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    const s = segments[mid]
+    const beforeOrAt = s.gl < genLine || (s.gl === genLine && s.gc <= genCol)
+    if (beforeOrAt) {
+      ans = mid
+      lo = mid + 1
+    } else {
+      hi = mid - 1
+    }
+  }
+  if (ans < 0) return null
+  while (
+    ans > 0 &&
+    segments[ans - 1].gl === segments[ans].gl &&
+    segments[ans - 1].gc === segments[ans].gc
+  ) {
+    ans--
+  }
+  return segments[ans]
+}
+
+// ---------------------------------------------------------------------------
+// Colors: by ORIGINAL line % 5 (like evan), so a generated token and its
+// source highlight share a hue. Unmapped segments are a faint gray.
+// ---------------------------------------------------------------------------
+
+const HUES = [
+  [25, 133, 255], // blue
+  [174, 97, 174], // purple
+  [255, 97, 106], // red
+  [250, 192, 61], // yellow
+  [115, 192, 88], // green
+]
+
+function segColor(seg, alpha) {
+  if (!seg || seg.sl == null) return `rgba(128,134,148,${alpha * 0.4})`
+  const [r, g, b] = HUES[seg.sl % HUES.length]
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
+let META = null
+let ARTIFACTS = []
+let CURRENT = null
+let GENERATED = ''
+let GENERATED_LINES = []
+let SEGMENTS = []
+let SOURCE_INDEX = -1
+let HOT = -1 // index of the focused segment
+let HOT_BC = null // { fid, pc, row } when focus came from a bytecode pc
+let PC_INDEX = null // main-thread: pcs sorted by encoded (line, col) for reverse lookup
+let SRC_LINE_IDX = null // current source: line (0-based) -> segment indices, for the caret readout
+let CUR_FID = null // currently rendered bytecode function id
+const FN_LABELS = new Map() // fid -> searchable display label
+let FN_ITEMS = [] // [{ fid, label }] for the function search dropdown
+let pcHoverLock = false // ignore pc-row hover synthesized when a dropdown closes over it
+let FILES = {} // basename -> text, for dropped bundle files
+
+// ---------------------------------------------------------------------------
+// Small helpers
+// ---------------------------------------------------------------------------
+
+const $ = (sel) => document.querySelector(sel)
+const esc = (s) =>
+  String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+const basename = (p) => p.split('/').pop()
+const fnLineCol = (fn) => fn.line_col || (fn.line_col_info && fn.line_col_info.line_col) || []
+
+// Normalize a source-map `source` to a short, backend-like path.
+function normalizeSource(source) {
+  const i = source.indexOf('/src/')
+  if (i >= 0) return source.slice(i + 1)
+  return source.replace(/^webpack:\/\/\/\.?\//, '')
+}
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag)
+  if (cls) node.className = cls
+  if (text != null) node.textContent = text
+  return node
+}
+
+// Append `text` to `parent`, rendering runs of spaces as faint middle dots so
+// whitespace in minified code is visible.
+function appendText(parent, text) {
+  const re = / +/g
+  let last = 0
+  let m
+  while ((m = re.exec(text))) {
+    if (m.index > last) parent.append(document.createTextNode(text.slice(last, m.index)))
+    parent.append(el('span', 'ws', '·'.repeat(m[0].length)))
+    last = m.index + m[0].length
+  }
+  if (last < text.length) parent.append(document.createTextNode(text.slice(last)))
+  if (!text.length) parent.append(document.createTextNode(' '))
+}
+
+// ---------------------------------------------------------------------------
+// Loading (debug-metadata.json + optional bundle .js files)
+// ---------------------------------------------------------------------------
+
+function handleFiles(list) {
+  const files = [...list]
+  if (!files.length) return
+  let metaText = null
+  let pending = files.length
+  for (const file of files) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (/\.json$/i.test(file.name)) metaText = reader.result
+      else FILES[file.name] = reader.result
+      if (--pending === 0) {
+        if (metaText) {
+          try {
+            loadMeta(JSON.parse(metaText))
+          } catch (e) {
+            alert('Parse failed: ' + e.message)
+          }
+        } else if (CURRENT) {
+          selectArtifact(CURRENT, true) // bundle dropped after the json — keep focus
+        }
+      }
+    }
+    reader.readAsText(file)
+  }
+}
+
+function loadMeta(meta) {
+  META = meta
+  ARTIFACTS = (meta.artifacts || [])
+    .map((a) => {
+      const sm = (a.debugSources || []).find((d) => d.kind === 'source-map')
+      const bc = (a.debugSources || []).find((d) => d.kind === 'bytecode-debug-info')
+
+      let map = sm && sm.map
+      if (typeof map === 'string') {
+        try {
+          map = JSON.parse(map)
+        } catch {}
+      }
+      let segments = null
+      try {
+        if (map && map.mappings) segments = decodeMappings(map.mappings)
+      } catch (e) {
+        console.warn(e)
+      }
+
+      let bcInfo = bc && bc.debugInfo
+      if (typeof bcInfo === 'string') {
+        try {
+          bcInfo = JSON.parse(bcInfo)
+        } catch {}
+      }
+      const fns =
+        (bcInfo && bcInfo.lepusNG_debug_info && bcInfo.lepusNG_debug_info.function_info) || null
+
+      return { kind: a.kind, path: a.path || a.filename || '', key: sm && sm.key, map, segments, fns }
+    })
+    .filter((a) => a.map)
+
+  $('#drop').style.display = 'none'
+  $('#app').classList.add('ready')
+
+  const build = META.buildInfo || {}
+  const git = build.git || {}
+  const rspeedy = build.rspeedy || {}
+  $('#build').innerHTML =
+    (git.commit ? `commit <code>${esc(String(git.commit).slice(0, 8))}</code> · ` : '') +
+    (rspeedy.entryFiles ? `entry <code>${esc([].concat(rspeedy.entryFiles).join(', '))}</code>` : '')
+
+  const sel = $('#artSel')
+  sel.style.display = ''
+  sel.innerHTML = ''
+  ARTIFACTS.forEach((a, i) => {
+    const o = document.createElement('option')
+    o.value = i
+    o.textContent = `[${a.kind}] ${basename(a.path)}`
+    sel.append(o)
+  })
+  sel.onchange = () => selectArtifact(ARTIFACTS[+sel.value])
+
+  selectArtifact(ARTIFACTS.find((a) => a.kind === 'background') || ARTIFACTS[0])
+}
+
+async function selectArtifact(art, keepFocus) {
+  // When a bundle is added after the json, re-render the same artifact but keep
+  // the current source and focused mapping instead of resetting to a default.
+  const prevSource = keepFocus ? SOURCE_INDEX : null
+  const prevHot = keepFocus ? HOT : -1
+  const prevBc = keepFocus ? HOT_BC : null
+  CURRENT = art
+  SEGMENTS = art.segments || []
+  HOT = -1
+  HOT_BC = null
+  $('#artSel').value = ARTIFACTS.indexOf(art)
+
+  // Generated bundle text comes only from a dropped/uploaded file. Without it the
+  // generated pane stays blank; mapping still works from the source map.
+  const name = basename(art.path)
+  GENERATED = FILES[name] || ''
+  GENERATED_LINES = GENERATED ? GENERATED.split('\n') : []
+
+  $('#genHd').innerHTML =
+    `<span class="tag ${art.kind}">${art.kind}</span> <span class="fp">${esc(name)}</span>` +
+    (GENERATED ? '' : ' <span style="color:var(--muted)">(source-map only — drop the bundle to show generated code)</span>')
+
+  // Source selector: sources referenced by segments.
+  const used = new Set(SEGMENTS.filter((s) => s.si != null).map((s) => s.si))
+  const srcSel = $('#srcSel')
+  srcSel.style.display = ''
+  srcSel.innerHTML = ''
+  ;[...used]
+    .sort((a, b) => a - b)
+    .forEach((si) => {
+      const o = document.createElement('option')
+      o.value = si
+      o.textContent = normalizeSource(art.map.sources[si] || '#' + si)
+      srcSel.append(o)
+    })
+  srcSel.onchange = () => showSource(+srcSel.value)
+
+  renderGenerated()
+
+  const bcPane = $('#bcPane')
+  if (art.kind === 'main-thread' && art.fns) {
+    bcPane.style.display = ''
+    buildBytecodeIndex()
+    renderBytecode()
+  } else {
+    bcPane.style.display = 'none'
+    PC_INDEX = null
+  }
+
+  if (keepFocus && prevSource != null && used.has(prevSource)) {
+    showSource(prevSource)
+  } else {
+    // Default source: prefer the build entry, then business code (/src/), then a
+    // real code file over a .css HMR shim, and finally the one with most segments.
+    const count = {}
+    SEGMENTS.forEach((s) => {
+      if (s.si != null) count[s.si] = (count[s.si] || 0) + 1
+    })
+    const entries = []
+      .concat((META.buildInfo && META.buildInfo.rspeedy && META.buildInfo.rspeedy.entryFiles) || [])
+      .map((e) => basename(String(e)))
+    const spath = (si) => art.map.sources[si] || ''
+    const isEntry = (si) => (entries.includes(basename(normalizeSource(spath(si)))) ? 1 : 0)
+    const isBusiness = (si) => (spath(si).includes('/src/') ? 1 : 0)
+    const isCode = (si) => (/\.css(\?|$)/i.test(spath(si)) ? 0 : 1)
+    const order = Object.keys(count)
+      .map(Number)
+      .sort(
+        (a, b) =>
+          isEntry(b) - isEntry(a) ||
+          isBusiness(b) - isBusiness(a) ||
+          isCode(b) - isCode(a) ||
+          count[b] - count[a],
+      )
+    showSource(order.length ? order[0] : [...used][0] ?? 0)
+  }
+
+  // Re-locate the previously focused mapping so it stays put across the re-render.
+  if (keepFocus && prevHot >= 0 && prevHot < SEGMENTS.length) {
+    focusSegment(prevHot, prevBc || 'src', true)
+  } else {
+    drawWires()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Generated pane: colored ranges [gc, nextGc) per line, dedup same column
+// ---------------------------------------------------------------------------
+
+function renderGenerated() {
+  const host = $('#genCode')
+  host.innerHTML = ''
+  // Without the bundle text, draw a colored block per segment positioned by its
+  // generated (line, column) — evan-style — so the mapping is visible and the
+  // block is still hoverable/clickable/wireable from the source side.
+  const blocks = !GENERATED
+
+  const byLine = new Map()
+  let maxGl = 0
+  SEGMENTS.forEach((s, idx) => {
+    if (!byLine.has(s.gl)) byLine.set(s.gl, [])
+    byLine.get(s.gl).push(idx)
+    if (s.gl > maxGl) maxGl = s.gl
+  })
+  const lastLine = blocks ? maxGl : GENERATED_LINES.length
+
+  const frag = document.createDocumentFragment()
+  for (let ln = 1; ln <= lastLine; ln++) {
+    const text = blocks ? '' : GENERATED_LINES[ln - 1] ?? ''
+    const row = el('div', 'ln')
+    row.append(el('span', 'g', ln))
+    const t = el('span', 't')
+    row.append(t)
+
+    let idxs = (byLine.get(ln) || []).slice().sort((a, b) => SEGMENTS[a].gc - SEGMENTS[b].gc)
+    // dedup by generated column (keep the first = backend GLB pick)
+    idxs = idxs.filter((id, i) => i === 0 || SEGMENTS[id].gc !== SEGMENTS[idxs[i - 1]].gc)
+
+    let pos = 0
+    for (let k = 0; k < idxs.length; k++) {
+      const id = idxs[k]
+      const seg = SEGMENTS[id]
+      const start = seg.gc
+      // last segment on a line has no known end without the text: use a nominal width
+      const end = k + 1 < idxs.length ? SEGMENTS[idxs[k + 1]].gc : blocks ? start + 6 : text.length
+      if (start > pos) appendText(t, blocks ? ' '.repeat(start - pos) : text.slice(pos, start))
+      const span = el('span', 'seg')
+      span.dataset.seg = id
+      span.style.background = segColor(seg, seg.si == null ? 0.1 : 0.32)
+      appendText(span, blocks ? ' '.repeat(Math.max(1, Math.max(start, end) - start)) : text.slice(start, Math.max(start, end)))
+      t.append(span)
+      pos = Math.max(start, end)
+    }
+    if (!blocks && pos < text.length) appendText(t, text.slice(pos))
+    frag.append(row)
+  }
+  host.append(frag)
+}
+
+// ---------------------------------------------------------------------------
+// Source pane: ranges [sc, nextSc) per original line (evan-style)
+// ---------------------------------------------------------------------------
+
+function showSource(si) {
+  SOURCE_INDEX = si
+  $('#srcSel').value = si
+  const content = (CURRENT.map.sourcesContent && CURRENT.map.sourcesContent[si]) || ''
+  const lines = content.split('\n')
+
+  $('#srcHd').innerHTML =
+    `<span class="tag source">source</span> <span class="fp">${esc(normalizeSource(CURRENT.map.sources[si] || '#' + si))}</span>` +
+    (content ? '' : ' <span style="color:#ff8585">(no sourcesContent)</span>')
+
+  const byLine = new Map()
+  SEGMENTS.forEach((s, idx) => {
+    if (s.si === si && s.sl != null) {
+      if (!byLine.has(s.sl)) byLine.set(s.sl, [])
+      byLine.get(s.sl).push(idx)
+    }
+  })
+  SRC_LINE_IDX = byLine
+
+  const host = $('#srcCode')
+  host.innerHTML = ''
+  const frag = document.createDocumentFragment()
+  for (let ln = 1; ln <= lines.length; ln++) {
+    const text = lines[ln - 1] ?? ''
+    const row = el('div', 'ln')
+    row.dataset.sl = ln - 1
+    row.append(el('span', 'g', ln))
+    const t = el('span', 't')
+    row.append(t)
+
+    let ids = (byLine.get(ln - 1) || []).slice().sort((a, b) => SEGMENTS[a].sc - SEGMENTS[b].sc)
+    ids = ids.filter((id, i) => i === 0 || SEGMENTS[id].sc !== SEGMENTS[ids[i - 1]].sc)
+
+    let pos = 0
+    for (let k = 0; k < ids.length; k++) {
+      const id = ids[k]
+      const seg = SEGMENTS[id]
+      const start = seg.sc
+      const end = k + 1 < ids.length ? SEGMENTS[ids[k + 1]].sc : text.length
+      if (start < pos) continue
+      if (start > pos) appendText(t, text.slice(pos, start))
+      const span = el('span', 'srcmark')
+      span.dataset.seg = id
+      span.dataset.sl = seg.sl
+      span.dataset.scs = start
+      span.dataset.sce = Math.max(start + 1, end)
+      span.style.background = segColor(seg, 0.32)
+      appendText(span, text.slice(start, Math.max(start + 1, end)))
+      t.append(span)
+      pos = Math.max(start + 1, end)
+    }
+    if (pos < text.length) appendText(t, text.slice(pos))
+    frag.append(row)
+  }
+  host.append(frag)
+}
+
+// ---------------------------------------------------------------------------
+// Bytecode pane (main-thread two-step: function_id:pc -> encoded -> source)
+// ---------------------------------------------------------------------------
+
+// Every pc with its encoded (line, col), sorted, so clicking a source/encoded
+// segment can find the bytecode for it: the first pc at or after that encoded
+// position (`pcAtOrAfter`). Sorted flat so a binary search spans all functions.
+function buildBytecodeIndex() {
+  const list = []
+  if (CURRENT.fns) {
+    for (const fn of CURRENT.fns) {
+      const lc = fnLineCol(fn)
+      for (let i = 0; i < lc.length; i++) {
+        list.push({ line: lc[i].line, col: lc[i].column, fid: fn.function_id, pc: i + 1 })
+      }
+    }
+    list.sort((a, b) => a.line - b.line || a.col - b.col)
+  }
+  PC_INDEX = list
+}
+
+// Least pc whose encoded (line, col) >= (line, col) — the bytecode this source
+// position compiles into (or the next one, if this exact spot has no pc).
+function pcAtOrAfter(line, col) {
+  const a = PC_INDEX
+  if (!a || !a.length) return null
+  let lo = 0, hi = a.length - 1, ans = -1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    const e = a[mid]
+    if (e.line > line || (e.line === line && e.col >= col)) {
+      ans = mid
+      hi = mid - 1
+    } else {
+      lo = mid + 1
+    }
+  }
+  return ans < 0 ? null : a[ans]
+}
+
+function renderBytecode() {
+  const items = CURRENT.fns
+    .filter((fn) => fnLineCol(fn).length)
+    .map((fn) => {
+      const lc = fnLineCol(fn)
+      let primary = null
+      for (const c of lc) {
+        const g = glb(SEGMENTS, c.line, c.column)
+        if (g && g.si != null) {
+          const src = CURRENT.map.sources[g.si] || ''
+          const isSrc = src.includes('/src/')
+          if (isSrc) {
+            primary = { src: basename(normalizeSource(src)), line: g.sl + 1, isSrc: true }
+            break
+          }
+          if (!primary) primary = { src: basename(normalizeSource(src)), line: g.sl + 1, isSrc: false }
+        }
+      }
+      return { fid: fn.function_id, name: fn.function_name, size: lc.length, primary }
+    })
+
+  // Business (/src/) functions first, smaller first.
+  items.sort(
+    (a, b) =>
+      (b.primary && b.primary.isSrc ? 1 : 0) - (a.primary && a.primary.isSrc ? 1 : 0) ||
+      a.size - b.size,
+  )
+
+  // Options for the searchable dropdown (see the fn-select component below).
+  FN_LABELS.clear()
+  FN_ITEMS = items.map((o) => {
+    const label =
+      `fn ${o.fid}${o.name ? ' · ' + o.name : ''}` +
+      (o.primary ? ' → ' + o.primary.src + ':' + o.primary.line : '')
+    FN_LABELS.set(o.fid, label)
+    return { fid: o.fid, label }
+  })
+
+  const def =
+    items.find((o) => o.primary && o.primary.isSrc && o.size <= 400) ||
+    items.find((o) => o.primary && o.primary.isSrc) ||
+    items[0]
+  renderPcList(def && def.fid)
+}
+
+const findFn = (fid) => CURRENT.fns.find((x) => x.function_id === fid) || CURRENT.fns[fid]
+
+function jumpToPc(fid, pc) {
+  const fn = findFn(fid)
+  if (!fn) return
+  const c = fnLineCol(fn)[pc - 1]
+  if (!c) return
+  if (CUR_FID !== fid) renderPcList(fid)
+  const row = $('#bcList').querySelector(`.pcrow[data-fid="${fid}"][data-pc="${pc}"]`)
+  if (row) {
+    focusPc(fid, pc, c.line, c.column, row, true)
+    row.scrollIntoView({ block: 'center' })
+  }
+}
+
+function renderPcList(fid) {
+  CUR_FID = fid
+  const fn = findFn(fid)
+  const lc = fn ? fnLineCol(fn) : []
+  const host = $('#bcList')
+  host.innerHTML = ''
+  const frag = document.createDocumentFragment()
+  lc.forEach((c, i) => {
+    const pc = i + 1
+    const seg = glb(SEGMENTS, c.line, c.column)
+    const mapped = seg && seg.si != null
+    const row = el('div', 'pcrow' + (mapped ? '' : ' dim'))
+    row.dataset.fid = fid
+    row.dataset.pc = pc
+    row.dataset.line = c.line
+    row.dataset.col = c.column
+    row.append(el('span', 'pc', 'pc ' + pc), el('span', 'enc', '→ ' + c.line + ':' + (c.column + 1)))
+    row.onmouseenter = () => {
+      if (!pcHoverLock) focusPc(fid, pc, c.line, c.column, row, false)
+    }
+    row.onclick = () => focusPc(fid, pc, c.line, c.column, row, true)
+    frag.append(row)
+  })
+  host.append(frag)
+  syncSelects()
+}
+
+function focusPc(fid, pc, encLine, encCol, row, locate) {
+  document.querySelectorAll('.pcrow.hot').forEach((n) => n.classList.remove('hot'))
+  row.classList.add('hot')
+  const seg = glb(SEGMENTS, encLine, encCol)
+  if (!seg) {
+    HOT = -1
+    HOT_BC = { fid, pc, row }
+    clearHot()
+    $('#infoMain').innerHTML =
+      infoBytecode(fid, pc) +
+      `<span><b>encoded</b> <span class="gen">${esc(basename(CURRENT.path))}:${encLine}:${encCol + 1}</span></span>` +
+      `<span class="none">no source-map</span>`
+    drawWires()
+    syncSelects()
+    return
+  }
+  focusSegment(SEGMENTS.indexOf(seg), { fid, pc, row }, locate)
+}
+
+// ---------------------------------------------------------------------------
+// Focus a segment: co-highlight generated + source (+ optional bytecode chain)
+// ---------------------------------------------------------------------------
+
+function clearHot() {
+  document.querySelectorAll('.seg.hot,.srcmark.hot').forEach((n) => {
+    n.classList.remove('hot')
+    n.style.outlineColor = ''
+  })
+}
+
+// Find the source-side span for a segment: exact, else the range covering (sl, sc).
+function sourceSpanFor(seg) {
+  const exact = $('#srcCode').querySelector(`.srcmark[data-seg="${SEGMENTS.indexOf(seg)}"]`)
+  if (exact) return exact
+  return [...$('#srcCode').querySelectorAll('.srcmark')].find(
+    (m) => +m.dataset.sl === seg.sl && +m.dataset.scs <= seg.sc && seg.sc < +m.dataset.sce,
+  )
+}
+
+// `origin` is 'gen' (generated pane), 'src' (source pane), or a bytecode object
+// { fid, pc, row }. Hover (locate falsy) only highlights + connects. Click
+// (locate true) jumps: switch the source file if needed and scroll the pane the
+// user is not on so the mapped code is visible. Matches evan's hover/click split.
+function focusSegment(idx, origin, locate) {
+  const bytecode = origin && typeof origin === 'object' ? origin : null
+  if (idx === HOT && !bytecode && !locate) return
+  HOT = idx
+  HOT_BC = bytecode
+  const seg = SEGMENTS[idx]
+
+  // Only jump the visible source file on click; hovering never re-renders it.
+  if (locate && seg.si != null && seg.si !== SOURCE_INDEX) showSource(seg.si)
+  clearHot()
+
+  const outlineColor = segColor(seg, 0.95)
+  const genSpan = $('#genCode').querySelector(`.seg[data-seg="${idx}"]`)
+  if (genSpan) {
+    genSpan.classList.add('hot')
+    genSpan.style.outlineColor = outlineColor
+    if (locate && origin !== 'gen') genSpan.scrollIntoView({ block: 'center' })
+  }
+
+  let srcSpan = null
+  if (seg.si != null && seg.si === SOURCE_INDEX) {
+    srcSpan = sourceSpanFor(seg)
+    if (srcSpan) {
+      srcSpan.classList.add('hot')
+      srcSpan.style.outlineColor = outlineColor
+      if (locate && origin !== 'src') srcSpan.scrollIntoView({ block: 'center' })
+    }
+  }
+
+  // main-thread: on click from source/encoded, find & connect the matching pc
+  if (locate && !bytecode && PC_INDEX) {
+    const hit = pcAtOrAfter(seg.gl, seg.gc)
+    if (hit) {
+      if (+$('#fnSel').value !== hit.fid) renderPcList(hit.fid)
+      const row = $('#bcList').querySelector(`.pcrow[data-fid="${hit.fid}"][data-pc="${hit.pc}"]`)
+      if (row) {
+        document.querySelectorAll('.pcrow.hot').forEach((n) => n.classList.remove('hot'))
+        row.classList.add('hot')
+        row.scrollIntoView({ block: 'center' })
+        HOT_BC = { fid: hit.fid, pc: hit.pc, row }
+      }
+    }
+  }
+
+  drawWires()
+
+  const map = CURRENT.map
+  const src = seg.si != null ? normalizeSource(map.sources[seg.si] || '?') : null
+  const name = seg.ni != null && map.names ? map.names[seg.ni] : null
+  const candidates = SEGMENTS.filter((s) => s.gl === seg.gl && s.gc === seg.gc)
+
+  let html = ''
+  if (bytecode) html += infoBytecode(bytecode.fid, bytecode.pc)
+  html += `<span><b>${bytecode ? 'encoded' : 'generated'}</b> <span class="gen">${esc(basename(CURRENT.path))}:${seg.gl}:${seg.gc + 1}</span></span><span class="arrow">→</span>`
+  html += src
+    ? `<span><b>source</b> <span class="src">${esc(src)}:${seg.sl + 1}:${seg.sc + 1}</span></span>`
+    : `<span class="none">no source mapping</span>`
+  if (name) html += `<span><b>name</b> <span class="nm">${esc(name)}</span></span>`
+  if (candidates.length > 1) {
+    html += `<span class="warn">⚠ ${candidates.length} mappings at this generated column · the first is used (${candidates[0] === seg ? 'this one ★' : 'not this one'})</span>`
+  }
+  $('#infoMain').innerHTML = html
+  syncSelects()
+}
+
+const infoBytecode = (fid, pc) =>
+  `<span><b>bytecode</b> <span class="bc">fn ${fid} : pc ${pc}</span></span><span class="arrow">→</span>`
+
+// ---------------------------------------------------------------------------
+// Connector wires (colored by the segment's hue), position-agnostic
+// ---------------------------------------------------------------------------
+
+function drawWire(pathId, a, b, color) {
+  const path = $(pathId)
+  if (!a || !b) {
+    path.style.opacity = '0'
+    return
+  }
+  const host = $('#app').getBoundingClientRect()
+  const ra = a.getBoundingClientRect()
+  const rb = b.getBoundingClientRect()
+  const [L, R] = ra.left <= rb.left ? [ra, rb] : [rb, ra]
+  const x1 = L.right - host.left
+  const y1 = L.top + L.height / 2 - host.top
+  const x2 = R.left - host.left
+  const y2 = R.top + R.height / 2 - host.top
+  path.setAttribute('d', `M${x1},${y1} C${(x1 * 2 + x2) / 3 + 30},${y1} ${(x1 + x2 * 2) / 3 - 30},${y2} ${x2},${y2}`)
+  path.style.stroke = color
+  path.style.opacity = '0.95'
+}
+
+function drawWires() {
+  if (HOT < 0) {
+    drawWire('#w1')
+    drawWire('#w2')
+    return
+  }
+  const seg = SEGMENTS[HOT]
+  const color = segColor(seg, 1)
+  const genSpan = $('#genCode').querySelector(`.seg[data-seg="${HOT}"]`)
+  const srcSpan = seg.si != null ? sourceSpanFor(seg) : null
+  drawWire('#w1', genSpan, srcSpan, color) // generated <-> source
+  drawWire('#w2', HOT_BC && HOT_BC.row, genSpan, color) // bytecode <-> generated
+}
+
+document.querySelectorAll('.pane').forEach((p) => p.addEventListener('scroll', drawWires))
+window.addEventListener('resize', drawWires)
+
+// hover: highlight + connect only. click: jump to the mapped code (evan-style).
+$('#genCode').addEventListener('mouseover', (e) => {
+  const sp = e.target.closest('.seg')
+  if (sp) focusSegment(+sp.dataset.seg, 'gen')
+})
+$('#srcCode').addEventListener('mouseover', (e) => {
+  const sp = e.target.closest('.srcmark')
+  if (sp) focusSegment(+sp.dataset.seg, 'src')
+})
+$('#genCode').addEventListener('click', (e) => {
+  const sp = e.target.closest('.seg')
+  if (sp) focusSegment(+sp.dataset.seg, 'gen', true)
+})
+$('#srcCode').addEventListener('click', (e) => {
+  const sp = e.target.closest('.srcmark')
+  if (sp) focusSegment(+sp.dataset.seg, 'src', true)
+})
+// real pointer movement re-enables pc-row hover (see pcHoverLock)
+$('#bcList').addEventListener('mousemove', () => (pcHoverLock = false))
+
+// ---------------------------------------------------------------------------
+// Searchable select (antd-Select style): a custom dropdown instead of a native
+// <datalist>, for styling + keyboard control. Focusing clears the box to a
+// placeholder (type to filter); pick with click or Enter. Reused for both the
+// function picker and the pc picker. Fixed-positioned on <body> so the pane's
+// overflow can't clip it.
+// ---------------------------------------------------------------------------
+
+function createSearchSelect(input, opts) {
+  const dropdown = el('div', 'sel-dropdown')
+  dropdown.hidden = true
+  document.body.appendChild(dropdown)
+  let filtered = []
+  let active = -1
+  let query = ''
+  const label = () => (opts.currentLabel ? opts.currentLabel() : '')
+
+  const matches = () => {
+    const q = query.trim().toLowerCase()
+    if (!q || (opts.isJump && opts.isJump(q))) return opts.items()
+    return opts.items().filter((it) => it.label.toLowerCase().includes(q))
+  }
+
+  const render = () => {
+    filtered = matches()
+    dropdown.innerHTML = ''
+    if (!filtered.length) {
+      dropdown.innerHTML = '<div class="sel-empty">no match</div>'
+      return
+    }
+    const cur = opts.current ? opts.current() : null
+    filtered.forEach((it, i) => {
+      const o = el(
+        'div',
+        'sel-option' + (it.value === cur ? ' selected' : '') + (i === active ? ' active' : ''),
+        it.label,
+      )
+      // mousedown: keep input focus (no blur) and keep the dropdown open through
+      // mouseup; pick on click, so the click target is the option itself and
+      // can't fall through to the pc list underneath once the dropdown closes.
+      o.addEventListener('mousedown', (e) => e.preventDefault())
+      o.addEventListener('click', () => pick(it.value))
+      dropdown.append(o)
+    })
+  }
+
+  const open = () => {
+    if (!opts.items().length) return
+    render()
+    const r = input.getBoundingClientRect()
+    const width = Math.max(r.width, opts.minWidth || 200)
+    dropdown.style.width = width + 'px'
+    dropdown.style.left = Math.max(8, Math.min(r.left, innerWidth - width - 8)) + 'px'
+    dropdown.style.top = r.bottom + 3 + 'px'
+    dropdown.hidden = false
+    const sel = dropdown.querySelector('.sel-option.selected')
+    if (sel) sel.scrollIntoView({ block: 'nearest' })
+  }
+
+  const close = () => {
+    dropdown.hidden = true
+    active = -1
+    // Closing exposes the pc row beneath; the browser synthesizes a mouseenter on
+    // it (no real movement). Lock pc hover until the pointer actually moves.
+    pcHoverLock = true
+  }
+
+  const pick = (value) => {
+    opts.onPick(value)
+    close()
+    input.blur()
+  }
+
+  const scrollActive = () => {
+    const a = dropdown.querySelector('.sel-option.active')
+    if (a) a.scrollIntoView({ block: 'nearest' })
+  }
+
+  input.addEventListener('focus', () => {
+    query = ''
+    input.placeholder = label() || opts.placeholder || ''
+    input.value = ''
+    open()
+  })
+  input.addEventListener('input', () => {
+    query = input.value
+    active = -1
+    open()
+  })
+  input.addEventListener('blur', () =>
+    setTimeout(() => {
+      close()
+      input.value = label()
+    }, 150),
+  )
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (dropdown.hidden) return open()
+      active = Math.min(active + 1, filtered.length - 1)
+      render()
+      scrollActive()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      active = Math.max(active - 1, 0)
+      render()
+      scrollActive()
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (opts.onEnterRaw && opts.onEnterRaw(input.value.trim())) {
+        close()
+        input.blur()
+      } else if (filtered[active]) {
+        pick(filtered[active].value)
+      } else if (filtered.length) {
+        pick(filtered[0].value)
+      }
+    } else if (e.key === 'Escape') {
+      close()
+      input.blur()
+    }
+  })
+}
+
+// Keep the (unfocused) inputs reflecting the current function / pc.
+function syncSelects() {
+  const fnI = $('#fnSel')
+  const pcI = $('#pcSel')
+  if (fnI && document.activeElement !== fnI) fnI.value = FN_LABELS.get(CUR_FID) || ''
+  if (pcI && document.activeElement !== pcI) {
+    pcI.value = HOT_BC && HOT_BC.fid === CUR_FID ? 'pc ' + HOT_BC.pc : ''
+  }
+}
+
+// Function picker: filter by fid / name / source; `fn:pc` or `:pc` jumps.
+createSearchSelect($('#fnSel'), {
+  placeholder: 'function',
+  minWidth: 300,
+  items: () => FN_ITEMS.map((it) => ({ value: it.fid, label: it.label })),
+  current: () => CUR_FID,
+  currentLabel: () => FN_LABELS.get(CUR_FID) || '',
+  onPick: (fid) => renderPcList(fid),
+  isJump: (q) => /^\d*\s*:\s*\d+$/.test(q),
+  onEnterRaw: (v) => {
+    const m = v.match(/^(\d*)\s*:\s*(\d+)$/)
+    if (!m) return false
+    const fid = m[1] ? +m[1] : CUR_FID
+    if (fid != null) jumpToPc(fid, +m[2])
+    return true
+  },
+})
+
+// pc picker (within the current function): filter or jump by pc number.
+createSearchSelect($('#pcSel'), {
+  placeholder: 'pc',
+  minWidth: 190,
+  items: () => {
+    const fn = CUR_FID != null && findFn(CUR_FID)
+    if (!fn) return []
+    return fnLineCol(fn).map((c, i) => ({
+      value: i + 1,
+      label: `pc ${i + 1} → ${c.line}:${c.column + 1}`,
+    }))
+  },
+  current: () => (HOT_BC && HOT_BC.fid === CUR_FID ? HOT_BC.pc : null),
+  currentLabel: () => (HOT_BC && HOT_BC.fid === CUR_FID ? 'pc ' + HOT_BC.pc : ''),
+  onPick: (pc) => jumpToPc(CUR_FID, pc),
+  onEnterRaw: (v) => {
+    const m = v.match(/^\s*(?:pc\s*)?(\d+)\s*$/i)
+    if (!m || CUR_FID == null) return false
+    jumpToPc(CUR_FID, +m[1])
+    return true
+  },
+})
+
+// ---------------------------------------------------------------------------
+// Live CARET readout (evan-style): the insertion point between characters, not
+// a selected character — this is what an engine's error column points at. Works
+// over unmapped regions too. Columns are reported 1-based.
+// ---------------------------------------------------------------------------
+
+const caretEl = $('#caret')
+
+function caretHit(e) {
+  const row = e.target.closest('.ln')
+  if (!row) return null
+
+  let node = null
+  let offset = 0
+  if (document.caretPositionFromPoint) {
+    const cp = document.caretPositionFromPoint(e.clientX, e.clientY)
+    if (cp) {
+      node = cp.offsetNode
+      offset = cp.offset
+    }
+  } else if (document.caretRangeFromPoint) {
+    const r = document.caretRangeFromPoint(e.clientX, e.clientY)
+    if (r) {
+      node = r.startContainer
+      offset = r.startOffset
+    }
+  }
+
+  const t = row.querySelector('.t')
+  if (!node || !t.contains(node)) return null
+
+  // column = characters before the caret within this line's text
+  let col = 0
+  const walker = document.createTreeWalker(t, NodeFilter.SHOW_TEXT)
+  let n
+  while ((n = walker.nextNode())) {
+    if (n === node) {
+      col += offset
+      break
+    }
+    col += n.textContent.length
+  }
+
+  // pixel rect of the collapsed caret, for the vertical marker
+  let rect = null
+  try {
+    const range = document.createRange()
+    range.setStart(node, offset)
+    range.collapse(true)
+    rect = range.getBoundingClientRect()
+  } catch {}
+
+  return { line: +row.querySelector('.g').textContent, col, rect }
+}
+
+function showCursor(e, label) {
+  const hit = caretHit(e)
+  if (!hit) {
+    caretEl.style.display = 'none'
+    return
+  }
+  if (hit.rect) {
+    caretEl.style.display = 'block'
+    caretEl.style.left = hit.rect.left + 'px'
+    caretEl.style.top = hit.rect.top + 'px'
+    caretEl.style.height = (hit.rect.height || 16) + 'px'
+  }
+  // Show the mapped position on the other side too: generated -> source uses the
+  // same GLB pick as the remap backend; source -> generated takes the nearest
+  // segment on this source line at or before the caret column.
+  let mapped = ''
+  if (label === 'Generated') {
+    const seg = glb(SEGMENTS, hit.line, hit.col)
+    if (seg && seg.si != null) {
+      const f = basename(normalizeSource(CURRENT.map.sources[seg.si] || '#' + seg.si))
+      mapped = `  →  Source ${f} ${seg.sl + 1}:${seg.sc + 1}`
+    }
+  } else if (SRC_LINE_IDX) {
+    let best = null
+    for (const id of SRC_LINE_IDX.get(hit.line - 1) || []) {
+      const s = SEGMENTS[id]
+      if (s.sc <= hit.col && (!best || s.sc > best.sc)) best = s
+    }
+    if (best) mapped = `  →  Generated ${best.gl}:${best.gc + 1}`
+  }
+  $('#cursorPos').textContent = `${label}  Line ${hit.line} · Col ${hit.col + 1}${mapped} (1-based caret)`
+}
+
+$('#genCode').addEventListener('mousemove', (e) => showCursor(e, 'Generated'))
+$('#srcCode').addEventListener('mousemove', (e) => showCursor(e, 'Source'))
+$('#genCode').addEventListener('mouseleave', () => (caretEl.style.display = 'none'))
+$('#srcCode').addEventListener('mouseleave', () => (caretEl.style.display = 'none'))
+
+// ---------------------------------------------------------------------------
+// Drag & drop
+// ---------------------------------------------------------------------------
+
+const drop = $('#drop')
+;['dragenter', 'dragover'].forEach((ev) =>
+  drop.addEventListener(ev, (e) => {
+    e.preventDefault()
+    drop.classList.add('hot')
+  }),
+)
+;['dragleave', 'drop'].forEach((ev) =>
+  drop.addEventListener(ev, (e) => {
+    e.preventDefault()
+    drop.classList.remove('hot')
+  }),
+)
+drop.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files))
+$('#file').addEventListener('change', (e) => handleFiles(e.target.files))
+// persistent upload button in the header (works even after data is loaded)
+$('#upload').addEventListener('click', () => $('#file').click())
+
+// let bundles be dropped onto the app after the json is loaded
+;['dragenter', 'dragover'].forEach((ev) => $('#app').addEventListener(ev, (e) => e.preventDefault()))
+$('#app').addEventListener('drop', (e) => {
+  e.preventDefault()
+  handleFiles(e.dataTransfer.files)
+})
+
+// base-aware docs link: strip the tool segment, keep the site base prefix
+{
+  const a = $('#docsLink')
+  const p = location.pathname
+  const i = p.indexOf('/debug-metadata-visualization')
+  if (a && i >= 0) a.href = p.slice(0, i) + '/rspeedy/map-errors-to-source'
+}
+
+  </script>
+</body>
+</html>
