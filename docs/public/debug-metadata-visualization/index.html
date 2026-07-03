@@ -176,6 +176,7 @@ svg#wire path { fill: none; stroke-width: 2; opacity: 0; }
   font-size: 12px;
   color: var(--muted);
 }
+#infoMain { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 #info b { color: var(--fg); font-weight: 600; }
 #info .gen { color: #1b6fc2; }
 #info .src { color: #1f7a4d; }
@@ -202,6 +203,7 @@ svg#wire path { fill: none; stroke-width: 2; opacity: 0; }
     <h2><a id="docsLink" href="../rspeedy/map-errors-to-source" target="_blank" rel="noreferrer">Drop a <code>debug-metadata.json</code></a></h2>
     <div>Drop its <code>.js</code> / <code>.css</code> bundles alongside it to see the generated side (bundle names depend on your build entry)</div>
     <div style="margin-top:12px">or <label for="file">choose files</label> (select the json + bundles together)</div>
+    <div style="margin-top:12px">or <a id="loadExample" href="javascript:void 0">load an example</a> (the Lynx react demo, main-thread + background + css)</div>
     <div style="margin-top:28px;font-size:12px">Inspired by <a href="https://evanw.github.io/source-map-visualization/" target="_blank" rel="noreferrer">Evan Wallace's source-map-visualization</a></div>
   </div>
 
@@ -881,6 +883,18 @@ function clearHot() {
   })
 }
 
+// Find the generated-side span for a segment. Duplicate mappings on one
+// generated column are deduped to the first when rendering, so fall back to
+// that rendered representative (the GLB pick) when the exact span is absent.
+function genSpanFor(idx) {
+  const exact = $('#genCode').querySelector(`.seg[data-seg="${idx}"]`)
+  if (exact) return exact
+  const seg = SEGMENTS[idx]
+  const rep = glb(SEGMENTS, seg.gl, seg.gc)
+  if (!rep || rep === seg) return null
+  return $('#genCode').querySelector(`.seg[data-seg="${SEGMENTS.indexOf(rep)}"]`)
+}
+
 // Find the source-side span for a segment: exact, else the range covering (sl, sc).
 function sourceSpanFor(seg) {
   const exact = $('#srcCode').querySelector(`.srcmark[data-seg="${SEGMENTS.indexOf(seg)}"]`)
@@ -906,7 +920,7 @@ function focusSegment(idx, origin, locate) {
   clearHot()
 
   const outlineColor = segColor(seg, 0.95)
-  const genSpan = $('#genCode').querySelector(`.seg[data-seg="${idx}"]`)
+  const genSpan = genSpanFor(idx)
   if (genSpan) {
     genSpan.classList.add('hot')
     genSpan.style.outlineColor = outlineColor
@@ -952,8 +966,11 @@ function focusSegment(idx, origin, locate) {
     ? `<span><b>source</b> <span class="src">${esc(src)}:${seg.sl + 1}:${seg.sc + 1}</span></span>`
     : `<span class="none">no source mapping</span>`
   if (name) html += `<span><b>name</b> <span class="nm">${esc(name)}</span></span>`
-  if (candidates.length > 1) {
-    html += `<span class="warn">⚠ ${candidates.length} mappings at this generated column · the first is used (${candidates[0] === seg ? 'this one ★' : 'not this one'})</span>`
+  // Duplicate mappings on one generated column are common in minified code
+  // (dropped identifiers collapse together); only surface it when inspecting
+  // from the remap direction, where the pick actually matters.
+  if (candidates.length > 1 && (origin === 'gen' || bytecode)) {
+    html += `<span class="none">${candidates.length} mappings at this generated column</span>`
   }
   $('#infoMain').innerHTML = html
   syncSelects()
@@ -993,7 +1010,7 @@ function drawWires() {
   }
   const seg = SEGMENTS[HOT]
   const color = segColor(seg, 1)
-  const genSpan = $('#genCode').querySelector(`.seg[data-seg="${HOT}"]`)
+  const genSpan = genSpanFor(HOT)
   const srcSpan = seg.si != null ? sourceSpanFor(seg) : null
   drawWire('#w1', genSpan, srcSpan, color) // generated <-> source
   drawWire('#w2', HOT_BC && HOT_BC.row, genSpan, color) // bytecode <-> generated
@@ -1311,6 +1328,54 @@ drop.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files))
 $('#file').addEventListener('change', (e) => handleFiles(e.target.files))
 // persistent upload button in the header (works even after data is loaded)
 $('#upload').addEventListener('click', () => $('#file').click())
+
+// "load an example": gzipped build artifacts of the Lynx react demo, served
+// next to this page and inflated with the browser's native DecompressionStream.
+// Resolve example assets against the tool's own directory, so it works with
+// and without a trailing slash and under any site base (same as the docs link).
+function exampleUrl(name) {
+  const p = location.pathname
+  const seg = '/debug-metadata-visualization'
+  const i = p.indexOf(seg)
+  const base = i >= 0 ? p.slice(0, i + seg.length) : '.'
+  return base + '/example/' + name + '.gz'
+}
+
+async function fetchGz(name) {
+  const res = await fetch(exampleUrl(name))
+  if (!res.ok) throw new Error(name + ': HTTP ' + res.status)
+  // Some servers mark .gz files with `Content-Encoding: gzip` and the body
+  // arrives already inflated; others serve the raw bytes. Sniff the gzip
+  // magic and inflate only when needed.
+  const buf = await res.arrayBuffer()
+  const b = new Uint8Array(buf)
+  if (b[0] === 0x1f && b[1] === 0x8b) {
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))
+    return new Response(stream).text()
+  }
+  return new TextDecoder().decode(buf)
+}
+
+async function loadExample() {
+  const link = $('#loadExample')
+  if (link) link.textContent = 'loading example…'
+  try {
+    // The bundle filenames come from the metadata itself, so a regenerated
+    // example (new content hashes) stays in sync automatically.
+    const meta = JSON.parse(await fetchGz('debug-metadata.json'))
+    const names = (meta.artifacts || []).map((a) => a.filename).filter(Boolean)
+    const texts = await Promise.all(names.map(fetchGz))
+    FILES = {}
+    names.forEach((name, i) => (FILES[name] = texts[i]))
+    loadMeta(meta)
+  } catch (e) {
+    alert('Failed to load the example: ' + e.message)
+  } finally {
+    if (link) link.textContent = 'load an example'
+  }
+}
+
+if ($('#loadExample')) $('#loadExample').addEventListener('click', loadExample)
 
 // let bundles be dropped onto the app after the json is loaded
 ;['dragenter', 'dragover'].forEach((ev) => $('#app').addEventListener(ev, (e) => e.preventDefault()))
