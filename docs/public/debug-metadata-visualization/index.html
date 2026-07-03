@@ -882,6 +882,18 @@ function clearHot() {
   })
 }
 
+// Find the generated-side span for a segment. Duplicate mappings on one
+// generated column are deduped to the first when rendering, so fall back to
+// that rendered representative (the GLB pick) when the exact span is absent.
+function genSpanFor(idx) {
+  const exact = $('#genCode').querySelector(`.seg[data-seg="${idx}"]`)
+  if (exact) return exact
+  const seg = SEGMENTS[idx]
+  const rep = glb(SEGMENTS, seg.gl, seg.gc)
+  if (!rep || rep === seg) return null
+  return $('#genCode').querySelector(`.seg[data-seg="${SEGMENTS.indexOf(rep)}"]`)
+}
+
 // Find the source-side span for a segment: exact, else the range covering (sl, sc).
 function sourceSpanFor(seg) {
   const exact = $('#srcCode').querySelector(`.srcmark[data-seg="${SEGMENTS.indexOf(seg)}"]`)
@@ -907,7 +919,7 @@ function focusSegment(idx, origin, locate) {
   clearHot()
 
   const outlineColor = segColor(seg, 0.95)
-  const genSpan = $('#genCode').querySelector(`.seg[data-seg="${idx}"]`)
+  const genSpan = genSpanFor(idx)
   if (genSpan) {
     genSpan.classList.add('hot')
     genSpan.style.outlineColor = outlineColor
@@ -994,7 +1006,7 @@ function drawWires() {
   }
   const seg = SEGMENTS[HOT]
   const color = segColor(seg, 1)
-  const genSpan = $('#genCode').querySelector(`.seg[data-seg="${HOT}"]`)
+  const genSpan = genSpanFor(HOT)
   const srcSpan = seg.si != null ? sourceSpanFor(seg) : null
   drawWire('#w1', genSpan, srcSpan, color) // generated <-> source
   drawWire('#w2', HOT_BC && HOT_BC.row, genSpan, color) // bytecode <-> generated
