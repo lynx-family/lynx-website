@@ -1330,8 +1330,16 @@ function exampleUrl(name) {
 async function fetchGz(name) {
   const res = await fetch(exampleUrl(name))
   if (!res.ok) throw new Error(name + ': HTTP ' + res.status)
-  const stream = res.body.pipeThrough(new DecompressionStream('gzip'))
-  return new Response(stream).text()
+  // Some servers mark .gz files with `Content-Encoding: gzip` and the body
+  // arrives already inflated; others serve the raw bytes. Sniff the gzip
+  // magic and inflate only when needed.
+  const buf = await res.arrayBuffer()
+  const b = new Uint8Array(buf)
+  if (b[0] === 0x1f && b[1] === 0x8b) {
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))
+    return new Response(stream).text()
+  }
+  return new TextDecoder().decode(buf)
 }
 
 async function loadExample() {
