@@ -1,17 +1,17 @@
 import { CodeFold } from '@lynx';
 import { Steps, Tab, Tabs } from '@theme';
 
-自定义元件的实现分为几个步骤，包括：声明并注册元件、创建原生视图、处理布局、在 Lynx 页面中使用等。Desktop 平台通过 Lynx C/C++ API 实现原生元件。接下来以一个简单的自定义输入框元件 `<explorer-input>` 为例，介绍自定义元件的实现流程。
+自定义元素的实现分为几个步骤，包括：声明并注册元素、创建原生视图、处理布局、在 Lynx 应用代码中使用等。Desktops 平台通过 Lynx C/C++ API 实现原生元素。接下来以一个简单的自定义输入框元素 `<explorer-input>` 为例，介绍自定义元素的实现流程。
 
 下文用到的扩展头文件，包括 `capi/lynx_view_capi.h`、`lynx_native_view.h` 和 `lynx/registration.h`，由 npm 包 [`@lynx-js/lynx-library-headers`](https://www.npmjs.com/package/@lynx-js/lynx-library-headers) 提供。在原生库工程中安装该包，把它的 `include/` 目录加入 include 路径即可；由 [`create-lynx-library`](/guide/autolink?platform=lynxtron) 生成的 CMake 已经完成了这一步。
 
 <Steps>
 
-### 声明并注册元件
+### 声明并注册元素
 
-#### 声明自定义元件
+#### 声明自定义元素
 
-把所有 Desktop backend 共享的行为放在 element header 中。各平台 backend 继承这个类，只实现展示相关的部分。
+把所有 Desktops 渲染后端共享的行为放在元素头文件中。各平台渲染后端继承这个类，只实现展示相关的部分。
 
 <CodeFold toggle height={500}>
 
@@ -84,11 +84,11 @@ class ExplorerInputElementView : public lynx::pub::LynxNativeView {
 
 </CodeFold>
 
-#### 注册自定义元件
+#### 注册自定义元素
 
-Desktop 原生元件通过 `LYNX_REGISTER_ELEMENT` 注册。这是一次进程级的静态注册：原生库被编译进宿主应用或被宿主进程加载后，进程内每个 `LynxView` 都可以使用注册的 tag。
+Desktops 原生元素通过 `LYNX_REGISTER_ELEMENT` 注册。这是一种进程级静态注册：原生库被编译进宿主应用或被宿主进程加载后，静态注册会让该标签成为 Lynx runtime 中可用的 Lynx 元素。
 
-最后一个参数传 `nullptr` 时，creator 收到的 `opaque` 是当前 `lynx_view_t*`，可以用它解析平台宿主窗口：
+最后一个参数传 `nullptr` 时，创建函数收到的 `opaque` 是当前 `lynx_view_t*`，可以用它解析平台宿主窗口：
 
 ```cpp title="shared/elements/ExplorerInputElementRegistration.cc"
 #include <lynx/registration.h>
@@ -105,25 +105,25 @@ LYNX_REGISTER_ELEMENT(
     nullptr)
 ```
 
-其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元件并创建实例。
+其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元素并创建实例。
 
-### 创建原生 `View` 实例
+### 创建原生视图实例
 
-每个自定义元件都会被创建为一个 `LynxNativeView`。上面的声明、属性处理、方法处理和静态注册对所有 Desktop 实现都是共享的。backend 决定 view 创建之后持有什么：Native UI 持有平台控件，Texture 持有 Lynx surface。
+每个自定义元素都会被创建为一个 `LynxNativeView`。上面的声明、属性处理、方法处理和静态注册对所有 Desktops 实现都是共享的。渲染后端决定视图创建之后持有什么：Native UI 持有平台控件，Texture 持有 Lynx 管理的 Surface。
 
-下面的示例使用同一个注册 creator 名称展示两种可选 backend 实现。实际构建时选择一种 backend，让 `CreateExplorerInputElementNativeView` 只解析到一个实现。
+下面的示例使用同一个注册创建函数名称展示两种可选渲染后端实现。实际构建时选择一种渲染后端，让 `CreateExplorerInputElementNativeView` 只解析到一个实现。
 
 <Tabs groupId="custom-component-desktop-backend">
 
 <Tab label="Native UI">
 
-Native UI backend 会 attach 一个平台控件，并在 `OnLayoutChanged` 中更新 frame。对于 `<explorer-input>`，实现会 attach 一个最小输入控件。
+Native UI 渲染后端会挂载一个平台控件，并在 `OnLayoutChanged` 中更新它的位置和尺寸。对于 `<explorer-input>`，实现会挂载一个最小输入控件。
 
 <Tabs groupId="custom-component-desktop-native-ui-platform">
 
 <Tab label="macOS">
 
-macOS 上可以 attach 一个 `NSTextField`：
+macOS 上可以挂载一个 `NSTextField`：
 
 <CodeFold toggle height={500}>
 
@@ -234,7 +234,7 @@ lynx_native_view_t* CreateExplorerInputElementNativeView(void* opaque) {
 
 <Tab label="Windows">
 
-Windows 上可以 attach 一个 `EDIT` 控件：
+Windows 上可以挂载一个 `EDIT` 控件：
 
 <CodeFold toggle height={500}>
 
@@ -441,9 +441,9 @@ lynx_native_view_t* CreateExplorerInputElementNativeView(void* opaque) {
 
 <Tab label="Texture">
 
-用 texture 实现文本输入是可行的，但会涉及文本编辑、光标、选区和 IME 处理，示例会很长。下面的示例只聚焦 texture 链路：绘制一块原生纹理，并复用 `ExplorerInputElementView` 中共享的 `value` 属性和 `setValue` UI method。
+用 Texture 实现文本输入是可行的，但会涉及文本编辑、光标、选区和 IME 处理，示例会很长。下面的示例只聚焦 Texture 链路：绘制一块原生纹理，并复用 `ExplorerInputElementView` 中共享的 `value` 属性和 `setValue` UI 方法。
 
-共享的 texture backend 是跨平台的。它负责打开 surface 路径、维护布局尺寸，并调用各平台 backend 实现的 `DrawExplorerInputElementTextureSurface`。
+共享的 Texture 渲染后端是跨平台的。它负责启用 Surface 渲染路径、维护布局尺寸，并调用各平台渲染后端实现的 `DrawExplorerInputElementTextureSurface`。
 
 <CodeFold toggle height={500}>
 
@@ -735,11 +735,11 @@ bool DrawExplorerInputElementTextureSurface(
 
 </Tabs>
 
-### 构建并使用元件
+### 构建并使用元素
 
-准备好原生代码后，将它编译进宿主应用或可被宿主加载的 Desktop 原生库。如果包里同时包含 Native UI 和 Texture 两套实现，需要在构建系统中选择一种，让注册的 creator 只解析到一个实现。
+准备好原生代码后，将它编译进宿主应用或可被宿主加载的 Desktops 原生库。如果包里同时包含 Native UI 和 Texture 两套渲染后端实现，需要在构建系统中选择一种，让注册创建函数只解析到一个实现。
 
-原生库被 link 或加载后，即可在 Lynx 中使用注册好的 tag：
+原生库被链接或加载后，即可使用注册好的 Lynx 元素：
 
 ```tsx title="src/App.tsx"
 <explorer-input style={{ width: '100px', height: '100px' }} value="hello" />
@@ -764,7 +764,7 @@ void OnPropertiesChanged(const lynx::pub::LynxValue& attrs,
 
 #### 处理 Lynx Engine 的排版结果
 
-Lynx Engine 会通过 `OnLayoutChanged` 传递元素的排版结果。可以在这个回调中移动或缩放平台 view，也可以在渲染前调整 texture surface 的尺寸。
+Lynx Engine 会通过 `OnLayoutChanged` 传递元素的排版结果。可以在这个回调中移动或缩放平台视图，也可以在渲染前调整 Texture 渲染表面的尺寸。
 
 ```cpp title="shared/elements/backends/texture/ExplorerInputElementTexture.cc"
 void OnLayoutChanged(
@@ -780,11 +780,11 @@ void OnLayoutChanged(
 
 ### 处理事件绑定（可选）
 
-在某些场景中，前端可能需要响应自定义元件的事件。例如，当用户在输入框中输入内容时，原生元件可以触发 `input` 事件。
+在某些场景中，前端可能需要响应自定义元素的事件。例如，当用户在输入框中输入内容时，原生元素可以触发 `input` 事件。
 
 #### 客户端事件发送
 
-使用 `TriggerEvent` 从原生元件向 Lynx 页面发送自定义事件。
+使用 `TriggerEvent` 从原生元素向 Lynx 应用代码发送自定义事件。
 
 ```cpp title="shared/elements/ExplorerInputElement.h"
 void EmitInputEvent(const std::string& value) {
@@ -796,7 +796,7 @@ void EmitInputEvent(const std::string& value) {
 
 #### 前端 DSL 事件绑定
 
-前端绑定对应事件后，即可监听并处理原生元件发送的数据。
+前端绑定对应事件后，即可监听并处理原生元素发送的数据。
 
 ```tsx title="src/App.tsx"
 const handleInput = (e) => {
@@ -813,13 +813,13 @@ const handleInput = (e) => {
 
 > **注意**：前端 DSL 使用 `bindxxx` 进行事件绑定，例如 `bindinput` 绑定 `input` 事件。
 
-### 支持直接操作元件（可选）
+### 支持直接操作元素（可选）
 
-在某些情况下，前端可能需要通过命令式 API 直接操作自定义元件。Desktop 上可以通过实现 `OnMethodInvoked` 处理这些调用。
+在某些情况下，前端可能需要通过命令式 API 直接操作自定义元素。Desktops 上可以通过实现 `OnMethodInvoked` 处理这些调用。
 
 #### 前端调用示例
 
-以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `setValue` 方法更新 `<explorer-input>` 元件：
+以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `setValue` 方法更新 `<explorer-input>` 元素：
 
 ```tsx title="src/App.tsx"
 lynx
@@ -840,7 +840,7 @@ lynx
 
 #### 客户端实现
 
-在客户端，重写 `OnMethodInvoked` 处理方法调用，并通过 callback 向前端返回状态码。
+在客户端，重写 `OnMethodInvoked` 处理方法调用，并通过回调向前端返回状态码。
 
 ```cpp title="shared/elements/ExplorerInputElement.h"
 void OnMethodInvoked(
@@ -861,7 +861,7 @@ void OnMethodInvoked(
 
 #### 方法回调返回值
 
-实现 method 时，需要向前端返回状态码，以便前端在对应 callback 中处理成功或失败。
+实现方法时，需要向前端返回状态码，以便前端在对应回调中处理成功或失败。
 
 `LynxNativeView` 定义了几类常见状态码：
 
