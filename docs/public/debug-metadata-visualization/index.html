@@ -1331,8 +1331,6 @@ $('#upload').addEventListener('click', () => $('#file').click())
 
 // "load an example": gzipped build artifacts of the Lynx react demo, served
 // next to this page and inflated with the browser's native DecompressionStream.
-const EXAMPLE_FILES = ['debug-metadata.json', 'main-thread.js', 'background.ce58f807.js', 'main.css']
-
 // Resolve example assets against the tool's own directory, so it works with
 // and without a trailing slash and under any site base (same as the docs link).
 function exampleUrl(name) {
@@ -1362,12 +1360,18 @@ async function loadExample() {
   const link = $('#loadExample')
   if (link) link.textContent = 'loading example…'
   try {
-    const [meta, ...bundles] = await Promise.all(EXAMPLE_FILES.map(fetchGz))
-    EXAMPLE_FILES.slice(1).forEach((name, i) => (FILES[name] = bundles[i]))
-    loadMeta(JSON.parse(meta))
+    // The bundle filenames come from the metadata itself, so a regenerated
+    // example (new content hashes) stays in sync automatically.
+    const meta = JSON.parse(await fetchGz('debug-metadata.json'))
+    const names = (meta.artifacts || []).map((a) => a.filename).filter(Boolean)
+    const texts = await Promise.all(names.map(fetchGz))
+    FILES = {}
+    names.forEach((name, i) => (FILES[name] = texts[i]))
+    loadMeta(meta)
   } catch (e) {
-    if (link) link.textContent = 'load an example'
     alert('Failed to load the example: ' + e.message)
+  } finally {
+    if (link) link.textContent = 'load an example'
   }
 }
 
