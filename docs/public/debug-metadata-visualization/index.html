@@ -1317,8 +1317,18 @@ $('#upload').addEventListener('click', () => $('#file').click())
 // next to this page and inflated with the browser's native DecompressionStream.
 const EXAMPLE_FILES = ['debug-metadata.json', 'main-thread.js', 'background.ce58f807.js', 'main.css']
 
+// Resolve example assets against the tool's own directory, so it works with
+// and without a trailing slash and under any site base (same as the docs link).
+function exampleUrl(name) {
+  const p = location.pathname
+  const seg = '/debug-metadata-visualization'
+  const i = p.indexOf(seg)
+  const base = i >= 0 ? p.slice(0, i + seg.length) : '.'
+  return base + '/example/' + name + '.gz'
+}
+
 async function fetchGz(name) {
-  const res = await fetch('example/' + name + '.gz')
+  const res = await fetch(exampleUrl(name))
   if (!res.ok) throw new Error(name + ': HTTP ' + res.status)
   const stream = res.body.pipeThrough(new DecompressionStream('gzip'))
   return new Response(stream).text()
