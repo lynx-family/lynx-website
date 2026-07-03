@@ -966,7 +966,11 @@ function focusSegment(idx, origin, locate) {
     : `<span class="none">no source mapping</span>`
   if (name) html += `<span><b>name</b> <span class="nm">${esc(name)}</span></span>`
   if (candidates.length > 1) {
-    html += `<span class="warn">⚠ ${candidates.length} mappings at this generated column · the first is used (${candidates[0] === seg ? 'this one ★' : 'not this one'})</span>`
+    if (candidates[0] === seg) {
+      html += `<span class="none">${candidates.length} mappings at this generated column · remap resolves to this one</span>`
+    } else {
+      html += `<span class="warn">⚠ remap of this column resolves to the first mapping, not this token</span>`
+    }
   }
   $('#infoMain').innerHTML = html
   syncSelects()
