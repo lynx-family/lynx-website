@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { useLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
 
-type ConfigKey = '/' | '/react/' | '/rspeedy/';
+type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
 
 /**
  * Configuration for the blog button on different subsites.
@@ -48,6 +48,12 @@ const config: Record<
       en: 'Rspeedy',
     },
   },
+  '/lynxtron/': {
+    text: {
+      zh: 'Lynxtron',
+      en: 'Lynxtron',
+    },
+  },
 };
 
 const useBlogBtnDom = (src: string) => {
@@ -61,7 +67,9 @@ const useBlogBtnDom = (src: string) => {
         ? '/react/'
         : src.startsWith('/rspeedy/')
           ? '/rspeedy/'
-          : '/'
+          : src.startsWith('/lynxtron/')
+            ? '/lynxtron/'
+            : '/'
     ) as ConfigKey;
   }, [src]);
 
