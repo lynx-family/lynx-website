@@ -110,7 +110,7 @@ export const GalaxyHeroBackground = () => {
           ringLayers={4}
           ringThickness={43}
           innerInsetRatio={0.02}
-          particlesPerLayer={100}
+          particlesPerLayer={45}
           baseParticleRadiusRatio={0.005}
           ringThicknessRatio={0.05}
           dprScale={true}
