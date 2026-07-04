@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useFixDark } from '@site/theme/hooks/use-fix-dark';
 import { GalaxyRings } from './galaxy-rings';
 import styles from './index.module.less';
 
@@ -65,10 +66,39 @@ export const GalaxyHeroBackground = () => {
     };
   }, []);
 
+  // Two palettes, one geometry. Dark keeps the original glow: full-sat
+  // green/amber at high lightness, fused into light trails by the additive
+  // blending against the near-black page. On the light page that blending
+  // can't fuse anything, so every dot reads alone — keep them inside the
+  // background wash's own green→teal family at mid value and muted
+  // saturation, so the ring reads as deeper strokes of the same atmosphere
+  // instead of confetti. The worker reads its palette once at init; keying
+  // the component remounts it when the theme flips.
+  const dark = useFixDark();
+  const palette = dark
+    ? {
+        lightScale: 1.25,
+        saturation: 100,
+        hueLeftA: 149.8,
+        hueRightA: 30,
+        hueLeftB: 30,
+        hueRightB: 149.8,
+      }
+    : {
+        lightScale: 0.8,
+        saturation: 72,
+        hueLeftA: 158,
+        hueRightA: 186,
+        hueLeftB: 186,
+        hueRightB: 158,
+      };
+
   return (
     <div className={styles['galaxy-bg']} ref={ref}>
       {ringSize && !reducedMotion ? (
         <GalaxyRings
+          key={dark ? 'dark' : 'light'}
+          {...palette}
           sizePx={ringSize}
           canvasClassName={styles['galaxy-canvas']}
           tiltDeg={60}
@@ -83,10 +113,6 @@ export const GalaxyHeroBackground = () => {
           particlesPerLayer={100}
           baseParticleRadiusRatio={0.005}
           ringThicknessRatio={0.05}
-          hueLeftA={149.8}
-          hueRightA={30}
-          hueLeftB={30}
-          hueRightB={149.8}
           dprScale={true}
         />
       ) : null}

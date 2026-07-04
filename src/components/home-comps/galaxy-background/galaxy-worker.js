@@ -191,7 +191,10 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
             peakSide === 'right'
               ? hues.right * pairNorm + hues.left * (1 - pairNorm)
               : hues.left * pairNorm + hues.right * (1 - pairNorm);
-          const sat = 100;
+          const sat =
+            config.saturation !== undefined && config.saturation !== null
+              ? config.saturation
+              : 100;
           const lightRaw = 45 + zSym * 18 + (radial - 0.5) * 12;
           const light = Math.min(100, lightRaw * (config.lightScale || 1));
           const vp = Math.min(w, h);

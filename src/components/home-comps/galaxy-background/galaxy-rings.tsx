@@ -23,6 +23,7 @@ export interface GalaxyRingsProps {
   adaptiveStride?: boolean;
   randomSeed?: number;
   lightScale?: number;
+  saturation?: number;
   alphaCleanIntervalMs?: number;
   alphaThreshold255?: number;
   className?: string;
@@ -53,6 +54,7 @@ export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
     adaptiveStride = true,
     randomSeed,
     lightScale = 1.25,
+    saturation = 100,
     alphaCleanIntervalMs = 500,
     alphaThreshold255,
     className,
@@ -108,6 +110,7 @@ export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
           hueRightB,
           adaptiveStride,
           lightScale,
+          saturation,
           alphaCleanIntervalMs,
           alphaThreshold255,
         },
