@@ -26,15 +26,12 @@ import {
 
 import './index.scss';
 import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
-import {
-  HomeLayout as LynxtronHomeLayout,
-  createCliStrLynxtron,
-} from './lynxtron/index';
 
 import {
   Banner,
   Features,
   Footer,
+  GalaxyHeroBackground,
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
@@ -150,6 +147,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     return removeBase(tmp);
   }, [page]);
 
+  const isLynxtron = routePath.startsWith('/lynxtron/');
+  const createCliStr = isLynxtron
+    ? 'npm create @lynx-js/lynxtron@latest'
+    : 'npm create rspeedy@latest';
+
   useBlogBtnDom(routePath);
 
   const updateText = useCallback(() => {
@@ -243,7 +245,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       <>
         <div
           className="rp-doc home-hero-codeblock"
-          style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
+          style={{
+            minHeight: 'auto',
+            width: '100%',
+            maxWidth: isLynxtron ? 450 : 300,
+          }}
         >
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
@@ -258,20 +264,22 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
               className="language-bash"
               style={{ textAlign: 'center' }}
             >
-              npm create rspeedy@latest
+              {createCliStr}
             </CodeWithRef>
           </PreWithCodeButtonGroup>
         </div>
       </>
     ),
+    beforeHero = isLynxtron ? <GalaxyHeroBackground /> : undefined,
   } = props;
 
   return (
     <>
-      <MeteorsBackground gridSize={120} meteorCount={3} />
+      {isLynxtron ? null : <MeteorsBackground gridSize={120} meteorCount={3} />}
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
+          beforeHero={beforeHero}
           afterHero={afterHero}
           afterHeroActions={afterHeroActions}
         />
@@ -308,53 +316,11 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     );
   }
 
-  if (
-    page.pagePath.startsWith('en/lynxtron') ||
-    page.pagePath.startsWith('zh/lynxtron') ||
-    page.pagePath.startsWith('lynxtron')
-  ) {
-    return (
-      <>
-        <OgHead />
-        <LynxtronHomeLayout
-          afterHeroActions={
-            <LynxtronCreateBlock createCliStr={createCliStrLynxtron} />
-          }
-        />
-      </>
-    );
-  }
-
   return (
     <>
       <OgHead />
       <MainHomeLayout {...props} />
     </>
-  );
-}
-
-function LynxtronCreateBlock(props: { createCliStr: string }) {
-  const { pre: PreWithCodeButtonGroup, code: Code } =
-    basicGetCustomMDXComponent();
-  return (
-    <div
-      className="rp-doc home-hero-codeblock"
-      style={{ minHeight: 'auto', width: '100%', maxWidth: 450 }}
-    >
-      <PreWithCodeButtonGroup
-        containerElementClassName="language-bash home-layout-create-block"
-        codeButtonGroupProps={{
-          showCodeWrapButton: false,
-        }}
-      >
-        <Code
-          className="language-bash home-layout-create-block"
-          style={{ textAlign: 'center' }}
-        >
-          {props.createCliStr}
-        </Code>
-      </PreWithCodeButtonGroup>
-    </div>
   );
 }
 

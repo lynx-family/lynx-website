@@ -11,6 +11,11 @@ import IconReactDark from '@assets/home/home-f-icon-1-dark.svg?react';
 import ItemPerformanceDark from '@assets/home/home-f-icon-0-dark.svg?react';
 import ItemEcosystemDark from '@assets/home/home-f-icon-2-dark.svg?react';
 import { useFixDark } from '@site/theme/hooks/use-fix-dark';
+import { MaskIcon } from './mask-icon';
+
+const brandMaskIcon = (
+  variant: 'lightning' | 'multiplatform' | 'extensible',
+) => <MaskIcon variant={variant} className={styles['brand-mask-icon']} />;
 
 const comps = {
   react: {
@@ -36,6 +41,18 @@ const comps = {
   rstack: {
     light: <span />,
     dark: <span />,
+  },
+  lightning: {
+    light: brandMaskIcon('lightning'),
+    dark: brandMaskIcon('lightning'),
+  },
+  multiplatform: {
+    light: brandMaskIcon('multiplatform'),
+    dark: brandMaskIcon('multiplatform'),
+  },
+  extensible: {
+    light: brandMaskIcon('extensible'),
+    dark: brandMaskIcon('extensible'),
   },
 };
 

@@ -26,6 +26,7 @@ export interface GalaxyRingsProps {
   alphaCleanIntervalMs?: number;
   alphaThreshold255?: number;
   className?: string;
+  canvasClassName?: string;
   style?: React.CSSProperties;
 }
 
@@ -55,6 +56,7 @@ export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
     alphaCleanIntervalMs = 500,
     alphaThreshold255,
     className,
+    canvasClassName,
     baseParticleRadiusRatio = 0.005,
     style,
   } = props;
@@ -147,9 +149,7 @@ export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
         ...style,
       }}
     >
-      <canvas ref={canvasRef} className="galaxy-canvas" />
+      <canvas ref={canvasRef} className={canvasClassName} />
     </div>
   );
 };
-
-export default GalaxyRings;

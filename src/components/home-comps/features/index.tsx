@@ -22,7 +22,8 @@ import {
   IconWindows,
 } from './icon';
 import { FeatureIconItem } from './item-icon';
-type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
+import { ExtensibleWidget } from './extensible-widget';
+type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
 const featuresConfig: Record<
   FeaturesConfigKey,
   Array<{
@@ -283,6 +284,42 @@ const featuresConfig: Record<
       },
     },
   ],
+  '/lynxtron/': [
+    {
+      iconClass: 'lightning',
+      title: {
+        en: 'Light-weight and Fast',
+        zh: '轻量且高速',
+      },
+      desc: {
+        en: 'Electron-like app framework with a light-weight UI renderer powered by Lynx.',
+        zh: '类 Electron 的应用框架，内置 Lynx 轻量级 UI 渲染器。',
+      },
+    },
+    {
+      iconClass: 'multiplatform',
+      title: {
+        en: 'Multiplatform',
+        zh: '多平台',
+      },
+      desc: {
+        en: 'With Lynx, your UI runs across platforms, including the Web, and can be ported to new hosts with minimal effort.',
+        zh: '借助 Lynx，UI 可跨平台运行（包含 Web），并能以极低成本移植到新的宿主环境。',
+      },
+    },
+    {
+      iconClass: 'extensible',
+      title: {
+        en: 'Natively Extensible',
+        zh: '原生可扩展',
+      },
+      desc: {
+        en: "Extend the renderer's capabilities with custom native modules via UI/texture extension C-APIs and Node-API.",
+        zh: '通过 UI/纹理扩展 C-API 与 Node-API 编写自定义原生模块，扩展渲染器能力。',
+      },
+      customRender: <ExtensibleWidget />,
+    },
+  ],
 };
 
 const Features = ({ src = '/' }: { src?: string }) => {
@@ -293,7 +330,9 @@ const Features = ({ src = '/' }: { src?: string }) => {
       ? '/react/'
       : src.startsWith('/rspeedy/')
         ? '/rspeedy/'
-        : '/'
+        : src.startsWith('/lynxtron/')
+          ? '/lynxtron/'
+          : '/'
   ) as FeaturesConfigKey;
   const isMobile = useIfMobile();
 
