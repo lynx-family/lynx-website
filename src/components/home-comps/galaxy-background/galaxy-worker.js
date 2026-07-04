@@ -22,7 +22,17 @@ let ringThicknessPx = 0;
 // orbit history explicitly gives exact control: the tail spans one full
 // lap, so its faintest end dies exactly where — and when — the comet
 // comes back around to redraw it.
-const TAIL_SEGMENTS = 96;
+// The tail is rendered by stamping overlapping translucent dots along the
+// orbit — the same texture the original persistence version produced by
+// stamping one dot per frame. Stroked polyline segments were tried first
+// and read as bamboo joints: flat hard-edged cross-section, stepped alpha
+// between segments, and additive doubling at the joints. Overlapping round
+// stamps instead fuse into a ribbon that is bright at the core and soft at
+// the edges. DOT_ALPHA_SCALE compensates for the longitudinal overlap
+// (each point on the path is covered by ~3.3 stamps).
+const DOT_SPACING_RATIO = 0.6;
+const DOT_ALPHA_SCALE = 0.34;
+const MAX_TAIL_DOTS = 1500;
 // Two exponentials in angle-space: a pronounced tail right behind the
 // head, and a faint remainder that lives for two full laps — long enough
 // that the whole knot outline is always faintly present, not erased
@@ -188,24 +198,29 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
   const off = which === 'A' ? offA : offB;
   const alp = which === 'A' ? alpA : alpB;
   const count = which === 'A' ? countA : countB;
-  const step = PI2 / TAIL_SEGMENTS;
 
   for (let i = 0; i < count; i++) {
     // x2 keeps the approved pace: the old two-pass loop advanced the
     // angle twice per frame.
     ang[i] += spd[i] * 2 * dtScale;
     if (ang[i] > PI2) ang[i] -= PI2;
-    if (i % drawStride !== 0) continue;
 
     const rBand = Math.max(-1, Math.min(1, off[i] / ringSpanHalf));
     const radial = (rBand + 1) * 0.5;
     const radialAlpha = 0.6 + 0.4 * radial;
     const radiusX = rx + innerInset + off[i];
     const radiusY = ryR + innerInset * roScaleR + off[i] * roScaleR;
+    // Angular step that keeps consecutive stamps within a fraction of a
+    // dot radius, so they fuse. drawStride widens the spacing on slow
+    // devices instead of dropping whole comets.
+    const rMax = Math.max(Math.abs(radiusX), Math.abs(radiusY));
+    const step = Math.max(
+      (DOT_SPACING_RATIO * baseR * drawStride) / rMax,
+      PI2 / MAX_TAIL_DOTS,
+    );
 
-    let prevX = 0;
-    let prevY = 0;
-    for (let j = 0; j <= TAIL_SEGMENTS; j++) {
+    const dots = Math.ceil(PI2 / step);
+    for (let j = 0; j <= dots; j++) {
       const a = ang[i] + globalRotation - j * step;
       const cosA = Math.cos(a);
       const sinA = Math.sin(a);
@@ -240,17 +255,14 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
         ctx.beginPath();
         ctx.arc(x, y, rP, 0, PI2);
         ctx.fill();
-      } else if (alpha > 0.002) {
-        ctx.strokeStyle = `hsla(${hue},${sat}%,${light}%,${alpha})`;
+      } else if (alpha > 0.0015) {
         // Taper the ribbon along with its fade.
-        ctx.lineWidth = rP * 2 * (0.35 + 0.65 * Math.sqrt(profile));
+        const rDot = rP * (0.45 + 0.55 * Math.sqrt(profile));
+        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${alpha * DOT_ALPHA_SCALE})`;
         ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
+        ctx.arc(x, y, rDot, 0, PI2);
+        ctx.fill();
       }
-      prevX = x;
-      prevY = y;
     }
   }
 }
@@ -261,9 +273,6 @@ function draw() {
   dtScale = dt > 0 ? (dt / 1000) * 60 : 1;
   ctx.clearRect(0, 0, w, h);
   ctx.globalCompositeOperation = 'lighter';
-  // Butt caps: round caps overlap at segment joints, and under additive
-  // blending each joint doubles into a bright bead.
-  ctx.lineCap = 'butt';
   globalRotation += 0.0005 * dtScale;
   renderRing(
     'A',
