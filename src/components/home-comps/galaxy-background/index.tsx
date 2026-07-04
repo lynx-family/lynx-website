@@ -79,6 +79,10 @@ export const GalaxyHeroBackground = () => {
     ? {
         lightScale: 1.25,
         saturation: 100,
+        // The hot core clips toward warm white, like an overexposed
+        // light source; color survives only at the fringes.
+        coreLight: 97,
+        coreSat: 35,
         hueLeftA: 149.8,
         hueRightA: 30,
         hueLeftB: 30,
@@ -90,7 +94,13 @@ export const GalaxyHeroBackground = () => {
         // No additive glow against a light page: the leftover trail needs
         // extra pigment to read. Boosts the trail only — the comet head
         // keeps its softer foreground color.
-        alphaBoost: 2.4,
+        alphaBoost: 1.7,
+        // Inverted exposure: on a light page the hot core is the deepest
+        // ink. The hot ramp already adds presence, so the boost drops and
+        // the halo nearly vanishes (it would only thicken the stroke).
+        coreLight: 34,
+        coreSat: 80,
+        tailHalo: 0.08,
         hueLeftA: 158,
         hueRightA: 174,
         hueLeftB: 174,

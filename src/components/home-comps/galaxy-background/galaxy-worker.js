@@ -268,14 +268,44 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
       const light = Math.min(100, lightRaw * lightScale);
       const rP = baseR * (0.85 + 0.3 * zSym);
 
+      // Overexposure ramp. The original dense field owed its glow to
+      // additive channel saturation: enough same-hue stamps piling up
+      // clip every channel and the core turns white, leaving color only
+      // at the fringes. Eight comets never reach that point, so the
+      // clipping is reproduced explicitly — the color climbs toward the
+      // hot core tone (near-white in dark, deepest ink in light) as the
+      // profile approaches the head, and falls back to the plain hue
+      // down the tail.
+      const hotMix = Math.min(1, profile) * Math.min(1, profile);
+      const coreLight =
+        config.coreLight !== undefined && config.coreLight !== null
+          ? config.coreLight
+          : 96;
+      const coreSat =
+        config.coreSat !== undefined && config.coreSat !== null
+          ? config.coreSat
+          : 40;
+      const hotLight = light + (coreLight - light) * hotMix;
+      const hotSat = sat + (coreSat - sat) * hotMix;
+
       if (j === 0) {
         // The comet head keeps its little shimmer; the tail stays
         // deterministic so the ribbon reads calm, not noisy.
         const jitter = r() * 0.06 - 0.03;
         const headAlpha = Math.min(Math.max(alpha + jitter, 0), 1);
-        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${headAlpha})`;
+        // Three layers, like a real light source: wide colored halo,
+        // warm mid, hot core.
+        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${headAlpha * 0.35})`;
         ctx.beginPath();
-        ctx.arc(x, y, rP, 0, PI2);
+        ctx.arc(x, y, rP * 3, 0, PI2);
+        ctx.fill();
+        ctx.fillStyle = `hsla(${hue},${hotSat}%,${hotLight}%,${headAlpha * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(x, y, rP * 1.6, 0, PI2);
+        ctx.fill();
+        ctx.fillStyle = `hsla(${hue},${coreSat}%,${coreLight}%,${headAlpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, rP * 0.95, 0, PI2);
         ctx.fill();
       } else if (alpha > 0.0015) {
         // Taper the ribbon along with its fade. alphaBoost lifts only the
@@ -286,7 +316,20 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
           alpha * DOT_ALPHA_SCALE * (config.alphaBoost || 1),
           1,
         );
-        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${tailAlpha})`;
+        // The recently-flown stretch keeps a soft colored halo around
+        // its hot line. Halos only glow against a dark page — on a light
+        // one they just widen the stroke — so the strength is themed.
+        const tailHalo =
+          config.tailHalo !== undefined && config.tailHalo !== null
+            ? config.tailHalo
+            : 0.3;
+        if (profile > 0.12 && tailHalo > 0) {
+          ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${tailAlpha * tailHalo})`;
+          ctx.beginPath();
+          ctx.arc(x, y, rDot * 2.4, 0, PI2);
+          ctx.fill();
+        }
+        ctx.fillStyle = `hsla(${hue},${hotSat}%,${hotLight}%,${tailAlpha})`;
         ctx.beginPath();
         ctx.arc(x, y, rDot, 0, PI2);
         ctx.fill();

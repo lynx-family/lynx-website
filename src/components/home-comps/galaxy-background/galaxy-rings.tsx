@@ -25,6 +25,9 @@ export interface GalaxyRingsProps {
   lightScale?: number;
   saturation?: number;
   alphaBoost?: number;
+  coreLight?: number;
+  coreSat?: number;
+  tailHalo?: number;
   alphaCleanIntervalMs?: number;
   alphaThreshold255?: number;
   className?: string;
@@ -57,6 +60,9 @@ export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
     lightScale = 1.25,
     saturation = 100,
     alphaBoost = 1,
+    coreLight = 96,
+    coreSat = 40,
+    tailHalo = 0.3,
     alphaCleanIntervalMs = 500,
     alphaThreshold255,
     className,
@@ -114,6 +120,9 @@ export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
           lightScale,
           saturation,
           alphaBoost,
+          coreLight,
+          coreSat,
+          tailHalo,
           alphaCleanIntervalMs,
           alphaThreshold255,
         },
