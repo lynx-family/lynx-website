@@ -290,9 +290,9 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [pathname]);
 
   if (
-    page.pagePath.startsWith('en/lynx-ui') ||
-    page.pagePath.startsWith('zh/lynx-ui') ||
-    page.pagePath.startsWith('lynx-ui')
+    page.pagePath.startsWith('en/ui/') ||
+    page.pagePath.startsWith('zh/ui/') ||
+    page.pagePath.startsWith('ui/')
   ) {
     return (
       <>
