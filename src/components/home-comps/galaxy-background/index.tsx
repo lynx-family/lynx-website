@@ -110,7 +110,9 @@ export const GalaxyHeroBackground = () => {
           ringLayers={4}
           ringThickness={43}
           innerInsetRatio={0.02}
-          particlesPerLayer={45}
+          // 1 per layer x 4 layers x 2 rings = 8 comets total: a handful
+          // of drifting strokes, not a particle field.
+          particlesPerLayer={1}
           baseParticleRadiusRatio={0.005}
           ringThicknessRatio={0.05}
           dprScale={true}
