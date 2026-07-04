@@ -88,8 +88,8 @@ export const GalaxyHeroBackground = () => {
         lightScale: 0.8,
         saturation: 72,
         hueLeftA: 158,
-        hueRightA: 186,
-        hueLeftB: 186,
+        hueRightA: 174,
+        hueLeftB: 174,
         hueRightB: 158,
       };
 
