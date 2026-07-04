@@ -87,6 +87,10 @@ export const GalaxyHeroBackground = () => {
     : {
         lightScale: 0.8,
         saturation: 72,
+        // No additive glow against a light page: the leftover trail needs
+        // extra pigment to read. Boosts the trail only — the comet head
+        // keeps its softer foreground color.
+        alphaBoost: 2.4,
         hueLeftA: 158,
         hueRightA: 174,
         hueLeftB: 174,

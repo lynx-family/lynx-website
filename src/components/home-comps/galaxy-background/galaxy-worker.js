@@ -256,9 +256,15 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
         ctx.arc(x, y, rP, 0, PI2);
         ctx.fill();
       } else if (alpha > 0.0015) {
-        // Taper the ribbon along with its fade.
+        // Taper the ribbon along with its fade. alphaBoost lifts only the
+        // trail, not the head: on a light page the leftover trace needs
+        // extra pigment to read, but the comet itself shouldn't deepen.
         const rDot = rP * (0.45 + 0.55 * Math.sqrt(profile));
-        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${alpha * DOT_ALPHA_SCALE})`;
+        const tailAlpha = Math.min(
+          alpha * DOT_ALPHA_SCALE * (config.alphaBoost || 1),
+          1,
+        );
+        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${tailAlpha})`;
         ctx.beginPath();
         ctx.arc(x, y, rDot, 0, PI2);
         ctx.fill();
