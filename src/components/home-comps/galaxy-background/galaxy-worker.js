@@ -12,9 +12,32 @@ let lastTime = performance.now();
 let progressiveInit = false;
 let initBatchSize = 0;
 let rndFn = null;
-let lastAlphaClean = 0;
 let dtScale = 1;
 let ringThicknessPx = 0;
+
+// Trails are drawn analytically each frame instead of accumulated through
+// canvas persistence. Persistence fades multiplicatively, and an 8-bit
+// canvas can't decrement alpha by less than 0.5/255 per frame, so any fade
+// slow enough for a long tail stalls into permanent ghosts. Drawing the
+// orbit history explicitly gives exact control: the tail spans one full
+// lap, so its faintest end dies exactly where — and when — the comet
+// comes back around to redraw it.
+const TAIL_SEGMENTS = 96;
+// Two exponentials in angle-space: a pronounced tail right behind the
+// head, and a faint remainder that completes the lap. The slow term hits
+// ~1/255 of the head alpha at 2π, i.e. the trail's end vanishes at the
+// moment the next lap arrives.
+const TAIL_W_FAST = 0.85;
+const TAIL_K_FAST = 2.3;
+const TAIL_W_SLOW = 0.15;
+const TAIL_K_SLOW = 0.58;
+
+function tailProfile(dTheta) {
+  return (
+    TAIL_W_FAST * Math.exp(-TAIL_K_FAST * dTheta) +
+    TAIL_W_SLOW * Math.exp(-TAIL_K_SLOW * dTheta)
+  );
+}
 
 function makeRNG(seed) {
   let s = seed >>> 0 || 1;
@@ -32,13 +55,6 @@ function setupCanvas(dprScale) {
   ctx.scale(dpr, dpr);
   cx = w / 2;
   cy = h / 2;
-}
-
-function applyResidueFloor() {
-  const initFadeBase = config.fadeAlpha60 || 0.12;
-  const quantFloor = (Math.ceil(0.5 / initFadeBase) + 1) / 255;
-  ctx.fillStyle = `rgba(255,255,255,${quantFloor})`;
-  ctx.fillRect(0, 0, w, h);
 }
 
 function initData() {
@@ -141,75 +157,94 @@ function initStep() {
 }
 
 function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
-  const {
-    rxBaseRatio,
-    innerInsetRatio,
-    ringLayers,
-    ringThickness,
-    baseParticleRadius,
-  } = config;
+  const { rxBaseRatio, innerInsetRatio, ringLayers, baseParticleRadius } =
+    config;
   const rx = Math.min(w, h) * rxBaseRatio;
   const ryR = rx * Math.cos(ringTilt);
   const roScaleR = ryR / rx;
   const innerInset = rx * innerInsetRatio;
   const ringSpanHalf = (ringLayers * ringThicknessPx) / 2;
-  for (let pass = 0; pass < 2; pass++) {
-    const front = pass === 1;
-    const ang = which === 'A' ? angA : angB;
-    const spd = which === 'A' ? spdA : spdB;
-    const off = which === 'A' ? offA : offB;
-    const alp = which === 'A' ? alpA : alpB;
-    const count = which === 'A' ? countA : countB;
-    for (let i = 0; i < count; i++) {
-      ang[i] += spd[i] * dtScale;
-      if (ang[i] > PI2) ang[i] -= PI2;
-      const a = ang[i] + globalRotation;
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+  const vp = Math.min(w, h);
+  const baseR =
+    config.baseParticleRadiusRatio !== undefined &&
+    config.baseParticleRadiusRatio !== null
+      ? vp * config.baseParticleRadiusRatio
+      : baseParticleRadius;
+  const sat =
+    config.saturation !== undefined && config.saturation !== null
+      ? config.saturation
+      : 100;
+  const lightScale = config.lightScale || 1;
+  const ang = which === 'A' ? angA : angB;
+  const spd = which === 'A' ? spdA : spdB;
+  const off = which === 'A' ? offA : offB;
+  const alp = which === 'A' ? alpA : alpB;
+  const count = which === 'A' ? countA : countB;
+  const step = PI2 / TAIL_SEGMENTS;
+
+  for (let i = 0; i < count; i++) {
+    // x2 keeps the approved pace: the old two-pass loop advanced the
+    // angle twice per frame.
+    ang[i] += spd[i] * 2 * dtScale;
+    if (ang[i] > PI2) ang[i] -= PI2;
+    if (i % drawStride !== 0) continue;
+
+    const rBand = Math.max(-1, Math.min(1, off[i] / ringSpanHalf));
+    const radial = (rBand + 1) * 0.5;
+    const radialAlpha = 0.6 + 0.4 * radial;
+    const radiusX = rx + innerInset + off[i];
+    const radiusY = ryR + innerInset * roScaleR + off[i] * roScaleR;
+
+    let prevX = 0;
+    let prevY = 0;
+    for (let j = 0; j <= TAIL_SEGMENTS; j++) {
+      const a = ang[i] + globalRotation - j * step;
       const cosA = Math.cos(a);
       const sinA = Math.sin(a);
       const z = sinA * Math.sin(ringTilt);
-      if (front ? z >= 0 : z < 0) {
-        if (i % drawStride === 0) {
-          const X = (rx + innerInset + off[i]) * cosA;
-          const Y = (ryR + innerInset * roScaleR + off[i] * roScaleR) * sinA;
-          const x = cx + Math.cos(phi) * X - Math.sin(phi) * Y;
-          const y = cy + Math.sin(phi) * X + Math.cos(phi) * Y;
-          const zSym = 0.5 + 0.5 * Math.abs(z);
-          let axisAlpha = Math.pow(Math.abs(Math.cos(a - axisDelta)), 4.0);
-          const rBand = Math.max(-1, Math.min(1, off[i] / ringSpanHalf));
-          const radial = (rBand + 1) * 0.5;
-          const jitter = r() * 0.06 - 0.03;
-          const alpha = Math.min(
-            Math.max(
-              (alp[i] * (0.35 + 0.65 * zSym) * (0.6 + 0.4 * radial) + jitter) *
-                axisAlpha,
-              0,
-            ),
-            1,
-          );
-          const pairNorm = (Math.cos(2 * (a - phi)) + 1) * 0.5;
-          const hue =
-            peakSide === 'right'
-              ? hues.right * pairNorm + hues.left * (1 - pairNorm)
-              : hues.left * pairNorm + hues.right * (1 - pairNorm);
-          const sat =
-            config.saturation !== undefined && config.saturation !== null
-              ? config.saturation
-              : 100;
-          const lightRaw = 45 + zSym * 18 + (radial - 0.5) * 12;
-          const light = Math.min(100, lightRaw * (config.lightScale || 1));
-          const vp = Math.min(w, h);
-          const baseR =
-            config.baseParticleRadiusRatio !== undefined &&
-            config.baseParticleRadiusRatio !== null
-              ? vp * config.baseParticleRadiusRatio
-              : baseParticleRadius;
-          const rP = baseR * (0.85 + 0.3 * zSym);
-          ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${alpha})`;
-          ctx.beginPath();
-          ctx.arc(x, y, rP, 0, PI2);
-          ctx.fill();
-        }
+      const X = radiusX * cosA;
+      const Y = radiusY * sinA;
+      const x = cx + cosPhi * X - sinPhi * Y;
+      const y = cy + sinPhi * X + cosPhi * Y;
+      const zSym = 0.5 + 0.5 * Math.abs(z);
+      const axisAlpha = Math.pow(Math.abs(Math.cos(a - axisDelta)), 4.0);
+      const profile = tailProfile(j * step);
+      const alpha = Math.min(
+        Math.max(alp[i] * (0.35 + 0.65 * zSym) * radialAlpha * axisAlpha, 0) *
+          profile,
+        1,
+      );
+      const pairNorm = (Math.cos(2 * (a - phi)) + 1) * 0.5;
+      const hue =
+        peakSide === 'right'
+          ? hues.right * pairNorm + hues.left * (1 - pairNorm)
+          : hues.left * pairNorm + hues.right * (1 - pairNorm);
+      const lightRaw = 45 + zSym * 18 + (radial - 0.5) * 12;
+      const light = Math.min(100, lightRaw * lightScale);
+      const rP = baseR * (0.85 + 0.3 * zSym);
+
+      if (j === 0) {
+        // The comet head keeps its little shimmer; the tail stays
+        // deterministic so the ribbon reads calm, not noisy.
+        const jitter = r() * 0.06 - 0.03;
+        const headAlpha = Math.min(Math.max(alpha + jitter, 0), 1);
+        ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${headAlpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, rP, 0, PI2);
+        ctx.fill();
+      } else if (alpha > 0.002) {
+        ctx.strokeStyle = `hsla(${hue},${sat}%,${light}%,${alpha})`;
+        // Taper the ribbon along with its fade.
+        ctx.lineWidth = rP * 2 * (0.35 + 0.65 * Math.sqrt(profile));
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
       }
+      prevX = x;
+      prevY = y;
     }
   }
 }
@@ -218,14 +253,11 @@ function draw() {
   const now = performance.now();
   const dt = now - lastTime;
   dtScale = dt > 0 ? (dt / 1000) * 60 : 1;
-  ctx.save();
-  ctx.globalCompositeOperation = 'destination-out';
-  const fadeBase = config.fadeAlpha60 || 0.12;
-  const fadeAlpha = 1 - Math.pow(1 - fadeBase, dtScale);
-  ctx.fillStyle = `rgba(0,0,0,${fadeAlpha})`;
-  ctx.fillRect(0, 0, w, h);
-  ctx.restore();
+  ctx.clearRect(0, 0, w, h);
   ctx.globalCompositeOperation = 'lighter';
+  // Butt caps: round caps overlap at segment joints, and under additive
+  // blending each joint doubles into a bright bead.
+  ctx.lineCap = 'butt';
   globalRotation += 0.0005 * dtScale;
   renderRing(
     'A',
@@ -279,16 +311,12 @@ self.onmessage = (e) => {
         ? makeRNG(msg.randomSeed)
         : null;
     setupCanvas(msg.dprScale);
-    // Re-apply the low-alpha floor after canvas resets so residue
-    // pixels decay toward a stable base instead of fully transparent.
-    applyResidueFloor();
     initData();
     draw();
   } else if (msg.type === 'resize') {
     w = msg.width;
     h = msg.height;
     setupCanvas(msg.dprScale);
-    applyResidueFloor();
     initData();
   }
 };
