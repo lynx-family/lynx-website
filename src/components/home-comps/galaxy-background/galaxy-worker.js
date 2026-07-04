@@ -34,24 +34,24 @@ const DOT_SPACING_RATIO = 0.6;
 const DOT_ALPHA_SCALE = 0.34;
 const MAX_TAIL_DOTS = 1500;
 // Two exponentials in angle-space: a pronounced tail right behind the
-// head, and a faint remainder that lives for two full laps — long enough
-// that the whole knot outline is always faintly present, not erased
-// before the shape completes. The slow term hits ~1/255 of the head
-// alpha at 4π. Since the orbit is a closed ellipse, lap two overlays lap
-// one exactly, so instead of drawing twice we fold the previous lap's
-// leftover brightness into this lap's profile.
+// head, and a faint remainder that lives for three full laps — long
+// enough that the whole knot outline is always faintly present, not
+// erased before the shape completes. The slow term hits ~1/255 of the
+// head alpha at 6π. Since the orbit is a closed ellipse, every lap
+// overlays the previous one exactly, so instead of drawing the history
+// three times we fold the earlier laps' leftover brightness into this
+// lap's profile.
 const TAIL_W_FAST = 0.85;
 const TAIL_K_FAST = 2.3;
 const TAIL_W_SLOW = 0.15;
-const TAIL_K_SLOW = 0.29;
+const TAIL_K_SLOW = 0.19;
 
 function tailProfile(dTheta) {
-  const decay = (k, d) => Math.exp(-k * d);
+  const decay = (k, d) =>
+    Math.exp(-k * d) + Math.exp(-k * (d + PI2)) + Math.exp(-k * (d + 2 * PI2));
   return (
-    TAIL_W_FAST *
-      (decay(TAIL_K_FAST, dTheta) + decay(TAIL_K_FAST, dTheta + PI2)) +
-    TAIL_W_SLOW *
-      (decay(TAIL_K_SLOW, dTheta) + decay(TAIL_K_SLOW, dTheta + PI2))
+    TAIL_W_FAST * decay(TAIL_K_FAST, dTheta) +
+    TAIL_W_SLOW * decay(TAIL_K_SLOW, dTheta)
   );
 }
 
