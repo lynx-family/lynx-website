@@ -182,6 +182,22 @@ export default defineConfig({
           from: '^/zh/api/genui\\.html$',
           to: '/zh/api/genui/index.html',
         },
+        // The lynx-ui subsite moved from /lynx-ui to /ui. Netlify 301s in
+        // netlify.toml cover server-side hits; these client rules keep every
+        // old /lynx-ui link working on hosts without redirect support and for
+        // SPA-side navigations. `to` preserves the captured tail via $1.
+        {
+          from: '^/lynx-ui(/.*)?$',
+          to: '/ui$1',
+        },
+        {
+          from: '^/zh/lynx-ui(/.*)?$',
+          to: '/zh/ui$1',
+        },
+        {
+          from: '^/en/lynx-ui(/.*)?$',
+          to: '/en/ui$1',
+        },
       ],
     }),
     ...(!IS_LIGHTWEIGHT_BUILD
