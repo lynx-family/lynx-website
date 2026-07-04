@@ -2,8 +2,17 @@
   font-size: 14px;
   align-self: center;
   position: relative;
-  display: flex;
-  align-items: center;
+  // Keep the announcement to a single line: a long blog title (the badge
+  // shows the latest post) used to wrap and spill out of the fixed-height
+  // pill. Block + line-height centering (the icon is absolutely positioned,
+  // so no flexbox is needed) lets text-overflow clip it with an ellipsis;
+  // `max-width` caps the pill at its container so the clip actually engages.
+  display: block;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   height: 36px;
   flex-shrink: 0;
   border-radius: 37px;
@@ -24,6 +33,9 @@
   @media (max-width: 768px) {
     font-size: 12px;
     height: 28px;
+    // Match the shorter pill so the single line stays vertically centered
+    // and isn't clipped by `overflow: hidden` (content box = 28px − 2px border).
+    line-height: 26px;
     padding-left: 38px;
     padding-right: 16px;
   }
