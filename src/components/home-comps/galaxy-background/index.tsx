@@ -10,6 +10,13 @@ import styles from './index.module.less';
 export const GalaxyHeroBackground = () => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [ringSize, setRingSize] = useState<number>();
+  // The ring is a continuously-animating canvas; skip it entirely for
+  // users who ask for reduced motion.
+  const [reducedMotion] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+  );
 
   useEffect(() => {
     const el = ref.current;
@@ -27,7 +34,12 @@ export const GalaxyHeroBackground = () => {
       const completeHeight = rect.height + marginTop + marginBottom;
       const completeTop = rect.top - marginTop;
       const parentRect = positionedParent?.getBoundingClientRect();
-      const nextRingSize = Math.round(completeHeight * 1.8);
+      // Scale with the hero, but cap by viewport width so the ring stays a
+      // halo around the title on phones (where the stacked hero is tall)
+      // instead of flooding the whole screen.
+      const nextRingSize = Math.round(
+        Math.min(completeHeight * 1.8, window.innerWidth * 1.7),
+      );
       el.style.width = `${rect.width}px`;
       el.style.height = `${completeHeight}px`;
       el.style.left = `${rect.left - (parentRect?.left ?? 0)}px`;
@@ -55,7 +67,7 @@ export const GalaxyHeroBackground = () => {
 
   return (
     <div className={styles['galaxy-bg']} ref={ref}>
-      {ringSize ? (
+      {ringSize && !reducedMotion ? (
         <GalaxyRings
           sizePx={ringSize}
           canvasClassName={styles['galaxy-canvas']}
