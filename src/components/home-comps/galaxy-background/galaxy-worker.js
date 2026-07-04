@@ -24,18 +24,24 @@ let ringThicknessPx = 0;
 // comes back around to redraw it.
 const TAIL_SEGMENTS = 96;
 // Two exponentials in angle-space: a pronounced tail right behind the
-// head, and a faint remainder that completes the lap. The slow term hits
-// ~1/255 of the head alpha at 2π, i.e. the trail's end vanishes at the
-// moment the next lap arrives.
+// head, and a faint remainder that lives for two full laps — long enough
+// that the whole knot outline is always faintly present, not erased
+// before the shape completes. The slow term hits ~1/255 of the head
+// alpha at 4π. Since the orbit is a closed ellipse, lap two overlays lap
+// one exactly, so instead of drawing twice we fold the previous lap's
+// leftover brightness into this lap's profile.
 const TAIL_W_FAST = 0.85;
 const TAIL_K_FAST = 2.3;
 const TAIL_W_SLOW = 0.15;
-const TAIL_K_SLOW = 0.58;
+const TAIL_K_SLOW = 0.29;
 
 function tailProfile(dTheta) {
+  const decay = (k, d) => Math.exp(-k * d);
   return (
-    TAIL_W_FAST * Math.exp(-TAIL_K_FAST * dTheta) +
-    TAIL_W_SLOW * Math.exp(-TAIL_K_SLOW * dTheta)
+    TAIL_W_FAST *
+      (decay(TAIL_K_FAST, dTheta) + decay(TAIL_K_FAST, dTheta + PI2)) +
+    TAIL_W_SLOW *
+      (decay(TAIL_K_SLOW, dTheta) + decay(TAIL_K_SLOW, dTheta + PI2))
   );
 }
 
