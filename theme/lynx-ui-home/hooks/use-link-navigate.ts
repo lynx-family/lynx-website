@@ -12,10 +12,10 @@ export const useLinkNavigate = () => {
   const handleInteraction = useCallback(
     (path: string) => {
       if (
-        page.pagePath.startsWith('en/lynx-ui') ||
-        page.pagePath.startsWith('zh/lynx-ui')
+        page.pagePath.startsWith('en/ui/') ||
+        page.pagePath.startsWith('zh/ui/')
       ) {
-        navigate(lang === 'en' ? `/en/lynx-ui/${path}` : `/zh/lynx-ui/${path}`);
+        navigate(lang === 'en' ? `/en/ui/${path}` : `/zh/ui/${path}`);
       } else {
         navigate(lang === 'en' ? `/en/${path}` : `/zh/${path}`);
       }
