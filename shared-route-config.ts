@@ -141,7 +141,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     description: 'Desktop apps with Lynx',
     descriptionZh: '使用 Lynx 构建桌面应用',
     home: '/lynxtron/',
-    url: '/lynxtron/index',
+    url: '/lynxtron/introduction',
     category: 'native-framework',
     logo: {
       light: '/assets/lynxtron/lynxtron-icon-light.svg',
