@@ -1,7 +1,7 @@
 let canvas, ctx, w, h, cx, cy;
 let config;
 let PI2 = Math.PI * 2;
-let angA, spdA, offA, alpA, angB, spdB, offB, alpB;
+let angA, spdA, offA, alpA, trvA, angB, spdB, offB, alpB, trvB;
 let countA = 0,
   countB = 0;
 let layerCounts, layerPtr;
@@ -46,13 +46,28 @@ const TAIL_K_FAST = 2.3;
 const TAIL_W_SLOW = 0.15;
 const TAIL_K_SLOW = 0.19;
 
-function tailProfile(dTheta) {
-  const decay = (k, d) =>
-    Math.exp(-k * d) + Math.exp(-k * (d + PI2)) + Math.exp(-k * (d + 2 * PI2));
-  return (
-    TAIL_W_FAST * decay(TAIL_K_FAST, dTheta) +
-    TAIL_W_SLOW * decay(TAIL_K_SLOW, dTheta)
-  );
+// `traveled` is how far this comet has actually flown since it spawned:
+// the trail is drawn gradually, never as pre-existing history. Each lap's
+// contribution only appears once the comet has flown that far, and the
+// last ~0.35 rad before the birth point eases out so the trail grows
+// from a soft tip instead of a cut edge. Capping traveled at three laps
+// makes the steady state identical to the infinite-history profile: the
+// oldest lap's ease-out then sits exactly at the 6π vanish point.
+const TAIL_LAPS = 3;
+const TAIL_BIRTH_EASE = 0.35;
+
+function tailProfile(dTheta, traveled) {
+  let sum = 0;
+  for (let lap = 0; lap < TAIL_LAPS; lap++) {
+    const d = dTheta + lap * PI2;
+    if (d > traveled) break;
+    const birthEase = Math.min(1, (traveled - d) / TAIL_BIRTH_EASE);
+    sum +=
+      (TAIL_W_FAST * Math.exp(-TAIL_K_FAST * d) +
+        TAIL_W_SLOW * Math.exp(-TAIL_K_SLOW * d)) *
+      birthEase;
+  }
+  return sum;
 }
 
 function makeRNG(seed) {
@@ -98,10 +113,12 @@ function initData() {
   spdA = new Float32Array(totalTarget);
   offA = new Float32Array(totalTarget);
   alpA = new Float32Array(totalTarget);
+  trvA = new Float32Array(totalTarget);
   angB = new Float32Array(totalTarget);
   spdB = new Float32Array(totalTarget);
   offB = new Float32Array(totalTarget);
   alpB = new Float32Array(totalTarget);
+  trvB = new Float32Array(totalTarget);
   countA = 0;
   countB = 0;
   for (let layer = 0; layer < ringLayers; layer++) {
@@ -197,13 +214,16 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
   const spd = which === 'A' ? spdA : spdB;
   const off = which === 'A' ? offA : offB;
   const alp = which === 'A' ? alpA : alpB;
+  const trv = which === 'A' ? trvA : trvB;
   const count = which === 'A' ? countA : countB;
 
   for (let i = 0; i < count; i++) {
     // x2 keeps the approved pace: the old two-pass loop advanced the
     // angle twice per frame.
-    ang[i] += spd[i] * 2 * dtScale;
+    const advance = spd[i] * 2 * dtScale;
+    ang[i] += advance;
     if (ang[i] > PI2) ang[i] -= PI2;
+    trv[i] = Math.min(trv[i] + advance, TAIL_LAPS * PI2);
 
     const rBand = Math.max(-1, Math.min(1, off[i] / ringSpanHalf));
     const radial = (rBand + 1) * 0.5;
@@ -221,6 +241,8 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
 
     const dots = Math.ceil(PI2 / step);
     for (let j = 0; j <= dots; j++) {
+      // Nothing exists beyond the birth point yet.
+      if (j * step > trv[i]) break;
       const a = ang[i] + globalRotation - j * step;
       const cosA = Math.cos(a);
       const sinA = Math.sin(a);
@@ -231,7 +253,7 @@ function renderRing(which, phi, ringTilt, axisDelta, hues, peakSide) {
       const y = cy + sinPhi * X + cosPhi * Y;
       const zSym = 0.5 + 0.5 * Math.abs(z);
       const axisAlpha = Math.pow(Math.abs(Math.cos(a - axisDelta)), 4.0);
-      const profile = tailProfile(j * step);
+      const profile = tailProfile(j * step, trv[i]);
       const alpha = Math.min(
         Math.max(alp[i] * (0.35 + 0.65 * zSym) * radialAlpha * axisAlpha, 0) *
           profile,
