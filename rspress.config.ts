@@ -3,7 +3,7 @@ import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess'
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
-import { defineConfig } from '@rspress/core';
+import { defineConfig, type RspressPlugin } from '@rspress/core';
 import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transformers';
 import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
@@ -14,6 +14,7 @@ import {
   transformerNotationFocus,
   transformerNotationHighlight,
 } from '@shikijs/transformers';
+import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
@@ -281,10 +282,13 @@ function rsbuildPluginDisableFileSizeReport() {
 // generated spec content may contain NUL bytes, language alternates can point
 // at missing localized routes, and living-spec emits one stale fragment link.
 // Sanitize those generated artifacts here so the source docs stay unchanged.
-function pluginSanitizeGeneratedHtml() {
+function pluginSanitizeGeneratedHtml(): RspressPlugin {
   return {
     name: 'sanitize-generated-html',
-    async afterBuild(config: { outDir?: string }) {
+    async afterBuild(config, isProd) {
+      if (!isProd) {
+        return;
+      }
       const outDir = path.resolve(__dirname, config.outDir ?? 'doc_build');
       const files = await collectHtmlFiles(outDir);
       // Compare links against the generated route set because redirects,
@@ -316,7 +320,7 @@ function pluginSanitizeGeneratedHtml() {
 }
 
 async function collectHtmlFiles(dir: string): Promise<string[]> {
-  let entries: Awaited<ReturnType<typeof fs.readdir>>;
+  let entries: Dirent[];
   try {
     entries = await fs.readdir(dir, { withFileTypes: true });
   } catch (error) {
