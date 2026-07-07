@@ -14,9 +14,39 @@ export declare function defineConfig(config: (params: ConfigParams) => Promise<C
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  config | (params: [ConfigParams](./rspeedy.configparams.md)<!-- -->) =&gt; Promise&lt;[Config](./rspeedy.config.md)<!-- -->&gt; | The function that returns a promise that resolves to a config of Rspeedy. |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+config
+
+
+</td><td>
+
+(params: [ConfigParams](./rspeedy.configparams.md)<!-- -->) =&gt; Promise&lt;[Config](./rspeedy.config.md)<!-- -->&gt;
+
+
+</td><td>
+
+The function that returns a promise that resolves to a config of Rspeedy.
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

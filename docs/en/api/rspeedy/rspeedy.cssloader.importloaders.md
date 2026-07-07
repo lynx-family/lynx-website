@@ -12,13 +12,11 @@ The option `importLoaders` allows you to configure how many loaders before `css-
 importLoaders?: 0 | 1 | 2 | undefined;
 ```
 
+## Default Value
+
+`1` when compiling CSS files and `2` when compiling Sass or Less files
+
 ## Remarks
-
-The default value of `importLoaders` is:
-
-- `1` when compiling CSS files
-
-- `2` when compiling Sass or Less files
 
 See [css-loader\#import-loaders](https://github.com/webpack-contrib/css-loader?tab=readme-ov-file#importloaders) for details.
 

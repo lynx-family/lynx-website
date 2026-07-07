@@ -14,9 +14,121 @@ export interface Minify
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [css?](./rspeedy.minify.css.md) |  | boolean \| undefined | _(Optional)_ Whether enable the CSS minification. |
-|  [js?](./rspeedy.minify.js.md) |  | boolean \| undefined | _(Optional)_ Whether enable the JavaScript minification. |
-|  [jsOptions?](./rspeedy.minify.jsoptions.md) |  | Rspack.SwcJsMinimizerRspackPluginOptions \| undefined | _(Optional)_ [Minify.jsOptions](./rspeedy.minify.jsoptions.md) is used to configure SWC minification options. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[backgroundOptions?](./rspeedy.minify.backgroundoptions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.SwcJsMinimizerRspackPluginOptions \| undefined
+
+
+</td><td>
+
+_(Optional)_ [Minify.backgroundOptions](./rspeedy.minify.backgroundoptions.md) is used to override [Minify.jsOptions](./rspeedy.minify.jsoptions.md) for background-thread bundles.
+
+
+</td></tr>
+<tr><td>
+
+[css?](./rspeedy.minify.css.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether enable the CSS minification.
+
+
+</td></tr>
+<tr><td>
+
+[js?](./rspeedy.minify.js.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether enable the JavaScript minification.
+
+
+</td></tr>
+<tr><td>
+
+[jsOptions?](./rspeedy.minify.jsoptions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.SwcJsMinimizerRspackPluginOptions \| undefined
+
+
+</td><td>
+
+_(Optional)_ [Minify.jsOptions](./rspeedy.minify.jsoptions.md) is used to configure SWC minification options.
+
+
+</td></tr>
+<tr><td>
+
+[mainThreadOptions?](./rspeedy.minify.mainthreadoptions.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.SwcJsMinimizerRspackPluginOptions \| undefined
+
+
+</td><td>
+
+_(Optional)_ [Minify.mainThreadOptions](./rspeedy.minify.mainthreadoptions.md) is used to override [Minify.jsOptions](./rspeedy.minify.jsoptions.md) for main-thread bundles.
+
+
+</td></tr>
+</tbody></table>
 

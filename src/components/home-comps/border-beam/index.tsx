@@ -168,7 +168,10 @@ const BorderBeam: React.FC<BorderBeamProps> = ({
   }, [color, size, duration]);
 
   return (
-    <div ref={containerRef} className={styles['border-beam-frame']}>
+    <div
+      ref={containerRef}
+      className={`${styles['border-beam-frame']} ${className}`.trim()}
+    >
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full pointer-events-none"

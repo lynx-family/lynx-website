@@ -14,7 +14,35 @@ constructor(options: ExternalBundleWebpackPluginOptions);
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | [ExternalBundleWebpackPluginOptions](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.md) |  |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+options
+
+
+</td><td>
+
+[ExternalBundleWebpackPluginOptions](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
 

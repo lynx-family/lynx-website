@@ -11,3 +11,8 @@ The options of the main-thread layer.
 ```typescript
 mainThread?: LayerOptions;
 ```
+
+## Default Value
+
+`undefined`
+

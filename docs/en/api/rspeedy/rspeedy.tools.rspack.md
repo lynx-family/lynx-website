@@ -4,13 +4,17 @@
 
 ## Tools.rspack property
 
-The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://www.rspack.dev/)<!-- -->.
+The [Tools.rspack](./rspeedy.tools.rspack.md) controls the options of [Rspack](https://rspack.rs/)<!-- -->.
 
 **Signature:**
 
 ```typescript
 rspack?: ToolsConfig['rspack'] | undefined;
 ```
+
+## Default Value
+
+undefined
 
 ## Example 1
 
@@ -29,7 +33,7 @@ export default defineConfig({
   },
 })
 ```
-See [Rspack - Configuration](https://www.rspack.dev/config/index) for details.
+See [Rspack - Configuration](https://rspack.rs/config/index) for details.
 
 ## Example 2
 
@@ -49,7 +53,7 @@ export default defineConfig({
   },
 })
 ```
-See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#env) for details.
+See [Rsbuild - tools.rspack](https://rsbuild.rs/config/tools/rspack#env) for details.
 
 ## Example 3
 
@@ -70,7 +74,7 @@ export default defineConfig({
   },
 })
 ```
-See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#mergeconfig) for details.
+See [Rsbuild - tools.rspack](https://rsbuild.rs/config/tools/rspack#mergeconfig) for details.
 
 ## Example 4
 
@@ -88,5 +92,5 @@ export default defineConfig({
   },
 })
 ```
-See [Rsbuild - tools.rspack](https://rsbuild.dev/config/tools/rspack#appendplugins) for details.
+See [Rsbuild - tools.rspack](https://rsbuild.rs/config/tools/rspack#appendplugins) for details.
 

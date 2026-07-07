@@ -11,3 +11,8 @@
 ```typescript
 enableSSR?: boolean;
 ```
+
+## Default Value
+
+`false`
+

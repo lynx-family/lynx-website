@@ -130,6 +130,9 @@ const MeteorsBackground: React.FC<GridBackgroundProps> = ({
   gridSize = 30,
   meteorCount = 20,
 }) => {
+  if (import.meta.env.SSG_MD) {
+    return null;
+  }
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -150,6 +153,7 @@ const MeteorsBackground: React.FC<GridBackgroundProps> = ({
       { length: meteorCount },
       () => new Meteor(gridSize, canvas),
     );
+    let animationFrameId = 0;
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -176,13 +180,14 @@ const MeteorsBackground: React.FC<GridBackgroundProps> = ({
         meteor.draw(ctx);
       });
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('resize', setCanvasSize);
+      cancelAnimationFrame(animationFrameId);
     };
   }, [gridSize, meteorCount]);
 

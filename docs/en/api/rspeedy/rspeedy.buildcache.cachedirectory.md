@@ -14,3 +14,8 @@ The output directory of the cache files.
 ```typescript
 cacheDirectory?: string | undefined;
 ```
+
+## Default Value
+
+'node\_modules/.cache'
+

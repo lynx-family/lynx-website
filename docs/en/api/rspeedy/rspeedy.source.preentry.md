@@ -12,9 +12,13 @@ Add a script before the entry file of each page. This script will be executed be
 preEntry?: string | string[] | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
-See [source.preEntry](https://rsbuild.dev/config/source/pre-entry) for more details.
+See [source.preEntry](https://rsbuild.rs/config/source/pre-entry) for more details.
 
 ## Example
 

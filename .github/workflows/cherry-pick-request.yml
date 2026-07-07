@@ -1,0 +1,50 @@
+name: Cherry-pick Request
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled, closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: cherry-pick-request-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: ${{ contains(github.event.issue.labels.*.name, 'cherry-pick:request') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
+    outputs:
+      should_execute: ${{ steps.validate.outputs.should_execute }}
+      request_fingerprint: ${{ steps.validate.outputs.request_fingerprint }}
+      source_pr: ${{ steps.validate.outputs.source_pr }}
+      target_branches: ${{ steps.validate.outputs.target_branches }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: validate
+        run: node .github/scripts/cherry-pick-request.mjs validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  execute:
+    needs: validate
+    if: ${{ needs.validate.outputs.should_execute == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: node .github/scripts/cherry-pick-request.mjs execute
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

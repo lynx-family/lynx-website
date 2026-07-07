@@ -1,0 +1,172 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  ClayWindowsOnly,
+  ClayMacOSOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## 属性
+
+### `android-nested-scroll-as-child`
+
+<AndroidOnly />
+
+```tsx
+// @默认值: false
+'android-nested-scroll-as-child'?: boolean;
+```
+
+Android foldview 基于 CoordinateLayout，但它仅实现了 NestedScrollingParent，因此不支持作为子组件嵌套在其他滚动组件中，将此属性设置为 true 可使其正常工作。
+
+### `bounces`
+
+<IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @默认值: true
+bounces?: boolean;
+```
+
+当 coordinator 滚动超出边界时启用回弹效果。
+
+### `enable-scroll`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @默认值: true
+'enable-scroll'?: boolean;
+```
+
+设置 coordinator 是否可以垂直滚动。
+
+### `enable-scroll-bar`
+
+<IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @默认值: false
+'enable-scroll-bar'?: boolean;
+```
+
+设置 coordinator 滚动时滚动条是否可见。
+
+### `granularity`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @默认值: 0.01
+granularity?: number;
+```
+
+bindoffset 的事件响应粒度，一旦滚动距离超过可滚动距离的 granularity 倍，即可能触发。默认值为 0.01，但不一定每 0.01 都会触发。
+
+### `header-over-slot`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @默认值: false
+'header-over-slot'?: boolean;
+```
+
+此属性控制 header 层级是否高于 slot，当 header 溢出时，将显示在 slot 之上。否则，将显示在 slot 之下。建议显式设置此属性，而不是使用默认值。
+
+### `ios-force-scroll-detach`
+
+<IOSOnly />
+
+```tsx
+// @默认值: false
+'ios-force-scroll-detach'?: boolean;
+```
+
+是否强制使 foldview 的 nested-vertical-scroll-behavior 在 iOS 上失效，此设置对其他平台无效。
+
+### `ios-scrolls-to-top`
+
+<IOSOnly />
+
+```tsx
+// @默认值: false
+'ios-scrolls-to-top'?: boolean;
+```
+
+当用户点击状态栏时，距离状态栏最近的触摸下方的滚动视图将滚动到顶部。仅限 iOS 功能。
+
+### `refresh-mode`
+
+<IOSOnly />
+
+```tsx
+// @默认值: 'none'
+'refresh-mode'?: 'page' | 'none' | 'fold';
+```
+
+foldview 的下拉刷新模式，none（无，默认值）、page（分类下拉刷新）、fold（整体下拉刷新）。
+
+## 事件
+
+前端可以绑定相应的事件回调来监听元素的运行时行为，如下所示。
+
+### `bindoffset`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindoffset = (e: ScrollCoordinatorOffsetEvent) => {};
+```
+
+| 字段   | 类型 | 是否可选 | 默认值 | 平台                                                     | 版本 | 描述                                                        |
+| ------ | ---- | -------- | ------ | -------------------------------------------------------- | ---- | ----------------------------------------------------------- |
+| height | 数字 | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |      | 可滚动距离的绝对值（header 高度 - toolbar 高度），单位为 px |
+| offset | 数字 | 否       | –      | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |      | header 滚动偏移量的绝对值，单位为 px                        |
+
+折叠进度回调
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
+
+### `setFoldExpanded`
+
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'setFoldExpanded',
+      params: {
+        /**
+         * 偏移量，支持 px 和 rpx
+         * @Android
+         * @iOS
+         * @Harmony
+         * @Web
+         * @PC
+         */
+        offset: string;
+        /**
+         * 折叠时是否需要动画
+         * @Android
+         * @iOS
+         * @Harmony
+         * @Web
+         * @PC
+         */
+        smooth: boolean;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```

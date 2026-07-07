@@ -8,19 +8,79 @@ A rsbuild plugin that print the template.js url using QRCode.
 
 ## Functions
 
-|  Function | Description |
-|  --- | --- |
-|  [pluginQRCode(options)](./qrcode-rsbuild-plugin.pluginqrcode.md) | Create a rsbuild plugin for printing QRCode. |
+<table><thead><tr><th>
+
+Function
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[pluginQRCode(options)](./qrcode-rsbuild-plugin.pluginqrcode.md)
+
+
+</td><td>
+
+Create a rsbuild plugin for printing QRCode.
+
+
+</td></tr>
+</tbody></table>
 
 ## Interfaces
 
-|  Interface | Description |
-|  --- | --- |
-|  [PluginQRCodeOptions](./qrcode-rsbuild-plugin.pluginqrcodeoptions.md) | The options for [pluginQRCode()](./qrcode-rsbuild-plugin.pluginqrcode.md)<!-- -->. |
+<table><thead><tr><th>
+
+Interface
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[PluginQRCodeOptions](./qrcode-rsbuild-plugin.pluginqrcodeoptions.md)
+
+
+</td><td>
+
+The options for [pluginQRCode()](./qrcode-rsbuild-plugin.pluginqrcode.md)<!-- -->.
+
+
+</td></tr>
+</tbody></table>
 
 ## Type Aliases
 
-|  Type Alias | Description |
-|  --- | --- |
-|  [CustomizedSchemaFn](./qrcode-rsbuild-plugin.customizedschemafn.md) | Customize the generated schema. |
+<table><thead><tr><th>
+
+Type Alias
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[CustomizedSchemaFn](./qrcode-rsbuild-plugin.customizedschemafn.md)
+
+
+</td><td>
+
+Customize the generated schema.
+
+
+</td></tr>
+</tbody></table>
 

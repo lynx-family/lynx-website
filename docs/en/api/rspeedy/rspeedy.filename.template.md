@@ -17,11 +17,11 @@ The name of the template files.
 template?: string | undefined;
 ```
 
+## Default Value
+
+`'[name].[platform].bundle'`
+
 ## Remarks
-
-Default values:
-
-- `'[name].lynx.bundle'`
 
 The following placeholder is supported:
 

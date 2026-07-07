@@ -11,3 +11,8 @@ The [Resolve](./rspeedy.resolve.md) option is used to control the resolution beh
 ```typescript
 resolve?: Resolve | undefined;
 ```
+
+## Default Value
+
+undefined
+

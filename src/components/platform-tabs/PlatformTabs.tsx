@@ -1,9 +1,9 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { BorderBeam } from '@/components/home-comps/border-beam';
 import React, { useCallback, useEffect, useState } from 'react';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
 import { PlatformName } from '@lynx-js/lynx-compat-data';
+import '../shared-tabs.scss';
 
 type Platform =
   | 'ios'
@@ -56,17 +56,17 @@ const PLATFORM_OPTIONS: Array<{
   {
     id: 'macos',
     label: 'macOS',
-    iconName: 'ios',
+    iconName: 'macos' as PlatformName,
   },
   {
     id: 'macos-arm64',
     label: 'macOS (arm64)',
-    iconName: 'ios',
+    iconName: 'macos' as PlatformName,
   },
   {
     id: 'macos-intel',
     label: 'macOS (x86_64)',
-    iconName: 'ios',
+    iconName: 'macos' as PlatformName,
   },
   {
     id: 'reactlynx',
@@ -112,45 +112,42 @@ const PlatformTab = ({ platform, children }: PlatformTabProps) => {
   return <div data-platform={platform}>{children}</div>;
 };
 
-function OptionSelector({
-  options,
-  selected,
-  onSelect,
-}: {
-  options: typeof PLATFORM_OPTIONS;
-  selected: Platform;
-  onSelect: (id: Platform) => void;
-}) {
+const OptionSelector = React.forwardRef<
+  HTMLDivElement,
+  {
+    options: typeof PLATFORM_OPTIONS;
+    selected: Platform;
+    onSelect: (id: Platform) => void;
+    activeCardRef?: React.Ref<HTMLButtonElement>;
+  }
+>(({ options, selected, onSelect, activeCardRef }, ref) => {
   return (
-    <div className="flex flex-wrap gap-4">
-      {options.map((option) => (
-        <Card
-          key={option.id}
-          className={cn(
-            'flex-1 cursor-pointer transition-colors border-2',
-            selected === option.id
-              ? 'border-primary bg-primary/10'
-              : 'border-muted hover:bg-muted',
-          )}
-          onClick={() => onSelect(option.id)}
-        >
-          <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
+    <div className="shared-tabs__track" ref={ref}>
+      {options.map((option) => {
+        const isActive = selected === option.id;
+        return (
+          <button
+            key={option.id}
+            ref={isActive ? activeCardRef : undefined}
+            type="button"
+            className={cn(
+              'shared-tabs__card',
+              isActive && 'shared-tabs__card--active',
+            )}
+            onClick={() => onSelect(option.id)}
+          >
+            {isActive && <BorderBeam duration={3} size={2} />}
             <PlatformSvg
               platformName={option.iconName}
-              className="icon bg-current h-8 w-8"
+              className="shared-tabs__card-icon"
             />
-            <Label
-              htmlFor={option.id}
-              className="cursor-pointer flex items-center gap-2"
-            >
-              {option.label}
-            </Label>
-          </CardContent>
-        </Card>
-      ))}
+            <span className="shared-tabs__card-label">{option.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
-}
+});
 
 //  FIXME: this is a hack for hook Rspress update the TOC */
 let renderCountForTocUpdate = 0;
@@ -245,8 +242,21 @@ export const PlatformTabs = ({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activePlatform, getPlatformFromQuery]);
 
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const activeCardRef = React.useRef<HTMLButtonElement>(null);
+
+  // Horizontal: center the active tab inside the strip when it overflows.
   useEffect(() => {
-    // Wait for the component to load
+    const track = trackRef.current;
+    const card = activeCardRef.current;
+    if (!track || !card) return;
+    if (track.scrollWidth <= track.clientWidth) return;
+    track.scrollLeft =
+      card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
+  }, [activePlatform]);
+
+  useEffect(() => {
+    // Wait for the component to load, then jump to the hash anchor if any.
     requestAnimationFrame(() => {
       const element = document.getElementById(window.location.hash?.slice(1));
       element?.scrollIntoView({ behavior: 'auto' });
@@ -277,6 +287,8 @@ export const PlatformTabs = ({
     <>
       <div className={cn('w-full space-y-4', className)}>
         <OptionSelector
+          ref={trackRef}
+          activeCardRef={activeCardRef}
           options={availableOptions}
           selected={activePlatform}
           onSelect={setActivePlatform}

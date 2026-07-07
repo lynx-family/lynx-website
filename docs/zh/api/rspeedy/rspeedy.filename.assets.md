@@ -12,9 +12,7 @@ The name of other assets, except for above (image, svg, font, html, wasm...)
 assets?: Rspack.AssetModuleFilename;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- `'[name].[contenthash:8][ext]'`
+`'[name].[contenthash:8][ext]'`
 

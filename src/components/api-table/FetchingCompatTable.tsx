@@ -198,7 +198,7 @@ export function useDelayedLoading(
  * load source code and fetches the data from the server.
  */
 export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
-  if (process.env.__SSR_MD__) {
+  if (import.meta.env.SSG_MD) {
     return <FetchingCompatTableMarkdown query={query} />;
   }
   const locale = useLang();

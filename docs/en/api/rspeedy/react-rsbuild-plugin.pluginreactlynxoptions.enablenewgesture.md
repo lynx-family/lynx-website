@@ -11,3 +11,8 @@ enableNewGesture enables the new gesture system.
 ```typescript
 enableNewGesture?: boolean;
 ```
+
+## Default Value
+
+`false`
+

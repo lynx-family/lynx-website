@@ -1,0 +1,157 @@
+// APIStatusLayout — header title bar + main content shell.
+//
+// Header is a real title bar, not a flat border-b. Three blocks left→right:
+//   trigger | title block (page name + brand stem + subtitle) | meta strip
+//
+// Heights and rhythm align with the rspress doc reader (no jarring break
+// when the user comes from a regular doc page into the dashboard).
+
+@import './APIStatusPages.scss';
+
+.aps-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+  background: var(--rp-c-bg, #fff);
+}
+
+.aps-header__trigger {
+  flex-shrink: 0;
+  margin-left: -4px;
+}
+
+// Title block — page name + descriptor + the brand stem accent. The stem
+// is a tiny vertical brand line that sits to the right of the title at
+// baseline, the same affordance the docs sidebar uses to anchor "this is
+// where you are." Reads as a quiet location marker rather than an icon.
+.aps-header__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.aps-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aps-header__title {
+  // Matches homepage hero scale-down vocabulary — semibold, tight tracking,
+  // intentional but not loud.
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.2;
+  color: var(--rp-c-text-1, #111113);
+  margin: 0;
+}
+
+// 2px brand stem next to the title. Same brand the SubsiteRow stem uses;
+// just rotated upright so it tags the title rather than connecting two
+// elements vertically.
+.aps-header__brand-stem {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    var(--rp-c-brand, #ff351a),
+    color-mix(in srgb, var(--rp-c-brand, #ff351a) 35%, transparent)
+  );
+}
+
+.aps-header__sub {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.4;
+  color: var(--rp-c-text-3, #8e8e98);
+}
+
+// Quiet single-line meta — body weight, no chrome, dot separators. Reads
+// as parenthetical context, not a mini dashboard at the corner of the bar.
+.aps-header__meta-line {
+  flex-shrink: 0;
+  margin: 0 0 0 16px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.4;
+  color: var(--rp-c-text-3, #8e8e98);
+  white-space: nowrap;
+}
+
+.aps-header__meta-sep {
+  display: inline-block;
+  margin: 0 8px;
+  opacity: 0.45;
+}
+
+// Narrow viewports drop the subtitle and meta labels so the bar stays one
+// line. Below 720px the meta strip collapses to bare values; below 540px
+// we hide it entirely and rely on the sidebar header for context.
+@media (max-width: 900px) {
+  .aps-header__sub {
+    display: none;
+  }
+  .aps-header__title-block {
+    gap: 0;
+  }
+}
+
+@media (max-width: 540px) {
+  .aps-header__meta-line {
+    display: none;
+  }
+}
+
+// ─── Main content shell ──────────────────────────────────────────────────
+//
+// Pages run in a contained scroll region with generous gutters that match
+// the homepage feature grid rhythm. Bottom padding leaves room for the
+// sticky scroll-to-bottom shadow without crowding the last row.
+.aps-main {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 20px 32px;
+  // Subtle scrollbar treatment — match docs reader so the dashboard feels
+  // native to rspress, not bolted on.
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 18%, transparent) transparent;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, currentColor 18%, transparent);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, currentColor 28%, transparent);
+    background-clip: padding-box;
+  }
+}
+
+// ─── Dark mode header tweaks ─────────────────────────────────────────────
+//
+// On near-black surfaces the value text needs to read warmer-white, not
+// the rspress neutral text-1 which can look ashy. Border + divider tints
+// get a touch more presence so the strip doesn't disappear into the page.
+:root.dark {
+  .aps-header {
+    border-bottom-color: color-mix(in srgb, currentColor 14%, transparent);
+  }
+}

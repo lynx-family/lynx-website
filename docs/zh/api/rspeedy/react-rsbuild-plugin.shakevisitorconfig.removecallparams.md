@@ -14,7 +14,7 @@ removeCallParams: Array<string>
 
 ## Remarks
 
-Default value: `['useEffect', 'useLayoutEffect', '__runInJS', 'useLynxGlobalEventListener', 'useImperativeHandle']` The provided values will be merged with the default values instead of replacing them.
+Default value: `[]` The provided values will be merged with the default values instead of replacing them.
 
 ## Example
 

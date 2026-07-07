@@ -11,3 +11,8 @@ Include all modules that pass test assertion.
 ```typescript
 test: BannerPlugin['options']['test'];
 ```
+
+## Default Value
+
+`/\.js$/`
+

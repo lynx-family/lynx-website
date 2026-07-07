@@ -14,8 +14,64 @@ export interface ConfigParams
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [command](./rspeedy.configparams.command.md) |  | 'build' \| 'dev' \| 'inspect' \| 'preview' \| (string &amp; Record&lt;never, never&gt;) | The CLI command of Rspeedy. |
-|  [env](./rspeedy.configparams.env.md) |  | 'production' \| 'development' \| 'test' \| (string &amp; Record&lt;never, never&gt;) | The value of <code>process.env['NODE_ENV']</code> |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[command](./rspeedy.configparams.command.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'build' \| 'dev' \| 'inspect' \| 'preview' \| (string &amp; Record&lt;never, never&gt;)
+
+
+</td><td>
+
+The CLI command of Rspeedy.
+
+
+</td></tr>
+<tr><td>
+
+[env](./rspeedy.configparams.env.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'production' \| 'development' \| 'test' \| (string &amp; Record&lt;never, never&gt;)
+
+
+</td><td>
+
+The value of `process.env['NODE_ENV']`
+
+
+</td></tr>
+</tbody></table>
 

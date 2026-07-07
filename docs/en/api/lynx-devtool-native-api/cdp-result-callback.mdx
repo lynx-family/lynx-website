@@ -1,0 +1,70 @@
+---
+api: lynx-devtool-native-api/cdp-result-callback
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# CDPResultCallback
+
+<APISummary />
+
+A callback for receiving the asynchronous result from [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk).
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+typedef void (^CDPResultCallback)(NSString *result);
+```
+
+### Android
+
+```java title="CDPResultCallback.java"
+public interface CDPResultCallback {
+  void onResult(String result);
+}
+```
+
+### Parameters
+
+- `result`: A JSON string containing the CDP Method result.
+
+## Return Data Format
+
+A JSON-formatted string.
+
+| Field  | Type   | Description                                                                                                                                                                   |
+| :----- | :----- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id     | number | Message ID, which is consistent with the value passed in [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk#request-data-format) |
+| result | object | Method return value, please refer to [CDP](https://chromedevtools.github.io/devtools-protocol/)                                                                               |
+
+For example, the return data for [`DOM.getDocument`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument) is as follows:
+
+```json
+{
+  "id" : 1,
+  "result" : {
+    "root" : {
+      "attributes" : [],
+      "backendNodeId" : 11,
+      "childNodeCount" : 1,
+      "children" : [
+         ...
+      ],
+      "localName" : "",
+      "nodeId" : 11,
+      "nodeName" : "#document",
+      "nodeType" : 9,
+      "nodeValue" : ""
+   }
+}
+```
+
+## Usage Example
+
+Please refer to [`invokeCDPFromSDK`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/invoke-cdp-from-sdk#usage-example).
+
+## Compatibility
+
+<APITable />

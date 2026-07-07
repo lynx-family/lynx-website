@@ -4,7 +4,7 @@
 
 ## Performance.profile property
 
-Whether capture timing information in the build time and the runtime, the same as the [profile](https://rspack.dev/config/other-options#profile) config of Rspack.
+Whether capture timing information in Lynx runtime integrations such as ReactLynx.
 
 **Signature:**
 
@@ -12,19 +12,15 @@ Whether capture timing information in the build time and the runtime, the same a
 profile?: boolean | undefined;
 ```
 
-## Remarks
+## Default Value
 
-This option would be `true` when `DEBUG` environment variable contains `rspeedy`<!-- -->.
+Rspeedy sets this to `true` when `DEBUG` contains `rspeedy`<!-- -->; otherwise it leaves the option unset.
 
 ## Example
 
 Enable profile.
 
-- Rsbuild will auto-generate `dist/stats.json` file through bundle analyzer.
-
-- Rspack will include the build time information when generating `stats.json`<!-- -->.
-
-- Frameworks like ReactLynx will include runtime information using `console.profile`<!-- -->.
+- Frameworks like ReactLynx will include runtime information using `console.profile`<!-- -->. - Rspeedy will emit `dist/stats.json` after build for bundle analysis compatibility.
 
 ```ts
 import { defineConfig } from '@lynx-js/rspeedy'

@@ -12,6 +12,10 @@ Used to control whether the build artifacts of the development environment are w
 writeToDisk?: boolean | ((filename: string) => boolean) | undefined;
 ```
 
+## Default Value
+
+true
+
 ## Remarks
 
 This is bypassed to [\`webpack-dev-middleware\`](https://github.com/webpack/webpack-dev-middleware?tab=readme-ov-file#writetodisk)<!-- -->.

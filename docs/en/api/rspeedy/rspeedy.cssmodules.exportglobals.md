@@ -12,6 +12,10 @@ Allows exporting names from global class names, so you can use them via import.
 exportGlobals?: boolean | undefined;
 ```
 
+## Default Value
+
+false
+
 ## Remarks
 
 See [css-loader\#exportGlobals](https://github.com/webpack-contrib/css-loader?tab=readme-ov-file#exportglobals) for details.

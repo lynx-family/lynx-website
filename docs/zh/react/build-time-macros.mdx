@@ -1,0 +1,96 @@
+# 编译时宏
+
+[ReactLynx](./introduction.mdx) 的编译插件（[`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin)，基于 [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)）会在编译你的应用时替换一组**编译时宏**。每个宏都是一个全局标识符，编译期会被替换成一个常量。一旦变成常量，被取值为 `false` 的宏所守卫的分支会被作为死代码移除，因此它们不产生运行时开销，也不增加包体积：
+
+```tsx
+if (__DEV__) {
+  // 这段代码会在生产构建中被移除。
+  console.log('debug only');
+}
+```
+
+:::tip
+[`@lynx-js/react`](https://www.npmjs.com/package/@lynx-js/react) 把每个宏都声明成了 TypeScript 全局变量，所以你可以直接用它们，不会报 `Cannot find name '__DEV__'`。
+:::
+
+## 线程宏
+
+ReactLynx 会把你的代码分别打包到主线程和后台线程两份产物中（参见 [ReactLynx 编程思想](./thinking-in-reactlynx.mdx)）。这些宏标记一段代码属于哪个线程，好让另一个线程的产物把它删掉。
+
+| 宏                | 类型      | 含义                                 |
+| ----------------- | --------- | ------------------------------------ |
+| `__MAIN_THREAD__` | `boolean` | 主线程产物中为 `true`。              |
+| `__BACKGROUND__`  | `boolean` | 后台线程产物中为 `true`。            |
+| `__LEPUS__`       | `boolean` | `__MAIN_THREAD__` 的别名（已废弃）。 |
+| `__JS__`          | `boolean` | `__BACKGROUND__` 的别名（已废弃）。  |
+
+大多数时候你不用手写这两个宏。编译器会自动把事件处理器（`bindtap` 等）、Effect（`useEffect` 等）、`ref`，以及标了 `'background only'` 指令的代码当作后台专属，不会打进主线程产物：
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function App() {
+  useEffect(() => console.log('Effect 是后台专属的'));
+  return (
+    <view bindtap={(e) => console.log('事件处理是后台专属的')}>
+      <text ref={(ref) => console.log('Ref 是后台专属的')}>
+        Hello, ReactLynx!
+      </text>
+    </view>
+  );
+}
+```
+
+真正需要手写的是另一种情况：一段在渲染期执行的代码（渲染会同时在两个线程上跑）要按线程访问不同的东西——比如某个值在后台线程是真正调用原生能力的实现、在主线程则换成空操作——这时用 `__BACKGROUND__` / `__MAIN_THREAD__` 显式分支，让每个线程的产物只保留对它有效的代码。[built-in-macros](/api/react/Document.built-in-macros.mdx) 参考里有一个 `__BACKGROUND__` 的完整例子；完整规则见 [ReactLynx 编程思想](./thinking-in-reactlynx.mdx)。
+
+## 模式宏
+
+这些宏用来整体开关某一类开发期行为。它们在开发环境为 `true`、生产环境为 `false`，因此仅用于开发的代码不会被打进生产产物。
+
+### `__DEV__`
+
+开发环境为 `true`，生产环境为 `false`（跟随构建模式 / `NODE_ENV`）。用它来包裹只在开发期需要的代码，比如 prop 校验、不变量断言、更友好的报错信息。`if (__DEV__) { … }` 里的内容在生产构建中都会被删掉。
+
+### `__PROFILE__`
+
+开启性能插桩。开启后，运行时会用性能标记把关键阶段（hydration、渲染、生命周期事件）包起来，这些标记会出现在 Lynx 的 trace 里。参见 [性能分析](./performance/profiling.mdx) 和 [运行时性能分析](/rspeedy/runtime-profiling.md)。开发环境默认开启，方便你本地分析；生产环境默认关闭，避免额外开销。开发环境可以用 `REACT_PROFILE=false` 关掉，也可以用插件的 `profile` 选项强制开启。
+
+### `__REACT_DEVTOOL__`
+
+开启 [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) 需要的运行时钩子（比如 snapshot 到 element 的映射）。开发环境默认开启。如果想在生产构建里用 Preact DevTools，设置 `REACT_DEVTOOL=true`，它同时会保留你引入的 [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools)，不让它被裁掉。
+
+## 日志宏
+
+ALog 是 Lynx 的原生日志通道。通过它打出来的日志会进入平台的原生日志，即使在 `console.log` 看不到的环境也能看到。下面两个宏默认都关着，因为输出很啰嗦；需要时自己设置环境变量打开。
+
+### `__ALOG__`
+
+开启后，运行时会在两个线程上打出详细的 `[ReactLynxDebug]` 诊断日志，方便你追踪框架在做什么。用 `REACT_ALOG=true` 开启。
+
+### `__ALOG_ELEMENT_API__`
+
+更细一层：它会记录每一次 [Element PAPI](/api/engine/element-api.md) 调用，也就是框架在主线程上执行的底层 create / append / update 操作，让你看清元素树到底是怎么搭起来的。输出非常多。用 `REACT_ALOG_ELEMENT_API=true` 开启。
+
+## 插件选项宏
+
+这些宏来自 ReactLynx 的插件选项，而不是环境变量，大多是框架内部使用：
+
+| 宏                                                       | 类型                         | 作用                                                                                                                                                                                                                  |
+| -------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `__ENABLE_SSR__`                                         | `boolean`                    | 开启 SSR 时为 `true`。由 [`enableSSR`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md) 控制。                                                                                                  |
+| `__EXTRACT_STR__`                                        | `boolean`                    | 开启「字符串提取」优化，对后台产物与主线程产物之间共享的字符串字面量去重，减小产物体积。由 [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md) 控制。                              |
+| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | 首屏什么时候进行控制权交接：尽量早（`immediately`），或等后台 JS 就绪后（`jsReady`）。由 [`firstScreenSyncTiming`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md) 控制。          |
+| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) 更新怎么派发：响应式（基于 context）或基于事件。由 [`globalPropsMode`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode.md) 控制。 |
+| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | 抑制关于已废弃的 `createSelectorQuery` / ref API 的开发期警告。由 `disableCreateSelectorQueryIncompatibleWarning` 控制。                                                                                              |
+| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | 实验性。开启预编译的 Element Template。由 [`experimental_useElementTemplate`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_useelementtemplate.md) 控制。                                     |
+
+## 环境变量
+
+有几个宏由构建时读取的环境变量决定：
+
+| 变量                     | 宏                     | 示例                                        |
+| ------------------------ | ---------------------- | ------------------------------------------- |
+| `REACT_PROFILE`          | `__PROFILE__`          | `REACT_PROFILE=false rspeedy build`         |
+| `REACT_DEVTOOL`          | `__REACT_DEVTOOL__`    | `REACT_DEVTOOL=true rspeedy build`          |
+| `REACT_ALOG`             | `__ALOG__`             | `REACT_ALOG=true rspeedy build`             |
+| `REACT_ALOG_ELEMENT_API` | `__ALOG_ELEMENT_API__` | `REACT_ALOG_ELEMENT_API=true rspeedy build` |

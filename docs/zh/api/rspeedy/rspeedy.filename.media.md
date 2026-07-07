@@ -12,9 +12,7 @@ The name of media assets, such as video.
 media?: Rspack.AssetModuleFilename | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- `'[name].[contenthash:8][ext]'`
+`'[name].[contenthash:8][ext]'`
 

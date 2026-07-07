@@ -14,7 +14,45 @@ export interface ExtractStrConfig
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [strLength](./react-rsbuild-plugin.extractstrconfig.strlength.md) |  | number | The minimum length of string literals to be extracted. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[strLength](./react-rsbuild-plugin.extractstrconfig.strlength.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+The minimum length of string literals to be extracted.
+
+
+</td></tr>
+</tbody></table>
 

@@ -11,3 +11,8 @@
 ```typescript
 engineVersion?: string;
 ```
+
+## Default Value
+
+`'3.2'`
+

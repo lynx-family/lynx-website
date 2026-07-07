@@ -11,3 +11,8 @@ The [Tools](./rspeedy.tools.md) options changes the behavior of various building
 ```typescript
 tools?: Tools | undefined;
 ```
+
+## Default Value
+
+undefined
+

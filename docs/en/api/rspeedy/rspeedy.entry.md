@@ -13,10 +13,6 @@ export type Entry = string | string[] | Record<string, string | string[] | Entry
 ```
 **References:** [EntryDescription](./rspeedy.entrydescription.md)
 
-## Remarks
-
-If no value is provided, the default value `'./src/index.js'` will be used.
-
 ## Example 1
 
 - Use a single entry:

@@ -11,3 +11,8 @@ Merge same string literals in JS and Lepus to reduce output bundle size. Set to 
 ```typescript
 extractStr?: Partial<ExtractStrConfig> | boolean;
 ```
+
+## Default Value
+
+false
+

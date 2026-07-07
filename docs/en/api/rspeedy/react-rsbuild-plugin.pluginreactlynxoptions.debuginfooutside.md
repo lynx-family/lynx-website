@@ -12,6 +12,10 @@ debugInfoOutside controls whether the debug info is placed outside the template.
 debugInfoOutside?: boolean;
 ```
 
+## Default Value
+
+`true`
+
 ## Remarks
 
 This is recommended to be set to true to reduce template size.

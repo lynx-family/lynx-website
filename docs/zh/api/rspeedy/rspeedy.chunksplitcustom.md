@@ -4,6 +4,11 @@
 
 ## ChunkSplitCustom interface
 
+> Warning: This API is now obsolete.
+> 
+> Use the top-level [Config.splitChunks](./rspeedy.config.splitchunks.md) option instead.
+> 
+
 [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
 
 **Signature:**
@@ -14,8 +19,64 @@ export interface ChunkSplitCustom
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [splitChunks?](./rspeedy.chunksplitcustom.splitchunks.md) |  | Rspack.Configuration extends { optimization?: { splitChunks?: infer P; } \| undefined; } ? P : never | _(Optional)_ Custom Rspack chunk splitting config can be specified. |
-|  [strategy](./rspeedy.chunksplitcustom.strategy.md) |  | 'custom' | The ChunkSplitting strategy. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[splitChunks?](./rspeedy.chunksplitcustom.splitchunks.md)
+
+
+</td><td>
+
+
+</td><td>
+
+Rspack.Configuration extends { optimization?: { splitChunks?: infer P; } \| undefined; } ? P : never
+
+
+</td><td>
+
+_(Optional)_ Custom Rspack chunk splitting config can be specified.
+
+
+</td></tr>
+<tr><td>
+
+[strategy](./rspeedy.chunksplitcustom.strategy.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'custom'
+
+
+</td><td>
+
+The ChunkSplitting strategy.
+
+
+</td></tr>
+</tbody></table>
 

@@ -4,13 +4,17 @@
 
 ## Source.tsconfigPath property
 
-Configure a custom `tsconfig.json` file path to use, can be a relative or absolute path. Defaults to be `./tsconfig.json`<!-- -->.
+Configure a custom `tsconfig.json` file path to use, can be a relative or absolute path.
 
 **Signature:**
 
 ```typescript
 tsconfigPath?: string | undefined;
 ```
+
+## Default Value
+
+`'./tsconfig.json'`
 
 ## Remarks
 

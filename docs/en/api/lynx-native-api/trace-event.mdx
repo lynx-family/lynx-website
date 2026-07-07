@@ -305,6 +305,55 @@ const args: Record<string, string> = {
 TraceEvent.instant(TraceCategory.Other, "request-finished", args);
 ```
 
+## Desktop (C API)
+
+Desktop public embedder API exposes trace helpers through C API macros.
+
+### beginSection
+
+Marks the start of a trace section. It must be paired with `LYNX_CAPI_TRACE_END` using the same category and name.
+
+```c
+LYNX_CAPI_TRACE_BEGIN(category, name);
+```
+
+### endSection
+
+Marks the end of a trace section.
+
+```c
+LYNX_CAPI_TRACE_END(category, name);
+```
+
+### instant
+
+Records an instant trace event.
+
+```c
+LYNX_CAPI_TRACE_INSTANT(category, name);
+```
+
+### counter
+
+Records a counter trace event.
+
+```c
+LYNX_CAPI_TRACE_COUNTER(category, name, value, incremental);
+```
+
+#### Examples
+
+```c
+void DecodeImage() {
+  LYNX_CAPI_TRACE_BEGIN("image", "DecodeImage");
+  // ... your code ...
+  LYNX_CAPI_TRACE_END("image", "DecodeImage");
+}
+
+LYNX_CAPI_TRACE_INSTANT("network", "RequestStarted");
+LYNX_CAPI_TRACE_COUNTER("cache", "EntryCount", 42, false);
+```
+
 ## Compatibility
 
 <APITable />

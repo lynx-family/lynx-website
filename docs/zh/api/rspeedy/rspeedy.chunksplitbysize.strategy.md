@@ -14,7 +14,7 @@ strategy: 'split-by-size';
 
 ## Remarks
 
-- `split-by-experience`<!-- -->(default): an empirical splitting strategy, automatically splits some commonly used npm packages into chunks of moderate size.
+- `split-by-experience`<!-- -->(Rsbuild default): an empirical splitting strategy, automatically splits some commonly used npm packages into chunks of moderate size.
 
 - `split-by-module`<!-- -->: split by NPM package granularity, each NPM package corresponds to a chunk.
 

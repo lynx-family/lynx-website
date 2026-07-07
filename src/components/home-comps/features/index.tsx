@@ -1,6 +1,7 @@
 import { Space } from '@douyinfe/semi-ui';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
-import React, { ReactNode, useEffect, useState } from 'react';
+import { useTiltEffect } from '@site/src/hooks';
+import React, { ReactNode, useState } from 'react';
 import styles from './index.module.less';
 import { Moon } from './moon';
 import { WriteOnceRunAllPlatform } from './write-once-run-all-platform';
@@ -9,30 +10,44 @@ import { useLang } from '@rspress/core/runtime';
 import { BorderBeam } from '../border-beam';
 import { ActionBtn } from './action-btn';
 import { FeatureItem } from './feature-item';
-import { IconAndroid, IconHarmony, IconIOS, IconWeb } from './icon';
+import {
+  IconAndroid,
+  IconHarmony,
+  IconIOS,
+  IconMacOS,
+  IconMisoLynx,
+  IconReactLynx,
+  IconVueLynx,
+  IconWeb,
+  IconWindows,
+} from './icon';
 import { FeatureIconItem } from './item-icon';
 type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
-
-// 最大倾斜角度（度数）
-const maxDegree = 6;
-const featuresConfig: Record<
-  FeaturesConfigKey,
-  Array<{
-    title: { en: string; zh: string };
-    desc: { en: string; zh: string };
-    class?: string;
-    isRowSet?: boolean | number;
-    iconClass?: string;
-    actions?: {
-      text: string | React.ReactNode;
-      link?: string;
-      size: string;
-    }[];
-    customRender?: ReactNode;
-  }>
-> = {
+export interface FeatureCardItem {
+  title: { en: string; zh: string };
+  desc: { en: string; zh: string };
+  class?: string;
+  isRowSet?: boolean | number;
+  /**
+   * Render the card's action buttons as a full-width vertical stack
+   * (one button per row) instead of the default horizontal wrap with
+   * fixed 191/390px widths. Use for cards whose actions are the focal
+   * content — e.g. the platform picker on Write Once, Render Anywhere
+   * or the framework picker on Framework Agnostic.
+   */
+  stackedActions?: boolean;
+  iconClass?: string;
+  actions?: {
+    text: string | React.ReactNode;
+    link?: string;
+    size: string;
+  }[];
+  customRender?: ReactNode;
+}
+const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
   '/': [
     {
+      stackedActions: true,
       title: {
         en: 'Write Once, Render Anywhere',
         zh: '一次编写，多端渲染',
@@ -82,9 +97,21 @@ const featuresConfig: Record<
           size: 'large',
           link: 'guide/start/integrate-with-existing-apps.html?platform=web',
         },
+        {
+          text: (
+            <Space>
+              <IconMacOS />
+              <IconWindows />
+              Desktop
+            </Space>
+          ),
+          size: 'large',
+          link: 'guide/start/integrate-with-existing-apps.html?platform=macos',
+        },
       ],
     },
     {
+      stackedActions: true,
       title: {
         en: 'Performance at Scale',
         zh: '高性能，规模化',
@@ -96,8 +123,7 @@ const featuresConfig: Record<
       customRender: <WriteOnceRunAllPlatform />,
     },
     {
-      isRowSet: true,
-      // class: 'item2',
+      stackedActions: true,
       title: {
         en: 'Web-Inspired Design',
         zh: 'Web 启发',
@@ -107,6 +133,49 @@ const featuresConfig: Record<
         zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 React 等技术，复用知识与生态。',
       },
       customRender: <Moon />,
+    },
+    {
+      stackedActions: true,
+      title: {
+        en: 'Framework Agnostic',
+        zh: '不止于一个框架',
+      },
+      desc: {
+        en: "Lynx isn't limited to React. ReactLynx is the official flavor, while Vue and Miso for Haskell come from the community. More frameworks welcome.",
+        zh: 'Lynx 不止于 React。ReactLynx 是官方框架，Vue 与适用于 Haskell 的 Miso 由社区驱动，欢迎更多框架加入。',
+      },
+      actions: [
+        {
+          text: (
+            <Space>
+              <IconReactLynx />
+              React
+            </Space>
+          ),
+          size: 'large',
+          link: '/react/',
+        },
+        {
+          text: (
+            <Space>
+              <IconVueLynx />
+              Vue
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://vue.lynxjs.org/',
+        },
+        {
+          text: (
+            <Space>
+              <IconMisoLynx />
+              Miso (Haskell)
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://github.com/haskell-miso/miso-lynx',
+        },
+      ],
     },
   ],
   '/react/': [
@@ -214,7 +283,14 @@ const featuresConfig: Record<
   ],
 };
 
-const Features = ({ src = '/' }: { src?: string }) => {
+const Features = ({
+  src = '/',
+  items,
+}: {
+  src?: string;
+  /** Custom card configs; bypasses the path-keyed `featuresConfig` lookup. */
+  items?: FeatureCardItem[];
+}) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const lang = useLang() as 'en' | 'zh';
   const configKey = (
@@ -226,7 +302,7 @@ const Features = ({ src = '/' }: { src?: string }) => {
   ) as FeaturesConfigKey;
   const isMobile = useIfMobile();
 
-  const featuresConfigTarget = featuresConfig[configKey];
+  const featuresConfigTarget = items ?? featuresConfig[configKey];
 
   const doBeamBorder = (isHover: boolean, index: number) => {
     if (isHover) {
@@ -236,47 +312,7 @@ const Features = ({ src = '/' }: { src?: string }) => {
     }
   };
 
-  useEffect(() => {
-    if (isMobile) return;
-
-    const items = document.querySelectorAll('#hover-feature-item');
-
-    const handleMouseMove = (e: MouseEvent, item: HTMLElement) => {
-      const rect = item.getBoundingClientRect();
-
-      const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-
-      const rotateX = -y * maxDegree;
-      const rotateY = x * maxDegree;
-
-      item.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-    };
-
-    const handleMouseLeave = (item: HTMLElement) => {
-      item.style.transform = 'none';
-    };
-
-    items.forEach((item) => {
-      item.addEventListener('mousemove', (e) =>
-        handleMouseMove(e as MouseEvent, item as HTMLElement),
-      );
-      item.addEventListener('mouseleave', () =>
-        handleMouseLeave(item as HTMLElement),
-      );
-    });
-
-    return () => {
-      items.forEach((item) => {
-        item.removeEventListener('mousemove', (e) =>
-          handleMouseMove(e as MouseEvent, item as HTMLElement),
-        );
-        item.removeEventListener('mouseleave', () =>
-          handleMouseLeave(item as HTMLElement),
-        );
-      });
-    };
-  }, []);
+  useTiltEffect('#hover-feature-item', { isMobile });
 
   return (
     <div className={styles['features-frame']}>
@@ -286,6 +322,7 @@ const Features = ({ src = '/' }: { src?: string }) => {
             className={cls(
               styles['list-item'],
               !!item.isRowSet && styles['row-set'],
+              item.stackedActions && styles['stacked-actions'],
             )}
             key={index}
             id="hover-feature-item"

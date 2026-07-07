@@ -4,17 +4,188 @@
 
 ## external-bundle-rsbuild-plugin package
 
-A rsbuild plugin for loading external bundles using externals-loading-webpack-plugin.
-
 ## Functions
 
-|  Function | Description |
-|  --- | --- |
-|  [pluginExternalBundle(options)](./external-bundle-rsbuild-plugin.pluginexternalbundle.md) | <p>Create a rsbuild plugin for loading external bundles.</p><p>This plugin wraps the externals-loading-webpack-plugin and automatically retrieves layer names from the react-rsbuild-plugin via api.useExposed.</p> |
+<table><thead><tr><th>
+
+Function
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[normalizeBundlePath(bundlePath)](./external-bundle-rsbuild-plugin.normalizebundlepath.md)
+
+
+</td><td>
+
+Normalize a public bundle path by removing leading slashes.
+
+
+</td></tr>
+<tr><td>
+
+[pluginExternalBundle(options)](./external-bundle-rsbuild-plugin.pluginexternalbundle.md)
+
+
+</td><td>
+
+Create a rsbuild plugin for loading external bundles.
+
+This plugin wraps the externals-loading-webpack-plugin and automatically retrieves layer names from the react-rsbuild-plugin via api.useExposed.
+
+
+</td></tr>
+</tbody></table>
+
+## Interfaces
+
+<table><thead><tr><th>
+
+Interface
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ExternalsPresetContext](./external-bundle-rsbuild-plugin.externalspresetcontext.md)
+
+
+</td><td>
+
+Context passed to externals preset resolvers.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalsPresetDefinition](./external-bundle-rsbuild-plugin.externalspresetdefinition.md)
+
+
+</td><td>
+
+Definition for a named externals preset.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalsPresets](./external-bundle-rsbuild-plugin.externalspresets.md)
+
+
+</td><td>
+
+Presets for external bundle dependencies.
+
+
+</td></tr>
+<tr><td>
+
+[PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md)
+
+
+</td><td>
+
+Options for the external-bundle-rsbuild-plugin.
+
+
+</td></tr>
+<tr><td>
+
+[PluginExternalValue](./external-bundle-rsbuild-plugin.pluginexternalvalue.md)
+
+
+</td><td>
+
+External bundle reference accepted by `pluginExternalBundle`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[ReactLynxExternalsPresetOptions](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.md)
+
+
+</td><td>
+
+Options for the built-in `reactlynx` externals preset.
+
+
+</td></tr>
+</tbody></table>
+
+## Variables
+
+<table><thead><tr><th>
+
+Variable
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[builtInExternalsPresetDefinitions](./external-bundle-rsbuild-plugin.builtinexternalspresetdefinitions.md)
+
+
+</td><td>
+
+Built-in externals preset definitions.
+
+
+</td></tr>
+</tbody></table>
 
 ## Type Aliases
 
-|  Type Alias | Description |
-|  --- | --- |
-|  [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) | Options for the external-bundle-rsbuild-plugin. |
+<table><thead><tr><th>
+
+Type Alias
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ExternalsPresetDefinitions](./external-bundle-rsbuild-plugin.externalspresetdefinitions.md)
+
+
+</td><td>
+
+Available externals preset definitions.
+
+
+</td></tr>
+<tr><td>
+
+[PluginExternalConfig](./external-bundle-rsbuild-plugin.pluginexternalconfig.md)
+
+
+</td><td>
+
+External bundle shorthand accepted by `pluginExternalBundle`<!-- -->.
+
+When a string is provided, it is treated as `bundlePath` and the plugin will infer: - `libraryName`<!-- -->: the external request key - `background.sectionPath`<!-- -->: the external request key - `mainThread.sectionPath`<!-- -->: `${request}__main-thread`
+
+
+</td></tr>
+</tbody></table>
 

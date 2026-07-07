@@ -4,13 +4,17 @@
 
 ## Tools.bundlerChain property
 
-The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of [Rspack](https://www.rspack.dev) using [rspack-chain](https://github.com/rspack-contrib/rspack-chain)<!-- -->.
+The [Tools.bundlerChain](./rspeedy.tools.bundlerchain.md) changes the options of [Rspack](https://rspack.rs) using [rspack-chain](https://github.com/rspack-contrib/rspack-chain)<!-- -->.
 
 **Signature:**
 
 ```typescript
 bundlerChain?: ToolsConfig['bundlerChain'] | undefined;
 ```
+
+## Default Value
+
+undefined
 
 ## Example
 

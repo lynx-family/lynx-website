@@ -12,6 +12,10 @@ The [Minify](./rspeedy.minify.md) configures whether to enable code minification
 minify?: Minify | boolean | undefined;
 ```
 
+## Default Value
+
+`true` in production builds and `false` otherwise
+
 ## Example
 
 Disable minification.

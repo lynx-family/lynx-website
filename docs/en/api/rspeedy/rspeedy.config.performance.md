@@ -11,3 +11,8 @@ The [Performance](./rspeedy.performance.md) option is used to optimize the build
 ```typescript
 performance?: Performance | undefined;
 ```
+
+## Default Value
+
+undefined
+

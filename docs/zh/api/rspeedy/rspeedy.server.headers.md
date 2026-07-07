@@ -12,6 +12,10 @@ Adds headers to all responses.
 headers?: Record<string, string | string[]> | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example
 
 

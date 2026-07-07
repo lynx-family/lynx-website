@@ -1,0 +1,114 @@
+---
+title: 'Generative UI on Lynx with A2UI'
+date: 2026-06-08
+sidebar: false
+authors:
+  [
+    'HuJean',
+    'PupilTong',
+    'Sherry-hue',
+    'gaoachao',
+    'fzx2666-fz',
+    'MoonfaceX',
+    'jkzing',
+    'huxpro',
+  ]
+badge_text: 'New: Generative UI on Lynx with A2UI'
+description: 'Today, we are officially releasing our renderer for A2UI, an open Agent-to-UI protocol, that brings Generative UI to Lynx, enabling AI-generated UI to render natively with streaming and customizable component catalogs.'
+---
+
+import { BlogHeader, Caption, Go } from '@lynx';
+import { EmbedIframe } from '@/components/EmbedIframe';
+import { ThemedImage } from '@/components/ThemedImage';
+
+<BlogHeader />
+
+Since the rise of AI Agents, we have been exploring what it would take to make Agent-driven generative UI feel truly native inside real apps. Lynx is uniquely placed for this: it renders natively across Mobile, Web, and Desktop, and embeds directly into the apps people already use. So when Google introduced [A2UI](https://a2ui.org/), an open Agent-to-UI protocol that lets AI Agents safely generate rich interactive interfaces without executing arbitrary code, we saw a clean fit.
+
+Today, we are officially releasing our A2UI renderer that brings Generative UI to Lynx.
+
+<ThemedImage
+  lightSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview.png"
+  darkSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_dark.png"
+  alt="Lynx A2UI Overview"
+/>
+
+<Caption>Agents reason. Lynx renders.</Caption>
+
+## Streaming Generation, Native Rendering
+
+The A2UI protocol natively supports [streaming](https://a2ui.org/concepts/data-flow/):
+the Agent sends UI fragments as it reasons, and the client renders them progressively.
+This incremental interaction model eliminates blank waiting screens, letting users watch the interface take shape as the Agent produces output.
+
+Lynx A2UI inherits Lynx's [dual-thread architecture](/react/thinking-in-reactlynx), parsing A2UI protocol messages on the Background Thread while committing UI updates on the Main Thread, both running in parallel without blocking each other.
+Even when the Agent outputs UI fragments at high frequency, the interface remains smooth and responsive.
+
+<Go
+  example="a2ui"
+  defaultFile="src/gallery/Gallery.tsx"
+  defaultEntryFile="dist/gallery.lynx.bundle"
+  defaultTab="web"
+  entry="src"
+  highlight={{
+    'src/gallery/Gallery.tsx': '{150-160}',
+  }}
+/>
+
+<Caption>
+  The <code>&lt;A2UI&gt;</code> container parses streamed protocol messages on
+  the Background Thread and commits updates to the Main Thread, keeping the UI
+  responsive even at high message frequency.
+</Caption>
+
+## A Catalog Built on lynx-ui
+
+The core mechanism of A2UI is the [Catalog](https://a2ui.org/concepts/catalogs/):
+the client declares which components, functions, and parameters it supports, and the Agent can only choose from that authorized scope.
+This keeps generation bounded, while leaving how each component renders to the renderer.
+
+Lynx A2UI ships with a built-in [default component catalog](https://lynx-stack.dev/genui/#/a2ui/catalog) based on [lynx-ui](/ui/), covering common components such as buttons, lists, and dialogs, ready to use out of the box.
+Beyond the defaults, developers will likely want to [define their own components](https://lynx-stack.dev/guide/genui/a2ui/catalog-guide), registering business capabilities into the Catalog so the Agent can invoke them on demand during conversations.
+
+<EmbedIframe
+  src={(theme) =>
+    `https://lynx-stack.dev/genui/?embed=1&theme=${theme}#/a2ui/catalog`
+  }
+  title="Lynx A2UI Catalog"
+/>
+
+<Caption>
+  The default Catalog, rendered live inside the Lynx GenUI Playground.
+</Caption>
+
+## Programmable Actions
+
+A2UI handles user interaction through the [`Action` mechanism](https://a2ui.org/concepts/actions/): components describe user intent as structured payloads instead of running arbitrary code. The spec also distinguishes [`functionCall`](https://a2ui.org/concepts/actions/), which runs locally without informing the Agent, from `event`, which round-trips back to the Agent.
+
+What Lynx A2UI adds is the API shape on top. The `<A2UI>` render container subscribes to a `MessageStore` that holds raw protocol messages in arrival order. When an Action fires, `onAction` hands your code a unified `{ name, context }` payload: push a follow-up message into the same store for a local update, or post to the Agent and stream the response back into it. The renderer stays the same; you own the round-trip.
+
+<Go
+  example="a2ui"
+  defaultFile="src/actions/Actions.tsx"
+  defaultEntryFile="dist/actions.lynx.bundle"
+  defaultTab="web"
+  entry="src"
+  highlight={{
+    'src/actions/Actions.tsx': '{62-65,67-73}',
+  }}
+/>
+
+<Caption>
+  Forward an Action to the Agent, or consume it on the rendering side to drive
+  UI updates directly.
+</Caption>
+
+## Try It Now
+
+[Lynx GenUI Playground](https://lynx-stack.dev/genui/#/a2ui) provides a complete interactive experience covering the full pipeline from model conversation to UI rendering.
+No local setup required: open your browser, chat with the Agent, and watch the interface generate in real time. To experience native rendering on a real device, download [Lynx Explorer](/guide/start/quick-start.html#prepare-lynx-explorer) and scan the QR code on the page.
+
+Read the [A2UI Guide under ReactLynx](/react/genui/a2ui), or jump straight to the more detailed preview version of the [integration guide](https://lynx-stack.dev/guide/genui/a2ui) to integrate Lynx A2UI into your app. The renderer ships as the [`@lynx-js/genui/a2ui`](/api/genui/a2ui/index.html) package, with support starting at [A2UI 0.9](https://a2ui.org/specification/v0.9-a2ui/); we'll work with the A2UI team at Google to adapt the [v1.0 candidate](https://a2ui.org/specification/v1.0-a2ui/) soon.
+If you encounter issues, have feature suggestions, or want to share your use cases, feel free to open an Issue or join the discussion on [GitHub](https://github.com/lynx-family/lynx-stack).
+
+We believe that cross-platform frameworks in the AI era should do more than just run AI-generated code: they should provide Agents with a secure, efficient, and native channel for rendering interfaces. Lynx A2UI is our first step in that direction, and we look forward to exploring the future of Generative UI, Open UI included, together with the community.

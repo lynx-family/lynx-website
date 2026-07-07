@@ -6,7 +6,15 @@
 
 Automatically resolve file extensions when importing modules. This means you can import files without explicitly writing their extensions.
 
-Default: `['.ts', '.tsx', '.mjs', '.js', '.jsx', '.json', '.cjs']`
+**Signature:**
+
+```typescript
+extensions?: string[] | undefined;
+```
+
+## Default Value
+
+`['.ts', '.tsx', '.mjs', '.js', '.jsx', '.json', '.cjs']`
 
 For example, if importing './index', Rsbuild will try to resolve using the following order:
 
@@ -23,12 +31,6 @@ For example, if importing './index', Rsbuild will try to resolve using the follo
 - `./index.json`
 
 - `./index.cjs`
-
-**Signature:**
-
-```typescript
-extensions?: string[] | undefined;
-```
 
 ## Remarks
 

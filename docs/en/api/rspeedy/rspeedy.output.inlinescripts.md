@@ -12,11 +12,13 @@ The [Output.inlineScripts](./rspeedy.output.inlinescripts.md) option controls wh
 inlineScripts?: InlineChunkConfig | undefined;
 ```
 
+## Default Value
+
+Rspeedy defaults this to `true` and only switches it to `false` when the user explicitly enables the top-level `splitChunks` option.
+
 ## Remarks
 
-If no value is provided, the default value would be `true`<!-- -->, which means all background thread scripts will be inlined.
-
-This is different with [output.inlineScripts](https://rsbuild.dev/config/output/inline-scripts) since we normally want to inline scripts in Lynx bundle (`.lynx.bundle`<!-- -->).
+This is different with [output.inlineScripts](https://rsbuild.rs/config/output/inline-scripts) since we normally want to inline scripts in Lynx bundle (`.lynx.bundle`<!-- -->).
 
 There are two points that need to be especially noted:
 

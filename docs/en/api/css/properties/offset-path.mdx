@@ -1,0 +1,170 @@
+---
+title: offset-path
+api: css/properties/offset-path
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+<APISummary />
+
+## Introduction
+
+The `offset-path` CSS property specifies the path that an element follows and determines the element's position within its parent container. The path can be a straight line, a quadratic or cubic Bézier curve, an arc, or any combination of these, along which the element will be positioned or moved.
+
+This property is typically used in combination with `offset-distance` to control the element's position along the path. You can also use `offset-rotate` to control whether the element rotates to follow the direction of that path.
+
+## Examples
+
+<Go
+  example="css-api"
+  defaultFile="src/offset-path/App.tsx"
+  defaultEntryFile="dist/offset-path.lynx.bundle"
+  entry="src/offset-path"
+/>
+
+## Syntax
+
+```css
+/* Keyword values */
+offset-path: '';
+
+/* <basic-shape> values */
+offset-path: inset(30px 50px 45px 20px round 24px 8px 32px 14px);
+offset-path: circle(50px at 0 100px);
+offset-path: path(
+  'M50,10 L90.45,34.55 L73.39,80.45 L26.61,80.45 L9.55,34.55 Z'
+);
+/* iOS: `ellipse()` is not supported */
+offset-path: ellipse(70px 45px at 90px 70px);
+```
+
+### Values
+
+The `offset-path` property is specified as one of the values listed below.
+
+`""`
+
+Specifies that the element does not follow any offset path. This is the default value.
+
+`<basic-shape>`
+
+A shape whose size and position are defined by its `border-box`. One of:
+
+- `inset()`
+
+  Defines an inset rectangle.
+
+  ```
+  inset( <length-percentage>{1, 4} [ round <border-radius> ]?)
+
+  <length-percentage> =
+    <length>
+    <percentage>
+
+  <border-radius> =
+    <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
+  ```
+
+  `<length-percentage>{1, 4}`
+
+  Represents the top, right, bottom, and left offsets from the `border-box` that define the edges of the inset rectangle. These arguments follow the syntax of the margin shorthand, allowing one, two, or four values.
+
+  `round <border-radius>`
+
+  Optional arguments that define the rounded corners of the inset rectangle. The corner radius follows the `<border-radius>` syntax.
+
+- `circle()`
+
+  Defines a circle using a radius and a position.
+
+  ```
+  circle(<length-percentage> [at <position>]?)
+
+  <length-percentage> =
+    <length [0,∞]>                |
+    <percentage [0,∞]>
+
+  <position> =
+    [ left | center | right | top | bottom | <length-percentage> ]  |
+    [ left | center | right ] && [ top | center | bottom ]  |
+    [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
+    [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
+  ```
+
+  `<length-percentage>`
+
+  Defines the radius of the circle. It can be a `<length>` or a `<percentage>`.
+
+  `<position>`
+
+  Moves the center of the circle. It can be a `<length>`, a `<percentage>`, or a keyword such as `left`. If omitted, the position defaults to `center`.
+
+- `ellipse()`
+
+  Defines an ellipse using two radii and a position.
+
+  An ellipse is similar to a circle, but it uses two radii: one for the x-axis and one for the y-axis.
+
+  ```
+  <ellipse()> =
+    ellipse( <radial-size>? [ at <position> ]? )
+
+  <radial-size> =
+    <length-percentage [0,∞]>{2}
+
+  <position> =
+    [ left | center | right | top | bottom | <length-percentage> ]  |
+    [ left | center | right ] && [ top | center | bottom ]  |
+    [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
+    [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
+
+  <length-percentage> =
+    <length>      |
+    <percentage>
+  ```
+
+  `<radial-size>`
+
+  Defines the two radii, in x-axis then y-axis order. Each radius can be a `<length>` or a `<percentage>`.
+
+  `<position>`
+
+  Moves the center of the ellipse. It can be a `<length>`, a `<percentage>`, or a keyword such as `left`. If omitted, the position defaults to `center`.
+
+  :::info
+  `ellipse()` is not supported on iOS.
+  :::
+
+- `path()`
+
+  Defines a shape using an SVG path definition.
+
+  ```
+  <path()> =
+    path(<string>)
+  ```
+
+  The `path()` function takes an [SVG path string](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d) as its argument.
+
+## Formal definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>""</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Difference from Web
+
+- [mdn:offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/offset-path)
+
+1. Lynx supports `path()`, `circle()`, `ellipse()`, and `inset()`. On iOS, `ellipse()` is not supported.
+2. Lynx does not support Web values such as `polygon()`, `ray()`, and `url()`.
+3. Lynx does not support coordinate box values.
+
+## Compatibility
+
+<APITable />

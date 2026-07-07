@@ -12,11 +12,9 @@ The name of the JavaScript files.
 js?: Rspack.Filename | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- Development: `'[name].js'` - Production: `'[name].[contenthash:8].js'`
+`'[name].js'` in development, `'[name].[contenthash:8].js'` in production web builds, and `'[name].js'` in production node builds
 
 ## Example
 

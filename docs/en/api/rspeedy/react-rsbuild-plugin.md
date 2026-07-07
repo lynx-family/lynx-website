@@ -8,18 +8,117 @@ A rsbuild plugin that integrates with ReactLynx.
 
 ## Functions
 
-|  Function | Description |
-|  --- | --- |
-|  [pluginReactLynx(userOptions)](./react-rsbuild-plugin.pluginreactlynx.md) | Create a rsbuild plugin for ReactLynx. |
+<table><thead><tr><th>
+
+Function
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[pluginReactLynx(userOptions)](./react-rsbuild-plugin.pluginreactlynx.md)
+
+
+</td><td>
+
+Create a rsbuild plugin for ReactLynx.
+
+
+</td></tr>
+</tbody></table>
 
 ## Interfaces
 
-|  Interface | Description |
-|  --- | --- |
-|  [AddComponentElementConfig](./react-rsbuild-plugin.addcomponentelementconfig.md) | Controls whether to add wrapper elements for components |
-|  [CompatVisitorConfig](./react-rsbuild-plugin.compatvisitorconfig.md) | The <code>compat</code> option controls compatibilities with ReactLynx2.0. |
-|  [DefineDceVisitorConfig](./react-rsbuild-plugin.definedcevisitorconfig.md) | Like <code>define</code> in various bundlers, but this one happens at transform time, and a DCE pass will be performed. |
-|  [ExtractStrConfig](./react-rsbuild-plugin.extractstrconfig.md) | Merge same string literals in JS and Lepus to reduce output bundle size. Set to <code>false</code> to disable. |
-|  [PluginReactLynxOptions](./react-rsbuild-plugin.pluginreactlynxoptions.md) | Options of [pluginReactLynx()](./react-rsbuild-plugin.pluginreactlynx.md) |
-|  [ShakeVisitorConfig](./react-rsbuild-plugin.shakevisitorconfig.md) | How main-thread code will be shaken. |
+<table><thead><tr><th>
+
+Interface
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[AddComponentElementConfig](./react-rsbuild-plugin.addcomponentelementconfig.md)
+
+
+</td><td>
+
+Controls whether to add wrapper elements for components
+
+
+</td></tr>
+<tr><td>
+
+[CompatVisitorConfig](./react-rsbuild-plugin.compatvisitorconfig.md)
+
+
+</td><td>
+
+The `compat` option controls compatibilities with ReactLynx2.0.
+
+
+</td></tr>
+<tr><td>
+
+[DefineDceVisitorConfig](./react-rsbuild-plugin.definedcevisitorconfig.md)
+
+
+</td><td>
+
+Like `define` in various bundlers, but this one happens at transform time, and a DCE pass will be performed.
+
+
+</td></tr>
+<tr><td>
+
+[ExtractStrConfig](./react-rsbuild-plugin.extractstrconfig.md)
+
+
+</td><td>
+
+Merge same string literals in JS and Lepus to reduce output bundle size. Set to `false` to disable.
+
+
+</td></tr>
+<tr><td>
+
+[LynxTemplatePlugin](./react-rsbuild-plugin.lynxtemplateplugin.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[PluginReactLynxOptions](./react-rsbuild-plugin.pluginreactlynxoptions.md)
+
+
+</td><td>
+
+Options of [pluginReactLynx()](./react-rsbuild-plugin.pluginreactlynx.md)
+
+
+</td></tr>
+<tr><td>
+
+[ShakeVisitorConfig](./react-rsbuild-plugin.shakevisitorconfig.md)
+
+
+</td><td>
+
+How main-thread code will be shaken.
+
+
+</td></tr>
+</tbody></table>
 

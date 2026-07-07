@@ -1,0 +1,46 @@
+---
+api: lynx-api/event/MemoryEvent
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# MemoryEvent
+
+<APISummary />
+
+Native memory pressure event dispatched from the host environment and delivered to the front end via the native context. The event name is `__OnLowMemory`, and the payload is a single `MemoryPressureLevel` enum value.
+
+## Payload
+
+### MemoryPressureLevel
+
+```ts
+enum MemoryPressureLevel {
+  MEMORY_PRESSURE_LEVEL_NONE = 0,
+  MEMORY_PRESSURE_LEVEL_MODERATE = 1,
+  MEMORY_PRESSURE_LEVEL_CRITICAL = 2,
+}
+```
+
+## Usage
+
+```ts
+// Add one or multiple listeners
+lynx
+  .getNative()
+  .addEventListener('__OnLowMemory', (level: MemoryPressureLevel) => {
+    if (level === MemoryPressureLevel.MEMORY_PRESSURE_LEVEL_CRITICAL) {
+      // handle critical memory pressure
+    }
+  });
+
+lynx
+  .getNative()
+  .addEventListener('__OnLowMemory', (level: MemoryPressureLevel) => {
+    // parallel listener
+  });
+```
+
+## Compatibility
+
+<APITable />

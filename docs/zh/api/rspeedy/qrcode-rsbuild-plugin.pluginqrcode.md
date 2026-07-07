@@ -14,9 +14,39 @@ export declare function pluginQRCode(options?: PluginQRCodeOptions): RsbuildPlug
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | [PluginQRCodeOptions](./qrcode-rsbuild-plugin.pluginqrcodeoptions.md) | _(Optional)_ |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+options
+
+
+</td><td>
+
+[PluginQRCodeOptions](./qrcode-rsbuild-plugin.pluginqrcodeoptions.md)
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

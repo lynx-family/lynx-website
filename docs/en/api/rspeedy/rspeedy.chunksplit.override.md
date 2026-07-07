@@ -16,6 +16,10 @@ override?: Rspack.Configuration extends {
     } ? P : never;
 ```
 
+## Default Value
+
+undefined
+
 ## Example
 
 - Split `@lynx-js/react` and `react-router` into chunk `lib-react`<!-- -->.

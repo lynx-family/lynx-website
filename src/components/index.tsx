@@ -18,6 +18,8 @@ export {
   ResponsiveDualColumn,
 } from './containers/ResponsiveDualColumn';
 export { PlatformTabs } from './platform-tabs/PlatformTabs';
+export { ChoiceTabs } from './choice-tabs/ChoiceTabs';
+export { TutorialTabs, LearnTutorialTabs } from './tutorial-tabs/TutorialTabs';
 
 // ----------------------------------------------------------------------------
 // API Documentation (Tables, Badges)
@@ -70,6 +72,8 @@ export { Go } from './go/Go';
 // Media & Visuals
 // ----------------------------------------------------------------------------
 
+export { Caption, Figure } from './Figure';
+export { ImageWall } from './ImageWall';
 export { default as Mermaid } from './Mermaid/Mermaid';
 export { VideoList } from './VideoList';
 export { YouTubeIframe } from './YoutubeIframe';
@@ -79,6 +83,7 @@ export { YouTubeIframe } from './YoutubeIframe';
 // ----------------------------------------------------------------------------
 
 export { BlogAvatar } from './blog-avatar';
+export { BlogHeader } from './blog-header';
 export { BlogList } from './blog-list';
 
 // ----------------------------------------------------------------------------

@@ -11,3 +11,8 @@ The [Output](./rspeedy.output.md) option is used to set how and where should the
 ```typescript
 output?: Output | undefined;
 ```
+
+## Default Value
+
+undefined
+

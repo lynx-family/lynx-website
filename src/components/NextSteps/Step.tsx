@@ -6,7 +6,23 @@ import { getLangPrefix } from '../../../shared-route-config';
 const Step = (props: { href: string; title: string; description: string }) => {
   return (
     <Link className={styles.step} href={useUrl(props.href)}>
-      <p className={styles.title}>{props.title}</p>
+      <p className={styles.title}>
+        <span>{props.title}</span>
+        <svg
+          className={styles.arrow}
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M3 8h10M9 4l4 4-4 4"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </p>
       <p className={styles.description}>{props.description}</p>
     </Link>
   );

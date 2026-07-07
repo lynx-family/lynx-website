@@ -12,13 +12,17 @@ Configure the base path of the server.
 base?: string | undefined;
 ```
 
+## Default Value
+
+`'/'`
+
 ## Remarks
 
-By default, the base path of the server is `/`<!-- -->, and users can access lynx bundle through `http://<host>:<port>/main.lynx.bundle`
+Users can access lynx bundle through `http://<host>:<port>/main.lynx.bundle` by default.
 
 If you want to access lynx bundle through `http://<host>:<port>/foo/main.lynx.bundle`<!-- -->, you can change `server.base` to `/foo`
 
-you can refer to [server.base](https://rsbuild.dev/config/server/base) for more information.
+you can refer to [server.base](https://rsbuild.rs/config/server/base) for more information.
 
 ## Example
 

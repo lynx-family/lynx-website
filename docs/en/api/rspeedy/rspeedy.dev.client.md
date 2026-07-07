@@ -11,3 +11,8 @@ Configuration of the development client.
 ```typescript
 client?: Client | undefined;
 ```
+
+## Default Value
+
+undefined
+

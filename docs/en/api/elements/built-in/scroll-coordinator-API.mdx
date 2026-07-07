@@ -1,0 +1,172 @@
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  ClayWindowsOnly,
+  ClayMacOSOnly,
+  HarmonyOnly,
+  Required,
+  Deprecated,
+  Go,
+  PlatformTabs,
+} from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## Attributes
+
+### `android-nested-scroll-as-child`
+
+<AndroidOnly />
+
+```tsx
+// @defaultValue: false
+'android-nested-scroll-as-child'?: boolean;
+```
+
+Android foldview is based on CoordinateLayout, but it only implements NestedScrollingParent, so it not support to nested scroll as child in other scrolling widget, set this property true to make it work.
+
+### `bounces`
+
+<IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: true
+bounces?: boolean;
+```
+
+Enable the bounce effect when the coordinator scrolls past its boundary.
+
+### `enable-scroll`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: true
+'enable-scroll'?: boolean;
+```
+
+Set whether the coordinator can scroll vertically.
+
+### `enable-scroll-bar`
+
+<IOSOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: false
+'enable-scroll-bar'?: boolean;
+```
+
+Set whether the scrollbar is visible during coordinator scrolling.
+
+### `granularity`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: 0.01
+granularity?: number;
+```
+
+The event response granularity of bindoffset, once the scroll distance exceeds the scrollable distance of granularity, it may trigger. It defaults to 0.01, but it doesn't necessarily trigger every 0.01.
+
+### `header-over-slot`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+// @defaultValue: false
+'header-over-slot'?: boolean;
+```
+
+This property controls whether the header hierarchy higher than the slot, when header is overflow, it will be displayed on top of the slot. Otherwise, it will be displayed below the slot. It is better to set this property explicitly, rather than use the default value.
+
+### `ios-force-scroll-detach`
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: false
+'ios-force-scroll-detach'?: boolean;
+```
+
+Whether to force the nested-vertical-scroll-behavior invalid of foldview on iOS, the setting is ineffective for other platforms
+
+### `ios-scrolls-to-top`
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: false
+'ios-scrolls-to-top'?: boolean;
+```
+
+When the user taps the status bar, the scroll view beneath the touch which is closest to the status bar will be scrolled to top. iOS feature only.
+
+### `refresh-mode`
+
+<IOSOnly />
+
+```tsx
+// @defaultValue: 'none'
+'refresh-mode'?: 'page' | 'none' | 'fold';
+```
+
+The pull-to-refresh mode of foldview, none (none, default value), page (category pull-to-refresh), fold (overall pull-to-refresh)
+
+## Events
+
+Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+
+### `bindoffset`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+```tsx
+bindoffset = (e: ScrollCoordinatorOffsetEvent) => {};
+```
+
+| Field  | Type   | Optional | Default | Platforms                                                | Since | Description                                                                           |
+| ------ | ------ | -------- | ------- | -------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------- |
+| height | number | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |       | The absolute value of the scrollable distance (header height - toolbar height), in px |
+| offset | number | No       | –       | <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> |       | The absolute value of the header scroll offset, in px                                 |
+
+Callback for folding progress
+
+## Methods
+
+Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+
+### `setFoldExpanded`
+
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'setFoldExpanded',
+      params: {
+        /**
+         * Offset, supports px and rpx
+         * @Android
+         * @iOS
+         * @Harmony
+         * @Web
+         * @PC
+         */
+        offset: string;
+        /**
+         * Whether folding requires animation
+         * @Android
+         * @iOS
+         * @Harmony
+         * @Web
+         * @PC
+         */
+        smooth: boolean;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```

@@ -11,3 +11,8 @@ This is an important option when using on-demand-loading or loading external res
 ```typescript
 publicPath?: string | undefined;
 ```
+
+## Default Value
+
+undefined
+

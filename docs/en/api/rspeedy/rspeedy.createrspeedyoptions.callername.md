@@ -12,6 +12,10 @@ The name of the framework or tool that is currently invoking Rsbuild. This allow
 callerName?: string;
 ```
 
+## Default Value
+
+'rspeedy'
+
 ## Example
 
 Rsbuild plugins can access this value via `api.context.callerName`<!-- -->.

@@ -12,6 +12,10 @@ The [Filename](./rspeedy.filename.md) determines the name of the JavaScript bund
 filename?: string | Filename | undefined;
 ```
 
+## Default Value
+
+`{ bundle: '[name].[platform].bundle', template: '[name].[platform].bundle' }`
+
 ## Remarks
 
 If a string is provided, it will be used as [Filename.bundle](./rspeedy.filename.bundle.md)<!-- -->.

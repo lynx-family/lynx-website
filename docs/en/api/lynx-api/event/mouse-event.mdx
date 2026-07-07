@@ -10,6 +10,20 @@ import { APISummary, APITable } from '@lynx';
 
 Represents a mouse event, inherited from [`Event`](./event), which is a type of event that describes the user's interaction with the mouse. For example, mouse click.
 
+:::info
+Starting from Lynx 3.8, you can enable W3C Web standard-aligned `MouseEvent` behavior in `pageConfig`.
+
+```js
+// pageConfig
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+pluginReactLynx({
+  alignMouseEventWithW3C: true,
+});
+```
+
+:::
+
 ## Instance property
 
 ### button
@@ -18,13 +32,13 @@ Represents a mouse event, inherited from [`Event`](./event), which is a type of 
 button: number;
 ```
 
-When a mouse event is triggered, if any mouse button is pressed or released, a integer value representing this mouse button will be returned.
+After `alignMouseEventWithW3C` is enabled, when a mouse event is triggered, if any mouse button is pressed or released, an integer value representing this mouse button will be returned.
 
 | Value | Description            |
 | ----- | ---------------------- |
-| 1     | primary mouse button   |
+| 0     | primary mouse button   |
+| 1     | middle mouse button    |
 | 2     | secondary mouse button |
-| 3     | middle mouse button    |
 
 ### buttons
 
@@ -32,7 +46,7 @@ When a mouse event is triggered, if any mouse button is pressed or released, a i
 buttons: number;
 ```
 
-When a mouse event is triggered, if any buttons are pressed, a integer value representing multiple buttons which user is pressing will be returned. Each button occupies one bit field.
+After `alignMouseEventWithW3C` is enabled, when a mouse event is triggered, if any buttons are pressed, an integer value representing multiple buttons which user is pressing will be returned. Each button occupies one bit field.
 
 | Bit | Description            |
 | --- | ---------------------- |
@@ -96,11 +110,11 @@ Indicates a mouse button is pressed (primary or secondary). [`target`](./event#t
 
 ### mousemove
 
-Indicates that the mouse moves after [`mousedown`](#mousedown). [`target`](./event#target) is always the same as [`mousedown`](#mousedown)'s [`target`](./event#target).
+Indicates that the mouse is moving inside the element. [`target`](./event#target) is the `element` that contains the mouse pointer and is closest to the user.
 
 ### mouseup
 
-Indicates that the mouse button is released, [`target`](./event#target) is the same as [`mousedown`](#mousedown)'s [`target`](./event#target).
+Indicates that the mouse button is released on the element. [`target`](./event#target) is the `element` that contains the mouse pointer and is closest to the user.
 
 ### mouseenter
 
@@ -110,7 +124,7 @@ Note: the `mouseenter` event does not bubble, and it can't be captured by using 
 
 ### mouseover
 
-Indicates that the mouse is moving inside [`target`](./event#target) after [`mouseenter`](#mouseenter). [`target`](./event#target) is the `element` that contains the mouse pointer and is closest to the user.
+Indicates that the mouse pointer is moved onto the [`target`](./event#target) or one of its children. [`target`](./event#target) is the `element` that contains the mouse pointer and is closest to the user.
 
 ### mouseleave
 

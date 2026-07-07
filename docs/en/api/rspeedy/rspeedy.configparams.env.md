@@ -12,6 +12,10 @@ The value of `process.env['NODE_ENV']`
 env: 'production' | 'development' | 'test' | (string & Record<never, never>);
 ```
 
+## Default Value
+
+When `loadConfig` evaluates a config function, this value is `process.env.NODE_ENV ?? 'production'`
+
 ## Remarks
 
 Common values include (non-exhaustive): - `'production'`

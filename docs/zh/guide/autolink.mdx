@@ -1,0 +1,479 @@
+import { PlatformTabs } from '@lynx';
+
+# 原生库与 Autolink
+
+Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android 和 iOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
+
+Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
+
+:::info 开始前的准备
+
+✅ 已完成[接入现有应用](/guide/start/integrate-with-existing-apps)
+
+✅ 了解[原生模块](/guide/use-native-modules)和[自定义元件](/guide/custom-native-component)
+
+:::
+
+:::note 工具可用性
+
+请使用与应用 Lynx SDK 同一发布渠道的 Autolink 工具。相关 package 和 plugin 名称如下：
+
+- npm：`create-lynx-library` 和 `@lynx-js/autolink-codegen`（`lynx-autolink-codegen` binary）
+- Android：Gradle plugin `org.lynxsdk.library-settings` 和 `org.lynxsdk.library-build`
+- iOS：Ruby gem `cocoapods-lynx-library`
+
+如果当前配置的 registry 还无法解析其中某个包，说明你使用的 Lynx SDK 发布版本尚未在该 registry 中包含 Native Autolink。此时请继续使用既有手动原生注册方式，等待匹配版本发布后再接入。
+
+:::
+
+## 什么是 Lynx 原生库
+
+一个库就是一个 npm 包，可以包含以下能力的任意组合：
+
+- **元件**：Lynx 渲染的自定义原生 UI 元件，例如 `<x-button>`。
+- **原生模块**：可以在 Lynx 应用代码中调用的、带类型声明的 JavaScript-to-native API。
+- **Service**：应用级的原生单例，可以被库内的其他能力依赖。
+
+每个库都通过包根目录下的 `lynx.lib.json` manifest 声明原生入口。这三类能力相互独立：一个库可以只暴露元件、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
+
+应用侧像安装普通 npm 依赖一样安装库。Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。
+
+## 使用库
+
+本节面向把一个或多个库集成进宿主 Lynx 应用的应用团队。
+
+### 宿主应用项目结构
+
+接入 Autolink 前，需要先确保宿主应用有一个可以安装 npm 包的项目根目录，并暴露原生应用的构建入口。典型结构如下：
+
+```text
+lynx-app/
+├── package.json
+├── android/
+│   ├── settings.gradle
+│   └── app/
+│       └── build.gradle
+├── ios/
+│   └── Podfile
+└── src/
+```
+
+- `package.json` 是必需的，用来声明 Autolink 库依赖。
+- Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
+- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
+
+安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.lib.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
+
+### 接入 Autolink
+
+宿主应用只需要接入一次 Autolink。接入完成后，已安装的库会从 `node_modules` 中被发现，并在 Lynx 初始化时通过生成的 registry 自动注册。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="android">
+
+在 `settings.gradle` 中启用 settings plugin，让库的 Android 工程可以通过 `lynx.lib.json` 被发现并 include 进来：
+
+```groovy
+plugins {
+  id 'org.lynxsdk.library-settings'
+}
+```
+
+在 Android application 工程中启用 build plugin，让生成的 registry 加入应用源码，并自动把库工程接入为依赖：
+
+```groovy
+plugins {
+  id 'com.android.application'
+  id 'org.lynxsdk.library-build'
+}
+```
+
+Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，库提供的元件、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="ios">
+
+在 iOS 构建环境中安装 `cocoapods-lynx-library` gem。然后在应用的 Podfile 中加入 CocoaPods plugin，并调用 `use_lynx_library!`。执行 `pod install` 时，插件会加入库的 podspec 和生成的 registry pod：
+
+```ruby
+plugin 'cocoapods-lynx-library'
+
+target 'LynxApp' do
+  use_lynx_library!
+end
+```
+
+执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+### 安装库
+
+应用接入 Autolink 后，在 Lynx 应用中安装库：
+
+```bash
+npm install @example/lynx-button
+```
+
+每个库包都会在包根目录暴露 `lynx.lib.json` manifest。Autolink 会扫描已安装 npm 包中的这个文件。
+
+```json
+{
+  "platforms": {
+    "android": {
+      "packageName": "com.example.button",
+      "sourceDir": "android"
+    },
+    "ios": {
+      "sourceDir": "ios",
+      "podspecPath": "ios/build.podspec"
+    }
+  }
+}
+```
+
+Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 `android`。iOS 侧 `sourceDir` 默认是 `ios`，`podspecPath` 默认使用 iOS 源码目录下找到的第一个 `.podspec` 文件。
+
+安装或更新库后，Android 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
+
+## 开发库
+
+本节面向开发可复用原生库供其他 Lynx 应用安装的库作者。
+
+### 库包结构
+
+一个典型的库结构如下：
+
+```text
+lynx-button/
+├── package.json
+├── lynx.lib.json
+├── types/
+│   └── index.d.ts
+├── src/
+│   └── index.ts
+├── generated/
+│   └── ButtonModule.ts
+├── android/
+│   └── src/main/java/com/example/button/
+│       ├── ButtonElement.java
+│       ├── ButtonModule.java
+│       ├── ButtonService.java
+│       └── generated/ButtonModuleSpec.java
+├── ios/
+│   ├── build.podspec
+│   └── src/
+│       ├── ButtonElement.m
+│       ├── ButtonModule.m
+│       ├── ButtonService.m
+│       └── generated/
+│           ├── ButtonModuleSpec.h
+│           └── ButtonModuleSpec.m
+└── example/
+```
+
+- `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
+- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里。
+- `types/index.d.ts` 描述库中可选的原生模块类型声明；如果库暴露原生模块，codegen 会基于这些声明生成平台 spec 和 JavaScript facade。
+- `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
+- `android/` 和 `ios/` 放置原生实现以及生成的原生 spec。
+- `example/` 是库作者用于本地验证的示例应用。
+
+### 创建库
+
+使用交互式命令创建库：
+
+```bash
+npm create lynx-library
+```
+
+在脚本或测试中，也可以用 flags 直接生成：
+
+```bash
+npm create lynx-library -- \
+  --dir ./lynx-button \
+  --types native-module,element,service \
+  --package-name @example/lynx-button \
+  --android-package com.example.button \
+  --module-name ButtonModule \
+  --element-name x-button \
+  --service-name ButtonService
+```
+
+生成的库会包含：
+
+- 带有 `"codegen": "lynx-autolink-codegen"` 的 `package.json`
+- 用于 Android 和 iOS Autolink 发现的 `lynx.lib.json`
+- `types/index.d.ts`，在库暴露原生模块时用于声明类型
+- JavaScript facade 入口 `src/index.ts`
+- 原生源码目录 `android/` 和 `ios/`
+- `example/`、`tsconfig.json` 和 `README.md`
+
+在库根目录运行 codegen：
+
+```bash
+npm run codegen
+```
+
+`lynx-autolink-codegen` 会读取 `lynx.lib.json`。对于原生模块，它会扫描 `types/**/*.d.ts` 中带有 `@lynxmodule` 的声明：
+
+```ts
+/** @lynxmodule */
+export declare class ButtonModule {
+  getLabel(id: string): string;
+  setEnabled(id: string, enabled: boolean): void;
+}
+```
+
+它会生成：
+
+- JavaScript facade：`generated/<ModuleName>.ts`
+- Android：`<ModuleName>Spec.java`
+- iOS：`<ModuleName>Spec.h` 和 `<ModuleName>Spec.m`
+
+第一版支持 `void`、`string`、`number`、`boolean`，以及带 `null` 的 nullable union。
+
+### 编写 Native API
+
+在原生源码中使用 Lynx 注解和注册宏，Autolink 就能发现库提供的能力。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="android">
+
+原生模块示例：
+
+```java
+package com.example.button;
+
+import com.example.button.generated.ButtonModuleSpec;
+import com.lynx.jsbridge.LynxNativeModule;
+import com.lynx.jsbridge.LynxMethod;
+import com.lynx.tasm.behavior.LynxContext;
+import java.util.HashMap;
+import java.util.Map;
+
+@LynxNativeModule(name = "ButtonModule")
+public final class ButtonModule extends ButtonModuleSpec {
+  private final Map<String, Boolean> enabledState = new HashMap<>();
+
+  public ButtonModule(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  @LynxMethod
+  public String getLabel(String id) {
+    return "Button " + id;
+  }
+
+  @Override
+  @LynxMethod
+  public void setEnabled(String id, boolean enabled) {
+    enabledState.put(id, enabled);
+  }
+}
+```
+
+元件示例：
+
+```java
+package com.example.button;
+
+import android.content.Context;
+import android.view.Gravity;
+import android.widget.TextView;
+import com.lynx.tasm.behavior.LynxElement;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.LynxProp;
+import com.lynx.tasm.behavior.ui.LynxUI;
+
+@LynxElement(name = "x-button")
+public final class ButtonElement extends LynxUI<TextView> {
+  public ButtonElement(LynxContext context) {
+    super(context);
+  }
+
+  @Override
+  protected TextView createView(Context context) {
+    TextView view = new TextView(context);
+    view.setGravity(Gravity.CENTER);
+    view.setText("x-button");
+    return view;
+  }
+
+  @LynxProp(name = "text")
+  public void setText(String text) {
+    mView.setText(text == null ? "" : text);
+  }
+}
+```
+
+Service 示例：
+
+```java
+package com.example.button;
+
+import android.content.Context;
+import com.lynx.tasm.service.IServiceProvider;
+import com.lynx.tasm.service.LynxService;
+
+@LynxService
+public final class ButtonService implements IServiceProvider {
+  private Context appContext;
+
+  @Override
+  public Class<? extends IServiceProvider> getServiceClass() {
+    return ButtonService.class;
+  }
+
+  @Override
+  public void onInitialize(Context context) {
+    appContext = context.getApplicationContext();
+  }
+
+  public void recordClick(String id) {
+    // Send analytics or call platform capabilities here.
+  }
+}
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="ios">
+
+原生模块示例：
+
+```objc
+// ButtonModule.h
+#import <Foundation/Foundation.h>
+#import <Lynx/LynxModule.h>
+#import "generated/ButtonModuleSpec.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@LynxNativeModule("ButtonModule")
+@interface ButtonModule : NSObject <ButtonModuleSpec>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// ButtonModule.m
+#import "ButtonModule.h"
+
+@implementation ButtonModule {
+  NSMutableDictionary<NSString *, NSNumber *> *_enabledState;
+}
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _enabledState = [NSMutableDictionary dictionary];
+  }
+  return self;
+}
+
+- (NSString *)getLabel:(NSString *)buttonId {
+  return [NSString stringWithFormat:@"Button %@", buttonId];
+}
+
+- (void)setEnabled:(NSString *)buttonId enabled:(BOOL)enabled {
+  _enabledState[buttonId] = @(enabled);
+}
+
+@end
+```
+
+元件示例：
+
+```objc
+// ButtonElement.h
+#import <UIKit/UIKit.h>
+#import <Lynx/LynxUI.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface ButtonElement : LynxUI<UILabel *>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// ButtonElement.m
+#import "ButtonElement.h"
+#import <Lynx/LynxPropsProcessor.h>
+
+@LynxElement("x-button")
+@implementation ButtonElement
+
+LYNX_PROP_SETTER("text", setText, NSString *) {
+  self.view.text = value ?: @"";
+}
+
+- (UILabel *)createView {
+  UILabel *label = [[UILabel alloc] init];
+  label.textAlignment = NSTextAlignmentCenter;
+  label.text = @"x-button";
+  return label;
+}
+
+@end
+```
+
+Service 示例：
+
+```objc
+// ButtonService.h
+#import <Foundation/Foundation.h>
+#import <LynxServiceAPI/ServiceAPI.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol ButtonServiceProtocol <LynxServiceProtocol>
+
+- (void)recordClick:(NSString *)buttonId;
+
+@end
+
+@interface ButtonService : NSObject <ButtonServiceProtocol>
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+// ButtonService.m
+#import "ButtonService.h"
+
+@LynxService(ButtonService, ButtonServiceProtocol)
+@implementation ButtonService
+
++ (instancetype)sharedInstance {
+  static ButtonService *service;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    service = [[ButtonService alloc] init];
+  });
+  return service;
+}
+
+- (void)recordClick:(NSString *)buttonId {
+  // Send analytics or call platform capabilities here.
+}
+
+@end
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
+
+在 iOS 侧，Autolink 会扫描库源码中的 `@LynxNativeModule(...)`、`@LynxElement(...)` 和 `@LynxService(...)` 声明，并把发现的能力加入生成的 registry。旧版 iOS Service API 仍提供 `@LynxServiceRegister(...)` 以兼容已有代码。新库代码推荐使用 `@LynxService(...)`。
+
+### 发布库
+
+像发布普通 npm 包一样发布库：选一个包名，通常是带 scope 的 `@example/lynx-button`，在 `package.json` 中设置版本号，然后执行 `npm publish`。应用团队把发布版本写入自己的 `package.json`，下次安装依赖时 Autolink 会自动识别。建议在库的 `peerDependencies` 中固定兼容的 Lynx SDK 版本范围，这样当库和宿主 SDK 出现版本错配时，应用团队能够第一时间收到清晰提示。
+
+## Autolink 工作原理
+
+Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` manifest，然后生成一份对应当前应用的 registry，列出所有已安装库暴露的元件、原生模块和 Service。Android 侧的 registry 生成由 Gradle settings plugin 和 build plugin 配合完成；iOS 侧由 CocoaPods plugin 完成并产出 registry pod。宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。

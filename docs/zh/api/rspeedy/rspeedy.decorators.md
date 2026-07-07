@@ -18,7 +18,45 @@ See [Decorators.version](./rspeedy.decorators.version.md) for more information.
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [version?](./rspeedy.decorators.version.md) |  | 'legacy' \| '2022-03' | _(Optional)_ Specify the decorator syntax version to be used. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[version?](./rspeedy.decorators.version.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'legacy' \| '2022-03'
+
+
+</td><td>
+
+_(Optional)_ Specify the decorator syntax version to be used.
+
+
+</td></tr>
+</tbody></table>
 

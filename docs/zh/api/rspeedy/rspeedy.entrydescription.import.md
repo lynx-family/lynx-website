@@ -12,7 +12,7 @@ The path to the entry module(s).
 import?: string | string[] | undefined;
 ```
 
-## Remarks
+## Default Value
 
-If no value is provided, the default value `src/index.js` will be used.
+`'./src/index.js'`
 

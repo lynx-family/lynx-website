@@ -36,7 +36,7 @@ To utilize the <Go> component in your documentation, follow these steps:
 
 The `<Go>` component accepts the following props:
 
-```jsx
+```tsx
 interface Props {
   /**
    * example name
@@ -75,7 +75,7 @@ interface Props {
    *   "src/waterfall/App.tsx": "{1,3-5}",
    * }}
    */
-  highlight?: string | Record<string,string>;
+  highlight?: string | Record<string, string>;
   /**
    * entry component directory, for example: src/waterfall, will show waterfall App.tsx/index.tsx tabs
    *
@@ -90,8 +90,46 @@ interface Props {
    * schema="{{{url}}}?bar_color=000000&back_button_style=dark"
    */
   schema?: string;
+  /**
+   * Override the default preview tab for this instance.
+   *
+   * - 'preview' — static screenshot (requires img)
+   * - 'web'     — live web preview (requires webFile in metadata)
+   * - 'qrcode'  — QR code for Lynx Explorer
+   *
+   * Resolution order: instance prop > GoConfigProvider > fallback.
+   * Fallback is 'preview' if img is available, otherwise 'qrcode'.
+   *
+   * @example
+   * defaultTab="web"
+   */
+  defaultTab?: 'preview' | 'web' | 'qrcode';
 }
 ```
+
+## Default Tab Configuration
+
+The default preview tab can be configured at three levels (highest priority first):
+
+1. **Instance-level** — `defaultTab` prop on `<Go>`:
+
+   ```jsx
+   <Go example="hello-world" defaultFile="src/App.tsx" defaultTab="web" />
+   ```
+
+2. **Site/Page-level** — `defaultTab` in a `GoConfigProvider`:
+
+   ```tsx
+   // site-wide (e.g. in Go.tsx wrapper)
+   const config = { exampleBasePath: '/lynx-examples', defaultTab: 'web' };
+
+   // or page-level override via nested provider in MDX
+   <GoConfigProvider config={{ defaultTab: 'preview' }}>
+     <Go example="a" ... />
+   </GoConfigProvider>
+   ```
+
+3. **Fallback** — `'preview'` if an image is available, otherwise `'qrcode'`.
 
 ## Examples
 

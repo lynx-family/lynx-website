@@ -1,0 +1,169 @@
+---
+api: css/properties/offset-path
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+
+# offset-path
+
+<APISummary />
+
+## 介绍
+
+`offset-path` CSS 属性指定元件要遵循的路径，并决定元件在父容器中的位置。路径可以是直线、二次或三次贝塞尔曲线、圆弧，或者这些路径命令的组合；元件会沿该路径被定位或移动。
+
+通常将 `offset-path` 与 `offset-distance` 配合使用，以控制元件沿路径的位置或运动进度。可以再配合 `offset-rotate` 控制元件是否跟随路径方向旋转。
+
+## 使用示例
+
+<Go
+  example="css-api"
+  defaultFile="src/offset-path/App.tsx"
+  defaultEntryFile="dist/offset-path.lynx.bundle"
+  entry="src/offset-path"
+/>
+
+## 语法
+
+```css
+/* 关键字取值 */
+offset-path: '';
+
+/* <basic-shape> 取值 */
+offset-path: inset(30px 50px 45px 20px round 24px 8px 32px 14px);
+offset-path: circle(50px at 0 100px);
+offset-path: path(
+  'M50,10 L90.45,34.55 L73.39,80.45 L26.61,80.45 L9.55,34.55 Z'
+);
+/* iOS 不支持 `ellipse()` */
+offset-path: ellipse(70px 45px at 90px 70px);
+```
+
+### 取值
+
+`""`
+
+表示元件不遵循任何偏移路径。这是默认值。
+
+`<basic-shape>`
+
+一种形状，其大小和位置由 `border-box` 的值作为参考框。取值可以为下值中的任意一个：
+
+- `inset()`
+
+  定义一个矩形。
+
+  ```
+  inset( <length-percentage>{1, 4} [ round <border-radius> ]?)
+
+  <length-percentage> =
+    <length>
+    <percentage>
+
+  <border-radius> =
+    <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
+  ```
+
+  `<length-percentage>{1, 4}`
+
+  为内嵌矩形框的偏移量，表示从 `border-box` 的上侧、右侧、下侧和左侧向内的偏移量，这些偏移量定义了内嵌矩形边缘的位置。这些参数遵循边间距简写的语法，它允许你定义具有一个、两个或四个值的 inset。
+
+  `round <border-radius>`
+
+  可选的圆角参数，用于定义内嵌矩形框的圆角。`<border-radius>` 使用边框半径简写语法定义内嵌矩形的圆角半径。
+
+- `circle()`
+
+  定义一个圆形（使用一个半径和一个圆心位置）。
+
+  ```
+  circle(<length-percentage> [at <position>]?)
+
+  <length-percentage> =
+    <length [0,∞]>                |
+    <percentage [0,∞]>
+
+  <position> =
+    [ left | center | right | top | bottom | <length-percentage> ]  |
+    [ left | center | right ] && [ top | center | bottom ]  |
+    [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
+    [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
+  ```
+
+  `<length-percentage>`
+
+  这个值用于定义圆形的半径。
+
+  `<position>`
+
+  移动圆形的中心。可以是 `<length>` 或 `<percentage>`，或者类似 `left` 这样的值。如果省略 `<position>` 值，则默认为中心。
+
+- `ellipse()`
+
+  定义一个椭圆（使用两个半径和一个圆心位置）。
+
+  椭圆本质上是一个扁平的圆形，因此 `ellipse()` 的行为与 `circle()` 非常相似，只是需要指定两个半径 x 和 y。
+
+  ```
+  <ellipse()> =
+    ellipse( <radial-size>? [ at <position> ]? )
+
+  <radial-size> =
+    <length-percentage [0,∞]>{2}
+
+  <position> =
+    [ left | center | right | top | bottom | <length-percentage> ]  |
+    [ left | center | right ] && [ top | center | bottom ]  |
+    [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
+    [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
+
+  <length-percentage> =
+    <length>      |
+    <percentage>
+  ```
+
+  `<radial-size>`
+
+  两个半径，按顺序是 x 和 y。可以是 `<length>` 或 `<percentage>`。
+
+  `<position>`
+
+  移动椭圆的中心。可以是 `<length>` 或 `<percentage>`，或者类似 `left` 这样的值。如果省略 `<position>` 值，则默认为中心。
+
+  :::info
+  iOS 不支持 `ellipse()`。
+  :::
+
+- `path()`
+
+  定义一个任意形状（使用一个 SVG 路径定义）。
+
+  ```
+  <path()> =
+    path(<string>)
+  ```
+
+  `path()` 函数接受 [SVG 路径字符串](https://developer.mozilla.org/zh-CN/docs/Web/SVG/Attribute/d) 作为参数。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>""</>}
+  appliesTo={<>所有元件</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 与 Web 的区别
+
+- [mdn:offset-path](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/offset-path)
+
+1. Lynx 支持 `path()`、`circle()`、`ellipse()` 和 `inset()`。其中 iOS 不支持 `ellipse()`。
+2. Lynx 不支持 `polygon()`、`ray()` 和 `url()` 等 Web 取值。
+3. Lynx 不支持坐标盒取值。
+
+## 兼容性
+
+<APITable />

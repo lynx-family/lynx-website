@@ -4,9 +4,13 @@
 
 ## CssExtractRspackPluginOptions.pathinfo property
 
-
 **Signature:**
 
 ```typescript
 pathinfo?: boolean | undefined;
 ```
+
+## Default Value
+
+undefined
+

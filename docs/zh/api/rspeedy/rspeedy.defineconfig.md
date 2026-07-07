@@ -14,9 +14,39 @@ export declare function defineConfig(config: Config): Config;
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  config | [Config](./rspeedy.config.md) | The config of Rspeedy. |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+config
+
+
+</td><td>
+
+[Config](./rspeedy.config.md)
+
+
+</td><td>
+
+The config of Rspeedy.
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

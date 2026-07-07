@@ -154,10 +154,11 @@
 
 ## 15. 工程实践与工具链
 
-- **项目初始化**：`pnpm create rspeedy` 一键生成 ReactLynx 工程，自动带上 Rspeedy 配置、脚手架示例。（参考：[Quick Start](/zh/rspeedy/start/quick-start.md)）
-- **开发调试**：`pnpm dev` 启动 Rspeedy Dev Server，终端输出二维码，使用 LynxExample App（iOS/Android/Harmony 模拟器）扫描即可热更新预览。（参考：[Quick Start](/zh/rspeedy/start/quick-start.md)）
+- **项目初始化**：`pnpm create rspeedy` 一键生成 ReactLynx 工程，自动带上 Rspeedy 配置、脚手架示例。（参考：[Quick Start](/zh/guide/start/quick-start.md)）
+- **开发调试**：`pnpm dev` 启动 Rspeedy Dev Server，终端输出二维码，使用 LynxExample App（iOS/Android/Harmony 模拟器）扫描即可热更新预览。（参考：[Quick Start](/zh/guide/start/quick-start.md)）
 - **DevTool 调试**：连接设备后使用 Lynx DevTool 桌面端调试 JS、查看节点、性能记录。（参考：[Lynx DevTool](/zh/guide/devtool.md)）
 - **构建产物**：Rspeedy 输出的 Bundle 包含后台线程脚本（文本）、主线程字节码、样式等资源；需要 `DEBUG=rspeedy` 环境变量以输出中间产物（组成Lynx Bundle 的后台线程脚本（文本）、主线程字节码、样式、SourceMap 等）到 `dist/.rspeedy` 目录，否则只会输出最终的 Lynx Bundle 文件。（参考：[Output Files](/zh/rspeedy/output.md)）
+- **文档资源引用**：在 MDX 中引用本地图片或文件时，优先使用 `@assets` alias（例如 `import demoImg from '@assets/foo.png?url'`），再传给 `<Go img={demoImg} />` 这类组件。不要在 MDX 的组件参数里直接硬编码 `/assets/...` 路径。
 
 ## 16. 与 Web 的关键差异清单
 
@@ -202,13 +203,13 @@
 
 以下是一些 Lynx 官方 Tutorial，涵盖从基础到进阶的多种使用场景，推荐跟随学习：
 
-- 产品列表——本教程将引导你逐步实现一个产品双列页面：[Tutorial Gallery](/zh/guide/start/tutorial-gallery.md)，你将学到：
+- 产品列表——本教程将引导你逐步实现一个产品双列页面：[Tutorial Gallery](/zh/learn/gallery.md)，你将学到：
   - 构建基本UI并添加样式、交互
   - 组件化
   - 使用 `<list />` 元件实现高性能长列表渲染
   - 直接操作节点：使用 `NodesRef.invoke` 实现自动滚动
   - 自定义滚动条，并使用 [Main Thread Script](/zh/react/main-thread-script.md) 优化滚动性能
-- 产品详情——本教程将通过实现一个轮播组件，带你学习如何编写高性能的交互代码：[Tutorial Product Detail](/zh/guide/start/tutorial-product-detail.md)，你将学到：
+- 产品详情——本教程将通过实现一个轮播组件，带你学习如何编写高性能的交互代码：[Tutorial Product Detail](/zh/learn/product-detail.md)，你将学到：
   - 直接操作节点：使用 `NodesRef.setNativeProps` 更新元件的样式和属性
   - 使用 [Main Thread Script](/zh/react/main-thread-script.md) 降低延迟
   - 主线程函数与后台线程函数互相调用

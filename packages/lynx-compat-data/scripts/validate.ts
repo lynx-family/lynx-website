@@ -6,9 +6,20 @@ import { Ajv } from 'ajv';
 import ajvErrors from 'ajv-errors';
 import ajvFormats from 'ajv-formats';
 
-import compatDataSchema from '../schemas/compat-data.schema.json' with { type: 'json' };
-import platformDataSchema from '../schemas/platform.schema.json' with { type: 'json' };
 import { getCompatDataDirs } from './lib/compat-dirs.js';
+
+const compatDataSchema = JSON.parse(
+  await fs.readFile(
+    new URL('../schemas/compat-data.schema.json', import.meta.url),
+    'utf-8',
+  ),
+);
+const platformDataSchema = JSON.parse(
+  await fs.readFile(
+    new URL('../schemas/platform.schema.json', import.meta.url),
+    'utf-8',
+  ),
+);
 
 const ajv = new Ajv({ allErrors: true });
 // We use 'fast' because as a side effect that makes the "uri" format more lax.
@@ -29,6 +40,7 @@ const dirname = fileURLToPath(new URL('.', import.meta.url));
 const platformDataDir = path.join(dirname, '..', 'platforms');
 
 const DEBUG = process.env.DEBUG === 'ajv';
+let hasValidationError = false;
 
 // Generated files that should be excluded from validation
 const EXCLUDED_PLATFORM_FILES = ['platform-keys.json', 'platforms.json'];
@@ -45,6 +57,7 @@ const validatePlatformData = async () => {
       const data = JSON.parse(content);
 
       if (!ajv.validate(platformDataSchema, data)) {
+        hasValidationError = true;
         console.error(`Validation failed for ${file}:`);
         console.error(ajv.errors);
       } else if (DEBUG) {
@@ -56,7 +69,7 @@ const validatePlatformData = async () => {
 
 await validatePlatformData();
 
-const validateCompatDataForDir = async (dirName) => {
+const validateCompatDataForDir = async (dirName: string) => {
   const dir = path.join(dirname, '..', dirName);
   const files = await fs.readdir(dir, { recursive: true });
 
@@ -67,6 +80,7 @@ const validateCompatDataForDir = async (dirName) => {
       const data = JSON.parse(content);
 
       if (!ajv.validate('compat-data', data)) {
+        hasValidationError = true;
         console.error(`Validation failed for ${dirName}/${file}:`);
         console.error(ajv.errors);
       } else if (DEBUG) {
@@ -88,3 +102,7 @@ const validateAllCompatData = async () => {
 };
 
 await validateAllCompatData();
+
+if (hasValidationError) {
+  process.exitCode = 1;
+}

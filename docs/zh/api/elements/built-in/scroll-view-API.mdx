@@ -1,0 +1,292 @@
+import { AndroidOnly, IOSOnly, ClayOnly, ClayWindowsOnly, ClayMacOSOnly, HarmonyOnly, Required, Deprecated, Go, PlatformTabs } from '@lynx';
+import { VersionBadge, APITable } from '@lynx';
+
+## 属性
+
+### `bounces`
+
+ <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+// @默认值: true
+bounces?: boolean;
+```
+
+启用回弹效果
+
+
+### `enable-scroll`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+// @默认值: true
+'enable-scroll'?: boolean;
+```
+
+启用拖动
+
+
+### `initial-scroll-offset`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.17</VersionBadge>
+
+```tsx
+// @默认值: 0
+'initial-scroll-offset'?: number;
+```
+
+初始滚动位置，仅生效一次，单位为像素
+
+
+### `initial-scroll-to-index`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.17</VersionBadge>
+
+```tsx
+// @默认值: 0
+'initial-scroll-to-index'?: number;
+```
+
+首次加载时滚动到指定子节点，仅生效一次。所有直接子节点必须设置 flatten=false。
+
+
+### `lower-threshold`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+// @默认值: 0
+'lower-threshold'?: number;
+```
+
+设置触发 bindscrolltolower 事件的下阈值。
+
+
+### `scroll-bar-enable`
+
+ <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+// @默认值: true
+'scroll-bar-enable'?: boolean;
+```
+
+启用滚动条
+
+
+### `scroll-orientation`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>3.0</VersionBadge>
+
+```tsx
+// @默认值: 'vertical'
+'scroll-orientation'?: 'vertical' | 'horizontal';
+```
+
+替代 scroll-x 和 scroll-y
+
+
+### `upper-threshold`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+// @默认值: 0
+'upper-threshold'?: number;
+```
+
+设置触发 bindscrolltoupper 事件的上阈值。
+
+## 事件
+
+前端可以绑定相应的事件回调来监听元素的运行时行为，如下所示。
+
+### `bindcontentsizechanged`
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.6</VersionBadge>
+
+```tsx
+bindcontentsizechanged = (e: ContentSizeChangedEvent) => {};
+```
+
+当滚动视图的内容大小发生变化时，会触发此事件。
+
+### `bindscroll`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+bindscroll = (e: ScrollEvent) => {};
+```
+
+当滚动视图正在滚动时，会触发此事件。
+
+### `bindscrollend`
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.6</VersionBadge>
+
+```tsx
+bindscrollend = (e: ScrollEndEvent) => {};
+```
+
+当滚动视图的滚动结束时，会触发此事件。
+
+### `bindscrolltolower`
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+bindscrolltolower = (e: ScrollToLowerEvent) => {};
+```
+
+当滚动区域的下/右边缘与由 lowerThreshold 定义的可见区域相交时，会触发此事件。
+
+### `bindscrolltoupper`
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+
+```tsx
+bindscrolltoupper = (e: ScrollToUpperEvent) => {};
+```
+
+当滚动区域的上/左边缘与由 upperThreshold 定义的可见区域相交时，会触发此事件。
+
+## 方法
+
+前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
+
+### `autoScroll`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'autoScroll',
+      params: {
+        /**
+         * 每秒滚动的距离，支持正负数。距离单位可以是 "px"、"rpx"、"ppx" 或 null（对于 iOS，该值必须大于 1/屏幕缩放比例 px）。
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        rate: number;
+        /**
+         * 开始/停止自动滚动。
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        start: boolean;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+自动滚动
+
+
+### `getScrollInfo`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'getScrollInfo',
+      success: Callback<{
+        /**
+         * 沿方向的总可滚动范围，单位为 PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollRange: number;
+        /**
+         * X 轴上的内容偏移量，单位为 PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollX: number;
+        /**
+         * Y 轴上的内容偏移量，单位为 PX
+         * @Android
+         * @iOS
+         * @Harmony
+         * @PC
+         */
+        scrollY: number;
+      }>;
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+获取滚动信息
+
+
+### `scrollBy`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'scrollBy',
+      params: {
+        /**
+         * 滚动的偏移量
+         */
+        offset?: number;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+按指定偏移量滚动
+
+
+### `scrollTo`
+
+ <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+```ts
+
+lynx.createSelectorQuery()
+     .select('#id')
+     .invoke({
+      method: 'scrollTo',
+      params: {
+        /**
+         * 目标项索引
+         * @defaultValue 0
+         */
+        index?: number;
+        /**
+         * 相对于目标节点的偏移量
+         */
+        offset?: number;
+        /**
+         * 启用滚动动画
+         */
+        smooth?: boolean;
+      };
+      success: function (res) {},
+      fail: function (res) {},
+    })
+    .exec();
+
+```
+
+滚动到指定位置
+

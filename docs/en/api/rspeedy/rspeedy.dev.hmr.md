@@ -12,9 +12,11 @@ Whether to enable Hot Module Replacement (HMR).
 hmr?: boolean | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Defaults to `true`<!-- -->.
+true
+
+## Remarks
 
 By default, Rspeedy uses HMR as the preferred method to update modules. If HMR is disabled or cannot be used in certain scenarios, it will automatically fallback to [Dev.liveReload](./rspeedy.dev.livereload.md)<!-- -->.
 

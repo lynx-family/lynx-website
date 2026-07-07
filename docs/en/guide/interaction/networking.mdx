@@ -74,6 +74,51 @@ Take a look at the [Fetch Response](/api/lynx-api/global/fetch#response) for the
 
 Don't forget to catch any errors that `fetch` may throw; otherwise, they will be silently ignored.
 
+## Using Streaming Fetch
+
+When transmitting large amounts of data, the server typically uses Streaming HTTP to send data incrementally. In such cases, the client can leverage the streaming capabilities of the `fetch` interface to receive and process data in batches in real time, thereby significantly improving data processing efficiency.
+
+```typescript
+fetch('https://sse.dev/test').then((response) => {
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    } else {
+      const text = TextCodecHelper.decode(value);
+      setData(text);
+    }
+  }
+});
+```
+
+You can refer to the MDN documentation [Response: body](https://developer.mozilla.org/en-US/docs/Web/API/Response/body)
+to learn how to handle a streaming body.
+
+:::tip
+This is an experimental feature. To enable the streaming reading capability of the fetch interface, you need to set the specific PageConfig `enableFetchAPIStandardStreaming = true` in the page.
+:::
+
+## Using EventSource
+
+Lynx provides the [EventSource](/api/lynx-api/global/fetch) with the same usage as the Web.
+
+You can refer to the MDN guides on [Using server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) for more information.
+
+```typescript
+const url = 'https://sse.dev/test';
+const eventSource = new lynx.EventSource(url2);
+
+eventSource.onmessage = (event) => {
+  console.log('Received message:', event.data);
+};
+
+eventSource.onerror = (error) => {
+  console.error('EventSource failed:', error);
+};
+```
+
 ## Using TextCodecHelper
 
 Due to the lack of `TextEncoder`/`TextDecoder` support in `PrimJS`, Lynx provides

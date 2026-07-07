@@ -51,7 +51,7 @@ To solve this, create a `src/rspeedy-env.d.ts` file, and add the following conte
 ```
 
 :::tip
-[`create-rspeedy`](https://npmjs.com/create-rspeedy) will automatically create this file for you.
+[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) will automatically create this file for you.
 :::
 
 ## Extending Lynx types
@@ -154,7 +154,7 @@ Unlike the native TypeScript compiler, tools like SWC and Babel compile each fil
 ```
 
 :::tip
-[`create-rspeedy`](https://npmjs.com/create-rspeedy) will automatically include this for you.
+[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) will automatically include this for you.
 :::
 
 This option can help you avoid using certain syntax that cannot be correctly compiled by SWC and Babel, such as cross-file type references. It will guide you to correct the corresponding usage:

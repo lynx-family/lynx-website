@@ -1,0 +1,106 @@
+---
+description: '使用 @lynx-js/motion 在 Lynx 主线程中实现动画、MotionValue、交错效果和手势驱动 UI。'
+---
+
+import { Go } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+import {
+  motionBasicDemoMeta,
+  motionGestureDemoMeta,
+  motionSpringDemoMeta,
+  motionValueDemoMeta,
+} from '../../../sharedDocs/introDocs/lynx-ui-motion/demoMeta.ts';
+
+# @lynx-js/motion
+
+`@lynx-js/motion` 是一个轻量适配层，直接复用 [Motion](https://motion.dev) 的源码，将其命令式 JavaScript API 带到 Lynx。所有 API 都运行在[主线程脚本](/react/main-thread-script)环境中，动画可以立即更新视觉属性，无需经过后台线程中转。如果你在 Web 上用过 Motion 的 [`animate()`](https://motion.dev/docs/animate)、[`motionValue()`](https://motion.dev/docs/motion-value) 和 [`spring`](https://motion.dev/docs/spring)，在 Lynx 中的用法完全一样。如果你还不熟悉 Motion，可以先阅读 [Motion 快速上手指南](https://motion.dev/docs/quick-start)。
+
+:::details 什么是 Mini 入口，什么时候应该使用它？
+
+这个包提供两个入口。完整入口尚未达到与 Motion 的完全特性对等，且引擎版本要求较高。[Mini](./motion-mini) 是裁剪版本，兼容性更广，也是目前 lynx-ui 使用的入口。
+
+|                                                           | `@lynx-js/motion`                            | `@lynx-js/motion/mini`（[Mini](./motion-mini)） |
+| --------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------- |
+| [**Animation**](https://motion.dev/docs/animate)          | 数字、颜色、带单位字符串、关键帧数组         | 仅数字                                          |
+| [**Motion values**](https://motion.dev/docs/motion-value) | `motionValue()`（`useMotionValue` 暂不支持） | `useMotionValueRef()`                           |
+| [**Spring**](https://motion.dev/docs/spring)              | `type: 'spring'`                             | `type: 'spring'`                                |
+| [**Stagger**](https://motion.dev/docs/stagger)            | `stagger()` + 选择器                         | --                                              |
+| **styleEffect**                                           | 从 motion value 派生样式                     | --                                              |
+| **Lynx Engine**                                           | >= 3.5                                       | 无最低要求                                      |
+| **ReactLynx**                                             | >= 0.115.2                                   | 无最低要求                                      |
+| **Bundle 体积**                                           | ~275 KB                                      | ~135 KB                                         |
+
+:::
+
+## 安装
+
+<PackageManagerTabs command="install @lynx-js/motion" />
+
+从主包入口导入：
+
+```ts
+import { animate, motionValue, styleEffect } from '@lynx-js/motion';
+```
+
+## 为元素添加动画
+
+`animate()` 函数接受与 Web 端 Motion 相同的[选项](https://motion.dev/docs/animate#options)，包括 `duration`、`ease`、`delay`、`repeat` 和 `type: 'spring'`。完整选项列表见 [Motion `animate()` 参考](https://motion.dev/docs/animate)。
+
+常见用法如下：
+
+1. 使用 `useMainThreadRef()` 创建主线程元素引用。
+2. 通过 `main-thread:ref` 绑定到元素。
+3. 在主线程函数中调用 [`animate()`](https://motion.dev/docs/animate) 启动动画。
+4. 将动画控制对象保存在另一个主线程引用中，方便清理时调用 `stop()`。
+
+<Go
+  example="motion"
+  defaultFile="src/Basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+  entry="src/Basic"
+  highlight={motionBasicDemoMeta.highlight}
+  webPreview={false}
+/>
+
+## 使用弹簧动画
+
+当值需要以弹簧物理效果收敛，而不是按固定时长的缓动曲线变化时，设置 `type: 'spring'`。Motion 的所有 [spring 选项](https://motion.dev/docs/spring)均受支持，包括 `stiffness`、`damping`、`mass` 和 `bounce`。
+
+<Go
+  example="motion"
+  defaultFile="src/Spring/index.tsx"
+  defaultEntryFile="dist/spring.lynx.bundle"
+  entry="src/Spring"
+  highlight={motionSpringDemoMeta.highlight}
+  webPreview={false}
+/>
+
+## 使用 MotionValue
+
+[`motionValue()`](https://motion.dev/docs/motion-value) 用于保存值，可以直接传给 `animate()` 做动画，并且可以订阅变化。当多个效果或事件处理函数需要共享同一个动画值时，可以使用它。
+
+<Go
+  example="motion"
+  defaultFile="src/MotionValue/index.tsx"
+  defaultEntryFile="dist/motion-value.lynx.bundle"
+  entry="src/MotionValue"
+  highlight={motionValueDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+## 构建手势效果
+
+对于高频触摸输入，应使用 `main-thread:bindtouchstart`、`main-thread:bindtouchmove` 和 `main-thread:bindtouchend` 将事件处理保留在主线程。再结合 MotionValue 和 `styleEffect()`，从手势状态派生视觉状态。
+
+<Go
+  example="motion"
+  defaultFile="src/iOSSlider/index.tsx"
+  defaultEntryFile="dist/gesture.lynx.bundle"
+  entry="src/iOSSlider"
+  highlight={motionGestureDemoMeta.highlight}
+  defaultTab="web"
+/>
+
+:::info
+Motion 的 Web 专属手势 API，如 [`scroll()`](https://motion.dev/docs/scroll)、[`inView()`](https://motion.dev/docs/inview)、[`hover()`](https://motion.dev/docs/hover) 和 [`press()`](https://motion.dev/docs/press)，不包含在 `@lynx-js/motion` 中。请使用上方展示的主线程触摸事件。
+:::

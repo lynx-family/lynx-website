@@ -4,10 +4,13 @@
 
 ## CssExtract.loaderOptions property
 
-The options of CSS extract loader.
-
 **Signature:**
 
 ```typescript
 loaderOptions?: CssExtractRspackLoaderOptions | undefined;
 ```
+
+## Default Value
+
+undefined
+

@@ -12,11 +12,9 @@ The name of the CSS files.
 css?: Rspack.CssFilename | undefined;
 ```
 
-## Remarks
+## Default Value
 
-Default values:
-
-- `'[name].css'`
+`'[name]/[name].css'`
 
 ## Example
 

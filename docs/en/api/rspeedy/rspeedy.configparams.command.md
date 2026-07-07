@@ -12,6 +12,10 @@ The CLI command of Rspeedy.
 command: 'build' | 'dev' | 'inspect' | 'preview' | (string & Record<never, never>);
 ```
 
+## Default Value
+
+When `loadConfig` evaluates a config function, this value is `process.argv[2] ?? 'build'`
+
 ## Remarks
 
 Possible values:

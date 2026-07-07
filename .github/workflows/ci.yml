@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Case Check
+        run: node scripts/ci/check-case-collisions.mjs
+
+      - name: Asset URL Check
+        run: node scripts/ci/check-asset-urls.mjs
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format Check
+        run: pnpm run format:check
+
+      - name: Build
+        run: pnpm run build
+
+  done:
+    name: Done
+    needs:
+      - validate
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions: {}
+
+    steps:
+      - name: Fail If Any Job Did Not Succeed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1

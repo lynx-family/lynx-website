@@ -1,0 +1,245 @@
+---
+api: lynx-devtool-native-api/cdp-event-listener
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# CDPEventListener
+
+<APISummary />
+
+A **protocol (or interface)** used to receive [CDP](https://chromedevtools.github.io/devtools-protocol/) **Event** messages sent by DevTool.
+
+## Syntax
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+@protocol CDPEventListener <NSObject>
+
+@required
+- (void)onEvent:(nonnull NSString *)event;
+
+@end
+```
+
+### Android
+
+```java title="CDPEventListener.java"
+public interface CDPEventListener {
+  void onEvent(String event);
+}
+```
+
+### Parameters
+
+- `event`: A JSON string containing the CDP Event content.
+
+## Data Format
+
+| Field  | Type   | Description                                                                                  |
+| :----- | :----- | :------------------------------------------------------------------------------------------- |
+| method | string | Event name, please refer to [CDP](https://chromedevtools.github.io/devtools-protocol/)       |
+| params | object | Event parameters, please refer to [CDP](https://chromedevtools.github.io/devtools-protocol/) |
+
+For example, the data for [`Page.screencastFrame`](https://chromedevtools.github.io/devtools-protocol/tot/Page/#event-screencastFrame) is as follows:
+
+```json
+{
+  "method": "Page.screencastFrame",
+  "params": {
+    "data": "...",
+    "metadata": {
+      "deviceHeight": 200.0,
+      "deviceWidth": 100.0,
+      "offsetTop": 0.0,
+      "pageScaleFactor": 1.0,
+      "scrollOffsetX": 0.0,
+      "scrollOffsetY": 0.0
+    }
+  }
+}
+```
+
+## Usage Example
+
+### Steps
+
+1. [Implement `CDPEventListener`](#syntax).
+2. [Get the `LynxBaseInspectorOwner` instance](/api/lynx-devtool-native-api/lynx-base-inspector-owner#get-the-lynxbaseinspectorowner-instance).
+3. Call the [`addCDPEventListener`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/add-cdp-event-listener) method to add the message listener.
+
+### Code Example
+
+The following example adds a CDP Event listener named `TestListener` and sends a `Page.startScreencast` message via `invokeCDPFromSDK` to enable screen capture functionality.
+
+As a result, the `TestCDPEventListener` will receive `Page.screencastFrame` message.
+
+#### iOS
+
+```objective-c title="TestCDPEventListener.h" {1-3}
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+@interface TestCDPEventListener : NSObject <CDPEventListener>
+
+@property(nonatomic, readonly, nonnull) NSString *name;
+
+- (instancetype)initWithName:(NSString * _Nonnull )name;
+
+@end
+```
+
+```objective-c title="TestCDPEventListener.m" {12-14}
+#import "TestCDPEventListener.h"
+
+@implementation TestCDPEventListener
+
+- (instancetype)initWithName:(NSString *)name {
+  if (self = [super init]) {
+    _name = name;
+  }
+  return self;
+}
+
+- (void)onEvent:(nonnull NSString *)event {
+  NSLog(@"onEvent: %@", event);
+}
+
+@end
+```
+
+```objective-c title="ViewController.m" {2-4,11,15-21,24-38,51-53}
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+#import "TestCDPEventListener.h"
+
+@interface LynxViewLifecycleClient : NSObject <LynxViewLifecycle>
+@property(nonatomic, weak) LynxView* lynxView;
+@end
+
+@implementation LynxViewLifecycleClient {
+  TestCDPEventListener* _listener;
+}
+
+- (void)lynxView:(LynxView *)view didLoadFinishedWithUrl:(NSString *)url {
+  [self addCDPEventListener:@"TestListener"];
+  __weak __typeof(self) weakSelf = self;
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)),
+                 dispatch_get_main_queue(), ^{
+                   __strong __typeof(weakSelf) strongSelf = weakSelf;
+                   [strongSelf removeCDPEventListener:@"TestListener"];
+                 });
+}
+
+- (void)addCDPEventListener:(NSString *)name {
+  __strong LynxView* view = self.lynxView;
+  id<LynxBaseInspectorOwner> owner = [view baseInspectorOwner];
+  _listener = [[TestCDPEventListener alloc] initWithName:name];
+  [owner addCDPEventListener:name withListener:_listener];
+  NSString *method = @"{\"id\":1,\"method\":\"Page.startScreencast\",\"params\":{\"format\":\"jpeg\",\"mode\":\"fullscreen\"}}";
+  [owner invokeCDPFromSDK:method withCallback:^(NSString *result){
+  }];
+}
+
+- (void)removeCDPEventListener:(NSString *)name {
+  __strong LynxView* view = self.lynxView;
+  id<LynxBaseInspectorOwner> owner = [view baseInspectorOwner];
+  [owner removeCDPEventListener:name];
+}
+
+@end
+
+@implementation ViewController {
+  LynxViewLifecycleClient *_client;
+}
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  _client = [LynxViewLifecycleClient new];
+  _client.lynxView = lynxView;
+  [lynxView addLifecycleClient:_client];
+}
+
+@end
+```
+
+#### Android
+
+```java title="TestCDPEventListener.java" {3,5,17-19}
+import android.util.Log;
+
+import com.lynx.devtoolwrapper.CDPEventListener;
+
+public class TestCDPEventListener implements CDPEventListener {
+  private final String name;
+
+  public TestCDPEventListener(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public void onEvent(String event) {
+    Log.i("TestCDPEventListener", "onEvent: " + event);
+  }
+}
+```
+
+```java title="MainActivity.java" {4,11,18,21,26-44}
+import android.os.Handler;
+import android.os.Looper;
+
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwner;
+import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxViewClient;
+
+import java.lang.ref.WeakReference;
+
+public class MainActivity extends Activity {
+  private TestCDPEventListener mTestCDPEventListener = null;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ...
+
+    lynxView.addLynxViewClient(new LynxViewClient() {
+      @Override
+      public void onLoadSuccess() {
+        addCDPEventListener(lynxView, "TestListener");
+      }
+    });
+  }
+
+  private void addCDPEventListener(LynxView lynxView, String name) {
+    LynxBaseInspectorOwner owner = lynxView.getBaseInspectorOwner();
+    if (owner == null) {
+      return;
+    }
+    mTestCDPEventListener = new TestCDPEventListener(name);
+    owner.addCDPEventListener(name, mTestCDPEventListener);
+
+    String method = "{\"id\":1,\"method\":\"Page.startScreencast\",\"params\":{\"format\":\"jpeg\",\"mode\":\"fullscreen\"}}";
+    owner.invokeCDPFromSDK(method, result -> {
+    });
+
+    Handler mainHandler = new Handler(Looper.getMainLooper());
+    WeakReference<LynxBaseInspectorOwner> weakOwner = new WeakReference<>(owner);
+    mainHandler.postDelayed(() -> {
+      LynxBaseInspectorOwner strongOwner = weakOwner.get();
+      strongOwner.removeCDPEventListener(name);
+    }, 10000);
+  }
+}
+```
+
+## Compatibility
+
+<APITable />

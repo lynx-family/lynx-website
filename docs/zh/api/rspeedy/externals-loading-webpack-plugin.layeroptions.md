@@ -14,7 +14,45 @@ export interface LayerOptions
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [sectionPath](./externals-loading-webpack-plugin.layeroptions.sectionpath.md) |  | string | The path in <code>customSections</code>. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[sectionPath](./externals-loading-webpack-plugin.layeroptions.sectionpath.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+The path in `customSections`<!-- -->.
+
+
+</td></tr>
+</tbody></table>
 

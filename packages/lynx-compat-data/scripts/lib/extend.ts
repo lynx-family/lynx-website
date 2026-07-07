@@ -20,7 +20,9 @@ class DuplicateCompatError extends Error {
  * @param v The object to test
  * @returns Whether the object is a plain object
  */
-const isPlainObject = (v): v is object =>
+type PlainObject = Record<string, unknown>;
+
+const isPlainObject = (v: unknown): v is PlainObject =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
@@ -29,7 +31,11 @@ const isPlainObject = (v): v is object =>
  * @param source The object to copy from
  * @param feature The feature path so far (internal for recursive calls)
  */
-const extend = (target, source, feature = ''): void => {
+const extend = (
+  target: PlainObject,
+  source: PlainObject,
+  feature = '',
+): void => {
   if (!isPlainObject(target) || !isPlainObject(source)) {
     throw new Error('Both target and source must be plain objects');
   }
@@ -42,7 +48,11 @@ const extend = (target, source, feature = ''): void => {
         // If attempting to merge __compat, we have a double-entry
         throw new DuplicateCompatError(feature);
       }
-      extend(target[key], value, feature + `${feature ? '.' : ''}${key}`);
+      const targetValue = target[key];
+      if (!isPlainObject(targetValue) || !isPlainObject(value)) {
+        throw new Error('Both target and source values must be plain objects');
+      }
+      extend(targetValue, value, feature + `${feature ? '.' : ''}${key}`);
     } else {
       target[key] = value;
     }

@@ -1,33 +1,135 @@
+// NextSteps Step — refined "next step" card.
+//
+// The old chrome was a flat gray block with the border the same color as
+// the surface (invisible until hover) and a blue link title. That reads
+// as a bland, templated card with a title competing with itself for
+// "clickability." Restyle it as a sibling of `.choice-tabs__card` and
+// the `.quick-start-cta`: color-mix tints from `--rp-c-text-1`, a soft
+// brand-aware hover with a lifted-card shadow, and a single arrow
+// affordance that owns the "this card is interactive" signal.
+//
+// Geometry borrowed from ChoiceTabs (18px/22px padding, 12px radius) so
+// the two card families read as the same vocabulary.
+
 .step {
-  border: 1px solid var(--rp-c-bg-soft);
-  background-color: var(--rp-c-bg-soft);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
-  padding: 28px 36px;
-  border-radius: 8px;
+  --brand: var(--rp-c-brand);
+
+  position: relative;
+  display: block;
   flex: auto;
   width: 15rem;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 18px 22px;
+  border: 1px solid color-mix(in srgb, var(--rp-c-text-1) 8%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rp-c-text-1) 2%, transparent);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
 
-  &:hover {
-    border-color: var(--rp-c-brand);
-    transition: border-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition:
+    border-color 0.25s ease-out,
+    background-color 0.25s ease-out,
+    box-shadow 0.25s ease-out,
+    transform 0.18s ease-out;
+
+  &:hover,
+  &:hover:visited {
+    text-decoration: none;
+    border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+    background: color-mix(in srgb, var(--brand) 4%, transparent);
+    // Brand-tinted lifted-card shadow — same DNA as `.subsite-icon--active`
+    // and `.quick-start-cta:hover`.
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--brand) 8%, transparent),
+      0 8px 22px -8px color-mix(in srgb, var(--brand) 32%, transparent);
+    transform: translateY(-1px);
+
+    .title {
+      color: var(--brand);
+    }
+    .arrow {
+      opacity: 1;
+      transform: translateX(2px);
+      color: var(--brand);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 }
 
+// ─── Title row: label + animated arrow ───────────────────────────────
+//
+// The whole card is the link, so the title doesn't need to inherit the
+// blue anchor color — making it `--rp-c-text-1` removes the "title looks
+// like a separate link" effect and lets the card own its clickability.
+// The arrow is the new affordance: dim at rest, animates in on hover.
+//
+// `!important` on margin matches the old rule, which exists because
+// rspress's doc styles add tight margins to inline `<p>` children.
+
 .title {
-  font-size: 20px;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.75em !important;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px !important;
+  font-size: 1rem; // 16px — refined heading, down from 20px
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--rp-c-text-1);
+  transition: color 0.2s ease-out;
+
+  // `<span>` wrapper keeps the label intrinsically sized so the arrow
+  // can sit tight to it instead of being pushed to the row's edge.
+  > span {
+    min-width: 0;
+  }
+}
+
+.arrow {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--rp-c-text-2);
+  opacity: 0;
+  transform: translateX(0);
+  transition:
+    color 0.22s ease-out,
+    opacity 0.22s ease-out,
+    transform 0.22s ease-out;
 }
 
 .description {
   margin: 0 !important;
-  line-height: 1.7 !important;
+  font-size: 0.875rem; // 14px
+  line-height: 1.55 !important;
   color: var(--rp-c-text-2);
-  transition: color 0.5s;
+}
+
+// ─── Dark mode ───────────────────────────────────────────────────────
+// Mirrors the SubsiteRow/Quick-Start-CTA pattern: bump the rest border +
+// wash and let the hover glow push harder against a near-black surface.
+//
+// `:where(.dark, .rp-dark)` is the defensive pattern documented in
+// `tailwind.config.js`: rspress may apply either class on `<html>`
+// depending on the theme pipeline.
+
+:root:where(.dark, .rp-dark) {
+  .step {
+    border-color: color-mix(in srgb, var(--rp-c-text-1) 12%, transparent);
+    background: color-mix(in srgb, var(--rp-c-text-1) 4%, transparent);
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--brand) 45%, transparent);
+      background: color-mix(in srgb, var(--brand) 8%, transparent);
+      box-shadow:
+        0 1px 0 color-mix(in srgb, var(--brand) 14%, transparent),
+        0 8px 26px -8px color-mix(in srgb, var(--brand) 48%, transparent);
+    }
+  }
 }

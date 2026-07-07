@@ -10,19 +10,22 @@ import {
   Layout as BaseLayout,
   Link as BaseLink,
   getCustomMDXComponent as basicGetCustomMDXComponent,
-} from '@rspress/core/theme';
+} from '@rspress/core/theme-original';
 import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
 import {
-  LlmsContainer,
-  LlmsCopyButton,
-  LlmsViewOptions,
-} from '@rspress/plugin-llms/runtime';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import './index.scss';
+import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 
 import {
   Banner,
@@ -34,13 +37,37 @@ import {
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
+import OgHead from './OgHead';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
-// Use word boundary (\b) to match complete words only (e.g., "react" matches but "reactive" doesn't)
+// Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
+  const segments = pathname.split('/');
   return SUBSITES_CONFIG.find((s) =>
-    new RegExp(`\\b${s.value}\\b`).test(pathname),
+    segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
   );
+};
+
+const NULL_BYTE_RE = /\u0000/g;
+
+const sanitizeHeadingAnchors = () => {
+  document
+    .querySelectorAll<HTMLElement>(
+      '.rspress-doc h1[id], .rspress-doc h2[id], .rspress-doc h3[id], .rspress-doc h4[id], .rspress-doc h5[id], .rspress-doc h6[id]',
+    )
+    .forEach((heading) => {
+      if (heading.id.includes('\u0000')) {
+        heading.id = heading.id.replace(NULL_BYTE_RE, '');
+      }
+
+      const anchor = heading.querySelector<HTMLAnchorElement>(
+        'a.rp-header-anchor[href]',
+      );
+      const href = anchor?.getAttribute('href');
+      if (anchor && href?.includes('\u0000')) {
+        anchor.setAttribute('href', href.replace(NULL_BYTE_RE, ''));
+      }
+    });
 };
 
 declare global {
@@ -51,12 +78,19 @@ declare global {
   }
 }
 
-function Layout(props: Parameters<typeof BaseLayout>[0]) {
+function Layout({
+  afterNavTitle = <AfterNavTitle />,
+  ...props
+}: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
   const subsite = findSubsite(pathname);
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
+
+  useEffect(() => {
+    sanitizeHeadingAnchors();
+  }, [pathname]);
 
   return (
     <>
@@ -66,9 +100,10 @@ function Layout(props: Parameters<typeof BaseLayout>[0]) {
           data-scroll-locked={isStatusRoute ? 'true' : null}
         />
       </Head>
+      <OgHead />
       <BaseLayout
         {...props}
-        afterNavTitle={<AfterNavTitle />}
+        afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
         bottom={<Footer />}
       />
@@ -77,11 +112,24 @@ function Layout(props: Parameters<typeof BaseLayout>[0]) {
 }
 
 const enSuffix = ' Native for More';
-const enWords = ['Unlock', 'Render', 'Toward', 'Ship'];
+const enWords = ['Unlock', 'Render', 'Vibe', 'Ship'];
 const zhWords = ['迈向', '更快的', '更多平台的', '更多人的'];
 const zhSuffix = '原生体验';
 
-function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+// Extend ImportMeta to include SSG-MD
+declare global {
+  interface ImportMetaEnv {
+    SSG_MD?: boolean;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
+function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  if (import.meta.env.SSG_MD) {
+    return <BaseHomeLayout {...props} />;
+  }
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
   const { page } = usePageData();
@@ -100,23 +148,11 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   useBlogBtnDom(routePath);
 
-  // Update theme based on URL
-  useEffect(() => {
-    const subsite = findSubsite(pathname);
-    document.documentElement.setAttribute(
-      'data-subsite',
-      subsite ? subsite.value : 'guide',
-    );
-  }, [pathname]);
-
   const updateText = useCallback(() => {
-    const h1Ele = document.querySelector('h1');
-    const h1Span = document.querySelector('h1 > span');
-    if (!h1Ele) return;
-    if (!h1Span) return;
-
-    // Add negative margin to h1 span to avoid text wrapping
-    h1Ele.style.margin = '0 -100px';
+    const titleEle = document.querySelector('.rp-home-hero__title');
+    const titleTextSpan = document.querySelector('.rp-home-hero__title > span');
+    if (!titleEle) return;
+    if (!titleTextSpan) return;
 
     const words = isZh ? zhWords : enWords;
     const suffix = isZh ? zhSuffix : enSuffix;
@@ -130,11 +166,11 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     const fullText = `${dynamicText}${suffix}`;
     setText(fullText);
 
-    const dynamicSpan = h1Span.querySelector('.dynamic-text');
-    const suffixSpan = h1Span.querySelector('.suffix-text');
+    const dynamicSpan = titleTextSpan.querySelector('.dynamic-text');
+    const suffixSpan = titleTextSpan.querySelector('.suffix-text');
 
     if (!dynamicSpan || !suffixSpan) {
-      h1Span.innerHTML = `
+      titleTextSpan.innerHTML = `
         <span class="dynamic-text">${dynamicText}</span><span class="suffix-text">${suffix}</span>
       `;
     } else {
@@ -185,34 +221,44 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
+  const copyElementRef = useRef<HTMLElement | null>(null);
+  const CodeWithRef = Code as unknown as React.ComponentType<
+    React.ComponentProps<typeof Code> & { ref?: React.Ref<HTMLElement> }
+  >;
 
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
     afterHero = (
       <>
-        <Features src={routePath} /> {routePath === '/' && <ShowCase />}
+        <Features src={routePath} />
+        {routePath === '/' && <ShowCase />}
         {routePath === '/' && <Banner />}
       </>
     ),
     afterHeroActions = (
-      <div
-        className="rp-doc"
-        style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
-      >
-        <PreWithCodeButtonGroup
-          containerElementClassName="language-bash home-layout-create-block"
-          codeButtonGroupProps={{
-            showCodeWrapButton: false,
-          }}
+      <>
+        <div
+          className="rp-doc home-hero-codeblock"
+          style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
         >
-          <Code
-            className="language-bash home-layout-create-block"
-            style={{ textAlign: 'center' }}
+          <PreWithCodeButtonGroup
+            containerElementClassName="language-bash"
+            codeButtonGroupProps={{
+              copyElementRef:
+                copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
+              showCodeWrapButton: false,
+            }}
           >
-            npm create rspeedy@latest
-          </Code>
-        </PreWithCodeButtonGroup>
-      </div>
+            <CodeWithRef
+              ref={copyElementRef}
+              className="language-bash"
+              style={{ textAlign: 'center' }}
+            >
+              npm create rspeedy@latest
+            </CodeWithRef>
+          </PreWithCodeButtonGroup>
+        </div>
+      </>
     ),
   } = props;
 
@@ -226,6 +272,42 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
           afterHeroActions={afterHeroActions}
         />
       </div>
+    </>
+  );
+}
+
+function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  const { pathname } = useLocation();
+  const { page } = usePageData();
+
+  // Update theme based on URL
+  useEffect(() => {
+    const subsite = findSubsite(pathname);
+    document.documentElement.setAttribute(
+      'data-subsite',
+      subsite ? subsite.value : 'guide',
+    );
+  }, [pathname]);
+
+  if (
+    page.pagePath.startsWith('en/ui/') ||
+    page.pagePath.startsWith('zh/ui/') ||
+    page.pagePath.startsWith('ui/')
+  ) {
+    return (
+      <>
+        <OgHead />
+        <div className="lynx-ui-home-layout-container">
+          <LynxUIHomeLayout />
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <OgHead />
+      <MainHomeLayout {...props} />
     </>
   );
 }
@@ -259,49 +341,54 @@ const Search = () => {
 
 export { HomeLayout, Layout, Search };
 
-function getCustomMDXComponent() {
-  const { h1: H1, ...mdxComponents } = basicGetCustomMDXComponent();
+type BaseLinkProps = Parameters<typeof BaseLink>[0];
+type BaseLinkRestProps = Omit<
+  BaseLinkProps,
+  'href' | 'children' | 'className' | 'style'
+>;
 
-  const MyH1 = ({ ...props }: React.ComponentProps<typeof H1>) => {
-    return (
-      <>
-        <H1 {...props} />
-        <LlmsContainer>
-          <LlmsCopyButton />
-          <LlmsViewOptions />
-        </LlmsContainer>
-      </>
-    );
-  };
-  return {
-    ...mdxComponents,
-    h1: MyH1,
-  };
-}
+const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
+  const { href, children, className, style, ...restProps } = props;
+  const safeRestProps = restProps as BaseLinkRestProps;
+  const lang = useLang();
+  const { pathname, search } = useLocation();
+  const getLangPrefix = (value: string) => (value === 'en' ? '' : `/${value}`);
+  let normalizedHref = href;
 
-export { getCustomMDXComponent };
+  if (
+    href &&
+    safeRestProps.rel === 'alternate' &&
+    safeRestProps.lang === lang
+  ) {
+    normalizedHref = removeBase(`${pathname}${search}`);
+  }
 
-const Link = (props: React.ComponentProps<typeof BaseLink>) => {
-  const { href, children, className, ...restProps } = props;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+  if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <BaseLink
-        href={`/next${removeBase(href)}`}
-        className={`rp-link ${className}`}
-        {...restProps}
+        href={`/next${removeBase(normalizedHref)}`}
+        className={className ? `rp-link ${className}` : 'rp-link'}
+        ref={ref}
+        style={style as any}
+        {...safeRestProps}
       >
         {children}
       </BaseLink>
     );
   }
   return (
-    <BaseLink href={href} className={className} {...restProps}>
+    <BaseLink
+      href={normalizedHref}
+      className={className}
+      ref={ref}
+      style={style as any}
+      {...safeRestProps}
+    >
       {children}
     </BaseLink>
   );
-};
+});
 
-export { Link }; // override Link from @rspress/core/theme
+export { Link }; // override Link from @rspress/core/theme-original
 
-export * from '@rspress/core/theme';
+export * from '@rspress/core/theme-original';

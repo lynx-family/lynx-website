@@ -9,14 +9,56 @@ The `createRspeedy` method can let you create a Rspeedy instance and you can cus
 **Signature:**
 
 ```typescript
-export declare function createRspeedy({ cwd, rspeedyConfig, loadEnv, environment, callerName, }: CreateRspeedyOptions): Promise<RspeedyInstance>;
+export declare function createRspeedy(input: CreateRspeedyOptions): Promise<RspeedyInstance>;
 ```
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  { cwd, rspeedyConfig, loadEnv, environment, callerName, } | [CreateRspeedyOptions](./rspeedy.createrspeedyoptions.md) |  |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+{ cwd, rspeedyConfig, loadEnv, environment, callerName, }
+
+
+</td><td>
+
+(not declared)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+input
+
+
+</td><td>
+
+[CreateRspeedyOptions](./rspeedy.createrspeedyoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 

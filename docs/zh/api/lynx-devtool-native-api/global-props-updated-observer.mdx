@@ -1,0 +1,137 @@
+---
+api: lynx-devtool-native-api/global-props-updated-observer
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# GlobalPropsUpdatedObserver
+
+<APISummary />
+
+一个**协议（或接口）**，用于接收 GlobalProps 的更新。
+
+## 语法
+
+### iOS
+
+```objective-c title="LynxBaseInspectorOwner.h"
+@protocol GlobalPropsUpdatedObserver <NSObject>
+
+- (void)onGlobalPropsUpdated:(NSDictionary *)props;
+
+@end
+```
+
+### Android
+
+```java title="GlobalPropsObserver.java"
+public interface GlobalPropsObserver {
+  void onGlobalPropsUpdated(Map globalProps);
+}
+```
+
+### 参数说明
+
+- `globalProps`: 更新后的 GlobalProps，包含所有属性的键值对。
+
+## 使用示例
+
+### 使用步骤
+
+1. [实现 `GlobalPropsUpdatedObserver`](#语法)。
+2. [获取 `LynxBaseInspectorOwner` 实例](/api/lynx-devtool-native-api/lynx-base-inspector-owner#获取-lynxbaseinspectorowner-实例)。
+3. [注册 `GlobalPropsUpdatedObserver`](/api/lynx-devtool-native-api/lynx-base-inspector-owner/set-global-props-updated-observer)。
+
+### 代码示例
+
+#### iOS
+
+```objective-c title="TestGlobalPropsUpdatedObserver.h" {1,3}
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+@interface TestGlobalPropsUpdatedObserver : NSObject <GlobalPropsUpdatedObserver>
+@end
+```
+
+```objective-c title="TestGlobalPropsUpdatedObserver.m" {5-7}
+#import "TestGlobalPropsUpdatedObserver.h"
+
+@implementation TestGlobalPropsUpdatedObserver
+
+- (void)onGlobalPropsUpdated:(NSDictionary *)props {
+  NSLog(@"onGlobalPropsUpdated: %@", props);
+}
+
+@end
+```
+
+```objective-c title="ViewController.m" {2-4,13-18}
+#import <Lynx/LynxView.h>
+#import <Lynx/LynxBaseInspectorOwner.h>
+
+#import "TestGlobalPropsUpdatedObserver.h"
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  // ...
+
+  [lynxView updateGlobalPropsWithDictionary:@{@"key1": @"value1"}];
+  id<LynxBaseInspectorOwner> owner = lynxView.baseInspectorOwner;
+  TestGlobalPropsUpdatedObserver* observer =
+      [[TestGlobalPropsUpdatedObserver alloc] init];
+  [owner setGlobalPropsUpdatedObserver:observer];
+  [lynxView updateGlobalPropsWithDictionary:@{@"key2": @"value2"}];
+}
+
+@end
+```
+
+#### Android
+
+```java title="MainActivity.java" {3-4,16,19-37}
+import android.util.Log;
+
+import com.lynx.devtoolwrapper.GlobalPropsObserver;
+import com.lynx.devtoolwrapper.LynxBaseInspectorOwner;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class MainActivity extends Activity {
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ...
+
+    registerGlobalPropsUpdatedObserver(lynxView);
+  }
+
+  private void registerGlobalPropsUpdatedObserver(LynxView lynxView) {
+    LynxBaseInspectorOwner owner = lynxView.getBaseInspectorOwner();
+    if (owner == null) {
+      return;
+    }
+    lynxView.updateGlobalProps(new HashMap<String, Object>() {{
+      put("key1", "value1");
+    }});
+    GlobalPropsObserver observer = new GlobalPropsObserver() {
+      @Override
+      public void onGlobalPropsUpdated(Map globalProps) {
+        Log.i("MainActivity", "onGlobalPropsUpdated: " + globalProps.toString());
+      }
+    };
+    owner.registerGlobalPropsUpdatedObserver(observer);
+    lynxView.updateGlobalProps(new HashMap<String, Object>() {{
+      put("key2", "value2");
+    }});
+  }
+}
+```
+
+## 兼容性
+
+<APITable />

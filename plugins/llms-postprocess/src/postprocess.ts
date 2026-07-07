@@ -9,6 +9,7 @@ import type {
   Root,
   RootContentMap,
 } from 'mdast';
+import { encodingForModel } from 'js-tiktoken';
 
 const COMMON_TO_MARKDOWN_OPTIONS = {
   bulletOther: '-',
@@ -74,6 +75,26 @@ function forEachType<T extends keyof RootContentMap>(
       forEachType(type, child, cb, node as Parent);
     }
   }
+}
+
+const enc = encodingForModel('gpt-4o');
+
+function truncateLongDescriptions(markdown: string, maxTokens: number): string {
+  const ellipsis = '…';
+  const ellipsisTokens = enc.encode(ellipsis).length;
+  return markdown
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(\* \[[^\]]*\]\([^)]+\)): (.+)$/);
+      if (!match) return line;
+      const [, prefix, desc] = match;
+      const tokens = enc.encode(desc);
+      if (tokens.length <= maxTokens) return line;
+      const truncatedTokens = tokens.slice(0, maxTokens - ellipsisTokens);
+      const truncated = enc.decode(truncatedTokens);
+      return `${prefix}: ${truncated}${ellipsis}`;
+    })
+    .join('\n');
 }
 
 /**
@@ -168,7 +189,10 @@ Below is a full list of available APIs of Lynx:
         // We are hiding `/guide/devtool/*` and `/guide/performance/*` from LLM to avoid noise
         link.url.match(/\/guide\/devtool/) ||
         link.url.match(/\/guide\/performance/) ||
-        link.url.match(/\/guide\/embed/))
+        link.url.match(/\/guide\/embed/) ||
+        link.url.match(/\/guide\/spec/) ||
+        link.url.match(/\/ai\//) ||
+        link.url.match(/\/lynx-ui\//))
     ) {
       parent.children = parent.children.filter((child) => child !== link);
     }
@@ -179,10 +203,9 @@ Below is a full list of available APIs of Lynx:
     link.url = `${prefix}${link.url}`;
   });
 
-  // filter "empty" list item
+  // filter "empty" list item or list item without any link
   forEachType('listItem', appendixSectionAst, (listItem, parent) => {
     if (parent) {
-      // Modify the list item as needed
       const listItemMD = toMarkdown(
         {
           type: 'root',
@@ -193,9 +216,23 @@ Below is a full list of available APIs of Lynx:
 
       if (listItemMD.trim() === '') {
         parent.children = parent.children.filter((child) => child !== listItem);
+        return;
+      }
+
+      let hasLink = false;
+      forEachType('link', listItem as unknown as Node, () => {
+        hasLink = true;
+      });
+      if (!hasLink) {
+        parent.children = parent.children.filter((child) => child !== listItem);
       }
     }
   });
+
+  const appendixMarkdown = truncateLongDescriptions(
+    toMarkdown(appendixSectionAst, COMMON_TO_MARKDOWN_OPTIONS),
+    30,
+  );
 
   const appendixSection = `\
 ---
@@ -204,7 +241,7 @@ Below is a full list of available APIs of Lynx:
 
 You may find more information about Lynx and related resources in the links below:
 
-${toMarkdown(appendixSectionAst, COMMON_TO_MARKDOWN_OPTIONS)}
+${appendixMarkdown}
 
 ## 99. Appendix: Lynx APIs
 

@@ -12,6 +12,10 @@ The `auto` option allows CSS modules to be automatically enabled based on their 
 auto?: boolean | RegExp | ((filename: string) => boolean) | undefined;
 ```
 
+## Default Value
+
+true
+
 ## Remarks
 
 Given the various `auto` values, the behavior is described as follows:

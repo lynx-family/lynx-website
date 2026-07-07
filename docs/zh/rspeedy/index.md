@@ -2,13 +2,14 @@
 pageType: home
 
 hero:
+  badge: ' ' # controlled by use-blog-btn-dom.ts
   name: <span class="hero-title"><span class="brand">Lynx </span><span class="brand-ani">构建工具</span></span>
   tagline: 用 Rspack，瞬息之间构建你的 Lynx 应用
   actions:
     - theme: brand
       text: 开始
-      link: /zh/rspeedy/start/quick-start.html
+      link: /zh/rspeedy/cli.html
     - theme: alt
       text: API
-      link: /api/rspeedy.html
+      link: /zh/api/rspeedy/index.html
 ---

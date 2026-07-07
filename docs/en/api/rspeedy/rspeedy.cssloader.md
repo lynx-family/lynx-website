@@ -32,8 +32,64 @@ const defaultOptions = {
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [importLoaders?](./rspeedy.cssloader.importloaders.md) |  | 0 \| 1 \| 2 \| undefined | _(Optional)_ The option <code>importLoaders</code> allows you to configure how many loaders before <code>css-loader</code> should be applied to <code>@imported</code> resources and CSS modules imports. |
-|  [modules?](./rspeedy.cssloader.modules.md) |  | boolean \| [CssLoaderModules](./rspeedy.cssloadermodules.md) \| undefined | _(Optional)_ The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables the CSS Modules specification and setup basic behavior. |
+<table><thead><tr><th>
+
+Property
+
+
+</th><th>
+
+Modifiers
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[importLoaders?](./rspeedy.cssloader.importloaders.md)
+
+
+</td><td>
+
+
+</td><td>
+
+0 \| 1 \| 2 \| undefined
+
+
+</td><td>
+
+_(Optional)_ The option `importLoaders` allows you to configure how many loaders before `css-loader` should be applied to `@imported` resources and CSS modules imports.
+
+
+</td></tr>
+<tr><td>
+
+[modules?](./rspeedy.cssloader.modules.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| [CssLoaderModules](./rspeedy.cssloadermodules.md) \| undefined
+
+
+</td><td>
+
+_(Optional)_ The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables the CSS Modules specification and setup basic behavior.
+
+
+</td></tr>
+</tbody></table>
 

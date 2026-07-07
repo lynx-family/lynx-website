@@ -12,6 +12,10 @@ The [Output.filenameHash](./rspeedy.output.filenamehash.md) option controls whet
 filenameHash?: boolean | string | undefined;
 ```
 
+## Default Value
+
+In production web builds, Rsbuild defaults this option to `true`<!-- -->; development builds and non-web outputs omit hashes by default.
+
 ## Remarks
 
 [Output.filename](./rspeedy.output.filename.md) has a higher priority than [Output.filenameHash](./rspeedy.output.filenamehash.md)<!-- -->.

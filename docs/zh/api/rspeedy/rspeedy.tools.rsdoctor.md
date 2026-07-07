@@ -12,6 +12,14 @@ The [Tools.rsdoctor](./rspeedy.tools.rsdoctor.md) controls the options of [Rsdoc
 rsdoctor?: RsdoctorRspackPluginOptions | undefined;
 ```
 
+## Default Value
+
+undefined
+
+## Remarks
+
+Setting `RSDOCTOR=true` enables Rsdoctor. When it is enabled, Rspeedy merges additional plugin defaults during config normalization.
+
 ## Example
 
 - Use the built-in Rsdoctor.

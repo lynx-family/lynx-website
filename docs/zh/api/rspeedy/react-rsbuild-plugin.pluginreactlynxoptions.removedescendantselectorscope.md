@@ -11,3 +11,8 @@ removeDescendantSelectorScope is used to remove the scope of descendant selector
 ```typescript
 removeDescendantSelectorScope?: boolean;
 ```
+
+## Default Value
+
+`true`
+

@@ -16,9 +16,37 @@ export declare function pluginExternalBundle(options: PluginExternalBundleOption
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | [PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md) |  |
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+options
+
+
+</td><td>
+
+[PluginExternalBundleOptions](./external-bundle-rsbuild-plugin.pluginexternalbundleoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
 
 **Returns:**
 
@@ -38,7 +66,7 @@ export default {
     pluginExternalBundle({
       externals: {
         lodash: {
-          url: 'http://lodash.lynx.bundle',
+          bundlePath: 'lodash.lynx.bundle',
           background: { sectionPath: 'background' },
           mainThread: { sectionPath: 'mainThread' },
         },

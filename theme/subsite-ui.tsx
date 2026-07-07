@@ -1,30 +1,30 @@
 import type { SubsiteConfig } from '@site/shared-route-config';
 import { withBase } from '@rspress/core/runtime';
 
-function isAbsoluteUrl(url: string): boolean {
-  return url.startsWith('/');
+function isExternalUrl(url: string): boolean {
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function resolveLogoUrl(url: string): string {
+  if (isExternalUrl(url)) return url;
+  if (url.startsWith('/')) return withBase(url);
+  return url;
 }
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
-  // Ensure the logo URLs are absolute by prepending the site base if they are relative
-  const lightLogoSrc = isAbsoluteUrl(subsite.logo.light)
-    ? withBase(subsite.logo.light)
-    : subsite.logo.light;
-  const darkLogoSrc = isAbsoluteUrl(subsite.logo.dark)
-    ? withBase(subsite.logo.dark)
-    : subsite.logo.dark;
+  const lightLogoSrc = resolveLogoUrl(subsite.logo.light);
+  const darkLogoSrc = resolveLogoUrl(subsite.logo.dark);
 
   return (
     <>
       <img
         src={lightLogoSrc}
-        // "dark:rp-hidden" is in the @rspress/theme-default CSS
-        className="w-full h-full object-contain dark:rp-hidden"
+        className="w-full h-full object-contain dark:hidden"
         alt={`${subsite.label} logo`}
       />
       <img
         src={darkLogoSrc}
-        className="hidden w-full h-full object-contain dark:rp-block"
+        className="hidden w-full h-full object-contain dark:block"
         alt={`${subsite.label} logo`}
       />
     </>

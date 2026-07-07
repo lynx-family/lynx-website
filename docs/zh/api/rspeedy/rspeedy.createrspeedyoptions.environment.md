@@ -11,3 +11,8 @@ Only build specified environments. For example, passing `['lynx']` will only bui
 ```typescript
 environment?: CreateRsbuildOptions['environment'];
 ```
+
+## Default Value
+
+\[\]
+

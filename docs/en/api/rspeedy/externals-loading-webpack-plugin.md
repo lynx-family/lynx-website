@@ -12,15 +12,75 @@ Requires Lynx version 3.5 or later.
 
 ## Classes
 
-|  Class | Description |
-|  --- | --- |
-|  [ExternalsLoadingPlugin](./externals-loading-webpack-plugin.externalsloadingplugin.md) | The webpack plugin to load lynx external bundles. |
+<table><thead><tr><th>
+
+Class
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ExternalsLoadingPlugin](./externals-loading-webpack-plugin.externalsloadingplugin.md)
+
+
+</td><td>
+
+The webpack plugin to load lynx external bundles.
+
+
+</td></tr>
+</tbody></table>
 
 ## Interfaces
 
-|  Interface | Description |
-|  --- | --- |
-|  [ExternalsLoadingPluginOptions](./externals-loading-webpack-plugin.externalsloadingpluginoptions.md) | The options of the <code>ExternalsLoadingPlugin</code>. |
-|  [ExternalValue](./externals-loading-webpack-plugin.externalvalue.md) |  |
-|  [LayerOptions](./externals-loading-webpack-plugin.layeroptions.md) | The options of the background or main-thread layer. |
+<table><thead><tr><th>
+
+Interface
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ExternalsLoadingPluginOptions](./externals-loading-webpack-plugin.externalsloadingpluginoptions.md)
+
+
+</td><td>
+
+The options of the `ExternalsLoadingPlugin`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalValue](./externals-loading-webpack-plugin.externalvalue.md)
+
+
+</td><td>
+
+The value item of the externals.
+
+
+</td></tr>
+<tr><td>
+
+[LayerOptions](./externals-loading-webpack-plugin.layeroptions.md)
+
+
+</td><td>
+
+The options of the background or main-thread layer.
+
+
+</td></tr>
+</tbody></table>
 

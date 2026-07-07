@@ -11,3 +11,8 @@ The options of the background layer.
 ```typescript
 background?: LayerOptions;
 ```
+
+## Default Value
+
+`undefined`
+

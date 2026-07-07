@@ -4,6 +4,11 @@
 
 ## Performance.chunkSplit property
 
+> Warning: This API is now obsolete.
+> 
+> Use the top-level [Config.splitChunks](./rspeedy.config.splitchunks.md) option instead.
+> 
+
 [Performance.chunkSplit](./rspeedy.performance.chunksplit.md) is used to configure the chunk splitting strategy.
 
 **Signature:**
@@ -11,3 +16,8 @@
 ```typescript
 chunkSplit?: ChunkSplit | ChunkSplitBySize | ChunkSplitCustom | undefined;
 ```
+
+## Default Value
+
+For web builds, Rsbuild currently uses `{ strategy: 'split-by-experience' }` when this option is unset.
+

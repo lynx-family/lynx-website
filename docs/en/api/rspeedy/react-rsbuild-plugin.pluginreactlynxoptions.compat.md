@@ -14,6 +14,10 @@ compat?: Partial<CompatVisitorConfig> & {
     } | undefined;
 ```
 
+## Default Value
+
+`undefined`
+
 ## Remarks
 
 These options should only be used for migrating from ReactLynx2.0.

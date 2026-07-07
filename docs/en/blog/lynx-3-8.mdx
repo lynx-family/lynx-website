@@ -1,0 +1,141 @@
+---
+title: 'Lynx 3.8: WebAssembly on Android, Adaptive Layout, and More'
+date: 2026-05-31
+sidebar: false
+authors: ['mitchell', 'lynx']
+badge_text: 'Lynx 3.8 is released!'
+description: 'Lynx 3.8 starts the monthly release cadence with WebAssembly on Android, adaptive layout and text fitting, HarmonyOS SessionStorage, LynxEngine reuse, and DevTool protocol support.'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+Lynx 3.8 is now officially released!
+
+As outlined in our [2026 roadmap](/blog/lynx-open-source-roadmap-2026), Lynx 3.8 kicks off our new monthly release cadence. Moving to monthly means each release will be smaller and more focused. For 3.8, that's **WebAssembly** on Android, `<frame>` auto-sizing, line-aware text fitting, HarmonyOS SessionStorage, `LynxEngine` reuse, and DevTool protocol updates.
+
+Before diving into 3.8, don't miss our recent [lynx-ui](/blog/lynx-ui) announcement, where we introduced ready-to-use components for building cross-platform Lynx interfaces.
+
+## WebAssembly on Android
+
+This release introduces initial [WebAssembly](/guide/scripting-runtime/webassembly) support on Android via the PrimJS runtime. Lynx apps can now load and execute WebAssembly modules on the background thread, making it possible to move computation-heavy logic into WebAssembly when JavaScript isn't fast enough.
+
+The current implementation focuses on common constructor-based flows:
+
+```js
+const module = new WebAssembly.Module(wasmBytes);
+const instance = new WebAssembly.Instance(module, imports);
+
+const result = instance.exports.add(1, 2);
+```
+
+The complete example below shows the same flow in a Lynx page:
+
+<Go
+  example="webassembly"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+/>
+
+The current implementation covers `WebAssembly.Module` and `WebAssembly.Instance` fully, plus common-case usage of `WebAssembly.Memory`, `WebAssembly.Table`, and `WebAssembly.Global`.
+
+## Adaptive Layout, Text, and Platform Behavior
+
+This release improves how Lynx content adapts to its host container, fits text into constrained layouts, and closes platform-specific behavior gaps.
+
+### `<frame>` Auto-sizing and Load Metrics
+
+[`<frame>`](/api/elements/built-in/frame) can now size itself based on the embedded Lynx page's content with the new `auto-width` and `auto-height` attributes, reducing the need for host-side dimension calculation.
+
+```tsx
+<frame src={url} auto-width auto-height />
+```
+
+It also improves startup and observability with preset layouts, better `data` and `global-props` passing, intrinsic size reporting through `layoutchange`, and `<frame>` load metrics on Android and iOS.
+
+### Line-aware Auto Font Sizing
+
+The new [`-x-auto-font-size-line-ranges`](/api/css/properties/-x-auto-font-size-line-ranges) CSS property lets developers define different font-size search ranges based on the actual number of rendered lines. Use it with `-x-auto-font-size: true`:
+
+```css
+.title {
+  -x-auto-font-size: true;
+  -x-auto-font-size-line-ranges:
+    line-range(1, 18px, 22px), line-range(2, 16px, 18px),
+    line-range(3 to infinity, 14px);
+}
+```
+
+This is useful for titles, cards, and feed layouts where one-line, two-line, and multi-line text need different fitting behavior.
+
+<Go
+  example="css-api"
+  defaultFile="src/-x-auto-font-size-line-ranges/index.scss"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/auto-font-size-line-ranges.jpeg"
+  defaultEntryFile="dist/-x-auto-font-size-line-ranges.lynx.bundle"
+  entry="src/-x-auto-font-size-line-ranges"
+  highlight="{20-23}"
+/>
+
+### Desktop Exposure
+
+macOS and Windows now support [`enable-exposure-ui-clip`](/api/elements/built-in/view.html#enable-exposure-ui-clip), giving developers more control over exposure calculations in complex layouts.
+
+## Native Integration
+
+### Lynx Engine Reuse in LynxViewGroup
+
+On Android, `LynxViewGroup` can now cache and reuse a `LynxEngine` across `LynxView` instances created from the same group. This is useful when an application repeatedly creates views from the same template bundle, such as in multi-page or embedded-view scenarios.
+
+We've seen many apps where users leave and re-enter the same Lynx page. In these cases, caching the `LynxEngine` avoids the cost of repeatedly destroying and recreating it, and can reuse work the engine has already done, like the constructed UI tree, so re-entering the page renders faster.
+
+Applications don't need to manage `LynxEngine` directly. Create a group with caching enabled, attach it to each `LynxViewBuilder`, and release it when no longer needed:
+
+```java
+ILynxViewGroup group = new LynxViewGroupBuilder()
+    .setContext(context)
+    .setTemplateBundle(templateBundle)
+    .setGlobalProps(globalProps)
+    .setEnableCacheEngine(true) // Enable caching.
+    .build();
+
+LynxView first = new LynxViewBuilder()
+    .setLynxViewGroup(group)
+    .build(context);
+
+// Later, another LynxView created from the same group can reuse the cached engine.
+LynxView second = new LynxViewBuilder()
+    .setLynxViewGroup(group)
+    .build(context);
+
+group.release();
+```
+
+### Resource Loading Callback
+
+`LynxViewClientV2` adds an `onResourceLoaded` callback so clients can observe resource loading from native code. This gives host applications a single hook for resource timing, success/failure status, and other diagnostics.
+
+### SessionStorage on HarmonyOS
+
+HarmonyOS now supports the SessionStorage API for cross-page data sharing. Front-end code can use the existing [`lynx.setSessionStorageItem`](/api/lynx-api/lynx/lynx-set-session-storage), [`lynx.getSessionStorageItem`](/api/lynx-api/lynx/lynx-get-session-storage), [`lynx.subscribeSessionStorage`](/api/lynx-api/lynx/lynx-subscribe-session-storage), and [`lynx.unsubscribeSessionStorage`](/api/lynx-api/lynx/lynx-unsubscribe-session-storage) APIs to share session-scoped state across pages.
+
+## DevTool Protocol and Debugging
+
+DevTool protocol and debugging improvements include:
+
+- MTS debugging now works with pre-executed and pre-decoded `MTSRuntime` instances.
+- CDP support adds `DOM.describeNode`.
+- `DOM.getDocument` now supports the `depth` parameter.
+- DevTool can query `PerformanceEntry` data through the CDP Performance domain.
+
+## Upgrade Guide
+
+To upgrade to Lynx 3.8, follow the [integration guide](https://lynxjs.org/3.8/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions accordingly.
+
+## Thank You
+
+Lynx 3.8 is the first step in our monthly release cadence: smaller releases, clearer upgrade paths, and faster feedback loops.
+
+Thanks to everyone building with Lynx, trying new releases early, filing issues, and helping the project improve in the open. See you in the next monthly release.

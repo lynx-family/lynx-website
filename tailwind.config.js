@@ -7,14 +7,19 @@
 
 const { fontFamily } = require('tailwindcss/defaultTheme');
 export default {
-  content: ['./src/**/*.{js,ts,jsx,tsx}', './theme/**/*.{js,ts,jsx,tsx}'],
-  // Use class-based dark mode to sync with Rspress's toggle (adds .dark to <html>)
-  darkMode: 'class',
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './theme/**/*.{js,ts,jsx,tsx}',
+    './src/luna/**/*.{js,ts,jsx,tsx}',
+  ],
+  // Use class-based dark mode to sync with Rspress's toggle
+  // Rspress may use either `.dark` or `.rp-dark` on <html> depending on theme pipeline
+  darkMode: ['class', ':is(.dark, .rp-dark)'],
   // When there is no explicit usage of the `.dark` class in project files,
   // tailwind will not include dark mode styles in the final bundle.
   // Adding 'dark' to safelist ensures the dark mode classes are preserved.
   // See: https://github.com/shadcn-ui/ui/issues/313#issuecomment-1927525155
-  safelist: ['dark'],
+  safelist: ['dark', 'rp-dark'],
   theme: {
     container: {
       center: true,
@@ -36,6 +41,11 @@ export default {
         ring: 'var(--rp-c-brand)',
         background: 'var(--rp-c-bg)',
         foreground: 'var(--rp-c-text-1)',
+        canvas: {
+          DEFAULT: 'var(--rp-c-bg)',
+          ambient: 'var(--rp-c-bg-alt)',
+        },
+        rule: 'var(--rp-c-divider-secondary)',
         primary: {
           DEFAULT: 'var(--rp-c-brand)',
           foreground: 'var(--rp-c-text-1)',
@@ -131,5 +141,8 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('@tailwindcss/container-queries'),
+    require('tailwindcss-animate'),
+  ],
 };

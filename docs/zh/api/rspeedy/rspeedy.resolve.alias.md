@@ -12,6 +12,10 @@ Create aliases to `import` or `require` certain modules more easily.
 alias?: Record<string, string | false | string[]> | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example 1
 
 A trailing `$` can also be added to the given object's keys to signify an exact match:

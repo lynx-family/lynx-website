@@ -11,3 +11,8 @@ Whether the source should be loaded asynchronously or not.
 ```typescript
 async?: boolean;
 ```
+
+## Default Value
+
+`true`
+

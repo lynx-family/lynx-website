@@ -12,6 +12,10 @@ Used to configure the decorators syntax.
 decorators?: Decorators | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Remarks
 
 See [Decorators.version](./rspeedy.decorators.version.md) for more information.

@@ -9,13 +9,17 @@
 
 Enable or configure persistent build cache.
 
-This feature is experimental and may be changed in the future.
-
 **Signature:**
 
 ```typescript
 buildCache?: BuildCache | boolean | undefined;
 ```
+
+## Default Value
+
+false
+
+This feature is experimental and may be changed in the future.
 
 ## Example 1
 

@@ -15,3 +15,8 @@ override?: Rspack.Configuration extends {
         } | undefined;
     } ? P : never;
 ```
+
+## Default Value
+
+undefined
+

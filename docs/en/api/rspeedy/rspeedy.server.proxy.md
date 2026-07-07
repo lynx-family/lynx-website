@@ -12,6 +12,10 @@ Configure proxy rules for the dev server or preview server to proxy requests to 
 proxy?: ProxyConfig | undefined;
 ```
 
+## Default Value
+
+undefined
+
 ## Example
 
 
