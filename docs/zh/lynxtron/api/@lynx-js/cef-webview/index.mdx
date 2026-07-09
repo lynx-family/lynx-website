@@ -1,0 +1,50 @@
+import { PackageManagerTabs } from '@theme';
+
+# @lynx-js/cef-webview
+
+`@lynx-js/cef-webview` 是 Lynxtron 官方维护的原生能力库，用来提供基于 CEF 的
+[`<webview>`](/api/elements/built-in/webview) 元素。它包含平台相关的 Lynxtron
+原生产物，并提供 `./lynxtron` 入口，用来加载当前平台产物，让其中的 Lynx
+静态注册在宿主进程中生效。
+
+## 安装
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+## 宿主入口
+
+在创建 `LynxWindow` 或加载 Lynx bundle 之前，在主进程中导入 Lynxtron 入口：
+
+```ts
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
+
+cefWebview.initialize();
+```
+
+`initialize()` 方法会为当前进程初始化 Chromium Embedded Framework (CEF)。AutoLink
+在为 Lynxtron 宿主构建收集包时，也会使用 `./lynxtron` 入口。
+
+## 导出
+
+| 导出             | 说明                                         |
+| ---------------- | -------------------------------------------- |
+| `.`              | CommonJS 包入口。                            |
+| `./lynxtron`     | 加载当前平台原生二进制的 Lynxtron 宿主入口。 |
+| `./package.json` | package metadata。                           |
+
+## 包元数据
+
+包内包含带 Lynxtron 元数据的 `lynx.lib.json`：
+
+```json
+{
+  "platforms": {
+    "lynxtron": {
+      "path": "dist"
+    }
+  }
+}
+```
+
+完整接入流程见
+[在 Lynxtron 中使用 webview](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started)。
