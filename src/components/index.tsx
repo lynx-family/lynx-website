@@ -49,13 +49,17 @@ export {
   ClayWindowsOnly,
   HarmonyOnly,
   IOSOnly,
+  MacOSOnly,
   NoAndroid,
   NoClay,
   NoClayAndroid,
   NoClayMacOS,
   NoClayWindows,
   NoIOS,
+  NoMacOS,
+  NoWindows,
   NoWeb,
+  WindowsOnly,
   WebOnly,
 } from './api-badge';
 

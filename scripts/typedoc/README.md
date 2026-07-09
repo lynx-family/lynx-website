@@ -64,6 +64,9 @@ pnpm run typedoc --package reactlynx-testing-library
 
 # update multiple packages
 pnpm run typedoc --package reactlynx-testing-library lynx-testing-environment
+
+# render TypeDoc @platform tags as Lynx compatibility badges
+pnpm run typedoc --package <pkg> --platform-badges
 ```
 
 After running the script, you should see the generated docs in the `docs/zh/api` and `docs/en/api` directory.

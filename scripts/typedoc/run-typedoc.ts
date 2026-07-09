@@ -75,6 +75,14 @@ const BASE_TYPEDOC_OPTIONS: Partial<Configuration.TypeDocOptions> = {
  */
 const SITE_URL = 'https://lynxjs.org';
 
+const TYPEDOC_PLATFORM_TO_BADGE_PLATFORM: Record<string, string> = {
+  darwin: 'macos',
+  macos: 'macos',
+  mas: 'macos',
+  win32: 'windows',
+  windows: 'windows',
+};
+
 /**
  * Rewrites markdown links pointing at the docs site itself
  * (`](https://lynxjs.org/...)`) into site-relative links (`](/...)`), dropping
@@ -128,20 +136,197 @@ function escapeMdxBraces(content: string): string {
   return lines.join('\n');
 }
 
+function trimTrailingWhitespace(content: string): string {
+  return content.replace(/[ \t]+$/gm, '');
+}
+
+function escapeMdxTagLiterals(content: string): string {
+  const lines = content.split('\n');
+  let inFence = false;
+  let inHeaderComment = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (line.includes('{/*')) inHeaderComment = true;
+    const skip = inHeaderComment;
+    if (line.includes('*/}')) inHeaderComment = false;
+    if (skip) continue;
+
+    const parts = line.split('`');
+    for (let j = 0; j < parts.length; j += 2) {
+      parts[j] = parts[j].replace(/<([a-z][a-z0-9]*-[a-z0-9-]*)>/g, '`<$1>`');
+    }
+    lines[i] = parts.join('`');
+  }
+
+  return lines.join('\n');
+}
+
+type TypeDocPlatformTag = {
+  badgePlatforms: string[];
+  unknownPlatforms: string[];
+};
+
+type TypeDocPlatformTagResult = TypeDocPlatformTag | 'omit';
+
+const COMPLETE_DESKTOP_BADGE_PLATFORMS = new Set(['macos', 'windows']);
+
+function escapeHtml(content: string): string {
+  return content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function getPlatformTagsFromTypeDocPlatformLine(
+  line: string,
+): TypeDocPlatformTagResult | undefined {
+  const tokens = line
+    .split(/[,/| ]+/)
+    .map((token) => token.trim().replace(/^`|`$/g, '').toLowerCase())
+    .filter(Boolean);
+
+  if (tokens.length === 0) return undefined;
+
+  const badgePlatforms: string[] = [];
+  const unknownPlatforms: string[] = [];
+  const seenBadgePlatforms = new Set<string>();
+  const seenUnknownPlatforms = new Set<string>();
+
+  for (const token of tokens) {
+    const platform = TYPEDOC_PLATFORM_TO_BADGE_PLATFORM[token];
+    if (platform) {
+      if (!seenBadgePlatforms.has(platform)) {
+        badgePlatforms.push(platform);
+        seenBadgePlatforms.add(platform);
+      }
+    } else if (!seenUnknownPlatforms.has(token)) {
+      unknownPlatforms.push(token);
+      seenUnknownPlatforms.add(token);
+    }
+  }
+
+  if (badgePlatforms.length === 0 && unknownPlatforms.length === 0) {
+    return undefined;
+  }
+
+  if (
+    unknownPlatforms.length === 0 &&
+    badgePlatforms.length === COMPLETE_DESKTOP_BADGE_PLATFORMS.size &&
+    badgePlatforms.every((platform) =>
+      COMPLETE_DESKTOP_BADGE_PLATFORMS.has(platform),
+    )
+  ) {
+    return 'omit';
+  }
+
+  return { badgePlatforms, unknownPlatforms };
+}
+
+function renderPlatformBadges({
+  badgePlatforms,
+  unknownPlatforms,
+}: TypeDocPlatformTag): string {
+  return [
+    '<div className="inline-flex flex-wrap gap-1">',
+    ...badgePlatforms.map(
+      (platform) => `  <Lynx.PlatformBadge platform="${platform}" />`,
+    ),
+    ...unknownPlatforms.map(
+      (platform) => `  <code>${escapeHtml(platform)}</code>`,
+    ),
+    '</div>',
+  ].join('\n');
+}
+
+function replaceTypeDocPlatformTagsWithBadges(content: string): string {
+  const lines = content.split('\n');
+  const out: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const platformHeadingMatch = /^(#{1,6})\s+Platform\s*$/.exec(lines[i]);
+    if (!platformHeadingMatch) {
+      out.push(lines[i]);
+      continue;
+    }
+
+    let platformLineIndex = i + 1;
+    while (
+      platformLineIndex < lines.length &&
+      /^[ \t]*$/.test(lines[platformLineIndex])
+    ) {
+      platformLineIndex++;
+    }
+
+    const platformLine = lines[platformLineIndex];
+    const platforms =
+      platformLine === undefined
+        ? undefined
+        : getPlatformTagsFromTypeDocPlatformLine(platformLine);
+    if (platforms === undefined) {
+      out.push(lines[i]);
+      continue;
+    }
+
+    if (platforms !== 'omit') {
+      const platformHeadingLevel = platformHeadingMatch[1].length;
+      const parentHeadingPattern = new RegExp(
+        `^#{1,${Math.max(1, platformHeadingLevel - 1)}}\\s+[^#]`,
+      );
+      const insertIndex = out.findLastIndex((line) =>
+        parentHeadingPattern.test(line),
+      );
+      const badgeLines = ['', renderPlatformBadges(platforms)];
+
+      if (insertIndex === -1) {
+        out.push(...badgeLines);
+      } else {
+        out.splice(insertIndex + 1, 0, ...badgeLines);
+      }
+    }
+
+    i = platformLineIndex;
+    if (i + 1 < lines.length && /^[ \t]*$/.test(lines[i + 1])) {
+      i++;
+    }
+  }
+
+  return out.join('\n');
+}
+
+type PostProcessGeneratedDocsOptions = {
+  platformBadges?: boolean;
+};
+
 /**
  * Post-processes generated docs in place: normalize site links and escape
  * MDX-breaking braces so the output builds cleanly and doesn't require manual
  * fixups after each regeneration.
  */
-function postProcessGeneratedDocs(dir: string): void {
+function postProcessGeneratedDocs(
+  dir: string,
+  options: PostProcessGeneratedDocsOptions = {},
+): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      postProcessGeneratedDocs(full);
+      postProcessGeneratedDocs(full, options);
     } else if (entry.name.endsWith('.mdx') || entry.name.endsWith('.md')) {
       const original = fs.readFileSync(full, 'utf8');
-      let out = rewriteSiteLinks(original);
-      if (entry.name.endsWith('.mdx')) out = escapeMdxBraces(out);
+      let out = trimTrailingWhitespace(rewriteSiteLinks(original));
+      if (entry.name.endsWith('.mdx')) {
+        if (options.platformBadges) {
+          out = replaceTypeDocPlatformTagsWithBadges(out);
+        }
+        out = escapeMdxTagLiterals(out);
+        out = escapeMdxBraces(out);
+      }
       if (out !== original) {
         fs.writeFileSync(full, out);
       }
@@ -164,6 +349,7 @@ export async function runTypeDocForPackage(
   packageConfig: PackageConfig,
   outputRoot: string,
   locale: string,
+  options: Pick<CliOptions, 'platformBadges'> = {},
 ): Promise<MarkdownApplication> {
   const { tsconfig } = packageConfig;
 
@@ -239,7 +425,9 @@ export async function runTypeDocForPackage(
     await app.generateDocs(project, absoluteOutputDir);
 
     // Normalize site links and escape MDX-breaking braces in the output.
-    postProcessGeneratedDocs(absoluteOutputDir);
+    postProcessGeneratedDocs(absoluteOutputDir, {
+      platformBadges: options.platformBadges,
+    });
   }
 
   return app;
@@ -270,12 +458,14 @@ export async function runTypeDoc(options: CliOptions): Promise<void> {
       packageConfig,
       path.join(options.cwd, 'docs/zh/'),
       'zh',
+      options,
     );
     await runTypeDocForPackage(
       packageName,
       packageConfig,
       path.join(options.cwd, 'docs/en/'),
       'en',
+      options,
     );
   }
 }
