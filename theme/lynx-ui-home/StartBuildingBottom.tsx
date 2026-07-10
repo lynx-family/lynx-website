@@ -14,7 +14,7 @@ export const StartBuilding = () => {
       <Ripple className="z-0" mainCircleSize={300} numCircles={10} />
       <div className="startBuildingTitle relative z-10">
         {lang === 'zh' ? '开始使用' : 'Start building with '}
-        <span className="text-[var(--home-highlight-title-color)]">
+        <span className="whitespace-nowrap text-[var(--home-highlight-title-color)]">
           lynx-ui
         </span>
       </div>

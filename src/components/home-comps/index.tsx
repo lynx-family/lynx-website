@@ -1,6 +1,6 @@
 export { MeteorsBackground } from './meteors-background';
 export { GalaxyHeroBackground } from './galaxy-background';
-export { Features } from './features/index';
+export { Features, type FeatureCardItem } from './features/index';
 export { LynxtronFeatures } from './lynxtron-features/index';
 export { ShowCase } from './showcase/index';
 export { Banner } from './banner/index';

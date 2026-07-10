@@ -90,12 +90,12 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
   {
-    value: 'lynx-ui',
+    value: 'ui',
     label: 'lynx-ui',
     description: 'UI for ReactLynx',
     descriptionZh: 'ReactLynx 组件库',
-    home: '/lynx-ui/',
-    url: '/lynx-ui/introduction',
+    home: '/ui/',
+    url: '/ui/introduction',
     category: 'js-framework',
     parentValue: 'react',
     logo: {

@@ -23,30 +23,28 @@ import {
 } from './icon';
 import { FeatureIconItem } from './item-icon';
 type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
-const featuresConfig: Record<
-  FeaturesConfigKey,
-  Array<{
-    title: { en: string; zh: string };
-    desc: { en: string; zh: string };
-    class?: string;
-    isRowSet?: boolean | number;
-    /**
-     * Render the card's action buttons as a full-width vertical stack
-     * (one button per row) instead of the default horizontal wrap with
-     * fixed 191/390px widths. Use for cards whose actions are the focal
-     * content — e.g. the platform picker on Write Once, Render Anywhere
-     * or the framework picker on Framework Agnostic.
-     */
-    stackedActions?: boolean;
-    iconClass?: string;
-    actions?: {
-      text: string | React.ReactNode;
-      link?: string;
-      size: string;
-    }[];
-    customRender?: ReactNode;
-  }>
-> = {
+export interface FeatureCardItem {
+  title: { en: string; zh: string };
+  desc: { en: string; zh: string };
+  class?: string;
+  isRowSet?: boolean | number;
+  /**
+   * Render the card's action buttons as a full-width vertical stack
+   * (one button per row) instead of the default horizontal wrap with
+   * fixed 191/390px widths. Use for cards whose actions are the focal
+   * content — e.g. the platform picker on Write Once, Render Anywhere
+   * or the framework picker on Framework Agnostic.
+   */
+  stackedActions?: boolean;
+  iconClass?: string;
+  actions?: {
+    text: string | React.ReactNode;
+    link?: string;
+    size: string;
+  }[];
+  customRender?: ReactNode;
+}
+const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
   '/': [
     {
       stackedActions: true,
@@ -285,7 +283,14 @@ const featuresConfig: Record<
   ],
 };
 
-const Features = ({ src = '/' }: { src?: string }) => {
+const Features = ({
+  src = '/',
+  items,
+}: {
+  src?: string;
+  /** Custom card configs; bypasses the path-keyed `featuresConfig` lookup. */
+  items?: FeatureCardItem[];
+}) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const lang = useLang() as 'en' | 'zh';
   const configKey = (
@@ -297,7 +302,7 @@ const Features = ({ src = '/' }: { src?: string }) => {
   ) as FeaturesConfigKey;
   const isMobile = useIfMobile();
 
-  const featuresConfigTarget = featuresConfig[configKey];
+  const featuresConfigTarget = items ?? featuresConfig[configKey];
 
   const doBeamBorder = (isHover: boolean, index: number) => {
     if (isHover) {

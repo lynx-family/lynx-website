@@ -20,7 +20,7 @@ export const Ripple = React.memo(function Ripple({
   return (
     <div
       className={[
-        'pointer-events-none absolute inset-0 select-none [mask-image:linear-gradient(to_bottom,white,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,white,transparent)]',
+        'pointer-events-none absolute inset-0 select-none [mask-image:linear-gradient(to_bottom,transparent,white_35%,white_65%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,white_35%,white_65%,transparent)]',
         className,
       ]
         .filter(Boolean)

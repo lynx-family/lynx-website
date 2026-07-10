@@ -80,7 +80,7 @@ const COVER_EXTRAS: Record<string, Pick<OgCover, 'gradient' | 'logo'>> = {
     gradient: ['#ff9a00', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
     logo: 'rspeedy.png',
   },
-  'lynx-ui': {
+  ui: {
     gradient: ['#ff1a6e', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
     logo: 'lynx-ui.png',
   },
@@ -173,7 +173,7 @@ export type OgSelection =
  * A leading `zh` segment is stripped before classifying. Precedence:
  *   1. blog   — a `blog` segment followed by a slug (the blog index is not a post)
  *   2. api    — first effective segment is `api`
- *   3. subsite — first segment matching a cover (react/rspeedy/lynx-ui/ai)
+ *   3. subsite — first segment matching a cover (react/rspeedy/ui/ai)
  *   4. guide  — fallback
  *
  * Examples (imagePath via ogBlogPath/ogCoverPath):
@@ -205,8 +205,10 @@ export function selectOg(pathnameNoBase: string, lang: string): OgSelection {
     return { kind: 'cover', value: 'api', imagePath: ogCoverPath(lang, 'api') };
   }
 
-  // 3. Subsite docs (react/rspeedy/lynx-ui/ai) — match a segment to a cover.
-  const value = SUBSITE_COVER_VALUES.find((v) => afterLang.includes(v));
+  // 3. Subsite docs (react/rspeedy/ui/ai) — match the first effective segment
+  // to a cover. Deeper segments must not count: /guide/ui/* is a guide page,
+  // not a lynx-ui one.
+  const value = SUBSITE_COVER_VALUES.find((v) => afterLang[0] === v);
   if (value)
     return { kind: 'cover', value, imagePath: ogCoverPath(lang, value) };
 
