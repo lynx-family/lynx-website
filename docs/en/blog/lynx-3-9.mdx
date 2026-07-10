@@ -1,80 +1,92 @@
 ---
-title: 'Lynx 3.9: Performance Report'
+title: 'Lynx 3.9: A2UI, Autolink, CSS Updates, and More'
 date: 2026-07-10
 sidebar: false
 authors: ['lynx']
-badge_text: 'Lynx 3.9 performance report'
-description: 'Lynx 3.9 performance benchmarking compares against 3.8 across Android, iOS, and HarmonyOS, covering first-screen rendering, CPU, memory, LoadTemplate, and C++ Benchmark results.'
+badge_text: 'Lynx 3.9 is released!'
+description: 'Lynx 3.9 brings Lynx for AI, A2UI, Autolink, ReactLynx build optimizations, Element and CSS updates, plus Lynx API and DevTool improvements.'
 ---
 
 import { BlogHeader } from '@lynx';
 
 <BlogHeader />
 
-{/* cspell:ignore nodiff VMSDK AOSP */}
+{/* cspell:ignore Autolink animax RTSVM */}
 
-Lynx 3.9 has completed its performance comparison against the stable Lynx 3.8 release.
+Lynx 3.9 is now officially released!
 
-This benchmark covers Android, iOS, and HarmonyOS. It focuses on first-screen rendering time, CPU time, physical memory, template loading time, and C++ function call duration. The benchmark tasks and data aggregation are automated, and the results are used as a release gate before host integration.
+This release continues our monthly cadence with updates across **Lynx for AI**, [A2UI](/react/genui/a2ui), [Autolink](/guide/autolink), ReactLynx rendering and build optimization, Element capabilities, CSS compatibility, Lynx APIs, and DevTool debugging.
 
-## Benchmark Conclusions
+## Lynx for AI
 
-Overall, Lynx 3.9 performs as expected.
+Lynx 3.9 expands the runtime foundation for AI Agent generated interfaces.
 
-- On Android, `image_animation_lynx_nodiff` and `poi_embedded_product_card` show significant regressions. These are mainly caused by the Fresco upgrade, which aligns Lynx with the host version and does not affect online business scenarios.
-- Android and iOS are affected by a VMSDK GC timing change. Some metrics with very small absolute values show large percentage regressions, while the overall timing remains within expectations.
-- On HarmonyOS, `image_animation` and `image_text_waterfall` improve by about 10% in `totalTiming`.
-- Some HarmonyOS TestBench `LoadTemplate` cases regress. The initial analysis points to the new image path, and we will keep tracking it.
-- C++ Benchmark does not show obvious improvements or regressions.
+We released Lynx A2UI, which connects model conversations, protocol messages, component catalogs, and ReactLynx rendering into a complete UI generation pipeline. Instead of asking models to generate arbitrary UI code, A2UI lets Agents compose interfaces within a controlled set of components and capabilities.
 
-## Benchmark Environment
+Read [Generative UI on Lynx with A2UI](/blog/lynx-a2ui) for the launch story, or jump straight to the [A2UI guide](/react/genui/a2ui) to start integrating it.
 
-The benchmark uses release packages and the online server environment.
+We are also improving how AI systems consume Lynx documentation, so Agents can better understand Lynx APIs, CSS, layout, Elements, and configuration instead of relying on assumptions from the Web platform.
 
-| Version      | Branch        | Lynx Version | Commit                                     |
-| ------------ | ------------- | ------------ | ------------------------------------------ |
-| Baseline     | `release/3.8` | 3.8          | `ca1f4fdbfee03ee9cac93e63c8028d2a0f1b586c` |
-| Test Version | `release/3.9` | 3.9          | `4d32eb78cf31cf99f9c3194c5dedb8f4eef5a225` |
+## Autolink
 
-The benchmark covers mid-to-high-end Android devices, high-end iOS devices, and high-end HarmonyOS devices:
+Lynx 3.9 introduces [Autolink](/guide/autolink), an integration mechanism that lets host apps automatically discover native libraries installed under `node_modules` and register their Elements, Native Modules, and Services during Android and iOS initialization.
 
-| Platform     | Android           | iOS           | HarmonyOS    |
-| ------------ | ----------------- | ------------- | ------------ |
-| Device Model | AOSP on blueline  | iPhone 12     | Mate 60 Pro  |
-| Device Score | Mid-high end 6.03 | High end 10.8 | High end 9.9 |
+For app teams, this removes the need to wire every native library by hand. For library authors, providing a `lynx.lib.json` manifest and the corresponding native implementation is enough for Autolink to generate the registry that the host app needs at build time.
 
-## Benchmark Metrics
+## ReactLynx
 
-| Metric        | Unit | Description                                                                             |
-| ------------- | ---- | --------------------------------------------------------------------------------------- |
-| Total Timing  | ms   | First-screen rendering time, similar to Lynx FCP, from `loadBundleStart` to `PaintEnd`. |
-| CPU           | ms   | CPU time from before page launch to 5 seconds after entering the page.                  |
-| Total Memory  | MB   | Memory increase from before page launch to 5 seconds after entering the page.           |
-| LoadTemplate  | ms   | Template loading duration, equivalent to the `loadBundle` stage.                        |
-| C++ Benchmark | ms   | C++ function call duration.                                                             |
+ReactLynx continues to reduce rendering overhead and improve bundle output in 3.9.
 
-## Result Analysis
+The multi-slot Snapshot optimization extends Preact support for multiple slots, reducing unnecessary Snapshot and wrapper nodes. It is enabled by default in `@lynx-js/react` 0.120.0.
 
-### Benchmark Cases
+On the build side, the ReactLynx toolchain now supports a multi-threaded Minimizer mechanism for more effective compression and tree-shaking across main-thread and background-thread bundles. You can enable the default optimization through [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize), or configure thread-specific compression with [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) and [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions).
 
-The main Android fluctuations are concentrated in image-related cases. The regressions in `image_animation_lynx_nodiff` and `poi_embedded_product_card` come from the Fresco upgrade, which is related to host dependency alignment and does not affect the online business assessment.
+ReactLynx also now supports [`createPortal`](/api/react/Function.createPortal), allowing content to render into a specified container node.
 
-iOS is generally stable. A few low-latency metrics show noticeable percentage changes because the VMSDK GC timing change affects small denominators, but the absolute timing remains acceptable.
+## Element Updates
 
-HarmonyOS improves first-screen timing by about 10% in `image_animation` and `image_text_waterfall`, while some TestBench `LoadTemplate` cases still need follow-up.
+This release extends several built-in and platform Elements.
 
-### TestBench and C++ Benchmark
+### `<frame>`
 
-On Android and iOS, TestBench is also affected by the GC timing change. Some small metrics show larger percentage regressions, but overall timing remains as expected.
+[`<frame>`](/api/elements/built-in/frame) adds the `enable-multi-async-thread` boolean attribute to control whether embedded Lynx pages use multiple async threads.
 
-C++ Benchmark is stable, with no clear optimization or regression cases.
+It also adds `preset-height` and `preset-width` for specifying dimensions before content initialization, plus a `bindloadmetrics` event for tracking frame loading and performance metrics.
 
-## Upgrade Notes
+### `<image>`
 
-If you are upgrading from Lynx 3.8 to Lynx 3.9, follow the official [integration guide](https://lynxjs.org/3.9/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions. Pay special attention to:
+[`<image>`](/api/elements/built-in/image) adds `region-to-decode` for region-based image decoding. This helps avoid unnecessary decode work when a page only needs to display part of a larger image.
 
-- Image-related performance changes, especially Android scenarios that depend on the host image library.
-- Metrics with very small absolute values, where percentage changes should be interpreted together with the raw timing.
-- HarmonyOS template loading and image pipeline performance.
+### More Elements
 
-Lynx 3.9 meets the expected release performance criteria. We will continue using automated benchmarking and keep tracking platform-specific performance changes in future releases.
+On Web, `<animax-view>` adds alpha video layer support, advanced text layout capabilities, and an async API for retrieving layer bounds. HarmonyOS overlay capabilities also continue to evolve for page-level and top-level overlay scenarios.
+
+## CSS Updates
+
+Lynx 3.9 adds several CSS capabilities:
+
+- [`!important`](/api/css/selectors#important-support): available when `engineVersion >= 3.9`.
+- `flexBasisZeroPercent`: when enabled, omitted `flex-basis` values in the `flex` shorthand are parsed as `0%`, matching behavior from some browsers.
+- `enableGridPlacementShorthands`: enables [`grid-row`](/api/css/properties/grid-row) and [`grid-column`](/api/css/properties/grid-column) shorthand properties.
+- Standard [`position: sticky`](/api/css/properties/position): enabled through `enableNewSticky`.
+- HarmonyOS support for [`offset-path`](/api/css/properties/offset-path), [`offset-distance`](/api/css/properties/offset-distance), and [`offset-rotate`](/api/css/properties/offset-rotate).
+
+## Gestures, APIs, and DevTool
+
+On HarmonyOS, the new `ReuseNativeContent` interface lets clients forward event and gesture handling back to a Lynx page after reusing Lynx page nodes. The default value of the `enableNewIntersectionObserver` page flag is now `true`.
+
+[`requestResourcePrefetch`](/api/lynx-api/lynx/lynx-request-resource-prefetch) gains a new `config` parameter with `awaitComplete` and `awaitTimeout`, so callbacks can run after prefetch fully completes.
+
+For debugging, MTS debugging now supports RTSVM. On HarmonyOS, BTS debugging supports the case where a `LynxBackgroundRuntime` is attached to a `LynxView`.
+
+## Performance
+
+The 3.9 release-gate benchmark shows that on HarmonyOS, cases such as `image_animation` gain roughly 10% in `TotalTime` and `CPUTime`, mainly thanks to the new image strategy optimization.
+
+## Upgrade Guide
+
+To upgrade to Lynx 3.9, follow the official [integration guide](https://lynxjs.org/3.9/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions.
+
+Lynx 3.9 includes some breaking changes. Before upgrading, validate the affected platforms, `engineVersion`, page switches, and host integration path for your app.
+
+Thanks to everyone trying new releases, filing issues, and helping the Lynx ecosystem move forward. We will keep the monthly releases smaller, focused, and easier to adopt.
