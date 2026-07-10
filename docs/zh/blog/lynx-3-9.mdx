@@ -1,0 +1,80 @@
+---
+title: 'Lynx 3.9：性能评测报告'
+date: 2026-07-10
+sidebar: false
+authors: ['lynx']
+badge_text: 'Lynx 3.9 性能报告'
+description: 'Lynx 3.9 与 3.8 的性能评测覆盖 Android、iOS 与 HarmonyOS，关注首屏渲染、CPU、内存、LoadTemplate 与 C++ Benchmark。'
+---
+
+import { BlogHeader } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore nodiff VMSDK AOSP */}
+
+Lynx 3.9 已完成与 3.8 稳定版本的性能对比评测。
+
+本次评测覆盖 Android、iOS 和 HarmonyOS 三个平台，关注首屏渲染耗时、CPU 使用耗时、物理内存、模板加载耗时和 C++ 函数调用耗时。评测任务和数据统计均通过自动化流程完成，用于在宿主集成前确认新版本的性能表现。
+
+## 评测结论
+
+整体来看，Lynx 3.9 的性能表现符合预期。
+
+- Android 端在 `image_animation_lynx_nodiff` 和 `poi_embedded_product_card` 等 case 中出现明显劣化，主要由 Fresco 升级引入。该升级用于对齐宿主版本，对线上业务没有影响。
+- Android 和 iOS 端受到 VMSDK GC 触发时机变化影响，部分绝对值较小的指标劣化比例被放大。整体耗时仍在预期范围内。
+- HarmonyOS 端在 `image_animation` 和 `image_text_waterfall` 的 `totalTiming` 指标上有约 10% 的优化。
+- HarmonyOS 端部分 TestBench `LoadTemplate` case 有劣化，初步判断与新图片链路相关，后续会继续跟进。
+- C++ Benchmark 暂无明显优化或劣化 case。
+
+## 评测环境
+
+本次评测使用 release 包和线上 server 环境。
+
+| 评测版本 | Branch        | Lynx 版本 | Commit                                     |
+| -------- | ------------- | --------- | ------------------------------------------ |
+| 基线版本 | `release/3.8` | 3.8       | `ca1f4fdbfee03ee9cac93e63c8028d2a0f1b586c` |
+| 测试版本 | `release/3.9` | 3.9       | `4d32eb78cf31cf99f9c3194c5dedb8f4eef5a225` |
+
+评测设备覆盖中高端 Android 设备、高端 iOS 设备和高端 HarmonyOS 设备：
+
+| 平台     | Android          | iOS         | HarmonyOS   |
+| -------- | ---------------- | ----------- | ----------- |
+| 设备型号 | AOSP on blueline | iPhone 12   | Mate 60 Pro |
+| 机型评分 | 中高端机 6.03    | 高端机 10.8 | 高端机 9.9  |
+
+## 评测指标
+
+| 指标          | 单位 | 说明                                                              |
+| ------------- | ---- | ----------------------------------------------------------------- |
+| Total Timing  | ms   | 首屏渲染耗时，类似 Lynx FCP，从 `loadBundleStart` 到 `PaintEnd`。 |
+| CPU           | ms   | 页面启动前到进入页面 5 秒后的 CPU 使用时间。                      |
+| Total Memory  | MB   | 页面启动前到进入页面 5 秒后的内存增量。                           |
+| LoadTemplate  | ms   | 模板加载耗时，即 `loadBundle` 阶段耗时。                          |
+| C++ Benchmark | ms   | C++ 函数调用耗时。                                                |
+
+## 结果分析
+
+### Benchmark Case
+
+Android 端的主要波动集中在图片相关 case。`image_animation_lynx_nodiff` 和 `poi_embedded_product_card` 的劣化来自 Fresco 升级，与宿主依赖对齐相关，不影响线上业务判断。
+
+iOS 端整体表现稳定。部分低耗时指标在百分比上有明显波动，主要是因为 VMSDK GC 触发时机变化导致分母较小，绝对耗时仍处于可接受范围。
+
+HarmonyOS 端在 `image_animation` 和 `image_text_waterfall` 场景下有约 10% 的首屏耗时优化，同时需要继续关注部分 TestBench `LoadTemplate` case 的劣化。
+
+### TestBench 与 C++ Benchmark
+
+TestBench 中 Android 和 iOS 端同样受到 GC 触发时机变化影响，部分小指标的百分比劣化较明显，但整体耗时符合预期。
+
+C++ Benchmark 暂无明显优化或劣化 case，整体表现稳定。
+
+## 升级建议
+
+如果你正在从 Lynx 3.8 升级到 Lynx 3.9，可以参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.9/zh/guide/start/integrate-with-existing-apps.html)更新依赖版本，并重点关注以下事项：
+
+- 图片相关场景的性能变化，尤其是 Android 端依赖宿主图片库的业务。
+- 对低耗时指标进行分析时，结合绝对值判断，不只看百分比变化。
+- HarmonyOS 端关注模板加载链路和图片链路表现。
+
+Lynx 3.9 的整体性能表现符合版本准出预期。后续版本中，我们会继续保持自动化评测流程，并持续跟进各平台的性能波动。
