@@ -1,0 +1,80 @@
+---
+title: 'Lynx 3.9: Performance Report'
+date: 2026-07-10
+sidebar: false
+authors: ['lynx']
+badge_text: 'Lynx 3.9 performance report'
+description: 'Lynx 3.9 performance benchmarking compares against 3.8 across Android, iOS, and HarmonyOS, covering first-screen rendering, CPU, memory, LoadTemplate, and C++ Benchmark results.'
+---
+
+import { BlogHeader } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore nodiff VMSDK AOSP */}
+
+Lynx 3.9 has completed its performance comparison against the stable Lynx 3.8 release.
+
+This benchmark covers Android, iOS, and HarmonyOS. It focuses on first-screen rendering time, CPU time, physical memory, template loading time, and C++ function call duration. The benchmark tasks and data aggregation are automated, and the results are used as a release gate before host integration.
+
+## Benchmark Conclusions
+
+Overall, Lynx 3.9 performs as expected.
+
+- On Android, `image_animation_lynx_nodiff` and `poi_embedded_product_card` show significant regressions. These are mainly caused by the Fresco upgrade, which aligns Lynx with the host version and does not affect online business scenarios.
+- Android and iOS are affected by a VMSDK GC timing change. Some metrics with very small absolute values show large percentage regressions, while the overall timing remains within expectations.
+- On HarmonyOS, `image_animation` and `image_text_waterfall` improve by about 10% in `totalTiming`.
+- Some HarmonyOS TestBench `LoadTemplate` cases regress. The initial analysis points to the new image path, and we will keep tracking it.
+- C++ Benchmark does not show obvious improvements or regressions.
+
+## Benchmark Environment
+
+The benchmark uses release packages and the online server environment.
+
+| Version      | Branch        | Lynx Version | Commit                                     |
+| ------------ | ------------- | ------------ | ------------------------------------------ |
+| Baseline     | `release/3.8` | 3.8          | `ca1f4fdbfee03ee9cac93e63c8028d2a0f1b586c` |
+| Test Version | `release/3.9` | 3.9          | `4d32eb78cf31cf99f9c3194c5dedb8f4eef5a225` |
+
+The benchmark covers mid-to-high-end Android devices, high-end iOS devices, and high-end HarmonyOS devices:
+
+| Platform     | Android           | iOS           | HarmonyOS    |
+| ------------ | ----------------- | ------------- | ------------ |
+| Device Model | AOSP on blueline  | iPhone 12     | Mate 60 Pro  |
+| Device Score | Mid-high end 6.03 | High end 10.8 | High end 9.9 |
+
+## Benchmark Metrics
+
+| Metric        | Unit | Description                                                                             |
+| ------------- | ---- | --------------------------------------------------------------------------------------- |
+| Total Timing  | ms   | First-screen rendering time, similar to Lynx FCP, from `loadBundleStart` to `PaintEnd`. |
+| CPU           | ms   | CPU time from before page launch to 5 seconds after entering the page.                  |
+| Total Memory  | MB   | Memory increase from before page launch to 5 seconds after entering the page.           |
+| LoadTemplate  | ms   | Template loading duration, equivalent to the `loadBundle` stage.                        |
+| C++ Benchmark | ms   | C++ function call duration.                                                             |
+
+## Result Analysis
+
+### Benchmark Cases
+
+The main Android fluctuations are concentrated in image-related cases. The regressions in `image_animation_lynx_nodiff` and `poi_embedded_product_card` come from the Fresco upgrade, which is related to host dependency alignment and does not affect the online business assessment.
+
+iOS is generally stable. A few low-latency metrics show noticeable percentage changes because the VMSDK GC timing change affects small denominators, but the absolute timing remains acceptable.
+
+HarmonyOS improves first-screen timing by about 10% in `image_animation` and `image_text_waterfall`, while some TestBench `LoadTemplate` cases still need follow-up.
+
+### TestBench and C++ Benchmark
+
+On Android and iOS, TestBench is also affected by the GC timing change. Some small metrics show larger percentage regressions, but overall timing remains as expected.
+
+C++ Benchmark is stable, with no clear optimization or regression cases.
+
+## Upgrade Notes
+
+If you are upgrading from Lynx 3.8 to Lynx 3.9, follow the official [integration guide](https://lynxjs.org/3.9/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions. Pay special attention to:
+
+- Image-related performance changes, especially Android scenarios that depend on the host image library.
+- Metrics with very small absolute values, where percentage changes should be interpreted together with the raw timing.
+- HarmonyOS template loading and image pipeline performance.
+
+Lynx 3.9 meets the expected release performance criteria. We will continue using automated benchmarking and keep tracking platform-specific performance changes in future releases.
