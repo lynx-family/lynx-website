@@ -1,80 +1,92 @@
 ---
-title: 'Lynx 3.9：性能评测报告'
+title: 'Lynx 3.9：A2UI、Autolink、CSS 能力增强与更多更新'
 date: 2026-07-10
 sidebar: false
 authors: ['lynx']
-badge_text: 'Lynx 3.9 性能报告'
-description: 'Lynx 3.9 与 3.8 的性能评测覆盖 Android、iOS 与 HarmonyOS，关注首屏渲染、CPU、内存、LoadTemplate 与 C++ Benchmark。'
+badge_text: 'Lynx 3.9 发布了!'
+description: 'Lynx 3.9 带来 Lynx for AI、A2UI、Autolink、ReactLynx 构建优化、元件与 CSS 能力增强，以及 Lynx API 和 DevTool 更新。'
 ---
 
 import { BlogHeader } from '@lynx';
 
 <BlogHeader />
 
-{/* cspell:ignore nodiff VMSDK AOSP */}
+{/* cspell:ignore Autolink animax RTSVM */}
 
-Lynx 3.9 已完成与 3.8 稳定版本的性能对比评测。
+Lynx 3.9 已经正式发布！
 
-本次评测覆盖 Android、iOS 和 HarmonyOS 三个平台，关注首屏渲染耗时、CPU 使用耗时、物理内存、模板加载耗时和 C++ 函数调用耗时。评测任务和数据统计均通过自动化流程完成，用于在宿主集成前确认新版本的性能表现。
+这个版本继续沿着月度发布节奏推进，重点包括 **Lynx for AI**、[A2UI](/react/genui/a2ui)、[Autolink](/guide/autolink)、ReactLynx 构建与渲染优化、元件能力扩展、CSS 标准能力补齐，以及 Lynx API 和 DevTool 调试体验增强。
 
-## 评测结论
+## Lynx for AI
 
-整体来看，Lynx 3.9 的性能表现符合预期。
+Lynx 3.9 进一步完善了面向 AI Agent 的界面生成能力。
 
-- Android 端在 `image_animation_lynx_nodiff` 和 `poi_embedded_product_card` 等 case 中出现明显劣化，主要由 Fresco 升级引入。该升级用于对齐宿主版本，对线上业务没有影响。
-- Android 和 iOS 端受到 VMSDK GC 触发时机变化影响，部分绝对值较小的指标劣化比例被放大。整体耗时仍在预期范围内。
-- HarmonyOS 端在 `image_animation` 和 `image_text_waterfall` 的 `totalTiming` 指标上有约 10% 的优化。
-- HarmonyOS 端部分 TestBench `LoadTemplate` case 有劣化，初步判断与新图片链路相关，后续会继续跟进。
-- C++ Benchmark 暂无明显优化或劣化 case。
+我们发布了 Lynx A2UI：它基于 A2UI 协议，将模型对话、协议消息、组件目录和 ReactLynx 渲染串成完整链路。开发者可以让 Agent 在受控的组件与能力范围内生成 UI，而不是直接生成任意界面代码。
 
-## 评测环境
+你可以阅读 [Generative UI on Lynx with A2UI](/blog/lynx-a2ui) 了解发布背景，也可以直接进入 [A2UI 指南](/react/genui/a2ui)开始接入。
 
-本次评测使用 release 包和线上 server 环境。
+同时，我们也在完善 AI 使用 Lynx 文档的方式，让 Agent 更容易获得 Lynx API、CSS、布局、元件和配置相关知识，减少“按 Web 习惯写 Lynx 代码”带来的误用。
 
-| 评测版本 | Branch        | Lynx 版本 | Commit                                     |
-| -------- | ------------- | --------- | ------------------------------------------ |
-| 基线版本 | `release/3.8` | 3.8       | `ca1f4fdbfee03ee9cac93e63c8028d2a0f1b586c` |
-| 测试版本 | `release/3.9` | 3.9       | `4d32eb78cf31cf99f9c3194c5dedb8f4eef5a225` |
+## Autolink
 
-评测设备覆盖中高端 Android 设备、高端 iOS 设备和高端 HarmonyOS 设备：
+Lynx 3.9 引入了 [Autolink](/guide/autolink) 机制，让宿主应用可以自动发现安装在 `node_modules` 中的原生库，并在 Android 和 iOS 初始化时统一注册这些库提供的元件、Native Module 和 Service。
 
-| 平台     | Android          | iOS         | HarmonyOS   |
-| -------- | ---------------- | ----------- | ----------- |
-| 设备型号 | AOSP on blueline | iPhone 12   | Mate 60 Pro |
-| 机型评分 | 中高端机 6.03    | 高端机 10.8 | 高端机 9.9  |
+对应用侧来说，这意味着接入一个原生库时不再需要逐库手动串联注册逻辑；对库作者来说，只要按照约定提供 `lynx.lib.json` 和对应原生实现，Autolink 就能在构建期生成宿主应用需要的 registry。
 
-## 评测指标
+## ReactLynx
 
-| 指标          | 单位 | 说明                                                              |
-| ------------- | ---- | ----------------------------------------------------------------- |
-| Total Timing  | ms   | 首屏渲染耗时，类似 Lynx FCP，从 `loadBundleStart` 到 `PaintEnd`。 |
-| CPU           | ms   | 页面启动前到进入页面 5 秒后的 CPU 使用时间。                      |
-| Total Memory  | MB   | 页面启动前到进入页面 5 秒后的内存增量。                           |
-| LoadTemplate  | ms   | 模板加载耗时，即 `loadBundle` 阶段耗时。                          |
-| C++ Benchmark | ms   | C++ 函数调用耗时。                                                |
+ReactLynx 在 3.9 中继续优化渲染层级和构建产物。
 
-## 结果分析
+多 Slot Snapshot 优化通过扩展 Preact 的实现，减少不必要的 Snapshot 和 wrapper 节点数量，并已在 `@lynx-js/react` 0.120.0 中默认启用。
 
-### Benchmark Case
+构建侧新增了双线程 Minimizer 机制，用于对主线程和后台线程产物进行更细粒度的压缩与裁剪。开发者可以通过 [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize) 快速启用默认优化，也可以分别配置 [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) 和 [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions)。
 
-Android 端的主要波动集中在图片相关 case。`image_animation_lynx_nodiff` 和 `poi_embedded_product_card` 的劣化来自 Fresco 升级，与宿主依赖对齐相关，不影响线上业务判断。
+此外，ReactLynx 现在支持 [`createPortal`](/api/react/Function.createPortal)，让内容可以渲染到指定容器节点中。
 
-iOS 端整体表现稳定。部分低耗时指标在百分比上有明显波动，主要是因为 VMSDK GC 触发时机变化导致分母较小，绝对耗时仍处于可接受范围。
+## 元件能力
 
-HarmonyOS 端在 `image_animation` 和 `image_text_waterfall` 场景下有约 10% 的首屏耗时优化，同时需要继续关注部分 TestBench `LoadTemplate` case 的劣化。
+这个版本也扩展了多个内置元件和平台元件能力。
 
-### TestBench 与 C++ Benchmark
+### `<frame>`
 
-TestBench 中 Android 和 iOS 端同样受到 GC 触发时机变化影响，部分小指标的百分比劣化较明显，但整体耗时符合预期。
+[`<frame>`](/api/elements/built-in/frame) 新增 `enable-multi-async-thread`，可控制嵌入式 Lynx 页面是否使用多个异步线程。
 
-C++ Benchmark 暂无明显优化或劣化 case，整体表现稳定。
+它也新增了 `preset-height` 和 `preset-width`，用于在内容初始化前指定尺寸；同时新增 `bindloadmetrics` 事件，方便宿主或业务侧跟踪 frame 的加载与性能指标。
 
-## 升级建议
+### `<image>`
 
-如果你正在从 Lynx 3.8 升级到 Lynx 3.9，可以参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.9/zh/guide/start/integrate-with-existing-apps.html)更新依赖版本，并重点关注以下事项：
+[`<image>`](/api/elements/built-in/image) 新增 `region-to-decode`，支持按图片区域解码。对于只需要展示局部区域的大图场景，这可以帮助减少不必要的解码成本。
 
-- 图片相关场景的性能变化，尤其是 Android 端依赖宿主图片库的业务。
-- 对低耗时指标进行分析时，结合绝对值判断，不只看百分比变化。
-- HarmonyOS 端关注模板加载链路和图片链路表现。
+### 其他元件
 
-Lynx 3.9 的整体性能表现符合版本准出预期。后续版本中，我们会继续保持自动化评测流程，并持续跟进各平台的性能波动。
+`<animax-view>` 在 Web 端新增 alpha video 图层和高阶文本排版能力，并提供异步接口获取图层边界。HarmonyOS 端的 overlay 能力也继续补齐，支持更灵活的页面级和顶层 overlay 场景。
+
+## CSS 能力
+
+Lynx 3.9 补齐了多项 CSS 能力。
+
+- [`!important`](/api/css/selectors#important-support) 支持：配置 `engineVersion >= 3.9` 后可启用。
+- `flexBasisZeroPercent` 开关：开启后，`flex` 简写中省略的 `flex-basis` 会按 `0%` 解析，用于对齐部分浏览器行为。
+- `enableGridPlacementShorthands` 开关：开启后可以使用 [`grid-row`](/api/css/properties/grid-row) 和 [`grid-column`](/api/css/properties/grid-column) 简写。
+- 标准 [`position: sticky`](/api/css/properties/position) 支持：可通过 `enableNewSticky` 开关启用。
+- HarmonyOS 支持 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
+
+## 手势、API 与 DevTool
+
+手势方面，HarmonyOS 新增 `ReuseNativeContent` 接口，用于在客户端复用 Lynx 页面节点后，将事件和手势处理继续转发给 Lynx 页面。`enableNewIntersectionObserver` 页面开关的默认值也调整为 `true`。
+
+[`requestResourcePrefetch`](/api/lynx-api/lynx/lynx-request-resource-prefetch) 新增 `config` 参数，支持 `awaitComplete` 和 `awaitTimeout`。如果你希望 prefetch 完全结束后再触发 callback，现在可以直接通过配置表达。
+
+DevTool 方面，MTS 调试支持 RTSVM；HarmonyOS 上的 BTS 调试也支持 `LynxBackgroundRuntime` attach 到 `LynxView` 的场景。
+
+## 性能表现
+
+3.9 的性能准出评测显示，HarmonyOS 端在 `image_animation` 等 benchmark case 中，`TotalTime` 和 `CPUTime` 有约 10% 的收益，主要来自新图片策略优化。
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.9/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.9 版本升级。
+
+Lynx 3.9 包含部分破坏性变更。升级前请结合你的目标平台、`engineVersion`、页面开关和宿主集成方式进行验证。
+
+感谢每一位持续试用新版本、反馈问题并推动 Lynx 生态发展的开发者。我们会继续保持更小、更聚焦的月度发布节奏。
