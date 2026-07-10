@@ -1,0 +1,270 @@
+---
+title: OpenUI
+description: 在 ReactLynx 中解析并原生渲染流式 OpenUI Lang，接入内置组件、交互 Action、响应式状态、工具调用与自定义组件库。
+---
+
+# OpenUI
+
+[OpenUI](https://www.openui.com/docs/openui-lang) 是一套生成式 UI 框架。它面向模型的输出格式 OpenUI Lang 是一种紧凑、按行组织、为流式传输设计的语言。Agent 不需要生成可执行的界面代码，而是从应用控制的组件库中选择 `Card(...)`、`Button(...)` 等组件表达式。
+
+[`@lynx-js/genui/openui`](/api/genui/openui/index.html) 是 OpenUI Lang 在 [ReactLynx](/react/introduction) 上的渲染实现。它会增量解析模型输出，把可识别的表达式映射为已注册的 ReactLynx 组件，再通过 Lynx 的原生渲染管线呈现界面。
+
+组件实现、视觉设计、可用工具、导航能力和 Agent 连接仍由应用负责。OpenUI `Library` 定义组件词汇；`toolProvider` 与 `onAction` 则分别控制工具和宿主侧副作用。
+
+## OpenUI 如何工作
+
+一套 OpenUI 接入包含五个部分：
+
+1. **定义 Library**：创建组件定义及其 Zod Schema。`createOpenUiLibrary()` 会从布局、内容、按钮、媒体、浮层和输入组件开始，再应用自定义扩展。
+2. **配置 Agent**：使用同一份组件契约生成 OpenUI system prompt，并提供给模型。
+3. **流式传输 OpenUI Lang**：把模型返回的每个增量片段追加到响应文本中。语句采用函数式记法，例如 `title = TextContent("Hello")`。
+4. **解析并渲染**：`<OpenUiRenderer>` 增量解析已经完整的语句、解析前向引用，并渲染已注册的 ReactLynx 组件。
+5. **处理运行时副作用**：Renderer 管理本地状态与工具调用；需要宿主处理的 Action 则通过 `onAction` 交给应用。
+
+这让生成组件始终处于明确词汇范围内：未注册的组件名不会被渲染，Agent 也不会向应用注入任意 ReactLynx 代码。`Query()`、`Mutation()` 等语言内置能力属于运行时能力，其实际权限需要通过 `toolProvider` 与 `onAction` 约束。
+
+## 快速开始
+
+安装 Renderer 及其 ReactLynx peer dependencies：
+
+```bash
+pnpm add @lynx-js/genui @lynx-js/react @lynx-js/lynx-ui
+```
+
+在应用样式中引入 OpenUI 样式：
+
+```css
+@import '@lynx-js/genui/openui/styles/renderer.css';
+```
+
+:::info 样式入口兼容性
+已发布的 `@lynx-js/genui@0.0.6` 使用 `renderer.css`。当前 `lynx-stack/main` 源码已把宿主侧主题变量移到 `@lynx-js/genui/openui/styles/theme.css`；直接基于 `main` 开发，或使用明确导出该入口的版本时，请改用该路径。
+:::
+
+创建一个引用稳定的 Library，再把 OpenUI Lang 源码传给 Renderer：
+
+```tsx
+import {
+  BuiltinActionType,
+  OpenUiRenderer,
+  createOpenUiLibrary,
+} from '@lynx-js/genui/openui';
+import { useMemo } from '@lynx-js/react';
+
+const response = `
+root = Stack([title, card], "column", false, "l", "stretch", "start")
+title = TextContent("你好，OpenUI", "large-heavy")
+card = Card([message, actions], "card", "column", false, "m", "stretch", "start")
+message = TextContent("这个界面由 OpenUI Lang 描述。")
+actions = Buttons([
+  Button("继续", Action([@ToAssistant("继续了解 OpenUI")]), "primary"),
+  Button("打开 Lynx", Action([@OpenUrl("https://lynxjs.org")]), "secondary")
+])
+`.trim();
+
+export function App() {
+  const library = useMemo(() => createOpenUiLibrary(), []);
+
+  return (
+    <OpenUiRenderer
+      response={response}
+      library={library}
+      onAction={(event) => {
+        if (event.type === BuiltinActionType.ContinueConversation) {
+          // 把 event.humanFriendlyMessage 发回 Agent。
+        }
+
+        if (event.type === BuiltinActionType.OpenUrl) {
+          // 校验 event.params.url，再通过宿主导航能力打开链接。
+        }
+      }}
+    />
+  );
+}
+```
+
+OpenUI Lang 使用位置参数，参数顺序由组件 Schema 决定。例如，内置 `Stack` 的签名是 `Stack(children, direction?, wrap?, gap?, align?, justify?)`。请在 [Components Playground](https://lynx-stack.dev/genui/#/openui/components) 中查看当前签名，不要凭组件名称猜测参数位置。
+
+## 生成 Agent 指令
+
+Agent 必须了解与 Renderer 一致的组件及语言契约。在没有 ReactLynx 运行时依赖的服务端生成内置 system prompt：
+
+```ts
+import { buildOpenUiSystemPrompt } from '@lynx-js/genui/openui/prompt';
+
+const systemPrompt = buildOpenUiSystemPrompt({
+  appendix: '只能使用当前应用明确提供的工具。',
+});
+```
+
+把 `systemPrompt` 作为模型的 system instruction。添加自定义组件时，需要同步维护服务端 prompt 定义和客户端 Library 定义，避免 Agent 输出 Renderer 无法识别的组件或参数。
+
+## 流式传输模型输出
+
+`response` 表示**当前已经收到的完整文本**，而不是最新的单个增量片段。按顺序追加 chunk，并让 `isStreaming` 与真实网络生命周期保持一致：
+
+```tsx
+import { OpenUiRenderer, createOpenUiLibrary } from '@lynx-js/genui/openui';
+import { useMemo, useState } from '@lynx-js/react';
+
+export function StreamingSurface() {
+  const library = useMemo(() => createOpenUiLibrary(), []);
+  const [response, setResponse] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  async function consume(source: AsyncIterable<string>) {
+    setResponse('');
+    setIsStreaming(true);
+
+    try {
+      for await (const delta of source) {
+        setResponse((current) => current + delta);
+      }
+    } finally {
+      setIsStreaming(false);
+    }
+  }
+
+  return (
+    <OpenUiRenderer
+      response={response}
+      library={library}
+      isStreaming={isStreaming}
+      onError={(errors) => {
+        // 流结束后，把结构化错误交给修正流程。
+      }}
+    />
+  );
+}
+```
+
+当 `isStreaming` 为 `true` 时，运行时会延后 `Query()` 和 `Mutation()` 相关工作，并抑制流式解析过程中的临时错误。只在流真正结束后把它设为 `false`；否则可能提前执行不完整的工具调用，或让 Query 一直无法启动。
+
+## 接入状态、工具与 Action
+
+[OpenUI Lang v0.5](https://www.openui.com/docs/openui-lang/specification-v05) 可以描述响应式状态、读写操作和有序 Action：
+
+```text
+$status = "draft"
+items = Query("list_items", {}, { rows: [] })
+save = Mutation("save_item", { status: $status })
+
+root = Stack([summary, actions], "column", false, "m")
+summary = TextContent("条目数：" + @Count(items.rows) + "，状态：" + $status)
+actions = Buttons([
+  Button(
+    "保存",
+    Action([
+      @Set($status, "ready"),
+      @Run(save),
+      @Run(items),
+      @ToAssistant("保存完成")
+    ]),
+    "primary"
+  )
+])
+```
+
+通过 `toolProvider` 把 `Query()` 和 `Mutation()` 中的名称连接到应用能力：
+
+```tsx
+<OpenUiRenderer
+  response={response}
+  library={library}
+  toolProvider={{
+    list_items: async () => ({ rows: [{ id: 1 }] }),
+    save_item: async ({ status }) => ({ ok: true, status }),
+  }}
+  initialState={{ $status: 'draft' }}
+  onStateUpdate={(state) => persistState(state)}
+  onAction={(event) => {
+    if (event.type === BuiltinActionType.ContinueConversation) {
+      sendToAgent(event.humanFriendlyMessage);
+    }
+  }}
+  onError={(errors) => reportForCorrection(errors)}
+/>
+```
+
+`Query()` 会在流结束后执行，并在它依赖的 `$variable` 变化时重新执行；默认值让界面可以在数据返回前先完成渲染。`Mutation()` 在 Action 通过 `@Run` 调用前不会执行。Action step 会按顺序访问，但只有 `@Run(mutation)` 会等待执行结果，并在失败时停止后续 step。`@Run(query)` 启动重新获取后便会立即进入下一个 step。
+
+`onStateUpdate` 快照会直接保存 `$variable` 的值，而表单控件可能使用 `{ value, componentType }` 结构。持久化逻辑需要兼容这两种形态，并能安全处理重复快照。
+
+运行时和宿主对 Action step 的分工如下：
+
+| Step                    | 处理方                     | 效果                                 |
+| ----------------------- | -------------------------- | ------------------------------------ |
+| `@Set($name, value)`    | Renderer                   | 在本地更新响应式变量。               |
+| `@Reset($name)`         | Renderer                   | 把变量恢复为声明时的默认值。         |
+| `@Run(query)`           | Renderer                   | 启动 Query 重新获取，但不等待完成。  |
+| `@Run(mutation)`        | Renderer                   | 执行 Mutation；失败时停止后续 step。 |
+| `@ToAssistant(message)` | 宿主，通过 `onAction` 接收 | 继续 Agent 对话。                    |
+| `@OpenUrl(url)`         | 宿主，通过 `onAction` 接收 | 请求导航；宿主必须校验并打开 URL。   |
+
+`toolProvider` 也可以是实现了兼容 `callTool({ name, arguments })` 方法的 MCP client。请把所有工具调用视为不可信输入：校验参数、在后端执行鉴权，并且只暴露生成界面真正需要的能力。
+
+## 扩展组件 Library
+
+使用 `defineComponent` 把 ReactLynx Renderer 与 Zod Schema 组合起来，再追加到默认 Library：
+
+```tsx
+import { createOpenUiLibrary, defineComponent } from '@lynx-js/genui/openui';
+import { z } from 'zod/v4';
+
+const StatusBadge = defineComponent({
+  name: 'StatusBadge',
+  description: 'A compact status label.',
+  props: z.object({
+    label: z.string(),
+    tone: z.enum(['positive', 'warning']).optional(),
+  }),
+  component: ({ props }) => (
+    <view className={`status-badge status-badge--${props.tone ?? 'positive'}`}>
+      <text>{props.label}</text>
+    </view>
+  ),
+});
+
+const library = createOpenUiLibrary({
+  components: [StatusBadge],
+  componentGroups: [{ name: 'Business', components: ['StatusBadge'] }],
+});
+```
+
+定义组件时，应把 `zod` 声明为应用的直接依赖。Schema 决定组件参数顺序，以及生成 prompt 和 JSON Schema 所需的元数据。当前 parser 会检查组件名、必填参数和多余参数等结构约束，但不会对每个值执行完整的 `zod.parse()`；组件与工具仍需自行校验安全敏感值。组件回调收到的是 `{ props, renderNode, statementId }`，而不是直接把组件 props 作为顶层参数传入。
+
+`createOpenUiLibrary()` 会把自定义定义追加到内置组件之后；同名组件可以覆盖对应名称，但这个公开 factory 不能移除其余默认组件来构造严格 allowlist。可以用 `library.toJSONSchema()` 检查最终契约。通过 memoization 保证一个活动流的 Library 引用稳定，不要在每次渲染时重新创建。
+
+## 体验 Playground
+
+[Lynx GenUI Playground](https://lynx-stack.dev/genui/#/openui) 提供三种 OpenUI 工作流：
+
+- [Create](https://lynx-stack.dev/genui/#/openui)：描述目标界面，查看流式生成的 OpenUI Lang，并在 Lynx Preview 中渲染。
+- [Examples](https://lynx-stack.dev/genui/#/openui/examples)：编辑和回放布局、响应式状态、`Query()` 与 `Mutation()` 示例。
+- [Components](https://lynx-stack.dev/genui/#/openui/components)：浏览内置 Library、位置参数契约、用法片段和实时预览。
+
+单个符号及属性说明请参考 [`@lynx-js/genui/openui` API](/api/genui/openui/index.html)。实现源码位于 [Lynx Stack OpenUI](https://github.com/lynx-family/lynx-stack/tree/main/packages/genui/openui)。
+
+## OpenUI 与 A2UI
+
+Lynx 同时支持 OpenUI 和 [A2UI](/react/genui/a2ui)。两者都通过开发者控制的组件渲染 Agent 生成的界面，但契约和运行时不同：
+
+|            | OpenUI                                               | A2UI                                   |
+| ---------- | ---------------------------------------------------- | -------------------------------------- |
+| Agent 输出 | 紧凑、按行组织的 OpenUI Lang                         | 结构化 Agent-to-UI 协议消息            |
+| 组件边界   | 包含组件 Schema 与 Renderer 的 OpenUI `Library`      | A2UI `Catalog`                         |
+| 流式单位   | 持续累积并增量解析的文本                             | 写入 A2UI 运行时的消息                 |
+| 运行时数据 | `$variables`、`Query()`、`Mutation()` 与 Action step | Data model binding、Function 与 Action |
+| 适用方向   | 希望使用紧凑 DSL，并在运行时编排本地状态与工具       | 希望采用 A2UI 协议及其 Renderer 生态   |
+
+无论选择哪种方案，组件行为、工具鉴权、导航、持久化和传输仍由应用负责。组件 Schema、工具 Provider 和 Action handler 是这条边界中彼此独立的部分。
+
+## 上线检查清单
+
+- 保证 Agent prompt 与 Renderer Library 使用同一份组件契约。
+- 按顺序把流式增量追加到累计的 `response`。
+- 保持 `library` 引用稳定，并在流结束时准确地把 `isStreaming` 设为 `false`。
+- 执行副作用前校验工具参数与 URL。
+- 以幂等或防抖方式持久化 `onStateUpdate` 快照。
+- 显式处理 `onAction`；它不会自动发送 Agent 消息或打开 URL。
+- 使用 `onError` 做可观测性建设，并按需接入有次数上限的模型修正流程。

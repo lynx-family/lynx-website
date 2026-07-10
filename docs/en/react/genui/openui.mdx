@@ -1,0 +1,270 @@
+---
+title: OpenUI
+description: Render streaming OpenUI Lang as native ReactLynx interfaces with built-in components, actions, reactive state, tools, and custom libraries.
+---
+
+# OpenUI
+
+[OpenUI](https://www.openui.com/docs/openui-lang) is a Generative UI framework whose model-facing format, OpenUI Lang, is a compact, line-oriented language designed for streaming. Instead of generating executable UI code, an Agent emits component expressions such as `Card(...)` and `Button(...)` from a library that the application controls.
+
+[`@lynx-js/genui/openui`](/api/genui/openui/index.html) is the OpenUI Lang renderer for [ReactLynx](/react/introduction). It incrementally parses model output, maps recognized expressions to registered ReactLynx components, and renders the result through Lynx's native rendering pipeline.
+
+The application still owns the component implementations, visual design, available tools, navigation, and Agent connection. The OpenUI `Library` defines the component vocabulary; `toolProvider` and `onAction` separately gate tools and host-side effects.
+
+## How OpenUI works
+
+An OpenUI integration has five parts:
+
+1. **Define a Library**: Create component definitions and their Zod schemas. `createOpenUiLibrary()` starts with layout, content, button, media, overlay, and input components, then applies your extensions.
+2. **Instruct the Agent**: Give the model an OpenUI system prompt generated from the same component contract.
+3. **Stream OpenUI Lang**: Append each model delta to the response text. Statements use functional notation, for example `title = TextContent("Hello")`.
+4. **Parse and render**: `<OpenUiRenderer>` incrementally parses completed statements, resolves forward references, and renders registered ReactLynx components.
+5. **Handle runtime effects**: The Renderer manages local state and tool calls, while host-facing actions are delivered to your application through `onAction`.
+
+This keeps generated components inside an explicit vocabulary: unknown component names are not rendered, and the Agent never supplies arbitrary ReactLynx code. Language built-ins such as `Query()` and `Mutation()` are runtime capabilities, so enforce their actual permissions through `toolProvider` and `onAction`.
+
+## Quick start
+
+Install the renderer and its ReactLynx peers:
+
+```bash
+pnpm add @lynx-js/genui @lynx-js/react @lynx-js/lynx-ui
+```
+
+Import the OpenUI styles in your application stylesheet:
+
+```css
+@import '@lynx-js/genui/openui/styles/renderer.css';
+```
+
+:::info Style entry compatibility
+The published `@lynx-js/genui@0.0.6` package uses `renderer.css`. The current `lynx-stack/main` source has moved the host-facing theme variables to `@lynx-js/genui/openui/styles/theme.css`; use that path when developing against `main` or a release that exports it.
+:::
+
+Create one stable Library and pass OpenUI Lang source to the Renderer:
+
+```tsx
+import {
+  BuiltinActionType,
+  OpenUiRenderer,
+  createOpenUiLibrary,
+} from '@lynx-js/genui/openui';
+import { useMemo } from '@lynx-js/react';
+
+const response = `
+root = Stack([title, card], "column", false, "l", "stretch", "start")
+title = TextContent("Hello OpenUI", "large-heavy")
+card = Card([message, actions], "card", "column", false, "m", "stretch", "start")
+message = TextContent("This interface is described with OpenUI Lang.")
+actions = Buttons([
+  Button("Continue", Action([@ToAssistant("Continue with OpenUI")]), "primary"),
+  Button("Open Lynx", Action([@OpenUrl("https://lynxjs.org")]), "secondary")
+])
+`.trim();
+
+export function App() {
+  const library = useMemo(() => createOpenUiLibrary(), []);
+
+  return (
+    <OpenUiRenderer
+      response={response}
+      library={library}
+      onAction={(event) => {
+        if (event.type === BuiltinActionType.ContinueConversation) {
+          // Send event.humanFriendlyMessage back to your Agent.
+        }
+
+        if (event.type === BuiltinActionType.OpenUrl) {
+          // Validate event.params.url, then open it with the host navigation API.
+        }
+      }}
+    />
+  );
+}
+```
+
+OpenUI Lang arguments are positional and follow the component's schema order. For example, the built-in `Stack` signature is `Stack(children, direction?, wrap?, gap?, align?, justify?)`. Use the [Components Playground](https://lynx-stack.dev/genui/#/openui/components) to inspect current signatures instead of guessing argument positions.
+
+## Generate Agent instructions
+
+The Agent must know the same component and language contract as the Renderer. Generate the built-in system prompt on the server, where ReactLynx runtime dependencies are not available:
+
+```ts
+import { buildOpenUiSystemPrompt } from '@lynx-js/genui/openui/prompt';
+
+const systemPrompt = buildOpenUiSystemPrompt({
+  appendix: 'Use only the tools explicitly provided by this application.',
+});
+```
+
+Pass `systemPrompt` as the model's system instruction. When you add custom components, keep the server-side prompt definitions and the client-side Library definitions synchronized so the Agent does not emit components or arguments that the Renderer does not recognize.
+
+## Stream model output
+
+`response` is the **complete text received so far**, not the latest delta. Append chunks in order and keep `isStreaming` aligned with the real network lifecycle:
+
+```tsx
+import { OpenUiRenderer, createOpenUiLibrary } from '@lynx-js/genui/openui';
+import { useMemo, useState } from '@lynx-js/react';
+
+export function StreamingSurface() {
+  const library = useMemo(() => createOpenUiLibrary(), []);
+  const [response, setResponse] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  async function consume(source: AsyncIterable<string>) {
+    setResponse('');
+    setIsStreaming(true);
+
+    try {
+      for await (const delta of source) {
+        setResponse((current) => current + delta);
+      }
+    } finally {
+      setIsStreaming(false);
+    }
+  }
+
+  return (
+    <OpenUiRenderer
+      response={response}
+      library={library}
+      isStreaming={isStreaming}
+      onError={(errors) => {
+        // After streaming completes, send structured errors to a correction loop.
+      }}
+    />
+  );
+}
+```
+
+While `isStreaming` is `true`, the runtime delays `Query()` and `Mutation()` work and suppresses transient parse errors. Set it to `false` only after the stream finishes; otherwise incomplete tool calls may run too early, or queries may never start.
+
+## Add state, tools, and actions
+
+[OpenUI Lang v0.5](https://www.openui.com/docs/openui-lang/specification-v05) can describe reactive state, reads, writes, and ordered actions:
+
+```text
+$status = "draft"
+items = Query("list_items", {}, { rows: [] })
+save = Mutation("save_item", { status: $status })
+
+root = Stack([summary, actions], "column", false, "m")
+summary = TextContent("Items: " + @Count(items.rows) + ", status: " + $status)
+actions = Buttons([
+  Button(
+    "Save",
+    Action([
+      @Set($status, "ready"),
+      @Run(save),
+      @Run(items),
+      @ToAssistant("Save completed")
+    ]),
+    "primary"
+  )
+])
+```
+
+Connect `Query()` and `Mutation()` names to application capabilities through `toolProvider`:
+
+```tsx
+<OpenUiRenderer
+  response={response}
+  library={library}
+  toolProvider={{
+    list_items: async () => ({ rows: [{ id: 1 }] }),
+    save_item: async ({ status }) => ({ ok: true, status }),
+  }}
+  initialState={{ $status: 'draft' }}
+  onStateUpdate={(state) => persistState(state)}
+  onAction={(event) => {
+    if (event.type === BuiltinActionType.ContinueConversation) {
+      sendToAgent(event.humanFriendlyMessage);
+    }
+  }}
+  onError={(errors) => reportForCorrection(errors)}
+/>
+```
+
+`Query()` runs after streaming finishes and runs again when a referenced `$variable` changes; its default value keeps the UI renderable before data arrives. `Mutation()` remains idle until an Action invokes it with `@Run`. Action steps are visited in order, but only `@Run(mutation)` is awaited and stops the remaining steps on failure. `@Run(query)` starts a refetch and immediately advances to the next step.
+
+`onStateUpdate` snapshots store `$variables` as direct values, while form controls can use `{ value, componentType }` entries. Make persistence code tolerant of repeated snapshots and these two shapes.
+
+The runtime and host divide Action steps as follows:
+
+| Step                    | Handled by              | Effect                                                        |
+| ----------------------- | ----------------------- | ------------------------------------------------------------- |
+| `@Set($name, value)`    | Renderer                | Updates a reactive variable locally.                          |
+| `@Reset($name)`         | Renderer                | Restores a variable to its declared default.                  |
+| `@Run(query)`           | Renderer                | Starts a Query refetch without waiting for it to finish.      |
+| `@Run(mutation)`        | Renderer                | Runs a Mutation and stops the remaining plan if it fails.     |
+| `@ToAssistant(message)` | Host through `onAction` | Continues the Agent conversation.                             |
+| `@OpenUrl(url)`         | Host through `onAction` | Requests navigation; the host must validate and open the URL. |
+
+`toolProvider` can also be an MCP client with a compatible `callTool({ name, arguments })` method. Treat every tool call as untrusted input: validate arguments, enforce authorization on the backend, and expose only the capabilities the generated interface needs.
+
+## Extend the component Library
+
+Use `defineComponent` to pair a ReactLynx renderer with a Zod schema, then append it to the default Library:
+
+```tsx
+import { createOpenUiLibrary, defineComponent } from '@lynx-js/genui/openui';
+import { z } from 'zod/v4';
+
+const StatusBadge = defineComponent({
+  name: 'StatusBadge',
+  description: 'A compact status label.',
+  props: z.object({
+    label: z.string(),
+    tone: z.enum(['positive', 'warning']).optional(),
+  }),
+  component: ({ props }) => (
+    <view className={`status-badge status-badge--${props.tone ?? 'positive'}`}>
+      <text>{props.label}</text>
+    </view>
+  ),
+});
+
+const library = createOpenUiLibrary({
+  components: [StatusBadge],
+  componentGroups: [{ name: 'Business', components: ['StatusBadge'] }],
+});
+```
+
+Declare `zod` as a direct application dependency when defining components. The schema establishes the component's argument order and metadata used for prompt and JSON Schema generation. The current parser checks structural constraints such as component names, required arguments, and extra arguments, but it does not perform a complete `zod.parse()` of every value; validate security-sensitive values inside components and tools. The component callback receives `{ props, renderNode, statementId }`; it does not receive the component props as its top-level argument.
+
+`createOpenUiLibrary()` appends custom definitions to its built-ins; a custom component with the same name overrides that name, but the public factory does not remove the other defaults to form a strict allowlist. You can inspect the resulting contract with `library.toJSONSchema()`. Keep this contract stable for the lifetime of an active stream by memoizing the Library instead of creating it during every render.
+
+## Try the Playground
+
+The [Lynx GenUI Playground](https://lynx-stack.dev/genui/#/openui) provides three OpenUI workflows:
+
+- [Create](https://lynx-stack.dev/genui/#/openui): Describe a surface, inspect the streamed OpenUI Lang, and render it in Lynx Preview.
+- [Examples](https://lynx-stack.dev/genui/#/openui/examples): Edit and replay examples for layouts, reactive state, `Query()`, and `Mutation()`.
+- [Components](https://lynx-stack.dev/genui/#/openui/components): Browse the built-in Library, positional prop contracts, usage snippets, and live previews.
+
+For individual symbols and props, see the [`@lynx-js/genui/openui` API reference](/api/genui/openui/index.html). The implementation is developed in the [Lynx Stack OpenUI source](https://github.com/lynx-family/lynx-stack/tree/main/packages/genui/openui).
+
+## OpenUI and A2UI
+
+Lynx supports both OpenUI and [A2UI](/react/genui/a2ui). They share the goal of rendering Agent-generated interfaces through developer-controlled components, but their contracts and runtimes differ:
+
+|                    | OpenUI                                                                  | A2UI                                                  |
+| ------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------- |
+| Agent output       | Compact, line-oriented OpenUI Lang                                      | Structured Agent-to-UI protocol messages              |
+| Component boundary | OpenUI `Library` with component schemas and renderers                   | A2UI `Catalog`                                        |
+| Streaming unit     | Accumulated text parsed incrementally                                   | Messages applied to the A2UI runtime                  |
+| Runtime data       | `$variables`, `Query()`, `Mutation()`, and Action steps                 | Data model bindings, Functions, and Actions           |
+| Consider it when   | You want a concise DSL with built-in local state and tool orchestration | You want the A2UI protocol and its Renderer ecosystem |
+
+In both cases, your application remains responsible for component behavior, tool authorization, navigation, persistence, and transport. Treat the component schema, tool provider, and Action handlers as separate parts of that boundary.
+
+## Production checklist
+
+- Keep the Agent prompt and Renderer Library on the same component contract.
+- Append stream deltas to the accumulated `response` in order.
+- Keep `library` stable and set `isStreaming` to `false` exactly when the stream ends.
+- Validate tool arguments and URLs before performing side effects.
+- Persist `onStateUpdate` snapshots with idempotent or debounced writes.
+- Handle `onAction` explicitly; it does not send Agent messages or open URLs automatically.
+- Use `onError` for observability and, when appropriate, a bounded model-correction loop.
