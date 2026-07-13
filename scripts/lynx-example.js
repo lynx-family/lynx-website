@@ -280,7 +280,7 @@ function parseExampleData() {
           files: sortedFiles,
           previewImage: previewImage,
           templateFiles: templateFiles,
-          exampleGitBaseUrl,
+          exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || exampleGitBaseUrl,
         },
         null,
         2,
