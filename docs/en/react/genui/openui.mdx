@@ -258,27 +258,3 @@ The [Lynx GenUI Playground](https://lynx-stack.dev/genui/#/openui) provides thre
 - [Components](https://lynx-stack.dev/genui/#/openui/components): Browse the built-in Library, positional prop contracts, usage snippets, and live previews.
 
 For individual symbols and props, see the [`@lynx-js/genui/openui` API reference](/api/genui/openui/index.html). The implementation is developed in the [Lynx Stack OpenUI source](https://github.com/lynx-family/lynx-stack/tree/main/packages/genui/openui).
-
-## OpenUI and A2UI
-
-Lynx supports both OpenUI and [A2UI](/react/genui/a2ui). They share the goal of rendering Agent-generated interfaces through developer-controlled components, but their contracts and runtimes differ:
-
-|                    | OpenUI                                                                  | A2UI                                                  |
-| ------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------- |
-| Agent output       | Compact, line-oriented OpenUI Lang                                      | Structured Agent-to-UI protocol messages              |
-| Component boundary | OpenUI `Library` with component schemas and renderers                   | A2UI `Catalog`                                        |
-| Streaming unit     | Accumulated text parsed incrementally                                   | Messages applied to the A2UI runtime                  |
-| Runtime data       | `$variables`, `Query()`, `Mutation()`, and Action steps                 | Data model bindings, Functions, and Actions           |
-| Consider it when   | You want a concise DSL with built-in local state and tool orchestration | You want the A2UI protocol and its Renderer ecosystem |
-
-In both cases, your application remains responsible for component behavior, tool authorization, navigation, persistence, and transport. Treat the component schema, tool provider, and Action handlers as separate parts of that boundary.
-
-## Production checklist
-
-- Keep the Agent prompt and Renderer Library on the same component contract.
-- Append stream deltas to the accumulated `response` in order.
-- Keep `library` stable and set `isStreaming` to `false` exactly when the stream ends.
-- Validate tool arguments and URLs before performing side effects.
-- Persist `onStateUpdate` snapshots with idempotent or debounced writes.
-- Handle `onAction` explicitly; it does not send Agent messages or open URLs automatically.
-- Use `onError` for observability and, when appropriate, a bounded model-correction loop.

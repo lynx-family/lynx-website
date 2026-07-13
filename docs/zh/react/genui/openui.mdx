@@ -258,27 +258,3 @@ const library = createOpenUiLibrary({
 - [Components](https://lynx-stack.dev/genui/#/openui/components)：浏览内置 Library、位置参数契约、用法片段和实时预览。
 
 单个符号及属性说明请参考 [`@lynx-js/genui/openui` API](/api/genui/openui/index.html)。实现源码位于 [Lynx Stack OpenUI](https://github.com/lynx-family/lynx-stack/tree/main/packages/genui/openui)。
-
-## OpenUI 与 A2UI
-
-Lynx 同时支持 OpenUI 和 [A2UI](/react/genui/a2ui)。两者都通过开发者控制的组件渲染 Agent 生成的界面，但契约和运行时不同：
-
-|            | OpenUI                                               | A2UI                                   |
-| ---------- | ---------------------------------------------------- | -------------------------------------- |
-| Agent 输出 | 紧凑、按行组织的 OpenUI Lang                         | 结构化 Agent-to-UI 协议消息            |
-| 组件边界   | 包含组件 Schema 与 Renderer 的 OpenUI `Library`      | A2UI `Catalog`                         |
-| 流式单位   | 持续累积并增量解析的文本                             | 写入 A2UI 运行时的消息                 |
-| 运行时数据 | `$variables`、`Query()`、`Mutation()` 与 Action step | Data model binding、Function 与 Action |
-| 适用方向   | 希望使用紧凑 DSL，并在运行时编排本地状态与工具       | 希望采用 A2UI 协议及其 Renderer 生态   |
-
-无论选择哪种方案，组件行为、工具鉴权、导航、持久化和传输仍由应用负责。组件 Schema、工具 Provider 和 Action handler 是这条边界中彼此独立的部分。
-
-## 上线检查清单
-
-- 保证 Agent prompt 与 Renderer Library 使用同一份组件契约。
-- 按顺序把流式增量追加到累计的 `response`。
-- 保持 `library` 引用稳定，并在流结束时准确地把 `isStreaming` 设为 `false`。
-- 执行副作用前校验工具参数与 URL。
-- 以幂等或防抖方式持久化 `onStateUpdate` 快照。
-- 显式处理 `onAction`；它不会自动发送 Agent 消息或打开 URL。
-- 使用 `onError` 做可观测性建设，并按需接入有次数上限的模型修正流程。
