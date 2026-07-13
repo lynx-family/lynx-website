@@ -45,7 +45,7 @@ Description
 
 </td><td>
 
-BannerPlugin\['options'\]\['test'\]
+Extract&lt;BannerPluginArgument, { banner: unknown; }&gt;\['test'\]
 
 
 </td><td>

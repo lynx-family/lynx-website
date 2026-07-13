@@ -9,7 +9,9 @@ Include all modules that pass test assertion.
 **Signature:**
 
 ```typescript
-test: BannerPlugin['options']['test'];
+test: Extract<BannerPluginArgument, {
+        banner: unknown;
+    }>['test'];
 ```
 
 ## Default Value
