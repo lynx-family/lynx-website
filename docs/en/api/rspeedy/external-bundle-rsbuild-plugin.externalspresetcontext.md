@@ -37,6 +37,25 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[environmentName?](./external-bundle-rsbuild-plugin.externalspresetcontext.environmentname.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_ The Rsbuild environment being resolved (e.g. `'lynx'`<!-- -->, `'web'`<!-- -->).
+
+
+</td></tr>
+<tr><td>
+
 [rootPath](./external-bundle-rsbuild-plugin.externalspresetcontext.rootpath.md)
 
 

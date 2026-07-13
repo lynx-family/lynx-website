@@ -21,16 +21,16 @@ true
 You can enable a CommonJS syntax using:
 
 ```js
-import {CssExtractWebpackPlugin} from "@lynx-js/css-extract-webpack-plugin";
+import {CssExtractRspackPlugin} from "@lynx-js/css-extract-webpack-plugin";
 export default {
-  plugins: [new CssExtractWebpackPlugin()],
+  plugins: [new CssExtractRspackPlugin()],
   module: {
     rules: [
       {
         test: /\.css$/i,
         use: [
           {
-            loader: CssExtractWebpackPlugin.loader,
+            loader: CssExtractRspackPlugin.loader,
             options: {
               esModule: false,
             },

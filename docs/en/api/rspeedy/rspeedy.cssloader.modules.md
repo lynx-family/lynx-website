@@ -9,7 +9,7 @@ The [cssLoader.modules](./rspeedy.cssloadermodules.md) option enables/disables t
 **Signature:**
 
 ```typescript
-modules?: boolean | CssLoaderModules | undefined;
+modules?: boolean | 'local' | 'global' | 'pure' | 'icss' | CssLoaderModules | undefined;
 ```
 
 ## Default Value

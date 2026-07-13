@@ -63,7 +63,7 @@ Controls whether to add wrapper elements for components
 
 </td><td>
 
-The `compat` option controls compatibilities with ReactLynx2.0.
+The `compat` option controls compatibilities with legacy ReactLynx.
 
 
 </td></tr>
