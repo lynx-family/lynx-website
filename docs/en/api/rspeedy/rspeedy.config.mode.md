@@ -22,7 +22,7 @@ If the value of `mode` is `'development'`<!-- -->:
 
 - Enable HMR and register the [HotModuleReplacementPlugin](https://rspack.rs/plugins/webpack/hot-module-replacement-plugin)<!-- -->.
 
-- Generate JavaScript source maps, but do not generate CSS source maps. See [Output.sourceMap](./rspeedy.output.sourcemap.md) for details.
+- Generate JavaScript and CSS source maps. In Lynx environments, all `.map` assets are removed before emit. See [Output.sourceMap](./rspeedy.output.sourcemap.md) for details.
 
 - The `process.env.NODE_ENV` in the source code will be replaced with `'development'`<!-- -->.
 
@@ -42,7 +42,7 @@ If the value of `mode` is `'production'`<!-- -->:
 
 - Generated CSS Modules classnames will be shorter, see [CssModules.localIdentName](./rspeedy.cssmodules.localidentname.md)<!-- -->.
 
-- Do not generate JavaScript and CSS source maps, see [Output.sourceMap](./rspeedy.output.sourcemap.md)<!-- -->.
+- Generate JavaScript and CSS source maps. In Lynx environments, all `.map` assets are removed before emit. See [Output.sourceMap](./rspeedy.output.sourcemap.md)<!-- -->.
 
 - The `process.env.NODE_ENV` in the source code will be replaced with `'production'`<!-- -->.
 

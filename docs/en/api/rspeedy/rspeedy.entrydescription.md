@@ -41,6 +41,25 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[dependOn?](./rspeedy.entrydescription.dependon.md)
+
+
+</td><td>
+
+
+</td><td>
+
+string \| string\[\] \| undefined
+
+
+</td><td>
+
+_(Optional)_ The entry points that the current entry depends on. They must be loaded before this entry is loaded.
+
+
+</td></tr>
+<tr><td>
+
 [import?](./rspeedy.entrydescription.import.md)
 
 

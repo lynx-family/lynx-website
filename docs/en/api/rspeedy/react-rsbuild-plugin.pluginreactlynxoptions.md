@@ -50,7 +50,7 @@ Partial&lt;[CompatVisitorConfig](./react-rsbuild-plugin.compatvisitorconfig.md)<
 
 </td><td>
 
-_(Optional)_ The `compat` option controls compatibilities with ReactLynx2.0.
+_(Optional)_ The `compat` option controls compatibilities with legacy ReactLynx.
 
 
 </td></tr>
@@ -376,18 +376,20 @@ _(Optional)_ Merge same string literals in JS and Lepus to reduce output bundle 
 
 </td><td>
 
-'immediately' \| 'jsReady'
+'immediately' \| 'jsReady' \| 'manual'
 
 
 </td><td>
 
 _(Optional)_ This flag controls when MainThread (Lepus) transfers control to Background after the first screen
 
-This flag has two options:
+This flag has three options:
 
 `"immediately"`<!-- -->: Transfer immediately
 
 `"jsReady"`<!-- -->: Transfer when background (JS Runtime) is ready
+
+`"manual"`<!-- -->: Transfer when the business calls the `markFirstScreenSyncReady()` API exported by `@lynx-js/react`<!-- -->, so the handover timing is fully controlled by the user
 
 After handing over control, MainThread (Lepus) runtime can no longer respond to data updates, and data updates will be forwarded to background (JS Runtime) and processed \_\_asynchronously\_\_
 

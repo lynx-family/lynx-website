@@ -12,6 +12,8 @@ Preset names are resolved from the built-in preset definitions plus any custom d
 
 ```typescript
 export type ExternalsPresets = {
-    reactlynx?: boolean;
-} & Record<string, boolean>;
+    reactlynx?: ExternalsPresetValue;
+} & Record<string, ExternalsPresetValue>;
 ```
+**References:** [ExternalsPresetValue](./lynx-bundle-rslib-config.externalspresetvalue.md)
+

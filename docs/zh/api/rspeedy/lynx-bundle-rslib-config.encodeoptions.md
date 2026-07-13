@@ -37,6 +37,25 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[enableJsBytecode?](./lynx-bundle-rslib-config.encodeoptions.enablejsbytecode.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Whether to compile main thread chunks to JsBytecode in the emitted bundle.
+
+
+</td></tr>
+<tr><td>
+
 [engineVersion?](./lynx-bundle-rslib-config.encodeoptions.engineversion.md)
 
 
@@ -51,6 +70,27 @@ string
 </td><td>
 
 _(Optional)_ The engine version of the external bundle.
+
+
+</td></tr>
+<tr><td>
+
+[target?](./lynx-bundle-rslib-config.encodeoptions.target.md)
+
+
+</td><td>
+
+
+</td><td>
+
+'web' \| 'tasm'
+
+
+</td><td>
+
+_(Optional)_ The output format of the encoded bundle.
+
+- `'tasm'`<!-- -->: the native TASM bundle via `@lynx-js/tasm`<!-- -->. - `'web'`<!-- -->: a web binary bundle via `@lynx-js/web-core/encode`<!-- -->, decodable by the web platform. Sections are emitted as raw JS (the web runtime wraps them at `lynx.loadScript` time), and CSS is folded into the StyleInfo section.
 
 
 </td></tr>

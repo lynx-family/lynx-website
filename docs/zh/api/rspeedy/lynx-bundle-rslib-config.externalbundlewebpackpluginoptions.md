@@ -56,6 +56,25 @@ The external bundle filename.
 </td></tr>
 <tr><td>
 
+[enableJsBytecode?](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.enablejsbytecode.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean \| undefined
+
+
+</td><td>
+
+_(Optional)_ Whether to tag main thread chunks with the `JsBytecode` encoding so the encoder compiles them to bytecode.
+
+
+</td></tr>
+<tr><td>
+
 [encode](./lynx-bundle-rslib-config.externalbundlewebpackpluginoptions.encode.md)
 
 

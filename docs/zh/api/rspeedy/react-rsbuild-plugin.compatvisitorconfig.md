@@ -4,7 +4,7 @@
 
 ## CompatVisitorConfig interface
 
-The `compat` option controls compatibilities with ReactLynx2.0.
+The `compat` option controls compatibilities with legacy ReactLynx.
 
 **Signature:**
 
@@ -14,7 +14,7 @@ export interface CompatVisitorConfig
 
 ## Remarks
 
-These options should only be used for migrating from ReactLynx2.0.
+These options should only be used for migrating from ReactLynx2.0 or targeting legacy ReactLynx3 runtimes.
 
 ## Properties
 
@@ -131,6 +131,25 @@ boolean
 </td><td>
 
 Whether to disable deprecated warnings
+
+
+</td></tr>
+<tr><td>
+
+[legacySlot?](./react-rsbuild-plugin.compatvisitorconfig.legacyslot.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Compile dynamic children as children + wrapper (the pre-SlotV2 slot codegen: `Slot`<!-- -->/`Children` dynamic parts rendered through wrapper elements) instead of the default SlotV2 codegen (`$N` slot props).
 
 
 </td></tr>
