@@ -1,0 +1,251 @@
+---
+description: 'AnimaXServiceCenter API 参考，包含 iOS 和 Android 的服务注册、获取与移除接口。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXServiceCenter
+
+`AnimaXServiceCenter` 是 AnimaX 的全局服务注册中心，用于管理资源加载、图片解码、监控等共享能力。
+
+服务按作用域隔离。同一个协议或服务类型在同一个作用域中只能注册一个实现；如果需要替换实现，应先注销旧实现，再注册新实现。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 获取实例
+
+### sharedInstance
+
+返回全局唯一的 `AnimaXServiceCenter` 实例。全局服务通常在应用初始化阶段注册。
+
+**返回值**
+
+`AnimaXServiceCenter *`
+
+## 注册服务
+
+### registerService
+
+在默认作用域中注册服务实现。适合大多数应用级全局服务，例如默认资源加载器、图片解码器或监控服务。
+
+**参数**
+
+| 名称    | 类型                | 说明       |
+| ------- | ------------------- | ---------- |
+| `proto` | `Protocol *`        | 服务协议。 |
+| `impl`  | `id<AnimaXService>` | 服务实现。 |
+
+### registerServiceWithScope
+
+在指定作用域中注册服务实现。适合需要按业务、页面或动画实例隔离服务实现的场景。
+
+**参数**
+
+| 名称    | 类型                                             | 说明         |
+| ------- | ------------------------------------------------ | ------------ |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | 服务作用域。 |
+| `proto` | `Protocol *`                                     | 服务协议。   |
+| `impl`  | `id<AnimaXService>`                              | 服务实现。   |
+
+## 获取服务
+
+### getService
+
+从默认作用域获取服务实现。未找到时返回 `nil`。
+
+**参数**
+
+| 名称    | 类型         | 说明               |
+| ------- | ------------ | ------------------ |
+| `proto` | `Protocol *` | 要获取的服务协议。 |
+
+**返回值**
+
+`id<AnimaXService>` 或 `nil`。
+
+### getServiceWithScope
+
+从指定作用域获取服务实现。未找到时返回 `nil`。
+
+**参数**
+
+| 名称    | 类型                                             | 说明               |
+| ------- | ------------------------------------------------ | ------------------ |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | 服务作用域。       |
+| `proto` | `Protocol *`                                     | 要获取的服务协议。 |
+
+**返回值**
+
+`id<AnimaXService>` 或 `nil`。
+
+## 注销服务
+
+### unregisterService
+
+从默认作用域移除指定协议对应的服务。
+
+**参数**
+
+| 名称    | 类型         | 说明               |
+| ------- | ------------ | ------------------ |
+| `proto` | `Protocol *` | 要移除的服务协议。 |
+
+### unregisterServiceWithScope
+
+从指定作用域移除指定协议对应的服务。
+
+**参数**
+
+| 名称    | 类型                                             | 说明               |
+| ------- | ------------------------------------------------ | ------------------ |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | 服务作用域。       |
+| `proto` | `Protocol *`                                     | 要移除的服务协议。 |
+
+### unregisterAllServices
+
+移除默认作用域中的所有服务。
+
+### unregisterAllServicesWithScope
+
+移除指定作用域中的所有服务。
+
+**参数**
+
+| 名称    | 类型                                             | 说明         |
+| ------- | ------------------------------------------------ | ------------ |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | 服务作用域。 |
+
+## 内置服务
+
+### AnimaXResourceFactoryService
+
+[`AnimaXResourceFactoryService`](./animax-resource-factory-service) 创建资源加载器，例如网络、文件或 asset 加载器。
+
+### AnimaXImageService
+
+[`AnimaXImageService`](./animax-image-service) 用于将图片数据解码为 `UIImage`。返回 `nil` 时回退到默认解码。
+
+### AnimaXMonitorService
+
+[`AnimaXMonitorService`](./animax-monitor-service) 上报错误和性能指标。
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 获取实例
+
+### inst
+
+返回全局唯一的 `AnimaXServiceCenter` 实例。全局服务通常在应用初始化阶段注册。
+
+**返回值**
+
+`AnimaXServiceCenter`
+
+## 注册服务
+
+### registerService
+
+注册服务实例。默认作用域适合大多数应用级全局服务；指定作用域适合按业务、页面或动画实例隔离服务实现。
+
+**可用签名**
+
+| 签名                                                              | 说明                         |
+| ----------------------------------------------------------------- | ---------------------------- |
+| `registerService(Class<T> clazz, T instance)`                     | 在默认作用域中注册服务实例。 |
+| `registerService(ServiceScope scope, Class<T> clazz, T instance)` | 在指定作用域中注册服务实例。 |
+
+**参数**
+
+| 名称       | 类型                                     | 说明                                 |
+| ---------- | ---------------------------------------- | ------------------------------------ |
+| `scope`    | [`ServiceScope`](./animax-service-scope) | 服务作用域。未传入时使用默认作用域。 |
+| `clazz`    | `Class<T>`                               | 服务接口类型。                       |
+| `instance` | `T`                                      | 服务实例。                           |
+
+## 获取服务
+
+### getService
+
+获取服务实例。未指定作用域时从默认作用域查找；未找到、作用域无效或传入类型为空时返回 `null`。
+
+**可用签名**
+
+| 签名                                             | 说明                       |
+| ------------------------------------------------ | -------------------------- |
+| `getService(Class<T> clazz)`                     | 从默认作用域获取服务实例。 |
+| `getService(ServiceScope scope, Class<T> clazz)` | 从指定作用域获取服务实例。 |
+
+**参数**
+
+| 名称    | 类型                                     | 说明                                 |
+| ------- | ---------------------------------------- | ------------------------------------ |
+| `scope` | [`ServiceScope`](./animax-service-scope) | 服务作用域。未传入时使用默认作用域。 |
+| `clazz` | `Class<T>`                               | 要获取的服务接口类型。               |
+
+**返回值**
+
+`T` 或 `null`。
+
+## 注销服务
+
+### unregisterService
+
+移除指定类型对应的服务。未指定作用域时从默认作用域移除。
+
+**可用签名**
+
+| 签名                                                    | 说明                                 |
+| ------------------------------------------------------- | ------------------------------------ |
+| `unregisterService(Class<T> clazz)`                     | 从默认作用域移除指定类型对应的服务。 |
+| `unregisterService(ServiceScope scope, Class<T> clazz)` | 从指定作用域移除指定类型对应的服务。 |
+
+**参数**
+
+| 名称    | 类型                                     | 说明                                 |
+| ------- | ---------------------------------------- | ------------------------------------ |
+| `scope` | [`ServiceScope`](./animax-service-scope) | 服务作用域。未传入时使用默认作用域。 |
+| `clazz` | `Class<T>`                               | 要移除的服务接口类型。               |
+
+### unregisterAllServices
+
+移除所有服务。未指定作用域时移除默认作用域中的服务。
+
+**可用签名**
+
+| 签名                                        | 说明                         |
+| ------------------------------------------- | ---------------------------- |
+| `unregisterAllServices()`                   | 移除默认作用域中的所有服务。 |
+| `unregisterAllServices(ServiceScope scope)` | 移除指定作用域中的所有服务。 |
+
+**参数**
+
+| 名称    | 类型                                     | 说明         |
+| ------- | ---------------------------------------- | ------------ |
+| `scope` | [`ServiceScope`](./animax-service-scope) | 服务作用域。 |
+
+## 内置服务
+
+### AnimaXResourceFactoryService
+
+[`AnimaXResourceFactoryService`](./animax-resource-factory-service) 用于创建网络、文件或 asset 加载器。
+
+### AnimaXImageService
+
+[`AnimaXImageService`](./animax-image-service) 用于从 URI 加载图片。`loadImage()` 返回 `true` 表示已处理该请求。
+
+### AnimaXMonitorService
+
+[`AnimaXMonitorService`](./animax-monitor-service) 用于上报错误和性能指标。
+
+### AnimaXSettingService
+
+[`AnimaXSettingService`](./animax-setting-service) 用于提供运行时配置值。
+
+### AnimaXVideoService
+
+[`AnimaXVideoService`](./animax-video-service) 用于创建视频播放器实例。
+
+</PlatformTabs.Tab>
+</PlatformTabs>

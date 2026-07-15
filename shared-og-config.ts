@@ -59,6 +59,7 @@ export type OgCover = {
  * sweep (theme/hero-text.scss + theme/home-layout-var.scss): the two brand
  * endpoints with the lilac bridge between them.
  *   - guide:   red → lilac → cyan       (home `.dynamic-text`)
+ *   - animax:  lime → green → charcoal  (AnimaX home accent)
  *   - react:   teal → lilac → red       (`--major/--second-brand-color`)
  *   - rspeedy: orange → lilac → red
  *
@@ -70,6 +71,10 @@ const COVER_EXTRAS: Record<string, Pick<OgCover, 'gradient' | 'logo'>> = {
   guide: {
     gradient: [OG_MAJOR_BRAND, OG_GRADIENT_BRIDGE, OG_SECOND_COLOR],
     logo: 'guide.png',
+  },
+  animax: {
+    gradient: ['#f1ff33', '#9ae600', '#151515'],
+    logo: 'animax.png',
   },
   react: {
     gradient: ['#0185ad', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
@@ -168,13 +173,14 @@ export type OgSelection =
  * A leading `zh` segment is stripped before classifying. Precedence:
  *   1. blog   — a `blog` segment followed by a slug (the blog index is not a post)
  *   2. api    — first effective segment is `api`
- *   3. subsite — first segment matching a cover (react/rspeedy/ui/ai)
+ *   3. subsite — first segment matching a cover (animax/react/rspeedy/ui/ai)
  *   4. guide  — fallback
  *
  * Examples (imagePath via ogBlogPath/ogCoverPath):
  *   `/blog/lynx-3-5`        → { kind: 'blog', slug: 'lynx-3-5' }
  *   `/api/hooks/useState`   → { kind: 'cover', value: 'api' }
  *   `/react/introduction`   → { kind: 'cover', value: 'react' }
+ *   `/animax/introduction`  → { kind: 'cover', value: 'animax' }
  *   `/zh/guide/...` (zh)    → { kind: 'cover', value: 'guide' }
  *
  * @param pathnameNoBase  pathname with the site base already removed,
@@ -200,7 +206,7 @@ export function selectOg(pathnameNoBase: string, lang: string): OgSelection {
     return { kind: 'cover', value: 'api', imagePath: ogCoverPath(lang, 'api') };
   }
 
-  // 3. Subsite docs (react/rspeedy/ui/ai) — match the first effective segment
+  // 3. Subsite docs (animax/react/rspeedy/ui/ai) — match the first effective segment
   // to a cover. Deeper segments must not count: /guide/ui/* is a guide page,
   // not a lynx-ui one.
   const value = SUBSITE_COVER_VALUES.find((v) => afterLang[0] === v);

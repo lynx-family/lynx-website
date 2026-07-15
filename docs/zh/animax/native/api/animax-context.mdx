@@ -1,0 +1,157 @@
+---
+description: 'AnimaXContext API 参考，包含 iOS 和 Android 的上下文创建与运行时配置接口。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXContext
+
+`AnimaXContext` 持有动画实例的运行时配置。`AnimaXView` 创建后会绑定一个 context，并通过 context 访问 ability、平台上下文和渲染配置。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 创建方式
+
+### contextWithDefaultAbility
+
+创建带默认 ability 的 context。适合不需要自定义实例级服务的接入场景。
+
+**返回值**
+
+`AnimaXContext *`
+
+### initWithAbility
+
+使用指定 ability 创建 context。适合需要在单个动画实例内注入服务、监听事件或自定义监控行为的场景。
+
+**参数**
+
+| 名称      | 类型                  | 说明                     |
+| --------- | --------------------- | ------------------------ |
+| `ability` | `BaseAnimaXAbility *` | 自定义 ability，可为空。 |
+
+**返回值**
+
+`AnimaXContext *`
+
+## 属性
+
+### ability
+
+当前 context 绑定的 ability。AnimaX 通过它管理实例级服务和动画事件监听。
+
+**类型**
+
+`BaseAnimaXAbility *`
+
+### enableMultiThreadAccelerate
+
+是否启用多线程渲染加速。默认值为 `NO`。
+
+**类型**
+
+`BOOL`
+
+### disablePlaybackOnAssetLoadFailure
+
+资源加载失败时是否终止播放。默认值为 `NO`，即允许按内部降级逻辑继续处理。
+
+**类型**
+
+`BOOL`
+
+### enableDownsampleVideo
+
+是否对视频纹理做降采样以降低内存占用。默认值为 `NO`。
+
+**类型**
+
+`BOOL`
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 创建方式
+
+### AnimaXContext.Builder
+
+创建 `AnimaXContext.Builder`。Android 使用 Builder 模式创建 context，构造时必须传入 ability 和 Android `Context`。
+
+**参数**
+
+| 名称      | 类型          | 说明                                 |
+| --------- | ------------- | ------------------------------------ |
+| `ability` | `BaseAbility` | 管理实例级服务和事件监听的 ability。 |
+| `context` | `Context`     | Android 上下文。                     |
+
+**返回值**
+
+`AnimaXContext.Builder`
+
+### multiThreadAccelerate
+
+设置是否启用多线程渲染加速。默认值为 `false`。
+
+**参数**
+
+| 名称     | 类型      | 说明                            |
+| -------- | --------- | ------------------------------- |
+| `enable` | `boolean` | `true` 表示启用多线程渲染加速。 |
+
+**返回值**
+
+`AnimaXContext.Builder`
+
+### build
+
+创建 `AnimaXContext` 实例。
+
+**返回值**
+
+`AnimaXContext`
+
+## 实例方法
+
+### getAbility
+
+返回当前 context 绑定的 `BaseAbility`。
+
+**返回值**
+
+`BaseAbility`
+
+### getContext
+
+返回创建 context 时传入的 Android `Context`。
+
+**返回值**
+
+`Context`
+
+### multiThreadAccelerate
+
+返回当前 context 是否启用了多线程渲染加速。
+
+**返回值**
+
+`boolean`
+
+### disablePlaybackOnAssetLoadFailure
+
+返回资源加载失败时是否终止播放。该值来自当前 ability 对应的运行时配置。
+
+**返回值**
+
+`boolean`
+
+### getDeviceDensity
+
+返回当前设备屏幕密度。首次调用时会从 Android resources 中读取并缓存。
+
+**返回值**
+
+`float`
+
+</PlatformTabs.Tab>
+</PlatformTabs>

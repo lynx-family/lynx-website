@@ -1,0 +1,217 @@
+import { Go } from '@lynx';
+
+# 动态属性
+
+在 Lynx 应用中，AnimaX 通过 JS NAPI 接口向前端开发者提供运行时更新动画属性的功能。
+
+:::info
+
+本文中的 Lynx 组件示例使用 [`<animax-view>`](/api/elements/built-in/animax-view.html) 集成能力。原生应用可以直接使用 Android 与 iOS API 接入。
+
+动画属性分为 图层属性 和 资源属性。其中 图层属性 包括 transform、可见性等，可以在动画播放期间动态修改。而 资源属性 包括图片、文字资源和视频资源等，只能在动画播放之前修改。
+
+:::
+
+## 通过前端组件使用动态属性
+
+我们定义了动态属性的相关类型，并封装了动态属性相关的接口。
+
+在实践中，推荐将动态属性调用封装在带类型的前端组件中，让资源更新、图层更新与播放生命周期处理集中在一处。
+
+### 设置图片资源
+
+:::warning
+
+需要设置属性 `autoplay={false}`, `dynamic-resource={true}`。动画播放开始后，资源属性的更新将不会生效。
+
+:::
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-resource-submit/index.tsx"
+  defaultEntryFile="dist/dynamic-resource-submit.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-resource-submit.gif"
+  entry={[
+    'src/dynamic-resource-submit/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-resource-submit/index.tsx': '{31,58-66}',
+    'src/shared/composition-proxy.ts': '{220-232}',
+  }}
+/>
+
+### 设置文本字体资源
+
+:::warning
+
+需要设置属性 `autoplay={false}`, `dynamic-resource={true}`。动画播放开始后，资源属性的更新将不会生效。
+
+:::
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-resource-font/index.tsx"
+  defaultEntryFile="dist/dynamic-resource-font.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-resource-font.gif"
+  entry={[
+    'src/dynamic-resource-font/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-resource-font/index.tsx': '{28-35,56-63}',
+    'src/shared/composition-proxy.ts': '{250-256,278-279,287-294}',
+  }}
+/>
+
+### 设置Alpha视频资源
+
+:::warning
+
+需要设置属性 `autoplay={false}`, `dynamic-resource={true}`。动画播放开始后，资源属性的更新将不会生效。
+
+:::
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-resource-video/index.tsx"
+  defaultEntryFile="dist/dynamic-resource-video.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-resource-video.gif"
+  entry={[
+    'src/dynamic-resource-video/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-resource-video/index.tsx': '{28-35,56-63}',
+    'src/shared/composition-proxy.ts': '{235-247,278-279,287-294}',
+  }}
+/>
+
+### 提交资源属性
+
+:::info
+
+在提交资源属性之前，任何尝试渲染动画的行为（如 `seek`,`resume`）都是未定义行为。
+
+除了显式提交资源属性，也可以通过调用 `play`/`playSegment` 提交资源属性。通过显式提交资源属性，
+可以提前加载资源并渲染特定帧，在弹窗场景中可以做到无缝直出。
+
+:::
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-resource-submit/index.tsx"
+  defaultEntryFile="dist/dynamic-resource-submit.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-resource-submit.gif"
+  entry={[
+    'src/dynamic-resource-submit/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-resource-submit/index.tsx': '{34-37}',
+    'src/shared/composition-proxy.ts': '{278-279}',
+  }}
+/>
+
+### 更新文本图层属性
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-text-layer/index.tsx"
+  defaultEntryFile="dist/dynamic-text-layer.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-text-layer.gif"
+  entry={[
+    'src/dynamic-text-layer/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-text-layer/index.tsx': '{32-38,59-66}',
+    'src/shared/composition-proxy.ts': '{171-182,185-196,199-217}',
+  }}
+/>
+
+### 更新其他图层属性
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-layer-property/index.tsx"
+  defaultEntryFile="dist/dynamic-layer-property.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-layer-property.gif"
+  entry={[
+    'src/dynamic-layer-property/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-layer-property/index.tsx': '{32-64,85-92}',
+    'src/shared/composition-proxy.ts': '{11-21,76-103,259-267}',
+  }}
+/>
+
+### 更新部分帧的图层属性
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-text-layer/index.tsx"
+  defaultEntryFile="dist/dynamic-text-layer.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-text-layer.gif"
+  entry={[
+    'src/dynamic-text-layer/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-text-layer/index.tsx': '{32-35}',
+    'src/shared/composition-proxy.ts': '{171-182}',
+  }}
+/>
+
+### 使用通配符更新图层属性
+
+AnimaX 支持通过通配符更新图层属性。当 `layerName` 传入 `**` 时，AnimaX 会尝试更新所有图层的对应属性；当传入 `*` 时，则匹配单个层级下的所有图层。
+如果 `layerName` 命中多个同名图层，所有匹配图层都会被选中并更新。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/dynamic-layer-wildcard/index.tsx"
+  defaultEntryFile="dist/dynamic-layer-wildcard.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/dynamic-layer-wildcard.gif"
+  entry={[
+    'src/dynamic-layer-wildcard/index.tsx',
+    'src/shared/composition-proxy.ts',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/dynamic-layer-wildcard/index.tsx': '{32-52,73-80}',
+    'src/shared/composition-proxy.ts': '{259-267}',
+  }}
+/>

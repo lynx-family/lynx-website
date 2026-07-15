@@ -39,6 +39,9 @@ const CDN =
  */
 const SOURCES = {
   guide: { remoteSvg: `${CDN}/lynx-light-logo.svg` },
+  animax: {
+    localSvg: join(PUBLIC_ASSETS, 'animax', 'animax-logo-white.svg'),
+  },
   react: { remoteSvg: `${CDN}/reactlynx-logo-dark.svg` },
   // The Rspeedy crab is a detailed colored mascot — flattening it to a white
   // silhouette loses all its internal detail, so keep its native colors.

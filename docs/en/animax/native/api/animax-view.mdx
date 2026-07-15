@@ -1,0 +1,1095 @@
+---
+description: 'AnimaXView API reference for initialization, properties, and playback controls on iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXView
+
+`AnimaXView` is the native playback view. It owns the rendering surface, loads animation resources, and exposes playback controls, event listeners, and dynamic property updates.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Initialization
+
+### initWithContext
+
+Creates a playback view with an `AnimaXContext`. Use it when you need to inject a custom ability, services, or runtime options through the context.
+
+**Parameters**
+
+| Name      | Type              | Description                 |
+| --------- | ----------------- | --------------------------- |
+| `context` | `AnimaXContext *` | Animation instance context. |
+
+**Returns**
+
+`AnimaXView *`
+
+### initWithPlayer
+
+Creates a playback view with an existing `AnimaXPlayer`. Use it when the player and view lifecycles need to be managed separately.
+
+**Parameters**
+
+| Name     | Type             | Description                 |
+| -------- | ---------------- | --------------------------- |
+| `player` | `AnimaXPlayer *` | Underlying player instance. |
+
+**Returns**
+
+`AnimaXView *`
+
+## Properties
+
+### enableNativeTapLayerEvent
+
+Controls whether native touch events trigger layer hit testing. When enabled, matched layer names are delivered through `onTapLayers:`.
+
+**Type**
+
+`BOOL`
+
+### ignoreAttachStatus
+
+Controls whether view attachment state participates in surface initialization and visibility updates. Use it only when the host view lifecycle needs special handling.
+
+**Type**
+
+`BOOL`
+
+### player
+
+Read-only access to the underlying player protocol object.
+
+**Type**
+
+`id<AnimaXPlayerProtocol>`
+
+## Resource Loading
+
+### setSrc
+
+Loads an animation resource. Use the URL-only form for a direct resource URL, or pass a bundle when dependent resources such as images should be resolved from that bundle.
+
+**Available Signatures**
+
+| Signature          | Description                                |
+| ------------------ | ------------------------------------------ |
+| `setSrc:`          | Loads an animation from a URL string.      |
+| `setSrc:inBundle:` | Loads an animation from a specific bundle. |
+
+**Parameters**
+
+| Name     | Type         | Description                     |
+| -------- | ------------ | ------------------------------- |
+| `src`    | `NSString *` | Animation resource URL.         |
+| `bundle` | `NSBundle *` | Bundle containing the resource. |
+
+### setJson
+
+Loads an animation from a JSON string. Use the bundle overload when dependent resources should be resolved from a specific bundle.
+
+**Available Signatures**
+
+| Signature           | Description                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| `setJson:`          | Loads an animation from a JSON string.                                                            |
+| `setJson:inBundle:` | Loads an animation from a JSON string and resolves dependent resources from the specified bundle. |
+
+**Parameters**
+
+| Name     | Type         | Description                            |
+| -------- | ------------ | -------------------------------------- |
+| `json`   | `NSString *` | Lottie JSON string.                    |
+| `bundle` | `NSBundle *` | Bundle containing dependent resources. |
+
+### setComposition
+
+Sets an already parsed `AnimaXComposition`. Use it to reuse a preloaded composition.
+
+**Parameters**
+
+| Name          | Type                  | Description            |
+| ------------- | --------------------- | ---------------------- |
+| `composition` | `AnimaXComposition *` | Animation composition. |
+
+### setImageFolder
+
+Sets the directory for external image assets. Call it before `setJson:` or `setSrc:`.
+
+**Parameters**
+
+| Name          | Type         | Description            |
+| ------------- | ------------ | ---------------------- |
+| `imageFolder` | `NSString *` | Image asset directory. |
+
+### setDynamicResource
+
+Enables or disables dynamic resource updates during playback.
+
+**Parameters**
+
+| Name     | Type   | Description                               |
+| -------- | ------ | ----------------------------------------- |
+| `enable` | `BOOL` | `YES` to enable dynamic resource updates. |
+
+## Playback Configuration
+
+### setLoop
+
+Sets whether the animation loops.
+
+**Parameters**
+
+| Name     | Type   | Description             |
+| -------- | ------ | ----------------------- |
+| `enable` | `BOOL` | `YES` to loop playback. |
+
+### setLoopCount
+
+Sets the loop count.
+
+**Parameters**
+
+| Name        | Type  | Description      |
+| ----------- | ----- | ---------------- |
+| `loopCount` | `int` | Number of loops. |
+
+### setStartFrame
+
+Sets the start frame.
+
+**Parameters**
+
+| Name         | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `startFrame` | `double` | Start frame number. |
+
+### setEndFrame
+
+Sets the end frame.
+
+**Parameters**
+
+| Name       | Type     | Description       |
+| ---------- | -------- | ----------------- |
+| `endFrame` | `double` | End frame number. |
+
+### setProgress
+
+Sets playback progress.
+
+**Parameters**
+
+| Name       | Type     | Description                   |
+| ---------- | -------- | ----------------------------- |
+| `progress` | `double` | Progress from `0.0` to `1.0`. |
+
+### setSpeed
+
+Sets playback speed. `1.0` is normal speed.
+
+**Parameters**
+
+| Name    | Type     | Description                |
+| ------- | -------- | -------------------------- |
+| `speed` | `double` | Playback speed multiplier. |
+
+### setAutoReverse
+
+Sets whether playback reverses after reaching the end.
+
+**Parameters**
+
+| Name     | Type   | Description                         |
+| -------- | ------ | ----------------------------------- |
+| `enable` | `BOOL` | `YES` to enable ping-pong playback. |
+
+### setAutoplay
+
+Sets whether playback starts automatically after the animation is loaded.
+
+**Parameters**
+
+| Name     | Type   | Description                        |
+| -------- | ------ | ---------------------------------- |
+| `enable` | `BOOL` | `YES` to auto-start after loading. |
+
+### setObjectfit
+
+Sets how animation content is scaled inside the view.
+
+**Parameters**
+
+| Name        | Type         | Description                                                      |
+| ----------- | ------------ | ---------------------------------------------------------------- |
+| `objectfit` | `NSString *` | Supports `contain`, `cover`, `fill`, `center`, and `scale-down`. |
+
+### setObjectPosition
+
+Sets how animation content is aligned inside the view.
+
+**Parameters**
+
+| Name             | Type         | Description        |
+| ---------------- | ------------ | ------------------ |
+| `objectPosition` | `NSString *` | Content alignment. |
+
+### setMaxFrameRate
+
+Caps the maximum rendering frame rate.
+
+**Parameters**
+
+| Name           | Type     | Description         |
+| -------------- | -------- | ------------------- |
+| `maxFrameRate` | `double` | Maximum frame rate. |
+
+### setMuted
+
+Mutes or unmutes audio layers. It can be called during playback.
+
+**Parameters**
+
+| Name   | Type   | Description    |
+| ------ | ------ | -------------- |
+| `mute` | `BOOL` | `YES` to mute. |
+
+### setEnableAudio
+
+Enables or disables audio layer parsing. Call it before `setSrc:`.
+
+**Parameters**
+
+| Name     | Type   | Description                    |
+| -------- | ------ | ------------------------------ |
+| `enable` | `BOOL` | `YES` to enable audio parsing. |
+
+## Playback Controls
+
+### play
+
+Starts playback.
+
+### playFrom
+
+Plays a specific frame range.
+
+**Parameters**
+
+| Name         | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `startFrame` | `double` | Start frame number. |
+| `endFrame`   | `double` | End frame number.   |
+
+### pause
+
+Pauses at the current frame.
+
+### resume
+
+Resumes from the paused position.
+
+### stop
+
+Stops playback.
+
+### seekTo
+
+Jumps to a specific frame.
+
+**Parameters**
+
+| Name    | Type     | Description          |
+| ------- | -------- | -------------------- |
+| `frame` | `double` | Target frame number. |
+
+### reload
+
+Reloads the current animation source or composition.
+
+## State Queries
+
+### isAnimating
+
+Returns whether the animation is currently playing.
+
+**Returns**
+
+`BOOL`
+
+### currentFrame
+
+Returns the current frame number, which may be fractional.
+
+**Returns**
+
+`double`
+
+### durationInMS
+
+Returns the total animation duration in milliseconds.
+
+**Returns**
+
+`double`
+
+### memoryUsageBytes
+
+Returns current memory usage for this animation instance in bytes.
+
+**Returns**
+
+`int64_t`
+
+### getAnimaXContext
+
+Returns the `AnimaXContext` bound to this player.
+
+**Returns**
+
+`AnimaXContext *`
+
+## Event Listeners
+
+### addAnimationEventListener
+
+Adds an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                         | Description               |
+| ---------- | ------------------------------------------------------------ | ------------------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | Animation event listener. |
+
+### removeAnimationEventListener
+
+Removes an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                         | Description         |
+| ---------- | ------------------------------------------------------------ | ------------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | Listener to remove. |
+
+### setFPSEventInterval
+
+Sets the FPS event reporting interval. `0` disables FPS events.
+
+**Parameters**
+
+| Name       | Type   | Description                         |
+| ---------- | ------ | ----------------------------------- |
+| `interval` | `long` | Reporting interval in milliseconds. |
+
+### subscribeUpdateEvent
+
+Subscribes to update events for a specific frame.
+
+**Parameters**
+
+| Name    | Type  | Description                   |
+| ------- | ----- | ----------------------------- |
+| `frame` | `int` | Frame number to subscribe to. |
+
+### unsubscribeUpdateEvent
+
+Unsubscribes from update events for a specific frame.
+
+**Parameters**
+
+| Name    | Type  | Description                       |
+| ------- | ----- | --------------------------------- |
+| `frame` | `int` | Frame number to unsubscribe from. |
+
+### subscribeUpdateEvents
+
+Subscribes or unsubscribes multiple frame update events.
+
+**Parameters**
+
+| Name        | Type        | Description                              |
+| ----------- | ----------- | ---------------------------------------- |
+| `frames`    | `NSArray *` | Frame number array.                      |
+| `subscribe` | `BOOL`      | `YES` to subscribe, `NO` to unsubscribe. |
+
+### handleTapAtPoint
+
+Programmatically triggers layer hit testing at a point.
+
+**Parameters**
+
+| Name    | Type      | Description                                |
+| ------- | --------- | ------------------------------------------ |
+| `point` | `CGPoint` | Tap position in the view coordinate space. |
+
+## Visibility and Lifecycle
+
+### updateVisibilityState
+
+Updates visibility state. AnimaX uses this information to throttle rendering or adjust playback.
+
+**Parameters**
+
+| Name      | Type              | Description                      |
+| --------- | ----------------- | -------------------------------- |
+| `visible` | `BOOL`            | Whether the view is visible.     |
+| `state`   | `VisibilityState` | Source of the visibility change. |
+
+### onShow
+
+Notifies the player that the view becomes visible.
+
+**Parameters**
+
+| Name    | Type              | Description               |
+| ------- | ----------------- | ------------------------- |
+| `state` | `VisibilityState` | Current visibility state. |
+
+### onHide
+
+Notifies the player that the view becomes hidden.
+
+**Parameters**
+
+| Name    | Type              | Description               |
+| ------- | ----------------- | ------------------------- |
+| `state` | `VisibilityState` | Current visibility state. |
+
+### enterForeground
+
+Notifies the player that the app entered foreground.
+
+### enterBackground
+
+Notifies the player that the app entered background. This is typically used to pause or throttle playback.
+
+## Dynamic Properties
+
+### updateLayerProperty
+
+Updates a static layer property value immediately.
+
+**Parameters**
+
+| Name           | Type                         | Description                    |
+| -------------- | ---------------------------- | ------------------------------ |
+| `keyPath`      | `AnimaXKeyPath *`            | Target layer or property path. |
+| `propertyType` | `LayerPropertyType`          | Layer property type.           |
+| `value`        | `AnimaXValueParam *`         | New property value.            |
+| `callback`     | `id<AnimaXPropertyCallback>` | Optional completion callback.  |
+
+### updateResourceProperty
+
+Updates a resource-scoped property such as image, text, or font.
+
+**Parameters**
+
+| Name           | Type                         | Description                   |
+| -------------- | ---------------------------- | ----------------------------- |
+| `keyPath`      | `AnimaXKeyPath *`            | Target resource path.         |
+| `propertyType` | `ResourcePropertyType`       | Resource property type.       |
+| `value`        | `AnimaXValueParam *`         | New property value.           |
+| `callback`     | `id<AnimaXPropertyCallback>` | Optional completion callback. |
+
+### addLayerPropertyCallback
+
+Adds a dynamic value callback for a layer property. The callback provides property values during rendering and is useful for driving animation state from app state.
+
+**Parameters**
+
+| Name            | Type                         | Description                    |
+| --------------- | ---------------------------- | ------------------------------ |
+| `propertyType`  | `LayerPropertyType`          | Layer property type.           |
+| `keyPath`       | `AnimaXKeyPath *`            | Target layer or property path. |
+| `valueCallback` | `AnimaXValueCallback *`      | Dynamic value callback.        |
+| `callback`      | `id<AnimaXPropertyCallback>` | Optional completion callback.  |
+
+### getKeysForKeyPath
+
+Resolves and returns all concrete keys matching a key path pattern.
+
+**Parameters**
+
+| Name       | Type                            | Description                           |
+| ---------- | ------------------------------- | ------------------------------------- |
+| `keyPath`  | `AnimaXKeyPath *`               | Key path query.                       |
+| `callback` | `id<AnimaXKeyPathListCallback>` | Callback receiving the resolved keys. |
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Constructors
+
+### AnimaXView
+
+Creates a playback view. Pass only `Context` when creating it in code, or pass `Context` and `AttributeSet` when inflating from XML and reading `AnimaXView` XML attributes.
+
+**Available Signatures**
+
+| Signature                                         | Description                                               |
+| ------------------------------------------------- | --------------------------------------------------------- |
+| `AnimaXView(Context context)`                     | Creates a playback view with the default `NativeAbility`. |
+| `AnimaXView(Context context, AttributeSet attrs)` | Creates a playback view from XML layout.                  |
+
+**Parameters**
+
+| Name      | Type           | Description        |
+| --------- | -------------- | ------------------ |
+| `context` | `Context`      | Android context.   |
+| `attrs`   | `AttributeSet` | XML attribute set. |
+
+**Returns**
+
+`AnimaXView`
+
+## XML Attributes
+
+### app:animax_animationUrl
+
+Sets the animation resource URL. Maps to `setSrc(String src)`.
+
+### app:animax_autoPlay
+
+Sets whether playback starts automatically after loading. Maps to `setAutoPlay(boolean autoPlay)`. Defaults to `true`.
+
+### app:animax_loop
+
+Sets whether playback loops. Maps to `setLoop(boolean enable)`. Defaults to `false`.
+
+### app:animax_objectFit
+
+Sets content fitting. Maps to `setObjectFit(ObjectFit objectFit)`. Defaults to `contain`.
+
+## View Options
+
+### getPlayer
+
+Returns the `IAnimaXPlayer` held by the view. Use it when the host wants to manage resource loading, playback controls, or event listeners through the player interface.
+
+**Returns**
+
+`IAnimaXPlayer`
+
+### setIgnoreAttachStatus
+
+Controls whether the view ignores Android attach state. Enable it when the host already manages visibility or attachment state and needs AnimaX to create a temporary surface without relying on the normal attach lifecycle.
+
+**Parameters**
+
+| Name     | Type      | Description                    |
+| -------- | --------- | ------------------------------ |
+| `ignore` | `boolean` | `true` to ignore attach state. |
+
+### setEnableTapLayerEvent
+
+Controls whether native layer tap detection is enabled. When enabled, `onTouchEvent` forwards the touch point to AnimaX and reports matched layer names through `onTapLayers(AnimaXTapParam param)`.
+
+**Parameters**
+
+| Name     | Type      | Description                        |
+| -------- | --------- | ---------------------------------- |
+| `enable` | `boolean` | `true` to enable layer tap events. |
+
+## Resource Loading
+
+### setSrc
+
+Loads an animation from a URL or local path.
+
+**Parameters**
+
+| Name  | Type     | Description                                                   |
+| ----- | -------- | ------------------------------------------------------------- |
+| `src` | `String` | Animation resource URL, such as a `.json` or `.zip` resource. |
+
+### setJson
+
+Loads an animation from a JSON string.
+
+**Parameters**
+
+| Name   | Type     | Description         |
+| ------ | -------- | ------------------- |
+| `json` | `String` | Lottie JSON string. |
+
+### setComposition
+
+Sets an already parsed `AnimaXComposition`.
+
+**Parameters**
+
+| Name          | Type                | Description            |
+| ------------- | ------------------- | ---------------------- |
+| `composition` | `AnimaXComposition` | Animation composition. |
+
+### getComposition
+
+Returns the currently loaded animation composition. Returns `null` if no composition is loaded.
+
+**Returns**
+
+`AnimaXComposition` or `null`
+
+### setImageFolder
+
+Sets the directory for external image assets. Call it before `setJson` or `setSrc`. Empty strings are ignored.
+
+**Parameters**
+
+| Name          | Type     | Description            |
+| ------------- | -------- | ---------------------- |
+| `imageFolder` | `String` | Image asset directory. |
+
+### setDynamicResource
+
+Enables or disables dynamic resource updates during playback.
+
+**Parameters**
+
+| Name              | Type      | Description                                |
+| ----------------- | --------- | ------------------------------------------ |
+| `dynamicResource` | `boolean` | `true` to enable dynamic resource updates. |
+
+## Playback Configuration
+
+### setLoop
+
+Sets whether the animation loops. Do not use it together with `setLoopCount(int loopCount)` to express the same behavior.
+
+**Parameters**
+
+| Name     | Type      | Description              |
+| -------- | --------- | ------------------------ |
+| `enable` | `boolean` | `true` to loop playback. |
+
+### setLoopCount
+
+Sets the loop count. Do not use it together with `setLoop(boolean enable)` to express the same behavior.
+
+**Parameters**
+
+| Name        | Type  | Description                                  |
+| ----------- | ----- | -------------------------------------------- |
+| `loopCount` | `int` | Number of loops. `0` means infinite looping. |
+
+### setStartFrame
+
+Sets the start frame.
+
+**Parameters**
+
+| Name         | Type  | Description         |
+| ------------ | ----- | ------------------- |
+| `startFrame` | `int` | Start frame number. |
+
+### setEndFrame
+
+Sets the end frame.
+
+**Parameters**
+
+| Name       | Type  | Description       |
+| ---------- | ----- | ----------------- |
+| `endFrame` | `int` | End frame number. |
+
+### setProgress
+
+Sets playback progress.
+
+**Parameters**
+
+| Name       | Type    | Description                   |
+| ---------- | ------- | ----------------------------- |
+| `progress` | `float` | Progress from `0.0` to `1.0`. |
+
+### setSpeed
+
+Sets playback speed. `1.0` is normal speed.
+
+**Parameters**
+
+| Name    | Type    | Description                |
+| ------- | ------- | -------------------------- |
+| `speed` | `float` | Playback speed multiplier. |
+
+### setAutoReverse
+
+Sets whether playback reverses after reaching the end.
+
+**Parameters**
+
+| Name            | Type      | Description                          |
+| --------------- | --------- | ------------------------------------ |
+| `isAutoReverse` | `boolean` | `true` to enable ping-pong playback. |
+
+### setAutoPlay
+
+Sets whether playback starts automatically after the animation is loaded.
+
+**Parameters**
+
+| Name       | Type      | Description                         |
+| ---------- | --------- | ----------------------------------- |
+| `autoPlay` | `boolean` | `true` to auto-start after loading. |
+
+### setObjectFit
+
+Sets how animation content is resized to fit the container.
+
+**Parameters**
+
+| Name        | Type        | Description                                                              |
+| ----------- | ----------- | ------------------------------------------------------------------------ |
+| `objectFit` | `ObjectFit` | Fit mode, such as `CONTAIN`, `COVER`, `FILL`, `CENTER`, or `SCALE_DOWN`. |
+
+### setObjectPosition
+
+Sets content alignment inside the container.
+
+**Parameters**
+
+| Name             | Type             | Description        |
+| ---------------- | ---------------- | ------------------ |
+| `objectPosition` | `ObjectPosition` | Content alignment. |
+
+### setKeepLastFrame
+
+Sets whether the view keeps displaying the last frame after playback completes. When disabled, playback seeks back to the first frame.
+
+**Parameters**
+
+| Name     | Type      | Description                    |
+| -------- | --------- | ------------------------------ |
+| `enable` | `boolean` | `true` to keep the last frame. |
+
+### setMaxFrameRate
+
+Caps the maximum rendering frame rate.
+
+**Parameters**
+
+| Name           | Type     | Description         |
+| -------------- | -------- | ------------------- |
+| `maxFrameRate` | `double` | Maximum frame rate. |
+
+### setMuted
+
+Mutes or unmutes audio layers. It can be called during playback.
+
+**Parameters**
+
+| Name    | Type      | Description     |
+| ------- | --------- | --------------- |
+| `muted` | `boolean` | `true` to mute. |
+
+### setEnableAudio
+
+Enables or disables audio layer parsing. Call it before `setSrc`.
+
+**Parameters**
+
+| Name     | Type      | Description                     |
+| -------- | --------- | ------------------------------- |
+| `enable` | `boolean` | `true` to enable audio parsing. |
+
+## Playback Controls
+
+### play
+
+Starts playback.
+
+### pause
+
+Pauses playback.
+
+### resume
+
+Resumes from the paused position.
+
+### stop
+
+Stops playback.
+
+### seek
+
+Jumps to a specific frame.
+
+**Parameters**
+
+| Name    | Type  | Description          |
+| ------- | ----- | -------------------- |
+| `frame` | `int` | Target frame number. |
+
+### cancel
+
+Cancels playback immediately.
+
+### playSegment
+
+Plays a specific frame range.
+
+**Parameters**
+
+| Name         | Type  | Description         |
+| ------------ | ----- | ------------------- |
+| `startFrame` | `int` | Start frame number. |
+| `endFrame`   | `int` | End frame number.   |
+
+### reload
+
+Reloads the current animation source.
+
+## State Queries
+
+### isAnimating
+
+Returns whether the animation is currently playing.
+
+**Returns**
+
+`boolean`
+
+### getCurrentFrame
+
+Returns the current frame number, which may be fractional.
+
+**Returns**
+
+`double`
+
+### getDurationMs
+
+Returns the total animation duration in milliseconds.
+
+**Returns**
+
+`double`
+
+### getAnimaXContext
+
+Returns the `AnimaXContext` bound to this player.
+
+**Returns**
+
+`AnimaXContext`
+
+## Event Listeners
+
+### addAnimationListener
+
+Adds an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                | Description               |
+| ---------- | --------------------------------------------------- | ------------------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | Animation event listener. |
+
+### removeAnimationListener
+
+Removes an animation event listener.
+
+**Parameters**
+
+| Name       | Type                                                | Description         |
+| ---------- | --------------------------------------------------- | ------------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | Listener to remove. |
+
+### setFpsEventInterval
+
+Sets the FPS event reporting interval. `0` disables FPS events.
+
+**Parameters**
+
+| Name       | Type   | Description                         |
+| ---------- | ------ | ----------------------------------- |
+| `interval` | `long` | Reporting interval in milliseconds. |
+
+### subscribeUpdateEvent
+
+Subscribes to update events for a specific frame.
+
+**Parameters**
+
+| Name    | Type  | Description                   |
+| ------- | ----- | ----------------------------- |
+| `frame` | `int` | Frame number to subscribe to. |
+
+### unsubscribeUpdateEvent
+
+Unsubscribes from update events for a specific frame.
+
+**Parameters**
+
+| Name    | Type  | Description                       |
+| ------- | ----- | --------------------------------- |
+| `frame` | `int` | Frame number to unsubscribe from. |
+
+### subscribeUpdateEvents
+
+Subscribes or unsubscribes multiple frame update events.
+
+**Parameters**
+
+| Name        | Type      | Description                                  |
+| ----------- | --------- | -------------------------------------------- |
+| `frame`     | `int[]`   | Frame number array.                          |
+| `subscribe` | `boolean` | `true` to subscribe, `false` to unsubscribe. |
+
+### onTap
+
+Programmatically triggers layer hit testing at a point.
+
+**Parameters**
+
+| Name | Type    | Description                                |
+| ---- | ------- | ------------------------------------------ |
+| `x`  | `float` | X coordinate in the view coordinate space. |
+| `y`  | `float` | Y coordinate in the view coordinate space. |
+
+## Visibility and Lifecycle
+
+### updateVisibilityState
+
+Updates visibility state. The player uses this information to throttle rendering or adjust playback.
+
+**Parameters**
+
+| Name        | Type              | Description                      |
+| ----------- | ----------------- | -------------------------------- |
+| `isVisible` | `boolean`         | Whether the view is visible.     |
+| `state`     | `VisibilityState` | Source of the visibility change. |
+
+### onShow
+
+Notifies the player that the view becomes visible.
+
+**Parameters**
+
+| Name    | Type              | Description               |
+| ------- | ----------------- | ------------------------- |
+| `state` | `VisibilityState` | Current visibility state. |
+
+### onHide
+
+Notifies the player that the view becomes hidden.
+
+**Parameters**
+
+| Name    | Type              | Description               |
+| ------- | ----------------- | ------------------------- |
+| `state` | `VisibilityState` | Current visibility state. |
+
+### enterForeground
+
+Notifies the player that the app entered foreground.
+
+### enterBackground
+
+Notifies the player that the app entered background. This is typically used to pause or throttle playback.
+
+## Rendering and Diagnostics
+
+### enableSoftwareRender
+
+Enables or disables software rendering. Use it as a fallback when GPU rendering is unavailable or has compatibility issues.
+
+**Parameters**
+
+| Name             | Type      | Description                          |
+| ---------------- | --------- | ------------------------------------ |
+| `softwareRender` | `boolean` | `true` to enable software rendering. |
+
+### setAntiAliasing
+
+Enables or disables anti-aliasing for shape layers. Enabling it can improve rendering quality at a performance cost.
+
+**Parameters**
+
+| Name           | Type      | Description                     |
+| -------------- | --------- | ------------------------------- |
+| `antiAliasing` | `boolean` | `true` to enable anti-aliasing. |
+
+### getMetricsAsync
+
+Collects runtime metrics asynchronously, such as FPS and memory-related data.
+
+**Parameters**
+
+| Name       | Type                    | Description                        |
+| ---------- | ----------------------- | ---------------------------------- |
+| `callback` | `AnimaXMetricsCallback` | Callback receiving metric results. |
+
+### release
+
+Releases all resources associated with the player. Do not reuse the instance after calling it. Usually call it from the host `onDestroy()`.
+
+## Dynamic Properties
+
+### updateLayerProperty
+
+Updates a static layer property value immediately.
+
+**Parameters**
+
+| Name       | Type                     | Description                    |
+| ---------- | ------------------------ | ------------------------------ |
+| `type`     | `LayerPropertyType`      | Layer property type.           |
+| `keyPath`  | `AnimaXKeyPath`          | Target layer or property path. |
+| `param`    | `AnimaXValueParam`       | New property value.            |
+| `callback` | `AnimaXPropertyCallback` | Optional completion callback.  |
+
+### addLayerPropertyCallback
+
+Adds a dynamic value callback for a layer property. The callback provides property values during rendering.
+
+**Parameters**
+
+| Name            | Type                     | Description                    |
+| --------------- | ------------------------ | ------------------------------ |
+| `type`          | `LayerPropertyType`      | Layer property type.           |
+| `keyPath`       | `AnimaXKeyPath`          | Target layer or property path. |
+| `valueCallback` | `AnimaXValueCallback`    | Dynamic value callback.        |
+| `callback`      | `AnimaXPropertyCallback` | Optional completion callback.  |
+
+### removeLayerPropertyCallback
+
+Removes a previously added dynamic value callback for a layer property.
+
+**Parameters**
+
+| Name       | Type                     | Description                    |
+| ---------- | ------------------------ | ------------------------------ |
+| `type`     | `LayerPropertyType`      | Layer property type.           |
+| `keyPath`  | `AnimaXKeyPath`          | Target layer or property path. |
+| `callback` | `AnimaXPropertyCallback` | Optional completion callback.  |
+
+### setResourceProperty
+
+Updates a resource-scoped property such as image, text, or font identified by a resource ID.
+
+**Parameters**
+
+| Name         | Type                     | Description                   |
+| ------------ | ------------------------ | ----------------------------- |
+| `type`       | `ResourcePropertyType`   | Resource property type.       |
+| `resourceId` | `String`                 | Resource identifier.          |
+| `param`      | `AnimaXValueParam`       | New property value.           |
+| `callback`   | `AnimaXPropertyCallback` | Optional completion callback. |
+
+### getKeysForKeyPath
+
+Resolves and returns all concrete keys matching a key path pattern.
+
+**Parameters**
+
+| Name       | Type                        | Description                           |
+| ---------- | --------------------------- | ------------------------------------- |
+| `keyPath`  | `AnimaXKeyPath`             | Key path query.                       |
+| `callback` | `AnimaXKeyPathListCallback` | Callback receiving the resolved keys. |
+
+</PlatformTabs.Tab>
+</PlatformTabs>
