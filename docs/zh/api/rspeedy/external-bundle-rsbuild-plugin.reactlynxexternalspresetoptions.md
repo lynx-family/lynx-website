@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[async?](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.async.md)
+
+
+</td><td>
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Load the ReactLynx runtime bundle asynchronously, for the web target.
+
+The web runtime (`@lynx-js/web-core`<!-- -->) can only fetch external bundles asynchronously (`fetchBundle().then`<!-- -->), so ReactLynx must be mounted as a promise that consuming modules await before reading a subpath (otherwise `React.memo` etc. are read off a pending promise and are `undefined`<!-- -->). Enabling this also resolves the web-encoded `@lynx-js/react-umd/{dev,prod}-web` bundle and defaults `bundlePath` to `react.web.bundle`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
 [bundlePath?](./external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.bundlepath.md)
 
 

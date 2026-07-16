@@ -191,5 +191,9 @@ rm -rf docs/en/api/genui docs/zh/api/genui
 pnpm run typedoc
 echo "::endgroup::"
 
+echo "::group::Apply API reference Lynx Go examples"
+node scripts/apply-api-doc-overlays.mjs
+echo "::endgroup::"
+
 echo "API docs regenerated. Review the diff and update docs/{en,zh}/api/_meta.json"
 echo "if API groups or members were added or removed."

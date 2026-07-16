@@ -117,6 +117,19 @@ The options for [ExternalBundleWebpackPlugin](./lynx-bundle-rslib-config.externa
 </td></tr>
 <tr><td>
 
+[ExternalObject](./lynx-bundle-rslib-config.externalobject.md)
+
+
+</td><td>
+
+Object form of an external mapping.
+
+Use this instead of the plain global-name form when the external library is mounted asynchronously (as a Promise) by the consuming application, i.e. the matching `pluginExternalBundle` external is configured with `async: true`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
 [ExternalsPresetDefinition](./lynx-bundle-rslib-config.externalspresetdefinition.md)
 
 
@@ -232,6 +245,19 @@ Available externals preset definitions.
 Enabled externals presets.
 
 Preset names are resolved from the built-in preset definitions plus any custom definitions passed to [defineExternalBundleRslibConfig()](./lynx-bundle-rslib-config.defineexternalbundlerslibconfig.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[ExternalsPresetValue](./lynx-bundle-rslib-config.externalspresetvalue.md)
+
+
+</td><td>
+
+How an externals preset is enabled.
+
+`true` mounts the preset's libraries synchronously. The `{ async: true }` object form mounts them asynchronously (as Promises), for the web target where external bundles are loaded via `fetchBundle().then` — see [ExternalObject.async](./lynx-bundle-rslib-config.externalobject.async.md)<!-- -->.
 
 
 </td></tr>

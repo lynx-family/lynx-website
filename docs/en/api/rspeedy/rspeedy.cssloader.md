@@ -82,7 +82,7 @@ _(Optional)_ The option `importLoaders` allows you to configure how many loaders
 
 </td><td>
 
-boolean \| [CssLoaderModules](./rspeedy.cssloadermodules.md) \| undefined
+boolean \| 'local' \| 'global' \| 'pure' \| 'icss' \| [CssLoaderModules](./rspeedy.cssloadermodules.md) \| undefined
 
 
 </td><td>

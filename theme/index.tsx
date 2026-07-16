@@ -45,9 +45,16 @@ import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 // Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
   const segments = pathname.split('/');
-  return SUBSITES_CONFIG.find((s) =>
-    segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-  );
+  return SUBSITES_CONFIG.find((s) => {
+    if (s.value === 'ui') {
+      return segments.some((seg) => {
+        const normalized = seg.replace(/\.html$/, '');
+        return normalized === s.value || normalized === 'lynx-ui';
+      });
+    }
+
+    return segments.some((seg) => seg.replace(/\.html$/, '') === s.value);
+  });
 };
 
 const NULL_BYTE_RE = /\u0000/g;

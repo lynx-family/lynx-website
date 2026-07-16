@@ -114,8 +114,9 @@ Use this to add business-specific presets such as `lynxUi`<!-- -->, or to extend
 
 _(Optional)_ Presets for external libraries.
 
-Same as https://rspack.rs/config/externals#externalspresets but for Lynx.
+Same as https://rspack.rs/config/externals\#externalspresets but for Lynx.
 
 
 </td></tr>
 </tbody></table>
+

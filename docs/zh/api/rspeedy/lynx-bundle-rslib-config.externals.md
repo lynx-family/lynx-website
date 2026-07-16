@@ -9,5 +9,7 @@ External module to global-name mappings used when building Lynx external bundles
 **Signature:**
 
 ```typescript
-export type Externals = Record<string, string | string[]>;
+export type Externals = Record<string, string | string[] | ExternalObject>;
 ```
+**References:** [ExternalObject](./lynx-bundle-rslib-config.externalobject.md)
+
