@@ -2,9 +2,9 @@ import { PlatformTabs } from '@lynx';
 
 # 原生库与 Autolink
 
-Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android 和 iOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
+Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android、iOS 和 HarmonyOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
 
-Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
+Autolink 只提供应用级全局注册，不生成按 `LynxView` 注册 Library 的接口。
 
 :::info 开始前的准备
 
@@ -21,6 +21,7 @@ Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS
 - npm：`create-lynx-library` 和 `@lynx-js/autolink-codegen`（`lynx-autolink-codegen` binary）
 - Android：Gradle plugin `org.lynxsdk.library-settings` 和 `org.lynxsdk.library-build`
 - iOS：Ruby gem `cocoapods-lynx-library`
+- HarmonyOS：Hvigor plugin `@lynx/lynx-library-plugin`
 
 如果当前配置的 registry 还无法解析其中某个包，说明你使用的 Lynx SDK 发布版本尚未在该 registry 中包含 Native Autolink。此时请继续使用既有手动原生注册方式，等待匹配版本发布后再接入。
 
@@ -36,7 +37,7 @@ Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS
 
 每个库都通过包根目录下的 `lynx.lib.json` manifest 声明原生入口。这三类能力相互独立：一个库可以只暴露元件、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
 
-应用侧像安装普通 npm 依赖一样安装库。Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。
+应用侧像安装普通 npm 依赖一样安装库。Android Gradle plugin、iOS CocoaPods plugin 和 HarmonyOS Hvigor plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。
 
 ## 使用库
 
@@ -55,12 +56,16 @@ lynx-app/
 │       └── build.gradle
 ├── ios/
 │   └── Podfile
+├── harmony/
+│   └── entry/
+│       └── hvigorfile.ts
 └── src/
 ```
 
 - `package.json` 是必需的，用来声明 Autolink 库依赖。
 - Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
 - iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
+- HarmonyOS 接入需要带有 `hvigorfile.ts` 的 entry 或 feature HAP 模块，并在 HAP 中依赖 `@lynx/lynx`。
 
 安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.lib.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
 
@@ -107,6 +112,33 @@ end
 执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+在包含 HarmonyOS 工程的 npm 项目中安装 Hvigor plugin：
+
+```bash
+npm install --save-dev @lynx/lynx-library-plugin
+```
+
+在 entry HAP 的 `hvigorfile.ts` 中启用一次：
+
+```ts
+import { hapTasks } from '@ohos/hvigor-ohos-plugin';
+import { harmonyLynxAutolinkPlugin } from '@lynx/lynx-library-plugin';
+
+export default {
+  system: hapTasks,
+  plugins: [harmonyLynxAutolinkPlugin()],
+};
+```
+
+Hvigor 配置阶段，plugin 会扫描当前工程可见的 `node_modules`，在 HAP 模块的 `build/generated/lynx-autolink` 下生成 Registry HAR 和 AppStartup 任务。plugin 通过 Hvigor 的 project/HAP model API 把 library HAR 和 Registry HAR 加入构建图，注入 Registry 依赖与生成资源目录，并设置 `module.appStartup`。生成的 profile 直接引用 `build/generated` 下的任务，整个过程不会修改应用的 `src` 目录。
+
+生成的 AppStartup 任务在主线程执行，并在应用创建 Lynx Runtime 前只调用 Registry HAR 中幂等的 `setupGlobal()`。如果 HAP 已经配置 AppStartup，plugin 会保留原有任务和 `configEntry`，再追加 Lynx 任务。应用不需要执行 `lynx-harmony-autolink` 之类的命令，也不需要手动调用 `setupGlobal()`。
+
+</PlatformTabs.Tab>
+
 </PlatformTabs>
 
 ### 安装库
@@ -129,14 +161,17 @@ npm install @example/lynx-button
     "ios": {
       "sourceDir": "ios",
       "podspecPath": "ios/build.podspec"
+    },
+    "harmony": {
+      "packageDir": "harmony"
     }
   }
 }
 ```
 
-Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 `android`。iOS 侧 `sourceDir` 默认是 `ios`，`podspecPath` 默认使用 iOS 源码目录下找到的第一个 `.podspec` 文件。
+Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 `android`。iOS 侧 `sourceDir` 默认是 `ios`，`podspecPath` 默认使用 iOS 源码目录下找到的第一个 `.podspec` 文件。HarmonyOS 侧 `packageDir` 默认是 `harmony`；该目录必须是完整的源码 HAR，包含 `oh-package.json5`、`build-profile.json5`、`src/main/module.json5`，以及 `main` 字段指定的入口文件或 `Index.ets`。
 
-安装或更新库后，Android 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
+安装或更新库后，Android 或 HarmonyOS 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
 
 ## 开发库
 
@@ -171,14 +206,26 @@ lynx-button/
 │       └── generated/
 │           ├── ButtonModuleSpec.h
 │           └── ButtonModuleSpec.m
+├── harmony/
+│   ├── Index.ets
+│   ├── oh-package.json5
+│   ├── build-profile.json5
+│   └── src/main/
+│       ├── module.json5
+│       └── ets/
+│           ├── LynxLibraryProviderImpl.ets
+│           ├── ButtonElement.ets
+│           ├── ButtonModule.ets
+│           ├── ButtonService.ets
+│           └── generated/ButtonModuleSpec.ets
 └── example/
 ```
 
 - `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
-- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里。
+- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用各平台原生 package 的位置。
 - `types/index.d.ts` 描述库中可选的原生模块类型声明；如果库暴露原生模块，codegen 会基于这些声明生成平台 spec 和 JavaScript facade。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
-- `android/` 和 `ios/` 放置原生实现以及生成的原生 spec。
+- `android/`、`ios/` 和 `harmony/` 放置原生实现以及生成的原生 spec。HarmonyOS 目录是完整的 HAR package，而不是松散源码目录。
 - `example/` 是库作者用于本地验证的示例应用。
 
 ### 创建库
@@ -194,7 +241,8 @@ npm create lynx-library
 ```bash
 npm create lynx-library -- \
   --dir ./lynx-button \
-  --types native-module,element,service \
+  --features native-module,element,service \
+  --platforms android,ios,harmony \
   --package-name @example/lynx-button \
   --android-package com.example.button \
   --module-name ButtonModule \
@@ -205,10 +253,10 @@ npm create lynx-library -- \
 生成的库会包含：
 
 - 带有 `"codegen": "lynx-autolink-codegen"` 的 `package.json`
-- 用于 Android 和 iOS Autolink 发现的 `lynx.lib.json`
+- 用于 Android、iOS 和 HarmonyOS Autolink 发现的 `lynx.lib.json`
 - `types/index.d.ts`，在库暴露原生模块时用于声明类型
 - JavaScript facade 入口 `src/index.ts`
-- 原生源码目录 `android/` 和 `ios/`
+- 原生源码目录 `android/`、`ios/`，以及完整的 `harmony/` HAR
 - `example/`、`tsconfig.json` 和 `README.md`
 
 在库根目录运行 codegen：
@@ -232,6 +280,7 @@ export declare class ButtonModule {
 - JavaScript facade：`generated/<ModuleName>.ts`
 - Android：`<ModuleName>Spec.java`
 - iOS：`<ModuleName>Spec.h` 和 `<ModuleName>Spec.m`
+- HarmonyOS：`<packageDir>/src/main/ets/generated/<ModuleName>Spec.ets`
 
 第一版支持 `void`、`string`、`number`、`boolean`，以及带 `null` 的 nullable union。
 
@@ -466,6 +515,102 @@ NS_ASSUME_NONNULL_END
 ```
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+HarmonyOS Library 通过一个 Provider 注册全部能力。`Index.ets` 必须导出名为 `LynxLibraryProviderImpl` 的类：
+
+```ts
+// harmony/Index.ets
+export { LynxLibraryProviderImpl } from './src/main/ets/LynxLibraryProviderImpl';
+export { ButtonElement } from './src/main/ets/ButtonElement';
+export { ButtonModule } from './src/main/ets/ButtonModule';
+export { ButtonService } from './src/main/ets/ButtonService';
+```
+
+Native Module 继承 Codegen 生成的 ArkTS Spec：
+
+```ts
+import { ButtonModuleSpec } from './generated/ButtonModuleSpec';
+
+export class ButtonModule extends ButtonModuleSpec {
+  getLabel(id: string): string {
+    return `Button ${id}`;
+  }
+
+  setEnabled(_id: string, _enabled: boolean): void {}
+}
+```
+
+Element 使用 HarmonyOS 现有的 `UIBase` API：
+
+```ts
+import { UIBase } from '@lynx/lynx';
+
+export class ButtonElement extends UIBase {
+  layout(
+    _x: number,
+    _y: number,
+    _width: number,
+    _height: number,
+    _paddingLeft: number,
+    _paddingTop: number,
+    _paddingRight: number,
+    _paddingBottom: number,
+    _marginLeft: number,
+    _marginTop: number,
+    _marginRight: number,
+    _marginBottom: number,
+    _sticky?: number[],
+  ): void {}
+}
+```
+
+Service 使用 Lynx 现有的 Service 接口。下面的示例提供全局 Extension Service：
+
+```ts
+import { ILynxExtensionService, LynxContext } from '@lynx/lynx';
+
+export class ButtonService implements ILynxExtensionService {
+  static readonly instance: ButtonService = new ButtonService();
+
+  onLynxViewSetup(
+    _context: LynxContext,
+    _uiDelegate: number[],
+    _isHostRenderer: boolean,
+  ): void {}
+
+  onLynxViewDestroy(_context: LynxContext): void {}
+}
+```
+
+Provider 把这些实现注册到 Lynx：
+
+```ts
+import {
+  Behavior,
+  LynxLibraryProvider,
+  LynxLibraryRegistry,
+  LynxServiceType,
+} from '@lynx/lynx';
+import { ButtonElement } from './ButtonElement';
+import { ButtonModule } from './ButtonModule';
+import { ButtonService } from './ButtonService';
+
+export class LynxLibraryProviderImpl implements LynxLibraryProvider {
+  register(registry: LynxLibraryRegistry): void {
+    registry.registerBehavior('x-button', new Behavior(ButtonElement));
+    registry.registerModule('ButtonModule', { moduleClass: ButtonModule });
+    registry.registerService(LynxServiceType.Extension, ButtonService.instance);
+  }
+}
+```
+
+包级原生初始化可以通过 `registerInitializer(() => packageInit())` 接入，例如调用原生 XElement 注册 API。原生 XElement 继续使用已有的 C++ 注册链路，不需要为了接入 Autolink 再封装成 `UIBase` 实现。
+
+Registry 会拒绝重复的全局 Element 标签、Native Module 名称和 Service 类型，并在错误信息中标明冲突的库。全局 Native Module 会先于 `LynxView` 或 `LynxBackgroundRuntime` 显式传入的 Module map 注册，因此现有的局部 Module 仍然可以覆盖同名全局 Module。
+
+</PlatformTabs.Tab>
 </PlatformTabs>
 
 在 iOS 侧，Autolink 会扫描库源码中的 `@LynxNativeModule(...)`、`@LynxElement(...)` 和 `@LynxService(...)` 声明，并把发现的能力加入生成的 registry。旧版 iOS Service API 仍提供 `@LynxServiceRegister(...)` 以兼容已有代码。新库代码推荐使用 `@LynxService(...)`。
@@ -476,4 +621,4 @@ NS_ASSUME_NONNULL_END
 
 ## Autolink 工作原理
 
-Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` manifest，然后生成一份对应当前应用的 registry，列出所有已安装库暴露的元件、原生模块和 Service。Android 侧的 registry 生成由 Gradle settings plugin 和 build plugin 配合完成；iOS 侧由 CocoaPods plugin 完成并产出 registry pod。宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
+Autolink 在构建期运行。它会扫描 `node_modules` 中 npm 包的 `lynx.lib.json` manifest，并为当前应用生成 registry。Android 侧由 Gradle settings plugin 和 build plugin 生成 registry；iOS 侧由 CocoaPods plugin 生成 registry pod；HarmonyOS 侧在 Hvigor 配置阶段生成源码 Registry HAR 和 AppStartup 任务。宿主应用在启动阶段只加载一次生成的 registry，因此宿主代码中不需要任何逐库接入逻辑。

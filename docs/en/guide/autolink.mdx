@@ -2,9 +2,9 @@ import { PlatformTabs } from '@lynx';
 
 # Native Libraries and Autolink
 
-A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Autolink is the integration mechanism that lets the host app discover libraries installed under `node_modules` and register their capabilities automatically on Android and iOS, instead of wiring each Element, Native Module, or Service by hand.
+A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Autolink is the integration mechanism that lets the host app discover libraries installed under `node_modules` and register their capabilities automatically on Android, iOS, and HarmonyOS, instead of wiring each Element, Native Module, or Service by hand.
 
-Autolink currently covers native Android and iOS libraries only. It does not generate Web or HarmonyOS integration code.
+Autolink provides app-wide registration. Per-`LynxView` library registration is not generated.
 
 :::info Prerequisites
 
@@ -21,6 +21,7 @@ Use Autolink tooling from the same Lynx release channel as your app. The package
 - npm: `create-lynx-library` and `@lynx-js/autolink-codegen` (`lynx-autolink-codegen` binary)
 - Android: Gradle plugins `org.lynxsdk.library-settings` and `org.lynxsdk.library-build`
 - iOS: Ruby gem `cocoapods-lynx-library`
+- HarmonyOS: Hvigor plugin `@lynx/lynx-library-plugin`
 
 If one of these packages cannot be resolved from your configured registries, your current Lynx SDK release does not include Native Autolink in that registry yet. Keep using the existing manual native registration flow until the matching release is available.
 
@@ -36,7 +37,7 @@ A library is an npm package that may ship any combination of:
 
 Every library declares its native entry points in a `lynx.lib.json` manifest at the package root. The three capability types are independent: a library may expose only Elements, only Native Modules, only Services, or any combination of them.
 
-App teams install a library like any other npm dependency. The Android Gradle plugins and the iOS CocoaPods plugin read `lynx.lib.json` and link the native code into the host app, so the host never needs to know which specific capabilities any given library exposes.
+App teams install a library like any other npm dependency. The Android Gradle plugins, iOS CocoaPods plugin, and HarmonyOS Hvigor plugin read `lynx.lib.json` and link the native code into the host app, so the host never needs to know which specific capabilities any given library exposes.
 
 ## Consuming a Library
 
@@ -55,12 +56,16 @@ lynx-app/
 │       └── build.gradle
 ├── ios/
 │   └── Podfile
+├── harmony/
+│   └── entry/
+│       └── hvigorfile.ts
 └── src/
 ```
 
 - `package.json` is required so the app can declare Autolink library packages as dependencies.
 - For Android, the project needs a Gradle settings file, such as `settings.gradle` or `settings.gradle.kts`, and an Android application build file, such as `app/build.gradle` or `app/build.gradle.kts`.
 - For iOS, the project needs a CocoaPods entry point, usually `Podfile`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-library` gem in `Gemfile`.
+- For HarmonyOS, the project needs an entry or feature HAP module with a `hvigorfile.ts`. The HAP must depend on `@lynx/lynx`.
 
 After you install dependencies, Autolink scans the installed npm packages for `lynx.lib.json` files at package roots. A lockfile such as `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` is recommended for reproducible installs, but it is not required by Autolink.
 
@@ -107,6 +112,32 @@ end
 After `pod install`, Autolink generates the registry pod and hooks it into the Lynx initialization flow. When the app creates `LynxConfig` or initializes `LynxEnv`, Elements, Native Modules, and Services from installed libraries are registered automatically. App code does not need to import generated files or add extra native initialization.
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+Install the Hvigor plugin in the npm project that contains the HarmonyOS app:
+
+```bash
+npm install --save-dev @lynx/lynx-library-plugin
+```
+
+Enable it once in the entry HAP `hvigorfile.ts`:
+
+```ts
+import { hapTasks } from '@ohos/hvigor-ohos-plugin';
+import { harmonyLynxAutolinkPlugin } from '@lynx/lynx-library-plugin';
+
+export default {
+  system: hapTasks,
+  plugins: [harmonyLynxAutolinkPlugin()],
+};
+```
+
+During Hvigor configuration, the plugin scans visible `node_modules` directories and generates a Registry HAR plus an AppStartup task under the HAP module's `build/generated/lynx-autolink` directory. Through Hvigor's project and HAP model APIs, it adds the library and Registry HAR modules to the build graph, injects the Registry dependency and generated resource directory, and sets `module.appStartup`. The generated profile points to the task under `build/generated`; the plugin does not edit the app's `src` tree.
+
+The generated AppStartup task runs on the main thread before app code creates a Lynx runtime and calls only the Registry HAR's idempotent `setupGlobal()` function. If the HAP already has an AppStartup profile, the plugin preserves its tasks and `configEntry` and appends the Lynx task. No command such as `lynx-harmony-autolink` and no manual `setupGlobal()` call is required.
+
+</PlatformTabs.Tab>
 </PlatformTabs>
 
 ### Install a Library
@@ -129,14 +160,17 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
     "ios": {
       "sourceDir": "ios",
       "podspecPath": "ios/build.podspec"
+    },
+    "harmony": {
+      "packageDir": "harmony"
     }
   }
 }
 ```
 
-For Android, `platforms.android.packageName` is required, and `sourceDir` defaults to `android`. For iOS, `sourceDir` defaults to `ios`, and `podspecPath` defaults to the first `.podspec` found under the iOS source directory.
+For Android, `platforms.android.packageName` is required, and `sourceDir` defaults to `android`. For iOS, `sourceDir` defaults to `ios`, and `podspecPath` defaults to the first `.podspec` found under the iOS source directory. For HarmonyOS, `packageDir` defaults to `harmony`; that directory must contain a complete source HAR with `oh-package.json5`, `build-profile.json5`, `src/main/module.json5`, and the package entry declared by `main` or `Index.ets`.
 
-After installing or updating a library package, sync/build the Android app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
+After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
 
 ## Authoring a Library
 
@@ -171,14 +205,26 @@ lynx-button/
 │       └── generated/
 │           ├── ButtonModuleSpec.h
 │           └── ButtonModuleSpec.m
+├── harmony/
+│   ├── Index.ets
+│   ├── oh-package.json5
+│   ├── build-profile.json5
+│   └── src/main/
+│       ├── module.json5
+│       └── ets/
+│           ├── LynxLibraryProviderImpl.ets
+│           ├── ButtonElement.ets
+│           ├── ButtonModule.ets
+│           ├── ButtonService.ets
+│           └── generated/ButtonModuleSpec.ets
 └── example/
 ```
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
-- `lynx.lib.json` is the Autolink contract. It tells the host app where Android and iOS source code lives.
+- `lynx.lib.json` is the Autolink contract. It tells the host app where each native package lives.
 - `types/index.d.ts` describes typed Native Module APIs, if the library exposes any. Codegen uses these declarations to create platform specs and the JavaScript facade.
 - `src/index.ts` exports the JavaScript API that app code imports.
-- `android/` and `ios/` contain native implementations and generated native specs.
+- `android/`, `ios/`, and `harmony/` contain native implementations and generated native specs. The HarmonyOS directory is a complete HAR package, not a loose source folder.
 - `example/` is a local app used by the library author to verify the package.
 
 ### Create a Library
@@ -194,7 +240,8 @@ For scripts and tests, the same scaffold can run without prompts:
 ```bash
 npm create lynx-library -- \
   --dir ./lynx-button \
-  --types native-module,element,service \
+  --features native-module,element,service \
+  --platforms android,ios,harmony \
   --package-name @example/lynx-button \
   --android-package com.example.button \
   --module-name ButtonModule \
@@ -205,10 +252,10 @@ npm create lynx-library -- \
 The generated package includes:
 
 - `package.json` with `"codegen": "lynx-autolink-codegen"`
-- `lynx.lib.json` for Android and iOS Autolink discovery
+- `lynx.lib.json` for Android, iOS, and HarmonyOS Autolink discovery
 - `types/index.d.ts` for typed Native Module declarations, when the library exposes Native Modules
 - `src/index.ts` for the JavaScript facade
-- `android/` and `ios/` native source folders
+- `android/` and `ios/` native source folders plus a complete `harmony/` HAR
 - `example/`, `tsconfig.json`, and `README.md`
 
 Run codegen from the library root:
@@ -232,6 +279,7 @@ It generates:
 - `generated/<ModuleName>.ts` for the JavaScript facade
 - Android `<ModuleName>Spec.java`
 - iOS `<ModuleName>Spec.h` and `<ModuleName>Spec.m`
+- HarmonyOS `<ModuleName>Spec.ets` under `<packageDir>/src/main/ets/generated`
 
 The first version supports `void`, `string`, `number`, `boolean`, and nullable unions with `null`.
 
@@ -466,6 +514,102 @@ NS_ASSUME_NONNULL_END
 ```
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="harmony">
+
+HarmonyOS libraries register all capabilities from one provider. `Index.ets` must export a class named `LynxLibraryProviderImpl`:
+
+```ts
+// harmony/Index.ets
+export { LynxLibraryProviderImpl } from './src/main/ets/LynxLibraryProviderImpl';
+export { ButtonElement } from './src/main/ets/ButtonElement';
+export { ButtonModule } from './src/main/ets/ButtonModule';
+export { ButtonService } from './src/main/ets/ButtonService';
+```
+
+Implement a Native Module by extending the generated ArkTS spec:
+
+```ts
+import { ButtonModuleSpec } from './generated/ButtonModuleSpec';
+
+export class ButtonModule extends ButtonModuleSpec {
+  getLabel(id: string): string {
+    return `Button ${id}`;
+  }
+
+  setEnabled(_id: string, _enabled: boolean): void {}
+}
+```
+
+Implement an Element with the existing HarmonyOS `UIBase` API:
+
+```ts
+import { UIBase } from '@lynx/lynx';
+
+export class ButtonElement extends UIBase {
+  layout(
+    _x: number,
+    _y: number,
+    _width: number,
+    _height: number,
+    _paddingLeft: number,
+    _paddingTop: number,
+    _paddingRight: number,
+    _paddingBottom: number,
+    _marginLeft: number,
+    _marginTop: number,
+    _marginRight: number,
+    _marginBottom: number,
+    _sticky?: number[],
+  ): void {}
+}
+```
+
+Services use the existing Lynx service interfaces. This example supplies the global Extension service:
+
+```ts
+import { ILynxExtensionService, LynxContext } from '@lynx/lynx';
+
+export class ButtonService implements ILynxExtensionService {
+  static readonly instance: ButtonService = new ButtonService();
+
+  onLynxViewSetup(
+    _context: LynxContext,
+    _uiDelegate: number[],
+    _isHostRenderer: boolean,
+  ): void {}
+
+  onLynxViewDestroy(_context: LynxContext): void {}
+}
+```
+
+The provider connects those implementations to Lynx:
+
+```ts
+import {
+  Behavior,
+  LynxLibraryProvider,
+  LynxLibraryRegistry,
+  LynxServiceType,
+} from '@lynx/lynx';
+import { ButtonElement } from './ButtonElement';
+import { ButtonModule } from './ButtonModule';
+import { ButtonService } from './ButtonService';
+
+export class LynxLibraryProviderImpl implements LynxLibraryProvider {
+  register(registry: LynxLibraryRegistry): void {
+    registry.registerBehavior('x-button', new Behavior(ButtonElement));
+    registry.registerModule('ButtonModule', { moduleClass: ButtonModule });
+    registry.registerService(LynxServiceType.Extension, ButtonService.instance);
+  }
+}
+```
+
+Use `registerInitializer(() => packageInit())` for package-level native initialization such as a native XElement registration API. Keep native XElements on their existing C++ registration path; do not wrap them in a `UIBase` implementation just for Autolink.
+
+The Registry rejects duplicate global Element tags, Native Module names, and Service types with package-aware diagnostics. Global Native Modules are installed before a `LynxView` or `LynxBackgroundRuntime`'s explicit module map, so an explicitly supplied local module keeps its existing override behavior.
+
+</PlatformTabs.Tab>
 </PlatformTabs>
 
 On iOS, Autolink scans `@LynxNativeModule(...)`, `@LynxElement(...)`, and `@LynxService(...)` declarations from library sources and adds the discovered capabilities to the generated registry. The legacy iOS Service API still provides `@LynxServiceRegister(...)` for existing code. New library code should use `@LynxService(...)`.
@@ -476,4 +620,4 @@ Publish the library like any other npm package: pick a name, often scoped as `@e
 
 ## How Autolink Works
 
-Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates a per-app registry that lists every Element, Native Module, and Service the installed libraries expose. Android registry generation runs through the Gradle settings and build plugins; iOS registry generation runs through the CocoaPods plugin and emits a registry pod. The host app loads the generated registry once during `LynxEnv` initialization, which is why no per-library wiring code lives in the host.
+Autolink runs at build time. It scans npm packages under `node_modules` for a `lynx.lib.json` manifest, then generates a per-app registry for the installed libraries. Android registry generation runs through the Gradle settings and build plugins; iOS registry generation runs through the CocoaPods plugin and emits a registry pod; HarmonyOS registry generation runs during Hvigor configuration and emits a source Registry HAR plus an AppStartup task. The host app loads the generated registry once during startup, which is why no per-library wiring code lives in the host.
