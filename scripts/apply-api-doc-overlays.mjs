@@ -15,6 +15,18 @@ const localeConfig = {
 // English and Chinese API reference pages.
 const apiReferenceExamples = [
   {
+    id: 'react-create-element-example',
+    apiReference: 'react/Function.createElement.mdx',
+    locales: ['en', 'zh'],
+    goProps: {
+      example: 'react-apis',
+      defaultFile: 'src/create-element/index.tsx',
+      defaultEntryFile: 'dist/create-element.lynx.bundle',
+      entry: 'src/create-element',
+      defaultTab: 'web',
+    },
+  },
+  {
     id: 'react-create-portal-example',
     apiReference: 'react/Function.createPortal.mdx',
     locales: ['en', 'zh'],
