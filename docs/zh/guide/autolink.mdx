@@ -129,17 +129,17 @@ end
 在 HarmonyOS 工程根目录创建 `hvigorconfig.ts`，并启用一次：
 
 ```ts
-import { hvigor, hvigorConfig } from '@ohos/hvigor';
+import * as hvigorApi from '@ohos/hvigor';
 import { enableHarmonyLynxAutolink } from '@lynx/lynx-library-plugin';
 
-enableHarmonyLynxAutolink(hvigorConfig, hvigor, {
+enableHarmonyLynxAutolink(hvigorApi, {
   moduleName: 'entry',
 });
 ```
 
 当工程中只有一个依赖 `@lynx/lynx` 的 entry 或 feature HAP 时，可以省略 `moduleName`；存在多个 Lynx HAP 时必须明确指定目标模块。
 
-Hvigor 创建模块节点前，plugin 会扫描当前工程可见的 `node_modules`，在工程已忽略的 `.hvigor/lynx-autolink/<moduleName>` 缓存目录中生成 Registry HAR，并通过 `hvigorConfig.includeNode()` 把 library HAR 和 Registry HAR 加入构建图。目标 HAP 加载完成后，plugin 再通过 HAP model API 注入 Registry 依赖、生成资源目录与 `module.appStartup`。AppStartup 源码保存在 HAP 模块的 `build/generated/lynx-autolink` 下；plugin 会注册一个 Hvigor 任务，在 `clean` 之后、当前 target 的 `PreBuild` 之前重新生成这些文件。整个过程不会修改应用的 `src` 目录或已提交的 `build-profile.json5`。
+Hvigor 创建模块节点前，plugin 会扫描当前工程可见的 `node_modules`，使用 Hvigor 公开的 `parseJsonFile()` API 解析 HarmonyOS JSON5 元数据，在工程已忽略的 `.hvigor/lynx-autolink/<moduleName>` 缓存目录中生成 Registry HAR，并通过 `hvigorConfig.includeNode()` 把 library HAR 和 Registry HAR 加入构建图。目标 HAP 加载完成后，plugin 再通过 HAP model API 注入 Registry 依赖、生成资源目录与 `module.appStartup`。AppStartup 源码保存在 HAP 模块的 `build/generated/lynx-autolink` 下；plugin 会注册一个 Hvigor 任务，在 `clean` 之后、当前 target 的 `PreBuild` 之前重新生成这些文件。整个过程不会修改应用的 `src` 目录或已提交的 `build-profile.json5`。
 
 生成的 AppStartup 任务在主线程执行，并在应用创建 Lynx Runtime 前只调用 Registry HAR 中幂等的 `setupGlobal()`。如果 HAP 已经配置 AppStartup，plugin 会保留原有任务和 `configEntry`，再追加 Lynx 任务。应用不需要执行 `lynx-harmony-autolink` 之类的命令，也不需要手动调用 `setupGlobal()`。
 
