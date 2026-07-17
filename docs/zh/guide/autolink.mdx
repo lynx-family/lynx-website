@@ -115,25 +115,31 @@ end
 
 <PlatformTabs.Tab platform="harmony">
 
-在包含 HarmonyOS 工程的 npm 项目中安装 Hvigor plugin：
+在 HarmonyOS 工程根目录的 `hvigor/hvigor-config.json5` 中加入 plugin 依赖：
 
-```bash
-npm install --save-dev @lynx/lynx-library-plugin
+```json5
+{
+  modelVersion: '5.0.0',
+  dependencies: {
+    '@lynx/lynx-library-plugin': '^0.1.0',
+  },
+}
 ```
 
-在 entry HAP 的 `hvigorfile.ts` 中启用一次：
+在 HarmonyOS 工程根目录创建 `hvigorconfig.ts`，并启用一次：
 
 ```ts
-import { hapTasks } from '@ohos/hvigor-ohos-plugin';
-import { harmonyLynxAutolinkPlugin } from '@lynx/lynx-library-plugin';
+import { hvigor, hvigorConfig } from '@ohos/hvigor';
+import { enableHarmonyLynxAutolink } from '@lynx/lynx-library-plugin';
 
-export default {
-  system: hapTasks,
-  plugins: [harmonyLynxAutolinkPlugin()],
-};
+enableHarmonyLynxAutolink(hvigorConfig, hvigor, {
+  moduleName: 'entry',
+});
 ```
 
-Hvigor 配置阶段，plugin 会扫描当前工程可见的 `node_modules`，在 HAP 模块的 `build/generated/lynx-autolink` 下生成 Registry HAR 和 AppStartup 任务。plugin 通过 Hvigor 的 project/HAP model API 把 library HAR 和 Registry HAR 加入构建图，注入 Registry 依赖与生成资源目录，并设置 `module.appStartup`。生成的 profile 直接引用 `build/generated` 下的任务，整个过程不会修改应用的 `src` 目录。
+当工程中只有一个依赖 `@lynx/lynx` 的 entry 或 feature HAP 时，可以省略 `moduleName`；存在多个 Lynx HAP 时必须明确指定目标模块。
+
+Hvigor 创建模块节点前，plugin 会扫描当前工程可见的 `node_modules`，在 HAP 模块的 `build/generated/lynx-autolink` 下生成 Registry HAR，并通过 `hvigorConfig.includeNode()` 把 library HAR 和 Registry HAR 加入构建图。目标 HAP 加载完成后，plugin 再通过 HAP model API 注入 Registry 依赖、生成资源目录与 `module.appStartup`。整个过程不会修改应用的 `src` 目录或已提交的 `build-profile.json5`。
 
 生成的 AppStartup 任务在主线程执行，并在应用创建 Lynx Runtime 前只调用 Registry HAR 中幂等的 `setupGlobal()`。如果 HAP 已经配置 AppStartup，plugin 会保留原有任务和 `configEntry`，再追加 Lynx 任务。应用不需要执行 `lynx-harmony-autolink` 之类的命令，也不需要手动调用 `setupGlobal()`。
 

@@ -115,25 +115,31 @@ After `pod install`, Autolink generates the registry pod and hooks it into the L
 
 <PlatformTabs.Tab platform="harmony">
 
-Install the Hvigor plugin in the npm project that contains the HarmonyOS app:
+Add the plugin dependency to `hvigor/hvigor-config.json5` in the HarmonyOS project root:
 
-```bash
-npm install --save-dev @lynx/lynx-library-plugin
+```json5
+{
+  modelVersion: '5.0.0',
+  dependencies: {
+    '@lynx/lynx-library-plugin': '^0.1.0',
+  },
+}
 ```
 
-Enable it once in the entry HAP `hvigorfile.ts`:
+Create `hvigorconfig.ts` in the HarmonyOS project root and enable it once:
 
 ```ts
-import { hapTasks } from '@ohos/hvigor-ohos-plugin';
-import { harmonyLynxAutolinkPlugin } from '@lynx/lynx-library-plugin';
+import { hvigor, hvigorConfig } from '@ohos/hvigor';
+import { enableHarmonyLynxAutolink } from '@lynx/lynx-library-plugin';
 
-export default {
-  system: hapTasks,
-  plugins: [harmonyLynxAutolinkPlugin()],
-};
+enableHarmonyLynxAutolink(hvigorConfig, hvigor, {
+  moduleName: 'entry',
+});
 ```
 
-During Hvigor configuration, the plugin scans visible `node_modules` directories and generates a Registry HAR plus an AppStartup task under the HAP module's `build/generated/lynx-autolink` directory. Through Hvigor's project and HAP model APIs, it adds the library and Registry HAR modules to the build graph, injects the Registry dependency and generated resource directory, and sets `module.appStartup`. The generated profile points to the task under `build/generated`; the plugin does not edit the app's `src` tree.
+You can omit `moduleName` when the project has exactly one entry or feature HAP that depends on `@lynx/lynx`. Projects with multiple Lynx HAP modules must select the target explicitly.
+
+Before Hvigor creates module nodes, the plugin scans visible `node_modules` directories, generates a Registry HAR under the HAP module's `build/generated/lynx-autolink` directory, and adds the library and Registry HAR modules to the build graph through `hvigorConfig.includeNode()`. After the target HAP is evaluated, it uses HAP model APIs to inject the Registry dependency and generated resource directory and set `module.appStartup`. The plugin does not edit the app's `src` tree or checked-in `build-profile.json5` files.
 
 The generated AppStartup task runs on the main thread before app code creates a Lynx runtime and calls only the Registry HAR's idempotent `setupGlobal()` function. If the HAP already has an AppStartup profile, the plugin preserves its tasks and `configEntry` and appends the Lynx task. No command such as `lynx-harmony-autolink` and no manual `setupGlobal()` call is required.
 
