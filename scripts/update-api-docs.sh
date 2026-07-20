@@ -9,6 +9,8 @@
 #                  run here in lynx-website (`pnpm run typedoc`), reading the
 #                  freshly built lynx-stack packages.
 #
+# Also syncs the `packageManager` pnpm pin in package.json from lynx-stack.
+#
 # NOT covered: docs/{en,zh}/api/react (bespoke: custom intro + projectDocuments
 # whose sources don't ship) and docs/{en,zh}/api/_meta.json (hand-curated
 # sidebar nav). Review the diff and reconcile nav when members are added/removed.
@@ -55,6 +57,35 @@ BUILD_FILTERS=(
   --filter @lynx-js/react
   --filter @lynx-js/testing-environment
 )
+
+sync_package_manager() {
+  echo "::group::Sync packageManager pin from lynx-stack"
+  # Keep lynx-website's pnpm pin aligned with lynx-stack's. This edits
+  # package.json only — the current run already installed with the old pin, so
+  # the new one takes effect on the next run.
+  node -e '
+    const fs = require("fs");
+    const [stackPkg, webPkg] = process.argv.slice(1);
+    const want = JSON.parse(fs.readFileSync(stackPkg, "utf8")).packageManager;
+    const raw = fs.readFileSync(webPkg, "utf8");
+    const have = JSON.parse(raw).packageManager;
+    if (!want) {
+      console.log("lynx-stack declares no packageManager; leaving the pin alone.");
+      process.exit(0);
+    }
+    if (!have) {
+      console.error("error: lynx-website package.json has no packageManager field to update.");
+      process.exit(1);
+    }
+    if (want === have) {
+      console.log(`packageManager already up to date: ${want}`);
+      process.exit(0);
+    }
+    fs.writeFileSync(webPkg, raw.replace(JSON.stringify(have), JSON.stringify(want)));
+    console.log(`packageManager: ${have} -> ${want}`);
+  ' "$STACK/package.json" "$WEBSITE/package.json"
+  echo "::endgroup::"
+}
 
 ensure_stack_paths_exist() {
   local missing=0
@@ -122,6 +153,8 @@ sync_api_extractor_docs() {
   done
   echo "::endgroup::"
 }
+
+sync_package_manager
 
 echo "::group::Build lynx-stack packages"
 pushd "$STACK" >/dev/null
