@@ -138,10 +138,7 @@ function isVersionAtOrBefore(
   return parseVersion(versionAdded) <= parseVersion(targetVersion);
 }
 
-function matchesCategoryFilter(
-  category: string,
-  filterId: string,
-): boolean {
+function matchesCategoryFilter(category: string, filterId: string): boolean {
   if (filterId === 'all') return PLATFORM_API_CATEGORIES.has(category);
   const filter = CATEGORY_FILTERS.find((f) => f.id === filterId);
   if (!filter) return category === filterId;
@@ -269,13 +266,13 @@ const ParityChart: React.FC<ParityChartProps> = ({
     offset;
 
   const platformPoints = selectedPlatforms.map((platform, idx) => {
-    const offset = (idx - (selectedPlatforms.length - 1) / 2) * (compact ? 2 : 3);
+    const offset =
+      (idx - (selectedPlatforms.length - 1) / 2) * (compact ? 2 : 3);
     return {
       platform,
       points: timeline.map((t, i) => ({
         x:
-          padX +
-          (i * (w - padX - padRight)) / Math.max(1, timeline.length - 1),
+          padX + (i * (w - padX - padRight)) / Math.max(1, timeline.length - 1),
         y: toY(t.platforms[platform]?.coverage ?? 0, offset),
         version: t.version,
         coverage: t.platforms[platform]?.coverage ?? 0,
@@ -374,7 +371,15 @@ const ParityChart: React.FC<ParityChartProps> = ({
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r={hoveredIndex === i ? (compact ? 5 : 6) : compact ? 2.5 : 3.5}
+                    r={
+                      hoveredIndex === i
+                        ? compact
+                          ? 5
+                          : 6
+                        : compact
+                          ? 2.5
+                          : 3.5
+                    }
                     fill={colors.line}
                     className="transition-all"
                   />
@@ -486,12 +491,7 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
         featureCount: summary.platform_api_total,
       };
     }
-    return buildTimeline(
-      features,
-      versions,
-      categoryFilter,
-      selectedPlatforms,
-    );
+    return buildTimeline(features, versions, categoryFilter, selectedPlatforms);
   }, [
     categoryFilter,
     baseTimeline,
@@ -640,8 +640,8 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
                 }}
               >
                 {filterLabel}
-                {' · '}
-                v{versions[0].version} → v{versions[versions.length - 1].version}
+                {' · '}v{versions[0].version} → v
+                {versions[versions.length - 1].version}
                 {featureCount > 0 && (
                   <>
                     {' · '}
@@ -651,11 +651,7 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
               </p>
             </div>
             <div className="aps-trend-controls">
-              <div
-                className="aps-trend-seg"
-                role="group"
-                aria-label={t.yScale}
-              >
+              <div className="aps-trend-seg" role="group" aria-label={t.yScale}>
                 <button
                   type="button"
                   className={cn(
@@ -680,7 +676,11 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
             </div>
           </div>
 
-          <div className="aps-trend-filters" role="tablist" aria-label={t.categoryFilter}>
+          <div
+            className="aps-trend-filters"
+            role="tablist"
+            aria-label={t.categoryFilter}
+          >
             {CATEGORY_FILTERS.map((f) => (
               <button
                 key={f.id}
