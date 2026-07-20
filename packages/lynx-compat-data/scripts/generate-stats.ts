@@ -169,8 +169,13 @@ const PLATFORM_API_CATEGORIES = new Set(
   CATEGORIES.filter((c) => c.group === 'platform').map((c) => c.path),
 );
 
-// Recent versions to track for "recently added" APIs
-const RECENT_VERSIONS = ['3.4', '3.5'];
+// Recent versions to track for "recently added" APIs.
+// Keep this aligned with the latest entries in version.json (plus any
+// pre-release minors already present in LCD, e.g. 4.1).
+const RECENT_VERSIONS = ['3.9', '4.0', '4.1'];
+
+// How many version.json history entries to include in the Coverage Trend.
+const TIMELINE_VERSION_COUNT = 14;
 
 interface APIInfo {
   path: string;
@@ -670,8 +675,8 @@ function calculateTimeline(
   allFeatures: FeatureInfo[],
   versionHistory: Array<{ version: string; release_date?: string }>,
 ): TimelinePoint[] {
-  // Only use recent versions (last 10)
-  const recentVersions = versionHistory.slice(-10);
+  // Use the most recent release window so the trend chart reaches current.
+  const recentVersions = versionHistory.slice(-TIMELINE_VERSION_COUNT);
 
   // Only count shared features in Platform API categories (supported by at least 2 platforms)
   const relevantFeatures = allFeatures.filter((f) => {
@@ -1071,7 +1076,8 @@ function generateStats(): APIStats {
     },
     category_groups: categoryGroups,
     categories,
-    recent_apis: allRecentAPIs.slice(0, 100),
+    // Cap high enough to cover the current RECENT_VERSIONS window.
+    recent_apis: allRecentAPIs.slice(0, 250),
     features: allFeatures,
     timeline,
   };
