@@ -15,6 +15,18 @@ const localeConfig = {
 // English and Chinese API reference pages.
 const apiReferenceExamples = [
   {
+    id: 'react-clone-element-example',
+    apiReference: 'react/Function.cloneElement.mdx',
+    locales: ['en', 'zh'],
+    goProps: {
+      example: 'react-apis',
+      defaultFile: 'src/clone-element/index.tsx',
+      defaultEntryFile: 'dist/clone-element.lynx.bundle',
+      entry: 'src/clone-element',
+      defaultTab: 'web',
+    },
+  },
+  {
     id: 'react-create-element-example',
     apiReference: 'react/Function.createElement.mdx',
     locales: ['en', 'zh'],
