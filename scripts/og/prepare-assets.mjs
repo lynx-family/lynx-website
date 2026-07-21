@@ -48,6 +48,9 @@ const SOURCES = {
     native: true,
   },
   ai: { localSvg: join(PUBLIC_ASSETS, 'lynxai-logo-dark.svg') },
+  lynxtron: {
+    localSvg: join(PUBLIC_ASSETS, 'lynxtron', 'lynxtron-icon-dark.svg'),
+  },
   api: { remoteSvg: `${CDN}/lynx-light-logo.svg` },
 };
 

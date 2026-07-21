@@ -1,5 +1,5 @@
 import type LCD from '@lynx-js/lynx-compat-data';
-import { getFullPlatformName, PlatformName } from '@lynx-js/lynx-compat-data';
+import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
 import { Badge } from '@rspress/core/theme';
 
 // TODO(xuan.huang): move this to a common place.
@@ -17,11 +17,18 @@ function mapPlatformNameToIconName(platform: ExtendedPlatformName) {
   if (platform === 'clay') {
     return 'clay';
   }
+  if (platform === 'macos') {
+    return 'macos-text';
+  }
+  if (platform === 'windows') {
+    return 'windows';
+  }
   return mapPlatformNameToIconNameInHeaders(platform);
 }
 
-// Extend LCD-defined platform names to include 'clay' as a shorthand for Clay as a whole.
-type ExtendedPlatformName = LCD.PlatformName | 'clay';
+// Extend LCD-defined platform names with labels that are useful in prose but
+// are not compatibility-data platform keys.
+type ExtendedPlatformName = LCD.PlatformName | 'clay' | 'macos' | 'windows';
 
 /**
  * Technical, stable platform name. Used to derive the exported component keys
@@ -34,6 +41,12 @@ function mapPlatformNameToTechnicalName(platform: ExtendedPlatformName) {
   }
   if (platform === 'harmony') {
     return 'Harmony';
+  }
+  if (platform === 'macos') {
+    return 'macOS';
+  }
+  if (platform === 'windows') {
+    return 'Windows';
   }
   return getFullPlatformName(platform);
 }
@@ -53,7 +66,7 @@ function mapPlatformNameToLabel(platform: ExtendedPlatformName) {
 type BadgeProps = React.ComponentProps<typeof Badge>;
 
 type PlatformBadgeInnerProps = {
-  platform: PlatformName;
+  platform: ExtendedPlatformName;
   badgeText: string;
   type?: BadgeProps['type'];
 };
@@ -95,7 +108,7 @@ function PlatformBadgeInner({
 }
 
 type PlatformBadgeProps = {
-  platform: PlatformName;
+  platform: ExtendedPlatformName;
   version?: LCD.VersionValue;
   type?: BadgeProps['type'];
 };
@@ -129,6 +142,8 @@ const platformNames: ExtendedPlatformName[] = [
   'android',
   'ios',
   'harmony',
+  'macos',
+  'windows',
   'clay_android',
   'clay_ios',
   'clay_macos',
@@ -233,6 +248,30 @@ export const {
    * <NoIOS />
    */
   NoIOS,
+  /**
+   * Renders a badge indicating macOS-only support
+   * @example
+   * <MacOSOnly />
+   */
+  MacOSOnly,
+  /**
+   * Renders a badge indicating no macOS support
+   * @example
+   * <NoMacOS />
+   */
+  NoMacOS,
+  /**
+   * Renders a badge indicating Windows-only support
+   * @example
+   * <WindowsOnly />
+   */
+  WindowsOnly,
+  /**
+   * Renders a badge indicating no Windows support
+   * @example
+   * <NoWindows />
+   */
+  NoWindows,
   /**
    * Renders a badge indicating Clay Android-only support
    * @example

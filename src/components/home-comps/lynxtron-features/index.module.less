@@ -1,0 +1,125 @@
+.after-hero {
+  position: relative;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  // No top padding: the cards start exactly where the main homepage's
+  // feature cards do (the shared afterHero slot edge).
+  padding: 0 1rem 2rem;
+}
+
+.ah-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 340px);
+  grid-auto-rows: fit-content;
+  grid-auto-flow: row dense;
+  justify-content: center;
+  gap: 16px;
+  align-items: stretch;
+
+  // Surface styles only apply to the grid's own cards; the small card
+  // nested inside the large one stays transparent.
+  > .ah-card {
+    background: var(--lynxtron-card-surface-bg);
+    border: 1px solid var(--lynxtron-card-border-color);
+    border-radius: 16px;
+    color: var(--rp-c-text-1);
+    position: relative;
+    padding: 16px;
+  }
+}
+
+.ah-small {
+  grid-column: span 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ah-large {
+  grid-column: span 2;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 16px;
+  align-items: stretch;
+  justify-items: stretch;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ah-large-right {
+  position: relative;
+  min-height: 200px;
+}
+
+.ah-content {
+  color: var(--rp-c-text-1);
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  // Type metrics match the main homepage's feature cards
+  // (src/components/home-comps/features): 22px/600/1.3 titles with 12px
+  // below, 14px/400/1.5 descriptions.
+  .ah-title {
+    margin-top: 20px;
+    padding-left: 8px;
+    margin-bottom: 12px;
+    color: var(--home-title-color);
+    font-size: 22px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .ah-desc {
+    color: var(--home-features-item-desc-color);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+    hyphens: auto;
+    padding: 0 8px;
+  }
+}
+
+.ah-icon {
+  color: var(--rp-c-brand);
+  padding-left: 8px;
+
+  > div {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+// Anywhere the layout is effectively two columns — which with the large
+// card's 2-track span means every viewport below the 4-track desktop at
+// 1440px — fixed 340px tracks would leave a 696px grid floating in a
+// much wider page. Let the two tracks flex and cap the grid at 960px,
+// the main homepage's feature list width, so both homes read as the
+// same content column.
+@media (min-width: 744px) and (max-width: 1439px) {
+  .ah-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 960px;
+  }
+}
+
+// Below two 340px tracks (+ gap + page padding) the large card can no
+// longer span two columns: collapse to a single shrinkable column and
+// stack the large card's text above its artwork.
+@media (max-width: 743px) {
+  .ah-grid {
+    grid-template-columns: minmax(0, 340px);
+  }
+
+  .ah-large {
+    grid-column: span 1;
+    grid-template-columns: 1fr;
+  }
+}

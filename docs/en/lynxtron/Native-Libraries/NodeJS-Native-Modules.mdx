@@ -1,0 +1,136 @@
+import { PackageManagerTabs } from '@theme';
+import { Go } from '@lynx';
+import nodejsNativeModulesGif from '@assets/lynxtron/lynxtron-nodejs-native-modules.gif?url';
+
+# Node.js Native Modules
+
+Lynxtron's support for Node.js native modules is aligned with Electron's: both can use npm native modules in the Node.js environment that runs with the app, and both can load `.node` binary artifacts from those modules.
+
+The main difference is the rebuild target. In Electron, people usually use `@electron/rebuild` to rebuild native modules for the Electron runtime. In Lynxtron, use `@lynx-js/lynxtron-rebuild` to rebuild native modules for the Lynxtron runtime.
+
+| Capability                  | Electron                            | Lynxtron                                                                |
+| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| Use npm native modules      | Supported, such as `better-sqlite3` | Supported, such as `better-sqlite3`                                     |
+| Rebuild for the app runtime | `@electron/rebuild`                 | [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/) |
+
+## What is a Node.js native module?
+
+A Node.js native module is an npm package that contains not only JavaScript code, but also locally compiled artifacts, usually `.node` files. They are commonly implemented in C/C++ and exposed to JavaScript through Node-API or node-gyp, and are suitable for scenarios such as:
+
+- high-performance capabilities provided by C/C++ extensions
+- npm packages that depend on `.node` binary artifacts
+- local system capabilities that are only accessible in the Node.js environment
+
+Lynxtron supports these modules, but there is one important thing to note: **native modules must be rebuilt for the Lynxtron runtime**.
+
+If a module was compiled only for your regular local Node.js environment, you may run into ABI mismatch errors when loading it in Lynxtron. A typical error looks like this:
+
+```bash
+Error: The module '/path/to/native/module.node'
+was compiled against a different Node.js version using
+NODE_MODULE_VERSION XXX. This version of Node.js requires
+NODE_MODULE_VERSION YYY. Please try re-compiling or re-installing
+the module.
+```
+
+In Electron, people usually solve this with `@electron/rebuild`. In Lynxtron, **use `@lynx-js/lynxtron-rebuild` instead**.
+
+## Rebuild and Require Native Modules
+
+When using an npm native module in Lynxtron, install the module and run `@lynx-js/lynxtron-rebuild` first, then import or require the module in the Node.js environment.
+
+Install the npm native module you need, and install `@lynx-js/lynxtron-rebuild`:
+
+```bash
+npm install <native-module>
+```
+
+<PackageManagerTabs command="install -D @lynx-js/lynxtron-rebuild" />
+
+Then run `@lynx-js/lynxtron-rebuild` to rebuild native modules for Lynxtron:
+
+```bash
+npx @lynx-js/lynxtron-rebuild
+```
+
+After rebuild is complete, import the native module in the Node.js environment:
+
+```typescript
+import nativeModule from 'native-module';
+
+// Or use CommonJS:
+const nativeModule = require('native-module');
+```
+
+If you need to expose Node.js capabilities to Lynx UI, use bridge messaging or [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts) as described in [Communication Between Node.js and Lynx](/lynxtron/learn/Communication-Between-Node-And-Lynx).
+
+## Example: Todo List Application
+
+:::info Before you start
+
+✅ You have already completed [Getting Started with Lynxtron](/lynxtron/introduction)
+
+✅ Your machine already has the local build toolchain required by `node-gyp`, such as Python, C/C++ Build Tools, or Xcode Command Line Tools
+
+:::
+
+<Go
+  img={nodejsNativeModulesGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="Open in Lynxtron Go"
+/>
+
+This example uses `better-sqlite3` to build a **Todo List application**:
+
+- **Node.js side**: use `better-sqlite3` to persist to-do items in a local SQLite database
+- **Lynx side**: call Node.js logic through communication APIs, display the to-do list, and support adding, toggling completion state, and deleting items
+
+The Node.js main process in this example imports `better-sqlite3` and initializes the database and schema:
+
+```typescript {3}
+// src/main/desktop/main.ts
+import path from 'node:path';
+import Database from 'better-sqlite3';
+import { app, LynxWindow } from 'lynxtron';
+
+const dbPath = path.join(app.getPath('userData'), 'todo.db');
+const db = new Database(dbPath);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0
+  )
+`);
+
+const listStmt = db.prepare(`
+  SELECT id, title, completed
+  FROM todos
+  ORDER BY id DESC
+`);
+
+...
+
+function listTodos() {
+  return listStmt.all().map((todo: any) => ({
+    ...todo,
+    completed: Boolean(todo.completed),
+  }));
+}
+```
+
+## Related docs
+
+- [Communication Between Node.js And LynxView](/lynxtron/learn/Communication-Between-Node-And-Lynx)
+- [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)
+- [Lynx Native Libraries](/lynxtron/Native-Libraries/Lynx-Native-Libraries)
+
+## Next steps
+
+Once you are comfortable with Node.js native modules, you can try:
+
+1. **Add more local capabilities**: for example, use `sharp` for thumbnail generation, or `node-pty` for an embedded terminal
+2. **Combine with Lynx native libraries**: use Node.js native modules together with Lynx native libraries to build more complex desktop applications
