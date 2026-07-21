@@ -18,6 +18,14 @@ Lynx already has many capabilities proven in production, but it does not yet hav
 
 XElement and lynx-ui are not a one-way stack in which one disappears behind the other. They serve different developers and solve different problems, yet together determine whether Lynx can turn native experience into efficient, reusable cross-platform development capabilities.
 
+## Why Elements Alone Are Not Enough
+
+A native element can be powerful and still be difficult to use directly in a product. If platform differences, engine versions, performance switches, and compatibility strategies all leak into application code, every project has to learn and carry the same complexity. Without sound defaults and stable composition patterns, a richer lower-level stack can also create more repeated work.
+
+The opposite extreme is no better. If every product interaction becomes another native property, the API surface keeps expanding while lower-level implementations struggle to keep pace with product needs. Frontend composition offers greater expressiveness, yet performance-sensitive gestures, animation, scrolling, and layering still need support from the main thread and native platform.
+
+The goal of a component ecosystem is therefore not simply to wrap Elements. **XElement extends what Lynx can express natively; lynx-ui makes those capabilities stable, composable, and approachable for frontend developers.** When real components expose new performance, semantic, or compatibility requirements, they feed those needs back into Elements and XElement.
+
 ## From a Few Primitives to a Broader Set of Elements
 
 In Lynx, [Elements](/guide/ui/elements-components) are the basic building blocks of an interface. `<view>`, `<text>`, and `<image>` provide the most fundamental structure and expression. Scrolling, input, media playback, and overlays require deeper cooperation with each platform's native UI system.
@@ -38,7 +46,7 @@ Native elements solve the problems closest to the platform: reliable input, scro
 
 [XElement](/guide/ui/elements-components#xelement) is Lynx's extended native element system. It lets capabilities that do not belong directly in the Engine—but still require deep platform integration—remain opt-in and evolve independently. [lynx-ui](https://github.com/lynx-family/lynx-ui) is the official headless ReactLynx component library maintained by the Lynx team. It does not decide what a component should look like. Instead, it organizes Elements, cross-platform behavior, and state into composable primitives that developers can use to build their own design systems.
 
-![The XElement native extension ecosystem connects to lynx-ui and other DSL component libraries through the shared Element contract, while frontend usage feeds API and testing needs back into XElement](/assets/blog/lynx-elements-to-component-ecosystem/xelement-lynx-ui-ecosystem.en.svg)
+![The XElement native extension ecosystem connects to lynx-ui and other DSL component libraries through the shared Element contract, while frontend usage feeds API, compatibility, performance, and testing needs back into XElement](/assets/blog/lynx-elements-to-component-ecosystem/xelement-lynx-ui-ecosystem.en.svg)
 
 <Caption>
   XElement and lynx-ui reinforce each other through a shared Element contract
@@ -78,6 +86,8 @@ This example also shows the ecosystem we want to build. A stable XElement can su
 
 As XElement evolves, Popover, Dialog, and Sheet gain a more reliable native foundation. As those components reach more products, they expose gaps in the lower-level capability sooner. Developers should neither have to solve native layering and platform differences again in every project nor accept an opaque component that cannot be adapted.
 
+The same loop appears in other forms. Long-list components need to absorb lower-level switches, platform differences, and version compatibility. Swiper needs programmable, low-latency main-thread interaction beyond a fixed native API. Sheet combines native layering and gestures with frontend state. Sometimes components absorb lower-level complexity; sometimes component scenarios expose a missing framework capability. Both directions move XElement and lynx-ui forward.
+
 ## What Belongs in the Official Core?
 
 A thriving ecosystem does not mean that the official project implements every component. The larger the official set becomes, the more clearly we need to define its boundaries and maintenance responsibilities.
@@ -90,13 +100,22 @@ Whether the proposal is an XElement or a lynx-ui component, we believe three que
 
 For a concrete proposal, we would also like to see real demand from at least three independent domains, clear compositional value, a maintainer prepared to take long-term responsibility, and comprehensive tests. For XElement, that also means explicit cross-platform semantics, native implementation boundaries, and compatibility requirements. For lynx-ui, it means composable APIs, openness to different design systems, and a sound abstraction over lower-level Element capabilities.
 
+For the official set, a working implementation is not the finish line. Compatibility information, changelogs, migration guidance, runnable examples, and tests for performance, memory, and accessibility should gradually become part of the maintenance commitment.
+
 These criteria still need to be tested in practice. We want to discuss them with the community: which native capabilities belong in the official XElement set, which interaction patterns lynx-ui should maintain over the long term, and what is better left to grow freely in the wider ecosystem?
 
-The Lynx team will continue to take responsibility for core XElement and lynx-ui implementations and their long-term maintenance. The community can participate not only by telling us what is missing, but also through discovery, API review, cross-platform semantics, and test standards. As development guidelines, testing, and distribution infrastructure improve, we also want to lower the barrier to building community XElements, industry components, and design systems, allowing both sides of the ecosystem to grow on a stable core.
+The community can participate at different stages of this ecosystem:
+
+- Share needs, problems, and feedback from real products;
+- Contribute best practices, runnable examples, and cross-platform test cases;
+- Join discussions about APIs, Element semantics, and test standards, and contribute fixes and new capabilities;
+- Build community XElements, components, and tools for scenarios beyond the official core.
+
+The Lynx team will continue to take responsibility for core XElement and lynx-ui implementations and their long-term maintenance. As development guidelines, testing, and distribution infrastructure improve, we also want to lower the barrier to building community XElements, industry components, and design systems, allowing both sides of the ecosystem to grow on a stable core.
 
 ## Bringing the Same Native Capabilities to More DSLs
 
-lynx-ui currently targets ReactLynx. It is one of the most important frontend outlets for XElement capabilities and the official implementation where we validate component APIs and composition models. But the Lynx Engine and XElement are not tied to a single frontend framework. As more DSLs develop on Lynx, we do not want every ecosystem to begin by solving the same platform differences from scratch.
+lynx-ui currently targets ReactLynx. It is the official component library built on these lower-level capabilities, and a proving ground where real components validate Element semantics, interaction mechanisms, compatibility strategies, component APIs, and composition models. But the Lynx Engine and XElement are not tied to a single frontend framework. As more DSLs develop on Lynx, we do not want every ecosystem to begin by solving the same platform differences from scratch.
 
 Ideally, different DSLs can share three kinds of foundations:
 
@@ -122,8 +141,9 @@ A component ecosystem is difficult to build from a dated checklist. We prefer to
 
 - Bring more production-proven XElements into the open-source stack and continue aligning behavior across Android, iOS, and HarmonyOS;
 - Maintain lynx-ui core components in parallel so new native capabilities become components frontend developers can use directly;
-- Improve documentation, examples, and tests on both sides, with clearer platform support and stability information for every capability;
-- Keep validating and refining Element APIs through real component scenarios.
+- Improve documentation, runnable examples, and interactive previews on both sides, with clearer platform support and stability information for every capability;
+- Gradually improve compatibility matrices, changelogs, and migration guides so upgrade paths become more transparent;
+- Keep validating and refining Element APIs, interaction mechanisms, and defaults through real component scenarios.
 
 ### Next: Establish Standards We Can Share
 
@@ -131,11 +151,12 @@ A component ecosystem is difficult to build from a dated checklist. We prefer to
 - Improve development, integration, testing, and release standards for XElement;
 - Continue refining component APIs and composition models in lynx-ui;
 - Establish proposal, admission, and maintenance processes for both core XElements and core components;
+- Gradually make performance, memory, and accessibility part of the verifiable quality baseline for core capabilities;
 - Open more shared cross-platform test infrastructure and contribution workflows.
 
 ### Exploring: Let the Ecosystem Cross Framework Boundaries
 
-- Explore discovery, distribution, and version compatibility for both XElements and frontend components;
+- Explore discovery, distribution, and dependency resolution for both XElements and frontend components;
 - Continue moving shareable, framework-independent behavior lower in the stack;
 - Let more DSLs reuse the same XElements while developing idiomatic component wrappers and shared tests;
 - Lower the barrier for the community to build native extensions, industry components, and design systems.
