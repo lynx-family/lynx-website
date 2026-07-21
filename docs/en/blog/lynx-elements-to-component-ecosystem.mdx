@@ -1,0 +1,152 @@
+---
+title: "From Elements to an Ecosystem: What's Next for Lynx UI"
+date: 2026-07-21
+sidebar: false
+authors: ['MoonfaceX', 'lynx']
+description: 'From Lynx 3.6 to the current development version, more production-proven native elements and lynx-ui components have entered the open-source stack. We look back at that progress and share what is next for cross-platform semantics, core components, multiple DSLs, and community collaboration.'
+---
+
+import { BlogHeader, Caption, Go } from '@lynx';
+
+<BlogHeader />
+
+When we open-sourced Lynx, we said that many production-proven capabilities—including a richer set of UI components—were [still on their way](/blog/lynx-unlock-native-for-more#this-is-not-the-end-but-a-new-beginning). From Lynx 3.6 to the current development version, we have kept moving that work forward: bringing more native elements into the open and using [lynx-ui](/blog/lynx-ui) to turn those foundations into components that frontend developers can use directly.
+
+Now is a good time to look back at that progress and share how we are thinking about the next stage.
+
+Lynx already has many capabilities proven in production, but it does not yet have a component ecosystem that is open, clear, and easy enough to participate in. What we want to build is not simply a longer component list. It is the **missing middle layer between native capabilities and frontend components**: cross-platform Elements as a public contract, officially maintained core components as a foundation, and native-quality UI capabilities that different DSLs can compose, reuse, and evolve together.
+
+## From a Few Primitives to a Broader Set of Elements
+
+In Lynx, [Elements](/guide/ui/elements-components) are the basic building blocks of an interface. `<view>`, `<text>`, and `<image>` provide the most fundamental structure and expression. Scrolling, input, media playback, and overlays require deeper cooperation with each platform's native UI system.
+
+In Lynx 3.6, the open-source stack included a small set of extended native elements, primarily `<input>`, `<textarea>`, and `<overlay>`. Since then, we have gradually brought more capabilities already running in real applications into the open-source repository:
+
+- Lynx 3.7 introduced the [`<svg>`](/api/elements/built-in/svg) element for cross-platform native vector rendering.
+- Lynx 3.8 added interaction containers such as [`<refresh>`](/api/elements/built-in/refresh) and began opening up native Markdown rendering.
+- In the current development version, capabilities such as `blur-view`, `markdown`, `scroll-coordinator`, `video`, `viewpager`, and `webview` are also entering the open stack across Android, iOS, and HarmonyOS.
+
+Together, these elements cover several recurring needs: input and keyboards, independent overlay layers, vector and blur effects, refresh and complex scrolling, rich text and media, and embedded content. Many are not new experiments; they have been exercised in real products. Once their code is open, however, we still need to align APIs, close platform gaps, and bring documentation, examples, testing, and release processes into the open as well.
+
+For that reason, “the code is open” is not the finish line. For capabilities that enter the official core set, we want to make their supported platforms, stability level, and known differences explicit, then uphold those commitments through public documentation, automated tests, and a clear versioning policy.
+
+## An Element Is Not Yet a Component
+
+Native elements solve the problems closest to the platform: reliable input, scrolling, gestures, layering, and rendering. A product-level component still needs state, composition, lifecycle, styling interfaces, and product-specific behavior.
+
+That is where [lynx-ui](https://github.com/lynx-family/lynx-ui) comes in. lynx-ui is the official headless component library for ReactLynx, maintained by the Lynx team. It does not decide what a component should look like. Instead, it organizes cross-platform state and behavior into composable primitives that developers can use to build their own design systems.
+
+Today, the Lynx UI stack can be understood in roughly three layers:
+
+| Layer                    | Primary responsibility                                                                        | Examples                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Engine built-in elements | Fundamental rendering primitives closely tied to the engine lifecycle                         | `<view>`, `<text>`, `<image>`, `<list>`      |
+| Extended native elements | Opt-in native primitives that depend on platform capabilities or high-performance interaction | `<input>`, `<overlay>`, `<svg>`, `<refresh>` |
+| lynx-ui                  | Composes elements, state, and behavior into headless ReactLynx components                     | `Popover`, `Dialog`, `Sheet`, `Swiper`       |
+
+Extended native elements are currently organized and integrated primarily through XElement. Its packaging and integration model may evolve, but the separation behind it will remain useful: not every capability belongs in the Engine, and not every native capability should have to be rebuilt by each product team. We need an opt-in layer of native capabilities with official quality guarantees.
+
+## How Overlay Grows into a Family of Components
+
+Overlay is a concrete example of this layering.
+
+The native `<overlay>` element solves an independent-layer rendering problem. It lets content escape the clipping and stacking constraints of the regular view tree and render in the appropriate native container. But `<overlay>` does not know what a dialog is, nor does it manage open and close state, enter and exit animation, anchor positioning, or drag-to-snap behavior.
+
+lynx-ui first uses `OverlayView` to normalize how Overlay works across containers and platforms. From there:
+
+- `Popover` composes anchor tracking, positioning, visibility state, and Presence;
+- `Dialog` composes Trigger, Backdrop, Content, dismissal behavior, and enter and exit states;
+- `Sheet` goes further by composing Overlay, Presence, main-thread gestures, and Motion to support dragging, resistance, and snap points.
+
+<Go
+  example="lynx-ui-sheet"
+  defaultFile="Basic/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-sheet.webm"
+  defaultEntryFile="dist/SheetBasic.lynx.bundle"
+  highlight="{17-38}"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  webPreviewMode="auto"
+/>
+
+<Caption>
+  <code>Sheet</code> combines a native Overlay, composable component structure,
+  and main-thread gestures
+</Caption>
+
+This example also shows the ecosystem we want to build. A stable native primitive can support multiple components, and those components can become foundations for more complex product experiences. Developers should not need to solve native layering and platform differences again in every project, nor should they have to accept an opaque component that cannot be adapted.
+
+## What Should the Official Core Maintain?
+
+A thriving ecosystem does not mean that the official project implements every component. The larger the official set becomes, the more clearly we need to define its boundaries and maintenance responsibilities.
+
+We believe three questions should guide whether a capability belongs in the officially maintained core:
+
+1. Is it broadly needed across independent industries?
+2. Can it serve as a foundation for several higher-level components?
+3. Does it place high demands on performance, interaction latency, or native platform integration?
+
+For a concrete proposal, we would also like to see real demand from at least three independent domains, clear value for higher-level composition, a maintainer prepared to take long-term responsibility, and comprehensive tests. These criteria still need to be tested in practice. We want to discuss them with the community: what should become a shared foundation that every Lynx developer can rely on, and what is better left to grow freely in the wider ecosystem?
+
+The Lynx team will continue to take responsibility for core implementations and long-term maintenance. The community can participate not only by telling us what is missing, but also through discovery, API review, cross-platform semantics, and test standards. For design systems, industry-specific components, and more specialized product patterns, we want a stable core to leave plenty of room for the community to create.
+
+## UI Capabilities Beyond a Single DSL
+
+lynx-ui currently targets ReactLynx, but the Lynx Engine is not tied to a single frontend framework. As more DSLs develop on Lynx, we do not want every ecosystem to begin by solving the same platform differences from scratch.
+
+Ideally, different DSLs can share three kinds of foundations:
+
+- **Reusable lower-level implementations:** mechanisms such as gesture arbitration, animation drivers, overlays, focus, and keyboard handling that depend on native code or the main thread;
+- **Shared behavioral contracts and tests:** even when form semantics, state transitions, and accessibility behavior cannot share code directly, they should follow the same specification and pass the same test suite;
+- **Thin, idiomatic wrappers:** each DSL can express composition, context, and controlled state in the way that feels most natural to its users.
+
+This does not mean that today's lynx-ui components can run unchanged in every DSL. It means that we can gradually move framework-independent behavior lower in the stack and turn Elements, behavior specifications, and test suites into shared assets—making each DSL's component wrappers thinner and more consistent.
+
+## Consistent Semantics, Without Pretending Platforms Are Identical
+
+Cross-platform consistency does not require every platform to use an identical implementation.
+
+When a capability can fully follow Web semantics, we will prefer APIs that are familiar to Web developers. When the Web does not accurately express native behavior, we will start from native interaction patterns and user expectations across platforms to define consistent core semantics. Where complete unification is not practical, we favor progressive enhancement while documenting compatibility and fallback behavior clearly.
+
+That takes more than a TypeScript definition. Cross-platform Element semantics, component APIs and composition models, compatibility matrices, and automated tests will all become important infrastructure for the next stage of the component system.
+
+## What Is Next
+
+A component ecosystem is difficult to build from a dated checklist. We prefer to describe the work ahead in three horizons: **Now, Next, and Exploring**.
+
+### Now: Open and Stabilize Core Capabilities
+
+- Bring more production-proven Elements into the open-source stack;
+- Continue aligning behavior across Android, iOS, and HarmonyOS;
+- Maintain lynx-ui core components and improve their documentation, examples, and tests;
+- Make platform support and stability information clearer for every capability.
+
+### Next: Establish Standards We Can Share
+
+- Define cross-platform Element semantics and compatibility baselines;
+- Refine component APIs and composition models;
+- Establish a proposal and admission process for core components;
+- Open more cross-platform test infrastructure and contribution workflows.
+
+### Exploring: Let the Ecosystem Cross Framework Boundaries
+
+- Continue moving shareable, framework-independent behavior lower in the stack;
+- Provide thin component wrappers and common tests for more DSLs;
+- Explore how components should be discovered, distributed, and checked for compatibility.
+
+Some of these directions are already in progress; others are questions we still need to answer with the community. As the designs become more concrete, we will continue to share progress through RFCs, documentation, and implementation updates.
+
+## Building Shared Infrastructure for Cross-Platform UI
+
+The vitality of the Web ecosystem has never come only from how many controls browsers ship. It comes from stable primitives, shared standards, open tools, and the space for anyone to keep building. We want the Lynx component ecosystem to have that foundation while preserving the distinct value of native rendering, cross-platform delivery, and low-latency interaction.
+
+As that foundation takes shape, a component no longer needs to be a one-off implementation owned by one platform, framework, or product team. It can be expressed through different DSLs, composed into different design systems, and preserve consistent user semantics across platforms. Cross-platform native components can become shared infrastructure that the whole ecosystem accumulates together, rather than an engineering cost paid repeatedly by every team.
+
+We especially want to discuss three questions with the community:
+
+1. How should component APIs and composition models be designed?
+2. What should a component need to demonstrate before it enters the officially maintained core?
+3. What cross-platform semantics should an Element promise?
+
+Join or start a conversation in [Lynx GitHub Discussions](https://github.com/lynx-family/lynx/discussions), talk with us on [Discord](https://discord.com/invite/mXk7jqdDXk), and follow the latest progress on [X](https://x.com/lynxjs_org). GitHub Discussions will be the primary home for proposals, standards discussions, and the decisions that follow.
+
+Open-sourcing Lynx made native-rendered cross-platform capabilities available to more developers. In the next stage, we want to open up how those capabilities are defined and evolved. Our goal is not only to provide more components, but to build, together with the community, a cross-platform UI ecosystem for the open Web community with a truly native experience.
