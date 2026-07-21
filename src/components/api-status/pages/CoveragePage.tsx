@@ -1,20 +1,101 @@
+import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PLATFORM_CONFIG } from '../constants';
-import type { APIStats, DisplayPlatformName, TimelinePoint } from '../types';
+import {
+  CATEGORY_DISPLAY_NAMES,
+  type APIStats,
+  type DisplayPlatformName,
+  type FeatureInfo,
+  type TimelinePoint,
+} from '../types';
 
 const i18n = {
   en: {
     exclusive: 'EXCL',
     parityLegend: 'Coverage by platform across the Lynx Platform API surface.',
     trendLegend: 'Coverage progression across released versions.',
+    categoryFilter: 'Category',
+    allCategories: 'All Platform API',
+    yScale: 'Y scale',
+    yFull: '0–100%',
+    yFocus: 'Focus range',
+    byCategory: 'Trend by category',
+    byCategoryLegend:
+      'Same window, split by category — easier to spot where coverage moved.',
+    deltaFrom: 'Δ from',
+    noData: 'Not enough timeline data for this filter.',
+    features: 'features',
   },
   zh: {
     exclusive: '独占',
     parityLegend: 'Lynx Platform API 表面下各平台的覆盖率。',
     trendLegend: '各发布版本中的覆盖率演进。',
+    categoryFilter: '分类',
+    allCategories: '全部 Platform API',
+    yScale: 'Y 轴',
+    yFull: '0–100%',
+    yFocus: '聚焦区间',
+    byCategory: '按分类趋势',
+    byCategoryLegend: '同一时间窗口按分类拆分，更容易看出覆盖率变化来源。',
+    deltaFrom: '相对',
+    noData: '当前筛选条件下没有足够的时间线数据。',
+    features: '个特性',
   },
 };
+
+/** Platform-API categories used for coverage (mirrors generate-stats.ts). */
+const PLATFORM_API_CATEGORIES = new Set([
+  'elements',
+  'css/properties',
+  'css/at-rule',
+  'css/data-type',
+  'lynx-api/global',
+  'lynx-api/event',
+  'lynx-api/fetch',
+  'lynx-api/lynx',
+  'lynx-api/selector-query',
+  'lynx-api/nodes-ref',
+  'lynx-api/intersection-observer',
+  'lynx-api/main-thread',
+  'lynx-api/performance-api',
+]);
+
+/** Filter chips shown above the main trend chart. */
+const CATEGORY_FILTERS: Array<{ id: string; label: string; match: string[] }> =
+  [
+    { id: 'all', label: 'All', match: [] },
+    { id: 'elements', label: 'Elements', match: ['elements'] },
+    {
+      id: 'css/properties',
+      label: 'CSS Properties',
+      match: ['css/properties'],
+    },
+    { id: 'css/at-rule', label: 'CSS At-Rules', match: ['css/at-rule'] },
+    {
+      id: 'css/data-type',
+      label: 'CSS Data Types',
+      match: ['css/data-type'],
+    },
+    {
+      id: 'lynx-api',
+      label: 'Lynx API',
+      match: [
+        'lynx-api/global',
+        'lynx-api/event',
+        'lynx-api/fetch',
+        'lynx-api/lynx',
+        'lynx-api/selector-query',
+        'lynx-api/nodes-ref',
+        'lynx-api/intersection-observer',
+        'lynx-api/main-thread',
+        'lynx-api/performance-api',
+      ],
+    },
+  ];
+
+/** Categories rendered as small-multiple charts. */
+const CATEGORY_CHARTS = CATEGORY_FILTERS.filter((c) => c.id !== 'all');
 
 const PlatformIcon: React.FC<{
   platform: string;
@@ -32,55 +113,170 @@ const platformVars = (platform: string): React.CSSProperties => {
   return { ['--platform' as any]: line };
 };
 
+function parseVersion(v: string): number {
+  const parts = v.split('.').map(Number);
+  return parts[0] * 1000 + (parts[1] || 0);
+}
+
+function isSupported(version: string | boolean | null | undefined): boolean {
+  return version !== false && version !== null && version !== undefined;
+}
+
+function isVersionAtOrBefore(
+  versionAdded: string | boolean | null | undefined,
+  targetVersion: string,
+): boolean {
+  if (versionAdded === true) return true;
+  if (
+    versionAdded === false ||
+    versionAdded === null ||
+    versionAdded === undefined
+  ) {
+    return false;
+  }
+  if (typeof versionAdded !== 'string') return false;
+  return parseVersion(versionAdded) <= parseVersion(targetVersion);
+}
+
+function matchesCategoryFilter(category: string, filterId: string): boolean {
+  if (filterId === 'all') return PLATFORM_API_CATEGORIES.has(category);
+  const filter = CATEGORY_FILTERS.find((f) => f.id === filterId);
+  if (!filter) return category === filterId;
+  return filter.match.includes(category);
+}
+
+/**
+ * Recompute coverage timeline for a category subset, matching the
+ * generator's Platform-API shared-feature (≥2 platforms) rule.
+ */
+function buildTimeline(
+  features: FeatureInfo[] | undefined,
+  versions: Array<{ version: string; release_date?: string }>,
+  categoryFilter: string,
+  platforms: DisplayPlatformName[],
+): { timeline: TimelinePoint[]; featureCount: number } {
+  if (!features || versions.length === 0) {
+    return { timeline: [], featureCount: 0 };
+  }
+
+  const relevant = features.filter((f) => {
+    if (!matchesCategoryFilter(f.category, categoryFilter)) return false;
+    const supportCount = Object.entries(f.support).filter(([key, s]) => {
+      // Count real platforms only (not aggregate clay) for the ≥2 rule.
+      if (key === 'clay') return false;
+      return s && isSupported(s.version_added);
+    }).length;
+    return supportCount >= 2;
+  });
+
+  const timeline: TimelinePoint[] = versions.map((v) => {
+    const platformStats: TimelinePoint['platforms'] = {};
+    for (const platform of platforms) {
+      let supported = 0;
+      for (const feature of relevant) {
+        const support = feature.support[platform];
+        if (support && isVersionAtOrBefore(support.version_added, v.version)) {
+          supported++;
+        }
+      }
+      platformStats[platform] = {
+        supported,
+        coverage:
+          relevant.length > 0
+            ? Math.round((supported / relevant.length) * 100)
+            : 0,
+      };
+    }
+    return {
+      version: v.version,
+      release_date: v.release_date,
+      platforms: platformStats,
+    };
+  });
+
+  return { timeline, featureCount: relevant.length };
+}
+
 // ─── Trend chart ─────────────────────────────────────────────────────────
-//
-// Fills its plate full-width via a wide viewBox (1200×320) +
-// preserveAspectRatio="none", which stretches the SVG horizontally to the
-// plate width regardless of aspect ratio. Stroke widths stay constant via
-// vectorEffect="non-scaling-stroke" so lines don't get distorted by the
-// stretch. Each platform line gets a per-index Y offset of ±3.5 viewBox
-// units so identical values don't render as a single line — the user
-// always sees every selected platform.
 
 interface ParityChartProps {
   timeline: TimelinePoint[];
   selectedPlatforms: DisplayPlatformName[];
+  /** When true, Y axis zooms to the data range so small deltas are visible. */
+  focusScale: boolean;
+  /** Compact mode for small-multiple tiles. */
+  compact?: boolean;
 }
 
 const ParityChart: React.FC<ParityChartProps> = ({
   timeline,
   selectedPlatforms,
+  focusScale,
+  compact = false,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (!timeline || timeline.length < 2) return null;
 
-  const w = 1200;
-  const h = 320;
-  const padX = 56;
-  // Extra room on the right for end-of-line platform labels (up to ~110
-  // viewBox units of text — "HarmonyOS" is the worst case).
-  const padRight = 130;
-  const padTop = 28;
-  const padBottom = 36;
+  const w = compact ? 640 : 1200;
+  const h = compact ? 220 : 320;
+  const padX = compact ? 40 : 56;
+  const padRight = compact ? 88 : 130;
+  const padTop = compact ? 18 : 28;
+  const padBottom = compact ? 40 : 44;
 
-  // Y offset per platform separates overlapping lines so each selected
-  // platform is always visible. Centered around 0 so the visual mean
-  // tracks the data, not the rendering order.
+  // Collect coverage values to decide Y domain.
+  const values: number[] = [];
+  for (const t of timeline) {
+    for (const platform of selectedPlatforms) {
+      const c = t.platforms[platform]?.coverage;
+      if (typeof c === 'number') values.push(c);
+    }
+  }
+  const dataMin = values.length ? Math.min(...values) : 0;
+  const dataMax = values.length ? Math.max(...values) : 100;
+
+  let yMin = 0;
+  let yMax = 100;
+  if (focusScale && values.length > 0) {
+    const span = Math.max(8, dataMax - dataMin);
+    const pad = Math.max(3, span * 0.2);
+    yMin = Math.max(0, Math.floor((dataMin - pad) / 2) * 2);
+    yMax = Math.min(100, Math.ceil((dataMax + pad) / 2) * 2);
+    if (yMax - yMin < 10) {
+      yMax = Math.min(100, yMin + 10);
+    }
+  }
+
+  const yTicks = (() => {
+    const ticks: number[] = [];
+    const span = yMax - yMin;
+    const step = span <= 12 ? 2 : span <= 25 ? 5 : span <= 50 ? 10 : 25;
+    for (let v = yMin; v <= yMax + 0.01; v += step) {
+      ticks.push(Math.round(v));
+    }
+    if (ticks[ticks.length - 1] !== yMax) ticks.push(yMax);
+    return ticks;
+  })();
+
+  const toY = (coverage: number, offset: number) =>
+    padTop +
+    (1 - (coverage - yMin) / Math.max(1, yMax - yMin)) *
+      (h - padTop - padBottom) +
+    offset;
+
   const platformPoints = selectedPlatforms.map((platform, idx) => {
-    const offset = (idx - (selectedPlatforms.length - 1) / 2) * 3.5;
+    const offset =
+      (idx - (selectedPlatforms.length - 1) / 2) * (compact ? 2 : 3);
     return {
       platform,
       points: timeline.map((t, i) => ({
         x:
           padX + (i * (w - padX - padRight)) / Math.max(1, timeline.length - 1),
-        y:
-          padTop +
-          (1 - Math.min(1, (t.platforms[platform]?.coverage ?? 0) / 100)) *
-            (h - padTop - padBottom) +
-          offset,
+        y: toY(t.platforms[platform]?.coverage ?? 0, offset),
         version: t.version,
         coverage: t.platforms[platform]?.coverage ?? 0,
+        supported: t.platforms[platform]?.supported ?? 0,
       })),
     };
   });
@@ -93,18 +289,30 @@ const ParityChart: React.FC<ParityChartProps> = ({
         }))
       : null;
 
+  // Label every version when few; otherwise first/last + every other.
+  const labelIndexes = (() => {
+    if (timeline.length <= 8) {
+      return timeline.map((_, i) => i);
+    }
+    const idxs = new Set<number>([0, timeline.length - 1]);
+    for (let i = 0; i < timeline.length; i += 2) idxs.add(i);
+    return [...idxs].sort((a, b) => a - b);
+  })();
+
   return (
     <div className="relative">
       <svg
         className="w-full"
-        style={{ display: 'block', height: 'min(40vh, 360px)' }}
+        style={{
+          display: 'block',
+          height: compact ? 'min(28vh, 220px)' : 'min(42vh, 380px)',
+        }}
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="none"
         onMouseLeave={() => setHoveredIndex(null)}
       >
-        {/* Horizontal grid */}
-        {[0, 25, 50, 75, 100].map((v) => {
-          const y = padTop + (1 - v / 100) * (h - padTop - padBottom);
+        {yTicks.map((v) => {
+          const y = toY(v, 0);
           return (
             <g key={v}>
               <line
@@ -113,19 +321,17 @@ const ParityChart: React.FC<ParityChartProps> = ({
                 x2={w - padRight}
                 y2={y}
                 stroke="currentColor"
-                strokeOpacity={v === 100 || v === 0 ? 0.18 : 0.08}
+                strokeOpacity={v === yMin || v === yMax ? 0.18 : 0.08}
                 strokeWidth="1"
                 vectorEffect="non-scaling-stroke"
-                strokeDasharray={v === 50 ? '0' : v % 50 === 0 ? '0' : '3 4'}
               />
               <text
-                x={padX - 10}
-                y={y + 4}
-                fontSize="12"
+                x={padX - 8}
+                y={y + 3.5}
+                fontSize={compact ? '10' : '12'}
                 fill="currentColor"
                 fillOpacity="0.4"
                 textAnchor="end"
-                style={{ vectorEffect: 'non-scaling-stroke' }}
               >
                 {v}%
               </text>
@@ -133,7 +339,6 @@ const ParityChart: React.FC<ParityChartProps> = ({
           );
         })}
 
-        {/* Per-platform line + interactive points */}
         {platformPoints.map(({ platform, points }) => {
           const polyline = points
             .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
@@ -148,7 +353,7 @@ const ParityChart: React.FC<ParityChartProps> = ({
                 points={polyline}
                 fill="none"
                 stroke={colors.line}
-                strokeWidth="2.5"
+                strokeWidth={compact ? '2' : '2.5'}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 opacity={0.9}
@@ -159,30 +364,33 @@ const ParityChart: React.FC<ParityChartProps> = ({
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r="18"
+                    r={compact ? 14 : 18}
                     fill="transparent"
                     className="cursor-pointer"
                   />
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r={hoveredIndex === i ? 6 : 3.5}
+                    r={
+                      hoveredIndex === i
+                        ? compact
+                          ? 5
+                          : 6
+                        : compact
+                          ? 2.5
+                          : 3.5
+                    }
                     fill={colors.line}
                     className="transition-all"
-                    style={{ vectorEffect: 'non-scaling-stroke' }}
                   />
                 </g>
               ))}
-              {/* End-of-line label — quiet platform tag right of the last
-                  point so each line is identifiable without a separate
-                  legend. */}
               <text
-                x={points[points.length - 1].x + 10}
-                y={points[points.length - 1].y + 4}
-                fontSize="13"
+                x={points[points.length - 1].x + 8}
+                y={points[points.length - 1].y + 3.5}
+                fontSize={compact ? '11' : '13'}
                 fontWeight="600"
                 fill={colors.line}
-                style={{ vectorEffect: 'non-scaling-stroke' }}
               >
                 {PLATFORM_CONFIG[platform]?.label || platform}
               </text>
@@ -190,26 +398,27 @@ const ParityChart: React.FC<ParityChartProps> = ({
           );
         })}
 
-        {/* X axis labels */}
-        <text
-          x={padX}
-          y={h - 10}
-          fontSize="12"
-          fill="currentColor"
-          fillOpacity="0.55"
-        >
-          v{timeline[0].version}
-        </text>
-        <text
-          x={w - padRight}
-          y={h - 10}
-          fontSize="12"
-          fill="currentColor"
-          fillOpacity="0.55"
-          textAnchor="end"
-        >
-          v{timeline[timeline.length - 1].version}
-        </text>
+        {labelIndexes.map((i) => {
+          const x =
+            padX +
+            (i * (w - padX - padRight)) / Math.max(1, timeline.length - 1);
+          const isEdge = i === 0 || i === timeline.length - 1;
+          return (
+            <text
+              key={i}
+              x={x}
+              y={h - 12}
+              fontSize={compact ? '10' : '11'}
+              fill="currentColor"
+              fillOpacity={isEdge ? 0.65 : 0.45}
+              textAnchor={
+                i === 0 ? 'start' : i === timeline.length - 1 ? 'end' : 'middle'
+              }
+            >
+              v{timeline[i].version}
+            </text>
+          );
+        })}
       </svg>
 
       {hovered && (
@@ -260,13 +469,74 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
 }) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
-  const { summary, timeline } = stats;
+  const { summary, timeline: baseTimeline, features } = stats;
+
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [focusScale, setFocusScale] = useState(true);
+
+  const versions = useMemo(
+    () =>
+      (baseTimeline ?? []).map((p) => ({
+        version: p.version,
+        release_date: p.release_date,
+      })),
+    [baseTimeline],
+  );
+
+  const { timeline, featureCount } = useMemo(() => {
+    if (categoryFilter === 'all' && baseTimeline && baseTimeline.length >= 2) {
+      // Prefer precomputed overall timeline (includes clay aggregate).
+      return {
+        timeline: baseTimeline,
+        featureCount: summary.platform_api_total,
+      };
+    }
+    return buildTimeline(features, versions, categoryFilter, selectedPlatforms);
+  }, [
+    categoryFilter,
+    baseTimeline,
+    features,
+    versions,
+    selectedPlatforms,
+    summary.platform_api_total,
+  ]);
+
+  const categoryTimelines = useMemo(() => {
+    return CATEGORY_CHARTS.map((cat) => {
+      const built = buildTimeline(
+        features,
+        versions,
+        cat.id,
+        selectedPlatforms,
+      );
+      const first = built.timeline[0];
+      const last = built.timeline[built.timeline.length - 1];
+      const deltas = selectedPlatforms.map((platform) => {
+        const a = first?.platforms[platform]?.coverage ?? 0;
+        const b = last?.platforms[platform]?.coverage ?? 0;
+        return { platform, delta: b - a, from: a, to: b };
+      });
+      return {
+        ...cat,
+        ...built,
+        deltas,
+        label:
+          cat.id === 'lynx-api'
+            ? 'Lynx API'
+            : CATEGORY_DISPLAY_NAMES[cat.id] || cat.label,
+      };
+    }).filter((c) => c.timeline.length >= 2 && c.featureCount > 0);
+  }, [features, versions, selectedPlatforms]);
+
+  const filterLabel =
+    categoryFilter === 'all'
+      ? t.allCategories
+      : CATEGORY_FILTERS.find((f) => f.id === categoryFilter)?.label ||
+        categoryFilter;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Parity strip — one row per platform, full-width bar dominant.
-          Replaces the previous stat-card grid (which was the hero-metric
-          trope). Reads as a ranked list, not a card array. */}
+      {/* Parity strip */}
       <div className="aps-plate">
         <div className="aps-plate__head">
           <p
@@ -302,7 +572,6 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
                     </span>
                   </div>
                   <div className="aps-parity-row__bar">
-                    {/* Quiet 25/50/75% tick marks for quantitative reference */}
                     <span
                       className="aps-parity-row__bar-tick"
                       style={{ left: '25%' }}
@@ -346,28 +615,169 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
         </div>
       </div>
 
-      {/* Trend chart — full-bleed inside the plate. End-of-line labels
-          identify each platform without needing a separate legend strip. */}
-      {timeline && timeline.length >= 2 && (
+      {/* Main trend chart with category + Y-scale controls */}
+      {versions.length >= 2 && (
+        <div className="aps-plate">
+          <div className="aps-plate__head" style={{ flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: 'var(--rp-c-text-3, #8e8e98)',
+                  letterSpacing: 0,
+                  lineHeight: 1.4,
+                }}
+              >
+                {t.trendLegend}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 11,
+                  color: 'var(--rp-c-text-2, #6a6a73)',
+                  fontFamily: 'var(--rp-font-mono, ui-monospace, monospace)',
+                }}
+              >
+                {filterLabel}
+                {' · '}v{versions[0].version} → v
+                {versions[versions.length - 1].version}
+                {featureCount > 0 && (
+                  <>
+                    {' · '}
+                    {featureCount.toLocaleString()} {t.features}
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="aps-trend-controls">
+              <div className="aps-trend-seg" role="group" aria-label={t.yScale}>
+                <button
+                  type="button"
+                  className={cn(
+                    'aps-trend-seg__btn',
+                    focusScale && 'aps-trend-seg__btn--active',
+                  )}
+                  onClick={() => setFocusScale(true)}
+                >
+                  {t.yFocus}
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    'aps-trend-seg__btn',
+                    !focusScale && 'aps-trend-seg__btn--active',
+                  )}
+                  onClick={() => setFocusScale(false)}
+                >
+                  {t.yFull}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="aps-trend-filters"
+            role="tablist"
+            aria-label={t.categoryFilter}
+          >
+            {CATEGORY_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                role="tab"
+                aria-selected={categoryFilter === f.id}
+                className={cn(
+                  'aps-trend-chip',
+                  categoryFilter === f.id && 'aps-trend-chip--active',
+                )}
+                onClick={() => setCategoryFilter(f.id)}
+              >
+                {f.id === 'all' ? t.allCategories : f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="aps-plate__body" style={{ padding: '8px 8px 4px' }}>
+            {timeline.length >= 2 ? (
+              <ParityChart
+                timeline={timeline}
+                selectedPlatforms={selectedPlatforms}
+                focusScale={focusScale}
+              />
+            ) : (
+              <p
+                style={{
+                  margin: '24px 12px',
+                  fontSize: 13,
+                  color: 'var(--rp-c-text-3, #8e8e98)',
+                }}
+              >
+                {t.noData}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Per-category small multiples */}
+      {categoryTimelines.length > 0 && (
         <div className="aps-plate">
           <div className="aps-plate__head">
-            <p
-              style={{
-                margin: 0,
-                fontSize: 12,
-                color: 'var(--rp-c-text-3, #8e8e98)',
-                letterSpacing: 0,
-                lineHeight: 1.4,
-              }}
-            >
-              {t.trendLegend}
-            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <p className="aps-plate__title" style={{ fontSize: 13 }}>
+                {t.byCategory}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: 'var(--rp-c-text-3, #8e8e98)',
+                  lineHeight: 1.4,
+                }}
+              >
+                {t.byCategoryLegend}
+              </p>
+            </div>
           </div>
-          <div className="aps-plate__body" style={{ padding: '8px 8px 4px' }}>
-            <ParityChart
-              timeline={timeline}
-              selectedPlatforms={selectedPlatforms}
-            />
+          <div className="aps-trend-grid">
+            {categoryTimelines.map((cat) => (
+              <div key={cat.id} className="aps-trend-tile">
+                <div className="aps-trend-tile__head">
+                  <div>
+                    <div className="aps-trend-tile__title">{cat.label}</div>
+                    <div className="aps-trend-tile__meta">
+                      {cat.featureCount.toLocaleString()} {t.features}
+                    </div>
+                  </div>
+                  <div className="aps-trend-tile__deltas">
+                    {cat.deltas.map(({ platform, delta }) => {
+                      const colors =
+                        PLATFORM_CONFIG[platform]?.colors ||
+                        PLATFORM_CONFIG.web_lynx.colors;
+                      const sign = delta > 0 ? '+' : '';
+                      return (
+                        <span
+                          key={platform}
+                          className="aps-trend-tile__delta"
+                          style={{ color: colors.line }}
+                          title={`${PLATFORM_CONFIG[platform]?.label}: ${sign}${delta}pp`}
+                        >
+                          {sign}
+                          {delta}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+                <ParityChart
+                  timeline={cat.timeline}
+                  selectedPlatforms={selectedPlatforms}
+                  focusScale={focusScale}
+                  compact
+                />
+              </div>
+            ))}
           </div>
         </div>
       )}
