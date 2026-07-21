@@ -35,10 +35,13 @@ import {
   ShowCase,
 } from '@/components/home-comps';
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
+import versionJson from '../docs/public/version.json';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
+
+const CURRENT_VERSION_BASE = `/${versionJson.current_version}`;
 
 // Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
@@ -366,7 +369,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <BaseLink
-        href={`/next${removeBase(normalizedHref)}`}
+        href={`${CURRENT_VERSION_BASE}${removeBase(normalizedHref)}`}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
         style={style as any}

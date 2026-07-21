@@ -13,7 +13,7 @@ import { ChevronDown } from 'lucide-react';
 
 import { getLangPrefix } from '../shared-route-config';
 
-import { withBase, useI18n, useLang } from '@rspress/core/runtime';
+import { useI18n, useLang } from '@rspress/core/runtime';
 import versionJson from '../docs/public/version.json';
 
 const menuItemClassName =
@@ -29,6 +29,18 @@ function shouldHideVersion(version: string) {
   }
 
   return false;
+}
+
+function stripVersionPrefix(pathname: string) {
+  return pathname.replace(/^\/(?:next|\d+\.\d+)(?=\/|$)/, '') || '/';
+}
+
+function joinVersionPath(version: string, pathname: string) {
+  const normalizedPathname = pathname.startsWith('/')
+    ? pathname
+    : `/${pathname}`;
+
+  return `/${version}${normalizedPathname}`;
 }
 
 export function VersionIndicator() {
@@ -79,15 +91,11 @@ export function VersionIndicator() {
   const changeVersion = (version: string) => {
     setIsOpen(false);
     const currentPath = window.location.pathname;
-    const searchParams = window.location.search;
+    const pathWithoutVersion = stripVersionPrefix(currentPath);
+    const newPath = joinVersionPath(version, pathWithoutVersion);
 
-    const currentBasePath = withBase('');
-    const pathWithoutBase = currentPath.startsWith(currentBasePath)
-      ? currentPath.slice(currentBasePath.length)
-      : currentPath;
-
-    const newPath = `/${version}/${pathWithoutBase}`;
-    window.location.href = newPath + searchParams;
+    window.location.href =
+      newPath + window.location.search + window.location.hash;
   };
 
   const viewAllVersions = () => {
