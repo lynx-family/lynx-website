@@ -1,0 +1,876 @@
+import { CodeFold } from '@lynx';
+import { Steps, Tab, Tabs } from '@theme';
+
+自定义元素的实现分为几个步骤，包括：声明并注册元素、创建原生视图、处理布局、在 Lynx 应用代码中使用等。Desktops 平台通过 Lynx C/C++ API 实现原生元素。接下来以一个简单的自定义输入框元素 `<explorer-input>` 为例，介绍自定义元素的实现流程。
+
+下文用到的扩展头文件，包括 `capi/lynx_view_capi.h`、`lynx_native_view.h` 和 `lynx/registration.h`，由 npm 包 [`@lynx-js/lynx-library-headers`](https://www.npmjs.com/package/@lynx-js/lynx-library-headers) 提供。在原生库工程中安装该包，把它的 `include/` 目录加入 include 路径即可；由 [`create-lynx-library`](/guide/autolink?platform=lynxtron) 生成的 CMake 已经完成了这一步。
+
+<Steps>
+
+### 声明并注册元素
+
+#### 声明自定义元素
+
+把所有 Desktops 渲染后端共享的行为放在元素头文件中。各平台渲染后端继承这个类，只实现展示相关的部分。
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/ExplorerInputElement.h"
+#pragma once
+
+#include <functional>
+#include <string>
+
+#if __has_include(<lynx_extension.h>)
+#include <lynx_extension.h>
+#elif __has_include(<lynx/extension.h>)
+#include <lynx/extension.h>
+#endif
+
+#include <lynx_native_view.h>
+
+class ExplorerInputElementView : public lynx::pub::LynxNativeView {
+ public:
+  explicit ExplorerInputElementView(void* opaque)
+      : lynx_view_(static_cast<lynx_view_t*>(opaque)) {}
+
+  void OnPropertiesChanged(const lynx::pub::LynxValue& attrs,
+                           const lynx::pub::LynxValue& events) override {
+    (void)events;
+    if (!attrs.HasProperty("value")) {
+      return;
+    }
+    SetValue(attrs.GetProperty("value").StdString());
+  }
+
+  void OnMethodInvoked(
+      const char* method,
+      const lynx::pub::LynxValue& params,
+      std::function<void(int, lynx::pub::LynxValue&&)> callback) override {
+    if (method != nullptr && std::string(method) == "setValue") {
+      if (!params.HasProperty("value")) {
+        callback(kInvalidParameter,
+                 lynx::pub::LynxValue(
+                     lynx::pub::LynxValue::kCreateAsNullTag));
+        return;
+      }
+      SetValue(params.GetProperty("value").StdString());
+      callback(kSuccess,
+               lynx::pub::LynxValue(
+                   lynx::pub::LynxValue::kCreateAsNullTag));
+      return;
+    }
+
+    callback(kMethodNotFound,
+             lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+  }
+
+ protected:
+  lynx_view_t* lynx_view() const { return lynx_view_; }
+  const std::string& value() const { return value_; }
+
+  virtual void OnValueChanged(const std::string& value) { (void)value; }
+
+ private:
+  void SetValue(const std::string& value) {
+    value_ = value;
+    OnValueChanged(value_);
+  }
+
+  lynx_view_t* lynx_view_ = nullptr;
+  std::string value_ = "explorer-input";
+};
+```
+
+</CodeFold>
+
+#### 注册自定义元素
+
+Desktops 原生元素通过 `LYNX_REGISTER_ELEMENT` 注册。这是一种进程级静态注册：原生库被编译进宿主应用或被宿主进程加载后，静态注册会让该标签成为 Lynx runtime 中可用的 Lynx 元素。
+
+最后一个参数传 `nullptr` 时，创建函数收到的 `opaque` 是当前 `lynx_view_t*`，可以用它解析平台宿主窗口：
+
+```cpp title="shared/elements/ExplorerInputElementRegistration.cc"
+#include <lynx/registration.h>
+
+#include "shared/elements/ExplorerInputElement.h"
+
+lynx_native_view_t* CreateExplorerInputElementNativeView(void* opaque);
+
+LYNX_REGISTER_ELEMENT(
+    "ExplorerInputElementModule",
+    "explorer-input",
+    CreateExplorerInputElementNativeView,
+    false,
+    nullptr)
+```
+
+其中，`"explorer-input"` 对应前端 DSL 的标签名称。当 Lynx Engine 解析到该标签时，会查找已注册的原生元素并创建实例。
+
+### 创建原生视图实例
+
+每个自定义元素都会被创建为一个 `LynxNativeView`。上面的声明、属性处理、方法处理和静态注册对所有 Desktops 实现都是共享的。渲染后端决定视图创建之后持有什么：Native UI 持有平台控件，Texture 持有 Lynx 管理的 Surface。
+
+下面的示例使用同一个注册创建函数名称展示两种可选渲染后端实现。实际构建时选择一种渲染后端，让 `CreateExplorerInputElementNativeView` 只解析到一个实现。
+
+<Tabs groupId="custom-component-desktop-backend">
+
+<Tab label="Native UI">
+
+Native UI 渲染后端会挂载一个平台控件，并在 `OnLayoutChanged` 中更新它的位置和尺寸。对于 `<explorer-input>`，实现会挂载一个最小输入控件。
+
+<Tabs groupId="custom-component-desktop-native-ui-platform">
+
+<Tab label="macOS">
+
+macOS 上可以挂载一个 `NSTextField`：
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/native-ui/macos/ExplorerInputElementNativeUI.mm"
+#import <Cocoa/Cocoa.h>
+
+#include "shared/elements/ExplorerInputElement.h"
+
+namespace {
+
+using MainThreadBlock = void (^)(void);
+
+void RunOnMainThreadSync(MainThreadBlock block) {
+  if ([NSThread isMainThread]) {
+    block();
+    return;
+  }
+  dispatch_sync(dispatch_get_main_queue(), block);
+}
+
+NSString* NSStringFromStdString(const std::string& value) {
+  NSString* result = [NSString stringWithUTF8String:value.c_str()];
+  return result != nil ? result : @"";
+}
+
+}  // namespace
+
+class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
+ public:
+  explicit ExplorerInputElementNativeUIView(void* opaque)
+      : ExplorerInputElementView(opaque) {
+    RunOnMainThreadSync(^{
+      input_ = [[NSTextField alloc] initWithFrame:NSZeroRect];
+      input_.placeholderString = @"explorer-input";
+      input_.stringValue = NSStringFromStdString(value());
+      input_.editable = YES;
+      input_.selectable = YES;
+      input_.bezeled = YES;
+      input_.bezelStyle = NSTextFieldRoundedBezel;
+      input_.textColor = [NSColor blackColor];
+    });
+  }
+
+  ~ExplorerInputElementNativeUIView() override {
+    RunOnMainThreadSync(^{
+      [input_ removeFromSuperview];
+      input_ = nil;
+    });
+  }
+
+  bool IsSurfaceEnabled() override { return false; }
+
+  void OnDetach() override {
+    RunOnMainThreadSync(^{
+      [input_ removeFromSuperview];
+    });
+  }
+
+  void OnLayoutChanged(
+      float left,
+      float top,
+      float width,
+      float height,
+      float pixel_ratio) override {
+    (void)pixel_ratio;
+    RunOnMainThreadSync(^{
+      auto* lynx_parent =
+          (__bridge NSView*)lynx_view_get_native_window(lynx_view());
+      if (lynx_parent == nil || input_ == nil) {
+        return;
+      }
+
+      NSView* parent = lynx_parent.window.contentView != nil
+                           ? lynx_parent.window.contentView
+                           : lynx_parent;
+      if (input_.superview != parent) {
+        [input_ removeFromSuperview];
+        [parent addSubview:input_ positioned:NSWindowAbove relativeTo:nil];
+      }
+
+      const NSRect frame_in_lynx = NSMakeRect(left, top, width, height);
+      input_.frame = [lynx_parent convertRect:frame_in_lynx toView:parent];
+    });
+  }
+
+ private:
+  void OnValueChanged(const std::string& value) override {
+    std::string text = value;
+    RunOnMainThreadSync(^{
+      if (input_ != nil) {
+        input_.stringValue = NSStringFromStdString(text);
+      }
+    });
+  }
+
+  NSTextField* input_ = nil;
+};
+
+lynx_native_view_t* CreateExplorerInputElementNativeView(void* opaque) {
+  auto* view = new ExplorerInputElementNativeUIView(opaque);
+  return view->native_view();
+}
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Windows">
+
+Windows 上可以挂载一个 `EDIT` 控件：
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/native-ui/windows/ExplorerInputElementNativeUI.cc"
+#include <algorithm>
+#include <string>
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <windows.h>
+
+#include "shared/elements/ExplorerInputElement.h"
+
+namespace {
+
+constexpr wchar_t kHostClassName[] = L"ExplorerInputElementNativeUIHost";
+
+int Scale(float value, float pixel_ratio) {
+  const float ratio = pixel_ratio > 0 ? pixel_ratio : 1;
+  return static_cast<int>(value * ratio);
+}
+
+std::wstring Utf8ToWide(const char* value) {
+  if (value == nullptr || value[0] == '\0') {
+    return L"";
+  }
+  const int size = MultiByteToWideChar(CP_UTF8, 0, value, -1, nullptr, 0);
+  if (size <= 0) {
+    return L"";
+  }
+  std::wstring result(static_cast<size_t>(size - 1), L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, value, -1, result.data(), size);
+  return result;
+}
+
+bool EnsureHostClassRegistered() {
+  static bool registered = false;
+  if (registered) {
+    return true;
+  }
+
+  WNDCLASSEXW window_class{};
+  window_class.cbSize = sizeof(window_class);
+  window_class.lpfnWndProc = DefWindowProcW;
+  window_class.hInstance = GetModuleHandleW(nullptr);
+  window_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
+  window_class.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+  window_class.lpszClassName = kHostClassName;
+  registered = RegisterClassExW(&window_class) != 0 ||
+      GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
+  return registered;
+}
+
+struct MainWindowSearch {
+  DWORD process_id = 0;
+  HWND hwnd = nullptr;
+};
+
+BOOL CALLBACK FindMainWindowCallback(HWND hwnd, LPARAM data) {
+  auto* search = reinterpret_cast<MainWindowSearch*>(data);
+  DWORD window_process_id = 0;
+  GetWindowThreadProcessId(hwnd, &window_process_id);
+  if (window_process_id == search->process_id && IsWindowVisible(hwnd) &&
+      GetWindow(hwnd, GW_OWNER) == nullptr) {
+    search->hwnd = hwnd;
+    return FALSE;
+  }
+  return TRUE;
+}
+
+HWND FindMainWindow() {
+  MainWindowSearch search{GetCurrentProcessId(), nullptr};
+  EnumWindows(FindMainWindowCallback, reinterpret_cast<LPARAM>(&search));
+  return search.hwnd != nullptr ? search.hwnd : GetActiveWindow();
+}
+
+}  // namespace
+
+class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
+ public:
+  explicit ExplorerInputElementNativeUIView(void* opaque)
+      : ExplorerInputElementView(opaque) {}
+
+  ~ExplorerInputElementNativeUIView() override {
+    if (input_ != nullptr) {
+      DestroyWindow(input_);
+      input_ = nullptr;
+    }
+    if (host_ != nullptr) {
+      DestroyWindow(host_);
+      host_ = nullptr;
+    }
+  }
+
+  bool IsSurfaceEnabled() override { return false; }
+
+  void OnDetach() override {
+    if (host_ != nullptr) {
+      ShowWindow(host_, SW_HIDE);
+    }
+  }
+
+  void OnLayoutChanged(
+      float left,
+      float top,
+      float width,
+      float height,
+      float pixel_ratio) override {
+    HWND parent = FindMainWindow();
+    if (parent == nullptr || !EnsureHostClassRegistered()) {
+      return;
+    }
+
+    const int x = Scale(left, pixel_ratio);
+    const int y = Scale(top, pixel_ratio);
+    const int w = std::max(1, Scale(width, pixel_ratio));
+    const int h = std::max(1, Scale(height, pixel_ratio));
+    POINT origin{x, y};
+    ClientToScreen(parent, &origin);
+
+    if (host_ == nullptr) {
+      host_ = CreateWindowExW(
+          WS_EX_TOOLWINDOW,
+          kHostClassName,
+          L"",
+          WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+          origin.x,
+          origin.y,
+          w,
+          h,
+          parent,
+          nullptr,
+          GetModuleHandleW(nullptr),
+          nullptr);
+    }
+
+    if (host_ == nullptr) {
+      return;
+    }
+
+    if (input_ == nullptr) {
+      const std::wstring text = Utf8ToWide(value().c_str());
+      input_ = CreateWindowExW(
+          0,
+          L"EDIT",
+          text.c_str(),
+          WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+          0,
+          0,
+          w,
+          h,
+          host_,
+          nullptr,
+          GetModuleHandleW(nullptr),
+          nullptr);
+    }
+
+    if (input_ == nullptr) {
+      return;
+    }
+
+    SetWindowPos(
+        host_,
+        HWND_TOP,
+        origin.x,
+        origin.y,
+        w,
+        h,
+        SWP_SHOWWINDOW | SWP_NOACTIVATE);
+    SetWindowPos(input_, HWND_TOP, 0, 0, w, h, SWP_SHOWWINDOW);
+  }
+
+ private:
+  void OnValueChanged(const std::string& value) override {
+    if (input_ == nullptr) {
+      return;
+    }
+    const std::wstring text = Utf8ToWide(value.c_str());
+    SetWindowTextW(input_, text.c_str());
+  }
+
+  HWND host_ = nullptr;
+  HWND input_ = nullptr;
+};
+
+lynx_native_view_t* CreateExplorerInputElementNativeView(void* opaque) {
+  auto* view = new ExplorerInputElementNativeUIView(opaque);
+  return view->native_view();
+}
+```
+
+</CodeFold>
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+<Tab label="Texture">
+
+用 Texture 实现文本输入是可行的，但会涉及文本编辑、光标、选区和 IME 处理，示例会很长。下面的示例只聚焦 Texture 链路：绘制一块原生纹理，并复用 `ExplorerInputElementView` 中共享的 `value` 属性和 `setValue` UI 方法。
+
+共享的 Texture 渲染后端是跨平台的。它负责启用 Surface 渲染路径、维护布局尺寸，并调用各平台渲染后端实现的 `DrawExplorerInputElementTextureSurface`。
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/texture/ExplorerInputElementTexture.cc"
+#include <algorithm>
+
+#include "shared/elements/ExplorerInputElement.h"
+
+bool DrawExplorerInputElementTextureSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message);
+
+namespace {
+
+constexpr float kYFlipTransform[3 * 3] = {1, 0, 0, 0, -1, 1, 0, 0, 1};
+
+class ExplorerInputElementTextureView : public ExplorerInputElementView {
+ public:
+  explicit ExplorerInputElementTextureView(void* opaque)
+      : ExplorerInputElementView(opaque) {}
+
+  bool IsSurfaceEnabled() override { return true; }
+
+  lynx_surface_buffer_mode_t SurfaceBufferMode() override {
+    return kTripleBuffer;
+  }
+
+  void OnAttach() override {
+    attached_ = true;
+    Render();
+  }
+
+  void OnDetach() override { attached_ = false; }
+
+  void OnLayoutChanged(
+      float left,
+      float top,
+      float width,
+      float height,
+      float pixel_ratio) override {
+    (void)left;
+    (void)top;
+    const float ratio = pixel_ratio > 0 ? pixel_ratio : 1;
+    width_px_ = std::max(1, static_cast<int>(width * ratio + 0.5f));
+    height_px_ = std::max(1, static_cast<int>(height * ratio + 0.5f));
+    Render();
+  }
+
+ private:
+  void OnValueChanged(const std::string& value) override {
+    (void)value;
+    Render();
+  }
+
+  void Render() {
+    if (!attached_ || width_px_ <= 0 || height_px_ <= 0) {
+      return;
+    }
+
+    lynx_surface_handle_t* surface = AcquireSurface(width_px_, height_px_);
+    if (surface == nullptr) {
+      return;
+    }
+
+    if (DrawExplorerInputElementTextureSurface(
+            surface,
+            width_px_,
+            height_px_,
+            value().c_str())) {
+      PresentSurface(width_px_, height_px_, kYFlipTransform, surface);
+    }
+  }
+
+  bool attached_ = false;
+  int width_px_ = 0;
+  int height_px_ = 0;
+};
+
+}  // namespace
+
+lynx_native_view_t* CreateExplorerInputElementNativeView(void* opaque) {
+  auto* view = new ExplorerInputElementTextureView(opaque);
+  return view->native_view();
+}
+```
+
+</CodeFold>
+
+<Tabs groupId="custom-component-desktop-texture-platform">
+
+<Tab label="macOS">
+
+macOS 上可以绘制到 IOSurface-backed surface。这个示例会把收到的 value 映射成彩色条，调用 `setValue` 后纹理会产生可见变化：
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/texture/macos/ExplorerInputElementTexture.mm"
+#include <lynx_extension.h>
+
+#import <CoreGraphics/CoreGraphics.h>
+#import <IOSurface/IOSurface.h>
+
+#include <algorithm>
+#include <cstring>
+
+bool DrawExplorerInputElementTextureSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message) {
+  if (handle == nullptr || width_px <= 0 || height_px <= 0) {
+    return false;
+  }
+
+  IOSurfaceRef surface = reinterpret_cast<IOSurfaceRef>(handle);
+  uint32_t seed = 0;
+  if (IOSurfaceLock(surface, 0, &seed) != kIOReturnSuccess) {
+    return false;
+  }
+
+  void* base = IOSurfaceGetBaseAddress(surface);
+  const size_t bytes_per_row = IOSurfaceGetBytesPerRow(surface);
+  CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context = CGBitmapContextCreate(
+      base,
+      width_px,
+      height_px,
+      8,
+      bytes_per_row,
+      color_space,
+      kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+  CGColorSpaceRelease(color_space);
+
+  if (context == nullptr) {
+    IOSurfaceUnlock(surface, 0, &seed);
+    return false;
+  }
+
+  CGContextSetRGBFillColor(context, 1, 1, 1, 1);
+  CGContextFillRect(context, CGRectMake(0, 0, width_px, height_px));
+
+  const char* label = message != nullptr && message[0] != '\0'
+                          ? message
+                          : "explorer-input";
+  const size_t count = std::min<size_t>(std::strlen(label), 12);
+  for (size_t i = 0; i < count; ++i) {
+    const unsigned char value = static_cast<unsigned char>(label[i]);
+    CGContextSetRGBFillColor(
+        context,
+        ((value * 37) % 255) / 255.0,
+        ((value * 67) % 255) / 255.0,
+        ((value * 97) % 255) / 255.0,
+        1.0);
+    CGContextFillRect(
+        context,
+        CGRectMake(8 + i * 14, 8, 10, std::max(1, height_px - 16)));
+  }
+
+  CGContextRelease(context);
+  IOSurfaceUnlock(surface, 0, &seed);
+  return true;
+}
+```
+
+</CodeFold>
+
+</Tab>
+
+<Tab label="Windows">
+
+Windows 上的 surface handle 是 D3D shared handle。将它导入为 `ID3D11Texture2D`，更新像素，再由 `ExplorerInputElementTextureView` 提交回 Lynx：
+
+<CodeFold toggle height={500}>
+
+```cpp title="shared/elements/backends/texture/windows/ExplorerInputElementTexture.cc"
+#include <lynx_extension.h>
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <d3d11.h>
+#include <windows.h>
+#include <wrl/client.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
+#include <vector>
+
+using Microsoft::WRL::ComPtr;
+
+namespace {
+
+std::vector<std::uint32_t> DrawMessagePixels(
+    int width_px,
+    int height_px,
+    const char* message) {
+  std::vector<std::uint32_t> pixels(
+      static_cast<size_t>(width_px) * height_px,
+      0xffffffff);
+
+  const char* label = message != nullptr && message[0] != '\0'
+                          ? message
+                          : "explorer-input";
+  const size_t count = std::min<size_t>(std::strlen(label), 12);
+  for (size_t i = 0; i < count; ++i) {
+    const unsigned char value = static_cast<unsigned char>(label[i]);
+    const std::uint32_t color =
+        0xff000000 |
+        (((value * 37) % 255) << 16) |
+        (((value * 67) % 255) << 8) |
+        ((value * 97) % 255);
+    const int x0 = 8 + static_cast<int>(i) * 14;
+    const int x1 = std::min(width_px, x0 + 10);
+    for (int y = 8; y < std::max(8, height_px - 8); ++y) {
+      for (int x = x0; x < x1; ++x) {
+        pixels[static_cast<size_t>(y) * width_px + x] = color;
+      }
+    }
+  }
+  return pixels;
+}
+
+}  // namespace
+
+bool DrawExplorerInputElementTextureSurface(
+    lynx_surface_handle_t* handle,
+    int width_px,
+    int height_px,
+    const char* message) {
+  if (handle == nullptr || width_px <= 0 || height_px <= 0) {
+    return false;
+  }
+
+  ComPtr<ID3D11Device> device;
+  ComPtr<ID3D11DeviceContext> context;
+  D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+  auto hr = D3D11CreateDevice(
+      nullptr,
+      D3D_DRIVER_TYPE_HARDWARE,
+      nullptr,
+      0,
+      nullptr,
+      0,
+      D3D11_SDK_VERSION,
+      device.GetAddressOf(),
+      &feature_level,
+      context.GetAddressOf());
+  if (FAILED(hr)) {
+    return false;
+  }
+
+  ComPtr<ID3D11Texture2D> texture;
+  hr = device->OpenSharedResource(
+      reinterpret_cast<HANDLE>(handle),
+      IID_PPV_ARGS(texture.GetAddressOf()));
+  if (FAILED(hr) || !texture) {
+    return false;
+  }
+
+  const auto pixels = DrawMessagePixels(width_px, height_px, message);
+  context->UpdateSubresource(
+      texture.Get(),
+      0,
+      nullptr,
+      pixels.data(),
+      static_cast<UINT>(width_px * sizeof(std::uint32_t)),
+      0);
+  context->Flush();
+  return true;
+}
+```
+
+</CodeFold>
+
+生产代码还需要和当前 Windows 图形后端匹配，并处理导入纹理暴露的同步原语。
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+</Tabs>
+
+### 构建并使用元素
+
+准备好原生代码后，将它编译进宿主应用或可被宿主加载的 Desktops 原生库。如果包里同时包含 Native UI 和 Texture 两套渲染后端实现，需要在构建系统中选择一种，让注册创建函数只解析到一个实现。
+
+原生库被链接或加载后，即可使用注册好的 Lynx 元素：
+
+```tsx title="src/App.tsx"
+<explorer-input style={{ width: '100px', height: '100px' }} value="hello" />
+```
+
+### 处理前端更新的样式和属性
+
+通过重写 `OnPropertiesChanged` 接收前端传入的属性和事件信息。`attrs` 中包含最新属性，`events` 中包含元素上声明的事件绑定。
+
+```cpp title="shared/elements/ExplorerInputElement.h"
+void OnPropertiesChanged(const lynx::pub::LynxValue& attrs,
+                         const lynx::pub::LynxValue& events) override {
+  (void)events;
+  if (!attrs.HasProperty("value")) {
+    return;
+  }
+  SetValue(attrs.GetProperty("value").StdString());
+}
+```
+
+### 处理排版信息（可选）
+
+#### 处理 Lynx Engine 的排版结果
+
+Lynx Engine 会通过 `OnLayoutChanged` 传递元素的排版结果。可以在这个回调中移动或缩放平台视图，也可以在渲染前调整 Texture 渲染表面的尺寸。
+
+```cpp title="shared/elements/backends/texture/ExplorerInputElementTexture.cc"
+void OnLayoutChanged(
+    float left,
+    float top,
+    float width,
+    float height,
+    float pixel_ratio) override {
+  // Convert the Lynx layout result to platform coordinates and update the
+  // native view frame or texture size.
+}
+```
+
+### 处理事件绑定（可选）
+
+在某些场景中，前端可能需要响应自定义元素的事件。例如，当用户在输入框中输入内容时，原生元素可以触发 `input` 事件。
+
+#### 客户端事件发送
+
+使用 `TriggerEvent` 从原生元素向 Lynx 应用代码发送自定义事件。
+
+```cpp title="shared/elements/ExplorerInputElement.h"
+void EmitInputEvent(const std::string& value) {
+  lynx::pub::LynxValue detail(lynx::pub::LynxValue::kCreateAsMapTag);
+  detail.SetProperty("value", lynx::pub::LynxValue(value));
+  TriggerEvent("input", std::move(detail));
+}
+```
+
+#### 前端 DSL 事件绑定
+
+前端绑定对应事件后，即可监听并处理原生元素发送的数据。
+
+```tsx title="src/App.tsx"
+const handleInput = (e) => {
+  const currentValue = e.detail.value.trim();
+  setInputValue(currentValue);
+};
+
+<explorer-input
+  style={{ width: '100px', height: '100px' }}
+  bindinput={handleInput}
+  value={inputValue}
+/>;
+```
+
+> **注意**：前端 DSL 使用 `bindxxx` 进行事件绑定，例如 `bindinput` 绑定 `input` 事件。
+
+### 支持直接操作元素（可选）
+
+在某些情况下，前端可能需要通过命令式 API 直接操作自定义元素。Desktops 上可以通过实现 `OnMethodInvoked` 处理这些调用。
+
+#### 前端调用示例
+
+以下代码展示了如何在前端通过 [SelectorQuery](/api/lynx-api/selector-query) 调用 `setValue` 方法更新 `<explorer-input>` 元素：
+
+```tsx title="src/App.tsx"
+lynx
+  .createSelectorQuery()
+  .select('#input-id')
+  .invoke({
+    method: 'setValue',
+    params: { value: 'updated value' },
+    success: function (res) {
+      console.log('lynx', 'set value success');
+    },
+    fail: function (res) {
+      console.log('lynx', 'set value fail');
+    },
+  })
+  .exec();
+```
+
+#### 客户端实现
+
+在客户端，重写 `OnMethodInvoked` 处理方法调用，并通过回调向前端返回状态码。
+
+```cpp title="shared/elements/ExplorerInputElement.h"
+void OnMethodInvoked(
+    const char* method,
+    const lynx::pub::LynxValue& params,
+    std::function<void(int, lynx::pub::LynxValue&&)> callback) override {
+  if (method != nullptr && std::string(method) == "setValue") {
+    SetValue(params.GetProperty("value").StdString());
+    callback(kSuccess,
+             lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+    return;
+  }
+
+  callback(kMethodNotFound,
+           lynx::pub::LynxValue(lynx::pub::LynxValue::kCreateAsNullTag));
+}
+```
+
+#### 方法回调返回值
+
+实现方法时，需要向前端返回状态码，以便前端在对应回调中处理成功或失败。
+
+`LynxNativeView` 定义了几类常见状态码：
+
+```cpp
+static constexpr int kSuccess = 0;
+static constexpr int kUnknown = 1;
+static constexpr int kMethodNotFound = 3;
+static constexpr int kInvalidParameter = 4;
+static constexpr int kInvalidStateError = 7;
+```
+
+</Steps>

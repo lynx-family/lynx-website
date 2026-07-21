@@ -2,15 +2,15 @@ import { PlatformTabs } from '@lynx';
 
 # 原生库与 Autolink
 
-Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android 和 iOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
+Lynx 原生库是一个 npm 包，可以打包元素、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并接入它们的原生能力，避免为每个元素、原生模块或 Service 手动写注册代码。
 
-Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
+Autolink 覆盖 Android 和 iOS 原生应用接入，也覆盖 Lynxtron 原生库使用的包元数据。它不生成 Web 或 HarmonyOS 的接入代码。
 
 :::info 开始前的准备
 
 ✅ 已完成[接入现有应用](/guide/start/integrate-with-existing-apps)
 
-✅ 了解[原生模块](/guide/use-native-modules)和[自定义元件](/guide/custom-native-component)
+✅ 了解[原生模块](/guide/use-native-modules)和[自定义元素](/guide/custom-native-component)
 
 :::
 
@@ -21,6 +21,7 @@ Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS
 - npm：`create-lynx-library` 和 `@lynx-js/autolink-codegen`（`lynx-autolink-codegen` binary）
 - Android：Gradle plugin `org.lynxsdk.library-settings` 和 `org.lynxsdk.library-build`
 - iOS：Ruby gem `cocoapods-lynx-library`
+- Lynxtron：`create-lynx-library` 可以生成 shared native library 包，`@lynx-js/lynxtron-dev-plugins` 通过 `pluginLynxtron()` 提供宿主侧加载能力。
 
 如果当前配置的 registry 还无法解析其中某个包，说明你使用的 Lynx SDK 发布版本尚未在该 registry 中包含 Native Autolink。此时请继续使用既有手动原生注册方式，等待匹配版本发布后再接入。
 
@@ -30,13 +31,13 @@ Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS
 
 一个库就是一个 npm 包，可以包含以下能力的任意组合：
 
-- **元件**：Lynx 渲染的自定义原生 UI 元件，例如 `<x-button>`。
+- **元素**：Lynx 渲染的自定义原生元素，例如 `<x-button>`。
 - **原生模块**：可以在 Lynx 应用代码中调用的、带类型声明的 JavaScript-to-native API。
 - **Service**：应用级的原生单例，可以被库内的其他能力依赖。
 
-每个库都通过包根目录下的 `lynx.lib.json` manifest 声明原生入口。这三类能力相互独立：一个库可以只暴露元件、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
+每个库都通过包根目录下的 `lynx.lib.json` 清单文件声明原生入口。这三类能力相互独立：一个库可以只暴露元素、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
 
-应用侧像安装普通 npm 依赖一样安装库。Android Gradle plugin 和 iOS CocoaPods plugin 会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。
+应用侧像安装普通 npm 依赖一样安装库。Android Gradle 插件和 iOS CocoaPods 插件会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。Lynxtron 会从已安装包中读取同一份清单，把匹配到的包文件收集到宿主输出目录，并在宿主 bundle 前置生成代码，加载每个已收集包的 `./lynxtron` 入口。
 
 ## 使用库
 
@@ -55,12 +56,18 @@ lynx-app/
 │       └── build.gradle
 ├── ios/
 │   └── Podfile
+├── shared/
+│   ├── CMakeLists.txt
+│   └── ...
+├── dist/
 └── src/
 ```
 
 - `package.json` 是必需的，用来声明 Autolink 库依赖。
 - Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
 - iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
+- `shared/` 用于宿主应用自有的跨端原生源码和 CMake 构建入口，需要自行编译。
+- Lynxtron 接入需要应用具备宿主侧 Rspack 构建，并通过 `pluginLynxtron()` 安装和加载原生库；一般消费编译后的 `dist/` 产物。
 
 安装依赖后，Autolink 会从已安装 npm 包的包根目录扫描 `lynx.lib.json`。`package-lock.json`、`pnpm-lock.yaml` 或 `yarn.lock` 等 lockfile 有助于可复现安装，但不是 Autolink 的必需项。
 
@@ -88,7 +95,7 @@ plugins {
 }
 ```
 
-Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，库提供的元件、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
+Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，库提供的元素、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
 
 </PlatformTabs.Tab>
 
@@ -104,7 +111,33 @@ target 'LynxApp' do
 end
 ```
 
-执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
+执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元素、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="lynxtron">
+
+Lynxtron 为桌面端原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的桌面宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
+
+在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，把匹配到的原生库包收集到宿主输出目录，并注入前置代码来加载每个已收集包的 `./lynxtron` 入口。对于声明了 `platforms.lynxtron.path` 的包，业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的包。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
+
+```ts
+import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
+
+export default {
+  target: 'electron-main',
+  plugins: [
+    pluginLynxtron({
+      isDev: process.env.NODE_ENV === 'development',
+      entry: './dist/desktop',
+    }),
+  ],
+};
+```
+
+`entry` 是 Lynxtron 宿主自身的 bundle 入口，`pluginLynxtron()` 会以它为基准放置已收集的原生库包。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
+
+Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx runtime 中生效。库作者不需要 Lynxtron 专用注册宏。
 
 </PlatformTabs.Tab>
 </PlatformTabs>
@@ -117,7 +150,7 @@ end
 npm install @example/lynx-button
 ```
 
-每个库包都会在包根目录暴露 `lynx.lib.json` manifest。Autolink 会扫描已安装 npm 包中的这个文件。
+每个库包都会在包根目录暴露 `lynx.lib.json` 清单文件。Autolink 会扫描已安装 npm 包中的这个文件。
 
 ```json
 {
@@ -129,12 +162,25 @@ npm install @example/lynx-button
     "ios": {
       "sourceDir": "ios",
       "podspecPath": "ios/build.podspec"
+    },
+    "lynxtron": {
+      "path": "dist"
+    },
+    "macos": {
+      "sourceDir": "shared"
+    },
+    "windows": {
+      "sourceDir": "shared"
     }
   }
 }
 ```
 
 Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 `android`。iOS 侧 `sourceDir` 默认是 `ios`，`podspecPath` 默认使用 iOS 源码目录下找到的第一个 `.podspec` 文件。
+
+`platforms.macos.sourceDir` 和 `platforms.windows.sourceDir` 指向以源码形式暴露的 `shared/` 目录。它是跨端原生源码结构，后续也可以被更多平台复用。
+
+对于 Lynxtron，`platforms.lynxtron.path` 声明原生产物根目录，通常是 `dist`。`pluginLynxtron()` 会收集匹配到的包文件并校验产物；包的 `./lynxtron` export 负责加载当前宿主的 `.node`，例如 `dist/macos/arm64/lynx-button.node` 或 `dist/windows/x64/lynx-button.node`。
 
 安装或更新库后，Android 侧重新 sync/build 应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
 
@@ -144,18 +190,21 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 ### 库包结构
 
-一个典型的库结构如下：
+一个典型的库结构如下；`shared/` 用于跨端原生实现，如果同一个包也发布 Lynxtron 原生产物，同一个结构中也可以包含 Lynxtron 加载入口和按宿主区分的输出：
 
 ```text
 lynx-button/
 ├── package.json
 ├── lynx.lib.json
 ├── types/
-│   └── index.d.ts
+│   ├── index.d.ts
+│   ├── platform-native-module.d.ts
+│   └── napi-native-module.d.ts
 ├── src/
 │   └── index.ts
 ├── generated/
-│   └── ButtonModule.ts
+│   ├── ButtonModule.ts
+│   └── ButtonModuleNapi.ts
 ├── android/
 │   └── src/main/java/com/example/button/
 │       ├── ButtonElement.java
@@ -171,14 +220,31 @@ lynx-button/
 │       └── generated/
 │           ├── ButtonModuleSpec.h
 │           └── ButtonModuleSpec.m
+├── shared/
+│   ├── CMakeLists.txt
+│   ├── nativeModule/
+│   └── elements/
+├── lynxtron/
+│   ├── CMakeLists.txt
+│   ├── index.cjs
+│   └── library_entry.cc
+├── dist/
+│   ├── macos/
+│   │   └── arm64/
+│   │       └── lynx-button.node
+│   └── windows/
+│       └── x64/
+│           └── lynx-button.node
 └── example/
 ```
 
 - `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
-- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里。
-- `types/index.d.ts` 描述库中可选的原生模块类型声明；如果库暴露原生模块，codegen 会基于这些声明生成平台 spec 和 JavaScript facade。
+- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用 Android 和 iOS 源码在哪里，以及 Lynxtron 原生产物根目录在哪里。
+- `types/index.d.ts` 汇总导出原生模块类型声明；选中对应能力时，平台 Native Module 声明位于 `types/platform-native-module.d.ts`，N-API Native Module 声明位于 `types/napi-native-module.d.ts`。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
 - `android/` 和 `ios/` 放置原生实现以及生成的原生 spec。
+- `shared/` 放置跨端原生代码，例如跨端自渲染元素实现，以及 `shared/nativeModule/` 下的 C++ N-API 回调桩代码。
+- `lynxtron/` 和 `dist/` 放置 Lynxtron 加载入口和按宿主区分的输出。
 - `example/` 是库作者用于本地验证的示例应用。
 
 ### 创建库
@@ -194,7 +260,8 @@ npm create lynx-library
 ```bash
 npm create lynx-library -- \
   --dir ./lynx-button \
-  --types native-module,element,service \
+  --features native-module,napi-native-module,element,service \
+  --platforms android,ios,lynxtron \
   --package-name @example/lynx-button \
   --android-package com.example.button \
   --module-name ButtonModule \
@@ -205,10 +272,12 @@ npm create lynx-library -- \
 生成的库会包含：
 
 - 带有 `"codegen": "lynx-autolink-codegen"` 的 `package.json`
-- 用于 Android 和 iOS Autolink 发现的 `lynx.lib.json`
-- `types/index.d.ts`，在库暴露原生模块时用于声明类型
+- 用于 Android、iOS 和 Lynxtron Autolink 元数据的 `lynx.lib.json`
+- `types/index.d.ts`、`types/platform-native-module.d.ts` 和 `types/napi-native-module.d.ts`，根据选择的模块能力生成对应类型声明
 - JavaScript facade 入口 `src/index.ts`
 - 原生源码目录 `android/` 和 `ios/`
+- 生成跨端实现时使用的 `shared/` native source
+- 生成 Lynxtron 产物时使用的 `lynxtron/` 加载入口
 - `example/`、`tsconfig.json` 和 `README.md`
 
 在库根目录运行 codegen：
@@ -217,7 +286,7 @@ npm create lynx-library -- \
 npm run codegen
 ```
 
-`lynx-autolink-codegen` 会读取 `lynx.lib.json`。对于原生模块，它会扫描 `types/**/*.d.ts` 中带有 `@lynxmodule` 的声明：
+`lynx-autolink-codegen` 会读取 `lynx.lib.json`。对于原生模块，它会扫描 `types/` 下的 Native Module 声明文件，查找带有 `@lynxmodule` 的声明：
 
 ```ts
 /** @lynxmodule */
@@ -230,14 +299,15 @@ export declare class ButtonModule {
 它会生成：
 
 - JavaScript facade：`generated/<ModuleName>.ts`
-- Android：`<ModuleName>Spec.java`
-- iOS：`<ModuleName>Spec.h` 和 `<ModuleName>Spec.m`
+- Android platform native module：`<ModuleName>Spec.java`
+- iOS platform native module：`<ModuleName>Spec.h` 和 `<ModuleName>Spec.m`
+- N-API 原生模块：`shared/nativeModule/` 下的 C++ N-API 回调桩代码
 
-第一版支持 `void`、`string`、`number`、`boolean`，以及带 `null` 的 nullable union。
+Codegen 支持基础类型、带 `null` 的 nullable union、数组、对象/maps/sets、promise，以及 `ArrayBuffer`、typed arrays、`BigInt`、`Date`、`Function`、`Symbol`、`Buffer`、`Value` 等 N-API wrapped value types。
 
 ### 编写 Native API
 
-在原生源码中使用 Lynx 注解和注册宏，Autolink 就能发现库提供的能力。原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。
+在原生源码中使用平台对应的 Lynx 注解或注册方式，Autolink 就能发现库提供的能力。Android 和 iOS 原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元素和 Service 会通过原生标记被发现。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -276,7 +346,7 @@ public final class ButtonModule extends ButtonModuleSpec {
 }
 ```
 
-元件示例：
+元素示例：
 
 ```java
 package com.example.button;
@@ -386,7 +456,7 @@ NS_ASSUME_NONNULL_END
 @end
 ```
 
-元件示例：
+元素示例：
 
 ```objc
 // ButtonElement.h
@@ -465,10 +535,19 @@ NS_ASSUME_NONNULL_END
 @end
 ```
 
+在 iOS 侧，Autolink 会扫描库源码中的 `@LynxNativeModule(...)`、`@LynxElement(...)` 和 `@LynxService(...)` 声明，并把发现的能力加入生成的 registry。旧版 iOS Service API 仍提供 `@LynxServiceRegister(...)` 以兼容已有代码。新库代码推荐使用 `@LynxService(...)`。
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="lynxtron">
+
+Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块的实现请看 Desktops (Node-API) 标签页，自定义元素的实现请看 Desktops 标签页：
+
+- [原生模块 Desktops (Node-API) 说明](/guide/use-native-modules?platform=node-api)
+- [自定义元素 Desktops 说明](/guide/custom-native-component?platform=desktops)
+
 </PlatformTabs.Tab>
 </PlatformTabs>
-
-在 iOS 侧，Autolink 会扫描库源码中的 `@LynxNativeModule(...)`、`@LynxElement(...)` 和 `@LynxService(...)` 声明，并把发现的能力加入生成的 registry。旧版 iOS Service API 仍提供 `@LynxServiceRegister(...)` 以兼容已有代码。新库代码推荐使用 `@LynxService(...)`。
 
 ### 发布库
 
@@ -476,4 +555,4 @@ NS_ASSUME_NONNULL_END
 
 ## Autolink 工作原理
 
-Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` manifest，然后生成一份对应当前应用的 registry，列出所有已安装库暴露的元件、原生模块和 Service。Android 侧的 registry 生成由 Gradle settings plugin 和 build plugin 配合完成；iOS 侧由 CocoaPods plugin 完成并产出 registry pod。宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
+Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` 清单，然后为当前平台生成或提供宿主接入数据。Android 侧的 registry 生成由 Gradle settings 插件和 build 插件配合完成；iOS 侧由 CocoaPods 插件完成并产出 registry pod。宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此 Android 或 iOS 宿主代码中不需要任何逐库的接入逻辑。Lynxtron Autolink 运行在宿主侧 Rspack 构建中：它会收集匹配到的原生包，把加载代码注入宿主 bundle，并让已加载库里的 Lynx 静态注册提供对应的原生模块和元素。

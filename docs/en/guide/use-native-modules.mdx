@@ -4,6 +4,7 @@ import { Badge, PackageManagerTabs, Steps, Tab, Tabs } from '@theme';
 import NativeModuleAndroid from './custom-native-modules/native-module-android.mdx';
 import NativeModuleHarmony from './custom-native-modules/native-module-harmony.mdx';
 import NativeModuleIOS from './custom-native-modules/native-module-ios.mdx';
+import NativeModuleDesktops from './custom-native-modules/native-module-desktops.mdx';
 
 # Native Modules
 
@@ -25,11 +26,12 @@ Currently, native modules can only be used in [Background Thread Scripting](/gui
 
 This guide aims to show you how to write a local persistent storage module that enables your Lynx application to use JavaScript code to store data persistently locally.
 
-To implement local persistent storage on mobile devices, you need to use the native APIs of Android, iOS and HarmonyOS:
+To implement local persistent storage on different platforms, use the matching platform native API or the Lynx C/C++ APIs:
 
 - Android: [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences)
 - iOS: [NSUserDefaults](https://developer.apple.com/documentation/foundation/nsuserdefaults)
 - HarmonyOS: [Preferences](https://developer.huawei.com/consumer/en/doc/harmonyos-references/_preferences)
+- Desktop (Node-API): Lynx C/C++ APIs and the Weak Node-API C++ wrapper
 
 <Steps>
 ### Declare a Typed Interface Specification
@@ -93,26 +95,31 @@ Now, you can start writing the native platform code.
     <NativeModuleHarmony />
 
   </PlatformTabs.Tab>
+  <PlatformTabs.Tab platform="node-api">
+
+    <NativeModuleDesktops />
+
+  </PlatformTabs.Tab>
 </PlatformTabs>
 
 </Steps>
 
-Congratulations! You have successfully created a native module in Lynx Explorer! If you want to create a native module in your application, you first need to integrate Lynx by referring to the [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) guide, and then follow the steps above to create the native module.
+Congratulations! You have successfully created a native module. If you want to create a native module in your application, you first need to integrate Lynx by referring to the [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) guide, and then follow the steps above to create the native module.
 
 ## Type Mapping Table
 
-| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     |
-| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `null`          | `nil`                                             | `null`                                            | `null`                                            |
-| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            |
-| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` |
-| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   |
-| `string`        | `NSString`                                        | `String`                                          | `string`                                          |
-| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    |
-| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          |
-| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               |
-| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             |
-| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  |
+| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     | Weak Node-API |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- | -------------------- |
+| `null`          | `nil`                                             | `null`                                            | `null`                                            | `Napi::Value` / `env.Null()` |
+| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            | `Napi::Value` / `env.Undefined()` |
+| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` | `Napi::Boolean` |
+| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   | `Napi::Number` |
+| `string`        | `NSString`                                        | `String`                                          | `string`                                          | `Napi::String` |
+| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    | `Napi::BigInt` |
+| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          | `Napi::ArrayBuffer` |
+| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               | `Napi::Object` |
+| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             | `Napi::Array` |
+| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  | `Napi::Function` |
 
 ## Native Module Permission Verification (Experimental)
 

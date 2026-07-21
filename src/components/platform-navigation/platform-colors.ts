@@ -10,6 +10,7 @@
 //   harmony                    -> rose       Huawei red, the brand cue
 //   web and web_lynx           -> orange     Lynx-on-web warmth
 //   windows                    -> sky        Microsoft blue
+//   lynxtron                   -> red        Lynx brand color
 //   clay umbrella and variants -> cyan       Clay/Desktop signature
 //
 // `clay_<platform>` reuses the underlying-platform icon glyph, so the color
@@ -25,6 +26,8 @@ export type PlatformKey =
   | 'web'
   | 'web_lynx'
   | 'windows'
+  | 'pc'
+  | 'lynxtron'
   | 'clay'
   | 'clay_ios'
   | 'clay_android'
@@ -73,6 +76,12 @@ const WINDOWS_HUE: PlatformHue = {
   bg: { light: '#f0f9ff', dark: '#082f4999' },
 };
 
+const LYNXTRON_HUE: PlatformHue = {
+  tint: 'text-red-600 dark:text-red-400',
+  hex: { light: '#ff351a', dark: '#ff6448' },
+  bg: { light: '#fff1f2', dark: '#450a0a99' },
+};
+
 const CLAY_HUE: PlatformHue = {
   tint: 'text-cyan-600 dark:text-cyan-400',
   hex: { light: '#0891b2', dark: '#22d3ee' },
@@ -87,6 +96,8 @@ export const PLATFORM_HUES: Record<PlatformKey, PlatformHue> = {
   web: WEB_HUE,
   web_lynx: WEB_HUE,
   windows: WINDOWS_HUE,
+  pc: WINDOWS_HUE,
+  lynxtron: LYNXTRON_HUE,
   clay: CLAY_HUE,
   clay_ios: CLAY_HUE,
   clay_android: CLAY_HUE,
