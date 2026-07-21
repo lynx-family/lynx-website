@@ -31,6 +31,8 @@ import {
   Banner,
   Features,
   Footer,
+  GalaxyHeroBackground,
+  LynxtronFeatures,
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
@@ -43,9 +45,38 @@ import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 // Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
   const segments = pathname.split('/');
-  return SUBSITES_CONFIG.find((s) =>
-    segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-  );
+  return SUBSITES_CONFIG.find((s) => {
+    if (s.value === 'ui') {
+      return segments.some((seg) => {
+        const normalized = seg.replace(/\.html$/, '');
+        return normalized === s.value || normalized === 'lynx-ui';
+      });
+    }
+
+    return segments.some((seg) => seg.replace(/\.html$/, '') === s.value);
+  });
+};
+
+const NULL_BYTE_RE = /\u0000/g;
+
+const sanitizeHeadingAnchors = () => {
+  document
+    .querySelectorAll<HTMLElement>(
+      '.rspress-doc h1[id], .rspress-doc h2[id], .rspress-doc h3[id], .rspress-doc h4[id], .rspress-doc h5[id], .rspress-doc h6[id]',
+    )
+    .forEach((heading) => {
+      if (heading.id.includes('\u0000')) {
+        heading.id = heading.id.replace(NULL_BYTE_RE, '');
+      }
+
+      const anchor = heading.querySelector<HTMLAnchorElement>(
+        'a.rp-header-anchor[href]',
+      );
+      const href = anchor?.getAttribute('href');
+      if (anchor && href?.includes('\u0000')) {
+        anchor.setAttribute('href', href.replace(NULL_BYTE_RE, ''));
+      }
+    });
 };
 
 declare global {
@@ -65,6 +96,10 @@ function Layout({
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
+
+  useEffect(() => {
+    sanitizeHeadingAnchors();
+  }, [pathname]);
 
   return (
     <>
@@ -119,6 +154,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     let tmp = page.routePath.replace('/zh/', '/');
     return removeBase(tmp);
   }, [page]);
+
+  const isLynxtron = routePath.startsWith('/lynxtron/');
+  const createCliStr = isLynxtron
+    ? 'npm create @lynx-js/lynxtron@latest'
+    : 'npm create rspeedy@latest';
 
   useBlogBtnDom(routePath);
 
@@ -202,7 +242,9 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
-    afterHero = (
+    afterHero = isLynxtron ? (
+      <LynxtronFeatures />
+    ) : (
       <>
         <Features src={routePath} />
         {routePath === '/' && <ShowCase />}
@@ -213,7 +255,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       <>
         <div
           className="rp-doc home-hero-codeblock"
-          style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
+          style={{
+            minHeight: 'auto',
+            width: '100%',
+            maxWidth: isLynxtron ? 450 : 300,
+          }}
         >
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
@@ -228,20 +274,22 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
               className="language-bash"
               style={{ textAlign: 'center' }}
             >
-              npm create rspeedy@latest
+              {createCliStr}
             </CodeWithRef>
           </PreWithCodeButtonGroup>
         </div>
       </>
     ),
+    beforeHero = isLynxtron ? <GalaxyHeroBackground /> : undefined,
   } = props;
 
   return (
     <>
-      <MeteorsBackground gridSize={120} meteorCount={3} />
+      {isLynxtron ? null : <MeteorsBackground gridSize={120} meteorCount={3} />}
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
+          beforeHero={beforeHero}
           afterHero={afterHero}
           afterHeroActions={afterHeroActions}
         />
@@ -264,9 +312,9 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   }, [pathname]);
 
   if (
-    page.pagePath.startsWith('en/lynx-ui') ||
-    page.pagePath.startsWith('zh/lynx-ui') ||
-    page.pagePath.startsWith('lynx-ui')
+    page.pagePath.startsWith('en/ui/') ||
+    page.pagePath.startsWith('zh/ui/') ||
+    page.pagePath.startsWith('ui/')
   ) {
     return (
       <>
@@ -324,11 +372,23 @@ type BaseLinkRestProps = Omit<
 const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   const { href, children, className, style, ...restProps } = props;
   const safeRestProps = restProps as BaseLinkRestProps;
-  const getLangPrefix = (lang: string) => (lang === 'en' ? '' : `/${lang}`);
-  if (href && href.startsWith(`${getLangPrefix(useLang())}/blog`)) {
+  const lang = useLang();
+  const { pathname, search } = useLocation();
+  const getLangPrefix = (value: string) => (value === 'en' ? '' : `/${value}`);
+  let normalizedHref = href;
+
+  if (
+    href &&
+    safeRestProps.rel === 'alternate' &&
+    safeRestProps.lang === lang
+  ) {
+    normalizedHref = removeBase(`${pathname}${search}`);
+  }
+
+  if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <BaseLink
-        href={`/next${removeBase(href)}`}
+        href={`/next${removeBase(normalizedHref)}`}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
         style={style as any}
@@ -340,7 +400,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   }
   return (
     <BaseLink
-      href={href}
+      href={normalizedHref}
       className={className}
       ref={ref}
       style={style as any}

@@ -51,7 +51,7 @@ Rspeedy 提供了 CSS Modules、[静态资源](./assets.md)等内置功能，这
 ```
 
 :::tip
-[`create-rspeedy`](https://npmjs.com/create-rspeedy) 在创建项目时会自动生成该文件。
+[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 在创建项目时会自动生成该文件。
 :::
 
 ## 扩展 Lynx 类型
@@ -154,7 +154,7 @@ Rsbuild 使用 SWC 来编译 TypeScript 代码。
 ```
 
 :::tip
-[`create-rspeedy`](https://npmjs.com/create-rspeedy) 在创建项目时会自动包含该配置。
+[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 在创建项目时会自动包含该配置。
 :::
 
 该选项可以帮助你避免使用某些无法被 SWC 正确编译的语法（如跨文件类型引用），并指导你修正对应的用法：

@@ -21,8 +21,8 @@ Rsbuild 提供了一套强大的插件系统，允许用户进行功能扩展。
 
 以下 Rsbuild 插件可直接在 Rspeedy 中使用：
 
-- [Sass 插件](https://rsbuild.dev/plugins/list/plugin-sass): 使用 Sass 作为 CSS 预处理器
-- [Less 插件](https://rsbuild.dev/plugins/list/plugin-less): 使用 Less 作为 CSS 预处理器
+- [Sass 插件](https://rsbuild.rs/plugins/list/plugin-sass): 使用 Sass 作为 CSS 预处理器
+- [Less 插件](https://rsbuild.rs/plugins/list/plugin-less): 使用 Less 作为 CSS 预处理器
 - [ESLint 插件](https://github.com/rspack-contrib/rsbuild-plugin-eslint): 在编译过程中执行 ESLint 检查
 - [TypeScript 类型检查插件](https://github.com/rspack-contrib/rsbuild-plugin-type-check): 在独立进程中进行 TypeScript 类型检查
 - [图片压缩插件](https://github.com/rspack-contrib/rsbuild-plugin-image-compress): 压缩图片资源

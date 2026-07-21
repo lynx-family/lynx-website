@@ -1,0 +1,58 @@
+# @lynx-js/lynx-library-headers
+
+`@lynx-js/lynx-library-headers` is the header package used by Lynx native libraries. It only provides headers. It does not create projects, build artifacts, or perform runtime loading.
+
+For library project creation and package layout details, see
+[Native Libraries and Autolink](/guide/autolink.html?platform=lynxtron).
+
+## Package Contents
+
+The published package contains:
+
+- Lynx embedder C API headers.
+- Lynx C++ wrapper headers such as `lynx_native_view.h`, `lynx_value.h`, and `lynx_view.h`.
+- Weak N-API headers used by the Lynx JS runtime.
+- `lynx/registration.h` for Lynx embedder static registration.
+
+The package does not provide a Lynxtron-specific addon macro. Lynxtron consumes Lynx native libraries by loading their shared libraries with `process.dlopen(...)`; AutoLink can generate that host-side loading code.
+
+## Use in CMake
+
+Resolve the package root from your build script, then add `include/` to the native target include path:
+
+```js
+const path = require('node:path');
+
+const headersRoot = path.dirname(
+  require.resolve('@lynx-js/lynx-library-headers/package.json'),
+);
+```
+
+## Static Registration
+
+Lynx native libraries register capabilities with static registration macros:
+
+```cpp
+#include <lynx/registration.h>
+
+void BindDemoModule(napi_env env, napi_value exports);
+lynx_native_view_t* CreateDemoView(void* opaque);
+
+LYNX_REGISTER_NATIVE_MODULE(
+    "DemoModule",
+    BindDemoModule,
+    nullptr)
+
+LYNX_REGISTER_ELEMENT(
+    "DemoElementModule",
+    "x-demo-view",
+    CreateDemoView,
+    false,
+    nullptr)
+```
+
+`native-module` and `element` registrations should live beside their own feature sources. A package can contain either feature or both.
+
+When `LYNX_REGISTER_ELEMENT` is called with `OPAQUE` set to `nullptr`, the registration helper passes the current `lynx_view_t*` to the native view creator. Pass an explicit opaque value only when the creator should receive custom data instead of the current view.
+
+For more details, see [Lynx Native Libraries](/lynxtron/Native-Libraries/Lynx-Native-Libraries).

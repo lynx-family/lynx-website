@@ -53,6 +53,27 @@ const collectFilesRecursively = (dir) => {
   return result;
 };
 
+// The website serves the lynx-ui subsite under /ui (renamed from /lynx-ui).
+// Upstream package docs hardcode absolute /lynx-ui/... route links, so rewrite
+// them to /ui/... as they cross the sync boundary — otherwise a re-sync from
+// upstream reintroduces links the dead-link checker rejects. Only route links
+// are touched: the leading-boundary class excludes `assets/lynx-ui/` CDN paths
+// and `@lynx-js/lynx-ui` / `family/lynx-ui` package references (no such
+// boundary + trailing slash).
+const rewriteSubsiteLinks = (filePath) => {
+  if (!/\.(mdx?|md)$/.test(filePath)) {
+    return;
+  }
+  const original = fs.readFileSync(filePath, 'utf8');
+  const next = original.replace(
+    /(^|[("'\s=:])(\/(?:en\/|zh\/)?)lynx-ui\//gm,
+    '$1$2ui/',
+  );
+  if (next !== original) {
+    fs.writeFileSync(filePath, next, 'utf8');
+  }
+};
+
 const hoistMdxImports = (filePath) => {
   if (!filePath.endsWith('.mdx')) {
     return;
@@ -130,8 +151,9 @@ packages.forEach((pkgName) => {
     }
 
     copyRecursiveSync(pkgDocsDir, targetDir);
-    if (ENABLE_MDX_HOIST) {
-      for (const filePath of collectFilesRecursively(targetDir)) {
+    for (const filePath of collectFilesRecursively(targetDir)) {
+      rewriteSubsiteLinks(filePath);
+      if (ENABLE_MDX_HOIST) {
         hoistMdxImports(filePath);
       }
     }

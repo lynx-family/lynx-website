@@ -1,0 +1,43 @@
+.galaxy-bg {
+  position: absolute;
+  pointer-events: none;
+  // The square ring canvas is wider than the hero on small screens; clip
+  // the horizontal spill so it can't grow a page-level scrollbar. Vertical
+  // spill stays visible — the ring intentionally overhangs the hero.
+  overflow-x: clip;
+}
+
+.galaxy-canvas {
+  position: relative;
+  top: 2.5%;
+  // Slightly translucent even in light mode: the ring is a vibe layer,
+  // not the subject.
+  opacity: 0.9;
+  aspect-ratio: 1;
+  transform: scale(0.78);
+  // One mask, two jobs: fade the square canvas into the page at the edges,
+  // and dim the center band so the hero copy stays readable on top of the
+  // particles instead of competing with them.
+  -webkit-mask-image: radial-gradient(
+    ellipse 50% 70% at 50% 50%,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.45) 28%,
+    black 52%,
+    black 70%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 50% 70% at 50% 50%,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.45) 28%,
+    black 52%,
+    black 70%,
+    transparent 100%
+  );
+}
+
+// With only a handful of comets, dark can afford most of its glow back —
+// any dimmer and the strokes vanish into the near-black page.
+:global(.dark) .galaxy-canvas {
+  opacity: 0.85;
+}

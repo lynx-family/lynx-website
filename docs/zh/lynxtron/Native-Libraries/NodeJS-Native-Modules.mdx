@@ -1,0 +1,136 @@
+import { PackageManagerTabs } from '@theme';
+import { Go } from '@lynx';
+import nodejsNativeModulesGif from '@assets/lynxtron/lynxtron-nodejs-native-modules.gif?url';
+
+# Node.js 原生模块
+
+Lynxtron 使用 Node.js 原生模块的能力和 Electron 是一致的：二者都可以在随应用运行的 Node.js 环境中使用 npm 原生模块，并加载模块中的 `.node` 二进制产物。
+
+区别主要在于 rebuild 目标不同。在 Electron 中，社区通常使用 `@electron/rebuild` 将原生模块重编译到 Electron runtime；在 Lynxtron 中，请使用 `@lynx-js/lynxtron-rebuild` 将原生模块重编译到 Lynxtron runtime。
+
+| 能力点                 | Electron                  | Lynxtron                                                                |
+| ---------------------- | ------------------------- | ----------------------------------------------------------------------- |
+| 使用 npm 原生模块      | 支持，如 `better-sqlite3` | 支持，如 `better-sqlite3`                                               |
+| 针对运行时重新编译模块 | `@electron/rebuild`       | [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/) |
+
+## 什么是 Node.js 原生模块？
+
+Node.js 原生模块是指那些不仅包含 JavaScript 代码，还包含本地编译产物（通常是 `.node` 文件）的 npm 包。它们通常由 C/C++ 编写，并通过 Node-API 或 node-gyp 暴露给 JavaScript 使用，适用于以下场景：
+
+- 需要 C/C++ 扩展提供的高性能能力
+- 依赖 `.node` 二进制产物的 npm 包
+- 只能在 Node.js 环境中访问的本地系统能力
+
+Lynxtron 支持这类模块，但需要注意：**原生模块必须针对 Lynxtron 运行时重新编译**
+
+如果模块是按照你本机普通 Node.js 环境编译出来的，那么在 Lynxtron 中运行时，可能会遇到 ABI 不匹配的问题，典型报错如下：
+
+```bash
+Error: The module '/path/to/native/module.node'
+was compiled against a different Node.js version using
+NODE_MODULE_VERSION XXX. This version of Node.js requires
+NODE_MODULE_VERSION YYY. Please try re-compiling or re-installing
+the module.
+```
+
+在 Electron 中，社区通常使用 `@electron/rebuild` 处理这件事；而在 Lynxtron 中，**请使用 `@lynx-js/lynxtron-rebuild` 来完成重编译**。
+
+## Rebuild 与 Require 原生模块
+
+在 Lynxtron 中使用 npm 原生模块时，通常先安装模块并执行 `@lynx-js/lynxtron-rebuild`，再在 Node.js 环境中通过 `import` 或 `require` 引入模块。
+
+安装需要使用的 npm 原生模块，并安装 `@lynx-js/lynxtron-rebuild`：
+
+```bash
+npm install <native-module>
+```
+
+<PackageManagerTabs command="install -D @lynx-js/lynxtron-rebuild" />
+
+然后执行 `@lynx-js/lynxtron-rebuild`，为 Lynxtron 重新编译原生模块：
+
+```bash
+npx @lynx-js/lynxtron-rebuild
+```
+
+rebuild 完成后，就可以在 Node.js 环境中引入原生模块：
+
+```typescript
+import nativeModule from 'native-module';
+
+// Or use CommonJS:
+const nativeModule = require('native-module');
+```
+
+如果需要将 Node.js 能力暴露给 Lynx UI，可以通过 [Node.js 与 Lynx 通信](/lynxtron/learn/Communication-Between-Node-And-Lynx)中介绍的 bridge 消息通信或 [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 完成。
+
+## 示例：待办事项应用
+
+:::info 开始前的准备
+
+✅ 已完成[快速上手 Lynxtron](/lynxtron/introduction)
+
+✅ 当前机器已经具备 `node-gyp` 所需的本地编译环境（如 Python、C/C++ Build Tools、Xcode Command Line Tools 等）
+
+:::
+
+<Go
+  img={nodejsNativeModulesGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="在 Lynxtron Go 中打开"
+/>
+
+这个示例使用 `better-sqlite3` 构建一个**待办事项应用**：
+
+- **Node.js 端**：使用 `better-sqlite3` 把待办事项持久化到本地 SQLite 数据库
+- **Lynx 端**：通过通信能力调用 Node.js 逻辑，展示待办列表，并支持新增、切换完成状态、删除
+
+示例中的 Node.js 主进程会引入 `better-sqlite3`，并初始化数据库和表结构：
+
+```typescript {3}
+// src/main/desktop/main.ts
+import path from 'node:path';
+import Database from 'better-sqlite3';
+import { app, LynxWindow } from 'lynxtron';
+
+const dbPath = path.join(app.getPath('userData'), 'todo.db');
+const db = new Database(dbPath);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0
+  )
+`);
+
+const listStmt = db.prepare(`
+  SELECT id, title, completed
+  FROM todos
+  ORDER BY id DESC
+`);
+
+...
+
+function listTodos() {
+  return listStmt.all().map((todo: any) => ({
+    ...todo,
+    completed: Boolean(todo.completed),
+  }));
+}
+```
+
+## 相关文档
+
+- [Node.js 与 LynxView 通信](/lynxtron/learn/Communication-Between-Node-And-Lynx)
+- [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)
+- [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries)
+
+## 下一步
+
+掌握了 Node.js 原生模块之后，你可以继续尝试：
+
+1. **接入更多本地能力**：例如 `sharp` 做缩略图生成，或 `node-pty` 做内置终端
+2. **组合使用 Lynx 原生能力库**：将 Node.js 原生模块和 Lynx 原生能力库结合，做更复杂的桌面应用

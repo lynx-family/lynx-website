@@ -1,0 +1,349 @@
+---
+title: Primitives 与主题
+description: 'Unstyled primitives 以及如何为它们做样式和主题。'
+---
+
+import { Details, Go } from '@lynx';
+
+# Primitives 与主题
+
+`lynx-ui` 是一个 **unstyled** 组件库（也称 **headless**）。受 [Radix Primitives](https://www.radix-ui.com/primitives) 和 [Base UI](https://base-ui.com/) 启发，每个组件被拆分为两层：
+
+- **Primitive** 是你导入的顶层组件，如 `Switch`、`Popover`、`Sheet`。每个 primitive 完整处理一种交互模式，但不决定外观。
+- **Part** 是组成 primitive 的结构化部件。`Switch` 由 `SwitchTrack` 和 `SwitchThumb` 组成，每个 part 独立渲染、独立样式化。
+
+Primitive 不附带任何视觉设计，外观通过两种机制控制：
+
+- **Styling** 定义单个组件实例的外观：尺寸、间距、过渡，以及不同状态下的视觉表现。
+- **Theming** 定义多个组件共享的语义化 token，token 一旦调整，所有引用它的地方都会同步更新。
+
+本文以 `Switch` 为例，用 [LUNA](/ui/luna-themes-tokens) 作为主题层（你也可以用自己的 token 系统），从最基础的 primitive 组合逐步演进到可复用的 themed wrapper，分三步走：
+
+1. [为 Part 做样式](#为-part-做样式)
+2. [使用 Token](#使用-token)
+3. [组合 Themed Wrapper](#组合-themed-wrapper)
+
+## 准备
+
+对于 plain CSS，可以直接引入 LUNA 样式，让 token 在运行时以 CSS 变量的形式生效。
+
+```css
+@import '@lynx-js/luna-styles/index.css';
+```
+
+对于 Tailwind，可以进一步通过 LUNA Tailwind preset 将同一套 token 暴露为
+`bg-primary`、`text-content` 等 utility class。与此同时，Lynx 上的 Tailwind
+还需要配合 `@lynx-js/tailwind-preset` 来提供运行时兼容支持。
+
+```ts
+// tailwind.config.ts
+import { LunaPreset } from '@lynx-js/luna-tailwind';
+import LynxPreset from '@lynx-js/tailwind-preset';
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  presets: [LynxPreset, LunaPreset],
+};
+
+export default config;
+```
+
+:::note
+
+部分 Tailwind 集成方案会自动处理 source scanning，因此并不是所有场景都需要
+显式配置 `content` 字段。本指南中的示例在基础 Tailwind 配置之外，还使用了额外
+的集成层。
+
+:::
+
+## 为 Part 做样式
+
+`lynx-ui` 的每个 part 都是面向应用层开放的。你负责渲染这些 part，并挂载自己的
+className。底层不会存在需要你覆盖的隐藏默认样式。
+
+以 `Switch` 为例：
+
+```tsx
+import { Switch, SwitchThumb, SwitchTrack } from '@lynx-js/lynx-ui';
+
+export function ExampleSwitch() {
+  return (
+    <Switch className="switch">
+      <SwitchTrack className="switch-track" />
+      <SwitchThumb className="switch-thumb" />
+    </Switch>
+  );
+}
+```
+
+primitive 提供的是交互行为与状态管理；而根节点的尺寸与布局、track 与 thumb 的
+视觉外观，以及组件在不同状态下的表现，都由应用层定义。
+
+同样的结构，也可以直接使用 Tailwind utility 来表达。区别只在于样式规则写在哪：
+
+```tsx
+<Switch className="flex items-center w-[48px] h-[28px] rounded-full overflow-hidden">
+  <SwitchTrack className="w-full h-full" />
+  <SwitchThumb className="absolute w-[22px] h-[22px] rounded-full" />
+</Switch>
+```
+
+关于平台属性补充一点：当 primitive 需要暴露底层平台能力时，会通过
+`switchProps` 这类显式 prop 透传，而不是混入 styling API 中。这样既能保持
+className 接口的稳定与可预期，也能保留平台层定制能力。
+
+## 为状态做样式
+
+带状态的 primitive 会暴露对应的状态样式钩子。它和 Radix UI、Headless UI 中常见
+的 `data-*` 状态属性，以及 Tailwind 中的 `data-*` variant，本质上是同一类能力。
+
+在 `lynx-ui` 中，这些能力以 **UI Variants** 的形式暴露，对应的是 UI 状态 class：
+
+- `ui-checked`
+- `ui-active`
+- `ui-disabled`
+
+headless primitive 之所以既能保持无样式，又依然容易定制视觉，很大程度上正是因
+为这些状态被显式暴露了出来。
+
+使用 plain CSS 时，可以直接通过选择器命中这些状态：
+
+```css
+.switch.ui-disabled {
+  opacity: 0.5;
+}
+.switch-track.ui-checked {
+  background-color: var(--primary);
+}
+.switch-track.ui-active {
+  background-color: var(--primary-2);
+}
+.switch-thumb.ui-checked {
+  transform: translateX(23px);
+}
+.switch-thumb.ui-active {
+  width: 33px;
+}
+.switch-thumb.ui-checked.ui-active {
+  transform: translateX(12px);
+}
+```
+
+使用 Tailwind 时，同样的状态则通过 variant chain 表达：
+
+```tsx
+<SwitchTrack
+  className="bg-neutral-faint
+    ui-checked:bg-primary
+    ui-active:bg-primary-2"
+/>
+<SwitchThumb
+  className="bg-primary-content
+    transform-[translateX(3px)]
+    ui-checked:transform-[translateX(23px)]
+    ui-active:w-[33px]
+    ui-checked:ui-active:transform-[translateX(12px)]"
+/>
+```
+
+:::note
+
+本指南中的 transform 都写成 `transform-[translateX(...)]`，而不是
+`translate-x-[...]`。
+
+这是因为 `translate-x-[...]` 内部依赖 CSS variable，在 Lynx 低版本 runtime
+里与 transition 或 animation 一起使用时存在已知问题。虽然
+`@lynx-js/tailwind-preset` 当前是基于 Tailwind v3，但已额外支持这种
+transform 写法。
+
+:::
+
+当多个状态可能同时生效时，比如 `checked` 和 `pressed`，需要明确设计状态优先级。
+
+上面的 `ui-checked:ui-active:` 是有意设计的：当两个状态同时存在时，它会覆盖单独
+`ui-checked` 的 translation，从而保证交互过程中的视觉连续性。
+
+无论使用选择器还是 utility，都不应当依赖 specificity 自然覆盖；状态之间的优先
+关系，应当作为明确的设计决策来处理。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-switch.webm"
+  example="lynx-ui-switch"
+  defaultEntryName="SwitchBasicTailwind"
+  entry="BasicTailwind"
+  defaultFile="BasicTailwind/styled-switch.tsx"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  defaultTab="web"
+  webPreviewMode="auto"
+/>
+
+## 使用 Token
+
+注意，上面的样式并没有硬编码具体颜色值，而是引用语义化 token，例如 `primary` 和
+`content`。
+
+语义化 token 命名的是一个值在界面中的意图，而不是这个值本身。例如，`primary`
+表示“当前主题下的主要强调色”，`content` 表示“主要前景内容”。
+
+在这篇指南中，你最常看到的是两种消费方式：在 CSS 属性值中使用
+`var(--primary)`、`var(--content)`，或在 Tailwind 中使用 `bg-primary`、
+`text-content` 等原子类。它们最终都会解析到同一套运行时 token 值。
+
+语义化 token 的价值主要体现在两个方面：
+
+- **一致性。** 如果 `Button`、`Switch` 和 `Checkbox` 都引用 `primary`，它们的视觉表现会自动保持一致。修改 token，就会同步更新所有引用它的组件。
+- **可主题化。** 组件依赖的是 `primary`、`content` 这类语义角色，而不是具体颜色。主题可以在浅色、深色或品牌变体中改变这些角色的实际取值，而不需要重写组件样式。
+
+在实际使用中，这些语义角色的具体取值由祖先节点上的主题作用域提供。这与
+[自定义主题指南](/zh/guide/styling/custom-theming.html) 中描述的模式一致：在容器层应用主题 class，让子树中的样式在同一个主题作用域下解析。
+
+因此，不推荐按主题为每个组件分叉写样式：
+
+```tsx
+<Button className="bg-pink-500 dark:bg-pink-300 text-white dark:text-black" />
+```
+
+<Details title="优先使用语义化 token，而不是色阶">
+
+在 Tailwind 工具类中，前缀描述的是 CSS 属性，例如 `bg-` 表示背景色，`text-` 表示文本颜色。真正与主题相关的是前缀后面的取值。
+
+`pink-500`、`pink-300` 这类取值也可能来自一套设计色阶，但这套色阶通常是全局的：无论当前是浅色、深色，还是品牌主题，`pink-500` 都指向同一个具体颜色。因此，它不太适合需要适配多主题的组件样式。
+
+相比之下，`primary`、`primary-content` 这类语义化取值描述的是样式角色。至于这些角色最终对应什么颜色，则由当前激活的主题决定。这样组件样式可以保持稳定，而视觉结果会随主题变化。
+
+</Details>
+
+组件应该保持稳定，只消费语义化 token：
+
+```tsx
+<Button className="bg-primary text-primary-content" />
+```
+
+主题切换则发生在容器层：
+
+```tsx
+<view className="lunaris-dark">
+  <Button className="bg-primary text-primary-content" />
+  <Switch className="switch">
+    <SwitchTrack className="switch-track" />
+    <SwitchThumb className="switch-thumb" />
+  </Switch>
+</view>
+```
+
+当祖先节点上的主题 class 从 `lunaris-dark` 切换为 `lunaris-light` 时，整棵子树的 token 值都会更新，而不需要重写单个组件样式。
+
+在 `lynx-ui` 中，这种容器级主题切换模型由 LUNA 实现。LUNA 提供了四个内置主题 class：`luna-light`、`luna-dark`、`lunaris-light`
+和 `lunaris-dark`。
+
+关于 token 命名、surface 层级以及主题覆写方式，可以参考 [LUNA 主题与 Token](./luna-themes-tokens.mdx)。
+
+## 组合 Themed Wrapper
+
+当某种样式模式开始稳定重复时，下一步通常就是基于 primitive 组合一个 themed
+wrapper。这样既能得到稳定、面向产品的默认 API，也不会失去底层 part 的灵活性。
+
+常见模式是：分别封装每个 part，在 wrapper 中写入默认值，再导出一个适用于常见
+场景的便捷组合：
+
+```tsx
+import {
+  Switch as SwitchPrimitive,
+  SwitchThumb as SwitchThumbPrimitive,
+  SwitchTrack as SwitchTrackPrimitive,
+} from '@lynx-js/lynx-ui';
+import type {
+  SwitchProps,
+  SwitchThumbProps,
+  SwitchTrackProps,
+} from '@lynx-js/lynx-ui';
+import { clsx } from 'clsx';
+
+export function ThemedSwitchRoot({ className, ...props }: SwitchProps) {
+  return (
+    <SwitchPrimitive
+      className={clsx(
+        'flex flex-row items-center w-[48px] h-[28px] rounded-full overflow-hidden',
+        'ui-disabled:opacity-50',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ThemedSwitchTrack({ className }: SwitchTrackProps) {
+  return (
+    <SwitchTrackPrimitive
+      className={clsx(
+        'size-full transition-colors duration-150 ease-out',
+        'bg-neutral-faint ui-checked:bg-primary ui-active:bg-primary-2',
+        className,
+      )}
+    />
+  );
+}
+
+export function ThemedSwitchThumb({ className }: SwitchThumbProps) {
+  return (
+    <SwitchThumbPrimitive
+      className={clsx(
+        'absolute size-[22px] rounded-full bg-primary-content shadow',
+        'transition-all duration-150 ease-out transform-[translateX(3px)]',
+        'ui-checked:transform-[translateX(23px)]',
+        'ui-active:w-[33px]',
+        'ui-checked:ui-active:transform-[translateX(12px)]',
+        className,
+      )}
+    />
+  );
+}
+
+export function ThemedSwitch(props: SwitchProps) {
+  return (
+    <ThemedSwitchRoot {...props}>
+      <ThemedSwitchTrack />
+      <ThemedSwitchThumb />
+    </ThemedSwitchRoot>
+  );
+}
+```
+
+这种形式有几个值得注意的特点：
+
+- 每个 part 都单独封装，因此使用方仍然可以单独覆盖其中任意部分，而不需要整体
+  重写。
+- `ThemedSwitch` 提供了覆盖常见场景的默认组合，但不会阻断 part 级别的 API。
+- 尺寸、过渡、状态视觉等默认规则只定义一次，然后在不同场景中复用。
+- token 层（`bg-primary`、`bg-neutral-faint`、`bg-primary-content`）保持不变；
+  wrapper 做的是默认值组织，而不是重新定义视觉体系。
+
+这也是一种典型的 shadcn 风格构建方式：primitive 保持公开、可组合，而 themed component 则作为产品层的默认实现存在。
+
+下面的示例展示了这一模式在实际 UI 中的用法：通过受控 Switch 切换容器主题，并演示嵌套 surface 如何独立覆盖主题。这个 demo 也会出现在 [`<Switch>`](./components/switch.mdx) 组件页。
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-switch_themed.webm"
+  example="lynx-ui-switch"
+  defaultEntryName="SwitchThemed"
+  entry="Themed"
+  defaultFile="Themed/index.tsx"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  defaultTab="web"
+  webPreviewMode="auto"
+/>
+
+## 最佳实践
+
+- 保持 primitive 在视觉层面的无主张，外观应由应用层定义。
+- 为每个渲染出的 part 显式编写样式，而不是依赖隐藏默认值。
+- 即使在开发早期，也优先使用语义化 token，而不是字面颜色。
+- 当多个状态可能叠加时，明确设计状态优先级。
+- 当一种样式模式真正开始重复时，再升级为 wrapper，而不是过早封装。
+- 将主题视为跨 surface 的共享视觉语言，而不是颜色堆砌。
+
+## 小结
+
+`lynx-ui` 的 primitive 在保留行为控制权的同时，也把完整的样式控制权交给了应用层。你可以直接使用 plain CSS 或 Tailwind 为 part 做样式，通过 LUNA 这样的
+token 层保持视觉一致性，并在模式稳定后进一步组合 themed wrapper，实现可复用的产品层组件。

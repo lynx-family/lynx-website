@@ -28,7 +28,9 @@ Lynx 3.5 已经正式发布!
 
 ## 主线程脚本
 
-### 支持用 `stopPropagation` 阻止事件冒泡 <Badge>Web 友好</Badge>
+<h3 id="支持用-stoppropagation-阻止事件冒泡">
+  支持用 <code>stopPropagation</code> 阻止事件冒泡 <Badge>Web 友好</Badge>
+</h3>
 
 当一个事件被触发后，它会沿着响应链进行[传播](https://lynxjs.org/3.5/zh/guide/interaction/event-handling/event-propagation)。此前，虽然 Lynx 已经支持使用 [`catch` 类型的事件处理器属性静态拦截事件冒泡](https://lynxjs.org/3.5/zh/guide/interaction/event-handling/event-propagation#事件拦截)，但这种方式仍缺乏 Web 一样的表达力。得益于主线程编程能力，Lynx 3.5 在主线程脚本中支持了和 Web 一致的 [`event.stopPropagation()`](https://lynxjs.org/3.5/zh/api/lynx-api/event/event.html#stoppropagation)，实现运行时的事件冒泡拦截。
 
@@ -51,7 +53,7 @@ function handleInnerTap(e: MainThread.TouchEvent) {
 
 ### [首帧](https://lynxjs.org/3.5/zh/guide/interaction/ifr.html)即可进行主线程交互
 
-此前，主线程事件需要等待后台线程完成[“激活”（Hydration）](https://lynxjs.org/3.5/zh/guide/react/lifecycle.html)后才能响应，导致页面在首帧可见后，仍存在一段不可交互的延迟，类似[服务端渲染中的常见的恐怖谷效应](https://web.dev/articles/rendering-on-the-web?utm_source=chatgpt.com#rehydration)。
+此前，主线程事件需要等待后台线程完成[“激活”（Hydration）](https://lynxjs.org/3.5/zh/react/lifecycle.html)后才能响应，导致页面在首帧可见后，仍存在一段不可交互的延迟，类似[服务端渲染中的常见的恐怖谷效应](https://web.dev/articles/rendering-on-the-web#rehydration)。
 
 为了消除这段延迟，我们优化了激活流程，使得主线程事件可以在首帧渲染后立刻响应，并在后台线程激活后正确接管主线程中的状态并重放 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html)，在保证线程间的正确同步的同时，实现首帧可见即可交互。
 

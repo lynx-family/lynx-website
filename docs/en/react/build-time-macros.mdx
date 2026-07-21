@@ -1,0 +1,96 @@
+# Build-time Macros
+
+[ReactLynx](./introduction.mdx)'s compiler plugin ([`@lynx-js/react-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin), built on [`@lynx-js/react-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/react-webpack-plugin)) replaces a set of **build-time macros** when it compiles your app. Each macro is a global identifier that gets swapped for a constant value. Once it's a constant, any branch guarded by a macro that's `false` is removed by dead-code elimination, so it costs nothing at runtime and adds nothing to the bundle:
+
+```tsx
+if (__DEV__) {
+  // Stripped from production builds.
+  console.log('debug only');
+}
+```
+
+:::tip
+[`@lynx-js/react`](https://www.npmjs.com/package/@lynx-js/react) declares every macro as a TypeScript global, so you can reference them directly without a `Cannot find name '__DEV__'` error.
+:::
+
+## Thread macros
+
+ReactLynx compiles your code into two bundles, one for the main thread and one for the background thread (see [Thinking in ReactLynx](./thinking-in-reactlynx.mdx)). These macros mark which thread a piece of code belongs to, so the other thread's bundle can drop it.
+
+| Macro             | Type      | Meaning                                  |
+| ----------------- | --------- | ---------------------------------------- |
+| `__MAIN_THREAD__` | `boolean` | `true` in the main-thread bundle.        |
+| `__BACKGROUND__`  | `boolean` | `true` in the background-thread bundle.  |
+| `__LEPUS__`       | `boolean` | Alias of `__MAIN_THREAD__` (deprecated). |
+| `__JS__`          | `boolean` | Alias of `__BACKGROUND__` (deprecated).  |
+
+You rarely write these by hand. The compiler already treats event handlers (`bindtap` and the like), effects (`useEffect`), `ref`s, and code marked `'background only'` as background-only, so none of it ends up in the main-thread bundle:
+
+```jsx
+import { useEffect } from '@lynx-js/react';
+
+function App() {
+  useEffect(() => console.log('effects are background-only'));
+  return (
+    <view bindtap={(e) => console.log('event handlers are background-only')}>
+      <text ref={(ref) => console.log('refs are background-only')}>
+        Hello, ReactLynx!
+      </text>
+    </view>
+  );
+}
+```
+
+You reach for the macros in a different case: when code that runs during render (render runs on both threads) needs to touch something thread-specific — say a value that's a real native call on the background thread but a no-op on the main thread. Branch on `__BACKGROUND__` / `__MAIN_THREAD__` so each thread's bundle only keeps what's valid for it. The [built-in-macros](/api/react/Document.built-in-macros.mdx) reference has a worked `__BACKGROUND__` example; see [Thinking in ReactLynx](./thinking-in-reactlynx.mdx) for the full rules.
+
+## Mode macros
+
+These switch whole categories of development behavior on or off. They are `true` in development and `false` in production, so dev-only code never ships.
+
+### `__DEV__`
+
+`true` in development, `false` in production (it follows the build mode / `NODE_ENV`). Use it to guard development-only code such as prop validation, invariant checks, and friendlier error messages. Anything inside `if (__DEV__) { … }` is gone from production builds.
+
+### `__PROFILE__`
+
+Turns on performance instrumentation. When it's on, the runtime wraps key phases (hydration, rendering, lifecycle events) with profiling marks that show up in Lynx's trace. See [Profiling](./performance/profiling.mdx) and [Runtime Profiling](/rspeedy/runtime-profiling.md). It defaults to on in development so you can profile locally, and off in production to avoid the overhead. Turn it off in development with `REACT_PROFILE=false`, or force it on with the plugin's `profile` option.
+
+### `__REACT_DEVTOOL__`
+
+Turns on the runtime hooks that [Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) needs, such as the snapshot-to-element mapping. It defaults to on in development. To use Preact DevTools in a production build, set `REACT_DEVTOOL=true`; that also keeps a user-imported [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools) from being stripped out of the bundle.
+
+## Logging macros
+
+ALog is Lynx's native logging channel. Messages sent through it land in the platform's native logs, even where `console.log` isn't surfaced. Both macros below are off by default because the output is verbose; you turn them on by setting the environment variable yourself.
+
+### `__ALOG__`
+
+Makes the runtime emit detailed `[ReactLynxDebug]` diagnostics on both threads, so you can trace what the framework is doing. Turn it on with `REACT_ALOG=true`.
+
+### `__ALOG_ELEMENT_API__`
+
+Finer-grained: it logs every [Element PAPI](/api/engine/element-api.md) call, the low-level create / append / update operations the framework runs on the main thread, so you can see exactly how the element tree is built. It's very noisy. Turn it on with `REACT_ALOG_ELEMENT_API=true`.
+
+## Plugin-option macros
+
+These come from ReactLynx plugin options rather than environment variables, and most are framework-internal:
+
+| Macro                                                    | Type                         | What it does                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `__ENABLE_SSR__`                                         | `boolean`                    | `true` when SSR is enabled. Controlled by [`enableSSR`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.enablessr.md).                                                                                                                              |
+| `__EXTRACT_STR__`                                        | `boolean`                    | Enables the "extract string" optimization, which deduplicates string literals shared between the background and main-thread bundles to shrink output. Controlled by [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr.md).  |
+| `__FIRST_SCREEN_SYNC_TIMING__`                           | `'immediately' \| 'jsReady'` | When the first screen hands over control: as early as possible (`immediately`), or after the background JS is ready (`jsReady`). Controlled by [`firstScreenSyncTiming`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.firstscreensynctiming.md). |
+| `__GLOBAL_PROPS_MODE__`                                  | `'reactive' \| 'event'`      | How [`useGlobalProps`](/api/react/Function.useGlobalProps.mdx) updates are delivered: reactive (context-based) or event-based. Controlled by [`globalPropsMode`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode.md).               |
+| `__DISABLE_CREATE_SELECTOR_QUERY_INCOMPATIBLE_WARNING__` | `boolean`                    | Suppresses the development warning about the deprecated `createSelectorQuery` / ref APIs. Controlled by `disableCreateSelectorQueryIncompatibleWarning`.                                                                                                     |
+| `__USE_ELEMENT_TEMPLATE__`                               | `boolean`                    | Experimental. Enables precompiled Element Templates. Controlled by [`experimental_useElementTemplate`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_useelementtemplate.md).                                                         |
+
+## Environment variables
+
+A few macros come from environment variables read at build time:
+
+| Variable                 | Macro                  | Example                                     |
+| ------------------------ | ---------------------- | ------------------------------------------- |
+| `REACT_PROFILE`          | `__PROFILE__`          | `REACT_PROFILE=false rspeedy build`         |
+| `REACT_DEVTOOL`          | `__REACT_DEVTOOL__`    | `REACT_DEVTOOL=true rspeedy build`          |
+| `REACT_ALOG`             | `__ALOG__`             | `REACT_ALOG=true rspeedy build`             |
+| `REACT_ALOG_ELEMENT_API` | `__ALOG_ELEMENT_API__` | `REACT_ALOG_ELEMENT_API=true rspeedy build` |

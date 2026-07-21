@@ -43,11 +43,14 @@ const SOURCES = {
   // The Rspeedy crab is a detailed colored mascot — flattening it to a white
   // silhouette loses all its internal detail, so keep its native colors.
   rspeedy: { remotePng: `${CDN}/rspeedy.PNG`, native: true },
-  'lynx-ui': {
+  ui: {
     localSvg: join(PUBLIC_ASSETS, 'lynx-ui-icon-light.svg'),
     native: true,
   },
   ai: { localSvg: join(PUBLIC_ASSETS, 'lynxai-logo-dark.svg') },
+  lynxtron: {
+    localSvg: join(PUBLIC_ASSETS, 'lynxtron', 'lynxtron-icon-dark.svg'),
+  },
   api: { remoteSvg: `${CDN}/lynx-light-logo.svg` },
 };
 

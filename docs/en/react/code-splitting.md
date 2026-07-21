@@ -114,7 +114,7 @@ You may also lazy-load modules that being built in a standalone Rspeedy project.
 
 ### Create a standalone Producer project
 
-Create a standalone project using [`create-rspeedy`](https://npmjs.com/create-rspeedy):
+Create a standalone project using [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy):
 
 ```bash
 pnpm create rspeedy@latest

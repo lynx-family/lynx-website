@@ -84,7 +84,7 @@ TS2307: Cannot find module './static/logo.png' or its corresponding type declara
 ```
 
 :::tip
-[`create-rspeedy`](https://npmjs.com/create-rspeedy) will automatically create this file for you.
+[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) will automatically create this file for you.
 :::
 
 ## 内联静态资源

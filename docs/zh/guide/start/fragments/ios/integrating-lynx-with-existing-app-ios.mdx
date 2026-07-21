@@ -4,6 +4,8 @@ import { CodeFold, Info } from '@lynx';
 import { Link, Steps, Tab, Tabs } from '@theme';
 import versionJson from '@site/docs/public/version.json';
 
+{/* cspell:ignore CPLUSPLUSFLAGS */}
+
 <Info title="Lynx for iOS">
   - 本文假设你已熟悉原生 iOS 应用开发的基本概念。
   - 下文中的所有代码，你都可以参考项目:<Link href={'https://github.com/lynx-family/integrating-lynx-demo-projects/tree/' + (versionJson.current_version === 'next' ? 'main': `release/${versionJson.current_version}`)}>integrating-lynx-demo-projects</Link>
@@ -129,6 +131,30 @@ end
   width="640px"
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/integration_ios_warning.png"
 />
+:::
+
+:::tip
+
+如果你使用 Xcode 26.x 构建，并且 Lynx pod 因为 warning 被当作 error 而编译失败，可以在 Podfile 中添加 `post_install` hook，将相关 warning 降级：
+
+```ruby title="Podfile"
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+
+      disable = ['-Wno-error', '-Wno-c99-designator',
+                 '-Wno-deprecated-declarations', '-Wno-deprecated-implementations']
+      ['OTHER_CPLUSPLUSFLAGS', 'OTHER_CFLAGS'].each do |key|
+        flags = config.build_settings[key] || ['$(inherited)']
+        flags = [flags] unless flags.is_a?(Array)
+        config.build_settings[key] = flags + disable
+      end
+    end
+  end
+end
+```
+
 :::
 
 </Steps>

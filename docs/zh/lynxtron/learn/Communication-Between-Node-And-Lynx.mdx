@@ -1,0 +1,270 @@
+import { Go } from '@lynx';
+import fileExplorerGif from '@assets/lynxtron/file-explorer.gif?url';
+import systemMonitorGif from '@assets/lynxtron/system-monitor.gif?url';
+
+# Lynxtron 中 Node.js 与 Lynx 的通信
+
+如果你熟悉 Electron，可以先把 Lynxtron 中的通信需求理解为两类：
+
+1. **Node 主进程与 UI 双向消息通信**：类似 Electron 中主进程与 [`BrowserWindow`](https://www.electronjs.org/zh/docs/latest/api/browser-window) renderer 之间的 IPC。
+2. **在 UI 中直接使用 Node.js 能力**：Electron 技术上支持通过 [`nodeIntegration`](https://www.electronjs.org/zh/docs/latest/api/browser-window#new-browserwindowoptions) 在 Web 中直接调用 Node.js 能力，但通常不推荐直接开启；Lynxtron 则通过增强 [preload scripts](#使用-preload-scripts)，使其能在隔离 context 中使用 Node.js，并将 JS 对象暴露给 Lynx UI 调用。
+
+Lynxtron 对这两类需求分别提供了对应能力：
+
+- 使用 `NativeModules.bridge` 通道、[`LynxWindow.on('-lynx-invoke')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200)、[`LynxWindow.on('-lynx-message')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 和 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent) 实现 Node 主进程与 Lynx 的通信。
+- 使用 Lynxtron [preload scripts](#使用-preload-scripts)，在 preload script 中通过 [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) 将 Node.js 的 JS 对象暴露给 Lynx UI 中的 [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) 对象。
+
+## 和 Electron 的能力对照
+
+| 需求                          | Electron                                                                                                                                                                                                                                                                                                                                           | Lynxtron                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UI 使用 Node.js 能力          | [preload scripts](https://www.electronjs.org/zh/docs/latest/tutorial/tutorial-preload) / [`contextBridge.exposeInMainWorld()`](https://www.electronjs.org/zh/docs/latest/api/context-bridge#contextbridgeexposeinmainworldapikey-api) / [`nodeIntegration`](https://www.electronjs.org/zh/docs/latest/api/browser-window#new-browserwindowoptions) | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload) + [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) + [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) |
+| Node 主进程向 UI 推送消息     | [`webContents.send()`](https://www.electronjs.org/zh/docs/latest/api/web-contents#contentssendchannel-args)                                                                                                                                                                                                                                        | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                                                                                                                                                                                                                                           |
+| UI 调用 Node 主进程并等待结果 | [`ipcRenderer.invoke()`](https://www.electronjs.org/zh/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args) + [`ipcMain.handle()`](https://www.electronjs.org/zh/docs/latest/api/ipc-main#ipcmainhandlechannel-listener)                                                                                                                    | `NativeModules.bridge.call()` + [`LynxWindow.on('-lynx-invoke')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200)                                                                                                                                                                                                               |
+| UI 向 Node 主进程发送单向消息 | [`ipcRenderer.send()`](https://www.electronjs.org/zh/docs/latest/api/ipc-renderer#ipcrenderersendchannel-args) + [`ipcMain.on()`](https://www.electronjs.org/zh/docs/latest/api/ipc-main#ipcmainonchannel-listener)                                                                                                                                | `NativeModules.bridge.send()` + [`LynxWindow.on('-lynx-message')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221)                                                                                                                                                                                                              |
+
+## 使用 Preload Scripts
+
+Lynxtron 的 [preload scripts](#使用-preload-scripts) 可以理解为 [Electron preload scripts](https://www.electronjs.org/zh/docs/latest/tutorial/tutorial-preload) / [`contextBridge`](https://www.electronjs.org/zh/docs/latest/api/context-bridge) 模式面向 Lynx BTS 的能力增强：preload script 可以直接使用 Node.js API，并把方法或对象暴露给 Lynx UI 调用。
+
+Electron 中，preload script 与 Web 页面处于隔离的 JS context；preload script 与 Web 最终需要通过 [`contextBridge`](https://www.electronjs.org/zh/docs/latest/api/context-bridge) 或 IPC 做跨 context 的序列化/代理通信，Web 侧不能直接使用 preload script context 中的原始 JS 对象。
+
+Lynxtron 中，Lynx BTS 与 preload scripts 都运行在 Node.js 中，但处于隔离的 JS context；preload script context 有 Node.js 能力，可以通过 [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) 将 JS 对象暴露给 Lynx BTS 直接访问。
+
+### 配置 preload scripts
+
+创建窗口时，通过 [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload) 指定 preload script 文件：
+
+```typescript
+// main.ts
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import path from 'path';
+
+app.whenReady().then(() => {
+  const win = new LynxWindow({
+    width: 800,
+    height: 600,
+    lynxPreference: {
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+
+  win.loadFile('main.lynx.bundle');
+});
+```
+
+### 在 preload script 中暴露 Node.js API
+
+preload script 中可以直接使用 Node.js API，然后通过 [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) 暴露给 Lynx：
+
+```typescript
+// preload.ts
+import { contextBridge } from '@lynx-js/lynxtron/context-bridge';
+import fs from 'fs';
+import path from 'path';
+
+type ExposedNodeApi = {
+  readTextFileWithTransform: (
+    filePath: string,
+    transform: (content: string) => string,
+  ) => Promise<string>;
+  createReader: (baseDir: string) => {
+    read: (relativePath: string) => Promise<string>;
+  };
+};
+
+const nodeApi: ExposedNodeApi = {
+  readTextFileWithTransform: async (filePath, transform) => {
+    const content = await fs.promises.readFile(filePath, 'utf8');
+    return transform(content);
+  },
+
+  createReader: (baseDir: string) => {
+    return {
+      read: (relativePath: string) => {
+        return fs.promises.readFile(path.join(baseDir, relativePath), 'utf8');
+      },
+    };
+  },
+};
+
+contextBridge.exposeInLynxBTS(nodeApi);
+```
+
+### 在 Lynx 中调用暴露的 API
+
+Lynx BTS 通过 [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) 访问这些 API：
+
+暴露的 JS 对象可以包含函数；函数的入参也可以是函数；函数可以使用 preload script context 中的闭包，也可以返回 Promise。Lynx UI 侧按普通异步 JS API 调用即可。
+
+```tsx
+// App.tsx
+const api = NativeModules.nodejs.exposed;
+
+const title = await api.readTextFileWithTransform(
+  '/Users/example/notes.txt',
+  (text) => text.split('\n')[0],
+);
+
+const reader = api.createReader('/Users/example');
+const todo = await reader.read('todo.txt');
+```
+
+### 示例：文件浏览器
+
+这个示例演示在 Lynx UI 中使用 preload script 暴露的 Node.js 能力：
+
+- preload script 通过 [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) 暴露 `readdir`、`homedir` 等 API。
+- Lynx UI 通过 [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) 调用这些 API，实现目录浏览和文件内容查看。
+
+<Go
+  img={fileExplorerGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="在 Lynxtron Go 中打开"
+/>
+
+## Node 主进程与 Lynx 双向消息通信
+
+这种方式适合窗口控制、系统服务、数据库访问、主进程状态管理等场景。Node.js 能力保留在主进程，Lynx 通过消息调用。
+
+### Node.js 向 Lynx 推送消息
+
+Node 主进程可以通过 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent) 主动向 Lynx 发送事件：
+
+```typescript
+// main.ts
+import { LynxWindow } from '@lynx-js/lynxtron';
+
+const win = new LynxWindow();
+
+win.sendGlobalEvent('systemInfoUpdate', {
+  cpuUsage: 32,
+  memoryUsage: 68,
+});
+```
+
+Lynx 侧通过 [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter) 监听事件：
+
+```tsx
+// App.tsx
+import { useEffect, useState } from '@lynx-js/react';
+
+export function App() {
+  const [systemInfo, setSystemInfo] = useState(null);
+
+  useEffect(() => {
+    const emitter = lynx.getJSModule('GlobalEventEmitter');
+    const handleUpdate = (data) => {
+      setSystemInfo(data);
+    };
+
+    emitter.addListener('systemInfoUpdate', handleUpdate);
+    return () => {
+      emitter.removeListener('systemInfoUpdate', handleUpdate);
+    };
+  }, []);
+
+  return <view>{/* render systemInfo */}</view>;
+}
+```
+
+### Lynx 调用 Node.js 并等待返回值
+
+使用 `bridge.call` 发起调用，因为需要等待 Node.js 返回数据。
+
+```tsx
+// App.tsx
+const info = await NativeModules.bridge.call('getSystemInfo', {
+  includeCpuDetail: true,
+});
+setSystemInfo(info);
+```
+
+Node 主进程则通过监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) 事件来处理 `bridge.call` 调用，并通过 `event.sendReply` 返回：
+
+```typescript
+// main.ts
+import { LynxWindow } from '@lynx-js/lynxtron';
+
+const win = new LynxWindow();
+
+win.on('-lynx-invoke', (event, methodName, params) => {
+  if (methodName === 'getSystemInfo') {
+    event.sendReply(getSystemInfo(params));
+  }
+});
+```
+
+### Lynx 向 Node.js 发送单向消息
+
+通过 `bridge.send` 通知 Node.js（单向通知，不需要返回值）。
+
+```tsx
+// App.tsx
+NativeModules.bridge.send('refreshIntervalChanged', { interval: 1000 });
+```
+
+Node 主进程通过监听 [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件来处理 `bridge.send` 发送的通知：
+
+```typescript
+// main.ts
+import { LynxWindow } from '@lynx-js/lynxtron';
+
+const win = new LynxWindow();
+
+win.on('-lynx-message', (methodName, params) => {
+  if (methodName === 'refreshIntervalChanged') {
+    console.log('refresh interval:', params.interval);
+  }
+});
+```
+
+### 示例：系统资源监控面板
+
+这个示例演示 Node 主进程与 Lynx 的双向消息通信：
+
+- Node.js 端使用 `os` 模块获取 CPU、内存等系统信息，并通过 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent) 推送给 Lynx。
+- Lynx 端通过 [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter) 接收更新，也可以通过 `NativeModules.bridge.call()` 主动请求最新数据。
+- 刷新间隔变化这类不需要返回值的通知，可以通过 `NativeModules.bridge.send()` 发送给 Node 主进程。
+
+<Go
+  img={systemMonitorGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="在 Lynxtron Go 中打开"
+/>
+
+## 能力参考
+
+| 能力                                               | API                                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 配置窗口级 preload script                          | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload)                                |
+| 从 preload scripts 向 Lynx 暴露 Node.js 方法或对象 | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) |
+| 从 Lynx UI 调用 preload scripts 暴露的方法或对象   | [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)                     |
+| 从 Node 主进程向 Lynx 推送事件                     | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          |
+| 从 Lynx 调用 Node 主进程并等待返回值               | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) 事件            |
+| 从 Lynx 向 Node 主进程发送单向消息                 | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件           |
+
+## 为什么 Lynxtron 这样设计
+
+Lynxtron 用两条通道覆盖 Electron 中常见的两类能力，因为它们解决的问题不同：
+
+- [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)：Lynx BTS 直接访问 preload scripts 暴露的 JS 对象，对应通过 [Electron preload scripts](https://www.electronjs.org/zh/docs/latest/tutorial/tutorial-preload) / [`nodeIntegration`](https://www.electronjs.org/zh/docs/latest/api/browser-window#new-browserwindowoptions) 在 UI 中使用 Node.js 能力。
+- `NativeModules.bridge` + [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件：Lynx 与 Node 主进程之间的消息通信，对应常见的 Electron IPC。
+
+关键差异不是 API 挂在哪个全局对象上，而是 Lynxtron 为 Lynx BTS 提供了一条 JS 对象暴露路径。
+
+## API 与规范
+
+| API / 规范                                                                                                                      | 说明                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx)                                                            | 创建窗口、加载 Lynx bundle                                                                         |
+| [`LynxWindowConstructorOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx)                    | 配置 `lynxPreference` 等窗口参数                                                                   |
+| [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) | 从 preload script 向 Lynx BTS 暴露 JS 对象                                                         |
+| [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          | Node 主进程向 Lynx 推送全局事件                                                                    |
+| [`LynxtronNodejs`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx)                                           | [`NativeModules.nodejs`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx) 的类型 |
+| [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter)                              | Lynx BTS 中监听全局事件                                                                            |
+| [`lynx.getJSModule()`](/api/lynx-api/lynx/lynx-get-js-module.mdx)                                                               | 获取 `GlobalEventEmitter` 等模块                                                                   |

@@ -1,0 +1,53 @@
+import { PackageManagerTabs } from '@theme';
+
+# @lynx-js/cef-webview
+
+`@lynx-js/cef-webview` is the officially maintained Lynxtron native library that
+provides the CEF-backed [`<webview>`](/api/elements/built-in/webview) element.
+It ships platform-specific Lynxtron native artifacts and a `./lynxtron` entry
+that loads the current platform artifact so its static Lynx registrations run in
+the host process.
+
+## Install
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+## Host Entry
+
+Import the Lynxtron entry in the main process before creating a `LynxWindow` or
+loading a Lynx bundle:
+
+```ts
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
+
+cefWebview.initialize();
+```
+
+The `initialize()` method initializes Chromium Embedded Framework (CEF) for the
+current process. AutoLink also uses the `./lynxtron` entry when staging the
+package for a Lynxtron host build.
+
+## Exports
+
+| Export           | Description                                                        |
+| ---------------- | ------------------------------------------------------------------ |
+| `.`              | CommonJS package entry.                                            |
+| `./lynxtron`     | Lynxtron host entry that loads the current platform native binary. |
+| `./package.json` | Package metadata.                                                  |
+
+## Package Metadata
+
+The package includes `lynx.lib.json` with Lynxtron metadata:
+
+```json
+{
+  "platforms": {
+    "lynxtron": {
+      "path": "dist"
+    }
+  }
+}
+```
+
+For the end-to-end setup flow, see
+[Using webview in Lynxtron](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started).

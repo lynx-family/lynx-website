@@ -16,8 +16,8 @@ export type PlatformName =
   | 'clay_ios'
   | 'clay_macos'
   | 'clay_windows'
-  | 'ios'
   | 'harmony'
+  | 'ios'
   | 'web_lynx';
 
 export type VersionValue = string | boolean | null;
@@ -44,7 +44,7 @@ export type PlatformStatus = 'retired' | 'current' | 'beta' | 'planned';
  */
 export interface PlatformStatement {
   /**
-   * The platform brand name (e.g. iOS, Android, Web, etc.).
+   * The platform brand name (e.g. iOS, Android, HarmonyOS, Web, etc.).
    */
   name: string;
   /**
@@ -153,11 +153,11 @@ export interface StatusBlock {
   /**
    * A boolean value that indicates the general stability of this feature. This value will be true if the feature was implemented in Lynx recently. This value will be false if the feature had been implemented over two years ago in Lynx.
    */
-  experimental: boolean;
+  experimental?: boolean;
   /**
    * A boolean value that indicates whether the feature is no longer recommended. It might be removed in the future or might only be kept for compatibility purposes. Avoid using this functionality.
    */
-  deprecated: boolean;
+  deprecated?: boolean;
 }
 /**
  * This interface was referenced by `CompatDataFile`'s JSON-Schema
