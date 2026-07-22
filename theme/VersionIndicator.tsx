@@ -1,5 +1,4 @@
-import { useLocation } from '@rspress/core/runtime';
-import { SUBSITES_CONFIG } from '@site/shared-route-config';
+import { useLocation, useI18n, useLang } from '@rspress/core/runtime';
 import { useState, useEffect } from 'react';
 import {
   HoverCard,
@@ -12,8 +11,6 @@ import useIfMobile from '@site/theme/hooks/use-if-mobile';
 import { ChevronDown } from 'lucide-react';
 
 import { getLangPrefix } from '../shared-route-config';
-
-import { useI18n, useLang } from '@rspress/core/runtime';
 import versionJson from '../docs/public/version.json';
 
 const menuItemClassName =
@@ -60,14 +57,10 @@ export function VersionIndicator() {
     if (pathname.endsWith('.html')) {
       pathname = pathname.replace('.html', '');
     }
-    var homepagePaths = SUBSITES_CONFIG.flatMap((site) => [
-      site.home,
-      site.home.endsWith('/') ? site.home.slice(0, -1) : `${site.home}/`,
-    ]);
-    homepagePaths.push('/versions');
-    const specificPath =
-      homepagePaths.includes(pathname) || pathname.startsWith('/blog');
-    return !specificPath;
+    // Hide on the versions index and blog listing — those pages already
+    // surface version/context. Show on docs *and* homepage/subsite homes so
+    // visitors can switch versions without first diving into a guide page.
+    return pathname !== '/versions' && !pathname.startsWith('/blog');
   };
 
   useEffect(() => {
