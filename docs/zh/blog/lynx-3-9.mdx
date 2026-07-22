@@ -59,11 +59,11 @@ HarmonyOS 端的 [`<overlay>`](/api/elements/built-in/overlay) 支持 `mode` 属
 
 ## CSS 能力
 
-Lynx 3.9 补齐了多项 CSS 能力，让行为更接近 Web 标准。
+Lynx 3.9 继续补齐 CSS 标准能力，重点包括样式优先级、布局简写解析，以及部分平台能力对齐。
 
-### [`!important`](/api/css/selectors#important-support)
+### [`!important`](/api/css/selectors#important-support) 优先级支持
 
-在 3.9 版本中，我们增加了对 `!important` 值的支持，现在可以通过对 CSS 值增加 `!important` 后缀来提升其在 CSS 中的优先级。
+现在可以在 CSS 值后追加 `!important`，提升该声明在层叠规则中的优先级。
 
 例如：
 
@@ -76,22 +76,22 @@ view.foo {
   color: blue;
 }
 ```
+
 现在 `<view className="foo"/>` 中的 `color` 会被应用为 `red`，而不是 `blue`。
 
-### [flex](/api/css/properties/flex) 中被省略的 [`flex-basis`](/api/css/properties/flex-basis) 按 `0%` 解析
+### [flex](/api/css/properties/flex) 简写解析对齐浏览器行为
 
-`flex` 简写会被展开为 `flex-grow`、`flex-shrink` 和 `flex-basis` 的组合，省略的 `flex-basis` 会被解析为 `0%`，再次之前为 `0`。虽然 `0` 才是 CSS 规范中的默认值，但是在
-各个浏览器中的实现都是 `0%`，具体的差别可以参考 [Flex basis 0 vs 0%](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/flex-basis#flex_basis_0_vs_0)。
+`flex` 简写会被展开为 `flex-grow`、`flex-shrink` 和 [`flex-basis`](/api/css/properties/flex-basis) 的组合。3.9 起，省略的 `flex-basis` 会按 `0%` 解析，而不是此前的 `0`。
 
-### 新增 [`grid-row`](/api/css/properties/grid-row) 和 [`grid-column`](/api/css/properties/grid-column) 简写。
+虽然 `0` 是 CSS 规范中的默认值，但浏览器在解析 `flex` 简写时普遍使用 `0%`。这个调整可以让 Lynx 的布局结果更接近 Web。具体差异可以参考 [Flex basis 0 vs 0%](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/flex-basis#flex_basis_0_vs_0)。
 
-现在可以通过 `grid-row` 和 `grid-column` 简写来设置 `grid-*-start` 和 `grid-*-end` 的值。
+### Grid、Sticky 与 Motion Path 能力补齐
 
-例如 `grid-row: 1 / span 2` 等价于 `grid-row-start: 1; grid-row-end: span 2`。
+除了上面的解析规则调整，Lynx 3.9 还补齐了以下 CSS 能力：
 
-### 标准 [`position: sticky`](/api/css/properties/position) 支持：可通过 `enableNewSticky` 开关启用。
-
-### HarmonyOS 支持 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
+- 新增 [`grid-row`](/api/css/properties/grid-row) 和 [`grid-column`](/api/css/properties/grid-column) 简写，可通过它们设置 `grid-*-start` 和 `grid-*-end` 的值。例如 `grid-row: 1 / span 2` 等价于 `grid-row-start: 1; grid-row-end: span 2`。
+- 支持标准 [`position: sticky`](/api/css/properties/position) 行为，可通过 `enableNewSticky` 页面开关启用。
+- HarmonyOS 端支持 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
 
 ## Lynx API 与 DevTool
 
