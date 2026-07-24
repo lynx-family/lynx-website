@@ -1,0 +1,122 @@
+---
+title: 'Lynx 3.9：Autolink、CSS、ReactLynx 与更多更新'
+date: 2026-07-10
+sidebar: false
+authors: ['lynx', 'WATER1350']
+badge_text: 'Lynx 3.9 发布了!'
+description: 'Lynx 3.9 带来 Autolink 自动注册、CSS 标准能力补齐、ReactLynx Portal 与构建优化，以及元件、Lynx API 和性能更新。'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore Autolink */}
+
+Lynx 3.9 已经正式发布！
+
+这个版本围绕三条主线展开：用 [Autolink](/guide/autolink) 简化原生能力接入，用更贴近 Web 的 CSS 能力减少迁移和 AI 生成代码中的常见误用，并让 ReactLynx 在 Portal、渲染与构建表现上继续前进。
+
+此外，3.9 也带来了元件、Lynx API、性能与 Lynx for AI 的一组小而实用的更新。下面我们一起来看看 Lynx 3.9 带来了哪些新变化。
+
+## Autolink
+
+Autolink 是 Lynx 3.9 引入的原生库自动发现与注册机制。它会在宿主工程的 `node_modules` 中发现符合约定的 Lynx 原生库，并在 Android 和 iOS 初始化流程中统一注册这些库提供的[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service)。
+
+随着 Lynx 应用接入的原生库越来越多，应用侧往往需要手动维护每个库的注册代码，库作者也需要反复说明接入步骤。Autolink 把这部分约定收敛到 `lynx.lib.json` 和生成的 registry 中，让应用接入更少依赖手写胶水代码，也让原生库的发布和复用更稳定。
+
+更多约定、配置和平台接入细节，可以继续阅读 [Autolink 指南](/guide/autolink)。
+
+## CSS 能力
+
+Lynx 3.9 的 CSS 更新重点不是简单增加属性数量，而是继续贴近 Web 社区已经熟悉的写法。这样从 Web 迁移过来的样式更容易得到一致结果，AI 或 Agent 生成 Lynx 代码时，也更少把 Web 常见写法误用成不可运行的 Lynx 样式。
+
+因此，这个版本补上了 `!important`、`flex` 简写解析等兼容性能力，也继续推进 Grid、Sticky 和 Motion Path 等标准能力补齐。
+
+### [`!important`](/api/css/selectors#important-support) 优先级支持
+
+在 `engineVersion` 3.9 或更高版本下，可以在 CSS 值后追加 `!important`，提升该声明在层叠规则中的优先级。
+
+例如：
+
+```css
+.foo {
+  color: red !important;
+}
+
+view.foo {
+  color: blue;
+}
+```
+
+现在 `<view className="foo" />` 中的 `color` 会被应用为 `red`，而不是 `blue`。
+
+### [`flex`](/api/css/properties/flex) 简写解析
+
+`flex` 简写会被展开为 `flex-grow`、`flex-shrink` 和 [`flex-basis`](/api/css/properties/flex-basis) 的组合。3.9 起，省略的 `flex-basis` 会按 `0%` 解析，而不是此前的 `0`。
+
+虽然 `0` 是 CSS 规范中的默认值，但浏览器在解析 `flex` 简写时普遍使用 `0%`。这个调整可以让 Lynx 的布局结果更接近 Web。具体差异可以参考 [Flex basis 0 vs 0%](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/flex-basis#flex_basis_0_vs_0)。
+
+### Grid、Sticky 与 Motion Path
+
+Lynx 3.9 还补齐了以下 CSS 能力：
+
+- 新增 [`grid-row`](/api/css/properties/grid-row) 和 [`grid-column`](/api/css/properties/grid-column) 简写，可通过它们设置 `grid-*-start` 和 `grid-*-end` 的值。例如 `grid-row: 1 / span 2` 等价于 `grid-row-start: 1; grid-row-end: span 2`。
+- 支持标准 [`position: sticky`](/api/css/properties/position) 行为，可通过 `enableNewSticky` 页面开关启用。
+- HarmonyOS 端支持 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
+
+<Go
+  example="css-api"
+  defaultFile="src/position/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/position.jpg"
+  entry="src/position"
+  defaultEntryFile="dist/position.lynx.bundle"
+/>
+
+## ReactLynx
+
+ReactLynx 在 3.9 中首先补齐了 [`createPortal`](/api/react/Function.createPortal)。Portal 用于把一段 vnode tree 继续渲染到当前组件层级之外的指定容器节点中，适合 overlay、浮层或需要跨容器挂载的 UI。
+
+过去这类跨容器渲染通常需要额外 wrapper 节点、宿主侧约定或更分散的挂载逻辑。现在，ReactLynx 可以通过 `createPortal` 把这个模式收敛到 ReactLynx API 中，让组件仍然按照 React 的数据流组织，同时把最终渲染位置交给目标容器。
+
+<Go
+  example="react-apis"
+  defaultFile="src/create-portal/index.tsx"
+  defaultEntryFile="dist/create-portal.lynx.bundle"
+  entry="src/create-portal"
+  defaultTab="web"
+/>
+
+在性能和构建侧，ReactLynx 也继续减少运行时和产物开销。多 Slot Snapshot 优化通过扩展 Preact 的实现，减少不必要的 Snapshot 和 wrapper 节点数量，并已在 `@lynx-js/react` 0.120.0 中默认启用。
+
+构建侧新增了双线程 Minimizer 机制，用于对主线程和后台线程产物进行更细粒度的压缩与裁剪。开发者可以通过 [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize) 快速启用默认优化，也可以分别配置 [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) 和 [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions)。
+
+## 其他更新
+
+### Lynx for AI
+
+新增 lynx-api-docs agent Skill，优化 AI 使用 Lynx 文档的方式，让 Agent 更容易获得 Lynx API、CSS、布局、元件和配置相关知识，减少“按 Web 习惯写 Lynx 代码”带来的误用。
+
+### 元件能力
+
+[`<frame>`](/api/elements/built-in/frame) 新增 `enable-multi-async-thread`，可控制嵌入式 Lynx 页面是否使用多个异步线程。它也新增了 `preset-height` 和 `preset-width`，用于在内容初始化前指定尺寸；同时新增 `bindloadmetrics` 事件，方便宿主或业务侧跟踪 frame 的加载与性能指标。
+
+[`<image>`](/api/elements/built-in/image) 新增 `region-to-decode`，支持按图片区域解码。对于只需要展示局部区域的大图场景，这可以帮助减少不必要的解码成本。
+
+HarmonyOS 端的 [`<overlay>`](/api/elements/built-in/overlay) 支持 `mode` 属性，控制当前 overlay 的层级是页面级（`page`）还是顶层（`top`）。
+
+### Lynx API
+
+Lynx API，[`requestResourcePrefetch`](/api/lynx-api/lynx/lynx-request-resource-prefetch) 新增 `config` 参数，支持 `awaitComplete` 和 `awaitTimeout`。如果你希望 prefetch 完全结束后再触发 callback，现在可以直接通过配置表达。
+
+### 性能表现
+
+HarmonyOS 端通过新的图片策略优化，在 `image_animation` 等场景中将 `TotalTime` 和 `CPUTime` 降低约 10%。
+
+## 升级指南
+
+参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.9/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.9 版本升级。
+
+Lynx 3.9 包含部分破坏性变更。升级前请结合你的目标平台、`engineVersion`、页面开关和宿主集成方式进行验证。
+
+如果你正在升级到 3.9，建议优先关注 Autolink 接入、CSS 兼容性行为和 ReactLynx Portal 使用场景，再结合业务需要评估元件、Lynx API 与性能相关更新。感谢每一位持续试用新版本、反馈问题并推动 Lynx 生态发展的开发者。我们会继续保持更小、更聚焦的月度发布节奏。

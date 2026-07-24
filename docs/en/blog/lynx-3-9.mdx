@@ -1,0 +1,122 @@
+---
+title: 'Lynx 3.9: Autolink, CSS, ReactLynx, and More'
+date: 2026-07-10
+sidebar: false
+authors: ['lynx', 'WATER1350']
+badge_text: 'Lynx 3.9 is released!'
+description: 'Lynx 3.9 brings Autolink registration, CSS compatibility improvements, ReactLynx Portal and build optimizations, plus Element, Lynx API, and performance updates.'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore Autolink */}
+
+Lynx 3.9 is now officially released!
+
+This release focuses on three themes: [Autolink](/guide/autolink) for simpler native capability integration, CSS behavior that is closer to the Web platform, and ReactLynx updates around Portal, rendering, and bundle output.
+
+It also includes a set of focused updates for Elements, Lynx APIs, performance, and Lynx for AI. Let's take a look at what's new in Lynx 3.9.
+
+## Autolink
+
+Autolink is the native library discovery and registration mechanism introduced in Lynx 3.9. It discovers compatible Lynx native libraries installed in the host project's `node_modules`, then registers the [Elements](/guide/ui/elements-components), [Native Modules](/guide/use-native-modules), and [Services](/api/lynx-native-api/lynx-service) provided by those libraries during Android and iOS initialization.
+
+As Lynx apps depend on more reusable native libraries, app teams often need to maintain manual registration code for each library, while library authors need to repeat integration instructions. Autolink moves that convention into `lynx.lib.json` and the generated registry, reducing hand-written integration code and making native libraries easier to publish and reuse.
+
+For conventions, configuration, and platform integration details, continue with the [Autolink guide](/guide/autolink).
+
+## CSS Updates
+
+The CSS work in Lynx 3.9 is not only about adding more properties. The larger goal is to make Lynx styling closer to the syntax and behavior that Web developers already know, so migrated styles are easier to reason about and AI-generated Lynx code is less likely to misuse Web-only assumptions.
+
+That is why this release fills in compatibility capabilities such as `!important` and `flex` shorthand parsing, while continuing to expand Grid, Sticky, and Motion Path support.
+
+### [`!important`](/api/css/selectors#important-support) priority support
+
+With `engineVersion` 3.9 or later, you can append `!important` to a CSS value to increase that declaration's priority in the cascade.
+
+For example:
+
+```css
+.foo {
+  color: red !important;
+}
+
+view.foo {
+  color: blue;
+}
+```
+
+The `color` of `<view className="foo" />` is now `red` instead of `blue`.
+
+### [`flex`](/api/css/properties/flex) shorthand parsing
+
+The `flex` shorthand expands to a combination of `flex-grow`, `flex-shrink`, and [`flex-basis`](/api/css/properties/flex-basis). Starting in 3.9, an omitted `flex-basis` is parsed as `0%` instead of the previous `0`.
+
+Although the CSS specification defines `0` as the default, browsers commonly parse the `flex` shorthand as `0%`. This change brings Lynx layout behavior closer to the Web. For details, see [Flex basis 0 vs 0%](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/flex-basis#flex_basis_0_vs_0).
+
+### Grid, Sticky, and Motion Path
+
+Lynx 3.9 also adds the following CSS capabilities:
+
+- New [`grid-row`](/api/css/properties/grid-row) and [`grid-column`](/api/css/properties/grid-column) shorthands for setting the corresponding `grid-*-start` and `grid-*-end` values. For example, `grid-row: 1 / span 2` is equivalent to `grid-row-start: 1; grid-row-end: span 2`.
+- Standard [`position: sticky`](/api/css/properties/position) behavior, enabled through the `enableNewSticky` page switch.
+- HarmonyOS support for [`offset-path`](/api/css/properties/offset-path), [`offset-distance`](/api/css/properties/offset-distance), and [`offset-rotate`](/api/css/properties/offset-rotate).
+
+<Go
+  example="css-api"
+  defaultFile="src/position/App.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/position.jpg"
+  entry="src/position"
+  defaultEntryFile="dist/position.lynx.bundle"
+/>
+
+## ReactLynx
+
+ReactLynx first adds [`createPortal`](/api/react/Function.createPortal) in 3.9. Portal lets a vnode tree continue rendering into a specified container node outside the current component hierarchy, which is useful for overlays, floating layers, and UI that needs to mount across containers.
+
+Previously, this kind of cross-container rendering often required extra wrapper nodes, host-side conventions, or scattered mounting logic. Now `createPortal` brings the pattern into the ReactLynx API surface, so components can keep following React data flow while the final render location is delegated to the target container.
+
+<Go
+  example="react-apis"
+  defaultFile="src/create-portal/index.tsx"
+  defaultEntryFile="dist/create-portal.lynx.bundle"
+  entry="src/create-portal"
+  defaultTab="web"
+/>
+
+ReactLynx also continues to reduce runtime and bundle overhead. The multi-slot Snapshot optimization extends Preact support for multiple slots, reducing unnecessary Snapshot and wrapper nodes. It is enabled by default in `@lynx-js/react` 0.120.0.
+
+On the build side, the ReactLynx toolchain now supports a multi-threaded Minimizer mechanism for more effective compression and tree-shaking across main-thread and background-thread bundles. You can enable the default optimization through [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize), or configure thread-specific compression with [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) and [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions).
+
+## Misc Updates
+
+### Lynx for AI
+
+Added the lynx-api-docs agent Skill to improve how AI uses Lynx documentation, making it easier for Agent workflows to retrieve knowledge about Lynx APIs, CSS, layout, Elements, and configuration, and reducing mistakes caused by writing Lynx code with Web assumptions.
+
+### Element Updates
+
+[`<frame>`](/api/elements/built-in/frame) adds the `enable-multi-async-thread` boolean attribute to control whether embedded Lynx pages use multiple async threads. It also adds `preset-height` and `preset-width` for specifying dimensions before content initialization, plus a `bindloadmetrics` event for tracking frame loading and performance metrics.
+
+[`<image>`](/api/elements/built-in/image) adds `region-to-decode` for region-based image decoding. This helps avoid unnecessary decode work when a page only needs to display part of a larger image.
+
+On HarmonyOS, [`<overlay>`](/api/elements/built-in/overlay) supports the `mode` attribute to control whether the current overlay layer is page-level (`page`) or top-level (`top`).
+
+### Lynx API
+
+Lynx API [`requestResourcePrefetch`](/api/lynx-api/lynx/lynx-request-resource-prefetch) gains a new `config` parameter with `awaitComplete` and `awaitTimeout`, so callbacks can run after prefetch fully completes.
+
+### Performance
+
+On HarmonyOS, the new image strategy optimization improves scenarios such as `image_animation`, reducing `TotalTime` and `CPUTime` by roughly 10%.
+
+## Upgrade Guide
+
+To upgrade to Lynx 3.9, follow the official [integration guide](https://lynxjs.org/3.9/guide/start/integrate-with-existing-apps.html) and update your Lynx dependency versions.
+
+Lynx 3.9 includes some breaking changes. Before upgrading, validate the affected platforms, `engineVersion`, page switches, and host integration path for your app.
+
+If you are upgrading to 3.9, start with Autolink integration, CSS compatibility behavior, and ReactLynx Portal usage, then evaluate the Element, Lynx API, and performance updates that apply to your app. We will keep the monthly releases smaller, focused, and easier to adopt.
