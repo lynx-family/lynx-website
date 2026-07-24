@@ -1,0 +1,104 @@
+---
+description: 'Understand the Lynx bundle structure under the dual-thread architecture, analyze size with Rsdoctor and a layered view, and apply levers like main-thread slimming, dependency deduplication, and asset compression.'
+---
+
+# Bundle Size
+
+Bundle size directly shapes download, parse, and first-screen time, yet it is the easiest metric to overlook: a dependency upgrade, an uncompressed image, or a piece of code that should run only in the background but got bundled into the first-screen render path can all quietly inflate your output.
+
+Unlike a regular web app, a Lynx app has a distinctive output structure because of its **dual-thread architecture** — and understanding that structure is the prerequisite for analyzing and optimizing size. Rspeedy is built on top of [Rsbuild](https://rsbuild.rs/) and [Rspack](https://rspack.rs/), so most of their size-optimization techniques apply. This page first explains the Lynx-specific output structure, then gives you the analysis workflow and optimization directions, with links out to the deeper docs.
+
+## Understand the Lynx output structure
+
+### Dual-thread architecture: two JS layers
+
+ReactLynx splits React across **two threads** (see [Thinking in ReactLynx](/react/thinking-in-reactlynx)):
+
+- **Main thread**: a lightweight UI driver responsible for [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr), UI updates, and touch-following animation and gestures. It sits on the rendering critical path and must stay lean.
+- **Background thread**: the logic and state center — full render, lifecycle, `setState`, data requests, telemetry, and so on.
+
+Accordingly, the build emits **two JS compilation intermediates** per entry, then encodes them into the final binary artifact:
+
+| Layer                    | Compilation intermediate               | Notes                                                                                                            |
+| ------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Main-thread output       | `main-thread.js` (`react:main-thread`) | First-screen render-path code; its size has the biggest impact on the first screen                               |
+| Background-thread output | `background.js` (`react:background`)   | App logic code; also produces the CSS. Does not block the first frame, but counts toward download and parse cost |
+| Static assets            | images / fonts / media                 | Often the largest single contributor to a bundle                                                                 |
+
+The two JS layers are encoded together into a single binary `.lynx.bundle` (located under `dist/` after a production build — see [Output Files](/rspeedy/output)). That binary is what the Lynx engine actually loads, and it is the final metric to watch when measuring size.
+
+:::tip Main-thread output ≠ Main Thread Script
+"Main-thread output / `main-thread.js`" here means the **compiled output of the main-thread layer**. It is _not_ the same thing as the [Main Thread Script](/react/main-thread-script) — the programming model written with the `'main thread'` directive for touch-following animation and gestures. Keep the two distinct.
+:::
+
+### Inspect the readable intermediates
+
+`.lynx.bundle` is binary and can't be read directly. To inspect the readable `main-thread.js` / `background.js`, build with `DEBUG`, which keeps the intermediates under `dist/.rspeedy/<entry>/`:
+
+```bash
+DEBUG=rspeedy rspeedy build
+```
+
+(A development build also emits these intermediates under `dist/.rspeedy/` — see [Output Files](/rspeedy/output).)
+
+### Code elimination: why the main-thread output should be small
+
+Because the main thread sits on the rendering critical path, any code only the background needs (network requests, [NativeModule](/guide/performance/analysis-performance/analysis-native-module) calls, loggers, telemetry, lifecycle, etc.) bloats both the bundle and the first-frame cost the moment it gets **bundled into the main-thread output**.
+
+ReactLynx **automatically eliminates** code that shouldn't run on the main thread: by default, the callbacks of `useEffect` / `useLayoutEffect` and some event handlers are removed from `main-thread.js` (see [Thinking in ReactLynx](/react/thinking-in-reactlynx)). When the compiler can't statically decide which thread a piece of code belongs to, you mark it explicitly:
+
+- Use the [`'background only'` directive](/api/react/Document.directives) to keep a function body only on the background thread.
+- Use the [`__BACKGROUND__` / `__MAIN_THREAD__` built-in macros](/api/react/Document.built-in-macros) to eliminate code blocks per thread.
+
+This elimination mechanism is exactly what the "slim down the main-thread output" lever below relies on.
+
+## How to analyze bundle size
+
+The guiding principle is **measure first, optimize second**: use data to confirm which layer the bytes are in before deciding what to touch — never guess and edit. We recommend breaking the size down across three layers: static assets, background-thread output, and main-thread output.
+
+### Use Rsdoctor
+
+[Rsdoctor](/rspeedy/use-rsdoctor) is a build-analysis tool that visualizes the asset list, module dependency graph, duplicate modules, and more. Enable it in a Rspeedy-based project:
+
+```bash
+RSDOCTOR=true rspeedy build
+```
+
+It opens an analysis page once the build finishes. Its module data carries a `layer` field, so you can attribute bytes to the `react:main-thread` and `react:background` layers, locate the largest modules, and trace "why was this module bundled in" through the real module graph rather than intuition. See [Use Rsdoctor](/rspeedy/use-rsdoctor) for the full workflow.
+
+### Use the rspeedy-bundle-size Skill
+
+If you work with an AI coding tool that supports Agent Skills, load the [`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) skill. It follows a measure-first workflow: it reads how your project builds, generates a size breakdown, attributes bytes layer by layer, and proposes optimizations in priority order — a good way to get an evidence-based report when you are not deeply familiar with the build internals.
+
+## How to reduce bundle size
+
+Once you have located where the size comes from, pick the lever that matches the layer. You can also refer to Rsbuild's [Bundle size optimization](https://rsbuild.rs/guide/optimization/optimize-bundle) guide.
+
+### Slim down the main-thread output (strip background-only code)
+
+This is the Lynx-specific layer, and the first one to check. Move code only the background needs (requests / NativeModule calls / loggers / monitoring SDKs) off the render path with [`'background only'`](/api/react/Document.directives) or [`__BACKGROUND__`](/api/react/Document.built-in-macros), keeping it out of `main-thread.js`. If such code comes from a third-party library you can't edit, it becomes a library-side ask to add the directive at the definition site.
+
+### Trim the background-thread output
+
+- **Reduce duplicate dependencies**: use Rsdoctor's duplicate-package detection to find dependencies bundled more than once, then converge them with [`resolve.dedupe`](/api/rspeedy/rspeedy.resolve.dedupe) or `pnpm dedupe`.
+- **Use lighter libraries**: use Rsdoctor to find the largest dependencies and evaluate lighter alternatives (for example `dayjs` instead of `moment`), or switch to importing only what you use.
+
+### Compress static assets
+
+Images, fonts, and media are usually the largest part of a bundle. Compress them at the source, use appropriately sized assets, and split large, non-first-screen assets out of the main bundle.
+
+### Split and lazy-load
+
+Distinguish **first-screen size** from **total size**: the first screen only needs the main-thread output and first-screen assets, so splitting out the rest noticeably improves startup.
+
+- Use [code splitting](/react/code-splitting) to defer non-first-screen components until they actually render.
+- Tune chunking with [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) (which maps onto Rspack's [code splitting](https://rspack.rs/guide/optimization/code-splitting)).
+- Use [External Bundle](/rspeedy/external-bundle) to factor out reusable parts.
+
+### Compile-layer options
+
+- [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr): merges duplicate string literals to reduce size — especially effective for strings that are duplicated across the main-thread and background-thread layers, such as i18n text and class names.
+
+---
+
+For a more systematic checklist and lower-level control, continue from Rsbuild's [Bundle size optimization](https://rsbuild.rs/guide/optimization/optimize-bundle) and Rspack's [optimization guide](https://rspack.rs/guide/optimization/code-splitting).
