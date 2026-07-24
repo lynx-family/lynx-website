@@ -1,0 +1,38 @@
+# lynx_value_set_named_property
+
+## 介绍
+
+给 map 类型的 lynx_value 插入给定的 key-value
+
+## 语法
+
+```c
+lynx_api_status
+lynx_value_set_named_property(lynx_api_env env, lynx_value object,
+                              const char* utf8name, lynx_value value);
+```
+
+### 参数
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | lynx_value 的运行环境，一般情况下是 nullptr |
+| [in] object   | map 类型的 lynx_value                             |
+| [in] utf8name | key 值                             |
+| [in] value    | value 值                                         |
+
+### 返回值
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_map_expected` if the types do not match.
+
+## 示例
+
+```c
+lynx_value map_value;
+lynx_value_create_map(env, &map_value);
+lynx_value v1;
+lynx_value_create_int32(env, 10, &v1);
+lynx_value_set_named_property(env, map_value, "v1", v1);
+// do something
+lynx_value_remove_reference(env, map_value, NULL);
+```
