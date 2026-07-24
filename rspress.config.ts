@@ -87,6 +87,10 @@ export default defineConfig({
           // This marks the first open sourced version of Lynx.
           OSS: '3.2',
           COMPAT_TABLE_HIDE_CLAY: true,
+          // APIBadge collapses the four clay_* variants into a single
+          // "Desktop X+" chip in OSS (mirrors hand-written <ClayOnly />).
+          // Inhouse overrides this to 'expandable' for interactive drill-down.
+          APIBADGE_CLAY_MODE: JSON.stringify('collapsed'),
           DOC_GIT_BASE_URL: JSON.stringify(
             'https://github.com/lynx-family/lynx-website/tree/main',
           ),
