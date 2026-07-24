@@ -1,0 +1,84 @@
+---
+description: 'Generate valid OpenUI Lang v0.5 programs for the Lynx OpenUI renderer from natural-language UI requests.'
+---
+
+# lynx-openui
+
+Turns natural-language UI requests into [OpenUI Lang v0.5](https://www.openui.com/docs/openui-lang/specification-v05) functional-notation programs that [`@lynx-js/genui/openui`](/react/genui/openui) can render through `<OpenUiRenderer response={...}>`. The skill produces declarative OpenUI DSL rather than ReactLynx application code.
+
+Use it when an agent needs to:
+
+- generate a static or interactive mobile UI from a natural-language description
+- add reactive `$state`, tool-backed `Query()` and `Mutation()` flows, or ordered `Action()` plans
+- target the built-in Lynx OpenUI component catalog or exact custom component signatures supplied by the application
+- produce streaming-friendly complete programs or minimal edit-mode patches
+- avoid inventing components, positional arguments, tool names, or runtime capabilities that the active renderer does not support
+
+Do not use this skill to generate JSX, HTML, CSS, A2UI JSON, or new ReactLynx component implementations.
+
+## Installation
+
+```bash
+npx skills add lynx-community/skills -s lynx-openui
+```
+
+This installs the `lynx-openui` rules and references so compatible coding agents can generate OpenUI Lang for the Lynx renderer.
+
+## How It Works
+
+The skill follows a catalog-first workflow:
+
+1. It reads `components.md` for the built-in component signatures and treats caller-supplied component signatures as authoritative extensions or replacements.
+2. For state, tools, repeated data, actions, or incremental edits, it also reads `runtime.md`. Non-trivial layouts and tool workflows use patterns from `examples.md`.
+3. It chooses static values for self-contained content, `Query()` only for a real read tool, and `Mutation()` only for a real write tool supplied by the host.
+4. It writes a streaming-friendly component graph. A complete program starts with `root = Stack(...)`, followed by state, queries or mutations, structural components, and leaf content.
+5. It validates syntax, references, reachability, component names, positional argument order, tool names, and Action targets before returning the program.
+
+:::info
+Provide the exact tool schemas and custom component signatures available to your application. Without a supplied tool, the skill uses static data or renders a supported explanation instead of inventing a tool call.
+:::
+
+## Output Contract
+
+The skill instructs the agent to:
+
+- return only OpenUI Lang, without Markdown, code fences, prose, JSON, JSX, or CSS
+- put one assignment statement on each line
+- make the first non-empty line of a complete program `root = Stack(...)`
+- pass component arguments positionally and fill every earlier argument when setting a later optional argument
+- use only components from the active catalog and only tool names supplied by the caller or host
+- ensure every reference resolves and every declaration is reachable from `root` or a reachable Action
+- return a complete program by default, or only changed statements when the caller explicitly enables edit mode or `mergeStatements`
+
+The built-in catalog covers layout, content, buttons, data display, media, and selected inputs. Components such as `Form`, `Select`, tables, and charts are unavailable unless the host supplies their exact custom schemas.
+
+## State, Tools, and Actions
+
+For runtime-backed interfaces, the skill applies these Lynx OpenUI rules:
+
+- mutable state uses `$name = defaultValue`
+- an input bound directly to state uses the same key, including `$`, as its literal `name`
+- every `Query()` includes a representative default result with the real tool's result shape
+- a `Mutation()` runs only from an explicit Action, normally on a submit or confirmation button
+- repeated query data uses `@Each`, with the loop-dependent component kept inside its inline template
+- multi-step Actions run deliberately in order; a failed Mutation stops the remaining steps
+
+For example, you can ask:
+
+```text
+Use lynx-openui to create a compact task dashboard. The host provides a
+list_tasks read tool that returns { rows: [{ title, status }] }. Show the total,
+render each task in a card, and add a Refresh button. Return a complete program
+for OpenUiRenderer.
+```
+
+The response should be raw OpenUI Lang, ready to pass to the Renderer.
+
+## Learn More
+
+- [OpenUI in ReactLynx](/react/genui/openui)
+- [`@lynx-js/genui/openui` API reference](/api/genui/openui/index.html)
+- [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui)
+- [lynx-openui skill source](https://github.com/lynx-community/skills/tree/release/skills/lynx-openui)
+- [lynx-community/skills on GitHub](https://github.com/lynx-community/skills)
+- [Agent Skills specification](https://agentskills.io/specification)

@@ -1,0 +1,83 @@
+---
+description: '根据自然语言界面需求，为 Lynx OpenUI Renderer 生成有效的 OpenUI Lang v0.5 程序。'
+---
+
+# lynx-openui
+
+将自然语言界面需求转换为 [`@lynx-js/genui/openui`](/react/genui/openui) 可通过 `<OpenUiRenderer response={...}>` 渲染的 [OpenUI Lang v0.5](https://www.openui.com/docs/openui-lang/specification-v05) 函数式记法程序。这个 skill 生成声明式 OpenUI DSL，而不是 ReactLynx 应用代码。
+
+当 coding agent 需要完成以下任务时，可以使用这个 skill：
+
+- 根据自然语言描述生成静态或可交互的移动端界面
+- 接入响应式 `$state`、由工具驱动的 `Query()` 与 `Mutation()` 流程，或有序的 `Action()` 计划
+- 使用 Lynx OpenUI 内置组件 Catalog，或应用提供的准确自定义组件签名
+- 生成适合流式传输的完整程序，或 edit mode 下的最小补丁
+- 避免编造当前 Renderer 不支持的组件、位置参数、工具名称或运行时能力
+
+不要使用这个 skill 生成 JSX、HTML、CSS、A2UI JSON 或新的 ReactLynx 组件实现。
+
+## 安装
+
+```bash
+npx skills add lynx-community/skills -s lynx-openui
+```
+
+这会安装 `lynx-openui` 的规则和参考资料，让兼容的 coding agent 可以为 Lynx Renderer 生成 OpenUI Lang。
+
+## 工作方式
+
+这个 skill 遵循 Catalog 优先的工作流：
+
+1. 读取 `components.md` 中的内置组件签名，并将调用方提供的组件签名视为权威的扩展或替代定义。
+2. 当需求涉及状态、工具、重复数据、Action 或增量编辑时，再读取 `runtime.md`；非简单布局和工具工作流会参考 `examples.md` 中的模式。
+3. 自包含内容使用静态值；只有宿主提供了真实的读取工具时才使用 `Query()`，提供了真实的写入工具时才使用 `Mutation()`。
+4. 编写适合流式传输的组件图。完整程序以 `root = Stack(...)` 开头，后面依次放置状态、Query 或 Mutation、结构组件和叶子内容。
+5. 返回程序前，检查语法、引用、可达性、组件名称、位置参数顺序、工具名称和 Action 目标。
+
+:::info
+请提供应用实际开放的工具 Schema 和自定义组件签名。如果没有提供工具，这个 skill 会使用静态数据，或通过受支持的组件解释能力限制，而不会编造工具调用。
+:::
+
+## 输出约束
+
+这个 skill 会要求 Agent：
+
+- 只返回 OpenUI Lang，不附加 Markdown、代码围栏、说明文字、JSON、JSX 或 CSS
+- 每行只放一条赋值语句
+- 让完整程序的第一个非空行成为 `root = Stack(...)`
+- 按位置传递组件参数；设置靠后的可选参数时，必须为它前面的每个参数提供有效值
+- 只使用当前 Catalog 中的组件，以及调用方或宿主明确提供的工具名称
+- 确保每个引用都有定义，且每条声明都能从 `root` 或可达的 Action 访问
+- 默认返回完整程序；只有调用方明确启用 edit mode 或 `mergeStatements` 时，才只返回发生变化的语句
+
+内置 Catalog 覆盖布局、内容、按钮、数据显示、媒体和部分输入组件。除非宿主提供准确的自定义 Schema，否则不能使用 `Form`、`Select`、表格或图表等组件。
+
+## 状态、工具与 Action
+
+对于依赖运行时的界面，这个 skill 会应用以下 Lynx OpenUI 规则：
+
+- 可变状态使用 `$name = defaultValue`
+- 直接绑定状态的输入组件，把包含 `$` 的同名状态键作为字面量 `name`
+- 每个 `Query()` 都提供与真实工具返回结构一致的代表性默认结果
+- `Mutation()` 只能通过显式 Action 执行，通常放在提交或确认按钮上
+- 查询结果中的重复数据使用 `@Each`，依赖循环变量的组件保留在它的内联模板中
+- 多步骤 Action 按预定顺序运行；Mutation 失败后会停止执行剩余步骤
+
+例如，你可以这样提问：
+
+```text
+使用 lynx-openui 创建一个紧凑的任务面板。宿主提供 list_tasks 读取工具，
+返回 { rows: [{ title, status }] }。显示任务总数，把每个任务渲染为卡片，
+并添加刷新按钮。返回可供 OpenUiRenderer 使用的完整程序。
+```
+
+Agent 应只返回可直接传给 Renderer 的 OpenUI Lang。
+
+## 了解更多
+
+- [ReactLynx 中的 OpenUI](/react/genui/openui)
+- [`@lynx-js/genui/openui` API 参考](/api/genui/openui/index.html)
+- [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui)
+- [lynx-openui skill 源码](https://github.com/lynx-community/skills/tree/release/skills/lynx-openui)
+- [GitHub 上的 lynx-community/skills](https://github.com/lynx-community/skills)
+- [Agent Skills 规范](https://agentskills.io/specification)
