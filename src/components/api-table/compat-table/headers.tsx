@@ -12,6 +12,7 @@
  *   Licensed under the Mozilla Public License, v. 2.0
  */
 import type BCD from '@lynx-js/lynx-compat-data';
+import { mapPlatformNameToIconName } from '../../../lib/platform';
 import { BrowserName } from './browser-info';
 
 function mapPlatformKindToIconName(platformType: BCD.PlatformType) {
@@ -24,27 +25,6 @@ function mapPlatformKindToIconName(platformType: BCD.PlatformType) {
       return 'web';
     default:
       return platformType;
-  }
-}
-
-export function mapPlatformNameToIconName(platformName: BCD.PlatformName) {
-  switch (platformName) {
-    case 'ios':
-    case 'clay_ios':
-      return 'apple';
-    case 'clay_macos':
-      return 'macos-text';
-    case 'android':
-    case 'clay_android':
-      return 'android';
-    case 'clay_windows':
-      return 'windows';
-    case 'web_lynx':
-      return 'web';
-    case 'harmony':
-      return 'harmony';
-    default:
-      return platformName;
   }
 }
 
