@@ -270,6 +270,9 @@ function rsbuildPluginDisableFileSizeReport() {
     name: 'disable-file-size-report',
     setup(api: RsbuildPluginApi) {
       api.modifyEnvironmentConfig((config) => {
+        // Rspress 2.0.13 sets SSR environment defaults after top-level config
+        // is merged. Mutate the existing environments so dev/preview do not get
+        // extra node or node_md environments with Rsbuild's default ./src entry.
         config.performance ??= {};
         config.performance.printFileSize = false;
         return config;
