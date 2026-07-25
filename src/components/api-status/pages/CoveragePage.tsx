@@ -1,6 +1,12 @@
 import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
-import React, { useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { PLATFORM_CONFIG } from '../constants';
 import {
   CATEGORY_DISPLAY_NAMES,
@@ -26,6 +32,10 @@ const i18n = {
     deltaFrom: 'Δ from',
     noData: 'Not enough timeline data for this filter.',
     features: 'features',
+    from: 'From',
+    to: 'To',
+    resetRange: 'Recent',
+    dragHint: 'Drag the handles or click a version to set the range.',
   },
   zh: {
     exclusive: '独占',
@@ -41,8 +51,14 @@ const i18n = {
     deltaFrom: '相对',
     noData: '当前筛选条件下没有足够的时间线数据。',
     features: '个特性',
+    from: '从',
+    to: '到',
+    resetRange: '近版本',
+    dragHint: '拖动手柄或点击版本号来设置范围。',
   },
 };
+
+const DEFAULT_WINDOW = 14;
 
 /** Platform-API categories used for coverage (mirrors generate-stats.ts). */
 const PLATFORM_API_CATEGORIES = new Set([
@@ -61,7 +77,7 @@ const PLATFORM_API_CATEGORIES = new Set([
   'lynx-api/performance-api',
 ]);
 
-/** Filter chips shown above the main trend chart. */
+/** Filter chips shown above the main trend chart (majors + leaf subcategories). */
 const CATEGORY_FILTERS: Array<{ id: string; label: string; match: string[] }> =
   [
     { id: 'all', label: 'All', match: [] },
@@ -92,10 +108,49 @@ const CATEGORY_FILTERS: Array<{ id: string; label: string; match: string[] }> =
         'lynx-api/performance-api',
       ],
     },
+    { id: 'lynx-api/global', label: 'Global', match: ['lynx-api/global'] },
+    { id: 'lynx-api/event', label: 'Event', match: ['lynx-api/event'] },
+    { id: 'lynx-api/fetch', label: 'Fetch', match: ['lynx-api/fetch'] },
+    { id: 'lynx-api/lynx', label: 'lynx.*', match: ['lynx-api/lynx'] },
+    {
+      id: 'lynx-api/selector-query',
+      label: 'Selector Query',
+      match: ['lynx-api/selector-query'],
+    },
+    {
+      id: 'lynx-api/nodes-ref',
+      label: 'Nodes Ref',
+      match: ['lynx-api/nodes-ref'],
+    },
+    {
+      id: 'lynx-api/intersection-observer',
+      label: 'Intersection Observer',
+      match: ['lynx-api/intersection-observer'],
+    },
+    {
+      id: 'lynx-api/main-thread',
+      label: 'Main Thread',
+      match: ['lynx-api/main-thread'],
+    },
+    {
+      id: 'lynx-api/performance-api',
+      label: 'Performance',
+      match: ['lynx-api/performance-api'],
+    },
+    {
+      id: 'lynx-native-api',
+      label: 'Native API',
+      match: ['lynx-native-api'],
+    },
+    { id: 'react', label: 'ReactLynx', match: ['react'] },
+    { id: 'devtool', label: 'DevTool', match: ['devtool'] },
+    { id: 'errors', label: 'Errors', match: ['errors'] },
   ];
 
-/** Categories rendered as small-multiple charts. */
-const CATEGORY_CHARTS = CATEGORY_FILTERS.filter((c) => c.id !== 'all');
+/** Categories rendered as small-multiple charts (skip aggregate All / Lynx API). */
+const CATEGORY_CHARTS = CATEGORY_FILTERS.filter(
+  (c) => c.id !== 'all' && c.id !== 'lynx-api',
+);
 
 const PlatformIcon: React.FC<{
   platform: string;
@@ -456,6 +511,179 @@ const ParityChart: React.FC<ParityChartProps> = ({
   );
 };
 
+// ─── Version range brush ─────────────────────────────────────────────────
+
+interface VersionBrushProps {
+  versions: string[];
+  startIndex: number;
+  endIndex: number;
+  onChange: (start: number, end: number) => void;
+  hint: string;
+}
+
+const VersionBrush: React.FC<VersionBrushProps> = ({
+  versions,
+  startIndex,
+  endIndex,
+  onChange,
+  hint,
+}) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<'start' | 'end' | 'window' | null>(null);
+  const dragOriginRef = useRef<{
+    x: number;
+    start: number;
+    end: number;
+  } | null>(null);
+
+  const n = versions.length;
+  const indexFromClientX = useCallback(
+    (clientX: number) => {
+      const el = trackRef.current;
+      if (!el) return 0;
+      const rect = el.getBoundingClientRect();
+      const ratio = Math.min(
+        1,
+        Math.max(0, (clientX - rect.left) / rect.width),
+      );
+      return Math.round(ratio * (n - 1));
+    },
+    [n],
+  );
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const mode = dragRef.current;
+      if (!mode) return;
+      const idx = indexFromClientX(e.clientX);
+      if (mode === 'start') {
+        onChange(Math.min(idx, endIndex - 1), endIndex);
+      } else if (mode === 'end') {
+        onChange(startIndex, Math.max(idx, startIndex + 1));
+      } else if (mode === 'window' && dragOriginRef.current) {
+        const origin = dragOriginRef.current;
+        const el = trackRef.current;
+        if (!el) return;
+        const dx = e.clientX - origin.x;
+        const shift = Math.round(
+          (dx / el.getBoundingClientRect().width) * (n - 1),
+        );
+        const span = origin.end - origin.start;
+        let nextStart = origin.start + shift;
+        let nextEnd = origin.end + shift;
+        if (nextStart < 0) {
+          nextStart = 0;
+          nextEnd = span;
+        }
+        if (nextEnd > n - 1) {
+          nextEnd = n - 1;
+          nextStart = nextEnd - span;
+        }
+        onChange(nextStart, nextEnd);
+      }
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      dragOriginRef.current = null;
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, [endIndex, indexFromClientX, n, onChange, startIndex]);
+
+  if (n < 2) return null;
+
+  const leftPct = (startIndex / (n - 1)) * 100;
+  const widthPct = ((endIndex - startIndex) / (n - 1)) * 100;
+
+  const tickIndexes = (() => {
+    if (n <= 14) return versions.map((_, i) => i);
+    const step = Math.ceil((n - 1) / 10);
+    const set = new Set<number>([0, n - 1, startIndex, endIndex]);
+    for (let i = step; i < n - 1; i += step) set.add(i);
+    return [...set].sort((a, b) => a - b);
+  })();
+
+  return (
+    <div className="aps-version-brush">
+      <div
+        ref={trackRef}
+        className="aps-version-brush__track"
+        onPointerDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          const idx = indexFromClientX(e.clientX);
+          if (Math.abs(idx - startIndex) <= Math.abs(idx - endIndex)) {
+            onChange(Math.min(idx, endIndex - 1), endIndex);
+          } else {
+            onChange(startIndex, Math.max(idx, startIndex + 1));
+          }
+        }}
+      >
+        <div
+          className="aps-version-brush__window"
+          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            dragRef.current = 'window';
+            dragOriginRef.current = {
+              x: e.clientX,
+              start: startIndex,
+              end: endIndex,
+            };
+          }}
+        />
+        <button
+          type="button"
+          className="aps-version-brush__handle"
+          style={{ left: `${leftPct}%` }}
+          aria-label="Range start"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            dragRef.current = 'start';
+          }}
+        />
+        <button
+          type="button"
+          className="aps-version-brush__handle"
+          style={{ left: `${leftPct + widthPct}%` }}
+          aria-label="Range end"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            dragRef.current = 'end';
+          }}
+        />
+      </div>
+      <div className="aps-version-brush__ticks">
+        {tickIndexes.map((i) => (
+          <button
+            key={versions[i]}
+            type="button"
+            className={cn(
+              'aps-version-brush__tick',
+              i >= startIndex && i <= endIndex && 'aps-version-brush__tick--in',
+              (i === startIndex || i === endIndex) &&
+                'aps-version-brush__tick--edge',
+            )}
+            style={{ left: `${(i / (n - 1)) * 100}%` }}
+            onClick={() => {
+              if (i < startIndex) onChange(i, endIndex);
+              else if (i > endIndex) onChange(startIndex, i);
+              else if (i - startIndex <= endIndex - i) onChange(i, endIndex);
+              else onChange(startIndex, i);
+            }}
+          >
+            v{versions[i]}
+          </button>
+        ))}
+      </div>
+      <p className="aps-version-brush__hint">{hint}</p>
+    </div>
+  );
+};
+
 // ─── Page ────────────────────────────────────────────────────────────────
 
 interface CoveragePageProps {
@@ -482,30 +710,69 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
       })),
     [baseTimeline],
   );
+  const versionLabels = useMemo(
+    () => versions.map((v) => v.version),
+    [versions],
+  );
+
+  const defaultStart = Math.max(0, versions.length - DEFAULT_WINDOW);
+  const defaultEnd = Math.max(0, versions.length - 1);
+  const [startIndex, setStartIndex] = useState(defaultStart);
+  const [endIndex, setEndIndex] = useState(defaultEnd);
+
+  useEffect(() => {
+    if (versions.length < 2) return;
+    setStartIndex((s) => Math.min(Math.max(0, s), versions.length - 2));
+    setEndIndex((e) => Math.min(Math.max(1, e), versions.length - 1));
+  }, [versions.length]);
+
+  const setRange = useCallback((start: number, end: number) => {
+    const s = Math.max(0, Math.min(start, end - 1));
+    const e = Math.max(s + 1, end);
+    setStartIndex(s);
+    setEndIndex(e);
+  }, []);
+
+  const resetRange = useCallback(() => {
+    setStartIndex(Math.max(0, versions.length - DEFAULT_WINDOW));
+    setEndIndex(Math.max(0, versions.length - 1));
+  }, [versions.length]);
+
+  const windowedVersions = useMemo(
+    () => versions.slice(startIndex, endIndex + 1),
+    [versions, startIndex, endIndex],
+  );
 
   const { timeline, featureCount } = useMemo(() => {
     if (categoryFilter === 'all' && baseTimeline && baseTimeline.length >= 2) {
       // Prefer precomputed overall timeline (includes clay aggregate).
       return {
-        timeline: baseTimeline,
+        timeline: baseTimeline.slice(startIndex, endIndex + 1),
         featureCount: summary.platform_api_total,
       };
     }
-    return buildTimeline(features, versions, categoryFilter, selectedPlatforms);
+    return buildTimeline(
+      features,
+      windowedVersions,
+      categoryFilter,
+      selectedPlatforms,
+    );
   }, [
     categoryFilter,
     baseTimeline,
     features,
-    versions,
+    windowedVersions,
     selectedPlatforms,
     summary.platform_api_total,
+    startIndex,
+    endIndex,
   ]);
 
   const categoryTimelines = useMemo(() => {
     return CATEGORY_CHARTS.map((cat) => {
       const built = buildTimeline(
         features,
-        versions,
+        windowedVersions,
         cat.id,
         selectedPlatforms,
       );
@@ -520,18 +787,16 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
         ...cat,
         ...built,
         deltas,
-        label:
-          cat.id === 'lynx-api'
-            ? 'Lynx API'
-            : CATEGORY_DISPLAY_NAMES[cat.id] || cat.label,
+        label: CATEGORY_DISPLAY_NAMES[cat.id] || cat.label,
       };
     }).filter((c) => c.timeline.length >= 2 && c.featureCount > 0);
-  }, [features, versions, selectedPlatforms]);
+  }, [features, windowedVersions, selectedPlatforms]);
 
   const filterLabel =
     categoryFilter === 'all'
       ? t.allCategories
-      : CATEGORY_FILTERS.find((f) => f.id === categoryFilter)?.label ||
+      : CATEGORY_DISPLAY_NAMES[categoryFilter] ||
+        CATEGORY_FILTERS.find((f) => f.id === categoryFilter)?.label ||
         categoryFilter;
 
   return (
@@ -640,8 +905,7 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
                 }}
               >
                 {filterLabel}
-                {' · '}v{versions[0].version} → v
-                {versions[versions.length - 1].version}
+                {' · '}v{versionLabels[startIndex]} → v{versionLabels[endIndex]}
                 {featureCount > 0 && (
                   <>
                     {' · '}
@@ -651,6 +915,48 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
               </p>
             </div>
             <div className="aps-trend-controls">
+              <div className="aps-coverage-range">
+                <label className="aps-coverage-range__field">
+                  <span>{t.from}</span>
+                  <select
+                    value={versionLabels[startIndex] || ''}
+                    onChange={(e) => {
+                      const idx = versionLabels.indexOf(e.target.value);
+                      if (idx >= 0) setRange(idx, endIndex);
+                    }}
+                  >
+                    {versionLabels.map((v, i) => (
+                      <option key={v} value={v} disabled={i >= endIndex}>
+                        v{v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <span className="aps-coverage-range__sep">—</span>
+                <label className="aps-coverage-range__field">
+                  <span>{t.to}</span>
+                  <select
+                    value={versionLabels[endIndex] || ''}
+                    onChange={(e) => {
+                      const idx = versionLabels.indexOf(e.target.value);
+                      if (idx >= 0) setRange(startIndex, idx);
+                    }}
+                  >
+                    {versionLabels.map((v, i) => (
+                      <option key={v} value={v} disabled={i <= startIndex}>
+                        v{v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="aps-coverage-range__reset"
+                  onClick={resetRange}
+                >
+                  {t.resetRange}
+                </button>
+              </div>
               <div className="aps-trend-seg" role="group" aria-label={t.yScale}>
                 <button
                   type="button"
@@ -700,11 +1006,20 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({
 
           <div className="aps-plate__body" style={{ padding: '8px 8px 4px' }}>
             {timeline.length >= 2 ? (
-              <ParityChart
-                timeline={timeline}
-                selectedPlatforms={selectedPlatforms}
-                focusScale={focusScale}
-              />
+              <>
+                <ParityChart
+                  timeline={timeline}
+                  selectedPlatforms={selectedPlatforms}
+                  focusScale={focusScale}
+                />
+                <VersionBrush
+                  versions={versionLabels}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  onChange={setRange}
+                  hint={t.dragHint}
+                />
+              </>
             ) : (
               <p
                 style={{
