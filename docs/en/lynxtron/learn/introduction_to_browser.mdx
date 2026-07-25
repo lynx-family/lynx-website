@@ -1,0 +1,328 @@
+import { PackageManagerTabs, Steps } from '@theme';
+import { Go } from '@lynx';
+import browserDemoGif from '@assets/lynxtron/browser-demo.gif?url';
+import browserDemoFrameLessPng from '@assets/lynxtron/browser_demo_frame_less.png?url';
+import browserTopBarPng from '@assets/lynxtron/browser_top_bar.png?url';
+import browserDemoTopBarDragGif from '@assets/lynxtron/browser_demo_top_bar_drag.gif?url';
+import browserDemoControlGif from '@assets/lynxtron/browser_demo_control.gif?url';
+import browserDemoNewTabGif from '@assets/lynxtron/browser_demo_new_tab.gif?url';
+import browserDemoWebviewPng from '@assets/lynxtron/browser_demo_webview.png?url';
+import browserDemoSwitchTabGif from '@assets/lynxtron/browser_demo_switch_tab.gif?url';
+import browserDemoGoBackGif from '@assets/lynxtron/browser_demo_go_back.gif?url';
+
+# Tutorial: Build Your Own Browser
+
+This tutorial walks you through building a simple multi-tab browser step by step. It does not assume any prior knowledge of Lynxtron. The techniques you learn here form the foundation for building any Lynxtron desktop application.
+
+**You will learn:**
+
+- [Build a custom title bar with Lynxtron](#build-a-custom-title-bar-with-lynxtron)
+- [Implement window controls through communication between Node.js and LynxView](#implement-window-controls-through-communication-between-nodejs-and-lynxview)
+- [How to use `<webview>` from Lynx Native Libraries](#embed-and-manage-web-content-with-the-webview-element)
+
+## What Are We Building?
+
+First, let us look at the final result. We will build a fully functional multi-tab browser that includes:
+
+- **Custom title bar**: with traffic-light window control buttons for close, minimize, and maximize
+- **Tab management**: add, switch, and close multiple tabs
+- **Navigation bar**: includes forward, back, refresh buttons, and an address bar
+- **Web content area**: uses [`<webview>`](/api/elements/built-in/webview) to load and display web pages
+
+<Go
+  img={browserDemoGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="Open in Lynxtron Go"
+/>
+
+## Tutorial Setup
+
+Please refer to our detailed [installation guide](/lynxtron/introduction), which walks you through creating a new Lynxtron project.
+
+You may notice that the project uses TypeScript. Although Lynxtron supports both TypeScript and plain JavaScript, we recommend TypeScript for a better development experience, including static type checking and improved editor IntelliSense.
+
+## Build a Custom Title Bar with Lynxtron
+
+Because the browser title bar contains tabs, the default Lynxtron window title bar does not meet our needs, so we need to create a custom one. The first step is to create a frameless window so we can fully customize the browser's appearance, including the title bar and the traffic-light control buttons.
+
+### Step 1: Create a Frameless Window
+
+When creating `LynxWindow`, set `frame: false` to remove the system title bar:
+
+```typescript {8}
+// src/main/main.ts
+import { app, LynxWindow } from 'lynxtron';
+let mainWindow: LynxWindow | null = null;
+function createWindow() {
+  mainWindow = new LynxWindow({
+    width: 1200,
+    height: 800,
+    frame: false, // Key: remove the system frame
+  });
+}
+```
+
+<img src={browserDemoFrameLessPng} alt="Remove the title bar" />
+
+### Step 2: Build the Custom Title Bar
+
+After removing the system title bar, we need to build the browser title bar ourselves. It mainly consists of three parts:
+
+1.  **Window control buttons**: used to maximize, minimize, and close the browser
+2.  **Tabs**: used to display the title information of each web page
+3.  **Add button**: used to create a new tab
+
+We place these components inside a top bar and use Flexbox for layout:
+
+```tsx
+// src/app/App.tsx
+return (
+  <view className="top-bar">
+    <view className="traffic-lights">...</view>
+    <scroll-view scroll-x className="tabs-container">
+      {tabs.map((tab) => (
+        <NewTab />
+      ))}
+      <view className="add-tab-btn" bindtap={handleAddTab}>
+        +
+      </view>
+    </scroll-view>
+  </view>
+);
+```
+
+<img src={browserTopBarPng} alt="Custom title bar" />
+
+### Step 3: Enable Window Dragging
+
+Because the system title bar is gone, users can no longer drag the window in the default way. We need to enable dragging on the custom top bar (`.top-bar`).
+
+Lynxtron supports the CSS property [`-x-app-region: drag`](./Custom-Window-Styles#step-2-make-the-window-draggable-again) to define draggable regions, similar to Electron's `-webkit-app-region: drag`.
+
+```css
+/* src/app/App.css */
+.top-bar {
+  /* Key: enable window dragging */
+  -x-app-region: drag;
+}
+```
+
+The effect looks like this:
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoTopBarDragGif} width="100%" />
+</div>
+
+## Implement Window Controls Through Communication Between Node.js and LynxView
+
+Because we removed the system-native title bar, we need to implement close, minimize, and maximize ourselves. This requires [communication between Node.js and LynxView](./Communication-Between-Node-And-Lynx).
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', margin: '16px 0', alignItems: 'stretch' }}>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <h4 style={{ marginTop: 0, marginBottom: '12px' }}>Lynx JS Thread</h4>
+    <div style={{ flex: 1 }}>
+
+```tsx
+// src/app/App.tsx
+const handleClose = () => {
+  // Call NativeModules to send a message to the main process.
+  NativeModules.bridge.call('close', {}, (res: any) => {
+    console.log(res);
+  });
+};
+
+const handleMinimize = () => {
+  NativeModules.bridge.call('blur', {}, (res: any) => {
+    console.log(res);
+  });
+};
+
+const handleFullScreenTap = () => {
+  NativeModules.bridge.call('maximize', {}, (res: any) => {
+    console.log(res);
+  });
+};
+```
+
+    </div>
+
+  </div>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <h4 style={{ marginTop: 0, marginBottom: '12px' }}>Node JS Thread</h4>
+    <div style={{ flex: 1 }}>
+
+```typescript
+// src/main/main.ts
+// Listen for these messages and call Lynxtron APIs.
+w.on('-lynx-invoke', (event, params) => {
+  console.log('window is invoke', params);
+  if (params == 'close') {
+    console.log('Closing window...');
+    w.close();
+  }
+
+  if (params == 'blur') {
+    w.blur();
+  }
+
+  if (params == 'maximize') {
+    isFullScreen = !isFullScreen;
+    console.log('Toggling full screen to:', isFullScreen);
+    w.setFullScreen(isFullScreen);
+  }
+});
+```
+
+    </div>
+
+  </div>
+</div>
+
+This allows the browser window to close, minimize, and maximize:
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoControlGif} width="100%" />
+</div>
+
+## How to Use `<webview>` from [Lynx Native Libraries](/lynxtron/Native-Libraries/Lynx-Native-Libraries) {#embed-and-manage-web-content-with-the-webview-element}
+
+### Manage Tabs
+
+One of the core capabilities of a browser is multi-tab management. We need to maintain the state of a tab list.
+
+```tsx
+// src/app/App.tsx
+const [tabs, setTabs] = useState<Tab[]>([
+  {
+    id: '1',
+    title: 'New Tab',
+    url: 'https://www.lynxjs.org',
+  },
+]);
+const [selectedTabId, setSelectedTabId] = useState<string>('1');
+
+// Add a new tab
+const handleAddTab = () => {
+  const newId = Date.now().toString();
+  setTabs([...tabs, { id: newId, title: 'New Tab', url: '' }]);
+  setSelectedTabId(newId);
+};
+
+// Close a tab
+const handleRemoveTab = (id: string) => {
+  const newTabs = tabs.filter((t) => t.id !== id);
+  setTabs(newTabs);
+  // If the closed tab is the currently selected one, switch to another tab
+  if (id === selectedTabId && newTabs.length > 0) {
+    setSelectedTabId(newTabs[newTabs.length - 1].id);
+  }
+};
+```
+
+At this point, we have finished adding and closing tabs:
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoNewTabGif} width="100%" />
+</div>
+
+### Add the `<webview>` Component
+
+Lynxtron provides the [`<webview>`](/api/elements/built-in/webview) element for loading external web pages. After importing it correctly, you can use the `<webview>` component to load web content.
+
+```tsx {5-9}
+<view className="content-area">
+  {tabs.map((tab) => (
+    <view key={tab.id} className="tab-content">
+      {tab.input_value && (
+        <webview
+          className="webview-container"
+          id={`webview-${tab.id}`}
+          src={tab.input_value}
+        />
+      )}
+    </view>
+  ))}
+</view>
+```
+
+After adding this element, we can load external web pages normally:
+
+<img src={browserDemoWebviewPng} alt="Load external web pages" />
+
+### Tab Switching Strategy
+
+To preserve page state when switching tabs, meaning the page does not reload, we **do not destroy and recreate** Webviews during tab switches. Instead, we render all Webviews and use `z-index` to control which one stays on top.
+
+```tsx
+// src/app/App.tsx
+<view className="content-area">
+  {tabs.map((tab) => (
+    <view
+      key={tab.id}
+      className="webview-wrapper"
+      style={{ zIndex: selectedTabId === tab.id ? 1 : 0 }} // Only the selected tab stays on top
+    >
+      <webview
+        className="webview"
+        src={tab.url}
+        use-osr={true} // Enable off-screen rendering
+        enable-debug={true} // Enable debugging
+      />
+    </view>
+  ))}
+</view>
+```
+
+This stacking strategy ensures a smooth tab-switching experience while preserving page state. The effect looks like this:
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoSwitchTabGif} width="100%" />
+</div>
+
+### Navigation and Control
+
+We also need to control Webview behavior, such as going back and refreshing, through buttons in the Lynx UI. To do that, we need a reference to `<webview>` and call its methods.
+
+```tsx
+// src/app/App.tsx
+const webviewRefs = useRef<Record<string, any>>({});
+// Bind the ref
+<webview
+  id={`webview-${tab.id}`}
+  ref={(ref) => (webviewRefs.current[tab.id] = ref)}
+/>;
+// Reload the page
+const handleReload = () => {
+  const ref = webviewRefs.current[selectedTabId];
+  if (ref) {
+    ref.invoke({ method: 'reload' });
+  }
+};
+// Go back
+const goBack = () => {
+  const ref = webviewRefs.current[selectedTabId];
+  if (ref) {
+    // Execute JavaScript inside the page
+    ref.invoke({
+      method: 'eval',
+      params: { func: 'window.history.back()' },
+    });
+  }
+};
+```
+
+This gives the browser refresh and back navigation:
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoGoBackGif} width="100%" />
+</div>
+
+## Summary
+
+Through this tutorial, you have built a basic multi-tab browser and learned several key capabilities in Lynxtron desktop app development:
+
+1.  **Custom browser window**: by creating a frameless window, building a custom top bar, and adding draggable regions to it, you established the browser's core visual and interaction structure.
+2.  **Communication between Lynx and Node.js**: by passing messages between the Lynx side and the Node.js side through the JS Bridge, you implemented close, minimize, and fullscreen window controls.
+3.  **Integration and control of `<webview>`**: by using `<webview>` to load web pages and calling methods through references, you implemented page loading, refresh, and back navigation.

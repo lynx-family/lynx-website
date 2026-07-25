@@ -7,6 +7,11 @@
   // pill. Block + line-height centering (the icon is absolutely positioned,
   // so no flexbox is needed) lets text-overflow clip it with an ellipsis;
   // `max-width` caps the pill at its container so the clip actually engages.
+  //
+  // line-height must match the border-box content height (height − 2×border),
+  // otherwise the line box sits at the top and the label looks top-heavy —
+  // the regression from #1155, which updated the mobile line-height but left
+  // desktop at the old 32px value from when flex was doing the centering.
   display: block;
   max-width: 100%;
   box-sizing: border-box;
@@ -22,7 +27,8 @@
   color: var(--home-blog-btn-color);
   font-style: normal;
   font-weight: 500;
-  line-height: 32px;
+  // content box = 36px − 2×1px border
+  line-height: 34px;
   padding-left: 43px;
   padding-right: 20px;
   transition: all 0.3s ease;
@@ -33,8 +39,7 @@
   @media (max-width: 768px) {
     font-size: 12px;
     height: 28px;
-    // Match the shorter pill so the single line stays vertically centered
-    // and isn't clipped by `overflow: hidden` (content box = 28px − 2px border).
+    // content box = 28px − 2×1px border
     line-height: 26px;
     padding-left: 38px;
     padding-right: 16px;

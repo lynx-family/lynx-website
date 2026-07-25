@@ -1,0 +1,38 @@
+# @lynx-js/lynxtron-builder
+
+`@lynx-js/lynxtron-builder` is the packaging entry point for Lynxtron applications. It is based on `electron-builder` and continues to read `electron-builder.yml` from the project root, but replaces the Electron runtime download configuration with the Lynxtron runtime that matches the installed Lynxtron dependency.
+
+## Install
+
+```bash
+npm install -D @lynx-js/lynxtron-builder
+```
+
+## Usage
+
+```bash
+npx lynxtron-builder --publish never
+```
+
+Common script configuration:
+
+```json
+{
+  "scripts": {
+    "pack": "npm run build && lynxtron-builder --publish never"
+  }
+}
+```
+
+## Configuration
+
+- Reads `electron-builder.yml` from the project root by default.
+- If `electronDownload` is not configured, it generates a Lynxtron runtime download configuration from the installed Lynxtron version.
+- Command-line arguments are forwarded to `electron-builder`.
+- When `--universal` is passed, or when the macOS config uses a `universal` target, it builds `x64` and `arm64` apps and merges them into a universal app.
+
+## Relationship With electron-builder
+
+`lynxtron-builder` does not introduce a new packaging configuration format. When migrating an Electron project, you can usually keep most fields in `electron-builder.yml`; make sure the app directory, file list, Lynx bundle outputs, and native module build flow point to the Lynxtron app.
+
+For more migration guidance, see [Migrating From Electron](/lynxtron/learn/Migrating-From-Electron#handle-native-modules-builds-and-packaging).

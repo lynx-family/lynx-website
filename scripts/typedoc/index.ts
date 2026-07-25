@@ -12,6 +12,7 @@ export interface CliOptions {
   packages?: string[];
   cwd: string;
   help?: boolean;
+  platformBadges?: boolean;
 }
 
 const HELP_TEXT = `
@@ -19,6 +20,7 @@ Usage: typedoc [options]
 
 Options:
   --package, -P <pkg1> [pkg2] ...  Generate docs for specific packages
+  --platform-badges                 Render TypeDoc @platform tags as compatibility badges
   --help, -h                       Show this help message
 `;
 
@@ -94,6 +96,11 @@ function parseCliOptions(argv: string[]): CliOptions {
       const { packages, endIndex } = parsePackages(argv, i + 1);
       options.packages = packages;
       i = endIndex;
+    }
+
+    if (arg === '--platform-badges') {
+      options.platformBadges = true;
+      continue;
     }
   }
 

@@ -31,6 +31,8 @@ import {
   Banner,
   Features,
   Footer,
+  GalaxyHeroBackground,
+  LynxtronFeatures,
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
@@ -153,6 +155,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     return removeBase(tmp);
   }, [page]);
 
+  const isLynxtron = routePath.startsWith('/lynxtron/');
+  const createCliStr = isLynxtron
+    ? 'npm create @lynx-js/lynxtron@latest'
+    : 'npm create rspeedy@latest';
+
   useBlogBtnDom(routePath);
 
   const updateText = useCallback(() => {
@@ -235,7 +242,9 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
-    afterHero = (
+    afterHero = isLynxtron ? (
+      <LynxtronFeatures />
+    ) : (
       <>
         <Features src={routePath} />
         {routePath === '/' && <ShowCase />}
@@ -246,7 +255,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       <>
         <div
           className="rp-doc home-hero-codeblock"
-          style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
+          style={{
+            minHeight: 'auto',
+            width: '100%',
+            maxWidth: isLynxtron ? 450 : 300,
+          }}
         >
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
@@ -261,20 +274,22 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
               className="language-bash"
               style={{ textAlign: 'center' }}
             >
-              npm create rspeedy@latest
+              {createCliStr}
             </CodeWithRef>
           </PreWithCodeButtonGroup>
         </div>
       </>
     ),
+    beforeHero = isLynxtron ? <GalaxyHeroBackground /> : undefined,
   } = props;
 
   return (
     <>
-      <MeteorsBackground gridSize={120} meteorCount={3} />
+      {isLynxtron ? null : <MeteorsBackground gridSize={120} meteorCount={3} />}
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
+          beforeHero={beforeHero}
           afterHero={afterHero}
           afterHeroActions={afterHeroActions}
         />

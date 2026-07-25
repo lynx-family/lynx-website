@@ -1,12 +1,12 @@
 name: Update API docs
 
-# Weekly (and on-demand) regeneration of the lynx-stack-derived API reference
-# docs, opened as a draft PR for review. Runs entirely in lynx-website and does
+# Daily (and on-demand) regeneration of the lynx-stack-derived API reference
+# docs, opened as a PR for review. Runs entirely in lynx-website and does
 # not touch the lynx-stack release pipeline or require cross-repo secrets.
 
 on:
   schedule:
-    - cron: '0 18 * * 0' # Weekly, Sunday 18:00 UTC
+    - cron: '0 18 * * *' # Daily, 18:00 UTC
   workflow_dispatch:
 
 permissions: {}
@@ -83,14 +83,14 @@ jobs:
         with:
           branch: bot/update-api-docs
           delete-branch: true
-          draft: true
           add-paths: |
             docs/en/api
             docs/zh/api
+            package.json
           commit-message: 'docs(api): sync API reference from lynx-stack main'
           title: 'docs(api): sync API reference from lynx-stack main'
           body: |
-            Automated weekly regeneration of the lynx-stack-derived API docs.
+            Automated daily regeneration of the lynx-stack-derived API docs.
 
             **Build validation:** `${{ steps.build.outcome }}` (GITHUB_TOKEN PRs don't trigger CI, so the build is run inside this job).
 
@@ -98,6 +98,7 @@ jobs:
             - `rspeedy/*` — API Extractor + API Documenter, from lynx-stack `main`.
             - `reactlynx-testing-library`, `lynx-testing-environment` — TypeDoc.
             - Targeted API reference Lynx Go examples from `scripts/apply-api-doc-overlays.mjs`.
+            - `packageManager` in `package.json` — realigned with lynx-stack's pnpm pin.
 
             **Reviewer checklist**
             - [ ] Reconcile `docs/{en,zh}/api/_meta.json` sidebar nav if API members were added/removed (not automated).

@@ -4,6 +4,7 @@ import { Tab, Tabs, Badge, PackageManagerTabs, Steps } from '@theme';
 import NativeModuleIOS from './custom-native-modules/native-module-ios.mdx';
 import NativeModuleAndroid from './custom-native-modules/native-module-android.mdx';
 import NativeModuleHarmony from './custom-native-modules/native-module-harmony.mdx';
+import NativeModuleDesktops from './custom-native-modules/native-module-desktops.mdx';
 
 # 原生模块
 
@@ -25,11 +26,12 @@ import NativeModuleHarmony from './custom-native-modules/native-module-harmony.m
 
 本指南旨在展示如何编写一个本地持久存储模块，让 Lynx 应用能够利用 JavaScript 代码在本地持久地存储数据。
 
-要在移动设备上实现本地持久存储功能，需要借助 Android 、iOS 和 HarmonyOS 的原生 API：
+要在不同平台上实现本地持久存储功能，需要借助对应平台的原生 API 或 Lynx C/C++ API：
 
 - Android: [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences)
 - iOS: [NSUserDefaults](https://developer.apple.com/documentation/foundation/nsuserdefaults)
 - HarmonyOS: [Preferences](https://developer.huawei.com/consumer/en/doc/harmonyos-references/_preferences)
+- Desktop (Node-API): Lynx C/C++ API 和 Weak Node-API C++ wrapper
 
 <Steps>
 ### 声明类型化的接口规范
@@ -96,26 +98,32 @@ declare let NativeModules: {
 
 </PlatformTabs.Tab>
 
+<PlatformTabs.Tab platform="node-api">
+
+  <NativeModuleDesktops />
+
+</PlatformTabs.Tab>
+
 </PlatformTabs>
 
 </Steps>
 
-恭喜你，成功在 Lynx Explorer 中创建了原生模块！如果你想在你的应用中创建原生模块，首先需要参考[接入现有应用](/guide/start/integrate-with-existing-apps)指南集成 Lynx，然后参照上述步骤创建原生模块。
+恭喜你，成功创建了原生模块！如果你想在你的应用中创建原生模块，首先需要参考[接入现有应用](/guide/start/integrate-with-existing-apps)指南集成 Lynx，然后参照上述步骤创建原生模块。
 
 ## 类型对照表
 
-| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     |
-| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `null`          | `nil`                                             | `null`                                            | `null`                                            |
-| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            |
-| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` |
-| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   |
-| `string`        | `NSString`                                        | `String`                                          | `string`                                          |
-| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    |
-| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          |
-| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               |
-| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             |
-| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  |
+| TypeScript      | iOS(Objective-C)                                  | Android(Java)                                     | HarmonyOS(ets)                                     | Weak Node-API |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- | -------------------- |
+| `null`          | `nil`                                             | `null`                                            | `null`                                            | `Napi::Value` / `env.Null()` |
+| `undefined`     | `nil`                                             | `null`                                            | `undefined`                                            | `Napi::Value` / `env.Undefined()` |
+| `boolean`       | `BOOL` (or `NSNumber` when used inside objects)   | `boolean` (or `Boolean` when used inside objects) | `boolean` | `Napi::Boolean` |
+| `number`        | `double` (or `NSNumber` when used inside objects) | `double` (or `Number` when used inside objects)   | `number`   | `Napi::Number` |
+| `string`        | `NSString`                                        | `String`                                          | `string`                                          | `Napi::String` |
+| `BigInt`        | `NSString`                                        | `long` (or `Number` when used inside objects)     | `BigInt`    | `Napi::BigInt` |
+| `ArrayBuffer`   | `NSData`                                          | `byte[]`                                          | `Buffer`                                          | `Napi::ArrayBuffer` |
+| `object`        | `NSDictionary`                                    | `com.lynx.react.bridge.ReadableMap`               | `object`               | `Napi::Object` |
+| `array`         | `NSArray`                                         | `com.lynx.react.bridge.ReadableArray`             | `array`             | `Napi::Array` |
+| `function`      | block `void (^)(id)`                              | `com.lynx.react.bridge.Callback`                  | `function`                  | `Napi::Function` |
 
 ## 原生模块权限验证（实验性）
 

@@ -1,0 +1,112 @@
+import { PackageManagerTabs, Steps } from '@theme';
+
+# Lynx 原生能力库
+
+Lynx 原生能力库是一个向 Lynx runtime 注册能力的原生 library。它可以直接链接进
+embedder，也可以随应用或包一起分发。在 Lynxtron 应用中，这类 library 常通过 npm
+分发，方便宿主构建安装、收集并加载对应平台的产物。
+
+- [`native-module`](/zh/guide/use-native-modules.html?platform=node-api)：在
+  Lynx JS 中通过 `NativeModules.<ModuleName>` 调用的原生 API。
+- [`custom element`](/zh/guide/custom-native-component.html?platform=desktops)：暴露为
+  Lynx element 的自定义元素。具体标签名由 library 声明，然后像普通 Lynx element
+  一样使用。
+
+本页聚焦 Lynxtron 如何消费这类包。library 创建和包结构说明请查看：
+
+- [原生模块](/zh/guide/use-native-modules.html?platform=node-api)
+- [自定义元素](/zh/guide/custom-native-component.html?platform=desktops)
+- [AutoLink](/zh/guide/autolink.html?platform=lynxtron)
+
+## 加载模型
+
+基础模型是静态注册加宿主侧原生 library 加载：
+
+1. library 的 C/C++ 代码通过 `LYNX_REGISTER_NATIVE_MODULE(...)` 和
+   `LYNX_REGISTER_ELEMENT(...)` 等静态注册宏声明 Lynx 能力。
+2. 宿主集成层加载当前平台对应的原生二进制。在 Lynxtron 中，这段加载逻辑可以由
+   AutoLink 根据包元数据生成，也可以由应用代码自行实现。
+3. 如果 Lynxtron 侧产物是 `.node` 文件，宿主可以通过 Node.js 常规 `require()`
+   加载它。二进制被加载后，静态 Lynx 注册会在 Lynx runtime 中生效，应用代码即可使用
+   `NativeModules.<ModuleName>` 和自定义元素。
+
+如果 library 需要提供宿主侧入口，`.node` 文件也可以暴露常规 Node-API addon
+接口。如果 library 只需要让 Lynx 能力可用，Node-API addon 接口也可以为空；加载副作用
+已经足够触发静态注册。
+
+## 运行时边界
+
+Lynxtron 同时有 Node.js 宿主和 Lynx JS runtime，原生能力库需要区分这两个环境。
+
+| 环境                  | 作用                                              | 常用 API                                               |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------------ |
+| Lynxtron Node.js 宿主 | 加载宿主集成入口或原生产物；调用宿主侧 API        | `require(...)`, package-specific exports               |
+| Lynx JS runtime       | 运行 Lynx 应用代码，调用注册进 Lynx 的能力        | `NativeModules.<ModuleName>`, `<custom-element />`     |
+| Lynx native library   | 二进制被加载或链接后注册 native module 和 element | `LYNX_REGISTER_NATIVE_MODULE`, `LYNX_REGISTER_ELEMENT` |
+
+应用代码不应该调用底层注册 API 让能力进入 Lynx runtime。library 在原生代码中完成注册；
+应用只需要加载 library。
+
+## 通过 AutoLink 创建并在 Lynxtron 中使用 Lynx Library
+
+下面是 Lynxtron 场景下的最小链路。
+
+<Steps>
+
+### 创建可 AutoLink 的 Lynxtron Library
+
+创建一个带 Lynxtron metadata、并包含最小 native module 或 element 脚手架的 Lynx
+library。完整的包结构请看 [AutoLink](/zh/guide/autolink.html?platform=lynxtron)。
+
+<PackageManagerTabs command="create lynx-library -- --dir ./hello-lynx-library --features native-module,napi-native-module,element --platforms lynxtron --package-name hello-lynx-library --module-name HelloModule --element-name hello-element" />
+
+### 实现 Native Module 或 Element
+
+生成的 AutoLink library 会把跨端原生实现放在 `shared/` 下，把 Lynxtron 的加载入口放在
+`lynxtron/` 下：
+
+```text
+hello-lynx-library/
+|-- shared/
+|   |-- nativeModule/  # NAPI native module 实现
+|   `-- elements/      # element 实现和静态注册
+`-- lynxtron/
+    |-- index.cjs        # Lynxtron 宿主加载的 CommonJS 入口
+    `-- library_entry.cc # 用于构建 .node 产物的 Node-API 入口
+```
+
+如果只是快速 smoke，可以保留生成的最小实现；也可以在 `shared/nativeModule/` 中实现
+native module，在 `shared/elements/` 中实现 element。想了解两类能力的具体实现方式，请查看
+[原生模块](/zh/guide/use-native-modules.html?platform=node-api) 和
+[自定义元素](/zh/guide/custom-native-component.html?platform=desktops)。
+
+### 构建并发布
+
+构建当前 OS/architecture 的产物，并打成一个 Lynxtron 应用可以安装的包：
+
+```bash
+cd hello-lynx-library
+npm install
+npm run codegen
+npm run build:lynxtron
+npm pack
+```
+
+正式发布到 registry 时，把 `npm pack` 换成 `npm publish`。
+
+### 在 Lynxtron 中消费 Lynx Library
+
+把刚才打出的 library 包安装到已有 Lynxtron 应用中。如果还没有基础应用，可以先参考
+[快速上手 Lynxtron](/zh/lynxtron/introduction)。这条 AutoLink 链路依赖宿主
+Rspack 配置中的 `pluginLynxtron()`；Lynxtron 侧的 AutoLink 加载能力由这个插件提供：
+
+```bash
+cd <your-lynxtron-app>
+npm install ../hello-lynx-library/hello-lynx-library-0.0.1.tgz
+npm run start
+```
+
+宿主构建通过 AutoLink 加载 library 后，对应能力会在 Lynx runtime
+中可用：应用代码可以调用它的 native module 或渲染它的自定义 element。
+
+</Steps>

@@ -1,0 +1,71 @@
+---
+description: 'Generate catalog-valid A2UI v0.9 JSON messages for Lynx GenUI from natural-language UI requests.'
+---
+
+# lynx-a2ui
+
+Turns natural-language UI requests into [A2UI v0.9](https://a2ui.org/specification/v0.9-a2ui/) protocol messages that [`@lynx-js/genui/a2ui`](/react/genui/a2ui) can render. The skill produces declarative JSON data rather than application code, so the generated UI stays within the components and functions authorized by an A2UI Catalog.
+
+Use it when an agent needs to:
+
+- generate a new A2UI surface from a UI description
+- bind shared, editable, or repeated values through the A2UI data model
+- respond to an A2UI user action with a minimal surface patch
+- target the default Lynx GenUI Catalog or a custom Catalog supplied by your application
+- avoid inventing components, props, functions, or action shapes that the active Catalog does not expose
+
+## Installation
+
+```bash
+npx skills add lynx-community/skills -s lynx-a2ui
+```
+
+This installs the `lynx-a2ui` rules so compatible coding agents can generate catalog-constrained A2UI messages and check them against the active Catalog.
+
+## How It Works
+
+The skill follows a catalog-first workflow:
+
+1. It fetches the latest default [Lynx GenUI A2UI Catalog](https://unpkg.com/@lynx-js/genui/a2ui/dist/catalog.json), unless you provide another Catalog URL or its JSON content.
+2. It reads the Catalog ID, component and function schemas, required fields, enum values, and examples.
+3. It translates the request into a data model and a flat component graph that validates against that Catalog.
+4. It returns only a pretty-printed JSON array of A2UI v0.9 messages.
+
+For a new surface, the output is ordered so the renderer can consume it progressively:
+
+1. `createSurface`, using `main` as the default surface ID and the fetched Catalog's `catalogId`
+2. `updateDataModel` for initial values used by bindings
+3. `updateComponents` with exactly one component whose ID is `root`
+
+When the latest request begins with `A2UI_USER_ACTION:`, the skill updates the existing surface instead. It prefers the smallest valid patch, using `updateDataModel` for data-only changes and adding `updateComponents` only when the visible structure changes.
+
+:::info
+The agent must be able to fetch the active Catalog before generating a non-trivial UI. If the Catalog is unreachable, provide its JSON content or a reachable Catalog URL.
+:::
+
+## Output Contract
+
+The skill instructs the agent to:
+
+- emit JSON only, without Markdown, prose, comments, or trailing commas
+- include `"version": "v0.9"` in every message
+- create bound data before a component reads it
+- keep component IDs unique and kebab-case, and reference child components by ID instead of nesting them inline
+- use only components, props, functions, enum values, and action schemas from the latest fetched Catalog
+- never emit arbitrary JavaScript, HTML, CSS, scripts, or executable snippets
+
+For example, you can ask:
+
+```text
+Use lynx-a2ui to generate a compact trip-planning card with three data-bound destinations and a button that sends the selected destination back to the agent.
+```
+
+The response should be the A2UI message array itself, ready for an A2UI renderer to consume.
+
+## Learn More
+
+- [A2UI in ReactLynx](/react/genui/a2ui)
+- [`@lynx-js/genui/a2ui` API reference](/api/genui/a2ui/index.html)
+- [lynx-a2ui skill source](https://github.com/lynx-community/skills/tree/release/skills/lynx-a2ui)
+- [lynx-community/skills on GitHub](https://github.com/lynx-community/skills)
+- [Agent Skills specification](https://agentskills.io/specification)

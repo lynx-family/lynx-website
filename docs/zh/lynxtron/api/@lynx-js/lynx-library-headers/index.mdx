@@ -1,0 +1,58 @@
+# @lynx-js/lynx-library-headers
+
+`@lynx-js/lynx-library-headers` 是 Lynx 原生能力库使用的头文件包。它只提供头文件，不负责创建工程、编译产物或执行运行时加载。
+
+library 工程创建和包结构说明请查看
+[原生库与 Autolink](/zh/guide/autolink.html?platform=lynxtron)。
+
+## 包内容
+
+发布包中包含：
+
+- Lynx embedder C API 头文件。
+- Lynx C++ wrapper 头文件，例如 `lynx_native_view.h`、`lynx_value.h`、`lynx_view.h`。
+- Lynx JS runtime 使用的 weak N-API 头文件。
+- `lynx/registration.h`，用于 Lynx embedder 静态注册。
+
+该包不提供 Lynxtron 专用 addon 宏。Lynxtron 通过 `process.dlopen(...)` 加载共享库来消费 Lynx 原生能力库；AutoLink 可以为 host 侧生成这段加载代码。
+
+## 在 CMake 中使用
+
+从构建脚本中解析包根目录，并把 `include/` 加入 native target 的 include path：
+
+```js
+const path = require('node:path');
+
+const headersRoot = path.dirname(
+  require.resolve('@lynx-js/lynx-library-headers/package.json'),
+);
+```
+
+## 静态注册
+
+Lynx 原生能力库通过静态注册宏注册能力：
+
+```cpp
+#include <lynx/registration.h>
+
+void BindDemoModule(napi_env env, napi_value exports);
+lynx_native_view_t* CreateDemoView(void* opaque);
+
+LYNX_REGISTER_NATIVE_MODULE(
+    "DemoModule",
+    BindDemoModule,
+    nullptr)
+
+LYNX_REGISTER_ELEMENT(
+    "DemoElementModule",
+    "x-demo-view",
+    CreateDemoView,
+    false,
+    nullptr)
+```
+
+`native-module` 和 `element` 的注册应分别放在各自 feature 源码旁边。一个包可以只包含其中一种 feature，也可以同时包含两种。
+
+当 `LYNX_REGISTER_ELEMENT` 的 `OPAQUE` 传入 `nullptr` 时，注册 helper 会把当前 `lynx_view_t*` 传给 native view creator。只有当 creator 需要接收自定义数据而不是当前 view 时，才需要传入显式 opaque。
+
+更多说明见 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries)。

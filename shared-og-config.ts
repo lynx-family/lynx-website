@@ -58,9 +58,10 @@ export type OgCover = {
  * Per-cover gradient + logo. Gradients echo each subsite's on-site hero title
  * sweep (theme/hero-text.scss + theme/home-layout-var.scss): the two brand
  * endpoints with the lilac bridge between them.
- *   - guide:   red → lilac → cyan       (home `.dynamic-text`)
- *   - react:   teal → lilac → red       (`--major/--second-brand-color`)
- *   - rspeedy: orange → lilac → red
+ *   - guide:    red → lilac → cyan       (home `.dynamic-text`)
+ *   - react:    teal → lilac → red       (`--major/--second-brand-color`)
+ *   - rspeedy:  orange → lilac → red
+ *   - lynxtron: green → lilac → red      (`subsite-theme(#47d78f)`)
  *
  * `ai` and `lynx-ui` have no on-site hero gradient; they follow the same
  * bridge pattern for cohesion. `api` (reference docs) deliberately breaks the
@@ -86,6 +87,10 @@ const COVER_EXTRAS: Record<string, Pick<OgCover, 'gradient' | 'logo'>> = {
   ai: {
     gradient: ['#6457f6', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
     logo: 'ai.png',
+  },
+  lynxtron: {
+    gradient: ['#47d78f', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
+    logo: 'lynxtron.png',
   },
 };
 

@@ -1,0 +1,102 @@
+import { PackageManagerTabs } from '@theme';
+
+# Using webview in Lynxtron
+
+[`<webview>`](/api/elements/built-in/webview) is the Lynx element for embedding
+Web content. Its attributes, events, and methods are defined by the Lynx element
+API. This page only explains how to introduce this capability in Lynxtron through
+the officially maintained npm package.
+
+Because CEF and WebView artifacts can significantly increase package size,
+Lynxtron does not bundle `<webview>` into the runtime by default. Instead, it is
+provided as an officially maintained Lynx native library. Other official Lynx
+elements remain built in and can be used normally.
+
+The officially maintained
+[`@lynx-js/cef-webview`](/lynxtron/api/@lynx-js/cef-webview/) package provides a
+native view capability based on the Chromium Embedded Framework (CEF). You can
+consume it like other Lynx native libraries: install the package, load its
+Lynxtron package entry in the host process, initialize CEF in the main process,
+and then use the `<webview>` Lynx element.
+
+The native `<webview>` element is registered by the package C++ library through
+`LYNX_REGISTER_ELEMENT(...)`. Application code only needs to make sure the
+library is loaded and call `initialize()`; it should not call lower-level Lynx
+registration APIs.
+
+## Install the npm Package
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+## Enable AutoLink
+
+Enable AutoLink through `pluginLynxtron()` in the Lynxtron host-side
+Rsbuild/Rspack config:
+
+```ts
+import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
+
+export default {
+  target: 'electron-main',
+  plugins: [
+    pluginLynxtron({
+      isDev: process.env.NODE_ENV === 'development',
+      entry: './dist/desktop',
+    }),
+  ],
+};
+```
+
+AutoLink is the recommended helper for loading Lynx native library packages from
+the host bundle. The underlying model is still static registration plus requiring
+the package entry or the platform `.node` artifact in the Lynxtron host process.
+
+## Initialize CEF in the Main Process
+
+Import the package and initialize CEF before creating a `LynxWindow` or loading a
+Lynx bundle:
+
+```typescript {1-2,5}
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+
+  const win = new LynxWindow({
+    width: 1200,
+    height: 800,
+  });
+
+  win.loadFile('main.lynx.bundle');
+});
+```
+
+## Use the Lynx Element
+
+After the native library is loaded and CEF is initialized in the main process,
+you can use the `<webview>` Lynx element.
+
+```tsx
+export function App() {
+  return (
+    <view style={{ width: '100%', height: '100%' }}>
+      <webview
+        src="https://www.example.com"
+        style={{ width: '100%', height: '100%' }}
+      />
+    </view>
+  );
+}
+```
+
+For the attributes, events, and methods supported by `<webview>`, see the
+[`<webview>` API](/api/elements/built-in/webview).
+
+## Packaging Notes
+
+[`@lynx-js/cef-webview`](/lynxtron/api/@lynx-js/cef-webview/) contains
+platform-specific native libraries and CEF binary artifacts. If you use AutoLink,
+keep it enabled for the packaged host build. If you use a custom loading or
+packaging flow, make sure the Lynxtron package entry, native `.node` artifact,
+and CEF artifacts are included in the app package.

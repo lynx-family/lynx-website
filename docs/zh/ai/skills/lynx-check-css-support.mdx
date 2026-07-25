@@ -1,0 +1,85 @@
+---
+description: '按照 CSS 属性、嵌套特性、渲染后端和 Lynx 版本查询兼容性。'
+---
+
+# lynx-check-css-support
+
+查询 skill 内置的 [`@lynx-js/css-defines`](https://www.npmjs.com/package/@lynx-js/css-defines) 兼容性数据，判断某个 CSS 属性或嵌套特性是否可用于指定的 Lynx 渲染后端和版本。coding agent 可以据此获得结构化证据，而不是根据浏览器行为、示例或 TypeScript 类型推测 Lynx 的支持情况。
+
+当 coding agent 需要完成以下任务时，可以使用这个 skill：
+
+- 检查 Lynx 或 ReactLynx 是否支持某个 CSS 属性或值
+- 比较数据集声明的各类后端，包括 Android、iOS、HarmonyOS、Web Lynx 和 Clay 变体
+- 查找某项能力从哪个 Lynx 版本开始支持
+- 确认计划中的样式改动是否兼容应用的目标版本
+- 查看原始兼容性定义，或检查是否已有更新的数据集
+
+## 安装
+
+```bash
+npx skills add lynx-community/skills -s lynx-check-css-support
+```
+
+这会安装 skill 及其固定版本的兼容性数据集。查询时，兼容的 coding agent 不需要下载或执行其他软件包。
+
+## 提出兼容性问题
+
+请求中应尽量包含 CSS 属性、相关的嵌套特性或取值、渲染后端以及目标 Lynx 版本。例如：
+
+```text
+使用 lynx-check-css-support 检查 Lynx 2.0 的 Android 后端是否支持 display: grid，并告诉我它从哪个版本开始支持。
+```
+
+```text
+比较 gap 在所有 Lynx 渲染后端上的支持情况，并附上数据集版本。
+```
+
+skill 会运行内置 CLI。一次完整查询如下：
+
+```bash
+node <skill-directory>/scripts/query-css-compat.mjs display \
+  --feature grid \
+  --backend android \
+  --lynx-version 2.0
+```
+
+嵌套特性的键名区分大小写，也可能包含标点。如果不知道准确键名，Agent 可以先通过 `--json` 查看该属性的原始 `compat_data`，再进行精确查询。
+
+## 理解查询结果
+
+每次回答都应包含被查询的属性和特性、后端与目标版本、数据中发布的 `version_added` 值或条件、相关说明、`partial_implementation`、废弃或实验状态，以及内置的 `@lynx-js/css-defines` 版本。
+
+CLI 会将结果归类为：
+
+- `available`：目标版本已经支持；未指定目标版本时，表示存在支持该能力的版本
+- `requires-newer-version`：需要比目标版本更新的 Lynx 版本
+- `conditional`：受非数字条件限制，例如 `targetSdkVersion` 要求
+- `unavailable`：明确不支持
+- `unknown`：数据集尚未确定支持情况
+
+如果定义中没有 `compat_data`，表示数据集未说明兼容性，不能据此判定为不支持。声明为可用也不等于与浏览器行为完全一致，且不能替代运行时行为说明。
+
+判断后端支持情况时，应以 `compat_data.__compat.support` 为准。这个 skill 不会根据定义顶层的 `version` 或某个取值的 `version` 字段推断支持情况。
+
+:::tip
+使用这个 skill 确认某项能力**是否可用以及从何时开始可用**。要了解语法、行为、布局语义和示例，请继续查阅 [CSS 参考](/api/css/properties)和 [API 大盘](/api/status)。
+:::
+
+## 保持数据集最新
+
+普通查询使用 skill 内置的数据集，不需要网络访问。当数据新鲜度很重要时，Agent 可以运行：
+
+```bash
+node <skill-directory>/scripts/query-css-compat.mjs --check-updates
+```
+
+该命令只查询公共 npm registry 中最新的数字版本号，不会下载新数据集或修改已安装的 skill。如果存在更新，请升级 skill，以使用新版本中经过评审的兼容性数据。
+
+## 了解更多
+
+- [Lynx CSS 属性参考](/api/css/properties)
+- [Lynx API 大盘](/api/status)
+- [Bundle 与 Lynx Engine 兼容性指南](/guide/compatibility)
+- [lynx-check-css-support skill 源码](https://github.com/lynx-community/skills/tree/release/skills/lynx-check-css-support)
+- [GitHub 上的 lynx-community/skills](https://github.com/lynx-community/skills)
+- [Agent Skills 规范](https://agentskills.io/specification)

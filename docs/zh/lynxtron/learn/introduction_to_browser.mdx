@@ -1,0 +1,328 @@
+import { PackageManagerTabs, Steps } from '@theme';
+import { Go } from '@lynx';
+import browserDemoGif from '@assets/lynxtron/browser-demo.gif?url';
+import browserDemoFrameLessPng from '@assets/lynxtron/browser_demo_frame_less.png?url';
+import browserTopBarPng from '@assets/lynxtron/browser_top_bar.png?url';
+import browserDemoTopBarDragGif from '@assets/lynxtron/browser_demo_top_bar_drag.gif?url';
+import browserDemoControlGif from '@assets/lynxtron/browser_demo_control.gif?url';
+import browserDemoNewTabGif from '@assets/lynxtron/browser_demo_new_tab.gif?url';
+import browserDemoWebviewPng from '@assets/lynxtron/browser_demo_webview.png?url';
+import browserDemoSwitchTabGif from '@assets/lynxtron/browser_demo_switch_tab.gif?url';
+import browserDemoGoBackGif from '@assets/lynxtron/browser_demo_go_back.gif?url';
+
+# 教程：打造你的浏览器
+
+本教程将引导你逐步实现一个简单的多标签页浏览器。本教程不假设你有任何 Lynxtron 的知识基础。你将在本教程中学到的技术将会是构建任何 Lynxtron 桌面应用程序的基础。
+
+**你将学到：**
+
+- [使用 Lynxtron 实现自定义标题栏](#使用-lynxtron-实现自定义标题栏)
+- [通过 Node.js 与 LynxView 通信实现窗口控制功能](#通过-nodejs-与-lynxview-通信实现窗口控制功能)
+- [如何使用 Lynx 原生能力库中的 `<webview>` 元素](#lynx-webview-native-ui-extension)
+
+## 我们要构建什么？
+
+首先，让我们看看最终结果！我们将构建一个功能完整的多标签页浏览器，它包含：
+
+- **自定义标题栏**：带有 "红绿灯" 窗口控制按钮（关闭、最小化、最大化）
+- **标签页管理**：可以添加、切换和关闭多个标签页
+- **导航栏**：包含前进、后退、刷新按钮和地址栏
+- **网页渲染区域**：使用 [`<webview>`](/api/elements/built-in/webview) 加载和显示网页内容
+
+<Go
+  img={browserDemoGif}
+  example="gallery"
+  defaultFile="src/utils.tsx"
+  deepLinkUrl="lynxtron-go://"
+  deepLinkTitle="在 Lynxtron Go 中打开"
+/>
+
+## 教程设置
+
+请查看我们详细的[安装文档](/lynxtron/introduction)，该文档将指导你创建一个新的 Lynxtron 项目。
+
+你可能会注意到该项目使用的是 TypeScript。虽然 Lynxtron 支持 TypeScript 和普通 JavaScript，但我们推荐使用 TypeScript，以提供更好的开发体验，包括静态类型检查和更好的编辑器智能感知。
+
+## 使用 Lynxtron 实现自定义标题栏
+
+由于浏览器的标题栏包含了标签页，而 Lynxtron 默认窗口的标题栏不符合要求，因此我们需要自定义标题栏。首先，我们需要创建一个无边框的窗口，以便完全自定义浏览器的外观（包括标题栏和 "红绿灯" 控制按钮）。
+
+### 第一步：创建无边框窗口
+
+在创建 `LynxWindow` 时，设置 `frame: false` 来移除系统默认的标题栏：
+
+```typescript {8}
+// src/main/main.ts
+import { app, LynxWindow } from 'lynxtron';
+let mainWindow: LynxWindow | null = null;
+function createWindow() {
+  mainWindow = new LynxWindow({
+    width: 1200,
+    height: 800,
+    frame: false, // 关键：移除系统边框
+  });
+}
+```
+
+<img src={browserDemoFrameLessPng} alt="移除标题栏" />
+
+### 第二步：自定义标题栏
+
+移除系统标题栏后，我们需要实现浏览器的标题栏，主要由三部分组成：
+
+1.  **窗口控制按钮**：用于最大化、最小化和关闭浏览器
+2.  **标签页**：用于显示各个网页相应的标题信息
+3.  **添加按钮**：用于新增一个标签页
+
+我们将这些组件都放在 top-bar 组件中，使用 Flexbox 布局排版，效果如下：
+
+```tsx
+// src/app/App.tsx
+return (
+  <view className="top-bar">
+    <view className="traffic-lights">...</view>
+    <scroll-view scroll-x className="tabs-container">
+      {tabs.map((tab) => (
+        <NewTab />
+      ))}
+      <view className="add-tab-btn" bindtap={handleAddTab}>
+        +
+      </view>
+    </scroll-view>
+  </view>
+);
+```
+
+<img src={browserTopBarPng} alt="自定义标题栏" />
+
+### 第三步：实现窗口拖拽
+
+由于我们移除了系统的标题栏，用户无法通过默认方式拖动窗口。我们需要在自定义的顶部栏 (`.top-bar`) 上启用拖拽功能。
+
+Lynxtron 支持使用 CSS 属性 [`-x-app-region: drag`](./Custom-Window-Styles#步骤-2让窗口重新可拖拽) 来指定可拖拽区域（类似于 Electron 的 `-webkit-app-region: drag`）。
+
+```css
+/* src/app/App.css */
+.top-bar {
+  /* 关键：启用窗口拖拽 */
+  -x-app-region: drag;
+}
+```
+
+`
+效果如下：
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoTopBarDragGif} width="100%" />
+</div>
+
+## 通过 Node.js 与 LynxView 通信实现窗口控制功能
+
+由于我们移除了系统原生的标题栏，我们需要自己实现 "关闭"、"最小化" 和 "最大化" 的功能。这需要通过 [Node.js 与 LynxView 通信](./Communication-Between-Node-And-Lynx)来实现。
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', margin: '16px 0', alignItems: 'stretch' }}>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <h4 style={{ marginTop: 0, marginBottom: '12px' }}>Lynx JS 线程</h4>
+    <div style={{ flex: 1 }}>
+
+```tsx
+// src/app/App.tsx
+const handleClose = () => {
+  // 调用 NativeModules 向主进程发送消息
+  NativeModules.bridge.call('close', {}, (res: any) => {
+    console.log(res);
+  });
+};
+
+const handleMinimize = () => {
+  NativeModules.bridge.call('blur', {}, (res: any) => {
+    console.log(res);
+  });
+};
+
+const handleFullScreenTap = () => {
+  NativeModules.bridge.call('maximize', {}, (res: any) => {
+    console.log(res);
+  });
+};
+```
+
+    </div>
+
+  </div>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <h4 style={{ marginTop: 0, marginBottom: '12px' }}>Node JS 线程</h4>
+    <div style={{ flex: 1 }}>
+
+```typescript
+// src/main/main.ts
+// 监听这些消息并调用 Lynxtron 的 API
+w.on('-lynx-invoke', (event, params) => {
+  console.log('window is invoke', params);
+  if (params == 'close') {
+    console.log('Closing window...');
+    w.close();
+  }
+
+  if (params == 'blur') {
+    w.blur();
+  }
+
+  if (params == 'maximize') {
+    isFullScreen = !isFullScreen;
+    console.log('Toggling full screen to:', isFullScreen);
+    w.setFullScreen(isFullScreen);
+  }
+});
+```
+
+    </div>
+
+  </div>
+</div>
+这样浏览器窗口就可以进行"关闭"、"最小化"和"最大化"了：
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoControlGif} width="100%" />
+</div>
+
+## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries) 中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
+
+### 管理标签页
+
+浏览器最核心的功能之一是多标签页管理。我们需要维护一个标签页列表的状态。
+
+```tsx
+// src/app/App.tsx
+const [tabs, setTabs] = useState<Tab[]>([
+  {
+    id: '1',
+    title: 'New Tab',
+    url: 'https://www.lynxjs.org',
+  },
+]);
+const [selectedTabId, setSelectedTabId] = useState<string>('1');
+
+// 添加新标签页
+const handleAddTab = () => {
+  const newId = Date.now().toString();
+  setTabs([...tabs, { id: newId, title: 'New Tab', url: '' }]);
+  setSelectedTabId(newId);
+};
+
+// 关闭标签页
+const handleRemoveTab = (id: string) => {
+  const newTabs = tabs.filter((t) => t.id !== id);
+  setTabs(newTabs);
+  // 如果关闭的是当前选中的标签，需要切换到另一个标签
+  if (id === selectedTabId && newTabs.length > 0) {
+    setSelectedTabId(newTabs[newTabs.length - 1].id);
+  }
+};
+```
+
+至此，我们完成了标签页的新增和关闭功能：
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoNewTabGif} width="100%" />
+</div>
+
+### 添加 `<webview`> 组件
+
+Lynxtron 提供了 [`<webview>`](/api/elements/built-in/webview) 元件来加载外部网页，正确引用后，可以用 `<webview>` 组件来加载网页内容。
+
+```tsx {5-9}
+<view className="content-area">
+  {tabs.map((tab) => (
+    <view key={tab.id} className="tab-content">
+      {tab.input_value && (
+        <webview
+          className="webview-container"
+          id={`webview-${tab.id}`}
+          src={tab.input_value}
+        />
+      )}
+    </view>
+  ))}
+</view>
+```
+
+添加该元件后，我们就可以正常加载外部网页了：
+
+<img src={browserDemoWebviewPng} alt="加载外部网页" />
+
+### 标签页切换策略
+
+为了在切换标签页时保持网页的状态（即不重新加载页面），我们**不同时销毁和创建** Webview。相反，我们渲染所有的 Webview，但通过 `z-index` 来控制哪个 Webview 显示在最上层。
+
+```tsx
+// src/app/App.tsx
+<view className="content-area">
+  {tabs.map((tab) => (
+    <view
+      key={tab.id}
+      className="webview-wrapper"
+      style={{ zIndex: selectedTabId === tab.id ? 1 : 0 }} // 只有选中的标签层级最高
+    >
+      <webview
+        className="webview"
+        src={tab.url}
+        use-osr={true} // 开启离屏渲染
+        enable-debug={true} // 开启调试功能
+      />
+    </view>
+  ))}
+</view>
+```
+
+这种 "堆叠" 策略确保了用户在标签间切换时体验流畅，页面状态得以保留，效果如下：
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoSwitchTabGif} width="100%" />
+</div>
+
+### 导航与控制
+
+我们需要通过 Lynx UI 上的按钮来控制 Webview 的行为（后退、刷新等）。这需要获取 `<webview>` 的引用并调用其方法。
+
+```tsx
+// src/app/App.tsx
+const webviewRefs = useRef<Record<string, any>>({});
+// 绑定 ref
+<webview
+  id={`webview-${tab.id}`}
+  ref={(ref) => (webviewRefs.current[tab.id] = ref)}
+/>;
+// 刷新页面
+const handleReload = () => {
+  const ref = webviewRefs.current[selectedTabId];
+  if (ref) {
+    ref.invoke({ method: 'reload' });
+  }
+};
+// 后退
+const goBack = () => {
+  const ref = webviewRefs.current[selectedTabId];
+  if (ref) {
+    // 通过 eval 执行页面内的 JS
+    ref.invoke({
+      method: 'eval',
+      params: { func: 'window.history.back()' },
+    });
+  }
+};
+```
+
+这样，浏览器就拥有了刷新和后退功能：
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={browserDemoGoBackGif} width="100%" />
+</div>
+
+## 总结
+
+通过本教程，你已经完成了一个基础的多标签页浏览器，并掌握了 Lynxtron 桌面应用开发中的几个关键能力：
+
+1.  **自定义浏览器窗口**：通过创建无边框窗口、自定义顶部栏，以及为顶部栏添加拖拽区域，实现了浏览器的基础外观和交互框架。
+2.  **Lynx 与 Node.js 通信**：通过 JS Bridge 在 Lynx 侧和 Node.js 侧之间传递消息，完成了关闭、最小化和全屏切换等窗口控制能力。
+3.  **`<webview>` 的集成与控制**：使用 `<webview>` 加载网页内容，并通过引用调用相关方法，实现页面加载、刷新和后退等导航操作。

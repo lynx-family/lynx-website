@@ -2,9 +2,9 @@ import { PlatformTabs } from '@lynx';
 
 # Native Libraries and Autolink
 
-A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Autolink is the integration mechanism that lets the host app discover libraries installed under `node_modules` and register their capabilities automatically on Android and iOS, instead of wiring each Element, Native Module, or Service by hand.
+A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Autolink is the integration mechanism that lets the host app discover libraries installed under `node_modules` and connect their native capabilities without wiring each Element, Native Module, or Service by hand.
 
-Autolink currently covers native Android and iOS libraries only. It does not generate Web or HarmonyOS integration code.
+Autolink covers Android and iOS native app integration, and it also covers the package metadata used by Lynxtron native libraries. It does not generate Web or HarmonyOS integration code.
 
 :::info Prerequisites
 
@@ -21,6 +21,7 @@ Use Autolink tooling from the same Lynx release channel as your app. The package
 - npm: `create-lynx-library` and `@lynx-js/autolink-codegen` (`lynx-autolink-codegen` binary)
 - Android: Gradle plugins `org.lynxsdk.library-settings` and `org.lynxsdk.library-build`
 - iOS: Ruby gem `cocoapods-lynx-library`
+- Lynxtron: `create-lynx-library` can generate shared native library packages, and `@lynx-js/lynxtron-dev-plugins` provides host-side loading through `pluginLynxtron()`.
 
 If one of these packages cannot be resolved from your configured registries, your current Lynx SDK release does not include Native Autolink in that registry yet. Keep using the existing manual native registration flow until the matching release is available.
 
@@ -36,7 +37,7 @@ A library is an npm package that may ship any combination of:
 
 Every library declares its native entry points in a `lynx.lib.json` manifest at the package root. The three capability types are independent: a library may expose only Elements, only Native Modules, only Services, or any combination of them.
 
-App teams install a library like any other npm dependency. The Android Gradle plugins and the iOS CocoaPods plugin read `lynx.lib.json` and link the native code into the host app, so the host never needs to know which specific capabilities any given library exposes.
+App teams install a library like any other npm dependency. The Android Gradle plugins and the iOS CocoaPods plugin read `lynx.lib.json` and link the native code into the host app, so the host never needs to know which specific capabilities any given library exposes. Lynxtron reads the same manifest from installed packages, stages matched package files into the host output, and prepends generated host-bundle code that requires each staged package's `./lynxtron` entry.
 
 ## Consuming a Library
 
@@ -55,12 +56,18 @@ lynx-app/
 │       └── build.gradle
 ├── ios/
 │   └── Podfile
+├── shared/
+│   ├── CMakeLists.txt
+│   └── ...
+├── dist/
 └── src/
 ```
 
 - `package.json` is required so the app can declare Autolink library packages as dependencies.
 - For Android, the project needs a Gradle settings file, such as `settings.gradle` or `settings.gradle.kts`, and an Android application build file, such as `app/build.gradle` or `app/build.gradle.kts`.
 - For iOS, the project needs a CocoaPods entry point, usually `Podfile`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-library` gem in `Gemfile`.
+- `shared/` is used when the host app owns cross-platform native source code and CMake build entry points; build these sources yourself.
+- For Lynxtron, the app needs a host-side Rspack build that can install npm packages and load native libraries through `pluginLynxtron()`; it generally consumes the compiled `dist/` artifacts.
 
 After you install dependencies, Autolink scans the installed npm packages for `lynx.lib.json` files at package roots. A lockfile such as `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` is recommended for reproducible installs, but it is not required by Autolink.
 
@@ -107,6 +114,32 @@ end
 After `pod install`, Autolink generates the registry pod and hooks it into the Lynx initialization flow. When the app creates `LynxConfig` or initializes `LynxEnv`, Elements, Native Modules, and Services from installed libraries are registered automatically. App code does not need to import generated files or add extra native initialization.
 
 </PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="lynxtron">
+
+Lynxtron enables Autolink for Desktop native libraries. Not every Lynx-embedded Desktop host supports Autolink out of the box; this is a Lynxtron-provided integration.
+
+In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, copies matching native library packages into the host output, and injects code that imports each copied package's `./lynxtron` entry. For packages declared with `platforms.lynxtron.path`, direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
+
+```ts
+import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
+
+export default {
+  target: 'electron-main',
+  plugins: [
+    pluginLynxtron({
+      isDev: process.env.NODE_ENV === 'development',
+      entry: './dist/desktop',
+    }),
+  ],
+};
+```
+
+The `entry` field is the Lynxtron host's own bundle entry, and `pluginLynxtron()` stages native library packages relative to it. See the `@lynx-js/lynxtron-dev-plugins` package for the full option shape.
+
+After Lynxtron loads a native library, its Lynx static registrations become available in the Lynx runtime. The library author does not need a Lynxtron-specific registration macro.
+
+</PlatformTabs.Tab>
 </PlatformTabs>
 
 ### Install a Library
@@ -129,12 +162,25 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
     "ios": {
       "sourceDir": "ios",
       "podspecPath": "ios/build.podspec"
+    },
+    "lynxtron": {
+      "path": "dist"
+    },
+    "macos": {
+      "sourceDir": "shared"
+    },
+    "windows": {
+      "sourceDir": "shared"
     }
   }
 }
 ```
 
 For Android, `platforms.android.packageName` is required, and `sourceDir` defaults to `android`. For iOS, `sourceDir` defaults to `ios`, and `podspecPath` defaults to the first `.podspec` found under the iOS source directory.
+
+`platforms.macos.sourceDir` and `platforms.windows.sourceDir` point to the source-exposed `shared/` directory, which is the cross-platform native source layout and may be reused by more platforms later.
+
+For Lynxtron, `platforms.lynxtron.path` declares the native artifact root, usually `dist`. `pluginLynxtron()` stages matching package files and verifies the artifacts; the package's `./lynxtron` export loads the current host's `.node`, such as `dist/macos/arm64/lynx-button.node` or `dist/windows/x64/lynx-button.node`.
 
 After installing or updating a library package, sync/build the Android app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
 
@@ -144,18 +190,21 @@ This section is for library authors building a reusable native package for other
 
 ### Library Package Structure
 
-A typical library package looks like this:
+A typical library package looks like this. `shared/` is for cross-platform native implementations, and packages that also ship Lynxtron native artifacts may contain a Lynxtron loading entry and per-host outputs:
 
 ```text
 lynx-button/
 ├── package.json
 ├── lynx.lib.json
 ├── types/
-│   └── index.d.ts
+│   ├── index.d.ts
+│   ├── platform-native-module.d.ts
+│   └── napi-native-module.d.ts
 ├── src/
 │   └── index.ts
 ├── generated/
-│   └── ButtonModule.ts
+│   ├── ButtonModule.ts
+│   └── ButtonModuleNapi.ts
 ├── android/
 │   └── src/main/java/com/example/button/
 │       ├── ButtonElement.java
@@ -171,14 +220,31 @@ lynx-button/
 │       └── generated/
 │           ├── ButtonModuleSpec.h
 │           └── ButtonModuleSpec.m
+├── shared/
+│   ├── CMakeLists.txt
+│   ├── nativeModule/
+│   └── elements/
+├── lynxtron/
+│   ├── CMakeLists.txt
+│   ├── index.cjs
+│   └── library_entry.cc
+├── dist/
+│   ├── macos/
+│   │   └── arm64/
+│   │       └── lynx-button.node
+│   └── windows/
+│       └── x64/
+│           └── lynx-button.node
 └── example/
 ```
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
-- `lynx.lib.json` is the Autolink contract. It tells the host app where Android and iOS source code lives.
-- `types/index.d.ts` describes typed Native Module APIs, if the library exposes any. Codegen uses these declarations to create platform specs and the JavaScript facade.
+- `lynx.lib.json` is the Autolink contract. It tells the host app where Android and iOS source code lives, and where the Lynxtron native artifact root lives.
+- `types/index.d.ts` re-exports typed Native Module declarations. Platform Native Module declarations live in `types/platform-native-module.d.ts`, and N-API Native Module declarations live in `types/napi-native-module.d.ts` when those features are selected.
 - `src/index.ts` exports the JavaScript API that app code imports.
 - `android/` and `ios/` contain native implementations and generated native specs.
+- `shared/` contains cross-platform native code, such as self-render element implementations and C++ N-API callback stubs under `shared/nativeModule/`.
+- `lynxtron/` and `dist/` contain the Lynxtron loading entry and per-host outputs.
 - `example/` is a local app used by the library author to verify the package.
 
 ### Create a Library
@@ -194,7 +260,8 @@ For scripts and tests, the same scaffold can run without prompts:
 ```bash
 npm create lynx-library -- \
   --dir ./lynx-button \
-  --types native-module,element,service \
+  --features native-module,napi-native-module,element,service \
+  --platforms android,ios,lynxtron \
   --package-name @example/lynx-button \
   --android-package com.example.button \
   --module-name ButtonModule \
@@ -205,10 +272,12 @@ npm create lynx-library -- \
 The generated package includes:
 
 - `package.json` with `"codegen": "lynx-autolink-codegen"`
-- `lynx.lib.json` for Android and iOS Autolink discovery
-- `types/index.d.ts` for typed Native Module declarations, when the library exposes Native Modules
+- `lynx.lib.json` for Android, iOS, and Lynxtron Autolink metadata
+- `types/index.d.ts`, `types/platform-native-module.d.ts`, and `types/napi-native-module.d.ts` for typed Native Module declarations, depending on the selected module features
 - `src/index.ts` for the JavaScript facade
 - `android/` and `ios/` native source folders
+- `shared/` native sources when cross-platform implementations are generated
+- `lynxtron/` loading entry when Lynxtron artifacts are generated
 - `example/`, `tsconfig.json`, and `README.md`
 
 Run codegen from the library root:
@@ -217,7 +286,7 @@ Run codegen from the library root:
 npm run codegen
 ```
 
-`lynx-autolink-codegen` reads `lynx.lib.json`. For Native Modules, it scans `types/**/*.d.ts` for `@lynxmodule` declarations:
+`lynx-autolink-codegen` reads `lynx.lib.json`. For Native Modules, it scans the Native Module declaration files under `types/` for `@lynxmodule` declarations:
 
 ```ts
 /** @lynxmodule */
@@ -230,14 +299,15 @@ export declare class ButtonModule {
 It generates:
 
 - `generated/<ModuleName>.ts` for the JavaScript facade
-- Android `<ModuleName>Spec.java`
-- iOS `<ModuleName>Spec.h` and `<ModuleName>Spec.m`
+- Android `<ModuleName>Spec.java` for Android platform native modules
+- iOS `<ModuleName>Spec.h` and `<ModuleName>Spec.m` for iOS platform native modules
+- shared C++ N-API callback stubs under `shared/nativeModule/` for N-API native modules
 
-The first version supports `void`, `string`, `number`, `boolean`, and nullable unions with `null`.
+Codegen supports primitive values, nullable unions with `null`, arrays, objects/maps/sets, promises, and N-API wrapped value types such as `ArrayBuffer`, typed arrays, `BigInt`, `Date`, `Function`, `Symbol`, `Buffer`, and `Value`.
 
 ### Write Native APIs
 
-Use the Lynx annotations and registration macros in native source files so Autolink can discover each library's capabilities. Native Modules usually extend the spec generated by `lynx-autolink-codegen`; Elements and Services are discovered from their native markers.
+Use platform-specific Lynx annotations or registration APIs in native source files so Autolink can discover each library's capabilities. On Android and iOS, Native Modules usually extend the spec generated by `lynx-autolink-codegen`, and Elements and Services are discovered from their native markers.
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -465,10 +535,19 @@ NS_ASSUME_NONNULL_END
 @end
 ```
 
+On iOS, Autolink scans `@LynxNativeModule(...)`, `@LynxElement(...)`, and `@LynxService(...)` declarations from library sources and adds the discovered capabilities to the generated registry. The legacy iOS Service API still provides `@LynxServiceRegister(...)` for existing code. New library code should use `@LynxService(...)`.
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="lynxtron">
+
+Lynxtron native libraries use the shared Lynx C/C++ extension APIs and static registration macros. This page only covers how Autolink discovers and loads packages. For implementation details, use the Desktop (Node-API) tab for Native Modules and the Desktop tab for Custom Native Elements:
+
+- [Native Modules for Desktop (Node-API)](/guide/use-native-modules?platform=node-api)
+- [Custom Native Elements for Desktop](/guide/custom-native-component?platform=desktops)
+
 </PlatformTabs.Tab>
 </PlatformTabs>
-
-On iOS, Autolink scans `@LynxNativeModule(...)`, `@LynxElement(...)`, and `@LynxService(...)` declarations from library sources and adds the discovered capabilities to the generated registry. The legacy iOS Service API still provides `@LynxServiceRegister(...)` for existing code. New library code should use `@LynxService(...)`.
 
 ### Distribute a Library
 
@@ -476,4 +555,4 @@ Publish the library like any other npm package: pick a name, often scoped as `@e
 
 ## How Autolink Works
 
-Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates a per-app registry that lists every Element, Native Module, and Service the installed libraries expose. Android registry generation runs through the Gradle settings and build plugins; iOS registry generation runs through the CocoaPods plugin and emits a registry pod. The host app loads the generated registry once during `LynxEnv` initialization, which is why no per-library wiring code lives in the host.
+Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates or feeds host integration data for the current platform. Android registry generation runs through the Gradle settings and build plugins; iOS registry generation runs through the CocoaPods plugin and emits a registry pod. The host app loads the generated registry once during `LynxEnv` initialization, which is why no per-library wiring code lives in the Android or iOS host. Lynxtron Autolink runs in the host Rspack build: it stages matching native packages, injects a loader into the host bundle, and lets the loaded library's Lynx static registrations provide its native modules and elements.

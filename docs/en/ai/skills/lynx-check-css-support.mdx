@@ -1,0 +1,85 @@
+---
+description: 'Check Lynx CSS support by property, nested feature, rendering backend, and Lynx version.'
+---
+
+# lynx-check-css-support
+
+Queries bundled [`@lynx-js/css-defines`](https://www.npmjs.com/package/@lynx-js/css-defines) compatibility data to determine whether a CSS property or nested feature is available on a specific Lynx rendering backend and version. It gives coding agents structured evidence instead of relying on browser behavior, examples, or TypeScript types to infer Lynx support.
+
+Use it when an agent needs to:
+
+- check whether a CSS property or value is supported in Lynx or ReactLynx
+- compare support across the backends declared by the dataset, including Android, iOS, HarmonyOS, Web Lynx, and Clay variants
+- find the Lynx version in which support was added
+- verify whether a proposed style change is compatible with the application's target versions
+- inspect the raw compatibility definition or check whether a newer dataset is available
+
+## Installation
+
+```bash
+npx skills add lynx-community/skills -s lynx-check-css-support
+```
+
+This installs the skill and its pinned compatibility dataset so compatible coding agents can run queries without downloading or executing packages at query time.
+
+## Ask a Compatibility Question
+
+Include the property, nested feature or value when relevant, rendering backend, and target Lynx version in your request. For example:
+
+```text
+Use lynx-check-css-support to check whether display: grid is available on Android in Lynx 2.0, and tell me when it was added.
+```
+
+```text
+Compare gap support across every Lynx rendering backend and include the dataset version.
+```
+
+The skill runs its bundled CLI. A detailed query looks like this:
+
+```bash
+node <skill-directory>/scripts/query-css-compat.mjs display \
+  --feature grid \
+  --backend android \
+  --lynx-version 2.0
+```
+
+Nested feature keys are case-sensitive and may contain punctuation. If the exact key is unknown, the agent can inspect the property's raw `compat_data` with `--json` before running a targeted query.
+
+## Understand the Result
+
+Every answer should include the queried property and feature, backend and target version, published `version_added` value or condition, relevant notes, `partial_implementation`, deprecated or experimental status, and the bundled `@lynx-js/css-defines` version.
+
+The CLI classifies the result as:
+
+- `available`: supported at the requested version, or supported at some version when no target was supplied
+- `requires-newer-version`: supported only after the requested version
+- `conditional`: gated by a non-numeric condition such as a `targetSdkVersion` requirement
+- `unavailable`: explicitly unsupported
+- `unknown`: not established by the dataset
+
+If a definition has no `compat_data`, compatibility is unspecified rather than unsupported. Declared availability also does not guarantee browser parity or describe runtime behavior.
+
+Backend support comes from `compat_data.__compat.support`. The skill does not infer support from a definition's top-level `version` or a value's `version` field.
+
+:::tip
+Use this skill to establish **whether and when** a feature is available. For syntax, behavior, layout semantics, and examples, continue with the [CSS reference](/api/css/properties) and [API status dashboard](/api/status).
+:::
+
+## Keep the Dataset Current
+
+Normal queries use the dataset bundled with the skill and do not require network access. When freshness matters, the agent can run:
+
+```bash
+node <skill-directory>/scripts/query-css-compat.mjs --check-updates
+```
+
+This checks the latest numeric package version in the public npm registry. It does not download a new dataset or modify the installed skill; if an update exists, update the skill to use the reviewed compatibility data from a newer release.
+
+## Learn More
+
+- [Lynx CSS property reference](/api/css/properties)
+- [Lynx API status dashboard](/api/status)
+- [Bundle and Lynx Engine compatibility guide](/guide/compatibility)
+- [lynx-check-css-support skill source](https://github.com/lynx-community/skills/tree/release/skills/lynx-check-css-support)
+- [lynx-community/skills on GitHub](https://github.com/lynx-community/skills)
+- [Agent Skills specification](https://agentskills.io/specification)
