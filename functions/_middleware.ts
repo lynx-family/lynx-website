@@ -3,8 +3,17 @@ import versionJson from '../docs/public/version.json';
 
 interface CFEventContext {
   request: Request;
-  next: () => Promise<Response>;
-  env: Record<string, string | undefined>;
+  next: (input?: Request | string) => Promise<Response>;
+  env: {
+    ASSETS?: {
+      fetch: (
+        input: RequestInfo | URL,
+        init?: RequestInit,
+      ) => Promise<Response>;
+    };
+    [key: string]: unknown;
+  };
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 // Cloudflare Pages project name — used to build branch-deploy URLs.
@@ -16,6 +25,38 @@ const SITE_VERSION = versionJson.current_version;
 const KNOWN_VERSIONS = new Set(
   versionJson.versions.map((v: { version_number: string }) => v.version_number),
 );
+
+function buildProxiedResponse(resp: Response) {
+  const newHeaders = new Headers(resp.headers);
+  newHeaders.delete('x-frame-options');
+
+  // Edge-cache proxied docs briefly so version switches / prefetch warm hits.
+  // HTML stays short-lived; hashed assets can be reused longer.
+  const contentType = newHeaders.get('content-type') || '';
+  if (!newHeaders.has('Cache-Control')) {
+    if (contentType.includes('text/html')) {
+      newHeaders.set(
+        'Cache-Control',
+        'public, max-age=60, stale-while-revalidate=300',
+      );
+    } else if (
+      contentType.includes('javascript') ||
+      contentType.includes('css') ||
+      contentType.includes('font') ||
+      contentType.includes('image')
+    ) {
+      newHeaders.set(
+        'Cache-Control',
+        'public, max-age=86400, stale-while-revalidate=604800',
+      );
+    }
+  }
+
+  return new Response(resp.body, {
+    status: resp.status,
+    headers: newHeaders,
+  });
+}
 
 export const onRequest = async (context: CFEventContext) => {
   if (context.request.headers.get(PROXY_HEADER)) {
@@ -34,12 +75,14 @@ export const onRequest = async (context: CFEventContext) => {
   const version = match[1];
   const rest = match[2] || '/';
 
-  // Current version → 302 strip prefix (works on all deployments)
+  // Current version → internal rewrite (avoid an extra 302 hop)
   if (version === SITE_VERSION) {
-    return Response.redirect(
-      new URL(rest + url.search, url.origin).toString(),
-      302,
-    );
+    const rewriteUrl = new URL(rest + url.search, url.origin);
+    if (context.env.ASSETS?.fetch) {
+      return context.env.ASSETS.fetch(new Request(rewriteUrl, context.request));
+    }
+    // Fallback for environments without the Pages ASSETS binding
+    return Response.redirect(rewriteUrl.toString(), 302);
   }
 
   // Other known versions → only proxy on production
@@ -53,6 +96,22 @@ export const onRequest = async (context: CFEventContext) => {
   const origin = `https://${CF_PAGES_PROJECT}-${branch}.pages.dev`;
   const proxyUrl = origin + rest + url.search;
 
+  const cache =
+    typeof caches !== 'undefined'
+      ? // Cloudflare Workers Cache API
+        (caches as unknown as { default: Cache }).default
+      : undefined;
+
+  const isCacheableGet = context.request.method === 'GET';
+  const cacheKey = new Request(proxyUrl, { method: 'GET' });
+
+  if (isCacheableGet && cache) {
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const headers = new Headers(context.request.headers);
   headers.set(PROXY_HEADER, '1');
 
@@ -61,11 +120,18 @@ export const onRequest = async (context: CFEventContext) => {
     headers,
   });
 
-  const newHeaders = new Headers(resp.headers);
-  newHeaders.delete('x-frame-options');
+  const proxied = buildProxiedResponse(resp);
 
-  return new Response(resp.body, {
-    status: resp.status,
-    headers: newHeaders,
-  });
+  if (isCacheableGet && cache && resp.ok) {
+    const cachedResponse = proxied.clone();
+    const putPromise = cache.put(cacheKey, cachedResponse);
+    if (context.waitUntil) {
+      context.waitUntil(putPromise);
+    } else {
+      // Best-effort when waitUntil is unavailable
+      void putPromise;
+    }
+  }
+
+  return proxied;
 };
