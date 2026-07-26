@@ -58,6 +58,19 @@ function buildProxiedResponse(resp: Response) {
   });
 }
 
+function isResponseCacheable(resp: Response) {
+  const cacheControl = resp.headers.get('cache-control')?.toLowerCase() || '';
+  const disallowsCaching = /(?:^|,)\s*(?:private|no-store|no-cache)\b/.test(
+    cacheControl,
+  );
+
+  return (
+    !disallowsCaching &&
+    !resp.headers.has('set-cookie') &&
+    resp.headers.get('vary')?.trim() !== '*'
+  );
+}
+
 export const onRequest = async (context: CFEventContext) => {
   if (context.request.headers.get(PROXY_HEADER)) {
     return context.next();
@@ -122,7 +135,7 @@ export const onRequest = async (context: CFEventContext) => {
 
   const proxied = buildProxiedResponse(resp);
 
-  if (isCacheableGet && cache && resp.ok) {
+  if (isCacheableGet && cache && resp.ok && isResponseCacheable(proxied)) {
     const cachedResponse = proxied.clone();
     const putPromise = cache.put(cacheKey, cachedResponse);
     if (context.waitUntil) {
