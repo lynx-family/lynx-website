@@ -12,6 +12,12 @@
   // otherwise the line box sits at the top and the label looks top-heavy —
   // the regression from #1155, which updated the mobile line-height but left
   // desktop at the old 32px value from when flex was doing the centering.
+  //
+  // Also zero vertical padding: Rspress's default `.rp-home-hero__badge`
+  // ships `padding: .5rem 1rem`, and setting only padding-left/right leaves
+  // the 8px top/bottom. Under border-box that shrinks the content box
+  // (mobile: 28 − 2×border − 16 = 10px) so line-height centering never
+  // lands — which is why #1206 still looked off on mobile.
   display: block;
   max-width: 100%;
   box-sizing: border-box;
@@ -29,8 +35,8 @@
   font-weight: 500;
   // content box = 36px − 2×1px border
   line-height: 34px;
-  padding-left: 43px;
-  padding-right: 20px;
+  // shorthand so we fully override Rspress's padding (not just left/right)
+  padding: 0 20px 0 43px;
   transition: all 0.3s ease;
   user-select: none;
   opacity: 0;
@@ -41,8 +47,7 @@
     height: 28px;
     // content box = 28px − 2×1px border
     line-height: 26px;
-    padding-left: 38px;
-    padding-right: 16px;
+    padding: 0 16px 0 38px;
   }
 
   &.active-hover {
