@@ -9,10 +9,12 @@ import {
 } from '@rspress/core/theme-original';
 import { useRef } from 'react';
 import { DeferredComponent } from '../deferred-client';
-import { LynxUIBelowHero } from './below-hero';
 
 const loadWarpBackground = () =>
   import('./WarpBackground').then((m) => m.WarpBackground);
+
+const loadLynxUIBelowHero = () =>
+  import('./below-hero').then((m) => m.LynxUIBelowHero);
 
 export const HomeLayout = () => {
   const { pre: PreWithCodeButtonGroup, code: Code } =
@@ -75,7 +77,22 @@ export const HomeLayout = () => {
       />
       <div className="home-layout-container relative z-10">
         <BaseHomeLayout afterHeroActions={afterHeroActions} />
-        <LynxUIBelowHero />
+        <DeferredComponent
+          loader={loadLynxUIBelowHero}
+          idle
+          props={{}}
+          errorFallback={(_error, retry) => (
+            <div className="flex justify-center py-8">
+              <button
+                type="button"
+                className="rounded-md border px-4 py-2 text-sm"
+                onClick={retry}
+              >
+                Retry loading content
+              </button>
+            </div>
+          )}
+        />
       </div>
     </div>
   );
