@@ -110,8 +110,11 @@ const useBlogBtnDom = (src: string) => {
       configKey === '/'
         ? `rp-home-hero__badge active-hover`
         : `rp-home-hero__badge`;
-    badgeElement.textContent = displayText;
-    badgeElement.style.opacity = '1';
+    // Upgrade SSG fallback copy when the latest blog title is available.
+    // Badge stays visible the whole time (opacity is 1 in CSS).
+    if (displayText) {
+      badgeElement.textContent = displayText;
+    }
 
     if (configKey === '/') {
       badgeElement.addEventListener('click', handleInteraction);

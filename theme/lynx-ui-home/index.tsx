@@ -3,16 +3,16 @@
 // LICENSE file in the root directory of this source tree.
 
 import './index.scss';
-import { WarpBackground } from './WarpBackground';
 import {
   HomeLayout as BaseHomeLayout,
   getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
 import { useRef } from 'react';
-import { ClearAPI } from './ClearApi';
-import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
-import { StartBuilding } from './StartBuildingBottom';
-import { LunaStudioShowcase } from '@site/src/luna';
+import { DeferredComponent } from '../deferred-client';
+import { LynxUIBelowHero } from './below-hero';
+
+const loadWarpBackground = () =>
+  import('./WarpBackground').then((m) => m.WarpBackground);
 
 export const HomeLayout = () => {
   const { pre: PreWithCodeButtonGroup, code: Code } =
@@ -52,37 +52,30 @@ export const HomeLayout = () => {
 
   return (
     <div className="lynx-ui-home-warp">
-      <WarpBackground
-        className="beam-background"
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          height: '70vh',
-          pointerEvents: 'none',
-          zIndex: 0,
+      <DeferredComponent
+        loader={loadWarpBackground}
+        idle
+        props={{
+          className: 'beam-background',
+          style: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            height: '70vh',
+            pointerEvents: 'none',
+            zIndex: 0,
+          },
+          beamSize: 0.5,
+          beamsPerSide: 7,
+          perspective: 500,
+          gridSize: 3,
+          gridLineWidth: 0.5,
         }}
-        beamSize={0.5}
-        beamsPerSide={7}
-        perspective={500}
-        gridSize={3}
-        gridLineWidth={0.5}
       />
       <div className="home-layout-container relative z-10">
         <BaseHomeLayout afterHeroActions={afterHeroActions} />
-        <div className="luna-studio-showcase-home mx-auto w-full max-w-screen-2xl md:px-4 lg:px-8">
-          <LunaStudioShowcase
-            className="px-4 md:px-6 lg:px-8 py-8 md:py-4"
-            defaultViewMode="lineup"
-            responsiveMode="viewport"
-          />
-        </div>
-        <div className="flex flex-col">
-          <ClearAPI />
-          <ConsistencyAndPerformance />
-          <StartBuilding />
-        </div>
+        <LynxUIBelowHero />
       </div>
     </div>
   );
