@@ -42,8 +42,10 @@ function buildVersionPath(version: string) {
   const normalizedRest = pathWithoutBase.startsWith('/')
     ? pathWithoutBase
     : `/${pathWithoutBase}`;
+  const versionlessRest =
+    normalizedRest.replace(/^\/(?:next|\d+\.\d+)(?=\/|$)/, '') || '/';
 
-  return `/${version}${normalizedRest === '/' ? '/' : normalizedRest}${searchParams}`;
+  return `/${version}${versionlessRest}${searchParams}`;
 }
 
 function prefetchVersionPath(path: string) {
@@ -127,7 +129,9 @@ export function VersionIndicator() {
     return () => {
       if (pendingTimerRef.current) {
         clearTimeout(pendingTimerRef.current);
+        pendingTimerRef.current = null;
       }
+      delete document.documentElement.dataset.versionSwitching;
     };
   }, []);
 
@@ -144,6 +148,7 @@ export function VersionIndicator() {
 
     // Let the pending UI paint before the hard navigation blocks the main thread.
     pendingTimerRef.current = setTimeout(() => {
+      pendingTimerRef.current = null;
       window.location.assign(newPath);
     }, 50);
   };
