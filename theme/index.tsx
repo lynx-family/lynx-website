@@ -25,30 +25,41 @@ import {
 } from 'react';
 
 import './index.scss';
-import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 
-import {
-  Banner,
-  Features,
-  Footer,
-  MeteorsBackground,
-  ShowCase,
-} from '@/components/home-comps';
+import { Footer } from '@/components/home-comps/footer';
 import { SUBSITES_CONFIG } from '@site/shared-route-config';
 import versionJson from '../docs/public/version.json';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
+import { DeferredComponent } from './deferred-client';
+import { HomeAfterHero } from './home-after-hero';
+import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 import OgHead from './OgHead';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
 const CURRENT_VERSION_BASE = `/${versionJson.current_version}`;
 
+const loadMeteorsBackground = () =>
+  import('@/components/home-comps/meteors-background').then(
+    (m) => m.MeteorsBackground,
+  );
+
+/** Delay typing so the SSG hero title can paint / count for LCP first. */
+const TYPING_START_DELAY_MS = 1600;
+
 // Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
   const segments = pathname.split('/');
-  return SUBSITES_CONFIG.find((s) =>
-    segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-  );
+  return SUBSITES_CONFIG.find((s) => {
+    if (s.value === 'ui') {
+      return segments.some((seg) => {
+        const normalized = seg.replace(/\.html$/, '');
+        return normalized === s.value || normalized === 'lynx-ui';
+      });
+    }
+
+    return segments.some((seg) => seg.replace(/\.html$/, '') === s.value);
+  });
 };
 
 const NULL_BYTE_RE = /\u0000/g;
@@ -143,6 +154,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
   const [delta, setDelta] = useState(200);
   const [isPaused, setIsPaused] = useState(false);
+  const [typingEnabled, setTypingEnabled] = useState(false);
 
   const routePath = useMemo(() => {
     let tmp = page.routePath.replace('/zh/', '/');
@@ -172,10 +184,18 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     const dynamicSpan = titleTextSpan.querySelector('.dynamic-text');
     const suffixSpan = titleTextSpan.querySelector('.suffix-text');
 
+    // Prefer updating existing SSG spans so we never clear the painted title.
     if (!dynamicSpan || !suffixSpan) {
-      titleTextSpan.innerHTML = `
-        <span class="dynamic-text">${dynamicText}</span><span class="suffix-text">${suffix}</span>
-      `;
+      titleTextSpan.replaceChildren(
+        Object.assign(document.createElement('span'), {
+          className: 'dynamic-text',
+          textContent: dynamicText,
+        }),
+        Object.assign(document.createElement('span'), {
+          className: 'suffix-text',
+          textContent: suffix,
+        }),
+      );
     } else {
       dynamicSpan.textContent = dynamicText;
       suffixSpan.textContent = suffix;
@@ -208,19 +228,31 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       setIsPaused(false);
       setDelta(200);
       setText(isZh ? `${zhWords[0]}${zhSuffix}` : `${enWords[0]}${enSuffix}`);
+      setTypingEnabled(false);
     }
-  }, [isZh, page]); // Watch both language and path changes
+  }, [isZh, page, routePath]); // Watch both language and path changes
+
+  // Let the static SSG title paint before starting the typing loop.
+  useEffect(() => {
+    if (routePath !== '/') {
+      return;
+    }
+
+    const startId = window.setTimeout(() => {
+      setTypingEnabled(true);
+    }, TYPING_START_DELAY_MS);
+
+    return () => clearTimeout(startId);
+  }, [routePath, isZh, page]);
 
   useEffect(() => {
-    const isHomePage = routePath === '/';
-
-    if (!isHomePage) {
+    if (routePath !== '/' || !typingEnabled) {
       return;
     }
 
     const ticker = setInterval(updateText, delta);
     return () => clearInterval(ticker);
-  }, [updateText, delta, page]);
+  }, [updateText, delta, page, routePath, typingEnabled]);
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
@@ -230,14 +262,9 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   >;
 
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
+  // Keep afterHero on the SSG path so feature cards / showcase are in the first HTML response.
   const {
-    afterHero = (
-      <>
-        <Features src={routePath} />
-        {routePath === '/' && <ShowCase />}
-        {routePath === '/' && <Banner />}
-      </>
-    ),
+    afterHero = <HomeAfterHero routePath={routePath} />,
     afterHeroActions = (
       <>
         <div
@@ -267,7 +294,11 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   return (
     <>
-      <MeteorsBackground gridSize={120} meteorCount={3} />
+      <DeferredComponent
+        loader={loadMeteorsBackground}
+        idle
+        props={{ gridSize: 120, meteorCount: 3 }}
+      />
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
