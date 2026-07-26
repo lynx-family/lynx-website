@@ -1,5 +1,5 @@
 import { useLocation, withBase, useI18n, useLang } from '@rspress/core/runtime';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   HoverCard,
   HoverCardContent,
@@ -8,13 +8,15 @@ import {
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 
 import { getLangPrefix } from '../shared-route-config';
 import versionJson from '../docs/public/version.json';
 
 const menuItemClassName =
   'relative flex w-full cursor-default select-none items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
+
+const PREFETCHED = new Set<string>();
 
 function shouldHideVersion(version: string) {
   if (version === '3.2' || version === '3.3') {
@@ -28,12 +30,64 @@ function shouldHideVersion(version: string) {
   return false;
 }
 
+function buildVersionPath(version: string) {
+  const currentPath = window.location.pathname;
+  const searchParams = window.location.search;
+
+  const currentBasePath = withBase('');
+  const pathWithoutBase = currentPath.startsWith(currentBasePath)
+    ? currentPath.slice(currentBasePath.length)
+    : currentPath;
+
+  const normalizedRest = pathWithoutBase.startsWith('/')
+    ? pathWithoutBase
+    : `/${pathWithoutBase}`;
+
+  return `/${version}${normalizedRest === '/' ? '/' : normalizedRest}${searchParams}`;
+}
+
+function prefetchVersionPath(path: string) {
+  if (typeof document === 'undefined' || PREFETCHED.has(path)) {
+    return;
+  }
+  PREFETCHED.add(path);
+
+  // Warm the edge proxy cache (and browser HTTP cache) before click.
+  // A real GET hits functions/_middleware.ts so caches.default can be filled.
+  void fetch(path, {
+    method: 'GET',
+    credentials: 'same-origin',
+    ...({ priority: 'low' } as object),
+  }).catch(() => {
+    // Prefetch is best-effort; navigation still works without it.
+  });
+}
+
+function VersionSwitchProgress({ active }: { active: boolean }) {
+  if (!active) {
+    return null;
+  }
+
+  return (
+    <div
+      className="version-switch-progress"
+      role="progressbar"
+      aria-busy="true"
+      aria-label="Loading documentation version"
+    >
+      <div className="version-switch-progress__bar" />
+    </div>
+  );
+}
+
 export function VersionIndicator() {
   var { pathname } = useLocation();
   const langPrefix = getLangPrefix(useLang());
   const [versions, setVersions] = useState<string[]>(['next']);
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingVersion, setPendingVersion] = useState<string | null>(null);
   const isMobile = useIfMobile();
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showIndicator = () => {
     if (pathname.startsWith('/zh')) {
@@ -69,18 +123,29 @@ export function VersionIndicator() {
     fetchVersions();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (pendingTimerRef.current) {
+        clearTimeout(pendingTimerRef.current);
+      }
+    };
+  }, []);
+
   const changeVersion = (version: string) => {
+    if (version === versionJson.current_version || pendingVersion) {
+      setIsOpen(false);
+      return;
+    }
+
+    const newPath = buildVersionPath(version);
+    setPendingVersion(version);
     setIsOpen(false);
-    const currentPath = window.location.pathname;
-    const searchParams = window.location.search;
+    document.documentElement.dataset.versionSwitching = 'true';
 
-    const currentBasePath = withBase('');
-    const pathWithoutBase = currentPath.startsWith(currentBasePath)
-      ? currentPath.slice(currentBasePath.length)
-      : currentPath;
-
-    const newPath = `/${version}/${pathWithoutBase}`;
-    window.location.href = newPath + searchParams;
+    // Let the pending UI paint before the hard navigation blocks the main thread.
+    pendingTimerRef.current = setTimeout(() => {
+      window.location.assign(newPath);
+    }, 50);
   };
 
   const viewAllVersions = () => {
@@ -93,27 +158,49 @@ export function VersionIndicator() {
   const filteredVersions = versions.filter(
     (version) => !shouldHideVersion(version),
   );
+  const isSwitching = pendingVersion !== null;
 
   const versionMenu = (
     <div className="p-2" role="menu" aria-orientation="vertical">
-      {filteredVersions.map((version) => (
-        <button
-          key={version}
-          type="button"
-          role="menuitem"
-          className={cn(
-            menuItemClassName,
-            version === displayVersion && 'bg-primary/10 text-primary',
-          )}
-          onClick={() => changeVersion(version)}
-        >
-          {version}
-        </button>
-      ))}
+      {filteredVersions.map((version) => {
+        const isCurrent = version === displayVersion;
+        const isPending = pendingVersion === version;
+        return (
+          <button
+            key={version}
+            type="button"
+            role="menuitem"
+            disabled={isSwitching}
+            className={cn(
+              menuItemClassName,
+              isCurrent && 'bg-primary/10 text-primary',
+              isPending && 'bg-primary/10 text-primary',
+              isSwitching && !isPending && 'opacity-50',
+            )}
+            onMouseEnter={() => {
+              if (!isCurrent && !isSwitching) {
+                prefetchVersionPath(buildVersionPath(version));
+              }
+            }}
+            onFocus={() => {
+              if (!isCurrent && !isSwitching) {
+                prefetchVersionPath(buildVersionPath(version));
+              }
+            }}
+            onClick={() => changeVersion(version)}
+          >
+            <span className="flex-1">{version}</span>
+            {isPending && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin opacity-70" />
+            )}
+          </button>
+        );
+      })}
       <button
         type="button"
         role="menuitem"
-        className={menuItemClassName}
+        disabled={isSwitching}
+        className={cn(menuItemClassName, isSwitching && 'opacity-50')}
         onClick={() => viewAllVersions()}
       >
         {t('all_versions')}
@@ -126,34 +213,55 @@ export function VersionIndicator() {
       type="button"
       aria-expanded={isOpen}
       aria-haspopup={isMobile ? 'dialog' : 'menu'}
-      className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1"
+      aria-busy={isSwitching}
+      disabled={isSwitching}
+      className="flex items-center rounded-md px-1.5 py-2 text-sm text-foreground hover:bg-accent -ml-1 -mb-1 disabled:opacity-70"
     >
-      {displayVersion}{' '}
-      <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
+      {isSwitching ? pendingVersion : displayVersion}{' '}
+      {isSwitching ? (
+        <Loader2 className="h-4 w-4 ml-1 animate-spin" strokeWidth={1.5} />
+      ) : (
+        <ChevronDown className="h-4 w-4 ml-1" strokeWidth={1.5} />
+      )}
     </button>
   );
 
   return (
-    showIndicator() &&
-    (isMobile ? (
-      <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-        <DrawerContent>
-          <div className="py-5 px-4 pb-7">{versionMenu}</div>
-        </DrawerContent>
-      </Drawer>
-    ) : (
-      <HoverCard
-        openDelay={0}
-        closeDelay={200}
-        open={isOpen}
-        onOpenChange={setIsOpen}
-      >
-        <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
-        <HoverCardContent className="w-28 p-0" align="start">
-          {versionMenu}
-        </HoverCardContent>
-      </HoverCard>
-    ))
+    showIndicator() && (
+      <>
+        <VersionSwitchProgress active={isSwitching} />
+        {isMobile ? (
+          <Drawer
+            open={isOpen}
+            onOpenChange={(open) => {
+              if (!isSwitching) {
+                setIsOpen(open);
+              }
+            }}
+          >
+            <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+            <DrawerContent>
+              <div className="py-5 px-4 pb-7">{versionMenu}</div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <HoverCard
+            openDelay={0}
+            closeDelay={200}
+            open={isOpen}
+            onOpenChange={(open) => {
+              if (!isSwitching) {
+                setIsOpen(open);
+              }
+            }}
+          >
+            <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
+            <HoverCardContent className="w-32 p-0" align="start">
+              {versionMenu}
+            </HoverCardContent>
+          </HoverCard>
+        )}
+      </>
+    )
   );
 }
