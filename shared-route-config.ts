@@ -3,8 +3,19 @@
  */
 import versionJson from './docs/public/version.json';
 
+export const SITE_BASE = versionJson.versions.find(
+  (version) => version.version_number === versionJson.current_version,
+)?.docs_link;
+
+if (!SITE_BASE) {
+  throw new Error(
+    `Missing docs_link for current version ${versionJson.current_version}`,
+  );
+}
+
 /** This build's Rspress base as a URL prefix — matches rspress.config.ts. */
-export const SITE_BASE_PREFIX = `/${versionJson.current_version}`;
+export const SITE_BASE_PREFIX =
+  SITE_BASE === '/' ? '' : SITE_BASE.replace(/\/$/, '');
 
 const developingDocsLink = versionJson.versions.find(
   (version) => version.type === 'developing',
