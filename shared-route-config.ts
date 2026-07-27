@@ -1,6 +1,17 @@
 /**
  * Sub-sites and shared docs configuration
  */
+import versionJson from './docs/public/version.json';
+
+export const SITE_BASE = versionJson.versions.find(
+  (version) => version.version_number === versionJson.current_version,
+)?.docs_link;
+
+if (!SITE_BASE) {
+  throw new Error(
+    `Missing docs_link for current version ${versionJson.current_version}`,
+  );
+}
 
 /**
  * Metadata for each subsites. This is used to
