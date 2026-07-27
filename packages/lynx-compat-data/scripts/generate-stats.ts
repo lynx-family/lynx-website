@@ -175,8 +175,6 @@ const PLATFORM_API_CATEGORIES = new Set(
 const RECENT_VERSIONS = ['3.9', '4.0', '4.1'];
 
 // How many version.json history entries to include in the Coverage Trend.
-const TIMELINE_VERSION_COUNT = 14;
-
 interface APIInfo {
   path: string;
   name: string;
@@ -675,8 +673,9 @@ function calculateTimeline(
   allFeatures: FeatureInfo[],
   versionHistory: Array<{ version: string; release_date?: string }>,
 ): TimelinePoint[] {
-  // Use the most recent release window so the trend chart reaches current.
-  const recentVersions = versionHistory.slice(-TIMELINE_VERSION_COUNT);
+  // Emit the full version history so the Coverage page can let users pick
+  // any from/to window. The UI defaults to a recent slice.
+  const recentVersions = versionHistory;
 
   // Only count shared features in Platform API categories (supported by at least 2 platforms)
   const relevantFeatures = allFeatures.filter((f) => {
