@@ -32,33 +32,23 @@ Together, these capabilities cover input and keyboards, independent overlay laye
 
 But code entering a repository does not mean that a capability has fully entered an ecosystem. Platform support, stability levels, known differences, changelogs, migration paths, and automated tests determine whether developers can depend on it. **Between open code and a dependable capability lies a public semantic and maintenance commitment.**
 
-## A Component Ecosystem Is Not an Element Wrapper
+## XElement × lynx-ui: From a Linear Stack to a Feedback System
 
 Describing a component ecosystem as “a component wrapper around an Element” assumes a linear model: the native layer first defines a complete capability, then the frontend consumes it. Real cross-platform UI does not evolve along such a one-way path.
 
-If every product interaction becomes another native property, the Element API surface expands without bound and lower-level implementations struggle to keep pace. If platform differences, performance switches, and compatibility strategies all move into the frontend, every DSL and product team pays the same engineering cost again.
+If every product interaction becomes another native property, the Element API surface expands without bound and lower-level implementations struggle to keep pace. If platform differences, performance switches, and compatibility strategies all move into the frontend, every DSL and product team pays the same engineering cost again. Native ownership of performance does not mean native code should define every product behavior. Frontend ownership of composition does not mean the frontend should repeatedly solve every platform difference.
 
-Native ownership of performance does not mean native code should define every product behavior. Frontend ownership of composition does not mean the frontend should repeatedly solve every platform difference. The ecosystem problem is therefore not “native or frontend.” It is three related questions that cannot replace one another:
+The relationship among XElement, Element, and lynx-ui therefore cannot be explained by a static division of responsibility alone. Element APIs are constrained by native platform capabilities, but they are also reshaped by the real needs of higher-level components. lynx-ui consumes lower-level capabilities while using component models, tests, and product scenarios to help define what dependable cross-platform behavior should mean.
 
-1. **Execution:** Where should performance-sensitive behavior run?
-2. **Semantics:** What does a cross-platform capability promise?
-3. **Composition:** How do these capabilities become reusable product experiences?
+A more accurate way to observe the system is through two flows moving in opposite directions:
 
-## XElement × lynx-ui: From a Linear Stack to a Feedback System
+> **Capability Flow: Platform capability → XElement implementation → Element contract → lynx-ui composition → Product experience**
+>
+> **Feedback Flow: Product requirements and tests → Component model → Element semantics → XElement implementation**
 
-### Three Boundaries: Carrier, Contract, and Composition
+In the Capability Flow, [XElement](/guide/ui/elements-components#xelement) expands what Lynx can express natively while absorbing differences in platform APIs, thread models, performance, and compatibility. Elements expose those capabilities through developer-facing APIs, events, and state. [lynx-ui](https://github.com/lynx-family/lynx-ui) organizes them into headless components that ReactLynx developers can use directly.
 
-When we look only at where code lives, XElement, Element, and lynx-ui can appear to form a static stack. From the perspective of ecosystem responsibility, they play three different roles:
-
-- **XElement is the Capability Carrier:** it carries capabilities that do not belong directly in the Engine but still require native-platform or main-thread integration, including their concrete implementations across Android, iOS, and HarmonyOS;
-- **Element is the Semantic Contract:** it defines APIs, core behavior, cross-platform semantics, compatibility status, and fallback expectations—the boundary that different implementations and DSLs can rely on together;
-- **lynx-ui is the Composition Surface:** it organizes Elements, state, and interaction into headless components for ReactLynx developers, while exposing those abstractions to validation in real product scenarios.
-
-These roles also answer the three questions above. Performance-sensitive Execution belongs in the Capability Carrier. Dependable Semantics form the Semantic Contract. Product experiences are organized through the Composition Surface.
-
-> **Cross-platform UI = Capability Carrier × Semantic Contract × Composition Surface**
-
-[XElement](/guide/ui/elements-components#xelement) and [lynx-ui](https://github.com/lynx-family/lynx-ui) are therefore not a one-way stack in which one disappears behind the other. XElement expands what Lynx can express natively. lynx-ui determines how those capabilities can be used in a stable and composable way. Performance, semantic, and compatibility issues revealed by real components then drive Elements and XElements forward again.
+In the Feedback Flow, the direction reverses. Real components expose gaps in containers, lifecycle, events, animation, and accessibility. Those findings first refine component models and Element semantics, then flow into XElement implementations and tests on each platform. Element is therefore not a third ecosystem standing between XElement and lynx-ui. It is the public interface they rely on together as a capability is used, discussed, and validated.
 
 ![The XElement native extension ecosystem connects to lynx-ui and other DSL component libraries through the shared Element contract, while frontend usage feeds API, compatibility, performance, and testing needs back into XElement](/assets/blog/lynx-elements-to-component-ecosystem/xelement-lynx-ui-ecosystem.en.svg)
 
@@ -67,9 +57,7 @@ These roles also answer the three questions above. Performance-sensitive Executi
   loop through the Element contract and real product scenarios.
 </Caption>
 
-### Overlay: From Native Capability to Component Composition
-
-Overlay shows how this technical feedback loop works.
+Overlay shows how both flows can operate within the same capability.
 
 As part of XElement, the native `<overlay>` element solves an independent-layer rendering problem. It lets content escape the clipping and stacking constraints of the regular view tree and render in the appropriate native container. But `<overlay>` does not know what a dialog is, nor does it manage open and close state, enter and exit animation, anchor positioning, or drag-to-snap behavior.
 
@@ -100,9 +88,7 @@ The path is no longer only “native capability → frontend wrapper.” It beco
 
 > **Native capability → Component composition → Product scenario → Semantic feedback → Native capability**
 
-### video: From Open Implementation to Shared Standards
-
-If Overlay explains how the technical system validates itself, `video` offers an early form of how an open ecosystem can evolve together.
+If Overlay shows how a capability moves back and forth between implementation and composition, `video` offers an early form of how that feedback system can operate in an open ecosystem.
 
 The API, cross-platform semantics, and compatibility expectations of `video` will be discussed and defined by the Lynx team together with the community. The Lynx team will turn that shared understanding into concrete implementations across Android, iOS, and HarmonyOS, and take responsibility for testing, releases, and long-term maintenance.
 
@@ -120,9 +106,7 @@ Different DSLs can share three kinds of foundations:
 - **Shared behavioral contracts and tests:** even when state management and composition code differ, implementations can follow the same semantics and pass the same cross-platform assertions;
 - **Thin, idiomatic wrappers:** each DSL can express component composition, context, and controlled state in the way that feels most natural to its users.
 
-The goal of multi-DSL reuse can therefore be expressed as another three-part model:
-
-> **Share the Capability, follow the Contract together, and let each DSL own its Composition.**
+The goal of multi-DSL reuse is therefore not to share one component codebase. It is to share a capability foundation that XElement implements, Element expresses, and tests validate, while allowing each DSL to retain component APIs and composition models that fit its own conventions.
 
 ### Consistency Is Not Identical Implementation
 
@@ -209,7 +193,7 @@ flowchart TB
 This is not a second architecture running alongside the one described above. It is the same public foundation extended to a new consumer:
 
 - **Lynx Engine is the Runtime**, responsible for executing UI expressions that have already been made valid;
-- **XElement is the Capability Carrier**, absorbing platform parameters, thread constraints, version branches, and compatibility differences while implementing capabilities that require deep native integration;
+- **XElement provides native capability implementations**, absorbing platform parameters, thread constraints, version branches, and compatibility differences while carrying behavior that requires deep native integration;
 - **Element is the Semantic Contract**, allowing native implementations, component libraries, different DSLs, and Agents to rely on the same APIs, behavior, and fallback expectations;
 - **lynx-ui today is the official ReactLynx component implementation and proving ground**; over time, it can also distill interaction semantics for state, events, composition, Focus, Keyboard, Gesture, and A11y that different DSLs can follow together;
 - **LUNA is a reference implementation of Visual Semantics**, allowing products to build their own visual systems through tokens, themes, and wrappers instead of fixing Appearance inside interaction components;

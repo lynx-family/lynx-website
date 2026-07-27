@@ -32,33 +32,23 @@ Lynx 3.6 时，开源体系中的扩展原生元件主要包括 `<input>`、`<te
 
 但代码进入仓库并不等于能力已经进入生态。平台支持、稳定性等级、已知差异、变更记录、迁移路径和自动化测试，都会决定开发者能否真正依赖一项能力。**从代码开放到能力可依赖，中间仍然需要一套公开的语义与维护承诺。**
 
-## 组件生态 ≠ 给 Element 包一层
+## XElement × lynx-ui：从线性分层到反馈系统
 
 把组件生态理解为“Element 外面再包一层组件”，隐含了一个线性模型：原生层先定义完整能力，前端层再负责消费。但真实的跨端 UI 并不沿着这条单向链路演进。
 
-如果每一种产品交互都被固化为新的原生属性，Element API 会不断膨胀，底层实现也很难跟上产品需求；如果平台差异、性能开关和兼容策略全部交给前端，每个 DSL 和产品团队又会重新支付同一份工程成本。
+如果每一种产品交互都被固化为新的原生属性，Element API 会不断膨胀，底层实现也很难跟上产品需求；如果平台差异、性能开关和兼容策略全部交给前端，每个 DSL 和产品团队又会重新支付同一份工程成本。原生负责性能，不意味着原生应该定义所有产品行为；前端负责组合，也不意味着前端应该重新处理所有平台差异。
 
-原生负责性能，不意味着原生应该定义所有产品行为；前端负责组合，也不意味着前端应该重新处理所有平台差异。因此，组件生态要解决的不是“原生还是前端”，而是三个彼此关联、又不能相互替代的问题：
+因此，XElement、Element 与 lynx-ui 的关系也不能只靠一组静态分层来描述。Element API 会受到原生平台能力的约束，也会被上层组件的真实需求重新塑造；lynx-ui 消费底层能力，也会通过组件模型、测试和产品场景参与定义什么才是可依赖的跨平台行为。
 
-1. **Execution**：性能敏感的行为在哪里执行？
-2. **Semantics**：跨平台能力向开发者承诺什么？
-3. **Composition**：这些能力如何被组织成可复用的产品体验？
+更准确的观察方式，是看同一个系统中两种相反方向的流动：
 
-## XElement × lynx-ui：从线性分层到反馈系统
+> **Capability Flow：平台能力 → XElement 实现 → Element 契约 → lynx-ui 组合 → 产品体验**
+>
+> **Feedback Flow：产品需求与测试 → 组件模型 → Element 语义 → XElement 实现**
 
-### 三个边界：Carrier、Contract 与 Composition
+在 Capability Flow 中，[XElement](/guide/ui/elements-components#xelement) 扩展 Lynx 可以原生表达的能力，并消化平台 API、线程模型、性能与兼容性差异；Element 以开发者可见的 API、事件和状态承载这些能力；[lynx-ui](https://github.com/lynx-family/lynx-ui) 则把它们组织成 ReactLynx 开发者可以直接使用的无样式组件。
 
-如果只按代码所在的位置观察，XElement、Element 与 lynx-ui 很容易被画成一组静态层级。但从生态责任看，它们承担的是三个不同角色：
-
-- **XElement 是 Capability Carrier**：它承载不适合直接进入 Engine、又需要深入原生平台或主线程的能力，并负责 Android、iOS 与 HarmonyOS 上的具体实现；
-- **Element 是 Semantic Contract**：它定义 API、核心行为、跨平台语义、兼容性状态与降级预期，是不同实现和不同 DSL 可以共同依赖的边界；
-- **lynx-ui 是 Composition Surface**：它把 Element、状态与交互组织成 ReactLynx 开发者可以使用的无样式组件，也让抽象进入真实产品场景接受检验。
-
-这三个角色也分别回答了前面的问题：性能敏感的 Execution 由 Capability Carrier 承担，可依赖的 Semantics 形成 Semantic Contract，产品体验则通过 Composition Surface 被组织出来。
-
-> **Cross-platform UI = Capability Carrier × Semantic Contract × Composition Surface**
-
-[XElement](/guide/ui/elements-components#xelement) 与 [lynx-ui](https://github.com/lynx-family/lynx-ui) 因此不是谁隐藏在谁背后的单向分层。XElement 扩展 Lynx 能够原生表达什么；lynx-ui 决定这些能力如何被稳定、可组合地使用；真实组件暴露出的性能、语义和兼容性问题，又会反向推动 Element 与 XElement 演进。
+在 Feedback Flow 中，方向反了过来。真实组件会暴露容器、生命周期、事件、动画与无障碍上的缺口；这些问题先推动组件模型和 Element 语义收敛，再进入各平台的 XElement 实现与测试。Element 因而不是隔在两者之间的第三套生态，而是能力被使用、讨论和验证时共同依赖的公共接口。
 
 ![XElement 原生扩展生态通过 Element 公共契约连接 lynx-ui 与其他 DSL 组件库，前端使用场景再将 API、兼容性、性能和测试需求反馈给 XElement](/assets/blog/lynx-elements-to-component-ecosystem/xelement-lynx-ui-ecosystem.zh.svg)
 
@@ -67,9 +57,7 @@ Lynx 3.6 时，开源体系中的扩展原生元件主要包括 `<input>`、`<te
   契约和真实场景形成验证循环。
 </Caption>
 
-### Overlay：从原生能力到组件组合
-
-Overlay 展示了这套技术反馈循环如何工作。
+Overlay 展示了这两种流动如何发生在同一项能力上。
 
 作为 XElement 的一部分，原生 `<overlay>` 解决的是独立渲染层问题：它让内容脱离普通视图树的裁剪与层级限制，并在正确的原生容器中显示。但 `<overlay>` 本身并不知道什么是对话框，也不负责管理打开与关闭、进出场动画、锚点定位或拖拽吸附。
 
@@ -99,9 +87,7 @@ lynx-ui 首先通过 `OverlayView` 统一不同容器和平台上的 Overlay 使
 
 > **原生能力 → 组件组合 → 产品场景 → 语义反馈 → 原生能力**
 
-### video：从实现开放到标准共建
-
-如果 Overlay 解释了技术体系如何相互验证，`video` 则呈现了开放生态如何共同演进的初步形态。
+如果 Overlay 说明了能力如何在实现与组合之间往返，`video` 则呈现了这套反馈系统进入开放生态后的初步形态。
 
 `video` 的 API、跨平台语义和兼容性预期将由 Lynx 团队与社区共同讨论、共同定义；Lynx 团队负责把这些共识落实为 Android、iOS 与 HarmonyOS 上的具体实现，并承担测试、发布和长期维护。
 
@@ -119,9 +105,7 @@ lynx-ui 目前面向 ReactLynx，是这套能力链路中的官方组件实现�
 - **共同的行为契约与测试**：即使状态管理和组合代码不同，也遵循相同语义并通过同一组跨平台断言；
 - **符合各自习惯的轻量封装**：组件组合、上下文和受控状态等 API，由不同 DSL 以最自然的方式表达。
 
-因此，多 DSL 复用的目标可以写成另一个三分模型：
-
-> **共享 Capability，共同遵循 Contract，各自拥有 Composition。**
+因此，多 DSL 复用的目标不是共享同一份组件代码，而是共享已经被 XElement 实现、被 Element 表达并被测试验证的能力基础；在此之上，每个 DSL 仍然可以拥有符合自身习惯的组件 API 与组合模型。
 
 ### 一致性 ≠ 相同实现
 
@@ -208,7 +192,7 @@ flowchart TB
 这不是一套与前文平行的新架构，而是同一套公共基础面对新消费者时的自然延伸：
 
 - **Lynx Engine 是 Runtime**，负责执行已经合法化的 UI 表达；
-- **XElement 是 Capability Carrier**，消化平台参数、线程约束、版本分支和兼容性差异，并实现需要深入原生系统的能力；
+- **XElement 提供原生能力实现**，消化平台参数、线程约束、版本分支和兼容性差异，并承载需要深入原生系统的行为；
 - **Element 是 Semantic Contract**，让原生实现、组件库、不同 DSL 与 Agent 共同依赖同一组 API、行为和降级预期；
 - **lynx-ui 当前是 ReactLynx 的官方组件实现与验证场**，长期则可以沉淀状态、事件、组合、Focus、Keyboard、Gesture 与 A11y 等可被不同 DSL 共同遵循的交互语义；
 - **LUNA 是 Visual Semantics 的参考实现**，让产品通过 tokens、主题和 wrapper 建立自己的视觉系统，而不把 Appearance 固化进交互组件；
