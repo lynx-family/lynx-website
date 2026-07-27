@@ -101,7 +101,7 @@ lynx-ui 首先通过 `OverlayView` 统一不同容器和平台上的 Overlay 使
 
 > **社区共同定义标准，Lynx 团队负责实现与长期维护。**
 
-Overlay 让反馈发生在技术栈之间，`video` 则尝试让反馈进一步发生在官方与社区之间。
+Overlay 让反馈发生在技术栈之间，`video` 则尝试让反馈进一步发生在官方与社区之间。如果你正在构建媒体、输入、浮层、复杂滚动或其他跨平台组件，我们尤其希望更早看到真实需求、平台差异和测试用例，而不是等实现完成后再讨论 API 是否合适。
 
 当这套反馈系统跨越 ReactLynx，复用的目标也不再是复制一份 lynx-ui 代码。lynx-ui 目前是这套能力链路中的官方组件实现与验证场，但 Lynx Engine 和 XElement 并不绑定某一种前端框架。随着更多 DSL 在 Lynx 上发展，每个生态不应该再从平台差异开始重新解决同样的问题。
 
@@ -141,13 +141,11 @@ XElement 与 lynx-ui 会在这里共同形成官方核心：前者把经过生�
 
 核心能力稳定以后，下一步是把反馈循环打开。
 
-需求、API 和跨平台行为不应该等实现完成后才被看见。社区可以更早通过 RFC 和 Discussions 参与讨论，共同定义 Element 应该承诺什么、组件应该如何组合、测试应该验证什么；Lynx 团队负责把这些共识变成 Android、iOS 与 HarmonyOS 上的实现，并承担发布和长期维护。`video` 是这种协作方式的开始。
+需求、API 和跨平台行为不应该等实现完成后才被看见。社区可以更早通过 RFC 和 Discussions 参与讨论，共同定义 Element 应该承诺什么、组件应该如何组合、测试应该验证什么；Lynx 团队负责把这些共识变成 Android、iOS 与 HarmonyOS 上的实现，并承担发布和长期维护。
 
 当语义和测试成为公共标准，复用也不再局限于 ReactLynx。不同 DSL 不必共享同一份 lynx-ui 代码，却可以共享 XElement、Element 行为规范和跨平台测试；原生扩展、行业组件和设计系统也可以建立在同一套能力基础上。未来的发现、分发和依赖机制，则让这些成果能够真正流动起来，而不是散落在不同仓库和产品中。
 
-Component Manifest 也会把组件实现、类型、文档、组合约束、测试和版本信息连接起来，让同一份事实同时服务开发者、设计工具、代码生成、OpenUI 和 Agent。这不是为了让所有人使用同一种 DSL，而是让新的参与者不必再从平台差异开始。
-
-我们希望最终形成的，不只是一个由官方不断增加组件的目录，而是一套跨平台、跨框架、跨行业持续积累的 UI 基础：Lynx 团队维护高质量的核心能力，社区共同定义新的需求、标准和测试，每一次真实使用又继续推动底层实现和上层组件向前演进。
+我们希望最终形成的，不只是一个由官方不断增加组件的目录。Lynx 团队维护高质量的核心能力，社区共同定义新的需求、标准和测试，每一次真实使用再继续推动底层实现和上层组件向前演进。
 
 ## 从公共基础到 Agent-ready UI
 
@@ -157,11 +155,7 @@ Web 生态的活力从来不只来自浏览器内置了多少控件，更来自�
 
 当这条循环逐渐闭合，一个原生能力或组件就不再只是某个平台、某个框架或某个团队内部的一次性实现。它可以被不同 DSL 表达，被不同设计系统组合，并在多个平台上保持一致的用户语义。跨端原生 UI 也可以从每个团队反复支付的工程成本，转化为整个生态能够共同积累的公共资产。
 
-这套公共基础首先服务于开发者和不同 DSL，但它的价值不会止于让人更容易编写组件。当界面开始由 Agent 生成，过去主要服务于人的 API、文档和组件规范，也需要进一步成为机器可以理解、约束和验证的公共语言。
-
-AI 改变的不是组件是否还需要被实现，而是组件体系的价值重心。在手写 UI 的时代，组件的主要价值是封装实现、减少重复代码；在 Agent 生成 UI 的时代，源码本身会越来越便宜，真正稀缺的是一组明确、受约束、可执行、可验证的语义空间。
-
-因此，方向不是让 AI 生成更多 TSX，也不只是给现有组件补一份 Schema。真正的 **Agent-ready UI**，应该让 Agent 在受控的 UI 语言中表达意图，再由经过验证的语义层把它编译为可信的跨端体验。
+这套基础首先服务开发者和不同 DSL，也会服务新的界面生产方式。AI 不会消除组件实现，却会降低生成代码的成本，同时放大稳定语义、组合规则和验证体系的价值。方向不是让 Agent 多写几段 TSX，而是让它在一套经过验证的 UI 词汇中表达意图，再把这种表达变成可信的跨端体验。
 
 > **Agent-ready UI = Constrained Expression × Trusted Semantics × Executable Evaluation**
 
@@ -191,30 +185,15 @@ flowchart TB
 
 `}</Mermaid>
 
-这不是一套与前文平行的新架构，而是同一套公共基础面对新消费者时的自然延伸：
+这不是另一套架构，而是同一套公共基础多了一个消费者。Lynx Engine 负责执行，XElement 吸收平台、线程和版本差异，Element 提供稳定的 API 与行为，lynx-ui 和其他 DSL 组件库提供可组合的交互词汇，LUNA 则作为视觉语义的参考实现。它们共同限定 Agent 可以使用什么，以及生成结果应该满足什么跨平台预期。
 
-- **Lynx Engine 是 Runtime**，负责执行已经合法化的 UI 表达；
-- **XElement 提供原生能力实现**，消化平台参数、线程约束、版本分支和兼容性差异，并承载需要深入原生系统的行为；
-- **Element 是 Semantic Contract**，让原生实现、组件库、不同 DSL 与 Agent 共同依赖同一组 API、行为和降级预期；
-- **lynx-ui 当前是 ReactLynx 的官方组件实现与验证场**，长期则可以沉淀状态、事件、组合、Focus、Keyboard、Gesture 与 A11y 等可被不同 DSL 共同遵循的交互语义；
-- **LUNA 是 Visual Semantics 的参考实现**，让产品通过 tokens、主题和 wrapper 建立自己的视觉系统，而不把 Appearance 固化进交互组件；
-- **Component Manifest、OpenUI 与 Skills 构成 Agent Control Plane**，限定 Agent 可以表达什么、如何组合，以及生成结果必须满足哪些平台、性能和安全约束。
+> **XElement 让原生能力稳定可用，lynx-ui 让这些能力可以被组合，最终的产品形态仍然由开发者决定。**
 
-这意味着 XElement 应该继续专注于必须依赖原生实现的硬能力，而不是向业务组件库膨胀；lynx-ui 应该保持 headless 和 composable，提供经过验证的交互组合，而不是成为不断增加 props 的产品黑盒。
+[OpenUI](https://lynxjs.org/next/react/genui/openui.html) 已经展示了一种可能：Agent 不直接面对无限开放的代码空间，而是在受控组件词汇中生成表达式，再由可信 Renderer 映射为真实界面。[lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) 是另一个起点。下一步，Component Manifest 可以让组件实现、类型、文档、组合约束、兼容信息和测试来自同一个事实源，并进一步驱动 Skills、OpenUI Catalog 和生成结果的评测。
 
-> **XElement 负责原生 Capability 与基础行为保证，不固化产品 Experience。**
->
-> **lynx-ui 负责交互组合与产品行为，不固化产品 Appearance。**
+对 Agent 来说，一个组件的价值不再只是源码，还包括可理解的契约、明确的使用边界和可以执行的测试。我们也会用一次编译率、跨端运行结果、视觉与交互通过率，以及需要多少人工修改，来判断这套基础是否真的可信。
 
-Agent 面对的也不应该是一个无限开放的代码空间，而是一套经过验证的 UI 词汇与语法。[OpenUI](https://lynxjs.org/next/react/genui/openui.html) 已经展示了这种可能：Agent 在受控组件词汇中生成表达式，再由可信 Renderer 将其映射为真实界面。现有的 [lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) 是另一个起点；更进一步，组件实现、类型、文档、AI Schema、Skills、兼容性信息和测试应该来自同一个 **Component Manifest**，避免多套信息在演进中彼此漂移。
-
-因此，未来一个组件的完整资产不再只是源码，而是：
-
-> **Implementation + Semantic Contract + Safety Envelope + Evaluation Data**
-
-衡量生态进展的方式也会随之改变。组件数量和下载量仍然重要，但 Agent 生成代码的一次编译率、跨端运行率、视觉与交互通过率、人工修改量，以及版本升级后的持续有效性，会更直接地描述这套基础设施是否可信。Streaming、Approval、Tool Call、Citation、Undo、Retry 与 Partial Failure 等 AI interaction primitives，也可以在这套共同语言之上被持续验证和沉淀。
-
-Lynx 团队会继续承担核心 XElement 与 lynx-ui 能力的实现和长期维护，也会逐步开放更多规范、测试与工具；社区则可以更早参与需求、API、跨平台语义和测试标准的讨论，并在共同基础上构建原生扩展、行业组件与设计系统。
+如果你正在维护跨端组件、设计系统或新的 DSL，或者正在探索生成式 UI，我们尤其希望了解哪些平台差异正在重复消耗工程成本，哪些行为应该成为公共标准，以及哪些测试可以让所有实现共同受益。
 
 我们尤其希望与社区一起回答三个问题：
 
@@ -222,6 +201,6 @@ Lynx 团队会继续承担核心 XElement 与 lynx-ui 能力的实现和长期�
 2. 组件 API 与组合模型应该如何反映和推动底层能力？
 3. 测试、工具和贡献基础设施应该如何开放，才能让能力被更多 DSL、社区组件和新的 UI 工具复用？
 
-Lynx 下一阶段要开放的，不只是一批经过验证的实现，而是能力从需求、标准、原生实现到组件组合的完整演进过程：从一次性实现到公共能力，从公共能力到跨 DSL 的共同语言，再到开发者、Agent 与 Runtime 都能够理解和信任的跨端 UI 基础设施。
-
 欢迎前往 [Lynx GitHub Discussions](https://github.com/lynx-family/lynx/discussions) 发起或参与讨论，也可以在 [Discord](https://discord.com/invite/mXk7jqdDXk) 与我们交流，并通过 [X](https://x.com/lynxjs_org) 关注最新进展。GitHub Discussions 将作为提案、标准讨论与后续决策记录的主要入口。
+
+Lynx 下一阶段要开放的，不只是一批经过验证的实现，而是能力从需求、标准、原生实现到组件组合的完整过程。我们希望与社区一起建立的，也不只是更多组件，而是一套任何 DSL、产品和工具都可以继续使用、验证和扩展的跨端 UI 公共基础。
