@@ -54,6 +54,8 @@ When we look only at where code lives, XElement, Element, and lynx-ui can appear
 - **Element is the Semantic Contract:** it defines APIs, core behavior, cross-platform semantics, compatibility status, and fallback expectations—the boundary that different implementations and DSLs can rely on together;
 - **lynx-ui is the Composition Surface:** it organizes Elements, state, and interaction into headless components for ReactLynx developers, while exposing those abstractions to validation in real product scenarios.
 
+These roles also answer the three questions above. Performance-sensitive Execution belongs in the Capability Carrier. Dependable Semantics form the Semantic Contract. Product experiences are organized through the Composition Surface.
+
 > **Cross-platform UI = Capability Carrier × Semantic Contract × Composition Surface**
 
 [XElement](/guide/ui/elements-components#xelement) and [lynx-ui](https://github.com/lynx-family/lynx-ui) are therefore not a one-way stack in which one disappears behind the other. XElement expands what Lynx can express natively. lynx-ui determines how those capabilities can be used in a stable and composable way. Performance, semantic, and compatibility issues revealed by real components then drive Elements and XElements forward again.
@@ -130,62 +132,9 @@ When a capability can fully follow Web semantics, we will prefer APIs familiar t
 
 What must remain consistent is not the implementation detail, but the core behavior that developers and users can rely on: how state changes, when events fire, where a capability is available, and how it degrades when unsupported. Those commitments must be validated both by XElement implementations across platforms and by real component compositions in lynx-ui and other DSLs.
 
-## Agent-ready UI Is Not About Letting AI Write More Components
-
-AI is changing where the value of a component system lives. In the era of hand-written UI, components primarily encapsulated implementations and reduced repeated code. In the era of agent-generated UI, source code itself becomes cheaper. What remains scarce is a semantic space that is explicit, constrained, executable, and verifiable.
-
-The direction is therefore not to let AI generate more TSX, nor merely to attach a Schema to existing components. A truly **Agent-ready UI** lets an Agent express intent in a controlled UI language, then relies on validated semantic layers to compile that intent into a trustworthy cross-platform experience.
-
-> **Agent-ready UI = Constrained Expression × Trusted Semantics × Executable Evaluation**
-
-<Mermaid title="From Agent intent to trustworthy cross-platform UI">{`
-flowchart TB
-    A["User Intent / Agent Plan"]
-    B["OpenUI / Component Manifest<br/>Constrained UI IR"]
-    C["LUNA<br/>Visual Semantics"]
-    D["lynx-ui<br/>Interaction Semantics"]
-    E["XElement<br/>Capability ISA"]
-    F["Lynx Engine<br/>Cross-platform Runtime"]
-    G["Compile · Run · Interact · Visual Evaluation"]
-
-    A --> B
-    B --> C
-    B --> D
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-    G -. "contracts and evaluation data" .-> B
-    G -. "behavior and capability gaps" .-> D
-    G -.-> E
-
-`}</Mermaid>
-
-In this pipeline, the role of each layer becomes more focused:
-
-- **Lynx Engine is the Runtime**, responsible for executing UI expressions that have already been made valid;
-- **XElement is the Capability ISA**, absorbing platform parameters, thread constraints, version branches, and compatibility differences behind a stable native capability instruction set;
-- **lynx-ui is the Interaction Standard Library**, defining states, events, composition, Focus, Keyboard, Gesture, and A11y semantics that developers and Agents can understand together;
-- **LUNA is a reference implementation of Visual Semantics**, allowing products to build their own visual systems through tokens, themes, and wrappers instead of fixing appearance inside interaction components;
-- **Component Manifest, OpenUI, and Skills form the Agent Control Plane**, constraining what an Agent can express, how components can be composed, and which platform, performance, and safety requirements generated results must satisfy.
-
-This means XElement should remain focused on hard capabilities that genuinely require native implementation rather than expanding toward a product component library. lynx-ui should remain headless and composable, providing validated interaction models instead of becoming a product black box with an ever-growing list of props.
-
-> **XElement owns Capability, not Experience.**
->
-> **lynx-ui owns Experience, not fixed Appearance.**
-
-An Agent should not face an infinitely open code space. It should work with a validated UI vocabulary and grammar. [OpenUI](https://lynxjs.org/next/react/genui/openui.html) demonstrates this possibility: an Agent generates expressions within a controlled component vocabulary, then a trusted Renderer maps those expressions into a real interface. The existing [lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) are another starting point. Going further, component implementations, types, documentation, AI Schemas, Skills, compatibility data, and tests should derive from one **Component Manifest**, preventing several descriptions of the same component from drifting apart over time.
-
-The complete asset represented by a component is therefore no longer just source code. It becomes:
-
-> **Implementation + Semantic Contract + Safety Envelope + Evaluation Data**
-
-The way we measure ecosystem progress changes with it. Component counts and downloads still matter, but first-pass compilation rates, cross-platform execution rates, visual and interaction pass rates, the amount of human modification required, and continued validity across version upgrades describe the trustworthiness of this infrastructure more directly.
-
 ## From Open Capabilities to a Shared Ecosystem
 
-A component ecosystem is difficult to build from a dated checklist. We prefer to describe the work ahead in three horizons. Now asks whether a capability is usable. Next asks whether people and machines can understand and maintain it together. Exploring asks whether it can continue growing beyond a single framework and be composed safely by Agents.
+A component ecosystem is difficult to build from a dated checklist. We prefer to describe the work ahead in three horizons. Now asks whether a capability is dependable. Next asks whether it can be defined and maintained together. Exploring asks whether it can continue growing beyond a single framework.
 
 ![XElement and lynx-ui advance together through the Now, Next, and Exploring horizons, moving from a stable core toward shared standards, more DSLs, and a community ecosystem](/assets/blog/lynx-elements-to-component-ecosystem/component-ecosystem-horizons.en.svg)
 
@@ -211,11 +160,11 @@ A component ecosystem is difficult to build from a dated checklist. We prefer to
 - Continue moving shareable, framework-independent behavior lower in the stack;
 - Let more DSLs reuse the same XElements, behavioral specifications, and test suites;
 - Lower the barrier for the community to build native extensions, industry components, and design systems;
-- Build AI evaluation across generation, compilation, cross-platform execution, interaction, and visual results, while exploring AI interaction primitives such as Streaming, Approval, Tool Call, Citation, Undo, Retry, and Partial Failure.
+- Explore how component contracts can be consumed safely by new higher-level systems, including design tools, code generation, and Agents.
 
 These horizons are not three stages of one-way delivery from the official team to the community. As the feedback among standards, implementations, components, and real needs becomes stronger, the community can participate earlier in capability evolution, while the Lynx team can take clearer responsibility for implementation and long-term maintenance.
 
-## From Repeated Engineering Cost to Shared Infrastructure
+## From Shared Infrastructure to Agent-ready UI
 
 The vitality of the Web ecosystem has never come only from how many controls browsers ship. It comes from stable primitives, shared standards, open tools, and the space for anyone to keep building. The Lynx component ecosystem needs that same foundation while preserving the distinct value of native rendering, cross-platform delivery, and low-latency interaction.
 
@@ -223,18 +172,71 @@ The vitality of the Web ecosystem has never come only from how many controls bro
 
 As this loop closes, a native capability or component no longer remains a one-off implementation owned by one platform, framework, or product team. It can be expressed through different DSLs, composed into different design systems, and preserve consistent user semantics across platforms. Cross-platform native UI can move from an engineering cost repeatedly paid by every team to shared infrastructure accumulated by the whole ecosystem.
 
+This public foundation first serves developers and different DSLs, but its value does not stop at making components easier for people to write. As interfaces begin to be generated by Agents, APIs, documentation, and component specifications that primarily served people must also become a public language that machines can understand, constrain, and verify.
+
+AI does not remove the need to implement components. It changes where the value of a component system lives. In the era of hand-written UI, components primarily encapsulated implementations and reduced repeated code. In the era of agent-generated UI, source code itself becomes cheaper. What remains scarce is a semantic space that is explicit, constrained, executable, and verifiable.
+
+The direction is therefore not to let AI generate more TSX, nor merely to attach a Schema to existing components. A truly **Agent-ready UI** lets an Agent express intent in a controlled UI language, then relies on validated semantic layers to compile that intent into a trustworthy cross-platform experience.
+
+> **Agent-ready UI = Constrained Expression × Trusted Semantics × Executable Evaluation**
+
+<Mermaid title="From Agent intent to trustworthy cross-platform UI">{`
+flowchart TB
+    A["User Intent / Agent Plan"]
+    B["OpenUI / Component Manifest<br/>Constrained UI IR"]
+    C["LUNA<br/>Visual Semantics"]
+    D["lynx-ui / Other DSL Libraries<br/>Interaction Composition"]
+    E["Element<br/>Semantic & Behavioral Contract"]
+    F["XElement<br/>Native Capability & Implementation"]
+    G["Lynx Engine<br/>Cross-platform Runtime"]
+    H["Compile · Run · Interact · Visual Evaluation"]
+
+    A --> B
+    B --> C
+    B --> D
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H -. "contracts and evaluation data" .-> B
+    H -. "composition and capability gaps" .-> D
+    H -.-> E
+    H -.-> F
+
+`}</Mermaid>
+
+This is not a second architecture running alongside the one described above. It is the same public foundation extended to a new consumer:
+
+- **Lynx Engine is the Runtime**, responsible for executing UI expressions that have already been made valid;
+- **XElement is the Capability Carrier**, absorbing platform parameters, thread constraints, version branches, and compatibility differences while implementing capabilities that require deep native integration;
+- **Element is the Semantic Contract**, allowing native implementations, component libraries, different DSLs, and Agents to rely on the same APIs, behavior, and fallback expectations;
+- **lynx-ui today is the official ReactLynx component implementation and proving ground**; over time, it can also distill interaction semantics for state, events, composition, Focus, Keyboard, Gesture, and A11y that different DSLs can follow together;
+- **LUNA is a reference implementation of Visual Semantics**, allowing products to build their own visual systems through tokens, themes, and wrappers instead of fixing Appearance inside interaction components;
+- **Component Manifest, OpenUI, and Skills form the Agent Control Plane**, constraining what an Agent can express, how components can be composed, and which platform, performance, and safety requirements generated results must satisfy.
+
+This means XElement should remain focused on hard capabilities that genuinely require native implementation rather than expanding toward a product component library. lynx-ui should remain headless and composable, providing validated interaction composition instead of becoming a product black box with an ever-growing list of props.
+
+> **XElement owns native Capability and foundational behavioral guarantees without fixing product Experience.**
+>
+> **lynx-ui owns interaction composition and product behavior without fixing product Appearance.**
+
+An Agent should not face an infinitely open code space. It should work with a validated UI vocabulary and grammar. [OpenUI](https://lynxjs.org/next/react/genui/openui.html) demonstrates this possibility: an Agent generates expressions within a controlled component vocabulary, then a trusted Renderer maps those expressions into a real interface. The existing [lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) are another starting point. Going further, component implementations, types, documentation, AI Schemas, Skills, compatibility data, and tests should derive from one **Component Manifest**, preventing several descriptions of the same component from drifting apart over time.
+
+The complete asset represented by a component is therefore no longer just source code. It becomes:
+
+> **Implementation + Semantic Contract + Safety Envelope + Evaluation Data**
+
+The way we measure ecosystem progress changes with it. Component counts and downloads still matter, but first-pass compilation rates, cross-platform execution rates, visual and interaction pass rates, the amount of human modification required, and continued validity across version upgrades describe the trustworthiness of this infrastructure more directly. AI interaction primitives such as Streaming, Approval, Tool Call, Citation, Undo, Retry, and Partial Failure can also be validated and accumulated on top of this shared language.
+
 The Lynx team will continue to take responsibility for implementing and maintaining core XElement and lynx-ui capabilities over the long term, while opening more specifications, tests, and tools. The community can participate earlier in discussions about requirements, APIs, cross-platform semantics, and testing standards, then build native extensions, industry components, and design systems on the shared foundation.
 
 We especially want to answer three questions with the community:
 
 1. What cross-platform semantics should an Element promise, and how should XElement validate them?
 2. How should component APIs and composition models reflect and drive lower-level capabilities?
-3. How should tests, tooling, and contribution infrastructure open up so these capabilities can be reused by more DSLs and community components?
+3. How should tests, tooling, and contribution infrastructure open up so these capabilities can be reused by more DSLs, community components, and new UI tools?
+
+In its next stage, Lynx needs to open more than a set of proven implementations. It needs to open the complete evolution path from requirements and standards to native implementation and component composition: from one-off implementations to shared capabilities, from shared capabilities to a common language across DSLs, and from that common language to cross-platform UI infrastructure that developers, Agents, and the Runtime can all understand and trust.
 
 Join or start a conversation in [Lynx GitHub Discussions](https://github.com/lynx-family/lynx/discussions), talk with us on [Discord](https://discord.com/invite/mXk7jqdDXk), and follow the latest progress on [X](https://x.com/lynxjs_org). GitHub Discussions will be the primary home for proposals, standards discussions, and the decisions that follow.
-
-In its next stage, Lynx needs to open more than a set of proven implementations. It needs to open the complete evolution path from requirements and standards to native implementation and component composition. XElement lets native capabilities enter the open. Element turns cross-platform semantics into a public contract that can be discussed. lynx-ui brings those capabilities into real components and product scenarios. LUNA allows products to own visual semantics. OpenUI and Skills let Agents use those standards within controlled boundaries.
-
-AI will make hand-written component source less scarce, while making stable semantics, composition rules, safety boundaries, and evaluation data significantly more valuable. Our goal is no longer only to provide more XElements or more components. It is to work with the community to define a public cross-platform UI language that Agents, developers, and the Runtime can all understand and trust.
-
-When this system exists, an Agent no longer produces interface code that happens to run. It produces a UI expression that can be compiled, validated, executed across platforms, and evolved over time. That is the real meaning of Agent-ready UI.
