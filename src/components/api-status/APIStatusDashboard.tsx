@@ -366,7 +366,7 @@ export const APIItem: React.FC<APIItemProps> = ({
       </DrawerTrigger>
       <DrawerContent
         className={cn(
-          isDesktop ? 'h-full' : 'max-h-[85vh]',
+          !isDesktop && 'max-h-[85vh]',
           isDesktop && 'bg-zinc-50 dark:bg-zinc-900',
         )}
       >

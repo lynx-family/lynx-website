@@ -47,13 +47,21 @@ const DrawerContent = React.forwardRef<
   const { direction } = React.useContext(DrawerContext)
   const isHorizontal = direction === "left" || direction === "right"
 
-  // For side drawers, add gap from edge and use --initial-transform for animation
-  const sideDrawerGap = 8
+  // Floating side drawers: inset from viewport edges (macOS-style) + animate past the gap
+  const sideDrawerGap = 12
   const sideDrawerStyle = isHorizontal
     ? {
         ...style,
-        // ...(direction === "right" && { right: `${sideDrawerGap}px`, top: `${sideDrawerGap}px`, bottom: `${sideDrawerGap}px` }),
-        // ...(direction === "left" && { left: `${sideDrawerGap}px`, top: `${sideDrawerGap}px`, bottom: `${sideDrawerGap}px` }),
+        ...(direction === "right" && {
+          right: `${sideDrawerGap}px`,
+          top: `${sideDrawerGap}px`,
+          bottom: `${sideDrawerGap}px`,
+        }),
+        ...(direction === "left" && {
+          left: `${sideDrawerGap}px`,
+          top: `${sideDrawerGap}px`,
+          bottom: `${sideDrawerGap}px`,
+        }),
         '--initial-transform': `calc(100% + ${sideDrawerGap}px)` as React.CSSProperties['--initial-transform'],
       } as React.CSSProperties
     : style
@@ -67,10 +75,10 @@ const DrawerContent = React.forwardRef<
           "fixed z-50 flex flex-col bg-background outline-none",
           // Bottom drawer (default)
           !isHorizontal && "inset-x-0 bottom-0 mt-24 h-auto rounded-t-[10px] border",
-          // Right drawer - with gap from edge, no border (gap provides visual separation)
-          direction === "right" && "inset-y-0 right-2 h-full w-[600px] max-w-[90vw] rounded-[16px] shadow-lg",
-          // Left drawer - with gap from edge, no border (gap provides visual separation)
-          direction === "left" && "inset-y-0 left-2 h-full w-[600px] max-w-[90vw] rounded-[16px] shadow-lg",
+          // Right drawer - floating with gap from edge (position via inline style)
+          direction === "right" && "w-[600px] max-w-[90vw] rounded-[16px] shadow-xl",
+          // Left drawer - floating with gap from edge (position via inline style)
+          direction === "left" && "w-[600px] max-w-[90vw] rounded-[16px] shadow-xl",
           // Top drawer
           direction === "top" && "inset-x-0 top-0 mb-24 h-auto rounded-b-[10px] border",
           className
