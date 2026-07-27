@@ -6,7 +6,7 @@ authors: ['MoonfaceX', 'lynx']
 description: '从 Lynx 3.6 到当前开发版本，更多经过生产验证的原生能力正在进入开放环境。本文不只回顾这些进展，也尝试重新定义 XElement、Element 与 lynx-ui 的关系，以及跨端 UI 如何从一次性实现演进为社区能够共同积累的公共基础。'
 ---
 
-import { BlogHeader, Caption, Go } from '@lynx';
+import { BlogHeader, Caption, Go, Mermaid } from '@lynx';
 
 <BlogHeader />
 
@@ -129,9 +129,62 @@ lynx-ui 目前面向 ReactLynx，是这套能力链路中的官方组件实现�
 
 真正需要一致的不是实现细节，而是开发者和用户可以依赖的核心行为：状态如何变化、事件何时发生、能力在哪些平台可用，以及不支持时如何降级。这些承诺需要在 XElement 的多平台实现中得到验证，也需要在 lynx-ui 和其他 DSL 的真实组件组合中接受检验。
 
+## Agent-ready UI ≠ 让 AI 多写几个组件
+
+AI 正在改变组件体系的价值重心。在手写 UI 的时代，组件的主要价值是封装实现、减少重复代码；在 Agent 生成 UI 的时代，源码本身会越来越便宜，真正稀缺的是一组明确、受约束、可执行、可验证的语义空间。
+
+因此，方向不是让 AI 生成更多 TSX，也不只是给现有组件补一份 Schema。真正的 **Agent-ready UI**，应该让 Agent 在受控的 UI 语言中表达意图，再由经过验证的语义层把它编译为可信的跨端体验。
+
+> **Agent-ready UI = Constrained Expression × Trusted Semantics × Executable Evaluation**
+
+<Mermaid title="从 Agent 意图到可信跨端 UI">{`
+flowchart TB
+    A["User Intent / Agent Plan"]
+    B["OpenUI / Component Manifest<br/>受约束的 UI IR"]
+    C["LUNA<br/>Visual Semantics"]
+    D["lynx-ui<br/>Interaction Semantics"]
+    E["XElement<br/>Capability ISA"]
+    F["Lynx Engine<br/>Cross-platform Runtime"]
+    G["编译 · 运行 · 交互 · 视觉评测"]
+
+    A --> B
+    B --> C
+    B --> D
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G -. "反馈契约与评测数据" .-> B
+    G -. "反馈行为与能力缺口" .-> D
+    G -.-> E
+
+`}</Mermaid>
+
+在这条链路中，各层的角色会进一步收敛：
+
+- **Lynx Engine 是 Runtime**，负责执行已经合法化的 UI 表达；
+- **XElement 是 Capability ISA**，消化平台参数、线程约束、版本分支和兼容性差异，为上层提供稳定的原生能力指令集；
+- **lynx-ui 是 Interaction Standard Library**，定义状态、事件、组合、Focus、Keyboard、Gesture 与 A11y 等可以被开发者和 Agent 共同理解的交互语义；
+- **LUNA 是 Visual Semantics 的参考实现**，让产品通过 tokens、主题和 wrapper 建立自己的视觉系统，而不把 appearance 固化进交互组件；
+- **Component Manifest、OpenUI 与 Skills 构成 Agent Control Plane**，限定 Agent 可以表达什么、如何组合，以及生成结果必须满足哪些平台、性能和安全约束。
+
+这意味着 XElement 应该继续专注于必须依赖原生实现的硬能力，而不是向业务组件库膨胀；lynx-ui 应该保持 headless 和 composable，提供经过验证的交互模型，而不是成为不断增加 props 的产品黑盒。
+
+> **XElement 负责 Capability，不负责 Experience。**
+>
+> **lynx-ui 负责 Experience，不负责固定 Appearance。**
+
+Agent 面对的也不应该是一个无限开放的代码空间，而是一套经过验证的 UI 词汇与语法。[OpenUI](https://lynxjs.org/next/react/genui/openui.html) 已经展示了这种可能：Agent 在受控组件词汇中生成表达式，再由可信 Renderer 将其映射为真实界面。现有的 [lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) 是另一个起点；更进一步，组件实现、类型、文档、AI Schema、Skills、兼容性信息和测试应该来自同一个 **Component Manifest**，避免多套信息在演进中彼此漂移。
+
+因此，未来一个组件的完整资产不再只是源码，而是：
+
+> **Implementation + Semantic Contract + Safety Envelope + Evaluation Data**
+
+衡量生态进展的方式也会随之改变。组件数量和下载量仍然重要，但 Agent 生成代码的一次编译率、跨端运行率、视觉与交互通过率、人工修改量，以及版本升级后的持续有效性，会更直接地描述这套基础设施是否可信。
+
 ## 从能力开放到生态共建
 
-组件生态很难由一张固定日期的清单完成。我们更愿意把接下来的工作分成三个建设层次：Now 解决能力是否可用，Next 解决能力是否可以共同维护，Exploring 则探索能力能否跨越单一框架持续生长。
+组件生态很难由一张固定日期的清单完成。我们更愿意把接下来的工作分成三个建设层次：Now 解决能力是否可用，Next 解决能力是否可以被人和机器共同理解、共同维护，Exploring 则探索能力能否跨越单一框架持续生长，并被 Agent 安全地组合。
 
 ![XElement 与 lynx-ui 在 Now、Next 与 Exploring 三个建设层次中并行演进，从稳定核心能力走向共同标准、多 DSL 和社区生态](/assets/blog/lynx-elements-to-component-ecosystem/component-ecosystem-horizons.zh.svg)
 
@@ -140,21 +193,24 @@ lynx-ui 目前面向 ReactLynx，是这套能力链路中的官方组件实现�
 - 将更多经过生产验证的 XElement 带入开源体系，持续改善 Android、iOS 与 HarmonyOS 的行为一致性；
 - 同步维护 lynx-ui 的核心组件，让新增原生能力形成前端开发者可以直接使用的组件入口；
 - 补充两侧的文档、可运行示例、交互式预览和平台支持信息；
-- 完善兼容性矩阵、变更记录和迁移指南，并通过真实组件场景持续收敛 Element API 与默认策略。
+- 完善兼容性矩阵、变更记录和迁移指南，并通过真实组件场景持续收敛 Element API 与默认策略；
+- 优先补齐高频复杂组件的键盘、焦点、手势、无障碍、性能与边界状态，而不是只追求组件数量。
 
 ### Next：让能力可以共同定义、共同维护
 
 - 定义 Element 的跨平台语义与兼容性基线；
 - 完善 XElement 的开发、集成、测试与发布规范；
 - 继续打磨 lynx-ui 的组件 API 与组合模型；
-- 开放更多跨平台测试基础设施与贡献流程，将性能、内存和无障碍逐步纳入可验证的质量基线。
+- 开放更多跨平台测试基础设施与贡献流程，将性能、内存和无障碍逐步纳入可验证的质量基线；
+- 探索统一的 Component Manifest，让类型、文档、Skills、OpenUI Catalog、组合约束、测试和版本兼容检查来自同一个事实源。
 
 ### Exploring：让能力跨越框架持续生长
 
 - 探索 XElement 与前端组件的发现、分发和依赖解析机制；
 - 继续下沉可以共享的框架无关行为；
 - 让更多 DSL 复用同一套 XElement、行为规范和测试套件；
-- 降低社区构建原生扩展、行业组件和设计系统的门槛。
+- 降低社区构建原生扩展、行业组件和设计系统的门槛；
+- 建立覆盖生成、编译、跨端运行、交互和视觉结果的 AI 评测体系，并探索 Streaming、Approval、Tool Call、Citation、Undo、Retry 与 Partial Failure 等 AI interaction primitives。
 
 这些层次不是从官方向社区单向交付的三个阶段。随着标准、实现、组件和真实需求之间的反馈逐渐建立，社区可以更早进入能力演进过程，Lynx 团队也可以更明确地承担实现与长期维护责任。
 
@@ -176,6 +232,8 @@ Lynx 团队会继续承担核心 XElement 与 lynx-ui 能力的实现和长期�
 
 欢迎前往 [Lynx GitHub Discussions](https://github.com/lynx-family/lynx/discussions) 发起或参与讨论，也可以在 [Discord](https://discord.com/invite/mXk7jqdDXk) 与我们交流，并通过 [X](https://x.com/lynxjs_org) 关注最新进展。GitHub Discussions 将作为提案、标准讨论与后续决策记录的主要入口。
 
-Lynx 下一阶段要开放的，不只是一批经过验证的实现，而是能力从需求、标准、原生实现到组件组合的完整演进过程。XElement 让原生能力进入开放环境，Element 让跨平台语义成为可以讨论的公共契约，lynx-ui 让这些能力进入真实组件与产品场景，社区则让标准、测试和使用方式持续演进。
+Lynx 下一阶段要开放的，不只是一批经过验证的实现，而是能力从需求、标准、原生实现到组件组合的完整演进过程。XElement 让原生能力进入开放环境，Element 让跨平台语义成为可以讨论的公共契约，lynx-ui 让这些能力进入真实组件与产品场景，LUNA 让视觉语义可以被产品接管，OpenUI 与 Skills 则让 Agent 能够在受控边界中使用这些标准。
 
-我们的目标不再只是提供更多 XElement 或更多组件，而是与社区一起，让跨端 UI 从反复发生的工程成本，变成开放 Web 开发者可以共同拥有、同时保持原生体验的公共基础。
+AI 会降低手写组件源码的稀缺性，却会显著提高稳定语义、组合规则、安全边界和评测数据的价值。我们的目标不再只是提供更多 XElement 或更多组件，而是与社区一起定义一套 Agent、开发者与 Runtime 都能够理解和信任的跨端 UI 公共语言。
+
+当这个体系成立，Agent 生成的就不再是一段碰巧可以运行的界面代码，而是一个能够被编译、验证、跨端执行并长期演进的 UI 表达。这才是 Agent-ready UI 的真正含义。
