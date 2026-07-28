@@ -15,13 +15,11 @@ When we open-sourced Lynx, we said that many production-proven capabilities—in
 
 That path has three connected stages: first, bring native capabilities already proven in real products into open source; then organize those capabilities into a component language that frontend developers can use and extend; finally, let requirements, standards, implementations, and tests form a continuous loop in the open community.
 
-> **Scope:** This article describes a direction for the Lynx cross-platform UI ecosystem, not a dated delivery checklist. Some capabilities are already in progress; others still need concrete designs through RFCs, implementation work, and community discussion. It also does not attempt to define a universal governance or admission model for every community component.
+> **Scope:** This article describes a direction, not a dated delivery checklist. Concrete designs will still take shape through RFCs, implementation work, and community discussion.
 
 ## XElement: Bringing Production Native Capabilities into the Open
 
-In Lynx, [Elements](/guide/ui/elements-components) are the basic building blocks of an interface. `<view>`, `<text>`, and `<image>` provide the most fundamental structure and expression. Scrolling, input, media playback, and overlays require deeper cooperation with each platform's native UI system.
-
-[XElement](/guide/ui/elements-components#xelement) provides those extensions. It absorbs differences in platform APIs, thread models, performance, and compatibility into native implementations, then exposes the resulting capabilities to the frontend through Element APIs, events, and state. For input, complex scrolling, media, and embedded content, this is more than an interface adapter. It determines whether Lynx can provide a dependable native experience across platforms.
+In Lynx, [Elements](/guide/ui/elements-components) are the basic building blocks of an interface. `<view>`, `<text>`, and `<image>` provide the fundamentals. [XElement](/guide/ui/elements-components#xelement) extends Lynx with native capabilities such as scrolling, input, media, and overlays, absorbs differences in platform APIs, thread models, performance, and compatibility, then exposes them through the Element contract.
 
 In Lynx 3.6, the open-source stack included a small set of extended native elements, primarily `<input>`, `<textarea>`, and `<overlay>`. Since then, we have gradually brought more capabilities already running in real applications into the open:
 
@@ -29,23 +27,13 @@ In Lynx 3.6, the open-source stack included a small set of extended native eleme
 - Lynx 3.8 added interaction containers such as [`<refresh>`](/api/elements/built-in/refresh) and began opening up native Markdown rendering;
 - In the current development version, capabilities such as `blur-view`, `markdown`, `scroll-coordinator`, `video`, `viewpager`, and `webview` are also entering the open stack across Android, iOS, and HarmonyOS.
 
-Together, these capabilities cover input and keyboards, independent overlay layers, vector and blur effects, refresh and complex scrolling, rich text and media, and embedded content. Many are not new experiments. They have served real products for years and been exercised in production.
-
-The core of this stage is therefore not to reinvent a native capability in a public repository. It is to bring an internally proven implementation into a public build, release, and maintenance lifecycle. Code entering a repository is only the beginning. Platform support, stability levels, known differences, changelogs, migration paths, and automated tests determine whether developers can actually depend on it.
-
-> **Moving from an internal implementation to an open capability means opening more than code. It also means making its semantics, compatibility boundaries, and maintenance lifecycle public.**
-
-XElement expands what Lynx can express natively. But as that capability set grows, the next step cannot be only to add more Elements. Real products also need state, composition, defaults, styling systems, and component APIs that can evolve over time. That is the context in which lynx-ui emerged.
+Many are not new experiments, but implementations already proven in production. The goal is not to reinvent them in public, but to bring them into a public build, release, and maintenance lifecycle together with their semantics, compatibility boundaries, and migration paths. As XElement expands what Lynx can express natively, real products still need state, composition, defaults, and component APIs that can evolve over time. That is where lynx-ui enters the story.
 
 ## Why lynx-ui Emerged: Capabilities Still Need to Be Organized
 
-The native layer and the frontend layer are good at different problems. Native code is closer to the platform UI system, making it a natural place for rendering performance, gesture latency, thread scheduling, and platform adaptation. The frontend is better suited to state management, component composition, visual customization, and rapid iteration. Cross-platform UI should not choose between them. It should turn native capability into something the frontend can continuously organize and extend.
+The native layer is good at rendering performance, gesture latency, and platform adaptation. The frontend is good at state, composition, visual customization, and rapid iteration. Cross-platform UI should not choose between them. It should turn native capability into something the frontend can continuously organize and extend.
 
-Early practice kept exposing the same tension. To cover different platforms, versions, and performance scenarios, a native Element needs a sufficiently complete **Capability Surface**. But when product code inherits the same API surface directly, platform switches, compatibility branches, and implementation details enter every application with it.
-
-Lists are a representative example. Lower-level `<list>` and `<scroll-view>` elements can provide scrolling, reuse, caching, sticky positioning, and exposure. Products usually care about refresh, loading, empty state, scroll position, and content composition. If every team assembles lower-level properties directly, it has to understand not only which switch applies on which platform, but also which defaults changed during an upgrade and which legacy configurations are now safe to remove.
-
-This is a **Leaky Abstraction**: the capability is powerful, but its users must understand more and more of the implementation behind it. Adding a product shape for every case makes the Element API expand without bound. Moving every difference into the frontend makes each DSL and product team pay the same engineering cost again.
+A native Element needs a complete **Capability Surface** to cover platforms, versions, and performance scenarios. If products inherit that API directly, they also inherit platform switches and compatibility branches. Lists are a representative example: `<list>` and `<scroll-view>` provide scrolling, reuse, caching, sticky positioning, and exposure, while products care about refresh, loading, empty state, and content composition. This is a **Leaky Abstraction**: adding every product shape expands the Element API; moving every difference into the frontend makes each DSL pay the same cost again.
 
 lynx-ui formed at this boundary. It is not another set of native controls, nor does it merely rename Element properties. It is an officially maintained, unstyled, and composable component system:
 
@@ -53,15 +41,9 @@ lynx-ui formed at this boundary. It is not another set of native controls, nor d
 - Element turns those capabilities into public contracts that can be discussed and tested;
 - lynx-ui converges platform switches, version strategies, and default behavior into component semantics, so the frontend deals with product intent instead of implementation detail.
 
-> **Native-grade interaction × Web-grade composition and development velocity**
-
-This is also why lynx-ui uses a composable model built from [Primitives and Parts](/ui/styling-theming). Components own state, behavior, and structure without fixing visual appearance. Design systems can build their own product language on top through tokens, styling, or wrappers. For lists, lazy rendering, and exposure, lynx-ui captures tested defaults and compatibility handling. For continuous interactions such as Swiper and Sheet, it organizes Main-Thread Script, gestures, and Motion into programmable frontend behavior.
-
-A component ecosystem is therefore not a wrapper around Elements. A component's value comes both from the capabilities it reuses and from the state, events, composition rules, and cross-platform boundaries it stabilizes for developers.
+This is also why lynx-ui uses a composable model built from [Primitives and Parts](/ui/styling-theming): components own state, behavior, and structure without fixing visual appearance, so design systems can build their own product language on top. The goal is native-grade interaction with Web-grade composition—not a thin wrapper around Elements.
 
 ### Let Capabilities Move Between Implementation and Composition
-
-Overlay shows how XElement and lynx-ui shape each other through a real component.
 
 As part of XElement, the native `<overlay>` element solves an independent-layer rendering problem. It lets content escape the clipping and stacking constraints of the regular view tree and render in the appropriate native container. But `<overlay>` does not know what a dialog is, nor does it manage open and close state, enter and exit animation, anchor positioning, or drag-to-snap behavior.
 
@@ -86,11 +68,7 @@ lynx-ui first uses `OverlayView` to normalize how Overlay works across container
   and enter and exit states into a complete open-and-close interaction.
 </Caption>
 
-The relationship becomes even clearer when a Sheet contains a ScrollView. Panel dragging and content scrolling may need to race, continue from one another, or operate simultaneously. Dynamically toggling a scroll switch covers only some paths and pushes platform differences back into product code. The component actually needs composable gesture relationships, and that requirement drives gesture capabilities, Element semantics, and platform implementations forward again.
-
-XElements and components therefore do not have a one-to-one relationship. A stable XElement can support several higher-level components. Those components then place more concrete demands on container selection, event pass-through, lifecycle, gesture arbitration, and animation coordination, helping lower-level capabilities converge on clearer cross-platform semantics.
-
-A more accurate way to observe the system is through two flows moving in opposite directions:
+When a Sheet contains a ScrollView, panel dragging and content scrolling may need to race, continue from one another, or operate simultaneously. Toggling a scroll switch covers only some paths. The component actually needs composable gesture relationships, and that requirement drives Element semantics and platform implementations forward again.
 
 > **Capability Flow: Platform capability → XElement implementation → Element contract → lynx-ui composition → Product experience**
 >
@@ -116,18 +94,9 @@ A more accurate way to observe the system is through two flows moving in opposit
   </a>
 </div>
 
-<Caption>
-  XElement and lynx-ui are not a one-way delivery chain. They form a validation
-  loop through the Element contract and real product scenarios.
-</Caption>
-
-Without XElement, components repeatedly absorb platform differences. Without lynx-ui, native capabilities lack a way to be organized and validated in real product scenarios. The two are not a one-time upstream-to-downstream delivery chain. They converge on dependable capabilities together through implementation and composition.
-
 ## From Open Capabilities to a Shared Ecosystem
 
-XElement and lynx-ui already create feedback across the technical stack. The next step is to extend that loop between the official team and the community.
-
-`video` is beginning to show what that collaboration can look like. Media capabilities connect to different platforms, player implementations, event models, and command ordering. What the community needs to depend on is stable playback state, controls, lifecycle, and fallback behavior. The Lynx team and the community will discuss and define the API, cross-platform semantics, and compatibility expectations of `video` together. The Lynx team will turn that shared understanding into concrete implementations across Android, iOS, and HarmonyOS, and take responsibility for testing, releases, and long-term maintenance.
+`video` begins to extend the feedback loop between XElement and lynx-ui to the official team and the community. Platforms, player implementations, and event models differ; developers need stable playback state, controls, lifecycle, and fallback behavior.
 
 <Go
   example="video"
@@ -142,11 +111,9 @@ XElement and lynx-ui already create feedback across the technical stack. The nex
   evolving.
 </Caption>
 
-This does not mean that the collaboration model is already final. `video` is still only a starting point, but it changes how a capability enters the open ecosystem: instead of opening code only after an implementation is complete, it brings requirements, standards, implementation, and validation into the same public loop.
-
 > **The community helps shape the standard; the Lynx team implements and maintains it over the long term.**
 
-The Roadmap ahead is not measured by component count, nor is it a dated feature checklist. It answers two more fundamental questions: how do capabilities already entering the open become foundations developers can depend on over time, and how do implementations maintained by the official team become standards that the whole ecosystem can reuse?
+The Roadmap is not measured by component count. It focuses on two outcomes: making open capabilities dependable over time, and turning official implementations into standards the whole ecosystem can reuse.
 
 <div className="blog-ecosystem-diagram-scroll">
   <a
@@ -170,21 +137,13 @@ The Roadmap ahead is not measured by component count, nor is it a dated feature 
 
 ### Make Open Capabilities Truly Dependable
 
-Open code answers whether developers can see an implementation. An ecosystem must also answer whether they can depend on it over time.
+For an XElement to become dependable, it needs a clear Element API, stable cross-platform behavior, explicit compatibility and fallback strategies, and documentation, tests, and migration paths that evolve with each release. The corresponding lynx-ui component must also cover keyboard, focus, gesture, accessibility, performance, and edge states.
 
-For an XElement to become a dependable capability, it needs a clear Element API, stable cross-platform behavior, explicit compatibility and fallback strategies, and documentation, examples, tests, and migration paths that evolve with each release. The corresponding lynx-ui component must cover more than the happy path. Keyboard, focus, gesture, accessibility, performance, and edge states are part of a complete implementation.
-
-We will maintain XElement and lynx-ui as parts of the same capability system. XElement brings production-proven native capabilities into the open. lynx-ui turns them into entry points that frontend developers can use and compose directly.
-
-lynx-ui will also be a long-term **dogfooding** surface for new Lynx capabilities. New Element contracts are composed in real components. New engine capabilities are validated through component tests. Compatibility and interaction differences then flow back into XElement and its platform implementations. Official components are not the endpoint of capability release. They are the first consumers that test whether a capability can be depended on over time.
-
-Success is not measured by how much code has been published. It is measured by whether a developer can answer three questions: where does this capability work, what happens when it is unsupported, and what will an upgrade cost? Open capabilities become dependable only when those answers are stable.
+lynx-ui will also be a long-term **dogfooding** surface: Element contracts are composed in real components, engine capabilities are validated through component tests, and differences flow back into XElement. Success is not measured by code volume, but by whether developers know where a capability works, how it falls back, and what an upgrade will cost.
 
 ### Let One Capability Serve the Whole Ecosystem
 
-A capability entering a repository is not the end of collaboration. It is the beginning of public discussion.
-
-Requirements, APIs, and cross-platform behavior should not become visible only after an implementation is complete. The community can join earlier through RFCs and Discussions to define what an Element should promise, how components should compose, and what tests should verify. The Lynx team turns that consensus into implementations across Android, iOS, and HarmonyOS, then takes responsibility for releases and long-term maintenance.
+Through RFCs and Discussions, the community can help define what an Element should promise, how components should compose, and what tests should verify. The Lynx team turns that consensus into multi-platform implementations and takes responsibility for releases and long-term maintenance.
 
 When semantics and tests become public standards, reuse no longer stops at ReactLynx. Different DSLs do not need to share one lynx-ui codebase, but they can share three kinds of foundations:
 
@@ -192,19 +151,13 @@ When semantics and tests become public standards, reuse no longer stops at React
 - **Shared behavioral contracts and tests:** even when state management and composition code differ, implementations can follow the same semantics and pass the same cross-platform assertions;
 - **Thin, idiomatic wrappers:** each DSL can express component composition, context, and controlled state in the way that feels most natural to its users.
 
-The goal of multi-DSL reuse is therefore not to share one component codebase. It is to share a capability foundation that XElement implements, Element expresses, and tests validate, while allowing each DSL to retain component APIs and composition models that fit its own conventions.
+The goal is not to share one component codebase, but to share XElement implementations, Element contracts, and cross-platform tests. When a capability can fully follow Web semantics, we prefer familiar Web APIs. Otherwise, we define a consistent **Semantic Target** from native interaction patterns and user expectations, then document platform differences and fallback behavior.
 
-Shared semantics do not require identical implementations, nor should they erase interaction expectations that have already formed on each platform. When a capability can fully follow Web semantics, we will prefer APIs familiar to Web developers. When the Web cannot accurately express native behavior, we will start from native interaction patterns and user expectations across platforms to define a consistent **Semantic Target**. Where complete unification is not practical, we favor progressive enhancement while documenting compatibility and fallback behavior clearly.
-
-What must remain consistent is not the implementation detail, but the core behavior that developers and users can rely on: how state changes, when events fire, where a capability is available, and how it degrades when unsupported. Those commitments must be validated both by XElement implementations across platforms and by real component compositions in lynx-ui and other DSLs.
-
-The destination is not a catalog that grows only when the official team adds another component. The Lynx team maintains a high-quality core; the community helps define new requirements, standards, and tests; every real use then drives both native implementations and higher-level components forward. Discovery, distribution, and dependency infrastructure can eventually let those results move through the ecosystem instead of remaining isolated in individual repositories and products.
+The destination is not a catalog that grows only when the official team adds a component. The Lynx team maintains a high-quality core; the community defines requirements, standards, and tests; real use drives both native implementations and higher-level components forward. Discovery, distribution, and dependency infrastructure let those results move through the ecosystem.
 
 ## From Shared Infrastructure to Agent-ready UI
 
-The vitality of the Web ecosystem has never come only from how many controls browsers ship. It comes from stable primitives, shared standards, open tools, and the space for anyone to keep building. The Lynx component ecosystem needs that same foundation while preserving the distinct value of native rendering, cross-platform delivery, and low-latency interaction.
-
-The goal of cross-platform UI is not to compromise between the Web and native platforms. It is to combine native-grade interaction with Web-grade composition, distribution, and collaboration.
+The vitality of the Web ecosystem comes not only from built-in controls, but from stable primitives, shared standards, and open tools. Lynx needs the same kind of foundation: not a compromise between the Web and native platforms, but native-grade interaction with Web-grade composition, distribution, and collaboration.
 
 <div className="blog-ecosystem-diagram-scroll">
   <a
@@ -226,9 +179,7 @@ The goal of cross-platform UI is not to compromise between the Web and native pl
   </a>
 </div>
 
-As this loop closes, a native capability or component no longer remains a one-off implementation owned by one platform, framework, or product team. It can be expressed through different DSLs, composed into different design systems, and preserve consistent user semantics across platforms. Cross-platform native UI can move from an engineering cost repeatedly paid by every team to shared infrastructure accumulated by the whole ecosystem.
-
-This foundation first serves developers and different DSLs. It can also support new ways of producing interfaces. AI does not remove the need to implement components, but it does lower the cost of generating code and raise the value of stable semantics, composition rules, and validation. The direction is not to let an Agent write more TSX. It is to let the Agent express intent through a validated UI vocabulary, then turn that expression into a trustworthy cross-platform experience.
+As the loop closes, a capability stops being a one-off implementation and becomes an asset shared by DSLs, design systems, and products. It can also support new ways of producing interfaces. AI does not remove the need to implement components, but it raises the value of stable semantics, composition rules, and validation. The direction is not to let an Agent write more TSX, but to let it express intent through a validated UI vocabulary and turn that expression into a trustworthy cross-platform experience.
 
 > **Agent-ready UI = Constrained Expression × Trusted Semantics × Executable Evaluation**
 
@@ -252,17 +203,11 @@ This foundation first serves developers and different DSLs. It can also support 
   </a>
 </div>
 
-This is not a second architecture. It is the same public foundation with a new consumer. The Lynx Engine executes. XElement absorbs platform, thread, and version differences. Element exposes stable APIs and behavior. lynx-ui and other DSL libraries provide composable interaction vocabulary, while LUNA serves as a reference for visual semantics. The Agent then faces neither platform-specific parameters nor an infinitely open code space, but a UI language with explicit boundaries that can be validated.
+This is the same public foundation with a new consumer: the Engine executes, XElement absorbs platform differences, Element exposes stable contracts, lynx-ui and other DSL libraries provide interaction vocabulary, and LUNA provides visual semantics. [OpenUI](https://lynxjs.org/next/react/genui/openui.html) already lets an Agent generate expressions within a controlled vocabulary and maps them into an interface through a trusted Renderer; [lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) are another starting point. Next, a Component Manifest can derive implementation, types, documentation, composition constraints, compatibility data, and tests from one source of truth while driving Skills, the OpenUI Catalog, and evaluation.
 
-> **XElement makes native capabilities dependable; lynx-ui makes them composable; developers still decide the final product experience.**
+A component's core assets will then include not only source code, but also machine-readable contracts, usage boundaries, and executable tests. First-pass compilation, cross-platform execution, visual and interaction results, and required human edits can tell us whether this foundation is trustworthy.
 
-[OpenUI](https://lynxjs.org/next/react/genui/openui.html) already demonstrates one possibility: instead of facing an infinitely open code space, an Agent generates expressions within a controlled component vocabulary, and a trusted Renderer maps those expressions into a real interface. [lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) are another starting point. Next, a Component Manifest can make implementation, types, documentation, composition constraints, compatibility data, and tests derive from one source of truth, while also driving Skills, the OpenUI Catalog, and evaluation of generated results.
-
-For an Agent, a component is valuable not only for its source code, but also for its understandable contract, explicit usage boundaries, and executable tests. First-pass compilation, cross-platform execution, visual and interaction results, and the amount of human modification required can tell us whether this foundation is actually trustworthy.
-
-Community contribution does not only mean submitting a new component. A reproducible platform difference, a behavioral test suite, an RFC, an XElement fix, or a component implementation for another DSL can all make this shared foundation more dependable.
-
-If you maintain cross-platform components, a design system, or a new DSL—or if you are exploring generative UI—tell us which platform differences keep consuming the same engineering effort, which behaviors should become public standards, and which tests can benefit every implementation.
+Community contribution does not only mean submitting a new component. A reproducible platform difference, a behavioral test suite, an RFC, an XElement fix, or an implementation for another DSL can all make this foundation more dependable.
 
 We especially want to answer three questions with the community:
 
