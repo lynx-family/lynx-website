@@ -1,0 +1,90 @@
+---
+title: '使用 Lynx 构建桌面应用'
+date: 2026-06-17
+sidebar: false
+authors: ['lynx']
+badge_text: 'Lynxtron 框架介绍'
+description: 'Lynxtron 是 Electron-like 应用框架，提供由 Lynx 驱动的轻量 UI 渲染器、跨平台 UI 模型，以及基于 UI/texture extension C-APIs 和 Node-API 的原生扩展能力。'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader authors={['lynx']} />
+
+Lynx 正在走向桌面端。
+
+**Lynxtron** 是由 Lynx 驱动的 Electron-like 应用框架。在 Lynxtron 应用中，宿主进程仍然保留桌面开发需要的 Node.js 能力，而窗口层由 `LynxWindow` 通过轻量 UI 渲染器承载 Lynx UI，而不是加载浏览器页面。
+
+这意味着：你可以用 Lynx 的 UI 模型构建桌面应用，同时继续获得更轻的运行时、更直接的原生扩展能力，以及面向桌面、Web 和移动端的跨平台代码组织方式。
+
+## Lynxtron 解决什么问题
+
+桌面应用开发长期有一个现实选择：要么使用 Web 技术快速构建跨平台应用，要么投入更多原生工程成本换取体积、性能和系统能力。Lynxtron 的目标是在这两者之间提供一个新的路径：用 Lynx 组织 UI，用桌面宿主进程连接系统能力，用原生扩展承载真正需要原生实现的部分。
+
+Lynxtron 围绕 **Light-weight and Fast**、**Multiplatform** 和 **Natively Extensible** 三项特性展开。下面观察它们如何落到桌面应用开发中。
+
+## Light-weight and Fast
+
+Lynxtron 在应用模型上接近 Electron，但它没有把 browser 作为 UI runtime 打包进应用。`LynxWindow` 通过轻量化的 Lynx renderer 承载 UI，让桌面运行时更小，也让启动、窗口创建和内存使用路径更直接。
+
+<Go
+  example="lynxtron-benchmark"
+  defaultFile="src/main/desktop/main.ts"
+  defaultEntryFile="dist/main.lynx.bundle"
+  defaultTab="preview"
+  highlight="{17-25,39-52,66-70}"
+  deepLinkUrl="lynxtron://lynxview_page?bundle={{{urlEncoded}}}&title=Lynxtron%20Benchmark"
+  nativeFramework="lynxtron"
+/>
+
+> **亮点：** `LynxWindow` 直接承载 Lynx bundle，并在同一进程内测量打开第二个窗口带来的增量内存开销。
+
+在当前测量口径下，产品计划记录的框架二进制体积对比是：**Lynxtron 58 MB，Electron Fiddle 161 MB**。重点不只是数字，而是架构差异：Lynxtron 使用 Lynx 作为 UI renderer，而不是嵌入完整 browser runtime。
+
+同一个应用也可以展示启动耗时、物理内存、JS heap、平台信息，以及打开第二个 `LynxWindow` 后的内存增量，让轻量化运行时在真实桌面应用中可观察。
+
+## Natively Extensible
+
+Lynxtron 通过 UI/texture extension C-APIs 和 Node-API 扩展渲染器能力。在桌面开发中，一部分图形或 UI 需要原生实现是很常见的需求：摄像头预览、视频画面、地图视图、绘制画布、平台控件，或者任何需要硬件访问、GPU 深度绑定、复用系统渲染能力的 surface。Lynxtron 可以把这些原生 surface 或原生 UI 和 Lynx runtime 结合起来，让需要原生渲染的部分继续走原生路径，同时让交互和界面逻辑继续用 Lynx UI 构建和迭代。
+
+<Go
+  example="lynxtron-native-texture"
+  defaultFile="src/app/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  defaultTab="preview"
+  highlight="{27-33,44-55,141-143}"
+  deepLinkUrl="lynxtron://lynxview_page?bundle={{{urlEncoded}}}&title=Native%20Texture%20Canvas"
+  nativeFramework="lynxtron"
+/>
+
+> **亮点：** Lynx UI 通过注册的原生模块控制 native texture surface，在同一组件树中组合原生渲染与前端式交互。
+
+Lynxtron 选择的是另一条路径：通过 native extension 和原生纹理，把原生视图、原生绘制表面和硬件加速内容纳入桌面应用模型。这样开发者可以在核心工作区充分使用原生能力，同时把大部分 UI 逻辑保留在前端式的 Lynx UI 中，降低研发和迭代成本。
+
+## Multiplatform
+
+Lynxtron 不是把 Lynx 锁在桌面端。借助 Lynx，UI 可以运行在包括 Web 在内的多个平台上，也可以用较低成本迁移到新的宿主环境。
+
+跨平台能力体现在代码组织方式上：同一份 Lynx UI 可以同时运行在桌面和 Web。桌面宿主通过 Node preload bridge 连接本地能力；Web 宿主使用浏览器侧能力。UI 代码保持一致，变化的是平台宿主适配层。
+
+<Go
+  example="lynxtron-cross-platform-notes"
+  defaultFile="src/app/api.ts"
+  defaultEntryFile="dist/main.lynx.bundle"
+  defaultTab="preview"
+  highlight="{71-87,146-149,165-178}"
+  deepLinkUrl="lynxtron://lynxview_page?bundle={{{urlEncoded}}}&title=Cross-Platform%20Notes"
+  nativeFramework="lynxtron"
+/>
+
+> **亮点：** 同一套 Lynx UI 只依赖统一的 notes API，适配层会在运行时选择桌面 bridge 或 Web bridge。
+
+这对应的是 Lynxtron 的跨平台工程模型：保持 Lynx UI 层可复用，把平台相关逻辑隔离在宿主适配层中，并在需要时将渲染器模型迁移到新的宿主。
+
+## 工程边界
+
+对开发者来说，更重要的是可检查的源码边界：宿主进程负责桌面能力，Lynx UI 负责界面和交互，原生扩展负责需要平台能力的部分。Lynxtron 的设计重点不是把所有能力收进同一层，而是让每一层承担自己最擅长的职责。
+
+## 立即体验
+
+前往 [Lynxtron 快速上手](/zh/lynxtron/introduction)，创建并运行你的第一个 Lynxtron 应用。

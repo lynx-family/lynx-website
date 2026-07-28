@@ -27,10 +27,9 @@ const config: Record<
       zh: '阅读最新博客',
       en: 'Read the Latest Blog',
     },
-    // Optional: customize which blog to show
-    // latestBlogConfig: {
-    //   filename: 'lynx-3-5', // Show a specific blog
-    // },
+    latestBlogConfig: {
+      filename: 'lynxtron',
+    },
     // Or use an external link:
     // latestBlogConfig: {
     //   externalLink: 'https://example.com',

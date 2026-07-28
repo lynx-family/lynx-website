@@ -312,10 +312,12 @@ function parseExampleData() {
       files: sortedFiles,
       previewImage: previewImage,
       templateFiles: templateFiles,
-      exampleGitBaseUrl,
+      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || exampleGitBaseUrl,
     };
-    if (nativeFramework) {
-      metadata.nativeFramework = nativeFramework;
+    const exampleNativeFramework =
+      packageJSON.nativeFramework || nativeFramework;
+    if (exampleNativeFramework) {
+      metadata.nativeFramework = exampleNativeFramework;
     }
 
     // write example-metadata.json
