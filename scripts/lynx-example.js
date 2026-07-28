@@ -52,6 +52,11 @@ const exampleGitBaseUrl =
   process.env.EXAMPLE_GIT_BASE_URL ||
   'https://github.com/lynx-family/lynx-examples/tree/main';
 
+// Optional: inject a top-level `nativeFramework` field into every generated
+// example-metadata.json (e.g. "lynxtron"). go-web reads this to pick the
+// correct deep-link scheme and hide the QR tab for native-only examples.
+const nativeFramework = process.env.NATIVE_FRAMEWORK || '';
+
 const isPackCopy = true;
 const linkPath = path.join(
   currentDir,
@@ -103,6 +108,8 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
   }
 
   const files = fs.readdirSync(exampleDir);
+  const excludeArgs = ignoreDirs.map((d) => `--exclude '${d}'`).join(' ');
+  const excludeFileArgs = ignoreFiles.map((f) => `--exclude '${f}'`).join(' ');
 
   files.forEach((file) => {
     const fullPath = path.join(exampleDir, file);
@@ -113,7 +120,12 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
-        execSync(`cp -Lrfp "${fullPath}" "${targetPath}"`);
+        // Use rsync to exclude nested node_modules/.git/.turbo and ignored files.
+        // cp -Lrfp would copy everything including deep node_modules (e.g.
+        // dist/desktop/node_modules/sqlite3), bloating the public deploy.
+        execSync(
+          `rsync -aL ${excludeArgs} ${excludeFileArgs} "${fullPath}/" "${targetPath}/"`,
+        );
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
@@ -122,7 +134,7 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
-        execSync(`cp -Lrfp "${fullPath}" "${targetPath}"`);
+        execSync(`cp -Lfp "${fullPath}" "${targetPath}"`);
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
@@ -186,11 +198,17 @@ function getTemplateFiles(allFiles) {
   const entries = [];
   allFiles.forEach((file) => {
     if (file.endsWith(lynxEntryFileName)) {
-      const dir = file.split('/');
-      const name = dir[dir.length - 1].replace(lynxEntryFileName, '');
+      const parts = file.split('/');
+      const fileName = parts[parts.length - 1];
+      const baseName = fileName.replace(lynxEntryFileName, '');
+      const parentDir = parts.length > 1 ? parts[parts.length - 2] : '';
+      // Default name is the bundle basename (e.g. "main" from "main.lynx.bundle").
+      // Fall back to parent directory name if the bundle file has no base name
+      // (e.g. a bare ".lynx.bundle" file).
+      const name = baseName || parentDir || fileName;
       const entry = {
-        name: name || dir[dir.length - 2],
-        file: file,
+        name,
+        file,
       };
       const webFile = file.replace(lynxEntryFileName, webEntryFileName);
       if (allFiles.includes(webFile)) {
@@ -199,6 +217,24 @@ function getTemplateFiles(allFiles) {
       entries.push(entry);
     }
   });
+
+  // Deduplicate names: when multiple bundles share the same basename
+  // (e.g. dist/desktop/main.lynx.bundle and output/bundle/lynx/main.lynx.bundle),
+  // prefix each with its parent directory to guarantee unique keys.
+  const nameCounts = {};
+  entries.forEach((e) => {
+    nameCounts[e.name] = (nameCounts[e.name] || 0) + 1;
+  });
+  entries.forEach((e) => {
+    if (nameCounts[e.name] > 1) {
+      const parts = e.file.split('/');
+      const parentDir = parts.length > 1 ? parts[parts.length - 2] : '';
+      if (parentDir) {
+        e.name = `${parentDir}/${e.name}`;
+      }
+    }
+  });
+
   return entries;
 }
 
@@ -265,27 +301,25 @@ function parseExampleData() {
 
     const sortedFiles = sortFilesByDirectoryFirst(filesFilters);
 
-    // example-metadata.json
+    // write example-metadata.json
     const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
 
     const previewImage = files.find((file) => previewImageReg.test(file));
     const templateFiles = getTemplateFiles(filesFilters);
 
+    const metadata = {
+      name: packageJSON.repository?.directory || example,
+      files: sortedFiles,
+      previewImage: previewImage,
+      templateFiles: templateFiles,
+      exampleGitBaseUrl,
+    };
+    if (nativeFramework) {
+      metadata.nativeFramework = nativeFramework;
+    }
+
     // write example-metadata.json
-    fs.writeFileSync(
-      jsonFilePath,
-      JSON.stringify(
-        {
-          name: packageJSON.repository?.directory || example,
-          files: sortedFiles,
-          previewImage: previewImage,
-          templateFiles: templateFiles,
-          exampleGitBaseUrl,
-        },
-        null,
-        2,
-      ),
-    );
+    fs.writeFileSync(jsonFilePath, JSON.stringify(metadata, null, 2));
   });
   console.log('lynx-examples link success');
 }
