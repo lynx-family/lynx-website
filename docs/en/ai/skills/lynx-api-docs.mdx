@@ -1,0 +1,78 @@
+---
+description: 'Install authoritative public Lynx API documentation as project-local context for coding agents.'
+---
+
+# lynx-api-docs
+
+[`@lynx-js/lynx-api-docs`](https://www.npmjs.com/package/@lynx-js/lynx-api-docs) installs the public Lynx engine documentation and the `using-lynx-api-docs` Agent Skill into your project. It gives coding agents local references for Lynx elements, CSS, layout systems, common patterns, Web migration, and best practices.
+
+Use it when an agent needs to:
+
+- implement or review Lynx pages, templates, components, or styles
+- verify supported public elements, attributes, CSS properties, selectors, values, or units
+- choose between Linear, Flex, Grid, and Relative layout
+- account for Lynx behavior that differs from the Web platform
+- debug rendering or styling issues without guessing from general Web knowledge
+
+## Installation
+
+Run the installer from your project root:
+
+```bash
+npx @lynx-js/lynx-api-docs@latest install
+```
+
+The installer:
+
+- copies the documentation bundle to `.ai/lynx-api-docs/`
+- installs the canonical skill at `.agents/skills/using-lynx-api-docs/`
+- adds a managed Lynx API documentation block to the root `AGENTS.md` while preserving your project notes
+- links the skill into the project-local Claude Code, Codex, and Trae skill directories by default
+
+:::info
+This package provides context for coding agents. It is not a runtime dependency of a Lynx application.
+:::
+
+Preview the changes without writing files:
+
+```bash
+npx @lynx-js/lynx-api-docs@latest install --dry-run
+```
+
+To install into another project, or to skip agent-specific links:
+
+```bash
+npx @lynx-js/lynx-api-docs@latest install --project ../my-lynx-app
+npx @lynx-js/lynx-api-docs@latest install --no-link
+```
+
+## Using the Skill
+
+Compatible coding agents can activate `using-lynx-api-docs` automatically when working on Lynx code. You can also request it explicitly:
+
+```text
+Use using-lynx-api-docs to verify the supported properties and events for
+<scroll-view> before implementing this component.
+```
+
+The skill requires the agent to read the relevant installed references before editing Lynx code. It routes different tasks to focused documents, such as:
+
+- `elements/<element-name>.md` for element attributes, events, and methods
+- `css/` for supported properties, selectors, values, units, and pseudo-classes
+- `layout/` for Linear, Flex, Grid, and Relative layout
+- `lynx-vs-web/` for Web migration and behavior differences
+- `patterns/` and `best-practices.md` for common implementation guidance
+
+## Updating
+
+Run the installation command again to update the managed documentation, skill, links, and `AGENTS.md` block:
+
+```bash
+npx @lynx-js/lynx-api-docs@latest install
+```
+
+## Learn More
+
+- [`@lynx-js/lynx-api-docs` on npm](https://www.npmjs.com/package/@lynx-js/lynx-api-docs)
+- [lynx-api-docs source](https://github.com/lynx-family/lynx/tree/develop/ai/skills/lynx-api-docs)
+- [Agent Skills specification](https://agentskills.io/specification)
