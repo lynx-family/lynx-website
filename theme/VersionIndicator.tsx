@@ -1,4 +1,10 @@
-import { useLocation, withBase, useI18n, useLang } from '@rspress/core/runtime';
+import {
+  removeTrailingSlash,
+  useLocation,
+  useI18n,
+  useLang,
+  withBase,
+} from '@rspress/core/runtime';
 import { useState, useEffect } from 'react';
 import {
   HoverCard,
@@ -71,16 +77,16 @@ export function VersionIndicator() {
 
   const changeVersion = (version: string) => {
     setIsOpen(false);
-    const currentPath = window.location.pathname;
-    const searchParams = window.location.search;
-
-    const currentBasePath = withBase('');
-    const pathWithoutBase = currentPath.startsWith(currentBasePath)
-      ? currentPath.slice(currentBasePath.length)
-      : currentPath;
-
-    const newPath = `/${version}/${pathWithoutBase}`;
-    window.location.href = newPath + searchParams;
+    const url = new URL(window.location.href);
+    const baseWithoutTrailingSlash = removeTrailingSlash(withBase('/'));
+    const pathWithoutBase =
+      url.pathname === baseWithoutTrailingSlash
+        ? '/'
+        : url.pathname.startsWith(`${baseWithoutTrailingSlash}/`)
+          ? url.pathname.slice(baseWithoutTrailingSlash.length)
+          : url.pathname;
+    url.pathname = `/${version}${pathWithoutBase}`;
+    window.location.href = url.href;
   };
 
   const viewAllVersions = () => {
