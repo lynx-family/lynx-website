@@ -39,24 +39,25 @@ const STORAGE_KEY = 'cross-platform-notes.v1';
 
 const DEFAULT_NOTES: NoteRecord[] = [
   {
-    id: 'note-1',
-    title: 'Project kickoff',
+    id: 'release-plan',
+    title: 'Desktop release plan',
     content:
-      '# Project kickoff\n\nA small note shell that proves the same UI code runs on desktop and web.',
-    updatedAt: '2026-03-30T00:00:00.000Z',
+      '# Desktop release plan\n\nShip the Lynx UI, verify native capabilities, and share one bundle across hosts.',
+    updatedAt: '2026-06-17T09:30:00.000Z',
   },
   {
-    id: 'note-2',
-    title: 'Cross-platform scope',
+    id: 'design-review',
+    title: 'Design review',
     content:
-      '# Cross-platform scope\n\nLeft list, right editor, bottom status bar.',
-    updatedAt: '2026-03-29T00:00:00.000Z',
+      '# Design review\n\nPolish navigation, canvas tools, and the platform status bar.',
+    updatedAt: '2026-06-16T14:15:00.000Z',
   },
   {
-    id: 'note-3',
-    title: 'Follow-up',
-    content: '# Follow-up\n\nStorage and host wiring come next.',
-    updatedAt: '2026-03-28T00:00:00.000Z',
+    id: 'platform-checklist',
+    title: 'Platform checklist',
+    content:
+      '# Platform checklist\n\n- Desktop: filesystem\n- Web: localStorage\n- UI: shared Lynx bundle',
+    updatedAt: '2026-06-15T11:00:00.000Z',
   },
 ];
 
@@ -161,8 +162,8 @@ function createNotesApi(): NotesApi {
       const nextId = `note-${Date.now().toString(36)}`;
       const created: NoteRecord = {
         id: nextId,
-        title: 'Untitled note',
-        content: '# Untitled note\n\nStart typing here.',
+        title: 'New idea',
+        content: '# New idea\n\nCapture the next product thought here.',
         updatedAt: nowIso(),
       };
       persist([created, ...state.notes]);

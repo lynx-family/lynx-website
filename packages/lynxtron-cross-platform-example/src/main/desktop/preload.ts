@@ -39,14 +39,22 @@ const NOTE_SUFFIX = '.json';
 
 const DEFAULT_NOTES: Array<Pick<NoteRecord, 'id' | 'title' | 'content'>> = [
   {
-    id: 'project-kickoff',
-    title: 'Project kickoff',
-    content: '# Cross-Platform Notes\n\nSame UI code, separate host storage.',
+    id: 'release-plan',
+    title: 'Desktop release plan',
+    content:
+      '# Desktop release plan\n\nShip the Lynx UI, verify native capabilities, and share one bundle across hosts.',
   },
   {
-    id: 'scope',
-    title: 'Scope',
-    content: '- Left note list\n- Right markdown editor\n- Bottom platform bar',
+    id: 'design-review',
+    title: 'Design review',
+    content:
+      '# Design review\n\nPolish navigation, canvas tools, and the platform status bar.',
+  },
+  {
+    id: 'platform-checklist',
+    title: 'Platform checklist',
+    content:
+      '# Platform checklist\n\n- Desktop: filesystem\n- Web: localStorage\n- UI: shared Lynx bundle',
   },
 ];
 
@@ -161,7 +169,7 @@ function toSummary(note: NoteRecord): NoteSummary {
   return {
     id: note.id,
     title: note.title,
-    excerpt: excerpt || 'Empty note',
+    excerpt: excerpt || 'No content yet',
     updatedAt: note.updatedAt,
   };
 }
@@ -176,10 +184,11 @@ function upsertNote(draft: NoteDraft): NoteRecord {
   const existing = draft.id ? getNoteById(draft.id) : null;
   const note: NoteRecord = {
     id: sanitizeId(draft.id ?? generateId()),
-    title:
-      (draft.title ?? existing?.title ?? 'Untitled note').trim() ||
-      'Untitled note',
-    content: draft.content ?? existing?.content ?? '',
+    title: (draft.title ?? existing?.title ?? 'New idea').trim() || 'New idea',
+    content:
+      draft.content ??
+      existing?.content ??
+      '# New idea\n\nCapture the next product thought here.',
     createdAt: existing?.createdAt ?? timestamp,
     updatedAt: timestamp,
   };

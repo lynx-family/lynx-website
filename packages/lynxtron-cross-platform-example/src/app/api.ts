@@ -95,7 +95,7 @@ function fallbackSummary(note: NoteRecord): NoteSummary {
   return {
     id: note.id,
     title: note.title,
-    excerpt: excerpt || 'Empty note',
+    excerpt: excerpt || 'No content yet',
     updatedAt: note.updatedAt,
   };
 }
@@ -103,9 +103,9 @@ function fallbackSummary(note: NoteRecord): NoteSummary {
 function fallbackApi(): UnifiedNotesApi {
   let record: NoteRecord = {
     id: 'local-fallback',
-    title: 'Welcome',
+    title: 'Desktop release plan',
     content:
-      '# Welcome\n\nCross-Platform Notes is waiting for its host bridge.',
+      '# Desktop release plan\n\nShip the Lynx UI, verify native capabilities, and share one bundle across hosts.',
     updatedAt: new Date().toISOString(),
   };
 
@@ -119,8 +119,8 @@ function fallbackApi(): UnifiedNotesApi {
     create() {
       record = {
         id: `local-${Date.now()}`,
-        title: 'Untitled note',
-        content: '# Untitled note\n',
+        title: 'New idea',
+        content: '# New idea\n\nCapture the next product thought here.',
         updatedAt: new Date().toISOString(),
       };
       return record;
@@ -195,7 +195,7 @@ export function getNotesApi(): UnifiedNotesApi {
         const current = draft.id ? web.get(draft.id) : null;
         return web.save({
           id: draft.id ?? current?.id ?? `note-${Date.now()}`,
-          title: draft.title ?? current?.title ?? 'Untitled note',
+          title: draft.title ?? current?.title ?? 'New idea',
           content: draft.content ?? current?.content ?? '',
         });
       },

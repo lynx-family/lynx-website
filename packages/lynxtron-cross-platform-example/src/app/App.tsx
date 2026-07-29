@@ -230,7 +230,7 @@ export function App() {
                   {note.title}
                 </text>
                 <text className="note-excerpt" text-maxline="1">
-                  {note.excerpt || 'Empty note'}
+                  {note.excerpt || 'No content yet'}
                 </text>
                 <text className="note-meta">
                   {formatTimestamp(note.updatedAt)}
@@ -256,8 +256,11 @@ export function App() {
 
           <view className="editor-preview">
             <text className="preview-label">Preview</text>
-            <text className="preview-title">{title || 'Untitled note'}</text>
-            <text className="preview-content">{content || '# Empty note'}</text>
+            <text className="preview-title">{title || 'New idea'}</text>
+            <text className="preview-content">
+              {content ||
+                '# New idea\n\nCapture the next product thought here.'}
+            </text>
           </view>
 
           <view className="editor-actions">
