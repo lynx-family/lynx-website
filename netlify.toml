@@ -5,6 +5,19 @@
 [context.deploy-preview.environment]
   RSPRESS_LIGHTWEIGHT_BUILD = "true"
 
+# Version homes are directory-style URLs, so redirect `/4.0` to `/4.0/` and
+# `/next` to `/next/` instead of serving the same page at two URLs. Netlify
+# normalizes trailing slashes before evaluating redirect rules, so either
+# static redirect would also match its target and cause a loop. Edge Functions
+# run first and can inspect the original pathname.
+[[edge_functions]]
+  function = "redirect-version-root"
+  path = "/4.0"
+
+[[edge_functions]]
+  function = "redirect-version-root"
+  path = "/next"
+
 [[headers]]
   for = "/*"
   [headers.values]
