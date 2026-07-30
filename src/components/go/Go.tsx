@@ -1,4 +1,5 @@
 import path from 'path';
+import { useMemo } from 'react';
 import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
@@ -25,7 +26,24 @@ const ErrorComponent = ({
   </Callout>
 );
 
-const config = {
+// Lynxtron Go is a desktop-only host, so `downloadUrl` needs to pick between
+// the macOS .dmg and the Windows installer. go-web's `LocalizedUrl` only
+// branches on language, so we resolve the OS here. The URL is never in the
+// SSR HTML — it only renders after a client-side 5s deep-link probe — so
+// reading `navigator` at render time is safe.
+const LYNXTRON_DOWNLOAD_URL_MAC =
+  'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/lynxtron-go-darwin-arm64.dmg';
+const LYNXTRON_DOWNLOAD_URL_WIN =
+  'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/LynxtronGo-win-x64-Setup.exe';
+
+function resolveLynxtronDownloadUrl(): string {
+  if (typeof navigator === 'undefined') return LYNXTRON_DOWNLOAD_URL_MAC;
+  return /Windows/i.test(navigator.userAgent)
+    ? LYNXTRON_DOWNLOAD_URL_WIN
+    : LYNXTRON_DOWNLOAD_URL_MAC;
+}
+
+const baseConfig = {
   ...rspressAdapter,
   exampleBasePath: '/lynx-examples',
   ssgExampleRoot: path?.join?.(__dirname, '../../docs/public/lynx-examples'),
@@ -43,6 +61,18 @@ const config = {
 };
 
 export function Go(props: GoProps) {
+  const config = useMemo(
+    () => ({
+      ...baseConfig,
+      nativeFrameworks: {
+        lynxtron: {
+          downloadUrl: resolveLynxtronDownloadUrl(),
+        },
+      },
+    }),
+    [],
+  );
+
   return (
     <GoConfigProvider config={config}>
       <GoBase {...props} />
