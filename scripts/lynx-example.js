@@ -192,9 +192,10 @@ function applyExampleFixups(example, exampleDir) {
 /**
  * Get all .lynx.bundle|.web.bundle files
  * @param {Array} allFiles - An array of all file paths
+ * @param {string | undefined} webHostFile - Optional full Web app entry
  * @returns {Array} - An array of template files
  */
-function getTemplateFiles(allFiles) {
+function getTemplateFiles(allFiles, webHostFile) {
   const entries = [];
   allFiles.forEach((file) => {
     if (file.endsWith(lynxEntryFileName)) {
@@ -213,6 +214,9 @@ function getTemplateFiles(allFiles) {
       const webFile = file.replace(lynxEntryFileName, webEntryFileName);
       if (allFiles.includes(webFile)) {
         entry.webFile = webFile;
+      }
+      if (webHostFile && allFiles.includes(webHostFile)) {
+        entry.webHostFile = webHostFile;
       }
       entries.push(entry);
     }
@@ -305,7 +309,10 @@ function parseExampleData() {
     const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
 
     const previewImage = files.find((file) => previewImageReg.test(file));
-    const templateFiles = getTemplateFiles(filesFilters);
+    const templateFiles = getTemplateFiles(
+      filesFilters,
+      packageJSON.webHostFile,
+    );
 
     const metadata = {
       name: packageJSON.repository?.directory || example,

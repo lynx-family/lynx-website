@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
 import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
-import {
-  getNotesApi,
-  type NoteRecord,
-  type NoteSummary,
-  type PlatformInfo,
-} from './api';
+import { getNotesApi, type NoteSummary, type PlatformInfo } from './api';
 
 function formatTimestamp(value: string): string {
   if (!value) return 'Just now';
@@ -32,9 +27,9 @@ export function App() {
     [],
   );
 
-  const refreshNotes = useCallback((preferredId?: string) => {
+  const refreshNotes = useCallback(async (preferredId?: string) => {
     const api = getNotesApi();
-    const nextNotes = api.list();
+    const nextNotes = await api.list();
     setNotes(nextNotes);
 
     const nextActiveId =
@@ -46,7 +41,7 @@ export function App() {
     return { api, nextNotes, nextActiveId };
   }, []);
 
-  const loadActiveNote = useCallback((noteId: string) => {
+  const loadActiveNote = useCallback(async (noteId: string) => {
     if (!noteId) {
       setTitle('');
       setContent('');
@@ -55,7 +50,7 @@ export function App() {
       return;
     }
 
-    const note = getNotesApi().get(noteId);
+    const note = await getNotesApi().get(noteId);
     if (!note) return;
 
     setTitle(note.title);
@@ -64,25 +59,25 @@ export function App() {
     setSavedContent(note.content);
   }, []);
 
-  const flushDirtyNote = useCallback(() => {
+  const flushDirtyNote = useCallback(async () => {
     if (!activeId || (title === savedTitle && content === savedContent))
       return null;
 
-    const saved = getNotesApi().save({
+    const saved = await getNotesApi().save({
       id: activeId,
       title,
       content,
     });
-    setNotes(getNotesApi().list());
+    setNotes(await getNotesApi().list());
     setSavedTitle(saved.title);
     setSavedContent(saved.content);
     return saved;
   }, [activeId, content, savedContent, savedTitle, title]);
 
-  const handleCreate = useCallback(() => {
-    const flushed = flushDirtyNote();
-    const created = getNotesApi().create();
-    const snapshot = refreshNotes(created.id);
+  const handleCreate = useCallback(async () => {
+    const flushed = await flushDirtyNote();
+    const created = await getNotesApi().create();
+    const snapshot = await refreshNotes(created.id);
     setTitle(created.title);
     setContent(created.content);
     setSavedTitle(created.title);
@@ -99,39 +94,42 @@ export function App() {
       nextStatus: 'manual' | 'autosave',
     ) => {
       if (!activeId) return null;
-      const saved = getNotesApi().save({
-        id: activeId,
-        title: nextTitle,
-        content: nextContent,
-      });
-      refreshNotes(saved.id);
-      setTitle(saved.title);
-      setContent(saved.content);
-      setSavedTitle(saved.title);
-      setSavedContent(saved.content);
-      setStatus(
-        `${nextStatus === 'autosave' ? 'Autosaved' : 'Saved'} ${saved.title}`,
-      );
-      return saved;
+      return getNotesApi()
+        .save({
+          id: activeId,
+          title: nextTitle,
+          content: nextContent,
+        })
+        .then(async (saved) => {
+          await refreshNotes(saved.id);
+          setTitle(saved.title);
+          setContent(saved.content);
+          setSavedTitle(saved.title);
+          setSavedContent(saved.content);
+          setStatus(
+            `${nextStatus === 'autosave' ? 'Autosaved' : 'Saved'} ${saved.title}`,
+          );
+          return saved;
+        });
     },
     [activeId, refreshNotes],
   );
 
   const handleSave = useCallback(() => {
-    saveActiveNote(title, content, 'manual');
+    void saveActiveNote(title, content, 'manual');
   }, [content, saveActiveNote, title]);
 
-  const handleRemove = useCallback(() => {
+  const handleRemove = useCallback(async () => {
     if (!activeId) return;
-    const removed = getNotesApi().remove(activeId);
+    const removed = await getNotesApi().remove(activeId);
     if (!removed) {
       setStatus('Failed to remove note');
       return;
     }
 
-    const snapshot = refreshNotes();
+    const snapshot = await refreshNotes();
     if (snapshot.nextActiveId) {
-      const next = snapshot.api.get(snapshot.nextActiveId);
+      const next = await snapshot.api.get(snapshot.nextActiveId);
       if (next) {
         setTitle(next.title);
         setContent(next.content);
@@ -148,33 +146,41 @@ export function App() {
   }, [activeId, refreshNotes]);
 
   const handleSelect = useCallback(
-    (noteId: string) => {
+    async (noteId: string) => {
       if (noteId !== activeId) {
-        flushDirtyNote();
+        await flushDirtyNote();
       }
       setActiveId(noteId);
-      loadActiveNote(noteId);
-      const selected = getNotesApi().get(noteId);
+      await loadActiveNote(noteId);
+      const selected = await getNotesApi().get(noteId);
       if (selected) setStatus(`Opened ${selected.title}`);
     },
     [activeId, flushDirtyNote, loadActiveNote],
   );
 
   useEffect(() => {
-    const snapshot = refreshNotes();
-    setPlatformInfo(snapshot.api.getPlatformInfo());
-    if (snapshot.nextActiveId) {
-      const firstNote = snapshot.api.get(snapshot.nextActiveId);
-      if (firstNote) {
-        setTitle(firstNote.title);
-        setContent(firstNote.content);
-        setSavedTitle(firstNote.title);
-        setSavedContent(firstNote.content);
+    void (async () => {
+      try {
+        const snapshot = await refreshNotes();
+        setPlatformInfo(await snapshot.api.getPlatformInfo());
+        if (snapshot.nextActiveId) {
+          const firstNote = await snapshot.api.get(snapshot.nextActiveId);
+          if (firstNote) {
+            setTitle(firstNote.title);
+            setContent(firstNote.content);
+            setSavedTitle(firstNote.title);
+            setSavedContent(firstNote.content);
+          }
+          setStatus(`Loaded ${snapshot.nextNotes.length} notes`);
+        } else {
+          setStatus('No notes yet');
+        }
+      } catch (error) {
+        setStatus(
+          `Failed to load notes: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-      setStatus(`Loaded ${snapshot.nextNotes.length} notes`);
-    } else {
-      setStatus('No notes yet');
-    }
+    })();
   }, [refreshNotes]);
 
   const isDirty = title !== savedTitle || content !== savedContent;
@@ -183,7 +189,7 @@ export function App() {
     if (!activeId || !isDirty) return;
 
     const timer = setTimeout(() => {
-      saveActiveNote(title, content, 'autosave');
+      void saveActiveNote(title, content, 'autosave');
     }, 500);
 
     return () => {
@@ -191,9 +197,8 @@ export function App() {
     };
   }, [activeId, content, isDirty, saveActiveNote, title]);
 
-  const activeNote: NoteRecord | null = activeId
-    ? getNotesApi().get(activeId)
-    : null;
+  const activeNote: NoteSummary | null =
+    notes.find((note) => note.id === activeId) ?? null;
 
   return (
     <view className="notes-root">

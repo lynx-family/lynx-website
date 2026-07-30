@@ -46,26 +46,30 @@ type DesktopBridge = {
 };
 
 type WebBridge = {
-  list(): NoteSummary[];
-  get(id: string): NoteRecord | null;
-  create(): NoteRecord;
-  save(note: { id: string; title: string; content: string }): NoteRecord;
-  remove(id: string): void;
-  platform(): {
+  list(): Promise<NoteSummary[]>;
+  get(id: string): Promise<NoteRecord | null>;
+  create(): Promise<NoteRecord>;
+  save(note: {
+    id: string;
+    title: string;
+    content: string;
+  }): Promise<NoteRecord>;
+  remove(id: string): Promise<void>;
+  platform(): Promise<{
     platform: 'web';
     runtime: 'browser';
     storage: 'localStorage';
     version: string;
-  };
+  }>;
 };
 
 type UnifiedNotesApi = {
-  list(): NoteSummary[];
-  get(id: string): NoteRecord | null;
-  create(): NoteRecord;
-  save(draft: NoteDraft): NoteRecord;
-  remove(id: string): boolean;
-  getPlatformInfo(): PlatformInfo;
+  list(): Promise<NoteSummary[]>;
+  get(id: string): Promise<NoteRecord | null>;
+  create(): Promise<NoteRecord>;
+  save(draft: NoteDraft): Promise<NoteRecord>;
+  remove(id: string): Promise<boolean>;
+  getPlatformInfo(): Promise<PlatformInfo>;
 };
 
 function desktopBridge(): DesktopBridge | null {
@@ -78,16 +82,12 @@ function desktopBridge(): DesktopBridge | null {
 }
 
 function webBridge(): WebBridge | null {
-  const root = globalThis as typeof globalThis & {
-    __CROSS_PLATFORM_NOTES__?: WebBridge;
-    window?: { __CROSS_PLATFORM_NOTES__?: WebBridge };
-  };
-
-  return (
-    root.__CROSS_PLATFORM_NOTES__ ??
-    root.window?.__CROSS_PLATFORM_NOTES__ ??
-    null
-  );
+  try {
+    // @ts-ignore - injected by Web Core from lynxView.nativeModulesMap
+    return NativeModules?.webNotes ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function fallbackSummary(note: NoteRecord): NoteSummary {
@@ -110,13 +110,13 @@ function fallbackApi(): UnifiedNotesApi {
   };
 
   return {
-    list() {
+    async list() {
       return [fallbackSummary(record)];
     },
-    get(id: string) {
+    async get(id: string) {
       return id === record.id ? record : null;
     },
-    create() {
+    async create() {
       record = {
         id: `local-${Date.now()}`,
         title: 'New idea',
@@ -125,7 +125,7 @@ function fallbackApi(): UnifiedNotesApi {
       };
       return record;
     },
-    save(draft: NoteDraft) {
+    async save(draft: NoteDraft) {
       record = {
         id: draft.id ?? record.id,
         title: draft.title ?? record.title,
@@ -134,10 +134,10 @@ function fallbackApi(): UnifiedNotesApi {
       };
       return record;
     },
-    remove(id: string) {
+    async remove(id: string) {
       return id === record.id;
     },
-    getPlatformInfo() {
+    async getPlatformInfo() {
       return {
         kind: 'web',
         runtime: 'fallback',
@@ -152,22 +152,22 @@ export function getNotesApi(): UnifiedNotesApi {
   const desktop = desktopBridge();
   if (desktop?.notes && desktop.platform) {
     return {
-      list() {
+      async list() {
         return desktop.notes!.list();
       },
-      get(id: string) {
+      async get(id: string) {
         return desktop.notes!.get(id);
       },
-      create() {
+      async create() {
         return desktop.notes!.create();
       },
-      save(draft: NoteDraft) {
+      async save(draft: NoteDraft) {
         return desktop.notes!.save(draft);
       },
-      remove(id: string) {
+      async remove(id: string) {
         return desktop.notes!.remove(id);
       },
-      getPlatformInfo() {
+      async getPlatformInfo() {
         const info = desktop.platform!.getInfo();
         return {
           kind: 'desktop',
@@ -182,29 +182,29 @@ export function getNotesApi(): UnifiedNotesApi {
   const web = webBridge();
   if (web) {
     return {
-      list() {
+      async list() {
         return web.list();
       },
-      get(id: string) {
+      async get(id: string) {
         return web.get(id);
       },
-      create() {
+      async create() {
         return web.create();
       },
-      save(draft: NoteDraft) {
-        const current = draft.id ? web.get(draft.id) : null;
+      async save(draft: NoteDraft) {
+        const current = draft.id ? await web.get(draft.id) : null;
         return web.save({
           id: draft.id ?? current?.id ?? `note-${Date.now()}`,
           title: draft.title ?? current?.title ?? 'New idea',
           content: draft.content ?? current?.content ?? '',
         });
       },
-      remove(id: string) {
-        web.remove(id);
+      async remove(id: string) {
+        await web.remove(id);
         return true;
       },
-      getPlatformInfo() {
-        const info = web.platform();
+      async getPlatformInfo() {
+        const info = await web.platform();
         return {
           kind: 'web',
           runtime: `${info.runtime} ${info.version}`,
