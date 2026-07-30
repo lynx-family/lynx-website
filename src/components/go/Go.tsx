@@ -26,21 +26,23 @@ const ErrorComponent = ({
   </Callout>
 );
 
-// Lynxtron Go is a desktop-only host, so `downloadUrl` needs to pick between
-// the macOS .dmg and the Windows installer. go-web's `LocalizedUrl` only
-// branches on language, so we resolve the OS here. The URL is never in the
-// SSR HTML — it only renders after a client-side 5s deep-link probe — so
-// reading `navigator` at render time is safe.
-const LYNXTRON_DOWNLOAD_URL_MAC =
-  'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/lynxtron-go-darwin-arm64.dmg';
+// Lynxtron Go is a desktop-only host, so `downloadUrl` needs to distinguish
+// supported desktop platforms from mobile, Linux, ChromeOS, and SSR. The
+// Windows installer has a stable asset name. macOS user agents do not reliably
+// expose Apple Silicon vs Intel, so send macOS users to the release page rather
+// than risking an automatic download of the arm64-only .dmg.
+const LYNXTRON_RELEASE_URL =
+  'https://github.com/lynx-community/lynxtron-examples/releases/latest';
 const LYNXTRON_DOWNLOAD_URL_WIN =
   'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/LynxtronGo-win-x64-Setup.exe';
 
-function resolveLynxtronDownloadUrl(): string {
-  if (typeof navigator === 'undefined') return LYNXTRON_DOWNLOAD_URL_MAC;
-  return /Windows/i.test(navigator.userAgent)
-    ? LYNXTRON_DOWNLOAD_URL_WIN
-    : LYNXTRON_DOWNLOAD_URL_MAC;
+function resolveLynxtronDownloadUrl(): string | undefined {
+  if (typeof navigator === 'undefined') return undefined;
+  const { userAgent } = navigator;
+  if (/Android|Mobile|iPhone|iPad|iPod/i.test(userAgent)) return undefined;
+  if (/Windows NT/i.test(userAgent)) return LYNXTRON_DOWNLOAD_URL_WIN;
+  if (/Macintosh|Mac OS X/i.test(userAgent)) return LYNXTRON_RELEASE_URL;
+  return undefined;
 }
 
 const baseConfig = {
