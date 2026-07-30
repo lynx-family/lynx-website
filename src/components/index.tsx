@@ -12,6 +12,7 @@
 
 export { CodeFold } from './code-fold';
 export { Columns } from './Columns';
+export { Pillars } from './Pillars';
 export { default as BrowserContainer } from './containers/BrowserContainer';
 export {
   FlexItem,
