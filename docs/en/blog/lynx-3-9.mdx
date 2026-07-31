@@ -76,9 +76,42 @@ Lynx 3.9 also adds the following CSS capabilities:
 
 ## ReactLynx
 
-ReactLynx first adds [`createPortal`](/api/react/Function.createPortal) in 3.9. Portal lets a vnode tree continue rendering into a specified container node outside the current component hierarchy, which is useful for overlays, floating layers, and UI that needs to mount across containers.
+ReactLynx brings `createPortal` and an optimization that reduces both the depth and the number of Snapshots, plus a dual-thread Minimizer on the build side.
 
-Previously, this kind of cross-container rendering often required extra wrapper nodes, host-side conventions, or scattered mounting logic. Now `createPortal` brings the pattern into the ReactLynx API surface, so components can keep following React data flow while the final render location is delegated to the target container.
+### `createPortal`
+
+[`createPortal`](/api/react/Function.createPortal) renders a component subtree into a container outside the current component hierarchy. It suits overlays, dialogs, and other UI that needs to escape the surrounding layout: components stay organized around React data flow, while the final render location is delegated to the target container. The API is available from `@lynx-js/react` 0.121.0.
+
+#### Usage
+
+ReactLynx does not expose the [Element PAPI](/api/engine/element-api) to users, so you cannot grab an element node directly the way you would on the web. The container comes from a ref instead:
+
+```tsx
+import { createPortal, useState } from '@lynx-js/react';
+import type { NodesRef } from '@lynx-js/types';
+
+function Counter() {
+  const [n, setN] = useState(0);
+  return (
+    <text
+      bindtap={() => {
+        setN(n + 1);
+      }}
+    >{`count:${n}`}</text>
+  );
+}
+
+function App() {
+  // Once the container element mounts, the callback ref receives its NodesRef
+  const [host, setHost] = useState<NodesRef | null>(null);
+  return (
+    <view>
+      <view ref={setHost} />
+      {host && createPortal(<Counter />, host)}
+    </view>
+  );
+}
+```
 
 <Go
   example="react-apis"
@@ -88,9 +121,125 @@ Previously, this kind of cross-container rendering often required extra wrapper 
   defaultTab="web"
 />
 
-ReactLynx also continues to reduce runtime and bundle overhead. The multi-slot Snapshot optimization extends Preact support for multiple slots, reducing unnecessary Snapshot and wrapper nodes. It is enabled by default in `@lynx-js/react` 0.120.0.
+Besides a ref, a `NodesRef` returned by `lynx.createSelectorQuery().select(...)` also works as a container.
 
-On the build side, the ReactLynx toolchain now supports a multi-threaded Minimizer mechanism for more effective compression and tree-shaking across main-thread and background-thread bundles. You can enable the default optimization through [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize), or configure thread-specific compression with [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) and [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions).
+#### Capabilities and limitations
+
+[Context](https://react.dev/learn/passing-data-deeply-with-context) still flows across the portal boundary, and state updates inside the portal behave just like they do in any other component.
+
+A few things differ from the web, though:
+
+- **Events do not bubble along the React component tree.** ReactLynx's `createPortal` follows Preact's approach, and Preact has no synthetic event system like React's, so events follow the actual element structure of the page rather than the React component tree.
+- **Portal content does not participate in main-thread first-screen rendering** — it renders on the background thread only.
+- **Mounting across pages or across native containers is not supported.** To build something like a Modal, use Lynx UI's [`OverlayView`](/ui/components/overlay) as the host layer and portal into a node inside it. It is a drop-in replacement for the raw [`<overlay>`](/api/elements/built-in/overlay) element that takes care of sizing and platform quirks for you.
+
+### Snapshot depth and count optimization
+
+A Snapshot is the static element structure that ReactLynx extracts from JSX at compile time; at runtime only the dynamic parts inside it need updating. Those variable positions are called **slots**.
+
+The catch is that the number of nodes a dynamic part renders is not fixed: `{items.map(renderItem)}` may produce zero, one, or hundreds of nodes. Preact's diff only sees a flat list of child nodes and cannot tell which slot a given child belongs to. If the first dynamic part renders three nodes, content meant for the second slot can be mistaken for part of the first one and end up in the wrong place.
+
+The previous solution was to generate an extra **wrapper element** for every dynamic part: an intermediate node used purely for grouping, collapsing a variable number of children into **exactly one**. That kept the parent Snapshot's child count fixed and always in one-to-one correspondence with its slots. The cost was one extra node in the element tree per dynamic part, and sometimes an extra Snapshot split on top of that.
+
+There is a historical reason for this trade-off: early versions of ReactLynx used their own build of Preact, which could already render each child element into a designated slot on its parent. After the switch to the open-source build of Preact, which does not carry slot information, wrappers became the necessary fallback.
+
+We have now extended Preact's diff algorithm so a child can declare, through a `$N` prop, that it belongs to the parent's Nth slot ([internal-preact#1](https://github.com/lynx-family/internal-preact/pull/1)). With slot membership stated explicitly, wrappers are no longer needed to keep the counts aligned ([#1764](https://github.com/lynx-family/lynx-stack/pull/1764)).
+
+Take this JSX:
+
+```tsx
+<view className="parent">
+  <view className="child">{items.map(renderItem)}</view>
+  <view className="child">{items.map(renderItem)}</view>
+</view>
+```
+
+Before the optimization it took three Snapshots, plus one wrapper element inside the parent for each dynamic part (the output below omits fixed arguments, and variable names are simplified):
+
+```js
+// Each child is split into its own Snapshot
+const __snapshot_2 = ReactLynx.createSnapshot(
+  '__snapshot_2',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'child');
+    return [el];
+  },
+  null,
+  ReactLynx.__DynamicPartChildren_0,
+);
+
+const __snapshot_3 = ReactLynx.createSnapshot(
+  '__snapshot_3',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'child');
+    return [el];
+  },
+  null,
+  ReactLynx.__DynamicPartChildren_0,
+);
+
+// Parent: two wrappers keep the child count at exactly 2, matching the 2 slots
+const __snapshot_1 = ReactLynx.createSnapshot(
+  '__snapshot_1',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'parent');
+    const el1 = __CreateWrapperElement(ReactLynx.__pageId);
+    __AppendElement(el, el1);
+    const el2 = __CreateWrapperElement(ReactLynx.__pageId);
+    __AppendElement(el, el2);
+    return [el, el1, el2];
+  },
+  null,
+  [
+    [ReactLynx.__DynamicPartSlot, 1],
+    [ReactLynx.__DynamicPartSlot, 2],
+  ],
+);
+
+<__snapshot_1>
+  <__snapshot_2>{items.map(renderItem)}</__snapshot_2>
+  <__snapshot_3>{items.map(renderItem)}</__snapshot_3>
+</__snapshot_1>;
+```
+
+After the optimization only one Snapshot remains. Both `child` views are inlined into the static structure, wrappers are gone entirely, and `$0` / `$1` identify the slot for each dynamic part:
+
+```js
+const __snapshot_1 = ReactLynx.createSnapshot(
+  '__snapshot_1',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'parent');
+    const el1 = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el1, 'child');
+    __AppendElement(el, el1);
+    const el2 = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el2, 'child');
+    __AppendElement(el, el2);
+    return [el, el1, el2];
+  },
+  null,
+  [
+    [ReactLynx.__DynamicPartSlotV2, 1],
+    [ReactLynx.__DynamicPartSlotV2, 2],
+  ],
+);
+
+<__snapshot_1 $0={items.map(renderItem)} $1={items.map(renderItem)} />;
+```
+
+Comparing the two: `__snapshot_2` and `__snapshot_3` disappear entirely, `__CreateWrapperElement` is gone, `el1` / `el2` turn from wrappers into the actual `child` views, and the slot descriptors change from `__DynamicPartSlot` to `__DynamicPartSlotV2`.
+
+Measured on the bundle of a production page, `createSnapshot` statements dropped from 175 to 123, and `__CreateWrapperElement` calls from 76 to 25.
+
+The optimization is enabled by default in `@lynx-js/react` 0.120.0. It is transparent to application code and requires no changes.
+
+### Dual-thread Minimizer
+
+On the build side, a dual-thread Minimizer mechanism performs finer-grained compression and tree-shaking across main-thread and background-thread bundles. You can enable the default optimization through [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize), or configure the two separately with [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) and [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions).
 
 ## Misc Updates
 
