@@ -1,0 +1,213 @@
+---
+title: '从能力开放到生态共建：Lynx 跨端 UI 的下一阶段'
+date: 2026-07-21
+sidebar: false
+authors: ['lynx']
+description: '从 Lynx 3.6 到当前开发版本，更多经过生产验证的原生能力正在通过 XElement 进入开放环境。本文回顾这些能力如何走向开源、lynx-ui 为什么随之形成，并展望跨端 UI 如何从官方实现演进为社区能够共同积累的公共基础。'
+---
+
+import { BlogHeader, Caption, Go } from '@lynx';
+import { withBase } from '@rspress/core/runtime';
+
+<BlogHeader />
+
+Lynx 开源之初，我们曾提到，许多经过生产验证的能力——包括更丰富的 UI 组件——[还在路上](/blog/lynx-unlock-native-for-more#这不是终点而是新的起点)。从 Lynx 3.6 到当前开发版本，我们一直在推进这项工作：让更多原生元件进入开放环境，也通过 [lynx-ui](/blog/lynx-ui) 将这些底层能力组合成前端开发者可以直接使用的组件。
+
+这条路可以分成三个相互衔接的阶段：先把真实产品中已经稳定运行的原生能力带入开源，再把这些能力组织成前端能够使用和扩展的组件语言，最后让需求、标准、实现和测试在开放社区中形成持续循环。
+
+> **范围说明：**本文讨论的是建设方向，而不是带有固定日期的交付清单；具体设计仍需要通过 RFC、实现和社区讨论形成。
+
+## XElement：把生产中的原生能力带入开放环境
+
+在 Lynx 中，[元件（Element）](/guide/ui/elements-components)是界面的基础构建单元。`<view>`、`<text>` 和 `<image>` 负责基本表达；[XElement](/guide/ui/elements-components#xelement) 则把滚动、输入、媒体和浮层等原生能力扩展进来，吸收平台 API、线程模型、性能与兼容性差异，再通过 Element 契约交给前端。
+
+Lynx 3.6 时，开源体系中的扩展原生元件主要包括 `<input>`、`<textarea>` 与 `<overlay>`。此后，我们逐步将更多已经在真实应用中运行的能力带入开放环境：
+
+- Lynx 3.7 引入了跨平台原生矢量渲染元件 [`<svg>`](/api/elements/built-in/svg)；
+- Lynx 3.8 继续补充 [`<refresh>`](/api/elements/built-in/refresh) 等交互容器，并开始开放 Markdown 渲染能力；
+- 在当前开发版本中，`blur-view`、`markdown`、`scroll-coordinator`、`video`、`viewpager` 与 `webview` 等能力也在 Android、iOS 和 HarmonyOS 上陆续进入开放体系。
+
+它们中的许多不是新的实验，而是经过线上检验的实现。开源工作的核心不是重新发明一遍，而是把它们带入公开的构建、发布和维护周期，同时公开其语义、兼容边界与迁移路径。随着 XElement 扩大 Lynx 可以原生表达的范围，真实产品还需要状态、组合、默认行为和持续演进的组件 API——这正是 lynx-ui 出现的背景。
+
+## lynx-ui 的由来：能力还需要被组织
+
+原生层擅长渲染性能、手势延迟和多端适配；前端层擅长状态、组合、视觉定制和快速迭代。跨端 UI 的目标不是二选一，而是让原生能力成为前端可以持续组织的生产力。
+
+一个原生 Element 为了覆盖不同平台、版本和性能场景，需要保留完整的 **Capability Surface**；业务若直接继承这套 API，平台开关和兼容分支也会随之进入产品。以列表为例，底层 `<list>` 与 `<scroll-view>` 提供滚动、复用、缓存、吸顶和曝光，产品关心的却是刷新、加载、空状态和内容组合。这是一种 **Leaky Abstraction**：继续给 Element 增加产品形态，API 会膨胀；把差异交给前端，每个 DSL 又会重复支付工程成本。
+
+lynx-ui 就是在这个边界上形成的。它不是另一套原生控件，也不只是给 Element 换一组名字，而是由官方维护的、无样式且可组合的组件体系：
+
+- XElement 保留原生能力所需的表达力，并负责多平台实现；
+- Element 把这些能力变成可讨论、可测试的公共契约；
+- lynx-ui 把平台开关、版本策略和默认行为收敛为组件语义，让前端面对产品意图，而不是实现细节。
+
+这也解释了为什么 lynx-ui 采用 [Primitive 与 Part](/ui/styling-theming) 的组合模型：组件负责状态、行为和结构，但不固定视觉外观；设计系统可以在其上建立自己的产品语言。它追求的是原生级的交互质感与 Web 级的组合效率，而不是给 Element 简单包一层。
+
+### 让能力在实现与组合之间往返
+
+作为 XElement 的一部分，原生 `<overlay>` 解决的是独立渲染层问题：它让内容脱离普通视图树的裁剪与层级限制，并在正确的原生容器中显示。但 `<overlay>` 本身并不知道什么是对话框，也不负责管理打开与关闭、进出场动画、锚点定位或拖拽吸附。
+
+lynx-ui 首先通过 `OverlayView` 统一不同容器和平台上的 Overlay 使用方式。在此之上：
+
+- `Popover` 组合锚点追踪、定位、开关状态与 Presence；
+- `Dialog` 组合 Trigger、Backdrop、Content、关闭行为与进出场状态；
+- `Sheet` 进一步组合 Overlay、Presence、主线程手势与 Motion，支持拖拽、阻尼和吸附点。
+
+<Go
+  example="lynx-ui-sheet"
+  defaultFile="Basic/index.tsx"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-ui/lynx-ui-cover-sheet.webm"
+  defaultEntryFile="dist/SheetBasic.lynx.bundle"
+  highlight="{17-38}"
+  schema="{{{url}}}?fullscreen=true&bar_color=0d0d0d&bg_color=0d0d0d"
+  webPreviewMode="auto"
+/>
+
+<Caption>
+  <code>Sheet</code> 将原生
+  Overlay、可组合的组件结构与进出场状态组织成完整的开合交互
+</Caption>
+
+Sheet 内嵌 ScrollView 时，面板拖拽与内容滚动需要竞争、接续或同时发生。动态切换滚动开关只能覆盖部分路径；组件真正需要的是可组合的手势关系，而这类需求会反过来推动 Element 语义和各平台实现演进。
+
+> **Capability Flow：平台能力 → XElement 实现 → Element 契约 → lynx-ui 组合 → 产品体验**
+>
+> **Feedback Flow：产品需求与测试 → 组件模型 → Element 语义 → XElement 实现**
+
+<div className="blog-ecosystem-diagram-scroll">
+  <a
+    href={withBase(
+      '/assets/blog/lynx-elements-to-component-ecosystem/xelement-lynx-ui-ecosystem.zh.svg',
+    )}
+    target="_blank"
+    rel="noreferrer"
+    aria-label="在新窗口查看完整的 XElement 与 lynx-ui 生态图"
+  >
+    <img
+      className="blog-ecosystem-diagram"
+      src={withBase(
+        '/assets/blog/lynx-elements-to-component-ecosystem/xelement-lynx-ui-ecosystem.zh.svg',
+      )}
+      alt="XElement 原生扩展生态通过 Element 公共契约连接 lynx-ui 与其他 DSL 组件库，前端使用场景再将 API、兼容性、性能和测试需求反馈给 XElement"
+      loading="lazy"
+    />
+  </a>
+</div>
+
+## 从能力开放到生态共建
+
+`video` 正在把 XElement 与 lynx-ui 之间的反馈循环扩展到官方与社区：底层平台、播放器和事件模型各不相同，开发者需要依赖的是稳定的播放状态、控制命令、生命周期和降级行为。
+
+<Go
+  example="video"
+  defaultFile="src/App.tsx"
+  webPreview={false}
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/video.gif"
+/>
+
+<Caption>
+  <code>video</code> 将播放控制、生命周期事件与跨平台媒体能力放进一套仍在演进的
+  Element 契约
+</Caption>
+
+> **社区共同定义标准，Lynx 团队负责实现与长期维护。**
+
+接下来的 Roadmap 不以组件数量为目标，而关注两件事：让开放能力值得长期依赖，让官方实现沉淀为整个生态可以复用的标准。
+
+<div className="blog-ecosystem-diagram-scroll">
+  <a
+    href={withBase(
+      '/assets/blog/lynx-elements-to-component-ecosystem/component-ecosystem-horizons.zh.svg',
+    )}
+    target="_blank"
+    rel="noreferrer"
+    aria-label="在新窗口查看完整的组件生态 Roadmap"
+  >
+    <img
+      className="blog-ecosystem-diagram"
+      src={withBase(
+        '/assets/blog/lynx-elements-to-component-ecosystem/component-ecosystem-horizons.zh.svg',
+      )}
+      alt="跨端 UI 反馈系统沿 Roadmap 持续扩大开放半径，从代码开放走向能力可信、共同标准与可持续生长的生态"
+      loading="lazy"
+    />
+  </a>
+</div>
+
+### 让开放能力真正可依赖
+
+一个可依赖的 XElement，需要清晰的 Element API、稳定的多平台行为、明确的兼容和降级策略，以及随版本维护的文档、测试和迁移路径。对应的 lynx-ui 组件则要覆盖键盘、焦点、手势、无障碍、性能和边界状态。
+
+lynx-ui 也会成为 Lynx 新能力的长期 **Dogfooding** 场：Element 契约在真实组件中被组合，引擎能力在组件测试中被验证，发现的差异再回到 XElement。衡量标准不是代码数量，而是开发者能否判断能力在哪里可用、如何降级、升级成本是什么。
+
+### 让一套能力服务整个生态
+
+社区可以通过 RFC 和 Discussions 共同定义 Element 应该承诺什么、组件如何组合、测试验证什么；Lynx 团队负责把共识变成多平台实现，并承担发布和长期维护。
+
+当语义和测试成为公共标准，复用也不再局限于 ReactLynx。不同 DSL 不必共享同一份 lynx-ui 代码，却可以共享三类基础：
+
+- **可复用的底层实现**：手势竞争、动画驱动、浮层、焦点与键盘等依赖原生或主线程的机制；
+- **共同的行为契约与测试**：即使状态管理和组合代码不同，也遵循相同语义并通过同一组跨平台断言；
+- **符合各自习惯的轻量封装**：组件组合、上下文和受控状态等 API，由不同 DSL 以最自然的方式表达。
+
+目标不是共享一份组件代码，而是共享 XElement 实现、Element 契约和跨平台测试。能够完整遵循 Web 语义时，我们优先使用 Web API；否则从原生交互与用户预期出发定义一致的 **Semantic Target**，并明确平台差异和降级行为。
+
+最终，这不应只是一个由官方不断增加组件的目录。Lynx 团队维护高质量的核心能力，社区共同定义需求、标准和测试，真实使用再推动底层实现与上层组件演进；发现、分发和依赖机制则让成果在生态中流动。
+
+## 从公共基础到 Agent-ready UI
+
+Web 生态的活力不只来自浏览器内置了多少控件，更来自稳定原语、共同标准和开放工具。Lynx 也需要这样的基础：不在 Web 与原生之间折中，而是同时获得原生级交互与 Web 级组合、分发和协作效率。
+
+<div className="blog-ecosystem-diagram-scroll">
+  <a
+    href={withBase(
+      '/assets/blog/lynx-elements-to-component-ecosystem/cross-platform-ui-commons.zh.svg',
+    )}
+    target="_blank"
+    rel="noreferrer"
+    aria-label="在新窗口查看完整的跨端 UI 生态飞轮"
+  >
+    <img
+      className="blog-ecosystem-diagram"
+      src={withBase(
+        '/assets/blog/lynx-elements-to-component-ecosystem/cross-platform-ui-commons.zh.svg',
+      )}
+      alt="跨行业真实需求、XElement 原生扩展、lynx-ui 与更多 DSL、社区复用围绕 Element 语义、行为规范、兼容基线和共享测试形成跨端 UI 生态飞轮"
+      loading="lazy"
+    />
+  </a>
+</div>
+
+当循环闭合，一个能力就不再是某个平台或团队的一次性实现，而会成为不同 DSL、设计系统和产品可以共同积累的资产，也会服务新的界面生产方式。AI 不会消除组件实现，却会放大稳定语义、组合规则和验证体系的价值。方向不是让 Agent 多写几段 TSX，而是让它在经过验证的 UI 词汇中表达意图，再转化为可信的跨端体验。
+
+> **Agent-ready UI = Constrained Expression × Trusted Semantics × Executable Evaluation**
+
+<div className="blog-ecosystem-diagram-scroll">
+  <a
+    href={withBase(
+      '/assets/blog/lynx-elements-to-component-ecosystem/agent-ready-ui.zh.svg',
+    )}
+    target="_blank"
+    rel="noreferrer"
+    aria-label="在新窗口查看完整的 Agent-ready UI 架构图"
+  >
+    <img
+      className="blog-ecosystem-diagram"
+      src={withBase(
+        '/assets/blog/lynx-elements-to-component-ecosystem/agent-ready-ui.zh.svg',
+      )}
+      alt="Agent 意图通过 OpenUI 与 Component Manifest 形成受约束的 UI 表达，经由 LUNA、lynx-ui、Element、XElement 和 Lynx Engine 转化为可信跨端 UI，并由可执行评测持续反馈"
+      loading="lazy"
+    />
+  </a>
+</div>
+
+这是同一套公共基础多了一个消费者：Engine 负责执行，XElement 吸收平台差异，Element 提供稳定契约，lynx-ui 和其他 DSL 组件库提供交互词汇，LUNA 提供视觉语义。[OpenUI](https://lynxjs.org/next/react/genui/openui.html) 已经让 Agent 在受控词汇中生成表达式，再由可信 Renderer 映射为界面；[lynx-ui Skills](https://lynxjs.org/4.0/ui/introduction.html) 是另一个起点。下一步，Component Manifest 可以让实现、类型、文档、组合约束、兼容信息和测试来自同一个事实源，并驱动 Skills、OpenUI Catalog 与评测。
+
+届时，组件的核心资产将不只是源码，还包括机器可理解的契约、使用边界和可执行测试；一次编译通过率、跨端运行结果、视觉与交互通过率及人工修改量，则共同检验这套基础是否可信。
+
+我们相信，下一代跨端 UI 的突破，不只来自更快的渲染引擎，也来自一套更开放、更可组合的组件生态。
+
+但这条路还远没有标准答案。哪些能力应该沉到 XElement，哪些交互适合留在前端组件层，怎样同时获得原生体验、Web 开发效率和长期可维护性——这些问题，需要在真实产品和真实场景中不断验证。
+
+lynx-ui 不是一个已经完成的答案，而是一次面向未来的共同探索。如果你也在构建复杂交互、跨端组件或新的 UI 基础设施，欢迎通过 [Lynx GitHub Discussions](https://github.com/lynx-family/lynx/discussions) 与我们分享你的场景、问题，甚至不同意见，也可以在 [Discord](https://discord.com/invite/mXk7jqdDXk) 与我们交流，并通过 [X](https://x.com/lynxjs_org) 关注最新进展。一起尝试，一起拆解，也一起探寻下一代跨端 UI 的更多可能。
