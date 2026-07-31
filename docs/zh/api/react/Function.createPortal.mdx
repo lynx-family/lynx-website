@@ -13,10 +13,14 @@ import * as Lynx from '@lynx';
 # 函数: createPortal()
 
 ```ts
-function createPortal(vnode: ComponentChild, container: NodesRef): useErrorBoundary<any> | null
+function createPortal(vnode: ComponentChild, container: NodesRef): ReactNode
 ```
 
-Create a `Portal` to continue rendering the vnode tree at a different DOM node.
+Renders `vnode` into `container` instead of the current component's position
+in the element tree, while keeping it in the React tree.
+
+`container` is a `NodesRef`, obtained either from a callback `ref` or from
+`lynx.createSelectorQuery().select(...)`.
 
 ## 参数
 
@@ -27,11 +31,24 @@ Create a `Portal` to continue rendering the vnode tree at a different DOM node.
 
 ## 返回
 
-[`useErrorBoundary`](/api/react/Variable.useErrorBoundary.mdx)\<`any`\> \| `null`
+`ReactNode`
+
+## 备注
+
+Context still flows across the portal boundary, and state updates inside the
+portal behave like they do in any other component. A few behaviors differ
+from `react-dom`:
+
+- Events do not bubble along the React tree. ReactLynx follows Preact's
+  approach, which has no synthetic event system, so events follow the actual
+  element structure of the page.
+- The portaled subtree renders on the background thread only, and does not
+  participate in main-thread first-screen rendering.
+- Mounting across pages or across native containers is not supported.
 
 ## 定义于
 
-@lynx-js/react/runtime/lib/snapshot/lynx/portals.d.ts:9
+@lynx-js/react/runtime/lib/snapshot/lynx/portals.d.ts:26
 
 {/* api-doc-overlay:react-create-portal-example:start */}
 
