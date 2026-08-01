@@ -8,10 +8,31 @@ packages:
 minimumReleaseAgeExclude:
   - '@lynx-example/*'
   - '@lynx-js/*'
+  - '@lynxtron-examples/*'
 
-# pnpm 11 no longer runs dependency build scripts unless explicitly allowed
-# (else ERR_PNPM_IGNORED_BUILDS). Allow the trusted deps that need a build step.
+# pnpm 11 no longer runs dependency build scripts unless explicitly allowed.
+# Set each package explicitly (true or false) so pnpm does not print
+# ERR_PNPM_IGNORED_BUILDS warnings, which fail CI/deploy environments.
 allowBuilds:
+  '@lynx-js/lynxtron': false
+  '@lynxtron-examples/file-explorer': false
+  '@lynxtron-examples/floating-clock': false
+  '@lynxtron-examples/system-monitor': false
+  '@lynxtron-examples/todolist': false
   '@parcel/watcher': true
   core-js: true
   esbuild: true
+  sqlite3: false
+
+# Rationale for disabled builds:
+# - @lynx-js/lynxtron: downloads a runtime binary; docs only need source/bundle files.
+# - @lynxtron-examples/*: ship prebuilt bundles; their rebuild scripts require
+#   native toolchains we don't have in CI/deploy environments.
+# - sqlite3: native module only needed by @lynxtron-examples/todolist at runtime.
+
+# Use the per-commit canary of @lynx-js/web-core until the next stable release.
+# The motion web previews need __GetComputedStyleByKey (lynx-stack#3262) and
+# the mutable MTS window wrapper (lynx-stack#3294). Pin back to a stable
+# @lynx-js/web-core (>0.23.0) once released.
+overrides:
+  '@lynx-js/web-core': 'npm:@lynx-js/web-core-canary@0.23.1-canary-20260730-6cbcb870'
