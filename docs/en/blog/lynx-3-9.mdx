@@ -15,17 +15,43 @@ import { BlogHeader, Go } from '@lynx';
 
 Lynx 3.9 is now officially released!
 
-This release focuses on three themes: [Autolink](/guide/autolink) for simpler native capability integration, CSS behavior that is closer to the Web platform, and ReactLynx updates around Portal, rendering, and bundle output.
+This release focuses on three themes: [Autolink](/guide/autolink), which makes a native capability something you can package, publish, and install; CSS behavior that is closer to the Web platform; and ReactLynx updates around Portal, rendering, and bundle output.
 
 It also includes a set of focused updates for Elements, Lynx APIs, and performance. Let's take a look at what's new in Lynx 3.9.
 
 ## Autolink
 
-Autolink is the native library discovery and registration mechanism introduced in Lynx 3.9. It discovers compatible Lynx native libraries installed in the host project's `node_modules`, then registers the [Elements](/guide/ui/elements-components), [Native Modules](/guide/use-native-modules), and [Services](/api/lynx-native-api/lynx-service) provided by those libraries during Android and iOS initialization.
+Before 3.9, wiring a native capability into a Lynx app meant writing the registration code yourself: [Elements](/guide/ui/elements-components), [Native Modules](/guide/use-native-modules), and [Services](/api/lynx-native-api/lynx-service) each have their own registration entry point, and Android and iOS each need their own pass. Reusing that capability in a second app meant writing the steps into a README and having the next team copy them by hand. What was missing was not a particular API — it was the notion of a native library as something you can publish and install.
 
-As Lynx apps depend on more reusable native libraries, app teams often need to maintain manual registration code for each library, while library authors need to repeat integration instructions. Autolink moves that convention into `lynx.lib.json` and the generated registry, reducing hand-written integration code and making native libraries easier to publish and reuse.
+Lynx 3.9 defines that unit. A [Lynx native library](/guide/autolink#what-is-a-lynx-native-library) is an npm package that declares its native entry points in a `lynx.lib.json` manifest at the package root, and [Autolink](/guide/autolink) is the mechanism that discovers those libraries at build time and connects them to the host app.
 
-For conventions, configuration, and platform integration details, continue with the [Autolink guide](/guide/autolink).
+### Consuming a library
+
+A host app [sets up Autolink once](/guide/autolink#set-up-autolink): on Android, enable one Gradle plugin in `settings.gradle` and one in the app's `build.gradle`; on iOS, call `use_lynx_library!` in the `Podfile`. After that, [installing a library](/guide/autolink#install-a-library) is no different from installing any other npm dependency:
+
+```bash
+npm install @example/lynx-button
+```
+
+Re-sync on Android, re-run `pod install` on iOS, and the Elements, Native Modules, and Services that library ships are registered when `LynxEnv` initializes. Not a line of host code is written for any particular library.
+
+### Authoring a library
+
+Going the other way, if you want to ship a native capability as a library, [`create-lynx-library`](/guide/autolink#create-a-library) scaffolds it:
+
+```bash
+npm create lynx-library
+```
+
+The generated package already contains `lynx.lib.json`, type declarations, a JavaScript facade, Android and iOS source directories, and an example app for local verification.
+
+For a Native Module, you declare the interface in TypeScript and mark it `@lynxmodule`; `npm run codegen` generates the native spec for both platforms, and you write the implementation against it. [Custom Elements](/guide/custom-native-component) and Services are discovered through native markers such as `@LynxElement` and `@LynxService`, so they need no registration code either. [Write Native APIs](/guide/autolink#write-native-apis) covers these conventions.
+
+Distribution is `npm publish`. Declaring a compatible Lynx SDK range in `peerDependencies` is worth doing, so a version mismatch surfaces at install time rather than at runtime.
+
+All of this happens at build time: Autolink scans `node_modules` for `lynx.lib.json`, generates a registry for the current platform, and the host loads it once during initialization — nothing is scanned or reflected at runtime. [How Autolink Works](/guide/autolink#how-autolink-works) has the full flow.
+
+Starting with 3.9, publishing a native capability as a library and installing it in another app are two ends of the same path.
 
 ## CSS, Closer to the Web
 
