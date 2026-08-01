@@ -15,17 +15,43 @@ import { BlogHeader, Go } from '@lynx';
 
 Lynx 3.9 已经正式发布！
 
-这个版本围绕三条主线展开：用 [Autolink](/guide/autolink) 简化原生能力接入，用更贴近 Web 的 CSS 能力减少迁移和 AI 生成代码中的常见误用，并让 ReactLynx 在 Portal、渲染与构建表现上继续前进。
+这个版本围绕三条主线展开：用 [Autolink](/guide/autolink) 让原生能力可以被打包成库、被安装和复用，用更贴近 Web 的 CSS 能力减少迁移和 AI 生成代码中的常见误用，并让 ReactLynx 在 Portal、渲染与构建表现上继续前进。
 
 此外，3.9 也带来了元件、Lynx API 与性能的一组小而实用的更新。下面我们一起来看看 Lynx 3.9 带来了哪些新变化。
 
 ## Autolink
 
-Autolink 是 Lynx 3.9 引入的原生库自动发现与注册机制。它会在宿主工程的 `node_modules` 中发现符合约定的 Lynx 原生库，并在 Android 和 iOS 初始化流程中统一注册这些库提供的[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service)。
+在 3.9 之前，把一段原生能力接进 Lynx 应用，需要应用侧自己写注册代码：[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service) 各有各的注册入口，Android 和 iOS 还要各写一遍。想把同一份能力用到第二个应用上，只能把接入步骤写进 README，让对方照着抄一遍。缺的不是某一个 API，而是「原生库」这个可以被发布、被安装的单位。
 
-随着 Lynx 应用接入的原生库越来越多，应用侧往往需要手动维护每个库的注册代码，库作者也需要反复说明接入步骤。Autolink 把这部分约定收敛到 `lynx.lib.json` 和生成的 registry 中，让应用接入更少依赖手写胶水代码，也让原生库的发布和复用更稳定。
+Lynx 3.9 定义了这个单位。一个 [Lynx 原生库](/guide/autolink#什么是-lynx-原生库)就是一个 npm 包，在包根目录用 `lynx.lib.json` 声明自己的原生入口；[Autolink](/guide/autolink) 则是在构建期发现这些库、并把它们接进宿主应用的机制。
 
-更多约定、配置和平台接入细节，可以继续阅读 [Autolink 指南](/guide/autolink)。
+### 使用库
+
+宿主应用只需要[接入一次 Autolink](/guide/autolink#接入-autolink)：Android 在 `settings.gradle` 和 app 的 `build.gradle` 里各启用一个 Gradle 插件，iOS 在 `Podfile` 里调用 `use_lynx_library!`。之后[安装一个库](/guide/autolink#安装库)，和安装任何一个 npm 依赖没有区别：
+
+```bash
+npm install @example/lynx-button
+```
+
+Android 重新 sync、iOS 重新 `pod install`，这个库提供的元件、原生模块和 Service 就会在 `LynxEnv` 初始化时全部注册好。宿主代码里不会有任何一行是为某个具体的库写的。
+
+### 开发库
+
+反过来，如果你想把一段原生能力做成库发出去，[`create-lynx-library`](/guide/autolink#创建库) 会把骨架生成好：
+
+```bash
+npm create lynx-library
+```
+
+生成的包里已经有 `lynx.lib.json`、类型声明、JavaScript facade、Android 与 iOS 源码目录，以及一个用来本地验证的 example 应用。
+
+原生模块的接口先用 TypeScript 写声明并标注 `@lynxmodule`，`npm run codegen` 会据此生成两端的原生 spec，你只需要继承它写实现；[自定义元件](/guide/custom-native-component)和 Service 则通过 `@LynxElement`、`@LynxService` 这类原生标记被发现，同样不需要手写登记代码。这些约定可以在[编写 Native API](/guide/autolink#编写-native-api) 中查到。
+
+发布就是 `npm publish`。建议在 `peerDependencies` 里声明兼容的 Lynx SDK 版本范围，这样版本错配会在安装阶段就暴露出来，而不是留到运行时。
+
+整个机制都发生在构建期：Autolink 扫描 `node_modules` 中的 `lynx.lib.json`，为当前平台生成一份 registry，宿主初始化时一次性加载，运行时没有额外的扫描或反射。完整流程见 [Autolink 工作原理](/guide/autolink#autolink-工作原理)。
+
+从 3.9 开始，把原生能力做成库发出去、和在另一个应用里装上它，是同一条路径的两端。
 
 ## 更贴近 Web 的 CSS
 
