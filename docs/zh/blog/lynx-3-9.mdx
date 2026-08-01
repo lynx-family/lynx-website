@@ -21,11 +21,11 @@ Lynx 3.9 已经正式发布！
 
 ## Autolink
 
-在 3.9 之前，一段原生能力只能在每个应用里各接一次：[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service) 各有各的注册入口，Android 和 iOS 还要各写一遍，复用到下一个应用往往意味着照着 README 再抄一遍。Lynx 3.9 把这件事收敛成一个可以发布、可以安装的单位：一个 [Lynx 原生库](/guide/autolink#什么是-lynx-原生库)就是一个 npm 包，在包根目录用 `lynx.lib.json` 声明原生入口；[Autolink](/guide/autolink) 会在构建期发现这些库，并把它们提供的能力接进宿主应用。
+Lynx 的开发者大多来自前端，但在 3.9 之前，想用上一个原生能力就得进原生工程：在 Gradle 和 Podfile 里各加一次依赖，再到 Android 和 iOS 的初始化代码里把[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service) 分别注册一遍。Lynx 3.9 把这些收敛成一个可以发布、可以安装的单位：一个 [Lynx 原生库](/guide/autolink#什么是-lynx-原生库)就是一个 npm 包，用包根目录的 `lynx.lib.json` 声明原生入口；宿主应用[接入一次 Autolink](/guide/autolink#接入-autolink) 之后，再加一个库就只是 `npm install`。
 
 ### 使用库
 
-宿主应用只需要[接入一次 Autolink](/guide/autolink#接入-autolink)：Android 在 `settings.gradle` 和 app 的 `build.gradle` 里各启用一个 Gradle 插件，iOS 安装 `cocoapods-lynx-library` 并在 `Podfile` 里调用 `use_lynx_library!`。之后[安装一个库](/guide/autolink#安装库)，和安装任何一个 npm 依赖没有区别：
+[那一次接入](/guide/autolink#接入-autolink)具体是：Android 在 `settings.gradle` 和 app 的 `build.gradle` 里各启用一个 Gradle 插件，iOS 安装 `cocoapods-lynx-library` 并在 `Podfile` 里调用 `use_lynx_library!`。做完之后，[装一个库](/guide/autolink#安装库)和装任何一个 npm 依赖没有区别：
 
 ```bash
 npm install @example/lynx-button

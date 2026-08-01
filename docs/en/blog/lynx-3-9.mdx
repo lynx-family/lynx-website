@@ -21,11 +21,11 @@ It also includes a set of focused updates for Elements, Lynx APIs, and performan
 
 ## Autolink
 
-Before 3.9, a native capability had to be wired up once per app: [Elements](/guide/ui/elements-components), [Native Modules](/guide/use-native-modules), and [Services](/api/lynx-native-api/lynx-service) each have their own registration entry point, Android and iOS each need their own pass, and reusing one in the next app usually meant following a README by hand. Lynx 3.9 turns that into a unit you can publish and install: a [Lynx native library](/guide/autolink#what-is-a-lynx-native-library) is an npm package that declares its native entry points in a `lynx.lib.json` manifest at the package root, and [Autolink](/guide/autolink) discovers those libraries at build time and connects their capabilities to the host app.
+Most people building with Lynx come from the web, but before 3.9, using a native capability meant going into the native projects: adding a dependency in Gradle and in the Podfile, then registering the [Elements](/guide/ui/elements-components), [Native Modules](/guide/use-native-modules), and [Services](/api/lynx-native-api/lynx-service) by hand in the Android and iOS startup paths. Lynx 3.9 collapses that into a unit you can publish and install: a [Lynx native library](/guide/autolink#what-is-a-lynx-native-library) is an npm package that declares its native entry points in a `lynx.lib.json` manifest at the package root, and once a host app [sets up Autolink](/guide/autolink#set-up-autolink), adding another library is just `npm install`.
 
 ### Consuming a library
 
-A host app [sets up Autolink once](/guide/autolink#set-up-autolink): on Android, enable one Gradle plugin in `settings.gradle` and one in the app's `build.gradle`; on iOS, install `cocoapods-lynx-library` and call `use_lynx_library!` in the `Podfile`. After that, [installing a library](/guide/autolink#install-a-library) is no different from installing any other npm dependency:
+[That one-time setup](/guide/autolink#set-up-autolink) is: on Android, enable one Gradle plugin in `settings.gradle` and one in the app's `build.gradle`; on iOS, install `cocoapods-lynx-library` and call `use_lynx_library!` in the `Podfile`. Once it is done, [installing a library](/guide/autolink#install-a-library) is no different from installing any other npm dependency:
 
 ```bash
 npm install @example/lynx-button
