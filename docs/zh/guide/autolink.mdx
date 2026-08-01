@@ -149,13 +149,13 @@ enableHarmonyLynxAutolink(hvigorApi, {
 
 在 Hvigor 创建模块节点之前，插件会扫描可见的 `node_modules`，通过 Hvigor 公开的 `parseJsonFile()` API 解析 HarmonyOS JSON5 元数据，在工程忽略的 `.hvigor/lynx-autolink/<moduleName>` 缓存目录生成 Registry HAR，并通过 `hvigorConfig.includeNode()` 把 Library HAR 和 Registry HAR 加入构建图。目标 HAP 完成求值后，插件通过 HAP model API 注入 Registry 依赖和生成的资源目录，并设置 `module.appStartup`。AppStartup 源码位于 HAP 模块的 `build/generated/lynx-autolink` 目录；生成的 Hvigor task 会在 `clean` 后、当前 target 的 `PreBuild` 前恢复这些文件。插件不会修改应用的 `src` 目录，也不会改写版本库中的 `build-profile.json5`。
 
-生成的 AppStartup task 会在应用代码创建 Lynx runtime 之前于主线程运行，并且只调用 Registry HAR 中幂等的 `setupGlobal()`。如果 HAP 已配置 AppStartup profile，插件会保留原有 task 和 `configEntry`，并追加 Lynx task。应用无需运行 `lynx-harmony-autolink` 命令，也无需手动调用 `setupGlobal()`。
+生成的 AppStartup task 会在应用代码创建 Lynx 运行时之前于主线程运行，并且只调用 Registry HAR 中幂等的 `setupGlobal()`。如果 HAP 已配置 AppStartup profile，插件会保留原有 task 和 `configEntry`，并追加 Lynx task。应用无需运行 `lynx-harmony-autolink` 命令，也无需手动调用 `setupGlobal()`。
 
 </PlatformTabs.Tab>
 
 <PlatformTabs.Tab platform="lynxtron">
 
-Lynxtron 为桌面端原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的桌面宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
+Lynxtron 为 Desktop 原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的 Desktop 宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
 
 在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，把匹配到的原生库包收集到宿主输出目录，并注入前置代码来加载每个已收集包的 `./lynxtron` 入口。对于声明了 `platforms.lynxtron.path` 的包，业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的包。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
 
@@ -175,7 +175,7 @@ export default {
 
 `entry` 是 Lynxtron 宿主自身的 bundle 入口，`pluginLynxtron()` 会以它为基准放置已收集的原生库包。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
 
-Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx runtime 中生效。库作者不需要 Lynxtron 专用注册宏。
+Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx 运行时中生效。库作者不需要 Lynxtron 专用注册宏。
 
 </PlatformTabs.Tab>
 </PlatformTabs>
@@ -692,10 +692,10 @@ Registry 会拒绝重复的全局 Element tag、Native Module name 和 Service t
 
 <PlatformTabs.Tab platform="lynxtron">
 
-Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块的实现请看 Desktops (Node-API) 标签页，自定义元素的实现请看 Desktops 标签页：
+Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块的实现请看 Desktop (Node-API) 标签页，自定义元素的实现请看 Desktop 标签页：
 
-- [原生模块 Desktops (Node-API) 说明](/guide/use-native-modules?platform=node-api)
-- [自定义元素 Desktops 说明](/guide/custom-native-component?platform=desktops)
+- [原生模块 Desktop (Node-API) 说明](/guide/use-native-modules?platform=node-api)
+- [自定义元素 Desktop 说明](/guide/custom-native-component?platform=desktops)
 
 </PlatformTabs.Tab>
 </PlatformTabs>
