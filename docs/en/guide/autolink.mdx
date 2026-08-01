@@ -2,9 +2,13 @@ import { PlatformTabs } from '@lynx';
 
 # Native Libraries and Autolink
 
+A native capability used to be wired up once per host app: Elements, Native Modules, and Services each have their own registration entry point, and Android, iOS, and HarmonyOS each need their own pass. Reusing the same capability in the next app usually meant writing the steps into a README for the next team to follow by hand. Native libraries and Autolink together reduce that to a single `npm install`.
+
 A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Autolink is the integration mechanism that lets the host app discover libraries installed under `node_modules` and connect their native capabilities without wiring each Element, Native Module, or Service by hand.
 
 Autolink provides app-wide registration on Android, iOS, and HarmonyOS. It also covers the package metadata and host loading used by Lynxtron native libraries. Per-`LynxView` library registration and Web integration code are not generated.
+
+This page has two halves: to use an existing library in your app, start from [Consuming a Library](#consuming-a-library); to publish your own native capability as a library, start from [Authoring a Library](#authoring-a-library). For the mental model first, read [How Autolink Works](#how-autolink-works).
 
 :::info Prerequisites
 
@@ -706,4 +710,11 @@ Publish the library like any other npm package: pick a name, often scoped as `@e
 
 ## How Autolink Works
 
-Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates or feeds host integration data for the current platform. Android registry generation runs through the Gradle settings and build plugins; iOS registry generation runs through the CocoaPods plugin and emits a registry pod; HarmonyOS registry generation runs during Hvigor configuration and emits a source Registry HAR plus an AppStartup task. Android, iOS, and HarmonyOS load their generated registry once during initialization, so no per-library wiring code lives in the host. Lynxtron Autolink runs in the host Rspack build: it stages matching native packages, injects a loader into the host bundle, and lets the loaded library's Lynx static registrations provide its native modules and elements.
+Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates or feeds host integration data for the current platform. Generation works differently per platform:
+
+- **Android**: registry generation runs through the Gradle settings and build plugins.
+- **iOS**: registry generation runs through the CocoaPods plugin and emits a registry pod.
+- **HarmonyOS**: registry generation runs during Hvigor configuration and emits a source Registry HAR plus an AppStartup task.
+- **Lynxtron**: Autolink runs in the host Rspack build, staging matching native packages, injecting a loader into the host bundle, and letting the loaded library's Lynx static registrations provide its native modules and elements.
+
+Android, iOS, and HarmonyOS load their generated registry once during initialization, so no per-library wiring code lives in the host.

@@ -2,9 +2,13 @@ import { PlatformTabs } from '@lynx';
 
 # 原生库与 Autolink
 
+一份原生能力过去只能在每个宿主应用里各接一次：元素、原生模块和 Service 各有各的注册入口，Android、iOS 和 HarmonyOS 还要分别写一遍；想把同一份能力复用到下一个应用，通常意味着把接入步骤写进 README，让对方照着做一遍。原生库和 Autolink 一起，把这件事收敛成一次 `npm install`。
+
 Lynx 原生库是一个 npm 包，可以打包元素、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并接入它们的原生能力，避免为每个元素、原生模块或 Service 手动写注册代码。
 
 Autolink 在 Android、iOS 和 HarmonyOS 上提供应用级全局注册，也覆盖 Lynxtron 原生库使用的包元数据和宿主加载。它不生成单个 `LynxView` 的局部 Library 注册，也不生成 Web 接入代码。
+
+本页分为两部分：要在应用里用上一个已有的库，从[使用库](#使用库)开始；要把自己的原生能力发布成库，从[开发库](#开发库)开始。想先建立整体印象，可以直接看 [Autolink 工作原理](#autolink-工作原理)。
 
 :::info 开始前的准备
 
@@ -706,4 +710,11 @@ Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本
 
 ## Autolink 工作原理
 
-Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` 清单，然后为当前平台生成或提供宿主接入数据。Android 侧的 registry 生成由 Gradle settings 插件和 build 插件配合完成；iOS 侧由 CocoaPods 插件完成并产出 registry pod；HarmonyOS 侧在 Hvigor 配置阶段生成源码 Registry HAR 和 AppStartup task。Android、iOS 和 HarmonyOS 都只会在初始化阶段加载一次生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。Lynxtron Autolink 运行在宿主侧 Rspack 构建中：它会收集匹配到的原生包，把加载代码注入宿主 bundle，并让已加载库里的 Lynx 静态注册提供对应的原生模块和元素。
+Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` 清单，然后为当前平台生成或提供宿主接入数据。各平台的生成方式如下：
+
+- **Android**：由 Gradle settings 插件和 build 插件配合完成 registry 生成。
+- **iOS**：由 CocoaPods 插件完成，并产出 registry pod。
+- **HarmonyOS**：在 Hvigor 配置阶段生成源码 Registry HAR 和 AppStartup task。
+- **Lynxtron**：运行在宿主侧 Rspack 构建中，收集匹配到的原生包，把加载代码注入宿主 bundle，并让已加载库里的 Lynx 静态注册提供对应的原生模块和元素。
+
+Android、iOS 和 HarmonyOS 都只会在初始化阶段加载一次生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
