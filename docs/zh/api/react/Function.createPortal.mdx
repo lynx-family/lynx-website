@@ -16,39 +16,47 @@ import * as Lynx from '@lynx';
 function createPortal(vnode: ComponentChild, container: NodesRef): ReactNode
 ```
 
-Renders `vnode` into `container` instead of the current component's position
-in the element tree, while keeping it in the React tree.
+将 `vnode` 渲染到 `container` 中，而不是当前组件在元素树中的位置，同时让它
+仍然保留在 React 树中。
 
-`container` is a `NodesRef`, obtained either from a callback `ref` or from
-`lynx.createSelectorQuery().select(...)`.
+`container` 是一个 `NodesRef`，可以通过回调 `ref` 或
+`lynx.createSelectorQuery().select(...)` 获取。
+
+:::info 可用性
+
+- 自 `@lynx-js/react` 0.121.0 起提供。
+- 自 0.123.3 起，声明的返回类型为 `ReactNode`；在 0.123.2 及更早版本中为
+  Preact 的 `VNode<any> | null`，二者没有运行时差异。
+
+:::
 
 ## 参数
 
-| 范围 | 类型 |
-| ------ | ------ |
-| `vnode` | `ComponentChild` |
-| `container` | `NodesRef` |
+| 范围 | 类型 | 描述 |
+| ------ | ------ | ------ |
+| `vnode` | `ComponentChild` | 要渲染到 `container` 中的 React 节点。 |
+| `container` | `NodesRef` | 作为渲染目标的 `NodesRef`。 |
 
 ## 返回
 
 `ReactNode`
 
+一个 `ReactNode` 占位节点，需要包含在调用处的 JSX 中；实际渲染输出会进入
+`container`。
+
 ## 备注
 
-Context still flows across the portal boundary, and state updates inside the
-portal behave like they do in any other component. A few behaviors differ
-from `react-dom`:
+Context 仍然会跨越 portal 边界传递，portal 内的状态更新行为与其他组件一致。
+以下行为与 `react-dom` 不同：
 
-- Events do not bubble along the React tree. ReactLynx follows Preact's
-  approach, which has no synthetic event system, so events follow the actual
-  element structure of the page.
-- The portaled subtree renders on the background thread only, and does not
-  participate in main-thread first-screen rendering.
-- Mounting across pages or across native containers is not supported.
+- 事件不会沿 React 树冒泡。ReactLynx 沿用了 Preact 的实现方式，没有合成
+  事件系统，因此事件遵循页面实际的元素结构。
+- portal 中的子树只在后台线程渲染，不参与主线程首屏渲染。
+- 不支持跨页面或跨原生容器挂载。
 
 ## 定义于
 
-@lynx-js/react/runtime/lib/snapshot/lynx/portals.d.ts:26
+@lynx-js/react/runtime/lib/snapshot/lynx/portals.d.ts:31
 
 {/* api-doc-overlay:react-create-portal-example:start */}
 
