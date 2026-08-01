@@ -6,7 +6,7 @@ description: '理解 Lynx 双线程架构下的产物结构，学会用 Rsdoctor
 
 产物体积直接影响下载、解析与首屏到达时间，却最容易被忽视：一次依赖升级、一张未压缩的图片、一段本该只跑在后台却漏进首屏渲染路径的代码，都会让产物悄悄变大。
 
-和普通 Web 应用不同，Lynx 应用因为**双线程架构**，产物结构有其特殊性——理解这套结构，是分析和优化体积的前提。Rspeedy 基于 [Rsbuild](https://rsbuild.rs/) 与 [Rspack](https://rspack.rs/) 构建，它们的体积优化经验大多可以复用；本页先讲清 Lynx 特有的产物结构，再给出分析方法与优化方向，并指向更深入的文档。
+和普通 Web 应用不同，Lynx 应用因为**双线程架构**，产物结构有其特殊性，而理解这套结构正是分析和优化体积的前提。Rspeedy 基于 [Rsbuild](https://rsbuild.rs/) 与 [Rspack](https://rspack.rs/) 构建，它们的体积优化经验大多可以复用；本页先讲清 Lynx 特有的产物结构，再给出分析方法与优化方向，并指向更深入的文档。
 
 ## 理解 Lynx 的产物结构
 
@@ -28,7 +28,7 @@ ReactLynx 把 React 拆到**双线程**上运行（详见 [ReactLynx 编程思�
 两份 JS 经过编码合成为一个二进制的 `.lynx.bundle`（生产构建后位于 `dist/`，详见 [构建输出文件](/rspeedy/output)），这才是 Lynx 引擎真正加载的交付产物，也是衡量体积时应当盯住的最终指标。
 
 :::tip 主线程产物 ≠ 主线程脚本
-这里的「主线程产物 / `main-thread.js`」指的是**主线程层的编译产物**。它和 [主线程脚本（Main Thread Script）](/react/main-thread-script)——那套用 `'main thread'` 指示符编写、用于跟手动画与手势的编程模型——不是一回事，注意区分。
+这里的「主线程产物 / `main-thread.js`」指的是**主线程层的编译产物**。它和 [主线程脚本（Main Thread Script）](/react/main-thread-script) 不是一回事，后者是那套用 `'main thread'` 指示符编写、用于跟手动画与手势的编程模型，注意区分。
 :::
 
 ### 查看可读的中间产物
@@ -39,7 +39,7 @@ ReactLynx 把 React 拆到**双线程**上运行（详见 [ReactLynx 编程思�
 DEBUG=rspeedy rspeedy build
 ```
 
-（开发构建同样会在 `dist/.rspeedy/` 下生成这些中间产物，详见 [构建输出文件](/rspeedy/output)。）
+开发构建同样会在 `dist/.rspeedy/` 下生成这些中间产物，详见 [构建输出文件](/rspeedy/output)。
 
 ### 代码裁剪：为什么主线程产物应该很小
 
@@ -54,7 +54,7 @@ ReactLynx 会**自动裁剪**不该在主线程运行的代码：默认情况下
 
 ## 分析产物体积
 
-核心原则是**先测量、再优化**：先用数据确认字节到底在哪一层，再决定动哪里，而不是凭猜测改代码。推荐按「静态资源 / 后台线程产物 / 主线程产物」三层拆解。
+核心原则是先测量、再优化：先用数据确认字节到底在哪一层，再决定动哪里，而不是凭猜测改代码。推荐按「静态资源 / 后台线程产物 / 主线程产物」三层拆解。
 
 ### 使用 Rsdoctor
 
@@ -68,11 +68,11 @@ RSDOCTOR=true rspeedy build
 
 ### 使用 rspeedy-bundle-size Skill
 
-如果你使用支持 Agent Skills 的 AI 编码工具，可以加载 [`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) skill。它会按「先测量再优化」的流程，自动读取你的构建方式、生成体积分布、分层定位字节去向，并按收益优先级给出优化建议——适合在不熟悉构建细节时快速得到一份有依据的分析报告。
+如果你使用支持 Agent Skills 的 AI 编码工具，可以加载 [`rspeedy-bundle-size`](/ai/skills/rspeedy-bundle-size) skill。它会按「先测量再优化」的流程，自动读取你的构建方式、生成体积分布、分层定位字节去向，并按收益优先级给出优化建议，适合在不熟悉构建细节时快速得到一份有依据的分析报告。
 
 ## 优化产物体积
 
-定位到体积来源后，按层选择手段。也可参考 Rsbuild 的 [缩小产物体积](https://rsbuild.rs/zh/guide/optimization/optimize-bundle) 指南。
+定位到体积来源后，按层选择手段。
 
 ### 给主线程产物瘦身（裁掉后台专属代码）
 
@@ -99,6 +99,6 @@ RSDOCTOR=true rspeedy build
 
 - [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr)：合并重复的字符串字面量来减小体积，对 i18n 文案、类名等「在主线程与后台线程两层中重复」的字符串尤其有效。
 
----
+## Next Steps
 
 更系统的清单与更底层的能力，可以从 Rsbuild 的 [缩小产物体积](https://rsbuild.rs/zh/guide/optimization/optimize-bundle) 与 Rspack 的 [优化指南](https://rspack.rs/zh/guide/optimization/code-splitting) 继续深入。
