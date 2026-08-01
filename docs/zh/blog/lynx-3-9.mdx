@@ -102,9 +102,42 @@ Lynx 3.9 还补齐了以下 CSS 能力：
 
 ## ReactLynx
 
-ReactLynx 在 3.9 中首先补齐了 [`createPortal`](/api/react/Function.createPortal)。Portal 用于把一段 vnode tree 继续渲染到当前组件层级之外的指定容器节点中，适合 overlay、浮层或需要跨容器挂载的 UI。
+ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在构建侧新增了双线程 Minimizer。
 
-过去这类跨容器渲染通常需要额外 wrapper 节点、宿主侧约定或更分散的挂载逻辑。现在，ReactLynx 可以通过 `createPortal` 把这个模式收敛到 ReactLynx API 中，让组件仍然按照 React 的数据流组织，同时把最终渲染位置交给目标容器。
+### `createPortal`
+
+[`createPortal`](/api/react/Function.createPortal) 可以把一段组件树渲染到当前组件层级之外的指定容器中，适合浮层、弹窗这类需要脱离当前布局层级的 UI：组件仍然按照 React 的数据流组织，但最终的渲染位置交给目标容器。该 API 自 `@lynx-js/react` 0.121.0 起提供。
+
+#### 用法
+
+ReactLynx 没有向用户暴露 [Element PAPI](/api/engine/element-api)，因此容器不能像 Web 那样直接拿到元素节点，而需要通过 ref 获取：
+
+```tsx
+import { createPortal, useState } from '@lynx-js/react';
+import type { NodesRef } from '@lynx-js/types';
+
+function Counter() {
+  const [n, setN] = useState(0);
+  return (
+    <text
+      bindtap={() => {
+        setN(n + 1);
+      }}
+    >{`count:${n}`}</text>
+  );
+}
+
+function App() {
+  // 容器元素挂载后，回调 ref 会拿到它的 NodesRef
+  const [host, setHost] = useState<NodesRef | null>(null);
+  return (
+    <view>
+      <view ref={setHost} />
+      {host && createPortal(<Counter />, host)}
+    </view>
+  );
+}
+```
 
 <Go
   example="react-apis"
@@ -114,7 +147,123 @@ ReactLynx 在 3.9 中首先补齐了 [`createPortal`](/api/react/Function.create
   defaultTab="web"
 />
 
-在性能和构建侧，ReactLynx 也继续减少运行时和产物开销。多 Slot Snapshot 优化通过扩展 Preact 的实现，减少不必要的 Snapshot 和 wrapper 节点数量，并已在 `@lynx-js/react` 0.120.0 中默认启用。
+除 ref 外，`lynx.createSelectorQuery().select(...)` 返回的 `NodesRef` 同样可以作为容器。
+
+#### 能力与限制
+
+跨越 Portal 边界时，[context](https://react.dev/learn/passing-data-deeply-with-context) 仍然可以正常传递，portal 内部的状态更新也和普通组件一致。
+
+同时有几个与 Web 不同的地方需要注意：
+
+- **事件不按 React 组件树冒泡。** ReactLynx 的 `createPortal` 沿用了 Preact 的实现思路，而 Preact 没有 React 那样的合成事件系统，因此事件遵循页面实际的元素结构，而不是 React 组件树。
+- **Portal 的内容不参与主线程首屏渲染**，只在后台线程渲染。
+- **不支持跨页面或跨 Native 容器挂载。** 想实现类似 Modal 的效果，推荐用 Lynx UI 的 [`OverlayView`](/ui/components/overlay) 作为承载层，把 Portal 挂到它内部的节点上。它是原生 [`<overlay>`](/api/elements/built-in/overlay) 的即插即用替代方案，帮你处理掉尺寸设置和平台差异。
+
+### Snapshot 层级和数量优化
+
+Snapshot 是 ReactLynx 在编译期从 JSX 中提取出的静态元素结构，运行时只需要更新其中的动态部分——这些可变的位置称为**槽位**。
+
+麻烦在于，一处动态内容会渲染出几个节点是不确定的：`{items.map(renderItem)}` 可能产出 0 个、1 个或上百个节点。而 Preact 的 diff 看到的只是一个扁平的子节点列表，并不知道某个子节点属于哪一处槽位。如果第一处渲染出了 3 个节点，第二处的内容就可能被当成第一处的一部分，插错位置。
+
+过去的解法是给每一处动态内容额外生成一个 **wrapper 元素**：一个只用于分组的中间节点，把数量不定的子节点收拢成**恰好一个**。这样父 Snapshot 的子节点数量就固定了，永远和它的槽位一一对应。代价是每处动态内容都在元素树上多出一个节点，有时还要为此多切出一层 Snapshot。
+
+这个折中是有历史原因的：早期版本的 ReactLynx 使用自行实现的 Preact 版本，本来就能把每个子元素直接渲染到父节点的指定槽位；改用开源版本的 Preact 之后，Preact 不提供槽位信息，才不得不引入 wrapper 来兜底。
+
+现在我们扩展了 Preact 的 diff 算法，让子节点可以通过 `$N` 属性直接声明自己属于父节点的第 N 个槽位（[internal-preact#1](https://github.com/lynx-family/internal-preact/pull/1)）。槽位归属既然被显式标了出来，就不再需要靠 wrapper 维持数量对齐（[#1764](https://github.com/lynx-family/lynx-stack/pull/1764)）。
+
+以这段 JSX 为例：
+
+```tsx
+<view className="parent">
+  <view className="child">{items.map(renderItem)}</view>
+  <view className="child">{items.map(renderItem)}</view>
+</view>
+```
+
+优化前需要切出 3 个 Snapshot，父节点里还要为两处动态内容各建一个 wrapper 元素（以下产物均省略了固定参数，变量名有简化）：
+
+```js
+// 两个 child 各自被切成独立的 Snapshot
+const __snapshot_2 = ReactLynx.createSnapshot(
+  '__snapshot_2',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'child');
+    return [el];
+  },
+  null,
+  ReactLynx.__DynamicPartChildren_0,
+);
+
+const __snapshot_3 = ReactLynx.createSnapshot(
+  '__snapshot_3',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'child');
+    return [el];
+  },
+  null,
+  ReactLynx.__DynamicPartChildren_0,
+);
+
+// 父节点：两个 wrapper 保证 children 长度恒为 2，与 2 个槽位一一对应
+const __snapshot_1 = ReactLynx.createSnapshot(
+  '__snapshot_1',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'parent');
+    const el1 = __CreateWrapperElement(ReactLynx.__pageId);
+    __AppendElement(el, el1);
+    const el2 = __CreateWrapperElement(ReactLynx.__pageId);
+    __AppendElement(el, el2);
+    return [el, el1, el2];
+  },
+  null,
+  [
+    [ReactLynx.__DynamicPartSlot, 1],
+    [ReactLynx.__DynamicPartSlot, 2],
+  ],
+);
+
+<__snapshot_1>
+  <__snapshot_2>{items.map(renderItem)}</__snapshot_2>
+  <__snapshot_3>{items.map(renderItem)}</__snapshot_3>
+</__snapshot_1>;
+```
+
+优化后只剩 1 个 Snapshot，两个 `child` 直接内联进静态结构，wrapper 完全消除，两处动态内容由 `$0`、`$1` 指明槽位：
+
+```js
+const __snapshot_1 = ReactLynx.createSnapshot(
+  '__snapshot_1',
+  function () {
+    const el = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el, 'parent');
+    const el1 = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el1, 'child');
+    __AppendElement(el, el1);
+    const el2 = __CreateView(ReactLynx.__pageId);
+    __SetClasses(el2, 'child');
+    __AppendElement(el, el2);
+    return [el, el1, el2];
+  },
+  null,
+  [
+    [ReactLynx.__DynamicPartSlotV2, 1],
+    [ReactLynx.__DynamicPartSlotV2, 2],
+  ],
+);
+
+<__snapshot_1 $0={items.map(renderItem)} $1={items.map(renderItem)} />;
+```
+
+对比两段产物：`__snapshot_2`、`__snapshot_3` 整体消失，`__CreateWrapperElement` 不再出现，`el1` / `el2` 从 wrapper 变成了真正的 `child` 视图，槽位描述也从 `__DynamicPartSlot` 换成了 `__DynamicPartSlotV2`。
+
+以一个生产页面的编译产物为例（单次测量，仅作示意）：`createSnapshot` 语句从 175 条降到 123 条，`__CreateWrapperElement` 调用从 76 次降到 25 次。具体数值随页面结构而异；机制本身会为每个动态部分省掉一个 wrapper 元素。
+
+该优化已在 [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中默认启用，对业务代码无感知，无需修改。
+
+### 双线程 Minimizer
 
 构建侧新增了双线程 Minimizer 机制，用于对主线程和后台线程产物进行更细粒度的压缩与裁剪。开发者可以通过 [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize) 快速启用默认优化，也可以分别配置 [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) 和 [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions)。
 
