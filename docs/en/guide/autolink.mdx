@@ -2,9 +2,11 @@ import { PlatformTabs } from '@lynx';
 
 # Native Libraries and Autolink
 
-A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Autolink is the integration mechanism that lets the host app discover libraries installed under `node_modules` and register their capabilities automatically on Android and iOS, instead of wiring each Element, Native Module, or Service by hand.
+A Lynx native library is an npm package that ships any combination of Elements, Native Modules, and Services for a host Lynx app to consume. Before this, those capabilities had to be wired up once per host app, with a separate pass for Android and iOS. Autolink is the companion integration mechanism that lets the host app discover libraries installed under `node_modules` and register their capabilities automatically on Android and iOS, instead of wiring each Element, Native Module, or Service by hand.
 
 Autolink currently covers native Android and iOS libraries only. It does not generate Web or HarmonyOS integration code.
+
+This page has two halves: to use an existing library in your app, start from [Consuming a Library](#consuming-a-library); to publish your own native capability as a library, start from [Authoring a Library](#authoring-a-library). For the mental model first, read [How Autolink Works](#how-autolink-works).
 
 :::info Prerequisites
 
@@ -476,4 +478,9 @@ Publish the library like any other npm package: pick a name, often scoped as `@e
 
 ## How Autolink Works
 
-Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates a per-app registry that lists every Element, Native Module, and Service the installed libraries expose. Android registry generation runs through the Gradle settings and build plugins; iOS registry generation runs through the CocoaPods plugin and emits a registry pod. The host app loads the generated registry once during `LynxEnv` initialization, which is why no per-library wiring code lives in the host.
+Autolink runs at build time. It scans every npm package under `node_modules` for a `lynx.lib.json` manifest, then generates a per-app registry that lists every Element, Native Module, and Service the installed libraries expose. Generation works differently per platform:
+
+- **Android**: registry generation runs through the Gradle settings and build plugins.
+- **iOS**: registry generation runs through the CocoaPods plugin and emits a registry pod.
+
+The host app loads the generated registry once during `LynxEnv` initialization, which is why no per-library wiring code lives in the host.
