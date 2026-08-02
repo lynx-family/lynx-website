@@ -83,13 +83,8 @@
 
   /* Match the 36px single-author avatar so a group sits flush in the row */
   .stacked-avatars {
-    > :global(.semi-avatar),
-    > .stacked-avatar-overflow {
-      box-sizing: border-box;
-      width: 36px;
-      height: 36px;
-      margin-left: -10px;
-    }
+    --stack-size: 36px;
+    --stack-overlap: 10px;
 
     > .stacked-avatar-overflow {
       font-size: 0.75rem;
@@ -98,20 +93,54 @@
 }
 
 /* ── Stacked avatars, shared by groups and compact mode ── */
+/*
+ * The separation between overlapping avatars is cut OUT of the lower avatar
+ * rather than drawn on top of it. A ring painted with a surface color has to
+ * name the exact surface it sits on, and there is no single right answer:
+ * the page is --rp-c-bg, but a blog card is --home-features-item-bg composited
+ * over it (white@50% in light, white@3% in dark), so any fixed choice reads
+ * too dark on one of them. Masking a circle out of each avatar where the next
+ * one lands lets the real background show through on any surface, in either
+ * theme, with no token to keep in sync.
+ */
 .stacked-avatars {
+  --stack-size: 24px;
+  --stack-overlap: 6px;
+  --stack-gap: 2px;
+
   display: flex;
   align-items: center;
   flex-shrink: 0;
 
-  /* Stack avatars with overlap */
   > :global(.semi-avatar),
   > .stacked-avatar-overflow {
-    border: 2px solid var(--rp-c-bg, #fff);
+    box-sizing: border-box;
+    width: var(--stack-size);
+    height: var(--stack-size);
     border-radius: 50%;
-    margin-left: -6px;
+    margin-left: calc(-1 * var(--stack-overlap));
 
     &:first-child {
       margin-left: 0;
+    }
+
+    /* Bite out where the next avatar overlaps. Its center sits one full
+     * avatar minus the overlap to the right of this one's left edge, plus
+     * half an avatar; the radius adds --stack-gap for the visible gutter. */
+    &:not(:last-child) {
+      --stack-bite-x: calc(var(--stack-size) * 1.5 - var(--stack-overlap));
+      --stack-bite-r: calc(var(--stack-size) / 2 + var(--stack-gap));
+
+      -webkit-mask-image: radial-gradient(
+        circle var(--stack-bite-r) at var(--stack-bite-x) 50%,
+        transparent 99%,
+        #000 100%
+      );
+      mask-image: radial-gradient(
+        circle var(--stack-bite-r) at var(--stack-bite-x) 50%,
+        transparent 99%,
+        #000 100%
+      );
     }
   }
 }
@@ -124,9 +153,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: content-box;
-  width: 24px;
-  height: 24px;
   font-size: 0.625rem;
   font-weight: 500;
   line-height: 1;
@@ -168,13 +194,6 @@
 }
 
 /* ── Compact mode for blog index cards ── */
-/*
- * The ring separating overlapping avatars must be an OPAQUE surface color.
- * --home-features-item-bg (the card's own background) is white@50% in light
- * mode and white@3% in dark, so using it here let the avatar underneath show
- * through and read as a dark outline. The card sits on the page background,
- * so --rp-c-bg from .stacked-avatars is the right stand-in for both themes.
- */
 .compact-authors {
   display: flex;
   align-items: center;
