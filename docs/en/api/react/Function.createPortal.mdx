@@ -13,25 +13,53 @@ import * as Lynx from '@lynx';
 # Function: createPortal()
 
 ```ts
-function createPortal(vnode: ComponentChild, container: NodesRef): useErrorBoundary<any> | null
+function createPortal(vnode: ComponentChild, container: NodesRef): ReactNode
 ```
 
-Create a `Portal` to continue rendering the vnode tree at a different DOM node.
+Renders `vnode` into `container` instead of the current component's position
+in the element tree, while keeping it in the React tree.
+
+`container` is a `NodesRef`, obtained either from a callback `ref` or from
+`lynx.createSelectorQuery().select(...)`.
+
+:::info Availability
+
+- Added in `@lynx-js/react` 0.121.0.
+- The declared return type is `ReactNode` since 0.123.3. In 0.123.2 and
+  earlier it is Preact's `VNode<any> | null`; there is no runtime difference.
+
+:::
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `vnode` | `ComponentChild` |
-| `container` | `NodesRef` |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `vnode` | `ComponentChild` | The React node to render into `container`. |
+| `container` | `NodesRef` | The `NodesRef` target to render into. |
 
 ## Returns
 
-[`useErrorBoundary`](/api/react/Variable.useErrorBoundary.mdx)\<`any`\> \| `null`
+`ReactNode`
+
+A `ReactNode` placeholder to include in the JSX at the call site;
+the rendered output goes into `container`.
+
+## Remarks
+
+Context still flows across the portal boundary, and state updates inside the
+portal behave like they do in any other component. A few behaviors differ
+from `react-dom`:
+
+- Events do not bubble along the React tree. ReactLynx follows Preact's
+  approach, which has no synthetic event system, so events follow the actual
+  element structure of the page.
+- The portaled subtree renders on the background thread only, and does not
+  participate in main-thread first-screen rendering.
+- Mounting across pages or across native containers is not supported.
 
 ## Defined in
 
-@lynx-js/react/runtime/lib/snapshot/lynx/portals.d.ts:9
+@lynx-js/react/runtime/lib/snapshot/lynx/portals.d.ts:31
 
 {/* api-doc-overlay:react-create-portal-example:start */}
 

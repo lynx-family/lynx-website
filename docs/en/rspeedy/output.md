@@ -45,16 +45,14 @@ dist/
 ├── .rspeedy
 │   ├── async
 │   │   └── [name]
-│   │       ├── debug-info.json
+│   │       ├── debug-metadata.json
 │   │       ├── tasm.json
 │   │       └── [name].css
 │   ├── [name]
 │   │   ├── background.js
-│   │   ├── background.js.map
-│   │   ├── debug-info.json
+│   │   ├── debug-metadata.json
 │   │   ├── [name].css
 │   │   ├── main-thread.js
-│   │   ├── main-thread.js.map
 │   │   └── tasm.json
 │   └── rspeedy.config.js
 ├── [name].lynx.bundle
@@ -65,17 +63,15 @@ dist/
     └── js
         ├── [id].[hash].js
         │   └── async
-        │       ├── [id].[hash].js
-        │       └── [id].[hash].js.map
-        ├── lib-preact.[hash].js
-        └── lib-preact.[hash].js.map
+        │       └── [id].[hash].js
+        └── lib-preact.[hash].js
 ```
 
 In addition, Rspeedy generates some extra files in development:
 
 - Background Thread Script(BTS): The background script file that is inlined into the bundle, default output to `.rspeedy/[name]/background.js`.
 - MainThread Thread Script(MTS): The main-thread script file that is inlined into the bundle, default output to `.rspeedy/[name]/main-thread.js`.
-- Source Map files: contains the source code mappings, which is output to the same level directory of JS files and adds a `.map` suffix.
+- Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.rspeedy/[name]/debug-metadata.json`. See [Map Production Errors to Source](./map-errors-to-source).
 
 ## Modify the Directory
 
