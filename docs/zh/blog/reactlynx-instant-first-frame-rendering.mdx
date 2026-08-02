@@ -1,6 +1,6 @@
 ---
 title: '深入 ReactLynx：从后台渲染到首帧直出优化'
-date: 2026-08-02
+date: 2026-08-10
 sidebar: false
 authors: ['Yradex', 'reactlynx']
 description: 'ReactLynx 把后台 React 更新编码成 Patch，再由主线程通过 Element PAPI 落到 Native 视图；首帧直出则把启动第一帧从这条等待链路里拆出来。'
@@ -13,6 +13,8 @@ import instantFirstFrameStartupImg from '@assets/blog/reactlynx-instant-first-fr
 import { BlogHeader } from '@lynx';
 
 <BlogHeader />
+
+_不少开发者好奇 ReactLynx 的实现细节和编程模型：它是怎么让 React 跑在双线程上的，又是怎么让[首帧直出](/guide/interaction/ifr)、[主线程脚本](/react/main-thread-script)这些主线程能力成为可能的。这些我们过去都没有展开讲过。为此我们开了一个 deep dive 系列，聊聊 ReactLynx 幕后的事情，这是第一篇。_
 
 在 Web React 里，[render 和 commit](https://react.dev/learn/render-and-commit) 发生在同一个线程中。而 [ReactLynx](/react/) 会在后台线程运行 React 业务逻辑，主线程进行 Native 视图绘制。这样业务 JS 不会直接卡住主线程，但也导致后台 React 没法直接拿主线程上的 Element 引用去 commit。这就驱使 ReactLynx 拥有一条与 React 不同的，从后台线程到主线程的 commit 链路。
 
@@ -307,3 +309,5 @@ Hydration 结果：
 归结起来，ReactLynx 的启动和运行其实是同一套提交模型在两个阶段的分工。页面启动时，主线程先拿到一份裁剪后的首屏路径，把第一帧画出来，再通过 Hydration 接管这些已有视图；页面稳定运行后，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 修改 Lynx Element 树。
 
 写首屏组件时，越能保证双线程节点树一致、把首屏表达成初始数据和可直接创建的视图，主线程路径就越短；请求、副作用、真实事件处理和后续状态更新只需要继续交给后台 React。首屏代码越贴近这条边界，首帧直出的收益就越可靠。
+
+去年我们曾在波兰的 [React Universe Conf](https://reactuniverse.com) 上做过一场题为 React for Two Threads 的演讲，聊的是同一个问题的另一面：如果 React 从第一天起就为两个线程而设计，会解锁哪些能力，又要面对哪些挑战。感兴趣的读者可以[观看演讲回放](https://youtu.be/-uUcYrl51JM)。
