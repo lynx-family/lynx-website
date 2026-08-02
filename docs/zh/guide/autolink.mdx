@@ -2,9 +2,11 @@ import { PlatformTabs } from '@lynx';
 
 # 原生库与 Autolink
 
-Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。Autolink 是一种集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android 和 iOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
+Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。在此之前，这些能力只能在每个宿主应用里各接一次，Android 和 iOS 还要分别写一遍。Autolink 是配套的集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并在 Android 和 iOS 上自动注册它们的能力，避免为每个元件、原生模块或 Service 手动写注册代码。
 
 Autolink 当前只覆盖 Android 和 iOS 原生库，不生成 Web 或 HarmonyOS 的接入代码。
+
+本页分为两部分：要在应用里用上一个已有的库，从[使用库](#使用库)开始；要把自己的原生能力发布成库，从[开发库](#开发库)开始。想先建立整体印象，可以直接看 [Autolink 工作原理](#autolink-工作原理)。
 
 :::info 开始前的准备
 
@@ -476,4 +478,9 @@ NS_ASSUME_NONNULL_END
 
 ## Autolink 工作原理
 
-Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` manifest，然后生成一份对应当前应用的 registry，列出所有已安装库暴露的元件、原生模块和 Service。Android 侧的 registry 生成由 Gradle settings plugin 和 build plugin 配合完成；iOS 侧由 CocoaPods plugin 完成并产出 registry pod。宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
+Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `lynx.lib.json` manifest，然后生成一份对应当前应用的 registry，列出所有已安装库暴露的元件、原生模块和 Service。各平台的生成方式如下：
+
+- **Android**：由 Gradle settings plugin 和 build plugin 配合完成 registry 生成。
+- **iOS**：由 CocoaPods plugin 完成，并产出 registry pod。
+
+宿主应用在初始化 `LynxEnv` 时会一次性加载生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
