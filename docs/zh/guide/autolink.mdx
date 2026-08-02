@@ -2,7 +2,7 @@ import { PlatformTabs } from '@lynx';
 
 # 原生库与 Autolink
 
-Lynx 原生库是一个 npm 包，可以打包元素、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。在此之前，这些能力只能在每个宿主应用里各接一次，Android、iOS 和 HarmonyOS 还要分别写一遍。Autolink 是配套的集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并接入它们的原生能力，避免为每个元素、原生模块或 Service 手动写注册代码。
+Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。在此之前，这些能力只能在每个宿主应用里各接一次，Android、iOS 和 HarmonyOS 还要分别写一遍。Autolink 是配套的集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并接入它们的原生能力，避免为每个元件、原生模块或 Service 手动写注册代码。
 
 Autolink 在 Android、iOS 和 HarmonyOS 上提供应用级全局注册，也覆盖 Lynxtron 原生库使用的包元数据和宿主加载。它不生成单个 `LynxView` 的局部 Library 注册，也不生成 Web 接入代码。
 
@@ -12,7 +12,7 @@ Autolink 在 Android、iOS 和 HarmonyOS 上提供应用级全局注册，也覆
 
 ✅ 已完成[接入现有应用](/guide/start/integrate-with-existing-apps)
 
-✅ 了解[原生模块](/guide/use-native-modules)和[自定义元素](/guide/custom-native-component)
+✅ 了解[原生模块](/guide/use-native-modules)和[自定义元件](/guide/custom-native-component)
 
 :::
 
@@ -34,11 +34,11 @@ Autolink 在 Android、iOS 和 HarmonyOS 上提供应用级全局注册，也覆
 
 一个库就是一个 npm 包，可以包含以下能力的任意组合：
 
-- **元素**：Lynx 渲染的自定义原生元素，例如 `<x-button>`。
+- **元件**：Lynx 渲染的自定义原生元件，例如 `<x-button>`。
 - **原生模块**：可以在 Lynx 应用代码中调用的、带类型声明的 JavaScript-to-native API。
 - **Service**：应用级的原生单例，可以被库内的其他能力依赖。
 
-每个库都通过包根目录下的 `lynx.lib.json` 清单文件声明原生入口。这三类能力相互独立：一个库可以只暴露元素、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
+每个库都通过包根目录下的 `lynx.lib.json` 清单文件声明原生入口。这三类能力相互独立：一个库可以只暴露元件、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
 
 应用侧像安装普通 npm 依赖一样安装库。Android Gradle 插件、iOS CocoaPods 插件和 HarmonyOS Hvigor 插件会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。Lynxtron 会从已安装包中读取同一份清单，把匹配到的包文件收集到宿主输出目录，并在宿主 bundle 前置生成代码，加载每个已收集包的 `./lynxtron` 入口。
 
@@ -103,7 +103,7 @@ plugins {
 }
 ```
 
-Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，库提供的元素、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
+Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并加入应用源码。应用初始化 `LynxEnv` 时会自动加载该入口，库提供的元件、原生模块和 Service 会按应用全局注册生效；业务侧无需额外编写原生初始化代码。
 
 </PlatformTabs.Tab>
 
@@ -119,7 +119,7 @@ target 'LynxApp' do
 end
 ```
 
-执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元素、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
+执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
 
 </PlatformTabs.Tab>
 
@@ -299,7 +299,7 @@ lynx-button/
 - `types/index.d.ts` 汇总导出原生模块类型声明；选中对应能力时，平台 Native Module 声明位于 `types/platform-native-module.d.ts`，N-API Native Module 声明位于 `types/napi-native-module.d.ts`。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
 - `android/`、`ios/` 和 `harmony/` 放置原生实现以及生成的原生 spec。HarmonyOS 目录是一个完整的源码 HAR，包含模块级的 `hvigorfile.ts`。
-- `shared/` 放置跨端原生代码，例如跨端自渲染元素实现，以及 `shared/nativeModule/` 下的 C++ N-API 回调桩代码。
+- `shared/` 放置跨端原生代码，例如跨端自渲染元件实现，以及 `shared/nativeModule/` 下的 C++ N-API 回调桩代码。
 - `lynxtron/` 和 `dist/` 放置 Lynxtron 加载入口和按宿主区分的输出。
 - `example/` 是库作者用于本地验证的示例应用。
 
@@ -364,7 +364,7 @@ HarmonyOS spec 当前支持 `void`、`string`、`number`、`boolean` 和带 `nul
 
 ### 编写 Native API
 
-在原生源码中使用平台对应的 Lynx 注解或注册方式，Autolink 就能发现库提供的能力。Android 和 iOS 原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元素和 Service 会通过原生标记被发现。HarmonyOS Library 则导出一个统一注册所有能力的 Provider。
+在原生源码中使用平台对应的 Lynx 注解或注册方式，Autolink 就能发现库提供的能力。Android 和 iOS 原生模块通常继承 `lynx-autolink-codegen` 生成的 spec；元件和 Service 会通过原生标记被发现。HarmonyOS Library 则导出一个统一注册所有能力的 Provider。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="android">
@@ -403,7 +403,7 @@ public final class ButtonModule extends ButtonModuleSpec {
 }
 ```
 
-元素示例：
+元件示例：
 
 ```java
 package com.example.button;
@@ -513,7 +513,7 @@ NS_ASSUME_NONNULL_END
 @end
 ```
 
-元素示例：
+元件示例：
 
 ```objc
 // ButtonElement.h
@@ -694,10 +694,10 @@ Registry 会拒绝重复的全局 Element tag、Native Module name 和 Service t
 
 <PlatformTabs.Tab platform="lynxtron">
 
-Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块的实现请看 Desktops (Node-API) 标签页，自定义元素的实现请看 Desktops 标签页：
+Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本页只说明 Autolink 如何发现和加载包；原生模块的实现请看 Desktops (Node-API) 标签页，自定义元件的实现请看 Desktops 标签页：
 
 - [原生模块 Desktops (Node-API) 说明](/guide/use-native-modules?platform=node-api)
-- [自定义元素 Desktops 说明](/guide/custom-native-component?platform=desktops)
+- [自定义元件 Desktops 说明](/guide/custom-native-component?platform=desktops)
 
 </PlatformTabs.Tab>
 </PlatformTabs>
@@ -713,6 +713,6 @@ Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `
 - **Android**：由 Gradle settings 插件和 build 插件配合完成 registry 生成。
 - **iOS**：由 CocoaPods 插件完成，并产出 registry pod。
 - **HarmonyOS**：在 Hvigor 配置阶段生成源码 Registry HAR 和 AppStartup task。
-- **Lynxtron**：运行在宿主侧 Rspack 构建中，收集匹配到的原生包，把加载代码注入宿主 bundle，并让已加载库里的 Lynx 静态注册提供对应的原生模块和元素。
+- **Lynxtron**：运行在宿主侧 Rspack 构建中，收集匹配到的原生包，把加载代码注入宿主 bundle，并让已加载库里的 Lynx 静态注册提供对应的原生模块和元件。
 
 Android、iOS 和 HarmonyOS 都只会在初始化阶段加载一次生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
