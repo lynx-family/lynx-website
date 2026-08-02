@@ -1,5 +1,5 @@
 ---
-title: 'Lynx 3.9：Autolink、CSS、ReactLynx 与更多更新'
+title: 'Lynx 3.9：Autolink、更贴近 Web 的 CSS、ReactLynx Portal'
 date: 2026-07-10
 sidebar: false
 authors: ['WATER1350', 'huxpro', 'lynx']
@@ -21,43 +21,31 @@ Lynx 3.9 已经正式发布！
 
 ## Autolink
 
-在 3.9 之前，把一段原生能力接进 Lynx 应用，需要应用侧自己写注册代码：[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service) 各有各的注册入口，Android 和 iOS 还要各写一遍。想把同一份能力用到第二个应用上，只能把接入步骤写进 README，让对方照着抄一遍。缺的不是某一个 API，而是「原生库」这个可以被发布、被安装的单位。
-
-Lynx 3.9 定义了这个单位。一个 [Lynx 原生库](/guide/autolink#什么是-lynx-原生库)就是一个 npm 包，在包根目录用 `lynx.lib.json` 声明自己的原生入口；[Autolink](/guide/autolink) 则是在构建期发现这些库、并把它们接进宿主应用的机制。
+在 3.9 之前，想用上一个原生能力，得先进原生工程：在 Gradle 和 Podfile 里各加一次依赖，再到 Android 和 iOS 的初始化代码里把[元件](/guide/ui/elements-components)、[原生模块](/guide/use-native-modules)和 [Service](/api/lynx-native-api/lynx-service) 分别注册一遍。Lynx 3.9 把这些收敛成一个可以发布、可以安装的单位：一个 [Lynx 原生库](/guide/autolink#什么是-lynx-原生库)就是一个 npm 包，用包根目录的 `lynx.lib.json` 声明原生入口，由 [Autolink](/guide/autolink) 在构建期发现并接进宿主应用。
 
 ### 使用库
 
-宿主应用只需要[接入一次 Autolink](/guide/autolink#接入-autolink)：Android 在 `settings.gradle` 和 app 的 `build.gradle` 里各启用一个 Gradle 插件，iOS 安装 `cocoapods-lynx-library` 并在 `Podfile` 里调用 `use_lynx_library!`。之后[安装一个库](/guide/autolink#安装库)，和安装任何一个 npm 依赖没有区别：
+[接入 Autolink](/guide/autolink#接入-autolink) 只需要做一次：Android 在 `settings.gradle` 和 app 的 `build.gradle` 里各启用一个 Gradle 插件，iOS 安装 `cocoapods-lynx-library` 并在 `Podfile` 里调用 `use_lynx_library!`。之后[安装库](/guide/autolink#安装库)：
 
 ```bash
 npm install @example/lynx-button
 ```
 
-Android 重新 sync、iOS 重新 `pod install`，这个库提供的元件、原生模块和 Service 就会在 `LynxEnv` 初始化时全部注册好。宿主代码里不会有任何一行是为某个具体的库写的。
+Android 重新 sync、iOS 重新执行 `pod install`，这个库提供的元件、原生模块和 Service 就会在 `LynxEnv` 初始化时注册好。
 
 ### 开发库
 
-反过来，如果你想把一段原生能力做成库发出去，[`create-lynx-library`](/guide/autolink#创建库) 会把骨架生成好：
+要把一段原生能力做成库发出去，用 [`create-lynx-library`](/guide/autolink#创建库) 生成骨架：
 
 ```bash
 npm create lynx-library
 ```
 
-生成的包里已经有 `lynx.lib.json`、类型声明、JavaScript facade、Android 与 iOS 源码目录，以及一个用来本地验证的 example 应用。
-
-原生模块的接口先用 TypeScript 写声明并标注 `@lynxmodule`，`npm run codegen` 会据此生成两端的原生 spec，你只需要继承它写实现；[自定义元件](/guide/custom-native-component)和 Service 则通过 `@LynxElement`、`@LynxService` 这类原生标记被发现，同样不需要手写登记代码。这些约定可以在[编写 Native API](/guide/autolink#编写-native-api) 中查到。
-
-发布就是 `npm publish`。建议在 `peerDependencies` 里声明兼容的 Lynx SDK 版本范围，这样版本错配会在安装阶段就暴露出来，而不是留到运行时。
-
-整个机制都发生在构建期：Autolink 扫描 `node_modules` 中的 `lynx.lib.json`，为当前平台生成一份 registry，宿主初始化时一次性加载，运行时没有额外的扫描或反射。完整流程见 [Autolink 工作原理](/guide/autolink#autolink-工作原理)。
-
-从 3.9 开始，把原生能力做成库发出去、和在另一个应用里装上它，是同一条路径的两端。
+生成的包里带上了 `lynx.lib.json`：这份清单声明该库的原生入口在哪里，Autolink 正是靠扫描它来发现已安装的库。类型声明、JavaScript facade、原生源码目录和 example 应用也一并生成好。codegen、原生标记的写法和发布流程，见 [Autolink 指南](/guide/autolink)。
 
 ## 更贴近 Web 的 CSS
 
-Lynx 3.9 的 CSS 更新重点不是简单增加属性数量，而是继续贴近 Web 社区已经熟悉的写法。这样从 Web 迁移过来的样式更容易得到一致结果，AI 或 Agent 生成 Lynx 代码时，也更少把 Web 常见写法误用成不可运行的 Lynx 样式。
-
-因此，这个版本补上了 `!important`、`flex` 简写解析等兼容性能力，也继续推进 Grid、Sticky 和 Motion Path 等标准能力补齐。
+Lynx 3.9 的 CSS 更新重点不是增加属性数量，而是继续贴近 Web 社区已经熟悉的写法：从 Web 迁移过来的样式更容易得到一致结果，AI 生成 Lynx 代码时也更少把 Web 常见写法误用成不可运行的 Lynx 样式。这个版本补上了 `!important`、`flex` 简写解析等兼容性能力，也继续推进 Grid、Sticky 和 Motion Path。
 
 ### [`!important`](/api/css/selectors#important-支持) 优先级支持
 
@@ -108,36 +96,7 @@ ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在�
 
 [`createPortal`](/api/react/Function.createPortal) 可以把一段组件树渲染到当前组件层级之外的指定容器中，适合浮层、弹窗这类需要脱离当前布局层级的 UI：组件仍然按照 React 的数据流组织，但最终的渲染位置交给目标容器。该 API 自 `@lynx-js/react` 0.121.0 起提供。
 
-#### 用法
-
-ReactLynx 没有向用户暴露 [Element PAPI](/api/engine/element-api)，因此容器不能像 Web 那样直接拿到元素节点，而需要通过 ref 获取：
-
-```tsx
-import { createPortal, useState } from '@lynx-js/react';
-import type { NodesRef } from '@lynx-js/types';
-
-function Counter() {
-  const [n, setN] = useState(0);
-  return (
-    <text
-      bindtap={() => {
-        setN(n + 1);
-      }}
-    >{`count:${n}`}</text>
-  );
-}
-
-function App() {
-  // 容器元素挂载后，回调 ref 会拿到它的 NodesRef
-  const [host, setHost] = useState<NodesRef | null>(null);
-  return (
-    <view>
-      <view ref={setHost} />
-      {host && createPortal(<Counter />, host)}
-    </view>
-  );
-}
-```
+容器要通过 [`NodesRef`](/api/lynx-api/nodes-ref) 传给 `createPortal`：在承载节点上挂一个 ref 拿到它的 `NodesRef`，再作为第二个参数传入。获取节点引用的更多方式见[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)。
 
 <Go
   example="react-apis"
@@ -145,123 +104,22 @@ function App() {
   defaultEntryFile="dist/create-portal.lynx.bundle"
   entry="src/create-portal"
   defaultTab="web"
+  highlight="{7,34-37}"
 />
 
-除 ref 外，`lynx.createSelectorQuery().select(...)` 返回的 `NodesRef` 同样可以作为容器。
+Context 仍然跨越 Portal 边界传递，状态更新也和普通组件一致。有三点与 `react-dom` 不同：
 
-#### 能力与限制
+- **事件冒泡遵循 Preact 的行为。** ReactLynx 的 `createPortal` 沿用 Preact 的实现，没有 React 的合成事件系统，因此事件沿页面实际的元件结构冒泡，而不是 React 组件树。
+- **Portal 子树不参与[首帧直出（IFR）](/guide/interaction/ifr)**，只在后台线程渲染。
+- **不支持跨页面、跨容器挂载。** 这类场景请改用 Lynx UI 的 [`Overlay`](/ui/components/overlay) 组件，或直接使用 [`<overlay>`](/api/elements/built-in/overlay) 这个 [XElement](/guide/ui/elements-components#xelement)。
 
-跨越 Portal 边界时，[context](https://react.dev/learn/passing-data-deeply-with-context) 仍然可以正常传递，portal 内部的状态更新也和普通组件一致。
-
-同时有几个与 Web 不同的地方需要注意：
-
-- **事件不按 React 组件树冒泡。** ReactLynx 的 `createPortal` 沿用了 Preact 的实现思路，而 Preact 没有 React 那样的合成事件系统，因此事件遵循页面实际的元素结构，而不是 React 组件树。
-- **Portal 的内容不参与主线程首屏渲染**，只在后台线程渲染。
-- **不支持跨页面或跨 Native 容器挂载。** 想实现类似 Modal 的效果，推荐用 Lynx UI 的 [`OverlayView`](/ui/components/overlay) 作为承载层，把 Portal 挂到它内部的节点上。它是原生 [`<overlay>`](/api/elements/built-in/overlay) 的即插即用替代方案，帮你处理掉尺寸设置和平台差异。
+以上限制的完整说明见 [`createPortal` 的备注](/api/react/Function.createPortal#备注)。
 
 ### Snapshot 层级和数量优化
 
-Snapshot 是 ReactLynx 在编译期从 JSX 中提取出的静态元素结构，运行时只需要更新其中的动态部分——这些可变的位置称为**槽位**。
+ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。一处动态内容会渲染出几个节点是不确定的，而 Preact 的 diff 只看到一个扁平的子节点列表，分不清哪个子节点属于哪一处。过去只能在每处动态内容外面额外套一层中间节点，把数量不定的子节点收拢成恰好一个，让数量对得上——代价是元件树上凭空多出一层，有时还要为此多切一层 Snapshot。
 
-麻烦在于，一处动态内容会渲染出几个节点是不确定的：`{items.map(renderItem)}` 可能产出 0 个、1 个或上百个节点。而 Preact 的 diff 看到的只是一个扁平的子节点列表，并不知道某个子节点属于哪一处槽位。如果第一处渲染出了 3 个节点，第二处的内容就可能被当成第一处的一部分，插错位置。
-
-过去的解法是给每一处动态内容额外生成一个 **wrapper 元素**：一个只用于分组的中间节点，把数量不定的子节点收拢成**恰好一个**。这样父 Snapshot 的子节点数量就固定了，永远和它的槽位一一对应。代价是每处动态内容都在元素树上多出一个节点，有时还要为此多切出一层 Snapshot。
-
-这个折中是有历史原因的：早期版本的 ReactLynx 使用自行实现的 Preact 版本，本来就能把每个子元素直接渲染到父节点的指定槽位；改用开源版本的 Preact 之后，Preact 不提供槽位信息，才不得不引入 wrapper 来兜底。
-
-现在我们扩展了 Preact 的 diff 算法，让子节点可以通过 `$N` 属性直接声明自己属于父节点的第 N 个槽位（[internal-preact#1](https://github.com/lynx-family/internal-preact/pull/1)）。槽位归属既然被显式标了出来，就不再需要靠 wrapper 维持数量对齐（[#1764](https://github.com/lynx-family/lynx-stack/pull/1764)）。
-
-以这段 JSX 为例：
-
-```tsx
-<view className="parent">
-  <view className="child">{items.map(renderItem)}</view>
-  <view className="child">{items.map(renderItem)}</view>
-</view>
-```
-
-优化前需要切出 3 个 Snapshot，父节点里还要为两处动态内容各建一个 wrapper 元素（以下产物均省略了固定参数，变量名有简化）：
-
-```js
-// 两个 child 各自被切成独立的 Snapshot
-const __snapshot_2 = ReactLynx.createSnapshot(
-  '__snapshot_2',
-  function () {
-    const el = __CreateView(ReactLynx.__pageId);
-    __SetClasses(el, 'child');
-    return [el];
-  },
-  null,
-  ReactLynx.__DynamicPartChildren_0,
-);
-
-const __snapshot_3 = ReactLynx.createSnapshot(
-  '__snapshot_3',
-  function () {
-    const el = __CreateView(ReactLynx.__pageId);
-    __SetClasses(el, 'child');
-    return [el];
-  },
-  null,
-  ReactLynx.__DynamicPartChildren_0,
-);
-
-// 父节点：两个 wrapper 保证 children 长度恒为 2，与 2 个槽位一一对应
-const __snapshot_1 = ReactLynx.createSnapshot(
-  '__snapshot_1',
-  function () {
-    const el = __CreateView(ReactLynx.__pageId);
-    __SetClasses(el, 'parent');
-    const el1 = __CreateWrapperElement(ReactLynx.__pageId);
-    __AppendElement(el, el1);
-    const el2 = __CreateWrapperElement(ReactLynx.__pageId);
-    __AppendElement(el, el2);
-    return [el, el1, el2];
-  },
-  null,
-  [
-    [ReactLynx.__DynamicPartSlot, 1],
-    [ReactLynx.__DynamicPartSlot, 2],
-  ],
-);
-
-<__snapshot_1>
-  <__snapshot_2>{items.map(renderItem)}</__snapshot_2>
-  <__snapshot_3>{items.map(renderItem)}</__snapshot_3>
-</__snapshot_1>;
-```
-
-优化后只剩 1 个 Snapshot，两个 `child` 直接内联进静态结构，wrapper 完全消除，两处动态内容由 `$0`、`$1` 指明槽位：
-
-```js
-const __snapshot_1 = ReactLynx.createSnapshot(
-  '__snapshot_1',
-  function () {
-    const el = __CreateView(ReactLynx.__pageId);
-    __SetClasses(el, 'parent');
-    const el1 = __CreateView(ReactLynx.__pageId);
-    __SetClasses(el1, 'child');
-    __AppendElement(el, el1);
-    const el2 = __CreateView(ReactLynx.__pageId);
-    __SetClasses(el2, 'child');
-    __AppendElement(el, el2);
-    return [el, el1, el2];
-  },
-  null,
-  [
-    [ReactLynx.__DynamicPartSlotV2, 1],
-    [ReactLynx.__DynamicPartSlotV2, 2],
-  ],
-);
-
-<__snapshot_1 $0={items.map(renderItem)} $1={items.map(renderItem)} />;
-```
-
-对比两段产物：`__snapshot_2`、`__snapshot_3` 整体消失，`__CreateWrapperElement` 不再出现，`el1` / `el2` 从 wrapper 变成了真正的 `child` 视图，槽位描述也从 `__DynamicPartSlot` 换成了 `__DynamicPartSlotV2`。
-
-以一个生产页面的编译产物为例（单次测量，仅作示意）：`createSnapshot` 语句从 175 条降到 123 条，`__CreateWrapperElement` 调用从 76 次降到 25 次。具体数值随页面结构而异；机制本身会为每个动态部分省掉一个 wrapper 元素。
-
-该优化已在 [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中默认启用，对业务代码无感知，无需修改。
+[`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中我们[扩展了 Preact 的 diff 算法](https://github.com/lynx-family/internal-preact/pull/1)，让子节点直接声明自己属于父节点的哪个槽位。归属既然写明了，[那层中间节点就不再需要](https://github.com/lynx-family/lynx-stack/pull/1764)，原本被拆开的静态结构也能合并成更少的 Snapshot。该优化默认启用，业务代码无需修改。
 
 ### 双线程 Minimizer
 
