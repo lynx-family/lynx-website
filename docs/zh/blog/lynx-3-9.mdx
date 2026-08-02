@@ -71,7 +71,7 @@ Lynx 3.9 还补齐了以下 CSS 能力：
 
 - 新增 [`grid-row`](/api/css/properties/grid-row) 和 [`grid-column`](/api/css/properties/grid-column) 简写，可通过它们设置 `grid-*-start` 和 `grid-*-end` 的值。例如 `grid-row: 1 / span 2` 等价于 `grid-row-start: 1; grid-row-end: span 2`。
 - 支持标准 `position: sticky` 行为，可通过 [`enableNewSticky`](/api/css/properties/position#sticky) 页面开关启用。
-- HarmonyOS 端补齐了更多 [Motion Path](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_motion_path) 能力，包括 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
+- HarmonyOS 端补齐了更多 [Motion Path](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Motion_path) 能力，包括 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
 
 <Go
   example="css-api"
@@ -87,11 +87,11 @@ Lynx 3.9 还补齐了以下 CSS 能力：
 
 ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在构建侧新增了双线程 Minimizer。
 
-### [Portal](https://react.dev/reference/react-dom/createPortal)
+### Portal
 
-在 React 中，Portal 用于把一段组件树渲染到元件树上的另一个容器里，同时让它仍然留在 React 树中——浮层、弹窗这类需要脱离当前布局层级的 UI 通常都靠它。自 `@lynx-js/react` 0.121.0 起，ReactLynx 通过 [`createPortal`](/api/react/Function.createPortal) 提供 Portal。
+在 React 中，[Portal](https://react.dev/reference/react-dom/createPortal) 用于把一段组件树渲染到元件树上的另一个容器里，同时让它仍然留在 React 树中——浮层、弹窗这类需要脱离当前布局层级的 UI 通常都靠它。自 `@lynx-js/react` 0.121.0 起，ReactLynx 通过 [`createPortal`](/api/react/Function.createPortal) 提供 Portal。
 
-与 React DOM 不同的是，ReactLynx 用 [`NodesRef`](/api/lynx-api/nodes-ref) 作为 Portal 容器：在承载元件上挂一个 ref 拿到它的 `NodesRef`，再作为 `createPortal` 的第二个参数传入。获取节点引用的更多方式见[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)。
+与 React DOM 中的 Portal 接受一个 DOM 节点作为容器不同，在 ReactLynx 中我们使用一个节点引用（[`NodesRef`](/api/lynx-api/nodes-ref)）作为 Portal 容器：在承载元件上挂一个 ref 拿到它的 `NodesRef`，再作为 `createPortal` 的第二个参数传入。获取节点引用的更多方式见[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)。
 
 <Go
   example="react-apis"
@@ -102,15 +102,15 @@ ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在�
   highlight="{7,34-37}"
 />
 
-React Context 仍然跨越 Portal 边界传递，状态更新也和普通组件一致。有三点[需要注意](/api/react/Function.createPortal#备注)的地方与 Web 不同：
+Portal 只改变元件在页面上的物理位置。除此之外，渲染进 Portal 的 JSX 表现得就像渲染它的那个组件的子节点：父树提供的 React Context 依然能拿到，状态更新也和普通组件一致。有三点[需要注意](/api/react/Function.createPortal#备注)的地方与 Web 不同：
 
-- **事件冒泡遵循 Preact 的行为。** ReactLynx 的 `createPortal` 沿用 Preact 的实现，没有 React 的合成事件系统，因此事件沿页面实际的元件结构冒泡，而不是 React 组件树。
+- **事件冒泡遵循 Preact 的行为。** ReactLynx 的 `createPortal` 沿用 Preact 的实现，而 [Preact 中事件不会穿过 Portal 组件向上冒泡](https://preactjs.com/guide/v10/differences-to-react/#main-differences)，因此事件沿页面实际的元件结构冒泡，而不是 React 树。
 - **Portal 子树不参与[首帧直出（IFR）](/guide/interaction/ifr)**，只在后台线程渲染。
 - **不支持跨页面或跨原生容器挂载。** 这类场景请改用 lynx-ui 的 [`Overlay`](/ui/components/overlay) 组件，或直接使用 [`<overlay>`](/api/elements/built-in/overlay) 这个 [XElement](/guide/ui/elements-components#xelement)。
 
 ### Snapshot 层级和数量优化
 
-ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。（Snapshot 的机制我们会在后续文章中展开。）
+ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。（Snapshot 我们会在后续博客中详细介绍。）
 
 [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中我们[扩展了 Preact 的 diff 算法](https://github.com/lynx-family/internal-preact/pull/1)，让子节点可以直接声明自己属于父节点的哪个槽位。编译产物因此可以[去掉原先必需的中间节点](https://github.com/lynx-family/lynx-stack/pull/1764)，元件树更浅、Snapshot 更少，渲染时要做的工作也更少。该优化默认启用，业务代码无需修改。
 

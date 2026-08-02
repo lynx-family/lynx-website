@@ -71,7 +71,7 @@ Lynx 3.9 also adds the following CSS capabilities:
 
 - New [`grid-row`](/api/css/properties/grid-row) and [`grid-column`](/api/css/properties/grid-column) shorthands for setting the corresponding `grid-*-start` and `grid-*-end` values. For example, `grid-row: 1 / span 2` is equivalent to `grid-row-start: 1; grid-row-end: span 2`.
 - Standard `position: sticky` behavior, enabled through the [`enableNewSticky`](/api/css/properties/position#sticky) page switch.
-- HarmonyOS support for more [Motion Path](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_motion_path) features, including [`offset-path`](/api/css/properties/offset-path), [`offset-distance`](/api/css/properties/offset-distance), and [`offset-rotate`](/api/css/properties/offset-rotate).
+- HarmonyOS support for more [Motion Path](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Motion_path) features, including [`offset-path`](/api/css/properties/offset-path), [`offset-distance`](/api/css/properties/offset-distance), and [`offset-rotate`](/api/css/properties/offset-rotate).
 
 <Go
   example="css-api"
@@ -87,11 +87,11 @@ Lynx 3.9 also adds the following CSS capabilities:
 
 ReactLynx brings `createPortal` and an optimization that reduces both the depth and the number of Snapshots, plus a dual-thread Minimizer on the build side.
 
-### [Portal](https://react.dev/reference/react-dom/createPortal)
+### Portal
 
-In React, a Portal renders a component subtree into a container elsewhere in the element tree while keeping it in the React tree — the usual answer for overlays, dialogs, and anything that has to escape its surrounding layout. Since `@lynx-js/react` 0.121.0, Portal is available in ReactLynx through [`createPortal`](/api/react/Function.createPortal).
+In React, a [Portal](https://react.dev/reference/react-dom/createPortal) renders a component subtree into a container elsewhere in the element tree while keeping it in the React tree — the usual answer for overlays, dialogs, and anything that has to escape its surrounding layout. Since `@lynx-js/react` 0.121.0, Portal is available in ReactLynx through [`createPortal`](/api/react/Function.createPortal).
 
-Unlike React DOM, ReactLynx takes a [`NodesRef`](/api/lynx-api/nodes-ref) as the Portal container: attach a ref to the hosting element to obtain its `NodesRef`, then pass that as `createPortal`'s second argument. For the other ways to obtain a node reference, see [Manipulating Elements](/guide/interaction/event-handling/manipulating-element.react).
+Where React DOM's Portal takes a DOM node as its container, ReactLynx takes a node reference — a [`NodesRef`](/api/lynx-api/nodes-ref). Attach a ref to the hosting element to obtain its `NodesRef`, then pass that as `createPortal`'s second argument. For the other ways to obtain a node reference, see [Manipulating Elements](/guide/interaction/event-handling/manipulating-element.react).
 
 <Go
   example="react-apis"
@@ -102,15 +102,15 @@ Unlike React DOM, ReactLynx takes a [`NodesRef`](/api/lynx-api/nodes-ref) as the
   highlight="{7,34-37}"
 />
 
-React Context still flows across the Portal boundary and state updates behave as they do in any other component. Three [notes](/api/react/Function.createPortal#remarks) differ from the Web:
+A Portal only changes where an element is physically placed. In every other way the JSX you render into it behaves as a child of the component that renders it: React Context from the parent tree still reaches it, and state updates behave as they do in any other component. Three [notes](/api/react/Function.createPortal#remarks) differ from the Web:
 
-- **Event bubbling follows Preact's behavior.** ReactLynx's `createPortal` builds on Preact, which has no synthetic event system, so events bubble along the page's actual element structure rather than the React component tree.
+- **Event bubbling follows Preact's behavior.** ReactLynx's `createPortal` builds on Preact, where [events do not bubble up through Portal components](https://preactjs.com/guide/v10/differences-to-react/#main-differences), so events follow the page's actual element structure rather than the React tree.
 - **The portal subtree does not take part in [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr)** — it renders on the background thread only.
 - **Mounting across pages or across native containers is not supported.** For those cases, reach for lynx-ui's [`Overlay`](/ui/components/overlay) component, or the [`<overlay>`](/api/elements/built-in/overlay) [XElement](/guide/ui/elements-components#xelement) directly.
 
 ### Snapshot depth and count optimization
 
-At compile time ReactLynx extracts the static element structure of your JSX into a **Snapshot**, so at runtime only the dynamic parts inside it need updating. (We will deep dive into Snapshots in a later post.)
+At compile time ReactLynx extracts the static element structure of your JSX into a **Snapshot**, so at runtime only the dynamic parts inside it need updating. (We will cover Snapshots in detail in a later post.)
 
 In [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) we [extended Preact's diff algorithm](https://github.com/lynx-family/internal-preact/pull/1) so a child can declare which slot of its parent it belongs to. That lets the compiler [drop the intermediate nodes](https://github.com/lynx-family/lynx-stack/pull/1764) it used to need, leaving a shallower element tree and fewer Snapshots — less work to render. It is on by default and needs no app-side changes.
 
