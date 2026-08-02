@@ -15,9 +15,7 @@ import { BlogHeader, Go } from '@lynx';
 
 Lynx 3.9 已经正式发布！
 
-这个版本围绕三条主线展开：用 [Autolink](/guide/autolink) 让原生能力可以被打包成库、被安装和复用，用更贴近 Web 的 CSS 能力减少迁移和 AI 生成代码中的常见误用，并让 ReactLynx 在 Portal、渲染与构建表现上继续前进。
-
-此外，3.9 也带来了元件、Lynx API 与性能的一组小而实用的更新。下面我们一起来看看 Lynx 3.9 带来了哪些新变化。
+这个版本围绕三条主线展开：用 [Autolink](/guide/autolink) 让原生能力可以被打包成库、被安装和复用，用更贴近 Web 的 CSS 能力减少迁移和 AI 生成代码中的常见误用，并让 ReactLynx 在 Portal、渲染与构建表现上继续前进。此外，3.9 也带来了元件、Lynx API 与性能的一组小而实用的更新。下面我们一起来看看 Lynx 3.9 带来了哪些新变化。
 
 ## Autolink
 
@@ -49,9 +47,7 @@ Lynx 3.9 的 CSS 更新重点不是增加属性数量，而是继续贴近 Web �
 
 ### [`!important`](/api/css/selectors#important-支持) 优先级支持
 
-在 `engineVersion` 3.9 或更高版本下，可以在 CSS 值后追加 `!important`，提升该声明在层叠规则中的优先级。
-
-例如：
+在 `engineVersion` 3.9 或更高版本下，可以在 CSS 值后追加 `!important`，提升该声明在层叠规则中的优先级。例如下面这段样式中，`<view className="foo" />` 的 `color` 会被应用为 `red` 而不是 `blue`：
 
 ```css
 .foo {
@@ -62,8 +58,6 @@ view.foo {
   color: blue;
 }
 ```
-
-现在 `<view className="foo" />` 中的 `color` 会被应用为 `red`，而不是 `blue`。
 
 ### [`flex`](/api/css/properties/flex) 简写解析
 
@@ -76,8 +70,8 @@ view.foo {
 Lynx 3.9 还补齐了以下 CSS 能力：
 
 - 新增 [`grid-row`](/api/css/properties/grid-row) 和 [`grid-column`](/api/css/properties/grid-column) 简写，可通过它们设置 `grid-*-start` 和 `grid-*-end` 的值。例如 `grid-row: 1 / span 2` 等价于 `grid-row-start: 1; grid-row-end: span 2`。
-- 支持标准 [`position: sticky`](/api/css/properties/position) 行为，可通过 `enableNewSticky` 页面开关启用。
-- HarmonyOS 端支持 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
+- 支持标准 `position: sticky` 行为，可通过 [`enableNewSticky`](/api/css/properties/position#sticky) 页面开关启用。
+- HarmonyOS 端补齐了更多 [Motion Path](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_motion_path) 能力，包括 [`offset-path`](/api/css/properties/offset-path)、[`offset-distance`](/api/css/properties/offset-distance) 和 [`offset-rotate`](/api/css/properties/offset-rotate)。
 
 <Go
   example="css-api"
@@ -86,17 +80,18 @@ Lynx 3.9 还补齐了以下 CSS 能力：
   entry="src/position"
   defaultEntryFile="dist/position.lynx.bundle"
   defaultTab="web"
+  highlight="{139-142,166-168}"
 />
 
 ## ReactLynx
 
 ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在构建侧新增了双线程 Minimizer。
 
-### `createPortal`
+### [Portal](https://react.dev/reference/react-dom/createPortal)
 
-[`createPortal`](/api/react/Function.createPortal) 可以把一段组件树渲染到当前组件层级之外的指定容器中，适合浮层、弹窗这类需要脱离当前布局层级的 UI：组件仍然按照 React 的数据流组织，但最终的渲染位置交给目标容器。该 API 自 `@lynx-js/react` 0.121.0 起提供。
+在 React 中，Portal 用于把一段组件树渲染到元件树上的另一个容器里，同时让它仍然留在 React 树中——浮层、弹窗这类需要脱离当前布局层级的 UI 通常都靠它。自 `@lynx-js/react` 0.121.0 起，ReactLynx 通过 [`createPortal`](/api/react/Function.createPortal) 提供 Portal。
 
-容器要通过 [`NodesRef`](/api/lynx-api/nodes-ref) 传给 `createPortal`：在承载节点上挂一个 ref 拿到它的 `NodesRef`，再作为第二个参数传入。获取节点引用的更多方式见[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)。
+与 React DOM 不同的是，ReactLynx 用 [`NodesRef`](/api/lynx-api/nodes-ref) 作为 Portal 容器：在承载元件上挂一个 ref 拿到它的 `NodesRef`，再作为 `createPortal` 的第二个参数传入。获取节点引用的更多方式见[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)。
 
 <Go
   example="react-apis"
@@ -107,19 +102,17 @@ ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在�
   highlight="{7,34-37}"
 />
 
-Context 仍然跨越 Portal 边界传递，状态更新也和普通组件一致。有三点与 `react-dom` 不同：
+React Context 仍然跨越 Portal 边界传递，状态更新也和普通组件一致。有三点[需要注意](/api/react/Function.createPortal#备注)的地方与 Web 不同：
 
 - **事件冒泡遵循 Preact 的行为。** ReactLynx 的 `createPortal` 沿用 Preact 的实现，没有 React 的合成事件系统，因此事件沿页面实际的元件结构冒泡，而不是 React 组件树。
 - **Portal 子树不参与[首帧直出（IFR）](/guide/interaction/ifr)**，只在后台线程渲染。
 - **不支持跨页面或跨原生容器挂载。** 这类场景请改用 lynx-ui 的 [`Overlay`](/ui/components/overlay) 组件，或直接使用 [`<overlay>`](/api/elements/built-in/overlay) 这个 [XElement](/guide/ui/elements-components#xelement)。
 
-以上限制的完整说明见 [`createPortal` 的备注](/api/react/Function.createPortal#备注)。
-
 ### Snapshot 层级和数量优化
 
-ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。一处动态内容会渲染出几个节点是不确定的，而 Preact 的 diff 只看到一个扁平的子节点列表，分不清哪个子节点属于哪一处。过去只能在每处动态内容外面额外套一层中间节点，把数量不定的子节点收拢成恰好一个，让数量对得上——代价是元件树上凭空多出一层，有时还要为此多切一层 Snapshot。
+ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。（Snapshot 的机制我们会在后续文章中展开。）
 
-[`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中我们[扩展了 Preact 的 diff 算法](https://github.com/lynx-family/internal-preact/pull/1)，让子节点直接声明自己属于父节点的哪个槽位。归属既然写明了，[那层中间节点就不再需要](https://github.com/lynx-family/lynx-stack/pull/1764)，原本被拆开的静态结构也能合并成更少的 Snapshot。该优化默认启用，业务代码无需修改。
+[`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中我们[扩展了 Preact 的 diff 算法](https://github.com/lynx-family/internal-preact/pull/1)，让子节点可以直接声明自己属于父节点的哪个槽位。编译产物因此可以[去掉原先必需的中间节点](https://github.com/lynx-family/lynx-stack/pull/1764)，元件树更浅、Snapshot 更少，渲染时要做的工作也更少。该优化默认启用，业务代码无需修改。
 
 ### 双线程 Minimizer
 
@@ -137,12 +130,10 @@ Lynx API，[`requestResourcePrefetch`](/api/lynx-api/lynx/lynx-request-resource-
 
 ### 性能表现
 
-HarmonyOS 端默认启用新版原生图片链路，将图片加载、解码缓存及动图帧调度下沉至图片节点，减少逐帧计算与刷新开销。在我们内部的图片动画基准场景中，总耗时（`TotalTime`）和 CPU 耗时（`CPUTime`）都有可观测的下降；具体幅度取决于图片规格、设备和页面结构，请以你自己场景的实测为准。
+HarmonyOS 端默认启用新版原生图片链路，将图片加载、解码缓存及动图帧调度下沉至图片节点，减少逐帧计算与刷新开销。在我们内部的图片动画基准测试中，总耗时（`TotalTime`）和 CPU 耗时（`CPUTime`）均降低约 10%。
 
 ## 升级指南
 
 参照官网[接入 Lynx 到现有应用](https://lynxjs.org/3.9/zh/guide/start/integrate-with-existing-apps.html)，更新 Lynx 依赖版本，即可完成 Lynx 3.9 版本升级。
 
-Lynx 3.9 包含部分破坏性变更。升级前请结合你的目标平台、`engineVersion`、页面开关和宿主集成方式进行验证。
-
-如果你正在升级到 3.9，建议优先关注 Autolink 接入、CSS 兼容性行为和 ReactLynx Portal 使用场景，再结合业务需要评估元件、Lynx API 与性能相关更新。感谢每一位持续试用新版本、反馈问题并推动 Lynx 生态发展的开发者。我们会继续保持更小、更聚焦的月度发布节奏。
+Lynx 3.9 包含部分破坏性变更，升级前请结合你的目标平台、`engineVersion`、页面开关和宿主集成方式进行验证。感谢每一位持续试用新版本、反馈问题并推动 Lynx 生态发展的开发者，我们会继续保持更小、更聚焦的月度发布节奏。
