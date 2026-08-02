@@ -256,6 +256,13 @@ const BlogAvatar = ({
         collator.compare(getDisplayName(a, lang), getDisplayName(b, lang)),
       );
 
+    // Nobody is credited twice in one byline. Naming an author individually
+    // takes precedence over their membership in a group, whichever order the
+    // two appear in, so `['Yradex', 'reactlynx']` reads as "Ziqi, then the
+    // rest of the ReactLynx Team". Groups listed later likewise skip anyone an
+    // earlier group already showed.
+    const claimed = new Set(list.filter((id) => authorMap.has(id)));
+
     // Map the list order to authors/groups, filtering out any invalid ids
     return list
       .map((id): Entry | null => {
@@ -268,9 +275,11 @@ const BlogAvatar = ({
         if (group) {
           const members = sortMembers(
             group.members
+              .filter((memberId) => !claimed.has(memberId))
               .map((memberId) => authorMap.get(memberId))
               .filter((member): member is Author => member != null),
           );
+          members.forEach((member) => claimed.add(member.id));
           return members.length > 0
             ? { kind: 'group', id, group, members }
             : null;
