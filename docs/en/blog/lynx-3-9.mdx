@@ -107,11 +107,19 @@ The container reaches `createPortal` as a [`NodesRef`](/api/lynx-api/nodes-ref):
   highlight="{7,34-37}"
 />
 
-Context still flows across the portal boundary and state updates behave as they do in any other component; event bubbling, main-thread first-screen rendering, and cross-container mounting differ from `react-dom`, as covered in the [`createPortal` notes](/api/react/Function.createPortal#remarks). For a floating layer that crosses pages or native containers, host it in Lynx UI's [`OverlayView`](/ui/components/overlay).
+Context still flows across the portal boundary and state updates behave as they do in any other component. Three things differ from `react-dom`:
+
+- **Event bubbling follows Preact's behavior.** ReactLynx's `createPortal` builds on Preact, which has no synthetic event system, so events bubble along the page's actual element structure rather than the React component tree.
+- **The portal subtree does not take part in [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr)** — it renders on the background thread only.
+- **Mounting across pages or containers is not supported.** For those cases, reach for Lynx UI's [`Overlay`](/ui/components/overlay) component, or the [`<overlay>`](/api/elements/built-in/overlay) [XElement](/guide/ui/elements-components#xelement) directly.
+
+The [`createPortal` notes](/api/react/Function.createPortal#remarks) cover all three in full.
 
 ### Snapshot depth and count optimization
 
-At compile time ReactLynx extracts the static element structure of your JSX into a **Snapshot**, so at runtime only the dynamic parts inside it need updating. Previously, to keep Preact's diff aligned with each dynamic position, the compiler emitted a wrapper element for every one of them purely for grouping. In 3.9 we [extended Preact's diff algorithm](https://github.com/lynx-family/internal-preact/pull/1) so a child can declare which slot of its parent it belongs to, which lets us [drop those wrappers entirely](https://github.com/lynx-family/lynx-stack/pull/1764) and merge structures that used to be split into fewer Snapshots. The optimization is enabled by default in [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) and needs no app-side changes.
+At compile time ReactLynx extracts the static element structure of your JSX into a **Snapshot**, so at runtime only the dynamic parts inside it need updating. How many nodes a dynamic part renders is not fixed, and Preact's diff sees only a flat list of children, with no way to tell which child belongs to which dynamic part. The only way to keep the counts aligned was to enclose every dynamic part in an extra intermediate node that collapsed a variable number of children into exactly one — at the cost of a level in the element tree that nothing in your JSX asked for, and sometimes an extra Snapshot split on top of it.
+
+In [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) we [extended Preact's diff algorithm](https://github.com/lynx-family/internal-preact/pull/1) so a child declares which slot of its parent it belongs to. With that membership written down, [the intermediate node is no longer needed](https://github.com/lynx-family/lynx-stack/pull/1764), and structures that used to be split can merge into fewer Snapshots. The optimization is on by default and needs no app-side changes.
 
 ### Dual-thread Minimizer
 

@@ -107,11 +107,19 @@ ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在�
   highlight="{7,34-37}"
 />
 
-Context 仍然跨越 Portal 边界传递，状态更新也和普通组件一致；事件冒泡、主线程首屏渲染和跨容器挂载上有几处与 `react-dom` 不同，见 [`createPortal` 的备注](/api/react/Function.createPortal#备注)。需要跨页面或跨原生容器的浮层，用 Lynx UI 的 [`OverlayView`](/ui/components/overlay) 承载。
+Context 仍然跨越 Portal 边界传递，状态更新也和普通组件一致。有三点与 `react-dom` 不同：
+
+- **事件冒泡遵循 Preact 的行为。** ReactLynx 的 `createPortal` 沿用 Preact 的实现，没有 React 的合成事件系统，因此事件沿页面实际的元件结构冒泡，而不是 React 组件树。
+- **Portal 子树不参与[首帧直出（IFR）](/guide/interaction/ifr)**，只在后台线程渲染。
+- **不支持跨页面、跨容器挂载。** 这类场景请改用 Lynx UI 的 [`Overlay`](/ui/components/overlay) 组件，或直接使用 [`<overlay>`](/api/elements/built-in/overlay) 这个 [XElement](/guide/ui/elements-components#xelement)。
+
+以上限制的完整说明见 [`createPortal` 的备注](/api/react/Function.createPortal#备注)。
 
 ### Snapshot 层级和数量优化
 
-ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。过去为了让 Preact 的 diff 对得上每一处动态位置，编译产物要为它们各生成一个只用于分组的 wrapper 元素。3.9 里我们[扩展了 Preact 的 diff 算法](https://github.com/lynx-family/internal-preact/pull/1)，让子节点直接声明自己属于父节点的哪个槽位，于是[这些 wrapper 可以完全去掉](https://github.com/lynx-family/lynx-stack/pull/1764)，原本被拆开的静态结构也能合并成更少的 Snapshot。该优化已在 [`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中默认启用，业务代码无需修改。
+ReactLynx 在编译期会把 JSX 中的静态元件结构提取成 **Snapshot**，运行时只更新其中的动态部分。一处动态内容会渲染出几个节点是不确定的，而 Preact 的 diff 只看到一个扁平的子节点列表，分不清哪个子节点属于哪一处。过去只能在每处动态内容外面额外套一层中间节点，把数量不定的子节点收拢成恰好一个，让数量对得上——代价是元件树上凭空多出一层，有时还要为此多切一层 Snapshot。
+
+[`@lynx-js/react` 0.120.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01200) 中我们[扩展了 Preact 的 diff 算法](https://github.com/lynx-family/internal-preact/pull/1)，让子节点直接声明自己属于父节点的哪个槽位。归属既然写明了，[那层中间节点就不再需要](https://github.com/lynx-family/lynx-stack/pull/1764)，原本被拆开的静态结构也能合并成更少的 Snapshot。该优化默认启用，业务代码无需修改。
 
 ### 双线程 Minimizer
 
