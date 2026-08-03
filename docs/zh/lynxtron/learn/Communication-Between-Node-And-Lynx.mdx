@@ -195,12 +195,12 @@ app.whenReady().then(() => {
 });
 ```
 
-如果需要更细粒度地控制回复时机（例如在回调中回复），也可以显式调用 `event.sendReply()`：
+对于异步逻辑，请返回一个 Promise，让运行时在 Promise resolve 后自动回复。**不要在通过 `handle` 注册的处理器中手动调用 `event.sendReply()`**：运行时已经会用 handler 的返回值调用一次 `sendReply`，再显式调用一次会产生重复回复。
 
 ```typescript
 lynxBridge.handle('getSystemInfo', (event, params) => {
-  fetchAsync(params, (info) => {
-    event.sendReply(info);
+  return new Promise<SystemInfo>((resolve) => {
+    fetchAsync(params, resolve);
   });
 });
 ```
@@ -238,7 +238,7 @@ app.whenReady().then(() => {
 | `lynxBridge.removeHandler(method)`       | 移除通过 `handle` / `handleOnce` 注册的处理器。                                                                                                  |
 | `lynxBridge.on(channel, listener)`       | 继承自 `EventEmitter`。用于接收 Lynx 通过 `NativeModules.bridge.send(channel, args)` 发送的单向消息，listener 的入参为 `(args)`。                |
 
-`handler` 的签名为 `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`。[`LynxBridgeInvokeEvent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx) 上提供 `event.sendReply(result)` 方法，供不希望通过返回值回传结果、需要手动控制回复时机的场景使用。
+`handler` 的签名为 `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`。运行时会用 handler 的返回值（在 Promise 场景下为其 resolve 后的值）自动调用一次 [`event.sendReply()`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx)，因此通过 `handle` / `handleOnce` 注册的处理器应当通过返回值（或 Promise）表达回复内容；再显式调用 `event.sendReply()` 会产生重复回复。`sendReply` 仅供直接监听底层 invoke 事件、绕过 `handle` 包装的低层调用者使用。
 
 ### 示例：系统资源监控面板
 

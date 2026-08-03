@@ -195,12 +195,12 @@ app.whenReady().then(() => {
 });
 ```
 
-If you need finer control over when the reply is sent (for example, replying from a callback), you can still call `event.sendReply()` explicitly:
+For asynchronous work, return a Promise and let the runtime send the reply when it resolves. **Do not call `event.sendReply()` from a handler registered with `handle`**: the runtime already invokes `sendReply` once with the handler's resolved value, so an explicit call would produce a second, out-of-order reply.
 
 ```typescript
 lynxBridge.handle('getSystemInfo', (event, params) => {
-  fetchAsync(params, (info) => {
-    event.sendReply(info);
+  return new Promise<SystemInfo>((resolve) => {
+    fetchAsync(params, resolve);
   });
 });
 ```
@@ -238,7 +238,7 @@ app.whenReady().then(() => {
 | `lynxBridge.removeHandler(method)`       | Removes a handler previously registered with `handle` / `handleOnce`.                                                                                                                   |
 | `lynxBridge.on(channel, listener)`       | Inherited from `EventEmitter`. Receives one-way `NativeModules.bridge.send(channel, args)` messages from Lynx. The listener is called with `(args)`.                                    |
 
-The `handler` signature is `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`. The [`LynxBridgeInvokeEvent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx) object exposes `event.sendReply(result)` for cases where you want to control when the reply is sent instead of relying on the return value.
+The `handler` signature is `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`. The runtime automatically calls [`event.sendReply()`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx) once with the handler's resolved value, so handlers registered through `handle` / `handleOnce` should express the reply as their return value (or a Promise). Manually invoking `event.sendReply()` from such a handler produces a duplicate reply. `sendReply` is intended for low-level callers that subscribe to the internal invoke event directly instead of going through `handle`.
 
 ### Example: System Resource Monitor
 
