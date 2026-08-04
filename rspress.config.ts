@@ -63,7 +63,6 @@ export default defineConfig({
       printFileSize: false,
     },
     plugins: [
-      rsbuildPluginDisableFileSizeReport(),
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       // Open Graph / Twitter Card meta is injected per-page by the theme
       // (theme/OgHead.tsx) so each route gets its build-time OG image and
@@ -278,19 +277,6 @@ export default defineConfig({
   llms: ENABLE_LLMS,
 });
 
-function rsbuildPluginDisableFileSizeReport() {
-  return {
-    name: 'disable-file-size-report',
-    setup(api: RsbuildPluginApi) {
-      api.modifyEnvironmentConfig((config) => {
-        config.performance ??= {};
-        config.performance.printFileSize = false;
-        return config;
-      });
-    },
-  };
-}
-
 // Some broken links are introduced only after Rspress renders the final HTML:
 // generated spec content may contain NUL bytes, language alternates can point
 // at missing localized routes, and living-spec emits one stale fragment link.
@@ -425,18 +411,6 @@ function routeFromGeneratedHref(href: string) {
     return null;
   }
 }
-
-type RsbuildEnvironmentConfig = {
-  performance?: {
-    printFileSize?: boolean;
-  };
-};
-
-type RsbuildPluginApi = {
-  modifyEnvironmentConfig: (
-    modify: (config: RsbuildEnvironmentConfig) => RsbuildEnvironmentConfig,
-  ) => void;
-};
 
 function remarkReplaceVersionJsonPlaceholders() {
   const replacements: Array<[string, string]> = [
