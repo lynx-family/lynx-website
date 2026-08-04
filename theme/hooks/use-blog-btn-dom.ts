@@ -123,8 +123,13 @@ const useBlogBtnDom = (src: string) => {
       configKey === '/'
         ? `rp-home-hero__badge active-hover`
         : `rp-home-hero__badge`;
-    badgeElement.textContent = displayText;
-    badgeElement.style.opacity = '1';
+    // Upgrade the SSG fallback copy once the post's text is known. The badge
+    // is visible the whole time (`opacity: 1` in CSS), so an empty
+    // `displayText` must leave the rendered fallback alone rather than blank
+    // the pill.
+    if (displayText) {
+      badgeElement.textContent = displayText;
+    }
 
     if (configKey === '/') {
       badgeElement.addEventListener('click', handleInteraction);
