@@ -266,7 +266,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
             codeButtonGroupProps={{
               copyElementRef:
                 copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
-              showCodeWrapButton: false,
+              showWrapCodeButton: false,
             }}
           >
             <CodeWithRef

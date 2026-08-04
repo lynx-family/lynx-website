@@ -32,7 +32,7 @@ export const HomeLayout = () => {
         codeButtonGroupProps={{
           copyElementRef:
             copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
-          showCodeWrapButton: false,
+          showWrapCodeButton: false,
         }}
       >
         <CodeWithRef
