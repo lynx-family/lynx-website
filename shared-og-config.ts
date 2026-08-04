@@ -11,19 +11,16 @@
  *   - one shared cover per subsite per language: `/og/covers/<lang>/<value>.png`
  *   - a unique image per blog post:              `/og/blog/<lang>/<slug>.png`
  */
-import { SUBSITES_CONFIG } from './shared-route-config';
-import versionJson from './docs/public/version.json';
+import { SITE_BASE, SUBSITES_CONFIG } from './shared-route-config';
 
 /** Published site origin (no trailing slash). OG/canonical URLs are absolute. */
 export const OG_SITE_ORIGIN = 'https://lynxjs.org';
 
 /**
- * Site base path — derived from the same source as rspress.config.ts's
- * `base: \`/${versionJson.current_version}\``, so canonical/og:image URLs stay
- * correct if `current_version` changes (currently `/next`). Public asset and
- * canonical URLs are prefixed with this.
+ * Site base path shared with Rspress. Public asset and canonical URLs are
+ * prefixed with this.
  */
-export const OG_BASE = `/${versionJson.current_version}`;
+export const OG_BASE = SITE_BASE === '/' ? '' : SITE_BASE.replace(/\/$/, '');
 
 /**
  * Brand anchors. Values match the home hero gradient in theme/home-layout-var.scss
