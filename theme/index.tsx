@@ -266,7 +266,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
             codeButtonGroupProps={{
               copyElementRef:
                 copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
-              showCodeWrapButton: false,
+              showWrapCodeButton: false,
             }}
           >
             <CodeWithRef
@@ -361,7 +361,29 @@ const Search = () => {
   );
 };
 
-export { HomeLayout, Layout, Search };
+const getCustomMDXComponent = () => {
+  const components = basicGetCustomMDXComponent();
+  const Pre = components.pre;
+
+  function PreWithoutWrapButton(props: React.ComponentProps<typeof Pre>) {
+    return (
+      <Pre
+        {...props}
+        codeButtonGroupProps={{
+          ...props.codeButtonGroupProps,
+          showWrapCodeButton: false,
+        }}
+      />
+    );
+  }
+
+  return {
+    ...components,
+    pre: PreWithoutWrapButton,
+  };
+};
+
+export { HomeLayout, Layout, Search, getCustomMDXComponent };
 
 type BaseLinkProps = Parameters<typeof BaseLink>[0];
 type BaseLinkRestProps = Omit<
