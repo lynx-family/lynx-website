@@ -79,6 +79,12 @@ export const useCanonicalLatestBlog = (
   const skip = !BLOG_IS_CROSS_VERSION || pinned;
 
   useEffect(() => {
+    // Anything already fetched belongs to the previous language (or to a
+    // config that has since pinned a post), so drop it before deciding what
+    // to do — otherwise switching locale keeps announcing the old locale's
+    // title until the new feed lands, and a newly pinned post never wins.
+    setCanonical(null);
+
     if (skip) return;
 
     const controller = new AbortController();
