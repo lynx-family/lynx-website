@@ -113,11 +113,26 @@ Each custom element is created as a `LynxNativeView`. The declaration, property 
 
 The examples below use the same registered creator name for two alternative rendering backend implementations. Choose one rendering backend in your library build so `CreateExplorerInputElementNativeView` resolves to one implementation.
 
+#### Choose a Composition Backend
+
+Native UI and Texture elements have different composition behavior:
+
+| Backend   | Presentation                                                             | Composition behavior                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native UI | A platform control, such as an `NSView` or child `HWND`                  | Preserves native input, IME, and accessibility behavior, but regular Lynx CSS `z-index` cannot reliably interleave Lynx-rendered content with the control. |
+| Texture   | An `IOSurface` or D3D shared texture acquired and presented through Lynx | Participates in the Lynx render tree, including clipping, transforms, and ordinary Lynx stacking, but the element must forward input and IME behavior.     |
+
+For Native UI elements, resolve the renderer host from the current `lynx_view_t` with `lynx_view_get_native_window(...)`, then attach the platform control as its child. This gives the control the correct window ownership in multi-window applications and keeps it inside the native subtree that Lynx overlay slices can cover. Top-level platform surfaces require separate host integration and are outside this composition model.
+
 <Tabs groupId="custom-component-desktop-backend">
 
 <Tab label="Native UI">
 
 The Native UI rendering backend attaches a platform control and updates its layout frame in `OnLayoutChanged`. For `<explorer-input>`, the implementation attaches a minimal input control.
+
+:::tip Covering native views or child windows
+Platform views or child windows attached by the Native UI backend are placed above Clay's main rendering surface, so regular Lynx `z-index` cannot reliably cover them. Keep the platform control inside the renderer host returned for its `lynx_view_t`, and place overlapping Lynx content inside a [`<cover-view>`](/api/elements/built-in/cover-view). If the UI requires arbitrary clipping, transforms, or interleaving with regular Lynx content, use the Texture backend instead.
+:::
 
 <Tabs groupId="custom-component-desktop-native-ui-platform">
 
@@ -196,12 +211,14 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
         return;
       }
 
-      NSView* parent = lynx_parent.window.contentView != nil
-                           ? lynx_parent.window.contentView
-                           : lynx_parent;
+      // Keep the control inside this LynxView's renderer subtree. Clay owns a
+      // sibling overlay host above that subtree for slices such as
+      // <cover-view>, so the extension must not discover or reorder the
+      // private overlay view itself.
+      NSView* parent = lynx_parent;
       if (input_.superview != parent) {
         [input_ removeFromSuperview];
-        [parent addSubview:input_ positioned:NSWindowAbove relativeTo:nil];
+        [parent addSubview:input_];
       }
 
       const NSRect frame_in_lynx = NSMakeRect(left, top, width, height);
@@ -270,8 +287,13 @@ std::wstring Utf8ToWide(const char* value) {
   if (size <= 0) {
     return L"";
   }
-  std::wstring result(static_cast<size_t>(size - 1), L'\0');
-  MultiByteToWideChar(CP_UTF8, 0, value, -1, result.data(), size);
+  std::wstring result(static_cast<size_t>(size), L'\0');
+  const int converted =
+      MultiByteToWideChar(CP_UTF8, 0, value, -1, result.data(), size);
+  if (converted <= 0) {
+    return L"";
+  }
+  result.resize(static_cast<size_t>(converted - 1));
   return result;
 }
 
@@ -291,29 +313,6 @@ bool EnsureHostClassRegistered() {
   registered = RegisterClassExW(&window_class) != 0 ||
       GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
   return registered;
-}
-
-struct MainWindowSearch {
-  DWORD process_id = 0;
-  HWND hwnd = nullptr;
-};
-
-BOOL CALLBACK FindMainWindowCallback(HWND hwnd, LPARAM data) {
-  auto* search = reinterpret_cast<MainWindowSearch*>(data);
-  DWORD window_process_id = 0;
-  GetWindowThreadProcessId(hwnd, &window_process_id);
-  if (window_process_id == search->process_id && IsWindowVisible(hwnd) &&
-      GetWindow(hwnd, GW_OWNER) == nullptr) {
-    search->hwnd = hwnd;
-    return FALSE;
-  }
-  return TRUE;
-}
-
-HWND FindMainWindow() {
-  MainWindowSearch search{GetCurrentProcessId(), nullptr};
-  EnumWindows(FindMainWindowCallback, reinterpret_cast<LPARAM>(&search));
-  return search.hwnd != nullptr ? search.hwnd : GetActiveWindow();
 }
 
 }  // namespace
@@ -348,7 +347,8 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
       float width,
       float height,
       float pixel_ratio) override {
-    HWND parent = FindMainWindow();
+    HWND parent = static_cast<HWND>(
+        lynx_view_get_native_window(lynx_view()));
     if (parent == nullptr || !EnsureHostClassRegistered()) {
       return;
     }
@@ -357,17 +357,14 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
     const int y = Scale(top, pixel_ratio);
     const int w = std::max(1, Scale(width, pixel_ratio));
     const int h = std::max(1, Scale(height, pixel_ratio));
-    POINT origin{x, y};
-    ClientToScreen(parent, &origin);
-
     if (host_ == nullptr) {
       host_ = CreateWindowExW(
-          WS_EX_TOOLWINDOW,
+          0,
           kHostClassName,
           L"",
-          WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-          origin.x,
-          origin.y,
+          WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+          x,
+          y,
           w,
           h,
           parent,
@@ -403,9 +400,10 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
 
     SetWindowPos(
         host_,
-        HWND_TOP,
-        origin.x,
-        origin.y,
+        // Keep native UI below child overlay windows created for <cover-view>.
+        HWND_BOTTOM,
+        x,
+        y,
         w,
         h,
         SWP_SHOWWINDOW | SWP_NOACTIVATE);

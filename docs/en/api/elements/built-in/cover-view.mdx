@@ -1,0 +1,59 @@
+---
+api: elements/cover-view
+tag: 'XElement'
+---
+
+import { APISummary, APITable, ClayMacOSOnly, ClayWindowsOnly } from '@lynx';
+
+# `<cover-view>` <ClayWindowsOnly /> <ClayMacOSOnly />
+
+<APISummary />
+
+`<cover-view>` is a desktop-only container that renders its child subtree into a platform overlay surface above Clay's main rendering surface. Use it when Lynx content must cover an embedded native or platform view that would otherwise appear above normally rendered Lynx content.
+
+For overlays that only need to cover other Clay-rendered content, prefer a regular `<view>` with `position: fixed`.
+
+## Usage
+
+Position and size `<cover-view>` with the same CSS layout properties used by `<view>`. Its children are rendered into the platform overlay surface within those bounds.
+
+```tsx
+export function OverlayControls() {
+  return (
+    <cover-view className="cover">
+      <view className="controls">
+        <text>Controls rendered above native content</text>
+      </view>
+    </cover-view>
+  );
+}
+```
+
+```css
+.cover {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 240px;
+  height: 48px;
+}
+
+.controls {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.72);
+}
+```
+
+## Platform behavior
+
+- On Windows, Clay renders the subtree into a native child overlay window and raises it above sibling native child windows. Native UI must remain a child of the renderer `HWND`; top-level or owned popup windows are outside this ordering model.
+- On macOS, Clay renders the subtree into a `CALayer` hosted by the transparent `ClayOverlayView`, which is a sibling above the main Clay view. It can cover native controls mounted inside the main renderer view's subtree, but not top-level or unrelated views.
+
+## Attributes
+
+`<cover-view>` does not define element-specific attributes. It supports the common styles, attributes, and events available to container elements.
+
+## Compatibility
+
+<APITable />
