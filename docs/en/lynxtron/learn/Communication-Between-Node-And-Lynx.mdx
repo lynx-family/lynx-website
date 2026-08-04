@@ -11,7 +11,7 @@ If you are familiar with Electron, you can first understand Lynxtron communicati
 
 Lynxtron provides corresponding capabilities for both needs:
 
-- Use `NativeModules.bridge` channels, [`LynxWindow.on('-lynx-invoke')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200), [`LynxWindow.on('-lynx-message')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221), and [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent) for communication between the Node main process and Lynx.
+- Use `NativeModules.bridge` channels together with the main-process `lynxBridge` (`lynxBridge.handle()` for calls that need a reply, `lynxBridge.on()` for one-way messages) and [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent) for communication between the Node main process and Lynx.
 - Use Lynxtron [preload scripts](#use-preload-scripts). In a preload script, call [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) to expose Node.js-side JS objects to [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) in Lynx UI.
 
 ## Electron Capability Mapping
@@ -20,8 +20,8 @@ Lynxtron provides corresponding capabilities for both needs:
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | UI uses Node.js capabilities                      | [preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`contextBridge.exposeInMainWorld()`](https://www.electronjs.org/docs/latest/api/context-bridge#contextbridgeexposeinmainworldapikey-api) / [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions) | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload) + [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) + [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) |
 | Node main process pushes messages to UI           | [`webContents.send()`](https://www.electronjs.org/docs/latest/api/web-contents#contentssendchannel-args)                                                                                                                                                                                                                                  | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                                                                                                                                                                                                                                           |
-| UI calls Node main process and waits for a result | [`ipcRenderer.invoke()`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args) + [`ipcMain.handle()`](https://www.electronjs.org/docs/latest/api/ipc-main#ipcmainhandlechannel-listener)                                                                                                                 | `NativeModules.bridge.call()` + [`LynxWindow.on('-lynx-invoke')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200)                                                                                                                                                                                                               |
-| UI sends one-way messages to Node main process    | [`ipcRenderer.send()`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrenderersendchannel-args) + [`ipcMain.on()`](https://www.electronjs.org/docs/latest/api/ipc-main#ipcmainonchannel-listener)                                                                                                                             | `NativeModules.bridge.send()` + [`LynxWindow.on('-lynx-message')`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221)                                                                                                                                                                                                              |
+| UI calls Node main process and waits for a result | [`ipcRenderer.invoke()`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args) + [`ipcMain.handle()`](https://www.electronjs.org/docs/latest/api/ipc-main#ipcmainhandlechannel-listener)                                                                                                                 | `NativeModules.bridge.call()` + `lynxBridge.handle()`                                                                                                                                                                                                                                                                                            |
+| UI sends one-way messages to Node main process    | [`ipcRenderer.send()`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrenderersendchannel-args) + [`ipcMain.on()`](https://www.electronjs.org/docs/latest/api/ipc-main#ipcmainonchannel-listener)                                                                                                                             | `NativeModules.bridge.send()` + `lynxBridge.on()`                                                                                                                                                                                                                                                                                                |
 
 ## Use Preload Scripts
 
@@ -182,18 +182,26 @@ const info = await NativeModules.bridge.call('getSystemInfo', {
 setSystemInfo(info);
 ```
 
-The Node main process listens for the [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) event to handle `bridge.call` calls, and returns the result through `event.sendReply`:
+The Node main process registers a handler with `lynxBridge.handle()` to process `bridge.call` invocations. The return value (or a resolved Promise) is sent back to Lynx automatically, similar to `ipcMain.handle()` in Electron:
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
+import { app, lynxBridge } from '@lynx-js/lynxtron';
 
-const win = new LynxWindow();
+app.whenReady().then(() => {
+  lynxBridge.handle('getSystemInfo', (event, params) => {
+    return getSystemInfo(params);
+  });
+});
+```
 
-win.on('-lynx-invoke', (event, methodName, params) => {
-  if (methodName === 'getSystemInfo') {
-    event.sendReply(getSystemInfo(params));
-  }
+For asynchronous work, return a Promise and let the runtime send the reply when it resolves. **Do not call `event.sendReply()` from a handler registered with `handle`**: the runtime already invokes `sendReply` once with the handler's resolved value, so an explicit call would produce a second, out-of-order reply.
+
+```typescript
+lynxBridge.handle('getSystemInfo', (event, params) => {
+  return new Promise<SystemInfo>((resolve) => {
+    fetchAsync(params, resolve);
+  });
 });
 ```
 
@@ -206,20 +214,31 @@ Notify Node.js with `bridge.send` (one-way, no return value needed).
 NativeModules.bridge.send('refreshIntervalChanged', { interval: 1000 });
 ```
 
-The Node main process listens for the [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) event to handle notifications sent by `bridge.send`:
+The Node main process listens for messages on `lynxBridge` (which is a Node.js `EventEmitter`). This mirrors `ipcMain.on()` in Electron:
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
+import { app, lynxBridge } from '@lynx-js/lynxtron';
 
-const win = new LynxWindow();
-
-win.on('-lynx-message', (methodName, params) => {
-  if (methodName === 'refreshIntervalChanged') {
+app.whenReady().then(() => {
+  lynxBridge.on('refreshIntervalChanged', (params) => {
     console.log('refresh interval:', params.interval);
-  }
+  });
 });
 ```
+
+### `lynxBridge` API
+
+`lynxBridge` is a main-process singleton imported from `@lynx-js/lynxtron`. It is a Node.js `EventEmitter`, so it exposes the standard `on` / `once` / `off` / `emit` methods in addition to the invoke helpers below. In Electron terms, `lynxBridge` plays the role of `ipcMain`.
+
+| Method                                   | Description                                                                                                                                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lynxBridge.handle(method, handler)`     | Registers a handler for `NativeModules.bridge.call(method, args)`. The handler's return value (or a resolved Promise) is sent back to Lynx. Registering the same `method` twice throws. |
+| `lynxBridge.handleOnce(method, handler)` | Same as `handle`, but the handler is removed after being called once.                                                                                                                   |
+| `lynxBridge.removeHandler(method)`       | Removes a handler previously registered with `handle` / `handleOnce`.                                                                                                                   |
+| `lynxBridge.on(channel, listener)`       | Inherited from `EventEmitter`. Receives one-way `NativeModules.bridge.send(channel, args)` messages from Lynx. The listener is called with `(args)`.                                    |
+
+The `handler` signature is `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`. The runtime automatically calls [`event.sendReply()`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx) once with the handler's resolved value, so handlers registered through `handle` / `handleOnce` should express the reply as their return value (or a Promise). Manually invoking `event.sendReply()` from such a handler produces a duplicate reply. `sendReply` is intended for low-level callers that subscribe to the internal invoke event directly instead of going through `handle`.
 
 ### Example: System Resource Monitor
 
@@ -245,15 +264,15 @@ This example demonstrates bidirectional message communication between the Node m
 | Expose Node.js methods or objects from preload scripts to Lynx          | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) |
 | Call Node.js methods or objects exposed by preload scripts from Lynx UI | [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)                     |
 | Push events from the Node main process to Lynx                          | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          |
-| Call the Node main process from Lynx and wait for a result              | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) event           |
-| Send one-way messages from Lynx to the Node main process                | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) event          |
+| Call the Node main process from Lynx and wait for a result              | `NativeModules.bridge.call` → `lynxBridge.handle()`                                                                             |
+| Send one-way messages from Lynx to the Node main process                | `NativeModules.bridge.send` → `lynxBridge.on()`                                                                                 |
 
 ## Why Lynxtron Is Designed This Way
 
 Lynxtron uses two channels to cover the two common Electron capabilities because they solve different problems:
 
 - [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed): direct access from Lynx BTS to JS objects exposed by preload scripts, corresponding to using Node.js capabilities in UI through [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions).
-- `NativeModules.bridge` + [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) events: message communication between Lynx and the Node main process, corresponding to common Electron-style IPC.
+- `NativeModules.bridge` + `lynxBridge`: message communication between Lynx and the Node main process, corresponding to Electron's `ipcRenderer` ↔ `ipcMain` IPC.
 
 The key difference is not which global object the API is mounted on, but that Lynxtron provides a JS-object exposure path for Lynx BTS.
 
@@ -265,6 +284,9 @@ The key difference is not which global object the API is mounted on, but that Ly
 | [`LynxWindowConstructorOptions`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx)                    | Configures window options such as `lynxPreference`                                                  |
 | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) | Exposes JS objects from preload scripts to Lynx BTS                                                 |
 | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          | Pushes global events from the Node main process to Lynx                                             |
+| [`lynxBridge`](/lynxtron/api/@lynx-js/lynxtron/Variable.lynxBridge.mdx)                                                         | Main-process singleton for handling `bridge.call` / `bridge.send` from Lynx                         |
+| [`LynxBridge`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridge.mdx)                                                        | Interface of `lynxBridge`; exposes `handle` / `handleOnce` / `removeHandler` and `EventEmitter` API |
+| [`LynxBridgeInvokeEvent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx)                                  | Event object passed to `lynxBridge.handle()`; exposes `sendReply()`                                 |
 | [`LynxtronNodejs`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx)                                           | Type of [`NativeModules.nodejs`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx) |
 | [`GlobalEventEmitter`](/guide/interaction/event-handling/event-propagation.mdx#globaleventemitter)                              | Listens for global events in Lynx BTS                                                               |
 | [`lynx.getJSModule()`](/api/lynx-api/lynx/lynx-get-js-module.mdx)                                                               | Gets modules such as `GlobalEventEmitter`                                                           |
