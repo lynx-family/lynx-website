@@ -11,7 +11,7 @@
  *   - one shared cover per subsite per language: `/og/covers/<lang>/<value>.png`
  *   - a unique image per blog post:              `/og/blog/<lang>/<slug>.png`
  */
-import { SITE_BASE, SUBSITES_CONFIG } from './shared-route-config';
+import { SITE_BASE_PREFIX, SUBSITES_CONFIG } from './shared-route-config';
 
 /** Published site origin (no trailing slash). OG/canonical URLs are absolute. */
 export const OG_SITE_ORIGIN = 'https://lynxjs.org';
@@ -20,7 +20,7 @@ export const OG_SITE_ORIGIN = 'https://lynxjs.org';
  * Site base path shared with Rspress. Public asset and canonical URLs are
  * prefixed with this.
  */
-export const OG_BASE = SITE_BASE === '/' ? '' : SITE_BASE.replace(/\/$/, '');
+export const OG_BASE = SITE_BASE_PREFIX;
 
 /**
  * Brand anchors. Values match the home hero gradient in theme/home-layout-var.scss

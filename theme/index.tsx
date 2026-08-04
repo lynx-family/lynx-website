@@ -4,7 +4,6 @@ import {
   useLang,
   useLocation,
   usePageData,
-  withBase,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -37,7 +36,11 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
-import { SUBSITES_CONFIG } from '@site/shared-route-config';
+import {
+  BLOG_BASE,
+  BLOG_IS_CROSS_VERSION,
+  SUBSITES_CONFIG,
+} from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
@@ -387,10 +390,31 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   }
 
   if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
+    const blogHref = `${BLOG_BASE}${removeBase(normalizedHref)}`;
+    const blogClassName = className ? `rp-link ${className}` : 'rp-link';
+
+    // On a release build the blog sits under another version's base, outside
+    // this app: `BaseLink` would re-apply its own base to the href and then
+    // intercept the click into a route that doesn't exist here. A plain
+    // anchor does the page load that actually gets there.
+    if (BLOG_IS_CROSS_VERSION) {
+      return (
+        <a
+          href={blogHref}
+          className={blogClassName}
+          ref={ref}
+          style={style}
+          {...(safeRestProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        >
+          {children}
+        </a>
+      );
+    }
+
     return (
       <BaseLink
-        href={withBase(removeBase(normalizedHref))}
-        className={className ? `rp-link ${className}` : 'rp-link'}
+        href={blogHref}
+        className={blogClassName}
         ref={ref}
         style={style as any}
         {...safeRestProps}
