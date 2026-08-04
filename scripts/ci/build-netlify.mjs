@@ -17,9 +17,6 @@ const rspressBin = path.join(
 );
 const llmsBuildDir = path.join(repoRoot, '.rspress-llms-build');
 const outputDir = path.join(repoRoot, 'doc_build');
-const isLightweightBuild =
-  process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
-  process.env.CONTEXT === 'deploy-preview';
 
 async function run(command, args, extraEnv = {}) {
   await new Promise((resolve, reject) => {
@@ -86,8 +83,6 @@ async function main() {
     ...commonBuildEnv,
     RSPRESS_BUILD_PHASE: 'site',
   });
-
-  if (isLightweightBuild) return;
 
   await fs.rm(llmsBuildDir, { force: true, recursive: true });
   await run(process.execPath, [rspressBin, 'build'], {
