@@ -1,36 +1,35 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import versionJson from '../../docs/public/version.json';
+import { BLOG_BASE } from '@site/shared-route-config';
 
-const CURRENT_VERSION_BASE = `/${versionJson.current_version}`;
 const VERSION_PREFIX_RE = /^\/(?:next|\d+\.\d+)(?=\/|$)/;
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-function withCurrentVersionBase(link: string) {
+function withBlogBase(link: string) {
   const normalizedLink = link.startsWith('/') ? link : `/${link}`;
 
   if (VERSION_PREFIX_RE.test(normalizedLink)) {
     return normalizedLink;
   }
 
-  return `${CURRENT_VERSION_BASE}${normalizedLink}`;
+  return `${BLOG_BASE}${normalizedLink}`;
 }
 
 export function toLatestBlogPath(link?: string) {
   if (!link) {
-    return withCurrentVersionBase('/blog/');
+    return withBlogBase('/blog/');
   }
 
   if (/^(https?:)?\/\//.test(link)) {
     return link;
   }
 
-  return withCurrentVersionBase(link);
+  return withBlogBase(link);
 }
 
 export function getLatestBlogIndexPath(lang: string) {
-  return withCurrentVersionBase(lang === 'zh' ? '/zh/blog/' : '/blog/');
+  return withBlogBase(lang === 'zh' ? '/zh/blog/' : '/blog/');
 }

@@ -27,8 +27,11 @@ import {
 import './index.scss';
 
 import { Footer } from '@/components/home-comps/footer';
-import { SUBSITES_CONFIG } from '@site/shared-route-config';
-import versionJson from '../docs/public/version.json';
+import {
+  BLOG_BASE,
+  BLOG_IS_CROSS_VERSION,
+  SUBSITES_CONFIG,
+} from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import { DeferredComponent } from './deferred-client';
@@ -36,8 +39,6 @@ import { HomeAfterHero } from './home-after-hero';
 import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 import OgHead from './OgHead';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
-
-const CURRENT_VERSION_BASE = `/${versionJson.current_version}`;
 
 const loadMeteorsBackground = () =>
   import('@/components/home-comps/meteors-background').then(
@@ -398,10 +399,31 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   }
 
   if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
+    const blogHref = `${BLOG_BASE}${removeBase(normalizedHref)}`;
+    const blogClassName = className ? `rp-link ${className}` : 'rp-link';
+
+    // The blog sits under the developing version's base, outside this app:
+    // `BaseLink` would re-apply this build's own base (`/4.0/next/blog/...`)
+    // and then intercept the click into a route that doesn't exist here. A
+    // plain anchor does the page load that actually gets there.
+    if (BLOG_IS_CROSS_VERSION) {
+      return (
+        <a
+          href={blogHref}
+          className={blogClassName}
+          ref={ref}
+          style={style}
+          {...(safeRestProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        >
+          {children as React.ReactNode}
+        </a>
+      );
+    }
+
     return (
       <BaseLink
-        href={`${CURRENT_VERSION_BASE}${removeBase(normalizedHref)}`}
-        className={className ? `rp-link ${className}` : 'rp-link'}
+        href={blogHref}
+        className={blogClassName}
         ref={ref}
         style={style as any}
         {...safeRestProps}
