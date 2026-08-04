@@ -13,6 +13,40 @@ if (!SITE_BASE) {
   );
 }
 
+/** A `docs_link` as a URL prefix: `/` becomes `''`, `/next/` becomes `/next`. */
+const toBasePrefix = (docsLink: string) =>
+  docsLink === '/' ? '' : docsLink.replace(/\/$/, '');
+
+/** {@link SITE_BASE} as a prefix, safe to concatenate with a rooted path. */
+export const SITE_BASE_PREFIX = toBasePrefix(SITE_BASE);
+
+const developingDocsLink = versionJson.versions.find(
+  (version) => version.type === 'developing',
+)?.docs_link;
+
+if (!developingDocsLink) {
+  throw new Error('Missing docs_link for the developing version');
+}
+
+/**
+ * Base prefix for blog links, on every version of the site.
+ *
+ * The blog is not versioned content: release branches are cut before a
+ * release post lands, and posts are never backported, so a release build's
+ * own copy of the blog is missing everything published after the cut. Every
+ * version therefore links to the developing version's blog, which is the
+ * single source of truth. Derived from `version.json` rather than hardcoded
+ * so it follows the developing entry if `next` is ever renamed.
+ */
+export const BLOG_BASE = toBasePrefix(developingDocsLink);
+
+/**
+ * Whether this build's blog links leave its own base. False on the
+ * developing build, where {@link BLOG_BASE} is its own base — in-app
+ * routing works and there is nothing to fetch cross-version.
+ */
+export const BLOG_IS_CROSS_VERSION = BLOG_BASE !== SITE_BASE_PREFIX;
+
 /**
  * Metadata for each subsites. This is used to
  * - generate the sidebar subsite selector dropdown UI.
