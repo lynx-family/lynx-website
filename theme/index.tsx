@@ -361,29 +361,7 @@ const Search = () => {
   );
 };
 
-const getCustomMDXComponent = () => {
-  const components = basicGetCustomMDXComponent();
-  const Pre = components.pre;
-
-  function PreWithoutWrapButton(props: React.ComponentProps<typeof Pre>) {
-    return (
-      <Pre
-        {...props}
-        codeButtonGroupProps={{
-          ...props.codeButtonGroupProps,
-          showWrapCodeButton: false,
-        }}
-      />
-    );
-  }
-
-  return {
-    ...components,
-    pre: PreWithoutWrapButton,
-  };
-};
-
-export { HomeLayout, Layout, Search, getCustomMDXComponent };
+export { HomeLayout, Layout, Search };
 
 type BaseLinkProps = Parameters<typeof BaseLink>[0];
 type BaseLinkRestProps = Omit<
