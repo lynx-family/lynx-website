@@ -2,8 +2,25 @@
   font-size: 14px;
   align-self: center;
   position: relative;
-  display: flex;
-  align-items: center;
+  // Keep the announcement to a single line. The badge shows the latest post's
+  // title, which is now read from the canonical blog and can be much longer
+  // than what this build's own content offered — long enough to wrap and
+  // spill out of the fixed-height pill. Block + line-height centering (the
+  // icon is absolutely positioned, so no flexbox is needed) lets
+  // text-overflow clip it with an ellipsis; `max-width` caps the pill at its
+  // container so the clip actually engages.
+  //
+  // line-height must match the border-box content height
+  // (height - 2*border - vertical padding). Write the padding as a shorthand:
+  // Rspress's own `.rp-home-hero__badge` rule sets `padding: .5rem 1rem`, and
+  // longhand `padding-left`/`padding-right` here would leave its 8px
+  // top/bottom in place, shrinking the content box so the centering misses.
+  display: block;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   height: 36px;
   flex-shrink: 0;
   border-radius: 37px;
@@ -13,9 +30,9 @@
   color: var(--home-blog-btn-color);
   font-style: normal;
   font-weight: 500;
-  line-height: 32px;
-  padding-left: 43px;
-  padding-right: 20px;
+  // content box = 36px - 2x1px border
+  line-height: 34px;
+  padding: 0 20px 0 43px;
   transition: all 0.3s ease;
   user-select: none;
   opacity: 0;
@@ -24,8 +41,9 @@
   @media (max-width: 768px) {
     font-size: 12px;
     height: 28px;
-    padding-left: 38px;
-    padding-right: 16px;
+    // content box = 28px - 2x1px border
+    line-height: 26px;
+    padding: 0 16px 0 38px;
   }
 
   &.active-hover {

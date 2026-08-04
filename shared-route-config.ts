@@ -1,6 +1,37 @@
 /**
  * Sub-sites and shared docs configuration
  */
+import versionJson from './docs/public/version.json';
+
+/** This build's Rspress base as a URL prefix — matches rspress.config.ts. */
+export const SITE_BASE_PREFIX = `/${versionJson.current_version}`;
+
+const developingDocsLink = versionJson.versions.find(
+  (version) => version.type === 'developing',
+)?.docs_link;
+
+if (!developingDocsLink) {
+  throw new Error('Missing docs_link for the developing version');
+}
+
+/**
+ * Base prefix for blog links, on every version of the site.
+ *
+ * The blog is not versioned content: this branch was cut before its own
+ * release post landed, and posts are never backported, so this build's copy
+ * of the blog is missing everything published since the cut. Blog links
+ * therefore point at the developing version, which is the single source of
+ * truth. Derived from `version.json` rather than hardcoded so it follows the
+ * developing entry if `next` is ever renamed.
+ */
+export const BLOG_BASE =
+  developingDocsLink === '/' ? '' : developingDocsLink.replace(/\/$/, '');
+
+/**
+ * Whether this build's blog links leave its own base. True on every release
+ * build; false on the developing build, where in-app routing just works.
+ */
+export const BLOG_IS_CROSS_VERSION = BLOG_BASE !== SITE_BASE_PREFIX;
 
 /**
  * Metadata for each subsites. This is used to
