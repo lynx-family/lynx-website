@@ -8,10 +8,13 @@
   // so no flexbox is needed) lets text-overflow clip it with an ellipsis;
   // `max-width` caps the pill at its container so the clip actually engages.
   //
-  // line-height must match the border-box content height (height − 2×border),
-  // otherwise the line box sits at the top and the label looks top-heavy —
-  // the regression from #1155, which updated the mobile line-height but left
-  // desktop at the old 32px value from when flex was doing the centering.
+  // line-height must match the border-box content height
+  // (height − 2×border − vertical padding), otherwise the line box sits at the
+  // top of the content box and the label looks off-centre. Write the padding as
+  // a shorthand: Rspress's own `.rp-home-hero__badge` rule sets
+  // `padding: .5rem 1rem`, and longhand `padding-left`/`padding-right` here
+  // leave its 8px top/bottom in place — which pushed the text 8px low and let
+  // `overflow: hidden` clip the descenders.
   display: block;
   max-width: 100%;
   box-sizing: border-box;
@@ -29,8 +32,7 @@
   font-weight: 500;
   // content box = 36px − 2×1px border
   line-height: 34px;
-  padding-left: 43px;
-  padding-right: 20px;
+  padding: 0 20px 0 43px;
   transition: all 0.3s ease;
   user-select: none;
   opacity: 0;
@@ -41,8 +43,7 @@
     height: 28px;
     // content box = 28px − 2×1px border
     line-height: 26px;
-    padding-left: 38px;
-    padding-right: 16px;
+    padding: 0 16px 0 38px;
   }
 
   &.active-hover {
