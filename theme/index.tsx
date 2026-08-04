@@ -4,6 +4,7 @@ import {
   useLang,
   useLocation,
   usePageData,
+  withBase,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -388,7 +389,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <BaseLink
-        href={`/next${removeBase(normalizedHref)}`}
+        href={withBase(removeBase(normalizedHref))}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
         style={style as any}
