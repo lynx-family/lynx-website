@@ -34,7 +34,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
-import { SUBSITES_CONFIG } from '@site/shared-route-config';
+import { BLOG_BASE, SUBSITES_CONFIG } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
@@ -373,7 +373,7 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
   if (normalizedHref?.startsWith(`${getLangPrefix(lang)}/blog`)) {
     return (
       <a
-        href={`/next${removeBase(normalizedHref)}`}
+        href={`${BLOG_BASE}${removeBase(normalizedHref)}`}
         className={className ? `rp-link ${className}` : 'rp-link'}
         ref={ref}
         style={style as any}
