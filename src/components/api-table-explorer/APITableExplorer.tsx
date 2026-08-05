@@ -76,11 +76,12 @@ const CodeIcon = ({ className }: { className?: string }) => (
 interface Example {
   query: string;
   label: string;
-  category: 'css' | 'element' | 'nested';
+  category: 'feature' | 'css' | 'element' | 'nested';
 }
 
 const examples: Example[] = [
   { query: 'css/properties/gap', label: 'gap', category: 'css' },
+  { query: 'features/autolink', label: 'Autolink', category: 'feature' },
   { query: 'elements/view', label: 'view', category: 'element' },
   { query: 'css/properties/align-self', label: 'align-self', category: 'css' },
   {
@@ -91,6 +92,8 @@ const examples: Example[] = [
 ];
 
 const categoryStyles = {
+  feature:
+    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20',
   css: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20',
   element:
     'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20',
@@ -100,11 +103,13 @@ const categoryStyles = {
 
 const categoryLabels = {
   en: {
+    feature: 'Feature',
     css: 'CSS',
     element: 'Element',
     nested: 'Nested',
   },
   zh: {
+    feature: '特性',
     css: 'CSS',
     element: '元件',
     nested: '嵌套',
@@ -113,25 +118,27 @@ const categoryLabels = {
 
 const i18nTexts = {
   en: {
-    title: 'API Compatibility Explorer',
+    title: 'Compatibility Explorer',
     description:
-      'Search for any Lynx API to view its compatibility across platforms',
-    placeholder: 'Enter API path (e.g., css/properties/gap)',
+      'Search Lynx features and APIs to view their compatibility across platforms',
+    placeholder: 'Enter a data path (e.g., css/properties/gap)',
     quickAccess: 'Quick access:',
     embedCode: 'Embed this table in your MDX:',
     tooltipCss: 'CSS property',
     tooltipElement: 'Built-in element',
     tooltipNested: 'Nested API using dot notation',
+    tooltipFeature: 'Lynx feature',
   },
   zh: {
-    title: 'API 兼容性探索器',
-    description: '搜索任意 Lynx API 以查看其跨平台兼容性',
-    placeholder: '输入 API 路径（例如 css/properties/gap）',
+    title: '兼容性探索器',
+    description: '搜索 Lynx 特性和 API，查看其跨平台兼容性',
+    placeholder: '输入数据路径（例如 css/properties/gap）',
     quickAccess: '快速访问：',
     embedCode: '将此表格嵌入到您的 MDX 中：',
     tooltipCss: 'CSS 属性',
     tooltipElement: '内置元件',
     tooltipNested: '使用点号访问的嵌套 API',
+    tooltipFeature: 'Lynx 特性',
   },
 };
 
@@ -156,6 +163,8 @@ const APITableExplorer: React.FC = () => {
 
   const getTooltipText = (category: Example['category']) => {
     switch (category) {
+      case 'feature':
+        return texts.tooltipFeature;
       case 'css':
         return texts.tooltipCss;
       case 'element':
