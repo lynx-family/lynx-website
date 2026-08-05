@@ -18,6 +18,7 @@ import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
+import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
@@ -110,7 +111,7 @@ export default defineConfig({
       'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
-  base: `/${versionJson.current_version}`,
+  base: SITE_BASE,
   themeConfig: {
     editLink: {
       docRepoBaseUrl:

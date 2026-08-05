@@ -162,12 +162,15 @@
   to = "https://main--lynx-doc.netlify.app/:splat"
   status = 200
 
-# Serve released docs from their branch deploys.
+# 4.0 is canonical at the site root. Keep versioned URLs as permanent
+# compatibility redirects.
 [[redirects]]
   from = "/4.0/*"
   to = "/:splat"
-  status = 200
+  status = 301
+  force = true
 
+# Serve previous releases from their branch deploys.
 [[redirects]]
   from = "/3.9/*"
   to = "https://release-3-9--lynx-doc.netlify.app/:splat"
@@ -197,11 +200,3 @@
   from = "/3.4/*"
   to = "https://release-3-4--lynx-doc.netlify.app/:splat"
   status = 200
-
-# Redirect remaining unversioned paths to the latest release so the browser
-# location matches the Rspress base path used by the release build.
-[[redirects]]
-  from = "/*"
-  to = "/4.0/:splat"
-  status = 302
-  force = true
