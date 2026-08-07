@@ -171,6 +171,16 @@ export default defineConfig({
           from: '^/zh/guide/start/tutorial-product-detail(\\.html)?$',
           to: '/zh/learn/product-detail.html',
         },
+        // The build-time macros page was removed: the public macros are covered
+        // by the API reference, and the rest were implementation details.
+        {
+          from: '^/react/build-time-macros(\\.html)?$',
+          to: '/api/react/Document.built-in-macros.html',
+        },
+        {
+          from: '^/zh/react/build-time-macros(\\.html)?$',
+          to: '/zh/api/react/Document.built-in-macros.html',
+        },
         {
           from: '^/api/genui\\.html$',
           to: '/api/genui/index.html',
