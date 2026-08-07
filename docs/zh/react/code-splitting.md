@@ -230,7 +230,7 @@ export default defineConfig({
 | `FetchBundle`    | `lynx.fetchBundle`，以及 `import(..., { with: { mode } })` 提示 |
 | `QueryComponent` | 旧的 `lynx.QueryComponent` 路径                                 |
 
-默认取值跟随 [`engineVersion`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md)：`3.9` 及以上为 `FetchBundle`，否则为 `QueryComponent`。`engineVersion` 默认是 `3.2`，因此没有主动调高的构建拿到的是 `QueryComponent`。
+默认取值跟随 [`engineVersion`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md)：`3.9` 及以上为 `FetchBundle`，否则为 `QueryComponent`。`engineVersion` 默认是 `3.2`，因此未把它调高到 `3.9` 的构建会使用 `QueryComponent`。
 
 环境变量 `REACT_LAZY_BUNDLE_FETCHER` 可以覆盖这个选择：
 
