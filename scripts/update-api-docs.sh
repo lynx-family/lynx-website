@@ -39,6 +39,7 @@ fi
 # directories that hold their api-extractor config.
 RSPEEDY_PKG_DIRS=(
   packages/rspeedy/core
+  packages/rspeedy/plugin-config
   packages/rspeedy/plugin-react
   packages/rspeedy/plugin-external-bundle
   packages/rspeedy/plugin-qrcode
@@ -47,6 +48,7 @@ RSPEEDY_PKG_DIRS=(
 )
 BUILD_FILTERS=(
   --filter @lynx-js/rspeedy
+  --filter @lynx-js/config-rsbuild-plugin
   --filter @lynx-js/react-rsbuild-plugin
   --filter @lynx-js/external-bundle-rsbuild-plugin
   --filter @lynx-js/qrcode-rsbuild-plugin
@@ -160,6 +162,7 @@ echo "::group::Build lynx-stack packages"
 pushd "$STACK" >/dev/null
 ensure_stack_paths_exist \
   "packages/rspeedy/core" \
+  "packages/rspeedy/plugin-config" \
   "packages/rspeedy/plugin-react" \
   "packages/rspeedy/plugin-external-bundle" \
   "packages/rspeedy/plugin-qrcode" \
