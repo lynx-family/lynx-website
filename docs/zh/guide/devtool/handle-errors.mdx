@@ -87,6 +87,32 @@ const ImageErrorExample = () => {
 
 请随意查阅！
 
+## ReactLynx 诊断日志
+
+有些问题只在你接不上 DevTool 的设备上复现。这种时候，可以让 ReactLynx 把自己正在做什么写进平台的原生日志：构建时用环境变量打开，然后用平台自己的工具去看——Android 用 `adb logcat`，iOS 用 Xcode 控制台。
+
+下面两个开关默认都是关的，也都不该带上线。它们的输出量大到会影响你正在测的东西，只用来排查问题。
+
+`REACT_ALOG=true` 会让 ReactLynx 把自己的状态流转打出来，主线程和后台线程都打，每行都带 `[ReactLynxDebug]` 前缀：
+
+```bash
+REACT_ALOG=true rspeedy build
+```
+
+你会看到：主线程发给后台线程的 `OnLifecycleEvent` 数据、两个线程在 hydration 前后的 snapshot 实例树、后台线程收到的事件、list 的更新，以及回灌到主线程的 patch。界面停在一个你解释不了的状态时用它——组件一直没 hydrate、事件没送到、list 渲染出了错位的项。每个阶段本该产出什么，见[渲染流程与生命周期](/react/lifecycle.mdx)。
+
+`REACT_ALOG_ELEMENT_API=true` 更低一层，它记录框架在主线程上发起的每一次 [Element PAPI](/api/engine/element-api.md) 调用，也就是搭建元素树的 create、append、update 操作，其中的元素会被渲染成 `tag#uniqueId`，方便你追踪同一个元素在多次调用中的去向：
+
+```
+[ReactLynxDebug] FiberElement API call #42: __AppendElement(view#3, text#7)
+```
+
+它比 `REACT_ALOG` 吵得多——一个屏幕就能打出上千行——所以先确定要看哪一次交互，再打开它。
+
+:::info
+`REACT_ALOG_ELEMENT_API` 从 `@lynx-js/react-rsbuild-plugin@0.12.10`（对应 `@lynx-js/react-webpack-plugin@0.7.4`）起才是独立开关。在此之前，这些调用是随 `REACT_ALOG` 一起打出来的。
+:::
+
 ## 兼容性
 
 import { APITable } from '@lynx';
