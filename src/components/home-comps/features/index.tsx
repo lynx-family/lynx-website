@@ -130,8 +130,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: 'Web 启发',
       },
       desc: {
-        en: 'Leverage your existing knowledge of CSS and React. We designed Lynx with the web knowledge and libraries in mind.',
-        zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 React 等技术，复用知识与生态。',
+        en: 'Leverage your existing knowledge of CSS and JavaScript. We designed Lynx with web knowledge, libraries, and frameworks in mind.',
+        zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 JavaScript 等技术，复用 Web 的知识、生态与框架。',
       },
       customRender: <Moon />,
     },
@@ -142,8 +142,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: '不止于一个框架',
       },
       desc: {
-        en: 'Lynx is a platform for frameworks. ReactLynx, Vue, Octane, and Miso for Haskell all integrate through the same standardized APIs — no privileged path, not even for the official flavor. All frameworks welcome.',
-        zh: 'Lynx 是一个面向框架的平台。ReactLynx、Vue、Octane 与适用于 Haskell 的 Miso 都通过同一套标准化 API 接入，没有特权通道，官方框架也不例外。欢迎所有框架加入。',
+        en: 'Lynx is a platform for frameworks. ReactLynx (official), Vue, Octane, and Miso for Haskell all integrate through the same standardized APIs. All frameworks welcome.',
+        zh: 'Lynx 是一个面向框架的平台。ReactLynx（官方）、Vue、Octane 与适用于 Haskell 的 Miso 都通过同一套标准化 API 接入。欢迎所有框架加入。',
       },
       actions: [
         {
