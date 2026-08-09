@@ -118,8 +118,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: '高性能，规模化',
       },
       desc: {
-        en: 'Achieve instant launch and silky UI responsiveness via our multithreaded engine, whether standalone or embedded.',
-        zh: '基于多线程引擎，带来瞬时启动和丝滑交互体验，无论是单页还是嵌入场景。',
+        en: 'Instant launch and silky UI responsiveness via our multithreaded engine, standalone or embedded. The same architecture lets data load while the UI renders.',
+        zh: '基于多线程引擎，带来瞬时启动和丝滑交互体验，无论是单页还是嵌入场景。同样的架构也让数据加载与界面渲染并行展开。',
       },
       customRender: <WriteOnceRunAllPlatform />,
     },
