@@ -16,6 +16,7 @@ import {
   IconIOS,
   IconMacOS,
   IconMisoLynx,
+  IconOctaneLynx,
   IconReactLynx,
   IconVueLynx,
   IconWeb,
@@ -119,8 +120,8 @@ const featuresConfig: Record<
         zh: '高性能，规模化',
       },
       desc: {
-        en: 'Achieve instant launch and silky UI responsiveness via our multithreaded engine, whether standalone or embedded.',
-        zh: '基于多线程引擎，带来瞬时启动和丝滑交互体验，无论是单页还是嵌入场景。',
+        en: 'Instant launch and silky UI responsiveness via our perf-driven, proven-at-scale multithreaded architecture, across engine and framework, standalone or embedded.',
+        zh: '基于面向性能设计、经规模验证的多线程架构，从引擎到框架一以贯之，带来瞬时启动和丝滑交互体验，无论是单页还是嵌入场景。',
       },
       customRender: <WriteOnceRunAllPlatform />,
     },
@@ -131,8 +132,8 @@ const featuresConfig: Record<
         zh: 'Web 启发',
       },
       desc: {
-        en: 'Leverage your existing knowledge of CSS and React. We designed Lynx with the web knowledge and libraries in mind.',
-        zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 React 等技术，复用知识与生态。',
+        en: "Leverage your existing knowledge of CSS and JavaScript. We designed Lynx around the web's programming model, libraries, and frameworks.",
+        zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 JavaScript 等技术，复用 Web 的知识、生态与框架。',
       },
       customRender: <Moon />,
     },
@@ -143,8 +144,8 @@ const featuresConfig: Record<
         zh: '不止于一个框架',
       },
       desc: {
-        en: "Lynx isn't limited to React. ReactLynx is the official flavor, while Vue and Miso for Haskell come from the community. More frameworks welcome.",
-        zh: 'Lynx 不止于 React。ReactLynx 是官方框架，Vue 与适用于 Haskell 的 Miso 由社区驱动，欢迎更多框架加入。',
+        en: 'Lynx is a platform for frameworks. ReactLynx (official), Vue, Octane, and Miso for Haskell all integrate through the same standardized APIs. All frameworks welcome.',
+        zh: 'Lynx 是一个面向框架的平台。ReactLynx（官方）、Vue、Octane 与适用于 Haskell 的 Miso 都通过同一套标准化 API 接入。欢迎所有框架加入。',
       },
       actions: [
         {
@@ -170,8 +171,18 @@ const featuresConfig: Record<
         {
           text: (
             <Space>
+              <IconOctaneLynx />
+              Octane
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://octanejs.dev',
+        },
+        {
+          text: (
+            <Space>
               <IconMisoLynx />
-              Miso (Haskell)
+              Miso
             </Space>
           ),
           size: 'large',
