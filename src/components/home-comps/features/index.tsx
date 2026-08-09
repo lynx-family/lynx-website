@@ -16,6 +16,7 @@ import {
   IconIOS,
   IconMacOS,
   IconMisoLynx,
+  IconOctaneLynx,
   IconReactLynx,
   IconVueLynx,
   IconWeb,
@@ -141,8 +142,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: '不止于一个框架',
       },
       desc: {
-        en: "Lynx isn't limited to React. ReactLynx is the official flavor, while Vue and Miso for Haskell come from the community. More frameworks welcome.",
-        zh: 'Lynx 不止于 React。ReactLynx 是官方框架，Vue 与适用于 Haskell 的 Miso 由社区驱动，欢迎更多框架加入。',
+        en: "Lynx isn't limited to React. ReactLynx is the official flavor, while Vue, Octane and Miso for Haskell come from the community. More frameworks welcome.",
+        zh: 'Lynx 不止于 React。ReactLynx 是官方框架，Vue、Octane 与适用于 Haskell 的 Miso 由社区驱动，欢迎更多框架加入。',
       },
       actions: [
         {
@@ -168,8 +169,18 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         {
           text: (
             <Space>
+              <IconOctaneLynx />
+              Octane
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://octanejs.dev',
+        },
+        {
+          text: (
+            <Space>
               <IconMisoLynx />
-              Miso (Haskell)
+              Miso
             </Space>
           ),
           size: 'large',
