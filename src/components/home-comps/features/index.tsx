@@ -130,8 +130,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: 'Web 启发',
       },
       desc: {
-        en: "Leverage your knowledge of CSS and JavaScript, and the mindset behind it. Lynx is designed around the web's programming model, libraries, and frameworks.",
-        zh: '延续 Web 的编程范式与心智模型，继续使用熟悉的 CSS 和 JavaScript，复用已有的知识、生态与框架。',
+        en: "Leverage your existing knowledge of CSS and JavaScript. We designed Lynx around the web's programming model, libraries, and frameworks.",
+        zh: '延续 Web 开发范式，继续使用熟悉的 CSS 和 JavaScript 等技术，复用 Web 的知识、生态与框架。',
       },
       customRender: <Moon />,
     },
