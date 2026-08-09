@@ -142,8 +142,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: '不止于一个框架',
       },
       desc: {
-        en: 'Lynx is a platform for frameworks. ReactLynx (the official flavor), Vue, Octane, and Miso for Haskell all run on it today. Everyone from the web community is invited to bring the next one.',
-        zh: 'Lynx 是一个面向框架的平台。ReactLynx（官方框架）、Vue、Octane 与适用于 Haskell 的 Miso 都已运行其上。我们诚邀 Web 社区的每一位开发者，带来下一个框架。',
+        en: 'Lynx is a platform for frameworks. ReactLynx, Vue, Octane, and Miso for Haskell all integrate through the same standardized APIs — no privileged path, not even for the official flavor. All frameworks welcome.',
+        zh: 'Lynx 是一个面向框架的平台。ReactLynx、Vue、Octane 与适用于 Haskell 的 Miso 都通过同一套标准化 API 接入，没有特权通道，官方框架也不例外。欢迎所有框架加入。',
       },
       actions: [
         {
