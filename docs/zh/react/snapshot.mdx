@@ -1,10 +1,10 @@
 ---
-description: '了解 ReactLynx 如何在编译期把 JSX 转换为 Snapshot，缩小运行时调和规模。'
+description: '了解 ReactLynx 如何在编译期把 JSX 转换为 Snapshot，缩小运行时协调规模。'
 ---
 
 # Snapshot 编译优化
 
-Snapshot 首先是一项**编译优化**。ReactLynx 编译器会提前分析 JSX，把能够确定的元件结构转换为直接创建 Lynx 元件的代码，并为动态属性和子节点生成专门的更新逻辑。运行时只需要实例化编译结果并传入动态值，不必重新解释完整的 JSX 结构。
+一个 UI 组件里，大部分结构在源码中就已经固定，每次渲染真正会变的往往只是少数属性和文本。ReactLynx 的 **Snapshot 编译优化**利用了这一点：编译器在构建时提取 JSX 中能够静态确定的元件结构，并为动态部分生成专门的表示。这样，可静态确定的宿主元件不必在每次渲染时逐层进入协调过程，运行时只需实例化编译结果并处理动态位置。
 
 :::info
 
@@ -14,9 +14,7 @@ Snapshot 首先是一项**编译优化**。ReactLynx 编译器会提前分析 JS
 
 ## 为什么需要 Snapshot
 
-### 常规 JSX 的运行时开销
-
-常规 JSX 产物会把元件结构、静态值和动态表达式保留在运行时。每次创建或更新 UI 时，运行时需要生成元素描述、逐层调和宿主元件，并将属性和子节点的变化落实到 UI。
+常规 JSX 产物会把元件结构、静态值和动态表达式都保留在运行时代码中。每次渲染时，`_jsx()` 会创建描述 UI 结构的虚拟节点（VNode），ReactLynx 的协调器再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为协调（Reconciliation）。
 
 以下组件同时包含静态结构和动态内容：
 
@@ -34,6 +32,7 @@ export function Greeting({ name, highlighted }) {
 
 ```js
 export function Greeting({ name, highlighted }) {
+  // view 和 text 仍然分别对应一个宿主 VNode。
   return _jsx('view', {
     className: highlighted ? 'card active' : 'card',
     children: _jsx('text', {
@@ -43,28 +42,39 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-这段产物仍然保留完整的 `view` 和 `text` 元件层级。每次渲染都会重新生成这棵元素描述，运行时需要依据完整层级进行调和。当页面规模较大时，逐层调和的耗时会更加明显，元素描述和节点状态占用的内存也会随之增加。
+这段产物仍以 `view` 和 `text` VNode 表达完整的宿主层级。即使协调器最终复用了对应的宿主元件，每次渲染仍会重新创建这些 VNode，并让完整的 `view → text` 层级参与协调。这里真正会变化的只有 `className` 和 `name`，元件类型、层级和父子关系始终不变。
 
-ReactLynx 编译器可以提前完成其中不依赖运行时数据的工作：
+这些稳定不变的结构，正是编译器可以提前提取的部分。
 
-- 确定内置元件的类型、层级和插入顺序。
-- 提取固定文本、静态属性和 CSS 作用域等信息。
-- 找出动态属性、展开属性和动态子节点的位置。
-- 为每个动态部分生成有针对性的更新函数。
+## JSX 如何编译为 Snapshot
 
-这些编译结果共同组成 Snapshot 定义。
+启用 Snapshot 提取后，同一组件的调用部分在语义上则类似：
 
-### JSX 编译为 Snapshot
+```js
+const __snapshot_xxx = '__snapshot_xxx';
 
-对于上述 `Greeting`，ReactLynx 编译器则会在构建时将它拆分为：
+export function Greeting({ name, highlighted }) {
+  // 静态宿主层级被折叠为一个 Snapshot 类型。
+  return _jsx(__snapshot_xxx, {
+    values: [highlighted ? 'card active' : 'card'], // 动态属性位置 0
+    $0: name, // 动态子节点插槽 0
+  });
+}
+```
+
+两份产物的差别在于：常规产物直接展开完整的宿主 VNode 层级；Snapshot 产物只引用一个 Snapshot ID，并将 `className` 和 `name` 分别传入预先确定的动态位置。
+
+编译器由此可以提前确定内置元件的类型、层级和插入顺序，提取固定文本、静态属性和 CSS 作用域，并找出动态属性、展开属性和动态子节点的位置。对于上述 `Greeting`，具体可以拆分为：
 
 - **静态结构**：`view`、`text` 和固定文本 `Hello, `。
 - **动态属性**：由 `highlighted` 决定的 `className`。
 - **动态子节点**：由 `name` 生成的文本。
 
-最后，编译器会把静态创建逻辑、动态更新函数和插槽位置组合成一个可复用的 Snapshot 定义，并为它生成 Snapshot ID。运行时通过这份定义创建 Snapshot 实例，只需传入每个实例自己的动态值和子节点。
+最后，编译器把静态创建逻辑、动态更新函数、插槽位置和一个 Snapshot ID 组合成可复用的 Snapshot 定义。运行时通过这份定义创建 Snapshot 实例，只需传入每个实例自己的动态值和子节点。
 
-具体来说，一个 Snapshot 定义包含以下四部分：
+### Snapshot 定义包含什么
+
+从编译模型来看，一个 Snapshot 定义可以归纳为以下四个核心部分：
 
 | 编译结果       | 作用                                                             |
 | -------------- | ---------------------------------------------------------------- |
@@ -73,45 +83,37 @@ ReactLynx 编译器可以提前完成其中不依赖运行时数据的工作：
 | 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树应该插入的位置。   |
 | Snapshot ID    | 标识这份编译后的结构，让多个组件实例复用同一个 Snapshot 定义。   |
 
-使用当前版本的 ReactLynx 编译器转换上述组件，会得到类似下面的代码：
+上面的 Snapshot ID 对应一份构建时生成的 Snapshot 定义。为突出其编译结构，下面给出一份简化示意，其中保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据：
 
 ```js
-const __snapshot_a721c_e4779_1 = '__snapshot_a721c_e4779_1';
-
-ReactLynx.snapshotCreatorMap[__snapshot_a721c_e4779_1] = (
-  __snapshot_a721c_e4779_1,
-) =>
+ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
   ReactLynx.createSnapshot(
-    __snapshot_a721c_e4779_1,
+    __snapshot_xxx,
     () => {
+      // 这部分只依赖 JSX 中可以静态确定的结构。
       const pageId = ReactLynx.__pageId;
       const view = __CreateView(pageId);
       const text = __CreateText(pageId);
       const rawText = __CreateRawText('Hello, ');
-      const slot = __CreateWrapperElement(pageId);
+      const slot = __CreateWrapperElement(pageId); // 为 $0 预留插入位置
 
       __AppendElement(view, text);
       __AppendElement(text, rawText);
       __AppendElement(text, slot);
 
+      // 更新函数和插槽描述通过这些数组索引定位元件。
       return [view, text, rawText, slot];
     },
     [
       function (ctx) {
         if (ctx.__elements) {
+          // values[0] 只更新 elements[0]，也就是根 view。
           __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
         }
       },
     ],
-    [[ReactLynx.__DynamicPartSlotV2, 3]],
+    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 对应 elements[3]
   );
-
-export function Greeting({ name, highlighted }) {
-  return _jsx(__snapshot_a721c_e4779_1, {
-    values: [highlighted ? 'card active' : 'card'],
-    $0: name,
-  });
-}
 ```
 
 :::warning
@@ -120,63 +122,79 @@ export function Greeting({ name, highlighted }) {
 
 :::
 
-基于这样的编译优化，原本需要逐层参与调和的多层宿主结构会被压缩为一层 Snapshot 单元。页面越复杂、可静态确定的结构越多，这种压缩带来的调和规模缩减越明显。这里压缩的是运行时调和层级，Snapshot 仍会在主线程创建完整的 Lynx 元件树。
+### 编译产物如何进入运行时
 
-### Snapshot 如何驱动渲染
+编译生成的 Snapshot 定义可以被多个 `Greeting` 复用，而每次实际渲染都会产生一组彼此对应的运行时实例：主线程实例持有创建出的 Lynx 元件，后台实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
 
-Snapshot 定义是编译器生成的可复用描述，SnapshotInstance 则是这份定义在运行时的一次实例化。在 ReactLynx 的双线程架构中，同一个逻辑 Snapshot 在两条线程上有各自的运行时对象：
+#### 首屏：根据定义创建实例
 
-| 所在线程 | 运行时对象                   | 职责                                                                                                                                   |
-| -------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 后台线程 | `BackgroundSnapshotInstance` | 作为 Preact 调和到宿主层时的节点，保存 Snapshot ID、动态值和子节点关系；比较动态值，并记录创建、插入、删除和属性更新等可序列化 Patch。 |
-| 主线程   | `SnapshotInstance`           | 在首屏渲染或接收后续 Patch 时，根据 Snapshot 定义创建并持有真实的 Lynx FiberElement；执行定向更新函数，并把动态子节点插入对应的插槽。  |
+首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到 Snapshot 定义，再为这次 `Greeting` 创建主线程实例。静态创建函数返回的 Lynx 元件由这个实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入定义中的插槽。
 
-后台线程提交更新时，会将实例 ID、操作类型和必要的动态数据发送到主线程。主线程根据实例 ID 找到对应的 `SnapshotInstance` 并应用操作。因此，两侧对象代表同一个逻辑 UI 单元，但它们不是同一个 JavaScript 对象，也不通过共享内存直接访问彼此。
+下面是这一过程的概念伪代码：
 
-这种双线程分工让调和与元件操作都以 Snapshot 为单位。编译后的 `_jsx(snapshotId, props)` 不再向运行时展开完整的宿主元件层级。后台线程进行 React 调和时，整段已编译结构对应一个 `BackgroundSnapshotInstance`；主线程中与之对应的 `SnapshotInstance` 再执行静态创建函数，将它展开为真实的 FiberElement。
+```js
+function renderFirstScreen(vnode) {
+  const definition = getSnapshotDefinition(vnode.type);
+  const instance = createMainThreadSnapshotInstance(vnode.type);
 
-以上面的 `Greeting` 为例，主线程的 `SnapshotInstance` 内部包含 `view`、`text`、固定文本和插槽对应的 FiberElement。但是在后台线程的调和树中，可静态确定的 `view → text → Hello, ` 不再需要逐个作为宿主节点处理，而是由一个 `BackgroundSnapshotInstance` 代表；只有 `$0` 对应的 `name` 继续作为动态子节点参与调和。
+  instance.elements = definition.create(instance);
+  instance.values = vnode.props.values;
+  definition.update[0](instance); // 将 values[0] 写入 className
+  insertDynamicChild(instance, 0, vnode.props.$0);
 
-| 场景                   | 逐个处理宿主元件时                               | 编译成 Snapshot 后                                                                                   |
-| ---------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| 创建 UI                | 逐层调和 `view`、`text`、文本及其父子关系。      | 后台线程调和一个 `BackgroundSnapshotInstance`，主线程由对应的 `SnapshotInstance` 创建 FiberElement。 |
-| `highlighted` 发生变化 | 再次确定动态值对应哪个元件和属性。               | 后台线程比较 `values[0]` 并生成 Patch，主线程直接更新根 FiberElement 的 `className`。                |
-| `name` 发生变化        | 固定文本和动态文本组成的宿主子树都在处理范围内。 | 固定文本保留在主线程实例内部，只有 `$0` 对应的动态插槽继续参与调和并生成子节点 Patch。               |
-| 渲染多个相同组件       | 每个实例都需要携带并处理相同的宿主元件结构。     | 每个逻辑实例只对应一对轻量实例对象，多个实例共享同一个 Snapshot 定义。                               |
-
-最直接的变化是：运行时不再需要理解这段 JSX 应该如何创建和更新，而是围绕 Snapshot 实例执行编译器已经准备好的操作。原本由多个静态宿主节点形成的调和层级，在后台线程中被折叠为一个 `BackgroundSnapshotInstance`；主线程对应的 `SnapshotInstance` 只负责将编译结果落实为 FiberElement。调和范围因此缩小到 Snapshot 实例及其动态插槽。
-
-:::note
-
-这里缩小的是宿主元件层面的调和规模，并不是绕过 React 调和。组件、条件分支、列表和动态子节点仍然正常参与调和；Snapshot 只折叠编译器能够静态确定的宿主元件结构。
-
-:::
-
-## 如何编写编译友好的 JSX
-
-Snapshot 优化由编译器自动完成，不需要手动开启。编写 JSX 时，关键是让宿主元件的类型、层级和插入顺序在源码中清晰可见，并把运行时数据集中在属性和子节点表达式中。编译器就能将前者提取为静态骨架，将后者转换为定向更新函数或动态插槽。
-
-### 动态值不会阻止静态结构提取
-
-以下组件的 `view → text` 层级始终不变，变化的只有 `className` 和文本内容：
-
-```tsx
-function UserCard({ name, selected }) {
-  return (
-    <view className={selected ? 'user-card selected' : 'user-card'}>
-      <text className="user-name">{name}</text>
-    </view>
-  );
+  return instance;
 }
 ```
 
-编译器可以将这段 JSX 拆分为：
+对于当前例子，`definition.create()` 创建 `view`、`text` 和固定文本；`definition.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树；差别在于静态层级由 `definition.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
 
-- **静态结构**：`view`、`text` 及二者的父子关系。
-- **静态属性**：`text` 上的 `user-name`。
-- **动态位置**：卡片的 `className` 和由 `name` 生成的文本子节点。
+后台首轮协调也会生成与主线程实例树对应的逻辑实例树。首屏同步通过 hydration 建立两侧实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程实例。
 
-因此，不必为不同的 `name` 或 `selected` 组合编写不同组件。保留稳定的宿主结构，让数据通过表达式进入即可。
+#### 更新：根据实例对应关系应用变化
+
+对应关系建立后，后台线程比较新旧动态值并生成更新，主线程再找到实际实例并应用它。
+
+下面的伪代码继续使用 `Greeting`。`highlighted` 对应动态位置 `0`，因此它变化时会生成一条属性更新；`name` 位于动态子节点插槽中，继续由 React 协调：
+
+```js
+// 后台线程：比较动态属性，并继续协调动态子节点
+function reconcileGreeting(previous, next, instanceId) {
+  if (!isEqual(previous.values[0], next.values[0])) {
+    emitAttributePatch({
+      instanceId,
+      dynamicPartIndex: 0,
+      value: next.values[0],
+    });
+  }
+
+  // $0 仍作为 React 子节点参与协调，结果会变成插入、移除等树操作。
+  reconcileChildren(previous.$0, next.$0, {
+    parentInstanceId: instanceId,
+    slotIndex: 0,
+  });
+}
+
+// 主线程根据实例和动态位置应用属性更新
+function applyAttributePatch(patch) {
+  const instance = findSnapshotInstance(patch.instanceId);
+  const index = patch.dynamicPartIndex;
+
+  instance.values[index] = patch.value;
+  instance.definition.update[index](instance);
+}
+```
+
+对于属性路径，`reconcileGreeting()` 只生成“哪个实例的哪个动态位置发生了变化”的描述，`applyAttributePatch()` 则找到主线程实例并调用编译器生成的更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。实际实现会将这些操作编码进序列化的 Snapshot Patch。
+
+## 如何编写编译友好的 JSX
+
+使用默认 Snapshot 编译后端时，优化由编译器自动完成。编译器能提取多少静态结构，取决于宿主元件的类型、层级和插入顺序在源码中是否清晰可见。下面几种写法有助于暴露稳定的宿主结构，但它们不是硬性规则：组件语义和可读性始终优先。
+
+### 放心让动态值进入稳定结构
+
+前面的 `Greeting` 中，`className` 和 `name` 都来自运行时，但 `view → text` 的宿主层级仍然直接出现在源码中。编译器因此可以提取这段骨架，只把两个表达式记录为动态位置。
+
+动态值本身不会阻止 Snapshot 提取。只要宿主类型、层级和顺序保持稳定，就可以让数据自然地通过属性或动态子节点进入，不必为了把属性或文本写成静态值而拆分组件。
 
 ### 将共享结构放在条件分支外
 
@@ -208,22 +226,24 @@ function ProductCard({ name, price, showPrice }) {
   return (
     <view className="product-card">
       <text className="product-name">{name}</text>
+      {/* 只有价格区域会随 showPrice 改变结构。 */}
       {showPrice && <text className="product-price">{price}</text>}
     </view>
   );
 }
 ```
 
-`showPrice` 变化时，React 只需要调和价格对应的动态区域，卡片外壳可以继续复用。如果两个分支的界面本来就完全不同，则无需强行合并，保持分支清晰更重要。
+当两个分支本来就表示同一种卡片结构时，后一种写法能让共享外壳直接暴露给编译器，并把价格区域保留为动态插槽。`showPrice` 变化时，运行时只需处理这个动态区域。如果移动结构会改变组件身份、状态保留或其他行为，就不应为了 Snapshot 强行合并分支。
 
 ### 显式声明宿主类型
 
-Snapshot 编译器分析的是 JSX 结构。通过字符串和 `createElement()` 在运行时决定宿主类型时，编译器无法提前确定这部分结构：
+编译器只能分析它在源码里看得见的 JSX 结构。如果你用字符串加 `createElement()` 在运行时才决定宿主类型，这部分结构就无法提前确定，也就无法提取成 Snapshot：
 
 ```tsx
 import { createElement } from '@lynx-js/react';
 
 function DynamicNode({ type, value }) {
+  // type 直到运行时才有具体值，编译器看不到宿主类型。
   return createElement(type, { className: 'content' }, value);
 }
 ```
@@ -232,6 +252,7 @@ function DynamicNode({ type, value }) {
 
 ```tsx
 function Content({ variant, value }) {
+  // 两种候选宿主类型都直接出现在 JSX 中。
   if (variant === 'label') {
     return <text className="content-label">{value}</text>;
   }
@@ -248,10 +269,11 @@ function Content({ variant, value }) {
 
 ### 属性集合固定时优先显式声明
 
-spread 属性受 Snapshot 支持，但编译器会将整个展开对象记录为一个动态属性集合。更新时，运行时需要比较集合中的属性，再将变化应用到对应元件：
+spread 属性同样受 Snapshot 支持。编译器知道展开对象作用于哪个元件，但由于属性集合要到运行时才能确定，只能把整个对象记录为一个动态位置。更新时，运行时需要遍历新旧对象的属性，再把变化应用到目标元件：
 
 ```tsx
 function UserCard({ id, name, selected }) {
+  // spread 会让整个属性集合成为一个动态位置。
   const cardProps = {
     id,
     className: selected ? 'user-card selected' : 'user-card',
@@ -269,6 +291,7 @@ function UserCard({ id, name, selected }) {
 
 ```tsx
 function UserCard({ id, name, selected }) {
+  // 每个动态属性都能获得独立的位置和更新函数。
   return (
     <view id={id} className={selected ? 'user-card selected' : 'user-card'}>
       <text>{name}</text>
@@ -277,4 +300,6 @@ function UserCard({ id, name, selected }) {
 }
 ```
 
-显式写法让编译器直接知道 `id` 和 `className` 分别对应哪个动态位置，可以为每个属性生成定向更新逻辑；它也避免了每次渲染都创建 `cardProps` 对象。组件需要透传调用方提供的未知属性时，spread 仍然是合适的写法，不必为了 Snapshot 强行逐项展开。
+显式写法让编译器直接知道 `id` 和 `className` 分别对应哪个动态位置，可以为每个属性生成独立的定向更新逻辑；它也避免了每次渲染都创建 `cardProps` 对象。组件需要透传调用方提供的未知属性时，spread 仍然是合适的写法，不必为了 Snapshot 强行逐项展开。
+
+判断 JSX 是否适合静态提取时，可以记住一个原则：让确定的宿主类型、层级和顺序直接出现在源码中，让真正的运行时数据通过属性或动态子节点进入。对于本来就需要在运行时决定的结构，保持动态写法比迎合编译器更重要。

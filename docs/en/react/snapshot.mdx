@@ -4,7 +4,7 @@ description: 'Learn how ReactLynx transforms JSX into Snapshots at compile time 
 
 # Snapshot Compilation Optimization
 
-Snapshot is first and foremost a **compile-time optimization**. The ReactLynx compiler analyzes JSX ahead of time, turns predictable element structures into code that directly creates Lynx elements, and generates dedicated update logic for dynamic properties and children. At runtime, ReactLynx only needs to instantiate the compiled result and pass in dynamic values instead of interpreting the complete JSX structure again.
+Most of the structure in a UI component is already fixed in the source code. Only a small number of properties and text values usually change between renders. The ReactLynx **Snapshot compilation optimization** takes advantage of this: at build time, the compiler extracts element structures that can be determined statically and generates specialized representations for their dynamic parts. As a result, statically known host elements do not need to enter reconciliation level by level on every render. The runtime only needs to instantiate the compiled result and process its dynamic positions.
 
 :::info
 
@@ -14,9 +14,7 @@ Snapshot is unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` met
 
 ## Why Snapshot
 
-### Runtime Cost of Regular JSX
-
-A regular JSX transform keeps element structure, static values, and dynamic expressions in the runtime output. Whenever the UI is created or updated, the runtime creates element descriptions, reconciles host elements level by level, and applies property and child changes to the UI.
+A regular JSX transform keeps the element structure, static values, and dynamic expressions in the runtime output. On every render, `_jsx()` creates virtual nodes (VNodes) that describe the UI structure. The ReactLynx reconciler then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as reconciliation.
 
 The following component contains both a static structure and dynamic content:
 
@@ -34,6 +32,7 @@ With a regular JSX transform and no Snapshot extraction, the compiled result is 
 
 ```js
 export function Greeting({ name, highlighted }) {
+  // view and text still correspond to separate host VNodes.
   return _jsx('view', {
     className: highlighted ? 'card active' : 'card',
     children: _jsx('text', {
@@ -43,28 +42,39 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-This output retains the complete `view` and `text` element hierarchy. Every render creates this element description again, and the runtime reconciles the complete hierarchy. As a page grows, the cost of level-by-level reconciliation becomes more noticeable, while element descriptions and node state also consume more memory.
+This output still represents the complete host hierarchy with separate `view` and `text` VNodes. Even if the reconciler ultimately reuses the corresponding host elements, every render creates these VNodes again and sends the complete `view → text` hierarchy through reconciliation. Only `className` and `name` can actually change; the element types, hierarchy, and parent-child relationships remain fixed.
 
-The ReactLynx compiler can complete work that does not depend on runtime data ahead of time:
+These stable structures are exactly what the compiler can extract ahead of time.
 
-- Determine the types, hierarchy, and insertion order of built-in elements.
-- Extract fixed text, static properties, and CSS scope information.
-- Locate dynamic properties, spread properties, and dynamic children.
-- Generate a targeted update function for each dynamic part.
+## How JSX Compiles into a Snapshot
 
-Together, these compiled results form a Snapshot definition.
+With Snapshot extraction enabled, the call site for the same component is semantically similar to the following code:
 
-### Compiling JSX into a Snapshot
+```js
+const __snapshot_xxx = '__snapshot_xxx';
 
-For the `Greeting` component above, the ReactLynx compiler separates the following parts at build time:
+export function Greeting({ name, highlighted }) {
+  // The static host hierarchy is folded into one Snapshot type.
+  return _jsx(__snapshot_xxx, {
+    values: [highlighted ? 'card active' : 'card'], // Dynamic property position 0
+    $0: name, // Dynamic child slot 0
+  });
+}
+```
+
+The difference between the two outputs is that the regular output expands the complete host VNode hierarchy, while the Snapshot output only references a Snapshot ID and passes `className` and `name` into predefined dynamic positions.
+
+The compiler can therefore determine built-in element types, hierarchy, and insertion order ahead of time; extract fixed text, static properties, and CSS scope information; and locate dynamic properties, spread properties, and dynamic children. For the `Greeting` component, these parts are:
 
 - **Static structure**: `view`, `text`, and the fixed text `Hello, `.
 - **Dynamic property**: the `className` determined by `highlighted`.
 - **Dynamic child**: the text generated from `name`.
 
-The compiler then combines the static creation logic, dynamic update functions, and slot locations into a reusable Snapshot definition and generates a Snapshot ID for it. At runtime, this definition is used to create Snapshot instances, with each instance providing only its own dynamic values and children.
+Finally, the compiler combines the static creation logic, dynamic update functions, slot locations, and a Snapshot ID into a reusable Snapshot definition. The runtime uses this definition to create Snapshot instances and only supplies each instance's own dynamic values and children.
 
-More specifically, a Snapshot definition has four parts:
+### What a Snapshot Definition Contains
+
+From the compiler's perspective, a Snapshot definition has four core parts:
 
 | Compiled result     | Purpose                                                                                                   |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -73,45 +83,37 @@ More specifically, a Snapshot definition has four parts:
 | Dynamic child slots | Marks where dynamic subtrees such as components, conditional branches, text expressions, and lists go.    |
 | Snapshot ID         | Identifies the compiled structure so that multiple component instances can reuse one Snapshot definition. |
 
-Compiling this component with the current ReactLynx compiler produces code similar to the following:
+The Snapshot ID above refers to a Snapshot definition generated at build time. The simplified example below preserves the static creator, dynamic updater, and slot information that illustrate the compiled structure, while omitting compiler metadata for CSS, entry points, and compatibility:
 
 ```js
-const __snapshot_a721c_e4779_1 = '__snapshot_a721c_e4779_1';
-
-ReactLynx.snapshotCreatorMap[__snapshot_a721c_e4779_1] = (
-  __snapshot_a721c_e4779_1,
-) =>
+ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
   ReactLynx.createSnapshot(
-    __snapshot_a721c_e4779_1,
+    __snapshot_xxx,
     () => {
+      // This part only depends on structure that is statically known in JSX.
       const pageId = ReactLynx.__pageId;
       const view = __CreateView(pageId);
       const text = __CreateText(pageId);
       const rawText = __CreateRawText('Hello, ');
-      const slot = __CreateWrapperElement(pageId);
+      const slot = __CreateWrapperElement(pageId); // Reserve an insertion point for $0
 
       __AppendElement(view, text);
       __AppendElement(text, rawText);
       __AppendElement(text, slot);
 
+      // Updaters and slot descriptors locate elements through these array indexes.
       return [view, text, rawText, slot];
     },
     [
       function (ctx) {
         if (ctx.__elements) {
+          // values[0] only updates elements[0], the root view.
           __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
         }
       },
     ],
-    [[ReactLynx.__DynamicPartSlotV2, 3]],
+    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 corresponds to elements[3]
   );
-
-export function Greeting({ name, highlighted }) {
-  return _jsx(__snapshot_a721c_e4779_1, {
-    values: [highlighted ? 'card active' : 'card'],
-    $0: name,
-  });
-}
 ```
 
 :::warning
@@ -120,63 +122,80 @@ export function Greeting({ name, highlighted }) {
 
 :::
 
-With this compilation optimization, a multi-level host structure that would otherwise participate in reconciliation level by level is compressed into a single Snapshot unit. The more complex the page and the more structure that can be determined statically, the more pronounced the reduction in reconciliation scale becomes. This compression applies to the runtime reconciliation hierarchy; Snapshot still creates the complete Lynx element tree on the main thread.
+### How the Compiled Output Enters the Runtime
 
-### How Snapshot Drives Rendering
+The compiled Snapshot definition can be reused by multiple `Greeting` components, while every rendered `Greeting` creates a pair of corresponding runtime instances: the main-thread instance owns the Lynx elements it creates, and the background-thread instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: the initial render and subsequent updates.
 
-A Snapshot definition is a reusable description generated by the compiler. A SnapshotInstance is one runtime instantiation of that definition. In ReactLynx's dual-thread architecture, the same logical Snapshot has a separate runtime object on each thread:
+#### Initial render: Create an instance from the definition
 
-| Thread            | Runtime object               | Responsibility                                                                                                                                                                                                                           |
-| ----------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Background thread | `BackgroundSnapshotInstance` | Acts as the host-layer node for Preact reconciliation; stores the Snapshot ID, dynamic values, and child relationships; compares dynamic values and records serializable patches for creation, insertion, removal, and property updates. |
-| Main thread       | `SnapshotInstance`           | Uses the Snapshot definition to create and own real Lynx FiberElements during initial rendering or when applying subsequent patches; runs targeted update functions and inserts dynamic children into their slots.                       |
+The UI elements for the initial render are created directly on the main thread. The runtime first looks up the Snapshot definition from the VNode type, then creates a main-thread instance for this `Greeting`. The instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots defined by the compiler.
 
-When the background thread commits an update, it sends the instance ID, operation type, and required dynamic data to the main thread. The main thread uses the instance ID to find the corresponding `SnapshotInstance` and apply the operation. The two objects therefore represent the same logical UI unit, but they are not the same JavaScript object and do not access each other through shared memory.
+The following pseudocode illustrates this process:
 
-This division of work makes both reconciliation and element operations Snapshot-based. The compiled `_jsx(snapshotId, props)` no longer expands the complete host element hierarchy for the runtime. During React reconciliation on the background thread, the compiled structure corresponds to one `BackgroundSnapshotInstance`. The matching `SnapshotInstance` on the main thread executes the static creator and expands it into real FiberElements.
+```js
+function renderFirstScreen(vnode) {
+  const definition = getSnapshotDefinition(vnode.type);
+  const instance = createMainThreadSnapshotInstance(vnode.type);
 
-In the `Greeting` example, the main-thread `SnapshotInstance` contains the FiberElements for `view`, `text`, the fixed text, and the slot. In the background-thread reconciliation tree, however, the statically predictable `view → text → Hello, ` hierarchy does not need to be processed as individual host nodes. One `BackgroundSnapshotInstance` represents the hierarchy, and only the `name` associated with `$0` continues to participate in reconciliation as a dynamic child.
+  instance.elements = definition.create(instance);
+  instance.values = vnode.props.values;
+  definition.update[0](instance); // Write values[0] to className
+  insertDynamicChild(instance, 0, vnode.props.$0);
 
-| Scenario                 | Processing host elements individually                                       | After compiling to Snapshot                                                                                                                    |
-| ------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Creating the UI          | Reconcile `view`, `text`, text, and their relationships level by level.     | Reconcile one `BackgroundSnapshotInstance`; its matching `SnapshotInstance` creates the FiberElements on the main thread.                      |
-| `highlighted` changes    | Determine which element and property correspond to the dynamic value again. | Compare `values[0]` on the background thread, generate a patch, and directly update `className` on the root FiberElement.                      |
-| `name` changes           | Process the host subtree containing both fixed and dynamic text.            | Keep the fixed text inside the main-thread instance; only the dynamic slot for `$0` participates in reconciliation and produces a child patch. |
-| Rendering many instances | Carry and process the same host element structure for every instance.       | Represent each logical instance with a lightweight pair of runtime objects while sharing one Snapshot definition.                              |
-
-The most direct change is that the runtime no longer needs to understand how to create and update this JSX structure. Instead, it executes compiler-prepared operations around Snapshot instances. The background thread folds the reconciliation hierarchy formed by multiple static host nodes into one `BackgroundSnapshotInstance`, while the corresponding main-thread `SnapshotInstance` materializes the compiled result as FiberElements. Reconciliation is therefore limited to Snapshot instances and their dynamic slots.
-
-:::note
-
-Snapshot reduces the reconciliation scale at the host-element level; it does not bypass React reconciliation. Components, conditional branches, lists, and dynamic children still participate in reconciliation normally. Snapshot only folds host element structures that the compiler can determine statically.
-
-:::
-
-## Writing Compiler-Friendly JSX
-
-The compiler applies Snapshot optimization automatically; it does not need to be enabled manually. When writing JSX, keep host element types, hierarchy, and insertion order clearly visible in the source, and concentrate runtime data in property and child expressions. The compiler can then extract the former into a static skeleton and turn the latter into targeted update functions or dynamic slots.
-
-### Dynamic Values Do Not Prevent Static Structure Extraction
-
-In the following component, the `view → text` hierarchy remains unchanged. Only `className` and the text content are dynamic:
-
-```tsx
-function UserCard({ name, selected }) {
-  return (
-    <view className={selected ? 'user-card selected' : 'user-card'}>
-      <text className="user-name">{name}</text>
-    </view>
-  );
+  return instance;
 }
 ```
 
-The compiler can separate this JSX into:
+In this example, `definition.create()` creates the `view`, `text`, and fixed text; `definition.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `definition.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
 
-- **Static structure**: `view`, `text`, and their parent-child relationship.
-- **Static property**: `user-name` on the `text` element.
-- **Dynamic positions**: `className` on the card and the text child generated from `name`.
+The initial background-thread reconciliation also creates a logical instance tree that corresponds to the main-thread instance tree. During first-screen synchronization, hydration establishes the mapping between the instances on the two threads, allowing subsequent updates to locate the main-thread instance created for the first screen by `instanceId`.
 
-There is no need to create different components for different combinations of `name` and `selected`. Keep the host structure stable and pass data through expressions.
+#### Updates: Apply changes through the instance mapping
+
+After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding runtime instance and applies each update.
+
+The following pseudocode continues with `Greeting`. `highlighted` corresponds to dynamic position `0`, so changing it produces a property update. `name` is in a dynamic child slot and continues to be reconciled by React:
+
+```js
+// Background thread: compare dynamic properties and reconcile dynamic children
+function reconcileGreeting(previous, next, instanceId) {
+  if (!isEqual(previous.values[0], next.values[0])) {
+    emitAttributePatch({
+      instanceId,
+      dynamicPartIndex: 0,
+      value: next.values[0],
+    });
+  }
+
+  // $0 remains a React child.
+  // Reconciliation produces tree operations such as insertions and removals.
+  reconcileChildren(previous.$0, next.$0, {
+    parentInstanceId: instanceId,
+    slotIndex: 0,
+  });
+}
+
+// Main thread: apply a property update using the instance and dynamic position
+function applyAttributePatch(patch) {
+  const instance = findSnapshotInstance(patch.instanceId);
+  const index = patch.dynamicPartIndex;
+
+  instance.values[index] = patch.value;
+  instance.definition.update[index](instance);
+}
+```
+
+For the property path, `reconcileGreeting()` only describes which dynamic position changed on which instance. `applyAttributePatch()` then finds the main-thread instance and calls the update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The implementation encodes these operations in a serialized Snapshot Patch.
+
+## Writing Compiler-Friendly JSX
+
+With the default Snapshot compiler backend, the compiler applies the optimization automatically. How much static structure it can extract depends on whether host element types, hierarchy, and insertion order are clearly visible in the source. The following patterns help expose stable host structures, but they are not hard rules: component semantics and readability always take priority.
+
+### Let Dynamic Values Flow Through Stable Structures
+
+In the `Greeting` component above, both `className` and `name` come from runtime data, but the `view → text` host hierarchy remains directly visible in the source. The compiler can therefore extract that skeleton and record only the two expressions as dynamic positions.
+
+Dynamic values do not prevent Snapshot extraction by themselves. As long as host types, hierarchy, and order remain stable, let data flow naturally through properties or dynamic children. There is no need to split a component merely to make its properties or text values static.
 
 ### Keep Shared Structure Outside Conditional Branches
 
@@ -208,22 +227,25 @@ function ProductCard({ name, price, showPrice }) {
   return (
     <view className="product-card">
       <text className="product-name">{name}</text>
+      {/* Only the price region changes structure with showPrice. */}
       {showPrice && <text className="product-price">{price}</text>}
     </view>
   );
 }
 ```
 
-When `showPrice` changes, React only needs to reconcile the dynamic region for the price, while the card shell can be reused. If the two branches represent genuinely different interfaces, do not force them into one structure; clear branches are more important.
+When both branches represent the same card structure, the second form exposes the shared shell to the compiler and keeps only the price region as a dynamic slot. When `showPrice` changes, the runtime only needs to process that dynamic region. If moving the structure changes component identity, state preservation, or other behavior, do not merge branches solely for Snapshot.
 
 ### Declare Host Element Types Explicitly
 
-The Snapshot compiler analyzes JSX structures. When a string and `createElement()` determine the host element type at runtime, the compiler cannot determine that structure ahead of time:
+The compiler can only analyze JSX structures that are visible in the source. If a string and `createElement()` determine a host element type at runtime, that part of the structure cannot be determined ahead of time and therefore cannot be extracted into a Snapshot:
 
 ```tsx
 import { createElement } from '@lynx-js/react';
 
 function DynamicNode({ type, value }) {
+  // type does not have a concrete value until runtime,
+  // so the compiler cannot see the host type.
   return createElement(type, { className: 'content' }, value);
 }
 ```
@@ -232,6 +254,7 @@ If the candidate structures are known during development, write explicit JSX bra
 
 ```tsx
 function Content({ variant, value }) {
+  // Both candidate host types appear directly in JSX.
   if (variant === 'label') {
     return <text className="content-label">{value}</text>;
   }
@@ -246,12 +269,13 @@ function Content({ variant, value }) {
 
 Runtime data still selects the branch, but the host structure of each branch is visible to the compiler, so each can produce its own Snapshot. Use dynamic creation only when the host type genuinely comes from runtime configuration.
 
-### Prefer Explicit Properties for Fixed Property Sets
+### Prefer Explicit Properties When the Property Set Is Fixed
 
-Snapshot supports spread attributes, but the compiler records the entire spread object as one dynamic property set. During an update, the runtime must compare the properties in that set before applying changes to the corresponding element:
+Snapshot also supports spread properties. The compiler knows which element receives the spread object, but because the set of properties is not known until runtime, it must record the entire object as one dynamic position. During an update, the runtime compares the properties in the old and new objects before applying changes to the target element:
 
 ```tsx
 function UserCard({ id, name, selected }) {
+  // A spread makes the entire property set one dynamic position.
   const cardProps = {
     id,
     className: selected ? 'user-card selected' : 'user-card',
@@ -269,6 +293,7 @@ When the property set is known during development, declaring properties explicit
 
 ```tsx
 function UserCard({ id, name, selected }) {
+  // Each dynamic property gets its own position and updater.
   return (
     <view id={id} className={selected ? 'user-card selected' : 'user-card'}>
       <text>{name}</text>
@@ -278,3 +303,5 @@ function UserCard({ id, name, selected }) {
 ```
 
 The explicit form tells the compiler exactly which dynamic position corresponds to `id` and which corresponds to `className`, allowing it to generate targeted update logic for each property. It also avoids creating a `cardProps` object on every render. Spread remains appropriate when a component needs to forward unknown properties supplied by its caller; do not expand them one by one solely for Snapshot.
+
+When deciding whether JSX is suitable for static extraction, remember one principle: keep known host types, hierarchy, and order directly visible in the source, and let actual runtime data enter through properties or dynamic children. If a structure genuinely needs to be chosen at runtime, keeping it dynamic is more important than optimizing for the compiler.
