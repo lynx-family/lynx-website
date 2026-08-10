@@ -10,17 +10,19 @@ import backgroundFirstFrameWaitImg from '@assets/blog/reactlynx-instant-first-fr
 import backgroundRenderingPatchImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-rendering-patch.png?url';
 import dualBuildPathsImg from '@assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png?url';
 import instantFirstFrameStartupImg from '@assets/blog/reactlynx-instant-first-frame-rendering/instant-first-frame-startup.png?url';
-import { BlogHeader } from '@lynx';
+import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader />
 
-_不少开发者好奇 ReactLynx 的实现细节和编程模型：它是怎么让 React 跑在双线程上的，又是怎么让[首帧直出](/guide/interaction/ifr)、[主线程脚本](/react/main-thread-script)这些主线程能力成为可能的。这些我们过去都没有展开讲过。为此我们开了一个 deep dive 系列，聊聊 ReactLynx 幕后的事情，这是第一篇。_
+_不少开发者好奇 ReactLynx 的实现细节和编程模型：它是怎么让 React 跑在双线程上的，又是怎么让[首帧直出](/guide/interaction/ifr)、[主线程脚本](/react/main-thread-script)这些主线程能力成为可能的。这些我们过去都没有展开讲过。为此我们打算写一个 deep dive 系列。_
 
-在 Web React 里，[render 和 commit](https://react.dev/learn/render-and-commit) 发生在同一个线程中。而 [ReactLynx](/react/) 会在后台线程运行 React 业务逻辑，主线程进行 Native 视图绘制。这样业务 JS 不会直接卡住主线程，但也导致后台 React 没法直接拿主线程上的 Element 引用去 commit。这就驱使 ReactLynx 拥有一条与 React 不同的，从后台线程到主线程的 commit 链路。
+在 Web React 里，[render 和 commit](https://react.dev/learn/render-and-commit) 发生在同一个线程：React 算完 diff，直接拿 DOM 引用去更新。
+
+而在 ReactLynx 等跨平台框架中，我们希望主线程尽可能专注于原生视图的绘制，不被 React 或 JavaScript 业务逻辑阻塞，因此将 UI 框架跑在了一个独立的后台线程上。但这也意味着后台线程拿不到主线程的 Element 引用，没法直接 commit。这就驱使 ReactLynx 拥有一条与 React 不同的，从后台线程到主线程的 commit 链路。
 
 ## 后台渲染
 
-在常规后台渲染模式下，ReactLynx 的更新路径本质上是一次跨线程的异步提交。React 的 render 和 diff 发生在后台线程，产生的更新结果被编码成 Patch；主线程收到 Patch 后，再解析并调用本地 Element 操作。
+后台渲染，更严谨的全称是"后台（线程）驱动的渲染"。在这个模式下，ReactLynx 的更新路径是一次跨线程的异步提交：React 在后台线程完成 render 和 diff，把结果编码成 Patch；主线程收到 Patch 后解析并执行 Element 操作。
 
 <img
   src={backgroundRenderingPatchImg}
@@ -29,6 +31,14 @@ _不少开发者好奇 ReactLynx 的实现细节和编程模型：它是怎么�
 />
 
 我们接下来会以这个典型的 ReactLynx 卡片组件为例，分析 ReactLynx 的渲染和更新流程：
+
+<Go
+  example="react-apis"
+  defaultFile="src/thread-macros/App.tsx"
+  defaultEntryFile="dist/thread-macros.lynx.bundle"
+  entry="src/thread-macros"
+  defaultTab="web"
+/>
 
 ```tsx
 import { useEffect, useState } from '@lynx-js/react';
@@ -65,7 +75,7 @@ export default function App({ initialCount }) {
 
 Patch 描述的是“这次变化是什么”。
 
-为了让这份数据适合跨线程传输，Patch 会被组织成扁平的操作码流：主线程可以用一个游标从左到右扫描，先读到操作码，再按这个操作消费后面的固定参数，接着继续读下一条操作。
+为了适合跨线程传输，Patch 被组织成扁平的操作码流：主线程用一个游标从左到右扫描，先读操作码，再按格式读取后续参数，逐条执行。
 
 Patch 的[操作枚举](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatch.ts)可以简化理解为几类：
 
@@ -88,7 +98,7 @@ patch: [
 ];
 ```
 
-有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”，主线程就能完成属性更新。关于位置编号的细节这里先不提，我们会在后续的另外一篇文档中再行讨论。
+有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程”这个位置的新值是 `1`”就够了。位置编号的具体机制我们会在系列的后续文章中讨论。
 
 Patch 也能表达结构变化。以前面的条件分支为例，如果同一位置需要从 `main` 分支对应的旧 child 切到 `background` 分支对应的新 child，这些操作仍然落在同一套数字流里：
 
