@@ -99,12 +99,12 @@ describe('scrollbar element compatibility', () => {
     },
   );
 
-  it('records the preferred names and platform-specific aliases', () => {
+  it('records the Clay preferred name and deprecated alias', () => {
     expect(
       Object.keys(
         scrollViewAttributes['enable-scrollbar'].__compat.support,
       ).sort(),
-    ).toEqual([...clayPlatforms, 'web_lynx'].sort());
+    ).toEqual(clayPlatforms);
     expect(
       scrollViewAttributes['scroll-bar-enable'].__compat.support.clay_macos,
     ).toMatchObject({
@@ -112,8 +112,14 @@ describe('scrollbar element compatibility', () => {
       notes: expect.stringContaining('Deprecated alias'),
     });
     expect(
-      Object.keys(listAttributes['scrollbar-enable'].__compat.support),
-    ).toEqual(['web_lynx']);
+      Object.keys(listAttributes['enable-scrollbar'].__compat.support).sort(),
+    ).toEqual(clayPlatforms);
+    expect(
+      listAttributes['scroll-bar-enable'].__compat.support.clay_macos,
+    ).toMatchObject({
+      alternative_name: 'enable-scrollbar',
+      notes: expect.stringContaining('Deprecated alias'),
+    });
   });
 });
 
