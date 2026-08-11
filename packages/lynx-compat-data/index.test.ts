@@ -1,4 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
+import listData from './elements/list.json';
+import scrollViewData from './elements/scroll-view.json';
 import setTimeoutData from './lynx-api/global/setTimeout.json';
 import iosData from './platforms/ios.json';
 import {
@@ -24,6 +26,24 @@ import {
 
 const ios = iosData.platforms.ios;
 const sTO = setTimeoutData['lynx-api'].global.setTimeout;
+const clayPlatforms = [
+  'clay_android',
+  'clay_ios',
+  'clay_macos',
+  'clay_windows',
+];
+const clayScrollbarAttributes = [
+  'scroll-bar-auto-hide',
+  'scroll-bar-auto-hide-delay',
+  'scroll-bar-width',
+  'scroll-bar-thumb-width',
+  'scroll-bar-thumb-min-length',
+  'scroll-bar-thumb-radius',
+  'scroll-bar-thumb-color',
+  'scroll-bar-thumb-active-color',
+  'scroll-bar-thumb-hover-color',
+  'scroll-bar-track-color',
+] as const;
 
 describe('Platform', () => {
   it('should have correct type', () => {
@@ -59,6 +79,41 @@ describe('API', () => {
     expect(isSupportBlock(sTO.__compat.support)).toBe(true);
     expect(isSupportStatement(sTO.__compat.support.android)).toBe(true);
     expect(isSimpleSupportStatement(sTO.__compat.support.android)).toBe(true);
+  });
+});
+
+describe('scrollbar element compatibility', () => {
+  const scrollViewAttributes =
+    scrollViewData.elements['scroll-view'].attributes;
+  const listAttributes = listData.elements.list.attributes;
+
+  it.each(clayScrollbarAttributes)(
+    'limits %s to Clay for scroll-view and list',
+    (attribute) => {
+      expect(
+        Object.keys(scrollViewAttributes[attribute].__compat.support).sort(),
+      ).toEqual(clayPlatforms);
+      expect(
+        Object.keys(listAttributes[attribute].__compat.support).sort(),
+      ).toEqual(clayPlatforms);
+    },
+  );
+
+  it('records the preferred names and platform-specific aliases', () => {
+    expect(
+      Object.keys(
+        scrollViewAttributes['enable-scrollbar'].__compat.support,
+      ).sort(),
+    ).toEqual([...clayPlatforms, 'web_lynx'].sort());
+    expect(
+      scrollViewAttributes['scroll-bar-enable'].__compat.support.clay_macos,
+    ).toMatchObject({
+      alternative_name: 'enable-scrollbar',
+      notes: expect.stringContaining('Deprecated alias'),
+    });
+    expect(
+      Object.keys(listAttributes['scrollbar-enable'].__compat.support),
+    ).toEqual(['web_lynx']);
   });
 });
 
