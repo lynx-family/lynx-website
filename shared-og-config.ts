@@ -79,7 +79,7 @@ const COVER_EXTRAS: Record<string, Pick<OgCover, 'gradient' | 'logo'>> = {
     gradient: ['#ff9a00', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
     logo: 'rspeedy.png',
   },
-  'lynx-ui': {
+  ui: {
     gradient: ['#ff1a6e', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
     logo: 'lynx-ui.png',
   },

@@ -182,6 +182,19 @@ export default defineConfig({
           from: '^/zh/api/genui\\.html$',
           to: '/zh/api/genui/index.html',
         },
+        // Keep old lynx-ui URLs working after the subsite moved to /ui.
+        {
+          from: '^/lynx-ui(/.*)?$',
+          to: '/ui$1',
+        },
+        {
+          from: '^/zh/lynx-ui(/.*)?$',
+          to: '/zh/ui$1',
+        },
+        {
+          from: '^/en/lynx-ui(/.*)?$',
+          to: '/en/ui$1',
+        },
       ],
     }),
     ...(!IS_LIGHTWEIGHT_BUILD

@@ -114,6 +114,21 @@ const hoistMdxImports = (filePath) => {
   }
 };
 
+const rewriteLynxUiRouteLinks = (filePath) => {
+  if (!filePath.endsWith('.mdx')) {
+    return;
+  }
+
+  const original = fs.readFileSync(filePath, 'utf8');
+  const next = original
+    .replace(/\((\/zh)?\/lynx-ui(?=[/#).?])/g, '($1/ui')
+    .replace(/(href=["'])(\/zh)?\/lynx-ui(?=[/#?])/g, '$1$2/ui');
+
+  if (next !== original) {
+    fs.writeFileSync(filePath, next, 'utf8');
+  }
+};
+
 const ENABLE_MDX_HOIST = (process.env.LYNX_UI_MDX_HOIST ?? 'true') !== 'false';
 
 let copiedCount = 0;
@@ -134,6 +149,9 @@ packages.forEach((pkgName) => {
       for (const filePath of collectFilesRecursively(targetDir)) {
         hoistMdxImports(filePath);
       }
+    }
+    for (const filePath of collectFilesRecursively(targetDir)) {
+      rewriteLynxUiRouteLinks(filePath);
     }
     copiedCount++;
   }
