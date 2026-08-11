@@ -33,6 +33,7 @@ const clayPlatforms = [
   'clay_windows',
 ];
 const clayScrollbarAttributes = [
+  'enable-scrollbar',
   'scroll-bar-auto-hide',
   'scroll-bar-auto-hide-delay',
   'scroll-bar-width',
@@ -88,27 +89,24 @@ describe('scrollbar element compatibility', () => {
   const listAttributes = listData.elements.list.attributes;
 
   it.each(clayScrollbarAttributes)(
-    'limits %s to Clay for scroll-view and list',
+    'records %s as added in Clay 3.7 for scroll-view and list',
     (attribute) => {
+      const scrollViewSupport =
+        scrollViewAttributes[attribute].__compat.support;
+      const listSupport = listAttributes[attribute].__compat.support;
+
+      expect(Object.keys(scrollViewSupport).sort()).toEqual(clayPlatforms);
+      expect(Object.keys(listSupport).sort()).toEqual(clayPlatforms);
       expect(
-        Object.keys(scrollViewAttributes[attribute].__compat.support).sort(),
-      ).toEqual(clayPlatforms);
+        Object.values(scrollViewSupport).map(
+          ({ version_added }) => version_added,
+        ),
+      ).toEqual(['3.7', '3.7', '3.7', '3.7']);
       expect(
-        Object.keys(listAttributes[attribute].__compat.support).sort(),
-      ).toEqual(clayPlatforms);
+        Object.values(listSupport).map(({ version_added }) => version_added),
+      ).toEqual(['3.7', '3.7', '3.7', '3.7']);
     },
   );
-
-  it('records the Clay preferred name', () => {
-    expect(
-      Object.keys(
-        scrollViewAttributes['enable-scrollbar'].__compat.support,
-      ).sort(),
-    ).toEqual(clayPlatforms);
-    expect(
-      Object.keys(listAttributes['enable-scrollbar'].__compat.support).sort(),
-    ).toEqual(clayPlatforms);
-  });
 });
 
 describe('Util functions', () => {
