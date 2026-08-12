@@ -29,7 +29,7 @@ The example below streams a mock OpenUI Lang response into the Renderer. As chun
 
 An OpenUI integration has five parts:
 
-1. **Define a Library**: Create component definitions and their Zod schemas. `createOpenUiLibrary()` starts with layout, content, button, media, overlay, and input components, then applies your extensions.
+1. **Define a Library**: Create component definitions and their Zod schemas. `createOpenUiLibrary()` includes layout, content, button, media, overlay, and input components by default, then applies your extensions. It can also build a Library from only the definitions you select.
 2. **Instruct the Agent**: Give the model an OpenUI system prompt generated from the same component contract.
 3. **Stream OpenUI Lang**: Append each model delta to the response text. Statements use functional notation, for example `title = TextContent("Hello")`.
 4. **Parse and render**: `<OpenUiRenderer>` incrementally parses completed statements, resolves forward references, and renders registered ReactLynx components.
@@ -200,7 +200,27 @@ Connect `Query()` and `Mutation()` names to application capabilities through `to
 />
 ```
 
-`Query()` runs after streaming finishes and runs again when a referenced `$variable` changes; its default value keeps the UI renderable before data arrives. `Mutation()` remains idle until an Action invokes it with `@Run`. Action steps are visited in order, but only `@Run(mutation)` is awaited and stops the remaining steps on failure. `@Run(query)` starts a refetch and immediately advances to the next step.
+After streaming finishes and a Query statement is complete, its default or prefetched result participates in the first synchronous render. When `toolProvider` is present, `Query()` revalidates after commit and runs again when a referenced `$variable` changes. `Mutation()` remains idle until an Action invokes it with `@Run`. Action steps are visited in order, but only `@Run(mutation)` is awaited and stops the remaining steps on failure. `@Run(query)` starts a refetch and immediately advances to the next step.
+
+### Prefetch Query results
+
+When Query data is available before the ReactLynx first screen, pass it through `initialQueryResults`. Each key is the Query assignment name (statement ID), not the tool name, so calls to the same tool with different arguments remain distinct:
+
+```text
+orders = Query("list_orders", { status: "open" }, { rows: [] })
+```
+
+```tsx
+<OpenUiRenderer
+  response={response}
+  library={library}
+  initialQueryResults={{ orders: prefetchedOrders }}
+/>
+```
+
+The prefetched value, including `null`, `false`, or `0`, takes precedence over the Query default during the first synchronous render. Tool execution still stays outside render: when `toolProvider` is present, the runtime revalidates after commit, and a successful result replaces the fallback. If revalidation fails, the prefetched fallback remains and the error follows the normal Query error path. Omit `toolProvider` when the prefetched result is an immutable snapshot that should not be revalidated.
+
+Query data is scoped to one raw `response`. When replacing the response—even with one that reuses the same assignment name—provide matching `initialQueryResults`; the runtime does not expose data left by the previous response.
 
 `onStateUpdate` snapshots store `$variables` as direct values, while form controls can use `{ value, componentType }` entries. Make persistence code tolerant of repeated snapshots and these two shapes.
 
@@ -247,7 +267,30 @@ const library = createOpenUiLibrary({
 
 Declare `zod` as a direct application dependency when defining components. The schema establishes the component's argument order and metadata used for prompt and JSON Schema generation. The current parser checks structural constraints such as component names, required arguments, and extra arguments, but it does not perform a complete `zod.parse()` of every value; validate security-sensitive values inside components and tools. The component callback receives `{ props, renderNode, statementId }`; it does not receive the component props as its top-level argument.
 
-`createOpenUiLibrary()` appends custom definitions to its built-ins; a custom component with the same name overrides that name, but the public factory does not remove the other defaults to form a strict allowlist. You can inspect the resulting contract with `library.toJSONSchema()`. Keep this contract stable for the lifetime of an active stream by memoizing the Library instead of creating it during every render.
+By default, `createOpenUiLibrary()` appends custom definitions to its 26 built-in components and six component groups. A custom component with the same name overrides that built-in. Set `includeDefaultComponents: false` to omit both the built-in definitions and their groups; `components` and `componentGroups` then describe the complete Library vocabulary. You can inspect the resulting contract with `library.toJSONSchema()`. Keep this contract stable for the lifetime of an active stream by memoizing the Library instead of creating it during every render.
+
+### Select components explicitly
+
+Import selected built-ins from their component subpaths. Use the catalog-free `openui/explicit` entry when components you did not select must also stay outside the static dependency graph:
+
+```tsx
+import {
+  OpenUiRenderer,
+  createOpenUiLibrary,
+} from '@lynx-js/genui/openui/explicit';
+import { Stack } from '@lynx-js/genui/openui/catalog/Stack';
+import { TextContent } from '@lynx-js/genui/openui/catalog/TextContent';
+
+const library = createOpenUiLibrary({
+  includeDefaultComponents: false,
+  components: [Stack, TextContent],
+  componentGroups: [{ name: 'Selected', components: ['Stack', 'TextContent'] }],
+});
+```
+
+Disabling defaults does not change the default root name, `Stack`. Include `Stack`, as above, or set `root` to another component you provide; Library creation fails when the root is missing. If you omit `componentGroups`, the Library has no groups. Keep the Agent prompt restricted to the same component names as the client Library.
+
+`includeDefaultComponents` controls the runtime vocabulary even when you import the factory from `@lynx-js/genui/openui`. However, the main entry still statically references the complete default catalog. To establish the static dependency boundary, import all OpenUI runtime APIs—including `OpenUiRenderer`, `defineComponent`, and hooks—from `openui/explicit`, import selected built-ins from individual `catalog/<Component>` paths, and do not also import the main `openui` entry.
 
 ## Try the Playground
 
