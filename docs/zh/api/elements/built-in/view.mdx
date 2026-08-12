@@ -515,7 +515,7 @@ event-through?: boolean
 
 对于非 `<page>` 节点，该属性支持继承：当实际命中的节点未设置 `event-through` 时，会继承祖先节点的 `event-through` 值，但不会继承 `<page>` 节点的 `event-through` 值。
 
-对于 `<page>` 节点，事件穿透行为由其 `event-through` 属性和页面配置 [`Config.enableEventThrough`](https://lynxjs.org/zh/api/rspeedy/type-config.config.enableeventthrough) 共同决定。当触摸命中 `<page>` 节点区域时，只要其中任意一项为 `true`，Lynx 就不会消费平台层的触摸事件。该配置属性从 `@lynx-js/type-config` 4.1.0 起可用；该类型包版本下限与 LynxSDK 3.2 的运行时版本下限相互独立。
+对于 `<page>` 节点，事件穿透行为由其 `event-through` 属性和页面配置 [`Config.enableEventThrough`](../../rspeedy/type-config.config.enableeventthrough.md) 共同决定。当触摸命中 `<page>` 节点区域时，只要其中任意一项为 `true`，Lynx 就不会消费平台层的触摸事件。该配置属性从 `@lynx-js/type-config` 4.1.0 起可用；该类型包版本下限与 LynxSDK 3.2 的运行时版本下限相互独立。
 
 `event-through` 的判定基于触摸命中的节点。[`user-interaction-enabled`](#user-interaction-enabled) 和 [`pointer-events`](../../css/properties/pointer-events.mdx) 会影响命中测试及最终命中的节点，因此也会间接影响 `event-through` 是否生效。命中节点确定后，若命中 `<page>`，则按上述 `<page>` 规则判断；否则，根据命中节点及其非 `<page>` 祖先节点的 `event-through` 值判断。
 
@@ -525,7 +525,16 @@ event-through?: boolean
 `event-through` 只控制 Lynx 是否响应或消费平台层的触摸事件。若要将未消费的触摸事件继续传递给其他平台层节点，还需要客户端按平台完成以下适配：
 
 - **Android**：确保 Lynx 页面的父容器不消费触摸事件。Lynx 不消费事件后，系统事件分发可将事件传递给能够消费事件的兄弟节点，例如滚动容器。
-- **iOS**：LynxView 不响应触摸时，其 `hitTest` 返回 `nil`，Lynx 页面不会进入事件响应链。如果需要由兄弟节点响应事件，父容器的 `hitTest` 也需根据场景返回 `nil`。
+- **iOS**：LynxView 不响应触摸时，其 `hitTest` 返回 `nil`，Lynx 页面不会进入事件响应链。以下示例假设一个专用的 Lynx 包装容器包含 LynxView，并由该包装容器重写 `hitTest:withEvent:`；目标响应视图是该包装容器在共同祖先视图下的兄弟视图：
+
+  ```text
+  共同祖先视图
+  ├── Lynx 包装容器（重写 hitTest:withEvent:）
+  │   └── LynxView
+  └── 目标响应视图
+  ```
+
+  LynxView 不响应触摸时，该包装容器也返回 `nil`，使共同祖先视图继续命中包装容器的兄弟视图。如果目标响应视图位于包装容器内部并与 LynxView 同级，请勿直接使用此实现：它会将 `[super hitTest:withEvent:]` 返回的非 Lynx 子视图替换为 `nil`。
 
   ```objc
   - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {

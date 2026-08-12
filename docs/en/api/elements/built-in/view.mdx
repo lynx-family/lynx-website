@@ -515,7 +515,7 @@ Specify whether Lynx consumes touch events from the platform layer when a touch 
 
 For non-`<page>` nodes, this property supports inheritance. If the hit-tested node does not set `event-through`, it inherits the `event-through` value from its ancestors, excluding the `event-through` value of the `<page>` node.
 
-For the `<page>` node, event pass-through is determined jointly by its `event-through` property and the page configuration [`Config.enableEventThrough`](https://lynxjs.org/api/rspeedy/type-config.config.enableeventthrough). When a touch hits the `<page>` node's area, Lynx does not consume the platform-level touch event if either value is `true`. This configuration property is available in `@lynx-js/type-config` 4.1.0 or later; this package floor is independent of its LynxSDK 3.2 runtime floor.
+For the `<page>` node, event pass-through is determined jointly by its `event-through` property and the page configuration [`Config.enableEventThrough`](../../rspeedy/type-config.config.enableeventthrough.md). When a touch hits the `<page>` node's area, Lynx does not consume the platform-level touch event if either value is `true`. This configuration property is available in `@lynx-js/type-config` 4.1.0 or later; this package floor is independent of its LynxSDK 3.2 runtime floor.
 
 The `event-through` result is based on the node hit by the touch. [`user-interaction-enabled`](#user-interaction-enabled) and [`pointer-events`](../../css/properties/pointer-events.mdx) affect hit testing and the resulting hit node, so they can indirectly affect whether `event-through` takes effect. After the hit node is determined, Lynx applies the `<page>` rules above if the hit node is `<page>`; otherwise, it evaluates the `event-through` values of the hit node and its non-`<page>` ancestors.
 
@@ -525,7 +525,16 @@ The active region of this property is affected by [`event-through-active-regions
 `event-through` only controls whether Lynx responds to or consumes touch events from the platform layer. Passing unconsumed touch events to other platform-layer nodes also requires client-side integration for each platform:
 
 - **Android**: Ensure that the parent container of the Lynx page does not consume touch events. When Lynx leaves an event unconsumed, the system's event dispatch can pass it to a sibling node that consumes it, such as a scroll container.
-- **iOS**: When LynxView does not respond to a touch, its `hitTest` returns `nil` and the Lynx page is excluded from the event responder chain. To let a sibling node respond to the event, the parent container's `hitTest` must also return `nil` as appropriate.
+- **iOS**: When LynxView does not respond to a touch, its `hitTest` returns `nil` and the Lynx page is excluded from the event responder chain. The following example assumes that a dedicated Lynx wrapper contains LynxView and overrides `hitTest:withEvent:`. The intended responder is a sibling of that wrapper under their common ancestor:
+
+  ```text
+  Common ancestor
+  ├── Lynx wrapper (overrides hitTest:withEvent:)
+  │   └── LynxView
+  └── Intended responder view
+  ```
+
+  When LynxView does not respond, the wrapper also returns `nil`, allowing the common ancestor to continue hit testing the wrapper's sibling. If the intended responder is instead a sibling of LynxView inside the wrapper, do not use this override unchanged: it replaces a non-Lynx descendant returned by `[super hitTest:withEvent:]` with `nil`.
 
   ```objc
   - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
