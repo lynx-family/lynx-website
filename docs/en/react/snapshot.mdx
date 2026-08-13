@@ -1,32 +1,57 @@
 ---
-description: 'Learn how ReactLynx transforms JSX into Snapshots at compile time to reduce runtime reconciliation.'
+description: 'Learn how ReactLynx uses compiler-informed rendering to move work from runtime to build time.'
 ---
 
-# Snapshot Compilation Optimization
+# Compiler-Informed Rendering
 
-ReactLynx automatically extracts statically known JSX structures at build time so that the runtime can focus on the parts that may change. In most applications, you can continue writing regular, idiomatic JSX. You do not need to create or manipulate Snapshots directly.
+ReactLynx analyzes JSX at build time and extracts statically known host structures so that the runtime can focus on the parts that may change. In most applications, you can continue writing regular, idiomatic JSX.
+
+The current compiler records the extracted structure and its dynamic positions in a compiled representation called a **Snapshot**. Conceptually, this can be loosely understood as a form of structural constant folding: host elements and values known at build time are folded into one reusable representation, while dynamic values and subtrees remain as its inputs.
+
+```tsx
+// Before folding
+<view>
+  <view className={cls}>
+    <view style={{ backgroundColor: 'red' }} />
+  </view>
+  <text>{t}</text>
+  <text>Hello World!</text>
+  <Comp1 />
+  {flag && <view className="optional" />}
+</view>;
+
+// After folding (conceptual output)
+<__snapshot_0x1
+  __0={cls}
+  __1={t}
+  __2={<Comp1 />}
+  __3={flag && <__snapshot_0x2 />}
+/>;
+```
+
+The exact generated names differ, but the shape illustrates the important boundary: the stable host hierarchy is part of the compiled representation, while `cls`, `t`, the component subtree, and the conditional subtree remain dynamic inputs.
 
 :::info
 
-Snapshot is unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` method on React class components. It is an internal ReactLynx optimization.
+Snapshot is unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` method on React class components. It is the current internal compiled representation used by ReactLynx, not the optimization itself. You do not need to create or manipulate Snapshots directly.
 
 :::
 
 ## Writing Compiler-Friendly JSX
 
-With the default Snapshot compiler backend, the optimization is applied automatically. For most components:
+Compiler-informed rendering is applied automatically. For most components:
 
 - Prefer clear and idiomatic JSX.
 - Let runtime data flow through properties and children as usual.
 - Keep component semantics and readability ahead of compiler optimization.
 
-Dynamic properties, text, and children do not prevent Snapshot extraction by themselves. When host element types, hierarchy, and insertion order are naturally visible in JSX, the compiler can extract the stable structure and record the expressions as dynamic positions. There is no need to split a component merely to make its properties or text values static.
+Dynamic properties, text, and children do not prevent static extraction by themselves. When host element types, hierarchy, and insertion order are naturally visible in JSX, the compiler can extract the stable structure and record the expressions as dynamic positions. There is no need to split a component merely to make its properties or text values static.
 
 The following sections explain additional patterns and the underlying mechanism. These patterns are not hard rules; use them only when they preserve the intended component structure.
 
-## How Snapshot Works
+## How Compiler-Informed Rendering Works
 
-### Why Snapshot
+### Why Move Rendering Work to Build Time
 
 A regular JSX transform keeps the element structure, static values, and dynamic expressions in the runtime output. On every render, `_jsx()` creates virtual nodes (VNodes) that describe the UI structure. The ReactLynx reconciler then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as reconciliation.
 
@@ -42,7 +67,7 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-With a regular JSX transform and no Snapshot extraction, the compiled result is semantically similar to the following code:
+With a regular JSX transform and no static extraction, the compiled result is semantically similar to the following code:
 
 ```js
 export function Greeting({ name, highlighted }) {
@@ -60,15 +85,15 @@ This output still represents the complete host hierarchy with separate `view` an
 
 These stable structures are exactly what the compiler can extract ahead of time.
 
-### How JSX Compiles into a Snapshot
+### How JSX Lowers to the Snapshot Representation
 
-With Snapshot extraction enabled, the call site for the same component is semantically similar to the following code:
+With static extraction enabled, the call site for the same component is semantically similar to the following code:
 
 ```js
 const __snapshot_xxx = '__snapshot_xxx';
 
 export function Greeting({ name, highlighted }) {
-  // The static host hierarchy is folded into one Snapshot type.
+  // The static host hierarchy is folded into one compiled representation.
   return _jsx(__snapshot_xxx, {
     values: [highlighted ? 'card active' : 'card'], // Dynamic property position 0
     $0: name, // Dynamic child slot 0
@@ -76,7 +101,7 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-The difference between the two outputs is that the regular output expands the complete host VNode hierarchy, while the Snapshot output only references a Snapshot ID and passes `className` and `name` into predefined dynamic positions.
+The difference between the two outputs is that the regular output expands the complete host VNode hierarchy, while the compiled output only references a Snapshot ID and passes `className` and `name` into predefined dynamic positions.
 
 The compiler can therefore determine built-in element types, hierarchy, and insertion order ahead of time; extract fixed text, static properties, and CSS scope information; and locate dynamic properties, spread properties, and dynamic children. For the `Greeting` component, these parts are:
 
@@ -84,11 +109,11 @@ The compiler can therefore determine built-in element types, hierarchy, and inse
 - **Dynamic property**: the `className` determined by `highlighted`.
 - **Dynamic child**: the text generated from `name`.
 
-Finally, the compiler combines the static creation logic, dynamic update functions, slot locations, and a Snapshot ID into a reusable Snapshot definition. The runtime uses this definition to create Snapshot instances and only supplies each instance's own dynamic values and children.
+Finally, the compiler records the static creation logic, dynamic update functions, slot locations, and a Snapshot ID in the current Snapshot representation. The runtime uses this compiled definition to create instances and only supplies each instance's own dynamic values and children.
 
-### What a Snapshot Definition Contains
+### What the Current Snapshot Representation Contains
 
-From the compiler's perspective, a Snapshot definition has four core parts:
+The current Snapshot representation has four core parts:
 
 | Compiled result     | Purpose                                                                                                   |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -97,7 +122,9 @@ From the compiler's perspective, a Snapshot definition has four core parts:
 | Dynamic child slots | Marks where dynamic subtrees such as components, conditional branches, text expressions, and lists go.    |
 | Snapshot ID         | Identifies the compiled structure so that multiple component instances can reuse one Snapshot definition. |
 
-The Snapshot ID above refers to a Snapshot definition generated at build time. The simplified example below preserves the static creator, dynamic updater, and slot information that illustrate the compiled structure, while omitting compiler metadata for CSS, entry points, and compatibility.
+The Snapshot ID above refers to a compiled definition generated at build time. From a compiler perspective, lowering this representation into direct element operations can be understood as a form of partial evaluation: ReactLynx specializes the generic rendering process with the host structure known from JSX, leaving only dynamic values and subtrees to be processed at runtime.
+
+The simplified example below preserves the static creator, dynamic updater, and slot information that illustrate the compiled structure, while omitting compiler metadata for CSS, entry points, and compatibility.
 
 <details>
 <summary>View a simplified Snapshot definition</summary>
@@ -245,11 +272,11 @@ function ProductCard({ name, price, showPrice }) {
 }
 ```
 
-The second form can make the shared shell more visible to the compiler and keep only the price region as a dynamic slot. Do not restructure conditional rendering solely for Snapshot: different forms may affect component identity, state preservation, and readability.
+The second form can make the shared shell more visible to the compiler and keep only the price region as a dynamic slot. Do not restructure conditional rendering solely for static extraction: different forms may affect component identity, state preservation, and readability.
 
 ### Declare Host Element Types Explicitly
 
-The compiler can only analyze JSX structures that are visible in the source. If a string and `createElement()` determine a host element type at runtime, that part of the structure cannot be determined ahead of time and therefore cannot be extracted into a Snapshot:
+The compiler can only analyze JSX structures that are visible in the source. If a string and `createElement()` determine a host element type at runtime, that part of the structure cannot be determined ahead of time and therefore cannot be statically extracted:
 
 ```tsx
 import { createElement } from '@lynx-js/react';
@@ -278,11 +305,11 @@ function Content({ variant, value }) {
 }
 ```
 
-Runtime data still selects the branch, but the host structure of each branch is visible to the compiler, so each can produce its own Snapshot. Use dynamic creation only when the host type genuinely comes from runtime configuration.
+Runtime data still selects the branch, but the host structure of each branch is visible to the compiler, so each can be statically extracted. Use dynamic creation only when the host type genuinely comes from runtime configuration.
 
 ### Explicit Properties Can Enable More Targeted Updates
 
-Snapshot also supports spread properties. The compiler knows which element receives the spread object, but because the set of properties is not known until runtime, it must record the entire object as one dynamic position. During an update, the runtime compares the properties in the old and new objects before applying changes to the target element:
+Compiler-informed rendering also supports spread properties. The compiler knows which element receives the spread object, but because the set of properties is not known until runtime, it must record the entire object as one dynamic position. During an update, the runtime compares the properties in the old and new objects before applying changes to the target element:
 
 ```tsx
 function UserCard({ id, name, selected }) {
@@ -313,6 +340,6 @@ function UserCard({ id, name, selected }) {
 }
 ```
 
-The explicit form tells the compiler exactly which dynamic position corresponds to `id` and which corresponds to `className`, allowing it to generate targeted update logic for each property. It also avoids creating a `cardProps` object on every render. Spread remains appropriate when a component needs to forward unknown properties supplied by its caller; do not expand them one by one solely for Snapshot.
+The explicit form tells the compiler exactly which dynamic position corresponds to `id` and which corresponds to `className`, allowing it to generate targeted update logic for each property. It also avoids creating a `cardProps` object on every render. Spread remains appropriate when a component needs to forward unknown properties supplied by its caller; do not expand them one by one solely for static extraction.
 
 When deciding whether JSX is suitable for static extraction, remember one principle: keep known host types, hierarchy, and order directly visible in the source, and let actual runtime data enter through properties or dynamic children. If a structure genuinely needs to be chosen at runtime, keeping it dynamic is more important than optimizing for the compiler.
