@@ -68,6 +68,10 @@ export function Go(props: GoProps) {
       ...baseConfig,
       nativeFrameworks: {
         lynxtron: {
+          learnMoreUrl: {
+            en: '/lynxtron/go',
+            cn: '/zh/lynxtron/go',
+          },
           downloadUrl: resolveLynxtronDownloadUrl(),
         },
       },
