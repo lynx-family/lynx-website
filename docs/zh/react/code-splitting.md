@@ -146,6 +146,10 @@ export default App;
 
 ### 修改消费者项目
 
+:::warning 版本兼容性
+部署新构建的独立 lazy bundle 前，请先将消费者的 `@lynx-js/react` 升级到相同或更新的版本。尤其需要注意，低于 0.115.0 的消费者无法加载由 0.115.0 及以上版本构建的 lazy bundle；0.115.0 及以上版本的消费者可以加载由旧版本构建的 bundle。详见 [`@lynx-js/react` 变更日志](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01150)。
+:::
+
 要加载 Producer 项目，请在入口的开头添加对 `@lynx-js/react/experimental/lazy/import` 的导入：
 
 <!-- eslint-disable import/no-unresolved -->
