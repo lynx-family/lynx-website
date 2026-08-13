@@ -4,15 +4,29 @@ description: '了解 ReactLynx 如何在编译期把 JSX 转换为 Snapshot，�
 
 # Snapshot 编译优化
 
-一个 UI 组件里，大部分结构在源码中就已经固定，每次渲染真正会变的往往只是少数属性和文本。ReactLynx 的 **Snapshot 编译优化**利用了这一点：编译器在构建时提取 JSX 中能够静态确定的元件结构，并为动态部分生成专门的表示。这样，可静态确定的宿主元件不必在每次渲染时逐层进入协调过程，运行时只需实例化编译结果并处理动态位置。
+ReactLynx 会在构建时自动提取 JSX 中能够静态确定的结构，让运行时专注处理可能变化的部分。大多数应用只需继续编写常规、地道的 JSX，不需要直接创建或操作 Snapshot。
 
 :::info
 
-这里的 Snapshot 不是测试框架中的“快照测试”，也不是 React 类组件的 `getSnapshotBeforeUpdate()`。它是 ReactLynx 的内部实现，应用代码只需照常编写 JSX，不需要直接创建或操作 Snapshot。
+这里的 Snapshot 不是测试框架中的“快照测试”，也不是 React 类组件的 `getSnapshotBeforeUpdate()`。它是 ReactLynx 的内部优化。
 
 :::
 
-## 为什么需要 Snapshot
+## 如何编写编译友好的 JSX
+
+使用默认 Snapshot 编译后端时，优化由编译器自动完成。对于大多数组件：
+
+- 优先编写清晰、地道的 JSX。
+- 让运行时数据照常通过属性和子节点传入。
+- 始终把组件语义和可读性放在编译优化之前。
+
+动态属性、文本和子节点本身不会阻止 Snapshot 提取。当宿主元件的类型、层级和插入顺序自然地出现在 JSX 中时，编译器就能提取稳定结构，只把表达式记录为动态位置。不必为了让属性或文本变成静态值而拆分组件。
+
+下文会进一步介绍可选的编写模式及其底层机制。这些模式并不是硬性规则，只有在不改变预期组件结构时才需要考虑。
+
+## Snapshot 的工作原理
+
+### 为什么需要 Snapshot
 
 常规 JSX 产物会把元件结构、静态值和动态表达式都保留在运行时代码中。每次渲染时，`_jsx()` 会创建描述 UI 结构的虚拟节点（VNode），ReactLynx 的协调器再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为协调（Reconciliation）。
 
@@ -83,7 +97,10 @@ export function Greeting({ name, highlighted }) {
 | 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树应该插入的位置。   |
 | Snapshot ID    | 标识这份编译后的结构，让多个组件实例复用同一个 Snapshot 定义。   |
 
-上面的 Snapshot ID 对应一份构建时生成的 Snapshot 定义。为突出其编译结构，下面给出一份简化示意，其中保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据：
+上面的 Snapshot ID 对应一份构建时生成的 Snapshot 定义。为突出其编译结构，下面给出一份简化示意，其中保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
+
+<details>
+<summary>查看简化的 Snapshot 定义</summary>
 
 ```js
 ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
@@ -115,6 +132,8 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
     [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 对应 elements[3]
   );
 ```
+
+</details>
 
 :::warning
 
@@ -186,17 +205,9 @@ function applyAttributePatch(patch) {
 
 对于属性路径，`reconcileGreeting()` 只生成“哪个实例的哪个动态位置发生了变化”的描述，`applyAttributePatch()` 则找到主线程实例并调用编译器生成的更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。实际实现会将这些操作编码进序列化的 Snapshot Patch。
 
-## 如何编写编译友好的 JSX
+## 其他可选优化模式
 
-使用默认 Snapshot 编译后端时，优化由编译器自动完成。编译器能提取多少静态结构，取决于宿主元件的类型、层级和插入顺序在源码中是否清晰可见。下面几种写法有助于暴露稳定的宿主结构，但它们不是硬性规则：组件语义和可读性始终优先。
-
-### 放心让动态值进入稳定结构
-
-前面的 `Greeting` 中，`className` 和 `name` 都来自运行时，但 `view → text` 的宿主层级仍然直接出现在源码中。编译器因此可以提取这段骨架，只把两个表达式记录为动态位置。
-
-动态值本身不会阻止 Snapshot 提取。只要宿主类型、层级和顺序保持稳定，就可以让数据自然地通过属性或动态子节点进入，不必为了把属性或文本写成静态值而拆分组件。
-
-### 将共享结构放在条件分支外
+### 在合适时显式保留共享结构
 
 下面的写法在两个分支中重复了整个卡片结构：
 
@@ -219,7 +230,7 @@ function ProductCard({ name, price, showPrice }) {
 }
 ```
 
-可以只保留一份稳定外壳，将价格区域作为动态插槽：
+当两个分支自然地表示同一种组件结构时，可以只保留一份稳定外壳，将价格区域作为动态插槽：
 
 ```tsx
 function ProductCard({ name, price, showPrice }) {
@@ -233,7 +244,7 @@ function ProductCard({ name, price, showPrice }) {
 }
 ```
 
-当两个分支本来就表示同一种卡片结构时，后一种写法能让共享外壳直接暴露给编译器，并把价格区域保留为动态插槽。`showPrice` 变化时，运行时只需处理这个动态区域。如果移动结构会改变组件身份、状态保留或其他行为，就不应为了 Snapshot 强行合并分支。
+后一种写法可以让共享外壳更直接地暴露给编译器，并把价格区域保留为动态插槽。不要单纯为了 Snapshot 重构条件渲染：不同写法可能影响组件身份、状态保留和可读性。
 
 ### 显式声明宿主类型
 
@@ -267,7 +278,7 @@ function Content({ variant, value }) {
 
 两个分支仍然由运行时数据选择，但每个分支的宿主结构都对编译器可见，可以分别生成 Snapshot。只有宿主类型确实来自运行时配置时，才需要使用动态创建方式。
 
-### 属性集合固定时优先显式声明
+### 显式属性可以支持更定向的更新
 
 spread 属性同样受 Snapshot 支持。编译器知道展开对象作用于哪个元件，但由于属性集合要到运行时才能确定，只能把整个对象记录为一个动态位置。更新时，运行时需要遍历新旧对象的属性，再把变化应用到目标元件：
 
@@ -287,7 +298,7 @@ function UserCard({ id, name, selected }) {
 }
 ```
 
-当属性集合在开发时已经确定，显式声明属性更优：
+当属性集合在开发时已经确定，显式声明属性可以支持更定向的更新：
 
 ```tsx
 function UserCard({ id, name, selected }) {
