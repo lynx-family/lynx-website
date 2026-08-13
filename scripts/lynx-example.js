@@ -73,6 +73,13 @@ const exampleFixups = {
   ],
 };
 
+// Complete Web hosts are executable documents rather than raw Lynx bundles.
+// Keep this allowlist local so only reviewed, pinned examples can opt into the
+// iframe path; package metadata alone must not expand the website trust boundary.
+const exampleWebHostFiles = {
+  'lynxtron-cross-platform-notes': 'dist/web/index.html',
+};
+
 /**
  * Get all files in the specified directory
  * @param {string} dirPath - The directory path
@@ -309,10 +316,8 @@ function parseExampleData() {
     const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
 
     const previewImage = files.find((file) => previewImageReg.test(file));
-    const templateFiles = getTemplateFiles(
-      filesFilters,
-      packageJSON.webHostFile,
-    );
+    const webHostFile = exampleWebHostFiles[example];
+    const templateFiles = getTemplateFiles(filesFilters, webHostFile);
 
     const metadata = {
       name: packageJSON.repository?.directory || example,
