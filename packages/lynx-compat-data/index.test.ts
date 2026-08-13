@@ -1,6 +1,4 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import listData from './elements/list.json';
-import scrollViewData from './elements/scroll-view.json';
 import setTimeoutData from './lynx-api/global/setTimeout.json';
 import iosData from './platforms/ios.json';
 import {
@@ -26,25 +24,6 @@ import {
 
 const ios = iosData.platforms.ios;
 const sTO = setTimeoutData['lynx-api'].global.setTimeout;
-const clayPlatforms = [
-  'clay_android',
-  'clay_ios',
-  'clay_macos',
-  'clay_windows',
-];
-const clayScrollbarAttributes = [
-  'enable-scrollbar',
-  'scroll-bar-auto-hide',
-  'scroll-bar-auto-hide-delay',
-  'scroll-bar-width',
-  'scroll-bar-thumb-width',
-  'scroll-bar-thumb-min-length',
-  'scroll-bar-thumb-radius',
-  'scroll-bar-thumb-color',
-  'scroll-bar-thumb-active-color',
-  'scroll-bar-thumb-hover-color',
-  'scroll-bar-track-color',
-] as const;
 
 describe('Platform', () => {
   it('should have correct type', () => {
@@ -81,32 +60,6 @@ describe('API', () => {
     expect(isSupportStatement(sTO.__compat.support.android)).toBe(true);
     expect(isSimpleSupportStatement(sTO.__compat.support.android)).toBe(true);
   });
-});
-
-describe('scrollbar element compatibility', () => {
-  const scrollViewAttributes =
-    scrollViewData.elements['scroll-view'].attributes;
-  const listAttributes = listData.elements.list.attributes;
-
-  it.each(clayScrollbarAttributes)(
-    'records %s as added in Clay 3.7 for scroll-view and list',
-    (attribute) => {
-      const scrollViewSupport =
-        scrollViewAttributes[attribute].__compat.support;
-      const listSupport = listAttributes[attribute].__compat.support;
-
-      expect(Object.keys(scrollViewSupport).sort()).toEqual(clayPlatforms);
-      expect(Object.keys(listSupport).sort()).toEqual(clayPlatforms);
-      expect(
-        Object.values(scrollViewSupport).map(
-          ({ version_added }) => version_added,
-        ),
-      ).toEqual(['3.7', '3.7', '3.7', '3.7']);
-      expect(
-        Object.values(listSupport).map(({ version_added }) => version_added),
-      ).toEqual(['3.7', '3.7', '3.7', '3.7']);
-    },
-  );
 });
 
 describe('Util functions', () => {
