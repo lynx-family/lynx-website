@@ -12,6 +12,14 @@ Snapshot is unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` met
 
 :::
 
+:::warning Version and lazy bundle compatibility
+
+The generated output on this page reflects `@lynx-js/react` 0.120.0 or later, which introduced the SlotV2 representation shown by `$0` and `__DynamicPartSlotV2`. These names are internal and may change in later releases.
+
+Standalone lazy bundles have a stricter compatibility requirement. Since `@lynx-js/react` 0.115.0, Snapshot definitions are registered lazily through `snapshotCreatorMap`. A 0.115.0 or later runtime can load lazy bundles built with an older version, but a runtime earlier than 0.115.0 cannot load lazy bundles built with 0.115.0 or later. More generally, upgrade consuming applications to the same or a newer `@lynx-js/react` version before deploying newly built lazy bundles. See the [`@lynx-js/react` changelog](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01150) and [Code Splitting](./code-splitting.mdx).
+
+:::
+
 ## Writing Compiler-Friendly JSX
 
 With the default Snapshot compiler backend, the optimization is applied automatically. For most components:
@@ -156,8 +164,8 @@ function renderFirstScreen(vnode) {
   const definition = getSnapshotDefinition(vnode.type);
   const instance = createMainThreadSnapshotInstance(vnode.type);
 
-  instance.elements = definition.create(instance);
-  instance.values = vnode.props.values;
+  instance.__elements = definition.create(instance);
+  instance.__values = vnode.props.values;
   definition.update[0](instance); // Write values[0] to className
   insertDynamicChild(instance, 0, vnode.props.$0);
 
@@ -199,7 +207,7 @@ function applyAttributePatch(patch) {
   const instance = findSnapshotInstance(patch.instanceId);
   const index = patch.dynamicPartIndex;
 
-  instance.values[index] = patch.value;
+  instance.__values[index] = patch.value;
   instance.definition.update[index](instance);
 }
 ```
