@@ -36,9 +36,7 @@ Lynxtron 在应用模型上接近 Electron，但它没有把 browser 作为 UI r
   nativeFramework="lynxtron"
 />
 
-> Lynxtron 具有较小的基础包体积、快速的首次启动和第二个窗口创建，以及运行一个或两个 `LynxWindow` 时较低的内存占用。
-
-同一个应用也可以展示启动耗时、物理内存、JS heap、平台信息，以及打开第二个 `LynxWindow` 后的内存增量，让轻量化运行时在真实桌面应用中可观察。
+> 该 benchmark 会报告 Lynxtron 的基础包体积、启动耗时、物理内存、JS heap、平台信息，以及打开第二个 `LynxWindow` 后的内存增量，覆盖一个或两个窗口时的启动和内存表现。
 
 ## Natively Extensible
 
@@ -55,13 +53,9 @@ Lynxtron 通过 UI/texture extension C-APIs 和 Node-API 扩展渲染器能力�
 
 > Lynx UI 通过注册的原生模块控制 native texture surface，在同一组件树中组合原生渲染与前端式交互。
 
-Lynxtron 选择的是另一条路径：通过 native extension 和原生纹理，把原生视图、原生绘制表面和硬件加速内容纳入桌面应用模型。这样开发者可以在核心工作区充分使用原生能力，同时把大部分 UI 逻辑保留在前端式的 Lynx UI 中，降低研发和迭代成本。
-
 ## Multiplatform
 
 Lynxtron 不是把 Lynx 锁在桌面端。借助 Lynx，UI 可以运行在包括 Web 在内的多个平台上，也可以用较低成本迁移到新的宿主环境。
-
-跨平台能力体现在代码组织方式上：同一份 Lynx UI 可以同时运行在桌面和 Web。桌面宿主通过 Node preload bridge 连接本地能力；Web 宿主使用浏览器侧能力。UI 代码保持一致，变化的是平台宿主适配层。
 
 <Go
   example="lynxtron-cross-platform-notes"
@@ -73,7 +67,7 @@ Lynxtron 不是把 Lynx 锁在桌面端。借助 Lynx，UI 可以运行在包括
   nativeFramework="lynxtron"
 />
 
-> 同一套 Lynx UI 只依赖统一的 notes API，桌面和 Web 构建会分别将该 API 接入对应的宿主 bridge。
+> 同一套 Lynx UI 只依赖统一的 notes API。构建时，桌面和 Web 目标会分别将该 API 接入 Node preload bridge 和浏览器侧 bridge。
 
 这对应的是 Lynxtron 的跨平台工程模型：保持 Lynx UI 层可复用，把平台相关逻辑隔离在宿主适配层中，并在需要时将渲染器模型迁移到新的宿主。
 
