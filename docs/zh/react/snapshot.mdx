@@ -4,7 +4,9 @@ description: '了解 ReactLynx 如何通过编译器辅助渲染，把一部分�
 
 # 编译器辅助渲染
 
-ReactLynx 会在构建时分析 JSX，提取其中能够静态确定的宿主结构，让运行时专注处理可能变化的部分。大多数应用只需继续编写常规、地道的 JSX。
+ReactLynx 会在构建时分析 JSX，提取其中能够静态确定的宿主元件结构，让运行时专注处理可能变化的部分。大多数应用只需继续编写常规、地道的 JSX。
+
+这里的“宿主元件”（host elements）是 ReactLynx 通过 Lynx 引擎渲染的 [Lynx 元件](/guide/ui/elements-components)，例如 `<view>` 和 `<text>`；`<Comp1>` 这样的用户组件则不是宿主元件。
 
 当前编译器会把提取出的结构及其动态位置记录为一种名为 **Snapshot** 的编译表示（compiled representation）。从直觉上，可以把它宽泛地理解为一种针对 UI 结构的“常量折叠”：构建时已知的宿主元件和值被折叠进一份可复用的表示，动态值和动态子树则保留为它的输入。
 
@@ -109,6 +111,8 @@ export function Greeting({ name, highlighted }) {
 - **动态属性**：由 `highlighted` 决定的 `className`。
 - **动态子节点**：由 `name` 生成的文本。
 
+这种把稳定结构与动态区域分开的做法，类似于 [Vue 的编译器辅助虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 中的优化。ReactLynx 采用了类似的编译器辅助思路，把稳定的宿主元件树结构降级为带有显式动态插槽、可复用的编译表示。
+
 最后，编译器把静态创建逻辑、动态更新函数、插槽位置和一个 Snapshot ID 记录进当前的 Snapshot 表示。运行时通过这份编译定义创建实例，只需传入每个实例自己的动态值和子节点。
 
 ### 当前 Snapshot 表示包含什么
@@ -122,9 +126,9 @@ export function Greeting({ name, highlighted }) {
 | 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树应该插入的位置。   |
 | Snapshot ID    | 标识这份编译后的结构，让多个组件实例复用同一个 Snapshot 定义。   |
 
-上面的 Snapshot ID 对应一份构建时生成的编译定义。从编译原理的视角，可以把这份表示进一步降级为直接元件操作的过程理解为一种部分求值（partial evaluation）：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把动态值和动态子树留到运行时处理。
+上面的 Snapshot ID 对应一份构建时生成的编译定义。从编译原理的视角，可以把这个过程理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主元件结构对通用渲染过程进行特化，只把动态值和动态子树留到运行时处理。
 
-为突出其编译结构，下面给出一份简化示意，其中保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
+下面的简化示例展示了当前 Snapshot 表示如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作来表达这种特化。示例保留了用于体现编译结构的静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
 
 <details>
 <summary>查看简化的 Snapshot 定义</summary>
@@ -170,6 +174,8 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
 
 ### 编译产物如何进入运行时
 
+ReactLynx 的一个独特之处在于：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
+
 编译生成的 Snapshot 定义可以被多个 `Greeting` 复用，而每次实际渲染都会产生一组彼此对应的运行时实例：主线程实例持有创建出的 Lynx 元件，后台实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
 
 #### 首屏：根据定义创建实例
@@ -193,6 +199,8 @@ function renderFirstScreen(vnode) {
 ```
 
 对于当前例子，`definition.create()` 创建 `view`、`text` 和固定文本；`definition.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树；差别在于静态层级由 `definition.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
+
+换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者预先计算出的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主元件结构继续降级，越过标记语言解析阶段，变成 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
 
 后台首轮协调也会生成与主线程实例树对应的逻辑实例树。首屏同步通过 hydration 建立两侧实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程实例。
 
