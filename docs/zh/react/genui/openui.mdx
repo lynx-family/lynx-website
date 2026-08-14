@@ -29,7 +29,7 @@ import { Go } from '@lynx';
 
 一套 OpenUI 接入包含五个部分：
 
-1. **定义 Library**：创建组件定义及其 Zod Schema。`createOpenUiLibrary()` 会从布局、内容、按钮、媒体、浮层和输入组件开始，再应用自定义扩展。
+1. **定义 Library**：创建组件定义及其 Zod Schema。`createOpenUiLibrary()` 默认包含布局、内容、按钮、媒体、浮层和输入组件，再应用自定义扩展；也可以只使用显式选择的 definitions 构建 Library。
 2. **配置 Agent**：使用同一份组件契约生成 OpenUI system prompt，并提供给模型。
 3. **流式传输 OpenUI Lang**：把模型返回的每个增量片段追加到响应文本中。语句采用函数式记法，例如 `title = TextContent("Hello")`。
 4. **解析并渲染**：`<OpenUiRenderer>` 增量解析已经完整的语句、解析前向引用，并渲染已注册的 ReactLynx 组件。
@@ -200,7 +200,27 @@ actions = Buttons([
 />
 ```
 
-`Query()` 会在流结束后执行，并在它依赖的 `$variable` 变化时重新执行；默认值让界面可以在数据返回前先完成渲染。`Mutation()` 在 Action 通过 `@Run` 调用前不会执行。Action step 会按顺序访问，但只有 `@Run(mutation)` 会等待执行结果，并在失败时停止后续 step。`@Run(query)` 启动重新获取后便会立即进入下一个 step。
+流结束且 Query statement 完整后，它的 default 或预取结果会参与第一次同步渲染。传入 `toolProvider` 时，`Query()` 会在 commit 后重新校验，并在它依赖的 `$variable` 变化时重新执行。`Mutation()` 在 Action 通过 `@Run` 调用前不会执行。Action step 会按顺序访问，但只有 `@Run(mutation)` 会等待执行结果，并在失败时停止后续 step。`@Run(query)` 启动重新获取后便会立即进入下一个 step。
+
+### 预取 Query 结果
+
+如果 Query 数据在 ReactLynx 首屏前已经可用，可以通过 `initialQueryResults` 传入。每个 key 都是 Query assignment name（statement ID），而不是 tool name，因此调用同一个工具但参数不同的 Queries 也不会混淆：
+
+```text
+orders = Query("list_orders", { status: "open" }, { rows: [] })
+```
+
+```tsx
+<OpenUiRenderer
+  response={response}
+  library={library}
+  initialQueryResults={{ orders: prefetchedOrders }}
+/>
+```
+
+预取值（包括 `null`、`false` 或 `0`）会在第一次同步渲染时优先于 Query default。工具仍不会在 render 阶段执行：传入 `toolProvider` 时，runtime 会在 commit 后重新校验，并在请求成功后替换 fallback。重新校验失败时会保留预取 fallback，并进入正常的 Query 错误处理流程。如果预取结果是无需重新校验的不可变 snapshot，可以不传 `toolProvider`。
+
+Query 数据只属于当前的原始 `response`。替换 response 时，即使新的 response 复用了相同的 assignment name，也应传入与它匹配的 `initialQueryResults`；runtime 不会暴露上一个 response 遗留的数据。
 
 `onStateUpdate` 快照会直接保存 `$variable` 的值，而表单控件可能使用 `{ value, componentType }` 结构。持久化逻辑需要兼容这两种形态，并能安全处理重复快照。
 
@@ -247,7 +267,30 @@ const library = createOpenUiLibrary({
 
 定义组件时，应把 `zod` 声明为应用的直接依赖。Schema 决定组件参数顺序，以及生成 prompt 和 JSON Schema 所需的元数据。当前 parser 会检查组件名、必填参数和多余参数等结构约束，但不会对每个值执行完整的 `zod.parse()`；组件与工具仍需自行校验安全敏感值。组件回调收到的是 `{ props, renderNode, statementId }`，而不是直接把组件 props 作为顶层参数传入。
 
-`createOpenUiLibrary()` 会把自定义定义追加到内置组件之后；同名组件可以覆盖对应名称，但这个公开 factory 不能移除其余默认组件来构造严格 allowlist。可以用 `library.toJSONSchema()` 检查最终契约。通过 memoization 保证一个活动流的 Library 引用稳定，不要在每次渲染时重新创建。
+默认情况下，`createOpenUiLibrary()` 会把自定义 definitions 追加到 26 个内置组件和 6 个 component groups 之后；同名自定义组件会覆盖对应的内置组件。设置 `includeDefaultComponents: false` 会同时移除内置 definitions 及其 groups，此时 `components` 和 `componentGroups` 描述的是完整的 Library vocabulary。可以用 `library.toJSONSchema()` 检查最终契约。通过 memoization 保证一个活动流的 Library 引用稳定，不要在每次渲染时重新创建。
+
+### 显式选择组件
+
+从逐组件子路径导入所需的内置组件。如果未选择的组件也不能进入静态依赖图，请使用不依赖 catalog 的 `openui/explicit` 入口：
+
+```tsx
+import {
+  OpenUiRenderer,
+  createOpenUiLibrary,
+} from '@lynx-js/genui/openui/explicit';
+import { Stack } from '@lynx-js/genui/openui/catalog/Stack';
+import { TextContent } from '@lynx-js/genui/openui/catalog/TextContent';
+
+const library = createOpenUiLibrary({
+  includeDefaultComponents: false,
+  components: [Stack, TextContent],
+  componentGroups: [{ name: 'Selected', components: ['Stack', 'TextContent'] }],
+});
+```
+
+关闭 defaults 不会改变默认 root 名称 `Stack`。请像上面的示例一样包含 `Stack`，或把 `root` 设为另一个由调用方提供的组件；如果缺少 root，创建 Library 时会报错。省略 `componentGroups` 时，Library 不包含任何 groups。Agent prompt 和客户端 Library 必须限制为相同的组件名称。
+
+即使从 `@lynx-js/genui/openui` 导入 factory，`includeDefaultComponents` 也能控制运行时 vocabulary；但主入口仍会静态引用完整的默认 catalog。要建立静态依赖边界，所有 OpenUI runtime API（包括 `OpenUiRenderer`、`defineComponent` 和 hooks）都应从 `openui/explicit` 导入，所选内置组件则从逐组件 `catalog/<Component>` 路径导入；不要再同时导入 `openui` 主入口。
 
 ## 体验 Playground
 
