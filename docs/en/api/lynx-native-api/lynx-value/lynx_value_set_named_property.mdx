@@ -1,0 +1,38 @@
+# lynx_value_set_named_property
+
+## Introduction
+
+Set lynx_value property into map at the key specified. 
+
+## Syntax
+
+```c
+lynx_api_status
+lynx_value_set_named_property(lynx_api_env env, lynx_value object,
+                              const char* utf8name, lynx_value value);
+```
+
+### Parameters
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | The environment in which lynx value runs, typically nullptr. |
+| [in] object   | The lynx_value representing map.                             |
+| [in] utf8name | The name of the property to set.                             |
+| [in] value    | The property value.                                          |
+
+### Return Value
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_map_expected` if the types do not match.
+
+## Example
+
+```c
+lynx_value map_value;
+lynx_value_create_map(env, &map_value);
+lynx_value v1;
+lynx_value_create_int32(env, 10, &v1);
+lynx_value_set_named_property(env, map_value, "v1", v1);
+// do something
+lynx_value_remove_reference(env, map_value, NULL);
+```
