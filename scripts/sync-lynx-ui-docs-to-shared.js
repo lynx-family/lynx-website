@@ -114,15 +114,22 @@ const hoistMdxImports = (filePath) => {
   }
 };
 
-const rewriteLynxUiRouteLinks = (filePath) => {
-  if (!filePath.endsWith('.mdx')) {
+const normalizeSyncedDoc = (filePath) => {
+  if (!/\.mdx?$/.test(filePath)) {
     return;
   }
 
   const original = fs.readFileSync(filePath, 'utf8');
-  const next = original
-    .replace(/\((\/zh)?\/lynx-ui(?=[/#).?])/g, '($1/ui')
-    .replace(/(href=["'])(\/zh)?\/lynx-ui(?=[/#?])/g, '$1$2/ui');
+  const hasLegacyEnglishUrl = original.includes('https://lynxjs.org/en/');
+  let next = original
+    // Rewrite route links without touching package, repository, or asset names.
+    .replace(/(^|[("'\s=:])(\/(?:en\/|zh\/)?)lynx-ui\//gm, '$1$2ui/')
+    // English is the default locale and is not served under an /en prefix.
+    .replaceAll('https://lynxjs.org/en/', 'https://lynxjs.org/');
+
+  if (hasLegacyEnglishUrl) {
+    next = next.replace(/(?:\r?\n[ \t]*)+$/, '\n');
+  }
 
   if (next !== original) {
     fs.writeFileSync(filePath, next, 'utf8');
@@ -145,13 +152,11 @@ packages.forEach((pkgName) => {
     }
 
     copyRecursiveSync(pkgDocsDir, targetDir);
-    if (ENABLE_MDX_HOIST) {
-      for (const filePath of collectFilesRecursively(targetDir)) {
+    for (const filePath of collectFilesRecursively(targetDir)) {
+      normalizeSyncedDoc(filePath);
+      if (ENABLE_MDX_HOIST) {
         hoistMdxImports(filePath);
       }
-    }
-    for (const filePath of collectFilesRecursively(targetDir)) {
-      rewriteLynxUiRouteLinks(filePath);
     }
     copiedCount++;
   }

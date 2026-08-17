@@ -21,7 +21,7 @@ export const StartBuilding = () => {
       <button
         type="button"
         className="relative z-10 mt-[20px] flex h-[48px] w-[142px] cursor-pointer flex-col items-center justify-center rounded-[24px] bg-[linear-gradient(275deg,var(--rp-c-brand-darker)_3%,var(--rp-c-brand)_97%)]"
-        onClick={() => linkNavigate('guides/introduction')}
+        onClick={() => linkNavigate('introduction')}
       >
         <span className="text-[var(--home-button-font-color)]">
           {lang === 'zh' ? '快速开始' : 'Get Started'}
