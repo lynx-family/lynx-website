@@ -3,24 +3,16 @@
 // LICENSE file in the root directory of this source tree.
 
 import { useCallback } from 'react';
-import { useLang, useNavigate, usePage } from '@rspress/core/runtime';
+import { useLang, useNavigate } from '@rspress/core/runtime';
 
 export const useLinkNavigate = () => {
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
-  const { page } = usePage();
   const handleInteraction = useCallback(
     (path: string) => {
-      if (
-        page.pagePath.startsWith('en/lynx-ui') ||
-        page.pagePath.startsWith('zh/lynx-ui')
-      ) {
-        navigate(lang === 'en' ? `/en/lynx-ui/${path}` : `/zh/lynx-ui/${path}`);
-      } else {
-        navigate(lang === 'en' ? `/en/${path}` : `/zh/${path}`);
-      }
+      navigate(lang === 'en' ? `/ui/${path}` : `/zh/ui/${path}`);
     },
-    [navigate, lang, page.pagePath],
+    [navigate, lang],
   );
 
   return {
