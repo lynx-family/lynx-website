@@ -60,15 +60,30 @@ const collectFilesRecursively = (dir) => {
 // are touched: the leading-boundary class excludes `assets/lynx-ui/` CDN paths
 // and `@lynx-js/lynx-ui` / `family/lynx-ui` package references (no such
 // boundary + trailing slash).
-const rewriteSubsiteLinks = (filePath) => {
-  if (!/\.(mdx?|md)$/.test(filePath)) {
+// Absolute English links are also normalized because the default locale is
+// served from the root rather than under /en.
+const normalizeSyncedDoc = (filePath) => {
+  if (!/\.mdx?$/.test(filePath)) {
     return;
   }
+
   const original = fs.readFileSync(filePath, 'utf8');
-  const next = original.replace(
-    /(^|[("'\s=:])(\/(?:en\/|zh\/)?)lynx-ui\//gm,
-    '$1$2ui/',
-  );
+  let hasInvalidEnglishUrl = false;
+  let next = original
+    .replace(/(^|[("'\s=:])(\/(?:en\/|zh\/)?)lynx-ui\//gm, '$1$2ui/')
+    // English is the default locale and is not served under an /en prefix.
+    .replace(
+      /https:\/\/lynxjs\.org\/((?:next|\d+(?:\.\d+)*)\/)?en\//g,
+      (_match, versionPrefix = '') => {
+        hasInvalidEnglishUrl = true;
+        return `https://lynxjs.org/${versionPrefix}`;
+      },
+    );
+
+  if (hasInvalidEnglishUrl) {
+    next = next.replace(/[ \t]*(?:\r?\n[ \t]*)*$/, '\n');
+  }
+
   if (next !== original) {
     fs.writeFileSync(filePath, next, 'utf8');
   }
@@ -152,7 +167,7 @@ packages.forEach((pkgName) => {
 
     copyRecursiveSync(pkgDocsDir, targetDir);
     for (const filePath of collectFilesRecursively(targetDir)) {
-      rewriteSubsiteLinks(filePath);
+      normalizeSyncedDoc(filePath);
       if (ENABLE_MDX_HOIST) {
         hoistMdxImports(filePath);
       }
