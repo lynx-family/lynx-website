@@ -1,0 +1,258 @@
+---
+description: '通过教学 DSL Greeting.lynx 了解框架如何生成双线程运行时入口并构建 Lynx 产物。'
+---
+
+# 教程：从 .lynx 文件到 Lynx 产物
+
+本教程以一个教学用 DSL 文件 `Greeting.lynx` 为输入，说明框架如何解析状态、UI 声明和样式，生成主线程与后台线程入口，最后构建为 Lynx 产物。
+
+`Greeting.lynx` 不是 Lynx 内置文件格式，而是一个用于说明框架编译流程的最小示例。真实框架可以选择自己的语法、文件后缀和编译器实现。
+
+完成本教程后，你将了解：
+
+- 一个 DSL 文件如何拆分为主线程、后台线程和样式产物；
+- 用户交互如何从主线程转化为后台线程任务；
+- 后台状态如何生成 patch，并由主线程提交 UI 更新；
+- 如何将生成的入口组装为一个 Lynx Bundle。
+
+## 1. 编写 `Greeting.lynx`
+
+下面的 DSL 使用 `screen` 声明页面，用 `state` 声明状态。点击标题会触发一个异步 `task`，由任务获取新标题后再写入 `title`：
+
+```text title="src/Greeting.lynx"
+screen Greeting {
+  state title = "Hello World"
+
+  text #title {
+    value = title
+    on tap {
+      run refreshGreeting
+    }
+  }
+
+  task refreshGreeting {
+    title <- await fetchGreeting()
+  }
+
+  style #title {
+    font-size: 32px
+    color: #222222
+  }
+}
+```
+
+框架编译器将状态声明、元素声明、任务和样式解析为自己的中间表示，再按线程职责生成代码：
+
+| DSL 声明   | 生成位置   | 生成内容                                                   |
+| ---------- | ---------- | ---------------------------------------------------------- |
+| `state`    | 后台线程   | 状态容器、更新调度和 patch 生成逻辑。                      |
+| `text`     | 主线程     | Element PAPI 元素树、节点引用、事件绑定和 patch 应用逻辑。 |
+| `task`     | 后台线程   | 异步任务、状态更新和 patch 生成逻辑。                      |
+| `style`    | 样式产物   | Element 节点的样式资源。                                   |
+| `run task` | 两个线程间 | 主线程任务消息和后台线程对应的任务处理函数。               |
+
+```text
+Greeting.lynx
+   │
+   ├─→ 解析为组件中间表示
+   │      ├─ 状态与更新关系
+   │      ├─ 元素树与事件绑定
+   │      ├─ 异步任务
+   │      └─ 样式规则
+   │
+   └─→ 生成主线程入口、后台线程入口和样式产物
+```
+
+对这个文件而言，编译器可以得到一份足够直接的中间表示：
+
+```ts title="Greeting.lynx 的编译结果"
+{
+  state: { title: 'Hello World' },
+  nodes: [{ id: 'title', type: 'text', value: 'title' }],
+  events: [
+    {
+      node: 'title',
+      name: 'tap',
+      run: 'refreshGreeting',
+    },
+  ],
+  tasks: [{ name: 'refreshGreeting', async: true, writes: ['title'] }],
+}
+```
+
+其中 `#title` 成为主线程节点标识，`value = title` 成为状态到节点的绑定，`run refreshGreeting` 成为任务意图。由于 `refreshGreeting` 包含异步调用，它与状态更新一起生成到后台线程。下面的两个入口直接由这些信息生成。
+
+## 2. 生成主线程入口
+
+`text #title` 生成到 `main-thread.ts`。下面只保留这个 DSL 文件直接产生的代码：创建标题节点、发送状态写入意图，以及应用 `{ title }` patch。
+
+```ts title=".framework/greeting/main-thread.ts"
+const page = __CreatePage('0', 0);
+const pageId = __GetElementUniqueID(page);
+const backgroundThread = lynx.getJSContext();
+const tapEventOptions = {};
+const elementMap = new Map();
+
+function onTitleTap() {
+  backgroundThread.dispatchEvent({
+    type: 'Intent',
+    data: {
+      type: 'run',
+      task: 'refreshGreeting',
+    },
+  });
+}
+
+function renderGreeting() {
+  const title = __CreateText(pageId);
+  const titleText = __CreateRawText('Hello World');
+  elementMap.set('title', titleText);
+
+  __AddEventListener(title, 'tap', onTitleTap, tapEventOptions);
+  __AppendElement(title, titleText);
+  __AppendElement(page, title);
+}
+
+function onPatch(event) {
+  // event.data 是后台线程发送的可序列化操作列表。
+  for (const [action, id, key, value] of event.data) {
+    const element = elementMap.get(id);
+    if (!element) continue;
+
+    if (action === '__SetAttribute') {
+      __SetAttribute(element, key, value);
+    }
+  }
+
+  __FlushElementTree();
+}
+
+backgroundThread.addEventListener('Patch', onPatch);
+```
+
+首屏调用 `renderGreeting()` 时使用 SDK 的默认提交时机。`elementMap` 保存主线程的节点引用，后台线程使用 DSL 中的 `title` 标识定位它；补丁只包含字符串与数组等可序列化数据。
+
+## 3. 生成后台线程入口
+
+`state title` 与 `task refreshGreeting` 一起生成到 `background.ts`。业务任务只更新 DSL 中声明的状态；框架运行时根据状态变化生成 patch，再通过 `dispatchEvent` 驱动主线程：
+
+```ts title=".framework/greeting/background.ts"
+const mainThread = lynx.getCoreContext();
+let state = { title: 'Hello World' };
+
+// 以下两个函数是框架运行时生成的更新驱动。
+function setTitle(title: string) {
+  if (title === state.title) return;
+
+  state = { ...state, title };
+  flushUpdate();
+}
+
+function flushUpdate() {
+  const patch = [['__SetAttribute', 'title', 'text', state.title]];
+  mainThread.dispatchEvent({
+    type: 'Patch',
+    data: patch,
+  });
+}
+
+async function refreshGreeting() {
+  setTitle(await fetchGreeting());
+}
+
+function onIntent(event) {
+  const intent = event.data;
+  if (intent?.type === 'run' && intent.task === 'refreshGreeting') {
+    void refreshGreeting();
+  }
+}
+
+mainThread.addEventListener('Intent', onIntent);
+```
+
+`value = title` 让编译器知道 `title` 是需要同步给主线程的状态字段。`fetchGreeting()` 代表网络请求、原生调用等异步工作；`refreshGreeting()` 只产生状态变化，`setTitle()` 与 `flushUpdate()` 则代表框架的更新驱动。真实框架可以在这里加入批处理、差异计算或调度策略，主线程始终只消费最终的可序列化操作列表。
+
+这就形成了一次完整的更新闭环：
+
+1. 主线程将 `run refreshGreeting` 转化为 `Intent` 事件。
+2. 后台线程执行异步任务并更新状态，框架运行时生成可序列化的 Element PAPI 操作列表。
+3. 主线程消费 patch，调用 Element PAPI 更新并提交 UI。
+
+## 4. 将生成入口构建为 Lynx 产物
+
+框架工具链可以将 DSL 编译封装为 Rsbuild 插件。插件解析 `Greeting.lynx`，生成三个中间入口；`@lynx-js/vanilla-rsbuild-plugin` 再将这些入口编码为一个 Lynx Bundle：
+
+```ts title="framework/plugin-greeting-dsl.ts"
+import type { RsbuildPlugin } from '@rsbuild/core';
+
+type GreetingDslOptions = {
+  input: string;
+  outputDir: string;
+};
+
+export function pluginGreetingDsl(options: GreetingDslOptions): RsbuildPlugin {
+  return {
+    name: 'framework:greeting-dsl',
+    setup(api) {
+      const generateEntries = () => {
+        const component = parseLynxFile(options.input);
+
+        emitFile(
+          `${options.outputDir}/main-thread.ts`,
+          generateMainThread(component),
+        );
+        emitFile(
+          `${options.outputDir}/background.ts`,
+          generateBackground(component),
+        );
+        emitFile(`${options.outputDir}/style.css`, generateStyles(component));
+      };
+
+      api.onBeforeBuild(generateEntries);
+      api.onBeforeStartDevServer(generateEntries);
+    },
+  };
+}
+```
+
+示例中的 `parseLynxFile()`、`generateMainThread()` 等函数由框架实现。开发模式下，插件还应监听 `.lynx` 文件变更并重新生成入口。
+
+构建配置注册这个 DSL 插件，并将生成入口交给 `@lynx-js/vanilla-rsbuild-plugin`：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginVanillaLynx } from '@lynx-js/vanilla-rsbuild-plugin';
+import { pluginGreetingDsl } from './framework/plugin-greeting-dsl';
+
+export default defineConfig({
+  plugins: [
+    pluginGreetingDsl({
+      input: './src/Greeting.lynx',
+      outputDir: './.framework/greeting',
+    }),
+    pluginVanillaLynx({
+      entries: {
+        greeting: {
+          mainThread: './.framework/greeting/main-thread.ts',
+          background: './.framework/greeting/background.ts',
+          css: './.framework/greeting/style.css',
+        },
+      },
+    }),
+  ],
+});
+```
+
+```text
+Greeting.lynx
+  └─→ pluginGreetingDsl
+        ├─ main-thread.ts
+        ├─ background.ts
+        └─ style.css
+              └─→ Rspeedy 与构建插件 ─→ dist/greeting.lynx.bundle
+```
+
+`@lynx-js/vanilla-rsbuild-plugin` 只是将双线程产物编码为 Lynx Bundle 的一个参考实现；框架也可以使用自己的构建器。
+
+通过这个最小 DSL，框架可以将开发者编写的状态、UI 声明和样式直接转换为双线程运行时，再构建为 Lynx 可加载的产物。
+更多构建层面的输入约定和产物编码细节，请参阅 [构建产物](/guide/framework-development/build)。
