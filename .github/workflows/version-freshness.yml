@@ -1,0 +1,43 @@
+name: Version Freshness
+
+# Runs the version-consistency guardrail with --remote on a weekly schedule.
+# Unlike the PR-blocking Version Consistency Check in ci.yml, this hits the
+# GitHub API to flag when our LYNX_VERSION has fallen behind upstream patches.
+# Failures here open a tracking issue rather than block merges, so a new
+# upstream release doesn't suddenly red all open PRs.
+
+on:
+  schedule:
+    - cron: '0 12 * * 1' # Mondays 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        with:
+          node-version-file: '.node-version'
+
+      - name: Run guardrail (remote)
+        id: check
+        run: |
+          set +e
+          node scripts/ci/check-version-consistency.mjs --remote 2>&1 | tee out.log
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Open issue if stale
+        if: steps.check.outputs.exit_code != '0' || contains(steps.check.outputs.exit_code, 'warning')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          body=$(cat out.log)
+          gh issue create \
+            --title "Version drift detected by guardrail" \
+            --body "Weekly version-freshness check flagged drift between docs/public/version.json and upstream releases. Output:\n\n\`\`\`\n$body\n\`\`\`" \
+            --label "docs,version-drift" || true
