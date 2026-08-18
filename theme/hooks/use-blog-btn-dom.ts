@@ -27,9 +27,6 @@ const config: Record<
       zh: '阅读最新博客',
       en: 'Read the Latest Blog',
     },
-    latestBlogConfig: {
-      filename: 'lynxtron',
-    },
     // Or use an external link:
     // latestBlogConfig: {
     //   externalLink: 'https://example.com',
