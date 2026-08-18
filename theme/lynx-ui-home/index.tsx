@@ -12,7 +12,7 @@ import { useRef } from 'react';
 import { ClearAPI } from './ClearApi';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
-import { LunaStudioShowcase } from '@site/src/luna';
+import { LunaStudioShowcase } from '@luna';
 
 export const HomeLayout = () => {
   const { pre: PreWithCodeButtonGroup, code: Code } =
