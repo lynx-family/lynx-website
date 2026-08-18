@@ -180,7 +180,9 @@ mainThread.addEventListener('Intent', onIntent);
 
 ## 4. 将生成入口构建为 Lynx 产物
 
-框架工具链可以将 DSL 编译封装为 Rsbuild 插件。插件解析 `Greeting.lynx`，生成三个中间入口；`@lynx-js/vanilla-rsbuild-plugin` 再将这些入口编码为一个 Lynx Bundle：
+到这里，DSL 已经产出了三个文件：`main-thread.ts`、`background.ts` 和 `style.css`。它们和[构建产物](/guide/framework-development/build)里讲的起点完全一致——**两个不同的入口文件加一份样式**。
+
+框架工具链把 DSL 编译封装成一个 Rsbuild 插件，在构建开始前生成这三个文件：
 
 ```ts title="framework/plugin-greeting-dsl.ts"
 import type { RsbuildPlugin } from '@rsbuild/core';
@@ -217,42 +219,43 @@ export function pluginGreetingDsl(options: GreetingDslOptions): RsbuildPlugin {
 
 示例中的 `parseLynxFile()`、`generateMainThread()` 等函数由框架实现。开发模式下，插件还应监听 `.lynx` 文件变更并重新生成入口。
 
-构建配置注册这个 DSL 插件，并将生成入口交给 `@lynx-js/vanilla-rsbuild-plugin`：
+生成之后，剩下的就是把这两个入口编码为一个 Bundle：`main-thread.ts` 编译出的资产放进 `lepusCode`，`background.ts` 编译出的资产放进 `manifest`，再交给 `@lynx-js/tasm` 编码。这一步由 `LynxTemplatePlugin` 和 `LynxEncodePlugin` 配合完成，细节见[构建产物](/guide/framework-development/build)。
+
+把 DSL 插件和负责编码的构建插件一起注册：
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginVanillaLynx } from '@lynx-js/vanilla-rsbuild-plugin';
 import { pluginGreetingDsl } from './framework/plugin-greeting-dsl';
+import { pluginGreetingTemplate } from './framework/plugin-greeting-template';
 
 export default defineConfig({
+  source: {
+    entry: {
+      greeting: './.framework/greeting/main-thread.ts',
+    },
+  },
+  output: {
+    filename: '[name].bundle',
+  },
   plugins: [
     pluginGreetingDsl({
       input: './src/Greeting.lynx',
       outputDir: './.framework/greeting',
     }),
-    pluginVanillaLynx({
-      entries: {
-        greeting: {
-          mainThread: './.framework/greeting/main-thread.ts',
-          background: './.framework/greeting/background.ts',
-          css: './.framework/greeting/style.css',
-        },
-      },
-    }),
+    pluginGreetingTemplate(),
   ],
 });
 ```
 
+入口只声明主线程文件，`pluginGreetingTemplate()` 按约定找到同目录下的 `background.ts` 和 `style.css`，补上后台入口并挂载编码插件。lynx-examples 的 [vanilla 示例](https://github.com/lynx-family/lynx-examples/tree/main/examples/vanilla)里有一份可以直接运行的实现，其 `plugin.ts` 就是按这个约定写的。
+
 ```text
 Greeting.lynx
   └─→ pluginGreetingDsl
-        ├─ main-thread.ts
-        ├─ background.ts
-        └─ style.css
-              └─→ Rspeedy 与构建插件 ─→ dist/greeting.lynx.bundle
+        ├─ main-thread.ts ─→ lepusCode  ─┐
+        ├─ background.ts  ─→ manifest   ─┼─→ @lynx-js/tasm ─→ dist/greeting.bundle
+        └─ style.css      ─→ css        ─┘
 ```
 
-`@lynx-js/vanilla-rsbuild-plugin` 只是将双线程产物编码为 Lynx Bundle 的一个参考实现；框架也可以使用自己的构建器。
-
 通过这个最小 DSL，框架可以将开发者编写的状态、UI 声明和样式直接转换为双线程运行时，再构建为 Lynx 可加载的产物。
-更多构建层面的输入约定和产物编码细节，请参阅 [构建产物](/guide/framework-development/build)。
+更多构建层面的输入约定和产物编码细节，请参阅[构建产物](/guide/framework-development/build)。
