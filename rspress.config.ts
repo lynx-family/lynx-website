@@ -201,10 +201,6 @@ export default defineConfig({
           from: '^/zh/lynx-ui(/.*)?$',
           to: '/zh/ui$1',
         },
-        {
-          from: '^/en/lynx-ui(/.*)?$',
-          to: '/en/ui$1',
-        },
       ],
     }),
     pluginSitemap({
