@@ -50,14 +50,14 @@ Lynxtron 在应用模型上接近 Electron，但它没有把 browser 作为 UI r
 
 ## Natively Extensible
 
-Lynxtron 通过公开的 [extension module C API](https://github.com/lynx-family/lynx/blob/develop/platform/embedder/public/capi/lynx_extension_module_capi.h)、[native view 与 texture surface C API](https://github.com/lynx-family/lynx/blob/develop/platform/embedder/public/capi/lynx_native_view_capi.h) 和 [Node-API](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules) 扩展渲染器能力。包结构和注册模型请参阅 [Lynx 原生能力库](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries)。在桌面开发中，一部分图形或 UI 需要原生实现是很常见的需求：摄像头预览、视频画面、地图视图、绘制画布、平台控件，或者任何需要硬件访问、GPU 深度绑定、复用系统渲染能力的 surface。Lynxtron 可以把这些原生 surface 或原生 UI 和 Lynx runtime 结合起来，让需要原生渲染的部分继续走原生路径，同时让交互和界面逻辑继续用 Lynx UI 构建和迭代。
+Lynxtron 通过 [Lynx Native API](https://lynxjs.org/next/api/lynx-native-api/lynx-view.html) 扩展渲染器能力。Lynx Native API 是由 Lynx 公开 C API 支撑的 C++ API 层：原生模块使用 C++ extension module wrapper 管理接入和生命周期，并通过 [Node-API](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules) 向 JavaScript 暴露接口；原生 UI 和 texture surface 则使用 native view wrappers。相关用法请参阅 Lynx 的[原生模块](https://lynxjs.org/next/guide/use-native-modules.html?platform=node-api)和[自定义原生组件](https://lynxjs.org/next/guide/custom-native-component.html?platform=desktops)指南；在 Lynxtron 原生能力库中使用 C/C++ headers 的方式请参阅 [`@lynx-js/lynx-library-headers`](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)。在桌面开发中，一部分图形或 UI 需要原生实现是很常见的需求：摄像头预览、视频画面、地图视图、绘制画布、平台控件，或者任何需要硬件访问、GPU 深度绑定、复用系统渲染能力的 surface。Lynxtron 可以把这些原生 surface 或原生 UI 和 Lynx runtime 结合起来，让需要原生渲染的部分继续走原生路径，同时让交互和界面逻辑继续用 Lynx UI 构建和迭代。
 
 <Go
   example="lynxtron-native-texture"
-  defaultFile="package.json"
+  defaultFile="native-texture-extension/module/native_texture_canvas_module.cc"
   defaultEntryFile="dist/desktop/main.lynx.bundle"
   defaultTab="preview"
-  highlight="{11-14,26-27,44-48}"
+  highlight="{67-70,93-107}"
   nativeFramework="lynxtron"
 />
 
