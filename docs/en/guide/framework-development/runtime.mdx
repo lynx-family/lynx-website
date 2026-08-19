@@ -2,7 +2,7 @@
 description: 'Start with a complete main-thread UI loop, then progressively introduce a background thread to extend the framework runtime when needed.'
 ---
 
-import { Mermaid } from '@lynx';
+import { Go, Mermaid } from '@lynx';
 
 # Runtime Model
 
@@ -39,25 +39,14 @@ The framework listens for lifecycle events defined by the Lynx engine through `l
 
 Start by registering the three lifecycle callbacks:
 
-```ts title="main-thread.ts"
-// Register page render, update, and destroy callbacks.
-const engine = lynx.getEngine();
-engine.addEventListener('__RenderPage', onRenderPage);
-engine.addEventListener('__UpdatePage', onUpdatePage);
-engine.addEventListener('__DestroyLifetime', onDestroyLifetime);
-
-function onRenderPage(event) {
-  const [data] = event.data;
-  renderPage(data);
-}
-function onUpdatePage(event) {
-  const [data] = event.data;
-  updatePage(data);
-}
-function onDestroyLifetime() {
-  clearPage();
-}
-```
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{4-11}"
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
 
 The framework can now receive page data, but it has not yet converted that data into UI. Next, use [Element PAPI](/api/engine/element-api) in `renderPage` and `updatePage`.
 
@@ -65,31 +54,14 @@ The framework can now receive page data, but it has not yet converted that data 
 
 `renderPage` creates an Element tree from the initial data, while `updatePage` updates existing nodes with subsequent data:
 
-```ts title="main-thread.ts"
-const page = __CreatePage('0', 0);
-const pageId = __GetElementUniqueID(page);
-let titleText;
-
-function renderPage(data) {
-  // Create the Element nodes needed for this render.
-  const container = __CreateView(pageId);
-  const title = __CreateText(pageId);
-  titleText = __CreateRawText(data.title);
-
-  // Compose the nodes and attach them to the Page.
-  __AppendElement(title, titleText);
-  __AppendElement(container, title);
-  __AppendElement(page, container);
-}
-
-function updatePage(data) {
-  if (data.title === undefined) return;
-
-  // Update the retained node reference, then explicitly commit this UI change.
-  __SetAttribute(titleText, 'text', data.title);
-  __FlushElementTree();
-}
-```
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  defaultEntryFile="dist/hello-lynx.lynx.bundle"
+  highlight="{19-28,30-35}"
+  defaultTab="web"
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
 
 The first render uses the SDK's default commit timing. For subsequent updates, call `__FlushElementTree()` after modifying Element nodes to commit that batch of changes to Lynx.
 The framework should also retain the node references required by later updates and release them when the page is destroyed.
@@ -98,55 +70,54 @@ The framework should also retain the node references required by later updates a
 
 `clearPage` removes listeners registered during the page lifecycle and releases node references, Element mappings, and state:
 
-```ts title="main-thread.ts"
-function clearPage() {
-  engine.removeEventListener('__RenderPage', onRenderPage);
-  engine.removeEventListener('__UpdatePage', onUpdatePage);
-  engine.removeEventListener('__DestroyLifetime', onDestroyLifetime);
-  titleText = null;
-}
-```
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  mode="source"
+  highlight="{46-52}"
+  sourceHeight={300}
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
 
 The minimal main-thread path is now complete: host data enters through lifecycle callbacks, the framework converts it into Element PAPI operations, and the UI is rendered and updated.
 
 ## Handle Lightweight Interactions on the Main Thread
 
-Next, add an interaction to the page. Register node events directly on the main thread with `__AddEventListener()`. When state management and update computation are lightweight, no background thread is required:
+Next, add an interaction to the page. Register the node event listener directly on the main thread with `__AddEventListener()`.
 
-```ts title="main-thread.ts"
-// Maintain state inside the framework and trigger an update when it changes.
-function useState(initialValue) {
-  let value = initialValue;
-  const setValue = function (nextValue) {
-    value = nextValue;
-    updatePage({ title: value });
-  };
-  return [value, setValue] as const;
-}
-
-function renderPage(data) {
-  const [title, setTitle] = useState(data.title);
-
-  const titleElement = __CreateText(pageId);
-  titleText = __CreateRawText(title);
-
-  // The event callback requests an update through the framework's state setter.
-  __AddEventListener(
-    titleElement,
-    'tap',
-    function () {
-      setTitle('Hello Lynx');
-    },
-    {},
-  );
-  __AppendElement(titleElement, titleText);
-  __AppendElement(page, titleElement);
-}
-```
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{20-23}"
+  mode="source"
+  sourceHeight={300}
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
 
 The framework should retain the node, handler, and event options, then call `__RemoveEventListener()` with the same arguments in `clearPage`.
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{47-52}"
+  mode="source"
+  sourceHeight={300}
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
 For lightweight interactions such as counters and visibility toggles that do not depend on asynchronous tasks or complex scheduling, the framework can complete the entire “update state → modify Element nodes → commit UI” loop on the main thread.
-When interactions begin to involve asynchronous tasks, complex scheduling, or heavier computation, move the work that can run independently of the UI to a background thread.
+In the following example, tap the text to update its content:
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{25-33,37-38}"
+  defaultTab="web"
+  defaultEntryFile="dist/simple-interaction.lynx.bundle"
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+When an interaction begins to involve asynchronous tasks, complex scheduling, or heavier computation, move the work that can run independently of the UI to the background thread.
 
 ## Introduce a Background Thread When Needed
 
@@ -184,112 +155,70 @@ sequenceDiagram
 
 In the lightweight example above, `setTitle()` updates the UI directly on the main thread. After introducing a background thread, the state change passes through the following steps.
 
-#### 1. Prepare the State Update on the Background Thread
+#### 1. Maintain State on the Background Thread
 
-```ts title="background.ts"
-const [, setTitle] = useState('Hello World');
+Framework state is declared and maintained on the background thread, separate from the Element nodes owned by the main thread. `setValue` provides a unified path for data updates.
 
-function useState(initialValue) {
-  let value = initialValue;
-  const setValue = function (id, nextValue) {
-    value = nextValue;
-    // Work that the framework must implement.
-    handleUpdate(id, value);
-  };
-  return [value, setValue] as const;
-}
-```
-
-A real framework can continue with scheduling, diffing, and batched updates inside `setValue`. Once this state update entry is ready, the main thread only needs to send the user's update intent.
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{9-17}"
+  entry={['src/background-interaction/background.ts']}
+/>
 
 #### 2. Send an Update Task from the Main Thread
 
-```ts title="main-thread.ts"
-const elementMap = new Map();
-const backgroundThread = lynx.getJSContext();
-function setTitle(element, title) {
-  const elementId = __GetElementUniqueID(element);
-  elementMap.set(elementId, element);
-  backgroundThread.dispatchEvent({
-    type: 'SetTitle',
-    data: { id: elementId, value: title },
-  });
-}
-
-function renderPage(data) {
-  const titleElement = __CreateText(pageId);
-  const titleText = __CreateRawText(data.title);
-  __AddEventListener(
-    titleElement,
-    'tap',
-    function () {
-      setTitle(titleText, 'Hello Lynx');
-    },
-    {},
-  );
-  __AppendElement(titleElement, titleText);
-  __AppendElement(page, titleElement);
-}
-```
-
 The main thread sends only the serializable Element identifier and new value. It does not pass the Element node itself to the background thread.
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/main-thread.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{26-31}"
+  entry={['src/background-interaction/main-thread.ts']}
+/>
 
 #### 3. Receive the Task on the Background Thread
 
-```ts title="background.ts"
-const mainThread = lynx.getCoreContext();
-mainThread.addEventListener('SetTitle', onSetTitle);
+After receiving the task, the background thread runs framework logic through the state update entry.
 
-function onSetTitle(event) {
-  const { id, value } = event.data;
-  setTitle(id, value);
-}
-```
-
-After receiving the task, the background thread runs framework logic through the state update entry. Next, organize the result as a patch that the main thread can consume.
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={300}
+  highlight="{27-32}"
+  entry={['src/background-interaction/background.ts']}
+/>
 
 #### 4. Generate and Return a Patch
 
-```ts title="background.ts"
-function handleUpdate(id, title) {
-  // A real framework can perform diffing and batched updates here.
-  const patch = [['__SetAttribute', id, 'text', title]];
-  mainThread.dispatchEvent({
-    type: 'Patch',
-    data: patch,
-  });
-}
-```
+Organize the computed result into a Patch that the main thread can consume. The Patch contains only serializable operation names, Element identifiers, and new values.
 
-The patch contains only serializable operation names, Element identifiers, and new values. Finally, the main thread converts these descriptions into actual Element PAPI calls.
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{14,20-25}"
+  entry={['src/background-interaction/background.ts']}
+/>
 
 #### 5. Apply the Patch and Commit the UI
 
-```ts title="main-thread.ts"
-backgroundThread.addEventListener('Patch', onPatch);
+Finally, the main thread converts these descriptions into actual Element PAPI calls.
 
-function onPatch(event) {
-  const patch = event.data;
-  if (!Array.isArray(patch)) return;
-
-  let didUpdate = false;
-  for (const item of patch) {
-    const [action, id, key, value] = item;
-    const element = elementMap.get(id);
-    if (!element) continue;
-    switch (action) {
-      case '__SetAttribute':
-        __SetAttribute(element, key, value);
-        didUpdate = true;
-        break;
-      default:
-        break;
-    }
-  }
-
-  if (didUpdate) __FlushElementTree();
-}
-```
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/main-thread.ts"
+  defaultTab="web"
+  defaultEntryFile="dist/background-interaction.lynx.bundle"
+  highlight="{64-76}"
+  entry={['src/background-interaction/main-thread.ts']}
+/>
 
 This completes the loop for a single interaction: the main thread sends a task, the background thread updates state and returns a patch, and the main thread commits the UI.
 When the page is destroyed, the main thread should also forward the destroy event, and both threads should remove communication listeners, node event listeners, and local state.
