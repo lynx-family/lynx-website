@@ -104,9 +104,14 @@ export function BlogList({ limit }: { limit?: number }) {
   const pages = limitNum ? blogPages.slice(0, limitNum) : blogPages;
   const isEmbedded = !!limitNum;
 
-  // In full page mode: first post is featured, rest go to grid
-  const featuredPost = !isEmbedded && pages.length > 0 ? pages[0] : null;
-  const gridPosts = !isEmbedded ? pages.slice(1) : pages;
+  // Keep the Lynxtron announcement in the blog entry banner. The other posts
+  // remain ordered by date in the grid, including the latest release notes.
+  const featuredPost = !isEmbedded
+    ? pages.find((page) => page.filename === 'lynxtron') || pages[0] || null
+    : null;
+  const gridPosts = !isEmbedded
+    ? pages.filter((page) => page !== featuredPost)
+    : pages;
 
   useTiltEffect('[data-tilt-card]', { isMobile });
 
