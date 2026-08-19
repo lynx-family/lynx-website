@@ -1,5 +1,5 @@
 import path from 'path';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
@@ -35,6 +35,31 @@ const LYNXTRON_RELEASE_URL =
   'https://github.com/lynx-community/lynxtron-examples/releases/latest';
 const LYNXTRON_DOWNLOAD_URL_WIN =
   'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/LynxtronGo-win-x64-Setup.exe';
+
+function ExampleVersion({ example }: { example: string }) {
+  const [version, setVersion] = useState<string>();
+  useEffect(() => {
+    fetch(`/lynx-examples/${example}/example-metadata.json`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((metadata) => {
+        if (metadata?.version) setVersion(metadata.version);
+      })
+      .catch(() => undefined);
+  }, [example]);
+
+  if (!version) return null;
+  return (
+    <span
+      style={{
+        color: 'var(--semi-color-text-2)',
+        fontSize: '12px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      Example version: {version}
+    </span>
+  );
+}
 
 function resolveLynxtronDownloadUrl(): string | undefined {
   if (typeof navigator === 'undefined') return undefined;
@@ -81,7 +106,15 @@ export function Go(props: GoProps) {
 
   return (
     <GoConfigProvider config={config}>
-      <GoBase {...props} />
+      <GoBase
+        {...props}
+        rightFooter={
+          <>
+            {props.rightFooter}
+            <ExampleVersion example={props.example} />
+          </>
+        }
+      />
     </GoConfigProvider>
   );
 }

@@ -321,6 +321,7 @@ function parseExampleData() {
 
     const metadata = {
       name: packageJSON.repository?.directory || example,
+      version: packageJSON.version,
       files: sortedFiles,
       previewImage: previewImage,
       templateFiles: templateFiles,
