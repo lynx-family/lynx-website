@@ -104,10 +104,10 @@ export function BlogList({ limit }: { limit?: number }) {
   const pages = limitNum ? blogPages.slice(0, limitNum) : blogPages;
   const isEmbedded = !!limitNum;
 
-  // Keep the Lynxtron announcement in the blog entry banner. The other posts
-  // remain ordered by date in the grid, including the latest release notes.
+  // A post can opt into the blog entry banner through frontmatter. The other
+  // posts remain ordered by date in the grid, including the latest releases.
   const featuredPost = !isEmbedded
-    ? pages.find((page) => page.filename === 'lynxtron') || pages[0] || null
+    ? pages.find((page) => page.featured) || pages[0] || null
     : null;
   const gridPosts = !isEmbedded
     ? pages.filter((page) => page !== featuredPost)
