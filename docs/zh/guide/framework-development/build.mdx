@@ -1,19 +1,17 @@
 ---
-description: '从两个入口文件出发，说明主线程与后台线程代码如何被编码为一个 Lynx Bundle。'
+description: '从两个入口文件出发，说明主线程与后台线程代码如何被打包为一个 Lynx Bundle。'
 ---
 
 import { Mermaid } from '@lynx';
 
-# 构建产物
+# Bundle 构建
 
-运行时决定了主线程如何驱动 UI、后台线程分担什么。
-构建阶段要做的事只有一件：把这些代码变成宿主能加载的一个文件——`.lynx.bundle`。
-
-本文从最简单的形态讲起：**两个入口文件**。
+前文已经说明主线程驱动 UI、后台线程按需分担逻辑的边界。
+本节则主要关注如何标记、组装并编码这些资产，使一个页面最终交付为宿主可加载的 `.lynx.bundle`。
 
 ## 从两个入口文件开始
 
-先不谈任何 Lynx 特有的概念。假设你的框架为一个页面生成了两个文件：
+本文从最简单的形态讲起：**两个入口文件**。假设你的框架为一个页面生成了两个文件：
 
 ```text
 src/counter/
@@ -22,11 +20,8 @@ src/counter/
 └── style.css        样式
 ```
 
-它们是两个**互不相同的文件**，各自作为一个 entry 被打包。到这一步为止，和普通的前端构建没有区别：两个 entry，编译出两份 JavaScript。
-
-真正 Lynx 特有的问题是下一步：**这两份 JavaScript 怎么变成一个 `.lynx.bundle`？**
-
-Bundle 不是把两份 JS 和 CSS 拼接到一个文件里，而是一种二进制模板格式，内部有若干个区段，每个区段有明确的角色。所以打包工具必须先说清楚“哪份代码是主线程的、哪份是后台线程的”，再交给编码器。
+它们是两个**互不相同的文件**，各自作为一个 entry 被工具链编译。这一步和普通的前端构建没有区别：两个 entry，编译出两份 JavaScript。
+接下来进入 Lynx 特有的产物编码阶段：**如何将主线程、后台线程和样式资产编码为一个 `.lynx.bundle`？**
 
 <Mermaid>{`
 flowchart LR
@@ -39,26 +34,62 @@ flowchart LR
   Encode --> Bundle["counter.bundle"]
 `}</Mermaid>
 
-## 标明哪一份是主线程
+Bundle 并非将两份 JavaScript 和 CSS 简单拼接，而是按模板协议编码的二进制格式。
+主线程脚本、后台线程脚本与样式会写入职责明确的区段。
+因此，打包工具首先要识别并标记每项资产的线程角色，再按照编码器的输入约定将它们组装为结构化数据，最后生成最终的 Bundle。
 
-构建产物里的资产默认都长得一样——都是 JavaScript 文件。打包工具通过给资产打标记来区分线程角色：
+## 线程资产分组与包装
 
-```ts
-compilation.updateAsset(asset.name, asset.source, {
-  ...asset.info,
-  'lynx:main-thread': true,
-});
+主线程与后台线程资产在文件形式上均为 JavaScript，无法仅凭文件类型判断其线程归属。
+打包工具需要为资产附加角色标识，以便在后续组装与编码过程中区分不同线程的代码。
+
+Rspeedy 插件通过 `compilation` 访问本次构建生成的 asset；每个 asset 包含文件名、内容 `source` 和元数据 `info`。
+关于插件钩子与构建产物处理，参阅 [Rspeedy 插件](/rspeedy/plugin)。
+
+框架开发者需要在自己的构建插件中识别主线程入口生成的 asset，根据其文件名调用 `compilation.getAsset()` 获取资源，
+再通过 `updateAsset()` 将 `lynx:main-thread` 写入其 `info`。
+
+```ts title="thread-assets.ts"
+function markMainThreadAsset(compilation, filename) {
+  const asset = compilation.getAsset(filename);
+  if (!asset) return;
+
+  compilation.updateAsset(filename, asset.source, {
+    ...asset.info,
+    'lynx:main-thread': true,
+  });
+}
 ```
 
-带 `lynx:main-thread` 标记的资产会被归入主线程区段，其余 JavaScript 资产归入后台线程区段。这是默认的分组规则，[ReactLynx 的构建插件](https://github.com/lynx-family/lynx-stack/blob/main/packages/webpack/react-webpack-plugin/src/ReactWebpackPlugin.ts)就是这么做的。
+带 `lynx:main-thread` 标记的资产会被归入主线程区段，其余 JavaScript 资产归入后台线程区段。
+这是 Rspeedy 内置插件默认的分组规则，[ReactLynx 的构建插件](https://github.com/lynx-family/lynx-stack/blob/main/packages/webpack/react-webpack-plugin/src/ReactWebpackPlugin.ts) 就是这么做的。
 
-如果你的入口是手工搭的、没有打这个标记，也可以在编码前的钩子里直接指定各区段的内容——下面会看到。
+如果入口由框架自行组织、未添加该标记，也可以通过后文的 [`beforeEncode` 钩子](#编码为-bundle)，在编码前直接指定主线程与后台线程区段的内容。
 
-后台线程的 chunk 还需要经过 `RuntimeWrapperWebpackPlugin` 包装。它在代码外面套一层函数，宿主按这个约定加载后台脚本，并把 `tt`、`console`、`setTimeout`、`NativeModules`、`lynx` 等对象作为模块级变量注入进去——Lynx 不使用 CommonJS，这些绑定只能由加载方在包装层提供。主线程代码不走这条加载路径，所以不需要包装。
+后台线程的 JavaScript 资产还需要使用 [`@lynx-js/runtime-wrapper-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/runtime-wrapper-webpack-plugin) 提供的 [`RuntimeWrapperWebpackPlugin`](https://github.com/lynx-family/lynx-stack/blob/main/packages/webpack/runtime-wrapper-webpack-plugin/src/RuntimeWrapperWebpackPlugin.ts) 进行包装：
+
+```ts title="background-assets.ts"
+import { RuntimeWrapperWebpackPlugin } from '@lynx-js/runtime-wrapper-webpack-plugin';
+
+function wrapBackgroundAssets(chain: RspackChain) {
+  chain.plugin('myLynx:runtime-wrapper').use(RuntimeWrapperWebpackPlugin, [
+    {
+      // 只包装后台线程的 JavaScript 资产。
+      test: /^\.rspeedy\/.+\/background\.js$/,
+    },
+  ]);
+}
+```
+
+`test` 应精确匹配后台线程产物，避免主线程资产被包装。
+插件会在代码外面套一层函数，宿主按这个约定加载后台脚本，并把 `console`、`setTimeout`、`NativeModules`、`lynx` 等对象作为模块级变量注入进去。
+主线程代码不走这条加载路径，所以不需要包装。
+
+至此，主线程资产已具备线程角色标记，后台线程资产已完成运行时包装，双线程资产准备完成。
 
 ## 编码输入：`tasm.json`
 
-分好组之后，打包工具把所有资产整理成一个结构化对象，这就是编码器的输入：
+下一步，打包工具以逻辑入口为单位收集双线程资产及关联样式，并组装为编码器需要的结构化输入：
 
 | 字段              | 内容                                                 |
 | ----------------- | ---------------------------------------------------- |
@@ -80,20 +111,19 @@ compilation.updateAsset(asset.name, asset.source, {
 DEBUG=rspeedy:template rspeedy build
 ```
 
-它不是构建的中间缓存，而是**编码器实际收到的参数本身**（`JSON.stringify` 出来的）。产物不对劲时，先看这个文件：主线程代码是不是进了 `lepusCode`、后台代码是不是进了 `manifest`、样式在不在，一目了然。
+它不是构建的中间缓存，而是**编码器实际收到的参数本身**（`JSON.stringify` 出来的）。
+产物不对劲时，先看这个文件：主线程代码是不是进了 `lepusCode`、后台代码是不是进了 `manifest`、样式在不在，一目了然。
 
 ## 编码为 Bundle
 
 最后一步由 [`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm) 完成——它是真正的编码器，把上面的结构化数据写成 Lynx 模板二进制，同时产出调试信息和样式诊断。
 
-在构建流程里，这两件事由 `@lynx-js/template-webpack-plugin` 的两个插件配合完成，**它们需要一起使用**：
+在构建流程里，这两件事由 [`@lynx-js/template-webpack-plugin`](https://www.npmjs.com/package/@lynx-js/template-webpack-plugin) 的两个插件配合完成，**它们需要一起使用**：只挂前者没有人执行编码；只挂后者则没有输入，都不会产出合法的 Bundle。
 
-| 插件                 | 职责                                                         |
-| -------------------- | ------------------------------------------------------------ |
-| `LynxTemplatePlugin` | 按入口收集资产、分组、组装出上面那个对象，并暴露编码前的钩子 |
-| `LynxEncodePlugin`   | 接住编码请求，在 worker 里调用 `@lynx-js/tasm` 完成编码      |
-
-只挂前者不会产出 Bundle——没有人执行编码；只挂后者则没有输入。
+| 插件                 | 职责                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `LynxTemplatePlugin` | 按入口收集资产、分组、组装出上面那个对象，并提供 `beforeEncode` 钩子以调整编码输入 |
+| `LynxEncodePlugin`   | 接住编码请求，在 worker 里调用 `@lynx-js/tasm` 完成编码                            |
 
 <Mermaid>{`
 flowchart LR
@@ -104,15 +134,45 @@ flowchart LR
   Tasm --> Bundle["counter.bundle"]
 `}</Mermaid>
 
-一个可以直接运行的完整实现，见 lynx-examples 里的 [vanilla 示例](https://github.com/lynx-family/lynx-examples/tree/main/examples/vanilla)：它的 `plugin.ts` 把上面这些步骤写成了一个 Rsbuild 插件——按入口找到 `main-thread.ts` 和兄弟 `background.ts`、挂上两个插件、并在 `beforeEncode` 钩子里把两个 chunk 分别放进 `lepusCode` 和 `manifest`。如果你的框架有自己的打包工具，也可以不用这两个插件，只要最终交给 `@lynx-js/tasm` 的数据结构是对的。
+下面的示例代码展示了框架构建插件如何注册 `LynxTemplatePlugin` 与 `LynxEncodePlugin`：
 
-## 当两个线程共用一份源码
+```ts title="framework/plugin-lynx-bundle.ts"
+import {
+  LynxEncodePlugin,
+  LynxTemplatePlugin,
+} from '@lynx-js/template-webpack-plugin';
+
+export const pluginFrameworkBundle: RsbuildPlugin = {
+  name: 'myLynx',
+  setup(api) {
+    api.modifyBundlerChain((chain) => {
+      chain.plugin(`${PLUGIN_NAME}:template`).use(LynxTemplatePlugin, [
+        {
+          ...LynxTemplatePlugin.defaultOptions,
+          // 前文注册的两个线程 entry 名称。
+          chunks: ['app__background', 'app__main-thread'],
+          filename: '[name].lynx.bundle',
+          intermediate: '.rspeedy/app',
+          targetSdkVersion: '3.5',
+        },
+      ]);
+      chain.plugin(LynxEncodePlugin.name).use(LynxEncodePlugin, []);
+    });
+  },
+};
+```
 
 到这里为止，主线程和后台线程一直是**两个不同的文件**。这对于理解产物结构足够了，但大多数框架并不这么写。
 
-以 ReactLynx 为例，开发者写的是一个组件文件，同一份源码要**同时**编译进两个线程——主线程产物里保留渲染部分、剥掉事件处理和 Effect，后台产物里则相反。这时两个 entry 指向同一个文件，仅靠文件路径已经无法区分该用哪套转换规则。
+## 当两个线程共用一份源码
 
-解决办法是给 entry 打上 [`layer`](https://rspack.rs/zh/config/entry#entrydescriptionlayer)：
+以 ReactLynx 为例，开发者写的是一个组件文件，同一份源码要**同时**编译进两个线程
+
+- 主线程产物里保留渲染部分、剥掉事件处理和 Effect
+- 后台产物里则相反，需要保留完整的事件处理和 Effect，并承载框架的状态更新、调度及差异计算
+
+这时两个 entry 指向同一个文件，仅靠文件路径已经无法区分该用哪套转换规则。
+解决办法是给 entry 打上不同的 [`layer`](https://rspack.rs/zh/config/entry#entrydescriptionlayer) 来标记双线程资产。
 
 ```ts
 chain.entry('counter__main-thread').add({
@@ -125,8 +185,16 @@ chain.entry('counter__background').add({
 });
 ```
 
-`layer` 是构建期的编译上下文，不代表额外创建了运行时线程。它会沿模块图传递，loader 规则通过 [`rules[].issuerLayer`](https://rspack.rs/zh/config/module-rules#rulesissuerlayer) 匹配“是谁引入了这个模块”，从而选择对应的转换流程——于是同一个文件在两个 layer 中可以走两套完全不同的编译。这两个配置项都来自 Rspack，并非 Lynx 特有。
+`layer` 是构建期的编译上下文，不代表额外创建了运行时线程。
+它会沿模块图传递，loader 规则通过 [`rules[].issuerLayer`](https://rspack.rs/zh/config/module-rules#rulesissuerlayer) 匹配“是谁引入了这个模块”，从而选择对应的转换流程。
 
+基于这一能力，同一个文件在两个 layer 中可以走两套完全不同的编译。
 ReactLynx 正是这样实现的，具体可以参考 [`@lynx-js/react-rsbuild-plugin` 的入口处理](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/plugin-react/src/entry.ts)。
 
-需要注意的是，`layer` 解决的只是**编译**问题。资产分组、`tasm.json` 组装和编码这几步和前面完全一样：无论源码怎么组织，最终都要落到“哪份代码是主线程、哪份是后台线程”这一个契约上。
+这两个配置项都来自 Rspack，并非 Lynx 特有。需要注意的是，`layer` 解决的只是**编译**问题。
+资产分组、`tasm.json` 组装和编码这几步和前面完全一样：无论源码怎么组织，最终都要落到“哪份代码是主线程、哪份是后台线程”这一个契约上。
+
+## 下一步
+
+至此，你已经了解如何区分和处理线程资产，并将它们组装、编码为 Lynx Bundle。
+接下来阅读[教程：从 DSL 到 Bundle](/guide/framework-development/tutorial-dsl)，通过一个完整示例串联 DSL 解析、运行时入口生成、线程资产处理和 Bundle 编码流程。

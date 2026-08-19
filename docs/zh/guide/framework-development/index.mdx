@@ -1,45 +1,58 @@
 ---
-description: '介绍如何基于 Lynx 运行时定制框架，以及如何使用 Rspeedy 构建可加载产物。'
+description: '面向 UI 框架开发者，概述如何基于 Lynx 运行时、Element PAPI 与 Bundle 约定定制框架。'
 ---
+
+import { Mermaid } from '@lynx';
 
 # 定制 UI 框架
 
-本章节面向 Lynx 框架开发者，介绍如何以 [Lynx 运行时](/guide/scripting-runtime/index.html)和 [Element PAPI](/api/engine/element-api) 为基础组织渲染逻辑。
-你将先了解如何以主线程作为 UI 驱动入口，并按需引入后台线程，再学习如何通过 [Rspeedy 构建](/guide/framework-development/build)将相关脚本打包为可加载的 Lynx 产物。
+本章节面向准备基于 Lynx 底层能力设计 UI 框架的开发者，不要求你已经实现过框架。
+你将从必需的主线程 UI 入口开始，逐步理解状态与交互如何变成 Element 操作，再学习如何按需引入后台线程，以及如何构建宿主可加载的 Lynx Bundle。
 
-如果你要使用 ReactLynx 或 VueLynx 开发应用，请从 [ReactLynx 指南](/react/introduction)或者 [VueLynx 指南](https://vue.lynxjs.org/zh/)入手。
-本章节则主要聚焦于这些 UI 框架之下的框架实现层。
+如果你的目标是使用 Lynx 现有 DSL 开发应用，请从 [ReactLynx 指南](/react/introduction)或者 [VueLynx 指南](https://vue.lynxjs.org/zh/)入手。
+本章节关注的是这些 DSL 之下的框架实现层。
 
-## Lynx 提供的能力与约束
+## 先理解完整链路
 
-Lynx 并不规定框架如何管理状态、调度更新或计算差异，而是提供构建这些能力所需的运行时、UI 接口与产物约定。
-自定义框架负责把自己的状态和更新模型转换为对 [Element 树](/guide/spec.html#element-tree)的操作。
+UI 框架负责把开发者编写的组件、DSL 或 API 调用转换为 Lynx 可以执行的运行时代码，并最终交付为 Bundle：
 
-首先，Lynx 提供[主线程](/guide/scripting-runtime/index.html#主线程)和[后台线程](/guide/scripting-runtime/index.html#后台线程)两个相互独立的 JavaScript 执行环境。
+<Mermaid>{`
+flowchart LR
+  Source["组件、DSL 或 API"] --> Framework["框架编译与运行时"]
+  Framework --> Main["主线程入口<br/>驱动 UI"]
+  Framework -. "按需生成" .-> Background["后台线程入口<br/>状态与任务"]
+  Main --> Build["Bundle 构建"]
+  Background --> Build
+  Style["样式资产"] --> Build
+  Build --> Bundle[".lynx.bundle"]
+`}</Mermaid>
 
-当框架引入后台线程时，应围绕“主线程拥有 UI、后台线程按需分担任务”划分职责：
+这条链路包含两个相互衔接的部分：
 
-| 定位维度 | 主线程                                                                       | 后台线程                                                                   |
-| -------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| 角色     | 必需的 UI 执行端                                                             | 按需引入的逻辑执行端                                                       |
-| 核心工作 | 持有 Element 节点，调用 Element PAPI 将状态变化落实为 UI 更新。              | 按需分担状态管理、更新调度、计算与异步任务。                               |
-| 协作方式 | 响应用户交互，将任务发送到后台线程；接收后台线程的数据补丁并转换为 UI 更新。 | 接收交互任务，计算状态变化，并将更新组织为可序列化的数据补丁同步给主线程。 |
+- **运行时模型**决定状态、生命周期和用户交互如何转换为 UI 更新。每个框架都需要主线程入口，后台线程则按需引入。
+- **构建流程**负责生成线程资产和样式，并按照 Lynx 的产物约定将它们编码为 Bundle。
 
-## 基于 Lynx 能力定制框架
+无论框架采用怎样的语法或状态模型，最终都需要完成这两个部分。
 
-Lynx 将主线程与后台线程运行时、Element PAPI、引擎生命周期与 Bundle 产物约定作为一组可组合的底层能力，开放给框架开发者。
-每个框架都需要主线程渲染入口，用于处理生命周期、持有 Element 节点并驱动 UI。在此基础上，开发者可以直接在主线程处理轻量状态与同步更新，也可以按需引入后台线程，分担状态管理、更新调度、异步任务和业务计算。
+## Lynx 与框架如何分工
 
-后台线程不能替代主线程。无论是否引入后台线程，框架都需要在主线程将状态变化转换为 Element PAPI 操作以驱动 UI 更新，并将自身代码打包为 Lynx 可加载的 Bundle 才能运行。
+Lynx 提供执行、渲染和交付所需的底层能力，但不规定框架如何设计组件、管理状态或调度更新。
+框架开发者需要在这些能力之上定义自己的开发模型：
 
-| 定制部分       | 在框架中承担的职责                                                       | 可构建的能力                                                 | 继续阅读                                                                      |
-| -------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| 主线程渲染入口 | 处理生命周期、持有 Element 节点，并将状态变化转换为 Element PAPI 操作。  | 所有框架必需的 UI 驱动能力，也可直接支持轻量状态与同步更新。 | [构建主线程渲染入口](/guide/framework-development/runtime#构建主线程渲染入口) |
-| 后台线程扩展   | 按需分担状态管理、更新调度、异步任务和较重计算，并向主线程返回数据。     | 状态驱动的响应式框架，以及包含复杂交互或异步任务的应用。     | [按需引入后台线程](/guide/framework-development/runtime#按需引入后台线程)     |
-| 产物构建       | 编译主线程入口、可选后台线程入口和样式，并将它们封装为一个 Lynx Bundle。 | 适配框架入口约定的 Rspeedy 插件、构建工具或脚手架。          | [构建产物](/guide/framework-development/build)                                |
+| 环节        | Lynx 提供                                                                                   | 框架需要定义                                                        |
+| ----------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 页面运行    | [引擎生命周期](/guide/framework-development/runtime#接入页面生命周期)与 JavaScript 执行环境 | 如何把生命周期转换为渲染、更新和销毁流程。                          |
+| UI 更新     | [Element PAPI](/api/engine/element-api) 与 Element 树                                       | 如何生成节点、保存节点映射，以及如何把状态差异转换为 Element 操作。 |
+| 后台执行    | 可选的[后台线程](/guide/scripting-runtime/index.html#后台线程)与跨线程通信通道              | 何时引入后台线程，以及状态、任务和 Patch 如何在两个线程间流转。     |
+| Bundle 交付 | Bundle 编码约定与 [Rspeedy](/rspeedy/) 构建扩展能力                                         | 如何生成入口、转换源码、组织线程资产和样式，并提供插件或脚手架。    |
 
-## 建议阅读路径
+需要始终保持的运行时边界是：主线程是驱动 UI 的必需入口，后台线程是按需引入的扩展。
+无论状态和任务在哪里执行，最终的 UI 变化都需要在主线程转换为 Element PAPI 操作。
 
-1. 从[运行时模型](/guide/framework-development/runtime)开始，先构建主线程的 UI 更新路径，再判断是否需要引入后台线程。使用后台线程时，还需要定义线程职责与跨线程消息协议，由后台线程向主线程同步可序列化的数据或补丁。
-2. 阅读[构建产物](/guide/framework-development/build)，通过 [Rspeedy](/rspeedy/) 将相应的主线程入口、可选后台线程入口和样式打包为 Lynx Bundle。构建配置负责交付产物，并保持主线程拥有 UI 的运行时边界。
-3. 最后通过[从 .lynx 文件到 Lynx 产物](/guide/framework-development/tutorial-dsl)串联从运行时模型到 Bundle 产物的完整流程。
+## 按顺序开始
+
+1. 从[运行时模型](/guide/framework-development/runtime)开始。先构建仅使用主线程的最小 UI 闭环，再根据状态管理、异步任务和调度需求判断是否引入后台线程。
+2. 继续阅读 [Bundle 构建](/guide/framework-development/build)。把主线程入口、可选后台线程入口和样式组织为线程资产，再编码为 Lynx Bundle。
+3. 最后完成[教程：从 DSL 到 Bundle](/guide/framework-development/tutorial-dsl)。通过一个最小 DSL，将源码解析、运行时入口生成和 Bundle 构建串联起来。
+
+如果尚不确定框架是否需要后台线程，可以先完成第一步中的主线程闭环；只有当任务适合脱离 UI 执行时，再扩展为包含后台线程的运行时模型。

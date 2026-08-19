@@ -1,0 +1,58 @@
+---
+description: 'An overview for UI framework developers on customizing a framework with the Lynx runtime, Element PAPI, and Bundle conventions.'
+---
+
+import { Mermaid } from '@lynx';
+
+# Custom UI Frameworks
+
+This section is for developers who want to design a UI framework on top of Lynx's low-level capabilities. You do not need prior experience building a framework.
+You will start with the required main-thread UI entry, learn how state and interactions become Element operations, add a background thread when needed, and build a Lynx Bundle that a host app can load.
+
+If your goal is to build an app with an existing Lynx DSL, start with the [ReactLynx guide](/react/introduction) or the [VueLynx guide](https://vue.lynxjs.org/).
+This section focuses on the framework implementation layer beneath those DSLs.
+
+## Understand the End-to-End Flow
+
+A UI framework transforms components, a DSL, or API calls written by developers into runtime code that Lynx can execute, and ultimately delivers that code as a Bundle:
+
+<Mermaid>{`
+flowchart LR
+  Source["Components, DSL, or APIs"] --> Framework["Framework compiler and runtime"]
+  Framework --> Main["Main-thread entry<br/>Drives the UI"]
+  Framework -. "Generated when needed" .-> Background["Background-thread entry<br/>State and tasks"]
+  Main --> Build["Bundle build"]
+  Background --> Build
+  Style["Style assets"] --> Build
+  Build --> Bundle[".lynx.bundle"]
+`}</Mermaid>
+
+This flow consists of two connected parts:
+
+- The **runtime model** determines how state, lifecycle events, and user interactions become UI updates. Every framework requires a main-thread entry; the background thread is optional.
+- The **build pipeline** generates thread assets and styles, then encodes them as a Bundle according to the Lynx artifact conventions.
+
+Regardless of its syntax or state model, every framework must implement both parts.
+
+## Divide Responsibilities Between Lynx and the Framework
+
+Lynx provides the low-level capabilities required to execute, render, and deliver a page, but it does not prescribe how a framework designs components, manages state, or schedules updates.
+Framework developers define their own development model on top of these capabilities:
+
+| Stage                | Lynx provides                                                                                                                        | The framework defines                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Page runtime         | The [engine lifecycle](/guide/framework-development/runtime#integrate-with-the-page-lifecycle) and JavaScript execution environments | How lifecycle events become render, update, and destroy operations.                                                    |
+| UI updates           | [Element PAPI](/api/engine/element-api) and the Element tree                                                                         | How to generate nodes, retain node mappings, and turn state differences into Element operations.                       |
+| Background execution | An optional [background thread](/guide/scripting-runtime/index.html#background-thread) and cross-thread communication channels       | When to introduce a background thread, and how state, tasks, and patches flow between the two threads.                 |
+| Bundle delivery      | Bundle encoding conventions and [Rspeedy](/rspeedy/) build extension capabilities                                                    | How to generate entries, transform source code, organize thread assets and styles, and provide plugins or scaffolding. |
+
+One runtime boundary must always remain clear: the main thread is the required entry that drives the UI, while the background thread is an optional extension.
+Regardless of where state and tasks run, UI changes must ultimately become Element PAPI operations on the main thread.
+
+## Get Started in Order
+
+1. Start with the [runtime model](/guide/framework-development/runtime). Build a minimal UI loop that uses only the main thread, then decide whether to introduce a background thread based on your state management, asynchronous task, and scheduling requirements.
+2. Continue to [Bundle build](/guide/framework-development/build). Organize the main-thread entry, optional background-thread entry, and styles as thread assets, then encode them as a Lynx Bundle.
+3. Finish with the [From DSL to Bundle tutorial](/guide/framework-development/tutorial-dsl). Use a minimal DSL to connect source parsing, runtime entry generation, and Bundle construction.
+
+If you are unsure whether your framework needs a background thread, first complete the main-thread loop in step 1. Extend the runtime model with a background thread only when a task is suitable for execution away from the UI.

@@ -1,20 +1,35 @@
 ---
-description: '介绍如何构建必需的主线程渲染入口，并按需引入后台线程扩展框架运行时。'
+description: '从主线程 UI 闭环开始，逐步介绍如何按需引入后台线程扩展框架运行时。'
 ---
+
+import { Mermaid } from '@lynx';
 
 # 运行时模型
 
-Lynx 提供主线程和后台线程两个相互独立的 JavaScript 执行环境。每个框架都需要主线程渲染入口，用于处理引擎生命周期并驱动 UI。
-在此基础上，框架可以在主线程中处理轻量状态与同步更新，也可以按需引入后台线程，分担状态管理、更新调度、异步任务和业务计算。
-后台线程不能替代主线程，状态变化最终仍由主线程落实为 UI 更新。
+Lynx 框架的运行时从主线程入口开始。主线程响应引擎生命周期，持有 Element 节点，并将状态变化落实为 UI 更新。
+在这条必需链路之上，框架可以直接处理轻量交互，也可以按需引入后台线程，分担状态管理、更新调度、异步任务和业务计算。
 
-## 构建主线程渲染入口
+本文先构建一个仅使用主线程的最小运行时，再沿一次用户交互逐步加入后台线程：
 
-无论是否引入后台线程，主线程都需要处理引擎生命周期、持有后续更新需要的节点引用，并将状态变化转换为 Element PAPI 操作。
+<Mermaid>{`
+flowchart LR
+  Data["宿主数据"] --> Lifecycle["主线程生命周期"]
+  Lifecycle --> Element["Element PAPI"]
+  Element --> UI["UI"]
+  UI --> Event["用户交互"]
+  Event --> MainUpdate["主线程更新处理"]
+  MainUpdate --> Element
+  Event -. "按需转发" .-> Background["后台线程任务与状态"]
+  Background -. "数据或 Patch" .-> MainUpdate
+`}</Mermaid>
 
-### 响应主线程生命周期事件
+## 从主线程入口开始
 
-`lynx.getEngine()` 仅用于监听 Lynx 引擎定义的生命周期事件。这些事件构成页面 UI 的渲染、更新和销毁入口：
+无论是否引入后台线程，框架都要先在主线程建立“接收数据 → 更新 Element 树 → 提交 UI”的闭环。第一步是接入页面生命周期。
+
+### 接入页面生命周期
+
+框架通过 `lynx.getEngine()` 监听 Lynx 引擎定义的生命周期事件，并将它们转换为自身的渲染、更新和销毁入口：
 
 | 事件                | UI 生命周期阶段 | 框架需要完成的工作                                                                              |
 | ------------------- | --------------- | ----------------------------------------------------------------------------------------------- |
@@ -22,9 +37,9 @@ Lynx 提供主线程和后台线程两个相互独立的 JavaScript 执行环境
 | `__UpdatePage`      | 更新            | 消费宿主后续数据，确定状态变化，更新元素树并调用 `__FlushElementTree()` 提交 UI。               |
 | `__DestroyLifetime` | 销毁            | 移除引擎与节点监听器、释放本地引用；使用后台线程时同步转发销毁事件。                            |
 
-下面的示例代码展示主线程如何注册这三个入口：
+先注册三个生命周期回调：
 
-```ts title="main-thread.ts" {2-5}
+```ts title="main-thread.ts"
 // 注册页面渲染、更新和销毁回调
 const engine = lynx.getEngine();
 engine.addEventListener('__RenderPage', onRenderPage);
@@ -44,31 +59,44 @@ function onDestroyLifetime() {
 }
 ```
 
-其中，`renderPage` 和 `updatePage` 主要用于接收数据，并基于 [Element PAPI](/api/engine/element-api) 构造和更新 UI。
+此时，框架已经能够接收页面数据，但还没有把数据转换为 UI。下一步，在 `renderPage` 和 `updatePage` 中接入 [Element PAPI](/api/engine/element-api)。
 
-```ts title="main-thread.ts" {6-11,16-17}
+### 构建并更新 Element 树
+
+`renderPage` 负责根据首屏数据创建 Element 树，`updatePage` 则使用后续数据更新已存在的节点：
+
+```ts title="main-thread.ts"
 const page = __CreatePage('0', 0);
 const pageId = __GetElementUniqueID(page);
 let titleText;
 
 function renderPage(data) {
+  // 创建本次渲染需要的 Element 节点。
   const container = __CreateView(pageId);
   const title = __CreateText(pageId);
   titleText = __CreateRawText(data.title);
+
+  // 组合节点并挂载到 Page。
   __AppendElement(title, titleText);
   __AppendElement(container, title);
   __AppendElement(page, container);
 }
 
 function updatePage(data) {
-  if (data.title) {
-    __SetAttribute(titleText, 'text', data.title);
-    __FlushElementTree();
-  }
+  if (data.title === undefined) return;
+
+  // 更新已保存的节点引用，再显式提交本次 UI 变更。
+  __SetAttribute(titleText, 'text', data.title);
+  __FlushElementTree();
 }
 ```
 
-`clearPage` 则负责解除页面生命周期内注册的所有事件监听器，并释放保存的 Element 节点引用、元素映射和状态数据。
+首次渲染沿用 SDK 的默认提交时机；后续更新在修改 Element 节点后调用 `__FlushElementTree()`，将本轮变更提交给 Lynx。
+框架还应保存更新所需的节点引用，并在页面销毁时释放它们。
+
+### 释放页面资源
+
+`clearPage` 负责解除页面生命周期内注册的监听器，并释放节点引用、元素映射和状态数据：
 
 ```ts title="main-thread.ts"
 function clearPage() {
@@ -79,11 +107,13 @@ function clearPage() {
 }
 ```
 
-### 处理轻量交互逻辑
+至此，最小主线程链路已经建立：宿主数据进入生命周期回调，框架将其转换为 Element PAPI 操作，最终完成 UI 渲染和更新。
 
-节点事件可以通过 `__AddEventListener()` 直接在主线程注册。下面的代码模拟一个极简框架：
+## 在主线程完成轻量交互
 
-```ts title="main-thread.ts" {2-9,18-25}
+下一步，为这个页面加入交互。节点事件可以通过 `__AddEventListener()` 直接在主线程注册；当状态管理和更新计算都很轻量时，无需引入后台线程：
+
+```ts title="main-thread.ts"
 // 框架内部维护状态，并在状态变化时驱动一次更新。
 function useState(initialValue) {
   let value = initialValue;
@@ -91,7 +121,7 @@ function useState(initialValue) {
     value = nextValue;
     updatePage({ title: value });
   };
-  return [value, setValue];
+  return [value, setValue] as const;
 }
 
 function renderPage(data) {
@@ -107,18 +137,22 @@ function renderPage(data) {
     function () {
       setTitle('Hello Lynx');
     },
-    tapEventOptions,
+    {},
   );
+  __AppendElement(titleElement, titleText);
+  __AppendElement(page, titleElement);
 }
 ```
 
+框架应保存节点、处理函数和事件选项，并在 `clearPage` 中使用相同参数调用 `__RemoveEventListener()`。
 对于不依赖异步任务和复杂调度的计数、显隐切换等轻量交互，框架可以在主线程完成“更新状态 → 修改 Element 节点 → 提交 UI”的闭环。
+当交互开始涉及异步任务、复杂调度或较重计算时，再把适合脱离 UI 的工作迁移到后台线程。
 
 ## 按需引入后台线程
 
-当更新链路涉及异步任务、复杂调度或较重计算时，可以按需引入后台线程，将这些适合脱离 UI 的逻辑放在后台执行。
+后台线程是主线程模型之上的可选扩展。它不持有 Element 节点，也不能替代主线程，而是负责计算新的状态或数据补丁，再交由主线程更新 UI。
 
-### 通过配对上下文通信
+### 建立配对通信通道
 
 主线程和后台线程通过 `lynx.getJSContext()` 与 `lynx.getCoreContext()` 返回的配对端点交换事件。
 一个端点派发的事件，会由另一个线程中与之配对的端点接收：
@@ -132,29 +166,45 @@ function renderPage(data) {
 销毁时使用相同的端点、事件名和函数引用移除监听器。
 事件载荷应保持小且可序列化，只传递基本类型、数组和普通对象。
 
-### 跨线程状态更新
+通信通道建立后，框架还需要定义更新协议：主线程发送任务，后台线程更新状态并生成 Patch，最后由主线程应用 Patch。
 
-前面的轻量示例中，`setTitle()` 在主线程直接更新 UI。引入后台线程后，这次状态变更将在两个线程间依次流转：
+### 串联一次跨线程更新
 
-1. 后台线程维护状态和框架更新逻辑
+下面沿一次点击更新，按搭建顺序串联两个线程：
 
-```ts title="background.ts" {1,6-8}
-const [title, setTitle] = useState('Hello World');
+<Mermaid>{`
+sequenceDiagram
+  participant Main as 主线程
+  participant Background as 后台线程
+  Main->>Background: SetTitle { id, value }
+  Background->>Background: 更新状态并生成 Patch
+  Background->>Main: Patch [...]
+  Main->>Main: Element PAPI + Flush
+`}</Mermaid>
 
-function useState() {
+前面的轻量示例中，`setTitle()` 在主线程直接更新 UI。引入后台线程后，这次状态变更依次经过以下步骤。
+
+#### 1. 在后台线程准备状态更新
+
+```ts title="background.ts"
+const [, setTitle] = useState('Hello World');
+
+function useState(initialValue) {
   let value = initialValue;
   const setValue = function (id, nextValue) {
     value = nextValue;
     // 框架需要完成的工作
-    handleUpdate(id);
+    handleUpdate(id, value);
   };
-  return [value, setValue];
+  return [value, setValue] as const;
 }
 ```
 
-2. 主线程将更新任务转发给后台线程
+真实框架可以在 `setValue` 中继续执行调度、差异计算和批量更新。状态更新入口准备完成后，主线程只需发送用户的更新意图。
 
-```ts title="main-thread.ts" {6-9}
+#### 2. 从主线程发送更新任务
+
+```ts title="main-thread.ts"
 const elementMap = new Map();
 const backgroundThread = lynx.getJSContext();
 function setTitle(element, title) {
@@ -175,14 +225,18 @@ function renderPage(data) {
     function () {
       setTitle(titleText, 'Hello Lynx');
     },
-    tapEventOptions,
+    {},
   );
+  __AppendElement(titleElement, titleText);
+  __AppendElement(page, titleElement);
 }
 ```
 
-3. 后台线程响应更新事件
+主线程只发送可序列化的元素标识和新值，不把 Element 节点本身传到后台线程。
 
-```ts title="background.ts" {2,6}
+#### 3. 在后台线程接收任务
+
+```ts title="background.ts"
 const mainThread = lynx.getCoreContext();
 mainThread.addEventListener('SetTitle', onSetTitle);
 
@@ -192,13 +246,14 @@ function onSetTitle(event) {
 }
 ```
 
-4. 后台线程的框架驱动根据最新状态生成 patch，并发送给主线程
+收到任务后，后台线程通过状态更新入口执行框架逻辑。下一步，将计算结果组织为主线程可以消费的 Patch。
 
-```ts title="background.ts" {4}
-const mainThread = lynx.getCoreContext();
-function handleUpdate(id) {
-  // 经过框架计算后获取，这里只是一个简单的例子
-  const patch = [['__SetAttribute', id, 'text', 'Hello Lynx']];
+#### 4. 生成并返回 Patch
+
+```ts title="background.ts"
+function handleUpdate(id, title) {
+  // 真实框架可在这里执行差异计算和批量更新。
+  const patch = [['__SetAttribute', id, 'text', title]];
   mainThread.dispatchEvent({
     type: 'Patch',
     data: patch,
@@ -206,30 +261,39 @@ function handleUpdate(id) {
 }
 ```
 
-5. 主线程消费补丁，调用 Element PAPI 更新 UI
+Patch 只包含可序列化的操作名、元素标识和新值。最后，主线程将这些描述转换为真正的 Element PAPI 调用。
 
-```ts title="main-thread.ts" {11}
-const backgroundThread = lynx.getJSContext();
+#### 5. 应用 Patch 并提交 UI
+
+```ts title="main-thread.ts"
 backgroundThread.addEventListener('Patch', onPatch);
 
 function onPatch(event) {
-  const { patch } = event.data;
-  for (let item of patch) {
+  const patch = event.data;
+  if (!Array.isArray(patch)) return;
+
+  let didUpdate = false;
+  for (const item of patch) {
     const [action, id, key, value] = item;
     const element = elementMap.get(id);
+    if (!element) continue;
     switch (action) {
       case '__SetAttribute':
         __SetAttribute(element, key, value);
+        didUpdate = true;
         break;
       default:
         break;
     }
   }
 
-  __FlushElementTree();
+  if (didUpdate) __FlushElementTree();
 }
 ```
 
-## 下一步：构建产物
+这样，一次交互就完成了“主线程发送任务 → 后台线程更新状态 → 返回 Patch → 主线程提交 UI”的闭环。
+页面销毁时，还应由主线程转发销毁事件，并在两个线程中移除通信监听器、节点事件和本地状态。
 
-确定主线程入口、可选后台线程和跨线程协议后，继续阅读 [构建产物](/guide/framework-development/build)，了解如何将这些入口打包为 Lynx 产物。
+## 下一步
+
+确定主线程入口、可选后台线程和跨线程协议后，继续阅读 [Bundle 构建](/guide/framework-development/build)，了解如何将相应的脚本与样式组织为宿主可加载的 Lynx Bundle。

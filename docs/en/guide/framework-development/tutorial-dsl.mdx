@@ -1,0 +1,229 @@
+---
+description: 'Use the teaching DSL Greeting.lynx to connect runtime entry generation for both threads with Lynx Bundle construction.'
+---
+
+# From DSL to Bundle
+
+The [runtime model](/guide/framework-development/runtime) explains how the main thread drives the UI and how a background thread can participate in updates. [Bundle build](/guide/framework-development/build) explains how that code becomes a Lynx artifact. This tutorial uses the teaching DSL `Greeting.lynx` as input and connects the framework compilation stages between them.
+
+`Greeting.lynx` is not a built-in Lynx file format. It is a minimal example designed to illustrate compiler responsibilities. A real framework can choose its own syntax, file extension, and compiler implementation.
+
+## 1. Describe the Page and Update Intent with a DSL
+
+The following DSL declares a title. Tapping the title runs the asynchronous `refreshGreeting` task, which retrieves a new title and writes it back to `title`:
+
+```text title="src/Greeting.lynx"
+screen Greeting {
+  state title = "Hello World"
+
+  text #title {
+    value = title
+    on tap {
+      run refreshGreeting
+    }
+  }
+
+  task refreshGreeting {
+    title <- await fetchGreeting()
+  }
+
+  style #title {
+    font-size: 32px
+    color: #222222
+  }
+}
+```
+
+The framework compiler first parses the source into an intermediate representation, then decides which thread should receive the generated code for each declaration. In this example, the asynchronous task requires a background thread, so the generation plan is:
+
+| DSL declaration | Generated in            | Responsibility of generated code                                                                             |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `text`          | Main thread             | Create the Element tree, bind the tap event, and apply the operation list returned by the background thread. |
+| `state`         | Background thread       | Store state and trigger a framework update when state changes.                                               |
+| `task`          | Background thread       | Run the asynchronous task and write its result to state.                                                     |
+| `run task`      | Between the two threads | Convert a main-thread interaction into a task message that the background thread can process.                |
+| `style`         | Style artifact          | Emit the style rules associated with `#title`.                                                               |
+
+The corresponding intermediate representation can remain simple:
+
+```ts title="Intermediate representation of Greeting.lynx"
+{
+  state: { title: 'Hello World' },
+  nodes: [{ id: 'title', type: 'text', value: 'title' }],
+  events: [{ node: 'title', name: 'tap', run: 'refreshGreeting' }],
+  tasks: [{ name: 'refreshGreeting', async: true, writes: ['title'] }],
+}
+```
+
+Here, `#title` identifies a main-thread node, `value = title` is a state binding, and `run refreshGreeting` expresses a cross-thread task intent. The compiler uses this information to generate the following three files.
+
+## 2. Generate Runtime Entries for Both Threads
+
+The framework runtime handles the page lifecycle, thread communication endpoints, and resource cleanup. See [Runtime model](/guide/framework-development/runtime) for those conventions. This section shows only the page logic generated directly from the DSL: the main thread creates the UI and receives patches, while the background thread maintains state and produces patches.
+
+### Generate the Main-Thread Entry
+
+The compiler generates `text #title` and `on tap` in `main-thread.ts`. The framework runtime calls `renderGreeting()` during the initial render. That first render uses the SDK's default commit timing; only subsequent patches call `__FlushElementTree()` explicitly.
+
+```ts title=".framework/greeting/main-thread.ts"
+const page = __CreatePage('0', 0);
+const pageId = __GetElementUniqueID(page);
+const backgroundThread = lynx.getJSContext();
+const elementMap = new Map();
+
+function renderGreeting() {
+  const title = __CreateText(pageId);
+  const titleText = __CreateRawText('Hello World');
+  __SetID(title, 'title');
+  elementMap.set('title', titleText);
+
+  __AddEventListener(title, 'tap', onTitleTap, {});
+  __AppendElement(title, titleText);
+  __AppendElement(page, title);
+}
+
+function onTitleTap() {
+  backgroundThread.dispatchEvent({
+    type: 'Intent',
+    data: { type: 'run', task: 'refreshGreeting' },
+  });
+}
+
+function onPatch(event) {
+  // event.data is the serializable operation list sent by the background thread.
+  for (const [action, id, key, value] of event.data) {
+    const element = elementMap.get(id);
+    if (action === '__SetAttribute' && element) {
+      __SetAttribute(element, key, value);
+    }
+  }
+
+  __FlushElementTree();
+}
+
+backgroundThread.addEventListener('Patch', onPatch);
+```
+
+The main thread retains references to Element nodes. Only node identifiers and operation arguments cross the thread boundary; the nodes themselves do not.
+
+### Generate the Background-Thread Entry
+
+The compiler generates `state title` and `task refreshGreeting` in `background.ts`. The task only updates state. The framework runtime generates an operation list from that state change and sends it back to the main thread:
+
+```ts title=".framework/greeting/background.ts"
+const mainThread = lynx.getCoreContext();
+let state = { title: 'Hello World' };
+
+function setTitle(title: string) {
+  if (title === state.title) return;
+
+  state = { ...state, title };
+  flushUpdate();
+}
+
+function flushUpdate() {
+  const patch = [['__SetAttribute', 'title', 'text', state.title]];
+  mainThread.dispatchEvent({
+    type: 'Patch',
+    data: patch,
+  });
+}
+
+async function refreshGreeting() {
+  setTitle(await fetchGreeting());
+}
+
+function onIntent(event) {
+  const intent = event.data;
+  if (intent?.type === 'run' && intent.task === 'refreshGreeting') {
+    void refreshGreeting();
+  }
+}
+
+mainThread.addEventListener('Intent', onIntent);
+```
+
+The interaction follows this update path:
+
+1. The main thread converts the tap into an `Intent` message.
+2. The background thread runs `refreshGreeting()`, updates state, and generates a serializable list of Element PAPI operations.
+3. The main thread consumes the `Patch`, locates the node, performs the operations, and commits the UI.
+
+The cross-thread event names, endpoint pairing, and listener cleanup during teardown follow the [communication conventions in Runtime model](/guide/framework-development/runtime#establish-paired-communication-channels).
+
+## 3. Integrate the DSL Compiler with Rsbuild
+
+You can package the compiler as an Rsbuild plugin. It reads `.lynx` inputs from Rspeedy's `source.entry` and replaces each logical entry with the generated main-thread, background-thread, and style entries.
+In development mode, the plugin must also watch for source file changes and regenerate these entries. The following example omits the watcher implementation:
+
+```ts title="framework/plugin-my-lynx.ts"
+import type { RsbuildPlugin } from '@rsbuild/core';
+
+export function pluginMyLynx(): RsbuildPlugin {
+  return {
+    name: 'framework:my-lynx',
+    setup(api) {
+      api.modifyBundlerChain((chain) => {
+        // The app entry in `source.entry` is './src/Greeting.lynx'.
+        const entries = chain.entryPoints.entries() ?? {};
+
+        for (const [entryName, entry] of Object.entries(entries)) {
+          const [input] = getEntryImports(entry.values());
+          const component = parseLynxFile(input);
+
+          // Create generated modules inside the framework, then register them
+          // as the entries for both threads and the styles.
+          replaceWithGeneratedEntries(chain, entryName, {
+            mainThread: generateMainThread(component),
+            background: generateBackground(component),
+            style: generateStyles(component),
+          });
+        }
+      });
+    },
+  };
+}
+```
+
+The configuration still uses the developer-authored `.lynx` file as the logical entry. During the build, the DSL plugin expands it into main-thread, background-thread, and style entries. The framework's Bundle plugin then groups and encodes those assets:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginMyLynx } from './framework/plugin-my-lynx';
+import { pluginFrameworkBundle } from './framework/plugin-lynx-bundle';
+
+export default defineConfig({
+  source: {
+    entry: {
+      app: './src/Greeting.lynx',
+    },
+  },
+  output: {
+    filename: {
+      bundle: '[name].lynx.bundle',
+    },
+  },
+  plugins: [pluginMyLynx(), pluginFrameworkBundle()],
+});
+```
+
+`source.entry` is the input to the DSL compiler, while `output.filename.bundle` determines the final Bundle filename. `pluginFrameworkBundle()` passes the generated thread assets to `LynxTemplatePlugin` and `LynxEncodePlugin`. See [Bundle build](/guide/framework-development/build) for asset marking, background-thread wrapping, and encoding input assembly.
+
+## 4. Deliver a Lynx Bundle from the Source File
+
+The framework now implements the complete path from a DSL to a Lynx Bundle:
+
+```text
+Greeting.lynx
+  └─→ DSL compiler
+        ├─→ main-thread.ts
+        ├─→ background.ts
+        └─→ style.css
+              └─→ Framework Bundle plugin
+                    └─→ app.lynx.bundle
+```
+
+The DSL compiler determines how state, events, and styles become entries for both threads. The framework runtime performs rendering and updates in those entries. The build plugin encodes the thread assets as a loadable Bundle.
+When changing the syntax, state model, or update strategy, you can preserve these three layers of responsibility and replace only the corresponding framework implementation.
+
+To review the specific conventions, continue with [Runtime model](/guide/framework-development/runtime) and [Bundle build](/guide/framework-development/build).
