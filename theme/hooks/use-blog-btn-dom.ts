@@ -23,14 +23,13 @@ const config: Record<
 > = {
   '/': {
     text: {
-      // Fallback text if no blog is found
-      zh: '阅读最新博客',
-      en: 'Read the Latest Blog',
+      // Fallback text if the pinned Lynxtron post cannot be read.
+      zh: '了解 Lynxtron',
+      en: 'Explore Lynxtron',
     },
-    // Optional: customize which blog to show
-    // latestBlogConfig: {
-    //   filename: 'lynx-3-5', // Show a specific blog
-    // },
+    latestBlogConfig: {
+      filename: 'lynxtron',
+    },
     // Or use an external link:
     // latestBlogConfig: {
     //   externalLink: 'https://example.com',
