@@ -79,6 +79,8 @@ const COVER_EXTRAS: Record<string, Pick<OgCover, 'gradient' | 'logo'>> = {
   },
   ui: {
     gradient: ['#ff1a6e', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
+    // Keep the vendored logo brand-aligned with the package/repo name even
+    // though the public docs route moved from `/lynx-ui/*` to `/ui/*`.
     logo: 'lynx-ui.png',
   },
   ai: {

@@ -8,9 +8,9 @@ shared with the theme.
 ## Outputs (`docs/public/og/`, git-ignored, regenerated each build)
 
 - `covers/<lang>/<subsite>.png` — one shared cover per subsite (`guide`, `react`,
-  `rspeedy`, `lynx-ui`, `ai`, `api`) per language (`en`/`zh`), reused across
-  every URL in that subsite+language. Label is language-neutral; the description,
-  footer URL, and "Documentation/文档" label localize.
+  `rspeedy`, `ui`, `ai`, `lynxtron`, `api`) per language (`en`/`zh`), reused
+  across every URL in that subsite+language. Label is language-neutral; the
+  description, footer URL, and "Documentation/文档" label localize.
 - `blog/<lang>/<slug>.png` — a unique image per blog post (en + zh).
 
 Each image has a `<name>.png.meta.json` sidecar holding a hash of its inputs;
@@ -39,11 +39,13 @@ pnpm gen:og:assets       # re-fetch + rasterize the vendored logos (rarely)
   static TTF), JetBrains Mono (URLs), Noto Sans (Latin fallback) and Noto Sans SC
   (CJK, from notofonts/noto-cjk SubsetOTF — required for Chinese blog titles).
   satori needs raw `ttf`/`otf` (not `woff2`).
-- `assets/<subsite>.png` — each subsite's logo, pre-rasterized to a uniform
-  white silhouette so it reads on the gradient. Exceptions keep their native
-  colors (`native: true`): the two-tone lynx-ui hex and the detailed Rspeedy
-  crab mascot, which a flat silhouette would reduce to a featureless blob.
-  Produced by `prepare-assets.mjs` from the `logo.dark` artwork in
+- `assets/<filename>` — each subsite's logo, pre-rasterized to a uniform white
+  silhouette so it reads on the gradient. Most filenames match the cover id;
+  the UI cover intentionally keeps `lynx-ui.png` for brand continuity even
+  though the docs route is `/ui`. Exceptions keep their native colors
+  (`native: true`): the two-tone lynx-ui hex and the detailed Rspeedy crab
+  mascot, which a flat silhouette would reduce to a featureless blob. Produced
+  by `prepare-assets.mjs` from the `logo.dark` artwork in
   `shared-route-config.ts`; committed so the build stays offline.
 
 ## OG meta tags
