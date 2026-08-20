@@ -1,0 +1,228 @@
+---
+description: 'Start with a complete main-thread UI loop, then progressively introduce a background thread to extend the framework runtime when needed.'
+---
+
+import { Go, Mermaid } from '@lynx';
+
+# Runtime Model
+
+A Lynx framework runtime starts with its main-thread entry. The main thread responds to engine lifecycle events, owns Element nodes, and turns state changes into UI updates.
+On top of this required path, a framework can handle lightweight interactions directly or introduce a background thread when needed for state management, update scheduling, asynchronous tasks, and business logic.
+
+This guide first builds a minimal runtime that uses only the main thread, then adds a background thread step by step along the path of a user interaction:
+
+<Mermaid>{`
+flowchart LR
+  Data["Host data"] --> Lifecycle["Main-thread lifecycle"]
+  Lifecycle --> Element["Element PAPI"]
+  Element --> UI["UI"]
+  UI --> Event["User interaction"]
+  Event --> MainUpdate["Main-thread update handling"]
+  MainUpdate --> Element
+  Event -. "Forward when needed" .-> Background["Background-thread tasks and state"]
+  Background -. "Data or patch" .-> MainUpdate
+`}</Mermaid>
+
+## Start with the Main-Thread Entry
+
+Whether or not you introduce a background thread, the framework must first establish a loop on the main thread: receive data, update the Element tree, and commit the UI. The first step is to integrate with the page lifecycle.
+
+### Integrate with the Page Lifecycle
+
+The framework listens for lifecycle events defined by the Lynx engine through `lynx.getEngine()`, then converts them into its own render, update, and destroy entry points:
+
+| Event               | UI lifecycle stage | Framework responsibility                                                                                                                                   |
+| ------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `__RenderPage`      | Render             | Process initial data, turn state into Element PAPI operations, and create the initial Element tree. The first render uses the SDK's default commit timing. |
+| `__UpdatePage`      | Update             | Consume subsequent data from the host, determine state changes, update the Element tree, and call `__FlushElementTree()` to commit the UI.                 |
+| `__DestroyLifetime` | Destroy            | Remove engine and node listeners and release local references. If a background thread is in use, forward the destroy event to it as well.                  |
+
+Start by registering the three lifecycle callbacks:
+
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{4-11}"
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
+
+The framework can now receive page data, but it has not yet converted that data into UI. Next, use [Element PAPI](/api/engine/element-api) in `renderPage` and `updatePage`.
+
+### Build and Update the Element Tree
+
+`renderPage` creates an Element tree from the initial data, while `updatePage` updates existing nodes with subsequent data:
+
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  defaultEntryFile="dist/hello-lynx.lynx.bundle"
+  highlight="{19-28,30-35}"
+  defaultTab="web"
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
+
+The first render uses the SDK's default commit timing. For subsequent updates, call `__FlushElementTree()` after modifying Element nodes to commit that batch of changes to Lynx.
+The framework should also retain the node references required by later updates and release them when the page is destroyed.
+
+### Release Page Resources
+
+`clearPage` removes listeners registered during the page lifecycle and releases node references, Element mappings, and state:
+
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  mode="source"
+  highlight="{46-52}"
+  sourceHeight={300}
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
+
+The minimal main-thread path is now complete: host data enters through lifecycle callbacks, the framework converts it into Element PAPI operations, and the UI is rendered and updated.
+
+## Handle Lightweight Interactions on the Main Thread
+
+Next, add an interaction to the page. Register the node event listener directly on the main thread with `__AddEventListener()`.
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{20-23}"
+  mode="source"
+  sourceHeight={300}
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+The framework should retain the node, handler, and event options, then call `__RemoveEventListener()` with the same arguments in `clearPage`.
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{47-52}"
+  mode="source"
+  sourceHeight={300}
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+For lightweight interactions such as counters and visibility toggles that do not depend on asynchronous tasks or complex scheduling, the framework can complete the entire “update state → modify Element nodes → commit UI” loop on the main thread.
+In the following example, tap the text to update its content:
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{25-33,37-38}"
+  defaultTab="web"
+  defaultEntryFile="dist/simple-interaction.lynx.bundle"
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+When an interaction begins to involve asynchronous tasks, complex scheduling, or heavier computation, move the work that can run independently of the UI to the background thread.
+
+## Introduce a Background Thread When Needed
+
+The background thread is an optional extension of the main-thread model. It neither owns Element nodes nor replaces the main thread. Instead, it computes new state or data patches and hands them to the main thread for UI updates.
+
+### Establish Paired Communication Channels
+
+The main thread and background thread exchange events through paired endpoints returned by `lynx.getJSContext()` and `lynx.getCoreContext()`.
+An event dispatched from one endpoint is received by its paired endpoint on the other thread:
+
+| Direction                       | Sender                                           | Receiver                                         |
+| ------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| Main thread → background thread | `lynx.getJSContext()` on the main thread         | `lynx.getCoreContext()` on the background thread |
+| Background thread → main thread | `lynx.getCoreContext()` on the background thread | `lynx.getJSContext()` on the main thread         |
+
+Cache and reuse these endpoints for cross-thread communication. Send events with `dispatchEvent()` and receive them with `addEventListener()`.
+During teardown, remove listeners using the same endpoint, event name, and function reference.
+Keep event payloads small and serializable: pass only primitive values, arrays, and plain objects.
+
+After establishing the communication channel, the framework must define an update protocol: the main thread sends a task, the background thread updates state and generates a patch, and the main thread applies the patch.
+
+### Connect a Cross-Thread Update
+
+The following example connects the two threads, in setup order, for a single tap-driven update:
+
+<Mermaid>{`
+sequenceDiagram
+  participant Main as Main thread
+  participant Background as Background thread
+  Main->>Background: SetTitle { id, value }
+  Background->>Background: Update state and generate a patch
+  Background->>Main: Patch [...]
+  Main->>Main: Element PAPI + flush
+`}</Mermaid>
+
+In the lightweight example above, `setTitle()` updates the UI directly on the main thread. After introducing a background thread, the state change passes through the following steps.
+
+#### 1. Maintain State on the Background Thread
+
+Framework state is declared and maintained on the background thread, separate from the Element nodes owned by the main thread. `setValue` provides a unified path for data updates.
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{9-17}"
+  entry={['src/background-interaction/background.ts']}
+/>
+
+#### 2. Send an Update Task from the Main Thread
+
+The main thread sends only the serializable Element identifier and new value. It does not pass the Element node itself to the background thread.
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/main-thread.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{26-31}"
+  entry={['src/background-interaction/main-thread.ts']}
+/>
+
+#### 3. Receive the Task on the Background Thread
+
+After receiving the task, the background thread runs framework logic through the state update entry.
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={300}
+  highlight="{27-32}"
+  entry={['src/background-interaction/background.ts']}
+/>
+
+#### 4. Generate and Return a Patch
+
+Organize the computed result into a Patch that the main thread can consume. The Patch contains only serializable operation names, Element identifiers, and new values.
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{14,20-25}"
+  entry={['src/background-interaction/background.ts']}
+/>
+
+#### 5. Apply the Patch and Commit the UI
+
+Finally, the main thread converts these descriptions into actual Element PAPI calls.
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/main-thread.ts"
+  defaultTab="web"
+  defaultEntryFile="dist/background-interaction.lynx.bundle"
+  highlight="{64-76}"
+  entry={['src/background-interaction/main-thread.ts']}
+/>
+
+This completes the loop for a single interaction: the main thread sends a task, the background thread updates state and returns a patch, and the main thread commits the UI.
+When the page is destroyed, the main thread should also forward the destroy event, and both threads should remove communication listeners, node event listeners, and local state.
+
+## Next Steps
+
+After defining the main-thread entry, optional background thread, and cross-thread protocol, continue to [Bundle build](/guide/framework-development/build) to learn how to organize the corresponding scripts and styles into a Lynx Bundle that a host app can load.

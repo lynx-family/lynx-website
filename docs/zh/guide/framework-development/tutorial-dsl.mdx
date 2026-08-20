@@ -1,0 +1,161 @@
+---
+description: '通过教学 DSL Greeting.lynx 串联中间表示、双线程模块生成与 Lynx、Web Bundle 构建。'
+---
+
+import { Go } from '@lynx';
+
+# 从 DSL 到 Bundle
+
+[运行时模型](/guide/framework-development/runtime)说明主线程如何驱动 UI、后台线程如何参与更新；[Bundle 构建](/guide/framework-development/build)说明这些代码如何成为一个 Lynx 产物。本教程以教学 DSL `Greeting.lynx` 为输入，按照“解析 DSL → 生成双线程模块 → 与 CSS 一起组装 Lynx Bundle”的顺序串联两者之间的框架编译流程。
+
+`Greeting.lynx` 不是 Lynx 内置文件格式，而是用于说明编译器职责的最小示例。真实框架可以选择自己的语法、文件后缀和编译器实现。
+
+## 运行完整示例
+
+下面的示例实现了本教程的完整链路。点击标题会在后台线程执行异步任务，再将生成的 Patch 发送到主线程更新 UI。你可以先在代码面板中查看 DSL 和 Rspeedy 配置；后续章节会依次展开中间表示、两个 layer 的模块生成，以及 CSS 与 Lynx Bundle 的组装：
+
+<Go
+  example="custom-framework"
+  defaultFile="src/Greeting.lynx"
+  defaultEntryFile="dist/greeting.lynx.bundle"
+  defaultTab="web"
+  highlight="{7-9,14}"
+  langAlias={{ lynx: 'stylus' }}
+  entry={['src', 'lynx.config.ts']}
+/>
+
+## 1. 将 DSL 解析为中间表示
+
+上方示例中的 `Greeting.lynx` 声明了 `view #content` 容器及其子节点 `text #title`。标题读取 `title` 状态；点击标题会运行异步任务 `refreshGreeting`，该任务调用 `fetchGreeting()` 并将结果写回状态。
+
+`parseLynx()` 会把这些声明解析为一份与线程无关的组件定义。`compileLynxFile()` 再补充源码路径和对应的 Action 模块路径，形成后续编译阶段共用的中间表示：
+
+| DSL 声明                           | 中间表示                      | 后续用途                                                 |
+| ---------------------------------- | ----------------------------- | -------------------------------------------------------- |
+| `view` 与 `text`                   | 带生成类名的嵌套节点树        | 主线程递归创建 Element 树。                              |
+| `state` 与 `value = title`         | 初始状态与文本节点的状态绑定  | 后台线程持有状态，主线程创建并保留对应的 Raw Text 节点。 |
+| `on tap` 与 `run`                  | 节点事件到任务的映射          | 主线程把交互转换为发往后台线程的任务意图。               |
+| `task refreshGreeting`             | Action、参数及目标状态        | 后台线程调用 Action，并把结果写入 `title`。              |
+| `style #content` 与 `style #title` | 生成类名及规范化后的 CSS 声明 | CSS 生成器输出样式，主线程运行时把类名设置到节点。       |
+
+中间表示可以简化为下面几项关系：
+
+```text title="简化后的中间表示"
+Greeting
+├─ 节点：view#content → text#title(value: title)
+├─ 状态：title = "Hello World"
+├─ 事件：title.tap → refreshGreeting
+├─ 任务：refreshGreeting → fetchGreeting() → title
+└─ 样式：#content、#title
+```
+
+实际解析器还会检查重复节点、未知状态、无效任务和样式目标等错误。下面的 `compileLynxFile()` 返回这份中间表示；它此时不会生成或写入任何线程文件：
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/compiler.ts"
+  mode="source"
+  highlight="{514-525}"
+  entry={['bundle/compiler.ts']}
+/>
+
+## 2. 让两个 layer 生成双线程模块
+
+Rspeedy 配置中仍然只有一个逻辑入口 `Greeting.lynx`。`configureThreadEntries()` 会用同一份源码创建两个 Rspack 入口，并分别设置 `my-lynx:main-thread` 与 `my-lynx:background` layer：
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/entries.ts"
+  mode="source"
+  highlight="{80-93}"
+  entry={['bundle/entries.ts', 'bundle/constants.ts']}
+/>
+
+两个入口进入 `.lynx` loader 后，编译器会在同一次 compilation 中缓存并复用同一份中间表示。`generateLayerSource()` 根据当前 layer 返回不同的模块源码：
+
+- 主线程模块导入 `runtime/main-thread.ts` 和 `Greeting.lynx?css`，嵌入组件定义后调用 `startMainThread(component)`。
+- 后台线程模块导入 `runtime/background.ts` 和 `Greeting.actions.ts`，嵌入同一份组件定义后调用 `startBackground(component, actions)`。
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/compiler.ts"
+  mode="source"
+  highlight="{563-575}"
+  entry={['bundle/compiler.ts']}
+/>
+
+这些源码保留在 Rspack 模块图中，不会先写成 `component.ts`、`main-thread.ts` 或 `background.ts`。两个 layer 编译出的 JavaScript 资产分别承担以下职责：
+
+| layer                 | 运行时职责                                                                  |
+| --------------------- | --------------------------------------------------------------------------- |
+| `my-lynx:main-thread` | 处理页面生命周期，创建 Element 节点，注册事件，并把收到的 Patch 应用到 UI。 |
+| `my-lynx:background`  | 持有状态，执行异步任务，并将状态变化转换为可序列化的 Patch。                |
+
+点击标题时，主线程先发送包含 `refreshGreeting` 的 `Intent`；后台线程调用 `fetchGreeting()` 并更新 `title`；
+主线程最后根据返回的 `Patch` 更新 Raw Text 节点并提交 Element 树。
+
+跨线程事件与清理约定见[运行时模型](/guide/framework-development/runtime#建立配对通信通道)。
+
+## 3. 组装 Lynx Bundle
+
+主线程模块会导入 `Greeting.lynx?css`；编译规则识别这个资源查询，调用 `generateStyles()`，再复用 Rsbuild 现有的 CSS loader chain。
+`issuerLayer` 将这条 CSS 分支限制在主线程 layer，因此后台线程不会重复引入样式：
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/compiler-rule.ts"
+  mode="source"
+  highlight="{100-110}"
+  entry={['bundle/compiler-rule.ts', 'bundle/compiler-loader.cjs']}
+/>
+
+Rspack 完成模块编译后，框架插件继续处理双线程资产：
+
+1. `thread-assets.ts` 为主线程 JavaScript 标记 `lynx:main-thread`。
+2. 在 Lynx 环境中，`background-assets.ts` 使用 `RuntimeWrapperWebpackPlugin` 包装后台线程 JavaScript。
+3. `LynxTemplatePlugin` 接收配对的主线程与后台线程 chunk，并将它们及主线程依赖的 CSS 汇总为编码输入。
+4. `encode.ts` 根据当前环境选择 `LynxEncodePlugin` 或 `WebEncodePlugin`。
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/template.ts"
+  mode="source"
+  highlight="{64-82}"
+  entry={[
+    'bundle/template.ts',
+    'bundle/thread-assets.ts',
+    'bundle/background-assets.ts',
+    'bundle/encode.ts',
+    'bundle/plugin-my-lynx.ts',
+  ]}
+/>
+
+`pluginMyLynx()` 按照“配置编译器 → 创建双 layer 入口 → 处理线程资产 → 组装模板 → 编码”的顺序串联这些步骤。项目配置只需保留 `Greeting.lynx` 逻辑入口，并声明 `lynx` 与 `web` 两个环境；完整配置可在页面顶部示例的 `lynx.config.ts` 标签中查看。
+
+## 4. 构建 Lynx 与 Web 产物
+
+至此，框架完成了从 DSL、中间表示、双 layer 模块到两种目标 Bundle 的完整链路：
+
+```text
+src/Greeting.lynx
+  └─→ parseLynx() → 中间表示
+        ├─→ my-lynx:main-thread layer
+        │     └─→ 主线程模块
+        │           ├─→ runtime/main-thread.ts
+        │           └─→ Greeting.lynx?css → CSS pipeline
+        └─→ my-lynx:background layer
+              └─→ 后台线程模块
+                    ├─→ runtime/background.ts
+                    └─→ Greeting.actions.ts
+
+主线程 JavaScript + 后台线程 JavaScript + CSS
+  └─→ LynxTemplatePlugin
+        ├─→ LynxEncodePlugin ─→ dist/greeting.lynx.bundle
+        └─→ WebEncodePlugin  ─→ dist/greeting.web.bundle
+```
+
+`greeting` 是两个线程入口共享的逻辑名称。结合 `output.filename: '[name].[platform].bundle'`，`lynx` 与 `web` 环境会分别产出 `greeting.lynx.bundle` 和 `greeting.web.bundle`。
+
+这套分层让 DSL 编译器只负责中间表示和模块生成，共享运行时只负责执行线程逻辑，构建插件则负责将双线程 JavaScript 与 CSS 组装、编码。更改语法、状态模型或更新策略时，可以保留后两层，只替换对应的解析或生成逻辑。
+
+如需回顾具体约定，请继续参阅[运行时模型](/guide/framework-development/runtime)和 [Bundle 构建](/guide/framework-development/build)。

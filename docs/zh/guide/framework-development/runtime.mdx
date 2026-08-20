@@ -1,0 +1,228 @@
+---
+description: '从主线程 UI 闭环开始，逐步介绍如何按需引入后台线程扩展框架运行时。'
+---
+
+import { Go, Mermaid } from '@lynx';
+
+# 运行时模型
+
+Lynx 框架的运行时从主线程入口开始。主线程响应引擎生命周期，持有 Element 节点，并将状态变化落实为 UI 更新。
+在这条必需链路之上，框架可以直接处理轻量交互，也可以按需引入后台线程，分担状态管理、更新调度、异步任务和业务计算。
+
+本文先构建一个仅使用主线程的最小运行时，再沿一次用户交互逐步加入后台线程：
+
+<Mermaid>{`
+flowchart LR
+  Data["宿主数据"] --> Lifecycle["主线程生命周期"]
+  Lifecycle --> Element["Element PAPI"]
+  Element --> UI["UI"]
+  UI --> Event["用户交互"]
+  Event --> MainUpdate["主线程更新处理"]
+  MainUpdate --> Element
+  Event -. "按需转发" .-> Background["后台线程任务与状态"]
+  Background -. "数据或 Patch" .-> MainUpdate
+`}</Mermaid>
+
+## 从主线程入口开始
+
+无论是否引入后台线程，框架都要先在主线程建立“接收数据 → 更新 Element 树 → 提交 UI”的闭环。第一步是接入页面生命周期。
+
+### 接入页面生命周期
+
+框架通过 `lynx.getEngine()` 监听 Lynx 引擎定义的生命周期事件，并将它们转换为自身的渲染、更新和销毁入口：
+
+| 事件                | UI 生命周期阶段 | 框架需要完成的工作                                                                              |
+| ------------------- | --------------- | ----------------------------------------------------------------------------------------------- |
+| `__RenderPage`      | 渲染            | 处理首屏数据，将状态转换为 Element PAPI 操作并创建初始元素树。首次渲染使用 SDK 的默认提交时机。 |
+| `__UpdatePage`      | 更新            | 消费宿主后续数据，确定状态变化，更新元素树并调用 `__FlushElementTree()` 提交 UI。               |
+| `__DestroyLifetime` | 销毁            | 移除引擎与节点监听器、释放本地引用；使用后台线程时同步转发销毁事件。                            |
+
+先注册三个生命周期回调：
+
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{4-11}"
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
+
+此时，框架已经能够接收页面数据，但还没有把数据转换为 UI。下一步，在 `renderPage` 和 `updatePage` 中接入 [Element PAPI](/api/engine/element-api)。
+
+### 构建并更新 Element 树
+
+`renderPage` 负责根据首屏数据创建 Element 树，`updatePage` 则使用后续数据更新已存在的节点：
+
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  defaultEntryFile="dist/hello-lynx.lynx.bundle"
+  highlight="{19-28,30-35}"
+  defaultTab="web"
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
+
+首次渲染沿用 SDK 的默认提交时机；后续更新在修改 Element 节点后调用 `__FlushElementTree()`，将本轮变更提交给 Lynx。
+框架还应保存更新所需的节点引用，并在页面销毁时释放它们。
+
+### 释放页面资源
+
+`clearPage` 负责解除页面生命周期内注册的监听器，并释放节点引用、元素映射和状态数据：
+
+<Go
+  example="vanilla"
+  defaultFile="src/hello-lynx/main-thread.ts"
+  mode="source"
+  highlight="{46-52}"
+  sourceHeight={300}
+  entry={['src/hello-lynx/main-thread.ts']}
+/>
+
+至此，最小主线程链路已经建立：宿主数据进入生命周期回调，框架将其转换为 Element PAPI 操作，最终完成 UI 渲染和更新。
+
+## 在主线程完成轻量交互
+
+下一步，为这个页面加入交互。节点事件可以通过 `__AddEventListener()` 直接在主线程注册事件监听器。
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{20-23}"
+  mode="source"
+  sourceHeight={300}
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+框架应保存节点、处理函数和事件选项，并在 `clearPage` 中使用相同参数调用 `__RemoveEventListener()`。
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{47-52}"
+  mode="source"
+  sourceHeight={300}
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+对于不依赖异步任务和复杂调度的计数、显隐切换等轻量交互，框架可以在主线程完成“更新状态 → 修改 Element 节点 → 提交 UI”的闭环。
+在下面的示例中，可以点击文本来更新内容：
+
+<Go
+  example="vanilla"
+  defaultFile="src/simple-interaction/main-thread.ts"
+  highlight="{25-33,37-38}"
+  defaultTab="web"
+  defaultEntryFile="dist/simple-interaction.lynx.bundle"
+  entry={['src/simple-interaction/main-thread.ts']}
+/>
+
+当交互开始涉及异步任务、复杂调度或较重计算时，就需要把适合脱离 UI 的工作迁移到后台线程。
+
+## 按需引入后台线程
+
+后台线程是主线程模型之上的可选扩展。它不持有 Element 节点，也不能替代主线程，而是负责计算新的状态或数据补丁，再交由主线程更新 UI。
+
+### 建立配对通信通道
+
+主线程和后台线程通过 `lynx.getJSContext()` 与 `lynx.getCoreContext()` 返回的配对端点交换事件。
+一个端点派发的事件，会由另一个线程中与之配对的端点接收：
+
+| 方向              | 发送端                             | 接收端                             |
+| ----------------- | ---------------------------------- | ---------------------------------- |
+| 主线程 → 后台线程 | 主线程的 `lynx.getJSContext()`     | 后台线程的 `lynx.getCoreContext()` |
+| 后台线程 → 主线程 | 后台线程的 `lynx.getCoreContext()` | 主线程的 `lynx.getJSContext()`     |
+
+跨线程通信应缓存并复用上述端点，通过 `dispatchEvent()` 发送事件、通过 `addEventListener()` 接收事件；
+销毁时使用相同的端点、事件名和函数引用移除监听器。
+事件载荷应保持小且可序列化，只传递基本类型、数组和普通对象。
+
+通信通道建立后，框架还需要定义更新协议：主线程发送任务，后台线程更新状态并生成 Patch，最后由主线程应用 Patch。
+
+### 串联一次跨线程更新
+
+下面沿一次点击更新，按搭建顺序串联两个线程：
+
+<Mermaid>{`
+sequenceDiagram
+  participant Main as 主线程
+  participant Background as 后台线程
+  Main->>Background: SetTitle { id, value }
+  Background->>Background: 更新状态并生成 Patch
+  Background->>Main: Patch [...]
+  Main->>Main: Element PAPI + Flush
+`}</Mermaid>
+
+前面的轻量示例中，`setTitle()` 在主线程直接更新 UI。引入后台线程后，这次状态变更依次经过以下步骤。
+
+#### 1. 在后台线程维护状态
+
+框架状态在后台线程中声明并维护，与主线程持有的 Element 节点分离，`setValue` 提供统一的数据更新能力。
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{9-17}"
+  entry={['src/background-interaction/background.ts']}
+/>
+
+#### 2. 从主线程发送更新任务
+
+主线程只发送可序列化的元素标识和新值，不把 Element 节点本身传到后台线程。
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/main-thread.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{26-31}"
+  entry={['src/background-interaction/main-thread.ts']}
+/>
+
+#### 3. 在后台线程接收任务
+
+收到任务后，后台线程通过状态更新入口执行框架逻辑。
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={300}
+  highlight="{27-32}"
+  entry={['src/background-interaction/background.ts']}
+/>
+
+#### 4. 生成并返回 Patch
+
+将计算结果组织为主线程可以消费的 Patch。Patch 只包含可序列化的操作名、元素标识和新值。
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/background.ts"
+  mode="source"
+  sourceHeight={400}
+  highlight="{14,20-25}"
+  entry={['src/background-interaction/background.ts']}
+/>
+
+#### 5. 应用 Patch 并提交 UI
+
+最后，主线程将这些描述转换为真正的 Element PAPI 调用。
+
+<Go
+  example="vanilla"
+  defaultFile="src/background-interaction/main-thread.ts"
+  defaultTab="web"
+  defaultEntryFile="dist/background-interaction.lynx.bundle"
+  highlight="{64-76}"
+  entry={['src/background-interaction/main-thread.ts']}
+/>
+
+这样，一次交互就完成了“主线程发送任务 → 后台线程更新状态 → 返回 Patch → 主线程提交 UI”的闭环。
+页面销毁时，还应由主线程转发销毁事件，并在两个线程中移除通信监听器、节点事件和本地状态。
+
+## 下一步
+
+确定主线程入口、可选后台线程和跨线程协议后，继续阅读 [Bundle 构建](/guide/framework-development/build)，了解如何将相应的脚本与样式组织为宿主可加载的 Lynx Bundle。
