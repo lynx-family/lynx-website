@@ -1,0 +1,75 @@
+---
+title: flow-tolerance
+api: css/properties/flow-tolerance
+---
+
+import { APISummary, APITable } from '@lynx';
+
+<APISummary />
+
+## Introduction
+
+The `flow-tolerance` property controls how Grid Lanes chooses among lanes whose
+running positions are close to the shortest lane. It only applies to a
+container with
+[`display: grid-lanes`](/guide/ui/layout/grid-lanes-layout.mdx).
+
+Grid Lanes is experimental from Lynx 4.3 and requires `enableGridLanes`.
+
+## Syntax
+
+```css
+flow-tolerance: normal;
+flow-tolerance: 0px;
+flow-tolerance: 12px;
+flow-tolerance: 5%;
+flow-tolerance: infinite;
+```
+
+### Values
+
+- `normal`
+
+  Resolves to `1em`. The used value is recomputed when the container's font
+  size changes.
+
+- `<length-percentage>`
+
+  A non-negative tolerance. Percentages resolve against the content size of
+  the lane axis.
+
+- `infinite`
+
+  Treats every eligible lane as being within the tolerance, so lane selection
+  preserves document-order progression strictly.
+
+For each item, Grid Lanes first finds the shortest eligible running position.
+Lanes no longer than `shortest + flow-tolerance` form the candidate set. The
+auto-placement cursor then chooses from that set.
+
+## Formal Definition
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>normal</>}
+  appliesTo={<>Grid Lanes containers</>}
+  inherited="no"
+  percentages={<>refer to the Grid Lanes grid-axis content size</>}
+/>
+
+## Formal Syntax
+
+```
+flow-tolerance = normal | <length-percentage [0,∞]> | infinite
+```
+
+## Compatibility
+
+<APITable />
+
+## See Also
+
+- [Grid Lanes Layout](/guide/ui/layout/grid-lanes-layout.mdx)
+- [`display`](/api/css/properties/display.mdx)
+- [`grid-auto-flow`](/api/css/properties/grid-auto-flow.mdx)
