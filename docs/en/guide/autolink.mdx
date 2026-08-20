@@ -78,7 +78,7 @@ lynx-app/
 
 - `package.json` is required so the app can declare Autolink library packages as dependencies.
 - For Android, the project needs a Gradle settings file, such as `settings.gradle` or `settings.gradle.kts`, and an Android application build file, such as `app/build.gradle` or `app/build.gradle.kts`.
-- For iOS, the project needs a CocoaPods entry point, usually `Podfile`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-library` gem in `Gemfile`.
+- For iOS, the project needs a CocoaPods entry point, usually `Podfile`. The Podfile must configure the Lynx specs repo `https://github.com/lynx-family/Specs.git`. If your team manages Ruby dependencies with Bundler, keep the `cocoapods-lynx-library` gem in `Gemfile`.
 - For HarmonyOS, the project needs a root `hvigorconfig.ts` and an entry or feature HAP module that depends on `@lynx/lynx`.
 - `shared/` is used when the host app owns cross-platform native source code and CMake build entry points; build these sources yourself.
 - For Lynxtron, the app needs a host-side Rspack build that can install npm packages and load native libraries through `pluginLynxtron()`; it generally consumes the compiled `dist/` artifacts.
@@ -115,9 +115,12 @@ After Gradle sync/build, Autolink generates a fixed Android registry entry and a
 
 <PlatformTabs.Tab platform="ios">
 
-Install the `cocoapods-lynx-library` gem in your iOS build environment. Then add the CocoaPods plugin to the app's Podfile and call `use_lynx_library!` so podspecs from installed libraries and the generated registry pod are added during `pod install`:
+Install the `cocoapods-lynx-library` gem in your iOS build environment. Then add the Lynx specs repo, the CocoaPods plugin, and call `use_lynx_library!` in the app's Podfile so podspecs from installed libraries and the generated registry pod are added during `pod install`:
 
 ```ruby
+source 'https://github.com/lynx-family/Specs.git'
+source 'https://cdn.cocoapods.org/'
+
 plugin 'cocoapods-lynx-library'
 
 target 'LynxApp' do
