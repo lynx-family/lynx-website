@@ -1,15 +1,14 @@
 /**
- * Prepare Luna demo packages for the documentation site by copying (default) or symlinking
- * demo packages from a source directory into a public directory.
+ * Materialize installed Luna demo packages under the documentation site's
+ * public example directory by copying (default) or symlinking them.
  *
- * Typical use case:
- * - You have one or more installed demo packages under node_modules, e.g.
- *   packages/luna-packages/node_modules/<scope>/<pkg>
- * - You want them materialized under docs/public/lynx-examples/<pkgName>
+ * `pnpm prepare:luna` passes the installed `@dugyu/luna-demo-bundles` package
+ * directory. Consumers may instead pass a package collection directory when
+ * they need to materialize multiple demo packages.
  *
  * Usage:
  *   LINK_PATH=docs/public/lynx-examples \
- *   LUNA_SOURCE_DIR=packages/luna-packages/node_modules \
+ *   LUNA_SOURCE_DIR=node_modules/@dugyu/luna-demo-bundles \
  *   LUNA_MODE=copy \
  *   node scripts/luna-demo.js
  *
@@ -18,7 +17,7 @@
  *   1) A node_modules directory (will scan one level and scope directories), or
  *   2) A scope directory containing multiple packages (each with package.json), or
  *   3) A single package directory (contains package.json)
- *   Default: packages/luna-packages/node_modules
+ *   Default: node_modules/@dugyu/luna-demo-bundles
  * - LINK_PATH: Target root directory.
  *   Default: docs/public/lynx-examples
  * - LUNA_MODE: "copy" (default) or "symlink".
@@ -35,7 +34,7 @@ const path = require('path');
 const currentDir = process.cwd();
 const sourceDir = path.join(
   currentDir,
-  process.env.LUNA_SOURCE_DIR || 'packages/luna-packages/node_modules',
+  process.env.LUNA_SOURCE_DIR || 'node_modules/@dugyu/luna-demo-bundles',
 );
 const linkPath = path.join(
   currentDir,
