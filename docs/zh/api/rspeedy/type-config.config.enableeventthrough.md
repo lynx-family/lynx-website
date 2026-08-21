@@ -8,6 +8,8 @@ Controls whether touches on the root area can pass through the Lynx page instead
 
 Supported platform: Android, HarmonyOS, iOS
 
+Type package availability: `@lynx-js/type-config` 4.1.0 or later
+
 Since: LynxSDK 3.2
 
 **Signature:**

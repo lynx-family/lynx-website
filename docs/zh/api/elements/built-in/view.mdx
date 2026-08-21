@@ -378,7 +378,7 @@ Android 平台只支持在 `view` 元件上设置生效，并且需要节点创�
 手势拦截效果只能作用于兄弟节点，不能作用于父子节点。
 :::
 
-### `pan-intercept-direction`
+### `pan-intercept-direction` <AndroidOnly /> <IOSOnly />
 
 ```ts
 // DefaultValue: 2 /* none */
@@ -396,7 +396,7 @@ pan-intercept-direction?:
 Android 平台只支持在 `view`、`scroll-view`、`list` 元件上设置生效，并且需要节点创建对应的 Android View，可能需要同时设置 [`flatten`](#flatten) 为 `false` 才能生效。
 :::
 
-### `pan-intercept-scope`
+### `pan-intercept-scope` <AndroidOnly /> <IOSOnly />
 
 ```ts
 // DefaultValue: 6 /* none */
@@ -411,6 +411,57 @@ pan-intercept-scope?:
 ```
 
 指定阻止特定方向的平台层滑动手势生效的范围，需配合 [`pan-intercept-direction`](#pan-intercept-direction) 使用。比如 `pan-intercept-scope` 设置为 `0` 时，表示仅拦截目标节点上的平台层滑动手势，设置为 `1` 时，表示拦截目标节点的所有祖先节点上的平台层滑动手势。
+
+:::note
+以下三个 iOS 筛选属性需要 `@lynx-js/types` 4.1.0 或更高版本；iOS SDK 运行时兼容版本仍为 4.1。
+:::
+
+### `ios-pan-intercept-gesture-class` <IOSOnly />
+
+```ts
+// DefaultValue: undefined
+ios-pan-intercept-gesture-class?: string
+```
+
+指定需要通过 `pan-intercept` 拦截的其他平台层 `UIGestureRecognizer` 类名。需与 [`ios-pan-intercept-view-class`](#ios-pan-intercept-view-class)、[`ios-pan-intercept-view-tag`](#ios-pan-intercept-view-tag)、[`pan-intercept-direction`](#pan-intercept-direction) 和 [`pan-intercept-scope`](#pan-intercept-scope) 配合使用。
+
+### `ios-pan-intercept-view-class` <IOSOnly />
+
+```ts
+// DefaultValue: undefined
+ios-pan-intercept-view-class?: string
+```
+
+指定需要拦截的其他平台层手势所绑定的 `UIView` 类名。需与 [`ios-pan-intercept-gesture-class`](#ios-pan-intercept-gesture-class)、[`ios-pan-intercept-view-tag`](#ios-pan-intercept-view-tag)、[`pan-intercept-direction`](#pan-intercept-direction) 和 [`pan-intercept-scope`](#pan-intercept-scope) 配合使用。
+
+### `ios-pan-intercept-view-tag` <IOSOnly />
+
+```ts
+// DefaultValue: undefined
+ios-pan-intercept-view-tag?: number
+```
+
+指定需要拦截的其他平台层手势所绑定的 `UIView.tag`。需与 [`ios-pan-intercept-gesture-class`](#ios-pan-intercept-gesture-class)、[`ios-pan-intercept-view-class`](#ios-pan-intercept-view-class)、[`pan-intercept-direction`](#pan-intercept-direction) 和 [`pan-intercept-scope`](#pan-intercept-scope) 配合使用。
+
+该属性必须显式设置后才参与匹配。未设置时，即使目标视图的 `tag` 为 `0`，也不会命中该筛选条件。
+
+当滑动方向与 `pan-intercept-direction` 一致，并且其他平台层手势绑定的视图位于 `pan-intercept-scope` 指定的范围内时，只有同时满足以下条件的其他平台层手势才会被拦截：
+
+- 手势识别器是 `ios-pan-intercept-gesture-class` 指定的类或其子类。
+- 手势绑定的视图是 `ios-pan-intercept-view-class` 指定的类或其子类。
+- 手势绑定视图的 `tag` 等于 `ios-pan-intercept-view-tag`。
+
+三个 iOS 属性必须全部显式设置，类名必须能够通过 Objective-C 运行时解析。例如：
+
+```tsx
+<view
+  pan-intercept-direction={0}
+  pan-intercept-scope={5}
+  ios-pan-intercept-gesture-class="UIPanGestureRecognizer"
+  ios-pan-intercept-view-class="UIView"
+  ios-pan-intercept-view-tag={1001}
+/>
+```
 
 ### `block-native-event`
 
@@ -462,11 +513,56 @@ event-through?: boolean
 
 指定触摸在目标节点上时 Lynx 是否消费平台层的触摸事件，可以实现类似只展示不交互的效果。
 
-该属性支持继承，即子节点未设置 `event-through` 时，会继承父节点的 `event-through` 值。其生效区域受 [`event-through-active-regions`](#event-through-active-regions) 的影响，未设置时默认为目标节点的所有区域。
+对于非 `<page>` 节点，该属性支持继承：当实际命中的节点未设置 `event-through` 时，会继承祖先节点的 `event-through` 值，但不会继承 `<page>` 节点的 `event-through` 值。
+
+对于 `<page>` 节点，事件穿透行为由其 `event-through` 属性和页面配置 [`Config.enableEventThrough`](../../rspeedy/type-config.config.enableeventthrough.md) 共同决定。当触摸命中 `<page>` 节点区域时，只要其中任意一项为 `true`，Lynx 就不会消费平台层的触摸事件。该配置属性从 `@lynx-js/type-config` 4.1.0 起可用；该类型包版本下限与 LynxSDK 3.2 的运行时版本下限相互独立。
+
+`event-through` 的判定基于触摸命中的节点。[`user-interaction-enabled`](#user-interaction-enabled) 和 [`pointer-events`](../../css/properties/pointer-events.mdx) 会影响命中测试及最终命中的节点，因此也会间接影响 `event-through` 是否生效。命中节点确定后，若命中 `<page>`，则按上述 `<page>` 规则判断；否则，根据命中节点及其非 `<page>` 祖先节点的 `event-through` 值判断。
+
+该属性的生效区域受 [`event-through-active-regions`](#event-through-active-regions) 的影响，未设置时默认为目标节点的所有区域。
 
 :::tip
-该属性设置为 `true` 只能保证 Lynx 不消费平台层的触摸事件，但 Lynx 的父节点可能消费触摸事件导致穿透失效。
-:::
+`event-through` 只控制 Lynx 是否响应或消费平台层的触摸事件。若要将未消费的触摸事件继续传递给其他平台层节点，还需要客户端按平台完成以下适配：
+
+- **Android**：确保 Lynx 页面的父容器不消费触摸事件。Lynx 不消费事件后，系统事件分发可将事件传递给能够消费事件的兄弟节点，例如滚动容器。
+- **iOS**：LynxView 不响应触摸时，其 `hitTest` 返回 `nil`，Lynx 页面不会进入事件响应链。以下示例假设一个专用的 Lynx 包装容器包含 LynxView，并由该包装容器重写 `hitTest:withEvent:`；目标响应视图是该包装容器在共同祖先视图下的兄弟视图：
+
+  ```text
+  共同祖先视图
+  ├── Lynx 包装容器（重写 hitTest:withEvent:）
+  │   └── LynxView
+  └── 目标响应视图
+  ```
+
+  LynxView 不响应触摸时，该包装容器也返回 `nil`，使共同祖先视图继续命中包装容器的兄弟视图。如果目标响应视图位于包装容器内部并与 LynxView 同级，请勿直接使用此实现：它会将 `[super hitTest:withEvent:]` 返回的非 Lynx 子视图替换为 `nil`。
+
+  ```objc
+  - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *result = [super hitTest:point withEvent:event];
+    if (result == nil || [result isDescendantOfView:_lynxView]) {
+      return result;
+    }
+    return nil;
+  }
+  ```
+
+- **HarmonyOS**：在 Lynx 页面与目标响应节点的最近共同祖先节点下，找到包含 Lynx 页面的直接子节点；在该节点的 `onTouchIntercept` 中调用容器的 `canConsumeTouchEvent(x, y)`。Lynx 需要消费事件时返回 `HitTestMode.Default`，否则返回 `HitTestMode.Transparent`，使事件能够传递给兄弟节点。
+
+  ```ts
+  .onTouchIntercept((event: TouchEvent) => {
+    if (event && event.touches) {
+      const touch = event.touches[0]
+      const lynxConsumes = lynxComponent.canConsumeTouchEvent(
+        touch.displayX,
+        touch.displayY,
+      )
+      return lynxConsumes ? HitTestMode.Default : HitTestMode.Transparent
+    }
+    return HitTestMode.Default
+  })
+  ```
+
+  :::
 
 ### `event-through-active-regions`
 
