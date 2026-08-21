@@ -1,0 +1,187 @@
+---
+description: '理解 MainThreadObject 句柄，以及如何在库对象、MainThreadRef 和渲染器管理的 MainThread.Element 绑定之间做选择。'
+---
+
+# 主线程对象
+
+[主线程函数](./main-thread-script)与 React 组件运行在不同的 JavaScript 运行时中。捕获 JSON 值时，ReactLynx 会把值复制到主线程运行时；但有状态对象还需要稳定身份，即捕获该对象的所有主线程函数都应访问同一个对象。
+
+`MainThreadObject` 是 ReactLynx 表达这种身份的模型。Hook 在后台运行时返回一个不透明句柄；主线程函数捕获句柄后，ReactLynx 会在主线程运行时中将其解析为一个稳定对象。
+
+```text
+后台运行时                          主线程运行时
+
+不透明句柄 ── 捕获并注水 ──────────> 稳定的具现对象
+    │                                     │
+    └─ 身份和初始化数据                   └─ 方法和可变状态
+```
+
+句柄并不是具现对象，也不是转发操作的 Proxy、RPC 桩、共享值或可转移的 JavaScript 对象。句柄的序列化形式是框架内部元数据；不要读取这些字段，也不要通过应用协议自行传输句柄。
+
+## 核心类型
+
+库可以通过三个核心 API 描述主线程对象：
+
+- `MainThreadObjectType<I, O>` 将可 JSON 序列化的初始化数据 `I` 映射为具现对象 `O`。它包含全局唯一且稳定的 `type` 键、`create` 函数和可选的 `dispose` 函数。
+- `useMainThreadObject(type, initialValue)` 在 React 渲染期间创建稳定句柄。返回类型是 `O`，因此主线程函数可以直接使用目标对象的常规 API。
+- `MainThreadObjectHandle<O>` 是源运行时中的不透明句柄表示。应用和库通常不应直接构造或读取这个类。
+
+首次渲染会把初始化数据发送到主线程。主线程运行时为每个句柄调用一次 `create`，并在多次捕获和重新渲染之间保持返回对象的身份。当句柄被释放时，ReactLynx 会调用可选的 `dispose`。
+
+同一个类型键必须始终使用相同的 `create` 和 `dispose` 函数。请使用 `com.example/Counter` 这类带包命名空间的键来避免冲突。
+
+## 定义库拥有的对象
+
+`defineMainThreadObjectType()` 和 `useMainThreadObject()` 是面向库 Hook 的底层 API。下面的最小 Hook 暴露一个纯 JavaScript 计数器，其状态只存在于主线程：
+
+```tsx
+import {
+  defineMainThreadObjectType,
+  useMainThreadObject,
+} from '@lynx-js/react';
+
+interface CounterInit {
+  initialValue: number;
+}
+
+interface Counter {
+  get(): number;
+  increment(): number;
+}
+
+const CounterType = defineMainThreadObjectType<CounterInit, Counter>({
+  type: 'com.example/Counter',
+  create({ initialValue }) {
+    let value = initialValue;
+    return {
+      get: () => value,
+      increment: () => ++value,
+    };
+  },
+});
+
+export function useCounter(initialValue: number): Counter {
+  return useMainThreadObject(CounterType, { initialValue });
+}
+```
+
+应用可以捕获返回对象，并在主线程函数中调用其方法：
+
+```tsx
+function CounterButton() {
+  const counter = useCounter(0);
+
+  function onTap() {
+    'main thread';
+    console.log(counter.increment());
+  }
+
+  return <text main-thread:bindtap={onTap}>Increment</text>;
+}
+```
+
+初始化数据必须可以 JSON 序列化。请使用 JSON 基本类型、数组和普通对象；不要传递函数、Symbol、`BigInt`、非有限数、类实例、`undefined` 或循环引用。
+
+## MotionValue：由工厂具现的对象
+
+`useMotionValue()` 是基于 `MainThreadObject` 构建的库 Hook。Motion 在主线程运行时中创建纯 JavaScript `MotionValue`，并在句柄被释放时停止它。
+
+```tsx
+import { useMotionValue } from '@lynx-js/motion';
+import type { MainThread } from '@lynx-js/types';
+
+export function MovingView() {
+  const x = useMotionValue(0);
+
+  function move(event: MainThread.TouchEvent) {
+    'main thread';
+    x.set(x.get() + 10);
+    event.currentTarget.setStyleProperty(
+      'transform',
+      `translateX(${x.get()}px)`,
+    );
+  }
+
+  return <view main-thread:bindtap={move}>Move</view>;
+}
+```
+
+调用 `x.set()` 只会修改主线程上的 `MotionValue`，不会更新 React state、触发 React 重新渲染，也不会把新值同步回后台运行时。
+
+## MainThreadRef：可变单元格或渲染器绑定
+
+[`MainThreadRef<T>`] 是带有 `current` 属性的稳定可变单元格。如果只需要简单的可变状态，而不需要库拥有的对象 API，请优先使用 [`useMainThreadRef()`]：
+
+```tsx
+const tapCount = useMainThreadRef(0);
+
+function onTap() {
+  'main thread';
+  tapCount.current += 1;
+}
+```
+
+`main-thread:ref` 使用相同的单元格形状来完成另一项工作：它是由渲染器控制的绑定。节点挂载或重新绑定时，渲染器会把原生能力支撑的 [`MainThread.Element`] 对象写入 `current`；移除绑定时则会清空它。应用代码不负责构造或销毁 Element。
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+import type { MainThread } from '@lynx-js/types';
+
+export function HighlightableView() {
+  const element = useMainThreadRef<MainThread.Element>(null);
+
+  function highlight() {
+    'main thread';
+    element.current?.setStyleProperty('background-color', 'gold');
+  }
+
+  return (
+    <view main-thread:ref={element} main-thread:bindtap={highlight}>
+      Highlight
+    </view>
+  );
+}
+```
+
+以下所有权差异非常重要：
+
+| 原语                      | 具现值                                                  | 所有者和生命周期                             |
+| ------------------------- | ------------------------------------------------------- | -------------------------------------------- |
+| `useMainThreadObject()`   | 库定义的对象                                            | 库提供的 `create` 和可选 `dispose` 函数      |
+| `useMotionValue()`        | 纯 JavaScript `MotionValue`                             | Motion，通过 `MainThreadObject` 生命周期管理 |
+| `useMainThreadRef(value)` | 可变的 `{ current }` 单元格                             | 组件代码                                     |
+| `main-thread:ref`         | `MainThreadRef` 中由原生能力支撑的 `MainThread.Element` | 渲染器；挂载、重新绑定和卸载控制 `current`   |
+
+对于标量、小型可变记录或 Element 绑定，请使用 `useMainThreadRef`。如果需要对象 API、内部不变量、订阅、原生资源或显式清理，请优先使用库提供的对象 Hook。库作者不应在 `MainThreadObject` 工厂中创建 `MainThread.Element` 等由渲染器拥有的值。
+
+## 运行时规则和诊断
+
+具现对象的方法只能在主线程函数中调用。在后台运行时执行 React 渲染时访问返回值属于错误用法：
+
+```tsx
+function BrokenCounter() {
+  const counter = useCounter(0);
+  const value = counter.get(); // 错误：从后台运行时访问
+  return <text>{value}</text>;
+}
+```
+
+开发构建会报告：
+
+```text
+MainThreadObject handle for "com.example/Counter" cannot access "get" in the background runtime. Use the object only inside a main-thread function.
+```
+
+这个仅用于开发环境的保护机制会提供更清晰的诊断，但不会把调用转发到主线程。生产构建中的句柄仍然是不透明的序列化句柄。
+
+请遵守以下规则：
+
+- 只在带有 `'main thread'` 指示符的函数中调用对象方法。
+- 初始化数据必须可 JSON 序列化；它是初始值，而不是实时同步状态。
+- 修改只发生在主线程。如果后台 UI 需要重新渲染，请使用 React state 和显式跨线程调用。
+- 不要读取句柄内部结构，也不要克隆、持久化、按结构比较或手动转移句柄。
+- 让 `main-thread:ref` 和渲染器负责 `MainThread.Element` 的绑定与清理。
+
+[`MainThread.Element`]: /api/lynx-api/main-thread/main-thread-element.mdx
+[`MainThreadRef<T>`]: /api/react/Class.MainThreadRef.mdx
+[`useMainThreadRef()`]: /api/react/Function.useMainThreadRef.mdx
