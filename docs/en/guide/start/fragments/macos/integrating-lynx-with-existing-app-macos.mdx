@@ -94,6 +94,7 @@ target_link_options(${PROJECT_NAME} PRIVATE
 - Lynx Service needs to be actively injected
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=AppDelegate.mm {17,20-30}
 #import "AppDelegate.h"
 #import "ViewController.h"
@@ -118,13 +119,15 @@ void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request, std::shared_pt
 @implementation AppDelegate {
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification \*)aNotification {
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   // Register http service for lynx.fetch.
   lynx::pub::LynxServiceCenter::GetInstance().RegisterService(std::make_shared<LynxHttpServiceImpl>());
 
   }
 
-````
+@end
+```
+
 </CodeFold>
 
 <div style={{ marginBottom: 30 }} />
@@ -134,13 +137,24 @@ void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request, std::shared_pt
 LynxEnv provides the global initialization interface for the Lynx Engine. Please ensure that the initialization of LynxEnv occurs before any interface calls to the Lynx Engine. It is recommended to complete the initialization of LynxEnv before LynxView creation.
 
 <CodeFold height={360} toggle>
-```objective-c title=AppDelegate.mm {9,12-19}
+
+```objective-c title=AppDelegate.mm {19,22-29}
 #import "AppDelegate.h"
 #import "ViewController.h"
 
 #import "lynx_env.h"
 #import "lynx_http_service.h"
 #import "lynx_view.h"
+
+// Implements the http service if needed.
+class LynxHttpServiceImpl : public lynx::pub::LynxHttpService {
+public:
+LynxHttpServiceImpl() = default;
+~LynxHttpServiceImpl() = default;
+void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request, std::shared_ptr<lynx::pub::LynxHttpResponse> response) override {
+// TODO
+}
+};
 
 @interface AppDelegate ()
 @end
@@ -162,7 +176,8 @@ LynxEnv provides the global initialization interface for the Lynx Engine. Please
   // lynx_env.RegisterNativeModule("ExplorerModule", ExplorerModuleCreator, nullptr);
 }
 
-````
+@end
+```
 
 </CodeFold>
 
@@ -184,24 +199,27 @@ Bundle Example:
 Impl Resource Fetcher
 
 <CodeFold toggle>
+
 ```objective-c title=ExampleGenericResourceFetcher.h {9,12-19}
 #import <Foundation/Foundation.h>
 #import "lynx_generic_resource_fetcher.h"
 
 class ExampleGenericResourceFetcher : public lynx::pub::LynxGenericResourceFetcher {
 public:
-void FetchResource(std::shared_ptr<lynx::pub::LynxResourceRequest> request, std::shared_ptr<lynx::pub::LynxResourceResponse> response) override;
+void FetchResource(std::shared_ptr<lynx::pub::resource::LynxResourceRequest> request, std::shared_ptr<lynx::pub::resource::LynxResourceResponse> response) override;
 };
 
-````
+```
+
 </CodeFold>
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=ExampleGenericResourceFetcher.mm {9,12-19}
 #import <Foundation/Foundation.h>
 #import "ExampleGenericResourceFetcher.h"
 
-void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::LynxResourceRequest> request, std::shared_ptr<lynx::pub::LynxResourceResponse> response) {
+void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::resource::LynxResourceRequest> request, std::shared_ptr<lynx::pub::resource::LynxResourceResponse> response) {
   const char *url_str = request->GetUrl();
   NSString *ns_string = [NSString stringWithUTF8String:url_str];
 
@@ -228,7 +246,7 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
   [dataTask resume];
 }
 
-````
+```
 
 </CodeFold>
 
@@ -237,6 +255,7 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
 `LynxView` is the basic rendering view provided by `Lynx Engine`. You can quickly construct a LynxView and provide a NSView as it's parent.
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=ViewController.mm {9,12-19}
 #import "ViewController.h"
 #import "ExampleGenericResourceFetcher.h"
@@ -258,7 +277,7 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
   lynx::pub::LynxView::Builder builder;
   builder.SetScreenSize(self.view.frame.size.width, self.view.frame.size.height, 1.0)
   .SetFrame(0, 0, self.view.frame.size.width, self.view.frame.size.height)
-  .SetParent((\_\_bridge NativeWindow)self.view)
+  .SetParent((__bridge NativeWindow)self.view)
   .SetGenericResourceFetcher(std::make_shared<ExampleGenericResourceFetcher>());
   self.lynxView = builder.Build();
   }
@@ -271,7 +290,8 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
   self.lynxView->SetFrame(0, 0, self.view.frame.size.width, self.view.frame.size.height);
   }
 
-````
+@end
+```
 
 </CodeFold>
 
@@ -282,6 +302,7 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
 After completing the above steps, all the work of initializing LynxView have been completed. Call the `lynxView->LoadTemplate` method to render the corresponding Bundle onto the LynxView.
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=ViewController.mm {9,12-19}
 #import "ViewController.h"
 #import "ExampleGenericResourceFetcher.h"
@@ -317,13 +338,18 @@ After completing the above steps, all the work of initializing LynxView have bee
   self.lynxView->LoadTemplate(meta_data);
   }
 
+@end
 ```
+
 </CodeFold>
 
 Then you will see the following interface on the screen:
 
 <center>
-  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/hello-world-showcase-macos.png" width="800" />
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/hello-world-showcase-macos.png"
+    width="800"
+  />
 </center>
 
 </Steps>
@@ -333,4 +359,3 @@ Congratulations, you have now completed all the work of rendering the LynxView!
 ## 4. Now what?
 
 At this stage, you have successfully integrated Lynx into your App. Refer to our [developing](/guide/start/quick-start) and [debugging](/guide/devtool/panels) docs for in-depth insights on working with Lynx.
-````
