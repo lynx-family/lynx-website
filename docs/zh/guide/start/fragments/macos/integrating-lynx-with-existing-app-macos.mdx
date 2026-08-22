@@ -91,6 +91,7 @@ target_link_options(${PROJECT_NAME} PRIVATE
 - Lynx Service 需主动注入。
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=AppDelegate.mm {17,20-30}
 #import "AppDelegate.h"
 #import "ViewController.h"
@@ -115,12 +116,14 @@ void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request, std::shared_pt
 @implementation AppDelegate {
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification \*)aNotification {
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   // Register http service for lynx.fetch.
   lynx::pub::LynxServiceCenter::GetInstance().RegisterService(std::make_shared<LynxHttpServiceImpl>());
   }
 
-````
+@end
+```
+
 </CodeFold>
 
 <div style={{ marginBottom: 30 }} />
@@ -130,13 +133,24 @@ void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request, std::shared_pt
 LynxEnv 提供了 Lynx Engine 的全局初始化接口, 请保证 LynxEnv 的初始化发生在 Lynx Engine 的任何接口调用之前。
 
 <CodeFold height={360} toggle>
-```objective-c title=AppDelegate.mm {9,12-19}
+
+```objective-c title=AppDelegate.mm {19,22-29}
 #import "AppDelegate.h"
 #import "ViewController.h"
 
 #import "lynx_env.h"
 #import "lynx_http_service.h"
 #import "lynx_view.h"
+
+// Implements the http service if needed.
+class LynxHttpServiceImpl : public lynx::pub::LynxHttpService {
+public:
+LynxHttpServiceImpl() = default;
+~LynxHttpServiceImpl() = default;
+void Request(std::shared_ptr<lynx::pub::LynxHttpRequest> request, std::shared_ptr<lynx::pub::LynxHttpResponse> response) override {
+// TODO
+}
+};
 
 @interface AppDelegate ()
 @end
@@ -158,7 +172,8 @@ LynxEnv 提供了 Lynx Engine 的全局初始化接口, 请保证 LynxEnv 的初
   // lynx_env.RegisterNativeModule("ExplorerModule", ExplorerModuleCreator, nullptr);
 }
 
-````
+@end
+```
 
 </CodeFold>
 
@@ -181,24 +196,27 @@ Bundle 示例:
 实现 Resource Fetcher
 
 <CodeFold toggle>
+
 ```objective-c title=ExampleGenericResourceFetcher.h {9,12-19}
 #import <Foundation/Foundation.h>
 #import "lynx_generic_resource_fetcher.h"
 
 class ExampleGenericResourceFetcher : public lynx::pub::LynxGenericResourceFetcher {
 public:
-void FetchResource(std::shared_ptr<lynx::pub::LynxResourceRequest> request, std::shared_ptr<lynx::pub::LynxResourceResponse> response) override;
+void FetchResource(std::shared_ptr<lynx::pub::resource::LynxResourceRequest> request, std::shared_ptr<lynx::pub::resource::LynxResourceResponse> response) override;
 };
 
-````
+```
+
 </CodeFold>
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=ExampleGenericResourceFetcher.mm {9,12-19}
 #import <Foundation/Foundation.h>
 #import "ExampleGenericResourceFetcher.h"
 
-void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::LynxResourceRequest> request, std::shared_ptr<lynx::pub::LynxResourceResponse> response) {
+void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::resource::LynxResourceRequest> request, std::shared_ptr<lynx::pub::resource::LynxResourceResponse> response) {
   const char *url_str = request->GetUrl();
   NSString *ns_string = [NSString stringWithUTF8String:url_str];
 
@@ -225,7 +243,7 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
   [dataTask resume];
 }
 
-````
+```
 
 </CodeFold>
 
@@ -234,6 +252,7 @@ void ExampleGenericResourceFetcher::FetchResource(std::shared_ptr<lynx::pub::Lyn
 LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造一个 LynxView，并通过设置一个NSView作为父容器将其任意添加到原生macOS的视图树上。
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=ViewController.mm {9,12-19}
 #import "ViewController.h"
 #import "ExampleGenericResourceFetcher.h"
@@ -255,7 +274,7 @@ LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造�
   lynx::pub::LynxView::Builder builder;
   builder.SetScreenSize(self.view.frame.size.width, self.view.frame.size.height, 1.0)
   .SetFrame(0, 0, self.view.frame.size.width, self.view.frame.size.height)
-  .SetParent((\_\_bridge NativeWindow)self.view)
+  .SetParent((__bridge NativeWindow)self.view)
   .SetGenericResourceFetcher(std::make_shared<ExampleGenericResourceFetcher>());
   self.lynxView = builder.Build();
   }
@@ -268,7 +287,8 @@ LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造�
   self.lynxView->SetFrame(0, 0, self.view.frame.size.width, self.view.frame.size.height);
   }
 
-````
+@end
+```
 
 </CodeFold>
 
@@ -279,6 +299,7 @@ LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造�
 当你完成以上步骤之后，已经完成了 LynxView 创建与资源读取的全部工作，调用 `lynxView->LoadTemplate` 方法，即可将对应的 Bundle 内容渲染到 LynxView 视图上。
 
 <CodeFold height={360} toggle>
+
 ```objective-c title=ViewController.mm {9,12-19}
 #import "ViewController.h"
 #import "ExampleGenericResourceFetcher.h"
@@ -314,13 +335,18 @@ LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造�
   self.lynxView->LoadTemplate(meta_data);
   }
 
+@end
 ```
+
 </CodeFold>
 
 然后你将在屏幕上看到如下内容：
 
 <center>
-  <img src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/hello-world-showcase-macos.png" width="800" />
+  <img
+    src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/hello-world-showcase-macos.png"
+    width="800"
+  />
 </center>
 
 </Steps>
@@ -330,4 +356,3 @@ LynxView 是 Lynx Engine 提供的渲染基本单元，你可以快速的构造�
 ## 4. 进入 Lynx 世界
 
 现在你已经将 Lynx 集成到你的应用中了。请参考[开发](/guide/start/quick-start)和[调试](/guide/devtool/panels)文档进一步在 Lynx 的世界里遨游吧！
-````
