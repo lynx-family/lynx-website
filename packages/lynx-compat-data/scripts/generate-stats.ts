@@ -19,6 +19,16 @@ import type {
   SimpleSupportStatement,
   VersionValue,
 } from '../types/types.js';
+import { isDocRoute, loadDocRoutes } from './lib/doc-routes.js';
+
+// Routes published by the docs site, used to keep `doc_url` from advertising
+// pages that do not exist. `null` when the docs sources are unavailable, in
+// which case URLs are emitted unchecked (see `loadDocRoutes`).
+const DOC_ROUTES = loadDocRoutes();
+
+// `lynx_path` values that do not resolve to a page. Authored data, so these are
+// reported rather than silently dropped.
+const unresolvedLynxPaths = new Set<string>();
 
 // All platforms to track
 const TRACKED_PLATFORMS: PlatformName[] = [
@@ -336,6 +346,36 @@ function generateDocUrl(apiPath: string, docPrefix: string): string {
 }
 
 /**
+ * Resolve the documentation URL for a compat entry, or `undefined` when the
+ * feature has no page.
+ *
+ * An authored `lynx_path` wins over the generated guess. Either way the target
+ * is verified against the published routes: a `doc_url` that 404s is worse than
+ * no `doc_url`, because consumers cannot tell the two apart. Dropping it lets
+ * them render the API as undocumented, which is what it is.
+ *
+ * An unresolvable `lynx_path` is authored data pointing at a page that moved or
+ * was deleted, so it is collected for reporting; an unresolvable generated URL
+ * is just a guess that did not pan out and is dropped quietly.
+ */
+function resolveDocUrl(
+  compat: CompatStatement,
+  apiPath: string,
+  docPrefix: string,
+): string | undefined {
+  const lynxPath = compat.lynx_path;
+  if (lynxPath) {
+    if (!DOC_ROUTES || isDocRoute(DOC_ROUTES, lynxPath)) return lynxPath;
+    unresolvedLynxPaths.add(lynxPath);
+    return undefined;
+  }
+
+  const generated = generateDocUrl(apiPath, docPrefix);
+  if (!DOC_ROUTES || isDocRoute(DOC_ROUTES, generated)) return generated;
+  return undefined;
+}
+
+/**
  * Recursively collect APIs and their support from an Identifier
  */
 function collectAPIs(
@@ -398,7 +438,7 @@ function collectAPIs(
       }
     }
 
-    const docUrl = compat.lynx_path || generateDocUrl(apiPath, docPrefix);
+    const docUrl = resolveDocUrl(compat, apiPath, docPrefix);
     const name =
       compat.description ||
       apiPath.split('/').pop()?.split('.').pop() ||
@@ -1124,6 +1164,19 @@ function generateStats(): APIStats {
 
 // Run the script
 const stats = generateStats();
+
+if (DOC_ROUTES === null) {
+  console.warn(
+    '\nWarning: docs sources not found, doc_url values were emitted unchecked.',
+  );
+} else if (unresolvedLynxPaths.size > 0) {
+  console.warn(
+    `\nWarning: ${unresolvedLynxPaths.size} lynx_path value(s) do not resolve to a page; doc_url omitted for them:`,
+  );
+  for (const lynxPath of [...unresolvedLynxPaths].sort()) {
+    console.warn(`  ${lynxPath}`);
+  }
+}
 
 // Write output
 const outputPath = path.join(rootDir, 'api-stats.json');
