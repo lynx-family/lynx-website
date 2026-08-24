@@ -68,6 +68,7 @@ export default defineConfig({
           'node_modules/react-render-to-markdown/dist/index.js',
         ),
         '@site': path.join(__dirname),
+        '@og-config$': path.join(__dirname, 'shared-og-config.ts'),
         '@': path.join(__dirname, 'src'),
         '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
         '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
@@ -200,10 +201,6 @@ export default defineConfig({
         {
           from: '^/zh/lynx-ui(/.*)?$',
           to: '/zh/ui$1',
-        },
-        {
-          from: '^/en/lynx-ui(/.*)?$',
-          to: '/en/ui$1',
         },
       ],
     }),

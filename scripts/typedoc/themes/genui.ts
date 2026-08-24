@@ -18,6 +18,9 @@
  *         `extractCatalog*FromTypeDocJson` may type their input with them,
  *         but surfacing them as Interfaces dominates the index for no
  *         reader benefit.
+ *       - references re-exported by @lynx-js/genui/openui/explicit; those
+ *         runtime symbols already link from the main OpenUI API module, while
+ *         the explicit page should focus on its catalog-free factory contract.
  */
 
 import { Converter, ReflectionKind } from 'typedoc';
@@ -62,6 +65,9 @@ const HIDDEN_CATALOG_EXTRACTOR_TYPEDOC_MIRRORS = new Set([
 const MODULE_RENAMES: Record<string, string> = {
   'a2ui/src': 'a2ui',
   'openui/src/core': 'openui',
+  'openui/src/core/explicit': 'openui/explicit',
+  'openui/dist/core': 'openui',
+  'openui/dist/core/explicit': 'openui/explicit',
   'a2ui-prompt/src': 'a2ui-prompt',
   'a2ui-catalog-extractor/src': 'a2ui-catalog-extractor',
 };
@@ -80,6 +86,13 @@ export function customize(app: MarkdownApplication, outputDir: string) {
     const all = context.project.getReflectionsByKind(ReflectionKind.All);
     for (const refl of [...all]) {
       const parentName = refl.parent?.name ?? '';
+      if (
+        parentName === 'openui/explicit' &&
+        refl.kindOf(ReflectionKind.Reference)
+      ) {
+        context.project.removeReflection(refl);
+        continue;
+      }
       if (
         parentName === 'a2ui' &&
         HIDDEN_A2UI_CATALOG_COMPONENTS.has(refl.name)

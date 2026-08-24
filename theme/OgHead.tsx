@@ -16,12 +16,7 @@ import {
   useLocation,
   usePageData,
 } from '@rspress/core/runtime';
-import {
-  OG_BASE,
-  getCover,
-  ogAbsolute,
-  selectOg,
-} from '@site/shared-og-config';
+import { OG_BASE, getCover, ogAbsolute, selectOg } from '@og-config';
 
 const TWITTER_SITE = '@LynxJS_org';
 /** Keep og:description bounded — blog descriptions can be long. */
