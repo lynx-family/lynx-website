@@ -32,6 +32,22 @@ workspace and runs it through `pnpm gen:living-spec`.
 Keep these script paths, caller-working-directory behavior, environment
 variables, and generated output layouts compatible with downstream callers.
 
+### `api-stats.json` doc links
+
+`packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API, and only
+emits one that resolves to a real page. It verifies against a docs tree the
+caller names, via `--docs-root <dir>` (resolved against the working directory)
+or `LYNX_COMPAT_DOCS_ROOT`; the OSS site passes its own root through the
+`gen:compat-stats` script. The root is never inferred from the package's
+location, so an install layout cannot decide which routes the data is checked
+against.
+
+A consumer that generates these stats itself should pass its own docs root, and
+gets a `doc_url` set matching the pages it publishes. Omitting the option skips
+verification and emits every URL unchecked; naming a root that does not exist
+is an error rather than a silent skip, so a run either verifies against the
+tree it was told to use or does not verify at all.
+
 ## Mirrored Integration Contracts
 
 The downstream repository maintains local versions of

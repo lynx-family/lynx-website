@@ -21,10 +21,33 @@ import type {
 } from '../types/types.js';
 import { isDocRoute, loadDocRoutes } from './lib/doc-routes.js';
 
-// Routes published by the docs site, used to keep `doc_url` from advertising
-// pages that do not exist. `null` when the docs sources are unavailable, in
-// which case URLs are emitted unchecked (see `loadDocRoutes`).
-const DOC_ROUTES = loadDocRoutes();
+/**
+ * Docs sources to verify `doc_url` values against, from `--docs-root <dir>` or
+ * `LYNX_COMPAT_DOCS_ROOT`, resolved against the working directory.
+ *
+ * Named by the caller rather than inferred from this file's location: the
+ * package is consumed as a generated-data input by sites that do not share a
+ * docs tree, so guessing a root would make `api-stats.json` depend on the
+ * checkout layout. Omit it and verification is skipped.
+ */
+function getDocsRootOption(): string | undefined {
+  const flagIndex = process.argv.indexOf('--docs-root');
+  const fromFlag =
+    flagIndex !== -1
+      ? process.argv[flagIndex + 1]
+      : process.env['LYNX_COMPAT_DOCS_ROOT'];
+  if (flagIndex !== -1 && !fromFlag) {
+    throw new Error('--docs-root requires a directory path');
+  }
+  return fromFlag ? path.resolve(fromFlag) : undefined;
+}
+
+const docsRoot = getDocsRootOption();
+
+// Routes published by the docs site, or `null` when the caller did not ask for
+// verification, in which case URLs are emitted unchecked. A docs root that was
+// asked for but is missing throws rather than degrading to `null`.
+const DOC_ROUTES = docsRoot ? loadDocRoutes(docsRoot) : null;
 
 // `lynx_path` values that do not resolve to a page. Authored data, so these are
 // reported rather than silently dropped.
@@ -1167,7 +1190,7 @@ const stats = generateStats();
 
 if (DOC_ROUTES === null) {
   console.warn(
-    '\nWarning: docs sources not found, doc_url values were emitted unchecked.',
+    '\nWarning: no --docs-root given, doc_url values were emitted unchecked.',
   );
 } else if (unresolvedLynxPaths.size > 0) {
   console.warn(

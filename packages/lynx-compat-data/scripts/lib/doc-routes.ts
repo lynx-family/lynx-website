@@ -1,56 +1,40 @@
 /**
- * Resolve documentation routes from the docs site sources.
+ * Resolve documentation routes from a docs source tree.
  *
- * `lynx_path` and the `doc_url` values derived from it are only useful if they
- * point at a page that actually exists. This module builds the set of routes
- * the docs site publishes, so generators can drop URLs that would 404 instead
- * of advertising them to consumers.
+ * `lynx_path`, and the `doc_url` values derived from it, are only useful if
+ * they point at a page that actually exists. This module builds the set of
+ * routes a docs tree publishes so generators can drop URLs that would 404
+ * instead of advertising them to consumers.
  *
- * The route set is derived from `docs/en` because `lynx_path` is en-rooted:
+ * The docs root is always supplied by the caller. This package is consumed as
+ * a generated-data input by more than one site, and those sites do not share a
+ * docs tree or a checkout layout — resolving the root from this file's own
+ * location would silently verify against whichever tree happened to sit next
+ * to the installed package. Whoever runs the generator names their own docs
+ * root, or opts out of verification entirely; nothing is inferred.
+ *
+ * Callers pass an en-language docs root, because `lynx_path` is en-rooted:
  * consumers prepend no locale segment (see the compat table's `withBase()`
  * call), so an en page is what a `lynx_path` resolves to.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const dirname = fileURLToPath(new URL('.', import.meta.url));
 
 /**
- * Repository root, relative to `packages/lynx-compat-data/scripts/lib`.
- */
-const repoRoot = path.join(dirname, '..', '..', '..', '..');
-
-const docsDir = path.join(repoRoot, 'docs', 'en');
-
-/**
- * Route prefixes that are excluded from the published site.
- *
- * Mirrors the `route.exclude` patterns in `rspress.config.ts`, minus the
- * `lynx-compat-data/**` entry (that is the symlinked data directory, which
- * lives outside `docs/en` and is never walked here). Keep in sync when the
- * rspress config changes: a file under one of these prefixes is not a route,
- * so a URL pointing at it would 404 like any other missing page.
- */
-const EXCLUDED_ROUTE_PREFIXES = [
-  'guide/start/fragments/',
-  'guide/custom-native-component/',
-  'guide/custom-native-modules/',
-  'guide/embed-lynx-to-native/',
-];
-
-function isExcluded(route: string): boolean {
-  return EXCLUDED_ROUTE_PREFIXES.some((prefix) => route.startsWith(prefix));
-}
-
-/**
- * Turn a documentation source path into the route it publishes at.
+ * Turn a docs-tree-relative source path into the route it publishes at.
  *
  * `api/foo.mdx` -> `api/foo`, `api/foo/index.mdx` -> `api/foo`.
+ *
+ * Accepts native separators — `path.relative()` yields backslashes on Windows,
+ * while every route, `lynx_path` and `doc_url` uses `/`. Normalising here keeps
+ * the generated data identical no matter which OS produced it.
  */
-function toRoute(relativePath: string): string {
+export function toRoute(relativePath: string): string {
   return relativePath
+    .split(path.sep)
+    .join('/')
+    .replace(/\\/g, '/')
     .replace(/\.mdx?$/, '')
     .replace(/(^|\/)index$/, '')
     .replace(/\/$/, '');
@@ -62,30 +46,38 @@ function walk(dir: string, base: string, routes: Set<string>): void {
     if (entry.isDirectory()) {
       walk(entryPath, base, routes);
     } else if (/\.mdx?$/.test(entry.name)) {
-      const route = toRoute(path.relative(base, entryPath));
-      if (!isExcluded(route)) {
-        routes.add(route);
-      }
+      routes.add(toRoute(path.relative(base, entryPath)));
     }
   }
 }
 
 /**
- * Build the set of routes published by the docs site.
+ * Build the set of routes published by a docs tree.
  *
- * Returns `null` when the docs sources are not available — the compat data
- * package can be consumed on its own, and in that case callers should fall
- * back to emitting URLs unchecked rather than dropping all of them.
+ * Throws when `docsRoot` does not exist: a caller that asked for verification
+ * and got none would otherwise write a differently shaped `api-stats.json`
+ * depending on what happened to be on disk. Opting out is a decision the
+ * caller makes by not passing a docs root at all.
+ *
+ * Route exclusions (rspress `route.exclude`) are deliberately not modelled
+ * here. They are site config, they differ per consumer, and mirroring them
+ * would put a second copy of another repository's routing semantics in this
+ * package. The cost is that a page excluded from a build is still treated as
+ * a route; today no `lynx_path` points into an excluded subtree.
  *
  * Note: Uses synchronous file system operations since this is called at script
  * startup, before any async work begins.
  */
-export function loadDocRoutes(): Set<string> | null {
-  if (!fs.existsSync(docsDir)) {
-    return null;
+export function loadDocRoutes(docsRoot: string): Set<string> {
+  if (!fs.existsSync(docsRoot)) {
+    throw new Error(
+      `Docs root not found: ${docsRoot}\n` +
+        'Pass a path to the docs sources to verify doc_url values against, ' +
+        'or omit the option to skip verification.',
+    );
   }
   const routes = new Set<string>();
-  walk(docsDir, docsDir, routes);
+  walk(docsRoot, docsRoot, routes);
   return routes;
 }
 
