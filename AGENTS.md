@@ -34,13 +34,14 @@ variables, and generated output layouts compatible with downstream callers.
 
 ### `api-stats.json` doc links
 
-`packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API, and only
-emits one that resolves to a real page. It verifies against a docs tree the
-caller names, via `--docs-root <dir>` (resolved against the working directory)
-or `LYNX_COMPAT_DOCS_ROOT`; the OSS site passes its own root through the
-`gen:compat-stats` script. The root is never inferred from the package's
-location, so an install layout cannot decide which routes the data is checked
-against.
+`packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API. **When the
+caller supplies a docs root** — via `--docs-root <dir>` (resolved against the
+working directory) or `LYNX_COMPAT_DOCS_ROOT` — it emits only the URLs that
+resolve to a route in that tree; without one it emits every URL unchecked. The
+OSS site supplies its own root through the `gen:compat-stats` script, which is
+therefore the script to use when regenerating these stats by hand. The root is
+never inferred from the package's location, so an install layout cannot decide
+which routes the data is checked against.
 
 A consumer that generates these stats itself should pass its own docs root, and
 gets a `doc_url` set matching the pages it publishes. Omitting the option skips

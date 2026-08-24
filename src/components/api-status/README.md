@@ -41,7 +41,7 @@ This system provides real-time visibility into Lynx API compatibility across all
 Run the stats generation script from the workspace root:
 
 ```bash
-pnpm --filter @lynx-js/lynx-compat-data run gen-stats
+pnpm gen:compat-stats
 ```
 
 This will:
@@ -49,6 +49,11 @@ This will:
 1. Walk through all compatibility data directories
 2. Count APIs and platform support
 3. Generate `api-stats.json` in the lynx-compat-data package
+
+Use this script rather than calling the package's `gen-stats` directly. It
+passes this site's docs root, which is what lets the generator drop a `doc_url`
+that would 404 instead of emitting it; without a docs root every URL is emitted
+unchecked. See [`AGENTS.md`](../../../AGENTS.md#api-statsjson-doc-links).
 
 ### Viewing the Dashboard
 
@@ -148,7 +153,7 @@ The stats generation is included in the `prepare` script, so it runs automatical
 If you need to regenerate stats manually:
 
 ```bash
-pnpm --filter @lynx-js/lynx-compat-data run gen-stats
+pnpm gen:compat-stats
 ```
 
 This ensures the dashboard always shows up-to-date statistics.
