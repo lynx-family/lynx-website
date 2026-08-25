@@ -1,0 +1,329 @@
+---
+description: '了解如何编写适合 ReactLynx 编译优化的 JSX，以及编译器与运行时如何协同完成渲染。'
+---
+
+# 编译协同渲染
+
+ReactLynx 会在构建时分析 JSX，提前提取其中稳定的宿主元件结构，让运行时专注处理可能变化的值和子树。
+本文将这种编译器与运行时分工的机制称为**编译协同渲染**。
+
+这项优化会自动生效。大多数应用只需继续编写清晰、地道的 JSX，不必为了配合编译器而改变正常的组件设计。
+
+这里的“宿主元件”（host elements）是 ReactLynx 通过 Lynx 引擎渲染的 [Lynx 元件](/guide/ui/elements-components)，例如 `<view>` 和 `<text>`；`<ProductCard>` 这样的用户组件则不是宿主元件。
+
+## 如何编写编译友好的 JSX
+
+先看一个常规组件：
+
+```tsx
+export function Greeting({ name, highlighted }) {
+  return (
+    <view className={highlighted ? 'card active' : 'card'}>
+      <text>Hello, {name}</text>
+    </view>
+  );
+}
+```
+
+这段 JSX 已经对编译器很友好：`view → text` 的宿主类型和层级直接出现在源码中，`className` 和 `name` 则作为运行时数据正常传入。
+编译器可以提取稳定结构，并把两个表达式保留为动态位置。
+
+动态属性、文本和子节点本身不会阻止编译优化。对于大多数组件，遵循下面三个原则就足够了：
+
+- 优先保证组件语义清晰、代码易读。
+- 让运行时数据照常通过属性和子节点传入。
+- 让开发时已经确定的宿主类型、层级和顺序自然地出现在 JSX 中。
+
+不必为了把属性或文本变成静态值而拆分组件，也不必追求整棵树都是静态的。
+编译器本来就会把稳定结构和动态区域分开处理。
+
+下面是一些可选的编写模式。它们不是硬性规则；只有当写法同时符合组件本身的语义时，才值得采用。
+
+### 自然地保留共享结构
+
+下面的写法在两个分支中重复了整个卡片结构：
+
+```tsx
+function ProductCard({ name, price, showPrice }) {
+  if (showPrice) {
+    return (
+      <view className="product-card">
+        <text className="product-name">{name}</text>
+        <text className="product-price">{price}</text>
+      </view>
+    );
+  }
+
+  return (
+    <view className="product-card">
+      <text className="product-name">{name}</text>
+    </view>
+  );
+}
+```
+
+当两个分支本来就表示同一种组件结构时，可以只保留一份稳定外壳，将价格区域写成动态子节点：
+
+```tsx
+function ProductCard({ name, price, showPrice }) {
+  return (
+    <view className="product-card">
+      <text className="product-name">{name}</text>
+      {showPrice && <text className="product-price">{price}</text>}
+    </view>
+  );
+}
+```
+
+后一种写法让共享外壳更直接地暴露给编译器，只把价格区域留在动态插槽中。
+不过，不要单纯为了编译优化重构条件渲染；不同写法可能影响组件身份、状态保留和可读性。
+
+### 直接写出已知的宿主类型
+
+编译器只能分析源码中可见的 JSX 结构。
+如果宿主类型要到运行时才能确定，这部分结构也只能留到运行时处理：
+
+```tsx
+import { createElement } from '@lynx-js/react';
+
+function DynamicNode({ type, value }) {
+  return createElement(type, { className: 'content' }, value);
+}
+```
+
+如果候选结构在开发时已经确定，可以直接写出 JSX 分支：
+
+```tsx
+function Content({ variant, value }) {
+  if (variant === 'label') {
+    return <text className="content-label">{value}</text>;
+  }
+
+  return (
+    <view className="content-panel">
+      <text>{value}</text>
+    </view>
+  );
+}
+```
+
+两个分支仍然由运行时数据选择，但每个分支的宿主结构都对编译器可见，因此可以分别提取。
+只有宿主类型确实来自运行时配置时，才需要使用动态创建方式。
+
+### 已知属性适合显式声明
+
+编译协同渲染支持 spread 属性。
+编译器知道展开对象作用于哪个元件，但属性集合要到运行时才能确定，因此需要把整个对象保留为一个动态位置：
+
+```tsx
+function UserCard({ id, name, selected }) {
+  const cardProps = {
+    id,
+    className: selected ? 'user-card selected' : 'user-card',
+  };
+
+  return (
+    <view {...cardProps}>
+      <text>{name}</text>
+    </view>
+  );
+}
+```
+
+当属性集合在开发时已经确定，显式声明属性可以让编译器生成更定向的更新逻辑：
+
+```tsx
+function UserCard({ id, name, selected }) {
+  return (
+    <view id={id} className={selected ? 'user-card selected' : 'user-card'}>
+      <text>{name}</text>
+    </view>
+  );
+}
+```
+
+显式写法也避免了每次渲染都创建 `cardProps` 对象。
+组件需要透传调用方提供的未知属性时，spread 仍然是合适的写法，不必为了编译优化强行逐项展开。
+
+概括来说，让确定的宿主结构直接出现在源码中，让真正的运行时数据通过属性或动态子节点进入即可。
+对于本来就需要在运行时决定的结构，保持自然、动态的写法更重要。
+
+## 编译器与运行时如何协作
+
+### 编译器提前完成了什么
+
+如果只进行常规 JSX 转换、不提取静态结构，`Greeting` 的编译结果在语义上类似：
+
+```js
+export function Greeting({ name, highlighted }) {
+  return jsx('view', {
+    className: highlighted ? 'card active' : 'card',
+    children: jsx('text', {
+      children: ['Hello, ', name],
+    }),
+  });
+}
+```
+
+每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 的协调器再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为协调（Reconciliation）。
+
+在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器可以提前提取这些稳定信息。经过优化后，调用部分在概念上类似：
+
+```js
+const __compiled_greeting = '__compiled_greeting';
+
+export function Greeting({ name, highlighted }) {
+  return jsx(__compiled_greeting, {
+    values: [highlighted ? 'card active' : 'card'], // 动态属性位置 0
+    $0: name, // 动态子节点插槽 0
+  });
+}
+```
+
+这里的名称只是帮助理解的概念表示，并不是可以依赖的实际编译产物。关键区别是：常规产物在运行时展开完整的宿主 VNode 层级；优化后的产物引用一份可复用的编译定义，并只传入这次渲染所需的动态数据。
+
+编译器会从 JSX 中区分出：
+
+- **静态结构**：`view`、`text`、固定文本 `Hello, `，以及确定的父子关系。
+- **动态属性**：由 `highlighted` 决定的 `className`。
+- **动态子节点**：由 `name` 生成的文本。
+
+因此，编译产物可以提前记录静态创建逻辑、定向更新函数和动态子节点插槽。运行时复用这份定义，只为每个组件实例提供自己的动态值和子节点。
+
+这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
+
+从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
+
+### 当前的中间表示
+
+ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）保存上述编译信息。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
+
+IR 属于内部实现，未来可能继续演进，或替换为 Template 等其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
+
+当前 IR 可以归纳为以下四个核心部分：
+
+| 编译结果       | 作用                                                             |
+| -------------- | ---------------------------------------------------------------- |
+| 静态创建函数   | 直接创建确定的 Lynx 元件，并建立父子关系。                       |
+| 动态更新函数   | 按索引更新某个属性、事件或展开属性，不需要重新遍历整段静态结构。 |
+| 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树的插入位置。       |
+| 表示标识       | 标识可复用的编译定义，让多个组件实例共享同一份静态信息。         |
+
+下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表达 `Greeting`。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
+
+:::details 查看当前 IR 的简化定义
+
+```js
+ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
+  ReactLynx.createSnapshot(
+    __snapshot_xxx,
+    () => {
+      // 这部分只依赖 JSX 中可以静态确定的结构。
+      const pageId = ReactLynx.__pageId;
+      const view = __CreateView(pageId);
+      const text = __CreateText(pageId);
+      const rawText = __CreateRawText('Hello, ');
+      const slot = __CreateWrapperElement(pageId); // 为 $0 预留插入位置
+
+      __AppendElement(view, text);
+      __AppendElement(text, rawText);
+      __AppendElement(text, slot);
+
+      // 更新函数和插槽描述通过这些数组索引定位元件。
+      return [view, text, rawText, slot];
+    },
+    [
+      function (ctx) {
+        if (ctx.__elements) {
+          // values[0] 只更新 elements[0]，也就是根 view。
+          __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
+        }
+      },
+    ],
+    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 对应 elements[3]
+  );
+```
+
+:::
+
+:::warning
+
+这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。请勿在应用代码中依赖或复制这些产物。
+
+:::
+
+### 编译产物如何进入运行时
+
+ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
+
+同一份编译定义可以被多个 `Greeting` 实例复用。每次实际渲染都会产生一组彼此对应的运行时实例：主线程实例持有创建出的 Lynx 元件，后台实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
+
+#### 首屏：根据编译定义创建实例
+
+首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到编译定义，再为这次 `Greeting` 创建主线程实例。静态创建函数返回的 Lynx 元件由这个实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
+
+下面是这一过程的概念伪代码：
+
+```js
+function renderFirstScreen(vnode) {
+  const definition = getCompiledDefinition(vnode.type);
+  const instance = createMainThreadInstance(vnode.type);
+
+  instance.elements = definition.create(instance);
+  instance.values = vnode.props.values;
+  definition.update[0](instance); // 将 values[0] 写入 className
+  insertDynamicChild(instance, 0, vnode.props.$0);
+
+  return instance;
+}
+```
+
+对于当前例子，`definition.create()` 创建 `view`、`text` 和固定文本；`definition.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树，差别在于静态层级由 `definition.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
+
+换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
+
+后台首轮协调也会生成与主线程实例树对应的逻辑实例树。首屏同步通过 hydration 建立两侧实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程实例。
+
+#### 更新：只处理动态位置的变化
+
+对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到实际实例并应用变化。
+
+下面的伪代码继续使用 `Greeting`。`highlighted` 对应动态位置 `0`，因此它变化时会生成一条属性更新；`name` 位于动态子节点插槽中，继续由 React 协调：
+
+```js
+// 后台线程：比较动态属性，并继续协调动态子节点
+function reconcileGreeting(previous, next, instanceId) {
+  if (!isEqual(previous.values[0], next.values[0])) {
+    emitAttributePatch({
+      instanceId,
+      dynamicPartIndex: 0,
+      value: next.values[0],
+    });
+  }
+
+  // $0 仍作为 React 子节点参与协调，结果会变成插入、移除等树操作。
+  reconcileChildren(previous.$0, next.$0, {
+    parentInstanceId: instanceId,
+    slotIndex: 0,
+  });
+}
+
+// 主线程根据实例和动态位置应用属性更新
+function applyAttributePatch(patch) {
+  const instance = findCompiledInstance(patch.instanceId);
+  const index = patch.dynamicPartIndex;
+
+  instance.values[index] = patch.value;
+  instance.definition.update[index](instance);
+}
+```
+
+对于属性路径，`reconcileGreeting()` 只描述“哪个实例的哪个动态位置发生了变化”，`applyAttributePatch()` 再调用编译器生成的定向更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。当前实现会将这些操作编码进序列化的 Patch。
+
+## 回到应用代码
+
+编译协同渲染不是一套需要开发者手动调用的 API，而是 ReactLynx 在编译器与运行时之间自动完成的分工。即使组件中包含动态属性、条件分支、列表和用户组件，常规 JSX 仍然可以正常工作；编译器会在能够确定的范围内提取稳定结构。
+
+在日常开发中，优先写出语义清晰的组件即可：让已知的宿主结构自然地出现在 JSX 中，让动态数据照常通过属性和子节点传入。只有性能分析明确指出相关代码是瓶颈时，才需要在不改变组件语义的前提下考虑额外调整。
+
+换句话说，应当让编译器从自然的 JSX 中寻找优化机会，而不是让应用代码围绕某一种内部 IR 组织。
