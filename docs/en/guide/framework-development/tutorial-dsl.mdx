@@ -1,0 +1,159 @@
+---
+description: 'Follow Greeting.lynx from an intermediate representation through dual-thread modules to Lynx and Web Bundles.'
+---
+
+import { Go } from '@lynx';
+
+# From DSL to Bundle
+
+The [runtime model](/guide/framework-development/runtime) explains how the main thread drives the UI and how a background thread can participate in updates. [Bundle build](/guide/framework-development/build) explains how that code becomes a Lynx artifact. This tutorial uses the teaching DSL `Greeting.lynx` as input and follows the framework compilation flow: parse the DSL, generate dual-thread modules, then assemble them with CSS into a Lynx Bundle.
+
+`Greeting.lynx` is not a built-in Lynx file format. It is a minimal example designed to illustrate compiler responsibilities. A real framework can choose its own syntax, file extension, and compiler implementation.
+
+## Run the Complete Example
+
+The following example implements the complete flow described in this tutorial. Tapping the title runs an asynchronous task on the background thread, then sends a generated patch to the main thread to update the UI. Start by inspecting the DSL and Rspeedy configuration in the code panel; later sections walk through the intermediate representation, module generation in two layers, and CSS and Lynx Bundle assembly:
+
+<Go
+  example="custom-framework"
+  defaultFile="src/Greeting.lynx"
+  defaultEntryFile="dist/greeting.lynx.bundle"
+  defaultTab="web"
+  highlight="{7-9,14}"
+  langAlias={{ lynx: 'stylus' }}
+  entry={['src', 'lynx.config.ts']}
+/>
+
+## 1. Parse the DSL into an Intermediate Representation
+
+The `Greeting.lynx` file in the example above declares a `view #content` container with a `text #title` child. The title reads from the `title` state. Tapping it runs the asynchronous `refreshGreeting` task, which calls `fetchGreeting()` and writes the result back to that state.
+
+`parseLynx()` parses these declarations into a thread-independent component definition. `compileLynxFile()` adds the source path and the corresponding Action module path to form the intermediate representation shared by later compilation stages:
+
+| DSL declaration                     | Intermediate representation                   | Used by                                                                                                |
+| ----------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `view` and `text`                   | A nested node tree with generated class names | The main thread recursively creates the Element tree.                                                  |
+| `state` and `value = title`         | Initial state and the text node state binding | The background thread owns state; the main thread creates and retains the corresponding Raw Text node. |
+| `on tap` and `run`                  | A node-event-to-task mapping                  | The main thread turns an interaction into a background task intent.                                    |
+| `task refreshGreeting`              | An Action, its arguments, and target state    | The background thread calls the Action and writes its result to `title`.                               |
+| `style #content` and `style #title` | Generated class names and normalized CSS      | The CSS generator emits styles; the main runtime assigns the classes.                                  |
+
+The intermediate representation can be reduced to these relationships:
+
+```text title="Simplified intermediate representation"
+Greeting
+├─ nodes: view#content → text#title(value: title)
+├─ state: title = "Hello World"
+├─ event: title.tap → refreshGreeting
+├─ task: refreshGreeting → fetchGreeting() → title
+└─ styles: #content, #title
+```
+
+The parser also rejects duplicate nodes, unknown states, invalid tasks, and missing style targets. The following `compileLynxFile()` returns the intermediate representation without generating or writing any thread files yet:
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/compiler.ts"
+  mode="source"
+  highlight="{514-525}"
+  entry={['bundle/compiler.ts']}
+/>
+
+## 2. Generate Dual-Thread Modules in Two Layers
+
+The Rspeedy configuration still contains only one logical entry, `Greeting.lynx`. `configureThreadEntries()` uses the same source to create two Rspack entries and assigns them the `my-lynx:main-thread` and `my-lynx:background` layers:
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/entries.ts"
+  mode="source"
+  highlight="{80-93}"
+  entry={['bundle/entries.ts', 'bundle/constants.ts']}
+/>
+
+When both entries pass through the `.lynx` loader, the compiler caches and reuses one intermediate representation within the compilation. `generateLayerSource()` returns different module source for each layer:
+
+- The main-thread module imports `runtime/main-thread.ts` and `Greeting.lynx?css`, embeds the component definition, and calls `startMainThread(component)`.
+- The background module imports `runtime/background.ts` and `Greeting.actions.ts`, embeds the same component definition, and calls `startBackground(component, actions)`.
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/compiler.ts"
+  mode="source"
+  highlight="{563-575}"
+  entry={['bundle/compiler.ts']}
+/>
+
+This source remains in Rspack's module graph instead of first being written as `component.ts`, `main-thread.ts`, or `background.ts`. The JavaScript assets compiled from the two layers have separate responsibilities:
+
+| Layer                 | Runtime responsibility                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| `my-lynx:main-thread` | Handles page lifecycle, creates Element nodes, registers events, and applies patches to UI. |
+| `my-lynx:background`  | Owns state, runs asynchronous tasks, and converts state changes into serializable patches.  |
+
+When the title is tapped, the main thread sends an `Intent` containing `refreshGreeting`; the background thread calls `fetchGreeting()` and updates `title`; the main thread then updates the Raw Text node from the returned `Patch` and flushes the Element tree.
+
+Cross-thread events and cleanup follow the [communication conventions in Runtime model](/guide/framework-development/runtime#establish-paired-communication-channels).
+
+## 3. Assemble the Lynx Bundle
+
+The main-thread module imports `Greeting.lynx?css`. The compiler rule recognizes this resource query, calls `generateStyles()`, and reuses Rsbuild's existing CSS loader chain. `issuerLayer` restricts the CSS branch to the main-thread layer, so the background thread does not include the styles again:
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/compiler-rule.ts"
+  mode="source"
+  highlight="{100-110}"
+  entry={['bundle/compiler-rule.ts', 'bundle/compiler-loader.cjs']}
+/>
+
+After Rspack compiles the modules, the framework plugin continues processing the dual-thread assets:
+
+1. `thread-assets.ts` marks the main-thread JavaScript with `lynx:main-thread`.
+2. In the Lynx environment, `background-assets.ts` wraps the background-thread JavaScript with `RuntimeWrapperWebpackPlugin`.
+3. `LynxTemplatePlugin` receives the paired main-thread and background-thread chunks and combines them with the main thread's CSS dependency into the encoding input.
+4. `encode.ts` selects `LynxEncodePlugin` or `WebEncodePlugin` for the current environment.
+
+<Go
+  example="custom-framework"
+  defaultFile="bundle/template.ts"
+  mode="source"
+  highlight="{64-82}"
+  entry={[
+    'bundle/template.ts',
+    'bundle/thread-assets.ts',
+    'bundle/background-assets.ts',
+    'bundle/encode.ts',
+    'bundle/plugin-my-lynx.ts',
+  ]}
+/>
+
+`pluginMyLynx()` connects these steps in order: configure the compiler, create the two layer entries, process thread assets, assemble the template, and encode it. The project configuration only needs to keep `Greeting.lynx` as the logical entry and declare the `lynx` and `web` environments. You can inspect the complete configuration in the `lynx.config.ts` tab of the example at the top of this page.
+
+## 4. Build Lynx and Web Bundles
+
+The framework now implements the complete path from the DSL through an intermediate representation and two layer modules to both target Bundles:
+
+```text
+src/Greeting.lynx
+  └─→ parseLynx() → intermediate representation
+        ├─→ my-lynx:main-thread layer
+        │     └─→ main-thread module
+        │           ├─→ runtime/main-thread.ts
+        │           └─→ Greeting.lynx?css → CSS pipeline
+        └─→ my-lynx:background layer
+              └─→ background module
+                    ├─→ runtime/background.ts
+                    └─→ Greeting.actions.ts
+
+main-thread JavaScript + background-thread JavaScript + CSS
+  └─→ LynxTemplatePlugin
+        ├─→ LynxEncodePlugin ─→ dist/greeting.lynx.bundle
+        └─→ WebEncodePlugin  ─→ dist/greeting.web.bundle
+```
+
+`greeting` is the logical name shared by the two thread entries. Combined with `output.filename: '[name].[platform].bundle'`, the `lynx` and `web` environments produce `greeting.lynx.bundle` and `greeting.web.bundle`.
+
+This separation keeps the DSL compiler responsible for the intermediate representation and module generation, the shared runtimes responsible for executing thread logic, and the build plugin responsible for assembling and encoding the dual-thread JavaScript and CSS. When changing the syntax, state model, or update strategy, you can preserve the latter two layers and replace only the relevant parsing or generation logic.
+
+To review the specific conventions, continue with [Runtime model](/guide/framework-development/runtime) and [Bundle build](/guide/framework-development/build).
