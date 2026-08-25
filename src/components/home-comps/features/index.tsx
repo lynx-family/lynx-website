@@ -184,7 +184,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
             </Space>
           ),
           size: 'large',
-          link: 'https://github.com/haskell-miso/miso-lynx',
+          link: 'https://haskell-miso.org/',
         },
       ],
     },
