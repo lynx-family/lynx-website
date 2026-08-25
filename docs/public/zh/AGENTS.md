@@ -150,12 +150,12 @@
 - **Main Thread Script**：确保动画/手势无延迟，注意线程隔离与数据同步。（参考：[Main Thread Script](/zh/react/main-thread-script.md)）
 - **NodesRef.invoke**：批量调用原生特性（如 `autoScroll`）避免跨线程瓶颈。（参考：[Direct Manipulation](/zh/guide/interaction/event-handling/manipulating-element.react.md)）
 - **Lynx DevTool & Trace**：桌面 DevTool 提供 Elements/Console/Sources/Trace 面板，可记录渲染流水、分析 ReactLynx Render Pipeline。（参考：[Lynx DevTool](/zh/guide/devtool.md), [Trace](/zh/guide/devtool/trace.md)）
-- **Performance Metrics**：通过 `lynx.performance`、`PerformanceObserver` 采集 FCP、InitContainer 等指标。（参考：[Performance API](/zh/guide/performance/metrics/performance-api.md)）
+- **Performance Metrics**：通过 `lynx.performance`、`PerformanceObserver` 采集 FCP、InitContainer 等指标。（参考：[Performance API](/zh/guide/performance/monitor-performance/performance-api.md)）
 
 ## 15. 工程实践与工具链
 
-- **项目初始化**：`pnpm create rspeedy` 一键生成 ReactLynx 工程，自动带上 Rspeedy 配置、脚手架示例。（参考：[Quick Start](/zh/rspeedy/start/quick-start.md)）
-- **开发调试**：`pnpm dev` 启动 Rspeedy Dev Server，终端输出二维码，使用 LynxExample App（iOS/Android/Harmony 模拟器）扫描即可热更新预览。（参考：[Quick Start](/zh/rspeedy/start/quick-start.md)）
+- **项目初始化**：`pnpm create rspeedy` 一键生成 ReactLynx 工程，自动带上 Rspeedy 配置、脚手架示例。（参考：[Quick Start](/zh/guide/start/quick-start.md)）
+- **开发调试**：`pnpm dev` 启动 Rspeedy Dev Server，终端输出二维码，使用 LynxExample App（iOS/Android/Harmony 模拟器）扫描即可热更新预览。（参考：[Quick Start](/zh/guide/start/quick-start.md)）
 - **DevTool 调试**：连接设备后使用 Lynx DevTool 桌面端调试 JS、查看节点、性能记录。（参考：[Lynx DevTool](/zh/guide/devtool.md)）
 - **构建产物**：Rspeedy 输出的 Bundle 包含后台线程脚本（文本）、主线程字节码、样式等资源；需要 `DEBUG=rspeedy` 环境变量以输出中间产物（组成Lynx Bundle 的后台线程脚本（文本）、主线程字节码、样式、SourceMap 等）到 `dist/.rspeedy` 目录，否则只会输出最终的 Lynx Bundle 文件。（参考：[Output Files](/zh/rspeedy/output.md)）
 - **文档资源引用**：在 MDX 中引用本地图片或文件时，优先使用 `@assets` alias（例如 `import demoImg from '@assets/foo.png?url'`），再传给 `<Go img={demoImg} />` 这类组件。不要在 MDX 的组件参数里直接硬编码 `/assets/...` 路径。
