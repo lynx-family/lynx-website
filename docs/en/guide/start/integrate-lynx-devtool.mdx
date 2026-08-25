@@ -64,7 +64,8 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {9-18}
+```objective-c title=AppDelegate.m {10-19}
+#import <Lynx/DevToolSettings.h>
 #import <Lynx/LynxEnv.h>
 #import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceDevToolProtocol.h>
@@ -73,11 +74,11 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
+  // set devtool bootstrap defaults
+  [[DevToolSettings sharedInstance].bootstrap applyDevelopmentDefaultsIfUnset];
   LynxEnv *lynxEnv = [LynxEnv sharedInstance];
   // Enable all sessions debugging for DevTool (required for Lynx DevTool Desktop connection)
   [LynxService(LynxServiceDevToolProtocol) enableAllSessions];
-  // set devtool bootstrap defaults
-  [[DevToolSettings sharedInstance].bootstrap applyDevelopmentDefaultsIfUnset];
   // Enable Lynx DevTool Switch
   lynxEnv.devtoolEnabled = YES;
   // Enable Lynx LogBox Switch
@@ -90,6 +91,7 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tab label="Swift">
 
 ```objective-c title="YourTarget-Bridging-Header.h"
+#import <Lynx/DevToolSettings.h>
 #import <Lynx/LynxEnv.h>
 #import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceDevToolProtocol.h>
@@ -100,11 +102,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
+    // set devtool bootstrap defaults
+    DevToolSettings.sharedInstance().bootstrap.applyDevelopmentDefaultsIfUnset()
     let lynxEnv = LynxEnv.sharedInstance()
     // Enable all sessions debugging for DevTool (required for Lynx DevTool Desktop connection)
     (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.enableAllSessions()
-    // set devtool bootstrap defaults
-    DevToolSettings.sharedInstance().bootstrap.applyDevelopmentDefaultsIfUnset()
     // Enable Lynx DevTool Switch
     lynxEnv.devtoolEnabled = true
     // Enable Lynx LogBox Switch
