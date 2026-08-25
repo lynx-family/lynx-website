@@ -2,8 +2,7 @@ import type LCD from '@lynx-js/lynx-compat-data';
 import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
 import { Badge } from '@rspress/core/theme';
 
-// TODO(xuan.huang): move this to a common place.
-import { mapPlatformNameToIconName as mapPlatformNameToIconNameInHeaders } from '../api-table/compat-table/headers';
+import { mapPlatformNameToIconName as mapCompatPlatformNameToIconName } from '../../lib/platform';
 import { PlatformSvg } from '../platform-navigation/PlatformIcon';
 
 import './PlatformBadge.css';
@@ -23,7 +22,7 @@ function mapPlatformNameToIconName(platform: ExtendedPlatformName) {
   if (platform === 'windows') {
     return 'windows';
   }
-  return mapPlatformNameToIconNameInHeaders(platform);
+  return mapCompatPlatformNameToIconName(platform);
 }
 
 // Extend LCD-defined platform names with labels that are useful in prose but
