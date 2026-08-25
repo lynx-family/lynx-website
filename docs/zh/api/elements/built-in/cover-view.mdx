@@ -1,0 +1,59 @@
+---
+api: elements/cover-view
+tag: 'XElement'
+---
+
+import { APISummary, APITable, ClayMacOSOnly, ClayWindowsOnly } from '@lynx';
+
+# `<cover-view>` <ClayWindowsOnly /> <ClayMacOSOnly />
+
+<APISummary />
+
+`<cover-view>` 是桌面端专用的容器元素。它会把子树渲染到 Clay 主渲染表面上方的平台覆盖层中。使用它可以让 Lynx 内容覆盖嵌入的原生视图或平台视图；这些视图通常会显示在普通 Lynx 内容之上。
+
+如果浮层只需要覆盖其他由 Clay 渲染的内容，请优先使用设置了 `position: fixed` 的普通 `<view>`。
+
+## 用法
+
+可以使用与 `<view>` 相同的 CSS 布局属性设置 `<cover-view>` 的位置和尺寸。它的子节点会在对应范围内渲染到平台覆盖层中。
+
+```tsx
+export function OverlayControls() {
+  return (
+    <cover-view className="cover">
+      <view className="controls">
+        <text>显示在原生内容上方的控件</text>
+      </view>
+    </cover-view>
+  );
+}
+```
+
+```css
+.cover {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 240px;
+  height: 48px;
+}
+
+.controls {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.72);
+}
+```
+
+## 平台行为
+
+- Windows：Clay 将子树渲染到原生子覆盖窗口中，并将它提升到同级原生子窗口上方。Native UI 必须保留为 renderer `HWND` 的子窗口；顶层窗口或 owned popup 不属于这一层级模型。
+- macOS：Clay 将子树渲染到透明 `ClayOverlayView` 承载的 `CALayer` 中；`ClayOverlayView` 是位于主 Clay 视图上方的同级视图。它可以覆盖挂载在主 renderer view 子树中的原生控件，但不能覆盖顶层视图或无关视图。
+
+## 属性
+
+`<cover-view>` 没有元素专属属性。它支持容器元素通用的样式、属性和事件。
+
+## 兼容性
+
+<APITable />

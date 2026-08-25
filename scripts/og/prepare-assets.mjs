@@ -5,8 +5,10 @@
  * Subsite logos in `shared-route-config.ts` are a mix of remote CDN SVGs/PNGs
  * and local SVGs. Fetching them during `gen:og` would make the build
  * network-dependent (the spec forbids this), so we rasterize them **once** into
- * committed PNGs under `scripts/og/assets/<value>.png`. The OG generator then
- * reads only these local files.
+ * committed PNGs under `scripts/og/assets/`. The OG generator then reads only
+ * these local files. Most covers keep the route/cover id as the filename; the
+ * UI cover intentionally keeps the brand-aligned `lynx-ui.png` filename even
+ * though the public docs route moved to `/ui`.
  *
  * We use each subsite's dark-mode logo variant (`logo.dark`), i.e. the
  * light/white artwork meant for dark surfaces — it reads best on the saturated
@@ -35,7 +37,7 @@ const CDN =
  * `native: true` keeps the source artwork's own colors (used for the two-tone
  * lynx-ui mark, whose inner cut-out reads on the gradient); otherwise the mark
  * is flattened to white.
- * @type {Record<string, { remoteSvg?: string; localSvg?: string; remotePng?: string; native?: boolean }>}
+ * @type {Record<string, { file?: string; remoteSvg?: string; localSvg?: string; remotePng?: string; native?: boolean }>}
  */
 const SOURCES = {
   guide: { remoteSvg: `${CDN}/lynx-light-logo.svg` },
@@ -44,6 +46,7 @@ const SOURCES = {
   // silhouette loses all its internal detail, so keep its native colors.
   rspeedy: { remotePng: `${CDN}/rspeedy.PNG`, native: true },
   ui: {
+    file: 'lynx-ui.png',
     localSvg: join(PUBLIC_ASSETS, 'lynx-ui-icon-light.svg'),
     native: true,
   },
@@ -116,7 +119,8 @@ async function main() {
   mkdirSync(ASSETS_DIR, { recursive: true });
 
   for (const [value, src] of Object.entries(SOURCES)) {
-    const out = join(ASSETS_DIR, `${value}.png`);
+    const file = src.file ?? `${value}.png`;
+    const out = join(ASSETS_DIR, file);
     try {
       const provided = [src.remotePng, src.localSvg, src.remoteSvg].filter(
         Boolean,
@@ -136,7 +140,7 @@ async function main() {
         if (!src.native) svg = recolorSvg(svg, '#ffffff');
         writeFileSync(out, rasterizeSvg(svg));
       }
-      console.log(`✓ ${value}.png`);
+      console.log(`✓ ${value} -> ${file}`);
     } catch (err) {
       console.error(`✗ ${value}: ${err instanceof Error ? err.message : err}`);
       process.exitCode = 1;

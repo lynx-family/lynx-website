@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
-import { useLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
+import { useCanonicalLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
+import { BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 
 type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
 
@@ -78,13 +79,17 @@ const useBlogBtnDom = (src: string) => {
     text: blogText,
     link: blogLink,
     isExternal,
-  } = useLatestBlog(latestBlogConfig);
+  } = useCanonicalLatestBlog(latestBlogConfig);
 
   const handleInteraction = useCallback(() => {
     if (!blogLink) return;
 
     if (isExternal) {
       window.open(blogLink, '_blank');
+    } else if (BLOG_IS_CROSS_VERSION) {
+      // The blog lives under another version's base, outside this app's
+      // router — `navigate` would resolve it against the wrong base.
+      window.location.assign(blogLink);
     } else {
       navigate(blogLink);
     }
@@ -118,8 +123,13 @@ const useBlogBtnDom = (src: string) => {
       configKey === '/'
         ? `rp-home-hero__badge active-hover`
         : `rp-home-hero__badge`;
-    badgeElement.textContent = displayText;
-    badgeElement.style.opacity = '1';
+    // Upgrade the SSG fallback copy once the post's text is known. The badge
+    // is visible the whole time (`opacity: 1` in CSS), so an empty
+    // `displayText` must leave the rendered fallback alone rather than blank
+    // the pill.
+    if (displayText) {
+      badgeElement.textContent = displayText;
+    }
 
     if (configKey === '/') {
       badgeElement.addEventListener('click', handleInteraction);

@@ -18,17 +18,15 @@ import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
+import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
-const NETLIFY_CONTEXT = process.env.CONTEXT ?? '';
-const IS_LIGHTWEIGHT_BUILD =
-  process.env.RSPRESS_LIGHTWEIGHT_BUILD === 'true' ||
-  NETLIFY_CONTEXT === 'deploy-preview';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
+  outDir: 'doc_build',
   route: {
     exclude: [
       'lynx-compat-data/**/*',
@@ -38,7 +36,6 @@ export default defineConfig({
       '**/guide/embed-lynx-to-native/*',
     ],
   },
-  // outDir: 'doc_build',
   title: 'Lynx',
   description:
     'Empower the web community and invite more to build cross-platform apps',
@@ -55,7 +52,6 @@ export default defineConfig({
       printFileSize: false,
     },
     plugins: [
-      rsbuildPluginDisableFileSizeReport(),
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       // Open Graph / Twitter Card meta is injected per-page by the theme
       // (theme/OgHead.tsx) so each route gets its build-time OG image and
@@ -72,6 +68,7 @@ export default defineConfig({
           'node_modules/react-render-to-markdown/dist/index.js',
         ),
         '@site': path.join(__dirname),
+        '@og-config$': path.join(__dirname, 'shared-og-config.ts'),
         '@': path.join(__dirname, 'src'),
         '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
         '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
@@ -110,7 +107,7 @@ export default defineConfig({
       'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-dark-logo.svg',
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
-  base: `/${versionJson.current_version}`,
+  base: SITE_BASE,
   themeConfig: {
     editLink: {
       docRepoBaseUrl:
@@ -175,6 +172,16 @@ export default defineConfig({
           from: '^/zh/guide/start/tutorial-product-detail(\\.html)?$',
           to: '/zh/learn/product-detail.html',
         },
+        // The build-time macros page was removed: the public macros are covered
+        // by the API reference, and the rest were implementation details.
+        {
+          from: '^/react/build-time-macros(\\.html)?$',
+          to: '/api/react/Document.built-in-macros.html',
+        },
+        {
+          from: '^/zh/react/build-time-macros(\\.html)?$',
+          to: '/zh/api/react/Document.built-in-macros.html',
+        },
         {
           from: '^/api/genui\\.html$',
           to: '/api/genui/index.html',
@@ -195,45 +202,37 @@ export default defineConfig({
           from: '^/zh/lynx-ui(/.*)?$',
           to: '/zh/ui$1',
         },
+      ],
+    }),
+    pluginSitemap({
+      siteUrl: PUBLISH_URL,
+    }),
+    pluginRss({
+      siteUrl: PUBLISH_URL,
+      feed: [
         {
-          from: '^/en/lynx-ui(/.*)?$',
-          to: '/en/ui$1',
+          id: 'blog-rss',
+          test: '/blog',
+          title: 'Lynx Blog',
+          language: 'en',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss.xml',
+          },
+        },
+        {
+          id: 'blog-rss-zh',
+          test: '/zh/blog',
+          title: 'Lynx 博客',
+          language: 'zh-CN',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss-zh.xml',
+          },
         },
       ],
     }),
-    ...(!IS_LIGHTWEIGHT_BUILD
-      ? [
-          pluginSitemap({
-            siteUrl: PUBLISH_URL,
-          }),
-          pluginRss({
-            siteUrl: PUBLISH_URL,
-            feed: [
-              {
-                id: 'blog-rss',
-                test: '/blog',
-                title: 'Lynx Blog',
-                language: 'en',
-                output: {
-                  type: 'rss',
-                  filename: 'blog-rss.xml',
-                },
-              },
-              {
-                id: 'blog-rss-zh',
-                test: '/zh/blog',
-                title: 'Lynx 博客',
-                language: 'zh-CN',
-                output: {
-                  type: 'rss',
-                  filename: 'blog-rss-zh.xml',
-                },
-              },
-            ],
-          }),
-          pluginLLMsPostprocess(),
-        ]
-      : []),
+    pluginLLMsPostprocess(),
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
@@ -262,21 +261,8 @@ export default defineConfig({
       ],
     },
   },
-  llms: !IS_LIGHTWEIGHT_BUILD,
+  llms: true,
 });
-
-function rsbuildPluginDisableFileSizeReport() {
-  return {
-    name: 'disable-file-size-report',
-    setup(api: RsbuildPluginApi) {
-      api.modifyEnvironmentConfig((config) => {
-        config.performance ??= {};
-        config.performance.printFileSize = false;
-        return config;
-      });
-    },
-  };
-}
 
 // Some broken links are introduced only after Rspress renders the final HTML:
 // generated spec content may contain NUL bytes, language alternates can point
@@ -412,18 +398,6 @@ function routeFromGeneratedHref(href: string) {
     return null;
   }
 }
-
-type RsbuildEnvironmentConfig = {
-  performance?: {
-    printFileSize?: boolean;
-  };
-};
-
-type RsbuildPluginApi = {
-  modifyEnvironmentConfig: (
-    modify: (config: RsbuildEnvironmentConfig) => RsbuildEnvironmentConfig,
-  ) => void;
-};
 
 function remarkReplaceVersionJsonPlaceholders() {
   const replacements: Array<[string, string]> = [

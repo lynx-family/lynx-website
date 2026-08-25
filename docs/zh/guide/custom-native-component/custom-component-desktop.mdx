@@ -113,11 +113,26 @@ LYNX_REGISTER_ELEMENT(
 
 下面的示例使用同一个注册创建函数名称展示两种可选渲染后端实现。实际构建时选择一种渲染后端，让 `CreateExplorerInputElementNativeView` 只解析到一个实现。
 
+#### 选择合成后端
+
+Native UI 和 Texture 元素具有不同的合成行为：
+
+| 后端      | 呈现方式                                         | 合成行为                                                                                               |
+| --------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Native UI | `NSView` 或子 `HWND` 等平台控件                  | 保留原生输入、输入法和无障碍能力，但普通 Lynx CSS `z-index` 无法可靠地让 Lynx 渲染内容与平台控件交错。 |
+| Texture   | 由 Lynx 获取并呈现的 `IOSurface` 或 D3D 共享纹理 | 参与 Lynx 渲染树的裁剪、变换和常规层叠，但元素需要自行转发输入和输入法行为。                           |
+
+对于 Native UI 元素，应通过 `lynx_view_get_native_window(...)` 从当前 `lynx_view_t` 获取 renderer 宿主，然后将平台控件作为其子节点挂载。这样可以在多窗口应用中保持正确的窗口归属，并保证控件仍位于 Lynx overlay slice 能够覆盖的原生子树中。顶层平台表面需要单独的宿主集成，不属于这一合成模型。
+
 <Tabs groupId="custom-component-desktop-backend">
 
 <Tab label="Native UI">
 
 Native UI 渲染后端会挂载一个平台控件，并在 `OnLayoutChanged` 中更新它的位置和尺寸。对于 `<explorer-input>`，实现会挂载一个最小输入控件。
+
+:::tip 覆盖原生视图或子窗口
+Native UI 后端挂载的平台视图或子窗口位于 Clay 主渲染表面之上，因此普通 Lynx `z-index` 无法可靠地覆盖它们。应将平台控件保留在对应 `lynx_view_t` 返回的 renderer 宿主中，并将需要重叠显示的 Lynx 内容放入 [`<cover-view>`](/zh/api/elements/built-in/cover-view)。如果界面需要任意裁剪、变换，或与普通 Lynx 内容交错，请改用 Texture 后端。
+:::
 
 <Tabs groupId="custom-component-desktop-native-ui-platform">
 
@@ -196,12 +211,14 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
         return;
       }
 
-      NSView* parent = lynx_parent.window.contentView != nil
-                           ? lynx_parent.window.contentView
-                           : lynx_parent;
+      // Keep the control inside this LynxView's renderer subtree. Clay owns a
+      // sibling overlay host above that subtree for slices such as
+      // <cover-view>, so the extension must not discover or reorder the
+      // private overlay view itself.
+      NSView* parent = lynx_parent;
       if (input_.superview != parent) {
         [input_ removeFromSuperview];
-        [parent addSubview:input_ positioned:NSWindowAbove relativeTo:nil];
+        [parent addSubview:input_];
       }
 
       const NSRect frame_in_lynx = NSMakeRect(left, top, width, height);
@@ -270,8 +287,13 @@ std::wstring Utf8ToWide(const char* value) {
   if (size <= 0) {
     return L"";
   }
-  std::wstring result(static_cast<size_t>(size - 1), L'\0');
-  MultiByteToWideChar(CP_UTF8, 0, value, -1, result.data(), size);
+  std::wstring result(static_cast<size_t>(size), L'\0');
+  const int converted =
+      MultiByteToWideChar(CP_UTF8, 0, value, -1, result.data(), size);
+  if (converted <= 0) {
+    return L"";
+  }
+  result.resize(static_cast<size_t>(converted - 1));
   return result;
 }
 
@@ -291,29 +313,6 @@ bool EnsureHostClassRegistered() {
   registered = RegisterClassExW(&window_class) != 0 ||
       GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
   return registered;
-}
-
-struct MainWindowSearch {
-  DWORD process_id = 0;
-  HWND hwnd = nullptr;
-};
-
-BOOL CALLBACK FindMainWindowCallback(HWND hwnd, LPARAM data) {
-  auto* search = reinterpret_cast<MainWindowSearch*>(data);
-  DWORD window_process_id = 0;
-  GetWindowThreadProcessId(hwnd, &window_process_id);
-  if (window_process_id == search->process_id && IsWindowVisible(hwnd) &&
-      GetWindow(hwnd, GW_OWNER) == nullptr) {
-    search->hwnd = hwnd;
-    return FALSE;
-  }
-  return TRUE;
-}
-
-HWND FindMainWindow() {
-  MainWindowSearch search{GetCurrentProcessId(), nullptr};
-  EnumWindows(FindMainWindowCallback, reinterpret_cast<LPARAM>(&search));
-  return search.hwnd != nullptr ? search.hwnd : GetActiveWindow();
 }
 
 }  // namespace
@@ -348,7 +347,8 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
       float width,
       float height,
       float pixel_ratio) override {
-    HWND parent = FindMainWindow();
+    HWND parent = static_cast<HWND>(
+        lynx_view_get_native_window(lynx_view()));
     if (parent == nullptr || !EnsureHostClassRegistered()) {
       return;
     }
@@ -357,17 +357,14 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
     const int y = Scale(top, pixel_ratio);
     const int w = std::max(1, Scale(width, pixel_ratio));
     const int h = std::max(1, Scale(height, pixel_ratio));
-    POINT origin{x, y};
-    ClientToScreen(parent, &origin);
-
     if (host_ == nullptr) {
       host_ = CreateWindowExW(
-          WS_EX_TOOLWINDOW,
+          0,
           kHostClassName,
           L"",
-          WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-          origin.x,
-          origin.y,
+          WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+          x,
+          y,
           w,
           h,
           parent,
@@ -403,9 +400,10 @@ class ExplorerInputElementNativeUIView : public ExplorerInputElementView {
 
     SetWindowPos(
         host_,
-        HWND_TOP,
-        origin.x,
-        origin.y,
+        // Keep native UI below child overlay windows created for <cover-view>.
+        HWND_BOTTOM,
+        x,
+        y,
         w,
         h,
         SWP_SHOWWINDOW | SWP_NOACTIVATE);

@@ -150,7 +150,7 @@
 - **Main Thread Script**：确保动画/手势无延迟，注意线程隔离与数据同步。（参考：[Main Thread Script](/zh/react/main-thread-script.md)）
 - **NodesRef.invoke**：批量调用原生特性（如 `autoScroll`）避免跨线程瓶颈。（参考：[Direct Manipulation](/zh/guide/interaction/event-handling/manipulating-element.react.md)）
 - **Lynx DevTool & Trace**：桌面 DevTool 提供 Elements/Console/Sources/Trace 面板，可记录渲染流水、分析 ReactLynx Render Pipeline。（参考：[Lynx DevTool](/zh/guide/devtool.md), [Trace](/zh/guide/devtool/trace.md)）
-- **Performance Metrics**：通过 `lynx.performance`、`PerformanceObserver` 采集 FCP、InitContainer 等指标。（参考：[Performance API](/zh/guide/performance/metrics/performance-api.md)）
+- **Performance Metrics**：通过 `lynx.performance`、`PerformanceObserver` 采集 FCP、InitContainer 等指标。（参考：[Performance API](/zh/guide/performance/monitor-performance/performance-api.md)）
 
 ## 15. 工程实践与工具链
 

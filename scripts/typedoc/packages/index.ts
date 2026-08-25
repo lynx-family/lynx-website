@@ -7,7 +7,7 @@ const GENUI_PACKAGE_ROOT = 'node_modules/@lynx-js/genui';
 
 // One entry point per public subpath of @lynx-js/genui. Each becomes its own
 // TypeDoc module ("@lynx-js/genui/a2ui", ".../openui", ...), so the index
-// page surfaces the four public subpackages instead of a wall of internals.
+// page surfaces public subpaths instead of a wall of internals.
 // When the lynx-stack source overlay is in place we prefer .ts (richer TSDoc);
 // otherwise we fall back to the published .d.ts ship.
 function genuiEntryPoints(): string[] {
@@ -16,17 +16,21 @@ function genuiEntryPoints(): string[] {
   );
 
   if (!hasSourceOverlay) {
+    const explicitEntry = `${GENUI_PACKAGE_ROOT}/openui/dist/core/explicit.d.ts`;
     return [
       `${GENUI_PACKAGE_ROOT}/a2ui/dist/index.d.ts`,
       `${GENUI_PACKAGE_ROOT}/openui/dist/core/index.d.ts`,
+      ...(fs.existsSync(explicitEntry) ? [explicitEntry] : []),
       `${GENUI_PACKAGE_ROOT}/a2ui-prompt/dist/index.d.ts`,
       `${GENUI_PACKAGE_ROOT}/a2ui-catalog-extractor/dist/index.d.ts`,
     ];
   }
 
+  const explicitEntry = `${GENUI_PACKAGE_ROOT}/openui/src/core/explicit.ts`;
   return [
     `${GENUI_PACKAGE_ROOT}/a2ui/src/index.ts`,
     `${GENUI_PACKAGE_ROOT}/openui/src/core/index.ts`,
+    ...(fs.existsSync(explicitEntry) ? [explicitEntry] : []),
     `${GENUI_PACKAGE_ROOT}/a2ui-prompt/src/index.ts`,
     `${GENUI_PACKAGE_ROOT}/a2ui-catalog-extractor/src/index.ts`,
   ];

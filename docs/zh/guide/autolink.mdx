@@ -1,10 +1,10 @@
-import { PlatformTabs } from '@lynx';
+import { APITable, PlatformTabs } from '@lynx';
 
 # 原生库与 Autolink
 
 Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。在此之前，这些能力只能在每个宿主应用里各接一次，Android、iOS 和 HarmonyOS 还要分别写一遍。Autolink 是配套的集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并接入它们的原生能力，避免为每个元件、原生模块或 Service 手动写注册代码。
 
-Autolink 在 Android、iOS 和 HarmonyOS 上提供应用级全局注册，也覆盖 Lynxtron 原生库使用的包元数据和宿主加载。它不生成单个 `LynxView` 的局部 Library 注册，也不生成 Web 接入代码。
+Autolink 在 Android 和 iOS 上提供应用级全局注册。HarmonyOS 接入方式已在下文说明，但尚未包含在正式发布的 Lynx SDK 中。Autolink 也覆盖 Lynxtron 原生库使用的包元数据和宿主加载，但不会生成单个 `LynxView` 的局部 Library 注册或 Web 接入代码。
 
 本页分为两部分：要在应用里用上一个已有的库，从[使用库](#使用库)开始；要把自己的原生能力发布成库，从[开发库](#开发库)开始。想先建立整体印象，可以直接看 [Autolink 工作原理](#autolink-工作原理)。
 
@@ -29,6 +29,12 @@ Autolink 在 Android、iOS 和 HarmonyOS 上提供应用级全局注册，也覆
 如果当前配置的 registry 还无法解析其中某个包，说明你使用的 Lynx SDK 发布版本尚未在该 registry 中包含 Native Autolink。此时请继续使用既有手动原生注册方式，等待匹配版本发布后再接入。
 
 :::
+
+## 平台兼容性
+
+下表展示 Lynx Compatibility Data 已收录平台的 Autolink 支持情况。Lynxtron 的宿主侧接入方式记录在[接入 Autolink](#接入-autolink) 中，但 Lynxtron 不在此表的覆盖范围内。
+
+<APITable query="features/autolink" />
 
 ## 什么是 Lynx 原生库
 
@@ -90,7 +96,7 @@ lynx-app/
 
 ```groovy
 plugins {
-  id 'org.lynxsdk.lynx.library-settings'
+  id 'org.lynxsdk.lynx.library-settings' version '4.0.1'
 }
 ```
 
@@ -99,7 +105,7 @@ plugins {
 ```groovy
 plugins {
   id 'com.android.application'
-  id 'org.lynxsdk.lynx.library-build'
+  id 'org.lynxsdk.lynx.library-build' version '4.0.1'
 }
 ```
 

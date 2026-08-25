@@ -1,26 +1,25 @@
 # =============================================
 # CODEOWNERS for lynx-family/lynx-website
 # Based on commit authorship + PR merge/review patterns
+#
+# IMPORTANT: Order matters — last matching pattern wins!
+# General/broader rules go FIRST; specific/override rules go LAST.
 # =============================================
 
 # ── Global fallback ──────────────────────────
 *                                       @Huxpro
 
 # ── Infrastructure / Build / Config ──────────
-package.json                            @Huxpro @colinaaa @SoonIter
-rspress.config.ts                       @Huxpro @colinaaa @SoonIter
-tsconfig.json                           @Huxpro
+package.json                            @Huxpro @colinaaa @SoonIter @Dugyu @upupming
+rspress.config.ts                       @Huxpro @colinaaa @SoonIter @Dugyu @upupming
+tsconfig.json                           @Huxpro @Dugyu @upupming
 /.github/                               @Huxpro
 /scripts/                               @icecreamx10 @Huxpro
 /functions/                             @icecreamx10
 
-# ── Theme & Site UI ──────────────────────────
-/src/                                   @Huxpro @SoonIter
-/theme/                                 @Huxpro @SoonIter
-
-# ── LUNA ─────────────────────────────────────
-**/*luna*                               @Dugyu
-/src/luna/                              @Dugyu
+# ── Site Integration ─────────────────────────
+shared-route-config.ts                  @Huxpro @SoonIter @Dugyu @upupming
+shared-og-config.ts                     @Huxpro @SoonIter @Dugyu @upupming
 
 # ── Plugins ──────────────────────────────────
 /plugins/                               @colinaaa @hzy
@@ -29,19 +28,38 @@ tsconfig.json                           @Huxpro
 /packages/lynx-compat-data/             @Huxpro @toretto-wt @MoonfaceX
 /packages/lynx-example-packages/        @toretto-wt @loongliu @MoonfaceX
 /packages/lynx-living-spec/             @Huxpro
+/packages/lynxtron-example-packages/    @zsy-jason
+/packages/lynx-ui-example-packages/     @Dugyu
+
+# ── Theme & Site UI ──────────────────────────
+/src/                                   @Huxpro @SoonIter
+/theme/                                 @Huxpro @SoonIter
+/theme/lynx-ui-home/                    @Huxpro @SoonIter @Dugyu
+/theme/OgHead.tsx                       @Huxpro @SoonIter @Dugyu @upupming
+tailwind.config.js                      @Huxpro @SoonIter @Dugyu
 
 # ═════════════════════════════════════════════
-# DOCS: API Reference
+# DOCS: Broad section catch-alls (go FIRST so sub-sections can override below)
+# ═════════════════════════════════════════════
+/docs/**/help/                          @Huxpro
+/docs/**/ai/                            @hzy @Huxpro @colinaaa
+/docs/**/blog/                          @Huxpro
+/docs/**/rspeedy/                       @colinaaa
+/docs/**/react/                         @colinaaa @Yradex @gaoachao @upupming
+/docs/**/ui/                            @MoonfaceX @f0rdream @toretto-wt @fzx2666-fz
+
+# ═════════════════════════════════════════════
+# DOCS: API Reference — parent fallbacks first, sub-directories override after
 # ═════════════════════════════════════════════
 
 # ── api/css ──────────────────────────────────
+/docs/**/api/css/                       @Huxpro
 /docs/**/api/css/data-type/             @zhongyr @Huxpro
 /docs/**/api/css/properties/            @Huxpro
-/docs/**/api/css/                       @Huxpro
 
 # ── api/elements ─────────────────────────────
-/docs/**/api/elements/built-in/         @toretto-wt @MoonfaceX
 /docs/**/api/elements/                  @toretto-wt
+/docs/**/api/elements/built-in/         @toretto-wt @MoonfaceX
 
 # ── api/engine ───────────────────────────────
 /docs/**/api/engine/                    @Huxpro @loongliu
@@ -50,16 +68,16 @@ tsconfig.json                           @Huxpro
 /docs/**/api/errors/                    @mitchilling @Huxpro
 
 # ── api/lynx-api ─────────────────────────────
+/docs/**/api/lynx-api/                  @loongliu @Huxpro
 /docs/**/api/lynx-api/event/            @loongliu @toretto-wt @hexionghui
 /docs/**/api/lynx-api/global/           @toretto-wt @Huxpro
-/docs/**/api/lynx-api/lynx/            @loongliu @colinaaa
+/docs/**/api/lynx-api/lynx/             @loongliu @colinaaa
 /docs/**/api/lynx-api/main-thread/      @Huxpro @colinaaa @f0rdream
 /docs/**/api/lynx-api/performance-api/  @loongliu
-/docs/**/api/lynx-api/                  @loongliu @Huxpro
 
 # ── api/lynx-native-api ─────────────────────
-/docs/**/api/lynx-native-api/lynx-background-runtime*/  @lybvinci @toretto-wt
 /docs/**/api/lynx-native-api/           @toretto-wt @loongliu @pilipala195 @PupilTong
+/docs/**/api/lynx-native-api/lynx-background-runtime*/  @lybvinci @toretto-wt
 
 # ── api/lynx-devtool-native-api ─────────────
 /docs/**/api/lynx-devtool-native-api/   @mitchilling @Dango-2021
@@ -73,8 +91,9 @@ tsconfig.json                           @Huxpro
 /docs/**/api/rspeedy/                   @colinaaa @upupming
 
 # ═════════════════════════════════════════════
-# DOCS: Guide
+# DOCS: Guide — guide fallback first, sub-sections override after
 # ═════════════════════════════════════════════
+/docs/**/guide/                         @Huxpro @loongliu
 
 # ── guide/start ──────────────────────────────
 /docs/**/guide/start/                   @Huxpro @loongliu @toretto-wt @PupilTong
@@ -107,15 +126,12 @@ tsconfig.json                           @Huxpro
 # ── guide/inclusion ──────────────────────────
 /docs/**/guide/inclusion/               @SoonIter @loongliu @colinaaa
 
-# ── guide fallback ───────────────────────────
-/docs/**/guide/                         @Huxpro @loongliu
+# ── LUNA ─────────────────────────────────────
+**/*luna*                               @Dugyu
+/src/luna/                              @Dugyu
 
-# ═════════════════════════════════════════════
-# DOCS: Other Sections
-# ═════════════════════════════════════════════
-/docs/**/ui/                            @MoonfaceX @f0rdream @toretto-wt @fzx2666-fz
-/docs/**/blog/                          @Huxpro
-/docs/**/react/                         @colinaaa @Yradex @gaoachao @upupming
-/docs/**/rspeedy/                       @colinaaa
-/docs/**/ai/                            @hzy @Huxpro @colinaaa
-/docs/**/help/                          @Huxpro
+# ── In-house downstream tool contract ────────
+# Keep this block last
+/scripts/luna-demo.js                    @Huxpro @Dugyu @upupming
+/scripts/lynx-example.js                 @icecreamx10 @Huxpro @Dugyu @upupming
+/scripts/lynx-living-spec.js             @icecreamx10 @Huxpro @upupming

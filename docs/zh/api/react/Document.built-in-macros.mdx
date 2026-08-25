@@ -246,20 +246,53 @@ class Conversations extends Component<Props, State> {
 }
 ```
 
-{/* api-doc-overlay:react-thread-macros-example:start */}
+## `__JS__`
 
-### 交互示例
+- 类型：`boolean`
+- 作用：[`__BACKGROUND__`](#__background__) 的别名。
+
+:::warning 已废弃
+请改用 `__BACKGROUND__`。
+:::
+
+## `__LEPUS__`
+
+- 类型：`boolean`
+- 作用：[`__MAIN_THREAD__`](#__main_thread__) 的别名。
+
+:::warning 已废弃
+请改用 `__MAIN_THREAD__`。
+:::
+
+## `__DEV__`
+
+- 类型：`boolean`
+- 作用：开发构建中为 `true`，生产构建中为 `false`。用它包裹只在开发期需要的代码——prop 校验、不变量断言、更友好的报错信息——这些代码不会进入生产产物。
+
+```tsx
+if (__DEV__) {
+  // 这段代码会在生产构建中被移除。
+  console.log('debug only');
+}
+```
+
+## `__PROFILE__`
+
+- 类型：`boolean`
+- 作用：产物中带有性能埋点时为 `true`。开发构建默认开启，生产构建默认关闭。埋点会产出哪些 trace 见[性能分析](/react/performance/profiling.mdx)，如何为生产构建打开见[运行时性能分析](/rspeedy/runtime-profiling.md)。
+
+## `__REACT_DEVTOOL__`
+
+- 类型：`boolean | undefined`
+- 作用：[Preact DevTools](/guide/devtool/panels/preact-devtools-panel.mdx) 所依赖的运行时钩子被编译进产物时为 `true`。开发构建默认开启；生产构建可以用环境变量 `REACT_DEVTOOL=true` 打开。
+
+## `__LAZY_BUNDLE_FETCHER__`
+
+- 类型：`'FetchBundle' | 'QueryComponent'`
+- 作用：当前产物接入的是哪一种 lazy bundle 拉取方式。`'FetchBundle'` 走基于 `lynx.fetchBundle` 的路径（以及 `import(..., { with: { mode } })` 的 mode 提示），`'QueryComponent'` 是旧的 `lynx.QueryComponent` 路径。取值如何选定、`REACT_LAZY_BUNDLE_FETCHER` 覆盖方式以及版本范围，见[懒加载 bundle 的加载器](/react/code-splitting.md#懒加载-bundle-的加载器)。
+
+### Escape Hatch
 
 :::caution Escape Hatch
 `__MAIN_THREAD__` 和 `__BACKGROUND__` 是逃生舱口（escape hatch）类型的 API。绝大多数场景下你不需要手写这些宏——编译器已经自动处理了事件处理器、effect、ref 等代码的线程归属。只有在 render 阶段需要区分线程行为时才使用。
 :::
-
-<Lynx.Go
-  example="react-apis"
-  defaultFile="src/thread-macros/App.tsx"
-  defaultEntryFile="dist/thread-macros.lynx.bundle"
-  entry="src/thread-macros"
-  defaultTab="web"
-/>
-
-{/* api-doc-overlay:react-thread-macros-example:end */}

@@ -221,4 +221,29 @@ export default defineConfig({
 
 使用 `npx rspeedy dev --config lynx.config.consumer.js` 来开始开发生产者项目。
 
+## 懒加载 bundle 的加载器
+
+懒加载 bundle 有两种加载方式，用哪一种在构建期决定，并通过 [`__LAZY_BUNDLE_FETCHER__`](/api/react/Document.built-in-macros.mdx#__lazy_bundle_fetcher__) 宏暴露给你的代码。
+
+| 加载器           | 拉取方式                                                        |
+| ---------------- | --------------------------------------------------------------- |
+| `FetchBundle`    | `lynx.fetchBundle`，以及 `import(..., { with: { mode } })` 提示 |
+| `QueryComponent` | 旧的 `lynx.QueryComponent` 路径                                 |
+
+默认取值跟随 [`engineVersion`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md)：`3.9` 及以上为 `FetchBundle`，否则为 `QueryComponent`。`engineVersion` 默认是 `3.2`，因此未把它调高到 `3.9` 的构建会使用 `QueryComponent`。
+
+环境变量 `REACT_LAZY_BUNDLE_FETCHER` 可以覆盖这个选择：
+
+```bash
+REACT_LAZY_BUNDLE_FETCHER=QueryComponent rspeedy build
+```
+
+- `QueryComponent`：即使 `engineVersion` 已经是 `3.9` 及以上，也强制走旧加载器。
+- `FetchBundle`：只有在 `engineVersion` 为 `3.9` 及以上时才接受。声明的版本更低时构建会直接报错，因为旧宿主没有 `lynx.fetchBundle` / `lynx.loadScript`。
+- 其他取值会被忽略，回落到由 `engineVersion` 推导出的结果。
+
+:::info 版本范围
+`FetchBundle` 加载器和上述选择逻辑从 `@lynx-js/react@0.123.0` / `@lynx-js/react-rsbuild-plugin@0.18.0` 起提供，这两个包同步发布。更早的版本一律使用 `QueryComponent`。
+:::
+
 [`experimental_isLazyBundle`]: ../../api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle
