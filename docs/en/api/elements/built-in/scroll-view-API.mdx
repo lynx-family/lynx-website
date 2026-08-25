@@ -174,7 +174,7 @@ lynx.createSelectorQuery()
          * @Harmony
          * @PC
          */
-        rate: number;
+        rate: 60,
         /**
          * Start/stop automatic scrolling.
          * @Android
@@ -182,8 +182,8 @@ lynx.createSelectorQuery()
          * @Harmony
          * @PC
          */
-        start: boolean;
-      };
+        start: true,
+      },
       success: function (res) {},
       fail: function (res) {},
     })
@@ -198,37 +198,38 @@ Automatic scrolling
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
+interface GetScrollInfoResult {
+  /**
+   * Total scrollable range along orientation, in PX
+   * @Android
+   * @iOS
+   * @Harmony
+   * @PC
+   */
+  scrollRange: number;
+  /**
+   * Content offset on X-axis, in PX
+   * @Android
+   * @iOS
+   * @Harmony
+   * @PC
+   */
+  scrollX: number;
+  /**
+   * Content offset on Y-axis, in PX
+   * @Android
+   * @iOS
+   * @Harmony
+   * @PC
+   */
+  scrollY: number;
+}
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'getScrollInfo',
-      success: Callback<{
-        /**
-         * Total scrollable range along orientation, in PX
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        scrollRange: number;
-        /**
-         * Content offset on X-axis, in PX
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        scrollX: number;
-        /**
-         * Content offset on Y-axis, in PX
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        scrollY: number;
-      }>;
+      success: function (res: GetScrollInfoResult) {},
       fail: function (res) {},
     })
     .exec();
@@ -242,17 +243,20 @@ Get scroll info
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
+interface ScrollByParams {
+  /**
+   * Offset to scroll
+   */
+  offset?: number;
+}
+
+const params: ScrollByParams = { offset: 100 };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'scrollBy',
-      params: {
-        /**
-         * Offset to scroll
-         */
-        offset?: number;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })
@@ -267,26 +271,29 @@ Scroll by specified offset
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
+interface ScrollToParams {
+  /**
+   * Target item index
+   * @defaultValue 0
+   */
+  index?: number;
+  /**
+   * Offset relative to target node
+   */
+  offset?: number;
+  /**
+   * Enable scroll animation
+   */
+  smooth?: boolean;
+}
+
+const params: ScrollToParams = { index: 0, offset: 0, smooth: true };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'scrollTo',
-      params: {
-        /**
-         * Target item index
-         * @defaultValue 0
-         */
-        index?: number;
-        /**
-         * Offset relative to target node
-         */
-        offset?: number;
-        /**
-         * Enable scroll animation
-         */
-        smooth?: boolean;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })
