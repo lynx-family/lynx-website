@@ -322,7 +322,7 @@ function stableBranchName(target, sourcePr) {
 }
 
 function generatedMarker(sourcePr, target, requestIssue) {
-  return `<!-- cherry-pick-generated: source-pr=${sourcePr} target=${target} request=${requestIssue} -->`;
+  return `${GENERATED_MARKER_PREFIX} source-pr=${sourcePr} target=${target} request=${requestIssue} -->`;
 }
 
 function isBotActor(comment) {
@@ -662,7 +662,7 @@ function initialTargets(parsed) {
   }));
 }
 
-async function validateParsedRequest(repo, config, parsed) {
+async function validateParsedRequest(repo, parsed) {
   const repository = await getRepo(repo);
   const pull = await getPull(repo, parsed.sourcePr);
   const errors = [];
@@ -865,7 +865,7 @@ async function validateCommand() {
   const errors = [];
   try {
     parsed = parseRequestBody(issue.body || '', config, repo);
-    validation = await validateParsedRequest(repo, config, parsed);
+    validation = await validateParsedRequest(repo, parsed);
     errors.push(...validation.errors);
   } catch (error) {
     errors.push(error.message);
@@ -1376,7 +1376,7 @@ async function executeCommand() {
   }
 
   const parsed = parseRequestBody(issue.body || '', config, repo);
-  const validation = await validateParsedRequest(repo, config, parsed);
+  const validation = await validateParsedRequest(repo, parsed);
   if (!validation.valid) {
     throw new Error(
       `Approved request became invalid: ${validation.errors.join('; ')}`,
