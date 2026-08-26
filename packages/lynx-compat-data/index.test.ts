@@ -12,6 +12,7 @@ import {
 import {
   getSupportedPlatforms,
   isCompatStatement,
+  isPlatformName,
   isPlatformStatement,
   isPlatformStatus,
   isPlatformType,
@@ -37,6 +38,7 @@ describe('Platform', () => {
     expect(isPlatformStatement({})).toBe(false);
 
     expect(isPlatformType(ios.type)).toBe(true);
+    expect(isPlatformName('clay_harmony')).toBe(true);
   });
 
   it('should validate release statement', () => {

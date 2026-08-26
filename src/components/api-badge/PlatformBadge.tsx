@@ -144,6 +144,7 @@ const platformNames: ExtendedPlatformName[] = [
   'macos',
   'windows',
   'clay_android',
+  'clay_harmony',
   'clay_ios',
   'clay_macos',
   'clay_windows',
