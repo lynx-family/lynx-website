@@ -259,7 +259,7 @@ export default function App({ initialCount }) {
 
 ### Hydration 接管已有视图
 
-现在首帧已经在两个线程分别画出来了，后台 React 接下来需要认领这些已有视图，让后续 `setState` 产生的 Patch 在发送到主线程后，能命中同一批原生节点。
+现在主线程已经画出首帧，后台 React 也完成了首轮 render。接下来，后台 React 需要认领这些已有视图，让后续 `setState` 产生的 Patch 在发送到主线程后，能命中同一批原生节点。
 
 拿前面的 `App` 来看，`view.card` 和 `count` 文本在两个线程中的结构一致，可以直接绑定；`$1` 位置因为主线程是 `main`、后台是 `background`，不能强行绑定，只能交给差异 Patch：
 
