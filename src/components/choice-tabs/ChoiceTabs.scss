@@ -130,7 +130,13 @@
   display: flex;
   align-items: baseline;
   gap: 7px;
-  flex-wrap: nowrap;
+  // Allow the title row to wrap so long labels never get clipped past the
+  // card's right padding. `flex-wrap: wrap` ensures the inline tag sits on
+  // the same line as the title when it fits, and wraps to a new line when
+  // it does not (instead of being orphaned off-screen). Do NOT re-add
+  // `nowrap` here — the card has `overflow: hidden`, and a long label with
+  // nowrap would be silently clipped at the card border.
+  flex-wrap: wrap;
 }
 
 .choice-tabs__label {
@@ -139,7 +145,15 @@
   letter-spacing: -0.01em; // tighter tracking for heading feel
   color: var(--home-title-color, #111113);
   line-height: 1.25;
-  white-space: nowrap;
+  // Let the label wrap inside the card content box. Combined with the
+  // parent's `min-width: 0` and `flex-wrap: wrap`, this guarantees that the
+  // title is never clipped by the card's `overflow: hidden`.
+  min-width: 0;
+  // Prefer whole-word breaks, but fall back to anywhere so extremely long
+  // continuous labels (e.g. a future CJK string or very narrow viewport)
+  // still stay inside the card.
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .choice-tabs__tag {
