@@ -5,7 +5,7 @@
  * This script walks through all compatibility data directories and generates
  * aggregated statistics for the API Status Dashboard.
  *
- * Usage: pnpm run gen-stats
+ * Usage: pnpm run gen-stats [--root <compat-data-dir>] [--output <file>]
  */
 
 import fs from 'node:fs';
@@ -256,7 +256,39 @@ interface APIStats {
 }
 
 const dirname = fileURLToPath(new URL('.', import.meta.url));
-const rootDir = path.join(dirname, '..');
+const defaultRootDir = path.join(dirname, '..');
+
+function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
+  let rootDir = defaultRootDir;
+  let outputPath: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const option = args[i];
+    const value = args[i + 1];
+    if (option === '--') {
+      continue;
+    }
+    if ((option === '--root' || option === '--output') && !value) {
+      throw new Error(`${option} requires a path`);
+    }
+    if (option === '--root') {
+      rootDir = path.resolve(value!);
+      i++;
+    } else if (option === '--output') {
+      outputPath = path.resolve(value!);
+      i++;
+    } else {
+      throw new Error(`Unknown argument: ${option}`);
+    }
+  }
+
+  return {
+    rootDir,
+    outputPath: outputPath ?? path.join(rootDir, 'api-stats.json'),
+  };
+}
+
+const { rootDir, outputPath } = parseArgs(process.argv.slice(2));
 
 /**
  * Check if a version value indicates support
@@ -1126,6 +1158,6 @@ function generateStats(): APIStats {
 const stats = generateStats();
 
 // Write output
-const outputPath = path.join(rootDir, 'api-stats.json');
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, JSON.stringify(stats, null, 2));
 console.log(`\nStats written to ${outputPath}`);

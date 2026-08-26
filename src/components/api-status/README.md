@@ -44,11 +44,14 @@ Run the stats generation script from the workspace root:
 pnpm --filter @lynx-js/lynx-compat-data run gen-stats
 ```
 
+CI can generate statistics from another source tree or write them outside the
+package with `--root <compat-data-dir>` and `--output <file>`.
+
 This will:
 
 1. Walk through all compatibility data directories
 2. Count APIs and platform support
-3. Generate `api-stats.json` in the lynx-compat-data package
+3. Generate the untracked `api-stats.json` in the lynx-compat-data package
 
 ### Viewing the Dashboard
 
@@ -104,7 +107,6 @@ The generated `api-stats.json` has the following structure:
 
 ```typescript
 interface APIStats {
-  generated_at: string; // ISO timestamp
   summary: {
     total_apis: number; // Total APIs tracked
     by_category: Record<string, CategoryStats>;
@@ -143,7 +145,9 @@ export const DISPLAY_PLATFORMS: PlatformName[] = [
 
 ## Integration with CI/CD
 
-The stats generation is included in the `prepare` script, so it runs automatically during `pnpm install` - both locally and in CI/CD pipelines. No additional configuration needed.
+The stats generation runs automatically during `pnpm install`, `pnpm dev`, and `pnpm build`. The generated `api-stats.json` is intentionally ignored by Git.
+
+For compatibility-data pull requests, CI generates statistics from both the base and head source data, then posts their comparison as a pull request comment. The summary includes each Clay sub-platform so platform-specific changes remain visible.
 
 If you need to regenerate stats manually:
 
