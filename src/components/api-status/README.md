@@ -45,7 +45,8 @@ pnpm gen:compat-stats
 ```
 
 CI can generate statistics from another source tree or write them outside the
-package with `--root <compat-data-dir>` and `--output <file>`.
+package with `--root <compat-data-dir>`, `--output <file>` and
+`--docs-root <docs-dir>`.
 
 This will:
 

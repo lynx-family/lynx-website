@@ -6,6 +6,7 @@
  * aggregated statistics for the API Status Dashboard.
  *
  * Usage: pnpm run gen-stats [--root <compat-data-dir>] [--output <file>]
+ *                          [--docs-root <docs-dir>]
  */
 
 import fs from 'node:fs';
@@ -20,38 +21,6 @@ import type {
   VersionValue,
 } from '../types/types.js';
 import { isDocRoute, loadDocRoutes } from './lib/doc-routes.js';
-
-/**
- * Docs sources to verify `doc_url` values against, from `--docs-root <dir>` or
- * `LYNX_COMPAT_DOCS_ROOT`, resolved against the working directory.
- *
- * Named by the caller rather than inferred from this file's location: the
- * package is consumed as a generated-data input by sites that do not share a
- * docs tree, so guessing a root would make `api-stats.json` depend on the
- * checkout layout. Omit it and verification is skipped.
- */
-function getDocsRootOption(): string | undefined {
-  const flagIndex = process.argv.indexOf('--docs-root');
-  const fromFlag =
-    flagIndex !== -1
-      ? process.argv[flagIndex + 1]
-      : process.env['LYNX_COMPAT_DOCS_ROOT'];
-  if (flagIndex !== -1 && !fromFlag) {
-    throw new Error('--docs-root requires a directory path');
-  }
-  return fromFlag ? path.resolve(fromFlag) : undefined;
-}
-
-const docsRoot = getDocsRootOption();
-
-// Routes published by the docs site, or `null` when the caller did not ask for
-// verification, in which case URLs are emitted unchecked. A docs root that was
-// asked for but is missing throws rather than degrading to `null`.
-const DOC_ROUTES = docsRoot ? loadDocRoutes(docsRoot) : null;
-
-// `lynx_path` values that do not resolve to a page. Authored data, so these are
-// reported rather than silently dropped.
-const unresolvedLynxPaths = new Set<string>();
 
 // All platforms to track
 const TRACKED_PLATFORMS: PlatformName[] = [
@@ -291,10 +260,24 @@ interface APIStats {
 const dirname = fileURLToPath(new URL('.', import.meta.url));
 const defaultRootDir = path.join(dirname, '..');
 
-/** Parse optional source-root and output-file overrides. */
-function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
+/**
+ * Parse optional source-root, output-file and docs-root overrides.
+ *
+ * `--docs-root` names the docs sources to verify `doc_url` values against, and
+ * also reads from `LYNX_COMPAT_DOCS_ROOT`. It is named by the caller rather
+ * than inferred from this file's location: the package is consumed as a
+ * generated-data input by sites that do not share a docs tree, so guessing a
+ * root would make the output depend on the checkout layout. Omit it and
+ * verification is skipped.
+ */
+function parseArgs(args: string[]): {
+  rootDir: string;
+  outputPath: string;
+  docsRoot: string | undefined;
+} {
   let rootDir = defaultRootDir;
   let outputPath: string | undefined;
+  let docsRoot = process.env['LYNX_COMPAT_DOCS_ROOT'];
 
   for (let i = 0; i < args.length; i++) {
     const option = args[i];
@@ -303,7 +286,9 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
       continue;
     }
     if (
-      (option === '--root' || option === '--output') &&
+      (option === '--root' ||
+        option === '--output' ||
+        option === '--docs-root') &&
       (!value || value.startsWith('--'))
     ) {
       throw new Error(`${option} requires a path`);
@@ -314,6 +299,9 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
     } else if (option === '--output') {
       outputPath = path.resolve(value!);
       i++;
+    } else if (option === '--docs-root') {
+      docsRoot = value!;
+      i++;
     } else {
       throw new Error(`Unknown argument: ${option}`);
     }
@@ -322,10 +310,20 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
   return {
     rootDir,
     outputPath: outputPath ?? path.join(rootDir, 'api-stats.json'),
+    docsRoot: docsRoot ? path.resolve(docsRoot) : undefined,
   };
 }
 
-const { rootDir, outputPath } = parseArgs(process.argv.slice(2));
+const { rootDir, outputPath, docsRoot } = parseArgs(process.argv.slice(2));
+
+// Routes published by the docs site, or `null` when the caller did not ask for
+// verification, in which case URLs are emitted unchecked. A docs root that was
+// asked for but is missing throws rather than degrading to `null`.
+const DOC_ROUTES = docsRoot ? loadDocRoutes(docsRoot) : null;
+
+// `lynx_path` values that do not resolve to a page. Authored data, so these are
+// reported rather than silently dropped.
+const unresolvedLynxPaths = new Set<string>();
 
 /**
  * Check if a version value indicates support
