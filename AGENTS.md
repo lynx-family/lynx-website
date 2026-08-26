@@ -43,7 +43,7 @@ Keep OSS runtime imports compatible with the downstream resolver aliases.
 Coordinate changes to shared configuration exports or resolver aliases with
 the downstream repository.
 
-The in-house scheduled sync runs daily at 10:00 UTC+8. For coordinated changes,
+The in-house scheduled sync runs daily at 09:30 UTC+8. For coordinated changes,
 especially those that must land internally first, plan the landing order around
 this window so an OSS change is not synced before its downstream counterpart is
 ready.
