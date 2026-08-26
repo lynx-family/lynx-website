@@ -4,7 +4,7 @@ A data-driven API compatibility tracking system for the Lynx documentation websi
 
 ## Overview
 
-This system provides real-time visibility into Lynx API compatibility across all supported platforms (Android, iOS, HarmonyOS, and Web). It consists of two main parts:
+This system provides real-time visibility into Lynx API compatibility across all supported platforms (Android, iOS, HarmonyOS, Web, and the Clay sub-platforms). It consists of two main parts:
 
 1. **Stats Generation Script** - A build-time script that walks through `@lynx-js/lynx-compat-data` and generates aggregated statistics
 2. **Dashboard UI** - React components that visualize the statistics in an interactive dashboard

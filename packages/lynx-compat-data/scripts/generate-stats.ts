@@ -258,6 +258,7 @@ interface APIStats {
 const dirname = fileURLToPath(new URL('.', import.meta.url));
 const defaultRootDir = path.join(dirname, '..');
 
+/** Parse optional source-root and output-file overrides. */
 function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
   let rootDir = defaultRootDir;
   let outputPath: string | undefined;
@@ -268,7 +269,10 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
     if (option === '--') {
       continue;
     }
-    if ((option === '--root' || option === '--output') && !value) {
+    if (
+      (option === '--root' || option === '--output') &&
+      (!value || value.startsWith('--'))
+    ) {
       throw new Error(`${option} requires a path`);
     }
     if (option === '--root') {

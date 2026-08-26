@@ -132,7 +132,7 @@ for (const p of SUMMARY_PLATFORMS) {
 
 md += '\n';
 
-// Helper: render a category table for a list of category keys
+/** Render a category table for a list of category keys. */
 function renderCategoryTable(categories) {
   let out = '| Category | Total |';
   for (const p of CATEGORY_PLATFORMS) {
