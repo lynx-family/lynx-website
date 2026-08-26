@@ -34,7 +34,27 @@ const targetPath = resolve(process.cwd(), TARGET_DIR);
 const run = (command, options = {}) =>
   execSync(command, { stdio: 'inherit', ...options });
 
+// git commands run inside a directory that is not itself a repository walk up
+// to the enclosing one. Since this script runs from a lynx-website checkout,
+// a leftover or partially cloned .lynx-ui-source would otherwise make
+// `rev-parse HEAD` report lynx-website's HEAD and `remote get-url origin`
+// report lynx-website's URL -- and the fetch below would then ask
+// lynx-website for a lynx-ui commit and fail with "not our ref".
+const isOwnRepo = () => {
+  try {
+    const top = execSync('git rev-parse --show-toplevel', {
+      cwd: targetPath,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }).trim();
+    return resolve(top) === targetPath;
+  } catch {
+    return false;
+  }
+};
+
 const readHead = () => {
+  if (!isOwnRepo()) return null;
   try {
     return execSync('git rev-parse HEAD', {
       cwd: targetPath,
@@ -56,10 +76,16 @@ if (existsSync(targetPath)) {
   }
 
   if (current) {
+    // Point origin at lynx-ui whatever it currently says: an origin that
+    // exists but refers to another repository would otherwise be used as-is,
+    // and the fetch below would look for a lynx-ui commit in the wrong place.
     try {
-      run('git remote get-url origin', { cwd: targetPath });
+      run(`git remote set-url origin ${REPO}`, {
+        cwd: targetPath,
+        stdio: 'pipe',
+      });
     } catch {
-      run(`git remote add origin ${REPO}`, { cwd: targetPath });
+      run(`git remote add origin ${REPO}`, { cwd: targetPath, stdio: 'pipe' });
     }
 
     console.log(`Updating lynx-ui to ${sha.slice(0, SHORT_SHA_LEN)}...`);

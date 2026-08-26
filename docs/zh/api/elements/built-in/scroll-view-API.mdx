@@ -168,7 +168,7 @@ lynx.createSelectorQuery()
          * @Harmony
          * @PC
          */
-        rate: number;
+        rate: 60,
         /**
          * 开始/停止自动滚动。
          * @Android
@@ -176,8 +176,8 @@ lynx.createSelectorQuery()
          * @Harmony
          * @PC
          */
-        start: boolean;
-      };
+        start: true,
+      },
       success: function (res) {},
       fail: function (res) {},
     })
@@ -190,39 +190,40 @@ lynx.createSelectorQuery()
 
 ### `getScrollInfo`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
 ```ts
+interface GetScrollInfoResult {
+  /**
+   * 沿方向的总可滚动范围，单位为 PX
+   * @Android
+   * @iOS
+   * @Harmony
+   * @PC
+   */
+  scrollRange: number;
+  /**
+   * X 轴上的内容偏移量，单位为 PX
+   * @Android
+   * @iOS
+   * @Harmony
+   * @PC
+   */
+  scrollX: number;
+  /**
+   * Y 轴上的内容偏移量，单位为 PX
+   * @Android
+   * @iOS
+   * @Harmony
+   * @PC
+   */
+  scrollY: number;
+}
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'getScrollInfo',
-      success: Callback<{
-        /**
-         * 沿方向的总可滚动范围，单位为 PX
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        scrollRange: number;
-        /**
-         * X 轴上的内容偏移量，单位为 PX
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        scrollX: number;
-        /**
-         * Y 轴上的内容偏移量，单位为 PX
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        scrollY: number;
-      }>;
+      success: function (res: GetScrollInfoResult) {},
       fail: function (res) {},
     })
     .exec();
@@ -234,19 +235,22 @@ lynx.createSelectorQuery()
 
 ### `scrollBy`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+ <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
 ```ts
+interface ScrollByParams {
+  /**
+   * 滚动的偏移量
+   */
+  offset?: number;
+}
+
+const params: ScrollByParams = { offset: 100 };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'scrollBy',
-      params: {
-        /**
-         * 滚动的偏移量
-         */
-        offset?: number;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })
@@ -261,26 +265,29 @@ lynx.createSelectorQuery()
 
  <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
 ```ts
+interface ScrollToParams {
+  /**
+   * 目标项索引
+   * @defaultValue 0
+   */
+  index?: number;
+  /**
+   * 相对于目标节点的偏移量
+   */
+  offset?: number;
+  /**
+   * 启用滚动动画
+   */
+  smooth?: boolean;
+}
+
+const params: ScrollToParams = { index: 0, offset: 0, smooth: true };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'scrollTo',
-      params: {
-        /**
-         * 目标项索引
-         * @defaultValue 0
-         */
-        index?: number;
-        /**
-         * 相对于目标节点的偏移量
-         */
-        offset?: number;
-        /**
-         * 启用滚动动画
-         */
-        smooth?: boolean;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })

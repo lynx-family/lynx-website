@@ -150,7 +150,7 @@ Common APIs:
 - **Main Thread Script**: Keep animations/gestures responsive while respecting thread isolation and data synchronization. (See [Main Thread Script](/react/main-thread-script.md))
 - **NodesRef.invoke**: Batch native operations (for example `autoScroll`) to avoid cross-thread overhead. (See [Direct Manipulation](/guide/interaction/event-handling/manipulating-element.react.md))
 - **Lynx DevTool & Trace**: The desktop DevTool offers Elements/Console/Sources/Trace panels to record render pipelines and analyze the ReactLynx render process. (See [Lynx DevTool](/guide/devtool.md), [Trace](/guide/devtool/trace.md))
-- **Performance metrics**: Use `lynx.performance` and `PerformanceObserver` to capture metrics such as FCP and InitContainer. (See [Performance API](/guide/performance/metrics/performance-api.md))
+- **Performance metrics**: Use `lynx.performance` and `PerformanceObserver` to capture metrics such as FCP and InitContainer. (See [Performance API](/guide/performance/monitor-performance/performance-api.md))
 
 ## 15. Engineering Practices and Tooling
 

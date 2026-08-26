@@ -25,13 +25,27 @@ try {
 }
 pr = JSON.parse(readFileSync(prPath, 'utf8'));
 
-// Show these platforms in the table (skip individual clay sub-platforms for readability)
-const PLATFORMS = ['android', 'ios', 'harmony', 'web_lynx', 'clay'];
+const SUMMARY_PLATFORMS = [
+  'android',
+  'ios',
+  'harmony',
+  'web_lynx',
+  'clay_android',
+  'clay_ios',
+  'clay_macos',
+  'clay_windows',
+  'clay',
+];
+const CATEGORY_PLATFORMS = ['android', 'ios', 'harmony', 'web_lynx', 'clay'];
 const PLATFORM_NAMES = {
   android: 'Android',
   ios: 'iOS',
   harmony: 'HarmonyOS',
   web_lynx: 'Web',
+  clay_android: 'Clay/Android',
+  clay_ios: 'Clay/iOS',
+  clay_macos: 'Clay/macOS',
+  clay_windows: 'Clay/Windows',
   clay: 'Clay',
 };
 
@@ -107,7 +121,7 @@ md += '### Platform Coverage\n\n';
 md += '| Platform | Supported | Coverage | Δ Supported | Δ Coverage |\n';
 md += '|----------|-----------|----------|-------------|------------|\n';
 
-for (const p of PLATFORMS) {
+for (const p of SUMMARY_PLATFORMS) {
   const bp = base?.summary?.by_platform?.[p];
   const pp = pr.summary.by_platform[p];
   if (!pp) continue;
@@ -118,15 +132,15 @@ for (const p of PLATFORMS) {
 
 md += '\n';
 
-// Helper: render a category table for a list of category keys
+/** Render a category table for a list of category keys. */
 function renderCategoryTable(categories) {
   let out = '| Category | Total |';
-  for (const p of PLATFORMS) {
+  for (const p of CATEGORY_PLATFORMS) {
     out += ` ${PLATFORM_NAMES[p]} |`;
   }
   out += '\n';
   out += '|----------|-------|';
-  for (let i = 0; i < PLATFORMS.length; i++) {
+  for (let i = 0; i < CATEGORY_PLATFORMS.length; i++) {
     out += '---------|';
   }
   out += '\n';
@@ -146,7 +160,7 @@ function renderCategoryTable(categories) {
     out += `| ${CATEGORY_NAMES[cat] ?? cat} | ${totalStr} |`;
 
     // Per-platform coverage with delta
-    for (const p of PLATFORMS) {
+    for (const p of CATEGORY_PLATFORMS) {
       const prCov = pc.coverage[p];
       if (prCov === null || prCov === undefined) {
         out += ` N/A |`;

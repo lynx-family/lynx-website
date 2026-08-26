@@ -6,7 +6,7 @@ This repo contains the website and documentation for Lynx.
 
 ### Prerequisites
 
-- `Node.js >= 18`
+- `Node.js >= 22`
 - `pnpm` (`corepack enable` is recommended)
 
 Install dependencies:
@@ -37,6 +37,11 @@ To preview the production build locally:
 pnpm run preview
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for pull request guidelines,
+downstream compatibility notes, and the release cherry-pick process.
+
 ## Downstream Consumers
 
 This repository is the OSS source for shared Lynx documentation, site runtime,
@@ -50,7 +55,7 @@ runtime source, themes, preparation scripts, or example-package layouts can
 affect downstream consumers. Contributors changing this boundary must
 coordinate downstream validation after the updated OSS revision is pinned.
 
-The in-house repository synchronizes OSS changes daily at 10:00 UTC+8. For
+The in-house repository synchronizes OSS changes daily at 09:30 UTC+8. For
 coordinated changes, especially those that must land internally first, land the
 downstream counterpart before the OSS change can be synchronized, or time the
 OSS merge around that window.

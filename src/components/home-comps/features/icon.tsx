@@ -40,7 +40,7 @@ const IconOctaneLynx = () => {
 const IconMisoLynx = () => {
   return (
     <img
-      src={withBase('/assets/home/miso-lynx-logo.png')}
+      src={withBase('/assets/home/miso-mark-gradient.svg')}
       alt=""
       className={styles['miso-icon']}
     />

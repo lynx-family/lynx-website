@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'packages/lynx-compat-data/**'
+      - '.github/workflows/compat-data-stats.yml'
 
 jobs:
   generate-stats:
@@ -30,15 +31,30 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Get Base Branch Stats
+      - name: Generate Base Stats
         run: |
-          git show origin/${{ github.event.pull_request.base.ref }}:packages/lynx-compat-data/api-stats.json > /tmp/base-stats.json || echo '{}' > /tmp/base-stats.json
+          git worktree add --detach /tmp/compat-data-base ${{ github.event.pull_request.base.sha }}
+          ln -s "${{ github.workspace }}/node_modules" \
+            /tmp/compat-data-base/node_modules
+          ln -s "${{ github.workspace }}/packages/lynx-compat-data/node_modules" \
+            /tmp/compat-data-base/packages/lynx-compat-data/node_modules
+          cd /tmp/compat-data-base/packages/lynx-compat-data
+          node --loader=ts-node/esm --no-warnings=ExperimentalWarning \
+            scripts/generate-css-from-defines.ts
+          cd "${{ github.workspace }}"
+          pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- \
+            --root /tmp/compat-data-base/packages/lynx-compat-data \
+            --docs-root /tmp/compat-data-base/docs/en \
+            --output /tmp/base-stats.json
 
       - name: Generate PR Stats
-        run: pnpm gen:compat-stats
+        run: |
+          pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- \
+            --docs-root "${{ github.workspace }}/docs/en" \
+            --output /tmp/pr-stats.json
 
       - name: Generate Comparison
-        run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json packages/lynx-compat-data/api-stats.json > /tmp/comment.md
+        run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json /tmp/pr-stats.json > /tmp/comment.md
 
       - name: Save PR Number
         run: echo "${{ github.event.pull_request.number }}" > /tmp/pr-number.txt
@@ -50,4 +66,5 @@ jobs:
           path: |
             /tmp/comment.md
             /tmp/pr-number.txt
+            /tmp/pr-stats.json
           retention-days: 1
