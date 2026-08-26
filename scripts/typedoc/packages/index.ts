@@ -102,6 +102,8 @@ export const PACKAGES: Record<string, PackageConfig> = {
     shared: {
       options: {
         // Disable README merging since this package doesn't have its own README
+        disableSources: true,
+        excludeInternal: true,
         mergeReadme: false,
         readme: 'none',
       },
