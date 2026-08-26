@@ -256,93 +256,33 @@ The `$0` and `__DynamicPartSlotV2` representation shown here reflects `@lynx-js/
 
 One characteristic of ReactLynx is that this compiled representation participates not only in update-time reconciliation, but also in Lynx's dual-thread [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) pipeline.
 
-#### Concepts Used in the Following Pseudocode
-
-The folded block above shows the current Snapshot IR in implementation-level terms. To explain how its data moves through the runtime without depending on those internal names, the following pseudocode uses a few simplified concepts. They are explanatory types, not ReactLynx APIs:
-
-```ts
-// An opaque reference to an element created by Lynx Engine.
-type LynxElement = unknown;
-
-type SnapshotDefinition = {
-  // Creates the stable Lynx element structure.
-  create: (instance: MainThreadInstance) => LynxElement[];
-
-  // Position N updates the dynamic property stored at values[N].
-  update: Array<(instance: MainThreadInstance) => void>;
-
-  // Slot N stores the element index where dynamicChildren[N] is inserted.
-  slots: number[];
-};
-
-type MainThreadInstance = {
-  id: number;
-  definition: SnapshotDefinition;
-  elements: LynxElement[];
-  values: unknown[];
-};
-
-type BackgroundInstance = {
-  id: number;
-  definition: SnapshotDefinition;
-  values: unknown[];
-  dynamicChildren: unknown[];
-};
-
-type PropertyPatch = {
-  instanceId: number;
-  propertyPosition: number;
-  value: unknown;
-};
-```
-
-In the current source, these concepts correspond to `Snapshot`, `SnapshotInstance`, and `BackgroundSnapshotInstance`, respectively. `createSnapshot` registers a `Snapshot` definition; each `SnapshotInstance` owns actual Lynx elements, while its `BackgroundSnapshotInstance` counterpart participates in reconciliation. The real field names, methods, and serialized Patch format are internal and are intentionally simplified here.
-
-The array indexes connect the compiler output to runtime data. For `Greeting`, `values[0]`, `update[0]`, and `propertyPosition: 0` all refer to the dynamic `className`. Separately, `dynamicChildren[0]` and `slots[0]` refer to the dynamic `name` child and its insertion point.
-
-The same `SnapshotDefinition` can be reused by multiple mounted `Greeting` components. Each mounted component has a corresponding pair of instances: the main-thread instance owns its Lynx elements, while the background instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
+The same compiled definition can be reused by multiple `Greeting` instances. Each render creates a corresponding pair of runtime instances: the main-thread instance owns the Lynx elements it creates, while the background-thread instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
 
 #### Initial Render: Create an Instance from the Compiled Definition
 
-The UI elements for the initial render are created directly on the main thread. The runtime first finds the `SnapshotDefinition` from the VNode type, then creates a `MainThreadInstance` for this `Greeting`. The instance owns the Lynx elements returned by `definition.create()`. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
+The UI elements for the initial render are created directly on the main thread. The runtime first finds the compiled definition from the VNode type, then creates a main-thread instance for this `Greeting`. The instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
 
 The following pseudocode illustrates this process:
 
-```ts
-function createMainThreadInstance(
-  definition: SnapshotDefinition,
-  initialValues: unknown[],
-  dynamicChildren: unknown[],
-): MainThreadInstance {
-  const instance: MainThreadInstance = {
-    id: allocateInstanceId(),
-    definition,
-    elements: [],
-    values: initialValues,
-  };
+```js
+function renderFirstScreen(vnode) {
+  const definition = getCompiledDefinition(vnode.type);
+  const instance = createMainThreadInstance(vnode.type);
 
   instance.elements = definition.create(instance);
-
-  // Apply every initial dynamic property to the newly created elements.
-  for (let position = 0; position < initialValues.length; position++) {
-    definition.update[position](instance);
-  }
-
-  // Insert every dynamic child at the element selected by its slot.
-  for (let slot = 0; slot < dynamicChildren.length; slot++) {
-    const elementIndex = definition.slots[slot];
-    insertDynamicChild(instance.elements[elementIndex], dynamicChildren[slot]);
-  }
+  instance.values = vnode.props.values;
+  definition.update[0](instance); // Write values[0] to className
+  insertDynamicChild(instance, 0, vnode.props.$0);
 
   return instance;
 }
 ```
 
-For `Greeting`, `definition.create()` creates the `view`, `text`, fixed text, and insertion-point wrapper. The only property updater writes `initialValues[0]`, the computed `className`, to the root `view`. The only child slot places `dynamicChildren[0]`, the `name`, at that insertion point inside `text`. This still creates the complete Lynx element tree. The difference is that the compiled creator expands the stable hierarchy directly instead of sending every host VNode through reconciliation level by level.
+In this example, `definition.create()` creates the `view`, `text`, and fixed text; `definition.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `definition.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
 
 From another perspective, this can be understood as precomputing part of the render, analogous to [Next.js Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering). The artifacts are different: Next.js produces a static HTML shell and a serialized React Server Component payload, while ReactLynx further lowers the stable host structure into element-creation operations understood directly by the Lynx platform. Dynamic values and subtrees are still supplied when the page starts.
 
-In parallel, initial background-thread reconciliation creates the corresponding `BackgroundInstance` and logical instance tree from the same dynamic values and children. During first-screen synchronization, hydration maps each background instance to the main-thread instance already created for the first screen. After that mapping, both sides use the same `instanceId`, so later Patches can locate the correct main-thread instance without comparing the two trees again.
+The initial background-thread reconciliation also creates a logical instance tree that corresponds to the main-thread instance tree. During first-screen synchronization, hydration establishes the mapping between instances on the two threads, allowing subsequent updates to locate the main-thread instance created for the first screen by `instanceId`.
 
 #### Updates: Process Only Changes to Dynamic Positions
 
@@ -350,39 +290,36 @@ After the mapping is established, the background thread compares old and new dyn
 
 The following pseudocode continues with `Greeting`. `highlighted` corresponds to dynamic position `0`, so changing it produces a property update. `name` is in a dynamic child slot and continues to be reconciled by React:
 
-```ts
+```js
 // Background thread: compare dynamic properties and reconcile dynamic children
-function updateInBackground(
-  instance: BackgroundInstance,
-  nextValues: unknown[],
-  nextDynamicChildren: unknown[],
-) {
-  for (let position = 0; position < nextValues.length; position++) {
-    if (!isEqual(instance.values[position], nextValues[position])) {
-      emitPropertyPatch({
-        instanceId: instance.id,
-        propertyPosition: position,
-        value: nextValues[position],
-      });
-    }
+function reconcileGreeting(previous, next, instanceId) {
+  if (!isEqual(previous.values[0], next.values[0])) {
+    emitAttributePatch({
+      instanceId,
+      dynamicPartIndex: 0,
+      value: next.values[0],
+    });
   }
 
-  instance.values = nextValues;
-  reconcileDynamicChildren(instance, nextDynamicChildren);
-  instance.dynamicChildren = nextDynamicChildren;
+  // $0 remains a React child; reconciliation produces tree operations
+  // such as insertions and removals.
+  reconcileChildren(previous.$0, next.$0, {
+    parentInstanceId: instanceId,
+    slotIndex: 0,
+  });
 }
 
 // Main thread: apply a property update using the instance and dynamic position
-function applyPropertyPatch(patch: PropertyPatch) {
-  const instance = findMainThreadInstance(patch.instanceId);
-  const position = patch.propertyPosition;
+function applyAttributePatch(patch) {
+  const instance = findCompiledInstance(patch.instanceId);
+  const index = patch.dynamicPartIndex;
 
-  instance.values[position] = patch.value;
-  instance.definition.update[position](instance);
+  instance.values[index] = patch.value;
+  instance.definition.update[index](instance);
 }
 ```
 
-For the property path, `updateInBackground()` emits only the instance ID, dynamic property position, and new value. `applyPropertyPatch()` uses that position to select the updater generated by the compiler. Dynamic children do not pass through these property updaters; `reconcileDynamicChildren()` produces insertion, removal, and other tree operations instead. The current implementation serializes both kinds of operations into a compact Patch rather than sending the explanatory objects shown here.
+For the property path, `reconcileGreeting()` only describes which dynamic position changed on which instance. `applyAttributePatch()` then calls the targeted update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The current implementation encodes these operations in a serialized Patch.
 
 ## Back to Application Code
 
