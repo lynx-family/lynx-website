@@ -31,8 +31,33 @@ if (!sha) {
 
 const targetPath = resolve(process.cwd(), TARGET_DIR);
 
+// Git exports GIT_DIR, GIT_INDEX_FILE and friends to the processes it runs --
+// hooks especially, and from a worktree they are absolute paths to the *outer*
+// repository. Those variables outrank `cwd`, so a `git checkout` aimed at
+// .lynx-ui-source with them set silently retargets lynx-website itself: the
+// fetch writes the outer FETCH_HEAD and the checkout detaches the outer HEAD
+// onto a lynx-ui commit, aborting the commit that triggered it. Strip them so
+// every command below is resolved from `cwd`, which is what this script means.
+const GIT_ENV_VARS = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_PREFIX',
+  'GIT_COMMON_DIR',
+  'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+  'GIT_CEILING_DIRECTORIES',
+  'GIT_NAMESPACE',
+];
+
+const nestedEnv = () => {
+  const env = { ...process.env };
+  for (const key of GIT_ENV_VARS) delete env[key];
+  return env;
+};
+
 const run = (command, options = {}) =>
-  execSync(command, { stdio: 'inherit', ...options });
+  execSync(command, { stdio: 'inherit', env: nestedEnv(), ...options });
 
 // git commands run inside a directory that is not itself a repository walk up
 // to the enclosing one. Since this script runs from a lynx-website checkout,
@@ -46,6 +71,7 @@ const isOwnRepo = () => {
       cwd: targetPath,
       encoding: 'utf8',
       stdio: 'pipe',
+      env: nestedEnv(),
     }).trim();
     return resolve(top) === targetPath;
   } catch {
@@ -60,6 +86,7 @@ const readHead = () => {
       cwd: targetPath,
       encoding: 'utf8',
       stdio: 'pipe',
+      env: nestedEnv(),
     }).trim();
   } catch {
     return null;
