@@ -63,8 +63,7 @@ DevTool 提供了一些调试功能开关，
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {10-19}
-#import <Lynx/DevToolSettings.h>
+```objective-c title=AppDelegate.m {9-16}
 #import <Lynx/LynxEnv.h>
 #import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceDevToolProtocol.h>
@@ -73,8 +72,6 @@ DevTool 提供了一些调试功能开关，
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
-  // 设置 DevTool 启动配置的默认值
-  [[DevToolSettings sharedInstance].bootstrap applyDevelopmentDefaultsIfUnset];
   LynxEnv *lynxEnv = [LynxEnv sharedInstance];
   // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
   [LynxService(LynxServiceDevToolProtocol) enableAllSessions];
@@ -90,22 +87,19 @@ DevTool 提供了一些调试功能开关，
 <Tab label="Swift">
 
 ```objective-c title="YourTarget-Bridging-Header.h"
-#import <Lynx/DevToolSettings.h>
 #import <Lynx/LynxEnv.h>
 #import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceDevToolProtocol.h>
 ```
 
-```swift title=AppDelegate.swift {5-14}
+```swift title=AppDelegate.swift {5-12}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
-    // 设置 DevTool 启动配置的默认值
-    DevToolSettings.sharedInstance().bootstrap.applyDevelopmentDefaultsIfUnset()
     let lynxEnv = LynxEnv.sharedInstance()
     // 允许 DevTool 调试所有 Lynx 页面（连接 DevTool 桌面应用必需）
-    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.enableAllSessions()
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self) as? LynxServiceDevToolProtocol)?.enableAllSessions()
     // 打开 Lynx DevTool 开关
     lynxEnv.devtoolEnabled = true
     // 打开 Lynx LogBox 开关
@@ -162,14 +156,10 @@ dependencies {
 
 ### 注册 DevTool Service
 
-DevTool Service 提供了一些启动配置值，以控制默认行为，可以根据实际需求进行配置。
-
-在下一章节中，将详细介绍这些启动配置值。
-
 <Tabs groupId='register-devtool-service-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-13}
+```java title=YourApplication.java {3-7}
 private void initLynxService() {
   // ...
   // register DevTool service
@@ -177,9 +167,6 @@ private void initLynxService() {
 
   // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
   LynxDevToolService.getINSTANCE().enableAllSessions();
-
-  // 设置 DevTool 启动配置的默认值
-  DevToolSettings.inst().bootstrap().applyDevelopmentDefaultsIfUnset();
 }
 
 ```
@@ -187,7 +174,7 @@ private void initLynxService() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-13}
+```kotlin title=YourApplication.kt {3-7}
 private fun initLynxService() {
   // ...
   // register DevTool service
@@ -195,9 +182,6 @@ private fun initLynxService() {
 
   // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
   LynxDevToolService.INSTANCE.enableAllSessions()
-
-  // 设置 DevTool 启动配置的默认值
-  DevToolSettings.inst().bootstrap().applyDevelopmentDefaultsIfUnset()
 }
 ```
 
