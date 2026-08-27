@@ -256,93 +256,33 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
 
 ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
 
-#### 下文伪代码使用的概念
-
-上面的折叠区使用接近实现的方式展示了当前 Snapshot IR。为了在不依赖内部名称的前提下说明数据如何进入运行时，下文伪代码使用几个经过简化的概念。它们只用于解释机制，并不是 ReactLynx API：
-
-```ts
-// Lynx Engine 创建的元件的不透明引用。
-type LynxElement = unknown;
-
-type SnapshotDefinition = {
-  // 创建稳定的 Lynx 元件结构。
-  create: (instance: MainThreadInstance) => LynxElement[];
-
-  // 第 N 个位置负责更新 values[N] 保存的动态属性。
-  update: Array<(instance: MainThreadInstance) => void>;
-
-  // 第 N 个插槽记录 dynamicChildren[N] 应插入的元件索引。
-  slots: number[];
-};
-
-type MainThreadInstance = {
-  id: number;
-  definition: SnapshotDefinition;
-  elements: LynxElement[];
-  values: unknown[];
-};
-
-type BackgroundInstance = {
-  id: number;
-  definition: SnapshotDefinition;
-  values: unknown[];
-  dynamicChildren: unknown[];
-};
-
-type PropertyPatch = {
-  instanceId: number;
-  propertyPosition: number;
-  value: unknown;
-};
-```
-
-在当前源码中，这三个概念分别对应 `Snapshot`、`SnapshotInstance` 和 `BackgroundSnapshotInstance`。`createSnapshot` 负责注册 `Snapshot` 定义；每个 `SnapshotInstance` 持有实际的 Lynx 元件，对应的 `BackgroundSnapshotInstance` 则参与协调。真实字段名、方法和序列化 Patch 格式都属于内部实现，这里有意做了简化。
-
-数组索引把编译产物和运行时数据连接起来。对于 `Greeting`，`values[0]`、`update[0]` 和 `propertyPosition: 0` 都指向动态 `className`。与它分开的是，`dynamicChildren[0]` 和 `slots[0]` 分别表示动态 `name` 子节点及其插入位置。
-
-同一份 `SnapshotDefinition` 可以被多个已挂载的 `Greeting` 组件复用。每个已挂载组件都有一组彼此对应的实例：主线程实例持有它的 Lynx 元件，后台实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
+同一份编译定义可以被多个 `Greeting` 实例复用。每次实际渲染都会产生一组彼此对应的运行时实例：主线程实例持有创建出的 Lynx 元件，后台实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
 
 #### 首屏：根据编译定义创建实例
 
-首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到 `SnapshotDefinition`，再为这次 `Greeting` 创建 `MainThreadInstance`。`definition.create()` 返回的 Lynx 元件由这个实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
+首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到编译定义，再为这次 `Greeting` 创建主线程实例。静态创建函数返回的 Lynx 元件由这个实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
 
 下面是这一过程的概念伪代码：
 
-```ts
-function createMainThreadInstance(
-  definition: SnapshotDefinition,
-  initialValues: unknown[],
-  dynamicChildren: unknown[],
-): MainThreadInstance {
-  const instance: MainThreadInstance = {
-    id: allocateInstanceId(),
-    definition,
-    elements: [],
-    values: initialValues,
-  };
+```js
+function renderFirstScreen(vnode) {
+  const definition = getCompiledDefinition(vnode.type);
+  const instance = createMainThreadInstance(vnode.type);
 
   instance.elements = definition.create(instance);
-
-  // 将每个初始动态属性应用到新创建的元件。
-  for (let position = 0; position < initialValues.length; position++) {
-    definition.update[position](instance);
-  }
-
-  // 根据插槽选出的元件位置，插入每个动态子节点。
-  for (let slot = 0; slot < dynamicChildren.length; slot++) {
-    const elementIndex = definition.slots[slot];
-    insertDynamicChild(instance.elements[elementIndex], dynamicChildren[slot]);
-  }
+  instance.values = vnode.props.values;
+  definition.update[0](instance); // 将 values[0] 写入 className
+  insertDynamicChild(instance, 0, vnode.props.$0);
 
   return instance;
 }
 ```
 
-对于 `Greeting`，`definition.create()` 创建 `view`、`text`、固定文本和表示插入位置的 wrapper。唯一的属性更新函数将 `initialValues[0]`，也就是计算出的 `className`，写入根 `view`；唯一的子节点插槽则把 `dynamicChildren[0]`，也就是 `name`，放进 `text` 内的这个插入位置。这里仍会创建完整的 Lynx 元件树，差别在于编译生成的创建函数直接展开稳定层级，不再让每个宿主 VNode 逐层参与协调。
+对于当前例子，`definition.create()` 创建 `view`、`text` 和固定文本；`definition.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树，差别在于静态层级由 `definition.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
 
 换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
 
-与此同时，后台首轮协调会根据同一组动态值和子节点创建对应的 `BackgroundInstance` 和逻辑实例树。首屏同步通过 hydration 将每个后台实例映射到已经为首屏创建的主线程实例。映射建立后，两侧使用相同的 `instanceId`，后续 Patch 因此可以直接定位正确的主线程实例，不需要再次比较两棵树。
+后台首轮协调也会生成与主线程实例树对应的逻辑实例树。首屏同步通过 hydration 建立两侧实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程实例。
 
 #### 更新：只处理动态位置的变化
 
@@ -350,39 +290,35 @@ function createMainThreadInstance(
 
 下面的伪代码继续使用 `Greeting`。`highlighted` 对应动态位置 `0`，因此它变化时会生成一条属性更新；`name` 位于动态子节点插槽中，继续由 React 协调：
 
-```ts
+```js
 // 后台线程：比较动态属性，并继续协调动态子节点
-function updateInBackground(
-  instance: BackgroundInstance,
-  nextValues: unknown[],
-  nextDynamicChildren: unknown[],
-) {
-  for (let position = 0; position < nextValues.length; position++) {
-    if (!isEqual(instance.values[position], nextValues[position])) {
-      emitPropertyPatch({
-        instanceId: instance.id,
-        propertyPosition: position,
-        value: nextValues[position],
-      });
-    }
+function reconcileGreeting(previous, next, instanceId) {
+  if (!isEqual(previous.values[0], next.values[0])) {
+    emitAttributePatch({
+      instanceId,
+      dynamicPartIndex: 0,
+      value: next.values[0],
+    });
   }
 
-  instance.values = nextValues;
-  reconcileDynamicChildren(instance, nextDynamicChildren);
-  instance.dynamicChildren = nextDynamicChildren;
+  // $0 仍作为 React 子节点参与协调，结果会变成插入、移除等树操作。
+  reconcileChildren(previous.$0, next.$0, {
+    parentInstanceId: instanceId,
+    slotIndex: 0,
+  });
 }
 
 // 主线程根据实例和动态位置应用属性更新
-function applyPropertyPatch(patch: PropertyPatch) {
-  const instance = findMainThreadInstance(patch.instanceId);
-  const position = patch.propertyPosition;
+function applyAttributePatch(patch) {
+  const instance = findCompiledInstance(patch.instanceId);
+  const index = patch.dynamicPartIndex;
 
-  instance.values[position] = patch.value;
-  instance.definition.update[position](instance);
+  instance.values[index] = patch.value;
+  instance.definition.update[index](instance);
 }
 ```
 
-对于属性路径，`updateInBackground()` 只发出实例 ID、动态属性位置和新值；`applyPropertyPatch()` 再使用该位置选择编译器生成的更新函数。动态子节点不经过这组属性更新函数，`reconcileDynamicChildren()` 会为它们生成插入、移除等树操作。当前实现会把两类操作都序列化进紧凑的 Patch，而不是发送这里用于解释的对象结构。
+对于属性路径，`reconcileGreeting()` 只描述“哪个实例的哪个动态位置发生了变化”，`applyAttributePatch()` 再调用编译器生成的定向更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。当前实现会将这些操作编码进序列化的 Patch。
 
 ## 回到应用代码
 
