@@ -22,7 +22,9 @@ In cross-platform frameworks like ReactLynx, however, we want the main thread to
 
 ## Background Rendering
 
-Background rendering, more formally known as "[background-driven rendering](/guide/spec.html#background-driven-rendering)", makes ReactLynx's update path a cross-thread asynchronous commit: React completes render and diff (the difference between two consecutive renders) on the background thread, encoding the results into a Patch. Once the main thread receives the Patch, it parses it and executes the corresponding Element operations.
+Background rendering, more formally known as "[background-driven rendering](/guide/spec.html#background-driven-rendering)", makes ReactLynx's update path a cross-thread asynchronous commit.
+
+ReactLynx's background runtime builds on [Preact](https://preactjs.com/), which provides the component model, Hooks, and the render and diff pipeline. The background thread, however, has no DOM and cannot access native views on the main thread. ReactLynx therefore uses background Snapshot instances as Preact's host nodes: element creation, attribute changes, and structural updates produced during render and diff are recorded as a Patch and sent to the main thread during commit.
 
 <img
   src={backgroundRenderingPatchImg}
@@ -158,17 +160,15 @@ During steady-state execution, this Patch mechanism updates the UI rapidly. But 
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimizes precisely this startup wait time. It splits out a fast path for the first frame that the main thread can execute immediately: the main thread runs a pruned first-screen bundle to create the initial native views right away, while the background thread concurrently boots full React and continues handling subsequent business logic. Once the background thread's initial render results are ready, Hydration claims the existing views and reconnects subsequent updates back to the background-driven Patch -> Element PAPI pipeline.
+ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimizes precisely this startup wait time. It splits out a fast path for the first frame that the main thread can execute immediately: the main thread runs a pruned first-screen bundle to create the initial native views right away, while the background thread concurrently boots the full React runtime and continues handling subsequent business logic. Once the initial background render is ready, ReactLynx performs a cross-thread handover to associate the background result with the main thread's existing views. Subsequent updates then return to the background-driven Patch -> Element PAPI pipeline.
 
 <img
   src={instantFirstFrameStartupImg}
-  alt="With instant first-frame rendering, the main thread draws first and later updates arrive after hydration"
+  alt="With instant first-frame rendering, the main thread draws first and later updates arrive after handover"
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-Here, Hydration establishes a mapping between the background thread's render results and the main thread's existing Elements.
-
-This is similar in spirit to [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) in React on the Web: both take over existing views rather than recreating the initial UI from scratch.
+This is similar in spirit to [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) in React on the Web: both reuse an existing initial UI rather than creating it again. ReactLynx handover, however, happens only after both the main-thread and background renders have completed.
 
 ### Dual-Thread Build Artifacts and Code Pruning
 
@@ -200,7 +200,7 @@ export default function App({ initialCount }) {
   return _jsx(__card, {
     values: [
       // Preserve the tap binding slot.
-      // The actual handler executes after background hydration takes over.
+      // The actual handler runs after handover to the background runtime.
       1,
     ],
 
@@ -213,7 +213,9 @@ export default function App({ initialCount }) {
 }
 ```
 
-This main-thread artifact retains only the execution path required for the first frame, without including a full React Reconciler or Scheduler. The ordering of dynamic slots must align across both threads, as Hydration relies on this ordering to establish node mappings between the two threads.
+The main-thread artifact serves only the first frame, which allows ReactLynx to prune user code for that path. During the two builds, each `__MAIN_THREAD__` conditional is folded to the branch for that thread, while `useEffect` callbacks and functions marked with `'background only'` are excluded from the main-thread path. What remains is primarily the initial values and view structure needed for the first frame.
+
+The main-thread runtime is also smaller. It omits the reconciliation and scheduling paths needed for continuous background updates. Instead, a dedicated JSX runtime and a synchronous traversal adapted from [`preact-render-to-string`](https://github.com/preactjs/preact-render-to-string) evaluate the first frame, while Hooks retain only the behavior needed for that pass.
 
 In contrast, the background artifact does not participate in main-thread first-frame tree construction. It preserves the complete React logic needed for subsequent execution:
 
@@ -257,14 +259,16 @@ export default function App({ initialCount }) {
 }
 ```
 
-### Hydration: Taking Over Existing Views
+### Handing Over Existing Views
 
-Now that the main thread has rendered the initial frame and background React has completed its initial render, background React needs to claim these existing views, so that Patches from subsequent `setState` calls can target the same native nodes once sent to the main thread.
+Now that the main thread has rendered the initial frame and background React has completed its initial render, ReactLynx compares the first-screen Snapshot tree sent by the main thread with the background Snapshot tree. Matched background instances reuse the main-thread IDs, while differences in dynamic values and subtrees are included in the initial correction Patch. Subsequent `setState` Patches can then target the same native nodes.
 
-Looking back at the earlier `App` example, `view.card` and the `count` text have identical structures across both threads and can be bound directly. The `$1` slot, however, rendered `main` on the main thread and `background` on the background thread, so it cannot be directly bound and is left to a diffing Patch:
+This differs from SSR hydration: Preact reuses existing host nodes while building the initial VNode tree. Here, both Snapshot trees already exist; handover instead rebinds the already rendered background tree to the main-thread IDs. Moving this work into the initial background render would make the background thread wait for the main-thread result, reducing IFR's parallelism.
+
+Looking at the earlier `App` example, the main-thread first-screen tree uses negative IDs, whereas Snapshot instances created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two Snapshot trees using compile-time dynamic slot positions and child node structures:
 
 ```plaintext
-Before Hydration:
+Before Handover:
 
   Main thread existing native views      Background initial render result
   -1 view.card                           1 view.card
@@ -272,22 +276,22 @@ Before Hydration:
     -2 text count ($0)                     2 text count ($0)
     -3 text "main" ($1)                    3 text "background" ($1)
 
-Hydration Result:
+Handover Result:
 
   Directly bindable:
     view.card        1 -> -1
     text count ($0)  2 -> -2
 
   Not directly bindable:
-    $1 branch        main != background, deferred to diff Patch
+    $1 branch        main != background, handled by a diff Patch
 ```
 
-Once binding completes, the background thread switches to using the existing main-thread IDs for shared nodes. When `count` subsequently updates from `0` to `1`, the text Patch generated by the background thread correctly targets the native text node corresponding to `-2`.
+Once handover completes, matched background Snapshot instances switch to using the existing main-thread IDs (`1 -> -1`, `2 -> -2`). When `count` subsequently updates from `0` to `1`, the Patch generated by the background thread correctly targets the native text node corresponding to `-2`.
 
-Dynamic values and events also reuse this mapping. If there are differences in text or attributes, the background serializes and sends a standard attribute Patch. If a user triggers a tap before takeover completes, the runtime corrects the event target using ID mappings after hydration and delegates execution to the background `handleTap`.
+Dynamic values and events also reuse this mapping. If text or attributes differ, the background thread sends a standard attribute Patch. Events that reach the background thread before handover completes are buffered, then dispatched to the corresponding `handleTap` through the ID mapping.
 
 ## Summary
 
-In summary, ReactLynx's startup and steady-state execution represent two phases of the same commit model. At startup, the main thread executes a pruned first-screen path to draw the first frame immediately, and Hydration subsequently takes over these existing views. During steady-state execution, the background thread calculates updates, sends Patches across the thread boundary, and the main thread updates the Lynx Element tree via Element PAPI.
+In summary, ReactLynx's startup and steady-state execution represent two phases of the same commit model. At startup, the main thread draws the first frame along the pruned first-screen path, and ReactLynx subsequently hands over the existing views to the background runtime. During steady-state execution, the background thread calculates updates, sends Patches across the thread boundary, and the main thread updates the Lynx Element tree via Element PAPI.
 
 When authoring initial-screen components, the more closely aligned the node trees are across both threads—and the better the first screen is expressed as initial data and directly creatable views—the shorter the main-thread execution path becomes. Network requests, side effects, actual event handling, and subsequent state updates remain safely delegated to background React. The closer initial-screen code adheres to this boundary, the greater and more reliable the performance benefits of Instant First-Frame Rendering will be.
