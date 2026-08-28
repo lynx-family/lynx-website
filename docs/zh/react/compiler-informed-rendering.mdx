@@ -170,17 +170,17 @@ export function Greeting({ name, highlighted }) {
 在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器可以提前提取这些稳定信息。经过优化后，调用部分在概念上类似：
 
 ```js
-const __compiled_greeting = '__compiled_greeting';
+const GreetingTemplate = '__compiled_greeting';
 
 export function Greeting({ name, highlighted }) {
-  return jsx(__compiled_greeting, {
+  return jsx(GreetingTemplate, {
     values: [highlighted ? 'card active' : 'card'], // 动态属性位置 0
     $0: name, // 动态子节点插槽 0
   });
 }
 ```
 
-这里的名称只是帮助理解的概念表示，并不是可以依赖的实际编译产物。关键区别是：常规产物在运行时展开完整的宿主 VNode 层级；优化后的产物引用一份可复用的编译定义，并只传入这次渲染所需的动态数据。
+这里的名称只是帮助理解的概念表示，并不是可以依赖的实际编译产物。关键区别是：常规产物在运行时展开完整的宿主 VNode 层级；优化后的产物引用一份可复用的模板，并只传入这次渲染所需的动态数据。
 
 编译器会从 JSX 中区分出：
 
@@ -188,7 +188,7 @@ export function Greeting({ name, highlighted }) {
 - **动态属性**：由 `highlighted` 决定的 `className`。
 - **动态子节点**：由 `name` 生成的文本。
 
-因此，编译产物可以提前记录静态创建逻辑、定向更新函数和动态子节点插槽。运行时复用这份定义，只为每个组件实例提供自己的动态值和子节点。
+因此，编译产物可以提前记录静态创建逻辑、定向更新函数和动态子节点插槽。运行时复用这份模板，只为每个模板实例提供自己的动态值和子节点。
 
 这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
 
@@ -196,9 +196,9 @@ export function Greeting({ name, highlighted }) {
 
 ### 当前的中间表示
 
-ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）保存上述编译信息。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
+ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）表示这些模板。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
 
-IR 属于内部实现，未来可能继续演进，或替换为 Template 等其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
+IR 属于内部实现，未来可能继续演进，或替换为其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
 
 当前 IR 可以归纳为以下四个核心部分：
 
@@ -207,9 +207,9 @@ IR 属于内部实现，未来可能继续演进，或替换为 Template 等其�
 | 静态创建函数   | 直接创建确定的 Lynx 元件，并建立父子关系。                       |
 | 动态更新函数   | 按索引更新某个属性、事件或展开属性，不需要重新遍历整段静态结构。 |
 | 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树的插入位置。       |
-| 表示标识       | 标识可复用的编译定义，让多个组件实例共享同一份静态信息。         |
+| 表示标识       | 标识可复用的模板，让多个模板实例共享同一份静态信息。             |
 
-下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表达 `Greeting`。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
+下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表示 `Greeting` 模板。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
 
 :::details 查看当前 IR 的简化定义
 
@@ -256,37 +256,37 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
 
 ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
 
-同一份编译定义可以被多个 `Greeting` 实例复用。每次实际渲染都会产生一组彼此对应的运行时实例：主线程实例持有创建出的 Lynx 元件，后台实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
+同一份模板可以被多个已挂载的 `Greeting` 组件复用。每个已挂载的 `Greeting` 都有一组彼此对应的模板实例：主线程模板实例持有创建出的 Lynx 元件，后台模板实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
 
-#### 首屏：根据编译定义创建实例
+#### 首屏：创建模板实例
 
-首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到编译定义，再为这次 `Greeting` 创建主线程实例。静态创建函数返回的 Lynx 元件由这个实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
+首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到模板，再为这次 `Greeting` 创建主线程模板实例。静态创建函数返回的 Lynx 元件由这个模板实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
 
 下面是这一过程的概念伪代码：
 
 ```js
 function renderFirstScreen(vnode) {
-  const definition = getCompiledDefinition(vnode.type);
-  const instance = createMainThreadInstance(vnode.type);
+  const template = getTemplate(vnode.type);
+  const instance = createMainThreadTemplateInstance(vnode.type);
 
-  instance.elements = definition.create(instance);
+  instance.elements = template.create(instance);
   instance.values = vnode.props.values;
-  definition.update[0](instance); // 将 values[0] 写入 className
+  template.update[0](instance); // 将 values[0] 写入 className
   insertDynamicChild(instance, 0, vnode.props.$0);
 
   return instance;
 }
 ```
 
-对于当前例子，`definition.create()` 创建 `view`、`text` 和固定文本；`definition.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树，差别在于静态层级由 `definition.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
+对于当前例子，`template.create()` 创建 `view`、`text` 和固定文本；`template.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树，差别在于静态层级由 `template.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
 
 换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
 
-后台首轮协调也会生成与主线程实例树对应的逻辑实例树。首屏同步通过 hydration 建立两侧实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程实例。
+后台首轮协调也会生成与主线程模板实例树对应的后台模板实例树。首屏同步通过 hydration 建立两侧模板实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程模板实例。
 
 #### 更新：只处理动态位置的变化
 
-对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到实际实例并应用变化。
+对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到对应的模板实例并应用变化。
 
 下面的伪代码继续使用 `Greeting`。`highlighted` 对应动态位置 `0`，因此它变化时会生成一条属性更新；`name` 位于动态子节点插槽中，继续由 React 协调：
 
@@ -308,17 +308,17 @@ function reconcileGreeting(previous, next, instanceId) {
   });
 }
 
-// 主线程根据实例和动态位置应用属性更新
+// 主线程根据模板实例和动态位置应用属性更新
 function applyAttributePatch(patch) {
-  const instance = findCompiledInstance(patch.instanceId);
+  const instance = findMainThreadTemplateInstance(patch.instanceId);
   const index = patch.dynamicPartIndex;
 
   instance.values[index] = patch.value;
-  instance.definition.update[index](instance);
+  instance.template.update[index](instance);
 }
 ```
 
-对于属性路径，`reconcileGreeting()` 只描述“哪个实例的哪个动态位置发生了变化”，`applyAttributePatch()` 再调用编译器生成的定向更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。当前实现会将这些操作编码进序列化的 Patch。
+对于属性路径，`reconcileGreeting()` 只描述“哪个模板实例的哪个动态位置发生了变化”，`applyAttributePatch()` 再调用编译器生成的定向更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。当前实现会将这些操作编码进序列化的 Patch。
 
 ## 回到应用代码
 

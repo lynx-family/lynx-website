@@ -170,17 +170,17 @@ On every render, `jsx()` creates virtual nodes (VNodes) that describe the UI str
 In this example, only `className` and `name` can change. The types, hierarchy, and parent-child relationship of `view → text` remain fixed. The compiler can extract this stable information ahead of time. After optimization, the call site is conceptually similar to the following code:
 
 ```js
-const __compiled_greeting = '__compiled_greeting';
+const GreetingTemplate = '__compiled_greeting';
 
 export function Greeting({ name, highlighted }) {
-  return jsx(__compiled_greeting, {
+  return jsx(GreetingTemplate, {
     values: [highlighted ? 'card active' : 'card'], // Dynamic property position 0
     $0: name, // Dynamic child slot 0
   });
 }
 ```
 
-These names are conceptual and exist only to explain the mechanism; they are not actual compiler output that applications can rely on. The key difference is that the regular output expands the complete host VNode hierarchy at runtime, whereas the optimized output references a reusable compiled definition and supplies only the dynamic data required for that render.
+These names are conceptual and exist only to explain the mechanism; they are not actual compiler output that applications can rely on. The key difference is that the regular output expands the complete host VNode hierarchy at runtime, whereas the optimized output references a reusable template and supplies only the dynamic data required for that render.
 
 The compiler separates the JSX into:
 
@@ -188,7 +188,7 @@ The compiler separates the JSX into:
 - **Dynamic property**: the `className` determined by `highlighted`.
 - **Dynamic child**: the text generated from `name`.
 
-The compiler can therefore record static creation logic, targeted update functions, and dynamic child slots ahead of time. The runtime reuses this definition and only supplies each component instance's own dynamic values and children.
+The compiler can therefore record static creation logic, targeted update functions, and dynamic child slots ahead of time. The runtime reuses this template and only supplies each template instance's own dynamic values and children.
 
 This approach is similar to [Vue's compiler-informed virtual DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom), [Owl's BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom), and [Million.js](https://github.com/aidenybai/million): each uses information known at build time to reduce the amount of work required at runtime.
 
@@ -196,9 +196,9 @@ From a compiler perspective, it can also be understood as a form of [partial eva
 
 ### The Current Intermediate Representation
 
-ReactLynx currently stores this compiler information in an Intermediate Representation (IR) called a **Snapshot**. Snapshot is only the IR used by the current implementation, not the name of the rendering mechanism. It is also unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` method on React class components.
+ReactLynx currently represents these templates with an Intermediate Representation (IR) called a **Snapshot**. Snapshot is only the IR used by the current implementation, not the name of the rendering mechanism. It is also unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` method on React class components.
 
-The IR is an internal implementation detail. It may continue to evolve or be replaced by other representations such as a Template. Application code does not need to create or manipulate it and should not depend on generated names or data structures.
+The IR is an internal implementation detail. It may continue to evolve or be replaced by another representation. Application code does not need to create or manipulate it and should not depend on generated names or data structures.
 
 The current IR has four core parts:
 
@@ -207,9 +207,9 @@ The current IR has four core parts:
 | Static creator      | Directly creates predictable Lynx elements and establishes their parent-child relationships.             |
 | Dynamic updaters    | Updates a property, event, or spread property by index without traversing the complete static structure. |
 | Dynamic child slots | Marks where dynamic subtrees such as components, conditional branches, text expressions, and lists go.   |
-| Representation ID   | Identifies a reusable compiled definition so multiple component instances can share its static data.     |
+| Representation ID   | Identifies a reusable template so multiple template instances can share its static data.                 |
 
-The simplified example below shows how the current IR expresses `Greeting` through [Element PAPI](/api/engine/element-api) creation and update operations. It preserves the static creator, dynamic updater, and slot information while omitting compiler metadata for CSS, entry points, and compatibility.
+The simplified example below shows how the current IR represents the `Greeting` template through [Element PAPI](/api/engine/element-api) creation and update operations. It preserves the static creator, dynamic updater, and slot information while omitting compiler metadata for CSS, entry points, and compatibility.
 
 :::details View a simplified definition of the current IR
 
@@ -256,37 +256,37 @@ The `$0` and `__DynamicPartSlotV2` representation shown here reflects `@lynx-js/
 
 One characteristic of ReactLynx is that this compiled representation participates not only in update-time reconciliation, but also in Lynx's dual-thread [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) pipeline.
 
-The same compiled definition can be reused by multiple `Greeting` instances. Each render creates a corresponding pair of runtime instances: the main-thread instance owns the Lynx elements it creates, while the background-thread instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
+The same template can be reused by multiple mounted `Greeting` components. Each mounted `Greeting` has a corresponding pair of template instances: the main-thread template instance owns the Lynx elements it creates, while the background template instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
 
-#### Initial Render: Create an Instance from the Compiled Definition
+#### Initial Render: Create a Template Instance
 
-The UI elements for the initial render are created directly on the main thread. The runtime first finds the compiled definition from the VNode type, then creates a main-thread instance for this `Greeting`. The instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
+The UI elements for the initial render are created directly on the main thread. The runtime first finds the template from the VNode type, then creates a main-thread template instance for this `Greeting`. The template instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
 
 The following pseudocode illustrates this process:
 
 ```js
 function renderFirstScreen(vnode) {
-  const definition = getCompiledDefinition(vnode.type);
-  const instance = createMainThreadInstance(vnode.type);
+  const template = getTemplate(vnode.type);
+  const instance = createMainThreadTemplateInstance(vnode.type);
 
-  instance.elements = definition.create(instance);
+  instance.elements = template.create(instance);
   instance.values = vnode.props.values;
-  definition.update[0](instance); // Write values[0] to className
+  template.update[0](instance); // Write values[0] to className
   insertDynamicChild(instance, 0, vnode.props.$0);
 
   return instance;
 }
 ```
 
-In this example, `definition.create()` creates the `view`, `text`, and fixed text; `definition.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `definition.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
+In this example, `template.create()` creates the `view`, `text`, and fixed text; `template.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `template.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
 
 From another perspective, this can be understood as precomputing part of the render, analogous to [Next.js Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering). The artifacts are different: Next.js produces a static HTML shell and a serialized React Server Component payload, while ReactLynx further lowers the stable host structure into element-creation operations understood directly by the Lynx platform. Dynamic values and subtrees are still supplied when the page starts.
 
-The initial background-thread reconciliation also creates a logical instance tree that corresponds to the main-thread instance tree. During first-screen synchronization, hydration establishes the mapping between instances on the two threads, allowing subsequent updates to locate the main-thread instance created for the first screen by `instanceId`.
+The initial background-thread reconciliation also creates a background template-instance tree that corresponds to the main-thread template-instance tree. During first-screen synchronization, hydration establishes the mapping between template instances on the two threads, allowing subsequent updates to locate the main-thread template instance created for the first screen by `instanceId`.
 
 #### Updates: Process Only Changes to Dynamic Positions
 
-After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding runtime instance and applies the changes.
+After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding template instance and applies the changes.
 
 The following pseudocode continues with `Greeting`. `highlighted` corresponds to dynamic position `0`, so changing it produces a property update. `name` is in a dynamic child slot and continues to be reconciled by React:
 
@@ -309,17 +309,17 @@ function reconcileGreeting(previous, next, instanceId) {
   });
 }
 
-// Main thread: apply a property update using the instance and dynamic position
+// Main thread: apply a property update using the template instance and dynamic position
 function applyAttributePatch(patch) {
-  const instance = findCompiledInstance(patch.instanceId);
+  const instance = findMainThreadTemplateInstance(patch.instanceId);
   const index = patch.dynamicPartIndex;
 
   instance.values[index] = patch.value;
-  instance.definition.update[index](instance);
+  instance.template.update[index](instance);
 }
 ```
 
-For the property path, `reconcileGreeting()` only describes which dynamic position changed on which instance. `applyAttributePatch()` then calls the targeted update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The current implementation encodes these operations in a serialized Patch.
+For the property path, `reconcileGreeting()` only describes which dynamic position changed on which template instance. `applyAttributePatch()` then calls the targeted update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The current implementation encodes these operations in a serialized Patch.
 
 ## Back to Application Code
 
