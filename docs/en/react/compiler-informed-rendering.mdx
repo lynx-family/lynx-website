@@ -17,6 +17,8 @@ Consider a regular component:
 
 ```tsx
 export function Greeting({ name, highlighted }) {
+  // Static: the view/text hierarchy and "Hello, ".
+  // Dynamic: className and name.
   return (
     <view className={highlighted ? 'card active' : 'card'}>
       <text>Hello, {name}</text>
@@ -167,10 +169,29 @@ export function Greeting({ name, highlighted }) {
 
 On every render, `jsx()` creates virtual nodes (VNodes) that describe the UI structure. The ReactLynx reconciler then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as reconciliation.
 
-In this example, only `className` and `name` can change. The types, hierarchy, and parent-child relationship of `view → text` remain fixed. The compiler can extract this stable information ahead of time. After optimization, the call site is conceptually similar to the following code:
+In this example, only `className` and `name` can change. The types, hierarchy, and parent-child relationship of `view → text` remain fixed. The compiler can extract this stable information ahead of time. After optimization, the generated template and call site are conceptually similar to the following code:
 
 ```js
 const GreetingTemplate = '__compiled_greeting';
+
+function GreetingTemplate_create() {
+  const pageId = ReactLynx.__pageId;
+  const view = __CreateView(pageId);
+  const text = __CreateText(pageId);
+  const fixedText = __CreateRawText('Hello, ');
+  const nameSlot = __CreateWrapperElement(pageId);
+
+  __AppendElement(view, text);
+  __AppendElement(text, fixedText);
+  __AppendElement(text, nameSlot);
+
+  return [view, text, fixedText, nameSlot];
+}
+
+function GreetingTemplate_update(instance) {
+  const className = instance.values[0];
+  __SetClasses(instance.elements[0], className || '');
+}
 
 export function Greeting({ name, highlighted }) {
   return jsx(GreetingTemplate, {
@@ -180,7 +201,7 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-These names are conceptual and exist only to explain the mechanism; they are not actual compiler output that applications can rely on. The key difference is that the regular output expands the complete host VNode hierarchy at runtime, whereas the optimized output references a reusable template and supplies only the dynamic data required for that render.
+These names and function shapes are conceptual and exist only to explain the mechanism; they are not actual compiler output that applications can rely on. `GreetingTemplate_create()` expands the stable host structure through Element PAPI, while `GreetingTemplate_update()` applies the dynamic `className` directly to the root element. These functions illustrate the creation and property-update parts of `GreetingTemplate`; the current IR also records its dynamic child slot. The call site references this reusable template and supplies only the dynamic data required for that render.
 
 The compiler separates the JSX into:
 

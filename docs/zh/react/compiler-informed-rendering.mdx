@@ -17,6 +17,8 @@ ReactLynx 会在构建时分析 JSX，提前提取其中稳定的宿主元件结
 
 ```tsx
 export function Greeting({ name, highlighted }) {
+  // 静态：view/text 层级和 "Hello, "。
+  // 动态：className 和 name。
   return (
     <view className={highlighted ? 'card active' : 'card'}>
       <text>Hello, {name}</text>
@@ -167,10 +169,29 @@ export function Greeting({ name, highlighted }) {
 
 每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 的协调器再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为协调（Reconciliation）。
 
-在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器可以提前提取这些稳定信息。经过优化后，调用部分在概念上类似：
+在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器可以提前提取这些稳定信息。经过优化后，生成的模板和调用部分在概念上类似：
 
 ```js
 const GreetingTemplate = '__compiled_greeting';
+
+function GreetingTemplate_create() {
+  const pageId = ReactLynx.__pageId;
+  const view = __CreateView(pageId);
+  const text = __CreateText(pageId);
+  const fixedText = __CreateRawText('Hello, ');
+  const nameSlot = __CreateWrapperElement(pageId);
+
+  __AppendElement(view, text);
+  __AppendElement(text, fixedText);
+  __AppendElement(text, nameSlot);
+
+  return [view, text, fixedText, nameSlot];
+}
+
+function GreetingTemplate_update(instance) {
+  const className = instance.values[0];
+  __SetClasses(instance.elements[0], className || '');
+}
 
 export function Greeting({ name, highlighted }) {
   return jsx(GreetingTemplate, {
@@ -180,7 +201,7 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-这里的名称只是帮助理解的概念表示，并不是可以依赖的实际编译产物。关键区别是：常规产物在运行时展开完整的宿主 VNode 层级；优化后的产物引用一份可复用的模板，并只传入这次渲染所需的动态数据。
+这里的名称和函数形式只是帮助理解的概念表示，并不是可以依赖的实际编译产物。`GreetingTemplate_create()` 通过 Element PAPI 展开稳定的宿主结构，`GreetingTemplate_update()` 则把动态 `className` 直接应用到根元件。这两个函数展示了 `GreetingTemplate` 的创建和属性更新部分；当前 IR 还会记录它的动态子节点插槽。调用部分引用这份可复用的模板，并只传入这次渲染所需的动态数据。
 
 编译器会从 JSX 中区分出：
 
