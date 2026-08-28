@@ -53,6 +53,15 @@ pnpm run format:check
 pnpm run build
 ```
 
+For changes under `packages/lynx-compat-data`, also run:
+
+```bash
+pnpm --filter @lynx-js/lynx-compat-data run pack:check
+```
+
+This verifies that generated CSS property compatibility data is present in the
+package tarball without committing `css/properties/*.json` to git.
+
 ## Pull Requests
 
 - Base normal changes on `main`.
