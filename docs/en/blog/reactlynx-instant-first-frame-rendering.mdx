@@ -24,7 +24,7 @@ In cross-platform frameworks like ReactLynx, however, we want the main thread to
 
 Background rendering, more formally known as "[background-driven rendering](/guide/spec.html#background-driven-rendering)", makes ReactLynx's update path a cross-thread asynchronous commit.
 
-ReactLynx's background runtime builds on [Preact](https://preactjs.com/), which provides the component model, Hooks, and the render and diff pipeline. The background thread, however, has no DOM and cannot access native views on the main thread. ReactLynx therefore uses background Snapshot instances as Preact's host nodes: element creation, attribute changes, and structural updates produced during render and diff are recorded as a Patch and sent to the main thread during commit.
+ReactLynx's background runtime builds on [Preact](https://preactjs.com/), which provides the component model, Hooks, and the render and diff pipeline. The background thread, however, has no DOM and cannot access native views on the main thread. ReactLynx therefore uses a logical host tree on the background thread: element creation, attribute changes, and structural updates produced during render and diff are recorded as a Patch and sent to the main thread during commit.
 
 <img
   src={backgroundRenderingPatchImg}
@@ -49,6 +49,8 @@ A Patch describes "what changed this time."
 
 To be suitable for cross-thread transfer, a Patch is structured as a flat stream of opcodes: the main thread scans it from left to right with a cursor, reading an opcode first, then consuming subsequent arguments according to their format, executing them one by one.
 
+The examples below focus on these logical operations and omit internal routing arguments.
+
 The [enum definitions of Patch opcodes](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatch.ts) can be simplified into a few main categories:
 
 ```plaintext
@@ -64,7 +66,7 @@ Let's start with the minimal state update: in the card component above, tapping 
 ```js
 patch: [
   3, // SetAttribute
-  instanceId, // Runtime view instance ID
+  instanceId, // Target instance ID
   0, // Dynamic slot index reserved for {count} at compile time
   1, // New value for this slot; main thread updates the count text to 1 accordingly
 ];
@@ -72,7 +74,7 @@ patch: [
 
 With slot indices, ReactLynx doesn't need to send the entire node description every time; it only needs to tell the main thread that "the new value at this slot is `1`." We will explore the details of slot indexing in subsequent posts in this series.
 
-Patches can also express structural changes. Consider the previous conditional branch: if the same slot needs to switch from the old child corresponding to the `main` branch to the new child corresponding to the `background` branch, these operations are still carried out within the same number stream. For the definition of [Snapshot](https://lynxjs.org/react/compiler-informed-rendering.html#the-current-intermediate-representation), refer to the Compiler-Informed Rendering section.
+Patches can also express structural changes. Consider the previous conditional branch: if the same slot needs to switch from the old child corresponding to the `main` branch to the new child corresponding to the `background` branch, these operations are still carried out within the same number stream.
 
 ```js
 patch: [
@@ -83,7 +85,7 @@ patch: [
 
   // Create new child node
   0, // CreateElement(type, newChildId)
-  backgroundBranchType, // Snapshot/type name of new child
+  backgroundBranchType, // Type of new child
   backgroundBranchTextId, // Instance ID of new child
 
   // Insert new child node
@@ -99,7 +101,7 @@ patch: [
 When the main thread receives a Patch, it first decodes the opcodes, and then, using local instance maps and compile-time slot rules, locates which Element, attribute, or child position the update actually targets. It then invokes [Element PAPI](/api/engine/element-api)—the low-level Element APIs provided by the Lynx main-thread runtime for frontend frameworks, such as `__CreateElement`, `__SetAttribute`, `__AppendElement`, `__InsertElementBefore`, and `__RemoveElement`.
 To look at the source code, check the global declarations in [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts) and the patch application entry point in [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts) within the ReactLynx runtime.
 
-The main thread translates opcodes into Element PAPI calls roughly like this:
+At a conceptual level, with the internal runtime-instance lookup omitted, the resulting Element operations look roughly like this:
 
 ```js
 for (let i = 0; i < patch.length; ++i) {
@@ -261,11 +263,11 @@ export default function App({ initialCount }) {
 
 ### Handing Over Existing Views
 
-Now that the main thread has rendered the initial frame and background React has completed its initial render, ReactLynx compares the first-screen Snapshot tree sent by the main thread with the background Snapshot tree. Matched background instances reuse the main-thread IDs, while differences in dynamic values and subtrees are included in the initial correction Patch. Subsequent `setState` Patches can then target the same native nodes.
+Now that the main thread has rendered the initial frame and background React has completed its initial render, ReactLynx compares the first-screen tree description sent by the main thread with the background render tree. Matched background nodes reuse the main-thread IDs, while differences in dynamic values and subtrees are included in the initial correction Patch. Subsequent `setState` Patches can then target the same native nodes.
 
-This differs from SSR hydration: Preact reuses existing host nodes while building the initial VNode tree. Here, both Snapshot trees already exist; handover instead rebinds the already rendered background tree to the main-thread IDs. Moving this work into the initial background render would make the background thread wait for the main-thread result, reducing IFR's parallelism.
+This differs from SSR hydration: Preact reuses existing host nodes while building the initial VNode tree. Here, both trees already exist; handover instead rebinds the already rendered background tree to the main-thread IDs. Moving this work into the initial background render would make the background thread wait for the main-thread result, reducing IFR's parallelism.
 
-Looking at the earlier `App` example, the main-thread first-screen tree uses negative IDs, whereas Snapshot instances created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two Snapshot trees using compile-time dynamic slot positions and child node structures:
+Looking at the earlier `App` example, the main-thread first-screen tree uses negative IDs, whereas the background render tree uses temporary positive IDs. During handover, ReactLynx recursively matches the two trees using dynamic slot positions and child node structures:
 
 ```plaintext
 Before Handover:
@@ -286,9 +288,15 @@ Handover Result:
     $1 branch        main != background, handled by a diff Patch
 ```
 
-Once handover completes, matched background Snapshot instances switch to using the existing main-thread IDs (`1 -> -1`, `2 -> -2`). When `count` subsequently updates from `0` to `1`, the Patch generated by the background thread correctly targets the native text node corresponding to `-2`.
+Once handover completes, matched background nodes switch to using the existing main-thread IDs (`1 -> -1`, `2 -> -2`). When `count` subsequently updates from `0` to `1`, the Patch generated by the background thread correctly targets the native text node corresponding to `-2`.
 
 Dynamic values and events also reuse this mapping. If text or attributes differ, the background thread sends a standard attribute Patch. Events that reach the background thread before handover completes are buffered, then dispatched to the corresponding `handleTap` through the ID mapping.
+
+:::details Current implementation: Snapshot
+
+The current runtime represents these corresponding trees with its internal Snapshot IR. Snapshot is an implementation detail and may evolve; see [Compiler-Informed Rendering](https://lynxjs.org/react/compiler-informed-rendering.html#the-current-intermediate-representation) for details.
+
+:::
 
 ## Summary
 
