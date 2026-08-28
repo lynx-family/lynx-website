@@ -11,14 +11,12 @@ ReactLynx 会在构建时分析 JSX，提前提取其中稳定的宿主元件结
 
 这里的“宿主元件”（host elements）是 ReactLynx 通过 Lynx 引擎渲染的 [Lynx 元件](/guide/ui/elements-components)，例如 `<view>` 和 `<text>`；`<ProductCard>` 这样的用户组件则不是宿主元件。
 
-## 如何编写编译友好的 JSX
+## 编译器提前优化了什么
 
 先看一个常规组件：
 
 ```tsx
 export function Greeting({ name, highlighted }) {
-  // 静态：view/text 层级和 "Hello, "。
-  // 动态：className 和 name。
   return (
     <view className={highlighted ? 'card active' : 'card'}>
       <text>Hello, {name}</text>
@@ -27,8 +25,128 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-这段 JSX 已经对编译器很友好：`view → text` 的宿主类型和层级直接出现在源码中，`className` 和 `name` 则作为运行时数据正常传入。
-编译器可以提取稳定结构，并把两个表达式保留为动态位置。
+如果只像传统的纯运行时 Virtual DOM 那样进行常规 JSX 转换、不提取静态结构，`Greeting` 的编译结果在语义上类似：
+
+```js
+export function Greeting({ name, highlighted }) {
+  return jsx('view', {
+    className: highlighted ? 'card active' : 'card',
+    children: jsx('text', {
+      children: ['Hello, ', name],
+    }),
+  });
+}
+```
+
+每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 的协调器再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为协调（Reconciliation）。
+
+在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器可以提前提取这些稳定信息，形成一份模板。经过优化后，生成的模板和调用部分在概念上类似：
+
+```js
+const GreetingTemplate = '__compiled_greeting';
+
+function GreetingTemplate_create() {
+  const pageId = ReactLynx.__pageId;
+  const view = __CreateView(pageId);
+  const text = __CreateText(pageId);
+  const fixedText = __CreateRawText('Hello, ');
+  const nameSlot = __CreateWrapperElement(pageId);
+
+  __AppendElement(view, text);
+  __AppendElement(text, fixedText);
+  __AppendElement(text, nameSlot);
+
+  return [view, text, fixedText, nameSlot];
+}
+
+function GreetingTemplate_update(instance) {
+  const className = instance.values[0];
+  __SetClasses(instance.elements[0], className || '');
+}
+
+export function Greeting({ name, highlighted }) {
+  return jsx(GreetingTemplate, {
+    values: [highlighted ? 'card active' : 'card'], // 动态属性位置 0
+    $0: name, // 动态子节点插槽 0
+  });
+}
+```
+
+这里的名称和函数形式只是帮助理解的概念表示，并不是可以依赖的实际编译产物。`GreetingTemplate_create()` 通过 Element PAPI 展开稳定的宿主结构，`GreetingTemplate_update()` 则把动态 `className` 直接应用到根元件。这两个函数展示了 `GreetingTemplate` 的创建和属性更新部分；当前 IR 还会记录它的动态子节点插槽。调用部分引用这份可复用的模板，并只传入这次渲染所需的动态数据。
+
+编译器会从 JSX 中区分出：
+
+- **静态结构**：`view`、`text`、固定文本 `Hello, `，以及确定的父子关系。
+- **动态属性**：由 `highlighted` 决定的 `className`。
+- **动态子节点**：由 `name` 生成的文本。
+
+因此，编译产物可以提前记录静态创建逻辑、定向更新函数和动态子节点插槽。运行时复用这份模板，只为每个模板实例提供自己的动态值和子节点。
+
+这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
+
+从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
+
+::::details 当前实现：Snapshot IR
+
+ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）表示这些模板。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
+
+IR 属于内部实现，未来可能继续演进，或替换为其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
+
+当前 IR 可以归纳为以下四个核心部分：
+
+| 编译结果       | 作用                                                             |
+| -------------- | ---------------------------------------------------------------- |
+| 静态创建函数   | 直接创建确定的 Lynx 元件，并建立父子关系。                       |
+| 动态更新函数   | 按索引更新某个属性、事件或展开属性，不需要重新遍历整段静态结构。 |
+| 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树的插入位置。       |
+| 表示标识       | 标识可复用的模板，让多个模板实例共享同一份静态信息。             |
+
+下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表示 `Greeting` 模板。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
+
+:::details 查看当前 IR 的简化定义
+
+```js
+ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
+  ReactLynx.createSnapshot(
+    __snapshot_xxx,
+    () => {
+      // 这部分只依赖 JSX 中可以静态确定的结构。
+      const pageId = ReactLynx.__pageId;
+      const view = __CreateView(pageId);
+      const text = __CreateText(pageId);
+      const rawText = __CreateRawText('Hello, ');
+      const slot = __CreateWrapperElement(pageId); // 为 $0 预留插入位置
+
+      __AppendElement(view, text);
+      __AppendElement(text, rawText);
+      __AppendElement(text, slot);
+
+      // 更新函数和插槽描述通过这些数组索引定位元件。
+      return [view, text, rawText, slot];
+    },
+    [
+      function (ctx) {
+        if (ctx.__elements) {
+          // values[0] 只更新 elements[0]，也就是根 view。
+          __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
+        }
+      },
+    ],
+    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 对应 elements[3]
+  );
+```
+
+:::
+
+:::warning
+
+这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。请勿在应用代码中依赖或复制这些产物。
+
+:::
+
+::::
+
+## 如何编写编译友好的 JSX
 
 动态属性、文本和子节点本身不会阻止编译优化。对于大多数组件，遵循下面三个原则就足够了：
 
@@ -152,134 +270,11 @@ function UserCard({ id, name, selected }) {
 
 ## 编译器与运行时如何协作
 
-### 编译器提前完成了什么
-
-如果只进行常规 JSX 转换、不提取静态结构，`Greeting` 的编译结果在语义上类似：
-
-```js
-export function Greeting({ name, highlighted }) {
-  return jsx('view', {
-    className: highlighted ? 'card active' : 'card',
-    children: jsx('text', {
-      children: ['Hello, ', name],
-    }),
-  });
-}
-```
-
-每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 的协调器再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为协调（Reconciliation）。
-
-在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器可以提前提取这些稳定信息。经过优化后，生成的模板和调用部分在概念上类似：
-
-```js
-const GreetingTemplate = '__compiled_greeting';
-
-function GreetingTemplate_create() {
-  const pageId = ReactLynx.__pageId;
-  const view = __CreateView(pageId);
-  const text = __CreateText(pageId);
-  const fixedText = __CreateRawText('Hello, ');
-  const nameSlot = __CreateWrapperElement(pageId);
-
-  __AppendElement(view, text);
-  __AppendElement(text, fixedText);
-  __AppendElement(text, nameSlot);
-
-  return [view, text, fixedText, nameSlot];
-}
-
-function GreetingTemplate_update(instance) {
-  const className = instance.values[0];
-  __SetClasses(instance.elements[0], className || '');
-}
-
-export function Greeting({ name, highlighted }) {
-  return jsx(GreetingTemplate, {
-    values: [highlighted ? 'card active' : 'card'], // 动态属性位置 0
-    $0: name, // 动态子节点插槽 0
-  });
-}
-```
-
-这里的名称和函数形式只是帮助理解的概念表示，并不是可以依赖的实际编译产物。`GreetingTemplate_create()` 通过 Element PAPI 展开稳定的宿主结构，`GreetingTemplate_update()` 则把动态 `className` 直接应用到根元件。这两个函数展示了 `GreetingTemplate` 的创建和属性更新部分；当前 IR 还会记录它的动态子节点插槽。调用部分引用这份可复用的模板，并只传入这次渲染所需的动态数据。
-
-编译器会从 JSX 中区分出：
-
-- **静态结构**：`view`、`text`、固定文本 `Hello, `，以及确定的父子关系。
-- **动态属性**：由 `highlighted` 决定的 `className`。
-- **动态子节点**：由 `name` 生成的文本。
-
-因此，编译产物可以提前记录静态创建逻辑、定向更新函数和动态子节点插槽。运行时复用这份模板，只为每个模板实例提供自己的动态值和子节点。
-
-这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
-
-从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
-
-### 当前的中间表示
-
-ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）表示这些模板。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
-
-IR 属于内部实现，未来可能继续演进，或替换为其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
-
-当前 IR 可以归纳为以下四个核心部分：
-
-| 编译结果       | 作用                                                             |
-| -------------- | ---------------------------------------------------------------- |
-| 静态创建函数   | 直接创建确定的 Lynx 元件，并建立父子关系。                       |
-| 动态更新函数   | 按索引更新某个属性、事件或展开属性，不需要重新遍历整段静态结构。 |
-| 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树的插入位置。       |
-| 表示标识       | 标识可复用的模板，让多个模板实例共享同一份静态信息。             |
-
-下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表示 `Greeting` 模板。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
-
-:::details 查看当前 IR 的简化定义
-
-```js
-ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
-  ReactLynx.createSnapshot(
-    __snapshot_xxx,
-    () => {
-      // 这部分只依赖 JSX 中可以静态确定的结构。
-      const pageId = ReactLynx.__pageId;
-      const view = __CreateView(pageId);
-      const text = __CreateText(pageId);
-      const rawText = __CreateRawText('Hello, ');
-      const slot = __CreateWrapperElement(pageId); // 为 $0 预留插入位置
-
-      __AppendElement(view, text);
-      __AppendElement(text, rawText);
-      __AppendElement(text, slot);
-
-      // 更新函数和插槽描述通过这些数组索引定位元件。
-      return [view, text, rawText, slot];
-    },
-    [
-      function (ctx) {
-        if (ctx.__elements) {
-          // values[0] 只更新 elements[0]，也就是根 view。
-          __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
-        }
-      },
-    ],
-    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 对应 elements[3]
-  );
-```
-
-:::
-
-:::warning
-
-这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。请勿在应用代码中依赖或复制这些产物。
-
-:::
-
-### 编译产物如何进入运行时
-
 ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
 
 同一份模板可以被多个已挂载的 `Greeting` 组件复用。每个已挂载的 `Greeting` 都有一组彼此对应的模板实例：主线程模板实例持有创建出的 Lynx 元件，后台模板实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
 
-#### 首屏：创建模板实例
+### 首屏：创建模板实例
 
 首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到模板，再为这次 `Greeting` 创建主线程模板实例。静态创建函数返回的 Lynx 元件由这个模板实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
 
@@ -305,7 +300,7 @@ function renderFirstScreen(vnode) {
 
 后台首轮协调也会生成与主线程模板实例树对应的后台模板实例树。首屏同步通过 hydration 建立两侧模板实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程模板实例。
 
-#### 更新：只处理动态位置的变化
+### 更新：只处理动态位置的变化
 
 对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到对应的模板实例并应用变化。
 
