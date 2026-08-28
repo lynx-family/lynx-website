@@ -44,10 +44,14 @@ jobs:
           cd "${{ github.workspace }}"
           pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- \
             --root /tmp/compat-data-base/packages/lynx-compat-data \
+            --docs-root /tmp/compat-data-base/docs/en \
             --output /tmp/base-stats.json
 
       - name: Generate PR Stats
-        run: pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- --output /tmp/pr-stats.json
+        run: |
+          pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- \
+            --docs-root "${{ github.workspace }}/docs/en" \
+            --output /tmp/pr-stats.json
 
       - name: Generate Comparison
         run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json /tmp/pr-stats.json > /tmp/comment.md

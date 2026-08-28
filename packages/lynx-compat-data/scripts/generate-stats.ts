@@ -6,6 +6,7 @@
  * aggregated statistics for the API Status Dashboard.
  *
  * Usage: pnpm run gen-stats [--root <compat-data-dir>] [--output <file>]
+ *                          [--docs-root <docs-dir>]
  */
 
 import fs from 'node:fs';
@@ -19,6 +20,7 @@ import type {
   SimpleSupportStatement,
   VersionValue,
 } from '../types/types.js';
+import { isDocRoute, loadDocRoutes } from './lib/doc-routes.js';
 
 // All platforms to track
 const TRACKED_PLATFORMS: PlatformName[] = [
@@ -258,10 +260,24 @@ interface APIStats {
 const dirname = fileURLToPath(new URL('.', import.meta.url));
 const defaultRootDir = path.join(dirname, '..');
 
-/** Parse optional source-root and output-file overrides. */
-function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
+/**
+ * Parse optional source-root, output-file and docs-root overrides.
+ *
+ * `--docs-root` names the docs sources to verify `doc_url` values against, and
+ * also reads from `LYNX_COMPAT_DOCS_ROOT`. It is named by the caller rather
+ * than inferred from this file's location: the package is consumed as a
+ * generated-data input by sites that do not share a docs tree, so guessing a
+ * root would make the output depend on the checkout layout. Omit it and
+ * verification is skipped.
+ */
+function parseArgs(args: string[]): {
+  rootDir: string;
+  outputPath: string;
+  docsRoot: string | undefined;
+} {
   let rootDir = defaultRootDir;
   let outputPath: string | undefined;
+  let docsRoot = process.env['LYNX_COMPAT_DOCS_ROOT'];
 
   for (let i = 0; i < args.length; i++) {
     const option = args[i];
@@ -270,7 +286,9 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
       continue;
     }
     if (
-      (option === '--root' || option === '--output') &&
+      (option === '--root' ||
+        option === '--output' ||
+        option === '--docs-root') &&
       (!value || value.startsWith('--'))
     ) {
       throw new Error(`${option} requires a path`);
@@ -281,6 +299,9 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
     } else if (option === '--output') {
       outputPath = path.resolve(value!);
       i++;
+    } else if (option === '--docs-root') {
+      docsRoot = value!;
+      i++;
     } else {
       throw new Error(`Unknown argument: ${option}`);
     }
@@ -289,10 +310,20 @@ function parseArgs(args: string[]): { rootDir: string; outputPath: string } {
   return {
     rootDir,
     outputPath: outputPath ?? path.join(rootDir, 'api-stats.json'),
+    docsRoot: docsRoot ? path.resolve(docsRoot) : undefined,
   };
 }
 
-const { rootDir, outputPath } = parseArgs(process.argv.slice(2));
+const { rootDir, outputPath, docsRoot } = parseArgs(process.argv.slice(2));
+
+// Routes published by the docs site, or `null` when the caller did not ask for
+// verification, in which case URLs are emitted unchecked. A docs root that was
+// asked for but is missing throws rather than degrading to `null`.
+const DOC_ROUTES = docsRoot ? loadDocRoutes(docsRoot) : null;
+
+// `lynx_path` values that do not resolve to a page. Authored data, so these are
+// reported rather than silently dropped.
+const unresolvedLynxPaths = new Set<string>();
 
 /**
  * Check if a version value indicates support
@@ -372,6 +403,36 @@ function generateDocUrl(apiPath: string, docPrefix: string): string {
 }
 
 /**
+ * Resolve the documentation URL for a compat entry, or `undefined` when the
+ * feature has no page.
+ *
+ * An authored `lynx_path` wins over the generated guess. Either way the target
+ * is verified against the published routes: a `doc_url` that 404s is worse than
+ * no `doc_url`, because consumers cannot tell the two apart. Dropping it lets
+ * them render the API as undocumented, which is what it is.
+ *
+ * An unresolvable `lynx_path` is authored data pointing at a page that moved or
+ * was deleted, so it is collected for reporting; an unresolvable generated URL
+ * is just a guess that did not pan out and is dropped quietly.
+ */
+function resolveDocUrl(
+  compat: CompatStatement,
+  apiPath: string,
+  docPrefix: string,
+): string | undefined {
+  const lynxPath = compat.lynx_path;
+  if (lynxPath) {
+    if (!DOC_ROUTES || isDocRoute(DOC_ROUTES, lynxPath)) return lynxPath;
+    unresolvedLynxPaths.add(lynxPath);
+    return undefined;
+  }
+
+  const generated = generateDocUrl(apiPath, docPrefix);
+  if (!DOC_ROUTES || isDocRoute(DOC_ROUTES, generated)) return generated;
+  return undefined;
+}
+
+/**
  * Recursively collect APIs and their support from an Identifier
  */
 function collectAPIs(
@@ -434,7 +495,7 @@ function collectAPIs(
       }
     }
 
-    const docUrl = compat.lynx_path || generateDocUrl(apiPath, docPrefix);
+    const docUrl = resolveDocUrl(compat, apiPath, docPrefix);
     const name =
       compat.description ||
       apiPath.split('/').pop()?.split('.').pop() ||
@@ -1160,6 +1221,19 @@ function generateStats(): APIStats {
 
 // Run the script
 const stats = generateStats();
+
+if (DOC_ROUTES === null) {
+  console.warn(
+    '\nWarning: no --docs-root given, doc_url values were emitted unchecked.',
+  );
+} else if (unresolvedLynxPaths.size > 0) {
+  console.warn(
+    `\nWarning: ${unresolvedLynxPaths.size} lynx_path value(s) do not resolve to a page; doc_url omitted for them:`,
+  );
+  for (const lynxPath of [...unresolvedLynxPaths].sort()) {
+    console.warn(`  ${lynxPath}`);
+  }
+}
 
 // Write output
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
