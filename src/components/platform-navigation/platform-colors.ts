@@ -31,6 +31,7 @@ export type PlatformKey =
   | 'clay'
   | 'clay_ios'
   | 'clay_android'
+  | 'clay_harmony'
   | 'clay_macos'
   | 'clay_windows';
 
@@ -101,6 +102,7 @@ export const PLATFORM_HUES: Record<PlatformKey, PlatformHue> = {
   clay: CLAY_HUE,
   clay_ios: CLAY_HUE,
   clay_android: CLAY_HUE,
+  clay_harmony: CLAY_HUE,
   clay_macos: CLAY_HUE,
   clay_windows: CLAY_HUE,
 };

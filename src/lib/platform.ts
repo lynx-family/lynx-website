@@ -34,6 +34,7 @@ export function mapPlatformNameToIconName(platformName: BCD.PlatformName) {
     case 'web_lynx':
       return 'web';
     case 'harmony':
+    case 'clay_harmony':
       return 'harmony';
     default:
       return platformName;

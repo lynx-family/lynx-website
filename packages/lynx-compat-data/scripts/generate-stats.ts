@@ -29,6 +29,7 @@ const TRACKED_PLATFORMS: PlatformName[] = [
   'harmony',
   'web_lynx',
   'clay_android',
+  'clay_harmony',
   'clay_ios',
   'clay_macos',
   'clay_windows',
@@ -37,6 +38,7 @@ const TRACKED_PLATFORMS: PlatformName[] = [
 // Clay sub-platforms for aggregate computation
 const CLAY_SUB_PLATFORMS: PlatformName[] = [
   'clay_android',
+  'clay_harmony',
   'clay_ios',
   'clay_macos',
   'clay_windows',
@@ -1204,12 +1206,7 @@ function generateStats(): APIStats {
     `    clay: ${clayAgg?.supported_count}/${platformApiTotal} (${clayAgg?.coverage_percent}%) +${clayAgg?.exclusive_count} exclusive`,
   );
   console.log(`\n  Clay Platforms:`);
-  for (const platform of [
-    'clay_android',
-    'clay_ios',
-    'clay_macos',
-    'clay_windows',
-  ] as PlatformName[]) {
+  for (const platform of CLAY_SUB_PLATFORMS) {
     const ps = byPlatform[platform];
     console.log(
       `    ${platform}: ${ps?.supported_count}/${platformApiTotal} (${ps?.coverage_percent}%) +${ps?.exclusive_count} exclusive`,
