@@ -7,6 +7,12 @@ on:
   push:
     branches:
       - main
+      - 'release/[3-9].*'
+      - 'release/[1-9][0-9].*'
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.ref, github.sha) }}
+  cancel-in-progress: true
 
 jobs:
   validate:
