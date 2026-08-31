@@ -26,8 +26,10 @@ The downstream prepare flow directly executes:
 - `scripts/luna-demo.js`
 - `scripts/lynx-example.js`
 
-The downstream currently synchronizes `scripts/lynx-living-spec.js` into its
-workspace and runs it through `pnpm gen:living-spec`.
+The downstream directly executes `scripts/lynx-living-spec.js` from its
+installed `lynx-doc` dependency through its own Living Spec orchestration layer.
+It prepares downstream source overlays first and runs the generator with the
+downstream repository root as the working directory.
 
 Keep these script paths, caller-working-directory behavior, environment
 variables, and generated output layouts compatible with downstream callers.
@@ -90,6 +92,9 @@ contract in every supported consumer.
   exported configuration fields as interfaces.
 - Keep internal-only content and behavior in the in-house repository.
 - Request downstream validation for changes affecting this contract.
+- Changes to CI, build or generation workflows, release behavior, or downstream
+  interfaces require human review and must be merged manually. Review agents
+  may approve these changes but must not auto-merge them.
 
 ## Verification
 
