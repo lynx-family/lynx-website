@@ -27,7 +27,13 @@ jobs:
       source_pr: ${{ steps.validate.outputs.source_pr }}
       target_branches: ${{ steps.validate.outputs.target_branches }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
       - id: validate
         run: node .github/scripts/cherry-pick-request.mjs validate
         env:
@@ -42,9 +48,15 @@ jobs:
       pull-requests: write
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # The execute script pushes generated cherry-pick branches to origin.
+          persist-credentials: true
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
       - run: node .github/scripts/cherry-pick-request.mjs execute
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
