@@ -1488,8 +1488,7 @@ Possible extra rowspan handling
 		}
 	}
 </style>
-  <meta content="Bikeshed version b25686b9f, updated Fri Mar 14 14:15:20 2025 -0700" name="generator">
-  <meta content="7196df2127aac3c8f93b6213cd93a0d929f938a0" name="revision">
+  <meta content="Bikeshed version ac92c2f0d, updated Fri Aug 21 16:01:29 2026 -0700" name="generator">
   <meta content="dark light" name="color-scheme">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
@@ -1784,7 +1783,7 @@ pre .property::before, pre .property::after {
 </style>
 <style>/* Boilerplate: style-counters */
 body {
-    counter-reset: example figure issue;
+    counter-reset: example figure issue table;
 }
 .issue {
     counter-increment: issue;
@@ -1801,7 +1800,7 @@ body {
 }
 .invalid.example:not(.no-marker)::before,
 .illegal.example:not(.no-marker)::before {
-    content: "Invalid Example" counter(example);
+    content: "Invalid Example " counter(example);
 }
 
 figcaption {
@@ -1809,6 +1808,13 @@ figcaption {
 }
 figcaption:not(.no-marker)::before {
     content: "Figure " counter(figure) " ";
+}
+
+figure.table figcaption {
+    counter-increment: table;
+}
+figure.table figcaption:not(.no-marker)::before {
+    content: "Table " counter(table) " ";
 }
 </style>
 <style>/* Boilerplate: style-dfn-panel */
@@ -2049,8 +2055,9 @@ dfn > a.self-link::before      { content: "#"; }
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
-   <h1 class="p-name no-ref" id="title">Lynx Living Spec</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Living Document, <time class="dt-updated" datetime="2025-03-06">6 March 2025</time></span></h2>
+   <h1 class="no-ref p-name" id="title">Lynx Living Spec</h1>
+   <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Living Document,
+    <time class="dt-updated" datetime="2026-08-31">31 August 2026</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>Issue Tracking:
@@ -2058,22 +2065,25 @@ dfn > a.self-link::before      { content: "#"; }
     </dl>
    </div>
    <div data-fill-with="warning"></div>
-   <p class="copyright" data-fill-with="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" height="15" src="https://licensebuttons.net/p/zero/1.0/80x15.png" width="80"></a> To the extent possible under law, the editors have waived all copyright
+   <p class="copyright" data-fill-with="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" height="15" src="https://licensebuttons.net/p/zero/1.0/80x15.png" width="80"></a>
+To the extent possible under law, the editors have waived all copyright
 and related or neighboring rights to this work.
-In addition, as of 6 March 2025,
-the editors have made this specification available under the <a href="https://www.openwebfoundation.org/the-agreements/the-owf-1-0-agreements-granted-claims/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
+In addition, as of 31 August 2026,
+the editors have made this specification available under the
+<a href="https://www.openwebfoundation.org/the-agreements/the-owf-1-0-agreements-granted-claims/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at https://www.openwebfoundation.org/the-agreements/the-owf-1-0-agreements-granted-claims/owfa-1-0.
-Parts of this work may be from another specification document.  If so, those parts are instead covered by the license of that specification document. </p>
+Parts of this work may be from another specification document.  If so, those parts are instead covered by the license of that specification document.
+</p>
    <hr title="Separator for header">
   </div>
   <div class="p-summary" data-fill-with="abstract">
-   <h2 class="no-num no-toc no-ref heading settled" id="abstract"><span class="content">Abstract</span></h2>
+   <h2 class="heading no-num no-ref no-toc settled" id="abstract"><span class="content">Abstract</span></h2>
    <p>This module introduces living specification for Lynx.</p>
   </div>
   <div data-fill-with="at-risk"></div>
   <nav data-fill-with="table-of-contents" id="toc">
-   <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
-   <ol class="toc" role="directory">
+   <h2 class="no-num no-ref no-toc" id="contents">Table of Contents</h2>
+   <ol class="toc">
     <li>
      <a href="#introduction"><span class="secno">1</span> <span class="content">Introduction</span></a>
      <ol class="toc">
@@ -2109,8 +2119,8 @@ Parts of this work may be from another specification document.  If so, those par
         <li><a href="#lazy-bundle"><span class="secno">2.2.2</span> <span class="content"><span>Lazy Bundle</span></span></a>
         <li><a href="#scripting-agent"><span class="secno">2.2.3</span> <span class="content"><span>Scripting Agent</span></span></a>
         <li><a href="#lynxview"><span class="secno">2.2.4</span> <span class="content"><span>LynxView</span></span></a>
-        <li><a href="#page"><span class="secno">2.2.5</span> <span class="content">Page</span></a>
-        <li><a href="#the-lynx-object"><span class="secno">2.2.6</span> <span class="content">The Lynx Object</span></a>
+        <li><a href="#page"><span class="secno">2.2.5</span> <span class="content"><span>Page</span></span></a>
+        <li><a href="#the-lynx-object"><span class="secno">2.2.6</span> <span class="content">The `Lynx` Object</span></a>
         <li><a href="#lynx-group"><span class="secno">2.2.7</span> <span class="content"><span>Lynx Group</span></span></a>
        </ol>
       <li>
@@ -2177,9 +2187,9 @@ Parts of this work may be from another specification document.  If so, those par
         <li><a href="#primjs-api-or-papi"><span class="secno">4.3.3</span> <span class="content"><span>PrimJS API</span> (or <span>PAPI</span>)</span></a>
        </ol>
       <li>
-       <a href="#scripting-runtime-enviroment"><span class="secno">4.4</span> <span class="content">Scripting Runtime Enviroment</span></a>
+       <a href="#scripting-runtime-environment"><span class="secno">4.4</span> <span class="content">Scripting Runtime Environment</span></a>
        <ol class="toc">
-        <li><a href="#scripting-runtime-enviroment①"><span class="secno">4.4.1</span> <span class="content"><span>Scripting Runtime Enviroment</span></span></a>
+        <li><a href="#scripting-runtime-environment①"><span class="secno">4.4.1</span> <span class="content"><span>Scripting Runtime Environment</span></span></a>
         <li>
          <a href="#main-thread-scripting"><span class="secno">4.4.2</span> <span class="content">Main Thread Scripting</span></a>
          <ol class="toc">
@@ -2386,12 +2396,12 @@ Parts of this work may be from another specification document.  If so, those par
         <li><a href="#event-interception"><span class="secno">10.3.4</span> <span class="content"><span>Event Interception</span></span></a>
        </ol>
      </ol>
-    <li><a href="#conformance"><span class="secno"></span> <span class="content"> Conformance</span></a>
+    <li><a href="#conformance"><span class="secno"></span> <span class="content">
+    Conformance</span></a>
     <li>
      <a href="#index"><span class="secno"></span> <span class="content">Index</span></a>
      <ol class="toc">
       <li><a href="#index-defined-here"><span class="secno"></span> <span class="content">Terms defined by this specification</span></a>
-      <li><a href="#index-defined-elsewhere"><span class="secno"></span> <span class="content">Terms defined by reference</span></a>
      </ol>
     <li>
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
@@ -2406,7 +2416,7 @@ Parts of this work may be from another specification document.  If so, those par
    <p>The spec will be largely focusing on the Lynx architecture.</p>
    <h3 class="heading settled" data-level="1.2" id="people"><span class="secno">1.2. </span><span class="content">People</span><a class="self-link" href="#people"></a></h3>
    <h4 class="heading settled" data-level="1.2.1" id="scripting-developer"><span class="secno">1.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Lynx" data-dfn-type="dfn" data-noexport id="lynx-scripting-developer">Scripting Developer</dfn></span><a class="self-link" href="#scripting-developer"></a></h4>
-   <p>Individuals who program <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script">scripts</a> within the <a data-link-type="dfn" href="#scripting-scripting-runtime-enviroment" id="ref-for-scripting-scripting-runtime-enviroment">scripting runtime enviroment</a>.</p>
+   <p>Individuals who program <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script">scripts</a> within the <a data-link-type="dfn" href="#scripting-scripting-runtime-environment" id="ref-for-scripting-scripting-runtime-environment">scripting runtime environment</a>.</p>
    <h4 class="heading settled" data-level="1.2.2" id="scripting-framework-developer"><span class="secno">1.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Lynx" data-dfn-type="dfn" data-noexport id="lynx-scripting-framework-developer">Scripting Framework Developer</dfn></span><a class="self-link" href="#scripting-framework-developer"></a></h4>
    <p>A kind of <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer">scripting developers</a> that builds <a data-link-type="dfn" href="#frameworkrendering-framework" id="ref-for-frameworkrendering-framework">frameworks</a> on top of the <a data-link-type="dfn" href="#commoninfrastructure-lynx-platform" id="ref-for-commoninfrastructure-lynx-platform">Lynx platform</a>.</p>
    <h4 class="heading settled" data-level="1.2.3" id="lynx-developer"><span class="secno">1.2.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Lynx" data-dfn-type="dfn" data-noexport id="lynx-lynx-developer">Lynx Developer</dfn></span><a class="self-link" href="#lynx-developer"></a></h4>
@@ -2420,10 +2430,12 @@ Parts of this work may be from another specification document.  If so, those par
    <h2 class="heading settled" data-level="2" id="common-infrastructure"><span class="secno">2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-common-infrastructure">Common Infrastructure</dfn></span><a class="self-link" href="#common-infrastructure"></a></h2>
    <h3 class="heading settled" data-level="2.1" id="high-level-concept"><span class="secno">2.1. </span><span class="content">High-level Concept</span><a class="self-link" href="#high-level-concept"></a></h3>
    <p>The following diagram gives a simplified overview of the pieces that form the Lynx tech stack. It clarifies where key terms (e.g. <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine①">engine</a> and <a data-link-type="dfn" href="#frameworkrendering-framework" id="ref-for-frameworkrendering-framework①">framework</a>) sit in this stack and highlights the API boundaries.</p>
-   <p style="justify-content:center;align-items:center;display:flex;"> <img alt="common_infrastructure" height="50%" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/spec/common_infrastructure.png" width="50%"> </p>
+   <p style="justify-content:center;align-items:center;display:flex;">
+    <img alt="common_infrastructure" height="50%" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/spec/common_infrastructure.png" width="50%">
+</p>
    <h4 class="heading settled" data-level="2.1.1" id="app"><span class="secno">2.1.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-app">APP</dfn></span><a class="self-link" href="#app"></a></h4>
    <p>It is where <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer">Lynx developers</a> own and program with the <a data-link-type="dfn" href="#commoninfrastructure-lynx-platform" id="ref-for-commoninfrastructure-lynx-platform②">Lynx platform</a> APIs and <a data-link-type="dfn" href="#frameworkrendering-framework" id="ref-for-frameworkrendering-framework②">framework</a> to build UIs and implement business logic.
-An App may consist of one or multiple <a data-link-type="dfn" href="https://w3c.github.io/miniapp-manifest/#dfn-pages" id="ref-for-dfn-pages">pages</a>, with each page being loaded from an entrypoint <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle">bundle</a>, and potentially additional <a data-link-type="dfn" href="#commoninfrastructure-lazy-bundle" id="ref-for-commoninfrastructure-lazy-bundle">lazy bundles</a> as needed.</p>
+An App may consist of one or multiple <a data-link-type="dfn" href="#commoninfrastructure-page" id="ref-for-commoninfrastructure-page">pages</a>, with each page being loaded from an entrypoint <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle">bundle</a>, and potentially additional <a data-link-type="dfn" href="#commoninfrastructure-lazy-bundle" id="ref-for-commoninfrastructure-lazy-bundle">lazy bundles</a> as needed.</p>
    <h4 class="heading settled" data-level="2.1.2" id="container"><span class="secno">2.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-container">Container</dfn></span><a class="self-link" href="#container"></a></h4>
    <p>It is a self-contained module within an <a data-link-type="dfn" href="#commoninfrastructure-app" id="ref-for-commoninfrastructure-app①">App</a> responsible for managing the lifecycle of <a data-link-type="dfn" href="#commoninfrastructure-lynxview" id="ref-for-commoninfrastructure-lynxview">LynxView</a> instances. Key responsibilities of the Container include:
 managing LynxView instances, loading page resources (e.g., <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle①">bundle</a>, medias, etc.), and handling navigation controls.</p>
@@ -2435,7 +2447,10 @@ managing LynxView instances, loading page resources (e.g., <a data-link-type="df
    <p>The <a data-link-type="dfn" href="#commoninfrastructure-lynx-pipeline" id="ref-for-commoninfrastructure-lynx-pipeline">lynx pipeline</a> in Lynx development refers to the sequence of steps a Lynx <a data-link-type="dfn" href="#commoninfrastructure-app" id="ref-for-commoninfrastructure-app③">app</a> takes to convert its internal <a data-link-type="dfn" href="#commoninfrastructure-structure" id="ref-for-commoninfrastructure-structure">structures</a> into the visual representation that users see and interact with on their screens.
 In practice, the <a data-link-type="dfn" href="#commoninfrastructure-lynx-pipeline" id="ref-for-commoninfrastructure-lynx-pipeline①">lynx pipeline</a> is an iterative loop where user inputs can continuously trigger various phases of the process. This pipeline is divided into four main parts: load, parse, <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering">framework rendering</a> and <a data-link-type="dfn" href="#enginepixeling-pixeling" id="ref-for-enginepixeling-pixeling">pixeling</a>.</p>
    <h4 class="heading settled" data-level="2.1.6" id="host-platform"><span class="secno">2.1.6. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-host-platform">Host Platform</dfn></span><a class="self-link" href="#host-platform"></a></h4>
-    The Host Platform refers to the underlying operating system and its supporting services that provide the foundational runtime environment and platform specific capabilities for the engine. 
+
+The Host Platform refers to the underlying operating system and its supporting services that provide the foundational runtime environment and platform specific capabilities for the engine.
+
+
    <h3 class="heading settled" data-level="2.2" id="structure"><span class="secno">2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-structure">Structure</dfn></span><a class="self-link" href="#structure"></a></h3>
    <h4 class="heading settled" data-level="2.2.1" id="lynx-bundle-or-bundle"><span class="secno">2.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-lynx-bundle">Lynx Bundle</dfn> (or <dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-bundle">Bundle</dfn>)</span><a class="self-link" href="#lynx-bundle-or-bundle"></a></h4>
    <p>Where all necessary resources needed for a Lynx <a data-link-type="dfn" href="#commoninfrastructure-app" id="ref-for-commoninfrastructure-app④">App</a> to run are bundled together.
@@ -2451,13 +2466,26 @@ This usually comprises of:</p>
    <h4 class="heading settled" data-level="2.2.2" id="lazy-bundle"><span class="secno">2.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-lazy-bundle">Lazy Bundle</dfn></span><a class="self-link" href="#lazy-bundle"></a></h4>
    <p>Where all necessary resources needed for a <a data-link-type="dfn" href="#elementscomponents-component" id="ref-for-elementscomponents-component">component</a> to run are bundled together, has similar composition to <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle②">bundle</a>. It is usually lazy loaded at runtime.</p>
    <h4 class="heading settled" data-level="2.2.3" id="scripting-agent"><span class="secno">2.2.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-scripting-agent">Scripting Agent</dfn></span><a class="self-link" href="#scripting-agent"></a></h4>
-    Similar to the agent in ECMA-262 and W3C. 
+
+Similar to the agent in ECMA-262 and W3C.
+
+
    <h4 class="heading settled" data-level="2.2.4" id="lynxview"><span class="secno">2.2.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-lynxview">LynxView</dfn></span><a class="self-link" href="#lynxview"></a></h4>
-    Similar to WebView in native developing. Renders <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle③">bundle</a> within host application’s context. 
-   <h4 class="heading settled" data-level="2.2.5" id="page"><span class="secno">2.2.5. </span><span class="content">Page</span><a class="self-link" href="#page"></a></h4>
-    Similar to the document in W3C. It is the root <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element">element</a> of Lynx <a data-link-type="dfn" href="#commoninfrastructure-app" id="ref-for-commoninfrastructure-app⑤">App</a>. 
-   <h4 class="heading settled" data-level="2.2.6" id="the-lynx-object"><span class="secno">2.2.6. </span><span class="content">The Lynx Object</span><a class="self-link" href="#the-lynx-object"></a></h4>
-    It is a binding object, offering some common capabilities to <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer②">scripting developers</a>. It is provided in <a data-link-type="dfn" href="#scripting-main-thread-runtime" id="ref-for-scripting-main-thread-runtime">main thread runtime</a> and <a data-link-type="dfn" href="#scripting-background-thread-runtime" id="ref-for-scripting-background-thread-runtime">background thread runtime</a>.
+
+Similar to WebView in native developing. Renders <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle③">bundle</a> within host application’s context.
+
+
+   <h4 class="heading settled" data-level="2.2.5" id="page"><span class="secno">2.2.5. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-page">Page</dfn></span><a class="self-link" href="#page"></a></h4>
+
+Similar to the document in W3C. It is the root <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element">element</a> of Lynx <a data-link-type="dfn" href="#commoninfrastructure-app" id="ref-for-commoninfrastructure-app⑤">App</a>.
+
+
+   <h4 class="heading settled" data-level="2.2.6" id="the-lynx-object"><span class="secno">2.2.6. </span><span class="content">The `Lynx` Object</span><a class="self-link" href="#the-lynx-object"></a></h4>
+
+A binding object, offering some common capabilities to <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer②">scripting developers</a>. It is provided in <a data-link-type="dfn" href="#scripting-main-thread-runtime" id="ref-for-scripting-main-thread-runtime">main thread runtime</a> and <a data-link-type="dfn" href="#scripting-background-thread-runtime" id="ref-for-scripting-background-thread-runtime">background thread runtime</a>.
+
+
+
    <h4 class="heading settled" data-level="2.2.7" id="lynx-group"><span class="secno">2.2.7. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="CommonInfrastructure" data-dfn-type="dfn" data-noexport id="commoninfrastructure-lynx-group">Lynx Group</dfn></span><a class="self-link" href="#lynx-group"></a></h4>
    <p>When multiple <a data-link-type="dfn" href="#commoninfrastructure-lynxview" id="ref-for-commoninfrastructure-lynxview①">LynxView</a> is hosted on a shared <a data-link-type="dfn" href="#commoninfrastructure-scripting-agent" id="ref-for-commoninfrastructure-scripting-agent">scripting agent</a>.</p>
    <h3 class="heading settled" data-level="2.3" id="running-scenarios"><span class="secno">2.3. </span><span class="content">Running Scenarios</span><a class="self-link" href="#running-scenarios"></a></h3>
@@ -2495,14 +2523,17 @@ N.B. It may or may not have a one-one correspondence with <a data-link-type="dfn
    <p>The <a data-link-type="dfn" href="#threading-virtual-thread" id="ref-for-threading-virtual-thread④">virtual thread</a> that drives <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline">pixel pipeline</a>.</p>
    <h4 class="heading settled" data-level="3.2.4" id="layout-thread"><span class="secno">3.2.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Threading" data-dfn-type="dfn" data-noexport id="threading-layout-thread">Layout Thread</dfn></span><a class="self-link" href="#layout-thread"></a></h4>
    <p>The <a data-link-type="dfn" href="#threading-virtual-thread" id="ref-for-threading-virtual-thread⑤">virtual thread</a> where the <a data-link-type="dfn" href="#enginepixeling-layout" id="ref-for-enginepixeling-layout">layout</a> step of <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline①">pixel pipeline</a> is performed.</p>
-   <p class="note" role="note"><span class="marker">Note:</span> Implementors' Note:
+   <p class="note" role="note"><span class="marker">Note:</span>
+Implementors' Note:
 In the actual implementation of Lynx, <a data-link-type="dfn" href="#threading-virtual-thread" id="ref-for-threading-virtual-thread⑥">Virtual Threads</a> are implemented as Task Runners (or Looper) onto which Tasks can be posted.</p>
    <h3 class="heading settled" data-level="3.3" id="scripting-facing-threading-abstraction"><span class="secno">3.3. </span><span class="content">Scripting-facing Threading Abstraction</span><a class="self-link" href="#scripting-facing-threading-abstraction"></a></h3>
    <h4 class="heading settled" data-level="3.3.1" id="scriptable-thread"><span class="secno">3.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Threading" data-dfn-type="dfn" data-noexport id="threading-scriptable-thread">Scriptable Thread</dfn></span><a class="self-link" href="#scriptable-thread"></a></h4>
    <p>An abstract notion refers to any <a data-link-type="dfn" href="#threading-virtual-thread" id="ref-for-threading-virtual-thread⑦">virtual threads</a> that can be controlled or manipulated through <a data-link-type="dfn" href="#scripting-scripting" id="ref-for-scripting-scripting">scripting</a>, abstracting the <a data-link-type="dfn" href="#threading-threading-strategy" id="ref-for-threading-threading-strategy">threading strategy</a> away from <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer③">scripting developers</a>.</p>
    <h4 class="heading settled" data-level="3.3.2" id="main-thread-or-lynx-main-thread"><span class="secno">3.3.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Threading" data-dfn-type="dfn" data-noexport id="threading-main-thread">Main Thread</dfn> (or <dfn class="dfn-paneled" data-dfn-for="Threading" data-dfn-type="dfn" data-noexport id="threading-lynx-main-thread">Lynx Main Thread</dfn>)</span><a class="self-link" href="#main-thread-or-lynx-main-thread"></a></h4>
    <p>The <a data-link-type="dfn" href="#threading-scriptable-thread" id="ref-for-threading-scriptable-thread">scriptable thread</a> corresponds to any <a data-link-type="dfn" href="#threading-virtual-thread" id="ref-for-threading-virtual-thread⑧">virtual threads</a> that handles <a data-link-type="dfn" href="#threading-task" id="ref-for-threading-task①">tasks</a> that directly affect <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline②">pixel pipeline</a>. From a developer’s perspective, any <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script③">scripts</a> evaluated on this abstract thread can potentially block <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline③">pixel pipeline</a>.</p>
-   <p class="note" role="note"><span class="marker">Note:</span> Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer③">Lynx developers</a> In Lynx development, the “main thread” refers to the primary thread on which a Lynx page runs.
+   <p class="note" role="note"><span class="marker">Note:</span>
+Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer③">Lynx developers</a>
+In Lynx development, the “main thread” refers to the primary thread on which a Lynx page runs.
 The main thread is where Lynx processes user events and emit "paints". By default, the Lynx engine uses a single thread to run <a data-link-type="dfn" href="#scripting-main-thread-script" id="ref-for-scripting-main-thread-script">main thread scripts</a>, as well as to perform layout, paints, etc.. This means that long-running <a data-link-type="dfn" href="#scripting-main-thread-script" id="ref-for-scripting-main-thread-script①">main thread scripts</a> can block the thread, leading to an unresponsive page and a bad user experience.
 --- forked from https://developer.mozilla.org/en-US/docs/Glossary/Main_thread</p>
    <h4 class="heading settled" data-level="3.3.3" id="background-thread-aka-off-main-thread"><span class="secno">3.3.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Threading" data-dfn-type="dfn" data-noexport id="threading-background-thread">Background Thread</dfn> (a.k.a. <dfn class="dfn-paneled" data-dfn-for="Threading" data-dfn-type="dfn" data-noexport id="threading-off-main-thread">Off-Main-Thread</dfn>)</span><a class="self-link" href="#background-thread-aka-off-main-thread"></a></h4>
@@ -2524,27 +2555,45 @@ This model allows <a data-link-type="dfn" href="#lynx-scripting-developer" id="r
    <p>A kind of <a data-link-type="dfn" href="#scripting-scripting-engine" id="ref-for-scripting-scripting-engine">scripting engine</a> that can execute <a data-link-type="dfn" href="#scripting-javascript-script" id="ref-for-scripting-javascript-script">JavaScript script</a>.</p>
    <h4 class="heading settled" data-level="4.2.3" id="instances-of-scripting-engine"><span class="secno">4.2.3. </span><span class="content">Instances of Scripting Engine</span><a class="self-link" href="#instances-of-scripting-engine"></a></h4>
    <h5 class="heading settled" data-level="4.2.3.1" id="v8-javascript-core-quickjs-hermes-etc"><span class="secno">4.2.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-v8">V8</dfn>, <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-javascript-core">JavaScript Core</dfn>, <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="quickjs">QuickJS</dfn>, <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-hermes">Hermes</dfn>, etc.</span><a class="self-link" href="#v8-javascript-core-quickjs-hermes-etc"></a></h5>
-    These are some of the industry-acknowledged <a data-link-type="dfn" href="#scripting-javascript-engine" id="ref-for-scripting-javascript-engine">JavaScript engine</a>. 
+
+These are some of the industry-acknowledged <a data-link-type="dfn" href="#scripting-javascript-engine" id="ref-for-scripting-javascript-engine">JavaScript engine</a>.
+
+
    <h5 class="heading settled" data-level="4.2.3.2" id="primjs-vm"><span class="secno">4.2.3.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-primjs-vm">PrimJS VM</dfn></span><a class="self-link" href="#primjs-vm"></a></h5>
-    This is a <a data-link-type="dfn" href="#scripting-scripting-engine" id="ref-for-scripting-scripting-engine①">scripting engine</a> forked from QuickJS. 
+
+An [open-sourced](https://github.com/lynx-family/primjs) <a data-link-type="dfn" href="#scripting-scripting-engine" id="ref-for-scripting-scripting-engine①">scripting engine</a> designed specifically for Lynx.
+
+
    <h3 class="heading settled" data-level="4.3" id="javascript-ffi"><span class="secno">4.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-javascript-ffi">JavaScript FFI</dfn></span><a class="self-link" href="#javascript-ffi"></a></h3>
-    A foreign function interface (FFI) is a mechanism by which a program written in one programming language can call routines or make use of services written or compiled in another one.
-JavaScript FFI here refers to the mechanism by which JavaScript calls to Native. 
+
+A Foreign Function Interface (FFI) is a mechanism by which a program written in one programming language can call routines or make use of services written or compiled in another one.
+JavaScript FFI here refers to the mechanism by which JavaScript calls to Native.
+
+
    <h4 class="heading settled" data-level="4.3.1" id="node-api-or-n-api"><span class="secno">4.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-node-api">Node-API</dfn> (or <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-n-api">N-API</dfn>)</span><a class="self-link" href="#node-api-or-n-api"></a></h4>
-    Node-API (formerly N-API) is an API for building native Addons. It is independent from the underlying JavaScript runtime (for example, V8).
-Native developers can implement JavaScript FFI based on Node-API. 
+
+Node-API (formerly N-API) is an API for building native Addons. It is independent from the underlying JavaScript runtime (for example, V8).
+Native developers can implement JavaScript FFI based on Node-API.
+
+
    <h4 class="heading settled" data-level="4.3.2" id="javascript-interface-or-jsi"><span class="secno">4.3.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-javascript-interface">JavaScript Interface</dfn> (or <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-jsi">JSI</dfn>)</span><a class="self-link" href="#javascript-interface-or-jsi"></a></h4>
-    JavaScript Interface(JSI) is an interface that allows JavaScript to hold a reference to host platform object and vice-versa. Native developers can implement JavaScript FFI based on JSI. 
+
+JavaScript Interface(JSI) is an interface that allows JavaScript to hold a reference to host platform object and vice-versa. Native developers can implement JavaScript FFI based on JSI.
+
+
    <h4 class="heading settled" data-level="4.3.3" id="primjs-api-or-papi"><span class="secno">4.3.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-primjs-api">PrimJS API</dfn> (or <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-papi">PAPI</dfn>)</span><a class="self-link" href="#primjs-api-or-papi"></a></h4>
-    The PrimJS API is the API provided by PrimJS for native developers to implement JavaScript FFI.
+
+The PrimJS API is the API provided by PrimJS for native developers to implement JavaScript FFI.
 It offers a special HostRef that can be created and held at high performance.
 This HostRef is not an Object in JavaScript, and <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer⑥">scripting developers</a> cannot manipulate the HostRef directly; they can only pass it as a parameter to the FFI.
-   <h3 class="heading settled" data-level="4.4" id="scripting-runtime-enviroment"><span class="secno">4.4. </span><span class="content">Scripting Runtime Enviroment</span><a class="self-link" href="#scripting-runtime-enviroment"></a></h3>
-   <h4 class="heading settled" data-level="4.4.1" id="scripting-runtime-enviroment①"><span class="secno">4.4.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-scripting-runtime-enviroment">Scripting Runtime Enviroment</dfn></span><a class="self-link" href="#scripting-runtime-enviroment①"></a></h4>
-   <p>An abstract enviroment comprises a <a data-link-type="dfn" href="#scripting-scripting-engine" id="ref-for-scripting-scripting-engine②">scripting engine</a> that executes <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script⑦">scripts</a>, along with a series of APIs and libraries accessible to the <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script⑧">scripts</a>.</p>
+
+
+   <h3 class="heading settled" data-level="4.4" id="scripting-runtime-environment"><span class="secno">4.4. </span><span class="content">Scripting Runtime Environment</span><a class="self-link" href="#scripting-runtime-environment"></a></h3>
+   <h4 class="heading settled" data-level="4.4.1" id="scripting-runtime-environment①"><span class="secno">4.4.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-scripting-runtime-environment">Scripting Runtime Environment</dfn></span><a class="self-link" href="#scripting-runtime-environment①"></a></h4>
+   <p>An abstract environment comprises a <a data-link-type="dfn" href="#scripting-scripting-engine" id="ref-for-scripting-scripting-engine②">scripting engine</a> that executes <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script⑦">scripts</a>, along with a series of APIs and libraries accessible to the <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script⑧">scripts</a>.</p>
    <h4 class="heading settled" data-level="4.4.2" id="main-thread-scripting"><span class="secno">4.4.2. </span><span class="content">Main Thread Scripting</span><a class="self-link" href="#main-thread-scripting"></a></h4>
    <h5 class="heading settled" data-level="4.4.2.1" id="main-thread-runtime"><span class="secno">4.4.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-main-thread-runtime">Main Thread Runtime</dfn></span><a class="self-link" href="#main-thread-runtime"></a></h5>
-   <p>The <a data-link-type="dfn" href="#scripting-scripting-runtime-enviroment" id="ref-for-scripting-scripting-runtime-enviroment①">scripting runtime enviroment</a> used by the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread①">main thread</a>. It comprises of</p>
+   <p>The <a data-link-type="dfn" href="#scripting-scripting-runtime-environment" id="ref-for-scripting-scripting-runtime-environment①">scripting runtime environment</a> used by the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread①">main thread</a>. It comprises of</p>
    <ul>
     <li data-md>
      <p><a data-link-type="dfn" href="#scripting-primjs-vm" id="ref-for-scripting-primjs-vm">PrimJS VM</a>, and</p>
@@ -2562,7 +2611,7 @@ This HostRef is not an Object in JavaScript, and <a data-link-type="dfn" href="#
    </ol>
    <h4 class="heading settled" data-level="4.4.3" id="background-thread-scripting"><span class="secno">4.4.3. </span><span class="content">Background Thread Scripting</span><a class="self-link" href="#background-thread-scripting"></a></h4>
    <h5 class="heading settled" data-level="4.4.3.1" id="background-thread-runtime"><span class="secno">4.4.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-background-thread-runtime">Background Thread Runtime</dfn></span><a class="self-link" href="#background-thread-runtime"></a></h5>
-   <p>A <a data-link-type="dfn" href="#scripting-scripting-runtime-enviroment" id="ref-for-scripting-scripting-runtime-enviroment②">scripting runtime enviroment</a> comprises of</p>
+   <p>A <a data-link-type="dfn" href="#scripting-scripting-runtime-environment" id="ref-for-scripting-scripting-runtime-environment②">scripting runtime environment</a> comprises of</p>
    <ul>
     <li data-md>
      <p>An instance of <a data-link-type="dfn" href="#scripting-javascript-engine" id="ref-for-scripting-javascript-engine①">JavaScript engine</a>, and</p>
@@ -2576,28 +2625,59 @@ This HostRef is not an Object in JavaScript, and <a data-link-type="dfn" href="#
      <p>e.g. app-service.js, background.js, worker.js</p>
    </ul>
    <h3 class="heading settled" data-level="4.5" id="procedure-call-or-call"><span class="secno">4.5. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-procedure-call">Procedure Call</dfn> (or <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-call">Call</dfn>)</span><a class="self-link" href="#procedure-call-or-call"></a></h3>
-    In Lynx Engine, there are dual threads and dual <a data-link-type="dfn" href="#scripting-scripting-runtime-enviroment" id="ref-for-scripting-scripting-runtime-enviroment③">scripting runtime enviroment</a>. And there are FFI calls from Runtime to Native, as well as calls from Native to Runtime. These cross-environment or cross-thread calls are referred to as Procedure Call, or simply as Call. 
+
+In Lynx Engine, there are dual threads and dual <a data-link-type="dfn" href="#scripting-scripting-runtime-environment" id="ref-for-scripting-scripting-runtime-environment③">scripting runtime environment</a>. And there are FFI calls from Runtime to Native, as well as calls from Native to Runtime. These cross-environment or cross-thread calls are referred to as Procedure Call, or simply as Call.
+
+
    <h4 class="heading settled" data-level="4.5.1" id="sync-call"><span class="secno">4.5.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-sync-call">Sync Call</dfn></span><a class="self-link" href="#sync-call"></a></h4>
-    Sync call specifically refers to cross-environment <a data-link-type="dfn" href="#scripting-call" id="ref-for-scripting-call">calls</a> that occur in the same thread, including calls from runtime to native and from native to runtime. 
+
+Sync call specifically refers to cross-environment <a data-link-type="dfn" href="#scripting-call" id="ref-for-scripting-call">calls</a> that occur in the same thread, including calls from runtime to native and from native to runtime.
+
+
    <h4 class="heading settled" data-level="4.5.2" id="inter-thread-call-or-itc"><span class="secno">4.5.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-inter-thread-call">Inter Thread Call</dfn> (or <dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-itc">ITC</dfn>)</span><a class="self-link" href="#inter-thread-call-or-itc"></a></h4>
-    Inter Thread Call refers to <a data-link-type="dfn" href="#scripting-call" id="ref-for-scripting-call①">calls</a> between threads, including cross-thread calls between native and native, between runtime and native, between runtime and runtime. 
+
+Inter Thread Call refers to <a data-link-type="dfn" href="#scripting-call" id="ref-for-scripting-call①">calls</a> between threads, including cross-thread calls between native and native, between runtime and native, between runtime and runtime.
+
+
    <h3 class="heading settled" data-level="4.6" id="native-module"><span class="secno">4.6. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-native-module">Native Module</dfn></span><a class="self-link" href="#native-module"></a></h3>
    <p>Native Module is a host object implemented in the background thread runtime based on <a data-link-type="dfn" href="#scripting-node-api" id="ref-for-scripting-node-api">Node-API</a> or <a data-link-type="dfn" href="#scripting-jsi" id="ref-for-scripting-jsi">JSI</a>.
 Native developers can register host platform capabilities to Native Module, which allows <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer⑦">scripting developers</a> to <a data-link-type="dfn" href="#scripting-call" id="ref-for-scripting-call②">call</a> host platform capabilities in the background thread runtime.</p>
    <h3 class="heading settled" data-level="4.7" id="worker"><span class="secno">4.7. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Scripting" data-dfn-type="dfn" data-noexport id="scripting-worker">Worker</dfn></span><a class="self-link" href="#worker"></a></h3>
-    Similar to the worker in W3C. 
+
+Similar to the worker in W3C.
+
+
+
+
    <h2 class="heading settled" data-level="5" id="pipeline"><span class="secno">5. </span><span class="content">Pipeline</span><a class="self-link" href="#pipeline"></a></h2>
    <h3 class="heading settled" data-level="5.1" id="introduction①"><span class="secno">5.1. </span><span class="content">Introduction</span><a class="self-link" href="#introduction①"></a></h3>
-    During the <a data-link-type="dfn" href="#frameworkrendering-first-screen-rendering" id="ref-for-frameworkrendering-first-screen-rendering">first-screen rendering</a>, the <a data-link-type="dfn" href="#commoninfrastructure-lynx-pipeline" id="ref-for-commoninfrastructure-lynx-pipeline②">lynx pipeline</a> includes four parts: load, parse, <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering①">framework rendering</a>, and <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline⑥">pixel pipeline</a>.
-In the case of <a data-link-type="dfn" href="#frameworkrendering-re-rendering" id="ref-for-frameworkrendering-re-rendering">re-rendering</a>, the lynx pipeline consists of two parts: <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering②">framework rendering</a> and <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline⑦">pixel pipeline</a>. 
+
+During the <a data-link-type="dfn" href="#frameworkrendering-first-screen-rendering" id="ref-for-frameworkrendering-first-screen-rendering">first-screen rendering</a>, the <a data-link-type="dfn" href="#commoninfrastructure-lynx-pipeline" id="ref-for-commoninfrastructure-lynx-pipeline②">lynx pipeline</a> includes four parts: load, parse, <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering①">framework rendering</a>, and <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline⑥">pixel pipeline</a>.
+In the case of <a data-link-type="dfn" href="#frameworkrendering-re-rendering" id="ref-for-frameworkrendering-re-rendering">re-rendering</a>, the lynx pipeline consists of two parts: <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering②">framework rendering</a> and <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline⑦">pixel pipeline</a>.
+
+
    <h4 class="heading settled" data-level="5.1.1" id="load"><span class="secno">5.1.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Pipeline" data-dfn-type="dfn" data-noexport id="pipeline-load">Load</dfn></span><a class="self-link" href="#load"></a></h4>
-    Load refers to the process of requesting the <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle⑥">bundle</a> during the <a data-link-type="dfn" href="#frameworkrendering-first-screen-rendering" id="ref-for-frameworkrendering-first-screen-rendering①">first-screen rendering</a>. 
+
+Load refers to the process of requesting the <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle⑥">bundle</a> during the <a data-link-type="dfn" href="#frameworkrendering-first-screen-rendering" id="ref-for-frameworkrendering-first-screen-rendering①">first-screen rendering</a>.
+
+
    <h4 class="heading settled" data-level="5.1.2" id="parse"><span class="secno">5.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Pipeline" data-dfn-type="dfn" data-noexport id="pipeline-parse">Parse</dfn></span><a class="self-link" href="#parse"></a></h4>
-    Parsing <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle⑦">bundle</a> such that can be directly consumed in the subsequent pipeline process. 
+
+Parsing <a data-link-type="dfn" href="#commoninfrastructure-bundle" id="ref-for-commoninfrastructure-bundle⑦">bundle</a> such that can be directly consumed in the subsequent pipeline process.
+
+
    <h4 class="heading settled" data-level="5.1.3" id="framework-rendering"><span class="secno">5.1.3. </span><span class="content">Framework Rendering</span><a class="self-link" href="#framework-rendering"></a></h4>
-    As described in <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering③">framework rendering</a>. 
+
+As described in <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering③">framework rendering</a>.
+
+
    <h4 class="heading settled" data-level="5.1.4" id="pixel-pipeline"><span class="secno">5.1.4. </span><span class="content">Pixel Pipeline</span><a class="self-link" href="#pixel-pipeline"></a></h4>
-    As described in <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline⑧">pixel pipeline</a>. 
+
+As described in <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline⑧">pixel pipeline</a>.
+
+
+
+
    <h2 class="heading settled" data-level="6" id="framework-and-rendering"><span class="secno">6. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-framework-and-rendering">Framework and Rendering</dfn></span><a class="self-link" href="#framework-and-rendering"></a></h2>
    <h3 class="heading settled" data-level="6.1" id="framework-and-dsl"><span class="secno">6.1. </span><span class="content">Framework and DSL</span><a class="self-link" href="#framework-and-dsl"></a></h3>
    <h4 class="heading settled" data-level="6.1.1" id="dsl-domain-specific-language"><span class="secno">6.1.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-dsl">DSL</dfn> (<dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-domain-specific-language">Domain-specific Language</dfn>)</span><a class="self-link" href="#dsl-domain-specific-language"></a></h4>
@@ -2611,13 +2691,19 @@ The implementation of <a data-link-type="dfn" href="#frameworkrendering-framewor
    <p>The act of executing the <a data-link-type="dfn" href="#commoninfrastructure-lynx-pipeline" id="ref-for-commoninfrastructure-lynx-pipeline③">lynx pipeline</a>. When used alone, it typically refers to <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering④">framework rendering</a> because the pipeline almost always starts with it.</p>
    <h4 class="heading settled" data-level="6.2.2" id="framework-rendering①"><span class="secno">6.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-framework-rendering">Framework Rendering</dfn></span><a class="self-link" href="#framework-rendering①"></a></h4>
    <p>The process within the <a data-link-type="dfn" href="#frameworkrendering-framework" id="ref-for-frameworkrendering-framework⑨">framework</a> where the application <a data-link-type="dfn" href="#scripting-scripting" id="ref-for-scripting-scripting②">scripts</a> are evaluated to create and synchronize its internal representation of the UI, often represented as <a data-link-type="dfn" href="#elementscomponents-component" id="ref-for-elementscomponents-component②">components</a>, with the actual <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree①">element tree</a> in the <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine④">engine</a> through element manipulation.</p>
-   <p style="justify-content:center;align-items:center;display:flex;"> <img alt="rendering" height="80%" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/spec/rendering.png" width="80%"> </p>
+   <p style="justify-content:center;align-items:center;display:flex;">
+    <img alt="rendering" height="80%" src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/spec/rendering.png" width="80%">
+</p>
    <h4 class="heading settled" data-level="6.2.3" id="main-thread-rendering"><span class="secno">6.2.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-main-thread-rendering">Main Thread Rendering</dfn></span><a class="self-link" href="#main-thread-rendering"></a></h4>
    <p>The type of <a data-link-type="dfn" href="#frameworkrendering-rendering" id="ref-for-frameworkrendering-rendering">rendering</a> where both <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering⑤">framework rendering</a> and <a data-link-type="dfn" href="#enginepixeling-pixeling" id="ref-for-enginepixeling-pixeling②">pixeling</a> occur on the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread②">main thread</a>.</p>
-   <p class="note" role="note"><span class="marker">Note:</span> Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer⑤">Lynx developers</a> This approach allows synchronous UI updates, with the risks that long <a data-link-type="dfn" href="#scripting-scripting" id="ref-for-scripting-scripting③">scripting</a> tasks may block the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread③">main thread</a>, causing the UI to be unresponsive.</p>
+   <p class="note" role="note"><span class="marker">Note:</span>
+Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer⑤">Lynx developers</a>
+This approach allows synchronous UI updates, with the risks that long <a data-link-type="dfn" href="#scripting-scripting" id="ref-for-scripting-scripting③">scripting</a> tasks may block the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread③">main thread</a>, causing the UI to be unresponsive.</p>
    <h4 class="heading settled" data-level="6.2.4" id="background-driven-rendering"><span class="secno">6.2.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-background-driven-rendering">Background-driven Rendering</dfn></span><a class="self-link" href="#background-driven-rendering"></a></h4>
    <p>The type of <a data-link-type="dfn" href="#frameworkrendering-rendering" id="ref-for-frameworkrendering-rendering①">rendering</a> where the <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering⑥">framework rendering</a> is initiated (and primarily executed) on a <a data-link-type="dfn" href="#threading-background-thread" id="ref-for-threading-background-thread①">background thread</a>, then transferred to the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread④">main thread</a> to complete the <a data-link-type="dfn" href="#enginepixeling-pixeling" id="ref-for-enginepixeling-pixeling③">pixeling</a>.</p>
-   <p class="note" role="note"><span class="marker">Note:</span> Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer⑥">Lynx developers</a> This approach can improve the responsiveness of the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread⑤">main thread</a> by utilizing parallelism and offloading heavy <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering⑦">framework rendering</a> tasks to <a data-link-type="dfn" href="#threading-background-thread" id="ref-for-threading-background-thread②">background thread</a>, but can introduce potential latency in UI updates.</p>
+   <p class="note" role="note"><span class="marker">Note:</span>
+Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer⑥">Lynx developers</a>
+This approach can improve the responsiveness of the <a data-link-type="dfn" href="#threading-main-thread" id="ref-for-threading-main-thread⑤">main thread</a> by utilizing parallelism and offloading heavy <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering⑦">framework rendering</a> tasks to <a data-link-type="dfn" href="#threading-background-thread" id="ref-for-threading-background-thread②">background thread</a>, but can introduce potential latency in UI updates.</p>
    <h4 class="heading settled" data-level="6.2.5" id="first-screen-rendering-or-fsr"><span class="secno">6.2.5. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-first-screen-rendering">First-screen Rendering</dfn> (or <dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-fsr">FSR</dfn>)</span><a class="self-link" href="#first-screen-rendering-or-fsr"></a></h4>
    <p>A special type of <a data-link-type="dfn" href="#frameworkrendering-main-thread-rendering" id="ref-for-frameworkrendering-main-thread-rendering">main thread rendering</a> occurs during the load of Lynx <a data-link-type="dfn" href="#commoninfrastructure-app" id="ref-for-commoninfrastructure-app⑦">apps</a> to improve the first load experience.</p>
    <h4 class="heading settled" data-level="6.2.6" id="re-rendering"><span class="secno">6.2.6. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="FrameworkRendering" data-dfn-type="dfn" data-noexport id="frameworkrendering-re-rendering">Re-rendering</dfn></span><a class="self-link" href="#re-rendering"></a></h4>
@@ -2647,129 +2733,273 @@ Technically,</p>
     <li data-md>
      <p>It’s also responsible for integrating with other native extensions (e.g. custom elements) developed by <a data-link-type="dfn" href="#lynx-native-developer" id="ref-for-lynx-native-developer①">native developers</a>.</p>
    </ul>
-   <p class="note" role="note"><span class="marker">Note:</span> Implementors' Note:
+   <p class="note" role="note"><span class="marker">Note:</span>
+Implementors' Note:
 By being native-coupled, it means that a <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script①④">script</a> has direct, unprotected access to native code through unstable scripting environment bindings (e.g. those defined in lynx.cc, lynx_app.cc), meaning changes to native code may break the interaction with those <a data-link-type="dfn" href="#scripting-script" id="ref-for-scripting-script①⑤">scripts</a>. Therefore, they often need to be updated together to ensure runtime safety.</p>
    <h4 class="heading settled" data-level="7.1.2" id="engine-ffi"><span class="secno">7.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-engine-ffi">Engine FFI</dfn></span><a class="self-link" href="#engine-ffi"></a></h4>
-    Engine FFI refers to all the <a data-link-type="dfn" href="#scripting-javascript-ffi" id="ref-for-scripting-javascript-ffi">JavaScript FFI</a> provided by <a data-link-type="dfn" href="#scripting-node-api" id="ref-for-scripting-node-api①">Node-API</a>, <a data-link-type="dfn" href="#scripting-jsi" id="ref-for-scripting-jsi①">JSI</a>, and <a data-link-type="dfn" href="#scripting-papi" id="ref-for-scripting-papi">PAPI</a> in the <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine⑤">engine</a>. 
+
+Engine FFI refers to all the <a data-link-type="dfn" href="#scripting-javascript-ffi" id="ref-for-scripting-javascript-ffi">JavaScript FFI</a> provided by <a data-link-type="dfn" href="#scripting-node-api" id="ref-for-scripting-node-api①">Node-API</a>, <a data-link-type="dfn" href="#scripting-jsi" id="ref-for-scripting-jsi①">JSI</a>, and <a data-link-type="dfn" href="#scripting-papi" id="ref-for-scripting-papi">PAPI</a> in the <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine⑤">engine</a>.
+
+
    <h4 class="heading settled" data-level="7.1.3" id="pixeling"><span class="secno">7.1.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-pixeling">Pixeling</dfn></span><a class="self-link" href="#pixeling"></a></h4>
-    The act of executing the pixel pipeline. Try making changes within the bundle’s structures, such as the modifications to the <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree②">element tree</a>, known as element manipulation.
+
+The act of executing the pixel pipeline. Try making changes within the bundle’s structures, such as the modifications to the <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree②">element tree</a>, known as element manipulation.
+
+
    <h4 class="heading settled" data-level="7.1.4" id="pixel-pipeline①"><span class="secno">7.1.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-pixel-pipeline">Pixel Pipeline</dfn></span><a class="self-link" href="#pixel-pipeline①"></a></h4>
    <p>At a high-level, this is the main process of the <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine⑥">engine</a>.
 It’s where the Lynx engine processes <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree③">element tree</a> into pixels that are displayed on the users' screen.</p>
    <h3 class="heading settled" data-level="7.2" id="pixel-pipeline②"><span class="secno">7.2. </span><span class="content"><a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline①⓪">Pixel Pipeline</a></span><a class="self-link" href="#pixel-pipeline②"></a></h3>
-    The Pixel Pipeline consists of the following stages. 
+
+The Pixel Pipeline consists of the following stages.
+
+
    <h4 class="heading settled" data-level="7.2.1" id="resolve"><span class="secno">7.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-resolve">Resolve</dfn></span><a class="self-link" href="#resolve"></a></h4>
-    At this stage, the <a data-link-type="dfn" href="#elementscomponents-computed-style" id="ref-for-elementscomponents-computed-style">computed style</a> and <a data-link-type="dfn" href="#elementscomponents-prop-bundle" id="ref-for-elementscomponents-prop-bundle">prop bundle</a> are generated based on the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①">element</a>’s <a data-link-type="dfn" href="#elementscomponents-attribute" id="ref-for-elementscomponents-attribute">attributes</a> and synchronized to the <a data-link-type="dfn" href="#elementscomponents-layout-node" id="ref-for-elementscomponents-layout-node">layout node</a>.
+
+At this stage, the <a data-link-type="dfn" href="#elementscomponents-computed-style" id="ref-for-elementscomponents-computed-style">computed style</a> and <a data-link-type="dfn" href="#elementscomponents-prop-bundle" id="ref-for-elementscomponents-prop-bundle">prop bundle</a> are generated based on the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①">element</a>’s <a data-link-type="dfn" href="#elementscomponents-attribute" id="ref-for-elementscomponents-attribute">attributes</a> and synchronized to the <a data-link-type="dfn" href="#elementscomponents-layout-node" id="ref-for-elementscomponents-layout-node">layout node</a>.
 Meanwhile, the <a data-link-type="dfn" href="#elementscomponents-layout-node-tree" id="ref-for-elementscomponents-layout-node-tree">layout node tree</a> may be created or modified, and <a data-link-type="dfn" href="#elementscomponents-ui-paint-op" id="ref-for-elementscomponents-ui-paint-op">UI paint ops</a> are emitted for rendering.
+
+
    <h5 class="heading settled" data-level="7.2.1.1" id="parallel-resolve"><span class="secno">7.2.1.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-parallel-resolve">Parallel Resolve</dfn></span><a class="self-link" href="#parallel-resolve"></a></h5>
-    Parallel resolve is a <a data-link-type="dfn" href="#enginepixeling-resolve" id="ref-for-enginepixeling-resolve">resolve</a> process such that the pixel pipeline will spilt resolve tasks into independent sub-tasks and executing the tasks in parallel on multiple threads. 
+
+Parallel resolve is a <a data-link-type="dfn" href="#enginepixeling-resolve" id="ref-for-enginepixeling-resolve">resolve</a> process such that the pixel pipeline will spilt resolve tasks into independent sub-tasks and executing the tasks in parallel on multiple threads.
+
+
    <h5 class="heading settled" data-level="7.2.1.2" id="serial-resolve"><span class="secno">7.2.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-serial-resolve">Serial Resolve</dfn></span><a class="self-link" href="#serial-resolve"></a></h5>
-    In contrast, Serial resolve is a <a data-link-type="dfn" href="#enginepixeling-resolve" id="ref-for-enginepixeling-resolve①">resolve</a> process where all resolve tasks are executed on a single thread. 
+
+In contrast, Serial resolve is a <a data-link-type="dfn" href="#enginepixeling-resolve" id="ref-for-enginepixeling-resolve①">resolve</a> process where all resolve tasks are executed on a single thread.
+
+
    <h4 class="heading settled" data-level="7.2.2" id="layout"><span class="secno">7.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-layout">Layout</dfn></span><a class="self-link" href="#layout"></a></h4>
-    This stage is based on <a data-link-type="dfn" href="#elementscomponents-layout-node-tree" id="ref-for-elementscomponents-layout-node-tree①">layout node tree</a> to complete the layout process, and finally synchronize the layout results to element. Element adjusts the layout results and generate <a data-link-type="dfn" href="#elementscomponents-ui-layout-op" id="ref-for-elementscomponents-ui-layout-op">UI layout op</a>. 
+
+This stage is based on <a data-link-type="dfn" href="#elementscomponents-layout-node-tree" id="ref-for-elementscomponents-layout-node-tree①">layout node tree</a> to complete the layout process, and finally synchronize the layout results to element. Element adjusts the layout results and generate <a data-link-type="dfn" href="#elementscomponents-ui-layout-op" id="ref-for-elementscomponents-ui-layout-op">UI layout op</a>.
+
+
    <h4 class="heading settled" data-level="7.2.3" id="execute-ui-op"><span class="secno">7.2.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-execute-ui-op">Execute UI OP</dfn></span><a class="self-link" href="#execute-ui-op"></a></h4>
    <h5 class="heading settled" data-level="7.2.3.1" id="execute-ui-paint-op"><span class="secno">7.2.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-execute-ui-paint-op">Execute UI Paint OP</dfn></span><a class="self-link" href="#execute-ui-paint-op"></a></h5>
-    Execute the <a data-link-type="dfn" href="#elementscomponents-ui-paint-op" id="ref-for-elementscomponents-ui-paint-op①">UI Paint OP</a> generated during the pre-order stages. 
+
+Execute the <a data-link-type="dfn" href="#elementscomponents-ui-paint-op" id="ref-for-elementscomponents-ui-paint-op①">UI Paint OP</a> generated during the pre-order stages.
+
+
    <h5 class="heading settled" data-level="7.2.3.2" id="execute-ui-layout-op"><span class="secno">7.2.3.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-execute-ui-layout-op">Execute UI Layout OP</dfn></span><a class="self-link" href="#execute-ui-layout-op"></a></h5>
-    Execute the <a data-link-type="dfn" href="#elementscomponents-ui-layout-op" id="ref-for-elementscomponents-ui-layout-op①">UI Layout OP</a> generated during the pre-order stages. 
+
+Execute the <a data-link-type="dfn" href="#elementscomponents-ui-layout-op" id="ref-for-elementscomponents-ui-layout-op①">UI Layout OP</a> generated during the pre-order stages.
+
+
    <h4 class="heading settled" data-level="7.2.4" id="paint"><span class="secno">7.2.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="EnginePixeling" data-dfn-type="dfn" data-noexport id="enginepixeling-paint">Paint</dfn></span><a class="self-link" href="#paint"></a></h4>
-    Based on <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui">platform UI</a> and <a data-link-type="dfn" href="#elementscomponents-platform-ui-tree" id="ref-for-elementscomponents-platform-ui-tree">platform UI Tree</a>, complete the final pixeling. 
+
+Based on <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui">platform UI</a> and <a data-link-type="dfn" href="#elementscomponents-platform-ui-tree" id="ref-for-elementscomponents-platform-ui-tree">platform UI Tree</a>, complete the final pixeling.
+
+
+
+
    <h2 class="heading settled" data-level="8" id="element-layout-node-and-platform-ui"><span class="secno">8. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-layout-node-and-platform-ui">Element, Layout Node and Platform UI</dfn></span><a class="self-link" href="#element-layout-node-and-platform-ui"></a></h2>
    <h3 class="heading settled" data-level="8.1" id="definition②"><span class="secno">8.1. </span><span class="content">Definition</span><a class="self-link" href="#definition②"></a></h3>
    <h4 class="heading settled" data-level="8.1.1" id="element-tag"><span class="secno">8.1.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-tag">Element Tag</dfn></span><a class="self-link" href="#element-tag"></a></h4>
-    An element tag is an abstraction notion, which is a static markup structure in <a data-link-type="dfn" href="#frameworkrendering-dsl" id="ref-for-frameworkrendering-dsl⑤">DSL</a>,
+
+An element tag is an abstraction notion, which is a static markup structure in <a data-link-type="dfn" href="#frameworkrendering-dsl" id="ref-for-frameworkrendering-dsl⑤">DSL</a>,
 composed of tags wrapped in angle brackets (such as &lt;view>),
-used to describe the structure and semantics of the <a data-link-type="dfn" href="https://w3c.github.io/miniapp-manifest/#dfn-pages" id="ref-for-dfn-pages①">page</a>. 
+used to describe the structure and semantics of the <a data-link-type="dfn" href="#commoninfrastructure-page" id="ref-for-commoninfrastructure-page①">page</a>.
+
+
    <h4 class="heading settled" data-level="8.1.2" id="element"><span class="secno">8.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element">Element</dfn></span><a class="self-link" href="#element"></a></h4>
-    Element is implemented natively on the host platform.
+
+Element is implemented natively on the host platform.
 It is a native object created during the <a data-link-type="dfn" href="#frameworkrendering-framework-rendering" id="ref-for-frameworkrendering-framework-rendering⑧">Framework Rendering</a> phase,
 consisting of nodes (Node) that form a tree structure
-and provide an interface for script access to and manipulation of <a data-link-type="dfn" href="https://w3c.github.io/miniapp-manifest/#dfn-pages" id="ref-for-dfn-pages②">page</a> content. 
+and provide an interface for script access to and manipulation of <a data-link-type="dfn" href="#commoninfrastructure-page" id="ref-for-commoninfrastructure-page②">page</a> content.
+
+
    <h4 class="heading settled" data-level="8.1.3" id="component"><span class="secno">8.1.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-component">Component</dfn></span><a class="self-link" href="#component"></a></h4>
-    An abstraction notion describing reusable, encapsulated pieces of UI that can be defined upon <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element②">elements</a>. <a data-link-type="dfn" href="#elementscomponents-component" id="ref-for-elementscomponents-component⑥">Components</a> are almost always implemented in <a data-link-type="dfn" href="#frameworkrendering-dsl" id="ref-for-frameworkrendering-dsl⑥">DSL</a>-specific <a data-link-type="dfn" href="#scripting-scripting" id="ref-for-scripting-scripting④">scripting</a>. 
+
+An abstraction notion describing reusable, encapsulated pieces of UI that can be defined upon <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element②">elements</a>.
+<a data-link-type="dfn" href="#elementscomponents-component" id="ref-for-elementscomponents-component⑥">Components</a> are almost always implemented in <a data-link-type="dfn" href="#frameworkrendering-dsl" id="ref-for-frameworkrendering-dsl⑥">DSL</a>-specific <a data-link-type="dfn" href="#scripting-scripting" id="ref-for-scripting-scripting④">scripting</a>.
+
+
    <h4 class="heading settled" data-level="8.1.4" id="layout-node"><span class="secno">8.1.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-layout-node">Layout Node</dfn></span><a class="self-link" href="#layout-node"></a></h4>
-    Layout Node is a node which holds the <a data-link-type="dfn" href="#elementscomponents-layout-related-computed-style" id="ref-for-elementscomponents-layout-related-computed-style">layout related computed style</a>.
+
+Layout Node is a node which holds the <a data-link-type="dfn" href="#elementscomponents-layout-related-computed-style" id="ref-for-elementscomponents-layout-related-computed-style">layout related computed style</a>.
 It converts the layout related computed style into data that layout engine can consume.
+
+
    <h4 class="heading settled" data-level="8.1.5" id="platform-ui"><span class="secno">8.1.5. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-ui">Platform UI</dfn></span><a class="self-link" href="#platform-ui"></a></h4>
-    The Platform UI is the platform-level node used to carry the paint and layout result.
-In the subsequent paint phase, platform UI will use this result to complete the pixeling. 
+
+The Platform UI is the platform-level node used to carry the paint and layout result.
+In the subsequent paint phase, platform UI will use this result to complete the pixeling.
+
+
    <h3 class="heading settled" data-level="8.2" id="element①"><span class="secno">8.2. </span><span class="content">Element</span><a class="self-link" href="#element①"></a></h3>
    <h4 class="heading settled" data-level="8.2.1" id="built-in-element"><span class="secno">8.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-built-in-element">Built-in Element</dfn></span><a class="self-link" href="#built-in-element"></a></h4>
    <p><a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element③">Elements</a> available to <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer⑧">scripting developers</a> without any extra configurations, such as &lt;page/>, &lt;view/>, &lt;image/>.</p>
    <h4 class="heading settled" data-level="8.2.2" id="custom-element"><span class="secno">8.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-custom-element">Custom Element</dfn></span><a class="self-link" href="#custom-element"></a></h4>
    <p><a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element④">Elements</a> available to <a data-link-type="dfn" href="#lynx-scripting-developer" id="ref-for-lynx-scripting-developer⑨">scripting developers</a> usually after manual installation.</p>
    <h4 class="heading settled" data-level="8.2.3" id="element-tree"><span class="secno">8.2.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-tree">Element Tree</dfn></span><a class="self-link" href="#element-tree"></a></h4>
-    Element tree is a multi-branch tree composed of <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑤">elements</a>. 
+
+Element tree is a multi-branch tree composed of <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑤">elements</a>.
+
+
    <h4 class="heading settled" data-level="8.2.4" id="element-attribute-or-attribute"><span class="secno">8.2.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-attribute">Element Attribute</dfn> (or <dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-attribute">Attribute</dfn>)</span><a class="self-link" href="#element-attribute-or-attribute"></a></h4>
-    Attribute refers to all properties asigned to <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑥">element</a>. 
+
+Attribute refers to all properties asigned to <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑥">element</a>.
+
+
    <h5 class="heading settled" data-level="8.2.4.1" id="selector"><span class="secno">8.2.4.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-selector">Selector</dfn></span><a class="self-link" href="#selector"></a></h5>
-    Selectors, similar to web css selectors, currently include <a data-link-type="dfn" href="#elementscomponents-tag-selector" id="ref-for-elementscomponents-tag-selector">tag selector</a>, <a data-link-type="dfn" href="#elementscomponents-id-selector" id="ref-for-elementscomponents-id-selector">id selector</a>, and <a data-link-type="dfn" href="#elementscomponents-class-selector" id="ref-for-elementscomponents-class-selector">class selector</a>. 
+
+Selectors, similar to web css selectors, currently include <a data-link-type="dfn" href="#elementscomponents-tag-selector" id="ref-for-elementscomponents-tag-selector">tag selector</a>, <a data-link-type="dfn" href="#elementscomponents-id-selector" id="ref-for-elementscomponents-id-selector">id selector</a>, and <a data-link-type="dfn" href="#elementscomponents-class-selector" id="ref-for-elementscomponents-class-selector">class selector</a>.
+
+
    <h5 class="heading settled" data-level="8.2.4.2" id="id-selector"><span class="secno">8.2.4.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-id-selector">ID Selector</dfn></span><a class="self-link" href="#id-selector"></a></h5>
-    An id selector matches an element based on the content of that element’s id property. For an element to be selected, its id property must exactly match the value given in the selector. 
+
+An id selector matches an element based on the content of that element’s id property. For an element to be selected, its id property must exactly match the value given in the selector.
+
+
    <h5 class="heading settled" data-level="8.2.4.3" id="tag-selector"><span class="secno">8.2.4.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-tag-selector">Tag Selector</dfn></span><a class="self-link" href="#tag-selector"></a></h5>
-    Tag selector matches an element based on the content of that element’s name. For an element to be selected, its name must exactly match the value given in the selector. 
+
+Tag selector matches an element based on the content of that element’s name. For an element to be selected, its name must exactly match the value given in the selector.
+
+
    <h5 class="heading settled" data-level="8.2.4.4" id="class-selector"><span class="secno">8.2.4.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-class-selector">Class Selector</dfn></span><a class="self-link" href="#class-selector"></a></h5>
-    Class selector matches elements based on the contents of their class property. 
+
+Class selector matches elements based on the contents of their class property.
+
+
    <h5 class="heading settled" data-level="8.2.4.5" id="inline-style"><span class="secno">8.2.4.5. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-inline-style">Inline Style</dfn></span><a class="self-link" href="#inline-style"></a></h5>
-    Inline style is used to get as well as set the style property of an element with <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi①">Element PAPI</a>. 
+
+Inline style is used to get as well as set the style property of an element with <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi①">Element PAPI</a>.
+
+
    <h5 class="heading settled" data-level="8.2.4.6" id="dataset"><span class="secno">8.2.4.6. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-dataset">Dataset</dfn></span><a class="self-link" href="#dataset"></a></h5>
-    The dataset property of the element provides read/write access to custom data property (data-*) on elements with <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi②">Element PAPI</a>. 
+
+The dataset property of the element provides read/write access to custom data property (data-*) on elements with <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi②">Element PAPI</a>.
+
+
    <h5 class="heading settled" data-level="8.2.4.7" id="event-listener"><span class="secno">8.2.4.7. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-event-listener">Event Listener</dfn></span><a class="self-link" href="#event-listener"></a></h5>
-    The event listener property of the element provides add/remove access to event listener property (bind/catch*) on elements with <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi③">Element PAPI</a>. 
+
+The event listener property of the element provides add/remove access to event listener property (bind/catch*) on elements with <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi③">Element PAPI</a>.
+
+
    <h4 class="heading settled" data-level="8.2.5" id="element-tree-operation"><span class="secno">8.2.5. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-tree-operation">Element Tree Operation</dfn></span><a class="self-link" href="#element-tree-operation"></a></h4>
-    Element Tree Operation refers to various operations on an <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree④">element tree</a>. 
+
+Element Tree Operation refers to various operations on an <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree④">element tree</a>.
+
+
    <h5 class="heading settled" data-level="8.2.5.1" id="element-tree-mutation"><span class="secno">8.2.5.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-tree-mutation">Element Tree Mutation</dfn></span><a class="self-link" href="#element-tree-mutation"></a></h5>
-    Element Tree Mutation refers to <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation">element tree operations</a> that insert, delete, or replace <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑦">elements</a> within the <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree⑤">element tree</a>. 
+
+Element Tree Mutation refers to <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation">element tree operations</a> that insert, delete, or replace <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑦">elements</a> within the <a data-link-type="dfn" href="#elementscomponents-element-tree" id="ref-for-elementscomponents-element-tree⑤">element tree</a>.
+
+
    <h5 class="heading settled" data-level="8.2.5.2" id="selector-query"><span class="secno">8.2.5.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-selector-query">Selector Query</dfn></span><a class="self-link" href="#selector-query"></a></h5>
-    Selector Query is a type of <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation①">element tree operation</a>,
-which will perform a method steps which are to return the first result or all results of running scope-match a specific <a data-link-type="dfn" href="#elementscomponents-selector" id="ref-for-elementscomponents-selector">selector</a> or <a data-link-type="dfn" href="#elementscomponents-attribute" id="ref-for-elementscomponents-attribute①">attribute</a> against the target <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑧">element</a>. 
+
+Selector Query is a type of <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation①">element tree operation</a>,
+which will perform a method steps which are to return the first result or all results of running scope-match a specific <a data-link-type="dfn" href="#elementscomponents-selector" id="ref-for-elementscomponents-selector">selector</a> or <a data-link-type="dfn" href="#elementscomponents-attribute" id="ref-for-elementscomponents-attribute①">attribute</a> against the target <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑧">element</a>.
+
+
    <h4 class="heading settled" data-level="8.2.6" id="element-operation"><span class="secno">8.2.6. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-operation">Element Operation</dfn></span><a class="self-link" href="#element-operation"></a></h4>
-    Element Tree Operation refers to various operations on an element. 
+
+Element Tree Operation refers to various operations on an element.
+
+
    <h5 class="heading settled" data-level="8.2.6.1" id="element-mutation"><span class="secno">8.2.6.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-mutation">Element Mutation</dfn></span><a class="self-link" href="#element-mutation"></a></h5>
-    Element Tree Mutation refers to <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation②">element tree operations</a> that set, get <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑨">element</a>’s attribute within the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①⓪">element</a>. 
+
+Element Tree Mutation refers to <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation②">element tree operations</a> that set, get <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element⑨">element</a>’s attribute within the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①⓪">element</a>.
+
+
    <h5 class="heading settled" data-level="8.2.6.2" id="element-method"><span class="secno">8.2.6.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-method">Element Method</dfn></span><a class="self-link" href="#element-method"></a></h5>
-    Element Method refers to the methods provided by the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①①">element</a> that can be used to retrieve information about the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①②">element</a> or manipulate the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①③">element</a>, such as boundingClientRect, animate, and other methods. 
+
+Element Method refers to the methods provided by the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①①">element</a> that can be used to retrieve information about the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①②">element</a> or manipulate the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①③">element</a>, such as boundingClientRect, animate, and other methods.
+
+
    <h4 class="heading settled" data-level="8.2.7" id="element-related-api"><span class="secno">8.2.7. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-related-api">Element Related API</dfn></span><a class="self-link" href="#element-related-api"></a></h4>
    <h5 class="heading settled" data-level="8.2.7.1" id="element-papi"><span class="secno">8.2.7.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-papi">Element PAPI</dfn></span><a class="self-link" href="#element-papi"></a></h5>
-    The <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts">MTS</a> environment exposes APIs based on <a data-link-type="dfn" href="#scripting-papi" id="ref-for-scripting-papi①">PAPI</a> to <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer①">scripting framework developers</a>. Using these APIs, the developers can perform <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation③">element tree operations</a> and <a data-link-type="dfn" href="#elementscomponents-element-operation" id="ref-for-elementscomponents-element-operation">element operations</a>.
+
+The <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts">MTS</a> environment exposes APIs based on <a data-link-type="dfn" href="#scripting-papi" id="ref-for-scripting-papi①">PAPI</a> to <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer①">scripting framework developers</a>. Using these APIs, the developers can perform <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation③">element tree operations</a> and <a data-link-type="dfn" href="#elementscomponents-element-operation" id="ref-for-elementscomponents-element-operation">element operations</a>.
+
+
    <h5 class="heading settled" data-level="8.2.7.2" id="element-object-model-or-eom"><span class="secno">8.2.7.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-object-model">Element Object Model</dfn> (or <dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-eom">EOM</dfn>)</span><a class="self-link" href="#element-object-model-or-eom"></a></h5>
-    EOM is the Object Model encapsulated based on <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi④">Element PAPI</a> exposed to <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer②">scripting framework developers</a> in the <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts①">MTS</a> environment. Based on EOM, developers can perform <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation④">element tree operations</a> and <a data-link-type="dfn" href="#elementscomponents-element-operation" id="ref-for-elementscomponents-element-operation①">element operations</a>.
+
+EOM is the Object Model encapsulated based on <a data-link-type="dfn" href="#elementscomponents-element-papi" id="ref-for-elementscomponents-element-papi④">Element PAPI</a> exposed to <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer②">scripting framework developers</a> in the <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts①">MTS</a> environment. Based on EOM, developers can perform <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation④">element tree operations</a> and <a data-link-type="dfn" href="#elementscomponents-element-operation" id="ref-for-elementscomponents-element-operation①">element operations</a>.
+
+
    <h5 class="heading settled" data-level="8.2.7.3" id="element-inter-thread-call-or-element-itc"><span class="secno">8.2.7.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-inter-thread-call">Element Inter Thread Call</dfn> (or <dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-itc">Element ITC</dfn>)</span><a class="self-link" href="#element-inter-thread-call-or-element-itc"></a></h5>
-    Element ITC is the <a data-link-type="dfn" href="#scripting-inter-thread-call" id="ref-for-scripting-inter-thread-call">inter thread call</a> exposed to <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer③">scripting framework developers</a> in the <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts">BTS</a> environment. Based on this, developers can perform <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation⑤">element tree operations</a> and <a data-link-type="dfn" href="#elementscomponents-element-operation" id="ref-for-elementscomponents-element-operation②">element operations</a> across threads.
+
+Element ITC is the <a data-link-type="dfn" href="#scripting-inter-thread-call" id="ref-for-scripting-inter-thread-call">inter thread call</a> exposed to <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer③">scripting framework developers</a> in the <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts">BTS</a> environment. Based on this, developers can perform <a data-link-type="dfn" href="#elementscomponents-element-tree-operation" id="ref-for-elementscomponents-element-tree-operation⑤">element tree operations</a> and <a data-link-type="dfn" href="#elementscomponents-element-operation" id="ref-for-elementscomponents-element-operation②">element operations</a> across threads.
+
+
    <h5 class="heading settled" data-level="8.2.7.4" id="element-selector-query-api"><span class="secno">8.2.7.4. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-element-selector-query-api">Element Selector Query API</dfn></span><a class="self-link" href="#element-selector-query-api"></a></h5>
-    Element Selector Query API is an implementation of <a data-link-type="dfn" href="#elementscomponents-element-itc" id="ref-for-elementscomponents-element-itc">Element ITC</a>, allowing <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer④">scripting framework developers</a> to use it to generate an element handle in the background thread
-for <a data-link-type="dfn" href="#scripting-inter-thread-call" id="ref-for-scripting-inter-thread-call①">inter thread call</a> of <a data-link-type="dfn" href="#elementscomponents-element-method" id="ref-for-elementscomponents-element-method">element methods</a>. 
+
+Element Selector Query API is an implementation of <a data-link-type="dfn" href="#elementscomponents-element-itc" id="ref-for-elementscomponents-element-itc">Element ITC</a>, allowing <a data-link-type="dfn" href="#lynx-scripting-framework-developer" id="ref-for-lynx-scripting-framework-developer④">scripting framework developers</a> to use it to generate an element handle in the background thread
+for <a data-link-type="dfn" href="#scripting-inter-thread-call" id="ref-for-scripting-inter-thread-call①">inter thread call</a> of <a data-link-type="dfn" href="#elementscomponents-element-method" id="ref-for-elementscomponents-element-method">element methods</a>.
+
+
    <h4 class="heading settled" data-level="8.2.8" id="computed-style"><span class="secno">8.2.8. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-computed-style">Computed Style</dfn></span><a class="self-link" href="#computed-style"></a></h4>
-    Computed style is the final style that <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline①①">pixel pipeline</a> aggregates from all the <a data-link-type="dfn" href="#elementscomponents-selector" id="ref-for-elementscomponents-selector①">selector</a> and <a data-link-type="dfn" href="#elementscomponents-inline-style" id="ref-for-elementscomponents-inline-style">inline style</a> of an element according to the <a data-link-type="dfn" href="#styling-style-sheet" id="ref-for-styling-style-sheet①">style sheet</a>. 
+
+Computed style is the final style that <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline①①">pixel pipeline</a> aggregates from all the <a data-link-type="dfn" href="#elementscomponents-selector" id="ref-for-elementscomponents-selector①">selector</a> and <a data-link-type="dfn" href="#elementscomponents-inline-style" id="ref-for-elementscomponents-inline-style">inline style</a> of an element according to the <a data-link-type="dfn" href="#styling-style-sheet" id="ref-for-styling-style-sheet①">style sheet</a>.
+
+
    <h5 class="heading settled" data-level="8.2.8.1" id="paint-related-computed-style"><span class="secno">8.2.8.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-paint-related-computed-style">Paint Related Computed Style</dfn></span><a class="self-link" href="#paint-related-computed-style"></a></h5>
-    Paint Related Computed Style refers to styles related to paint, such as background, color, and etc. 
+
+Paint Related Computed Style refers to styles related to paint, such as background, color, and etc.
+
+
    <h5 class="heading settled" data-level="8.2.8.2" id="layout-related-computed-style"><span class="secno">8.2.8.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-layout-related-computed-style">Layout Related Computed Style</dfn></span><a class="self-link" href="#layout-related-computed-style"></a></h5>
-    Layout Related Computed Style refers to styles related to layout, such as width, height, and etc. 
+
+Layout Related Computed Style refers to styles related to layout, such as width, height, and etc.
+
+
    <h4 class="heading settled" data-level="8.2.9" id="prop-bundle"><span class="secno">8.2.9. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-prop-bundle">Prop Bundle</dfn></span><a class="self-link" href="#prop-bundle"></a></h4>
-    Prop Bundle consists of the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①④">element</a>’s <a data-link-type="dfn" href="#elementscomponents-attribute" id="ref-for-elementscomponents-attribute②">attribute</a> and <a data-link-type="dfn" href="#elementscomponents-paint-related-computed-style" id="ref-for-elementscomponents-paint-related-computed-style">paint related computed style</a>. 
+
+Prop Bundle consists of the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①④">element</a>’s <a data-link-type="dfn" href="#elementscomponents-attribute" id="ref-for-elementscomponents-attribute②">attribute</a> and <a data-link-type="dfn" href="#elementscomponents-paint-related-computed-style" id="ref-for-elementscomponents-paint-related-computed-style">paint related computed style</a>.
+
+
    <h3 class="heading settled" data-level="8.3" id="layout-node①"><span class="secno">8.3. </span><span class="content">Layout Node</span><a class="self-link" href="#layout-node①"></a></h3>
    <h4 class="heading settled" data-level="8.3.1" id="layout-node-tree"><span class="secno">8.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-layout-node-tree">Layout Node Tree</dfn></span><a class="self-link" href="#layout-node-tree"></a></h4>
-    Layout Node Tree is a multi-branch tree composed of <a data-link-type="dfn" href="#elementscomponents-layout-node" id="ref-for-elementscomponents-layout-node①">layout nodes</a>. 
+
+Layout Node Tree is a multi-branch tree composed of <a data-link-type="dfn" href="#elementscomponents-layout-node" id="ref-for-elementscomponents-layout-node①">layout nodes</a>.
+
+
    <h4 class="heading settled" data-level="8.3.2" id="platform-layout-node"><span class="secno">8.3.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-layout-node">Platform Layout Node</dfn></span><a class="self-link" href="#platform-layout-node"></a></h4>
-    Platform Layout Node is created and held by <a data-link-type="dfn" href="#elementscomponents-layout-node" id="ref-for-elementscomponents-layout-node②">layout node</a>. Some specific element nodes, such as text, inline-text, inline-view, and etc require platform capabilities for measurement. For these types of element nodes, a platform layout node will be created. 
-   <p class="note" role="note"><span class="marker">Note:</span> Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer⑦">Lynx developers</a> in Lynx development, the layout engine of Lynx is named as starlight,
+
+Platform Layout Node is created and held by <a data-link-type="dfn" href="#elementscomponents-layout-node" id="ref-for-elementscomponents-layout-node②">layout node</a>. Some specific element nodes, such as text, inline-text, inline-view, and etc require platform capabilities for measurement. For these types of element nodes, a platform layout node will be created.
+
+
+   <p class="note" role="note"><span class="marker">Note:</span>
+Explainers to <a data-link-type="dfn" href="#lynx-lynx-developer" id="ref-for-lynx-lynx-developer⑦">Lynx developers</a> in Lynx development, the layout engine of Lynx is named as starlight,
 which is an independent layout engine that supports various layout algorithms,
 including flex, linear, grid and etc. It also exposes capabilities for custom measure and custom layout,
 providing users with the flexibility to extend its functionality.</p>
    <h3 class="heading settled" data-level="8.4" id="platform-ui①"><span class="secno">8.4. </span><span class="content">Platform UI</span><a class="self-link" href="#platform-ui①"></a></h3>
    <h4 class="heading settled" data-level="8.4.1" id="platform-ui-primitives"><span class="secno">8.4.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-ui-primitives">Platform UI Primitives</dfn></span><a class="self-link" href="#platform-ui-primitives"></a></h4>
-    Platform UI Primitives refer to the host platform objects that are actually used for pixeling. On Android, the primitives are the native Android Views, and on iOS, they are the UIView objects provided by iOS UIKit. 
+
+Platform UI Primitives refer to the host platform objects that are actually used for pixeling. On Android, the primitives are the native Android Views, and on iOS, they are the UIView objects provided by iOS UIKit.
+
+
    <h4 class="heading settled" data-level="8.4.2" id="platform-ui-tree"><span class="secno">8.4.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-ui-tree">Platform UI Tree</dfn></span><a class="self-link" href="#platform-ui-tree"></a></h4>
-    UI Tree is a multi-branch tree composed of <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui①">platform UIs</a>. 
+
+UI Tree is a multi-branch tree composed of <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui①">platform UIs</a>.
+
+
    <h4 class="heading settled" data-level="8.4.3" id="platform-ui-operations-or-ui-op"><span class="secno">8.4.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-ui-operations">Platform UI Operations</dfn> (or <dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-ui-op">UI OP</dfn>)</span><a class="self-link" href="#platform-ui-operations-or-ui-op"></a></h4>
-    Platform UI Operations refers to the operations on the <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui②">platform UI</a> and <a data-link-type="dfn" href="#elementscomponents-platform-ui-tree" id="ref-for-elementscomponents-platform-ui-tree①">platform UI Tree</a> generated during <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline①②">pixel pipeline</a>.
-It consists of <a data-link-type="dfn" href="#elementscomponents-platform-ui-paint-operations" id="ref-for-elementscomponents-platform-ui-paint-operations">platform UI paint operations</a> and <a data-link-type="dfn" href="#elementscomponents-platform-ui-layout-operations" id="ref-for-elementscomponents-platform-ui-layout-operations">platform UI layout operations</a>. 
+
+Platform UI Operations refers to the operations on the <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui②">platform UI</a> and <a data-link-type="dfn" href="#elementscomponents-platform-ui-tree" id="ref-for-elementscomponents-platform-ui-tree①">platform UI Tree</a> generated during <a data-link-type="dfn" href="#enginepixeling-pixel-pipeline" id="ref-for-enginepixeling-pixel-pipeline①②">pixel pipeline</a>.
+It consists of <a data-link-type="dfn" href="#elementscomponents-platform-ui-paint-operations" id="ref-for-elementscomponents-platform-ui-paint-operations">platform UI paint operations</a> and <a data-link-type="dfn" href="#elementscomponents-platform-ui-layout-operations" id="ref-for-elementscomponents-platform-ui-layout-operations">platform UI layout operations</a>.
+
+
    <h5 class="heading settled" data-level="8.4.3.1" id="platform-ui-paint-operations-or-ui-paint-op"><span class="secno">8.4.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-ui-paint-operations">Platform UI Paint Operations</dfn> (or <dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-ui-paint-op">UI Paint OP</dfn>)</span><a class="self-link" href="#platform-ui-paint-operations-or-ui-paint-op"></a></h5>
-    UI Paint OP is composed of <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui③">platform UI</a> mutation operations and <a data-link-type="dfn" href="#elementscomponents-platform-ui-tree" id="ref-for-elementscomponents-platform-ui-tree②">platform UI tree</a> mutation operations. 
+
+UI Paint OP is composed of <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui③">platform UI</a> mutation operations and <a data-link-type="dfn" href="#elementscomponents-platform-ui-tree" id="ref-for-elementscomponents-platform-ui-tree②">platform UI tree</a> mutation operations.
+
+
    <h5 class="heading settled" data-level="8.4.3.2" id="platform-ui-layout-operations-or-ui-layout-op"><span class="secno">8.4.3.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-platform-ui-layout-operations">Platform UI Layout Operations</dfn> (or <dfn class="dfn-paneled" data-dfn-for="ElementsComponents" data-dfn-type="dfn" data-noexport id="elementscomponents-ui-layout-op">UI Layout OP</dfn>)</span><a class="self-link" href="#platform-ui-layout-operations-or-ui-layout-op"></a></h5>
-    UI Layout OP currently only includes the operations to update measure and layout info to <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui④">platform UI</a>. 
+
+UI Layout OP currently only includes the operations to update measure and layout info to <a data-link-type="dfn" href="#elementscomponents-platform-ui" id="ref-for-elementscomponents-platform-ui④">platform UI</a>.
+
+
+
+
+
    <h2 class="heading settled" data-level="9" id="styling"><span class="secno">9. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-styling">Styling</dfn></span><a class="self-link" href="#styling"></a></h2>
-   <p>The specifications related to Lynx Styling are similar to those of W3C, including but not limited to <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-style-sheet">Style Sheet</dfn>, <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-style-rule">Style Rule</dfn>, <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-css-style-rule">CSS Style Rule</dfn>, and <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-style-property">Style Property</dfn>.</p>
+   <p>The specifications related to Lynx Styling are similar to those of W3C, including but not limited to <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-style-sheet">Style Sheet</dfn>,
+<dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-style-rule">Style Rule</dfn>, <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-css-style-rule">CSS Style Rule</dfn>, and <dfn class="dfn-paneled" data-dfn-for="Styling" data-dfn-type="dfn" data-noexport id="styling-style-property">Style Property</dfn>.</p>
    <h2 class="heading settled" data-level="10" id="user-interaction"><span class="secno">10. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-user-interaction">User Interaction</dfn></span><a class="self-link" href="#user-interaction"></a></h2>
    <h3 class="heading settled" data-level="10.1" id="event"><span class="secno">10.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-event">Event</dfn></span><a class="self-link" href="#event"></a></h3>
    <p>An event is an abstraction notion describing the signal that triggers an action in the system.
@@ -2778,24 +3008,48 @@ This action may be triggered by the <a data-link-type="dfn" href="#lynx-scriptin
    <p>An Event object is an object that contains state information related to an <a data-link-type="dfn" href="#userinteraction-event" id="ref-for-userinteraction-event">event</a>.
 It is implemented natively on the host platform.</p>
    <h4 class="heading settled" data-level="10.1.2" id="main-thread-event-object"><span class="secno">10.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-main-thread-event-object">Main Thread Event Object</dfn></span><a class="self-link" href="#main-thread-event-object"></a></h4>
-    Main Thread Event is a script object initialized by the <a data-link-type="dfn" href="#scripting-main-thread-runtime" id="ref-for-scripting-main-thread-runtime⑤">main thread runtime</a> based on the event object, and it is not a host object. 
+
+Main Thread Event is a script object initialized by the <a data-link-type="dfn" href="#scripting-main-thread-runtime" id="ref-for-scripting-main-thread-runtime⑤">main thread runtime</a> based on the event object, and it is not a host object.
+
+
    <h4 class="heading settled" data-level="10.1.3" id="background-thread-event-object"><span class="secno">10.1.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-background-thread-event-object">Background Thread Event Object</dfn></span><a class="self-link" href="#background-thread-event-object"></a></h4>
-    Background Thread Event is an object passed to <a data-link-type="dfn" href="#scripting-background-thread-runtime" id="ref-for-scripting-background-thread-runtime②">background thread runtime</a> by the <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine⑦">engine</a> based on the event object with <a data-link-type="dfn" href="#scripting-inter-thread-call" id="ref-for-scripting-inter-thread-call②">inter thread call</a>, and it is also not a binding object. 
+
+Background Thread Event is an object passed to <a data-link-type="dfn" href="#scripting-background-thread-runtime" id="ref-for-scripting-background-thread-runtime②">background thread runtime</a> by the <a data-link-type="dfn" href="#enginepixeling-engine" id="ref-for-enginepixeling-engine⑦">engine</a> based on the event object with <a data-link-type="dfn" href="#scripting-inter-thread-call" id="ref-for-scripting-inter-thread-call②">inter thread call</a>, and it is also not a binding object.
+
+
    <h3 class="heading settled" data-level="10.2" id="event-listening"><span class="secno">10.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-event-listening">Event Listening</dfn></span><a class="self-link" href="#event-listening"></a></h3>
    <p><a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①⑤">elements</a> listen for <a data-link-type="dfn" href="#userinteraction-event" id="ref-for-userinteraction-event①">events</a> by setting the <a data-link-type="dfn" href="#userinteraction-event-handler" id="ref-for-userinteraction-event-handler">event handler</a>.</p>
    <h4 class="heading settled" data-level="10.2.1" id="event-handler"><span class="secno">10.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-event-handler">Event Handler</dfn></span><a class="self-link" href="#event-handler"></a></h4>
-    Event Handler is the value of the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①⑥">element</a>’s <a data-link-type="dfn" href="#elementscomponents-event-listener" id="ref-for-elementscomponents-event-listener">event listener</a>, which serves as a handle for the <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts②">MTS</a> closure or <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts①">BTS</a> closure.
-When an event is triggered, the corresponding <a data-link-type="dfn" href="#scripting-procedure-call" id="ref-for-scripting-procedure-call">procedure call</a> will be invoked based on the event handler. 
+
+Event Handler is the value of the <a data-link-type="dfn" href="#elementscomponents-element" id="ref-for-elementscomponents-element①⑥">element</a>’s <a data-link-type="dfn" href="#elementscomponents-event-listener" id="ref-for-elementscomponents-event-listener">event listener</a>, which serves as a handle for the <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts②">MTS</a> closure or <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts①">BTS</a> closure.
+When an event is triggered, the corresponding <a data-link-type="dfn" href="#scripting-procedure-call" id="ref-for-scripting-procedure-call">procedure call</a> will be invoked based on the event handler.
+
+
    <h5 class="heading settled" data-level="10.2.1.1" id="main-thread-event-handler"><span class="secno">10.2.1.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-main-thread-event-handler">Main Thread Event Handler</dfn></span><a class="self-link" href="#main-thread-event-handler"></a></h5>
-    When the closure handled by the <a data-link-type="dfn" href="#userinteraction-event-handler" id="ref-for-userinteraction-event-handler①">event handler</a> is an <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts③">MTS</a> closure, it is referred to as the Main Thread Event Handler. 
+
+When the closure handled by the <a data-link-type="dfn" href="#userinteraction-event-handler" id="ref-for-userinteraction-event-handler①">event handler</a> is an <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts③">MTS</a> closure, it is referred to as the Main Thread Event Handler.
+
+
    <h5 class="heading settled" data-level="10.2.1.2" id="background-thread-event-handler"><span class="secno">10.2.1.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-background-thread-event-handler">Background Thread Event Handler</dfn></span><a class="self-link" href="#background-thread-event-handler"></a></h5>
-    When the closure handled by the <a data-link-type="dfn" href="#userinteraction-event-handler" id="ref-for-userinteraction-event-handler②">event handler</a> is an <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts②">BTS</a> closure, it is referred to as the Background Thread Event Handler. 
+
+When the closure handled by the <a data-link-type="dfn" href="#userinteraction-event-handler" id="ref-for-userinteraction-event-handler②">event handler</a> is an <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts②">BTS</a> closure, it is referred to as the Background Thread Event Handler.
+
+
    <h4 class="heading settled" data-level="10.2.2" id="event-handler-function"><span class="secno">10.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-event-handler-function">Event Handler Function</dfn></span><a class="self-link" href="#event-handler-function"></a></h4>
-    Event handler function is a <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts③">BTS</a> or <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts④">MTS</a> closure that accepts an <a data-link-type="dfn" href="#userinteraction-event-object" id="ref-for-userinteraction-event-object">event object</a>. 
+
+Event handler function is a <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts③">BTS</a> or <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts④">MTS</a> closure that accepts an <a data-link-type="dfn" href="#userinteraction-event-object" id="ref-for-userinteraction-event-object">event object</a>.
+
+
    <h5 class="heading settled" data-level="10.2.2.1" id="main-thread-event-handler-function"><span class="secno">10.2.2.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-main-thread-event-handler-function">Main Thread Event Handler Function</dfn></span><a class="self-link" href="#main-thread-event-handler-function"></a></h5>
-    Event handler function is a <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts⑤">MTS</a> closure that accepts an <a data-link-type="dfn" href="#userinteraction-main-thread-event-object" id="ref-for-userinteraction-main-thread-event-object">main thread event object</a>. 
+
+Event handler function is a <a data-link-type="dfn" href="#scripting-mts" id="ref-for-scripting-mts⑤">MTS</a> closure that accepts an <a data-link-type="dfn" href="#userinteraction-main-thread-event-object" id="ref-for-userinteraction-main-thread-event-object">main thread event object</a>.
+
+
    <h5 class="heading settled" data-level="10.2.2.2" id="background-thread-event-handler-function"><span class="secno">10.2.2.2. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-background-thread-event-handler-function">Background Thread Event Handler Function</dfn></span><a class="self-link" href="#background-thread-event-handler-function"></a></h5>
-    Event handler function is a <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts④">BTS</a> closure that accepts an <a data-link-type="dfn" href="#userinteraction-background-thread-event-object" id="ref-for-userinteraction-background-thread-event-object">background thread event object</a>. 
+
+Event handler function is a <a data-link-type="dfn" href="#scripting-bts" id="ref-for-scripting-bts④">BTS</a> closure that accepts an <a data-link-type="dfn" href="#userinteraction-background-thread-event-object" id="ref-for-userinteraction-background-thread-event-object">background thread event object</a>.
+
+
    <h3 class="heading settled" data-level="10.3" id="event-propagation"><span class="secno">10.3. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-event-propagation">Event Propagation</dfn></span><a class="self-link" href="#event-propagation"></a></h3>
    <p>When an <a data-link-type="dfn" href="#userinteraction-event" id="ref-for-userinteraction-event②">event</a> is triggered, it will propagate on the <a data-link-type="dfn" href="#userinteraction-event-respond-chain" id="ref-for-userinteraction-event-respond-chain">event respond chain</a>, triggering the corresponding <a data-link-type="dfn" href="#userinteraction-event-handler-function" id="ref-for-userinteraction-event-handler-function">event handler function</a> according to the <a data-link-type="dfn" href="#userinteraction-event-handler" id="ref-for-userinteraction-event-handler③">event handler</a>.</p>
    <h4 class="heading settled" data-level="10.3.1" id="event-respond-chain"><span class="secno">10.3.1. </span><span class="content"><dfn class="dfn-paneled" data-dfn-for="UserInteraction" data-dfn-type="dfn" data-noexport id="userinteraction-event-respond-chain">Event Respond Chain</dfn></span><a class="self-link" href="#event-respond-chain"></a></h4>
@@ -2808,21 +3062,37 @@ When an event is triggered, the corresponding <a data-link-type="dfn" href="#scr
    <p>During the process of <a data-link-type="dfn" href="#userinteraction-event-propagation" id="ref-for-userinteraction-event-propagation">event propagation</a>, the <a data-link-type="dfn" href="#userinteraction-event" id="ref-for-userinteraction-event⑥">event</a> can be intercepted midway to prevent the <a data-link-type="dfn" href="#userinteraction-event" id="ref-for-userinteraction-event⑦">event</a> from continuing to propagate.</p>
   </main>
   <div data-fill-with="conformance">
-   <h2 class="no-ref no-num heading settled" id="conformance"><span class="content"> Conformance</span><a class="self-link" href="#conformance"></a></h2>
-   <p> Conformance requirements are expressed with a combination of descriptive assertions and RFC 2119 terminology.
+   <h2 class="heading no-num no-ref settled" id="conformance"><span class="content">
+    Conformance</span><a class="self-link" href="#conformance"></a></h2>
+   <p>
+            Conformance requirements are expressed with a combination of descriptive assertions and RFC 2119 terminology.
             The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL”
             in the normative parts of this document
             are to be interpreted as described in RFC 2119.
             However, for readability,
-            these words do not appear in all uppercase letters in this specification. </p>
-   <p> All of the text of this specification is normative
-            except sections explicitly marked as non-normative, examples, and notes. <a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a> </p>
-   <p> Examples in this specification are introduced with the words “for example”
-            or are set apart from the normative text with <code>class="example"</code>, like this: </p>
-   <div class="example" id="example-example"><a class="self-link" href="#example-example"></a> This is an example of an informative example. </div>
-   <p> Informative notes begin with the word “Note”
-            and are set apart from the normative text with <code>class="note"</code>, like this: </p>
-   <p class="note" role="note"> Note, this is an informative note.</p>
+            these words do not appear in all uppercase letters in this specification.
+
+        </p>
+   <p>
+            All of the text of this specification is normative
+            except sections explicitly marked as non-normative, examples, and notes. <a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a>
+
+        </p>
+   <p>
+            Examples in this specification are introduced with the words “for example”
+            or are set apart from the normative text with <code>class="example"</code>, like this:
+
+        </p>
+   <div class="example" id="example-example"><a class="self-link" href="#example-example"></a>
+            This is an example of an informative example.
+        </div>
+   <p>
+            Informative notes begin with the word “Note”
+            and are set apart from the normative text with <code>class="note"</code>, like this:
+
+        </p>
+   <p class="note" role="note">
+            Note, this is an informative note.</p>
   </div>
 <script>
 (function() {
@@ -2953,8 +3223,8 @@ When an event is triggered, the corresponding <a data-link-type="dfn" href="#scr
 
 })();
 </script>
-  <h2 class="no-num no-ref heading settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
-  <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
+  <h2 class="heading no-num no-ref settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
+  <h3 class="heading no-num no-ref settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
    <li><a href="#commoninfrastructure-app">APP</a><span>, in § 2.1.1</span>
    <li><a href="#elementscomponents-attribute">Attribute</a><span>, in § 8.2.4</span>
@@ -3064,6 +3334,7 @@ When an event is triggered, the corresponding <a data-link-type="dfn" href="#scr
    <li><a href="#scripting-native-module">Native Module</a><span>, in § 4.6</span>
    <li><a href="#scripting-node-api">Node-API</a><span>, in § 4.3.1</span>
    <li><a href="#threading-off-main-thread">Off-Main-Thread</a><span>, in § 3.3.3</span>
+   <li><a href="#commoninfrastructure-page">Page</a><span>, in § 2.2.5</span>
    <li><a href="#enginepixeling-paint">Paint</a><span>, in § 7.2.4</span>
    <li><a href="#elementscomponents-paint-related-computed-style">Paint Related Computed Style</a><span>, in § 8.2.8.1</span>
    <li><a href="#scripting-papi">PAPI</a><span>, in § 4.3.3</span>
@@ -3095,7 +3366,7 @@ When an event is triggered, the corresponding <a data-link-type="dfn" href="#scr
    <li><a href="#lynx-scripting-developer">Scripting Developer</a><span>, in § 1.2.1</span>
    <li><a href="#scripting-scripting-engine">Scripting Engine</a><span>, in § 4.2.1</span>
    <li><a href="#lynx-scripting-framework-developer">Scripting Framework Developer</a><span>, in § 1.2.2</span>
-   <li><a href="#scripting-scripting-runtime-enviroment">Scripting Runtime Enviroment</a><span>, in § 4.4.1</span>
+   <li><a href="#scripting-scripting-runtime-environment">Scripting Runtime Environment</a><span>, in § 4.4.1</span>
    <li><a href="#commoninfrastructure-sdk">SDK</a><span>, in § 2.1.3</span>
    <li><a href="#elementscomponents-selector">Selector</a><span>, in § 8.2.4.1</span>
    <li><a href="#elementscomponents-selector-query">Selector Query</a><span>, in § 8.2.5.2</span>
@@ -3124,19 +3395,9 @@ When an event is triggered, the corresponding <a data-link-type="dfn" href="#scr
    <li><a href="#scripting-vm">VM</a><span>, in § 4.2.1</span>
    <li><a href="#scripting-worker">Worker</a><span>, in § 4.7</span>
   </ul>
-  <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
-  <ul class="index">
-   <li>
-    <a data-link-type="biblio">[MINIAPP-MANIFEST]</a> defines the following terms:
-    <ul>
-     <li><span class="dfn-paneled" id="3ff560d4">pages</span>
-    </ul>
-  </ul>
-  <h2 class="no-num no-ref heading settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
-  <h3 class="no-num no-ref heading settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
+  <h2 class="heading no-num no-ref settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
+  <h3 class="heading no-num no-ref settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
   <dl>
-   <dt id="biblio-miniapp-manifest">[MINIAPP-MANIFEST]
-   <dd>Martin Alvarez-Espinar; Yongjing ZHANG. <a href="https://w3c.github.io/miniapp-manifest/"><cite>MiniApp Manifest</cite></a>. URL: <a href="https://w3c.github.io/miniapp-manifest/">https://w3c.github.io/miniapp-manifest/</a>
    <dt id="biblio-rfc2119">[RFC2119]
    <dd>S. Bradner. <a href="https://datatracker.ietf.org/doc/html/rfc2119"><cite>Key words for use in RFCs to Indicate Requirement Levels</cite></a>. March 1997. Best Current Practice. URL: <a href="https://datatracker.ietf.org/doc/html/rfc2119">https://datatracker.ietf.org/doc/html/rfc2119</a>
   </dl>
@@ -3340,7 +3601,6 @@ function parseHTML(markup) {
 "use strict";
 {
 let dfnPanelData = {
-"3ff560d4": {"dfnID":"3ff560d4","dfnText":"pages","external":true,"refSections":[{"refs":[{"id":"ref-for-dfn-pages"}],"title":"2.1.1. APP"},{"refs":[{"id":"ref-for-dfn-pages\u2460"}],"title":"8.1.1. Element Tag"},{"refs":[{"id":"ref-for-dfn-pages\u2461"}],"title":"8.1.2. Element"}],"url":"https://w3c.github.io/miniapp-manifest/#dfn-pages"},
 "commoninfrastructure-app": {"dfnID":"commoninfrastructure-app","dfnText":"APP","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-app"}],"title":"1.2.3. Lynx Developer"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2460"}],"title":"2.1.2. Container"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2461"}],"title":"2.1.3. SDK"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2462"}],"title":"2.1.5. Lynx Pipeline"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2463"}],"title":"2.2.1. Lynx Bundle (or Bundle)"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2464"}],"title":"2.2.5. Page"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2465"}],"title":"6.1.2. Framework"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2466"}],"title":"6.2.5. First-screen Rendering (or FSR)"},{"refs":[{"id":"ref-for-commoninfrastructure-app\u2467"}],"title":"7.1.1. Engine"}],"url":"#commoninfrastructure-app"},
 "commoninfrastructure-bundle": {"dfnID":"commoninfrastructure-bundle","dfnText":"Bundle","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-bundle"}],"title":"2.1.1. APP"},{"refs":[{"id":"ref-for-commoninfrastructure-bundle\u2460"}],"title":"2.1.2. Container"},{"refs":[{"id":"ref-for-commoninfrastructure-bundle\u2461"}],"title":"2.2.2. Lazy Bundle"},{"refs":[{"id":"ref-for-commoninfrastructure-bundle\u2462"}],"title":"2.2.4. LynxView"},{"refs":[{"id":"ref-for-commoninfrastructure-bundle\u2463"},{"id":"ref-for-commoninfrastructure-bundle\u2464"}],"title":"4.4.2.3. Instances of main thread script"},{"refs":[{"id":"ref-for-commoninfrastructure-bundle\u2465"}],"title":"5.1.1. Load"},{"refs":[{"id":"ref-for-commoninfrastructure-bundle\u2466"}],"title":"5.1.2. Parse"}],"url":"#commoninfrastructure-bundle"},
 "commoninfrastructure-common-infrastructure": {"dfnID":"commoninfrastructure-common-infrastructure","dfnText":"Common Infrastructure","external":false,"refSections":[],"url":"#commoninfrastructure-common-infrastructure"},
@@ -3353,6 +3613,7 @@ let dfnPanelData = {
 "commoninfrastructure-lynx-pipeline": {"dfnID":"commoninfrastructure-lynx-pipeline","dfnText":"Lynx Pipeline","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-lynx-pipeline"},{"id":"ref-for-commoninfrastructure-lynx-pipeline\u2460"}],"title":"2.1.5. Lynx Pipeline"},{"refs":[{"id":"ref-for-commoninfrastructure-lynx-pipeline\u2461"}],"title":"5.1. Introduction"},{"refs":[{"id":"ref-for-commoninfrastructure-lynx-pipeline\u2462"}],"title":"6.2.1. Rendering"}],"url":"#commoninfrastructure-lynx-pipeline"},
 "commoninfrastructure-lynx-platform": {"dfnID":"commoninfrastructure-lynx-platform","dfnText":"Lynx Platform","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-lynx-platform"}],"title":"1.2.2. Scripting Framework Developer"},{"refs":[{"id":"ref-for-commoninfrastructure-lynx-platform\u2460"}],"title":"1.2.3. Lynx Developer"},{"refs":[{"id":"ref-for-commoninfrastructure-lynx-platform\u2461"}],"title":"2.1.1. APP"},{"refs":[{"id":"ref-for-commoninfrastructure-lynx-platform\u2462"}],"title":"6.1.2. Framework"},{"refs":[{"id":"ref-for-commoninfrastructure-lynx-platform\u2463"}],"title":"7.1.1. Engine"}],"url":"#commoninfrastructure-lynx-platform"},
 "commoninfrastructure-lynxview": {"dfnID":"commoninfrastructure-lynxview","dfnText":"LynxView","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-lynxview"}],"title":"2.1.2. Container"},{"refs":[{"id":"ref-for-commoninfrastructure-lynxview\u2460"}],"title":"2.2.7. Lynx Group"}],"url":"#commoninfrastructure-lynxview"},
+"commoninfrastructure-page": {"dfnID":"commoninfrastructure-page","dfnText":"Page","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-page"}],"title":"2.1.1. APP"},{"refs":[{"id":"ref-for-commoninfrastructure-page\u2460"}],"title":"8.1.1. Element Tag"},{"refs":[{"id":"ref-for-commoninfrastructure-page\u2461"}],"title":"8.1.2. Element"}],"url":"#commoninfrastructure-page"},
 "commoninfrastructure-scripting-agent": {"dfnID":"commoninfrastructure-scripting-agent","dfnText":"Scripting Agent","external":false,"refSections":[{"refs":[{"id":"ref-for-commoninfrastructure-scripting-agent"}],"title":"2.2.7. Lynx Group"}],"url":"#commoninfrastructure-scripting-agent"},
 "commoninfrastructure-sdk": {"dfnID":"commoninfrastructure-sdk","dfnText":"SDK","external":false,"refSections":[],"url":"#commoninfrastructure-sdk"},
 "commoninfrastructure-standalone": {"dfnID":"commoninfrastructure-standalone","dfnText":"Standalone","external":false,"refSections":[],"url":"#commoninfrastructure-standalone"},
@@ -3436,7 +3697,7 @@ let dfnPanelData = {
 "pipeline-load": {"dfnID":"pipeline-load","dfnText":"Load","external":false,"refSections":[],"url":"#pipeline-load"},
 "pipeline-parse": {"dfnID":"pipeline-parse","dfnText":"Parse","external":false,"refSections":[],"url":"#pipeline-parse"},
 "quickjs": {"dfnID":"quickjs","dfnText":"QuickJS","external":false,"refSections":[],"url":"#quickjs"},
-"scripting-background-thread-runtime": {"dfnID":"scripting-background-thread-runtime","dfnText":"Background Thread Runtime","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-background-thread-runtime"}],"title":"2.2.6. The Lynx Object"},{"refs":[{"id":"ref-for-scripting-background-thread-runtime\u2460"}],"title":"4.4.3.2. Background Thread Script (or BTS)"},{"refs":[{"id":"ref-for-scripting-background-thread-runtime\u2461"}],"title":"10.1.3. Background Thread Event Object"}],"url":"#scripting-background-thread-runtime"},
+"scripting-background-thread-runtime": {"dfnID":"scripting-background-thread-runtime","dfnText":"Background Thread Runtime","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-background-thread-runtime"}],"title":"2.2.6. The `Lynx` Object"},{"refs":[{"id":"ref-for-scripting-background-thread-runtime\u2460"}],"title":"4.4.3.2. Background Thread Script (or BTS)"},{"refs":[{"id":"ref-for-scripting-background-thread-runtime\u2461"}],"title":"10.1.3. Background Thread Event Object"}],"url":"#scripting-background-thread-runtime"},
 "scripting-background-thread-script": {"dfnID":"scripting-background-thread-script","dfnText":"Background Thread Script","external":false,"refSections":[],"url":"#scripting-background-thread-script"},
 "scripting-bts": {"dfnID":"scripting-bts","dfnText":"BTS","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-bts"}],"title":"8.2.7.3. Element Inter Thread Call (or Element ITC)"},{"refs":[{"id":"ref-for-scripting-bts\u2460"}],"title":"10.2.1. Event Handler"},{"refs":[{"id":"ref-for-scripting-bts\u2461"}],"title":"10.2.1.2. Background Thread Event Handler"},{"refs":[{"id":"ref-for-scripting-bts\u2462"}],"title":"10.2.2. Event Handler Function"},{"refs":[{"id":"ref-for-scripting-bts\u2463"}],"title":"10.2.2.2. Background Thread Event Handler Function"}],"url":"#scripting-bts"},
 "scripting-call": {"dfnID":"scripting-call","dfnText":"Call","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-call"}],"title":"4.5.1. Sync Call"},{"refs":[{"id":"ref-for-scripting-call\u2460"}],"title":"4.5.2. Inter Thread Call (or ITC)"},{"refs":[{"id":"ref-for-scripting-call\u2461"}],"title":"4.6. Native Module"}],"url":"#scripting-call"},
@@ -3449,7 +3710,7 @@ let dfnPanelData = {
 "scripting-javascript-interface": {"dfnID":"scripting-javascript-interface","dfnText":"JavaScript Interface","external":false,"refSections":[],"url":"#scripting-javascript-interface"},
 "scripting-javascript-script": {"dfnID":"scripting-javascript-script","dfnText":"JavaScript Script","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-javascript-script"}],"title":"4.2.2. JavaScript Engine"}],"url":"#scripting-javascript-script"},
 "scripting-jsi": {"dfnID":"scripting-jsi","dfnText":"JSI","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-jsi"}],"title":"4.6. Native Module"},{"refs":[{"id":"ref-for-scripting-jsi\u2460"}],"title":"7.1.2. Engine FFI"}],"url":"#scripting-jsi"},
-"scripting-main-thread-runtime": {"dfnID":"scripting-main-thread-runtime","dfnText":"Main Thread Runtime","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-main-thread-runtime"}],"title":"2.2.6. The Lynx Object"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2460"}],"title":"4.4.2.2. Main Thread Script (or MTS)"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2461"},{"id":"ref-for-scripting-main-thread-runtime\u2462"}],"title":"4.4.2.3. Instances of main thread script"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2463"}],"title":"6.3.1.1. Rendering Patterns"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2464"}],"title":"10.1.2. Main Thread Event Object"}],"url":"#scripting-main-thread-runtime"},
+"scripting-main-thread-runtime": {"dfnID":"scripting-main-thread-runtime","dfnText":"Main Thread Runtime","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-main-thread-runtime"}],"title":"2.2.6. The `Lynx` Object"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2460"}],"title":"4.4.2.2. Main Thread Script (or MTS)"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2461"},{"id":"ref-for-scripting-main-thread-runtime\u2462"}],"title":"4.4.2.3. Instances of main thread script"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2463"}],"title":"6.3.1.1. Rendering Patterns"},{"refs":[{"id":"ref-for-scripting-main-thread-runtime\u2464"}],"title":"10.1.2. Main Thread Event Object"}],"url":"#scripting-main-thread-runtime"},
 "scripting-main-thread-script": {"dfnID":"scripting-main-thread-script","dfnText":"Main Thread Script","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-main-thread-script"},{"id":"ref-for-scripting-main-thread-script\u2460"}],"title":"3.3.2. Main Thread (or Lynx Main Thread)"},{"refs":[{"id":"ref-for-scripting-main-thread-script\u2461"}],"title":"4.4.2.3. Instances of main thread script"},{"refs":[{"id":"ref-for-scripting-main-thread-script\u2462"}],"title":"6.3.1.1. Rendering Patterns"}],"url":"#scripting-main-thread-script"},
 "scripting-mts": {"dfnID":"scripting-mts","dfnText":"MTS","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-mts"}],"title":"8.2.7.1. Element PAPI"},{"refs":[{"id":"ref-for-scripting-mts\u2460"}],"title":"8.2.7.2. Element Object Model (or EOM)"},{"refs":[{"id":"ref-for-scripting-mts\u2461"}],"title":"10.2.1. Event Handler"},{"refs":[{"id":"ref-for-scripting-mts\u2462"}],"title":"10.2.1.1. Main Thread Event Handler"},{"refs":[{"id":"ref-for-scripting-mts\u2463"}],"title":"10.2.2. Event Handler Function"},{"refs":[{"id":"ref-for-scripting-mts\u2464"}],"title":"10.2.2.1. Main Thread Event Handler Function"}],"url":"#scripting-mts"},
 "scripting-n-api": {"dfnID":"scripting-n-api","dfnText":"N-API","external":false,"refSections":[],"url":"#scripting-n-api"},
@@ -3459,10 +3720,10 @@ let dfnPanelData = {
 "scripting-primjs-api": {"dfnID":"scripting-primjs-api","dfnText":"PrimJS API","external":false,"refSections":[],"url":"#scripting-primjs-api"},
 "scripting-primjs-vm": {"dfnID":"scripting-primjs-vm","dfnText":"PrimJS VM","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-primjs-vm"}],"title":"4.4.2.1. Main Thread Runtime"}],"url":"#scripting-primjs-vm"},
 "scripting-procedure-call": {"dfnID":"scripting-procedure-call","dfnText":"Procedure Call","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-procedure-call"}],"title":"10.2.1. Event Handler"}],"url":"#scripting-procedure-call"},
-"scripting-script": {"dfnID":"scripting-script","dfnText":"Script","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-script"}],"title":"1.2.1. Scripting Developer"},{"refs":[{"id":"ref-for-scripting-script\u2460"}],"title":"2.2.1. Lynx Bundle (or Bundle)"},{"refs":[{"id":"ref-for-scripting-script\u2461"}],"title":"3.2.2. Background Scripting Thread (historically known as \"JS Thread\")"},{"refs":[{"id":"ref-for-scripting-script\u2462"}],"title":"3.3.2. Main Thread (or Lynx Main Thread)"},{"refs":[{"id":"ref-for-scripting-script\u2463"}],"title":"3.3.4. Dual-threaded Model"},{"refs":[{"id":"ref-for-scripting-script\u2464"}],"title":"4.1.2. JavaScript Script"},{"refs":[{"id":"ref-for-scripting-script\u2465"}],"title":"4.2.1. Scripting Engine (a.k.a VM, or Virtual Machine)"},{"refs":[{"id":"ref-for-scripting-script\u2466"},{"id":"ref-for-scripting-script\u2467"}],"title":"4.4.1. Scripting Runtime Enviroment"},{"refs":[{"id":"ref-for-scripting-script\u2468"}],"title":"4.4.2.2. Main Thread Script (or MTS)"},{"refs":[{"id":"ref-for-scripting-script\u2460\u24ea"},{"id":"ref-for-scripting-script\u2460\u2460"}],"title":"4.4.2.3. Instances of main thread script"},{"refs":[{"id":"ref-for-scripting-script\u2460\u2461"}],"title":"4.4.3.2. Background Thread Script (or BTS)"},{"refs":[{"id":"ref-for-scripting-script\u2460\u2462"},{"id":"ref-for-scripting-script\u2460\u2463"},{"id":"ref-for-scripting-script\u2460\u2464"}],"title":"7.1.1. Engine"}],"url":"#scripting-script"},
+"scripting-script": {"dfnID":"scripting-script","dfnText":"Script","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-script"}],"title":"1.2.1. Scripting Developer"},{"refs":[{"id":"ref-for-scripting-script\u2460"}],"title":"2.2.1. Lynx Bundle (or Bundle)"},{"refs":[{"id":"ref-for-scripting-script\u2461"}],"title":"3.2.2. Background Scripting Thread (historically known as \"JS Thread\")"},{"refs":[{"id":"ref-for-scripting-script\u2462"}],"title":"3.3.2. Main Thread (or Lynx Main Thread)"},{"refs":[{"id":"ref-for-scripting-script\u2463"}],"title":"3.3.4. Dual-threaded Model"},{"refs":[{"id":"ref-for-scripting-script\u2464"}],"title":"4.1.2. JavaScript Script"},{"refs":[{"id":"ref-for-scripting-script\u2465"}],"title":"4.2.1. Scripting Engine (a.k.a VM, or Virtual Machine)"},{"refs":[{"id":"ref-for-scripting-script\u2466"},{"id":"ref-for-scripting-script\u2467"}],"title":"4.4.1. Scripting Runtime Environment"},{"refs":[{"id":"ref-for-scripting-script\u2468"}],"title":"4.4.2.2. Main Thread Script (or MTS)"},{"refs":[{"id":"ref-for-scripting-script\u2460\u24ea"},{"id":"ref-for-scripting-script\u2460\u2460"}],"title":"4.4.2.3. Instances of main thread script"},{"refs":[{"id":"ref-for-scripting-script\u2460\u2461"}],"title":"4.4.3.2. Background Thread Script (or BTS)"},{"refs":[{"id":"ref-for-scripting-script\u2460\u2462"},{"id":"ref-for-scripting-script\u2460\u2463"},{"id":"ref-for-scripting-script\u2460\u2464"}],"title":"7.1.1. Engine"}],"url":"#scripting-script"},
 "scripting-scripting": {"dfnID":"scripting-scripting","dfnText":"Scripting","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-scripting"}],"title":"3.3.1. Scriptable Thread"},{"refs":[{"id":"ref-for-scripting-scripting\u2460"}],"title":"6.1.1. DSL (Domain-specific Language)"},{"refs":[{"id":"ref-for-scripting-scripting\u2461"}],"title":"6.2.2. Framework Rendering"},{"refs":[{"id":"ref-for-scripting-scripting\u2462"}],"title":"6.2.3. Main Thread Rendering"},{"refs":[{"id":"ref-for-scripting-scripting\u2463"}],"title":"8.1.3. Component"}],"url":"#scripting-scripting"},
-"scripting-scripting-engine": {"dfnID":"scripting-scripting-engine","dfnText":"Scripting Engine","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-scripting-engine"}],"title":"4.2.2. JavaScript Engine"},{"refs":[{"id":"ref-for-scripting-scripting-engine\u2460"}],"title":"4.2.3.2. PrimJS VM"},{"refs":[{"id":"ref-for-scripting-scripting-engine\u2461"}],"title":"4.4.1. Scripting Runtime Enviroment"}],"url":"#scripting-scripting-engine"},
-"scripting-scripting-runtime-enviroment": {"dfnID":"scripting-scripting-runtime-enviroment","dfnText":"Scripting Runtime Enviroment","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-scripting-runtime-enviroment"}],"title":"1.2.1. Scripting Developer"},{"refs":[{"id":"ref-for-scripting-scripting-runtime-enviroment\u2460"}],"title":"4.4.2.1. Main Thread Runtime"},{"refs":[{"id":"ref-for-scripting-scripting-runtime-enviroment\u2461"}],"title":"4.4.3.1. Background Thread Runtime"},{"refs":[{"id":"ref-for-scripting-scripting-runtime-enviroment\u2462"}],"title":"4.5. Procedure Call (or Call)"}],"url":"#scripting-scripting-runtime-enviroment"},
+"scripting-scripting-engine": {"dfnID":"scripting-scripting-engine","dfnText":"Scripting Engine","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-scripting-engine"}],"title":"4.2.2. JavaScript Engine"},{"refs":[{"id":"ref-for-scripting-scripting-engine\u2460"}],"title":"4.2.3.2. PrimJS VM"},{"refs":[{"id":"ref-for-scripting-scripting-engine\u2461"}],"title":"4.4.1. Scripting Runtime Environment"}],"url":"#scripting-scripting-engine"},
+"scripting-scripting-runtime-environment": {"dfnID":"scripting-scripting-runtime-environment","dfnText":"Scripting Runtime Environment","external":false,"refSections":[{"refs":[{"id":"ref-for-scripting-scripting-runtime-environment"}],"title":"1.2.1. Scripting Developer"},{"refs":[{"id":"ref-for-scripting-scripting-runtime-environment\u2460"}],"title":"4.4.2.1. Main Thread Runtime"},{"refs":[{"id":"ref-for-scripting-scripting-runtime-environment\u2461"}],"title":"4.4.3.1. Background Thread Runtime"},{"refs":[{"id":"ref-for-scripting-scripting-runtime-environment\u2462"}],"title":"4.5. Procedure Call (or Call)"}],"url":"#scripting-scripting-runtime-environment"},
 "scripting-sync-call": {"dfnID":"scripting-sync-call","dfnText":"Sync Call","external":false,"refSections":[],"url":"#scripting-sync-call"},
 "scripting-v8": {"dfnID":"scripting-v8","dfnText":"V8","external":false,"refSections":[],"url":"#scripting-v8"},
 "scripting-virtual-machine": {"dfnID":"scripting-virtual-machine","dfnText":"Virtual Machine","external":false,"refSections":[],"url":"#scripting-virtual-machine"},
@@ -3685,6 +3946,7 @@ function refocusOnTarget(event) {
     });
 }
 
+// TODO: shared util
 // Returns the root-level absolute position {left and top} of element.
 function getBounds(el, relativeTo=document.body) {
     const relativeRect = relativeTo.getBoundingClientRect();
@@ -3902,6 +4164,7 @@ let refsData = {
 "#commoninfrastructure-lynx-pipeline": {"displayText":"lynx pipeline","export":true,"for_":["CommonInfrastructure"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"lynx pipeline","type":"dfn","url":"#commoninfrastructure-lynx-pipeline"},
 "#commoninfrastructure-lynx-platform": {"displayText":"lynx platform","export":true,"for_":["CommonInfrastructure"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"lynx platform","type":"dfn","url":"#commoninfrastructure-lynx-platform"},
 "#commoninfrastructure-lynxview": {"displayText":"lynxview","export":true,"for_":["CommonInfrastructure"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"lynxview","type":"dfn","url":"#commoninfrastructure-lynxview"},
+"#commoninfrastructure-page": {"displayText":"page","export":true,"for_":["CommonInfrastructure"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"page","type":"dfn","url":"#commoninfrastructure-page"},
 "#commoninfrastructure-scripting-agent": {"displayText":"scripting agent","export":true,"for_":["CommonInfrastructure"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"scripting agent","type":"dfn","url":"#commoninfrastructure-scripting-agent"},
 "#commoninfrastructure-structure": {"displayText":"structure","export":true,"for_":["CommonInfrastructure"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"structure","type":"dfn","url":"#commoninfrastructure-structure"},
 "#elementscomponents-attribute": {"displayText":"attribute","export":true,"for_":["ElementsComponents"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"attribute","type":"dfn","url":"#elementscomponents-attribute"},
@@ -3970,7 +4233,7 @@ let refsData = {
 "#scripting-script": {"displayText":"script","export":true,"for_":["Scripting"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"script","type":"dfn","url":"#scripting-script"},
 "#scripting-scripting": {"displayText":"scripting","export":true,"for_":["Scripting"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"scripting","type":"dfn","url":"#scripting-scripting"},
 "#scripting-scripting-engine": {"displayText":"scripting engine","export":true,"for_":["Scripting"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"scripting engine","type":"dfn","url":"#scripting-scripting-engine"},
-"#scripting-scripting-runtime-enviroment": {"displayText":"scripting runtime enviroment","export":true,"for_":["Scripting"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"scripting runtime enviroment","type":"dfn","url":"#scripting-scripting-runtime-enviroment"},
+"#scripting-scripting-runtime-environment": {"displayText":"scripting runtime environment","export":true,"for_":["Scripting"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"scripting runtime environment","type":"dfn","url":"#scripting-scripting-runtime-environment"},
 "#scripting-worker": {"displayText":"worker","export":true,"for_":["Scripting"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"worker","type":"dfn","url":"#scripting-worker"},
 "#styling-style-sheet": {"displayText":"style sheet","export":true,"for_":["Styling"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"style sheet","type":"dfn","url":"#styling-style-sheet"},
 "#threading-background-scripting-thread": {"displayText":"background scripting thread","export":true,"for_":["Threading"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"background scripting thread","type":"dfn","url":"#threading-background-scripting-thread"},
@@ -3990,7 +4253,6 @@ let refsData = {
 "#userinteraction-event-propagation": {"displayText":"event propagation","export":true,"for_":["UserInteraction"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"event propagation","type":"dfn","url":"#userinteraction-event-propagation"},
 "#userinteraction-event-respond-chain": {"displayText":"event respond chain","export":true,"for_":["UserInteraction"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"event respond chain","type":"dfn","url":"#userinteraction-event-respond-chain"},
 "#userinteraction-main-thread-event-object": {"displayText":"main thread event object","export":true,"for_":["UserInteraction"],"level":"1","normative":true,"shortname":"lynxlivingspec","spec":"lynxlivingspec-1","status":"local","text":"main thread event object","type":"dfn","url":"#userinteraction-main-thread-event-object"},
-"https://w3c.github.io/miniapp-manifest/#dfn-pages": {"displayText":"pages","export":true,"for_":[],"level":"1","normative":true,"shortname":"miniapp-manifest","spec":"miniapp-manifest","status":"current","text":"pages","type":"dfn","url":"https://w3c.github.io/miniapp-manifest/#dfn-pages"},
 };
 
 function mkRefHint(link, ref) {
@@ -4144,6 +4406,7 @@ function positionRefHint(refHint) {
     }
 }
 
+// TODO: shared util
 // Returns the root-level absolute position {left and top} of element.
 function getBounds(el, relativeTo=document.body) {
     const relativeRect = relativeTo.getBoundingClientRect();

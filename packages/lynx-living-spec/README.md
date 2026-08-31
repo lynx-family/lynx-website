@@ -4,13 +4,12 @@ This package contains the Lynx Living Specification, which is the authoritative 
 
 ## Getting Started
 
-1. Install Bikeshed
+1. Install pipx
 
-First, install `pipx` if you haven't already:
+Install `pipx` if you haven't already:
 
 ```bash
 brew install pipx
-pipx install bikeshed
 ```
 
 2. Generate HTML Documentation
@@ -21,4 +20,9 @@ Run the following command to generate the HTML documentation from the Bikeshed s
 pnpm gen:living-spec
 ```
 
-This command will generate the HTML documentation in the `docs/public/living-spec` directory.
+This command runs the Bikeshed version pinned by
+`scripts/lynx-living-spec.js` and generates the HTML documentation in the
+`docs/public/living-spec` directory. Commit the generated
+`docs/public/living-spec/index.html` together with changes to the `.bs` source
+files, and update the `Date` metadata in `src/index.bs` when publishing source
+changes.
