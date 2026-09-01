@@ -1,0 +1,42 @@
+import { PackageManagerTabs } from '@theme';
+
+# 调试 Lynxtron
+
+Lynxtron 本地开发默认使用带 DevTool 的 runtime，打包时则默认使用 release runtime。
+
+## 在开发模式下调试
+
+以开发模式启动脚手架生成的项目：
+
+<PackageManagerTabs command="run dev" />
+
+Lynxtron CLI 在本地运行时默认使用带 DevTool 的 runtime。
+
+### 调试主进程
+
+脚手架生成的开发命令会在 `localhost:9222` 启动 Node.js inspector。
+
+1. 在 Chrome 中打开 `chrome://inspect`。
+2. 选择 **Configure...**，确认目标发现列表中包含 `localhost:9222`。
+3. 在 **Remote Target** 下找到应用的 `main.js`，然后选择 **inspect**。
+
+### 调试 Lynx UI
+
+保持 `npm run dev` 运行，下载并打开 [Lynx DevTool](/guide/devtool)。选择 Lynxtron 应用，即可检查元素、控制台输出和源代码。
+
+## 调试打包后的应用
+
+`electron-builder` 默认使用 release runtime。如确需生成仅供本地调试、带 DevTool 的安装包，请在顶层添加以下配置：
+
+```yaml title="electron-builder.yml"
+lynxtron:
+  runtimeVariant: devtool
+```
+
+然后打包应用：
+
+<PackageManagerTabs command="run pack" />
+
+打开打包后的应用，并像开发模式一样使用 [Lynx DevTool](/guide/devtool) 连接。
+
+对外分发前请移除 `runtimeVariant: devtool`，使后续安装包恢复使用 release runtime。
