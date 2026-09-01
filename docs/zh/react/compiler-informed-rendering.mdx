@@ -80,13 +80,11 @@ export function Greeting({ name, highlighted }) {
 
 从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
 
-:::details 当前实现：Snapshot IR
+:::details 当前的内部表示：Snapshot
 
-ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）表示这些模板。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
+ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）保存上述编译信息。我们也在尝试演进成性能更好的其他表示。
 
-IR 属于内部实现，未来可能继续演进，或替换为其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
-
-将上面的概念对应到当前 Snapshot IR，可以归纳为以下四个核心部分：
+Snapshot 和上述简化的概念一致，可以归纳为以下四个核心部分：
 
 | 编译结果       | 作用                                                             |
 | -------------- | ---------------------------------------------------------------- |
@@ -128,7 +126,7 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
   );
 ```
 
-**注意：**这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。请勿在应用代码中依赖或复制这些产物。
+**注意：**IR 属于内部实现，请勿在应用代码中依赖或复制这些产物。这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。
 
 :::
 
