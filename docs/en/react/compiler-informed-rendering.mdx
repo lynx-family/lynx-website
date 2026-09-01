@@ -86,7 +86,7 @@ This approach is similar to [Vue's compiler-informed virtual DOM](https://vuejs.
 
 From a compiler perspective, it can also be understood as a form of [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation): ReactLynx specializes the generic rendering process with host structures known from JSX, leaving only the parts that cannot be determined ahead of time for the runtime.
 
-::::details Current implementation: Snapshot IR
+:::details Current implementation: Snapshot IR
 
 ReactLynx currently represents these templates with an Intermediate Representation (IR) called a **Snapshot**. Snapshot is only the IR used by the current implementation, not the name of the rendering mechanism. It is also unrelated to snapshot testing or the `getSnapshotBeforeUpdate()` method on React class components.
 
@@ -102,8 +102,6 @@ The current IR has four core parts:
 | Representation ID   | Identifies a reusable template so multiple template instances can share its static data.                 |
 
 The simplified example below shows how the current IR represents the `Greeting` template through [Element PAPI](/api/engine/element-api) creation and update operations. It preserves the static creator, dynamic updater, and slot information while omitting compiler metadata for CSS, entry points, and compatibility.
-
-:::details View a simplified definition of the current IR
 
 ```js
 ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
@@ -136,15 +134,9 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
   );
 ```
 
-:::
-
-:::warning
-
-The `$0` and `__DynamicPartSlotV2` representation shown here reflects `@lynx-js/react` 0.120.0 or later. `createSnapshot`, `snapshotCreatorMap`, the global element operation functions, and generated IDs are internal implementation details. Their names and parameters may change with the source code, compiler configuration, or ReactLynx version. Do not depend on or copy these outputs in application code.
+**Warning:** The `$0` and `__DynamicPartSlotV2` representation shown here reflects `@lynx-js/react` 0.120.0 or later. `createSnapshot`, `snapshotCreatorMap`, the global element operation functions, and generated IDs are internal implementation details. Their names and parameters may change with the source code, compiler configuration, or ReactLynx version. Do not depend on or copy these outputs in application code.
 
 :::
-
-::::
 
 ## Writing Compiler-Friendly JSX
 

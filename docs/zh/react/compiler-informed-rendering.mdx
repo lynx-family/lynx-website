@@ -86,7 +86,7 @@ export function Greeting({ name, highlighted }) {
 
 从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
 
-::::details 当前实现：Snapshot IR
+:::details 当前实现：Snapshot IR
 
 ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）表示这些模板。Snapshot 只是当前实现采用的 IR，不是这项渲染机制的名称，也与快照测试或 React 类组件的 `getSnapshotBeforeUpdate()` 无关。
 
@@ -102,8 +102,6 @@ IR 属于内部实现，未来可能继续演进，或替换为其他表示。�
 | 表示标识       | 标识可复用的模板，让多个模板实例共享同一份静态信息。             |
 
 下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表示 `Greeting` 模板。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
-
-:::details 查看当前 IR 的简化定义
 
 ```js
 ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
@@ -136,15 +134,9 @@ ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
   );
 ```
 
-:::
-
-:::warning
-
-这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。请勿在应用代码中依赖或复制这些产物。
+**注意：**这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。请勿在应用代码中依赖或复制这些产物。
 
 :::
-
-::::
 
 ## 如何编写编译友好的 JSX
 
