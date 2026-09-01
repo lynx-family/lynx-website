@@ -40,15 +40,7 @@ export function Greeting({ name, highlighted }) {
 
 每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为[协调（Reconciliation）](https://react.dev/learn/render-and-commit)。
 
-但在这个例子中，真正会变化的只有 `className` 和 `name`；`view → text` 的类型、层级和父子关系始终不变。编译器会从 JSX 中区分出：
-
-- **静态结构**：`view`、`text`、固定文本 `Hello, `，以及确定的父子关系。
-- **动态属性**：由 `highlighted` 决定的 `className`。
-- **动态子节点**：由 `name` 生成的文本。
-
-因此，编译产物可以提前记录静态创建逻辑、定向更新函数和动态子节点插槽。运行时复用这份模板，只为每个模板实例提供自己的动态值和子节点。
-
-经过优化后，生成的模板和调用部分在概念上类似：
+但在这个例子中，`view`、`text`、固定文本 `Hello, ` 及其父子关系都是静态的，只有 `className` 和 `name` 会变化。编译器可以据此提取一份可复用的模板，让运行时只传入每次渲染所需的动态数据。概念上类似：
 
 ```js
 const GreetingTemplate = '__compiled_greeting';
@@ -80,7 +72,7 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-这里的名称和函数形式只是帮助理解的概念表示，并不是可以依赖的实际编译产物。`GreetingTemplate_create()` 通过 Element PAPI 展开稳定的宿主结构，`GreetingTemplate_update()` 则把动态 `className` 直接应用到根元件。这两个函数展示了 `GreetingTemplate` 的创建和属性更新部分；当前 IR 还会记录它的动态子节点插槽。调用部分引用这份可复用的模板，并只传入这次渲染所需的动态数据。
+这里的名称和函数形式只用于解释机制，并不是可以依赖的实际编译产物。`GreetingTemplate_create()` 创建静态结构，`GreetingTemplate_update()` 定向更新 `className`，`$0` 表示 `name` 所在的动态子节点插槽。
 
 这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
 
@@ -92,7 +84,7 @@ ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate R
 
 IR 属于内部实现，未来可能继续演进，或替换为其他表示。应用代码无需创建或操作它，也不应依赖生成名称和数据结构。
 
-当前 IR 可以归纳为以下四个核心部分：
+将上面的概念对应到当前 Snapshot IR，可以归纳为以下四个核心部分：
 
 | 编译结果       | 作用                                                             |
 | -------------- | ---------------------------------------------------------------- |

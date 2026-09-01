@@ -40,15 +40,7 @@ export function Greeting({ name, highlighted }) {
 
 On every render, `jsx()` creates virtual nodes (VNodes) that describe the UI structure. ReactLynx then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as [reconciliation](https://react.dev/learn/render-and-commit).
 
-But in this example, only `className` and `name` can change. The types, hierarchy, and parent-child relationship of `view → text` remain fixed. The compiler separates the JSX into:
-
-- **Static structure**: `view`, `text`, the fixed text `Hello, `, and their known parent-child relationships.
-- **Dynamic property**: the `className` determined by `highlighted`.
-- **Dynamic child**: the text generated from `name`.
-
-The compiler can therefore record static creation logic, targeted update functions, and dynamic child slots ahead of time. The runtime reuses this template and only supplies each template instance's own dynamic values and children.
-
-After optimization, the generated template and call site are conceptually similar to the following code:
+But in this example, the `view`, `text`, fixed text `Hello, `, and their parent-child relationships are static; only `className` and `name` can change. The compiler can therefore extract a reusable template, so the runtime only needs to supply the dynamic data required for each render. Conceptually, it looks like this:
 
 ```js
 const GreetingTemplate = '__compiled_greeting';
@@ -80,7 +72,7 @@ export function Greeting({ name, highlighted }) {
 }
 ```
 
-These names and function shapes are conceptual and exist only to explain the mechanism; they are not actual compiler output that applications can rely on. `GreetingTemplate_create()` expands the stable host structure through Element PAPI, while `GreetingTemplate_update()` applies the dynamic `className` directly to the root element. These functions illustrate the creation and property-update parts of `GreetingTemplate`; the current IR also records its dynamic child slot. The call site references this reusable template and supplies only the dynamic data required for that render.
+These names and function shapes only explain the mechanism; they are not actual compiler output that applications can rely on. `GreetingTemplate_create()` creates the static structure, `GreetingTemplate_update()` directly updates `className`, and `$0` represents the dynamic child slot for `name`.
 
 This approach is similar to [Vue's compiler-informed virtual DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom), [Owl's BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom), and [Million.js](https://github.com/aidenybai/million): each uses information known at build time to reduce the amount of work required at runtime.
 
@@ -92,7 +84,7 @@ ReactLynx currently represents these templates with an Intermediate Representati
 
 The IR is an internal implementation detail. It may continue to evolve or be replaced by another representation. Application code does not need to create or manipulate it and should not depend on generated names or data structures.
 
-The current IR has four core parts:
+In the current Snapshot IR, this model is represented by four core parts:
 
 | Compiled result     | Purpose                                                                                                  |
 | ------------------- | -------------------------------------------------------------------------------------------------------- |
