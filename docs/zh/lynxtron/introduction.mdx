@@ -45,7 +45,7 @@ cd <project-name>
    <PackageManagerTabs command="install" />
 
 3. 启动应用
-   <PackageManagerTabs command="run start" />
+   <PackageManagerTabs command="run dev" />
 
 运行之后，您将看到 `Hello Lynxtron` 应用启动成功，如下图：
 
@@ -55,7 +55,23 @@ cd <project-name>
 
 ### 调试应用
 
-请参考[调试 Lynxtron](/lynxtron/debug)，了解如何在开发模式或带 DevTool 的安装包中调试主进程和 Lynx UI。
+开发命令默认使用带 DevTool 的 Lynxtron runtime。保持命令运行，即可调试主进程或 Lynx UI。
+
+#### 调试主进程
+
+开发命令会在 `localhost:9222` 启动 Node.js inspector。
+
+1. 在 Chrome 中打开 `chrome://inspect`。
+2. 点击 **Configure...**，确认目标发现列表中包含 `localhost:9222`。
+3. 在 **Remote Target** 下找到 Lynxtron 进程，然后点击 **inspect**。
+
+![通过 Chrome 检查 Lynxtron 主进程](/assets/lynxtron/debug/main-process.png)
+
+#### 调试 Lynx UI
+
+下载并打开 [Lynx DevTool](/guide/devtool)，选择正在运行的 Lynxtron 应用，即可检查元素、控制台输出和源代码。
+
+![使用 Lynx DevTool 检查运行中的 Lynxtron 应用](/assets/lynxtron/debug/lynx-ui.png)
 
 ### 打包您的应用程序
 
@@ -63,7 +79,7 @@ cd <project-name>
 
 <PackageManagerTabs command="run pack" />
 
-`pack` 默认使用 release runtime。如需生成仅用于本地调试、带 DevTool 的安装包，请添加：
+`pack` 默认使用 release runtime。如需生成仅用于本地调试、带 DevTool 的安装包，请添加以下顶层配置：
 
 ```yaml title="electron-builder.yml"
 lynxtron:
@@ -71,6 +87,8 @@ lynxtron:
 ```
 
 对外分发前请移除此配置。
+
+打开打包后的应用，即可按照开发阶段相同的方式连接 [Lynx DevTool](/guide/devtool)。
 
 如果需要配置一些自定义参数，可以修改 `electron-builder.yml` 配置文件。
 

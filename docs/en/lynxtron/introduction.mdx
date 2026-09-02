@@ -43,7 +43,7 @@ cd <project-name>
     <PackageManagerTabs command="install" />
 
 3.  Start the application:
-    <PackageManagerTabs command="run start" />
+    <PackageManagerTabs command="run dev" />
 
 After running, you will see the `Hello Lynxtron` application launch successfully, as shown below:
 
@@ -51,9 +51,25 @@ After running, you will see the `Hello Lynxtron` application launch successfully
   <img src={helloLynxtronGif} width="100%" />
 </div>
 
-### Debugging Your Application
+### Debug Your Application
 
-See [Debug Lynxtron](/lynxtron/debug) to debug the main process and Lynx UI during development or from a DevTool-enabled package.
+The development command uses a DevTool-enabled Lynxtron runtime by default. Keep it running while you debug the main process or Lynx UI.
+
+#### Debug the Main Process
+
+The development command starts the Node.js inspector on `localhost:9222`.
+
+1. Open `chrome://inspect` in Chrome.
+2. Select **Configure...** and make sure `localhost:9222` is in the target discovery list.
+3. Find the Lynxtron process under **Remote Target**, then select **inspect**.
+
+![Inspect the Lynxtron main process from Chrome](/assets/lynxtron/debug/main-process.png)
+
+#### Debug the Lynx UI
+
+Download and open [Lynx DevTool](/guide/devtool), select the running Lynxtron application, then inspect its elements, console output, and source code.
+
+![Inspect a running Lynxtron application with Lynx DevTool](/assets/lynxtron/debug/lynx-ui.png)
 
 ### Package Your Application
 
@@ -61,7 +77,7 @@ You can use the following command to package your application:
 
 <PackageManagerTabs command="run pack" />
 
-`pack` uses the release runtime by default. To create a DevTool-enabled package for local debugging, add:
+`pack` uses the release runtime by default. To create a DevTool-enabled package for local debugging, add this top-level option:
 
 ```yaml title="electron-builder.yml"
 lynxtron:
@@ -69,6 +85,8 @@ lynxtron:
 ```
 
 Remove this option before distributing the application.
+
+Open the packaged application and connect with [Lynx DevTool](/guide/devtool) in the same way as during development.
 
 If you need to configure some custom parameters, you can modify the `electron-builder.yml` configuration file.
 
