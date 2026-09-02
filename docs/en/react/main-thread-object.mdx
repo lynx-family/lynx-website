@@ -1,0 +1,187 @@
+---
+description: 'Understand MainThreadObject handles and choose between library-owned objects, MainThreadRef, and renderer-owned MainThread.Element bindings.'
+---
+
+# Main-Thread Objects
+
+[Main thread functions](./main-thread-script) run in a different JavaScript runtime from your React component. Captured JSON values are copied into that runtime. A stateful object, however, needs identity: every main thread function that captures it should reach the same object.
+
+`MainThreadObject` is the ReactLynx model for that identity. A hook returns an opaque background-runtime handle. When a main thread function captures the handle, ReactLynx resolves it to one stable object in the main-thread runtime.
+
+```text
+background runtime                 main-thread runtime
+
+opaque handle ── capture/hydrate ──> stable realized object
+     │                                      │
+     └─ identity + initialization data      └─ methods and mutable state
+```
+
+The handle is not the realized object. It is not a Proxy that forwards operations, an RPC stub, a shared value, or a transferable JavaScript object. Its serialized representation is framework-owned metadata; do not inspect it or send it through an application protocol.
+
+## The Core Types
+
+A library describes a main-thread object with three core APIs:
+
+- `MainThreadObjectType<I, O>` maps a JSON-serializable initialization payload `I` to a realized object `O`. It contains a globally unique, stable `type` key, a `create` function, and an optional `dispose` function.
+- `useMainThreadObject(type, initialValue)` creates a stable handle during React rendering. Its return type is `O`, so a main thread function can use the target object's normal API.
+- `MainThreadObjectHandle<O>` is the opaque source-runtime representation. Application and library code normally does not construct or inspect this class directly.
+
+The first render sends the initialization payload to the main thread. The main-thread runtime calls `create` once for that handle and preserves the returned object's identity across captures and rerenders. When the handle is released, ReactLynx calls `dispose`, if provided.
+
+The same type key must always use the same `create` and `dispose` functions. Use a package-qualified key such as `com.example/Counter` to avoid collisions.
+
+## Define a Library-Owned Object
+
+`defineMainThreadObjectType()` and `useMainThreadObject()` are low-level APIs intended for library-provided hooks. This minimal hook exposes a pure-JavaScript counter whose state exists only on the main thread:
+
+```tsx
+import {
+  defineMainThreadObjectType,
+  useMainThreadObject,
+} from '@lynx-js/react';
+
+interface CounterInit {
+  initialValue: number;
+}
+
+interface Counter {
+  get(): number;
+  increment(): number;
+}
+
+const CounterType = defineMainThreadObjectType<CounterInit, Counter>({
+  type: 'com.example/Counter',
+  create({ initialValue }) {
+    let value = initialValue;
+    return {
+      get: () => value,
+      increment: () => ++value,
+    };
+  },
+});
+
+export function useCounter(initialValue: number): Counter {
+  return useMainThreadObject(CounterType, { initialValue });
+}
+```
+
+An application can capture the returned object and call its methods inside a main thread function:
+
+```tsx
+function CounterButton() {
+  const counter = useCounter(0);
+
+  function onTap() {
+    'main thread';
+    console.log(counter.increment());
+  }
+
+  return <text main-thread:bindtap={onTap}>Increment</text>;
+}
+```
+
+The initialization payload must be JSON-serializable. Use JSON primitives, arrays, and plain objects. Do not pass functions, symbols, `BigInt`, non-finite numbers, class instances, `undefined`, or cyclic data.
+
+## MotionValue: A Factory-Realized Object
+
+`useMotionValue()` is a library hook built on `MainThreadObject`. Motion creates a pure-JavaScript `MotionValue` in the main-thread runtime and stops it when the handle is disposed.
+
+```tsx
+import { useMotionValue } from '@lynx-js/motion';
+import type { MainThread } from '@lynx-js/types';
+
+export function MovingView() {
+  const x = useMotionValue(0);
+
+  function move(event: MainThread.TouchEvent) {
+    'main thread';
+    x.set(x.get() + 10);
+    event.currentTarget.setStyleProperty(
+      'transform',
+      `translateX(${x.get()}px)`,
+    );
+  }
+
+  return <view main-thread:bindtap={move}>Move</view>;
+}
+```
+
+Calling `x.set()` changes the main-thread `MotionValue`. It does not update React state, cause a React rerender, or synchronize the new value back to the background runtime.
+
+## MainThreadRef: A Mutable Cell or Renderer Binding
+
+[`MainThreadRef<T>`] is a stable mutable cell with a `current` property. Prefer [`useMainThreadRef()`] when you need simple mutable state rather than a library-owned object API:
+
+```tsx
+const tapCount = useMainThreadRef(0);
+
+function onTap() {
+  'main thread';
+  tapCount.current += 1;
+}
+```
+
+`main-thread:ref` uses the same cell shape for a different purpose: it is a renderer-controlled binding. The renderer writes a native-backed [`MainThread.Element`] object to `current` when the node mounts or rebinds, and clears it when the binding is removed. Your code does not construct or dispose the Element.
+
+```tsx
+import { useMainThreadRef } from '@lynx-js/react';
+import type { MainThread } from '@lynx-js/types';
+
+export function HighlightableView() {
+  const element = useMainThreadRef<MainThread.Element>(null);
+
+  function highlight() {
+    'main thread';
+    element.current?.setStyleProperty('background-color', 'gold');
+  }
+
+  return (
+    <view main-thread:ref={element} main-thread:bindtap={highlight}>
+      Highlight
+    </view>
+  );
+}
+```
+
+This ownership difference is important:
+
+| Primitive                 | Realized value                                            | Owner and lifetime                                         |
+| ------------------------- | --------------------------------------------------------- | ---------------------------------------------------------- |
+| `useMainThreadObject()`   | A library-defined object                                  | The library's `create` and optional `dispose` functions    |
+| `useMotionValue()`        | A pure-JavaScript `MotionValue`                           | Motion, through the `MainThreadObject` lifecycle           |
+| `useMainThreadRef(value)` | A mutable `{ current }` cell                              | Your component                                             |
+| `main-thread:ref`         | A native-backed `MainThread.Element` in a `MainThreadRef` | The renderer; mount, rebind, and unmount control `current` |
+
+Use `useMainThreadRef` for a scalar, a small mutable record, or an Element binding. Prefer a library-provided object hook when you need an object API, invariants, subscriptions, native resources, or explicit cleanup. Library authors should keep renderer-owned values such as `MainThread.Element` out of `MainThreadObject` factories.
+
+## Runtime Rules and Diagnostics
+
+Methods on a realized main-thread object are callable only inside main thread functions. Accessing the returned value while React is rendering in the background runtime is a mistake:
+
+```tsx
+function BrokenCounter() {
+  const counter = useCounter(0);
+  const value = counter.get(); // Error: background-runtime access
+  return <text>{value}</text>;
+}
+```
+
+In a development build, ReactLynx reports:
+
+```text
+MainThreadObject handle for "com.example/Counter" cannot access "get" in the background runtime. Use the object only inside a main-thread function.
+```
+
+This development-only guard improves the diagnostic; it does not forward the call to the main thread. Production handles remain opaque serialized handles.
+
+Keep these rules in mind:
+
+- Call object methods only from functions marked with `'main thread'`.
+- Keep initialization payloads JSON-serializable and treat them as initialization, not live synchronized state.
+- Mutations remain on the main thread. Use React state and an explicit cross-thread call when the background UI must rerender.
+- Do not read, clone, persist, compare by structure, or manually transfer a handle.
+- Let `main-thread:ref` and the renderer own `MainThread.Element` binding and cleanup.
+
+[`MainThread.Element`]: /api/lynx-api/main-thread/main-thread-element.mdx
+[`MainThreadRef<T>`]: /api/react/Class.MainThreadRef.mdx
+[`useMainThreadRef()`]: /api/react/Function.useMainThreadRef.mdx
