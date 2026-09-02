@@ -78,7 +78,7 @@ lynx-app/
 
 - `package.json` 是必需的，用来声明 Autolink 库依赖。
 - Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
-- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
+- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。Podfile 需要配置 Lynx specs 源 `https://github.com/lynx-family/Specs.git`。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
 - HarmonyOS 接入需要根目录的 `hvigorconfig.ts`，以及一个依赖 `@lynx/lynx` 的 entry 或 feature HAP 模块。
 - `shared/` 用于宿主应用自有的跨端原生源码和 CMake 构建入口，需要自行编译。
 - Lynxtron 接入需要应用具备宿主侧 Rspack 构建，并通过 `pluginLynxtron()` 安装和加载原生库；一般消费编译后的 `dist/` 产物。
@@ -115,9 +115,12 @@ Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并�
 
 <PlatformTabs.Tab platform="ios">
 
-在 iOS 构建环境中安装 `cocoapods-lynx-library` gem。然后在应用的 Podfile 中加入 CocoaPods plugin，并调用 `use_lynx_library!`。执行 `pod install` 时，插件会加入库的 podspec 和生成的 registry pod：
+在 iOS 构建环境中安装 `cocoapods-lynx-library` gem。然后在应用的 Podfile 中加入 Lynx specs 源、CocoaPods plugin，并调用 `use_lynx_library!`。执行 `pod install` 时，插件会加入库的 podspec 和生成的 registry pod：
 
 ```ruby
+source 'https://github.com/lynx-family/Specs.git'
+source 'https://cdn.cocoapods.org/'
+
 plugin 'cocoapods-lynx-library'
 
 target 'LynxApp' do
