@@ -1,0 +1,118 @@
+---
+title: 'Agent Lynx 正式发布：面向 AI Agent 的 Lynx DevTool'
+date: 2026-08-10
+sidebar: false
+authors: ['hzy']
+badge_text: '新：Agent Lynx，面向 AI Agent 的 Lynx DevTool'
+description: 'Agent Lynx 让 coding agent 可以通过命令行检查、操作并验证运行中的 Lynx 应用，提供 Snapshot Ref、标注截图、ReactLynx 关联和 Trace 证据。'
+---
+
+import { BlogHeader } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore pftrace */}
+
+Coding agent 已经很擅长阅读项目、修改源码和运行测试，但很多 UI 问题只有页面真正跑起来才会成立：一个元件落在屏幕之外，一次点击命中了错误的目标，一个组件拿到了意料之外的状态，或者某一帧花费了过长时间。如果看不到运行中的页面，agent 仍然只能根据源码猜测，或者请人把 DevTool 里看到的信息再翻译一遍。
+
+过去几个版本里，[Lynx DevTool MCP](/ai/lynx-devtool-mcp) 和 [`lynx-devtool` Agent Skill](/ai/skills/lynx-devtool) 已经开始补上这段链路。今天，我们更进一步，正式发布 **Agent Lynx**：一个独立的 npm CLI，把 Lynx DevTool 变成一套紧凑、可脚本化、面向 AI agent 的接口。
+
+Agent Lynx 0.14 现已发布到 npm。它不会取代 Lynx DevTool 桌面应用，也不要求 agent 支持某一种特定协议。只要能够使用终端，agent 就可以通过 `agent-lynx` CLI 完成同一个基本闭环：观察运行中的页面，操作刚刚找到的目标，再用证据验证结果是否正确。
+
+## 一套 Agent 能读懂的 UI 闭环
+
+传统选择器不适合在 agent 的多轮工作中传递目标：它可能很长、并不唯一，甚至根本不存在。原始 DevTool 协议响应虽然信息完整，但对于下一步操作来说往往又太多了。
+
+`agent-lynx` CLI 从一个紧凑的 `snapshot` 开始。它保留可交互结构、可见文本，以及 `scrollable`、`editable`、`disabled`、`offscreen` 等关键状态，再为结果分配 `@e1`、`@e2` 这样的 ref：
+
+```bash
+agent-lynx snapshot
+
+# @e1 [scroll-view] ... {scrollable}
+# ├─ @e2 [input] "Search" ... {editable}
+# └─ @e3 [view] "Add to cart" ...
+```
+
+这些 ref 会成为后续命令共同使用的目标语言：
+
+```bash
+agent-lynx fill @e2 "wireless headphones"
+agent-lynx tap @e3 --snapshot
+agent-lynx wait --text "Added to cart"
+```
+
+共享 daemon 会保持目标连接，并在多次 CLI 调用之间持有最新的 ref 映射。修改页面的命令可以带上 `--snapshot`，在操作完成后立即返回并缓存下一份 UI 状态；`wait` 则会轮询新的 snapshot，而不是依赖一段拍脑袋决定的 sleep。需要把结果交给下一个工具或自动检查时，再加上 `--json` 即可。
+
+## 同一个 Ref，同时出现在文本与像素中
+
+文本树适合解释页面上有什么、什么可以操作；截图适合解释布局、视觉层级和实际渲染。只有两者使用同一种目标语言时，它们才能真正配合起来。
+
+```bash
+agent-lynx screenshot --annotate -o page.jpeg --json
+```
+
+启用 `--annotate` 后，`agent-lynx` CLI 会在一次操作中刷新 snapshot 并完成截图。JPEG 中的 `[3]` 会直接对应 `@e3`，JSON 结果则携带同一份新 snapshot 和标注框。多模态 agent 可以先理解像素、选择目标，再把它的 ref 交给 `tap`、`fill` 或 `scroll`，不需要换算坐标，也不需要补拍第二份可能已经属于另一帧的 snapshot。
+
+标注会刻意保持稀疏：优先呈现可操作控件、可编辑字段、显式测试目标和滚动容器，而不是给每一个布局节点都画框。需要完整页面结构时，agent 仍然可以读取同一份 snapshot。
+
+## 从元件回到 ReactLynx 组件
+
+找到异常元件通常只是第一步。接下来还要知道：它由哪个 ReactLynx 组件渲染，这个组件此刻看到了什么。
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx find Checkout
+agent-lynx reactlynx link @e3
+```
+
+ReactLynx 子命令会提供另一棵紧凑树，并使用 `@c8` 这样的组件 ref。`reactlynx component` 可以检查 props、state、hooks 和 context，`reactlynx find` 可以按组件名缩小大型组件树，而 `reactlynx link` 则能在元件 ref 与其最近的可见组件之间双向跳转。
+
+这不是根据文本、坐标或树位置做出的猜测，而是通过 Lynx node ID 与 ReactLynx unique ID 完成的身份关联。当应用包含兼容的 [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools) 开发版本时，agent 可以从视觉现象抵达负责它的组件，再从组件回到真实渲染出的元件，全程不丢失上下文。
+
+## 用证据完成调试
+
+UI 状态只是一次调试会话的一部分。`agent-lynx` CLI 还提供控制台日志、已加载源码、JavaScript 求值、截图、Heap Snapshot、交互录制、原始 CDP 与 App 请求，以及性能 Trace。
+
+Trace 的录制与分析也在同一套工作流里。拿到 `.pftrace` 后，agent 可以先确认录制里到底有什么，再执行聚焦的 Perfetto SQL 查询：
+
+```bash
+agent-lynx trace event-summary ./page.pftrace
+agent-lynx trace query ./page.pftrace \
+  --sql "SELECT name, COUNT(*) AS count FROM slice GROUP BY name ORDER BY count DESC LIMIT 20"
+```
+
+这样一来，验证依据就不再只是“Trace 文件不为空”，而是可以明确回答：里面有哪些事件、各自出现了多少次，以及这次录制是否真的包含回答原始性能问题所需的数据。
+
+## 一个自带 Skill 的 CLI
+
+只有可执行命令还不够。Agent 还需要知道什么时候应该使用它们，ref 的作用域是什么，表达式应该在哪个线程执行，以及连接不到目标时应该排查什么。
+
+`agent-lynx` CLI 会把这些知识作为 `lynx-devtool` Agent Skill 一起发布：
+
+```bash
+agent-lynx skills list
+agent-lynx skills get lynx-devtool
+```
+
+CLI 会从自己的运行时依赖中发现 Skill，并输出它的 `SKILL.md`，以及随包提供的 references 与 examples 清单。因此，只安装 `agent-lynx`，就能同时获得执行入口和教 agent 如何使用它的完整说明。Skill 仍然是这套知识的唯一事实来源，CLI 内部不再复制一份更短、也更容易漂移的 prompt。
+
+这也划清了本次品牌升级的边界：**Agent Lynx** 是产品品牌，`agent-lynx` 负责 CLI 运行时；**lynx-devtool** 则继续作为核心 Agent Skill。此前通过 `@lynx-js/skill-lynx-devtool` 使用的一次性命令仍然保留，兼容入口会转发到版本一致的 Agent Lynx。
+
+## 立即体验
+
+无需安装，直接运行最新版本：
+
+```bash
+npx --yes agent-lynx --help
+```
+
+也可以全局安装，让 agent 直接从 `PATH` 找到命令：
+
+```bash
+npm install --global agent-lynx
+agent-lynx list-clients
+```
+
+Agent Lynx 需要 Node.js 18 或更高版本，以及一个已经接入 DevTool、能够访问的 Android、iOS 或 Desktop Lynx 目标。你可以先按照 [Lynx DevTool 接入指南](/guide/start/integrate-lynx-devtool)准备应用，再查看 GitHub 上的 [`agent-lynx` 源码](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx)或 npm 上的 [`agent-lynx` 包](https://www.npmjs.com/package/agent-lynx)。
+
+Agent Lynx 只是 Lynx 面向 agent 原生调试界面的起点。欢迎把它用到真实页面上，在 [lynx-community/skills](https://github.com/lynx-community/skills) 中告诉我们闭环还会在哪里中断，并一起决定接下来要补上的能力。
