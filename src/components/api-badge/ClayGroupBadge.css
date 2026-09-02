@@ -1,0 +1,51 @@
+/*
+ * ClayGroupBadge — interactive umbrella chip used by APIBadge in
+ * `expandable` mode. Visual states:
+ *   default            "Clay X+" with no variant indicators.
+ *   :hover (collapsed) Variant mini-icons fade in inline between label and version.
+ *   .--expanded        Clicked-locked. Label is replaced by variant name list
+ *                      (e.g. "Clay Android, Clay iOS"); hover icons hide.
+ *
+ * Icons-on-hover is CSS-only so static SSR HTML is fine without JS;
+ * click-locked expansion needs hydration.
+ */
+
+.clay-group-badge__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.clay-group-badge__chip:focus-visible {
+  outline: 1px solid var(--platform-badge-fg);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.clay-group-badge__icons {
+  display: none;
+  align-items: center;
+  gap: 0.125rem;
+  margin-left: 0.125rem;
+}
+
+.clay-group-badge:not(.clay-group-badge--expanded)
+  .clay-group-badge__chip:hover
+  .clay-group-badge__icons {
+  display: inline-flex;
+}
+
+.clay-group-badge__variant-icon {
+  --icon-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.clay-group-badge__names {
+  font-variant-numeric: tabular-nums;
+}
+
+.clay-group-badge__version {
+  font-variant-numeric: tabular-nums;
+}
