@@ -213,7 +213,21 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "path": "dist"
+      "path": "dist",
+      "binaries": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "path": "dist/darwin/arm64/lynx-button.node"
+        }
+      ],
+      "frameworks": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "path": "dist/darwin/arm64/frameworks"
+        }
+      ]
     },
     "macos": {
       "sourceDir": "shared"
@@ -229,7 +243,11 @@ For Android, `platforms.android.packageName` is required, and `sourceDir` defaul
 
 `platforms.macos.sourceDir` and `platforms.windows.sourceDir` point to the source-exposed `shared/` directory, which is the cross-platform native source layout and may be reused by more platforms later.
 
-For Lynxtron, `platforms.lynxtron.path` declares the native artifact root, usually `dist`. `pluginLynxtron()` stages matching package files and verifies the artifacts; the package's `./lynxtron` export loads the current host's `.node`, such as `dist/macos/arm64/lynx-button.node` or `dist/windows/x64/lynx-button.node`.
+For Lynxtron, `platforms.lynxtron.path` declares the package-mode native artifact root, usually `dist`. `pluginLynxtron()` stages matching package files and verifies the artifacts; the package's `./lynxtron` export loads the current host's `.node`, such as `dist/darwin/arm64/lynx-button.node` or `dist/win32/x64/lynx-button.node`.
+
+Use `binaries` and `frameworks` when a package needs to describe its runtime payloads explicitly. Both fields are arrays, and every entry has an `os`, an `arch`, and a `path` (or an array of paths) relative to the package root. Autolink selects entries matching the target host. `binaries` describes directly loadable native files such as `.node`, `.dylib`, and `.dll`; `frameworks` describes macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
+
+These paths identify source artifacts inside the npm package. The host application integration chooses their final location in the development output or packaged application. The legacy singular `binary` field and its misspelled `arc` selector remain accepted for compatibility, but new manifests should use `binaries` and `arch`. Do not declare `binary` and `binaries` together.
 
 After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
 

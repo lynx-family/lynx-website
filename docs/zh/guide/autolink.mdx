@@ -213,7 +213,21 @@ npm install @example/lynx-button
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "path": "dist"
+      "path": "dist",
+      "binaries": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "path": "dist/darwin/arm64/lynx-button.node"
+        }
+      ],
+      "frameworks": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "path": "dist/darwin/arm64/frameworks"
+        }
+      ]
     },
     "macos": {
       "sourceDir": "shared"
@@ -229,7 +243,11 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 `platforms.macos.sourceDir` 和 `platforms.windows.sourceDir` 指向以源码形式暴露的 `shared/` 目录。它是跨端原生源码结构，后续也可以被更多平台复用。
 
-对于 Lynxtron，`platforms.lynxtron.path` 声明原生产物根目录，通常是 `dist`。`pluginLynxtron()` 会收集匹配到的包文件并校验产物；包的 `./lynxtron` export 负责加载当前宿主的 `.node`，例如 `dist/macos/arm64/lynx-button.node` 或 `dist/windows/x64/lynx-button.node`。
+对于 Lynxtron，`platforms.lynxtron.path` 声明 package mode 使用的原生产物根目录，通常是 `dist`。`pluginLynxtron()` 会收集匹配到的包文件并校验产物；包的 `./lynxtron` export 负责加载当前宿主的 `.node`，例如 `dist/darwin/arm64/lynx-button.node` 或 `dist/win32/x64/lynx-button.node`。
+
+当一个包需要明确描述运行时产物时，使用 `binaries` 和 `frameworks`。两个字段都是数组；每项都包含 `os`、`arch`，以及相对于包根目录的 `path`（也可以是路径数组）。Autolink 会选择与目标宿主匹配的项。`binaries` 描述可以直接加载的 `.node`、`.dylib`、`.dll` 等原生文件；`frameworks` 描述 macOS Framework payload 目录，其中也可以包含 Helper app bundle，并且必须保留内部符号链接。
+
+这些路径只标识 npm 包内的源产物。开发输出或最终应用包中的目标位置由宿主应用接入层决定。旧的单数 `binary` 字段和误拼写的 `arc` 选择器会继续兼容，但新清单应使用 `binaries` 和 `arch`；不要同时声明 `binary` 与 `binaries`。
 
 安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
 
