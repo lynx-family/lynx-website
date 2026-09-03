@@ -40,47 +40,45 @@ export function Greeting({ name, highlighted }) {
 
 每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为[协调（Reconciliation）](https://react.dev/learn/render-and-commit)。
 
-但在这个例子中，`view`、`text`、固定文本 `Hello, ` 及其父子关系都是静态的，只有 `className` 和 `name` 会变化。编译器可以据此提取一份可复用的模板，让运行时只传入每次渲染所需的动态数据。概念上类似：
+但在这个例子中，`view`、`text`、固定文本 `Hello, ` 及其父子关系都是静态的，只有 `className` 和 `name` 会变化。编译器可以据此提取一份可复用的模板，将静态结构编译为 [Element PAPI](/api/engine/element-api) 操作，让运行时只传入每次渲染所需的动态数据。概念上类似：
 
 ```js
-const GreetingTemplate = '__compiled_greeting';
+const GreetingTemplate = {
+  // 首次创建模板实例：直接执行编译生成的 Element PAPI 操作。
+  create() {
+    const pageId = ReactLynx.__pageId;
+    const view = __CreateView(pageId);
+    const text = __CreateText(pageId);
+    const nameSlot = __CreateWrapperElement(pageId);
 
-// 将静态结构提前编译为 Element PAPI 操作。
-function GreetingTemplate_create() {
-  const pageId = ReactLynx.__pageId;
-  const view = __CreateView(pageId);
-  const text = __CreateText(pageId);
-  const fixedText = __CreateRawText('Hello, ');
-  const nameSlot = __CreateWrapperElement(pageId);
+    __AppendElement(view, text);
+    __AppendElement(text, __CreateRawText('Hello, '));
+    __AppendElement(text, nameSlot);
 
-  __AppendElement(view, text);
-  __AppendElement(text, fixedText);
-  __AppendElement(text, nameSlot);
+    return { view, nameSlot };
+  },
 
-  return [view, text, fixedText, nameSlot];
-}
-
-// 为动态属性生成细粒度更新逻辑。
-function GreetingTemplate_update(instance) {
-  const className = instance.values[0];
-  __SetClasses(instance.elements[0], className || '');
-}
+  // 后续更新：直接更新已知元件，不遍历静态结构。
+  update(instance, { className }) {
+    __SetClasses(instance.view, className);
+  },
+};
 
 export function Greeting({ name, highlighted }) {
-  return jsx(GreetingTemplate, {
-    values: [highlighted ? 'card active' : 'card'], // 动态属性位置 0
-    $0: name, // 动态子节点插槽 0
+  return renderTemplate(GreetingTemplate, {
+    className: highlighted ? 'card active' : 'card',
+    nameSlot: name,
   });
 }
 ```
 
-这里的名称和函数形式只用于解释机制，并不是可以依赖的实际编译产物。`GreetingTemplate_create()` 创建静态结构，`GreetingTemplate_update()` 定向更新 `className`，`$0` 表示 `name` 所在的动态子节点插槽。
+这里的名称和函数形式只用于解释机制，并不是可以依赖的实际编译产物。首次渲染时，编译生成的 `create()` 直接建立已知的宿主结构；后续渲染时，`update()` 直接修改已知元件。运行时不需要为这部分结构反复创建和比较 VNode，而 `name` 等无法提前确定的子节点仍通过动态插槽处理。
+
+:::details 当前的内部表示：Snapshot
 
 这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
 
 从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
-
-:::details 当前的内部表示：Snapshot
 
 ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）保存上述编译信息。我们也在尝试演进成性能更好的其他表示。
 
@@ -93,40 +91,7 @@ Snapshot 和上述简化的概念一致，可以归纳为以下四个核心部�
 | 动态子节点插槽 | 标记组件、条件分支、文本表达式和列表等动态子树的插入位置。       |
 | 表示标识       | 标识可复用的模板，让多个模板实例共享同一份静态信息。             |
 
-下面的简化示例展示了当前 IR 如何通过 [Element PAPI](/api/engine/element-api) 的创建和更新操作表示 `Greeting` 模板。示例保留了静态创建函数、动态更新函数和插槽，省略了 CSS、entry 和兼容性等编译元数据。
-
-```js
-ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
-  ReactLynx.createSnapshot(
-    __snapshot_xxx,
-    () => {
-      // 这部分只依赖 JSX 中可以静态确定的结构。
-      const pageId = ReactLynx.__pageId;
-      const view = __CreateView(pageId);
-      const text = __CreateText(pageId);
-      const rawText = __CreateRawText('Hello, ');
-      const slot = __CreateWrapperElement(pageId); // 为 $0 预留插入位置
-
-      __AppendElement(view, text);
-      __AppendElement(text, rawText);
-      __AppendElement(text, slot);
-
-      // 更新函数和插槽描述通过这些数组索引定位元件。
-      return [view, text, rawText, slot];
-    },
-    [
-      function (ctx) {
-        if (ctx.__elements) {
-          // values[0] 只更新 elements[0]，也就是根 view。
-          __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
-        }
-      },
-    ],
-    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 对应 elements[3]
-  );
-```
-
-**注意：**IR 属于内部实现，请勿在应用代码中依赖或复制这些产物。这里的 `$0` 和 `__DynamicPartSlotV2` 表示方式对应 `@lynx-js/react` 0.120.0 及以上版本。`createSnapshot`、`snapshotCreatorMap`、全局元件操作函数和生成的标识都属于内部实现，具体名称和参数可能随源码、编译配置及 ReactLynx 版本变化。
+**注意：**IR 属于内部实现，请勿在应用代码中依赖或复制这些产物。具体名称、参数和数据结构可能随源码、编译配置及 ReactLynx 版本变化。
 
 :::
 

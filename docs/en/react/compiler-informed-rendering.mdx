@@ -40,47 +40,45 @@ export function Greeting({ name, highlighted }) {
 
 On every render, `jsx()` creates virtual nodes (VNodes) that describe the UI structure. ReactLynx then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as [reconciliation](https://react.dev/learn/render-and-commit).
 
-But in this example, the `view`, `text`, fixed text `Hello, `, and their parent-child relationships are static; only `className` and `name` can change. The compiler can therefore extract a reusable template, so the runtime only needs to supply the dynamic data required for each render. Conceptually, it looks like this:
+But in this example, the `view`, `text`, fixed text `Hello, `, and their parent-child relationships are static; only `className` and `name` can change. The compiler can therefore extract a reusable template and compile the static structure into [Element PAPI](/api/engine/element-api) operations, so the runtime only needs to supply the dynamic data required for each render. Conceptually, it looks like this:
 
 ```js
-const GreetingTemplate = '__compiled_greeting';
+const GreetingTemplate = {
+  // Create a template instance by directly executing compiled Element PAPI operations.
+  create() {
+    const pageId = ReactLynx.__pageId;
+    const view = __CreateView(pageId);
+    const text = __CreateText(pageId);
+    const nameSlot = __CreateWrapperElement(pageId);
 
-// Compile the static structure ahead of time into Element PAPI operations.
-function GreetingTemplate_create() {
-  const pageId = ReactLynx.__pageId;
-  const view = __CreateView(pageId);
-  const text = __CreateText(pageId);
-  const fixedText = __CreateRawText('Hello, ');
-  const nameSlot = __CreateWrapperElement(pageId);
+    __AppendElement(view, text);
+    __AppendElement(text, __CreateRawText('Hello, '));
+    __AppendElement(text, nameSlot);
 
-  __AppendElement(view, text);
-  __AppendElement(text, fixedText);
-  __AppendElement(text, nameSlot);
+    return { view, nameSlot };
+  },
 
-  return [view, text, fixedText, nameSlot];
-}
-
-// Generate fine-grained update logic for dynamic properties.
-function GreetingTemplate_update(instance) {
-  const className = instance.values[0];
-  __SetClasses(instance.elements[0], className || '');
-}
+  // Update a known element directly without traversing the static structure.
+  update(instance, { className }) {
+    __SetClasses(instance.view, className);
+  },
+};
 
 export function Greeting({ name, highlighted }) {
-  return jsx(GreetingTemplate, {
-    values: [highlighted ? 'card active' : 'card'], // Dynamic property position 0
-    $0: name, // Dynamic child slot 0
+  return renderTemplate(GreetingTemplate, {
+    className: highlighted ? 'card active' : 'card',
+    nameSlot: name,
   });
 }
 ```
 
-These names and function shapes only explain the mechanism; they are not actual compiler output that applications can rely on. `GreetingTemplate_create()` creates the static structure, `GreetingTemplate_update()` directly updates `className`, and `$0` represents the dynamic child slot for `name`.
+These names and function shapes only explain the mechanism; they are not actual compiler output that applications can rely on. On the initial render, the compiled `create()` directly builds the known host structure. On subsequent renders, `update()` directly modifies a known element. The runtime does not need to repeatedly create and compare VNodes for this part of the structure, while children that cannot be determined ahead of time, such as `name`, are still handled through dynamic slots.
+
+:::details Current Internal Representation: Snapshot
 
 This approach is similar to [Vue's compiler-informed virtual DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom), [Owl's BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom), and [Million.js](https://github.com/aidenybai/million): each uses information known at build time to reduce the amount of work required at runtime.
 
 From a compiler perspective, it can also be understood as a form of [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation): ReactLynx specializes the generic rendering process with host structures known from JSX, leaving only the parts that cannot be determined ahead of time for the runtime.
-
-:::details Current Internal Representation: Snapshot
 
 ReactLynx currently uses an Intermediate Representation (IR) called a **Snapshot** to store the compilation information described above. We are also exploring other representations with better performance.
 
@@ -93,40 +91,7 @@ Snapshot follows the simplified model above and can be summarized in four core p
 | Dynamic child slots | Marks where dynamic subtrees such as components, conditional branches, text expressions, and lists go.   |
 | Representation ID   | Identifies a reusable template so multiple template instances can share its static data.                 |
 
-The simplified example below shows how the current IR represents the `Greeting` template through [Element PAPI](/api/engine/element-api) creation and update operations. It preserves the static creator, dynamic updater, and slot information while omitting compiler metadata for CSS, entry points, and compatibility.
-
-```js
-ReactLynx.snapshotCreatorMap[__snapshot_xxx] = (__snapshot_xxx) =>
-  ReactLynx.createSnapshot(
-    __snapshot_xxx,
-    () => {
-      // This part only depends on structure that is statically known in JSX.
-      const pageId = ReactLynx.__pageId;
-      const view = __CreateView(pageId);
-      const text = __CreateText(pageId);
-      const rawText = __CreateRawText('Hello, ');
-      const slot = __CreateWrapperElement(pageId); // Reserve an insertion point for $0
-
-      __AppendElement(view, text);
-      __AppendElement(text, rawText);
-      __AppendElement(text, slot);
-
-      // Updaters and slot descriptors locate elements through these array indexes.
-      return [view, text, rawText, slot];
-    },
-    [
-      function (ctx) {
-        if (ctx.__elements) {
-          // values[0] only updates elements[0], the root view.
-          __SetClasses(ctx.__elements[0], ctx.__values[0] || '');
-        }
-      },
-    ],
-    [[ReactLynx.__DynamicPartSlotV2, 3]], // $0 corresponds to elements[3]
-  );
-```
-
-**Note:** The IR is an internal implementation detail. Do not depend on or copy these outputs in application code. The `$0` and `__DynamicPartSlotV2` representation shown here reflects `@lynx-js/react` 0.120.0 or later. `createSnapshot`, `snapshotCreatorMap`, the global element operation functions, and generated IDs are internal implementation details. Their names and parameters may change with the source code, compiler configuration, or ReactLynx version.
+**Note:** The IR is an internal implementation detail. Do not depend on or copy these outputs in application code. Specific names, parameters, and data structures may change with the source code, compiler configuration, or ReactLynx version.
 
 :::
 
