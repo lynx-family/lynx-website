@@ -40,6 +40,119 @@ Please refer to our detailed [installation guide](/lynxtron/introduction), which
 
 You may notice that the project uses TypeScript. Although Lynxtron supports both TypeScript and plain JavaScript, we recommend TypeScript for a better development experience, including static type checking and improved editor IntelliSense.
 
+### Set Up the Native `<webview>` Element
+
+Lynxtron provides `<webview>` through the optional `@lynx-js/cef-webview`
+native library. Install it before following the browser-specific steps:
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+Projects created with `create-lynxtron` already configure `pluginLynxtron()` for
+the desktop Rsbuild environment. The plugin AutoLinks installed native
+libraries, so do not add a second instance of it.
+
+Import and initialize CEF in the desktop main process before creating any
+`LynxWindow`:
+
+```typescript {2,6}
+// src/main/desktop/main.ts
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+
+  const mainWindow = new LynxWindow({
+    width: 1200,
+    height: 800,
+  });
+});
+```
+
+#### macOS: Sync the CEF Frameworks
+
+On macOS, the CEF Framework and Helper apps must also be present in the
+installed Lynxtron app bundle. Add the following project-level helper, based on
+the [official browser demo](https://github.com/lynx-family/lynxtron/blob/main/src/packages/browser-demo/scripts/postinstall.js),
+as `scripts/sync-cef-frameworks.cjs`:
+
+```javascript
+const fs = require('node:fs');
+const path = require('node:path');
+
+function packageRoot(packageName) {
+  return path.dirname(require.resolve(`${packageName}/package.json`));
+}
+
+async function main() {
+  if (process.platform !== 'darwin') return;
+
+  const cefRoot = packageRoot('@lynx-js/cef-webview');
+  const lynxtronRoot = packageRoot('@lynx-js/lynxtron');
+  const source = path.join(
+    cefRoot,
+    'dist',
+    'darwin',
+    process.arch,
+    'frameworks',
+  );
+  const appBundle = [
+    path.join(lynxtronRoot, 'dist', 'Lynxtron.app'),
+    path.join(lynxtronRoot, 'dist', 'lynxtron.app'),
+    path.join(lynxtronRoot, 'dist', 'darwin', process.arch, 'lynxtron.app'),
+  ].find((candidate) => fs.existsSync(candidate));
+
+  if (!fs.existsSync(source) || !appBundle) {
+    throw new Error('CEF or Lynxtron macOS artifacts were not downloaded.');
+  }
+
+  const destination = path.join(appBundle, 'Contents', 'Frameworks');
+  await fs.promises.mkdir(destination, { recursive: true });
+  for (const entry of await fs.promises.readdir(source)) {
+    await fs.promises.cp(
+      path.join(source, entry),
+      path.join(destination, entry),
+      { recursive: true, force: true },
+    );
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+```
+
+Run it after dependencies are installed by adding it to `package.json`:
+
+```json
+{
+  "scripts": {
+    "postinstall": "node scripts/sync-cef-frameworks.cjs"
+  }
+}
+```
+
+The helper resolves the installed package locations instead of hard-coding a
+`node_modules` layout. It uses the current `dist/Lynxtron.app` location while
+retaining compatibility with the older platform-specific layout.
+
+:::note pnpm 11 users
+
+If pnpm 11 reports that it blocked dependency build scripts, add these entries
+to `pnpm-workspace.yaml`, then run `pnpm install` again so the native artifacts
+can be downloaded. This is not required for the other package-manager tabs or
+when pnpm already permits the scripts.
+
+```yaml
+allowBuilds:
+  '@lynx-js/cef-webview': true
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+```
+
+:::
+
 ## Build a Custom Title Bar with Lynxtron
 
 Because the browser title bar contains tabs, the default Lynxtron window title bar does not meet our needs, so we need to create a custom one. The first step is to create a frameless window so we can fully customize the browser's appearance, including the title bar and the traffic-light control buttons.

@@ -40,6 +40,114 @@ import browserDemoGoBackGif from '@assets/lynxtron/browser_demo_go_back.gif?url'
 
 你可能会注意到该项目使用的是 TypeScript。虽然 Lynxtron 支持 TypeScript 和普通 JavaScript，但我们推荐使用 TypeScript，以提供更好的开发体验，包括静态类型检查和更好的编辑器智能感知。
 
+### 配置原生 `<webview>` 元素
+
+Lynxtron 通过可选的 `@lynx-js/cef-webview` 原生能力库提供 `<webview>`。
+在继续浏览器相关步骤前，先安装这个包：
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+通过 `create-lynxtron` 创建的项目已经在桌面端 Rsbuild 环境中配置了
+`pluginLynxtron()`。该插件会自动链接已安装的原生能力库，不要重复添加插件实例。
+
+在桌面端主进程中导入并初始化 CEF，而且必须在创建任何 `LynxWindow` 之前完成：
+
+```typescript {2,6}
+// src/main/desktop/main.ts
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+
+  const mainWindow = new LynxWindow({
+    width: 1200,
+    height: 800,
+  });
+});
+```
+
+#### macOS：同步 CEF Framework
+
+在 macOS 上，还需要将 CEF Framework 和 Helper apps 放进已安装的 Lynxtron
+应用包。参考[官方 browser demo](https://github.com/lynx-family/lynxtron/blob/main/src/packages/browser-demo/scripts/postinstall.js)，
+在项目中添加 `scripts/sync-cef-frameworks.cjs`：
+
+```javascript
+const fs = require('node:fs');
+const path = require('node:path');
+
+function packageRoot(packageName) {
+  return path.dirname(require.resolve(`${packageName}/package.json`));
+}
+
+async function main() {
+  if (process.platform !== 'darwin') return;
+
+  const cefRoot = packageRoot('@lynx-js/cef-webview');
+  const lynxtronRoot = packageRoot('@lynx-js/lynxtron');
+  const source = path.join(
+    cefRoot,
+    'dist',
+    'darwin',
+    process.arch,
+    'frameworks',
+  );
+  const appBundle = [
+    path.join(lynxtronRoot, 'dist', 'Lynxtron.app'),
+    path.join(lynxtronRoot, 'dist', 'lynxtron.app'),
+    path.join(lynxtronRoot, 'dist', 'darwin', process.arch, 'lynxtron.app'),
+  ].find((candidate) => fs.existsSync(candidate));
+
+  if (!fs.existsSync(source) || !appBundle) {
+    throw new Error('CEF or Lynxtron macOS artifacts were not downloaded.');
+  }
+
+  const destination = path.join(appBundle, 'Contents', 'Frameworks');
+  await fs.promises.mkdir(destination, { recursive: true });
+  for (const entry of await fs.promises.readdir(source)) {
+    await fs.promises.cp(
+      path.join(source, entry),
+      path.join(destination, entry),
+      { recursive: true, force: true },
+    );
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+```
+
+在 `package.json` 中将这个脚本配置为依赖安装后的步骤：
+
+```json
+{
+  "scripts": {
+    "postinstall": "node scripts/sync-cef-frameworks.cjs"
+  }
+}
+```
+
+该脚本会解析包的实际安装位置，而不是写死 `node_modules` 路径；它优先使用当前的
+`dist/Lynxtron.app`，同时兼容旧的平台专属目录结构。
+
+:::note pnpm 11 用户
+
+如果 pnpm 11 提示依赖的构建脚本被阻止，请在 `pnpm-workspace.yaml`
+中加入以下配置，然后重新运行 `pnpm install`，让各包下载原生产物。使用其他包管理器，或 pnpm
+已经允许这些脚本时，不需要此配置。
+
+```yaml
+allowBuilds:
+  '@lynx-js/cef-webview': true
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+```
+
+:::
+
 ## 使用 Lynxtron 实现自定义标题栏
 
 由于浏览器的标题栏包含了标签页，而 Lynxtron 默认窗口的标题栏不符合要求，因此我们需要自定义标题栏。首先，我们需要创建一个无边框的窗口，以便完全自定义浏览器的外观（包括标题栏和 "红绿灯" 控制按钮）。
@@ -183,7 +291,7 @@ w.on('-lynx-invoke', (event, params) => {
   <img src={browserDemoControlGif} width="100%" />
 </div>
 
-## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries) 中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
+## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries)中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
 
 ### 管理标签页
 
