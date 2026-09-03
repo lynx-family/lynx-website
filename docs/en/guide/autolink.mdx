@@ -165,7 +165,7 @@ The generated AppStartup task runs on the main thread before app code creates a 
 
 Lynxtron enables Autolink for Desktop native libraries. Not every Lynx-embedded Desktop host supports Autolink out of the box; this is a Lynxtron-provided integration.
 
-In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, copies matching native library packages into the host output, and injects code that imports each copied package's `./lynxtron` entry. For packages declared with `platforms.lynxtron.path`, direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
+In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, selects matching `platforms.lynxtron.binaries` and `frameworks`, copies each matching native library package into the host output, and injects code that imports the copied package's `./lynxtron` entry. Direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -213,12 +213,16 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "path": "dist",
       "binaries": [
         {
           "os": "darwin",
           "arch": "arm64",
           "path": "dist/darwin/arm64/lynx-button.node"
+        },
+        {
+          "os": "win32",
+          "arch": "x64",
+          "path": "dist/win32/x64/lynx-button.node"
         }
       ],
       "frameworks": [
@@ -243,11 +247,9 @@ For Android, `platforms.android.packageName` is required, and `sourceDir` defaul
 
 `platforms.macos.sourceDir` and `platforms.windows.sourceDir` point to the source-exposed `shared/` directory, which is the cross-platform native source layout and may be reused by more platforms later.
 
-For Lynxtron, `platforms.lynxtron.path` declares the package-mode native artifact root, usually `dist`. `pluginLynxtron()` stages matching package files and verifies the artifacts; the package's `./lynxtron` export loads the current host's `.node`, such as `dist/darwin/arm64/lynx-button.node` or `dist/win32/x64/lynx-button.node`.
+For Lynxtron, use `binaries` and `frameworks` to describe runtime payloads explicitly. Both fields are arrays, and every entry has an `os`, an `arch`, and a `path` (or an array of paths) relative to the package root. Autolink selects entries matching the target host, verifies them, stages the package, and loads its `./lynxtron` export. That entry reads the same manifest and loads the selected `.node`. `binaries` describes directly loadable native files such as `.node`, `.dylib`, and `.dll`; `frameworks` describes macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
 
-Use `binaries` and `frameworks` when a package needs to describe its runtime payloads explicitly. Both fields are arrays, and every entry has an `os`, an `arch`, and a `path` (or an array of paths) relative to the package root. Autolink selects entries matching the target host. `binaries` describes directly loadable native files such as `.node`, `.dylib`, and `.dll`; `frameworks` describes macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
-
-These paths identify source artifacts inside the npm package. The host application integration chooses their final location in the development output or packaged application. This Lynxtron manifest shape is still prerelease, so it does not provide legacy aliases: use the plural `binaries` field and the `arch` selector exactly as shown.
+These paths identify source artifacts inside the npm package. The host application integration chooses their final location in the development output or packaged application. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `binaries`, `frameworks`, and the `arch` selector exactly as shown.
 
 After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
 
@@ -309,17 +311,17 @@ lynx-button/
 │   ├── index.cjs
 │   └── library_entry.cc
 ├── dist/
-│   ├── macos/
+│   ├── darwin/
 │   │   └── arm64/
 │   │       └── lynx-button.node
-│   └── windows/
+│   └── win32/
 │       └── x64/
 │           └── lynx-button.node
 └── example/
 ```
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
-- `lynx.lib.json` is the Autolink contract. It tells the host app where each native package or artifact root lives.
+- `lynx.lib.json` is the Autolink contract. It declares each platform-selected binary or Framework source artifact.
 - `types/index.d.ts` re-exports typed Native Module declarations. Platform Native Module declarations live in `types/platform-native-module.d.ts`, and N-API Native Module declarations live in `types/napi-native-module.d.ts` when those features are selected.
 - `src/index.ts` exports the JavaScript API that app code imports.
 - `android/`, `ios/`, and `harmony/` contain native implementations and generated native specs. The HarmonyOS directory is a complete source HAR, including its module-level `hvigorfile.ts`.
