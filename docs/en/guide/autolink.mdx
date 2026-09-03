@@ -165,7 +165,7 @@ The generated AppStartup task runs on the main thread before app code creates a 
 
 Lynxtron enables Autolink for Desktop native libraries. Not every Lynx-embedded Desktop host supports Autolink out of the box; this is a Lynxtron-provided integration.
 
-In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, selects matching `platforms.lynxtron.binaries` and `frameworks`, copies each matching native library package into the host output, and injects code that imports the copied package's `./lynxtron` entry. Direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
+In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, selects the matching `platforms.lynxtron.targets` record, copies each matching native library package into the host output, and injects code that imports the copied package's `./lynxtron` entry. Direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -181,7 +181,7 @@ export default {
 };
 ```
 
-The `entry` field is the Lynxtron host's own bundle entry, and `pluginLynxtron()` stages native library packages relative to it. See the `@lynx-js/lynxtron-dev-plugins` package for the full option shape.
+The `entry` field is the Lynxtron host's own bundle entry, and `pluginLynxtron()` stages native library packages relative to it. When packaging the application, `lynxtron-builder` keeps these packages outside ASAR. It copies macOS Framework payloads from the selected target into `Contents/Frameworks`; on Windows, the unpacked package keeps the `.node` addon, DLLs, resource packs, and locales together. See the `@lynx-js/lynxtron-dev-plugins` package for the full option shape.
 
 After Lynxtron loads a native library, its Lynx static registrations become available in the Lynx runtime. The library author does not need a Lynxtron-specific registration macro.
 
@@ -213,23 +213,17 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "binaries": [
+      "targets": [
         {
           "os": "darwin",
           "arch": "arm64",
-          "path": "dist/darwin/arm64/lynx-button.node"
+          "binaries": ["dist/darwin/arm64/lynx-button.node"],
+          "frameworks": ["dist/darwin/arm64/frameworks"]
         },
         {
           "os": "win32",
           "arch": "x64",
-          "path": "dist/win32/x64/lynx-button.node"
-        }
-      ],
-      "frameworks": [
-        {
-          "os": "darwin",
-          "arch": "arm64",
-          "path": "dist/darwin/arm64/frameworks"
+          "binaries": ["dist/win32/x64/lynx-button.node"]
         }
       ]
     },
@@ -247,9 +241,9 @@ For Android, `platforms.android.packageName` is required, and `sourceDir` defaul
 
 `platforms.macos.sourceDir` and `platforms.windows.sourceDir` point to the source-exposed `shared/` directory, which is the cross-platform native source layout and may be reused by more platforms later.
 
-For Lynxtron, use `binaries` and `frameworks` to describe runtime payloads explicitly. Both fields are arrays, and every entry has an `os`, an `arch`, and a `path` (or an array of paths) relative to the package root. Autolink selects entries matching the target host, verifies them, stages the package, and loads its `./lynxtron` export. That entry reads the same manifest and loads the selected `.node`. `binaries` describes directly loadable native files such as `.node`, `.dylib`, and `.dll`; `frameworks` describes macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
+For Lynxtron, use `targets` to group runtime payloads by host. Each target declares `os`, `arch`, and one or both string arrays named `binaries` and `frameworks`; every path is relative to the package root. Autolink selects the matching target, verifies its paths, stages the package, and loads its `./lynxtron` export. That entry reads the same manifest and loads the selected `.node`. `binaries` describes directly loadable native files such as `.node`, `.dylib`, and `.dll`; `frameworks` describes macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
 
-These paths identify source artifacts inside the npm package. The host application integration chooses their final location in the development output or packaged application. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `binaries`, `frameworks`, and the `arch` selector exactly as shown.
+These paths identify source artifacts inside the npm package. The host application integration chooses their final location in the development output or packaged application. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `targets`, `binaries`, `frameworks`, and the `arch` selector exactly as shown.
 
 After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
 

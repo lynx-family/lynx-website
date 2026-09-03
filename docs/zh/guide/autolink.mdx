@@ -165,7 +165,7 @@ enableHarmonyLynxAutolink(hvigorApi, {
 
 Lynxtron 为桌面端原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的桌面宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
 
-在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，选择匹配的 `platforms.lynxtron.binaries` 和 `frameworks`，把对应原生库 package 收集到宿主输出目录，并注入前置代码来加载所收集 package 的 `./lynxtron` 入口。业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的 package。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
+在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，选择匹配的 `platforms.lynxtron.targets` 记录，把对应原生库 package 收集到宿主输出目录，并注入前置代码来加载所收集 package 的 `./lynxtron` 入口。业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的 package。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -181,7 +181,7 @@ export default {
 };
 ```
 
-`entry` 是 Lynxtron 宿主自身的 bundle 入口，`pluginLynxtron()` 会以它为基准放置已收集的原生库包。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
+`entry` 是 Lynxtron 宿主自身的 bundle 入口，`pluginLynxtron()` 会以它为基准放置已收集的原生库包。打包应用时，`lynxtron-builder` 会把这些 package 保留在 ASAR 外；macOS 会把所选 target 的 Framework payload 复制到 `Contents/Frameworks`，Windows 则让 `.node`、DLL、资源包和 locales 继续相邻地保存在解包目录中。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
 
 Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx runtime 中生效。库作者不需要 Lynxtron 专用注册宏。
 
@@ -213,23 +213,17 @@ npm install @example/lynx-button
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "binaries": [
+      "targets": [
         {
           "os": "darwin",
           "arch": "arm64",
-          "path": "dist/darwin/arm64/lynx-button.node"
+          "binaries": ["dist/darwin/arm64/lynx-button.node"],
+          "frameworks": ["dist/darwin/arm64/frameworks"]
         },
         {
           "os": "win32",
           "arch": "x64",
-          "path": "dist/win32/x64/lynx-button.node"
-        }
-      ],
-      "frameworks": [
-        {
-          "os": "darwin",
-          "arch": "arm64",
-          "path": "dist/darwin/arm64/frameworks"
+          "binaries": ["dist/win32/x64/lynx-button.node"]
         }
       ]
     },
@@ -247,9 +241,9 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 `platforms.macos.sourceDir` 和 `platforms.windows.sourceDir` 指向以源码形式暴露的 `shared/` 目录。它是跨端原生源码结构，后续也可以被更多平台复用。
 
-对于 Lynxtron，使用 `binaries` 和 `frameworks` 明确描述运行时产物。两个字段都是数组；每项都包含 `os`、`arch`，以及相对于包根目录的 `path`（也可以是路径数组）。Autolink 会选择并校验与目标宿主匹配的项、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单并加载选中的 `.node`。`binaries` 描述可以直接加载的 `.node`、`.dylib`、`.dll` 等原生文件；`frameworks` 描述 macOS Framework payload 目录，其中也可以包含 Helper app bundle，并且必须保留内部符号链接。
+对于 Lynxtron，使用 `targets` 按宿主组织运行时产物。每个 target 都包含 `os`、`arch`，以及名为 `binaries` 和 `frameworks` 的字符串数组中的至少一个；其中每条路径都相对于包根目录。Autolink 会选择并校验与目标宿主匹配的 target、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单并加载选中的 `.node`。`binaries` 描述可以直接加载的 `.node`、`.dylib`、`.dll` 等原生文件；`frameworks` 描述 macOS Framework payload 目录，其中也可以包含 Helper app bundle，并且必须保留内部符号链接。
 
-这些路径只标识 npm 包内的源产物。开发输出或最终应用包中的目标位置由宿主应用接入层决定。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `binaries`、`frameworks` 和 `arch` 选择器。
+这些路径只标识 npm 包内的源产物。开发输出或最终应用包中的目标位置由宿主应用接入层决定。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`binaries`、`frameworks` 和 `arch` 选择器。
 
 安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
 
