@@ -1,12 +1,17 @@
-const fs = require('fs');
-const { exec } = require('child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 
 const folderPath = 'docs/public/living-spec';
 const sourcePath = 'packages/lynx-living-spec';
-const shellCommand = `pipx run bikeshed spec ${sourcePath}/src/index.bs ${folderPath}/index.html`;
+const htmlPath = path.join(folderPath, 'index.html');
+const temporaryHtmlPath = path.join(folderPath, 'index.tmp.html');
+const bikeshedVersion = '7.1.2';
 
-function addScriptToHtml(htmlPath) {
-  const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
+function finalizeHtml(outputPath) {
+  const htmlContent = fs
+    .readFileSync(outputPath, 'utf8')
+    .replace(/^[ \t]+$/gm, '');
   const script = `
     <script>
       window.addEventListener('hashchange', function() {
@@ -16,32 +21,50 @@ function addScriptToHtml(htmlPath) {
         }), '*');
       });
     </script>`;
-  fs.writeFileSync(htmlPath, htmlContent + script);
+  fs.writeFileSync(outputPath, htmlContent + script, 'utf8');
 }
 
-fs.rmdir(folderPath, { recursive: true }, (err) => {
-  if (err) {
-    console.error('Error deleting folder:', err);
-    return;
-  }
-  fs.mkdir(folderPath, (err) => {
-    if (err) {
-      console.error('Error creating folder:', err);
-      return;
-    }
-    exec(shellCommand, null, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error executing shell command: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      console.log('All operations completed successfully');
+fs.mkdirSync(folderPath, { recursive: true });
+fs.rmSync(temporaryHtmlPath, { force: true });
 
-      addScriptToHtml(`${folderPath}/index.html`);
-    });
-  });
-});
+// Use the exact Bikeshed release and its bundled data. Three --quiet flags
+// suppress informational and lint output while retaining warnings, link errors,
+// and fatal errors; unresolved links still fail after the full document is
+// processed, so all actionable diagnostics are reported together.
+const result = spawnSync(
+  'pipx',
+  [
+    'run',
+    '--spec',
+    `bikeshed==${bikeshedVersion}`,
+    'bikeshed',
+    '--quiet',
+    '--quiet',
+    '--quiet',
+    '--print',
+    'plain',
+    '--no-update',
+    '--die-on',
+    'link-error',
+    '--die-when',
+    'late',
+    'spec',
+    path.join(sourcePath, 'src/index.bs'),
+    temporaryHtmlPath,
+  ],
+  { stdio: 'inherit' },
+);
+
+if (result.error) {
+  fs.rmSync(temporaryHtmlPath, { force: true });
+  throw result.error;
+}
+
+if (result.status !== 0) {
+  fs.rmSync(temporaryHtmlPath, { force: true });
+  process.exit(result.status ?? 1);
+}
+
+finalizeHtml(temporaryHtmlPath);
+fs.renameSync(temporaryHtmlPath, htmlPath);
+console.log(`Generated ${htmlPath} with Bikeshed ${bikeshedVersion}`);

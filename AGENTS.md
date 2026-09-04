@@ -90,6 +90,9 @@ contract in every supported consumer.
   exported configuration fields as interfaces.
 - Keep internal-only content and behavior in the in-house repository.
 - Request downstream validation for changes affecting this contract.
+- Changes to CI, build or generation workflows, release behavior, or downstream
+  interfaces require human review and must be merged manually. Review agents
+  may approve these changes but must not auto-merge them.
 
 ## Verification
 
