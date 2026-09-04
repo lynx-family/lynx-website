@@ -215,72 +215,52 @@ For structures that genuinely need to be determined at runtime, keeping the code
 
 ## How the Compiler and Runtime Work Together
 
-One characteristic of ReactLynx is that this compiled representation participates not only in update-time reconciliation, but also in Lynx's dual-thread [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) pipeline.
+The compiler generates reusable templates, while the runtime executes their creation and update logic. In ReactLynx's dual-thread architecture, the same template participates in both [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) and subsequent updates.
 
-The same template can be reused by multiple mounted `Greeting` components. Each mounted `Greeting` has a corresponding pair of template instances: the main-thread template instance owns the Lynx elements it creates, while the background template instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
+The same template can be reused across multiple mount locations, but each mount has its own pair of template instances: the main-thread instance owns the Lynx elements it creates, while the background-thread instance stores the state and dynamic data used for reconciliation. The initial synchronization establishes the correspondence between these instances for subsequent updates.
 
-### Initial Render: Create a Template Instance
+### Initial Render: Create and Associate Template Instances
 
-The UI elements for the initial render are created directly on the main thread. The runtime first finds the template from the VNode type, then creates a main-thread template instance for this `Greeting`. The template instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
-
-The following pseudocode illustrates this process:
+During the initial render, the main thread invokes the template's `create()` and `update()` methods to directly create the static host structure and apply the initial dynamic properties, then mounts dynamic children into the reserved slots. The background thread also creates the corresponding instance for this render. The following pseudocode illustrates the responsibilities and correspondence of the two sides, not their actual execution order:
 
 ```js
-function renderFirstScreen(vnode) {
-  const template = getTemplate(vnode.type);
-  const instance = createMainThreadTemplateInstance(vnode.type);
+function renderFirstScreen(Template, dynamicData) {
+  const mainInstance = Template.create();
+  Template.update(mainInstance, dynamicData);
+  mountDynamicChildren(Template, mainInstance, dynamicData);
 
-  instance.elements = template.create(instance);
-  instance.values = vnode.props.values;
-  template.update[0](instance); // Write values[0] to className
-  insertDynamicChild(instance, 0, vnode.props.$0);
+  const backgroundInstance = renderOnBackgroundThread(Template, dynamicData);
 
-  return instance;
+  connectInstances(backgroundInstance, mainInstance);
 }
 ```
 
-In this example, `template.create()` creates the `view`, `text`, and fixed text; `template.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `template.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
+Here, `Template` represents any compiler-generated template whose `create()` and `update()` methods have the conceptual shape shown in the previous section. `connectInstances()` summarizes the initial synchronization: the two sides do not share one instance, but establish a correspondence so that subsequent changes from the background thread can be applied to the main-thread instance created for the first screen.
 
-From another perspective, this can be understood as precomputing part of the render, analogous to [Next.js Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering). The artifacts are different: Next.js produces a static HTML shell and a serialized React Server Component payload, while ReactLynx further lowers the stable host structure into element-creation operations understood directly by the Lynx platform. Dynamic values and subtrees are still supplied when the page starts.
+### Updates: Send Only Dynamic Changes
 
-The initial background-thread reconciliation also creates a background template-instance tree that corresponds to the main-thread template-instance tree. During first-screen synchronization, hydration establishes the mapping between template instances on the two threads, allowing subsequent updates to locate the main-thread template instance created for the first screen by `instanceId`.
-
-### Updates: Process Only Changes to Dynamic Positions
-
-After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding template instance and applies the changes.
-
-The following pseudocode continues with `Greeting`. `highlighted` corresponds to dynamic position `0`, so changing it produces a property update. `name` is in a dynamic child slot and continues to be reconciled by React:
+After this correspondence is established, the background thread compares the dynamic data: changes to dynamic properties can be handled by targeted updaters generated by the compiler, while dynamic children remain reconciled by React.
 
 ```js
-// Background thread: compare dynamic properties and reconcile dynamic children
-function reconcileGreeting(previous, next, instanceId) {
-  if (!isEqual(previous.values[0], next.values[0])) {
-    emitAttributePatch({
-      instanceId,
-      dynamicPartIndex: 0,
-      value: next.values[0],
-    });
+// Background thread
+function reconcileTemplate(previous, next) {
+  const propertyChanges = diffDynamicProperties(previous, next);
+  const childChanges = reconcileDynamicChildren(previous, next);
+
+  sendToMainThread({ propertyChanges, childChanges });
+}
+
+// Main thread
+function applyTemplateChanges(Template, instance, changes) {
+  if (hasChanges(changes.propertyChanges)) {
+    Template.update(instance, changes.propertyChanges);
   }
 
-  // $0 remains a React child; reconciliation produces tree operations
-  // such as insertions and removals.
-  reconcileChildren(previous.$0, next.$0, {
-    parentInstanceId: instanceId,
-    slotIndex: 0,
-  });
-}
-
-// Main thread: apply a property update using the template instance and dynamic position
-function applyAttributePatch(patch) {
-  const instance = findMainThreadTemplateInstance(patch.instanceId);
-  const index = patch.dynamicPartIndex;
-
-  instance.values[index] = patch.value;
-  instance.template.update[index](instance);
+  applyDynamicChildChanges(Template, instance, changes.childChanges);
 }
 ```
 
-For the property path, `reconcileGreeting()` only describes which dynamic position changed on which template instance. `applyAttributePatch()` then calls the targeted update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The current implementation encodes these operations in a serialized Patch.
+For dynamic properties, the main thread directly calls the compiler-generated `Template.update()` without traversing the static host structure again. For dynamic children, the background thread still performs reconciliation and applies the resulting child changes to the reserved slots.
 
 ## Back to Application Code
 

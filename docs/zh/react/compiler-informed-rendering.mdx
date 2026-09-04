@@ -215,71 +215,52 @@ function UserCard({ id, name, selected }) {
 
 ## 编译器与运行时如何协作
 
-ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
+编译器负责生成可复用的模板，运行时负责执行模板中的创建和更新逻辑。在 ReactLynx 的双线程架构中，同一份模板同时用于[首帧直出（IFR）](/guide/interaction/ifr)和后续更新。
 
-同一份模板可以被多个已挂载的 `Greeting` 组件复用。每个已挂载的 `Greeting` 都有一组彼此对应的模板实例：主线程模板实例持有创建出的 Lynx 元件，后台模板实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
+同一份模板可以被多个挂载位置复用，但每次挂载都有自己的一组模板实例：主线程实例持有创建出的 Lynx 元件，后台线程实例保存参与协调的状态和动态数据。首次同步会建立两侧实例之间的对应关系，供后续更新使用。
 
-### 首屏：创建模板实例
+### 首屏：创建并关联模板实例
 
-首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到模板，再为这次 `Greeting` 创建主线程模板实例。静态创建函数返回的 Lynx 元件由这个模板实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
-
-下面是这一过程的概念伪代码：
+首屏时，主线程调用模板的 `create()` 和 `update()`，直接创建静态宿主结构并写入初始动态属性，再将动态子节点挂载到预留插槽。后台线程同时为这次渲染建立对应的实例。下面的伪代码只表示两侧的职责和对应关系，不表示实际执行顺序：
 
 ```js
-function renderFirstScreen(vnode) {
-  const template = getTemplate(vnode.type);
-  const instance = createMainThreadTemplateInstance(vnode.type);
+function renderFirstScreen(Template, dynamicData) {
+  const mainInstance = Template.create();
+  Template.update(mainInstance, dynamicData);
+  mountDynamicChildren(Template, mainInstance, dynamicData);
 
-  instance.elements = template.create(instance);
-  instance.values = vnode.props.values;
-  template.update[0](instance); // 将 values[0] 写入 className
-  insertDynamicChild(instance, 0, vnode.props.$0);
+  const backgroundInstance = renderOnBackgroundThread(Template, dynamicData);
 
-  return instance;
+  connectInstances(backgroundInstance, mainInstance);
 }
 ```
 
-对于当前例子，`template.create()` 创建 `view`、`text` 和固定文本；`template.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树，差别在于静态层级由 `template.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
+这里的 `Template` 表示任意编译生成的模板，其 `create()` 和 `update()` 具有上一节展示的概念形态。`connectInstances()` 概括了首次同步过程：两侧不会共享同一个实例，而是建立对应关系，让后续来自后台线程的变化可以应用到首屏已经创建的主线程实例上。
 
-换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
+### 更新：只传递动态变化
 
-后台首轮协调也会生成与主线程模板实例树对应的后台模板实例树。首屏同步通过 hydration 建立两侧模板实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程模板实例。
-
-### 更新：只处理动态位置的变化
-
-对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到对应的模板实例并应用变化。
-
-下面的伪代码继续使用 `Greeting`。`highlighted` 对应动态位置 `0`，因此它变化时会生成一条属性更新；`name` 位于动态子节点插槽中，继续由 React 协调：
+对应关系建立后，后台线程比较动态数据：动态属性的变化可以交给编译器生成的定向更新函数，动态子节点则仍由 React 协调。
 
 ```js
-// 后台线程：比较动态属性，并继续协调动态子节点
-function reconcileGreeting(previous, next, instanceId) {
-  if (!isEqual(previous.values[0], next.values[0])) {
-    emitAttributePatch({
-      instanceId,
-      dynamicPartIndex: 0,
-      value: next.values[0],
-    });
+// 后台线程
+function reconcileTemplate(previous, next) {
+  const propertyChanges = diffDynamicProperties(previous, next);
+  const childChanges = reconcileDynamicChildren(previous, next);
+
+  sendToMainThread({ propertyChanges, childChanges });
+}
+
+// 主线程
+function applyTemplateChanges(Template, instance, changes) {
+  if (hasChanges(changes.propertyChanges)) {
+    Template.update(instance, changes.propertyChanges);
   }
 
-  // $0 仍作为 React 子节点参与协调，结果会变成插入、移除等树操作。
-  reconcileChildren(previous.$0, next.$0, {
-    parentInstanceId: instanceId,
-    slotIndex: 0,
-  });
-}
-
-// 主线程根据模板实例和动态位置应用属性更新
-function applyAttributePatch(patch) {
-  const instance = findMainThreadTemplateInstance(patch.instanceId);
-  const index = patch.dynamicPartIndex;
-
-  instance.values[index] = patch.value;
-  instance.template.update[index](instance);
+  applyDynamicChildChanges(Template, instance, changes.childChanges);
 }
 ```
 
-对于属性路径，`reconcileGreeting()` 只描述“哪个模板实例的哪个动态位置发生了变化”，`applyAttributePatch()` 再调用编译器生成的定向更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。当前实现会将这些操作编码进序列化的 Patch。
+对于动态属性，主线程直接调用编译器生成的 `Template.update()`，不需要重新遍历静态宿主结构。对于动态子节点，后台线程仍会进行协调，并将产生的子节点变化应用到预留插槽。
 
 ## 回到应用代码
 
