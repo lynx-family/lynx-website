@@ -217,13 +217,13 @@ npm install @example/lynx-button
         {
           "os": "darwin",
           "arch": "arm64",
-          "binaries": ["dist/darwin/arm64/lynx-button.node"],
+          "files": ["dist/darwin/arm64/lynx-button.node"],
           "frameworks": ["dist/darwin/arm64/frameworks"]
         },
         {
           "os": "win32",
           "arch": "x64",
-          "binaries": ["dist/win32/x64/lynx-button.node"]
+          "files": ["dist/win32/x64/lynx-button.node"]
         }
       ]
     },
@@ -241,11 +241,11 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 `platforms.macos.sourceDir` 和 `platforms.windows.sourceDir` 指向以源码形式暴露的 `shared/` 目录。它是跨端原生源码结构，后续也可以被更多平台复用。
 
-对于 Lynxtron，使用 `targets` 按宿主组织运行时产物。每个 target 都包含 `os`、`arch`，以及名为 `binaries` 和 `frameworks` 的字符串数组中的至少一个；其中每条路径都相对于包根目录。Autolink 会选择并校验与目标宿主匹配的 target、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单并加载选中的 `.node`。`binaries` 描述可以直接加载的 `.node`、`.dylib`、`.dll` 等原生文件；`frameworks` 描述 macOS Framework payload 目录，其中也可以包含 Helper app bundle，并且必须保留内部符号链接。
+对于 Lynxtron，使用 `targets` 按宿主组织运行时产物。每个 target 都包含 `os`、`arch`，以及名为 `files` 和 `frameworks` 的字符串数组中的至少一个；其中每条路径都相对于包根目录。Autolink 会选择并校验与目标宿主匹配的 target、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单，并从 `files` 中加载选中的 `.node`。`files` 列出保持包内相对位置的全部 payload，包括原生 addon、动态库、可执行文件、资源包和目录；`frameworks` 仅用于 macOS Framework payload 目录，其中也可以包含 Helper app bundle，并且必须保留内部符号链接。
 
 `npm pack` 不会保留 package 内容中的符号链接条目。如果 Framework 依赖符号链接，需要提供幂等的安装步骤，使用随包发布的目标文件恢复链接，并验证安装后的 package。Lynxtron 会在收集和打包 Framework 时保留这些已恢复的链接。
 
-这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`binaries`、`frameworks` 和 `arch` 选择器。
+这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`files`、`frameworks` 和 `arch` 选择器。
 
 安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。Lynxtron 应用只需执行自身标准的构建和打包命令，`pluginLynxtron()` 与 `lynxtron-builder` 会自动处理所选 target。应用不需要导入库的 `./lynxtron` 入口、复制原生文件，也不需要为每个库编写注册或打包配置。
 
@@ -317,7 +317,7 @@ lynx-button/
 ```
 
 - `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
-- `lynx.lib.json` 是 Autolink 清单文件，用来声明按平台选择的 binary 或 Framework 源产物。
+- `lynx.lib.json` 是 Autolink 清单文件，用来声明按平台选择的文件或 Framework 源产物。
 - `types/index.d.ts` 汇总导出原生模块类型声明；选中对应能力时，平台 Native Module 声明位于 `types/platform-native-module.d.ts`，N-API Native Module 声明位于 `types/napi-native-module.d.ts`。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
 - `android/`、`ios/` 和 `harmony/` 放置原生实现以及生成的原生 spec。HarmonyOS 目录是一个完整的源码 HAR，包含模块级的 `hvigorfile.ts`。

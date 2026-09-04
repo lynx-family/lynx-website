@@ -217,13 +217,13 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
         {
           "os": "darwin",
           "arch": "arm64",
-          "binaries": ["dist/darwin/arm64/lynx-button.node"],
+          "files": ["dist/darwin/arm64/lynx-button.node"],
           "frameworks": ["dist/darwin/arm64/frameworks"]
         },
         {
           "os": "win32",
           "arch": "x64",
-          "binaries": ["dist/win32/x64/lynx-button.node"]
+          "files": ["dist/win32/x64/lynx-button.node"]
         }
       ]
     },
@@ -241,11 +241,11 @@ For Android, `platforms.android.packageName` is required, and `sourceDir` defaul
 
 `platforms.macos.sourceDir` and `platforms.windows.sourceDir` point to the source-exposed `shared/` directory, which is the cross-platform native source layout and may be reused by more platforms later.
 
-For Lynxtron, use `targets` to group runtime payloads by host. Each target declares `os`, `arch`, and one or both string arrays named `binaries` and `frameworks`; every path is relative to the package root. Autolink selects the matching target, verifies its paths, stages the package, and loads its `./lynxtron` export. That entry reads the same manifest and loads the selected `.node`. `binaries` describes directly loadable native files such as `.node`, `.dylib`, and `.dll`; `frameworks` describes macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
+For Lynxtron, use `targets` to group runtime payloads by host. Each target declares `os`, `arch`, and one or both string arrays named `files` and `frameworks`; every path is relative to the package root. Autolink selects the matching target, verifies its paths, stages the package, and loads its `./lynxtron` export. That entry reads the same manifest and loads the selected `.node` from `files`. `files` lists every payload that remains at its package-relative location, including native addons, dynamic libraries, executables, resource packs, and directories. `frameworks` is reserved for macOS Framework payload directories, which may also contain helper app bundles and must preserve their internal symbolic links.
 
 `npm pack` does not preserve symbolic-link entries inside package contents. If a Framework relies on links, provide an idempotent installation step that reconstructs them from shipped targets, then verify the installed package. Lynxtron preserves those restored links when it stages and packages the Framework.
 
-These paths identify source artifacts inside the npm package. Lynxtron's development plugin and builder automatically choose their final locations in development output and packaged applications. App teams do not copy these artifacts or add per-library packaging rules. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `targets`, `binaries`, `frameworks`, and the `arch` selector exactly as shown.
+These paths identify source artifacts inside the npm package. Lynxtron's development plugin and builder automatically choose their final locations in development output and packaged applications. App teams do not copy these artifacts or add per-library packaging rules. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `targets`, `files`, `frameworks`, and the `arch` selector exactly as shown.
 
 After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. For Lynxtron, use the app's standard build and package commands; `pluginLynxtron()` and `lynxtron-builder` handle the selected target automatically. You do not need to import a library's `./lynxtron` entry, copy its native files, or add per-library registration or packaging code in the app.
 
@@ -317,7 +317,7 @@ lynx-button/
 ```
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
-- `lynx.lib.json` is the Autolink contract. It declares each platform-selected binary or Framework source artifact.
+- `lynx.lib.json` is the Autolink contract. It declares each platform-selected file or Framework source artifact.
 - `types/index.d.ts` re-exports typed Native Module declarations. Platform Native Module declarations live in `types/platform-native-module.d.ts`, and N-API Native Module declarations live in `types/napi-native-module.d.ts` when those features are selected.
 - `src/index.ts` exports the JavaScript API that app code imports.
 - `android/`, `ios/`, and `harmony/` contain native implementations and generated native specs. The HarmonyOS directory is a complete source HAR, including its module-level `hvigorfile.ts`.
