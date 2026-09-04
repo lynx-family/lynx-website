@@ -1,0 +1,305 @@
+---
+title: '深入 ReactLynx：从后台渲染到首帧直出优化'
+date: 2026-08-10
+sidebar: false
+authors: ['Yradex', 'reactlynx']
+description: 'ReactLynx 把后台 React 更新编码成 Patch，再由主线程通过 Element PAPI 落到原生视图；首帧直出则把启动第一帧从这条等待链路里拆出来。'
+---
+
+import backgroundFirstFrameWaitImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-first-frame-wait.png?url';
+import backgroundRenderingPatchImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-rendering-patch.png?url';
+import dualBuildPathsImg from '@assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png?url';
+import instantFirstFrameStartupImg from '@assets/blog/reactlynx-instant-first-frame-rendering/instant-first-frame-startup.png?url';
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+_不少开发者都好奇：ReactLynx 是怎么让 React 跑在双线程上的，又是怎么让[首帧直出](/guide/interaction/ifr)、[主线程脚本](/react/main-thread-script)这些能力成为可能的？为此，我们将推出一系列博客，和大家分享背后的技术细节。如果你更喜欢看视频，也可以观看我们去年在 React Universe Conf 上的演讲[《React for Two Threads》](https://youtu.be/-uUcYrl51JM)。_
+
+在 Web React 里，[render 和 commit](https://react.dev/learn/render-and-commit) 发生在同一个线程：React 重渲染完，直接拿 DOM 引用去更新。
+
+而在 ReactLynx 等跨平台框架中，我们希望主线程尽可能专注于原生视图的绘制，不被 React 或 JavaScript 业务逻辑阻塞，因此将它们跑在了一个独立的后台线程上。但这也意味着后台线程拿不到主线程的 Element 引用，没法直接 commit。这就驱使 ReactLynx 拥有一条与 React 不同的，从后台线程到主线程的 commit 链路。
+
+## 后台渲染
+
+后台渲染，更严谨的全称是“[后台（线程）驱动的渲染](/guide/spec.html#background-driven-rendering)”。在这个模式下，ReactLynx 的更新路径是一次跨线程的异步提交。
+
+ReactLynx 的后台运行时建立在 [Preact](https://preactjs.com/) 之上，组件、Hooks 以及 render / diff 都由 Preact 驱动。不同的是，后台线程没有 DOM，也拿不到主线程的原生视图。ReactLynx 因此在后台线程维护一棵逻辑宿主树：render / diff 过程中发生的创建、属性修改和结构变化会被记录成 Patch，再在 commit 阶段统一发送给主线程。
+
+<img
+  src={backgroundRenderingPatchImg}
+  alt="Background thread creates a Patch and commits it asynchronously to the main thread"
+  style={{ width: '100%', margin: '24px 0' }}
+/>
+
+我们接下来会以这个典型的 ReactLynx 卡片组件为例，分析 ReactLynx 的渲染和更新流程：
+
+<Go
+  example="react-apis"
+  defaultFile="src/thread-macros/App.tsx"
+  defaultEntryFile="dist/thread-macros.lynx.bundle"
+  entry="src/thread-macros"
+  defaultTab="web"
+  highlight="{25}"
+/>
+
+### 可序列化的变更（Patch）
+
+Patch 描述的是“这次变化是什么”。
+
+为了适合跨线程传输，Patch 被组织成扁平的操作码流：主线程用一个游标从左到右扫描，先读操作码，再按格式读取后续参数，逐条执行。
+
+下面的示例只表达这些逻辑操作，省略内部路由参数。
+
+Patch [操作码的枚举定义](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatch.ts)可以简化理解为几类：
+
+```plaintext
+0  CreateElement
+1  InsertBefore
+2  RemoveChild
+3  SetAttribute
+4  SetAttributes
+```
+
+先从最小的状态更新看起：前面的卡片组件点击后把 `count` 从 `0` 更新到 `1`，后台线程可以把这次文本变化编码成一段紧凑的数字流：
+
+```js
+patch: [
+  3, // SetAttribute
+  instanceId, // 目标实例 ID
+  0, // 编译期给 {count} 预留的动态位置编号
+  1, // 这个位置的新值；主线程据此把 count 文本更新为 1
+];
+```
+
+有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”就够了。位置编号的具体机制我们会在系列的后续文章中讨论。
+
+Patch 也能表达结构变化。以前面的条件分支为例，如果同一位置需要从 `main` 分支对应的旧 child（子节点）切到 `background` 分支对应的新 child，这些操作仍然落在同一套数字流里。
+
+```js
+patch: [
+  // 删除旧子节点
+  2, // RemoveChild(parentId, oldChildId)
+  parentId, // 父节点实例 ID
+  mainBranchTextId, // 将被移除的旧 child ID
+
+  // 创建新子节点
+  0, // CreateElement(type, newChildId)
+  backgroundBranchType, // 新 child 的类型
+  backgroundBranchTextId, // 新 child 的实例 ID
+
+  // 插入新子节点
+  1, // InsertBefore(parentId, newChildId, beforeId)
+  parentId,
+  backgroundBranchTextId,
+  undefined, // 没有 before 节点，表示插到末尾
+];
+```
+
+### 从 Patch 到 Element PAPI
+
+主线程收到 Patch 后，会先解析操作码，再通过本地实例映射和编译期留下的位置规则，找到这次更新真正落到哪个 Element、哪个属性或哪个子节点位置。随后会调用 [Element PAPI](/api/engine/element-api)，也就是 Lynx 主线程运行时提供给前端框架的底层 Element 接口，例如 `__CreateElement`、`__SetAttribute`、`__AppendElement`、`__InsertElementBefore`、`__RemoveElement`。
+如果想对照源码，可以看 ReactLynx 运行时里的 [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts) 全局声明，以及 [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts) 里的 Patch 应用入口。
+
+从概念上看，如果省略运行时内部的实例查找，最终的 Element 操作大致如下：
+
+```js
+for (let i = 0; i < patch.length; ++i) {
+  switch (patch[i]) {
+    case 0: {
+      // CreateElement(type, id)
+      const type = patch[++i];
+      const id = patch[++i];
+
+      rememberElement(id, createElement(type));
+      break;
+    }
+
+    case 1: {
+      // InsertBefore(parentId, childId, beforeId)
+      const parentId = patch[++i];
+      const childId = patch[++i];
+      const beforeId = patch[++i];
+
+      const parent = resolveElement(parentId);
+      const child = resolveElement(childId);
+      const before = resolveElementOrUndefined(beforeId);
+      __InsertElementBefore(parent, child, before);
+      break;
+    }
+
+    case 2: {
+      // RemoveChild(parentId, childId)
+      const parentId = patch[++i];
+      const childId = patch[++i];
+
+      const parent = resolveElement(parentId);
+      const child = resolveElement(childId);
+      __RemoveElement(parent, child);
+      break;
+    }
+
+    case 3: {
+      // SetAttribute(id, dynamicPartIndex, value)
+      const id = patch[++i];
+      const dynamicPartIndex = patch[++i];
+      const value = patch[++i];
+
+      setDynamicValue(resolveElement(id), dynamicPartIndex, value);
+      break;
+    }
+  }
+}
+```
+
+## 主线程首帧直出
+
+在页面稳定运行时，这套 Patch 机制能够快速完成 UI 更新。但如果在渲染首帧时还只使用这套机制，就会导致主线程已经具备原生绘制能力，却还拿不到第一屏的视图结构。它必须等后台完成初始化、加载业务代码、首轮 render / diff，并送回第一批首屏 Patch，这就削弱了 Lynx 双线程的意义：
+
+<img
+  src={backgroundFirstFrameWaitImg}
+  alt="Without instant first-frame rendering, the main thread waits for the first-screen Patch before drawing"
+  style={{ width: '100%', margin: '24px 0' }}
+/>
+
+ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/interaction/ifr)优化的就是这段启动等待。它会为第一帧拆出一条主线程可以先走的短路径：主线程执行裁剪后的首屏产物，先创建初始原生视图；后台线程同时启动完整的 React 运行时，并继续负责后续业务逻辑。等后台首轮渲染就绪后，ReactLynx 再执行一次跨线程接管（handover），把后台渲染结果与主线程已有视图关联起来，后续更新便回到 Background Rendering 的 Patch -> Element PAPI 链路。
+
+<img
+  src={instantFirstFrameStartupImg}
+  alt="With instant first-frame rendering, the main thread draws first and later updates arrive after handover"
+  style={{ width: '100%', margin: '24px 0' }}
+/>
+
+这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：两者都复用已经存在的首屏视图。不过，ReactLynx 的 handover 发生在主、后台两侧都完成首轮 render 之后。
+
+### 面向双线程的构建产物与代码裁剪
+
+两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，只服务首屏建树；后台侧生成 `background.js`，保留完整 React 逻辑。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
+
+<img
+  src={dualBuildPathsImg}
+  alt="One React entry is built into a main-thread first-screen path and a background full React path"
+  style={{ width: '100%', margin: '24px 0' }}
+/>
+
+沿用前面那段同时包含副作用、事件、动态文本和 `__MAIN_THREAD__` 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样：
+
+```js
+// 编译生成的首屏结构占位名，示例不展开内部格式。
+const __card = '...';
+
+// __MAIN_THREAD__ 在主线程构建中折叠到 main 分支。
+const __main_text = '...';
+
+export default function App({ initialCount }) {
+  // useState 只同步返回 initialCount，让第一帧能填入初始文本。
+  const [count] = useState(initialCount);
+
+  // 'background only' 的真实 handler 已被裁到后台产物；
+  // 这里的无引用空壳生产压缩后可清理。
+  function handleTap() {}
+
+  return _jsx(__card, {
+    values: [
+      // 保留 tap 绑定位置。
+      // 真实 handler 等后台接管后执行。
+      1,
+    ],
+
+    // 动态文本位置：首帧把 initialCount 填回 {count}。
+    $0: count,
+
+    // 动态子树位置：主线程侧落到 "main" 分支。
+    $1: _jsx(__main_text, {}),
+  });
+}
+```
+
+主线程产物只面向首帧，这使得我们能够在用户代码的基础上进行裁剪。构建时，同一个 `__MAIN_THREAD__` 分支会在两份产物中分别折叠，`useEffect` 回调和标记为 `'background only'` 的函数体也不会进入主线程路径，留下的主要是首帧需要的初始值和视图结构。
+
+同时，主线程使用的运行时也更轻。它没有把后台持续更新所需的完整协调与调度路径搬过来，而是用专用 JSX 运行时和改造自 [`preact-render-to-string`](https://github.com/preactjs/preact-render-to-string) 的同步遍历完成首帧求值，Hooks 也只保留这一步需要的行为。
+
+相比之下，后台产物不参与主线程首帧建树。它需要保留后续运行所需的完整 React 逻辑：
+
+```js
+function fetchProfile() {
+  // 请求逻辑只在后台产物保留；主线程首帧不执行 effect。
+  console.log('fetchProfile');
+}
+
+const __card = '...';
+
+// __MAIN_THREAD__ 在后台构建中折叠到 background 分支。
+const __background_text = '...';
+
+export default function App({ initialCount }) {
+  // 后台产物保留完整 useEffect、fetchProfile、handleTap 和 setCount。
+  // setCount 仅在后台线程保留；主线程只读取 count。
+  const [count, setCount] = useState(initialCount);
+
+  // effect 回调仅在后台线程保留。
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  function handleTap() {
+    // 真实 handler 仅在后台线程保留；主线程只保留 tap 绑定占位。
+    setCount(count + 1);
+  }
+
+  return _jsx(__card, {
+    values: [
+      // 真实 handler，仅在后台线程保留；
+      // 主线程里对应为数字 1 占位。
+      handleTap,
+    ],
+    $0: count,
+
+    // 主线程同一位置折叠为 __main_text。
+    $1: _jsx(__background_text, {}),
+  });
+}
+```
+
+### 接管已有视图
+
+现在主线程已经画出首帧，后台 React 也完成了首轮 render。ReactLynx 接下来会在后台线程比较主线程传来的首屏树描述和后台渲染树：匹配上的后台节点复用主线程 ID，动态值和子树差异则进入第一批修正 Patch。这样，后续 `setState` 产生的 Patch 就能命中同一批原生节点。
+
+这与 SSR Hydration 的时机不同：以 Preact 为例，它会在首次构建 VNode 树时复用已有宿主节点。这里两棵树已经分别生成，接管要做的是让已经完成首轮 render 的后台树改用主线程 ID。若把这一步前移到后台首次 render，后台就要等待主线程结果，削弱 IFR 的双线程并行。
+
+拿前面的 `App` 来看，主线程首帧树使用负数 ID，后台渲染树则使用临时正数 ID。接管过程会结合动态位置和子节点结构递归匹配两棵树：
+
+```plaintext
+接管前：
+
+  主线程已有原生视图                 后台首轮渲染结果
+  -1 view.card                      1 view.card
+    text "ReactLynx"                  text "ReactLynx"
+    -2 text count ($0)                2 text count ($0)
+    -3 text "main" ($1)               3 text "background" ($1)
+
+接管结果：
+
+  可直接绑定：
+    view.card        1 -> -1
+    text count ($0)  2 -> -2
+
+  不能直接绑定：
+    $1 分支           main != background，交给差异 Patch 局部更新
+```
+
+接管完成后，匹配上的后台节点会改用主线程已有 ID（`1 -> -1`、`2 -> -2`）。后续 `count` 从 `0` 更新到 `1` 时，后台生成的 Patch 就能命中 `-2` 对应的原生文本节点。
+
+动态值和事件也会复用这份接管关系。文本或属性如果有差异，后台会发送一段普通属性 Patch；如果事件在接管完成前已经到达后台，运行时会先暂存它，接管后再根据 ID 映射找到对应的 `handleTap` 执行。
+
+:::details 当前实现：Snapshot
+
+ReactLynx 当前使用内部的 Snapshot IR 表示这两棵对应的树。Snapshot 属于可能继续演进的实现细节，详见[编译协同渲染](https://lynxjs.org/react/compiler-informed-rendering.html#the-current-intermediate-representation)。
+
+:::
+
+## 总结
+
+归结起来，ReactLynx 的启动和运行其实是同一套提交模型在两个阶段的分工。页面启动时，主线程先沿着裁剪后的首屏路径画出第一帧，ReactLynx 再把已有视图交给后台运行时；页面稳定运行后，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 修改 Lynx Element 树。
+
+写首屏组件时，越能保证双线程节点树一致、把首屏表达成初始数据和可直接创建的视图，主线程路径就越短；请求、副作用、真实事件处理和后续状态更新只需要继续交给后台 React。首屏代码越贴近这条边界，首帧直出的收益就越可靠。
