@@ -12,6 +12,7 @@ import { PACKAGES } from './packages/index.js';
 import { customize as defaultCustomize } from './themes/default.js';
 import type { PackageConfig } from './types/PackageConfig.js';
 import { doGenTplWithData } from './utils/tpl.js';
+import { generateElementApiEntry } from './generate-element-api-entry.js';
 
 /**
  * This is the base configuration for typedoc-plugin-markdown.
@@ -640,6 +641,114 @@ function postProcessGeneratedDocs(
 }
 
 /**
+ * Keeps Element API routes compatible with the hand-written reference that
+ * TypeDoc replaces. The markdown theme prefixes member files with their kind
+ * when output is flattened (`Function.__Foo.mdx`); the existing public routes
+ * are `/api/engine/element-api/__Foo`.
+ */
+const ELEMENT_API_REFERENCE_FUNCTIONS = new Set([
+  '__AddClass',
+  '__AddConfig',
+  '__AddDataset',
+  '__AddEvent',
+  '__AddInlineStyle',
+  '__AppendElement',
+  '__CreateComponent',
+  '__CreateElement',
+  '__CreatePage',
+  '__ElementIsEqual',
+  '__FirstElement',
+  '__GetAttributes',
+  '__GetChildren',
+  '__GetClasses',
+  '__GetComponentID',
+  '__GetComputedStyleByKey',
+  '__GetConfig',
+  '__GetDataByKey',
+  '__GetDataset',
+  '__GetElementUniqueID',
+  '__GetEvent',
+  '__GetEvents',
+  '__GetID',
+  '__GetInlineStyles',
+  '__GetParent',
+  '__GetTag',
+  '__InsertElementBefore',
+  '__LastElement',
+  '__NextElement',
+  '__RemoveElement',
+  '__ReplaceElement',
+  '__ReplaceElements',
+  '__SetAttribute',
+  '__SetClasses',
+  '__SetConfig',
+  '__SetCSSId',
+  '__SetDataset',
+  '__SetEvents',
+  '__SetID',
+  '__SetInlineStyles',
+  '__SwapElement',
+  '__UpdateComponentID',
+]);
+
+function normalizeElementApiOutput(dir: string, locale: string): void {
+  const functionFilePattern = /^Function\.(__[A-Za-z0-9_]+)\.mdx$/;
+  const generatedFunctions = new Set<string>();
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const match = functionFilePattern.exec(entry.name);
+    if (!match) continue;
+    generatedFunctions.add(match[1]);
+    fs.renameSync(
+      path.join(dir, entry.name),
+      path.join(dir, `${match[1]}.mdx`),
+    );
+  }
+
+  const missing = [...ELEMENT_API_REFERENCE_FUNCTIONS].filter(
+    (name) => !generatedFunctions.has(name),
+  );
+  const unexpected = [...generatedFunctions].filter(
+    (name) => !ELEMENT_API_REFERENCE_FUNCTIONS.has(name),
+  );
+  if (missing.length || unexpected.length) {
+    throw new Error(
+      `Element API public surface differs from the reference. ` +
+        `Missing: ${missing.join(', ') || 'none'}. ` +
+        `Unexpected: ${unexpected.join(', ') || 'none'}.`,
+    );
+  }
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.mdx')) continue;
+    const full = path.join(dir, entry.name);
+    const original = fs.readFileSync(full, 'utf8');
+    let output = original.replace(
+      /Function\.(__[A-Za-z0-9_]+)\.mdx/g,
+      '$1.mdx',
+    );
+    output = output.replace(
+      /\/api\/engine\/element-api\/index\.mdx/g,
+      '/api/engine/element-api',
+    );
+
+    if (entry.name === '__GetComputedStyleByKey.mdx') {
+      output = `---\napi: elements/get-computed-style-supported-properties\n---\n\n${output}`;
+      output = output.replace(/^(# .+)$/m, '$1\n\n<Lynx.APISummary />');
+      const compatibilityHeading = locale === 'zh' ? '兼容性' : 'Compatibility';
+      output = `${output.trimEnd()}\n\n## ${compatibilityHeading}\n\n<Lynx.APITable />\n`;
+    }
+
+    if (output !== original) fs.writeFileSync(full, output);
+  }
+
+  // Rspress already creates `/api/engine/element-api` as the directory
+  // overview. Keeping TypeDoc's index would add a duplicate `/index` route.
+  fs.rmSync(path.join(dir, 'index.mdx'), { force: true });
+}
+
+/**
  * Generates TypeDoc documentation for a single package with the specified configuration.
  * This allows us to configure the TypeDoc application for each package and locale individually.
  *
@@ -729,6 +838,10 @@ export async function runTypeDocForPackage(
 
     await app.generateDocs(project, absoluteOutputDir);
 
+    if (packageName === 'element-api') {
+      normalizeElementApiOutput(absoluteOutputDir, locale);
+    }
+
     // Normalize site links and escape MDX-breaking braces in the output.
     postProcessGeneratedDocs(absoluteOutputDir, {
       platformBadges: options.platformBadges,
@@ -755,6 +868,11 @@ export async function runTypeDoc(options: CliOptions): Promise<void> {
           options.packages?.find((str) => name.startsWith(str)),
       )
     : Object.entries(PACKAGES);
+
+  // Generate the element-api wrapper entry point if it will be processed
+  if (packagesToGenerate.some(([name]) => name === 'element-api')) {
+    generateElementApiEntry();
+  }
 
   // Generate documentation for each package in both locales
   for (const [packageName, packageConfig] of packagesToGenerate) {

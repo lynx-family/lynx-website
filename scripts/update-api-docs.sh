@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Regenerate the lynx-stack-derived API reference docs in place, against a
-# lynx-stack checkout. Covers two pipelines:
+# Regenerate source-derived API reference docs in place, against lynx-stack
+# and Lynx checkouts. Covers two pipelines:
 #
 #   1. rspeedy/* – Microsoft API Extractor + API Documenter, run inside the
 #                  lynx-stack `website/` workspace.
-#   2. genui, reactlynx-testing-library, lynx-testing-environment – TypeDoc,
-#                  run here in lynx-website (`pnpm run typedoc`), reading the
-#                  freshly built lynx-stack packages.
+#   2. genui, reactlynx-testing-library, lynx-testing-environment, element-api
+#                  – TypeDoc, run here in lynx-website (`pnpm run typedoc`),
+#                  reading lynx-stack packages and the Lynx declaration source.
 #
 # Also syncs the `packageManager` pnpm pin in package.json from lynx-stack.
 #
@@ -15,13 +15,29 @@
 # whose sources don't ship) and docs/{en,zh}/api/_meta.json (hand-curated
 # sidebar nav). Review the diff and reconcile nav when members are added/removed.
 #
-# Usage: scripts/update-api-docs.sh <path-to-lynx-stack-checkout>
+# Usage: scripts/update-api-docs.sh <path-to-lynx-stack-checkout> <path-to-lynx-checkout>
 
 set -euo pipefail
 
-STACK_ARG="${1:?usage: scripts/update-api-docs.sh <lynx-stack-dir>}"
+STACK_ARG="${1:?usage: scripts/update-api-docs.sh <lynx-stack-dir> <lynx-dir>}"
 STACK="$(cd "$STACK_ARG" && pwd)"
+LYNX_ARG="${2:-}"
+if [ -n "$LYNX_ARG" ]; then
+  LYNX_REPO="$(cd "$LYNX_ARG" && pwd)"
+  export LYNX_REPO
+fi
 WEBSITE="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [ -z "${LYNX_REPO:-}" ]; then
+  echo "error: a Lynx checkout is required to generate Element API docs." >&2
+  echo "usage: scripts/update-api-docs.sh <lynx-stack-dir> <lynx-dir>" >&2
+  exit 1
+fi
+
+if [ ! -f "$LYNX_REPO/lynx/js_libraries/type-element-api/types/element-api.d.ts" ]; then
+  echo "error: Element API declaration not found under '$LYNX_REPO'." >&2
+  exit 1
+fi
 
 if [ -n "${PNPM_BIN:-}" ]; then
   PNPM_CMD=("$PNPM_BIN")

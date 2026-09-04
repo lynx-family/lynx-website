@@ -1,8 +1,8 @@
 name: Update API docs
 
-# Daily (and on-demand) regeneration of the lynx-stack-derived API reference
-# docs, opened as a PR for review. Runs entirely in lynx-website and does
-# not touch the lynx-stack release pipeline or require cross-repo secrets.
+# Daily (and on-demand) regeneration of source-derived API reference docs,
+# opened as a PR for review. Runs entirely in lynx-website and does not touch
+# either source repository's release pipeline or require cross-repo secrets.
 
 on:
   schedule:
@@ -13,7 +13,7 @@ permissions: {}
 
 jobs:
   update:
-    name: Regenerate API docs from lynx-stack
+    name: Regenerate API docs from source repositories
     if: github.repository == 'lynx-family/lynx-website'
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -41,6 +41,14 @@ jobs:
           path: .lynx-stack
           persist-credentials: false
 
+      - name: Checkout Lynx
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: lynx-family/lynx
+          ref: develop
+          path: .lynx
+          persist-credentials: false
+
       - name: Setup Rust
         # lynx-stack's build graph compiles wasm crates (e.g. react-transform,
         # web-core). Match lynx-stack's rust-toolchain.toml (it lives in
@@ -65,7 +73,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Regenerate API docs
-        run: bash scripts/update-api-docs.sh .lynx-stack
+        run: bash scripts/update-api-docs.sh .lynx-stack .lynx
 
       - name: Validate build
         id: build
@@ -87,16 +95,17 @@ jobs:
             docs/en/api
             docs/zh/api
             package.json
-          commit-message: 'docs(api): sync API reference from lynx-stack main'
-          title: 'docs(api): sync API reference from lynx-stack main'
+          commit-message: 'docs(api): sync API reference from source repositories'
+          title: 'docs(api): sync API reference from source repositories'
           body: |
-            Automated daily regeneration of the lynx-stack-derived API docs.
+            Automated daily regeneration of API docs from lynx-stack `main` and Lynx `develop`.
 
             **Build validation:** `${{ steps.build.outcome }}` (GITHUB_TOKEN PRs don't trigger CI, so the build is run inside this job).
 
             Covered:
             - `rspeedy/*` — API Extractor + API Documenter, from lynx-stack `main`.
             - `reactlynx-testing-library`, `lynx-testing-environment` — TypeDoc.
+            - `element-api` — TypeDoc generated directly from Lynx `develop` declarations.
             - Targeted API reference Lynx Go examples from `scripts/apply-api-doc-overlays.mjs`.
             - `packageManager` in `package.json` — realigned with lynx-stack's pnpm pin.
 
