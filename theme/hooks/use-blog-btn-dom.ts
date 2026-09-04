@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
-import { useCanonicalLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
+import {
+  useBlogPages,
+  useCanonicalLatestBlog,
+  type LatestBlogConfig,
+} from '@site/src/hooks';
 import { BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 
 type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
@@ -8,7 +12,8 @@ type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
 /**
  * Configuration for the blog button on different subsites.
  *
- * For the main site ('/'), the badge will show the latest blog post dynamically.
+ * For the main site ('/'), the badge uses the same `featured` frontmatter as
+ * the Blog page, then falls back to the latest blog post.
  * Use `latestBlogConfig` to customize which blog to show:
  * - Default: shows the latest blog post
  * - `filename`: specify a blog post by its filename (e.g., 'lynx-3-5')
@@ -23,14 +28,10 @@ const config: Record<
 > = {
   '/': {
     text: {
-      // Fallback text if no blog is found
-      zh: '阅读最新博客',
-      en: 'Read the Latest Blog',
+      // Fallback text if the featured post cannot be read.
+      zh: '了解 Lynxtron',
+      en: 'Explore Lynxtron',
     },
-    // Optional: customize which blog to show
-    // latestBlogConfig: {
-    //   filename: 'lynx-3-5', // Show a specific blog
-    // },
     // Or use an external link:
     // latestBlogConfig: {
     //   externalLink: 'https://example.com',
@@ -61,6 +62,9 @@ const useBlogBtnDom = (src: string) => {
   const { page } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
+  const featuredBlogFilename = useBlogPages().find(
+    (blog) => blog.featured,
+  )?.filename;
 
   const configKey = useMemo(() => {
     return (
@@ -74,7 +78,13 @@ const useBlogBtnDom = (src: string) => {
     ) as ConfigKey;
   }, [src]);
 
-  const latestBlogConfig = config[configKey].latestBlogConfig;
+  const latestBlogConfig = useMemo<LatestBlogConfig | undefined>(() => {
+    const configured = config[configKey].latestBlogConfig;
+    if (configured || configKey !== '/' || !featuredBlogFilename) {
+      return configured;
+    }
+    return { filename: featuredBlogFilename };
+  }, [configKey, featuredBlogFilename]);
   const {
     text: blogText,
     link: blogLink,
