@@ -40,7 +40,7 @@ export function Greeting({ name, highlighted }) {
 
 On every render, `jsx()` creates virtual nodes (VNodes) that describe the UI structure. ReactLynx then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as [reconciliation](https://react.dev/learn/render-and-commit).
 
-But in this example, the `view`, `text`, fixed text `Hello, `, and their parent-child relationships are static; only `className` and `name` can change. The compiler can therefore extract a reusable template and compile the static structure into [Element PAPI](/api/engine/element-api) operations, so the runtime only needs to supply the dynamic data required for each render. Conceptually, it looks like this:
+But in this example, the `view`, `text`, fixed text `Hello, `, and their parent-child relationships are static; only `className` and `name` can change. The compiler can generate the [Element PAPI](/api/engine/element-api) operations for creating the static structure ahead of time. The resulting static template definition can be reused across the initial renders of different instances and their subsequent re-renders; the runtime only needs to supply the dynamic data for each render. Conceptually, it looks like this:
 
 ```js
 const GreetingTemplate = {

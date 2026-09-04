@@ -40,7 +40,7 @@ export function Greeting({ name, highlighted }) {
 
 每次渲染时，`jsx()` 都会创建描述 UI 结构的虚拟节点（VNode）。ReactLynx 再沿着这些节点逐层比较，决定复用、创建或更新哪些宿主元件。这个过程通常称为[协调（Reconciliation）](https://react.dev/learn/render-and-commit)。
 
-但在这个例子中，`view`、`text`、固定文本 `Hello, ` 及其父子关系都是静态的，只有 `className` 和 `name` 会变化。编译器可以据此提取一份可复用的模板，将静态结构编译为 [Element PAPI](/api/engine/element-api) 操作，让运行时只传入每次渲染所需的动态数据。概念上类似：
+但在这个例子中，`view`、`text`、固定文本 `Hello, ` 及其父子关系都是静态的，只有 `className` 和 `name` 会变化。编译器可以提前生成用于创建静态结构的 [Element PAPI](/api/engine/element-api) 操作。由此得到的静态模板定义可以在不同实例的首次渲染以及后续重新渲染中复用；运行时只需提供每次渲染所需的动态数据。概念上类似：
 
 ```js
 const GreetingTemplate = {
