@@ -76,13 +76,9 @@ export function Greeting({ name, highlighted }) {
 
 :::details 历史经验与当前实现：Snapshot
 
-这种思路与 [Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 有相似之处：都利用编译阶段已知的信息，缩小运行时需要处理的范围。
+这种利用编译阶段已知信息缩小运行时工作范围的思路并非 ReactLynx 独创。[Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 都采用了类似的思路。从更宽泛的计算视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时，达到一种“[部分预渲染](https://nextjs.org/docs/15/app/getting-started/partial-prerendering)”的效果。
 
-从编译原理的视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：ReactLynx 使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时。
-
-ReactLynx 当前使用一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）保存上述编译信息。我们也在尝试演进成性能更好的其他表示。
-
-Snapshot 和上述简化的概念一致，可以归纳为以下四个核心部分：
+在 ReactLynx 中，这套思路当前通过一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）实现。我们也在尝试演进成性能更好的其他表示。Snapshot 与上面的概念模型一致，可以归纳为以下四个核心部分：
 
 | 编译结果       | 作用                                                             |
 | -------------- | ---------------------------------------------------------------- |
