@@ -2,6 +2,8 @@ import { PackageManagerTabs } from '@theme';
 
 # @lynx-js/cef-webview
 
+<!-- cspell:ignore libcef -->
+
 `@lynx-js/cef-webview` is the officially maintained Lynxtron native library that
 provides the CEF-backed [`<webview>`](/api/elements/built-in/webview) element.
 It ships platform-specific Lynxtron native artifacts and a `./lynxtron` entry
@@ -37,7 +39,8 @@ package for a Lynxtron host build.
 
 ## Package Metadata
 
-The package includes `lynx.lib.json` with Lynxtron metadata:
+The package includes `lynx.lib.json` with Lynxtron metadata. The following
+excerpt abbreviates the complete platform matrix and Windows runtime file list:
 
 ```json
 {
@@ -48,7 +51,16 @@ The package includes `lynx.lib.json` with Lynxtron metadata:
           "os": "darwin",
           "arch": "arm64",
           "files": ["dist/darwin/arm64/cef_extension.node"],
-          "frameworks": ["dist/darwin/arm64/frameworks"]
+          "frameworks": [
+            "dist/darwin/arm64/frameworks/Chromium Embedded Framework.framework"
+          ],
+          "appBundles": [
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper.app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (Alerts).app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (GPU).app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (Plugin).app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (Renderer).app"
+          ]
         },
         {
           "os": "win32",
@@ -66,9 +78,10 @@ The package includes `lynx.lib.json` with Lynxtron metadata:
 }
 ```
 
-`files` lists payloads that remain together in the installed package, while
-`frameworks` lists macOS Framework directories that the builder places in
-`Contents/Frameworks`.
+`files` lists payloads that remain together in the installed package.
+`frameworks` and `appBundles` list macOS bundles that the builder places in
+`Contents/Frameworks`; nested applications are also included in the host's
+signing flow.
 
 For the end-to-end setup flow, see
 [Using webview in Lynxtron](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started).

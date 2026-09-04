@@ -2,6 +2,8 @@ import { PackageManagerTabs } from '@theme';
 
 # @lynx-js/cef-webview
 
+<!-- cspell:ignore libcef -->
+
 `@lynx-js/cef-webview` 是 Lynxtron 官方维护的原生能力库，用来提供基于 CEF 的
 [`<webview>`](/api/elements/built-in/webview) 元素。它包含平台相关的 Lynxtron
 原生产物，并提供 `./lynxtron` 入口，用来加载当前平台产物，让其中的 Lynx
@@ -34,7 +36,8 @@ cefWebview.initialize();
 
 ## 包元数据
 
-包内包含带 Lynxtron 元数据的 `lynx.lib.json`：
+包内包含带 Lynxtron 元数据的 `lynx.lib.json`。下面的节选省略了完整平台矩阵和
+Windows 运行时文件列表：
 
 ```json
 {
@@ -45,7 +48,16 @@ cefWebview.initialize();
           "os": "darwin",
           "arch": "arm64",
           "files": ["dist/darwin/arm64/cef_extension.node"],
-          "frameworks": ["dist/darwin/arm64/frameworks"]
+          "frameworks": [
+            "dist/darwin/arm64/frameworks/Chromium Embedded Framework.framework"
+          ],
+          "appBundles": [
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper.app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (Alerts).app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (GPU).app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (Plugin).app",
+            "dist/darwin/arm64/frameworks/LynxtronWebview Helper (Renderer).app"
+          ]
         },
         {
           "os": "win32",
@@ -63,8 +75,9 @@ cefWebview.initialize();
 }
 ```
 
-`files` 列出在安装包中保持相邻位置的 payload；`frameworks` 列出由 builder
-放入 `Contents/Frameworks` 的 macOS Framework 目录。
+`files` 列出在安装包中保持相邻位置的 payload；`frameworks` 和 `appBundles`
+列出由 builder 放入 `Contents/Frameworks` 的 macOS bundle，其中嵌套应用也会
+进入宿主签名流程。
 
 完整接入流程见
 [在 Lynxtron 中使用 webview](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started)。

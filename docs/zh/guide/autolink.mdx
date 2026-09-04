@@ -181,7 +181,7 @@ export default {
 };
 ```
 
-`entry` 是 Lynxtron 宿主自身的 bundle 入口。`pluginLynxtron()` 会把已收集的原生库包放到 Rspack 配置的 `output.path` 下；electron-builder 的 `directories.app` 必须指向同一个应用输出目录。打包应用时，`lynxtron-builder` 会把这些 package 保留在 ASAR 外；macOS 会把所选 target 的 Framework payload 复制到 `Contents/Frameworks`，Windows 则让 `.node`、DLL、资源包和 locales 继续相邻地保存在解包目录中。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
+`entry` 是 Lynxtron 宿主自身的 bundle 入口。`pluginLynxtron()` 会把已收集的原生库包放到 Rspack 配置的 `output.path` 下；electron-builder 的 `directories.app` 必须指向同一个应用输出目录。打包应用时，`lynxtron-builder` 会把这些 package 保留在 ASAR 外；macOS 会把所选 target 的 Framework 和嵌套 app bundle payload 复制到 `Contents/Frameworks`，Windows 则让 `.node`、DLL、资源包和 locales 继续相邻地保存在解包目录中。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
 
 Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx runtime 中生效。库作者不需要 Lynxtron 专用注册宏。
 
@@ -218,7 +218,8 @@ npm install @example/lynx-button
           "os": "darwin",
           "arch": "arm64",
           "files": ["dist/darwin/arm64/lynx-button.node"],
-          "frameworks": ["dist/darwin/arm64/frameworks"]
+          "frameworks": ["dist/darwin/arm64/Button.framework"],
+          "appBundles": ["dist/darwin/arm64/Button Helper.app"]
         },
         {
           "os": "win32",
@@ -241,11 +242,11 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 `platforms.macos.sourceDir` 和 `platforms.windows.sourceDir` 指向以源码形式暴露的 `shared/` 目录。它是跨端原生源码结构，后续也可以被更多平台复用。
 
-对于 Lynxtron，使用 `targets` 按宿主组织运行时产物。每个 target 都包含 `os`、`arch`，以及名为 `files` 和 `frameworks` 的字符串数组中的至少一个；其中每条路径都相对于包根目录。Autolink 会选择并校验与目标宿主匹配的 target、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单，并从 `files` 中加载选中的 `.node`。`files` 列出保持包内相对位置的全部 payload，包括原生 addon、动态库、可执行文件、资源包和目录；`frameworks` 仅用于 macOS Framework payload 目录，其中也可以包含 Helper app bundle，并且必须保留内部符号链接。
+对于 Lynxtron，使用 `targets` 按宿主组织运行时产物。每个 target 都包含 `os`、`arch`，以及名为 `files`、`frameworks` 和 `appBundles` 的字符串数组中的至少一个；其中每条路径都相对于包根目录。Autolink 会选择并校验与目标宿主匹配的 target、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单，并从 `files` 中加载选中的 `.node`。`files` 列出保持包内相对位置的全部 payload，包括原生 addon、动态库、可执行文件、资源包和目录。在 macOS 上，`frameworks` 列出 `.framework` bundle，`appBundles` 列出嵌套 `.app` bundle；Lynxtron 会将两者放入 `Contents/Frameworks`，并把嵌套应用纳入宿主签名流程。
 
-`npm pack` 不会保留 package 内容中的符号链接条目。如果 Framework 依赖符号链接，需要提供幂等的安装步骤，使用随包发布的目标文件恢复链接，并验证安装后的 package。Lynxtron 会在收集和打包 Framework 时保留这些已恢复的链接。
+`npm pack` 不会保留 package 内容中的符号链接条目。如果 Framework 或 app bundle 依赖符号链接，需要提供幂等的安装步骤，使用随包发布的目标文件恢复链接，并验证安装后的 package。Lynxtron 会在收集和打包 bundle 时保留这些已恢复的链接。
 
-这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`files`、`frameworks` 和 `arch` 选择器。
+这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`files`、`frameworks`、`appBundles` 和 `arch` 选择器。
 
 安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。Lynxtron 应用只需执行自身标准的构建和打包命令，`pluginLynxtron()` 与 `lynxtron-builder` 会自动处理所选 target。应用不需要导入库的 `./lynxtron` 入口、复制原生文件，也不需要为每个库编写注册或打包配置。
 
