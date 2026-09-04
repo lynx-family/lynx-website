@@ -215,31 +215,29 @@ function UserCard({ id, name, selected }) {
 
 ## 编译器与运行时如何协作
 
-编译器负责生成可复用的模板，运行时负责执行模板中的创建和更新逻辑。在 ReactLynx 的双线程架构中，同一份模板同时用于[首帧直出（IFR）](/guide/interaction/ifr)和后续更新。
+编译器分别为主线程和后台线程生成相应的模板信息。在 ReactLynx 的双线程架构中，应用代码会同时运行在[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)和[后台线程](/guide/spec.html#background-thread-aka-off-main-thread)，两条线程都会执行 React 的渲染流程并建立各自的模板实例树。
 
-同一份模板可以被多个挂载位置复用，但每次挂载都有自己的一组模板实例：主线程实例持有创建出的 Lynx 元件，后台线程实例保存参与协调的状态和动态数据。首次同步会建立两侧实例之间的对应关系，供后续更新使用。
+加载页面时，主线程直接渲染首屏内容，以实现[首帧直出（IFR）](/guide/interaction/ifr)。在 Lynx 规范中，这一过程称为[首屏渲染（First-screen Rendering，FSR）](/guide/spec.html#first-screen-rendering-or-fsr)，是[主线程渲染（Main Thread Rendering）](/guide/spec.html#main-thread-rendering)的一种。与此同时，后台线程会并行执行一次渲染；首次同步会比较两侧的模板实例树并同步差异，为后续更新做好准备。
 
-### 首屏：创建并关联模板实例
+### 首屏：同步两个线程的渲染结果
 
-首屏时，主线程调用模板的 `create()` 和 `update()`，直接创建静态宿主结构并写入初始动态属性，再将动态子节点挂载到预留插槽。后台线程同时为这次渲染建立对应的实例。下面的伪代码只表示两侧的职责和对应关系，不表示实际执行顺序：
+这个首次同步过程在关键语义上类似 SSR hydration：长期运行的协调器重新执行应用逻辑，将自己的逻辑树附着到较早执行环境已经渲染的元件树，而不是重新创建整棵树。用接近 React [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot) 的 API 形状表示，概念上类似：
 
 ```js
-function renderFirstScreen(Template, dynamicData) {
-  const mainInstance = Template.create();
-  Template.update(mainInstance, dynamicData);
-  mountDynamicChildren(Template, mainInstance, dynamicData);
+// 主线程：执行 React，并通过首屏渲染（FSR）完成首帧直出（IFR）
+const initialRender = mainThreadRoot.render(<App />);
 
-  const backgroundInstance = renderOnBackgroundThread(Template, dynamicData);
-
-  connectInstances(backgroundInstance, mainInstance);
-}
+// 后台线程：再次执行 React，并通过 hydration 与主线程的结果同步
+const backgroundRoot = hydrateRootFromMainThread(initialRender, <App />);
 ```
 
-这里的 `Template` 表示任意编译生成的模板，其 `create()` 和 `update()` 具有上一节展示的概念形态。`connectInstances()` 概括了首次同步过程：两侧不会共享同一个实例，而是建立对应关系，让后续来自后台线程的变化可以应用到首屏已经创建的主线程实例上。
+这里的 `initialRender` 抽象了首次同步所需的主线程模板实例信息；Lynx 元件本身仍留在主线程。`hydrateRootFromMainThread()` 抽象了后台渲染、两侧实例关联和首次差异同步，并返回长期负责协调的后台 root。这些名称用于说明机制，并非 ReactLynx 当前公开的 API。
 
-### 更新：只传递动态变化
+### 更新：后台驱动渲染
 
-对应关系建立后，后台线程比较动态数据：动态属性的变化可以交给编译器生成的定向更新函数，动态子节点则仍由 React 协调。
+完成 hydration 后，后续的重新渲染通常采用规范中定义的[后台驱动渲染（Background-driven Rendering）](/guide/spec.html#background-driven-rendering)：后台线程发起并主要执行框架渲染，再将结果传递给主线程以完成像素管线。在 ReactLynx 中，后台线程协调动态数据并发送变化，主线程继续持有并更新 Lynx 元件。
+
+动态属性的变化可以交给编译器生成的定向更新函数，动态子节点则仍由 React 协调：
 
 ```js
 // 后台线程
