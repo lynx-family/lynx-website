@@ -72,6 +72,48 @@ After a successful build, you will get an output directory like this:
 │   └── comp-lib.template.js
 ```
 
+### Without A DSL
+
+A bundle of plain TypeScript needs no DSL plugin. `pluginLynx` is the Lynx build engine, and `LAYERS` picks the thread the bundle runs on:
+
+```ts title="rslib-utils.config.ts"
+import {
+  defineExternalBundleRslibConfig,
+  LAYERS,
+} from '@lynx-js/lynx-bundle-rslib-config';
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+
+export default defineExternalBundleRslibConfig({
+  id: 'utils',
+  source: {
+    entry: {
+      './utils.js': {
+        import: './src/utils.ts',
+        layer: LAYERS.BACKGROUND,
+      },
+    },
+  },
+  plugins: [pluginLynx()],
+});
+```
+
+An entry without a `layer` is emitted for both threads. Pick one when the host app only calls into the bundle from that thread: the bundle then carries a single section, and the host declares the external for that thread only.
+
+```ts title="lynx.config.ts"
+pluginExternalBundle({
+  externals: {
+    './utils.js': {
+      bundlePath: 'utils.lynx.bundle',
+      libraryName: './utils.js',
+      background: { sectionPath: './utils.js' },
+      async: true,
+    },
+  },
+});
+```
+
+The string shorthand (`'./utils.js': 'utils.lynx.bundle'`) declares the external for both threads, so a bundle built for one of them fails to load on the other.
+
 ### Bundle CSS
 
 <VersionBadge v={3.7} />

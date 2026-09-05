@@ -74,6 +74,48 @@ export default defineExternalBundleRslibConfig({
 │   └── comp-lib.template.js
 ```
 
+### 不使用 DSL
+
+打包纯 TypeScript 不需要 DSL 插件。`pluginLynx` 就是 Lynx 构建引擎，`LAYERS` 用来指定 bundle 运行在哪个线程：
+
+```ts title="rslib-utils.config.ts"
+import {
+  defineExternalBundleRslibConfig,
+  LAYERS,
+} from '@lynx-js/lynx-bundle-rslib-config';
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+
+export default defineExternalBundleRslibConfig({
+  id: 'utils',
+  source: {
+    entry: {
+      './utils.js': {
+        import: './src/utils.ts',
+        layer: LAYERS.BACKGROUND,
+      },
+    },
+  },
+  plugins: [pluginLynx()],
+});
+```
+
+不指定 `layer` 的入口会同时产出两个线程的产物。当宿主只从某一个线程调用时指定其中之一：bundle 只会包含一个 section，宿主也只需为该线程声明 external。
+
+```ts title="lynx.config.ts"
+pluginExternalBundle({
+  externals: {
+    './utils.js': {
+      bundlePath: 'utils.lynx.bundle',
+      libraryName: './utils.js',
+      background: { sectionPath: './utils.js' },
+      async: true,
+    },
+  },
+});
+```
+
+字符串简写（`'./utils.js': 'utils.lynx.bundle'`）会为两个线程都声明 external，因此只产出单线程的 bundle 在另一个线程上会加载失败。
+
 ### 打包 CSS
 
 <VersionBadge v={3.7} />
