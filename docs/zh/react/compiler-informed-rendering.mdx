@@ -217,14 +217,14 @@ function UserCard({ id, name, selected }) {
 
 编译器分别为主线程和后台线程生成相应的模板信息。在 ReactLynx 的双线程架构中，应用代码会同时运行在[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)和[后台线程](/guide/spec.html#background-thread-aka-off-main-thread)，两条线程都会执行 React 的渲染流程并建立各自的模板实例树。
 
-加载页面时，主线程直接渲染首屏内容，以实现[首帧直出（IFR）](/guide/interaction/ifr)。在 Lynx 规范中，这一过程称为[首屏渲染（First-screen Rendering，FSR）](/guide/spec.html#first-screen-rendering-or-fsr)，是[主线程渲染（Main Thread Rendering）](/guide/spec.html#main-thread-rendering)的一种。与此同时，后台线程会并行执行一次渲染；首次同步会比较两侧的模板实例树并同步差异，为后续更新做好准备。
+加载页面时，主线程直接渲染首屏内容，以实现[首帧直出（IFR）](/guide/interaction/ifr)。在 Lynx 规范中，这一过程称为[首帧渲染（First-frame Rendering，FFR）](/guide/spec.html#first-frame-rendering-or-ffr)，是[主线程渲染（Main Thread Rendering）](/guide/spec.html#main-thread-rendering)的一种。与此同时，后台线程会并行执行一次渲染；首次同步会比较两侧的模板实例树并同步差异，为后续更新做好准备。
 
 ### 首屏：同步两个线程的渲染结果
 
 这个首次同步过程在关键语义上类似 SSR hydration：长期运行的协调器重新执行应用逻辑，将自己的逻辑树附着到较早执行环境已经渲染的元件树，而不是重新创建整棵树。用接近 React [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot) 的 API 形状表示，概念上类似：
 
 ```js
-// 主线程：执行 React，并通过首屏渲染（FSR）完成首帧直出（IFR）
+// 主线程：执行 React，并通过首帧渲染（FFR）完成首帧直出（IFR）
 const initialRender = mainThreadRoot.render(<App />);
 
 // 后台线程：再次执行 React，并通过 hydration 与主线程的结果同步
