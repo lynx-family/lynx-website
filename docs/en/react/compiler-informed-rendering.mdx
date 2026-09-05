@@ -76,7 +76,7 @@ These names and function shapes only explain the mechanism; they are not actual 
 
 :::details Prior Art and the Current Implementation: Snapshot
 
-This idea of using information known at build time to reduce runtime work is not unique to ReactLynx. [Vue's compiler-informed virtual DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom), [Owl's BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom), and [Million.js](https://github.com/aidenybai/million) all take a similar approach. From a broader computational perspective, it can also be understood as a form of [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation): using host structures known from JSX to specialize the generic rendering process, leaving only the parts that cannot be determined ahead of time for runtime and producing an effect similar to “[partial prerendering](https://nextjs.org/docs/15/app/getting-started/partial-prerendering).”
+This idea of using information known at build time to reduce runtime work is not unique to ReactLynx. [Vue's compiler-informed virtual DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom), [Owl's BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom), and [Million.js](https://old.million.dev/blog/virtual-dom) all take a similar approach. From a broader computational perspective, it can also be understood as a form of [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation): using host structures known from JSX to specialize the generic rendering process, leaving only the parts that cannot be determined ahead of time for runtime and producing an effect similar to “[partial prerendering](https://nextjs.org/docs/15/app/getting-started/partial-prerendering).”
 
 In ReactLynx, this approach is currently implemented through an Intermediate Representation (IR) called a **Snapshot**. We are also exploring other representations with better performance. Snapshot follows the conceptual model above and can be summarized in four core parts:
 
@@ -215,72 +215,50 @@ For structures that genuinely need to be determined at runtime, keeping the code
 
 ## How the Compiler and Runtime Work Together
 
-One characteristic of ReactLynx is that this compiled representation participates not only in update-time reconciliation, but also in Lynx's dual-thread [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) pipeline.
+The compiler emits corresponding template information for the main-thread and background-thread runtimes. In ReactLynx's dual-thread architecture, application code runs simultaneously on the [main thread](/guide/spec.html#main-thread-or-lynx-main-thread) and the [background thread](/guide/spec.html#background-thread-aka-off-main-thread). Both threads execute the React render and build their own template-instance trees.
 
-The same template can be reused by multiple mounted `Greeting` components. Each mounted `Greeting` has a corresponding pair of template instances: the main-thread template instance owns the Lynx elements it creates, while the background template instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
+When a page loads, the main thread renders the first-screen content directly to achieve [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr). The Lynx specification calls this [First-frame Rendering](/guide/spec.html#first-frame-rendering), a special type of [Main Thread Rendering](/guide/spec.html#main-thread-rendering). Meanwhile, the background thread performs a parallel render; the initial synchronization compares the two template-instance trees and synchronizes their differences in preparation for subsequent updates.
 
-### Initial Render: Create a Template Instance
+### Initial Render: Synchronize the Results from Both Threads
 
-The UI elements for the initial render are created directly on the main thread. The runtime first finds the template from the VNode type, then creates a main-thread template instance for this `Greeting`. The template instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
-
-The following pseudocode illustrates this process:
+In one important respect, this initial synchronization resembles SSR hydration: a long-lived reconciler reruns the application and attaches its logical tree to an element tree rendered earlier in another environment, rather than recreating the entire tree. Using an API shape similar to React's [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot), it conceptually looks like this:
 
 ```js
-function renderFirstScreen(vnode) {
-  const template = getTemplate(vnode.type);
-  const instance = createMainThreadTemplateInstance(vnode.type);
+// Main thread: execute React and perform first-frame rendering to achieve IFR
+const initialRender = mainThreadRoot.render(<App />);
 
-  instance.elements = template.create(instance);
-  instance.values = vnode.props.values;
-  template.update[0](instance); // Write values[0] to className
-  insertDynamicChild(instance, 0, vnode.props.$0);
-
-  return instance;
-}
+// Background thread: execute React again and hydrate from the main-thread result
+const backgroundRoot = hydrateRootFromMainThread(initialRender, <App />);
 ```
 
-In this example, `template.create()` creates the `view`, `text`, and fixed text; `template.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `template.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
+Here, `initialRender` abstracts the main-thread template-instance information required for the initial synchronization; the Lynx elements themselves remain on the main thread. `hydrateRootFromMainThread()` abstracts the background render, instance association, and initial difference synchronization, returning the long-lived background root responsible for reconciliation. These names illustrate the mechanism and are not current public ReactLynx APIs.
 
-From another perspective, this can be understood as precomputing part of the render, analogous to [Next.js Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering). The artifacts are different: Next.js produces a static HTML shell and a serialized React Server Component payload, while ReactLynx further lowers the stable host structure into element-creation operations understood directly by the Lynx platform. Dynamic values and subtrees are still supplied when the page starts.
+### Updates: Background-driven Rendering
 
-The initial background-thread reconciliation also creates a background template-instance tree that corresponds to the main-thread template-instance tree. During first-screen synchronization, hydration establishes the mapping between template instances on the two threads, allowing subsequent updates to locate the main-thread template instance created for the first screen by `instanceId`.
+After hydration, subsequent re-rendering typically uses [Background-driven Rendering](/guide/spec.html#background-driven-rendering), as defined by the specification: framework rendering is initiated and primarily executed on the background thread, then transferred to the main thread to complete the pixel pipeline. In ReactLynx, the background thread reconciles dynamic data and sends changes, while the main thread continues to own and update the Lynx elements.
 
-### Updates: Process Only Changes to Dynamic Positions
-
-After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding template instance and applies the changes.
-
-The following pseudocode continues with `Greeting`. `highlighted` corresponds to dynamic position `0`, so changing it produces a property update. `name` is in a dynamic child slot and continues to be reconciled by React:
+Changes to dynamic properties can be handled by targeted updaters generated by the compiler, while dynamic children remain reconciled by React:
 
 ```js
-// Background thread: compare dynamic properties and reconcile dynamic children
-function reconcileGreeting(previous, next, instanceId) {
-  if (!isEqual(previous.values[0], next.values[0])) {
-    emitAttributePatch({
-      instanceId,
-      dynamicPartIndex: 0,
-      value: next.values[0],
-    });
+// Background thread
+function reconcileTemplate(previous, next) {
+  const propertyChanges = diffDynamicProperties(previous, next);
+  const childChanges = reconcileDynamicChildren(previous, next);
+
+  sendToMainThread({ propertyChanges, childChanges });
+}
+
+// Main thread
+function applyTemplateChanges(Template, instance, changes) {
+  if (hasChanges(changes.propertyChanges)) {
+    Template.update(instance, changes.propertyChanges);
   }
 
-  // $0 remains a React child; reconciliation produces tree operations
-  // such as insertions and removals.
-  reconcileChildren(previous.$0, next.$0, {
-    parentInstanceId: instanceId,
-    slotIndex: 0,
-  });
-}
-
-// Main thread: apply a property update using the template instance and dynamic position
-function applyAttributePatch(patch) {
-  const instance = findMainThreadTemplateInstance(patch.instanceId);
-  const index = patch.dynamicPartIndex;
-
-  instance.values[index] = patch.value;
-  instance.template.update[index](instance);
+  applyDynamicChildChanges(Template, instance, changes.childChanges);
 }
 ```
 
-For the property path, `reconcileGreeting()` only describes which dynamic position changed on which template instance. `applyAttributePatch()` then calls the targeted update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The current implementation encodes these operations in a serialized Patch.
+For dynamic properties, the main thread directly calls the compiler-generated `Template.update()` without traversing the static host structure again. For dynamic children, the background thread still performs reconciliation and applies the resulting child changes to the reserved slots.
 
 ## Back to Application Code
 

@@ -76,7 +76,7 @@ export function Greeting({ name, highlighted }) {
 
 :::details 历史经验与当前实现：Snapshot
 
-这种利用编译阶段已知信息缩小运行时工作范围的思路并非 ReactLynx 独创。[Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://github.com/aidenybai/million) 都采用了类似的思路。从更宽泛的计算视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时，达到一种“[部分预渲染](https://nextjs.org/docs/15/app/getting-started/partial-prerendering)”的效果。
+这种利用编译阶段已知信息缩小运行时工作范围的思路并非 ReactLynx 独创。[Vue 的编译器信息增强虚拟 DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom)、[Owl 的 BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom) 和 [Million.js](https://old.million.dev/blog/virtual-dom) 都采用了类似的思路。从更宽泛的计算视角，也可以把它理解为一种[部分求值（partial evaluation）](https://en.wikipedia.org/wiki/Partial_evaluation)：使用 JSX 中已知的宿主结构对通用渲染过程进行特化，只把无法提前确定的部分留到运行时，达到一种“[部分预渲染](https://nextjs.org/docs/15/app/getting-started/partial-prerendering)”的效果。
 
 在 ReactLynx 中，这套思路当前通过一种名为 **Snapshot** 的中间表示（Intermediate Representation，IR）实现。我们也在尝试演进成性能更好的其他表示。Snapshot 与上面的概念模型一致，可以归纳为以下四个核心部分：
 
@@ -215,71 +215,50 @@ function UserCard({ id, name, selected }) {
 
 ## 编译器与运行时如何协作
 
-ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
+编译器分别为主线程和后台线程生成相应的模板信息。在 ReactLynx 的双线程架构中，应用代码会同时运行在[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)和[后台线程](/guide/spec.html#background-thread-aka-off-main-thread)，两条线程都会执行 React 的渲染流程并建立各自的模板实例树。
 
-同一份模板可以被多个已挂载的 `Greeting` 组件复用。每个已挂载的 `Greeting` 都有一组彼此对应的模板实例：主线程模板实例持有创建出的 Lynx 元件，后台模板实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
+加载页面时，主线程直接渲染首屏内容，以实现[首帧直出（IFR）](/guide/interaction/ifr)。在 Lynx 规范中，这一过程称为[首帧渲染（First-frame Rendering）](/guide/spec.html#first-frame-rendering)，是[主线程渲染（Main Thread Rendering）](/guide/spec.html#main-thread-rendering)的一种。与此同时，后台线程会并行执行一次渲染；首次同步会比较两侧的模板实例树并同步差异，为后续更新做好准备。
 
-### 首屏：创建模板实例
+### 首屏：同步两个线程的渲染结果
 
-首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到模板，再为这次 `Greeting` 创建主线程模板实例。静态创建函数返回的 Lynx 元件由这个模板实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
-
-下面是这一过程的概念伪代码：
+这个首次同步过程在关键语义上类似 SSR hydration：长期运行的协调器重新执行应用逻辑，将自己的逻辑树附着到较早执行环境已经渲染的元件树，而不是重新创建整棵树。用接近 React [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot) 的 API 形状表示，概念上类似：
 
 ```js
-function renderFirstScreen(vnode) {
-  const template = getTemplate(vnode.type);
-  const instance = createMainThreadTemplateInstance(vnode.type);
+// 主线程：执行 React，并通过首帧渲染完成首帧直出（IFR）
+const initialRender = mainThreadRoot.render(<App />);
 
-  instance.elements = template.create(instance);
-  instance.values = vnode.props.values;
-  template.update[0](instance); // 将 values[0] 写入 className
-  insertDynamicChild(instance, 0, vnode.props.$0);
-
-  return instance;
-}
+// 后台线程：再次执行 React，并通过 hydration 与主线程的结果同步
+const backgroundRoot = hydrateRootFromMainThread(initialRender, <App />);
 ```
 
-对于当前例子，`template.create()` 创建 `view`、`text` 和固定文本；`template.update[0]()` 将 `values[0]` 写入 `className`；`insertDynamicChild()` 则把 `$0` 对应的 `name` 放进预留插槽。这里仍会创建完整的 Lynx 元件树，差别在于静态层级由 `template.create()` 直接展开，不再通过每个宿主 VNode 逐层协调。
+这里的 `initialRender` 抽象了首次同步所需的主线程模板实例信息；Lynx 元件本身仍留在主线程。`hydrateRootFromMainThread()` 抽象了后台渲染、两侧实例关联和首次差异同步，并返回长期负责协调的后台 root。这些名称用于说明机制，并非 ReactLynx 当前公开的 API。
 
-换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
+### 更新：后台驱动渲染
 
-后台首轮协调也会生成与主线程模板实例树对应的后台模板实例树。首屏同步通过 hydration 建立两侧模板实例的对应关系，使后续更新可以用 `instanceId` 定位首屏时创建的主线程模板实例。
+完成 hydration 后，后续的重新渲染通常采用规范中定义的[后台驱动渲染（Background-driven Rendering）](/guide/spec.html#background-driven-rendering)：后台线程发起并主要执行框架渲染，再将结果传递给主线程以完成像素管线。在 ReactLynx 中，后台线程协调动态数据并发送变化，主线程继续持有并更新 Lynx 元件。
 
-### 更新：只处理动态位置的变化
-
-对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到对应的模板实例并应用变化。
-
-下面的伪代码继续使用 `Greeting`。`highlighted` 对应动态位置 `0`，因此它变化时会生成一条属性更新；`name` 位于动态子节点插槽中，继续由 React 协调：
+动态属性的变化可以交给编译器生成的定向更新函数，动态子节点则仍由 React 协调：
 
 ```js
-// 后台线程：比较动态属性，并继续协调动态子节点
-function reconcileGreeting(previous, next, instanceId) {
-  if (!isEqual(previous.values[0], next.values[0])) {
-    emitAttributePatch({
-      instanceId,
-      dynamicPartIndex: 0,
-      value: next.values[0],
-    });
+// 后台线程
+function reconcileTemplate(previous, next) {
+  const propertyChanges = diffDynamicProperties(previous, next);
+  const childChanges = reconcileDynamicChildren(previous, next);
+
+  sendToMainThread({ propertyChanges, childChanges });
+}
+
+// 主线程
+function applyTemplateChanges(Template, instance, changes) {
+  if (hasChanges(changes.propertyChanges)) {
+    Template.update(instance, changes.propertyChanges);
   }
 
-  // $0 仍作为 React 子节点参与协调，结果会变成插入、移除等树操作。
-  reconcileChildren(previous.$0, next.$0, {
-    parentInstanceId: instanceId,
-    slotIndex: 0,
-  });
-}
-
-// 主线程根据模板实例和动态位置应用属性更新
-function applyAttributePatch(patch) {
-  const instance = findMainThreadTemplateInstance(patch.instanceId);
-  const index = patch.dynamicPartIndex;
-
-  instance.values[index] = patch.value;
-  instance.template.update[index](instance);
+  applyDynamicChildChanges(Template, instance, changes.childChanges);
 }
 ```
 
-对于属性路径，`reconcileGreeting()` 只描述“哪个模板实例的哪个动态位置发生了变化”，`applyAttributePatch()` 再调用编译器生成的定向更新函数。动态子节点不经过这组属性更新函数，而是由 React 协调后产生相应的树操作。当前实现会将这些操作编码进序列化的 Patch。
+对于动态属性，主线程直接调用编译器生成的 `Template.update()`，不需要重新遍历静态宿主结构。对于动态子节点，后台线程仍会进行协调，并将产生的子节点变化应用到预留插槽。
 
 ## 回到应用代码
 
