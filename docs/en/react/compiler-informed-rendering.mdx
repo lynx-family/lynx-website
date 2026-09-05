@@ -217,14 +217,14 @@ For structures that genuinely need to be determined at runtime, keeping the code
 
 The compiler emits corresponding template information for the main-thread and background-thread runtimes. In ReactLynx's dual-thread architecture, application code runs simultaneously on the [main thread](/guide/spec.html#main-thread-or-lynx-main-thread) and the [background thread](/guide/spec.html#background-thread-aka-off-main-thread). Both threads execute the React render and build their own template-instance trees.
 
-When a page loads, the main thread renders the first-screen content directly to achieve [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr). The Lynx specification calls this [First-frame Rendering (FFR)](/guide/spec.html#first-frame-rendering-or-ffr), a special type of [Main Thread Rendering](/guide/spec.html#main-thread-rendering). Meanwhile, the background thread performs a parallel render; the initial synchronization compares the two template-instance trees and synchronizes their differences in preparation for subsequent updates.
+When a page loads, the main thread renders the first-screen content directly to achieve [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr). The Lynx specification calls this [First-frame Rendering](/guide/spec.html#first-frame-rendering), a special type of [Main Thread Rendering](/guide/spec.html#main-thread-rendering). Meanwhile, the background thread performs a parallel render; the initial synchronization compares the two template-instance trees and synchronizes their differences in preparation for subsequent updates.
 
 ### Initial Render: Synchronize the Results from Both Threads
 
 In one important respect, this initial synchronization resembles SSR hydration: a long-lived reconciler reruns the application and attaches its logical tree to an element tree rendered earlier in another environment, rather than recreating the entire tree. Using an API shape similar to React's [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot), it conceptually looks like this:
 
 ```js
-// Main thread: execute React and perform FFR to achieve IFR
+// Main thread: execute React and perform first-frame rendering to achieve IFR
 const initialRender = mainThreadRoot.render(<App />);
 
 // Background thread: execute React again and hydrate from the main-thread result
