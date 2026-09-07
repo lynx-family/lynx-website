@@ -1,0 +1,91 @@
+---
+title: 'Build desktop applications with Lynx.'
+date: 2026-06-17
+sidebar: false
+authors: ['lynx']
+badge_text: 'Introducing Lynxtron'
+featured: true
+description: 'Lynxtron is an Electron-like app framework with a light-weight Lynx renderer, multiplatform UI, and native extension support through UI/texture extension C-APIs and Node-API.'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader authors={['lynx']} />
+
+Lynx is moving onto desktop.
+
+**Lynxtron** is an Electron-like app framework powered by Lynx. In a Lynxtron application, the host process keeps the Node.js capabilities desktop apps need, while `LynxWindow` hosts Lynx UI through a light-weight renderer instead of a browser page.
+
+That gives developers a way to build desktop applications with the Lynx UI model, while keeping the runtime lightweight, making native extension a first-class part of the app, and organizing UI code across desktop, web, and mobile-native targets.
+
+## What Lynxtron Is For
+
+Desktop application development often forces a practical choice: move fast with web technology, or spend more native engineering effort to get smaller binaries, better runtime behavior, and deeper system integration. Lynxtron is a third path: use Lynx for UI, use a desktop host process for system capabilities, and use native extensions where native code is the right tool.
+
+Lynxtron centers on three features: Light-weight and Fast, Multiplatform, and Natively Extensible. Here is how those ideas map to desktop application development.
+
+## Explore with Lynxtron Go
+
+[Lynxtron Go](/lynxtron/go) is the official playground for Lynxtron, and is itself a desktop application built with the Lynxtron framework. It provides templates, a built-in example gallery, an editor, and a console for running and inspecting small Lynxtron applications without first setting up a full project. The runnable examples below can also be opened directly in Lynxtron Go.
+
+:::info Tested versions and platforms
+
+The examples in this article come from the Lynxtron Go 0.1.6 release and use Lynxtron runtime 0.0.15. Their desktop targets support macOS on Apple silicon and Windows on x64; the Notes example also includes a Web target. Lynxtron projects require Node.js 22 or later.
+
+:::
+
+## Light-weight and Fast
+
+Lynxtron is Electron-like in the application model, but it does not ship a browser as the UI runtime. [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx) hosts UI through the light-weight Lynx renderer, which keeps the desktop runtime smaller and gives startup, window creation, and memory usage a more direct path.
+
+<Go
+  example="lynxtron-benchmark"
+  defaultFile="src/main/desktop/main.ts"
+  defaultEntryFile="dist/desktop/main.lynx.bundle"
+  defaultTab="preview"
+  highlight="{17-25,39-52,66-70}"
+  nativeFramework="lynxtron"
+/>
+
+> The benchmark reports Lynxtron's baseline package size, startup time, physical memory, JS heap, platform information, and the memory delta after opening a second `LynxWindow`, covering startup and memory use with one or two windows.
+
+## Natively Extensible
+
+Lynxtron extends the renderer through [LynxExtensionModule](https://lynxjs.org/next/api/lynx-native-api/lynx-extension-module.html), the Desktop C++ extension API backed by Lynx's public C API. Its reference covers the extension lifecycle, `LynxNativeView`, and texture helpers used by this example. Native modules use the C++ extension-module wrapper and expose their JavaScript interface through [Node-API](/lynxtron/Native-Libraries/NodeJS-Native-Modules), while native UI and texture surfaces use the native-view wrappers. See the Lynx guides for [using native modules](https://lynxjs.org/next/guide/use-native-modules.html?platform=node-api) and [custom native components](https://lynxjs.org/next/guide/custom-native-component.html?platform=desktops); see [`@lynx-js/lynx-library-headers`](/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx) for consuming the C and C++ headers from a Lynxtron native library. In desktop development, it is common for part of an application to need native-rendered graphics or native UI: a camera preview, video surface, map view, drawing canvas, platform control, or any surface that needs hardware access, deeper GPU integration, or system-provided rendering. Lynxtron can combine those native surfaces or native UI with the Lynx runtime, so native-rendered parts stay native while interaction and UI logic can still be built and iterated with Lynx UI.
+
+<Go
+  example="lynxtron-native-texture"
+  defaultFile="native-texture-extension/module/native_texture_canvas_module.cc"
+  defaultEntryFile="dist/desktop/main.lynx.bundle"
+  defaultTab="preview"
+  highlight="{67-70,93-107}"
+  nativeFramework="lynxtron"
+/>
+
+> Lynx UI controls a native texture surface through a registered native module, keeping native rendering and front-end-style interaction in one component tree.
+
+## Multiplatform
+
+Lynxtron does not lock Lynx to desktop. With Lynx, UI code can run across platforms, including the Web, and can be ported to new hosts with minimal effort.
+
+<Go
+  example="lynxtron-cross-platform-notes"
+  defaultFile="src/app/api.ts"
+  defaultEntryFile="dist/desktop/main.lynx.bundle"
+  defaultTab="web"
+  webPreviewMode="responsive"
+  highlight="{71-87,146-149,165-178}"
+  nativeFramework="lynxtron"
+/>
+
+> The same Lynx UI consumes one notes API. At build time, the desktop and Web targets wire that API to a Node preload bridge and a browser-side bridge, respectively.
+
+This is the Lynxtron cross-platform engineering model: keep the Lynx UI layer shareable, isolate host-specific logic behind platform adapters, and port the renderer model to new hosts when needed.
+
+## Engineering Boundaries
+
+What matters is the inspectable source boundary: the host process owns desktop capabilities, Lynx UI owns interface and interaction, and native extensions own the platform-specific pieces. Lynxtron's design is not about pushing every capability into one layer. It is about letting each layer own the work it is best suited for.
+
+## Get Started
+
+Follow [Lynxtron Getting Started](/lynxtron/introduction) to create and run your first project.

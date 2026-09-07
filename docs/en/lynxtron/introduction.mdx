@@ -5,6 +5,12 @@ import helloLynxtronGif from '@assets/lynxtron/Hello-Lynxtron.gif?url';
 
 Welcome to the Lynxtron documentation! We will create a Lynxtron project and start developing.
 
+:::tip Explore first with Lynxtron Go
+
+Want to try Lynxtron before creating a full project? [Download Lynxtron Go](/lynxtron/go) to edit and run templates and showcases immediately.
+
+:::
+
 ## System Requirements
 
 Before you begin, ensure your development environment meets the following requirements:
@@ -12,7 +18,7 @@ Before you begin, ensure your development environment meets the following requir
 - [Node.js 22](https://nodejs.org/en): or later. You can check your version by running `node -v`.
 - **TypeScript**: The project might be written in TypeScript.
 - **Chrome Browser**: Used for debugging the Lynxtron main process.
-- **LynxDevTool**: used for debugging Lynx. You can download it from [here](/guide/devtool).
+- **Lynx DevTool**: used for debugging Lynx. You can download it from [here](/guide/devtool).
 
 <Steps>
 
@@ -37,7 +43,7 @@ cd <project-name>
     <PackageManagerTabs command="install" />
 
 3.  Start the application:
-    <PackageManagerTabs command="run start" />
+    <PackageManagerTabs command="run dev" />
 
 After running, you will see the `Hello Lynxtron` application launch successfully, as shown below:
 
@@ -45,32 +51,62 @@ After running, you will see the `Hello Lynxtron` application launch successfully
   <img src={helloLynxtronGif} width="100%" />
 </div>
 
-### Debugging Your Application
+### Debug Your Application
 
-#### 1. Debugging the Main Process
+The development command uses a DevTool-enabled Lynxtron runtime by default. Keep it running while you debug the main process or Lynx UI.
 
-The main process runs in Node.js. You can debug it using Google Chrome's Developer Tools.
+#### Debug the Main Process
 
-1.  Run `npm run dev`.
-2.  Open Google Chrome and navigate to `chrome://inspect`.
-3.  Click the **Configure...** button and make sure `localhost:9222` is in the target discovery list.
-4.  You should see your application's `main.js` under **Remote Target**. Click **inspect** to open the DevTools.
+The development command starts the Node.js inspector on `localhost:9222`.
 
-Now you can set breakpoints, inspect variables, and see `console.log` output from `main.js`.
+1. Open `chrome://inspect` in Chrome.
+2. Select **Configure...** and make sure `localhost:9222` is in the target discovery list.
+3. Find the Lynxtron process under **Remote Target**, then select **inspect**.
 
-#### 2. Debugging Lynx
+![Inspect the Lynxtron main process from Chrome](/assets/lynxtron/debug/main-process.png)
 
-Lynx is debugged using **LynxDevTool**.
+#### Debug the Lynx UI
 
-1.  Make sure `npm run dev` is running.
-2.  Visit [Lynx DevTool](/guide/devtool) to download and open the Lynx DevTool desktop application.
-3.  It should automatically connect to the development server. You can now inspect the UI element tree, view console output, and debug your React components.
+Download and open [Lynx DevTool](/guide/devtool), select the running Lynxtron application, then inspect its elements, console output, and source code.
+
+![Inspect a running Lynxtron application with Lynx DevTool](/assets/lynxtron/debug/lynx-ui.png)
+
+#### Use DevTool from the CLI or a Coding Agent
+
+The [`agent-lynx`](https://www.npmjs.com/package/agent-lynx) CLI exposes the same connection to scripts and coding agents. With the development command still running, you can discover the Lynxtron client, inspect its UI tree, read console output, or capture an annotated screenshot:
+
+```bash
+npx --yes agent-lynx list-clients
+npx --yes agent-lynx snapshot
+npx --yes agent-lynx get-console
+npx --yes agent-lynx screenshot --annotate -o page.jpeg
+```
+
+`agent-lynx` includes the official [`lynx-devtool` skill](/ai/skills/lynx-devtool). A coding agent can discover and load its complete instructions directly from the CLI:
+
+```bash
+npx --yes agent-lynx skills list
+npx --yes agent-lynx skills get lynx-devtool
+```
+
+The skill teaches the agent how to select clients and sessions and use DevTool commands for inspection, interaction, logs, sources, and screenshots.
 
 ### Package Your Application
 
 You can use the following command to package your application:
 
 <PackageManagerTabs command="run pack" />
+
+`pack` uses the release runtime by default. To create a DevTool-enabled package for local debugging, add this top-level option:
+
+```yaml title="electron-builder.yml"
+lynxtron:
+  runtimeVariant: devtool
+```
+
+Remove this option before distributing the application.
+
+Open the packaged application and connect with [Lynx DevTool](/guide/devtool) in the same way as during development.
 
 If you need to configure some custom parameters, you can modify the `electron-builder.yml` configuration file.
 

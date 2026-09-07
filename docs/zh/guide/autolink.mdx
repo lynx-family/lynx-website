@@ -165,7 +165,7 @@ enableHarmonyLynxAutolink(hvigorApi, {
 
 Lynxtron 为桌面端原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的桌面宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
 
-在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，把匹配到的原生库包收集到宿主输出目录，并注入前置代码来加载每个已收集包的 `./lynxtron` 入口。对于声明了 `platforms.lynxtron.path` 的包，业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的包。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
+在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，选择匹配的 `platforms.lynxtron.targets` 记录，把对应原生库 package 收集到宿主输出目录，并注入前置代码来加载所收集 package 的 `./lynxtron` 入口。业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的 package，但原生注册不需要这种显式导入。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -181,7 +181,7 @@ export default {
 };
 ```
 
-`entry` 是 Lynxtron 宿主自身的 bundle 入口，`pluginLynxtron()` 会以它为基准放置已收集的原生库包。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
+`entry` 是 Lynxtron 宿主自身的 bundle 入口。`pluginLynxtron()` 会把已收集的原生库包放到 Rspack 配置的 `output.path` 下；electron-builder 的 `directories.app` 必须指向同一个应用输出目录。打包应用时，`lynxtron-builder` 会把这些 package 保留在 ASAR 外；macOS 会把所选 target 的 Framework 和嵌套 app bundle payload 复制到 `Contents/Frameworks`，Windows 则让 `.node`、DLL、资源包和 locales 继续相邻地保存在解包目录中。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
 
 Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx runtime 中生效。库作者不需要 Lynxtron 专用注册宏。
 
@@ -213,7 +213,20 @@ npm install @example/lynx-button
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "path": "dist"
+      "targets": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "files": ["dist/darwin/arm64/lynx-button.node"],
+          "frameworks": ["dist/darwin/arm64/Button.framework"],
+          "appBundles": ["dist/darwin/arm64/Button Helper.app"]
+        },
+        {
+          "os": "win32",
+          "arch": "x64",
+          "files": ["dist/win32/x64/lynx-button.node"]
+        }
+      ]
     },
     "macos": {
       "sourceDir": "shared"
@@ -229,9 +242,13 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 `platforms.macos.sourceDir` 和 `platforms.windows.sourceDir` 指向以源码形式暴露的 `shared/` 目录。它是跨端原生源码结构，后续也可以被更多平台复用。
 
-对于 Lynxtron，`platforms.lynxtron.path` 声明原生产物根目录，通常是 `dist`。`pluginLynxtron()` 会收集匹配到的包文件并校验产物；包的 `./lynxtron` export 负责加载当前宿主的 `.node`，例如 `dist/macos/arm64/lynx-button.node` 或 `dist/windows/x64/lynx-button.node`。
+对于 Lynxtron，使用 `targets` 按宿主组织运行时产物。每个 target 都包含 `os`、`arch`，以及名为 `files`、`frameworks` 和 `appBundles` 的字符串数组中的至少一个；其中每条路径都相对于包根目录。Autolink 会选择并校验与目标宿主匹配的 target、暂存对应 package，然后加载 package 的 `./lynxtron` export。该入口读取同一份清单，并从 `files` 中加载选中的 `.node`。`files` 列出保持包内相对位置的全部 payload，包括原生 addon、动态库、可执行文件、资源包和目录。在 macOS 上，`frameworks` 列出 `.framework` bundle，`appBundles` 列出嵌套 `.app` bundle；Lynxtron 会将两者放入 `Contents/Frameworks`，并把嵌套应用纳入宿主签名流程。
 
-安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。应用中不需要为每个库再写手动注册代码。
+`npm pack` 不会保留 package 内容中的符号链接条目。如果 Framework 或 app bundle 依赖符号链接，需要提供幂等的安装步骤，使用随包发布的目标文件恢复链接，并验证安装后的 package。Lynxtron 会在收集和打包 bundle 时保留这些已恢复的链接。
+
+这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`files`、`frameworks`、`appBundles` 和 `arch` 选择器。
+
+安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。Lynxtron 应用只需执行自身标准的构建和打包命令，`pluginLynxtron()` 与 `lynxtron-builder` 会自动处理所选 target。应用不需要导入库的 `./lynxtron` 入口、复制原生文件，也不需要为每个库编写注册或打包配置。
 
 ## 开发库
 
@@ -291,17 +308,17 @@ lynx-button/
 │   ├── index.cjs
 │   └── library_entry.cc
 ├── dist/
-│   ├── macos/
+│   ├── darwin/
 │   │   └── arm64/
 │   │       └── lynx-button.node
-│   └── windows/
+│   └── win32/
 │       └── x64/
 │           └── lynx-button.node
 └── example/
 ```
 
 - `package.json` 让库可以通过 npm 安装，并通常提供 `codegen` 脚本。
-- `lynx.lib.json` 是 Autolink 清单文件，用来告诉宿主应用各平台的原生 package 或产物根目录在哪里。
+- `lynx.lib.json` 是 Autolink 清单文件，用来声明按平台选择的文件或 Framework 源产物。
 - `types/index.d.ts` 汇总导出原生模块类型声明；选中对应能力时，平台 Native Module 声明位于 `types/platform-native-module.d.ts`，N-API Native Module 声明位于 `types/napi-native-module.d.ts`。
 - `src/index.ts` 导出应用代码需要 import 的 JavaScript API。
 - `android/`、`ios/` 和 `harmony/` 放置原生实现以及生成的原生 spec。HarmonyOS 目录是一个完整的源码 HAR，包含模块级的 `hvigorfile.ts`。
@@ -710,7 +727,17 @@ Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本
 
 ### 发布库
 
-像发布普通 npm 包一样发布库：选一个包名，通常是带 scope 的 `@example/lynx-button`，在 `package.json` 中设置版本号，然后执行 `npm publish`。应用团队把发布版本写入自己的 `package.json`，下次安装依赖时 Autolink 会自动识别。建议在库的 `peerDependencies` 中固定兼容的 Lynx SDK 版本范围，这样当库和宿主 SDK 出现版本错配时，应用团队能够第一时间收到清晰提示。
+像发布普通 npm 包一样发布库：选一个包名（通常是带 scope 的 `@example/lynx-button`），并在 `package.json` 中设置版本号。如果包声明了 Lynxtron targets，需要先生成源码，并在对应宿主上构建每个声明的操作系统和架构，再进行打包：
+
+```bash
+npm run codegen
+npm run build:lynxtron
+npm pack
+```
+
+`npm pack` 和 `npm publish` 不会编译原生产物。运行 `npm publish` 前，需要把所有 target 的输出收集到 `dist/`，确认 `package.json#files` 包含 `dist`、`lynxtron` 和 `lynx.lib.json`，并确认 tgz 中包含 `targets` 列出的每条路径。
+
+应用团队只需把已发布的包加入依赖，然后执行应用自身标准的构建和打包命令。Lynxtron Autolink 会自动加载匹配的 target 并打包其运行时 payload，不需要任何逐库的应用配置。建议在库的 `peerDependencies` 中固定兼容的 Lynx SDK 版本范围，这样当库和宿主 SDK 出现版本错配时，应用团队能够第一时间收到清晰提示。
 
 ## Autolink 工作原理
 

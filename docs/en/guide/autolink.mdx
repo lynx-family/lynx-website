@@ -165,7 +165,7 @@ The generated AppStartup task runs on the main thread before app code creates a 
 
 Lynxtron enables Autolink for Desktop native libraries. Not every Lynx-embedded Desktop host supports Autolink out of the box; this is a Lynxtron-provided integration.
 
-In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, copies matching native library packages into the host output, and injects code that imports each copied package's `./lynxtron` entry. For packages declared with `platforms.lynxtron.path`, direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime. The `./lynxtron` entry loads the current host's `.node` artifact.
+In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, selects the matching `platforms.lynxtron.targets` record, copies each matching native library package into the host output, and injects code that imports the copied package's `./lynxtron` entry. Direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime, but they are not needed for native registration. The `./lynxtron` entry loads the current host's `.node` artifact.
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -181,7 +181,7 @@ export default {
 };
 ```
 
-The `entry` field is the Lynxtron host's own bundle entry, and `pluginLynxtron()` stages native library packages relative to it. See the `@lynx-js/lynxtron-dev-plugins` package for the full option shape.
+The `entry` field is the Lynxtron host's own bundle entry. `pluginLynxtron()` stages native library packages under the configured Rspack `output.path`, and electron-builder's `directories.app` must point to that same application output directory. When packaging the application, `lynxtron-builder` keeps these packages outside ASAR. It copies macOS Framework and nested app bundle payloads from the selected target into `Contents/Frameworks`; on Windows, the unpacked package keeps the `.node` addon, DLLs, resource packs, and locales together. See the `@lynx-js/lynxtron-dev-plugins` package for the full option shape.
 
 After Lynxtron loads a native library, its Lynx static registrations become available in the Lynx runtime. The library author does not need a Lynxtron-specific registration macro.
 
@@ -213,7 +213,20 @@ Each library package exposes a `lynx.lib.json` manifest at the package root. Aut
       "packageDir": "harmony"
     },
     "lynxtron": {
-      "path": "dist"
+      "targets": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "files": ["dist/darwin/arm64/lynx-button.node"],
+          "frameworks": ["dist/darwin/arm64/Button.framework"],
+          "appBundles": ["dist/darwin/arm64/Button Helper.app"]
+        },
+        {
+          "os": "win32",
+          "arch": "x64",
+          "files": ["dist/win32/x64/lynx-button.node"]
+        }
+      ]
     },
     "macos": {
       "sourceDir": "shared"
@@ -229,9 +242,13 @@ For Android, `platforms.android.packageName` is required, and `sourceDir` defaul
 
 `platforms.macos.sourceDir` and `platforms.windows.sourceDir` point to the source-exposed `shared/` directory, which is the cross-platform native source layout and may be reused by more platforms later.
 
-For Lynxtron, `platforms.lynxtron.path` declares the native artifact root, usually `dist`. `pluginLynxtron()` stages matching package files and verifies the artifacts; the package's `./lynxtron` export loads the current host's `.node`, such as `dist/macos/arm64/lynx-button.node` or `dist/windows/x64/lynx-button.node`.
+For Lynxtron, use `targets` to group runtime payloads by host. Each target declares `os`, `arch`, and at least one string array named `files`, `frameworks`, or `appBundles`; every path is relative to the package root. Autolink selects the matching target, verifies its paths, stages the package, and loads its `./lynxtron` export. That entry reads the same manifest and loads the selected `.node` from `files`. `files` lists every payload that remains at its package-relative location, including native addons, dynamic libraries, executables, resource packs, and directories. On macOS, `frameworks` lists `.framework` bundles and `appBundles` lists nested `.app` bundles. Lynxtron places both categories in `Contents/Frameworks` and includes the nested applications in the host's signing flow.
 
-After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. You do not need to add per-library manual registration code in the app.
+`npm pack` does not preserve symbolic-link entries inside package contents. If a Framework or app bundle relies on links, provide an idempotent installation step that reconstructs them from shipped targets, then verify the installed package. Lynxtron preserves those restored links when it stages and packages the bundle.
+
+These paths identify source artifacts inside the npm package. Lynxtron's development plugin and builder automatically choose their final locations in development output and packaged applications. App teams do not copy these artifacts or add per-library packaging rules. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `targets`, `files`, `frameworks`, `appBundles`, and the `arch` selector exactly as shown.
+
+After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. For Lynxtron, use the app's standard build and package commands; `pluginLynxtron()` and `lynxtron-builder` handle the selected target automatically. You do not need to import a library's `./lynxtron` entry, copy its native files, or add per-library registration or packaging code in the app.
 
 ## Authoring a Library
 
@@ -291,17 +308,17 @@ lynx-button/
 │   ├── index.cjs
 │   └── library_entry.cc
 ├── dist/
-│   ├── macos/
+│   ├── darwin/
 │   │   └── arm64/
 │   │       └── lynx-button.node
-│   └── windows/
+│   └── win32/
 │       └── x64/
 │           └── lynx-button.node
 └── example/
 ```
 
 - `package.json` makes the package installable from npm and usually provides the `codegen` script.
-- `lynx.lib.json` is the Autolink contract. It tells the host app where each native package or artifact root lives.
+- `lynx.lib.json` is the Autolink contract. It declares each platform-selected file or Framework source artifact.
 - `types/index.d.ts` re-exports typed Native Module declarations. Platform Native Module declarations live in `types/platform-native-module.d.ts`, and N-API Native Module declarations live in `types/napi-native-module.d.ts` when those features are selected.
 - `src/index.ts` exports the JavaScript API that app code imports.
 - `android/`, `ios/`, and `harmony/` contain native implementations and generated native specs. The HarmonyOS directory is a complete source HAR, including its module-level `hvigorfile.ts`.
@@ -710,7 +727,17 @@ Lynxtron native libraries use the shared Lynx C/C++ extension APIs and static re
 
 ### Distribute a Library
 
-Publish the library like any other npm package: pick a name, often scoped as `@example/lynx-button`, set a version in `package.json`, and run `npm publish`. App teams add the published version to their `package.json` and Autolink picks the library up the next time they install dependencies. Pin a compatible Lynx SDK version range in the library's `peerDependencies` so app teams get a clear signal when the library and the host SDK drift apart.
+Publish the library like any other npm package: pick a name, often scoped as `@example/lynx-button`, and set a version in `package.json`. If the package declares Lynxtron targets, generate its sources and build every declared OS/architecture on the matching host before packing it:
+
+```bash
+npm run codegen
+npm run build:lynxtron
+npm pack
+```
+
+`npm pack` and `npm publish` do not compile native artifacts. Collect every target's output under `dist/`, make sure `package.json#files` includes `dist`, `lynxtron`, and `lynx.lib.json`, and verify that the resulting tgz contains every path listed in `targets` before running `npm publish`.
+
+App teams only add the published package to their dependencies and run the application's standard build/package commands. Lynxtron Autolink loads the matching target and packages its runtime payload without per-library application configuration. Pin a compatible Lynx SDK version range in the library's `peerDependencies` so app teams get a clear signal when the library and the host SDK drift apart.
 
 ## How Autolink Works
 

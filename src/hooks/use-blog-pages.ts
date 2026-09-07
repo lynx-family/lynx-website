@@ -11,6 +11,8 @@ export type BlogItem = {
    * Defined in the frontmatter of the blog post.
    */
   badgeText?: string;
+  /** Whether this post is promoted in the blog entry banner. */
+  featured?: boolean;
   /**
    * The filename of the blog post (without extension).
    * E.g. 'lynx-3-5' for 'lynx-3-5.mdx'
@@ -44,7 +46,7 @@ export const useBlogPages = (): BlogItem[] => {
 
   return blogPages.map(
     ({
-      frontmatter: { description, date, authors, badge_text },
+      frontmatter: { description, date, authors, badge_text, featured },
       routePath,
       title,
     }) => {
@@ -58,6 +60,7 @@ export const useBlogPages = (): BlogItem[] => {
         title: title,
         authors: authors as string[] | undefined,
         badgeText: badge_text as string | undefined,
+        featured: featured === true,
         filename,
       };
     },

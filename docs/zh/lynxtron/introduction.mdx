@@ -5,6 +5,12 @@ import helloLynxtronGif from '@assets/lynxtron/Hello-Lynxtron.gif?url';
 
 欢迎来到 Lynxtron 文档！我们将创建一个 Lynxtron 项目并开始开发。
 
+:::tip 先用 Lynxtron Go 体验
+
+想在创建完整工程之前体验 Lynxtron？[下载 Lynxtron Go](/lynxtron/go)，即可直接编辑和运行模板及示例。
+
+:::
+
 ## 系统要求
 
 在开始之前，请确保您的开发环境满足以下要求：
@@ -12,7 +18,7 @@ import helloLynxtronGif from '@assets/lynxtron/Hello-Lynxtron.gif?url';
 - [Node.js 22](https://nodejs.org/zh-cn) 或更新的版本。您可以通过运行 `node -v` 来检查您的版本。
 - **TypeScript**: 项目可能使用 TypeScript 编写。
 - **Chrome 浏览器**: 用于调试 Lynxtron 主进程。
-- **LynxDevTool**: 用于调试 Lynx。您可以从[这里](/guide/devtool)下载。
+- **Lynx DevTool**: 用于调试 Lynx。您可以从[这里](/guide/devtool)下载。
 
 ## 安装
 
@@ -39,7 +45,7 @@ cd <project-name>
    <PackageManagerTabs command="install" />
 
 3. 启动应用
-   <PackageManagerTabs command="run start" />
+   <PackageManagerTabs command="run dev" />
 
 运行之后，您将看到 `Hello Lynxtron` 应用启动成功，如下图：
 
@@ -49,30 +55,60 @@ cd <project-name>
 
 ### 调试应用
 
-#### 1. 调试主进程
+开发命令默认使用带 DevTool 的 Lynxtron runtime。保持命令运行，即可调试主进程或 Lynx UI。
 
-主进程在 Node.js 中运行。您可以使用 Google Chrome 的开发者工具对其进行调试。
+#### 调试主进程
 
-1.  运行 `npm run dev`。
-2.  打开 Google Chrome 并导航到 `chrome://inspect`。
-3.  点击 **Configure...** 按钮，并确保 `localhost:9222` 在目标发现列表中。
-4.  您应该会在 **Remote Target** 下看到您的应用程序的 `main.js`，点击 **inspect** 打开开发者工具。
+开发命令会在 `localhost:9222` 启动 Node.js inspector。
 
-现在您可以设置断点、检查变量以及查看来自 `main.js` 的 `console.log` 输出。
+1. 在 Chrome 中打开 `chrome://inspect`。
+2. 点击 **Configure...**，确认目标发现列表中包含 `localhost:9222`。
+3. 在 **Remote Target** 下找到 Lynxtron 进程，然后点击 **inspect**。
 
-#### 2. 调试 Lynx
+![通过 Chrome 检查 Lynxtron 主进程](/assets/lynxtron/debug/main-process.png)
 
-Lynx 使用 **LynxDevTool** 进行调试。
+#### 调试 Lynx UI
 
-1.  确保 `npm run dev` 正在运行。
-2.  访问 [Lynx DevTool](/guide/devtool) 下载并打开 Lynx DevTool 桌面应用。
-3.  它应该会自动连接到开发服务器。您现在可以检查 UI 元素树、查看控制台输出以及调试您的 React 组件。
+下载并打开 [Lynx DevTool](/guide/devtool)，选择正在运行的 Lynxtron 应用，即可检查元素、控制台输出和源代码。
+
+![使用 Lynx DevTool 检查运行中的 Lynxtron 应用](/assets/lynxtron/debug/lynx-ui.png)
+
+#### 通过 CLI 或 Coding Agent 使用 DevTool
+
+[`agent-lynx`](https://www.npmjs.com/package/agent-lynx) CLI 可以让脚本和 coding agent 使用同一条调试连接。保持开发命令运行，即可发现 Lynxtron 客户端、检查 UI 树、读取 Console 输出或生成带元素标记的截图：
+
+```bash
+npx --yes agent-lynx list-clients
+npx --yes agent-lynx snapshot
+npx --yes agent-lynx get-console
+npx --yes agent-lynx screenshot --annotate -o page.jpeg
+```
+
+`agent-lynx` 已经内置官方 [`lynx-devtool` skill](/ai/skills/lynx-devtool)。Coding agent 可以直接通过 CLI 发现并加载完整说明：
+
+```bash
+npx --yes agent-lynx skills list
+npx --yes agent-lynx skills get lynx-devtool
+```
+
+该 skill 会指导 agent 选择 client 和 session，并通过 DevTool 命令检查界面、执行交互、读取日志和源码，以及采集截图。
 
 ### 打包您的应用程序
 
 你可以使用以下命令来打包你的应用程序：
 
 <PackageManagerTabs command="run pack" />
+
+`pack` 默认使用 release runtime。如需生成仅用于本地调试、带 DevTool 的安装包，请添加以下顶层配置：
+
+```yaml title="electron-builder.yml"
+lynxtron:
+  runtimeVariant: devtool
+```
+
+对外分发前请移除此配置。
+
+打开打包后的应用，即可按照开发阶段相同的方式连接 [Lynx DevTool](/guide/devtool)。
 
 如果需要配置一些自定义参数，可以修改 `electron-builder.yml` 配置文件。
 

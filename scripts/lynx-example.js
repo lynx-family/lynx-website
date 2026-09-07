@@ -73,6 +73,13 @@ const exampleFixups = {
   ],
 };
 
+// Complete Web hosts are executable documents rather than raw Lynx bundles.
+// Keep this allowlist local so only reviewed, pinned examples can opt into the
+// iframe path; package metadata alone must not expand the website trust boundary.
+const exampleWebHostFiles = {
+  'lynxtron-cross-platform-notes': 'dist/web/index.html',
+};
+
 /**
  * Get all files in the specified directory
  * @param {string} dirPath - The directory path
@@ -192,9 +199,10 @@ function applyExampleFixups(example, exampleDir) {
 /**
  * Get all .lynx.bundle|.web.bundle files
  * @param {Array} allFiles - An array of all file paths
+ * @param {string | undefined} webHostFile - Optional full Web app entry
  * @returns {Array} - An array of template files
  */
-function getTemplateFiles(allFiles) {
+function getTemplateFiles(allFiles, webHostFile) {
   const entries = [];
   allFiles.forEach((file) => {
     if (file.endsWith(lynxEntryFileName)) {
@@ -213,6 +221,9 @@ function getTemplateFiles(allFiles) {
       const webFile = file.replace(lynxEntryFileName, webEntryFileName);
       if (allFiles.includes(webFile)) {
         entry.webFile = webFile;
+      }
+      if (webHostFile && allFiles.includes(webHostFile)) {
+        entry.webHostFile = webHostFile;
       }
       entries.push(entry);
     }
@@ -305,17 +316,21 @@ function parseExampleData() {
     const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
 
     const previewImage = files.find((file) => previewImageReg.test(file));
-    const templateFiles = getTemplateFiles(filesFilters);
+    const webHostFile = exampleWebHostFiles[example];
+    const templateFiles = getTemplateFiles(filesFilters, webHostFile);
 
     const metadata = {
       name: packageJSON.repository?.directory || example,
+      version: packageJSON.version,
       files: sortedFiles,
       previewImage: previewImage,
       templateFiles: templateFiles,
-      exampleGitBaseUrl,
+      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || exampleGitBaseUrl,
     };
-    if (nativeFramework) {
-      metadata.nativeFramework = nativeFramework;
+    const exampleNativeFramework =
+      packageJSON.nativeFramework || nativeFramework;
+    if (exampleNativeFramework) {
+      metadata.nativeFramework = exampleNativeFramework;
     }
 
     // write example-metadata.json
