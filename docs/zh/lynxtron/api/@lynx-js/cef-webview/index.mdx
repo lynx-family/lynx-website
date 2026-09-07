@@ -9,6 +9,12 @@ import { PackageManagerTabs } from '@theme';
 原生产物，并提供 `./lynxtron` 入口，用来加载当前平台产物，让其中的 Lynx
 静态注册在宿主进程中生效。
 
+:::note 工具链版本
+
+本页的 `targets` 元数据和自动打包流程需要支持该预发布集成的配套工具链，详见 [webview 入门](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started)。
+
+:::
+
 ## 安装
 
 <PackageManagerTabs command="install @lynx-js/cef-webview" />
@@ -18,9 +24,13 @@ import { PackageManagerTabs } from '@theme';
 在创建 `LynxWindow` 或加载 Lynx bundle 之前，在主进程中导入 Lynxtron 入口：
 
 ```ts
+import { app } from '@lynx-js/lynxtron';
 import cefWebview from '@lynx-js/cef-webview/lynxtron';
 
-cefWebview.initialize();
+app.whenReady().then(() => {
+  cefWebview.initialize();
+  // 在此之后创建 LynxWindow。
+});
 ```
 
 `initialize()` 方法会为当前进程初始化 Chromium Embedded Framework (CEF)。AutoLink

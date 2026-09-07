@@ -40,6 +40,23 @@ import browserDemoGoBackGif from '@assets/lynxtron/browser_demo_go_back.gif?url'
 
 你可能会注意到该项目使用的是 TypeScript。虽然 Lynxtron 支持 TypeScript 和普通 JavaScript，但我们推荐使用 TypeScript，以提供更好的开发体验，包括静态类型检查和更好的编辑器智能感知。
 
+### 安装 webview 原生库
+
+`<webview>` 由可选包 `@lynx-js/cef-webview` 提供。在项目根目录安装：
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+`create-lynxtron` 已配置桌面端的 `pluginLynxtron()`，无需重复添加。请先确认 [webview 入门中的工具链版本要求](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started)。配套工具链负责原生库加载与产物打包；应用仍需在创建窗口前初始化 CEF，见下一节。
+
+如果使用 pnpm 11 且安装时提示相关构建脚本被阻止，在项目的 `pnpm-workspace.yaml` 中合并以下配置，再重新执行安装：
+
+```yaml
+allowBuilds:
+  '@lynx-js/cef-webview': true
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+```
+
 ## 使用 Lynxtron 实现自定义标题栏
 
 由于浏览器的标题栏包含了标签页，而 Lynxtron 默认窗口的标题栏不符合要求，因此我们需要自定义标题栏。首先，我们需要创建一个无边框的窗口，以便完全自定义浏览器的外观（包括标题栏和 "红绿灯" 控制按钮）。
@@ -48,9 +65,10 @@ import browserDemoGoBackGif from '@assets/lynxtron/browser_demo_go_back.gif?url'
 
 在创建 `LynxWindow` 时，设置 `frame: false` 来移除系统默认的标题栏：
 
-```typescript {8}
+```typescript
 // src/main/main.ts
-import { app, LynxWindow } from 'lynxtron';
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
 let mainWindow: LynxWindow | null = null;
 function createWindow() {
   mainWindow = new LynxWindow({
@@ -59,7 +77,14 @@ function createWindow() {
     frame: false, // 关键：移除系统边框
   });
 }
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+  createWindow();
+});
 ```
+
+将初始化调用合并到项目现有的启动流程中，并保留已有的 bundle 加载代码。CEF 必须在创建任何 `LynxWindow` 之前初始化。
 
 <img src={browserDemoFrameLessPng} alt="移除标题栏" />
 
@@ -226,7 +251,7 @@ const handleRemoveTab = (id: string) => {
 
 ### 添加 `<webview`> 组件
 
-Lynxtron 提供了 [`<webview>`](/api/elements/built-in/webview) 元件来加载外部网页，正确引用后，可以用 `<webview>` 组件来加载网页内容。
+完成前面的原生库安装和 CEF 初始化后，可以在 Lynx UI 中直接使用 [`<webview>`](/api/elements/built-in/webview) 加载外部网页，无需在 UI 代码中导入 CEF 包。
 
 ```tsx {5-9}
 <view className="content-area">

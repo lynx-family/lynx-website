@@ -163,6 +163,12 @@ enableHarmonyLynxAutolink(hvigorApi, {
 
 <PlatformTabs.Tab platform="lynxtron">
 
+:::note Lynxtron 工具链版本
+
+下文的 `targets` 清单和原生产物自动打包需要支持这套预发布集成的配套工具链。可通过 [lynx-stack #3760](https://github.com/lynx-family/lynx-stack/pull/3760) 和 [lynxtron #234](https://github.com/lynx-family/lynxtron/pull/234) 跟踪可用情况。请使用相互兼容的 `@lynx-js/autolink-codegen`、`create-lynx-library`、`@lynx-js/lynxtron-dev-plugins` 和 `@lynx-js/lynxtron-builder`；安装较早发布的包不会获得这些能力。
+
+:::
+
 Lynxtron 为桌面端原生库提供了 Autolink 支持。并不是所有嵌入 Lynx 的桌面宿主都开箱支持 Autolink，这是 Lynxtron 自带的能力。
 
 在 Lynxtron 宿主侧 Rspack 配置中使用 `pluginLynxtron()`。这个插件默认包含 Lynxtron Autolink：它会扫描已安装依赖中的 `lynx.lib.json`，选择匹配的 `platforms.lynxtron.targets` 记录，把对应原生库 package 收集到宿主输出目录，并注入前置代码来加载所收集 package 的 `./lynxtron` 入口。业务代码直接导入 `<package>/lynxtron` 时，也会被别名到生成的代理模块，并在运行时解析已收集的 package，但原生注册不需要这种显式导入。`./lynxtron` 入口负责加载当前宿主对应的 `.node` 产物。

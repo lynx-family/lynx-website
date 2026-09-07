@@ -20,13 +20,19 @@ CEF，然后使用 `<webview>` 这个 Lynx 元素。
 注册。应用代码只需要确保 library 已加载并调用 `initialize()`，不需要调用更底层的
 Lynx 注册 API。
 
+:::note 工具链版本
+
+本页的自动加载和打包流程依赖支持 `targets` 清单的配套 Lynxtron 工具链。安装前请确认 [AutoLink 工具链版本说明](/guide/autolink#接入-autolink)；这套集成仍处于预发布阶段。
+
+:::
+
 ## 安装 npm 包
 
 <PackageManagerTabs command="install @lynx-js/cef-webview" />
 
 ## 启用 AutoLink
 
-在 Lynxtron 宿主侧 Rsbuild/Rspack 配置中通过 `pluginLynxtron()` 启用 AutoLink：
+`create-lynxtron` 生成的项目已在桌面端构建中配置 `pluginLynxtron()`，无需重复添加。手动搭建宿主构建时，可参考以下 Rspack 配置；如果使用 Rsbuild，应将该插件放入桌面端环境的 `tools.rspack.plugins`：
 
 ```ts
 import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
@@ -48,7 +54,7 @@ AutoLink 是推荐的宿主 bundle 侧 Lynx
 
 ## 在主进程初始化 CEF
 
-在创建 `LynxWindow` 或加载 Lynx bundle 之前导入包并初始化 CEF：
+AutoLink 会加载原生库并完成元素注册，但不会代替 CEF 初始化。这里显式导入包是为了调用 `initialize()`。在 `app.whenReady()` 后、创建 `LynxWindow` 或加载 Lynx bundle 之前初始化 CEF：
 
 ```typescript {1-2,5}
 import { app, LynxWindow } from '@lynx-js/lynxtron';
@@ -88,6 +94,4 @@ export function App() {
 
 ## 打包注意事项
 
-[`@lynx-js/cef-webview`](/lynxtron/api/@lynx-js/cef-webview/)
-包含平台相关的原生库和 CEF 二进制产物。如果使用 AutoLink，打包宿主构建时保持它启用；如果使用自定义加载或打包流程，需要确保 Lynxtron
-包入口、原生 `.node` 产物和 CEF 产物被包含进应用包。
+打包宿主构建时保持 `pluginLynxtron()` 启用，并让 electron-builder 的 `directories.app` 指向宿主构建的 `output.path`。执行项目的标准构建和打包命令后，`lynxtron-builder` 会将原生包保留在 ASAR 外，将 macOS CEF Framework 和 Helper apps 放入 `Contents/Frameworks`，并让 Windows 的 addon、DLL 和资源文件保持包内相对位置。应用无需添加 CEF 专用的复制脚本或逐库打包规则。

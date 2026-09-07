@@ -10,6 +10,12 @@ It ships platform-specific Lynxtron native artifacts and a `./lynxtron` entry
 that loads the current platform artifact so its static Lynx registrations run in
 the host process.
 
+:::note Tooling Version
+
+The `targets` metadata and automatic packaging flow on this page require matching tooling with support for this prerelease integration. See the [webview setup guide](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started).
+
+:::
+
 ## Install
 
 <PackageManagerTabs command="install @lynx-js/cef-webview" />
@@ -20,9 +26,13 @@ Import the Lynxtron entry in the main process before creating a `LynxWindow` or
 loading a Lynx bundle:
 
 ```ts
+import { app } from '@lynx-js/lynxtron';
 import cefWebview from '@lynx-js/cef-webview/lynxtron';
 
-cefWebview.initialize();
+app.whenReady().then(() => {
+  cefWebview.initialize();
+  // Create LynxWindow instances after this call.
+});
 ```
 
 The `initialize()` method initializes Chromium Embedded Framework (CEF) for the

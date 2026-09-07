@@ -40,6 +40,23 @@ Please refer to our detailed [installation guide](/lynxtron/introduction), which
 
 You may notice that the project uses TypeScript. Although Lynxtron supports both TypeScript and plain JavaScript, we recommend TypeScript for a better development experience, including static type checking and improved editor IntelliSense.
 
+### Install the webview Native Library
+
+The optional `@lynx-js/cef-webview` package provides `<webview>`. Install it from the project root:
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+`create-lynxtron` already configures `pluginLynxtron()` for the desktop build. Check the [webview tooling requirements](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started) before continuing. The matching tooling loads and packages the native library; the app still initializes CEF before creating a window, as shown below.
+
+If you use pnpm 11 and installation reports blocked build scripts for these packages, merge the following into the project's `pnpm-workspace.yaml` and run installation again:
+
+```yaml
+allowBuilds:
+  '@lynx-js/cef-webview': true
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+```
+
 ## Build a Custom Title Bar with Lynxtron
 
 Because the browser title bar contains tabs, the default Lynxtron window title bar does not meet our needs, so we need to create a custom one. The first step is to create a frameless window so we can fully customize the browser's appearance, including the title bar and the traffic-light control buttons.
@@ -48,9 +65,10 @@ Because the browser title bar contains tabs, the default Lynxtron window title b
 
 When creating `LynxWindow`, set `frame: false` to remove the system title bar:
 
-```typescript {8}
+```typescript
 // src/main/main.ts
-import { app, LynxWindow } from 'lynxtron';
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
 let mainWindow: LynxWindow | null = null;
 function createWindow() {
   mainWindow = new LynxWindow({
@@ -59,7 +77,14 @@ function createWindow() {
     frame: false, // Key: remove the system frame
   });
 }
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+  createWindow();
+});
 ```
+
+Merge this initialization into the project's existing startup flow and keep its bundle loading code. Initialize CEF before creating any `LynxWindow`.
 
 <img src={browserDemoFrameLessPng} alt="Remove the title bar" />
 
@@ -226,7 +251,7 @@ At this point, we have finished adding and closing tabs:
 
 ### Add the `<webview>` Component
 
-Lynxtron provides the [`<webview>`](/api/elements/built-in/webview) element for loading external web pages. After importing it correctly, you can use the `<webview>` component to load web content.
+After installing the native library and initializing CEF as shown above, use [`<webview>`](/api/elements/built-in/webview) directly in the Lynx UI to load external pages. The UI code does not import the CEF package.
 
 ```tsx {5-9}
 <view className="content-area">

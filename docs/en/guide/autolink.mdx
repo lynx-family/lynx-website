@@ -163,6 +163,12 @@ The generated AppStartup task runs on the main thread before app code creates a 
 
 <PlatformTabs.Tab platform="lynxtron">
 
+:::note Lynxtron Tooling Version
+
+The `targets` manifest and automatic native artifact packaging require matching tooling that supports this prerelease integration. Track availability in [lynx-stack #3760](https://github.com/lynx-family/lynx-stack/pull/3760) and [lynxtron #234](https://github.com/lynx-family/lynxtron/pull/234). Use compatible versions of `@lynx-js/autolink-codegen`, `create-lynx-library`, `@lynx-js/lynxtron-dev-plugins`, and `@lynx-js/lynxtron-builder`; installing an older published package does not enable these features.
+
+:::
+
 Lynxtron enables Autolink for Desktop native libraries. Not every Lynx-embedded Desktop host supports Autolink out of the box; this is a Lynxtron-provided integration.
 
 In the Lynxtron host's Rspack config, add `pluginLynxtron()`. The plugin includes Lynxtron Autolink by default: it scans installed dependencies for `lynx.lib.json`, selects the matching `platforms.lynxtron.targets` record, copies each matching native library package into the host output, and injects code that imports the copied package's `./lynxtron` entry. Direct imports of `<package>/lynxtron` are also aliased to a generated proxy that resolves the copied package at runtime, but they are not needed for native registration. The `./lynxtron` entry loads the current host's `.node` artifact.
