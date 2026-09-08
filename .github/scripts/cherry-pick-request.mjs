@@ -350,6 +350,11 @@ function hasTerminalStateLabel(issue) {
   return [...TERMINAL_STATE_LABELS].some((label) => labels.has(label));
 }
 
+function hasManagedStateLabel(issue) {
+  const labels = labelsOf(issue);
+  return STATE_LABELS.some((label) => labels.has(label));
+}
+
 function issuePath(repo, issueNumber) {
   return `/repos/${repo.owner}/${repo.repo}/issues/${issueNumber}`;
 }
@@ -725,6 +730,11 @@ function shouldNoopValidate(event, issue) {
   }
   if (event.action === 'labeled') {
     const label = event.label?.name;
+    // A request label may arrive after the opened event was skipped. Initialize
+    // only requests that have not already entered the cherry-pick state machine.
+    if (label === TYPE_LABEL && !hasManagedStateLabel(issue)) {
+      return '';
+    }
     if (label !== APPROVED_LABEL) {
       return `Ignoring labeled event for ${label}.`;
     }
