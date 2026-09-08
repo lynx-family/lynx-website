@@ -1,0 +1,104 @@
+---
+description: '使用 CSS Grid Lanes 构建有界瀑布流布局，并根据内容规模选择虚拟化 waterfall list。'
+---
+
+# Grid Lanes 布局
+
+Grid Lanes 是 CSS Grid Level 3 定义的瀑布流布局，适用于内容数量有界、需要
+CSS 组合能力的区域。在容器上设置
+[`display: grid-lanes`](/api/css/properties/display.mdx)，再通过
+`grid-template-columns` 或 `grid-template-rows` 定义巷道，子元件会沿垂直于巷道轴的
+方向堆叠。
+
+:::warning 实验性功能
+Grid Lanes 从 Lynx 4.3 开始提供，并受 `enableGridLanes` 控制。在观察期内，
+该开关默认关闭。支持 Grid Lanes 的新版
+`@lynx-js/template-webpack-plugin` 会自动写入编译配置和 Page Config；自定义
+编码流程则必须显式写入两处配置。
+:::
+
+自定义编码流程需要在编码输入的两个字段中同时写入开关：
+
+```ts
+encodeData.compilerOptions.enableGridLanes = true;
+encodeData.sourceContent.config.enableGridLanes = true;
+```
+
+只写入其中一处并不足够：`compilerOptions` 控制编码行为，`sourceContent.config`
+负责把运行时 Page Config 写入 bundle。
+
+## 创建纵向 Grid Lanes 布局
+
+以下容器会创建自适应列。自动放置游标会从 `flow-tolerance` 定义的候选巷道中
+为每个子元件选择位置。
+
+```css
+.container {
+  display: grid;
+  display: grid-lanes;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  flow-tolerance: normal;
+}
+```
+
+第一条 `display: grid` 是为旧版 Lynx 编码器提供的受控回退；旧编码器会移除
+不支持的 `grid-lanes` 声明。不要在 Lynx 源码中添加 `display: masonry`，它不是
+Lynx 支持的 `display` 值。Lynx for Web 会把 `display: grid-lanes` 原样交给
+浏览器。不支持该值的浏览器会按标准 CSS 无效值规则忽略这条声明，并应用作者在
+前面显式写入的 `display: grid`。如果作者没有提供回退，该声明会保持不受支持。
+
+如需横向堆叠，可以改用 `grid-template-rows` 定义巷道。网格定位属性只作用于
+巷道轴；根据巷道方向，可以用 `grid-column` 或 `grid-row` 让子元件跨越多个巷道。
+
+## 控制放置顺序
+
+[`flow-tolerance`](/api/css/properties/flow-tolerance.mdx) 控制候选巷道相对最短
+巷道允许多出的长度：
+
+- `0px` 始终选择最短的候选巷道。
+- `normal` 将与最短巷道相差不超过 `1em` 的候选巷道视为并列，再按文档顺序
+  从这些并列巷道中选择。
+- `infinite` 严格保持按文档顺序选择巷道。
+
+使用 `grid-auto-flow: dense` 可以让后续子元件回填满足条件的空隙。稠密放置可能
+改变视觉顺序；如果视觉顺序必须与阅读顺序一致，请不要使用它。
+
+## 选择 Grid Lanes 还是瀑布流列表
+
+| 需求                      | `display: grid-lanes` | `<list list-type="waterfall">` |
+| ------------------------- | --------------------- | ------------------------------ |
+| 任意可组合子元件          | 支持                  | 仅支持列表项                   |
+| 巷道轴跨度和内在尺寸轨道  | 支持                  | 不支持                         |
+| CSS Grid Level 3 放置语义 | 支持                  | 不支持                         |
+| 为无限数据回收元件        | 不支持                | 支持                           |
+| 建议内容规模              | 有界                  | 大量或无界                     |
+
+商品陈列、媒体分组、仪表盘等内容有界且需要 CSS 组合或跨巷道能力的区域，适合使用
+Grid Lanes。需要元件回收的长列表或无限信息流，应继续使用
+[`<list list-type="waterfall">`](/api/elements/built-in/list.mdx#required-list-type)。
+不要使用非虚拟化的 Grid Lanes 容器替换无界虚拟化列表。
+
+## 兼容与回退
+
+- **Lynx 4.3 及以上版本：**在实验期内通过 `enableGridLanes` 显式启用。
+- **旧版 Lynx 编码器：**不支持的 Grid Lanes 声明会被移除并产生警告。请根据
+  内容模型提供普通网格、弹性布局或瀑布流列表回退。
+- **Safari 26.4 及以上版本：**Lynx for Web 使用原生
+  `display: grid-lanes`。
+- **Chromium 实验实现：**在浏览器默认启用前，需要打开
+  `CSSGridLanesLayout`。
+- **其他 Web 浏览器：**Lynx for Web 仍会原样传递
+  `display: grid-lanes`。不支持该值的浏览器会忽略声明，不会自动获得
+  `masonry` 或 `grid` 回退。
+
+Grid Lanes 不会虚拟化子元件，兼容性回退也不会改变这个边界。
+
+## 相关 API
+
+- [`display`](/api/css/properties/display.mdx)
+- [`flow-tolerance`](/api/css/properties/flow-tolerance.mdx)
+- [`grid-template-columns`](/api/css/properties/grid-template-columns.mdx)
+- [`grid-template-rows`](/api/css/properties/grid-template-rows.mdx)
+- [`grid-auto-flow`](/api/css/properties/grid-auto-flow.mdx)
+- [`gap`](/api/css/properties/gap.mdx)

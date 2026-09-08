@@ -1,0 +1,72 @@
+---
+api: css/properties/flow-tolerance
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# flow-tolerance
+
+<APISummary />
+
+## 介绍
+
+`flow-tolerance` 控制 Grid Lanes 如何从当前位置接近最短位置的巷道中选择放置位置。
+该属性仅作用于设置了
+[`display: grid-lanes`](/guide/ui/layout/grid-lanes-layout.mdx) 的容器。
+
+Grid Lanes 从 Lynx 4.3 开始以实验性功能提供，需要启用 `enableGridLanes`。
+
+## 语法
+
+```css
+flow-tolerance: normal;
+flow-tolerance: 0px;
+flow-tolerance: 12px;
+flow-tolerance: 5%;
+flow-tolerance: infinite;
+```
+
+### 取值
+
+- `normal`
+
+  解析为 `1em`。容器字号变化时会重新计算使用值。
+
+- `<length-percentage>`
+
+  非负的容差。百分比相对于巷道轴的内容尺寸解析。
+
+- `infinite`
+
+  所有候选巷道都视为处于容差范围内，因此会严格保持按文档顺序推进巷道选择。
+
+布局每个子元件时，Grid Lanes 会先找到最短的候选位置。当前位置不超过
+`最短位置 + flow-tolerance` 的巷道组成候选集合，随后由自动放置游标从集合中
+选择巷道。
+
+## 形式定义
+
+import { PropertyDefinition } from '@/components/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>normal</>}
+  appliesTo={<>Grid Lanes 容器</>}
+  inherited="否"
+  percentages={<>相对于 Grid Lanes 巷道轴的内容尺寸</>}
+/>
+
+## 形式语法
+
+```
+flow-tolerance = normal | <length-percentage [0,∞]> | infinite
+```
+
+## 兼容性
+
+<APITable />
+
+## 另请参阅
+
+- [Grid Lanes 布局](/guide/ui/layout/grid-lanes-layout.mdx)
+- [`display`](/api/css/properties/display.mdx)
+- [`grid-auto-flow`](/api/css/properties/grid-auto-flow.mdx)
