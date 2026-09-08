@@ -1,0 +1,62 @@
+---
+title: _onPipelineStart()
+---
+
+# `lynx.performance._onPipelineStart()`
+
+Starts a framework-initiated Lynx Pipeline and records its start time in the Engine.
+
+This method is a framework integration hook for Scripting Framework Developers. Application code must not call it.
+
+## Syntax
+
+```ts
+_onPipelineStart(
+  pipelineID: string,
+  pipelineOptions?: PipelineOptions,
+): void;
+```
+
+### Parameters
+
+#### `pipelineID`
+
+The Engine-generated identifier returned in [`PipelineOptions.pipelineID`](../../performance-api/pipeline-options.mdx#pipelineid). Do not generate or modify this value.
+
+#### `pipelineOptions`
+
+The [`PipelineOptions`](../../performance-api/pipeline-options.mdx) object for the pipeline. Before calling this method, populate the framework-owned `pipelineOrigin`, `dsl`, and `stage` metadata.
+
+The `pipelineID` argument must equal `pipelineOptions.pipelineID`.
+
+### Return value
+
+No return value.
+
+## Usage requirements
+
+Call `_onPipelineStart()`:
+
+- only for a pipeline created through [`_generatePipelineOptions()`](./generate-pipeline-options.mdx);
+- exactly once for each framework-initiated pipeline;
+- before the first timing point belonging to the pipeline; and
+- before transferring or submitting the corresponding UI changes.
+
+Do not call it for an Engine-initiated pipeline received through a framework callback. That pipeline is already started.
+
+## Example
+
+```ts
+const options = lynx.performance._generatePipelineOptions();
+options.pipelineOrigin = 'updateTriggeredByBts';
+options.dsl = 'myFramework';
+options.stage = 'update';
+
+lynx.performance._onPipelineStart(options.pipelineID, options);
+```
+
+## See also
+
+- [`PipelineOptions`](../../performance-api/pipeline-options.mdx)
+- [`_generatePipelineOptions()`](./generate-pipeline-options.mdx)
+- [`_markTiming()`](./mark-timing.mdx)
