@@ -1,0 +1,49 @@
+# lynx_value_iterate_value
+
+## 介绍
+
+遍历数组或者字典类型的 lynx_value
+
+## 语法
+
+```c
+typedef void (*lynx_value_iterator_callback)(lynx_api_env env, lynx_value key,
+                                             lynx_value val, void* func,
+                                             void* raw_data);
+```
+
+```c
+lynx_api_status lynx_value_iterate_value(
+    lynx_api_env env, lynx_value object, lynx_value_iterator_callback callback,
+    void* func, void* raw_data);
+```
+
+### 参数
+
+| Key           | Description                                                                                                |
+|:--------------|:-----------------------------------------------------------------------------------------------------------|
+| [in] env      | lynx_value 的运行环境，一般情况下是 nullptr                                               |
+| [in] object   | 被遍历的 lynx_value                                                                         |
+| [in] callback | lynx_value_iterator_callback 函数指针.                                                             |
+| [in] func     | 透传的函数指针，遍历函数内部不会使用它                     |
+| [in] raw_data | 透传的用户自定义数据，遍历函数内部不会使用它                |
+
+### 返回值
+
+Returns `lynx_api_ok` if the API succeeded.
+
+## 示例
+
+If the lynx_value being iterated is an array, the Callback's key is of type lynx_value_uint32. If the lynx_value being iterated is a map, the Callback's key is of type lynx_value_string.
+
+```c
+static inline void LynxValueIteratorCallback(lynx_api_env env,
+                                             lynx_value key,
+                                             lynx_value value, void* func,
+                                             void* raw_data) {
+  // do something by func
+}
+
+lynx_value_iterate_value(env, val, LynxValueIteratorCallback,
+                         reinterpret_cast<void*>(func), nullptr);
+```

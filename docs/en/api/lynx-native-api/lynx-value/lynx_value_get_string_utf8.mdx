@@ -1,0 +1,45 @@
+# lynx_value_get_string_utf8
+
+## Introduction
+
+Read the UTF8-encoded string value from lynx_value. lynx_api_string_expected is returned if the types do not match. If the buf argument is passed NULL, the length of the string in bytes and excluding the null terminator is returned in result.
+
+## Syntax
+
+```c
+lynx_api_status lynx_value_get_string_utf8(lynx_api_env env,
+                                           lynx_value value,
+                                           char* buf,
+                                           size_t bufsize,
+                                           size_t* result);
+```
+
+### Parameters
+
+| Key           | Description                                                                                                                                                                    |
+|:--------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [in] env      | The environment in which lynx value runs, typically nullptr.                                                                                                                    |
+| [in] value    | lynx_value value to be represented in lynx_value.                                                                                                                               |
+| [in] buf      | Buffer to write the UTF8-encoded string into. If NULL is passed in, the length of the string in bytes and excluding the null terminator is returned in result.                 |
+| [in] bufsize  | Size of the destination buffer. If this value is zero, then the string is not returned and no changes are done to the buffer.                                                  |
+| [out] result  | Number of bytes copied into the buffer, excluding the null terminator.                                                                                                          |
+
+### Return Value
+
+Returns lynx_api_ok if the API succeeded. Returns lynx_api_string_expected if the types do not match.
+
+## Example
+
+```c
+size_t length = 0;
+lynx_api_status status = lynx_value_get_string_utf8(env, string_value, nullptr, 0, &length);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+std::string str;
+str.resize(length);
+status = lynx_value_get_string_utf8(env, string_value, &str[0], length + 1, &length);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+```

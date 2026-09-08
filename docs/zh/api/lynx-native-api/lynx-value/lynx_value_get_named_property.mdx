@@ -1,0 +1,40 @@
+# lynx_value_get_named_property
+
+## 介绍
+
+从 map 类型的 lynx_value 中读取给定 key 对应的 Value
+
+## 语法
+
+```c
+lynx_api_status
+lynx_value_get_named_property(lynx_api_env env, lynx_value object,
+                              const char* utf8name, lynx_value* result);
+```
+
+### 参数
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | lynx_value 的运行环境，一般情况下是 nullptr |
+| [in] object   | 被查询的 map.                                     |
+| [in] utf8name | 给定的 key.                             |
+| [out] result  | 读取到的 Value                                   |
+
+### 返回值
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_map_expected` if the types do not match.
+
+## 示例
+
+读取的结果在使用完后要用 `lynx_value_remove_reference` 释放内存
+
+```c
+lynx_value ret;
+lynx_api_status status = lynx_value_get_named_property(env, map_value, "v1", &ret);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+// do something
+lynx_value_remove_reference(env, ret, NULL);
+```
