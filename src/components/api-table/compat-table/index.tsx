@@ -22,6 +22,7 @@ import { FeatureRow } from './feature-row';
 import { Headers } from './headers';
 import './index.scss';
 import { Legend } from './legend';
+import { isCurrentDocPath } from './links';
 import { listFeatures } from './utils';
 
 // Note! Don't import any SCSS here inside *this* component.
@@ -197,6 +198,7 @@ export default function CompatibilityTable({
   const { __compat: compat } = data;
   // Try to find source_file in data, then __compat
   const sourceFile = (data as any).source_file || compat?.source_file;
+  const sourceUrl = (data as any).source_url || compat?.source_url;
   const path = sourceFile
     ? `packages/lynx-compat-data/${sourceFile}`
     : module
@@ -210,7 +212,7 @@ export default function CompatibilityTable({
   // Try to find lynx_path in data, then __compat
   const lynxPath = (data as any).lynx_path || compat?.lynx_path;
   const lynxDocUrl =
-    lynxPath && !location.pathname.endsWith(lynxPath)
+    lynxPath && !isCurrentDocPath(location.pathname, lynxPath)
       ? withBase(`/${lynxPath}`)
       : undefined;
 
@@ -245,7 +247,9 @@ export default function CompatibilityTable({
       <BrowserInfoContext.Provider value={browserInfo}>
         <div className="flex justify-end items-center mb-2">
           <div className="flex gap-2 text-sm">
-            {path && <EditThis path={path} />}
+            {(sourceUrl || path) && (
+              <EditThis path={path} sourceUrl={sourceUrl} />
+            )}
             {lynxDocUrl && (
               <a
                 href={lynxDocUrl}
