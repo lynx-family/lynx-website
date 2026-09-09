@@ -215,13 +215,15 @@ function UserCard({ id, name, selected }) {
 
 ## 编译器与运行时如何协作
 
-编译器分别为主线程和后台线程生成相应的模板信息。在 ReactLynx 的双线程架构中，应用代码会同时运行在[主线程](/guide/spec.html#main-thread-or-lynx-main-thread)和[后台线程](/guide/spec.html#background-thread-aka-off-main-thread)，两条线程都会执行 React 的渲染流程并建立各自的模板实例树。
+ReactLynx 的一个特点是：这份编译表示不仅参与更新阶段的协调，也参与 Lynx 双线程的[首帧直出（IFR）](/guide/interaction/ifr)链路。
 
-加载页面时，主线程直接渲染首屏内容，以实现[首帧直出（IFR）](/guide/interaction/ifr)。在 Lynx 规范中，这一过程称为[首帧渲染（First-frame Rendering）](/guide/spec.html#first-frame-rendering)，是[主线程渲染（Main Thread Rendering）](/guide/spec.html#main-thread-rendering)的一种。与此同时，后台线程会并行执行一次渲染；首次同步会比较两侧的模板实例树并同步差异，为后续更新做好准备。
+同一份模板可以被多个已挂载的 `Greeting` 组件复用。每个已挂载的 `Greeting` 都有一组彼此对应的模板实例：主线程模板实例持有创建出的 Lynx 元件，后台模板实例保存参与协调的逻辑树和动态数据。运行时消费编译产物的过程可以分为首屏创建和后续更新两个阶段。
 
-### 首屏：同步两个线程的渲染结果
+### 首屏：创建模板实例
 
-这个首次同步过程在关键语义上类似 SSR hydration：长期运行的协调器重新执行应用逻辑，将自己的逻辑树附着到较早执行环境已经渲染的元件树，而不是重新创建整棵树。用接近 React [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot) 的 API 形状表示，概念上类似：
+首屏的 UI 元件由主线程直接创建。运行时先根据 VNode 的类型找到模板，再为这次 `Greeting` 创建主线程模板实例。静态创建函数返回的 Lynx 元件由这个模板实例持有；初始动态值随后交给对应的更新函数，动态子节点则插入编译器预留的插槽。
+
+下面是这一过程的概念伪代码：
 
 ```js
 // 主线程：执行 React，并通过首帧渲染完成首帧直出（IFR）
@@ -233,11 +235,15 @@ const backgroundRoot = hydrateRootFromMainThread(initialRender, <App />);
 
 这里的 `initialRender` 抽象了首次同步所需的主线程模板实例信息；Lynx 元件本身仍留在主线程。`hydrateRootFromMainThread()` 抽象了后台渲染、两侧实例关联和首次差异同步，并返回长期负责协调的后台 root。这些名称用于说明机制，并非 ReactLynx 当前公开的 API。
 
-### 更新：后台驱动渲染
+换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
 
-完成 hydration 后，后续的重新渲染通常采用规范中定义的[后台驱动渲染（Background-driven Rendering）](/guide/spec.html#background-driven-rendering)：后台线程发起并主要执行框架渲染，再将结果传递给主线程以完成像素管线。在 ReactLynx 中，后台线程协调动态数据并发送变化，主线程继续持有并更新 Lynx 元件。
+后台首轮协调也会生成与主线程模板实例树对应的后台模板实例树。在[首帧渲染（First-frame Rendering）](/guide/spec.html#first-frame-rendering)期间，hydration 会建立两侧模板实例的对应关系，使后续更新可以用 `instanceId` 定位首帧时创建的主线程模板实例。
 
-动态属性的变化可以交给编译器生成的定向更新函数，动态子节点则仍由 React 协调：
+### 更新：只处理动态位置的变化
+
+对应关系建立后，后台线程比较新旧动态数据并生成更新，主线程再找到对应的模板实例并应用变化。
+
+下面的伪代码以任意模板为例说明相同机制。动态属性的变化可以交给编译器生成的定向更新函数，动态子节点则仍由 React 协调：
 
 ```js
 // 后台线程
