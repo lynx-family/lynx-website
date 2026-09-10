@@ -5,18 +5,15 @@
 [context.deploy-preview.environment]
   RSPRESS_LIGHTWEIGHT_BUILD = "true"
 
-# Version homes are directory-style URLs, so redirect `/4.0` to `/4.0/` and
-# `/next` to `/next/` instead of serving the same page at two URLs. Netlify
-# normalizes trailing slashes before evaluating redirect rules, so either
-# static redirect would also match its target and cause a loop. Edge Functions
-# run first and can inspect the original pathname.
+# The version home is a directory-style URL, so redirect `/4.0` to `/4.0/`
+# instead of serving the same page at two URLs. Netlify normalizes trailing
+# slashes before evaluating redirect rules, so a static redirect would also
+# match its target and cause a loop. Edge Functions run first and can inspect
+# the original pathname. `/next` is gone from this branch along with the rest
+# of the cross-version routing.
 [[edge_functions]]
   function = "redirect-version-root"
   path = "/4.0"
-
-[[edge_functions]]
-  function = "redirect-version-root"
-  path = "/next"
 
 [[headers]]
   for = "/*"
@@ -156,47 +153,11 @@
   status = 301
   force = true
 
-# Serve current development docs from the site root.
-[[redirects]]
-  from = "/next/*"
-  to = "https://main--lynx-doc.netlify.app/:splat"
-  status = 200
-
-# 4.0 is canonical at the site root. Keep versioned URLs as permanent
-# compatibility redirects.
+# This branch is no longer the site root: 4.1 serves it and owns the
+# cross-version routing table. What is left is this deploy's own base,
+# which every built link and asset carries, rewritten to the files it
+# actually publishes.
 [[redirects]]
   from = "/4.0/*"
   to = "/:splat"
-  status = 301
-  force = true
-
-# Serve previous releases from their branch deploys.
-[[redirects]]
-  from = "/3.9/*"
-  to = "https://release-3-9--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.8/*"
-  to = "https://release-3-8--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.7/*"
-  to = "https://release-3-7--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.6/*"
-  to = "https://release-3-6--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.5/*"
-  to = "https://release-3-5--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.4/*"
-  to = "https://release-3-4--lynx-doc.netlify.app/:splat"
   status = 200
