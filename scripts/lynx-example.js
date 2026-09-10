@@ -135,6 +135,8 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
       }
       if (isPackCopy) {
         fs.cpSync(fullPath, targetPath, {
+          // Required when dereferencing file symlinks. Node 22 and 24 throw
+          // ERR_FS_EISDIR without this option even when the source is a file.
           recursive: true,
           dereference: true,
           preserveTimestamps: true,
