@@ -235,9 +235,9 @@ const backgroundRoot = hydrateRootFromMainThread(initialRender, <App />);
 
 这里的 `initialRender` 抽象了首次同步所需的主线程模板实例信息；Lynx 元件本身仍留在主线程。`hydrateRootFromMainThread()` 抽象了后台渲染、两侧实例关联和首次差异同步，并返回长期负责协调的后台 root。这些名称用于说明机制，并非 ReactLynx 当前公开的 API。
 
-换一个角度，也可以把它理解为预先计算一部分渲染工作，类似于 [Next.js 的 Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)。不过，两者的产物不同：Next.js 生成静态 HTML 外壳和序列化的 React Server Component 载荷；ReactLynx 则把稳定的宿主结构继续降级为 Lynx 平台可以直接理解的元件创建操作。动态值和动态子树仍会在页面启动时传入。
+这里我们借用 SSR hydration 的概念来描述这一流程：主线程先执行应用并创建首帧所需的 Host Tree，让内容无需等待后台线程就绪即可展示；后台线程随后再次执行应用逻辑，将自己的模板实例树附着到已有 Host Tree，而不是重新创建整棵树。
 
-后台首轮协调也会生成与主线程模板实例树对应的后台模板实例树。在[首帧渲染（First-frame Rendering）](/guide/spec.html#first-frame-rendering)期间，hydration 会建立两侧模板实例的对应关系，使后续更新可以用 `instanceId` 定位首帧时创建的主线程模板实例。
+ReactLynx 利用主线程能够提前创建 Host Tree 的特点，阻塞 UI 线程直至首次渲染完成，确保展示出的第一帧已经包含内容，这就是[首帧直出（IFR）](/guide/spec.html#first-frame-rendering)。首次同步后，后台线程接管后续协调，主线程继续持有 Lynx 元件并应用更新。
 
 ### 更新：只处理动态位置的变化
 
