@@ -6,8 +6,10 @@
 # instead of serving the same page at two URLs. Netlify normalizes trailing
 # slashes before evaluating redirect rules, so a static redirect would also
 # match its target and cause a loop. Edge Functions run first and can inspect
-# the original pathname. A release branch serves a second version home at its
-# own base and registers it here alongside `/next`.
+# the original pathname. A release branch adds an entry only for a base it
+# serves: an archived release builds at `/x.y` and needs one, while the
+# current release builds at the root, where `/x.y/*` is a compatibility
+# redirect that already matches the bare form.
 [[edge_functions]]
   function = "redirect-version-root"
   path = "/next"
