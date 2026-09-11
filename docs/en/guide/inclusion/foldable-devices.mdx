@@ -1,0 +1,138 @@
+---
+description: 'Sync dimensions through GlobalProps and screen metrics for low-effort foldable layouts.'
+---
+
+import { FoldableRenderFlow } from '../../../../src/components/foldable-render-flow';
+
+# Foldables
+
+At its September event, Apple unveiled its first foldable iPhone, [iPhone Duo](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/). Unfold the screen and the page you were reading gains a fresh canvas; fold it back and the content has to settle into a smaller space. The job of an app is to make the interface flow gracefully between the two.
+
+Lynx now fully supports foldable scenarios, proven in production inside TikTok. Our goal was simple: keep the integration effortless. The host passes new dimensions to Lynx, the frontend keeps its familiar layout tools, and the page reflows with the window on its own.
+
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, margin: '24px 0' }}>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableBigToSmall.gif"
+      alt="A Lynx page in TikTok adjusts as the window shrinks"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      Folding
+    </figcaption>
+  </figure>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableSmallToBig.gif"
+      alt="A Lynx page in TikTok adjusts as the window grows"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      Unfolding
+    </figcaption>
+  </figure>
+</div>
+
+## New screen sizes
+
+Adaptation starts with the host. When the window changes size, the host finishes native layout first, then updates Lynx's **screen metrics, viewport, and GlobalProps** together, keeping the engine's sizing bases in step with the dimensions the frontend reads.
+
+Start with the data the frontend needs. [GlobalProps](/api/lynx-api/lynx/lynx-global-props) carries environment information from the host to the page, which reads it through [`lynx.__globalProps`](/api/lynx-api/lynx/lynx-global-props). In TikTok, we distinguish the window's dimensions from the space available to an individual page. The community can use the same convention:
+
+| Field                             | Meaning                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `viewportWidth`, `viewportHeight` | The current LynxView's actual layout dimensions, for page layout                           |
+| `screenWidth`, `screenHeight`     | The current application window's dimensions; a LynxView in a dialog or card may be smaller |
+
+These host-defined fields use logical pixels: Lynx CSS [`px`](/api/css/data-type/length), corresponding to iOS `pt`. Set initial values through [`LynxLoadMeta.globalProps`](/api/lynx-native-api/lynx-load-meta#ios), then update each [LynxView](/api/lynx-native-api/lynx-view) as its dimensions change. The frontend treats them as read-only.
+
+Updates merge the fields and emit [`onGlobalPropsChanged`](/api/react/Document.global-events#onglobalpropschanged). With the default [`globalPropsMode: 'reactive'`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode), **ReactLynx automatically re-renders the entire page**; components simply read the latest dimensions during render. The optional `'event'` mode disables this automatic render.
+
+The host also refreshes screen metrics for `rpx` and the viewport for `vw` and `vh`. ReactLynx applies UI changes through [Element PAPI](/api/engine/element-api), then the engine resolves styles and runs Layout using the new dimensions. The platform paints the result.
+
+<FoldableRenderFlow locale="en" />
+
+On iOS, this uses [`updateScreenMetricsWithWidth:height:`](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/ios/lynx/public/LynxView.h#L262), [`updateViewport`](/api/lynx-native-api/lynx-view/update-viewport#ios), and [`updateGlobalPropsWithDictionary`](/api/lynx-api/lynx/lynx-global-props#ios). Once the view is attached and native layout is complete, call them on the main thread. Here, screen metrics use the window size, and the viewport uses the LynxView's size:
+
+```objc
+CGSize windowSize = lynxView.window.bounds.size;
+CGSize viewportSize = lynxView.bounds.size;
+
+[lynxView updateScreenMetricsWithWidth:windowSize.width
+                               height:windowSize.height];
+[lynxView updateViewportWithPreferredLayoutWidth:viewportSize.width
+                         preferredLayoutHeight:viewportSize.height
+                                    needLayout:YES];
+[lynxView updateGlobalPropsWithDictionary:@{
+  @"screenWidth": @(windowSize.width),
+  @"screenHeight": @(windowSize.height),
+  @"viewportWidth": @(viewportSize.width),
+  @"viewportHeight": @(viewportSize.height),
+}];
+```
+
+Initialize the same `rpx` basis through [`LynxViewBuilder.screenSize`](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/ios/lynx/public/LynxBaseConfigurator.h#L81), and skip unchanged dimensions. Screen metrics updates do not trigger layout themselves; the example uses [`needLayout:YES`](/api/lynx-native-api/lynx-view/update-viewport#ios). With [`enableAutoLayout`](/api/lynx-native-api/lynx-view/enable-auto-layout) enabled, constraints drive viewport updates.
+
+## Familiar layout units
+
+Once this flow is connected, frontend adaptation usually takes little work. For pages that already use flexible layouts and relative units, **the frontend does not need to detect the folding state or trigger updates manually** — the layout adjusts to the newly available space on its own.
+
+That leaves a single decision: what each dimension should follow — its parent container, the whole viewport, or the size of the text. Pick the right reference, and your existing responsive layout keeps doing its job.
+
+In the table below, automatic adaptation describes how each unit follows its sizing basis once the host integration is in place.
+
+| Unit        | Automatic adaptation                                                                                  | Sizing basis and guidance                                                                                                                                                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `%`         | <strong style={{ color: 'hsl(var(--status-supported-strong))' }}>Yes</strong>, follows the parent     | Width and height are relative to the containing block, usually the parent. Suitable for cards and dialogs; percentage heights require a definite parent height                                         |
+| `vw`, `vh`  | <strong style={{ color: 'hsl(var(--status-supported-strong))' }}>Yes</strong>, follows the viewport   | 1% of viewport width or height. Suitable for page-level dimensions; prefer `%` inside nested components                                                                                                |
+| `rpx`       | <strong style={{ color: 'hsl(var(--status-supported-strong))' }}>Yes</strong>, follows screen metrics | 1/750 of the logical width configured in screen metrics                                                                                                                                                |
+| `px`, `ppx` | <strong style={{ color: 'hsl(var(--status-unsupported-strong))' }}>No</strong>, fixed pixel units     | Logical and physical pixels, respectively. Keep `px` for font sizes, spacing, and controls; use `ppx` for pixel-level details                                                                          |
+| `rem`, `em` | <strong style={{ color: 'hsl(var(--status-partial-strong))' }}>Follows font size</strong>             | Relative to the root or current element's font size, respectively; `em` in [`font-size`](/api/css/properties/font-size) uses the inherited font size. Window resizing alone does not scale these units |
+
+In practice, [Flex](/guide/ui/layout/flexible-box-layout) and [`width: 100%`](/api/css/properties/width) make a good starting point, with [`max-width`](/api/css/properties/max-width) to keep content from stretching too far on wider screens. Font sizes, buttons, and spacing can keep sensible `px` values, so the content area grows with the screen while reading and interaction stay a constant size.
+
+`rpx` follows screen metrics: **`1rpx` equals 1/750 of the configured logical width**. When the host updates [screen metrics](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/ios/lynx/public/LynxView.h#L262), Lynx recalculates `rpx` values during layout, so the frontend does not need to recompute them.
+
+```tsx
+export function ResponsiveCard() {
+  return (
+    <view
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%', // Follow the parent.
+        maxWidth: '600px', // Limit content width when the foldable screen is unfolded.
+        padding: '16px', // Keep spacing and font size stable.
+        gap: '12px',
+      }}
+    >
+      <text style={{ fontSize: '16px' }}>A familiar layout</text>
+      <view
+        style={{
+          width: '100%',
+          height: '200rpx', // Recalculated when the host updates screen metrics.
+          backgroundColor: '#e6f4ff',
+        }}
+      />
+    </view>
+  );
+}
+```
+
+See [length units](/api/css/data-type/length) for more detail.
