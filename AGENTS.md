@@ -34,6 +34,20 @@ downstream repository root as the working directory.
 Keep these script paths, caller-working-directory behavior, environment
 variables, and generated output layouts compatible with downstream callers.
 
+## Portable Build and Generation Tooling
+
+Prepare and build tooling runs across local development, GitHub Actions,
+Cloudflare Pages, Netlify, and downstream consumers. Node-based generators must
+not invoke undeclared host commands. In particular, do not depend on `rsync`;
+it is not available in every Cloudflare Pages build image supported by this
+site.
+
+Prefer `node:*` APIs or declared package dependencies. If an operating-system
+tool is unavoidable, explicitly provision it in every caller and supported
+build image, document the prerequisite, and add CI coverage for its absence or
+availability. A command being installed on a developer machine or GitHub-hosted
+runner does not make it part of the build contract.
+
 ### `api-stats.json` doc links
 
 `packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API. **When the
