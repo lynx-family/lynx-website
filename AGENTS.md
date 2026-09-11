@@ -1,9 +1,18 @@
-# Downstream Compatibility
+# Repository Instructions
+
+## Contribution Workflow
+
+Follow the [commit](./CONTRIBUTING.md#commits) and
+[pull request](./CONTRIBUTING.md#pull-requests) conventions in
+`CONTRIBUTING.md`. Automated reviewers must also follow the policy
+embedded in [the pull request template](./.github/pull_request_template.md).
+
+## Downstream Compatibility
 
 This repository is consumed by the in-house Lynx documentation site through a
 pinned git submodule and local `file:` dependency.
 
-## Directly Consumed Paths
+### Directly Consumed Paths
 
 The downstream prepare flow consumes these OSS paths:
 
@@ -19,7 +28,7 @@ The downstream prepare flow consumes these OSS paths:
 The downstream repository replaces `docs/public/lynx-examples` and applies
 internal content overlays after copying OSS content.
 
-## Downstream Tool Contract
+### Downstream Tool Contract
 
 The downstream prepare flow directly executes:
 

@@ -92,12 +92,36 @@ pnpm run build
 
 Then request downstream validation after the updated OSS revision is pinned.
 
+## Commits
+
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) for
+  commit subjects.
+- Keep the subject focused; prefer no more than 72 characters per line.
+- Use concise, direct English.
+- Use the body to explain what changed, why it was needed, and how it
+  was verified or affects users. Use clear paragraphs or bullets; fixed
+  subsection headings are not required.
+- Use optional footers in the following form:
+
+```text
+issue: #12345
+doc: https://example.com
+TEST: Relevant test cases
+```
+
+Keep `TEST` on one line when practical. Use lowercase `issue` and `doc`.
+
 ## Pull Requests
 
 - Base normal changes on `main`.
+- Format pull request titles as Conventional Commit subjects.
 - Keep pull requests focused on one behavior or documentation update.
-- Include enough context in the pull request description for reviewers to
-  understand the user impact, affected pages, and validation performed.
+- Keep descriptions structured and concise. Use sections such as
+  Summary, Rationale, Verification, and Documentation when helpful.
+- Include enough context for reviewers to understand the user impact,
+  affected pages, and validation performed.
+- Prefer no more than 72 characters per line, except where a URL or code
+  sample cannot be wrapped clearly.
 - Do not include internal-only content, private URLs, or downstream-only
   implementation details in this OSS repository.
 
