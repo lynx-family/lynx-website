@@ -1,0 +1,138 @@
+---
+description: '通过 GlobalProps 与 screen metrics 同步尺寸，让前端以低成本适配折叠屏。'
+---
+
+import { FoldableRenderFlow } from '../../../../src/components/foldable-render-flow';
+
+# 折叠屏
+
+苹果在秋季发布会上推出了首款折叠屏 iPhone——[iPhone Duo](https://www.apple.com.cn/newsroom/2026/09/apple-unveils-iphone-duo/)。展开屏幕，正在浏览的页面有了更多空间；合上屏幕，内容又回到较小的窗口。用户期待的，是页面能顺着屏幕的变化自然调整。
+
+Lynx 已经支持折叠屏适配，并在 TikTok 中投入使用。我们希望接入尽可能简单：客户端把尺寸变化同步给 Lynx，前端继续使用熟悉的布局方式，让页面随窗口大小自动调整。
+
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, margin: '24px 0' }}>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableBigToSmall.gif"
+      alt="TikTok 中的 Lynx 页面随窗口缩小重新布局"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      折叠
+    </figcaption>
+  </figure>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableSmallToBig.gif"
+      alt="TikTok 中的 Lynx 页面随窗口放大重新布局"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      展开
+    </figcaption>
+  </figure>
+</div>
+
+## 全新的屏幕尺寸
+
+适配从客户端开始。窗口尺寸变化后，客户端先完成原生布局，再一并更新 Lynx 的 **screen metrics、viewport 和 GlobalProps**，让引擎的布局基准和前端读取的尺寸保持一致。
+
+先看尺寸如何传给前端。[GlobalProps](/api/lynx-api/lynx/lynx-global-props) 负责将客户端的环境信息传给页面，前端通过 [`lynx.__globalProps`](/api/lynx-api/lynx/lynx-global-props) 读取。在 TikTok 中，我们用两组字段分别表示窗口尺寸和页面实际可用的尺寸，供社区参考：
+
+| 字段                              | 含义                                                     |
+| --------------------------------- | -------------------------------------------------------- |
+| `viewportWidth`、`viewportHeight` | 当前 LynxView 的实际布局宽高，用于页面布局               |
+| `screenWidth`、`screenHeight`     | 当前应用窗口的宽高；弹窗、卡片中的 LynxView 可能比窗口小 |
+
+这些字段由客户端自行定义，单位统一为逻辑像素，即 Lynx CSS [`px`](/api/css/data-type/length)，在 iOS 上对应 `pt`。首次加载时，通过 [`LynxLoadMeta.globalProps`](/api/lynx-native-api/lynx-load-meta#ios) 设置初始值；之后随尺寸变化更新各个 [LynxView](/api/lynx-native-api/lynx-view) 实例，前端只负责读取。
+
+运行时更新 GlobalProps，传入的字段会合并到已有数据中，并触发 [`onGlobalPropsChanged`](/api/react/Document.global-events#onglobalpropschanged)。在默认的 [`globalPropsMode: 'reactive'`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode) 下，**ReactLynx 会自动对整个页面重新执行 render**，组件在 render 时读取最新尺寸即可。如果选择 `'event'` 模式，则不会自动触发整页 render。
+
+客户端同时更新的 screen metrics 和 viewport，分别为 `rpx` 和 `vw`、`vh` 提供尺寸基准。ReactLynx 通过 [Element PAPI](/api/engine/element-api) 将 UI 变化应用到 Element 树，随后引擎根据新尺寸解析样式、完成布局（Layout），最后由平台绘制画面。
+
+<FoldableRenderFlow locale="zh" />
+
+在 iOS 上，分别调用 [`updateScreenMetricsWithWidth:height:`](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/ios/lynx/public/LynxView.h#L262)、[`updateViewport`](/api/lynx-native-api/lynx-view/update-viewport#ios) 和 [`updateGlobalPropsWithDictionary`](/api/lynx-api/lynx/lynx-global-props#ios) 完成这三项更新。调用时，视图应已加入窗口并完成原生布局，且这些操作都要在主线程执行。下面的示例用窗口尺寸更新 screen metrics，用 LynxView 自身的尺寸更新 viewport：
+
+```objc
+CGSize windowSize = lynxView.window.bounds.size;
+CGSize viewportSize = lynxView.bounds.size;
+
+[lynxView updateScreenMetricsWithWidth:windowSize.width
+                               height:windowSize.height];
+[lynxView updateViewportWithPreferredLayoutWidth:viewportSize.width
+                         preferredLayoutHeight:viewportSize.height
+                                    needLayout:YES];
+[lynxView updateGlobalPropsWithDictionary:@{
+  @"screenWidth": @(windowSize.width),
+  @"screenHeight": @(windowSize.height),
+  @"viewportWidth": @(viewportSize.width),
+  @"viewportHeight": @(viewportSize.height),
+}];
+```
+
+创建 LynxView 时，也要通过 [`LynxViewBuilder.screenSize`](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/ios/lynx/public/LynxBaseConfigurator.h#L81) 设置相同的 `rpx` 基准；后续尺寸没有变化时，无需重复更新。更新 screen metrics 本身不会触发布局，因此示例在更新 viewport 时设置了 [`needLayout:YES`](/api/lynx-native-api/lynx-view/update-viewport#ios)。如果启用了 [`enableAutoLayout`](/api/lynx-native-api/lynx-view/enable-auto-layout)，视口则会随布局约束自动更新。
+
+## 熟悉的布局单位
+
+客户端完成这些接入后，前端通常只需很少的适配工作。对于已经使用弹性布局和相对单位的页面，**前端无需感知折叠状态，也无需手动触发更新**，页面就能随可用空间的变化自动调整布局。
+
+写页面时，仍然只需考虑熟悉的问题：这个尺寸应该跟随父容器、整个视口，还是文字大小？选好参照，现有的响应式布局就能适应新的屏幕尺寸。
+
+下表整理了各个单位的尺寸基准，以及客户端完成接入后，它们能否随基准变化自动调整。
+
+| 单位        | 自动适配                                                                                        | 尺寸基准与适配建议                                                                                                                                    |
+| ----------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `%`         | <strong style={{ color: 'hsl(var(--status-supported-strong))' }}>是</strong>，随父容器          | 宽高以包含块（通常是父容器）为基准，适合卡片、弹窗内部布局；使用百分比高度时，父容器需要有明确的高度                                                  |
+| `vw`、`vh`  | <strong style={{ color: 'hsl(var(--status-supported-strong))' }}>是</strong>，随视口            | 视口宽、高的 1%，适合页面级尺寸；嵌套组件优先使用 `%`                                                                                                 |
+| `rpx`       | <strong style={{ color: 'hsl(var(--status-supported-strong))' }}>是</strong>，随 screen metrics | screen metrics 中配置的逻辑宽度的 1/750                                                                                                               |
+| `px`、`ppx` | <strong style={{ color: 'hsl(var(--status-unsupported-strong))' }}>否</strong>，保持像素尺寸    | 分别表示逻辑像素和物理像素。字号、间距和控件可继续使用 `px`，像素级细节可用 `ppx`                                                                     |
+| `rem`、`em` | <strong style={{ color: 'hsl(var(--status-partial-strong))' }}>随字号变化</strong>              | 分别以根元素和当前元素的字号为基准；`em` 用于 [`font-size`](/api/css/properties/font-size) 时，以继承的字号为基准。窗口尺寸变化本身不会让它们自动缩放 |
+
+实际布局时，可以用 [Flex](/guide/ui/layout/flexible-box-layout) 和 [`width: 100%`](/api/css/properties/width) 让内容随容器伸缩，再用 [`max-width`](/api/css/properties/max-width) 避免内容在大屏上拉得过宽。字号、按钮大小和间距可以继续使用合适的 `px` 值。这样，内容区域可以变宽，文字和控件仍保持熟悉的大小。
+
+`rpx` 的尺寸取决于 screen metrics：**`1rpx` 等于其中配置的逻辑宽度的 1/750**。客户端更新 [screen metrics](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/ios/lynx/public/LynxView.h#L262) 后，Lynx 会在布局时自动重新计算 `rpx` 对应的尺寸，前端无需自行换算。
+
+```tsx
+export function ResponsiveCard() {
+  return (
+    <view
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%', // 跟随父容器。
+        maxWidth: '600px', // 限制折叠屏展开后的内容宽度，避免内容拉得过宽。
+        padding: '16px', // 间距和字号保持稳定。
+        gap: '12px',
+      }}
+    >
+      <text style={{ fontSize: '16px' }}>熟悉的布局</text>
+      <view
+        style={{
+          width: '100%',
+          height: '200rpx', // 客户端更新 screen metrics 后，自动重新计算。
+          backgroundColor: '#e6f4ff',
+        }}
+      />
+    </view>
+  );
+}
+```
+
+各单位的详细说明可参阅[长度单位](/api/css/data-type/length)。
