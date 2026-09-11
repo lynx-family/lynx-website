@@ -220,48 +220,51 @@ lynx.createSelectorQuery()
 
  <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
 ```ts
+interface CookiesGetParams {
+  /**
+   * 获取域名匹配或为其子域名的 cookies
+   * @PC
+   */
+  domain?: string;
+  /**
+   * 按 httpOnly 过滤 cookies
+   * @PC
+   */
+  httpOnly?: boolean;
+  /**
+   * 按名称过滤 cookies
+   * @PC
+   */
+  name?: string;
+  /**
+   * 获取路径匹配的 cookies
+   * @PC
+   */
+  path?: string;
+  /**
+   * 按 Secure 属性过滤 cookies
+   * @PC
+   */
+  secure?: boolean;
+  /**
+   * 过滤会话 cookie 或持久化 cookie
+   * @PC
+   */
+  session?: boolean;
+  /**
+   * 获取与指定 URL 关联的 cookies。为空则获取所有 URL 的 cookies
+   * @PC
+   */
+  url?: string;
+}
+
+const params: CookiesGetParams = { domain: 'example.com', httpOnly: true, name: 'session', path: '/', secure: true, session: false, url: 'https://example.com' };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'cookies.get',
-      params: {
-        /**
-         * 获取域名匹配或为其子域名的 cookies
-         * @PC
-         */
-        domain?: string;
-        /**
-         * 按 httpOnly 过滤 cookies
-         * @PC
-         */
-        httpOnly?: boolean;
-        /**
-         * 按名称过滤 cookies
-         * @PC
-         */
-        name?: string;
-        /**
-         * 获取路径匹配的 cookies
-         * @PC
-         */
-        path?: string;
-        /**
-         * 按 Secure 属性过滤 cookies
-         * @PC
-         */
-        secure?: boolean;
-        /**
-         * 过滤会话 cookie 或持久化 cookie
-         * @PC
-         */
-        session?: boolean;
-        /**
-         * 获取与指定 URL 关联的 cookies。为空则获取所有 URL 的 cookies
-         * @PC
-         */
-        url?: string;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })
@@ -276,23 +279,26 @@ lynx.createSelectorQuery()
 
  <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
 ```ts
+interface CookiesRemoveParams {
+  /**
+   * 要删除的 cookie 名称
+   * @PC
+   */
+  name?: string;
+  /**
+   * 与 cookie 关联的 URL
+   * @PC
+   */
+  url: string;
+}
+
+const params: CookiesRemoveParams = { name: 'session', url: 'https://example.com' };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'cookies.remove',
-      params: {
-        /**
-         * 要删除的 cookie 名称
-         * @PC
-         */
-        name?: string;
-        /**
-         * 与 cookie 关联的 URL
-         * @PC
-         */
-        url: string;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })
@@ -307,61 +313,64 @@ lynx.createSelectorQuery()
 
  <ClayOnly /> <VersionBadge>Lynx 3.5</VersionBadge>
 ```ts
+interface CookiesSetParams {
+  /**
+   * cookie 的域名。省略时默认为空
+   * @PC
+   */
+  domain?: string;
+  /**
+   * cookie 的过期时间，为 UNIX 纪元以来的秒数
+   * @PC
+   */
+  expirationDate?: number;
+  /**
+   * cookie 是否标记为 HTTP only
+   * @PC
+   * @defaultValue false
+   */
+  httpOnly?: boolean;
+  /**
+   * cookie 的名称
+   * @PC
+   */
+  name: string;
+  /**
+   * cookie 的路径。省略时默认为空
+   * @PC
+   */
+  path?: string;
+  /**
+   * 应用于此 cookie 的 Same Site 策略。可为 unspecified、no_restriction、lax 或 strict
+   * @PC
+   * @defaultValue 'lax'
+   */
+  sameSite?: string;
+  /**
+   * cookie 是否标记为 secure
+   * @PC
+   * @defaultValue false
+   */
+  secure?: boolean;
+  /**
+   * 关联 cookie 的 URL
+   * @PC
+   */
+  url: string;
+  /**
+   * cookie 的值。省略时默认为空
+   * @PC
+   */
+  value?: string;
+}
+
+const params: CookiesSetParams = { domain: 'example.com', expirationDate: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, httpOnly: true, name: 'session', path: '/', sameSite: 'lax', secure: true, url: 'https://example.com', value: 'hello' };
 
 lynx.createSelectorQuery()
      .select('#id')
      .invoke({
       method: 'cookies.set',
-      params: {
-        /**
-         * cookie 的域名。省略时默认为空
-         * @PC
-         */
-        domain?: string;
-        /**
-         * cookie 的过期时间，为 UNIX 纪元以来的秒数
-         * @PC
-         */
-        expirationDate?: number;
-        /**
-         * cookie 是否标记为 HTTP only
-         * @PC
-         * @defaultValue false
-         */
-        httpOnly?: boolean;
-        /**
-         * cookie 的名称
-         * @PC
-         */
-        name: string;
-        /**
-         * cookie 的路径。省略时默认为空
-         * @PC
-         */
-        path?: string;
-        /**
-         * 应用于此 cookie 的 Same Site 策略。可为 unspecified、no_restriction、lax 或 strict
-         * @PC
-         * @defaultValue 'lax'
-         */
-        sameSite?: string;
-        /**
-         * cookie 是否标记为 secure
-         * @PC
-         * @defaultValue false
-         */
-        secure?: boolean;
-        /**
-         * 关联 cookie 的 URL
-         * @PC
-         */
-        url: string;
-        /**
-         * cookie 的值。省略时默认为空
-         * @PC
-         */
-        value?: string;
-      };
+      params,
       success: function (res) {},
       fail: function (res) {},
     })
@@ -389,8 +398,8 @@ lynx.createSelectorQuery()
          * @Harmony
          * @PC
          */
-        func: string;
-      };
+        func: 'javascriptFunc(1, 2)',
+      },
       success: function (res) {},
       fail: function (res) {},
     })

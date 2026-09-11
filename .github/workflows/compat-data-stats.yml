@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'packages/lynx-compat-data/**'
+      - '.github/workflows/compat-data-stats.yml'
 
 jobs:
   generate-stats:
@@ -14,15 +15,16 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - name: Setup Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: '.node-version'
           cache: 'pnpm'
@@ -30,24 +32,40 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Get Base Branch Stats
+      - name: Generate Base Stats
         run: |
-          git show origin/${{ github.event.pull_request.base.ref }}:packages/lynx-compat-data/api-stats.json > /tmp/base-stats.json || echo '{}' > /tmp/base-stats.json
+          git worktree add --detach /tmp/compat-data-base ${{ github.event.pull_request.base.sha }}
+          ln -s "${{ github.workspace }}/node_modules" \
+            /tmp/compat-data-base/node_modules
+          ln -s "${{ github.workspace }}/packages/lynx-compat-data/node_modules" \
+            /tmp/compat-data-base/packages/lynx-compat-data/node_modules
+          cd /tmp/compat-data-base/packages/lynx-compat-data
+          node --loader=ts-node/esm --no-warnings=ExperimentalWarning \
+            scripts/generate-css-from-defines.ts
+          cd "${{ github.workspace }}"
+          pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- \
+            --root /tmp/compat-data-base/packages/lynx-compat-data \
+            --docs-root /tmp/compat-data-base/docs/en \
+            --output /tmp/base-stats.json
 
       - name: Generate PR Stats
-        run: pnpm --filter @lynx-js/lynx-compat-data run gen-stats
+        run: |
+          pnpm --filter @lynx-js/lynx-compat-data run gen-stats -- \
+            --docs-root "${{ github.workspace }}/docs/en" \
+            --output /tmp/pr-stats.json
 
       - name: Generate Comparison
-        run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json packages/lynx-compat-data/api-stats.json > /tmp/comment.md
+        run: node packages/lynx-compat-data/scripts/compare-stats.mjs /tmp/base-stats.json /tmp/pr-stats.json > /tmp/comment.md
 
       - name: Save PR Number
         run: echo "${{ github.event.pull_request.number }}" > /tmp/pr-number.txt
 
       - name: Upload Comment Artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: compat-data-stats-comment
           path: |
             /tmp/comment.md
             /tmp/pr-number.txt
+            /tmp/pr-stats.json
           retention-days: 1

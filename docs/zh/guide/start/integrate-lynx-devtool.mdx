@@ -29,6 +29,7 @@ import versionJson from '@site/docs/public/version.json';
 ### 引入依赖
 
 你需要新增以下组件：`LynxService` 的 `Devtool` 子组件、 `LynxDevTool` 和 `DebugRouter`。
+请确保 Podfile 已按 [Lynx 集成指南](/guide/start/integrate-with-existing-apps.html?platform=ios) 声明 `lynx-family` Specs 仓库作为源。
 
 ```ruby title="Podfile" {2-8}
 target 'YourTarget' do
@@ -105,7 +106,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     DevToolSettings.sharedInstance().bootstrap.applyDevelopmentDefaultsIfUnset()
     let lynxEnv = LynxEnv.sharedInstance()
     // 允许 DevTool 调试所有 Lynx 页面（连接 DevTool 桌面应用必需）
-    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.enableAllSessions()
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self) as? LynxServiceDevToolProtocol)?.enableAllSessions()
     // 打开 Lynx DevTool 开关
     lynxEnv.devtoolEnabled = true
     // 打开 Lynx LogBox 开关
@@ -162,14 +163,12 @@ dependencies {
 
 ### 注册 DevTool Service
 
-DevTool Service 提供了一些启动配置值，以控制默认行为，可以根据实际需求进行配置。
-
-在下一章节中，将详细介绍这些启动配置值。
+DevTool Service 提供了一些启动配置值，以控制默认行为，可以根据实际需求进行配置。下面的示例会为尚未设置的配置值应用开发环境下的默认值。
 
 <Tabs groupId='register-devtool-service-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-13}
+```java title=YourApplication.java {3-10}
 private void initLynxService() {
   // ...
   // register DevTool service
@@ -187,7 +186,7 @@ private void initLynxService() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-13}
+```kotlin title=YourApplication.kt {3-10}
 private fun initLynxService() {
   // ...
   // register DevTool service

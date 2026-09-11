@@ -39,6 +39,10 @@ Data for CSS e.g. properties like `background`, `color`, etc.
 >
 > 1. **`@lynx-js/css-defines`** — the primary source of truth. To update a property, change the upstream definition and bump the dependency, then regenerate.
 > 2. **`css/properties-manual/`** — hand-maintained files for properties not yet covered by `css-defines` (e.g. `css-variable`, `custom-property`, `filter-properties`). The directory listing itself is the allowlist; no name is hardcoded in the generator. A filename collision between the two sources fails the build, so once `css-defines` adds coverage, remove the corresponding file from `properties-manual/`.
+>
+> The package `prepack` lifecycle runs the CSS generator and validation before
+> packing or publishing, so generated `css/properties/*.json` files are included
+> in the package tarball without being committed to git.
 
 #### [`lynx-api`](./lynx-api)
 
@@ -182,6 +186,22 @@ Run all build steps at once:
 ```bash
 pnpm run build
 ```
+
+### Package
+
+Before packing or publishing, the `prepack` lifecycle generates CSS property
+compatibility data, fixes generated key names, and validates the package data.
+
+To verify the packed package contract locally:
+
+```bash
+pnpm run pack:check
+```
+
+This check creates a package tarball, verifies that generated
+`css/properties/*.json` files are included, installs the tarball into a clean
+temporary consumer with scripts disabled, and reads
+`css/properties/custom-property.json`.
 
 ### Test
 

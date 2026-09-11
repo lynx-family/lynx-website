@@ -190,6 +190,12 @@ export function App() {
 }
 ```
 
+:::details Before deploying: version compatibility
+
+Before deploying a newly built standalone lazy bundle, upgrade the Consumer to the same or a newer `@lynx-js/react` version. In particular, a Consumer earlier than 0.115.0 cannot load a lazy bundle built with 0.115.0 or later, while a 0.115.0 or later Consumer can load bundles built with older versions. See the [`@lynx-js/react` changelog](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/CHANGELOG.md#01150).
+
+:::
+
 ### Developing Producer project
 
 It is recommended to create a separated Consumer in the Producer project.

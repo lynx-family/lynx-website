@@ -29,6 +29,7 @@ All code examples in this documentation can be found in the [integrating-lynx-de
 ### Adding Dependencies
 
 You need to add these components: the `Devtool` subcomponent of `LynxService`, `LynxDevTool`, and `DebugRouter`.
+Make sure the Podfile declares the `lynx-family` Specs repository as a source, as shown in the [Lynx integration guide](/guide/start/integrate-with-existing-apps.html?platform=ios).
 
 ```ruby title="Podfile" {2-8}
 # Ensure Lynx DevTool version matches the Lynx version when integrating
@@ -74,7 +75,7 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
-  // set devtool bootstrap defaults
+  // set DevTool bootstrap defaults
   [[DevToolSettings sharedInstance].bootstrap applyDevelopmentDefaultsIfUnset];
   LynxEnv *lynxEnv = [LynxEnv sharedInstance];
   // Enable all sessions debugging for DevTool (required for Lynx DevTool Desktop connection)
@@ -106,7 +107,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     DevToolSettings.sharedInstance().bootstrap.applyDevelopmentDefaultsIfUnset()
     let lynxEnv = LynxEnv.sharedInstance()
     // Enable all sessions debugging for DevTool (required for Lynx DevTool Desktop connection)
-    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self, bizID: DEFAULT_LYNX_SERVICE) as? LynxServiceDevToolProtocol)?.enableAllSessions()
+    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self) as? LynxServiceDevToolProtocol)?.enableAllSessions()
     // Enable Lynx DevTool Switch
     lynxEnv.devtoolEnabled = true
     // Enable Lynx LogBox Switch
@@ -163,14 +164,12 @@ It is recommended to use the latest [Lynx version](https://github.com/lynx-famil
 
 ### Registering DevTool Service
 
-DevTool Service provides some bootstrap values to control default behaviors. You can configure them as needed.
-
-In the next chapter, we will introduce these bootstrap values in detail.
+DevTool Service provides some bootstrap values to control default behaviors. You can configure them as needed; the snippets below apply the development defaults to the values that have not been set.
 
 <Tabs groupId='register-devtool-service-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-13}
+```java title=YourApplication.java {3-10}
 private void initLynxService() {
   // ...
   // register DevTool service
@@ -188,7 +187,7 @@ private void initLynxService() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-13}
+```kotlin title=YourApplication.kt {3-10}
 private fun initLynxService() {
   // ...
   // register DevTool service

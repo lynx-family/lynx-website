@@ -144,6 +144,7 @@ const platformNames: ExtendedPlatformName[] = [
   'macos',
   'windows',
   'clay_android',
+  'clay_harmony',
   'clay_ios',
   'clay_macos',
   'clay_windows',
@@ -271,6 +272,36 @@ export const {
    * <NoWindows />
    */
   NoWindows,
+  /**
+   * Renders a badge indicating no Harmony support
+   * @example
+   * <NoHarmony />
+   */
+  NoHarmony,
+  /**
+   * Renders a badge indicating Clay iOS-only support
+   * @example
+   * <ClayIOSOnly />
+   */
+  ClayIOSOnly,
+  /**
+   * Renders a badge indicating no Clay iOS support
+   * @example
+   * <NoClayIOS />
+   */
+  NoClayIOS,
+  /**
+   * Renders a badge indicating Clay HarmonyOS-only support
+   * @example
+   * <ClayHarmonyOSOnly />
+   */
+  ClayHarmonyOSOnly,
+  /**
+   * Renders a badge indicating no Clay HarmonyOS support
+   * @example
+   * <NoClayHarmonyOS />
+   */
+  NoClayHarmonyOS,
   /**
    * Renders a badge indicating Clay Android-only support
    * @example

@@ -31,6 +31,7 @@ const IOSIcon = makeIcon('ios');
 const HarmonyIcon = makeIcon('harmony');
 const WebIcon = makeIcon('web_lynx');
 const ClayIcon = makeIcon('clay');
+const ClayHarmonyIcon = makeIcon('clay_harmony');
 const MacOSIcon = makeIcon('clay_macos');
 const WindowsIcon = makeIcon('clay_windows');
 
@@ -93,6 +94,17 @@ export const PLATFORM_CONFIG: Record<string, PlatformConfig> = {
   clay_android: {
     label: 'Clay Android',
     icon: ClayIcon,
+    colors: {
+      bg: 'bg-teal-500/10',
+      border: 'border-teal-500',
+      text: 'text-teal-700 dark:text-teal-400',
+      progress: 'bg-teal-500',
+      line: '#14b8a6',
+    },
+  },
+  clay_harmony: {
+    label: 'Clay HarmonyOS',
+    icon: ClayHarmonyIcon,
     colors: {
       bg: 'bg-teal-500/10',
       border: 'border-teal-500',

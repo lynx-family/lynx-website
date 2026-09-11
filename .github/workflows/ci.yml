@@ -2,9 +2,17 @@ name: CI
 
 on:
   pull_request:
+  merge_group:
+    types: [checks_requested]
   push:
     branches:
       - main
+      - 'release/[3-9].*'
+      - 'release/[1-9][0-9].*'
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.ref, github.sha) }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -15,13 +23,20 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.13'
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - name: Setup Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: '.node-version'
           cache: 'pnpm'
@@ -35,11 +50,29 @@ jobs:
       - name: lynx-ui Route Contract Check
         run: node scripts/ci/check-lynx-ui-routes.mjs
 
+      - name: Lynx Example Generator Test
+        run: pnpm run test:lynx-example
+
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install pipx
+        run: python -m pip install pipx==1.17.1
+
+      - name: Living Spec Check
+        run: |
+          # The generated HTML is committed; fail when source and output drift.
+          pnpm run gen:living-spec
+          git diff --exit-code -- docs/public/living-spec/index.html
+
       - name: Format Check
         run: pnpm run format:check
+
+      - name: Lynx Compat Data Test
+        run: pnpm --filter @lynx-js/lynx-compat-data run test
+
+      - name: Lynx Compat Data Pack Check
+        run: pnpm --filter @lynx-js/lynx-compat-data run pack:check
 
       - name: Build
         run: pnpm run build

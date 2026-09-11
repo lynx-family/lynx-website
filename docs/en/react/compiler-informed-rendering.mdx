@@ -1,0 +1,291 @@
+---
+description: 'Learn how to write JSX that works well with ReactLynx compiler optimizations, and how the compiler and runtime work together to render it.'
+---
+
+# Compiler-Informed Rendering
+
+ReactLynx analyzes JSX at build time and extracts stable host element structures ahead of time, allowing the runtime to focus on values and subtrees that may change.
+We call this division of work between the compiler and runtime **compiler-informed rendering**.
+
+This optimization is applied automatically. Most applications can continue writing clear, idiomatic JSX without changing their component design to accommodate the compiler.
+
+Here, _host elements_ are [Lynx elements](/guide/ui/elements-components) such as `<view>` and `<text>` that ReactLynx renders through the Lynx Engine. User-defined components such as `<ProductCard>` are not host elements.
+
+## What the Compiler Can Do Ahead of Time
+
+Consider a regular component:
+
+```tsx
+export function Greeting({ name, highlighted }) {
+  return (
+    <view className={highlighted ? 'card active' : 'card'}>
+      <text>Hello, {name}</text>
+    </view>
+  );
+}
+```
+
+If JSX is transformed only as in a traditional, purely runtime Virtual DOM, without static extraction, the compiled result of `Greeting` is semantically similar to the following code:
+
+```js
+export function Greeting({ name, highlighted }) {
+  return jsx('view', {
+    className: highlighted ? 'card active' : 'card',
+    children: jsx('text', {
+      children: ['Hello, ', name],
+    }),
+  });
+}
+```
+
+On every render, `jsx()` creates virtual nodes (VNodes) that describe the UI structure. ReactLynx then compares these nodes level by level to decide which host elements to reuse, create, or update. This process is known as [reconciliation](https://react.dev/learn/render-and-commit).
+
+But in this example, the `view`, `text`, fixed text `Hello, `, and their parent-child relationships are static; only `className` and `name` can change. The compiler can generate the [Element PAPI](/api/engine/element-api) operations for creating the static structure ahead of time. The resulting static template definition can be reused across the initial renders of different instances and their subsequent re-renders; the runtime only needs to supply the dynamic data for each render. Conceptually, it looks like this:
+
+```js
+const GreetingTemplate = {
+  // Create a template instance by directly executing compiled Element PAPI operations.
+  create() {
+    const pageId = ReactLynx.__pageId;
+    const view = __CreateView(pageId);
+    const text = __CreateText(pageId);
+    const nameSlot = __CreateWrapperElement(pageId);
+
+    __AppendElement(view, text);
+    __AppendElement(text, __CreateRawText('Hello, '));
+    __AppendElement(text, nameSlot);
+
+    return { view, nameSlot };
+  },
+
+  // Update a known element directly without traversing the static structure.
+  update(instance, { className }) {
+    __SetClasses(instance.view, className);
+  },
+};
+
+export function Greeting({ name, highlighted }) {
+  return renderTemplate(GreetingTemplate, {
+    className: highlighted ? 'card active' : 'card',
+    nameSlot: name,
+  });
+}
+```
+
+These names and function shapes only explain the mechanism; they are not actual compiler output that applications can rely on. On the initial render, the compiled `create()` directly builds the known host structure. On subsequent renders, `update()` directly modifies a known element. The runtime does not need to repeatedly create and compare VNodes for this part of the structure, while children that cannot be determined ahead of time, such as `name`, are still handled through dynamic slots.
+
+:::details Prior Art and the Current Implementation: Snapshot
+
+This idea of using information known at build time to reduce runtime work is not unique to ReactLynx. [Vue's compiler-informed virtual DOM](https://vuejs.org/guide/extras/rendering-mechanism#compiler-informed-virtual-dom), [Owl's BlockDOM](https://odoo.github.io/owl/documentation/v2/miscellaneous/architecture.html#blockdom), and [Million.js](https://github.com/aidenybai/million) all take a similar approach. From a broader computational perspective, it can also be understood as a form of [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation): using host structures known from JSX to specialize the generic rendering process, leaving only the parts that cannot be determined ahead of time for runtime and producing an effect similar to “[partial prerendering](https://nextjs.org/docs/15/app/getting-started/partial-prerendering).”
+
+In ReactLynx, this approach is currently implemented through an Intermediate Representation (IR) called a **Snapshot**. We are also exploring other representations with better performance. Snapshot follows the conceptual model above and can be summarized in four core parts:
+
+| Compiled result     | Purpose                                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| Static creator      | Directly creates predictable Lynx elements and establishes their parent-child relationships.             |
+| Dynamic updaters    | Updates a property, event, or spread property by index without traversing the complete static structure. |
+| Dynamic child slots | Marks where dynamic subtrees such as components, conditional branches, text expressions, and lists go.   |
+| Representation ID   | Identifies a reusable template so multiple template instances can share its static data.                 |
+
+**Note:** The IR is an internal implementation detail. Do not depend on or copy these outputs in application code. Specific names, parameters, and data structures may change with the source code, compiler configuration, or ReactLynx version.
+
+:::
+
+## Writing Compiler-Friendly JSX
+
+Dynamic properties, text, and children do not prevent compiler optimization by themselves. For most components, these three principles are enough:
+
+- Keep component semantics clear and the code readable.
+- Let runtime data flow through properties and children as usual.
+- Let host types, hierarchy, and order that are already known during development appear naturally in JSX.
+
+There is no need to split a component just to make a property or text value static, nor does the entire tree need to be static.
+The compiler already separates stable structures from dynamic regions.
+
+The following patterns are optional, not hard rules. Use them only when they also fit the component's intended semantics.
+
+### Keep Shared Structure Visible When It Is Natural
+
+The following code duplicates the entire card structure in both branches:
+
+```tsx
+function ProductCard({ name, price, showPrice }) {
+  if (showPrice) {
+    return (
+      <view className="product-card">
+        <text className="product-name">{name}</text>
+        <text className="product-price">{price}</text>
+      </view>
+    );
+  }
+
+  return (
+    <view className="product-card">
+      <text className="product-name">{name}</text>
+    </view>
+  );
+}
+```
+
+When both branches naturally represent the same component structure, you can keep one stable shell and make the price region a dynamic child:
+
+```tsx
+function ProductCard({ name, price, showPrice }) {
+  return (
+    <view className="product-card">
+      <text className="product-name">{name}</text>
+      {showPrice && <text className="product-price">{price}</text>}
+    </view>
+  );
+}
+```
+
+The second form makes the shared shell more directly visible to the compiler and leaves only the price region in a dynamic slot.
+However, do not restructure conditional rendering solely for compiler optimization. Different forms may affect component identity, state preservation, and readability.
+
+### Write Known Host Element Types Directly
+
+The compiler can only analyze JSX structures visible in the source.
+If a host type is not determined until runtime, that part of the structure must also be handled at runtime:
+
+```tsx
+import { createElement } from '@lynx-js/react';
+
+function DynamicNode({ type, value }) {
+  return createElement(type, { className: 'content' }, value);
+}
+```
+
+If the candidate structures are already known during development, write them as explicit JSX branches:
+
+```tsx
+function Content({ variant, value }) {
+  if (variant === 'label') {
+    return <text className="content-label">{value}</text>;
+  }
+
+  return (
+    <view className="content-panel">
+      <text>{value}</text>
+    </view>
+  );
+}
+```
+
+Runtime data still selects the branch, but the host structure of each branch is visible to the compiler, so each can be extracted separately.
+Use dynamic creation only when the host type genuinely comes from runtime configuration.
+
+### Declare Known Properties Explicitly
+
+Compiler-informed rendering supports spread properties.
+The compiler knows which element receives the spread object, but because the property set is not known until runtime, it must preserve the entire object as one dynamic position:
+
+```tsx
+function UserCard({ id, name, selected }) {
+  const cardProps = {
+    id,
+    className: selected ? 'user-card selected' : 'user-card',
+  };
+
+  return (
+    <view {...cardProps}>
+      <text>{name}</text>
+    </view>
+  );
+}
+```
+
+When the property set is known during development, declaring properties explicitly lets the compiler generate more targeted update logic:
+
+```tsx
+function UserCard({ id, name, selected }) {
+  return (
+    <view id={id} className={selected ? 'user-card selected' : 'user-card'}>
+      <text>{name}</text>
+    </view>
+  );
+}
+```
+
+The explicit form also avoids creating a `cardProps` object on every render.
+Spread remains appropriate when a component needs to forward unknown properties from its caller; do not expand them one by one solely for compiler optimization.
+
+In short, keep known host structures directly visible in the source and let actual runtime data enter through properties or dynamic children.
+For structures that genuinely need to be determined at runtime, keeping the code natural and dynamic is more important.
+
+## How the Compiler and Runtime Work Together
+
+One characteristic of ReactLynx is that this compiled representation participates not only in update-time reconciliation, but also in Lynx's dual-thread [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) pipeline.
+
+The same template can be reused by multiple mounted `Greeting` components. Each mounted `Greeting` has a corresponding pair of template instances: the main-thread template instance owns the Lynx elements it creates, while the background template instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
+
+### Initial Render: Create a Template Instance
+
+The UI elements for the initial render are created directly on the main thread. The runtime first finds the template from the VNode type, then creates a main-thread template instance for this `Greeting`. The template instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
+
+The following pseudocode illustrates this process:
+
+```js
+function renderFirstScreen(vnode) {
+  const template = getTemplate(vnode.type);
+  const instance = createMainThreadTemplateInstance(vnode.type);
+
+  instance.elements = template.create(instance);
+  instance.values = vnode.props.values;
+  template.update[0](instance); // Write values[0] to className
+  insertDynamicChild(instance, 0, vnode.props.$0);
+
+  return instance;
+}
+```
+
+In this example, `template.create()` creates the `view`, `text`, and fixed text; `template.update[0]()` writes `values[0]` to `className`; and `insertDynamicChild()` places the `name` from `$0` into the reserved slot. This still creates the complete Lynx element tree. The difference is that `template.create()` expands the static hierarchy directly instead of sending every host VNode through reconciliation level by level.
+
+From another perspective, this can be understood as precomputing part of the render, analogous to [Next.js Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering). The artifacts are different: Next.js produces a static HTML shell and a serialized React Server Component payload, while ReactLynx further lowers the stable host structure into element-creation operations understood directly by the Lynx platform. Dynamic values and subtrees are still supplied when the page starts.
+
+The initial background-thread reconciliation also creates a background template-instance tree that corresponds to the main-thread template-instance tree. During first-screen synchronization, hydration establishes the mapping between template instances on the two threads, allowing subsequent updates to locate the main-thread template instance created for the first screen by `instanceId`.
+
+### Updates: Process Only Changes to Dynamic Positions
+
+After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding template instance and applies the changes.
+
+The following pseudocode continues with `Greeting`. `highlighted` corresponds to dynamic position `0`, so changing it produces a property update. `name` is in a dynamic child slot and continues to be reconciled by React:
+
+```js
+// Background thread: compare dynamic properties and reconcile dynamic children
+function reconcileGreeting(previous, next, instanceId) {
+  if (!isEqual(previous.values[0], next.values[0])) {
+    emitAttributePatch({
+      instanceId,
+      dynamicPartIndex: 0,
+      value: next.values[0],
+    });
+  }
+
+  // $0 remains a React child; reconciliation produces tree operations
+  // such as insertions and removals.
+  reconcileChildren(previous.$0, next.$0, {
+    parentInstanceId: instanceId,
+    slotIndex: 0,
+  });
+}
+
+// Main thread: apply a property update using the template instance and dynamic position
+function applyAttributePatch(patch) {
+  const instance = findMainThreadTemplateInstance(patch.instanceId);
+  const index = patch.dynamicPartIndex;
+
+  instance.values[index] = patch.value;
+  instance.template.update[index](instance);
+}
+```
+
+For the property path, `reconcileGreeting()` only describes which dynamic position changed on which template instance. `applyAttributePatch()` then calls the targeted update function generated by the compiler. Dynamic children do not pass through these property updaters; React reconciliation produces the corresponding tree operations instead. The current implementation encodes these operations in a serialized Patch.
+
+## Back to Application Code
+
+Compiler-informed rendering is not an API that developers need to invoke manually. It is a division of work that ReactLynx performs automatically between the compiler and runtime. Regular JSX continues to work even when a component contains dynamic properties, conditional branches, lists, and user-defined components; the compiler extracts stable structures wherever it can determine them.
+
+In day-to-day development, prioritize components with clear semantics: let known host structures appear naturally in JSX, and let dynamic data flow through properties and children as usual. Consider additional adjustments only when performance analysis identifies the code as a bottleneck, and only when those adjustments preserve the component's semantics.
+
+In other words, let the compiler find optimization opportunities in natural JSX instead of organizing application code around a particular internal IR.

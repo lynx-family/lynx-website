@@ -11,6 +11,7 @@ export const NATIVE_PLATFORMS: PlatformName[] = [
 ];
 export const CLAY_PLATFORMS: PlatformName[] = [
   'clay_android',
+  'clay_harmony',
   'clay_ios',
   'clay_macos',
   'clay_windows',

@@ -26,11 +26,44 @@ The downstream prepare flow directly executes:
 - `scripts/luna-demo.js`
 - `scripts/lynx-example.js`
 
-The downstream currently synchronizes `scripts/lynx-living-spec.js` into its
-workspace and runs it through `pnpm gen:living-spec`.
+The downstream directly executes `scripts/lynx-living-spec.js` from its
+installed `lynx-doc` dependency through its own Living Spec orchestration layer.
+It prepares downstream source overlays first and runs the generator with the
+downstream repository root as the working directory.
 
 Keep these script paths, caller-working-directory behavior, environment
 variables, and generated output layouts compatible with downstream callers.
+
+## Portable Build and Generation Tooling
+
+Prepare and build tooling runs across local development, GitHub Actions,
+Cloudflare Pages, Netlify, and downstream consumers. Node-based generators must
+not invoke undeclared host commands. In particular, do not depend on `rsync`;
+it is not available in every Cloudflare Pages build image supported by this
+site.
+
+Prefer `node:*` APIs or declared package dependencies. If an operating-system
+tool is unavoidable, explicitly provision it in every caller and supported
+build image, document the prerequisite, and add CI coverage for its absence or
+availability. A command being installed on a developer machine or GitHub-hosted
+runner does not make it part of the build contract.
+
+### `api-stats.json` doc links
+
+`packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API. **When the
+caller supplies a docs root** — via `--docs-root <dir>` (resolved against the
+working directory) or `LYNX_COMPAT_DOCS_ROOT` — it emits only the URLs that
+resolve to a route in that tree; without one it emits every URL unchecked. The
+OSS site supplies its own root through the `gen:compat-stats` script, which is
+therefore the script to use when regenerating these stats by hand. The root is
+never inferred from the package's location, so an install layout cannot decide
+which routes the data is checked against.
+
+A consumer that generates these stats itself should pass its own docs root, and
+gets a `doc_url` set matching the pages it publishes. Omitting the option skips
+verification and emits every URL unchecked; naming a root that does not exist
+is an error rather than a silent skip, so a run either verifies against the
+tree it was told to use or does not verify at all.
 
 ## Mirrored Integration Contracts
 
@@ -43,7 +76,7 @@ Keep OSS runtime imports compatible with the downstream resolver aliases.
 Coordinate changes to shared configuration exports or resolver aliases with
 the downstream repository.
 
-The in-house scheduled sync runs daily at 10:00 UTC+8. For coordinated changes,
+The in-house scheduled sync runs daily at 09:30 UTC+8. For coordinated changes,
 especially those that must land internally first, plan the landing order around
 this window so an OSS change is not synced before its downstream counterpart is
 ready.
@@ -73,6 +106,9 @@ contract in every supported consumer.
   exported configuration fields as interfaces.
 - Keep internal-only content and behavior in the in-house repository.
 - Request downstream validation for changes affecting this contract.
+- Changes to CI, build or generation workflows, release behavior, or downstream
+  interfaces require human review and must be merged manually. Review agents
+  may approve these changes but must not auto-merge them.
 
 ## Verification
 
