@@ -36,7 +36,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const currentDir = process.cwd();
 const examplesDir = path.join(
@@ -108,8 +107,6 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
   }
 
   const files = fs.readdirSync(exampleDir);
-  const excludeArgs = ignoreDirs.map((d) => `--exclude '${d}'`).join(' ');
-  const excludeFileArgs = ignoreFiles.map((f) => `--exclude '${f}'`).join(' ');
 
   files.forEach((file) => {
     const fullPath = path.join(exampleDir, file);
@@ -120,12 +117,15 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
-        // Use rsync to exclude nested node_modules/.git/.turbo and ignored files.
-        // cp -Lrfp would copy everything including deep node_modules (e.g.
-        // dist/desktop/node_modules/sqlite3), bloating the public deploy.
-        execSync(
-          `rsync -aL ${excludeArgs} ${excludeFileArgs} "${fullPath}/" "${targetPath}/"`,
-        );
+        fs.cpSync(fullPath, targetPath, {
+          recursive: true,
+          dereference: true,
+          preserveTimestamps: true,
+          filter: (source) => {
+            const name = path.basename(source);
+            return !ignoreDirs.includes(name) && !ignoreFiles.includes(name);
+          },
+        });
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
@@ -134,7 +134,11 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
-        execSync(`cp -Lfp "${fullPath}" "${targetPath}"`);
+        fs.cpSync(fullPath, targetPath, {
+          recursive: true,
+          dereference: true,
+          preserveTimestamps: true,
+        });
       } else {
         fs.symlinkSync(fullPath, targetPath);
       }
