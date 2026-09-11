@@ -1,0 +1,17 @@
+name: Setup Node and PNPM
+description: Set up repository-pinned Node and PNPM with a shared store cache.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PNPM
+      uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+    - name: Setup Node.js
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version-file: '.node-version'
+        cache: 'pnpm'
+
+# Checkout must happen before this local action. Each caller installs its own
+# dependencies explicitly and chooses whether lifecycle scripts should run.
