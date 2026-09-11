@@ -54,6 +54,8 @@ export default {
 
 使用 webview 前需要初始化 CEF：在 `app.whenReady()` 后、创建 `LynxWindow` 或加载 Lynx bundle 之前调用 `cefWebview.initialize()`。
 
+当前共享 CEF 存储同时只能由一个宿主进程使用。运行示例前，请关闭其他 WebView 宿主，包括之前启动的开发态或已安装应用。同一宿主支持多个 WebView。`initialize()` 失败时会抛出异常，不要忽略错误后继续创建窗口。参见[初始化限制](/lynxtron/api/@lynx-js/cef-webview/#初始化结果与进程限制)。
+
 ```typescript {1-2,5}
 import { app, LynxWindow } from '@lynx-js/lynxtron';
 import cefWebview from '@lynx-js/cef-webview/lynxtron';
@@ -66,9 +68,12 @@ app.whenReady().then(() => {
     height: 800,
   });
 
-  win.loadFile('main.lynx.bundle');
+  win.show();
+  // 保留脚手架中开发态 loadURL / 生产态 loadFile 的加载逻辑。
 });
 ```
+
+将初始化合并到 `src/main/desktop/main.ts`，保留脚手架的 bundle 路径及按环境加载的代码，不要替换为硬编码路径。
 
 ## 使用 Lynx 元素
 

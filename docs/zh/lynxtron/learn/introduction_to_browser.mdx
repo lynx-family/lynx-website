@@ -66,7 +66,7 @@ allowBuilds:
 在创建 `LynxWindow` 时，设置 `frame: false` 来移除系统默认的标题栏：
 
 ```typescript
-// src/main/main.ts
+// src/main/desktop/main.ts
 import { app, LynxWindow } from '@lynx-js/lynxtron';
 import cefWebview from '@lynx-js/cef-webview/lynxtron';
 let mainWindow: LynxWindow | null = null;
@@ -85,6 +85,8 @@ app.whenReady().then(() => {
 ```
 
 将初始化调用合并到项目现有的启动流程中，并保留已有的 bundle 加载代码。CEF 必须在创建任何 `LynxWindow` 之前初始化。
+
+运行 `npm run dev` 前，请关闭其他使用该 WebView 的宿主应用，包括已安装的副本。当前各宿主共享 CEF 存储，同时只能有一个 browser 宿主进程初始化它。同一个浏览器内的多个标签页不受此限制。若 `initialize()` 抛出异常，应停止启动并检查错误，不要继续创建空白 WebView。
 
 <img src={browserDemoFrameLessPng} alt="移除标题栏" />
 
@@ -177,7 +179,7 @@ const handleFullScreenTap = () => {
     <div style={{ flex: 1 }}>
 
 ```typescript
-// src/main/main.ts
+// src/main/desktop/main.ts
 // 监听这些消息并调用 Lynxtron 的 API
 w.on('-lynx-invoke', (event, params) => {
   console.log('window is invoke', params);
@@ -208,7 +210,7 @@ w.on('-lynx-invoke', (event, params) => {
   <img src={browserDemoControlGif} width="100%" />
 </div>
 
-## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries) 中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
+## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries)中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
 
 ### 管理标签页
 
@@ -257,11 +259,11 @@ const handleRemoveTab = (id: string) => {
 <view className="content-area">
   {tabs.map((tab) => (
     <view key={tab.id} className="tab-content">
-      {tab.input_value && (
+      {tab.url && (
         <webview
           className="webview-container"
           id={`webview-${tab.id}`}
-          src={tab.input_value}
+          src={tab.url}
         />
       )}
     </view>
@@ -319,7 +321,7 @@ const webviewRefs = useRef<Record<string, any>>({});
 const handleReload = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
-    ref.invoke({ method: 'reload' });
+    ref.invoke({ method: 'reload' }).exec();
   }
 };
 // 后退
@@ -327,10 +329,12 @@ const goBack = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
     // 通过 eval 执行页面内的 JS
-    ref.invoke({
-      method: 'eval',
-      params: { func: 'window.history.back()' },
-    });
+    ref
+      .invoke({
+        method: 'eval',
+        params: { func: 'window.history.back()' },
+      })
+      .exec();
   }
 };
 ```

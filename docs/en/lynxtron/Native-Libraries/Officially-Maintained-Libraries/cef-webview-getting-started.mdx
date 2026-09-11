@@ -58,6 +58,8 @@ export default {
 
 Initialize CEF before using webview: call `cefWebview.initialize()` after `app.whenReady()` and before creating a `LynxWindow` or loading a Lynx bundle.
 
+Only one host process can use the current shared CEF storage at a time. Stop other WebView host applications before running this example, including a previously launched dev or installed app. Multiple WebViews in one host are supported. `initialize()` throws on failure; do not ignore the error and continue creating windows. See [initialization limits](/lynxtron/api/@lynx-js/cef-webview/#initialization-result-and-process-limit).
+
 ```typescript {1-2,5}
 import { app, LynxWindow } from '@lynx-js/lynxtron';
 import cefWebview from '@lynx-js/cef-webview/lynxtron';
@@ -70,9 +72,12 @@ app.whenReady().then(() => {
     height: 800,
   });
 
-  win.loadFile('main.lynx.bundle');
+  win.show();
+  // Keep the scaffold's dev loadURL / production loadFile logic here.
 });
 ```
+
+Merge this initialization into `src/main/desktop/main.ts`; retain the scaffold's bundle paths and environment-dependent loading code rather than replacing them with a hard-coded path.
 
 ## Use the Lynx Element
 

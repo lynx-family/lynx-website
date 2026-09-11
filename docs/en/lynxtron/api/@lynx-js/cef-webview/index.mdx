@@ -39,6 +39,14 @@ The `initialize()` method initializes Chromium Embedded Framework (CEF) for the
 current process. AutoLink also uses the `./lynxtron` entry when staging the
 package for a Lynxtron host build.
 
+### Initialization Result and Process Limit
+
+`initialize(): boolean` returns `true` on success and throws when native initialization fails. Do not continue creating WebViews after a failure; inspect the native logs for the cause.
+
+The current implementation shares the default CEF storage directory across host applications. Only one host process can initialize the CEF browser at a time, including development and installed applications. Close other applications using this WebView before starting another host. One host can create multiple WebViews, and CEF Helper subprocesses do not count as additional browser hosts. This is not yet isolation by application bundle ID. A storage conflict is one possible initialization failure, not the only cause.
+
+The root and `./lynxtron` exports include TypeScript declarations for this host API.
+
 ## Exports
 
 | Export           | Description                                                        |

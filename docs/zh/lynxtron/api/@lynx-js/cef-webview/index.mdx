@@ -36,6 +36,14 @@ app.whenReady().then(() => {
 `initialize()` 方法会为当前进程初始化 Chromium Embedded Framework (CEF)。AutoLink
 在为 Lynxtron 宿主构建收集包时，也会使用 `./lynxtron` 入口。
 
+### 初始化结果与进程限制
+
+`initialize(): boolean` 成功时返回 `true`，原生初始化失败时抛出异常。失败后不要继续创建 WebView，应查看原生日志定位原因。
+
+当前实现中，各宿主应用共享默认 CEF 存储目录，因此同时只能有一个宿主进程初始化 CEF browser，包括开发态和已安装的应用。启动另一个宿主前，请先关闭其他使用该 WebView 的应用。同一个宿主可以创建多个 WebView，CEF Helper 子进程不属于额外的 browser 宿主。目前尚未按应用 bundle ID 隔离。存储冲突只是初始化失败的一种可能原因。
+
+根入口与 `./lynxtron` 入口均提供该宿主 API 的 TypeScript 声明。
+
 ## 导出
 
 | 导出             | 说明                                         |

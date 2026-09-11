@@ -66,7 +66,7 @@ Because the browser title bar contains tabs, the default Lynxtron window title b
 When creating `LynxWindow`, set `frame: false` to remove the system title bar:
 
 ```typescript
-// src/main/main.ts
+// src/main/desktop/main.ts
 import { app, LynxWindow } from '@lynx-js/lynxtron';
 import cefWebview from '@lynx-js/cef-webview/lynxtron';
 let mainWindow: LynxWindow | null = null;
@@ -85,6 +85,8 @@ app.whenReady().then(() => {
 ```
 
 Merge this initialization into the project's existing startup flow and keep its bundle loading code. Initialize CEF before creating any `LynxWindow`.
+
+Before running `npm run dev`, close any other host application using this WebView, including an installed copy. The current CEF storage is shared across host applications; only one browser host process can initialize it at a time. Multiple tabs in this browser are supported. If `initialize()` throws, stop startup and inspect the error instead of continuing with a blank WebView.
 
 <img src={browserDemoFrameLessPng} alt="Remove the title bar" />
 
@@ -176,7 +178,7 @@ const handleFullScreenTap = () => {
     <div style={{ flex: 1 }}>
 
 ```typescript
-// src/main/main.ts
+// src/main/desktop/main.ts
 // Listen for these messages and call Lynxtron APIs.
 w.on('-lynx-invoke', (event, params) => {
   console.log('window is invoke', params);
@@ -257,11 +259,11 @@ After installing the native library and initializing CEF as shown above, use [`<
 <view className="content-area">
   {tabs.map((tab) => (
     <view key={tab.id} className="tab-content">
-      {tab.input_value && (
+      {tab.url && (
         <webview
           className="webview-container"
           id={`webview-${tab.id}`}
-          src={tab.input_value}
+          src={tab.url}
         />
       )}
     </view>
@@ -319,7 +321,7 @@ const webviewRefs = useRef<Record<string, any>>({});
 const handleReload = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
-    ref.invoke({ method: 'reload' });
+    ref.invoke({ method: 'reload' }).exec();
   }
 };
 // Go back
@@ -327,10 +329,12 @@ const goBack = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
     // Execute JavaScript inside the page
-    ref.invoke({
-      method: 'eval',
-      params: { func: 'window.history.back()' },
-    });
+    ref
+      .invoke({
+        method: 'eval',
+        params: { func: 'window.history.back()' },
+      })
+      .exec();
   }
 };
 ```
