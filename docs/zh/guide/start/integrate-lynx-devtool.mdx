@@ -29,6 +29,7 @@ import versionJson from '@site/docs/public/version.json';
 ### 引入依赖
 
 你需要新增以下组件：`LynxService` 的 `Devtool` 子组件、 `LynxDevTool` 和 `DebugRouter`。
+请确保 Podfile 已按 [Lynx 集成指南](/guide/start/integrate-with-existing-apps.html?platform=ios) 声明 `lynx-family` Specs 仓库作为源。
 
 ```ruby title="Podfile" {2-8}
 target 'YourTarget' do
@@ -58,23 +59,21 @@ DevTool 提供了一些调试功能开关，
 
 </Details>
 
-你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这些开关：
 
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {9-16}
+```objective-c title=AppDelegate.m {7-13}
 #import <Lynx/LynxEnv.h>
-#import <Lynx/LynxService.h>
-#import <Lynx/LynxServiceDevToolProtocol.h>
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
+  // 准备 DevTool
+  [LynxEnv prepareDevToolForDevelopmentBeforeInit];
   LynxEnv *lynxEnv = [LynxEnv sharedInstance];
-  // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
-  [LynxService(LynxServiceDevToolProtocol) enableAllSessions];
   // 打开 Lynx DevTool 开关
   lynxEnv.devtoolEnabled = YES;
   // 打开 Lynx LogBox 开关
@@ -88,18 +87,16 @@ DevTool 提供了一些调试功能开关，
 
 ```objective-c title="YourTarget-Bridging-Header.h"
 #import <Lynx/LynxEnv.h>
-#import <Lynx/LynxService.h>
-#import <Lynx/LynxServiceDevToolProtocol.h>
 ```
 
-```swift title=AppDelegate.swift {5-12}
+```swift title=AppDelegate.swift {5-11}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
+    // 准备 DevTool
+    LynxEnv.prepareDevToolForDevelopmentBeforeInit()
     let lynxEnv = LynxEnv.sharedInstance()
-    // 允许 DevTool 调试所有 Lynx 页面（连接 DevTool 桌面应用必需）
-    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self) as? LynxServiceDevToolProtocol)?.enableAllSessions()
     // 打开 Lynx DevTool 开关
     lynxEnv.devtoolEnabled = true
     // 打开 Lynx LogBox 开关
@@ -113,7 +110,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 </Tabs>
 
 :::info
-除了前面介绍的三个开关外，还有更多开关可以帮助你控制 DevTool 的行为，请参考 [Lynx DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+除了前面介绍的开关外，还有更多开关可以帮助你控制 DevTool 的行为，请参考 [Lynx DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
 :::
 
  </Steps>
@@ -156,17 +153,18 @@ dependencies {
 
 ### 注册 DevTool Service
 
+DevTool Service 提供了一些启动配置值，以控制默认行为，可以根据实际需求进行配置。下面的示例会为尚未设置的配置值应用开发环境下的默认值。
+
 <Tabs groupId='register-devtool-service-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-7}
+```java title=YourApplication.java {3-6}
 private void initLynxService() {
   // ...
   // register DevTool service
   LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
-
-  // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
-  LynxDevToolService.getINSTANCE().enableAllSessions();
+  // 准备 DevTool
+  LynxEnv.inst().prepareDevToolForDevelopmentBeforeInit();
 }
 
 ```
@@ -174,14 +172,13 @@ private void initLynxService() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-7}
+```kotlin title=YourApplication.kt {3-6}
 private fun initLynxService() {
   // ...
   // register DevTool service
   LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
-
-  // 允许 DevTool 调试所有 Lynx 页面（连接 Lynx DevTool 桌面应用必需）
-  LynxDevToolService.INSTANCE.enableAllSessions()
+  // 准备 DevTool
+  LynxEnv.inst().prepareDevToolForDevelopmentBeforeInit()
 }
 ```
 
@@ -207,7 +204,7 @@ DevTool 提供了一些调试功能开关，
 
 </Details>
 
-你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这些开关：
 
 <Tabs groupId='turn-on-switches-android'>
 <Tab label="Java">
@@ -244,7 +241,7 @@ private fun initLynxEnv() {
 </Tabs>
 
 :::info
-除了前面介绍的三个开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+除了前面介绍的开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
 :::
 
 </Steps>
@@ -324,7 +321,7 @@ DevTool 提供了一些调试功能开关，
 
 </Details>
 
-你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这三个开关：
+你可以在[初始化 LynxEnv](/guide/start/integrate-with-existing-apps.html#lynxenv-初始化) 时打开设置这些开关：
 
 <Tabs groupId='turn-on-switches-harmony'>
 <Tab label="ETS">
@@ -347,7 +344,7 @@ public initLynxEnv() {
 </Tabs>
 
 :::info
-除了前面介绍的三个开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
+除了前面介绍的开关外，还有更多可以帮助你控制 DevTool 的行为，请参考 [DevTool 开关页面](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch)。
 :::
 
 </Steps>

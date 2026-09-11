@@ -1,9 +1,18 @@
-# Downstream Compatibility
+# Repository Instructions
+
+## Contribution Workflow
+
+Follow the [commit](./CONTRIBUTING.md#commits) and
+[pull request](./CONTRIBUTING.md#pull-requests) conventions in
+`CONTRIBUTING.md`. Automated reviewers must also follow the policy
+embedded in [the pull request template](./.github/pull_request_template.md).
+
+## Downstream Compatibility
 
 This repository is consumed by the in-house Lynx documentation site through a
 pinned git submodule and local `file:` dependency.
 
-## Directly Consumed Paths
+### Directly Consumed Paths
 
 The downstream prepare flow consumes these OSS paths:
 
@@ -19,7 +28,7 @@ The downstream prepare flow consumes these OSS paths:
 The downstream repository replaces `docs/public/lynx-examples` and applies
 internal content overlays after copying OSS content.
 
-## Downstream Tool Contract
+### Downstream Tool Contract
 
 The downstream prepare flow directly executes:
 
@@ -33,6 +42,20 @@ downstream repository root as the working directory.
 
 Keep these script paths, caller-working-directory behavior, environment
 variables, and generated output layouts compatible with downstream callers.
+
+## Portable Build and Generation Tooling
+
+Prepare and build tooling runs across local development, GitHub Actions,
+Cloudflare Pages, Netlify, and downstream consumers. Node-based generators must
+not invoke undeclared host commands. In particular, do not depend on `rsync`;
+it is not available in every Cloudflare Pages build image supported by this
+site.
+
+Prefer `node:*` APIs or declared package dependencies. If an operating-system
+tool is unavoidable, explicitly provision it in every caller and supported
+build image, document the prerequisite, and add CI coverage for its absence or
+availability. A command being installed on a developer machine or GitHub-hosted
+runner does not make it part of the build contract.
 
 ### `api-stats.json` doc links
 
