@@ -32,14 +32,8 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Setup PNPM
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: '.node-version'
-          cache: 'pnpm'
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Case Check
         run: node scripts/ci/check-case-collisions.mjs
@@ -50,11 +44,23 @@ jobs:
       - name: lynx-ui Route Contract Check
         run: node scripts/ci/check-lynx-ui-routes.mjs
 
-      - name: Lynx Example Generator Test
-        run: pnpm run test:lynx-example
-
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generated Documentation Consistency Check
+        run: |
+          # Installation runs prepare. Keep this list aligned with every
+          # committed documentation output generated during that lifecycle.
+          generated_documentation_outputs=(
+            "sharedDocs/packageDocs"
+            "sharedDocs/lynx-ui-intros.ts"
+          )
+          changes="$(git status --porcelain=v1 --untracked-files=all -- "${generated_documentation_outputs[@]}")"
+          if [ -n "$changes" ]; then
+            printf '%s\n' "$changes"
+            echo "::error::Generated documentation is out of date. Run pnpm run prepare and commit all changes reported above."
+            exit 1
+          fi
 
       - name: Install pipx
         run: python -m pip install pipx==1.17.1
@@ -77,10 +83,62 @@ jobs:
       - name: Build
         run: pnpm run build
 
+  # Keep generator portability tests dependency-free. Direct Node execution
+  # avoids pnpm 11 implicitly installing dependencies and running root prepare.
+  generator-portability:
+    name: Generator Portability
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
+
+      - name: Lynx Example Generator Test
+        run: node --test scripts/lynx-example.test.js
+
+  # Check committed documents with MDX dependencies, without running prepare.
+  # Validate separately verifies generated documentation after root prepare.
+  # Keep installation explicit and separate from dependency-free generator tests.
+  documentation-imports:
+    name: Documentation Imports
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Documentation Import Boundary Check
+        run: |
+          node --test scripts/ci/check-doc-import-boundaries.test.mjs
+          node scripts/ci/check-doc-import-boundaries.mjs
+
+  # Branch protection requires Done as the aggregate status. Add every new
+  # required CI job to needs so its result cannot bypass this gate.
   done:
     name: Done
     needs:
       - validate
+      - generator-portability
+      - documentation-imports
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions: {}
