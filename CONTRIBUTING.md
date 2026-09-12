@@ -301,6 +301,28 @@ If validation or execution is interrupted after approval, the recovery job
 removes the approval label and moves the request to `cherry-pick:failed`. Inspect
 the failed workflow run before approving the request again.
 
+#### Adding newly enabled targets
+
+An existing request can be reused after another release branch is explicitly
+enabled in the workflow configuration. Edit **Target release branches** in the
+Issue body and add a checked item such as `- [x] release/4.1`, then reopen the
+Issue if it is closed.
+
+Editing or reopening the request revalidates it and returns a valid request to
+`cherry-pick:pending-approval`. Changing the source PR (which is prohibited and
+makes the request invalid), target branches, or risk level, and every reopen,
+clears the previous approval metadata. A reason-only edit does not change the
+approval fingerprint, but execution still requires a new approval label event
+after revalidation. A user with write, maintain, or admin permission must add
+`cherry-pick:approved` again. Existing generated pull requests are reused or
+skipped, so execution creates pull requests only for targets that are still
+missing.
+
+The source PR is fixed when the request is first initialized and cannot be
+changed. Editing the **Source PR** field makes the request invalid without
+changing its recorded source. Restore the original value to continue using the
+request, or open a new Cherry-pick request for a different source PR.
+
 ### Configuration
 
 The allowed target branches are defined in

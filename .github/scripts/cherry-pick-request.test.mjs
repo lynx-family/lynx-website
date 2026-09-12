@@ -72,6 +72,25 @@ function requestBodyWithNewTarget() {
   );
 }
 
+/** Builds the canonical summary created when a request is initialized. */
+function initializedSummary() {
+  return {
+    id: 1,
+    body: [
+      '<!-- cherry-pick-request-summary -->',
+      '<!-- cherry-pick-source-pr: 1358 -->',
+      '',
+      '## Cherry-pick request summary',
+      '',
+      'Status: **Pending approval**',
+      '',
+      '- Request issue: #1403',
+      '- Source PR: #1358',
+    ].join('\n'),
+    user: { login: 'github-actions[bot]', type: 'Bot' },
+  };
+}
+
 /** Builds a canonical summary at the requested execution phase. */
 function executionSummary(status) {
   const nextAction =
@@ -84,6 +103,7 @@ function executionSummary(status) {
     id: 1,
     body: [
       '<!-- cherry-pick-request-summary -->',
+      '<!-- cherry-pick-source-pr: 1358 -->',
       '<!-- cherry-pick-approved-fingerprint: bc2d6fddd07e8fad -->',
       '<!-- cherry-pick-approved-by: maintainer -->',
       '<!-- cherry-pick-approved-at: 2026-09-11T10:00:00.000Z -->',
@@ -164,7 +184,7 @@ async function createTemporaryDirectory(prefix) {
 }
 
 /** Installs a deterministic git stub used by execution tests. */
-async function createFakeGit(temporaryDirectory) {
+async function createFakeGit(temporaryDirectory, targetContainsSource = true) {
   const fakeBin = path.join(temporaryDirectory, 'bin');
   const gitLogPath = path.join(temporaryDirectory, 'git.log');
   await fs.mkdir(fakeBin);
@@ -176,7 +196,7 @@ async function createFakeGit(temporaryDirectory) {
       'const args = process.argv.slice(2);',
       "fs.appendFileSync(process.env.FAKE_GIT_LOG, `${args.join(' ')}\\n`);",
       "if (args[0] === 'ls-remote') process.exit(2);",
-      "if (args[0] === 'merge-base') process.exit(0);",
+      `if (args[0] === 'merge-base') process.exit(${targetContainsSource ? 0 : 1});`,
     ].join('\n'),
     { mode: 0o755 },
   );
@@ -385,7 +405,12 @@ async function runValidation(stateLabels = [], options = {}) {
     body: options.body || requestBody(),
     updated_at: options.issueUpdatedAt || '2026-09-14T01:00:00Z',
   };
-  const comments = structuredClone(options.comments || []);
+  const comments = structuredClone(
+    options.comments ??
+      (stateLabels.some((label) => STATE_LABELS.includes(label))
+        ? [initializedSummary()]
+        : []),
+  );
   const requests = [];
 
   const server = http.createServer(async (request, response) => {
@@ -609,6 +634,23 @@ async function runExecution(options) {
   };
   const comments = structuredClone(options.comments || []);
   const requests = [];
+  const createdPulls = [];
+  const existingPullState = options.existingPullState || 'open';
+  const existingPull =
+    options.existingPullLabels === undefined
+      ? null
+      : {
+          number: 2000,
+          html_url: 'https://github.com/lynx-family/lynx-website/pull/2000',
+          base: { ref: 'release/4.0' },
+          head: {
+            ref: 'cherry-pick/release-4.0/pr-1358',
+            repo: { full_name: 'lynx-family/lynx-website' },
+          },
+          labels: structuredClone(options.existingPullLabels),
+          body: '<!-- cherry-pick-generated: source-pr=1358 target=release/4.0 request=1403 -->',
+          merged_at: options.existingPullMergedAt || null,
+        };
 
   const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://localhost');
@@ -675,7 +717,28 @@ async function runExecution(options) {
       request.method === 'GET' &&
       url.pathname === '/repos/lynx-family/lynx-website/pulls'
     ) {
-      sendJson(response, []);
+      const pulls =
+        existingPull &&
+        url.searchParams.get('state') === existingPullState &&
+        url.searchParams.get('base') === 'release/4.0'
+          ? [existingPull]
+          : [];
+      sendJson(response, pulls);
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/repos/lynx-family/lynx-website/pulls'
+    ) {
+      createdPulls.push(body);
+      sendJson(
+        response,
+        {
+          number: 2001,
+          html_url: 'https://github.com/lynx-family/lynx-website/pull/2001',
+        },
+        201,
+      );
       return;
     }
     if (
@@ -688,6 +751,30 @@ async function runExecution(options) {
         }
       }
       sendJson(response, issue.labels);
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/2000/labels'
+    ) {
+      if (options.existingLabelWriteStatus) {
+        sendJson(
+          response,
+          { message: 'Generated label write failed' },
+          options.existingLabelWriteStatus,
+        );
+        return;
+      }
+      for (const name of body.labels) {
+        if (!existingPull.labels.some((label) => label.name === name)) {
+          existingPull.labels.push({ name });
+        }
+      }
+      sendJson(response, existingPull.labels);
+      return;
+    }
+    if (request.method === 'POST' && url.pathname.endsWith('/labels')) {
+      sendJson(response, body.labels);
       return;
     }
     if (
@@ -749,7 +836,10 @@ async function runExecution(options) {
       'cherry-pick-request-execute-test-',
     );
     const eventPath = path.join(temporaryDirectory, 'event.json');
-    const { fakeBin, gitLogPath } = await createFakeGit(temporaryDirectory);
+    const { fakeBin, gitLogPath } = await createFakeGit(
+      temporaryDirectory,
+      options.targetContainsSource,
+    );
     await fs.writeFile(
       eventPath,
       JSON.stringify({
@@ -793,6 +883,7 @@ async function runExecution(options) {
     return {
       ...result,
       comments,
+      createdPulls,
       gitCalls: (await fs.readFile(gitLogPath, 'utf8').catch(() => ''))
         .trim()
         .split('\n')
@@ -846,6 +937,399 @@ describe('cherry-pick request label initialization', () => {
       );
     });
   }
+});
+
+describe('terminal cherry-pick request reuse', () => {
+  it('persists a parseable source identity when other fields are invalid', async () => {
+    const result = await runValidation([], {
+      body: requestBody().replace('- [x] release/4.0', '- [ ] release/4.0'),
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    const summary = result.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(summary.body, /<!-- cherry-pick-source-pr: 1358 -->/);
+    assert.doesNotMatch(summary.body, /cherry-pick-source-pr: unset/);
+  });
+
+  it('allows the first valid source after an invalid initial source', async () => {
+    const invalid = await runValidation([], {
+      body: requestBody().replace('#1358', 'not-a-pull-request'),
+    });
+    assert.equal(invalid.code, 0, invalid.stderr);
+    const invalidSummary = invalid.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(invalidSummary.body, /<!-- cherry-pick-source-pr: unset -->/);
+
+    const corrected = await runValidation(['cherry-pick:invalid'], {
+      action: 'edited',
+      comments: invalid.comments,
+    });
+
+    assert.equal(corrected.code, 0, corrected.stderr);
+    assert.deepEqual(
+      corrected.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:pending-approval'].sort(),
+    );
+    const correctedSummary = corrected.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(correctedSummary.body, /<!-- cherry-pick-source-pr: 1358 -->/);
+    assert.doesNotMatch(correctedSummary.body, /cherry-pick-source-pr: unset/);
+  });
+
+  it('does not infer a legacy source identity from reason text', async () => {
+    const result = await runValidation(['cherry-pick:partial'], {
+      action: 'edited',
+      comments: [
+        {
+          id: 1,
+          body: [
+            '<!-- cherry-pick-request-summary -->',
+            '',
+            '## Cherry-pick request summary',
+            '',
+            '### Reason',
+            '',
+            '- Source PR: #1400',
+          ].join('\n'),
+          user: { login: 'github-actions[bot]', type: 'Bot' },
+        },
+      ],
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(
+      result.requests.some(
+        (request) =>
+          request.method === 'GET' && request.path.endsWith('/pulls/1400'),
+      ),
+      false,
+    );
+    assert.ok(
+      result.comments.some((comment) =>
+        /persisted source PR identity is missing/i.test(comment.body),
+      ),
+    );
+  });
+
+  it('fails closed when an initialized request loses its source identity', async () => {
+    const result = await runValidation(['cherry-pick:partial'], {
+      action: 'edited',
+      comments: [],
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(
+      result.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:partial'].sort(),
+    );
+    assert.equal(
+      result.requests.some(
+        (request) =>
+          request.method === 'GET' && request.path.endsWith('/pulls/1358'),
+      ),
+      false,
+    );
+    assert.ok(
+      result.comments.some(
+        (comment) =>
+          /persisted source PR identity is missing/i.test(comment.body) &&
+          comment.body.includes('Open a new cherry-pick request'),
+      ),
+    );
+  });
+
+  it('rejects changing the source PR of an existing request', async () => {
+    const initialized = await runValidation();
+    assert.equal(initialized.code, 0, initialized.stderr);
+    const legacySummary = initialized.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    legacySummary.body = legacySummary.body.replace(
+      '<!-- cherry-pick-source-pr: 1358 -->\n',
+      '',
+    );
+
+    const result = await runValidation(
+      ['cherry-pick:partial', 'cherry-pick:approved'],
+      {
+        action: 'edited',
+        body: requestBody().replace('#1358', '#1400'),
+        comments: [legacySummary],
+      },
+    );
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(
+      result.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:invalid'].sort(),
+    );
+    assert.equal(
+      result.requests.some(
+        (request) =>
+          request.method === 'GET' && request.path.endsWith('/pulls/1400'),
+      ),
+      false,
+    );
+    const summary = result.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(summary.body, /<!-- cherry-pick-source-pr: 1358 -->/);
+    assert.match(summary.body, /^- Source PR: #1358$/m);
+    assert.doesNotMatch(summary.body, /^- Source PR: #1400$/m);
+    assert.match(summary.body, /Status: \*\*Invalid\*\*/);
+    assert.ok(
+      result.comments.some(
+        (comment) =>
+          comment.body.includes(
+            'Source PR cannot be changed from #1358 to #1400.',
+          ) && comment.body.includes('open a new Cherry-pick request'),
+      ),
+    );
+  });
+
+  for (const action of ['edited', 'reopened']) {
+    it(`clears stale approval metadata when a terminal request is ${action}`, async () => {
+      const approved = await runValidation(
+        ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+        { eventLabel: 'cherry-pick:approved' },
+      );
+      assert.equal(approved.code, 0, approved.stderr);
+
+      const terminalState =
+        action === 'edited' ? 'cherry-pick:partial' : 'cherry-pick:pr-created';
+      const stateLabels =
+        action === 'edited'
+          ? [terminalState, 'cherry-pick:approved']
+          : [terminalState];
+      const result = await runValidation(stateLabels, {
+        action,
+        body: requestBodyWithNewTarget(),
+        comments: approved.comments,
+      });
+
+      assert.equal(result.code, 0, result.stderr);
+      assert.deepEqual(
+        result.issue.labels.map((label) => label.name).sort(),
+        [TYPE_LABEL, 'cherry-pick:pending-approval'].sort(),
+      );
+      const summary = result.comments.find((comment) =>
+        comment.body.includes('<!-- cherry-pick-request-summary -->'),
+      );
+      assert.doesNotMatch(summary.body, /cherry-pick-approved-fingerprint/);
+      assert.doesNotMatch(summary.body, /cherry-pick-approval-event/);
+      assert.doesNotMatch(summary.body, /cherry-pick-approved-by/);
+      assert.doesNotMatch(summary.body, /cherry-pick-approved-at/);
+      assert.match(summary.body, /Status: \*\*Pending approval\*\*/);
+    });
+  }
+
+  it('reuses an existing target and creates a PR only for the new target after reapproval', async () => {
+    const initialApproval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      { eventLabel: 'cherry-pick:approved' },
+    );
+    assert.equal(initialApproval.code, 0, initialApproval.stderr);
+
+    const body = requestBodyWithNewTarget();
+    const reopened = await runValidation(['cherry-pick:pr-created'], {
+      action: 'reopened',
+      body,
+      comments: initialApproval.comments,
+    });
+    assert.equal(reopened.code, 0, reopened.stderr);
+
+    const approval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        body,
+        comments: reopened.comments,
+        eventLabel: 'cherry-pick:approved',
+        eventUpdatedAt: '2026-09-14T02:00:00Z',
+        issueUpdatedAt: '2026-09-14T02:00:00Z',
+      },
+    );
+    assert.equal(approval.code, 0, approval.stderr);
+    assert.match(approval.output, /^should_execute=true$/m);
+    assert.match(
+      approval.output,
+      /^target_branches=release\/4.1,release\/4.0$/m,
+    );
+
+    const execution = await runExecution({
+      body,
+      comments: approval.comments,
+      eventBody: body,
+      eventUpdatedAt: '2026-09-14T02:00:00Z',
+      existingPullLabels: [{ name: 'cherry-pick:generated' }],
+      targetContainsSource: false,
+    });
+
+    assert.equal(execution.code, 0, execution.stderr);
+    assert.deepEqual(
+      execution.createdPulls.map((pull) => pull.base),
+      ['release/4.1'],
+    );
+    assert.equal(
+      execution.gitCalls.filter((call) =>
+        call.startsWith('cherry-pick -x source-commit'),
+      ).length,
+      1,
+    );
+    assert.ok(
+      execution.comments.some((comment) =>
+        comment.body.includes(
+          'Existing cherry-pick PR found for `release/4.0`',
+        ),
+      ),
+    );
+    assert.equal(execution.issue.state, 'closed');
+    assert.ok(
+      execution.issue.labels.some(
+        (label) => label.name === 'cherry-pick:pr-created',
+      ),
+    );
+  });
+
+  it('restores a missing generated label while reusing the existing PR', async () => {
+    const approval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      { eventLabel: 'cherry-pick:approved' },
+    );
+    assert.equal(approval.code, 0, approval.stderr);
+
+    const execution = await runExecution({
+      comments: approval.comments,
+      eventBody: requestBody(),
+      existingPullLabels: [],
+      targetContainsSource: false,
+    });
+
+    assert.equal(execution.code, 0, execution.stderr);
+    assert.deepEqual(execution.createdPulls, []);
+    assert.equal(
+      execution.gitCalls.some((call) => call.startsWith('cherry-pick -x ')),
+      false,
+    );
+    assert.ok(
+      execution.requests.some(
+        (request) =>
+          request.method === 'POST' &&
+          request.path.endsWith('/issues/2000/labels') &&
+          request.body.labels.includes('cherry-pick:generated'),
+      ),
+    );
+  });
+
+  it('reuses the existing PR when generated label restoration also fails', async () => {
+    const approval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      { eventLabel: 'cherry-pick:approved' },
+    );
+    assert.equal(approval.code, 0, approval.stderr);
+
+    const execution = await runExecution({
+      comments: approval.comments,
+      eventBody: requestBody(),
+      existingPullLabels: [],
+      existingLabelWriteStatus: 500,
+      targetContainsSource: false,
+    });
+
+    assert.equal(execution.code, 0, execution.stderr);
+    assert.match(
+      execution.stderr,
+      /Failed to restore cherry-pick:generated on PR #2000/,
+    );
+    assert.deepEqual(execution.createdPulls, []);
+    assert.equal(
+      execution.gitCalls.some((call) => call.startsWith('cherry-pick -x ')),
+      false,
+    );
+    assert.ok(
+      execution.comments.some((comment) =>
+        comment.body.includes(
+          'Existing cherry-pick PR found for `release/4.0`',
+        ),
+      ),
+    );
+  });
+
+  it('reuses an existing merged PR without recreating its target', async () => {
+    const approval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      { eventLabel: 'cherry-pick:approved' },
+    );
+    assert.equal(approval.code, 0, approval.stderr);
+
+    const execution = await runExecution({
+      comments: approval.comments,
+      eventBody: requestBody(),
+      existingPullLabels: [],
+      existingPullState: 'closed',
+      existingPullMergedAt: '2026-09-14T03:00:00Z',
+      targetContainsSource: false,
+    });
+
+    assert.equal(execution.code, 0, execution.stderr);
+    assert.deepEqual(execution.createdPulls, []);
+    assert.equal(
+      execution.gitCalls.some((call) => call.startsWith('cherry-pick -x ')),
+      false,
+    );
+    assert.ok(
+      execution.requests.some(
+        (request) =>
+          request.method === 'POST' &&
+          request.path.endsWith('/issues/2000/labels'),
+      ),
+    );
+    assert.ok(
+      execution.issue.labels.some(
+        (label) => label.name === 'cherry-pick:pr-created',
+      ),
+    );
+    assert.equal(execution.issue.state, 'closed');
+  });
+
+  it('blocks a target whose generated PR was closed without merging', async () => {
+    const approval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      { eventLabel: 'cherry-pick:approved' },
+    );
+    assert.equal(approval.code, 0, approval.stderr);
+
+    const execution = await runExecution({
+      comments: approval.comments,
+      eventBody: requestBody(),
+      existingPullLabels: [{ name: 'cherry-pick:generated' }],
+      existingPullState: 'closed',
+      targetContainsSource: false,
+    });
+
+    assert.equal(execution.code, 0, execution.stderr);
+    assert.deepEqual(execution.createdPulls, []);
+    assert.equal(
+      execution.gitCalls.some((call) => call.startsWith('cherry-pick -x ')),
+      false,
+    );
+    assert.ok(
+      execution.comments.some((comment) =>
+        comment.body.includes(
+          'existing generated cherry-pick PR for this source PR and target branch was closed without merging',
+        ),
+      ),
+    );
+    assert.ok(
+      execution.issue.labels.some(
+        (label) => label.name === 'cherry-pick:failed',
+      ),
+    );
+    assert.equal(execution.issue.state, 'open');
+  });
 });
 
 describe('cherry-pick request approval authorization', () => {
