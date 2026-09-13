@@ -1,5 +1,17 @@
 # Repository Instructions
 
+## Branch Strategy
+
+Never push directly to `main` or any `release/*` branch. Before committing or
+pushing, ensure `HEAD` is on an appropriately named topic or development branch
+based on the applicable branch. Automated cherry-picks require a source pull
+request already merged into the default branch.
+
+Follow the release cherry-pick and backport rules in
+[Release Cherry-picks and Backports](./CONTRIBUTING.md#release-cherry-picks-and-backports).
+Use the newest applicable branch, normally `main`, and
+cherry-pick only toward older release branches; never in the opposite direction.
+
 ## Contribution Workflow
 
 Follow the [commit](./CONTRIBUTING.md#commits) and

@@ -225,7 +225,38 @@ Keep `TEST` on one line when practical. Use lowercase `issue` and `doc`.
 - Do not include internal-only content, private URLs, or downstream-only
   implementation details in this OSS repository.
 
-## Release Cherry-picks
+## Release Cherry-picks and Backports
+
+This section is the source of truth for choosing source and target branches for
+release backports.
+
+### Branch Direction
+
+Open a pull request from a topic or development branch into the newest branch
+to which the change applies. The pull request base is normally `main`. Use a
+release branch as the base only in the rare case that the change is
+intentionally specific to that release and does not apply to `main`.
+
+When the same change is needed on older releases, cherry-pick it from the
+newest applicable branch toward older release branches. Never cherry-pick from
+an older release branch into a newer release branch or into `main`. If a fix
+applies to `main`, land it there before backporting it.
+
+The automated Cherry-pick request workflow accepts only a source pull request
+merged into the repository's default branch, currently `main`, that does not
+change files under `.github/workflows/`. A pull request with a release branch
+as its base cannot be used as the automated source.
+
+Backport a release-specific source pull request manually. For each target,
+create a topic or development branch and open a separate pull request for
+normal review and approval. Use
+`[release/x.y] <original-commit-subject>` for a literal cherry-pick or
+`[release/x.y] <concise-subject>` for an adapted backport. Do not land an
+equivalent change on `main` solely to make it eligible for the automated
+workflow. Handle workflow-changing sources manually or with an explicitly
+permitted token as described in [Configuration](#configuration).
+
+### Requesting a Release Cherry-pick
 
 Release cherry-picks are requested through the **Cherry-pick request** issue
 form. Comment commands such as `/cherry-pick release/4.0` are no longer a
@@ -251,6 +282,8 @@ protection process.
 If a target conflicts or fails, fix the issue manually or update the request,
 then remove and re-add `cherry-pick:approved` to retry. Targets that already
 produced a valid generated pull request are skipped on retry.
+
+### Configuration
 
 The allowed target branches are defined in
 [`.github/cherry-pick-config.json`](./.github/cherry-pick-config.json) and must
