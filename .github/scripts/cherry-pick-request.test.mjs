@@ -529,7 +529,7 @@ describe('cherry-pick request config validation', () => {
     assert.equal(result.code, 1);
     assert.match(
       result.stderr,
-      /must not assign reserved workflow labels before maintainer triage/,
+      /must not assign reserved workflow labels automatically/,
     );
     for (const lifecycleLabel of lifecycleLabels) {
       assert.match(result.stderr, new RegExp(lifecycleLabel));

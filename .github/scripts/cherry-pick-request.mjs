@@ -1811,7 +1811,7 @@ function checkConfigCommand() {
   );
   if (unexpectedDefaultLabels.length > 0) {
     throw new Error(
-      `Issue Form must not assign reserved workflow labels before maintainer triage: ${unexpectedDefaultLabels.join(', ')}.`,
+      `Issue Form must not assign reserved workflow labels automatically: ${unexpectedDefaultLabels.join(', ')}.`,
     );
   }
   const requiredUsedLabels = [

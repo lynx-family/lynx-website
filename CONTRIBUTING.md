@@ -271,7 +271,7 @@ To request a release cherry-pick:
 2. Enter the merged source pull request.
 3. Select one or more target release branches.
 4. Explain why the change is needed and choose a risk level.
-5. Wait for a maintainer to triage the request by adding
+5. Wait for a user with repository triage access or greater to add
    `cherry-pick:request`. Automation does not run before this label is added.
 6. Wait for validation to mark the request as pending approval.
 7. A user with write, maintain, or admin permission must add the
