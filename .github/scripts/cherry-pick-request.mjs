@@ -8,6 +8,9 @@ import { spawnSync } from 'node:child_process';
 const CONFIG_PATH = '.github/cherry-pick-config.json';
 const ISSUE_FORM_PATH = '.github/ISSUE_TEMPLATE/cherry_pick_request.yml';
 const SUMMARY_MARKER = '<!-- cherry-pick-request-summary -->';
+const SOURCE_PR_RE = /<!-- cherry-pick-source-pr:\s*(\d+)\s*-->/i;
+const SOURCE_PR_UNSET_MARKER = '<!-- cherry-pick-source-pr: unset -->';
+const LEGACY_SUMMARY_SOURCE_PR_RE = /^- Source PR:\s+#(\d+)\s*$/m;
 const GENERATED_MARKER_PREFIX = '<!-- cherry-pick-generated:';
 const APPROVED_FINGERPRINT_RE =
   /<!-- cherry-pick-approved-fingerprint:\s*([a-f0-9]+)\s*-->/i;
@@ -40,14 +43,22 @@ const VALID_RISKS = new Set(['Low', 'Medium', 'High']);
 const MAX_REASON_LENGTH = 2000;
 const MAX_CONFLICT_FILES = 20;
 
+// Configuration and workflow context
+
+/** Reads and parses a JSON file from the workflow checkout. */
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+/** Loads the release target and required-label configuration. */
 function loadConfig() {
   return readJson(CONFIG_PATH);
 }
 
+/**
+ * Resolves the current owner and repository from the environment, falling back
+ * to the webhook payload when GitHub has not populated GITHUB_REPOSITORY.
+ */
 function repoFromEnv() {
   let repository = process.env.GITHUB_REPOSITORY;
   if (!repository || !repository.includes('/')) {
@@ -67,6 +78,7 @@ function repoFromEnv() {
   return { owner, repo, repository };
 }
 
+/** Loads the GitHub webhook event that selected the current command path. */
 function getEvent() {
   if (!process.env.GITHUB_EVENT_PATH) {
     throw new Error('GITHUB_EVENT_PATH is required.');
@@ -74,6 +86,7 @@ function getEvent() {
   return readJson(process.env.GITHUB_EVENT_PATH);
 }
 
+/** Builds the current Actions run URL for audit comments and summaries. */
 function workflowRunUrl() {
   const server = process.env.GITHUB_SERVER_URL || 'https://github.com';
   let repo = process.env.GITHUB_REPOSITORY || '';
@@ -91,10 +104,17 @@ function workflowRunUrl() {
   return `${server}/${repo}/actions/runs/${runId}`;
 }
 
+/** Returns the REST API origin, allowing tests to substitute a local server. */
 function apiBase() {
   return process.env.GITHUB_API_URL || 'https://api.github.com';
 }
 
+// GitHub API transport
+
+/**
+ * Sends one authenticated GitHub REST request and normalizes successful and
+ * failed JSON responses for callers.
+ */
 async function github(pathname, options = {}) {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error('GITHUB_TOKEN is required.');
@@ -130,6 +150,7 @@ async function github(pathname, options = {}) {
   return { data, headers: response.headers, status: response.status };
 }
 
+/** Parses RFC 5988-style pagination links by relation name. */
 function parseLinkHeader(header) {
   if (!header) return {};
   const links = {};
@@ -140,6 +161,7 @@ function parseLinkHeader(header) {
   return links;
 }
 
+/** Fetches every page from a GitHub list endpoint. */
 async function githubPaginate(pathname) {
   const results = [];
   let next = `${apiBase()}${pathname}`;
@@ -166,6 +188,7 @@ async function githubPaginate(pathname) {
   return results;
 }
 
+/** Publishes a value through GITHUB_OUTPUT or stdout during local runs. */
 function setOutput(name, value) {
   if (!process.env.GITHUB_OUTPUT) {
     console.log(`${name}=${value}`);
@@ -174,10 +197,14 @@ function setOutput(name, value) {
   fs.appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 }
 
+// Request parsing and output sanitization
+
+/** Prevents user-controlled text from terminating an HTML comment marker. */
 function escapeHtmlComment(value) {
   return String(value || '').replaceAll('-->', '-- >');
 }
 
+/** Removes hidden HTML comments and bounds the user-provided reason. */
 function sanitizeReason(reason) {
   return String(reason || '')
     .replace(/<!--[\s\S]*?-->/g, '[removed html comment]')
@@ -185,6 +212,7 @@ function sanitizeReason(reason) {
     .slice(0, MAX_REASON_LENGTH);
 }
 
+/** Escapes user-controlled Markdown text, including mention syntax. */
 function neutralizeMarkdownText(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -193,12 +221,14 @@ function neutralizeMarkdownText(value) {
     .replaceAll('@', '&#64;');
 }
 
+/** Truncates text to a stable upper bound while preserving an ellipsis. */
 function truncate(value, maxLength) {
   const input = String(value || '');
   if (input.length <= maxLength) return input;
   return `${input.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
+/** Escapes a value for safe inclusion in one Markdown table cell. */
 function markdownTableCell(value) {
   return neutralizeMarkdownText(value)
     .replaceAll('\r', '')
@@ -206,6 +236,7 @@ function markdownTableCell(value) {
     .replaceAll('|', '\\|');
 }
 
+/** Splits an Issue Form body into normalized level-three heading sections. */
 function parseIssueSections(body) {
   const sections = new Map();
   let current = null;
@@ -229,10 +260,15 @@ function parseIssueSections(body) {
   return normalized;
 }
 
+/** Reads a parsed issue section case-insensitively. */
 function getSection(sections, expected) {
   return sections.get(expected.toLowerCase()) || '';
 }
 
+/**
+ * Accepts a PR number or same-repository URL and rejects cross-repository
+ * source references.
+ */
 function normalizeSourcePr(raw, repo) {
   const input = String(raw || '').trim();
   let match = input.match(/^#?(\d+)$/);
@@ -256,6 +292,7 @@ function normalizeSourcePr(raw, repo) {
   return Number(number);
 }
 
+/** Extracts unique checked values from a Markdown checkbox list. */
 function parseCheckedTargets(raw) {
   const targets = [];
   for (const line of String(raw || '').split('\n')) {
@@ -265,6 +302,10 @@ function parseCheckedTargets(raw) {
   return [...new Set(targets)];
 }
 
+/**
+ * Parses and validates the user-editable fields in a cherry-pick request while
+ * preserving configured target order.
+ */
 function parseRequestBody(body, config, repo = repoFromEnv()) {
   const sections = parseIssueSections(body);
   const sourceRaw = getSection(sections, 'Source PR');
@@ -304,6 +345,16 @@ function parseRequestBody(body, config, repo = repoFromEnv()) {
   };
 }
 
+/** Parses only the source field so its identity survives other form errors. */
+function sourcePrFromRequestBody(body, repo = repoFromEnv()) {
+  const sections = parseIssueSections(body);
+  return normalizeSourcePr(getSection(sections, 'Source PR'), repo);
+}
+
+/**
+ * Fingerprints execution-sensitive fields so edits invalidate prior approval.
+ * The reason is excluded because it does not change the executed operation.
+ */
 function fingerprint(parsed) {
   const payload = {
     sourcePr: parsed.sourcePr,
@@ -317,14 +368,19 @@ function fingerprint(parsed) {
     .slice(0, 16);
 }
 
+// Request identity and state helpers
+
+/** Derives the stable automation branch for one source PR and target. */
 function stableBranchName(target, sourcePr) {
   return `cherry-pick/${target.replaceAll('/', '-')}/pr-${sourcePr}`;
 }
 
+/** Builds the generated-PR identity marker used for idempotency checks. */
 function generatedMarker(sourcePr, target, requestIssue) {
   return `${GENERATED_MARKER_PREFIX} source-pr=${sourcePr} target=${target} request=${requestIssue} -->`;
 }
 
+/** Returns whether a comment was authored by a bot account. */
 function isBotActor(comment) {
   const user = comment?.user;
   return (
@@ -333,51 +389,64 @@ function isBotActor(comment) {
   );
 }
 
+/** Distinguishes workflow-owned label removals from human actions. */
 function isGitHubActionsBot(user) {
   return user?.login === 'github-actions[bot]';
 }
 
+/** Normalizes issue labels into a set of names. */
 function labelsOf(issue) {
   return new Set((issue.labels || []).map((label) => label.name || label));
 }
 
+/** Tests whether an issue currently has a specific label. */
 function hasLabel(issue, label) {
   return labelsOf(issue).has(label);
 }
 
+/** Tests whether a request reached a completed or blocked terminal state. */
 function hasTerminalStateLabel(issue) {
   const labels = labelsOf(issue);
   return [...TERMINAL_STATE_LABELS].some((label) => labels.has(label));
 }
 
+/** Tests whether automation has already assigned any workflow state. */
 function hasManagedStateLabel(issue) {
   const labels = labelsOf(issue);
   return STATE_LABELS.some((label) => labels.has(label));
 }
 
+// GitHub issue and pull-request resources
+
+/** Builds the REST path for an issue or pull request number. */
 function issuePath(repo, issueNumber) {
   return `/repos/${repo.owner}/${repo.repo}/issues/${issueNumber}`;
 }
 
+/** Fetches the current issue state instead of trusting the webhook snapshot. */
 async function getCurrentIssue(repo, issueNumber) {
   return (await github(issuePath(repo, issueNumber))).data;
 }
 
+/** Fetches source pull-request metadata. */
 async function getPull(repo, number) {
   return (await github(`/repos/${repo.owner}/${repo.repo}/pulls/${number}`))
     .data;
 }
 
+/** Fetches every changed file in a source pull request. */
 async function getPullFiles(repo, number) {
   return githubPaginate(
     `/repos/${repo.owner}/${repo.repo}/pulls/${number}/files?per_page=100`,
   );
 }
 
+/** Fetches repository metadata such as the default branch. */
 async function getRepo(repo) {
   return (await github(`/repos/${repo.owner}/${repo.repo}`)).data;
 }
 
+/** Fails early when repository labels required by the state machine are absent. */
 async function ensureRequiredLabels(repo, config) {
   const labels = await githubPaginate(
     `/repos/${repo.owner}/${repo.repo}/labels?per_page=100`,
@@ -391,6 +460,7 @@ async function ensureRequiredLabels(repo, config) {
   }
 }
 
+/** Adds labels without replacing unrelated labels on the issue. */
 async function addLabels(repo, issueNumber, labels) {
   if (labels.length === 0) return;
   await github(`${issuePath(repo, issueNumber)}/labels`, {
@@ -400,6 +470,7 @@ async function addLabels(repo, issueNumber, labels) {
   });
 }
 
+/** Removes a label idempotently; a missing label is already the desired state. */
 async function removeLabel(repo, issueNumber, label) {
   try {
     await github(
@@ -413,6 +484,10 @@ async function removeLabel(repo, issueNumber, label) {
   }
 }
 
+/**
+ * Replaces the current workflow-state label while preserving all non-state
+ * labels.
+ */
 async function setStateLabel(repo, issue, nextState) {
   const issueNumber = issue.number;
   const current = labelsOf(issue);
@@ -426,6 +501,7 @@ async function setStateLabel(repo, issue, nextState) {
   }
 }
 
+/** Creates an issue comment and returns the GitHub response object. */
 async function createIssueComment(repo, issueNumber, body) {
   return (
     await github(`${issuePath(repo, issueNumber)}/comments`, {
@@ -436,6 +512,7 @@ async function createIssueComment(repo, issueNumber, body) {
   ).data;
 }
 
+/** Replaces an existing issue comment, primarily the mutable summary. */
 async function updateIssueComment(repo, commentId, body) {
   return (
     await github(
@@ -449,6 +526,7 @@ async function updateIssueComment(repo, commentId, body) {
   ).data;
 }
 
+/** Closes a request after every target succeeds or is already satisfied. */
 async function closeIssue(repo, issueNumber) {
   await github(issuePath(repo, issueNumber), {
     method: 'PATCH',
@@ -457,12 +535,14 @@ async function closeIssue(repo, issueNumber) {
   });
 }
 
+/** Lists all comments so bot-owned state can be found across pagination. */
 async function listIssueComments(repo, issueNumber) {
   return githubPaginate(
     `/repos/${repo.owner}/${repo.repo}/issues/${issueNumber}/comments?per_page=100`,
   );
 }
 
+/** Finds a bot-authored comment containing a workflow-owned marker. */
 async function findBotComment(repo, issueNumber, marker) {
   const comments = await listIssueComments(repo, issueNumber);
   return comments.find(
@@ -471,6 +551,9 @@ async function findBotComment(repo, issueNumber, marker) {
   );
 }
 
+// Persisted summary state and rendering
+
+/** Reads the approval fingerprint and audit fields from a summary comment. */
 function approvedSnapshotFromBody(body) {
   const fingerprintMatch = String(body || '').match(APPROVED_FINGERPRINT_RE);
   if (!fingerprintMatch) return null;
@@ -481,10 +564,24 @@ function approvedSnapshotFromBody(body) {
   };
 }
 
+/**
+ * Reads the immutable source PR from new metadata or the visible legacy
+ * summary line so requests created before the marker remain reusable.
+ */
+function sourcePrFromSummary(body) {
+  const content = String(body || '');
+  const metadata = content.split(/^### Reason\s*$/m, 1)[0];
+  const match =
+    content.match(SOURCE_PR_RE) || metadata.match(LEGACY_SUMMARY_SOURCE_PR_RE);
+  return match ? Number(match[1]) : null;
+}
+
+/** Finds the single bot-owned summary comment for a request. */
 async function getSummaryComment(repo, issueNumber) {
   return findBotComment(repo, issueNumber, SUMMARY_MARKER);
 }
 
+/** Maps a summary status and validation errors to maintainer instructions. */
 function nextActionForStatus(status, errors = []) {
   const normalized = String(status || '').toLowerCase();
   const hasUnmergedSource = errors.some((error) =>
@@ -493,7 +590,13 @@ function nextActionForStatus(status, errors = []) {
   const hasWorkflowFiles = errors.some((error) =>
     error.includes('changes GitHub Actions workflow files'),
   );
+  const hasChangedSource = errors.some((error) =>
+    error.includes('Source PR cannot be changed'),
+  );
 
+  if (normalized === 'invalid' && hasChangedSource) {
+    return 'Restore the original source PR, or open a new cherry-pick request for the different source PR.';
+  }
   if (normalized === 'invalid' && hasUnmergedSource) {
     return 'Wait for the source PR to merge, then edit or reopen this request to revalidate. If validation passes, a user with write, maintain, or admin permission must add `cherry-pick:approved`.';
   }
@@ -516,20 +619,24 @@ function nextActionForStatus(status, errors = []) {
     return 'Review and merge the generated cherry-pick PRs.';
   }
   if (normalized === 'partial') {
-    return 'Fix failed or blocked targets, then remove and re-add `cherry-pick:approved` to retry. Successful targets will be skipped.';
+    return 'Fix failed or blocked targets, then add `cherry-pick:approved` to retry. Successful targets will be skipped.';
   }
   if (normalized === 'failed') {
-    return 'Fix the failure, then remove and re-add `cherry-pick:approved` to retry.';
+    return 'Fix the failure, then add `cherry-pick:approved` to retry.';
   }
   return '';
 }
 
+/** Renders the event comment for an invalid request and its recovery steps. */
 function renderValidationFailureComment(errors, workflowUrl, options = {}) {
   const hasUnmergedSource = errors.some((error) =>
     error.includes('is not merged'),
   );
   const hasWorkflowFiles = errors.some((error) =>
     error.includes('changes GitHub Actions workflow files'),
+  );
+  const hasChangedSource = errors.some((error) =>
+    error.includes('Source PR cannot be changed'),
   );
   const header = hasWorkflowFiles
     ? 'Cherry-pick request is invalid for automatic execution.'
@@ -541,19 +648,24 @@ function renderValidationFailureComment(errors, workflowUrl, options = {}) {
         'Handle this backport manually, or use a separately approved process with a token that has workflow permission.',
         'Do not retry this request with the default cherry-pick workflow unless the source PR no longer changes workflow files.',
       ]
-    : hasUnmergedSource
+    : hasChangedSource
       ? [
-          'Wait until the source PR is merged into the default branch.',
-          'After it is merged, edit this request issue or reopen it to trigger validation again.',
-          'If validation passes, the request will move back to `cherry-pick:pending-approval`.',
-          'A user with write, maintain, or admin permission must add `cherry-pick:approved` again before execution starts.',
+          'Restore the original source PR in this request, or close it and open a new Cherry-pick request for the different source PR.',
+          'Save the restored request to trigger validation again.',
         ]
-      : [
-          'Edit this request issue and fix the fields above.',
-          'Save the issue, or reopen it, to trigger validation again.',
-          'If validation passes, the request will move back to `cherry-pick:pending-approval`.',
-          'A user with write, maintain, or admin permission must add `cherry-pick:approved` before execution starts.',
-        ];
+      : hasUnmergedSource
+        ? [
+            'Wait until the source PR is merged into the default branch.',
+            'After it is merged, edit this request issue or reopen it to trigger validation again.',
+            'If validation passes, the request will move back to `cherry-pick:pending-approval`.',
+            'A user with write, maintain, or admin permission must add `cherry-pick:approved` again before execution starts.',
+          ]
+        : [
+            'Edit this request issue and fix the fields above.',
+            'Save the issue, or reopen it, to trigger validation again.',
+            'If validation passes, the request will move back to `cherry-pick:pending-approval`.',
+            'A user with write, maintain, or admin permission must add `cherry-pick:approved` before execution starts.',
+          ];
 
   return [
     header,
@@ -568,13 +680,19 @@ function renderValidationFailureComment(errors, workflowUrl, options = {}) {
   ].join('\n');
 }
 
+/** Renders the standard workflow-run audit line. */
 function renderWorkflowRunLine() {
   return `Workflow run: ${workflowRunUrl()}`;
 }
 
+/**
+ * Renders the canonical mutable summary, including hidden state markers and
+ * per-target execution results.
+ */
 function renderSummary({
   requestIssue,
   sourcePr,
+  sourcePrUnset,
   sourceTitle,
   sourceCommit,
   requestedBy,
@@ -592,6 +710,8 @@ function renderSummary({
 }) {
   const markerLines = [
     SUMMARY_MARKER,
+    sourcePr ? `<!-- cherry-pick-source-pr: ${sourcePr} -->` : '',
+    sourcePrUnset ? SOURCE_PR_UNSET_MARKER : '',
     approvedFingerprint
       ? `<!-- cherry-pick-approved-fingerprint: ${escapeHtmlComment(approvedFingerprint)} -->`
       : '',
@@ -653,12 +773,48 @@ function renderSummary({
   return `${body.join('\n')}\n`;
 }
 
+/** Marks an existing summary failed while preserving its target details. */
+function renderRecoveredSummary(body, completedAt) {
+  let summary = String(body || '');
+  const statusLine = 'Status: **Failed**';
+  const nextActionLine = `Next action: ${nextActionForStatus('failed', [])}`;
+
+  if (/^Status: \*\*.+\*\*$/m.test(summary)) {
+    summary = summary.replace(/^Status: \*\*.+\*\*$/m, statusLine);
+  } else {
+    summary = summary.replace(
+      '## Cherry-pick request summary',
+      `## Cherry-pick request summary\n\n${statusLine}`,
+    );
+  }
+  if (/^Next action: .*$/m.test(summary)) {
+    summary = summary.replace(/^Next action: .*$/m, nextActionLine);
+  } else {
+    summary = summary.replace(statusLine, `${statusLine}\n${nextActionLine}`);
+  }
+
+  const completedLine = `- Completed at: ${completedAt}`;
+  if (/^- Completed at: .*$/m.test(summary)) {
+    summary = summary.replace(/^- Completed at: .*$/m, completedLine);
+  } else if (/^### (?:Reason|Targets)$/m.test(summary)) {
+    summary = summary.replace(
+      /^### (Reason|Targets)$/m,
+      `${completedLine}\n\n### $1`,
+    );
+  } else {
+    summary = `${summary.trimEnd()}\n\n${completedLine}`;
+  }
+  return `${summary.trimEnd()}\n`;
+}
+
+/** Updates the existing bot summary or creates it on first validation. */
 async function upsertSummary(repo, issueNumber, summaryBody) {
   const existing = await getSummaryComment(repo, issueNumber);
   if (existing) return updateIssueComment(repo, existing.id, summaryBody);
   return createIssueComment(repo, issueNumber, summaryBody);
 }
 
+/** Initializes target rows shown while a valid request awaits approval. */
 function initialTargets(parsed) {
   return parsed.targets.map((branch) => ({
     branch,
@@ -667,6 +823,12 @@ function initialTargets(parsed) {
   }));
 }
 
+// Request validation and approval state machine
+
+/**
+ * Verifies the source PR and each target against repository state. Workflow
+ * file changes are rejected because the default token cannot push them.
+ */
 async function validateParsedRequest(repo, parsed) {
   const repository = await getRepo(repo);
   const pull = await getPull(repo, parsed.sourcePr);
@@ -721,6 +883,10 @@ async function validateParsedRequest(repo, parsed) {
   };
 }
 
+/**
+ * Filters webhook events that cannot or should not advance validation. A type
+ * label may initialize only a request without an existing managed state.
+ */
 function shouldNoopValidate(event, issue) {
   if (!hasLabel(issue, TYPE_LABEL) && event.action !== 'opened') {
     return 'Issue does not have cherry-pick:request label.';
@@ -748,6 +914,7 @@ function shouldNoopValidate(event, issue) {
   return '';
 }
 
+/** Checks whether an approval actor may start write-capable automation. */
 async function hasWritePermission(repo, username) {
   const result = await github(
     `/repos/${repo.owner}/${repo.repo}/collaborators/${encodeURIComponent(username)}/permission`,
@@ -755,6 +922,7 @@ async function hasWritePermission(repo, username) {
   return ['write', 'maintain', 'admin'].includes(result.data.permission);
 }
 
+/** Removes approval metadata while preserving the rest of the summary. */
 async function clearApprovedSnapshot(repo, issueNumber) {
   const summary = await getSummaryComment(repo, issueNumber);
   if (!summary) return;
@@ -765,23 +933,33 @@ async function clearApprovedSnapshot(repo, issueNumber) {
   await updateIssueComment(repo, summary.id, body);
 }
 
+/**
+ * Validates one issue event, maintains request state and approval metadata,
+ * and emits outputs that gate the separate execution job.
+ */
 async function validateCommand() {
   const repo = repoFromEnv();
   const config = loadConfig();
   const event = getEvent();
   const issueNumber = event.issue.number;
+  const isApprovalEvent =
+    event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
   console.log(
     `Validating cherry-pick request issue #${issueNumber} in ${repo.repository} for action ${event.action}.`,
   );
   let issue = await getCurrentIssue(repo, issueNumber);
-  const noopReason = shouldNoopValidate(event, issue);
+
+  // Approval is authorized by its immutable webhook snapshot. Later issue
+  // mutations affect future events, not the execution this event starts.
+  const eventIssue = isApprovalEvent ? event.issue : issue;
+  const noopReason = shouldNoopValidate(event, eventIssue);
   if (noopReason) {
     console.log(noopReason);
     setOutput('should_execute', 'false');
     return;
   }
 
-  if (!hasLabel(issue, TYPE_LABEL)) {
+  if (!hasLabel(eventIssue, TYPE_LABEL)) {
     console.log('Issue is not a cherry-pick request.');
     setOutput('should_execute', 'false');
     return;
@@ -870,20 +1048,62 @@ async function validateCommand() {
     throw error;
   }
 
+  const currentBody = String(issue.body || '');
+  const eventBody = String(event.issue?.body || '');
+  const requestBody = isApprovalEvent ? eventBody : currentBody;
+
+  // Parse user input, preserve the original source identity, and validate all
+  // repository-backed constraints before accepting an approval.
+  const summary = await getSummaryComment(repo, issueNumber);
+  const summaryBody = String(summary?.body || '');
+  const establishedSourcePr = sourcePrFromSummary(summaryBody);
+  const sourcePrWasUnset = summaryBody.includes(SOURCE_PR_UNSET_MARKER);
+  const sourceIdentityMissing =
+    !establishedSourcePr && hasManagedStateLabel(issue) && !sourcePrWasUnset;
+  if (sourceIdentityMissing) {
+    if (hasLabel(issue, APPROVED_LABEL)) {
+      await removeLabel(repo, issueNumber, APPROVED_LABEL);
+    }
+    await createIssueComment(
+      repo,
+      issueNumber,
+      [
+        'Cherry-pick request cannot be revalidated.',
+        '',
+        'The persisted source PR identity is missing from this initialized request.',
+        '',
+        'Next steps:',
+        '- Open a new cherry-pick request.',
+        '',
+        renderWorkflowRunLine(),
+      ].join('\n'),
+    );
+    setOutput('should_execute', 'false');
+    return;
+  }
   let parsed;
+  let requestedSourcePr;
   let validation = null;
   const errors = [];
   try {
-    parsed = parseRequestBody(issue.body || '', config, repo);
-    validation = await validateParsedRequest(repo, parsed);
-    errors.push(...validation.errors);
+    requestedSourcePr = sourcePrFromRequestBody(requestBody, repo);
+    parsed = parseRequestBody(requestBody, config, repo);
+    if (establishedSourcePr && parsed.sourcePr !== establishedSourcePr) {
+      errors.push(
+        `Source PR cannot be changed from #${establishedSourcePr} to #${parsed.sourcePr}. Restore #${establishedSourcePr} or open a new cherry-pick request.`,
+      );
+    } else {
+      validation = await validateParsedRequest(repo, parsed);
+      errors.push(...validation.errors);
+    }
   } catch (error) {
     errors.push(error.message);
   }
 
   const summaryBase = {
     requestIssue: issueNumber,
-    sourcePr: parsed?.sourcePr,
+    sourcePr: establishedSourcePr || requestedSourcePr,
+    sourcePrUnset: !establishedSourcePr && !requestedSourcePr,
     sourceTitle: validation?.sourceTitle,
     sourceCommit: validation?.sourceCommit,
     requestedBy: issue.user?.login,
@@ -920,28 +1140,26 @@ async function validateCommand() {
   }
 
   const currentFingerprint = fingerprint(parsed);
-  const summary = await getSummaryComment(repo, issueNumber);
-  const approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
-  const isApprovalEvent =
-    event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
+  let approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
 
+  // Every edit or reopen starts a new review cycle, even when only explanatory
+  // text changed, so the visible issue revision and approval cannot diverge.
   if (event.action === 'edited' || event.action === 'reopened') {
-    if (
-      approvedSnapshot?.fingerprint &&
-      approvedSnapshot.fingerprint !== currentFingerprint
-    ) {
-      if (hasLabel(issue, APPROVED_LABEL)) {
-        await removeLabel(repo, issueNumber, APPROVED_LABEL);
-      }
+    const hadApproval =
+      hasLabel(issue, APPROVED_LABEL) || Boolean(approvedSnapshot?.fingerprint);
+    if (hasLabel(issue, APPROVED_LABEL)) {
+      await removeLabel(repo, issueNumber, APPROVED_LABEL);
+    }
+    if (approvedSnapshot?.fingerprint) {
       await clearApprovedSnapshot(repo, issueNumber);
+    }
+    approvedSnapshot = null;
+    if (hadApproval) {
       await createIssueComment(
         repo,
         issueNumber,
         [
-          'Cherry-pick approval was cleared because request parameters changed.',
-          '',
-          'Changed fields that require re-approval:',
-          '- Source PR, target branches, or risk level.',
+          'Cherry-pick approval was cleared because the request was edited or reopened.',
           '',
           'Next steps:',
           '- Review the updated request.',
@@ -950,30 +1168,13 @@ async function validateCommand() {
           renderWorkflowRunLine(),
         ].join('\n'),
       );
-    } else if (approvedSnapshot?.fingerprint) {
-      await upsertSummary(
-        repo,
-        issueNumber,
-        renderSummary({
-          ...summaryBase,
-          status: 'Pending approval',
-          approvedFingerprint: approvedSnapshot?.fingerprint,
-          approvedBy: approvedSnapshot?.approvedBy,
-          approvedAt: approvedSnapshot?.approvedAt,
-        }),
-      );
     }
   }
 
-  if (event.action === 'reopened') {
-    if (hasLabel(issue, APPROVED_LABEL)) {
-      await removeLabel(repo, issueNumber, APPROVED_LABEL);
-    }
-    await clearApprovedSnapshot(repo, issueNumber);
-  }
-
+  // Only a fresh approval from a write-capable actor can start execution.
   if (isApprovalEvent) {
     if (hasLabel(issue, 'cherry-pick:running')) {
+      await removeLabel(repo, issueNumber, APPROVED_LABEL);
       await createIssueComment(
         repo,
         issueNumber,
@@ -982,7 +1183,7 @@ async function validateCommand() {
           '',
           'Next steps:',
           '- Wait for the running workflow to finish.',
-          '- If it fails or is interrupted, remove and re-add `cherry-pick:approved` to retry.',
+          '- If it fails or is interrupted, add `cherry-pick:approved` to retry.',
           '',
           renderWorkflowRunLine(),
         ].join('\n'),
@@ -1014,6 +1215,9 @@ async function validateCommand() {
       return;
     }
 
+    // The validated event is the authorization commit point. Remove the
+    // trigger label for UI clarity; its later state does not revoke this run.
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
     const approvedAt = new Date().toISOString();
     await upsertSummary(
       repo,
@@ -1078,6 +1282,9 @@ async function validateCommand() {
   setOutput('should_execute', 'false');
 }
 
+// Git workspace operations
+
+/** Runs git synchronously and attaches process details to thrown errors. */
 function runGit(args, options = {}) {
   const result = spawnSync('git', args, {
     encoding: 'utf8',
@@ -1100,16 +1307,19 @@ function runGit(args, options = {}) {
   return result;
 }
 
+/** Runs git and returns trimmed stdout. */
 function gitOutput(args, options = {}) {
   return runGit(args, options).stdout.trim();
 }
 
+/** Restores a clean checkout before and after each target attempt. */
 function cleanWorkingTree() {
   runGit(['cherry-pick', '--abort'], { allowFailure: true });
   runGit(['reset', '--hard'], { stdio: 'inherit' });
   runGit(['clean', '-fd'], { stdio: 'inherit' });
 }
 
+/** Checks whether a generated branch name already exists on origin. */
 function remoteRefExists(ref) {
   const result = runGit(
     ['ls-remote', '--exit-code', '--heads', 'origin', ref],
@@ -1120,6 +1330,7 @@ function remoteRefExists(ref) {
   return result.status === 0;
 }
 
+/** Lists files left in an unmerged state after a failed cherry-pick. */
 function conflictFiles() {
   const output = gitOutput(['diff', '--name-only', '--diff-filter=U'], {
     allowFailure: true,
@@ -1127,6 +1338,7 @@ function conflictFiles() {
   return output ? output.split('\n').filter(Boolean) : [];
 }
 
+/** Formats a bounded conflict-file list for an issue comment. */
 function formatConflictList(files) {
   if (files.length === 0) return 'No conflicted files reported by git.';
   const visible = files.slice(0, MAX_CONFLICT_FILES);
@@ -1137,6 +1349,7 @@ function formatConflictList(files) {
   return lines.join('\n');
 }
 
+/** Detects the GitHub token error specific to workflow-file pushes. */
 function isWorkflowPermissionPushError(error) {
   const text = [error?.message, error?.git?.stdout, error?.git?.stderr]
     .filter(Boolean)
@@ -1150,6 +1363,7 @@ function isWorkflowPermissionPushError(error) {
   );
 }
 
+/** Produces a bounded diagnostic from a command or API error. */
 function shortErrorMessage(error) {
   return truncate(
     [error?.message, error?.git?.stderr, error?.git?.stdout]
@@ -1160,6 +1374,9 @@ function shortErrorMessage(error) {
   );
 }
 
+// Execution result rendering
+
+/** Renders the final success, partial, or failure instructions. */
 function renderFinalResultComment(finalState, workflowUrl) {
   if (finalState === 'cherry-pick:pr-created') {
     return [
@@ -1186,7 +1403,7 @@ function renderFinalResultComment(finalState, workflowUrl) {
       'Next steps:',
       '- Check the summary table for each target result.',
       '- Fix blocked or failed targets manually if needed.',
-      `- To retry remaining work, remove and re-add \`${APPROVED_LABEL}\`.`,
+      `- To retry remaining work, add \`${APPROVED_LABEL}\`.`,
       '- Already successful targets will be skipped by idempotency checks.',
       '',
       `Workflow run: ${workflowUrl}`,
@@ -1202,18 +1419,22 @@ function renderFinalResultComment(finalState, workflowUrl) {
     'Next steps:',
     '- Check the failure comments and summary table.',
     '- Fix the underlying issue.',
-    `- Remove and re-add \`${APPROVED_LABEL}\` to retry after the issue is resolved.`,
+    `- Add \`${APPROVED_LABEL}\` to retry after the issue is resolved.`,
     '',
     `Workflow run: ${workflowUrl}`,
   ].join('\n');
 }
 
+// Generated pull-request identity and API operations
+
+/** Lists pull requests in one state, optionally constrained by query fields. */
 async function listPulls(repo, state, extra = '') {
   return githubPaginate(
     `/repos/${repo.owner}/${repo.repo}/pulls?state=${state}&per_page=100${extra}`,
   );
 }
 
+/** Verifies the stable marker, head, and base identity of a generated PR. */
 function prHasGeneratedIdentity(
   pr,
   repo,
@@ -1224,18 +1445,30 @@ function prHasGeneratedIdentity(
 ) {
   const body = String(pr.body || '');
   const marker = generatedMarker(sourcePr, target, requestIssue);
-  const labelMatches = (pr.labels || []).some(
-    (label) => label.name === GENERATED_LABEL,
-  );
   return (
     pr.base?.ref === target &&
     pr.head?.repo?.full_name === `${repo.owner}/${repo.repo}` &&
     pr.head?.ref === branchName &&
-    labelMatches &&
     body.includes(marker)
   );
 }
 
+/** Restores optional generated-PR metadata without weakening idempotency. */
+async function reconcileGeneratedLabel(repo, pr) {
+  if ((pr.labels || []).some((label) => label.name === GENERATED_LABEL)) return;
+  try {
+    await addIssueLabelSafe(repo, pr.number, GENERATED_LABEL);
+  } catch (error) {
+    console.warn(
+      `Failed to restore ${GENERATED_LABEL} on PR #${pr.number}: ${error.message}`,
+    );
+  }
+}
+
+/**
+ * Finds an existing open, merged, or closed-unmerged generated PR for exactly
+ * one request source and target.
+ */
 async function findExistingGeneratedPr(
   repo,
   sourcePr,
@@ -1259,7 +1492,10 @@ async function findExistingGeneratedPr(
       branchName,
     ),
   );
-  if (open) return { kind: 'open', pr: open };
+  if (open) {
+    await reconcileGeneratedLabel(repo, open);
+    return { kind: 'open', pr: open };
+  }
 
   const closedPulls = await listPulls(
     repo,
@@ -1276,15 +1512,18 @@ async function findExistingGeneratedPr(
       branchName,
     ),
   );
-  if (closed)
+  if (closed) {
+    await reconcileGeneratedLabel(repo, closed);
     return {
       kind: closed.merged_at ? 'merged' : 'closed-unmerged',
       pr: closed,
     };
+  }
 
   return null;
 }
 
+/** Creates a pull request for a successfully pushed cherry-pick branch. */
 async function createPull(repo, title, body, head, base) {
   return (
     await github(`/repos/${repo.owner}/${repo.repo}/pulls`, {
@@ -1295,10 +1534,12 @@ async function createPull(repo, title, body, head, base) {
   ).data;
 }
 
+/** Adds the generated marker label while leaving failures visible to callers. */
 async function addIssueLabelSafe(repo, issueNumber, label) {
   await addLabels(repo, issueNumber, [label]);
 }
 
+/** Renders the auditable body attached to every generated pull request. */
 function renderGeneratedPrBody({
   requestIssue,
   sourcePr,
@@ -1334,10 +1575,12 @@ function renderGeneratedPrBody({
   ].join('\n');
 }
 
+/** Builds a bounded generated-PR title containing target and source identity. */
 function renderPrTitle(target, sourcePr, sourceTitle) {
   return truncate(`[${target}] Cherry-pick #${sourcePr}: ${sourceTitle}`, 180);
 }
 
+/** Persists current per-target progress in the request summary. */
 async function updateExecutionSummary(repo, issue, context, targets, status) {
   await upsertSummary(
     repo,
@@ -1362,11 +1605,18 @@ async function updateExecutionSummary(repo, issue, context, targets, status) {
   );
 }
 
+/** Renders a generated PR as a compact Markdown link. */
 function targetDetailLink(pr) {
   if (!pr) return '';
   return `[#${pr.number}](${pr.html_url})`;
 }
 
+// Cherry-pick execution state machine
+
+/**
+ * Revalidates the approved snapshot, processes targets serially with
+ * idempotency checks, and records a terminal request state.
+ */
 async function executeCommand() {
   const repo = repoFromEnv();
   const config = loadConfig();
@@ -1376,16 +1626,11 @@ async function executeCommand() {
     `Executing cherry-pick request issue #${issueNumber} in ${repo.repository}.`,
   );
   let issue = await getCurrentIssue(repo, issueNumber);
-  if (!hasLabel(issue, TYPE_LABEL)) {
-    console.log('Issue is no longer a cherry-pick request.');
-    return;
-  }
-  if (issue.state === 'closed') {
-    console.log('Issue is closed before execution start.');
-    return;
-  }
 
-  const parsed = parseRequestBody(issue.body || '', config, repo);
+  // The approved webhook event is immutable. Current issue edits, closure, or
+  // label changes belong to later events and cannot mutate this execution.
+  const approvedBody = String(event.issue?.body || '');
+  const parsed = parseRequestBody(approvedBody, config, repo);
   const validation = await validateParsedRequest(repo, parsed);
   if (!validation.valid) {
     throw new Error(
@@ -1416,8 +1661,8 @@ async function executeCommand() {
     detail: 'Waiting to run',
   }));
 
+  // Enter the running state only for the snapshot committed by validation.
   await setStateLabel(repo, issue, 'cherry-pick:running');
-  await removeLabel(repo, issueNumber, APPROVED_LABEL);
   await createIssueComment(
     repo,
     issueNumber,
@@ -1441,6 +1686,8 @@ async function executeCommand() {
   ]);
   runGit(['fetch', 'origin', '--prune', '--no-tags'], { stdio: 'inherit' });
 
+  // Process newest-to-oldest targets independently so one failure does not
+  // discard successful work or prevent idempotent retries.
   for (const row of targets) {
     row.status = 'Running';
     row.detail = 'Cherry-pick in progress';
@@ -1605,7 +1852,7 @@ async function executeCommand() {
             '',
             'Next steps:',
             '- Resolve this target manually, or prepare a manual cherry-pick PR.',
-            '- If there are remaining targets to retry after cleanup, remove and re-add `cherry-pick:approved`.',
+            '- If there are remaining targets to retry after cleanup, add `cherry-pick:approved`.',
             '- Already successful targets will be skipped by idempotency checks.',
             '',
             renderWorkflowRunLine(),
@@ -1695,7 +1942,7 @@ async function executeCommand() {
           '',
           'Next steps:',
           '- Open the workflow run and inspect the logs.',
-          `- If this was a transient GitHub API, rate limit, or runner issue, remove and re-add \`${APPROVED_LABEL}\` to retry.`,
+          `- If this was a transient GitHub API, rate limit, or runner issue, add \`${APPROVED_LABEL}\` to retry.`,
           '- Already successful targets will be skipped by idempotency checks.',
           '',
           renderWorkflowRunLine(),
@@ -1704,6 +1951,7 @@ async function executeCommand() {
     }
   }
 
+  // Derive one terminal state from the complete target result set.
   context.completedAt = new Date().toISOString();
   const successCount = targets.filter((target) =>
     SUCCESS_RESULTS.has(target.status),
@@ -1729,6 +1977,9 @@ async function executeCommand() {
   }
 }
 
+// Configuration consistency checks
+
+/** Reads a simple top-level YAML list following an exact key. */
 function parseYamlListAfterKey(content, key) {
   const lines = content.split('\n');
   const index = lines.findIndex((line) => line.trim() === `${key}:`);
@@ -1743,6 +1994,7 @@ function parseYamlListAfterKey(content, key) {
   return values;
 }
 
+/** Extracts ordered target labels from the Cherry-pick request Issue Form. */
 function parseIssueFormTargets(content) {
   const lines = content.split('\n');
   const targets = [];
@@ -1761,6 +2013,7 @@ function parseIssueFormTargets(content) {
   return targets;
 }
 
+/** Rejects duplicate values that would make configuration order ambiguous. */
 function assertNoDuplicates(name, values) {
   const seen = new Set();
   const duplicates = [];
@@ -1773,6 +2026,7 @@ function assertNoDuplicates(name, values) {
   }
 }
 
+/** Verifies that config, form targets, and workflow labels stay synchronized. */
 function checkConfigCommand() {
   const config = loadConfig();
   const form = fs.readFileSync(ISSUE_FORM_PATH, 'utf8');
@@ -1785,12 +2039,12 @@ function checkConfigCommand() {
     );
   }
   const defaultLabels = parseYamlListAfterKey(form, 'labels');
-  if (!defaultLabels.includes(TYPE_LABEL)) {
-    throw new Error(`Issue Form must include default label ${TYPE_LABEL}.`);
-  }
-  if (defaultLabels.includes('cherry-pick:pending-approval')) {
+  if (
+    defaultLabels.includes(TYPE_LABEL) ||
+    defaultLabels.includes('cherry-pick:pending-approval')
+  ) {
     throw new Error(
-      'Issue Form must not default to cherry-pick:pending-approval.',
+      'Issue Form must not assign workflow labels before maintainer triage.',
     );
   }
   const requiredUsedLabels = [
@@ -1807,12 +2061,16 @@ function checkConfigCommand() {
   console.log('Cherry-pick config check passed.');
 }
 
+// Local CLI and top-level failure reporting
+
+/** Reads the value immediately following a named CLI option. */
 function getArgValue(args, name) {
   const index = args.indexOf(name);
   if (index < 0) return '';
   return args[index + 1] || '';
 }
 
+/** Parses one request body locally and prints its normalized representation. */
 function dryRunValidate(args) {
   const config = loadConfig();
   const bodyFile = getArgValue(args, '--body-file');
@@ -1834,10 +2092,57 @@ function dryRunValidate(args) {
   );
 }
 
+/** Keeps the legacy parse command as an alias for dry-run validation. */
 function parseCommand(args) {
   dryRunValidate(args);
 }
 
+/**
+ * Replaces an orphaned running state after an unexpected execution failure.
+ */
+async function recoverRunningState(repo, issueNumber) {
+  const issue = await getCurrentIssue(repo, issueNumber);
+  if (!hasLabel(issue, 'cherry-pick:running')) return false;
+  const summary = await getSummaryComment(repo, issueNumber);
+  if (summary) {
+    await updateIssueComment(
+      repo,
+      summary.id,
+      renderRecoveredSummary(summary.body, new Date().toISOString()),
+    );
+  }
+  await setStateLabel(repo, issue, 'cherry-pick:failed');
+  return true;
+}
+
+/** Repairs state after a failed or timed-out execute job. */
+async function cleanupCommand() {
+  const repo = repoFromEnv();
+  const event = getEvent();
+  const issueNumber = event.issue?.number;
+  if (!issueNumber) throw new Error('Cleanup requires an issue event.');
+  if (!(await recoverRunningState(repo, issueNumber))) {
+    console.log('Request is not running; no cleanup is needed.');
+    return;
+  }
+  await createIssueComment(
+    repo,
+    issueNumber,
+    [
+      'Cherry-pick execution did not finish successfully.',
+      '',
+      'The request was moved from running to failed.',
+      '',
+      'Next steps:',
+      '- Inspect the failed workflow run.',
+      `- Add \`${APPROVED_LABEL}\` again to retry after addressing the failure.`,
+      '',
+      renderWorkflowRunLine(),
+    ].join('\n'),
+  );
+}
+
+/** Dispatches the requested validation, execution, or maintenance command. */
 async function main() {
   const [command, ...args] = process.argv.slice(2);
   if (command === 'parse') {
@@ -1860,11 +2165,16 @@ async function main() {
     await executeCommand();
     return;
   }
+  if (command === 'cleanup') {
+    await cleanupCommand();
+    return;
+  }
   throw new Error(
-    'Usage: cherry-pick-request.mjs parse --body-file <file> | validate [--dry-run --body-file <file>] | check-config | execute',
+    'Usage: cherry-pick-request.mjs parse --body-file <file> | validate [--dry-run --body-file <file>] | check-config | execute | cleanup',
   );
 }
 
+/** Best-effort reporting for unexpected failures outside normal state handling. */
 async function commentWorkflowFailure(error) {
   if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_EVENT_PATH) {
     return;
@@ -1874,6 +2184,16 @@ async function commentWorkflowFailure(error) {
     const event = getEvent();
     const issueNumber = event.issue?.number;
     if (!issueNumber) return;
+    let recoveredRunningState = false;
+    if (process.argv[2] === 'execute') {
+      try {
+        recoveredRunningState = await recoverRunningState(repo, issueNumber);
+      } catch (cleanupError) {
+        console.error(
+          `Failed to recover running request state: ${cleanupError.message}`,
+        );
+      }
+    }
     await createIssueComment(
       repo,
       issueNumber,
@@ -1881,6 +2201,9 @@ async function commentWorkflowFailure(error) {
         'Cherry-pick workflow encountered an unexpected error before it could finish updating the summary.',
         '',
         truncate(error.message || String(error), 1000),
+        ...(recoveredRunningState
+          ? ['', 'The request was moved from running to failed.']
+          : ['', 'The request state may require manual cleanup.']),
         '',
         `Workflow run: ${workflowRunUrl()}`,
       ].join('\n'),

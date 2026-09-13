@@ -271,17 +271,42 @@ To request a release cherry-pick:
 2. Enter the merged source pull request.
 3. Select one or more target release branches.
 4. Explain why the change is needed and choose a risk level.
-5. Wait for validation to mark the request as pending approval.
-6. A user with write, maintain, or admin permission must add the
+5. Wait for a maintainer to triage the request by adding
+   `cherry-pick:request`. Automation does not run before this label is added.
+6. Wait for validation to mark the request as pending approval.
+7. A user with write, maintain, or admin permission must add the
    `cherry-pick:approved` label to start execution.
+
+Adding `cherry-pick:approved` commits that exact issue revision to execution.
+The workflow removes the label after accepting it. Later edits, closure, or
+label changes do not alter or cancel that in-flight execution; they apply only
+to a future approval cycle.
 
 The workflow creates pull requests only. Generated cherry-pick pull requests
 still require the normal review, required checks, CODEOWNERS, and branch
 protection process.
 
+### Retrying or Adding Targets
+
 If a target conflicts or fails, fix the issue manually or update the request,
-then remove and re-add `cherry-pick:approved` to retry. Targets that already
-produced a valid generated pull request are skipped on retry.
+then add `cherry-pick:approved` to retry. Targets that already produced a valid
+generated pull request are skipped on retry.
+
+To add a newly enabled target to an existing request:
+
+1. Edit the issue body and add a checked item such as
+   `- [x] release/4.1` under **Target release branches**.
+2. Save the edit, then reopen the issue if the request is closed.
+3. Wait for validation to return the request to
+   `cherry-pick:pending-approval`.
+4. Have a user with write, maintain, or admin permission add
+   `cherry-pick:approved` again.
+
+The source PR identifies the request and cannot be changed. Open a new
+Cherry-pick request to backport a different source PR. Outside an in-flight
+execution, editing or reopening the request clears the previous approval.
+Existing generated pull requests are reused or skipped, so the next execution
+creates pull requests only for newly requested targets.
 
 ### Configuration
 
