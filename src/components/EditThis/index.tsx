@@ -5,6 +5,10 @@ interface Props {
    * If path is not provided, we will use the current page path and assume it's a `md` or `mdx` file.
    */
   path?: string;
+  /**
+   * An absolute source URL for content maintained outside this repository.
+   */
+  sourceUrl?: string;
 }
 
 /**
@@ -12,7 +16,7 @@ interface Props {
  * - [] tweak the style
  * - [] use it within the new APITable
  */
-export default function EditThis({ path }: Props) {
+export default function EditThis({ path, sourceUrl }: Props) {
   const { page } = usePageData();
   const t = useI18n();
 
@@ -22,11 +26,15 @@ export default function EditThis({ path }: Props) {
   } else {
     basePath = `${path}`;
   }
-  const sourcePath = `${process.env.DOC_GIT_BASE_URL}/${basePath}`;
+  const sourcePath =
+    sourceUrl ||
+    (process.env.DOC_GIT_BASE_URL
+      ? `${process.env.DOC_GIT_BASE_URL}/${basePath}`
+      : undefined);
 
   return (
     <div className="flex gap-2 items-center text-sm">
-      {process.env.DOC_GIT_BASE_URL && (
+      {sourcePath && (
         <a
           href={sourcePath}
           target="_blank"
@@ -37,7 +45,7 @@ export default function EditThis({ path }: Props) {
           {t('edit.source')}
         </a>
       )}
-      {process.env.CODE_IDE_BASE_URL && (
+      {!sourceUrl && process.env.CODE_IDE_BASE_URL && (
         <a
           href={`${process.env.CODE_IDE_BASE_URL}/${basePath}`}
           target="_blank"

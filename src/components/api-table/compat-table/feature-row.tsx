@@ -84,7 +84,7 @@ function StatusIcons({ status }: { status: BCD.StatusBlock }) {
     },
     // TODO(xuan.huang): figure out if we want to have standard_track (probably yes).
     // !status.standard_track && {
-    //   title: 'Non-standard. Expect poor cross-browser support.',
+    //   title: 'Non-standard. Expect poor cross-platform support.',
     //   text: 'Non-standard',
     //   iconClassName: 'icon-nonstandard',
     // },

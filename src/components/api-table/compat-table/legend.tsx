@@ -32,7 +32,7 @@ export const LEGEND_LABELS = {
   no: 'No support',
   unknown: 'Compatibility unknown',
   experimental: 'Experimental. Expect behavior to change in the future.',
-  nonstandard: 'Non-standard. Check cross-browser support before using.',
+  nonstandard: 'Non-standard. Check cross-platform support before using.',
   deprecated: 'Deprecated. Not for use in new websites.',
   footnote: 'See implementation notes.',
   disabled: 'User must explicitly enable this feature.',
