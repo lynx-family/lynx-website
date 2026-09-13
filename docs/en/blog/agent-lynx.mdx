@@ -1,0 +1,118 @@
+---
+title: 'Introducing Agent Lynx: DevTools for AI Agents'
+date: 2026-08-10
+sidebar: false
+authors: ['hzy']
+badge_text: 'New: Agent Lynx, DevTools for AI Agents'
+description: 'Agent Lynx gives coding agents a scriptable way to inspect, operate, and verify running Lynx apps, with snapshot refs, annotated screenshots, ReactLynx links, and trace evidence.'
+---
+
+import { BlogHeader } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore pftrace */}
+
+Coding agents can read a project, edit its source, and run its tests. But many UI bugs only become concrete once the app is running: an element is offscreen, a tap reaches the wrong target, a component receives unexpected state, or a frame takes longer than it should. Without access to the live page, the agent still has to guess from source code or ask a person to translate what DevTools shows.
+
+Over the past releases, the [Lynx DevTool MCP](/ai/lynx-devtool-mcp) and the [`lynx-devtool` Agent Skill](/ai/skills/lynx-devtool) have started closing that gap. Today we are taking the next step with **Agent Lynx**, a standalone npm CLI that turns Lynx DevTool into a compact, scriptable interface for AI agents.
+
+Agent Lynx 0.14 is now available on npm. It does not replace the Lynx DevTool desktop app, and it does not require a specific agent protocol. The `agent-lynx` CLI gives any agent with a terminal the same basic debugging loop: observe a running page, act on what it found, and collect evidence that the result is correct.
+
+## A UI Loop Agents Can Read
+
+Traditional selectors are a poor handoff between an agent's turns. They can be verbose, duplicated, or absent altogether. Raw DevTool protocol responses contain everything, but often far more than a model needs for the next action.
+
+The `agent-lynx` CLI starts from a compact `snapshot` instead. It keeps the interactive structure, visible text, and useful states such as `scrollable`, `editable`, `disabled`, and `offscreen`, then assigns refs such as `@e1` and `@e2` to the result:
+
+```bash
+agent-lynx snapshot
+
+# @e1 [scroll-view] ... {scrollable}
+# ├─ @e2 [input] "Search" ... {editable}
+# └─ @e3 [view] "Add to cart" ...
+```
+
+Those refs become the vocabulary for the next commands:
+
+```bash
+agent-lynx fill @e2 "wireless headphones"
+agent-lynx tap @e3 --snapshot
+agent-lynx wait --text "Added to cart"
+```
+
+The shared daemon keeps the target connection warm and owns the latest ref mapping across CLI invocations. Mutating commands can add `--snapshot` to return and cache the next UI state immediately, while `wait` polls fresh snapshots instead of relying on an arbitrary sleep. Add `--json` when the result needs to feed another tool or an automated check.
+
+## The Same Refs in Text and Pixels
+
+A text tree explains what can be acted on; a screenshot explains layout, visual hierarchy, and rendering. The two are much more useful when they speak the same language.
+
+```bash
+agent-lynx screenshot --annotate -o page.jpeg --json
+```
+
+With `--annotate`, the `agent-lynx` CLI refreshes the snapshot and captures the screenshot in one operation. A label such as `[3]` in the JPEG maps directly to `@e3`, and the JSON result carries the same fresh snapshot and annotation boxes. A multimodal agent can therefore reason about the pixels, choose a target, and pass its ref to `tap`, `fill`, or `scroll` without translating coordinates or taking a second snapshot that may already describe a different frame.
+
+The annotation stays deliberately sparse: it favors actionable controls, editable fields, explicit test targets, and scroll containers instead of drawing a box around every layout node. The full snapshot remains available when the agent needs the rest of the page structure.
+
+## From an Element Back to ReactLynx
+
+Finding a broken element is often only the start. The next question is which ReactLynx component produced it and what that component currently sees.
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx find Checkout
+agent-lynx reactlynx link @e3
+```
+
+The ReactLynx commands expose a second compact tree with component refs such as `@c8`. `reactlynx component` inspects props, state, hooks, and context; `reactlynx find` narrows a large tree by component name; and `reactlynx link` crosses between an element ref and its nearest surfaced component in either direction.
+
+That link is an identity lookup through Lynx node IDs and ReactLynx unique IDs, not a guess based on text, coordinates, or tree position. With a compatible [`@lynx-js/preact-devtools`](https://www.npmjs.com/package/@lynx-js/preact-devtools) development build in the app, an agent can move from a visual symptom to the responsible component and back to the rendered element without losing its place.
+
+## Debugging with Evidence
+
+UI state is only one part of a debugging session. The `agent-lynx` CLI also exposes console logs, loaded sources, JavaScript evaluation, screenshots, heap snapshots, interaction recordings, raw CDP and App requests, and performance traces.
+
+Trace recording and analysis live in the same workflow. Once a `.pftrace` has been captured, the agent can first discover what the trace actually contains, then run a focused Perfetto SQL query:
+
+```bash
+agent-lynx trace event-summary ./page.pftrace
+agent-lynx trace query ./page.pftrace \
+  --sql "SELECT name, COUNT(*) AS count FROM slice GROUP BY name ORDER BY count DESC LIMIT 20"
+```
+
+This turns “the trace file is non-empty” into inspectable evidence: which events exist, how often they occurred, and whether the recording contains the data needed to answer the original performance question.
+
+## A CLI That Carries Its Own Skill
+
+An agent needs more than executable commands. It also needs to know when to use them, how refs are scoped, which thread to evaluate on, and what to try when a target cannot be reached.
+
+The `agent-lynx` CLI ships that knowledge as the `lynx-devtool` Agent Skill:
+
+```bash
+agent-lynx skills list
+agent-lynx skills get lynx-devtool
+```
+
+The CLI discovers the Skill from its own runtime dependencies and exposes its `SKILL.md` together with an inventory of the bundled references and examples. Installing `agent-lynx` is therefore enough to install both the execution surface and the instructions that teach an agent how to use it. The Skill remains the single source of truth instead of duplicating a shorter prompt inside the CLI.
+
+This is also the boundary of the brand upgrade. **Agent Lynx** is the product and `agent-lynx` owns the CLI runtime; **lynx-devtool** remains the core Agent Skill. Existing one-shot usage through `@lynx-js/skill-lynx-devtool` continues to work through a compatibility launcher that forwards to the matching Agent Lynx version.
+
+## Try It Today
+
+Run the latest version without installing anything:
+
+```bash
+npx --yes agent-lynx --help
+```
+
+Or install it globally so the command is available to your agent on `PATH`:
+
+```bash
+npm install --global agent-lynx
+agent-lynx list-clients
+```
+
+Agent Lynx requires Node.js 18 or later and a reachable Android, iOS, or Desktop Lynx target with DevTool integrated. See the [Lynx DevTool integration guide](/guide/start/integrate-lynx-devtool) to prepare an app, then explore the [`agent-lynx` source on GitHub](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx) or the [`agent-lynx` package on npm](https://www.npmjs.com/package/agent-lynx).
+
+Agent Lynx is the beginning of a more agent-native debugging surface for Lynx. Try it on a real page, tell us where the loop still breaks down, and help shape what comes next in [lynx-community/skills](https://github.com/lynx-community/skills).
