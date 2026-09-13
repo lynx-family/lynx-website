@@ -16,6 +16,8 @@ const SUMMARY_MARKER = '<!-- cherry-pick-request-summary -->';
 const GENERATED_MARKER_PREFIX = '<!-- cherry-pick-generated:';
 const APPROVED_FINGERPRINT_RE =
   /<!-- cherry-pick-approved-fingerprint:\s*([a-f0-9]+)\s*-->/i;
+const APPROVED_EVENT_RE =
+  /<!-- cherry-pick-approval-event:\s*([a-f0-9]+)\s*-->/i;
 const APPROVED_BY_RE = /<!-- cherry-pick-approved-by:\s*([^>]+?)\s*-->/i;
 const APPROVED_AT_RE = /<!-- cherry-pick-approved-at:\s*([^>]+?)\s*-->/i;
 
@@ -322,6 +324,31 @@ function fingerprint(parsed) {
     .slice(0, 16);
 }
 
+/** Identifies one immutable approval webhook independently of live Issue state. */
+function approvalEventFingerprint(event) {
+  const payload = {
+    action: event.action,
+    issueBody: String(event.issue?.body || ''),
+    issueId: event.issue?.id || null,
+    issueNumber: event.issue?.number || null,
+    issueUpdatedAt: event.issue?.updated_at || '',
+    label: event.label?.name || '',
+    repository: event.repository?.id || event.repository?.full_name || '',
+    senderId: event.sender?.id || null,
+    senderLogin: event.sender?.login || '',
+  };
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(payload))
+    .digest('hex')
+    .slice(0, 32);
+}
+
+/** Renders the durable marker used to reject duplicate approval delivery. */
+function approvalEventMarker(eventFingerprint) {
+  return `<!-- cherry-pick-approval-event: ${eventFingerprint} -->`;
+}
+
 function stableBranchName(target, sourcePr) {
   return `cherry-pick/${target.replaceAll('/', '-')}/pr-${sourcePr}`;
 }
@@ -482,6 +509,9 @@ function approvedSnapshotFromBody(body) {
   if (!fingerprintMatch) return null;
   return {
     fingerprint: fingerprintMatch[1].trim(),
+    eventFingerprint: (
+      String(body || '').match(APPROVED_EVENT_RE)?.[1] || ''
+    ).trim(),
     approvedBy: (String(body || '').match(APPROVED_BY_RE)?.[1] || '').trim(),
     approvedAt: (String(body || '').match(APPROVED_AT_RE)?.[1] || '').trim(),
   };
@@ -597,12 +627,16 @@ function renderSummary({
   startedAt,
   completedAt,
   approvedFingerprint,
+  approvedEventFingerprint,
   errors = [],
 }) {
   const markerLines = [
     SUMMARY_MARKER,
     approvedFingerprint
       ? `<!-- cherry-pick-approved-fingerprint: ${escapeHtmlComment(approvedFingerprint)} -->`
+      : '',
+    approvedEventFingerprint
+      ? approvalEventMarker(escapeHtmlComment(approvedEventFingerprint))
       : '',
     approvedBy
       ? `<!-- cherry-pick-approved-by: ${escapeHtmlComment(approvedBy)} -->`
@@ -763,10 +797,16 @@ function shouldNoopValidate(event, issue) {
 }
 
 async function hasWritePermission(repo, username) {
-  const result = await github(
-    `/repos/${repo.owner}/${repo.repo}/collaborators/${encodeURIComponent(username)}/permission`,
-  );
-  return ['write', 'maintain', 'admin'].includes(result.data.permission);
+  if (!username) return false;
+  try {
+    const result = await github(
+      `/repos/${repo.owner}/${repo.repo}/collaborators/${encodeURIComponent(username)}/permission`,
+    );
+    return ['write', 'maintain', 'admin'].includes(result.data.permission);
+  } catch (error) {
+    if (error.status === 404) return false;
+    throw error;
+  }
 }
 
 async function clearApprovedSnapshot(repo, issueNumber) {
@@ -774,6 +814,7 @@ async function clearApprovedSnapshot(repo, issueNumber) {
   if (!summary) return;
   const body = String(summary.body || '')
     .replace(APPROVED_FINGERPRINT_RE, '')
+    .replace(APPROVED_EVENT_RE, '')
     .replace(APPROVED_BY_RE, '')
     .replace(APPROVED_AT_RE, '');
   await updateIssueComment(repo, summary.id, body);
@@ -784,18 +825,21 @@ async function validateCommand() {
   const config = loadConfig();
   const event = getEvent();
   const issueNumber = event.issue.number;
+  const isApprovalEvent =
+    event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
   console.log(
     `Validating cherry-pick request issue #${issueNumber} in ${repo.repository} for action ${event.action}.`,
   );
   let issue = await getCurrentIssue(repo, issueNumber);
-  const noopReason = shouldNoopValidate(event, issue);
+  const eventIssue = isApprovalEvent ? event.issue : issue;
+  const noopReason = shouldNoopValidate(event, eventIssue);
   if (noopReason) {
     console.log(noopReason);
     setOutput('should_execute', 'false');
     return;
   }
 
-  if (!hasLabel(issue, TYPE_LABEL)) {
+  if (!hasLabel(eventIssue, TYPE_LABEL)) {
     console.log('Issue is not a cherry-pick request.');
     setOutput('should_execute', 'false');
     return;
@@ -867,6 +911,29 @@ async function validateCommand() {
     return;
   }
 
+  if (
+    isApprovalEvent &&
+    (hasLabel(eventIssue, 'cherry-pick:running') ||
+      hasLabel(issue, 'cherry-pick:running'))
+  ) {
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
+    await createIssueComment(
+      repo,
+      issueNumber,
+      [
+        'Cherry-pick execution is already running. New approval trigger was ignored.',
+        '',
+        'Next steps:',
+        '- Wait for the running workflow to finish.',
+        '- If it fails or is interrupted, ensure `cherry-pick:approved` is absent, then add it to retry.',
+        '',
+        renderWorkflowRunLine(),
+      ].join('\n'),
+    );
+    setOutput('should_execute', 'false');
+    return;
+  }
+
   if (hasLabel(issue, 'cherry-pick:running') && event.action !== 'labeled') {
     console.log('Request is already running; validation event is a no-op.');
     setOutput('should_execute', 'false');
@@ -884,11 +951,31 @@ async function validateCommand() {
     throw error;
   }
 
+  const approvedEventId = isApprovalEvent
+    ? approvalEventFingerprint(event)
+    : '';
+  if (
+    isApprovalEvent &&
+    (await findBotComment(
+      repo,
+      issueNumber,
+      approvalEventMarker(approvedEventId),
+    ))
+  ) {
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
+    console.log('This approval event was already accepted; no-op.');
+    setOutput('should_execute', 'false');
+    return;
+  }
+
+  const requestBody = isApprovalEvent
+    ? String(eventIssue.body || '')
+    : String(issue.body || '');
   let parsed;
   let validation = null;
   const errors = [];
   try {
-    parsed = parseRequestBody(issue.body || '', config, repo);
+    parsed = parseRequestBody(requestBody, config, repo);
     validation = await validateParsedRequest(repo, parsed);
     errors.push(...validation.errors);
   } catch (error) {
@@ -900,7 +987,7 @@ async function validateCommand() {
     sourcePr: parsed?.sourcePr,
     sourceTitle: validation?.sourceTitle,
     sourceCommit: validation?.sourceCommit,
-    requestedBy: issue.user?.login,
+    requestedBy: eventIssue.user?.login,
     risk: parsed?.risk,
     reason: parsed?.reason,
     targets: parsed ? initialTargets(parsed) : [],
@@ -935,9 +1022,7 @@ async function validateCommand() {
 
   const currentFingerprint = fingerprint(parsed);
   const summary = await getSummaryComment(repo, issueNumber);
-  const approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
-  const isApprovalEvent =
-    event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
+  let approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
 
   if (event.action === 'edited' || event.action === 'reopened') {
     if (
@@ -948,6 +1033,7 @@ async function validateCommand() {
         await removeLabel(repo, issueNumber, APPROVED_LABEL);
       }
       await clearApprovedSnapshot(repo, issueNumber);
+      approvedSnapshot = null;
       await createIssueComment(
         repo,
         issueNumber,
@@ -972,6 +1058,7 @@ async function validateCommand() {
           ...summaryBase,
           status: 'Pending approval',
           approvedFingerprint: approvedSnapshot?.fingerprint,
+          approvedEventFingerprint: approvedSnapshot?.eventFingerprint,
           approvedBy: approvedSnapshot?.approvedBy,
           approvedAt: approvedSnapshot?.approvedAt,
         }),
@@ -984,26 +1071,10 @@ async function validateCommand() {
       await removeLabel(repo, issueNumber, APPROVED_LABEL);
     }
     await clearApprovedSnapshot(repo, issueNumber);
+    approvedSnapshot = null;
   }
 
   if (isApprovalEvent) {
-    if (hasLabel(issue, 'cherry-pick:running')) {
-      await createIssueComment(
-        repo,
-        issueNumber,
-        [
-          'Cherry-pick execution is already running. New approval trigger was ignored.',
-          '',
-          'Next steps:',
-          '- Wait for the running workflow to finish.',
-          '- If it fails or is interrupted, ensure `cherry-pick:approved` is absent, then add it to retry.',
-          '',
-          renderWorkflowRunLine(),
-        ].join('\n'),
-      );
-      setOutput('should_execute', 'false');
-      return;
-    }
     const approver = event.sender?.login;
     if (!(await hasWritePermission(repo, approver))) {
       await removeLabel(repo, issueNumber, APPROVED_LABEL);
@@ -1028,7 +1099,7 @@ async function validateCommand() {
       return;
     }
 
-    const approvedAt = new Date().toISOString();
+    const approvedAt = eventIssue.updated_at || new Date().toISOString();
     await upsertSummary(
       repo,
       issueNumber,
@@ -1038,12 +1109,15 @@ async function validateCommand() {
         approvedBy: approver,
         approvedAt,
         approvedFingerprint: currentFingerprint,
+        approvedEventFingerprint: approvedEventId,
       }),
     );
+    await setStateLabel(repo, issue, 'cherry-pick:running');
     await createIssueComment(
       repo,
       issueNumber,
       [
+        approvalEventMarker(approvedEventId),
         `Cherry-pick request approved by @${approver}. Execution will start.`,
         '',
         'Next steps:',
@@ -1053,6 +1127,7 @@ async function validateCommand() {
         renderWorkflowRunLine(),
       ].join('\n'),
     );
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
     setOutput('request_fingerprint', currentFingerprint);
     setOutput('source_pr', String(parsed.sourcePr));
     setOutput('target_branches', parsed.targets.join(','));
@@ -1069,6 +1144,7 @@ async function validateCommand() {
       ...summaryBase,
       status: 'Pending approval',
       approvedFingerprint: approvedSnapshot?.fingerprint,
+      approvedEventFingerprint: approvedSnapshot?.eventFingerprint,
       approvedBy: approvedSnapshot?.approvedBy,
       approvedAt: approvedSnapshot?.approvedAt,
     }),
@@ -1372,6 +1448,7 @@ async function updateExecutionSummary(repo, issue, context, targets, status) {
       startedAt: context.startedAt,
       completedAt: context.completedAt,
       approvedFingerprint: context.fingerprint,
+      approvedEventFingerprint: context.approvedEventFingerprint,
     }),
   );
 }
@@ -1390,16 +1467,9 @@ async function executeCommand() {
     `Executing cherry-pick request issue #${issueNumber} in ${repo.repository}.`,
   );
   let issue = await getCurrentIssue(repo, issueNumber);
-  if (!hasLabel(issue, TYPE_LABEL)) {
-    console.log('Issue is no longer a cherry-pick request.');
-    return;
-  }
-  if (issue.state === 'closed') {
-    console.log('Issue is closed before execution start.');
-    return;
-  }
 
-  const parsed = parseRequestBody(issue.body || '', config, repo);
+  const approvedBody = String(event.issue?.body || '');
+  const parsed = parseRequestBody(approvedBody, config, repo);
   const validation = await validateParsedRequest(repo, parsed);
   if (!validation.valid) {
     throw new Error(
@@ -1407,11 +1477,16 @@ async function executeCommand() {
     );
   }
   const currentFingerprint = fingerprint(parsed);
+  const approvedEventId = approvalEventFingerprint(event);
   const summary = await getSummaryComment(repo, issueNumber);
   const approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
-  if (approvedSnapshot?.fingerprint !== currentFingerprint) {
+  if (
+    approvedSnapshot?.fingerprint !== currentFingerprint ||
+    approvedSnapshot?.eventFingerprint !== approvedEventId ||
+    approvedSnapshot?.approvedBy !== event.sender?.login
+  ) {
     throw new Error(
-      'Approved fingerprint does not match current request body.',
+      'Approved snapshot does not match the authorization event.',
     );
   }
 
@@ -1419,7 +1494,8 @@ async function executeCommand() {
     parsed,
     validation,
     fingerprint: currentFingerprint,
-    approvedBy: approvedSnapshot.approvedBy || event.sender?.login,
+    approvedEventFingerprint: approvedEventId,
+    approvedBy: event.sender.login,
     approvedAt: approvedSnapshot.approvedAt || new Date().toISOString(),
     startedAt: new Date().toISOString(),
     completedAt: '',
@@ -1431,7 +1507,6 @@ async function executeCommand() {
   }));
 
   await setStateLabel(repo, issue, 'cherry-pick:running');
-  await removeLabel(repo, issueNumber, APPROVED_LABEL);
   await createIssueComment(
     repo,
     issueNumber,

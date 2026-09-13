@@ -281,6 +281,18 @@ The workflow creates pull requests only. Generated cherry-pick pull requests
 still require the normal review, required checks, CODEOWNERS, and branch
 protection process.
 
+#### Maintainer approval and retries
+
+Before adding `cherry-pick:approved`, verify the request details shown in the
+Issue. The workflow records those details and the approver, then starts that
+version of the request. Editing or closing the Issue afterward does not change
+or cancel work that has already started.
+
+The workflow automatically removes `cherry-pick:approved` after recording the
+approval. This does not cancel the execution. Adding the label while another
+execution is running is ignored; wait for the active run to finish before
+approving another attempt.
+
 If a target conflicts or fails, fix the issue manually or update the request,
 ensure `cherry-pick:approved` is absent, then add it to retry. Targets that
 already produced a valid generated pull request are skipped on retry.
