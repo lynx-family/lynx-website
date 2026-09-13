@@ -271,8 +271,10 @@ To request a release cherry-pick:
 2. Enter the merged source pull request.
 3. Select one or more target release branches.
 4. Explain why the change is needed and choose a risk level.
-5. Wait for validation to mark the request as pending approval.
-6. A user with write, maintain, or admin permission must add the
+5. Wait for a maintainer to triage the request by adding
+   `cherry-pick:request`. Automation does not run before this label is added.
+6. Wait for validation to mark the request as pending approval.
+7. A user with write, maintain, or admin permission must add the
    `cherry-pick:approved` label to start execution.
 
 The workflow creates pull requests only. Generated cherry-pick pull requests
@@ -280,8 +282,12 @@ still require the normal review, required checks, CODEOWNERS, and branch
 protection process.
 
 If a target conflicts or fails, fix the issue manually or update the request,
-then remove and re-add `cherry-pick:approved` to retry. Targets that already
-produced a valid generated pull request are skipped on retry.
+ensure `cherry-pick:approved` is absent, then add it to retry. Targets that
+already produced a valid generated pull request are skipped on retry.
+
+If validation or execution is interrupted after approval, the recovery job
+removes the approval label and moves the request to `cherry-pick:failed`. Inspect
+the failed workflow run before approving the request again.
 
 ### Configuration
 
