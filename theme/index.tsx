@@ -50,7 +50,7 @@ const TYPING_START_DELAY_MS = 1600;
 
 // Match subsite by checking if any path segment exactly equals the subsite value
 const findSubsite = (pathname: string) => {
-  const segments = pathname.split('/');
+  const segments = removeBase(pathname).split('/');
   return SUBSITES_CONFIG.find((s) => {
     if (s.value === 'ui') {
       return segments.some((seg) => {
