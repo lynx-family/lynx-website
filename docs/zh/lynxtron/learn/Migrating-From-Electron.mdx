@@ -197,23 +197,24 @@ const result = await ipcRenderer.invoke('get-system-info', {
 });
 ```
 
-Lynx UI 侧使用 `NativeModules.bridge.call` 发起调用：
+Lynx UI 侧使用 `NativeModules.bridge.call(method, payload, callback)`。该方法返回 `void`，需要通过回调接收结果，不能直接 await 调用：
 
 ```tsx
 // App.tsx
-const result = await NativeModules.bridge.call('get-system-info', {
-  includeCpuDetail: true,
-});
-renderSystemInfo(result);
+NativeModules.bridge.call(
+  'get-system-info',
+  { includeCpuDetail: true },
+  (result) => {
+    renderSystemInfo(result);
+  },
+);
 ```
 
 Node 主进程通过监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) 事件处理 `bridge.call` 调用，并通过 `event.sendReply` 返回：
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
-
-const win = new LynxWindow();
+// 复用上文 app.whenReady() 内的 win，在 win.loadFile() 前注册此监听器。
 
 win.on('-lynx-invoke', (event, methodName, params) => {
   if (methodName === 'get-system-info') {

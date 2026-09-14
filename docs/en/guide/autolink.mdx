@@ -165,7 +165,7 @@ The generated AppStartup task runs on the main thread before app code creates a 
 
 :::note Lynxtron Tooling Version
 
-The `targets` manifest and automatic native artifact packaging require compatible versions of `create-lynxtron`, `@lynx-js/lynxtron`, `@lynx-js/lynxtron-dev-plugins`, and `@lynx-js/lynxtron-builder`. Library authors also need compatible `create-lynx-library` and `@lynx-js/autolink-codegen` versions. A merged tooling change does not update an already published npm package. When testing prereleases, pin the exact compatible versions or local package archives and retain the lockfile; do not assume the `latest` tag includes every fix.
+The `targets` manifest and automatic native artifact packaging are available in the published `0.0.22` releases of `@lynx-js/create-lynxtron`, `@lynx-js/lynxtron`, `@lynx-js/lynxtron-dev-plugins`, and `@lynx-js/lynxtron-builder`. Library creation has been verified with `create-lynx-library@0.6.1` and `@lynx-js/autolink-codegen@0.6.0`. Use these compatible versions together and retain the lockfile when reproducing this guide.
 
 :::
 
@@ -252,7 +252,7 @@ For Lynxtron, use `targets` to group runtime payloads by host. Each target decla
 
 `npm pack` does not preserve symbolic-link entries inside package contents. If a Framework or app bundle relies on links, provide an idempotent installation step that reconstructs them from shipped targets, then verify the installed package. Lynxtron preserves those restored links when it stages and packages the bundle.
 
-These paths identify source artifacts inside the npm package. Lynxtron's development plugin and builder automatically choose their final locations in development output and packaged applications. App teams do not copy these artifacts or add per-library packaging rules. This Lynxtron manifest shape is still prerelease, so it does not provide opaque package roots or legacy aliases: use `targets`, `files`, `frameworks`, `appBundles`, and the `arch` selector exactly as shown.
+These paths identify source artifacts inside the npm package. Lynxtron's development plugin and builder automatically choose their final locations in development output and packaged applications. App teams do not copy these artifacts or add per-library packaging rules. The Lynxtron manifest does not provide opaque package roots or legacy aliases: use `targets`, `files`, `frameworks`, `appBundles`, and the `arch` selector exactly as shown.
 
 After installing or updating a library package, sync/build the Android or HarmonyOS app and run `pod install` for iOS so the generated registry and native dependencies are refreshed. For Lynxtron, use the app's standard build and package commands; `pluginLynxtron()` and `lynxtron-builder` handle the selected target automatically. You do not need to import a library's `./lynxtron` entry, copy its native files, or add per-library registration or packaging code in the app.
 

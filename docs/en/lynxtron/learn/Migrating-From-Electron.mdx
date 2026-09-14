@@ -197,23 +197,24 @@ const result = await ipcRenderer.invoke('get-system-info', {
 });
 ```
 
-The Lynx UI side uses `NativeModules.bridge.call` to make the call:
+The Lynx UI side uses `NativeModules.bridge.call(method, payload, callback)`. It returns `void`, so receive the reply in the callback instead of directly awaiting the call:
 
 ```tsx
 // App.tsx
-const result = await NativeModules.bridge.call('get-system-info', {
-  includeCpuDetail: true,
-});
-renderSystemInfo(result);
+NativeModules.bridge.call(
+  'get-system-info',
+  { includeCpuDetail: true },
+  (result) => {
+    renderSystemInfo(result);
+  },
+);
 ```
 
 The Node main process listens for the [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) event to handle `bridge.call` calls, and returns the result through `event.sendReply`:
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
-
-const win = new LynxWindow();
+// Reuse win inside app.whenReady() above; register this listener before win.loadFile().
 
 win.on('-lynx-invoke', (event, methodName, params) => {
   if (methodName === 'get-system-info') {

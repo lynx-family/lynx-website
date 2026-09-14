@@ -165,7 +165,7 @@ enableHarmonyLynxAutolink(hvigorApi, {
 
 :::note Lynxtron 工具链版本
 
-下文的 `targets` 清单和原生产物自动打包需要相互兼容的 `create-lynxtron`、`@lynx-js/lynxtron`、`@lynx-js/lynxtron-dev-plugins` 和 `@lynx-js/lynxtron-builder`。库作者还需要配套的 `create-lynx-library` 和 `@lynx-js/autolink-codegen`。代码合入不代表已发布的 npm 包同步更新。验证预发布版本时，请固定配套版本或本地包归档并保留锁文件，不要默认 `latest` 已包含全部修复。
+下文的 `targets` 清单和原生产物自动打包已包含在 `@lynx-js/create-lynxtron`、`@lynx-js/lynxtron`、`@lynx-js/lynxtron-dev-plugins` 和 `@lynx-js/lynxtron-builder` 的 `0.0.22` 正式发布版本中。库创建流程已使用 `create-lynx-library@0.6.1` 和 `@lynx-js/autolink-codegen@0.6.0` 验证。复现本教程时，请配套使用这些版本并保留锁文件。
 
 :::
 
@@ -252,7 +252,7 @@ Android 侧必须声明 `platforms.android.packageName`，`sourceDir` 默认是 
 
 `npm pack` 不会保留 package 内容中的符号链接条目。如果 Framework 或 app bundle 依赖符号链接，需要提供幂等的安装步骤，使用随包发布的目标文件恢复链接，并验证安装后的 package。Lynxtron 会在收集和打包 bundle 时保留这些已恢复的链接。
 
-这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 的这部分清单格式仍处于 prerelease 阶段，因此不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`files`、`frameworks`、`appBundles` 和 `arch` 选择器。
+这些路径只标识 npm 包内的源产物。Lynxtron 的开发插件和 builder 会自动决定它们在开发输出及最终应用包中的位置；应用团队不需要复制这些产物，也不需要为每个库增加打包规则。Lynxtron 清单不提供不透明的 package 根目录或旧字段别名：请严格使用 `targets`、`files`、`frameworks`、`appBundles` 和 `arch` 选择器。
 
 安装或更新库后，Android 或 HarmonyOS 侧重新构建应用，iOS 侧重新执行 `pod install`，让生成的 registry 和原生依赖刷新。Lynxtron 应用只需执行自身标准的构建和打包命令，`pluginLynxtron()` 与 `lynxtron-builder` 会自动处理所选 target。应用不需要导入库的 `./lynxtron` 入口、复制原生文件，也不需要为每个库编写注册或打包配置。
 
