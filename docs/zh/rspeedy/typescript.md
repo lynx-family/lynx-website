@@ -30,7 +30,7 @@ import { get } from '@common/request.js'; // 等同于 './common/request.js'
 
 ## 自定义 tsconfig.json 路径
 
-Rspeedy 默认会读取根目录下的 `tsconfig.json` 文件。你可以通过 [source.tsconfigPath](../../api/rspeedy/rspeedy.source.tsconfigpath) 配置自定义的 `tsconfig.json` 文件路径。
+Rspeedy 默认会读取根目录下的 `tsconfig.json` 文件。你可以通过 [source.tsconfigPath](/zh/rspeedy/config/source#source-tsconfigpath) 配置自定义的 `tsconfig.json` 文件路径。
 
 ```ts
 export default {
@@ -59,7 +59,7 @@ Rspeedy 提供了 CSS Modules、[静态资源](./assets.md)等内置功能，这
 Lynx 提供了默认类型，但你可能需要为你的应用扩展或自定义某些类型定义。
 
 - [`GlobalProps`](#globalprops)：扩展 `lynx.__globalProps` 的类型定义
-- [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Function.useInitData.mdx) 的返回类型
+- [`InitData`](#initdata)：扩展 [`useInitData()`](/react/api/hooks#useinitdata) 的返回类型
 - [`IntrinsicElements`](#intrinsicelements): 扩展元件的类型（例如：可以为 `<input>` 元件定义类型）
 - [`NativeModules`](#nativemodules): 扩展[原生模块](/guide/use-native-modules.mdx)的类型定义
 

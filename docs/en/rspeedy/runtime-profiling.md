@@ -63,4 +63,4 @@ export default defineConfig({
 
 Use the [JS Profile](/guide/devtool/trace/js-profile.html) tool to collect call stack data at runtime without modifying the build configuration.
 
-[`performance.profile`]: /api/rspeedy/rspeedy.performance.profile
+[`performance.profile`]: /rspeedy/config/performance#performance-profile

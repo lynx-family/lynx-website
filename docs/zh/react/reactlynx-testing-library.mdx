@@ -4,7 +4,7 @@ description: '使用 Testing Library 风格 API 测试组件。'
 
 # 代码测试
 
-[`@lynx-js/react/testing-library`](../../api/reactlynx-testing-library/index.mdx) 包适用于对 ReactLynx 组件的渲染结果进行测试。它提供了和 [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) 相同的 API，例如 [`render`](../../api/reactlynx-testing-library/Function.render.mdx)、[`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx)、[`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 等，其底层使用了 [`@lynx-js/testing-environment`](../../api/lynx-testing-environment/index.mdx) 包来提供 Lynx 环境的 JS 实现，屏蔽了 Lynx 双线程的实现细节。
+[`@lynx-js/react/testing-library`](/zh/react/api/testing-library) 包适用于对 ReactLynx 组件的渲染结果进行测试。它提供了和 [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) 相同的 API，例如 [`render`](/zh/react/api/testing-library#render)、[`fireEvent`](/zh/react/api/testing-library#fireevent)、[`screen`](/zh/react/api/testing-library#screen) 等，其底层使用了 [`@lynx-js/testing-environment`](/zh/packages/testing-environment) 包来提供 Lynx 环境的 JS 实现，屏蔽了 Lynx 双线程的实现细节。
 
 ## 配置
 
@@ -110,7 +110,7 @@ it('basic', async function () {
 
 ### 基础渲染
 
-[`render`](../../api/reactlynx-testing-library/Function.render.mdx) 方法用于渲染一个 ReactLynx 组件，并返回一个 [`RenderResult`](../../api/reactlynx-testing-library/TypeAlias.RenderResult.mdx) 对象，其中的 `container` 字段是一个 [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx)，表示渲染结果的根元素。
+[`render`](/zh/react/api/testing-library#render) 方法用于渲染一个 ReactLynx 组件，并返回一个 [`RenderResult`](/zh/react/api/testing-library#renderresult) 对象，其中的 `container` 字段是一个 [`LynxElement`](/zh/packages/testing-environment#lynxelement)，表示渲染结果的根元素。
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -143,7 +143,7 @@ it('basic render', () => {
 
 ### 事件触发
 
-在使用 [`fireEvent`](../../api/reactlynx-testing-library/Function.fireEvent.mdx) 触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值和使用场景如下：
+在使用 [`fireEvent`](/zh/react/api/testing-library#fireevent) 触发事件时，需要显式指定事件的类型。例如 `new Event('catchEvent:tap')`（`eventType:eventName`） 表示触发 `catch` 类型的 `tap` 事件，请参考[事件处理器属性](/guide/interaction/event-handling/event-propagation.html#事件处理器属性)。`eventType` 的可能值和使用场景如下：
 
 | 事件类型        | `eventType`     | 事件绑定举例       | 事件触发举例                     |
 | --------------- | --------------- | ------------------ | -------------------------------- |
@@ -154,7 +154,7 @@ it('basic render', () => {
 
 可以直接自己构造 `Event` 对象，也可以使用直接传入事件类型和初始化参数让 Testing Library 自动构造 `Event` 对象。
 
-在 `render` 过程中，事件处理器会被挂载到 [`LynxElement`](../../api/lynx-testing-environment/Interface.LynxElement.mdx) 的 [`eventMap`](../../api/lynx-testing-environment/Interface.LynxElement.mdx#eventmap) 属性上，因此可以通过 `eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
+在 `render` 过程中，事件处理器会被挂载到 [`LynxElement`](/zh/packages/testing-environment#lynxelement) 的 [`eventMap`](/zh/packages/testing-environment#lynxelement) 属性上，因此可以通过 `eventMap` 属性来获取元素的事件处理器，用于断言事件处理器是否被正确挂载。
 
 ```jsx
 import { render, fireEvent } from '@lynx-js/react/testing-library';
@@ -302,7 +302,7 @@ it('component ref', async () => {
 
 ### 页面元素查询
 
-你可以使用 [`screen`](../../api/reactlynx-testing-library/Variable.screen.mdx) 对象来查询页面元素，它提供了一些常用的方法，例如 [`getByText`](../../api/reactlynx-testing-library/Function.getByText.mdx)、[`getByTestId`](../../api/reactlynx-testing-library/Function.getByTestId.mdx) 等。还有像 [`waitForElementToBeRemoved`](../../api/reactlynx-testing-library/Function.waitForElementToBeRemoved.mdx) 这样的方法对页面元素状态进行等待。
+你可以使用 [`screen`](/zh/react/api/testing-library#screen) 对象来查询页面元素，它提供了一些常用的方法，例如 [`getByText`](/zh/react/api/testing-library#getbytext)、[`getByTestId`](/zh/react/api/testing-library#getbytestid) 等。还有像 [`waitForElementToBeRemoved`](/zh/react/api/testing-library#waitforelementtoberemoved) 这样的方法对页面元素状态进行等待。
 
 ```jsx
 import '@testing-library/jest-dom';
@@ -441,7 +441,7 @@ it('rerender will re-render the element', async () => {
 
 ### 测试 [list](/zh/api/elements/built-in/list.html)
 
-由于 `list` 下的 `list-item` 元素是懒加载的，只有元素进入视口时才会被加载，离开视口时会被标记为可回收，在测试框架中可以使用 [`elementTree.enterListItemAtIndex`](../../api/lynx-testing-environment/Function.initElementTree.mdx#enterlistitematindex) 和 [`elementTree.leaveListItem`](../../api/lynx-testing-environment/Function.initElementTree.mdx#leavelistitem) 方法来模拟列表项元素的加载和回收。
+由于 `list` 下的 `list-item` 元素是懒加载的，只有元素进入视口时才会被加载，离开视口时会被标记为可回收，在测试框架中可以使用 [`elementTree.enterListItemAtIndex`](/zh/packages/testing-environment#initelementtree) 和 [`elementTree.leaveListItem`](/zh/packages/testing-environment#initelementtree) 方法来模拟列表项元素的加载和回收。
 
 ```jsx
 import { useState } from '@lynx-js/react';
@@ -588,7 +588,7 @@ it('main thread script', async () => {
 
 ### 控制渲染时的[双线程](./thinking-in-reactlynx.mdx#你的代码运行在两个线程上)行为
 
-[`render`](../api/reactlynx-testing-library/Function.render.mdx) 方法的第二个参数 [`RenderOptions`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx) 中支持 [`enableMainThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablemainthread) 和 [`enableBackgroundThread`](../api/reactlynx-testing-library/Interface.RenderOptions.mdx#enablebackgroundthread) 两个选项，`enableMainThread` 用于开启[首帧直出](../guide/interaction/ifr.mdx)，`enableBackgroundThread` 用于开启后台线程渲染。
+[`render`](/zh/react/api/testing-library#render) 方法的第二个参数 [`RenderOptions`](/zh/react/api/testing-library#renderoptions) 中支持 [`enableMainThread`](/zh/react/api/testing-library#renderoptions) 和 [`enableBackgroundThread`](/zh/react/api/testing-library#renderoptions) 两个选项，`enableMainThread` 用于开启[首帧直出](../guide/interaction/ifr.mdx)，`enableBackgroundThread` 用于开启后台线程渲染。
 
 以这个组件为例：
 
@@ -664,4 +664,4 @@ describe('IFR Testing', () => {
 
 ## API 参考
 
-详见 [API 参考](../../api/reactlynx-testing-library/index.mdx)。
+详见 [API 参考](/zh/react/api/testing-library)。

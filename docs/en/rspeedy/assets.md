@@ -190,8 +190,8 @@ console.log(myFile); // "/static/myFile.6c12aba3.pdf"
 
 For more information about asset modules, please refer to [Rspack - Asset modules](https://rspack.rs/guide/features/asset-module).
 
-[`dev.assetPrefix`]: ../../api/rspeedy/rspeedy.dev.assetprefix
-[`output.assetPrefix`]: ../../api/rspeedy/rspeedy.output.assetprefix
-[`output.dataUriLimit`]: ../../api/rspeedy/rspeedy.output.dataurilimit
-[`tools.rspack`]: ../../api/rspeedy/rspeedy.tools.rspack
-[`source.assetsInclude`]: ../../api/rspeedy/rspeedy.source.assetsinclude
+[`dev.assetPrefix`]: /rspeedy/config/dev#dev-assetprefix
+[`output.assetPrefix`]: /rspeedy/config/output#output-assetprefix
+[`output.dataUriLimit`]: /rspeedy/config/output#output-dataurilimit
+[`tools.rspack`]: /rspeedy/config/tools#tools-rspack
+[`source.assetsInclude`]: /rspeedy/config/source#source-assetsinclude
