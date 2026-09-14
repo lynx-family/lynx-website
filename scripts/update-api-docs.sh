@@ -5,7 +5,8 @@
 #
 #   1. config, react/api, packages – copied as-is from
 #      lynx-stack's docs/content by scripts/sync-lynx-stack-docs.mjs. lynx-stack
-#      generates and commits these pages itself.
+#      generates and commits these pages itself. scripts/apply-api-doc-overlays.mjs
+#      then adds the Lynx Go examples to the ReactLynx API pages.
 #   2. genui – TypeDoc, run here in lynx-website (`pnpm run typedoc`), reading
 #      the freshly built lynx-stack package.
 #
@@ -94,6 +95,7 @@ echo "::endgroup::"
 
 echo "::group::Sync API reference pages from lynx-stack"
 node "$WEBSITE/scripts/sync-lynx-stack-docs.mjs" "$STACK/docs"
+node "$WEBSITE/scripts/apply-api-doc-overlays.mjs"
 echo "::endgroup::"
 
 echo "::group::Overlay built packages into node_modules for TypeDoc"
