@@ -4,6 +4,11 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
+import {
+  RETRY_APPROVAL_INSTRUCTION,
+  recoveryState,
+  renderRecoveredSummary,
+} from './cherry-pick-request-recovery.mjs';
 
 const CONFIG_PATH = '.github/cherry-pick-config.json';
 const ISSUE_FORM_PATH = '.github/ISSUE_TEMPLATE/cherry_pick_request.yml';
@@ -11,6 +16,8 @@ const SUMMARY_MARKER = '<!-- cherry-pick-request-summary -->';
 const GENERATED_MARKER_PREFIX = '<!-- cherry-pick-generated:';
 const APPROVED_FINGERPRINT_RE =
   /<!-- cherry-pick-approved-fingerprint:\s*([a-f0-9]+)\s*-->/i;
+const APPROVED_EVENT_RE =
+  /<!-- cherry-pick-approval-event:\s*([a-f0-9]+)\s*-->/i;
 const APPROVED_BY_RE = /<!-- cherry-pick-approved-by:\s*([^>]+?)\s*-->/i;
 const APPROVED_AT_RE = /<!-- cherry-pick-approved-at:\s*([^>]+?)\s*-->/i;
 
@@ -317,6 +324,31 @@ function fingerprint(parsed) {
     .slice(0, 16);
 }
 
+/** Identifies one immutable approval webhook independently of live Issue state. */
+function approvalEventFingerprint(event) {
+  const payload = {
+    action: event.action,
+    issueBody: String(event.issue?.body || ''),
+    issueId: event.issue?.id || null,
+    issueNumber: event.issue?.number || null,
+    issueUpdatedAt: event.issue?.updated_at || '',
+    label: event.label?.name || '',
+    repository: event.repository?.id || event.repository?.full_name || '',
+    senderId: event.sender?.id || null,
+    senderLogin: event.sender?.login || '',
+  };
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(payload))
+    .digest('hex')
+    .slice(0, 32);
+}
+
+/** Renders the durable marker used to reject duplicate approval delivery. */
+function approvalEventMarker(eventFingerprint) {
+  return `<!-- cherry-pick-approval-event: ${eventFingerprint} -->`;
+}
+
 function stableBranchName(target, sourcePr) {
   return `cherry-pick/${target.replaceAll('/', '-')}/pr-${sourcePr}`;
 }
@@ -471,20 +503,26 @@ async function findBotComment(repo, issueNumber, marker) {
   );
 }
 
+/** Reads approval audit metadata from a canonical summary comment. */
 function approvedSnapshotFromBody(body) {
   const fingerprintMatch = String(body || '').match(APPROVED_FINGERPRINT_RE);
   if (!fingerprintMatch) return null;
   return {
     fingerprint: fingerprintMatch[1].trim(),
+    eventFingerprint: (
+      String(body || '').match(APPROVED_EVENT_RE)?.[1] || ''
+    ).trim(),
     approvedBy: (String(body || '').match(APPROVED_BY_RE)?.[1] || '').trim(),
     approvedAt: (String(body || '').match(APPROVED_AT_RE)?.[1] || '').trim(),
   };
 }
 
+/** Finds the canonical bot-owned summary for one request. */
 async function getSummaryComment(repo, issueNumber) {
   return findBotComment(repo, issueNumber, SUMMARY_MARKER);
 }
 
+/** Maps a summary status and validation errors to maintainer instructions. */
 function nextActionForStatus(status, errors = []) {
   const normalized = String(status || '').toLowerCase();
   const hasUnmergedSource = errors.some((error) =>
@@ -516,10 +554,10 @@ function nextActionForStatus(status, errors = []) {
     return 'Review and merge the generated cherry-pick PRs.';
   }
   if (normalized === 'partial') {
-    return 'Fix failed or blocked targets, then remove and re-add `cherry-pick:approved` to retry. Successful targets will be skipped.';
+    return 'Fix failed or blocked targets. Ensure `cherry-pick:approved` is absent, then add it to retry. Successful targets will be skipped.';
   }
   if (normalized === 'failed') {
-    return 'Fix the failure, then remove and re-add `cherry-pick:approved` to retry.';
+    return `Fix the failure. ${RETRY_APPROVAL_INSTRUCTION}`;
   }
   return '';
 }
@@ -572,6 +610,7 @@ function renderWorkflowRunLine() {
   return `Workflow run: ${workflowRunUrl()}`;
 }
 
+/** Renders the canonical request summary and its persisted audit metadata. */
 function renderSummary({
   requestIssue,
   sourcePr,
@@ -588,12 +627,16 @@ function renderSummary({
   startedAt,
   completedAt,
   approvedFingerprint,
+  approvedEventFingerprint,
   errors = [],
 }) {
   const markerLines = [
     SUMMARY_MARKER,
     approvedFingerprint
       ? `<!-- cherry-pick-approved-fingerprint: ${escapeHtmlComment(approvedFingerprint)} -->`
+      : '',
+    approvedEventFingerprint
+      ? approvalEventMarker(escapeHtmlComment(approvedEventFingerprint))
       : '',
     approvedBy
       ? `<!-- cherry-pick-approved-by: ${escapeHtmlComment(approvedBy)} -->`
@@ -653,6 +696,7 @@ function renderSummary({
   return `${body.join('\n')}\n`;
 }
 
+/** Creates or replaces the canonical request summary. */
 async function upsertSummary(repo, issueNumber, summaryBody) {
   const existing = await getSummaryComment(repo, issueNumber);
   if (existing) return updateIssueComment(repo, existing.id, summaryBody);
@@ -732,7 +776,11 @@ function shouldNoopValidate(event, issue) {
     const label = event.label?.name;
     // A request label may arrive after the opened event was skipped. Initialize
     // only requests that have not already entered the cherry-pick state machine.
-    if (label === TYPE_LABEL && !hasManagedStateLabel(issue)) {
+    if (
+      label === TYPE_LABEL &&
+      !hasLabel(issue, APPROVED_LABEL) &&
+      !hasManagedStateLabel(issue)
+    ) {
       return '';
     }
     if (label !== APPROVED_LABEL) {
@@ -749,10 +797,16 @@ function shouldNoopValidate(event, issue) {
 }
 
 async function hasWritePermission(repo, username) {
-  const result = await github(
-    `/repos/${repo.owner}/${repo.repo}/collaborators/${encodeURIComponent(username)}/permission`,
-  );
-  return ['write', 'maintain', 'admin'].includes(result.data.permission);
+  if (!username) return false;
+  try {
+    const result = await github(
+      `/repos/${repo.owner}/${repo.repo}/collaborators/${encodeURIComponent(username)}/permission`,
+    );
+    return ['write', 'maintain', 'admin'].includes(result.data.permission);
+  } catch (error) {
+    if (error.status === 404) return false;
+    throw error;
+  }
 }
 
 async function clearApprovedSnapshot(repo, issueNumber) {
@@ -760,6 +814,7 @@ async function clearApprovedSnapshot(repo, issueNumber) {
   if (!summary) return;
   const body = String(summary.body || '')
     .replace(APPROVED_FINGERPRINT_RE, '')
+    .replace(APPROVED_EVENT_RE, '')
     .replace(APPROVED_BY_RE, '')
     .replace(APPROVED_AT_RE, '');
   await updateIssueComment(repo, summary.id, body);
@@ -770,18 +825,21 @@ async function validateCommand() {
   const config = loadConfig();
   const event = getEvent();
   const issueNumber = event.issue.number;
+  const isApprovalEvent =
+    event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
   console.log(
     `Validating cherry-pick request issue #${issueNumber} in ${repo.repository} for action ${event.action}.`,
   );
   let issue = await getCurrentIssue(repo, issueNumber);
-  const noopReason = shouldNoopValidate(event, issue);
+  const eventIssue = isApprovalEvent ? event.issue : issue;
+  const noopReason = shouldNoopValidate(event, eventIssue);
   if (noopReason) {
     console.log(noopReason);
     setOutput('should_execute', 'false');
     return;
   }
 
-  if (!hasLabel(issue, TYPE_LABEL)) {
+  if (!hasLabel(eventIssue, TYPE_LABEL)) {
     console.log('Issue is not a cherry-pick request.');
     setOutput('should_execute', 'false');
     return;
@@ -853,6 +911,29 @@ async function validateCommand() {
     return;
   }
 
+  if (
+    isApprovalEvent &&
+    (hasLabel(eventIssue, 'cherry-pick:running') ||
+      hasLabel(issue, 'cherry-pick:running'))
+  ) {
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
+    await createIssueComment(
+      repo,
+      issueNumber,
+      [
+        'Cherry-pick execution is already running. New approval trigger was ignored.',
+        '',
+        'Next steps:',
+        '- Wait for the running workflow to finish.',
+        '- If it fails or is interrupted, ensure `cherry-pick:approved` is absent, then add it to retry.',
+        '',
+        renderWorkflowRunLine(),
+      ].join('\n'),
+    );
+    setOutput('should_execute', 'false');
+    return;
+  }
+
   if (hasLabel(issue, 'cherry-pick:running') && event.action !== 'labeled') {
     console.log('Request is already running; validation event is a no-op.');
     setOutput('should_execute', 'false');
@@ -870,11 +951,31 @@ async function validateCommand() {
     throw error;
   }
 
+  const approvedEventId = isApprovalEvent
+    ? approvalEventFingerprint(event)
+    : '';
+  if (
+    isApprovalEvent &&
+    (await findBotComment(
+      repo,
+      issueNumber,
+      approvalEventMarker(approvedEventId),
+    ))
+  ) {
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
+    console.log('This approval event was already accepted; no-op.');
+    setOutput('should_execute', 'false');
+    return;
+  }
+
+  const requestBody = isApprovalEvent
+    ? String(eventIssue.body || '')
+    : String(issue.body || '');
   let parsed;
   let validation = null;
   const errors = [];
   try {
-    parsed = parseRequestBody(issue.body || '', config, repo);
+    parsed = parseRequestBody(requestBody, config, repo);
     validation = await validateParsedRequest(repo, parsed);
     errors.push(...validation.errors);
   } catch (error) {
@@ -886,7 +987,7 @@ async function validateCommand() {
     sourcePr: parsed?.sourcePr,
     sourceTitle: validation?.sourceTitle,
     sourceCommit: validation?.sourceCommit,
-    requestedBy: issue.user?.login,
+    requestedBy: eventIssue.user?.login,
     risk: parsed?.risk,
     reason: parsed?.reason,
     targets: parsed ? initialTargets(parsed) : [],
@@ -921,9 +1022,7 @@ async function validateCommand() {
 
   const currentFingerprint = fingerprint(parsed);
   const summary = await getSummaryComment(repo, issueNumber);
-  const approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
-  const isApprovalEvent =
-    event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
+  let approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
 
   if (event.action === 'edited' || event.action === 'reopened') {
     if (
@@ -934,6 +1033,7 @@ async function validateCommand() {
         await removeLabel(repo, issueNumber, APPROVED_LABEL);
       }
       await clearApprovedSnapshot(repo, issueNumber);
+      approvedSnapshot = null;
       await createIssueComment(
         repo,
         issueNumber,
@@ -958,6 +1058,7 @@ async function validateCommand() {
           ...summaryBase,
           status: 'Pending approval',
           approvedFingerprint: approvedSnapshot?.fingerprint,
+          approvedEventFingerprint: approvedSnapshot?.eventFingerprint,
           approvedBy: approvedSnapshot?.approvedBy,
           approvedAt: approvedSnapshot?.approvedAt,
         }),
@@ -970,26 +1071,10 @@ async function validateCommand() {
       await removeLabel(repo, issueNumber, APPROVED_LABEL);
     }
     await clearApprovedSnapshot(repo, issueNumber);
+    approvedSnapshot = null;
   }
 
   if (isApprovalEvent) {
-    if (hasLabel(issue, 'cherry-pick:running')) {
-      await createIssueComment(
-        repo,
-        issueNumber,
-        [
-          'Cherry-pick execution is already running. New approval trigger was ignored.',
-          '',
-          'Next steps:',
-          '- Wait for the running workflow to finish.',
-          '- If it fails or is interrupted, remove and re-add `cherry-pick:approved` to retry.',
-          '',
-          renderWorkflowRunLine(),
-        ].join('\n'),
-      );
-      setOutput('should_execute', 'false');
-      return;
-    }
     const approver = event.sender?.login;
     if (!(await hasWritePermission(repo, approver))) {
       await removeLabel(repo, issueNumber, APPROVED_LABEL);
@@ -1014,7 +1099,7 @@ async function validateCommand() {
       return;
     }
 
-    const approvedAt = new Date().toISOString();
+    const approvedAt = eventIssue.updated_at || new Date().toISOString();
     await upsertSummary(
       repo,
       issueNumber,
@@ -1024,12 +1109,15 @@ async function validateCommand() {
         approvedBy: approver,
         approvedAt,
         approvedFingerprint: currentFingerprint,
+        approvedEventFingerprint: approvedEventId,
       }),
     );
+    await setStateLabel(repo, issue, 'cherry-pick:running');
     await createIssueComment(
       repo,
       issueNumber,
       [
+        approvalEventMarker(approvedEventId),
         `Cherry-pick request approved by @${approver}. Execution will start.`,
         '',
         'Next steps:',
@@ -1039,6 +1127,7 @@ async function validateCommand() {
         renderWorkflowRunLine(),
       ].join('\n'),
     );
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
     setOutput('request_fingerprint', currentFingerprint);
     setOutput('source_pr', String(parsed.sourcePr));
     setOutput('target_branches', parsed.targets.join(','));
@@ -1055,6 +1144,7 @@ async function validateCommand() {
       ...summaryBase,
       status: 'Pending approval',
       approvedFingerprint: approvedSnapshot?.fingerprint,
+      approvedEventFingerprint: approvedSnapshot?.eventFingerprint,
       approvedBy: approvedSnapshot?.approvedBy,
       approvedAt: approvedSnapshot?.approvedAt,
     }),
@@ -1186,7 +1276,7 @@ function renderFinalResultComment(finalState, workflowUrl) {
       'Next steps:',
       '- Check the summary table for each target result.',
       '- Fix blocked or failed targets manually if needed.',
-      `- To retry remaining work, remove and re-add \`${APPROVED_LABEL}\`.`,
+      `- Ensure \`${APPROVED_LABEL}\` is absent, then add it to retry remaining work.`,
       '- Already successful targets will be skipped by idempotency checks.',
       '',
       `Workflow run: ${workflowUrl}`,
@@ -1202,7 +1292,7 @@ function renderFinalResultComment(finalState, workflowUrl) {
     'Next steps:',
     '- Check the failure comments and summary table.',
     '- Fix the underlying issue.',
-    `- Remove and re-add \`${APPROVED_LABEL}\` to retry after the issue is resolved.`,
+    `- Ensure \`${APPROVED_LABEL}\` is absent, then add it to retry after the issue is resolved.`,
     '',
     `Workflow run: ${workflowUrl}`,
   ].join('\n');
@@ -1358,6 +1448,7 @@ async function updateExecutionSummary(repo, issue, context, targets, status) {
       startedAt: context.startedAt,
       completedAt: context.completedAt,
       approvedFingerprint: context.fingerprint,
+      approvedEventFingerprint: context.approvedEventFingerprint,
     }),
   );
 }
@@ -1376,16 +1467,9 @@ async function executeCommand() {
     `Executing cherry-pick request issue #${issueNumber} in ${repo.repository}.`,
   );
   let issue = await getCurrentIssue(repo, issueNumber);
-  if (!hasLabel(issue, TYPE_LABEL)) {
-    console.log('Issue is no longer a cherry-pick request.');
-    return;
-  }
-  if (issue.state === 'closed') {
-    console.log('Issue is closed before execution start.');
-    return;
-  }
 
-  const parsed = parseRequestBody(issue.body || '', config, repo);
+  const approvedBody = String(event.issue?.body || '');
+  const parsed = parseRequestBody(approvedBody, config, repo);
   const validation = await validateParsedRequest(repo, parsed);
   if (!validation.valid) {
     throw new Error(
@@ -1393,11 +1477,16 @@ async function executeCommand() {
     );
   }
   const currentFingerprint = fingerprint(parsed);
+  const approvedEventId = approvalEventFingerprint(event);
   const summary = await getSummaryComment(repo, issueNumber);
   const approvedSnapshot = approvedSnapshotFromBody(summary?.body || '');
-  if (approvedSnapshot?.fingerprint !== currentFingerprint) {
+  if (
+    approvedSnapshot?.fingerprint !== currentFingerprint ||
+    approvedSnapshot?.eventFingerprint !== approvedEventId ||
+    approvedSnapshot?.approvedBy !== event.sender?.login
+  ) {
     throw new Error(
-      'Approved fingerprint does not match current request body.',
+      'Approved snapshot does not match the authorization event.',
     );
   }
 
@@ -1405,7 +1494,8 @@ async function executeCommand() {
     parsed,
     validation,
     fingerprint: currentFingerprint,
-    approvedBy: approvedSnapshot.approvedBy || event.sender?.login,
+    approvedEventFingerprint: approvedEventId,
+    approvedBy: event.sender.login,
     approvedAt: approvedSnapshot.approvedAt || new Date().toISOString(),
     startedAt: new Date().toISOString(),
     completedAt: '',
@@ -1417,7 +1507,6 @@ async function executeCommand() {
   }));
 
   await setStateLabel(repo, issue, 'cherry-pick:running');
-  await removeLabel(repo, issueNumber, APPROVED_LABEL);
   await createIssueComment(
     repo,
     issueNumber,
@@ -1524,7 +1613,7 @@ async function executeCommand() {
             'Next steps:',
             '- Inspect the remote branch manually.',
             '- Delete or rename the stale branch if it is safe.',
-            `- Re-add \`${APPROVED_LABEL}\` to retry after cleanup.`,
+            `- Ensure \`${APPROVED_LABEL}\` is absent, then add it to retry after cleanup.`,
             '',
             renderWorkflowRunLine(),
           ].join('\n'),
@@ -1605,7 +1694,7 @@ async function executeCommand() {
             '',
             'Next steps:',
             '- Resolve this target manually, or prepare a manual cherry-pick PR.',
-            '- If there are remaining targets to retry after cleanup, remove and re-add `cherry-pick:approved`.',
+            '- If targets remain after cleanup, ensure `cherry-pick:approved` is absent, then add it to retry.',
             '- Already successful targets will be skipped by idempotency checks.',
             '',
             renderWorkflowRunLine(),
@@ -1695,7 +1784,7 @@ async function executeCommand() {
           '',
           'Next steps:',
           '- Open the workflow run and inspect the logs.',
-          `- If this was a transient GitHub API, rate limit, or runner issue, remove and re-add \`${APPROVED_LABEL}\` to retry.`,
+          `- If this was transient, ensure \`${APPROVED_LABEL}\` is absent, then add it to retry.`,
           '- Already successful targets will be skipped by idempotency checks.',
           '',
           renderWorkflowRunLine(),
@@ -1716,9 +1805,9 @@ async function executeCommand() {
         : 'cherry-pick:failed';
   const finalStatus = finalState.replace('cherry-pick:', '');
 
+  await updateExecutionSummary(repo, issue, context, targets, finalStatus);
   issue = await getCurrentIssue(repo, issueNumber);
   await setStateLabel(repo, issue, finalState);
-  await updateExecutionSummary(repo, issue, context, targets, finalStatus);
   await createIssueComment(
     repo,
     issueNumber,
@@ -1761,6 +1850,7 @@ function parseIssueFormTargets(content) {
   return targets;
 }
 
+/** Rejects duplicate configuration values. */
 function assertNoDuplicates(name, values) {
   const seen = new Set();
   const duplicates = [];
@@ -1773,6 +1863,7 @@ function assertNoDuplicates(name, values) {
   }
 }
 
+/** Verifies that config, form targets, and workflow labels stay synchronized. */
 function checkConfigCommand() {
   const config = loadConfig();
   const form = fs.readFileSync(ISSUE_FORM_PATH, 'utf8');
@@ -1785,12 +1876,17 @@ function checkConfigCommand() {
     );
   }
   const defaultLabels = parseYamlListAfterKey(form, 'labels');
-  if (!defaultLabels.includes(TYPE_LABEL)) {
-    throw new Error(`Issue Form must include default label ${TYPE_LABEL}.`);
-  }
-  if (defaultLabels.includes('cherry-pick:pending-approval')) {
+  const reservedDefaultLabels = new Set([
+    TYPE_LABEL,
+    APPROVED_LABEL,
+    ...STATE_LABELS,
+  ]);
+  const unexpectedDefaultLabels = defaultLabels.filter((label) =>
+    reservedDefaultLabels.has(label),
+  );
+  if (unexpectedDefaultLabels.length > 0) {
     throw new Error(
-      'Issue Form must not default to cherry-pick:pending-approval.',
+      `Issue Form must not assign reserved workflow labels automatically: ${unexpectedDefaultLabels.join(', ')}.`,
     );
   }
   const requiredUsedLabels = [
@@ -1807,12 +1903,14 @@ function checkConfigCommand() {
   console.log('Cherry-pick config check passed.');
 }
 
+/** Reads the value immediately following a named CLI option. */
 function getArgValue(args, name) {
   const index = args.indexOf(name);
   if (index < 0) return '';
   return args[index + 1] || '';
 }
 
+/** Parses one request body locally and prints its normalized representation. */
 function dryRunValidate(args) {
   const config = loadConfig();
   const bodyFile = getArgValue(args, '--body-file');
@@ -1834,10 +1932,67 @@ function dryRunValidate(args) {
   );
 }
 
+/** Keeps the legacy parse command as an alias for dry-run validation. */
 function parseCommand(args) {
   dryRunValidate(args);
 }
 
+/**
+ * Repairs an execution interrupted either before or after it entered the
+ * running state. Other validation failures remain no-ops because recovery
+ * requires a committed Approved summary or a Running state.
+ */
+async function recoverExecutionState(repo, issueNumber) {
+  const issue = await getCurrentIssue(repo, issueNumber);
+  const summary = await getSummaryComment(repo, issueNumber);
+  const summaryBody = String(summary?.body || '');
+  const previousState = recoveryState(labelsOf(issue), summaryBody);
+
+  if (!previousState) return '';
+
+  if (hasLabel(issue, APPROVED_LABEL)) {
+    await removeLabel(repo, issueNumber, APPROVED_LABEL);
+  }
+  await setStateLabel(repo, issue, 'cherry-pick:failed');
+  if (summary) {
+    await updateIssueComment(
+      repo,
+      summary.id,
+      renderRecoveredSummary(summaryBody, new Date().toISOString()),
+    );
+  }
+  return previousState;
+}
+
+/** Repairs state after a failed or timed-out execute job. */
+async function cleanupCommand() {
+  const repo = repoFromEnv();
+  const event = getEvent();
+  const issueNumber = event.issue?.number;
+  if (!issueNumber) throw new Error('Cleanup requires an issue event.');
+  const recoveredState = await recoverExecutionState(repo, issueNumber);
+  if (!recoveredState) {
+    console.log('Request has no interrupted execution state to recover.');
+    return;
+  }
+  await createIssueComment(
+    repo,
+    issueNumber,
+    [
+      'Cherry-pick execution did not finish successfully.',
+      '',
+      `The request was moved from ${recoveredState} to failed.`,
+      '',
+      'Next steps:',
+      '- Inspect the failed workflow run.',
+      `- Ensure \`${APPROVED_LABEL}\` is absent, then add it to retry after addressing the failure.`,
+      '',
+      renderWorkflowRunLine(),
+    ].join('\n'),
+  );
+}
+
+/** Dispatches the requested validation, execution, or maintenance command. */
 async function main() {
   const [command, ...args] = process.argv.slice(2);
   if (command === 'parse') {
@@ -1860,11 +2015,16 @@ async function main() {
     await executeCommand();
     return;
   }
+  if (command === 'cleanup') {
+    await cleanupCommand();
+    return;
+  }
   throw new Error(
-    'Usage: cherry-pick-request.mjs parse --body-file <file> | validate [--dry-run --body-file <file>] | check-config | execute',
+    'Usage: cherry-pick-request.mjs parse --body-file <file> | validate [--dry-run --body-file <file>] | check-config | execute | cleanup',
   );
 }
 
+/** Reports unexpected failures and repairs interrupted execution state. */
 async function commentWorkflowFailure(error) {
   if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_EVENT_PATH) {
     return;
@@ -1874,6 +2034,16 @@ async function commentWorkflowFailure(error) {
     const event = getEvent();
     const issueNumber = event.issue?.number;
     if (!issueNumber) return;
+    let recoveredState = '';
+    if (process.argv[2] === 'execute') {
+      try {
+        recoveredState = await recoverExecutionState(repo, issueNumber);
+      } catch (recoveryError) {
+        console.error(
+          `Failed to recover cherry-pick execution state: ${recoveryError.message}`,
+        );
+      }
+    }
     await createIssueComment(
       repo,
       issueNumber,
@@ -1882,6 +2052,9 @@ async function commentWorkflowFailure(error) {
         '',
         truncate(error.message || String(error), 1000),
         '',
+        ...(recoveredState
+          ? [`The request was moved from ${recoveredState} to failed.`, '']
+          : []),
         `Workflow run: ${workflowRunUrl()}`,
       ].join('\n'),
     );
