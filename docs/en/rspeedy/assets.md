@@ -192,6 +192,6 @@ For more information about asset modules, please refer to [Rspack - Asset module
 
 [`dev.assetPrefix`]: /config/#dev-assetprefix
 [`output.assetPrefix`]: /config/#output-assetprefix
-[`output.dataUriLimit`]: /config/#output-dataurilimit
+[`output.dataUriLimit`]: /config/output/data-uri-limit
 [`tools.rspack`]: /config/#tools-rspack
 [`source.assetsInclude`]: /config/#source-assetsinclude

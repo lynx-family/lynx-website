@@ -192,6 +192,6 @@ console.log(myFile); // "/static/myFile.6c12aba3.pdf"
 
 [`dev.assetPrefix`]: /zh/config/#dev-assetprefix
 [`output.assetPrefix`]: /zh/config/#output-assetprefix
-[`output.dataUriLimit`]: /zh/config/#output-dataurilimit
+[`output.dataUriLimit`]: /zh/config/output/data-uri-limit
 [`tools.rspack`]: /zh/config/#tools-rspack
 [`source.assetsInclude`]: /zh/config/#source-assetsinclude
