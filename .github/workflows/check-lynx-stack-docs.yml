@@ -1,0 +1,28 @@
+name: Lynx Stack Docs Ownership
+
+# These pages are generated and reviewed in lynx-stack (docs/content) and
+# copied here by scripts/sync-lynx-stack-docs.sh. Edits made here are
+# overwritten by the next sync, so they are rejected up front.
+
+on:
+  pull_request:
+    paths:
+      - 'docs/*/rspeedy/config/**'
+      - 'docs/*/rspeedy/plugins/**'
+      - 'docs/*/rspeedy/api/**'
+      - 'docs/*/react/api/**'
+      - 'docs/*/packages/**'
+
+permissions: {}
+
+jobs:
+  check:
+    name: Edited pages synced from lynx-stack
+    if: github.head_ref != 'bot/update-api-docs'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::error::This PR changes pages that are synced from lynx-stack."
+          echo "Edit them in https://github.com/lynx-family/lynx-stack/tree/main/docs/content instead;"
+          echo "the daily 'Update API docs' workflow copies them here."
+          exit 1

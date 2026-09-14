@@ -62,32 +62,4 @@ export const PACKAGES: Record<string, PackageConfig> = {
       },
     },
   },
-  'reactlynx-testing-library': {
-    out: 'api/reactlynx-testing-library',
-    tsconfig: 'scripts/typedoc/tsconfigs/reactlynx-testing-library.json',
-    en: {
-      entryPoints: [
-        'node_modules/@lynx-js/react/testing-library/types/index.d.ts',
-      ],
-    },
-    zh: {
-      entryPoints: [
-        'node_modules/@lynx-js/react/testing-library/types/index.d.ts',
-      ],
-    },
-  },
-  'lynx-testing-environment': {
-    out: 'api/lynx-testing-environment',
-    tsconfig: 'scripts/typedoc/tsconfigs/lynx-testing-environment.json',
-    en: {
-      entryPoints: [
-        'node_modules/@lynx-js/testing-environment/dist/index.d.ts',
-      ],
-    },
-    zh: {
-      entryPoints: [
-        'node_modules/@lynx-js/testing-environment/dist/index.d.ts',
-      ],
-    },
-  },
 };
