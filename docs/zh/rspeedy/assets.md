@@ -190,8 +190,8 @@ console.log(myFile); // "/static/myFile.6c12aba3.pdf"
 
 有关资源模块的更多信息，请参考 [Rspack - 资源模块](https://rspack.rs/guide/features/asset-module)。
 
-[`dev.assetPrefix`]: /zh/rspeedy/config/dev#dev-assetprefix
-[`output.assetPrefix`]: /zh/rspeedy/config/output#output-assetprefix
-[`output.dataUriLimit`]: /zh/rspeedy/config/output#output-dataurilimit
-[`tools.rspack`]: /zh/rspeedy/config/tools#tools-rspack
-[`source.assetsInclude`]: /zh/rspeedy/config/source#source-assetsinclude
+[`dev.assetPrefix`]: /zh/config/dev#dev-assetprefix
+[`output.assetPrefix`]: /zh/config/output#output-assetprefix
+[`output.dataUriLimit`]: /zh/config/output#output-dataurilimit
+[`tools.rspack`]: /zh/config/tools#tools-rspack
+[`source.assetsInclude`]: /zh/config/source#source-assetsinclude

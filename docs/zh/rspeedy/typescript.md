@@ -30,7 +30,7 @@ import { get } from '@common/request.js'; // 等同于 './common/request.js'
 
 ## 自定义 tsconfig.json 路径
 
-Rspeedy 默认会读取根目录下的 `tsconfig.json` 文件。你可以通过 [source.tsconfigPath](/zh/rspeedy/config/source#source-tsconfigpath) 配置自定义的 `tsconfig.json` 文件路径。
+Rspeedy 默认会读取根目录下的 `tsconfig.json` 文件。你可以通过 [source.tsconfigPath](/zh/config/source#source-tsconfigpath) 配置自定义的 `tsconfig.json` 文件路径。
 
 ```ts
 export default {
