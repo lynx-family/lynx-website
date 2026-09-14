@@ -1,0 +1,212 @@
+---
+api: css/at-rule/media-query
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# 媒体查询
+
+<APISummary />
+
+Lynx 实现了 CSS Media Queries Level 4 的一个子集。可以使用 `@media` 规则，根据视口和其他运行时环境值应用不同的样式。
+
+## 启用 CSS Rule 编码
+
+媒体查询需要启用 CSS Rule 编码。在 `lynx.config.mjs` 已有的 `plugins` 数组中添加 `pluginLynxConfig`：
+
+```js
+import { pluginLynxConfig } from '@lynx-js/config-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginLynxConfig({
+      enableCSSRule: true,
+    }),
+  ],
+});
+```
+
+`enableCSSRule` 要求 Lynx SDK 或 Clay 4.0 及更高版本。未启用时，`@media` 规则不会被编码到模板中，也不会在运行时生效。
+
+## 语法支持
+
+### 媒体类型
+
+| 类型                       | Lynx 行为                         | Web 行为           |
+| -------------------------- | --------------------------------- | ------------------ |
+| `all`                      | 始终匹配                          | 始终匹配           |
+| `screen`                   | 始终匹配，Lynx 只有屏幕渲染上下文 | 仅屏幕设备匹配     |
+| `print`                    | 始终不匹配                        | 仅打印上下文匹配   |
+| 其他（`speech`、`tty` 等） | 始终不匹配                        | 各自匹配对应上下文 |
+
+### 逻辑修饰符和运算符
+
+Lynx 支持 `not`、`only`、逗号分隔的查询列表（OR 语义），以及 `and`、`or` 和 `not` 媒体条件。与 CSS 语法一致，不能在同一层级中混用 `and` 和 `or`；需要混用时，应通过圆括号嵌套条件。
+
+```css
+/* and / or / not 组合 */
+@media (min-width: 600px) and (orientation: portrait) { ... }
+@media (hover) or (pointer) { ... }
+@media not (prefers-color-scheme: dark) { ... }
+
+/* Level 4 范围语法 */
+@media (300px <= width <= 600px) { ... }
+@media (width > 400px) { ... }
+@media (100px < width < 500px) { ... }
+```
+
+范围语法应使用未加前缀的 feature 名称，例如 `width`，而不是 `min-width`。
+
+## 支持的媒体特征
+
+### 视口尺寸
+
+| Feature         | 支持形式                    | 说明                      |
+| --------------- | --------------------------- | ------------------------- |
+| `width`         | plain / min- / max- / range | 视口宽度，单位为 CSS 像素 |
+| `height`        | plain / min- / max- / range | 视口高度，单位为 CSS 像素 |
+| `device-width`  | plain / min- / max- / range | 与 `width` 等价           |
+| `device-height` | plain / min- / max- / range | 与 `height` 等价          |
+
+布尔形式 `(width)` 在视口宽度大于零时匹配。
+
+### 宽高比
+
+| Feature               | 支持形式                    | 说明                   |
+| --------------------- | --------------------------- | ---------------------- |
+| `aspect-ratio`        | plain / min- / max- / range | 视口宽度除以视口高度   |
+| `device-aspect-ratio` | plain / min- / max- / range | 与 `aspect-ratio` 等价 |
+
+值可以是 `16/9` 形式的比例，也可以是单纯数字，后者会被视为 `N/1`。
+
+### 分辨率和像素密度
+
+| Feature              | 支持形式                    | 说明               |
+| -------------------- | --------------------------- | ------------------ |
+| `resolution`         | plain / min- / max- / range | 设备像素比         |
+| `device-pixel-ratio` | plain / min- / max- / range | 无单位的设备像素比 |
+
+`resolution` 支持 `dppx`、`x`、`dpi` 和 `dpcm` 单位，其中 `x` 是 `dppx` 的别名。
+
+### 方向
+
+| Feature       | 值                       | 说明                               |
+| ------------- | ------------------------ | ---------------------------------- |
+| `orientation` | `portrait` / `landscape` | 当 height >= width 时为 `portrait` |
+
+正方形视口被视为 `portrait`。
+
+### 交互能力
+
+:::note
+
+当前宿主不注入 hover 或 pointer 环境值；不含 `not` 的相关查询均不匹配。
+
+:::
+
+| Feature   | 值                         | 说明                                          |
+| --------- | -------------------------- | --------------------------------------------- |
+| `hover`   | `hover` / `none`           | 主输入是否支持悬停                            |
+| `pointer` | `fine` / `coarse` / `none` | 是否存在主指针；当前不区分 `fine` 与 `coarse` |
+
+### 用户偏好
+
+宿主可通过 `UpdateColorScheme` 更新系统颜色模式。默认值为 `light`。
+
+| Feature                | 值               | 说明             |
+| ---------------------- | ---------------- | ---------------- |
+| `prefers-color-scheme` | `light` / `dark` | 系统颜色模式偏好 |
+
+### 色深
+
+:::note
+
+当前宿主不注入实际色深；运行时固定按每个颜色分量 8 位求值。
+
+:::
+
+| Feature | 支持形式                    | 说明               |
+| ------- | --------------------------- | ------------------ |
+| `color` | plain / min- / max- / range | 每个颜色分量的位数 |
+
+## 支持的值单位
+
+### 长度单位
+
+| 单位   | 说明                             |
+| ------ | -------------------------------- |
+| `px`   | CSS 像素                         |
+| `em`   | 相对当前字号                     |
+| `rem`  | 相对根元素字号                   |
+| `%`    | 在媒体查询中相对视口宽度的百分比 |
+| `vw`   | 视口宽度百分比                   |
+| `vh`   | 视口高度百分比                   |
+| `vmin` | `vw` 和 `vh` 中较小的值          |
+| `vmax` | `vw` 和 `vh` 中较大的值          |
+
+### 分辨率单位
+
+| 单位   | 说明                                    |
+| ------ | --------------------------------------- |
+| `dppx` | 每个 CSS 像素的点数                     |
+| `x`    | `dppx` 的别名                           |
+| `dpi`  | 每英寸的点数；除以 96 后得到 `dppx`     |
+| `dpcm` | 每厘米的点数；除以 37.795 后得到 `dppx` |
+
+## 与 Web 的关键差异
+
+### `device-*` 尺寸使用视口值
+
+与 Web 不同，Lynx 不会通过媒体查询暴露物理设备尺寸。`device-width`、`device-height` 和 `device-aspect-ratio` 分别使用与 `width`、`height` 和 `aspect-ratio` 相同的视口值。
+
+### 不支持的 Feature 采用 Fail Closed 策略
+
+未列在本文档中的媒体特征不会被识别，查询结果恒为 false。
+
+### 媒体类型始终是 `screen`
+
+Lynx 只有屏幕渲染上下文：
+
+- `@media print { ... }` 永远不生效。
+- `@media not print { ... }` 永远生效。
+- `@media screen { ... }` 等同于 `@media all { ... }`。
+
+### 无效查询列表会使用 `not all`
+
+当整个媒体查询列表都无效时，Lynx 会将其替换为 `not all`，因此不会匹配。对于逗号分隔的列表，无效项会被丢弃，合法项仍以 OR 语义参与匹配。
+
+## 使用示例
+
+```css
+/* 响应式布局 */
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+  }
+}
+
+/* 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background-color: #1a1a1a;
+  }
+}
+
+/* 高 DPR 设备 */
+@media (min-resolution: 2dppx) {
+  .logo {
+    background-image: url('logo@2x.png');
+  }
+}
+
+/* Level 4 范围语法 */
+@media (400px <= width <= 800px) {
+  .sidebar {
+    display: none;
+  }
+}
+```
+
+## 兼容性
+
+<APITable />

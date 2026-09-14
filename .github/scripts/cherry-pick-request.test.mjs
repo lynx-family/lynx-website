@@ -14,6 +14,15 @@ const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const CONFIG_PATH = fileURLToPath(
   new URL('../cherry-pick-config.json', import.meta.url),
 );
+const ISSUE_FORM_PATH = fileURLToPath(
+  new URL('../ISSUE_TEMPLATE/cherry_pick_request.yml', import.meta.url),
+);
+const WORKFLOW_PATH = fileURLToPath(
+  new URL('../workflows/cherry-pick-request.yml', import.meta.url),
+);
+const RECOVERY_SCRIPT_PATH = fileURLToPath(
+  new URL('./cherry-pick-request-recovery.mjs', import.meta.url),
+);
 const TYPE_LABEL = 'cherry-pick:request';
 const STATE_LABELS = [
   'cherry-pick:pending-approval',
@@ -34,6 +43,7 @@ afterEach(async () => {
   );
 });
 
+/** Builds the canonical single-target request body used by workflow tests. */
 function requestBody() {
   return [
     '### Source PR',
@@ -54,6 +64,53 @@ function requestBody() {
   ].join('\n');
 }
 
+/** Adds a newer target while retaining the original request target. */
+function requestBodyWithNewTarget() {
+  return requestBody().replace(
+    '- [x] release/4.0',
+    ['- [x] release/4.1', '- [x] release/4.0'].join('\n'),
+  );
+}
+
+/** Builds a canonical summary at the requested execution phase. */
+function executionSummary(status) {
+  const nextAction =
+    status === 'Approved'
+      ? 'Waiting for workflow execution to start.'
+      : status === 'Running'
+        ? 'Wait for target results.'
+        : 'A maintainer must approve this request.';
+  return {
+    id: 1,
+    body: [
+      '<!-- cherry-pick-request-summary -->',
+      '<!-- cherry-pick-approved-fingerprint: bc2d6fddd07e8fad -->',
+      '<!-- cherry-pick-approved-by: maintainer -->',
+      '<!-- cherry-pick-approved-at: 2026-09-11T10:00:00.000Z -->',
+      '',
+      '## Cherry-pick request summary',
+      '',
+      `Status: **${status}**`,
+      `Next action: ${nextAction}`,
+      '',
+      '- Request issue: #1403',
+      '- Source PR: #1358',
+      '',
+      '### Reason',
+      '',
+      'Backport a low-risk documentation change.',
+      '',
+      '### Targets',
+      '',
+      '| Target branch | Result | Detail |',
+      '| --- | --- | --- |',
+      '| `release/4.0` | Pending | Waiting to run |',
+    ].join('\n'),
+    user: { login: 'github-actions[bot]', type: 'Bot' },
+  };
+}
+
+/** Starts a mock GitHub API server on an available local port. */
 async function listen(server) {
   await new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -63,19 +120,71 @@ async function listen(server) {
   return `http://127.0.0.1:${address.port}`;
 }
 
+/** Parses a JSON request body, returning null when no body is present. */
 async function readRequestBody(request) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
   return chunks.length > 0 ? JSON.parse(Buffer.concat(chunks)) : null;
 }
 
+/** Sends one JSON response from the mock GitHub API. */
 function sendJson(response, value, statusCode = 200) {
   response.writeHead(statusCode, { 'content-type': 'application/json' });
   response.end(JSON.stringify(value));
 }
 
-async function runValidation(stateLabels = []) {
-  const config = JSON.parse(await fs.readFile(CONFIG_PATH, 'utf8'));
+/** Runs one workflow command and captures its process output. */
+async function runWorkflowProcess(command, env) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [SCRIPT_PATH, command], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, ...env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.once('error', reject);
+    child.once('close', (code) => resolve({ code, stdout, stderr }));
+  });
+}
+
+/** Creates and tracks a temporary directory for one workflow invocation. */
+async function createTemporaryDirectory(prefix) {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+  temporaryDirectories.push(directory);
+  return directory;
+}
+
+/** Installs a deterministic git stub used by execution tests. */
+async function createFakeGit(temporaryDirectory) {
+  const fakeBin = path.join(temporaryDirectory, 'bin');
+  const gitLogPath = path.join(temporaryDirectory, 'git.log');
+  await fs.mkdir(fakeBin);
+  await fs.writeFile(
+    path.join(fakeBin, 'git'),
+    [
+      '#!/usr/bin/env node',
+      "const fs = require('node:fs');",
+      'const args = process.argv.slice(2);',
+      "fs.appendFileSync(process.env.FAKE_GIT_LOG, `${args.join(' ')}\\n`);",
+      "if (args[0] === 'ls-remote') process.exit(2);",
+      "if (args[0] === 'merge-base') process.exit(0);",
+    ].join('\n'),
+    { mode: 0o755 },
+  );
+  return { fakeBin, gitLogPath };
+}
+
+/** Runs a recovery command against a stateful mock GitHub Issue. */
+async function runRecovery(stateLabels, status, command = 'cleanup') {
   const issue = {
     number: 1403,
     state: 'open',
@@ -83,7 +192,200 @@ async function runValidation(stateLabels = []) {
     user: { login: 'external-contributor' },
     body: requestBody(),
   };
-  const comments = [];
+  const comments = [executionSummary(status)];
+  const requests = [];
+
+  const server = http.createServer(async (request, response) => {
+    const url = new URL(request.url, 'http://localhost');
+    const body = await readRequestBody(request);
+    requests.push({ method: request.method, path: url.pathname, body });
+
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403'
+    ) {
+      sendJson(response, issue);
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403/comments'
+    ) {
+      sendJson(response, comments);
+      return;
+    }
+    if (
+      request.method === 'DELETE' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/issues/1403/labels/',
+      )
+    ) {
+      const label = decodeURIComponent(url.pathname.split('/').at(-1));
+      issue.labels = issue.labels.filter((item) => item.name !== label);
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403/labels'
+    ) {
+      for (const name of body.labels) {
+        if (!issue.labels.some((label) => label.name === name)) {
+          issue.labels.push({ name });
+        }
+      }
+      sendJson(response, issue.labels);
+      return;
+    }
+    if (
+      request.method === 'PATCH' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/comments/1'
+    ) {
+      comments[0].body = body.body;
+      sendJson(response, comments[0]);
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403/comments'
+    ) {
+      const comment = {
+        id: comments.length + 1,
+        body: body.body,
+        user: { login: 'github-actions[bot]', type: 'Bot' },
+      };
+      comments.push(comment);
+      sendJson(response, comment, 201);
+      return;
+    }
+
+    sendJson(response, { message: 'Not Found' }, 404);
+  });
+
+  const apiUrl = await listen(server);
+  try {
+    const temporaryDirectory = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'cherry-pick-request-cleanup-test-'),
+    );
+    temporaryDirectories.push(temporaryDirectory);
+    const eventPath = path.join(temporaryDirectory, 'event.json');
+    await fs.writeFile(
+      eventPath,
+      JSON.stringify({
+        action: 'labeled',
+        issue,
+        label: { name: 'cherry-pick:approved' },
+        repository: { full_name: 'lynx-family/lynx-website' },
+        sender: { login: 'maintainer' },
+      }),
+    );
+
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [SCRIPT_PATH, command], {
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          GITHUB_API_URL: apiUrl,
+          GITHUB_EVENT_PATH: eventPath,
+          GITHUB_REPOSITORY: 'lynx-family/lynx-website',
+          GITHUB_RUN_ID: '124',
+          GITHUB_SERVER_URL: 'https://github.com',
+          GITHUB_TOKEN: 'test-token',
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.setEncoding('utf8');
+      child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on('data', (chunk) => {
+        stderr += chunk;
+      });
+      child.once('error', reject);
+      child.once('close', (code) => resolve({ code, stdout, stderr }));
+    });
+
+    return { ...result, comments, issue, requests };
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+}
+
+/** Extracts the API-only bootstrap from the recovery workflow step. */
+function recoveryWorkflowScript(workflow) {
+  const marker = '          script: |\n';
+  const start = workflow.indexOf(marker);
+  assert.notEqual(start, -1, 'Recovery workflow script is missing.');
+  const scriptLines = [];
+  for (const line of workflow.slice(start + marker.length).split('\n')) {
+    if (line && !line.startsWith('            ')) break;
+    scriptLines.push(line.slice(12));
+  }
+  return scriptLines.join('\n');
+}
+
+/** Runs the config check with controlled Issue Form default labels. */
+async function runConfigCheck(defaultLabels) {
+  const directory = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'cherry-pick-config-test-'),
+  );
+  temporaryDirectories.push(directory);
+  const configDirectory = path.join(directory, '.github');
+  const formDirectory = path.join(configDirectory, 'ISSUE_TEMPLATE');
+  await fs.mkdir(formDirectory, { recursive: true });
+  await fs.copyFile(
+    CONFIG_PATH,
+    path.join(configDirectory, 'cherry-pick-config.json'),
+  );
+  const form = await fs.readFile(ISSUE_FORM_PATH, 'utf8');
+  const labelBlock = [
+    'labels:',
+    ...defaultLabels.map((label) => `  - '${label}'`),
+    '',
+  ].join('\n');
+  await fs.writeFile(
+    path.join(formDirectory, 'cherry_pick_request.yml'),
+    form.replace(/^body:/m, `${labelBlock}body:`),
+  );
+
+  const child = spawn(process.execPath, [SCRIPT_PATH, 'check-config'], {
+    cwd: directory,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => {
+    stdout += chunk;
+  });
+  child.stderr.on('data', (chunk) => {
+    stderr += chunk;
+  });
+  return new Promise((resolve) => {
+    child.once('close', (code) => resolve({ code, stdout, stderr }));
+  });
+}
+
+/** Runs request validation against a stateful mock GitHub API. */
+async function runValidation(stateLabels = [], options = {}) {
+  const config = JSON.parse(await fs.readFile(CONFIG_PATH, 'utf8'));
+  const issue = {
+    id: 140300,
+    number: 1403,
+    state: options.issueState || 'open',
+    labels: [TYPE_LABEL, ...stateLabels].map((name) => ({ name })),
+    user: { login: 'external-contributor' },
+    body: options.body || requestBody(),
+    updated_at: options.issueUpdatedAt || '2026-09-14T01:00:00Z',
+  };
+  const comments = structuredClone(options.comments || []);
   const requests = [];
 
   const server = http.createServer(async (request, response) => {
@@ -117,6 +419,22 @@ async function runValidation(stateLabels = []) {
     }
     if (
       request.method === 'GET' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/collaborators/',
+      ) &&
+      url.pathname.endsWith('/permission')
+    ) {
+      if (options.permissionStatus === 404) {
+        sendJson(response, { message: 'Not Found' }, 404);
+      } else {
+        sendJson(response, {
+          permission: options.senderPermission || 'maintain',
+        });
+      }
+      return;
+    }
+    if (
+      request.method === 'GET' &&
       url.pathname === '/repos/lynx-family/lynx-website/pulls/1358'
     ) {
       sendJson(response, {
@@ -136,9 +454,14 @@ async function runValidation(stateLabels = []) {
     }
     if (
       request.method === 'GET' &&
-      url.pathname === '/repos/lynx-family/lynx-website/branches/release%2F4.0'
+      [
+        '/repos/lynx-family/lynx-website/branches/release%2F4.1',
+        '/repos/lynx-family/lynx-website/branches/release%2F4.0',
+      ].includes(url.pathname)
     ) {
-      sendJson(response, { name: 'release/4.0' });
+      sendJson(response, {
+        name: decodeURIComponent(url.pathname.split('/').at(-1)),
+      });
       return;
     }
     if (
@@ -161,6 +484,25 @@ async function runValidation(stateLabels = []) {
       return;
     }
     if (
+      request.method === 'DELETE' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/issues/1403/labels/',
+      )
+    ) {
+      const label = decodeURIComponent(url.pathname.split('/').at(-1));
+      issue.labels = issue.labels.filter((item) => item.name !== label);
+      if (
+        label === 'cherry-pick:approved' &&
+        options.approvalDeleteStatus === 404
+      ) {
+        sendJson(response, { message: 'Not Found' }, 404);
+        return;
+      }
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+    if (
       request.method === 'POST' &&
       url.pathname === '/repos/lynx-family/lynx-website/issues/1403/comments'
     ) {
@@ -173,60 +515,291 @@ async function runValidation(stateLabels = []) {
       sendJson(response, comment, 201);
       return;
     }
+    if (
+      request.method === 'PATCH' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/issues/comments/',
+      )
+    ) {
+      const commentId = Number(url.pathname.split('/').at(-1));
+      const comment = comments.find((item) => item.id === commentId);
+      comment.body = body.body;
+      sendJson(response, comment);
+      return;
+    }
 
     sendJson(response, { message: 'Not Found' }, 404);
   });
 
   const apiUrl = await listen(server);
   try {
-    const temporaryDirectory = await fs.mkdtemp(
-      path.join(os.tmpdir(), 'cherry-pick-request-test-'),
+    const temporaryDirectory = await createTemporaryDirectory(
+      'cherry-pick-request-test-',
     );
-    temporaryDirectories.push(temporaryDirectory);
     const eventPath = path.join(temporaryDirectory, 'event.json');
     const outputPath = path.join(temporaryDirectory, 'output.txt');
+    const eventIssue = {
+      ...issue,
+      state: options.eventIssueState || issue.state,
+      body: options.eventBody ?? issue.body,
+      labels: (options.eventStateLabels || [TYPE_LABEL, ...stateLabels]).map(
+        (name) => ({ name }),
+      ),
+      updated_at:
+        options.eventUpdatedAt ||
+        options.issueUpdatedAt ||
+        '2026-09-14T01:00:00Z',
+    };
     await fs.writeFile(
       eventPath,
       JSON.stringify({
-        action: 'labeled',
-        issue,
-        label: { name: TYPE_LABEL },
-        repository: { full_name: 'lynx-family/lynx-website' },
-        sender: { login: 'maintainer' },
+        action: options.action || 'labeled',
+        issue: eventIssue,
+        label: {
+          name: options.eventLabel || TYPE_LABEL,
+        },
+        repository: {
+          id: 850,
+          full_name: 'lynx-family/lynx-website',
+        },
+        sender: {
+          id: options.senderId || 42,
+          login: options.sender || 'maintainer',
+        },
       }),
     );
     await fs.writeFile(outputPath, '');
 
-    const result = await new Promise((resolve, reject) => {
-      const child = spawn(process.execPath, [SCRIPT_PATH, 'validate'], {
-        cwd: REPO_ROOT,
-        env: {
-          ...process.env,
-          GITHUB_API_URL: apiUrl,
-          GITHUB_EVENT_PATH: eventPath,
-          GITHUB_OUTPUT: outputPath,
-          GITHUB_REPOSITORY: 'lynx-family/lynx-website',
-          GITHUB_RUN_ID: '123',
-          GITHUB_SERVER_URL: 'https://github.com',
-          GITHUB_TOKEN: 'test-token',
-        },
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-      let stdout = '';
-      let stderr = '';
-      child.stdout.setEncoding('utf8');
-      child.stderr.setEncoding('utf8');
-      child.stdout.on('data', (chunk) => {
-        stdout += chunk;
-      });
-      child.stderr.on('data', (chunk) => {
-        stderr += chunk;
-      });
-      child.once('error', reject);
-      child.once('close', (code) => resolve({ code, stdout, stderr }));
+    const result = await runWorkflowProcess('validate', {
+      GITHUB_API_URL: apiUrl,
+      GITHUB_EVENT_PATH: eventPath,
+      GITHUB_OUTPUT: outputPath,
+      GITHUB_REPOSITORY: 'lynx-family/lynx-website',
+      GITHUB_RUN_ID: options.runId || '123',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_TOKEN: 'test-token',
     });
 
-    return { ...result, comments, requests };
+    return {
+      ...result,
+      comments,
+      issue,
+      output: await fs.readFile(outputPath, 'utf8'),
+      requests,
+    };
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+}
+
+/** Runs execution against the approval event while exposing live Issue drift. */
+async function runExecution(options) {
+  const issue = {
+    id: 140300,
+    number: 1403,
+    state: options.issueState || 'open',
+    labels: [TYPE_LABEL, ...(options.stateLabels || [])].map((name) => ({
+      name,
+    })),
+    user: { login: 'external-contributor' },
+    body: options.body || requestBody(),
+    updated_at: options.issueUpdatedAt || '2026-09-14T01:01:00Z',
+  };
+  const comments = structuredClone(options.comments || []);
+  const requests = [];
+
+  const server = http.createServer(async (request, response) => {
+    const url = new URL(request.url, 'http://localhost');
+    const body = await readRequestBody(request);
+    requests.push({
+      method: request.method,
+      path: url.pathname,
+      query: Object.fromEntries(url.searchParams),
+      body,
+    });
+
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403'
+    ) {
+      sendJson(response, issue);
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website'
+    ) {
+      sendJson(response, { default_branch: 'main' });
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/pulls/1358'
+    ) {
+      sendJson(response, {
+        merged: true,
+        base: { ref: 'main' },
+        merge_commit_sha: 'source-commit',
+        title: 'docs: update Miso logo and website link',
+      });
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/pulls/1358/files'
+    ) {
+      sendJson(response, [{ filename: 'docs/example.mdx' }]);
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/branches/release%2F4.',
+      )
+    ) {
+      sendJson(response, {
+        name: decodeURIComponent(url.pathname.split('/').at(-1)),
+      });
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403/comments'
+    ) {
+      sendJson(response, comments);
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      url.pathname === '/repos/lynx-family/lynx-website/pulls'
+    ) {
+      sendJson(response, []);
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403/labels'
+    ) {
+      for (const name of body.labels) {
+        if (!issue.labels.some((label) => label.name === name)) {
+          issue.labels.push({ name });
+        }
+      }
+      sendJson(response, issue.labels);
+      return;
+    }
+    if (
+      request.method === 'DELETE' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/issues/1403/labels/',
+      )
+    ) {
+      const label = decodeURIComponent(url.pathname.split('/').at(-1));
+      if (!issue.labels.some((item) => item.name === label)) {
+        sendJson(response, { message: 'Not Found' }, 404);
+        return;
+      }
+      issue.labels = issue.labels.filter((item) => item.name !== label);
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403/comments'
+    ) {
+      const comment = {
+        id: comments.length + 1,
+        body: body.body,
+        user: { login: 'github-actions[bot]', type: 'Bot' },
+      };
+      comments.push(comment);
+      sendJson(response, comment, 201);
+      return;
+    }
+    if (
+      request.method === 'PATCH' &&
+      url.pathname.startsWith(
+        '/repos/lynx-family/lynx-website/issues/comments/',
+      )
+    ) {
+      const commentId = Number(url.pathname.split('/').at(-1));
+      const comment = comments.find((item) => item.id === commentId);
+      comment.body = body.body;
+      sendJson(response, comment);
+      return;
+    }
+    if (
+      request.method === 'PATCH' &&
+      url.pathname === '/repos/lynx-family/lynx-website/issues/1403'
+    ) {
+      issue.state = body.state;
+      sendJson(response, issue);
+      return;
+    }
+
+    sendJson(response, { message: 'Not Found' }, 404);
+  });
+
+  const apiUrl = await listen(server);
+  try {
+    const temporaryDirectory = await createTemporaryDirectory(
+      'cherry-pick-request-execute-test-',
+    );
+    const eventPath = path.join(temporaryDirectory, 'event.json');
+    const { fakeBin, gitLogPath } = await createFakeGit(temporaryDirectory);
+    await fs.writeFile(
+      eventPath,
+      JSON.stringify({
+        action: 'labeled',
+        issue: {
+          id: 140300,
+          number: 1403,
+          state: 'open',
+          labels: [
+            TYPE_LABEL,
+            'cherry-pick:pending-approval',
+            'cherry-pick:approved',
+          ].map((name) => ({ name })),
+          user: { login: 'external-contributor' },
+          body: options.eventBody || requestBody(),
+          updated_at: options.eventUpdatedAt || '2026-09-14T01:00:00Z',
+        },
+        label: { name: 'cherry-pick:approved' },
+        repository: {
+          id: 850,
+          full_name: 'lynx-family/lynx-website',
+        },
+        sender: {
+          id: options.senderId || 42,
+          login: options.sender || 'maintainer',
+        },
+      }),
+    );
+
+    const result = await runWorkflowProcess('execute', {
+      FAKE_GIT_LOG: gitLogPath,
+      GITHUB_API_URL: apiUrl,
+      GITHUB_EVENT_PATH: eventPath,
+      GITHUB_REPOSITORY: 'lynx-family/lynx-website',
+      GITHUB_RUN_ID: options.runId || '123',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_TOKEN: 'test-token',
+      PATH: `${fakeBin}:${process.env.PATH}`,
+    });
+
+    return {
+      ...result,
+      comments,
+      gitCalls: (await fs.readFile(gitLogPath, 'utf8').catch(() => ''))
+        .trim()
+        .split('\n')
+        .filter(Boolean),
+      issue,
+      requests,
+    };
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
@@ -258,9 +831,9 @@ describe('cherry-pick request label initialization', () => {
     );
   });
 
-  for (const stateLabel of STATE_LABELS) {
-    it(`ignores a duplicate type-label event when ${stateLabel} exists`, async () => {
-      const result = await runValidation([stateLabel]);
+  for (const lifecycleLabel of ['cherry-pick:approved', ...STATE_LABELS]) {
+    it(`ignores a duplicate type-label event when ${lifecycleLabel} exists`, async () => {
+      const result = await runValidation([lifecycleLabel]);
 
       assert.equal(result.code, 0, result.stderr);
       assert.match(
@@ -273,4 +846,480 @@ describe('cherry-pick request label initialization', () => {
       );
     });
   }
+});
+
+describe('cherry-pick request approval authorization', () => {
+  for (const permission of ['write', 'maintain', 'admin']) {
+    it(`accepts an approval event from an actor with ${permission} permission`, async () => {
+      const result = await runValidation(
+        ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+        {
+          eventLabel: 'cherry-pick:approved',
+          senderPermission: permission,
+        },
+      );
+
+      assert.equal(result.code, 0, result.stderr);
+      assert.match(result.output, /^should_execute=true$/m);
+      assert.equal(
+        result.issue.labels.some(
+          (label) => label.name === 'cherry-pick:approved',
+        ),
+        false,
+      );
+    });
+  }
+
+  for (const permission of ['read', 'triage', 'none']) {
+    it(`rejects an approval event from an actor with ${permission} permission`, async () => {
+      const result = await runValidation(
+        ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+        {
+          eventLabel: 'cherry-pick:approved',
+          senderPermission: permission,
+        },
+      );
+
+      assert.equal(result.code, 0, result.stderr);
+      assert.doesNotMatch(result.output, /^should_execute=true$/m);
+      assert.equal(
+        result.issue.labels.some(
+          (label) => label.name === 'cherry-pick:approved',
+        ),
+        false,
+      );
+    });
+  }
+
+  it('rejects an approval actor missing from repository permissions', async () => {
+    const result = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        eventLabel: 'cherry-pick:approved',
+        permissionStatus: 404,
+      },
+    );
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.doesNotMatch(result.output, /^should_execute=true$/m);
+    assert.equal(
+      result.issue.labels.some(
+        (label) => label.name === 'cherry-pick:approved',
+      ),
+      false,
+    );
+  });
+
+  it('authorizes the immutable event body instead of a later live edit', async () => {
+    const result = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        body: requestBodyWithNewTarget(),
+        eventBody: requestBody(),
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.output, /^target_branches=release\/4\.0$/m);
+    const summary = result.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.ok(summary);
+    assert.doesNotMatch(summary.body, /release\/4\.1/);
+  });
+
+  it('rejects approval captured after acceptance but before execution starts', async () => {
+    const first = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+    assert.equal(first.code, 0, first.stderr);
+    assert.match(first.output, /^should_execute=true$/m);
+
+    const eventStateLabels = [
+      ...first.issue.labels.map((label) => label.name),
+      'cherry-pick:approved',
+    ];
+    const queued = await runValidation(
+      ['cherry-pick:failed', 'cherry-pick:approved'],
+      {
+        comments: first.comments,
+        eventLabel: 'cherry-pick:approved',
+        eventStateLabels,
+        eventUpdatedAt: '2026-09-14T01:05:00Z',
+        issueUpdatedAt: '2026-09-14T01:05:00Z',
+      },
+    );
+
+    assert.equal(queued.code, 0, queued.stderr);
+    assert.doesNotMatch(queued.output, /^should_execute=true$/m);
+    assert.deepEqual(
+      queued.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:failed'].sort(),
+    );
+  });
+
+  it('establishes running before removing the approval trigger', async () => {
+    const result = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+
+    assert.equal(result.code, 0, result.stderr);
+    const summaryWrite = result.requests.findIndex(
+      (request) =>
+        ['POST', 'PATCH'].includes(request.method) &&
+        request.body?.body?.includes('<!-- cherry-pick-request-summary -->') &&
+        request.body.body.includes('Status: **Approved**'),
+    );
+    const runningState = result.requests.findIndex(
+      (request) =>
+        request.method === 'POST' &&
+        request.path.endsWith('/issues/1403/labels') &&
+        request.body?.labels?.includes('cherry-pick:running'),
+    );
+    const triggerCleanup = result.requests.findIndex(
+      (request) =>
+        request.method === 'DELETE' &&
+        request.path.endsWith(
+          `/labels/${encodeURIComponent('cherry-pick:approved')}`,
+        ),
+    );
+    assert.notEqual(summaryWrite, -1);
+    assert.ok(runningState > summaryWrite);
+    assert.ok(triggerCleanup > runningState);
+    assert.deepEqual(
+      result.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:running'].sort(),
+    );
+  });
+
+  it('accepts approval when the trigger label was already removed', async () => {
+    const result = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        approvalDeleteStatus: 404,
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.output, /^should_execute=true$/m);
+  });
+
+  it('ignores a duplicate delivery of an accepted approval event', async () => {
+    const first = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+    assert.equal(first.code, 0, first.stderr);
+    assert.match(first.output, /^should_execute=true$/m);
+    assert.ok(
+      first.comments.some((comment) =>
+        comment.body.includes('<!-- cherry-pick-approval-event:'),
+      ),
+    );
+
+    const duplicate = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        comments: first.comments,
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+
+    assert.equal(duplicate.code, 0, duplicate.stderr);
+    assert.doesNotMatch(duplicate.output, /^should_execute=true$/m);
+    assert.match(duplicate.stdout, /already accepted/i);
+  });
+
+  it('accepts a fresh approval cycle for the same request body', async () => {
+    const first = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+    assert.equal(first.code, 0, first.stderr);
+
+    const retry = await runValidation(
+      ['cherry-pick:failed', 'cherry-pick:approved'],
+      {
+        comments: first.comments,
+        eventLabel: 'cherry-pick:approved',
+        eventUpdatedAt: '2026-09-14T01:05:00Z',
+        issueUpdatedAt: '2026-09-14T01:05:00Z',
+      },
+    );
+
+    assert.equal(retry.code, 0, retry.stderr);
+    assert.match(retry.output, /^should_execute=true$/m);
+  });
+
+  it('executes the accepted event after later body, state, and label changes', async () => {
+    const approval = await runValidation(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      {
+        body: requestBodyWithNewTarget(),
+        eventBody: requestBody(),
+        eventLabel: 'cherry-pick:approved',
+      },
+    );
+    assert.equal(approval.code, 0, approval.stderr);
+    assert.match(approval.output, /^should_execute=true$/m);
+
+    const execution = await runExecution({
+      body: requestBodyWithNewTarget(),
+      comments: approval.comments,
+      eventBody: requestBody(),
+      issueState: 'closed',
+      stateLabels: ['cherry-pick:pending-approval'],
+    });
+
+    assert.equal(execution.code, 0, execution.stderr);
+    assert.ok(
+      execution.gitCalls.some((call) =>
+        call.includes('release-4.0 origin/release/4.0'),
+      ),
+    );
+    assert.equal(
+      execution.gitCalls.some((call) => call.includes('release/4.1')),
+      false,
+    );
+    assert.equal(
+      execution.requests.some((request) =>
+        request.path.includes('branches/release%2F4.1'),
+      ),
+      false,
+    );
+  });
+});
+
+describe('cherry-pick request config validation', () => {
+  it('rejects every reserved default label', async () => {
+    const lifecycleLabels = [
+      TYPE_LABEL,
+      'cherry-pick:approved',
+      ...STATE_LABELS,
+    ];
+    const result = await runConfigCheck(lifecycleLabels);
+
+    assert.equal(result.code, 1);
+    assert.match(
+      result.stderr,
+      /must not assign reserved workflow labels automatically/,
+    );
+    for (const lifecycleLabel of lifecycleLabels) {
+      assert.match(result.stderr, new RegExp(lifecycleLabel));
+    }
+  });
+
+  it('accepts a non-workflow default label', async () => {
+    const result = await runConfigCheck(['bug']);
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Cherry-pick config check passed/);
+  });
+});
+
+describe('cherry-pick request execution recovery', () => {
+  for (const scenario of [
+    {
+      name: 'approved execution before the running state',
+      status: 'Approved',
+      stateLabels: ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      recoveredState: 'approved',
+    },
+    {
+      name: 'orphaned running execution',
+      status: 'Running',
+      stateLabels: ['cherry-pick:running'],
+      recoveredState: 'running',
+    },
+    {
+      name: 'terminal transition with a stale running summary',
+      status: 'Running',
+      stateLabels: ['cherry-pick:partial'],
+      recoveredState: 'running',
+    },
+  ]) {
+    it(`recovers ${scenario.name}`, async () => {
+      const result = await runRecovery(scenario.stateLabels, scenario.status);
+
+      assert.equal(result.code, 0, result.stderr);
+      assert.deepEqual(
+        result.issue.labels.map((label) => label.name).sort(),
+        [TYPE_LABEL, 'cherry-pick:failed'].sort(),
+      );
+      const summary = result.comments.find((comment) =>
+        comment.body.includes('<!-- cherry-pick-request-summary -->'),
+      );
+      assert.match(summary.body, /Status: \*\*Failed\*\*/);
+      assert.match(
+        summary.body,
+        /Next action: Fix the failure\. Ensure `cherry-pick:approved` is absent, then add it to retry\./,
+      );
+      assert.match(summary.body, /^- Completed at: .+$/m);
+      assert.ok(
+        result.comments.some((comment) =>
+          comment.body.includes(
+            `moved from ${scenario.recoveredState} to failed`,
+          ),
+        ),
+      );
+    });
+  }
+
+  it('recovers an approved request when execution fails before running', async () => {
+    const result = await runRecovery(
+      ['cherry-pick:pending-approval', 'cherry-pick:approved'],
+      'Approved',
+      'execute',
+    );
+
+    assert.equal(result.code, 1);
+    assert.deepEqual(
+      result.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:failed'].sort(),
+    );
+    const summary = result.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(summary.body, /Status: \*\*Failed\*\*/);
+    assert.ok(
+      result.comments.some(
+        (comment) =>
+          comment.body.includes(
+            'Cherry-pick workflow encountered an unexpected error',
+          ) && comment.body.includes('moved from approved to failed'),
+      ),
+    );
+  });
+
+  it('does not recover a request without an interrupted execution', async () => {
+    const result = await runRecovery(
+      ['cherry-pick:pending-approval'],
+      'Pending approval',
+    );
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(
+      result.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:pending-approval'].sort(),
+    );
+    assert.match(result.stdout, /no interrupted execution state to recover/i);
+    assert.equal(
+      result.requests.some((request) => request.method !== 'GET'),
+      false,
+    );
+  });
+});
+
+describe('cherry-pick request recovery workflow', () => {
+  it('runs API-only recovery for validation and execution failures', async () => {
+    const workflow = await fs.readFile(WORKFLOW_PATH, 'utf8');
+    const cleanupJob = workflow.split('\n  cleanup:\n')[1];
+
+    assert.ok(cleanupJob);
+    assert.match(cleanupJob, /needs\.validate\.result != 'success'/);
+    assert.match(cleanupJob, /needs\.validate\.result != 'skipped'/);
+    assert.match(cleanupJob, /needs\.execute\.result != 'success'/);
+    assert.match(cleanupJob, /actions\/github-script@/);
+    assert.match(cleanupJob, /github\.rest\.repos\.getContent/);
+    assert.match(cleanupJob, /cherry-pick-request-recovery\.mjs/);
+    assert.doesNotMatch(cleanupJob, /actions\/checkout@/);
+    assert.doesNotMatch(cleanupJob, /actions\/setup-node@/);
+  });
+
+  it('executes API-only recovery for an approved request', async () => {
+    const workflow = await fs.readFile(WORKFLOW_PATH, 'utf8');
+    const script = recoveryWorkflowScript(workflow);
+    const recoverySource = await fs.readFile(RECOVERY_SCRIPT_PATH, 'utf8');
+    const issue = {
+      labels: [
+        TYPE_LABEL,
+        'cherry-pick:pending-approval',
+        'cherry-pick:approved',
+      ].map((name) => ({ name })),
+    };
+    const comments = [executionSummary('Approved')];
+    const createdComments = [];
+    const issues = {
+      get: async () => ({ data: issue }),
+      listComments: async () => ({ data: comments }),
+      removeLabel: async ({ name }) => {
+        issue.labels = issue.labels.filter((label) => label.name !== name);
+      },
+      addLabels: async ({ labels }) => {
+        for (const name of labels) issue.labels.push({ name });
+      },
+      updateComment: async ({ comment_id, body }) => {
+        comments.find((comment) => comment.id === comment_id).body = body;
+      },
+      createComment: async ({ body }) => {
+        createdComments.push(body);
+      },
+    };
+    const github = {
+      rest: {
+        issues,
+        repos: {
+          getContent: async ({ owner, repo, path, ref }) => {
+            assert.deepEqual(
+              { owner, repo, path, ref },
+              {
+                owner: 'lynx-family',
+                repo: 'lynx-website',
+                path: '.github/scripts/cherry-pick-request-recovery.mjs',
+                ref: 'abc123',
+              },
+            );
+            return {
+              data: {
+                type: 'file',
+                encoding: 'base64',
+                content: Buffer.from(recoverySource).toString('base64'),
+              },
+            };
+          },
+        },
+      },
+      paginate: async () => comments,
+    };
+    const context = {
+      issue: { number: 1403 },
+      repo: { owner: 'lynx-family', repo: 'lynx-website' },
+      runId: 125,
+      serverUrl: 'https://github.com',
+      sha: 'abc123',
+    };
+    const core = { info() {} };
+    const AsyncFunction = Object.getPrototypeOf(
+      async function () {},
+    ).constructor;
+
+    await new AsyncFunction('github', 'context', 'core', script)(
+      github,
+      context,
+      core,
+    );
+
+    assert.deepEqual(
+      issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:failed'].sort(),
+    );
+    assert.match(comments[0].body, /Status: \*\*Failed\*\*/);
+    assert.ok(
+      createdComments.some((comment) =>
+        comment.includes('moved from approved to failed'),
+      ),
+    );
+  });
 });

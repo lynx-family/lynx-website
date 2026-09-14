@@ -1,0 +1,213 @@
+---
+title: Media Query
+api: css/at-rule/media-query
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# Media Query
+
+<APISummary />
+
+Lynx implements a subset of CSS Media Queries Level 4. Use `@media` rules to apply styles according to the viewport and other runtime environment values.
+
+## Enable CSS Rule Encoding
+
+Media query rules require CSS Rule encoding. Add `pluginLynxConfig` to the existing `plugins` array in `lynx.config.mjs`:
+
+```js
+import { pluginLynxConfig } from '@lynx-js/config-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginLynxConfig({
+      enableCSSRule: true,
+    }),
+  ],
+});
+```
+
+`enableCSSRule` requires Lynx SDK or Clay 4.0 or later. Without it, `@media` rules are not encoded into the template and do not take effect at runtime.
+
+## Syntax Support
+
+### Media Types
+
+| Type                           | Lynx behavior                                 | Web behavior                    |
+| ------------------------------ | --------------------------------------------- | ------------------------------- |
+| `all`                          | Always matches                                | Always matches                  |
+| `screen`                       | Always matches; Lynx is a screen-only surface | Matches only on screen devices  |
+| `print`                        | Never matches                                 | Matches only in a print context |
+| Others (`speech`, `tty`, etc.) | Never match                                   | Match their respective contexts |
+
+### Logical Modifiers and Operators
+
+Lynx supports `not`, `only`, comma-separated query lists (OR semantics), and `and`, `or`, and `not` media conditions. As in the CSS grammar, do not mix `and` and `or` at the same level without nesting a condition in parentheses.
+
+```css
+/* and / or / not combinations */
+@media (min-width: 600px) and (orientation: portrait) { ... }
+@media (hover) or (pointer) { ... }
+@media not (prefers-color-scheme: dark) { ... }
+
+/* Level 4 range syntax */
+@media (300px <= width <= 600px) { ... }
+@media (width > 400px) { ... }
+@media (100px < width < 500px) { ... }
+```
+
+Range syntax uses the unprefixed feature name, such as `width` rather than `min-width`.
+
+## Supported Media Features
+
+### Viewport Dimensions
+
+| Feature         | Supported forms             | Description                   |
+| --------------- | --------------------------- | ----------------------------- |
+| `width`         | plain / min- / max- / range | Viewport width in CSS pixels  |
+| `height`        | plain / min- / max- / range | Viewport height in CSS pixels |
+| `device-width`  | plain / min- / max- / range | Equivalent to `width`         |
+| `device-height` | plain / min- / max- / range | Equivalent to `height`        |
+
+The boolean form `(width)` matches when the viewport width is greater than zero.
+
+### Aspect Ratio
+
+| Feature               | Supported forms             | Description                      |
+| --------------------- | --------------------------- | -------------------------------- |
+| `aspect-ratio`        | plain / min- / max- / range | Viewport width divided by height |
+| `device-aspect-ratio` | plain / min- / max- / range | Equivalent to `aspect-ratio`     |
+
+Values can be ratios such as `16/9`, or plain numbers interpreted as `N/1`.
+
+### Resolution and Pixel Density
+
+| Feature              | Supported forms             | Description                 |
+| -------------------- | --------------------------- | --------------------------- |
+| `resolution`         | plain / min- / max- / range | Device pixel ratio          |
+| `device-pixel-ratio` | plain / min- / max- / range | Unitless device pixel ratio |
+
+`resolution` accepts `dppx`, `x`, `dpi`, and `dpcm`. `x` is an alias for `dppx`.
+
+### Orientation
+
+| Feature       | Values                   | Description                     |
+| ------------- | ------------------------ | ------------------------------- |
+| `orientation` | `portrait` / `landscape` | `portrait` when height >= width |
+
+A square viewport is considered `portrait`.
+
+### Interaction Capabilities
+
+:::note
+
+The host does not provide hover or pointer environment values. Related queries without a `not` modifier do not match.
+
+:::
+
+| Feature   | Values                     | Description                                                                     |
+| --------- | -------------------------- | ------------------------------------------------------------------------------- |
+| `hover`   | `hover` / `none`           | Whether the primary input supports hover                                        |
+| `pointer` | `fine` / `coarse` / `none` | Whether a primary pointer is present; `fine` and `coarse` are not distinguished |
+
+### User Preferences
+
+The host can update the system color scheme through `UpdateColorScheme`. The default value is `light`.
+
+| Feature                | Values           | Description                    |
+| ---------------------- | ---------------- | ------------------------------ |
+| `prefers-color-scheme` | `light` / `dark` | System color scheme preference |
+
+### Color Depth
+
+:::note
+
+The host does not provide actual color-depth data. The runtime evaluates color depth as 8 bits per color component.
+
+:::
+
+| Feature | Supported forms             | Description              |
+| ------- | --------------------------- | ------------------------ |
+| `color` | plain / min- / max- / range | Bits per color component |
+
+## Supported Value Units
+
+### Length Units
+
+| Unit   | Description                                   |
+| ------ | --------------------------------------------- |
+| `px`   | CSS pixels                                    |
+| `em`   | Relative to the current font size             |
+| `rem`  | Relative to the root element font size        |
+| `%`    | Percentage of viewport width in media queries |
+| `vw`   | Viewport width percentage                     |
+| `vh`   | Viewport height percentage                    |
+| `vmin` | The smaller of `vw` and `vh`                  |
+| `vmax` | The larger of `vw` and `vh`                   |
+
+### Resolution Units
+
+| Unit   | Description                                      |
+| ------ | ------------------------------------------------ |
+| `dppx` | Dots per CSS pixel                               |
+| `x`    | Alias for `dppx`                                 |
+| `dpi`  | Dots per inch; divide by 96 for `dppx`           |
+| `dpcm` | Dots per centimeter; divide by 37.795 for `dppx` |
+
+## Key Differences from Web
+
+### `device-*` Dimensions Use the Viewport
+
+Unlike the Web, Lynx does not expose a physical-device size through media queries. `device-width`, `device-height`, and `device-aspect-ratio` use the same viewport values as `width`, `height`, and `aspect-ratio`.
+
+### Unsupported Features Fail Closed
+
+Media features not listed on this page are unrecognized and evaluate to false.
+
+### The Media Type Is Always `screen`
+
+Lynx has a screen rendering context only:
+
+- `@media print { ... }` never applies.
+- `@media not print { ... }` always applies.
+- `@media screen { ... }` is equivalent to `@media all { ... }`.
+
+### Invalid Query Lists Use `not all`
+
+When an entire media query list is invalid, Lynx replaces it with `not all`, so it never matches. In a comma-separated list, invalid entries are discarded while valid entries continue to participate in OR matching.
+
+## Usage Examples
+
+```css
+/* Responsive layout */
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+  }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background-color: #1a1a1a;
+  }
+}
+
+/* High-DPR devices */
+@media (min-resolution: 2dppx) {
+  .logo {
+    background-image: url('logo@2x.png');
+  }
+}
+
+/* Level 4 range syntax */
+@media (400px <= width <= 800px) {
+  .sidebar {
+    display: none;
+  }
+}
+```
+
+## Compatibility
+
+<APITable />
