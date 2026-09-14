@@ -4,7 +4,7 @@
 # lynx-stack checkout:
 #
 #   1. rspeedy/{config,plugins,api}, react/api, packages – copied as-is from
-#      lynx-stack's docs/content by scripts/sync-lynx-stack-docs.sh. lynx-stack
+#      lynx-stack's docs/content by scripts/sync-lynx-stack-docs.mjs. lynx-stack
 #      generates and commits these pages itself.
 #   2. genui – TypeDoc, run here in lynx-website (`pnpm run typedoc`), reading
 #      the freshly built lynx-stack package.
@@ -93,7 +93,7 @@ popd >/dev/null
 echo "::endgroup::"
 
 echo "::group::Sync API reference pages from lynx-stack"
-bash "$WEBSITE/scripts/sync-lynx-stack-docs.sh" "$STACK"
+node "$WEBSITE/scripts/sync-lynx-stack-docs.mjs" "$STACK/docs"
 echo "::endgroup::"
 
 echo "::group::Overlay built packages into node_modules for TypeDoc"
