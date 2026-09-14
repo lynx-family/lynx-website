@@ -3,7 +3,7 @@
 # Refresh the lynx-stack-derived API reference docs in place, against a
 # lynx-stack checkout:
 #
-#   1. rspeedy/{config,plugins,api}, react/api, packages – copied as-is from
+#   1. config, react/api, packages – copied as-is from
 #      lynx-stack's docs/content by scripts/sync-lynx-stack-docs.mjs. lynx-stack
 #      generates and commits these pages itself.
 #   2. genui – TypeDoc, run here in lynx-website (`pnpm run typedoc`), reading
