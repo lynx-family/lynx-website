@@ -114,10 +114,10 @@ dist
 └── [name].lynx.bundle
 ```
 
-[`output.filename`]: /zh/config/output#output-filename
-[`output.filename.js`]: /zh/config/output#output-filename
-[`output.filename.bundle`]: /zh/config/output#output-filename
-[`output.distPath`]: /zh/config/output#output-distpath
+[`output.filename`]: /zh/config/#output-filename
+[`output.filename.js`]: /zh/config/#output-filename
+[`output.filename.bundle`]: /zh/config/#output-filename
+[`output.distPath`]: /zh/config/#output-distpath
 [`output.distPath.js`]: /zh/packages/rspeedy
-[`output.legalComments`]: /zh/config/output#output-legalcomments
-[`output.sourceMap`]: /zh/config/output#output-sourcemap
+[`output.legalComments`]: /zh/config/#output-legalcomments
+[`output.sourceMap`]: /zh/config/#output-sourcemap

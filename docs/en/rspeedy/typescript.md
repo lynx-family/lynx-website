@@ -30,7 +30,7 @@ import { get } from '@common/request.js'; // The same as './common/request.js'
 
 ## Custom `tsconfig.json` Path
 
-Rspeedy by default reads the `tsconfig.json` file from the root directory. You can use the [source.tsconfigPath](/config/source#source-tsconfigpath) to configure a custom tsconfig.json file path.
+Rspeedy by default reads the `tsconfig.json` file from the root directory. You can use the [source.tsconfigPath](/config/#source-tsconfigpath) to configure a custom tsconfig.json file path.
 
 ```ts
 export default {
