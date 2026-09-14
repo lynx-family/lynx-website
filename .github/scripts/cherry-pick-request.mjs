@@ -748,9 +748,9 @@ function initialTargets(parsed) {
   }));
 }
 
-async function validateParsedRequest(repo, parsed) {
+async function validateParsedRequest(repo, parsed, sourcePull = null) {
   const repository = await getRepo(repo);
-  const pull = await getPull(repo, parsed.sourcePr);
+  const pull = sourcePull || (await getPull(repo, parsed.sourcePr));
   const errors = [];
   if (!pull.merged) {
     errors.push(`Source PR #${parsed.sourcePr} is not merged.`);
@@ -862,6 +862,8 @@ async function validateCommand() {
   const config = loadConfig();
   const event = getEvent();
   const issueNumber = event.issue.number;
+  const isInitializationEvent =
+    event.action === 'labeled' && event.label?.name === TYPE_LABEL;
   const isApprovalEvent =
     event.action === 'labeled' && event.label?.name === APPROVED_LABEL;
   console.log(
@@ -1013,7 +1015,7 @@ async function validateCommand() {
   const establishedSourcePr = sourcePrFromSummary(summaryBody);
   const sourcePrWasUnset = summaryBody.includes(SOURCE_PR_UNSET_MARKER);
   const sourceIdentityMissing =
-    !establishedSourcePr && hasManagedStateLabel(issue) && !sourcePrWasUnset;
+    !establishedSourcePr && !sourcePrWasUnset && !isInitializationEvent;
   if (sourceIdentityMissing) {
     if (hasLabel(issue, APPROVED_LABEL)) {
       await removeLabel(repo, issueNumber, APPROVED_LABEL);
@@ -1037,27 +1039,58 @@ async function validateCommand() {
   }
   let parsed;
   let requestedSourcePr;
+  let confirmedSourcePr;
+  let sourcePull;
   let validation = null;
   const errors = [];
   try {
     requestedSourcePr = sourcePrFromRequestBody(requestBody, repo);
-    parsed = parseRequestBody(requestBody, config, repo);
-    if (establishedSourcePr && parsed.sourcePr !== establishedSourcePr) {
-      errors.push(
-        `Source PR cannot be changed from #${establishedSourcePr} to #${parsed.sourcePr}. Restore #${establishedSourcePr} or open a new cherry-pick request.`,
-      );
-    } else {
-      validation = await validateParsedRequest(repo, parsed);
-      errors.push(...validation.errors);
-    }
   } catch (error) {
     errors.push(error.message);
   }
 
+  if (requestedSourcePr !== undefined) {
+    if (establishedSourcePr && requestedSourcePr !== establishedSourcePr) {
+      errors.push(
+        `Source PR cannot be changed from #${establishedSourcePr} to #${requestedSourcePr}. Restore #${establishedSourcePr} or open a new cherry-pick request.`,
+      );
+    } else {
+      try {
+        sourcePull = await getPull(repo, requestedSourcePr);
+        confirmedSourcePr = requestedSourcePr;
+      } catch (error) {
+        if (error.status === 404) {
+          errors.push(`Source PR #${requestedSourcePr} does not exist.`);
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  try {
+    parsed = parseRequestBody(requestBody, config, repo);
+  } catch (error) {
+    if (!errors.includes(error.message)) {
+      errors.push(error.message);
+    }
+  }
+
+  if (parsed && sourcePull) {
+    try {
+      validation = await validateParsedRequest(repo, parsed, sourcePull);
+      errors.push(...validation.errors);
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+
+  const persistedSourcePr = establishedSourcePr || confirmedSourcePr;
+
   const summaryBase = {
     requestIssue: issueNumber,
-    sourcePr: establishedSourcePr || requestedSourcePr,
-    sourcePrUnset: !establishedSourcePr && !requestedSourcePr,
+    sourcePr: persistedSourcePr,
+    sourcePrUnset: !persistedSourcePr,
     sourceTitle: validation?.sourceTitle,
     sourceCommit: validation?.sourceCommit,
     requestedBy: eventIssue.user?.login,

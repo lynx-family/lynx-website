@@ -462,12 +462,21 @@ async function runValidation(stateLabels = [], options = {}) {
       request.method === 'GET' &&
       url.pathname === '/repos/lynx-family/lynx-website/pulls/1358'
     ) {
-      sendJson(response, {
-        merged: true,
-        base: { ref: 'main' },
-        merge_commit_sha: 'source-commit',
-        title: 'docs: update Miso logo and website link',
-      });
+      if (options.sourcePullStatus && options.sourcePullStatus !== 200) {
+        sendJson(
+          response,
+          { message: options.sourcePullError || 'Source pull request failed' },
+          options.sourcePullStatus,
+        );
+      } else {
+        sendJson(response, {
+          merged: true,
+          base: { ref: 'main' },
+          merge_commit_sha: 'source-commit',
+          title: 'docs: update Miso logo and website link',
+          ...options.sourcePull,
+        });
+      }
       return;
     }
     if (
@@ -980,6 +989,71 @@ describe('terminal cherry-pick request reuse', () => {
     assert.doesNotMatch(correctedSummary.body, /cherry-pick-source-pr: unset/);
   });
 
+  it('allows correcting a parseable source PR that does not exist', async () => {
+    const invalid = await runValidation([], {
+      body: requestBody().replace('#1358', '#10000'),
+    });
+
+    assert.equal(invalid.code, 0, invalid.stderr);
+    const invalidSummary = invalid.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(invalidSummary.body, /<!-- cherry-pick-source-pr: unset -->/);
+    assert.match(invalidSummary.body, /Source PR #10000 does not exist/);
+
+    const corrected = await runValidation(['cherry-pick:invalid'], {
+      action: 'edited',
+      comments: invalid.comments,
+    });
+
+    assert.equal(corrected.code, 0, corrected.stderr);
+    assert.deepEqual(
+      corrected.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:pending-approval'].sort(),
+    );
+    const correctedSummary = corrected.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(correctedSummary.body, /<!-- cherry-pick-source-pr: 1358 -->/);
+  });
+
+  it('does not persist source identity after a transient PR lookup failure', async () => {
+    const result = await runValidation([], {
+      sourcePullStatus: 500,
+    });
+
+    assert.equal(result.code, 1);
+    assert.equal(
+      result.comments.some((comment) =>
+        comment.body.includes('<!-- cherry-pick-request-summary -->'),
+      ),
+      false,
+    );
+  });
+
+  it('locks an existing source PR and reuses its lookup result', async () => {
+    const result = await runValidation([], {
+      sourcePull: { merged: false },
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(
+      result.issue.labels.map((label) => label.name).sort(),
+      [TYPE_LABEL, 'cherry-pick:invalid'].sort(),
+    );
+    const summary = result.comments.find((comment) =>
+      comment.body.includes('<!-- cherry-pick-request-summary -->'),
+    );
+    assert.match(summary.body, /<!-- cherry-pick-source-pr: 1358 -->/);
+    assert.equal(
+      result.requests.filter(
+        (request) =>
+          request.method === 'GET' && request.path.endsWith('/pulls/1358'),
+      ).length,
+      1,
+    );
+  });
+
   it('does not infer a legacy source identity from reason text', async () => {
     const result = await runValidation(['cherry-pick:partial'], {
       action: 'edited',
@@ -1041,6 +1115,42 @@ describe('terminal cherry-pick request reuse', () => {
       ),
     );
   });
+
+  for (const scenario of [
+    { name: 'edited', stateLabels: [], options: { action: 'edited' } },
+    { name: 'reopened', stateLabels: [], options: { action: 'reopened' } },
+    {
+      name: 'approval',
+      stateLabels: ['cherry-pick:approved'],
+      options: { eventLabel: 'cherry-pick:approved' },
+    },
+  ]) {
+    it(`fails closed for ${scenario.name} events without persisted source identity or state`, async () => {
+      const result = await runValidation(scenario.stateLabels, {
+        ...scenario.options,
+        comments: [],
+      });
+
+      assert.equal(result.code, 0, result.stderr);
+      assert.match(result.output, /^should_execute=false$/m);
+      assert.deepEqual(
+        result.issue.labels.map((label) => label.name),
+        [TYPE_LABEL],
+      );
+      assert.equal(
+        result.requests.some(
+          (request) =>
+            request.method === 'GET' && request.path.endsWith('/pulls/1358'),
+        ),
+        false,
+      );
+      assert.ok(
+        result.comments.some((comment) =>
+          /persisted source PR identity is missing/i.test(comment.body),
+        ),
+      );
+    });
+  }
 
   it('rejects changing the source PR of an existing request', async () => {
     const initialized = await runValidation();
