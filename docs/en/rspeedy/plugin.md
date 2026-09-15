@@ -16,7 +16,7 @@ Plugins written by developers can modify the default behavior of Rspeedy/Rsbuild
 
 ## Find Plugins
 
-Before finding plugin, you may want to check if the feature you want is already included in [Rspeedy Configuration](../../api/rspeedy/rspeedy.md).
+Before finding plugin, you may want to check if the feature you want is already included in [Rspeedy Configuration](/api/config/).
 
 ### Rsbuild Plugins
 
@@ -54,7 +54,7 @@ See [Rsbuild - Plugin Hooks](https://rsbuild.dev/plugins/dev/hooks) for more det
 
 See [Rspack - Compiler Hooks](https://rspack.rs/api/plugin-api/compiler-hooks) and [Rspack - Compilation Hooks](https://rspack.rs/api/plugin-api/compilation-hooks) for more details.
 
-[`tools.rspack.plugins`]: /api/rspeedy/rspeedy.tools.rspack#example-4
+[`tools.rspack.plugins`]: /api/config/#tools-rspack
 [BannerPlugin]: https://rspack.rs/plugins/webpack/banner-plugin
 [DefinePlugin]: https://rspack.rs/plugins/webpack/define-plugin
 [EnvironmentPlugin]: https://rspack.rs/plugins/webpack/environment-plugin

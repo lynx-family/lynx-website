@@ -89,7 +89,7 @@ ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在�
 
 ### Portal
 
-在 React 中，[Portal](https://react.dev/reference/react-dom/createPortal) 用于把一段组件树渲染到元件树上的另一个容器里，同时让它仍然留在 React 树中——浮层、弹窗这类需要脱离当前布局层级的 UI 通常都靠它。自 `@lynx-js/react` 0.121.0 起，ReactLynx 通过 [`createPortal`](/api/react/Function.createPortal) 提供 Portal。
+在 React 中，[Portal](https://react.dev/reference/react-dom/createPortal) 用于把一段组件树渲染到元件树上的另一个容器里，同时让它仍然留在 React 树中——浮层、弹窗这类需要脱离当前布局层级的 UI 通常都靠它。自 `@lynx-js/react` 0.121.0 起，ReactLynx 通过 [`createPortal`](/api/react/functions#createportal) 提供 Portal。
 
 与 React DOM 中的 Portal 接受一个 DOM 节点作为容器不同，在 ReactLynx 中我们使用一个节点引用（[`NodesRef`](/api/lynx-api/nodes-ref)）作为 Portal 容器：在承载元件上挂一个 ref 拿到它的 `NodesRef`，再作为 `createPortal` 的第二个参数传入。获取节点引用的更多方式见[直接操作节点](/guide/interaction/event-handling/manipulating-element.react)。
 
@@ -102,7 +102,7 @@ ReactLynx 带来了 `createPortal` 与 Snapshot 层级和数量优化，并在�
   highlight="{7,34-37}"
 />
 
-Portal 只改变元件在页面上的物理位置。除此之外，渲染进 Portal 的 JSX 表现得就像渲染它的那个组件的子节点：父树提供的 React Context 依然能拿到，状态更新也和普通组件一致。有三点[需要注意](/api/react/Function.createPortal#备注)的地方与 Web 不同：
+Portal 只改变元件在页面上的物理位置。除此之外，渲染进 Portal 的 JSX 表现得就像渲染它的那个组件的子节点：父树提供的 React Context 依然能拿到，状态更新也和普通组件一致。有三点[需要注意](/api/react/functions#createportal备注)的地方与 Web 不同：
 
 - **事件冒泡遵循 Preact 的行为。** ReactLynx 的 `createPortal` 沿用 Preact 的实现，而 [Preact 中事件不会穿过 Portal 组件向上冒泡](https://preactjs.com/guide/v10/differences-to-react/#main-differences)，因此事件沿页面实际的元件结构冒泡，而不是 React 树。
 - **Portal 子树不参与[首帧直出（IFR）](/guide/interaction/ifr)**，只在后台线程渲染。
@@ -116,7 +116,7 @@ ReactLynx 在编译期会提取 JSX 中的静态元件结构。当前编译器�
 
 ### 双线程 Minimizer
 
-构建侧新增了双线程 Minimizer 机制，用于对主线程和后台线程产物进行更细粒度的压缩与裁剪。开发者可以通过 [`optimizeBundleSize`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.optimizebundlesize) 快速启用默认优化，也可以分别配置 [`Minify.mainThreadOptions`](/api/rspeedy/rspeedy.minify.mainthreadoptions) 和 [`Minify.backgroundOptions`](/api/rspeedy/rspeedy.minify.backgroundoptions)。
+构建侧新增了双线程 Minimizer 机制，用于对主线程和后台线程产物进行更细粒度的压缩与裁剪。开发者可以通过 [`optimizeBundleSize`](/api/packages/react-rsbuild-plugin#optimizebundlesize) 快速启用默认优化，也可以分别配置 [`Minify.mainThreadOptions`](/api/config/#output-minify) 和 [`Minify.backgroundOptions`](/api/config/#output-minify)。
 
 ## 其他更新
 

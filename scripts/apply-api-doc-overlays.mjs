@@ -11,12 +11,14 @@ const localeConfig = {
   zh: { heading: '示例' },
 };
 
-// Add one entry here to inject a Lynx Go example into the corresponding
-// English and Chinese API reference pages.
+// Add one entry here to inject a Lynx Go example under an API on the
+// ReactLynx reference pages synced from lynx-stack. `anchor` is the id of the
+// API's heading on that page; the example goes at the end of its section.
 const apiReferenceExamples = [
   {
     id: 'react-clone-element-example',
-    apiReference: 'react/Function.cloneElement.mdx',
+    apiReference: 'api/react/functions.mdx',
+    anchor: 'cloneelement',
     locales: ['en', 'zh'],
     goProps: {
       example: 'react-apis',
@@ -28,7 +30,8 @@ const apiReferenceExamples = [
   },
   {
     id: 'react-create-element-example',
-    apiReference: 'react/Function.createElement.mdx',
+    apiReference: 'api/react/functions.mdx',
+    anchor: 'createelement',
     locales: ['en', 'zh'],
     goProps: {
       example: 'react-apis',
@@ -40,7 +43,8 @@ const apiReferenceExamples = [
   },
   {
     id: 'react-create-portal-example',
-    apiReference: 'react/Function.createPortal.mdx',
+    apiReference: 'api/react/functions.mdx',
+    anchor: 'createportal',
     locales: ['en', 'zh'],
     goProps: {
       example: 'react-apis',
@@ -114,12 +118,11 @@ function renderLynxGo({ id, goProps }) {
 
 function createOverlays(examples) {
   const ids = new Set();
-  const apiReferences = new Set();
-  const targets = new Set();
+  const sections = new Set();
   const overlays = [];
 
   for (const example of examples) {
-    const { id, apiReference, locales } = example;
+    const { id, apiReference, anchor, locales } = example;
 
     if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(id)) {
       throw new Error(`Invalid API doc overlay id: ${String(id)}`);
@@ -133,30 +136,27 @@ function createOverlays(examples) {
       typeof apiReference !== 'string' ||
       !apiReference.endsWith('.mdx') ||
       apiReference.includes('\\') ||
-      apiReference.includes('\0')
-    ) {
-      throw new Error(`Invalid API reference path in "${id}".`);
-    }
-    const normalizedReference = path.posix.normalize(apiReference);
-    if (
-      normalizedReference !== apiReference ||
+      apiReference.includes('\0') ||
+      path.posix.normalize(apiReference) !== apiReference ||
       path.posix.isAbsolute(apiReference) ||
       apiReference.startsWith('../')
     ) {
+      throw new Error(`Invalid API reference path in "${id}".`);
+    }
+    if (typeof anchor !== 'string' || !/^[a-z0-9-]+$/.test(anchor)) {
+      throw new Error(`Invalid anchor in "${id}".`);
+    }
+    if (sections.has(`${apiReference}#${anchor}`)) {
       throw new Error(
-        `API reference path must stay under docs/*/api: ${apiReference}`,
+        `Duplicate API reference example: ${apiReference}#${anchor}`,
       );
     }
-    if (apiReferences.has(apiReference)) {
-      throw new Error(`Duplicate API reference example: ${apiReference}`);
-    }
-    apiReferences.add(apiReference);
+    sections.add(`${apiReference}#${anchor}`);
 
     if (!Array.isArray(locales) || locales.length === 0) {
       throw new Error(`API reference example "${id}" requires locales.`);
     }
-    const uniqueLocales = new Set(locales);
-    if (uniqueLocales.size !== locales.length) {
+    if (new Set(locales).size !== locales.length) {
       throw new Error(`Duplicate locale in API reference example "${id}".`);
     }
 
@@ -166,15 +166,11 @@ function createOverlays(examples) {
         throw new Error(`Unsupported locale "${locale}" in "${id}".`);
       }
       const { heading } = localeConfig[locale];
-      const target = `docs/${locale}/api/${apiReference}`;
-      if (targets.has(target)) {
-        throw new Error(`Duplicate API doc overlay target: ${target}`);
-      }
-      targets.add(target);
       overlays.push({
         id,
-        target,
-        content: `## ${heading}\n\n${go}`,
+        anchor,
+        target: `docs/${locale}/${apiReference}`,
+        content: `#### ${heading}\n\n${go}`,
       });
     }
   }
@@ -215,40 +211,85 @@ function removeExistingOverlay(content, id) {
   return `${before}\n\n${after}`;
 }
 
-async function prepareOverlay({ id, target, content }) {
-  const targetPath = path.join(repoRoot, target);
-  const original = await readFile(targetPath, 'utf8');
+const LYNX_IMPORT = "import * as Lynx from '@lynx';";
 
-  if (!original.includes('@generated')) {
-    throw new Error(`Refusing to overlay non-generated API doc: ${target}`);
+function ensureLynxImport(content) {
+  if (content.includes(LYNX_IMPORT)) {
+    return content;
   }
-  if (!original.includes("import * as Lynx from '@lynx';")) {
-    throw new Error(`Missing Lynx component import in API doc: ${target}`);
+  const frontmatter = content.match(/^---\n[\s\S]*?\n---\n/);
+  const at = frontmatter ? frontmatter[0].length : 0;
+  return `${content.slice(0, at)}\n${LYNX_IMPORT}\n${content.slice(at)}`;
+}
+
+function insertAtEndOfSection(content, anchor, block) {
+  const lines = content.split('\n');
+  const headingIndex = lines.findIndex(
+    (line) => /^#{2,6} /.test(line) && line.includes(`\\{#${anchor}\\}`),
+  );
+  if (headingIndex === -1) {
+    throw new Error(`No heading with anchor "${anchor}" found.`);
   }
-
-  const contentWithoutOverlay = removeExistingOverlay(original, id);
-  const trimmedContent = content.trim();
-  if (!trimmedContent) {
-    throw new Error(`Overlay content is empty: ${id}`);
+  const level = lines[headingIndex].match(/^#+/)[0].length;
+  let end = lines.length;
+  let inFence = false;
+  for (let i = headingIndex + 1; i < lines.length; i++) {
+    if (/^\s*```/.test(lines[i])) {
+      inFence = !inFence;
+    }
+    if (inFence) {
+      continue;
+    }
+    const heading = lines[i].match(/^(#{1,6}) /);
+    if (
+      (heading && heading[1].length <= level) ||
+      lines[i].startsWith('{/* @api-end */}')
+    ) {
+      end = i;
+      break;
+    }
   }
-
-  const startMarker = `{/* api-doc-overlay:${id}:start */}`;
-  const endMarker = `{/* api-doc-overlay:${id}:end */}`;
-  const block = `${startMarker}\n\n${trimmedContent}\n\n${endMarker}`;
-  const updated = `${contentWithoutOverlay.trimEnd()}\n\n${block}\n`;
-
-  return { id, target, targetPath, original, updated };
+  while (end > headingIndex + 1 && lines[end - 1] === '') {
+    end--;
+  }
+  lines.splice(end, 0, '', block, '');
+  return lines.join('\n');
 }
 
 const overlays = createOverlays(apiReferenceExamples);
-const preparedOverlays = await Promise.all(overlays.map(prepareOverlay));
+const byTarget = new Map();
+for (const overlay of overlays) {
+  byTarget.set(overlay.target, [
+    ...(byTarget.get(overlay.target) ?? []),
+    overlay,
+  ]);
+}
 
-for (const { id, target, targetPath, original, updated } of preparedOverlays) {
-  if (updated === original) {
-    console.log(`API doc overlay "${id}" is already up to date in ${target}`);
-    continue;
+for (const [target, pageOverlays] of byTarget) {
+  const targetPath = path.join(repoRoot, target);
+  const original = await readFile(targetPath, 'utf8');
+  if (!original.includes('{/* @api ')) {
+    throw new Error(
+      `Refusing to overlay a page that is not synced from lynx-stack: ${target}`,
+    );
   }
 
+  let updated = ensureLynxImport(original);
+  for (const { id, anchor, content } of pageOverlays) {
+    updated = removeExistingOverlay(updated, id);
+    const startMarker = `{/* api-doc-overlay:${id}:start */}`;
+    const endMarker = `{/* api-doc-overlay:${id}:end */}`;
+    updated = insertAtEndOfSection(
+      updated,
+      anchor,
+      `${startMarker}\n\n${content.trim()}\n\n${endMarker}`,
+    );
+  }
+
+  if (updated === original) {
+    console.log(`API doc overlays are already up to date in ${target}`);
+    continue;
+  }
   await writeFile(targetPath, updated);
-  console.log(`Applied API doc overlay "${id}" to ${target}`);
+  console.log(`Applied ${pageOverlays.length} API doc overlay(s) to ${target}`);
 }

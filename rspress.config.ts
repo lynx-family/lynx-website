@@ -176,11 +176,11 @@ export default defineConfig({
         // by the API reference, and the rest were implementation details.
         {
           from: '^/react/build-time-macros(\\.html)?$',
-          to: '/api/react/Document.built-in-macros.html',
+          to: '/api/react/macros.html',
         },
         {
           from: '^/zh/react/build-time-macros(\\.html)?$',
-          to: '/zh/api/react/Document.built-in-macros.html',
+          to: '/zh/api/react/macros.html',
         },
         {
           from: '^/api/genui\\.html$',

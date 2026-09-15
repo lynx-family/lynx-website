@@ -74,7 +74,7 @@ Rsbuild 在 Rspack 之上提供开箱即用的构建配置。2.0 让这些配置
 
 ### `source.alias` → `resolve.alias` \{#bc-alias}
 
-将别名从 [`source.alias`](/api/rspeedy/rspeedy.source.alias) 迁移到 [`resolve.alias`](/api/rspeedy/rspeedy.resolve.alias)：
+将别名从 [`source.alias`](/api/config/source/alias) 迁移到 [`resolve.alias`](/api/config/#resolve-alias)：
 
 ```diff
 export default defineConfig({
@@ -89,7 +89,7 @@ export default defineConfig({
 
 ### `performance.chunkSplit` → `splitChunks` \{#bc-chunksplit}
 
-将 [`performance.chunkSplit.strategy`](/api/rspeedy/rspeedy.chunksplit.strategy) 迁移到顶层 [`splitChunks.preset`](/api/rspeedy/rspeedy.config.splitchunks)：
+将 [`performance.chunkSplit.strategy`](/api/config/#performance-chunksplit) 迁移到顶层 [`splitChunks.preset`](/api/config/split-chunks)：
 
 ```diff
 export default defineConfig({
@@ -106,7 +106,7 @@ export default defineConfig({
 
 ### 默认装饰器版本 `2023-11` \{#bc-decorators}
 
-[`source.decorators.version`](/api/rspeedy/rspeedy.decorators.version) 的默认值由 `2022-03` 变更为 `2023-11`，如需保持旧行为请显式配置。
+[`source.decorators.version`](/api/config/#source-decorators) 的默认值由 `2022-03` 变更为 `2023-11`，如需保持旧行为请显式配置。
 
 ## 面向 Lynx 的定制优化 \{#rspeedy}
 
@@ -116,11 +116,11 @@ export default defineConfig({
 
 Lynx 提供了由弱到强的三种拆分手段，它们在 Web 生态中都有对应的概念，并由 Rspeedy 适配到了 Lynx 的产物形态上：
 
-| 场景              | Web 生态                                                                 | Lynx                                                                                          |
-| ----------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| 构建期拆包        | Chunk Split（`splitChunks`）                                             | [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks)（同名配置，提供 Lynx 适配的 preset） |
-| 应用内按需加载    | 动态 `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | 动态 `import()` + ReactLynx `lazy()`，产物为 [Lazy Bundle](/react/code-splitting#懒加载组件)  |
-| 外部 / 跨应用复用 | webpack `externals`                                                      | [External Bundle](/rspeedy/external-bundle)                                                   |
+| 场景              | Web 生态                                                                 | Lynx                                                                                         |
+| ----------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 构建期拆包        | Chunk Split（`splitChunks`）                                             | [`splitChunks`](/api/config/split-chunks)（同名配置，提供 Lynx 适配的 preset）               |
+| 应用内按需加载    | 动态 `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | 动态 `import()` + ReactLynx `lazy()`，产物为 [Lazy Bundle](/react/code-splitting#懒加载组件) |
+| 外部 / 跨应用复用 | webpack `externals`                                                      | [External Bundle](/rspeedy/external-bundle)                                                  |
 
 构建期拆包的 `splitChunks` 较为常见（配置迁移见 [`performance.chunkSplit` → `splitChunks`](#bc-chunksplit)），这里不再展开；下面重点说说 Lazy Bundle 和 External Bundle。
 
@@ -153,7 +153,7 @@ External Bundle 是一个单独构建出来的 Lynx Bundle，可以被另一个�
 
 ### 默认目标提升至 ES2017 \{#rspeedy-es2017}
 
-我们把后台线程的产物目标从 ES2015 提升到了 ES2017（主线程保持 ES2019）。随着低端机型逐渐退场，更高的产物基线意味着更少的语法降级、更小更快的产物。如果你仍需要降级某些特定语法，可以把对应的 transform 加到 [`tools.swc`](/api/rspeedy/rspeedy.tools.swc) 的 `env.include`：
+我们把后台线程的产物目标从 ES2015 提升到了 ES2017（主线程保持 ES2019）。随着低端机型逐渐退场，更高的产物基线意味着更少的语法降级、更小更快的产物。如果你仍需要降级某些特定语法，可以把对应的 transform 加到 [`tools.swc`](/api/config/#tools-swc) 的 `env.include`：
 
 ```js
 import { defineConfig } from '@lynx-js/rspeedy';
