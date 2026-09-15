@@ -97,7 +97,8 @@ all changes in those output paths.
 
 The API reference for lynx-stack packages is written and generated in
 [lynx-stack](https://github.com/lynx-family/lynx-stack/tree/main/docs/content)
-and copied here by `scripts/sync-lynx-stack-docs.mjs`. The directories listed in
+and copied here from the `@lynx-js/lynx-stack-docs` package by
+`pnpm run sync:lynx-stack-docs`. The directories listed in
 `scripts/lynx-stack-docs-dirs.txt` (`config`, `react/api` and
 `packages`, in both locales) are owned by that sync: change those pages in lynx-stack, and the daily `Update API docs`
 workflow brings them here. A pull request that edits them directly fails the
