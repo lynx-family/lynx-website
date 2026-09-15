@@ -1,0 +1,71 @@
+---
+description: '根据自然语言界面需求，为 Lynx GenUI 生成符合 Catalog 约束的 A2UI v0.9 JSON 消息。'
+---
+
+# lynx-a2ui
+
+将自然语言界面需求转换为 [`@lynx-js/genui/a2ui`](/react/genui/a2ui) 可渲染的 [A2UI v0.9](https://a2ui.org/specification/v0.9-a2ui/) 协议消息。该 skill 生成声明式 JSON 数据，而不是应用代码，因此生成的界面始终受 A2UI Catalog 已授权的组件和 Function 约束。
+
+当 coding agent 需要完成以下任务时，可以使用这个 skill：
+
+- 根据界面描述生成新的 A2UI Surface
+- 通过 A2UI 数据模型绑定共享、可编辑或重复展示的数据
+- 响应 A2UI 用户操作，并返回尽可能小的 Surface 补丁
+- 使用 Lynx GenUI 默认 Catalog，或应用提供的自定义 Catalog
+- 避免编造当前 Catalog 未提供的组件、属性、Function 或 Action 结构
+
+## 安装
+
+```bash
+npx skills add lynx-community/skills -s lynx-a2ui
+```
+
+安装后，兼容的 coding agent 可以自动加载 `lynx-a2ui` 规则，生成受 Catalog 约束的 A2UI 消息，并根据当前 Catalog 进行检查。
+
+## 工作方式
+
+这个 skill 遵循 Catalog 优先的工作流：
+
+1. 获取最新的 [Lynx GenUI A2UI 默认 Catalog](https://unpkg.com/@lynx-js/genui/a2ui/dist/catalog.json)；如果你提供了其他 Catalog URL 或 JSON 内容，则改用你提供的 Catalog。
+2. 读取 Catalog ID、组件与 Function Schema、必填字段、枚举值和示例。
+3. 将需求转换为数据模型和扁平组件图，并根据当前 Catalog 完成校验。
+4. 只返回格式化后的 A2UI v0.9 JSON 消息数组。
+
+生成新 Surface 时，消息会按以下顺序输出，以便 Renderer 渐进式处理：
+
+1. `createSurface`，默认使用 `main` 作为 Surface ID，并使用已获取 Catalog 中的 `catalogId`
+2. 用于初始化绑定数据的 `updateDataModel`
+3. `updateComponents`，其中恰有一个 ID 为 `root` 的组件
+
+当最新请求以 `A2UI_USER_ACTION:` 开头时，skill 会更新现有 Surface。它会优先返回尽可能小的有效补丁：只有数据变化时使用 `updateDataModel`，仅在可见结构发生变化时才添加 `updateComponents`。
+
+:::info
+Agent 必须能够先获取当前 Catalog，才能生成非简单界面。如果 Catalog 无法访问，请提供其 JSON 内容或一个可访问的 Catalog URL。
+:::
+
+## 输出约束
+
+这个 skill 会要求 Agent：
+
+- 只输出 JSON，不附加 Markdown、说明文字、注释或尾随逗号
+- 每条消息都包含 `"version": "v0.9"`
+- 在组件读取绑定路径之前创建对应数据
+- 保证组件 ID 唯一且使用 kebab-case，并通过 ID 引用子组件，而不是把子组件内联嵌套
+- 只使用最新 Catalog 中定义的组件、属性、Function、枚举值和 Action Schema
+- 不输出任意 JavaScript、HTML、CSS、脚本或其他可执行片段
+
+例如，你可以这样提问：
+
+```text
+使用 lynx-a2ui 生成一张紧凑的旅行规划卡片，展示三个通过数据模型绑定的目的地，并提供一个按钮，把选中的目的地回传给 Agent。
+```
+
+Agent 应直接返回可供 A2UI Renderer 消费的协议消息数组。
+
+## 了解更多
+
+- [ReactLynx 中的 A2UI](/react/genui/a2ui)
+- [`@lynx-js/genui/a2ui` API 参考](/api/genui/a2ui/index.html)
+- [lynx-a2ui skill 源码](https://github.com/lynx-community/skills/tree/release/skills/lynx-a2ui)
+- [GitHub 上的 lynx-community/skills](https://github.com/lynx-community/skills)
+- [Agent Skills 规范](https://agentskills.io/specification)
