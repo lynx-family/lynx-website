@@ -3,7 +3,7 @@
 # Refresh the lynx-stack-derived API reference docs in place, against a
 # lynx-stack checkout:
 #
-#   1. config, react/api, packages – copied as-is from
+#   1. api/config, api/react, api/packages – copied as-is from
 #      lynx-stack's docs/content by scripts/sync-lynx-stack-docs.mjs. lynx-stack
 #      generates and commits these pages itself. scripts/apply-api-doc-overlays.mjs
 #      then adds the Lynx Go examples to the ReactLynx API pages.

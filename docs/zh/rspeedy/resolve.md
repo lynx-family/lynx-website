@@ -42,11 +42,11 @@ description: '路径别名与模块解析配置。'
 
 ### 使用 `source.alias` 配置
 
-Rsbuild 提供 [source.alias](/zh/config/source/alias) 配置项，对应 webpack/Rspack 原生的 [resolve.alias](https://rspack.rs/config/resolve#resolvealias) 配置。可通过对象或函数形式进行配置。
+Rsbuild 提供 [source.alias](/zh/api/config/source/alias) 配置项，对应 webpack/Rspack 原生的 [resolve.alias](https://rspack.rs/config/resolve#resolvealias) 配置。可通过对象或函数形式进行配置。
 
 #### 使用场景
 
-`tsconfig.json` 的 `paths` 配置是静态的，缺乏动态性。且 `paths` 仅在模块被包含在 [`source.include`](/zh/config/#source-include) 时生效。
+`tsconfig.json` 的 `paths` 配置是静态的，缺乏动态性。且 `paths` 仅在模块被包含在 [`source.include`](/zh/api/config/#source-include) 时生效。
 
 `source.alias` 配置能突破这些限制，允许通过 JavaScript 代码动态设置别名。例如为所有依赖使用工作区版本的 `lodash-es`：
 
@@ -211,4 +211,4 @@ export default defineConfig({
 });
 ```
 
-[`tools.rspack`]: /zh/config/#tools-rspack
+[`tools.rspack`]: /zh/api/config/#tools-rspack

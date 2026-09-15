@@ -42,11 +42,11 @@ You can refer to the [TypeScript - paths](https://typescriptlang.org/tsconfig#pa
 
 ### Use `source.alias` Configuration
 
-Rsbuild provides the [source.alias](/config/source/alias) configuration option, which corresponds to the webpack/Rspack native [resolve.alias](https://rspack.rs/config/resolve#resolvealias) configuration. You can configure this option using an object or a function.
+Rsbuild provides the [source.alias](/api/config/source/alias) configuration option, which corresponds to the webpack/Rspack native [resolve.alias](https://rspack.rs/config/resolve#resolvealias) configuration. You can configure this option using an object or a function.
 
 #### Use Cases
 
-The `paths` configuration in `tsconfig.json` is static and lacks dynamism. Furthermore, `paths` only takes effect when the module is included in [`source.include`](/config/#source-include).
+The `paths` configuration in `tsconfig.json` is static and lacks dynamism. Furthermore, `paths` only takes effect when the module is included in [`source.include`](/api/config/#source-include).
 
 The `source.alias` configuration can overcome this limitation by enabling you to dynamically set `source.alias` using JavaScript code.
 
@@ -214,4 +214,4 @@ export default defineConfig({
 });
 ```
 
-[`tools.rspack`]: /config/#tools-rspack
+[`tools.rspack`]: /api/config/#tools-rspack

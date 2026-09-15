@@ -47,8 +47,8 @@ DEBUG=rspeedy rspeedy build
 
 ReactLynx 会**自动裁剪**不该在主线程运行的代码：默认情况下 `useEffect`、`useLayoutEffect` 的回调以及部分事件处理函数会从 `main-thread.js` 中移除（详见 [ReactLynx 编程思想](/react/thinking-in-reactlynx)）。当编译器无法静态判断某段代码归属哪个线程时，需要你手动标注：
 
-- 用 [`'background only'` 指示符](/react/api/directives) 把一个函数体标记为只在后台线程保留。
-- 用 [`__BACKGROUND__` / `__MAIN_THREAD__` 内置宏](/react/api/macros) 按线程裁剪代码块。
+- 用 [`'background only'` 指示符](/api/react/directives) 把一个函数体标记为只在后台线程保留。
+- 用 [`__BACKGROUND__` / `__MAIN_THREAD__` 内置宏](/api/react/macros) 按线程裁剪代码块。
 
 这套裁剪机制，正是后面「给主线程产物瘦身」这条优化手段的基础。
 
@@ -76,11 +76,11 @@ RSDOCTOR=true rspeedy build
 
 ### 给主线程产物瘦身（裁掉后台专属代码）
 
-这是 Lynx 特有、也最该优先检查的一层。把只在后台需要的代码（请求 / NativeModule 调用 / 日志 / 监控 SDK）用 [`'background only'`](/react/api/directives) 或 [`__BACKGROUND__`](/react/api/macros) 移出渲染路径，避免它被打包进 `main-thread.js`。若这类代码来自你无法修改的第三方库，则需要推动库侧在定义处加上标注。
+这是 Lynx 特有、也最该优先检查的一层。把只在后台需要的代码（请求 / NativeModule 调用 / 日志 / 监控 SDK）用 [`'background only'`](/api/react/directives) 或 [`__BACKGROUND__`](/api/react/macros) 移出渲染路径，避免它被打包进 `main-thread.js`。若这类代码来自你无法修改的第三方库，则需要推动库侧在定义处加上标注。
 
 ### 精简后台线程产物
 
-- **减少重复依赖**：用 Rsdoctor 的重复包检测找出被多份打包的依赖，再用 [`resolve.dedupe`](/config/#resolve-dedupe) 或 `pnpm dedupe` 收敛。
+- **减少重复依赖**：用 Rsdoctor 的重复包检测找出被多份打包的依赖，再用 [`resolve.dedupe`](/api/config/#resolve-dedupe) 或 `pnpm dedupe` 收敛。
 - **使用更轻量的库**：用 Rsdoctor 找出体积最大的依赖，评估替代品（例如用 `dayjs` 替换 `moment`），或改为按需引入。
 
 ### 压缩静态资源
@@ -92,12 +92,12 @@ RSDOCTOR=true rspeedy build
 区分**首屏体积**与**总体积**：首屏只需要主线程产物与首屏资源，把非首屏内容拆出去能显著改善启动体验。
 
 - 用 [代码拆分](/react/code-splitting) 把非首屏组件延迟到真正渲染时再加载。
-- 通过 [`splitChunks`](/config/split-chunks) 调整分包策略（底层即 Rspack 的 [代码分割](https://rspack.rs/zh/guide/optimization/code-splitting)）。
+- 通过 [`splitChunks`](/api/config/split-chunks) 调整分包策略（底层即 Rspack 的 [代码分割](https://rspack.rs/zh/guide/optimization/code-splitting)）。
 - 用 [External Bundle](/rspeedy/external-bundle) 把可复用的部分独立出去。
 
 ### 编译层选项
 
-- [`extractStr`](/packages/react-rsbuild-plugin#extractstr)：合并重复的字符串字面量来减小体积，对 i18n 文案、类名等「在主线程与后台线程两层中重复」的字符串尤其有效。
+- [`extractStr`](/api/packages/react-rsbuild-plugin#extractstr)：合并重复的字符串字面量来减小体积，对 i18n 文案、类名等「在主线程与后台线程两层中重复」的字符串尤其有效。
 
 ## Next Steps
 

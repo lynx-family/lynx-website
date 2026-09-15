@@ -15,7 +15,7 @@ Rsbuild 提供了一套强大的插件系统，允许用户进行功能扩展。
 
 ## 查找插件
 
-在寻找插件之前，建议先查看所需功能是否已包含在 [Rspeedy 配置](/zh/config/)中。
+在寻找插件之前，建议先查看所需功能是否已包含在 [Rspeedy 配置](/zh/api/config/)中。
 
 ### Rsbuild 插件
 
@@ -53,7 +53,7 @@ Rspack/Webpack 插件需要配置在 [`tools.rspack.plugins`] 中
 
 详见 [Rspack - Compiler 钩子](https://rspack.rs/api/plugin-api/compiler-hooks)和 [Rspack - Compilation 钩子](https://rspack.rs/api/plugin-api/compilation-hooks)
 
-[`tools.rspack.plugins`]: /zh/config/#tools-rspack
+[`tools.rspack.plugins`]: /zh/api/config/#tools-rspack
 [Banner 插件]: https://rspack.rs/plugins/webpack/banner-plugin
 [Define 插件]: https://rspack.rs/plugins/webpack/define-plugin
 [Environment 插件]: https://rspack.rs/plugins/webpack/environment-plugin

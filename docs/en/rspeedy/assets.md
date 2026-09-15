@@ -190,8 +190,8 @@ console.log(myFile); // "/static/myFile.6c12aba3.pdf"
 
 For more information about asset modules, please refer to [Rspack - Asset modules](https://rspack.rs/guide/features/asset-module).
 
-[`dev.assetPrefix`]: /config/#dev-assetprefix
-[`output.assetPrefix`]: /config/#output-assetprefix
-[`output.dataUriLimit`]: /config/output/data-uri-limit
-[`tools.rspack`]: /config/#tools-rspack
-[`source.assetsInclude`]: /config/#source-assetsinclude
+[`dev.assetPrefix`]: /api/config/#dev-assetprefix
+[`output.assetPrefix`]: /api/config/#output-assetprefix
+[`output.dataUriLimit`]: /api/config/output/data-uri-limit
+[`tools.rspack`]: /api/config/#tools-rspack
+[`source.assetsInclude`]: /api/config/#source-assetsinclude

@@ -11,5 +11,5 @@ hero:
       link: /rspeedy/cli.html
     - theme: alt
       text: API
-      link: /config/
+      link: /api/config/
 ---

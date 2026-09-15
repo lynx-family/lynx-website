@@ -99,11 +99,11 @@ The API reference for lynx-stack packages is written and generated in
 [lynx-stack](https://github.com/lynx-family/lynx-stack/tree/main/docs/content)
 and copied here from the `@lynx-js/lynx-stack-docs` package by
 `pnpm run sync:lynx-stack-docs`. The directories listed in
-`scripts/lynx-stack-docs-dirs.txt` (`config`, `react/api` and
-`packages`, in both locales) are owned by that sync: change those pages in lynx-stack, and the daily `Update API docs`
+`scripts/lynx-stack-docs-dirs.txt` (`api/config`, `api/react` and
+`api/packages`, in both locales) are owned by that sync: change those pages in lynx-stack, and the daily `Update API docs`
 workflow brings them here. A pull request that edits them directly fails the
 `Lynx Stack Docs Ownership` check. Old `/api/rspeedy`, `/api/react`,
-`/rspeedy/{config,plugins,api}`, `/plugins` and testing-library URLs are redirected by
+`/rspeedy/{config,plugins,api}`, `/plugins`, `/config`, `/packages`, `/react/api` and testing-library URLs are redirected by
 `docs/public/_redirects`.
 
 ## Deployment Portability

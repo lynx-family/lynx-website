@@ -17,7 +17,7 @@ const localeConfig = {
 const apiReferenceExamples = [
   {
     id: 'react-clone-element-example',
-    apiReference: 'react/api/functions.mdx',
+    apiReference: 'api/react/functions.mdx',
     anchor: 'cloneelement',
     locales: ['en', 'zh'],
     goProps: {
@@ -30,7 +30,7 @@ const apiReferenceExamples = [
   },
   {
     id: 'react-create-element-example',
-    apiReference: 'react/api/functions.mdx',
+    apiReference: 'api/react/functions.mdx',
     anchor: 'createelement',
     locales: ['en', 'zh'],
     goProps: {
@@ -43,7 +43,7 @@ const apiReferenceExamples = [
   },
   {
     id: 'react-create-portal-example',
-    apiReference: 'react/api/functions.mdx',
+    apiReference: 'api/react/functions.mdx',
     anchor: 'createportal',
     locales: ['en', 'zh'],
     goProps: {

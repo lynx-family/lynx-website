@@ -63,4 +63,4 @@ export default defineConfig({
 
 Use the [JS Profile](/guide/devtool/trace/js-profile.html) tool to collect call stack data at runtime without modifying the build configuration.
 
-[`performance.profile`]: /config/performance/profile
+[`performance.profile`]: /api/config/performance/profile

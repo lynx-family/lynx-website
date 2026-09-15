@@ -63,4 +63,4 @@ export default defineConfig({
 
 使用 [JS Profile](/guide/devtool/trace/js-profile.html) 工具在运行时采集调用堆栈数据，无需修改构建配置。
 
-[`performance.profile`]: /config/performance/profile
+[`performance.profile`]: /api/config/performance/profile
