@@ -98,11 +98,11 @@ all changes in those output paths.
 The API reference for lynx-stack packages is written and generated in
 [lynx-stack](https://github.com/lynx-family/lynx-stack/tree/main/docs/content)
 and copied here from the `@lynx-js/lynx-stack-docs` package by
-`pnpm run sync:lynx-stack-docs`. The directories listed in
-`scripts/lynx-stack-docs-dirs.txt` (`api/config`, `api/react` and
-`api/packages`, in both locales) are owned by that sync: change those pages in lynx-stack, and the daily `Update API docs`
-workflow brings them here. A pull request that edits them directly fails the
-`Lynx Stack Docs Ownership` check. Old `/api/rspeedy`, `/api/react`,
+`pnpm run sync:lynx-stack-docs`, which `pnpm install` runs as part of
+`prepare`. The directories listed in `scripts/lynx-stack-docs-dirs.txt`
+(`api/config`, `api/react` and `api/packages`, in both locales) are not
+committed: change those pages in lynx-stack, then update
+`@lynx-js/lynx-stack-docs` here. Old `/api/rspeedy`, `/api/react`,
 `/rspeedy/{config,plugins,api}`, `/plugins`, `/config`, `/packages`, `/react/api` and testing-library URLs are redirected by
 `docs/public/_redirects`.
 

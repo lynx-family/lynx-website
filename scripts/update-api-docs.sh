@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
 #
-# Refresh the lynx-stack-derived API reference docs in place, against a
-# lynx-stack checkout:
-#
-#   1. api/config, api/react, api/packages – copied as-is from
-#      lynx-stack's docs/content by scripts/sync-lynx-stack-docs.mjs. lynx-stack
-#      generates and commits these pages itself. scripts/apply-api-doc-overlays.mjs
-#      then adds the Lynx Go examples to the ReactLynx API pages.
-#   2. genui – TypeDoc, run here in lynx-website (`pnpm run typedoc`), reading
-#      the freshly built lynx-stack package.
+# Refresh the genui API reference docs in place with TypeDoc, run here in
+# lynx-website (`pnpm run typedoc`) against a freshly built lynx-stack checkout.
+# api/config, api/react and api/packages come from @lynx-js/lynx-stack-docs
+# instead: `pnpm install` copies them in and they are not committed.
 #
 # Also syncs the `packageManager` pnpm pin in package.json from lynx-stack.
 #
@@ -85,17 +80,10 @@ sync_package_manager
 echo "::group::Build lynx-stack packages"
 pushd "$STACK" >/dev/null
 ensure_stack_paths_exist \
-  "docs/content/en" \
-  "docs/content/zh" \
   "packages/genui"
 "${PNPM_CMD[@]}" install --frozen-lockfile
 "${PNPM_CMD[@]}" exec turbo run build "${BUILD_FILTERS[@]}"
 popd >/dev/null
-echo "::endgroup::"
-
-echo "::group::Sync API reference pages from lynx-stack"
-node "$WEBSITE/scripts/sync-lynx-stack-docs.mjs" "$STACK/docs"
-node "$WEBSITE/scripts/apply-api-doc-overlays.mjs"
 echo "::endgroup::"
 
 echo "::group::Overlay built packages into node_modules for TypeDoc"
