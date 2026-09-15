@@ -103,8 +103,8 @@ and copied here from the `@lynx-js/lynx-stack-docs` package by
 (`api/config`, `api/react` and `api/packages`, in both locales) are not
 committed: change those pages in lynx-stack, then update
 `@lynx-js/lynx-stack-docs` here. Old `/api/rspeedy`, `/api/react`,
-`/rspeedy/{config,plugins,api}`, `/plugins`, `/config`, `/packages`, `/react/api` and testing-library URLs are redirected by
-`docs/public/_redirects`.
+testing-library and GenUI URLs are redirected by
+`netlify/edge-functions/api-redirects.ts`.
 
 ## Deployment Portability
 
