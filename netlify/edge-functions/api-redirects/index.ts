@@ -35,7 +35,10 @@ export default (request: Request) => {
   const [, prefix, path] =
     /^((?:\/next)?(?:\/zh)?)(\/.*?)(?:\.html)?\/?$/.exec(url.pathname) ?? [];
   const to = path && target(path);
-  if (to) return Response.redirect(new URL(prefix + to, url), 301);
+  if (!to) return;
+  const destination = new URL(prefix + to, url);
+  destination.search = url.search;
+  return Response.redirect(destination, 301);
 };
 
 export const config = {
