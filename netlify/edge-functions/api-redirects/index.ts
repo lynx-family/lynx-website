@@ -1,4 +1,4 @@
-import legacy from './api-redirects.json' with { type: 'json' };
+import legacy from './legacy.json' with { type: 'json' };
 
 const slug = (s: string) =>
   s
@@ -40,5 +40,5 @@ export default (request: Request) => {
 
 export const config = {
   pattern:
-    '^(/next)?(/zh)?/api/(rspeedy|reactlynx-testing-library|lynx-testing-environment|react/[A-Z]|genui/.+/(classes|functions|interfaces|type-aliases|variables|index))',
+    '^(/next)?(/zh)?/api/(rspeedy|reactlynx-testing-library|lynx-testing-environment|react/[A-Z]|genui/.+/(classes|functions|interfaces|type-aliases|variables|index)).*$',
 };
