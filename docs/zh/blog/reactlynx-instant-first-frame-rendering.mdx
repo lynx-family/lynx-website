@@ -24,7 +24,7 @@ _不少开发者都好奇：ReactLynx 是怎么让 React 跑在双线程上的�
 
 后台渲染，更严谨的全称是“[后台（线程）驱动的渲染](/guide/spec.html#background-driven-rendering)”。在这个模式下，ReactLynx 的更新路径是一次跨线程的异步提交。
 
-ReactLynx 的后台运行时建立在 [Preact](https://preactjs.com/) 之上，组件、Hooks 以及 render / diff 都由 Preact 驱动。不同的是，后台线程没有 DOM，也拿不到主线程的原生视图。ReactLynx 因此用后台 Snapshot 实例承接 Preact 的宿主操作：render / diff 过程中发生的创建、属性修改和结构变化会被记录成 Patch，再在 commit 阶段统一发送给主线程。
+ReactLynx 的后台运行时建立在 [Preact](https://preactjs.com/) 之上，组件、Hooks 以及 render / diff 都由 Preact 驱动。不同的是，后台线程没有 DOM，也拿不到主线程的原生视图。ReactLynx 因此在后台线程接管了 Preact 的宿主操作：render / diff 过程中发生的创建、属性修改和结构变化不会直接作用于视图，而是被记录成 Patch，再在 commit 阶段统一发送给主线程。
 
 <img
   src={backgroundRenderingPatchImg}
@@ -72,7 +72,7 @@ patch: [
 
 有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”就够了。位置编号的具体机制我们会在系列的后续文章中讨论。
 
-Patch 也能表达结构变化。以前面的条件分支为例，如果同一位置需要从 `main` 分支对应的旧 child（子节点）切到 `background` 分支对应的新 child，这些操作仍然落在同一套数字流里。其中，[Snapshot](https://lynxjs.org/react/compiler-informed-rendering.html#the-current-intermediate-representation) 的定义见 Compiler-Informed Rendering 章节。
+Patch 也能表达结构变化。以前面的条件分支为例，如果同一位置需要从 `main` 分支对应的旧 child（子节点）切到 `background` 分支对应的新 child，这些操作仍然落在同一套数字流里。
 
 ```js
 patch: [
@@ -83,7 +83,7 @@ patch: [
 
   // 创建新子节点
   0, // CreateElement(type, newChildId)
-  backgroundBranchType, // 新 child 的 Snapshot/type 名
+  backgroundBranchType, // 新 child 的类型
   backgroundBranchTextId, // 新 child 的实例 ID
 
   // 插入新子节点
@@ -261,11 +261,11 @@ export default function App({ initialCount }) {
 
 ### 接管已有视图
 
-现在主线程已经画出首帧，后台 React 也完成了首轮 render。ReactLynx 接下来会在后台线程比较主线程传来的首屏 Snapshot 树和后台 Snapshot 树：匹配上的后台实例复用主线程 ID，动态值和子树差异则进入第一批修正 Patch。这样，后续 `setState` 产生的 Patch 就能命中同一批原生节点。
+现在主线程已经画出首帧，后台 React 也完成了首轮 render。ReactLynx 接下来会在后台线程比较主线程传来的首帧树和后台首轮 render 的结果：匹配上的后台节点复用主线程 ID，动态值和子树差异则进入第一批修正 Patch。这样，后续 `setState` 产生的 Patch 就能命中同一批原生节点。
 
-这与 SSR Hydration 的时机不同：以 Preact 为例，它会在首次构建 VNode 树时复用已有宿主节点。这里两棵 Snapshot 树已经分别生成，接管要做的是让已经完成首轮 render 的后台树改用主线程 ID。若把这一步前移到后台首次 render，后台就要等待主线程结果，削弱 IFR 的双线程并行。
+这与 SSR Hydration 的时机不同：以 Preact 为例，它会在首次构建 VNode 树时复用已有宿主节点。这里两棵树已经分别生成，接管要做的是让已经完成首轮 render 的后台树改用主线程 ID。若把这一步前移到后台首次 render，后台就要等待主线程结果，削弱 IFR 的双线程并行。
 
-拿前面的 `App` 来看，主线程首帧树使用负数 ID，后台首轮 render 创建的 Snapshot 实例则使用临时正数 ID。接管过程会结合编译期动态位置和子节点结构递归匹配两棵 Snapshot 树：
+拿前面的 `App` 来看，主线程首帧树使用负数 ID，后台首轮 render 创建的节点则使用临时正数 ID。接管过程会结合编译期动态位置和子节点结构递归匹配两棵树：
 
 ```plaintext
 接管前：
@@ -286,7 +286,7 @@ export default function App({ initialCount }) {
     $1 分支           main != background，交给差异 Patch 局部更新
 ```
 
-接管完成后，匹配上的后台 Snapshot 实例会改用主线程已有 ID（`1 -> -1`、`2 -> -2`）。后续 `count` 从 `0` 更新到 `1` 时，后台生成的 Patch 就能命中 `-2` 对应的原生文本节点。
+接管完成后，匹配上的后台节点会改用主线程已有 ID（`1 -> -1`、`2 -> -2`）。后续 `count` 从 `0` 更新到 `1` 时，后台生成的 Patch 就能命中 `-2` 对应的原生文本节点。
 
 动态值和事件也会复用这份接管关系。文本或属性如果有差异，后台会发送一段普通属性 Patch；如果事件在接管完成前已经到达后台，运行时会先暂存它，接管后再根据 ID 映射找到对应的 `handleTap` 执行。
 
