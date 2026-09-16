@@ -42,7 +42,7 @@ Based on the `entryType` property, the Performance API supports four main catego
 
 - **Rendering pipeline events (`pipeline`)**
   - [`PipelineEntry`](/api/lynx-api/performance-api/performance-entry/pipeline-entry): Performance event for [flagged rendering pipelines](./timing-flag)
-  - [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry): Performance event for [TemplateBundle](/api/lynx-native-api/template-bundle) loading and first-screen rendering
+  - [`LoadBundleEntry`](/api/lynx-api/performance-api/performance-entry/load-bundle-entry): Performance event for [TemplateBundle](/api/lynx-native-api/template-bundle) loading and first-frame rendering
   - [`ReloadBundleEntry`](/api/lynx-api/performance-api/performance-entry/reload-bundle-entry): Performance event for reloading [TemplateBundle](/api/lynx-native-api/template-bundle)
 
 - **Resource loading events (`resource`)**
@@ -158,7 +158,7 @@ When the flagged rendering pipeline completes and the screen is refreshed, a [`P
 
 Different business goals imply different metrics to focus on. Your use of the Performance API need not be limited to built-in Lynx metrics—you can flexibly combine timestamps from different `PerformanceEntry`s at key points to construct a metric suite tailored to your application.
 
-For example, if you want to measure the latency from the end of first-screen rendering to the first important data update, you can combine `LoadBundleEntry` and `PipelineEntry` to compute a custom metric `waitingDuration` as shown below. It helps monitor the speed of network requests, file IO, etc., and pinpoint causes of performance regressions.
+For example, if you want to measure the latency from the end of first-frame rendering to the first important data update, you can combine `LoadBundleEntry` and `PipelineEntry` to compute a custom metric `waitingDuration` as shown below. It helps monitor the speed of network requests, file IO, etc., and pinpoint causes of performance regressions.
 
 ![waiting duration](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/custom-metric-waitingduration.png)
 
@@ -269,7 +269,7 @@ No. If two identical Timing Flags are injected, Performance API fires on the fir
 
 Possible causes:
 
-1. First-screen rendering produced no pixels, e.g., LynxView width/height is 0, LynxView is off-screen, or LynxView wasn’t added to the window.
+1. First-frame rendering produced no pixels, e.g., LynxView width/height is 0, LynxView is off-screen, or LynxView wasn’t added to the window.
 2. The observer was registered too late; try registering earlier:
    - register in the class constructor or `useMemo`
 
