@@ -18,11 +18,20 @@ import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import versionJson from './docs/public/version.json';
-import { SITE_BASE } from './shared-route-config';
+import { BLOG_IS_CROSS_VERSION, SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
+
+const DEAD_LINK_EXCLUDES = [
+  '/guide/spec.html?ts=1743416098203#element%E2%91%A0',
+  '/Components/Components/**',
+];
+
+/** A link into the blog, as authored: version-less, with or without a locale. */
+const isCanonicalBlogLink = (url: string) =>
+  /^\/(?:[a-z]{2}\/)?blog(?:[/#?]|$)/.test(url);
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -34,6 +43,12 @@ export default defineConfig({
       '**/guide/custom-native-component/*',
       '**/guide/custom-native-modules/*',
       '**/guide/embed-lynx-to-native/*',
+      // The blog is not versioned content: every version links to the
+      // developing version's copy (see `BLOG_BASE`), so on a release build
+      // this branch's own posts would only be built as orphan pages that
+      // nothing links to and that duplicate the canonical ones under the
+      // developing base. Leave them out of the route set entirely.
+      ...(BLOG_IS_CROSS_VERSION ? ['**/blog/**'] : []),
     ],
   },
   title: 'Lynx',
@@ -207,31 +222,39 @@ export default defineConfig({
     pluginSitemap({
       siteUrl: PUBLISH_URL,
     }),
-    pluginRss({
-      siteUrl: PUBLISH_URL,
-      feed: [
-        {
-          id: 'blog-rss',
-          test: '/blog',
-          title: 'Lynx Blog',
-          language: 'en',
-          output: {
-            type: 'rss',
-            filename: 'blog-rss.xml',
-          },
-        },
-        {
-          id: 'blog-rss-zh',
-          test: '/zh/blog',
-          title: 'Lynx 博客',
-          language: 'zh-CN',
-          output: {
-            type: 'rss',
-            filename: 'blog-rss-zh.xml',
-          },
-        },
-      ],
-    }),
+    // The blog feed belongs to the developing version, the only build that
+    // carries the posts. `use-canonical-latest-blog.ts` reads it from
+    // `${BLOG_BASE}/rss/...` on every version, so a release build emitting its
+    // own feed would publish a second, now-empty URL for the same thing.
+    ...(BLOG_IS_CROSS_VERSION
+      ? []
+      : [
+          pluginRss({
+            siteUrl: PUBLISH_URL,
+            feed: [
+              {
+                id: 'blog-rss',
+                test: '/blog',
+                title: 'Lynx Blog',
+                language: 'en',
+                output: {
+                  type: 'rss',
+                  filename: 'blog-rss.xml',
+                },
+              },
+              {
+                id: 'blog-rss-zh',
+                test: '/zh/blog',
+                title: 'Lynx 博客',
+                language: 'zh-CN',
+                output: {
+                  type: 'rss',
+                  filename: 'blog-rss-zh.xml',
+                },
+              },
+            ],
+          }),
+        ]),
     pluginLLMsPostprocess(),
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
@@ -246,10 +269,19 @@ export default defineConfig({
     remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
       checkDeadLinks: {
-        excludes: [
-          '/guide/spec.html?ts=1743416098203#element%E2%91%A0',
-          '/Components/Components/**',
-        ],
+        // A release build has no blog routes to validate against (see
+        // `route.exclude`), but docs still link to posts by their
+        // version-less `/blog/...` path. The theme's `Link` override rewrites
+        // those to the developing base at render time, so the rendered links
+        // resolve even though no local route matches the authored href.
+        //
+        // Rspress matches an `excludes` array as a `Set` of authored hrefs --
+        // exact strings, not globs -- so a whole subtree can only be covered
+        // by the predicate form.
+        excludes: BLOG_IS_CROSS_VERSION
+          ? (url: string) =>
+              DEAD_LINK_EXCLUDES.includes(url) || isCanonicalBlogLink(url)
+          : DEAD_LINK_EXCLUDES,
       },
     },
     shiki: {
