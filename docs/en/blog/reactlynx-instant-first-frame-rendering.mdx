@@ -1,5 +1,5 @@
 ---
-title: 'Deep Dive into ReactLynx: From Background Rendering to Instant First-Frame Optimization'
+title: 'Deep Dive into ReactLynx: From Background Rendering to Instant First-Frame Rendering'
 date: 2026-09-16
 sidebar: false
 authors: ['Yradex', 'reactlynx']
@@ -70,7 +70,7 @@ patch: [
 ];
 ```
 
-With slot indices, ReactLynx doesn't need to send the entire node description every time; it only needs to tell the main thread that "the new value at this slot is `1`." For how slot indices work, see [Compiler-Informed Rendering](/react/compiler-informed-rendering); we will also explore them in subsequent posts in this series.
+With slot indices, ReactLynx doesn't need to send the entire node description every time; it only needs to tell the main thread that "the new value at this slot is `1`." Slot indices are assigned at compile time; we will leave the details aside for now.
 
 Patches can also express structural changes. Consider the previous conditional branch: if the same slot needs to switch from the old child corresponding to the `main` branch to the new child corresponding to the `background` branch, these operations are still carried out within the same number stream.
 
@@ -160,7 +160,7 @@ During steady-state execution, this Patch mechanism updates the UI rapidly. But 
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimizes precisely this startup wait time. It splits out a fast path for the first frame that the main thread can execute immediately: the main thread runs a pruned first-screen bundle to create the initial native views right away, while the background thread concurrently boots the full React runtime and continues handling subsequent business logic. Once the initial background render is ready, ReactLynx performs a cross-thread handover to associate the background result with the main thread's existing views. Subsequent updates then return to the background-driven Patch -> Element PAPI pipeline.
+ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimizes precisely this startup wait time. It splits out a fast path for the first frame that the main thread can execute immediately: the main thread runs the pruned main-thread artifact to create the initial native views right away, while the background thread concurrently boots the full React runtime and continues handling subsequent business logic. Once the initial background render is ready, ReactLynx performs a cross-thread handover to associate the background result with the main thread's existing views. Subsequent updates then return to the background-driven Patch -> Element PAPI pipeline.
 
 <img
   src={instantFirstFrameStartupImg}
@@ -168,11 +168,11 @@ ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimi
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-This is similar in spirit to [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) in React on the Web: both reuse an existing initial UI rather than creating it again. ReactLynx handover, however, happens only after both the main-thread and background renders have completed.
+This is similar in spirit to [SSR hydration](https://react.dev/reference/react-dom/client/hydrateRoot) in React on the Web: both reuse an existing initial UI rather than creating it again. ReactLynx handover, however, happens only after both the main-thread and background renders have completed.
 
 ### Dual-Thread Build Artifacts and Code Pruning
 
-With responsibilities split across two threads, a single React entry module can no longer emit just one bundle. ReactLynx's build toolchain, [Rspeedy](/rspeedy/), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, dedicated exclusively to initial tree creation; and `background.js` on the background thread, preserving the complete React logic. In default development builds, these two files can typically be found under [`.rspeedy/[name]/`](/rspeedy/output). Ultimately, they are packaged together into `lynx.bundle` and loaded per thread by the Lynx engine.
+With responsibilities split across two threads, a single React entry module can no longer emit just one piece of code. ReactLynx's build toolchain, [Rspeedy](/rspeedy/), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, dedicated exclusively to first-frame tree creation; and `background.js` on the background thread, preserving the complete React logic. The `first-screen path` in the diagram below is this main-thread path, the one that renders the first screen. In default development builds, these two files can typically be found under [`.rspeedy/[name]/`](/rspeedy/output). Ultimately, they are packaged together into the same `lynx.bundle` and loaded per thread by the Lynx engine.
 
 <img
   src={dualBuildPathsImg}
@@ -180,10 +180,10 @@ With responsibilities split across two threads, a single React entry module can 
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-Using the earlier `App` component that contains side effects, event handlers, dynamic text, and `__MAIN_THREAD__` branches, the main-thread artifact after ReactLynx compilation looks roughly like this:
+Using the earlier `App` component that contains side effects, event handlers, dynamic text, and [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) branches, the main-thread artifact after ReactLynx compilation looks roughly like this:
 
 ```js
-// Compiled placeholder name for initial structure; internal format omitted for illustration.
+// Structure the compiler generated from this JSX, describing which Elements the first frame creates; internal format omitted for illustration.
 const __card = '...';
 
 // __MAIN_THREAD__ collapses to the main branch in the main-thread build.
@@ -193,7 +193,7 @@ export default function App({ initialCount }) {
   // useState synchronously returns initialCount so the first frame can populate the initial text.
   const [count] = useState(initialCount);
 
-  // The actual 'background only' handler is pruned into the background bundle;
+  // The actual 'background only' handler is pruned into the background artifact;
   // this unreferenced stub can be eliminated during production minification.
   function handleTap() {}
 
@@ -213,7 +213,7 @@ export default function App({ initialCount }) {
 }
 ```
 
-The main-thread artifact serves only the first frame, which allows ReactLynx to prune user code for that path. During the two builds, each `__MAIN_THREAD__` conditional is folded to the branch for that thread, while `useEffect` callbacks and functions marked with `'background only'` are excluded from the main-thread path. What remains is primarily the initial values and view structure needed for the first frame.
+The main-thread artifact serves only the first frame, which allows ReactLynx to prune user code for that path. During the two builds, each `__MAIN_THREAD__` conditional is folded to the branch for that thread, while `useEffect` callbacks and functions marked with [`'background only'`](/api/react/Document.directives) are excluded from the main-thread path. What remains is primarily the initial values and view structure needed for the first frame.
 
 The main-thread runtime is also smaller. It omits the reconciliation and scheduling paths needed for continuous background updates. Instead, a dedicated JSX runtime and a synchronous traversal adapted from [`preact-render-to-string`](https://github.com/preactjs/preact-render-to-string) evaluate the first frame, while Hooks retain only the behavior needed for that pass.
 
@@ -225,6 +225,7 @@ function fetchProfile() {
   console.log('fetchProfile');
 }
 
+// On the background side this is only an identifier; it points to the main-thread structure that creates the Elements.
 const __card = '...';
 
 // __MAIN_THREAD__ collapses to the background branch in the background build.
@@ -259,13 +260,21 @@ export default function App({ initialCount }) {
 }
 ```
 
+The `__card` in the background artifact is only an identifier. It points to the `__card` structure on the main thread that creates the Elements, which is how rendering and Patch updates find it again.
+
+:::details Help from the compiler
+
+You may have noticed that the pipeline above relies on help from the compiler throughout: pruning the first frame down to a short path, and sending only a slot index in a Patch, both build on the structure the compiler analyzed ahead of time. For this part of the mechanism, see [Compiler-Informed Rendering](/react/compiler-informed-rendering); we will also explore it in subsequent posts in this series.
+
+:::
+
 ### Handing Over Existing Views
 
 Now that the main thread has rendered the initial frame and background React has completed its initial render, ReactLynx compares the first-frame tree sent by the main thread with the result of the initial background render. Matched background nodes reuse the main-thread IDs, while differences in dynamic values and subtrees are included in the initial correction Patch. Subsequent `setState` Patches can then target the same native nodes.
 
 This differs from SSR hydration: Preact reuses existing host nodes while building the initial VNode tree. Here, both trees already exist; handover instead rebinds the already rendered background tree to the main-thread IDs. Moving this work into the initial background render would make the background thread wait for the main-thread result, reducing IFR's parallelism.
 
-Looking at the earlier `App` example, the main-thread first-screen tree uses negative IDs, whereas nodes created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two trees using compile-time dynamic slot positions and child node structures:
+Looking at the earlier `App` example, the main-thread first-frame tree uses negative IDs, whereas nodes created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two trees using compile-time dynamic slot positions and child node structures:
 
 ```plaintext
 Before Handover:
@@ -292,6 +301,6 @@ Dynamic values and events also reuse this mapping. If text or attributes differ,
 
 ## Summary
 
-In summary, ReactLynx's startup and steady-state execution represent two phases of the same commit model. At startup, the main thread draws the first frame along the pruned first-screen path, and ReactLynx subsequently hands over the existing views to the background runtime. During steady-state execution, the background thread calculates updates, sends Patches across the thread boundary, and the main thread updates the Lynx Element tree via Element PAPI.
+In summary, ReactLynx's startup and steady-state execution represent two phases of the same commit model. At startup, the main thread draws the first frame along the pruned main-thread path, and ReactLynx subsequently hands over the existing views to the background runtime. During steady-state execution, the background thread calculates updates, sends Patches across the thread boundary, and the main thread updates the Lynx Element tree via Element PAPI.
 
-When authoring initial-screen components, the more closely aligned the node trees are across both threads—and the better the first screen is expressed as initial data and directly creatable views—the shorter the main-thread execution path becomes. Network requests, side effects, actual event handling, and subsequent state updates remain safely delegated to background React. The closer initial-screen code adheres to this boundary, the greater and more reliable the performance benefits of Instant First-Frame Rendering will be.
+When authoring components that render in the first frame, the more closely aligned the node trees are across both threads, and the better the first frame is expressed as initial data and directly creatable views, the shorter the main-thread execution path becomes. Network requests, side effects, actual event handling, and subsequent state updates remain safely delegated to background React. The closer first-frame code adheres to this boundary, the greater and more reliable the performance benefits of Instant First-Frame Rendering will be.

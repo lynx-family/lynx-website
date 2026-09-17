@@ -70,7 +70,7 @@ patch: [
 ];
 ```
 
-有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”就够了。位置编号的具体机制可以参考[编译协同渲染](/react/compiler-informed-rendering)，我们也会在系列的后续文章中展开讨论。
+有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”就够了。位置编号是编译期就排好的，具体机制这里先不展开。
 
 Patch 也能表达结构变化。以前面的条件分支为例，如果同一位置需要从 `main` 分支对应的旧 child（子节点）切到 `background` 分支对应的新 child，这些操作仍然落在同一套数字流里。
 
@@ -168,11 +168,11 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：两者都复用已经存在的首屏视图。不过，ReactLynx 的 handover 发生在主、后台两侧都完成首轮 render 之后。
+这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：两者都复用已经存在的首屏视图。不过，ReactLynx 的接管发生在主、后台两侧都完成首轮 render 之后。
 
 ### 面向双线程的构建产物与代码裁剪
 
-两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，只服务首屏建树；后台侧生成 `background.js`，保留完整 React 逻辑。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
+两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，只服务首帧建树；后台侧生成 `background.js`，保留完整 React 逻辑。下图中的 `first-screen path` 指的就是主线程这条服务首屏的路径。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
 
 <img
   src={dualBuildPathsImg}
@@ -180,10 +180,10 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-沿用前面那段同时包含副作用、事件、动态文本和 `__MAIN_THREAD__` 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样：
+沿用前面那段同时包含副作用、事件、动态文本和 [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样：
 
 ```js
-// 编译生成的首屏结构占位名，示例不展开内部格式。
+// 编译器为这段 JSX 生成的结构，描述首帧要创建哪些 Element；示例不展开内部格式。
 const __card = '...';
 
 // __MAIN_THREAD__ 在主线程构建中折叠到 main 分支。
@@ -213,7 +213,7 @@ export default function App({ initialCount }) {
 }
 ```
 
-主线程产物只面向首帧，这使得我们能够在用户代码的基础上进行裁剪。构建时，同一个 `__MAIN_THREAD__` 分支会在两份产物中分别折叠，`useEffect` 回调和标记为 `'background only'` 的函数体也不会进入主线程路径，留下的主要是首帧需要的初始值和视图结构。
+主线程产物只面向首帧，这使得我们能够在用户代码的基础上进行裁剪。构建时，同一个 `__MAIN_THREAD__` 分支会在两份产物中分别折叠，`useEffect` 回调和标记为 [`'background only'`](/api/react/Document.directives) 的函数体也不会进入主线程路径，留下的主要是首帧需要的初始值和视图结构。
 
 同时，主线程使用的运行时也更轻。它没有把后台持续更新所需的完整协调与调度路径搬过来，而是用专用 JSX 运行时和改造自 [`preact-render-to-string`](https://github.com/preactjs/preact-render-to-string) 的同步遍历完成首帧求值，Hooks 也只保留这一步需要的行为。
 
@@ -225,6 +225,7 @@ function fetchProfile() {
   console.log('fetchProfile');
 }
 
+// 后台侧只是一个标识，关联着主线程那份用于创建 Element 的结构。
 const __card = '...';
 
 // __MAIN_THREAD__ 在后台构建中折叠到 background 分支。
@@ -258,6 +259,14 @@ export default function App({ initialCount }) {
   });
 }
 ```
+
+后台产物里的 `__card` 只是一个标识，它关联着主线程那份用于创建 Element 的 `__card` 结构，渲染和 Patch 更新时据此找回它。
+
+:::details 编译期的配合
+
+你可能已经注意到，上面这条渲染链路其实一直依赖编译期的配合：首帧能被裁剪成一条短路径，Patch 能只发送一个位置编号，都建立在编译器提前分析过 JSX 结构的基础上。这部分机制可以参考[编译协同渲染](/react/compiler-informed-rendering)，我们也会在系列的后续文章中展开讨论。
+
+:::
 
 ### 接管已有视图
 
