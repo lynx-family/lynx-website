@@ -18,7 +18,7 @@ _Many developers wonder: how does ReactLynx run React across two threads, and ho
 
 In React on the Web, [render and commit](https://react.dev/learn/render-and-commit) happen on the same thread: after React finishes re-rendering, it directly updates the DOM using DOM references.
 
-In cross-platform frameworks like ReactLynx, however, we want the main thread to focus as much as possible on rendering native views without being blocked by React or JavaScript business logic. We therefore run them on an independent background thread. But this also means the background thread cannot access Element references on the main thread and cannot commit directly. This is why ReactLynx needs a different commit pipeline—one that bridges from the background thread to the main thread.
+In cross-platform frameworks like ReactLynx, however, we want the main thread to focus as much as possible on rendering native views without being blocked by React or JavaScript business logic. We therefore run them on an independent background thread. But this also means the background thread cannot access Element references on the main thread and cannot commit directly. This is why ReactLynx needs a different commit pipeline, one that bridges from the background thread to the main thread.
 
 ## Background Rendering
 
@@ -96,8 +96,13 @@ patch: [
 
 ### From Patch to Element PAPI
 
-When the main thread receives a Patch, it first decodes the opcodes, and then, using local instance maps and compile-time slot rules, locates which Element, attribute, or child position the update actually targets. It then invokes [Element PAPI](/api/engine/element-api)—the low-level Element APIs provided by the Lynx main-thread runtime for frontend frameworks, such as `__CreateElement`, `__SetAttribute`, `__AppendElement`, `__InsertElementBefore`, and `__RemoveElement`.
-To look at the source code, check the global declarations in [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts) and the patch application entry point in [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts) within the ReactLynx runtime.
+When the main thread receives a Patch, it first decodes the opcodes, and then, using local instance maps and compile-time slot rules, locates which Element, attribute, or child position the update actually targets. It then invokes [Element PAPI](/api/engine/element-api), the low-level Element APIs provided by the Lynx main-thread runtime for frontend frameworks, such as `__CreateElement`, `__SetAttribute`, `__AppendElement`, `__InsertElementBefore`, and `__RemoveElement`.
+
+:::details Reading the source
+
+In the ReactLynx runtime, the patch application entry point is in [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts), and the Element PAPI global declarations are in [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts).
+
+:::
 
 The main thread translates opcodes into Element PAPI calls roughly like this:
 
@@ -152,7 +157,7 @@ for (let i = 0; i < patch.length; ++i) {
 
 ## Main-Thread Instant First-Frame Rendering
 
-During steady-state execution, this Patch mechanism updates the UI rapidly. But if we still rely solely on this mechanism for the very first frame, the main thread—despite being capable of native rendering—cannot yet obtain the first-screen view structure. It must wait for the background thread to initialize, execute application code, perform the initial render/diff, and send back the first batch of initial Patches. This weakens the benefits of Lynx's dual-threaded architecture:
+During steady-state execution, this Patch mechanism updates the UI rapidly. But the first frame cannot rely on this mechanism alone. The main thread cannot yet obtain the first-screen view structure, even though it is already capable of native rendering. It must wait for the background thread to initialize, execute application code, perform the initial render/diff, and send back the first batch of initial Patches. This weakens the benefits of Lynx's dual-threaded architecture:
 
 <img
   src={backgroundFirstFrameWaitImg}

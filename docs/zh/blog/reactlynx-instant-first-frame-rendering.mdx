@@ -28,11 +28,11 @@ ReactLynx 的后台运行时建立在 [Preact](https://preactjs.com/) 之上，�
 
 <img
   src={backgroundRenderingPatchImg}
-  alt="Background thread creates a Patch and commits it asynchronously to the main thread"
+  alt="后台线程生成 Patch，异步提交给主线程"
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-我们接下来会以这个典型的 ReactLynx 卡片组件为例，分析 ReactLynx 的渲染和更新流程：
+接下来我们以这个典型的卡片组件为例，走一遍 ReactLynx 的渲染和更新流程：
 
 <Go
   example="react-apis"
@@ -97,7 +97,12 @@ patch: [
 ### 从 Patch 到 Element PAPI
 
 主线程收到 Patch 后，会先解析操作码，再通过本地实例映射和编译期留下的位置规则，找到这次更新真正落到哪个 Element、哪个属性或哪个子节点位置。随后会调用 [Element PAPI](/api/engine/element-api)，也就是 Lynx 主线程运行时提供给前端框架的底层 Element 接口，例如 `__CreateElement`、`__SetAttribute`、`__AppendElement`、`__InsertElementBefore`、`__RemoveElement`。
-如果想对照源码，可以看 ReactLynx 运行时里的 [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts) 全局声明，以及 [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts) 里的 Patch 应用入口。
+
+:::details 对照源码
+
+Patch 的应用入口在 ReactLynx 运行时的 [`snapshotPatchApply.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts)，Element PAPI 的全局声明在 [`types.d.ts`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/types/types.d.ts)。
+
+:::
 
 主线程大致这样把 opcode（操作码）翻译成 Element PAPI 调用：
 
@@ -152,11 +157,11 @@ for (let i = 0; i < patch.length; ++i) {
 
 ## 主线程首帧直出
 
-在页面稳定运行时，这套 Patch 机制能够快速完成 UI 更新。但如果在渲染首帧时还只使用这套机制，就会导致主线程已经具备原生绘制能力，却还拿不到第一屏的视图结构。它必须等后台完成初始化、加载业务代码、首轮 render / diff，并送回第一批首屏 Patch，这就削弱了 Lynx 双线程的意义：
+在页面稳定运行时，这套 Patch 机制能够快速完成 UI 更新。但首帧不能只靠这套机制。主线程明明已经可以绘制，却还拿不到首屏的视图结构，只能等后台完成初始化、加载业务代码、首轮 render / diff，再送回第一批首屏 Patch，这就削弱了 Lynx 双线程的意义：
 
 <img
   src={backgroundFirstFrameWaitImg}
-  alt="Without instant first-frame rendering, the main thread waits for the first-screen Patch before drawing"
+  alt="没有首帧直出时，主线程要等首屏 Patch 才能绘制"
   style={{ width: '100%', margin: '24px 0' }}
 />
 
@@ -164,7 +169,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
 
 <img
   src={instantFirstFrameStartupImg}
-  alt="With instant first-frame rendering, the main thread draws first and later updates arrive after handover"
+  alt="有了首帧直出，主线程先绘制，后续更新在接管后到达"
   style={{ width: '100%', margin: '24px 0' }}
 />
 
@@ -176,7 +181,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
 
 <img
   src={dualBuildPathsImg}
-  alt="One React entry is built into a main-thread first-screen path and a background full React path"
+  alt="同一个 React entry 编译出主线程首屏路径和后台完整 React 路径"
   style={{ width: '100%', margin: '24px 0' }}
 />
 
