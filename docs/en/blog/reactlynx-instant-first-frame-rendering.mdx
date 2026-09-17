@@ -70,7 +70,7 @@ patch: [
 ];
 ```
 
-With slot indices, ReactLynx doesn't need to send the entire node description every time; it only needs to tell the main thread that "the new value at this slot is `1`." Slot indices are assigned at compile time; we will leave the details aside for now.
+With slot indices assigned at compile time, ReactLynx doesn't need to send the entire node description every time; it only needs to tell the main thread that "the new value at this slot is `1`."
 
 Patches can also express structural changes. Consider the previous conditional branch: if the same slot needs to switch from the old child corresponding to the `main` branch to the new child corresponding to the `background` branch, these operations are still carried out within the same number stream.
 
@@ -172,7 +172,7 @@ This is similar in spirit to [SSR hydration](https://react.dev/reference/react-d
 
 ### Dual-Thread Build Artifacts and Code Pruning
 
-With responsibilities split across two threads, a single React entry module can no longer emit just one piece of code. ReactLynx's build toolchain, [Rspeedy](/rspeedy/), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, dedicated exclusively to first-frame tree creation; and `background.js` on the background thread, preserving the complete React logic. The `first-screen path` in the diagram below is this main-thread path, the one that renders the first screen. In default development builds, these two files can typically be found under [`.rspeedy/[name]/`](/rspeedy/output). Ultimately, they are packaged together into the same `lynx.bundle` and loaded per thread by the Lynx engine.
+With responsibilities split across two threads, a single React entry module can no longer emit just one piece of code. ReactLynx's build toolchain, [Rspeedy](/rspeedy/), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, which creates the Elements of the first frame along the first-screen path; and `background.js` on the background thread, preserving the complete React logic. In default development builds, these two files can typically be found under [`.rspeedy/[name]/`](/rspeedy/output). Ultimately, they are packaged together into the same `lynx.bundle` and loaded per thread by the Lynx engine.
 
 <img
   src={dualBuildPathsImg}
@@ -183,7 +183,7 @@ With responsibilities split across two threads, a single React entry module can 
 Using the earlier `App` component that contains side effects, event handlers, dynamic text, and [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) branches, the main-thread artifact after ReactLynx compilation looks roughly like this:
 
 ```js
-// Structure the compiler generated from this JSX, describing which Elements the first frame creates; internal format omitted for illustration.
+// Structure the compiler generated from this JSX, describing which Elements the first frame creates. Internal format omitted.
 const __card = '...';
 
 // __MAIN_THREAD__ collapses to the main branch in the main-thread build.
@@ -225,7 +225,7 @@ function fetchProfile() {
   console.log('fetchProfile');
 }
 
-// On the background side this is only an identifier; it points to the main-thread structure that creates the Elements.
+// On the background side this is only an identifier, pointing to the main-thread structure that actually creates the Elements.
 const __card = '...';
 
 // __MAIN_THREAD__ collapses to the background branch in the background build.
@@ -260,11 +260,11 @@ export default function App({ initialCount }) {
 }
 ```
 
-The `__card` in the background artifact is only an identifier. It points to the `__card` structure on the main thread that creates the Elements, which is how rendering and Patch updates find it again.
+You may have noticed that the background artifact has a `__card` too. It is only an identifier, used during rendering and Patch updates to find the structure on the main thread that actually creates the Elements.
 
-:::details Help from the compiler
+:::details Compiler-Informed Rendering
 
-You may have noticed that the pipeline above relies on help from the compiler throughout: pruning the first frame down to a short path, and sending only a slot index in a Patch, both build on the structure the compiler analyzed ahead of time. For this part of the mechanism, see [Compiler-Informed Rendering](/react/compiler-informed-rendering); we will also explore it in subsequent posts in this series.
+The pipeline above relies on help from the compiler throughout: pruning the first frame down to a short path, and sending only a slot index in a Patch, both build on the structure the compiler analyzed ahead of time. For this part of the mechanism, see [Compiler-Informed Rendering](/react/compiler-informed-rendering); we will also explore it in subsequent posts in this series.
 
 :::
 

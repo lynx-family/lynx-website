@@ -70,7 +70,7 @@ patch: [
 ];
 ```
 
-有了位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”就够了。位置编号是编译期就排好的，具体机制这里先不展开。
+有了编译期就排好的位置编号，ReactLynx 不需要每次都发送完整节点描述，只要告诉主线程“这个位置的新值是 `1`”就够了。
 
 Patch 也能表达结构变化。以前面的条件分支为例，如果同一位置需要从 `main` 分支对应的旧 child（子节点）切到 `background` 分支对应的新 child，这些操作仍然落在同一套数字流里。
 
@@ -172,7 +172,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
 
 ### 面向双线程的构建产物与代码裁剪
 
-两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，只服务首帧建树；后台侧生成 `background.js`，保留完整 React 逻辑。下图中的 `first-screen path` 指的就是主线程这条服务首屏的路径。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
+两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，沿首屏路径创建首帧的 Element；后台侧生成 `background.js`，保留完整 React 逻辑。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
 
 <img
   src={dualBuildPathsImg}
@@ -183,7 +183,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
 沿用前面那段同时包含副作用、事件、动态文本和 [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样：
 
 ```js
-// 编译器为这段 JSX 生成的结构，描述首帧要创建哪些 Element；示例不展开内部格式。
+// 编译器为这段 JSX 生成的结构，描述首帧要创建哪些 Element，内部格式省略。
 const __card = '...';
 
 // __MAIN_THREAD__ 在主线程构建中折叠到 main 分支。
@@ -225,7 +225,7 @@ function fetchProfile() {
   console.log('fetchProfile');
 }
 
-// 后台侧只是一个标识，关联着主线程那份用于创建 Element 的结构。
+// 后台侧只是一个标识，指向主线程那份真正创建 Element 的结构。
 const __card = '...';
 
 // __MAIN_THREAD__ 在后台构建中折叠到 background 分支。
@@ -260,11 +260,11 @@ export default function App({ initialCount }) {
 }
 ```
 
-后台产物里的 `__card` 只是一个标识，它关联着主线程那份用于创建 Element 的 `__card` 结构，渲染和 Patch 更新时据此找回它。
+你可能注意到了，后台产物里也有一个 `__card`。它其实只是一个标识，用于在渲染和 Patch 更新时找到主线程那份真正创建 Element 的结构。
 
-:::details 编译期的配合
+:::details 编译协同渲染（Compiler-Informed Rendering）
 
-你可能已经注意到，上面这条渲染链路其实一直依赖编译期的配合：首帧能被裁剪成一条短路径，Patch 能只发送一个位置编号，都建立在编译器提前分析过 JSX 结构的基础上。这部分机制可以参考[编译协同渲染](/react/compiler-informed-rendering)，我们也会在系列的后续文章中展开讨论。
+上面这条渲染链路一直依赖编译期的配合：首帧能被裁剪成一条短路径，Patch 能只发送一个位置编号，都建立在编译器提前分析过 JSX 结构的基础上。这部分机制可以参考[编译协同渲染](/react/compiler-informed-rendering)，我们也会在系列的后续文章中展开讨论。
 
 :::
 
