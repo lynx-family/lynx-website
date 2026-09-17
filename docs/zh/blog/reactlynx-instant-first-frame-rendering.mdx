@@ -173,7 +173,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：两者都复用已经存在的首屏视图。不过，ReactLynx 的接管发生在主、后台两侧都完成首轮 render 之后。
+这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：两者都复用已经存在的首屏视图。
 
 ### 面向双线程的构建产物与代码裁剪
 
@@ -275,11 +275,11 @@ export default function App({ initialCount }) {
 
 ### 接管已有视图
 
-现在主线程已经画出首帧，后台 React 也完成了首轮 render。ReactLynx 接下来会在后台线程比较主线程传来的首帧树和后台首轮 render 的结果：匹配上的后台节点复用主线程 ID，动态值和子树差异则进入第一批修正 Patch。这样，后续 `setState` 产生的 Patch 就能命中同一批原生节点。
+主线程画出首帧的同时，后台 React 也在并行跑完首轮 render。于是同一份 UI 在两个线程上各有一棵树：主线程那棵持有真正的 Element，后台那棵只有刚 render 出来的节点。那么，后台接下来产生的 Patch，要怎么落到主线程已经画出来的那批 Element 上？
 
-这与 SSR Hydration 的时机不同：以 Preact 为例，它会在首次构建 VNode 树时复用已有宿主节点。这里两棵树已经分别生成，接管要做的是让已经完成首轮 render 的后台树改用主线程 ID。若把这一步前移到后台首次 render，后台就要等待主线程结果，削弱 IFR 的双线程并行。
+为了完成接管，主线程会把首帧树传回后台线程，由后台线程把它和自己首轮 render 的结果对应起来。
 
-拿前面的 `App` 来看，主线程首帧树使用负数 ID，后台首轮 render 创建的节点则使用临时正数 ID。接管过程会结合编译期动态位置和子节点结构递归匹配两棵树：
+主线程首帧树使用负数 ID，后台首轮 render 创建的节点则使用临时正数 ID。接管过程会结合编译期动态位置和子节点结构递归匹配两棵树。以开头那个卡片组件为例：
 
 ```plaintext
 接管前：
@@ -300,9 +300,15 @@ export default function App({ initialCount }) {
     $1 分支           main != background，交给差异 Patch 局部更新
 ```
 
-接管完成后，匹配上的后台节点会改用主线程已有 ID（`1 -> -1`、`2 -> -2`）。后续 `count` 从 `0` 更新到 `1` 时，后台生成的 Patch 就能命中 `-2` 对应的原生文本节点。
+匹配上的后台节点复用主线程 ID（`1 -> -1`、`2 -> -2`），动态值和子树差异则进入第一批修正 Patch，比如两侧不同的 `$1` 分支。这样，后续 `count` 从 `0` 更新到 `1` 时，后台生成的 Patch 就能命中 `-2` 对应的原生文本节点。
 
 动态值和事件也会复用这份接管关系。文本或属性如果有差异，后台会发送一段普通属性 Patch；如果事件在接管完成前已经到达后台，运行时会先暂存它，接管后再根据 ID 映射找到对应的 `handleTap` 执行。
+
+接管和 SSR Hydration 的区别集中在三点：
+
+- **时机。**以 Preact 为例，hydration 发生在客户端首次构建 VNode 树的过程中，边 render 边认领已有宿主节点；接管则发生在两棵树各自 render 完之后。这样后台首轮 render 不必等主线程，双线程的并行才保得住。
+- **复用什么。**Web 上客户端能直接拿到 DOM 节点；后台线程拿不到主线程的 Element，只能拿到它的一份描述，所以接管复用的是一份 ID 映射，而不是宿主节点本身。
+- **对不上的代价。**在 React 里，hydration 对不上通常要丢掉服务端结果、在客户端重新渲染；接管对不上的部分不需要重建，只是变成修正 Patch 局部更新，就像上面的 `$1` 分支。
 
 ## 总结
 
