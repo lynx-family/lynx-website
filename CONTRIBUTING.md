@@ -73,6 +73,26 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
+### Alias Contracts
+
+Follow the
+[alias contract guide](./scripts/alias-contracts/README.md) when changing
+portable aliases, public subpaths, source ownership, or repository-local
+resolver overrides. The registry is the single policy source; resolver
+configuration only implements it.
+
+- Register aliases and canonical public subpaths in `aliases`.
+- Register physical roots and their ownership only in `ossSourceAreas`.
+- Register exact local exceptions in `ossResolverOverrides`, including their
+  reason, parity, lifecycle, and removal condition.
+
+For registry or checker changes, run:
+
+```bash
+node --test scripts/alias-contracts/check-registry.test.mjs
+pnpm check:alias-contracts
+```
+
 For changes under `packages/lynx-compat-data`, also run:
 
 ```bash

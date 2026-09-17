@@ -134,6 +134,13 @@ then fail on additions, modifications, deletions, or untracked output files.
 When adding such a tool, include its complete output set in the consistency
 check.
 
+## Alias Contracts
+
+Follow the policy and change process in the
+[Alias Contract Guide](./scripts/alias-contracts/README.md). Treat the
+packaged checker path, CLI options, and consumer module export names as
+downstream compatibility interfaces.
+
 ## Documentation Runtime Imports
 
 The contributor-facing rules, examples, and alias selection table in
