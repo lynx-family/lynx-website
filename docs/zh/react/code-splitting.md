@@ -110,10 +110,10 @@ export function App() {
 
 ### 创建一个独立的生产者项目
 
-使用 [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 创建一个独立项目：
+使用 [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 创建一个独立的 Rspeedy 项目：
 
 ```bash
-pnpm create rspeedy@latest
+pnpm create @lynx-js/lynx@latest --template rspeedy
 ```
 
 在 `lynx.config.js` 中将 `pluginReactLynx` 的 [`experimental_isLazyBundle`] 选项设置为 `true`：

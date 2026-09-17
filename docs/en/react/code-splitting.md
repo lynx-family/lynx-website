@@ -114,10 +114,10 @@ You may also lazy-load modules that being built in a standalone Rspeedy project.
 
 ### Create a standalone Producer project
 
-Create a standalone project using [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy):
+Create a standalone Rspeedy project using [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx):
 
 ```bash
-pnpm create rspeedy@latest
+pnpm create @lynx-js/lynx@latest --template rspeedy
 ```
 
 Then add [`experimental_isLazyBundle`] to the options of `pluginReactLynx` in the `lynx.config.js`:
