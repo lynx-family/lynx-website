@@ -105,7 +105,7 @@ Checkout [React - Catching rendering errors with an error boundary](https://reac
 
 ## Lazy-loading standalone project
 
-You may also lazy-load modules that being built in a standalone Rsbuild project.
+You may also lazy-load modules that are built in a standalone Rsbuild project.
 
 ### Glossary of Terms
 
