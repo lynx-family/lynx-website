@@ -44,7 +44,7 @@ export default {
 
 Rspeedy 提供了 CSS Modules、[静态资源](./assets.md)等内置功能，这些功能需要添加对应的类型声明。
 
-请在 `tsconfig.json` 的 `types` 中加入 `@lynx-js/rspeedy/client`：
+请在 `tsconfig.json` 的 `types` 数组中追加 `@lynx-js/rspeedy/client`，保留已有的项：
 
 ```json title=tsconfig.json
 {

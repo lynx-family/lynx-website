@@ -17,8 +17,7 @@
  *     "dist/main.lynx.bundle",
  *     "src/App.tsx",
  *     "src/index.tsx",
- *     "src/rspeedy-env.d.ts",
- *     "lynx.config.ts",
+ *     "rsbuild.config.ts",
  *     "package.json",
  *     "README.md"
  *   ],

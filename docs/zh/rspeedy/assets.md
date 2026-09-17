@@ -77,7 +77,7 @@ const logoURL = `${process.env.ASSET_PREFIX}/logo.png`;
 TS2307: Cannot find module './static/logo.png' or its corresponding type declarations.
 ```
 
-此时请在 `tsconfig.json` 的 `types` 中加入 `@lynx-js/rspeedy/client`，它声明了静态资源的类型：
+此时请在 `tsconfig.json` 的 `types` 数组中追加声明了静态资源类型的 `@lynx-js/rspeedy/client`，保留已有的项：
 
 ```json title=tsconfig.json
 {

@@ -158,14 +158,11 @@ Options:
 ```text
 ➜ rspeedy inspect
 
-Inspect config succeed, open following files to view the content:
-
-  - Rspeedy Config: /project/dist/.rsbuild/rspeedy.config.mjs
+success config inspection completed, generated files:
+  - Rsbuild config: /project/dist/.rsbuild/rsbuild.config.mjs
   - Rspack Config (lynx): /project/dist/.rsbuild/rspack.config.lynx.mjs
-
-Inspect Rspeedy config succeed, open following files to view the content:
-
-  - Rspeedy: /Users/colin/rspeedy/examples/react/dist/rspeedy-rspack/.rsbuild/rspeedy.config.js
+success Inspect Rspeedy config succeed, open following files to view the content:
+  - Rspeedy: /project/dist/.rsbuild/rspeedy.config.js
 ```
 
 ### 指定模式

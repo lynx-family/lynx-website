@@ -44,7 +44,7 @@ export default {
 
 Rspeedy provide various built-in features like CSS Modules and [Static Assets](./assets.md). TypeScript does not know about these features and the corresponding type declarations.
 
-To solve this, add `@lynx-js/rspeedy/client` to `types` in `tsconfig.json`:
+To solve this, add `@lynx-js/rspeedy/client` to the `types` array in `tsconfig.json`, keeping the entries already there:
 
 ```json title=tsconfig.json
 {
