@@ -154,7 +154,7 @@ Common APIs:
 
 ## 15. Engineering Practices and Tooling
 
-- **Project initialization**: `pnpm create rspeedy` scaffolds a ReactLynx project with Rspeedy configuration and sample code. (See [Quick Start](/guide/start/quick-start.md))
+- **Project initialization**: `pnpm create @lynx-js/lynx@latest` scaffolds a ReactLynx project with sample code, letting you choose Rsbuild with `pluginLynx` (recommended), Rspeedy, or Rslib. (See [Quick Start](/guide/start/quick-start.md))
 - **Development and debugging**: `pnpm dev` starts the dev server. The terminal prints a QR code—scan it with the LynxExample app (iOS/Android/Harmony emulator) for hot-update previews. (See [Quick Start](/guide/start/quick-start.md))
 - **DevTool debugging**: After connecting a device, use the desktop Lynx DevTool to debug JS, inspect nodes, and record performance. (See [Lynx DevTool](/guide/devtool.md))
 - **Build artifacts**: The build outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=lynx` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.lynx`; otherwise only the final bundle is produced. (See [Output Files](/rspeedy/output.md))
