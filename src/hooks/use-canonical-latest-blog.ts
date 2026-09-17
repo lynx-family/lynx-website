@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
-import { toLatestBlogPath } from '@site/src/lib/utils';
+import { getLatestBlogIndexPath, toLatestBlogPath } from '@site/src/lib/utils';
 import {
   useLatestBlog,
   type LatestBlogConfig,
@@ -112,9 +112,18 @@ export const useCanonicalLatestBlog = (
   // `link` is returned in the form its consumer needs: a base-relative route
   // for in-app navigation on the developing build, and a fully based path
   // when it points at another version and only a page load can get there.
+  // A release build no longer bundles the blog at all, so there may be no
+  // local post to fall back to. Point at the canonical blog index instead of
+  // returning a null link, which would leave the badge inert whenever the feed
+  // is slow or unreachable.
   const fallback =
-    BLOG_IS_CROSS_VERSION && !local.isExternal && local.link
-      ? { ...local, link: toLatestBlogPath(local.link) }
+    BLOG_IS_CROSS_VERSION && !local.isExternal
+      ? {
+          ...local,
+          link: local.link
+            ? toLatestBlogPath(local.link)
+            : getLatestBlogIndexPath(lang),
+        }
       : local;
 
   return canonical ?? fallback;
