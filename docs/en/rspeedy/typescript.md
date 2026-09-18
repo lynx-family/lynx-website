@@ -30,7 +30,7 @@ import { get } from '@common/request.js'; // The same as './common/request.js'
 
 ## Custom `tsconfig.json` Path
 
-Rspeedy by default reads the `tsconfig.json` file from the root directory. You can use the [source.tsconfigPath](../../api/rspeedy/rspeedy.source.tsconfigpath) to configure a custom tsconfig.json file path.
+Rspeedy by default reads the `tsconfig.json` file from the root directory. You can use the [source.tsconfigPath](https://rsbuild.rs/config/source/tsconfig-path) to configure a custom tsconfig.json file path.
 
 ```ts
 export default {
@@ -63,7 +63,7 @@ To solve this, add `@lynx-js/rspeedy/client` to the `types` array in `tsconfig.j
 Lynx provides default types, but you may need to extend or customize certain type definitions for your application.
 
 - [`GlobalProps`](#globalprops): extends the type definition for `lynx.__globalProps`
-- [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Function.useInitData.mdx)
+- [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Hooks/useInitData)
 - [`IntrinsicElements`](#intrinsicelements): extends the type definition for elements (e.g: you may have your own `<input>` element)
 - [`NativeModules`](#nativemodules): extends the type definition for [custom native modules](/guide/use-native-modules.mdx).
 

@@ -16,32 +16,19 @@ import type { SubsiteConfig } from '@site/shared-route-config';
 import { cn } from '@/lib/utils';
 
 import { SubsiteLogo } from './subsite-ui';
+import { subsiteOf } from './api-subsites';
 import './SubsiteRow.scss';
 
-function findSubsiteFromPathname(
-  pathname: string,
-  lang: string,
-): SubsiteConfig {
-  const langPrefix = getLangPrefix(lang);
-  let path = pathname;
-  if (langPrefix && path.startsWith(`${langPrefix}/`)) {
-    path = path.slice(langPrefix.length + 1);
-  } else if (!langPrefix && path.startsWith('/')) {
-    path = path.slice(1);
-  }
-  if (!path) return CORE_SUBSITES[0];
-  const [firstSegment] = path.split('/');
-  const normalizedSegment = firstSegment.replace(/\.html$/, '');
-  return (
-    CORE_SUBSITES.find((s) => s.value === normalizedSegment) ?? CORE_SUBSITES[0]
-  );
+function findSubsiteFromPathname(pathname: string): SubsiteConfig {
+  const value = subsiteOf(pathname);
+  return CORE_SUBSITES.find((s) => s.value === value) ?? CORE_SUBSITES[0];
 }
 
 export function SubsiteRow() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const lang = useLang();
-  const current = findSubsiteFromPathname(pathname, lang);
+  const current = findSubsiteFromPathname(pathname);
   const quickStartHref = `${getLangPrefix(lang)}${QUICK_START_PATH}`;
   // Quick Start is the single most-clicked entry on the docs — every
   // Lynx-family journey passes through it — so the CTA stays mounted on
