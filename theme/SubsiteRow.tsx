@@ -12,23 +12,17 @@ import {
   QUICK_START_PATH,
   getLangPrefix,
 } from '@site/shared-route-config';
-import type { SubsiteConfig } from '@site/shared-route-config';
 import { cn } from '@/lib/utils';
 
 import { SubsiteLogo } from './subsite-ui';
-import { subsiteOf } from './api-subsites';
+import { subsiteConfigOf } from './api-subsites';
 import './SubsiteRow.scss';
-
-function findSubsiteFromPathname(pathname: string): SubsiteConfig {
-  const value = subsiteOf(pathname);
-  return CORE_SUBSITES.find((s) => s.value === value) ?? CORE_SUBSITES[0];
-}
 
 export function SubsiteRow() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const lang = useLang();
-  const current = findSubsiteFromPathname(pathname);
+  const current = subsiteConfigOf(pathname);
   const quickStartHref = `${getLangPrefix(lang)}${QUICK_START_PATH}`;
   // Quick Start is the single most-clicked entry on the docs — every
   // Lynx-family journey passes through it — so the CTA stays mounted on
