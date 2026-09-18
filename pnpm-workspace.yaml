@@ -14,6 +14,7 @@ minimumReleaseAgeExclude:
 # Set each package explicitly (true or false) so pnpm does not print
 # ERR_PNPM_IGNORED_BUILDS warnings, which fail CI/deploy environments.
 allowBuilds:
+  '@lynx-js/cef-webview': false
   '@lynx-js/lynxtron': false
   '@lynxtron-examples/file-explorer': false
   '@lynxtron-examples/floating-clock': false
@@ -25,6 +26,7 @@ allowBuilds:
   sqlite3: false
 
 # Rationale for disabled builds:
+# - @lynx-js/cef-webview: the Browser example runs in Lynxtron Go; the docs do not need CEF binaries.
 # - @lynx-js/lynxtron: downloads a runtime binary; docs only need source/bundle files.
 # - @lynxtron-examples/*: ship prebuilt bundles; their rebuild scripts require
 #   native toolchains we don't have in CI/deploy environments.
@@ -35,4 +37,7 @@ allowBuilds:
 # the mutable MTS window wrapper (lynx-stack#3294). Pin back to a stable
 # @lynx-js/web-core (>0.23.0) once released.
 overrides:
+  # The docs read the prebuilt showcase files, not its native runtime dependency.
+  # Keep the bundled native-texture-extension sources; skip resolving its file: dependency.
+  '@lynxtron-examples/native-texture-canvas>lynxtron-native-texture-canvas': '-'
   '@lynx-js/web-core': 'npm:@lynx-js/web-core-canary@0.23.1-canary-20260730-6cbcb870'
