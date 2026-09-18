@@ -91,7 +91,7 @@ test('reports string repository metadata in diagnostics', () => {
   );
 });
 
-test('checks the lowest and highest SemVer range versions only', () => {
+test('ignores out-of-range versions when selecting SemVer range endpoints', () => {
   const violation = validateDependency('@lynx-example/example', '^1.0.0', {
     getPackageManifest: () => [
       manifest('@lynx-example/example', canonicalRepository, '1.0.10'),
@@ -101,7 +101,7 @@ test('checks the lowest and highest SemVer range versions only', () => {
           type: 'git',
           url: 'git+https://github.com/lynx-family/lynx-ui.git',
         },
-        '1.0.9',
+        '2.0.0',
       ),
       manifest('@lynx-example/example', canonicalRepository, '1.0.0'),
     ],
