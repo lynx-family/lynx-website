@@ -20,12 +20,41 @@ import {
   ossResolverOverrides,
   ossSourceAreas,
   owners,
-} from './registry.mjs';
-
+} from './registry.js';
 const scriptPath = fileURLToPath(import.meta.url);
+// Dynamic consumer modules are untyped at this boundary. `isRecord` verifies
+// their container shape, then the validator checks every accessed field.
+type UnknownRecord = Record<string, any>;
+type PatternKind = 'exact' | 'descendants' | 'namespace';
+
+interface SpecifierPattern {
+  kind: PatternKind;
+  specifier: string;
+}
+
+interface ContractInput {
+  owners: unknown;
+  aliases: unknown;
+  sourceAreas: unknown;
+  resolverOverrides: unknown;
+  sourceAreaPolicy?: unknown;
+}
+
+interface RegistryDefaults {
+  owners: unknown;
+  aliases: unknown;
+  sourceAreas: unknown;
+  resolverOverrides: unknown;
+}
+
+interface CliOptions {
+  help?: true;
+  sourceMap?: string;
+  resolverOverrides?: string;
+}
 
 // Closed vocabularies are schema, not policy. The concrete owners, aliases,
-// source areas, and overrides remain data in registry.mjs.
+// source areas, and overrides remain data in registry.ts.
 const visibilityValues = new Set([
   'public',
   'owner-private',
@@ -45,15 +74,15 @@ const downstreamImplementationValues = new Set(['required', 'optional']);
 const parityValues = new Set(['override-required', 'not-applicable']);
 const sourceExtension = /\.(?:[cm]?[jt]sx?)$/;
 
-function isRecord(value) {
+function isRecord(value: unknown): value is UnknownRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function nonEmptyString(value) {
+function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function importSpecifierProblem(specifier) {
+function importSpecifierProblem(specifier: string): string | undefined {
   if (
     specifier.includes('\\') ||
     specifier.includes('*') ||
@@ -70,7 +99,7 @@ function importSpecifierProblem(specifier) {
   return undefined;
 }
 
-function publicSubpathProblem(subpath) {
+function publicSubpathProblem(subpath: string): string | undefined {
   if (
     subpath.includes('\\') ||
     subpath.includes('*') ||
@@ -87,10 +116,13 @@ function publicSubpathProblem(subpath) {
   return undefined;
 }
 
-function duplicateValues(records, field) {
-  const seen = new Set();
-  const duplicates = new Set();
+function duplicateValues(records: readonly unknown[], field: string): string[] {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
   for (const record of records) {
+    if (!isRecord(record)) {
+      continue;
+    }
     const value = record?.[field];
     if (!nonEmptyString(value)) {
       continue;
@@ -103,7 +135,7 @@ function duplicateValues(records, field) {
   return [...duplicates].sort();
 }
 
-function sourceRootProblem(root) {
+function sourceRootProblem(root: unknown): string | undefined {
   if (!nonEmptyString(root)) {
     return 'must be a non-empty repository-relative path';
   }
@@ -125,7 +157,7 @@ function sourceRootProblem(root) {
   return undefined;
 }
 
-function canonicalFilePath(filePath) {
+function canonicalFilePath(filePath: string): string {
   try {
     return realpathSync(filePath);
   } catch {
@@ -133,7 +165,7 @@ function canonicalFilePath(filePath) {
   }
 }
 
-function rootsOverlap(left, right) {
+function rootsOverlap(left: string, right: string): boolean {
   return (
     left === right ||
     left.startsWith(`${right}/`) ||
@@ -143,7 +175,7 @@ function rootsOverlap(left, right) {
 
 // An override overlaps portable policy when a registered alias already owns
 // the exact specifier or a registered public namespace containing it.
-function aliasCoversSpecifier(alias, specifier) {
+function aliasCoversSpecifier(alias: unknown, specifier: string): boolean {
   if (!isRecord(alias) || !nonEmptyString(alias.specifier)) {
     return false;
   }
@@ -160,10 +192,11 @@ function aliasCoversSpecifier(alias, specifier) {
     return false;
   }
   const relative = specifier.slice(alias.specifier.length + 1);
-  return (alias.publicSubpaths ?? []).some(
-    (subpath) =>
-      subpath?.path === relative ||
-      (subpath?.kind === 'namespace' &&
+  return (Array.isArray(alias.publicSubpaths) ? alias.publicSubpaths : []).some(
+    (subpath: unknown) =>
+      (isRecord(subpath) && subpath.path === relative) ||
+      (isRecord(subpath) &&
+        subpath.kind === 'namespace' &&
         relative.startsWith(`${subpath.path}/`)),
   );
 }
@@ -171,8 +204,8 @@ function aliasCoversSpecifier(alias, specifier) {
 // Reduce each alias to exact and prefix patterns, then compare the accepted
 // import domains. A public namespace includes its root and descendants, while
 // prefix-only aliases include descendants but reject the bare root.
-function aliasPatterns(alias) {
-  const patterns = [];
+function aliasPatterns(alias: unknown): SpecifierPattern[] {
+  const patterns: SpecifierPattern[] = [];
   if (!isRecord(alias) || !nonEmptyString(alias.specifier)) {
     return patterns;
   }
@@ -197,7 +230,10 @@ function aliasPatterns(alias) {
   return patterns;
 }
 
-function aliasPatternsOverlap(left, right) {
+function aliasPatternsOverlap(
+  left: SpecifierPattern,
+  right: SpecifierPattern,
+): boolean {
   if (left.kind === 'exact' && right.kind === 'exact') {
     return left.specifier === right.specifier;
   }
@@ -216,7 +252,7 @@ function aliasPatternsOverlap(left, right) {
   );
 }
 
-function aliasesOverlap(left, right) {
+function aliasesOverlap(left: unknown, right: unknown): boolean {
   return aliasPatterns(left).some((leftPattern) =>
     aliasPatterns(right).some((rightPattern) =>
       aliasPatternsOverlap(leftPattern, rightPattern),
@@ -235,7 +271,7 @@ export function validateAliasContracts({
   sourceAreas,
   resolverOverrides,
   sourceAreaPolicy = undefined,
-}) {
+}: ContractInput): string[] {
   const errors = [];
   const ownerList = Array.isArray(ownerRecords) ? ownerRecords : [];
   const aliasList = Array.isArray(aliasRecords) ? aliasRecords : [];
@@ -264,7 +300,7 @@ export function validateAliasContracts({
   for (const duplicate of duplicateValues(ownerList, 'id')) {
     errors.push(`duplicate owner id '${duplicate}'`);
   }
-  const ownerIds = new Set(
+  const ownerIds = new Set<string>(
     ownerList.filter((owner) => nonEmptyString(owner?.id)).map(({ id }) => id),
   );
   for (const [index, owner] of ownerList.entries()) {
@@ -289,7 +325,7 @@ export function validateAliasContracts({
 
   // Validate and index physical source areas before aliases resolve their
   // sourceAreas references.
-  const sourceAreaIds = new Set();
+  const sourceAreaIds = new Set<string>();
   for (const [index, area] of sourceAreaList.entries()) {
     const label = nonEmptyString(area?.id)
       ? `source area '${area.id}'`
@@ -344,7 +380,7 @@ export function validateAliasContracts({
   }
 
   if (sourceAreaPolicyList) {
-    const policyById = new Map(
+    const policyById = new Map<string, UnknownRecord>(
       sourceAreaPolicyList
         .filter((area) => nonEmptyString(area?.id))
         .map((area) => [area.id, area]),
@@ -395,7 +431,7 @@ export function validateAliasContracts({
 
   // Validate portable alias policy and build the complete public specifier
   // index so duplicate bare aliases and subpaths cannot hide each other.
-  const publicSpecifiers = new Map(
+  const publicSpecifiers = new Map<string, string>(
     aliasList
       .filter((alias) => nonEmptyString(alias?.specifier))
       .map((alias) => [alias.specifier, `alias '${alias.id}'`]),
@@ -532,8 +568,8 @@ export function validateAliasContracts({
       errors.push(`${label} must declare downstream implementation policy`);
     }
 
-    const localSubpaths = new Set();
-    const localSubpathPatterns = [];
+    const localSubpaths = new Set<string>();
+    const localSubpathPatterns: SpecifierPattern[] = [];
     for (const [subpathIndex, subpath] of alias.publicSubpaths.entries()) {
       const subpathLabel = `${label} publicSubpaths[${subpathIndex}]`;
       if (!isRecord(subpath) || !nonEmptyString(subpath.path)) {
@@ -562,7 +598,7 @@ export function validateAliasContracts({
         !subpathProblem &&
         subpathKinds.has(subpath.kind)
       ) {
-        const pattern = {
+        const pattern: SpecifierPattern = {
           kind: subpath.kind === 'namespace' ? 'namespace' : 'exact',
           specifier: fullSpecifier,
         };
@@ -687,8 +723,8 @@ export function validateAliasContracts({
 
 // Keep argument parsing strict because these option names and module export
 // contracts are consumed directly from the packaged downstream CLI.
-function parseArguments(args) {
-  const options = {};
+function parseArguments(args: readonly string[]): CliOptions {
+  const options: CliOptions = {};
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--help') {
@@ -714,14 +750,18 @@ function parseArguments(args) {
   return options;
 }
 
-function moduleUrl(modulePath, cwd) {
+function moduleUrl(modulePath: string, cwd: string): string {
   if (modulePath.startsWith('file:')) {
     return modulePath;
   }
   return pathToFileURL(path.resolve(cwd, modulePath)).href;
 }
 
-async function loadConsumerData(modulePath, exportName, cwd) {
+async function loadConsumerData(
+  modulePath: string,
+  exportName: 'sourceAreas' | 'resolverOverrides',
+  cwd: string,
+): Promise<unknown> {
   const consumerModule = await import(moduleUrl(modulePath, cwd));
   // Consumers may bind physical data, but OSS remains the sole source of
   // portable owner and alias policy.
@@ -748,25 +788,33 @@ async function loadConsumerData(modulePath, exportName, cwd) {
  * modules. Returns a process exit code so tests can exercise it in-process.
  */
 export async function runCli(
-  args = process.argv.slice(2),
+  args: readonly string[] = process.argv.slice(2),
   cwd = process.cwd(),
-) {
+  defaults: RegistryDefaults = {
+    owners,
+    aliases,
+    sourceAreas: ossSourceAreas,
+    resolverOverrides: ossResolverOverrides,
+  },
+): Promise<number> {
   let options;
   try {
     options = parseArguments(args);
   } catch (error) {
-    console.error(`Alias contract check failed: ${error.message}`);
+    console.error(`Alias contract check failed: ${errorMessage(error)}`);
     return 1;
   }
   if (options.help) {
     console.log(
-      'Usage: node scripts/alias-contracts/check-registry.mjs [--source-map <module>] [--resolver-overrides <module>]',
+      'Usage: node --import tsx scripts/alias-contracts/check-registry.ts [--source-map <module>] [--resolver-overrides <module>]',
     );
     return 0;
   }
 
-  let sourceAreas = ossSourceAreas;
-  let resolverOverrides = options.sourceMap ? [] : ossResolverOverrides;
+  let sourceAreas: unknown = defaults.sourceAreas;
+  let resolverOverrides: unknown = options.sourceMap
+    ? []
+    : defaults.resolverOverrides;
   try {
     if (options.sourceMap) {
       sourceAreas = await loadConsumerData(
@@ -783,16 +831,16 @@ export async function runCli(
       );
     }
   } catch (error) {
-    console.error(`Alias contract check failed: ${error.message}`);
+    console.error(`Alias contract check failed: ${errorMessage(error)}`);
     return 1;
   }
 
   const errors = validateAliasContracts({
-    owners,
-    aliases,
+    owners: defaults.owners,
+    aliases: defaults.aliases,
     sourceAreas,
     resolverOverrides,
-    sourceAreaPolicy: options.sourceMap ? ossSourceAreas : undefined,
+    sourceAreaPolicy: options.sourceMap ? defaults.sourceAreas : undefined,
   });
   if (errors.length > 0) {
     console.error('Alias contract validation failed:');
@@ -803,6 +851,10 @@ export async function runCli(
   }
   console.log('Alias contract validation passed.');
   return 0;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 if (

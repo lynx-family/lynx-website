@@ -18,8 +18,11 @@ uses the plural name `alias-contracts`.
   checks for the JavaScript registry.
 - [`check-registry.mjs`](./check-registry.mjs) validates the registry and
   optional consumer-owned physical data.
-- [`check-registry.test.mjs`](./check-registry.test.mjs) covers every
+- [`check-registry.test.ts`](./check-registry.test.ts) covers every
   structural rule and the consumer CLI boundary.
+- [`package.json`](./package.json) makes this toolchain an ESM subpackage
+  without changing the root repository's module mode.
+- [`tsconfig.json`](./tsconfig.json) provides strict, no-emit type checking.
 
 Do not create another alias matrix, public-subpath list, or resolver-override
 allowlist. Resolver configuration implements these contracts but does not
@@ -93,13 +96,20 @@ aliases. Optional modules export physical `sourceAreas` and local
 its own repository-local package script or orchestration script, which owns its
 paths and overlay preparation.
 
+Consumer adapters are ESM modules. Use `.mjs` by default; it remains supported
+so a consumer does not need to migrate its own data adapters to TypeScript.
+Consumers may also use `.ts` adapters because the checker runs through
+`node --import tsx`, but they must declare `tsx` directly. Both formats export
+the same `sourceAreas` or `resolverOverrides` binding and are runtime-validated
+as untrusted input.
+
 Source areas that reuse an OSS ID must retain that ID's logical owner, while
 their root, role, and origins may reflect the downstream layout. Additional
 source-area IDs must be consumer-owned.
 
-The following excerpt illustrates one composite area. A real `--source-map`
-module replaces the complete OSS source map and must provide every OSS
-source-area ID, including areas used only to classify legacy imports.
+The following `.mjs` excerpt illustrates one composite area. A real
+`--source-map` module replaces the complete OSS source map and must provide
+every OSS source-area ID, including areas used only to classify legacy imports.
 
 ```js
 // scripts/alias-source-areas.mjs
@@ -141,18 +151,22 @@ export const resolverOverrides = [
 ```
 
 ```bash
-node node_modules/@lynx-js/lynx-doc/scripts/alias-contracts/check-registry.mjs \
+node --import tsx \
+  node_modules/@lynx-js/lynx-doc/scripts/alias-contracts/check-registry.ts \
   --source-map ./scripts/alias-source-areas.mjs \
   --resolver-overrides ./scripts/resolver-overrides.mjs
 ```
 
-The packaged CLI path, option names, and module export names are compatibility
-interfaces used by that downstream orchestration.
+The checker is TypeScript, so downstream wrappers must declare `tsx` directly
+and invoke it through `node --import tsx`. The packaged CLI path, option names,
+and module export names are compatibility interfaces used by that downstream
+orchestration.
 
 ## Verification
 
 ```bash
-node --test scripts/alias-contracts/check-registry.test.mjs
+pnpm check:alias-contract-types
+node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
 ```
 

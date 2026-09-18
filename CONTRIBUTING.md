@@ -89,7 +89,8 @@ configuration only implements it.
 For registry or checker changes, run:
 
 ```bash
-node --test scripts/alias-contracts/check-registry.test.mjs
+pnpm check:alias-contract-types
+node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
 ```
 

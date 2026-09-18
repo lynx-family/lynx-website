@@ -25,12 +25,15 @@ import {
   ossResolverOverrides,
   ossSourceAreas,
   owners,
-} from './registry.mjs';
-import { runCli, validateAliasContracts } from './check-registry.mjs';
+} from './registry.js';
+import { runCli, validateAliasContracts } from './check-registry.js';
+
+type MutableFixture = any;
+type FixtureMutation = (fixture: MutableFixture) => void;
 
 // Keep this fixture independent from the checked-in registry: it demonstrates
 // the complete public schema without making production data its own oracle.
-function completeRegistryFixture() {
+function completeRegistryFixture(): MutableFixture {
   return {
     owners: [
       { id: 'oss', description: 'OSS source' },
@@ -131,13 +134,17 @@ function completeRegistryFixture() {
 
 // Each rejection case begins from known-valid data and changes only the
 // contract property named by the test.
-function errorsFor(mutate) {
+function errorsFor(mutate: FixtureMutation): string[] {
   const fixture = completeRegistryFixture();
   mutate(fixture);
   return validateAliasContracts(fixture);
 }
 
-function assertInvalid(name, mutate, expected) {
+function assertInvalid(
+  name: string,
+  mutate: FixtureMutation,
+  expected: string,
+): void {
   test(name, () => {
     const errors = errorsFor(mutate);
     assert.ok(
@@ -513,7 +520,7 @@ for (const flag of ['omitIndex', 'omitSourceExtensions']) {
   );
 }
 
-function exactAlias(id, specifier) {
+function exactAlias(id: string, specifier: string): MutableFixture {
   const alias = structuredClone(completeRegistryFixture().aliases[0]);
   alias.id = id;
   alias.specifier = specifier;
@@ -710,10 +717,26 @@ test('a source-map-only consumer does not inherit OSS overrides', async () => {
     path.join(os.tmpdir(), 'alias-contracts-source-map-only-'),
   );
   const originalConsoleError = console.error;
-  const invalidOssOverride = {
-    ...structuredClone(ossResolverOverrides[0]),
-    id: 'test-portable-alias-overlap',
-    specifier: aliases[0].specifier,
+  const defaults = {
+    owners,
+    aliases,
+    sourceAreas: ossSourceAreas,
+    resolverOverrides: [
+      ...ossResolverOverrides,
+      {
+        id: 'test-portable-alias-overlap',
+        specifier: '@lynx',
+        kind: 'package-compatibility',
+        match: 'exact',
+        reason: 'A test-only invalid OSS override.',
+        parity: {
+          runtime: 'override-required',
+          typescript: 'not-applicable',
+        },
+        lifecycle: 'temporary',
+        removalCondition: 'Remove with this test fixture.',
+      },
+    ],
   };
   try {
     const sourceMap = path.join(tempDirectory, 'source-map.mjs');
@@ -721,11 +744,12 @@ test('a source-map-only consumer does not inherit OSS overrides', async () => {
       sourceMap,
       `export const sourceAreas = ${JSON.stringify(ossSourceAreas)};\n`,
     );
-    ossResolverOverrides.push(invalidOssOverride);
     console.error = () => {};
-    assert.equal(await runCli(['--source-map', sourceMap], tempDirectory), 0);
+    assert.equal(
+      await runCli(['--source-map', sourceMap], tempDirectory, defaults),
+      0,
+    );
   } finally {
-    ossResolverOverrides.pop();
     console.error = originalConsoleError;
     rmSync(tempDirectory, { recursive: true, force: true });
   }
@@ -759,7 +783,7 @@ test('consumer source maps must retain every OSS source-area ID', async () => {
     path.join(os.tmpdir(), 'alias-contracts-complete-map-'),
   );
   const originalConsoleError = console.error;
-  const errors = [];
+  const errors: string[] = [];
   try {
     const sourceMap = path.join(tempDirectory, 'source-map.mjs');
     const sourceAreas = ossSourceAreas.filter(
@@ -788,8 +812,10 @@ test('consumer source maps cannot change a shared source-area owner', async () =
   const originalConsoleError = console.error;
   try {
     const sourceMap = path.join(tempDirectory, 'source-map.mjs');
-    const sourceAreas = structuredClone(ossSourceAreas);
-    sourceAreas.find(({ id }) => id === 'oss-components').owner = 'consumer';
+    const sourceAreas: MutableFixture = structuredClone(ossSourceAreas);
+    sourceAreas.find(
+      (area: MutableFixture) => area.id === 'oss-components',
+    ).owner = 'consumer';
     writeFileSync(
       sourceMap,
       `export const sourceAreas = ${JSON.stringify(sourceAreas)};\n`,
@@ -870,12 +896,14 @@ test('executes the checker when its entry path is a symlink', () => {
       linkedPackage,
       'scripts',
       'alias-contracts',
-      'check-registry.mjs',
+      'check-registry.ts',
     );
 
-    const result = spawnSync(process.execPath, [linkedChecker, '--unknown'], {
-      encoding: 'utf8',
-    });
+    const result = spawnSync(
+      process.execPath,
+      ['--import', 'tsx', linkedChecker, '--unknown'],
+      { encoding: 'utf8' },
+    );
 
     assert.equal(result.status, 1);
     assert.match(result.stderr, /unknown argument '--unknown'/);

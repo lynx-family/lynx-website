@@ -1,5 +1,3 @@
-// @ts-check
-
 // Gate 1 of the portable alias contract work tracked by:
 // https://github.com/lynx-family/lynx-website/issues/1487
 // This registry implements:
@@ -8,17 +6,18 @@
 // import forms are portable and who owns them. Later gates bind and verify the
 // corresponding resolver configuration.
 
-/** @typedef {import('./types.js').AliasContract} AliasContract */
-/** @typedef {import('./types.js').CanonicalSpelling} CanonicalSpelling */
-/** @typedef {import('./types.js').Owner} Owner */
-/** @typedef {import('./types.js').OwnerId} OwnerId */
-/** @typedef {import('./types.js').PublicSubpath} PublicSubpath */
-/** @typedef {import('./types.js').ResolverOverride} ResolverOverride */
-/** @typedef {import('./types.js').SourceArea} SourceArea */
+import type {
+  AliasContract,
+  CanonicalSpelling,
+  Owner,
+  OwnerId,
+  PublicSubpath,
+  ResolverOverride,
+  SourceArea,
+} from './types.js';
 
 // Owners are stable logical identities, independent of checkout layout.
 // Consumers map physical source areas to these IDs without redefining policy.
-/** @satisfies {readonly Owner[]} */
 export const owners = [
   {
     id: 'lynx-website',
@@ -38,27 +37,26 @@ export const owners = [
     id: 'rspress',
     description: 'Adapters supplied by the active Rspress theme.',
   },
-];
+] as const satisfies readonly Owner[];
 
-/** @satisfies {CanonicalSpelling} */
 const publicCanonicalSpelling = {
   omitIndex: true,
   omitSourceExtensions: true,
-};
+} as const satisfies CanonicalSpelling;
 
 const stablePublicLifecycle = {
   state: 'stable',
   removalPolicy: 'breaking-change',
-};
+} as const;
 
 /**
  * Declare bounded top-level namespaces while keeping their ownership explicit.
  *
- * @param {readonly string[]} paths
- * @param {OwnerId} owner
- * @returns {PublicSubpath[]}
  */
-function namespaceSubpaths(paths, owner) {
+function namespaceSubpaths(
+  paths: readonly string[],
+  owner: OwnerId,
+): PublicSubpath[] {
   return paths.map((path) => ({ path, kind: 'namespace', owner }));
 }
 
@@ -73,7 +71,6 @@ function namespaceSubpaths(paths, owner) {
 // - `sourceAreas` contains IDs from the active source-area map, never physical
 //   paths. It identifies where an alias implementation is allowed to come from.
 // - `downstream` and `lifecycle` define the compatibility contract.
-/** @satisfies {readonly AliasContract[]} */
 export const aliases = [
   {
     id: 'lynx-components',
@@ -347,14 +344,13 @@ export const aliases = [
       removalPolicy: 'owner-controlled',
     },
   },
-];
+] as const satisfies readonly AliasContract[];
 
 // Every `id` below is a valid OSS `sourceAreas` reference. This is the OSS
 // repository's physical source map. Logical ownership and source role are
 // separate: generated or mounted content retains the owner of its canonical
 // source. Consumers provide the IDs required by shared aliases, bind them to
 // their own roots, and may add areas needed to classify consumer source.
-/** @satisfies {readonly SourceArea[]} */
 export const ossSourceAreas = [
   {
     id: 'oss-docs-en',
@@ -480,12 +476,11 @@ export const ossSourceAreas = [
     owner: 'lynx-website',
     role: 'authoritative',
   },
-];
+] as const satisfies readonly SourceArea[];
 
 // Resolver overrides are exact, repository-local exceptions, not portable
 // aliases. A consumer supplies its own list and does not inherit these
 // physical implementation choices automatically.
-/** @satisfies {readonly ResolverOverride[]} */
 export const ossResolverOverrides = [
   {
     id: 'rspress-react-18-renderer',
@@ -502,4 +497,4 @@ export const ossResolverOverrides = [
     removalCondition:
       'Remove when Rspress no longer requires the React 19 implementation while this site uses React 18.',
   },
-];
+] as const satisfies readonly ResolverOverride[];
