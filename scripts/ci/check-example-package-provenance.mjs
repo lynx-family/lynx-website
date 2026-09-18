@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,6 +13,7 @@ const expectedPackageScope = '@lynx-example/';
 const expectedRepositoryType = 'git';
 const expectedRepositoryUrl =
   'git+https://github.com/lynx-family/lynx-examples.git';
+const npmRegistry = 'https://registry.npmjs.org/';
 const allowedSpecTypes = new Set(['version', 'range']);
 
 function hasExpectedRepository(repository) {
@@ -63,10 +65,22 @@ function baseViolation(dependency, spec) {
  */
 export function viewPackage(packageSpec) {
   return JSON.parse(
-    execFileSync('npm', ['view', packageSpec, 'name', 'repository', '--json'], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    }),
+    execFileSync(
+      'npm',
+      [
+        'view',
+        packageSpec,
+        'name',
+        'repository',
+        '--json',
+        `--registry=${npmRegistry}`,
+      ],
+      {
+        // Avoid pnpm-only repository .npmrc settings that npm warns about.
+        cwd: tmpdir(),
+        encoding: 'utf8',
+      },
+    ),
   );
 }
 
