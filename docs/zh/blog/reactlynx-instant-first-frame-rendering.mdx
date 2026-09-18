@@ -1,6 +1,6 @@
 ---
 title: '深入 ReactLynx：从后台渲染到首帧直出优化'
-date: 2026-09-16
+date: 2026-09-17
 sidebar: false
 authors: ['Yradex', 'reactlynx']
 description: 'ReactLynx 把后台 React 更新编码成 Patch，再由主线程通过 Element PAPI 落到原生视图；首帧直出则把启动第一帧从这条等待链路里拆出来。'
@@ -308,6 +308,6 @@ export default function App({ initialCount }) {
 
 总结一下，页面启动时，主线程先沿着裁剪后的首屏路径画出第一帧，ReactLynx 再把已有视图交给后台运行时接管；页面稳定运行时，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 更新 Lynx Element 树。
 
-ReactLynx 的编译器和架构都致力于把首屏表达成初始数据和可直接创建的视图，让主线程上的路径尽可能短；请求、副作用、真实事件处理和后续状态更新，只需要继续交给后台 React。如果还想再往前推一步，你还可以通过[在客户端提前准备好首屏数据](/guide/interaction/ifr#使用宿主平台的数据进行-首帧直出)省掉一次往返请求；用 [`'background only'`](/api/react/Document.directives) 等规则降低主线程产物的体积。
+ReactLynx 的编译器和架构都致力于把首屏表达成初始数据和可直接创建的视图，让主线程上的路径尽可能短；请求、副作用、真实事件处理和后续状态更新，只需要继续交给后台 React。如果还想再往前推一步，你还可以通过[在客户端提前准备好首屏数据](/guide/interaction/ifr#使用宿主平台的数据进行-首帧直出)省掉一次往返请求；用 [`'background only'` 等思路](/react/thinking-in-reactlynx#某些代码只能在后台线程运行)降低主线程产物的体积。
 
-祝你的 ReactLynx 应用健步如飞！
+祝你的 ReactLynx 应用首帧秒开！

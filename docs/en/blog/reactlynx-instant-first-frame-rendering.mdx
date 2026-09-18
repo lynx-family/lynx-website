@@ -1,6 +1,6 @@
 ---
 title: 'Deep Dive into ReactLynx: From Background Rendering to Instant First-Frame Rendering'
-date: 2026-09-16
+date: 2026-09-17
 sidebar: false
 authors: ['Yradex', 'reactlynx']
 description: 'ReactLynx encodes background React updates into patches applied to native views via Element PAPI on the main thread; Instant First-Frame Rendering unblocks the initial frame from this wait pipeline.'
@@ -308,6 +308,6 @@ When and where this adoption happens is a strategy choice. ReactLynx currently w
 
 To sum up, at startup the main thread first draws the first frame along the pruned first-screen path, and ReactLynx then hands the existing views over to the background runtime. Once the page is running, the background thread computes updates and sends Patches across the thread boundary, and the main thread updates the Lynx Element tree through Element PAPI.
 
-The ReactLynx compiler and architecture are both built to express the first screen as initial data and directly creatable views, keeping the path on the main thread as short as possible. Requests, side effects, real event handling, and later state updates simply stay with background React. To push further, you can [prepare the first-screen data on the host platform ahead of time](/guide/interaction/ifr#do-ifr-with-data-from-host-platform) to save a round trip, and use rules such as [`'background only'`](/api/react/Document.directives) to shrink the main-thread artifact.
+The ReactLynx compiler and architecture are both built to express the first screen as initial data and directly creatable views, keeping the path on the main thread as short as possible. Requests, side effects, real event handling, and later state updates simply stay with background React. To push further, you can [prepare the first-screen data on the host platform ahead of time](/guide/interaction/ifr#do-ifr-with-data-from-host-platform) to save a round trip, and use ideas such as [`'background only'`](/react/thinking-in-reactlynx#some-code-can-only-run-on-the-background-thread) to shrink the main-thread artifact.
 
-May your ReactLynx apps be quick on their feet!
+Here's to instant first frames in your ReactLynx apps!
