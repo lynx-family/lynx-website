@@ -98,8 +98,8 @@ their root, role, and origins may reflect the downstream layout. Additional
 source-area IDs must be consumer-owned.
 
 The following excerpt illustrates one composite area. A real `--source-map`
-module replaces the complete OSS source map and must provide every source-area
-ID referenced by the alias registry.
+module replaces the complete OSS source map and must provide every OSS
+source-area ID, including areas used only to classify legacy imports.
 
 ```js
 // scripts/alias-source-areas.mjs

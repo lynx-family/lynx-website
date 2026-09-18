@@ -164,6 +164,17 @@ test('accepts the checked-in OSS registry', () => {
   );
 });
 
+test('reports malformed alias records instead of throwing', () => {
+  const fixture = completeRegistryFixture();
+  fixture.aliases[0] = null;
+
+  assert.ok(
+    validateAliasContracts(fixture).some((error) =>
+      error.includes('aliases[0] must declare a non-empty id'),
+    ),
+  );
+});
+
 // Focused rejection cases cover each rule required by Issue #1503.
 assertInvalid(
   'rejects duplicate alias IDs',
@@ -694,6 +705,32 @@ test('accepts consumer-owned source-map and resolver-override modules', async ()
   }
 });
 
+test('a source-map-only consumer does not inherit OSS overrides', async () => {
+  const tempDirectory = mkdtempSync(
+    path.join(os.tmpdir(), 'alias-contracts-source-map-only-'),
+  );
+  const originalConsoleError = console.error;
+  const invalidOssOverride = {
+    ...structuredClone(ossResolverOverrides[0]),
+    id: 'test-portable-alias-overlap',
+    specifier: aliases[0].specifier,
+  };
+  try {
+    const sourceMap = path.join(tempDirectory, 'source-map.mjs');
+    writeFileSync(
+      sourceMap,
+      `export const sourceAreas = ${JSON.stringify(ossSourceAreas)};\n`,
+    );
+    ossResolverOverrides.push(invalidOssOverride);
+    console.error = () => {};
+    assert.equal(await runCli(['--source-map', sourceMap], tempDirectory), 0);
+  } finally {
+    ossResolverOverrides.pop();
+    console.error = originalConsoleError;
+    rmSync(tempDirectory, { recursive: true, force: true });
+  }
+});
+
 test('consumer modules cannot redefine OSS alias policy', async () => {
   const tempDirectory = mkdtempSync(
     path.join(os.tmpdir(), 'alias-contracts-policy-'),
@@ -711,6 +748,33 @@ test('consumer modules cannot redefine OSS alias policy', async () => {
     );
     console.error = () => {};
     assert.equal(await runCli(['--source-map', sourceMap], tempDirectory), 1);
+  } finally {
+    console.error = originalConsoleError;
+    rmSync(tempDirectory, { recursive: true, force: true });
+  }
+});
+
+test('consumer source maps must retain every OSS source-area ID', async () => {
+  const tempDirectory = mkdtempSync(
+    path.join(os.tmpdir(), 'alias-contracts-complete-map-'),
+  );
+  const originalConsoleError = console.error;
+  const errors = [];
+  try {
+    const sourceMap = path.join(tempDirectory, 'source-map.mjs');
+    const sourceAreas = ossSourceAreas.filter(
+      ({ id }) => id !== 'oss-version-data',
+    );
+    writeFileSync(
+      sourceMap,
+      `export const sourceAreas = ${JSON.stringify(sourceAreas)};\n`,
+    );
+    console.error = (...args) => errors.push(args.join(' '));
+    assert.equal(await runCli(['--source-map', sourceMap], tempDirectory), 1);
+    assert.match(
+      errors.join('\n'),
+      /missing required OSS source area 'oss-version-data'/,
+    );
   } finally {
     console.error = originalConsoleError;
     rmSync(tempDirectory, { recursive: true, force: true });

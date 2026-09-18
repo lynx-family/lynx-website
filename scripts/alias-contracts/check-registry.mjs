@@ -144,6 +144,9 @@ function rootsOverlap(left, right) {
 // An override overlaps portable policy when a registered alias already owns
 // the exact specifier or a registered public namespace containing it.
 function aliasCoversSpecifier(alias, specifier) {
+  if (!isRecord(alias) || !nonEmptyString(alias.specifier)) {
+    return false;
+  }
   if (alias.specifier === specifier) {
     return true;
   }
@@ -346,6 +349,13 @@ export function validateAliasContracts({
         .filter((area) => nonEmptyString(area?.id))
         .map((area) => [area.id, area]),
     );
+    for (const areaId of policyById.keys()) {
+      if (!sourceAreaIds.has(areaId)) {
+        errors.push(
+          `consumer source map is missing required OSS source area '${areaId}'`,
+        );
+      }
+    }
     for (const area of sourceAreaList) {
       if (!nonEmptyString(area?.id) || !nonEmptyString(area?.owner)) {
         continue;
@@ -756,7 +766,7 @@ export async function runCli(
   }
 
   let sourceAreas = ossSourceAreas;
-  let resolverOverrides = ossResolverOverrides;
+  let resolverOverrides = options.sourceMap ? [] : ossResolverOverrides;
   try {
     if (options.sourceMap) {
       sourceAreas = await loadConsumerData(
