@@ -13,10 +13,10 @@ uses the plural name `alias-contracts`.
 
 ## Files
 
-- [`registry.mjs`](./registry.mjs) is the single policy registry.
-- [`types.d.ts`](./types.d.ts) documents the data model and provides editor
-  checks for the JavaScript registry.
-- [`check-registry.mjs`](./check-registry.mjs) validates the registry and
+- [`registry.ts`](./registry.ts) is the single policy registry.
+- [`types.ts`](./types.ts) defines the data model and provides static checks
+  for the TypeScript registry.
+- [`check-registry.ts`](./check-registry.ts) validates the registry and
   optional consumer-owned physical data.
 - [`check-registry.test.ts`](./check-registry.test.ts) covers every
   structural rule and the consumer CLI boundary.
