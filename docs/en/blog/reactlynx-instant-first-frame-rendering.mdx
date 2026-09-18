@@ -275,9 +275,9 @@ The pipeline above relies on help from the compiler throughout: pruning the firs
 
 While the main thread renders the first frame, background React finishes its own initial render in parallel. The same UI now exists as two trees, one per thread: the main-thread tree owns the real Elements, while the background tree holds the nodes it has just rendered. So how do the Patches that the background thread produces next reach the Elements the main thread has already drawn?
 
-The Web has run into a similar problem with SSR hydration: server-rendered HTML creates a host node tree ahead of time, and the client adopts those existing DOM nodes as it builds its first VNode tree. Handover takes the same adoption approach, connecting two renders from different environments through an ID mapping.
+The Web has run into a similar problem with [SSR hydration](https://react.dev/reference/react-dom/client/hydrateRoot): server-rendered HTML creates a host node tree ahead of time, and the client adopts those existing DOM nodes as it builds its first VNode tree. Handover takes the same adoption approach, connecting two renders from different environments through an ID mapping.
 
-In practice, the main-thread first-frame tree uses negative IDs, whereas nodes created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two trees using compile-time dynamic slot positions and child node structures. Taking the counter app from the beginning of this post:
+In practice, the main-thread first-frame tree uses negative IDs, whereas nodes created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two trees using [compile-time dynamic slot positions](/react/compiler-informed-rendering#updates-process-only-changes-to-dynamic-positions) and child node structures. Taking the counter app from the beginning of this post:
 
 ```plaintext
 Before Handover:
@@ -302,7 +302,7 @@ Matched background nodes reuse the main-thread IDs (`1 -> -1`, `2 -> -2`), while
 
 Dynamic values and events also reuse this mapping. If text or attributes differ, the background thread sends a standard attribute Patch. Events that reach the background thread before handover completes are buffered, then dispatched to the corresponding `handleTap` through the ID mapping.
 
-When and where this adoption happens is a strategy choice. ReactLynx currently waits until both trees have been rendered, then has the main thread send its first-frame tree back to the background thread to do the matching, so that the main thread is not blocked by that work and the initial background render never waits on the main-thread result. The division of labor after adoption differs too. On the Web, the server output is done as soon as hydration finishes, and the page belongs entirely to the client. In ReactLynx, the main-thread artifact still holds the Elements, every later Patch lands through it, and main thread scripts run on this side as well.
+When and where this adoption happens is a strategy choice. ReactLynx currently waits until both trees have been rendered, then has the main thread send its first-frame tree back to the background thread to do the matching, so that the main thread is not blocked by that work and the initial background render never waits on the main-thread result. The division of labor after adoption differs too. On the Web, the server output is done as soon as hydration finishes, and the page belongs entirely to the client. In ReactLynx, the [main-thread artifact](#dual-thread-build-artifacts-and-code-pruning) still holds the Elements, every later Patch lands through it, and [main thread scripts](/react/main-thread-script) run on this side as well.
 
 ## Takeaways
 

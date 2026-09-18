@@ -275,9 +275,9 @@ export default function App({ initialCount }) {
 
 主线程画出首帧的同时，后台 React 也在并行跑完首轮 render。于是同一份 UI 在两个线程上各有一棵树：主线程那棵持有真正的 Element，后台那棵只有刚 render 出来的节点。那么，后台接下来产生的 Patch，要怎么落到主线程已经画出来的那批 Element 上？
 
-类似的问题在 Web 的 SSR Hydration 上出现过：服务端预渲染的 HTML 更早地创建了一棵宿主节点树，客户端在首次构建 VNode 树的过程中，边 render 边认领已有的 DOM 节点。ReactLynx 的接管也可以采用类似的认领（adoption）思路，把两个线程各自 render 出的结果通过一份 ID 映射对应起来。
+类似的问题在 Web 的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 上出现过：服务端预渲染的 HTML 更早地创建了一棵宿主节点树，客户端在首次构建 VNode 树的过程中，边 render 边认领已有的 DOM 节点。ReactLynx 的接管也可以采用类似的认领（adoption）思路，把两个线程各自 render 出的结果通过一份 ID 映射对应起来。
 
-具体到实现，主线程首帧树使用负数 ID，后台首轮 render 创建的节点则使用临时正数 ID。接管过程会结合编译期动态位置和子节点结构递归匹配两棵树。以开头那个计数器应用为例：
+具体到实现，主线程首帧树使用负数 ID，后台首轮 render 创建的节点则使用临时正数 ID。接管过程会结合[编译期动态位置](/react/compiler-informed-rendering#更新只处理动态位置的变化)和子节点结构递归匹配两棵树。以开头那个计数器应用为例：
 
 ```plaintext
 接管前：
@@ -302,7 +302,7 @@ export default function App({ initialCount }) {
 
 动态值和事件也会复用这份接管关系。文本或属性如果有差异，后台会发送一段普通属性 Patch；如果事件在接管完成前已经到达后台，运行时会先暂存它，接管后再根据 ID 映射找到对应的 `handleTap` 执行。
 
-认领的时机和位置其实有不同的策略选择。ReactLynx 目前的策略是等两棵树各自 render 完，再由主线程把首帧树传回后台线程完成对应，优先保证主线程不被这部分工作阻塞，后台首轮 render 也不必等主线程的结果。认领之后的分工也不同。Web 上 hydration 一结束，服务端产物就没用了，页面完全归客户端管理。而在 ReactLynx 中，主线程产物仍然持有 Element，后续 Patch 都要经过它落地，主线程脚本也跑在这一侧。
+认领的时机和位置其实有不同的策略选择。ReactLynx 目前的策略是等两棵树各自 render 完，再由主线程把首帧树传回后台线程完成对应，优先保证主线程不被这部分工作阻塞，后台首轮 render 也不必等主线程的结果。认领之后的分工也不同。Web 上 hydration 一结束，服务端产物就没用了，页面完全归客户端管理。而在 ReactLynx 中，[主线程产物](#面向双线程的构建产物与代码裁剪)仍然持有 Element，后续 Patch 都要经过它落地，[主线程脚本](/react/main-thread-script)也跑在这一侧。
 
 ## Takeaways
 
