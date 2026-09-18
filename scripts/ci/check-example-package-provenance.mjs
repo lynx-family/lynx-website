@@ -16,6 +16,10 @@ const expectedRepositoryUrl =
 const npmRegistry = 'https://registry.npmjs.org/';
 const allowedSpecTypes = new Set(['version', 'range']);
 
+/**
+ * Require the canonical metadata published by lynx-examples. This check is
+ * intentionally stricter than URL equivalence so release metadata cannot drift.
+ */
 function hasExpectedRepository(repository) {
   return (
     repository &&
@@ -25,6 +29,9 @@ function hasExpectedRepository(repository) {
   );
 }
 
+/**
+ * The downstream core-example flow only supports packages in this namespace.
+ */
 function hasExpectedPackageName(name) {
   return typeof name === 'string' && name.startsWith(expectedPackageScope);
 }
@@ -36,6 +43,9 @@ function repositoryDescription(repository) {
   return `${repository.type ?? '<missing>'} ${repository.url ?? '<missing>'}`;
 }
 
+/**
+ * Select the dependency versions that define a range's compatibility boundary.
+ */
 function manifestsToCheck(parsed, manifest) {
   if (!Array.isArray(manifest)) {
     return [manifest];
@@ -49,6 +59,9 @@ function manifestsToCheck(parsed, manifest) {
   return [manifest[0], manifest.at(-1)];
 }
 
+/**
+ * Build a consistent diagnostic payload for a rejected dependency.
+ */
 function baseViolation(dependency, spec) {
   return {
     aggregator: manifestPath,
@@ -61,7 +74,8 @@ function baseViolation(dependency, spec) {
 }
 
 /**
- * Read the published manifest in CI. Node setup in this workflow provisions npm.
+ * Read published package metadata from the public registry. The temporary cwd
+ * avoids applying pnpm-only repository configuration to the npm subprocess.
  */
 export function viewPackage(packageSpec) {
   return JSON.parse(
@@ -87,7 +101,7 @@ export function viewPackage(packageSpec) {
 /**
  * Validate one core example dependency without assuming its npm scope proves
  * ownership. Only direct registry versions and ranges are compatible with the
- * downstream @lynx-example to @byted-lynx-example mapping.
+ * downstream core-example mapping.
  */
 export function validateDependency(
   dependency,
@@ -162,7 +176,8 @@ export function validateDependency(
 }
 
 /**
- * Validate all core example dependencies.
+ * Validate every dependency declared by the core example aggregator, preserving
+ * all independent failures for one actionable CI result.
  */
 export function validateAggregator(packageManifest, options = {}) {
   const dependencies = Object.entries(packageManifest.dependencies ?? {});
@@ -171,6 +186,9 @@ export function validateAggregator(packageManifest, options = {}) {
     .filter(Boolean);
 }
 
+/**
+ * Load the checked aggregator package manifest and return its policy violations.
+ */
 export async function checkExamplePackageProvenance({
   root = repoRoot,
   getPackageManifest,
@@ -184,6 +202,9 @@ export async function checkExamplePackageProvenance({
   });
 }
 
+/**
+ * Render rejected dependencies in a CI-friendly, copyable diagnostic format.
+ */
 export function formatViolations(violations) {
   return [
     'Invalid example package provenance:',
