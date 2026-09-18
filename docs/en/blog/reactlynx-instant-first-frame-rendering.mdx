@@ -32,7 +32,7 @@ ReactLynx's background runtime builds on [Preact](https://preactjs.com/), which 
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-Next, we'll take a typical ReactLynx card component as an example to walk through the rendering and update flow of ReactLynx:
+Next, we'll use the typical counter app below to walk through how ReactLynx renders and updates. In practice the first frame flashes past, so here we use [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) on purpose to simulate the difference between the app at two points in time. What happens between those two results is what the rest of this post is about.
 
 <Go
   example="react-apis"
@@ -277,9 +277,9 @@ The pipeline above relies on help from the compiler throughout: pruning the firs
 
 While the main thread renders the first frame, background React finishes its own initial render in parallel. The same UI now exists as two trees, one per thread: the main-thread tree owns the real Elements, while the background tree holds the nodes it has just rendered. So how do the Patches that the background thread produces next reach the Elements the main thread has already drawn?
 
-The Web has run into a similar problem with SSR hydration: server-rendered HTML creates a host node tree ahead of time, and the client adopts those existing DOM nodes as it builds its first VNode tree. Handover takes the same adoption approach, connecting two renders from different environments through an ID mapping. The difference is that the background thread cannot reach the main thread's Elements, so what it adopts are IDs rather than the host nodes themselves.
+The Web has run into a similar problem with SSR hydration: server-rendered HTML creates a host node tree ahead of time, and the client adopts those existing DOM nodes as it builds its first VNode tree. Handover takes the same adoption approach, connecting two renders from different environments through an ID mapping.
 
-In practice, the main-thread first-frame tree uses negative IDs, whereas nodes created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two trees using compile-time dynamic slot positions and child node structures. Taking the card component from the beginning of this post:
+In practice, the main-thread first-frame tree uses negative IDs, whereas nodes created during the initial background render use temporary positive IDs. During handover, ReactLynx recursively matches the two trees using compile-time dynamic slot positions and child node structures. Taking the counter app from the beginning of this post:
 
 ```plaintext
 Before Handover:
@@ -304,7 +304,7 @@ Matched background nodes reuse the main-thread IDs (`1 -> -1`, `2 -> -2`), while
 
 Dynamic values and events also reuse this mapping. If text or attributes differ, the background thread sends a standard attribute Patch. Events that reach the background thread before handover completes are buffered, then dispatched to the corresponding `handleTap` through the ID mapping.
 
-When and where this adoption happens is a strategy choice. ReactLynx currently waits until both trees have been rendered, then has the main thread send its first-frame tree back to the background thread to do the matching, so that the main thread is not blocked by that work and the initial background render never waits on the main-thread result.
+When and where this adoption happens is a strategy choice. ReactLynx currently waits until both trees have been rendered, then has the main thread send its first-frame tree back to the background thread to do the matching, so that the main thread is not blocked by that work and the initial background render never waits on the main-thread result. The division of labor after adoption differs too. On the Web, the server output is done as soon as hydration finishes, and the page belongs entirely to the client. In ReactLynx, the main-thread artifact still holds the Elements, every later Patch lands through it, and main thread scripts run on this side as well.
 
 ## Summary
 
