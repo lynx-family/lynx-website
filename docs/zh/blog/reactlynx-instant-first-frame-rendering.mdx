@@ -173,8 +173,6 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-这个思路和 React Web 里的 [SSR Hydration](https://react.dev/reference/react-dom/client/hydrateRoot) 有一点相似：两者都复用已经存在的首屏视图。
-
 ### 面向双线程的构建产物与代码裁剪
 
 两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，沿首屏路径创建首帧的 Element；后台侧生成 `background.js`，保留完整 React 逻辑。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
@@ -308,6 +306,6 @@ export default function App({ initialCount }) {
 
 ## 总结
 
-归结起来，ReactLynx 的启动和运行其实是同一套提交模型在两个阶段的分工。页面启动时，主线程先沿着裁剪后的首屏路径画出第一帧，ReactLynx 再把已有视图交给后台运行时；页面稳定运行后，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 修改 Lynx Element 树。
+ReactLynx 的启动和运行其实是同一套提交模型在两个阶段的分工。页面启动时，主线程先沿着裁剪后的首屏路径画出第一帧，ReactLynx 再把已有视图交给后台运行时；页面稳定运行后，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 修改 Lynx Element 树。
 
 写首屏组件时，越能保证双线程节点树一致、把首屏表达成初始数据和可直接创建的视图，主线程路径就越短；请求、副作用、真实事件处理和后续状态更新只需要继续交给后台 React。首屏代码越贴近这条边界，首帧直出的收益就越可靠。
