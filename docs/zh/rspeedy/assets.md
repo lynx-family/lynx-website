@@ -77,14 +77,18 @@ const logoURL = `${process.env.ASSET_PREFIX}/logo.png`;
 TS2307: Cannot find module './static/logo.png' or its corresponding type declarations.
 ```
 
-此时你需要为静态资源添加类型声明文件，请在项目中创建 `src/rspeedy-env.d.ts` 文件，并添加相应的类型声明。
+此时请在 `tsconfig.json` 的 `types` 数组中追加声明了静态资源类型的 `@lynx-js/rspeedy/client`，保留已有的项：
 
-```typescript title=src/rspeedy-env.d.ts
-/// <reference types="@lynx-js/rspeedy/client" />
+```json title=tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@lynx-js/rspeedy/client"]
+  }
+}
 ```
 
 :::tip
-[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) will automatically create this file for you.
+[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 在创建项目时会自动包含该配置。
 :::
 
 ## 内联静态资源

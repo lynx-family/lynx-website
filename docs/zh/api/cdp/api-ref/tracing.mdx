@@ -196,4 +196,55 @@ Response:
 }
 ```
 
+### `Tracing.takeVMSnapshotByUrl`
+
+为指定 URL 对应页面的 MTS 或 BTS 虚拟机创建快照。
+
+- 来源类型：`lynx-extension`
+- 源码：`devtool/lynx_devtool/agent/domain_agent/inspector_tracing_agent.cc`
+
+###### 参数
+
+| 名称   | 类型     | 必填 | 说明                                      |
+| ------ | -------- | ---- | ----------------------------------------- |
+| `url`  | `string` | 是   | 要创建快照的页面 URL。                    |
+| `type` | `string` | 是   | 要创建的快照类型，取值为 `bts` 或 `mts`。 |
+
+###### 返回字段
+
+无返回字段。
+
+###### 备注
+
+- 通过 LynxGlobalDevToolMediator 在全局 DevTool 任务执行器上分发。
+- tracing 会话处于活动状态，且提供了 `params.url` 和 `params.type` 时，返回空的成功响应。
+- 缺少 `url` 或 `type` 参数时，返回 CDP 错误，消息为 `Argument error`。
+- tracing 会话未处于活动状态时，返回 CDP 错误，消息为 `Tracing is not started`。
+- 如果全局 mediator 没有默认任务执行器，当前处理函数不会发送显式的 CDP 响应。
+
+###### 示例
+
+**为指定 URL 对应的页面创建快照**
+
+请求：
+
+```json
+{
+  "id": 1,
+  "method": "Tracing.takeVMSnapshotByUrl",
+  "params": {
+    "config": "{\"url\":\"https://xxx/template.js\",\"type\":\"bts\"}"
+  }
+}
+```
+
+响应：
+
+```json
+{
+  "id": 1,
+  "result": {}
+}
+```
+
 {/* END GENERATED CDP REFERENCE */}

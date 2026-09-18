@@ -2,6 +2,16 @@
   command = "node scripts/ci/check-build-prereqs.mjs && pnpm gen:og && NODE_OPTIONS=--max-old-space-size=3072 RSPRESS_SSG_WORKER_THREAD_COUNT=2 pnpm exec rspress build"
   publish = "doc_build"
 
+# The version home is a directory-style URL, so redirect `/next` to `/next/`
+# instead of serving the same page at two URLs. Netlify normalizes trailing
+# slashes before evaluating redirect rules, so a static redirect would also
+# match its target and cause a loop. Edge Functions run first and can inspect
+# the original pathname. A release branch serves a second version home at its
+# own base and registers it here alongside `/next`.
+[[edge_functions]]
+  function = "redirect-version-root"
+  path = "/next"
+
 [[headers]]
   for = "/*"
   [headers.values]

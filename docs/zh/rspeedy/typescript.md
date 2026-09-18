@@ -44,14 +44,18 @@ export default {
 
 Rspeedy 提供了 CSS Modules、[静态资源](./assets.md)等内置功能，这些功能需要添加对应的类型声明。
 
-请创建 `src/rspeedy-env.d.ts` 文件，并添加以下内容：
+请在 `tsconfig.json` 的 `types` 数组中追加 `@lynx-js/rspeedy/client`，保留已有的项：
 
-```typescript title=src/rspeedy-env.d.ts
-/// <reference types="@lynx-js/rspeedy/client" />
+```json title=tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@lynx-js/rspeedy/client"]
+  }
+}
 ```
 
 :::tip
-[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 在创建项目时会自动生成该文件。
+[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 在创建项目时会自动包含该配置。
 :::
 
 ## 扩展 Lynx 类型
@@ -154,7 +158,7 @@ Rsbuild 使用 SWC 来编译 TypeScript 代码。
 ```
 
 :::tip
-[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 在创建项目时会自动包含该配置。
+[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 在创建项目时会自动包含该配置。
 :::
 
 该选项可以帮助你避免使用某些无法被 SWC 正确编译的语法（如跨文件类型引用），并指导你修正对应的用法：

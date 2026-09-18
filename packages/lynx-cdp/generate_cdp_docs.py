@@ -250,7 +250,7 @@ def validate_custom_doc(path: Path, doc: dict[str, Any]) -> None:
     require_string(doc, "summary", path)
     validate_named_field_list(path, doc, "parameters")
     validate_named_field_list(path, doc, "returns")
-    validate_string_list(path, doc, "events")
+    validate_events(path, doc)
     validate_string_list(path, doc, "notes")
     examples = doc.get("examples")
     if examples is None:
@@ -283,6 +283,27 @@ def validate_named_field_list(path: Path, doc: dict[str, Any], key: str) -> None
         description = item.get("description")
         if description is not None and not isinstance(description, str):
             raise DocsError(f"{path} {key}[{index}].description must be a string")
+
+
+def validate_events(path: Path, doc: dict[str, Any]) -> None:
+    events = doc.get("events")
+    if events is None:
+        return
+    if not isinstance(events, list):
+        raise DocsError(f"{path} events must be a list")
+    for index, event in enumerate(events):
+        # TODO: Migrate string events in Lynx custom_cdp_docs to name/description
+        # mappings, then remove string support here and in render_events.
+        # Update schema docs and tests after the migrated metadata is available.
+        if isinstance(event, str):
+            continue
+        if not isinstance(event, dict):
+            raise DocsError(f"{path} events[{index}] must be a mapping or a string")
+        name = event.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise DocsError(f"{path} events[{index}].name must be a non-empty string")
+        if "description" in event and not isinstance(event["description"], str):
+            raise DocsError(f"{path} events[{index}].description must be a string")
 
 
 def validate_string_list(path: Path, doc: dict[str, Any], key: str) -> None:
@@ -633,7 +654,7 @@ def render_custom_method(
 
     lines.extend(render_fields("Parameters", doc.get("parameters"), include_required=True))
     lines.extend(render_fields("Returns", doc.get("returns"), include_required=False))
-    lines.extend(render_list_section("Events", doc.get("events")))
+    lines.extend(render_events(doc.get("events")))
     lines.extend(render_list_section("Notes", doc.get("notes")))
     lines.extend(render_examples(doc.get("examples")))
     return lines
@@ -666,6 +687,19 @@ def render_fields(
     lines.extend(render_table(headers, rows))
     lines.append("")
     return lines
+
+
+def render_events(events: Any) -> list[str]:
+    values = []
+    for event in events or []:
+        if isinstance(event, str):
+            values.append(event)
+            continue
+        text = code(event["name"])
+        if event.get("description"):
+            text += f": {event['description']}"
+        values.append(text)
+    return render_list_section("Events", values)
 
 
 def render_list_section(title: str, values: Any) -> list[str]:

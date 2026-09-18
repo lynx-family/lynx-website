@@ -290,6 +290,67 @@ Response:
 }
 ```
 
+### `DOM.getOriginalNodeSourceInfo`
+
+Returns the source info associated with a DevTool node id.
+
+- Origin: `lynx-extension`
+- Source: `devtool/lynx_devtool/agent/domain_agent/inspector_dom_agent_ng.cc`
+
+###### Parameters
+
+| Name     | Type      | Required | Description                                                  |
+| -------- | --------- | -------- | ------------------------------------------------------------ |
+| `nodeId` | `integer` | Yes      | DevTool node id to resolve in the current Lynx element tree. |
+
+###### Returns
+
+| Name               | Type           | Description                                                                                                                        |
+| ------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `nodeId`           | `integer`      | DevTool node id of the resolved element node.                                                                                      |
+| `tag`              | `string`       | Runtime element tag name such as view, text, image, or wrapper.                                                                    |
+| `nodeIndex`        | `integer`      | Raw node index stored on the resolved element node.                                                                                |
+| `debugMetadataUrl` | `string`       | Debug metadata URL of the template bundle that owns the element node. Empty when the owning bundle does not expose debug metadata. |
+| `lazyBundleUrl`    | `string\|null` | Lazy bundle URL when the node belongs to a lazy bundle. The field is null for nodes from the main template.                        |
+
+###### Notes
+
+- Dispatches through LynxDevToolMediator to InspectorTasmExecutor on the TASM thread.
+- Runtime-generated wrapper nodes can be identified by tag set to wrapper.
+- The response result is an empty object when no element is found for params.nodeId.
+- If the mediator has no TASM task runner, the current handler does not send an explicit CDP response.
+
+###### Examples
+
+**Read source info for an element node**
+
+Request:
+
+```json
+{
+  "id": 1,
+  "method": "DOM.getOriginalNodeSourceInfo",
+  "params": {
+    "nodeId": 42
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "id": 1,
+  "result": {
+    "nodeId": 42,
+    "tag": "view",
+    "nodeIndex": 7,
+    "debugMetadataUrl": "https://example.com/main.debug-metadata.json",
+    "lazyBundleUrl": null
+  }
+}
+```
+
 ### `DOM.innerText`
 
 Returns raw text child values for a Lynx text node.

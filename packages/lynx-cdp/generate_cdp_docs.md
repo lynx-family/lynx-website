@@ -118,9 +118,31 @@ Custom documentation validation:
 - `summary` is required
 - `parameters` and `returns`, when present, must be lists of fields with `name`
   and `type`
-- `events` and `notes`, when present, must be lists of strings
+- `events`, when present, must be a list of mappings with a non-empty string
+  `name` and an optional string `description`; existing string entries are also
+  accepted for backward compatibility
+- `notes`, when present, must be a list of strings
 - `examples`, when present, must include a `title` and may include `request`
   and `response` mappings
+
+### Event Descriptions
+
+Use structured entries for new event descriptions:
+
+```yaml
+events:
+  - name: GlobalProps.changed
+    description: Emitted when the target's GlobalProps change.
+```
+
+The generator renders the event name as inline code followed by its description,
+when provided. These entries describe events associated with a method; they do
+not declare standalone event APIs in the manifest.
+
+Existing string entries retain their current rendering and can coexist with
+structured entries in the same list. The string format is intended for future
+deprecation after existing entries have been migrated; it is still accepted
+without warnings today.
 
 ## Output
 

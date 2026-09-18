@@ -29,6 +29,7 @@ All code examples in this documentation can be found in the [integrating-lynx-de
 ### Adding Dependencies
 
 You need to add these components: the `Devtool` subcomponent of `LynxService`, `LynxDevTool`, and `DebugRouter`.
+Make sure the Podfile declares the `lynx-family` Specs repository as a source, as shown in the [Lynx integration guide](/guide/start/integrate-with-existing-apps.html?platform=ios).
 
 ```ruby title="Podfile" {2-8}
 # Ensure Lynx DevTool version matches the Lynx version when integrating
@@ -64,18 +65,16 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 <Tabs groupId='integrating-lynx-with-existing-app-ios'>
 <Tab label="Objective-C">
 
-```objective-c title=AppDelegate.m {9-16}
+```objective-c title=AppDelegate.m {7-13}
 #import <Lynx/LynxEnv.h>
-#import <Lynx/LynxService.h>
-#import <Lynx/LynxServiceDevToolProtocol.h>
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // ...
+  // Prepare DevTool
+  [LynxEnv prepareDevToolForDevelopmentBeforeInit];
   LynxEnv *lynxEnv = [LynxEnv sharedInstance];
-  // Enable all sessions debugging for DevTool (required for Lynx DevTool Desktop connection)
-  [LynxService(LynxServiceDevToolProtocol) enableAllSessions];
   // Enable Lynx DevTool Switch
   lynxEnv.devtoolEnabled = YES;
   // Enable Lynx LogBox Switch
@@ -89,18 +88,16 @@ You can configure these switches during [Lynx Environment Initialization](/guide
 
 ```objective-c title="YourTarget-Bridging-Header.h"
 #import <Lynx/LynxEnv.h>
-#import <Lynx/LynxService.h>
-#import <Lynx/LynxServiceDevToolProtocol.h>
 ```
 
-```swift title=AppDelegate.swift {5-12}
+```swift title=AppDelegate.swift {5-11}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // ...
+    // Prepare DevTool
+    LynxEnv.prepareDevToolForDevelopmentBeforeInit()
     let lynxEnv = LynxEnv.sharedInstance()
-    // Enable all sessions debugging for DevTool (required for Lynx DevTool Desktop connection)
-    (LynxServices.getInstanceWith(LynxServiceDevToolProtocol.self) as? LynxServiceDevToolProtocol)?.enableAllSessions()
     // Enable Lynx DevTool Switch
     lynxEnv.devtoolEnabled = true
     // Enable Lynx LogBox Switch
@@ -114,7 +111,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 </Tabs>
 
 :::info
-In addition to the three switches introduced earlier, there are more switches that can help you control the behavior of DevTool. Please refer to the [Lynx DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
+In addition to the switches introduced earlier, there are more switches that can help you control the behavior of DevTool. Please refer to the [Lynx DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
 :::
 
  </Steps>
@@ -157,17 +154,18 @@ It is recommended to use the latest [Lynx version](https://github.com/lynx-famil
 
 ### Registering DevTool Service
 
+DevTool Service provides some bootstrap values to control default behaviors. You can configure them as needed; the snippets below apply the development defaults to the values that have not been set.
+
 <Tabs groupId='register-devtool-service-android'>
 <Tab label="Java">
 
-```java title=YourApplication.java {3-7}
+```java title=YourApplication.java {3-6}
 private void initLynxService() {
   // ...
   // register DevTool service
   LynxServiceCenter.inst().registerService(LynxDevToolService.getINSTANCE());
-
-  // enable all sessions debug for DevTool (required for Lynx DevTool Desktop connection)
-  LynxDevToolService.getINSTANCE().enableAllSessions();
+  // Prepare DevTool
+  LynxEnv.inst().prepareDevToolForDevelopmentBeforeInit();
 }
 
 ```
@@ -175,14 +173,13 @@ private void initLynxService() {
 </Tab>
 <Tab label="Kotlin">
 
-```kotlin title=YourApplication.kt {3-7}
+```kotlin title=YourApplication.kt {3-6}
 private fun initLynxService() {
   // ...
   // register DevTool service
   LynxServiceCenter.inst().registerService(LynxDevToolService.INSTANCE)
-
-  // enable all sessions debug for DevTool (required for Lynx DevTool Desktop connection)
-  LynxDevToolService.INSTANCE.enableAllSessions()
+  // Prepare DevTool
+  LynxEnv.inst().prepareDevToolForDevelopmentBeforeInit()
 }
 ```
 
@@ -245,7 +242,7 @@ private fun initLynxEnv() {
 </Tabs>
 
 :::info
-In addition to the three switches introduced earlier, there are more that can help you control the behavior of DevTool. Please refer to the [DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
+In addition to the switches introduced earlier, there are more that can help you control the behavior of DevTool. Please refer to the [DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
 :::
 
 </Steps>
@@ -349,7 +346,7 @@ public initLynxEnv() {
 </Tabs>
 
 :::info
-In addition to the three switches introduced earlier, there are more that can help you control the behavior of DevTool. Please refer to the [DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
+In addition to the switches introduced earlier, there are more that can help you control the behavior of DevTool. Please refer to the [DevTool Switch Page](/guide/start/integrate-lynx-devtool-advanced.html#debugging-devtool-switch).
 :::
 
 </Steps>

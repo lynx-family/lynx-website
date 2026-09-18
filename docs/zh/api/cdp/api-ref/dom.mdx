@@ -290,6 +290,67 @@ Response:
 }
 ```
 
+### `DOM.getOriginalNodeSourceInfo`
+
+返回与 DevTool 节点 ID 关联的源码信息。
+
+- 来源类型：`lynx-extension`
+- 源码：`devtool/lynx_devtool/agent/domain_agent/inspector_dom_agent_ng.cc`
+
+###### 参数
+
+| 名称     | 类型      | 必填 | 说明                                           |
+| -------- | --------- | ---- | ---------------------------------------------- |
+| `nodeId` | `integer` | 是   | 要在当前 Lynx 元素树中解析的 DevTool 节点 ID。 |
+
+###### 返回字段
+
+| 名称               | 类型           | 说明                                                                        |
+| ------------------ | -------------- | --------------------------------------------------------------------------- |
+| `nodeId`           | `integer`      | 解析得到的元素节点的 DevTool 节点 ID。                                      |
+| `tag`              | `string`       | 运行时元素的标签名，例如 `view`、`text`、`image` 或 `wrapper`。             |
+| `nodeIndex`        | `integer`      | 存储在解析所得元素节点上的原始节点索引。                                    |
+| `debugMetadataUrl` | `string`       | 该元素节点所属模板包的调试元数据 URL。所属模板包未提供调试元数据时为空。    |
+| `lazyBundleUrl`    | `string\|null` | 节点属于懒加载包时，为该懒加载包的 URL。节点来自主模板时，此字段为 `null`。 |
+
+###### 备注
+
+- 通过 LynxDevToolMediator 分发至 TASM 线程上的 InspectorTasmExecutor。
+- 运行时生成的包装节点可通过值为 `wrapper` 的 `tag` 字段识别。
+- 未找到 `params.nodeId` 对应的元素时，响应的 result 为空对象。
+- 如果 mediator 没有 TASM 任务执行器，当前处理函数不会发送显式的 CDP 响应。
+
+###### 示例
+
+**读取元素节点的源码信息**
+
+请求：
+
+```json
+{
+  "id": 1,
+  "method": "DOM.getOriginalNodeSourceInfo",
+  "params": {
+    "nodeId": 42
+  }
+}
+```
+
+响应：
+
+```json
+{
+  "id": 1,
+  "result": {
+    "nodeId": 42,
+    "tag": "view",
+    "nodeIndex": 7,
+    "debugMetadataUrl": "https://example.com/main.debug-metadata.json",
+    "lazyBundleUrl": null
+  }
+}
+```
+
 ### `DOM.innerText`
 
 Returns raw text child values for a Lynx text node.

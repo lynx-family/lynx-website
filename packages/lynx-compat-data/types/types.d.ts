@@ -141,9 +141,13 @@ export interface CompatStatement {
    */
   tags?: string[];
   /**
-   * The path to the file that defines this feature in lynx-compat-data, relative to the repository root. Useful for guiding potential contributors towards the correct file to edit. This is automatically generated at build time and should never manually be specified.
+   * The path to the local file that defines this feature, relative to the lynx-compat-data package root. Consumers can combine it with the package's repository URL to guide contributors to the correct file. This is automatically generated at build time and should never be specified manually.
    */
   source_file?: string;
+  /**
+   * The absolute URL of the file that defines this feature when its source of truth is outside lynx-compat-data. Consumers should use this URL instead of constructing a link from source_file. This is automatically generated at build time and should never be specified manually.
+   */
+  source_url?: string;
   support: SupportBlock;
   status?: StatusBlock;
 }

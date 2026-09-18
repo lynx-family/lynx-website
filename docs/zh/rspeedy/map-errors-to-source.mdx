@@ -50,14 +50,14 @@ flowchart LR
 
 ## 落盘内容
 
-每个 entry 一个文件，位于该 entry 的中间目录下（默认 `.rspeedy/<entry>`）：
+每个 entry 一个文件，位于该 entry 的中间目录下（默认 `.lynx/<entry>`）：
 
 ```text
-dist/.rspeedy/<entry>/debug-metadata.json
+dist/.lynx/<entry>/debug-metadata.json
 ```
 
 :::warning 生产构建默认会删除它
-生产构建里，这个文件会生成，但随后就从产物里删掉，它不该跟着 app 发出去，只是调试用的辅助信息。只有在 `dev`、或 `DEBUG` 里带 `rspeedy` 时（例如 `DEBUG=rspeedy pnpm build`，方便本地查看）才会留在磁盘上。要用它做线上反解，需要你自己上传并托管，见 [在生产环境中使用](#在生产环境中使用)。
+生产构建里，这个文件会生成，但随后就从产物里删掉，它不该跟着 app 发出去，只是调试用的辅助信息。只有在 `dev`、或 `DEBUG` 里带 `lynx` 时（例如 `DEBUG=lynx pnpm build`，方便本地查看）才会留在磁盘上。要用它做线上反解，需要你自己上传并托管，见 [在生产环境中使用](#在生产环境中使用)。
 :::
 
 ## DebugMetadata 文件结构
@@ -169,9 +169,9 @@ flowchart LR
 `dev` 期间，插件会托管该文件，并允许你只查询单个字段而不必解析整个文件：
 
 ```http
-GET <publicPath>/.rspeedy/<entry>/debug-metadata.json
-GET <publicPath>/.rspeedy/<entry>/debug-metadata.json?field=source-map&filename=main-thread.js.map
-GET <publicPath>/.rspeedy/<entry>/debug-metadata.json?field=bytecode-debug-info&filename=main-thread.js
+GET <publicPath>/.lynx/<entry>/debug-metadata.json
+GET <publicPath>/.lynx/<entry>/debug-metadata.json?field=source-map&filename=main-thread.js.map
+GET <publicPath>/.lynx/<entry>/debug-metadata.json?field=bytecode-debug-info&filename=main-thread.js
 ```
 
 在 dev 下，插件还会把 bundle 内的 `sourceMappingURL` 注释，以及 tasm 的 `templateDebugUrl` / `debugMetadataUrl` 改写为指向这些 dev server 接口，从而让 devtools 自动解析源码。
@@ -274,7 +274,7 @@ export default defineConfig({
 });
 ```
 
-> 如果只是临时想拿到磁盘上的文件，改用 `DEBUG=rspeedy` 构建即可，它会把文件留在 `dist/.rspeedy/<entry>/` 下，不需要任何插件。
+> 如果只是临时想拿到磁盘上的文件，改用 `DEBUG=lynx` 构建即可，它会把文件留在 `dist/.lynx/<entry>/` 下，不需要任何插件。
 
 :::note 运行时 release 如何对应到文件
 

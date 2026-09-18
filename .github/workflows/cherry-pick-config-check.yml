@@ -6,6 +6,7 @@ on:
       - '.github/cherry-pick-config.json'
       - '.github/ISSUE_TEMPLATE/cherry_pick_request.yml'
       - '.github/scripts/cherry-pick-request.mjs'
+      - '.github/scripts/cherry-pick-request.test.mjs'
       - '.github/workflows/cherry-pick-request.yml'
       - '.github/workflows/cherry-pick-config-check.yml'
   workflow_dispatch:
@@ -23,4 +24,7 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: '.node-version'
-      - run: node .github/scripts/cherry-pick-request.mjs check-config
+      - name: Test cherry-pick request workflow
+        run: node --test .github/scripts/cherry-pick-request.test.mjs
+      - name: Check cherry-pick configuration
+        run: node .github/scripts/cherry-pick-request.mjs check-config
