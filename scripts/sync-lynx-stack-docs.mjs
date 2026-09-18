@@ -97,7 +97,7 @@ for (const section of manifest.sections) {
 // lists only the packages the manifest names, in its order and groups. A
 // single group is the section itself, so its header would repeat the name.
 // The theme reads the same group names to pick a subsite for a package page.
-const groups = new Set(manifest.shownPackages.map(({ group }) => group));
+const groups = new Set(manifest.packages.map(({ group }) => group));
 for (const group of Object.keys(GROUP_SUBSITES)) {
   if (!groups.has(group)) {
     throw new Error(

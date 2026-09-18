@@ -6,25 +6,43 @@ import {
   findSubsiteValue,
 } from './shared-subsite-routes.ts';
 
-const groups = [
-  {
-    group: 'Build tools',
-    packages: ['@lynx-js/rspeedy', '@lynx-js/rsbuild-plugin'],
-  },
-  { group: 'Web platform', packages: ['@lynx-js/web-core'] },
+const packages = [
+  { route: 'api/packages/rspeedy', group: 'Build tools' },
+  { route: 'api/packages/rsbuild-plugin', group: 'Build tools' },
+  { route: 'api/packages/web-core', group: 'Web platform' },
+  { route: 'api/react', group: 'Libraries and tools' },
 ];
 
 const subsiteOf = (pathname: string) =>
   findSubsiteValue(pathname, {
     subsites: ['guide', 'rspeedy', 'react', 'ui', 'lynxtron'],
-    packageSubsites: apiPackageSubsites(groups),
+    packageSubsites: apiPackageSubsites(packages),
   });
 
 test('package pages keep the subsite of their group', () => {
   assert.equal(subsiteOf('/api/packages/rspeedy'), 'rspeedy');
   assert.equal(subsiteOf('/api/packages/rsbuild-plugin'), 'rspeedy');
+  // A member page is the same package.
+  assert.equal(
+    subsiteOf('/api/packages/rsbuild-plugin/functions/isPluginLynxRegistered'),
+    'rspeedy',
+  );
+  assert.equal(subsiteOf('/api/packages/rspeedy/interfaces/Config'), 'rspeedy');
   assert.equal(subsiteOf('/api/packages/web-core'), undefined);
   assert.equal(subsiteOf('/api/packages/'), undefined);
+});
+
+// lynxjs.org serves both testing packages under the Lynx guide today.
+test('the testing pages keep the guide', () => {
+  assert.equal(subsiteOf('/api/react/testing-library'), 'guide');
+  assert.equal(
+    subsiteOf('/api/react/testing-library/Classes/LynxTestingEnv'),
+    'guide',
+  );
+  assert.equal(
+    subsiteOf('/zh/api/packages/testing-environment/classes/LynxTestingEnv'),
+    undefined,
+  );
 });
 
 test('config and ReactLynx routes keep their subsite', () => {

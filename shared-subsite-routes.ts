@@ -10,10 +10,10 @@
  * Kept free of imports so `node --test` can run its tests.
  */
 
-/** A group of `shownPackages` in the manifest of @lynx-js/lynx-stack-docs. */
-export type PackageGroup = {
+/** A package of the manifest of @lynx-js/lynx-stack-docs. */
+export type ManifestPackage = {
+  route: string;
   group: string;
-  packages: readonly string[];
 };
 
 /**
@@ -24,28 +24,34 @@ export const GROUP_SUBSITES: Record<string, string> = {
   'Build tools': 'rspeedy',
 };
 
-/** Routes of the API reference that belong to a subsite as a whole. */
+/**
+ * Routes of the API reference that belong to a subsite as a whole, in matching
+ * order. The testing library keeps the Lynx guide it had before the reference
+ * moved under `/api/react`, next to the testing environment.
+ */
 const API_ROUTE_SUBSITES: [RegExp, string][] = [
+  [/^\/api\/react\/testing-library(\/|$)/, 'guide'],
   [/^\/api\/config(\/|$)/, 'rspeedy'],
   [/^\/api\/react(\/|$)/, 'react'],
 ];
 
-const API_PACKAGE_ROUTE = /^\/api\/packages\/([^/]+)$/;
+/** A package page, which is the package itself or one of its members. */
+const API_PACKAGE_ROUTE = /^\/api\/packages\/([^/]+)(?:\/|$)/;
 
 /**
- * The subsite of every package page, from the group the manifest lists the
- * package under. The sidebar is free to show those groups or not.
+ * The subsite of every package page, from the group the manifest puts the
+ * package in. Every package has a page, whether the sidebar shows it or not.
  */
 export function apiPackageSubsites(
-  groups: readonly PackageGroup[],
+  packages: readonly ManifestPackage[],
 ): Record<string, string> {
   const subsites: Record<string, string> = {};
-  for (const { group, packages } of groups) {
+  for (const { route, group } of packages) {
     const subsite = GROUP_SUBSITES[group];
-    if (!subsite) continue;
-    for (const name of packages) {
-      subsites[name.replace(/^@lynx-js\//, '')] = subsite;
-    }
+    const name = route.startsWith('api/packages/')
+      ? route.slice('api/packages/'.length)
+      : undefined;
+    if (subsite && name) subsites[name] = subsite;
   }
   return subsites;
 }

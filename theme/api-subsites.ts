@@ -4,7 +4,7 @@ import manifest from '@lynx-js/lynx-stack-docs/manifest.json';
 
 import { apiPackageSubsites, findSubsiteValue } from '../shared-subsite-routes';
 
-const PACKAGE_SUBSITES = apiPackageSubsites(manifest.shownPackages);
+const PACKAGE_SUBSITES = apiPackageSubsites(manifest.packages);
 const SUBSITE_VALUES = SUBSITES_CONFIG.map((subsite) => subsite.value);
 
 /** The subsite a route belongs to, defaulting to the Lynx guide. */
