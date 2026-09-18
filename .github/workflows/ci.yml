@@ -83,6 +83,31 @@ jobs:
       - name: Build
         run: pnpm run build
 
+  # Validate published core example metadata separately from site generation.
+  # This check needs dependencies but does not need root prepare lifecycle work.
+  dependency-provenance:
+    name: Dependency Provenance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Example Package Provenance Check
+        run: |
+          node --test scripts/ci/check-example-package-provenance.test.mjs
+          node scripts/ci/check-example-package-provenance.mjs
+
   # Keep generator portability tests dependency-free. Direct Node execution
   # avoids pnpm 11 implicitly installing dependencies and running root prepare.
   generator-portability:
@@ -137,6 +162,7 @@ jobs:
     name: Done
     needs:
       - validate
+      - dependency-provenance
       - generator-portability
       - documentation-imports
     if: ${{ always() }}

@@ -209,7 +209,8 @@ doc: https://example.com
 TEST: Relevant test cases
 ```
 
-Keep `TEST` on one line when practical. Use lowercase `issue` and `doc`.
+Use exactly one `TEST` footer. It MUST concisely summarize validation rather
+than enumerate individual commands. Use lowercase `issue` and `doc`.
 
 ## Pull Requests
 
