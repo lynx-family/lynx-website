@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import npa from 'npm-package-arg';
+import { maxSatisfying, minSatisfying } from 'semver';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const scriptPath = fileURLToPath(import.meta.url);
@@ -37,6 +38,9 @@ function hasExpectedPackageName(name) {
 }
 
 function repositoryDescription(repository) {
+  if (typeof repository === 'string') {
+    return repository;
+  }
   if (!repository || typeof repository !== 'object') {
     return '<missing>';
   }
@@ -44,19 +48,27 @@ function repositoryDescription(repository) {
 }
 
 /**
- * Select the dependency versions that define a range's compatibility boundary.
+ * Select a range's lowest and highest published satisfying versions by SemVer,
+ * independently of registry response order.
  */
 function manifestsToCheck(parsed, manifest) {
-  if (!Array.isArray(manifest)) {
-    return [manifest];
+  const candidates = Array.isArray(manifest) ? manifest : [manifest];
+  if (parsed.type === 'version') {
+    return candidates;
   }
-  if (manifest.length === 0) {
+
+  const versions = candidates
+    .map((candidate) => candidate?.version)
+    .filter((version) => typeof version === 'string');
+  const lowest = minSatisfying(versions, parsed.rawSpec);
+  const highest = maxSatisfying(versions, parsed.rawSpec);
+  if (!lowest || !highest) {
     return [];
   }
-  if (parsed.type === 'version' || manifest.length === 1) {
-    return [manifest[0]];
-  }
-  return [manifest[0], manifest.at(-1)];
+  return candidates.filter(
+    (candidate) =>
+      candidate?.version === lowest || candidate?.version === highest,
+  );
 }
 
 /**
@@ -85,6 +97,7 @@ export function viewPackage(packageSpec) {
         'view',
         packageSpec,
         'name',
+        'version',
         'repository',
         '--json',
         `--registry=${npmRegistry}`,

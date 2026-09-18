@@ -12,9 +12,10 @@ const canonicalRepository = {
   url: 'git+https://github.com/lynx-family/lynx-examples.git',
 };
 
-function manifest(name, repository) {
+function manifest(name, repository, version = '1.0.0') {
   return {
     name,
+    version,
     repository: arguments.length === 1 ? canonicalRepository : repository,
   };
 }
@@ -24,10 +25,14 @@ test('accepts canonical lynx-examples repository metadata', () => {
   const violation = validateDependency('@lynx-example/view', '^0.6.5', {
     getPackageManifest(spec) {
       packageSpec = spec;
-      return manifest('@lynx-example/view', {
-        ...canonicalRepository,
-        directory: 'examples/view',
-      });
+      return manifest(
+        '@lynx-example/view',
+        {
+          ...canonicalRepository,
+          directory: 'examples/view',
+        },
+        '0.6.5',
+      );
     },
   });
 
@@ -71,29 +76,52 @@ test('requires the canonical repository type and URL', () => {
   }
 });
 
-test('checks the lowest and highest range versions only', () => {
+test('reports string repository metadata in diagnostics', () => {
+  const violation = validateDependency('@lynx-example/example', '1.0.0', {
+    getPackageManifest: () =>
+      manifest(
+        '@lynx-example/example',
+        'git+https://github.com/lynx-family/lynx-examples.git',
+      ),
+  });
+
+  assert.equal(
+    violation.actualSource,
+    'git+https://github.com/lynx-family/lynx-examples.git',
+  );
+});
+
+test('checks the lowest and highest SemVer range versions only', () => {
   const violation = validateDependency('@lynx-example/example', '^1.0.0', {
     getPackageManifest: () => [
-      manifest('@lynx-example/example'),
-      manifest('@lynx-example/example', {
-        type: 'git',
-        url: 'git+https://github.com/lynx-family/lynx-ui.git',
-      }),
-      manifest('@lynx-example/example'),
+      manifest('@lynx-example/example', canonicalRepository, '1.0.10'),
+      manifest(
+        '@lynx-example/example',
+        {
+          type: 'git',
+          url: 'git+https://github.com/lynx-family/lynx-ui.git',
+        },
+        '1.0.9',
+      ),
+      manifest('@lynx-example/example', canonicalRepository, '1.0.0'),
     ],
   });
 
   assert.equal(violation, undefined);
 });
 
-test('rejects a non-canonical range endpoint', () => {
+test('rejects a non-canonical SemVer range endpoint', () => {
   const violation = validateDependency('@lynx-example/example', '^1.0.0', {
     getPackageManifest: () => [
-      manifest('@lynx-example/example'),
-      manifest('@lynx-example/example', {
-        type: 'git',
-        url: 'git+https://github.com/lynx-family/lynx-ui.git',
-      }),
+      manifest('@lynx-example/example', canonicalRepository, '1.0.10'),
+      manifest(
+        '@lynx-example/example',
+        {
+          type: 'git',
+          url: 'git+https://github.com/lynx-family/lynx-ui.git',
+        },
+        '1.0.0',
+      ),
     ],
   });
 
