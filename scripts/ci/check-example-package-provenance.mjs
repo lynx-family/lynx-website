@@ -204,6 +204,9 @@ export function formatViolations(violations) {
 async function run() {
   const violations = await checkExamplePackageProvenance();
   if (violations.length === 0) {
+    console.log(
+      'Dependency provenance passed: core example packages use the canonical registry contract.',
+    );
     return;
   }
   console.error(formatViolations(violations));
