@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
-import { toLatestBlogPath } from '@site/src/lib/utils';
+import { getLatestBlogIndexPath, toLatestBlogPath } from '@site/src/lib/utils';
 import {
   useLatestBlog,
   type LatestBlogConfig,
@@ -64,8 +64,12 @@ function pathnameOf(href?: string) {
  * post. On the developing build there is nothing to cross-check and this is
  * exactly {@link useLatestBlog}.
  *
- * Falls back to the local result while the feed is in flight and if it can't
- * be read, so the caller always has something to render.
+ * While the feed is in flight, or if it can't be read, a release build
+ * returns no text and a link to the blog index, so the caller keeps its
+ * generic copy. It deliberately does not fall back to its own bundled posts:
+ * those stop at the branch cut and can include posts that have since been
+ * taken down, which the badge would otherwise flash before the feed lands.
+ * A pinned post or an external link is still resolved locally.
  */
 export const useCanonicalLatestBlog = (
   config?: LatestBlogConfig,
@@ -103,7 +107,7 @@ export const useCanonicalLatestBlog = (
         }
       })
       .catch(() => {
-        // Aborted, offline, feed missing, or unparseable — keep the local result.
+        // Aborted, offline, feed missing, or unparseable — keep the fallback.
       });
 
     return () => controller.abort();
@@ -112,10 +116,18 @@ export const useCanonicalLatestBlog = (
   // `link` is returned in the form its consumer needs: a base-relative route
   // for in-app navigation on the developing build, and a fully based path
   // when it points at another version and only a page load can get there.
-  const fallback =
-    BLOG_IS_CROSS_VERSION && !local.isExternal && local.link
-      ? { ...local, link: toLatestBlogPath(local.link) }
-      : local;
+  const fallback: LatestBlogResult = !BLOG_IS_CROSS_VERSION
+    ? local
+    : !pinned
+      ? {
+          blog: null,
+          text: null,
+          link: getLatestBlogIndexPath(lang),
+          isExternal: false,
+        }
+      : !local.isExternal && local.link
+        ? { ...local, link: toLatestBlogPath(local.link) }
+        : local;
 
   return canonical ?? fallback;
 };
