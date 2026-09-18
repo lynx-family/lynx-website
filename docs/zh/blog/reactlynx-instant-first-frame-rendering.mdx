@@ -304,9 +304,9 @@ export default function App({ initialCount }) {
 
 认领的时机和位置其实有不同的策略选择。ReactLynx 目前的策略是等两棵树各自 render 完，再由主线程把首帧树传回后台线程完成对应，优先保证主线程不被这部分工作阻塞，后台首轮 render 也不必等主线程的结果。认领之后的分工也不同。Web 上 hydration 一结束，服务端产物就没用了，页面完全归客户端管理。而在 ReactLynx 中，[主线程产物](#面向双线程的构建产物与代码裁剪)仍然持有 Element，后续 Patch 都要经过它落地，[主线程脚本](/react/main-thread-script)也跑在这一侧。
 
-## Takeaways
+## 要点回顾
 
-总结一下，ReactLynx 的启动和运行其实是同一套提交模型在两个阶段的分工。页面启动时，主线程先沿着裁剪后的首屏路径画出第一帧，ReactLynx 再把已有视图交给后台运行时；页面稳定运行后，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 更新 Lynx Element 树。
+总结一下，页面启动时，主线程先沿着裁剪后的首屏路径画出第一帧，ReactLynx 再把已有视图交给后台运行时接管；页面稳定运行时，后台线程计算更新，将 Patch 发送过线程边界，主线程再通过 Element PAPI 更新 Lynx Element 树。
 
 ReactLynx 的编译器和架构都致力于把首屏表达成初始数据和可直接创建的视图，让主线程上的路径尽可能短；请求、副作用、真实事件处理和后续状态更新，只需要继续交给后台 React。
 
