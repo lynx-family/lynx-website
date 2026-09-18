@@ -162,7 +162,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   const isLynxtron = routePath.startsWith('/lynxtron/');
   const createCliStr = isLynxtron
     ? 'npm create @lynx-js/lynxtron@latest'
-    : 'npm create rspeedy@latest';
+    : 'npm create @lynx-js/lynx@latest';
 
   useBlogBtnDom(routePath);
 

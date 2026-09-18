@@ -38,11 +38,11 @@ In the filename, `[name]` is the entry name corresponding to this file, such as 
 
 ### Development
 
-In development, an `dist/.rspeedy` directory is emitted which contains the resources for debugging.
+In development, an `dist/.lynx` directory is emitted which contains the resources for debugging.
 
 ```txt
 dist/
-├── .rspeedy
+├── .lynx
 │   ├── async
 │   │   └── [name]
 │   │       ├── debug-metadata.json
@@ -69,9 +69,9 @@ dist/
 
 In addition, Rspeedy generates some extra files in development:
 
-- Background Thread Script(BTS): The background script file that is inlined into the bundle, default output to `.rspeedy/[name]/background.js`.
-- MainThread Thread Script(MTS): The main-thread script file that is inlined into the bundle, default output to `.rspeedy/[name]/main-thread.js`.
-- Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.rspeedy/[name]/debug-metadata.json`. See [Map Production Errors to Source](./map-errors-to-source).
+- Background Thread Script(BTS): The background script file that is inlined into the bundle, default output to `.lynx/[name]/background.js`.
+- MainThread Thread Script(MTS): The main-thread script file that is inlined into the bundle, default output to `.lynx/[name]/main-thread.js`.
+- Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.lynx/[name]/debug-metadata.json`. See [Map Production Errors to Source](./map-errors-to-source).
 
 ## Modify the Directory
 

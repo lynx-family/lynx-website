@@ -105,7 +105,7 @@ Checkout [React - Catching rendering errors with an error boundary](https://reac
 
 ## Lazy-loading standalone project
 
-You may also lazy-load modules that being built in a standalone Rspeedy project.
+You may also lazy-load modules that are built in a standalone Rsbuild project.
 
 ### Glossary of Terms
 
@@ -114,21 +114,26 @@ You may also lazy-load modules that being built in a standalone Rspeedy project.
 
 ### Create a standalone Producer project
 
-Create a standalone project using [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy):
+Create a standalone Rsbuild project using [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx):
 
 ```bash
-pnpm create rspeedy@latest
+pnpm create @lynx-js/lynx@latest --template rsbuild
 ```
 
-Then add [`experimental_isLazyBundle`] to the options of `pluginReactLynx` in the `lynx.config.js`:
+Then add [`experimental_isLazyBundle`] to the options of `pluginReactLynx` in the `rsbuild.config.ts`:
 
-```js
+```ts title="rsbuild.config.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
+  environments: {
+    lynx: {},
+  },
   source: {
-    entry: './src/index.tsx',
+    entry: {
+      main: './src/index.tsx',
+    },
   },
   plugins: [
     pluginReactLynx({
@@ -215,21 +220,26 @@ root.render(
 );
 ```
 
-Then, create a separated `lynx.config.consumer.js`:
+Then, create a separated `rsbuild.config.consumer.ts`:
 
-```js title="lynx.config.consumer.js"
+```ts title="rsbuild.config.consumer.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
+  environments: {
+    lynx: {},
+  },
   source: {
-    entry: './src/Consumer.tsx',
+    entry: {
+      main: './src/Consumer.tsx',
+    },
   },
   plugins: [pluginReactLynx()],
 });
 ```
 
-Use `npx rspeedy dev --config lynx.config.consumer.js` to start developing the producer project.
+Use `npx rsbuild dev --config rsbuild.config.consumer.ts` to start developing the producer project.
 
 ## Lazy bundle loaders
 

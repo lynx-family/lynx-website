@@ -154,10 +154,10 @@ Common APIs:
 
 ## 15. Engineering Practices and Tooling
 
-- **Project initialization**: `pnpm create rspeedy` scaffolds a ReactLynx project with Rspeedy configuration and sample code. (See [Quick Start](/guide/start/quick-start.md))
-- **Development and debugging**: `pnpm dev` starts the Rspeedy dev server. The terminal prints a QR code—scan it with the LynxExample app (iOS/Android/Harmony emulator) for hot-update previews. (See [Quick Start](/guide/start/quick-start.md))
+- **Project initialization**: `pnpm create @lynx-js/lynx@latest` scaffolds a ReactLynx project with sample code, letting you choose Rsbuild with `pluginLynx` (recommended), Rspeedy, or Rslib. (See [Quick Start](/guide/start/quick-start.md))
+- **Development and debugging**: `pnpm dev` starts the dev server. The terminal prints a QR code—scan it with the LynxExample app (iOS/Android/Harmony emulator) for hot-update previews. (See [Quick Start](/guide/start/quick-start.md))
 - **DevTool debugging**: After connecting a device, use the desktop Lynx DevTool to debug JS, inspect nodes, and record performance. (See [Lynx DevTool](/guide/devtool.md))
-- **Build artifacts**: Rspeedy outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=rspeedy` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.rspeedy`; otherwise only the final bundle is produced. (See [Output Files](/rspeedy/output.md))
+- **Build artifacts**: The build outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=lynx` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.lynx`; otherwise only the final bundle is produced. (See [Output Files](/rspeedy/output.md))
 - **Docs asset references**: In MDX, prefer the `@assets` alias for local assets (for example `import demoImg from '@assets/foo.png?url'`) and pass the imported variable to components such as `<Go img={demoImg} />`. Do not hardcode `/assets/...` paths in MDX props.
 
 ## 16. Key Differences from the Web
