@@ -17,7 +17,7 @@
     "gen:living-spec": "node scripts/lynx-living-spec.js",
     "gen:og": "tsx scripts/og/generate.ts",
     "gen:og:assets": "node scripts/og/prepare-assets.mjs",
-    "prepare": "husky && pnpm --filter @lynx-js/lynx-compat-data run gen-css && pnpm --filter @lynx-js/lynx-compat-data run lint:keys -- --fix && pnpm gen:compat-stats && pnpm prepare:lynx-compat-data && pnpm prepare:lynx-example-data && pnpm prepare:lynxtron-example-data && pnpm prepare:luna && pnpm prepare:lynx-ui-example-data && pnpm prepare:fetch-lynx-ui && pnpm prepare:sync-lynx-ui && pnpm prepare:lynx-ui-intros",
+    "prepare": "husky && pnpm sync:lynx-stack-docs && pnpm --filter @lynx-js/lynx-compat-data run gen-css && pnpm --filter @lynx-js/lynx-compat-data run lint:keys -- --fix && pnpm gen:compat-stats && pnpm prepare:lynx-compat-data && pnpm prepare:lynx-example-data && pnpm prepare:lynxtron-example-data && pnpm prepare:luna && pnpm prepare:lynx-ui-example-data && pnpm prepare:fetch-lynx-ui && pnpm prepare:sync-lynx-ui && pnpm prepare:lynx-ui-intros",
     "prepare:fetch-lynx-ui": "node scripts/fetch-lynx-ui.mjs",
     "prepare:luna": "LUNA_SOURCE_DIR=node_modules/@dugyu node scripts/luna-demo.js",
     "prepare:lynx-compat-data": "rm -rf docs/public/lynx-compat-data && ln -s $(pwd)/packages/lynx-compat-data docs/public/lynx-compat-data",
@@ -29,8 +29,8 @@
     "preview": "rspress preview",
     "prestart": "pnpm gen:compat-stats",
     "start": "rspress dev",
+    "sync:lynx-stack-docs": "node scripts/sync-lynx-stack-docs.mjs && node scripts/apply-api-doc-overlays.mjs",
     "test:lynx-example": "node --test scripts/lynx-example.test.js",
-    "typedoc": "tsx ./scripts/typedoc/index.ts",
     "zhlint": "zhlint 'docs/zh/**/*.{md,mdx}'"
   },
   "lint-staged": {
@@ -84,8 +84,8 @@
     "vscode-icons-js": "^11.6.1"
   },
   "devDependencies": {
-    "@lynx-js/genui": "0.0.3",
     "@lynx-js/lynx-compat-data": "workspace:*",
+    "@lynx-js/lynx-stack-docs": "https://pkg.pr.new/lynx-family/lynx-stack/@lynx-js/lynx-stack-docs@43d8e49",
     "@lynx-js/react": "^0.121.1",
     "@lynx-js/rspress-plugin-llms-postprocess": "workspace:*",
     "@lynx-js/testing-environment": "npm:@lynx-js/test-environment@0.0.1",
@@ -123,10 +123,6 @@
     "semver": "^7.7.3",
     "tailwindcss": "^3.4.19",
     "tsx": "^4.19.4",
-    "typedoc": "^0.26.11",
-    "typedoc-plugin-expand-object-like-types": "^0.1.2",
-    "typedoc-plugin-include-example": "^1.4.1",
-    "typedoc-plugin-markdown": "~4.2.10",
     "typescript": "5.0.4",
     "unist-util-visit": "^5.0.0",
     "zhlint": "^0.8.2"
