@@ -70,4 +70,3 @@ export default defineConfig({
 ### Dynamic Sampling with JS Profile
 
 Use the [JS Profile](/guide/devtool/trace/js-profile.html) tool to collect call stack data at runtime without modifying the build configuration.
-
