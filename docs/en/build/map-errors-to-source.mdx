@@ -49,7 +49,7 @@ build: the source maps, bytecode debug info, UI source map, and build metadata.
 It is produced by
 [`@lynx-js/debug-metadata-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/debug-metadata-rsbuild-plugin)
 and auto-registered by
-[`@lynx-js/rspeedy`](https://www.npmjs.com/package/@lynx-js/rspeedy) (enabled by
+[`pluginLynx`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin) (enabled by
 default; no config needed).
 
 <Mermaid title="From build to mapped source">{`
@@ -304,12 +304,12 @@ export function pluginUploadDebugMetadata(
 
 :::
 
-Wire it into `lynx.config.ts`. You upload the file as-is; the `release` your
+Wire it into `rsbuild.config.ts`. You upload the file as-is; the `release` your
 backend indexes by is the one the build injected and embedded, not something you
 pick here:
 
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy';
+```ts title="rsbuild.config.ts"
+import { defineConfig } from '@rsbuild/core';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { pluginUploadDebugMetadata } from './plugins/upload-debug-metadata.js';
 
@@ -482,7 +482,7 @@ export function pluginHostDebugMetadata(opts: {
 
 Wire it in with the base URL of wherever you serve the files:
 
-```ts title="lynx.config.ts"
+```ts title="rsbuild.config.ts"
 pluginHostDebugMetadata({
   baseUrl: 'https://your-cdn.example.com/dm',
   upload: async (json, key) => {
