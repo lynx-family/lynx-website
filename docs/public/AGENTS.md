@@ -88,7 +88,7 @@ Additionally:
 
 ## 8. Type System
 
-- **TypeScript support**: Official typings live in `@lynx-js/types`; using TypeScript throughout is highly encouraged. (See [TypeScript Support](/rspeedy/typescript))
+- **TypeScript support**: Official typings live in `@lynx-js/types`; using TypeScript throughout is highly encouraged. (See [TypeScript Support](/build/typescript))
 - **`tsconfig.json`**: Set `compilerOptions.jsx` to `react-jsx` and `compilerOptions.jsxImportSource` to `@lynx-js/react`.
 - **Import types correctly**: All Lynx API types are exported from `@lynx-js/types`, for example `import type { MainThread, NodesRef } from '@lynx-js/types'`. ReactLynx APIs and types come from `@lynx-js/react`.
 
@@ -157,7 +157,7 @@ Common APIs:
 - **Project initialization**: `pnpm create @lynx-js/lynx@latest` scaffolds a ReactLynx project with sample code, letting you choose Rsbuild with `pluginLynx` (recommended), Rspeedy, or Rslib. (See [Quick Start](/guide/start/quick-start.md))
 - **Development and debugging**: `pnpm dev` starts the dev server. The terminal prints a QR code—scan it with the LynxExample app (iOS/Android/Harmony emulator) for hot-update previews. (See [Quick Start](/guide/start/quick-start.md))
 - **DevTool debugging**: After connecting a device, use the desktop Lynx DevTool to debug JS, inspect nodes, and record performance. (See [Lynx DevTool](/guide/devtool.md))
-- **Build artifacts**: The build outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=lynx` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.lynx`; otherwise only the final bundle is produced. (See [Output Files](/rspeedy/output.md))
+- **Build artifacts**: The build outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=lynx` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.lynx`; otherwise only the final bundle is produced. (See [Output Files](/build/output.md))
 - **Docs asset references**: In MDX, prefer the `@assets` alias for local assets (for example `import demoImg from '@assets/foo.png?url'`) and pass the imported variable to components such as `<Go img={demoImg} />`. Do not hardcode `/assets/...` paths in MDX props.
 
 ## 16. Key Differences from the Web

@@ -38,7 +38,7 @@ Lynx 线上报错上报到你的监控时，是一段被打包过的堆栈，例
 
 注意：堆栈里这些行列号对应的是打包产物（`background.js`、`main-thread.js`）里的位置，不是你的源码。其中 `main-thread.js:23:13` 还要当心：它看着像`行:列`，但主线程跑的是字节码，这两个数其实是 `function_id:pc`（第 23 号函数、第 13 条指令），跟源码行列没关系；`background.js:247:77` 才是真的行列号。本文要做的，就是把它们还原回源码位置（文件、行、列）。
 
-反解需要的东西都在每次构建产出的同一个 `debug-metadata.json` 里：source map、字节码调试信息、UI source map、构建信息。它由 [`@lynx-js/debug-metadata-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/debug-metadata-rsbuild-plugin) 产出，并由 [`@lynx-js/rspeedy`](https://www.npmjs.com/package/@lynx-js/rspeedy) 自动注册（默认启用，无需在配置中声明）。
+反解需要的东西都在每次构建产出的同一个 `debug-metadata.json` 里：source map、字节码调试信息、UI source map、构建信息。它由 [`@lynx-js/debug-metadata-rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/debug-metadata-rsbuild-plugin) 产出，并由 [`pluginLynx`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin) 自动注册（默认启用，无需在配置中声明）。
 
 <Mermaid title="从构建到映射回源码">{`
 flowchart LR
@@ -253,10 +253,10 @@ export function pluginUploadDebugMetadata(
 
 :::
 
-把它接进 `lynx.config.ts`。你只需原样上传文件，后端用来索引的 `release` 是构建注入、并嵌在文件里的，不用你在这里指定：
+把它接进 `rsbuild.config.ts`。你只需原样上传文件，后端用来索引的 `release` 是构建注入、并嵌在文件里的，不用你在这里指定：
 
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy';
+```ts title="rsbuild.config.ts"
+import { defineConfig } from '@rsbuild/core';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { pluginUploadDebugMetadata } from './plugins/upload-debug-metadata.js';
 
@@ -418,7 +418,7 @@ export function pluginHostDebugMetadata(opts: {
 
 用你实际托管文件的 base URL 接入：
 
-```ts title="lynx.config.ts"
+```ts title="rsbuild.config.ts"
 pluginHostDebugMetadata({
   baseUrl: 'https://your-cdn.example.com/dm',
   upload: async (json, key) => {

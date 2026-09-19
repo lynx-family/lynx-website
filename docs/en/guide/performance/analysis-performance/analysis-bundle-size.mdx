@@ -27,7 +27,7 @@ Accordingly, the build emits **two JS compilation intermediates** per entry, the
 | Background-thread output | `background.js` (`react:background`)   | App logic code; also produces the CSS. Does not block the first frame, but counts toward download and parse cost |
 | Static assets            | images / fonts / media                 | Often the largest single contributor to a bundle                                                                 |
 
-The two JS layers are encoded together into a single binary `.lynx.bundle`, located under `dist/` after a production build (see [Output Files](/rspeedy/output)). That binary is what the Lynx engine loads, and it is the final metric to watch when measuring size.
+The two JS layers are encoded together into a single binary `.lynx.bundle`, located under `dist/` after a production build (see [Output Files](/build/output)). That binary is what the Lynx engine loads, and it is the final metric to watch when measuring size.
 
 :::tip Main-thread output ≠ Main Thread Script
 "Main-thread output / `main-thread.js`" here means the **compiled output of the main-thread layer**. It is _not_ the [Main Thread Script](/react/main-thread-script), the programming model written with the `'main thread'` directive for touch-following animation and gestures. Keep the two distinct.
@@ -41,7 +41,7 @@ The two JS layers are encoded together into a single binary `.lynx.bundle`, loca
 DEBUG=lynx npx rsbuild build
 ```
 
-A development build also emits these intermediates under `dist/.lynx/`; see [Output Files](/rspeedy/output).
+A development build also emits these intermediates under `dist/.lynx/`; see [Output Files](/build/output).
 
 ### Code elimination: why the main-thread output should be small
 
@@ -60,7 +60,7 @@ The guiding principle is measure first, optimize second: use data to confirm whi
 
 ### Use Rsdoctor
 
-[Rsdoctor](/rspeedy/use-rsdoctor) is a build-analysis tool that visualizes the asset list, module dependency graph, duplicate modules, and more. Install the Rsdoctor plugin:
+[Rsdoctor](https://rsbuild.rs/guide/debug/rsdoctor) is a build-analysis tool that visualizes the asset list, module dependency graph, duplicate modules, and more. Install the Rsdoctor plugin:
 
 <PackageManagerTabs command="add -D @rsdoctor/rspack-plugin" />
 
@@ -70,7 +70,7 @@ Then enable it when building:
 RSDOCTOR=true npx rsbuild build
 ```
 
-It opens an analysis page once the build finishes. Its module data carries a `layer` field, so you can attribute bytes to the `react:main-thread` and `react:background` layers, locate the largest modules, and trace "why was this module bundled in" through the real module graph rather than intuition. See [Use Rsdoctor](/rspeedy/use-rsdoctor) for the full workflow.
+It opens an analysis page once the build finishes. Its module data carries a `layer` field, so you can attribute bytes to the `react:main-thread` and `react:background` layers, locate the largest modules, and trace "why was this module bundled in" through the real module graph rather than intuition. See [Use Rsdoctor](https://rsbuild.rs/guide/debug/rsdoctor) for the full workflow.
 
 ### Use the rspeedy-bundle-size Skill
 
@@ -99,7 +99,7 @@ Distinguish **first-screen size** from **total size**: the first screen only nee
 
 - Use [code splitting](/react/code-splitting) to defer non-first-screen components until they actually render.
 - Tune chunking with [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) (which maps onto Rspack's [code splitting](https://rspack.rs/guide/optimization/code-splitting)).
-- Use [External Bundle](/rspeedy/external-bundle) to factor out reusable parts.
+- Use [External Bundle](/build/external-bundle) to factor out reusable parts.
 
 ### Compile-layer options
 

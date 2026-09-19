@@ -20,7 +20,7 @@ import { BlogHeader } from '@lynx';
 
 <BlogHeader />
 
-Lynx built its toolchain [Rspeedy](/rspeedy/) on top of Rstack, [Rsbuild](https://rsbuild.rs/) and [Rspack](https://rspack.rs/), so every Lynx app gets the performance and capabilities of the upstream toolchain as soon as they land.
+Lynx built its toolchain [Rspeedy](/build/) on top of Rstack, [Rsbuild](https://rsbuild.rs/) and [Rspack](https://rspack.rs/), so every Lynx app gets the performance and capabilities of the upstream toolchain as soon as they land.
 
 With [Rspack 2.0](https://rspack.rs/blog/announcing-2-0) and [Rsbuild 2.0](https://rsbuild.rs/blog/v2-0) now out, Lynx picks up the upstream improvements for free: [18–39% faster builds](#rspack-faster), [3–9% smaller bundles](#rspack-smaller), and config aligned with web conventions like [`resolve.alias`](#bc-alias) and top-level [`splitChunks`](#bc-chunksplit). On top of them, we've shipped a series of optimizations tailored to Lynx: [more flexible code splitting and dynamic loading](#rspeedy-splitting), [PrimJS-tuned output](#rspeedy-primjs), [ES2017 by default](#rspeedy-es2017), [parallel Lynx Bundle encoding](#rspeedy-parallel), and [precise error de-mapping](#rspeedy-debug). And one more thing: an [Agent Skill for bundle-size optimization](#rspeedy-skill), to help you systematically shrink an app.
 
@@ -123,7 +123,7 @@ Lynx supports three increasingly powerful ways to split an app, each with a coun
 | -------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Build-time splitting       | Chunk Split (`splitChunks`)                                                 | [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) (same config name, Lynx-tuned presets)                 |
 | In-app on-demand loading   | dynamic `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | dynamic `import()` + ReactLynx `lazy()`, output as [Lazy Bundle](/react/code-splitting#lazy-loading-components) |
-| External / cross-app reuse | webpack `externals`                                                         | [External Bundle](/rspeedy/external-bundle)                                                                     |
+| External / cross-app reuse | webpack `externals`                                                         | [External Bundle](/build/external-bundle)                                                                     |
 
 Build-time splitting with `splitChunks` is common (its config moved, see [`performance.chunkSplit` → `splitChunks`](#bc-chunksplit)), so we won't expand on it here; below we focus on Lazy Bundle and External Bundle.
 
@@ -148,7 +148,7 @@ This is in progress and will land in a future release.
 
 #### External Bundle
 
-External Bundle is a separately built Lynx Bundle that another app can fetch and render at runtime, enabling cross-app reuse. The producer side is built with [Rslib](https://rslib.rs/) via [`defineExternalBundleRslibConfig`](/rspeedy/external-bundle); the consumer side uses the Rsbuild plugin [`pluginExternalBundle`](/rspeedy/external-bundle).
+External Bundle is a separately built Lynx Bundle that another app can fetch and render at runtime, enabling cross-app reuse. The producer side is built with [Rslib](https://rslib.rs/) via [`defineExternalBundleRslibConfig`](/build/external-bundle); the consumer side uses the Rsbuild plugin [`pluginExternalBundle`](/build/external-bundle).
 
 ### PrimJS-tuned output: lowering `let` / `const` to `var` \{#rspeedy-primjs}
 
@@ -178,7 +178,7 @@ For multi-page apps, the speedup isn't only from Rspack 2.0: Rspeedy runs each e
 
 ### Precise error de-mapping \{#rspeedy-debug}
 
-Rspeedy 0.15 lets production errors resolve precisely back to your source: it generates a unified `debug-metadata.json` per Lynx entry that brings the JS, CSS, and UI source maps together, so both main-thread and background-thread errors can find the right de-mapping info. See [Map Production Errors to Source](/rspeedy/map-errors-to-source) for how it works.
+Rspeedy 0.15 lets production errors resolve precisely back to your source: it generates a unified `debug-metadata.json` per Lynx entry that brings the JS, CSS, and UI source maps together, so both main-thread and background-thread errors can find the right de-mapping info. See [Map Production Errors to Source](/build/map-errors-to-source) for how it works.
 
 ## One More Thing: an Agent Skill for Bundle-Size Optimization \{#rspeedy-skill}
 
@@ -196,7 +196,7 @@ Then just describe the goal in natural language, e.g. "break down this app's bun
 
 ## Migration \{#migration}
 
-For migration steps, see the [Rspeedy upgrade guide](/rspeedy/upgrade). The breaking changes listed by layer above mostly come with the Rspack 2.0 / Rsbuild 2.0 upgrade. To check them off one by one, see the [Rspeedy CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md), the [Rsbuild v1 → v2 guide](https://rsbuild.rs/guide/upgrade/v1-to-v2), and the [Rspack v1 → v2 migration guide](https://rspack.rs/guide/migration/rspack_1.x).
+For migration steps, see the [Rspeedy upgrade guide](/build/upgrade). The breaking changes listed by layer above mostly come with the Rspack 2.0 / Rsbuild 2.0 upgrade. To check them off one by one, see the [Rspeedy CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/build/core/CHANGELOG.md), the [Rsbuild v1 → v2 guide](https://rsbuild.rs/guide/upgrade/v1-to-v2), and the [Rspack v1 → v2 migration guide](https://rspack.rs/guide/migration/rspack_1.x).
 
 ## What's next \{#whats-next}
 

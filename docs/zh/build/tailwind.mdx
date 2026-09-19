@@ -1,0 +1,68 @@
+---
+description: '在 Lynx 中使用 Tailwind CSS 与官方 preset。'
+---
+
+import { PackageManagerTabs } from '@theme';
+
+# Tailwind CSS
+
+[Tailwind CSS](https://v3.tailwindcss.com/) 是一个原子化 CSS 框架。Lynx 不是浏览器，直接使用 Tailwind 会产出 Lynx 无法渲染的工具类。[`@lynx-js/tailwind-preset`](https://github.com/lynx-family/lynx-stack/tree/main/packages/tailwind-preset) 只保留 Lynx 支持的工具类，并对需要差异化的部分做了适配。
+
+与 Lynx 无关的部分参见 [Rsbuild 的 Tailwind CSS 指南](https://rsbuild.rs/zh/guide/styling/tailwindcss)。
+
+:::tip Tailwind CSS v3
+Lynx 目前需要 **Tailwind CSS v3**。请安装 `tailwindcss@^3` 并将其用作 PostCSS 插件。注意 v4 的包如 `@tailwindcss/postcss`、`@tailwindcss/vite` 和 `@tailwindcss/cli` 与 `@lynx-js/tailwind-preset` 不兼容。
+:::
+
+1. 安装 Tailwind CSS
+
+   内置支持 PostCSS，你可以安装 tailwindcss 包来接入 Tailwind CSS：
+
+   <PackageManagerTabs command="install -D tailwindcss@^3" />
+
+2. 配置 PostCSS
+
+   你可以通过 [`postcss.config.js`](https://www.npmjs.com/package/postcss-loader#config) 或 [`tools.postcss`](https://rsbuild.rs/zh/config/tools/postcss) 来注册 `tailwindcss` 的 PostCSS 插件。
+
+   ```js title=postcss.config.js
+   export default {
+     plugins: {
+       tailwindcss: {},
+     },
+   };
+   ```
+
+3. 安装 `@lynx-js/tailwind-preset` 包：
+
+   <PackageManagerTabs command="install -D @lynx-js/tailwind-preset" />
+
+4. 配置 `tailwind.config.js` 并添加 `@lynx-js/tailwind-preset`：
+
+   您必须使用 [`@lynx-js/tailwind-preset`](https://github.com/lynx-family/lynx-stack/tree/main/packages/tailwind-preset) 删除 Lynx 中不支持的所有 tailwindcss 工具类或替换至特定于 Lynx 的替代方案。
+
+   ```js title=tailwind.config.js
+   import lynxPreset from '@lynx-js/tailwind-preset';
+
+   export default {
+     content: ['./src/**/*.{js,ts,jsx,tsx}'],
+     presets: [lynxPreset],
+   };
+   ```
+
+   :::warning
+
+   `@lynx-js/tailwind-preset` 仍不稳定，请谨慎使用。如果您发现任何 tailwindcss 功能无法使用且应予以支持，请在 https://github.com/lynx-family/lynx-stack/issues 上提出 issue。
+
+   :::
+
+### 使用示例
+
+import { Go } from '@lynx';
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-tailwindcss.png"
+  example="tailwindcss"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/main.lynx.bundle"
+  entry="src"
+></Go>

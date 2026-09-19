@@ -27,7 +27,7 @@ ReactLynx 把 React 拆到**双线程**上运行（详见 [ReactLynx 编程思�
 | 后台线程产物 | `background.js`（`react:background`）   | 业务逻辑代码，同时产出 CSS；不阻塞首屏，但计入下载与解析成本 |
 | 静态资源     | 图片 / 字体 / 媒体                      | 往往是单个产物中体积最大的部分                               |
 
-两份 JS 经过编码合成为一个二进制的 `.lynx.bundle`（生产构建后位于 `dist/`，详见 [构建输出文件](/rspeedy/output)），这才是 Lynx 引擎真正加载的交付产物，也是衡量体积时应当盯住的最终指标。
+两份 JS 经过编码合成为一个二进制的 `.lynx.bundle`（生产构建后位于 `dist/`，详见 [构建输出文件](/build/output)），这才是 Lynx 引擎真正加载的交付产物，也是衡量体积时应当盯住的最终指标。
 
 :::tip 主线程产物 ≠ 主线程脚本
 这里的「主线程产物 / `main-thread.js`」指的是**主线程层的编译产物**。它和 [主线程脚本（Main Thread Script）](/react/main-thread-script) 不是一回事，后者是那套用 `'main thread'` 指示符编写、用于跟手动画与手势的编程模型，注意区分。
@@ -41,7 +41,7 @@ ReactLynx 把 React 拆到**双线程**上运行（详见 [ReactLynx 编程思�
 DEBUG=lynx npx rsbuild build
 ```
 
-开发构建同样会在 `dist/.lynx/` 下生成这些中间产物，详见 [构建输出文件](/rspeedy/output)。
+开发构建同样会在 `dist/.lynx/` 下生成这些中间产物，详见 [构建输出文件](/build/output)。
 
 ### 代码裁剪：为什么主线程产物应该很小
 
@@ -60,7 +60,7 @@ ReactLynx 会**自动裁剪**不该在主线程运行的代码：默认情况下
 
 ### 使用 Rsdoctor
 
-[Rsdoctor](/rspeedy/use-rsdoctor) 是一个构建分析工具，可以可视化资源列表、模块依赖关系、重复模块等信息。先安装 Rsdoctor 插件：
+[Rsdoctor](https://rsbuild.rs/zh/guide/debug/rsdoctor) 是一个构建分析工具，可以可视化资源列表、模块依赖关系、重复模块等信息。先安装 Rsdoctor 插件：
 
 <PackageManagerTabs command="add -D @rsdoctor/rspack-plugin" />
 
@@ -70,7 +70,7 @@ ReactLynx 会**自动裁剪**不该在主线程运行的代码：默认情况下
 RSDOCTOR=true npx rsbuild build
 ```
 
-构建完成后会自动打开分析页面。它的模块信息带有 `layer` 字段，可据此把字节归到 `react:main-thread` 与 `react:background` 两层，从而定位体积最大的模块，并通过真实的模块引用关系（module graph）追踪「某个模块为什么被打进了产物里」，而不是凭直觉判断。完整用法见 [使用 Rsdoctor](/rspeedy/use-rsdoctor)。
+构建完成后会自动打开分析页面。它的模块信息带有 `layer` 字段，可据此把字节归到 `react:main-thread` 与 `react:background` 两层，从而定位体积最大的模块，并通过真实的模块引用关系（module graph）追踪「某个模块为什么被打进了产物里」，而不是凭直觉判断。完整用法见 [使用 Rsdoctor](https://rsbuild.rs/zh/guide/debug/rsdoctor)。
 
 ### 使用 rspeedy-bundle-size Skill
 
@@ -99,7 +99,7 @@ RSDOCTOR=true npx rsbuild build
 
 - 用 [代码拆分](/react/code-splitting) 把非首屏组件延迟到真正渲染时再加载。
 - 通过 [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) 调整分包策略（底层即 Rspack 的 [代码分割](https://rspack.rs/zh/guide/optimization/code-splitting)）。
-- 用 [External Bundle](/rspeedy/external-bundle) 把可复用的部分独立出去。
+- 用 [External Bundle](/build/external-bundle) 把可复用的部分独立出去。
 
 ### 编译层选项
 

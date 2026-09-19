@@ -14,28 +14,32 @@
 
 ![react profile](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/rspeedy-react-profile.png)
 
-- 在开发环境（`rspeedy dev`）：默认情况下会**添加** ReactLynx 相关的 Trace 点。
-- 在生产环境（`rspeedy build`）：默认情况下会**移除** ReactLynx 相关的 Trace 点。
+- 在开发环境（`npx rsbuild dev`）：默认情况下会**添加** ReactLynx 相关的 Trace 点。
+- 在生产环境（`npx rsbuild build`）：默认情况下会**移除** ReactLynx 相关的 Trace 点。
 
 这些 Trace 点显示了组件如何渲染和比较差异。
 
 #### 在生产环境中运行性能分析
 
-可以通过在构建时设置 [`performance.profile`] 为 `true` 来启用 Trace 点。
+可以通过在构建时设置 `performance.profile` 为 `true` 来启用 Trace 点。
 
 ```js
-import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  performance: {
-    // [!code ++]
-    profile: true, // [!code ++]
-  }, // [!code ++]
+  plugins: [
+    pluginLynx({
+      performance: {
+        profile: true, // [!code ++]
+      }, // [!code ++]
+    }), // [!code ++]
+  ],
 });
 ```
 
 :::tip
-您可以使用 [`rspeedy preview`](./cli.md#rspeedy-preview) 在本地预览输出结果。
+您可以使用 [`npx rsbuild preview`](https://rsbuild.rs/zh/guide/basic/cli#rsbuild-preview) 在本地预览输出结果。
 :::
 
 这在尝试优化应用程序性能时非常有用。
@@ -49,13 +53,17 @@ export default defineConfig({
 可以通过在开发时设置 `performance.profile` 为 `false` 来禁用 Trace 点。
 
 ```js
-import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  performance: {
-    // [!code ++]
-    profile: false, // [!code ++]
-  }, // [!code ++]
+  plugins: [
+    pluginLynx({
+      performance: {
+        profile: false, // [!code ++]
+      }, // [!code ++]
+    }), // [!code ++]
+  ],
 });
 ```
 
@@ -63,4 +71,3 @@ export default defineConfig({
 
 使用 [JS Profile](/guide/devtool/trace/js-profile.html) 工具在运行时采集调用堆栈数据，无需修改构建配置。
 
-[`performance.profile`]: /api/rspeedy/rspeedy.performance.profile

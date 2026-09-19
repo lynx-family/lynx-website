@@ -88,7 +88,7 @@
 
 ## 8. 类型系统
 
-- **TypeScript 支持**：官方提供 `@lynx-js/types` 类型定义，推荐全程使用 TypeScript。（参考：[TypeScript Support](/zh/rspeedy/typescript)）
+- **TypeScript 支持**：官方提供 `@lynx-js/types` 类型定义，推荐全程使用 TypeScript。（参考：[TypeScript Support](/zh/build/typescript)）
 - **`tsconfig.json`**：`compilerOptions.jsx` 需设为 `react-jsx`，`compilerOptions.jsxImportSource` 需设为 `@lynx-js/react`。
 - **正确地导入类型**：Lynx API 类型均在 `@lynx-js/types` 包中，需显式导入，如 `import type { MainThread, NodesRef } from '@lynx-js/types'`；ReactLynx 的 API 和类型从 `@lynx-js/react` 导入；支持的 React API和类型从 `@lynx-js/react` 导入。
 
@@ -157,7 +157,7 @@
 - **项目初始化**：`pnpm create @lynx-js/lynx@latest` 一键生成 ReactLynx 工程和脚手架示例，可选择 Rsbuild + `pluginLynx`（推荐）、Rspeedy 或 Rslib。（参考：[Quick Start](/zh/guide/start/quick-start.md)）
 - **开发调试**：`pnpm dev` 启动 Dev Server，终端输出二维码，使用 LynxExample App（iOS/Android/Harmony 模拟器）扫描即可热更新预览。（参考：[Quick Start](/zh/guide/start/quick-start.md)）
 - **DevTool 调试**：连接设备后使用 Lynx DevTool 桌面端调试 JS、查看节点、性能记录。（参考：[Lynx DevTool](/zh/guide/devtool.md)）
-- **构建产物**：构建输出的 Bundle 包含后台线程脚本（文本）、主线程字节码、样式等资源；需要 `DEBUG=lynx` 环境变量以输出中间产物（组成Lynx Bundle 的后台线程脚本（文本）、主线程字节码、样式、SourceMap 等）到 `dist/.lynx` 目录，否则只会输出最终的 Lynx Bundle 文件。（参考：[Output Files](/zh/rspeedy/output.md)）
+- **构建产物**：构建输出的 Bundle 包含后台线程脚本（文本）、主线程字节码、样式等资源；需要 `DEBUG=lynx` 环境变量以输出中间产物（组成Lynx Bundle 的后台线程脚本（文本）、主线程字节码、样式、SourceMap 等）到 `dist/.lynx` 目录，否则只会输出最终的 Lynx Bundle 文件。（参考：[Output Files](/zh/build/output.md)）
 - **文档资源引用**：在 MDX 中引用本地图片或文件时，优先使用 `@assets` alias（例如 `import demoImg from '@assets/foo.png?url'`），再传给 `<Go img={demoImg} />` 这类组件。不要在 MDX 的组件参数里直接硬编码 `/assets/...` 路径。
 
 ## 16. 与 Web 的关键差异清单
