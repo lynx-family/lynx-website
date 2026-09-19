@@ -1,0 +1,1095 @@
+---
+description: 'AnimaXView API 参考，包含 iOS 和 Android 的初始化、属性和播放控制接口。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXView
+
+`AnimaXView` 是原生播放视图组件，负责承载渲染 surface、加载动画资源，并提供播放控制、事件监听和动态属性更新能力。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 初始化
+
+### initWithContext
+
+使用 `AnimaXContext` 创建播放视图。适合需要通过 context 注入自定义 ability、服务或运行时配置的场景。
+
+**参数**
+
+| 名称      | 类型              | 说明             |
+| --------- | ----------------- | ---------------- |
+| `context` | `AnimaXContext *` | 动画实例上下文。 |
+
+**返回值**
+
+`AnimaXView *`
+
+### initWithPlayer
+
+使用已创建的 `AnimaXPlayer` 创建播放视图。适合播放器与视图生命周期需要分开管理的场景。
+
+**参数**
+
+| 名称     | 类型             | 说明             |
+| -------- | ---------------- | ---------------- |
+| `player` | `AnimaXPlayer *` | 底层播放器实例。 |
+
+**返回值**
+
+`AnimaXView *`
+
+## 属性
+
+### enableNativeTapLayerEvent
+
+控制原生触摸事件是否触发图层点击检测。启用后可通过 `onTapLayers:` 接收命中的图层名称。
+
+**类型**
+
+`BOOL`
+
+### ignoreAttachStatus
+
+控制视图 attach 状态是否参与 surface 初始化和可见性更新。通常只在宿主视图生命周期特殊时使用。
+
+**类型**
+
+`BOOL`
+
+### player
+
+只读属性，用于访问底层播放器协议对象。
+
+**类型**
+
+`id<AnimaXPlayerProtocol>`
+
+## 资源加载
+
+### setSrc
+
+加载动画资源。可以直接传入 URL 字符串，也可以指定 bundle，用于查找动画依赖的图片等子资源。
+
+**可用签名**
+
+| 签名               | 说明                         |
+| ------------------ | ---------------------------- |
+| `setSrc:`          | 从 URL 字符串加载动画资源。  |
+| `setSrc:inBundle:` | 从指定 bundle 加载动画资源。 |
+
+**参数**
+
+| 名称     | 类型         | 说明              |
+| -------- | ------------ | ----------------- |
+| `src`    | `NSString *` | 动画资源地址。    |
+| `bundle` | `NSBundle *` | 资源所在 bundle。 |
+
+### setJson
+
+从 JSON 字符串加载动画。需要从特定 bundle 解析依赖资源时，使用带 bundle 的重载。
+
+**可用签名**
+
+| 签名                | 说明                                                     |
+| ------------------- | -------------------------------------------------------- |
+| `setJson:`          | 从 JSON 字符串加载动画。                                 |
+| `setJson:inBundle:` | 从 JSON 字符串加载动画，并使用指定 bundle 查找依赖资源。 |
+
+**参数**
+
+| 名称     | 类型         | 说明                 |
+| -------- | ------------ | -------------------- |
+| `json`   | `NSString *` | Lottie JSON 字符串。 |
+| `bundle` | `NSBundle *` | 资源所在 bundle。    |
+
+### setComposition
+
+直接设置已解析的 `AnimaXComposition`。适合复用预加载的动画合成。
+
+**参数**
+
+| 名称          | 类型                  | 说明           |
+| ------------- | --------------------- | -------------- |
+| `composition` | `AnimaXComposition *` | 动画合成对象。 |
+
+### setImageFolder
+
+设置外部图片资源目录。应在 `setJson:` 或 `setSrc:` 前调用。
+
+**参数**
+
+| 名称          | 类型         | 说明           |
+| ------------- | ------------ | -------------- |
+| `imageFolder` | `NSString *` | 图片资源目录。 |
+
+### setDynamicResource
+
+启用或关闭播放期间的动态资源更新能力。
+
+**参数**
+
+| 名称     | 类型   | 说明                         |
+| -------- | ------ | ---------------------------- |
+| `enable` | `BOOL` | `YES` 表示启用动态资源更新。 |
+
+## 播放配置
+
+### setLoop
+
+设置动画是否循环播放。
+
+**参数**
+
+| 名称     | 类型   | 说明                 |
+| -------- | ------ | -------------------- |
+| `enable` | `BOOL` | `YES` 表示循环播放。 |
+
+### setLoopCount
+
+设置循环次数。
+
+**参数**
+
+| 名称        | 类型  | 说明       |
+| ----------- | ----- | ---------- |
+| `loopCount` | `int` | 循环次数。 |
+
+### setStartFrame
+
+设置播放起始帧。
+
+**参数**
+
+| 名称         | 类型     | 说明       |
+| ------------ | -------- | ---------- |
+| `startFrame` | `double` | 起始帧号。 |
+
+### setEndFrame
+
+设置播放结束帧。
+
+**参数**
+
+| 名称       | 类型     | 说明       |
+| ---------- | -------- | ---------- |
+| `endFrame` | `double` | 结束帧号。 |
+
+### setProgress
+
+设置播放进度。
+
+**参数**
+
+| 名称       | 类型     | 说明                            |
+| ---------- | -------- | ------------------------------- |
+| `progress` | `double` | 进度值，范围为 `0.0` 到 `1.0`。 |
+
+### setSpeed
+
+设置播放速度倍率。`1.0` 表示正常速度。
+
+**参数**
+
+| 名称    | 类型     | 说明           |
+| ------- | -------- | -------------- |
+| `speed` | `double` | 播放速度倍率。 |
+
+### setAutoReverse
+
+设置循环播放时是否在到达结束位置后反向播放。
+
+**参数**
+
+| 名称     | 类型   | 说明                     |
+| -------- | ------ | ------------------------ |
+| `enable` | `BOOL` | `YES` 表示启用往返播放。 |
+
+### setAutoplay
+
+设置动画加载完成后是否自动播放。
+
+**参数**
+
+| 名称     | 类型   | 说明                           |
+| -------- | ------ | ------------------------------ |
+| `enable` | `BOOL` | `YES` 表示加载完成后自动播放。 |
+
+### setObjectfit
+
+设置动画内容在视图内的缩放方式。
+
+**参数**
+
+| 名称        | 类型         | 说明                                                      |
+| ----------- | ------------ | --------------------------------------------------------- |
+| `objectfit` | `NSString *` | 支持 `contain`、`cover`、`fill`、`center`、`scale-down`。 |
+
+### setObjectPosition
+
+设置动画内容在视图内的对齐方式。
+
+**参数**
+
+| 名称             | 类型         | 说明           |
+| ---------------- | ------------ | -------------- |
+| `objectPosition` | `NSString *` | 内容对齐方式。 |
+
+### setMaxFrameRate
+
+限制动画最大渲染帧率。
+
+**参数**
+
+| 名称           | 类型     | 说明       |
+| -------------- | -------- | ---------- |
+| `maxFrameRate` | `double` | 最大帧率。 |
+
+### setMuted
+
+静音或取消静音音频图层，可在播放过程中调用。
+
+**参数**
+
+| 名称   | 类型   | 说明             |
+| ------ | ------ | ---------------- |
+| `mute` | `BOOL` | `YES` 表示静音。 |
+
+### setEnableAudio
+
+启用或禁用音频图层解析。应在 `setSrc:` 前调用。
+
+**参数**
+
+| 名称     | 类型   | 说明                     |
+| -------- | ------ | ------------------------ |
+| `enable` | `BOOL` | `YES` 表示启用音频解析。 |
+
+## 播放控制
+
+### play
+
+开始播放动画。
+
+### playFrom
+
+播放指定帧区间。
+
+**参数**
+
+| 名称         | 类型     | 说明       |
+| ------------ | -------- | ---------- |
+| `startFrame` | `double` | 起始帧号。 |
+| `endFrame`   | `double` | 结束帧号。 |
+
+### pause
+
+在当前帧暂停播放。
+
+### resume
+
+从暂停位置继续播放。
+
+### stop
+
+停止播放。
+
+### seekTo
+
+跳转到指定帧。
+
+**参数**
+
+| 名称    | 类型     | 说明       |
+| ------- | -------- | ---------- |
+| `frame` | `double` | 目标帧号。 |
+
+### reload
+
+重新加载当前动画资源或合成。
+
+## 状态查询
+
+### isAnimating
+
+返回当前动画是否正在播放。
+
+**返回值**
+
+`BOOL`
+
+### currentFrame
+
+返回当前帧号，可能为小数。
+
+**返回值**
+
+`double`
+
+### durationInMS
+
+返回动画总时长，单位为毫秒。
+
+**返回值**
+
+`double`
+
+### memoryUsageBytes
+
+返回当前动画实例的内存使用量，单位为字节。
+
+**返回值**
+
+`int64_t`
+
+### getAnimaXContext
+
+返回当前播放器绑定的 `AnimaXContext`。
+
+**返回值**
+
+`AnimaXContext *`
+
+## 事件监听
+
+### addAnimationEventListener
+
+添加动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                         | 说明             |
+| ---------- | ------------------------------------------------------------ | ---------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | 动画事件监听器。 |
+
+### removeAnimationEventListener
+
+移除动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                         | 说明             |
+| ---------- | ------------------------------------------------------------ | ---------------- |
+| `listener` | [`id<AnimaXAnimationListener>`](./animax-animation-listener) | 要移除的监听器。 |
+
+### setFPSEventInterval
+
+设置 FPS 事件上报间隔。`0` 表示关闭 FPS 事件。
+
+**参数**
+
+| 名称       | 类型   | 说明                   |
+| ---------- | ------ | ---------------------- |
+| `interval` | `long` | 上报间隔，单位为毫秒。 |
+
+### subscribeUpdateEvent
+
+订阅指定帧的更新事件。
+
+**参数**
+
+| 名称    | 类型  | 说明           |
+| ------- | ----- | -------------- |
+| `frame` | `int` | 要订阅的帧号。 |
+
+### unsubscribeUpdateEvent
+
+取消订阅指定帧的更新事件。
+
+**参数**
+
+| 名称    | 类型  | 说明               |
+| ------- | ----- | ------------------ |
+| `frame` | `int` | 要取消订阅的帧号。 |
+
+### subscribeUpdateEvents
+
+批量订阅或取消订阅多个帧更新事件。
+
+**参数**
+
+| 名称        | 类型        | 说明                                |
+| ----------- | ----------- | ----------------------------------- |
+| `frames`    | `NSArray *` | 帧号数组。                          |
+| `subscribe` | `BOOL`      | `YES` 表示订阅，`NO` 表示取消订阅。 |
+
+### handleTapAtPoint
+
+以编程方式触发某个坐标点的图层点击检测。
+
+**参数**
+
+| 名称    | 类型      | 说明                     |
+| ------- | --------- | ------------------------ |
+| `point` | `CGPoint` | 视图坐标系下的点击位置。 |
+
+## 可见性与生命周期
+
+### updateVisibilityState
+
+更新可见性状态。AnimaX 会根据状态进行渲染节流或播放状态处理。
+
+**参数**
+
+| 名称      | 类型              | 说明             |
+| --------- | ----------------- | ---------------- |
+| `visible` | `BOOL`            | 当前是否可见。   |
+| `state`   | `VisibilityState` | 可见性变化来源。 |
+
+### onShow
+
+通知播放器视图变为可见。
+
+**参数**
+
+| 名称    | 类型              | 说明             |
+| ------- | ----------------- | ---------------- |
+| `state` | `VisibilityState` | 当前可见性状态。 |
+
+### onHide
+
+通知播放器视图变为隐藏。
+
+**参数**
+
+| 名称    | 类型              | 说明             |
+| ------- | ----------------- | ---------------- |
+| `state` | `VisibilityState` | 当前可见性状态。 |
+
+### enterForeground
+
+通知播放器应用进入前台。
+
+### enterBackground
+
+通知播放器应用进入后台。通常用于暂停或节流播放。
+
+## 动态属性
+
+### updateLayerProperty
+
+立即更新指定图层属性的静态值。
+
+**参数**
+
+| 名称           | 类型                         | 说明                 |
+| -------------- | ---------------------------- | -------------------- |
+| `keyPath`      | `AnimaXKeyPath *`            | 目标图层或属性路径。 |
+| `propertyType` | `LayerPropertyType`          | 图层属性类型。       |
+| `value`        | `AnimaXValueParam *`         | 新属性值。           |
+| `callback`     | `id<AnimaXPropertyCallback>` | 可选完成回调。       |
+
+### updateResourceProperty
+
+更新指定资源属性，例如图片、文本或字体等资源级属性。
+
+**参数**
+
+| 名称           | 类型                         | 说明           |
+| -------------- | ---------------------------- | -------------- |
+| `keyPath`      | `AnimaXKeyPath *`            | 目标资源路径。 |
+| `propertyType` | `ResourcePropertyType`       | 资源属性类型。 |
+| `value`        | `AnimaXValueParam *`         | 新属性值。     |
+| `callback`     | `id<AnimaXPropertyCallback>` | 可选完成回调。 |
+
+### addLayerPropertyCallback
+
+为图层属性添加动态值回调。回调会在渲染过程中提供属性值，适合跟随业务状态实时更新动画。
+
+**参数**
+
+| 名称            | 类型                         | 说明                 |
+| --------------- | ---------------------------- | -------------------- |
+| `propertyType`  | `LayerPropertyType`          | 图层属性类型。       |
+| `keyPath`       | `AnimaXKeyPath *`            | 目标图层或属性路径。 |
+| `valueCallback` | `AnimaXValueCallback *`      | 动态值回调。         |
+| `callback`      | `id<AnimaXPropertyCallback>` | 可选完成回调。       |
+
+### getKeysForKeyPath
+
+解析并返回匹配指定 key path 模式的所有具体 key。
+
+**参数**
+
+| 名称       | 类型                            | 说明                 |
+| ---------- | ------------------------------- | -------------------- |
+| `keyPath`  | `AnimaXKeyPath *`               | 查询用 key path。    |
+| `callback` | `id<AnimaXKeyPathListCallback>` | 接收匹配结果的回调。 |
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 构造函数
+
+### AnimaXView
+
+创建播放视图。代码创建时传入 `Context`；XML 布局创建时传入 `Context` 和 `AttributeSet`，并读取 `AnimaXView` XML 属性。
+
+**可用签名**
+
+| 签名                                              | 说明                                    |
+| ------------------------------------------------- | --------------------------------------- |
+| `AnimaXView(Context context)`                     | 使用默认 `NativeAbility` 创建播放视图。 |
+| `AnimaXView(Context context, AttributeSet attrs)` | 从 XML 布局创建播放视图。               |
+
+**参数**
+
+| 名称      | 类型           | 说明             |
+| --------- | -------------- | ---------------- |
+| `context` | `Context`      | Android 上下文。 |
+| `attrs`   | `AttributeSet` | XML 属性集合。   |
+
+**返回值**
+
+`AnimaXView`
+
+## XML 属性
+
+### app:animax_animationUrl
+
+设置动画资源 URL，对应 `setSrc(String src)`。
+
+### app:animax_autoPlay
+
+设置加载完成后是否自动播放，对应 `setAutoPlay(boolean autoPlay)`。默认值为 `true`。
+
+### app:animax_loop
+
+设置是否循环播放，对应 `setLoop(boolean enable)`。默认值为 `false`。
+
+### app:animax_objectFit
+
+设置内容适配方式，对应 `setObjectFit(ObjectFit objectFit)`。默认值为 `contain`。
+
+## 视图选项
+
+### getPlayer
+
+返回当前视图内部持有的 `IAnimaXPlayer`。如果需要通过 player 接口统一管理资源加载、播放控制或事件监听，可以从这里取得实例。
+
+**返回值**
+
+`IAnimaXPlayer`
+
+### setIgnoreAttachStatus
+
+控制视图是否忽略 attach 状态。启用后，视图不会依赖 Android attach 生命周期来判断是否需要创建临时 surface，适用于宿主已经自行管理可见性或挂载状态的场景。
+
+**参数**
+
+| 名称     | 类型      | 说明                          |
+| -------- | --------- | ----------------------------- |
+| `ignore` | `boolean` | `true` 表示忽略 attach 状态。 |
+
+### setEnableTapLayerEvent
+
+控制是否启用原生图层点击检测。启用后，`onTouchEvent` 会把触点传给 AnimaX，并通过 `onTapLayers(AnimaXTapParam param)` 返回命中的图层名称。
+
+**参数**
+
+| 名称     | 类型      | 说明                          |
+| -------- | --------- | ----------------------------- |
+| `enable` | `boolean` | `true` 表示启用图层点击事件。 |
+
+## 资源加载
+
+### setSrc
+
+从 URL 或本地路径加载动画资源。
+
+**参数**
+
+| 名称  | 类型     | 说明                                   |
+| ----- | -------- | -------------------------------------- |
+| `src` | `String` | 动画资源地址，例如 `.json` 或 `.zip`。 |
+
+### setJson
+
+从 JSON 字符串加载动画。
+
+**参数**
+
+| 名称   | 类型     | 说明                 |
+| ------ | -------- | -------------------- |
+| `json` | `String` | Lottie JSON 字符串。 |
+
+### setComposition
+
+直接设置已解析的 `AnimaXComposition`。
+
+**参数**
+
+| 名称          | 类型                | 说明           |
+| ------------- | ------------------- | -------------- |
+| `composition` | `AnimaXComposition` | 动画合成对象。 |
+
+### getComposition
+
+返回当前已加载的动画合成。未加载时返回 `null`。
+
+**返回值**
+
+`AnimaXComposition` 或 `null`
+
+### setImageFolder
+
+设置外部图片资源目录。应在 `setJson` 或 `setSrc` 前调用；传入空字符串时不会生效。
+
+**参数**
+
+| 名称          | 类型     | 说明           |
+| ------------- | -------- | -------------- |
+| `imageFolder` | `String` | 图片资源目录。 |
+
+### setDynamicResource
+
+启用或关闭播放期间的动态资源更新能力。
+
+**参数**
+
+| 名称              | 类型      | 说明                          |
+| ----------------- | --------- | ----------------------------- |
+| `dynamicResource` | `boolean` | `true` 表示启用动态资源更新。 |
+
+## 播放配置
+
+### setLoop
+
+设置动画是否循环播放。不要与 `setLoopCount(int loopCount)` 同时使用来表达同一逻辑。
+
+**参数**
+
+| 名称     | 类型      | 说明                  |
+| -------- | --------- | --------------------- |
+| `enable` | `boolean` | `true` 表示循环播放。 |
+
+### setLoopCount
+
+设置循环次数。不要与 `setLoop(boolean enable)` 同时使用来表达同一逻辑。
+
+**参数**
+
+| 名称        | 类型  | 说明                         |
+| ----------- | ----- | ---------------------------- |
+| `loopCount` | `int` | 循环次数，`0` 表示无限循环。 |
+
+### setStartFrame
+
+设置播放起始帧。
+
+**参数**
+
+| 名称         | 类型  | 说明       |
+| ------------ | ----- | ---------- |
+| `startFrame` | `int` | 起始帧号。 |
+
+### setEndFrame
+
+设置播放结束帧。
+
+**参数**
+
+| 名称       | 类型  | 说明       |
+| ---------- | ----- | ---------- |
+| `endFrame` | `int` | 结束帧号。 |
+
+### setProgress
+
+设置播放进度。
+
+**参数**
+
+| 名称       | 类型    | 说明                            |
+| ---------- | ------- | ------------------------------- |
+| `progress` | `float` | 进度值，范围为 `0.0` 到 `1.0`。 |
+
+### setSpeed
+
+设置播放速度倍率。`1.0` 表示正常速度。
+
+**参数**
+
+| 名称    | 类型    | 说明           |
+| ------- | ------- | -------------- |
+| `speed` | `float` | 播放速度倍率。 |
+
+### setAutoReverse
+
+设置动画是否在到达结束位置后反向播放。
+
+**参数**
+
+| 名称            | 类型      | 说明                      |
+| --------------- | --------- | ------------------------- |
+| `isAutoReverse` | `boolean` | `true` 表示启用往返播放。 |
+
+### setAutoPlay
+
+设置动画加载完成后是否自动播放。
+
+**参数**
+
+| 名称       | 类型      | 说明                            |
+| ---------- | --------- | ------------------------------- |
+| `autoPlay` | `boolean` | `true` 表示加载完成后自动播放。 |
+
+### setObjectFit
+
+设置动画内容如何缩放以适配容器。
+
+**参数**
+
+| 名称        | 类型        | 说明                                                                    |
+| ----------- | ----------- | ----------------------------------------------------------------------- |
+| `objectFit` | `ObjectFit` | 内容适配模式，例如 `CONTAIN`、`COVER`、`FILL`、`CENTER`、`SCALE_DOWN`。 |
+
+### setObjectPosition
+
+设置动画内容在容器内的对齐方式。
+
+**参数**
+
+| 名称             | 类型             | 说明           |
+| ---------------- | ---------------- | -------------- |
+| `objectPosition` | `ObjectPosition` | 内容对齐方式。 |
+
+### setKeepLastFrame
+
+设置动画结束后是否保留最后一帧。关闭时会回到第一帧。
+
+**参数**
+
+| 名称     | 类型      | 说明                      |
+| -------- | --------- | ------------------------- |
+| `enable` | `boolean` | `true` 表示保留最后一帧。 |
+
+### setMaxFrameRate
+
+限制动画最大渲染帧率。
+
+**参数**
+
+| 名称           | 类型     | 说明       |
+| -------------- | -------- | ---------- |
+| `maxFrameRate` | `double` | 最大帧率。 |
+
+### setMuted
+
+静音或取消静音音频图层，可在播放过程中调用。
+
+**参数**
+
+| 名称    | 类型      | 说明              |
+| ------- | --------- | ----------------- |
+| `muted` | `boolean` | `true` 表示静音。 |
+
+### setEnableAudio
+
+启用或禁用音频图层解析。应在 `setSrc` 前调用。
+
+**参数**
+
+| 名称     | 类型      | 说明                      |
+| -------- | --------- | ------------------------- |
+| `enable` | `boolean` | `true` 表示启用音频解析。 |
+
+## 播放控制
+
+### play
+
+开始播放动画。
+
+### pause
+
+暂停动画。
+
+### resume
+
+从暂停位置继续播放。
+
+### stop
+
+停止播放。
+
+### seek
+
+跳转到指定帧。
+
+**参数**
+
+| 名称    | 类型  | 说明       |
+| ------- | ----- | ---------- |
+| `frame` | `int` | 目标帧号。 |
+
+### cancel
+
+立即取消动画播放。
+
+### playSegment
+
+播放指定帧区间。
+
+**参数**
+
+| 名称         | 类型  | 说明       |
+| ------------ | ----- | ---------- |
+| `startFrame` | `int` | 起始帧号。 |
+| `endFrame`   | `int` | 结束帧号。 |
+
+### reload
+
+重新加载当前动画资源。
+
+## 状态查询
+
+### isAnimating
+
+返回当前动画是否正在播放。
+
+**返回值**
+
+`boolean`
+
+### getCurrentFrame
+
+返回当前帧号，可能为小数。
+
+**返回值**
+
+`double`
+
+### getDurationMs
+
+返回动画总时长，单位为毫秒。
+
+**返回值**
+
+`double`
+
+### getAnimaXContext
+
+返回当前播放器绑定的 `AnimaXContext`。
+
+**返回值**
+
+`AnimaXContext`
+
+## 事件监听
+
+### addAnimationListener
+
+添加动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                | 说明             |
+| ---------- | --------------------------------------------------- | ---------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | 动画事件监听器。 |
+
+### removeAnimationListener
+
+移除动画事件监听器。
+
+**参数**
+
+| 名称       | 类型                                                | 说明             |
+| ---------- | --------------------------------------------------- | ---------------- |
+| `listener` | [`IAnimationListener`](./animax-animation-listener) | 要移除的监听器。 |
+
+### setFpsEventInterval
+
+设置 FPS 事件上报间隔。`0` 表示关闭 FPS 事件。
+
+**参数**
+
+| 名称       | 类型   | 说明                   |
+| ---------- | ------ | ---------------------- |
+| `interval` | `long` | 上报间隔，单位为毫秒。 |
+
+### subscribeUpdateEvent
+
+订阅指定帧的更新事件。
+
+**参数**
+
+| 名称    | 类型  | 说明           |
+| ------- | ----- | -------------- |
+| `frame` | `int` | 要订阅的帧号。 |
+
+### unsubscribeUpdateEvent
+
+取消订阅指定帧的更新事件。
+
+**参数**
+
+| 名称    | 类型  | 说明               |
+| ------- | ----- | ------------------ |
+| `frame` | `int` | 要取消订阅的帧号。 |
+
+### subscribeUpdateEvents
+
+批量订阅或取消订阅多个帧更新事件。
+
+**参数**
+
+| 名称        | 类型      | 说明                                    |
+| ----------- | --------- | --------------------------------------- |
+| `frame`     | `int[]`   | 帧号数组。                              |
+| `subscribe` | `boolean` | `true` 表示订阅，`false` 表示取消订阅。 |
+
+### onTap
+
+以编程方式触发某个坐标点的图层点击检测。
+
+**参数**
+
+| 名称 | 类型    | 说明                    |
+| ---- | ------- | ----------------------- |
+| `x`  | `float` | 视图坐标系下的 x 坐标。 |
+| `y`  | `float` | 视图坐标系下的 y 坐标。 |
+
+## 可见性与生命周期
+
+### updateVisibilityState
+
+更新可见性状态。播放器会根据状态进行渲染节流或播放状态处理。
+
+**参数**
+
+| 名称        | 类型              | 说明             |
+| ----------- | ----------------- | ---------------- |
+| `isVisible` | `boolean`         | 当前是否可见。   |
+| `state`     | `VisibilityState` | 可见性变化来源。 |
+
+### onShow
+
+通知播放器视图变为可见。
+
+**参数**
+
+| 名称    | 类型              | 说明             |
+| ------- | ----------------- | ---------------- |
+| `state` | `VisibilityState` | 当前可见性状态。 |
+
+### onHide
+
+通知播放器视图变为隐藏。
+
+**参数**
+
+| 名称    | 类型              | 说明             |
+| ------- | ----------------- | ---------------- |
+| `state` | `VisibilityState` | 当前可见性状态。 |
+
+### enterForeground
+
+通知播放器应用进入前台。
+
+### enterBackground
+
+通知播放器应用进入后台，通常用于暂停或节流播放。
+
+## 渲染与诊断
+
+### enableSoftwareRender
+
+启用或关闭软件渲染路径。适合 GPU 不可用或硬件渲染存在兼容问题的场景。
+
+**参数**
+
+| 名称             | 类型      | 说明                      |
+| ---------------- | --------- | ------------------------- |
+| `softwareRender` | `boolean` | `true` 表示启用软件渲染。 |
+
+### setAntiAliasing
+
+启用或关闭形状图层抗锯齿。开启后可改善渲染质量，但可能增加性能开销。
+
+**参数**
+
+| 名称           | 类型      | 说明                    |
+| -------------- | --------- | ----------------------- |
+| `antiAliasing` | `boolean` | `true` 表示启用抗锯齿。 |
+
+### getMetricsAsync
+
+异步获取运行时性能指标，例如 FPS 和内存相关数据。
+
+**参数**
+
+| 名称       | 类型                    | 说明                 |
+| ---------- | ----------------------- | -------------------- |
+| `callback` | `AnimaXMetricsCallback` | 接收指标结果的回调。 |
+
+### release
+
+释放播放器关联的所有资源。释放后不应继续使用当前实例，通常在宿主 `onDestroy()` 中调用。
+
+## 动态属性
+
+### updateLayerProperty
+
+立即更新指定图层属性的静态值。
+
+**参数**
+
+| 名称       | 类型                     | 说明                 |
+| ---------- | ------------------------ | -------------------- |
+| `type`     | `LayerPropertyType`      | 图层属性类型。       |
+| `keyPath`  | `AnimaXKeyPath`          | 目标图层或属性路径。 |
+| `param`    | `AnimaXValueParam`       | 新属性值。           |
+| `callback` | `AnimaXPropertyCallback` | 可选完成回调。       |
+
+### addLayerPropertyCallback
+
+为图层属性添加动态值回调。回调会在渲染过程中提供属性值。
+
+**参数**
+
+| 名称            | 类型                     | 说明                 |
+| --------------- | ------------------------ | -------------------- |
+| `type`          | `LayerPropertyType`      | 图层属性类型。       |
+| `keyPath`       | `AnimaXKeyPath`          | 目标图层或属性路径。 |
+| `valueCallback` | `AnimaXValueCallback`    | 动态值回调。         |
+| `callback`      | `AnimaXPropertyCallback` | 可选完成回调。       |
+
+### removeLayerPropertyCallback
+
+移除指定图层属性的动态值回调。
+
+**参数**
+
+| 名称       | 类型                     | 说明                 |
+| ---------- | ------------------------ | -------------------- |
+| `type`     | `LayerPropertyType`      | 图层属性类型。       |
+| `keyPath`  | `AnimaXKeyPath`          | 目标图层或属性路径。 |
+| `callback` | `AnimaXPropertyCallback` | 可选完成回调。       |
+
+### setResourceProperty
+
+更新资源级属性，例如图片、文本或字体等由资源 ID 标识的属性。
+
+**参数**
+
+| 名称         | 类型                     | 说明           |
+| ------------ | ------------------------ | -------------- |
+| `type`       | `ResourcePropertyType`   | 资源属性类型。 |
+| `resourceId` | `String`                 | 资源标识符。   |
+| `param`      | `AnimaXValueParam`       | 新属性值。     |
+| `callback`   | `AnimaXPropertyCallback` | 可选完成回调。 |
+
+### getKeysForKeyPath
+
+解析并返回匹配指定 key path 模式的所有具体 key。
+
+**参数**
+
+| 名称       | 类型                        | 说明                 |
+| ---------- | --------------------------- | -------------------- |
+| `keyPath`  | `AnimaXKeyPath`             | 查询用 key path。    |
+| `callback` | `AnimaXKeyPathListCallback` | 接收匹配结果的回调。 |
+
+</PlatformTabs.Tab>
+</PlatformTabs>

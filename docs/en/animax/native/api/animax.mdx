@@ -1,0 +1,98 @@
+---
+description: 'AnimaX global engine entry point API reference for iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaX
+
+`AnimaX` is the global entry point for the AnimaX rendering engine. On Android, use it to initialize the engine. On iOS, no global initialization is required.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Get Instance
+
+### shareInstance
+
+Returns the shared `AnimaX` instance. Direct calls to `new` and `init` are unavailable.
+
+**Return value**
+
+`AnimaX *`
+
+## Logger Registration
+
+### registerLoggerOnce
+
+Registers the AnimaX logger. The method is safe to invoke more than once, but only the first call performs the registration.
+
+**Return value**
+
+`void`
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Get Instance
+
+### inst
+
+Returns the global singleton `AnimaX` instance.
+
+**Return value**
+
+`AnimaX`
+
+## Initialization
+
+### init
+
+Initializes the AnimaX rendering engine. Call the recommended `init(Context)` overload in `Application.onCreate()` before using `AnimaXView` or `AnimaXPlayer`. Repeated calls do not re-initialize the native libraries.
+
+**Available signatures**
+
+| Signature                                                       | Description                                                      |
+| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `init(Context applicationContext)`                              | Recommended. Initialize with the application context.            |
+| `init(Context applicationContext, INativeLibraryLoader loader)` | Initialize with the application context and a custom loader.     |
+| `init()`                                                        | Deprecated. Initialize without an application context.           |
+| `init(INativeLibraryLoader loader)`                             | Deprecated. Initialize with only a custom native library loader. |
+
+**Parameters**
+
+| Name                 | Type                   | Description                                                   |
+| -------------------- | ---------------------- | ------------------------------------------------------------- |
+| `applicationContext` | `Context`              | Application context retained by AnimaX.                       |
+| `loader`             | `INativeLibraryLoader` | Custom native library loader; pass `null` to use the default. |
+
+### hasInitialized
+
+Returns whether the engine has completed initialization.
+
+**Return value**
+
+`boolean`
+
+## Native Library Loading
+
+### INativeLibraryLoader
+
+Interface for custom native library loading. Implement this when `libanimax.so` needs to be loaded from a non-standard path.
+
+### loadLibrary
+
+Loads the native library with the given name.
+
+**Parameters**
+
+| Name      | Type     | Description          |
+| --------- | -------- | -------------------- |
+| `libName` | `String` | Native library name. |
+
+**Return value**
+
+`void`
+
+</PlatformTabs.Tab>
+</PlatformTabs>

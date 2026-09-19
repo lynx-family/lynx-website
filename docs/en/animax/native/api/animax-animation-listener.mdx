@@ -1,0 +1,248 @@
+---
+description: 'AnimaXAnimationListener API reference for animation lifecycle, error, FPS, and tap callbacks on iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXAnimationListener
+
+`AnimaXAnimationListener` receives animation lifecycle, frame update, error, FPS, and layer tap events.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Lifecycle
+
+### onReady
+
+Resources are loaded and playback APIs are ready.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onStart
+
+Playback starts.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onCompletion
+
+Non-looping playback completes.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onRepeat
+
+One loop ends and the next loop starts.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onCancel
+
+Playback is cancelled. The current implementation does not actively emit this event.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onFirstFrame
+
+The first frame is rendered to the surface.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onCompositionReady
+
+Composition parsing completes.
+
+**Parameters**
+
+`NSDictionary *params`
+
+## Playback
+
+### onUpdate
+
+A subscribed frame update occurs.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onFps
+
+An FPS sample is emitted.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onTapLayers
+
+A layer tap hits one or more layers.
+
+**Parameters**
+
+`NSDictionary *params`
+
+## Errors and Warnings
+
+### onError
+
+A loading or playback error occurs.
+
+**Parameters**
+
+`NSDictionary *params`
+
+### onWarning
+
+A non-fatal warning occurs.
+
+**Parameters**
+
+`NSDictionary *params`
+
+## Parameters
+
+Every callback receives `NSDictionary *params`. Common keys include:
+
+| Key             | Type       | Description                                  |
+| --------------- | ---------- | -------------------------------------------- |
+| `animationID`   | `NSString` | Unique animation identifier.                 |
+| `current`       | `NSNumber` | Current frame.                               |
+| `total`         | `NSNumber` | Total frame count.                           |
+| `loopIndex`     | `NSNumber` | Current loop index.                          |
+| `elementID`     | `NSString` | Host element ID. Only provided by `onReady`. |
+| `msg`           | `NSString` | Error or warning message.                    |
+| `code`          | `NSNumber` | Error or warning code.                       |
+| `fps`           | `NSNumber` | Frames per second.                           |
+| `max_drop_rate` | `NSNumber` | Maximum frame drop rate.                     |
+| `layerList`     | `NSArray`  | Tapped layer names.                          |
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Lifecycle
+
+### onReady
+
+Resources are loaded and playback APIs are ready.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onStart
+
+Playback starts.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onComplete
+
+Non-looping playback completes.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onRepeat
+
+One loop ends and the next loop starts.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onCancel
+
+Playback is cancelled.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onFirstFrame
+
+The first frame is rendered to the surface.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onCompositionReady
+
+Composition parsing completes.
+
+**Parameters**
+
+`AnimaXParam param`
+
+## Playback
+
+### onUpdate
+
+A subscribed frame update occurs.
+
+**Parameters**
+
+`AnimaXParam param`
+
+### onFPS
+
+An FPS sample is emitted.
+
+**Parameters**
+
+`AnimaXFPSParam param`
+
+### onTapLayers
+
+A layer tap hits one or more layers.
+
+**Parameters**
+
+`AnimaXTapParam param`
+
+## Errors and Warnings
+
+### onError
+
+A loading or playback error occurs.
+
+**Parameters**
+
+`AnimaXErrorParam param`
+
+### onWarning
+
+A non-fatal warning occurs.
+
+**Parameters**
+
+`AnimaXErrorParam param`
+
+## Related Parameter Objects
+
+| Type               | Description                  |
+| ------------------ | ---------------------------- |
+| `AnimaXParam`      | Base animation event params. |
+| `AnimaXErrorParam` | Error or warning params.     |
+| `AnimaXFPSParam`   | FPS metric params.           |
+| `AnimaXTapParam`   | Layer tap params.            |
+
+</PlatformTabs.Tab>
+</PlatformTabs>

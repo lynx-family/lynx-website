@@ -1,0 +1,91 @@
+---
+description: 'AnimaXMonitorService API 参考，用于在 iOS 和 Android 上接收 AnimaX 错误和性能监控事件。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXMonitorService
+
+`AnimaXMonitorService` 用于接收 AnimaX 的错误和性能指标。服务可注册到 [AnimaXServiceCenter](./animax-service-center) 或实例级 [AnimaXAbility](./animax-ability)。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+实现此协议以接收 AnimaX 的监控事件。
+
+## 监控上报
+
+### reportError
+
+上报错误事件。
+
+**参数**
+
+| 名称     | 类型             | 说明               |
+| -------- | ---------------- | ------------------ |
+| `params` | `NSDictionary *` | 错误事件参数字典。 |
+
+### reportPerformance
+
+上报性能事件。
+
+**参数**
+
+| 名称     | 类型             | 说明               |
+| -------- | ---------------- | ------------------ |
+| `params` | `NSDictionary *` | 性能事件参数字典。 |
+
+**注册方式**
+
+```objc
+[[AnimaXServiceCenter sharedInstance] registerService:@protocol(AnimaXMonitorService)
+                                             withImpl:myMonitor];
+```
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 运行上下文
+
+### setCurrentUrl
+
+设置当前动画来源 URL，后续错误和性能事件会带上这类上下文信息。
+
+**参数**
+
+| 名称  | 类型     | 说明       |
+| ----- | -------- | ---------- |
+| `url` | `String` | 当前 URL。 |
+
+## 监控上报
+
+### reportError
+
+上报错误信息。
+
+**参数**
+
+| 名称        | 类型               | 说明       |
+| ----------- | ------------------ | ---------- |
+| `errorInfo` | `AnimaXErrorParam` | 错误信息。 |
+
+### reportPerformanceMetrics
+
+上报性能指标。
+
+**参数**
+
+| 名称      | 类型                   | 说明         |
+| --------- | ---------------------- | ------------ |
+| `metrics` | `MetricsAndEventStore` | 性能指标集。 |
+
+## 注册方式
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXMonitorService.class,
+    myMonitor);
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
