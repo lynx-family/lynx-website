@@ -82,6 +82,25 @@ pnpm --filter @lynx-js/lynx-compat-data run pack:check
 This verifies that generated CSS property compatibility data is present in the
 package tarball without committing `css/properties/*.json` to git.
 
+## Media Assets
+
+Keep documentation media small and move large assets to the documentation CDN
+when possible. PR and merge-queue CI runs the `media-budget` job, which checks
+new regular-file blobs for common media types, including but not limited to
+GIF, PNG, JPEG, WebP, WebM, MP4, SVG, PDF, and fonts, across the repository:
+
+- Warn above 100 KiB per new blob.
+- Fail above 200 KiB per new blob or 1 MiB total new media per PR.
+- Count identical new blobs once, but do not give deletion credit.
+
+If an asset cannot meet the budget, ask a maintainer to decide
+whether a reviewed exception is appropriate.
+
+Use `scripts/media/process-doc-media.sh` to list candidates or create local
+GIF/WebM and image/WebP conversions for review before CDN upload. It never
+uploads files or modifies documentation sources. See
+[Media tools](./scripts/media/README.md) for usage and required local encoders.
+
 ## Generated Documentation
 
 Generated or synchronized documentation committed to the repository must match
