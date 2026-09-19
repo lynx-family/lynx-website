@@ -38,7 +38,7 @@ export default defineConfig({
 
 Three things to know:
 
-- **Declare the `lynx` environment.** Rsbuild's default environment is `web`; without `environments: { lynx: {} }` the build succeeds but emits a web-encoded bundle.
+- **The `lynx` environment.** Rsbuild's default environment is `web`. `pluginLynx` fills in `environments: { lynx: {} }` when your config declares none, so the example above spells it out only to stay explicit. Declare it yourself when your config declares any other environment, or when you are on `@lynx-js/rsbuild-plugin@0.1.2` or older, where that default is not in place yet and the build quietly emits a web-encoded bundle.
 - **`source.entry` takes the object form**, like any other Rsbuild project.
 - **Apply `pluginLynx` yourself when you need its options.** The automatic application uses default options, so configuring `output.filename.bundle` or `performance.profile` means adding `pluginLynx({ ... })` to `plugins` explicitly. It is not applied twice.
 

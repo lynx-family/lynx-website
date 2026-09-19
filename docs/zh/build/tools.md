@@ -38,7 +38,7 @@ export default defineConfig({
 
 三点需要注意：
 
-- **要声明 `lynx` 环境。** Rsbuild 默认环境是 `web`，不写 `environments: { lynx: {} }` 时构建不会报错，但产出的是 Web 格式的 Bundle。
+- **关于 `lynx` 环境。** Rsbuild 默认环境是 `web`。配置里没有声明 environments 时，`pluginLynx` 会补上 `environments: { lynx: {} }`，上面的示例写出来只是为了显式。以下两种情况需要自己声明：配置里还声明了其他环境；或者使用的是 `@lynx-js/rsbuild-plugin@0.1.2` 及更早版本——那时还没有这个默认值，构建不会报错但产出的是 Web 格式的 Bundle。
 - **`source.entry` 用对象形式**，和其他 Rsbuild 项目一致。
 - **需要配置选项时要自己引入 `pluginLynx`。** 自动应用用的是默认选项，所以想配 `output.filename.bundle` 或 `performance.profile`，需要在 `plugins` 里显式写上 `pluginLynx({ ... })`，不会重复应用。
 

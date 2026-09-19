@@ -29,7 +29,7 @@ dist/
 
 The most common output files are Bundle files, JS files and static assets:
 
-- Bundle files(`[name].lynx.bundle`), which can be configured with `output.filename.bundle`.
+- Bundle files(`[name].lynx.bundle`), which can be configured with the `output.filename.bundle` option of `pluginLynx`.
 - Async(lazy) bundle files(`async/[name].lynx.bundle`).
 - JS files(`static/js/*.js`), which can be configured with [`output.distPath.js`] and [`output.filename.js`]. They are only emitted when code splitting is enabled; otherwise the scripts are inlined into the bundle.
 - Static assets(`static/{font,image,media,svg}`) directory.
