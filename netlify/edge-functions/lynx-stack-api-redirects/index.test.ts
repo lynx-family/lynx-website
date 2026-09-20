@@ -16,7 +16,7 @@ test('redirects old API URLs', () => {
     location('/api/react/Function.useInitData'),
     '/api/react/Hooks/useInitData',
   );
-  assert.equal(location('/api/rspeedy/'), '/api/config/');
+  assert.equal(location('/api/rspeedy/'), '/api/build/');
   assert.equal(
     location('/api/lynx-testing-environment/index.html'),
     '/api/packages/testing-environment',
