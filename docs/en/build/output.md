@@ -13,8 +13,8 @@ In production, the `dist/` directory contains all the files that need to be depl
 ```txt
 dist/
 ├── [name].lynx.bundle
-├── async
-│   └── [name].lynx.bundle
+├── lazy-bundle
+│   └── [name].[hash].bundle
 └── static
     ├── image
     │   └── [name].[hash].png
@@ -22,15 +22,13 @@ dist/
     │   └── [name].[hash].svg
     └── js
         ├── [id].[hash].js
-        │   └── async
-        │       └── [id].[hash].js
         └── lib-preact.[hash].js
 ```
 
 The most common output files are Bundle files, JS files and static assets:
 
 - Bundle files(`[name].lynx.bundle`), which can be configured with the `output.filename.bundle` option of `pluginLynx`.
-- Async(lazy) bundle files(`async/[name].lynx.bundle`).
+- Lazy bundle files(`lazy-bundle/[name].[hash].bundle`), one per dynamic `import()`.
 - JS files(`static/js/*.js`), which can be configured with [`output.distPath.js`] and [`output.filename.js`]. They are only emitted when code splitting is enabled; otherwise the scripts are inlined into the bundle.
 - Static assets(`static/{font,image,media,svg}`) directory.
 
@@ -43,11 +41,12 @@ In development, an `dist/.lynx` directory is emitted which contains the resource
 ```txt
 dist/
 ├── .lynx
-│   ├── async
+│   ├── lazy-bundle
 │   │   └── [name]
+│   │       ├── background.css
+│   │       ├── background.js
 │   │       ├── debug-metadata.json
-│   │       ├── tasm.json
-│   │       └── [name].css
+│   │       └── tasm.json
 │   ├── [name]
 │   │   ├── background.js
 │   │   ├── debug-metadata.json
@@ -55,14 +54,14 @@ dist/
 │   │   ├── main-thread.js
 │   │   └── tasm.json
 ├── [name].lynx.bundle
+├── lazy-bundle
+│   └── [name].[hash].bundle
 └── static
     ├── image
     │   ├── [name].[hash].png
     │   └── [name].[hash].svg
     └── js
         ├── [id].[hash].js
-        │   └── async
-        │       └── [id].[hash].js
         └── lib-preact.[hash].js
 ```
 
