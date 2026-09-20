@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-代价是能力范围：Rspeedy 的配置是 Rsbuild 配置的一个精选子集，`html`、`security`、`moduleFederation`、`tools.postcss`、`tools.sass` 这类选项会被拒绝而不是透传，`output.charset`、`output.polyfill` 等少数值是固定的。反过来，Lynx 特有的配置直接写在配置里：`output.filename.bundle`、`performance.profile` 不用绕 `pluginLynx` 的选项。`source.entry` 和 `output.filename` 还额外接受字符串写法。
+代价是能力范围：Rspeedy 的配置是 Rsbuild 配置的一个精选子集，`tools.postcss`、`tools.sass` 这类选项会被拒绝而不是透传，`output.charset`、`output.polyfill` 等少数值是固定的。反过来，Lynx 特有的配置直接写在配置里：`output.filename.bundle`、`performance.profile` 不用绕 `pluginLynx` 的选项。`source.entry` 和 `output.filename` 还额外接受字符串写法。
 
 它的类型声明是对 Rsbuild 类型的再导出：
 
@@ -114,4 +114,4 @@ Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调�
 - **`source.entry` 和 `output.filename` 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
 - **Lynx 自己的选项挪进 `pluginLynx`。** `output.filename.bundle` 和 `performance.profile` 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`——这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
 
-Rspeedy 拒绝的那些配置现在都可以用了：`html`、`security`、`moduleFederation`、`tools.postcss`、`tools.sass` 以及 Rsbuild 配置的其余部分。
+这一步实际能用上的是 `tools.postcss`——Rspeedy 不接受这个配置项。

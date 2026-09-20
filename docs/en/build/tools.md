@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like `html`, `security`, `moduleFederation`, `tools.postcss` or `tools.sass` are rejected rather than passed through, and a few values such as `output.charset` and `output.polyfill` are fixed. What it gains is that Lynx's own options sit in the config itself: `output.filename.bundle` and `performance.profile` need no detour through `pluginLynx`. `source.entry` and `output.filename` additionally accept a plain string.
+The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like `tools.postcss` and `tools.sass` are rejected rather than passed through, and a few values such as `output.charset` and `output.polyfill` are fixed. What it gains is that Lynx's own options sit in the config itself: `output.filename.bundle` and `performance.profile` need no detour through `pluginLynx`. `source.entry` and `output.filename` additionally accept a plain string.
 
 Its type declarations re-export Rsbuild's:
 
@@ -114,4 +114,4 @@ Then adjust the config itself:
 - **`source.entry` and `output.filename` take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
 - **Lynx's own options move into `pluginLynx`.** `output.filename.bundle` and `performance.profile` are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
 
-Everything Rspeedy rejected is now available: `html`, `security`, `moduleFederation`, `tools.postcss`, `tools.sass` and the rest of the Rsbuild configuration surface.
+The option this opens up in practice is `tools.postcss`, which Rspeedy does not accept.
