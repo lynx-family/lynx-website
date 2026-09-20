@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /rspeedy/cli.html
+      link: /build/lynx-bundle.html
     - theme: alt
       text: API
       link: /api/config/

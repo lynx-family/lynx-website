@@ -105,12 +105,12 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     },
   },
   {
-    value: 'rspeedy',
-    label: 'Rspeedy',
+    value: 'build',
+    label: 'Build',
     description: 'Build Tool for Lynx',
     descriptionZh: 'Lynx 构建工具',
-    home: '/rspeedy/',
-    url: '/rspeedy/cli',
+    home: '/build/',
+    url: '/build/lynx-bundle',
     category: 'core',
     logo: {
       light:
