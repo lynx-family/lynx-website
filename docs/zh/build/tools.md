@@ -94,7 +94,7 @@ export default defineConfig({
 
 ## 该用哪个
 
-新项目用 **Rsbuild + `pluginLynx`**。这是 `create-lynx` 推荐的方式，配置和命令行都与 Rstack 生态的文档一致，Rsbuild 的完整配置能力和插件生态都可以直接使用。
+新项目用 **Rsbuild + `pluginLynx`**。这是 [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 推荐的方式，配置和命令行都与 Rstack 生态的文档一致，Rsbuild 的完整配置能力和插件生态都可以直接使用。
 
 Rspeedy 仍在维护。如果现有工具链依赖 `rspeedy` 命令行或 `lynx.config.ts`，或者你需要它更严格的配置校验，继续用它没有问题。
 

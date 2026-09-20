@@ -94,7 +94,7 @@ See the [Rspeedy documentation](https://lynx-stack.dev/guide/cli) for its CLI an
 
 ## Which one to use
 
-Use **Rsbuild with `pluginLynx`** for new projects. It is what `create-lynx` recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
+Use **Rsbuild with `pluginLynx`** for new projects. It is what [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
 
 Rspeedy remains supported. It is the right choice when existing tooling depends on the `rspeedy` CLI or on `lynx.config.ts`, or when you want its stricter config validation.
 
