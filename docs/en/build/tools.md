@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like `html`, `security`, `moduleFederation`, `tools.postcss` or `tools.sass` are rejected rather than passed through, and a few values such as `output.charset` and `output.polyfill` are fixed. In exchange, `source.entry` also accepts a plain string and `output.filename` a plain string.
+The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like `html`, `security`, `moduleFederation`, `tools.postcss` or `tools.sass` are rejected rather than passed through, and a few values such as `output.charset` and `output.polyfill` are fixed. What it gains is that Lynx's own options sit in the config itself: `output.filename.bundle` and `performance.profile` need no detour through `pluginLynx`. `source.entry` and `output.filename` additionally accept a plain string.
 
 Its type declarations re-export Rsbuild's:
 

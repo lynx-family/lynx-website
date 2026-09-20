@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-代价是能力范围：Rspeedy 的配置是 Rsbuild 配置的一个精选子集，`html`、`security`、`moduleFederation`、`tools.postcss`、`tools.sass` 这类选项会被拒绝而不是透传，`output.charset`、`output.polyfill` 等少数值是固定的。作为交换，它的 `source.entry` 也接受字符串，`output.filename` 也接受字符串。
+代价是能力范围：Rspeedy 的配置是 Rsbuild 配置的一个精选子集，`html`、`security`、`moduleFederation`、`tools.postcss`、`tools.sass` 这类选项会被拒绝而不是透传，`output.charset`、`output.polyfill` 等少数值是固定的。反过来，Lynx 特有的配置直接写在配置里：`output.filename.bundle`、`performance.profile` 不用绕 `pluginLynx` 的选项。`source.entry` 和 `output.filename` 还额外接受字符串写法。
 
 它的类型声明是对 Rsbuild 类型的再导出：
 
