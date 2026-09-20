@@ -99,3 +99,19 @@ export default defineConfig({
 Rspeedy 仍在维护。如果现有工具链依赖 `rspeedy` 命令行或 `lynx.config.ts`，或者你需要它更严格的配置校验，继续用它没有问题。
 
 不带 `--template` 执行 `npm create @lynx-js/lynx@latest` 会让你选择构建工具，也提供用于组件库的 Rslib。
+
+## 迁移现有的 Rspeedy 项目
+
+Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调整，不是重写，产物不会有任何变化。
+
+1. 换依赖：移除 `@lynx-js/rspeedy`，装上 [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core)。
+2. 换命令行：`rspeedy dev`、`rspeedy build`、`rspeedy preview` 分别改成 `rsbuild dev`、`rsbuild build`、`rsbuild preview`。
+3. 把 `lynx.config.ts` 改名为 `rsbuild.config.ts`，`defineConfig` 从 `@rsbuild/core` 引入，不再从 `@lynx-js/rspeedy` 引入。
+4. `tsconfig.json` 里的 `types` 从 `@lynx-js/rspeedy/client` 换成 `@rsbuild/core/types`。
+
+然后调整配置本身：
+
+- **`source.entry` 和 `output.filename` 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
+- **Lynx 自己的选项挪进 `pluginLynx`。** `output.filename.bundle` 和 `performance.profile` 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`——这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
+
+Rspeedy 拒绝的那些配置现在都可以用了：`html`、`security`、`moduleFederation`、`tools.postcss`、`tools.sass` 以及 Rsbuild 配置的其余部分。
