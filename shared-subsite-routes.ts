@@ -35,6 +35,16 @@ const API_ROUTE_SUBSITES: [RegExp, string][] = [
   [/^\/api\/react(\/|$)/, 'react'],
 ];
 
+/**
+ * The segment each subsite was published under before it was renamed. A route
+ * that still carries the old name stays with its subsite, so the page keeps its
+ * theme while a redirect to the current name is being processed.
+ */
+const LEGACY_SEGMENTS: Record<string, string> = {
+  ui: 'lynx-ui',
+  build: 'rspeedy',
+};
+
 /** A package page, which is the package itself or one of its members. */
 const API_PACKAGE_ROUTE = /^\/api\/packages\/([^/]+)(?:\/|$)/;
 
@@ -95,8 +105,7 @@ export function findSubsiteValue(
   const segments = route.split('/');
   return subsites.find((value) =>
     segments.some(
-      (segment) =>
-        segment === value || (value === 'ui' && segment === 'lynx-ui'),
+      (segment) => segment === value || segment === LEGACY_SEGMENTS[value],
     ),
   );
 }

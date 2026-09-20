@@ -62,6 +62,8 @@ test('version and language prefixes and .html suffixes', () => {
 test('other routes still match a path segment', () => {
   assert.equal(subsiteOf('/guide/start/quick-start'), 'guide');
   assert.equal(subsiteOf('/zh/build/cli.html'), 'build');
+  // The segment each subsite was published under before it was renamed.
+  assert.equal(subsiteOf('/zh/rspeedy/cli.html'), 'build');
   assert.equal(subsiteOf('/ui/introduction'), 'ui');
   assert.equal(subsiteOf('/lynx-ui/introduction'), 'ui');
   assert.equal(subsiteOf('/api/genui/openui'), undefined);
