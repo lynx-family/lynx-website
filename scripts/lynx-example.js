@@ -75,7 +75,7 @@ const exampleFixups = {
 // Keep this allowlist local so only reviewed, pinned examples can opt into the
 // iframe path; package metadata alone must not expand the website trust boundary.
 const exampleWebHostFiles = {
-  'lynxtron-cross-platform-notes': 'dist_precompiled/web/index.html',
+  'cross-platform-notes': 'dist_precompiled/web/index.html',
 };
 
 /**
