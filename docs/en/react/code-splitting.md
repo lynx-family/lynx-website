@@ -244,7 +244,7 @@ Lazy bundles are fetched through one of two loaders. Which one a build uses is d
 | `FetchBundle`    | `lynx.fetchBundle`, and the `import(..., { with: { mode } })` mode hints |
 | `QueryComponent` | The legacy `lynx.QueryComponent` path                                    |
 
-By default the loader follows [`engineVersion`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md): `FetchBundle` when it is `3.9` or higher, `QueryComponent` otherwise. `engineVersion` defaults to `3.2`, so a build that does not raise it to `3.9` gets `QueryComponent`.
+By default the loader follows [`engineVersion`](/api/build/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md): `FetchBundle` when it is `3.9` or higher, `QueryComponent` otherwise. `engineVersion` defaults to `3.2`, so a build that does not raise it to `3.9` gets `QueryComponent`.
 
 The `REACT_LAZY_BUNDLE_FETCHER` environment variable overrides that choice:
 
@@ -260,4 +260,4 @@ REACT_LAZY_BUNDLE_FETCHER=QueryComponent rspeedy build
 The `FetchBundle` loader and this selection logic arrived in `@lynx-js/react@0.123.0` / `@lynx-js/react-rsbuild-plugin@0.18.0`, which release together. Earlier versions always use `QueryComponent`.
 :::
 
-[`experimental_isLazyBundle`]: ../../api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle
+[`experimental_isLazyBundle`]: ../../api/build/react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle

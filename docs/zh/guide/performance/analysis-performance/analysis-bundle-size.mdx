@@ -86,7 +86,7 @@ RSDOCTOR=true npx rsbuild build
 
 ### 精简后台线程产物
 
-- **减少重复依赖**：用 Rsdoctor 的重复包检测找出被多份打包的依赖，再用 [`resolve.dedupe`](/api/rspeedy/rspeedy.resolve.dedupe) 或 `pnpm dedupe` 收敛。
+- **减少重复依赖**：用 Rsdoctor 的重复包检测找出被多份打包的依赖，再用 [`resolve.dedupe`](/api/build/rspeedy.resolve.dedupe) 或 `pnpm dedupe` 收敛。
 - **使用更轻量的库**：用 Rsdoctor 找出体积最大的依赖，评估替代品（例如用 `dayjs` 替换 `moment`），或改为按需引入。
 
 ### 压缩静态资源
@@ -98,12 +98,12 @@ RSDOCTOR=true npx rsbuild build
 区分**首屏体积**与**总体积**：首屏只需要主线程产物与首屏资源，把非首屏内容拆出去能显著改善启动体验。
 
 - 用 [代码拆分](/react/code-splitting) 把非首屏组件延迟到真正渲染时再加载。
-- 通过 [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks) 调整分包策略（底层即 Rspack 的 [代码分割](https://rspack.rs/zh/guide/optimization/code-splitting)）。
+- 通过 [`splitChunks`](/api/build/rspeedy.config.splitchunks) 调整分包策略（底层即 Rspack 的 [代码分割](https://rspack.rs/zh/guide/optimization/code-splitting)）。
 - 用 [External Bundle](/build/external-bundle) 把可复用的部分独立出去。
 
 ### 编译层选项
 
-- [`extractStr`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.extractstr)：合并重复的字符串字面量来减小体积，对 i18n 文案、类名等「在主线程与后台线程两层中重复」的字符串尤其有效。
+- [`extractStr`](/api/build/react-rsbuild-plugin.pluginreactlynxoptions.extractstr)：合并重复的字符串字面量来减小体积，对 i18n 文案、类名等「在主线程与后台线程两层中重复」的字符串尤其有效。
 
 ## Next Steps
 
