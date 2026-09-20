@@ -51,12 +51,12 @@ dist/
 │   │       ├── background.js
 │   │       ├── debug-metadata.json
 │   │       └── tasm.json
-│   ├── [name]
-│   │   ├── background.js
-│   │   ├── debug-metadata.json
-│   │   ├── [name].css
-│   │   ├── main-thread.js
-│   │   └── tasm.json
+│   └── [name]
+│       ├── background.js
+│       ├── debug-metadata.json
+│       ├── [name].css
+│       ├── main-thread.js
+│       └── tasm.json
 ├── [name].lynx.bundle
 ├── lazy-bundle
 │   └── [name].[hash].bundle
