@@ -18,15 +18,17 @@ and the integration tests.
 
 ## 2. Convert one file
 
-Enter the tool directory from the repository root. The following examples run here:
+Enter the tool directory from the repository root. Commands below run here.
+Paths containing `path/to/` are illustrative; replace them with existing paths.
+Repository assets normally live under `docs/public/assets`.
 
 ```sh
 cd scripts/media
-./process-doc-media.sh docs/public/assets/list-oss-zIndex.gif
+./process-doc-media.sh docs/public/assets/path/to/demo.gif
 ```
 
 The helper prints a fresh `output/run-*/` directory: `manifest.md` is the readable summary and
-`manifest.tsv` is the spreadsheet-friendly data. `list-oss-zIndex.webm` is kept
+`manifest.tsv` is the spreadsheet-friendly data. `demo.webm` is kept
 only if conversion succeeds and produces a smaller file.
 
 - GIF → WebM; PNG/JPG/JPEG → WebP.
@@ -46,8 +48,32 @@ released automatically when the process exits.
 Write input paths from the **repository root**, such as `docs/public/assets/...`.
 The helper locates the repository from its own script location, so no `../../`
 or local repository prefix is needed. Relative `--root` paths use the same rule.
-Absolute input and root paths also work. For files outside the default `docs/public/assets` root,
-set `--root` too:
+Absolute input and root paths also work.
+
+### Process a temporary download
+
+For an asset already removed from the repository, download or copy the original
+into `scripts/media/input/`. This directory is ignored by Git and is not cleaned
+by the helper:
+
+```sh
+mkdir -p input
+SOURCE_URL='https://your-cdn.example/path/demo.gif'
+curl --fail --location "$SOURCE_URL" --output input/demo.gif
+
+./process-doc-media.sh \
+  --root scripts/media/input \
+  --output downloaded \
+  scripts/media/input/demo.gif
+```
+
+Although the commands run from `scripts/media`, `--root` and input arguments
+remain relative to the repository root. The converted file is written to
+`output/downloaded/demo.webm`; the downloaded source remains in `input/`.
+Omit the final input argument to process everything in `input/`. Remove temporary
+sources yourself when they are no longer needed.
+
+For other files outside the default `docs/public/assets` root, set `--root` too:
 
 ```sh
 ./process-doc-media.sh --root /absolute/path/to/assets --output external /absolute/path/to/assets/photo.png
@@ -56,12 +82,12 @@ set `--root` too:
 ## 3. Convert a directory
 
 ```sh
-./process-doc-media.sh --output lynxtron docs/public/assets/lynxtron
+./process-doc-media.sh --output docs-section docs/public/assets/path/to/docs-section
 ```
 
 The helper searches recursively and preserves descendants of the input directory.
-For example, `lynxtron/browser_demo_control.gif` becomes
-`output/lynxtron/browser_demo_control.webm`.
+For example, `path/to/docs-section/demos/demo.gif` becomes
+`output/docs-section/demos/demo.webm`.
 
 To preserve the full directory structure beneath `assets`, use it as the input:
 
@@ -69,12 +95,12 @@ To preserve the full directory structure beneath `assets`, use it as the input:
 ./process-doc-media.sh --output assets docs/public/assets
 ```
 
-This produces `output/assets/lynxtron/browser_demo_control.webm`.
+This produces paths such as `output/assets/path/to/docs-section/demos/demo.webm`.
 
 To list candidates without converting anything:
 
 ```sh
-./process-doc-media.sh --output lynxtron --dry-run docs/public/assets/lynxtron
+./process-doc-media.sh --output docs-section --dry-run docs/public/assets/path/to/docs-section
 ```
 
 A dry run also clears the selected output directory, then writes only
@@ -86,7 +112,7 @@ Reference scanning is off by default, so processing media does not require Git.
 To include candidate documentation references in the manifests:
 
 ```sh
-./process-doc-media.sh --output lynxtron --dry-run --scan-references docs/public/assets/lynxtron
+./process-doc-media.sh --output docs-section --dry-run --scan-references docs/public/assets/path/to/docs-section
 ```
 
 The scan searches Git-tracked files under `docs/`, `sharedDocs/`, `src/`, and

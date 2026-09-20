@@ -6,10 +6,11 @@
 # Git is needed only with --scan-references.
 # macOS setup: brew install python ffmpeg imagemagick
 #
+# Replace the illustrative path/to/ values with existing asset paths.
 # One file:
-#   ./process-doc-media.sh docs/public/assets/list-oss-zIndex.gif
+#   ./process-doc-media.sh docs/public/assets/path/to/demo.gif
 # A directory (recursive):
-#   ./process-doc-media.sh --output lynxtron docs/public/assets/lynxtron
+#   ./process-doc-media.sh --output docs-section docs/public/assets/path/to/docs-section
 #
 # Usage: ./process-doc-media.sh [OPTIONS] [INPUT ...]
 # Relative INPUT and --root paths start at this script's repository root.
