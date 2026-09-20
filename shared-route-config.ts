@@ -110,7 +110,7 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
     description: 'Build Tool for Lynx',
     descriptionZh: 'Lynx 构建工具',
     home: '/build/',
-    url: '/build/tools',
+    url: '/build/lynx-bundle',
     category: 'core',
     logo: {
       light:

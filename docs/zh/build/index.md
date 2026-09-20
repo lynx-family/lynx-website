@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: 开始
-      link: /zh/build/tools.html
+      link: /zh/build/lynx-bundle.html
     - theme: alt
       text: API
       link: /zh/api/rspeedy/index.html
