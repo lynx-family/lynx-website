@@ -176,7 +176,7 @@ This replaces any transparency with white. For pixel-exact screenshots, use
 `magick input.png -define webp:lossless=true output/screenshot.webp` instead, with your own
 input and output paths. Compare quality and file size before using either result.
 The helper's **100 KiB** threshold selects optimization candidates; it does not
-guarantee an output below the CI **200 KiB** per-file limit.
+guarantee an output below the CI **100 KiB** per-file limit.
 
 ## Options
 
@@ -219,8 +219,8 @@ Exit codes: `0` completed, `1` some files failed, `2` setup/argument error,
 `check-budget.mjs` runs automatically in PR and merge-queue CI; no routine local
 command is required. It checks media across the repository:
 
-- Warn above **100 KiB** per new blob.
-- Fail above **200 KiB** per new blob or **1 MiB** total.
+- Warn above **50 KiB** per new blob.
+- Fail above **100 KiB** per new blob or **512 KiB** total.
 - Exact boundary values pass. Unchanged legacy content and reused base blobs are
   excluded; identical new content counts once. Replacements count their full size,
   and deletion gives no budget credit.

@@ -71,7 +71,7 @@ for (const [name, bytes, warning, failed] of [
   ['small image', 42, false, false],
   ['exact warning boundary', limits.warning, false, false],
   ['above warning boundary', limits.warning + 1, true, false],
-  ['exact file and total boundary', limits.file, true, false],
+  ['exact file boundary', limits.file, true, false],
   ['above file boundary', limits.file + 1, false, true],
 ]) {
   test(name, (t) => {
@@ -122,24 +122,27 @@ test('counts identical new content once and reports every path', (t) => {
   const f = fixture(t);
   const base = f.git('rev-parse', 'HEAD');
   for (const file of ['a.webp', 'nested/b.jpg'])
-    f.write(file, Buffer.alloc(150 * 1024));
+    f.write(file, Buffer.alloc(75 * 1024));
   const result = checkBudget(f.cwd, base, f.commit());
-  assert.equal(result.total, 150 * 1024);
+  assert.equal(result.total, 75 * 1024);
   assert.equal(result.blobs.length, 1);
   assert.equal(result.failed, false);
   assert.deepEqual(result.blobs[0].paths, ['a.webp', 'nested/b.jpg']);
   assert.match(formatReport(result), /nested\/b.jpg/);
 });
 
-test('unique sub-limit files exceed the aggregate limit; deletion gives no credit', (t) => {
+test('aggregate boundary passes and one byte over fails; deletion gives no credit', (t) => {
   const f = fixture(t);
   f.write('old.gif', Buffer.alloc(limits.file * 2, 3));
   const base = f.commit();
   rmSync(path.join(f.cwd, 'old.gif'));
-  for (let index = 0; index < 6; index++)
-    f.write(`${index}.png`, Buffer.alloc(180 * 1024, index));
+  for (let index = 0; index < 5; index++)
+    f.write(`${index}.png`, Buffer.alloc(limits.file, index));
+  f.write('5.png', Buffer.alloc(12 * 1024, 5));
+  assert.equal(checkBudget(f.cwd, base, f.commit()).failed, false);
+  f.write('5.png', Buffer.alloc(12 * 1024 + 1, 5));
   const result = checkBudget(f.cwd, base, f.commit());
-  assert.equal(result.total, 1080 * 1024);
+  assert.equal(result.total, limits.total + 1);
   assert.equal(result.failed, true);
   const report = formatReport(result);
   assert.match(report, /exceeding.*change budget/);

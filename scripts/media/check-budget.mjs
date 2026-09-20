@@ -11,9 +11,9 @@ import { pathToFileURL } from 'node:url';
  */
 const KIB = 1024;
 const MIB = 1024 * KIB;
-const warningThresholdKiB = 100;
-const perFileLimitKiB = 200;
-const changeBudgetKiB = 1024;
+const warningThresholdKiB = 50;
+const perFileLimitKiB = 100;
+const changeBudgetKiB = 512;
 
 /** Budget policy in bytes; exported so tests exercise the exact boundaries. */
 export const limits = {
