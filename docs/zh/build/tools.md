@@ -23,7 +23,7 @@ npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
 
 产物本身和 Web 构建差别不小：没有 HTML 入口，样式和脚本都编码进一个二进制文件，主线程和后台线程各有一份代码。先读[Lynx Bundle 是什么](./lynx-bundle.md)会更容易理解下面的配置。
 
-## pluginLynx
+## Rsbuild + pluginLynx
 
 `pluginLynx`（来自 [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)）是把一次 Rsbuild 构建变成 Lynx 构建的关键。它配置双线程产物与 Bundle 文件名，把中间产物保留在 `dist/.lynx/<entry>/`，按 Lynx 运行时调整压缩与 source map，按 Lynx 的 `exports` 条件解析模块，在开发时通过局域网把产物推送到设备，并注册[线上错误反解](./map-errors-to-source.mdx)所需的 debug metadata。
 

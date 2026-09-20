@@ -23,7 +23,7 @@ Both produce the same `.lynx.bundle`, and the dev server, HMR, QR code and debug
 
 The output itself differs from a web build in several ways: no HTML entry, styles and scripts encoded into one binary, and one copy of your code per thread. [What is a Lynx Bundle?](./lynx-bundle.md) covers that, and makes the configuration below easier to follow.
 
-## pluginLynx
+## Rsbuild with pluginLynx
 
 `pluginLynx` (from [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)) is what turns an Rsbuild build into a Lynx build. It configures the dual-thread output and bundle filename, keeps the intermediate files under `dist/.lynx/<entry>/`, tunes minification and source maps for the Lynx runtime, resolves modules through Lynx's `exports` conditions, serves the bundle over your LAN during development, and registers the debug metadata used to [map production errors to source](./map-errors-to-source.mdx).
 
