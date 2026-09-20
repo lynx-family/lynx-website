@@ -5,6 +5,7 @@
 // It is not a copy of rspress.config.ts or tsconfig.json: it describes which
 // import forms are portable and who owns them. Later gates bind and verify the
 // corresponding resolver configuration.
+// cspell:ignore lynxai
 
 import type {
   AliasContract,
@@ -106,7 +107,9 @@ export const aliases = [
       },
     ],
     canonical: publicCanonicalSpelling,
-    allowMultipleResolverRoots: false,
+    // Downstream resolvers may use ordered fallback roots for this namespace.
+    // Resolution remains first-match, so roots never form a merged barrel.
+    allowMultipleResolverRoots: true,
     sourceAreas: ['oss-components'],
     downstream: {
       implementation: 'required',
@@ -247,6 +250,31 @@ export const aliases = [
         ],
         'consumer',
       ),
+      {
+        path: 'favicon.png',
+        kind: 'module',
+        owner: 'consumer',
+      },
+      {
+        path: 'lynx-ui-icon-dark.svg',
+        kind: 'module',
+        owner: 'consumer',
+      },
+      {
+        path: 'lynx-ui-icon-light.svg',
+        kind: 'module',
+        owner: 'consumer',
+      },
+      {
+        path: 'lynxai-logo-dark.svg',
+        kind: 'module',
+        owner: 'consumer',
+      },
+      {
+        path: 'lynxai-logo-light.svg',
+        kind: 'module',
+        owner: 'consumer',
+      },
       {
         path: 'x-logo.svg',
         kind: 'module',

@@ -6,6 +6,7 @@
  * failure signal. The final group exercises the packaged consumer CLI boundary
  * with temporary ESM modules.
  */
+// cspell:ignore lynxai
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
@@ -352,6 +353,23 @@ for (const [description, specifier] of [
   );
 }
 
+for (const [description, specifier, expected] of [
+  ['a trailing index', '@portable/index', 'uses non-canonical trailing /index'],
+  [
+    'a JavaScript or TypeScript source extension',
+    '@portable.ts',
+    'uses a non-canonical JavaScript/TypeScript source extension',
+  ],
+] as const) {
+  assertInvalid(
+    `rejects non-private alias specifiers using ${description}`,
+    ({ aliases }) => {
+      aliases[0].specifier = specifier;
+    },
+    expected,
+  );
+}
+
 assertInvalid(
   'rejects unknown override kinds',
   ({ resolverOverrides }) => {
@@ -436,6 +454,14 @@ assertInvalid(
     sourceAreas[0].root = '/workspace/src';
   },
   'must be repository-relative, not absolute',
+);
+
+assertInvalid(
+  'rejects wildcard source roots',
+  ({ sourceAreas }) => {
+    sourceAreas[0].root = 'src/*';
+  },
+  'must be a normalized repository-relative path',
 );
 
 assertInvalid(

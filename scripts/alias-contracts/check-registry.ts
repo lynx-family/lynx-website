@@ -148,6 +148,7 @@ function sourceRootProblem(root: unknown): string | undefined {
   }
   if (
     root.includes('\\') ||
+    root.includes('*') ||
     root === '.' ||
     root.endsWith('/') ||
     root.split('/').some((part) => part === '' || part === '.' || part === '..')
@@ -452,6 +453,18 @@ export function validateAliasContracts({
         errors.push(
           `${label} specifier '${alias.specifier}' ${specifierProblem}`,
         );
+      }
+      if (alias.visibility !== 'owner-private') {
+        if (alias.specifier === 'index' || alias.specifier.endsWith('/index')) {
+          errors.push(
+            `${label} specifier '${alias.specifier}' uses non-canonical trailing /index`,
+          );
+        }
+        if (sourceExtension.test(alias.specifier)) {
+          errors.push(
+            `${label} specifier '${alias.specifier}' uses a non-canonical JavaScript/TypeScript source extension`,
+          );
+        }
       }
     }
     if (!ownerIds.has(alias.owner)) {
