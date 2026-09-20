@@ -123,9 +123,6 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  environments: {
-    lynx: {},
-  },
   source: {
     entry: {
       main: './src/index.tsx',
@@ -223,9 +220,6 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  environments: {
-    lynx: {},
-  },
   source: {
     entry: {
       main: './src/Consumer.tsx',

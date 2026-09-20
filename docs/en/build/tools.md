@@ -11,6 +11,14 @@ There are two ways to run that engine:
 - **Rsbuild with `pluginLynx`** — the recommended setup. You own an ordinary `rsbuild.config.ts` and use the `rsbuild` CLI.
 - **Rspeedy** — a wrapper around the same engine, with its own `rspeedy` CLI and `lynx.config.ts`.
 
+```bash
+# Rsbuild with pluginLynx (recommended)
+npm create @lynx-js/lynx@latest -- --template rsbuild-react-ts
+
+# Rspeedy
+npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
+```
+
 Both produce the same `.lynx.bundle`, and the dev server, HMR, QR code and debug metadata behave identically, because all of that lives in `pluginLynx`. What differs is who owns the CLI and how much of the Rsbuild configuration surface you can reach.
 
 ## pluginLynx
@@ -24,9 +32,6 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  environments: {
-    lynx: {},
-  },
   source: {
     entry: {
       main: './src/index.tsx',
@@ -36,9 +41,8 @@ export default defineConfig({
 });
 ```
 
-Three things to know:
+Two things to know:
 
-- **The `lynx` environment.** Rsbuild's default environment is `web`. `pluginLynx` fills in `environments: { lynx: {} }` when your config declares none, so the example above spells it out only to stay explicit. Declare it yourself when your config declares any other environment, or when you are on `@lynx-js/rsbuild-plugin@0.1.2` or older, where that default is not in place yet and the build quietly emits a web-encoded bundle.
 - **`source.entry` takes the object form**, like any other Rsbuild project.
 - **Apply `pluginLynx` yourself when you need its options.** The automatic application uses default options, so configuring `output.filename.bundle` or `performance.profile` means adding `pluginLynx({ ... })` to `plugins` explicitly. It is not applied twice.
 
@@ -59,7 +63,6 @@ Rspeedy ([`@lynx-js/rspeedy`](https://www.npmjs.com/package/@lynx-js/rspeedy)) w
 - the `rspeedy` CLI — `dev`, `build`, `preview` and `inspect` — which also restarts itself when the config file changes
 - `lynx.config.ts` as the config file, with `defineConfig` from `@lynx-js/rspeedy`
 - strict validation of that config: an unknown key is an error, not a silent no-op
-- Lynx-oriented defaults that plain Rsbuild does not set, such as a default entry, code splitting off, inlined scripts and no polyfills
 
 ```ts title="lynx.config.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
@@ -91,10 +94,6 @@ See the [Rspeedy documentation](https://lynx-stack.dev/guide/cli) for its CLI an
 
 Use **Rsbuild with `pluginLynx`** for new projects. It is what `create-lynx` recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
 
-Rspeedy remains supported. It is the right choice when existing tooling depends on the `rspeedy` CLI or on `lynx.config.ts`, or when you want its stricter config validation and ready-made defaults.
+Rspeedy remains supported. It is the right choice when existing tooling depends on the `rspeedy` CLI or on `lynx.config.ts`, or when you want its stricter config validation.
 
-```bash
-npm create @lynx-js/lynx@latest
-```
-
-The command asks which build tool to use — Rsbuild with `pluginLynx` (recommended), Rspeedy, or Rslib for a component library.
+Running `npm create @lynx-js/lynx@latest` without `--template` asks which build tool to use, and also offers Rslib for a component library.
