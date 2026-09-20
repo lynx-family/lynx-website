@@ -11,5 +11,5 @@ hero:
       link: /zh/build/lynx-bundle.html
     - theme: alt
       text: API
-      link: /zh/api/config/
+      link: /zh/api/build/
 ---

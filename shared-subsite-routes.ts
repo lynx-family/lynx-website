@@ -3,7 +3,7 @@
  *
  * The API reference is grouped by package rather than by subsite, so its
  * routes no longer carry the subsite in a path segment: `/api/packages/
- * react-signals` is ReactLynx, `/api/config/mode` is Rspeedy. The mapping
+ * react-signals` is ReactLynx, `/api/build/mode` is Rspeedy. The mapping
  * below is the single place that decides this, for every version and
  * language form of a route.
  *
@@ -31,7 +31,7 @@ export const GROUP_SUBSITES: Record<string, string> = {
  */
 const API_ROUTE_SUBSITES: [RegExp, string][] = [
   [/^\/api\/react\/testing-library(\/|$)/, 'guide'],
-  [/^\/api\/config(\/|$)/, 'rspeedy'],
+  [/^\/api\/build(\/|$)/, 'rspeedy'],
   [/^\/api\/react(\/|$)/, 'react'],
 ];
 

@@ -46,8 +46,8 @@ test('the testing pages keep the guide', () => {
 });
 
 test('config and ReactLynx routes keep their subsite', () => {
-  assert.equal(subsiteOf('/api/config/mode'), 'rspeedy');
-  assert.equal(subsiteOf('/api/config/'), 'rspeedy');
+  assert.equal(subsiteOf('/api/build/mode'), 'rspeedy');
+  assert.equal(subsiteOf('/api/build/'), 'rspeedy');
   assert.equal(subsiteOf('/api/react/hooks'), 'react');
 });
 
@@ -55,7 +55,7 @@ test('version and language prefixes and .html suffixes', () => {
   assert.equal(subsiteOf('/next/api/packages/rspeedy.html'), 'rspeedy');
   assert.equal(subsiteOf('/4.0/api/packages/rsbuild-plugin'), 'rspeedy');
   assert.equal(subsiteOf('/zh/api/packages/rspeedy'), 'rspeedy');
-  assert.equal(subsiteOf('/next/zh/api/config/mode.html'), 'rspeedy');
+  assert.equal(subsiteOf('/next/zh/api/build/mode.html'), 'rspeedy');
   assert.equal(subsiteOf('/next/zh/api/react/hooks'), 'react');
 });
 
