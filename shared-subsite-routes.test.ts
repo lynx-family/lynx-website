@@ -15,19 +15,19 @@ const packages = [
 
 const subsiteOf = (pathname: string) =>
   findSubsiteValue(pathname, {
-    subsites: ['guide', 'rspeedy', 'react', 'ui', 'lynxtron'],
+    subsites: ['guide', 'build', 'react', 'ui', 'lynxtron'],
     packageSubsites: apiPackageSubsites(packages),
   });
 
 test('package pages keep the subsite of their group', () => {
-  assert.equal(subsiteOf('/api/packages/rspeedy'), 'rspeedy');
-  assert.equal(subsiteOf('/api/packages/rsbuild-plugin'), 'rspeedy');
+  assert.equal(subsiteOf('/api/packages/rspeedy'), 'build');
+  assert.equal(subsiteOf('/api/packages/rsbuild-plugin'), 'build');
   // A member page is the same package.
   assert.equal(
     subsiteOf('/api/packages/rsbuild-plugin/functions/isPluginLynxRegistered'),
-    'rspeedy',
+    'build',
   );
-  assert.equal(subsiteOf('/api/packages/rspeedy/interfaces/Config'), 'rspeedy');
+  assert.equal(subsiteOf('/api/packages/rspeedy/interfaces/Config'), 'build');
   assert.equal(subsiteOf('/api/packages/web-core'), undefined);
   assert.equal(subsiteOf('/api/packages/'), undefined);
 });
@@ -46,22 +46,22 @@ test('the testing pages keep the guide', () => {
 });
 
 test('config and ReactLynx routes keep their subsite', () => {
-  assert.equal(subsiteOf('/api/build/mode'), 'rspeedy');
-  assert.equal(subsiteOf('/api/build/'), 'rspeedy');
+  assert.equal(subsiteOf('/api/build/mode'), 'build');
+  assert.equal(subsiteOf('/api/build/'), 'build');
   assert.equal(subsiteOf('/api/react/hooks'), 'react');
 });
 
 test('version and language prefixes and .html suffixes', () => {
-  assert.equal(subsiteOf('/next/api/packages/rspeedy.html'), 'rspeedy');
-  assert.equal(subsiteOf('/4.0/api/packages/rsbuild-plugin'), 'rspeedy');
-  assert.equal(subsiteOf('/zh/api/packages/rspeedy'), 'rspeedy');
-  assert.equal(subsiteOf('/next/zh/api/build/mode.html'), 'rspeedy');
+  assert.equal(subsiteOf('/next/api/packages/rspeedy.html'), 'build');
+  assert.equal(subsiteOf('/4.0/api/packages/rsbuild-plugin'), 'build');
+  assert.equal(subsiteOf('/zh/api/packages/rspeedy'), 'build');
+  assert.equal(subsiteOf('/next/zh/api/build/mode.html'), 'build');
   assert.equal(subsiteOf('/next/zh/api/react/hooks'), 'react');
 });
 
 test('other routes still match a path segment', () => {
   assert.equal(subsiteOf('/guide/start/quick-start'), 'guide');
-  assert.equal(subsiteOf('/zh/rspeedy/cli.html'), 'rspeedy');
+  assert.equal(subsiteOf('/zh/build/cli.html'), 'build');
   assert.equal(subsiteOf('/ui/introduction'), 'ui');
   assert.equal(subsiteOf('/lynx-ui/introduction'), 'ui');
   assert.equal(subsiteOf('/api/genui/openui'), undefined);
