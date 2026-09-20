@@ -99,3 +99,19 @@ Use **Rsbuild with `pluginLynx`** for new projects. It is what `create-lynx` rec
 Rspeedy remains supported. It is the right choice when existing tooling depends on the `rspeedy` CLI or on `lynx.config.ts`, or when you want its stricter config validation.
 
 Running `npm create @lynx-js/lynx@latest` without `--template` asks which build tool to use, and also offers Rslib for a component library.
+
+## Migrating an Rspeedy project
+
+Rspeedy and `pluginLynx` share one engine, so the move is a config change, not a rewrite. Nothing about the output changes.
+
+1. Replace the dependency: drop `@lynx-js/rspeedy`, add [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core).
+2. Point the scripts at the other CLI — `rspeedy dev`, `rspeedy build` and `rspeedy preview` become `rsbuild dev`, `rsbuild build` and `rsbuild preview`.
+3. Rename `lynx.config.ts` to `rsbuild.config.ts` and take `defineConfig` from `@rsbuild/core` instead of `@lynx-js/rspeedy`.
+4. Switch `types` in `tsconfig.json` from `@lynx-js/rspeedy/client` to `@rsbuild/core/types`.
+
+Then adjust the config itself:
+
+- **`source.entry` and `output.filename` take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
+- **Lynx's own options move into `pluginLynx`.** `output.filename.bundle` and `performance.profile` are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
+
+Everything Rspeedy rejected is now available: `html`, `security`, `moduleFederation`, `tools.postcss`, `tools.sass` and the rest of the Rsbuild configuration surface.
