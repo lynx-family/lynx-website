@@ -38,6 +38,18 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         '<html></html>',
       );
       fs.writeFileSync(path.join(directory, 'main.lynx.bundle'), 'fixture');
+      if (example === 'native-texture-canvas') {
+        const native = path.join(directory, 'native-texture-extension');
+        fs.mkdirSync(native);
+        for (const file of [
+          'module.cc',
+          'module.h',
+          'surface.mm',
+          'CMakeLists.txt',
+        ]) {
+          fs.writeFileSync(path.join(native, file), `source fixture: ${file}`);
+        }
+      }
     }
     execFileSync(
       process.execPath,
@@ -73,6 +85,24 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
           path.join(temporary, 'output', example, 'example-metadata.json'),
         );
         assert.equal(metadata.nativeFramework, 'lynxtron');
+        if (example === 'native-texture-canvas') {
+          for (const file of [
+            'module.cc',
+            'module.h',
+            'surface.mm',
+            'CMakeLists.txt',
+          ]) {
+            const source = `native-texture-extension/${file}`;
+            assert.ok(metadata.files.includes(source));
+            assert.equal(
+              fs.readFileSync(
+                path.join(temporary, 'output', example, source),
+                'utf8',
+              ),
+              `source fixture: ${file}`,
+            );
+          }
+        }
         assert.match(
           metadata.exampleGitBaseUrl,
           /lynx-community\/lynxtron-examples/,

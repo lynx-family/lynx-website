@@ -17,15 +17,14 @@ packages and run this separate generation step. Converting packages from
 directory names, source files, precompiled Web assets and metadata consumed by
 the documentation when providing a downstream package source.
 
-## Current archive limitation
+## Independent installation
 
-The pinned Native Texture archive contains a relative `file:` dependency on its
-native extension. The website only consumes source and precompiled files, so
-the root workspace override skips that dependency. Moving the example into this
-directory does **not** fix the archive's independent installation: copying this
-directory and running `pnpm install --ignore-workspace` without that override is
-not yet supported. The upstream archive must become independently installable
-before dropping the override or claiming isolated downstream installation works.
+The pinned Go 0.1.18 release archives bundle local runtime dependencies, including
+the Native Texture extension, while preserving their editable source files.
+No root workspace override is needed. Downstream source-only consumers can copy
+this directory's `package.json` into an empty directory and run
+`pnpm install --ignore-workspace --ignore-scripts`. Install scripts are unnecessary
+for generating documentation from the source and precompiled files.
 
 ## Usage in documentation
 
