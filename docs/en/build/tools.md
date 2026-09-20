@@ -2,7 +2,7 @@
 description: 'How pluginLynx and Rspeedy relate, and which one to use for a Lynx project.'
 ---
 
-# pluginLynx and Rspeedy
+# Rsbuild and Rspeedy
 
 A Lynx app is built by [Rsbuild](https://rsbuild.rs/). What makes the output a Lynx bundle instead of a web bundle is **`pluginLynx`**, the Lynx build engine packaged as a set of Rsbuild plugins.
 

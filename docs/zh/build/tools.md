@@ -2,7 +2,7 @@
 description: 'pluginLynx 与 Rspeedy 的关系，以及项目该选哪一个。'
 ---
 
-# pluginLynx 与 Rspeedy
+# Rsbuild 与 Rspeedy
 
 Lynx 应用由 [Rsbuild](https://rsbuild.rs/) 构建。让产物成为 Lynx Bundle 而不是 Web Bundle 的，是 **`pluginLynx`**——以一组 Rsbuild 插件形式提供的 Lynx 构建引擎。
 
