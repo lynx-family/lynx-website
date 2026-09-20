@@ -151,6 +151,144 @@ export default defineConfig({
   plugins: [
     pluginClientRedirects({
       redirects: [
+        // The build section moved from /rspeedy/ to /build/, and the pages that
+        // Rsbuild and Rspeedy document themselves now live on their own sites.
+        {
+          from: '^/rspeedy/styling(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/styling/css-usage',
+        },
+        {
+          from: '^/zh/rspeedy/styling(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/styling/css-usage',
+        },
+        {
+          from: '^/build/styling(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/styling/css-usage',
+        },
+        {
+          from: '^/zh/build/styling(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/styling/css-usage',
+        },
+        {
+          from: '^/rspeedy/assets(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/basic/static-assets',
+        },
+        {
+          from: '^/zh/rspeedy/assets(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/basic/static-assets',
+        },
+        {
+          from: '^/build/assets(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/basic/static-assets',
+        },
+        {
+          from: '^/zh/build/assets(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/basic/static-assets',
+        },
+        {
+          from: '^/rspeedy/resolve(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/advanced/alias',
+        },
+        {
+          from: '^/zh/rspeedy/resolve(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/advanced/alias',
+        },
+        {
+          from: '^/build/resolve(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/advanced/alias',
+        },
+        {
+          from: '^/zh/build/resolve(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/advanced/alias',
+        },
+        {
+          from: '^/rspeedy/plugin(\\.html)?$',
+          to: 'https://rsbuild.rs/plugins/list',
+        },
+        {
+          from: '^/zh/rspeedy/plugin(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/plugins/list',
+        },
+        {
+          from: '^/build/plugin(\\.html)?$',
+          to: 'https://rsbuild.rs/plugins/list',
+        },
+        {
+          from: '^/zh/build/plugin(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/plugins/list',
+        },
+        {
+          from: '^/rspeedy/build-profiling(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/debug/build-profiling',
+        },
+        {
+          from: '^/zh/rspeedy/build-profiling(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/debug/build-profiling',
+        },
+        {
+          from: '^/build/build-profiling(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/debug/build-profiling',
+        },
+        {
+          from: '^/zh/build/build-profiling(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/debug/build-profiling',
+        },
+        {
+          from: '^/rspeedy/use-rsdoctor(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/debug/rsdoctor',
+        },
+        {
+          from: '^/zh/rspeedy/use-rsdoctor(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/debug/rsdoctor',
+        },
+        {
+          from: '^/build/use-rsdoctor(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/debug/rsdoctor',
+        },
+        {
+          from: '^/zh/build/use-rsdoctor(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/debug/rsdoctor',
+        },
+        {
+          from: '^/rspeedy/cli(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/basic/cli',
+        },
+        {
+          from: '^/zh/rspeedy/cli(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/basic/cli',
+        },
+        {
+          from: '^/build/cli(\\.html)?$',
+          to: 'https://rsbuild.rs/guide/basic/cli',
+        },
+        {
+          from: '^/zh/build/cli(\\.html)?$',
+          to: 'https://rsbuild.rs/zh/guide/basic/cli',
+        },
+        {
+          from: '^/rspeedy/upgrade(\\.html)?$',
+          to: 'https://lynx-stack.dev/guide/upgrade-rspeedy',
+        },
+        {
+          from: '^/zh/rspeedy/upgrade(\\.html)?$',
+          to: 'https://lynx-stack.dev/zh/guide/upgrade-rspeedy',
+        },
+        {
+          from: '^/build/upgrade(\\.html)?$',
+          to: 'https://lynx-stack.dev/guide/upgrade-rspeedy',
+        },
+        {
+          from: '^/zh/build/upgrade(\\.html)?$',
+          to: 'https://lynx-stack.dev/zh/guide/upgrade-rspeedy',
+        },
+        {
+          from: '^/rspeedy(/.*)?$',
+          to: '/build$1',
+        },
+        {
+          from: '^/zh/rspeedy(/.*)?$',
+          to: '/zh/build$1',
+        },
         {
           from: '/react/routing.html',
           to: '/react/routing/react-router.html',

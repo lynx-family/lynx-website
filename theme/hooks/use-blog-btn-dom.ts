@@ -45,8 +45,8 @@ const config: Record<
   },
   '/build/': {
     text: {
-      zh: 'Rspeedy',
-      en: 'Rspeedy',
+      zh: 'Lynx 构建工具',
+      en: 'Build tool for Lynx',
     },
   },
   '/lynxtron/': {
