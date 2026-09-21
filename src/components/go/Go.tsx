@@ -1,6 +1,6 @@
 import path from 'path';
 import { useEffect, useMemo, useState } from 'react';
-import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
+import { Go as GoBase, GoConfigProvider, useGoConfig } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
 import { ExamplePreview as SSGComponent } from './example-preview-ssg';
@@ -37,15 +37,23 @@ const LYNXTRON_DOWNLOAD_URL_WIN =
   'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/LynxtronGo-win-x64-Setup.exe';
 
 function ExampleVersion({ example }: { example: string }) {
+  const { exampleBasePath, withBase = (value: string) => value } =
+    useGoConfig();
+  const metadataUrl = `${withBase(exampleBasePath)}/${example}/example-metadata.json`;
   const [version, setVersion] = useState<string>();
   useEffect(() => {
-    fetch(`/lynx-examples/${example}/example-metadata.json`)
+    let active = true;
+    setVersion(undefined);
+    fetch(metadataUrl)
       .then((response) => (response.ok ? response.json() : null))
       .then((metadata) => {
-        if (metadata?.version) setVersion(metadata.version);
+        if (active && metadata?.version) setVersion(metadata.version);
       })
       .catch(() => undefined);
-  }, [example]);
+    return () => {
+      active = false;
+    };
+  }, [metadataUrl]);
 
   if (!version) return null;
   return (
