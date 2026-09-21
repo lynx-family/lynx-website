@@ -93,9 +93,15 @@ for (const lang of ['en', 'zh']) {
 
     useBlogBtnDom('/');
     assert.equal(selectedConfig, undefined);
-    assert.match(badge.textContent, /Lynxtron/);
+    const newest = [...pages].sort(
+      (a, b) => new Date(b.frontmatter.date) - new Date(a.frontmatter.date),
+    )[0];
+    assert.equal(
+      badge.textContent,
+      newest.frontmatter.badge_text || newest.title,
+    );
     listeners.click();
-    assert.equal(destination, `${lang === 'zh' ? '/zh' : ''}/blog/lynxtron`);
+    assert.equal(destination, newest.routePath);
 
     pages.push({
       lang,
