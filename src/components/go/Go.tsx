@@ -1,9 +1,9 @@
 import path from 'path';
-import { useEffect, useMemo, useState } from 'react';
-import { Go as GoBase, GoConfigProvider, useGoConfig } from '@lynx-js/go-web';
+import { useMemo } from 'react';
+import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
-import { ExamplePreview as SSGComponent } from './example-preview-ssg';
+import { ExamplePreviewSSG as SSGComponent } from '@lynx-js/go-web/ssg';
 import Callout from '../Callout';
 
 const ErrorComponent = ({
@@ -35,39 +35,6 @@ const LYNXTRON_RELEASE_URL =
   'https://github.com/lynx-community/lynxtron-examples/releases/latest';
 const LYNXTRON_DOWNLOAD_URL_WIN =
   'https://github.com/lynx-community/lynxtron-examples/releases/latest/download/LynxtronGo-win-x64-Setup.exe';
-
-function ExampleVersion({ example }: { example: string }) {
-  const { exampleBasePath, withBase = (value: string) => value } =
-    useGoConfig();
-  const metadataUrl = `${withBase(exampleBasePath)}/${example}/example-metadata.json`;
-  const [version, setVersion] = useState<string>();
-  useEffect(() => {
-    let active = true;
-    setVersion(undefined);
-    fetch(metadataUrl)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((metadata) => {
-        if (active && metadata?.version) setVersion(metadata.version);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [metadataUrl]);
-
-  if (!version) return null;
-  return (
-    <span
-      style={{
-        color: 'var(--semi-color-text-2)',
-        fontSize: '12px',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      Example version: {version}
-    </span>
-  );
-}
 
 function resolveLynxtronDownloadUrl(): string | undefined {
   if (typeof navigator === 'undefined') return undefined;
@@ -127,12 +94,6 @@ export function Go(props: GoProps) {
           mm: 'objective-cpp',
           ...props.langAlias,
         }}
-        rightFooter={
-          <>
-            {props.rightFooter}
-            <ExampleVersion example={props.example} />
-          </>
-        }
       />
     </GoConfigProvider>
   );
