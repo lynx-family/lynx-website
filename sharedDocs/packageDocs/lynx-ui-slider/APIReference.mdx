@@ -1,10 +1,825 @@
 import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
 
 
-  
-## SliderTrackProps
-    
-  
+### SliderRoot
+
+Root primitive props for a single-value or range slider. The generic
+selects the value shape and defaults to `number` for existing single-value
+usage. A range slider must provide its tuple through either `value` or
+`defaultValue` so the runtime can determine the shape.
+Range-thumb collision behavior is intentionally non-crossing: thumbs may
+meet, but the active thumb stops at the other value without swapping or
+pushing the other thumb.
+
+<UIApiTable source={[
+  {
+    "name": "children",
+    "type": "ReactNode",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Primitive children composition, usually: "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderTrack`"
+      },
+      {
+        "kind": "text",
+        "text": " containing "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderIndicator`"
+      },
+      {
+        "kind": "text",
+        "text": " and optional "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderThumb`"
+      },
+      {
+        "kind": "text",
+        "text": "."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "子原语组件组合，通常为："
+      },
+      {
+        "kind": "code",
+        "text": "`SliderTrack`"
+      },
+      {
+        "kind": "text",
+        "text": " 内包含 "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderIndicator`"
+      },
+      {
+        "kind": "text",
+        "text": " 以及可选的 "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderThumb`"
+      },
+      {
+        "kind": "text",
+        "text": "。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "className",
+    "type": "string",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "className"
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "类名"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "defaultValue",
+    "type": "number | SliderRangeValue",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Initial value for uncontrolled usage. A single-value slider starts at\n"
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": " when omitted; a range slider must provide a tuple."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "非受控模式下的初始值。省略时，单值滑块从 "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": " 开始；区间滑块必须提供二元组。"
+      }
+    ],
+    "defaultValue": "0",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "number | SliderRangeValue"
+        }
+      ]
+    }
+  },
+  {
+    "name": "disabled",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Disable the slider and prevent pointer/touch interaction."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "禁用滑块，阻止指针/触摸交互。"
+      }
+    ],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "enableRTL",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Enable right-to-left layout. When "
+      },
+      {
+        "kind": "code",
+        "text": "`true`"
+      },
+      {
+        "kind": "text",
+        "text": ", the slider range grows from right to left."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "启用从右到左的布局。为 "
+      },
+      {
+        "kind": "code",
+        "text": "`true`"
+      },
+      {
+        "kind": "text",
+        "text": " 时，滑块范围从右向左增长。"
+      }
+    ],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onDragging",
+    "type": "(value: number | SliderRangeValue) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Triggered when dragging state changes, with the current slider value.\nThe callback fires when dragging starts and when dragging ends."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "拖拽状态变化时触发，传入当前滑块值。开始拖拽和结束拖拽时都会触发。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "(value: number | SliderRangeValue) => void"
+        }
+      ]
+    }
+  },
+  {
+    "name": "onValueChange",
+    "type": "(value: number | SliderRangeValue, source: SliderValueChangeSource) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Triggered after slider-driven value updates, including dragging and\n"
+      },
+      {
+        "kind": "code",
+        "text": "`SliderRef.updateValue`"
+      },
+      {
+        "kind": "text",
+        "text": ". In controlled mode, use this callback to keep\nthe external "
+      },
+      {
+        "kind": "code",
+        "text": "`value`"
+      },
+      {
+        "kind": "text",
+        "text": " prop in sync with the rendered value."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "由滑块自身驱动的值更新后触发，包括拖拽和 "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderRef.updateValue`"
+      },
+      {
+        "kind": "text",
+        "text": "。在受控模式下，请通过此回调让外部 "
+      },
+      {
+        "kind": "code",
+        "text": "`value`"
+      },
+      {
+        "kind": "text",
+        "text": " 属性与渲染值保持同步。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "(value: number | SliderRangeValue, source: SliderValueChangeSource) => void"
+        }
+      ]
+    }
+  },
+  {
+    "name": "onValueCommit",
+    "type": "(value: number | SliderRangeValue) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Triggered at the end of a drag interaction with the final value."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "拖拽交互结束时以最终值触发。适用于只需要最终提交值的场景，例如持久化到后端。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "(value: number | SliderRangeValue) => void"
+        }
+      ]
+    }
+  },
+  {
+    "name": "step",
+    "type": "number",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Stepping interval in range "
+      },
+      {
+        "kind": "code",
+        "text": "`[0, 1]`"
+      },
+      {
+        "kind": "text",
+        "text": ". When set, the value snaps to the nearest multiple of "
+      },
+      {
+        "kind": "code",
+        "text": "`step`"
+      },
+      {
+        "kind": "text",
+        "text": "."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "步进间隔，范围 "
+      },
+      {
+        "kind": "code",
+        "text": "`[0, 1]`"
+      },
+      {
+        "kind": "text",
+        "text": "。设置后值会吸附到最近的 "
+      },
+      {
+        "kind": "code",
+        "text": "`step`"
+      },
+      {
+        "kind": "text",
+        "text": " 倍数。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "style",
+    "type": "CSSProperties",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "style"
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "样式"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "value",
+    "type": "number | SliderRangeValue",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Controlled slider value. Pass a number in "
+      },
+      {
+        "kind": "code",
+        "text": "`[0, 1]`"
+      },
+      {
+        "kind": "text",
+        "text": " or an ordered\nlower/upper tuple. Do not use together with "
+      },
+      {
+        "kind": "code",
+        "text": "`defaultValue`"
+      },
+      {
+        "kind": "text",
+        "text": "."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "受控滑块值。传入范围 "
+      },
+      {
+        "kind": "code",
+        "text": "`[0, 1]`"
+      },
+      {
+        "kind": "text",
+        "text": " 内的数值或有序的下限/上限二元组。请勿与 "
+      },
+      {
+        "kind": "code",
+        "text": "`defaultValue`"
+      },
+      {
+        "kind": "text",
+        "text": " 同时使用。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "number | SliderRangeValue"
+        }
+      ]
+    }
+  }
+]}/>
+
+
+### SliderRangeValue
+
+<UIApiTable source={[
+  {
+    "name": "SliderRangeValue",
+    "type": "readonly [number, number]",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Ordered lower and upper values for a range slider. Both values use the normalized "
+      },
+      {
+        "kind": "code",
+        "text": "`[0, 1]`"
+      },
+      {
+        "kind": "text",
+        "text": " scale.\nDuring dragging, the lower and upper thumbs may meet, but they never cross,\nswap identities, or push one another."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "区间滑块的下限值和上限值。两个值都使用标准化的 "
+      },
+      {
+        "kind": "code",
+        "text": "`[0, 1]`"
+      },
+      {
+        "kind": "text",
+        "text": " 范围。\n拖拽时，下限和上限拇指可以相遇，但不会交叉、交换身份或推动彼此。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderValue
+
+<UIApiTable source={[
+  {
+    "name": "SliderValue",
+    "type": "number | SliderRangeValue",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Value accepted by "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderRoot`"
+      },
+      {
+        "kind": "text",
+        "text": ": either one normalized value or an ordered\nlower/upper tuple."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "code",
+        "text": "`SliderRoot`"
+      },
+      {
+        "kind": "text",
+        "text": " 接受的值：单个标准化数值，或有序的下限/上限二元组。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderThumbIndex
+
+<UIApiTable source={[
+  {
+    "name": "SliderThumbIndex",
+    "type": "0 | 1",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Index of a slider thumb. A single-value slider uses index "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": "; a range\nslider uses index "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": " for the lower value and "
+      },
+      {
+        "kind": "code",
+        "text": "`1`"
+      },
+      {
+        "kind": "text",
+        "text": " for the upper value."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "滑块拇指的索引。单值滑块使用索引 "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": "；区间滑块使用索引 "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": " 表示下限、索引 "
+      },
+      {
+        "kind": "code",
+        "text": "`1`"
+      },
+      {
+        "kind": "text",
+        "text": " 表示上限。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderValueChangeSource
+
+<UIApiTable source={[
+  {
+    "name": "SliderValueChangeSource",
+    "type": "external | drag",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Source of a value change.\n\n- "
+      },
+      {
+        "kind": "code",
+        "text": "`external`"
+      },
+      {
+        "kind": "text",
+        "text": ": value updated by imperative API calls.\n- "
+      },
+      {
+        "kind": "code",
+        "text": "`drag`"
+      },
+      {
+        "kind": "text",
+        "text": ": value updated by pointer/touch dragging."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "值变更的来源。\n\n- "
+      },
+      {
+        "kind": "code",
+        "text": "`external`"
+      },
+      {
+        "kind": "text",
+        "text": "：通过命令式 API 调用更新。\n- "
+      },
+      {
+        "kind": "code",
+        "text": "`drag`"
+      },
+      {
+        "kind": "text",
+        "text": "：通过指针/触摸拖拽更新。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderUpdateValueOptions
+
+Options used by `SliderRef.updateValue`.
+
+<UIApiTable source={[
+  {
+    "name": "force",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Bypass drag-time guard and force update even while dragging."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "跳过拖拽保护，在拖拽过程中也强制更新。"
+      }
+    ],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "source",
+    "type": "SliderValueChangeSource",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Mark the update source for analytics/logic branching."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "标记更新来源，用于分析或逻辑分支。"
+      }
+    ],
+    "defaultValue": "'external'",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderUIVariants
+
+UI variants applied by slider primitives based on interaction state.
+Use them as CSS selectors to style active and disabled states.
+
+<UIApiTable source={[
+  {
+    "name": "ui-active",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Applied while the slider is actively being interacted with. On "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderThumb`"
+      },
+      {
+        "kind": "text",
+        "text": ", only the active thumb receives this variant."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "滑块处于交互中时生效。在 "
+      },
+      {
+        "kind": "code",
+        "text": "`SliderThumb`"
+      },
+      {
+        "kind": "text",
+        "text": " 上，仅当前活动的拇指会获得此状态。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "ui-disabled",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Applied when the slider is disabled."
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "滑块被禁用时生效。"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderTrack
+
+Track primitive props.
+
+`SliderTrack` establishes the measurement/layout coordinate space and renders the base rail.
+
 <UIApiTable source={[
   {
     "name": "children",
@@ -105,10 +920,67 @@ import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
     "docTypeFallback": null
   }
 ]}/>
-      
 
-### SliderThumbProps
 
+### SliderIndicator
+
+Indicator primitive props.
+
+`SliderIndicator` is a pure visual layer. It fills from zero to the value in single-value mode and spans the selected interval in range mode.
+
+<UIApiTable source={[
+  {
+    "name": "className",
+    "type": "string",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "className"
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "类名"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "style",
+    "type": "CSSProperties",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "style"
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "样式"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+### SliderThumb
+
+Thumb primitive props.
+
+`SliderThumb` is positioned by the current ratio inside `SliderTrack` and does not own interaction logic.
 
 <UIApiTable source={[
   {
@@ -156,462 +1028,70 @@ import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
     "docTypeFallback": null
   },
   {
-    "name": "style",
-    "type": "CSSProperties",
+    "name": "index",
+    "type": "SliderThumbIndex",
     "summary": [
       {
         "kind": "text",
-        "text": "style"
+        "text": "Value index represented by this thumb. A single-value slider uses the\ndefault index "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": "; a range slider uses "
+      },
+      {
+        "kind": "code",
+        "text": "`0`"
+      },
+      {
+        "kind": "text",
+        "text": " for the lower thumb and "
+      },
+      {
+        "kind": "code",
+        "text": "`1`"
+      },
+      {
+        "kind": "text",
+        "text": "\nfor the upper thumb."
       }
     ],
     "summary_zh": [
       {
         "kind": "text",
-        "text": "样式"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": true,
-    "isSupportAndroid": true,
-    "isSupportHarmony": true,
-    "docTypeFallback": null
-  }
-]}/>
-    
-      
-
-### SliderRootProps
-
-
-<UIApiTable source={[
-  {
-    "name": "children",
-    "type": "ReactNode",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Primitive children composition, usually: "
+        "text": "此拇指对应的值索引。单值滑块使用默认索引 "
       },
       {
         "kind": "code",
-        "text": "`SliderTrack`"
+        "text": "`0`"
       },
       {
         "kind": "text",
-        "text": " containing "
-      },
-      {
-        "kind": "code",
-        "text": "`SliderIndicator`"
-      },
-      {
-        "kind": "text",
-        "text": " and optional "
+        "text": "；区间滑块使用 "
       },
       {
         "kind": "code",
-        "text": "`SliderThumb`"
+        "text": "`0`"
       },
       {
         "kind": "text",
-        "text": "."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "子原语组件组合，通常为："
+        "text": " 表示下限拇指，使用 "
       },
       {
         "kind": "code",
-        "text": "`SliderTrack`"
+        "text": "`1`"
       },
       {
         "kind": "text",
-        "text": " 内包含 "
-      },
-      {
-        "kind": "code",
-        "text": "`SliderIndicator`"
-      },
-      {
-        "kind": "text",
-        "text": " 以及可选的 "
-      },
-      {
-        "kind": "code",
-        "text": "`SliderThumb`"
-      },
-      {
-        "kind": "text",
-        "text": "。"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "className",
-    "type": "string",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "className"
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "类名"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": true,
-    "isSupportAndroid": true,
-    "isSupportHarmony": true,
-    "docTypeFallback": null
-  },
-  {
-    "name": "defaultValue",
-    "type": "number",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Initial value for uncontrolled usage."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "非受控模式下的初始值。"
+        "text": " 表示上限拇指。"
       }
     ],
     "defaultValue": "0",
     "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "disabled",
-    "type": "boolean",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Disable the slider and prevent pointer/touch interaction."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "禁用滑块，阻止指针/触摸交互。"
-      }
-    ],
-    "defaultValue": "false",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "enableRTL",
-    "type": "boolean",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Enable right-to-left layout. When "
-      },
-      {
-        "kind": "code",
-        "text": "`true`"
-      },
-      {
-        "kind": "text",
-        "text": ", the slider range grows from right to left."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "启用从右到左的布局。为 "
-      },
-      {
-        "kind": "code",
-        "text": "`true`"
-      },
-      {
-        "kind": "text",
-        "text": " 时，滑块范围从右向左增长。"
-      }
-    ],
-    "defaultValue": "false",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "onDragging",
-    "type": "(value: number) => void",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Triggered once when an interaction enters dragging state, with the current progress value."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "交互进入拖拽态时触发一次，传入当前进度值。"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "onValueChange",
-    "type": "(value: number, source: SliderValueChangeSource) => void",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Triggered for slider-driven value updates, including dragging and "
-      },
-      {
-        "kind": "code",
-        "text": "`SliderRef.updateValue`"
-      },
-      {
-        "kind": "text",
-        "text": ". In controlled mode, the slider does **not** update its internal value automatically; use this callback to update the controlled "
-      },
-      {
-        "kind": "code",
-        "text": "`value`"
-      },
-      {
-        "kind": "text",
-        "text": " prop."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "由滑块自身驱动的值更新时触发，包括拖拽和 "
-      },
-      {
-        "kind": "code",
-        "text": "`SliderRef.updateValue`"
-      },
-      {
-        "kind": "text",
-        "text": "。在受控模式下，滑块不会自动更新内部值，需要通过此回调更新外部的 "
-      },
-      {
-        "kind": "code",
-        "text": "`value`"
-      },
-      {
-        "kind": "text",
-        "text": " 属性。"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "onValueCommit",
-    "type": "(value: number) => void",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Triggered at the end of a drag interaction with the final value."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "拖拽交互结束时以最终值触发。适用于只需要最终提交值的场景，例如持久化到后端。"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "step",
-    "type": "number",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Stepping interval in range "
-      },
-      {
-        "kind": "code",
-        "text": "`[0, 1]`"
-      },
-      {
-        "kind": "text",
-        "text": ". When set, the value snaps to the nearest multiple of "
-      },
-      {
-        "kind": "code",
-        "text": "`step`"
-      },
-      {
-        "kind": "text",
-        "text": "."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "步进间隔，范围 "
-      },
-      {
-        "kind": "code",
-        "text": "`[0, 1]`"
-      },
-      {
-        "kind": "text",
-        "text": "。设置后值会吸附到最近的 "
-      },
-      {
-        "kind": "code",
-        "text": "`step`"
-      },
-      {
-        "kind": "text",
-        "text": " 倍数。"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "style",
-    "type": "CSSProperties",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "style"
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "样式"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": true,
-    "isSupportAndroid": true,
-    "isSupportHarmony": true,
-    "docTypeFallback": null
-  },
-  {
-    "name": "value",
-    "type": "number",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Controlled value in range "
-      },
-      {
-        "kind": "code",
-        "text": "`[0, 1]`"
-      },
-      {
-        "kind": "text",
-        "text": ". When provided, the slider is in controlled mode. Do not use together with "
-      },
-      {
-        "kind": "code",
-        "text": "`defaultValue`"
-      },
-      {
-        "kind": "text",
-        "text": "."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "受控模式下的值，范围 "
-      },
-      {
-        "kind": "code",
-        "text": "`[0, 1]`"
-      },
-      {
-        "kind": "text",
-        "text": "。传入此属性时滑块为受控模式，请勿与 "
-      },
-      {
-        "kind": "code",
-        "text": "`defaultValue`"
-      },
-      {
-        "kind": "text",
-        "text": " 同时使用。"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  }
-]}/>
-    
-      
-
-### SliderIndicatorProps
-
-
-<UIApiTable source={[
-  {
-    "name": "className",
-    "type": "string",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "className"
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "类名"
-      }
-    ],
-    "defaultValue": "",
-    "isOption": true,
     "isSupportIOS": true,
     "isSupportAndroid": true,
     "isSupportHarmony": true,
@@ -640,92 +1120,28 @@ import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
     "docTypeFallback": null
   }
 ]}/>
-    
-      
 
-### SliderUpdateValueOptions
-
-
-<UIApiTable source={[
-  {
-    "name": "force",
-    "type": "boolean",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Bypass drag-time guard and force update even while dragging."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "跳过拖拽保护，在拖拽过程中也强制更新。"
-      }
-    ],
-    "defaultValue": "false",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  },
-  {
-    "name": "source",
-    "type": "SliderValueChangeSource",
-    "summary": [
-      {
-        "kind": "text",
-        "text": "Mark the update source for analytics/logic branching."
-      }
-    ],
-    "summary_zh": [
-      {
-        "kind": "text",
-        "text": "标记更新来源，用于分析或逻辑分支。"
-      }
-    ],
-    "defaultValue": "'external'",
-    "isOption": true,
-    "isSupportIOS": false,
-    "isSupportAndroid": false,
-    "isSupportHarmony": false,
-    "docTypeFallback": null
-  }
-]}/>
-    
-      
 
 ## SliderRef
+
+Imperative methods exposed by `SliderRoot` for the selected value shape.
+The generic defaults to `number` for compatibility with existing
+single-value refs; use `SliderRef<SliderRangeValue>` for a range slider.
+
 <UIApiTable source={[
   {
     "name": "getValue",
-    "type": "() => number",
+    "type": "() => number | SliderRangeValue",
     "summary": [
       {
         "kind": "text",
-        "text": "Read current slider value in range "
-      },
-      {
-        "kind": "code",
-        "text": "`[0, 1]`"
-      },
-      {
-        "kind": "text",
-        "text": "."
+        "text": "Read the current slider value using the selected value shape."
       }
     ],
     "summary_zh": [
       {
         "kind": "text",
-        "text": "读取当前滑块值，取值范围 "
-      },
-      {
-        "kind": "code",
-        "text": "`[0, 1]`"
-      },
-      {
-        "kind": "text",
-        "text": "。"
+        "text": "使用所选值形态读取当前滑块值。"
       }
     ],
     "defaultValue": "",
@@ -733,15 +1149,23 @@ import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
     "isSupportIOS": false,
     "isSupportAndroid": false,
     "isSupportHarmony": false,
-    "docTypeFallback": null
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "() => number | SliderRangeValue"
+        }
+      ]
+    }
   },
   {
     "name": "updateValue",
-    "type": "(value: number, options: {force?: boolean, source?: SliderValueChangeSource}) => void",
+    "type": "(value: number | SliderRangeValue, options?: SliderUpdateValueOptions) => void",
     "summary": [
       {
         "kind": "text",
-        "text": "Imperatively set slider value in range "
+        "text": "Imperatively set the slider value. Every number in the selected value\nshape uses the normalized range "
       },
       {
         "kind": "code",
@@ -755,7 +1179,7 @@ import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
     "summary_zh": [
       {
         "kind": "text",
-        "text": "命令式地设置滑块值，取值范围 "
+        "text": "命令式地设置滑块值。所选值形态中的每个数值都使用标准化范围 "
       },
       {
         "kind": "code",
@@ -771,8 +1195,14 @@ import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
     "isSupportIOS": false,
     "isSupportAndroid": false,
     "isSupportHarmony": false,
-    "docTypeFallback": null
+    "docTypeFallback": {
+      "tag": "@docTypeFallback",
+      "content": [
+        {
+          "kind": "text",
+          "text": "(value: number | SliderRangeValue, options?: SliderUpdateValueOptions) => void"
+        }
+      ]
+    }
   }
 ]}/>
-  
-  
