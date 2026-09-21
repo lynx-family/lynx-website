@@ -53,17 +53,13 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
     }
     execFileSync(
       process.execPath,
-      [path.join(root, 'scripts/lynx-example.js')],
+      [path.join(root, 'scripts/lynxtron-examples.js')],
       {
         cwd: temporary,
         env: {
           ...process.env,
           EXAMPLES_DIR: 'examples',
           LINK_PATH: 'output',
-          REMOVE_LINK_PATH: 'false',
-          NATIVE_FRAMEWORK: 'lynxtron',
-          EXAMPLE_GIT_BASE_URL:
-            'https://github.com/lynx-community/lynxtron-examples/tree/main',
         },
       },
     );
@@ -117,6 +113,54 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         }
       }
     }
+    // The generic entry must not infer a Web host from a Lynxtron package.
+    execFileSync(
+      process.execPath,
+      [path.join(root, 'scripts/lynx-example.js')],
+      {
+        cwd: temporary,
+        env: {
+          ...process.env,
+          EXAMPLES_DIR: 'examples',
+          LINK_PATH: 'generic-output',
+        },
+      },
+    );
+    const genericMetadata = readJSON(
+      path.join(
+        temporary,
+        'generic-output/cross-platform-notes/example-metadata.json',
+      ),
+    );
+    assert.ok(
+      genericMetadata.templateFiles.every((entry) => !entry.webHostFile),
+    );
+
+    // An unrelated package with the same directory name must not get the host.
+    fs.writeFileSync(
+      path.join(temporary, 'examples/cross-platform-notes/package.json'),
+      JSON.stringify({ name: '@other/cross-platform-notes', version: '1.0.0' }),
+    );
+    fs.writeFileSync(
+      path.join(temporary, 'output/keep.txt'),
+      'existing example',
+    );
+    execFileSync(
+      process.execPath,
+      [path.join(root, 'scripts/lynxtron-examples.js')],
+      {
+        cwd: temporary,
+        env: { ...process.env, EXAMPLES_DIR: 'examples', LINK_PATH: 'output' },
+      },
+    );
+    const unrelated = readJSON(
+      path.join(temporary, 'output/cross-platform-notes/example-metadata.json'),
+    );
+    assert.ok(unrelated.templateFiles.every((entry) => !entry.webHostFile));
+    assert.equal(
+      fs.readFileSync(path.join(temporary, 'output/keep.txt'), 'utf8'),
+      'existing example',
+    );
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }

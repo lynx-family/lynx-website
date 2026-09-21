@@ -51,7 +51,7 @@ const exampleGitBaseUrl =
   'https://github.com/lynx-family/lynx-examples/tree/main';
 
 // Optional: inject a top-level `nativeFramework` field into every generated
-// example-metadata.json (e.g. "lynxtron"). go-web reads this to pick the
+// example-metadata.json. go-web reads this to pick the
 // correct deep-link scheme and hide the QR tab for native-only examples.
 const nativeFramework = process.env.NATIVE_FRAMEWORK || '';
 
@@ -69,13 +69,6 @@ const exampleFixups = {
       to: 'grid item 3',
     },
   ],
-};
-
-// Complete Web hosts are executable documents rather than raw Lynx bundles.
-// Keep this allowlist local so only reviewed, pinned examples can opt into the
-// iframe path; package metadata alone must not expand the website trust boundary.
-const exampleWebHostFiles = {
-  'cross-platform-notes': 'dist_precompiled/web/index.html',
 };
 
 /**
@@ -275,16 +268,22 @@ function sortFilesByDirectoryFirst(files) {
 /**
  * Parse example data and generate corresponding JSON files
  */
-function parseExampleData() {
-  if (removeLinkPath && fs.existsSync(linkPath)) {
+function parseExampleData({
+  examplesDir: sourceDir = examplesDir,
+  removeLinkPath: clearOutput = removeLinkPath,
+  exampleGitBaseUrl: gitBaseUrl = exampleGitBaseUrl,
+  nativeFramework: framework = nativeFramework,
+  webHostFiles = {},
+} = {}) {
+  if (clearOutput && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
 
-  const examples = fs.readdirSync(examplesDir);
+  const examples = fs.readdirSync(sourceDir);
 
   examples.forEach((example) => {
-    const exampleDir = path.join(examplesDir, example);
+    const exampleDir = path.join(sourceDir, example);
     const lnExampleDir = path.join(linkPath, example);
     // check exampleDir is a directory
     const stats = fs.statSync(exampleDir);
@@ -321,7 +320,9 @@ function parseExampleData() {
     const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
 
     const previewImage = files.find((file) => previewImageReg.test(file));
-    const webHostFile = exampleWebHostFiles[example];
+    const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
+      ? webHostFiles[packageJSON.name]
+      : undefined;
     const templateFiles = getTemplateFiles(filesFilters, webHostFile);
 
     const metadata = {
@@ -330,10 +331,9 @@ function parseExampleData() {
       files: sortedFiles,
       previewImage: previewImage,
       templateFiles: templateFiles,
-      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || exampleGitBaseUrl,
+      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || gitBaseUrl,
     };
-    const exampleNativeFramework =
-      packageJSON.nativeFramework || nativeFramework;
+    const exampleNativeFramework = packageJSON.nativeFramework || framework;
     if (exampleNativeFramework) {
       metadata.nativeFramework = exampleNativeFramework;
     }
@@ -347,4 +347,8 @@ function parseExampleData() {
 /**
  * Main function to execute the script
  */
-parseExampleData();
+if (require.main === module) {
+  parseExampleData();
+}
+
+module.exports = { parseExampleData };
