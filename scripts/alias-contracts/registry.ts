@@ -232,22 +232,11 @@ export const aliases = [
     owner: 'consumer',
     visibility: 'public',
     kind: 'subpaths-only',
-    // TODO(https://github.com/lynx-family/lynx-website/issues/1508):
-    // Drop `lynx-ui` after its LazyComponent docs stop importing `@assets`.
-    allowedImporters: ['lynx-website', 'lynx-ui', 'consumer'],
+    allowedImporters: ['lynx-website', 'consumer'],
     supportsBare: false,
     publicSubpaths: [
       ...namespaceSubpaths(
-        [
-          // TODO(https://github.com/lynx-family/lynx-website/issues/1508):
-          // Remove after upstream lynx-ui docs use the stable CDN asset URL.
-          'LazyComponent',
-          'blog',
-          'doc',
-          'home',
-          'lynx-ui-home',
-          'lynxtron',
-        ],
+        ['blog', 'home', 'lynx-ui-home', 'lynxtron'],
         'consumer',
       ),
       {
