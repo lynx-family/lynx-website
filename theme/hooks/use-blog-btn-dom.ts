@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
-import {
-  useBlogPages,
-  useCanonicalLatestBlog,
-  type LatestBlogConfig,
-} from '@site/src/hooks';
+import { useCanonicalLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
 import { BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 
 type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
@@ -12,8 +8,7 @@ type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
 /**
  * Configuration for the blog button on different subsites.
  *
- * For the main site ('/'), the badge uses the same `featured` frontmatter as
- * the Blog page, then falls back to the latest blog post.
+ * For the main site ('/'), the badge shows the latest blog post by date.
  * Use `latestBlogConfig` to customize which blog to show:
  * - Default: shows the latest blog post
  * - `filename`: specify a blog post by its filename (e.g., 'lynx-3-5')
@@ -28,9 +23,9 @@ const config: Record<
 > = {
   '/': {
     text: {
-      // Fallback text if the featured post cannot be read.
-      zh: '了解 Lynxtron',
-      en: 'Explore Lynxtron',
+      // Product-neutral fallback when no blog is available.
+      zh: '阅读最新博客',
+      en: 'Read the Latest Blog',
     },
     // Or use an external link:
     // latestBlogConfig: {
@@ -63,9 +58,6 @@ const useBlogBtnDom = (src: string) => {
   const { page } = usePageData();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
-  const featuredBlogFilename = useBlogPages().find(
-    (blog) => blog.featured,
-  )?.filename;
 
   const configKey = useMemo(() => {
     return (
@@ -79,19 +71,12 @@ const useBlogBtnDom = (src: string) => {
     ) as ConfigKey;
   }, [src]);
 
-  const latestBlogConfig = useMemo<LatestBlogConfig | undefined>(() => {
-    const configured = config[configKey].latestBlogConfig;
-    if (configured || configKey !== '/' || !featuredBlogFilename) {
-      return configured;
-    }
-    return { filename: featuredBlogFilename };
-  }, [configKey, featuredBlogFilename]);
   const {
     blog,
     text: blogText,
     link: blogLink,
     isExternal,
-  } = useCanonicalLatestBlog(latestBlogConfig);
+  } = useCanonicalLatestBlog(config[configKey].latestBlogConfig);
 
   const handleInteraction = useCallback(() => {
     if (!blogLink) return;
