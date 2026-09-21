@@ -1,0 +1,96 @@
+---
+api: css/properties/-x-animation-color-interpolation
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# -x-animation-color-interpolation
+
+<APISummary />
+
+## 介绍
+
+开启 `enable-new-animator={{true}}` 后，可以通过 `-x-animation-color-interpolation` 属性控制 CSS 动画和过渡中的颜色插值算法。显式设置为 `sRGB` 或 `linearRGB`，可以让各平台使用相同的颜色插值算法。
+
+## 语法
+
+```css
+.element {
+  /* 选择一个值；这里使用 sRGB 模式。 */
+  -x-animation-color-interpolation: sRGB;
+}
+```
+
+### 取值
+
+取值区分大小写。
+
+#### auto
+
+**默认值。** 根据平台选择 `sRGB` 或 `linearRGB`：
+
+- 在 iOS 上，使用 `sRGB`。
+- 在其他平台上，使用 `linearRGB`。
+
+需要统一各平台的颜色插值算法时，请显式设置 `sRGB` 或 `linearRGB`。
+
+#### sRGB
+
+在 sRGB 编码的空间中，使用预乘 alpha 的 RGB 通道值进行线性插值，不进行色彩空间转换。
+
+#### linearRGB
+
+使用标准 sRGB 分段传递函数，将 RGB 通道值解码到线性光空间，进行线性插值，再编码回 sRGB。这里的“线性”指色彩空间与光强的关系，而不是动画的缓动函数。
+
+### 透明度插值
+
+所有模式均使用预乘 alpha 插值：先在所选色彩空间中将 RGB 通道乘以 alpha，再分别对预乘后的 RGB 和 alpha 进行线性插值，最后除以插值后的 alpha，还原 RGB。对于 `linearRGB`，预乘发生在线性光空间中，还原后再编码回 sRGB。alpha 为 0 时，结果为完全透明的黑色。
+
+因此，完全透明颜色的 RGB 值不会影响可见的中间色。例如，从不透明红色过渡到 `transparent`，在 50% 插值进度时得到半透明红色，而不会变暗。
+
+### 中间色示例
+
+对于不透明的黑色到白色，在插值进度为 50% 时：
+
+| 属性值             | 中间色               |
+| ------------------ | -------------------- |
+| `sRGB`             | `rgb(128, 128, 128)` |
+| `linearRGB`        | `rgb(188, 188, 188)` |
+| `auto`（iOS）      | `rgb(128, 128, 128)` |
+| `auto`（其他平台） | `rgb(188, 188, 188)` |
+
+这里的 50% 指经过缓动函数后的插值进度。使用 `linear` 缓动函数时，它对应两个关键帧之间的时间中点。
+
+## 形式定义
+
+import { PropertyDefinition } from '@lynx/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>auto</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## 形式语法
+
+```
+-x-animation-color-interpolation = auto | sRGB | linearRGB
+```
+
+## 与 Web 的区别
+
+- Lynx 特有的属性，不能作为通用 Web CSS 属性使用。
+- `sRGB` 和 `linearRGB` 分别对应 Web 色彩术语中的 `srgb` 和 `srgb-linear` 插值空间，均按照 [CSS Color 4 的预乘 alpha 规则](https://www.w3.org/TR/css-color-4/#interpolation-alpha)处理透明度。
+
+## 扩展阅读
+
+- [animation](./animation.mdx)
+- [animation-name](./animation-name.mdx)
+- [animation-timing-function](./animation-timing-function.mdx)
+- [CSS animation event](../../lynx-api/event/animation-event.mdx)
+- [Animate API](../../lynx-api/lynx/lynx-animate-api.mdx)
+
+## 兼容性
+
+<APITable />
