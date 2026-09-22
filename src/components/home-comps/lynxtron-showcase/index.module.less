@@ -4,14 +4,46 @@
 }
 
 .video {
+  --video-mask-top: 22.6015625%;
   display: block;
   width: 100%;
   max-width: 960px;
   height: auto;
   margin-top: 24px;
-  border: 1px solid var(--lynxtron-card-border-color);
-  border-radius: 16px;
-  background: var(--lynxtron-card-surface-bg);
+  // The application occupies the middle 80% of the source video.
+  // Hide the surrounding black canvas and fade its baked-in bottom gradient.
+  -webkit-mask-image:
+    linear-gradient(
+      to right,
+      transparent 9%,
+      #000 10%,
+      #000 90%,
+      transparent 91%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(var(--video-mask-top) - 0.4%),
+      #000 var(--video-mask-top),
+      #000 72%,
+      transparent 100%
+    );
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent 9%,
+      #000 10%,
+      #000 90%,
+      transparent 91%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(var(--video-mask-top) - 0.4%),
+      #000 var(--video-mask-top),
+      #000 72%,
+      transparent 100%
+    );
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 // Preserve the official navbar's 35:50 image sizes and 10px gap at 2x scale.

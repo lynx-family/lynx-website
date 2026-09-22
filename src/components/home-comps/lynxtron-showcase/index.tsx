@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { useLang } from '@rspress/core/runtime';
+import { getVideoMaskTop } from './video-mask';
 import showcaseStyles from '../showcase/index.module.less';
 import styles from './index.module.less';
 // Original inline logo images from https://www.retouchpics.com/.
@@ -9,6 +11,40 @@ const demoVideo =
 
 export const LynxtronShowcase = () => {
   const isZh = useLang() === 'zh';
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    let frame = 0;
+    let animation = 0;
+    const update = (time: number) => {
+      video.style.setProperty('--video-mask-top', `${getVideoMaskTop(time)}%`);
+    };
+    const sync = () => update(video.currentTime);
+    // Follow decoded frames, not a separate CSS animation clock: buffering,
+    // seeking and loop restarts must keep the mask aligned with the video.
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      const tick: VideoFrameRequestCallback = (_, metadata) => {
+        update(metadata.mediaTime);
+        frame = video.requestVideoFrameCallback(tick);
+      };
+      frame = video.requestVideoFrameCallback(tick);
+    } else {
+      const tick = () => {
+        sync();
+        animation = requestAnimationFrame(tick);
+      };
+      animation = requestAnimationFrame(tick);
+    }
+    sync();
+    video.addEventListener('seeked', sync);
+    return () => {
+      if (frame) video.cancelVideoFrameCallback(frame);
+      if (animation) cancelAnimationFrame(animation);
+      video.removeEventListener('seeked', sync);
+    };
+  }, []);
 
   return (
     <section
@@ -40,6 +76,7 @@ export const LynxtronShowcase = () => {
         </a>
       </h2>
       <video
+        ref={videoRef}
         className={styles.video}
         autoPlay
         muted

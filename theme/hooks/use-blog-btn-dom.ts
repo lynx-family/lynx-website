@@ -51,6 +51,7 @@ const config: Record<
     },
   },
   '/lynxtron/': {
+    latestBlogConfig: { filename: 'lynxtron' },
     text: {
       zh: 'Lynxtron',
       en: 'Lynxtron',
@@ -86,6 +87,7 @@ const useBlogBtnDom = (src: string) => {
     return { filename: featuredBlogFilename };
   }, [configKey, featuredBlogFilename]);
   const {
+    blog,
     text: blogText,
     link: blogLink,
     isExternal,
@@ -107,13 +109,16 @@ const useBlogBtnDom = (src: string) => {
 
   // Determine the display text
   const displayText = useMemo(() => {
+    if (configKey === '/lynxtron/') {
+      return blog?.title || config[configKey].text[lang];
+    }
     if (configKey === '/') {
       // For main site, use dynamic blog text or fallback
       return blogText || config[configKey].text[lang];
     }
     // For subsites, use static text
     return config[configKey].text[lang];
-  }, [configKey, blogText, lang]);
+  }, [configKey, blog, blogText, lang]);
 
   useEffect(() => {
     if (page.pageType !== 'home') return;
@@ -130,7 +135,7 @@ const useBlogBtnDom = (src: string) => {
     if (!badgeElement) return;
 
     badgeElement.className =
-      configKey === '/'
+      configKey === '/' || configKey === '/lynxtron/'
         ? `rp-home-hero__badge active-hover`
         : `rp-home-hero__badge`;
     // Upgrade the SSG fallback copy once the post's text is known. The badge
@@ -141,7 +146,7 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.textContent = displayText;
     }
 
-    if (configKey === '/') {
+    if (configKey === '/' || configKey === '/lynxtron/') {
       badgeElement.addEventListener('click', handleInteraction);
       badgeElement.addEventListener('touchstart', handleInteraction);
     }
