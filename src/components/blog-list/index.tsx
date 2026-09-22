@@ -104,14 +104,9 @@ export function BlogList({ limit }: { limit?: number }) {
   const pages = limitNum ? blogPages.slice(0, limitNum) : blogPages;
   const isEmbedded = !!limitNum;
 
-  // A post can opt into the blog entry banner through frontmatter. The other
-  // posts remain ordered by date in the grid, including the latest releases.
-  const featuredPost = !isEmbedded
-    ? pages.find((page) => page.featured) || pages[0] || null
-    : null;
-  const gridPosts = !isEmbedded
-    ? pages.filter((page) => page !== featuredPost)
-    : pages;
+  // In full page mode: first post is featured, rest go to grid
+  const featuredPost = !isEmbedded && pages.length > 0 ? pages[0] : null;
+  const gridPosts = !isEmbedded ? pages.slice(1) : pages;
 
   useTiltEffect('[data-tilt-card]', { isMobile });
 

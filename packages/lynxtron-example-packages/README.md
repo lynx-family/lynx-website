@@ -1,44 +1,33 @@
-# Lynxtron documentation examples
+# Lynxtron Example Packages
 
-This directory owns examples published by `lynx-community/lynxtron-examples`.
-Do not add these packages to `lynx-example-packages`: that directory belongs to
-the `lynx-family/lynx-examples` publishing and downstream conversion flow.
+Aggregates `@lynxtron-examples/*` packages from npm so the documentation site can render them via the `<Go>` component.
 
-From the website workspace root, install the frozen lockfile and run
-`pnpm prepare:lynxtron-example-data` (`node scripts/lynxtron-examples.js`).
-This dedicated entry configures the shared generator and reads this directory's
-`node_modules/@lynxtron-examples` and adds source files, precompiled bundles and
-metadata to `docs/public/lynx-examples`. Run the generic example generator first,
-because it clears the shared output directory. Go deep links continue to use the
-upstream `@lynxtron-examples/*` showcase identifiers.
+Sibling of [`lynx-example-packages/`](../lynx-example-packages) and [`lynx-ui-example-packages/`](../lynx-ui-example-packages); the workflow and build script (`scripts/lynx-example.js`) are shared.
 
-Downstream builds that include Lynxtron pages must explicitly provide these
-packages and run this separate generation step. Converting packages from
-`lynx-family/lynx-examples` does not supply Lynxtron examples. Preserve the example
-directory names, source files, precompiled Web assets and metadata consumed by
-the documentation when providing a downstream package source.
+## Workflow for Contributors
 
-The Lynxtron entry owns the Web-host allowlist, keyed by full package name
-(for example, `@lynxtron-examples/cross-platform-notes`). The shared generator
-does not enable these iframe previews on its own. Downstream builds must invoke
-the dedicated entry and preserve these package names. `EXAMPLES_DIR` and
-`LINK_PATH` may override the input and output directories; existing output is
-preserved. Validate downstream adaptation against the final exact website
-commit before merging, not just a local OSS build.
+1. **Add/Update Dependency**:
+   Edit [`package.json`](./package.json) to add or update the example package version (e.g., `"@lynxtron-examples/file-explorer": "0.0.2"`).
 
-## Independent installation
+   > The source code for examples is hosted in the [lynxtron-examples](https://github.com/lynx-community/lynxtron-examples) repository.
 
-The pinned Go 0.1.18 release archives bundle local runtime dependencies, including
-the Native Texture extension, while preserving their editable source files.
-No root workspace override is needed. Downstream source-only consumers can copy
-this directory's `package.json` into an empty directory and run
-`pnpm install --ignore-workspace --ignore-scripts`. Install scripts are unnecessary
-for generating documentation from the source and precompiled files.
+2. **Install**:
+   Run `pnpm install` in the root directory to download the package into `node_modules`.
 
-## Usage in documentation
+3. **Generate Assets**:
+   The website build process automatically runs the generation script. To run it manually:
 
-`nativeFramework` is injected into `example-metadata.json` by the generator.
-Use the package's unscoped name as the example directory:
+   ```bash
+   pnpm prepare:lynxtron-example-data
+   ```
+
+   This appends metadata and assets to `docs/public/lynx-examples/` (shared namespace with the other example packages, keyed by directory name).
+
+## Usage in Documentation
+
+`nativeFramework` is injected into `example-metadata.json` automatically by the
+build script (via the `NATIVE_FRAMEWORK=lynxtron` env var), so you don't need to
+repeat it on every `<Go>` call.
 
 ```tsx
 import { Go } from '@lynx';
@@ -50,6 +39,3 @@ import { Go } from '@lynx';
   webPreview={false}
 />;
 ```
-
-Run `node --test scripts/lynxtron-example-pipeline.test.cjs` from the workspace
-root to check source ownership, blog references and Web-host metadata generation.

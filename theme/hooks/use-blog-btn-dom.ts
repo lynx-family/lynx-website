@@ -8,7 +8,7 @@ type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
 /**
  * Configuration for the blog button on different subsites.
  *
- * For the main site ('/'), the badge shows the latest blog post by date.
+ * For the main site ('/'), the badge will show the latest blog post dynamically.
  * Use `latestBlogConfig` to customize which blog to show:
  * - Default: shows the latest blog post
  * - `filename`: specify a blog post by its filename (e.g., 'lynx-3-5')
@@ -23,10 +23,14 @@ const config: Record<
 > = {
   '/': {
     text: {
-      // Product-neutral fallback when no blog is available.
+      // Fallback text if no blog is found
       zh: '阅读最新博客',
       en: 'Read the Latest Blog',
     },
+    // Optional: customize which blog to show
+    // latestBlogConfig: {
+    //   filename: 'lynx-3-5', // Show a specific blog
+    // },
     // Or use an external link:
     // latestBlogConfig: {
     //   externalLink: 'https://example.com',
@@ -46,7 +50,6 @@ const config: Record<
     },
   },
   '/lynxtron/': {
-    latestBlogConfig: { filename: 'lynxtron' },
     text: {
       zh: 'Lynxtron',
       en: 'Lynxtron',
@@ -71,12 +74,12 @@ const useBlogBtnDom = (src: string) => {
     ) as ConfigKey;
   }, [src]);
 
+  const latestBlogConfig = config[configKey].latestBlogConfig;
   const {
-    blog,
     text: blogText,
     link: blogLink,
     isExternal,
-  } = useCanonicalLatestBlog(config[configKey].latestBlogConfig);
+  } = useCanonicalLatestBlog(latestBlogConfig);
 
   const handleInteraction = useCallback(() => {
     if (!blogLink) return;
@@ -94,16 +97,13 @@ const useBlogBtnDom = (src: string) => {
 
   // Determine the display text
   const displayText = useMemo(() => {
-    if (configKey === '/lynxtron/') {
-      return blog?.title || config[configKey].text[lang];
-    }
     if (configKey === '/') {
       // For main site, use dynamic blog text or fallback
       return blogText || config[configKey].text[lang];
     }
     // For subsites, use static text
     return config[configKey].text[lang];
-  }, [configKey, blog, blogText, lang]);
+  }, [configKey, blogText, lang]);
 
   useEffect(() => {
     if (page.pageType !== 'home') return;
@@ -120,7 +120,7 @@ const useBlogBtnDom = (src: string) => {
     if (!badgeElement) return;
 
     badgeElement.className =
-      configKey === '/' || configKey === '/lynxtron/'
+      configKey === '/'
         ? `rp-home-hero__badge active-hover`
         : `rp-home-hero__badge`;
     // Upgrade the SSG fallback copy once the post's text is known. The badge
@@ -131,7 +131,7 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.textContent = displayText;
     }
 
-    if (configKey === '/' || configKey === '/lynxtron/') {
+    if (configKey === '/') {
       badgeElement.addEventListener('click', handleInteraction);
       badgeElement.addEventListener('touchstart', handleInteraction);
     }

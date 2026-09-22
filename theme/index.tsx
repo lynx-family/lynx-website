@@ -33,7 +33,6 @@ import {
   Footer,
   GalaxyHeroBackground,
   LynxtronFeatures,
-  LynxtronShowcase,
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
@@ -248,10 +247,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
     afterHero = isLynxtron ? (
-      <>
-        <LynxtronFeatures />
-        <LynxtronShowcase />
-      </>
+      <LynxtronFeatures />
     ) : (
       <>
         <Features src={routePath} />
