@@ -7,7 +7,7 @@ import styles from './index.module.less';
 import brandAssets from './brand-assets.json';
 
 const demoVideo =
-  'https://lf3-s.vlabstatic.com/obj/vilab-static/ies/retouch/retouch_pro_pc/cn/static/media/edit-intro.30aa765da1.mp4';
+  'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/showcase-h264-960-20260922.mp4';
 
 export const LynxtronShowcase = () => {
   const isZh = useLang() === 'zh';
