@@ -156,6 +156,40 @@ jobs:
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
 
+  # Enforce final media blobs relative to the target tree of the synthetic merge.
+  # The offline media processor is deliberately not invoked by CI.
+  media-budget:
+    name: Media Budget
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
+
+      - name: Test Media Budget
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        run: node --test scripts/media/check-budget.test.mjs
+
+      - name: Check Media Budget
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        run: node scripts/media/check-budget.mjs HEAD^1 HEAD
+
+      - name: Skip Push Check
+        if: ${{ github.event_name == 'push' }}
+        run: echo "[media-budget] success — media budget is enforced before merge."
+
   # Branch protection requires Done as the aggregate status. Add every new
   # required CI job to needs so its result cannot bypass this gate.
   done:
@@ -165,6 +199,7 @@ jobs:
       - dependency-provenance
       - generator-portability
       - documentation-imports
+      - media-budget
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions: {}

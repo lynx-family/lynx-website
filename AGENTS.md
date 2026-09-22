@@ -106,6 +106,20 @@ build image, document the prerequisite, and add CI coverage for its absence or
 availability. A command being installed on a developer machine or GitHub-hosted
 runner does not make it part of the build contract.
 
+## Media Assets
+
+The contributor-facing rules in
+[Media Assets](./CONTRIBUTING.md#media-assets) are the source of truth for
+media budgets and local media processing. Automated agents must not add or
+modify entries in `scripts/media/budget-allowlist.json`; exception decisions
+belong to developers and maintainers. Preserve the `media-budget` CI contract.
+
+Before adding or replacing any media file, double-check whether it really needs
+to live in this repository. Authoring/source assets should not enter the website
+repository. Identify the consuming page, example, test, or build step, and
+consider reusing an existing asset, a smaller web export, or a documentation CDN
+URL. Passing the size budget alone does not justify inclusion.
+
 ### `api-stats.json` doc links
 
 `packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API. **When the
