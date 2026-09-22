@@ -6,10 +6,6 @@ authors: ['Yradex', 'huxpro', 'reactlynx']
 description: 'ReactLynx encodes background React updates into patches applied to native views via Element PAPI on the main thread; Instant First-Frame Rendering unblocks the initial frame from this wait pipeline.'
 ---
 
-import backgroundFirstFrameWaitImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-first-frame-wait.png?url';
-import backgroundRenderingPatchImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-rendering-patch.png?url';
-import dualBuildPathsImg from '@assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png?url';
-import instantFirstFrameStartupImg from '@assets/blog/reactlynx-instant-first-frame-rendering/instant-first-frame-startup.png?url';
 import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader />
@@ -27,7 +23,7 @@ Background rendering, more formally known as "[background-driven rendering](/gui
 ReactLynx's background runtime builds on [Preact](https://preactjs.com/), which provides the component model, Hooks, and the render and diff pipeline. The background thread, however, has no DOM and cannot access native views on the main thread. ReactLynx therefore intercepts Preact's host operations on the background thread: element creation, attribute changes, and structural updates produced during render and diff don't touch views directly. Instead, they are recorded as a Patch and sent to the main thread during commit.
 
 <img
-  src={backgroundRenderingPatchImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/background-rendering-patch.png"
   alt="Background thread creates a Patch and commits it asynchronously to the main thread"
   style={{ width: '100%', margin: '24px 0' }}
 />
@@ -160,7 +156,7 @@ for (let i = 0; i < patch.length; ++i) {
 During steady-state execution, this Patch mechanism updates the UI rapidly. But the first frame cannot rely on this mechanism alone. The main thread cannot yet obtain the first-screen view structure, even though it is already capable of native rendering. It must wait for the background thread to initialize, execute application code, perform the initial render/diff, and send back the first batch of initial Patches. This weakens the benefits of Lynx's dual-threaded architecture:
 
 <img
-  src={backgroundFirstFrameWaitImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/background-first-frame-wait.png"
   alt="Without instant first-frame rendering, the main thread waits for the first-screen Patch before drawing"
   style={{ width: '100%', margin: '24px 0' }}
 />
@@ -168,7 +164,7 @@ During steady-state execution, this Patch mechanism updates the UI rapidly. But 
 ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimizes precisely this startup wait time. It splits out a fast path for the first frame that the main thread can execute immediately: the main thread runs the pruned main-thread artifact to create the initial native views right away, while the background thread concurrently boots the full React runtime and continues handling subsequent business logic. Once the initial background render is ready, ReactLynx performs a cross-thread handover to associate the background result with the main thread's existing views. Subsequent updates then return to the background-driven Patch -> Element PAPI pipeline.
 
 <img
-  src={instantFirstFrameStartupImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/instant-first-frame-startup.png"
   alt="With instant first-frame rendering, the main thread draws first and later updates arrive after handover"
   style={{ width: '100%', margin: '24px 0' }}
 />
@@ -178,7 +174,7 @@ ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimi
 With responsibilities split across two threads, a single React entry module can no longer emit just one piece of code. ReactLynx's build toolchain, [Rspeedy](/rspeedy/), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, which creates the Elements of the first frame along the first-screen path; and `background.js` on the background thread, preserving the complete React logic. In default development builds, these two files can typically be found under [`.rspeedy/[name]/`](/rspeedy/output). Ultimately, they are packaged together into the same `lynx.bundle` and loaded per thread by the Lynx engine.
 
 <img
-  src={dualBuildPathsImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png"
   alt="One React entry is built into a main-thread first-screen path and a background full React path"
   style={{ width: '100%', margin: '24px 0' }}
 />
