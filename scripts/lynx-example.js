@@ -304,7 +304,10 @@ function parseExampleData({
     // get all files
     const allFiles = getAllFiles(exampleDir, []);
 
-    const files = allFiles.map((file) => path.relative(exampleDir, file));
+    // Metadata paths are URLs, including on Windows build hosts.
+    const files = allFiles.map((file) =>
+      path.relative(exampleDir, file).split(path.sep).join('/'),
+    );
 
     // preview image
     const previewImageReg = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;

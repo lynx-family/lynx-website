@@ -4,6 +4,69 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
+
+test('Windows relative paths produce POSIX metadata and match the Web host', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lynx-example-win-'));
+  try {
+    const exampleDir = path.join(root, 'examples', 'notes');
+    fs.mkdirSync(path.join(exampleDir, 'dist_precompiled', 'web'), {
+      recursive: true,
+    });
+    fs.writeFileSync(
+      path.join(exampleDir, 'package.json'),
+      JSON.stringify({ name: '@lynxtron-examples/cross-platform-notes' }),
+    );
+    fs.writeFileSync(path.join(exampleDir, 'main.lynx.bundle'), 'bundle');
+    fs.writeFileSync(
+      path.join(exampleDir, 'dist_precompiled', 'web', 'index.html'),
+      '<html></html>',
+    );
+    const module = { exports: {} };
+    // Keep filesystem operations native, but emulate Windows path.relative/sep.
+    const windowsMetadataPath = {
+      ...path,
+      sep: '\\',
+      relative: (from, to) =>
+        path.relative(from, to).split(path.sep).join('\\'),
+    };
+    vm.runInNewContext(
+      fs.readFileSync(path.join(__dirname, 'lynx-example.js'), 'utf8'),
+      {
+        module,
+        require: (name) => {
+          if (name === 'fs') return fs;
+          if (name === 'path') return windowsMetadataPath;
+          throw new Error(`Unexpected import: ${name}`);
+        },
+        process: { cwd: () => root, env: { LINK_PATH: 'output' } },
+        console,
+      },
+    );
+    module.exports.parseExampleData({
+      examplesDir: path.join(root, 'examples'),
+      webHostFiles: {
+        '@lynxtron-examples/cross-platform-notes':
+          'dist_precompiled/web/index.html',
+      },
+    });
+    const metadata = JSON.parse(
+      fs.readFileSync(
+        path.join(root, 'output', 'notes', 'example-metadata.json'),
+        'utf8',
+      ),
+    );
+    assert.ok(metadata.files.includes('dist_precompiled/web/index.html'));
+    assert.ok(metadata.files.every((file) => !file.includes('\\')));
+    assert.ok(
+      metadata.templateFiles.some(
+        (entry) => entry.webHostFile === 'dist_precompiled/web/index.html',
+      ),
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('copies example assets without external commands', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lynx-example-'));
