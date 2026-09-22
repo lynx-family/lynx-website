@@ -32,7 +32,9 @@ export const useBlogPages = (): BlogItem[] => {
     .filter((page) => page.lang === lang)
     .filter(
       (page) =>
-        page.routePath.includes('/blog/') && !page.routePath.endsWith('/blog/'),
+        page.routePath.includes('/blog/') &&
+        !page.routePath.endsWith('/blog/') &&
+        page.frontmatter?.blog_hidden !== true,
     )
     .sort((a, b) => {
       const dateA = a.frontmatter?.date

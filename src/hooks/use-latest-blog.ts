@@ -72,6 +72,13 @@ export const useLatestBlog = (config?: LatestBlogConfig): LatestBlogResult => {
         isExternal: false,
       };
     }
+
+    return {
+      blog: null,
+      text: null,
+      link: null,
+      isExternal: false,
+    };
   }
 
   // Scenario 1: Latest blog (default)
