@@ -6,10 +6,6 @@ authors: ['Yradex', 'huxpro', 'reactlynx']
 description: 'ReactLynx 把后台 React 更新编码成 Patch，再由主线程通过 Element PAPI 落到原生视图；首帧直出则把启动第一帧从这条等待链路里拆出来。'
 ---
 
-import backgroundFirstFrameWaitImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-first-frame-wait.png?url';
-import backgroundRenderingPatchImg from '@assets/blog/reactlynx-instant-first-frame-rendering/background-rendering-patch.png?url';
-import dualBuildPathsImg from '@assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png?url';
-import instantFirstFrameStartupImg from '@assets/blog/reactlynx-instant-first-frame-rendering/instant-first-frame-startup.png?url';
 import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader />
@@ -27,7 +23,7 @@ _不少开发者都好奇：ReactLynx 是怎么让 React 跑在双线程上的�
 ReactLynx 的后台运行时建立在 [Preact](https://preactjs.com/) 之上，组件、Hooks 以及 render / diff 都由 Preact 驱动。不同的是，后台线程没有 DOM，也拿不到主线程的原生视图。ReactLynx 因此在后台线程接管了 Preact 的宿主操作：render / diff 过程中发生的创建、属性修改和结构变化不会直接作用于视图，而是被记录成 Patch，再在 commit 阶段统一发送给主线程。
 
 <img
-  src={backgroundRenderingPatchImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/background-rendering-patch.png"
   alt="后台线程生成 Patch，异步提交给主线程"
   style={{ width: '100%', margin: '24px 0' }}
 />
@@ -160,7 +156,7 @@ for (let i = 0; i < patch.length; ++i) {
 在页面稳定运行时，这套 Patch 机制能够快速完成 UI 更新。但首帧不能只靠这套机制。主线程明明已经可以绘制，却还拿不到首屏的视图结构，只能等后台完成初始化、加载业务代码、首轮 render / diff，再送回第一批首屏 Patch，这就削弱了 Lynx 双线程的意义：
 
 <img
-  src={backgroundFirstFrameWaitImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/background-first-frame-wait.png"
   alt="没有首帧直出时，主线程要等首屏 Patch 才能绘制"
   style={{ width: '100%', margin: '24px 0' }}
 />
@@ -168,7 +164,7 @@ for (let i = 0; i < patch.length; ++i) {
 ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/interaction/ifr)优化的就是这段启动等待。它会为第一帧拆出一条主线程可以先走的短路径：主线程执行裁剪后的首屏产物，先创建初始原生视图；后台线程同时启动完整的 React 运行时，并继续负责后续业务逻辑。等后台首轮渲染就绪后，ReactLynx 再执行一次跨线程接管（handover），把后台渲染结果与主线程已有视图关联起来，后续更新便回到 Background Rendering 的 Patch -> Element PAPI 链路。
 
 <img
-  src={instantFirstFrameStartupImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/instant-first-frame-startup.png"
   alt="有了首帧直出，主线程先绘制，后续更新在接管后到达"
   style={{ width: '100%', margin: '24px 0' }}
 />
@@ -178,7 +174,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
 两个线程职责分开后，同一个 React entry（入口模块）就不能只产出一份代码。ReactLynx 的配套构建工具 [Rspeedy](/rspeedy/) 会对同一 entry 生成双线程产物：主线程侧生成 `main-thread.js`，沿首屏路径创建首帧的 Element；后台侧生成 `background.js`，保留完整 React 逻辑。默认开发产物里通常能在 [`.rspeedy/[name]/`](/rspeedy/output) 下看到这两个文件，最终它们会一起进入 `lynx.bundle`，由 Lynx 引擎按线程加载。
 
 <img
-  src={dualBuildPathsImg}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png"
   alt="同一个 React entry 编译出主线程首屏路径和后台完整 React 路径"
   style={{ width: '100%', margin: '24px 0' }}
 />
