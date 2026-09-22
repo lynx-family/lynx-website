@@ -108,6 +108,7 @@ export function Go(props: GoProps) {
     <GoConfigProvider config={config}>
       <GoBase
         {...props}
+        langAlias={{ cc: 'cpp', ...props.langAlias }}
         rightFooter={
           <>
             {props.rightFooter}
