@@ -161,22 +161,15 @@ Because we removed the system-native title bar, we need to implement close, mini
 ```tsx
 // src/app/App.tsx
 const handleClose = () => {
-  // Call NativeModules to send a message to the main process.
-  NativeModules.bridge.call('close', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('close', {}, () => {});
 };
 
 const handleMinimize = () => {
-  NativeModules.bridge.call('minimize', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('minimize', {}, () => {});
 };
 
 const handleFullScreenTap = () => {
-  NativeModules.bridge.call('maximize', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('maximize', {}, () => {});
 };
 ```
 
@@ -192,21 +185,24 @@ const handleFullScreenTap = () => {
 // Called from createWindow() above.
 function registerWindowControls(window: LynxWindow) {
   let isFullScreen = false;
-  window.on('-lynx-invoke', (event, params) => {
-    console.log('window is invoke', params);
-    if (params == 'close') {
+  window.on('-lynx-invoke', (event, methodName, params) => {
+    console.log('window is invoked', methodName, params);
+    if (methodName === 'close') {
       console.log('Closing window...');
+      event.sendReply(null);
       window.close();
     }
 
-    if (params == 'minimize') {
+    if (methodName === 'minimize') {
       window.minimize();
+      event.sendReply(null);
     }
 
-    if (params == 'maximize') {
+    if (methodName === 'maximize') {
       isFullScreen = !isFullScreen;
       console.log('Toggling full screen to:', isFullScreen);
       window.setFullScreen(isFullScreen);
+      event.sendReply(null);
     }
   });
 }
