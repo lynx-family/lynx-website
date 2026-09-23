@@ -46,6 +46,7 @@ The downstream prepare flow directly executes:
 
 - `scripts/luna-demo.js`
 - `scripts/lynx-example.js`
+- `scripts/lynxtron-examples.js`
 
 The downstream directly executes `scripts/lynx-living-spec.js` from its
 installed `lynx-doc` dependency through its own Living Spec orchestration layer.
