@@ -100,7 +100,7 @@ Since the focus of this tutorial is not on how to style your UI, you may just sa
   padding-bottom: 20px;
   padding-left: 20px;
   padding-right: 20px;
-  height: calc(100% - 48px);
+  height: 100%;
   list-main-axis-gap: 10px;
   list-cross-axis-gap: 10px;
 }
@@ -340,7 +340,8 @@ Similar to the `bindtap` event used to add the like functionality, we add the [`
 const onScroll = (event: ScrollEvent) => {
   scrollbarRef.current?.adjustScrollbar(
     event.detail.scrollTop,
-    event.detail.scrollHeight
+    event.detail.scrollHeight,
+    event.detail.listHeight || SystemInfo.pixelHeight / SystemInfo.pixelRatio
   );
 };
 ...
@@ -365,8 +366,11 @@ We use many React techniques in this component, such as `forwardRef` and `useImp
 
 ```tsx title="NiceScrollbar.tsx" {14-19}
 ...
-const adjustScrollbar = (scrollTop: number, scrollHeight: number) => {
-  const listHeight = lynx.__globalProps.screenHeight - 48;
+const adjustScrollbar = (
+  scrollTop: number,
+  scrollHeight: number,
+  listHeight: number
+) => {
   const scrollbarHeight = listHeight * (listHeight / scrollHeight);
   const scrollbarTop = listHeight * (scrollTop / scrollHeight);
   setScrollbarHeight(scrollbarHeight);
@@ -375,8 +379,8 @@ const adjustScrollbar = (scrollTop: number, scrollHeight: number) => {
 ...
 ```
 
-:::details \_\_globalProps
-We use [globalProps](/api/lynx-api/lynx/lynx-global-props) in this method, where you can use `screenHeight` and `screenWidth` to get the screen height and width.
+:::details listHeight
+The [`scroll`](/api/elements/built-in/list.html#scroll) event reports `listHeight`, the height of the `<list>` itself. Using it keeps the scrollbar correct whatever box the list ends up with — a full-screen page, a page under Lynx Explorer's title bar, or an embedded preview on the web. Lynx for Web reports `0` there, so the page height stands in; once the list fills the page, it is the same number.
 :::
 
 :::details list-item's estimated-main-axis-size-px
