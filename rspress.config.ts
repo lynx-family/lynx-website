@@ -210,7 +210,8 @@ export default defineConfig({
       ],
     }),
     pluginSitemap({
-      siteUrl: PUBLISH_URL,
+      // An explicit siteUrl must include the version base for crawler URLs.
+      siteUrl: new URL(SITE_BASE, PUBLISH_URL).href,
     }),
     pluginRss({
       siteUrl: PUBLISH_URL,
