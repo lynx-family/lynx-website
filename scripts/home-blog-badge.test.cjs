@@ -63,6 +63,14 @@ for (const lang of ['en', 'zh']) {
     const blogPages = load('src/hooks/use-blog-pages.ts', {
       '@rspress/core/runtime': runtime,
     });
+    const lynxtronPage = pages.find((page) =>
+      page.routePath.endsWith('/blog/lynxtron'),
+    );
+    assert.equal(lynxtronPage.frontmatter.blog_hidden, true);
+    assert.equal(
+      blogPages.useBlogPages().some((page) => page.filename === 'lynxtron'),
+      false,
+    );
     const latest = load('src/hooks/use-latest-blog.ts', {
       './use-blog-pages': blogPages,
     });
@@ -93,9 +101,11 @@ for (const lang of ['en', 'zh']) {
 
     useBlogBtnDom('/');
     assert.equal(selectedConfig, undefined);
-    const newest = [...pages].sort(
-      (a, b) => new Date(b.frontmatter.date) - new Date(a.frontmatter.date),
-    )[0];
+    const newest = pages
+      .filter((page) => page.frontmatter.blog_hidden !== true)
+      .sort(
+        (a, b) => new Date(b.frontmatter.date) - new Date(a.frontmatter.date),
+      )[0];
     assert.equal(
       badge.textContent,
       newest.frontmatter.badge_text || newest.title,
@@ -114,9 +124,23 @@ for (const lang of ['en', 'zh']) {
     listeners.click();
     assert.equal(destination, '/blog/newer');
 
-    useBlogBtnDom('/lynxtron/');
+    pages.push({
+      lang,
+      title: 'A hidden newer post',
+      frontmatter: { date: '2100-01-01', blog_hidden: true },
+      routePath: '/blog/hidden-newer',
+    });
+    useBlogBtnDom('/');
+    assert.equal(badge.textContent, 'A newer neutral post');
     listeners.click();
-    assert.equal(destination, `${lang === 'zh' ? '/zh' : ''}/blog/lynxtron`);
+    assert.equal(destination, '/blog/newer');
+
+    destination = undefined;
+    useBlogBtnDom('/lynxtron/');
+    assert.equal(selectedConfig.filename, 'lynxtron');
+    assert.equal(badge.textContent, 'Lynxtron');
+    listeners.click();
+    assert.equal(destination, undefined);
 
     pages.length = 0;
     useBlogBtnDom('/');
