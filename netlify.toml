@@ -2,46 +2,45 @@
   command = "node scripts/ci/check-build-prereqs.mjs && pnpm gen:og && NODE_OPTIONS=--max-old-space-size=3072 RSPRESS_SSG_WORKER_THREAD_COUNT=2 pnpm exec rspress build"
   publish = "doc_build"
 
-# The version home is a directory-style URL, so redirect `/next` to `/next/`
+# The version home is a directory-style URL, so redirect `/4.1` to `/4.1/`
 # instead of serving the same page at two URLs. Netlify normalizes trailing
 # slashes before evaluating redirect rules, so a static redirect would also
 # match its target and cause a loop. Edge Functions run first and can inspect
-# the original pathname. `/4.1` needs no entry: it is not a home this branch
-# serves, and the compatibility rule below already sends it to the root.
+# the original pathname.
 [[edge_functions]]
   function = "redirect-version-root"
-  path = "/next"
+  path = "/4.1"
 
 [[headers]]
   for = "/*"
   [headers.values]
     access-control-allow-origin = "https://www.unpkg.com"
 
-# Tutorials moved from /guide/start/tutorial-* to top-level /learn/*. The
-# /next/* rewrite at the bottom doesn't chain into these — direct hits to
-# the /next/ form need their own rules. The trailing splat catches the bare
-# URL plus the .html and .md variants in one rule.
+# Tutorials moved from /guide/start/tutorial-* to top-level /learn/*.
+# The production proxy strips /4.1 before reaching this branch, so root-level
+# migration rules must return /4.1-prefixed locations to stay in this release.
+# The trailing splat catches bare URLs plus the .html and .md variants.
 [[redirects]]
   from = "/guide/start/tutorial-gallery*"
-  to = "/learn/gallery:splat"
+  to = "/4.1/learn/gallery:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/guide/start/tutorial-gallery*"
-  to = "/zh/learn/gallery:splat"
+  to = "/4.1/zh/learn/gallery:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/guide/start/tutorial-product-detail*"
-  to = "/learn/product-detail:splat"
+  to = "/4.1/learn/product-detail:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/guide/start/tutorial-product-detail*"
-  to = "/zh/learn/product-detail:splat"
+  to = "/4.1/zh/learn/product-detail:splat"
   status = 301
   force = true
 
@@ -75,49 +74,49 @@
 # so bookmarks and crawler-cached URLs still resolve.
 [[redirects]]
   from = "/ai/start/*"
-  to = "/guide/start/:splat"
+  to = "/4.1/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/ai/start/*"
-  to = "/zh/guide/start/:splat"
+  to = "/4.1/zh/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/react/start/*"
-  to = "/guide/start/:splat"
+  to = "/4.1/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/react/start/*"
-  to = "/zh/guide/start/:splat"
+  to = "/4.1/zh/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/rspeedy/start/*"
-  to = "/guide/start/:splat"
+  to = "/4.1/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/rspeedy/start/*"
-  to = "/zh/guide/start/:splat"
+  to = "/4.1/zh/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/lynx-ui/start/*"
-  to = "/guide/start/:splat"
+  to = "/4.1/guide/start/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/lynx-ui/start/*"
-  to = "/zh/guide/start/:splat"
+  to = "/4.1/zh/guide/start/:splat"
   status = 301
   force = true
 
@@ -128,13 +127,13 @@
 # bottom doesn't chain into other rules.
 [[redirects]]
   from = "/lynx-ui/*"
-  to = "/ui/:splat"
+  to = "/4.1/ui/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "/zh/lynx-ui/*"
-  to = "/zh/ui/:splat"
+  to = "/4.1/zh/ui/:splat"
   status = 301
   force = true
 
@@ -201,52 +200,94 @@
   status = 301
   force = true
 
-# Serve current development docs from the main branch deploy.
+# Direct branch requests keep /4.1. Handle their legacy routes explicitly
+# because the local rewrite below does not chain into the root-level rules.
 [[redirects]]
-  from = "/next/*"
-  to = "https://main--lynx-doc.netlify.app/:splat"
-  status = 200
-
-# 4.1 is canonical at the site root. Keep versioned URLs as permanent
-# compatibility redirects.
-[[redirects]]
-  from = "/4.1/*"
-  to = "/:splat"
+  from = "/4.1/guide/start/tutorial-gallery*"
+  to = "/4.1/learn/gallery:splat"
   status = 301
   force = true
 
-# Serve previous releases from their branch deploys.
 [[redirects]]
-  from = "/4.0/*"
-  to = "https://release-4-0--lynx-doc.netlify.app/:splat"
-  status = 200
+  from = "/4.1/zh/guide/start/tutorial-gallery*"
+  to = "/4.1/zh/learn/gallery:splat"
+  status = 301
+  force = true
 
 [[redirects]]
-  from = "/3.9/*"
-  to = "https://release-3-9--lynx-doc.netlify.app/:splat"
-  status = 200
+  from = "/4.1/guide/start/tutorial-product-detail*"
+  to = "/4.1/learn/product-detail:splat"
+  status = 301
+  force = true
 
 [[redirects]]
-  from = "/3.8/*"
-  to = "https://release-3-8--lynx-doc.netlify.app/:splat"
-  status = 200
+  from = "/4.1/zh/guide/start/tutorial-product-detail*"
+  to = "/4.1/zh/learn/product-detail:splat"
+  status = 301
+  force = true
 
 [[redirects]]
-  from = "/3.7/*"
-  to = "https://release-3-7--lynx-doc.netlify.app/:splat"
-  status = 200
+  from = "/4.1/ai/start/*"
+  to = "/4.1/guide/start/:splat"
+  status = 301
+  force = true
 
 [[redirects]]
-  from = "/3.6/*"
-  to = "https://release-3-6--lynx-doc.netlify.app/:splat"
-  status = 200
+  from = "/4.1/zh/ai/start/*"
+  to = "/4.1/zh/guide/start/:splat"
+  status = 301
+  force = true
 
 [[redirects]]
-  from = "/3.5/*"
-  to = "https://release-3-5--lynx-doc.netlify.app/:splat"
-  status = 200
+  from = "/4.1/react/start/*"
+  to = "/4.1/guide/start/:splat"
+  status = 301
+  force = true
 
 [[redirects]]
-  from = "/3.4/*"
-  to = "https://release-3-4--lynx-doc.netlify.app/:splat"
+  from = "/4.1/zh/react/start/*"
+  to = "/4.1/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/4.1/rspeedy/start/*"
+  to = "/4.1/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/4.1/zh/rspeedy/start/*"
+  to = "/4.1/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/4.1/lynx-ui/start/*"
+  to = "/4.1/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/4.1/zh/lynx-ui/start/*"
+  to = "/4.1/zh/guide/start/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/4.1/lynx-ui/*"
+  to = "/4.1/ui/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/4.1/zh/lynx-ui/*"
+  to = "/4.1/zh/ui/:splat"
+  status = 301
+  force = true
+
+# Serve this archived release under /4.1/ without redirecting to the root.
+[[redirects]]
+  from = "/4.1/*"
+  to = "/:splat"
   status = 200
