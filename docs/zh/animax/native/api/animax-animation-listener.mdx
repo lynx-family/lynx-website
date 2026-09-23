@@ -1,0 +1,248 @@
+---
+description: 'AnimaXAnimationListener API 参考，用于在 iOS 和 Android 上接收动画生命周期、错误、FPS 和点击回调。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXAnimationListener
+
+`AnimaXAnimationListener` 用于接收动画生命周期、帧更新、错误、FPS 和图层点击事件。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 生命周期
+
+### onReady
+
+资源加载完成，播放 API 可用。
+
+**参数**
+
+`NSDictionary *params`
+
+### onStart
+
+动画开始播放。
+
+**参数**
+
+`NSDictionary *params`
+
+### onCompletion
+
+非循环播放完成。
+
+**参数**
+
+`NSDictionary *params`
+
+### onRepeat
+
+一次循环结束并开始下一次循环。
+
+**参数**
+
+`NSDictionary *params`
+
+### onCancel
+
+播放被取消。当前实现不会主动通知。
+
+**参数**
+
+`NSDictionary *params`
+
+### onFirstFrame
+
+首帧渲染到 surface 后触发。
+
+**参数**
+
+`NSDictionary *params`
+
+### onCompositionReady
+
+动画合成解析完成。
+
+**参数**
+
+`NSDictionary *params`
+
+## 播放过程
+
+### onUpdate
+
+订阅的帧更新发生。
+
+**参数**
+
+`NSDictionary *params`
+
+### onFps
+
+FPS 采样事件。
+
+**参数**
+
+`NSDictionary *params`
+
+### onTapLayers
+
+图层点击命中。
+
+**参数**
+
+`NSDictionary *params`
+
+## 错误与警告
+
+### onError
+
+加载或播放过程中发生错误。
+
+**参数**
+
+`NSDictionary *params`
+
+### onWarning
+
+发生非致命警告。
+
+**参数**
+
+`NSDictionary *params`
+
+## 参数
+
+所有回调都接收 `NSDictionary *params`。常见字段如下：
+
+| Key             | 类型       | 说明                             |
+| --------------- | ---------- | -------------------------------- |
+| `animationID`   | `NSString` | 动画唯一标识符。                 |
+| `current`       | `NSNumber` | 当前帧号。                       |
+| `total`         | `NSNumber` | 总帧数。                         |
+| `loopIndex`     | `NSNumber` | 当前循环次数。                   |
+| `elementID`     | `NSString` | 宿主元素 ID，仅 `onReady` 提供。 |
+| `msg`           | `NSString` | 错误或警告信息。                 |
+| `code`          | `NSNumber` | 错误或警告码。                   |
+| `fps`           | `NSNumber` | 每秒帧数。                       |
+| `max_drop_rate` | `NSNumber` | 最大丢帧率。                     |
+| `layerList`     | `NSArray`  | 被点击图层名称数组。             |
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 生命周期
+
+### onReady
+
+资源加载完成，播放 API 可用。
+
+**参数**
+
+`AnimaXParam param`
+
+### onStart
+
+动画开始播放。
+
+**参数**
+
+`AnimaXParam param`
+
+### onComplete
+
+非循环播放完成。
+
+**参数**
+
+`AnimaXParam param`
+
+### onRepeat
+
+一次循环结束并开始下一次循环。
+
+**参数**
+
+`AnimaXParam param`
+
+### onCancel
+
+播放被取消。
+
+**参数**
+
+`AnimaXParam param`
+
+### onFirstFrame
+
+首帧渲染到 surface 后触发。
+
+**参数**
+
+`AnimaXParam param`
+
+### onCompositionReady
+
+动画合成解析完成。
+
+**参数**
+
+`AnimaXParam param`
+
+## 播放过程
+
+### onUpdate
+
+订阅的帧更新发生。
+
+**参数**
+
+`AnimaXParam param`
+
+### onFPS
+
+FPS 采样事件。
+
+**参数**
+
+`AnimaXFPSParam param`
+
+### onTapLayers
+
+图层点击命中。
+
+**参数**
+
+`AnimaXTapParam param`
+
+## 错误与警告
+
+### onError
+
+加载或播放过程中发生错误。
+
+**参数**
+
+`AnimaXErrorParam param`
+
+### onWarning
+
+发生非致命警告。
+
+**参数**
+
+`AnimaXErrorParam param`
+
+## 相关参数对象
+
+| 类型               | 说明               |
+| ------------------ | ------------------ |
+| `AnimaXParam`      | 基础动画事件参数。 |
+| `AnimaXErrorParam` | 错误或警告参数。   |
+| `AnimaXFPSParam`   | FPS 统计参数。     |
+| `AnimaXTapParam`   | 图层点击参数。     |
+
+</PlatformTabs.Tab>
+</PlatformTabs>

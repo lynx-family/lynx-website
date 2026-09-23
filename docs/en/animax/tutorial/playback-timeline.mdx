@@ -1,0 +1,154 @@
+---
+description: 'Tutorial: configure AnimaX playback ranges, speed, progress, segments, and runtime status queries.'
+---
+
+import { Go } from '@lynx';
+
+# Tutorial: Playback Timeline
+
+Learn timeline-level playback controls: limiting the playable frame range, changing speed, setting initial progress, playing a segment, and querying playback state from the runtime.
+
+## Configure playback props
+
+For simple timeline behavior, prefer declarative attributes on `<animax-view>`. The example below sets a frame range, enables reverse playback on repeat, adjusts speed, and updates initial progress from UI state.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/playback-props/index.tsx"
+  defaultEntryFile="dist/playback-props.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/playback-props.gif"
+  entry={[
+    'src/playback-props/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/playback-props/index.tsx': '{82-95}',
+  }}
+/>
+
+Use `start-frame` and `end-frame` when only part of the source animation should be played. Use `speed` for the playback rate, `progress` for the initial position, and `loop-count` or `bindrepeat` / `bindcompletion` when the UI needs to reflect repeat and completion state.
+
+```tsx {5-11}
+<animax-view
+  src={PLAYBACK_PROPS_LOTTIE_SRC}
+  autoplay={true}
+  start-frame={24}
+  end-frame={144}
+  auto-reverse={true}
+  speed={speed}
+  progress={progress}
+  loop-count={2}
+  bindrepeat={handleRepeat}
+  bindcompletion={handleCompletion}
+/>
+```
+
+## Basic loop playback
+
+For a smaller looping case, `loop-count` can be used by itself. `bindrepeat` reports each repeat, and `bindcompletion` fires when the configured loop count has finished.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/basic-loop/index.tsx"
+  defaultEntryFile="dist/basic-loop.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic-loop.gif"
+  entry={['src/basic-loop/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/basic-loop/index.tsx': '{20-23,46-53}',
+  }}
+/>
+
+## Play a segment
+
+When the playback range is decided by user interaction or business logic, call the `playSegment` UI Method instead of changing static props.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/playsegment/index.tsx"
+  defaultEntryFile="dist/playsegment.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/playsegment.gif"
+  entry={[
+    'src/playsegment/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/playsegment/index.tsx': '{38,42,48-56}',
+  }}
+/>
+
+The segment bounds are frame numbers. Keep `autoplay={false}` when the animation should wait for the segment command.
+
+```tsx {3,12-20}
+<view
+  className="button"
+  bindtap={() => invokeAnimaX('playSegment', { startFrame: 15, endFrame: 75 })}
+>
+  <text className="button-text">Play Segment</text>
+</view>
+
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  src={PLAY_SEGMENT_LOTTIE_SRC}
+  autoplay={false}
+  loop={true}
+  bindstart={updateStatus('start')}
+  bindcompletion={updateStatus('complete')}
+/>
+```
+
+## Query runtime status
+
+Query methods are useful when the UI needs to synchronize with playback after user actions, page visibility changes, or host-side lifecycle callbacks.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/methods-query/index.tsx"
+  defaultEntryFile="dist/methods-query.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/methods-query.gif"
+  entry={[
+    'src/methods-query/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/methods-query/index.tsx': '{63-77,88,92,96,100,137-144}',
+  }}
+/>
+
+`getDuration`, `getCurrentFrame`, and `isAnimating` return runtime state through the UI Method callback. As with playback methods, call them after `ready`.
+
+```tsx {1-15,20-23}
+function invokeQuery(method: QueryMethod, onResult: (value: string) => void) {
+  lynx
+    .createSelectorQuery()
+    .select(`#${ANIMAX_VIEW_ID}`)
+    .invoke({
+      method,
+      success(res) {
+        onResult(formatQueryResult(method, res));
+      },
+    })
+    .exec();
+}
+
+const queryCurrentFrame = () => {
+  invokeQuery('getCurrentFrame', setFrame);
+};
+
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  src={METHODS_QUERY_LOTTIE_SRC}
+  autoplay={true}
+  bindready={handleReady}
+/>;
+```

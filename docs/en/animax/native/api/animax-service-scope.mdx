@@ -1,0 +1,100 @@
+---
+description: 'AnimaXServiceScope API reference for iOS and Android scope creation, defaults, and isolation behavior.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXServiceScope
+
+`AnimaXServiceScope` represents a scope for service registration. Services in different scopes are isolated from each other, allowing different service implementations to be registered per business domain, page, or animation instance.
+
+The core value of scopes is service isolation: for example, register a default `MonitorService` globally, and a different implementation for animation instances on a specific page—they do not interfere with each other.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Getting Scopes
+
+### defaultScope
+
+Returns the default service scope. Services are registered here when no scope is explicitly provided.
+
+**Type**
+
+`AnimaXServiceScope *`
+
+### scopeWithValue
+
+Create a custom service scope from a string value.
+
+**Parameters**
+
+| Name    | Type         | Description                                                                                                               |
+| ------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `value` | `NSString *` | Scope identifier string. Each call creates a new object; scopes whose values differ only in letter case compare as equal. |
+
+**Return value**
+
+`AnimaXServiceScope *`
+
+## Example
+
+```objc
+// Create a custom scope
+AnimaXServiceScope *scope = [AnimaXServiceScope scopeWithValue:@"my_feature"];
+
+// Register a service in that scope
+[[AnimaXServiceCenter sharedInstance] registerServiceWithScope:scope
+                                                      protocol:@protocol(AnimaXMonitorService)
+                                                      withImpl:myMonitor];
+```
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Getting Scopes
+
+### DEFAULT
+
+The default service scope. Services are registered here when no scope is explicitly provided.
+
+**Type**
+
+`ServiceScope`
+
+### of
+
+Create a custom service scope from a string value. The `value` is converted to lowercase for comparison.
+
+**Parameters**
+
+| Name    | Type     | Description                                                                                                               |
+| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `value` | `String` | Scope identifier string. Each call creates a new object; scopes whose values differ only in letter case compare as equal. |
+
+**Return value**
+
+`ServiceScope`
+
+## Example
+
+```java
+ServiceScope scope = ServiceScope.of("my_feature");
+
+AnimaXServiceCenter.inst().registerService(scope,
+    IAnimaXMonitorService.class, myMonitor);
+```
+
+## Scope Lookup Order
+
+When `AnimaXAbility` or `AnimaXView` needs to obtain a service, the lookup order is:
+
+1. Instance-level registry (services registered via `ability.registerService()`)
+2. The scope associated with the current ability
+
+The lookup stops at the first matching service. `BaseAbility` selects this scope through its protected `getScope()` method, which returns `ServiceScope.DEFAULT` by default and can be overridden by subclasses.
+
+A custom scope does not automatically fall back to `ServiceScope.DEFAULT`. To use a service from a custom scope, register the service in that scope. Alternatively, keep the ability on its default scope when it should use services registered under `ServiceScope.DEFAULT`.
+
+</PlatformTabs.Tab>
+</PlatformTabs>

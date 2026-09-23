@@ -1,0 +1,146 @@
+---
+description: 'AnimaXCompositionFactory API 参考，说明如何从 JSON 或 URI 创建 AnimaXComposition。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXCompositionFactory
+
+`AnimaXCompositionFactory` 用于异步解析动画资源并创建 [AnimaXComposition](./animax-composition)。解析结果可以复用到多个 [AnimaXView](./animax-view)，避免重复解析同一份动画资源。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 获取实例
+
+### shared
+
+返回全局唯一的 `AnimaXCompositionFactory` 实例。
+
+**返回值**
+
+`AnimaXCompositionFactory *`
+
+## 加载合成
+
+### loadJson
+
+从 Lottie JSON 字符串解析动画合成。传入 `AnimaXContext` 时，解析过程会使用该 context 对应的服务作用域；不传 context 时使用默认 ability 和默认服务作用域。
+
+**可用签名**
+
+| 签名                               | 说明                         |
+| ---------------------------------- | ---------------------------- |
+| `loadJson:withContext:completion:` | 使用指定 context 解析 JSON。 |
+| `loadJson:completion:`             | 使用默认 context 解析 JSON。 |
+
+**参数**
+
+| 名称         | 类型                                    | 说明                 |
+| ------------ | --------------------------------------- | -------------------- |
+| `json`       | `NSString *`                            | Lottie JSON 字符串。 |
+| `context`    | [`AnimaXContext`](./animax-context) `*` | 解析时使用的上下文。 |
+| `completion` | `AnimaXCompositionCompletionBlock`      | 解析完成回调。       |
+
+**返回值**
+
+`void`
+
+### loadUri
+
+从 URI 加载并解析动画合成。传入 `AnimaXContext` 时，解析过程会使用该 context 对应的服务作用域；不传 context 时使用默认 ability 和默认服务作用域。
+
+**可用签名**
+
+| 签名                              | 说明                        |
+| --------------------------------- | --------------------------- |
+| `loadUri:withContext:completion:` | 使用指定 context 解析 URI。 |
+| `loadUri:completion:`             | 使用默认 context 解析 URI。 |
+
+**参数**
+
+| 名称         | 类型                                    | 说明                 |
+| ------------ | --------------------------------------- | -------------------- |
+| `uri`        | `NSString *`                            | 动画资源 URI。       |
+| `context`    | [`AnimaXContext`](./animax-context) `*` | 解析时使用的上下文。 |
+| `completion` | `AnimaXCompositionCompletionBlock`      | 解析完成回调。       |
+
+**返回值**
+
+`void`
+
+## 资源释放
+
+### releaseAll
+
+释放 factory 持有的所有资源加载器，并清理底层 composition factory 的缓存。
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 获取实例
+
+### inst
+
+返回全局唯一的 `AnimaXCompositionFactory` 实例。
+
+**返回值**
+
+`AnimaXCompositionFactory`
+
+## 加载合成
+
+### loadJson
+
+从 Lottie JSON 字符串解析动画合成。传入 `ServiceScope` 时，解析过程会使用该作用域对应的资源加载器；不传 scope 时使用 `ServiceScope.DEFAULT`。
+
+**可用签名**
+
+| 签名                                                                            | 说明                       |
+| ------------------------------------------------------------------------------- | -------------------------- |
+| `loadJson(ServiceScope scope, String json, AnimaXCompositionListener listener)` | 使用指定 scope 解析 JSON。 |
+| `loadJson(String json, AnimaXCompositionListener listener)`                     | 使用默认 scope 解析 JSON。 |
+
+**参数**
+
+| 名称       | 类型                                                         | 说明                 |
+| ---------- | ------------------------------------------------------------ | -------------------- |
+| `scope`    | [`ServiceScope`](./animax-service-scope)                     | 服务作用域。         |
+| `json`     | `String`                                                     | Lottie JSON 字符串。 |
+| `listener` | [`AnimaXCompositionListener`](./animax-composition-listener) | 解析结果回调。       |
+
+**返回值**
+
+`void`
+
+### loadUri
+
+从 URI 加载并解析动画合成。传入 `ServiceScope` 时，解析过程会使用该作用域对应的资源加载器；不传 scope 时使用 `ServiceScope.DEFAULT`。
+
+**可用签名**
+
+| 签名                                                                          | 说明                      |
+| ----------------------------------------------------------------------------- | ------------------------- |
+| `loadUri(ServiceScope scope, String uri, AnimaXCompositionListener listener)` | 使用指定 scope 解析 URI。 |
+| `loadUri(String uri, AnimaXCompositionListener listener)`                     | 使用默认 scope 解析 URI。 |
+
+**参数**
+
+| 名称       | 类型                                                         | 说明           |
+| ---------- | ------------------------------------------------------------ | -------------- |
+| `scope`    | [`ServiceScope`](./animax-service-scope)                     | 服务作用域。   |
+| `uri`      | `String`                                                     | 动画资源 URI。 |
+| `listener` | [`AnimaXCompositionListener`](./animax-composition-listener) | 解析结果回调。 |
+
+**返回值**
+
+`void`
+
+## 资源释放
+
+### release
+
+释放 factory 持有的所有资源加载器，并清理底层 composition factory 的缓存。
+
+</PlatformTabs.Tab>
+</PlatformTabs>

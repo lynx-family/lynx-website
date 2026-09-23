@@ -1,0 +1,113 @@
+# 常见问题
+
+本文整理使用 AnimaX 时常见的渲染、控制、资源和字体问题。
+
+## 渲染问题
+
+### 某些帧被跳过或没有渲染
+
+移动端渲染通常按 60 FPS 对齐到约 16 ms 的帧间隔。如果主线程繁忙，实际间隔可能变长，部分帧就可能来不及渲染。
+
+如果动画依赖大量持续时间很短的帧，尽量增加单帧持续时间。如果使用了大量图片序列帧，可以考虑把适合的部分转为[Alpha Video](./alpha-video)。
+
+### Alpha Video 出现黑边
+
+Alpha Video 的宽高需要是 16 的整数倍。部分解码器有对齐要求，非 16 倍数的视频可能在解码时被填充，从而出现黑边。
+
+如果宽高已经对齐但仍然出现黑边，可以在源视频边缘补充少量完全透明像素，让被填充区域保持透明。
+
+## 控制问题
+
+### 动画非预期停止
+
+如果动画挂载在 popup 或 overlay 中，可以尝试将 [`ignore-attach-status`](/api/elements/built-in/animax-view.html#ignore-attach-status) 设置为 `true`。如果问题与生命周期有关，也可以检查 [`ignore-lynx-lifecycle`](/api/elements/built-in/animax-view.html#ignore-lynx-lifecycle)。
+
+如果仍然停止，检查业务逻辑是否主动调用了 `pause`、`stop` 或 `cancel`，并结合 [`bindcancel`](/api/elements/built-in/animax-view.html#bindcancel) 排查取消来源。
+
+### 设置 `autoplay={false}` 后主动 `play` 没有开始播放
+
+请在 [`bindready`](/api/elements/built-in/animax-view.html#bindready) 回调之后调用 `play`。资源加载并解析完成后，动画才可以播放。
+
+### 封面图切换到动画时出现拉伸
+
+封面图的展示模式需要与 AnimaX 的适配模式保持一致。例如 `objectfit="cover"` 应该搭配同样按比例填充容器的图片模式。
+
+```tsx
+const [isFrameReady, setIsFrameReady] = useState(false);
+
+const handleFirstFrame = () => {
+  setIsFrameReady(true);
+};
+
+return (
+  <view className="container">
+    <animax-view
+      className="animax-item"
+      bindfirstframe={handleFirstFrame}
+      src="https://example.com/animation.json"
+      objectfit="cover"
+    />
+    {!isFrameReady && (
+      <image
+        className="poster-item"
+        src="https://example.com/poster.png"
+        mode="aspectFill"
+      />
+    )}
+  </view>
+);
+```
+
+更多说明见 [`objectfit`](/api/elements/built-in/animax-view.html#objectfit)。
+
+## 资源问题
+
+### 动画 JSON 和图片资源没有被打包
+
+使用本地文件时，需要确保资源进入构建产物，并且动画 JSON 中引用的是最终部署后的资源路径。可以结合 Rspeedy 输出和资源配置进行检查。
+
+### 字体文件加载失败
+
+先检查 Lottie JSON 中 `fonts.list` 下的 `origin` 值。
+
+```json
+{
+  "fonts": {
+    "list": [
+      {
+        "origin": 3,
+        "fPath": "",
+        "fFamily": "Example Font"
+      }
+    ]
+  }
+}
+```
+
+在 [Lottie 规范](https://lottiefiles.github.io/lottie-docs/constants/#font-path-origin)中，`origin: 3` 表示字体从远程资源加载。请确保 `fPath` 是有效 URL，或者在播放前通过动态属性设置字体资源。
+
+如果只需要使用系统默认字体，可以使用 `origin: 0`，这样运行时不会请求远程字体文件。
+
+### 文字图层需要自定义字体
+
+优先使用 AFX 导出流程。如果需要手动调整 JSON，需要显式设置 `origin` 和 `fPath`。
+
+```json
+{
+  "fonts": {
+    "list": [
+      {
+        "origin": 3,
+        "fPath": "https://example.com/fonts/example.ttf",
+        "fFamily": "Example Font"
+      }
+    ]
+  }
+}
+```
+
+## 其他问题
+
+### iOS implicit animation 影响播放
+
+当原生隐式动画影响 AnimaX 播放时，可以设置 [`implicit-animation={false}`](/api/elements/built-in/animax-view.html#implicit-animation)。

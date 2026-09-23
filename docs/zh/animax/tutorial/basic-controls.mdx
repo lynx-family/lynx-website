@@ -1,0 +1,113 @@
+---
+description: '教程：通过 UI Method、事件和帧更新控制 AnimaX 播放。'
+---
+
+import { Go } from '@lynx';
+
+# 教程：基本控制
+
+介绍如何通过 UI Method 控制播放、监听运行时事件、订阅帧更新，并跳转到指定帧。
+
+## 手动播放
+
+快速开始示例通过 `autoplay` 自动播放动画。本教程中，播放行为由用户操作触发，因此示例在 `<animax-view>` 上设置了 `autoplay={false}`。
+
+示例会先等待 `ready` 事件，再调用 UI Method。只有当 AnimaX 准备好渲染模型和平台渲染对象之后，才可以响应 `play`、`pause`、`resume`、`stop` 和 `seek` 等方法。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/controls/index.tsx"
+  defaultEntryFile="dist/controls.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/animax-controls-play.gif"
+  entry={['src/controls/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/controls/index.tsx': '{24-42,77-80,237-249}',
+  }}
+/>
+
+控制方法会通过 `SelectorQuery` 找到 `<animax-view>` 节点，然后调用 `invoke`。你也可以通过 `ref` 获取 `NodesRef`，并调用 [`NodesRef.invoke()`](/api/lynx-api/nodes-ref/nodes-ref-invoke)。
+
+:::details ready 与 firstframe
+
+在发送 `ready` 事件后，AnimaX 会继续渲染第一帧内容，并发送 `firstframe` 事件。
+
+如果需要尽早响应 UI Method，或准备动态属性相关内容，应监听 `ready` 事件。
+
+如果需要实现无缝切换，例如在动画加载完成前先展示一张图片来减少空白帧，应监听 `firstframe` 事件。
+
+更多事件请参考 [`<animax-view>` 事件属性](/api/elements/built-in/animax-view.html#事件属性)。
+
+:::
+
+## 暂停、恢复和停止
+
+播放按钮会在三种状态之间切换：
+
+1. 还未开始播放时，调用 `play`。
+2. 动画正在播放时，调用 `pause`。
+3. 暂停后再次点击，调用 `resume`。
+
+停止按钮会调用 `stop`，清理播放状态，并将显示的帧数重置。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/controls/index.tsx"
+  defaultEntryFile="dist/controls.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/animax-controls-pause.gif"
+  entry={['src/controls/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/controls/index.tsx': '{127,136,143,154,224-230}',
+  }}
+/>
+
+示例会同时根据方法回调和运行时事件更新播放状态。这样无论动画开始、完成还是被停止，界面状态都能和实际播放状态保持一致。
+
+## 进度和逐帧跳转
+
+[`subscribeUpdateEvents`](/api/elements/built-in/animax-view.html#subscribeupdateevents) 用于订阅指定帧。示例会从 `ready` 事件中拿到总帧数，然后订阅 `0` 到 `total` 的每一帧。
+
+被订阅的帧完成渲染时，AnimaX 会发送 `update` 事件。示例使用这个事件更新当前帧和进度条。
+
+上一帧、下一帧和点击进度条，都会通过 [`seek`](/api/elements/built-in/animax-view.html#seek) 跳转到目标帧。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/controls/index.tsx"
+  defaultEntryFile="dist/controls.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/animax-controls-progress.gif"
+  entry={['src/controls/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/controls/index.tsx': '{77-80,87-89,115,207-210,237-249}',
+  }}
+/>
+
+:::tip
+
+AnimaX 的渲染依赖 UI 线程的 Vsync 同步，因此事件回调中的帧信息可能是浮点数。
+
+如果主线程比较繁忙，可能会跳过 1-2 帧。如果这些被跳过的帧已经被订阅，AnimaX 会补发 `update` 事件。
+
+:::
+
+## 使用 json 传入动画内容
+
+除了通过 [`src`](/api/elements/built-in/animax-view.html#src) 让 AnimaX 按 URL 请求 `.json` 或 `.zip` 资源，也可以使用 [`json`](/api/elements/built-in/animax-view.html#json) 直接传入动画内容。区别在于：`src` 由 AnimaX 根据 URL 加载资源，`json` 则由前端先拿到完整 JSON 字符串后再传给 `<animax-view>`，适合页面需要自己控制请求、缓存或下发内容的场景。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/basic-json/index.tsx"
+  defaultEntryFile="dist/basic-json.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic-json.gif"
+  entry={['src/basic-json/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/basic-json/index.tsx': '{23,70-77}',
+  }}
+/>
