@@ -19,7 +19,7 @@ To solve this, add `@rsbuild/core/types` to the `types` array in `tsconfig.json`
 ```
 
 :::tip
-[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) will automatically include this for you.
+[`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) will automatically include this for you.
 :::
 
 ## Extending Lynx types

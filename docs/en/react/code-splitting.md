@@ -114,7 +114,7 @@ You may also lazy-load modules that are built in a standalone Rsbuild project.
 
 ### Create a standalone Producer project
 
-Create a standalone Rsbuild project using [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx):
+Create a standalone Rsbuild project using [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx):
 
 ```bash
 pnpm create @lynx-js/lynx@latest --template rsbuild

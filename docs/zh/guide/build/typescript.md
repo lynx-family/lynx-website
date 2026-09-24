@@ -19,7 +19,7 @@ TypeScript 开箱可用：`.ts` / `.tsx` 文件、路径别名、自定义 `tsco
 ```
 
 :::tip
-[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 在创建项目时会自动包含该配置。
+[`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 在创建项目时会自动包含该配置。
 :::
 
 ## 扩展 Lynx 类型
