@@ -25,7 +25,7 @@ Profiling is automatically enabled when the Lynx engine's profile recording is a
 
 To start profiling, you need to enable profile recording in the Lynx engine. For detailed instructions on how to record and view traces, see [Recording Traces](/guide/devtool/trace/record-trace).
 
-The instrumentation also has to be compiled into the bundle in the first place. It is added by default in development and removed by default in production; see [Runtime Profiling](/build/runtime-profiling.md) for how to turn it on for a production build.
+The instrumentation also has to be compiled into the bundle in the first place.
 
 :::info Requirements
 
@@ -38,6 +38,65 @@ This feature requires Lynx 3.0 or later, which provides the necessary profiling 
 - `lynx.performance.isProfileRecording()`
 
 :::
+
+### Compiling the instrumentation into the bundle
+
+ReactLynx ships built-in trace points for a component's `render` and `diff`, which show how components are rendered and diffed.
+
+![react profile](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/rspeedy-react-profile.png)
+
+- In development (`npx rsbuild dev`), they are _**added**_ by default.
+- In production (`npx rsbuild build`), they are _**removed**_ by default.
+
+#### Turning them on for a production build
+
+Set `performance.profile` to `true`. This is useful when trying to optimize the performance of the application.
+
+```js
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+
+export default defineConfig({
+  plugins: [
+    pluginLynx({
+      performance: {
+        profile: true, // [!code ++]
+      }, // [!code ++]
+    }), // [!code ++]
+  ],
+});
+```
+
+:::tip
+You may use [`npx rsbuild preview`](https://rsbuild.rs/guide/basic/cli#rsbuild-preview) to preview the output locally.
+:::
+
+:::warning
+Do **NOT** deploy the output with `performance.profile: true`. They are not for production.
+:::
+
+#### Turning them off in development
+
+Set `performance.profile` to `false`.
+
+```js
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+
+export default defineConfig({
+  plugins: [
+    pluginLynx({
+      performance: {
+        profile: false, // [!code ++]
+      }, // [!code ++]
+    }), // [!code ++]
+  ],
+});
+```
+
+### Dynamic sampling with JS Profile
+
+Use the [JS Profile](/guide/devtool/trace/js-profile) tool to collect call stack data at runtime, without changing the build configuration.
 
 ## Understanding Trace Events
 

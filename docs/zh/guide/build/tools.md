@@ -25,7 +25,7 @@ npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
 
 ## Rsbuild + pluginLynx
 
-`pluginLynx`（来自 [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)）是把一次 Rsbuild 构建变成 Lynx 构建的关键。它配置双线程产物与 Bundle 文件名，把中间产物保留在 `dist/.lynx/<entry>/`，按 Lynx 运行时调整压缩与 source map，按 Lynx 的 `exports` 条件解析模块，在开发时通过局域网把产物推送到设备，并注册[线上错误反解](./map-errors-to-source.mdx)所需的 debug metadata。
+`pluginLynx`（来自 [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)）是把一次 Rsbuild 构建变成 Lynx 构建的关键。它配置双线程产物与 Bundle 文件名，把中间产物保留在 `dist/.lynx/<entry>/`，按 Lynx 运行时调整压缩与 source map，按 Lynx 的 `exports` 条件解析模块，在开发时通过局域网把产物推送到设备，并注册[线上错误反解](/guide/devtool/map-errors-to-source.mdx)所需的 debug metadata。
 
 你很少需要手动引入它：[`pluginReactLynx`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin) 在它尚未注册时会自动应用，所以 ReactLynx 模板的配置里只写了 `pluginReactLynx`。
 

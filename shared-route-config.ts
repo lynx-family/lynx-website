@@ -104,20 +104,6 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: '/assets/lynxai-logo-dark.svg',
     },
   },
-  {
-    value: 'build',
-    label: 'Build',
-    description: 'Build Tool for Lynx',
-    descriptionZh: 'Lynx 构建工具',
-    home: '/build/',
-    url: '/build/lynx-bundle',
-    category: 'core',
-    logo: {
-      light:
-        'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
-      dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/rspeedy.PNG',
-    },
-  },
 
   // ── JavaScript Framework ──────────────────────────────────────
   {

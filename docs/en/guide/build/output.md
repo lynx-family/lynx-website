@@ -69,7 +69,7 @@ In addition, some extra files are generated in development:
 
 - Background Thread Script(BTS): The background script file that is inlined into the bundle, default output to `.lynx/[name]/background.js`.
 - MainThread Thread Script(MTS): The main-thread script file that is inlined into the bundle, default output to `.lynx/[name]/main-thread.js`.
-- Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.lynx/[name]/debug-metadata.json`. See [Map Production Errors to Source](./map-errors-to-source).
+- Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.lynx/[name]/debug-metadata.json`. See [Map Production Errors to Source](/guide/devtool/map-errors-to-source).
 
 ## Modify the Directory
 
