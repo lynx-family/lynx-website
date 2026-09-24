@@ -1,0 +1,112 @@
+---
+description: 'Build bounded masonry layouts with CSS Grid Lanes and choose when to use a virtualized waterfall list instead.'
+---
+
+# Grid Lanes Layout
+
+Grid Lanes is the CSS Grid Level 3 masonry layout for bounded, composable
+content. Set [`display: grid-lanes`](/api/css/properties/display.mdx) on a
+container, define its lanes with `grid-template-columns` or
+`grid-template-rows`, and let items stack along the perpendicular axis.
+
+:::warning Experimental
+Grid Lanes is available from Lynx 4.3 and is guarded by
+`enableGridLanes`. The flag remains disabled by default during the
+observation period. Current `@lynx-js/template-webpack-plugin` versions that
+support Grid Lanes write the compile and page configuration automatically.
+Custom encoders must set both configurations explicitly.
+:::
+
+For a custom encoder integration, pass the flag in both fields of the encode
+input:
+
+```ts
+encodeData.compilerOptions.enableGridLanes = true;
+encodeData.sourceContent.config.enableGridLanes = true;
+```
+
+Setting only one field is not sufficient: `compilerOptions` controls encoding,
+while `sourceContent.config` carries the runtime Page Config.
+
+## Create a Vertical Grid Lanes Layout
+
+The following container creates responsive columns. Each item is placed from
+the tolerance-defined candidate lanes by the auto-placement cursor.
+
+```css
+.container {
+  display: grid;
+  display: grid-lanes;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  flow-tolerance: normal;
+}
+```
+
+The first `display: grid` declaration is a controlled fallback for older Lynx
+encoders, which strip the unsupported `grid-lanes` declaration. Do not add
+`display: masonry` to Lynx source: it is not a supported Lynx display value.
+Lynx for Web passes `display: grid-lanes` directly to the browser. If the
+browser does not support it, normal CSS invalid-value handling ignores that
+declaration and the preceding authored `display: grid` declaration applies.
+Without an authored fallback, the unsupported declaration remains unsupported.
+
+To stack horizontally instead, define lanes with `grid-template-rows`. Grid
+placement properties apply along the lane axis. Items can span lanes with
+`grid-column` or `grid-row`, depending on the selected axis.
+
+## Control Placement Order
+
+[`flow-tolerance`](/api/css/properties/flow-tolerance.mdx) controls how much
+longer an eligible lane may be than the shortest lane:
+
+- `0px` always chooses a shortest eligible lane.
+- `normal` treats eligible lanes within `1em` of the shortest lane as tied,
+  then selects among the tied lanes in document order.
+- `infinite` preserves document-order lane selection strictly.
+
+Use `grid-auto-flow: dense` when later items may backfill compatible gaps.
+Dense placement can change visual order, so avoid it when visual order must
+match reading order.
+
+## Choose Grid Lanes or a Waterfall List
+
+| Requirement                          | `display: grid-lanes` | `<list list-type="waterfall">` |
+| ------------------------------------ | --------------------- | ------------------------------ |
+| Arbitrary composable children        | Yes                   | List items only                |
+| Grid-axis spans and intrinsic tracks | Yes                   | No                             |
+| CSS Grid Level 3 placement           | Yes                   | No                             |
+| Recycling for an unbounded feed      | No                    | Yes                            |
+| Recommended content size             | Bounded               | Large or unbounded             |
+
+Use Grid Lanes for product shelves, media groups, dashboards, and other
+bounded sections where CSS composition and spans matter. Use
+[`<list list-type="waterfall">`](/api/elements/built-in/list.mdx#required-list-type)
+for long or infinite feeds that require recycling. Do not replace an
+unbounded virtualized list with a non-virtualized Grid Lanes container.
+
+## Compatibility and Fallback
+
+- **Lynx 4.3 and later:** opt in with `enableGridLanes` while the feature is
+  experimental.
+- **Older Lynx encoders:** unsupported Grid Lanes declarations are stripped
+  with a warning. Provide a `grid`, flex, or waterfall fallback according to
+  the product's content model.
+- **Safari 26.4 and later:** Lynx for Web uses native `display: grid-lanes`.
+- **Chromium experimental implementation:** enable
+  `CSSGridLanesLayout` until the browser enables it by default.
+- **Other Web browsers:** Lynx for Web still passes through
+  `display: grid-lanes`. Unsupported browsers ignore the declaration; they do
+  not receive an automatic `masonry` or `grid` fallback.
+
+Grid Lanes does not virtualize its children. The compatibility fallback does
+not change that boundary.
+
+## Related APIs
+
+- [`display`](/api/css/properties/display.mdx)
+- [`flow-tolerance`](/api/css/properties/flow-tolerance.mdx)
+- [`grid-template-columns`](/api/css/properties/grid-template-columns.mdx)
+- [`grid-template-rows`](/api/css/properties/grid-template-rows.mdx)
+- [`grid-auto-flow`](/api/css/properties/grid-auto-flow.mdx)
+- [`gap`](/api/css/properties/gap.mdx)
