@@ -1,0 +1,274 @@
+---
+title: '编译协同渲染：让运行时只处理变化'
+date: 2026-09-24
+sidebar: false
+authors: ['HuJean', 'reactlynx']
+description: 'ReactLynx 在编译期提取 JSX 的稳定宿主结构，并把属性、事件和动态子树编号，让首帧创建与后续更新只处理真正变化的部分。'
+---
+
+import { BlogHeader } from '@lynx';
+
+<BlogHeader />
+
+_在[上一篇文章](/blog/reactlynx-instant-first-frame-rendering)中，我们介绍了 ReactLynx 如何在主线程画出第一帧，再由后台 React 接管后续更新。那条链路里还有一个关键问题没有展开：Patch 为什么只带一个位置编号，就能准确更新主线程上的元件？答案藏在构建阶段。本文继续深入 ReactLynx，看看编译器如何把 JSX 中已经确定的信息提前交给运行时。_
+
+## 让编译器记住不变的结构
+
+先看一个普通的 ReactLynx 组件：
+
+```tsx
+export function Greeting({ name, highlighted }) {
+  return (
+    <view className={highlighted ? 'card active' : 'card'}>
+      <text>Hello, {name}</text>
+    </view>
+  );
+}
+```
+
+如果只做常规 JSX 转换，它在语义上会变成一组运行时调用：
+
+```js
+export function Greeting({ name, highlighted }) {
+  return jsx('view', {
+    className: highlighted ? 'card active' : 'card',
+    children: jsx('text', {
+      children: ['Hello, ', name],
+    }),
+  });
+}
+```
+
+每次组件渲染，`jsx()` 都会重新产生描述 `view → text` 结构的 VNode。协调器再遍历它们，判断哪些宿主元件需要创建、复用或更新。
+
+但从源码看，绝大部分信息在构建时已经确定：
+
+```plaintext
+Greeting
+├─ 稳定结构
+│  ├─ view
+│  ├─ text
+│  ├─ 固定文本 "Hello, "
+│  └─ 它们之间的父子关系
+└─ 动态位置
+   ├─ 属性 0：className
+   └─ 子节点插槽 0：name
+```
+
+无论 `Greeting` 渲染多少次，`view` 和 `text` 的类型、顺序与父子关系都不会改变。真正需要留到运行时决定的，只有 `className` 和 `name`。
+
+ReactLynx 因此把这项工作拆给两个阶段：编译器提前提取稳定的宿主结构，运行时只接收这次渲染的动态数据。我们把这种分工称为**编译协同渲染（Compiler-Informed Rendering）**。
+
+:::details React Compiler
+
+编译协同渲染和 [React Compiler](https://react.dev/learn/react-compiler) 都在构建阶段分析 React 代码，但解决的问题不同。React Compiler 主要通过自动记忆化减少组件和表达式的不必要重新计算；ReactLynx 的编译协同渲染则提取宿主元件结构，为创建、协调和跨线程更新生成专用信息。
+
+一个关注“哪些 JavaScript 计算可以复用”，另一个关注“哪些宿主渲染工作可以提前特化”。它们是两个不同层面的优化方向。
+
+两者并不冲突，ReactLynx 也支持接入 React Compiler。启用方式和性能考量请参考 [ReactLynx 的 React Compiler 文档](https://lynxjs.org/next/zh/react/react-compiler.html)。
+
+:::
+
+## 从 JSX 到运行时实例
+
+编译器先把 JSX 拆成可复用的结构定义和每次渲染所需的动态数据，运行时再基于这份定义创建彼此独立的组件实例。
+
+### 从一棵 JSX 树到“定义 + 数据”
+
+经过编译优化后，前面的组件可以概念化为：
+
+```js
+const __compiled_greeting = '__compiled_greeting';
+
+export function Greeting({ name, highlighted }) {
+  return jsx(__compiled_greeting, {
+    values: [highlighted ? 'card active' : 'card'],
+    $0: name,
+  });
+}
+```
+
+这里的名称和数据结构只用于说明机制，不是应用可以依赖的真实编译产物。关键变化在于：运行时不再收到一棵完整的 `view → text` VNode 子树，而是收到一份**编译定义的标识**，以及本次渲染的**动态数据**。
+
+当前 ReactLynx 使用一种名为 **Snapshot** 的中间表示（IR）保存这份编译信息。Snapshot 是当前实现，不是这项机制本身；它也可能随着实现演进而变化。概念上，一份编译定义包含四类信息：
+
+| 编译信息       | 运行时用途                                                     |
+| -------------- | -------------------------------------------------------------- |
+| 静态创建函数   | 直接创建确定的 Lynx 元件和固定文本，并建立父子关系。           |
+| 动态更新函数   | 按位置更新属性、事件或展开属性，不重新遍历整段稳定结构。       |
+| 动态子节点插槽 | 标记表达式、条件分支、列表和用户组件等动态子树应该插入的位置。 |
+| 表示标识       | 让多个组件实例找到并复用同一份编译定义。                       |
+
+把上面的 `Greeting` 继续展开，它的定义在概念上类似：
+
+```js
+const GreetingDefinition = {
+  create() {
+    const view = createView();
+    const text = createText();
+    const rawText = createRawText('Hello, ');
+    const nameSlot = createSlot();
+
+    append(view, text);
+    append(text, rawText);
+    append(text, nameSlot);
+
+    return [view, text, rawText, nameSlot];
+  },
+
+  updaters: [
+    // 动态属性位置 0 只需要修改根 view 的 className。
+    (instance, value) => setClassName(instance.elements[0], value),
+  ],
+
+  slots: [
+    // 动态子节点插槽 0 对应 create() 返回的 nameSlot。
+    { index: 0, elementIndex: 3 },
+  ],
+};
+```
+
+运行时仍然会创建完整的 Lynx 元件树。省掉的不是元件本身，而是反复从通用 VNode 中发现稳定结构、再逐层决定如何创建和更新的过程。编译器已经把这些决定变成了可以直接执行的元件操作。
+
+:::warning
+
+Snapshot、生成标识、位置编号和内部函数都属于实现细节。请勿在应用代码中读取、复制或依赖编译产物；本文中的代码经过简化，只用于解释运行机制。
+
+:::
+
+### 一份定义，多个运行时实例
+
+编译定义可以共享，页面上的组件实例却必须彼此独立。假设页面同时渲染两张卡片：
+
+```tsx
+<Greeting name="Ada" highlighted={true} />
+<Greeting name="Lin" highlighted={false} />
+```
+
+两张卡片都引用同一份 `GreetingDefinition`，但各自拥有自己的元件、动态值和实例 ID：
+
+```plaintext
+共享的 GreetingDefinition
+├─ 实例 17
+│  ├─ elements: [view#101, text#102, ...]
+│  ├─ values: ['card active']
+│  └─ slot 0: 'Ada'
+└─ 实例 18
+   ├─ elements: [view#201, text#202, ...]
+   ├─ values: ['card']
+   └─ slot 0: 'Lin'
+```
+
+这也是为什么 Patch 不能只有动态位置编号。`0` 表示“这份定义里的第 0 个动态属性”，实例 ID 则表示“页面上具体哪一个实例”。两者组合起来，主线程才能准确找到要修改的元件。
+
+以实例 `17` 的 `className` 从 `card` 更新为 `card active` 为例，当前实现发送的 [`SnapshotPatch`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatch.ts) 是一个扁平数组：
+
+```js
+const patch = [
+  3, // SnapshotOperation.SetAttribute
+  17, // id
+  0, // dynamicPartIndex
+  'card active', // value
+];
+```
+
+这条数据的结构和操作码来自当前 Patch 协议；`17` 和 `card active` 则是本例的实例 ID 与新值。每个字段的作用如下：
+
+| 偏移 | 字段             | 当前值        | 作用                                                          |
+| ---- | ---------------- | ------------- | ------------------------------------------------------------- |
+| `0`  | operation        | `3`           | 选择 `SetAttribute` 操作，并确定后面要继续读取三个参数。      |
+| `1`  | id               | `17`          | 在主线程的实例映射中找到页面上的第一张 `Greeting`。           |
+| `2`  | dynamicPartIndex | `0`           | 定位 `GreetingDefinition` 中第 0 个动态属性，即 `className`。 |
+| `3`  | value            | `card active` | 传给该动态属性更新函数的新值。                                |
+
+主线程的 [`snapshotPatchApply()`](https://github.com/lynx-family/lynx-stack/blob/main/packages/react/runtime/src/snapshot/lifecycle/patch/snapshotPatchApply.ts) 按同样的字段顺序读取数组。`id` 先解析出独立的运行时实例，`dynamicPartIndex` 再在这份实例共享的编译定义中定位更新逻辑：
+
+```js
+const instance = snapshotInstanceManager.values.get(id);
+instance.setAttribute(dynamicPartIndex, value);
+```
+
+因此，即使实例 `17` 和 `18` 共用同一份 `GreetingDefinition`，这条 Patch 也只会把实例 `17` 的根 `view` 更新为 `card active`，不会影响第二张卡片。
+
+## 编译定义如何参与渲染
+
+同一份编译定义既参与主线程的首帧创建，也为后台线程的后续更新提供定位动态位置所需的信息。
+
+### 首帧：把编译定义变成真实元件
+
+在[首帧直出（IFR）](/guide/interaction/ifr)阶段，主线程会执行裁剪后的首屏代码。遇到 `Greeting` 时，它不需要沿着一棵宿主 VNode 子树逐层协调，而是可以直接完成三步：
+
+1. 根据表示标识找到 `GreetingDefinition`。
+2. 执行静态创建函数，得到这一实例的 `view`、`text`、固定文本和插槽。
+3. 把初始 `className` 交给第 0 个更新函数，再把 `name` 放进第 0 个动态子节点插槽。
+
+```js
+function renderFirstFrame(vnode) {
+  const definition = getCompiledDefinition(vnode.type);
+  const instance = createInstance(vnode.type);
+
+  instance.elements = definition.create();
+  definition.updaters[0](instance, vnode.props.values[0]);
+  insertDynamicChild(instance, definition.slots[0], vnode.props.$0);
+
+  return instance;
+}
+```
+
+与此同时，后台线程运行完整的 React 逻辑，建立用于长期协调的逻辑实例树。两边的首轮渲染完成后，ReactLynx 会把后台实例与主线程已经创建的实例关联起来。上一篇文章介绍的[跨线程接管](/blog/reactlynx-instant-first-frame-rendering#接管已有视图)，正是依赖编译器留下的表示标识、动态位置和子节点结构来完成匹配。
+
+换句话说，编译信息同时解决了两个问题：
+
+- **怎样更快创建首帧：**直接执行预先生成的稳定结构创建逻辑。
+- **怎样让后台接管首帧：**为两个线程提供一致的结构与动态位置坐标。
+
+### 更新：只传变化
+
+接管完成后，后台线程负责后续协调。假设 `highlighted` 从 `false` 变为 `true`，后台实例只需比较这一份定义的动态数据：
+
+```js
+function reconcileGreeting(previous, next, instanceId) {
+  if (previous.values[0] !== next.values[0]) {
+    emitPatch([
+      SetAttribute,
+      instanceId,
+      0, // GreetingDefinition 的动态属性位置 0
+      next.values[0],
+    ]);
+  }
+}
+```
+
+主线程收到 Patch 后，用实例 ID 找到具体实例，再用动态位置 `0` 调用编译器生成的定向更新函数：
+
+```js
+function applyAttributePatch(instanceId, position, value) {
+  const instance = findInstance(instanceId);
+  const definition = getCompiledDefinition(instance.type);
+
+  definition.updaters[position](instance, value);
+}
+```
+
+这条路径不需要再次遍历 `view → text → "Hello, "`，也不需要把这些静态信息跨线程发送。Patch 只描述“哪个实例、哪个位置、变成什么值”。
+
+动态子节点走的是另一条路径。如果 `name`、条件分支或列表发生变化，后台 React 仍会协调该插槽中的新旧子树，并把插入、删除或属性变化编码进 Patch。区别在于，协调范围被限制在编译器标记的动态插槽中；插槽外面的稳定宿主结构不需要重新参与。
+
+这正是上一篇文章中那段紧凑数字流的来源：编译器先建立坐标系，后台运行时再用坐标描述变化，主线程则按同一坐标把变化应用到真实元件。
+
+:::info 编译边界与开发建议
+
+编译协同渲染会自动提取源码中能够确定的结构。应用代码通常只需保持 JSX 清晰自然；具体的编译边界和推荐写法请参阅[如何编写编译友好的 JSX](https://lynxjs.org/next/zh/react/compiler-informed-rendering.html#%E5%A6%82%E4%BD%95%E7%BC%96%E5%86%99%E7%BC%96%E8%AF%91%E5%8F%8B%E5%A5%BD%E7%9A%84-jsx)。
+
+:::
+
+## 要点回顾
+
+ReactLynx 没有取消运行时渲染，而是把运行时不必重复做的结构分析提前到了构建阶段：
+
+- 编译器把 JSX 拆成稳定宿主结构、动态属性和动态子节点插槽。
+- 稳定结构被记录为可复用的编译定义，每个挂载位置再创建独立实例。
+- 首帧可以直接执行静态创建逻辑，后台接管时也能复用同一套结构坐标。
+- 后续更新只需发送实例 ID、动态位置和值，动态子树则在对应插槽内继续协调。
+
+从源码中的一棵 JSX 树，到编译期的一份结构定义，再到运行时的一小段动态数据，这就是编译协同渲染的核心：**让编译器记住已经知道的，让运行时只处理真正变化的。**
