@@ -1,0 +1,97 @@
+# `__FlushElementTree`
+
+## Introduction
+
+Submits pending [Element Tree](../../../guide/spec.mdx#element-tree) changes to the Lynx Engine. The Engine uses the submitted changes to continue the [Pixel Pipeline](../../../guide/spec.mdx#pixel-pipeline).
+
+`__FlushElementTree` is an [Element PAPI](../../../guide/spec.mdx#element-papi) available to Scripting Framework Developers in the Main Thread Script environment. Application code should use framework APIs instead of calling it directly.
+
+## Syntax
+
+```ts
+declare function __FlushElementTree(): void;
+declare function __FlushElementTree(root: Element): void;
+declare function __FlushElementTree(root: Element, options: FlushOptions): void;
+```
+
+### Parameters
+
+#### `root`
+
+The root of the Element Tree or subtree to submit. When omitted, the call uses the Engine's default flush scope.
+
+Performance integration must not change the root selected by the framework's existing rendering implementation.
+
+#### `options`
+
+Options for the submission.
+
+```ts
+interface FlushOptions {
+  triggerLayout?: boolean;
+  pipelineOptions?: PipelineOptions;
+}
+```
+
+This interface defines the framework-facing options covered by this contract. The Engine may recognize additional specialized options that are not part of the custom-framework integration contract.
+
+##### `triggerLayout`
+
+```ts
+triggerLayout?: boolean;
+```
+
+Controls whether the submission triggers layout. The default value is `true`.
+
+A performance integration must preserve the value selected by the framework. Adding `pipelineOptions` must not overwrite it.
+
+##### `pipelineOptions`
+
+```ts
+pipelineOptions?: PipelineOptions;
+```
+
+Associates this Element Tree submission with a Lynx Pipeline. Use the complete [`PipelineOptions`](../../lynx-api/performance-api/pipeline-options.mdx) object that followed the corresponding framework changes.
+
+Omit this property when the submission does not belong to a tracked pipeline. Do not generate a pipeline solely because a flush occurs.
+
+### Return value
+
+No return value.
+
+## Pipeline association
+
+A flush is an Element Tree submission boundary, while a pipeline is a logical attribution unit that extends from a rendering trigger to displayed output. They are not interchangeable.
+
+A framework must attach `pipelineOptions` to the flush that submits the corresponding content. In particular, it must not consume a pending load pipeline with:
+
+- a placeholder that is not the intended first-screen content;
+- an empty change batch;
+- an internal-only submission; or
+- a stale patch from a replaced or destroyed page.
+
+After the effective submission, release the pipeline context so that a later update cannot reuse it.
+
+## Example
+
+The following example preserves the framework's existing flush behavior while adding pipeline correlation:
+
+```ts
+function submitChanges(
+  root: Element,
+  existingOptions: FlushOptions,
+  pipelineOptions?: PipelineOptions,
+): void {
+  __FlushElementTree(root, {
+    ...existingOptions,
+    ...(pipelineOptions ? { pipelineOptions } : {}),
+  });
+}
+```
+
+For an Engine-initiated pipeline, forward the object received from the Engine. For a framework-initiated pipeline, create and start the object through the framework performance hooks before submitting it.
+
+## See also
+
+- [`PipelineOptions`](../../lynx-api/performance-api/pipeline-options.mdx)
+- [Integrating a Custom Framework with the Performance API](../../../guide/performance/monitor-performance/custom-framework-performance-api-integration.mdx)
