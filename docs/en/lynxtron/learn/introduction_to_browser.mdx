@@ -1,4 +1,5 @@
 import { PackageManagerTabs, Steps } from '@theme';
+import { Go } from '@lynx';
 
 # Tutorial: Build Your Own Browser
 
@@ -19,10 +20,18 @@ First, let us look at the final result. We will build a fully functional multi-t
 - **Navigation bar**: includes forward, back, refresh buttons, and an address bar
 - **Web content area**: uses [`<webview>`](/api/elements/built-in/webview) to load and display web pages
 
-<img
-  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/browser-demo.gif"
-  alt="Browser demo"
-  style={{ width: '100%', borderRadius: 8 }}
+### Try the Finished Browser
+
+The complete Browser demo includes the Lynx UI, Node.js main process, and preload bridge; you can inspect all of them in the source panel below.
+
+<Go
+  example="browser"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/browser-demo.gif"
+  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/browser"
+  defaultFile="src/main/desktop/main.ts"
+  defaultEntryFile="dist_precompiled/desktop/main.lynx.bundle"
+  defaultTab="preview"
+  nativeFramework="lynxtron"
 />
 
 ## Tutorial Setup
@@ -30,6 +39,23 @@ First, let us look at the final result. We will build a fully functional multi-t
 Please refer to our detailed [installation guide](/lynxtron/introduction), which walks you through creating a new Lynxtron project.
 
 You may notice that the project uses TypeScript. Although Lynxtron supports both TypeScript and plain JavaScript, we recommend TypeScript for a better development experience, including static type checking and improved editor IntelliSense.
+
+### Install the webview Native Library
+
+The optional `@lynx-js/cef-webview` package provides `<webview>`. Install it from the project root:
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+`create-lynxtron` already configures `pluginLynxtron()` for the desktop build. Check the [webview tooling requirements](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started) before continuing. The matching tooling loads and packages the native library; the app still initializes CEF before creating a window, as shown below.
+
+If you use pnpm 11 and installation reports blocked build scripts for these packages, merge the following into the project's `pnpm-workspace.yaml` and run installation again:
+
+```yaml
+allowBuilds:
+  '@lynx-js/cef-webview': true
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+```
 
 ## Build a Custom Title Bar with Lynxtron
 
@@ -39,9 +65,10 @@ Because the browser title bar contains tabs, the default Lynxtron window title b
 
 When creating `LynxWindow`, set `frame: false` to remove the system title bar:
 
-```typescript {8}
-// src/main/main.ts
+```typescript
+// src/main/desktop/main.ts
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
 let mainWindow: LynxWindow | null = null;
 function createWindow() {
   mainWindow = new LynxWindow({
@@ -49,8 +76,18 @@ function createWindow() {
     height: 800,
     frame: false, // Key: remove the system frame
   });
+  registerWindowControls(mainWindow);
 }
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+  createWindow();
+});
 ```
+
+Merge this initialization into the project's existing startup flow and keep its bundle loading code. Initialize CEF before creating any `LynxWindow`.
+
+CEF selects its storage directory based on the host application's identity. Multiple instances sharing the same identity may encounter storage conflicts. Multiple tabs in this browser are supported. If `initialize()` throws, stop startup and inspect the error instead of continuing to create WebViews.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/browser_demo_frame_less.png"
@@ -93,7 +130,7 @@ return (
 
 Because the system title bar is gone, users can no longer drag the window in the default way. We need to enable dragging on the custom top bar (`.top-bar`).
 
-Lynxtron supports the CSS property [`-x-app-region: drag`](./Custom-Window-Styles#step-2-make-the-window-draggable-again) to define draggable regions, similar to Electron's `-webkit-app-region: drag`.
+Lynxtron supports the CSS property [`-x-app-region: drag`](./Custom-Window-Styles#define-ui-draggable-regions) to define draggable regions, similar to Electron's `-webkit-app-region: drag`.
 
 ```css
 /* src/app/App.css */
@@ -124,22 +161,15 @@ Because we removed the system-native title bar, we need to implement close, mini
 ```tsx
 // src/app/App.tsx
 const handleClose = () => {
-  // Call NativeModules to send a message to the main process.
-  NativeModules.bridge.call('close', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('close', {}, () => {});
 };
 
 const handleMinimize = () => {
-  NativeModules.bridge.call('blur', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('minimize', {}, () => {});
 };
 
 const handleFullScreenTap = () => {
-  NativeModules.bridge.call('maximize', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('maximize', {}, () => {});
 };
 ```
 
@@ -151,25 +181,31 @@ const handleFullScreenTap = () => {
     <div style={{ flex: 1 }}>
 
 ```typescript
-// src/main/main.ts
-// Listen for these messages and call Lynxtron APIs.
-w.on('-lynx-invoke', (event, params) => {
-  console.log('window is invoke', params);
-  if (params == 'close') {
-    console.log('Closing window...');
-    w.close();
-  }
+// src/main/desktop/main.ts
+// Called from createWindow() above.
+function registerWindowControls(window: LynxWindow) {
+  let isFullScreen = false;
+  window.on('-lynx-invoke', (event, methodName, params) => {
+    console.log('window is invoked', methodName, params);
+    if (methodName === 'close') {
+      console.log('Closing window...');
+      event.sendReply(null);
+      window.close();
+    }
 
-  if (params == 'blur') {
-    w.blur();
-  }
+    if (methodName === 'minimize') {
+      window.minimize();
+      event.sendReply(null);
+    }
 
-  if (params == 'maximize') {
-    isFullScreen = !isFullScreen;
-    console.log('Toggling full screen to:', isFullScreen);
-    w.setFullScreen(isFullScreen);
-  }
-});
+    if (methodName === 'maximize') {
+      isFullScreen = !isFullScreen;
+      console.log('Toggling full screen to:', isFullScreen);
+      window.setFullScreen(isFullScreen);
+      event.sendReply(null);
+    }
+  });
+}
 ```
 
     </div>
@@ -232,17 +268,17 @@ At this point, we have finished adding and closing tabs:
 
 ### Add the `<webview>` Component
 
-Lynxtron provides the [`<webview>`](/api/elements/built-in/webview) element for loading external web pages. After importing it correctly, you can use the `<webview>` component to load web content.
+After installing the native library and initializing CEF as shown above, use [`<webview>`](/api/elements/built-in/webview) directly in the Lynx UI to load external pages. The UI code does not import the CEF package.
 
 ```tsx {5-9}
 <view className="content-area">
   {tabs.map((tab) => (
     <view key={tab.id} className="tab-content">
-      {tab.input_value && (
+      {tab.url && (
         <webview
           className="webview-container"
           id={`webview-${tab.id}`}
-          src={tab.input_value}
+          src={tab.url}
         />
       )}
     </view>
@@ -306,7 +342,7 @@ const webviewRefs = useRef<Record<string, any>>({});
 const handleReload = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
-    ref.invoke({ method: 'reload' });
+    ref.invoke({ method: 'reload' }).exec();
   }
 };
 // Go back
@@ -314,10 +350,12 @@ const goBack = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
     // Execute JavaScript inside the page
-    ref.invoke({
-      method: 'eval',
-      params: { func: 'window.history.back()' },
-    });
+    ref
+      .invoke({
+        method: 'eval',
+        params: { func: 'window.history.back()' },
+      })
+      .exec();
   }
 };
 ```

@@ -84,10 +84,15 @@ package tarball without committing `css/properties/*.json` to git.
 
 ## Media Assets
 
-Keep documentation media small and move large assets to the documentation CDN
-when possible. PR and merge-queue CI runs the `media-budget` job, which checks
-new regular-file blobs for common media types, including but not limited to
-GIF, PNG, JPEG, WebP, WebM, MP4, SVG, PDF, and fonts, across the repository:
+Use approved immutable documentation CDN URLs for documentation media by
+default. Do not add a local copy merely to make an image available to a
+documentation page. Existing local assets used by site UI under `src/` or
+`theme/` are outside this documentation-media policy and do not need to be
+migrated.
+
+PR and merge-queue CI runs the `media-budget` job, which checks new regular-file
+blobs for common media types, including but not limited to GIF, PNG, JPEG,
+WebP, WebM, MP4, SVG, PDF, and fonts, across the repository:
 
 - Warn above 50 KiB per new blob.
 - Fail above 100 KiB per new blob or 512 KiB total new media per PR.
@@ -140,6 +145,52 @@ Then request downstream validation after the updated OSS revision is pinned.
 
 ### Portable Documentation Imports
 
+Documentation runtime modules and public assets have different portability
+contracts. Public files are URL-addressed resources rather than code modules.
+
+#### Public Asset References
+
+Rspress copies every file under `docs/public` into the build output while
+preserving its path relative to that directory. These public files are
+URL-addressed resources, not code modules.
+
+Do not import from `@assets` in `docs/` or `sharedDocs/`. The alias points to
+the `docs/public/assets` subtree, so an import emits a bundled copy in addition
+to the public copy. There is no replacement asset alias: use an approved
+immutable documentation CDN URL by default.
+
+When a document intentionally uses an existing public file, standard Markdown
+origin-root URLs are version-aware because Rspress resolves them under the
+configured documentation base:
+
+```mdx
+![Diagram](/assets/diagram.png)
+```
+
+Raw HTML and explicit MDX JSX props do not receive that standard Markdown image
+handling. An unnormalized origin-root public URL such as `/assets/...` on a page
+under `/4.0/` requests the current root deployment instead of
+`/4.0/assets/...`. Prefer the CDN URL, or normalize an existing public URL
+explicitly:
+
+```mdx
+import { normalizeImagePath } from '@rspress/core/runtime';
+
+<img src={normalizeImagePath('/assets/diagram.png')} />
+<Go img={normalizeImagePath('/assets/demo.gif')} />
+```
+
+See the
+[Rspress static assets documentation](https://rspress.rs/guide/basic/static-assets)
+for the `normalizeImagePath` contract. Do not couple a document to the physical
+layout of `docs/public`:
+
+```mdx
+![Diagram](../../public/assets/diagram.png)
+```
+
+#### Runtime Source Imports
+
 In this repository, `docs/` and `sharedDocs/` happen to have fixed relative
 positions next to `src/` and `theme/`, so imports such as
 `../../src/components/...` can appear to work. Downstream sites copy the
@@ -164,7 +215,7 @@ import { Example } from '../../../../src/components/example';
 import { Example } from '@lynx/example';
 ```
 
-For new imports of shared components, content modules, or assets, choose the
+For new imports of runtime components or shared content modules, choose the
 narrowest shared entry points:
 
 | Dependencies used by documentation pages           | Import form         |
@@ -175,7 +226,6 @@ narrowest shared entry points:
 | Specific modules under `src/lynx-ui/components`    | `@lynx-ui/<module>` |
 | Luna components exported by its exact entry point  | `@luna`             |
 | Shared package-document modules                    | `@docs/<path>`      |
-| Files under `docs/public/assets`                   | `@assets/<path>`    |
 | MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports    |
 
 `@luna` is an exact-match barrel for `src/luna/index.ts`. Use only the bare

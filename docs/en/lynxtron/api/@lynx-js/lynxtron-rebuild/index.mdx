@@ -14,15 +14,16 @@ npm install -D @lynx-js/lynxtron-rebuild
 npx @lynx-js/lynxtron-rebuild
 ```
 
-Run it after installing or updating native modules, and verify the rebuilt artifacts before packaging the app.
+Run it after installing or updating native modules. The tool may reuse compatible prebuilt artifacts, so a successful exit does not necessarily mean it compiled a new binary. Inspect its log and the loaded `.node` path, and exercise the module in the target Lynxtron runtime and packaged app.
 
 ## When To Use It
 
-| Scenario                                         | Required                                                                   |
-| ------------------------------------------------ | -------------------------------------------------------------------------- |
-| Pure JavaScript npm packages                     | No rebuild required                                                        |
-| npm native modules that contain `.node` binaries | Use `@lynx-js/lynxtron-rebuild`                                            |
-| Native modules migrated from an Electron project | Rebuild from the Electron ABI to the Lynxtron runtime ABI                  |
-| Lynx native libraries                            | Usually built through `npm run build:shared` instead of `lynxtron-rebuild` |
+| Scenario                                         | Required                                                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Pure JavaScript npm packages                     | No rebuild required                                                                                          |
+| Modules that depend on the Node.js/V8 ABI        | Use `@lynx-js/lynxtron-rebuild` when the binary does not match Lynxtron                                      |
+| Node-API modules with a compatible prebuild      | May reuse it; verify OS, architecture, Node-API version, native dependencies, and actual loading in Lynxtron |
+| Native modules migrated from an Electron project | Replace Electron ABI-specific binaries with Lynxtron builds; compatible Node-API prebuilds may be reused     |
+| Lynx native libraries                            | Usually built through `npm run build:lynxtron` instead of `lynxtron-rebuild`                                 |
 
 For more details, see [Node.js Native Modules](/lynxtron/Native-Libraries/NodeJS-Native-Modules).
