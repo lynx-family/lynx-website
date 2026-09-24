@@ -25,7 +25,7 @@ The output itself differs from a web build in several ways: no HTML entry, style
 
 ## Rsbuild with pluginLynx
 
-`pluginLynx` (from [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)) is what turns an Rsbuild build into a Lynx build. It configures the dual-thread output and bundle filename, keeps the intermediate files under `dist/.lynx/<entry>/`, tunes minification and source maps for the Lynx runtime, resolves modules through Lynx's `exports` conditions, serves the bundle over your LAN during development, and registers the debug metadata used to [map production errors to source](./map-errors-to-source.mdx).
+`pluginLynx` (from [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)) is what turns an Rsbuild build into a Lynx build. It configures the dual-thread output and bundle filename, keeps the intermediate files under `dist/.lynx/<entry>/`, tunes minification and source maps for the Lynx runtime, resolves modules through Lynx's `exports` conditions, serves the bundle over your LAN during development, and registers the debug metadata used to [map production errors to source](/guide/devtool/map-errors-to-source.mdx).
 
 You rarely apply it by hand: [`pluginReactLynx`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin) applies it for you when it is not already registered, which is why the ReactLynx template lists only `pluginReactLynx`.
 

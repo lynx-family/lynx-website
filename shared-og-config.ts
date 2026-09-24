@@ -57,7 +57,6 @@ export type OgCover = {
  * endpoints with the lilac bridge between them.
  *   - guide:    red → lilac → cyan       (home `.dynamic-text`)
  *   - react:    teal → lilac → red       (`--major/--second-brand-color`)
- *   - build:    orange → lilac → red
  *   - lynxtron: green → lilac → red      (`subsite-theme(#47d78f)`)
  *
  * `ai` and `lynx-ui` have no on-site hero gradient; they follow the same
@@ -72,10 +71,6 @@ const COVER_EXTRAS: Record<string, Pick<OgCover, 'gradient' | 'logo'>> = {
   react: {
     gradient: ['#0185ad', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
     logo: 'react.png',
-  },
-  build: {
-    gradient: ['#ff9a00', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
-    logo: 'rspeedy.png',
   },
   ui: {
     gradient: ['#ff1a6e', OG_GRADIENT_BRIDGE, OG_MAJOR_BRAND],
@@ -172,7 +167,7 @@ export type OgSelection =
  * A leading `zh` segment is stripped before classifying. Precedence:
  *   1. blog   — a `blog` segment followed by a slug (the blog index is not a post)
  *   2. api    — first effective segment is `api`
- *   3. subsite — first segment matching a cover (react/build/ui/ai)
+ *   3. subsite — first segment matching a cover (react/ui/ai)
  *   4. guide  — fallback
  *
  * Examples (imagePath via ogBlogPath/ogCoverPath):
@@ -204,7 +199,7 @@ export function selectOg(pathnameNoBase: string, lang: string): OgSelection {
     return { kind: 'cover', value: 'api', imagePath: ogCoverPath(lang, 'api') };
   }
 
-  // 3. Subsite docs (react/build/ui/ai) — match the first effective segment
+  // 3. Subsite docs (react/ui/ai) — match the first effective segment
   // to a cover. Deeper segments must not count: /guide/ui/* is a guide page,
   // not a lynx-ui one.
   const value = SUBSITE_COVER_VALUES.find((v) => afterLang[0] === v);

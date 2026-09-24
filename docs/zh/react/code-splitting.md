@@ -88,7 +88,7 @@ export function App() {
 ```
 
 :::warning 与 Web 的区别
-在 Lynx 中，CSS 的作用域限定于每个 [Bundle](../api/lynx-native-api/template-bundle.md)。由于懒加载组件会生成自己的 Bundle（请参阅[构建输出文件](../build/output.md)的输出结构），因此它们的行为与 Web 上的有所不同。主 Bundle 中定义的全局 CSS 不会影响懒加载组件，反之亦然。
+在 Lynx 中，CSS 的作用域限定于每个 [Bundle](../api/lynx-native-api/template-bundle.md)。由于懒加载组件会生成自己的 Bundle（请参阅[构建输出文件](/guide/build/output)的输出结构），因此它们的行为与 Web 上的有所不同。主 Bundle 中定义的全局 CSS 不会影响懒加载组件，反之亦然。
 :::
 
 ### 错误处理
