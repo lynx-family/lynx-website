@@ -20,7 +20,7 @@ import { BlogHeader } from '@lynx';
 
 <BlogHeader />
 
-Lynx 基于 Rstack（[Rsbuild](https://rsbuild.rs/zh/) 与 [Rspack](https://rspack.rs/zh/)）构建了自己的工具链 [Rspeedy](/rspeedy/)，让每一个 Lynx 应用都能同步获得上游工具链的性能与能力。
+Lynx 基于 Rstack（[Rsbuild](https://rsbuild.rs/zh/) 与 [Rspack](https://rspack.rs/zh/)）构建了自己的工具链 [Rspeedy](/guide/build/lynx-bundle)，让每一个 Lynx 应用都能同步获得上游工具链的性能与能力。
 
 随着 [Rspack 2.0](https://rspack.rs/zh/blog/announcing-2-0) 与 [Rsbuild 2.0](https://rsbuild.rs/zh/blog/v2-0) 相继发布，Lynx 免费获得了上游的一系列优化：[构建提速 18～39%](#rspack-faster)、[产物体积下降 3～9%](#rspack-smaller)，以及向 Web 通行约定对齐的配置，如 [`resolve.alias`](#bc-alias) 和顶层 [`splitChunks`](#bc-chunksplit)。在此之上，我们针对 Lynx 做了一系列定制：[更灵活的分包与动态加载](#rspeedy-splitting)、[面向 PrimJS 的产物调优](#rspeedy-primjs)、[默认 ES2017](#rspeedy-es2017)、[Lynx Bundle 并行编码](#rspeedy-parallel)，以及[精确错误反解](#rspeedy-debug)。我们还引入了一个用于包体积优化的 [Agent Skill](#rspeedy-skill)，帮你系统化地优化应用体积。
 
@@ -74,7 +74,7 @@ Rsbuild 在 Rspack 之上提供开箱即用的构建配置。2.0 让这些配置
 
 ### `source.alias` → `resolve.alias` \{#bc-alias}
 
-将别名从 [`source.alias`](/api/rspeedy/rspeedy.source.alias) 迁移到 [`resolve.alias`](/api/rspeedy/rspeedy.resolve.alias)：
+将别名从 [`source.alias`](/api/build/rspeedy.source.alias) 迁移到 [`resolve.alias`](/api/build/rspeedy.resolve.alias)：
 
 ```diff
 export default defineConfig({
@@ -89,7 +89,7 @@ export default defineConfig({
 
 ### `performance.chunkSplit` → `splitChunks` \{#bc-chunksplit}
 
-将 [`performance.chunkSplit.strategy`](/api/rspeedy/rspeedy.chunksplit.strategy) 迁移到顶层 [`splitChunks.preset`](/api/rspeedy/rspeedy.config.splitchunks)：
+将 [`performance.chunkSplit.strategy`](/api/build/rspeedy.chunksplit.strategy) 迁移到顶层 [`splitChunks.preset`](/api/build/rspeedy.config.splitchunks)：
 
 ```diff
 export default defineConfig({
@@ -106,7 +106,7 @@ export default defineConfig({
 
 ### 默认装饰器版本 `2023-11` \{#bc-decorators}
 
-[`source.decorators.version`](/api/rspeedy/rspeedy.decorators.version) 的默认值由 `2022-03` 变更为 `2023-11`，如需保持旧行为请显式配置。
+[`source.decorators.version`](/api/build/rspeedy.decorators.version) 的默认值由 `2022-03` 变更为 `2023-11`，如需保持旧行为请显式配置。
 
 ## 面向 Lynx 的定制优化 \{#rspeedy}
 
@@ -116,11 +116,11 @@ export default defineConfig({
 
 Lynx 提供了由弱到强的三种拆分手段，它们在 Web 生态中都有对应的概念，并由 Rspeedy 适配到了 Lynx 的产物形态上：
 
-| 场景              | Web 生态                                                                 | Lynx                                                                                          |
-| ----------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| 构建期拆包        | Chunk Split（`splitChunks`）                                             | [`splitChunks`](/api/rspeedy/rspeedy.config.splitchunks)（同名配置，提供 Lynx 适配的 preset） |
-| 应用内按需加载    | 动态 `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | 动态 `import()` + ReactLynx `lazy()`，产物为 [Lazy Bundle](/react/code-splitting#懒加载组件)  |
-| 外部 / 跨应用复用 | webpack `externals`                                                      | [External Bundle](/rspeedy/external-bundle)                                                   |
+| 场景              | Web 生态                                                                 | Lynx                                                                                         |
+| ----------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 构建期拆包        | Chunk Split（`splitChunks`）                                             | [`splitChunks`](/api/build/rspeedy.config.splitchunks)（同名配置，提供 Lynx 适配的 preset）  |
+| 应用内按需加载    | 动态 `import()` + [`React.lazy`](https://react.dev/reference/react/lazy) | 动态 `import()` + ReactLynx `lazy()`，产物为 [Lazy Bundle](/react/code-splitting#懒加载组件) |
+| 外部 / 跨应用复用 | webpack `externals`                                                      | [External Bundle](/guide/build/external-bundle)                                              |
 
 构建期拆包的 `splitChunks` 较为常见（配置迁移见 [`performance.chunkSplit` → `splitChunks`](#bc-chunksplit)），这里不再展开；下面重点说说 Lazy Bundle 和 External Bundle。
 
@@ -145,7 +145,7 @@ lazy(() => import('./LazyComponent.jsx', { with: { mode: 'async' } })); // 后�
 
 #### External Bundle
 
-External Bundle 是一个单独构建出来的 Lynx Bundle，可以被另一个应用在运行时拉取并渲染，从而实现跨应用复用。生产侧基于 [Rslib](https://rslib.rs/zh/) 构建，用 [`defineExternalBundleRslibConfig`](/rspeedy/external-bundle) 产出；消费侧则使用 Rsbuild 插件 [`pluginExternalBundle`](/rspeedy/external-bundle) 接入。
+External Bundle 是一个单独构建出来的 Lynx Bundle，可以被另一个应用在运行时拉取并渲染，从而实现跨应用复用。生产侧基于 [Rslib](https://rslib.rs/zh/) 构建，用 [`defineExternalBundleRslibConfig`](/guide/build/external-bundle) 产出；消费侧则使用 Rsbuild 插件 [`pluginExternalBundle`](/guide/build/external-bundle) 接入。
 
 ### 面向 PrimJS：`let` / `const` 降级为 `var` \{#rspeedy-primjs}
 
@@ -153,7 +153,7 @@ External Bundle 是一个单独构建出来的 Lynx Bundle，可以被另一个�
 
 ### 默认目标提升至 ES2017 \{#rspeedy-es2017}
 
-我们把后台线程的产物目标从 ES2015 提升到了 ES2017（主线程保持 ES2019）。随着低端机型逐渐退场，更高的产物基线意味着更少的语法降级、更小更快的产物。如果你仍需要降级某些特定语法，可以把对应的 transform 加到 [`tools.swc`](/api/rspeedy/rspeedy.tools.swc) 的 `env.include`：
+我们把后台线程的产物目标从 ES2015 提升到了 ES2017（主线程保持 ES2019）。随着低端机型逐渐退场，更高的产物基线意味着更少的语法降级、更小更快的产物。如果你仍需要降级某些特定语法，可以把对应的 transform 加到 [`tools.swc`](/api/build/rspeedy.tools.swc) 的 `env.include`：
 
 ```js
 import { defineConfig } from '@lynx-js/rspeedy';
@@ -175,7 +175,7 @@ export default defineConfig({
 
 ### 精确的错误反解 \{#rspeedy-debug}
 
-Rspeedy 0.15 让线上错误能精确反解回源码：为每个 Lynx entry 生成统一的 `debug-metadata.json`，整合 JS、CSS、UI 三类 Source Map，主线程与后台线程的报错都能找到正确的反解信息、还原到原始代码。具体做法见[线上错误反解](/rspeedy/map-errors-to-source)。
+Rspeedy 0.15 让线上错误能精确反解回源码：为每个 Lynx entry 生成统一的 `debug-metadata.json`，整合 JS、CSS、UI 三类 Source Map，主线程与后台线程的报错都能找到正确的反解信息、还原到原始代码。具体做法见[线上错误反解](/guide/devtool/map-errors-to-source)。
 
 ## One More Thing：包体积优化 Agent Skill \{#rspeedy-skill}
 
@@ -193,7 +193,7 @@ npx skills add lynx-community/skills -s rspeedy-bundle-size
 
 ## 升级指南 \{#migration}
 
-完整迁移步骤见 [Rspeedy 升级指南](/rspeedy/upgrade)。上文按层列出的破坏性变更，多数随 Rspack 2.0 / Rsbuild 2.0 升级引入。如需逐条核对，可参阅 [Rspeedy CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md)、[Rsbuild v1 → v2 升级指南](https://rsbuild.rs/zh/guide/upgrade/v1-to-v2) 以及 [Rspack v1 → v2 迁移指南](https://rspack.rs/zh/guide/migration/rspack_1.x)。
+完整迁移步骤见 [Rspeedy 升级指南](https://lynx-stack.dev/zh/guide/upgrade-rspeedy)。上文按层列出的破坏性变更，多数随 Rspack 2.0 / Rsbuild 2.0 升级引入。如需逐条核对，可参阅 [Rspeedy CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md)、[Rsbuild v1 → v2 升级指南](https://rsbuild.rs/zh/guide/upgrade/v1-to-v2) 以及 [Rspack v1 → v2 迁移指南](https://rspack.rs/zh/guide/migration/rspack_1.x)。
 
 ## 接下来 \{#whats-next}
 

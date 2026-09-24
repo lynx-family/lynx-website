@@ -13,8 +13,8 @@
 ```txt
 dist/
 ├── [name].lynx.bundle
-├── async
-│   └── [name].lynx.bundle
+├── lazy-bundle
+│   └── [name].[hash].bundle
 └── static
     ├── image
     │   └── [name].[hash].png
@@ -22,16 +22,14 @@ dist/
     │   └── [name].[hash].svg
     └── js
         ├── [id].[hash].js
-        │   └── async
-        │       └── [id].[hash].js
         └── lib-preact.[hash].js
 ```
 
 最常见的输出文件包括 Bundle 文件、JS 文件和静态资源：
 
-- Bundle（`[name].lynx.bundle`），可通过 [`output.filename.bundle`] 配置
-- 异步 Bundle（`async/[name].lynx.bundle`）
-- JS 文件（`static/js/*.js`），可通过 [`output.distPath.js`] 和 [`output.filename.js`] 配置
+- Bundle（`[name].lynx.bundle`），可通过 `pluginLynx` 的 `output.filename.bundle` 选项配置
+- 懒加载 Bundle（`lazy-bundle/[name].[hash].bundle`），每个动态 `import()` 产出一个
+- JS 文件（`static/js/*.js`），可通过 [`output.distPath.js`] 和 [`output.filename.js`] 配置。只有开启代码分包时才会产出，否则脚本会内联进 Bundle
 - 静态资源目录（`static/{font,image,media,svg}`）
 
 文件名中的占位符含义：
@@ -47,27 +45,27 @@ dist/
 ```txt
 dist/
 ├── .lynx
-│   ├── async
+│   ├── lazy-bundle
 │   │   └── [name]
+│   │       ├── background.css
+│   │       ├── background.js
 │   │       ├── debug-metadata.json
-│   │       ├── tasm.json
-│   │       └── [name].css
-│   ├── [name]
-│   │   ├── background.js
-│   │   ├── debug-metadata.json
-│   │   ├── [name].css
-│   │   ├── main-thread.js
-│   │   └── tasm.json
-│   └── rspeedy.config.js
+│   │       └── tasm.json
+│   └── [name]
+│       ├── background.js
+│       ├── debug-metadata.json
+│       ├── [name].css
+│       ├── main-thread.js
+│       └── tasm.json
 ├── [name].lynx.bundle
+├── lazy-bundle
+│   └── [name].[hash].bundle
 └── static
     ├── image
     │   ├── [name].[hash].png
     │   └── [name].[hash].svg
     └── js
         ├── [id].[hash].js
-        │   └── async
-        │       └── [id].[hash].js
         └── lib-preact.[hash].js
 ```
 
@@ -75,11 +73,11 @@ dist/
 
 - 后台线程脚本（Background Thread Script）：内联到 Bundle 中的脚本，默认输出到 `.lynx/[name]/background.js`
 - 主线程脚本（MainThread Thread Script）：默认输出到 `.lynx/[name]/main-thread.js`
-- Debug Metadata：反解线上错误所需的元数据（包含 source map、字节码调试信息、UI source map 与构建信息），默认输出到 `.lynx/[name]/debug-metadata.json`，详见 [线上错误反解](./map-errors-to-source)
+- Debug Metadata：反解线上错误所需的元数据（包含 source map、字节码调试信息、UI source map 与构建信息），默认输出到 `.lynx/[name]/debug-metadata.json`，详见 [线上错误反解](/guide/devtool/map-errors-to-source)
 
 ## 修改目录结构
 
-Rspeedy 提供以下配置项来调整输出目录：
+可以用以下配置项来调整输出目录：
 
 - 通过 [`output.filename`] 修改文件名
 - 通过 [`output.distPath`] 修改输出路径
@@ -91,17 +89,24 @@ Rspeedy 提供以下配置项来调整输出目录：
 若需要简化目录层级，可将目录配置设为空字符串来实现扁平化结构：
 
 ```js
-import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
   output: {
     distPath: {
       js: '',
     },
-    filename: {
-      bundle: '[name].lynx.bundle',
-    },
   },
+  plugins: [
+    pluginLynx({
+      output: {
+        filename: {
+          bundle: '[name].lynx.bundle',
+        },
+      },
+    }),
+  ],
 });
 ```
 
@@ -114,10 +119,9 @@ dist
 └── [name].lynx.bundle
 ```
 
-[`output.filename`]: ../../api/rspeedy/rspeedy.output.filename
-[`output.filename.js`]: ../../api/rspeedy/rspeedy.filename.js
-[`output.filename.bundle`]: ../../api/rspeedy/rspeedy.filename.bundle
-[`output.distPath`]: ../../api/rspeedy/rspeedy.output.distpath
-[`output.distPath.js`]: ../../api/rspeedy/rspeedy.distpath.js
-[`output.legalComments`]: ../../api/rspeedy/rspeedy.output.legalcomments
-[`output.sourceMap`]: ../../api/rspeedy/rspeedy.output.sourcemap
+[`output.filename`]: https://rsbuild.rs/zh/config/output/filename
+[`output.filename.js`]: https://rsbuild.rs/zh/config/output/filename
+[`output.distPath`]: https://rsbuild.rs/zh/config/output/dist-path
+[`output.distPath.js`]: https://rsbuild.rs/zh/config/output/dist-path
+[`output.legalComments`]: https://rsbuild.rs/zh/config/output/legal-comments
+[`output.sourceMap`]: https://rsbuild.rs/zh/config/output/source-map

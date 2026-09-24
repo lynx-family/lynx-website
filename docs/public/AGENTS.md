@@ -20,7 +20,7 @@
 
 | Web Mental Model             | Lynx Counterpart                                                                | Key Differences                                                                                                                                                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.html` + assets        | Lynx bundle (binary that contains JS bytecode + styles) or a `template.js` file | Bundles must be compatible with the Lynx engine version; configure `engineVersion` (previously `targetSdkVersion`). (See [Compatibility](/guide/compatibility.md))                                                            |
+| `index.html` + assets        | Lynx bundle (binary that contains JS bytecode + styles) or a `template.js` file | Bundles must be compatible with the Lynx engine version; configure `engineVersion` (previously `targetSdkVersion`). (See [Compatibility](/guide/build/compatibility.md))                                                      |
 | DOM + CSSOM                  | Element tree + styling system                                                   | Every element behaves like a block-level node. Custom tags such as `view`/`text` map to native controls. (See [Composing Elements](/guide/ui/elements-components.md))                                                         |
 | Browser main thread          | Lynx main thread                                                                | Handles first-screen rendering, layout, and main-thread scripts, executing PrimJS bytecode. (See [Main Thread Runtime](/guide/scripting-runtime/main-thread-runtime.md))                                                      |
 | Browser rendering-task queue | Lynx background thread                                                          | Runs ReactLynx scheduling, lifecycle, and most side effects. Executes PrimJS/JavaScriptCore with syntax support up to ES2015 (SWC transpiles during build). (See [JavaScript Runtime](/guide/scripting-runtime/index.md))     |
@@ -88,7 +88,7 @@ Additionally:
 
 ## 8. Type System
 
-- **TypeScript support**: Official typings live in `@lynx-js/types`; using TypeScript throughout is highly encouraged. (See [TypeScript Support](/rspeedy/typescript))
+- **TypeScript support**: Official typings live in `@lynx-js/types`; using TypeScript throughout is highly encouraged. (See [TypeScript Support](/guide/build/typescript))
 - **`tsconfig.json`**: Set `compilerOptions.jsx` to `react-jsx` and `compilerOptions.jsxImportSource` to `@lynx-js/react`.
 - **Import types correctly**: All Lynx API types are exported from `@lynx-js/types`, for example `import type { MainThread, NodesRef } from '@lynx-js/types'`. ReactLynx APIs and types come from `@lynx-js/react`.
 
@@ -157,7 +157,7 @@ Common APIs:
 - **Project initialization**: `pnpm create @lynx-js/lynx@latest` scaffolds a ReactLynx project with sample code, letting you choose Rsbuild with `pluginLynx` (recommended), Rspeedy, or Rslib. (See [Quick Start](/guide/start/quick-start.md))
 - **Development and debugging**: `pnpm dev` starts the dev server. The terminal prints a QR code—scan it with the LynxExample app (iOS/Android/Harmony emulator) for hot-update previews. (See [Quick Start](/guide/start/quick-start.md))
 - **DevTool debugging**: After connecting a device, use the desktop Lynx DevTool to debug JS, inspect nodes, and record performance. (See [Lynx DevTool](/guide/devtool.md))
-- **Build artifacts**: The build outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=lynx` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.lynx`; otherwise only the final bundle is produced. (See [Output Files](/rspeedy/output.md))
+- **Build artifacts**: The build outputs a bundle that includes the background-thread script (text), main-thread bytecode, styles, and other assets. Set `DEBUG=lynx` to dump intermediate artifacts (background script, main-thread bytecode, styles, source maps, etc.) into `dist/.lynx`; otherwise only the final bundle is produced. (See [Output Files](/guide/build/output.md))
 - **Documentation asset references**: Use approved immutable CDN URLs by default. Rspress copies `docs/public` into the build, so files under `docs/` and `sharedDocs/` **MUST NOT** import from `@assets`, which would emit a second bundled copy. Standard Markdown public URLs are base-aware:
 
   ```mdx

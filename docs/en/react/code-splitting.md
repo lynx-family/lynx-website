@@ -92,7 +92,7 @@ export function App() {
 ```
 
 :::warning Differences from the Web
-In Lynx, CSS is scoped to each [Bundle](../api/lynx-native-api/template-bundle.md). Since lazy-loaded components generate their own Bundles (see output structure at [Output Files](../rspeedy/output.md)), you shouldn’t expect them to behave like on the Web. Global CSS defined in the main Bundle will not affect lazy-loaded components, and vice versa.
+In Lynx, CSS is scoped to each [Bundle](../api/lynx-native-api/template-bundle.md). Since lazy-loaded components generate their own Bundles (see output structure at [Output Files](/guide/build/output)), you shouldn’t expect them to behave like on the Web. Global CSS defined in the main Bundle will not affect lazy-loaded components, and vice versa.
 :::
 
 ### Error handling
@@ -114,7 +114,7 @@ You may also lazy-load modules that are built in a standalone Rsbuild project.
 
 ### Create a standalone Producer project
 
-Create a standalone Rsbuild project using [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx):
+Create a standalone Rsbuild project using [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx):
 
 ```bash
 pnpm create @lynx-js/lynx@latest --template rsbuild
@@ -127,9 +127,6 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  environments: {
-    lynx: {},
-  },
   source: {
     entry: {
       main: './src/index.tsx',
@@ -227,9 +224,6 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
-  environments: {
-    lynx: {},
-  },
   source: {
     entry: {
       main: './src/Consumer.tsx',
@@ -250,7 +244,7 @@ Lazy bundles are fetched through one of two loaders. Which one a build uses is d
 | `FetchBundle`    | `lynx.fetchBundle`, and the `import(..., { with: { mode } })` mode hints |
 | `QueryComponent` | The legacy `lynx.QueryComponent` path                                    |
 
-By default the loader follows [`engineVersion`](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md): `FetchBundle` when it is `3.9` or higher, `QueryComponent` otherwise. `engineVersion` defaults to `3.2`, so a build that does not raise it to `3.9` gets `QueryComponent`.
+By default the loader follows [`engineVersion`](/api/build/react-rsbuild-plugin.pluginreactlynxoptions.engineversion.md): `FetchBundle` when it is `3.9` or higher, `QueryComponent` otherwise. `engineVersion` defaults to `3.2`, so a build that does not raise it to `3.9` gets `QueryComponent`.
 
 The `REACT_LAZY_BUNDLE_FETCHER` environment variable overrides that choice:
 
@@ -266,4 +260,4 @@ REACT_LAZY_BUNDLE_FETCHER=QueryComponent rspeedy build
 The `FetchBundle` loader and this selection logic arrived in `@lynx-js/react@0.123.0` / `@lynx-js/react-rsbuild-plugin@0.18.0`, which release together. Earlier versions always use `QueryComponent`.
 :::
 
-[`experimental_isLazyBundle`]: ../../api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle
+[`experimental_isLazyBundle`]: ../../api/build/react-rsbuild-plugin.pluginreactlynxoptions.experimental_islazybundle
