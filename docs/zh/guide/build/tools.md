@@ -27,7 +27,7 @@ npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
 
 `pluginLynx`（来自 [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)）是把一次 Rsbuild 构建变成 Lynx 构建的关键。它配置双线程产物与 Bundle 文件名，把中间产物保留在 `dist/.lynx/<entry>/`，按 Lynx 运行时调整压缩与 source map，按 Lynx 的 `exports` 条件解析模块，在开发时通过局域网把产物推送到设备，并注册[线上错误反解](/guide/devtool/map-errors-to-source.mdx)所需的 debug metadata。
 
-你很少需要手动引入它：[`pluginReactLynx`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin) 在它尚未注册时会自动应用，所以 ReactLynx 模板的配置里只写了 `pluginReactLynx`。
+你很少需要手动引入它：[`pluginReactLynx`](/api/build/react-rsbuild-plugin.pluginreactlynx) 在它尚未注册时会自动应用，所以 ReactLynx 模板的配置里只写了 `pluginReactLynx`。
 
 ```ts title="rsbuild.config.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
@@ -45,8 +45,8 @@ export default defineConfig({
 
 两点需要注意：
 
-- **`source.entry` 用对象形式**，和其他 Rsbuild 项目一致。
-- **需要配置选项时要自己引入 `pluginLynx`。** 自动应用用的是默认选项，所以想配 `output.filename.bundle` 或 `performance.profile`，需要在 `plugins` 里显式写上 `pluginLynx({ ... })`，不会重复应用。
+- **[`source.entry`](/api/build/rspeedy.source.entry) 用对象形式**，和其他 Rsbuild 项目一致。
+- **需要配置选项时要自己引入 `pluginLynx`。** 自动应用用的是默认选项，所以想配 [`output.filename.bundle`](/api/build/rspeedy.output.filename) 或 [`performance.profile`](/api/build/rspeedy.performance.profile)，需要在 `plugins` 里显式写上 `pluginLynx({ ... })`，不会重复应用。
 
 类型声明来自 Rsbuild：
 
@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-代价是能力范围：Rspeedy 的配置是 Rsbuild 配置的一个精选子集，`tools.postcss`、`tools.sass` 这类选项会被拒绝而不是透传，`output.charset`、`output.polyfill` 等少数值是固定的。反过来，Lynx 特有的配置直接写在配置里：`output.filename.bundle`、`performance.profile` 不用绕 `pluginLynx` 的选项。`source.entry` 和 `output.filename` 还额外接受字符串写法。
+代价是能力范围：Rspeedy 的配置是 Rsbuild 配置的一个精选子集，[`tools.postcss`](https://rsbuild.rs/config/tools/postcss)、[`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) 这类选项会被拒绝而不是透传，[`output.charset`](https://rsbuild.rs/config/output/charset)、[`output.polyfill`](https://rsbuild.rs/config/output/polyfill) 等少数值是固定的。反过来，Lynx 特有的配置直接写在配置里：[`output.filename.bundle`](/api/build/rspeedy.output.filename)、[`performance.profile`](/api/build/rspeedy.performance.profile) 不用绕 `pluginLynx` 的选项。[`source.entry`](/api/build/rspeedy.source.entry) 和 [`output.filename`](/api/build/rspeedy.output.filename) 还额外接受字符串写法。
 
 它的类型声明是对 Rsbuild 类型的再导出：
 
@@ -111,7 +111,7 @@ Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调�
 
 然后调整配置本身：
 
-- **`source.entry` 和 `output.filename` 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
-- **Lynx 自己的选项挪进 `pluginLynx`。** `output.filename.bundle` 和 `performance.profile` 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`——这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
+- **[`source.entry`](/api/build/rspeedy.source.entry) 和 [`output.filename`](/api/build/rspeedy.output.filename) 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
+- **Lynx 自己的选项挪进 `pluginLynx`。** [`output.filename.bundle`](/api/build/rspeedy.output.filename) 和 [`performance.profile`](/api/build/rspeedy.performance.profile) 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`——这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
 
-这一步实际能用上的是 `tools.postcss`——Rspeedy 不接受这个配置项。
+这一步实际能用上的是 [`tools.postcss`](https://rsbuild.rs/config/tools/postcss)——Rspeedy 不接受这个配置项。

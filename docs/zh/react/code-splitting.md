@@ -110,7 +110,7 @@ export function App() {
 
 ### 创建一个独立的生产者项目
 
-使用 [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 创建一个独立的 Rsbuild 项目：
+使用 [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 创建一个独立的 Rsbuild 项目：
 
 ```bash
 pnpm create @lynx-js/lynx@latest --template rsbuild

@@ -27,7 +27,7 @@ The output itself differs from a web build in several ways: no HTML entry, style
 
 `pluginLynx` (from [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)) is what turns an Rsbuild build into a Lynx build. It configures the dual-thread output and bundle filename, keeps the intermediate files under `dist/.lynx/<entry>/`, tunes minification and source maps for the Lynx runtime, resolves modules through Lynx's `exports` conditions, serves the bundle over your LAN during development, and registers the debug metadata used to [map production errors to source](/guide/devtool/map-errors-to-source.mdx).
 
-You rarely apply it by hand: [`pluginReactLynx`](https://www.npmjs.com/package/@lynx-js/react-rsbuild-plugin) applies it for you when it is not already registered, which is why the ReactLynx template lists only `pluginReactLynx`.
+You rarely apply it by hand: [`pluginReactLynx`](/api/build/react-rsbuild-plugin.pluginreactlynx) applies it for you when it is not already registered, which is why the ReactLynx template lists only `pluginReactLynx`.
 
 ```ts title="rsbuild.config.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
@@ -45,8 +45,8 @@ export default defineConfig({
 
 Two things to know:
 
-- **`source.entry` takes the object form**, like any other Rsbuild project.
-- **Apply `pluginLynx` yourself when you need its options.** The automatic application uses default options, so configuring `output.filename.bundle` or `performance.profile` means adding `pluginLynx({ ... })` to `plugins` explicitly. It is not applied twice.
+- **[`source.entry`](/api/build/rspeedy.source.entry) takes the object form**, like any other Rsbuild project.
+- **Apply `pluginLynx` yourself when you need its options.** The automatic application uses default options, so configuring [`output.filename.bundle`](/api/build/rspeedy.output.filename) or [`performance.profile`](/api/build/rspeedy.performance.profile) means adding `pluginLynx({ ... })` to `plugins` explicitly. It is not applied twice.
 
 Types come from Rsbuild:
 
@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like `tools.postcss` and `tools.sass` are rejected rather than passed through, and a few values such as `output.charset` and `output.polyfill` are fixed. What it gains is that Lynx's own options sit in the config itself: `output.filename.bundle` and `performance.profile` need no detour through `pluginLynx`. `source.entry` and `output.filename` additionally accept a plain string.
+The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) and [`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) are rejected rather than passed through, and a few values such as [`output.charset`](https://rsbuild.rs/config/output/charset) and [`output.polyfill`](https://rsbuild.rs/config/output/polyfill) are fixed. What it gains is that Lynx's own options sit in the config itself: [`output.filename.bundle`](/api/build/rspeedy.output.filename) and [`performance.profile`](/api/build/rspeedy.performance.profile) need no detour through `pluginLynx`. [`source.entry`](/api/build/rspeedy.source.entry) and [`output.filename`](/api/build/rspeedy.output.filename) additionally accept a plain string.
 
 Its type declarations re-export Rsbuild's:
 
@@ -111,7 +111,7 @@ Rspeedy and `pluginLynx` share one engine, so the move is a config change, not a
 
 Then adjust the config itself:
 
-- **`source.entry` and `output.filename` take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
-- **Lynx's own options move into `pluginLynx`.** `output.filename.bundle` and `performance.profile` are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
+- **[`source.entry`](/api/build/rspeedy.source.entry) and [`output.filename`](/api/build/rspeedy.output.filename) take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
+- **Lynx's own options move into `pluginLynx`.** [`output.filename.bundle`](/api/build/rspeedy.output.filename) and [`performance.profile`](/api/build/rspeedy.performance.profile) are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
 
-The option this opens up in practice is `tools.postcss`, which Rspeedy does not accept.
+The option this opens up in practice is [`tools.postcss`](https://rsbuild.rs/config/tools/postcss), which Rspeedy does not accept.
