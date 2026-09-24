@@ -100,7 +100,7 @@ Rspeedy 仍在维护。如果现有工具链依赖 `rspeedy` 命令行或 `lynx.
 
 不带 `--template` 执行 `npm create @lynx-js/lynx@latest` 会让你选择构建工具，也提供用于组件库的 Rslib。
 
-## 迁移现有的 Rspeedy 项目
+## 迁移现有的 Rspeedy 项目 {#migrating-an-rspeedy-project}
 
 Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调整，不是重写，产物不会有任何变化。
 
