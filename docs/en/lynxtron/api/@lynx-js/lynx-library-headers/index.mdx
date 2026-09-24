@@ -14,6 +14,8 @@ The published package contains:
 - Weak N-API headers used by the Lynx JS runtime.
 - `lynx/registration.h` for Lynx embedder static registration.
 
+The C++ wrappers are backed by the public C API. Their API semantics are documented in the [Lynx Native API reference](https://lynxjs.org/next/api/lynx-native-api/lynx-view.html). See also [Using Native Modules](https://lynxjs.org/next/guide/use-native-modules.html?platform=node-api) and [Custom Native Components](https://lynxjs.org/next/guide/custom-native-component.html?platform=desktops).
+
 The package does not provide a Lynxtron-specific addon macro. Lynxtron consumes Lynx native libraries by loading their shared libraries with `process.dlopen(...)`; AutoLink can generate that host-side loading code.
 
 ## Use in CMake
@@ -38,9 +40,15 @@ Lynx native libraries register capabilities with static registration macros:
 void BindDemoModule(napi_env env, napi_value exports);
 lynx_native_view_t* CreateDemoView(void* opaque);
 
+napi_value CreateDemoModule(napi_env env, napi_value exports,
+                            const char* module_name, void* opaque) {
+  BindDemoModule(env, exports);
+  return exports;
+}
+
 LYNX_REGISTER_NATIVE_MODULE(
     "DemoModule",
-    BindDemoModule,
+    CreateDemoModule,
     nullptr)
 
 LYNX_REGISTER_ELEMENT(
@@ -50,6 +58,8 @@ LYNX_REGISTER_ELEMENT(
     false,
     nullptr)
 ```
+
+The native module creator takes four arguments and returns `napi_value`. Here, `CreateDemoModule` calls your `BindDemoModule` implementation to populate `exports`, then returns it. Implement `BindDemoModule` and `CreateDemoView` in your feature sources.
 
 `native-module` and `element` registrations should live beside their own feature sources. A package can contain either feature or both.
 

@@ -151,6 +151,11 @@ export default defineConfig({
   plugins: [
     pluginClientRedirects({
       redirects: [
+        // Preserve locale/version prefixes for the former root-package page.
+        {
+          from: '^(.*)/lynxtron/api/@lynx-js/lynxtron/Variable\\.contextBridge(?:\\.html|\\.mdx)?/?$',
+          to: '$1/lynxtron/api/@lynx-js/lynxtron/context-bridge/Variable.contextBridge.html',
+        },
         {
           from: '/react/routing.html',
           to: '/react/routing/react-router.html',

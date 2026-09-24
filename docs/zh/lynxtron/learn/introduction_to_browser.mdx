@@ -1,4 +1,5 @@
 import { PackageManagerTabs, Steps } from '@theme';
+import { Go } from '@lynx';
 
 # 教程：打造你的浏览器
 
@@ -19,10 +20,18 @@ import { PackageManagerTabs, Steps } from '@theme';
 - **导航栏**：包含前进、后退、刷新按钮和地址栏
 - **网页渲染区域**：使用 [`<webview>`](/api/elements/built-in/webview) 加载和显示网页内容
 
-<img
-  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/browser-demo.gif"
-  alt="浏览器演示"
-  style={{ width: '100%', borderRadius: 8 }}
+### 体验成品浏览器
+
+成品 Browser demo 包含 Lynx UI、Node.js 主进程和 preload 桥接代码，均可在下方源码面板中查看。
+
+<Go
+  example="browser"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/browser-demo.gif"
+  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/browser"
+  defaultFile="src/main/desktop/main.ts"
+  defaultEntryFile="dist_precompiled/desktop/main.lynx.bundle"
+  defaultTab="preview"
+  nativeFramework="lynxtron"
 />
 
 ## 教程设置
@@ -30,6 +39,23 @@ import { PackageManagerTabs, Steps } from '@theme';
 请查看我们详细的[安装文档](/lynxtron/introduction)，该文档将指导你创建一个新的 Lynxtron 项目。
 
 你可能会注意到该项目使用的是 TypeScript。虽然 Lynxtron 支持 TypeScript 和普通 JavaScript，但我们推荐使用 TypeScript，以提供更好的开发体验，包括静态类型检查和更好的编辑器智能感知。
+
+### 安装 webview 原生库
+
+`<webview>` 由可选包 `@lynx-js/cef-webview` 提供。在项目根目录安装：
+
+<PackageManagerTabs command="install @lynx-js/cef-webview" />
+
+`create-lynxtron` 已配置桌面端的 `pluginLynxtron()`，无需重复添加。请先确认 [webview 入门中的工具链版本要求](/lynxtron/Native-Libraries/Officially-Maintained-Libraries/cef-webview-getting-started)。配套工具链负责原生库加载与产物打包；应用仍需在创建窗口前初始化 CEF，见下一节。
+
+如果使用 pnpm 11 且安装时提示相关构建脚本被阻止，在项目的 `pnpm-workspace.yaml` 中合并以下配置，再重新执行安装：
+
+```yaml
+allowBuilds:
+  '@lynx-js/cef-webview': true
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+```
 
 ## 使用 Lynxtron 实现自定义标题栏
 
@@ -39,9 +65,10 @@ import { PackageManagerTabs, Steps } from '@theme';
 
 在创建 `LynxWindow` 时，设置 `frame: false` 来移除系统默认的标题栏：
 
-```typescript {8}
-// src/main/main.ts
+```typescript
+// src/main/desktop/main.ts
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import cefWebview from '@lynx-js/cef-webview/lynxtron';
 let mainWindow: LynxWindow | null = null;
 function createWindow() {
   mainWindow = new LynxWindow({
@@ -49,8 +76,18 @@ function createWindow() {
     height: 800,
     frame: false, // 关键：移除系统边框
   });
+  registerWindowControls(mainWindow);
 }
+
+app.whenReady().then(() => {
+  cefWebview.initialize();
+  createWindow();
+});
 ```
+
+将初始化调用合并到项目现有的启动流程中，并保留已有的 bundle 加载代码。CEF 必须在创建任何 `LynxWindow` 之前初始化。
+
+CEF 根据宿主应用标识选择存储目录；使用相同标识的多个实例可能发生存储冲突。同一个浏览器支持多个标签页。若 `initialize()` 抛出异常，应停止启动并检查错误，不要继续创建 WebView。
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/browser_demo_frame_less.png"
@@ -93,7 +130,7 @@ return (
 
 由于我们移除了系统的标题栏，用户无法通过默认方式拖动窗口。我们需要在自定义的顶部栏 (`.top-bar`) 上启用拖拽功能。
 
-Lynxtron 支持使用 CSS 属性 [`-x-app-region: drag`](./Custom-Window-Styles#步骤-2让窗口重新可拖拽) 来指定可拖拽区域（类似于 Electron 的 `-webkit-app-region: drag`）。
+Lynxtron 支持使用 CSS 属性 [`-x-app-region: drag`](./Custom-Window-Styles#定义-ui-拖拽区域) 来指定可拖拽区域（类似于 Electron 的 `-webkit-app-region: drag`）。
 
 ```css
 /* src/app/App.css */
@@ -125,22 +162,15 @@ Lynxtron 支持使用 CSS 属性 [`-x-app-region: drag`](./Custom-Window-Styles#
 ```tsx
 // src/app/App.tsx
 const handleClose = () => {
-  // 调用 NativeModules 向主进程发送消息
-  NativeModules.bridge.call('close', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('close', {}, () => {});
 };
 
 const handleMinimize = () => {
-  NativeModules.bridge.call('blur', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('minimize', {}, () => {});
 };
 
 const handleFullScreenTap = () => {
-  NativeModules.bridge.call('maximize', {}, (res: any) => {
-    console.log(res);
-  });
+  NativeModules.bridge.call('maximize', {}, () => {});
 };
 ```
 
@@ -152,25 +182,31 @@ const handleFullScreenTap = () => {
     <div style={{ flex: 1 }}>
 
 ```typescript
-// src/main/main.ts
-// 监听这些消息并调用 Lynxtron 的 API
-w.on('-lynx-invoke', (event, params) => {
-  console.log('window is invoke', params);
-  if (params == 'close') {
-    console.log('Closing window...');
-    w.close();
-  }
+// src/main/desktop/main.ts
+// 由上面的 createWindow() 调用。
+function registerWindowControls(window: LynxWindow) {
+  let isFullScreen = false;
+  window.on('-lynx-invoke', (event, methodName, params) => {
+    console.log('window is invoked', methodName, params);
+    if (methodName === 'close') {
+      console.log('Closing window...');
+      event.sendReply(null);
+      window.close();
+    }
 
-  if (params == 'blur') {
-    w.blur();
-  }
+    if (methodName === 'minimize') {
+      window.minimize();
+      event.sendReply(null);
+    }
 
-  if (params == 'maximize') {
-    isFullScreen = !isFullScreen;
-    console.log('Toggling full screen to:', isFullScreen);
-    w.setFullScreen(isFullScreen);
-  }
-});
+    if (methodName === 'maximize') {
+      isFullScreen = !isFullScreen;
+      console.log('Toggling full screen to:', isFullScreen);
+      window.setFullScreen(isFullScreen);
+      event.sendReply(null);
+    }
+  });
+}
 ```
 
     </div>
@@ -186,7 +222,7 @@ w.on('-lynx-invoke', (event, params) => {
   />
 </div>
 
-## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries) 中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
+## 如何使用 [Lynx 原生能力库](/lynxtron/Native-Libraries/Lynx-Native-Libraries)中的 `<webview>` 元素 {#lynx-webview-native-ui-extension}
 
 ### 管理标签页
 
@@ -232,17 +268,17 @@ const handleRemoveTab = (id: string) => {
 
 ### 添加 `<webview`> 组件
 
-Lynxtron 提供了 [`<webview>`](/api/elements/built-in/webview) 元件来加载外部网页，正确引用后，可以用 `<webview>` 组件来加载网页内容。
+完成前面的原生库安装和 CEF 初始化后，可以在 Lynx UI 中直接使用 [`<webview>`](/api/elements/built-in/webview) 加载外部网页，无需在 UI 代码中导入 CEF 包。
 
 ```tsx {5-9}
 <view className="content-area">
   {tabs.map((tab) => (
     <view key={tab.id} className="tab-content">
-      {tab.input_value && (
+      {tab.url && (
         <webview
           className="webview-container"
           id={`webview-${tab.id}`}
-          src={tab.input_value}
+          src={tab.url}
         />
       )}
     </view>
@@ -306,7 +342,7 @@ const webviewRefs = useRef<Record<string, any>>({});
 const handleReload = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
-    ref.invoke({ method: 'reload' });
+    ref.invoke({ method: 'reload' }).exec();
   }
 };
 // 后退
@@ -314,10 +350,12 @@ const goBack = () => {
   const ref = webviewRefs.current[selectedTabId];
   if (ref) {
     // 通过 eval 执行页面内的 JS
-    ref.invoke({
-      method: 'eval',
-      params: { func: 'window.history.back()' },
-    });
+    ref
+      .invoke({
+        method: 'eval',
+        params: { func: 'window.history.back()' },
+      })
+      .exec();
   }
 };
 ```

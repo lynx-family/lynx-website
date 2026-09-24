@@ -51,7 +51,7 @@ const exampleGitBaseUrl =
   'https://github.com/lynx-family/lynx-examples/tree/main';
 
 // Optional: inject a top-level `nativeFramework` field into every generated
-// example-metadata.json (e.g. "lynxtron"). go-web reads this to pick the
+// example-metadata.json. go-web reads this to pick the
 // correct deep-link scheme and hide the QR tab for native-only examples.
 const nativeFramework = process.env.NATIVE_FRAMEWORK || '';
 
@@ -197,9 +197,10 @@ function applyExampleFixups(example, exampleDir) {
 /**
  * Get all .lynx.bundle|.web.bundle files
  * @param {Array} allFiles - An array of all file paths
+ * @param {string | undefined} webHostFile - Optional full Web app entry
  * @returns {Array} - An array of template files
  */
-function getTemplateFiles(allFiles) {
+function getTemplateFiles(allFiles, webHostFile) {
   const entries = [];
   allFiles.forEach((file) => {
     if (file.endsWith(lynxEntryFileName)) {
@@ -218,6 +219,9 @@ function getTemplateFiles(allFiles) {
       const webFile = file.replace(lynxEntryFileName, webEntryFileName);
       if (allFiles.includes(webFile)) {
         entry.webFile = webFile;
+      }
+      if (webHostFile && allFiles.includes(webHostFile)) {
+        entry.webHostFile = webHostFile;
       }
       entries.push(entry);
     }
@@ -264,16 +268,22 @@ function sortFilesByDirectoryFirst(files) {
 /**
  * Parse example data and generate corresponding JSON files
  */
-function parseExampleData() {
-  if (removeLinkPath && fs.existsSync(linkPath)) {
+function parseExampleData({
+  examplesDir: sourceDir = examplesDir,
+  removeLinkPath: clearOutput = removeLinkPath,
+  exampleGitBaseUrl: gitBaseUrl = exampleGitBaseUrl,
+  nativeFramework: framework = nativeFramework,
+  webHostFiles = {},
+} = {}) {
+  if (clearOutput && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
 
-  const examples = fs.readdirSync(examplesDir);
+  const examples = fs.readdirSync(sourceDir);
 
   examples.forEach((example) => {
-    const exampleDir = path.join(examplesDir, example);
+    const exampleDir = path.join(sourceDir, example);
     const lnExampleDir = path.join(linkPath, example);
     // check exampleDir is a directory
     const stats = fs.statSync(exampleDir);
@@ -294,7 +304,10 @@ function parseExampleData() {
     // get all files
     const allFiles = getAllFiles(exampleDir, []);
 
-    const files = allFiles.map((file) => path.relative(exampleDir, file));
+    // Metadata paths are URLs, including on Windows build hosts.
+    const files = allFiles.map((file) =>
+      path.relative(exampleDir, file).split(path.sep).join('/'),
+    );
 
     // preview image
     const previewImageReg = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
@@ -310,17 +323,22 @@ function parseExampleData() {
     const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
 
     const previewImage = files.find((file) => previewImageReg.test(file));
-    const templateFiles = getTemplateFiles(filesFilters);
+    const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
+      ? webHostFiles[packageJSON.name]
+      : undefined;
+    const templateFiles = getTemplateFiles(filesFilters, webHostFile);
 
     const metadata = {
       name: packageJSON.repository?.directory || example,
+      version: packageJSON.version,
       files: sortedFiles,
       previewImage: previewImage,
       templateFiles: templateFiles,
-      exampleGitBaseUrl,
+      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || gitBaseUrl,
     };
-    if (nativeFramework) {
-      metadata.nativeFramework = nativeFramework;
+    const exampleNativeFramework = packageJSON.nativeFramework || framework;
+    if (exampleNativeFramework) {
+      metadata.nativeFramework = exampleNativeFramework;
     }
 
     // write example-metadata.json
@@ -332,4 +350,8 @@ function parseExampleData() {
 /**
  * Main function to execute the script
  */
-parseExampleData();
+if (require.main === module) {
+  parseExampleData();
+}
+
+module.exports = { parseExampleData };

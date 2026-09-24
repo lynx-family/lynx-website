@@ -116,6 +116,7 @@ This example demonstrates using Node.js capabilities exposed by a preload script
 - Lynx UI calls these APIs through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) to browse directories and view file content.
 
 <Go
+  nativeFramework="lynxtron"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/file-explorer.gif"
   example="file-explorer"
   defaultFile="src/app/App.tsx"
@@ -133,10 +134,7 @@ The Node main process can send events to Lynx with [`LynxWindow.sendGlobalEvent(
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
-
-const win = new LynxWindow();
-
+// Reuse a window created inside app.whenReady(), after its UI listener is registered.
 win.sendGlobalEvent('systemInfoUpdate', {
   cpuUsage: 32,
   memoryUsage: 68,
@@ -170,14 +168,17 @@ export function App() {
 
 ### Call Node.js from Lynx and Wait for a Result
 
-Use `bridge.call` to make the call, since you need to wait for Node.js to return data.
+`bridge.call(method, payload, callback)` returns `void`. Receive the result in the third argument, a callback; do not directly `await bridge.call(...)`. To use `await`, wrap the callback in a Promise, as the System Monitor example does.
 
 ```tsx
 // App.tsx
-const info = await NativeModules.bridge.call('getSystemInfo', {
-  includeCpuDetail: true,
-});
-setSystemInfo(info);
+NativeModules.bridge.call(
+  'getSystemInfo',
+  { includeCpuDetail: true },
+  (info) => {
+    setSystemInfo(info);
+  },
+);
 ```
 
 The Node main process registers a handler with `lynxBridge.handle()` to process `bridge.call` invocations. The return value (or a resolved Promise) is sent back to Lynx automatically, similar to `ipcMain.handle()` in Electron:
@@ -229,12 +230,12 @@ app.whenReady().then(() => {
 
 `lynxBridge` is a main-process singleton imported from `@lynx-js/lynxtron`. It is a Node.js `EventEmitter`, so it exposes the standard `on` / `once` / `off` / `emit` methods in addition to the invoke helpers below. In Electron terms, `lynxBridge` plays the role of `ipcMain`.
 
-| Method                                   | Description                                                                                                                                                                             |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lynxBridge.handle(method, handler)`     | Registers a handler for `NativeModules.bridge.call(method, args)`. The handler's return value (or a resolved Promise) is sent back to Lynx. Registering the same `method` twice throws. |
-| `lynxBridge.handleOnce(method, handler)` | Same as `handle`, but the handler is removed after being called once.                                                                                                                   |
-| `lynxBridge.removeHandler(method)`       | Removes a handler previously registered with `handle` / `handleOnce`.                                                                                                                   |
-| `lynxBridge.on(channel, listener)`       | Inherited from `EventEmitter`. Receives one-way `NativeModules.bridge.send(channel, args)` messages from Lynx. The listener is called with `(args)`.                                    |
+| Method                                   | Description                                                                                                                                                                                       |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lynxBridge.handle(method, handler)`     | Registers a handler for `NativeModules.bridge.call(method, args, callback)`. The handler's return value (or a resolved Promise) is sent back to Lynx. Registering the same `method` twice throws. |
+| `lynxBridge.handleOnce(method, handler)` | Same as `handle`, but the handler is removed after being called once.                                                                                                                             |
+| `lynxBridge.removeHandler(method)`       | Removes a handler previously registered with `handle` / `handleOnce`.                                                                                                                             |
+| `lynxBridge.on(channel, listener)`       | Inherited from `EventEmitter`. Receives one-way `NativeModules.bridge.send(channel, args)` messages from Lynx. The listener is called with `(args)`.                                              |
 
 The `handler` signature is `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`. The runtime automatically calls [`event.sendReply()`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx) once with the handler's resolved value, so handlers registered through `handle` / `handleOnce` should express the reply as their return value (or a Promise). Manually invoking `event.sendReply()` from such a handler produces a duplicate reply. `sendReply` is intended for low-level callers that subscribe to the internal invoke event directly instead of going through `handle`.
 
@@ -247,6 +248,7 @@ This example demonstrates bidirectional message communication between the Node m
 - Notifications that do not need a return value, such as refresh interval changes, can be sent to the Node main process with `NativeModules.bridge.send()`.
 
 <Go
+  nativeFramework="lynxtron"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/system-monitor.gif"
   example="system-monitor"
   defaultFile="src/app/App.tsx"
