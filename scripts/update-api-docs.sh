@@ -35,7 +35,7 @@ else
   exit 1
 fi
 
-# rspeedy-related packages mirrored under docs/api/rspeedy, with the package
+# rspeedy-related packages mirrored under docs/api/build, with the package
 # directories that hold their api-extractor config.
 RSPEEDY_PKG_DIRS=(
   packages/rspeedy/core
@@ -175,7 +175,7 @@ popd >/dev/null
 echo "::endgroup::"
 
 generate_api_extractor_docs "rspeedy" "${RSPEEDY_PKG_DIRS[@]}"
-sync_api_extractor_docs "rspeedy" "rspeedy" "true"
+sync_api_extractor_docs "rspeedy" "build" "true"
 
 echo "::group::Overlay built packages into node_modules for TypeDoc"
 # TypeDoc reads node_modules. Overlay the freshly built source so the docs

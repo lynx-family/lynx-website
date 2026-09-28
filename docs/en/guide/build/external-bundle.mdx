@@ -11,12 +11,12 @@ import { Go, VersionBadge } from '@lynx';
 
 External Bundle lets you build a Lynx bundle once and load it from multiple Lynx apps at runtime. Use it when you want to share ReactLynx components or common business bundles across apps.
 
-Compared with [Chunk Splitting](/api/rspeedy/rspeedy.performance.chunksplit), External Bundle is for cross-application reuse, while Chunk Splitting is for splitting code inside one app.
+Compared with [Chunk Splitting](/api/build/rspeedy.performance.chunksplit), External Bundle is for cross-application reuse, while Chunk Splitting is for splitting code inside one app.
 
 This workflow has two parts:
 
-1. Use [`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config) to build the external bundle.
-2. Use [`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin) to load it in the host app.
+1. Use [`@lynx-js/lynx-bundle-rslib-config`](/api/build/lynx-bundle-rslib-config) to build the external bundle.
+2. Use [`@lynx-js/external-bundle-rsbuild-plugin`](/api/build/external-bundle-rsbuild-plugin) to load it in the host app.
 
 The responsibilities are equally simple:
 
@@ -69,7 +69,7 @@ After a successful build, you will get an output directory like this:
 
 ```text
 ├── dist-external-bundle
-│   └── comp-lib.template.js
+│   └── comp-lib.lynx.bundle
 ```
 
 ### Bundle CSS
@@ -94,11 +94,11 @@ Pure JS / TS External Bundles do not need this.
 
 Use the same request key in the app:
 
-```ts title="lynx.config.ts"
+```ts title="rsbuild.config.ts"
 import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
 import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
   plugins: [
@@ -159,7 +159,7 @@ output: {
 }
 ```
 
-```ts title="lynx.config.ts"
+```ts title="rsbuild.config.ts"
 pluginExternalBundle({
   externalsPresets: {
     reactlynx: true,
@@ -205,7 +205,7 @@ This side decides how imports are mapped to external globals when the bundle is 
 
 On the host app side, presets live in `pluginExternalBundle({ externalsPresets, externalsPresetDefinitions })`:
 
-```ts title="lynx.config.ts"
+```ts title="rsbuild.config.ts"
 import { pluginExternalBundle } from '@lynx-js/external-bundle-rsbuild-plugin';
 
 pluginExternalBundle({
@@ -286,7 +286,7 @@ The `lynx-examples` external-bundle example is available directly in the docs:
 
 ## API Reference
 
-- [`defineExternalBundleRslibConfig()`](/api/rspeedy/lynx-bundle-rslib-config.defineexternalbundlerslibconfig)
-- [`pluginExternalBundle()`](/api/rspeedy/external-bundle-rsbuild-plugin.pluginexternalbundle)
-- [`@lynx-js/lynx-bundle-rslib-config`](/api/rspeedy/lynx-bundle-rslib-config)
-- [`@lynx-js/external-bundle-rsbuild-plugin`](/api/rspeedy/external-bundle-rsbuild-plugin)
+- [`defineExternalBundleRslibConfig()`](/api/build/lynx-bundle-rslib-config.defineexternalbundlerslibconfig)
+- [`pluginExternalBundle()`](/api/build/external-bundle-rsbuild-plugin.pluginexternalbundle)
+- [`@lynx-js/lynx-bundle-rslib-config`](/api/build/lynx-bundle-rslib-config)
+- [`@lynx-js/external-bundle-rsbuild-plugin`](/api/build/external-bundle-rsbuild-plugin)

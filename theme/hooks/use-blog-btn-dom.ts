@@ -3,7 +3,7 @@ import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
 import { useCanonicalLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
 import { BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 
-type ConfigKey = '/' | '/react/' | '/rspeedy/' | '/lynxtron/';
+type ConfigKey = '/' | '/react/' | '/build/' | '/lynxtron/';
 
 /**
  * Configuration for the blog button on different subsites.
@@ -39,10 +39,10 @@ const config: Record<
       en: 'ReactLynx',
     },
   },
-  '/rspeedy/': {
+  '/build/': {
     text: {
-      zh: 'Rspeedy',
-      en: 'Rspeedy',
+      zh: 'Lynx 构建工具',
+      en: 'Build tool for Lynx',
     },
   },
   '/lynxtron/': {
@@ -63,8 +63,8 @@ const useBlogBtnDom = (src: string) => {
     return (
       src.startsWith('/react/')
         ? '/react/'
-        : src.startsWith('/rspeedy/')
-          ? '/rspeedy/'
+        : src.startsWith('/build/')
+          ? '/build/'
           : src.startsWith('/lynxtron/')
             ? '/lynxtron/'
             : '/'

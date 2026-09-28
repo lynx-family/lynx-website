@@ -23,7 +23,7 @@ import {
   IconWindows,
 } from './icon';
 import { FeatureIconItem } from './item-icon';
-type FeaturesConfigKey = '/' | '/react/' | '/rspeedy/';
+type FeaturesConfigKey = '/' | '/react/' | '/build/';
 export interface FeatureCardItem {
   title: { en: string; zh: string };
   desc: { en: string; zh: string };
@@ -255,7 +255,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
       ],
     },
   ],
-  '/rspeedy/': [
+  '/build/': [
     {
       iconClass: 'rstack',
       class: 'item4',
@@ -307,8 +307,8 @@ const Features = ({
   const configKey = (
     src.startsWith('/react/')
       ? '/react/'
-      : src.startsWith('/rspeedy/')
-        ? '/rspeedy/'
+      : src.startsWith('/build/')
+        ? '/build/'
         : '/'
   ) as FeaturesConfigKey;
   const isMobile = useIfMobile();
