@@ -156,7 +156,9 @@ export default defineConfig({
 });
 ```
 
-The trade-off is reach: Rspeedy's config is a curated subset of Rsbuild's, so options like [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) and [`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) are rejected rather than passed through, and a few values such as [`output.charset`](https://rsbuild.rs/config/output/charset) and [`output.polyfill`](https://rsbuild.rs/config/output/polyfill) are fixed. What it gains is that Lynx's own options sit in the config itself: [`output.filename.bundle`](/api/build/rspeedy.output.filename) and [`performance.profile`](/api/build/rspeedy.performance.profile) need no detour through `pluginLynx`. [`source.entry`](/api/build/rspeedy.source.entry) and [`output.filename`](/api/build/rspeedy.output.filename) additionally accept a plain string.
+Rspeedy's config is a curated subset of Rsbuild's, holding only what Lynx supports. Options like [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) and [`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) are rejected rather than passed through, and a few values such as [`output.charset`](https://rsbuild.rs/config/output/charset) and [`output.polyfill`](https://rsbuild.rs/config/output/polyfill) are fixed. In return, Lynx's own options go straight into `lynx.config.ts`: [`output.filename.bundle`](/api/build/rspeedy.output.filename) and [`performance.profile`](/api/build/rspeedy.performance.profile) need no `pluginLynx`. [`source.entry`](/api/build/rspeedy.source.entry) and [`output.filename`](/api/build/rspeedy.output.filename) also accept a plain string.
+
+We still recommend against Rspeedy. It wraps another layer of concepts around Rsbuild, and you have to keep track of which options belong to Rspeedy, which to Rsbuild, and which go to `pluginLynx`. That extra cost lands on people and AI agents alike.
 
 Its type declarations re-export Rsbuild's:
 
@@ -174,7 +176,7 @@ See the [Rspeedy documentation](https://lynx-stack.dev/guide/cli) for its CLI an
 
 Use **Rsbuild with `pluginLynx`** for new projects. It is what [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
 
-Rspeedy remains supported. It is the right choice when existing tooling depends on the `rspeedy` CLI or on `lynx.config.ts`, or when you want its stricter config validation.
+Rspeedy is still maintained. An existing project that depends on the `rspeedy` CLI or on `lynx.config.ts` need not rush to move, but do not start a new one on it.
 
 Running `npm create @lynx-js/lynx@latest` without `--template` asks which build tool to use, and also offers Rslib for a component library.
 
@@ -192,7 +194,7 @@ Then adjust the config itself:
 - **[`source.entry`](/api/build/rspeedy.source.entry) and [`output.filename`](/api/build/rspeedy.output.filename) take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
 - **Lynx's own options move into `pluginLynx`.** [`output.filename.bundle`](/api/build/rspeedy.output.filename) and [`performance.profile`](/api/build/rspeedy.performance.profile) are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
 
-The option this opens up in practice is [`tools.postcss`](https://rsbuild.rs/config/tools/postcss), which Rspeedy does not accept.
+Once you are on Rsbuild you can reach for options like [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) directly. That is the point of the move: the raw Rsbuild API is right there, with no translation layer in between.
 
 ## Output files {#output}
 
