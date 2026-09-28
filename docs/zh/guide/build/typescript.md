@@ -27,7 +27,7 @@ TypeScript 开箱可用：`.ts` / `.tsx` 文件、路径别名、自定义 `tsco
 Lynx 提供了默认类型，但你可能需要为你的应用扩展或自定义某些类型定义。
 
 - [`GlobalProps`](#globalprops)：扩展 `lynx.__globalProps` 的类型定义
-- [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Function.useInitData.mdx) 的返回类型
+- [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Hooks/useInitData) 的返回类型
 - [`IntrinsicElements`](#intrinsicelements): 扩展元件的类型（例如：可以为 `<input>` 元件定义类型）
 - [`NativeModules`](#nativemodules): 扩展[原生模块](/guide/use-native-modules.mdx)的类型定义
 

@@ -119,6 +119,17 @@ copies its package documentation into `sharedDocs/packageDocs/`, and generates
 revision or its sync and generation tooling, run `pnpm run prepare` and commit
 all changes in those output paths.
 
+The API reference for lynx-stack packages is written and generated in
+[lynx-stack](https://github.com/lynx-family/lynx-stack/tree/main/docs/content)
+and copied here from the `@lynx-js/lynx-stack-docs` package by
+`pnpm run sync:lynx-stack-docs`, which `pnpm install` runs as part of
+`prepare`. The sections the package's `manifest.json` lists (`api/config`,
+`api/genui`, `api/react` and `api/packages`, in both locales) are not
+committed: change those pages in lynx-stack, then update
+`@lynx-js/lynx-stack-docs` here. Old `/api/rspeedy`, `/api/react`,
+testing-library and GenUI URLs are redirected by
+`netlify/edge-functions/lynx-stack-api-redirects/`.
+
 ## Deployment Portability
 
 Build and generation scripts must remain portable across GitHub Actions,

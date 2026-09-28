@@ -101,7 +101,7 @@ npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
 
 `pluginLynx`（来自 [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)）是把一次 Rsbuild 构建变成 Lynx 构建的关键。它配置双线程产物与 Bundle 文件名，把中间产物保留在 `dist/.lynx/<entry>/`，按 Lynx 运行时调整压缩与 source map，按 Lynx 的 `exports` 条件解析模块，在开发时通过局域网把产物推送到设备，并注册[线上错误反解](/guide/devtool/map-errors-to-source.mdx)所需的 debug metadata。
 
-你很少需要手动引入它：[`pluginReactLynx`](/api/build/react-rsbuild-plugin.pluginreactlynx) 在它尚未注册时会自动应用，所以 ReactLynx 模板的配置里只写了 `pluginReactLynx`。
+你很少需要手动引入它：[`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) 在它尚未注册时会自动应用，所以 ReactLynx 模板的配置里只写了 `pluginReactLynx`。
 
 ```ts title="rsbuild.config.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
@@ -119,8 +119,8 @@ export default defineConfig({
 
 两点需要注意：
 
-- **[`source.entry`](/api/build/rspeedy.source.entry) 用对象形式**，和其他 Rsbuild 项目一致。
-- **需要配置选项时要自己引入 `pluginLynx`。** 自动应用用的是默认选项，所以想配 [`output.filename.bundle`](/api/build/rspeedy.output.filename) 或 [`performance.profile`](/api/build/rspeedy.performance.profile)，需要在 `plugins` 里显式写上 `pluginLynx({ ... })`，不会重复应用。
+- **[`source.entry`](https://rsbuild.rs/config/source/entry) 用对象形式**，和其他 Rsbuild 项目一致。
+- **需要配置选项时要自己引入 `pluginLynx`。** 自动应用用的是默认选项，所以想配 [`output.filename.bundle`](/api/build/output/filename/bundle) 或 [`performance.profile`](/api/build/performance/profile)，需要在 `plugins` 里显式写上 `pluginLynx({ ... })`，不会重复应用。
 
 类型声明来自 Rsbuild：
 
@@ -152,7 +152,7 @@ export default defineConfig({
 });
 ```
 
-Rspeedy 的配置是 Rsbuild 配置的一个精选子集，只保留 Lynx 支持的那些。[`tools.postcss`](https://rsbuild.rs/config/tools/postcss)、[`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) 这类会被直接拒绝，不往下透传；[`output.charset`](https://rsbuild.rs/config/output/charset)、[`output.polyfill`](https://rsbuild.rs/config/output/polyfill) 等少数值写死了改不动。换来的是 Lynx 特有的配置可以直接写在 `lynx.config.ts` 里，[`output.filename.bundle`](/api/build/rspeedy.output.filename)、[`performance.profile`](/api/build/rspeedy.performance.profile) 都不必经过 `pluginLynx`。[`source.entry`](/api/build/rspeedy.source.entry) 和 [`output.filename`](/api/build/rspeedy.output.filename) 还能写成字符串。
+Rspeedy 的配置是 Rsbuild 配置的一个精选子集，只保留 Lynx 支持的那些。[`tools.postcss`](https://rsbuild.rs/config/tools/postcss)、[`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) 这类会被直接拒绝，不往下透传；[`output.charset`](https://rsbuild.rs/config/output/charset)、[`output.polyfill`](https://rsbuild.rs/config/output/polyfill) 等少数值写死了改不动。换来的是 Lynx 特有的配置可以直接写在 `lynx.config.ts` 里，[`output.filename.bundle`](/api/build/output/filename/bundle)、[`performance.profile`](/api/build/performance/profile) 都不必经过 `pluginLynx`。[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 还能写成字符串。
 
 即便如此，我们仍然不推荐 Rspeedy。它在 Rsbuild 之上多包了一层概念，你得同时记住哪些配置归 Rspeedy、哪些归 Rsbuild、哪些要交给 `pluginLynx`，这份额外的理解成本，对人和 AI agent 都一样。
 
@@ -187,8 +187,8 @@ Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调�
 
 然后调整配置本身：
 
-- **[`source.entry`](/api/build/rspeedy.source.entry) 和 [`output.filename`](/api/build/rspeedy.output.filename) 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
-- **Lynx 自己的选项挪进 `pluginLynx`。** [`output.filename.bundle`](/api/build/rspeedy.output.filename) 和 [`performance.profile`](/api/build/rspeedy.performance.profile) 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`，这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
+- **[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
+- **Lynx 自己的选项挪进 `pluginLynx`。** [`output.filename.bundle`](/api/build/output/filename/bundle) 和 [`performance.profile`](/api/build/performance/profile) 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`，这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
 
 迁过来之后你会发现 [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) 这类配置可以直接写了。这正是迁到 Rsbuild 的好处：原始的 Rsbuild API 直接暴露出来，中间少了一层转译，写法也更短。
 
@@ -453,4 +453,4 @@ Lynx 为平台特性、API、内置元件和 CSS 属性提供结构化的兼容�
 [`output.sourceMap`]: https://rsbuild.rs/zh/config/output/source-map
 [Lynx Bundle]: /guide/spec#lynx-bundle-or-bundle
 [Lynx Engine]: /guide/spec#engine
-[`engineVersion`]: /api/build/react-rsbuild-plugin.pluginreactlynxoptions.targetsdkversion
+[`engineVersion`]: /api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#targetsdkversion

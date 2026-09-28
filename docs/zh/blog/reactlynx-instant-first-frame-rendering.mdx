@@ -28,7 +28,7 @@ ReactLynx 的后台运行时建立在 [Preact](https://preactjs.com/) 之上，�
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-接下来，我们会以下面这个典型的计数器应用为例，介绍 ReactLynx 的渲染和更新流程。现实中的首帧是一闪而过的，我们在这里特意用 [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) 模拟了应用在两个时间点的差别。两份结果之间发生了什么，就是我们接下来要讲的。
+接下来，我们会以下面这个典型的计数器应用为例，介绍 ReactLynx 的渲染和更新流程。现实中的首帧是一闪而过的，我们在这里特意用 [`__MAIN_THREAD__`](/api/react/Documents/Built-in_macros) 模拟了应用在两个时间点的差别。两份结果之间发生了什么，就是我们接下来要讲的。
 
 <Go
   example="react-apis"
@@ -179,7 +179,7 @@ ReactLynx 的[首帧直出（Instant First-Frame Rendering，IFR）](/guide/inte
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-沿用前面那段同时包含副作用、事件、动态文本和 [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样：
+沿用前面那段同时包含副作用、事件、动态文本和 [`__MAIN_THREAD__`](/api/react/Documents/Built-in_macros) 分支的 `App`，经过 ReactLynx 编译转换后，主线程产物大致会变成这样：
 
 ```js
 // 编译器为这段 JSX 生成的结构，描述首帧要创建哪些 Element，内部格式省略。
@@ -212,7 +212,7 @@ export default function App({ initialCount }) {
 }
 ```
 
-主线程产物只面向首帧，这使得我们能够在用户代码的基础上进行裁剪。构建时，同一个 `__MAIN_THREAD__` 分支会在两份产物中分别折叠，`useEffect` 回调和标记为 [`'background only'`](/api/react/Document.directives) 的函数体也不会进入主线程路径，留下的主要是首帧需要的初始值和视图结构。
+主线程产物只面向首帧，这使得我们能够在用户代码的基础上进行裁剪。构建时，同一个 `__MAIN_THREAD__` 分支会在两份产物中分别折叠，`useEffect` 回调和标记为 [`'background only'`](/api/react/Documents/Directives) 的函数体也不会进入主线程路径，留下的主要是首帧需要的初始值和视图结构。
 
 同时，主线程使用的运行时也更轻。它没有把后台持续更新所需的完整协调与调度路径搬过来，而是用专用 JSX 运行时和改造自 [`preact-render-to-string`](https://github.com/preactjs/preact-render-to-string) 的同步遍历完成首帧求值，Hooks 也只保留这一步需要的行为。
 

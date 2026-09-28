@@ -1,5 +1,7 @@
 [build]
-  command = "node scripts/ci/check-build-prereqs.mjs && pnpm gen:og && NODE_OPTIONS=--max-old-space-size=3072 RSPRESS_SSG_WORKER_THREAD_COUNT=2 pnpm exec rspress build"
+  # `pnpm build` owns the build flags, so the memory the pages need is
+  # raised in one place instead of drifting between here and package.json.
+  command = "node scripts/ci/check-build-prereqs.mjs && pnpm build"
   publish = "doc_build"
 
 # The version home is a directory-style URL, so redirect `/next` to `/next/`
@@ -769,6 +771,30 @@
 [[redirects]]
   from = "/next/zh/build/use-rsdoctor.html"
   to = "https://rsbuild.rs/zh/guide/debug/rsdoctor"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/api/config/*"
+  to = "/api/build/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/api/config/*"
+  to = "/zh/api/build/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/next/api/config/*"
+  to = "/next/api/build/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/next/zh/api/config/*"
+  to = "/next/zh/api/build/:splat"
   status = 301
   force = true
 

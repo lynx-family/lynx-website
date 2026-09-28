@@ -49,8 +49,8 @@ Because the main thread sits on the rendering critical path, any code only the b
 
 ReactLynx **automatically eliminates** code that shouldn't run on the main thread: by default, the callbacks of `useEffect` / `useLayoutEffect` and some event handlers are removed from `main-thread.js` (see [Thinking in ReactLynx](/react/thinking-in-reactlynx)). When the compiler can't statically decide which thread a piece of code belongs to, you mark it explicitly:
 
-- Use the [`'background only'` directive](/api/react/Document.directives) to keep a function body only on the background thread.
-- Use the [`__BACKGROUND__` / `__MAIN_THREAD__` built-in macros](/api/react/Document.built-in-macros) to eliminate code blocks per thread.
+- Use the [`'background only'` directive](/api/react/Documents/Directives) to keep a function body only on the background thread.
+- Use the [`__BACKGROUND__` / `__MAIN_THREAD__` built-in macros](/api/react/Documents/Built-in_macros) to eliminate code blocks per thread.
 
 This elimination mechanism is exactly what the "slim down the main-thread output" lever below relies on.
 
@@ -82,11 +82,11 @@ Once you have located where the size comes from, pick the lever that matches the
 
 ### Slim down the main-thread output (strip background-only code)
 
-This is the Lynx-specific layer, and the first one to check. Move code only the background needs (requests / NativeModule calls / loggers / monitoring SDKs) off the render path with [`'background only'`](/api/react/Document.directives) or [`__BACKGROUND__`](/api/react/Document.built-in-macros), keeping it out of `main-thread.js`. If such code comes from a third-party library you can't edit, it becomes a library-side ask to add the directive at the definition site.
+This is the Lynx-specific layer, and the first one to check. Move code only the background needs (requests / NativeModule calls / loggers / monitoring SDKs) off the render path with [`'background only'`](/api/react/Documents/Directives) or [`__BACKGROUND__`](/api/react/Documents/Built-in_macros), keeping it out of `main-thread.js`. If such code comes from a third-party library you can't edit, it becomes a library-side ask to add the directive at the definition site.
 
 ### Trim the background-thread output
 
-- **Reduce duplicate dependencies**: use Rsdoctor's duplicate-package detection to find dependencies bundled more than once, then converge them with [`resolve.dedupe`](/api/build/rspeedy.resolve.dedupe) or `pnpm dedupe`.
+- **Reduce duplicate dependencies**: use Rsdoctor's duplicate-package detection to find dependencies bundled more than once, then converge them with [`resolve.dedupe`](https://rsbuild.rs/config/resolve/dedupe) or `pnpm dedupe`.
 - **Use lighter libraries**: use Rsdoctor to find the largest dependencies and evaluate lighter alternatives (for example `dayjs` instead of `moment`), or switch to importing only what you use.
 
 ### Compress static assets
@@ -98,12 +98,12 @@ Images, fonts, and media are usually the largest part of a bundle. Compress them
 Distinguish **first-screen size** from **total size**: the first screen only needs the main-thread output and first-screen assets, so splitting out the rest noticeably improves startup.
 
 - Use [code splitting](/react/code-splitting) to defer non-first-screen components until they actually render.
-- Tune chunking with [`splitChunks`](/api/build/rspeedy.config.splitchunks) (which maps onto Rspack's [code splitting](https://rspack.rs/guide/optimization/code-splitting)).
+- Tune chunking with [`splitChunks`](https://rsbuild.rs/config/split-chunks) (which maps onto Rspack's [code splitting](https://rspack.rs/guide/optimization/code-splitting)).
 - Use [External Bundle](/guide/build/external-bundle) to factor out reusable parts.
 
 ### Compile-layer options
 
-- [`extractStr`](/api/build/react-rsbuild-plugin.pluginreactlynxoptions.extractstr): merges duplicate string literals to reduce size, especially effective for strings that are duplicated across the main-thread and background-thread layers, such as i18n text and class names.
+- [`extractStr`](/api/packages/react-rsbuild-plugin#extractstr): merges duplicate string literals to reduce size, especially effective for strings that are duplicated across the main-thread and background-thread layers, such as i18n text and class names.
 
 ## Next Steps
 

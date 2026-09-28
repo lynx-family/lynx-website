@@ -55,7 +55,7 @@ function handleInnerTap(e: MainThread.TouchEvent) {
 
 此前，主线程事件需要等待后台线程完成[“激活”（Hydration）](https://lynxjs.org/3.5/zh/react/lifecycle.html)后才能响应，导致页面在首帧可见后，仍存在一段不可交互的延迟，类似[服务端渲染中的常见的恐怖谷效应](https://web.dev/articles/rendering-on-the-web#rehydration)。
 
-为了消除这段延迟，我们优化了激活流程，使得主线程事件可以在首帧渲染后立刻响应，并在后台线程激活后正确接管主线程中的状态并重放 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html)，在保证线程间的正确同步的同时，实现首帧可见即可交互。
+为了消除这段延迟，我们优化了激活流程，使得主线程事件可以在首帧渲染后立刻响应，并在后台线程激活后正确接管主线程中的状态并重放 [`runOnBackground`](https://lynxjs.org/3.5/zh/react/api/functions#runonbackground)，在保证线程间的正确同步的同时，实现首帧可见即可交互。
 
 ```tsx {3,6}
 function App() {
@@ -73,7 +73,7 @@ function App() {
 
 ### 跨线程函数调用支持返回数据
 
-Lynx 提供了 [`runOnMainThread`](https://lynxjs.org/3.5/zh/api/react/Function.runOnMainThread#function-runonmainthread) 和 [`runOnBackground`](https://lynxjs.org/3.5/zh/api/react/Function.runOnBackground.html) 两个 API 用于跨线程函数调用。在 Lynx 3.5 中，这两个 API 现在支持异步返回值，让跨线程通信更加灵活和直观。
+Lynx 提供了 [`runOnMainThread`](https://lynxjs.org/3.5/zh/react/api/functions#runonmainthread) 和 [`runOnBackground`](https://lynxjs.org/3.5/zh/react/api/functions#runonbackground) 两个 API 用于跨线程函数调用。在 Lynx 3.5 中，这两个 API 现在支持异步返回值，让跨线程通信更加灵活和直观。
 
 ```tsx {13,14}
 import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';

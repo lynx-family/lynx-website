@@ -37,30 +37,12 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
-import {
-  BLOG_BASE,
-  BLOG_IS_CROSS_VERSION,
-  SUBSITES_CONFIG,
-} from '@site/shared-route-config';
+import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
+import { subsiteOf } from './api-subsites';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
-
-// Match subsite by checking if any path segment exactly equals the subsite value
-const findSubsite = (pathname: string) => {
-  const segments = pathname.split('/');
-  return SUBSITES_CONFIG.find((s) => {
-    if (s.value === 'ui') {
-      return segments.some((seg) => {
-        const normalized = seg.replace(/\.html$/, '');
-        return normalized === s.value || normalized === 'lynx-ui';
-      });
-    }
-
-    return segments.some((seg) => seg.replace(/\.html$/, '') === s.value);
-  });
-};
 
 const NULL_BYTE_RE = /\u0000/g;
 
@@ -97,7 +79,7 @@ function Layout({
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
-  const subsite = findSubsite(pathname);
+  const subsite = subsiteOf(pathname);
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
@@ -110,7 +92,7 @@ function Layout({
     <>
       <Head>
         <htmlAttrs
-          data-subsite={subsite ? subsite.value : 'guide'}
+          data-subsite={subsite}
           data-scroll-locked={isStatusRoute ? 'true' : null}
         />
       </Head>
@@ -312,11 +294,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   // Update theme based on URL
   useEffect(() => {
-    const subsite = findSubsite(pathname);
-    document.documentElement.setAttribute(
-      'data-subsite',
-      subsite ? subsite.value : 'guide',
-    );
+    document.documentElement.setAttribute('data-subsite', subsiteOf(pathname));
   }, [pathname]);
 
   if (
@@ -441,5 +419,6 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
 });
 
 export { Link }; // override Link from @rspress/core/theme-original
+export { EditLink } from './EditLink';
 
 export * from '@rspress/core/theme-original';
