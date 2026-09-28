@@ -18,71 +18,146 @@ With this release, we are making it easier to build interfaces with AI, create d
 
 For foldable devices, the host passes size changes to Lynx so pages can adapt to the window using familiar Flex layout and relative units. We are also expanding desktop CSS and Element capabilities, making `<webview>` and `<blur-view>` open source, and introducing global memory queries. Let's take a look at what you can build with Lynx 4.0.
 
-## Lynx for AI
+## Adaptive Design
 
-### Give Agents Access to Lynx Documentation
+### Foldables
 
-AI coding agents often draw on Web development conventions when writing Lynx. This can lead to properties or layouts that Lynx does not support. To help agents work with the right APIs, we provide the [`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill: a project-local reference for Lynx APIs, CSS, layout, and Elements that agents can consult before writing code.
+At its September event, Apple introduced its first foldable iPhone, [**iPhone Duo**](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/), bringing new requirements for apps to adapt to dynamically changing screen configurations. Through our collaboration with TikTok, Lynx 4.0 now provides foundational support for foldable devices. When the window size changes, the host updates the [screen metrics](https://github.com/lynx-family/lynx/blob/4.0.3/platform/darwin/ios/lynx/public/LynxView.h#L244), [viewport](/api/lynx-native-api/lynx-view/update-viewport), and [GlobalProps](/api/lynx-api/lynx/lynx-global-props) for each [LynxView](/api/lynx-native-api/lynx-view) together. These updates trigger a new layout pass; in the default reactive mode, a GlobalProps update also triggers a ReactLynx [re-render](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode). Pages that already use [flexible layouts](/guide/ui/layout/flexible-box-layout) and [relative units](/api/css/data-type/length) can typically adapt to size changes caused by folding and unfolding without frontend code changes. See the [**Foldable Device Adaptation Guide**](/guide/inclusion/foldable-devices) for details.
 
-These references come from the public `@lynx-js/lynx-api-docs` package. Install the skill through the community-maintained [Lynx Agent Skills](https://github.com/lynx-community/skills) repository:
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, margin: '24px 0' }}>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableBigToSmall.gif"
+      alt="A Lynx page in TikTok adjusts as the window shrinks"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      Folding
+    </figcaption>
+  </figure>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableSmallToBig.gif"
+      alt="A Lynx page in TikTok adjusts as the window grows"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      Unfolding
+    </figcaption>
+  </figure>
+</div>
 
-```bash
-npx skills add lynx-community/skills -s lynx-api-docs
-```
+### CSS Media Queries
 
-Once installed, agents can access the documentation they need for each task. For example, before building a scrolling list, an agent can check the properties, events, and layout constraints of `<scroll-view>`. For more project configuration options, see [Lynx for AI](/ai/).
-
-### From Model Conversations to Native UI
-
-With [Lynx A2UI](/react/genui/a2ui), agents can go beyond writing code and generate interfaces at runtime. The model produces structured protocol messages, and Lynx turns them into native UI. As new messages arrive, the interface updates progressively.
-
-<ThemedImage
-  lightSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview.png"
-  darkSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_dark.png"
-  alt="An agent produces A2UI protocol messages, and Lynx renders native UI across platforms"
-/>
-
-<Caption>
-  Agents generate protocol messages from a component catalog. Lynx handles
-  rendering and interaction.
-</Caption>
-
-Building on the previously released A2UI renderer, we have added the [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill, maintained and distributed through `lynx-community/skills`:
-
-```bash
-npx skills add lynx-community/skills -s lynx-a2ui
-```
-
-The skill first reads your application's capability catalog, then generates A2UI messages that follow its component, function, and parameter constraints. You can use the default catalog or provide your own, so generated interfaces use capabilities your application already supports. For a full introduction, see [Generative UI on Lynx with A2UI](/blog/lynx-a2ui).
-
-#### Simulated Example
-
-Let's see this in action with a weather query. In the example below, a mock agent sends A2UI protocol messages progressively, and ReactLynx uses components from the catalog to render a weather card. Click the button to switch cities: your interaction is sent back to the mock agent as an Action, and its next messages update the page. This shows how streamed messages and user interactions work together.
+To accommodate an increasingly diverse range of screen sizes and window configurations, Lynx 4.0 brings the core responsive-layout capabilities of [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) to Lynx, including queries based on viewport width and height, aspect ratio, orientation, and pixel density; `min-`, `max-`, `and`, `or`, and `not`; comma-separated query lists; and modern range syntax such as `width >= 768px`. It also supports adapting styles to color scheme preferences, as shown in the following example.
 
 <Go
-  example="a2ui"
-  defaultFile="src/weather/Weather.tsx"
-  defaultEntryFile="dist/weather.lynx.bundle"
-  entry="src"
+  example="css"
+  defaultFile="src/media_query/index.tsx"
+  defaultEntryFile="dist/media_query.lynx.bundle"
+  entry="src/media_query"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/media-query-portrait-ranges.png"
 />
 
-#### Try the Playground
+For the full syntax, units, supported features, and limitations, see [Media Queries](/api/css/media-query).
 
-Chat with a model on the [Create page of the Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create) to see interfaces generated and updated in real time. In [Examples](https://lynx-stack.dev/genui/#/a2ui/examples), edit and replay existing cases to explore how protocol messages correspond to rendered output. In [Catalog](https://lynx-stack.dev/genui/#/a2ui/catalog), combine built-in components and preview the results.
+## Native Backdrop Blur and Liquid Glass
 
-### Generate Interactive UI with OpenUI
+Lynx renders directly to platform-native UI, so it can embrace native visual effects such as Liquid Glass from day one. After refining it for months in production apps, including TikTok, we are finally confident enough to ship it to the community.
 
-With the [`lynx-openui`](/ai/skills/lynx-openui) Skill, you can describe an interface in natural language and generate a declarative OpenUI Lang v0.5 program. Pass the result to `<OpenUiRenderer>` from `@lynx-js/genui/openui` to render interfaces with streaming generation, reactive state, and tool calls.
+Instead of providing separate primitives, we chose to encapsulate native backdrop blur on the Web, HarmonyOS, and iOS, Liquid Glass on iOS, and Lynx's Android blur implementation in an all-in-one `<blur-view>` element so that developers can use the same structure across platforms while progressively enhancing and gracefully degrading through platform-specific configurations.
 
-```bash
-npx skills add lynx-community/skills -s lynx-openui
+Configure `<blur-view>` with [`blur-effect="glass"`](/api/elements/built-in/blur-view#blur-effect) to render Liquid Glass on iOS. Lynx exposes the key configuration of [`UIGlassEffect`](https://developer.apple.com/documentation/uikit/uiglasseffect) through [`glass-style`](/api/elements/built-in/blur-view#glass-style), [`glass-tint-color`](/api/elements/built-in/blur-view#glass-tint-color), and [`glass-interactive`](/api/elements/built-in/blur-view#glass-interactive). For grouped effects backed by [`UIGlassContainerEffect`](https://developer.apple.com/documentation/uikit/uiglasscontainereffect), use [`blur-effect="glass-container"`](/api/elements/built-in/blur-view#blur-effect) and control the distance at which glass elements begin to merge with [`spacing`](/api/elements/built-in/blur-view#spacing).
+
+<Go
+  example="blur-view"
+  defaultFile="src/liquid-glass/index.tsx"
+  defaultEntryFile="dist/liquid-glass.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/blur-view_liquid-glass.webm"
+  highlight="{20-30}"
+  entry="src/liquid-glass"
+/>
+
+All supported platforms can render backdrop blur through `<blur-view>`. On Android, Lynx provides a dedicated implementation while the platform's built-in backdrop blur APIs continue to mature. Set [`android-capture-target`](/api/elements/built-in/blur-view#android-capture-target) to explicitly identify the background element to capture and blur:
+
+<Go
+  example="blur-view"
+  defaultFile="src/base/index.tsx"
+  defaultEntryFile="dist/base.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/blur-view_base.jpg"
+  highlight="{12-16,20-26}"
+  entry="src/base"
+/>
+
+See the [**`<blur-view>` API reference**](/api/elements/built-in/blur-view) for all properties and platform support.
+
+## WebView
+
+Lynx 4.0 adds [`<webview>`](/api/elements/built-in/webview) to the open-source release, with support for Android, iOS, HarmonyOS, macOS, and Windows, allowing developers to reuse existing Web content directly in Lynx applications.
+
+Give `<webview>` an explicit width and height, then set [`src`](/api/elements/built-in/webview#src) to load a Web page on every supported platform.
+
+<Go
+  example="webview"
+  defaultFile="src/base/index.tsx"
+  defaultEntryFile="dist/base.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/webview-base.gif"
+/>
+
+On Android, iOS, and HarmonyOS, you can also load an HTML string directly through [`html`](/api/elements/built-in/webview#html).
+
+<Go
+  example="webview"
+  defaultFile="src/html/index.tsx"
+  defaultEntryFile="dist/html.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/webview-html.gif"
+/>
+
+See the [**`<webview>` API reference**](/api/elements/built-in/webview) for all properties, events, methods, and platform support.
+
+## Desktop Rendering
+
+Lynx 4.0 expands the expressive power of CSS on desktop with custom text carets and multi-layer mask compositing in Clay on macOS and Windows.
+
+### Custom Text Carets
+
+Four new `-x-caret-*` properties let you style the caret in `<input>` and `<textarea>` with a custom [gradient](/api/css/properties/-x-caret-gradient), [width](/api/css/properties/-x-caret-width), [height](/api/css/properties/-x-caret-height), and [corner radius](/api/css/properties/-x-caret-radius):
+
+```css
+input {
+  -x-caret-gradient: linear-gradient(to bottom, #00a6a6, #1479ff);
+  -x-caret-width: 2px;
+  -x-caret-height: 20px;
+  -x-caret-radius: 1px;
+}
 ```
 
-The skill guides agents to read the built-in catalog or your application's component signatures first. It then checks component names, positional arguments, and references, helping agents generate programs that match the renderer's capabilities. By default, it produces a complete program. Enable edit mode or `mergeStatements` explicitly to generate only the changed statements for incremental updates.
+### Multi-Layer Mask Compositing
 
-For interactive interfaces, use `$state` to express reactive state, `Query()` to read host data, and `Action()` to coordinate interactions. Queries and writes use only tools that the host actually provides. A `Mutation()` must be triggered by an explicit Action, such as a user clicking a submit button. This lets generated interfaces both display content and participate in the application's existing workflows.
+With [`mask-composite`](/api/css/properties/mask-composite), you can combine multiple mask layers using `add`, `subtract`, `intersect`, and `exclude` to create cutouts and overlapping visual effects directly in CSS:
 
-See [OpenUI in ReactLynx](/react/genui/openui) for integration details, or try the [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui).
+```css
+.masked-view {
+  mask-image: linear-gradient(#000, #000), linear-gradient(#000, transparent);
+  mask-composite: exclude;
+}
+```
 
 ## ReactLynx
 
@@ -130,171 +205,79 @@ export default defineConfig({
 
 Production builds delete `debug-metadata.json` after generation by default. To map production errors, preserve and host the debug metadata that corresponds to each build artifact. Mapping UI nodes also requires the runtime to access the corresponding `debugMetadataUrl`. See [Map Errors to Source](/rspeedy/map-errors-to-source) and [UI Source Map](/rspeedy/ui-source-map) for setup details.
 
-## Adapting to Foldable Devices
+## Generative UI
 
-At its September event, Apple unveiled its first foldable iPhone, [iPhone Duo](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/). Unfold the screen and the page you were reading gains a fresh canvas; fold it back and the content has to settle into a smaller space. The job of an app is to make the interface flow gracefully between the two.
+### A2UI
 
-Lynx already supports foldable devices and is in production use in TikTok. We aim to keep integration simple: the host passes size changes to Lynx by updating **screen metrics, viewport, and GlobalProps** together, while the frontend continues to use familiar Flex layout and relative units to adapt. The page then adjusts automatically as the window resizes. For integration details, see [Adapting to Foldable Devices](/guide/inclusion/foldable-devices).
+With [Lynx A2UI](/react/genui/a2ui), agents can go beyond writing code and generate interfaces at runtime. The model produces structured protocol messages, and Lynx turns them into native UI. As new messages arrive, the interface updates progressively.
 
-<div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, margin: '24px 0' }}>
-  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
-    <img
-      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableBigToSmall.gif"
-      alt="A Lynx page in TikTok adjusts as the window shrinks"
-      width="480"
-      height="360"
-      loading="lazy"
-      style={{
-        display: 'block',
-        width: '100%',
-        height: 'auto',
-        borderRadius: 12,
-      }}
-    />
-    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
-      Folding
-    </figcaption>
-  </figure>
-  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
-    <img
-      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableSmallToBig.gif"
-      alt="A Lynx page in TikTok adjusts as the window grows"
-      width="480"
-      height="360"
-      loading="lazy"
-      style={{
-        display: 'block',
-        width: '100%',
-        height: 'auto',
-        borderRadius: 12,
-      }}
-    />
-    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
-      Unfolding
-    </figcaption>
-  </figure>
-</div>
-
-## CSS
-
-### Media Queries
-
-Lynx 4.0 implements a subset of CSS Media Queries Level 4, so you can use `@media` rules to apply different styles based on device and viewport conditions, as shown in the following example.
-
-<Go
-  example="css"
-  defaultFile="src/media_query/index.tsx"
-  defaultEntryFile="dist/media_query.lynx.bundle"
-  entry="src/media_query"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/media-query-portrait-ranges.png"
+<ThemedImage
+  lightSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview.png"
+  darkSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_dark.png"
+  alt="An agent produces A2UI protocol messages, and Lynx renders native UI across platforms"
 />
 
-You can adapt layouts and styles to viewport dimensions, aspect ratio, orientation, pixel density, and color scheme preferences. Alongside `min-` and `max-` syntax, Lynx supports `and`, `or`, and `not` conditions, comma-separated query lists, and Level 4 range syntax such as `width >= 768px`. For the full syntax, units, supported features, and limitations, see [Media Queries](/api/css/media-query).
+<Caption>
+  Agents generate protocol messages from a component catalog. Lynx handles
+  rendering and interaction.
+</Caption>
 
-### Desktop-Only Capabilities (macOS and Windows)
+Building on the previously released A2UI renderer, we have added the [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill, maintained and distributed through `lynx-community/skills`:
 
-We are continuing to expand desktop CSS support with customizable text carets and multi-layer mask compositing. Both capabilities are currently available in the Clay rendering backend on **macOS and Windows**. They are not yet available in the native rendering backends on Android, iOS, or HarmonyOS. See each API page's compatibility table for platform details.
-
-#### Custom Text Carets
-
-Four new Lynx-specific `-x-caret-*` properties let you customize the text insertion caret in `<input>` and `<textarea>`:
-
-- [`-x-caret-gradient`](/api/css/properties/-x-caret-gradient): set the caret gradient.
-- [`-x-caret-width`](/api/css/properties/-x-caret-width): set the caret width.
-- [`-x-caret-height`](/api/css/properties/-x-caret-height): set the caret height.
-- [`-x-caret-radius`](/api/css/properties/-x-caret-radius): set the caret corner radius.
-
-```css
-input {
-  -x-caret-gradient: linear-gradient(to bottom, #00a6a6, #1479ff);
-  -x-caret-width: 2px;
-  -x-caret-height: 20px;
-  -x-caret-radius: 1px;
-}
+```bash
+npx skills add lynx-community/skills -s lynx-a2ui
 ```
 
-#### Multi-Layer Mask Compositing
+The skill first reads your application's capability catalog, then generates A2UI messages that follow its component, function, and parameter constraints. You can use the default catalog or provide your own, so generated interfaces use capabilities your application already supports. For a full introduction, see [Generative UI on Lynx with A2UI](/blog/lynx-a2ui).
 
-[`mask-composite`](/api/css/properties/mask-composite) controls how the current mask layer combines with the layers beneath it. It supports `add`, `subtract`, `intersect`, and `exclude` for adding, subtracting, intersecting, or excluding overlapping regions.
+**Simulated Example**
 
-```css
-.masked-view {
-  mask-image: linear-gradient(#000, #000), linear-gradient(#000, transparent);
-  mask-composite: exclude;
-}
+Let's see this in action with a weather query. In the example below, a mock agent sends A2UI protocol messages progressively, and ReactLynx uses components from the catalog to render a weather card. Click the button to switch cities: your interaction is sent back to the mock agent as an Action, and its next messages update the page. This shows how streamed messages and user interactions work together.
+
+<Go
+  example="a2ui"
+  defaultFile="src/weather/Weather.tsx"
+  defaultEntryFile="dist/weather.lynx.bundle"
+  entry="src"
+/>
+
+**Try the Playground**
+
+Chat with a model on the [Create page of the Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create) to see interfaces generated and updated in real time. In [Examples](https://lynx-stack.dev/genui/#/a2ui/examples), edit and replay existing cases to explore how protocol messages correspond to rendered output. In [Catalog](https://lynx-stack.dev/genui/#/a2ui/catalog), combine built-in components and preview the results.
+
+### OpenUI
+
+With the [`lynx-openui`](/ai/skills/lynx-openui) Skill, you can describe an interface in natural language and generate a declarative OpenUI Lang v0.5 program. Pass the result to `<OpenUiRenderer>` from `@lynx-js/genui/openui` to render interfaces with streaming generation, reactive state, and tool calls.
+
+```bash
+npx skills add lynx-community/skills -s lynx-openui
 ```
 
-## Element Updates
+The skill guides agents to read the built-in catalog or your application's component signatures first. It then checks component names, positional arguments, and references, helping agents generate programs that match the renderer's capabilities. By default, it produces a complete program. Enable edit mode or `mergeStatements` explicitly to generate only the changed statements for incremental updates.
 
-### Open-Sourcing `<webview>`
+For interactive interfaces, use `$state` to express reactive state, `Query()` to read host data, and `Action()` to coordinate interactions. Queries and writes use only tools that the host actually provides. A `Mutation()` must be triggered by an explicit Action, such as a user clicking a submit button. This lets generated interfaces both display content and participate in the application's existing workflows.
 
-With Lynx 4.0, [`<webview>`](/api/elements/built-in/webview) is now open source. You can use it to embed web pages in your Lynx application and reuse existing Web content across Android, iOS, HarmonyOS, macOS, and Windows.
+See [OpenUI in ReactLynx](/react/genui/openui) for integration details, or try the [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui).
 
-Set an explicit width and height for `<webview>`. You can load a URL on all supported platforms. On Android, iOS, and HarmonyOS, you can also provide an HTML string directly.
+## API Docs Skill
 
-#### Load Web Content
+AI coding agents often draw on Web development conventions when writing Lynx. This can lead to properties or layouts that Lynx does not support. To help agents work with the right APIs, we provide the [`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill: a project-local reference for Lynx APIs, CSS, layout, and Elements that agents can consult before writing code.
 
-Use `src` to specify a URL:
+These references come from the public `@lynx-js/lynx-api-docs` package. Install the skill through the community-maintained [Lynx Agent Skills](https://github.com/lynx-community/skills) repository:
 
-<Go
-  example="webview"
-  defaultFile="src/base/index.tsx"
-  defaultEntryFile="dist/base.lynx.bundle"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/webview-base.gif"
-/>
+```bash
+npx skills add lynx-community/skills -s lynx-api-docs
+```
 
-#### Load an HTML String on Android, iOS, and HarmonyOS
+Once installed, agents can access the documentation they need for each task. For example, before building a scrolling list, an agent can check the properties, events, and layout constraints of `<scroll-view>`. For more project configuration options, see [Lynx for AI](/ai/).
 
-On Android, iOS, and HarmonyOS, use `html` to provide HTML content:
-
-<Go
-  example="webview"
-  defaultFile="src/html/index.tsx"
-  defaultEntryFile="dist/html.lynx.bundle"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/webview-html.gif"
-/>
-
-For more properties, events, and methods, see the [`<webview>` API reference](/api/elements/built-in/webview).
-
-### Open-Sourcing `<blur-view>`
-
-We are also making [`<blur-view>`](/api/elements/built-in/blur-view) open source, with support for Android, iOS, and HarmonyOS. You can use it to apply Gaussian blur to the content behind overlays and panels, similar to CSS `backdrop-filter: blur`.
-
-#### Basic Usage
-
-On Android, use `android-capture-target` to identify the background element to blur, and set `flatten={false}` on that target:
-
-<Go
-  example="blur-view"
-  defaultFile="src/base/index.tsx"
-  defaultEntryFile="dist/base.lynx.bundle"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/blur-view_base.jpg"
-  highlight="{12-16,20-26}"
-  entry="src/base"
-/>
-
-#### Liquid Glass on iOS
-
-<Go
-  example="blur-view"
-  defaultFile="src/liquid-glass/index.tsx"
-  defaultEntryFile="dist/liquid-glass.lynx.bundle"
-  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/blur-view_liquid-glass.webm"
-  highlight="{20-30}"
-  entry="src/liquid-glass"
-/>
-
-See the [`<blur-view>` API reference](/api/elements/built-in/blur-view) for available properties and their platform support.
-
-## Other Updates
-
-### Global Lynx Memory Queries
+## Global Lynx Memory Queries
 
 When your application hosts multiple Lynx pages, you may need to know which instances are still alive and where their memory is being used. With [global Lynx memory queries](/guide/performance/monitor-performance/global-memory-usage-query) on iOS and Android, you can asynchronously collect memory usage attributed to live Lynx instances in the current process. The results are grouped into categories such as Elements, UI/Views, Main Thread runtimes, and Background Thread runtimes.
 
 Use this capability to request a snapshot when investigating memory pressure or other issues. To further trace references between JavaScript objects, use the query results to select an instance, then analyze its heap snapshot.
 
-## Get Started with Lynx 4.0
+**Get Started with Lynx 4.0**
 
 Follow [Integrate Lynx 4.0 with an Existing App](https://lynxjs.org/4.0/guide/start/integrate-with-existing-apps.html) to update your Lynx and PrimJS dependencies to `4.0.x`, along with the supporting dependencies for your target platform. For the complete list of engine updates and fixes, see the [Lynx 4.0 release notes](https://github.com/lynx-family/lynx/releases/tag/4.0.3).
 
