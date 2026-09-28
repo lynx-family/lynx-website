@@ -78,8 +78,6 @@ Besides the main bundle:
 
 The same source can also be built for the web. There the Rsbuild environment is named `web`, the output is a `.web.bundle`, and `<lynx-view url="...">` loads it. The `[platform]` placeholder in a filename is that environment name, which is why the default `[name].[platform].bundle` gives you `main.lynx.bundle` in one environment and `main.web.bundle` in the other.
 
-#
-
 ## Which tool to build with {#tools}
 
 A Lynx app is built by [Rsbuild](https://rsbuild.rs/). What makes the output a Lynx bundle instead of a web bundle is **`pluginLynx`**, the Lynx build engine packaged as a set of Rsbuild plugins.
@@ -98,8 +96,6 @@ npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
 ```
 
 Both produce the same `.lynx.bundle`, and the dev server, HMR, QR code and debug metadata behave identically, because all of that lives in `pluginLynx`. What differs is who owns the CLI and how much of the Rsbuild configuration surface you can reach.
-
-The output itself differs from a web build in several ways: no HTML entry, styles and scripts encoded into one binary, and one copy of your code per thread. [What is a Lynx Bundle?](#lynx-bundle) covers that, and makes the configuration below easier to follow.
 
 ### Rsbuild with pluginLynx
 
@@ -198,11 +194,9 @@ Once you are on Rsbuild you can reach for options like [`tools.postcss`](https:/
 
 ## Output files {#output}
 
-This chapter will introduces the directory structure of output files and how to control the output directory of different types of files.
-
 ### Default Directory Structure
 
-The following is a basic directory for output files. By default, the compiled files will be output in the `dist` directory of current project.
+By default the compiled files are written to the project's `dist` directory:
 
 #### Production
 
@@ -266,7 +260,7 @@ dist/
 In addition, some extra files are generated in development:
 
 - Background Thread Script(BTS): The background script file that is inlined into the bundle, default output to `.lynx/[name]/background.js`.
-- MainThread Thread Script(MTS): The main-thread script file that is inlined into the bundle, default output to `.lynx/[name]/main-thread.js`.
+- Main Thread Script (MTS): The main-thread script file that is inlined into the bundle, default output to `.lynx/[name]/main-thread.js`.
 - Debug Metadata: the metadata needed to map production errors back to source (source map, bytecode debug info, UI source map, and build info), default output to `.lynx/[name]/debug-metadata.json`. See [Map Production Errors to Source](/guide/devtool/map-errors-to-source).
 
 ### Modify the Directory
@@ -280,7 +274,7 @@ The build provides some configs to modify the directory or filename, you can:
 
 ### Flatten the Directory
 
-Sometimes you don't want the dist directory to have too many levels, you can set the directory to an empty string to flatten the generated directory.
+To flatten the generated directory, set the directory to an empty string.
 
 See the example below:
 
@@ -380,14 +374,14 @@ When running multiple Bundles on a single Lynx Engine version, each Bundle can s
 
 #### Version Incompatibility Handling
 
-If you try to run a Bundle on a lower version of the Lynx Engine, a Fatal level error with code [10204](/api/errors/error-code.mdx#10204-e_app_bundle_load_parse_failed) will occur, and the rendering process will stop. This mechanism prevents potential runtime issues caused by version incompatibility.
+If you try to run a Bundle on a lower version of the Lynx Engine, a Fatal level error with code [10204](/api/errors/error-code.mdx#10204-e_app_bundle_load_parse_failed) will occur, and the rendering process will stop.
 
 #### Configuring Engine Version
 
 The [`engineVersion`] is a string containing two version numbers, and you can specify it in your configuration file:
 
-```js title="lynx.config.js"
-import { defineConfig } from '@lynx-js/rspeedy';
+```ts title="rsbuild.config.ts"
+import { defineConfig } from '@rsbuild/core';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 
 export default defineConfig({
