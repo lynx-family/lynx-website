@@ -176,29 +176,12 @@ export function StatusLabel({ selected }: { selected: boolean }) {
 
 这让配置驱动的界面和通用组件封装有了更多选择。如果元件结构在开发时已经确定，仍然推荐直接编写 JSX，让编译器分析静态结构并优化渲染。两种写法的取舍见[编译协同渲染](/react/compiler-informed-rendering)。
 
-### 统一调试信息
+### 统一调试信息（Debug Metadata）
 
-线上报错通常指向压缩后的 JavaScript，主线程报错给出的则是字节码位置，无法直接对应源码的行列号。为此，Rspeedy 现在会为每次构建生成一份 `debug-metadata.json`，统一汇集 JavaScript 与 CSS Source Map、字节码调试信息和 UI Source Map。借助它可以完成两类反解：
+线上报错通常指向压缩后的 JavaScript，主线程报错给出的则是字节码位置，无法直接对应源码的行列号。Rspeedy 现在会为每次构建生成一份统一的调试信息文件 `debug-metadata.json`，借助它可以：
 
-- **线上错误反解**：将打包后的错误堆栈还原为源码文件、行和列，主线程抛出的错误同样适用。
-- **UI 节点树反解**：从客户端导出运行时 UI 树，找到创建每个节点的 JSX，帮助定位界面问题。
-
-UI Source Map 默认关闭，需要在 `pluginReactLynx` 中显式开启：
-
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-
-export default defineConfig({
-  plugins: [
-    pluginReactLynx({
-      enableUiSourceMap: true,
-    }),
-  ],
-});
-```
-
-生产构建默认会在生成后删除 `debug-metadata.json`。进行线上错误反解时，需要保存并托管每次构建对应的调试信息；进行 UI 节点树反解时，还需要让运行时能够获取对应的 `debugMetadataUrl`。具体接入方式见[线上错误反解](/rspeedy/map-errors-to-source)和[反解 UI 节点树](/rspeedy/ui-source-map)。
+- **[将线上错误映射回源码](/rspeedy/map-errors-to-source)**：还原错误堆栈对应的源码文件、行和列，主线程抛出的错误同样适用。
+- **[将 UI 节点映射回源码](/rspeedy/ui-source-map)**：找到运行时 UI 树中每个节点对应的 JSX。
 
 ## 生成式 UI
 

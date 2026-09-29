@@ -180,27 +180,10 @@ This gives you more flexibility when building configuration-driven interfaces an
 
 ### Unified Debug Metadata
 
-Production errors usually point to minified JavaScript, and errors on the Main Thread report bytecode locations that do not correspond to source lines and columns. To make them traceable, Rspeedy now collects JavaScript and CSS source maps, bytecode debug information, and UI source maps into a single `debug-metadata.json` for each build. You can use it to:
+Production errors usually point to minified JavaScript, and errors on the Main Thread report bytecode locations that do not correspond to source lines and columns. Rspeedy now emits a unified `debug-metadata.json` for each build, so you can:
 
-- **Map production errors to source**: restore the original file, line, and column from a bundled error stack, including errors thrown on the Main Thread.
-- **Map UI nodes to source**: export the runtime UI tree from the client and find the JSX that created each node, helping you diagnose interface issues.
-
-UI source maps are off by default. Enable them in `pluginReactLynx`:
-
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-
-export default defineConfig({
-  plugins: [
-    pluginReactLynx({
-      enableUiSourceMap: true,
-    }),
-  ],
-});
-```
-
-Production builds remove `debug-metadata.json` from the output by default. To map production errors, keep and host the metadata for each build. To map UI nodes, the runtime also needs access to the matching `debugMetadataUrl`. See [Map Errors to Source](/rspeedy/map-errors-to-source) and [UI Source Map](/rspeedy/ui-source-map) for setup details.
+- **[Map production errors to source](/rspeedy/map-errors-to-source)**, restoring the original file, line, and column, including for errors thrown on the Main Thread.
+- **[Map UI nodes to source](/rspeedy/ui-source-map)** by finding the JSX that created each node in the runtime UI tree.
 
 ## Generative UI
 
