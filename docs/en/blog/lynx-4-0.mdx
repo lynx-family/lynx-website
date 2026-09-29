@@ -162,7 +162,7 @@ With [`mask-composite`](/api/css/properties/mask-composite), you can combine mul
 
 ### `createElement` and `cloneElement`
 
-ReactLynx now supports the familiar React APIs [`createElement`](/api/react/Function.createElement) and [`cloneElement`](/api/react/Function.cloneElement). Use them when an element's type is only known at runtime, or when you need to adjust the props of an existing element:
+ReactLynx now supports creating Lynx elements dynamically with [`createElement`](/api/react/Function.createElement) and [`cloneElement`](/api/react/Function.cloneElement). Use these familiar React APIs when an element's type is only known at runtime, or when you need to adjust the props of an existing element:
 
 ```tsx
 import { cloneElement, createElement } from '@lynx-js/react';
@@ -204,28 +204,19 @@ Production builds remove `debug-metadata.json` from the output by default. To ma
 
 ## Generative UI
 
-In [Generative UI on Lynx with A2UI](/blog/lynx-a2ui), we released the Lynx A2UI renderer so agents can generate native interfaces at runtime. Lynx 4.0 continues that work: a new Skill helps agents write A2UI messages your application can render, and Lynx GenUI now expands to a second format, OpenUI.
+We have been actively exploring generative UI and previously released [support for A2UI](/blog/lynx-a2ui). Today, we are adding the `lynx-a2ui` Skill and support for the OpenUI format.
 
 ### A2UI
 
-The new [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill helps agents generate A2UI messages. It first reads your application's catalog, either the default one or your own, and then generates messages that use only the components, functions, and parameters that catalog declares, so the result is always something your application can render:
+The [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill helps agents generate A2UI messages that use only the components, functions, and parameters declared in your application's catalog:
 
 ```bash
 npx skills add lynx-community/skills -s lynx-a2ui
 ```
 
-The weather example below shows how streamed messages and user interactions work together. A mock agent streams A2UI messages to render a weather card. When you switch cities, your interaction is sent back to the agent as an Action, and its next messages update the page. You can also chat with a real model in the [Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create).
-
-<Go
-  example="a2ui"
-  defaultFile="src/weather/Weather.tsx"
-  defaultEntryFile="dist/weather.lynx.bundle"
-  entry="src"
-/>
-
 ### OpenUI
 
-Lynx GenUI now also supports [OpenUI](https://www.openui.com/docs/openui-lang). While A2UI describes an interface as JSON messages, OpenUI Lang is a compact, line-oriented language designed for streaming: the agent writes component expressions such as `Card(...)` and `Button(...)`, and [`<OpenUiRenderer>`](/react/genui/openui) from `@lynx-js/genui/openui` parses them as they arrive and renders them with ReactLynx components from a library your application controls.
+[OpenUI](https://www.openui.com/docs/openui-lang) is a generative UI framework whose model-facing format, OpenUI Lang, is a compact, line-oriented language designed for streaming. Instead of generating executable code, the agent describes the interface with component expressions such as `Card(...)` and `Button(...)`, chosen from a library your application controls. [`<OpenUiRenderer>`](/react/genui/openui) from `@lynx-js/genui/openui` parses the output as it arrives and renders it as native UI with your registered ReactLynx components.
 
 OpenUI programs can also hold reactive state and call tools. Use `$state` for state, `Query()` to read host data, and `Action()` to coordinate interactions. Queries and `Mutation()` writes only go through tools the host actually provides, and a `Mutation()` runs only when an explicit Action triggers it, such as a user clicking a submit button. This lets generated interfaces both display content and take part in your application's existing workflows.
 

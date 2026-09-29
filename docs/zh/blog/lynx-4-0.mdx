@@ -160,7 +160,7 @@ input {
 
 ### `createElement` 与 `cloneElement`
 
-ReactLynx 现已支持 [`createElement`](/api/react/Function.createElement) 和 [`cloneElement`](/api/react/Function.cloneElement)。当元件类型要到运行时才能确定，或需要基于已有元素调整属性时，可以直接使用这两个熟悉的 React API：
+ReactLynx 新增对 [`createElement`](/api/react/Function.createElement) 和 [`cloneElement`](/api/react/Function.cloneElement) 动态构建 Lynx 元素的支持。当元件类型要到运行时才能确定，或需要基于已有元素调整属性时，可以直接使用这两个熟悉的 React API：
 
 ```tsx
 import { cloneElement, createElement } from '@lynx-js/react';
@@ -202,28 +202,19 @@ export default defineConfig({
 
 ## 生成式 UI
 
-在 [A2UI 驱动的 Lynx 生成式界面](/blog/lynx-a2ui) 中，我们发布了 Lynx A2UI 渲染器，让 Agent 能在运行时生成原生界面。Lynx 4.0 在此基础上继续推进：新增的 Skill 帮助 Agent 编写应用能够渲染的 A2UI 消息，Lynx GenUI 也扩展到了第二种格式 OpenUI。
+我们一直在积极探索生成式 UI，并在此前发布了[对 A2UI 的支持](/blog/lynx-a2ui)。今天，我们进一步新增了 `lynx-a2ui` Skill 与对 OpenUI 格式的支持。
 
 ### A2UI
 
-新增的 [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill 帮助 Agent 生成 A2UI 消息。它会先读取应用的组件目录（Catalog），可以是默认目录，也可以是你自己的目录，再严格按照其中声明的组件、函数和参数生成消息，确保结果都能被应用渲染：
+[`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill 帮助 Agent 严格按照应用组件目录（Catalog）中声明的组件、函数和参数生成 A2UI 消息：
 
 ```bash
 npx skills add lynx-community/skills -s lynx-a2ui
 ```
 
-下面的天气示例展示了流式消息与用户交互如何配合：模拟 Agent 逐步发送 A2UI 消息，渲染出天气卡片；点击按钮切换城市时，用户操作会作为 Action 回传给 Agent，再由后续消息更新页面。你也可以在 [Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create) 中直接与模型对话体验。
-
-<Go
-  example="a2ui"
-  defaultFile="src/weather/Weather.tsx"
-  defaultEntryFile="dist/weather.lynx.bundle"
-  entry="src"
-/>
-
 ### OpenUI
 
-Lynx GenUI 现在也支持 [OpenUI](https://www.openui.com/docs/openui-lang)。与用 JSON 消息描述界面的 A2UI 不同，OpenUI Lang 是一种紧凑、按行组织、为流式传输设计的语言：Agent 输出 `Card(...)`、`Button(...)` 等组件表达式，`@lynx-js/genui/openui` 中的 [`<OpenUiRenderer>`](/react/genui/openui) 边接收边解析，并使用应用控制的 ReactLynx 组件库渲染出原生界面。
+[OpenUI](https://www.openui.com/docs/openui-lang) 是一套生成式 UI 框架，它面向模型的输出格式 OpenUI Lang 是一种紧凑、按行组织、为流式传输设计的语言。Agent 不需要生成可执行代码，而是从应用控制的组件库中选择 `Card(...)`、`Button(...)` 等组件表达式来描述界面。`@lynx-js/genui/openui` 中的 [`<OpenUiRenderer>`](/react/genui/openui) 会边接收边解析模型输出，并用已注册的 ReactLynx 组件渲染出原生界面。
 
 OpenUI 程序还可以包含响应式状态和工具调用：用 `$state` 表达响应式状态，用 `Query()` 读取宿主数据，用 `Action()` 编排交互步骤。查询和 `Mutation()` 写入只会调用宿主实际提供的工具，且 `Mutation()` 必须由显式的 Action 触发，例如用户点击提交按钮。这样，生成的界面既能展示内容，也能接入应用已有的业务流程。
 
