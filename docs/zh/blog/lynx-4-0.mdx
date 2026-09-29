@@ -7,8 +7,7 @@ badge_text: 'Lynx 4.0 发布了!'
 description: 'Lynx 4.0 带来 AI Agent Skills 与 A2UI、OpenUI 生成式界面、ReactLynx 动态元素与统一调试信息、折叠屏适配、桌面端 CSS 更新、元件开源与能力增强和全局内存查询'
 ---
 
-import { BlogHeader, Caption, Go } from '@lynx';
-import { ThemedImage } from '@/components/ThemedImage';
+import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader />
 
@@ -203,29 +202,17 @@ export default defineConfig({
 
 ## 生成式 UI
 
+在 [A2UI 驱动的 Lynx 生成式界面](/blog/lynx-a2ui) 中，我们发布了 Lynx A2UI 渲染器，让 Agent 能在运行时生成原生界面。Lynx 4.0 在此基础上继续推进：新增的 Skill 帮助 Agent 编写应用能够渲染的 A2UI 消息，Lynx GenUI 也扩展到了第二种格式 OpenUI。
+
 ### A2UI
 
-除了帮助开发者写代码，[Lynx A2UI](/react/genui/a2ui) 也让 Agent 能在运行时生成界面：模型输出结构化的协议消息，由 Lynx 渲染器转换为原生 UI，并随着消息到达逐步更新。
-
-<ThemedImage
-  lightSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_zh.png"
-  darkSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_zh_dark.png"
-  alt="Agent 输出 A2UI 协议消息，由 Lynx 在不同平台渲染原生界面"
-/>
-
-<Caption>Agent 根据组件目录生成协议消息，Lynx 负责渲染与交互。</Caption>
-
-在此前发布 A2UI 渲染器的基础上，我们新增了 [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill，并通过 `lynx-community/skills` 统一维护和分发：
+新增的 [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill 帮助 Agent 生成 A2UI 消息。它会先读取应用的组件目录（Catalog），可以是默认目录，也可以是你自己的目录，再严格按照其中声明的组件、函数和参数生成消息，确保结果都能被应用渲染：
 
 ```bash
 npx skills add lynx-community/skills -s lynx-a2ui
 ```
 
-这个 Skill 会先读取应用的能力目录（Catalog），再根据其中的组件、函数和参数约束生成 A2UI 消息。开发者可以使用默认目录，也可以提供业务自己的目录，让 Agent 生成的界面使用应用已支持的能力。完整介绍见 [A2UI 驱动的 Lynx 生成式界面](/blog/lynx-a2ui)。
-
-**模拟示例**
-
-下面的天气查询示例使用模拟 Agent，逐步发送 A2UI 协议消息，由 ReactLynx 将 Catalog 中的组件渲染为天气卡片。点击按钮切换城市时，用户操作会作为 Action 回传给模拟 Agent，再通过后续消息更新页面，展示从流式渲染到交互反馈的完整过程。
+下面的天气示例展示了流式消息与用户交互如何配合：模拟 Agent 逐步发送 A2UI 消息，渲染出天气卡片；点击按钮切换城市时，用户操作会作为 Action 回传给 Agent，再由后续消息更新页面。你也可以在 [Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create) 中直接与模型对话体验。
 
 <Go
   example="a2ui"
@@ -234,35 +221,41 @@ npx skills add lynx-community/skills -s lynx-a2ui
   entry="src"
 />
 
-**体验 Playground**
-
-你也可以在 [Lynx A2UI Playground 的 Create 页面](https://lynx-stack.dev/genui/#/a2ui/create) 与模型对话，实时体验界面的生成与更新；在 [Examples](https://lynx-stack.dev/genui/#/a2ui/examples) 中编辑、回放已有案例，查看协议消息与渲染结果的对应关系；或在 [Catalog](https://lynx-stack.dev/genui/#/a2ui/catalog) 中组合内置组件并预览效果。
-
 ### OpenUI
 
-Lynx 也提供了 [`lynx-openui`](/ai/skills/lynx-openui) Skill，将自然语言界面需求转换为 OpenUI Lang v0.5 声明式程序。生成的内容可以传给 `@lynx-js/genui/openui` 的 `<OpenUiRenderer>` 渲染，适合需要流式生成、响应式状态和工具调用的界面。
+Lynx GenUI 现在也支持 [OpenUI](https://www.openui.com/docs/openui-lang)。与用 JSON 消息描述界面的 A2UI 不同，OpenUI Lang 是一种紧凑、按行组织、为流式传输设计的语言：Agent 输出 `Card(...)`、`Button(...)` 等组件表达式，`@lynx-js/genui/openui` 中的 [`<OpenUiRenderer>`](/react/genui/openui) 边接收边解析，并使用应用控制的 ReactLynx 组件库渲染出原生界面。
+
+OpenUI 程序还可以包含响应式状态和工具调用：用 `$state` 表达响应式状态，用 `Query()` 读取宿主数据，用 `Action()` 编排交互步骤。查询和 `Mutation()` 写入只会调用宿主实际提供的工具，且 `Mutation()` 必须由显式的 Action 触发，例如用户点击提交按钮。这样，生成的界面既能展示内容，也能接入应用已有的业务流程。
+
+下面的示例将一段模拟的 OpenUI Lang 响应流式传入渲染器，逐步生成一份两日行程；点击按钮即可查看发送给宿主的 Action。
+
+<Go
+  example="openui"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/openui.lynx.bundle"
+  entry="src"
+  defaultTab="web"
+/>
+
+为了帮助 Agent 编写 OpenUI Lang，我们同样提供了 [`lynx-openui`](/ai/skills/lynx-openui) Skill。它会读取内置组件目录或应用提供的组件签名，并在返回程序前检查组件名称、参数顺序和引用关系：
 
 ```bash
 npx skills add lynx-community/skills -s lynx-openui
 ```
 
-这个 Skill 会引导 Agent 先读取内置 Catalog 或应用提供的自定义组件签名，再检查组件名称、位置参数和引用关系，生成符合当前 Renderer 能力的程序。默认输出完整程序；显式启用 edit mode 或 `mergeStatements` 后，也可以只输出发生变化的语句，实现增量更新。
-
-对于可交互界面，可以通过 `$state` 表达响应式状态，通过 `Query()` 读取宿主数据，并用 `Action()` 编排交互步骤。查询和写入只使用宿主实际提供的工具，其中 `Mutation()` 必须由显式 Action 触发，例如用户点击提交按钮。这样，生成的界面既能展示内容，也能接入应用已有的业务流程。
-
 接入方式见 [ReactLynx 中的 OpenUI](/react/genui/openui)，也可以在 [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui) 中体验。
 
 ## API 文档 Skill
 
-让 AI 编写 Lynx 页面时，一个常见问题是它会沿用 Web 开发经验，生成 Lynx 尚不支持的属性或布局写法。[`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill 为 coding agent 提供项目本地的 Lynx API、CSS、布局和元件参考资料，帮助它在实现前确认能力边界。
+让 AI 编写 Lynx 页面时，一个常见问题是它会沿用 Web 开发经验，生成 Lynx 尚不支持的属性或布局写法。[`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill 基于公开的 `@lynx-js/lynx-api-docs` 软件包，为 coding agent 提供项目本地的 Lynx API、CSS、布局和元件参考资料，让它在编写代码前先确认 Lynx 支持哪些能力。比如在实现一个滚动列表前，agent 可以先查阅 `<scroll-view>` 的属性、事件和布局约束。
 
-这些资料来自公开的 `@lynx-js/lynx-api-docs` 软件包，可以通过社区维护的 [Lynx Agent Skills](https://github.com/lynx-community/skills) 安装：
+和上面的生成式 UI Skill 一样，它也通过社区维护的 [Lynx Agent Skills](https://github.com/lynx-community/skills) 安装：
 
 ```bash
 npx skills add lynx-community/skills -s lynx-api-docs
 ```
 
-安装后，兼容的 agent 可以按任务加载相关资料。比如在实现一个滚动列表前，先确认 `<scroll-view>` 的属性、事件和布局约束，再生成代码。更多项目配置方式见[面向 AI 的 Lynx](/ai/)。
+更多面向 AI 的项目配置方式见[面向 AI 的 Lynx](/ai/)。
 
 ## 全局 Lynx 内存查询
 

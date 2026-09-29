@@ -7,8 +7,7 @@ badge_text: 'Lynx 4.0 is released!'
 description: 'Lynx 4.0 brings AI Agent Skills, A2UI and OpenUI generative UI, ReactLynx dynamic elements and unified debug metadata, foldable device support, desktop CSS updates, more open-source Elements, and global memory queries.'
 ---
 
-import { BlogHeader, Caption, Go } from '@lynx';
-import { ThemedImage } from '@/components/ThemedImage';
+import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader />
 
@@ -205,32 +204,17 @@ Production builds remove `debug-metadata.json` from the output by default. To ma
 
 ## Generative UI
 
+In [Generative UI on Lynx with A2UI](/blog/lynx-a2ui), we released the Lynx A2UI renderer so agents can generate native interfaces at runtime. Lynx 4.0 continues that work: a new Skill helps agents write A2UI messages your application can render, and Lynx GenUI now expands to a second format, OpenUI.
+
 ### A2UI
 
-With [Lynx A2UI](/react/genui/a2ui), agents can go beyond writing code and generate interfaces at runtime. The model produces structured protocol messages, and Lynx turns them into native UI. As new messages arrive, the interface updates progressively.
-
-<ThemedImage
-  lightSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview.png"
-  darkSrc="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/overview_dark.png"
-  alt="An agent produces A2UI protocol messages, and Lynx renders native UI across platforms"
-/>
-
-<Caption>
-  Agents generate protocol messages from a component catalog. Lynx handles
-  rendering and interaction.
-</Caption>
-
-Building on the previously released A2UI renderer, we have added the [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill, maintained and distributed through `lynx-community/skills`:
+The new [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill helps agents generate A2UI messages. It first reads your application's catalog, either the default one or your own, and then generates messages that use only the components, functions, and parameters that catalog declares, so the result is always something your application can render:
 
 ```bash
 npx skills add lynx-community/skills -s lynx-a2ui
 ```
 
-The skill first reads your application's capability catalog, then generates A2UI messages that follow its component, function, and parameter constraints. You can use the default catalog or provide your own, so generated interfaces use capabilities your application already supports. For a full introduction, see [Generative UI on Lynx with A2UI](/blog/lynx-a2ui).
-
-**Simulated Example**
-
-Let's see this in action with a weather query. In the example below, a mock agent sends A2UI protocol messages progressively, and ReactLynx uses components from the catalog to render a weather card. Click the button to switch cities: your interaction is sent back to the mock agent as an Action, and its next messages update the page. This shows how streamed messages and user interactions work together.
+The weather example below shows how streamed messages and user interactions work together. A mock agent streams A2UI messages to render a weather card. When you switch cities, your interaction is sent back to the agent as an Action, and its next messages update the page. You can also chat with a real model in the [Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create).
 
 <Go
   example="a2ui"
@@ -239,35 +223,41 @@ Let's see this in action with a weather query. In the example below, a mock agen
   entry="src"
 />
 
-**Try the Playground**
-
-Chat with a model on the [Create page of the Lynx A2UI Playground](https://lynx-stack.dev/genui/#/a2ui/create) to see interfaces generated and updated in real time. In [Examples](https://lynx-stack.dev/genui/#/a2ui/examples), edit and replay existing cases to explore how protocol messages correspond to rendered output. In [Catalog](https://lynx-stack.dev/genui/#/a2ui/catalog), combine built-in components and preview the results.
-
 ### OpenUI
 
-With the [`lynx-openui`](/ai/skills/lynx-openui) Skill, you can describe an interface in natural language and generate a declarative OpenUI Lang v0.5 program. Pass the result to `<OpenUiRenderer>` from `@lynx-js/genui/openui` to render interfaces with streaming generation, reactive state, and tool calls.
+Lynx GenUI now also supports [OpenUI](https://www.openui.com/docs/openui-lang). While A2UI describes an interface as JSON messages, OpenUI Lang is a compact, line-oriented language designed for streaming: the agent writes component expressions such as `Card(...)` and `Button(...)`, and [`<OpenUiRenderer>`](/react/genui/openui) from `@lynx-js/genui/openui` parses them as they arrive and renders them with ReactLynx components from a library your application controls.
+
+OpenUI programs can also hold reactive state and call tools. Use `$state` for state, `Query()` to read host data, and `Action()` to coordinate interactions. Queries and `Mutation()` writes only go through tools the host actually provides, and a `Mutation()` runs only when an explicit Action triggers it, such as a user clicking a submit button. This lets generated interfaces both display content and take part in your application's existing workflows.
+
+In the example below, a mock OpenUI Lang response streams into the renderer and progressively builds a two-day itinerary. Select a button to see the Action it sends to the host.
+
+<Go
+  example="openui"
+  defaultFile="src/App.tsx"
+  defaultEntryFile="dist/openui.lynx.bundle"
+  entry="src"
+  defaultTab="web"
+/>
+
+To help agents write OpenUI Lang, we also provide the [`lynx-openui`](/ai/skills/lynx-openui) Skill. It reads the built-in component catalog or your application's component signatures, then checks component names, argument order, and references before returning a program:
 
 ```bash
 npx skills add lynx-community/skills -s lynx-openui
 ```
 
-The skill guides agents to read the built-in catalog or your application's component signatures first. It then checks component names, positional arguments, and references, helping agents generate programs that match the renderer's capabilities. By default, it produces a complete program. Enable edit mode or `mergeStatements` explicitly to generate only the changed statements for incremental updates.
-
-For interactive interfaces, use `$state` to express reactive state, `Query()` to read host data, and `Action()` to coordinate interactions. Queries and writes use only tools that the host actually provides. A `Mutation()` must be triggered by an explicit Action, such as a user clicking a submit button. This lets generated interfaces both display content and participate in the application's existing workflows.
-
 See [OpenUI in ReactLynx](/react/genui/openui) for integration details, or try the [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui).
 
 ## API Docs Skill
 
-AI coding agents often draw on Web development conventions when writing Lynx. This can lead to properties or layouts that Lynx does not support. To help agents work with the right APIs, we provide the [`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill: a project-local reference for Lynx APIs, CSS, layout, and Elements that agents can consult before writing code.
+AI coding agents often carry Web conventions over to Lynx, producing properties or layouts that Lynx does not support. The [`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill gives agents a project-local reference for Lynx APIs, CSS, layout, and Elements, built from the public `@lynx-js/lynx-api-docs` package, so they can check what Lynx supports before writing code. For example, before building a scrolling list, an agent can look up the properties, events, and layout constraints of `<scroll-view>`.
 
-These references come from the public `@lynx-js/lynx-api-docs` package. Install the skill through the community-maintained [Lynx Agent Skills](https://github.com/lynx-community/skills) repository:
+Like the Generative UI Skills above, it is available from the community-maintained [Lynx Agent Skills](https://github.com/lynx-community/skills) repository:
 
 ```bash
 npx skills add lynx-community/skills -s lynx-api-docs
 ```
 
-Once installed, agents can access the documentation they need for each task. For example, before building a scrolling list, an agent can check the properties, events, and layout constraints of `<scroll-view>`. For more project configuration options, see [Lynx for AI](/ai/).
+For more ways to set up your project for AI agents, see [Lynx for AI](/ai/).
 
 ## Global Lynx Memory Queries
 
