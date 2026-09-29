@@ -159,9 +159,9 @@ input {
 
 ## ReactLynx
 
-### 动态创建与克隆元素
+### `createElement` 与 `cloneElement`
 
-ReactLynx 新增对 [`createElement`](/api/react/Function.createElement) 和 [`cloneElement`](/api/react/Function.cloneElement) 动态构建 Lynx 元素的支持。当元件类型需要到运行时才能确定，或需要基于已有元素调整属性时，可以直接使用熟悉的 React API：
+ReactLynx 现已支持 [`createElement`](/api/react/Function.createElement) 和 [`cloneElement`](/api/react/Function.cloneElement)：元件类型到运行时才能确定时可以动态创建元素，也可以基于已有元素覆盖属性、派生新元素：
 
 ```tsx
 import { cloneElement, createElement } from '@lynx-js/react';
@@ -175,18 +175,16 @@ export function StatusLabel({ selected }: { selected: boolean }) {
 }
 ```
 
-这为配置驱动的界面和通用组件封装提供了更多选择。如果元件结构在开发时已经确定，仍然推荐直接写出 JSX，让编译器能够分析静态结构并参与渲染优化。两种写法的取舍可以参考[编译协同渲染](/react/compiler-informed-rendering)。
+如果结构在开发时已经确定，仍推荐直接写 JSX，让编译器预编译静态结构。两种写法的取舍见[编译协同渲染](/react/compiler-informed-rendering)。
 
-### 统一调试信息
+### 调试信息
 
-线上报错通常指向压缩后的 JavaScript，主线程字节码中的位置也不能直接当作源码行列号使用。构建工具现在通过统一的 `debug-metadata.json` 汇集 JavaScript、CSS Source Map、字节码调试信息和 UI Source Map，为错误与节点定位提供同一份构建依据。
+线上错误堆栈指向压缩后的产物，主线程上的位置更是字节码偏移而非源码行列号。Rspeedy 现在为每次构建生成一份 `debug-metadata.json`，汇集 JavaScript 与 CSS Source Map、字节码调试信息和 UI Source Map，用于：
 
-借助这些信息，可以完成两类反解：
+- **线上错误反解**：将错误堆栈（包括主线程字节码）还原到源码文件、行和列。
+- **UI 节点树反解**：从客户端导出运行时 UI 树，定位创建每个节点的 JSX。
 
-- **线上错误反解**：把打包后的错误堆栈还原为源码文件、行和列；主线程字节码会先映射到编码后的 JavaScript，再映射回源码。
-- **UI 节点树反解**：从客户端导出运行时 UI 树，将节点映射到创建它的 JSX，帮助定位界面问题。
-
-UI Source Map 默认关闭，需要在 `pluginReactLynx` 中显式开启：
+UI Source Map 默认关闭，需要在 `pluginReactLynx` 中开启：
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy';
@@ -201,7 +199,7 @@ export default defineConfig({
 });
 ```
 
-生产构建默认会在生成后删除 `debug-metadata.json`。用于线上反解时，需要在构建流程中保存并托管与产物对应的调试信息；用于 UI 树反解时，还需要让运行时获取对应的 `debugMetadataUrl`。具体接入方式见[线上错误反解](/rspeedy/map-errors-to-source)和[反解 UI 节点树](/rspeedy/ui-source-map)。
+生产构建默认会删除 `debug-metadata.json`，需要为每次发布自行保存并托管；UI 节点树反解还需要注入对应的 `debugMetadataUrl`。详见[线上错误反解](/rspeedy/map-errors-to-source)和[反解 UI 节点树](/rspeedy/ui-source-map)。
 
 ## 生成式 UI
 

@@ -161,9 +161,9 @@ With [`mask-composite`](/api/css/properties/mask-composite), you can combine mul
 
 ## ReactLynx
 
-### Dynamically Create and Clone Elements
+### `createElement` and `cloneElement`
 
-You can now create and clone Lynx elements dynamically with ReactLynx's [`createElement`](/api/react/Function.createElement) and [`cloneElement`](/api/react/Function.cloneElement). These familiar React APIs give you more flexibility when an element's type is only known at runtime, or when you need to adjust the properties of an existing element:
+ReactLynx now supports [`createElement`](/api/react/Function.createElement) and [`cloneElement`](/api/react/Function.cloneElement), so you can create elements whose type is only known at runtime, or derive new elements from existing ones with different props:
 
 ```tsx
 import { cloneElement, createElement } from '@lynx-js/react';
@@ -177,18 +177,16 @@ export function StatusLabel({ selected }: { selected: boolean }) {
 }
 ```
 
-This makes it easier to build configuration-driven interfaces and reusable components. When you already know the component structure at development time, we still recommend writing JSX directly. This lets the compiler analyze the static structure and optimize rendering. For more on these trade-offs, see [Compiler-Informed Rendering](/react/compiler-informed-rendering).
+When the structure is known at development time, prefer JSX so the compiler can precompile the static structure. See [Compiler-Informed Rendering](/react/compiler-informed-rendering) for the trade-offs.
 
-### Unified Debug Metadata
+### Debug Metadata
 
-Production errors often point to minified JavaScript, and locations in Main Thread bytecode do not directly correspond to source line and column numbers. To make these issues easier to investigate, our build tools now bring JavaScript and CSS source maps, bytecode debugging information, and UI source maps together in `debug-metadata.json`.
+Production error stacks point into minified bundles, and Main Thread positions are bytecode offsets rather than source lines. Rspeedy now emits a single `debug-metadata.json` per build, bundling JavaScript and CSS source maps, bytecode debug info, and the UI source map, so you can:
 
-You can use this metadata in two ways:
+- **Map production errors to source**, including Main Thread bytecode frames.
+- **Map UI nodes to source** by dumping the runtime UI tree from the client and locating the JSX that created each node.
 
-- **Map production errors to source**: restore source file locations from bundled error stacks. Main Thread bytecode locations are first mapped to the encoded JavaScript, then back to the original source.
-- **Map UI nodes to source**: export the runtime UI tree from the client and locate the JSX that created each node to help diagnose interface issues.
-
-UI source maps are disabled by default. Enable them explicitly in `pluginReactLynx`:
+The UI source map is off by default. Enable it in `pluginReactLynx`:
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy';
@@ -203,7 +201,7 @@ export default defineConfig({
 });
 ```
 
-Production builds delete `debug-metadata.json` after generation by default. To map production errors, preserve and host the debug metadata that corresponds to each build artifact. Mapping UI nodes also requires the runtime to access the corresponding `debugMetadataUrl`. See [Map Errors to Source](/rspeedy/map-errors-to-source) and [UI Source Map](/rspeedy/ui-source-map) for setup details.
+Production builds delete `debug-metadata.json` by default, so host it yourself for each release; mapping UI nodes also requires injecting its `debugMetadataUrl`. See [Map Errors to Source](/rspeedy/map-errors-to-source) and [UI Source Map](/rspeedy/ui-source-map).
 
 ## Generative UI
 
