@@ -185,23 +185,11 @@ export function StatusLabel({ selected }: { selected: boolean }) {
 
 ## 生成式 UI
 
-我们一直在积极探索生成式 UI，并在此前发布了[对 A2UI 的支持](/blog/lynx-a2ui)。今天，我们进一步新增了 `lynx-a2ui` Skill 与对 OpenUI 格式的支持。
-
-### A2UI
-
-[`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill 帮助 Agent 严格按照应用组件目录（Catalog）中声明的组件、函数和参数生成 A2UI 消息：
-
-```bash
-npx skills add lynx-community/skills -s lynx-a2ui
-```
+我们一直在积极探索生成式 UI，并在此前发布了[对 A2UI 的支持](/blog/lynx-a2ui)。今天，我们进一步新增了对 OpenUI 格式的支持，以及两个帮助 Agent 使用这些格式的 Skills。
 
 ### OpenUI
 
-[OpenUI](https://www.openui.com/docs/openui-lang) 是一套生成式 UI 框架，它面向模型的输出格式 OpenUI Lang 是一种紧凑、按行组织、为流式传输设计的语言。Agent 不需要生成可执行代码，而是从应用控制的组件库中选择 `Card(...)`、`Button(...)` 等组件表达式来描述界面。`@lynx-js/genui/openui` 中的 [`<OpenUiRenderer>`](/react/genui/openui) 会边接收边解析模型输出，并用已注册的 ReactLynx 组件渲染出原生界面。
-
-OpenUI 程序还可以包含响应式状态和工具调用：用 `$state` 表达响应式状态，用 `Query()` 读取宿主数据，用 `Action()` 编排交互步骤。查询和 `Mutation()` 写入只会调用宿主实际提供的工具，且 `Mutation()` 必须由显式的 Action 触发，例如用户点击提交按钮。这样，生成的界面既能展示内容，也能接入应用已有的业务流程。
-
-下面的示例将一段模拟的 OpenUI Lang 响应流式传入渲染器，逐步生成一份两日行程；点击按钮即可查看发送给宿主的 Action。
+[OpenUI](https://www.openui.com/docs/openui-lang) 提供了一种紧凑、按行组织、为流式传输设计的语言。Agent 不需要生成可执行代码，而是从应用控制的组件库中选择 `Card(...)`、`Button(...)` 等组件表达式来描述界面。`@lynx-js/genui/openui` 中的 [`<OpenUiRenderer>`](/react/genui/openui) 会边接收边解析模型输出，并用已注册的 ReactLynx 组件渲染出原生界面。下面的示例将一段模拟的 OpenUI Lang 响应流式传入渲染器，逐步生成一份两日行程；点击按钮即可查看发送给宿主的 Action。
 
 <Go
   example="openui"
@@ -211,13 +199,21 @@ OpenUI 程序还可以包含响应式状态和工具调用：用 `$state` 表达
   defaultTab="web"
 />
 
-为了帮助 Agent 编写 OpenUI Lang，我们同样提供了 [`lynx-openui`](/ai/skills/lynx-openui) Skill。它会读取内置组件目录或应用提供的组件签名，并在返回程序前检查组件名称、参数顺序和引用关系：
+接入方式见 [ReactLynx 中的 OpenUI](/react/genui/openui)，也可以在 [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui) 中体验。
+
+### Skills
+
+[`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill 帮助 Agent 严格按照应用组件目录（Catalog）中声明的组件、函数和参数生成 A2UI 消息：
+
+```bash
+npx skills add lynx-community/skills -s lynx-a2ui
+```
+
+[`lynx-openui`](/ai/skills/lynx-openui) Skill 帮助 Agent 只使用渲染器可用的组件来编写 OpenUI Lang：
 
 ```bash
 npx skills add lynx-community/skills -s lynx-openui
 ```
-
-接入方式见 [ReactLynx 中的 OpenUI](/react/genui/openui)，也可以在 [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui) 中体验。
 
 ## API 文档 Skill
 

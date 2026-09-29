@@ -187,23 +187,11 @@ Production errors usually point to minified JavaScript, and errors on the Main T
 
 ## Generative UI
 
-We have been actively exploring generative UI and previously released [support for A2UI](/blog/lynx-a2ui). Today, we are adding the `lynx-a2ui` Skill and support for the OpenUI format.
-
-### A2UI
-
-The [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill helps agents generate A2UI messages that use only the components, functions, and parameters declared in your application's catalog:
-
-```bash
-npx skills add lynx-community/skills -s lynx-a2ui
-```
+We have been actively exploring generative UI and previously released [support for A2UI](/blog/lynx-a2ui). Today, we are adding support for the OpenUI format, along with two Skills that help agents work with these formats.
 
 ### OpenUI
 
-[OpenUI](https://www.openui.com/docs/openui-lang) is a generative UI framework whose model-facing format, OpenUI Lang, is a compact, line-oriented language designed for streaming. Instead of generating executable code, the agent describes the interface with component expressions such as `Card(...)` and `Button(...)`, chosen from a library your application controls. [`<OpenUiRenderer>`](/react/genui/openui) from `@lynx-js/genui/openui` parses the output as it arrives and renders it as native UI with your registered ReactLynx components.
-
-OpenUI programs can also hold reactive state and call tools. Use `$state` for state, `Query()` to read host data, and `Action()` to coordinate interactions. Queries and `Mutation()` writes only go through tools the host actually provides, and a `Mutation()` runs only when an explicit Action triggers it, such as a user clicking a submit button. This lets generated interfaces both display content and take part in your application's existing workflows.
-
-In the example below, a mock OpenUI Lang response streams into the renderer and progressively builds a two-day itinerary. Select a button to see the Action it sends to the host.
+[OpenUI](https://www.openui.com/docs/openui-lang) provides a compact, line-oriented language designed for streaming. Instead of generating executable code, the agent describes the interface with component expressions such as `Card(...)` and `Button(...)`, chosen from a library your application controls. [`<OpenUiRenderer>`](/react/genui/openui) from `@lynx-js/genui/openui` parses the model output as it arrives and renders native UI with your registered ReactLynx components. In the example below, a mock OpenUI Lang response streams into the renderer and progressively builds a two-day itinerary. Select a button to see the Action it sends to the host.
 
 <Go
   example="openui"
@@ -213,13 +201,21 @@ In the example below, a mock OpenUI Lang response streams into the renderer and 
   defaultTab="web"
 />
 
-To help agents write OpenUI Lang, we also provide the [`lynx-openui`](/ai/skills/lynx-openui) Skill. It reads the built-in component catalog or your application's component signatures, then checks component names, argument order, and references before returning a program:
+See [OpenUI in ReactLynx](/react/genui/openui) for integration details, or try the [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui).
+
+### Skills
+
+The [`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill helps agents generate A2UI messages that use only the components, functions, and parameters declared in your application's catalog:
+
+```bash
+npx skills add lynx-community/skills -s lynx-a2ui
+```
+
+The [`lynx-openui`](/ai/skills/lynx-openui) Skill helps agents write OpenUI Lang that uses only the components available to the renderer:
 
 ```bash
 npx skills add lynx-community/skills -s lynx-openui
 ```
-
-See [OpenUI in ReactLynx](/react/genui/openui) for integration details, or try the [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui).
 
 ## API Docs Skill
 
