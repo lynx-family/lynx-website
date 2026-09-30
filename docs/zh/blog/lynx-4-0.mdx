@@ -1,0 +1,244 @@
+---
+title: 'Lynx 4.0：折叠屏、媒体查询、Liquid Glass、WebView、OpenUI 等'
+date: 2026-09-30
+sidebar: false
+authors: ['shiwentao', 'lynx']
+badge_text: 'Lynx 4.0 发布了!'
+description: 'Lynx 4.0 带来折叠屏适配与 CSS 媒体查询、基于 <blur-view> 的原生背景模糊与 Liquid Glass、开源 <webview>、桌面端 CSS 更新、ReactLynx 动态元素与统一调试信息、OpenUI 支持与 Agent Skills，以及全局内存查询'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+Lynx 4.0 已经正式发布！不用担心，升级大版本号并不意味着我们要引入 Breaking Changes，我们会在后续的博客里介绍 Lynx 新的愿景。
+
+这个版本重点提升了 Lynx 适配折叠屏等动态变化屏幕尺寸的能力，并新增了 CSS 媒体查询。同时，久违的原生背景模糊与 Liquid Glass 也随着新开源的 `<blur-view>` 到来。我们还开源了 `<webview>`，带来了桌面端 CSS 新能力与 OpenUI 支持，并改进了 ReactLynx 和 AI Skills。让我们一起来看看吧！
+
+## 自适应设计
+
+### 折叠屏
+
+苹果在秋季发布会上推出了首款折叠屏 [**iPhone Duo**](https://www.apple.com.cn/newsroom/2026/09/apple-unveils-iphone-duo/)，也对应用适配动态变化的屏幕形态提出了新的要求。基于与 TikTok 的合作实践，Lynx 4.0 现已具备基础的折叠屏适配能力。窗口尺寸变化时，宿主会为 [LynxView](/api/lynx-native-api/lynx-view) 一并更新[屏幕尺寸](https://github.com/lynx-family/lynx/blob/4.0.3/platform/darwin/ios/lynx/public/LynxView.h#L244)、[视口](/api/lynx-native-api/lynx-view/update-viewport)和 [GlobalProps](/api/lynx-api/lynx/lynx-global-props)。这些更新会触发页面重新布局；在默认的 reactive 模式下，GlobalProps 更新还会触发 ReactLynx [重新渲染](/api/rspeedy/react-rsbuild-plugin.pluginreactlynxoptions.globalpropsmode)。对于已经采用[弹性布局](/guide/ui/layout/flexible-box-layout)和[相对单位](/api/css/data-type/length)的页面，通常无需修改前端代码，即可适应折叠、展开带来的尺寸变化。更多信息请参阅[**折叠屏适配指南**](/guide/inclusion/foldable-devices)。
+
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, margin: '24px 0' }}>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableBigToSmall.gif"
+      alt="TikTok 中的 Lynx 页面随窗口缩小重新布局"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      折叠
+    </figcaption>
+  </figure>
+  <figure style={{ flex: '1 1 260px', minWidth: 0, margin: 0 }}>
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/resizeableSmallToBig.gif"
+      alt="TikTok 中的 Lynx 页面随窗口放大重新布局"
+      width="480"
+      height="360"
+      loading="lazy"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        borderRadius: 12,
+      }}
+    />
+    <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 14 }}>
+      展开
+    </figcaption>
+  </figure>
+</div>
+
+### CSS 媒体查询
+
+为了适应日益多样的屏幕尺寸与窗口形态，Lynx 4.0 引入了 [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) 中响应式布局常用的核心能力，包括基于视口宽高、宽高比、横竖屏方向和像素密度的查询，以及 `min-`、`max-`、`and`、`or`、`not`、逗号分隔的查询列表和 `width >= 768px` 这样的现代范围语法；此外还支持根据颜色模式偏好应用不同样式，如以下示例。
+
+<Go
+  example="css"
+  defaultFile="src/media_query/index.scss"
+  highlight="{103,117,127,138,148}"
+  defaultEntryFile="dist/media_query.lynx.bundle"
+  entry="src/media_query"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/media-query-portrait-ranges.png"
+/>
+
+完整的语法、单位、支持范围与使用限制见[媒体查询文档](/api/css/media-query)。
+
+## 原生背景模糊与 Liquid Glass
+
+Lynx 直接渲染为平台原生 UI，因此从第一天起就能承载 Liquid Glass 等原生视觉效果。在 TikTok 等线上应用中持续打磨数月后，我们终于有信心将这项能力交付给社区。
+
+我们选择通过一个一体化的 `<blur-view>` 元素，统一封装 Web、HarmonyOS 和 iOS 的原生背景模糊、iOS Liquid Glass，以及 Lynx 的 Android 模糊实现，让开发者可以跨平台复用相同的结构，并通过平台专属配置实现渐进增强与优雅降级。
+
+在 iOS 上，为 `<blur-view>` 配置 [`blur-effect="glass"`](/api/elements/built-in/blur-view#blur-effect) 即可渲染 Liquid Glass。Lynx 通过 [`glass-style`](/api/elements/built-in/blur-view#glass-style)、[`glass-tint-color`](/api/elements/built-in/blur-view#glass-tint-color) 和 [`glass-interactive`](/api/elements/built-in/blur-view#glass-interactive) 开放了 [`UIGlassEffect`](https://developer.apple.com/documentation/uikit/uiglasseffect) 的关键配置。对于基于 [`UIGlassContainerEffect`](https://developer.apple.com/documentation/uikit/uiglasscontainereffect) 的组合效果，可以使用 [`blur-effect="glass-container"`](/api/elements/built-in/blur-view#blur-effect)，并通过 [`spacing`](/api/elements/built-in/blur-view#spacing) 控制玻璃元素开始融合的间距。
+
+<Go
+  example="blur-view"
+  defaultFile="src/liquid-glass/index.tsx"
+  highlight="{23-26}"
+  defaultEntryFile="dist/liquid-glass.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/blur-view_liquid-glass.webm"
+  entry="src/liquid-glass"
+/>
+
+所有支持的平台都可以通过 `<blur-view>` 渲染背景模糊。在 Android 平台的内置背景模糊 API 逐步成熟的同时，Lynx 提供了专门的实现。通过 [`android-capture-target`](/api/elements/built-in/blur-view#android-capture-target) 明确指定需要捕获并模糊的背景元素：
+
+<Go
+  example="blur-view"
+  defaultFile="src/base/index.tsx"
+  highlight="{14-15,22}"
+  defaultEntryFile="dist/base.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/blur-view_base.jpg"
+  entry="src/base"
+/>
+
+具体属性及其平台支持范围见 [**`<blur-view>` API 文档**](/api/elements/built-in/blur-view)。
+
+## WebView
+
+Lynx 4.0 的开源版本新增了 [`<webview>`](/api/elements/built-in/webview) 元素，支持 Android、iOS、HarmonyOS、macOS 和 Windows，让开发者可以直接在 Lynx 应用中复用现有 Web 内容。
+
+为 `<webview>` 设置明确的宽高，并通过 [`src`](/api/elements/built-in/webview#src) 指定网页地址，即可在所有支持的平台加载 Web 页面。
+
+<Go
+  example="webview"
+  defaultFile="src/base/index.tsx"
+  highlight="{36-37,39}"
+  defaultEntryFile="dist/base.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/webview-base.gif"
+/>
+
+在 Android、iOS 和 HarmonyOS 上，还可以通过 [`html`](/api/elements/built-in/webview#html) 直接加载 HTML 字符串。
+
+<Go
+  example="webview"
+  defaultFile="src/html/index.tsx"
+  highlight="{96-97,99}"
+  defaultEntryFile="dist/html.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/elements/webview-html.gif"
+/>
+
+具体属性、事件、方法及平台支持范围见 [**`<webview>` API 文档**](/api/elements/built-in/webview)。
+
+## 桌面端渲染
+
+Lynx 4.0 进一步扩展桌面端的 CSS 表现力，为采用 Clay 渲染的 macOS 和 Windows 应用带来自定义文本插入光标与多层遮罩合成。
+
+### 自定义文本插入光标
+
+四个新的 `-x-caret-*` 属性让你可以为 `<input>` 和 `<textarea>` 设置光标的[渐变](/api/css/properties/-x-caret-gradient)、[宽度](/api/css/properties/-x-caret-width)、[高度](/api/css/properties/-x-caret-height)与[圆角](/api/css/properties/-x-caret-radius)：
+
+```css
+input {
+  -x-caret-gradient: linear-gradient(to bottom, #00a6a6, #1479ff);
+  -x-caret-width: 2px;
+  -x-caret-height: 20px;
+  -x-caret-radius: 1px;
+}
+```
+
+### 多层遮罩合成
+
+通过 [`mask-composite`](/api/css/properties/mask-composite)，你可以使用 `add`、`subtract`、`intersect` 和 `exclude` 组合多个遮罩层，直接通过 CSS 实现镂空、交叠等视觉效果：
+
+```css
+.masked-view {
+  mask-image: linear-gradient(#000, #000), linear-gradient(#000, transparent);
+  mask-composite: exclude;
+}
+```
+
+## ReactLynx
+
+### `createElement` 与 `cloneElement`
+
+ReactLynx 新增对 [`createElement`](/api/react/Function.createElement) 和 [`cloneElement`](/api/react/Function.cloneElement) 动态构建 Lynx 元素的支持。当元件类型要到运行时才能确定，或需要基于已有元素调整属性时，可以直接使用这两个熟悉的 React API：
+
+```tsx
+import { cloneElement, createElement } from '@lynx-js/react';
+
+export function StatusLabel({ selected }: { selected: boolean }) {
+  const label = createElement('text', { className: 'label' }, 'Lynx 4.0');
+
+  return selected
+    ? cloneElement(label, { className: 'label label-selected' })
+    : label;
+}
+```
+
+这让配置驱动的界面和通用组件封装有了更多选择。如果元件结构在开发时已经确定，仍然推荐直接编写 JSX，让编译器分析静态结构并优化渲染。两种写法的取舍见[编译协同渲染](/react/compiler-informed-rendering)。
+
+### 统一调试信息（Debug Metadata）
+
+线上报错通常指向压缩后的 JavaScript，主线程报错给出的则是字节码位置，无法直接对应源码的行列号。Rspeedy 现在会为每次构建生成一份统一的调试信息文件 `debug-metadata.json`，借助它可以：
+
+- **[将线上错误映射回源码](/rspeedy/map-errors-to-source)**：还原错误堆栈对应的源码文件、行和列，主线程抛出的错误同样适用。
+- **[将 UI 节点映射回源码](/rspeedy/ui-source-map)**：找到运行时 UI 树中每个节点对应的 JSX。
+
+## 面向 AI 的 Lynx：生成式 UI 与 Agent Skills
+
+我们一直在积极探索生成式 UI，并在此前发布了[对 A2UI 的支持](/blog/lynx-a2ui)。今天，我们进一步新增了对 OpenUI 格式的支持，以及两个帮助 Agent 使用这些格式的 Skills。
+
+### OpenUI
+
+[OpenUI](https://www.openui.com/docs/openui-lang) 提供了一种紧凑、按行组织、为流式传输设计的语言。Agent 不需要生成可执行代码，而是从应用控制的组件库中选择 `Card(...)`、`Button(...)` 等组件表达式来描述界面。`@lynx-js/genui/openui` 中的 [`<OpenUiRenderer>`](/react/genui/openui) 会边接收边解析模型输出，并用已注册的 ReactLynx 组件渲染出原生界面。下面的示例将一段模拟的 OpenUI Lang 响应流式传入渲染器，逐步生成一份两日行程；点击按钮即可查看发送给宿主的 Action。
+
+<Go
+  example="openui"
+  defaultFile="src/App.tsx"
+  highlight="{15,61-64,88-94}"
+  defaultEntryFile="dist/openui.lynx.bundle"
+  entry="src"
+  defaultTab="web"
+/>
+
+接入方式见 [ReactLynx 中的 OpenUI](/react/genui/openui)，也可以在 [Lynx GenUI OpenUI Playground](https://lynx-stack.dev/genui/#/openui) 中体验。
+
+### GenUI Skills
+
+[`lynx-a2ui`](/ai/skills/lynx-a2ui) Skill 帮助 Agent 严格按照应用组件目录（Catalog）中声明的组件、函数和参数生成 A2UI 消息：
+
+```bash
+npx skills add lynx-community/skills -s lynx-a2ui
+```
+
+[`lynx-openui`](/ai/skills/lynx-openui) Skill 帮助 Agent 只使用渲染器可用的组件来编写 OpenUI Lang：
+
+```bash
+npx skills add lynx-community/skills -s lynx-openui
+```
+
+### API 文档 Skill
+
+让 AI 编写 Lynx 页面时，一个常见问题是它会沿用 Web 开发经验，生成 Lynx 尚不支持的属性或布局写法。[`lynx-api-docs`](/ai/skills/lynx-api-docs) Agent Skill 基于公开的 `@lynx-js/lynx-api-docs` 软件包，为 coding agent 提供项目本地的 Lynx API、CSS、布局和元件参考资料，让它在编写代码前先确认 Lynx 支持哪些能力。比如在实现一个滚动列表前，agent 可以先查阅 `<scroll-view>` 的属性、事件和布局约束。
+
+和上面的 GenUI Skills 一样，它也通过社区维护的 [Lynx Agent Skills](https://github.com/lynx-community/skills) 安装：
+
+```bash
+npx skills add lynx-community/skills -s lynx-api-docs
+```
+
+更多面向 AI 的项目配置方式见[面向 AI 的 Lynx](/ai/)。
+
+## 全局 Lynx 内存查询
+
+当应用同时承载多个 Lynx 页面时，定位内存问题往往需要先回答：哪些实例还存活、内存主要花在哪里？Lynx 4.0 在 iOS 和 Android 提供了[全局 Lynx 内存查询](/guide/performance/monitor-performance/global-memory-usage-query)，可以异步采集当前进程内存活实例的 Lynx 归因内存，并按 Element、UI/View、主线程 runtime 和后台线程 runtime 等分类返回结果。
+
+这项能力适合在内存压力或问题排查时主动获取快照。若需要进一步追踪 JavaScript 对象的引用关系，可以根据查询结果选择目标实例，再分析 heap snapshot。
+
+## 开始使用 Lynx 4.0
+
+升级时，请参照[接入 Lynx 4.0 到现有应用](https://lynxjs.org/4.0/zh/guide/start/integrate-with-existing-apps.html)，将 Lynx 和 PrimJS 依赖更新到 `4.0.x`，并按目标平台更新配套依赖。完整的引擎更新与修复列表见 [Lynx 4.0 发布记录](https://github.com/lynx-family/lynx/releases/tag/4.0.3)。
+
+感谢每一位反馈问题、贡献代码和分享实践的开发者，期待看到大家用 Lynx 4.0 构建的新体验！
