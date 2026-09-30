@@ -44,6 +44,7 @@ import {
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
+import RspeedyMigrationNotice from './RspeedyMigrationNotice';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
 // Match subsite by checking if any path segment exactly equals the subsite value
@@ -118,6 +119,7 @@ function Layout({
         {...props}
         afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
+        beforeDocContent={<RspeedyMigrationNotice />}
         bottom={<Footer />}
       />
     </>
@@ -293,7 +295,12 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
-          beforeHero={beforeHero}
+          beforeHero={
+            <>
+              <RspeedyMigrationNotice />
+              {beforeHero}
+            </>
+          }
           afterHero={afterHero}
           afterHeroActions={afterHeroActions}
         />
