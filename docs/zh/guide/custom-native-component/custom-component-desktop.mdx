@@ -132,6 +132,10 @@ Native UI 渲染后端会挂载一个平台控件，并在 `OnLayoutChanged` 中
 
 :::tip 覆盖原生视图或子窗口
 Native UI 后端挂载的平台视图或子窗口位于 Clay 主渲染表面之上，因此普通 Lynx `z-index` 无法可靠地覆盖它们。应将平台控件保留在对应 `lynx_view_t` 返回的 renderer 宿主中，并将需要重叠显示的 Lynx 内容放入 [`<cover-view>`](/zh/api/elements/built-in/cover-view)。如果界面需要任意裁剪、变换，或与普通 Lynx 内容交错，请改用 Texture 后端。
+
+普通元素的背景同样会遮挡平台控件。Clay 会把 `background-color` 提升为独立图层，而平台控件合成于所有这些图层之下；因此**任何**盒子与该控件重叠的元素，只要设置了背景色，就会把它遮住 —— 包括应用的根元素，它只是一个普通元素，并非渲染树的根。此时挂载、布局和内容都是正确的，但该区域是空白的，很容易被误判为合成失败，而实际上只是绘制顺序。
+
+应改为由宿主窗口提供背景色，并只在不与该控件重叠的节点上设置元素背景。窗口是唯一同时位于 Lynx 内容与平台控件之下的表面。
 :::
 
 <Tabs groupId="custom-component-desktop-native-ui-platform">
