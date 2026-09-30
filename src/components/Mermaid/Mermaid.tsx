@@ -34,7 +34,7 @@ export default function Mermaid({
     async function renderMermaid2SVG() {
       const { default: mermaid } = await import('mermaid');
       const mermaidConfig: MermaidConfig = {
-        securityLevel: 'loose',
+        securityLevel: 'strict',
         startOnLoad: false,
         theme: dark ? 'dark' : 'default',
         ...config,
