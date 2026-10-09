@@ -74,6 +74,9 @@ jobs:
       - name: Format Check
         run: pnpm run format:check
 
+      - name: Go Component Entry Check
+        run: pnpm run check:go-component-entries
+
       - name: Lynx Compat Data Test
         run: pnpm --filter @lynx-js/lynx-compat-data run test
 
@@ -156,6 +159,36 @@ jobs:
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
 
+  # Keep interactive-example authoring contracts separate from portable import
+  # rules. Both parse MDX, but they enforce independent policy domains.
+  example-authoring:
+    name: Example Authoring
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: API Reference Overlay Check
+        run: |
+          node scripts/apply-api-doc-overlays.mjs
+          git diff --exit-code -- docs/en/api docs/zh/api
+
+      - name: Go Component Contract Check
+        run: |
+          node --test scripts/ci/check-go-components.test.mjs
+          node scripts/ci/check-go-components.mjs
+
   # Enforce final media blobs relative to the target tree of the synthetic merge.
   # The offline media processor is deliberately not invoked by CI.
   media-budget:
@@ -199,6 +232,7 @@ jobs:
       - dependency-provenance
       - generator-portability
       - documentation-imports
+      - example-authoring
       - media-budget
     if: ${{ always() }}
     runs-on: ubuntu-latest

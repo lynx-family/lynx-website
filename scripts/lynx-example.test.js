@@ -6,6 +6,43 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
+const { getTemplateFiles } = require('./lynx-example.js');
+
+test('uses the shortest unique path suffix for duplicate entry basenames', () => {
+  assert.deepEqual(
+    getTemplateFiles([
+      'dist/a/main.lynx.bundle',
+      'dist/a/main.web.bundle',
+      'output/a/main.lynx.bundle',
+      'output/a/main.web.bundle',
+      'other/b/main.lynx.bundle',
+    ]),
+    [
+      {
+        name: 'dist/a/main',
+        file: 'dist/a/main.lynx.bundle',
+        webFile: 'dist/a/main.web.bundle',
+      },
+      {
+        name: 'output/a/main',
+        file: 'output/a/main.lynx.bundle',
+        webFile: 'output/a/main.web.bundle',
+      },
+      {
+        name: 'b/main',
+        file: 'other/b/main.lynx.bundle',
+      },
+    ],
+  );
+});
+
+test('rejects template entry names that cannot be made unique', () => {
+  assert.throws(
+    () => getTemplateFiles(['dist/main.lynx.bundle', 'dist/main.lynx.bundle']),
+    /Could not create unique template entry names/,
+  );
+});
+
 test('Windows relative paths produce POSIX metadata and match the Web host', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lynx-example-win-'));
   try {
