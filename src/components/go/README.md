@@ -60,12 +60,13 @@ interface Props {
    */
   img?: string;
   /**
-   * default entry file, if not provided, the default is example/**.lynx.bundle
+   * exact logical entry name from example-metadata.json templateFiles[].name
+   * recommended when selecting among multiple entries
    *
    * @example
-   * defaultEntryFile="dist/main.lynx.bundle"
+   * defaultEntryName="main"
    */
-  defaultEntryFile?: string;
+  defaultEntryName?: string;
   /**
    * highlight lines of code, only effective for defaultFile
    *
@@ -147,19 +148,27 @@ To include a preview image, use the following:
 
 The above code demonstrates an animation example with the preview image `https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/bg-draggable.gif`. If the img prop is not provide，it will default to using `example/preview-image.png` `(matches /^preview-image\.(png|jpg|jpeg|webp|gif)$/)` as the preview image.
 
-### Entry File
+### Entry Name
 
-To specify a default entry file, use the following:
+To select a default metadata entry, use the following:
 
 ```jsx
 <Go
   example="animation"
   defaultFile="src/transition_animation/index.tsx"
-  defaultEntryFile="dist/transition_animation.lynx.bundle"
+  defaultEntryName="transition_animation"
 />
 ```
 
-This example specifies `dist/transition_animation.lynx.bundle` as the default entry file.
+The metadata generator derives this logical name from the Lynx bundle basename.
+For example, `dist/transition_animation.lynx.bundle` produces the entry name
+`transition_animation`. The prop selects `templateFiles[].name` exactly without
+depending on the generated artifact filename.
+
+When the prop is omitted, go-web falls back to `templateFiles[0]`. That position
+has no declared default semantics and is not explicitly sorted by the generator.
+Only omit the prop for a single-entry example. An unknown name does not fall back
+to the first entry.
 
 ### Highlighting Lines
 
@@ -198,7 +207,7 @@ Here’s a complete example of the `<Go>` component in use:
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/bg-draggable.gif"
   defaultFile="src/transition_animation/index.tsx"
   highlight="{1,3-5}"
-  defaultEntryFile="dist/transition_animation.lynx.bundle"
+  defaultEntryName="transition_animation"
   entry="src/transition_animation"
   schema="{{{url}}}?bar_color=000000&back_button_style=dark"
 />

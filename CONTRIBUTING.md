@@ -48,16 +48,14 @@ pnpm run preview
 
 Before opening a pull request, run the relevant checks for your change:
 
+### General
+
 ```bash
 pnpm run format:check
 pnpm run build
 ```
 
-For changes to the Lynx example generator, also run:
-
-```bash
-pnpm run test:lynx-example
-```
+### Documentation Imports
 
 For changes to imports in `docs/` or `sharedDocs/`, also run:
 
@@ -73,7 +71,38 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
-For changes under `packages/lynx-compat-data`, also run:
+### Go Components
+
+For changes to rendered `Go` components in `docs/` or `sharedDocs/`, run:
+
+```bash
+pnpm run check:go-components
+```
+
+When changing `defaultEntryName` selectors or generated example metadata, run
+`pnpm run prepare` first, then validate selectors against that metadata:
+
+```bash
+pnpm run check:go-component-entries
+```
+
+For changes to the `Go` component checker, also run:
+
+```bash
+node --test scripts/ci/check-go-components.test.mjs
+```
+
+### Lynx Example Generator
+
+For changes to the generator, run:
+
+```bash
+pnpm run test:lynx-example
+```
+
+### Lynx Compatibility Data
+
+For changes under `packages/lynx-compat-data`, run:
 
 ```bash
 pnpm --filter @lynx-js/lynx-compat-data run pack:check
@@ -177,13 +206,15 @@ explicitly:
 import { normalizeImagePath } from '@rspress/core/runtime';
 
 <img src={normalizeImagePath('/assets/diagram.png')} />
-<Go img={normalizeImagePath('/assets/demo.gif')} />
+<Go img="https://lf-lynx.tiktok-cdns.com/obj/example.gif" />
 ```
 
 See the
 [Rspress static assets documentation](https://rspress.rs/guide/basic/static-assets)
-for the `normalizeImagePath` contract. Do not couple a document to the physical
-layout of `docs/public`:
+for the `normalizeImagePath` contract. The `Go` component is stricter: its
+`img` prop must be a string literal whose origin is in the approved HTTPS CDN
+allowlist in `scripts/ci/check-go-components.mjs`; it cannot reference a public
+file. Do not couple a document to the physical layout of `docs/public`:
 
 ```mdx
 ![Diagram](../../public/assets/diagram.png)

@@ -38,10 +38,25 @@ import { Go } from '@lynx';
 | :----------------- | :------- | :--------------- | :--------------------------------------------------------------------------------- |
 | `example`          | `string` | **必需**         | 要加载的示例 ID（例如 `"view"`）。与 `docs/public/lynx-examples/` 中的目录名匹配。 |
 | `defaultFile`      | `string` | `"package.json"` | 代码编辑器中默认显示的文件路径。                                                   |
-| `defaultEntryName` | `string` | -                | 要运行的特定入口点（如果示例有多个 bundle）。                                      |
-| `img`              | `string` | -                | 自定义预览图像的 URL（覆盖默认的 `preview-image.png`）。                           |
+| `defaultEntryName` | `string` | -                | 要运行的 `templateFiles[].name` 精确值。多个入口中选择入口时建议提供。             |
+| `img`              | `string` | -                | 自定义预览图的绝对 HTTPS URL，其 origin 必须在已批准的文档 CDN allowlist 中。      |
 | `highlight`        | `object` | -                | 行高亮配置。格式：`{ "path/to/file": "start-end" }`。                              |
 | `schema`           | `string` | -                | 预览的自定义 schema URL 模式。使用 `{{{url}}}` 作为 bundle URL 的占位符。          |
+
+#### 入口选择
+
+`scripts/lynx-example.js` 会为每个 Lynx bundle 创建一个 `templateFiles`
+条目。默认情况下，`name` 是移除 `.lynx.bundle` 后的 bundle basename：
+例如，`dist/main.lynx.bundle` 会生成 `name: "main"`。当 basename 冲突时，
+生成器会添加足够的父路径片段，得到唯一的路径后缀。例如，
+`dist/a/main.lynx.bundle` 和 `output/a/main.lynx.bundle` 会分别生成
+`dist/a/main` 和 `output/a/main`。如果产物路径仍无法生成唯一名称，生成会失败。
+`defaultEntryName` 会精确选择这个逻辑名称；它不是文件名或数组下标。
+
+未提供入口名时，go-web 会回退到 `templateFiles[0]`。生成器不会为该位置
+赋予特殊语义，也不会显式排序入口列表。多入口 example 建议设置
+`defaultEntryName`，避免所选入口依赖这一回退逻辑。不存在的入口名不会静默
+回退到第一个入口。
 
 ### 高级示例
 
