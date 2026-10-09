@@ -71,6 +71,31 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
+### Alias Contracts
+
+Follow the
+[alias contract guide](./scripts/alias-contracts/README.md) when changing
+portable aliases, direct-subpath policy, source ownership, or repository-local
+resolver overrides. The shared registry owns portable policy; consumers may
+declare constrained, additive private aliases through `aliasExtensions`.
+Resolver configuration implements the validated policy.
+
+- Register alias shape, ownership, and lifecycle in `aliases`; do not maintain
+  a duplicate list of files reachable below an alias.
+- Register physical roots and their ownership only in `ossSourceAreas`.
+- Register exact local exceptions in `ossResolverOverrides`, including their
+  reason, parity, lifecycle, and removal condition.
+- Keep consumer-private aliases in consumer modules, with explicit consumer
+  source areas; never add consumer-specific prefixes to the shared registry.
+
+For registry or checker changes, run:
+
+```bash
+pnpm check:alias-contract-types
+node --import tsx --test scripts/alias-contracts/check-registry.test.ts
+pnpm check:alias-contracts
+```
+
 ### Go Components
 
 For changes to rendered `Go` components in `docs/` or `sharedDocs/`, run:
@@ -260,31 +285,30 @@ source. Use a shared resolver alias whenever a file under `docs/` or
 // Incorrect: depends on the OSS checkout layout.
 import { Example } from '../../../../src/components/example';
 
-// Correct: resolves through the shared OSS/downstream contract.
-import { Example } from '@lynx/example';
+// Correct: resolves through the shared OSS/downstream entry.
+import { Example } from '@lynx';
 ```
 
 For new imports of runtime components or shared content modules, choose the
 narrowest shared entry points:
 
-| Dependencies used by documentation pages           | Import form         |
-| -------------------------------------------------- | ------------------- |
-| Components exported by the OSS shared entry point  | `@lynx`             |
-| Specific OSS modules under `src/components`        | `@lynx/<module>`    |
-| Components exported by the `lynx-ui` shared entry  | `@lynx-ui`          |
-| Specific modules under `src/lynx-ui/components`    | `@lynx-ui/<module>` |
-| Luna components exported by its exact entry point  | `@luna`             |
-| Shared package-document modules                    | `@docs/<path>`      |
-| MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports    |
+| Dependencies used by documentation pages           | Import form      |
+| -------------------------------------------------- | ---------------- |
+| Components exported by the OSS shared entry point  | `@lynx`          |
+| Components exported by the `lynx-ui` shared entry  | `@lynx-ui`       |
+| Luna components exported by its exact entry point  | `@luna`          |
+| Shared package-document modules                    | `@docs/<path>`   |
+| MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports |
 
 `@luna` is an exact-match barrel for `src/luna/index.ts`. Use only the bare
 alias; `@luna/*` subpaths are not part of the shared resolver contract.
 
 For new imports, omit JS/TS file extensions and a trailing `/index`. Existing
 imports that include `/index` remain supported and can be migrated separately.
-When replacing a relative import, retain its specific module subpath. Use a
-bare entry point only when every consumer exports the imported symbols from
-that shared entry point.
+Existing `@lynx/*` and `@lynx-ui/*` direct imports are migration debt, not
+stable file-level Component APIs. Before replacing a relative or private
+component import, export the symbol from the owning bare entry in every
+consumer, then import it from that entry.
 
 Treat each alias as an ownership boundary. Import a symbol from the entry point
 that owns it, even if another site currently re-exports that symbol from an
@@ -300,15 +324,16 @@ import { UIApiTable } from '@lynx-ui';
 
 Some downstream resolvers map one alias to an ordered list of source roots.
 Those roots are fallbacks, not a merged namespace: resolution stops at the
-first matching module. Do not require a downstream consumer to add cross-root
-re-exports to make an OSS document compile. If a downstream root overrides an
-OSS-owned subpath, the replacement must preserve the module contract used by
-shared documentation.
+first matching module. A downstream bare `@lynx` or `@lynx-ui` wrapper must
+re-export the complete OSS barrel and may add uniquely named exports.
+Existing direct component subpaths must resolve to OSS-owned source; a
+consumer-owned replacement is a migration violation even if its exports
+look compatible. Coordinate bare exports before shared documents use them.
 
 Existing `@/*` imports remain **temporarily** supported for compatibility, but do
-not add one for a new OSS documentation component when an `@lynx/*` import is
-available. Downstream consumers may resolve `@` through multiple source roots,
-where an earlier match shadows later roots.
+not add one for a new OSS documentation component. Promote the component
+through the owning bare barrel. Downstream consumers may resolve `@` through
+multiple source roots, where an earlier match shadows later roots.
 
 ## Commits
 

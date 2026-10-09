@@ -217,6 +217,13 @@ jobs:
       - name: Install Dependencies Without Lifecycle Scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Alias Contract Check
+        run: |
+          pnpm check:alias-contract-types
+          # Include pack/extract consumer checks without the prepare lifecycle.
+          node --import tsx --test scripts/alias-contracts/check-registry.test.ts
+          pnpm check:alias-contracts
+
       - name: Documentation Import Boundary Check
         run: |
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
