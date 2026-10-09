@@ -265,6 +265,8 @@ where an earlier match shadows later roots.
 
 - Follow [Conventional Commits](https://www.conventionalcommits.org/) for
   commit subjects.
+- Optional scopes MUST use lowercase kebab-case in commit and pull request
+  subjects.
 - Keep the subject focused; prefer no more than 72 characters per line.
 - Use concise, direct English.
 - Use the body to explain what changed, why it was needed, and how it
@@ -285,6 +287,8 @@ than enumerate individual commands. Use lowercase `issue` and `doc`.
 
 - Base normal changes on `main`.
 - Format pull request titles as Conventional Commit subjects.
+- Pull request title subjects must contain at least 3 non-whitespace
+  characters and be no longer than 72 characters.
 - Keep pull requests focused on one behavior or documentation update.
 - Keep descriptions structured and concise. Use sections such as
   Summary, Rationale, Verification, and Documentation when helpful.
