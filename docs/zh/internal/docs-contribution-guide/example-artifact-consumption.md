@@ -101,7 +101,7 @@ description: "消费方如何下载和使用 example 产物。"
 
 - `templateFiles: Array<{ name: string; file: string; webFile?: string }>`
   - example 的可执行入口列表
-  - `name` 是入口名，用于多入口切换
+  - `name` 是稳定的逻辑入口标识，供 `defaultEntryName` 和入口切换使用
   - `file` 是 Lynx bundle 路径，用于二维码预览
   - `webFile` 是可选字段，对应 Web 预览 bundle
 
@@ -157,6 +157,36 @@ description: "消费方如何下载和使用 example 产物。"
 
 ## 5. 单入口和多入口格式
 
+### `templateFiles` 如何生成
+
+OSS 站点由 `scripts/lynx-example.js` 生成 `example-metadata.json`。生成器会:
+
+1. 递归收集 example 发布产物中的文件
+2. 为每个匹配 `LYNX_ENTRY_FILE_NAME` 的 Lynx bundle 创建一个入口
+3. 默认移除文件名末尾的 `.lynx.bundle`，将剩余部分作为 `name`
+4. 查找同路径、同 basename 的 `.web.bundle` 并记录为 `webFile`
+5. 当多个 bundle 得到相同 `name` 时，逐层添加父路径片段，生成唯一的最短路径后缀
+
+例如 `dist/fib.lynx.bundle` 会生成:
+
+```json
+{
+  "name": "fib",
+  "file": "dist/fib.lynx.bundle",
+  "webFile": "dist/fib.web.bundle"
+}
+```
+
+例如，`dist/a/main.lynx.bundle` 和 `output/a/main.lynx.bundle` 会分别生成
+`dist/a/main` 和 `output/a/main`。如果产物路径仍无法生成唯一名称，生成器会
+报错，而不会写入含重复入口名的 metadata。
+
+`name` 才是文档应依赖的入口标识。`file` 和 `webFile` 是当前发布产物的
+物理路径，不应反向充当跨环境的入口 ID。
+
+生成器没有为 `templateFiles[0]` 指定“主入口”语义，也没有单独排序
+`templateFiles`。当前数组顺序来自文件遍历顺序，不能作为稳定协议。
+
 ### 单入口
 
 ```json
@@ -194,11 +224,21 @@ description: "消费方如何下载和使用 example 产物。"
 
 适合一个 example 下有多个可切换演示入口的情况。
 
-多数同类消费实现会按下面的优先级选择默认入口:
+### `defaultEntryName` 如何选择入口
 
-1. `defaultEntryFile`
-2. `defaultEntryName`
-3. `templateFiles[0]`
+`defaultEntryName` 的值必须精确匹配一个 `templateFiles[].name`。它不会创建
+入口，也不是数组下标。当前 go-web 的选择逻辑是:
+
+1. 如果提供了历史字段 `defaultEntryFile`，按 `file` 查找
+2. 否则如果提供了 `defaultEntryName`，按 `name` 精确查找
+3. 两者都未提供时，才回退到 `templateFiles[0]`
+
+如果显式提供的 `defaultEntryName` 不存在，当前实现不会再回退到
+`templateFiles[0]`，对应入口预览将不可用。
+
+本站文档禁止使用 `defaultEntryFile`。多入口 example 建议显式写
+`defaultEntryName`，避免所选入口依赖 `templateFiles[0]` 的当前回退行为；
+不能把数组首项理解为生成器声明的“默认入口”。
 
 ## 6. `files` 列表的要求
 

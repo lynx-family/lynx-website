@@ -3,28 +3,11 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createProcessor } from '@mdx-js/mdx';
-import matter from 'gray-matter';
-import remarkCjkFriendly from 'remark-cjk-friendly';
-import remarkCjkStrikethrough from 'remark-cjk-friendly-gfm-strikethrough';
-import remarkGfm from 'remark-gfm';
+import { parseDocumentation } from './documentation-parser.mjs';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const scriptPath = fileURLToPath(import.meta.url);
 const docExtensions = new Set(['.md', '.mdx']);
-
-// Match Rspress's syntax plugins and extension-based format selection, without
-// running its rendering plugins, importing site config, or executing documents.
-// Keep these direct dependency versions aligned with @rspress/core.
-const processors = new Map(
-  ['md', 'mdx'].map((format) => [
-    format,
-    createProcessor({
-      format,
-      remarkPlugins: [remarkGfm, remarkCjkFriendly, remarkCjkStrikethrough],
-    }),
-  ]),
-);
 
 /**
  * Normalize native paths across Windows, macOS, and Linux. Windows uses `\`
@@ -32,23 +15,6 @@ const processors = new Map(
  */
 function toPosix(value) {
   return value.split(path.sep).join('/');
-}
-
-/**
- * Match Rspress's frontmatter removal and heading-ID escaping before parsing.
- * Restore removed line breaks so AST locations still refer to the source file.
- * The site's version-placeholder remark plugin runs after parsing and rewrites
- * only code nodes, so it is intentionally irrelevant to import discovery.
- */
-function prepareSource(content) {
-  // Only metadata boundaries matter here. Never evaluate gray-matter's
-  // JavaScript frontmatter engine while inspecting a document.
-  const body = matter(content, { engines: { javascript: () => ({}) } }).content;
-  const removedLines = content.split('\n').length - body.split('\n').length;
-  return `${'\n'.repeat(removedLines)}${body}`.replace(
-    /(?:^|\n)#{1,6}(?!#).*/g,
-    (heading) => heading.replace('{#', '\\{#').replace('\\\\{#', '\\{#'),
-  );
 }
 
 /**
@@ -137,11 +103,7 @@ function suggestedAlias(target, modifier) {
  */
 export function findSourceBoundaryImports(file, content) {
   const normalizedFile = toPosix(file);
-  const format = path.posix.extname(normalizedFile).slice(1);
-  const tree = processors.get(format).parse({
-    path: normalizedFile,
-    value: prepareSource(content),
-  });
+  const tree = parseDocumentation(normalizedFile, content);
   const violations = [];
   for (const { node, specifier } of importNodes(tree)) {
     if (!specifier.startsWith('./') && !specifier.startsWith('../')) {

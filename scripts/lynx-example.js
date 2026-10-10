@@ -232,21 +232,79 @@ function getTemplateFiles(
     }
   });
 
-  // Deduplicate names: when multiple bundles share the same basename
-  // (e.g. dist/desktop/main.lynx.bundle and output/bundle/lynx/main.lynx.bundle),
-  // prefix each with its parent directory to guarantee unique keys.
-  const nameCounts = {};
-  entries.forEach((e) => {
-    nameCounts[e.name] = (nameCounts[e.name] || 0) + 1;
+  // Preserve basename-only names for the common case. Path-derived names are
+  // introduced only within collision groups so existing selectors stay stable.
+  const entriesByName = new Map();
+  entries.forEach((entry) => {
+    const group = entriesByName.get(entry.name) ?? [];
+    group.push(entry);
+    entriesByName.set(entry.name, group);
   });
-  entries.forEach((e) => {
-    if (nameCounts[e.name] > 1) {
-      const parts = e.file.split('/');
-      const parentDir = parts.length > 1 ? parts[parts.length - 2] : '';
-      if (parentDir) {
-        e.name = `${parentDir}/${e.name}`;
+
+  for (const group of entriesByName.values()) {
+    if (group.length < 2) {
+      continue;
+    }
+    const states = group.map((entry) => {
+      const segments = entry.file
+        .slice(0, -lynxEntryFileName.length)
+        .split('/')
+        .filter(Boolean);
+      return {
+        entry,
+        segments,
+        // The basename is already known to collide. Start with its parent plus
+        // basename, which is the shortest suffix that can distinguish it.
+        depth: Math.min(2, segments.length),
+      };
+    });
+
+    while (true) {
+      const statesByCandidate = new Map();
+      states.forEach((state) => {
+        const candidate = state.segments.slice(-state.depth).join('/');
+        const candidates = statesByCandidate.get(candidate) ?? [];
+        candidates.push(state);
+        statesByCandidate.set(candidate, candidates);
+      });
+      const collisions = [...statesByCandidate.values()].filter(
+        (candidates) => candidates.length > 1,
+      );
+      if (collisions.length === 0) {
+        states.forEach((state) => {
+          state.entry.name = state.segments.slice(-state.depth).join('/');
+        });
+        break;
+      }
+
+      // Grow only candidates that still collide. Candidates already unique at
+      // a shorter depth keep the shortest stable suffix.
+      let changed = false;
+      collisions.forEach((candidates) => {
+        candidates.forEach((state) => {
+          if (state.depth < state.segments.length) {
+            state.depth += 1;
+            changed = true;
+          }
+        });
+      });
+      if (!changed) {
+        const files = collisions[0].map(({ entry }) => entry.file).join(', ');
+        throw new Error(
+          `Could not create unique template entry names: ${files}`,
+        );
       }
     }
+  }
+
+  // A path-derived name from one basename group can still equal an untouched
+  // name from another group. Enforce uniqueness across the final metadata.
+  const finalNames = new Set();
+  entries.forEach((entry) => {
+    if (finalNames.has(entry.name)) {
+      throw new Error(`Duplicate template entry name: ${entry.name}`);
+    }
+    finalNames.add(entry.name);
   });
 
   return entries;
@@ -364,4 +422,5 @@ if (require.main === module) {
   parseExampleData();
 }
 
-module.exports = { parseExampleData };
+// Keep the naming helper directly testable without running filesystem setup.
+module.exports = { getTemplateFiles, parseExampleData };

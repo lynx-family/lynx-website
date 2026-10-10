@@ -171,7 +171,7 @@ Common APIs:
   <Go img="/assets/demo.gif" />
   ```
 
-  `Go` passes `img` through unchanged. Use a CDN URL, or apply `normalizeImagePath` to an existing public URL. Do not reference files through the physical `docs/public` path.
+  When JSX intentionally uses an existing public URL, pass it through `normalizeImagePath`. This does not apply to `Go`: it forwards `img` unchanged, cannot use a public URL, and requires a string-literal URL whose origin is in the approved HTTPS CDN allowlist. Do not reference files through the physical `docs/public` path.
 
 ## 16. Key Differences from the Web
 

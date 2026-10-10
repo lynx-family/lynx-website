@@ -29,7 +29,7 @@ import { Go } from '@lynx';
 <Go
   example="css"
   defaultFile="src/class_guide/index.tsx"
-  defaultEntryFile="dist/class_guide.lynx.bundle"
+  defaultEntryName="class_guide"
   highlight="{16}"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/class-guide.png"
   entry="src/class_guide"
