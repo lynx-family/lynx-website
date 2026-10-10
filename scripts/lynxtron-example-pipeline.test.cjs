@@ -39,7 +39,15 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
     for (const name of Object.keys(dedicated.dependencies)) {
       const example = name.split('/')[1];
       const directory = path.join(temporary, 'examples', example);
+      const desktopDir =
+        example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
       fs.mkdirSync(path.join(directory, 'dist/web'), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(directory, desktopDir), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(directory, 'output/bundle/lynx'), {
         recursive: true,
       });
       fs.writeFileSync(
@@ -50,7 +58,14 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         path.join(directory, 'dist/web/index.html'),
         '<html></html>',
       );
-      fs.writeFileSync(path.join(directory, 'main.lynx.bundle'), 'fixture');
+      fs.writeFileSync(
+        path.join(directory, desktopDir, 'main.lynx.bundle'),
+        'desktop fixture',
+      );
+      fs.writeFileSync(
+        path.join(directory, 'output/bundle/lynx/main.lynx.bundle'),
+        'intermediate fixture',
+      );
       if (example === 'native-texture-canvas') {
         const native = path.join(directory, 'native-texture-extension');
         fs.mkdirSync(native);
@@ -90,10 +105,36 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         'cross-platform-notes',
       ]);
       for (const example of examples) {
+        const desktopDir =
+          example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
         const metadata = readJSON(
           path.join(temporary, 'output', example, 'example-metadata.json'),
         );
         assert.equal(metadata.nativeFramework, 'lynxtron');
+        assert.deepEqual(metadata.templateFiles, [
+          {
+            name: 'main',
+            file: `${desktopDir}/main.lynx.bundle`,
+            ...(example === 'cross-platform-notes'
+              ? { webHostFile: 'dist/web/index.html' }
+              : {}),
+          },
+        ]);
+        assert.ok(
+          metadata.files.includes('output/bundle/lynx/main.lynx.bundle'),
+        );
+        assert.equal(
+          fs.readFileSync(
+            path.join(
+              temporary,
+              'output',
+              example,
+              'output/bundle/lynx/main.lynx.bundle',
+            ),
+            'utf8',
+          ),
+          'intermediate fixture',
+        );
         if (example === 'native-texture-canvas') {
           for (const file of [
             'module.cc',
