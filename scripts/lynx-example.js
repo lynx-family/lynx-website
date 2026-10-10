@@ -198,12 +198,17 @@ function applyExampleFixups(example, exampleDir) {
  * Get all .lynx.bundle|.web.bundle files
  * @param {Array} allFiles - An array of all file paths
  * @param {string | undefined} webHostFile - Optional full Web app entry
+ * @param {(file: string) => boolean} templateFileFilter - Select entry bundles
  * @returns {Array} - An array of template files
  */
-function getTemplateFiles(allFiles, webHostFile) {
+function getTemplateFiles(
+  allFiles,
+  webHostFile,
+  templateFileFilter = () => true,
+) {
   const entries = [];
   allFiles.forEach((file) => {
-    if (file.endsWith(lynxEntryFileName)) {
+    if (file.endsWith(lynxEntryFileName) && templateFileFilter(file)) {
       const parts = file.split('/');
       const fileName = parts[parts.length - 1];
       const baseName = fileName.replace(lynxEntryFileName, '');
@@ -274,6 +279,7 @@ function parseExampleData({
   exampleGitBaseUrl: gitBaseUrl = exampleGitBaseUrl,
   nativeFramework: framework = nativeFramework,
   webHostFiles = {},
+  templateFileFilter,
 } = {}) {
   if (clearOutput && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
@@ -326,7 +332,11 @@ function parseExampleData({
     const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
       ? webHostFiles[packageJSON.name]
       : undefined;
-    const templateFiles = getTemplateFiles(filesFilters, webHostFile);
+    const templateFiles = getTemplateFiles(
+      filesFilters,
+      webHostFile,
+      templateFileFilter,
+    );
 
     const metadata = {
       name: packageJSON.repository?.directory || example,
