@@ -4,7 +4,7 @@ const { parseExampleData } = require('./lynx-example');
 // Only reviewed Web hosts may opt into iframe previews. Match the full package
 // name so unrelated examples with the same directory name cannot opt in.
 const webHostFiles = {
-  '@lynxtron-examples/cross-platform-notes': 'dist_precompiled/web/index.html',
+  '@lynxtron-examples/cross-platform-notes': 'dist/web/index.html',
 };
 
 parseExampleData({

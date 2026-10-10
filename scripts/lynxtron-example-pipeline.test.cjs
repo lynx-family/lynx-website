@@ -19,6 +19,19 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
     path.join(root, 'packages/lynxtron-example-packages/package.json'),
   );
   assert.equal(Object.keys(dedicated.dependencies).length, 8);
+  // Pin real npm releases, never a GitHub archive or bootstrap placeholder.
+  for (const version of Object.values(dedicated.dependencies)) {
+    assert.match(version, /^\d+\.\d+\.\d+$/);
+  }
+  const workspace = fs.readFileSync(
+    path.join(root, 'pnpm-workspace.yaml'),
+    'utf8',
+  );
+  assert.ok(
+    workspace.includes(
+      "'@lynxtron-examples/native-texture-canvas@0.0.8>lynxtron-native-texture-canvas': '-'",
+    ),
+  );
   const temporary = fs.mkdtempSync(
     path.join(os.tmpdir(), 'lynxtron-pipeline-'),
   );
@@ -26,7 +39,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
     for (const name of Object.keys(dedicated.dependencies)) {
       const example = name.split('/')[1];
       const directory = path.join(temporary, 'examples', example);
-      fs.mkdirSync(path.join(directory, 'dist_precompiled/web'), {
+      fs.mkdirSync(path.join(directory, 'dist/web'), {
         recursive: true,
       });
       fs.writeFileSync(
@@ -34,7 +47,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         JSON.stringify({ name, version: '1.0.0' }),
       );
       fs.writeFileSync(
-        path.join(directory, 'dist_precompiled/web/index.html'),
+        path.join(directory, 'dist/web/index.html'),
         '<html></html>',
       );
       fs.writeFileSync(path.join(directory, 'main.lynx.bundle'), 'fixture');
@@ -106,8 +119,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         if (example === 'cross-platform-notes') {
           assert.ok(
             metadata.templateFiles.some(
-              (entry) =>
-                entry.webHostFile === 'dist_precompiled/web/index.html',
+              (entry) => entry.webHostFile === 'dist/web/index.html',
             ),
           );
         }
