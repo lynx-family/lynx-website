@@ -31,6 +31,10 @@
  */
 const fs = require('fs');
 const path = require('path');
+const {
+  assertExampleOutputIdOwnership,
+  assertExampleOutputOwnership,
+} = require('./example-output-ownership');
 
 const currentDir = process.cwd();
 const sourceDir = path.join(
@@ -50,6 +54,12 @@ function isDirectory(filePath) {
   return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
 }
 
+/**
+ * Derive the flat output ID from the final segment of the package name.
+ *
+ * Scanning multiple scopes can therefore produce the same ID for different
+ * owners, such as @alpha/demo and @beta/demo.
+ */
 function readPackageName(packageDir) {
   const packageJSONPath = path.join(packageDir, 'package.json');
   if (!fs.existsSync(packageJSONPath)) {
@@ -73,11 +83,21 @@ function linkOrCopyDirectory(sourcePath, targetPath) {
     fs.symlinkSync(sourcePath, targetPath);
     return;
   }
-  fs.cpSync(sourcePath, targetPath, {
-    recursive: true,
-    dereference: true,
-    preserveTimestamps: true,
-    force: true,
+
+  fs.mkdirSync(targetPath, { recursive: true });
+  // Publish package.json first so a partial copy retains its package owner.
+  const entries = fs.readdirSync(sourcePath).sort((left, right) => {
+    if (left === 'package.json') return -1;
+    if (right === 'package.json') return 1;
+    return 0;
+  });
+  entries.forEach((entry) => {
+    fs.cpSync(path.join(sourcePath, entry), path.join(targetPath, entry), {
+      recursive: true,
+      dereference: true,
+      preserveTimestamps: true,
+      force: true,
+    });
   });
 }
 
@@ -89,6 +109,10 @@ function getWebBundleFiles(packageDir) {
   return fs.readdirSync(distDir).filter((f) => f.endsWith('.web.bundle'));
 }
 
+/**
+ * Discover a single package, packages in one scope, or packages across a
+ * node_modules root. The result may contain duplicate basenames across scopes.
+ */
 function getPackageDirs(rootDir) {
   if (!isDirectory(rootDir)) {
     throw new Error(`sourceDir is not a directory: ${rootDir}`);
@@ -126,6 +150,10 @@ function getPackageDirs(rootDir) {
   return packageDirs;
 }
 
+/**
+ * Collect eligible packages, validate the complete batch without mutation,
+ * then materialize each package only after every ownership check succeeds.
+ */
 function main() {
   if (!supportedModes.has(mode)) {
     console.error(
@@ -141,8 +169,6 @@ function main() {
     return;
   }
 
-  fs.mkdirSync(linkPath, { recursive: true });
-
   const packageDirs = getPackageDirs(sourceDir);
   if (packageDirs.length === 0) {
     console.error(`No packages found under: ${sourceDir}`);
@@ -155,27 +181,65 @@ function main() {
     `[prepare:luna] start mode=${mode} source=${sourceDir} target=${linkPath}`,
   );
 
-  let processedCount = 0;
-  packageDirs.forEach((packageDir) => {
+  // Build immutable copy records first. Filtering here ensures packages that
+  // will not be published cannot reserve or collide with an output ID.
+  const packageRecords = packageDirs.flatMap((packageDir) => {
     const packageName = readPackageName(packageDir);
     const webBundles = getWebBundleFiles(packageDir);
     if (!copyAll && (!webBundles || webBundles.length === 0)) {
-      return;
+      return [];
     }
 
-    const targetDir = path.join(linkPath, packageName);
-    linkOrCopyDirectory(packageDir, targetDir);
-    processedCount += 1;
-    console.log(`[prepare:luna] synced ${packageName} -> ${targetDir}`);
-
-    if (!webBundles) {
-      console.log(`[prepare:luna] dist directory not found for ${packageName}`);
-      return;
-    }
-    console.log(
-      `[prepare:luna] found ${webBundles.length} dist/*.web.bundle for ${packageName}`,
-    );
+    return [
+      {
+        packageDir,
+        packageName,
+        targetDir: path.join(linkPath, packageName),
+        webBundles,
+      },
+    ];
   });
+
+  // Disk checks prevent overwriting outputs from earlier generators. The Map
+  // separately catches two incoming scopes that flatten to the same basename
+  // while the disk target is still absent.
+  const incomingOwners = new Map();
+  packageRecords.forEach(({ packageDir, targetDir, packageName }) => {
+    const sourceOwner = assertExampleOutputOwnership(
+      packageDir,
+      targetDir,
+      packageName,
+    );
+    assertExampleOutputIdOwnership(
+      packageName,
+      incomingOwners.get(packageName),
+      sourceOwner,
+    );
+    incomingOwners.set(packageName, sourceOwner);
+  });
+
+  fs.mkdirSync(linkPath, { recursive: true });
+
+  // No ownership failure is possible beyond this point, so replacing targets
+  // cannot leave earlier packages copied before a later collision is found.
+  let processedCount = 0;
+  packageRecords.forEach(
+    ({ packageDir, packageName, targetDir, webBundles }) => {
+      linkOrCopyDirectory(packageDir, targetDir);
+      processedCount += 1;
+      console.log(`[prepare:luna] synced ${packageName} -> ${targetDir}`);
+
+      if (!webBundles) {
+        console.log(
+          `[prepare:luna] dist directory not found for ${packageName}`,
+        );
+        return;
+      }
+      console.log(
+        `[prepare:luna] found ${webBundles.length} dist/*.web.bundle for ${packageName}`,
+      );
+    },
+  );
 
   const durationMs = Date.now() - startedAt;
   console.log(
