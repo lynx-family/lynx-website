@@ -35,6 +35,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const {
+  assertExampleOutputOwnership,
+  assertExampleSourceOwnership,
+} = require('./example-output-ownership');
 
 const currentDir = process.cwd();
 const examplesDir = path.join(
@@ -100,12 +104,24 @@ function getAllFiles(dirPath, arrayOfFiles) {
   return arrayOfFiles;
 }
 
+/**
+ * Copy one package into its already-approved output directory.
+ *
+ * package.json is published first so any non-empty output left by an
+ * interrupted copy still identifies the package that was writing it.
+ */
 function lnExampleFiles(exampleDir, lnExampleDir) {
   if (!fs.existsSync(lnExampleDir)) {
     fs.mkdirSync(lnExampleDir, { recursive: true });
   }
 
-  const files = fs.readdirSync(exampleDir);
+  // Publish package.json first so an interrupted copy still records which
+  // package owns any non-empty partial output.
+  const files = fs.readdirSync(exampleDir).sort((left, right) => {
+    if (left === 'package.json') return -1;
+    if (right === 'package.json') return 1;
+    return 0;
+  });
 
   files.forEach((file) => {
     const fullPath = path.join(exampleDir, file);
@@ -116,6 +132,8 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
+        // Ownership preflight runs before this copy, so a collision cannot
+        // appear after an earlier example has already been written.
         fs.cpSync(fullPath, targetPath, {
           recursive: true,
           dereference: true,
@@ -133,6 +151,8 @@ function lnExampleFiles(exampleDir, lnExampleDir) {
         return;
       }
       if (isPackCopy) {
+        // Keep the copy operation free of shell commands and preserve source
+        // symlink targets in the generated package.
         fs.cpSync(fullPath, targetPath, {
           // Required when dereferencing file symlinks. Node 22 and 24 throw
           // ERR_FS_EISDIR without this option even when the source is a file.
@@ -329,7 +349,11 @@ function sortFilesByDirectoryFirst(files) {
 }
 
 /**
- * Parse example data and generate corresponding JSON files
+ * Generate flat example outputs and their metadata.
+ *
+ * The function deliberately separates discovery, ownership preflight, and
+ * mutation. Full rebuilds validate source owners before clearing the shared
+ * root; incremental callers additionally compare every existing target owner.
  */
 function parseExampleData({
   examplesDir: sourceDir = examplesDir,
@@ -339,79 +363,103 @@ function parseExampleData({
   webHostFiles = {},
   templateFileFilter,
 } = {}) {
+  // Capture every source and parsed manifest before checking or changing the
+  // output tree. One sourceDir contains one flat package namespace, so its
+  // immediate child names are unique output IDs within this batch.
+  const exampleRecords = fs.readdirSync(sourceDir).flatMap((example) => {
+    const exampleDir = path.join(sourceDir, example);
+    const lnExampleDir = path.join(linkPath, example);
+    const stats = fs.statSync(exampleDir);
+    if (!stats.isDirectory()) {
+      console.warn('exampleDir is not a directory', exampleDir);
+      return [];
+    }
+
+    const packageJSONPath = path.join(exampleDir, 'package.json');
+    if (!fs.existsSync(packageJSONPath)) {
+      console.warn('package.json not found', packageJSONPath);
+      return [];
+    }
+
+    return [
+      {
+        example,
+        exampleDir,
+        lnExampleDir,
+        packageJSON: JSON.parse(fs.readFileSync(packageJSONPath, 'utf8')),
+      },
+    ];
+  });
+
+  // A full rebuild discards the output root, so only source ownership matters;
+  // stale owners from a previous install must not block a scope migration.
+  // Incremental callers preserve the root and must validate existing targets.
+  exampleRecords.forEach(({ exampleDir, lnExampleDir, example }) => {
+    if (clearOutput) {
+      assertExampleSourceOwnership(exampleDir, example);
+    } else {
+      assertExampleOutputOwnership(exampleDir, lnExampleDir, example);
+    }
+  });
+
   if (clearOutput && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
 
-  const examples = fs.readdirSync(sourceDir);
+  // Start mutation only after the complete batch has passed preflight.
+  exampleRecords.forEach(
+    ({ example, exampleDir, lnExampleDir, packageJSON }) => {
+      // Every allowed target is generated data. Replace it instead of merging
+      // with an incomplete or stale output from an earlier run.
+      fs.rmSync(lnExampleDir, { recursive: true, force: true });
+      lnExampleFiles(exampleDir, lnExampleDir);
+      applyExampleFixups(example, lnExampleDir);
+      const allFiles = getAllFiles(exampleDir, []);
 
-  examples.forEach((example) => {
-    const exampleDir = path.join(sourceDir, example);
-    const lnExampleDir = path.join(linkPath, example);
-    // check exampleDir is a directory
-    const stats = fs.statSync(exampleDir);
-    if (!stats.isDirectory()) {
-      console.warn('exampleDir is not a directory', exampleDir);
-      return;
-    }
-    // check package.json exists
-    const packageJSONPath = path.join(exampleDir, 'package.json');
-    if (!fs.existsSync(packageJSONPath)) {
-      console.warn('package.json not found', packageJSONPath);
-      return;
-    }
-    const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, 'utf8'));
-    // ln example files
-    lnExampleFiles(exampleDir, lnExampleDir);
-    applyExampleFixups(example, lnExampleDir);
-    // get all files
-    const allFiles = getAllFiles(exampleDir, []);
+      // Metadata paths are URLs, including on Windows build hosts.
+      const files = allFiles.map((file) =>
+        path.relative(exampleDir, file).split(path.sep).join('/'),
+      );
 
-    // Metadata paths are URLs, including on Windows build hosts.
-    const files = allFiles.map((file) =>
-      path.relative(exampleDir, file).split(path.sep).join('/'),
-    );
+      // preview image
+      const previewImageReg = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
 
-    // preview image
-    const previewImageReg = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
+      // Keep generated metadata and the separately referenced preview image
+      // out of the code file list.
+      const filesFilters = files.filter(
+        (file) =>
+          !previewImageReg.test(file) && file !== 'example-metadata.json',
+      );
 
-    // These files will not be included in the final output
-    const filesFilters = files.filter(
-      (file) => !previewImageReg.test(file) && file !== 'example-metadata.json',
-    );
+      const sortedFiles = sortFilesByDirectoryFirst(filesFilters);
+      const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
+      const previewImage = files.find((file) => previewImageReg.test(file));
+      const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
+        ? webHostFiles[packageJSON.name]
+        : undefined;
+      const templateFiles = getTemplateFiles(
+        filesFilters,
+        webHostFile,
+        templateFileFilter,
+      );
+      const metadata = {
+        name: packageJSON.repository?.directory || example,
+        version: packageJSON.version,
+        files: sortedFiles,
+        previewImage: previewImage,
+        templateFiles: templateFiles,
+        exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || gitBaseUrl,
+      };
+      const exampleNativeFramework = packageJSON.nativeFramework || framework;
+      if (exampleNativeFramework) {
+        metadata.nativeFramework = exampleNativeFramework;
+      }
 
-    const sortedFiles = sortFilesByDirectoryFirst(filesFilters);
-
-    // write example-metadata.json
-    const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
-
-    const previewImage = files.find((file) => previewImageReg.test(file));
-    const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
-      ? webHostFiles[packageJSON.name]
-      : undefined;
-    const templateFiles = getTemplateFiles(
-      filesFilters,
-      webHostFile,
-      templateFileFilter,
-    );
-
-    const metadata = {
-      name: packageJSON.repository?.directory || example,
-      version: packageJSON.version,
-      files: sortedFiles,
-      previewImage: previewImage,
-      templateFiles: templateFiles,
-      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || gitBaseUrl,
-    };
-    const exampleNativeFramework = packageJSON.nativeFramework || framework;
-    if (exampleNativeFramework) {
-      metadata.nativeFramework = exampleNativeFramework;
-    }
-
-    // write example-metadata.json
-    fs.writeFileSync(jsonFilePath, JSON.stringify(metadata, null, 2));
-  });
+      // write example-metadata.json
+      fs.writeFileSync(jsonFilePath, JSON.stringify(metadata, null, 2));
+    },
+  );
   console.log('lynx-examples link success');
 }
 

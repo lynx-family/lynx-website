@@ -35,10 +35,15 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
   const temporary = fs.mkdtempSync(
     path.join(os.tmpdir(), 'lynxtron-pipeline-'),
   );
+  const fixtureRoot = path.join(temporary, 'fixtures');
+  const productionRoot = path.join(temporary, 'production');
+  const examplesRoot = path.join(fixtureRoot, 'examples');
+  fs.mkdirSync(examplesRoot, { recursive: true });
+  fs.mkdirSync(productionRoot, { recursive: true });
   try {
     for (const name of Object.keys(dedicated.dependencies)) {
       const example = name.split('/')[1];
-      const directory = path.join(temporary, 'examples', example);
+      const directory = path.join(examplesRoot, example);
       const desktopDir =
         example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
       fs.mkdirSync(path.join(directory, 'dist/web'), {
@@ -83,10 +88,10 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       process.execPath,
       [path.join(root, 'scripts/lynxtron-examples.js')],
       {
-        cwd: temporary,
+        cwd: productionRoot,
         env: {
           ...process.env,
-          EXAMPLES_DIR: 'examples',
+          EXAMPLES_DIR: path.relative(productionRoot, examplesRoot),
           LINK_PATH: 'output',
         },
       },
@@ -108,7 +113,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         const desktopDir =
           example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
         const metadata = readJSON(
-          path.join(temporary, 'output', example, 'example-metadata.json'),
+          path.join(productionRoot, 'output', example, 'example-metadata.json'),
         );
         assert.equal(metadata.nativeFramework, 'lynxtron');
         assert.deepEqual(metadata.templateFiles, [
@@ -126,7 +131,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         assert.equal(
           fs.readFileSync(
             path.join(
-              temporary,
+              productionRoot,
               'output',
               example,
               'output/bundle/lynx/main.lynx.bundle',
@@ -146,7 +151,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
             assert.ok(metadata.files.includes(source));
             assert.equal(
               fs.readFileSync(
-                path.join(temporary, 'output', example, source),
+                path.join(productionRoot, 'output', example, source),
                 'utf8',
               ),
               `source fixture: ${file}`,
@@ -171,17 +176,17 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       process.execPath,
       [path.join(root, 'scripts/lynx-example.js')],
       {
-        cwd: temporary,
+        cwd: productionRoot,
         env: {
           ...process.env,
-          EXAMPLES_DIR: 'examples',
+          EXAMPLES_DIR: path.relative(productionRoot, examplesRoot),
           LINK_PATH: 'generic-output',
         },
       },
     );
     const genericMetadata = readJSON(
       path.join(
-        temporary,
+        productionRoot,
         'generic-output/cross-platform-notes/example-metadata.json',
       ),
     );
@@ -189,29 +194,65 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       genericMetadata.templateFiles.every((entry) => !entry.webHostFile),
     );
 
-    // An unrelated package with the same directory name must not get the host.
+    // Keep alternate package metadata in a separate fixture tree. The
+    // production source tree remains unchanged for the collision run below.
+    const conflictExamplesRoot = path.join(fixtureRoot, 'conflict-examples');
+    const conflictExampleDir = path.join(
+      conflictExamplesRoot,
+      'cross-platform-notes',
+    );
+    fs.mkdirSync(conflictExamplesRoot, { recursive: true });
+    fs.cpSync(
+      path.join(examplesRoot, 'cross-platform-notes'),
+      conflictExampleDir,
+      { recursive: true },
+    );
     fs.writeFileSync(
-      path.join(temporary, 'examples/cross-platform-notes/package.json'),
+      path.join(conflictExampleDir, 'package.json'),
       JSON.stringify({ name: '@other/cross-platform-notes', version: '1.0.0' }),
     );
     fs.writeFileSync(
-      path.join(temporary, 'output/keep.txt'),
+      path.join(productionRoot, 'output/keep.txt'),
       'existing example',
     );
     execFileSync(
       process.execPath,
       [path.join(root, 'scripts/lynxtron-examples.js')],
       {
-        cwd: temporary,
-        env: { ...process.env, EXAMPLES_DIR: 'examples', LINK_PATH: 'output' },
+        cwd: productionRoot,
+        env: {
+          ...process.env,
+          EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
+          LINK_PATH: 'unrelated-output',
+        },
       },
     );
     const unrelated = readJSON(
-      path.join(temporary, 'output/cross-platform-notes/example-metadata.json'),
+      path.join(
+        productionRoot,
+        'unrelated-output/cross-platform-notes/example-metadata.json',
+      ),
     );
     assert.ok(unrelated.templateFiles.every((entry) => !entry.webHostFile));
+
+    assert.throws(
+      () =>
+        execFileSync(
+          process.execPath,
+          [path.join(root, 'scripts/lynxtron-examples.js')],
+          {
+            cwd: productionRoot,
+            env: {
+              ...process.env,
+              EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
+              LINK_PATH: 'output',
+            },
+          },
+        ),
+      /output ID collision.*@lynxtron-examples\/cross-platform-notes.*@other\/cross-platform-notes/,
+    );
     assert.equal(
-      fs.readFileSync(path.join(temporary, 'output/keep.txt'), 'utf8'),
+      fs.readFileSync(path.join(productionRoot, 'output/keep.txt'), 'utf8'),
       'existing example',
     );
   } finally {
