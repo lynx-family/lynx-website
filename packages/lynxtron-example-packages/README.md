@@ -28,12 +28,24 @@ commit before merging, not just a local OSS build.
 
 ## Independent installation
 
-The pinned Go 0.1.18 release archives bundle local runtime dependencies, including
-the Native Texture extension, while preserving their editable source files.
-No root workspace override is needed. Downstream source-only consumers can copy
-this directory's `package.json` into an empty directory and run
-`pnpm install --ignore-workspace --ignore-scripts`. Install scripts are unnecessary
-for generating documentation from the source and precompiled files.
+Dependencies are pinned to stable npm releases, not platform-specific GitHub
+Release archives. The packages preserve editable sources and precompiled bundles,
+including the Native Texture extension sources. Notes ships its reviewed Web
+host at `dist/web/index.html`.
+The website workspace omits Canvas 0.0.8's runtime-only local `file:` dependency
+with a scoped pnpm override; the extension source files remain available.
+Downstream source-only pnpm consumers must copy the following override into their
+root `pnpm-workspace.yaml` before installing this directory's `package.json` with
+`pnpm install --ignore-scripts`:
+
+```yaml
+overrides:
+  '@lynxtron-examples/native-texture-canvas@0.0.8>lynxtron-native-texture-canvas': '-'
+```
+
+Install scripts are unnecessary
+for generating documentation from the source and precompiled files. This change
+only affects website build inputs; Go still resolves its showcases through GitHub.
 
 ## Usage in documentation
 
