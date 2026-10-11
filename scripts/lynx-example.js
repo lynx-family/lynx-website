@@ -30,11 +30,14 @@
  *   "previewImage": "preview-image.png"
  * }
  *
- * The script also creates a symbolic link to the example files in a public directory for easy access.
+ * The script also copies the example files into the public output directory.
  */
 
 const fs = require('fs');
 const path = require('path');
+const {
+  assertExampleOutputBatchOwnership,
+} = require('./example-output-id-collision');
 
 const currentDir = process.cwd();
 const examplesDir = path.join(
@@ -55,13 +58,14 @@ const exampleGitBaseUrl =
 // correct deep-link scheme and hide the QR tab for native-only examples.
 const nativeFramework = process.env.NATIVE_FRAMEWORK || '';
 
-const isPackCopy = true;
 const linkPath = path.join(
   currentDir,
   process.env.LINK_PATH || 'docs/public/lynx-examples',
 );
 const ignoreDirs = ['node_modules', '.git', '.turbo'];
 const ignoreFiles = ['.DS_Store', 'LICENSE'];
+const previewImageFilePattern = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
+// TODO: Remove this downstream fixup after the @lynx-example/layout@0.7.1 release
 const exampleFixups = {
   layout: [
     {
@@ -100,50 +104,22 @@ function getAllFiles(dirPath, arrayOfFiles) {
   return arrayOfFiles;
 }
 
-function lnExampleFiles(exampleDir, lnExampleDir) {
-  if (!fs.existsSync(lnExampleDir)) {
-    fs.mkdirSync(lnExampleDir, { recursive: true });
-  }
-
-  const files = fs.readdirSync(exampleDir);
-
-  files.forEach((file) => {
-    const fullPath = path.join(exampleDir, file);
-    const targetPath = path.join(lnExampleDir, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      const dirName = path.basename(fullPath);
-      if (ignoreDirs.includes(dirName)) {
-        return;
+/**
+ * Copy one package into its already-approved output directory.
+ */
+function copyExampleFiles(sourceDir, targetDir) {
+  fs.cpSync(sourceDir, targetDir, {
+    recursive: true,
+    dereference: true,
+    preserveTimestamps: true,
+    force: true,
+    filter: (source) => {
+      if (source === sourceDir) {
+        return true;
       }
-      if (isPackCopy) {
-        fs.cpSync(fullPath, targetPath, {
-          recursive: true,
-          dereference: true,
-          preserveTimestamps: true,
-          filter: (source) => {
-            const name = path.basename(source);
-            return !ignoreDirs.includes(name) && !ignoreFiles.includes(name);
-          },
-        });
-      } else {
-        fs.symlinkSync(fullPath, targetPath);
-      }
-    } else {
-      if (ignoreFiles.includes(file)) {
-        return;
-      }
-      if (isPackCopy) {
-        fs.cpSync(fullPath, targetPath, {
-          // Required when dereferencing file symlinks. Node 22 and 24 throw
-          // ERR_FS_EISDIR without this option even when the source is a file.
-          recursive: true,
-          dereference: true,
-          preserveTimestamps: true,
-        });
-      } else {
-        fs.symlinkSync(fullPath, targetPath);
-      }
-    }
+      const name = path.basename(source);
+      return !ignoreDirs.includes(name) && !ignoreFiles.includes(name);
+    },
   });
 }
 
@@ -311,25 +287,60 @@ function getTemplateFiles(
 }
 
 /**
- * Sort files with directories first
+ * Sort the metadata code-file list with nested paths before root-level files.
+ *
+ * This ordering is only used by metadata.files; templateFiles keeps its
+ * separate discovery order.
+ *
  * @param {Array} files - An array of file paths
  * @returns {Array} - An array of sorted file paths
  */
 function sortFilesByDirectoryFirst(files) {
-  // 分离目录和文件
+  // Separate nested paths from files at the example root.
   const directories = files.filter((file) => file.includes('/'));
   const regularFiles = files.filter((file) => !file.includes('/'));
 
-  // 按字母顺序排序
+  // Sort each group alphabetically.
   directories.sort((a, b) => a.localeCompare(b));
   regularFiles.sort((a, b) => a.localeCompare(b));
 
-  // 合并结果
+  // Keep nested paths grouped before root-level files.
   return [...directories, ...regularFiles];
 }
 
 /**
- * Parse example data and generate corresponding JSON files
+ * Collect immutable source-to-output records without touching generated data.
+ */
+function collectExampleRecords(examplesRoot) {
+  return fs.readdirSync(examplesRoot).flatMap((outputId) => {
+    const sourceDir = path.join(examplesRoot, outputId);
+    const targetDir = path.join(linkPath, outputId);
+    const stats = fs.statSync(sourceDir);
+    if (!stats.isDirectory()) {
+      console.warn('exampleDir is not a directory', sourceDir);
+      return [];
+    }
+
+    const packageJSONPath = path.join(sourceDir, 'package.json');
+    if (!fs.existsSync(packageJSONPath)) {
+      console.warn('package.json not found', packageJSONPath);
+      return [];
+    }
+
+    return [
+      {
+        outputId,
+        sourceDir,
+        targetDir,
+        packageJSON: JSON.parse(fs.readFileSync(packageJSONPath, 'utf8')),
+      },
+    ];
+  });
+}
+
+/**
+ * Generate flat example outputs through collect, preflight, and materialize
+ * phases. No generated data is changed until the complete batch is approved.
  */
 function parseExampleData({
   examplesDir: sourceDir = examplesDir,
@@ -339,69 +350,60 @@ function parseExampleData({
   webHostFiles = {},
   templateFileFilter,
 } = {}) {
+  // Phase 1: collect source manifests and their intended flat output IDs.
+  const exampleRecords = collectExampleRecords(sourceDir);
+
+  // Phase 2: validate the complete batch without modifying generated data.
+  assertExampleOutputBatchOwnership(exampleRecords, {
+    checkExistingTargets: !clearOutput,
+  });
+
   if (clearOutput && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
 
-  const examples = fs.readdirSync(sourceDir);
-
-  examples.forEach((example) => {
-    const exampleDir = path.join(sourceDir, example);
-    const lnExampleDir = path.join(linkPath, example);
-    // check exampleDir is a directory
-    const stats = fs.statSync(exampleDir);
-    if (!stats.isDirectory()) {
-      console.warn('exampleDir is not a directory', exampleDir);
-      return;
-    }
-    // check package.json exists
-    const packageJSONPath = path.join(exampleDir, 'package.json');
-    if (!fs.existsSync(packageJSONPath)) {
-      console.warn('package.json not found', packageJSONPath);
-      return;
-    }
-    const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, 'utf8'));
-    // ln example files
-    lnExampleFiles(exampleDir, lnExampleDir);
-    applyExampleFixups(example, lnExampleDir);
-    // get all files
-    const allFiles = getAllFiles(exampleDir, []);
+  // Phase 3: replace approved outputs and write their metadata.
+  exampleRecords.forEach(({ outputId, sourceDir, targetDir, packageJSON }) => {
+    // Every approved target is generated data. Replace it instead of merging
+    // with an incomplete or stale output from an earlier run.
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    copyExampleFiles(sourceDir, targetDir);
+    applyExampleFixups(outputId, targetDir);
+    const allFiles = getAllFiles(sourceDir, []);
 
     // Metadata paths are URLs, including on Windows build hosts.
     const files = allFiles.map((file) =>
-      path.relative(exampleDir, file).split(path.sep).join('/'),
+      path.relative(sourceDir, file).split(path.sep).join('/'),
     );
 
-    // preview image
-    const previewImageReg = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
-
-    // These files will not be included in the final output
+    // Keep the separately referenced preview image out of the code file list.
     const filesFilters = files.filter(
-      (file) => !previewImageReg.test(file) && file !== 'example-metadata.json',
+      (file) =>
+        !previewImageFilePattern.test(file) && file !== 'example-metadata.json',
     );
 
     const sortedFiles = sortFilesByDirectoryFirst(filesFilters);
-
-    // write example-metadata.json
-    const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
-
-    const previewImage = files.find((file) => previewImageReg.test(file));
+    const previewImage = files.find((file) =>
+      previewImageFilePattern.test(file),
+    );
     const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
       ? webHostFiles[packageJSON.name]
       : undefined;
+    // TODO: templateFiles currently preserves filesystem discovery order.
+    // go-web falls back to templateFiles[0] when no defaultEntryName is set,
+    // so the first item must not be treated as a stable package declaration.
     const templateFiles = getTemplateFiles(
       filesFilters,
       webHostFile,
       templateFileFilter,
     );
-
     const metadata = {
-      name: packageJSON.repository?.directory || example,
+      name: packageJSON.repository?.directory || outputId,
       version: packageJSON.version,
       files: sortedFiles,
-      previewImage: previewImage,
-      templateFiles: templateFiles,
+      previewImage,
+      templateFiles,
       exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || gitBaseUrl,
     };
     const exampleNativeFramework = packageJSON.nativeFramework || framework;
@@ -409,8 +411,10 @@ function parseExampleData({
       metadata.nativeFramework = exampleNativeFramework;
     }
 
-    // write example-metadata.json
-    fs.writeFileSync(jsonFilePath, JSON.stringify(metadata, null, 2));
+    fs.writeFileSync(
+      path.join(targetDir, 'example-metadata.json'),
+      JSON.stringify(metadata, null, 2),
+    );
   });
   console.log('lynx-examples link success');
 }

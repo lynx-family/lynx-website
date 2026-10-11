@@ -92,12 +92,19 @@ For changes to the `Go` component checker, also run:
 node --test scripts/ci/check-go-components.test.mjs
 ```
 
-### Lynx Example Generator
+### Example Generators
 
-For changes to the generator, run:
+For changes to the core Lynx example generator, run:
 
 ```bash
 pnpm run test:lynx-example
+```
+
+For changes that affect the Luna or Lynxtron generators, or shared behavior
+across generators, run the complete suite:
+
+```bash
+pnpm run test:example-generators
 ```
 
 ### Lynx Compatibility Data
