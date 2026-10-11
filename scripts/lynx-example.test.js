@@ -455,6 +455,8 @@ test('copies example assets without external commands', () => {
         ...process.env,
         EXAMPLES_DIR: path.relative(root, examplesDir),
         LINK_PATH: path.relative(root, outputDir),
+        // Empty PATH models deployment images without undeclared host tools
+        // such as rsync.
         PATH: '',
       },
     });

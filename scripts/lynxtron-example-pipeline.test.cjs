@@ -7,6 +7,9 @@ const { test } = require('node:test');
 
 const root = path.resolve(__dirname, '..');
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+// Empty PATH models deployment images without undeclared host tools
+// such as rsync.
+const generatorEnv = (env) => ({ ...process.env, ...env, PATH: '' });
 
 test('Lynxtron examples use the source-specific pipeline and blog references', () => {
   const generic = readJSON(
@@ -89,11 +92,10 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       [path.join(root, 'scripts/lynxtron-examples.js')],
       {
         cwd: productionRoot,
-        env: {
-          ...process.env,
+        env: generatorEnv({
           EXAMPLES_DIR: path.relative(productionRoot, examplesRoot),
           LINK_PATH: 'output',
-        },
+        }),
       },
     );
     for (const language of ['en', 'zh']) {
@@ -177,11 +179,10 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       [path.join(root, 'scripts/lynx-example.js')],
       {
         cwd: productionRoot,
-        env: {
-          ...process.env,
+        env: generatorEnv({
           EXAMPLES_DIR: path.relative(productionRoot, examplesRoot),
           LINK_PATH: 'generic-output',
-        },
+        }),
       },
     );
     const genericMetadata = readJSON(
@@ -220,11 +221,10 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       [path.join(root, 'scripts/lynxtron-examples.js')],
       {
         cwd: productionRoot,
-        env: {
-          ...process.env,
+        env: generatorEnv({
           EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
           LINK_PATH: 'unrelated-output',
-        },
+        }),
       },
     );
     const unrelated = readJSON(
@@ -242,11 +242,10 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
           [path.join(root, 'scripts/lynxtron-examples.js')],
           {
             cwd: productionRoot,
-            env: {
-              ...process.env,
+            env: generatorEnv({
               EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
               LINK_PATH: 'output',
-            },
+            }),
           },
         ),
       /output ID collision.*@lynxtron-examples\/cross-platform-notes.*@other\/cross-platform-notes/,
