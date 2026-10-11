@@ -25,6 +25,8 @@ function runLuna(cwd, sourceDir, linkPath = 'output') {
   const env = {
     ...process.env,
     LINK_PATH: linkPath,
+    // Empty PATH models deployment images without undeclared host tools such as rsync.
+    PATH: '',
   };
   delete env.LUNA_SOURCE_DIR;
   if (sourceDir) {
