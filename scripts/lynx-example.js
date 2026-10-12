@@ -65,15 +65,6 @@ const linkPath = path.join(
 const ignoreDirs = ['node_modules', '.git', '.turbo'];
 const ignoreFiles = ['.DS_Store', 'LICENSE'];
 const previewImageFilePattern = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
-// TODO: Remove this downstream fixup after the @lynx-example/layout@0.7.1 release
-const exampleFixups = {
-  layout: [
-    {
-      from: 'gird item 3',
-      to: 'grid item 3',
-    },
-  ],
-};
 
 /**
  * Get all files in the specified directory
@@ -120,53 +111,6 @@ function copyExampleFiles(sourceDir, targetDir) {
       const name = path.basename(source);
       return !ignoreDirs.includes(name) && !ignoreFiles.includes(name);
     },
-  });
-}
-
-function replaceBufferContent(buffer, from, to) {
-  const fromBuffer = Buffer.from(from);
-  const toBuffer = Buffer.from(to);
-
-  if (fromBuffer.length !== toBuffer.length) {
-    throw new Error(`Fixup replacement length mismatch: "${from}" -> "${to}"`);
-  }
-
-  let index = buffer.indexOf(fromBuffer);
-  if (index === -1) {
-    return { buffer, changed: false };
-  }
-
-  const nextBuffer = Buffer.from(buffer);
-  while (index !== -1) {
-    toBuffer.copy(nextBuffer, index);
-    index = nextBuffer.indexOf(fromBuffer, index + toBuffer.length);
-  }
-
-  return { buffer: nextBuffer, changed: true };
-}
-
-function applyExampleFixups(example, exampleDir) {
-  const fixups = exampleFixups[example];
-  if (!fixups?.length) {
-    return;
-  }
-
-  const files = getAllFiles(exampleDir, []);
-  files.forEach((filePath) => {
-    let buffer = fs.readFileSync(filePath);
-    let changed = false;
-
-    fixups.forEach(({ from, to }) => {
-      const result = replaceBufferContent(buffer, from, to);
-      if (result.changed) {
-        changed = true;
-        buffer = result.buffer;
-      }
-    });
-
-    if (changed) {
-      fs.writeFileSync(filePath, buffer);
-    }
   });
 }
 
@@ -369,7 +313,6 @@ function parseExampleData({
     // with an incomplete or stale output from an earlier run.
     fs.rmSync(targetDir, { recursive: true, force: true });
     copyExampleFiles(sourceDir, targetDir);
-    applyExampleFixups(outputId, targetDir);
     const allFiles = getAllFiles(sourceDir, []);
 
     // Metadata paths are URLs, including on Windows build hosts.
