@@ -15,6 +15,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lockfile-consistency:
+    name: Lockfile Consistency
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Lockfile Consistency Check
+        run: |
+          pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+          git diff --exit-code -- pnpm-lock.yaml
+
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -230,6 +250,7 @@ jobs:
   done:
     name: Done
     needs:
+      - lockfile-consistency
       - validate
       - dependency-provenance
       - generator-portability
