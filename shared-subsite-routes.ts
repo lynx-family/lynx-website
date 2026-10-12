@@ -3,25 +3,25 @@
  *
  * The API reference is grouped by package rather than by subsite, so its
  * routes no longer carry the subsite in a path segment: `/api/packages/
- * react-signals` is ReactLynx, `/api/build/mode` is Build. The mapping
- * below is the single place that decides this, for every version and
+ * react-signals` is ReactLynx, `/api/build/mode` is the Lynx guide. The
+ * mapping below is the single place that decides this, for every version and
  * language form of a route.
  *
  * Kept free of imports so `node --test` can run its tests.
  */
 
-/** A package of the manifest of @lynx-js/lynx-stack-docs. */
-export type ManifestPackage = {
-  route: string;
-  group: string;
-};
-
 /**
- * The subsite each group of the manifest belongs to. A group that names no
- * subsite leaves its packages to the segment match below.
+ * Packages of the API reference that belong to a subsite other than the Lynx
+ * guide, by the name of their directory under `api/packages`. The manifest of
+ * @lynx-js/lynx-stack-docs groups packages by what they are, not by subsite,
+ * so this is stated here; the sync stops when a name is no longer a package
+ * of the manifest, instead of letting its pages silently lose their theme.
  */
-export const GROUP_SUBSITES: Record<string, string> = {
-  'Build tools': 'build',
+export const API_PACKAGE_SUBSITES: Record<string, string> = {
+  'background-only': 'react',
+  'react-signals': 'react',
+  'react-umd': 'react',
+  'use-sync-external-store': 'react',
 };
 
 /**
@@ -31,7 +31,6 @@ export const GROUP_SUBSITES: Record<string, string> = {
  */
 const API_ROUTE_SUBSITES: [RegExp, string][] = [
   [/^\/api\/react\/testing-library(\/|$)/, 'guide'],
-  [/^\/api\/build(\/|$)/, 'build'],
   [/^\/api\/react(\/|$)/, 'react'],
 ];
 
@@ -42,36 +41,10 @@ const API_ROUTE_SUBSITES: [RegExp, string][] = [
  */
 const LEGACY_SEGMENTS: Record<string, string> = {
   ui: 'lynx-ui',
-  build: 'rspeedy',
 };
 
 /** A package page, which is the package itself or one of its members. */
 const API_PACKAGE_ROUTE = /^\/api\/packages\/([^/]+)(?:\/|$)/;
-
-/**
- * The subsite of every package page, from the group the manifest puts the
- * package in. Every package has a page, whether the sidebar shows it or not.
- */
-export function apiPackageSubsites(
-  packages: readonly ManifestPackage[],
-): Record<string, string> {
-  const subsites: Record<string, string> = {};
-  for (const { route, group } of packages) {
-    const subsite = GROUP_SUBSITES[group];
-    const name = route.startsWith('api/packages/')
-      ? route.slice('api/packages/'.length)
-      : undefined;
-    if (subsite && name) subsites[name] = subsite;
-  }
-  return subsites;
-}
-
-export type SubsiteRouteOptions = {
-  /** Subsite values a path segment can name, in matching order. */
-  subsites: readonly string[];
-  /** Subsite of each package page, from {@link apiPackageSubsites}. */
-  packageSubsites?: Record<string, string>;
-};
 
 /** The version a build is served under, as `version.json` spells it: `/next`, `/4.0`. */
 const VERSION_PREFIX = /^\/(?:next|\d+(?:\.\d+)*)(?=\/|$)/;
@@ -85,10 +58,14 @@ function normalize(pathname: string): string {
   return route || '/';
 }
 
-/** The subsite a route belongs to, or `undefined` when it belongs to none. */
+/**
+ * The subsite a route belongs to, or `undefined` when it belongs to none.
+ *
+ * @param subsites - Subsite values a path segment can name, in matching order.
+ */
 export function findSubsiteValue(
   pathname: string,
-  { subsites, packageSubsites = {} }: SubsiteRouteOptions,
+  subsites: readonly string[],
 ): string | undefined {
   const route = normalize(pathname);
 
@@ -99,7 +76,7 @@ export function findSubsiteValue(
 
   const page = API_PACKAGE_ROUTE.exec(route);
   if (page) {
-    return packageSubsites[page[1]];
+    return API_PACKAGE_SUBSITES[page[1]];
   }
 
   const segments = route.split('/');
