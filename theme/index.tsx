@@ -25,6 +25,7 @@ import {
 } from 'react';
 
 import './index.scss';
+import './api-reference.scss';
 import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 
 import {
@@ -41,6 +42,7 @@ import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
+import { isGeneratedApiPage } from './api-reference';
 import { subsiteOf } from './api-subsites';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
@@ -79,7 +81,9 @@ function Layout({
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
+  const { page } = usePageData();
   const subsite = subsiteOf(pathname);
+  const isApiReference = isGeneratedApiPage(page._relativePath ?? '');
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
@@ -93,6 +97,7 @@ function Layout({
       <Head>
         <htmlAttrs
           data-subsite={subsite}
+          data-api-reference={isApiReference ? 'true' : null}
           data-scroll-locked={isStatusRoute ? 'true' : null}
         />
       </Head>
