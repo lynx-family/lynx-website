@@ -22,7 +22,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { GROUP_SUBSITES } from '../shared-subsite-routes.ts';
+import { API_PACKAGE_SUBSITES } from '../shared-subsite-routes.ts';
 
 const WEBSITE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(WEBSITE, 'docs');
@@ -93,18 +93,19 @@ for (const section of manifest.sections) {
   }
 }
 
-// Every package keeps its page, so links to it stay valid, but the sidebar
-// lists only the packages the manifest names, in its order and groups. A
-// single group is the section itself, so its header would repeat the name.
-// The theme reads the same group names to pick a subsite for a package page.
-const groups = new Set(manifest.packages.map(({ group }) => group));
-for (const group of Object.keys(GROUP_SUBSITES)) {
-  if (!groups.has(group)) {
+// The theme picks a subsite for some package pages by name.
+const packageRoutes = new Set(manifest.packages.map(({ route }) => route));
+for (const name of Object.keys(API_PACKAGE_SUBSITES)) {
+  if (!packageRoutes.has(`api/packages/${name}`)) {
     throw new Error(
-      `shared-subsite-routes.ts maps the group ${group}, which the manifest no longer has.`,
+      `shared-subsite-routes.ts maps the package ${name}, which the manifest no longer has.`,
     );
   }
 }
+
+// Every package keeps its page, so links to it stay valid, but the sidebar
+// lists only the packages the manifest names, in its order and groups. A
+// single group is the section itself, so its header would repeat the name.
 
 const metaFile = (locale) => join(DOCS, locale, 'api/packages/_meta.json');
 for (const locale of LOCALES) {
