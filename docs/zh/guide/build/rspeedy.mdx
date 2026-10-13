@@ -1,76 +1,12 @@
-import { PackageManagerTabs } from '@theme';
+# 从 Rspeedy 升级
 
-# Rspeedy
+Rspeedy（[`@lynx-js/rspeedy`](/api/packages/rspeedy)）是 Lynx 之前使用的构建工具，基于 Rsbuild，提供 `rspeedy` 命令行，并使用 `lynx.config.ts` 作为配置文件。现在推荐直接使用 **Rsbuild + `pluginLynx`**，沿用 Rsbuild 的配置和插件生态。
 
-Rspeedy（[`@lynx-js/rspeedy`](/api/packages/rspeedy)）封装了同一套引擎，并额外提供：
+Rspeedy 仍在维护，现有项目可以继续使用。下面介绍如何将项目迁移到 Rsbuild。
 
-- `rspeedy` 命令行：`dev`、`build`、`preview`、`inspect`，配置文件变更时会自动重启
-- 以 `lynx.config.ts` 作为配置文件，`defineConfig` 来自 `@lynx-js/rspeedy`
-- 对配置的严格校验：写错的键会直接报错，而不是被静默忽略
+<span id="migrating-an-rspeedy-project" />
 
-```ts title="lynx.config.ts"
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
-
-export default defineConfig({
-  source: {
-    entry: './src/index.tsx',
-  },
-  plugins: [pluginReactLynx()],
-});
-```
-
-Rspeedy 的配置是 Rsbuild 配置的一个精选子集，只保留 Lynx 支持的那些。[`tools.postcss`](https://rsbuild.rs/config/tools/postcss)、[`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) 这类会被直接拒绝，不往下透传；[`output.charset`](https://rsbuild.rs/config/output/charset)、[`output.polyfill`](https://rsbuild.rs/config/output/polyfill) 等少数值写死了改不动。换来的是 Lynx 特有的配置可以直接写在 `lynx.config.ts` 里，[`output.filename.bundle`](/api/build/output/filename/bundle)、[`performance.profile`](/api/build/performance/profile) 都不必经过 `pluginLynx`。[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 还能写成字符串。
-
-即便如此，我们仍然不推荐 Rspeedy。它在 Rsbuild 之上多包了一层概念，你得同时记住哪些配置归 Rspeedy、哪些归 Rsbuild、哪些要交给 `pluginLynx`，这份额外的理解成本，对人和 AI agent 都一样。
-
-它的类型声明是对 Rsbuild 类型的再导出：
-
-```json title="tsconfig.json"
-{
-  "compilerOptions": {
-    "types": ["@lynx-js/rspeedy/client"]
-  }
-}
-```
-
-## 命令行 {#cli}
-
-| 命令              | 作用                                                              |
-| ----------------- | ----------------------------------------------------------------- |
-| `rspeedy dev`     | 启动开发服务器并在变更时重新构建；`lynx.config.ts` 变更时自动重启 |
-| `rspeedy build`   | 把生产环境的 Bundle 写入 `dist/`                                  |
-| `rspeedy preview` | 在本地预览生产构建                                                |
-| `rspeedy inspect` | 输出最终的 Rsbuild 和 Rspack 配置                                 |
-
-每个命令都接受 `--config` 指定其他配置文件、`--mode` 覆盖构建模式、`--environment` 只构建部分 [environments](/api/build/environments)。全部参数见 [Rspeedy 命令行文档](https://lynx-stack.dev/zh/guide/cli)。
-
-## 升级 Rspeedy {#upgrading}
-
-`@lynx-js/rspeedy` 和它的插件之间通过 `peerDependencies` 互相约束，所以要用 [`upgrade-rspeedy`](https://www.npmjs.com/package/upgrade-rspeedy) 一起升级。它只改写 `package.json`，之后请自行安装依赖。
-
-<PackageManagerTabs
-  command={{
-    npm: `npx upgrade-rspeedy@latest`,
-    pnpm: `pnpm dlx upgrade-rspeedy@latest`,
-    bun: `bunx upgrade-rspeedy@latest`,
-    yarn: `yarn dlx upgrade-rspeedy@latest`,
-  }}
-/>
-
-把 `latest` 换成具体版本号即可升级到该版本。升级到 canary 版本见[升级 Rspeedy](https://lynx-stack.dev/zh/guide/upgrade-rspeedy)。
-
-## 该用哪个
-
-新项目用 **Rsbuild + `pluginLynx`**。这是 [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 推荐的方式，配置和命令行都与 Rstack 生态的文档一致，Rsbuild 的完整配置能力和插件生态都可以直接使用。
-
-Rspeedy 仍在维护。现有项目如果依赖 `rspeedy` 命令行或 `lynx.config.ts`，不必急着迁；新项目就别从它开始了。
-
-不带 `--template` 执行 `npm create @lynx-js/lynx@latest` 会让你选择构建工具，也提供用于组件库的 Rslib。
-
-## 迁移现有的 Rspeedy 项目 {#migrating-an-rspeedy-project}
-
-Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调整，不是重写，产物不会有任何变化。
+Rspeedy 和 `pluginLynx` 使用同一套构建引擎。迁移主要涉及依赖、命令行和配置，应用代码无需重写。
 
 1. 换依赖：移除 `@lynx-js/rspeedy`，装上 [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core)。
 2. 换命令行：`rspeedy dev`、`rspeedy build`、`rspeedy preview` 分别改成 `rsbuild dev`、`rsbuild build`、`rsbuild preview`。
@@ -82,4 +18,22 @@ Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调�
 - **[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
 - **Lynx 自己的选项挪进 `pluginLynx`。** [`output.filename.bundle`](/api/build/output/filename/bundle) 和 [`performance.profile`](/api/build/performance/profile) 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`，这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
 
-迁过来之后你会发现 [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) 这类配置可以直接写了。这正是迁到 Rsbuild 的好处：原始的 Rsbuild API 直接暴露出来，中间少了一层转译，写法也更短。
+## Rspeedy 与 Rsbuild 差异
+
+两种方式都通过 `pluginLynx` 构建 Lynx Bundle；主要区别在于命令行和配置接口：
+
+|               | Rspeedy                                                  | Rsbuild + `pluginLynx`                                   |
+| ------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| 命令行        | `rspeedy dev / build / preview / inspect`                | `rsbuild dev / build / preview / inspect`                |
+| 配置文件      | `lynx.config.ts`，`defineConfig` 来自 `@lynx-js/rspeedy` | `rsbuild.config.ts`，`defineConfig` 来自 `@rsbuild/core` |
+| 配置范围      | Rsbuild 配置的子集，带严格校验；部分选项受限             | 直接使用完整的 Rsbuild 配置和插件生态                    |
+| Lynx 特有配置 | 直接写在配置文件中，如 `output.filename.bundle`          | 传给 `pluginLynx({ ... })`                               |
+| 配置简写      | `source.entry`、`output.filename` 支持字符串             | 使用对象形式                                             |
+| 构建期类型    | `@lynx-js/rspeedy/client`                                | `@rsbuild/core/types`                                    |
+
+例如，Rspeedy 不透传 `tools.postcss` 等配置，并固定了 `output.charset`、`output.polyfill` 等选项。使用 Rsbuild 后，可以直接按 [Rsbuild 配置参考](https://rsbuild.rs/zh/config/) 配置构建；Lynx 新增的选项和调整过的默认值见 [Lynx 构建配置参考](/api/build)。
+
+<span id="cli" />
+<span id="upgrading" />
+
+继续使用 Rspeedy 的项目，可以查阅 [Rspeedy 命令行文档](https://lynx-stack.dev/zh/guide/cli)和[版本升级指南](https://lynx-stack.dev/zh/guide/upgrade-rspeedy)。
