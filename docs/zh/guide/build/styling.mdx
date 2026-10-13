@@ -1,0 +1,120 @@
+---
+description: '在 Lynx 构建中使用 CSS Modules、全局 CSS、预处理器、PostCSS 与 Tailwind CSS。'
+---
+
+import { PackageManagerTabs } from '@theme';
+
+# 样式
+
+Lynx 应用用 CSS 编写样式。选择器、层叠、[CSS 变量](/api/css/properties/css-variable.mdx)以及 [Lynx 支持的属性](/api/css/properties)和在 Web 上的用法一致；Lynx 能渲染哪些样式，见[应用样式](/guide/ui/styling.mdx)。
+
+[Rsbuild](https://rsbuild.rs/zh/guide/styling/css-usage) 项目支持的 CSS 写法，Lynx 构建都支持：
+
+- [**CSS Modules**](#css-modules)：类名的作用域限定在导入它的文件里，不会互相冲突。
+- [**全局 CSS**](#global-css)：普通的 `.css` 文件，适合全应用共享的样式和复杂选择器。
+- [**CSS 预处理器**](#css-pre-processors)：[Sass](https://sass-lang.com/)、[Less](https://lesscss.org/) 和 [Stylus](https://stylus-lang.com/)，提供变量、嵌套和 mixin。
+- [**PostCSS**](#postcss)：用 PostCSS 插件转换 CSS。
+- [**Tailwind CSS**](#tailwind-css)：原子化工具类，通过只保留 Lynx 能渲染的部分的 preset 接入。
+
+除 Tailwind CSS 以外，本页的内容都和 Rsbuild 文档描述的一致。Lynx 构建的不同之处在于 CSS 的去向：它会被解析并[编码进 Bundle](./lynx-bundle.mdx#what-is-inside-a-bundle)，而不是输出成 `.css` 文件。
+
+## CSS Modules {#css-modules}
+
+以 `*.module.css`（或 `.module.scss`、`.module.less`）命名的文件就是 [CSS Module](https://github.com/css-modules/css-modules)，无需配置。
+
+```css title="button.module.css"
+.red {
+  background: red;
+}
+```
+
+```jsx title="Button.jsx"
+import styles from './button.module.css';
+
+export function Button() {
+  return (
+    <view className={styles.red}>
+      <text>Button</text>
+    </view>
+  );
+}
+```
+
+想把其他文件也当作 CSS Modules，或者调整类名的生成方式，用 [`output.cssModules`](https://rsbuild.rs/zh/config/output/css-modules)。`*.module.css` 导入的 TypeScript 类型声明见 [TypeScript](./typescript.md#构建期类型声明)。
+
+在 ReactLynx 里，CSS Modules 也是把样式限定在单个组件内的方式：把 [`enableRemoveCSSScope`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enableremovecssscope) 设为 `undefined` 后，CSS Modules 只作用于导入它的组件，匹配起来也比全局 CSS 更快。
+
+## 全局 CSS {#global-css}
+
+导入一个普通的 `.css` 文件，直接使用其中的类名：
+
+```css title="styles.css"
+.red {
+  background: red;
+}
+
+.red > text {
+  color: blue;
+}
+```
+
+```jsx title="App.jsx"
+import './styles.css';
+
+export default function App() {
+  return (
+    <view className="red">
+      <text>Hello, Lynx!</text>
+    </view>
+  );
+}
+```
+
+`color`、`font-size` 这类属性是否继承，以及类名变化时是否重新匹配后代选择器，分别由 [`enableCSSInheritance`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinheritance) 和 [`enableCSSInvalidation`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinvalidation) 控制。继承的用法见[自定义主题](/guide/styling/custom-theming.mdx)。
+
+## CSS 预处理器 {#css-pre-processors}
+
+加上对应预处理器的 Rsbuild 插件，然后像 CSS 一样导入 `.scss`、`.sass`、`.less` 文件（或 Stylus 文件）：
+
+<PackageManagerTabs command="install -D @rsbuild/plugin-sass" />
+
+```ts title="rsbuild.config.ts"
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+import { pluginSass } from '@rsbuild/plugin-sass';
+
+export default defineConfig({
+  plugins: [pluginReactLynx(), pluginSass()],
+});
+```
+
+[`@rsbuild/plugin-less`](https://rsbuild.rs/zh/plugins/list/plugin-less) 和 [`@rsbuild/plugin-stylus`](https://v1.rsbuild.rs/zh/plugins/list/plugin-stylus) 的用法相同。各自的选项见 [Sass](https://rsbuild.rs/zh/plugins/list/plugin-sass)、Less 和 Stylus 插件的文档。
+
+## PostCSS {#postcss}
+
+PostCSS 是内置的。在项目根目录添加 `postcss.config.js`，或者使用 [`tools.postcss`](https://rsbuild.rs/zh/config/tools/postcss)：
+
+```js title="postcss.config.js"
+export default {
+  plugins: {
+    'postcss-nesting': {},
+  },
+};
+```
+
+配置的加载方式见 [Rsbuild 的 PostCSS 指南](https://rsbuild.rs/zh/guide/styling/css-usage#postcss)。
+
+## Tailwind CSS {#tailwind-css}
+
+Tailwind CSS 需要一处 Lynx 特有的配置。Lynx 不是浏览器，直接使用 Tailwind 会生成 Lynx 无法渲染的工具类。[`@lynx-js/tailwind-preset`](/api/packages/tailwind-preset) 只保留 Lynx 支持的工具类，并替换那些在 Lynx 上需要不同实现的部分：
+
+```js title="tailwind.config.js"
+import lynxPreset from '@lynx-js/tailwind-preset';
+
+export default {
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  presets: [lynxPreset],
+};
+```
+
+这个 preset 需要 **Tailwind CSS v3**，以 PostCSS 插件的形式使用。完整的接入步骤和示例见 [Tailwind CSS](./tailwind.mdx)。
