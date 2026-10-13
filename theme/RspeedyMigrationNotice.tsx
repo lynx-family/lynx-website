@@ -7,8 +7,7 @@ import {
 
 import { Callout } from '@rspress/core/theme-original';
 
-// Historical Rspeedy pages link to the maintained migration guide. On the
-// guide itself, keep the reader on the selected version and language.
+// Historical Rspeedy pages link to the maintained migration guide.
 const MIGRATION_GUIDE: Record<string, string> = {
   en: 'https://lynxjs.org/next/guide/build/rspeedy.html#migrating-an-rspeedy-project',
   zh: 'https://lynxjs.org/next/zh/guide/build/rspeedy.html#migrating-an-rspeedy-project',
@@ -24,8 +23,7 @@ export default function RspeedyMigrationNotice() {
     .replace(/\.html$/, '')
     .replace(/\/$/, '');
   const isLegacyRspeedy = route === '/rspeedy' || route.startsWith('/rspeedy/');
-  const isMigrationPage = route === '/guide/build/rspeedy';
-  if (!isLegacyRspeedy && !isMigrationPage) {
+  if (!isLegacyRspeedy) {
     return null;
   }
 
@@ -33,13 +31,7 @@ export default function RspeedyMigrationNotice() {
     <Callout type="info">
       <p>
         <span>{t('rspeedy.migration.notice')}</span>{' '}
-        <a
-          href={
-            isMigrationPage
-              ? '#migrating-an-rspeedy-project'
-              : (MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en)
-          }
-        >
+        <a href={MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en}>
           {t('rspeedy.migration.action')}
         </a>
       </p>
