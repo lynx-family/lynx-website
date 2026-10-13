@@ -1,0 +1,51 @@
+# Rspeedy
+
+Rspeedy（[`@lynx-js/rspeedy`](/api/packages/rspeedy)）封装了同一套引擎，并额外提供：
+
+- `rspeedy` 命令行：`dev`、`build`、`preview`、`inspect`，配置文件变更时会自动重启
+- 以 `lynx.config.ts` 作为配置文件，`defineConfig` 来自 `@lynx-js/rspeedy`
+- 对配置的严格校验：写错的键会直接报错，而不是被静默忽略
+
+```ts title="lynx.config.ts"
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@lynx-js/rspeedy';
+
+export default defineConfig({
+  source: {
+    entry: './src/index.tsx',
+  },
+  plugins: [pluginReactLynx()],
+});
+```
+
+Rspeedy 的配置是 Rsbuild 配置的一个精选子集，只保留 Lynx 支持的那些。[`tools.postcss`](https://rsbuild.rs/config/tools/postcss)、[`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) 这类会被直接拒绝，不往下透传；[`output.charset`](https://rsbuild.rs/config/output/charset)、[`output.polyfill`](https://rsbuild.rs/config/output/polyfill) 等少数值写死了改不动。换来的是 Lynx 特有的配置可以直接写在 `lynx.config.ts` 里，[`output.filename.bundle`](/api/build/output/filename/bundle)、[`performance.profile`](/api/build/performance/profile) 都不必经过 `pluginLynx`。[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 还能写成字符串。
+
+即便如此，我们仍然不推荐 Rspeedy。它在 Rsbuild 之上多包了一层概念，你得同时记住哪些配置归 Rspeedy、哪些归 Rsbuild、哪些要交给 `pluginLynx`，这份额外的理解成本，对人和 AI agent 都一样。
+
+它的类型声明是对 Rsbuild 类型的再导出：
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "types": ["@lynx-js/rspeedy/client"]
+  }
+}
+```
+
+命令行与配置项详见 [Rspeedy 文档](https://lynx-stack.dev/zh/guide/cli)。
+
+## 迁移现有的 Rspeedy 项目 {#migrating-an-rspeedy-project}
+
+Rspeedy 和 `pluginLynx` 用的是同一套引擎，所以这是一次配置调整，不是重写，产物不会有任何变化。
+
+1. 换依赖：移除 `@lynx-js/rspeedy`，装上 [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core)。
+2. 换命令行：`rspeedy dev`、`rspeedy build`、`rspeedy preview` 分别改成 `rsbuild dev`、`rsbuild build`、`rsbuild preview`。
+3. 把 `lynx.config.ts` 改名为 `rsbuild.config.ts`，`defineConfig` 从 `@rsbuild/core` 引入，不再从 `@lynx-js/rspeedy` 引入。
+4. `tsconfig.json` 里的 `types` 从 `@lynx-js/rspeedy/client` 换成 `@rsbuild/core/types`。
+
+然后调整配置本身：
+
+- **[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
+- **Lynx 自己的选项挪进 `pluginLynx`。** [`output.filename.bundle`](/api/build/output/filename/bundle) 和 [`performance.profile`](/api/build/performance/profile) 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`，这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
+
+迁过来之后你会发现 [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) 这类配置可以直接写了。这正是迁到 Rsbuild 的好处：原始的 Rsbuild API 直接暴露出来，中间少了一层转译，写法也更短。
