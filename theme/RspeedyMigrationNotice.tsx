@@ -1,14 +1,16 @@
-import { useI18n, useLang, useLocation } from '@rspress/core/runtime';
-import { getLangPrefix } from '@site/shared-route-config';
+import {
+  removeBase,
+  useI18n,
+  useLang,
+  useLocation,
+} from '@rspress/core/runtime';
 
-import './RspeedyMigrationNotice.scss';
+import { Callout } from '@rspress/core/theme-original';
 
-// 4.1 is the last version that documents Rspeedy here. The guide it points at
-// lives on the developing version, which is where the build documentation is
-// maintained from now on.
+// Historical Rspeedy pages link to the maintained migration guide.
 const MIGRATION_GUIDE: Record<string, string> = {
-  en: 'https://lynxjs.org/next/guide/build/tools.html#migrating-an-rspeedy-project',
-  zh: 'https://lynxjs.org/next/zh/guide/build/tools.html#migrating-an-rspeedy-project',
+  en: 'https://lynxjs.org/next/guide/build/rspeedy.html#migrating-an-rspeedy-project',
+  zh: 'https://lynxjs.org/next/zh/guide/build/rspeedy.html#migrating-an-rspeedy-project',
 };
 
 export default function RspeedyMigrationNotice() {
@@ -16,21 +18,23 @@ export default function RspeedyMigrationNotice() {
   const lang = useLang();
   const { pathname } = useLocation();
 
-  const prefix = getLangPrefix(lang);
-  const route = pathname.replace(/\.html$/, '').replace(/\/$/, '');
-  if (
-    route !== `${prefix}/rspeedy` &&
-    !route.startsWith(`${prefix}/rspeedy/`)
-  ) {
+  const route = removeBase(pathname)
+    .replace(/^\/zh(?=\/)/, '')
+    .replace(/\.html$/, '')
+    .replace(/\/$/, '');
+  const isLegacyRspeedy = route === '/rspeedy' || route.startsWith('/rspeedy/');
+  if (!isLegacyRspeedy) {
     return null;
   }
 
   return (
-    <aside className="rspeedy-migration-notice">
-      <span>{t('rspeedy.migration.notice')}</span>{' '}
-      <a href={MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en}>
-        {t('rspeedy.migration.action')}
-      </a>
-    </aside>
+    <Callout type="info">
+      <p>
+        <span>{t('rspeedy.migration.notice')}</span>{' '}
+        <a href={MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en}>
+          {t('rspeedy.migration.action')}
+        </a>
+      </p>
+    </Callout>
   );
 }
