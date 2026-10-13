@@ -2,6 +2,12 @@ packages:
   - 'packages/*'
   - 'plugins/*'
 
+# Documentation only reads the Canvas package's sources and compiled bundles.
+# pnpm resolves its runtime-only file: dependency against the consumer directory;
+# omit that dependency without removing the extension sources inside the package.
+overrides:
+  '@lynxtron-examples/native-texture-canvas@0.0.8>lynxtron-native-texture-canvas': '-'
+
 # pnpm 11's minimumReleaseAge supply-chain policy rejects very recently published
 # packages. The Lynx example/runtime packages are first-party and published
 # frequently, so exempt our own OSS scopes to avoid blocking fresh releases.
@@ -20,6 +26,7 @@ allowBuilds:
   '@lynxtron-examples/floating-clock': false
   '@lynxtron-examples/system-monitor': false
   '@lynxtron-examples/todolist': false
+  '@openuidev/lang-core': false
   '@parcel/watcher': true
   core-js: true
   esbuild: true
@@ -31,3 +38,4 @@ allowBuilds:
 # - @lynxtron-examples/*: ship prebuilt bundles; their rebuild scripts require
 #   native toolchains we don't have in CI/deploy environments.
 # - sqlite3: native module only needed by @lynxtron-examples/todolist at runtime.
+# - @openuidev/lang-core: its postinstall only reports telemetry.

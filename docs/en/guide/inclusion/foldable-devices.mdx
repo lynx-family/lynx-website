@@ -2,6 +2,7 @@
 description: 'Sync dimensions through GlobalProps and screen metrics for low-effort foldable layouts.'
 ---
 
+import { Go } from '@lynx';
 import { FoldableRenderFlow } from '@lynx/foldable-render-flow';
 
 # Foldables
@@ -136,3 +137,29 @@ export function ResponsiveCard() {
 ```
 
 See [length units](/api/css/data-type/length) for more detail.
+
+## Media queries
+
+Flexible layouts let content grow with the available space. When a wider window should also show more columns, reveal a sidebar, or use larger headings, use [media queries](/api/css/media-query) to apply styles at specific viewport widths. The same component tree can serve both folded and unfolded layouts, without reading dimensions in JavaScript to choose CSS classes.
+
+The [large-screen media query example](https://github.com/lynx-family/lynx-examples/tree/main/examples/css/src/media_query/large_screen) starts with a small-screen layout and adds styles at `600px` and `1024px`. These breakpoints use the **Lynx viewport width in CSS pixels**, so choose them according to the space your content needs.
+
+| Viewport width            | Cards         | Sidebar | Page padding | Heading size |
+| ------------------------- | ------------- | ------- | ------------ | ------------ |
+| Below `600px`             | One column    | Hidden  | `20px`       | `34px`       |
+| `600px` to below `1024px` | Two columns   | Hidden  | `32px`       | `44px`       |
+| `1024px` and above        | Three columns | Visible | `40px`       | `52px`       |
+
+<Go
+  example="css"
+  defaultFile="src/media_query/large_screen/index.scss"
+  defaultEntryName="media_query_large_screen"
+  entry="src/media_query/large_screen"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/mediaQueryInDifferentScreens.gif"
+/>
+
+The GIF cycles through Lynx Sandbox screenshots loaded separately at 414px, 800px, and 1280px viewport widths.
+
+The full example also centers content with `max-width: 1440px` and reduces vertical padding when the viewport is at least `1024px` wide and at most `700px` tall. This keeps wide, short windows usable while preserving the larger layout.
+
+Use Lynx SDK **4.0 or later** and [enable CSS Rule encoding](/api/css/media-query#enable-css-rule-encoding) with `pluginLynxConfig({ enableCSSRule: true })`. The example already includes this configuration. The host must keep the Lynx viewport up to date as described above. When testing Android display-size overrides in Lynx Sandbox, reload the page after each change so the media-query environment picks up the new dimensions.

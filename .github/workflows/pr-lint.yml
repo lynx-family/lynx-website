@@ -1,0 +1,85 @@
+name: PR Lint
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  # Allow `amannn/action-semantic-pull-request` to read pull requests.
+  pull-requests: read
+
+jobs:
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Detect Repository-specific PR Title
+        id: title-format
+        env:
+          # Authenticate `gh api`; the CLI reads this variable automatically.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          base_ref="$(jq -er '.base.ref' <<< "$pr_json")"
+          pr_title="$(jq -er '.title' <<< "$pr_json")"
+          use_semantic_lint=true
+
+          # These repository-supported formats are not Conventional Commit titles.
+          if [[ "$pr_title" =~ ^Revert\ \"(.*)\"$ ]]; then
+            revert_subject="${BASH_REMATCH[1]}"
+            if [[ "$revert_subject" =~ [^[:space:]] ]]; then
+              use_semantic_lint=false
+            else
+              echo "::error::Revert titles must include a non-whitespace subject."
+              exit 1
+            fi
+          elif [[ "$base_ref" =~ ^release/[0-9]+\.[0-9]+$ ]]; then
+            release_prefix="[$base_ref] "
+            if [[ "$pr_title" == "$release_prefix"* ]]; then
+              backport_subject="${pr_title#"$release_prefix"}"
+              if [[ "$backport_subject" =~ [^[:space:]] ]]; then
+                use_semantic_lint=false
+              else
+                echo "::error::Backport titles must include a non-whitespace subject."
+                exit 1
+              fi
+            fi
+          fi
+
+          echo "use-semantic-lint=$use_semantic_lint" >> "$GITHUB_OUTPUT"
+
+      # https://github.com/amannn/action-semantic-pull-request
+      - if: steps.title-format.outputs.use-semantic-lint == 'true'
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Derived from https://github.com/commitizen/conventional-commit-types.
+          types: |
+            fix
+            feat
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+            release
+            security
+          # Scope patterns are automatically wrapped in `^` and `$`.
+          scopes: |
+            [a-z0-9]+(?:-[a-z0-9]+)*
+          requireScope: false
+          subjectPattern: '(?=(?:\s*\S){3}).{3,72}'
+          subjectPatternError: |
+            The subject "{subject}" must contain at least 3 non-whitespace
+            characters and be no longer than 72 characters.

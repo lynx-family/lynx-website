@@ -171,7 +171,7 @@
   <Go img="/assets/demo.gif" />
   ```
 
-  `Go` 会原样透传 `img`。应使用 CDN URL，或通过 `normalizeImagePath` 规范化已有 public URL。不要通过 `docs/public` 的物理路径引用文件。
+  JSX 中确实需要使用现有 public URL 时，应通过 `normalizeImagePath` 规范化。这不适用于 `Go`：它会原样透传 `img`，不能使用 public URL，并要求字符串字面量 URL 的 origin 位于已批准的 HTTPS CDN allowlist 中。不要通过 `docs/public` 的物理路径引用文件。
 
 ## 16. 与 Web 的关键差异清单
 
