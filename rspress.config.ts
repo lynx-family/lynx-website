@@ -197,8 +197,8 @@ export default defineConfig({
         },
         // The bundle guide is consolidated into the overview; preserve its hash.
         {
-          from: '^(/(?:next/)?(?:zh/)?)guide/build/lynx-bundle(\\.html)?/?$',
-          to: '$1guide/build/',
+          from: '^(/(?:zh/)?)guide/build/lynx-bundle(\\.html)?/?$',
+          to: `${SITE_BASE.replace(/\/$/, '')}$1guide/build/`,
         },
         // The lynx-ui subsite moved from /lynx-ui to /ui. Netlify 301s in
         // netlify.toml cover server-side hits; these client rules keep every
