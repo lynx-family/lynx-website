@@ -16,7 +16,6 @@ test('redirects old API URLs', () => {
     location('/api/react/Function.useInitData'),
     '/api/react/Hooks/useInitData',
   );
-  assert.equal(location('/api/rspeedy/'), '/api/build/');
   assert.equal(
     location('/api/lynx-testing-environment/index.html'),
     '/api/packages/testing-environment',
@@ -28,19 +27,23 @@ test('redirects old API URLs', () => {
   );
 });
 
-test('points a member at the page of its own type', () => {
-  assert.equal(
-    location(
-      '/api/rspeedy/external-bundle-rsbuild-plugin.reactlynxexternalspresetoptions.async',
-    ),
-    '/api/packages/external-bundle-rsbuild-plugin/interfaces/ReactLynxExternalsPresetOptions#async',
-  );
+test('leaves archived Rspeedy API URLs to the Netlify redirects', () => {
+  const pattern = new RegExp(config.pattern);
+  for (const prefix of ['', '/zh', '/next', '/next/zh']) {
+    for (const page of ['', '/index', '/rspeedy.config.mode']) {
+      for (const extension of ['', '.html', '.md']) {
+        const path = `${prefix}/api/rspeedy${page}${extension}`;
+        assert.ok(!pattern.test(path));
+        assert.equal(location(path), undefined);
+      }
+    }
+  }
 });
 
 test('keeps locale and version prefixes', () => {
   assert.equal(
-    location('/next/zh/api/rspeedy/rspeedy.config.mode.html'),
-    '/next/zh/api/packages/rspeedy/interfaces/Config#mode',
+    location('/next/zh/api/react/Function.useInitData.html'),
+    '/next/zh/api/react/Hooks/useInitData',
   );
   // TypeDoc names the kind directories of a localized page in its language.
   assert.equal(
@@ -74,7 +77,7 @@ test('keeps the query string', () => {
 test('leaves current pages alone', () => {
   assert.equal(location('/api/react/Hooks/useInitData'), undefined);
   const pattern = new RegExp(config.pattern);
-  assert.ok(pattern.test('/next/zh/api/rspeedy/rspeedy.config.mode.html'));
+  assert.ok(pattern.test('/next/zh/api/react/Function.useInitData.html'));
   assert.ok(!pattern.test('/api/react/Hooks/useInitData'));
   assert.ok(!pattern.test('/zh/api/packages/rspeedy'));
 });

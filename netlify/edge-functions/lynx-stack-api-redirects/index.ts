@@ -2,6 +2,7 @@
 // (https://github.com/lynx-family/lynx-stack/pull/3938). This keeps every URL
 // the old reference published working: the shapes that map by rule are
 // computed here, the rest are listed one by one in legacy.json.
+// Old Rspeedy API pages stay on the 4.1 archive via netlify.toml.
 
 import legacy from './legacy.json' with { type: 'json' };
 
@@ -74,5 +75,5 @@ export default (request: Request) => {
 
 export const config = {
   pattern:
-    '^(/next)?(/zh)?/api/(rspeedy|reactlynx-testing-library|lynx-testing-environment|react/[A-Z][a-z]+\\.|genui/.+/(classes|functions|interfaces|type-aliases|variables|index)).*$',
+    '^(/next)?(/zh)?/api/(reactlynx-testing-library|lynx-testing-environment|react/[A-Z][a-z]+\\.|genui/.+/(classes|functions|interfaces|type-aliases|variables|index)).*$',
 };
