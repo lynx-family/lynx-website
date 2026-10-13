@@ -1,22 +1,42 @@
+import { Steps } from '@theme';
+
 # 从 Rspeedy 升级
 
-Rspeedy（[`@lynx-js/rspeedy`](/api/packages/rspeedy)）是 Lynx 之前使用的构建工具，基于 Rsbuild，提供 `rspeedy` 命令行，并使用 `lynx.config.ts` 作为配置文件。现在推荐直接使用 **Rsbuild + `pluginLynx`**，沿用 Rsbuild 的配置和插件生态。
+Rspeedy 会长期维护。你仍然可以访问[旧版 Rspeedy 官网](https://lynxjs.org/zh/rspeedy/index.html)。
 
-Rspeedy 仍在维护，现有项目可以继续使用。下面介绍如何将项目迁移到 Rsbuild。
+Rspeedy（[`@lynx-js/rspeedy`](/api/packages/rspeedy)）是 Lynx 之前使用的构建工具，基于 Rsbuild，提供 `rspeedy` 命令行，并使用 `lynx.config.ts` 作为配置文件。现在推荐直接使用 **Rsbuild + `pluginLynx`**，沿用 Rsbuild 的配置和插件生态。
 
 <span id="migrating-an-rspeedy-project" />
 
 Rspeedy 和 `pluginLynx` 使用同一套构建引擎。迁移主要涉及依赖、命令行和配置，应用代码无需重写。
 
-1. 换依赖：移除 `@lynx-js/rspeedy`，装上 [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core)。
-2. 换命令行：`rspeedy dev`、`rspeedy build`、`rspeedy preview` 分别改成 `rsbuild dev`、`rsbuild build`、`rsbuild preview`。
-3. 把 `lynx.config.ts` 改名为 `rsbuild.config.ts`，`defineConfig` 从 `@rsbuild/core` 引入，不再从 `@lynx-js/rspeedy` 引入。
-4. `tsconfig.json` 里的 `types` 从 `@lynx-js/rspeedy/client` 换成 `@rsbuild/core/types`。
+<Steps>
 
-然后调整配置本身：
+### 更换依赖
 
-- **[`source.entry`](https://rsbuild.rs/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/config/output/filename) 要写成对象形式。** Rspeedy 额外接受字符串，Rsbuild 不接受。
-- **Lynx 自己的选项挪进 `pluginLynx`。** [`output.filename.bundle`](/api/build/output/filename/bundle) 和 [`performance.profile`](/api/build/performance/profile) 是 Rspeedy 的配置项而非 Rsbuild 的，需要写进 `pluginLynx({ ... })`，这也意味着要显式应用这个插件，因为自动应用用的是默认选项。
+移除 `@lynx-js/rspeedy`，安装 [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core)。
+
+### 更换命令行
+
+将 `rspeedy dev`、`rspeedy build`、`rspeedy preview` 和 `rspeedy inspect` 分别改成 `rsbuild dev`、`rsbuild build`、`rsbuild preview` 和 `rsbuild inspect`。
+
+### 更换配置文件
+
+把 `lynx.config.ts` 改名为 `rsbuild.config.ts`，将 `defineConfig` 的导入来源从 `@lynx-js/rspeedy` 改为 `@rsbuild/core`。
+
+### 更新构建期类型
+
+将 `tsconfig.json` 中 `types` 数组里的 `@lynx-js/rspeedy/client` 替换为 `@rsbuild/core/types`，保留其他项。
+
+### 调整配置简写
+
+将 [`source.entry`](https://rsbuild.rs/zh/config/source/entry) 和 [`output.filename`](https://rsbuild.rs/zh/config/output/filename) 的字符串简写改为对象形式。
+
+### 迁移 Lynx 特有配置
+
+将 [`output.filename.bundle`](/api/build/output/filename/bundle)、[`performance.profile`](/api/build/performance/profile) 等 Lynx 特有选项移入 `pluginLynx({ ... })`。需要这些配置时，在 `plugins` 中显式添加 `pluginLynx`；自动应用时使用的是默认选项。
+
+</Steps>
 
 ## Rspeedy 与 Rsbuild 差异
 
