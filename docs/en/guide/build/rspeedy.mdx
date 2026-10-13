@@ -1,76 +1,12 @@
-import { PackageManagerTabs } from '@theme';
+# Upgrade from Rspeedy
 
-# Rspeedy
+Rspeedy ([`@lynx-js/rspeedy`](/api/packages/rspeedy)) is Lynx's previous build tool. Built on Rsbuild, it provides the `rspeedy` CLI and uses `lynx.config.ts` for configuration. We now recommend **Rsbuild with `pluginLynx`**, using Rsbuild's configuration and plugin ecosystem directly.
 
-Rspeedy ([`@lynx-js/rspeedy`](/api/packages/rspeedy)) wraps the same engine and adds:
-
-- the `rspeedy` CLI — `dev`, `build`, `preview` and `inspect` — which also restarts itself when the config file changes
-- `lynx.config.ts` as the config file, with `defineConfig` from `@lynx-js/rspeedy`
-- strict validation of that config: an unknown key is an error, not a silent no-op
-
-```ts title="lynx.config.ts"
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
-
-export default defineConfig({
-  source: {
-    entry: './src/index.tsx',
-  },
-  plugins: [pluginReactLynx()],
-});
-```
-
-Rspeedy's config is a curated subset of Rsbuild's, holding only what Lynx supports. Options like [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) and [`tools.sass`](https://rsbuild.rs/plugins/list/plugin-sass) are rejected rather than passed through, and a few values such as [`output.charset`](https://rsbuild.rs/config/output/charset) and [`output.polyfill`](https://rsbuild.rs/config/output/polyfill) are fixed. In return, Lynx's own options go straight into `lynx.config.ts`: [`output.filename.bundle`](/api/build/output/filename/bundle) and [`performance.profile`](/api/build/performance/profile) need no `pluginLynx`. [`source.entry`](https://rsbuild.rs/config/source/entry) and [`output.filename`](https://rsbuild.rs/config/output/filename) also accept a plain string.
-
-We still recommend against Rspeedy. It wraps another layer of concepts around Rsbuild, and you have to keep track of which options belong to Rspeedy, which to Rsbuild, and which go to `pluginLynx`. That extra cost lands on people and AI agents alike.
-
-Its type declarations re-export Rsbuild's:
-
-```json title="tsconfig.json"
-{
-  "compilerOptions": {
-    "types": ["@lynx-js/rspeedy/client"]
-  }
-}
-```
-
-## CLI {#cli}
-
-| Command           | What it does                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| `rspeedy dev`     | Starts the dev server and rebuilds on change; restarts when `lynx.config.ts` changes |
-| `rspeedy build`   | Writes the production bundles to `dist/`                                             |
-| `rspeedy preview` | Serves the production build locally                                                  |
-| `rspeedy inspect` | Prints the final Rsbuild and Rspack configuration                                    |
-
-Each command takes `--config` to point at another config file, `--mode` to override the build mode, and `--environment` to build only some [environments](/api/build/environments). See the [Rspeedy CLI documentation](https://lynx-stack.dev/guide/cli) for every flag.
-
-## Upgrading Rspeedy {#upgrading}
-
-`@lynx-js/rspeedy` and its plugins constrain each other through `peerDependencies`, so upgrade them together with [`upgrade-rspeedy`](https://www.npmjs.com/package/upgrade-rspeedy). It rewrites `package.json`; install the dependencies afterwards.
-
-<PackageManagerTabs
-  command={{
-    npm: `npx upgrade-rspeedy@latest`,
-    pnpm: `pnpm dlx upgrade-rspeedy@latest`,
-    bun: `bunx upgrade-rspeedy@latest`,
-    yarn: `yarn dlx upgrade-rspeedy@latest`,
-  }}
-/>
-
-Replace `latest` with a version to upgrade to that version. See [Upgrading Rspeedy](https://lynx-stack.dev/guide/upgrade-rspeedy) for canary versions.
-
-## Which one to use
-
-Use **Rsbuild with `pluginLynx`** for new projects. It is what [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
-
-Rspeedy is still maintained. An existing project that depends on the `rspeedy` CLI or on `lynx.config.ts` need not rush to move, but do not start a new one on it.
-
-Running `npm create @lynx-js/lynx@latest` without `--template` asks which build tool to use, and also offers Rslib for a component library.
+Rspeedy is still maintained, and existing projects can continue to use it. The following steps migrate a project to Rsbuild.
 
 ## Migrating an Rspeedy project {#migrating-an-rspeedy-project}
 
-Rspeedy and `pluginLynx` share one engine, so the move is a config change, not a rewrite. Nothing about the output changes.
+Rspeedy and `pluginLynx` share the same build engine. Migration mainly involves dependencies, CLI commands and configuration; application code does not need to be rewritten.
 
 1. Replace the dependency: drop `@lynx-js/rspeedy`, add [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core).
 2. Point the scripts at the other CLI — `rspeedy dev`, `rspeedy build` and `rspeedy preview` become `rsbuild dev`, `rsbuild build` and `rsbuild preview`.
@@ -82,4 +18,22 @@ Then adjust the config itself:
 - **[`source.entry`](https://rsbuild.rs/config/source/entry) and [`output.filename`](https://rsbuild.rs/config/output/filename) take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
 - **Lynx's own options move into `pluginLynx`.** [`output.filename.bundle`](/api/build/output/filename/bundle) and [`performance.profile`](/api/build/performance/profile) are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
 
-Once you are on Rsbuild you can reach for options like [`tools.postcss`](https://rsbuild.rs/config/tools/postcss) directly. That is the point of the move: the raw Rsbuild API is right there, with no translation layer in between.
+## Differences between Rspeedy and Rsbuild
+
+Both approaches use `pluginLynx` to build Lynx bundles. The main differences are their CLI and configuration interfaces:
+
+|                         | Rspeedy                                                                            | Rsbuild with `pluginLynx`                                     |
+| ----------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| CLI                     | `rspeedy dev / build / preview / inspect`                                          | `rsbuild dev / build / preview / inspect`                     |
+| Configuration file      | `lynx.config.ts`, with `defineConfig` from `@lynx-js/rspeedy`                      | `rsbuild.config.ts`, with `defineConfig` from `@rsbuild/core` |
+| Configuration scope     | A strictly validated subset of Rsbuild configuration, with some options restricted | The full Rsbuild configuration and plugin ecosystem           |
+| Lynx-specific options   | Set directly in the configuration file, such as `output.filename.bundle`           | Pass to `pluginLynx({ ... })`                                 |
+| Shorthand configuration | `source.entry` and `output.filename` accept strings                                | Use object form                                               |
+| Build-time types        | `@lynx-js/rspeedy/client`                                                          | `@rsbuild/core/types`                                         |
+
+For example, Rspeedy does not pass through options such as `tools.postcss`, and fixes values such as `output.charset` and `output.polyfill`. With Rsbuild, follow the [Rsbuild configuration reference](https://rsbuild.rs/config/) directly. See the [Lynx build configuration reference](/api/build) for Lynx-specific options and changed defaults.
+
+<span id="cli" />
+<span id="upgrading" />
+
+Projects continuing to use Rspeedy can refer to its [CLI documentation](https://lynx-stack.dev/guide/cli) and [version upgrade guide](https://lynx-stack.dev/guide/upgrade-rspeedy).
