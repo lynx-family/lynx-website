@@ -81,11 +81,19 @@ When you import static assets in TypeScript code, TypeScript may prompt that the
 TS2307: Cannot find module './static/logo.png' or its corresponding type declarations.
 ```
 
-To fix this, you need to add a type declaration file for the static assets, please create a `src/rspeedy-env.d.ts` file, and add the corresponding type declaration.
+To fix this, add `@lynx-js/rspeedy/client`, which declares the types of static assets, to the `types` array in `tsconfig.json`, keeping the entries already there:
 
-```typescript title=src/rspeedy-env.d.ts
-/// <reference types="@lynx-js/rspeedy/client" />
+```json title=tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@lynx-js/rspeedy/client"]
+  }
+}
 ```
+
+:::tip
+[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) will automatically include this for you.
+:::
 
 ## Inline Assets
 

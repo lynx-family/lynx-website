@@ -2,7 +2,7 @@ name: Cherry-pick Request
 
 on:
   issues:
-    types: [opened, edited, reopened, labeled, unlabeled, closed]
+    types: [edited, reopened, labeled, unlabeled, closed]
 
 permissions:
   contents: read
@@ -15,8 +15,10 @@ concurrency:
 
 jobs:
   validate:
+    name: Validate Request
     if: ${{ contains(github.event.issue.labels.*.name, 'cherry-pick:request') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: read
@@ -40,9 +42,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   execute:
+    name: Execute Cherry-picks
     needs: validate
     if: ${{ needs.validate.outputs.should_execute == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
@@ -60,3 +64,58 @@ jobs:
       - run: node .github/scripts/cherry-pick-request.mjs execute
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup:
+    name: Recover Failed Execution
+    needs: [validate, execute]
+    if: >-
+      ${{
+        always() &&
+        (
+          (
+            needs.validate.result != 'success' &&
+            needs.validate.result != 'skipped'
+          ) ||
+          (
+            needs.validate.outputs.should_execute == 'true' &&
+            needs.execute.result != 'success'
+          )
+        )
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Recover Request State
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const path =
+              '.github/scripts/cherry-pick-request-recovery.mjs';
+            const { owner, repo } = context.repo;
+            const { data: file } = await github.rest.repos.getContent({
+              owner,
+              repo,
+              path,
+              ref: context.sha,
+            });
+            if (
+              Array.isArray(file) ||
+              file.type !== 'file' ||
+              file.encoding !== 'base64' ||
+              !file.content
+            ) {
+              throw new Error(`Unable to load ${path} at ${context.sha}.`);
+            }
+            const source = file.content.replace(/\s/g, '');
+            const recoveryModule = await import(
+              `data:text/javascript;base64,${source}`
+            );
+            await recoveryModule.default({
+              github,
+              context,
+              core,
+            });

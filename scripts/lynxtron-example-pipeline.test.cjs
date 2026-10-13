@@ -1,0 +1,260 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+const { test } = require('node:test');
+
+const root = path.resolve(__dirname, '..');
+const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+// Empty PATH models deployment images without undeclared host tools
+// such as rsync.
+const generatorEnv = (env) => ({ ...process.env, ...env, PATH: '' });
+
+test('Lynxtron examples use the source-specific pipeline and blog references', () => {
+  const generic = readJSON(
+    path.join(root, 'packages/lynx-example-packages/package.json'),
+  );
+  assert.ok(
+    !JSON.stringify(generic.dependencies).includes('lynxtron-examples'),
+  );
+  const dedicated = readJSON(
+    path.join(root, 'packages/lynxtron-example-packages/package.json'),
+  );
+  assert.equal(Object.keys(dedicated.dependencies).length, 8);
+  // Pin real npm releases, never a GitHub archive or bootstrap placeholder.
+  for (const version of Object.values(dedicated.dependencies)) {
+    assert.match(version, /^\d+\.\d+\.\d+$/);
+  }
+  const workspace = fs.readFileSync(
+    path.join(root, 'pnpm-workspace.yaml'),
+    'utf8',
+  );
+  assert.ok(
+    workspace.includes(
+      "'@lynxtron-examples/native-texture-canvas@0.0.8>lynxtron-native-texture-canvas': '-'",
+    ),
+  );
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'lynxtron-pipeline-'),
+  );
+  const fixtureRoot = path.join(temporary, 'fixtures');
+  const productionRoot = path.join(temporary, 'production');
+  const examplesRoot = path.join(fixtureRoot, 'examples');
+  fs.mkdirSync(examplesRoot, { recursive: true });
+  fs.mkdirSync(productionRoot, { recursive: true });
+  try {
+    for (const name of Object.keys(dedicated.dependencies)) {
+      const example = name.split('/')[1];
+      const directory = path.join(examplesRoot, example);
+      const desktopDir =
+        example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
+      fs.mkdirSync(path.join(directory, 'dist/web'), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(directory, desktopDir), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(directory, 'output/bundle/lynx'), {
+        recursive: true,
+      });
+      fs.writeFileSync(
+        path.join(directory, 'package.json'),
+        JSON.stringify({ name, version: '1.0.0' }),
+      );
+      fs.writeFileSync(
+        path.join(directory, 'dist/web/index.html'),
+        '<html></html>',
+      );
+      fs.writeFileSync(
+        path.join(directory, desktopDir, 'main.lynx.bundle'),
+        'desktop fixture',
+      );
+      fs.writeFileSync(
+        path.join(directory, 'output/bundle/lynx/main.lynx.bundle'),
+        'intermediate fixture',
+      );
+      if (example === 'native-texture-canvas') {
+        const native = path.join(directory, 'native-texture-extension');
+        fs.mkdirSync(native);
+        for (const file of [
+          'module.cc',
+          'module.h',
+          'surface.mm',
+          'CMakeLists.txt',
+        ]) {
+          fs.writeFileSync(path.join(native, file), `source fixture: ${file}`);
+        }
+      }
+    }
+    execFileSync(
+      process.execPath,
+      [path.join(root, 'scripts/lynxtron-examples.js')],
+      {
+        cwd: productionRoot,
+        env: generatorEnv({
+          EXAMPLES_DIR: path.relative(productionRoot, examplesRoot),
+          LINK_PATH: 'output',
+        }),
+      },
+    );
+    for (const language of ['en', 'zh']) {
+      const blog = fs.readFileSync(
+        path.join(root, `docs/${language}/blog/lynxtron.mdx`),
+        'utf8',
+      );
+      const examples = [...blog.matchAll(/example="([^"]+)"/g)].map(
+        (match) => match[1],
+      );
+      assert.deepEqual(examples, [
+        'benchmark',
+        'native-texture-canvas',
+        'cross-platform-notes',
+      ]);
+      for (const example of examples) {
+        const desktopDir =
+          example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
+        const metadata = readJSON(
+          path.join(productionRoot, 'output', example, 'example-metadata.json'),
+        );
+        assert.equal(metadata.nativeFramework, 'lynxtron');
+        assert.deepEqual(metadata.templateFiles, [
+          {
+            name: 'main',
+            file: `${desktopDir}/main.lynx.bundle`,
+            ...(example === 'cross-platform-notes'
+              ? { webHostFile: 'dist/web/index.html' }
+              : {}),
+          },
+        ]);
+        assert.ok(
+          metadata.files.includes('output/bundle/lynx/main.lynx.bundle'),
+        );
+        assert.equal(
+          fs.readFileSync(
+            path.join(
+              productionRoot,
+              'output',
+              example,
+              'output/bundle/lynx/main.lynx.bundle',
+            ),
+            'utf8',
+          ),
+          'intermediate fixture',
+        );
+        if (example === 'native-texture-canvas') {
+          for (const file of [
+            'module.cc',
+            'module.h',
+            'surface.mm',
+            'CMakeLists.txt',
+          ]) {
+            const source = `native-texture-extension/${file}`;
+            assert.ok(metadata.files.includes(source));
+            assert.equal(
+              fs.readFileSync(
+                path.join(productionRoot, 'output', example, source),
+                'utf8',
+              ),
+              `source fixture: ${file}`,
+            );
+          }
+        }
+        assert.match(
+          metadata.exampleGitBaseUrl,
+          /lynx-community\/lynxtron-examples/,
+        );
+        if (example === 'cross-platform-notes') {
+          assert.ok(
+            metadata.templateFiles.some(
+              (entry) => entry.webHostFile === 'dist/web/index.html',
+            ),
+          );
+        }
+      }
+    }
+    // The generic entry must not infer a Web host from a Lynxtron package.
+    execFileSync(
+      process.execPath,
+      [path.join(root, 'scripts/lynx-example.js')],
+      {
+        cwd: productionRoot,
+        env: generatorEnv({
+          EXAMPLES_DIR: path.relative(productionRoot, examplesRoot),
+          LINK_PATH: 'generic-output',
+        }),
+      },
+    );
+    const genericMetadata = readJSON(
+      path.join(
+        productionRoot,
+        'generic-output/cross-platform-notes/example-metadata.json',
+      ),
+    );
+    assert.ok(
+      genericMetadata.templateFiles.every((entry) => !entry.webHostFile),
+    );
+
+    // Keep alternate package metadata in a separate fixture tree. The
+    // production source tree remains unchanged for the collision run below.
+    const conflictExamplesRoot = path.join(fixtureRoot, 'conflict-examples');
+    const conflictExampleDir = path.join(
+      conflictExamplesRoot,
+      'cross-platform-notes',
+    );
+    fs.mkdirSync(conflictExamplesRoot, { recursive: true });
+    fs.cpSync(
+      path.join(examplesRoot, 'cross-platform-notes'),
+      conflictExampleDir,
+      { recursive: true },
+    );
+    fs.writeFileSync(
+      path.join(conflictExampleDir, 'package.json'),
+      JSON.stringify({ name: '@other/cross-platform-notes', version: '1.0.0' }),
+    );
+    fs.writeFileSync(
+      path.join(productionRoot, 'output/keep.txt'),
+      'existing example',
+    );
+    execFileSync(
+      process.execPath,
+      [path.join(root, 'scripts/lynxtron-examples.js')],
+      {
+        cwd: productionRoot,
+        env: generatorEnv({
+          EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
+          LINK_PATH: 'unrelated-output',
+        }),
+      },
+    );
+    const unrelated = readJSON(
+      path.join(
+        productionRoot,
+        'unrelated-output/cross-platform-notes/example-metadata.json',
+      ),
+    );
+    assert.ok(unrelated.templateFiles.every((entry) => !entry.webHostFile));
+
+    assert.throws(
+      () =>
+        execFileSync(
+          process.execPath,
+          [path.join(root, 'scripts/lynxtron-examples.js')],
+          {
+            cwd: productionRoot,
+            env: generatorEnv({
+              EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
+              LINK_PATH: 'output',
+            }),
+          },
+        ),
+      /output ID collision.*@lynxtron-examples\/cross-platform-notes.*@other\/cross-platform-notes/,
+    );
+    assert.equal(
+      fs.readFileSync(path.join(productionRoot, 'output/keep.txt'), 'utf8'),
+      'existing example',
+    );
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});

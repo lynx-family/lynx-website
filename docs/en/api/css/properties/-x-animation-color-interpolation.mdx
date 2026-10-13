@@ -1,0 +1,96 @@
+---
+api: css/properties/-x-animation-color-interpolation
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# -x-animation-color-interpolation
+
+<APISummary />
+
+## Introduction
+
+With `enable-new-animator={{true}}` enabled, use `-x-animation-color-interpolation` to control the color interpolation algorithm for CSS animations and transitions. Explicitly setting it to `sRGB` or `linearRGB` selects the same color interpolation algorithm across platforms.
+
+## Syntax
+
+```css
+.element {
+  /* Choose one value; this example uses the sRGB mode. */
+  -x-animation-color-interpolation: sRGB;
+}
+```
+
+### Values
+
+The value is case-sensitive.
+
+#### auto
+
+**Default value.** Selects `sRGB` or `linearRGB` based on the platform:
+
+- On iOS, it uses `sRGB`.
+- On other platforms, it uses `linearRGB`.
+
+To select the same color interpolation algorithm across platforms, explicitly set `sRGB` or `linearRGB`.
+
+#### sRGB
+
+Linearly interpolates premultiplied RGB channel values in sRGB-encoded space without a color-space conversion.
+
+#### linearRGB
+
+Uses the standard piecewise sRGB transfer function to decode RGB channels to linear-light space, interpolate them, and encode the result back to sRGB. Here, "linear" describes the relationship between the color space and light intensity, not the animation's easing function.
+
+### Alpha interpolation
+
+All modes use premultiplied alpha interpolation: multiply RGB channels by alpha in the selected color space, linearly interpolate the premultiplied RGB channels and alpha separately, then divide by the interpolated alpha to recover RGB. For `linearRGB`, premultiplication happens in linear-light space, and the recovered RGB values are then encoded back to sRGB. When alpha is 0, the result is transparent black.
+
+This prevents the RGB values of a fully transparent color from affecting visible intermediate colors. For example, a transition from opaque red to `transparent` produces semi-transparent red at 50% interpolation progress without darkening the color.
+
+### Intermediate color example
+
+For opaque black to white at 50% interpolation progress:
+
+| Property value           | Intermediate color   |
+| ------------------------ | -------------------- |
+| `sRGB`                   | `rgb(128, 128, 128)` |
+| `linearRGB`              | `rgb(188, 188, 188)` |
+| `auto` (iOS)             | `rgb(128, 128, 128)` |
+| `auto` (other platforms) | `rgb(188, 188, 188)` |
+
+Here, 50% means interpolation progress after applying the easing function. With `linear` easing, this corresponds to the time midpoint between the two keyframes.
+
+## Formal definition
+
+import { PropertyDefinition } from '@lynx/PropertyDefinition';
+
+<PropertyDefinition
+  initialValue={<>auto</>}
+  appliesTo={<>all elements</>}
+  inherited="no"
+  animatable="no"
+/>
+
+## Formal syntax
+
+```
+-x-animation-color-interpolation = auto | sRGB | linearRGB
+```
+
+## Differences from Web
+
+- This is a Lynx-specific property and cannot be used as a general Web CSS property.
+- `sRGB` and `linearRGB` correspond to the `srgb` and `srgb-linear` interpolation spaces in Web color terminology. Both handle transparency using the [premultiplied alpha rules in CSS Color 4](https://www.w3.org/TR/css-color-4/#interpolation-alpha).
+
+## See also
+
+- [animation](./animation.mdx)
+- [animation-name](./animation-name.mdx)
+- [animation-timing-function](./animation-timing-function.mdx)
+- [CSS animation event](../../lynx-api/event/animation-event.mdx)
+- [Animate API](../../lynx-api/lynx/lynx-animate-api.mdx)
+
+## Compatibility
+
+<APITable />

@@ -1,6 +1,4 @@
 import { Go } from '@lynx';
-import fileExplorerGif from '@assets/lynxtron/file-explorer.gif?url';
-import systemMonitorGif from '@assets/lynxtron/system-monitor.gif?url';
 
 # Lynxtron 中 Node.js 与 Lynx 的通信
 
@@ -118,7 +116,8 @@ const todo = await reader.read('todo.txt');
 - Lynx UI 通过 [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) 调用这些 API，实现目录浏览和文件内容查看。
 
 <Go
-  img={fileExplorerGif}
+  nativeFramework="lynxtron"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/file-explorer.gif"
   example="file-explorer"
   defaultFile="src/app/App.tsx"
   deepLinkUrl="lynxtron-go://showcase/open?id=%40lynxtron-examples%2Ffile-explorer"
@@ -135,10 +134,7 @@ Node 主进程可以通过 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
-
-const win = new LynxWindow();
-
+// 复用 app.whenReady() 内创建的窗口，并在 UI 注册监听器后发送。
 win.sendGlobalEvent('systemInfoUpdate', {
   cpuUsage: 32,
   memoryUsage: 68,
@@ -172,14 +168,17 @@ export function App() {
 
 ### Lynx 调用 Node.js 并等待返回值
 
-使用 `bridge.call` 发起调用，因为需要等待 Node.js 返回数据。
+`bridge.call(method, payload, callback)` 返回 `void`，结果通过第三个参数回调返回，不能直接 `await bridge.call(...)`。需要使用 `await` 时，请像 System Monitor 示例一样用 Promise 包装回调。
 
 ```tsx
 // App.tsx
-const info = await NativeModules.bridge.call('getSystemInfo', {
-  includeCpuDetail: true,
-});
-setSystemInfo(info);
+NativeModules.bridge.call(
+  'getSystemInfo',
+  { includeCpuDetail: true },
+  (info) => {
+    setSystemInfo(info);
+  },
+);
 ```
 
 Node 主进程通过 `lynxBridge.handle()` 注册处理器来响应 `bridge.call` 调用。handler 的返回值（或返回的 Promise）会自动通过 `event.sendReply` 回传给 Lynx，行为等同于 Electron 中的 `ipcMain.handle()`：
@@ -231,12 +230,12 @@ app.whenReady().then(() => {
 
 `lynxBridge` 是从 `@lynx-js/lynxtron` 导入的主进程单例，它是一个 Node.js `EventEmitter`，除下列 invoke 相关方法外，还可以使用 `on` / `once` / `off` / `emit` 等标准方法。在 Electron 中，`lynxBridge` 相当于 `ipcMain`。
 
-| 方法                                     | 说明                                                                                                                                             |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `lynxBridge.handle(method, handler)`     | 为 `NativeModules.bridge.call(method, args)` 注册处理器。handler 的返回值（或返回的 Promise）会自动回传给 Lynx。同一个 `method` 重复注册会抛错。 |
-| `lynxBridge.handleOnce(method, handler)` | 与 `handle` 相同，但 handler 触发一次后会自动移除。                                                                                              |
-| `lynxBridge.removeHandler(method)`       | 移除通过 `handle` / `handleOnce` 注册的处理器。                                                                                                  |
-| `lynxBridge.on(channel, listener)`       | 继承自 `EventEmitter`。用于接收 Lynx 通过 `NativeModules.bridge.send(channel, args)` 发送的单向消息，listener 的入参为 `(args)`。                |
+| 方法                                     | 说明                                                                                                                                                       |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lynxBridge.handle(method, handler)`     | 为 `NativeModules.bridge.call(method, args, callback)` 注册处理器。handler 的返回值（或返回的 Promise）会自动回传给 Lynx。同一个 `method` 重复注册会抛错。 |
+| `lynxBridge.handleOnce(method, handler)` | 与 `handle` 相同，但 handler 触发一次后会自动移除。                                                                                                        |
+| `lynxBridge.removeHandler(method)`       | 移除通过 `handle` / `handleOnce` 注册的处理器。                                                                                                            |
+| `lynxBridge.on(channel, listener)`       | 继承自 `EventEmitter`。用于接收 Lynx 通过 `NativeModules.bridge.send(channel, args)` 发送的单向消息，listener 的入参为 `(args)`。                          |
 
 `handler` 的签名为 `(event: LynxBridgeInvokeEvent, args) => unknown | Promise<unknown>`。运行时会用 handler 的返回值（在 Promise 场景下为其 resolve 后的值）自动调用一次 [`event.sendReply()`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxBridgeInvokeEvent.mdx)，因此通过 `handle` / `handleOnce` 注册的处理器应当通过返回值（或 Promise）表达回复内容；再显式调用 `event.sendReply()` 会产生重复回复。`sendReply` 仅供直接监听底层 invoke 事件、绕过 `handle` 包装的低层调用者使用。
 
@@ -249,7 +248,8 @@ app.whenReady().then(() => {
 - 刷新间隔变化这类不需要返回值的通知，可以通过 `NativeModules.bridge.send()` 发送给 Node 主进程。
 
 <Go
-  img={systemMonitorGif}
+  nativeFramework="lynxtron"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/system-monitor.gif"
   example="system-monitor"
   defaultFile="src/app/App.tsx"
   deepLinkUrl="lynxtron-go://showcase/open?id=%40lynxtron-examples%2Fsystem-monitor"

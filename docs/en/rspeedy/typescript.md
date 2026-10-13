@@ -44,14 +44,18 @@ export default {
 
 Rspeedy provide various built-in features like CSS Modules and [Static Assets](./assets.md). TypeScript does not know about these features and the corresponding type declarations.
 
-To solve this, create a `src/rspeedy-env.d.ts` file, and add the following content:
+To solve this, add `@lynx-js/rspeedy/client` to the `types` array in `tsconfig.json`, keeping the entries already there:
 
-```typescript title=src/rspeedy-env.d.ts
-/// <reference types="@lynx-js/rspeedy/client" />
+```json title=tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@lynx-js/rspeedy/client"]
+  }
+}
 ```
 
 :::tip
-[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) will automatically create this file for you.
+[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) will automatically include this for you.
 :::
 
 ## Extending Lynx types
@@ -154,7 +158,7 @@ Unlike the native TypeScript compiler, tools like SWC and Babel compile each fil
 ```
 
 :::tip
-[`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) will automatically include this for you.
+[`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) will automatically include this for you.
 :::
 
 This option can help you avoid using certain syntax that cannot be correctly compiled by SWC and Babel, such as cross-file type references. It will guide you to correct the corresponding usage:

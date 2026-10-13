@@ -149,7 +149,7 @@ Options:
   -h, --help            display help for command
 ```
 
-在项目根目录执行 `rspeedy inspect` 命令后，会在项目的 `dist/.rspeedy` 目录下生成以下文件：
+在项目根目录执行 `rspeedy inspect` 命令后，会在项目的 `dist/.rsbuild` 目录下生成以下文件：
 
 - `rspeedy.config.js`: 表示构建时使用的 Rspeedy 配置
 - `rsbuild.config.mjs`: 表示构建时使用的 Rsbuild 配置
@@ -158,14 +158,11 @@ Options:
 ```text
 ➜ rspeedy inspect
 
-Inspect config succeed, open following files to view the content:
-
-  - Rspeedy Config: /project/dist/.rsbuild/rspeedy.config.mjs
+success config inspection completed, generated files:
+  - Rsbuild config: /project/dist/.rsbuild/rsbuild.config.mjs
   - Rspack Config (lynx): /project/dist/.rsbuild/rspack.config.lynx.mjs
-
-Inspect Rspeedy config succeed, open following files to view the content:
-
-  - Rspeedy: /Users/colin/rspeedy/examples/react/dist/rspeedy-rspack/.rsbuild/rspeedy.config.js
+success Inspect Rspeedy config succeed, open following files to view the content:
+  - Rspeedy: /project/dist/.rsbuild/rspeedy.config.js
 ```
 
 ### 指定模式

@@ -42,13 +42,13 @@ Note:
 Explainers to [=Lynx/Lynx developers=]
 This approach can improve the responsiveness of the [=Threading/main thread=] by utilizing parallelism and offloading heavy [=FrameworkRendering/framework rendering=] tasks to [=Threading/background thread=], but can introduce potential latency in UI updates.
 
-### <dfn for=FrameworkRendering>First-screen Rendering</dfn> (or <dfn for=FrameworkRendering>FSR</dfn>)
+### <dfn for=FrameworkRendering>First-frame Rendering</dfn>
 
-A special type of [=FrameworkRendering/main thread rendering=] occurs during the load of Lynx [=CommonInfrastructure/apps=] to improve the first load experience.
+This is a special type of [=FrameworkRendering/main thread rendering=] that occurs during the load of Lynx [=CommonInfrastructure/apps=]. It blocks the [=Threading/UI thread=] until the first frame is complete, avoiding a blank screen and improving the initial load experience. This capability is marketed as <a href="/guide/interaction/ifr">Instant First-Frame Rendering (IFR)</a>.
 
 ### <dfn for=FrameworkRendering>Re-rendering</dfn>
 
-The type of [=FrameworkRendering/rendering=] that occurs after [=FrameworkRendering/first-screen rendering=], can be either [=FrameworkRendering/main thread rendering=] or [=FrameworkRendering/background-driven rendering=].
+The type of [=FrameworkRendering/rendering=] that occurs after [=FrameworkRendering/first-frame rendering=], can be either [=FrameworkRendering/main thread rendering=] or [=FrameworkRendering/background-driven rendering=].
 
 ## Instances of Framework
 
@@ -58,6 +58,6 @@ A [=FrameworkRendering/framework=] featuring React-like [=FrameworkRendering/DSL
 
 #### Rendering Patterns
 
-- Renders [=ElementsComponents/components=] in the [=Scripting/main thread runtime=] to achieve [=FrameworkRendering/first-screen rendering=], and
+- Renders [=ElementsComponents/components=] in the [=Scripting/main thread runtime=] to achieve [=FrameworkRendering/first-frame rendering=], and
 - Typically, [=FrameworkRendering/re-rendering=] [=ElementsComponents/components=] via [=FrameworkRendering/background-driven rendering=].
 - By opting into [=Scripting/main thread script=] features: allows for short-circuiting to [=FrameworkRendering/main thread rendering=] via [=Threading/main thread=] event handling and [=ElementsComponents/EOM=] without [=FrameworkRendering/re-rendering=] [=ElementsComponents/components=].

@@ -1,6 +1,5 @@
 import { PackageManagerTabs } from '@theme';
 import { Go } from '@lynx';
-import nodejsNativeModulesGif from '@assets/lynxtron/lynxtron-nodejs-native-modules.gif?url';
 
 # Node.js Native Modules
 
@@ -21,7 +20,7 @@ A Node.js native module is an npm package that contains not only JavaScript code
 - npm packages that depend on `.node` binary artifacts
 - local system capabilities that are only accessible in the Node.js environment
 
-Lynxtron supports these modules, but there is one important thing to note: **native modules must be rebuilt for the Lynxtron runtime**.
+Native modules must be compatible with the target Lynxtron runtime, operating system, and architecture. **Modules that depend on the Node.js/V8 ABI need a matching build.** Modules using only Node-API may reuse a compatible prebuilt binary when the runtime supports its Node-API version and its native dependencies are available; not every `.node` file requires recompilation.
 
 If a module was compiled only for your regular local Node.js environment, you may run into ABI mismatch errors when loading it in Lynxtron. A typical error looks like this:
 
@@ -53,7 +52,9 @@ Then run `@lynx-js/lynxtron-rebuild` to rebuild native modules for Lynxtron:
 npx @lynx-js/lynxtron-rebuild
 ```
 
-After rebuild is complete, import the native module in the Node.js environment:
+The tool may reuse a compatible Node-API prebuild instead of compiling from source. A successful exit or “Successfully rebuilt” message alone does not prove that a new binary was compiled. Check the build log and the actual loaded `.node` path, then exercise the module inside Lynxtron and the packaged app, not only in your system Node.js.
+
+Import the native module in the app's Node.js environment:
 
 ```typescript
 import nativeModule from 'native-module';
@@ -75,51 +76,49 @@ If you need to expose Node.js capabilities to Lynx UI, use bridge messaging or [
 :::
 
 <Go
-  img={nodejsNativeModulesGif}
+  nativeFramework="lynxtron"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-nodejs-native-modules.gif"
   example="todolist"
   defaultFile="src/app/App.tsx"
   deepLinkUrl="lynxtron-go://showcase/open?id=%40lynxtron-examples%2Ftodolist"
   webPreview={false}
 />
 
-This example uses `better-sqlite3` to build a **Todo List application**:
+This example uses `sqlite3` to build a **Todo List application**:
 
-- **Node.js side**: use `better-sqlite3` to persist to-do items in a local SQLite database
-- **Lynx side**: call Node.js logic through communication APIs, display the to-do list, and support adding, toggling completion state, and deleting items
+- **Node.js side**: persist to-do items in `todos.db` under the app's user data directory using the callback-based `sqlite3` API.
+- **Lynx side**: call Node.js logic through communication APIs to add, list, toggle, and delete items.
 
-The Node.js main process in this example imports `better-sqlite3` and initializes the database and schema:
+The following excerpt shows the example's schema initialization. The full [Todo source](https://github.com/lynx-community/lynxtron-examples/blob/main/showcases/todolist/src/main/desktop/main.ts) also wraps `db.run` and `db.all` in Promises, waits for `dbReady` in bridge handlers, and converts `completed` to a boolean and `created_at` to `createdAt` when listing rows.
 
-```typescript {3}
+```typescript
 // src/main/desktop/main.ts
+import { app } from '@lynx-js/lynxtron';
+import fs from 'node:fs';
 import path from 'node:path';
-import Database from 'better-sqlite3';
-import { app, LynxWindow } from '@lynx-js/lynxtron';
+import sqlite3 from 'sqlite3';
 
-const dbPath = path.join(app.getPath('userData'), 'todo.db');
-const db = new Database(dbPath);
+app.whenReady().then(() => {
+  const dir = app.getPath('userData');
+  fs.mkdirSync(dir, { recursive: true });
+  const dbPath = path.join(dir, 'todos.db');
+  const db = new sqlite3.Database(dbPath);
+  db.serialize();
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS todos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    completed INTEGER NOT NULL DEFAULT 0
-  )
-`);
+  const dbReady = new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS todos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )`,
+      (err) => (err ? reject(err) : resolve()),
+    );
+  });
 
-const listStmt = db.prepare(`
-  SELECT id, title, completed
-  FROM todos
-  ORDER BY id DESC
-`);
-
-...
-
-function listTodos() {
-  return listStmt.all().map((todo: any) => ({
-    ...todo,
-    completed: Boolean(todo.completed),
-  }));
-}
+  // Register the showcase bridge handlers here; await dbReady before queries.
+});
 ```
 
 ## Related docs

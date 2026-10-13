@@ -74,7 +74,7 @@ export default defineConfig({
         '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
         '@lynx-ui': path.join(__dirname, 'src', 'lynx-ui', 'components'),
-        '@luna': path.join(__dirname, 'src', 'luna', 'index.ts'),
+        '@luna$': path.join(__dirname, 'src', 'luna', 'index.ts'),
       },
     },
     source: {
@@ -151,6 +151,11 @@ export default defineConfig({
   plugins: [
     pluginClientRedirects({
       redirects: [
+        // Preserve locale/version prefixes for the former root-package page.
+        {
+          from: '^(.*)/lynxtron/api/@lynx-js/lynxtron/Variable\\.contextBridge(?:\\.html|\\.mdx)?/?$',
+          to: '$1/lynxtron/api/@lynx-js/lynxtron/context-bridge/Variable.contextBridge.html',
+        },
         {
           from: '/react/routing.html',
           to: '/react/routing/react-router.html',

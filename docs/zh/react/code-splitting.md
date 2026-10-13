@@ -101,7 +101,7 @@ export function App() {
 
 ## 懒加载独立项目
 
-你还可以延迟加载在独立的 Rspeedy 项目中构建的模块。
+你还可以延迟加载在独立的 Rsbuild 项目中构建的模块。
 
 ### 术语表
 
@@ -110,21 +110,26 @@ export function App() {
 
 ### 创建一个独立的生产者项目
 
-使用 [`create-rspeedy`](https://www.npmjs.com/package/create-rspeedy) 创建一个独立项目：
+使用 [`create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 创建一个独立的 Rsbuild 项目：
 
 ```bash
-pnpm create rspeedy@latest
+pnpm create @lynx-js/lynx@latest --template rsbuild
 ```
 
-在 `lynx.config.js` 中将 `pluginReactLynx` 的 [`experimental_isLazyBundle`] 选项设置为 `true`：
+在 `rsbuild.config.ts` 中将 `pluginReactLynx` 的 [`experimental_isLazyBundle`] 选项设置为 `true`：
 
-```js
+```ts title="rsbuild.config.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
+  environments: {
+    lynx: {},
+  },
   source: {
-    entry: './src/index.tsx',
+    entry: {
+      main: './src/index.tsx',
+    },
   },
   plugins: [
     pluginReactLynx({
@@ -211,21 +216,26 @@ root.render(
 );
 ```
 
-然后，创建一个单独的 `lynx.config.consumer.js`：
+然后，创建一个单独的 `rsbuild.config.consumer.ts`：
 
-```js title="lynx.config.consumer.js"
+```ts title="rsbuild.config.consumer.ts"
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig } from '@rsbuild/core';
 
 export default defineConfig({
+  environments: {
+    lynx: {},
+  },
   source: {
-    entry: './src/Consumer.tsx',
+    entry: {
+      main: './src/Consumer.tsx',
+    },
   },
   plugins: [pluginReactLynx()],
 });
 ```
 
-使用 `npx rspeedy dev --config lynx.config.consumer.js` 来开始开发生产者项目。
+使用 `npx rsbuild dev --config rsbuild.config.consumer.ts` 来开始开发生产者项目。
 
 ## 懒加载 bundle 的加载器
 

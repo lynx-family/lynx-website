@@ -1,9 +1,10 @@
 import path from 'path';
 import { useMemo } from 'react';
+import { withBase } from '@rspress/core/runtime';
 import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
-import { ExamplePreview as SSGComponent } from './example-preview-ssg';
+import { ExamplePreviewSSG as SSGComponent } from '@lynx-js/go-web/ssg';
 import Callout from '../Callout';
 
 const ErrorComponent = ({
@@ -68,6 +69,12 @@ export function Go(props: GoProps) {
       ...baseConfig,
       nativeFrameworks: {
         lynxtron: {
+          learnMoreUrl: {
+            // TODO: Remove site-level base resolution once go-web handles
+            // nativeFrameworks URLs through its Rspress adapter.
+            en: withBase('/lynxtron/go'),
+            cn: withBase('/zh/lynxtron/go'),
+          },
           downloadUrl: resolveLynxtronDownloadUrl(),
         },
       },
@@ -77,7 +84,20 @@ export function Go(props: GoProps) {
 
   return (
     <GoConfigProvider config={config}>
-      <GoBase {...props} />
+      <GoBase
+        {...props}
+        langAlias={{
+          cc: 'cpp',
+          cxx: 'cpp',
+          h: 'cpp',
+          hh: 'cpp',
+          hpp: 'cpp',
+          hxx: 'cpp',
+          m: 'objective-c',
+          mm: 'objective-cpp',
+          ...props.langAlias,
+        }}
+      />
     </GoConfigProvider>
   );
 }

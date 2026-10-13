@@ -1,19 +1,28 @@
-import { useI18n, usePageData } from '@rspress/core/runtime';
+import { useI18n, usePage } from '@rspress/core/runtime';
 
 interface Props {
   /**
-   * If path is not provided, we will use the current page path and assume it's a `md` or `mdx` file.
+   * Repository-relative source path. When omitted, the current Rspress
+   * `pagePath` is used under `docs/` and is expected to retain its `.md` or
+   * `.mdx` extension.
    */
   path?: string;
+  /**
+   * Absolute URL for content maintained outside this repository. It takes
+   * precedence over `path` and disables the repository-specific Cloud IDE link.
+   */
+  sourceUrl?: string;
 }
 
 /**
- * TODO(xuan.huang):
- * - [] tweak the style
- * - [] use it within the new APITable
+ * Render links for viewing or editing the source behind documentation content.
+ *
+ * Local sources use the configured repository and Cloud IDE base URLs.
+ * External sources expose only their canonical source URL because they cannot
+ * be opened through this repository's Cloud IDE integration.
  */
-export default function EditThis({ path }: Props) {
-  const { page } = usePageData();
+export default function EditThis({ path, sourceUrl }: Props) {
+  const { page } = usePage();
   const t = useI18n();
 
   let basePath = '';
@@ -22,11 +31,15 @@ export default function EditThis({ path }: Props) {
   } else {
     basePath = `${path}`;
   }
-  const sourcePath = `${process.env.DOC_GIT_BASE_URL}/${basePath}`;
+  const sourcePath =
+    sourceUrl ||
+    (process.env.DOC_GIT_BASE_URL
+      ? `${process.env.DOC_GIT_BASE_URL}/${basePath}`
+      : undefined);
 
   return (
     <div className="flex gap-2 items-center text-sm">
-      {process.env.DOC_GIT_BASE_URL && (
+      {sourcePath && (
         <a
           href={sourcePath}
           target="_blank"
@@ -37,7 +50,7 @@ export default function EditThis({ path }: Props) {
           {t('edit.source')}
         </a>
       )}
-      {process.env.CODE_IDE_BASE_URL && (
+      {!sourceUrl && process.env.CODE_IDE_BASE_URL && (
         <a
           href={`${process.env.CODE_IDE_BASE_URL}/${basePath}`}
           target="_blank"

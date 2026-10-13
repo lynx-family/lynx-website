@@ -38,10 +38,28 @@ import { Go } from '@lynx';
 | :----------------- | :------- | :--------------- | :---------------------------------------------------------------------------------------------------------- |
 | `example`          | `string` | **Required**     | The ID of the example to load (e.g., `"view"`). Matches the directory name in `docs/public/lynx-examples/`. |
 | `defaultFile`      | `string` | `"package.json"` | The file path to display in the code editor initially.                                                      |
-| `defaultEntryName` | `string` | -                | The specific entry point to run (if the example has multiple bundles).                                      |
-| `img`              | `string` | -                | URL to a custom preview image (overrides the default `preview-image.png`).                                  |
+| `defaultEntryName` | `string` | -                | An exact `templateFiles[].name` to run. Recommended when choosing among multiple entries.                   |
+| `img`              | `string` | -                | Custom preview image as an absolute HTTPS URL whose origin is in the approved documentation CDN allowlist.  |
 | `highlight`        | `object` | -                | Line highlighting configuration. Format: `{ "path/to/file": "start-end" }`.                                 |
 | `schema`           | `string` | -                | Custom schema URL pattern for the preview. Use `{{{url}}}` as a placeholder for the bundle URL.             |
+
+#### Entry Selection
+
+`scripts/lynx-example.js` creates one `templateFiles` item per Lynx bundle.
+By default, its `name` is the bundle basename without `.lynx.bundle`: for
+example, `dist/main.lynx.bundle` becomes `name: "main"`.
+When basenames collide, the generator prefixes enough parent path segments to
+produce unique suffixes. For example, `dist/a/main.lynx.bundle` and
+`output/a/main.lynx.bundle` become `dist/a/main` and `output/a/main`.
+Generation fails if artifact paths still cannot produce unique names.
+`defaultEntryName` selects that logical name exactly; it is not a filename or
+an array index.
+
+When no entry name is provided, go-web falls back to `templateFiles[0]`.
+The generator does not assign special meaning to that position or explicitly
+sort the entry list. Multi-entry examples should set `defaultEntryName` so the
+selected entry does not depend on that fallback. A name that does not exist
+does not silently fall back to the first entry.
 
 ### Advanced Example
 

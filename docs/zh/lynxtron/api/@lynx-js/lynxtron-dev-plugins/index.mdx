@@ -1,6 +1,6 @@
 # @lynx-js/lynxtron-dev-plugins
 
-`@lynx-js/lynxtron-dev-plugins` 提供开发期构建插件，用于协调 RSpeedy、Rspack 和 Lynxtron 进程启动。
+`@lynx-js/lynxtron-dev-plugins` 提供构建插件，用于协调 RSpeedy、Rspack 和 Lynxtron 进程启动。
 
 ## RSpeedy Dev Ready 插件
 
@@ -48,12 +48,13 @@ export default {
 };
 ```
 
-每次 Rspack 编译完成后，插件会启动或重启 Lynxtron 进程。
+仅当 `isDev` 为 `true` 且提供 `entry` 时，插件才会在编译完成后启动或重启 Lynxtron 进程。AutoLink 默认开启，在开发和生产构建中均生效；仅使用 AutoLink 时无需设置 `entry`。
 
-| 选项      | 类型                     | 说明                                                                                              |
-| --------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
-| `entry`   | `string`                 | 必填，传给 Lynxtron CLI 的应用入口。                                                              |
-| `isDev`   | `boolean`                | 开发模式标记；为 `true` 时关闭 minimize。插件会将 Rspack 的 `optimization.nodeEnv` 设为 `false`。 |
-| `args`    | `string[]`               | 传给 Lynxtron CLI 的额外参数。                                                                    |
-| `env`     | `Record<string, string>` | 传给 Lynxtron 子进程的额外环境变量。                                                              |
-| `command` | `string`                 | Lynxtron 启动命令，默认是 `lynxtron`。                                                            |
+| 选项       | 类型                     | 说明                                                                                              |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| `entry`    | `string`                 | 可选，传给 Lynxtron CLI 的应用入口；开发期自动启动时需要设置。                                    |
+| `isDev`    | `boolean`                | 开发模式标记；为 `true` 时关闭 minimize。插件会将 Rspack 的 `optimization.nodeEnv` 设为 `false`。 |
+| `args`     | `string[]`               | 传给 Lynxtron CLI 的额外参数。                                                                    |
+| `autolink` | `boolean`                | 是否启用原生库 AutoLink，默认 `true`。                                                            |
+| `env`      | `Record<string, string>` | 传给 Lynxtron 子进程的额外环境变量。                                                              |
+| `command`  | `string`                 | Lynxtron 启动命令，默认是 `lynxtron`。                                                            |

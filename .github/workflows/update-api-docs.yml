@@ -68,6 +68,8 @@ jobs:
         run: bash scripts/update-api-docs.sh .lynx-stack
 
       - name: Validate build
+        # Bot pull request workflows wait for maintainer approval. Run the
+        # build here as well so the generated pull request has an early result.
         id: build
         continue-on-error: true
         run: pnpm run build
@@ -92,7 +94,7 @@ jobs:
           body: |
             Automated daily regeneration of the lynx-stack-derived API docs.
 
-            **Build validation:** `${{ steps.build.outcome }}` (GITHUB_TOKEN PRs don't trigger CI, so the build is run inside this job).
+            **Pre-PR build validation:** `${{ steps.build.outcome }}` (pull request CI waits for maintainer approval, so the build is also run inside this job for earlier feedback).
 
             Covered:
             - `rspeedy/*` — API Extractor + API Documenter, from lynx-stack `main`.

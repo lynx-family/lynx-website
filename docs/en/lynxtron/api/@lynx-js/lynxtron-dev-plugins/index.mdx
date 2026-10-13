@@ -1,6 +1,6 @@
 # @lynx-js/lynxtron-dev-plugins
 
-`@lynx-js/lynxtron-dev-plugins` provides development-time build plugins for coordinating RSpeedy, Rspack, and Lynxtron process startup.
+`@lynx-js/lynxtron-dev-plugins` provides build plugins for coordinating RSpeedy, Rspack, and Lynxtron process startup.
 
 ## RSpeedy Dev Ready Plugin
 
@@ -48,12 +48,13 @@ export default {
 };
 ```
 
-After each Rspack compilation completes, the plugin starts or restarts the Lynxtron process.
+The plugin starts or restarts Lynxtron after compilation only when `isDev` is `true` and `entry` is provided. AutoLink is enabled by default in development and production builds; using AutoLink alone does not require `entry`.
 
-| Option    | Type                     | Description                                                                                                         |
-| --------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `entry`   | `string`                 | Required. The app entry passed to the Lynxtron CLI.                                                                 |
-| `isDev`   | `boolean`                | Development mode flag. When `true`, minimize is disabled. The plugin sets Rspack `optimization.nodeEnv` to `false`. |
-| `args`    | `string[]`               | Extra arguments passed to the Lynxtron CLI.                                                                         |
-| `env`     | `Record<string, string>` | Extra environment variables passed to the Lynxtron child process.                                                   |
-| `command` | `string`                 | Lynxtron launch command. Defaults to `lynxtron`.                                                                    |
+| Option     | Type                     | Description                                                                                                         |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `entry`    | `string`                 | Optional. The app entry passed to the Lynxtron CLI; required for automatic development-time startup.                |
+| `isDev`    | `boolean`                | Development mode flag. When `true`, minimize is disabled. The plugin sets Rspack `optimization.nodeEnv` to `false`. |
+| `args`     | `string[]`               | Extra arguments passed to the Lynxtron CLI.                                                                         |
+| `autolink` | `boolean`                | Enable native-library AutoLink. Defaults to `true`.                                                                 |
+| `env`      | `Record<string, string>` | Extra environment variables passed to the Lynxtron child process.                                                   |
+| `command`  | `string`                 | Lynxtron launch command. Defaults to `lynxtron`.                                                                    |

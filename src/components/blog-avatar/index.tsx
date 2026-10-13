@@ -7,7 +7,7 @@ import {
 } from '@douyinfe/semi-icons';
 import { Avatar, Popover } from '@douyinfe/semi-ui';
 import { useLang } from '@rspress/core/runtime';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import originListData from './authors.json';
 import originGroupData from './groups.json';
 import styles from './index.module.less';
@@ -147,11 +147,30 @@ const GroupMembersCard = ({ members }: { members: Author[] }) => {
 
 const GroupCard = ({ group, members }: { group: Group; members: Author[] }) => {
   const lang = useLang();
+  const [mounted, setMounted] = useState(false);
   const displayName = lang === 'zh' ? group.name_zh : group.name;
   const memberCount =
     lang === 'zh'
       ? `${members.length} 位成员`
       : `${members.length} member${members.length === 1 ? '' : 's'}`;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const card = (
+    <span className={styles['avatar-item']}>
+      <StackedAvatars members={members} />
+      <div className={styles['avatar-text']}>
+        <span className={styles['avatar-name-row']}>
+          <span className={styles['avatar-name']}>{displayName}</span>
+        </span>
+        <span className={styles['avatar-role']}>{memberCount}</span>
+      </div>
+    </span>
+  );
+
+  if (!mounted) return card;
 
   return (
     <Popover
@@ -160,15 +179,7 @@ const GroupCard = ({ group, members }: { group: Group; members: Author[] }) => {
       trigger="hover"
       content={<GroupMembersCard members={members} />}
     >
-      <span className={styles['avatar-item']}>
-        <StackedAvatars members={members} />
-        <div className={styles['avatar-text']}>
-          <span className={styles['avatar-name-row']}>
-            <span className={styles['avatar-name']}>{displayName}</span>
-          </span>
-          <span className={styles['avatar-role']}>{memberCount}</span>
-        </div>
-      </span>
+      {card}
     </Popover>
   );
 };

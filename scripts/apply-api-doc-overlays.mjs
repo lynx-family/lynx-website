@@ -21,7 +21,7 @@ const apiReferenceExamples = [
     goProps: {
       example: 'react-apis',
       defaultFile: 'src/clone-element/index.tsx',
-      defaultEntryFile: 'dist/clone-element.lynx.bundle',
+      defaultEntryName: 'clone-element',
       entry: 'src/clone-element',
       defaultTab: 'web',
     },
@@ -33,7 +33,7 @@ const apiReferenceExamples = [
     goProps: {
       example: 'react-apis',
       defaultFile: 'src/create-element/index.tsx',
-      defaultEntryFile: 'dist/create-element.lynx.bundle',
+      defaultEntryName: 'create-element',
       entry: 'src/create-element',
       defaultTab: 'web',
     },
@@ -45,7 +45,7 @@ const apiReferenceExamples = [
     goProps: {
       example: 'react-apis',
       defaultFile: 'src/create-portal/index.tsx',
-      defaultEntryFile: 'dist/create-portal.lynx.bundle',
+      defaultEntryName: 'create-portal',
       entry: 'src/create-portal',
       defaultTab: 'web',
     },

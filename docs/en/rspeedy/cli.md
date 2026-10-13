@@ -151,7 +151,7 @@ Options:
   -h, --help            display help for command
 ```
 
-When you run the command `rspeedy inspect` in the project root directory, the following files will be generated in the `dist/.rspeedy` directory of the project:
+When you run the command `rspeedy inspect` in the project root directory, the following files will be generated in the `dist/.rsbuild` directory of the project:
 
 - `rspeedy.config.js`: Represents the Rspeedy configuration used during the build.
 - `rsbuild.config.mjs`: Represents the Rsbuild configuration used during the build.
@@ -160,14 +160,11 @@ When you run the command `rspeedy inspect` in the project root directory, the fo
 ```text
 ➜ rspeedy inspect
 
-Inspect config succeed, open following files to view the content:
-
-  - Rspeedy Config: /project/dist/.rsbuild/rspeedy.config.mjs
+success config inspection completed, generated files:
+  - Rsbuild config: /project/dist/.rsbuild/rsbuild.config.mjs
   - Rspack Config (lynx): /project/dist/.rsbuild/rspack.config.lynx.mjs
-
-Inspect Rspeedy config succeed, open following files to view the content:
-
-  - Rspeedy: /Users/colin/rspeedy/examples/react/dist/rspeedy-rspack/.rsbuild/rspeedy.config.js
+success Inspect Rspeedy config succeed, open following files to view the content:
+  - Rspeedy: /project/dist/.rsbuild/rspeedy.config.js
 ```
 
 ### Specifying Mode

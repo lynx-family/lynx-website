@@ -14,6 +14,8 @@ library 工程创建和包结构说明请查看
 - Lynx JS runtime 使用的 weak N-API 头文件。
 - `lynx/registration.h`，用于 Lynx embedder 静态注册。
 
+C++ wrappers 由公开 C API 支撑，API 语义请参阅 [Lynx Native API reference](https://lynxjs.org/next/api/lynx-native-api/lynx-view.html)。相关用法另请参阅[使用原生模块](https://lynxjs.org/next/guide/use-native-modules.html?platform=node-api)和[自定义原生组件](https://lynxjs.org/next/guide/custom-native-component.html?platform=desktops)。
+
 该包不提供 Lynxtron 专用 addon 宏。Lynxtron 通过 `process.dlopen(...)` 加载共享库来消费 Lynx 原生能力库；AutoLink 可以为 host 侧生成这段加载代码。
 
 ## 在 CMake 中使用
@@ -38,9 +40,15 @@ Lynx 原生能力库通过静态注册宏注册能力：
 void BindDemoModule(napi_env env, napi_value exports);
 lynx_native_view_t* CreateDemoView(void* opaque);
 
+napi_value CreateDemoModule(napi_env env, napi_value exports,
+                            const char* module_name, void* opaque) {
+  BindDemoModule(env, exports);
+  return exports;
+}
+
 LYNX_REGISTER_NATIVE_MODULE(
     "DemoModule",
-    BindDemoModule,
+    CreateDemoModule,
     nullptr)
 
 LYNX_REGISTER_ELEMENT(
@@ -50,6 +58,8 @@ LYNX_REGISTER_ELEMENT(
     false,
     nullptr)
 ```
+
+原生模块 creator 接收四个参数，并返回 `napi_value`。这里的 `CreateDemoModule` 调用你的 `BindDemoModule` 实现来填充 `exports`，然后返回它。请在 feature 源码中实现 `BindDemoModule` 和 `CreateDemoView`。
 
 `native-module` 和 `element` 的注册应分别放在各自 feature 源码旁边。一个包可以只包含其中一种 feature，也可以同时包含两种。
 

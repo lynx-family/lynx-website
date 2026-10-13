@@ -17,8 +17,7 @@
  *     "dist/main.lynx.bundle",
  *     "src/App.tsx",
  *     "src/index.tsx",
- *     "src/rspeedy-env.d.ts",
- *     "lynx.config.ts",
+ *     "rsbuild.config.ts",
  *     "package.json",
  *     "README.md"
  *   ],
@@ -31,12 +30,14 @@
  *   "previewImage": "preview-image.png"
  * }
  *
- * The script also creates a symbolic link to the example files in a public directory for easy access.
+ * The script also copies the example files into the public output directory.
  */
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const {
+  assertExampleOutputBatchOwnership,
+} = require('./example-output-id-collision');
 
 const currentDir = process.cwd();
 const examplesDir = path.join(
@@ -53,25 +54,17 @@ const exampleGitBaseUrl =
   'https://github.com/lynx-family/lynx-examples/tree/main';
 
 // Optional: inject a top-level `nativeFramework` field into every generated
-// example-metadata.json (e.g. "lynxtron"). go-web reads this to pick the
+// example-metadata.json. go-web reads this to pick the
 // correct deep-link scheme and hide the QR tab for native-only examples.
 const nativeFramework = process.env.NATIVE_FRAMEWORK || '';
 
-const isPackCopy = true;
 const linkPath = path.join(
   currentDir,
   process.env.LINK_PATH || 'docs/public/lynx-examples',
 );
 const ignoreDirs = ['node_modules', '.git', '.turbo'];
 const ignoreFiles = ['.DS_Store', 'LICENSE'];
-const exampleFixups = {
-  layout: [
-    {
-      from: 'gird item 3',
-      to: 'grid item 3',
-    },
-  ],
-};
+const previewImageFilePattern = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
 
 /**
  * Get all files in the specified directory
@@ -102,102 +95,40 @@ function getAllFiles(dirPath, arrayOfFiles) {
   return arrayOfFiles;
 }
 
-function lnExampleFiles(exampleDir, lnExampleDir) {
-  if (!fs.existsSync(lnExampleDir)) {
-    fs.mkdirSync(lnExampleDir, { recursive: true });
-  }
-
-  const files = fs.readdirSync(exampleDir);
-  const excludeArgs = ignoreDirs.map((d) => `--exclude '${d}'`).join(' ');
-  const excludeFileArgs = ignoreFiles.map((f) => `--exclude '${f}'`).join(' ');
-
-  files.forEach((file) => {
-    const fullPath = path.join(exampleDir, file);
-    const targetPath = path.join(lnExampleDir, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      const dirName = path.basename(fullPath);
-      if (ignoreDirs.includes(dirName)) {
-        return;
+/**
+ * Copy one package into its already-approved output directory.
+ */
+function copyExampleFiles(sourceDir, targetDir) {
+  fs.cpSync(sourceDir, targetDir, {
+    recursive: true,
+    dereference: true,
+    preserveTimestamps: true,
+    force: true,
+    filter: (source) => {
+      if (source === sourceDir) {
+        return true;
       }
-      if (isPackCopy) {
-        // Use rsync to exclude nested node_modules/.git/.turbo and ignored files.
-        // cp -Lrfp would copy everything including deep node_modules (e.g.
-        // dist/desktop/node_modules/sqlite3), bloating the public deploy.
-        execSync(
-          `rsync -aL ${excludeArgs} ${excludeFileArgs} "${fullPath}/" "${targetPath}/"`,
-        );
-      } else {
-        fs.symlinkSync(fullPath, targetPath);
-      }
-    } else {
-      if (ignoreFiles.includes(file)) {
-        return;
-      }
-      if (isPackCopy) {
-        execSync(`cp -Lfp "${fullPath}" "${targetPath}"`);
-      } else {
-        fs.symlinkSync(fullPath, targetPath);
-      }
-    }
-  });
-}
-
-function replaceBufferContent(buffer, from, to) {
-  const fromBuffer = Buffer.from(from);
-  const toBuffer = Buffer.from(to);
-
-  if (fromBuffer.length !== toBuffer.length) {
-    throw new Error(`Fixup replacement length mismatch: "${from}" -> "${to}"`);
-  }
-
-  let index = buffer.indexOf(fromBuffer);
-  if (index === -1) {
-    return { buffer, changed: false };
-  }
-
-  const nextBuffer = Buffer.from(buffer);
-  while (index !== -1) {
-    toBuffer.copy(nextBuffer, index);
-    index = nextBuffer.indexOf(fromBuffer, index + toBuffer.length);
-  }
-
-  return { buffer: nextBuffer, changed: true };
-}
-
-function applyExampleFixups(example, exampleDir) {
-  const fixups = exampleFixups[example];
-  if (!fixups?.length) {
-    return;
-  }
-
-  const files = getAllFiles(exampleDir, []);
-  files.forEach((filePath) => {
-    let buffer = fs.readFileSync(filePath);
-    let changed = false;
-
-    fixups.forEach(({ from, to }) => {
-      const result = replaceBufferContent(buffer, from, to);
-      if (result.changed) {
-        changed = true;
-        buffer = result.buffer;
-      }
-    });
-
-    if (changed) {
-      fs.writeFileSync(filePath, buffer);
-    }
+      const name = path.basename(source);
+      return !ignoreDirs.includes(name) && !ignoreFiles.includes(name);
+    },
   });
 }
 
 /**
  * Get all .lynx.bundle|.web.bundle files
  * @param {Array} allFiles - An array of all file paths
+ * @param {string | undefined} webHostFile - Optional full Web app entry
+ * @param {(file: string) => boolean} templateFileFilter - Select entry bundles
  * @returns {Array} - An array of template files
  */
-function getTemplateFiles(allFiles) {
+function getTemplateFiles(
+  allFiles,
+  webHostFile,
+  templateFileFilter = () => true,
+) {
   const entries = [];
   allFiles.forEach((file) => {
-    if (file.endsWith(lynxEntryFileName)) {
+    if (file.endsWith(lynxEntryFileName) && templateFileFilter(file)) {
       const parts = file.split('/');
       const fileName = parts[parts.length - 1];
       const baseName = fileName.replace(lynxEntryFileName, '');
@@ -214,112 +145,219 @@ function getTemplateFiles(allFiles) {
       if (allFiles.includes(webFile)) {
         entry.webFile = webFile;
       }
+      if (webHostFile && allFiles.includes(webHostFile)) {
+        entry.webHostFile = webHostFile;
+      }
       entries.push(entry);
     }
   });
 
-  // Deduplicate names: when multiple bundles share the same basename
-  // (e.g. dist/desktop/main.lynx.bundle and output/bundle/lynx/main.lynx.bundle),
-  // prefix each with its parent directory to guarantee unique keys.
-  const nameCounts = {};
-  entries.forEach((e) => {
-    nameCounts[e.name] = (nameCounts[e.name] || 0) + 1;
+  // Preserve basename-only names for the common case. Path-derived names are
+  // introduced only within collision groups so existing selectors stay stable.
+  const entriesByName = new Map();
+  entries.forEach((entry) => {
+    const group = entriesByName.get(entry.name) ?? [];
+    group.push(entry);
+    entriesByName.set(entry.name, group);
   });
-  entries.forEach((e) => {
-    if (nameCounts[e.name] > 1) {
-      const parts = e.file.split('/');
-      const parentDir = parts.length > 1 ? parts[parts.length - 2] : '';
-      if (parentDir) {
-        e.name = `${parentDir}/${e.name}`;
+
+  for (const group of entriesByName.values()) {
+    if (group.length < 2) {
+      continue;
+    }
+    const states = group.map((entry) => {
+      const segments = entry.file
+        .slice(0, -lynxEntryFileName.length)
+        .split('/')
+        .filter(Boolean);
+      return {
+        entry,
+        segments,
+        // The basename is already known to collide. Start with its parent plus
+        // basename, which is the shortest suffix that can distinguish it.
+        depth: Math.min(2, segments.length),
+      };
+    });
+
+    while (true) {
+      const statesByCandidate = new Map();
+      states.forEach((state) => {
+        const candidate = state.segments.slice(-state.depth).join('/');
+        const candidates = statesByCandidate.get(candidate) ?? [];
+        candidates.push(state);
+        statesByCandidate.set(candidate, candidates);
+      });
+      const collisions = [...statesByCandidate.values()].filter(
+        (candidates) => candidates.length > 1,
+      );
+      if (collisions.length === 0) {
+        states.forEach((state) => {
+          state.entry.name = state.segments.slice(-state.depth).join('/');
+        });
+        break;
+      }
+
+      // Grow only candidates that still collide. Candidates already unique at
+      // a shorter depth keep the shortest stable suffix.
+      let changed = false;
+      collisions.forEach((candidates) => {
+        candidates.forEach((state) => {
+          if (state.depth < state.segments.length) {
+            state.depth += 1;
+            changed = true;
+          }
+        });
+      });
+      if (!changed) {
+        const files = collisions[0].map(({ entry }) => entry.file).join(', ');
+        throw new Error(
+          `Could not create unique template entry names: ${files}`,
+        );
       }
     }
+  }
+
+  // A path-derived name from one basename group can still equal an untouched
+  // name from another group. Enforce uniqueness across the final metadata.
+  const finalNames = new Set();
+  entries.forEach((entry) => {
+    if (finalNames.has(entry.name)) {
+      throw new Error(`Duplicate template entry name: ${entry.name}`);
+    }
+    finalNames.add(entry.name);
   });
 
   return entries;
 }
 
 /**
- * Sort files with directories first
+ * Sort the metadata code-file list with nested paths before root-level files.
+ *
+ * This ordering is only used by metadata.files; templateFiles keeps its
+ * separate discovery order.
+ *
  * @param {Array} files - An array of file paths
  * @returns {Array} - An array of sorted file paths
  */
 function sortFilesByDirectoryFirst(files) {
-  // 分离目录和文件
+  // Separate nested paths from files at the example root.
   const directories = files.filter((file) => file.includes('/'));
   const regularFiles = files.filter((file) => !file.includes('/'));
 
-  // 按字母顺序排序
+  // Sort each group alphabetically.
   directories.sort((a, b) => a.localeCompare(b));
   regularFiles.sort((a, b) => a.localeCompare(b));
 
-  // 合并结果
+  // Keep nested paths grouped before root-level files.
   return [...directories, ...regularFiles];
 }
 
 /**
- * Parse example data and generate corresponding JSON files
+ * Collect immutable source-to-output records without touching generated data.
  */
-function parseExampleData() {
-  if (removeLinkPath && fs.existsSync(linkPath)) {
+function collectExampleRecords(examplesRoot) {
+  return fs.readdirSync(examplesRoot).flatMap((outputId) => {
+    const sourceDir = path.join(examplesRoot, outputId);
+    const targetDir = path.join(linkPath, outputId);
+    const stats = fs.statSync(sourceDir);
+    if (!stats.isDirectory()) {
+      console.warn('exampleDir is not a directory', sourceDir);
+      return [];
+    }
+
+    const packageJSONPath = path.join(sourceDir, 'package.json');
+    if (!fs.existsSync(packageJSONPath)) {
+      console.warn('package.json not found', packageJSONPath);
+      return [];
+    }
+
+    return [
+      {
+        outputId,
+        sourceDir,
+        targetDir,
+        packageJSON: JSON.parse(fs.readFileSync(packageJSONPath, 'utf8')),
+      },
+    ];
+  });
+}
+
+/**
+ * Generate flat example outputs through collect, preflight, and materialize
+ * phases. No generated data is changed until the complete batch is approved.
+ */
+function parseExampleData({
+  examplesDir: sourceDir = examplesDir,
+  removeLinkPath: clearOutput = removeLinkPath,
+  exampleGitBaseUrl: gitBaseUrl = exampleGitBaseUrl,
+  nativeFramework: framework = nativeFramework,
+  webHostFiles = {},
+  templateFileFilter,
+} = {}) {
+  // Phase 1: collect source manifests and their intended flat output IDs.
+  const exampleRecords = collectExampleRecords(sourceDir);
+
+  // Phase 2: validate the complete batch without modifying generated data.
+  assertExampleOutputBatchOwnership(exampleRecords, {
+    checkExistingTargets: !clearOutput,
+  });
+
+  if (clearOutput && fs.existsSync(linkPath)) {
     fs.rmSync(linkPath, { recursive: true, force: true });
   }
   fs.mkdirSync(linkPath, { recursive: true });
 
-  const examples = fs.readdirSync(examplesDir);
+  // Phase 3: replace approved outputs and write their metadata.
+  exampleRecords.forEach(({ outputId, sourceDir, targetDir, packageJSON }) => {
+    // Every approved target is generated data. Replace it instead of merging
+    // with an incomplete or stale output from an earlier run.
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    copyExampleFiles(sourceDir, targetDir);
+    const allFiles = getAllFiles(sourceDir, []);
 
-  examples.forEach((example) => {
-    const exampleDir = path.join(examplesDir, example);
-    const lnExampleDir = path.join(linkPath, example);
-    // check exampleDir is a directory
-    const stats = fs.statSync(exampleDir);
-    if (!stats.isDirectory()) {
-      console.warn('exampleDir is not a directory', exampleDir);
-      return;
-    }
-    // check package.json exists
-    const packageJSONPath = path.join(exampleDir, 'package.json');
-    if (!fs.existsSync(packageJSONPath)) {
-      console.warn('package.json not found', packageJSONPath);
-      return;
-    }
-    const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, 'utf8'));
-    // ln example files
-    lnExampleFiles(exampleDir, lnExampleDir);
-    applyExampleFixups(example, lnExampleDir);
-    // get all files
-    const allFiles = getAllFiles(exampleDir, []);
+    // Metadata paths are URLs, including on Windows build hosts.
+    const files = allFiles.map((file) =>
+      path.relative(sourceDir, file).split(path.sep).join('/'),
+    );
 
-    const files = allFiles.map((file) => path.relative(exampleDir, file));
-
-    // preview image
-    const previewImageReg = /^preview-image\.(png|jpg|jpeg|webp|gif)$/;
-
-    // These files will not be included in the final output
+    // Keep the separately referenced preview image out of the code file list.
     const filesFilters = files.filter(
-      (file) => !previewImageReg.test(file) && file !== 'example-metadata.json',
+      (file) =>
+        !previewImageFilePattern.test(file) && file !== 'example-metadata.json',
     );
 
     const sortedFiles = sortFilesByDirectoryFirst(filesFilters);
-
-    // write example-metadata.json
-    const jsonFilePath = path.join(lnExampleDir, 'example-metadata.json');
-
-    const previewImage = files.find((file) => previewImageReg.test(file));
-    const templateFiles = getTemplateFiles(filesFilters);
-
+    const previewImage = files.find((file) =>
+      previewImageFilePattern.test(file),
+    );
+    const webHostFile = Object.hasOwn(webHostFiles, packageJSON.name)
+      ? webHostFiles[packageJSON.name]
+      : undefined;
+    // TODO: templateFiles currently preserves filesystem discovery order.
+    // go-web falls back to templateFiles[0] when no defaultEntryName is set,
+    // so the first item must not be treated as a stable package declaration.
+    const templateFiles = getTemplateFiles(
+      filesFilters,
+      webHostFile,
+      templateFileFilter,
+    );
     const metadata = {
-      name: packageJSON.repository?.directory || example,
+      name: packageJSON.repository?.directory || outputId,
+      version: packageJSON.version,
       files: sortedFiles,
-      previewImage: previewImage,
-      templateFiles: templateFiles,
-      exampleGitBaseUrl,
+      previewImage,
+      templateFiles,
+      exampleGitBaseUrl: packageJSON.exampleGitBaseUrl || gitBaseUrl,
     };
-    if (nativeFramework) {
-      metadata.nativeFramework = nativeFramework;
+    const exampleNativeFramework = packageJSON.nativeFramework || framework;
+    if (exampleNativeFramework) {
+      metadata.nativeFramework = exampleNativeFramework;
     }
 
-    // write example-metadata.json
-    fs.writeFileSync(jsonFilePath, JSON.stringify(metadata, null, 2));
+    fs.writeFileSync(
+      path.join(targetDir, 'example-metadata.json'),
+      JSON.stringify(metadata, null, 2),
+    );
   });
   console.log('lynx-examples link success');
 }
@@ -327,4 +365,9 @@ function parseExampleData() {
 /**
  * Main function to execute the script
  */
-parseExampleData();
+if (require.main === module) {
+  parseExampleData();
+}
+
+// Keep the naming helper directly testable without running filesystem setup.
+module.exports = { getTemplateFiles, parseExampleData };

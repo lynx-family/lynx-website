@@ -22,6 +22,7 @@ import { FeatureRow } from './feature-row';
 import { Headers } from './headers';
 import './index.scss';
 import { Legend } from './legend';
+import { isCurrentDocPath } from './links';
 import { listFeatures } from './utils';
 
 // Note! Don't import any SCSS here inside *this* component.
@@ -137,6 +138,22 @@ function gatherPlatformsAndBrowsers(
 
 type CellIndex = [number, number];
 
+interface CompatibilityTableProps {
+  /** Dot-separated accessor identifying the selected compatibility record. */
+  query: string;
+  /**
+   * Package-relative JSON module containing the record. Used as the fallback
+   * source path when the record does not declare more specific metadata.
+   */
+  module?: string;
+  /** Compatibility record selected by `query`. */
+  data: BCD.Identifier;
+  /** Platform metadata used to order and label support columns. */
+  browsers: BCD.Platforms;
+  /** Locale used when formatting platform release dates. */
+  locale: string;
+}
+
 function FeatureListAccordion({
   features,
   browsers,
@@ -174,19 +191,20 @@ function FeatureListAccordion({
   );
 }
 
+/**
+ * Render a compatibility record with its platform support and related links.
+ *
+ * Source links prefer metadata attached to the selected record, allowing
+ * generated data to point either to a local package file or to an upstream
+ * source of truth. Documentation links back to the current page are omitted.
+ */
 export default function CompatibilityTable({
   query,
   module,
   data,
   browsers: browserInfo,
   locale,
-}: {
-  query: string;
-  module?: string;
-  data: BCD.Identifier;
-  browsers: BCD.Platforms;
-  locale: string;
-}) {
+}: CompatibilityTableProps) {
   const location = useLocation();
   const t = useI18n();
 
@@ -195,8 +213,9 @@ export default function CompatibilityTable({
   }
 
   const { __compat: compat } = data;
-  // Try to find source_file in data, then __compat
+  // Direct identifier metadata takes precedence over its compatibility block.
   const sourceFile = (data as any).source_file || compat?.source_file;
+  const sourceUrl = (data as any).source_url || compat?.source_url;
   const path = sourceFile
     ? `packages/lynx-compat-data/${sourceFile}`
     : module
@@ -210,7 +229,7 @@ export default function CompatibilityTable({
   // Try to find lynx_path in data, then __compat
   const lynxPath = (data as any).lynx_path || compat?.lynx_path;
   const lynxDocUrl =
-    lynxPath && !location.pathname.endsWith(lynxPath)
+    lynxPath && !isCurrentDocPath(location.pathname, lynxPath)
       ? withBase(`/${lynxPath}`)
       : undefined;
 
@@ -245,7 +264,9 @@ export default function CompatibilityTable({
       <BrowserInfoContext.Provider value={browserInfo}>
         <div className="flex justify-end items-center mb-2">
           <div className="flex gap-2 text-sm">
-            {path && <EditThis path={path} />}
+            {(sourceUrl || path) && (
+              <EditThis path={path} sourceUrl={sourceUrl} />
+            )}
             {lynxDocUrl && (
               <a
                 href={lynxDocUrl}

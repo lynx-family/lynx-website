@@ -40,6 +40,14 @@ Data for CSS e.g. properties like `background`, `color`, etc.
 > 1. **`@lynx-js/css-defines`** — the primary source of truth. To update a property, change the upstream definition and bump the dependency, then regenerate.
 > 2. **`css/properties-manual/`** — hand-maintained files for properties not yet covered by `css-defines` (e.g. `css-variable`, `custom-property`, `filter-properties`). The directory listing itself is the allowlist; no name is hardcoded in the generator. A filename collision between the two sources fails the build, so once `css-defines` adds coverage, remove the corresponding file from `properties-manual/`.
 >
+> Every generated `__compat` block includes source metadata so contributors can
+> find the authoritative input instead of editing generated output:
+>
+> - `source_url` points to the upstream `css-defines` JSON file.
+> - `source_file` identifies a hand-maintained file relative to this package.
+>
+> Nested features receive the same metadata as their parent property.
+>
 > The package `prepack` lifecycle runs the CSS generator and validation before
 > packing or publishing, so generated `css/properties/*.json` files are included
 > in the package tarball without being committed to git.

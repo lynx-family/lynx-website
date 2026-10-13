@@ -42,11 +42,11 @@ dist/
 
 ### 开发环境
 
-开发环境下会生成 `dist/.rspeedy` 目录用于调试：
+开发环境下会生成 `dist/.lynx` 目录用于调试：
 
 ```txt
 dist/
-├── .rspeedy
+├── .lynx
 │   ├── async
 │   │   └── [name]
 │   │       ├── debug-metadata.json
@@ -73,9 +73,9 @@ dist/
 
 开发环境额外生成的文件包括：
 
-- 后台线程脚本（Background Thread Script）：内联到 Bundle 中的脚本，默认输出到 `.rspeedy/[name]/background.js`
-- 主线程脚本（MainThread Thread Script）：默认输出到 `.rspeedy/[name]/main-thread.js`
-- Debug Metadata：反解线上错误所需的元数据（包含 source map、字节码调试信息、UI source map 与构建信息），默认输出到 `.rspeedy/[name]/debug-metadata.json`，详见 [线上错误反解](./map-errors-to-source)
+- 后台线程脚本（Background Thread Script）：内联到 Bundle 中的脚本，默认输出到 `.lynx/[name]/background.js`
+- 主线程脚本（MainThread Thread Script）：默认输出到 `.lynx/[name]/main-thread.js`
+- Debug Metadata：反解线上错误所需的元数据（包含 source map、字节码调试信息、UI source map 与构建信息），默认输出到 `.lynx/[name]/debug-metadata.json`，详见 [线上错误反解](./map-errors-to-source)
 
 ## 修改目录结构
 

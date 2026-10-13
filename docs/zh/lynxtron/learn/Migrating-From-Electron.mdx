@@ -12,9 +12,9 @@ Lynxtron 的主进程 API 基本沿用 Electron，[`LynxWindow`](/lynxtron/api/@
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 主进程生命周期、菜单、托盘、通知、对话框、shell、screen 等      | 通常可以保留大部分代码，改用 Lynxtron 导出的 [`app`](/lynxtron/api/@lynx-js/lynxtron/Variable.app.mdx)、[`Menu`](/lynxtron/api/@lynx-js/lynxtron/Class.Menu.mdx)、[`Tray`](/lynxtron/api/@lynx-js/lynxtron/Class.Tray.mdx)、[`Notification`](/lynxtron/api/@lynx-js/lynxtron/Class.Notification.mdx)、[`dialog`](/lynxtron/api/@lynx-js/lynxtron/Variable.dialog.mdx)、[`shell`](/lynxtron/api/@lynx-js/lynxtron/Variable.shell.mdx)、[`screen`](/lynxtron/api/@lynx-js/lynxtron/Variable.screen.mdx) 等同名或相近 API。                                                                                        |
 | `BrowserWindow` 创建和窗口选项                                  | 替换为 [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx)。[`width`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#width)、[`height`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#height)、[`frame`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#frame)、[`transparent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#transparent)、[`titleBarStyle`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#titlebarstyle) 等窗口选项基本一致。 |
-| `loadFile('index.html')` / `loadURL()` 加载 Web 页面            | 改为加载 Lynx bundle，例如 [`win.loadFile()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#loadfile)`('main.lynx.bundle')`。                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `loadFile('index.html')` / `loadURL()` 加载 Web 页面            | 改为加载 Lynx bundle，例如 [`win.loadFile(bundlePath)`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#loadfile)。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Renderer 中的 HTML、DOM、Web CSS、Web 组件库                    | 需要重写为 Lynx UI。可以使用 ReactLynx、VueLynx 等 Lynx 运行时 DSL，最终渲染为 [`<view>`](/api/elements/built-in/view)、[`<text>`](/api/elements/built-in/text)、[`<image>`](/api/elements/built-in/image) 等 Lynx 元素。                                                                                                                                                                                                                                                                                                                                                                                       |
-| `ipcRenderer` / `ipcMain`                                       | 按通信方向迁移为 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)、`NativeModules.bridge.call` / `NativeModules.bridge.send`，并在主进程侧监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件。                                                                                                                                                                                                                              |
+| `ipcRenderer` / `ipcMain`                                       | 按通信方向迁移为 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)、`NativeModules.bridge.call` / `NativeModules.bridge.send`，并在主进程侧监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) 事件。                                                                                                                                                                                                             |
 | `webPreferences.preload` / `contextBridge`                      | 改为 [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload) + [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) + [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)，通过 [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 暴露 Node.js 能力。                                                                                                                                     |
 | Electron ABI 下的 Node.js 原生模块                              | 需要使用 [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/) 重新构建，见 [Node.js 原生模块](/lynxtron/Native-Libraries/NodeJS-Native-Modules)。                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `electron-builder` 打包配置                                     | 改用 [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) 作为打包入口，通常可以继续使用 `electron-builder.yml`，但需要确认入口目录、资源列表和 Lynx bundle 产物已经指向 Lynxtron 应用。                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -26,13 +26,13 @@ Lynxtron 的主进程 API 基本沿用 Electron，[`LynxWindow`](/lynxtron/api/@
 | ----------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 创建窗口                | [`BrowserWindow`](https://www.electronjs.org/zh/docs/latest/api/browser-window)                     | [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx)                                                                                                                                                                                                                                                                                                                                                     |
 | 窗口构造选项            | `new BrowserWindow({ width, height, frame, transparent })`                                          | `new LynxWindow({` [`width`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#width), [`height`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#height), [`frame`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#frame), [`transparent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#transparent) `})` |
-| 加载 UI                 | `win.loadFile('index.html')`                                                                        | [`win.loadFile()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#loadfile)`('main.lynx.bundle')`                                                                                                                                                                                                                                                                                                                  |
+| 加载 UI                 | `win.loadFile('index.html')`                                                                        | [`win.loadFile(bundlePath)`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#loadfile)                                                                                                                                                                                                                                                                                                                              |
 | 配置 Preload Scripts    | `webPreferences.preload`                                                                            | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload)                                                                                                                                                                                                                                                                                                                         |
 | 暴露 Node.js 能力       | `contextBridge.exposeInMainWorld()`                                                                 | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts)                                                                                                                                                                                                                                                                                          |
 | UI 访问暴露对象         | `window.<api>`                                                                                      | [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)                                                                                                                                                                                                                                                                                                              |
 | 主进程向 UI 推送事件    | `webContents.send()`                                                                                | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                                                                                                                                                                                                                                                                                                                   |
-| UI 调用主进程并等待返回 | `ipcRenderer.invoke()` + `ipcMain.handle()`                                                         | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) 事件                                                                                                                                                                                                                                                                                                     |
-| UI 向主进程发送单向消息 | `ipcRenderer.send()` + `ipcMain.on()`                                                               | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件                                                                                                                                                                                                                                                                                                    |
+| UI 调用主进程并等待返回 | `ipcRenderer.invoke()` + `ipcMain.handle()`                                                         | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) 事件                                                                                                                                                                                                                                                                                             |
+| UI 向主进程发送单向消息 | `ipcRenderer.send()` + `ipcMain.on()`                                                               | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) 事件                                                                                                                                                                                                                                                                                           |
 | 原生模块重建            | [`@electron/rebuild`](https://www.electronjs.org/zh/docs/latest/tutorial/using-native-node-modules) | [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/)                                                                                                                                                                                                                                                                                                                                                  |
 | 打包应用                | [`electron-builder`](https://www.electron.build/)                                                   | [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/)                                                                                                                                                                                                                                                                                                                                                  |
 
@@ -74,9 +74,12 @@ app.whenReady().then(() => {
     },
   });
 
-  win.loadFile('main.lynx.bundle');
+  const bundlePath = path.join(__dirname, 'main.lynx.bundle');
+  win.loadFile(bundlePath);
 });
 ```
+
+示例假定构建后的主进程文件与 `main.lynx.bundle` 位于同一目录，请按实际构建产物布局调整路径。
 
 窗口形态选项可以优先按原 Electron 配置迁移，例如 [`width`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#width)、[`height`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#height)、[`frame`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#frame)、[`transparent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#transparent)、[`titleBarStyle`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#titlebarstyle)、[`trafficLightPosition`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#trafficlightposition)。无边框、透明窗口和自定义标题栏的 Lynx UI 写法见[构建自定义窗口](/lynxtron/learn/Custom-Window-Styles)。
 
@@ -197,23 +200,24 @@ const result = await ipcRenderer.invoke('get-system-info', {
 });
 ```
 
-Lynx UI 侧使用 `NativeModules.bridge.call` 发起调用：
+Lynx UI 侧使用 `NativeModules.bridge.call(method, payload, callback)`。该方法返回 `void`，需要通过回调接收结果，不能直接 await 调用：
 
 ```tsx
 // App.tsx
-const result = await NativeModules.bridge.call('get-system-info', {
-  includeCpuDetail: true,
-});
-renderSystemInfo(result);
+NativeModules.bridge.call(
+  'get-system-info',
+  { includeCpuDetail: true },
+  (result) => {
+    renderSystemInfo(result);
+  },
+);
 ```
 
-Node 主进程通过监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) 事件处理 `bridge.call` 调用，并通过 `event.sendReply` 返回：
+Node 主进程通过监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) 事件处理 `bridge.call` 调用，并通过 `event.sendReply` 返回：
 
 ```typescript
 // main.ts
-import { LynxWindow } from '@lynx-js/lynxtron';
-
-const win = new LynxWindow();
+// 复用上文 app.whenReady() 内的 win，在 win.loadFile() 前注册此监听器。
 
 win.on('-lynx-invoke', (event, methodName, params) => {
   if (methodName === 'get-system-info') {
@@ -244,12 +248,12 @@ Lynx UI 侧通过 [`GlobalEventEmitter`](/lynxtron/learn/Communication-Between-N
 npx @lynx-js/lynxtron-rebuild
 ```
 
-应用打包建议使用 [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/)。它基于 `electron-builder`，可以继续读取 `electron-builder.yml`，但会把 Electron runtime 替换为当前 Lynxtron 依赖对应的 Lynxtron runtime。通常可以把原来的 `electron-builder` 命令改成：
+应用打包建议使用 [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/)。它基于 `electron-builder`，可以继续读取 `electron-builder.yml`，但会把 Electron runtime 替换为当前 Lynxtron 依赖对应的 Lynxtron runtime。建议先按[快速上手](/lynxtron/introduction)创建工程，再迁入业务代码。以下脚本对应当前脚手架的 `lynx.config.ts` 和 `rsbuild.config.ts`，分别构建 Lynx UI 和桌面主进程；已有工程应保留与其构建配置匹配的 `build` 命令，将打包入口替换为 `lynxtron-builder`：
 
 ```json title="package.json"
 {
   "scripts": {
-    "build": "rspeedy build && rspack build",
+    "build": "rspeedy build --environment lynx && rsbuild build --environment desktop",
     "pack": "npm run build && lynxtron-builder --publish never"
   }
 }
@@ -270,7 +274,7 @@ npx @lynx-js/lynxtron-rebuild
 3. 把 `BrowserWindow` 替换为 `LynxWindow`，加载一个最小 Lynx bundle。
 4. 迁移 [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts)，把 UI 需要的 Node.js 能力暴露到 [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)。
 5. 按窗口重写 Renderer UI，把 HTML/DOM/CSS 改成 Lynx 元素和样式；如果需要渐进式迁移，可以先用 `<webview>` 承载暂时未迁移的 Web 页面。
-6. 迁移 IPC，统一使用 `NativeModules.bridge.call` / `NativeModules.bridge.send` 和 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)，并在主进程侧监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件。
+6. 迁移 IPC，统一使用 `NativeModules.bridge.call` / `NativeModules.bridge.send` 和 [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)，并在主进程侧监听 [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) 事件。
 7. 重建原生模块，使用 [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) 检查打包产物和平台相关能力。
 
 ## 继续阅读

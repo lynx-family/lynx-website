@@ -14,15 +14,16 @@ npm install -D @lynx-js/lynxtron-rebuild
 npx @lynx-js/lynxtron-rebuild
 ```
 
-通常在安装或更新原生模块后执行，并在打包前确认重建产物可被 Lynxtron runtime 加载。
+通常在安装或更新原生模块后执行。工具可能复用兼容的预编译产物，因此成功退出不一定表示重新编译了二进制。请检查日志和实际加载的 `.node` 路径，并在目标 Lynxtron runtime 和打包后的应用中调用模块验证。
 
 ## 适用场景
 
-| 场景                               | 是否需要                                                        |
-| ---------------------------------- | --------------------------------------------------------------- |
-| 纯 JavaScript npm 包               | 不需要 rebuild                                                  |
-| 包含 `.node` 二进制的 npm 原生模块 | 需要使用 `@lynx-js/lynxtron-rebuild`                            |
-| 从 Electron 项目迁移过来的原生模块 | 需要从 Electron ABI 重建到 Lynxtron runtime ABI                 |
-| Lynx 原生能力库                    | 通常通过 `npm run build:shared` 构建，不依赖 `lynxtron-rebuild` |
+| 场景                               | 是否需要                                                                    |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| 纯 JavaScript npm 包               | 不需要 rebuild                                                              |
+| 依赖 Node.js/V8 ABI 的原生模块     | 二进制与 Lynxtron 不匹配时，使用 `@lynx-js/lynxtron-rebuild`                |
+| 有兼容预编译产物的 Node-API 模块   | 可以复用；需验证操作系统、架构、Node-API 版本、原生依赖及 Lynxtron 实际加载 |
+| 从 Electron 项目迁移过来的原生模块 | Electron ABI 专用二进制需替换为 Lynxtron 构建；兼容的 Node-API 产物可以复用 |
+| Lynx 原生能力库                    | 通常通过 `npm run build:lynxtron` 构建，不依赖 `lynxtron-rebuild`           |
 
 更多说明见 [Node.js 原生模块](/lynxtron/Native-Libraries/NodeJS-Native-Modules)。

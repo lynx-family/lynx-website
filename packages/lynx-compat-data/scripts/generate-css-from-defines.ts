@@ -19,8 +19,16 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import esMain from 'es-main';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Repository directory containing the authoritative `css-defines` JSON files.
+ */
+const CSS_DEFINES_SOURCE_BASE_URL =
+  'https://github.com/lynx-family/lynx/blob/develop/tools/css_generator/css_defines';
 
 function findCssDefinesDir(): string {
   const candidates = [
@@ -61,7 +69,42 @@ const outputDir = path.join(__dirname, '..', 'css', 'properties');
 const manualDir = path.join(__dirname, '..', 'css', 'properties-manual');
 
 /**
- * Generate CSS property compat data files from @lynx-js/css-defines.
+ * Attach source information to every compatibility statement in an identifier
+ * tree.
+ *
+ * CSS definitions may contain nested features, each with its own `__compat`
+ * block. Mutating all of them keeps every rendered feature linked to the file
+ * that supplied its data. Values that are not identifier objects are ignored.
+ *
+ * @param value Identifier tree to update in place.
+ * @param metadata Local package path or external URL for the source file.
+ */
+export function addSourceMetadata(
+  value: unknown,
+  metadata: { source_file?: string; source_url?: string },
+): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return;
+  }
+
+  const identifier = value as Record<string, unknown>;
+  const compat = identifier.__compat;
+  if (compat && typeof compat === 'object' && !Array.isArray(compat)) {
+    Object.assign(compat, metadata);
+  }
+
+  for (const [key, child] of Object.entries(identifier)) {
+    if (key !== '__compat') {
+      addSourceMetadata(child, metadata);
+    }
+  }
+}
+
+/**
+ * Generate CSS property compat data and annotate each record with its source.
+ *
+ * Records imported from `@lynx-js/css-defines` link to their upstream files.
+ * Hand-maintained records link to files relative to this package's root.
  */
 async function generateCssProperties(): Promise<void> {
   // Clean output directory to avoid stale files from previous runs
@@ -103,6 +146,9 @@ async function generateCssProperties(): Promise<void> {
     // css-defines: { "property-name": { "__compat": {...}, "sub-feature": {...} } }
     // lynx-compat-data: { "css": { "properties": { "property-name": { "__compat": {...}, "sub-feature": {...} } } } }
     const compatData = definition.compat_data;
+    addSourceMetadata(compatData, {
+      source_url: `${CSS_DEFINES_SOURCE_BASE_URL}/${file}`,
+    });
 
     // Verify that the compat_data key matches the property name
     if (!compatData[propertyName]) {
@@ -144,7 +190,12 @@ async function generateCssProperties(): Promise<void> {
             `Remove it from properties-manual/ now that css-defines covers it.`,
         );
       }
-      await fs.copyFile(path.join(manualDir, file), dst);
+      const content = await fs.readFile(path.join(manualDir, file), 'utf-8');
+      const data = JSON.parse(content);
+      addSourceMetadata(data, {
+        source_file: `css/properties-manual/${file}`,
+      });
+      await fs.writeFile(dst, JSON.stringify(data, null, 2) + '\n');
       copied++;
     }
     console.log(
@@ -155,7 +206,10 @@ async function generateCssProperties(): Promise<void> {
   console.log(`Output directory: ${outputDir}`);
 }
 
-generateCssProperties().catch((error) => {
-  console.error('Error generating CSS properties:', error);
-  process.exit(1);
-});
+// Keep helper imports side-effect free while preserving direct CLI execution.
+if (esMain(import.meta)) {
+  generateCssProperties().catch((error) => {
+    console.error('Error generating CSS properties:', error);
+    process.exit(1);
+  });
+}

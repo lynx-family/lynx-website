@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const packagesDir = path.resolve(__dirname, '../.lynx-ui-source/packages');
+const LYNX_UI_PACKAGE_NAME = '@lynx-js/lynx-ui';
 /** @type {Record<string, string>} */
 const enIntros = {};
 /** @type {Record<string, string>} */
@@ -19,6 +20,7 @@ const packages = fs.readdirSync(packagesDir);
 const extractFirstParagraph = (content) => {
   const lines = content.split('\n');
   let foundHeader = false;
+  const paragraph = [];
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -29,19 +31,30 @@ const extractFirstParagraph = (content) => {
       continue;
     }
 
-    if (
-      trimmed.length > 0 &&
-      !trimmed.startsWith('import ') &&
-      !trimmed.startsWith('export ') &&
-      !trimmed.startsWith('<') &&
-      !trimmed.startsWith('{') &&
-      !trimmed.startsWith(':::')
-    ) {
-      return trimmed;
+    if (trimmed.length === 0) {
+      if (paragraph.length > 0) {
+        break;
+      }
+      continue;
     }
+
+    const isNonParagraphContent =
+      trimmed.startsWith('import ') ||
+      trimmed.startsWith('export ') ||
+      trimmed.startsWith('<') ||
+      trimmed.startsWith('{') ||
+      trimmed.startsWith(':::');
+    if (isNonParagraphContent) {
+      if (paragraph.length > 0) {
+        break;
+      }
+      continue;
+    }
+
+    paragraph.push(trimmed);
   }
 
-  return '';
+  return paragraph.join(' ');
 };
 
 const extractIntroFromFile = (filePath) => {
@@ -53,6 +66,19 @@ const extractIntroFromFile = (filePath) => {
 };
 
 for (const pkg of packages) {
+  const packageJsonPath = path.join(packagesDir, pkg, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    continue;
+  }
+
+  const packageName = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).name;
+  if (
+    packageName !== LYNX_UI_PACKAGE_NAME &&
+    !packageName?.startsWith(`${LYNX_UI_PACKAGE_NAME}-`)
+  ) {
+    continue;
+  }
+
   const enIntro = extractIntroFromFile(
     path.join(packagesDir, pkg, 'README.md'),
   );

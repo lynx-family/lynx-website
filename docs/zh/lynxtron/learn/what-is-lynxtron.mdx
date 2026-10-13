@@ -1,5 +1,3 @@
-import lynxtronArchitecturePng from '@assets/lynxtron/lynxtron-architecture.png?url';
-
 # 什么是 Lynxtron？
 
 Lynxtron 是一个使用 [Lynx](https://lynxjs.org/) 和 Node.js 构建桌面应用的框架。如果你了解 [Electron](https://www.electronjs.org/)，可以将 Lynxtron 理解为**把 Chromium 渲染层替换为 Lynx 的 Electron**。
@@ -39,7 +37,10 @@ UI 层就是标准的 Lynx。你可以使用 Lynx 支持的运行时 DSL（如 R
 
 与 Electron 的多进程模型（主进程 + 渲染进程）不同，Lynxtron 运行在**单个进程**中，通过**主线程 + Lynx 后台线程**形成和 Electron 双进程模型对偶的双线程隔离；其中 Lynx 后台线程可以被多个窗口共享，也可以为窗口使用独立后台线程。
 
-<img src={lynxtronArchitecturePng} alt="Lynxtron 单进程双线程架构" />
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture.png"
+  alt="Lynxtron 单进程双线程架构"
+/>
 
 | Lynxtron 线程     | 线程关系           | Electron 对偶                                 | 主要职责                                                                                                                                         |
 | ----------------- | ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -66,11 +67,11 @@ Lynxtron 为 Lynx 的 UI 系统增加了桌面特有的能力：
 
 Lynxtron 有三种线程间通信模式，对应 [Electron 的 IPC](https://www.electronjs.org/zh/docs/latest/tutorial/ipc)：
 
-| 方向                       | Lynxtron                                                                                                              | Electron 对应                                                                                                                                                       |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js → Lynx**         | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                | [`webContents.send()`](https://www.electronjs.org/zh/docs/latest/api/web-contents)                                                                                  |
-| **Lynx → Node.js**（双向） | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) 事件  | [`ipcRenderer.invoke()`](https://www.electronjs.org/zh/docs/latest/api/ipc-renderer) + [`ipcMain.handle()`](https://www.electronjs.org/zh/docs/latest/api/ipc-main) |
-| **Lynx → Node.js**（单向） | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) 事件 | [`ipcRenderer.send()`](https://www.electronjs.org/zh/docs/latest/api/ipc-renderer) + [`ipcMain.on()`](https://www.electronjs.org/zh/docs/latest/api/ipc-main)       |
+| 方向                       | Lynxtron                                                                                                                       | Electron 对应                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js → Lynx**         | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                         | [`webContents.send()`](https://www.electronjs.org/zh/docs/latest/api/web-contents)                                                                                  |
+| **Lynx → Node.js**（双向） | `NativeModules.bridge.call` → [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) 事件   | [`ipcRenderer.invoke()`](https://www.electronjs.org/zh/docs/latest/api/ipc-renderer) + [`ipcMain.handle()`](https://www.electronjs.org/zh/docs/latest/api/ipc-main) |
+| **Lynx → Node.js**（单向） | `NativeModules.bridge.send` → [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) 事件 | [`ipcRenderer.send()`](https://www.electronjs.org/zh/docs/latest/api/ipc-renderer) + [`ipcMain.on()`](https://www.electronjs.org/zh/docs/latest/api/ipc-main)       |
 
 → [了解更多：Node 与 Lynx 之间的通信](/lynxtron/learn/Communication-Between-Node-And-Lynx)
 

@@ -15,6 +15,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lockfile-consistency:
+    name: Lockfile Consistency
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Lockfile Consistency Check
+        run: |
+          pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+          git diff --exit-code -- pnpm-lock.yaml
+
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -32,14 +52,8 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Setup PNPM
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: '.node-version'
-          cache: 'pnpm'
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Case Check
         run: node scripts/ci/check-case-collisions.mjs
@@ -53,6 +67,21 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generated Documentation Consistency Check
+        run: |
+          # Installation runs prepare. Keep this list aligned with every
+          # committed documentation output generated during that lifecycle.
+          generated_documentation_outputs=(
+            "sharedDocs/packageDocs"
+            "sharedDocs/lynx-ui-intros.ts"
+          )
+          changes="$(git status --porcelain=v1 --untracked-files=all -- "${generated_documentation_outputs[@]}")"
+          if [ -n "$changes" ]; then
+            printf '%s\n' "$changes"
+            echo "::error::Generated documentation is out of date. Run pnpm run prepare and commit all changes reported above."
+            exit 1
+          fi
+
       - name: Install pipx
         run: python -m pip install pipx==1.17.1
 
@@ -65,6 +94,9 @@ jobs:
       - name: Format Check
         run: pnpm run format:check
 
+      - name: Go Component Entry Check
+        run: pnpm run check:go-component-entries
+
       - name: Lynx Compat Data Test
         run: pnpm --filter @lynx-js/lynx-compat-data run test
 
@@ -74,10 +106,157 @@ jobs:
       - name: Build
         run: pnpm run build
 
+  # Validate published core example metadata separately from site generation.
+  # This check needs dependencies but does not need root prepare lifecycle work.
+  dependency-provenance:
+    name: Dependency Provenance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Example Package Provenance Check
+        run: |
+          node --test scripts/ci/check-example-package-provenance.test.mjs
+          node scripts/ci/check-example-package-provenance.mjs
+
+  # Keep generator portability checks free of undeclared package and host
+  # dependencies. Direct Node execution avoids pnpm 11 implicitly installing
+  # dependencies and running root prepare. Subprocess tests clear PATH to model
+  # minimal deployment images without tools such as rsync.
+  generator-portability:
+    name: Generator Portability
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
+
+      - name: Example Generator Tests
+        run: node --test scripts/lynx-example.test.js scripts/luna-demo.test.js scripts/lynxtron-example-pipeline.test.cjs
+
+  # Check committed documents with MDX dependencies, without running prepare.
+  # Validate separately verifies generated documentation after root prepare.
+  # Keep installation explicit and separate from dependency-free generator tests.
+  documentation-imports:
+    name: Documentation Imports
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Documentation Import Boundary Check
+        run: |
+          node --test scripts/ci/check-doc-import-boundaries.test.mjs
+          node scripts/ci/check-doc-import-boundaries.mjs
+
+  # Keep interactive-example authoring contracts separate from portable import
+  # rules. Both parse MDX, but they enforce independent policy domains.
+  example-authoring:
+    name: Example Authoring
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: API Reference Overlay Check
+        run: |
+          node scripts/apply-api-doc-overlays.mjs
+          git diff --exit-code -- docs/en/api docs/zh/api
+
+      - name: Go Component Contract Check
+        run: |
+          node --test scripts/ci/check-go-components.test.mjs
+          node scripts/ci/check-go-components.mjs
+
+  # Enforce final media blobs relative to the target tree of the synthetic merge.
+  # The offline media processor is deliberately not invoked by CI.
+  media-budget:
+    name: Media Budget
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
+
+      - name: Test Media Budget
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        run: node --test scripts/media/check-budget.test.mjs
+
+      - name: Check Media Budget
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        run: node scripts/media/check-budget.mjs HEAD^1 HEAD
+
+      - name: Skip Push Check
+        if: ${{ github.event_name == 'push' }}
+        run: echo "[media-budget] success — media budget is enforced before merge."
+
+  # Branch protection requires Done as the aggregate status. Add every new
+  # required CI job to needs so its result cannot bypass this gate.
   done:
     name: Done
     needs:
+      - lockfile-consistency
       - validate
+      - dependency-provenance
+      - generator-portability
+      - documentation-imports
+      - example-authoring
+      - media-budget
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions: {}

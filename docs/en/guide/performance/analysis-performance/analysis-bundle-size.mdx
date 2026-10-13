@@ -2,11 +2,13 @@
 description: 'Understand the Lynx bundle structure under the dual-thread architecture, analyze size with Rsdoctor and a layered view, and apply levers like main-thread slimming, dependency deduplication, and asset compression.'
 ---
 
+import { PackageManagerTabs } from '@theme';
+
 # Bundle Size
 
 Bundle size directly shapes download, parse, and first-screen time, yet it is the easiest metric to overlook. A dependency upgrade, an uncompressed image, or background-only code that leaks into the first-screen render path can each inflate your output.
 
-Unlike a regular web app, a Lynx app has a distinctive output structure because of its **dual-thread architecture**, and understanding that structure is the prerequisite for analyzing and optimizing size. Rspeedy is built on top of [Rsbuild](https://rsbuild.rs/) and [Rspack](https://rspack.rs/), so most of their size-optimization techniques apply. This page explains the Lynx-specific output structure, then the analysis workflow and optimization levers, linking out to the deeper docs.
+Unlike a regular web app, a Lynx app has a distinctive output structure because of its **dual-thread architecture**, and understanding that structure is the prerequisite for analyzing and optimizing size. Lynx apps are built with [Rsbuild](https://rsbuild.rs/) and [Rspack](https://rspack.rs/), so most of their size-optimization techniques apply. This page explains the Lynx-specific output structure, then the analysis workflow and optimization levers, linking out to the deeper docs.
 
 ## Understand the Lynx output structure
 
@@ -33,13 +35,13 @@ The two JS layers are encoded together into a single binary `.lynx.bundle`, loca
 
 ### Inspect the readable intermediates
 
-`.lynx.bundle` is binary and can't be read directly. To inspect the readable `main-thread.js` / `background.js`, build with `DEBUG`, which keeps the intermediates under `dist/.rspeedy/<entry>/`:
+`.lynx.bundle` is binary and can't be read directly. To inspect the readable `main-thread.js` / `background.js`, build with `DEBUG`, which keeps the intermediates under `dist/.lynx/<entry>/`:
 
 ```bash
-DEBUG=rspeedy rspeedy build
+DEBUG=lynx npx rsbuild build
 ```
 
-A development build also emits these intermediates under `dist/.rspeedy/`; see [Output Files](/rspeedy/output).
+A development build also emits these intermediates under `dist/.lynx/`; see [Output Files](/rspeedy/output).
 
 ### Code elimination: why the main-thread output should be small
 
@@ -58,10 +60,14 @@ The guiding principle is measure first, optimize second: use data to confirm whi
 
 ### Use Rsdoctor
 
-[Rsdoctor](/rspeedy/use-rsdoctor) is a build-analysis tool that visualizes the asset list, module dependency graph, duplicate modules, and more. Enable it in a Rspeedy-based project:
+[Rsdoctor](/rspeedy/use-rsdoctor) is a build-analysis tool that visualizes the asset list, module dependency graph, duplicate modules, and more. Install the Rsdoctor plugin:
+
+<PackageManagerTabs command="add -D @rsdoctor/rspack-plugin" />
+
+Then enable it when building:
 
 ```bash
-RSDOCTOR=true rspeedy build
+RSDOCTOR=true npx rsbuild build
 ```
 
 It opens an analysis page once the build finishes. Its module data carries a `layer` field, so you can attribute bytes to the `react:main-thread` and `react:background` layers, locate the largest modules, and trace "why was this module bundled in" through the real module graph rather than intuition. See [Use Rsdoctor](/rspeedy/use-rsdoctor) for the full workflow.

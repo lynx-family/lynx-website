@@ -1,5 +1,3 @@
-import lynxtronArchitecturePng from '@assets/lynxtron/lynxtron-architecture-en.png?url';
-
 # What is Lynxtron?
 
 Lynxtron is a framework for building desktop applications with [Lynx](https://lynxjs.org/) and Node.js. If you know [Electron](https://www.electronjs.org/), you can think of Lynxtron as **Electron with the Chromium rendering layer replaced by Lynx**.
@@ -40,7 +38,7 @@ The UI layer is standard Lynx. You can use runtime DSLs supported by Lynx, such 
 Unlike Electron's multi-process model (Main Process + Renderer Process), Lynxtron runs in a **single process** and uses **Main Thread + Lynx Background Thread** as a thread-level dual of Electron's two-process model. The Lynx Background Thread can be shared by multiple windows, or windows can use independent background threads.
 
 <img
-  src={lynxtronArchitecturePng}
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture-en.png"
   alt="Lynxtron single-process two-thread architecture"
 />
 
@@ -69,11 +67,11 @@ Lynxtron adds desktop-specific capabilities to Lynx's UI system:
 
 Lynxtron has three inter-thread communication patterns, corresponding to [Electron IPC](https://www.electronjs.org/docs/latest/tutorial/ipc):
 
-| Direction                     | Lynxtron                                                                                                                | Electron equivalent                                                                                                                                           |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js -> Lynx**           | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                  | [`webContents.send()`](https://www.electronjs.org/docs/latest/api/web-contents)                                                                               |
-| **Lynx -> Node.js** (two-way) | `NativeModules.bridge.call` -> [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3199-3200) event  | [`ipcRenderer.invoke()`](https://www.electronjs.org/docs/latest/api/ipc-renderer) + [`ipcMain.handle()`](https://www.electronjs.org/docs/latest/api/ipc-main) |
-| **Lynx -> Node.js** (one-way) | `NativeModules.bridge.send` -> [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#L3220-3221) event | [`ipcRenderer.send()`](https://www.electronjs.org/docs/latest/api/ipc-renderer) + [`ipcMain.on()`](https://www.electronjs.org/docs/latest/api/ipc-main)       |
+| Direction                     | Lynxtron                                                                                                                         | Electron equivalent                                                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js -> Lynx**           | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                           | [`webContents.send()`](https://www.electronjs.org/docs/latest/api/web-contents)                                                                               |
+| **Lynx -> Node.js** (two-way) | `NativeModules.bridge.call` -> [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) event   | [`ipcRenderer.invoke()`](https://www.electronjs.org/docs/latest/api/ipc-renderer) + [`ipcMain.handle()`](https://www.electronjs.org/docs/latest/api/ipc-main) |
+| **Lynx -> Node.js** (one-way) | `NativeModules.bridge.send` -> [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) event | [`ipcRenderer.send()`](https://www.electronjs.org/docs/latest/api/ipc-renderer) + [`ipcMain.on()`](https://www.electronjs.org/docs/latest/api/ipc-main)       |
 
 -> [Learn more: Communication Between Node and Lynx](/lynxtron/learn/Communication-Between-Node-And-Lynx)
 

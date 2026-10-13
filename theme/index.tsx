@@ -33,6 +33,7 @@ import {
   Footer,
   GalaxyHeroBackground,
   LynxtronFeatures,
+  LynxtronShowcase,
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
@@ -162,7 +163,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   const isLynxtron = routePath.startsWith('/lynxtron/');
   const createCliStr = isLynxtron
     ? 'npm create @lynx-js/lynxtron@latest'
-    : 'npm create rspeedy@latest';
+    : 'npm create @lynx-js/lynx@latest';
 
   useBlogBtnDom(routePath);
 
@@ -247,7 +248,10 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
     afterHero = isLynxtron ? (
-      <LynxtronFeatures />
+      <>
+        <LynxtronFeatures />
+        <LynxtronShowcase />
+      </>
     ) : (
       <>
         <Features src={routePath} />

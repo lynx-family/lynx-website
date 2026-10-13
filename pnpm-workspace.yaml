@@ -2,6 +2,12 @@ packages:
   - 'packages/*'
   - 'plugins/*'
 
+# Documentation only reads the Canvas package's sources and compiled bundles.
+# pnpm resolves its runtime-only file: dependency against the consumer directory;
+# omit that dependency without removing the extension sources inside the package.
+overrides:
+  '@lynxtron-examples/native-texture-canvas@0.0.8>lynxtron-native-texture-canvas': '-'
+
 # pnpm 11's minimumReleaseAge supply-chain policy rejects very recently published
 # packages. The Lynx example/runtime packages are first-party and published
 # frequently, so exempt our own OSS scopes to avoid blocking fresh releases.
@@ -14,25 +20,22 @@ minimumReleaseAgeExclude:
 # Set each package explicitly (true or false) so pnpm does not print
 # ERR_PNPM_IGNORED_BUILDS warnings, which fail CI/deploy environments.
 allowBuilds:
+  '@lynx-js/cef-webview': false
   '@lynx-js/lynxtron': false
   '@lynxtron-examples/file-explorer': false
   '@lynxtron-examples/floating-clock': false
   '@lynxtron-examples/system-monitor': false
   '@lynxtron-examples/todolist': false
+  '@openuidev/lang-core': false
   '@parcel/watcher': true
   core-js: true
   esbuild: true
   sqlite3: false
 
 # Rationale for disabled builds:
+# - @lynx-js/cef-webview: the Browser example runs in Lynxtron Go; the docs do not need CEF binaries.
 # - @lynx-js/lynxtron: downloads a runtime binary; docs only need source/bundle files.
 # - @lynxtron-examples/*: ship prebuilt bundles; their rebuild scripts require
 #   native toolchains we don't have in CI/deploy environments.
 # - sqlite3: native module only needed by @lynxtron-examples/todolist at runtime.
-
-# Use the per-commit canary of @lynx-js/web-core until the next stable release.
-# The motion web previews need __GetComputedStyleByKey (lynx-stack#3262) and
-# the mutable MTS window wrapper (lynx-stack#3294). Pin back to a stable
-# @lynx-js/web-core (>0.23.0) once released.
-overrides:
-  '@lynx-js/web-core': 'npm:@lynx-js/web-core-canary@0.23.1-canary-20260730-6cbcb870'
+# - @openuidev/lang-core: its postinstall only reports telemetry.
