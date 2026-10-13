@@ -1,3 +1,5 @@
+import { PackageManagerTabs } from '@theme';
+
 # Rspeedy
 
 Rspeedy ([`@lynx-js/rspeedy`](/api/packages/rspeedy)) wraps the same engine and adds:
@@ -32,7 +34,39 @@ Its type declarations re-export Rsbuild's:
 }
 ```
 
-See the [Rspeedy documentation](https://lynx-stack.dev/guide/cli) for its CLI and options.
+## CLI {#cli}
+
+| Command           | What it does                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| `rspeedy dev`     | Starts the dev server and rebuilds on change; restarts when `lynx.config.ts` changes |
+| `rspeedy build`   | Writes the production bundles to `dist/`                                             |
+| `rspeedy preview` | Serves the production build locally                                                  |
+| `rspeedy inspect` | Prints the final Rsbuild and Rspack configuration                                    |
+
+Each command takes `--config` to point at another config file, `--mode` to override the build mode, and `--environment` to build only some [environments](/api/build/environments). See the [Rspeedy CLI documentation](https://lynx-stack.dev/guide/cli) for every flag.
+
+## Upgrading Rspeedy {#upgrading}
+
+`@lynx-js/rspeedy` and its plugins constrain each other through `peerDependencies`, so upgrade them together with [`upgrade-rspeedy`](https://www.npmjs.com/package/upgrade-rspeedy). It rewrites `package.json`; install the dependencies afterwards.
+
+<PackageManagerTabs
+  command={{
+    npm: `npx upgrade-rspeedy@latest`,
+    pnpm: `pnpm dlx upgrade-rspeedy@latest`,
+    bun: `bunx upgrade-rspeedy@latest`,
+    yarn: `yarn dlx upgrade-rspeedy@latest`,
+  }}
+/>
+
+Replace `latest` with a version to upgrade to that version. See [Upgrading Rspeedy](https://lynx-stack.dev/guide/upgrade-rspeedy) for canary versions.
+
+## Which one to use
+
+Use **Rsbuild with `pluginLynx`** for new projects. It is what [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
+
+Rspeedy is still maintained. An existing project that depends on the `rspeedy` CLI or on `lynx.config.ts` need not rush to move, but do not start a new one on it.
+
+Running `npm create @lynx-js/lynx@latest` without `--template` asks which build tool to use, and also offers Rslib for a component library.
 
 ## Migrating an Rspeedy project
 

@@ -1,37 +1,32 @@
 # Building and Shipping Bundles
 
-How a Lynx app is built and shipped: which tool builds it, what it produces, and how to keep it running on the Lynx Engine you target.
+A Lynx app ships as a [_Lynx Bundle_][Lynx Bundle]: one binary file that a host app hands to the [_Lynx Engine_][Lynx Engine]. It is built by [Rsbuild](https://rsbuild.rs/) with the Lynx build plugin [`pluginLynx`], so most of what you know about building for the web carries over. A Lynx build gives you:
 
-- [Lynx Bundles and Compatibility](./lynx-bundle.mdx): what a build produces and which engines run it
-- [Output Files](./output.mdx): where the files land
-- [Rspeedy](./rspeedy.mdx): the earlier CLI around the same engine, and moving off it
+- [The `rsbuild` CLI](#getting-started) to develop on a device and build for production, configured in `rsbuild.config.ts`.
+- [Lynx bundles](#bundles), with an [engine version](./lynx-bundle.mdx#compatibility) that decides which Lynx Engine versions can run them.
+- [Styling](#styling) with CSS Modules, global CSS, Sass, Less, PostCSS and [Tailwind CSS](./tailwind.mdx).
+- [TypeScript](#typescript) out of the box, with types for Lynx's own globals.
+- [Static assets](#static-assets) imported as URLs, or inlined into the bundle when they are small.
+- [Module resolution](#module-resolution) that prefers the Lynx build of a package.
+- [Output files](#output-files) under `dist/`, with the intermediate files kept for debugging.
+- [Plugins](#plugins) from the Rsbuild and Rspack ecosystems.
+- [External bundles](#external-bundles) that share dependencies between apps.
+- [Debugging and profiling](#debugging-and-profiling) for build speed, runtime performance, bundle size and production errors.
 
-## Which tool to build with {#tools}
+Rspeedy, the CLI that Lynx apps used before, wraps the same engine. See [Rspeedy](./rspeedy.mdx) for how it differs and how to move off it.
 
-A Lynx app is built by [Rsbuild](https://rsbuild.rs/). What makes the output a Lynx bundle instead of a web bundle is [**`pluginLynx`**](/api/packages/rsbuild-plugin), the Lynx build engine packaged as a set of Rsbuild plugins.
+## Getting started {#getting-started}
 
-There are two ways to run that engine:
-
-- **Rsbuild with `pluginLynx`** — the recommended setup. You own an ordinary `rsbuild.config.ts` and use the `rsbuild` CLI.
-- **Rspeedy** — a wrapper around the same engine, with its own `rspeedy` CLI and `lynx.config.ts`.
+Create a project with the Rsbuild template:
 
 ```bash
-# Rsbuild with pluginLynx (recommended)
 npm create @lynx-js/lynx@latest -- --template rsbuild-react-ts
-
-# Rspeedy
-npm create @lynx-js/lynx@latest -- --template rspeedy-react-ts
 ```
 
-Both produce the same `.lynx.bundle`, and the dev server, HMR, QR code and debug metadata behave identically, because all of that lives in `pluginLynx`. What differs is who owns the CLI and how much of the Rsbuild configuration surface you can reach.
-
-### Rsbuild with pluginLynx
-
-`pluginLynx` (from [`@lynx-js/rsbuild-plugin`](https://www.npmjs.com/package/@lynx-js/rsbuild-plugin)) is what turns an Rsbuild build into a Lynx build. It configures the dual-thread output and bundle filename, keeps the intermediate files under `dist/.lynx/<entry>/`, tunes minification and source maps for the Lynx runtime, resolves modules through Lynx's `exports` conditions, serves the bundle over your LAN during development, and registers the debug metadata used to [map production errors to source](/guide/devtool/map-errors-to-source.mdx).
-
-You rarely apply it by hand: [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) applies it for you when it is not already registered, which is why the ReactLynx template lists only `pluginReactLynx`.
+The ReactLynx template lists [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx), which applies [`pluginLynx`] for you, and [`pluginQRCode`](/api/packages/qrcode-rsbuild-plugin), which prints a QR code that opens the app in [Lynx Explorer](/guide/start/quick-start.mdx):
 
 ```ts title="rsbuild.config.ts"
+import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@rsbuild/core';
 
@@ -41,37 +36,104 @@ export default defineConfig({
       main: './src/index.tsx',
     },
   },
-  plugins: [pluginReactLynx()],
+  plugins: [pluginQRCode(), pluginReactLynx()],
 });
 ```
 
-Two things to know:
+The [Rsbuild CLI](https://rsbuild.rs/guide/basic/cli) runs it:
 
-- **[`source.entry`](https://rsbuild.rs/config/source/entry) takes the object form**, like any other Rsbuild project.
-- **Apply `pluginLynx` yourself when you need its options.** The automatic application uses default options, so configuring [`output.filename.bundle`](/api/build/output/filename/bundle) or [`performance.profile`](/api/build/performance/profile) means adding `pluginLynx({ ... })` to `plugins` explicitly. It is not applied twice.
+| Command           | What it does                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| `rsbuild dev`     | Starts the dev server on your LAN so a device can load the bundle, and rebuilds with HMR on save |
+| `rsbuild build`   | Writes the production bundles to `dist/`                                                         |
+| `rsbuild preview` | Serves the production build locally                                                              |
+| `rsbuild inspect` | Prints the final Rsbuild and Rspack configuration                                                |
 
-The options `pluginLynx` adds, and the Rsbuild options whose defaults it changes for Lynx, are listed in the [build configuration reference](/api/build).
+`rsbuild.config.ts` takes every [Rsbuild option](https://rsbuild.rs/config/). The [`rsbuild.config.ts` reference](/api/build) lists the options [`pluginLynx`] adds and the Rsbuild options whose defaults it changes for Lynx. To set the options of `pluginLynx`, such as [`output.filename.bundle`](/api/build/output/filename/bundle), add `pluginLynx({ ... })` to `plugins` yourself; it is not applied twice.
 
-Types come from Rsbuild:
+## Lynx bundles and compatibility {#bundles}
 
-```json title="tsconfig.json"
+A build produces one `.lynx.bundle` per entry. Unlike a web build, it holds everything in one file: the main-thread code, the background-thread code, the styles and the page configuration. Lazy-loaded components become [bundles of their own](/react/code-splitting.md).
+
+A bundle runs on a Lynx Engine whose version is at least the bundle's [`engineVersion`]. Set it when one bundle has to run in host apps with different engine versions:
+
+```ts title="rsbuild.config.ts"
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+
+export default defineConfig({
+  plugins: [pluginReactLynx({ engineVersion: '3.2' })],
+});
+```
+
+[Lynx Bundles and Compatibility](./lynx-bundle.mdx) explains what is inside a bundle, how each thread gets its own code, how to upgrade the engine, and how to check whether a feature is available.
+
+## Styling {#styling}
+
+CSS works as it does on the web, written in any of the ways Rsbuild accepts: [CSS Modules](./styling.mdx#css-modules), [global CSS](./styling.mdx#global-css), [Sass, Less and Stylus](./styling.mdx#css-pre-processors), and [PostCSS](./styling.mdx#postcss). The styles are encoded into the bundle instead of emitted as `.css` files.
+
+[Tailwind CSS](./tailwind.mdx) needs [`@lynx-js/tailwind-preset`](/api/packages/tailwind-preset), which keeps only the utilities Lynx can render. See [Styling](./styling.mdx).
+
+## TypeScript {#typescript}
+
+`.ts` and `.tsx` files, path aliases and type checking work as in [any Rsbuild project](https://rsbuild.rs/guide/basic/typescript). Lynx adds [`@lynx-js/types`](https://www.npmjs.com/package/@lynx-js/types), which you extend to type `lynx.__globalProps`, [`useInitData()`](/api/react/Hooks/useInitData), custom elements and native modules. See [TypeScript](./typescript.md).
+
+## Static assets {#static-assets}
+
+Import an image, font or other file to get its URL, in JavaScript or in CSS:
+
+```jsx
+import logo from './assets/logo.png';
+
+export function App() {
+  return <image src={logo} />;
+}
+```
+
+Files smaller than 2 KiB are inlined into the bundle as data URIs, so they need no request; [`output.dataUriLimit`](/api/build/output/data-uri-limit) changes that threshold. Files in `public/` are copied to the output unchanged. URL prefixes, the public directory and inlining are covered by [Rsbuild's static assets guide](https://rsbuild.rs/guide/basic/static-assets).
+
+## Module resolution {#module-resolution}
+
+Path aliases come from `tsconfig.json` [`paths`](https://www.typescriptlang.org/tsconfig#paths) or [`resolve.alias`](https://rsbuild.rs/config/resolve/alias), as in Rsbuild.
+
+What Lynx changes is which file of a package gets picked. [`pluginLynx`] resolves the `lynx` [export condition](https://nodejs.org/api/packages.html#conditional-exports) first, then `import`, `require` and `browser`, so a package can ship a build made for Lynx:
+
+```json title="package.json"
 {
-  "compilerOptions": {
-    "types": ["@rsbuild/core/types"]
+  "name": "foo",
+  "exports": {
+    ".": {
+      "lynx": "./index-lynx.js",
+      "import": "./index.js"
+    }
   }
 }
 ```
 
-### Rspeedy
+For packages without `exports`, the `lynx` field comes before `module` and `main`, and a directory resolves to `index.lynx` before `index`. [`resolve.extensions`](/api/build/resolve/extensions) lists the extensions tried.
 
-Rspeedy wraps the same engine with its own `rspeedy` CLI and `lynx.config.ts`. See [Rspeedy](./rspeedy.mdx).
+## Output files {#output-files}
 
-### Which one to use
+A production build writes `[name].lynx.bundle` for each entry to `dist/`, lazy bundles to `dist/lazy-bundle/`, and static assets to `dist/static/`. A development build also keeps each bundle's intermediate files under `dist/.lynx/<entry>/`: the main-thread and background-thread scripts, the styles, and the debug metadata. Rename or move them with [`output.filename.bundle`](/api/build/output/filename/bundle) and [`output.distPath`](/api/build/output/dist-path). See [Output Files](./output.mdx).
 
-Use **Rsbuild with `pluginLynx`** for new projects. It is what [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) recommends, it keeps you on the config and CLI the Rstack ecosystem documents, and the whole Rsbuild configuration surface and plugin catalog stays available.
+## Plugins {#plugins}
 
-Rspeedy is still maintained. An existing project that depends on the `rspeedy` CLI or on `lynx.config.ts` need not rush to move, but do not start a new one on it.
+`pluginLynx` and the framework plugins are [Rsbuild plugins](https://rsbuild.rs/plugins/list/), so other Rsbuild plugins work next to them: the [Sass](https://rsbuild.rs/plugins/list/plugin-sass) and [Less](https://rsbuild.rs/plugins/list/plugin-less) plugins, [type checking](https://github.com/rspack-contrib/rsbuild-plugin-type-check), [image compression](https://github.com/rspack-contrib/rsbuild-plugin-image-compress) and more. Rspack plugins go in [`tools.rspack`](https://rsbuild.rs/config/tools/rspack).
 
-Running `npm create @lynx-js/lynx@latest` without `--template` asks which build tool to use, and also offers Rslib for a component library.
+The Lynx plugins and tools, from the QR code plugin to the webpack plugins underneath `pluginLynx`, are listed under "Plugins and tools" in the API reference, starting with [`@lynx-js/rsbuild-plugin`](/api/packages/rsbuild-plugin). To write a plugin, see [Rsbuild's plugin API](https://rsbuild.rs/plugins/dev/core).
 
-To move an existing project, see [Migrating an Rspeedy project](./rspeedy.mdx#migrating-an-rspeedy-project).
+## External bundles {#external-bundles}
+
+Several Lynx apps can share a dependency, such as ReactLynx itself, by loading it from an external bundle instead of building it into each one. Build the shared code with [`@lynx-js/lynx-bundle-rslib-config`](/api/packages/lynx-bundle-rslib-config) and load it with [`@lynx-js/external-bundle-rsbuild-plugin`](/api/packages/external-bundle-rsbuild-plugin). See [External Bundle](./external-bundle.mdx).
+
+## Debugging and profiling {#debugging-and-profiling}
+
+- **Build speed**: run `RSDOCTOR=true rsbuild build` with [`@rsdoctor/rspack-plugin`](https://www.npmjs.com/package/@rsdoctor/rspack-plugin) installed to see where the build spends its time, or record Node.js and Rspack profiles as [Rsbuild's build profiling guide](https://rsbuild.rs/guide/debug/build-profiling) shows.
+- **Runtime performance**: [`performance.profile`](/api/build/performance/profile) compiles ReactLynx's trace points into the bundle; see [Framework Performance Profiling](/guide/performance/analysis-performance/analysis-framework.mdx#compiling-the-instrumentation-into-the-bundle).
+- **Bundle size**: see [Bundle Size](/guide/performance/analysis-performance/analysis-bundle-size.mdx).
+- **Production errors**: the debug metadata a build emits [maps errors back to source](/guide/devtool/map-errors-to-source.mdx), and the [UI source map](/guide/devtool/ui-source-map.mdx) maps each rendered node back to the JSX that created it.
+
+[Lynx Bundle]: /guide/spec#lynx-bundle-or-bundle
+[Lynx Engine]: /guide/spec#engine
+[`pluginLynx`]: /api/packages/rsbuild-plugin
+[`engineVersion`]: /api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#engineversion

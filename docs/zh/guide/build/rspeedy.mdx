@@ -1,3 +1,5 @@
+import { PackageManagerTabs } from '@theme';
+
 # Rspeedy
 
 Rspeedy（[`@lynx-js/rspeedy`](/api/packages/rspeedy)）封装了同一套引擎，并额外提供：
@@ -32,7 +34,39 @@ Rspeedy 的配置是 Rsbuild 配置的一个精选子集，只保留 Lynx 支持
 }
 ```
 
-命令行与配置项详见 [Rspeedy 文档](https://lynx-stack.dev/zh/guide/cli)。
+## 命令行 {#cli}
+
+| 命令              | 作用                                                              |
+| ----------------- | ----------------------------------------------------------------- |
+| `rspeedy dev`     | 启动开发服务器并在变更时重新构建；`lynx.config.ts` 变更时自动重启 |
+| `rspeedy build`   | 把生产环境的 Bundle 写入 `dist/`                                  |
+| `rspeedy preview` | 在本地预览生产构建                                                |
+| `rspeedy inspect` | 输出最终的 Rsbuild 和 Rspack 配置                                 |
+
+每个命令都接受 `--config` 指定其他配置文件、`--mode` 覆盖构建模式、`--environment` 只构建部分 [environments](/api/build/environments)。全部参数见 [Rspeedy 命令行文档](https://lynx-stack.dev/zh/guide/cli)。
+
+## 升级 Rspeedy {#upgrading}
+
+`@lynx-js/rspeedy` 和它的插件之间通过 `peerDependencies` 互相约束，所以要用 [`upgrade-rspeedy`](https://www.npmjs.com/package/upgrade-rspeedy) 一起升级。它只改写 `package.json`，之后请自行安装依赖。
+
+<PackageManagerTabs
+  command={{
+    npm: `npx upgrade-rspeedy@latest`,
+    pnpm: `pnpm dlx upgrade-rspeedy@latest`,
+    bun: `bunx upgrade-rspeedy@latest`,
+    yarn: `yarn dlx upgrade-rspeedy@latest`,
+  }}
+/>
+
+把 `latest` 换成具体版本号即可升级到该版本。升级到 canary 版本见[升级 Rspeedy](https://lynx-stack.dev/zh/guide/upgrade-rspeedy)。
+
+## 该用哪个
+
+新项目用 **Rsbuild + `pluginLynx`**。这是 [`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 推荐的方式，配置和命令行都与 Rstack 生态的文档一致，Rsbuild 的完整配置能力和插件生态都可以直接使用。
+
+Rspeedy 仍在维护。现有项目如果依赖 `rspeedy` 命令行或 `lynx.config.ts`，不必急着迁；新项目就别从它开始了。
+
+不带 `--template` 执行 `npm create @lynx-js/lynx@latest` 会让你选择构建工具，也提供用于组件库的 Rslib。
 
 ## 迁移现有的 Rspeedy 项目 {#migrating-an-rspeedy-project}
 
