@@ -2,7 +2,7 @@
 
 Lynx 通过 Rsbuild 支持 TypeScript。代码转换、路径别名、`tsconfig.json` 配置和类型检查方式见 [Rsbuild 的 TypeScript 指南](https://rsbuild.rs/zh/guide/basic/typescript)。**代码转换不会执行类型检查**，需要另行配置类型检查插件或运行 `tsc`。
 
-CSS Modules、静态资源等构建期类型使用 [Rsbuild 的预设类型](https://rsbuild.rs/zh/guide/basic/typescript#预设类型)，在已有的 `compilerOptions.types` 中追加 `@rsbuild/core/types`。
+CSS Modules、静态资源等构建期类型使用 [Rsbuild 的预设类型](https://rsbuild.rs/zh/guide/basic/typescript#preset-types)，在已有的 `compilerOptions.types` 中追加 `@rsbuild/core/types`。
 
 ## 扩展 Lynx 类型
 
