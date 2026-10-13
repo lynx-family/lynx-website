@@ -48,16 +48,14 @@ pnpm run preview
 
 Before opening a pull request, run the relevant checks for your change:
 
+### General
+
 ```bash
 pnpm run format:check
 pnpm run build
 ```
 
-For changes to the Lynx example generator, also run:
-
-```bash
-pnpm run test:lynx-example
-```
+### Documentation Imports
 
 For changes to imports in `docs/` or `sharedDocs/`, also run:
 
@@ -73,7 +71,45 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
-For changes under `packages/lynx-compat-data`, also run:
+### Go Components
+
+For changes to rendered `Go` components in `docs/` or `sharedDocs/`, run:
+
+```bash
+pnpm run check:go-components
+```
+
+When changing `defaultEntryName` selectors or generated example metadata, run
+`pnpm run prepare` first, then validate selectors against that metadata:
+
+```bash
+pnpm run check:go-component-entries
+```
+
+For changes to the `Go` component checker, also run:
+
+```bash
+node --test scripts/ci/check-go-components.test.mjs
+```
+
+### Example Generators
+
+For changes to the core Lynx example generator, run:
+
+```bash
+pnpm run test:lynx-example
+```
+
+For changes that affect the Luna or Lynxtron generators, or shared behavior
+across generators, run the complete suite:
+
+```bash
+pnpm run test:example-generators
+```
+
+### Lynx Compatibility Data
+
+For changes under `packages/lynx-compat-data`, run:
 
 ```bash
 pnpm --filter @lynx-js/lynx-compat-data run pack:check
@@ -188,13 +224,15 @@ explicitly:
 import { normalizeImagePath } from '@rspress/core/runtime';
 
 <img src={normalizeImagePath('/assets/diagram.png')} />
-<Go img={normalizeImagePath('/assets/demo.gif')} />
+<Go img="https://lf-lynx.tiktok-cdns.com/obj/example.gif" />
 ```
 
 See the
 [Rspress static assets documentation](https://rspress.rs/guide/basic/static-assets)
-for the `normalizeImagePath` contract. Do not couple a document to the physical
-layout of `docs/public`:
+for the `normalizeImagePath` contract. The `Go` component is stricter: its
+`img` prop must be a string literal whose origin is in the approved HTTPS CDN
+allowlist in `scripts/ci/check-go-components.mjs`; it cannot reference a public
+file. Do not couple a document to the physical layout of `docs/public`:
 
 ```mdx
 ![Diagram](../../public/assets/diagram.png)
@@ -276,6 +314,8 @@ where an earlier match shadows later roots.
 
 - Follow [Conventional Commits](https://www.conventionalcommits.org/) for
   commit subjects.
+- Optional scopes MUST use lowercase kebab-case in commit and pull request
+  subjects.
 - Keep the subject focused; prefer no more than 72 characters per line.
 - Use concise, direct English.
 - Use the body to explain what changed, why it was needed, and how it
@@ -296,6 +336,8 @@ than enumerate individual commands. Use lowercase `issue` and `doc`.
 
 - Base normal changes on `main`.
 - Format pull request titles as Conventional Commit subjects.
+- Pull request title subjects must contain at least 3 non-whitespace
+  characters and be no longer than 72 characters.
 - Keep pull requests focused on one behavior or documentation update.
 - Keep descriptions structured and concise. Use sections such as
   Summary, Rationale, Verification, and Documentation when helpful.

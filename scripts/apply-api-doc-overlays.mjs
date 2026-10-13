@@ -31,7 +31,7 @@ ${content.trimEnd()}
 <Lynx.Go
   example="react-apis"
   defaultFile="${entry}/index.tsx"
-  defaultEntryFile="dist/${name}.lynx.bundle"
+  defaultEntryName="${name}"
   entry="${entry}"
   defaultTab="web"
 />

@@ -1,24 +1,21 @@
 /**
- * Prepare Luna demo packages for the documentation site by copying (default) or symlinking
- * demo packages from a source directory into a public directory.
+ * Materialize installed Luna demo packages under the documentation site's
+ * public example directory by copying (default) or symlinking them.
  *
- * Typical use case:
- * - You have one or more installed demo packages under node_modules, e.g.
- *   packages/luna-packages/node_modules/<scope>/<pkg>
- * - You want them materialized under docs/public/lynx-examples/<pkgName>
+ * LUNA_SOURCE_DIR may point to one installed package directory or a flat
+ * collection of package directories from the same scope.
  *
  * Usage:
  *   LINK_PATH=docs/public/lynx-examples \
- *   LUNA_SOURCE_DIR=packages/luna-packages/node_modules \
+ *   LUNA_SOURCE_DIR=path/to/package-or-flat-collection \
  *   LUNA_MODE=copy \
  *   node scripts/luna-demo.js
  *
  * Environment variables:
  * - LUNA_SOURCE_DIR: Source directory. Can be:
- *   1) A node_modules directory (will scan one level and scope directories), or
- *   2) A scope directory containing multiple packages (each with package.json), or
- *   3) A single package directory (contains package.json)
- *   Default: packages/luna-packages/node_modules
+ *   1) A single package directory (contains package.json), or
+ *   2) A flat collection containing package directories from one scope.
+ *   Default: node_modules/@dugyu/luna-demo-bundles
  * - LINK_PATH: Target root directory.
  *   Default: docs/public/lynx-examples
  * - LUNA_MODE: "copy" (default) or "symlink".
@@ -31,11 +28,14 @@
  */
 const fs = require('fs');
 const path = require('path');
+const {
+  assertExampleOutputBatchOwnership,
+} = require('./example-output-id-collision');
 
 const currentDir = process.cwd();
 const sourceDir = path.join(
   currentDir,
-  process.env.LUNA_SOURCE_DIR || 'packages/luna-packages/node_modules',
+  process.env.LUNA_SOURCE_DIR || 'node_modules/@dugyu/luna-demo-bundles',
 );
 const linkPath = path.join(
   currentDir,
@@ -50,6 +50,9 @@ function isDirectory(filePath) {
   return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
 }
 
+/**
+ * Derive the flat output ID from the final segment of the package name.
+ */
 function readPackageName(packageDir) {
   const packageJSONPath = path.join(packageDir, 'package.json');
   if (!fs.existsSync(packageJSONPath)) {
@@ -73,6 +76,7 @@ function linkOrCopyDirectory(sourcePath, targetPath) {
     fs.symlinkSync(sourcePath, targetPath);
     return;
   }
+
   fs.cpSync(sourcePath, targetPath, {
     recursive: true,
     dereference: true,
@@ -89,6 +93,10 @@ function getWebBundleFiles(packageDir) {
   return fs.readdirSync(distDir).filter((f) => f.endsWith('.web.bundle'));
 }
 
+/**
+ * Discover either one package or the immediate package children of one flat
+ * collection. Nested scope discovery is intentionally unsupported.
+ */
 function getPackageDirs(rootDir) {
   if (!isDirectory(rootDir)) {
     throw new Error(`sourceDir is not a directory: ${rootDir}`);
@@ -100,32 +108,18 @@ function getPackageDirs(rootDir) {
   }
 
   const ignored = new Set(['.pnpm', '.bin']);
-  const firstLevelDirs = fs
+  return fs
     .readdirSync(rootDir)
     .filter((name) => !ignored.has(name))
     .map((name) => path.join(rootDir, name))
-    .filter((dir) => isDirectory(dir));
-
-  const packageDirs = [];
-
-  firstLevelDirs.forEach((dir) => {
-    if (fs.existsSync(path.join(dir, 'package.json'))) {
-      packageDirs.push(dir);
-      return;
-    }
-
-    if (path.basename(dir).startsWith('@')) {
-      fs.readdirSync(dir)
-        .map((name) => path.join(dir, name))
-        .filter((subDir) => isDirectory(subDir))
-        .filter((subDir) => fs.existsSync(path.join(subDir, 'package.json')))
-        .forEach((subDir) => packageDirs.push(subDir));
-    }
-  });
-
-  return packageDirs;
+    .filter((dir) => isDirectory(dir))
+    .filter((dir) => fs.existsSync(path.join(dir, 'package.json')));
 }
 
+/**
+ * Collect eligible packages, validate the complete batch without mutation,
+ * then materialize each package only after every ownership check succeeds.
+ */
 function main() {
   if (!supportedModes.has(mode)) {
     console.error(
@@ -141,8 +135,6 @@ function main() {
     return;
   }
 
-  fs.mkdirSync(linkPath, { recursive: true });
-
   const packageDirs = getPackageDirs(sourceDir);
   if (packageDirs.length === 0) {
     console.error(`No packages found under: ${sourceDir}`);
@@ -155,27 +147,48 @@ function main() {
     `[prepare:luna] start mode=${mode} source=${sourceDir} target=${linkPath}`,
   );
 
-  let processedCount = 0;
-  packageDirs.forEach((packageDir) => {
-    const packageName = readPackageName(packageDir);
+  // Phase 1: collect immutable records. Filtering here ensures packages that
+  // will not be published cannot reserve or collide with an output ID.
+  const packageRecords = packageDirs.flatMap((packageDir) => {
+    const outputId = readPackageName(packageDir);
     const webBundles = getWebBundleFiles(packageDir);
     if (!copyAll && (!webBundles || webBundles.length === 0)) {
-      return;
+      return [];
     }
 
-    const targetDir = path.join(linkPath, packageName);
-    linkOrCopyDirectory(packageDir, targetDir);
-    processedCount += 1;
-    console.log(`[prepare:luna] synced ${packageName} -> ${targetDir}`);
-
-    if (!webBundles) {
-      console.log(`[prepare:luna] dist directory not found for ${packageName}`);
-      return;
-    }
-    console.log(
-      `[prepare:luna] found ${webBundles.length} dist/*.web.bundle for ${packageName}`,
-    );
+    return [
+      {
+        outputId,
+        sourceDir: packageDir,
+        targetDir: path.join(linkPath, outputId),
+        webBundles,
+      },
+    ];
   });
+
+  // Phase 2: finish all read-only ownership checks before touching outputs.
+  assertExampleOutputBatchOwnership(packageRecords);
+
+  fs.mkdirSync(linkPath, { recursive: true });
+
+  // Phase 3: materialize. No ownership failure is possible beyond this point,
+  // so a later collision cannot leave earlier packages partially published.
+  let processedCount = 0;
+  packageRecords.forEach(
+    ({ sourceDir: packageDir, outputId, targetDir, webBundles }) => {
+      linkOrCopyDirectory(packageDir, targetDir);
+      processedCount += 1;
+      console.log(`[prepare:luna] synced ${outputId} -> ${targetDir}`);
+
+      if (!webBundles) {
+        console.log(`[prepare:luna] dist directory not found for ${outputId}`);
+        return;
+      }
+      console.log(
+        `[prepare:luna] found ${webBundles.length} dist/*.web.bundle for ${outputId}`,
+      );
+    },
+  );
 
   const durationMs = Date.now() - startedAt;
   console.log(

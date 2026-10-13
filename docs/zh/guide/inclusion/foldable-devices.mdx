@@ -2,6 +2,7 @@
 description: '通过 GlobalProps 与 screen metrics 同步尺寸，让前端以低成本适配折叠屏。'
 ---
 
+import { Go } from '@lynx';
 import { FoldableRenderFlow } from '@lynx/foldable-render-flow';
 
 # 折叠屏
@@ -136,3 +137,29 @@ export function ResponsiveCard() {
 ```
 
 各单位的详细说明可参阅[长度单位](/api/css/data-type/length)。
+
+## 灵活的媒体查询
+
+弹性布局让内容随可用空间伸缩。如果希望窗口变宽时增加卡片列数、展示侧栏，或调整标题字号，可以通过[媒体查询](/api/css/media-query)按视口宽度应用样式。同一套组件结构即可适配折叠和展开后的布局，无需在 JavaScript 中读取尺寸来切换 CSS 类名。
+
+这个[大屏适配示例](https://github.com/lynx-family/lynx-examples/tree/main/examples/css/src/media_query/large_screen)以小屏样式为基础，在 `600px` 和 `1024px` 处增加样式规则。断点依据的是 **Lynx 视口宽度，单位为 CSS 像素**，实际项目应根据内容所需的空间选择断点。
+
+| 视口宽度                | 卡片布局 | 侧栏 | 页面内边距 | 标题字号 |
+| ----------------------- | -------- | ---- | ---------- | -------- |
+| 小于 `600px`            | 单列     | 隐藏 | `20px`     | `34px`   |
+| `600px` 至小于 `1024px` | 双列     | 隐藏 | `32px`     | `44px`   |
+| `1024px` 及以上         | 三列     | 显示 | `40px`     | `52px`   |
+
+<Go
+  example="css"
+  defaultFile="src/media_query/large_screen/index.scss"
+  defaultEntryName="media_query_large_screen"
+  entry="src/media_query/large_screen"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/mediaQueryInDifferentScreens.gif"
+/>
+
+GIF 依次展示在 Lynx Sandbox 中分别以 414px、800px 和 1280px 视口宽度加载后的截图。
+
+完整示例还通过 `max-width: 1440px` 限制内容宽度并居中展示；当视口宽度至少为 `1024px`、高度不超过 `700px` 时，进一步减少纵向内边距，让宽而矮的窗口也能容纳更多内容。
+
+使用时需要 **Lynx SDK 4.0 或更高版本**，并通过 `pluginLynxConfig({ enableCSSRule: true })` [开启 CSS Rule 编码](/api/css/media-query#启用-css-rule-编码)。示例已包含这项配置，客户端仍需按上文同步 Lynx 视口尺寸。在 Lynx Sandbox 中修改 Android 显示尺寸进行测试时，每次修改后应重新加载页面，让媒体查询环境读取新的尺寸。
