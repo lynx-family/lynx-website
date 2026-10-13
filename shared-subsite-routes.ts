@@ -7,8 +7,10 @@
  * mapping below is the single place that decides this, for every version and
  * language form of a route.
  *
- * Kept free of imports so `node --test` can run its tests.
+ * Runtime package metadata is shared with the Node-based documentation sync.
  */
+
+import packageSubsites from './shared-api-package-subsites.json' with { type: 'json' };
 
 /**
  * Packages of the API reference that belong to a subsite other than the Lynx
@@ -17,12 +19,7 @@
  * so this is stated here; the sync stops when a name is no longer a package
  * of the manifest, instead of letting its pages silently lose their theme.
  */
-export const API_PACKAGE_SUBSITES: Record<string, string> = {
-  'background-only': 'react',
-  'react-signals': 'react',
-  'react-umd': 'react',
-  'use-sync-external-store': 'react',
-};
+export const API_PACKAGE_SUBSITES: Record<string, string> = packageSubsites;
 
 /**
  * Routes of the API reference that belong to a subsite as a whole, in matching
