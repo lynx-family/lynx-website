@@ -1,58 +1,300 @@
+import { Mermaid } from '@lynx';
+import APITableExplorer from '@lynx/api-table-explorer/APITableExplorer.tsx';
+
 # Building a Lynx App
 
-A build turns your application's code, styles and assets into a [_Lynx Bundle_][Lynx Bundle] that a host app can load. During development, the dev server and hot updates bring changes to your device. For production, the build generates the files you deploy and the debugging information you use to investigate performance and errors.
+Lynx builds use [Rsbuild](https://rsbuild.rs/) with [`pluginLynx`]. Use Rsbuild's TypeScript, CSS, static asset and plugin capabilities, while `pluginLynx` compiles code for both threads and encodes the bundles your host loads.
 
-Lynx builds use [Rsbuild](https://rsbuild.rs/) with [`pluginLynx`]. TypeScript, CSS, static assets and plugins use Rsbuild's capabilities. `pluginLynx` handles the parts specific to Lynx: building code for two threads, encoding bundles and adapting the output to the target [_Lynx Engine_][Lynx Engine]. This chapter explains how these pieces fit together, with detailed usage in each topic's guide.
+## Get started with Rsbuild {#getting-started}
 
-## Build tools and development {#getting-started}
+Create a project with the ReactLynx Rsbuild template:
 
-Use Rsbuild with `pluginLynx` for new projects. [Quick Start](/guide/start/quick-start.mdx) walks through creating a project, starting the dev server and running the app on a device. ReactLynx projects use [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx), which applies `pluginLynx` automatically; [`pluginQRCode`](/api/packages/qrcode-rsbuild-plugin) provides a QR code to open the app.
+```bash
+npm create @lynx-js/lynx@latest -- --template rsbuild-react-ts
+```
 
-Configure the project in `rsbuild.config.ts`. Use `rsbuild dev` during development, `rsbuild build` for production and `rsbuild preview` to preview the output. The full Rsbuild configuration is available; the [`rsbuild.config.ts` reference](/api/build) describes the options Lynx adds and the defaults it changes. To set Lynx-specific options, configure `pluginLynx` explicitly in `plugins`.
+In the generated project directory, install dependencies and start the dev server:
 
-Existing Rspeedy projects use the same build engine. See [Rspeedy](./rspeedy.mdx) for the configuration differences, maintenance commands and migration steps.
+```bash
+npm install
+npm run dev
+```
 
-## Code, styles and assets
+Scan the QR code with [Lynx Explorer](/guide/start/quick-start.mdx) to run the app on a device. The dev server updates the app when you save your code.
 
-Writing an application follows familiar Rsbuild patterns, while Lynx provides the runtime. The build processes your source and assets; Lynx determines which elements, CSS properties and runtime APIs are available.
+The template's build configuration lives in `rsbuild.config.ts`. [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) applies `pluginLynx` automatically, and [`pluginQRCode`](/api/packages/qrcode-rsbuild-plugin) provides the QR code:
 
-### Styling {#styling}
+```ts title="rsbuild.config.ts"
+import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
 
-The build supports CSS Modules, global CSS, Sass, Less and PostCSS. CSS is parsed and encoded into the bundle, while Lynx configuration controls behavior such as component scoping and inheritance. [Styling](./styling.mdx) explains how these approaches work together. [Tailwind CSS](./tailwind.mdx) also needs `@lynx-js/tailwind-preset` to adapt its utilities to the styles Lynx supports.
+export default defineConfig({
+  source: {
+    entry: {
+      main: './src/index.tsx',
+    },
+  },
+  plugins: [pluginQRCode(), pluginReactLynx()],
+});
+```
 
-### TypeScript {#typescript}
+When development is complete, use `rsbuild build` to generate production files and `rsbuild preview` to preview them locally.
 
-Rsbuild handles general build needs such as `.ts`, `.tsx` and path aliases. Lynx adds types for its globals, elements and native modules, which you can extend to describe your application's data and host capabilities. See [TypeScript](./typescript.md).
+### Configure your app
 
-### Static assets {#static-assets}
+`rsbuild.config.ts` accepts the full [Rsbuild configuration](https://rsbuild.rs/config/). Configure the capabilities your project needs:
 
-Reference images, fonts and other assets from code or CSS. The build emits them as separate files or inlines small files as data URIs; files in `public/` are copied directly to the output. [Rsbuild's static assets guide](https://rsbuild.rs/guide/basic/static-assets) covers paths, URL prefixes and inlining. See [`output.dataUriLimit`](/api/build/output/data-uri-limit) for Lynx's default inlining threshold.
+- <span id="typescript" />
+  **[TypeScript](./typescript.md)**: build-time declarations and types for
+  application data, elements and native modules.
+- <span id="styling" />
+  **[CSS](./styling.mdx)**: CSS Modules, global styles, pre-processors and
+  PostCSS. For Tailwind, see the [Lynx preset setup](./tailwind.mdx).
+- <span id="static-assets" />
+  **[Static assets](https://rsbuild.rs/guide/basic/static-assets)**: images,
+  fonts, the `public/` directory, URL prefixes and inlining.
+- <span id="module-resolution" />
+  **[Module resolution](https://rsbuild.rs/config/resolve/alias)**: path aliases
+  and dependency resolution. `pluginLynx` prefers dependencies' `lynx` export
+  condition; see [`resolve.extensions`](/api/build/resolve/extensions) for file
+  extensions.
+- <span id="plugins" />
+  **[Plugins](https://rsbuild.rs/plugins/list/)**: add Rsbuild plugins or extend
+  the underlying build through `tools.rspack`.
 
-### Module resolution {#module-resolution}
+The [`rsbuild.config.ts` reference](/api/build) describes Lynx-specific options and changed defaults. For example, to customize the bundle filename, explicitly add `pluginLynx({ output: { filename: { bundle: 'app.lynx.bundle' } } })` to `plugins`; it will not be applied twice.
 
-A dependency can provide both web and Lynx implementations. `pluginLynx` prefers the package's `lynx` export condition so the app uses the implementation intended for Lynx. Configure path aliases through `tsconfig.json` or Rsbuild's [`resolve.alias`](https://rsbuild.rs/config/resolve/alias); see [`resolve.extensions`](/api/build/resolve/extensions) for file extension resolution.
+### Optimize and debug
 
-## Bundles and the runtime {#bundles}
+The build also provides ways to control loading, investigate performance and diagnose problems:
 
-Each application entry produces a `.lynx.bundle` containing main-thread code, background-thread code, styles and page configuration. The host hands it to the Lynx Engine, so a build must also account for the engine versions its hosts use. The bundle's [`engineVersion`] sets the minimum required engine version. [Lynx Bundles and Compatibility](./lynx-bundle.mdx) explains bundle contents, dual-thread builds and version compatibility.
+- **[Code splitting](/react/code-splitting.md)**: load some code on demand to reduce what the first screen needs.
+- <span id="external-bundles" />
+  **[External Bundle](./external-bundle.mdx)**: build common dependencies into a
+  bundle shared by several apps.
+- **[Build profiling](https://rsbuild.rs/guide/debug/build-profiling)**: use tools such as Rsdoctor to understand build time and dependencies.
+- <span id="debugging-and-profiling" />
+  **[Runtime
+  profiling](/guide/performance/analysis-performance/analysis-framework.mdx) and
+  [bundle size
+  analysis](/guide/performance/analysis-performance/analysis-bundle-size.mdx)**:
+  investigate runtime and loading costs.
+- **[Production error mapping](/guide/devtool/map-errors-to-source.mdx) and [UI source maps](/guide/devtool/ui-source-map.mdx)**: use build-generated debugging information to connect errors and rendered nodes to source code.
 
-### Output files {#output-files}
+:::info Still using Rspeedy?
+Rspeedy is still maintained and uses the same build engine as `pluginLynx`. Existing projects can keep using it; Rsbuild is recommended for new projects. See the [Rspeedy migration guide](./rspeedy.mdx#migrating-an-rspeedy-project) for the differences and migration steps.
+:::
 
-Production files go into `dist/` by default. Alongside application bundles, there may be lazy bundles and separate static assets. Development builds also keep intermediate scripts, styles and debug metadata so you can inspect the build. See [Output Files](./output.mdx) for directory layouts, filenames and output configuration.
+## Understand the output {#bundles}
 
-### Sharing code between apps {#external-bundles}
+### What is a Lynx Bundle {#lynx-bundle}
 
-Several applications can load common dependencies from an external bundle, reducing what each app packages itself. This addresses a different reuse need from [code splitting](/react/code-splitting.md) within an application. [External Bundle](./external-bundle.mdx) explains how to build the shared bundle and load it in the host app.
+A [_Lynx Bundle_][Lynx Bundle] is what a Lynx app ships: a single binary file ending in `.lynx.bundle`. The container hands its URL or its bytes to the [_Lynx Engine_][Lynx Engine], and the page renders.
 
-## Extending the build {#plugins}
+A web app ships a set of files — an HTML entry, some JS, some CSS — and the browser fetches them one by one as the HTML references them. Lynx produces a bundle for each application entry, with styles and scripts encoded inside it by default.
 
-Lynx builds can compose Rsbuild plugins for pre-processors, type checking and asset optimization. For lower-level extensions, add Rspack plugins through [`tools.rspack`](https://rsbuild.rs/config/tools/rspack). See [Rsbuild's plugin documentation](https://rsbuild.rs/plugins/list/) for general extensions. Lynx's own plugins are listed under "Plugins and tools" in the API reference, starting with the package that provides [`pluginLynx`].
+#### How it differs from a web build
 
-## Debugging and profiling {#debugging-and-profiling}
+|               | Web                                       | Lynx                                                    |
+| ------------- | ----------------------------------------- | ------------------------------------------------------- |
+| Entry         | `index.html`                              | No HTML; the container loads the bundle directly        |
+| Styles        | Separate `.css` files, fetched at runtime | Parsed into style data and encoded into the bundle      |
+| Scripts       | Separate `.js` files, fetched at runtime  | Inlined into the bundle by default                      |
+| Static assets | Separate files                            | Separate files too; small ones are inlined as data URIs |
+| Threads       | Single-threaded                           | One build per thread, both inside the same bundle       |
 
-During a build, [Rsdoctor and build profiling](https://rsbuild.rs/guide/debug/build-profiling) help you understand build time and dependencies. Once the app runs, [framework profiling](/guide/performance/analysis-performance/analysis-framework.mdx) and [bundle size analysis](/guide/performance/analysis-performance/analysis-bundle-size.mdx) help you investigate performance and size.
+<span id="output-files" />
+Static assets and scripts emitted by chunk splitting can also be separate files
+alongside the bundle. See [Output Files](./output.mdx) for the full directory
+layout.
 
-The build's debug metadata also [maps production errors back to source](/guide/devtool/map-errors-to-source.mdx), while the [UI source map](/guide/devtool/ui-source-map.mdx) maps rendered nodes to the JSX that created them. These capabilities connect build output to source code for development and production debugging.
+#### What is inside a bundle {#what-is-inside-a-bundle}
+
+Every bundle carries at least four kinds of content:
+
+- **Main-thread code** — creates the elements of the first screen; `main-thread.js` in the intermediate output
+- **Background-thread code** — your full application logic; `background.js`
+- **Styles** — every CSS rule, parsed into structured data
+- **Page config** — switches such as `enableCSSInheritance` and `enableNewGesture`, plus metadata such as which framework built it
+
+#### How the dual-thread output is produced
+
+Lynx's dual-thread architecture means one source tree compiles into two outputs. The build keeps them apart with Rspack **layers**: one layer for the main thread, one for the background thread, each with its own module graph.
+
+That split does two things. A module can resolve differently per layer — ReactLynx uses `@lynx-js/react/lepus` on the main thread and `@lynx-js/react` on the background thread. And markers like `background only` can act per layer: the code they mark never enters the main-thread graph, which keeps the first-screen path small.
+
+Both layers land in the intermediate output directory, `dist/.lynx/<entry>/`:
+
+```txt
+dist/.lynx/<entry>/
+├── main-thread.js      # compiled main-thread layer
+├── background.js       # compiled background-thread layer
+├── <entry>.css         # styles
+├── tasm.json           # the encoder's input
+└── debug-metadata.json # metadata for mapping production errors back to source
+```
+
+These files stay on disk only in development builds, or when `DEBUG` contains `lynx`. A production build still produces them, then deletes them from the output once they are encoded into the bundle.
+
+#### From intermediates to a binary
+
+`tasm.json` is the encoder's input, and the readable version of the bundle. It organizes the content above into a few fields:
+
+| Field             | Content                                                |
+| ----------------- | ------------------------------------------------------ |
+| `lepusCode`       | Main-thread code                                       |
+| `manifest`        | Background-thread code; `/app-service.js` is the entry |
+| `css`             | Structured style data                                  |
+| `sourceContent`   | Page config, the framework, the app type               |
+| `compilerOptions` | Encoder switches                                       |
+
+The last step belongs to [`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm): it takes what `tasm.json` describes and encodes it into the binary written as `.lynx.bundle`.
+
+To see what a build actually encoded, open `dist/.lynx/<entry>/tasm.json`.
+
+#### An app can have more than one bundle
+
+Besides the main bundle:
+
+- **Lazy bundles** — a component behind a dynamic `import()` is encoded into its own `.lynx.bundle` under `lazy-bundle/`, fetched at runtime. See [Code Splitting](/react/code-splitting.md).
+- **External bundles** — shared dependencies built once into a bundle that several apps load. See [External Bundle](./external-bundle.mdx).
+
+#### The web output
+
+The same source can also be built for the web. There the Rsbuild environment is named `web`, the output is a `.web.bundle`, and `<lynx-view url="...">` loads it. The `[platform]` placeholder in a filename is that environment name, which is why the default `[name].[platform].bundle` gives you `main.lynx.bundle` in one environment and `main.web.bundle` in the other.
+
+### Compatibility {#compatibility}
+
+A bundle's engine version decides which Lynx Engine builds can run it. Here is how to set that version, and how to cope when the engine moves on.
+
+#### Build from Source
+
+A simple way to ensure compatibility is to **always build the Bundle with the Host application from source**.
+
+- Bundle can fully utilize all features of the current Lynx Engine version
+- Compatibility can be fully verified during development, what you see is what you get
+
+#### Multi-version Compatibility
+
+However, in a complex project, the relationship between Bundle and Lynx Engine is not one-to-one:
+
+- A Bundle might run in applications with different Lynx Engine versions
+
+- An application can run multiple Bundles maintained by different teams
+
+In this case, you need to set the [`engineVersion`] to ensure compatibility.
+
+:::info Engine Version
+When the Bundle's [`engineVersion`] is greater than the Lynx Engine version, it will not be able to run.
+:::
+
+For example: a Bundle with [`engineVersion`] 3.3 can run on Lynx Engine 3.3 and later versions, but cannot run on 3.2.
+
+<Mermaid title="Version Compatibility Diagram">
+  {`
+graph TB
+    subgraph Bundle["🎯 Bundle"]
+        B10["Engine Version 3.3"]
+    end
+    subgraph Engine["⚙️ Lynx Engine"]
+        E12["Version 3.5"]
+        E11["Version 3.4"]
+        E10["Version 3.3"]
+        E09["Version 3.2"]
+    end
+    B10 -.->|❌ Not Supported| E09
+    B10 ==>|✅ Can Run| E10
+    B10 ==>|✅ Can Run| E11
+    B10 ==>|✅ Can Run| E12
+    %% Node styles
+    style E12 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E11 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E10 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E09 fill:#2b5a83,stroke:#4a90e2,stroke-width:2px,rx:10px,stroke-dasharray:5,5
+    style B10 fill:#2d5a1e,stroke:#7ed321,stroke-width:3px,rx:10px
+    %% Subgraph styles
+    style Bundle fill:transparent,stroke:#7ed321,stroke-width:2px,rx:10px
+    style Engine fill:transparent,stroke:#4a90e2,stroke-width:2px,rx:10px
+    %% Default styles
+    classDef default fill:#23272f,color:#ccc,font-family:system-ui
+    %% Connection line label styles
+    linkStyle default stroke-width:2px
+`}
+</Mermaid>
+
+When a Bundle needs to run on multiple Lynx Engine versions, its [`engineVersion`] must not exceed the oldest Lynx Engine version it targets.
+
+When running multiple Bundles on a single Lynx Engine version, each Bundle can set different [`engineVersion`]s, but none can be greater than the Lynx Engine version.
+
+##### Version Incompatibility Handling
+
+If you try to run a Bundle on a lower version of the Lynx Engine, a Fatal level error with code [10204](/api/errors/error-code.mdx#10204-e_app_bundle_load_parse_failed) will occur, and the rendering process will stop.
+
+##### Configuring Engine Version
+
+The [`engineVersion`] is a string containing two version numbers, and you can specify it in your configuration file:
+
+```ts title="rsbuild.config.ts"
+import { defineConfig } from '@rsbuild/core';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      engineVersion: '3.2',
+    }),
+  ],
+});
+```
+
+#### Upgrading Lynx Engine
+
+As Lynx Engine evolves, new features are added and some features may be deprecated. Their compatibility is also managed by [`engineVersion`].
+
+##### New Features
+
+Some new features **_will not_** affect existing Bundles, but if [`engineVersion`] is lower than the version where they were introduced, runtime detection is needed, for example:
+
+```js
+// Detect if `lynx.newlyAddedMethod` can be called
+if (lynx.newlyAddedMethod) {
+  lynx.newlyAddedMethod();
+}
+```
+
+While some new features cannot run on lower versions of the Lynx Engine at all, so they will only be enabled when [`engineVersion`] is greater than or equal to the corresponding version.
+
+##### Deprecated Features
+
+Some features may be deprecated during iteration, and their behavior may change when a higher [`engineVersion`] is set.
+
+- If only the Lynx Engine version is upgraded without upgrading the Bundle's [`engineVersion`], there will be no compatibility issues
+- If both Lynx Engine and Bundle's [`engineVersion`] are upgraded, you need to read the CHANGELOG to ensure there are no unexpected behavior changes
+
+### Feature and API Compatibility {#feature-compatibility}
+
+Lynx provides structured compatibility information for platform features, APIs, built-in components, and CSS properties.
+
+For APIs, two paired components help you understand platform support:
+
+#### APISummary
+
+The `<APISummary />` component provides a quick, high-level overview of an API's availability across platforms. It shows a summary status (e.g., "Widely available") and badges for supported platforms. Clicking on this summary card will automatically jump to the detailed compatibility table.
+
+#### APITable
+
+The `<APITable />` component displays detailed, version-specific support information for each platform. It covers Android, iOS, HarmonyOS, and Web, including specific version numbers where applicable.
+
+#### Interactive Explorer
+
+Use the interactive explorer below to search and discover compatibility information using both components:
+
+- **CSS Properties**: Enter paths like `css/properties/gap`
+- **Built-in Elements**: Enter paths like `elements/view` to see element compatibility
+- **Nested APIs**: Use dot notation to access nested identifiers, e.g., `css/properties/align-self.supported_in_flex_layout`
+
+<APITableExplorer />
 
 [Lynx Bundle]: /guide/spec#lynx-bundle-or-bundle
 [Lynx Engine]: /guide/spec#engine
