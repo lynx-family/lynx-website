@@ -1,0 +1,120 @@
+---
+description: 'CSS Modules, global CSS, pre-processors, PostCSS and Tailwind CSS in a Lynx build.'
+---
+
+import { PackageManagerTabs } from '@theme';
+
+# Styling
+
+A Lynx app is styled with CSS. Selectors, the cascade, [CSS variables](/api/css/properties/css-variable.mdx) and the [properties Lynx supports](/api/css/properties) work as they do on the web; [Applying Styles](/guide/ui/styling.mdx) covers what Lynx renders.
+
+The build accepts CSS in all the ways an [Rsbuild](https://rsbuild.rs/guide/styling/css-usage) project does:
+
+- [**CSS Modules**](#css-modules): class names scoped to the file that imports them, so they cannot collide.
+- [**Global CSS**](#global-css): plain `.css` files, for styles shared across the app and for complex selectors.
+- [**CSS pre-processors**](#css-pre-processors): [Sass](https://sass-lang.com/), [Less](https://lesscss.org/) and [Stylus](https://stylus-lang.com/), for variables, nesting and mixins.
+- [**PostCSS**](#postcss): transforms CSS with PostCSS plugins.
+- [**Tailwind CSS**](#tailwind-css): utility classes, through a preset that keeps only what Lynx renders.
+
+Everything on this page except Tailwind CSS behaves as Rsbuild documents it. What a Lynx build does differently is where the CSS ends up: it is parsed and [encoded into the bundle](./lynx-bundle.mdx#what-is-inside-a-bundle), not emitted as a `.css` file.
+
+## CSS Modules {#css-modules}
+
+A file named `*.module.css` (or `.module.scss`, `.module.less`) is a [CSS Module](https://github.com/css-modules/css-modules), with no configuration.
+
+```css title="button.module.css"
+.red {
+  background: red;
+}
+```
+
+```jsx title="Button.jsx"
+import styles from './button.module.css';
+
+export function Button() {
+  return (
+    <view className={styles.red}>
+      <text>Button</text>
+    </view>
+  );
+}
+```
+
+To treat other files as CSS Modules, or to change how class names are generated, use [`output.cssModules`](https://rsbuild.rs/config/output/css-modules). For the TypeScript declarations of `*.module.css` imports, see [TypeScript](./typescript.md#build-time-type-declarations).
+
+In ReactLynx, CSS Modules are also how styles stay inside one component: with [`enableRemoveCSSScope`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enableremovecssscope) set to `undefined`, CSS Modules apply only to the component that imports them, which is also faster to match than global CSS.
+
+## Global CSS {#global-css}
+
+Import a plain `.css` file and use its class names directly:
+
+```css title="styles.css"
+.red {
+  background: red;
+}
+
+.red > text {
+  color: blue;
+}
+```
+
+```jsx title="App.jsx"
+import './styles.css';
+
+export default function App() {
+  return (
+    <view className="red">
+      <text>Hello, Lynx!</text>
+    </view>
+  );
+}
+```
+
+Whether properties such as `color` and `font-size` inherit, and whether a class change re-evaluates descendant selectors, are switched by [`enableCSSInheritance`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinheritance) and [`enableCSSInvalidation`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinvalidation). See [Custom Theming](/guide/styling/custom-theming.mdx) for how inheritance is used.
+
+## CSS pre-processors {#css-pre-processors}
+
+Add the Rsbuild plugin for the pre-processor, then import `.scss`, `.sass` or `.less` files (or Stylus files) like CSS:
+
+<PackageManagerTabs command="install -D @rsbuild/plugin-sass" />
+
+```ts title="rsbuild.config.ts"
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+import { pluginSass } from '@rsbuild/plugin-sass';
+
+export default defineConfig({
+  plugins: [pluginReactLynx(), pluginSass()],
+});
+```
+
+[`@rsbuild/plugin-less`](https://rsbuild.rs/plugins/list/plugin-less) and [`@rsbuild/plugin-stylus`](https://v1.rsbuild.rs/plugins/list/plugin-stylus) work the same way. Their options are documented with the [Sass](https://rsbuild.rs/plugins/list/plugin-sass), Less and Stylus plugins.
+
+## PostCSS {#postcss}
+
+PostCSS is built in. Add a `postcss.config.js` at the project root, or use [`tools.postcss`](https://rsbuild.rs/config/tools/postcss):
+
+```js title="postcss.config.js"
+export default {
+  plugins: {
+    'postcss-nesting': {},
+  },
+};
+```
+
+See [Rsbuild's PostCSS guide](https://rsbuild.rs/guide/styling/css-usage#postcss) for how the configuration is loaded.
+
+## Tailwind CSS {#tailwind-css}
+
+Tailwind CSS needs one Lynx-specific piece. Lynx is not a browser, so a plain Tailwind setup generates utilities Lynx cannot render. [`@lynx-js/tailwind-preset`](/api/packages/tailwind-preset) keeps only the utilities Lynx supports and replaces the ones that must work differently:
+
+```js title="tailwind.config.js"
+import lynxPreset from '@lynx-js/tailwind-preset';
+
+export default {
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  presets: [lynxPreset],
+};
+```
+
+The preset requires **Tailwind CSS v3**, used as a PostCSS plugin. See [Tailwind CSS](./tailwind.mdx) for the full setup and an example.
