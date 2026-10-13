@@ -10,8 +10,6 @@ const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 // Generated API sources remain owned by lynx-stack.
 const configCopy = {
   en: {
-    addedTag: 'Lynx-only',
-    overrideTag: 'Default override',
     rspeedyTag: 'Rspeedy-only',
     addedTitle: 'Lynx-specific option',
     overrideTitle: 'Lynx default override',
@@ -28,8 +26,6 @@ const configCopy = {
     rspeedyHeading: '## Rspeedy-only options',
   },
   zh: {
-    addedTag: 'Lynx 新增',
-    overrideTag: '默认值覆盖',
     rspeedyTag: '仅 Rspeedy',
     addedTitle: 'Lynx 新增配置',
     overrideTitle: 'Lynx 默认值覆盖',
@@ -59,11 +55,8 @@ for (const [locale, copy] of Object.entries(configCopy)) {
       const override = ['Default changed', '默认值已变更'].includes(item.tag);
       const rspeedy = item.tag === 'Rspeedy';
       if (!added && !override && !rspeedy) continue;
-      item.tag = added
-        ? copy.addedTag
-        : override
-          ? copy.overrideTag
-          : copy.rspeedyTag;
+      if (rspeedy) item.tag = copy.rspeedyTag;
+      else delete item.tag;
       const page = join(dirname(metaFile), `${item.name}.mdx`);
       let content = await readFile(page, 'utf8');
       const option = content.match(/^# (.+)$/m)?.[1];
