@@ -1,22 +1,42 @@
+import { Steps } from '@theme';
+
 # Upgrade from Rspeedy
 
-Rspeedy ([`@lynx-js/rspeedy`](/api/packages/rspeedy)) is Lynx's previous build tool. Built on Rsbuild, it provides the `rspeedy` CLI and uses `lynx.config.ts` for configuration. We now recommend **Rsbuild with `pluginLynx`**, using Rsbuild's configuration and plugin ecosystem directly.
+Rspeedy will be maintained for the long term. You can still visit the [previous Rspeedy website](https://lynxjs.org/rspeedy/index.html).
 
-Rspeedy is still maintained, and existing projects can continue to use it. The following steps migrate a project to Rsbuild.
+Rspeedy ([`@lynx-js/rspeedy`](/api/packages/rspeedy)) is Lynx's previous build tool. Built on Rsbuild, it provides the `rspeedy` CLI and uses `lynx.config.ts` for configuration. We now recommend **Rsbuild with `pluginLynx`**, using Rsbuild's configuration and plugin ecosystem directly.
 
 ## Migrating an Rspeedy project
 
 Rspeedy and `pluginLynx` share the same build engine. Migration mainly involves dependencies, CLI commands and configuration; application code does not need to be rewritten.
 
-1. Replace the dependency: drop `@lynx-js/rspeedy`, add [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core).
-2. Point the scripts at the other CLI — `rspeedy dev`, `rspeedy build` and `rspeedy preview` become `rsbuild dev`, `rsbuild build` and `rsbuild preview`.
-3. Rename `lynx.config.ts` to `rsbuild.config.ts` and take `defineConfig` from `@rsbuild/core` instead of `@lynx-js/rspeedy`.
-4. Switch `types` in `tsconfig.json` from `@lynx-js/rspeedy/client` to `@rsbuild/core/types`.
+<Steps>
 
-Then adjust the config itself:
+### Replace the dependency
 
-- **[`source.entry`](https://rsbuild.rs/config/source/entry) and [`output.filename`](https://rsbuild.rs/config/output/filename) take the object form.** Rspeedy also accepts a plain string; Rsbuild does not.
-- **Lynx's own options move into `pluginLynx`.** [`output.filename.bundle`](/api/build/output/filename/bundle) and [`performance.profile`](/api/build/performance/profile) are Rspeedy config keys, not Rsbuild ones, so they belong in `pluginLynx({ ... })` — which also means applying that plugin explicitly, since the automatic application uses default options.
+Remove `@lynx-js/rspeedy` and install [`@rsbuild/core`](https://www.npmjs.com/package/@rsbuild/core).
+
+### Update CLI commands
+
+Replace `rspeedy dev`, `rspeedy build`, `rspeedy preview` and `rspeedy inspect` with `rsbuild dev`, `rsbuild build`, `rsbuild preview` and `rsbuild inspect` respectively.
+
+### Replace the configuration file
+
+Rename `lynx.config.ts` to `rsbuild.config.ts` and import `defineConfig` from `@rsbuild/core` instead of `@lynx-js/rspeedy`.
+
+### Update build-time types
+
+Replace `@lynx-js/rspeedy/client` with `@rsbuild/core/types` in the `types` array in `tsconfig.json`, keeping the other entries.
+
+### Expand shorthand configuration
+
+Change string values for [`source.entry`](https://rsbuild.rs/config/source/entry) and [`output.filename`](https://rsbuild.rs/config/output/filename) to object form.
+
+### Move Lynx-specific options
+
+Move options such as [`output.filename.bundle`](/api/build/output/filename/bundle) and [`performance.profile`](/api/build/performance/profile) into `pluginLynx({ ... })`. Add `pluginLynx` explicitly to `plugins` when you need these options; automatic application uses the defaults.
+
+</Steps>
 
 ## Differences between Rspeedy and Rsbuild
 
