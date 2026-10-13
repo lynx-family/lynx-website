@@ -82,24 +82,24 @@ Rspeedy 仍在维护，与 `pluginLynx` 使用同一套构建引擎。现有项�
 ## 理解产物 {#bundles}
 
 <span id="lynx-bundle" />
-每个应用入口会生成一个后缀为 `.lynx.bundle` 的二进制文件。宿主应用将这个 [_Lynx
-Bundle_][Lynx Bundle] 交给 [_Lynx Engine_][Lynx Engine]
-加载，无需像浏览器那样先加载 HTML 入口。
+[***Lynx Bundle***][Lynx Bundle] 是 Lynx 应用的交付产物：一个后缀为
+`.lynx.bundle` 的二进制文件。容器拿到它的 URL 或内容，交给 [***Lynx
+Engine***][Lynx Engine] 加载，页面就渲染出来了。Lynx Bundle 和 Web
+应用其实非常像：
 
-### Bundle 里有什么 {#what-is-inside-a-bundle}
+<span id="what-is-inside-a-bundle" />
+<span id="双线程构建" />
 
-Bundle 将页面运行所需的内容打包在一起：
-
-- **主线程代码**：创建首屏元素。
-- **后台线程代码**：运行应用逻辑。
-- **样式**：解析后的 CSS 数据。
-- **页面配置**：引擎开关、所用框架等信息。
-
-### 双线程构建
-
-同一份源码会分别编译为主线程和后台线程代码，再编码进 Bundle。构建通过 Rspack 的 layer 隔离两份模块图，使同一个依赖可以在两个线程中使用不同实现；标记为 `background only` 的代码不会进入主线程产物。
+| 组成 | Web 应用                                        | Lynx Bundle                                                                     |
+| ---- | ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| 脚本 | JavaScript 文件，运行时加载                     | 默认编码进 Bundle；**主线程**代码创建**首屏**元素，**后台线程**代码运行业务逻辑 |
+| 样式 | CSS 文件，运行时加载                            | CSS 解析为结构化数据，编码进 Bundle                                             |
+| 资源 | 图片、字体等独立文件，小资源可以内联            | 同样支持独立文件和小资源内联                                                    |
+| 入口 | 浏览器加载 HTML，再加载它引用的脚本、样式和资源 | 容器直接加载 Bundle，包含页面配置等元信息                                       |
 
 ### 输出文件 {#output-files}
+
+#### 标准 Lynx Bundle 产物
 
 构建产物默认写入 `dist/`：
 
@@ -111,9 +111,24 @@ dist/
 └── .lynx/[name]/      # 调试用中间产物
 ```
 
-`.lynx/` 中包含 `main-thread.js`、`background.js` 和 `debug-metadata.json` 等文件，默认只在开发构建时保留；生产构建也可以通过 `DEBUG=lynx` 保留它们。调试元数据的用法见[线上错误反解](/guide/devtool/map-errors-to-source.mdx)。
+脚本默认编码进 Bundle，开启代码分包后也会输出到 `static/js/`。通过 [`output.filename.bundle`](/api/build/output/filename/bundle) 设置 Bundle 文件名，[`output.filename`](https://rsbuild.rs/zh/config/output/filename) 设置其他文件名，[`output.distPath`](/api/build/output/dist-path) 调整输出目录；[Source Map](/api/build/output/source-map) 和[许可声明](/api/build/output/legal-comments)的配置见对应 API。
 
-通过 [`output.filename.bundle`](/api/build/output/filename/bundle) 设置 Bundle 文件名，[`output.filename`](https://rsbuild.rs/zh/config/output/filename) 设置其他文件名，[`output.distPath`](/api/build/output/dist-path) 调整输出目录。[Source Map](/api/build/output/source-map) 和[许可声明](/api/build/output/legal-comments)的配置也见对应 API。
+#### Web 产物
+
+同一份源码也可以构建到 Web：`web` 环境产出 `.web.bundle`，由 `<lynx-view url="...">` 加载。默认文件名中的 `[platform]` 对应环境名，因此两种环境分别生成 `main.lynx.bundle` 和 `main.web.bundle`。
+
+#### 从中间产物到二进制
+
+构建先生成**主线程**脚本 `main-thread.js`、**后台线程**脚本 `background.js` 和样式，再由 `tasm.json` 组织这些内容及页面配置，交给 [`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm) 编码为 `.lynx.bundle` 二进制文件。
+
+这些中间产物保存在 `.lynx/[name]/`，默认只在开发构建时保留；生产构建可通过 `DEBUG=lynx` 保留。查看 `tasm.json` 可以了解 Bundle 编码了哪些内容；`debug-metadata.json` 用于[线上错误反解](/guide/devtool/map-errors-to-source.mdx)。
+
+### 一个应用可以有多个 Bundle
+
+主 Bundle 之外，还可以按需加载或共享其他 Bundle：
+
+- **懒加载 Bundle**：通过动态 `import()` 加载组件，产物输出到 `lazy-bundle/`，减少**首屏**需要加载的内容。详见[代码分割](/react/code-splitting.md)。
+- **External Bundle**：把公共依赖单独构建为 Bundle，供多个应用共享。详见 [External Bundle](./external-bundle.mdx)。
 
 ## 兼容性 {#compatibility}
 

@@ -88,25 +88,24 @@ Rspeedy is still maintained and uses the same build engine as `pluginLynx`. Exis
 
 ## Understand the output {#bundles}
 
-<span id="lynx-bundle" />
-Each application entry produces a binary file ending in `.lynx.bundle`. The host
-hands this [_Lynx Bundle_][Lynx Bundle] to the [_Lynx Engine_][Lynx Engine] to
-load, without an HTML entry like a browser uses.
+<span id="lynx-bundle" />A [***Lynx Bundle***][Lynx Bundle] is the deliverable
+for a Lynx app: a binary file ending in `.lynx.bundle`. The host passes its URL
+or contents to the [***Lynx Engine***][Lynx Engine], which loads it and renders
+the page. A Lynx Bundle has much in common with a web app:
 
-### What is inside a bundle {#what-is-inside-a-bundle}
+<span id="what-is-inside-a-bundle" />
+<span id="dual-thread-builds" />
 
-A bundle packages the content needed to run the page:
-
-- **Main-thread code**: creates the first screen's elements.
-- **Background-thread code**: runs application logic.
-- **Styles**: parsed CSS data.
-- **Page configuration**: engine switches, framework information and other metadata.
-
-### Dual-thread builds
-
-The same source is compiled into main-thread and background-thread code, then encoded into the bundle. Rspack layers keep the two module graphs separate so a dependency can use a different implementation on each thread. Code marked `background only` does not enter the main-thread output.
+| Part    | Web app                                                                      | Lynx Bundle                                                                                                                                    |
+| ------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scripts | JavaScript files loaded at runtime                                           | Encoded into the bundle by default; **main-thread** code creates the **first screen**, while **background-thread** code runs application logic |
+| Styles  | CSS files loaded at runtime                                                  | CSS parsed into structured data and encoded into the bundle                                                                                    |
+| Assets  | Separate images, fonts and other files, with small assets optionally inlined | Also supports separate files and inlining small assets                                                                                         |
+| Entry   | The browser loads HTML, then the scripts, styles and assets it references    | The host loads the bundle directly, including page configuration and other metadata                                                            |
 
 ### Output files {#output-files}
+
+#### Standard Lynx Bundle output
 
 Build output goes into `dist/` by default:
 
@@ -118,9 +117,24 @@ dist/
 └── .lynx/[name]/      # intermediates for debugging
 ```
 
-`.lynx/` contains files such as `main-thread.js`, `background.js` and `debug-metadata.json`. They are kept in development builds by default; use `DEBUG=lynx` to retain them in production builds too. See [Production Error Mapping](/guide/devtool/map-errors-to-source.mdx) for how to use debug metadata.
+Scripts are encoded into the bundle by default; code splitting can also produce files in `static/js/`. Set the bundle filename with [`output.filename.bundle`](/api/build/output/filename/bundle), other filenames with [`output.filename`](https://rsbuild.rs/config/output/filename), and output directories with [`output.distPath`](/api/build/output/dist-path). See the APIs for [source maps](/api/build/output/source-map) and [license comments](/api/build/output/legal-comments) for those options.
 
-Set the bundle filename with [`output.filename.bundle`](/api/build/output/filename/bundle), other filenames with [`output.filename`](https://rsbuild.rs/config/output/filename), and output directories with [`output.distPath`](/api/build/output/dist-path). See the APIs for [source maps](/api/build/output/source-map) and [license comments](/api/build/output/legal-comments) for those options.
+#### Web output
+
+The same source can also target the web: the `web` environment produces a `.web.bundle`, loaded by `<lynx-view url="...">`. The `[platform]` placeholder in the default filename is the environment name, so the two environments produce `main.lynx.bundle` and `main.web.bundle` respectively.
+
+#### From intermediate files to binary
+
+The build first produces the **main-thread** script `main-thread.js`, the **background-thread** script `background.js` and styles. The `tasm.json` file organizes these contents and page configuration for [`@lynx-js/tasm`](https://www.npmjs.com/package/@lynx-js/tasm) to encode into the `.lynx.bundle` binary.
+
+These intermediate files live in `.lynx/[name]/` and are kept in development builds by default; use `DEBUG=lynx` to retain them in production builds. Inspect `tasm.json` to see what the bundle encodes; `debug-metadata.json` supports [Production Error Mapping](/guide/devtool/map-errors-to-source.mdx).
+
+### An app can have multiple bundles
+
+Besides the main bundle, an app can load other bundles on demand or share them:
+
+- **Lazy bundles**: load components through dynamic `import()`, with output in `lazy-bundle/`, to reduce what the **first screen** needs. See [Code Splitting](/react/code-splitting.md).
+- **External Bundle**: build common dependencies into a separate bundle shared by several apps. See [External Bundle](./external-bundle.mdx).
 
 ## Compatibility {#compatibility}
 
