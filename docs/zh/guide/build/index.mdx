@@ -1,137 +1,58 @@
-# 构建与交付 Bundle
+# 构建 Lynx 应用
 
-Lynx 应用以 [_Lynx Bundle_][Lynx Bundle] 的形式交付：一个二进制文件，由宿主应用交给 [_Lynx Engine_][Lynx Engine] 加载。它由 [Rsbuild](https://rsbuild.rs/zh/) 搭配 Lynx 的构建插件 [`pluginLynx`] 构建，所以 Web 构建的大部分经验都可以直接沿用。Lynx 构建提供：
+构建把应用的代码、样式和资源转换为宿主可以加载的 [_Lynx Bundle_][Lynx Bundle]。开发时，构建工具通过开发服务器和热更新把修改同步到设备；发布时，它生成生产产物，并提供调试信息，帮助你分析性能和定位线上问题。
 
-- 用 [`rsbuild` 命令行](#getting-started)在设备上开发、构建生产产物，配置写在 `rsbuild.config.ts` 里。
-- [Lynx Bundle](#bundles)，以及决定它能在哪些 Lynx Engine 版本上运行的[引擎版本](./lynx-bundle.mdx#compatibility)。
-- 用 CSS Modules、全局 CSS、Sass、Less、PostCSS 和 [Tailwind CSS](./tailwind.mdx) [编写样式](#styling)。
-- 开箱即用的 [TypeScript](#typescript)，包括 Lynx 自有全局对象的类型。
-- 以 URL 引用、体积小时内联进 Bundle 的[静态资源](#static-assets)。
-- 优先选用包的 Lynx 产物的[模块解析](#module-resolution)。
-- 输出到 `dist/` 的[构建输出文件](#output-files)，并保留用于调试的中间产物。
-- 来自 Rsbuild 和 Rspack 生态的[插件](#plugins)。
-- 在多个应用之间共享依赖的 [External Bundle](#external-bundles)。
-- 面向构建速度、运行时性能、产物体积和线上错误的[调试与性能分析](#debugging-and-profiling)。
+Lynx 使用 [Rsbuild](https://rsbuild.rs/zh/) 和 [`pluginLynx`] 完成这一过程。TypeScript、CSS、静态资源和插件接入沿用 Rsbuild 的能力；`pluginLynx` 负责 Lynx 特有的部分，包括双线程代码的构建、Bundle 编码，以及适配目标 [_Lynx Engine_][Lynx Engine] 的输出。本章介绍这些环节如何配合，各专题进一步说明具体用法。
 
-Lynx 应用以前使用的命令行 Rspeedy 封装的是同一套引擎。它和 Rsbuild 的区别以及如何迁出，见 [Rspeedy](./rspeedy.mdx)。
+## 构建工具与开发流程 {#getting-started}
 
-## 开始使用 {#getting-started}
+新项目推荐使用 Rsbuild + `pluginLynx`。[快速开始](/guide/start/quick-start.mdx)介绍如何创建项目、启动开发服务器并在设备上运行应用。ReactLynx 项目通过 [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) 接入构建，它会自动应用 `pluginLynx`；[`pluginQRCode`](/api/packages/qrcode-rsbuild-plugin) 提供扫码打开应用的入口。
 
-用 Rsbuild 模板创建项目：
+项目在 `rsbuild.config.ts` 中配置，用 `rsbuild dev` 开发、`rsbuild build` 构建生产产物，`rsbuild preview` 预览产物。配置可以使用 Rsbuild 的完整能力；[`rsbuild.config.ts` 参考](/api/build)说明了 Lynx 新增的选项和调整过的默认值。需要设置 Lynx 专属选项时，在 `plugins` 中显式配置 `pluginLynx`。
 
-```bash
-npm create @lynx-js/lynx@latest -- --template rsbuild-react-ts
-```
+现有的 Rspeedy 项目使用同一套构建引擎。两者的配置差异、维护方式和迁移步骤见 [Rspeedy](./rspeedy.mdx)。
 
-ReactLynx 模板里写的是 [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx)，它会替你应用 [`pluginLynx`]；以及 [`pluginQRCode`](/api/packages/qrcode-rsbuild-plugin)，它会打印一个二维码，用 [Lynx Explorer](/guide/start/quick-start.mdx) 扫码即可打开应用：
+## 代码、样式与资源
 
-```ts title="rsbuild.config.ts"
-import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@rsbuild/core';
+应用的日常编写方式与 Rsbuild 项目相通，但运行环境是 Lynx。构建工具负责处理源码和资源；具体可以使用哪些元件、CSS 属性和运行时 API，由 Lynx 决定。
 
-export default defineConfig({
-  source: {
-    entry: {
-      main: './src/index.tsx',
-    },
-  },
-  plugins: [pluginQRCode(), pluginReactLynx()],
-});
-```
+### 样式 {#styling}
 
-用 [Rsbuild 命令行](https://rsbuild.rs/zh/guide/basic/cli)运行：
+构建支持 CSS Modules、全局 CSS、Sass、Less 和 PostCSS。CSS 会被解析并编码进 Bundle；组件作用域、样式继承等行为则由 Lynx 的配置控制。[样式](./styling.mdx)介绍这些方式如何配合。使用 [Tailwind CSS](./tailwind.mdx) 时，还需要 `@lynx-js/tailwind-preset` 来适配 Lynx 支持的样式能力。
 
-| 命令              | 作用                                                               |
-| ----------------- | ------------------------------------------------------------------ |
-| `rsbuild dev`     | 在局域网内启动开发服务器供设备加载 Bundle，保存时通过 HMR 重新构建 |
-| `rsbuild build`   | 把生产环境的 Bundle 写入 `dist/`                                   |
-| `rsbuild preview` | 在本地预览生产构建                                                 |
-| `rsbuild inspect` | 输出最终的 Rsbuild 和 Rspack 配置                                  |
+### TypeScript {#typescript}
 
-`rsbuild.config.ts` 接受所有 [Rsbuild 配置项](https://rsbuild.rs/zh/config/)。[`rsbuild.config.ts` 参考](/api/build)列出了 [`pluginLynx`] 新增的配置项，以及它为 Lynx 改了默认值的 Rsbuild 配置项。要设置 `pluginLynx` 自己的选项，比如 [`output.filename.bundle`](/api/build/output/filename/bundle)，在 `plugins` 里显式写上 `pluginLynx({ ... })` 即可，不会重复应用。
+Rsbuild 处理 `.ts`、`.tsx` 和路径别名等通用构建需求。Lynx 还提供全局对象、元件和原生模块的类型；你可以扩展这些类型来描述应用自己的数据与宿主能力。具体见 [TypeScript](./typescript.md)。
 
-## Lynx Bundle 与兼容性 {#bundles}
+### 静态资源 {#static-assets}
 
-每个入口构建出一个 `.lynx.bundle`。和 Web 构建不同，所有内容都在这一个文件里：主线程代码、后台线程代码、样式和页面配置。懒加载的组件会[各自构建成 Bundle](/react/code-splitting.md)。
+图片、字体等资源可以在代码或 CSS 中引用。构建会把它们作为单独文件输出，或将小文件内联为 data URI；`public/` 中的文件则直接复制到输出目录。资源路径、URL 前缀和内联方式见 [Rsbuild 静态资源指南](https://rsbuild.rs/zh/guide/basic/static-assets)，Lynx 的默认内联阈值见 [`output.dataUriLimit`](/api/build/output/data-uri-limit)。
 
-Bundle 只能运行在版本不低于其 [`engineVersion`] 的 Lynx Engine 上。当同一个 Bundle 需要运行在引擎版本各不相同的宿主应用里时，设置它：
+### 模块解析 {#module-resolution}
 
-```ts title="rsbuild.config.ts"
-import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { defineConfig } from '@rsbuild/core';
+同一个依赖包可能同时提供 Web 和 Lynx 版本。`pluginLynx` 优先选择包的 `lynx` 导出条件，让应用使用适合 Lynx 的实现。路径别名仍通过 `tsconfig.json` 或 Rsbuild 的 [`resolve.alias`](https://rsbuild.rs/zh/config/resolve/alias) 配置，文件扩展名的解析规则见 [`resolve.extensions`](/api/build/resolve/extensions)。
 
-export default defineConfig({
-  plugins: [pluginReactLynx({ engineVersion: '3.2' })],
-});
-```
+## Bundle 与运行环境 {#bundles}
 
-Bundle 里有什么、两个线程的代码各自怎么产出、怎么升级引擎、怎么确认某个特性是否可用，见 [Lynx Bundle 与兼容性](./lynx-bundle.mdx)。
+每个应用入口生成一个 `.lynx.bundle`，其中包含主线程代码、后台线程代码、样式和页面配置。宿主把它交给 Lynx Engine 加载，因此构建时也需要考虑宿主使用的引擎版本。Bundle 的 [`engineVersion`] 决定它所需的最低引擎版本；[Lynx Bundle 与兼容性](./lynx-bundle.mdx)介绍 Bundle 的内容、双线程构建和版本兼容策略。
 
-## 样式 {#styling}
+### 构建输出文件 {#output-files}
 
-CSS 的用法和 Web 一致，Rsbuild 支持的写法都可以用：[CSS Modules](./styling.mdx#css-modules)、[全局 CSS](./styling.mdx#global-css)、[Sass、Less 和 Stylus](./styling.mdx#css-pre-processors)，以及 [PostCSS](./styling.mdx#postcss)。样式会编码进 Bundle，而不是输出成 `.css` 文件。
+生产产物默认写入 `dist/`。除应用 Bundle 外，还可能有懒加载 Bundle 和单独输出的静态资源。开发构建会保留脚本、样式和调试元数据等中间产物，便于检查构建结果。目录结构、文件命名和输出路径的配置见[构建输出文件](./output.mdx)。
 
-[Tailwind CSS](./tailwind.mdx) 需要配合 [`@lynx-js/tailwind-preset`](/api/packages/tailwind-preset) 使用，它只保留 Lynx 能渲染的工具类。详见[样式](./styling.mdx)。
+### 跨应用共享代码 {#external-bundles}
 
-## TypeScript {#typescript}
+多个应用可以从 External Bundle 加载公共依赖，减少各自重复打包的内容。它与应用内的[代码分割](/react/code-splitting.md)解决不同的复用需求。[External Bundle](./external-bundle.mdx)介绍如何构建共享 Bundle，以及如何在宿主应用中加载它。
 
-`.ts` 和 `.tsx` 文件、路径别名和类型检查的用法和[其他 Rsbuild 项目](https://rsbuild.rs/zh/guide/basic/typescript)一样。Lynx 额外提供 [`@lynx-js/types`](https://www.npmjs.com/package/@lynx-js/types)，你可以扩展它来为 `lynx.__globalProps`、[`useInitData()`](/api/react/Hooks/useInitData)、自定义元件和原生模块声明类型。详见 [TypeScript](./typescript.md)。
+## 扩展构建流程 {#plugins}
 
-## 静态资源 {#static-assets}
-
-在 JavaScript 或 CSS 里导入图片、字体等文件，得到它的 URL：
-
-```jsx
-import logo from './assets/logo.png';
-
-export function App() {
-  return <image src={logo} />;
-}
-```
-
-小于 2 KiB 的文件会以 data URI 的形式内联进 Bundle，无需额外请求；用 [`output.dataUriLimit`](/api/build/output/data-uri-limit) 调整这个阈值。`public/` 下的文件会原样复制到产物目录。URL 前缀、public 目录和内联规则见 [Rsbuild 的静态资源指南](https://rsbuild.rs/zh/guide/basic/static-assets)。
-
-## 模块解析 {#module-resolution}
-
-路径别名来自 `tsconfig.json` 的 [`paths`](https://www.typescriptlang.org/tsconfig#paths) 或 [`resolve.alias`](https://rsbuild.rs/zh/config/resolve/alias)，和 Rsbuild 一致。
-
-Lynx 改变的是一个包里哪个文件会被选中。[`pluginLynx`] 优先解析 `lynx` [导出条件](https://nodejs.org/api/packages.html#conditional-exports)，然后才是 `import`、`require` 和 `browser`，因此一个包可以单独提供为 Lynx 构建的产物：
-
-```json title="package.json"
-{
-  "name": "foo",
-  "exports": {
-    ".": {
-      "lynx": "./index-lynx.js",
-      "import": "./index.js"
-    }
-  }
-}
-```
-
-对于没有 `exports` 的包，`lynx` 字段排在 `module` 和 `main` 之前；目录则优先解析到 `index.lynx`，其次才是 `index`。尝试的扩展名见 [`resolve.extensions`](/api/build/resolve/extensions)。
-
-## 构建输出文件 {#output-files}
-
-生产构建会为每个入口在 `dist/` 下写出 `[name].lynx.bundle`，懒加载 Bundle 写到 `dist/lazy-bundle/`，静态资源写到 `dist/static/`。开发构建还会在 `dist/.lynx/<entry>/` 下保留每个 Bundle 的中间产物：主线程和后台线程脚本、样式，以及 debug metadata。用 [`output.filename.bundle`](/api/build/output/filename/bundle) 和 [`output.distPath`](/api/build/output/dist-path) 调整文件名和位置。详见[构建输出文件](./output.mdx)。
-
-## 插件 {#plugins}
-
-`pluginLynx` 和各框架插件都是 [Rsbuild 插件](https://rsbuild.rs/zh/plugins/list/)，所以其他 Rsbuild 插件可以和它们一起使用：[Sass](https://rsbuild.rs/zh/plugins/list/plugin-sass) 和 [Less](https://rsbuild.rs/zh/plugins/list/plugin-less) 插件、[类型检查](https://github.com/rspack-contrib/rsbuild-plugin-type-check)、[图片压缩](https://github.com/rspack-contrib/rsbuild-plugin-image-compress)等。Rspack 插件写在 [`tools.rspack`](https://rsbuild.rs/zh/config/tools/rspack) 里。
-
-Lynx 的插件和工具，从二维码插件到 `pluginLynx` 底层的 webpack 插件，都列在 API 参考的“插件与工具”下，第一个是 [`@lynx-js/rsbuild-plugin`](/api/packages/rsbuild-plugin)。编写插件见 [Rsbuild 的插件 API](https://rsbuild.rs/zh/plugins/dev/core)。
-
-## External Bundle {#external-bundles}
-
-多个 Lynx 应用可以通过 External Bundle 共享一份依赖（比如 ReactLynx 本身），而不是把它分别构建进每个应用。用 [`@lynx-js/lynx-bundle-rslib-config`](/api/packages/lynx-bundle-rslib-config) 构建共享代码，用 [`@lynx-js/external-bundle-rsbuild-plugin`](/api/packages/external-bundle-rsbuild-plugin) 加载它。详见 [External Bundle](./external-bundle.mdx)。
+Lynx 构建可以组合 Rsbuild 插件，例如预处理器、类型检查和资源优化插件；需要更底层的扩展时，也可以通过 [`tools.rspack`](https://rsbuild.rs/zh/config/tools/rspack) 接入 Rspack 插件。通用扩展方式见 [Rsbuild 插件文档](https://rsbuild.rs/zh/plugins/list/)，Lynx 自身的插件从 [`pluginLynx`] 所在的包开始，列在 API 参考的“插件与工具”中。
 
 ## 调试与性能分析 {#debugging-and-profiling}
 
-- **构建速度**：安装 [`@rsdoctor/rspack-plugin`](https://www.npmjs.com/package/@rsdoctor/rspack-plugin) 后执行 `RSDOCTOR=true rsbuild build`，查看构建时间花在哪里；也可以按 [Rsbuild 的构建性能分析指南](https://rsbuild.rs/zh/guide/debug/build-profiling)录制 Node.js 和 Rspack 的 profile。
-- **运行时性能**：[`performance.profile`](/api/build/performance/profile) 会把 ReactLynx 的 Trace 埋点编译进 Bundle，详见[框架性能分析](/guide/performance/analysis-performance/analysis-framework.mdx#compiling-the-instrumentation-into-the-bundle)。
-- **产物体积**：见[产物体积](/guide/performance/analysis-performance/analysis-bundle-size.mdx)。
-- **线上错误**：构建产出的 debug metadata 用于[线上错误反解](/guide/devtool/map-errors-to-source.mdx)，[UI 节点树反解](/guide/devtool/ui-source-map.mdx)则把每个渲染出的节点映射回创建它的 JSX。
+构建阶段，可以通过 [Rsdoctor 和构建性能分析](https://rsbuild.rs/zh/guide/debug/build-profiling)了解耗时和依赖关系。应用运行后，[框架性能分析](/guide/performance/analysis-performance/analysis-framework.mdx)和[产物体积分析](/guide/performance/analysis-performance/analysis-bundle-size.mdx)帮助你定位性能与体积问题。
+
+构建生成的调试元数据还能用于[反解线上错误](/guide/devtool/map-errors-to-source.mdx)，[UI Source Map](/guide/devtool/ui-source-map.mdx)则将运行中的节点映射回创建它的 JSX。这些能力把构建产物与源码关联起来，供开发和线上排查使用。
 
 [Lynx Bundle]: /guide/spec#lynx-bundle-or-bundle
 [Lynx Engine]: /guide/spec#engine
