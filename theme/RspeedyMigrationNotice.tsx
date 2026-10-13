@@ -1,0 +1,46 @@
+import {
+  removeBase,
+  useI18n,
+  useLang,
+  useLocation,
+} from '@rspress/core/runtime';
+
+import './RspeedyMigrationNotice.scss';
+
+// Historical Rspeedy pages link to the maintained migration guide. On the
+// guide itself, keep the reader on the selected version and language.
+const MIGRATION_GUIDE: Record<string, string> = {
+  en: 'https://lynxjs.org/next/guide/build/rspeedy.html#migrating-an-rspeedy-project',
+  zh: 'https://lynxjs.org/next/zh/guide/build/rspeedy.html#migrating-an-rspeedy-project',
+};
+
+export default function RspeedyMigrationNotice() {
+  const t = useI18n();
+  const lang = useLang();
+  const { pathname } = useLocation();
+
+  const route = removeBase(pathname)
+    .replace(/^\/zh(?=\/)/, '')
+    .replace(/\.html$/, '')
+    .replace(/\/$/, '');
+  const isLegacyRspeedy = route === '/rspeedy' || route.startsWith('/rspeedy/');
+  const isMigrationPage = route === '/guide/build/rspeedy';
+  if (!isLegacyRspeedy && !isMigrationPage) {
+    return null;
+  }
+
+  return (
+    <aside className="rspeedy-migration-notice">
+      <span>{t('rspeedy.migration.notice')}</span>{' '}
+      <a
+        href={
+          isMigrationPage
+            ? '#migrating-an-rspeedy-project'
+            : (MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en)
+        }
+      >
+        {t('rspeedy.migration.action')}
+      </a>
+    </aside>
+  );
+}

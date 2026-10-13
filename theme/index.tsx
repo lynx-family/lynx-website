@@ -42,6 +42,7 @@ import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
+import RspeedyMigrationNotice from './RspeedyMigrationNotice';
 import { isGeneratedApiPage } from './api-reference';
 import { subsiteOf } from './api-subsites';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
@@ -106,6 +107,7 @@ function Layout({
         {...props}
         afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
+        beforeDocContent={<RspeedyMigrationNotice />}
         bottom={<Footer />}
       />
     </>
@@ -284,7 +286,12 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
-          beforeHero={beforeHero}
+          beforeHero={
+            <>
+              <RspeedyMigrationNotice />
+              {beforeHero}
+            </>
+          }
           afterHero={afterHero}
           afterHeroActions={afterHeroActions}
         />
