@@ -28,7 +28,7 @@ ReactLynx's background runtime builds on [Preact](https://preactjs.com/), which 
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-Next, we'll use the typical counter app below to walk through how ReactLynx renders and updates. In practice the first frame flashes past, so here we use [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) on purpose to simulate the difference between the app at two points in time. What happens between those two results is what the rest of this post is about.
+Next, we'll use the typical counter app below to walk through how ReactLynx renders and updates. In practice the first frame flashes past, so here we use [`__MAIN_THREAD__`](/api/react/Documents/Built-in_macros) on purpose to simulate the difference between the app at two points in time. What happens between those two results is what the rest of this post is about.
 
 <Go
   example="react-apis"
@@ -171,7 +171,7 @@ ReactLynx's [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) optimi
 
 ### Dual-Thread Build Artifacts and Code Pruning
 
-With responsibilities split across two threads, a single React entry module can no longer emit just one piece of code. ReactLynx's build toolchain, [Rspeedy](/guide/build/#lynx-bundle), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, which creates the Elements of the first frame along the first-screen path; and `background.js` on the background thread, preserving the complete React logic. In default development builds, these two files can typically be found under [`dist/.lynx/[name]/`](/guide/build/#output). Ultimately, they are packaged together into the same `lynx.bundle` and loaded per thread by the Lynx engine.
+With responsibilities split across two threads, a single React entry module can no longer emit just one piece of code. ReactLynx's build toolchain, [Rspeedy](/guide/build/rspeedy), compiles each entry into dual-threaded artifacts: `main-thread.js` on the main thread, which creates the Elements of the first frame along the first-screen path; and `background.js` on the background thread, preserving the complete React logic. In default development builds, these two files can typically be found under [`dist/.lynx/[name]/`](/guide/build/#output-files). Ultimately, they are packaged together into the same `lynx.bundle` and loaded per thread by the Lynx engine.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/reactlynx-instant-first-frame-rendering/dual-build-paths.png"
@@ -179,7 +179,7 @@ With responsibilities split across two threads, a single React entry module can 
   style={{ width: '100%', margin: '24px 0' }}
 />
 
-Using the earlier `App` component that contains side effects, event handlers, dynamic text, and [`__MAIN_THREAD__`](/api/react/Document.built-in-macros) branches, the main-thread artifact after ReactLynx compilation looks roughly like this:
+Using the earlier `App` component that contains side effects, event handlers, dynamic text, and [`__MAIN_THREAD__`](/api/react/Documents/Built-in_macros) branches, the main-thread artifact after ReactLynx compilation looks roughly like this:
 
 ```js
 // Structure the compiler generated from this JSX, describing which Elements the first frame creates. Internal format omitted.
@@ -212,7 +212,7 @@ export default function App({ initialCount }) {
 }
 ```
 
-The main-thread artifact serves only the first frame, which allows ReactLynx to prune user code for that path. During the two builds, each `__MAIN_THREAD__` conditional is folded to the branch for that thread, while `useEffect` callbacks and functions marked with [`'background only'`](/api/react/Document.directives) are excluded from the main-thread path. What remains is primarily the initial values and view structure needed for the first frame.
+The main-thread artifact serves only the first frame, which allows ReactLynx to prune user code for that path. During the two builds, each `__MAIN_THREAD__` conditional is folded to the branch for that thread, while `useEffect` callbacks and functions marked with [`'background only'`](/api/react/Documents/Directives) are excluded from the main-thread path. What remains is primarily the initial values and view structure needed for the first frame.
 
 The main-thread runtime is also smaller. It omits the reconciliation and scheduling paths needed for continuous background updates. Instead, a dedicated JSX runtime and a synchronous traversal adapted from [`preact-render-to-string`](https://github.com/preactjs/preact-render-to-string) evaluate the first frame, while Hooks retain only the behavior needed for that pass.
 

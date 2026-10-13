@@ -5,7 +5,6 @@ import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme-original';
 import useIfMobile from '@site/theme/hooks/use-if-mobile';
 import {
-  CORE_SUBSITES,
   SUBSITES_CONFIG,
   DROPDOWN_CORE,
   DROPDOWN_JS_FRAMEWORK,
@@ -14,6 +13,7 @@ import {
   getLangPrefix,
 } from '@site/shared-route-config';
 import { Separator } from '@/components/ui/separator';
+import { subsiteConfigOf } from './api-subsites';
 import { SubsiteLogo } from './subsite-ui';
 import { VersionIndicator } from './VersionIndicator';
 
@@ -24,8 +24,6 @@ import {
 } from '@/components/ui/hover-card';
 
 type Subsite = (typeof SUBSITES_CONFIG)[0];
-
-const internalSubsites = CORE_SUBSITES;
 
 function Badge({ text }: { text: string }) {
   return (
@@ -353,23 +351,13 @@ export default function AfterNavTitle() {
   const { pathname } = useLocation();
   const lang = useLang();
   const isMobile = useIfMobile();
-  const [currentSubsite, setCurrentSubsite] = useState(() => {
-    const segments = pathname.split('/');
-    return (
-      internalSubsites.find((s) =>
-        segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-      ) || internalSubsites[0]
-    );
-  });
+  const [currentSubsite, setCurrentSubsite] = useState(() =>
+    subsiteConfigOf(pathname),
+  );
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const segments = pathname.split('/');
-    const subsite =
-      internalSubsites.find((s) =>
-        segments.some((seg) => seg.replace(/\.html$/, '') === s.value),
-      ) || internalSubsites[0];
-    setCurrentSubsite(subsite);
+    setCurrentSubsite(subsiteConfigOf(pathname));
   }, [pathname]);
 
   return (

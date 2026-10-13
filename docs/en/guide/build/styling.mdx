@@ -1,0 +1,80 @@
+---
+description: 'Configure styling with Rsbuild and the Lynx preset for Tailwind CSS.'
+---
+
+import { PackageManagerTabs } from '@theme';
+import { Go } from '@lynx';
+
+# Styling
+
+<span id="configure-with-rsbuild" />
+
+Lynx supports common styling tools from the web ecosystem through Rsbuild. You can configure them directly with Rsbuild:
+
+- <span id="css-modules" />
+  [**CSS Modules**](https://rsbuild.rs/guide/styling/css-modules): Create
+  locally scoped CSS classes to avoid naming conflicts and improve
+  maintainability.
+- <span id="global-css" />
+  [**Global CSS**](https://rsbuild.rs/guide/styling/css-usage): Use familiar,
+  traditional CSS. As your app grows, consider stylesheet size and how to manage
+  global rules.
+- <span id="css-pre-processors" />
+  [**CSS
+  pre-processors**](https://rsbuild.rs/guide/styling/css-usage#css-preprocessors):
+  Extend CSS with variables, nesting and other features using Sass, Less or
+  similar tools.
+- <span id="postcss" />
+  [**PostCSS**](https://rsbuild.rs/guide/styling/css-usage#postcss): Transform
+  CSS through plugins.
+- [**Tailwind CSS**](#tailwind-css): Build custom designs by composing utility classes.
+
+These tools process how you write and transform styles; Lynx determines which CSS features can render. See [Applying Styles](/guide/ui/styling.mdx). CSS is parsed and [encoded into the bundle](./index.mdx#what-is-inside-a-bundle). [`enableRemoveCSSScope`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enableremovecssscope), [`enableCSSInheritance`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinheritance) and [`enableCSSInvalidation`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinvalidation) control component scoping, inheritance and style re-evaluation.
+
+## Using Tailwind CSS in Lynx {#tailwind-css}
+
+Tailwind CSS requires [`@lynx-js/tailwind-preset`](/api/packages/tailwind-preset) to filter utilities Lynx cannot render and adapt those that need different implementations. For general usage, follow [Rsbuild's Tailwind CSS guide](https://rsbuild.rs/guide/styling/tailwindcss-v3).
+
+:::tip Use Tailwind CSS v3
+`@lynx-js/tailwind-preset` requires **Tailwind CSS v3**, used as a PostCSS plugin. Tailwind v4 packages `@tailwindcss/postcss`, `@tailwindcss/vite` and `@tailwindcss/cli` do not work with this preset.
+:::
+
+Install Tailwind CSS and the Lynx preset:
+
+<PackageManagerTabs command="install -D tailwindcss@^3 @lynx-js/tailwind-preset" />
+
+Register the PostCSS plugin at the project root:
+
+```js title="postcss.config.js"
+export default {
+  plugins: {
+    tailwindcss: {},
+  },
+};
+```
+
+Add the Lynx preset to the Tailwind configuration:
+
+```js title="tailwind.config.js"
+import lynxPreset from '@lynx-js/tailwind-preset';
+
+export default {
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  presets: [lynxPreset],
+};
+```
+
+:::warning
+`@lynx-js/tailwind-preset` is not yet stable. If a utility that should work does not, report it to [lynx-stack](https://github.com/lynx-family/lynx-stack/issues).
+:::
+
+<span id="example" />
+The example below shows Tailwind CSS in a Lynx app:
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-tailwindcss-v2.png"
+  example="tailwindcss"
+  defaultFile="src/App.tsx"
+  defaultEntryName="main"
+  entry="src"
+/>

@@ -1,33 +1,15 @@
 # TypeScript
 
-TypeScript 开箱可用：`.ts` / `.tsx` 文件、路径别名、自定义 `tsconfig.json` 路径、编译与类型检查都由 Rsbuild 负责，参见 [Rsbuild 的 TypeScript 指南](https://rsbuild.rs/zh/guide/basic/typescript)。
+Lynx 通过 Rsbuild 支持 TypeScript。代码转换、路径别名、`tsconfig.json` 配置和类型检查方式见 [Rsbuild 的 TypeScript 指南](https://rsbuild.rs/zh/guide/basic/typescript)。**代码转换不会执行类型检查**，需要另行配置类型检查插件或运行 `tsc`。
 
-本页只讲 Lynx 特有的部分。
-
-## 构建期类型声明
-
-构建提供了 CSS Modules、[静态资源](https://rsbuild.rs/zh/guide/basic/static-assets)等内置功能，这些功能需要添加对应的类型声明。
-
-请在 `tsconfig.json` 的 `types` 数组中追加 `@rsbuild/core/types`，保留已有的项：
-
-```json title=tsconfig.json
-{
-  "compilerOptions": {
-    "types": ["@rsbuild/core/types"]
-  }
-}
-```
-
-:::tip
-[`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) 在创建项目时会自动包含该配置。
-:::
+CSS Modules、静态资源等构建期类型使用 [Rsbuild 的预设类型](https://rsbuild.rs/zh/guide/basic/typescript#preset-types)，在已有的 `compilerOptions.types` 中追加 `@rsbuild/core/types`。
 
 ## 扩展 Lynx 类型
 
 Lynx 提供了默认类型，但你可能需要为你的应用扩展或自定义某些类型定义。
 
 - [`GlobalProps`](#globalprops)：扩展 `lynx.__globalProps` 的类型定义
-- [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Function.useInitData.mdx) 的返回类型
+- [`InitData`](#initdata)：扩展 [`useInitData()`](/api/react/Hooks/useInitData) 的返回类型
 - [`IntrinsicElements`](#intrinsicelements): 扩展元件的类型（例如：可以为 `<input>` 元件定义类型）
 - [`NativeModules`](#nativemodules): 扩展[原生模块](/guide/use-native-modules.mdx)的类型定义
 
@@ -102,5 +84,5 @@ declare module '@lynx-js/types' {
   }
 }
 
-export {}; // This export makes the file a module
+export {}; // 这个导出使文件成为一个模块
 ```

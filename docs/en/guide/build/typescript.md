@@ -1,33 +1,15 @@
 # TypeScript
 
-TypeScript works out of the box: `.ts` and `.tsx` files, path aliases, a custom `tsconfig.json` path, transpilation and type checking are all handled by Rsbuild. See the [Rsbuild TypeScript guide](https://rsbuild.rs/guide/basic/typescript) for those.
+Lynx supports TypeScript through Rsbuild. See the [Rsbuild TypeScript guide](https://rsbuild.rs/guide/basic/typescript) for transpilation, path aliases, `tsconfig.json` configuration and type checking. **Transpilation does not perform type checking**; configure a type checking plugin or run `tsc` separately.
 
-This page covers the parts that are specific to Lynx.
-
-## Build-time type declarations
-
-The build provides various built-in features like CSS Modules and [static assets](https://rsbuild.rs/guide/basic/static-assets). TypeScript does not know about these features and the corresponding type declarations.
-
-To solve this, add `@rsbuild/core/types` to the `types` array in `tsconfig.json`, keeping the entries already there:
-
-```json title=tsconfig.json
-{
-  "compilerOptions": {
-    "types": ["@rsbuild/core/types"]
-  }
-}
-```
-
-:::tip
-[`@lynx-js/create-lynx`](https://www.npmjs.com/package/@lynx-js/create-lynx) will automatically include this for you.
-:::
+For build-time types such as CSS Modules and static assets, use [Rsbuild's preset types](https://rsbuild.rs/guide/basic/typescript#preset-types) by adding `@rsbuild/core/types` to your existing `compilerOptions.types` array.
 
 ## Extending Lynx types
 
 Lynx provides default types, but you may need to extend or customize certain type definitions for your application.
 
 - [`GlobalProps`](#globalprops): extends the type definition for `lynx.__globalProps`
-- [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Function.useInitData.mdx)
+- [`InitData`](#initdata): extends the return type of [`useInitData()`](/api/react/Hooks/useInitData)
 - [`IntrinsicElements`](#intrinsicelements): extends the type definition for elements (e.g: you may have your own `<input>` element)
 - [`NativeModules`](#nativemodules): extends the type definition for [custom native modules](/guide/use-native-modules.mdx).
 
@@ -67,7 +49,7 @@ With this extension, TypeScript will provide type checking for `useInitData().fo
 
 ### IntrinsicElements
 
-You can extends the `interface IntrinsicElements` from `@lynx-js/types` to add your [custom native element](/guide/custom-native-component.mdx)
+You can extend the `interface IntrinsicElements` from `@lynx-js/types` to add your [custom native element](/guide/custom-native-component.mdx)
 
 Here is an example for a `<input>` element with required `type` and optional `bindinput` and `value`.
 

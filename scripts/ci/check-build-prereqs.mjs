@@ -5,6 +5,7 @@ const required = [
   'docs/public/lynx-compat-data/api-stats.json',
   'docs/public/lynx-examples/text/example-metadata.json',
   'docs/public/lynx-examples/css-api/example-metadata.json',
+  'docs/en/api/react/index.mdx',
 ];
 
 const missing = required.filter((p) => !existsSync(p));

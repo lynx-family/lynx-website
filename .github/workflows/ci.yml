@@ -106,6 +106,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: API Redirect Fragment Check
+        run: node scripts/ci/check-api-redirect-fragments.mjs
+
   # Validate published core example metadata separately from site generation.
   # This check needs dependencies but does not need root prepare lifecycle work.
   dependency-provenance:
@@ -155,6 +158,12 @@ jobs:
       - name: Example Generator Tests
         run: node --test scripts/lynx-example.test.js scripts/luna-demo.test.js scripts/lynxtron-example-pipeline.test.cjs
 
+      - name: API Redirect Edge Function Test
+        run: node --test netlify/edge-functions/lynx-stack-api-redirects/index.test.ts
+
+      - name: Subsite Route Test
+        run: node --test shared-subsite-routes.test.ts
+
   # Check committed documents with MDX dependencies, without running prepare.
   # Validate separately verifies generated documentation after root prepare.
   # Keep installation explicit and separate from dependency-free generator tests.
@@ -201,9 +210,9 @@ jobs:
       - name: Install Dependencies Without Lifecycle Scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: API Reference Overlay Check
+      - name: API Reference Sync and Overlay Check
         run: |
-          node scripts/apply-api-doc-overlays.mjs
+          pnpm sync:lynx-stack-docs
           git diff --exit-code -- docs/en/api docs/zh/api
 
       - name: Go Component Contract Check

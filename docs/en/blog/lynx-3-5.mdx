@@ -53,7 +53,7 @@ function handleInnerTap(e: MainThread.TouchEvent) {
 
 Previously, main thread events had to wait for the background thread to complete [hydration](https://lynxjs.org/3.5/react/lifecycle.html) before responding, creating a frustrating delay where the page looked ready but wasn't interactive, similar to the [uncanny valley effect commonly seen in server-side rendering](https://web.dev/articles/rendering-on-the-web#rehydration).
 
-To eliminate this delay, we optimized the hydration process so that main thread events can respond immediately after the first frame is rendered. After the background thread hydrates, it correctly takes over the state from the main thread and replays [`runOnBackground`](https://lynxjs.org/3.5/api/react/Function.runOnBackground.html) calls, ensuring proper synchronization between threads while achieving immediate interactivity as soon as the first frame is visible.
+To eliminate this delay, we optimized the hydration process so that main thread events can respond immediately after the first frame is rendered. After the background thread hydrates, it correctly takes over the state from the main thread and replays [`runOnBackground`](https://lynxjs.org/3.5/react/api/functions#runonbackground) calls, ensuring proper synchronization between threads while achieving immediate interactivity as soon as the first frame is visible.
 
 ```tsx {3,6}
 function App() {
@@ -71,7 +71,7 @@ function App() {
 
 ### Cross-Thread Function Calls Now Return Values
 
-Lynx provides [`runOnMainThread`](https://lynxjs.org/3.5/api/react/Function.runOnMainThread#function-runonmainthread) and [`runOnBackground`](https://lynxjs.org/3.5/api/react/Function.runOnBackground.html) for cross-thread function calls. In Lynx 3.5, both APIs now support async return values, making cross-thread communication more flexible and intuitive.
+Lynx provides [`runOnMainThread`](https://lynxjs.org/3.5/react/api/functions#runonmainthread) and [`runOnBackground`](https://lynxjs.org/3.5/react/api/functions#runonbackground) for cross-thread function calls. In Lynx 3.5, both APIs now support async return values, making cross-thread communication more flexible and intuitive.
 
 ```tsx {13,14}
 import { runOnMainThread, useMainThreadRef } from '@lynx-js/react';

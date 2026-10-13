@@ -1,0 +1,78 @@
+---
+description: '通过 Rsbuild 配置样式，以及 Tailwind CSS 所需的 Lynx preset。'
+---
+
+import { PackageManagerTabs } from '@theme';
+import { Go } from '@lynx';
+
+# 样式
+
+<span id="configure-with-rsbuild" />
+
+Lynx 支持通过 Rsbuild 接入 Web 生态常见的各类样式工具。你可以直接使用 Rsbuild 配置，包括：
+
+- <span id="css-modules" />
+  [**CSS
+  Modules**](https://rsbuild.rs/zh/guide/styling/css-modules)：创建具有局部作用域的
+  CSS 类，以避免命名冲突并提高可维护性。
+- <span id="global-css" />
+  [**Global CSS**](https://rsbuild.rs/zh/guide/styling/css-usage)：使用全局
+  CSS，沿用传统 CSS 的编写方式；随着应用增长，需要注意样式体积和全局规则的管理。
+- <span id="css-pre-processors" />
+  [**CSS
+  预处理器**](https://rsbuild.rs/zh/guide/styling/css-usage#css-预处理器)：使用
+  Sass、Less 等预处理器，通过变量、嵌套规则等特性扩展 CSS。
+- <span id="postcss" />
+  [**PostCSS**](https://rsbuild.rs/zh/guide/styling/css-usage#postcss)：通过插件转换
+  CSS。
+- [**Tailwind CSS**](#tailwind-css)：通过组合工具类（utility classes）快速进行自定义设计。
+
+这些工具处理样式的编写和转换，最终可使用的 CSS 能力仍由 Lynx 决定，见[应用样式](/guide/ui/styling.mdx)。CSS 会被解析并[编码进 Bundle](./index.mdx#what-is-inside-a-bundle)。组件作用域、继承和样式重新匹配分别由 [`enableRemoveCSSScope`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enableremovecssscope)、[`enableCSSInheritance`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinheritance) 和 [`enableCSSInvalidation`](/api/packages/react-rsbuild-plugin/interfaces/PluginReactLynxOptions#enablecssinvalidation) 控制。
+
+## 在 Lynx 中使用 Tailwind CSS {#tailwind-css}
+
+使用 Tailwind CSS 时，需要 [`@lynx-js/tailwind-preset`](/api/packages/tailwind-preset) 过滤 Lynx 不支持的工具类，并适配需要不同实现的部分。其余用法沿用 [Rsbuild 的 Tailwind CSS 指南](https://rsbuild.rs/zh/guide/styling/tailwindcss-v3)。
+
+:::tip 使用 Tailwind CSS v3
+`@lynx-js/tailwind-preset` 需要 **Tailwind CSS v3**，以 PostCSS 插件的形式使用。Tailwind v4 的 `@tailwindcss/postcss`、`@tailwindcss/vite` 和 `@tailwindcss/cli` 不适用于这个 preset。
+:::
+
+安装 Tailwind CSS 和 Lynx preset：
+
+<PackageManagerTabs command="install -D tailwindcss@^3 @lynx-js/tailwind-preset" />
+
+在项目根目录注册 PostCSS 插件：
+
+```js title="postcss.config.js"
+export default {
+  plugins: {
+    tailwindcss: {},
+  },
+};
+```
+
+在 Tailwind 配置中添加 Lynx preset：
+
+```js title="tailwind.config.js"
+import lynxPreset from '@lynx-js/tailwind-preset';
+
+export default {
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  presets: [lynxPreset],
+};
+```
+
+:::warning
+`@lynx-js/tailwind-preset` 仍不稳定。如果发现应当支持的工具类无法使用，请向 [lynx-stack](https://github.com/lynx-family/lynx-stack/issues) 反馈。
+:::
+
+<span id="使用示例" />
+下面的示例展示了 Tailwind CSS 在 Lynx 中的用法：
+
+<Go
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/lynx-tailwindcss-v2.png"
+  example="tailwindcss"
+  defaultFile="src/App.tsx"
+  defaultEntryName="main"
+  entry="src"
+/>

@@ -181,11 +181,11 @@ export default defineConfig({
         // by the API reference, and the rest were implementation details.
         {
           from: '^/react/build-time-macros(\\.html)?$',
-          to: '/api/react/Document.built-in-macros.html',
+          to: '/api/react/Documents/Built-in_macros.html',
         },
         {
           from: '^/zh/react/build-time-macros(\\.html)?$',
-          to: '/zh/api/react/Document.built-in-macros.html',
+          to: '/zh/api/react/Documents/Built-in_macros.html',
         },
         {
           from: '^/api/genui\\.html$',
@@ -194,6 +194,21 @@ export default defineConfig({
         {
           from: '^/zh/api/genui\\.html$',
           to: '/zh/api/genui/index.html',
+        },
+        // Tailwind configuration now lives on the styling page.
+        {
+          from: '^(/(?:zh/)?)guide/build/tailwind(\\.html)?/?$',
+          to: `${SITE_BASE.replace(/\/$/, '')}$1guide/build/styling.html`,
+        },
+        // Output files are described in the build overview.
+        {
+          from: '^(/(?:zh/)?)guide/build/output(\\.html)?/?$',
+          to: `${SITE_BASE.replace(/\/$/, '')}$1guide/build/`,
+        },
+        // The bundle guide is consolidated into the overview; preserve its hash.
+        {
+          from: '^(/(?:zh/)?)guide/build/lynx-bundle(\\.html)?/?$',
+          to: `${SITE_BASE.replace(/\/$/, '')}$1guide/build/`,
         },
         // The lynx-ui subsite moved from /lynx-ui to /ui. Netlify 301s in
         // netlify.toml cover server-side hits; these client rules keep every
