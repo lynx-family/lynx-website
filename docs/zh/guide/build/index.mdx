@@ -93,12 +93,25 @@ Bundle 将页面运行所需的内容打包在一起：
 - **样式**：解析后的 CSS 数据。
 - **页面配置**：引擎开关、所用框架等信息。
 
-<span id="output-files" />
-图片、字体和按需加载的代码也可以作为独立文件输出。完整目录结构与文件命名见[构建输出文件](./output.mdx)。
-
 ### 双线程构建
 
 同一份源码会分别编译为主线程和后台线程代码，再编码进 Bundle。构建通过 Rspack 的 layer 隔离两份模块图，使同一个依赖可以在两个线程中使用不同实现；标记为 `background only` 的代码不会进入主线程产物。
+
+### 输出文件 {#output-files}
+
+构建产物默认写入 `dist/`：
+
+```txt
+dist/
+├── [name].lynx.bundle  # 应用 Bundle
+├── lazy-bundle/       # 按需加载的 Bundle
+├── static/            # 静态资源和分包脚本
+└── .lynx/[name]/      # 调试用中间产物
+```
+
+`.lynx/` 中包含 `main-thread.js`、`background.js` 和 `debug-metadata.json` 等文件，默认只在开发构建时保留；生产构建也可以通过 `DEBUG=lynx` 保留它们。调试元数据的用法见[线上错误反解](/guide/devtool/map-errors-to-source.mdx)。
+
+通过 [`output.filename.bundle`](/api/build/output/filename/bundle) 设置 Bundle 文件名，[`output.filename`](https://rsbuild.rs/zh/config/output/filename) 设置其他文件名，[`output.distPath`](/api/build/output/dist-path) 调整输出目录。[Source Map](/api/build/output/source-map) 和[许可声明](/api/build/output/legal-comments)的配置也见对应 API。
 
 ### 引擎兼容性 {#compatibility}
 

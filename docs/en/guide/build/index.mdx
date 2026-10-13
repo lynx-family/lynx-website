@@ -100,13 +100,25 @@ A bundle packages the content needed to run the page:
 - **Styles**: parsed CSS data.
 - **Page configuration**: engine switches, framework information and other metadata.
 
-<span id="output-files" />
-Images, fonts and code loaded on demand can also be separate output files. See
-[Output Files](./output.mdx) for directory layouts and filenames.
-
 ### Dual-thread builds
 
 The same source is compiled into main-thread and background-thread code, then encoded into the bundle. Rspack layers keep the two module graphs separate so a dependency can use a different implementation on each thread. Code marked `background only` does not enter the main-thread output.
+
+### Output files {#output-files}
+
+Build output goes into `dist/` by default:
+
+```txt
+dist/
+├── [name].lynx.bundle  # application bundle
+├── lazy-bundle/       # bundles loaded on demand
+├── static/            # static assets and split scripts
+└── .lynx/[name]/      # intermediates for debugging
+```
+
+`.lynx/` contains files such as `main-thread.js`, `background.js` and `debug-metadata.json`. They are kept in development builds by default; use `DEBUG=lynx` to retain them in production builds too. See [Production Error Mapping](/guide/devtool/map-errors-to-source.mdx) for how to use debug metadata.
+
+Set the bundle filename with [`output.filename.bundle`](/api/build/output/filename/bundle), other filenames with [`output.filename`](https://rsbuild.rs/config/output/filename), and output directories with [`output.distPath`](/api/build/output/dist-path). See the APIs for [source maps](/api/build/output/source-map) and [license comments](/api/build/output/legal-comments) for those options.
 
 ### Engine compatibility {#compatibility}
 
