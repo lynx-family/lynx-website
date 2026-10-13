@@ -7,7 +7,7 @@ import { Mermaid } from '@lynx';
 
 它分三步：
 
-1. 构建：打开 [`enableUiSourceMap`](#1-开启开关)，把 UI source map 写进 [`debug-metadata.json`](./map-errors-to-source)，并给元素打上 `nodeIndex`。
+1. 构建：打开 [`enableUiSourceMap`](#1-开启开关)，把 UI source map 写进 [`debug-metadata.json`](/guide/devtool/map-errors-to-source)，并给元素打上 `nodeIndex`。
 2. 导出：让 Lynx 客户端把[运行时 UI 树序列化](#2-从客户端导出-ui-树)成 JSON。
 3. 反解：把这份 JSON 加上 `debug-metadata.json` 喂给 [`remapUiTree`](#3-反解这棵树)，它会给每个节点标注源码位置。
 
@@ -22,8 +22,8 @@ flowchart LR
 
 UI source map 生成默认是关的。在 `pluginReactLynx` 里打开：
 
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy';
+```ts title="rsbuild.config.ts"
+import { defineConfig } from '@rsbuild/core';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 
 export default defineConfig({
@@ -46,7 +46,7 @@ interface UiSourceMapData {
 }
 ```
 
-要让运行时指向这个文件，模板里还得带上它的 `debugMetadataUrl`：连到 dev server 时会自动写入，生产环境则要你自己注入（见 [线上错误反解 → 方案 2](./map-errors-to-source#方案-2让产物指向你的托管地址)）。否则导出的节点 `debugMetadataUrl` 为空，没法反解。
+要让运行时指向这个文件，模板里还得带上它的 `debugMetadataUrl`：连到 dev server 时会自动写入，生产环境则要你自己注入（见 [线上错误反解 → 方案 2](/guide/devtool/map-errors-to-source#方案-2让产物指向你的托管地址)）。否则导出的节点 `debugMetadataUrl` 为空，没法反解。
 
 ## 2. 从客户端导出 UI 树
 

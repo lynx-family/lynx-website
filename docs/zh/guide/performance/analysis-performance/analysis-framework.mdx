@@ -25,7 +25,7 @@ description: '分析框架层的渲染与更新开销，涵盖 ReactLynx 内置 
 
 要开始性能分析，你需要在 Lynx 引擎中启用性能记录。有关如何录制和查看 trace 的详细说明，请参阅[录制 Trace](/guide/devtool/trace/record-trace)。
 
-前提是这些埋点被编译进了产物。开发构建默认带上埋点，生产构建默认去掉；如何为生产构建打开，见[运行时性能分析](/rspeedy/runtime-profiling.md)。
+前提是这些埋点被编译进了产物。
 
 :::info 版本要求
 
@@ -38,6 +38,65 @@ description: '分析框架层的渲染与更新开销，涵盖 ReactLynx 内置 
 - `lynx.performance.isProfileRecording()`
 
 :::
+
+### 把埋点编译进产物 \{#compiling-the-instrumentation-into-the-bundle}
+
+ReactLynx 为组件的 `render` 和 `diff` 内置了 Trace 点，用来观察组件如何渲染、如何比较差异。
+
+![react profile](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/rspeedy-react-profile.png)
+
+- 开发环境（`npx rsbuild dev`）默认**添加**这些 Trace 点。
+- 生产环境（`npx rsbuild build`）默认**移除**这些 Trace 点。
+
+#### 在生产构建中打开
+
+把 `performance.profile` 设为 `true`。想优化应用性能时，这很有用。
+
+```js
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+
+export default defineConfig({
+  plugins: [
+    pluginLynx({
+      performance: {
+        profile: true, // [!code ++]
+      }, // [!code ++]
+    }), // [!code ++]
+  ],
+});
+```
+
+:::tip
+可以用 [`npx rsbuild preview`](https://rsbuild.rs/zh/guide/basic/cli#rsbuild-preview) 在本地预览产物。
+:::
+
+:::warning
+**不要**把 `performance.profile: true` 的产物发到线上，它们不适用于生产环境。
+:::
+
+#### 在开发环境中关闭
+
+把 `performance.profile` 设为 `false`。
+
+```js
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+
+export default defineConfig({
+  plugins: [
+    pluginLynx({
+      performance: {
+        profile: false, // [!code ++]
+      }, // [!code ++]
+    }), // [!code ++]
+  ],
+});
+```
+
+### 使用 JS Profile 动态采样
+
+用 [JS Profile](/guide/devtool/trace/js-profile) 在运行时采集调用堆栈，不需要改构建配置。
 
 ## 理解追踪事件
 

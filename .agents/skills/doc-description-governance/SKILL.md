@@ -130,7 +130,7 @@ for (const file of ['doc_build/llms.txt', 'doc_build/zh/llms.txt']) {
 ## Common Pitfalls
 
 - **Chinese token counting**: A single Chinese character can be 1-3 tokens in tiktoken. Never estimate Chinese text by character count alone.
-- **Shared pages**: Documentation frameworks often mount the same MDX at multiple routes (e.g., `/react/start/X`, `/rspeedy/start/X`). Adding frontmatter to the source fixes all routes at once.
+- **Shared pages**: Documentation frameworks often mount the same MDX at multiple routes (e.g., `/react/start/X`, `/build/start/X`). Adding frontmatter to the source fixes all routes at once.
 - **MDX variable leakage**: Pages using `{someVar['key']}` in their first paragraph will have that raw expression appear in llms.txt because the llms.txt generator doesn't execute JS. Adding a proper `description` frontmatter overrides this.
 - **Ellipsis token cost**: `…` (U+2026) is 1 token in gpt-4o. `...` (three dots) is also 1 token. Account for it when truncating.
 
