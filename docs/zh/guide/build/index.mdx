@@ -1,3 +1,5 @@
+import { APISummary, APITable, Mermaid } from '@lynx';
+
 # 构建 Lynx 应用
 
 Lynx 使用 [Rsbuild](https://rsbuild.rs/zh/) 和 [`pluginLynx`] 构建应用。你可以沿用 Rsbuild 的 TypeScript、CSS、静态资源和插件能力，由 `pluginLynx` 完成双线程编译和 Bundle 编码，生成宿主可以加载的产物。
@@ -93,23 +95,146 @@ Bundle 将页面运行所需的内容打包在一起：
 - **样式**：解析后的 CSS 数据。
 - **页面配置**：引擎开关、所用框架等信息。
 
-<span id="output-files" />
-图片、字体和按需加载的代码也可以作为独立文件输出。完整目录结构与文件命名见[构建输出文件](./output.mdx)。
-
 ### 双线程构建
 
 同一份源码会分别编译为主线程和后台线程代码，再编码进 Bundle。构建通过 Rspack 的 layer 隔离两份模块图，使同一个依赖可以在两个线程中使用不同实现；标记为 `background only` 的代码不会进入主线程产物。
 
-### 引擎兼容性 {#compatibility}
+### 输出文件 {#output-files}
 
-Bundle 的 [`engineVersion`] 表示它所需的最低 Lynx Engine 版本。例如，设置为 `3.3` 的 Bundle 可以运行在 3.3 及更新的引擎上，不能运行在 3.2 上。如果同一个 Bundle 要运行在多个宿主中，应按其中最低的引擎版本设置。
+构建产物默认写入 `dist/`：
 
-通过 `pluginReactLynx({ engineVersion: '3.3' })` 设置目标版本。提高这个值可能启用新的引擎行为，需要同时检查宿主版本和相关变更记录。
+```txt
+dist/
+├── [name].lynx.bundle  # 应用 Bundle
+├── lazy-bundle/       # 按需加载的 Bundle
+├── static/            # 静态资源和分包脚本
+└── .lynx/[name]/      # 调试用中间产物
+```
 
-<span id="feature-compatibility" />
-引擎版本之外，具体 API 和 CSS 特性的支持情况还会因平台而异，使用前应查看对应 API
-参考中的兼容性信息。
+`.lynx/` 中包含 `main-thread.js`、`background.js` 和 `debug-metadata.json` 等文件，默认只在开发构建时保留；生产构建也可以通过 `DEBUG=lynx` 保留它们。调试元数据的用法见[线上错误反解](/guide/devtool/map-errors-to-source.mdx)。
 
+通过 [`output.filename.bundle`](/api/build/output/filename/bundle) 设置 Bundle 文件名，[`output.filename`](https://rsbuild.rs/zh/config/output/filename) 设置其他文件名，[`output.distPath`](/api/build/output/dist-path) 调整输出目录。[Source Map](/api/build/output/source-map) 和[许可声明](/api/build/output/legal-comments)的配置也见对应 API。
+
+## 兼容性 {#compatibility}
+
+本文主要介绍如何确保 [Bundle] 和 [Lynx Engine] 之间的版本兼容性，以及如何应对 Lynx Engine 版本演进带来的挑战。
+
+### 从源码构建
+
+一种简单的保证兼容性的方法是，**永远同时从源码构建 Bundle 和宿主应用**。
+
+- Bundle 可以充分利用当前 Lynx Engine 版本的所有特性
+- 在开发阶段就能完全确保兼容性，所见即所得
+
+### 多版本兼容
+
+但是在一个复杂的工程中，Bundle 和 Lynx Engine 之间并非一一对应的关系
+
+- 一个 Bundle 可能运行在多个含有不同版本 Lynx Engine 的应用中
+
+- 一个应用中也可以运行多个由不同团队维护的 Bundle
+
+此时，需要为 Bundle 设置**引擎版本**（[`engineVersion`]）来保证兼容性
+
+:::info 引擎版本
+
+当 Bundle 的引擎版本大于 Lynx Engine 版本时，将无法运行
+
+:::
+
+例如：一个 [`engineVersion`] 为 3.3 的 Bundle 可以在 Lynx Engine 3.3 及以后的版本上运行，但不能在 3.2 上运行。
+
+<Mermaid title="版本兼容性示意图">
+  {`
+graph TB
+    subgraph Bundle["🎯 Bundle"]
+        B10["引擎版本 3.3"]
+    end
+    subgraph Engine["⚙️ Lynx Engine"]
+        E12["Version 3.5"]
+        E11["Version 3.4"]
+        E10["Version 3.3"]
+        E09["Version 3.2"]
+    end
+    B10 -.->|❌ 不支持| E09
+    B10 ==>|✅ 可运行| E10
+    B10 ==>|✅ 可运行| E11
+    B10 ==>|✅ 可运行| E12
+    %% 节点样式
+    style E12 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E11 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E10 fill:#2b5a83,stroke:#4a90e2,stroke-width:3px,rx:10px
+    style E09 fill:#2b5a83,stroke:#4a90e2,stroke-width:2px,rx:10px,stroke-dasharray:5,5
+    style B10 fill:#2d5a1e,stroke:#7ed321,stroke-width:3px,rx:10px
+    %% 子图样式
+    style Bundle fill:transparent,stroke:#7ed321,stroke-width:2px,rx:10px
+    style Engine fill:transparent,stroke:#4a90e2,stroke-width:2px,rx:10px
+    %% 默认样式
+    classDef default fill:#23272f,color:#ccc,font-family:system-ui
+    %% 连接线标签样式
+    linkStyle default stroke-width:2px
+`}
+</Mermaid>
+
+在一个 Bundle 对应多个 Lynx Engine 版本的情况下，该 Bundle 的 [`engineVersion`] 不能高于其中最低的 Lynx Engine 版本。
+
+在一个 Lynx Engine 版本上运行多个 Bundle 的情况下，每个 Bundle 都可以设置不同的 [`engineVersion`]，但是都不能大于 Lynx Engine 的版本
+
+#### 版本不兼容处理
+
+当 Bundle 尝试在一个较低版本的 Lynx Engine 上运行时，系统会抛出错误码为 [10204](/api/errors/error-code.mdx#10204-e_app_bundle_load_parse_failed) 的 Fatal 级别错误，并停止渲染流程。这种机制可以防止不兼容版本导致的潜在运行时问题。
+
+#### 设置引擎版本
+
+[`engineVersion`] 是一个含有两位版本号的字符串，可以在配置文件中指定：
+
+```ts title="rsbuild.config.ts"
+import { defineConfig } from '@rsbuild/core';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginReactLynx({
+      engineVersion: '3.2',
+    }),
+  ],
+});
+```
+
+### 升级 Lynx Engine
+
+Lynx Engine 的迭代过程中，会有新增功能，也会有废弃功能，它们的兼容性也由 [`engineVersion`] 来保证。
+
+#### 新增功能
+
+一些新增功能***不会***对已有的 Bundle 产生影响，但如果 [`engineVersion`] 小于其被引入的版本，则需要在运行时进行判断，例如：
+
+```js
+// Detect if `lynx.newlyAddedMethod` can be called
+if (lynx.newlyAddedMethod) {
+  lynx.newlyAddedMethod();
+}
+```
+
+而一些新增功能完全无法运行在低版本的 Lynx Engine 中，因此它们只有在 [`engineVersion`] 大于或等于对应版本时才会被启用。
+
+#### 废弃功能
+
+一些功能也可能在迭代的过程中被废弃，他们的行为可能在设置了更高的 [`engineVersion`] 后发生改变。
+
+- 如果只升级 Lynx Engine 的版本，不升级 Bundle 的 [`engineVersion`]，那么不会有兼容性问题产生
+- 如果同时升级了 Lynx Engine 和 Bundle 的 [`engineVersion`]，需要阅读 CHANGELOG 来确保没有产生预期外的行为变更
+
+<span id="特性与-api-兼容性" />
+
+### 特性与 API 兼容性 {#feature-compatibility}
+
+平台特性、元件、API 和 CSS 属性的支持情况可在各自的参考页查看。下例展示 CSS `gap` 的跨平台兼容性：
+
+<APISummary query="css/properties/gap" />
+<APITable query="css/properties/gap" />
+
+[Bundle]: /guide/spec#lynx-bundle-or-bundle
 [Lynx Bundle]: /guide/spec#lynx-bundle-or-bundle
 [Lynx Engine]: /guide/spec#engine
 [`pluginLynx`]: /api/packages/rsbuild-plugin
