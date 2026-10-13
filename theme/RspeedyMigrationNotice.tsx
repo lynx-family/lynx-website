@@ -5,7 +5,7 @@ import {
   useLocation,
 } from '@rspress/core/runtime';
 
-import './RspeedyMigrationNotice.scss';
+import { Callout } from '@rspress/core/theme-original';
 
 // Historical Rspeedy pages link to the maintained migration guide. On the
 // guide itself, keep the reader on the selected version and language.
@@ -30,17 +30,19 @@ export default function RspeedyMigrationNotice() {
   }
 
   return (
-    <aside className="rspeedy-migration-notice">
-      <span>{t('rspeedy.migration.notice')}</span>{' '}
-      <a
-        href={
-          isMigrationPage
-            ? '#migrating-an-rspeedy-project'
-            : (MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en)
-        }
-      >
-        {t('rspeedy.migration.action')}
-      </a>
-    </aside>
+    <Callout type="info">
+      <p>
+        <span>{t('rspeedy.migration.notice')}</span>{' '}
+        <a
+          href={
+            isMigrationPage
+              ? '#migrating-an-rspeedy-project'
+              : (MIGRATION_GUIDE[lang] ?? MIGRATION_GUIDE.en)
+          }
+        >
+          {t('rspeedy.migration.action')}
+        </a>
+      </p>
+    </Callout>
   );
 }
