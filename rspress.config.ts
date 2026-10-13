@@ -195,6 +195,11 @@ export default defineConfig({
           from: '^/zh/api/genui\\.html$',
           to: '/zh/api/genui/index.html',
         },
+        // The bundle guide is consolidated into the overview; preserve its hash.
+        {
+          from: '^(/(?:next/)?(?:zh/)?)guide/build/lynx-bundle(\\.html)?/?$',
+          to: '$1guide/build/',
+        },
         // The lynx-ui subsite moved from /lynx-ui to /ui. Netlify 301s in
         // netlify.toml cover server-side hits; these client rules keep every
         // old /lynx-ui link working on hosts without redirect support and for
