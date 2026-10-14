@@ -5,6 +5,8 @@ Lynxtron 是一个使用 [Lynx](https://lynxjs.org/) 和 Node.js 构建桌面应
 - **主进程**侧本质上就是 [Electron](https://www.electronjs.org/docs/latest/tutorial/process-model#the-main-process)。Node.js 控制应用生命周期、窗口、菜单、托盘、对话框等系统级 API。
 - **UI** 侧是 [Lynx](https://lynxjs.org/zh/guide/start/quick-start.html) 运行时。可以使用 ReactLynx、VueLynx 等 Lynx 运行时 DSL 编写界面，最终使用 [`<view>`](/api/elements/built-in/view)、[`<text>`](/api/elements/built-in/text)、[`<image>`](/api/elements/built-in/image) 等原生元素进行渲染，而非 HTML。
 
+本文档中的应用界面是使用 Lynx 元素和样式构建的界面，可以通过 ReactLynx、VueLynx 等框架编写。这不特指 [lynx-ui 组件库](/zh/ui/)；涉及代码执行环境时，会使用具体的运行时或 context 名称。
+
 :::tip 已经熟悉 Electron 和 Lynx？
 那你已经掌握了 Lynxtron 的大部分知识。本页只介绍**新的部分**：那些只因 Electron + Lynx 组合才存在的概念。
 :::
@@ -42,16 +44,16 @@ UI 层就是标准的 Lynx。你可以使用 Lynx 支持的运行时 DSL（如 R
   alt="Lynxtron 单进程双线程架构"
 />
 
-| Lynxtron 线程     | 线程关系           | Electron 对偶                                 | 主要职责                                                                                                                                         |
-| ----------------- | ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **主线程**        | 每个应用一个       | Electron 主进程 + Chromium 渲染侧的主线程职责 | Node.js 主进程 API、窗口管理、原生能力、Lynx [MTS](/react/main-thread-script)、输入、布局、渲染                                                  |
-| **Lynx 后台线程** | 可共享或按窗口独立 | Electron Renderer 中的页面业务 JS             | 直接运行在 Node.js 上，承载各窗口隔离的 BTS Context，执行 Lynx UI 业务逻辑；BTS Context 不是 Node.js 全局环境，可通过桥接访问白名单 Node.js 能力 |
+| Lynxtron 线程     | 线程关系           | Electron 对偶                                 | 主要职责                                                                                                                                    |
+| ----------------- | ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **主线程**        | 每个应用一个       | Electron 主进程 + Chromium 渲染侧的主线程职责 | Node.js 主进程 API、窗口管理、原生能力、Lynx [MTS](/react/main-thread-script)、输入、布局、渲染                                             |
+| **Lynx 后台线程** | 可共享或按窗口独立 | Electron Renderer 中的页面业务 JS             | 直接运行在 Node.js 上，承载各窗口隔离的 BTS Context，执行应用业务逻辑；BTS Context 不是 Node.js 全局环境，可通过桥接访问白名单 Node.js 能力 |
 
-Lynxtron 在单进程内，把主控能力和 Lynx 主线程能力放在主线程，把 Lynx UI 业务逻辑放在 Lynx 后台线程。Lynx 后台线程直接运行在 Node.js 上，但每个窗口的 BTS Context 是隔离 context，不是 Node.js 全局环境，不能直接使用 Node.js 接口。多个窗口可以共享同一个后台线程，也可以为窗口分配独立后台线程；无论哪种方式，各窗口的 BTS Context 仍然相互隔离；BTS 只能通过 `NativeModules.bridge` 或 [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 暴露的白名单能力访问 Node.js。
+Lynxtron 在单进程内，把主控能力和 Lynx 主线程能力放在主线程，把应用业务逻辑放在 Lynx 后台线程。Lynx 后台线程直接运行在 Node.js 上，但每个窗口的 BTS Context 是隔离 context，不是 Node.js 全局环境，不能直接使用 Node.js 接口。多个窗口可以共享同一个后台线程，也可以为窗口分配独立后台线程；无论哪种方式，各窗口的 BTS Context 仍然相互隔离；BTS 只能通过 `NativeModules.bridge` 或 [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 暴露的白名单能力访问 Node.js。
 
 ## Lynxtron 中的关键差异
 
-以下机制用于连接 Electron-like 主进程模型和 Lynx UI 运行时，是 Lynxtron 相比 Electron 或纯 Lynx 需要额外理解的部分：
+以下机制用于连接 Electron-like 主进程模型和 Lynx 运行时，是 Lynxtron 相比 Electron 或纯 Lynx 需要额外理解的部分：
 
 ### 使用 Lynx 元素构建桌面 UI
 
@@ -77,7 +79,7 @@ Lynxtron 有三种线程间通信模式，对应 [Electron 的 IPC](https://www.
 
 ### 通过 [Preload Scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 集成 Node.js
 
-[Preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 可以理解为 [Electron preload scripts](https://www.electronjs.org/zh/docs/latest/tutorial/tutorial-preload) / contextBridge 模式面向 Lynx BTS 的能力桥接层：preload scripts 在具备 Node.js 能力的隔离 context 中执行，再把明确允许的方法或对象暴露给 Lynx UI。
+[Preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#使用-preload-scripts) 可以理解为 [Electron preload scripts](https://www.electronjs.org/zh/docs/latest/tutorial/tutorial-preload) / contextBridge 模式面向 Lynx BTS 的能力桥接层：preload scripts 在具备 Node.js 能力的隔离 context 中执行，再把明确允许的方法或对象暴露给 BTS context 中的应用代码。
 
 与 Electron 不同，Lynxtron 的 preload scripts 和 BTS 位于同一进程内的隔离 JS context 中。[`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) 暴露的不是单纯的可序列化消息 payload，而是可供 BTS 直接调用的 JS 对象；这些对象可以包含函数、闭包，也可以返回 Promise。
 
