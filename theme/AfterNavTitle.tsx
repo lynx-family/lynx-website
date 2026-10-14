@@ -376,7 +376,9 @@ export default function AfterNavTitle() {
             href={`${getLangPrefix(lang)}${currentSubsite.home}`}
             className="flex items-center gap-2"
           >
-            <div className="relative h-[28px] w-[28px]">
+            <div
+              className={`relative h-[28px] w-[28px] ${currentSubsite.value === 'lynxtron' ? 'p-0.5' : ''}`}
+            >
               <SubsiteLogo subsite={currentSubsite} />
             </div>
             <span className="text-base font-medium">
