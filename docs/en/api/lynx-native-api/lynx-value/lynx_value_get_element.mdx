@@ -1,0 +1,41 @@
+# lynx_value_get_element
+
+## Introduction
+
+Read the element from lynx_value of array type by given index. 
+
+## Syntax
+
+```c
+lynx_api_status lynx_value_get_element(lynx_api_env env,
+                                       lynx_value object,
+                                       uint32_t index,
+                                       lynx_value* result)
+```
+
+### Parameters
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | The environment in which lynx value runs, typically nullptr. |
+| [in] object   | The lynx_value to query.                                     |
+| [in] index    | The index of the value to get.                               |
+| [out] result  | lynx_value at index.                                         |
+
+### Return Value
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_array_expected` if the types do not match.
+
+## Example
+
+After using the extracted result, memory needs to be freed using `lynx_value_remove_reference`.
+
+```c
+lynx_value ret;
+lynx_api_status status = lynx_value_get_element(env, array_value, 0, &ret);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+// do something
+lynx_value_remove_reference(env, ret, NULL);
+```

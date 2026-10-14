@@ -1,0 +1,40 @@
+# lynx_value_create_string_utf8
+
+## 介绍
+
+用 UTF8 C 字符串创建一个 string 类型的 lynx_value。这个字符串会被拷贝。
+
+## 语法
+
+```c
+lynx_api_status lynx_value_create_string_utf8(
+    lynx_api_env env, const char* str, size_t length, lynx_value* result);
+```
+
+### 参数
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | lynx_value 的运行环境，一般情况下是 nullptr |
+| [in] str      | UTF8 编码的字符串         |
+| [in] length   | 字符串长度                           |
+| [out] result  | 创建的字符串结果                           |
+
+### 返回值
+
+Returns `lynx_api_ok` if the API succeeded.
+
+## 示例
+
+字符串在堆上创建，使用完后需要用 `lynx_value_remove_reference` 释放内存
+
+```c
+lynx_value val;
+lynx_api_status status = lynx_value_create_string_utf8(env, "string", 6, &val);;
+if (status != lynx_api_ok) {
+  // handle error.
+}
+// do something.
+lynx_value_remove_reference(env, val, NULL);
+
+```
