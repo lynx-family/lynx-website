@@ -22,14 +22,12 @@ embedder，也可以随应用或包一起分发。在 Lynxtron 应用中，这�
 
 Lynxtron 的原生能力可以供 Node.js 宿主或 Lynx UI 调用：
 
-| 调用环境               | 接入方式                                                             | 能力如何生效                                                                         |
-| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 在 Node.js 中调用      | [Node.js addon](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules) | 通过 `import` 或 `require` 加载包的宿主入口；根据运行时 ABI 兼容性决定是否 rebuild   |
-| 在 Lynx runtime 中调用 | Lynx native library                                                  | 在原生代码中注册能力，再加载或链接 library；包元数据与 AutoLink 可以自动完成宿主接入 |
+| 调用环境               | 接入方式                                                             | 能力如何生效                                                                                                                                                                                                                              |
+| ---------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 在 Node.js 中调用      | [Node.js addon](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules) | 通过 `import` 或 `require` 加载包的宿主入口；根据运行时 ABI 兼容性决定是否 rebuild                                                                                                                                                        |
+| 在 Lynx runtime 中调用 | Lynx native library                                                  | 通过[静态注册宏](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)注册能力；Desktop 上也可直接使用 [`LynxExtensionModule`](/zh/api/lynx-native-api/lynx-extension-module)。加载或链接 library 后生效，AutoLink 可自动完成宿主接入 |
 
 同一个 library 可以同时提供两类能力。加载其 Node.js 入口，不代表它导出的接口会自动成为 Lynx `NativeModules`；library 需要单独注册 Lynx 能力。
-
-在 Desktop 上，Lynx native library 可以使用 [`LynxExtensionModule`](/zh/api/lynx-native-api/lynx-extension-module) 管理视图与运行时生命周期、投递 BTS 任务和注册原生视图。注册辅助接口简化了常见组合：`LYNX_REGISTER_ELEMENT` 内部使用 extension module；只提供原生模块的 library 则可使用 `LYNX_REGISTER_NATIVE_MODULE`，无需编写自定义 extension-module 类。应用使用 library 文档说明的入口，由 library 作者选择底层接口。头文件与注册签名参见 [`@lynx-js/lynx-library-headers`](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)。
 
 ## 加载模型
 
