@@ -242,6 +242,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
           [path.join(root, 'scripts/lynxtron-examples.js')],
           {
             cwd: productionRoot,
+            stdio: 'pipe',
             env: generatorEnv({
               EXAMPLES_DIR: path.relative(productionRoot, conflictExamplesRoot),
               LINK_PATH: 'output',

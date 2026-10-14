@@ -38,6 +38,7 @@ function runLuna(cwd, sourceDir, linkPath = 'output') {
     [path.join(__dirname, 'luna-demo.js')],
     {
       cwd,
+      stdio: 'pipe',
       env,
     },
   );
