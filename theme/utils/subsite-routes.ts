@@ -14,8 +14,7 @@
  * Packages of the API reference that belong to a subsite other than the Lynx
  * guide, by the name of their directory under `api/packages`. The manifest of
  * @lynx-js/lynx-stack-docs groups packages by what they are, not by subsite,
- * so this is stated here; the sync stops when a name is no longer a package
- * of the manifest, instead of letting its pages silently lose their theme.
+ * so this theme-owned classification is stated here.
  */
 export const API_PACKAGE_SUBSITES: Record<string, string> = {
   'background-only': 'react',
