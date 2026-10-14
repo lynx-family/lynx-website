@@ -22,7 +22,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { API_PACKAGE_SUBSITES } from '../shared-subsite-routes.ts';
+import API_PACKAGE_SUBSITES from '../shared-api-package-subsites.json' with { type: 'json' };
 
 const WEBSITE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(WEBSITE, 'docs');

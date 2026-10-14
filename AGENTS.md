@@ -32,6 +32,8 @@ The downstream prepare flow consumes these OSS paths:
 - Symlinked runtime: `src/` and `theme/`
 - Imported configuration: `tailwind.config.js`
 - Package contract: `package.json`
+- Legacy API redirect data:
+  `netlify/edge-functions/lynx-stack-api-redirects/legacy.json`
 - Generated-data inputs: `packages/lynx-living-spec/`,
   `packages/lynx-compat-data/`, `packages/lynx-example-packages/`,
   `packages/lynx-ui-example-packages/`, and
@@ -39,6 +41,10 @@ The downstream prepare flow consumes these OSS paths:
 
 The downstream repository replaces `docs/public/lynx-examples` and applies
 internal content overlays after copying OSS content.
+
+The downstream uses the legacy API redirect data for its hosted client
+redirects. Treat this JSON path and mapping format as a compatibility
+contract, including when refactoring the Netlify edge function.
 
 ### Downstream Tool Contract
 
