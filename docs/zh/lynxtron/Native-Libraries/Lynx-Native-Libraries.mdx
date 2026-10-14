@@ -29,13 +29,7 @@ Lynxtron 支持两类原生能力接入。选择依据是由哪个环境调用�
 
 同一个 library 可以同时提供两类能力。加载其 Node.js 入口，不代表它导出的接口会自动成为 Lynx `NativeModules`；library 需要单独注册 Lynx 能力。
 
-### Desktop library 与 LynxExtensionModule 的关系
-
-在 Desktop 上，[`LynxExtensionModule`](/zh/api/lynx-native-api/lynx-extension-module) 是 Lynx native library 可使用的底层扩展接口，提供视图与运行时生命周期、BTS 任务调度、VSync 监听和原生视图注册等能力。它不是与 Node.js addon、Lynx native library 并列的第三种接入方式。
-
-Lynx native library 通过注册辅助接口、包元数据和 AutoLink 等组织与交付这些能力。例如，`LYNX_REGISTER_ELEMENT` 内部会注册 extension module，并在视图创建时注册元素。library 作者需要更细的生命周期或运行时控制时，可以直接使用 `LynxExtensionModule`。只注册原生模块的 library 则可以使用 `LYNX_REGISTER_NATIVE_MODULE`，无需编写自定义 extension-module 类。
-
-应用通常只需使用 library 文档说明的入口；注册和生命周期实现由 library 负责。头文件与注册签名参见 [`@lynx-js/lynx-library-headers`](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)。
+在 Desktop 上，Lynx native library 可以使用 [`LynxExtensionModule`](/zh/api/lynx-native-api/lynx-extension-module) 管理视图与运行时生命周期、投递 BTS 任务和注册原生视图。注册辅助接口简化了常见组合：`LYNX_REGISTER_ELEMENT` 内部使用 extension module；只提供原生模块的 library 则可使用 `LYNX_REGISTER_NATIVE_MODULE`，无需编写自定义 extension-module 类。应用使用 library 文档说明的入口，由 library 作者选择底层接口。头文件与注册签名参见 [`@lynx-js/lynx-library-headers`](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)。
 
 ## 加载模型
 
