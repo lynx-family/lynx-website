@@ -13,12 +13,12 @@ const FEATURES: Array<{
   {
     iconVariant: 'lightning',
     title: {
-      en: 'Light-weight and Fast',
+      en: 'Lightweight and Fast',
       zh: '轻量且高速',
     },
     desc: {
-      en: 'Electron-like app framework with a light-weight UI renderer powered by Lynx',
-      zh: '类 Electron 的应用框架，内置 Lynx 轻量级 UI 渲染器',
+      en: 'Build desktop apps with an Electron-style application model and a lightweight Lynx renderer.',
+      zh: '使用类 Electron 的应用模型和轻量级 Lynx 渲染器构建桌面应用。',
     },
   },
   {
@@ -28,8 +28,8 @@ const FEATURES: Array<{
       zh: '多平台',
     },
     desc: {
-      en: 'With Lynx, your UI runs across platforms, including the Web, and can be ported to new hosts with minimal effort.',
-      zh: '借助 Lynx，UI 可跨平台运行（包含 Web），并能以极低成本移植到新的宿主环境。',
+      en: 'Share Lynx UI across desktop, mobile, and the web, with adapters for platform-specific capabilities.',
+      zh: '在桌面、移动端和 Web 之间复用 Lynx UI，通过适配层接入各平台的专属能力。',
     },
   },
   {
@@ -39,8 +39,8 @@ const FEATURES: Array<{
       zh: '原生可扩展',
     },
     desc: {
-      en: "Extend the renderer's capabilities with custom native modules via UI/texture extension C-APIs and Node-API.",
-      zh: '通过 UI/纹理扩展 C-API 与 Node-API 编写自定义原生模块，扩展渲染器能力。',
+      en: 'Add native UI, textures, and system capabilities through C APIs and Node-API.',
+      zh: '通过 C API 和 Node-API 接入原生 UI、纹理和系统能力。',
     },
   },
 ];
