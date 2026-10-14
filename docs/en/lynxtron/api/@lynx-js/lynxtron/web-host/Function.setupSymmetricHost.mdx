@@ -11,7 +11,10 @@ import * as Lynx from '@lynx';
 function setupSymmetricHost(lynxView: any, config?: HostConfig): void;
 ```
 
-Setup Symmetric Host for Web.
+Configure browser host capabilities for a Lynx view.
+Call from the browser main thread before loading the Lynx bundle.
+Registers optional bridge handlers and a background adapter script.
+This replaces the view's nativeModulesMap and onNativeModulesCall.
 
 **Parameters**
 
@@ -24,6 +27,24 @@ Setup Symmetric Host for Web.
 
 `void`
 
+## See
+
+https://lynxjs.org/next/lynxtron/learn/running-on-web
+
 **Defined in**
 
-[apis/web-host.d.ts:24](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L24)
+[web-host.d.ts:39](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L39)
+
+{/* api-doc-overlay:lynxtron-web-host-function-setupsymmetrichost:start */}
+
+## Usage on the Web
+
+Call this function in the browser main thread to configure Native Modules on a `<lynx-view>`, before loading its bundle. Import it from `@lynx-js/lynxtron/web-host`.
+
+`config.bridge` registers browser main-thread handlers exposed through `NativeModules.bridge`. The Web proxy passes the handler result to a trailing callback. Background adapter exports are exposed through `NativeModules.nodejs.exposed`; they do not provide a Node.js runtime.
+
+Configure both paths in one call when needed: the current implementation replaces `nativeModulesMap` and `onNativeModulesCall` rather than merging previous registrations.
+
+See [Running Lynxtron on the Web](/lynxtron/learn/running-on-web) for a complete example and background adapter setup.
+
+{/* api-doc-overlay:lynxtron-web-host-function-setupsymmetrichost:end */}
