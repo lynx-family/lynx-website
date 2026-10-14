@@ -1,7 +1,7 @@
 import { CORE_SUBSITES, SUBSITES_CONFIG } from '@site/shared-route-config';
 import type { SubsiteConfig } from '@site/shared-route-config';
 
-import { findSubsiteValue } from '../shared-subsite-routes';
+import { findSubsiteValue } from './utils/subsite-routes';
 
 const SUBSITE_VALUES = SUBSITES_CONFIG.map((subsite) => subsite.value);
 

@@ -1,10 +1,22 @@
-// Copy the API reference pages that lynx-stack owns into this site.
+// Synchronize the API reference sections that lynx-stack owns into this site.
 //
-// manifest.json of the source says what it contains: the installed
-// @lynx-js/lynx-stack-docs package by default, or the docs/ directory of a
-// lynx-stack checkout. Change those pages in lynx-stack, not here; the next
-// sync overwrites local edits. Links to lynxjs.org pages that exist in this
-// site become site-relative.
+// The source manifest is the authority for which generated sections exist,
+// where each locale's content lives, and which package pages appear in the
+// sidebar. By default the source is the installed @lynx-js/lynx-stack-docs
+// package; an explicit source may point at the docs/ directory of a built
+// lynx-stack checkout.
+//
+// The sync:
+// 1. verifies that the site's top-level API sidebar declares every section;
+// 2. replaces each generated section with its manifest-declared content;
+// 3. rebuilds the package sidebar from manifest.shownPackages;
+// 4. verifies that generated directories are ignored by Git; and
+// 5. makes lynxjs.org links site-relative only when the target exists locally.
+//
+// Generated sections are replaced wholesale, so change their sources in
+// lynx-stack rather than editing the copied pages here. Theme-owned route
+// classification and site-owned API overlays are separate concerns; the
+// sync:lynx-stack-docs package script applies overlays after this script.
 //
 // Usage: node scripts/sync-lynx-stack-docs.mjs [source]
 
@@ -22,17 +34,20 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { API_PACKAGE_SUBSITES } from '../shared-subsite-routes.ts';
-
 const WEBSITE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(WEBSITE, 'docs');
 const LYNXJS_LINK = /(\]\(|^\[[^\]]+\]:\s*)https:\/\/lynxjs\.org(\/[^)\s]*)/gm;
 
+/** Resolve the default source relative to this installed lynx-doc package. */
 function packageSource() {
   const require = createRequire(import.meta.url);
   return dirname(require.resolve('@lynx-js/lynx-stack-docs/manifest.json'));
 }
 
+/**
+ * Whether a lynxjs.org path resolves to a page published by this site.
+ * Unprefixed links target English; /zh/ links retain their locale.
+ */
 function pageExists(url) {
   let path = url
     .split('#')[0]
@@ -45,6 +60,7 @@ function pageExists(url) {
   );
 }
 
+/** List Markdown pages under one generated section. */
 function markdownFiles(dir) {
   return readdirSync(dir, { recursive: true })
     .map((name) => join(dir, name))
@@ -60,10 +76,9 @@ if (!existsSync(manifestFile)) {
 }
 const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
 
-// The sections are generated, listed in the sidebar and left out of git. Each
-// of those is stated by hand here, so a section the manifest adds or renames
-// stops the sync instead of quietly landing in a tracked directory or in no
-// sidebar at all.
+// Top-level API navigation is site-owned. Require it to acknowledge every
+// generated section before copying, so an upstream addition or rename cannot
+// silently produce pages with no sidebar entry.
 const LOCALES = [
   ...new Set(manifest.sections.flatMap((s) => Object.keys(s.content))),
 ];
@@ -82,6 +97,8 @@ for (const locale of LOCALES) {
   }
 }
 
+// Section directories are generated output. Replace them instead of merging so
+// pages removed upstream do not survive locally as stale routes.
 const synced = [];
 for (const section of manifest.sections) {
   for (const [locale, content] of Object.entries(section.content)) {
@@ -93,20 +110,9 @@ for (const section of manifest.sections) {
   }
 }
 
-// The theme picks a subsite for some package pages by name.
-const packageRoutes = new Set(manifest.packages.map(({ route }) => route));
-for (const name of Object.keys(API_PACKAGE_SUBSITES)) {
-  if (!packageRoutes.has(`api/packages/${name}`)) {
-    throw new Error(
-      `shared-subsite-routes.ts maps the package ${name}, which the manifest no longer has.`,
-    );
-  }
-}
-
-// Every package keeps its page, so links to it stay valid, but the sidebar
-// lists only the packages the manifest names, in its order and groups. A
-// single group is the section itself, so its header would repeat the name.
-
+// Every package keeps its copied page so existing links remain valid, but the
+// sidebar lists only manifest.shownPackages, preserving its order and groups.
+// A single group needs no header because the enclosing section already names it.
 const metaFile = (locale) => join(DOCS, locale, 'api/packages/_meta.json');
 for (const locale of LOCALES) {
   const items = new Map(
@@ -129,6 +135,9 @@ for (const locale of LOCALES) {
   writeFileSync(metaFile(locale), `${JSON.stringify(meta, null, 2)}\n`);
 }
 
+// Generated sections must stay out of version control. Within those sections,
+// localize only lynxjs.org links whose target is actually present in this site;
+// leave all other absolute links intact instead of creating broken local URLs.
 for (const dir of synced) {
   try {
     execFileSync('git', ['check-ignore', '--quiet', dir], { cwd: WEBSITE });
