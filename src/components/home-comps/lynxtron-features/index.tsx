@@ -28,8 +28,8 @@ const FEATURES: Array<{
       zh: '多平台',
     },
     desc: {
-      en: 'Share Lynx UI across desktop, mobile, and the web, with adapters for platform-specific capabilities.',
-      zh: '在桌面、移动端和 Web 之间复用 Lynx UI，通过适配层接入各平台的专属能力。',
+      en: 'Share UI code built with Lynx across desktop, mobile, and the web, with adapters for platform-specific capabilities.',
+      zh: '在桌面、移动端和 Web 之间共享用 Lynx 编写的界面代码，通过适配层接入各平台的专属能力。',
     },
   },
   {

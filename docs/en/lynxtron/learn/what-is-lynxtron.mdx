@@ -5,6 +5,8 @@ Lynxtron is a framework for building desktop applications with [Lynx](https://ly
 - The **Main Process** side is essentially [Electron](https://www.electronjs.org/docs/latest/tutorial/process-model#the-main-process). Node.js controls the app lifecycle, windows, menus, tray, dialogs, and other OS-level APIs.
 - The **UI** side is the [Lynx](https://lynxjs.org/guide/start/quick-start.html) runtime. You can use Lynx runtime DSLs such as ReactLynx and VueLynx to build UI, and it ultimately renders native elements such as [`<view>`](/api/elements/built-in/view), [`<text>`](/api/elements/built-in/text), and [`<image>`](/api/elements/built-in/image), not HTML.
 
+In this documentation, the application interface is built with Lynx elements and styles, using frameworks such as ReactLynx or VueLynx. This does not refer to the [lynx-ui component library](/ui/); discussions of execution environments use the specific runtime or context name.
+
 :::tip Already familiar with Electron and Lynx?
 Then you already know most of Lynxtron. This page covers the parts that only exist because Electron and Lynx are combined.
 :::
@@ -42,16 +44,16 @@ Unlike Electron's multi-process model (Main Process + Renderer Process), Lynxtro
   alt="Lynxtron single-process two-thread architecture"
 />
 
-| Lynxtron Thread            | Thread Relationship              | Electron Counterpart                                                          | Primary Responsibilities                                                                                                                                                                                                       |
-| -------------------------- | -------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Main Thread**            | One per app                      | Electron Main Process + main-thread responsibilities from Chromium's renderer | Node.js main-process APIs, window management, native capabilities, Lynx [MTS](/react/main-thread-script), input, layout, rendering                                                                                             |
-| **Lynx Background Thread** | Shared or independent per window | Page business JS in the Electron Renderer                                     | Runs directly on Node.js, hosts isolated BTS Contexts for windows, and executes Lynx UI business logic; BTS Context is not the Node.js global environment and can access only allowlisted Node.js capabilities through bridges |
+| Lynxtron Thread            | Thread Relationship              | Electron Counterpart                                                          | Primary Responsibilities                                                                                                                                                                                                           |
+| -------------------------- | -------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Main Thread**            | One per app                      | Electron Main Process + main-thread responsibilities from Chromium's renderer | Node.js main-process APIs, window management, native capabilities, Lynx [MTS](/react/main-thread-script), input, layout, rendering                                                                                                 |
+| **Lynx Background Thread** | Shared or independent per window | Page business JS in the Electron Renderer                                     | Runs directly on Node.js, hosts isolated BTS Contexts for windows, and executes application business logic; BTS Context is not the Node.js global environment and can access only allowlisted Node.js capabilities through bridges |
 
-In a single process, Lynxtron puts the control plane and Lynx main-thread capabilities on the main thread, and puts Lynx UI business logic on the Lynx Background Thread. The Lynx Background Thread runs directly on Node.js, but each window's BTS Context is an isolated context, not the Node.js global environment, so it cannot directly use Node.js APIs. Multiple windows can share one background thread, or windows can be assigned independent background threads; either way, their BTS Contexts remain isolated. BTS can access Node.js only through `NativeModules.bridge` or allowlisted [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts).
+In a single process, Lynxtron puts the control plane and Lynx main-thread capabilities on the main thread, and puts application business logic on the Lynx Background Thread. The Lynx Background Thread runs directly on Node.js, but each window's BTS Context is an isolated context, not the Node.js global environment, so it cannot directly use Node.js APIs. Multiple windows can share one background thread, or windows can be assigned independent background threads; either way, their BTS Contexts remain isolated. BTS can access Node.js only through `NativeModules.bridge` or allowlisted [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts).
 
 ## Key Differences in Lynxtron
 
-The following mechanisms connect the Electron-like main process model with the Lynx UI runtime, and are the parts that need extra attention compared with Electron or pure Lynx:
+The following mechanisms connect the Electron-like main process model with the Lynx runtime, and are the parts that need extra attention compared with Electron or pure Lynx:
 
 ### Desktop UI with Lynx Elements
 
@@ -77,7 +79,7 @@ Lynxtron has three inter-thread communication patterns, corresponding to [Electr
 
 ### Node.js Integration via [Preload Scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts)
 
-[Preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts) can be understood as an enhancement of [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / contextBridge model for Lynx BTS. A preload script runs in an isolated context with Node.js capabilities, then exposes explicitly allowed methods or objects to Lynx UI.
+[Preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts) can be understood as an enhancement of [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / contextBridge model for Lynx BTS. A preload script runs in an isolated context with Node.js capabilities, then exposes explicitly allowed methods or objects to application code in the BTS context.
 
 Unlike Electron, Lynxtron's preload scripts and BTS are isolated JS contexts in the same process. [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) does not expose only serializable message payloads. It exposes JS objects that BTS can call directly; those objects can contain functions, closures, and can return Promises.
 
