@@ -95,10 +95,12 @@ BTS 所在的 Lynx 后台线程直接运行在 Node.js 上，但 BTS 仍然处�
 
 Lynxtron 的原生能力可以供 Node.js 宿主或 Lynx UI 调用：
 
-| 调用环境               | 接入方式                                                                   | 能力如何生效                                                                                                                                                                                                                                                                                                              |
-| ---------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 在 Node.js 中调用      | [Node.js addon](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules)       | 通过 `import` 或 `require` 加载包的宿主入口；根据运行时 ABI 兼容性决定是否 rebuild                                                                                                                                                                                                                                        |
-| 在 Lynx runtime 中调用 | [Lynx native library](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries) | 推荐使用[静态注册宏](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)：`LYNX_REGISTER_NATIVE_MODULE` 底层调用 `lynx_env_register_native_module`；`LYNX_REGISTER_ELEMENT` 底层调用 `lynx_env_register_extension_module`，通过扩展模块生命周期注册元素。加载或链接 library 后注册生效，AutoLink 可自动完成宿主接入 |
+| 调用环境               | 接入方式                                                                   | 能力如何生效                                                                                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 在 Node.js 中调用      | [Node.js addon](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules)       | 通过 `import` 或 `require` 加载包的宿主入口；根据运行时 ABI 兼容性决定是否 rebuild                                                                                      |
+| 在 Lynx runtime 中调用 | [Lynx native library](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries) | 通过[静态注册宏](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)注册模块和元素。加载或链接 library 后，Lynx 即可使用这些能力。AutoLink 可以生成宿主侧加载代码 |
+
+library 作者推荐使用注册宏：`LYNX_REGISTER_NATIVE_MODULE` 通过 `lynx_env_register_native_module` 注册原生模块；`LYNX_REGISTER_ELEMENT` 通过 `lynx_env_register_extension_module` 注册扩展模块，由该模块在 Lynx 视图创建时注册元素。
 
 同一个 library 可以同时提供两类能力。加载其 Node.js 入口，不代表它导出的接口会自动成为 Lynx `NativeModules`；library 需要单独注册 Lynx 能力。
 
