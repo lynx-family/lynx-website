@@ -1,7 +1,16 @@
+/**
+ * Pure behavior tests for the theme-owned route classifier.
+ *
+ * These cases intentionally use only synthetic pathnames. Whether mapped API
+ * packages still exist in the installed Lynx Stack docs manifest is a separate
+ * CI contract, and whether the sync script runs after packaging is covered by
+ * its installed-package regression.
+ */
+
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { findSubsiteValue } from './shared-subsite-routes.ts';
+import { findSubsiteValue } from './subsite-routes.ts';
 
 const subsiteOf = (pathname: string) =>
   findSubsiteValue(pathname, ['guide', 'react', 'ui', 'lynxtron']);

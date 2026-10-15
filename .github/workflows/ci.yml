@@ -109,8 +109,9 @@ jobs:
       - name: API Redirect Fragment Check
         run: node scripts/ci/check-api-redirect-fragments.mjs
 
-  # Validate published core example metadata separately from site generation.
-  # This check needs dependencies but does not need root prepare lifecycle work.
+  # Validate published example aggregator metadata separately from site
+  # generation. This check needs dependencies but does not need root prepare
+  # lifecycle work.
   dependency-provenance:
     name: Dependency Provenance
     runs-on: ubuntu-latest
@@ -161,8 +162,10 @@ jobs:
       - name: API Redirect Edge Function Test
         run: node --test netlify/edge-functions/lynx-stack-api-redirects/index.test.ts
 
+      # Route classification is pure theme behavior. Keep this test independent
+      # of the installed Lynx Stack manifest and package-manager lifecycle.
       - name: Subsite Route Test
-        run: node --test shared-subsite-routes.test.ts
+        run: node --test theme/utils/subsite-routes.test.ts
 
   # Check committed documents with MDX dependencies, without running prepare.
   # Validate separately verifies generated documentation after root prepare.
@@ -190,8 +193,10 @@ jobs:
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
 
-  # Keep interactive-example authoring contracts separate from portable import
-  # rules. Both parse MDX, but they enforce independent policy domains.
+  # Keep authoring contracts that require installed dependencies separate from
+  # portable import rules. API reference checks here may read the installed
+  # Lynx Stack manifest or invoke pnpm pack, but installation still skips the
+  # root prepare lifecycle.
   example-authoring:
     name: Example Authoring
     runs-on: ubuntu-latest
@@ -209,6 +214,13 @@ jobs:
 
       - name: Install Dependencies Without Lifecycle Scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: API Reference Contract Tests
+        run: |
+          # Validate the theme exception map against the installed manifest.
+          node --test scripts/ci/check-api-package-subsites.test.mjs
+          # Validate the sync script from the complete packed lynx-doc artifact.
+          node --test scripts/sync-lynx-stack-docs.test.mjs
 
       - name: API Reference Sync and Overlay Check
         run: |

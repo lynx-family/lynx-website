@@ -290,6 +290,7 @@ test('preflights all incremental owners before copying examples', (t) => {
         [path.join(__dirname, 'lynx-example.js')],
         {
           cwd: root,
+          stdio: 'pipe',
           env: {
             ...process.env,
             EXAMPLES_DIR: path.relative(root, sourceDir),
