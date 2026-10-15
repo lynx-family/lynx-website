@@ -5,7 +5,7 @@ import { Go } from '@lynx';
 If you are familiar with Electron, you can first understand Lynxtron communication needs in two categories:
 
 1. **Bidirectional message communication between the Node main process and UI**: similar to IPC between Electron's main process and a [`BrowserWindow`](https://www.electronjs.org/docs/latest/api/browser-window) renderer.
-2. **Using Node.js capabilities directly in UI code**: Electron technically supports [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions) for calling Node.js capabilities directly in Web code, but enabling it directly is generally not recommended. Lynxtron instead enhances [preload scripts](#use-preload-scripts) so they can use Node.js in an isolated context and expose JS objects for application code in the BTS context to call.
+2. **Using Node.js capabilities directly in application code**: Electron technically supports [`nodeIntegration`](https://www.electronjs.org/docs/latest/api/browser-window#new-browserwindowoptions) for calling Node.js capabilities directly in Web code, but enabling it directly is generally not recommended. Lynxtron instead enhances [preload scripts](#use-preload-scripts) so they can use Node.js in an isolated context and expose JS objects for application code running in the BTS context to call.
 
 Lynxtron provides corresponding capabilities for both needs:
 
@@ -23,7 +23,7 @@ Lynxtron provides corresponding capabilities for both needs:
 
 ## Use Preload Scripts
 
-Lynxtron's [preload scripts](#use-preload-scripts) can be understood as an enhancement of [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) model for Lynx BTS: a preload script can use Node.js APIs directly and expose methods or objects for application code in the BTS context to call.
+Lynxtron's [preload scripts](#use-preload-scripts) can be understood as an enhancement of [Electron preload scripts](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) / [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) model for Lynx BTS: a preload script can use Node.js APIs directly and expose methods or objects for BTS code to call.
 
 In Electron, the preload script and the Web page are in isolated JS contexts. The preload script and Web eventually communicate across contexts through [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) or IPC, with values serialized, proxied, or copied according to Electron's rules; the Web side cannot directly use the original JS objects from the preload script context.
 
@@ -93,7 +93,7 @@ contextBridge.exposeInLynxBTS(nodeApi);
 
 Lynx BTS accesses these APIs through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed):
 
-The exposed JS object can contain functions. Functions can take other functions as parameters, use closures from the preload script context, and return Promises. Application code in the BTS context can call them as regular asynchronous JS APIs.
+The exposed JS object can contain functions. Functions can take other functions as parameters, use closures from the preload script context, and return Promises. BTS code can call them as regular asynchronous JS APIs.
 
 ```tsx
 // App.tsx
@@ -110,10 +110,10 @@ const todo = await reader.read('todo.txt');
 
 ### Example: File Explorer
 
-This example demonstrates using Node.js capabilities exposed by a preload script from application code in the BTS context:
+This example demonstrates using Node.js capabilities exposed by a preload script from BTS code:
 
 - The preload script exposes APIs such as `readdir` and `homedir` with [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts).
-- Application code in the BTS context calls these APIs through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) to browse directories and view file content.
+- BTS code calls these APIs through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) to browse directories and view file content.
 
 <Go
   nativeFramework="lynxtron"
@@ -258,14 +258,16 @@ This example demonstrates bidirectional message communication between the Node m
 
 ## Capability Reference
 
-| Capability                                                                                          | API                                                                                                                             |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Configure the window-level preload script                                                           | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload)                                |
-| Expose Node.js methods or objects from preload scripts to Lynx                                      | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) |
-| Call Node.js methods or objects exposed by preload scripts from application code in the BTS context | [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)                     |
-| Push events from the Node main process to Lynx                                                      | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          |
-| Call the Node main process from Lynx and wait for a result                                          | `NativeModules.bridge.call` → `lynxBridge.handle()`                                                                             |
-| Send one-way messages from Lynx to the Node main process                                            | `NativeModules.bridge.send` → `lynxBridge.on()`                                                                                 |
+In this table, Lynx refers to BTS code running in the window.
+
+| Capability                                                           | API                                                                                                                             |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Configure the window-level preload script                            | [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload)                                |
+| Expose Node.js methods or objects from preload scripts to Lynx       | [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) |
+| Call Node.js methods or objects exposed by preload scripts from Lynx | [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed)                     |
+| Push events from the Node main process to Lynx                       | [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent)                          |
+| Call the Node main process from Lynx and wait for a result           | `NativeModules.bridge.call` → `lynxBridge.handle()`                                                                             |
+| Send one-way messages from Lynx to the Node main process             | `NativeModules.bridge.send` → `lynxBridge.on()`                                                                                 |
 
 ## Why Lynxtron Is Designed This Way
 
