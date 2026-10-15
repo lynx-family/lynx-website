@@ -1,0 +1,145 @@
+---
+title: 'Lynx 构建工具链：原生 Rsbuild 支持'
+description: '使用原生 Rsbuild 构建 Lynx 应用。'
+date: 2026-10-15
+sidebar: false
+authors:
+  [
+    'upupming',
+    'huxpro',
+    'chenjiahan',
+    'HuJean',
+    'colinaaa',
+    'jkzing',
+    'luhc228',
+    'Yradex',
+    'gaoachao',
+  ]
+---
+
+import { BlogHeader } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+
+<BlogHeader />
+
+{/* cspell:ignore rstackjs */}
+
+在上一篇[《Lynx × Rspack 2.0：更快、更小、更贴近 Web》](./lynx-rspack-2.mdx)的结尾，我们提出减少 Rspack → Rsbuild → Rspeedy 三层结构中的 Lynx 专属配置、概念与文档。现在，Lynx 已支持直接使用 Rsbuild 构建。
+
+## 从配置差异开始
+
+[Rspeedy](https://lynxjs.org/zh/rspeedy/index.html) 是 Lynx 此前推荐的构建工具，基于 Rsbuild 封装。它的插件 API 和配置结构遵循 Rsbuild，但只暴露部分配置，并增加了少量专有选项。开发者即使熟悉 Rsbuild，仍需要查阅 Rspeedy 文档，判断一个配置是否支持、默认值是否相同。
+
+我们逐项对比了两套配置。大部分可以直接沿用 Rsbuild，少量配置用于处理 Lynx Bundle 和双线程产物。
+
+例如，Rsbuild 的 [`output.filename`](https://rsbuild.rs/zh/config/output/filename) 可以设置 JavaScript、CSS 等文件名，Rspeedy 则增加了 [`output.filename.bundle`](/api/build/output/filename/bundle) 设置最终的 `.lynx.bundle` 文件名。Lynx 还需要通过 [`output.minify.mainThreadOptions`](/api/build/output/minify/main-thread-options) 和 [`output.minify.backgroundOptions`](/api/build/output/minify/background-options) 分别设置主线程和后台线程的压缩选项。
+
+另一些差异只涉及默认值，例如 [`output.dataUriLimit`](/api/build/output/data-uri-limit) 和 [`output.sourceMap`](/api/build/output/source-map)。它们沿用 Rsbuild 的配置接口，由 Lynx 插件调整默认值。
+
+## 抽出 pluginLynx，复用构建能力
+
+我们将 Lynx 在 Rsbuild 上的特有逻辑和优化抽出为 [`pluginLynx`]，由 Rspeedy 和原生 Rsbuild 共用。它与 [`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) 配合，适配 Lynx 的[模块解析](/guide/build/index#module-resolution)、[模块加载](/react/code-splitting)和[产物格式](/guide/build/index#output-files)，完成 [Bundle 编码](/guide/build/index#从中间产物到二进制)、开发服务器适配、Lynx HMR 和[调试元数据](/guide/devtool/map-errors-to-source)生成。插件还针对 Lynx 运行时优化 JavaScript 编译与 JS/CSS 压缩，并提供 Lynx 专有配置项及默认值。
+
+[`pluginReactLynx`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) 会自动应用默认的 [`pluginLynx`]。通常只需添加 `pluginReactLynx()`；需要定制 Lynx 专有选项时，再显式添加 `pluginLynx`，`pluginReactLynx` 不会重复应用它。
+
+以修改 Bundle 文件名为例，原先的 Rspeedy 配置如下：
+
+```ts title="lynx.config.ts"
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { defineConfig } from '@lynx-js/rspeedy';
+
+export default defineConfig({
+  source: {
+    entry: { main: './src/index.tsx' },
+  },
+  output: {
+    filename: { bundle: 'app.lynx.bundle' },
+  },
+  plugins: [pluginReactLynx()],
+});
+```
+
+迁移后，入口配置仍留在顶层，Bundle 文件名移入 [`pluginLynx`]。显式导入该插件时，先将它添加为项目依赖：
+
+<PackageManagerTabs command="install -D @lynx-js/rsbuild-plugin" />
+
+```ts title="rsbuild.config.ts"
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { pluginLynx } from '@lynx-js/rsbuild-plugin';
+import { defineConfig } from '@rsbuild/core';
+
+export default defineConfig({
+  source: {
+    entry: { main: './src/index.tsx' },
+  },
+  plugins: [
+    pluginLynx({
+      output: {
+        filename: { bundle: 'app.lynx.bundle' },
+      },
+    }),
+    pluginReactLynx(),
+  ],
+});
+```
+
+## 使用原生 Rsbuild
+
+抽出插件后，项目可以直接使用 [Rsbuild CLI](https://rsbuild.rs/zh/guide/basic/cli)，配置文件改为标准的 [`rsbuild.config.ts`](https://rsbuild.rs/zh/guide/configuration/rsbuild#配置文件)。静态资源、CSS、模块解析等配置直接参考 Rsbuild 文档，Lynx 文档只需说明专有选项和默认值差异。
+
+新项目通过官方脚手架创建，按提示选择 Rsbuild 和 TypeScript：
+
+<PackageManagerTabs command="create @lynx-js/lynx@latest" />
+
+安装依赖后，启动开发服务器，通过 [Lynx Explorer](/guide/start/quick-start) 扫码预览：
+
+<PackageManagerTabs command="run dev" />
+
+生成生产产物：
+
+<PackageManagerTabs command="run build" />
+
+### 组件库与测试
+
+创建 ReactLynx 组件库时，在同一脚手架中选择 Rslib 和 TypeScript，由 Rslib 构建 JavaScript 和类型声明。
+
+构建配置、类型声明与发布方式见 [Rslib 的 ReactLynx 指南](https://rslib.rs/guide/solution/reactlynx)。应用和组件库模板均配套 [Rstest](https://rstest.rs/zh/) 与 [ReactLynx Testing Library](/api/react/testing-library)，运行测试：
+
+<PackageManagerTabs command="run test" />
+
+### Agent 辅助开发
+
+使用 Coding Agent 修改 Rsbuild 配置或排查构建问题时，可以安装 [Rstack Agent Skills](https://github.com/rstackjs/agent-skills) 中的 Rsbuild 最佳实践技能：
+
+<PackageManagerTabs
+  command="skills add rstackjs/agent-skills --skill rsbuild-best-practices"
+  dlx
+/>
+
+同一仓库还提供 Rslib、Rstest 和构建分析相关技能，可按项目需要选用。
+
+## 升级与迁移
+
+Rspeedy 将继续维护，现有项目可以继续使用；新项目推荐原生 Rsbuild。
+
+### 继续使用 Rspeedy
+
+继续使用 Rspeedy 的项目，从 0.15 升级时需要留意以下变化：
+
+- **0.17 移除 `dev.client`**：使用过 `dev.client` 的项目需删除该配置项。Lynx HMR 统一使用原生 `LynxWebSocketModule`，自定义 Lynx 宿主需提供该模块。
+- **0.18 对齐 CSS Modules 默认类名**：开发环境改为 `[path][name]__[local]-[hash:base64:6]`，生产环境不变。可以显式设置 [`output.cssModules.localIdentName`](https://rsbuild.rs/zh/config/output/css-modules#cssmoduleslocalidentname) 保留旧行为。
+- **0.18 默认关闭开发进度条**：需要时显式开启 [`dev.progressBar`](https://rsbuild.rs/zh/config/dev/progress-bar)。
+
+产物路径也有调整：Rspeedy 0.17 将中间产物从 `.rspeedy/` 改为 `.lynx/`，并移除 `output.distPath.intermediate`；配套的 `@lynx-js/template-webpack-plugin` 0.14.0 将懒加载 Bundle 默认目录从 `async/` 改为 `lazy-bundle/`。部署、调试和缓存脚本中若引用了这些路径，需要同步更新。
+
+### 迁移到原生 Rsbuild
+
+迁移到 Rsbuild 时，先将依赖 `@lynx-js/rspeedy` 替换为 `@rsbuild/core`，并把项目脚本中的 `rspeedy` 命令改为 `rsbuild`。配置文件改名为 `rsbuild.config.ts`，`defineConfig` 也改为从 `@rsbuild/core` 导入。`tsconfig.json` 中的 `@lynx-js/rspeedy/client` 类型引用则替换为 `@rsbuild/core/types`。
+
+配置内容也需要相应调整。上文展示的 Lynx 独有选项需要移入 [`pluginLynx`]；如果 [`source.entry`](https://rsbuild.rs/zh/config/source/entry) 使用了字符串简写，需要改为对象形式。使用过 `tools.rsdoctor` 的项目，需要改为接入 [Rsdoctor 插件](https://rsdoctor.rs/zh/guide/start/quick-start)。
+
+目前 [`performance.profile`](/api/build/performance/profile) 仍可通过 `pluginLynx` 配置；后续我们会逐步淘汰这类原生 Rsbuild 已废弃的旧配置。
+
+完整步骤与版本记录见 [Rspeedy 迁移指南](/guide/build/rspeedy#migrating-an-rspeedy-project)和 [CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md)。
+
+[`pluginLynx`]: /api/packages/rsbuild-plugin
