@@ -1,0 +1,66 @@
+---
+title: _bindPipelineIdWithTimingFlag()
+---
+
+# `lynx.performance._bindPipelineIdWithTimingFlag()`
+
+Associates a pipeline with an application-provided Timing Flag.
+
+This method is a framework integration hook for Scripting Framework Developers. Application code must set [`__lynx_timing_flag`](../../../elements/built-in/view.mdx#__lynx_timing_flag) on content instead of calling this method.
+
+## Syntax
+
+```ts
+_bindPipelineIdWithTimingFlag(
+  pipelineID: string,
+  timingFlag: string,
+): void;
+```
+
+### Parameters
+
+#### `pipelineID`
+
+The Engine-generated identifier of the pipeline in which the marked content participates.
+
+#### `timingFlag`
+
+The non-empty value of the effective `__lynx_timing_flag` discovered by the framework while rendering the content.
+
+### Return value
+
+No return value.
+
+## Usage requirements
+
+When a framework discovers an effective Timing Flag for a framework-initiated pipeline, it must:
+
+1. set [`PipelineOptions.needTimestamps`](../../performance-api/pipeline-options.mdx#needtimestamps) to `true`;
+2. bind the flag to that pipeline's `pipelineID`; and
+3. submit the matching Element Tree changes with the same `PipelineOptions` object.
+
+After the flagged pipeline completes its final painting phase, the Engine can emit a [`PipelineEntry`](../../performance-api/performance-entry/pipeline-entry.mdx). Its `identifier` equals the effective Timing Flag.
+
+Do not bind an empty value or bind a flag from one logical update to another pipeline.
+
+## Example
+
+```ts
+function bindTimingFlag(options: PipelineOptions, timingFlag: string): void {
+  if (timingFlag.length === 0) {
+    return;
+  }
+
+  options.needTimestamps = true;
+  lynx.performance._bindPipelineIdWithTimingFlag(
+    options.pipelineID,
+    timingFlag,
+  );
+}
+```
+
+## See also
+
+- [`__lynx_timing_flag`](../../../elements/built-in/view.mdx#__lynx_timing_flag)
+- [`PipelineOptions`](../../performance-api/pipeline-options.mdx)
+- [Marking Lynx Pipeline](../../../../guide/performance/monitor-performance/timing-flag.mdx)

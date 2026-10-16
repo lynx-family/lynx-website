@@ -1,0 +1,83 @@
+---
+title: _markTiming()
+---
+
+# `lynx.performance._markTiming()`
+
+Records the occurrence of a framework rendering timing point in the Engine.
+
+This method is a framework integration hook for Scripting Framework Developers. Application code must not call it.
+
+## Syntax
+
+```ts
+_markTiming(pipelineID: string, key: FrameworkTimingKey): void;
+```
+
+### Parameters
+
+#### `pipelineID`
+
+The Engine-generated identifier of the pipeline being annotated.
+
+#### `key`
+
+A standard key identifying the beginning or end of a framework rendering stage.
+
+```ts
+type FrameworkTimingKey =
+  | 'diffVdomStart'
+  | 'diffVdomEnd'
+  | 'hydrateParseSnapshotStart'
+  | 'hydrateParseSnapshotEnd'
+  | 'packChangesStart'
+  | 'packChangesEnd'
+  | 'parseChangesStart'
+  | 'parseChangesEnd'
+  | 'patchChangesStart'
+  | 'patchChangesEnd';
+```
+
+The keys correspond to fields in [`FrameworkPipelineTiming`](../../performance-api/framework-pipeline-timing.mdx). Use only stages that apply to the framework.
+
+### Return value
+
+No return value.
+
+## Timing semantics
+
+The Engine samples the time when `_markTiming()` is called. Do not pass or synthesize a JavaScript timestamp.
+
+Record each timing point in the runtime that performs the corresponding work:
+
+| Stage                 | Typical runtime   |
+| --------------------- | ----------------- |
+| VDOM diff             | Background Thread |
+| Snapshot parsing      | Background Thread |
+| Change serialization  | Background Thread |
+| Change parsing        | Main Thread       |
+| Element Tree mutation | Main Thread       |
+
+Record paired `Start` and `End` keys in chronological order. The same `pipelineID` must follow the UI changes across runtime and asynchronous boundaries.
+
+## Example
+
+```ts
+function diffAndSerialize(options: PipelineOptions): SerializedChanges {
+  lynx.performance._markTiming(options.pipelineID, 'diffVdomStart');
+  const changes = diffVdom();
+  lynx.performance._markTiming(options.pipelineID, 'diffVdomEnd');
+
+  lynx.performance._markTiming(options.pipelineID, 'packChangesStart');
+  const serialized = serializeChanges(changes);
+  lynx.performance._markTiming(options.pipelineID, 'packChangesEnd');
+
+  return serialized;
+}
+```
+
+## See also
+
+- [`FrameworkPipelineTiming`](../../performance-api/framework-pipeline-timing.mdx)
+- [`PipelineOptions`](../../performance-api/pipeline-options.mdx)
+- [`_onPipelineStart()`](./on-pipeline-start.mdx)
