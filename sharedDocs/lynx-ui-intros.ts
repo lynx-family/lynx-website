@@ -19,6 +19,7 @@ export const lynxUiIntros: Record<string, string> = {
   "lynx-ui-popover": "A headless Popover component for ReactLynx. It provides primitives for positioning and anchor tracking.",
   "lynx-ui-presence": "A Presence component for ReactLynx. It animates elements entering and leaving the view tree.",
   "lynx-ui-radio-group": "A headless RadioGroup component for ReactLynx. It manages single-selection state across a group of radio buttons.",
+  "lynx-ui-scroll-coordinator": "A headless collapsible header that coordinates scrolling with nested lists, scroll views, and paged content in ReactLynx.",
   "lynx-ui-scroll-view": "A ScrollView component for ReactLynx. It provides scrolling primitives and bounce handling.",
   "lynx-ui-sheet": "A directional Sheet component for ReactLynx. It supports bottom-sheet and side-drawer semantics with drag interactions and snap point primitives.",
   "lynx-ui-slider": "A primitives-first slider component package for lynx-ui. It supports both single-value sliders and two-thumb range sliders.",
@@ -26,7 +27,8 @@ export const lynxUiIntros: Record<string, string> = {
   "lynx-ui-swipe-action": "A SwipeAction component for ReactLynx. It provides swipeable list item primitives via main-thread gestures.",
   "lynx-ui-swiper": "A Swiper (carousel) component for ReactLynx. It provides pagination and gesture-handling primitives.",
   "lynx-ui-switch": "A headless Switch (toggle) component for ReactLynx. It provides unstyled primitives for toggle states.",
-  "lynx-ui-tab-group": "Composable primitives for building tab navigation with lynx-ui. The package provides `TabsRoot`, `TabsBar`, `TabsItem`, and `TabsIndicator`."
+  "lynx-ui-tab-group": "Composable primitives for building tab navigation with lynx-ui. The package provides `TabsRoot`, `TabsBar`, `TabsItem`, `TabsIndicator`, and an optional swipeable `TabsPanel`.",
+  "lynx-ui-view-pager": "A page-snapped horizontal content navigator for ReactLynx with optional off-screen lazy rendering."
 };
 
 export const lynxUiIntrosZh: Record<string, string> = {
@@ -40,12 +42,14 @@ export const lynxUiIntrosZh: Record<string, string> = {
   "lynx-ui-feed-list": "一个适用于 ReactLynx 的信息流列表组件，面向复杂布局和无限滚动列表场景。",
   "lynx-ui-form": "一个适用于 ReactLynx 的无样式表单组件，提供表单上下文和收集字段值的提交基础能力。",
   "lynx-ui-input": "一个适用于 ReactLynx 的无样式输入框组件，提供文本输入和键盘感知基础能力。",
+  "lynx-ui-input-otp": "一个适用于 ReactLynx 的无样式、长度可配置的一次性密码（OTP）和 PIN 输入组件。`InputOTP` 通过一个隐藏的原生输入框统一管理键盘、焦点、删除、粘贴、过滤和值状态。使用者可以通过 `InputOTPSlot` 组合可见输入区域。",
   "lynx-ui-lazy-component": "一个适用于 ReactLynx 的懒加载组件，用于延迟加载和渲染非关键 UI 元素。",
   "lynx-ui-list": "一个适用于 ReactLynx 的虚拟化列表组件，用于高效渲染长列表数据。",
   "lynx-ui-overlay": "一个适用于 ReactLynx 的浮层组件，用于在主视图树之上通过原生浮层渲染内容。",
   "lynx-ui-popover": "一个适用于 ReactLynx 的无样式气泡浮层组件，提供定位和锚点追踪基础能力。",
   "lynx-ui-presence": "一个适用于 ReactLynx 的 Presence 组件，用于处理元素进入和离开视图树时的动画。",
   "lynx-ui-radio-group": "一个适用于 ReactLynx 的无样式单选组组件，用于管理一组单选按钮的单选状态。",
+  "lynx-ui-scroll-coordinator": "用于 ReactLynx 的无样式滚动协调组件，支持可折叠头部与嵌套列表、滚动视图、分页内容联动。",
   "lynx-ui-scroll-view": "一个适用于 ReactLynx 的滚动容器组件，提供滚动基础能力和回弹处理。",
   "lynx-ui-sheet": "一个适用于 ReactLynx 的方向性 Sheet 组件，支持底部面板、侧边抽屉、拖拽交互和吸附点基础能力。",
   "lynx-ui-slider": "一个适用于 ReactLynx 的 Slider 组件包，优先提供可组合的基础能力，同时支持单值滑块和双拇指区间滑块。",
@@ -53,5 +57,6 @@ export const lynxUiIntrosZh: Record<string, string> = {
   "lynx-ui-swipe-action": "一个适用于 ReactLynx 的滑动操作组件，通过主线程手势提供可滑动列表项基础能力。",
   "lynx-ui-swiper": "一个适用于 ReactLynx 的轮播组件，提供轮播分页和手势处理基础能力。",
   "lynx-ui-switch": "一个适用于 ReactLynx 的无样式开关组件，提供切换状态基础能力。",
-  "lynx-ui-tab-group": "用于通过 lynx-ui 构建标签导航的可组合 Tab 原语。此软件包提供 `TabsRoot`、`TabsBar`、`TabsItem` 和 `TabsIndicator`。"
+  "lynx-ui-tab-group": "用于通过 lynx-ui 构建标签导航的可组合 Tab 原语。此软件包提供 `TabsRoot`、`TabsBar`、`TabsItem`、`TabsIndicator`，以及可选的可滑动 `TabsPanel`。",
+  "lynx-ui-view-pager": "适用于 ReactLynx 的分页横向内容导航组件，支持屏外页面懒加载。"
 };

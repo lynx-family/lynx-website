@@ -1,0 +1,622 @@
+import { UIApiTable, ClassRenderPropTable } from "@lynx-ui/index";
+
+
+### ScrollCoordinator
+
+Coordinates a collapsible header with nested vertical lists or scroll views.
+
+<UIApiTable source={[
+  {
+    "name": "bounces",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Enable bounce on supported platforms. Outer refresh always enables it unless popupOptions disables it."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "className",
+    "type": "string",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "className"
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "类名"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "coordinatorProps",
+    "type": "Omit<ScrollCoordinatorProps, ref | children | id | style | className>",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Native properties passed explicitly to the coordinator. Managed properties take precedence."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "enableScroll",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Enable vertical coordinator scrolling."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "true",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "granularity",
+    "type": "number",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Offset event granularity as a fraction of the collapse range. Also sets the sticky threshold."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "0.01",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "headerOverSlot",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Place the overflowing header above the slot."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "headers",
+    "type": "ReactNode",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Collapsible header content."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "id",
+    "type": "string",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Optional native coordinator ID. Imperative methods use instance-local node refs."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "main-thread:gesture",
+    "type": "BaseGesture<BaseGestureConfig, GestureChangeEvent>",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Native gesture attached to the coordinator."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "main-thread:onOffsetChange",
+    "type": "(event: ScrollCoordinatorOffset) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Header offset callback on the main thread. Pass a function with the 'main thread' directive."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onLeaveSticky",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Called once when the header leaves the sticky threshold."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onOffsetChange",
+    "type": "(event: ScrollCoordinatorOffset) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Header offset and total collapse range, in px."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onSticky",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Called once when the header reaches the sticky threshold."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "popupOptions",
+    "type": "{enableHalfToFullScreen: boolean, name: string}",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Native host popup integration for hosts that support half-to-full-screen expansion."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "refreshInSlot",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Use independent refresh elements inside the slot. Each nested refresh must\nfinish its own refresh through its ref; finishRefresh only affects the outer wrapper."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "refreshOptions",
+    "type": "false | ScrollCoordinatorRefreshOptions",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Configure outer native refresh. Enabled outer refresh takes precedence over refreshInSlot.\nProviding an options object mounts the refresh wrapper, even while enableRefresh is false.\nclassName and style apply to this wrapper; otherwise they apply to the native coordinator.\nNo implementation mode is required."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "scrollBarEnable",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Show the coordinator scrollbar on supported platforms."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "scrollWithNative",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Participate as a nested scrolling child of a native Android container."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "false",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "slot",
+    "type": "ReactNode",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Content below the header, typically a vertical List, ScrollView, or ViewPager of lists."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "style",
+    "type": "CSSProperties",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "style"
+      }
+    ],
+    "summary_zh": [
+      {
+        "kind": "text",
+        "text": "样式"
+      }
+    ],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": true,
+    "docTypeFallback": null
+  },
+  {
+    "name": "toolbar",
+    "type": "ReactNode",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Persistent toolbar. Its height is subtracted from the header's collapse range."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+
+### ScrollCoordinatorUIVariants
+
+
+
+<UIApiTable source={[
+  {
+    "name": "ui-sticky",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Applied to the coordinator and outer refresh wrapper while the header is collapsed."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": false,
+    "isSupportAndroid": false,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+## ScrollCoordinatorRef
+
+
+
+<UIApiTable source={[
+  {
+    "name": "finishRefresh",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "End the outer refresh, including after a failed request. An existing refresh\ncan still finish after enableRefresh becomes false. Does not reset list offsets."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "scrollIntoView",
+    "type": "(id: string, animated: boolean, success?: (result: unknown) => void, fail?: (result: unknown) => void) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Scroll to an element inside headers, measured relative to this instance's header."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "scrollTo",
+    "type": "(offset: px | rpx, animated: boolean, success?: (result: unknown) => void, fail?: (result: unknown) => void) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Set the header offset. The native coordinator clamps it to the scrollable range."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "scrollToSticky",
+    "type": "(animated: boolean, success?: (result: unknown) => void, fail?: (result: unknown) => void) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Collapse the header to its sticky position."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "scrollToTop",
+    "type": "(animated: boolean, success?: (result: unknown) => void, fail?: (result: unknown) => void) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Expand the header. Does not reset the nested list's own scroll position."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "startRefresh",
+    "type": "() => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Start the outer refresh through its native node. Requires enableRefresh.\nonStartRefresh reports triggeredBy: 'startRefresh'. Does not control slot refresh instances."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
+
+
+## ScrollCoordinatorRefreshOptions
+
+Native refresh options with the same callback shapes as FeedList.
+
+<UIApiTable source={[
+  {
+    "name": "enableRefresh",
+    "type": "boolean",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Allow pull gestures and startRefresh() to start the outer refresh.\nToggle this flag to preserve the mounted content and its scroll position."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "headerContent",
+    "type": "ReactNode",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Refresh header content. Give it a nonzero height to define the pull threshold.\nKeep its dimensions stable while refreshing to avoid resetting the native header position."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": false,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onHeaderReleased",
+    "type": "(event: {headerSize: number, offset: number}) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "The native header was released. Reports the latest offset and measured height in px."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onRefreshOffsetChange",
+    "type": "(event: {headerSize: number, isDragging: boolean, offset: number}) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Pull offset and measured header height in px. The height is zero until layout.\nProgress is offset / headerSize when headerSize > 0, and may exceed 1."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onRefreshStateChange",
+    "type": "(event: {state: number}) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Native state: 0 idle, 1 released past the threshold, 2 refreshing.\nEvent order is platform-dependent. Use isDragging from the offset event for drag state."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  },
+  {
+    "name": "onStartRefresh",
+    "type": "(event: {triggeredBy: startRefresh | drag}) => void",
+    "summary": [
+      {
+        "kind": "text",
+        "text": "Start loading data. Always call ref.finishRefresh() when the request settles.\nReturning a Promise does not automatically end the refresh."
+      }
+    ],
+    "summary_zh": [],
+    "defaultValue": "",
+    "isOption": true,
+    "isSupportIOS": true,
+    "isSupportAndroid": true,
+    "isSupportHarmony": false,
+    "docTypeFallback": null
+  }
+]}/>
