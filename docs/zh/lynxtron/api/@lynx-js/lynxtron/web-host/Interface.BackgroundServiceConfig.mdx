@@ -7,26 +7,33 @@ import * as Lynx from '@lynx';
 
 # BackgroundServiceConfig
 
+Adapter script loaded directly into the Lynx background Worker.
+
 ## 属性
 
-### methods
+### scriptURL
 
 ```ts
-methods: string[];
+scriptURL: string;
 ```
+
+URL of the built, importScripts-compatible adapter script.
+Relative URLs are resolved against the browser page URL.
+Export capabilities with contextBridge.exposeInLynxBTS; the UI accesses
+them through NativeModules.nodejs.exposed.
 
 **定义于**
 
-[apis/web-host.d.ts:11](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L11)
+[web-host.d.ts:19](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L19)
 
----
+{/* api-doc-overlay:lynxtron-web-host-interface-backgroundserviceconfig:start */}
 
-### workerURL
+## 背景适配配置
 
-```ts
-workerURL: string;
-```
+此配置用于 `HostConfig.nodejs`，为 `NativeModules.nodejs.exposed` 提供能力。
 
-**定义于**
+将 `scriptURL` 设置为构建后的、兼容 `importScripts` 的适配脚本 URL。相对 URL 基于浏览器页面 URL 解析。脚本在 Lynx 背景 Worker 中运行，通过 `contextBridge.exposeInLynxBTS` 导出能力；宿主将其暴露为 `NativeModules.nodejs.exposed`。
 
-[apis/web-host.d.ts:10](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L10)
+适配脚本的执行环境与配置方式参见[在 Web 中运行 Lynxtron](/lynxtron/learn/running-on-web)。
+
+{/* api-doc-overlay:lynxtron-web-host-interface-backgroundserviceconfig:end */}
