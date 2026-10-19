@@ -188,21 +188,28 @@ const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
   const isZh = useLang() === 'zh';
   const showClassName = source.some((row) => Boolean(row.className));
   const showRenderProp = source.some((row) => Boolean(getRenderProp(row)));
+  const isVariantOnly = showClassName && !showRenderProp;
+  const showType = showRenderProp;
   const columnCount = Number(showClassName) + Number(showRenderProp) + 1;
   const classNameLabel = isZh ? '类名' : 'Class Name';
   const renderPropLabel = isZh ? '渲染属性' : 'Render Prop';
   const typeLabel = isZh ? '类型' : 'Type';
+  const descriptionLabel = isZh ? '说明' : 'Description';
 
   return (
-    <div className="ui-api-list">
-      <div
-        aria-hidden="true"
-        className={`ui-api-state-header ui-api-state-fields ui-api-state-fields--${columnCount}`}
-      >
-        {showClassName && <span>{classNameLabel}</span>}
-        {showRenderProp && <span>{renderPropLabel}</span>}
-        <span>{typeLabel}</span>
-      </div>
+    <div
+      className={`ui-api-list${isVariantOnly ? ' ui-api-state-list--variant-only' : ''}`}
+    >
+      {!isVariantOnly && (
+        <div
+          aria-hidden="true"
+          className={`ui-api-state-header ui-api-state-fields ui-api-state-fields--${columnCount}`}
+        >
+          {showClassName && <span>{classNameLabel}</span>}
+          {showRenderProp && <span>{renderPropLabel}</span>}
+          <span>{descriptionLabel}</span>
+        </div>
+      )}
       {source.map((row, index) => {
         const renderProp = getRenderProp(row);
         const description = isZh
@@ -216,7 +223,7 @@ const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
             key={row.className || renderProp || index}
           >
             <div
-              className={`ui-api-state-fields ui-api-state-fields--${columnCount}`}
+              className={`ui-api-state-fields ui-api-state-fields--${columnCount}${isVariantOnly ? ' ui-api-state-fields--variant-only' : ''}`}
             >
               {showClassName && (
                 <div className="ui-api-state-field" data-label={classNameLabel}>
@@ -236,7 +243,7 @@ const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
               )}
               {showRenderProp && (
                 <div
-                  className="ui-api-state-field"
+                  className="ui-api-state-field ui-api-state-render-prop"
                   data-label={renderPropLabel}
                 >
                   {renderProp ? (
@@ -251,13 +258,18 @@ const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
                   )}
                 </div>
               )}
-              <div className="ui-api-state-field" data-label={typeLabel}>
-                <code className="ui-api-state-value">{row.item.type}</code>
+              <div
+                className="ui-api-state-description"
+                data-label={descriptionLabel}
+              >
+                {showType && (
+                  <span className="ui-api-state-type" data-label={typeLabel}>
+                    <code className="ui-api-state-value">{row.item.type}</code>
+                  </span>
+                )}
+                {description && <span>{description}</span>}
               </div>
             </div>
-            {description && (
-              <div className="ui-api-item-desc">{description}</div>
-            )}
           </div>
         );
       })}
