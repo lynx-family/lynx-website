@@ -1,0 +1,1250 @@
+## Properties
+
+The frontend can set the corresponding properties on the component to define the runtime behavior of the component, as shown below.
+
+```tsx
+<markdown content={content} />
+```
+
+### `content`
+
+```ts
+/**
+ * markdown source content.
+ */
+content: string;
+```
+
+markdown content
+
+### `content-id`
+
+```ts
+/**
+ * mark the content when the event or UI method is triggered.
+ */
+'content-id'?: string;
+```
+
+Used as a unique identifier for `content`, for consumption in events.
+
+### `markdown-style`
+
+```ts
+/**
+ * set the style of markdown.
+ * @defaultValue {}
+ */
+'markdown-style'?: object
+```
+
+markdown style, for specific formats please refer to [Stylesheets](#stylesheets)
+
+### `animation-type`
+
+```ts
+/**
+ * which animation to use.
+ * none: no animation
+ * typewriter: typewriter animation
+ * @defaultValue 'none'
+ */
+'animation-type'?: 'none' | 'typewriter'
+```
+
+markdown animation style, optional typewriter effect
+
+### `animation-velocity`
+
+```ts
+/**
+ * velocity of animation.
+ * when animation-type is typewriter, it's the number of characters typed per second.
+ * @defaultValue 1
+ */
+'animation-velocity'?:number;
+```
+
+Speed of markdown typewriter effect
+
+### `text-maxline`
+
+```ts
+/**
+ * maximum number of text lines.
+ * a table row is counted as a line
+ */
+'text-maxline'?: number;
+```
+
+maximum number of markdown text lines
+
+### `overflow`
+
+```ts
+overflow?: 'ellipsis' | 'clip';
+```
+
+Choose an ellipsis or clipping when text overflows. Defaults to `ellipsis`.
+
+### `initial-animation-step`
+
+```ts
+/**
+ * animation will start at the given step.
+ * @defaultValue 0
+ */
+'initial-animation-step'?: number
+```
+
+Specifies the start position of markdown animation
+
+### `content-complete`
+
+```ts
+/**
+ * whether to hide the typewriter cursor.
+ * true: typewriter cursor will be hidden and drawEnd event will be triggered after the animation is complete.
+ * false: typewriter cursor will be shown and drawEnd event will not be triggered.
+ * @defaultValue true
+ */
+'content-complete'?: boolean;
+```
+
+Indicates if the current `content` is complete. If `true`, the cursor will be hidden after the animation ends, otherwise, the cursor remains visible
+
+### `typewriter-dynamic-height`
+
+```ts
+/**
+ * whether markdown height is equal to the content height typed by typewriter
+ * @defaultValue false
+ */
+'typewriter-dynamic-height'?: boolean
+```
+
+Configures typewriter effect to dynamically change element height
+
+### `text-selection`
+
+```ts
+/**
+ * whether markdown content is selectable.
+ * @defaultValue false
+ */
+'text-selection'?: boolean
+```
+
+Configures whether the markdown content is selectable
+
+### `text-mark-attachments`
+
+Used for complex highlighting: overlapping segments, line-wrapping, combined with underlines or strokes.
+
+```ts
+/**
+ * define text mark attachments for highlighting or underlining character ranges.
+ * attachments are drawn per line while preserving gradient continuity across lines.
+ * @defaultValue []
+ */
+'text-mark-attachments'?: MarkAttachment[];
+
+interface LineStyle {
+  lineType: 'none' | 'solid' | 'dashed';
+  color: string; // supports linear-gradient
+  width: number; // px
+  elementSize?: number; // dashed segment length
+  emptySize?: number; // dashed gap length
+}
+
+interface MarkStyle {
+  radius?: number; // corner radius
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
+  color?: string; // fill color or gradient
+  borderLeft?: LineStyle;
+  borderTop?: LineStyle;
+  borderRight?: LineStyle;
+  borderBottom?: LineStyle;
+}
+
+interface MarkAttachment {
+  startIndex: number;
+  endIndex: number; // exclusive
+  indexType: 'char' | 'source';
+  clickable?: boolean;
+  id?: string;
+  layer?: 'background' | 'foreground';
+  style: MarkStyle;
+}
+```
+
+### `content-range`
+
+```ts
+/**
+ * the range of content to be parsed.
+ * @defaultValue [0, int32_max]
+ */
+'content-range'?: number[];
+```
+
+Configures the parsing range for markdown content
+
+### `markdown-effect`
+
+```ts
+/**
+ * additional effects
+ * @defaultValue {}
+ */
+'markdown-effect'?: object
+```
+
+Configure additional rendering effects. A text mask uses `{ type: 'text-mask', color, rangeStart, rangeEnd }`; see [Text Fade Effect](#text-fade-effect).
+
+### `typewriter-height-transition-duration`
+
+```ts
+/**
+ * transition duration when height extended by typewriter animation.
+ * @defaultValue 0
+ */
+'typewriter-height-transition-duration'?: number
+```
+
+Set the transition duration in seconds when typewriter content changes height. The default is `0`. Use with `typewriter-dynamic-height`.
+
+### `enable-gif`
+
+```ts
+/**
+ * whether to enable gif animation.
+ * @defaultValue false
+ */
+'enable-gif'?: boolean
+```
+
+Configure whether to enable GIF animation on iOS. Android supports GIF animation by default.
+
+## Events
+
+The frontend can bind corresponding event callbacks on the component to monitor the runtime behavior of the component, as shown below.
+
+```tsx
+<markdown content={content} binddrawEnd={onDrawEnd} />
+```
+
+### `binddrawStart`
+
+```ts
+/**
+ * draw start
+ */
+binddrawStart?: (e: BaseEvent) => void;
+```
+
+Event for markdown drawing start
+
+### `binddrawEnd`
+
+```ts
+/**
+ * draw end
+ */
+binddrawEnd?: (e: BaseEvent) => void;
+```
+
+Event for markdown drawing end
+
+### `bindanimationStep`
+
+```ts
+export interface MarkdownAnimationStepEvent {
+    /**
+     * current step of animation.
+     */
+    animationStep: number;
+
+    /**
+     * maximum step of animation.
+     */
+    maxAnimationStep: number;
+}
+
+/**
+ * callback after each animation frame, some animation steps may be skipped if animation velocity is too fast.
+ */
+bindanimationStep?: (e: BaseEvent<'bindanimationStep', MarkdownAnimationStepEvent>) => void;
+```
+
+Callback event for each markdown animation frame
+
+### `bindoverflow`
+
+```ts
+
+export interface MarkdownOverflowEvent {
+    /**
+     * type of overflow.
+     * ellipsis: overflow text will be replaced by ... or truncation view.
+     * clip: overflow text will be clipped
+     */
+    type: 'ellipsis' | 'clip';
+}
+
+/**
+ * callback when text overflow.
+ */
+bindoverflow?: (e: BaseEvent<'bindoverflow', MarkdownOverflowEvent>) => void;
+```
+
+Event for markdown text overflow
+
+### `bindlink`
+
+```ts
+export interface MarkdownLinkEvent {
+    /**
+     * link url
+     */
+    url: string;
+
+    /**
+     * link text
+     */
+    content: string;
+}
+
+/**
+ * callback when link is clicked.
+ */
+bindlink?: (e: BaseEvent<'bindlink', MarkdownLinkEvent>) => void;
+```
+
+Event for markdown link click
+
+### `bindselectionchange`
+
+```ts
+export interface MarkdownSelectionChangeEvent {
+    /**
+     * start char pos of selection range.
+     */
+    start: number;
+    /**
+     * end char pos of selection range.
+     */
+    end: number;
+    /**
+     * direction of selection.
+     */
+    direction: 'forward' | 'backward';
+}
+
+/**
+ * callback when selection change.
+ */
+bindselectionchange?: (e: BaseEvent<'bindselectionchange', MarkdownSelectionChangeEvent>) => void;
+```
+
+Event for markdown cursor change
+
+### `bindimageTap`
+
+```ts
+export interface MarkdownImageTapEvent {
+    /**
+     * image url
+     */
+    url: string;
+}
+
+/**
+ * callback when image is clicked.
+ */
+bindimageTap?: (e: BaseEvent<'bindimageTap', MarkdownImageTapEvent>) => void;
+```
+
+Event for markdown image click
+
+### `bindparseEnd`
+
+```ts
+export interface MarkdownParseEndEvent {
+    /**
+     * the id of content that parsed.
+     */
+    id: string;
+}
+
+/**
+ * callback when parse end.
+ */
+bindparseEnd?: (e: BaseEvent<'bindparseEnd', MarkdownParseEndEvent>) => void;
+```
+
+Event for markdown parsing end
+
+### `bindtextClick`
+
+Triggered when an attachment with `clickable` set in `text-mark-attachments` is clicked; the event returns the `id` of that attachment.
+
+```ts
+export interface MarkdownTextClickEvent {
+  /** id of the clicked attachment */
+  id: string;
+}
+
+/**
+ * callback when a clickable attachment defined in `text-mark-attachments` is clicked.
+ */
+bindtextClick?: (e: BaseEvent<'bindtextClick', MarkdownTextClickEvent>) => void;
+```
+
+## Methods
+
+The frontend can use the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.md) API to execute the component's methods, as shown below:
+
+```ts title=index.js
+lynx
+  .createSelectorQuery() // create SelectorQuery
+  .select('#markdown') // specify the target node's selector
+  .invoke({
+    // specify the operation for the target node
+    method: 'pauseAnimation',
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (res) {
+      console.log(res.code, res.data);
+    },
+  })
+  .exec(); // execute query
+```
+
+### `pauseAnimation`
+
+```ts
+/**
+ */
+export interface MarkdownPauseAnimationMethod extends BaseMethod {
+  method: 'pauseAnimation';
+  success?: Callback<{
+    /**
+     * current step of animation.
+     */
+    animationStep: number;
+  }>;
+}
+```
+
+Pause animation
+
+### `resumeAnimation`
+
+```ts
+/**
+ */
+export interface MarkdownResumeAnimationMethod extends BaseMethod {
+  method: 'resumeAnimation';
+  params?: {
+    /**
+     * animation will start at the given step.
+     */
+    animationStep?: number;
+  };
+}
+```
+
+Resume animation
+
+### `getContent`
+
+```ts
+/**
+ * get parsed content
+ */
+export interface MarkdownGetContentMethod extends BaseMethod {
+  method: 'getContent';
+  params: {
+    /**
+     * start index of parsed content.
+     * @defaultValue 0
+     */
+    start?: number;
+    /**
+     * end index of parsed content.
+     * @defaultValue int32_max
+     */
+    end?: number;
+  };
+  success?: Callback<{
+    /**
+     * parsed content of the given range.
+     */
+    content: string;
+  }>;
+}
+```
+
+Get parsed content
+
+### `getSelectedText`
+
+```ts
+/**
+ */
+export interface MarkdownGetSelectedTextMethod extends BaseMethod {
+  method: 'getSelectedText';
+  success?: Callback<{
+    /**
+     * selected text.
+     */
+    selectedText: string;
+  }>;
+}
+```
+
+Get selected text
+
+### `setTextSelection`
+
+```ts
+/**
+ * Control text selection highlighting.
+ */
+export interface MarkdownSetTextSelectionMethod extends BaseMethod {
+  method: 'setTextSelection';
+  params: {
+    /**
+     * The x-coordinate of the start of the selected text relative to the text component
+     */
+    startX: number;
+    /**
+     * The y-coordinate of the start of the selected text relative to the text component
+     */
+    startY: number;
+    /**
+     * The x-coordinate of the end of the selected text relative to the text component
+     */
+    endX: number;
+    /**
+     * The y-coordinate of the end of the selected text relative to the text component
+     */
+    endY: number;
+    selectionTextType?: 'char' | 'word' | 'sentence' | 'paragraph';
+  };
+  success?: Callback<{
+    /**
+     * The bounding box of the selected text
+     */
+    boundingRect: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    };
+    /**
+     * The bounding boxes of each line
+     */
+    boxes: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    }[];
+    /**
+     * The cursor positions and the default radius
+     */
+    handles?: {
+      x: number;
+      y: number;
+      radius: number;
+    }[];
+  }>;
+}
+```
+
+Set text selection box
+
+### `getTextBoundingRect`
+
+```ts
+/**
+ */
+export interface MarkdownGetTextBoundingRectMethod extends BaseMethod {
+  method: 'getTextBoundingRect';
+  params: {
+    /**
+     * start index of parsed content.
+     * @defaultValue 0
+     */
+    start?: number;
+    /**
+     * end index of parsed content.
+     * @defaultValue int32_max
+     */
+    end?: number;
+    /**
+     * index type of the start and end.
+     * @defaultValue 'char'
+     */
+    indexType?: 'source' | 'char';
+  };
+  success?: Callback<{
+    /**
+     * bounding rect of the given range.
+     */
+    boundingRect: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    };
+    /**
+     * bounding boxes of each line.
+     */
+    boxes: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    }[];
+  }>;
+}
+```
+
+Get bounding rect of the given range.
+
+### `getImages`
+
+```ts
+/**
+ * get all images in the markdown.
+ */
+export interface MarkdownGetImagesMethod extends BaseMethod {
+  method: 'getImages';
+  success?: Callback<{
+    /**
+     * all images in the markdown.
+     */
+    images: string[];
+  }>;
+}
+```
+
+Get all images in the markdown
+
+### `getParseResult`
+
+```ts
+/**
+ * get source ranges of the given tags.
+ */
+export interface MarkdownGetParseResultMethod extends BaseMethod {
+  method: 'getParseResult';
+  params: {
+    /**
+     * tags that you want to get its source range.
+     */
+    tags: string[];
+  };
+  success?: Callback<{
+    /**
+     * source ranges of the given tags.
+     * key: tag
+     * value: ranges
+     */
+    result: Record<
+      string,
+      {
+        start: number;
+        end: number;
+      }[]
+    >;
+  }>;
+}
+```
+
+Get parsing results for specified tags
+
+## Stylesheets
+
+### normalText - Normal Text Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow
+- wordBreak (enum: normal, break-all) - Word break
+
+### h1 - Level 1 Heading Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### h2 - Level 2 Heading Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### h3 - Level 3 Heading Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### h4 - Level 4 Heading Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### h5 - Level 5 Heading Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### h6 - Level 6 Heading Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### link - Link Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- textDecorationColor (color) - Text decoration color
+- textDecorationLine (enum: none, underline, overline, line-through) - Text decoration line
+- textDecorationStyle (enum: none, solid, double, dotted, dashed, wavy) - Text decoration style
+- textDecorationThickness (float) - Text decoration thickness
+
+### inlineCode - Inline Code Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- borderColor (color) - Border color
+- borderRadius (float) - Border radius
+- borderWidth (float) - Border width
+- color (color) - Text color
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+
+### codeBlock - Code Block Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- borderColor (color) - Border color
+- borderRadius (float) - Border radius
+- borderType (enum: none, solid) - Border type
+- borderWidth (float) - Border width
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- maxWidth (float) - Maximum width
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- scrollX (bool) - Horizontal scroll
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### quote - Quote Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- borderColor (color) - Border color
+- borderRadius (float) - Border radius
+- borderType (enum: none, solid) - Border type
+- borderWidth (float) - Border width
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- indent (float) - Indent
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### orderedList - Ordered List Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- indent (float) - Indent
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- numberColor (color) - Number color
+- numberFont (font) - Number font
+- numberFontSize (float) - Number font size
+- numberMarginRight (float) - Number right margin
+- numberType (enum: number, alphabet, roman-numerals, mixed) - Number type
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### unorderedList - Unordered List Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- indent (float) - Indent
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- markColor (color) - Mark color
+- markMarginRight (float) - Mark right margin
+- markSize (float) - Mark size
+- markType (enum: ring, circle, square, mixed) - Mark type
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### table - Table Style
+
+Supported properties:
+
+- altColor (color) - Alternative color
+- backgroundColor (color) - Background color
+- borderColor (color) - Border color
+- borderRadius (float) - Border radius
+- borderWidth (float) - Border width
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- maxWidth (float) - Maximum width
+- minWidth (float) - Minimum width
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- scrollX (bool) - Horizontal scroll
+- tableBackground (enum: none, solid, chess-board) - Table background
+- tableBorder (enum: none, full-rect, underline) - Table border
+
+### tableCell - Table Cell Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- maxWidth (float) - Maximum width
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- wordBreak (enum: normal, break-all) - Word break
+
+### split - Divider Style
+
+Supported properties:
+
+- borderColor (color) - Color
+- borderWidth (float) - Width
+- marginBottom (float) - Bottom margin
+- marginTop (float) - Top margin
+
+### typewriterCursor - Typewriter Cursor Style
+
+Supported properties:
+
+- customCursor (string) - Custom cursor
+- verticalAlign (enum: baseline, top, center, bottom) - Cursor vertical alignment
+
+### truncation - Truncation Style
+
+Supported properties:
+
+- content (string) - Truncation content
+- truncationType (enum: text, view) - Truncation type
+
+### listItem - List Item Style
+
+Supported properties:
+
+- marginBottom (float) - Bottom margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingTop (float) - Top padding
+
+### tableHeader - Table Header Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- paddingBottom (float) - Bottom padding
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- verticalAlign (enum: baseline, top, center, bottom) - Vertical alignment
+- wordBreak (enum: normal, break-all) - Word break
+
+### image - Image Style
+
+Supported properties:
+
+- altImage (string) - Alternative image
+- enableAltText (bool) - Enable alternative text
+- height (float) - Height
+- width (float) - Width
+
+### quoteBorderLine - Quote Border Line Style
+
+Supported properties:
+
+- color (color) - Text color
+- lineType (enum: none, solid, dashed) - Line type
+- radius (float) - Radius
+- shrink (float) - Shrink
+- width (float) - Width
+
+### unorderedListMarker - Unordered List Marker Style
+
+Supported properties:
+
+- color (color) - Text color
+- height (float) - Height
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+- markType (enum: ring, circle, square, mixed) - Mark type
+- width (float) - Width
+
+### \<span\> - Span Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- backgroundImage (string) - Background image
+- borderColor (color) - Border color
+- borderRadius (float) - Border radius
+- borderWidth (float) - Border width
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- paddingLeft (float) - Left padding
+- paddingRight (float) - Right padding
+- textDecorationColor (color) - Text decoration line color
+- textDecorationLine (enum: none, underline, overline, line-through) - Text decoration line type
+- textDecorationStyle (enum: none, solid, double, dotted, dashed, wavy) - Text decoration line style
+- textDecorationThickness (float) - Text decoration line width
+
+### \<p\> - Paragraph Style
+
+Supported properties:
+
+- direction (enum: normal, ltr, rtl) - Text direction
+- lastLineAlignment (enum: left, center, right, justify) - Last line alignment
+- lineHeight (float) - Line height
+- lineSpace (float) - Line spacing
+- marginBottom (float) - Bottom margin
+- marginTop (float) - Top margin
+- paddingBottom (float) - Bottom padding
+- paddingTop (float) - Top padding
+- paragraphSpace (float) - Paragraph spacing
+- textAlign (enum: left, center, right, justify) - Text alignment
+- textIndent (float) - Text indent
+- textMaxline (int) - Maximum lines
+- textOverflow (enum: clip, ellipsis) - Text overflow handling
+- wordBreak (enum: normal, break-all) - Word break
+
+### orderedListNumber - Ordered List Number Style
+
+Supported properties:
+
+- backgroundColor (color) - Background color
+- color (color) - Text color
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lineHeight (float) - Line height
+- marginBottom (float) - Bottom margin
+- marginLeft (float) - Left margin
+- marginRight (float) - Right margin
+- marginTop (float) - Top margin
+
+### imageCaption - Image Caption Style
+
+Supported properties:
+
+- captionPosition (enum: top, bottom) - Caption position
+- color (color) - Text color
+- direction (enum: normal, ltr, rtl) - Text direction
+- font (font) - Font settings
+- fontSize (float) - Font size
+- fontWeight (enum: normal, bold, 100-900) - Font weight
+- lineHeight (float) - Line height
+- textAlign (enum: left, center, right, justify) - Text alignment

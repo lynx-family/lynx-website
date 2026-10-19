@@ -1,0 +1,1250 @@
+## 属性
+
+前端可以在元件上设置相应属性来定义组件的运行时行为，使用方法如下。
+
+```tsx
+<markdown content={content} />
+```
+
+### `content`
+
+```ts
+/**
+ * markdown source content.
+ */
+content: string;
+```
+
+markdown 内容
+
+### `content-id`
+
+```ts
+/**
+ * mark the content when the event or UI method is triggered.
+ */
+'content-id'?: string;
+```
+
+作为`content`的唯一标识符，用于在事件中消费。
+
+### `markdown-style`
+
+```ts
+/**
+ * set the style of markdown.
+ * @defaultValue {}
+ */
+'markdown-style'?: object
+```
+
+markdown 的样式，具体格式请参考[样式表](#样式表)
+
+### `animation-type`
+
+```ts
+/**
+ * which animation to use.
+ * none: no animation
+ * typewriter: typewriter animation
+ * @defaultValue 'none'
+ */
+'animation-type'?: 'none' | 'typewriter'
+```
+
+markdown 的动画样式，可以选择指定开启打字机效果
+
+### `animation-velocity`
+
+```ts
+/**
+ * velocity of animation.
+ * when animation-type is typewriter, it's the number of characters typed per second.
+ * @defaultValue 1
+ */
+'animation-velocity'?:number;
+```
+
+markdown 打字机效果的速度
+
+### `text-maxline`
+
+```ts
+/**
+ * maximum number of text lines.
+ * a table row is counted as a line
+ */
+'text-maxline'?: number;
+```
+
+markdown 文本最大行数
+
+### `overflow`
+
+```ts
+overflow?: 'ellipsis' | 'clip';
+```
+
+控制文本溢出时显示省略号还是直接裁剪，默认为 `ellipsis`。
+
+### `initial-animation-step`
+
+```ts
+/**
+ * animation will start at the given step.
+ * @defaultValue 0
+ */
+'initial-animation-step'?: number
+```
+
+指定 markdown 动画开始的位置
+
+### `content-complete`
+
+```ts
+/**
+ * whether to hide the typewriter cursor.
+ * true: typewriter cursor will be hidden and drawEnd event will be triggered after the animation is complete.
+ * false: typewriter cursor will be shown and drawEnd event will not be triggered.
+ * @defaultValue true
+ */
+'content-complete'?: boolean;
+```
+
+标明当前`content`是否完整，如果为`true`，则会在动画结束后隐藏光标，否则会一直显示光标
+
+### `typewriter-dynamic-height`
+
+```ts
+/**
+ * whether markdown height is equal to the content height typed by typewriter
+ * @defaultValue false
+ */
+'typewriter-dynamic-height'?: boolean
+```
+
+配置打字机效果是否动态改变元素高度
+
+### `text-selection`
+
+```ts
+/**
+ * whether markdown content is selectable.
+ * @defaultValue false
+ */
+'text-selection'?: boolean
+```
+
+配置 markdown 内容是否可选择
+
+### `text-mark-attachments`
+
+用于复杂高亮：多段重叠、跨行、与下划线/描边混合的场景。
+
+```ts
+/**
+ * 定义文本高亮附件，用于在指定字符范围内添加高亮或下划线。
+ * 附件按行绘制，并在跨行时保持渐变连续。
+ * @defaultValue []
+ */
+'text-mark-attachments'?: MarkAttachment[];
+
+interface LineStyle {
+  lineType: 'none' | 'solid' | 'dashed';
+  color: string; // 16进制颜色或者gradient
+  width: number; // 单位为px
+  elementSize?: number; // 虚线元素长度
+  emptySize?: number; // 虚线间隔长度
+}
+
+interface MarkStyle {
+  radius?: number; // 圆角半径，单位为px
+  left?: number; // 单位为px
+  right?: number; // 单位为px
+  top?: number; // 单位为px
+  bottom?: number; // 单位为px
+  color?: string; // 矩形填充颜色或者gradient
+  borderLeft?: LineStyle;
+  borderTop?: LineStyle;
+  borderRight?: LineStyle;
+  borderBottom?: LineStyle;
+}
+
+interface MarkAttachment {
+  startIndex: number;
+  endIndex: number; // 不包含该位置（exclusive）
+  indexType: 'char' | 'source';
+  clickable?: boolean;
+  id?: string;
+  layer?: 'background' | 'foreground';
+  style: MarkStyle;
+}
+```
+
+### `content-range`
+
+```ts
+/**
+ * the range of content to be parsed.
+ * @defaultValue [0, int32_max]
+ */
+'content-range'?: number[];
+```
+
+配置 Markdown 源文本的解析范围。
+
+### `markdown-effect`
+
+```ts
+/**
+ * additional effects
+ * @defaultValue {}
+ */
+'markdown-effect'?: object
+```
+
+配置额外渲染效果。渐隐遮罩使用 `{ type: 'text-mask', color, rangeStart, rangeEnd }`，见[文本渐隐效果](#文本渐隐效果)。
+
+### `typewriter-height-transition-duration`
+
+```ts
+/**
+ * transition duration when height extended by typewriter animation.
+ * @defaultValue 0
+ */
+'typewriter-height-transition-duration'?: number
+```
+
+配置打字机高度变化时的过渡时长，单位为秒，默认值为 `0`。配合 `typewriter-dynamic-height` 使用。
+
+### `enable-gif`
+
+```ts
+/**
+ * whether to enable gif animation.
+ * @defaultValue false
+ */
+'enable-gif'?: boolean
+```
+
+配置iOS是否开启gif动画，安卓默认支持gif动画。
+
+## 事件
+
+前端可以在元件上绑定相应事件回调来监听组件的运行时行为，使用方法如下。
+
+```tsx
+<markdown content={content} binddrawEnd={onDrawEnd} />
+```
+
+### `binddrawStart`
+
+```ts
+/**
+ * draw start
+ */
+binddrawStart?: (e: BaseEvent) => void;
+```
+
+markdown 开始绘制的事件
+
+### `binddrawEnd`
+
+```ts
+/**
+ * draw end
+ */
+binddrawEnd?: (e: BaseEvent) => void;
+```
+
+markdown 结束绘制事件
+
+### `bindanimationStep`
+
+```ts
+export interface MarkdownAnimationStepEvent {
+    /**
+     * current step of animation.
+     */
+    animationStep: number;
+
+    /**
+     * maximum step of animation.
+     */
+    maxAnimationStep: number;
+}
+
+/**
+ * callback after each animation frame, some animation steps may be skipped if animation velocity is too fast.
+ */
+bindanimationStep?: (e: BaseEvent<'bindanimationStep', MarkdownAnimationStepEvent>) => void;
+```
+
+markdown 每次动画帧的回调事件
+
+### `bindoverflow`
+
+```ts
+
+export interface MarkdownOverflowEvent {
+    /**
+     * type of overflow.
+     * ellipsis: overflow text will be replaced by ... or truncation view.
+     * clip: overflow text will be clipped
+     */
+    type: 'ellipsis' | 'clip';
+}
+
+/**
+ * callback when text overflow.
+ */
+bindoverflow?: (e: BaseEvent<'bindoverflow', MarkdownOverflowEvent>) => void;
+```
+
+markdown 文本溢出事件
+
+### `bindlink`
+
+```ts
+export interface MarkdownLinkEvent {
+    /**
+     * link url
+     */
+    url: string;
+
+    /**
+     * link text
+     */
+    content: string;
+}
+
+/**
+ * callback when link is clicked.
+ */
+bindlink?: (e: BaseEvent<'bindlink', MarkdownLinkEvent>) => void;
+```
+
+markdown 链接点击事件
+
+### `bindselectionchange`
+
+```ts
+export interface MarkdownSelectionChangeEvent {
+    /**
+     * start char pos of selection range.
+     */
+    start: number;
+    /**
+     * end char pos of selection range.
+     */
+    end: number;
+    /**
+     * direction of selection.
+     */
+    direction: 'forward' | 'backward';
+}
+
+/**
+ * callback when selection change.
+ */
+bindselectionchange?: (e: BaseEvent<'bindselectionchange', MarkdownSelectionChangeEvent>) => void;
+```
+
+markdown 光标变化事件
+
+### `bindimageTap`
+
+```ts
+export interface MarkdownImageTapEvent {
+    /**
+     * image url
+     */
+    url: string;
+}
+
+/**
+ * callback when image is clicked.
+ */
+bindimageTap?: (e: BaseEvent<'bindimageTap', MarkdownImageTapEvent>) => void;
+```
+
+markdown 图片点击事件
+
+### `bindparseEnd`
+
+```ts
+export interface MarkdownParseEndEvent {
+    /**
+     * the id of content that parsed.
+     */
+    id: string;
+}
+
+/**
+ * callback when parse end.
+ */
+bindparseEnd?: (e: BaseEvent<'bindparseEnd', MarkdownParseEndEvent>) => void;
+```
+
+markdown 解析结束事件
+
+### `bindtextClick`
+
+当 `text-mark-attachments` 中设置了 `clickable` 的附件被点击时触发，事件返回该附件的 `id`。
+
+```ts
+export interface MarkdownTextClickEvent {
+  /** id of the clicked attachment */
+  id: string;
+}
+
+/**
+ * callback when a clickable attachment defined in `text-mark-attachments` is clicked.
+ */
+bindtextClick?: (e: BaseEvent<'bindtextClick', MarkdownTextClickEvent>) => void;
+```
+
+## 方法
+
+前端可以通过 [SelectorQuery](/zh/api/lynx-api/nodes-ref/nodes-ref-invoke.md) API 执行元件的方法，使用方法如下：
+
+```ts title=index.js
+lynx
+  .createSelectorQuery() // 创建 SelectorQuery
+  .select('#markdown') // 指定目标节点的选择器
+  .invoke({
+    // 指定对目标节点的操作
+    method: 'pauseAnimation',
+    success: function (res) {
+      console.log(res);
+    },
+    fail: function (res) {
+      console.log(res.code, res.data);
+    },
+  })
+  .exec(); // 执行查询
+```
+
+### `pauseAnimation`
+
+```ts
+/**
+ */
+export interface MarkdownPauseAnimationMethod extends BaseMethod {
+  method: 'pauseAnimation';
+  success?: Callback<{
+    /**
+     * current step of animation.
+     */
+    animationStep: number;
+  }>;
+}
+```
+
+暂停动画
+
+### `resumeAnimation`
+
+```ts
+/**
+ */
+export interface MarkdownResumeAnimationMethod extends BaseMethod {
+  method: 'resumeAnimation';
+  params?: {
+    /**
+     * animation will start at the given step.
+     */
+    animationStep?: number;
+  };
+}
+```
+
+恢复动画
+
+### `getContent`
+
+```ts
+/**
+ * get parsed content
+ */
+export interface MarkdownGetContentMethod extends BaseMethod {
+  method: 'getContent';
+  params: {
+    /**
+     * start index of parsed content.
+     * @defaultValue 0
+     */
+    start?: number;
+    /**
+     * end index of parsed content.
+     * @defaultValue int32_max
+     */
+    end?: number;
+  };
+  success?: Callback<{
+    /**
+     * parsed content of the given range.
+     */
+    content: string;
+  }>;
+}
+```
+
+获取解析后的内容
+
+### `getSelectedText`
+
+```ts
+/**
+ */
+export interface MarkdownGetSelectedTextMethod extends BaseMethod {
+  method: 'getSelectedText';
+  success?: Callback<{
+    /**
+     * selected text.
+     */
+    selectedText: string;
+  }>;
+}
+```
+
+获取选中的文本
+
+### `setTextSelection`
+
+```ts
+/**
+ * Control text selection highlighting.
+ */
+export interface MarkdownSetTextSelectionMethod extends BaseMethod {
+  method: 'setTextSelection';
+  params: {
+    /**
+     * The x-coordinate of the start of the selected text relative to the text component
+     */
+    startX: number;
+    /**
+     * The y-coordinate of the start of the selected text relative to the text component
+     */
+    startY: number;
+    /**
+     * The x-coordinate of the end of the selected text relative to the text component
+     */
+    endX: number;
+    /**
+     * The y-coordinate of the end of the selected text relative to the text component
+     */
+    endY: number;
+    selectionTextType?: 'char' | 'word' | 'sentence' | 'paragraph';
+  };
+  success?: Callback<{
+    /**
+     * The bounding box of the selected text
+     */
+    boundingRect: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    };
+    /**
+     * The bounding boxes of each line
+     */
+    boxes: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    }[];
+    /**
+     * The cursor positions and the default radius
+     */
+    handles?: {
+      x: number;
+      y: number;
+      radius: number;
+    }[];
+  }>;
+}
+```
+
+设置文本选择框
+
+### `getTextBoundingRect`
+
+```ts
+/**
+ */
+export interface MarkdownGetTextBoundingRectMethod extends BaseMethod {
+  method: 'getTextBoundingRect';
+  params: {
+    /**
+     * start index of parsed content.
+     * @defaultValue 0
+     */
+    start?: number;
+    /**
+     * end index of parsed content.
+     * @defaultValue int32_max
+     */
+    end?: number;
+    /**
+     * index type of the start and end.
+     * @defaultValue 'char'
+     */
+    indexType?: 'source' | 'char';
+  };
+  success?: Callback<{
+    /**
+     * bounding rect of the given range.
+     */
+    boundingRect: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    };
+    /**
+     * bounding boxes of each line.
+     */
+    boxes: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    }[];
+  }>;
+}
+```
+
+获取指定范围的文本边界框
+
+### `getImages`
+
+```ts
+/**
+ * get all images in the markdown.
+ */
+export interface MarkdownGetImagesMethod extends BaseMethod {
+  method: 'getImages';
+  success?: Callback<{
+    /**
+     * all images in the markdown.
+     */
+    images: string[];
+  }>;
+}
+```
+
+获取 markdown 中的所有图片
+
+### `getParseResult`
+
+```ts
+/**
+ * get source ranges of the given tags.
+ */
+export interface MarkdownGetParseResultMethod extends BaseMethod {
+  method: 'getParseResult';
+  params: {
+    /**
+     * tags that you want to get its source range.
+     */
+    tags: string[];
+  };
+  success?: Callback<{
+    /**
+     * source ranges of the given tags.
+     * key: tag
+     * value: ranges
+     */
+    result: Record<
+      string,
+      {
+        start: number;
+        end: number;
+      }[]
+    >;
+  }>;
+}
+```
+
+获取指定标签的解析结果
+
+## 样式表
+
+### normalText - 普通文本样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### h1 - 一级标题样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### h2 - 二级标题样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### h3 - 三级标题样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### h4 - 四级标题样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### h5 - 五级标题样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### h6 - 六级标题样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### link - 链接样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- textDecorationColor (color) - 文本装饰颜色
+- textDecorationLine (enum: none, underline, overline, line-through) - 文本装饰线
+- textDecorationStyle (enum: none, solid, double, dotted, dashed, wavy) - 文本装饰样式
+- textDecorationThickness (float) - 文本装饰厚度
+
+### inlineCode - 行内代码样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- borderColor (color) - 边框颜色
+- borderRadius (float) - 边框圆角
+- borderWidth (float) - 边框宽度
+- color (color) - 文字颜色
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+
+### codeBlock - 代码块样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- borderColor (color) - 边框颜色
+- borderRadius (float) - 边框圆角
+- borderType (enum: none, solid) - 边框类型
+- borderWidth (float) - 边框宽度
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- maxWidth (float) - 最大宽度
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- scrollX (bool) - 水平滚动
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### quote - 引用样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- borderColor (color) - 边框颜色
+- borderRadius (float) - 边框圆角
+- borderType (enum: none, solid) - 边框类型
+- borderWidth (float) - 边框宽度
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- indent (float) - 缩进
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### orderedList - 有序列表样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- indent (float) - 缩进
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- numberColor (color) - 数字颜色
+- numberFont (font) - 数字字体
+- numberFontSize (float) - 数字字体大小
+- numberMarginRight (float) - 数字右边距
+- numberType (enum: number, alphabet, roman-numerals, mixed) - 数字类型
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### unorderedList - 无序列表样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- indent (float) - 缩进
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- markColor (color) - 标记颜色
+- markMarginRight (float) - 标记右边距
+- markSize (float) - 标记大小
+- markType (enum: ring, circle, square, mixed) - 标记类型
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### table - 表格样式
+
+支持的属性：
+
+- altColor (color) - 替代颜色
+- backgroundColor (color) - 背景颜色
+- borderColor (color) - 边框颜色
+- borderRadius (float) - 边框圆角
+- borderWidth (float) - 边框宽度
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- maxWidth (float) - 最大宽度
+- minWidth (float) - 最小宽度
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- scrollX (bool) - 水平滚动
+- tableBackground (enum: none, solid, chess-board) - 表格背景
+- tableBorder (enum: none, full-rect, underline) - 表格边框
+
+### tableCell - 表格单元格样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- maxWidth (float) - 最大宽度
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### split - 分割线样式
+
+支持的属性：
+
+- borderColor (color) - 颜色
+- borderWidth (float) - 宽度
+- marginBottom (float) - 下外边距
+- marginTop (float) - 上外边距
+
+### typewriterCursor - 打字机光标样式
+
+支持的属性：
+
+- customCursor (string) - 自定义光标
+- verticalAlign (enum: baseline, top, center, bottom) - 光标垂直对齐
+
+### truncation - 截断样式
+
+支持的属性：
+
+- content (string) - 截断内容
+- truncationType (enum: text, view) - 截断类型
+
+### listItem - 列表项样式
+
+支持的属性：
+
+- marginBottom (float) - 下外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingTop (float) - 上内边距
+
+### tableHeader - 表格头样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- paddingBottom (float) - 下内边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- verticalAlign (enum: baseline, top, center, bottom) - 垂直对齐
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### image - 图片样式
+
+支持的属性：
+
+- altImage (string) - 替代图片
+- enableAltText (bool) - 启用替代文本
+- height (float) - 高度
+- width (float) - 宽度
+
+### quoteBorderLine - 引用边框线样式
+
+支持的属性：
+
+- color (color) - 文字颜色
+- lineType (enum: none, solid, dashed) - 线条类型
+- radius (float) - 半径
+- shrink (float) - 收缩
+- width (float) - 宽度
+
+### unorderedListMarker - 无序列表标记样式
+
+支持的属性：
+
+- color (color) - 文字颜色
+- height (float) - 高度
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+- markType (enum: ring, circle, square, mixed) - 标记类型
+- width (float) - 宽度
+
+### \<span\> - span样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- backgroundImage (string) - 背景图片
+- borderColor (color) - 边框颜色
+- borderRadius (float) - 边框圆角
+- borderWidth (float) - 边框宽度
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- paddingLeft (float) - 左内边距
+- paddingRight (float) - 右内边距
+- textDecorationColor (color) - 文本装饰线颜色
+- textDecorationLine (enum: none, underline, overline, line-through) - 文本装饰线类型
+- textDecorationStyle (enum: none, solid, double, dotted, dashed, wavy) - 文本装饰线样式
+- textDecorationThickness (float) - 文本装饰线宽度
+
+### \<p\> - 段落样式
+
+支持的属性：
+
+- direction (enum: normal, ltr, rtl) - 文本方向
+- lastLineAlignment (enum: left, center, right, justify) - 最后一行对齐
+- lineHeight (float) - 行高
+- lineSpace (float) - 行间距
+- marginBottom (float) - 下外边距
+- marginTop (float) - 上外边距
+- paddingBottom (float) - 下内边距
+- paddingTop (float) - 上内边距
+- paragraphSpace (float) - 段落间距
+- textAlign (enum: left, center, right, justify) - 文本对齐
+- textIndent (float) - 文本缩进
+- textMaxline (int) - 最大行数
+- textOverflow (enum: clip, ellipsis) - 文本溢出处理
+- wordBreak (enum: normal, break-all) - 单词换行
+
+### orderedListNumber - 有序列表数字样式
+
+支持的属性：
+
+- backgroundColor (color) - 背景颜色
+- color (color) - 文字颜色
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lineHeight (float) - 行高
+- marginBottom (float) - 下外边距
+- marginLeft (float) - 左外边距
+- marginRight (float) - 右外边距
+- marginTop (float) - 上外边距
+
+### imageCaption - 图片标题样式
+
+支持的属性：
+
+- captionPosition (enum: top, bottom) - 标题位置
+- color (color) - 文字颜色
+- direction (enum: normal, ltr, rtl) - 文本方向
+- font (font) - 字体设置
+- fontSize (float) - 字体大小
+- fontWeight (enum: normal, bold, 100-900) - 字体粗细
+- lineHeight (float) - 行高
+- textAlign (enum: left, center, right, justify) - 文本对齐
