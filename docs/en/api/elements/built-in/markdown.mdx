@@ -1,0 +1,388 @@
+---
+tag: 'XElement'
+api: elements/markdown
+description: Render Markdown with custom styles, images, typewriter animation, text selection, and native methods.
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+import APIReference from './markdown-API.mdx';
+
+# `<markdown>`
+
+<APISummary />
+
+`<markdown>` renders Markdown content in Lynx, including headings, paragraphs, block quotes, lists, code, links, images, and tables. It also supports embedded Lynx views, typewriter animation, and text selection.
+
+The host must integrate and register this native element. Run the examples in a Lynx Explorer build that includes `<markdown>`. See [Compatibility](#compatibility) for platform support of individual attributes and methods.
+
+## Usage
+
+### Basic
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/basic/index.tsx"
+  defaultEntryName="basic"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/basic-d23237c63a06.webp"
+/>
+
+The above code demonstrates the simplest way to use it. Simply pass the Markdown-formatted text to the `content` prop of `<markdown>`. It will render a static Markdown page using the default styles.
+
+### Modify Styles
+
+The inner elements of `<markdown>` are not Lynx elements, so they cannot be styled using CSS. However, we can use the `markdown-style` attribute to modify the styles of inner elements.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/style/index.tsx"
+  defaultEntryName="style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/style-30e2f2032899.webp"
+/>
+
+In the above code, we passed an object through the `markdown-style` attribute. This object represents the style configuration for all `normalText` elements (i.e., regular text) and `inlineCode` elements (i.e., inline code). In this case, we set the font size of all `normalText` elements to 25px and the font size of all `inlineCode` elements to 20px, with a color of red.
+
+`markdown-style` is just such a series of tag-to-style configuration mappings. By using it, we can modify the style of a specific syntax. See [Stylesheets](#stylesheets) for the supported tags and their configuration options.
+
+#### `<span>` tag
+
+By using tags, we can modify the style of all text of the same type. For example:
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/link_style/index.tsx"
+  defaultEntryName="link_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/link_style-3db2bd119a08.webp"
+/>
+
+In the above code, both `link1` and `link2` will be affected by the `link` in the style sheet and thus set to red.
+
+But what if we only want to modify the color of `link1`? `<markdown>` supports the simple `<span>` tag. We can wrap `link1` with a `<span>` tag that has a class, and then configure the style corresponding to this class in `markdown-style`.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/span_style/index.tsx"
+  defaultEntryName="span_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/span_style-98950bbefae9.webp"
+/>
+
+In the above code, we wrapped `link1` with a `<span>` tag that has a class `red`, and then set the style of this class in `markdown-style`.
+
+#### `<p>` tag
+
+Similarly, we can use the `<p>` tag to set the style of paragraphs, such as line height and alignment:
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/paragraph_style/index.tsx"
+  defaultEntryName="paragraph_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/paragraph_style-4ffa7babe2af.webp"
+/>
+
+The supported HTML tags are `<span>` for text styles and `<p>` for paragraph styles. Define their styles through a class in `markdown-style`; inline HTML styles and other HTML tags are not supported.
+
+### Images
+
+Inserting images in `<markdown>` is just like Markdown. For example:
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image/index.tsx"
+  defaultEntryName="image"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image-cf5f1e01c58d.webp"
+/>
+
+#### Image Size
+
+Markdown does not support directly controlling the size of inserted images. However, `<markdown>` supports adding `width` and `height` to the image URL to control the size of the image.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image_size/index.tsx"
+  defaultEntryName="image_size"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image_size-b34c02d09e6f.webp"
+/>
+
+The values of `width` and `height` must be numbers in px, with no spaces around the equals sign.
+
+#### Image Captions
+
+`<markdown>` supports image caption syntax, just like Markdown. Adding a caption is as simple as `![alt text](url "caption")`.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image_caption/index.tsx"
+  defaultEntryName="image_caption"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image_caption-d85cc1bdd81e.webp"
+/>
+
+Similar to other text, the image caption can also have its style configured through `markdown-style`. The `imageCaption` configuration item in `markdown-style` is used to set the style of the image caption. For specific configuration items, see [Style Sheet](#stylesheets).
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image_caption_style/index.tsx"
+  defaultEntryName="image_caption_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image_caption_style-9c257f35b4ad.webp"
+/>
+
+#### GIF
+
+Android supports GIF animation by default. Set `enable-gif={true}` to enable it on iOS.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/gif/index.tsx"
+  defaultEntryName="gif"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/gif-3218446c78f1.webp"
+/>
+
+### Embedded Lynx Views
+
+Markdown's syntax is quite limited, and to implement some complex cases, we can insert some custom Lynx Views. For example, we can insert a gradient color text:
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryName="inline_view"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/inline_view-2f0b269143c9.webp"
+/>
+
+In the above code, we inserted a gradient color text by using `![](inlineview://mkd)`. The `mkd` view is a child view of `markdown`, and it contains the gradient color text we need.
+
+inlineview can be set `vertical-align` to configure the vertical alignment. The default value is `baseline`, and in the above code, we set it to `center` to make the text align properly.
+
+inlineview **_must_** be a child view of `markdown`, and `flatten` must be set to `false` to avoid rendering issues.
+
+### Text Marks
+
+#### Highlight and Underline a Span
+
+Assign a class to `<span>`, then configure its `backgroundImage`, `textDecorationLine`, and related properties in `markdown-style`.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/span_mark/index.tsx"
+  defaultEntryName="span_mark"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/span_mark-205a4db022f8.webp"
+/>
+
+#### Mark a Text Range
+
+Use `text-mark-attachments` to apply highlights, borders, or gradient underlines to a range. `indexType="source"` indexes the Markdown source; `indexType="char"` indexes parsed characters.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/text_mark_attachments/index.tsx"
+  defaultEntryName="text_mark_attachments"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/text_mark_attachments-a8077920e4eb.webp"
+/>
+
+### Truncation
+
+`markdown` comes with a built-in truncation feature. Whether to add an ellipsis can be set through the `overflow` property. The default value is `ellipsis`, which means an ellipsis will be added. Setting it to `clip` means no ellipsis will be added. Tables do not support adding ellipses.
+
+You can control the maximum number of text lines through the `text-maxline` property, and control the maximum text height through the `height` style. When both are present, they will take effect simultaneously.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/truncation/index.tsx"
+  defaultEntryName="truncation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/truncation-66aa11ca6b3e.webp"
+/>
+
+#### Custom Truncation Text
+
+By default, the truncation text is an ellipsis. To modify the truncation text, you need to configure it through `markdown-style`. `markdown-style` has a special tag `truncation` used to set the truncation text.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/truncation_text/index.tsx"
+  defaultEntryName="truncation_text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/truncation_text-46e7b06eb08a.webp"
+/>
+
+The above code sets the truncation text to "...more", which will be added at the end of the truncated text instead of an ellipsis.
+
+#### Custom Truncation View
+
+The truncation text can also be a Lynx View. You only need to set `truncationType` to `view` in `truncation` and set `content` to a view id. Similar to inlineview, the child view corresponding to `content` will replace the truncation text.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/truncation_view/index.tsx"
+  defaultEntryName="truncation_view"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/truncation_view-aa38da4af642.png"
+/>
+
+Using Lynx View as truncation text allows for more custom effects, such as listening to click events on the truncation text and expanding all content when clicked.
+
+### Typewriter
+
+Typewriter animations are very common in AI outputs. `markdown` directly supports typewriter animations. We can enable the typewriter animation by setting `animation-type` to `typewriter`. Meanwhile, we can set the speed of the typewriter animation using `animation-velocity`, with the unit being characters per second.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter/index.tsx"
+  defaultEntryName="typewriter"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter-3469a1f5628b.webp"
+/>
+
+#### Custom Cursor
+
+By default, the typewriter cursor is an ellipsis. If you want to change the cursor, you can set it through `markdown-style`. `markdown-style` has a special tag for setting the typewriter cursor, which is `typewriterCursor`.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter_cursor/index.tsx"
+  defaultEntryName="typewriter_cursor"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter_cursor-c570c4975868.webp"
+/>
+
+In `typewriterCursor`, you can specify the cursor through `customCursor`. Similar to inlineview, the value of `customCursor` needs to be an id, and the child view with this id will replace the cursor during typing.
+
+#### Keep the Cursor Visible
+
+By default, the typewriter cursor will be hidden after the current content is output. However, in some cases, we may not want the cursor to be hidden until the content is complete. In this case, we can set `content-complete` to `false` to make the cursor always visible.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter_keep_cursor/index.tsx"
+  defaultEntryName="typewriter_keep_cursor"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter_keep_cursor-1067bccf48d2.webp"
+/>
+
+#### Text Fade Effect
+
+If you want the text to fade out at the end of the typing instead of using a cursor at the end, you can set `customCursor` in `typewriterCursor` to "none" to disable the cursor, and then use `markdown-effect` to set the fade effect of the text.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter_mask/index.tsx"
+  defaultEntryName="typewriter_mask"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter_mask-9c9c451d14d0.webp"
+/>
+
+In the above code, we added a text mask effect through `markdown-effect`. It will add a semi-transparent mask layer on the last 4 characters of the text.
+
+Here we also listen to the `drawEnd` event, which is because `markdown-effect` will not be automatically removed after the typing is complete, but the `drawEnd` event will be triggered after the typing is complete, and in the callback of this event, we can clear `markdown-effect` to remove the fade effect of the text.
+
+Like the cursor, when `content-complete` is set to `false`, the `drawEnd` event will not be triggered after the typing is complete. Therefore, the above code will remove the fade effect of the text after the content is complete **and** the typing is complete.
+
+### Text Selection
+
+#### Enable Selection
+
+Set `text-selection={true}` to allow users to select text.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/text_selection/index.tsx"
+  defaultEntryName="text_selection"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/text_selection-3ce4f7a3b34d.webp"
+/>
+
+Long-press the text to start a selection. Provide your own menu and actions; enabling selection does not add a clipboard menu.
+
+#### Implement a Menu
+
+`getTextBoundingRect` returns page coordinates. Subtract the containing view’s `boundingClientRect` coordinates before positioning an absolute menu inside it. This example displays the menu; the following examples add button actions.
+
+When the selected area changes, the `selectionchange` event will be triggered, and the event parameters will contain the start position and end position of the selected area. If the current selected area is empty, both the start position and end position will be -1. We can use this to determine whether to display or hide the menu.
+
+After displaying the menu, we need to adjust the position of the menu based on the selected area. We can use the `getTextBoundingRect` method to get the position of the selected area. This method needs to pass in the start position and end position of the selected area, and the return value is a `TextBoundingRect` object. The object contains the total bounding rect of the selected area and the bounding rect of each line of the selected area.
+
+```ts
+interface Rect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+interface TextBoundingRect {
+  boundingRect: Rect;
+  boxes: Rect[];
+}
+```
+
+Use the total bounding rectangle to center the menu above the selection:
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_menu/index.tsx"
+  defaultEntryName="selection_menu"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_menu-8f86301b2af9.webp"
+/>
+
+#### Extend the Selection
+
+`markdown` component provides a `setTextSelection` method to set the selected area from the front end. The parameters of the method are the starting touch position and the ending touch position of the selected area.
+
+We listen to the click event of the "select all" text, and in the callback of the click event, we set the starting touch position to (0, 0) and the ending touch position to (MAX_VALUE, MAX_VALUE).
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_select_all/index.tsx"
+  defaultEntryName="selection_select_all"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_select_all-136b21a97add.webp"
+/>
+
+#### Read Selected Text
+
+Use `getSelectedText` to read plain text from the selection. The example displays the returned text when you tap `Get text`, then clears the selection and hides the menu. This method does not write to the system clipboard. To copy the text, call a Native Module provided by the host.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_copy/index.tsx"
+  defaultEntryName="selection_copy"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_copy-3322837c2c94.webp"
+/>
+
+#### Select a Paragraph or Sentence
+
+`setTextSelection` takes coordinates relative to `<markdown>`. When selecting a paragraph from the center of a text bounding rectangle, subtract the markdown element’s page coordinates before passing equal start and end points.
+
+By default, `markdown` only selects the character at the touch position when long pressed. If you want to select a paragraph or sentence, you need to adjust the selected area in the `selectionchange` event.
+
+`setTextSelection` method also has a `selectionTextType` parameter. When the start and end positions are the same, this parameter will take effect. It is used to specify the type of selected text, which can be `char`, `word`, `sentence`, and `paragraph`.
+
+By setting this parameter to `paragraph`, you can select a paragraph. Similarly, by setting this parameter to `sentence`, you can select a sentence.
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_paragraph/index.tsx"
+  defaultEntryName="selection_paragraph"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_paragraph-64f4e2cf54d8.webp"
+/>
+
+<APIReference />
+
+## Compatibility
+
+<APITable query="elements/markdown" />

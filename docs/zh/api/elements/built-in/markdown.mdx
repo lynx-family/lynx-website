@@ -1,0 +1,386 @@
+---
+tag: 'XElement'
+api: elements/markdown
+description: 使用 markdown 渲染富文本，配置样式、图片、打字机动画、文本选择及原生方法。
+---
+
+import { APISummary, APITable, Go } from '@lynx';
+import APIReference from './markdown-API.mdx';
+
+# `<markdown>`
+
+<APISummary />
+
+`<markdown>` 在 Lynx 中渲染 Markdown 内容，支持标题、段落、引用、列表、代码、链接、图片和表格，并提供内嵌 View、打字机动画与文本选择能力。
+
+宿主需要集成并注册该原生元件。使用支持 `<markdown>` 的 Lynx Explorer 运行示例；各属性和方法的平台支持情况见[兼容性](#兼容性)。
+
+## 使用指南
+
+### 基础用法
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/basic/index.tsx"
+  defaultEntryName="basic"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/basic-d23237c63a06.webp"
+/>
+
+上面的代码就是最简单的使用方式，将 Markdown 格式的文本传给 `<markdown>` 的 content 即可。它会使用默认的样式来渲染一个静态的 Markdown 页面。
+
+### 修改样式
+
+`<markdown>` 内部的元素并不是一个 Lynx 元素，因此无法通过 CSS 来赋予样式，但是我们可以通过 `markdown-style` 属性来修改内部元素的样式。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/style/index.tsx"
+  defaultEntryName="style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/style-30e2f2032899.webp"
+/>
+
+在上面的代码中我们通过 `markdown-style` 传入了一个 object，它表示将所有的 `normalText` 即普通文本的字号设置为 25px 以及将 `inlineCode` 即行内代码的字号设置成了 20px、颜色设置成了红色。
+
+`markdown-style` 就是这样的一系列 tag 到样式配置项的映射，通过它能修改某一个语法的样式。支持的 tag 及其配置项见[样式表](#样式表)。
+
+#### `<span>` 标签
+
+通过 tag 来修改样式会导致所有的同类文本样式变化：
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/link_style/index.tsx"
+  defaultEntryName="link_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/link_style-3db2bd119a08.webp"
+/>
+
+如上的代码中 link1 和 link2 都会被样式表中的 `link` 影响，从而被设置成红色。
+
+但是如果我只想修改 link1 的颜色该怎么办呢？`markdown` 支持了简单的 `<span>` 标签，我们可以在 link1 外包裹一个带有 class 的 `<span>` 标签，然后在 `markdown-style` 中配置这个 class 对应的样式。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/span_style/index.tsx"
+  defaultEntryName="span_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/span_style-98950bbefae9.webp"
+/>
+
+#### `<p>` 标签
+
+类似的，我们可以用 `<p>` 标签来设置段落的样式，例如行高、对齐方式：
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/paragraph_style/index.tsx"
+  defaultEntryName="paragraph_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/paragraph_style-4ffa7babe2af.webp"
+/>
+
+上面的写法与在 Markdown 中使用 HTML 类似，但是需要注意的是，`markdown` 只支持 `<span>` 标签用于设置文本的样式以及`<p>` 标签用于设置段落的样式，**不支持**其他标签，标签的样式也**不支持**内嵌，只能通过 class 在 `markdown-style` 中设置。
+
+### 插入图片
+
+在 `<markdown>` 中插入图片的语法与 Markdown 一致，例如：
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image/index.tsx"
+  defaultEntryName="image"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image-cf5f1e01c58d.webp"
+/>
+
+#### 控制图片大小
+
+Markdown 的语法中无法控制插入图片的大小，但是 `<markdown>` 支持在 URL 后添加 `width` 和 `height` 来控制图片的大小。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image_size/index.tsx"
+  defaultEntryName="image_size"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image_size-b34c02d09e6f.webp"
+/>
+
+注意：`width` 和 `height` 的值只能是数字，单位为 px，并且等于号两边不允许有空格。
+
+#### 图片标题
+
+`<markdown>` 支持图片标题语法，添加标题的方式与 Markdown 中一致：`![alt text](url "caption")`。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image_caption/index.tsx"
+  defaultEntryName="image_caption"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image_caption-d85cc1bdd81e.webp"
+/>
+
+与其他文本类似，图片标题也可以通过 `markdown-style` 配置样式，`markdown-style` 中的 `imageCaption` 配置项就是用来配置图片标题的样式的，具体的配置项见[样式表](#样式表)。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/image_caption_style/index.tsx"
+  defaultEntryName="image_caption_style"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/image_caption_style-9c257f35b4ad.webp"
+/>
+
+#### GIF
+
+Android 默认支持 GIF；在 iOS 上通过 `enable-gif={true}` 开启动画。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/gif/index.tsx"
+  defaultEntryName="gif"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/gif-3218446c78f1.webp"
+/>
+
+### 插入 Lynx View
+
+Markdown 的语法相当有限，想要实现一些复杂的效果可以通过插入一些自定义的 Lynx View 来实现。比如说插入一段 gradient 颜色的文本：
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/inline_view/index.tsx"
+  defaultEntryName="inline_view"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/inline_view-2f0b269143c9.webp"
+/>
+
+示例会将 Markdown 中的 `![](inlineview://mkd)` 替换成 id 为 `mkd` 的子 view，而这个 view 中有一段我们需要的 gradient 颜色的文本。
+
+inlineview 可以通过 `vertical-align` 来设置垂直对齐方式，默认是 `baseline`，在上面的代码中，为了使得文本能够对齐，将 `vertical-align` 设置为 `center`。
+
+inlineview ***必须***是`markdown`的子 view，并且设置 `flatten` 为 `false`，否则会有渲染问题。
+
+### 文本标记
+
+#### 使用 span 设置高亮和下划线
+
+为 `<span>` 指定 class，并在 `markdown-style` 中设置对应的 `backgroundImage` 或 `textDecorationLine` 等属性。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/span_mark/index.tsx"
+  defaultEntryName="span_mark"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/span_mark-205a4db022f8.webp"
+/>
+
+#### 按范围添加标记
+
+通过 `text-mark-attachments` 为指定范围添加高亮、边框或渐变下划线。`indexType="source"` 使用 Markdown 源文本索引，`indexType="char"` 使用解析后的字符索引。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/text_mark_attachments/index.tsx"
+  defaultEntryName="text_mark_attachments"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/text_mark_attachments-a8077920e4eb.webp"
+/>
+
+### 文本截断
+
+`markdown` 自带超出截断功能，是否添加省略号可以通过 `overflow` 属性来设置，默认值为 `ellipsis` 代表会添加省略号，设置值为 `clip` 代表不会添加省略号，表格不支持添加省略号。
+
+通过 `text-maxline` 属性可以控制文本的最大行数，通过 `height` 样式可以控制文本的最大高度，二者同时存在时会同时生效。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/truncation/index.tsx"
+  defaultEntryName="truncation"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/truncation-66aa11ca6b3e.webp"
+/>
+
+#### 自定义截断文本
+
+默认截断文本是一个省略号，修改截断文本需要通过 `markdown-style` 来配置。 `markdown-style` 中有一个特殊的 tag `truncation` 用于设置截断文本。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/truncation_text/index.tsx"
+  defaultEntryName="truncation_text"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/truncation_text-46e7b06eb08a.webp"
+/>
+
+上面的代码将截断文本设置为“...more”，在截断时会在文本末尾添加“...more”而不是省略号。
+
+#### 自定义截断 View
+
+截断文本也可以是一个 Lynx View，只需要将 `truncation` 中的 `truncationType` 设置为 `view` 同时将 `content` 设置为一个 view id 即可，与 inlineview 类似，`content` 对应的子 view 就会替换截断文本。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/truncation_view/index.tsx"
+  defaultEntryName="truncation_view"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/truncation_view-aa38da4af642.png"
+/>
+
+使用 Lynx View 作为截断文本可以实现更多的自定义效果，比如监听截断文本的点击事件，点击截断文本展开全部内容。
+
+### 打字机
+
+打字机动画在 AI 输出中非常常见，`markdown` 内置支持了打字机动画，只需要将 `animation-type` 设置为 `typewriter` 即可开启打字机动画，同时可以通过 `animation-velocity` 来设置打字机动画的速度，单位是字符数每秒。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter/index.tsx"
+  defaultEntryName="typewriter"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter-3469a1f5628b.webp"
+/>
+
+#### 自定义光标
+
+默认的打字机光标是一个省略号，如果想要改变光标可以通过 `markdown-style` 来设置。`markdown-style` 中有一个特殊的 tag 用于设置打字机光标，即 `typewriterCursor`。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter_cursor/index.tsx"
+  defaultEntryName="typewriter_cursor"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter_cursor-c570c4975868.webp"
+/>
+
+在 `typewriterCursor` 中可以通过 `customCursor` 来指定光标，与 inlineview 类似，`customCursor` 的值需要是一个 id， 而这个 id 对应的子 view 就会替换打字时的光标。
+
+#### 不隐藏光标
+
+默认情况下在当前内容输出完成后，打字机光标会被隐藏。但是通常 AI 的输出是分段的，如果不希望在内容未完整时就隐藏光标，可以将 `content-complete` 属性设置为 `false` 来使得打字机光标一直显示。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter_keep_cursor/index.tsx"
+  defaultEntryName="typewriter_keep_cursor"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter_keep_cursor-1067bccf48d2.webp"
+/>
+
+#### 文本渐隐效果
+
+如果想要在打字过程中末尾的文本渐隐而不是在末尾使用光标，可以将 `typewriterCursor` 中的 `customCursor` 设置为"none"来禁用光标，然后通过 `markdown-effect` 来设置文本的渐隐效果。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/typewriter_mask/index.tsx"
+  defaultEntryName="typewriter_mask"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/typewriter_mask-9c9c451d14d0.webp"
+/>
+
+在上面的代码中我们通过 `markdown-effect` 添加了一个文本的渐变蒙层效果，它会在末尾的 4 个字符上加上一层半透明蒙层。
+
+这里我们还监听了 `drawEnd` 事件，这是因为 `markdown-effect` 不会在打字完成后自动消失，但是打字完成后，会触发 `drawEnd` 事件，在这个事件的回调里我们可以将 `markdown-effect` 清空，从而移除文本的渐隐效果。
+
+与光标类似，在 `content-complete` 设置为 `false` 时，当前内容打字完成后也不会触发 `drawEnd` 事件，因此上面的代码会在内容完整并且打字完成后移除文本的渐隐效果。
+
+### 文本选择与读取
+
+#### 开启文本选择
+
+设置 `text-selection={true}` 开启文本选择。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/text_selection/index.tsx"
+  defaultEntryName="text_selection"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/text_selection-3ce4f7a3b34d.webp"
+/>
+
+长按文字区域可以开始选择。菜单和按钮行为由前端实现，开启选择不会自动提供剪贴板菜单。
+
+#### 实现菜单
+
+`getTextBoundingRect` 返回页面坐标。将它用于容器内绝对定位的菜单时，需要减去容器的 `boundingClientRect` 坐标。该示例只展示菜单；后续示例再添加按钮行为。
+
+在选中区域有变化时，会触发 `selectionchange` 事件，事件的参数中会包含选中的起始位置和结束位置，如果当前选中区域为空，则起始位置和结束位置都为-1，我们可以通过判断起始位置和结束位置是否为-1来实现菜单的显示和隐藏。
+
+在显示了菜单后，需要根据选中的区域来调整菜单的位置，这里我们可以通过 `getTextBoundingRect` 方法来获取选中区域的位置。这个方法需要传入选中区域的起始位置和结束位置，返回值是一个 `TextBoundingRect` 对象，对象中包含了选中区域的总的 boundingRect 以及每行单独的 boundingRect。
+
+```ts
+interface Rect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+interface TextBoundingRect {
+  boundingRect: Rect;
+  boxes: Rect[];
+}
+```
+
+这里使用总 boundingRect 将菜单水平居中定位在选中区域上方。示例代码如下：
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_menu/index.tsx"
+  defaultEntryName="selection_menu"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_menu-8f86301b2af9.webp"
+/>
+
+#### 扩展选区
+
+`markdown` 提供了一个 `setTextSelection` 方法来由前端设置选中区域，方法的参数为选中区域的起始触摸位置和结束触摸位置。
+
+我们监听 全选 文本的点击事件，在点击事件的回调里把起始触摸位置设置为（0，0），结束触摸位置设置为（MAX_VALUE，MAX_VALUE），即可实现全选功能。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_select_all/index.tsx"
+  defaultEntryName="selection_select_all"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_select_all-136b21a97add.webp"
+/>
+
+#### 读取所选文本
+
+通过 `getSelectedText` 读取选区内的纯文本。示例的 `Get text` 按钮显示返回内容，然后清除选区并隐藏菜单。该方法不会写入系统剪贴板；复制到剪贴板需要调用宿主提供的 Native Module。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_copy/index.tsx"
+  defaultEntryName="selection_copy"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_copy-3322837c2c94.webp"
+/>
+
+#### 选择段落或句子
+
+`setTextSelection` 接收相对于 `<markdown>` 的坐标。用文本边界框的中心定位段落时，先减去 `<markdown>` 自身的页面坐标，再传入相同的起点和终点。
+
+默认情况下 `markdown` 在长按之后只会选中当前触摸位置的字符，如果想要在长按之后选中一个段落，需要在 `selectionchange` 事件中调整选中区域。
+
+`setTextSelection` 方法还可以传入一个 `selectionTextType` 参数，当 start 和 end 位置相同时，这个参数才会生效，它用来指定选中的文本类型，值可以是 `char`，`word`，`sentence` 以及 `paragraph`。
+
+将这个参数设置为 `paragraph` 即可选中一个段落，同理，将这个参数设置为 `sentence` 即可选中一个句子。
+
+<Go
+  example="markdown"
+  webPreview={false}
+  defaultFile="src/selection_paragraph/index.tsx"
+  defaultEntryName="selection_paragraph"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/markdown/selection_paragraph-64f4e2cf54d8.webp"
+/>
+
+<APIReference />
+
+## 兼容性
+
+<APITable query="elements/markdown" />
