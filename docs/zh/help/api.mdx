@@ -70,16 +70,29 @@ api: lynx-api/global/console/log
 
 ## 验证文档
 
-我们提供了一个脚本来确保您的 API 文档与兼容性数据匹配。
+CI 会对所有已跟踪的 API 页面执行兼容性组件查询校验。该全量检查有意不接入
+lint-staged。如需在本地运行同一检查：
 
 ```bash
-pnpm run check-docs
+pnpm run check:api-summary
 ```
 
-该脚本 (`scripts/check_api_doc`) 检查：
+该检查会验证：
 
-- 无效的 `api` Frontmatter 键。
-- 已定义 API 缺少文档。
+- `<APISummary>` 是否指向包含直接兼容性记录的标识符。
+- `<APITable>` 是否指向包含直接兼容性记录的标识符。
+- 包含表格的 API 页面是否至少包含一个有效摘要；当页面记录相关条目时，两者
+  可以使用不同查询。
+- 静态组件查询（包括 MDX 表达式中的 JSX）与 `api` Frontmatter 是否引用了现有
+  数据。
+- 查询是否不包含空的 `/` 或 `.` 路径段。
+
+:::warning
+旧版 `check-docs` 和 `fix-docs` 命令未在 CI 中运行，且目前不建议使用。
+尤其是 `fix-docs`，它可能重写大量 MDX 文件（包括生成的 `*-API.mdx`
+页面），并造成破坏性的格式化变更。详见
+[#896](https://github.com/lynx-family/lynx-website/pull/896)。
+:::
 
 ## 生成的 API 参考
 
