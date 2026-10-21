@@ -2,8 +2,8 @@
  * Which subsite a route belongs to.
  *
  * The API reference is grouped by package rather than by subsite, so its
- * routes no longer carry the subsite in a path segment: `/api/packages/
- * react-signals` is ReactLynx, `/api/build/mode` is the Lynx guide. The
+ * routes use dedicated sections and package paths: `/api/react` is
+ * ReactLynx, `/api/build/mode` is the Lynx guide. The
  * mapping below is the single place that decides this, for every version and
  * language form of a route.
  *
@@ -16,12 +16,7 @@
  * @lynx-js/lynx-stack-docs groups packages by what they are, not by subsite,
  * so this theme-owned classification is stated here.
  */
-export const API_PACKAGE_SUBSITES: Record<string, string> = {
-  'background-only': 'react',
-  'react-signals': 'react',
-  'react-umd': 'react',
-  'use-sync-external-store': 'react',
-};
+export const API_PACKAGE_SUBSITES: Record<string, string> = {};
 
 /**
  * Routes of the API reference that belong to a subsite as a whole, in matching

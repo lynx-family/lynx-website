@@ -15,18 +15,6 @@ import { findSubsiteValue } from './subsite-routes.ts';
 const subsiteOf = (pathname: string) =>
   findSubsiteValue(pathname, ['guide', 'react', 'ui', 'lynxtron']);
 
-test('ReactLynx package pages keep the ReactLynx subsite', () => {
-  assert.equal(subsiteOf('/api/packages/react-signals'), 'react');
-  assert.equal(subsiteOf('/api/packages/react-umd'), 'react');
-  assert.equal(subsiteOf('/api/packages/background-only'), 'react');
-  assert.equal(subsiteOf('/api/packages/use-sync-external-store'), 'react');
-  // A member page is the same package.
-  assert.equal(
-    subsiteOf('/api/packages/react-signals/functions/useSignal'),
-    'react',
-  );
-});
-
 // The build documentation is part of the Lynx guide.
 test('other package pages and the build configuration keep the guide', () => {
   assert.equal(subsiteOf('/api/packages/rspeedy'), undefined);
@@ -61,9 +49,9 @@ test('ReactLynx routes keep their subsite', () => {
 });
 
 test('version and language prefixes and .html suffixes', () => {
-  assert.equal(subsiteOf('/next/api/packages/react-signals.html'), 'react');
-  assert.equal(subsiteOf('/4.0/api/packages/react-umd'), 'react');
-  assert.equal(subsiteOf('/zh/api/packages/background-only'), 'react');
+  assert.equal(subsiteOf('/next/api/react.html'), 'react');
+  assert.equal(subsiteOf('/4.0/api/react/Hooks/useState'), 'react');
+  assert.equal(subsiteOf('/zh/api/react'), 'react');
   assert.equal(subsiteOf('/next/zh/api/react/Hooks/useState.html'), 'react');
   assert.equal(subsiteOf('/next/zh/api/build/mode.html'), undefined);
 });
