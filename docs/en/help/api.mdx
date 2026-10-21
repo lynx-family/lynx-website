@@ -70,16 +70,30 @@ You can use the explorer below to find valid API queries and preview their table
 
 ## Validating Documentation
 
-We provide a script to ensure your API documentation matches the compatibility data.
+CI validates compatibility component queries across all tracked API pages. This
+full-tree check is intentionally not part of lint-staged. To run the same check
+locally:
 
 ```bash
-pnpm run check-docs
+pnpm run check:api-summary
 ```
 
-This script (`scripts/check_api_doc`) checks for:
+This check verifies that:
 
-- Invalid `api` frontmatter keys.
-- Missing documentation for defined APIs.
+- `<APISummary>` resolves to an identifier with a direct compatibility record.
+- `<APITable>` resolves to an identifier with a direct compatibility record.
+- API pages containing a table also contain at least one valid summary; their
+  queries may differ when a page documents related records.
+- Static component queries, including JSX inside MDX expressions, and `api`
+  frontmatter reference existing data.
+- Queries contain no empty `/` or `.` path segments.
+
+:::warning
+The legacy `check-docs` and `fix-docs` commands are not run in CI and are not
+recommended. In particular, `fix-docs` can rewrite a broad set of MDX files,
+including generated `*-API.mdx` pages, and cause destructive formatting
+changes. See [#896](https://github.com/lynx-family/lynx-website/pull/896).
+:::
 
 ## Generated API Reference
 

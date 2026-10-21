@@ -2,6 +2,15 @@
 
 This directory contains scripts to verify and maintain the consistency of the API documentation.
 
+> [!WARNING]
+> `check-docs` and `fix-docs` are legacy authoring tools. They are not run in
+> CI and are not recommended for current documentation work. In particular,
+> `fix-docs` can touch a broad set of MDX files, including generated
+> `*-API.mdx` pages, and expose them to destructive formatting changes. See
+> [#896](https://github.com/lynx-family/lynx-website/pull/896). Use the
+> repository's targeted lint-staged and CI checks instead. For API compatibility
+> component queries, run `pnpm run check:api-summary`.
+
 ## Components
 
 - **`index.py`**: The main entry point. Scans `docs/en/api` and `docs/zh/api` for MDX files and runs checks.
@@ -14,7 +23,7 @@ This directory contains scripts to verify and maintain the consistency of the AP
   - Adds missing components to the import list.
 - **`utils.py`**: Shared utilities (constants, frontmatter parsing).
 
-## Usage
+## Legacy Usage
 
 Run from the project root:
 
