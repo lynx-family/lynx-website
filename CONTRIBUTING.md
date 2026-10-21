@@ -166,6 +166,21 @@ committed: change those pages in lynx-stack, then update
 testing-library and GenUI URLs are redirected by
 `netlify/edge-functions/lynx-stack-api-redirects/`.
 
+`prepare` finishes with the existing sync script’s `--prune` phase. It
+retains every page of the manifest's shown packages and recursively retains pages referenced
+by the rest of the final documentation tree, including shared documents and
+their language-switch destinations. Other package pages are removed before Rspress generates routes, navigation, search,
+and SSG output. Unreferenced hidden package URLs are no longer published.
+
+Consumers must run pruning **after** their own documentation overlays. Reuse
+`scripts/sync-lynx-stack-docs.mjs --prune <docs-root> <manifest.json>` from
+the installed website package; both arguments are resolved against the caller's working
+directory. Do not prune the source package before copying and applying overlays,
+since consumer-owned pages may reference additional hidden APIs. Resynchronize
+the complete source sections before preparing again, so new references can
+restore pages removed by a previous run. Markdown/MDX parse failures abort the
+operation before pages are deleted.
+
 ## Deployment Portability
 
 Build and generation scripts must remain portable across GitHub Actions,

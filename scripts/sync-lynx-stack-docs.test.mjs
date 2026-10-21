@@ -15,6 +15,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -25,6 +26,8 @@ import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+
+import { pageReferences, prunePackagePages } from './sync-lynx-stack-docs.mjs';
 
 const website = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
@@ -70,6 +73,30 @@ test('sync runs from the package produced by pnpm pack', () => {
       ['-xzf', tarball, '-C', installed, '--strip-components=1'],
       { cwd: consumer },
     );
+
+    // Consumers execute pruning after their own overlays. Its parser must be
+    // shipped with runtime dependencies, not only work in a development tree.
+    for (const file of [
+      'scripts/sync-lynx-stack-docs.mjs',
+      'scripts/ci/documentation-parser.mjs',
+    ]) {
+      assert.ok(existsSync(join(installed, file)), `${file} is packaged`);
+    }
+    const packaged = JSON.parse(
+      readFileSync(join(installed, 'package.json'), 'utf8'),
+    );
+    for (const name of [
+      '@mdx-js/mdx',
+      'gray-matter',
+      'remark-cjk-friendly',
+      'remark-cjk-friendly-gfm-strikethrough',
+      'remark-gfm',
+    ]) {
+      assert.ok(
+        packaged.dependencies[name],
+        `${name} is available to consumers`,
+      );
+    }
 
     const source = join(consumer, 'node_modules/@lynx-js/lynx-stack-docs');
     const sourcePackages = join(source, 'packages');
@@ -123,6 +150,114 @@ test('sync runs from the package produced by pnpm pack', () => {
       ),
       items,
     );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('retains shown packages and the recursive references of final site overlays', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'lynx-doc-prune-'));
+  const docs = join(root, 'docs');
+  const write = (file, text) => {
+    mkdirSync(dirname(join(docs, file)), { recursive: true });
+    writeFileSync(join(docs, file), text);
+  };
+  try {
+    for (const locale of ['en', 'zh']) {
+      const p = `${locale}/api/packages`;
+      write(
+        `${p}/shown/index.mdx`,
+        '# Shown\n[Type](../hidden/Type.mdx#member)',
+      );
+      write(`${p}/shown/Unused.mdx`, '# Still shown');
+      write(
+        `${p}/hidden/Type.mdx`,
+        '# Type\n[Recursive](../deep/Type.mdx?foo=bar)',
+      );
+      write(`${p}/deep/Type.mdx`, '# Type\n[Cycle](../hidden/Type.mdx)');
+      write(`${p}/hidden/Unused.mdx`, '# Unused');
+      write(
+        `${p}/hidden/_meta.json`,
+        JSON.stringify([{ name: 'Type' }, { name: 'Unused' }]),
+      );
+      write(`${p}/overlay/Type.mdx`, '# Overlay reference');
+      write(`${p}/localized.mdx`, '# Localized root-relative target');
+      write(`${p}/locale-only/Type.mdx`, '# Language counterpart');
+      write(`${p}/spare/Type.mdx`, '# Not referenced');
+      write(
+        `${locale}/guide.mdx`,
+        `[Overlay](/next/${locale === 'en' ? '' : 'zh/'}api/packages/overlay/Type.html)`,
+      );
+    }
+    write(
+      'zh/styling.mdx',
+      '[Preset](/api/packages/localized)\n[Type](./api/packages/locale-only/Type.mdx)',
+    );
+    write(
+      'en/api/build/index.mdx',
+      '<a href="/api/packages/hidden/Type.html">Type</a>',
+    );
+    const result = await prunePackagePages({
+      docs,
+      manifest: {
+        packages: [{ name: 'shown', route: 'api/packages/shown' }],
+        shownPackages: [{ packages: ['shown'] }],
+      },
+    });
+    assert.equal(result.before, 18);
+    assert.equal(result.kept, 14);
+    assert.equal(result.removed, 4);
+    assert.ok(existsSync(join(docs, 'zh/api/packages/localized.mdx')));
+    assert.ok(existsSync(join(docs, 'en/api/packages/locale-only/Type.mdx')));
+    assert.ok(existsSync(join(docs, 'en/api/packages/deep/Type.mdx')));
+    assert.ok(!existsSync(join(docs, 'zh/api/packages/spare/Type.mdx')));
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(docs, 'en/api/packages/hidden/_meta.json'))),
+      [{ name: 'Type' }],
+    );
+    assert.equal(
+      (
+        await prunePackagePages({
+          docs,
+          manifest: {
+            packages: [{ name: 'shown', route: 'api/packages/shown' }],
+            shownPackages: [{ packages: ['shown'] }],
+          },
+        })
+      ).removed,
+      0,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('reads reference definitions, static JSX expressions, and MDX imports, not fenced examples', async () => {
+  const refs = await pageReferences(
+    'page.mdx',
+    '[Type][type]\n\n[type]: ./Type.mdx\n\n<a href={"./JSX.mdx"}>Type</a>\n\nimport Page from "./Imported.mdx"\n\n```md\n[Example](./Example.mdx)\n```',
+  );
+  for (const file of ['./Type.mdx', './JSX.mdx', './Imported.mdx'])
+    assert.ok(refs.includes(file));
+  assert.ok(!refs.includes('./Example.mdx'));
+});
+
+test('parse failures stop pruning before any page is deleted', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'lynx-doc-prune-invalid-'));
+  try {
+    mkdirSync(join(root, 'en/api/packages/hidden'), { recursive: true });
+    writeFileSync(
+      join(root, 'en/api/packages/hidden/index.mdx'),
+      '# Keep until validation completes',
+    );
+    writeFileSync(join(root, 'en/index.mdx'), '<broken');
+    await assert.rejects(() =>
+      prunePackagePages({
+        docs: root,
+        manifest: { packages: [], shownPackages: [] },
+      }),
+    );
+    assert.ok(existsSync(join(root, 'en/api/packages/hidden/index.mdx')));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
