@@ -28,7 +28,12 @@ jobs:
           pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
           base_ref="$(jq -er '.base.ref' <<< "$pr_json")"
           pr_title="$(jq -er '.title' <<< "$pr_json")"
+          pr_author_type="$(jq -er '.user.type' <<< "$pr_json")"
+          head_ref="$(jq -er '.head.ref' <<< "$pr_json")"
+          head_repo="$(jq -er '.head.repo.full_name' <<< "$pr_json")"
           use_semantic_lint=true
+          subject_pattern='(?=(?:\s*\S){3}).{3,72}'
+          subject_pattern_error='The subject "{subject}" must contain at least 3 non-whitespace characters and be no longer than 72 characters.'
 
           # These repository-supported formats are not Conventional Commit titles.
           if [[ "$pr_title" =~ ^Revert\ \"(.*)\"$ ]]; then
@@ -52,7 +57,21 @@ jobs:
             fi
           fi
 
-          echo "use-semantic-lint=$use_semantic_lint" >> "$GITHUB_OUTPUT"
+          # Renovate includes exact package names and versions in dependency PR
+          # titles. Keep semantic validation, but allow those generated subjects
+          # to exceed the normal human-authored title limit.
+          if [[ "$pr_author_type" == "Bot" &&
+            "$head_ref" == renovate/* &&
+            "$head_repo" == "$GITHUB_REPOSITORY" ]]; then
+            subject_pattern='(?=(?:\s*\S){3}).{3,128}'
+            subject_pattern_error='The subject "{subject}" must contain at least 3 non-whitespace characters and be no longer than 128 characters for Renovate dependency PRs.'
+          fi
+
+          {
+            echo "use-semantic-lint=$use_semantic_lint"
+            echo "subject-pattern=$subject_pattern"
+            echo "subject-pattern-error=$subject_pattern_error"
+          } >> "$GITHUB_OUTPUT"
 
       # https://github.com/amannn/action-semantic-pull-request
       - if: steps.title-format.outputs.use-semantic-lint == 'true'
@@ -79,7 +98,5 @@ jobs:
           scopes: |
             [a-z0-9]+(?:-[a-z0-9]+)*
           requireScope: false
-          subjectPattern: '(?=(?:\s*\S){3}).{3,72}'
-          subjectPatternError: |
-            The subject "{subject}" must contain at least 3 non-whitespace
-            characters and be no longer than 72 characters.
+          subjectPattern: ${{ steps.title-format.outputs.subject-pattern }}
+          subjectPatternError: ${{ steps.title-format.outputs.subject-pattern-error }}
