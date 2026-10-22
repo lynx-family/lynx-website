@@ -338,8 +338,8 @@ than enumerate individual commands. Use lowercase `issue` and `doc`.
 - Format pull request titles as Conventional Commit subjects.
 - Pull request title subjects must contain at least 3 non-whitespace
   characters and be no longer than 72 characters.
-- Renovate dependency pull requests may use longer subjects when the generated
-  package name and version require it.
+- Renovate dependency pull requests may use longer subjects when their
+  generated package name and version require it.
 - Keep pull requests focused on one behavior or documentation update.
 - Keep descriptions structured and concise. Use sections such as
   Summary, Rationale, Verification, and Documentation when helpful.

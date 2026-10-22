@@ -30,16 +30,11 @@ jobs:
           pr_title="$(jq -er '.title' <<< "$pr_json")"
           pr_author_type="$(jq -er '.user.type' <<< "$pr_json")"
           head_ref="$(jq -er '.head.ref' <<< "$pr_json")"
-          head_repo="$(jq -er '.head.repo.full_name' <<< "$pr_json")"
-          pr_subject="$pr_title"
+          head_repo="$(jq -er '.head.repo.full_name // ""' <<< "$pr_json")"
           use_semantic_lint=true
           subject_pattern='(?=(?:\s*\S){3}).+'
           subject_pattern_error='The subject "{subject}" must contain at least 3 non-whitespace characters.'
           max_subject_length=72
-
-          if [[ "$pr_title" =~ ^[^:]+:[[:space:]](.*)$ ]]; then
-            pr_subject="${BASH_REMATCH[1]}"
-          fi
 
           # These repository-supported formats are not Conventional Commit titles.
           if [[ "$pr_title" =~ ^Revert\ \"(.*)\"$ ]]; then
@@ -75,7 +70,6 @@ jobs:
           {
             echo "use-semantic-lint=$use_semantic_lint"
             echo "max-subject-length=$max_subject_length"
-            echo "pr-subject=$pr_subject"
             echo "subject-pattern=$subject_pattern"
             echo "subject-pattern-error=$subject_pattern_error"
           } >> "$GITHUB_OUTPUT"
@@ -112,10 +106,18 @@ jobs:
       - name: Validate PR Title Subject Length
         if: steps.title-format.outputs.use-semantic-lint == 'true'
         env:
-          PR_SUBJECT: ${{ steps.title-format.outputs.pr-subject }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           MAX_SUBJECT_LENGTH: ${{ steps.title-format.outputs.max-subject-length }}
         run: |
-          subject_length="${#PR_SUBJECT}"
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          pr_title="$(jq -er '.title' <<< "$pr_json")"
+          pr_subject="$pr_title"
+          if [[ "$pr_title" =~ ^[^:]+:[[:space:]](.*)$ ]]; then
+            pr_subject="${BASH_REMATCH[1]}"
+          fi
+
+          subject_length="${#pr_subject}"
           if (( subject_length > MAX_SUBJECT_LENGTH )); then
             echo "::error title=Pull request title is too long::The subject must be no longer than ${MAX_SUBJECT_LENGTH} characters; received ${subject_length}."
             exit 1
