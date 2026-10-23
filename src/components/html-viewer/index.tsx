@@ -1,13 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, withBase } from '@rspress/core/runtime';
 import styles from './index.module.less';
 
-const doUpdataParentHash = (event: MessageEvent) => {
+const doUpdataParentHash = (
+  event: MessageEvent,
+  updateHash: (hash: string) => void,
+) => {
   try {
     const data = JSON.parse(event.data);
 
     if (data.src === 'living-spec') {
       window.history.replaceState({}, '', data.hash);
+      updateHash(data.hash);
     }
   } catch (postError) {
     //
@@ -24,31 +28,42 @@ function formatUrlWithBase(url: string): string {
 
 const HtmlViewer = ({ path }: { path: string }) => {
   const location = useLocation();
+  const [currentHash, setCurrentHash] = useState(location.hash);
+  const [initialHash] = useState(location.hash);
   const formattedPath = formatUrlWithBase(path);
-  const iframeSrc = `${formattedPath}?ts=${Date.now()}${location.hash}`;
+  const iframeSrc = useMemo(
+    () => `${formattedPath}?ts=${Date.now()}${initialHash}`,
+    [formattedPath, initialHash],
+  );
 
   useEffect(() => {
     const rootContainer = document.querySelector('#root');
+    const onMessage = (event: MessageEvent) =>
+      doUpdataParentHash(event, setCurrentHash);
 
     if (rootContainer) {
       rootContainer.classList.add('html-viewer-root');
 
-      window.addEventListener('message', doUpdataParentHash);
+      window.addEventListener('message', onMessage);
     }
 
     return () => {
       if (rootContainer) {
         rootContainer.classList.remove('html-viewer-root');
 
-        window.removeEventListener('message', doUpdataParentHash);
+        window.removeEventListener('message', onMessage);
       }
     };
   }, []);
 
+  useEffect(() => {
+    setCurrentHash(location.hash);
+  }, [location.hash]);
+
   return (
     <div className={styles['html-viewer-frame']}>
       <a
-        href={formattedPath}
+        href={`${formattedPath}${currentHash}`}
         target="_blank"
         rel="noopener noreferrer"
         className={styles['open-external']}
