@@ -30,6 +30,7 @@ export default defineConfig({
   route: {
     exclude: [
       'lynx-compat-data/**/*',
+      '**/api/elements/built-in/*-API.mdx',
       '**/guide/start/fragments/**',
       '**/guide/custom-native-component/*',
       '**/guide/custom-native-modules/*',
