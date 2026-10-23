@@ -5,7 +5,7 @@ export const lazyComponentBasicDemoMeta = {
 };
 
 export const lazyComponentVisibilityMarginDemoMeta = {
-  highlight: '{135}',
+  highlight: '{139}',
   description: 'render earlier by adjusting visibility margin',
   content: ['<LazyComponent visibilityMargin={...}>...</LazyComponent>'],
 };

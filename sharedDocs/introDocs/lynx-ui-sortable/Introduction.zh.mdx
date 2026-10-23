@@ -12,7 +12,9 @@ import { Go } from '@lynx-ui';
   webPreviewMode="auto"
 />
 
-## 无边界拖拽
+## 示例
+
+### 无边界拖拽
 
 如果未提供 `boundaryId`，则 `SortableItem` 可以不受限制地自由拖拽。
 
@@ -30,7 +32,7 @@ export const sortableNoBoundaryMeta = {
   webPreviewMode="auto"
 />
 
-## 禁用所有拖拽和排序行为
+### 禁用所有拖拽和排序行为
 
 export const sortableDisableSortingMeta = {
   highlight: '32',
@@ -51,30 +53,31 @@ export const sortableDisableSortingMeta = {
 
 ## 结构
 
-整个 `SortableItem` 都可以被拖拽。
+默认情况下，整个 `SortableItem` 都可以被拖拽。
 
-```jsx
- <SortableRoot data={data}>
-    {(item: SortableData<string>) => {
-      return (
-        <SortableItem />
-      )
-    }}
- </SortableRoot>
+```tsx
+<SortableRoot>
+  {(item) => (
+    <SortableItem
+      key={item.getSortingKey()}
+      sortingKey={item.getSortingKey()}
+    />
+  )}
+</SortableRoot>
 ```
 
-只有 `SortableItemArea` 可以被拖拽。
+当只有特定区域需要响应拖拽时，使用 `SortableItemArea`。
 
-```jsx
- <SortableRoot data={data}>
-    {(item: SortableData<string>) => {
-      return (
-        <SortableItem as='DraggableRoot' >
-          <SortableItemArea />
-        </SortableItem>
-      )
-    }}
- </SortableRoot>
+```tsx
+<SortableRoot>
+  {(item) => (
+    <SortableItem
+      key={item.getSortingKey()}
+      sortingKey={item.getSortingKey()}
+      as="DraggableRoot"
+    >
+      <SortableItemArea />
+    </SortableItem>
+  )}
+</SortableRoot>
 ```
-
-## API
