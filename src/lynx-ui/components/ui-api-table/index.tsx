@@ -18,6 +18,13 @@ type DocTypeFallback = {
   content: Array<{ text: unknown }>;
 };
 
+export type UIApiTableItem = Record<string, unknown>;
+
+export interface UIApiTableProps {
+  source: UIApiTableItem[];
+  title?: string;
+}
+
 function renderSummaryTokens(tokens: unknown): React.ReactNode[] {
   if (!Array.isArray(tokens)) return [];
   return tokens
@@ -65,15 +72,20 @@ function PlatformIndicators({ record }: { record: Record<string, unknown> }) {
   );
 }
 
-const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
+const UIApiTable = ({ source, title }: UIApiTableProps) => {
   if (import.meta.env.SSG_MD) return null;
 
   const isZh = useLang() === 'zh';
+  const titleId = React.useId();
 
-  return (
-    <div className="ui-api-list">
+  const table = (
+    <div
+      className="ui-api-list"
+      role={title ? 'table' : undefined}
+      aria-labelledby={title ? titleId : undefined}
+    >
       {source.map((item, index) => {
-        const record = item as Record<string, unknown>;
+        const record = item as UIApiTableItem;
         const name = String(record.name ?? '');
         const type = normalizeType(record);
         const defaultValue = record.defaultValue
@@ -88,8 +100,8 @@ const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
         const descNodes = renderSummaryTokens(summary);
         const hasMeta = type || defaultValue;
 
-        return (
-          <div className="ui-api-item" key={name || index}>
+        const content = (
+          <>
             <div className="ui-api-item-header">
               <span className="ui-api-item-name">{name}</span>
               <PlatformIndicators record={record} />
@@ -120,45 +132,147 @@ const UIApiTable = ({ source }: { source: Record<string, unknown>[] }) => {
             {descNodes.length > 0 && (
               <div className="ui-api-item-desc">{descNodes}</div>
             )}
+          </>
+        );
+
+        return (
+          <div
+            className="ui-api-item"
+            key={name || index}
+            role={title ? 'row' : undefined}
+          >
+            {title ? <div role="cell">{content}</div> : content}
           </div>
         );
       })}
     </div>
   );
+
+  if (!title) return table;
+
+  return (
+    <div className="ui-api-table">
+      <div className="ui-api-table-title" id={titleId}>
+        {title}
+      </div>
+      {table}
+    </div>
+  );
 };
 
-interface DataSourceItem {
-  className: string;
-  'Render Prop': string;
+export interface StateExposureRow {
+  className?: string;
+  renderProp?: string;
   item: {
     type: string;
-    description_zh: string;
-    description: string;
+    description?: string;
+    description_zh?: string;
   };
 }
 
-const ClassRenderPropTable = ({ source }: { source: DataSourceItem[] }) => {
+type LegacyStateExposureRow = StateExposureRow & {
+  'Render Prop'?: string;
+};
+
+export interface ClassRenderPropTableProps {
+  source: Array<StateExposureRow | LegacyStateExposureRow>;
+}
+
+function getRenderProp(
+  row: StateExposureRow | LegacyStateExposureRow,
+): string | undefined {
+  return row.renderProp ?? (row as LegacyStateExposureRow)['Render Prop'];
+}
+
+const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
   const isZh = useLang() === 'zh';
+  const showClassName = source.some((row) => Boolean(row.className));
+  const showRenderProp = source.some((row) => Boolean(getRenderProp(row)));
+  const isVariantOnly = showClassName && !showRenderProp;
+  const showType = showRenderProp;
+  const columnCount = Number(showClassName) + Number(showRenderProp) + 1;
+  const classNameLabel = isZh ? '类名' : 'Class Name';
+  const renderPropLabel = isZh ? '渲染属性' : 'Render Prop';
+  const typeLabel = isZh ? '类型' : 'Type';
+  const descriptionLabel = isZh ? '说明' : 'Description';
 
   return (
-    <div className="ui-api-list">
-      {source.map((row, index) => (
-        <div className="ui-api-item" key={row.className || index}>
-          <span className="ui-api-item-name">{row.className}</span>
-          <div className="ui-api-item-meta">
-            <span className="ui-api-item-label">Render Prop</span>
-            <code>{row['Render Prop']}</code>
-            <span className="ui-api-item-dot">&middot;</span>
-            <span className="ui-api-item-label">{isZh ? '类型' : 'Type'}</span>
-            <code>{row.item.type}</code>
-          </div>
-          {row.item.description && (
-            <div className="ui-api-item-desc">
-              {isZh ? row.item.description_zh : row.item.description}
-            </div>
-          )}
+    <div
+      className={`ui-api-list${isVariantOnly ? ' ui-api-state-list--variant-only' : ''}`}
+    >
+      {!isVariantOnly && (
+        <div
+          aria-hidden="true"
+          className={`ui-api-state-header ui-api-state-fields ui-api-state-fields--${columnCount}`}
+        >
+          {showClassName && <span>{classNameLabel}</span>}
+          {showRenderProp && <span>{renderPropLabel}</span>}
+          <span>{descriptionLabel}</span>
         </div>
-      ))}
+      )}
+      {source.map((row, index) => {
+        const renderProp = getRenderProp(row);
+        const description = isZh
+          ? (row.item.description_zh ?? row.item.description)
+          : (row.item.description ?? row.item.description_zh);
+        const placeholderLabel = isZh ? '未提供' : 'Not provided';
+
+        return (
+          <div
+            className="ui-api-item"
+            key={row.className || renderProp || index}
+          >
+            <div
+              className={`ui-api-state-fields ui-api-state-fields--${columnCount}${isVariantOnly ? ' ui-api-state-fields--variant-only' : ''}`}
+            >
+              {showClassName && (
+                <div className="ui-api-state-field" data-label={classNameLabel}>
+                  {row.className ? (
+                    <span className="ui-api-item-name ui-api-state-class-name">
+                      {row.className}
+                    </span>
+                  ) : (
+                    <span
+                      aria-label={placeholderLabel}
+                      className="ui-api-state-placeholder"
+                    >
+                      &mdash;
+                    </span>
+                  )}
+                </div>
+              )}
+              {showRenderProp && (
+                <div
+                  className="ui-api-state-field ui-api-state-render-prop"
+                  data-label={renderPropLabel}
+                >
+                  {renderProp ? (
+                    <code className="ui-api-state-value">{renderProp}</code>
+                  ) : (
+                    <span
+                      aria-label={placeholderLabel}
+                      className="ui-api-state-placeholder"
+                    >
+                      &mdash;
+                    </span>
+                  )}
+                </div>
+              )}
+              <div
+                className="ui-api-state-description"
+                data-label={descriptionLabel}
+              >
+                {showType && (
+                  <span className="ui-api-state-type" data-label={typeLabel}>
+                    <code className="ui-api-state-value">{row.item.type}</code>
+                  </span>
+                )}
+                {description && <span>{description}</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
