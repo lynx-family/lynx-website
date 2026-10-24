@@ -3,45 +3,64 @@
   margin-top: 0;
 }
 
-.video {
+.videoStage {
   --video-mask-top: 22.6015625%;
+  // Visual reference: a 26pt corner on a 1280pt-wide toolbar window.
+  --window-corner: 1.625cqw;
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin-top: 24px;
+
+  // A fine inner highlight, strongest along the top, like native window chrome.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: calc(var(--video-mask-top) - 1px) calc(10% - 1px) 0;
+    border-radius: var(--window-corner);
+    pointer-events: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      inset 1px 0 0 rgba(255, 255, 255, 0.18),
+      inset -1px 0 0 rgba(255, 255, 255, 0.14);
+    -webkit-mask-image: linear-gradient(#000 50%, transparent 88%);
+    mask-image: linear-gradient(#000 50%, transparent 88%);
+  }
+}
+
+.video {
   display: block;
   width: 100%;
   max-width: 960px;
   height: auto;
-  margin-top: 24px;
-  // The application occupies the middle 80% of the source video.
-  // Hide the surrounding black canvas and fade its baked-in bottom gradient.
-  -webkit-mask-image:
-    linear-gradient(
-      to right,
-      transparent 9%,
-      #000 10%,
-      #000 90%,
-      transparent 91%
-    ),
-    linear-gradient(
-      to bottom,
-      transparent calc(var(--video-mask-top) - 0.4%),
-      #000 var(--video-mask-top),
-      #000 72%,
-      transparent 100%
-    );
-  mask-image:
-    linear-gradient(
-      to right,
-      transparent 9%,
-      #000 10%,
-      #000 90%,
-      transparent 91%
-    ),
-    linear-gradient(
-      to bottom,
-      transparent calc(var(--video-mask-top) - 0.4%),
-      #000 var(--video-mask-top),
-      #000 72%,
-      transparent 100%
-    );
+  // Feather only the outside edge of the source window, without adding
+  // a background, border, or shadow around it.
+  --window-mask: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22soft%22%20x%3D%22-10%25%22%20y%3D%22-10%25%22%20width%3D%22120%25%22%20height%3D%22120%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20rx%3D%222.03125%25%22%20fill%3D%22white%22%20filter%3D%22url%28%23soft%29%22%2F%3E%3C%2Fsvg%3E');
+  --bottom-fade: linear-gradient(
+    to bottom,
+    #000 72%,
+    rgba(0, 0, 0, 0.85) 80%,
+    rgba(0, 0, 0, 0.45) 89%,
+    rgba(0, 0, 0, 0.12) 96%,
+    transparent 100%
+  );
+  -webkit-mask-image: var(--window-mask), var(--bottom-fade);
+  mask-image: var(--window-mask), var(--bottom-fade);
+  -webkit-mask-size:
+    calc(80% + 2px) calc(100% - var(--video-mask-top) + 1px),
+    100% 100%;
+  mask-size:
+    calc(80% + 2px) calc(100% - var(--video-mask-top) + 1px),
+    100% 100%;
+  -webkit-mask-position:
+    center bottom,
+    center;
+  mask-position:
+    center bottom,
+    center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
@@ -71,4 +90,44 @@
 
 :global(.dark) .wordmark {
   filter: none;
+}
+
+@media (max-width: 599px) {
+  // Keep the endorsement compact; reserve the width for the product demo.
+  .section.section {
+    box-sizing: border-box;
+    padding: 24px 16px 0;
+    margin-top: 0;
+    margin-bottom: 32px;
+    overflow-x: clip;
+
+    > h2 {
+      flex-direction: row;
+      gap: 16px;
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+  }
+
+  .brand {
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  .mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .wordmark {
+    width: 58px;
+  }
+
+  .videoStage {
+    // The source has 10% empty canvas on each side. Expand that canvas,
+    // keeping the entire visible window within the same 16px page gutters.
+    width: 125%;
+    margin-top: 20px;
+  }
 }
