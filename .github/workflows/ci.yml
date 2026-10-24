@@ -37,7 +37,21 @@ jobs:
             --lockfile-only \
             --ignore-scripts \
             --no-frozen-lockfile
-          git diff --exit-code -- pnpm-lock.yaml
+          if ! git diff --exit-code -- pnpm-lock.yaml; then
+            echo "::error::The committed pnpm-lock.yaml is inconsistent with the complete dependency resolution."
+            cat <<'EOF'
+          Regenerate the lockfile locally with:
+
+            pnpm install --force \
+              --resolution-only \
+              --lockfile-only \
+              --ignore-scripts \
+              --no-frozen-lockfile
+
+          Review and commit the resulting pnpm-lock.yaml changes.
+          EOF
+            exit 1
+          fi
 
   validate:
     name: Validate
