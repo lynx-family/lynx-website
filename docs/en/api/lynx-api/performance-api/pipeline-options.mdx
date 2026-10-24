@@ -1,0 +1,116 @@
+# `PipelineOptions`
+
+## Introduction
+
+`PipelineOptions` is the framework-facing correlation context for a [Lynx Pipeline](../../../guide/spec.mdx#lynx-pipeline). It connects framework rendering work to the Pixel Pipeline that displays the corresponding Element Tree changes.
+
+`PipelineOptions` is intended for Scripting Framework Developers. Application code must not construct this object or generate its `pipelineID`.
+
+## Type
+
+```ts
+interface PipelineOptions {
+  readonly pipelineID: string;
+  pipelineOrigin: string;
+  needTimestamps: boolean;
+  dsl?: string;
+  stage?: 'hydrate' | 'update' | string;
+}
+```
+
+## Properties
+
+### `pipelineID`
+
+```ts
+readonly pipelineID: string;
+```
+
+An Engine-generated identifier that correlates all work belonging to one pipeline. A framework must not replace, invent, or reuse this value.
+
+### `pipelineOrigin`
+
+```ts
+pipelineOrigin: string;
+```
+
+Identifies what initiated the pipeline. It determines the `name` reported by [`PipelineEntry`](./performance-entry/pipeline-entry.mdx).
+
+For an Engine-initiated pipeline, the framework must preserve the value supplied by the Engine. For a framework-initiated update, the framework sets the value to `updateTriggeredByBts` before calling [`_onPipelineStart()`](../lynx/lynx-performance/on-pipeline-start.mdx).
+
+The Performance API currently reports the following origins:
+
+| Value                     | Typical initiator              |
+| ------------------------- | ------------------------------ |
+| `loadBundle`              | Lynx Engine                    |
+| `reloadBundleFromNative`  | Native code                    |
+| `reloadBundleFromBts`     | Background Thread Script       |
+| `updateTriggeredByBts`    | Scripting framework            |
+| `updateTriggeredByNative` | Native code                    |
+| `updateGlobalProps`       | Native code or Lynx Engine     |
+| `setNativeProps`          | Native element property update |
+
+A framework must not introduce another origin without a corresponding Engine and Performance API contract.
+
+### `needTimestamps`
+
+```ts
+needTimestamps: boolean;
+```
+
+Indicates whether the pipeline requires detailed timing points. When a framework discovers an effective Timing Flag for a framework-initiated pipeline, it sets this property to `true` and binds the flag through [`_bindPipelineIdWithTimingFlag()`](../lynx/lynx-performance/bind-pipeline-id-with-timing-flag.mdx).
+
+A framework must not change an Engine-provided `true` value to `false`.
+
+### `dsl`
+
+```ts
+dsl?: string;
+```
+
+A stable identifier for the framework or DSL that produced the framework rendering data. The value is reported as [`FrameworkPipelineTiming.dsl`](./framework-pipeline-timing.mdx#dsl).
+
+### `stage`
+
+```ts
+stage?: 'hydrate' | 'update' | string;
+```
+
+Describes the framework rendering stage. The current standard values are:
+
+- `hydrate`: reconciles framework state with an existing UI representation or snapshot;
+- `update`: performs ordinary framework rendering after initialization.
+
+The value is reported as [`FrameworkPipelineTiming.stage`](./framework-pipeline-timing.mdx#stage). A framework must not introduce another value without extending the public output contract.
+
+## Ownership and transfer
+
+A pipeline is either Engine-initiated or framework-initiated:
+
+| Initiation mode     | Required framework behavior                                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Engine-initiated    | Preserve the complete object received from the Engine and forward it to the matching Element Tree submission. Do not generate or start another pipeline.                        |
+| Framework-initiated | Create the object through [`_generatePipelineOptions()`](../lynx/lynx-performance/generate-pipeline-options.mdx), populate framework-owned metadata, and start it exactly once. |
+
+The framework must transfer the complete object, or a complete structured copy, across every thread, queue, and asynchronous boundary followed by the corresponding UI changes. It must preserve fields it does not recognize.
+
+Pass the same context as [`FlushOptions.pipelineOptions`](../../engine/element-api/__FlushElementTree.mdx#pipelineoptions) when the framework submits the matching Element Tree changes.
+
+## Lifecycle
+
+One `PipelineOptions` object belongs to one logical pipeline. The framework must:
+
+1. receive it from the Engine or create it through `_generatePipelineOptions()`;
+2. start it only when it is framework-initiated;
+3. use its `pipelineID` for timing marks and Timing Flag binding;
+4. transfer it with the corresponding framework changes;
+5. attach it to the flush that submits those changes; and
+6. release or discard it after commit, cancellation, reload, or page destruction.
+
+The framework must never attach a stale context to an unrelated update.
+
+## See also
+
+- [`__FlushElementTree`](../../engine/element-api/__FlushElementTree.mdx)
+- [`PipelineEntry`](./performance-entry/pipeline-entry.mdx)
+- [Integrating a Custom Framework with the Performance API](../../../guide/performance/monitor-performance/custom-framework-performance-api-integration.mdx)
