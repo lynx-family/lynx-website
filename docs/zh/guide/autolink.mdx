@@ -1,5 +1,7 @@
 import { APITable, PlatformTabs } from '@lynx';
 
+{/* cspell:ignore DEVECO libnapi */}
+
 # 原生库与 Autolink
 
 Lynx 原生库是一个 npm 包，可以打包元件、原生模块和 Service 中的任意组合，供宿主 Lynx 应用消费。在此之前，这些能力只能在每个宿主应用里各接一次，Android、iOS 和 HarmonyOS 还要分别写一遍。Autolink 是配套的集成机制，让宿主应用自动发现 `node_modules` 中安装的库，并接入它们的原生能力，避免为每个元件、原生模块或 Service 手动写注册代码。
@@ -46,6 +48,8 @@ Autolink 在 Android 和 iOS 上提供应用级全局注册。HarmonyOS 接入�
 
 每个库都通过包根目录下的 `lynx.lib.json` 清单文件声明原生入口。这三类能力相互独立：一个库可以只暴露元件、只暴露原生模块、只暴露 Service，也可以暴露它们的任意组合。
 
+原生模块有两种实现方式。如果 Android、iOS 和 HarmonyOS 需要分别实现，请选择 `native-module`；如果 API 和业务逻辑可以通过标准 Node-API C++ addon 实现一次，再编译到 Android、iOS、HarmonyOS 和 Lynxtron，请选择 `napi-native-module`。两种方式都会给 Lynx 应用代码暴露带类型的模块，但生成文件和原生注册链路不同。
+
 应用侧像安装普通 npm 依赖一样安装库。Android Gradle 插件、iOS CocoaPods 插件和 HarmonyOS Hvigor 插件会读取 `lynx.lib.json`，把原生代码链接进宿主应用；宿主应用本身无需了解每个库具体暴露了哪些能力。Lynxtron 会从已安装包中读取同一份清单，把匹配到的包文件收集到宿主输出目录，并在宿主 bundle 前置生成代码，加载每个已收集包的 `./lynxtron` 入口。
 
 ## 使用库
@@ -78,7 +82,7 @@ lynx-app/
 
 - `package.json` 是必需的，用来声明 Autolink 库依赖。
 - Android 接入需要 Gradle settings 文件，例如 `settings.gradle` 或 `settings.gradle.kts`，以及 Android application 的构建文件，例如 `app/build.gradle` 或 `app/build.gradle.kts`。
-- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。Podfile 需要声明 [`lynx-family` Specs 仓库](https://github.com/lynx-family/Specs) 作为源。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
+- iOS 接入需要 CocoaPods 入口，通常是 `Podfile`。Podfile 需要声明 [`lynx-family` Specs 仓库](https://github.com/lynx-family/Specs)作为源。如果团队通过 Bundler 管理 Ruby 依赖，可以在 `Gemfile` 中维护 `cocoapods-lynx-library` gem。
 - HarmonyOS 接入需要根目录的 `hvigorconfig.ts`，以及一个依赖 `@lynx/lynx` 的 entry 或 feature HAP 模块。
 - `shared/` 用于宿主应用自有的跨端原生源码和 CMake 构建入口，需要自行编译。
 - Lynxtron 接入需要应用具备宿主侧 Rspack 构建，并通过 `pluginLynxtron()` 安装和加载原生库；一般消费编译后的 `dist/` 产物。
@@ -105,7 +109,7 @@ plugins {
 ```groovy
 plugins {
   id 'com.android.application'
-  id 'org.lynxsdk.lynx.library-build' version '4.0.1'
+  id 'org.lynxsdk.lynx.library-build'
 }
 ```
 
@@ -121,12 +125,15 @@ Gradle sync/build 后，Autolink 会生成固定的 Android registry 入口并�
 source 'https://cdn.cocoapods.org/'
 source 'https://github.com/lynx-family/Specs.git'
 
+install! 'cocoapods', :generate_multiple_pod_projects => true
 plugin 'cocoapods-lynx-library'
 
 target 'LynxApp' do
   use_lynx_library!
 end
 ```
+
+接入 N-API 库时需要保留 `generate_multiple_pod_projects`。它会隔离各 pod 的 header map，避免同名的 PrimJS 和 LynxWeakNodeAPI header 发生冲突。同时还需要让 Lynx 配套 pods 与主 Lynx pod 保持同一版本；否则旧 lockfile 可能继续保留不兼容的版本。
 
 执行 `pod install` 后，Autolink 会生成 registry pod，并把它接入 Lynx 的初始化流程。应用创建 `LynxConfig` 或初始化 `LynxEnv` 时，库提供的元件、原生模块和 Service 会自动注册生效；业务侧无需导入生成文件或编写额外初始化代码。
 
@@ -168,7 +175,7 @@ enableHarmonyLynxAutolink(hvigorApi, {
 
 :::note Lynxtron 工具链版本
 
-下文的 `targets` 清单和原生产物自动打包已包含在 `@lynx-js/create-lynxtron`、`@lynx-js/lynxtron`、`@lynx-js/lynxtron-dev-plugins` 和 `@lynx-js/lynxtron-builder` 的 `0.0.22` 正式发布版本中。库创建流程已使用 `create-lynx-library@0.6.1` 和 `@lynx-js/autolink-codegen@0.6.0` 验证。复现本教程时，请配套使用这些版本并保留锁文件。
+请为 `@lynx-js/create-lynxtron`、`@lynx-js/lynxtron`、`@lynx-js/lynxtron-dev-plugins` 和 `@lynx-js/lynxtron-builder` 使用相同的发布版本。`targets` 清单和原生产物自动打包从 `0.0.22` 开始提供；本流程也已使用 Lynxtron `0.0.30`、`create-lynx-library@0.6.1` 和 `@lynx-js/autolink-codegen@0.6.0` 验证。复现本教程时请保留 lockfile。
 
 :::
 
@@ -190,9 +197,11 @@ export default {
 };
 ```
 
-`entry` 是 Lynxtron 宿主自身的 bundle 入口。`pluginLynxtron()` 会把已收集的原生库包放到 Rspack 配置的 `output.path` 下；electron-builder 的 `directories.app` 必须指向同一个应用输出目录。打包应用时，`lynxtron-builder` 会把这些 package 保留在 ASAR 外；macOS 会把所选 target 的 Framework 和嵌套 app bundle payload 复制到 `Contents/Frameworks`，Windows 则让 `.node`、DLL、资源包和 locales 继续相邻地保存在解包目录中。完整的参数含义请参考 `@lynx-js/lynxtron-dev-plugins` 包。
+`entry` 参数是开发 runtime 接收的 Lynxtron 应用目录。`pluginLynxtron()` 会把已收集的原生库包放到 `<output>/.lynxtron/native` 下，其中 `<output>` 对应 Rspack 的 `output.path`。electron-builder 的 `directories.app` 必须指向同一个应用输出目录。打包应用时，`lynxtron-builder` 会把这些 package 保留在 ASAR 外；macOS 会把所选 target 的 Framework 和嵌套 app bundle payload 复制到 `Contents/Frameworks`，Windows 则让 `.node`、DLL、资源包和 locales 继续相邻地保存在解包目录中。
 
-Lynxtron 加载原生库后，其中的 Lynx 静态注册会在 Lynx runtime 中生效。库作者不需要 Lynxtron 专用注册宏。
+如果宿主使用 Rsbuild，则改为从 `@lynx-js/lynxtron-dev-plugins/rsbuild` 导入 `pluginLynxtron`。这个封装会配置底层 Rspack plugin、自动判断开发模式，并默认把 `entry` 指向 Rsbuild environment 的输出目录。
+
+Lynxtron 加载原生库后，其中的生成注册会在 Lynx runtime 中生效。平台原生模块和元件使用 Lynx 静态注册，共享 N-API 模块则使用生成的 Node-API 注册。库作者不需要 Lynxtron 专用注册宏。
 
 </PlatformTabs.Tab>
 </PlatformTabs>
@@ -734,6 +743,193 @@ Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本
 </PlatformTabs.Tab>
 </PlatformTabs>
 
+### 构建跨端 N-API 原生模块
+
+当同一个原生 API 可以在四个原生宿主上运行时，使用 N-API 原生模块。生成的平台工程会编译同一份 C++ 实现，Autolink 则负责各平台的构建、注册和加载壳。
+
+#### 创建工程并声明 API
+
+下面的命令会创建只包含共享 N-API 模块的包。如果这个库还需要元件、Service 或平台原生模块，可以在同一条命令里追加其他 feature：
+
+```bash
+npm create lynx-library -- \
+  --dir ./lynx-storage \
+  --features napi-native-module \
+  --platforms android,ios,harmony,lynxtron \
+  --package-name @example/lynx-storage \
+  --module-name StorageModule
+```
+
+进入生成的 package 并安装依赖：
+
+```bash
+cd lynx-storage
+npm install
+```
+
+在 package 根目录的 `types/napi-native-module.d.ts` 中声明 JavaScript 接口。不要和 `types/platform-native-module.d.ts` 混用；同时选择两个 feature 时会生成两个模块，并走各自独立的注册链路。
+
+```ts
+/** @lynxmodule */
+export declare class StorageModule {
+  getRuntime(): string;
+}
+```
+
+修改声明后运行 codegen：
+
+```bash
+npm run codegen
+```
+
+Codegen 只会创建一次 `shared/nativeModule/StorageModule.cc`，后续运行会保留该文件；TypeScript facade、注册源码、iOS wrapper 和符号保留 header、Lynxtron 注册源码则会重新生成。新增、删除或重命名方法后，需要先重新运行 codegen，再自行同步这个被保留 C++ 文件中的 callback 和 export。重命名模块 class 时，需要先重命名或删除旧的 `<ModuleName>.cc`，并清理旧模块对应的生成文件，再重新运行 codegen；codegen 不会自动删除残留的模块文件。
+
+#### 只实现一次模块
+
+将业务逻辑和 Node-API callback 放在 `shared/nativeModule/<ModuleName>.cc` 中。这个保留的源码使用 `@lynx-js/weak-node-api` 提供的标准 header；具体使用普通符号还是 weak-suffixed 符号，由各平台构建配置决定。
+
+下面的精简实现展示了用户维护代码和生成注册代码之间的边界：
+
+```cpp
+#if __has_include(<LynxWeakNodeAPI/headers/napi.h>)
+#include <LynxWeakNodeAPI/headers/napi.h>
+#else
+#include "napi.h"
+#endif
+
+#if defined(USE_WEAK_SUFFIX_NAPI)
+#include "weak_napi_defines.h"
+#endif
+
+namespace {
+
+napi_value GetRuntime(napi_env env, napi_callback_info info) {
+  (void)info;
+  napi_value result = nullptr;
+  napi_create_string_utf8(
+      env, "shared-c++", NAPI_AUTO_LENGTH, &result);
+  return result;
+}
+
+void BindStorageModule(napi_env env, napi_value exports) {
+  napi_value get_runtime = nullptr;
+  napi_create_function(
+      env, "getRuntime", NAPI_AUTO_LENGTH, GetRuntime, nullptr, &get_runtime);
+  napi_set_named_property(env, exports, "getRuntime", get_runtime);
+}
+
+}  // namespace
+
+extern "C" napi_value LynxAutolinkCreateStorageModule(
+    napi_env env, napi_value exports, const char* module_name, void* opaque) {
+  (void)module_name;
+  (void)opaque;
+  BindStorageModule(env, exports);
+  return exports;
+}
+
+#if defined(USE_WEAK_SUFFIX_NAPI)
+#include "weak_napi_undefs.h"
+#endif
+```
+
+不要在这个文件里放 `napi_module_register`、constructor 或平台 loader 代码。`shared/nativeModule/generated/<ModuleName>Registration.cc` 负责标准 Node-API 注册，并会被 codegen 覆盖；各平台入口只需要保留或调用这份生成注册代码。
+
+#### 为每个平台声明 addon
+
+`create-lynx-library` 会在 `lynx.lib.json` 中生成下面这些平台记录。在移动端，`nodeApiAddons` 的 `name` 必须与标记了 `@lynxmodule` 的 class 名称，以及生成的 TypeScript facade 加载的名称一致。
+
+```json
+{
+  "platforms": {
+    "android": {
+      "packageName": "com.example.storage",
+      "sourceDir": "android",
+      "providerClassName": null,
+      "nodeApiAddons": [
+        {
+          "name": "StorageModule",
+          "libraryName": "StorageModule",
+          "required": true
+        }
+      ]
+    },
+    "ios": {
+      "sourceDir": "ios",
+      "podspecPath": "ios/lynx-storage.podspec",
+      "nodeApiAddons": [
+        {
+          "name": "StorageModule",
+          "podName": "lynx-storage",
+          "podspecPath": "ios/lynx-storage.podspec",
+          "addonUseHeader": "addon_use.h"
+        }
+      ]
+    },
+    "harmony": {
+      "packageDir": "harmony",
+      "providerExportName": null,
+      "nodeApiAddons": [
+        {
+          "name": "StorageModule",
+          "libraryName": "StorageModule",
+          "initializerExportName": "initializeNodeApiAddon",
+          "required": true
+        }
+      ]
+    },
+    "lynxtron": {
+      "targets": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "files": ["dist/darwin/arm64/lynx-storage.node"]
+        }
+      ]
+    }
+  }
+}
+```
+
+- Android 从 package 的 CMake 工程构建 `lib<libraryName>.so`。生成的工程会链接 PrimJS 的 `libnapi_adapter.so` 和 `libnapi.so`；如果 package 发布的是预编译库，则可以改为声明 `jniLibsDir`。
+- iOS 通过生成的 CocoaPods wrapper 编译共享实现。`addonUseHeader` 用于防止生成的注册符号被 linker 裁剪。
+- HarmonyOS 构建源码 HAR。`initializerExportName` 指向一个幂等的 ArkTS export；Autolink 会在 AppStartup 阶段调用它，在 Lynx 创建 runtime 前加载 addon library。
+- Lynxtron 选择匹配的 `targets` 记录、收集其中列出的 `.node` 产物，再加载 package 的 `./lynxtron` 入口。package 发布的每个 OS 和架构都需要构建并包含对应 target。
+
+宿主应用仍然只需要完成[接入 Autolink](#接入-autolink) 中的一次性平台配置。不要在宿主中自行加载共享库、调用 `initializeNodeApiAddon()` 或引用 iOS 注册符号。原生注册本身不需要显式导入 `./lynxtron` 入口；如果业务代码需要使用该入口，仍然可以显式导入。
+
+#### 保持 C++ 实现跨端共享
+
+将可移植的 Node-API callback 和业务逻辑放在 `shared/nativeModule/` 下。平台目录只保留构建配置、生成 wrapper 和原生依赖打包：
+
+| 平台      | 平台专属层                                                    | 共享输入                             |
+| --------- | ------------------------------------------------------------- | ------------------------------------ |
+| Android   | Gradle、CMake shared-library target、PrimJS 原生库            | C++ callback 和生成的注册代码        |
+| iOS       | Podspec、生成 wrapper、`addon_use.h`                          | 同一份 C++ callback 和生成的注册代码 |
+| HarmonyOS | 源码 HAR、CMake shared-library target、ArkTS initializer      | 同一份 C++ callback 和生成的注册代码 |
+| Lynxtron  | CMake `.node` target、`./lynxtron` loader、打包 target 元数据 | 同一份 C++ callback 和生成的注册代码 |
+
+共享文件里使用标准 Node-API 类型，不要直接使用 JNI、Objective-C、ArkTS 或 Node/V8 专属 API。如果某个原生依赖的平台接入方式不同，应通过平台 link library 或一层很小的 C++ 抽象把它提供给共享 CMake target，不要复制整套模块 callback。让生成的 CMake 控制 `USE_WEAK_SUFFIX_NAPI`，并确保 `weak_napi_defines.h` 和 `weak_napi_undefs.h` 成对包住实现。
+
+从 package 根入口导入 `StorageModule`。首次访问时，生成的 facade 会通过 Lynx N-API loader 解析 addon，并同时暴露为 `NativeModules.StorageModule`。ReactLynx 组件模块可能在两个线程执行，但 N-API 模块只在后台 runtime 可用，因此调用前需要判断线程：
+
+```ts
+import { StorageModule } from '@example/lynx-storage';
+
+function readRuntime() {
+  if (__MAIN_THREAD__) {
+    return;
+  }
+
+  const runtime = StorageModule.getRuntime();
+  // 导入 package 后，下面的调用等价：
+  const sameRuntime = NativeModules.StorageModule.getRuntime();
+  // 在后台线程使用 runtime 和 sameRuntime。
+}
+```
+
+如果没有这个判断，主线程执行阶段可能报出 `Native module "StorageModule" is unavailable`，即使同一个 package 已在后台 runtime 中正确注册。
+
 ### 发布库
 
 像发布普通 npm 包一样发布库：选一个包名（通常是带 scope 的 `@example/lynx-button`），并在 `package.json` 中设置版本号。如果包声明了 Lynxtron targets，需要先生成源码，并在对应宿主上构建每个声明的操作系统和架构，再进行打包：
@@ -741,6 +937,7 @@ Lynxtron 原生库使用共享的 Lynx C/C++ 扩展 API 和静态注册宏。本
 ```bash
 npm run codegen
 npm run build:lynxtron
+npm pack --dry-run
 npm pack
 ```
 
@@ -755,6 +952,6 @@ Autolink 在构建期运行。它会扫描 `node_modules` 中每个 npm 包的 `
 - **Android**：由 Gradle settings 插件和 build 插件配合完成 registry 生成。
 - **iOS**：由 CocoaPods 插件完成，并产出 registry pod。
 - **HarmonyOS**：在 Hvigor 配置阶段生成源码 Registry HAR 和 AppStartup task。
-- **Lynxtron**：运行在宿主侧 Rspack 构建中，收集匹配到的原生包，把加载代码注入宿主 bundle，并让已加载库里的 Lynx 静态注册提供对应的原生模块和元件。
+- **Lynxtron**：运行在宿主侧 Rspack 构建中，收集匹配到的原生包，并把加载代码注入宿主 bundle。已加载的库通过 Lynx 静态注册提供平台原生模块和元件；对于共享 N-API 模块，`./lynxtron` 入口加载已收集的 `.node` 产物时，会走生成的 Node-API 注册链路。
 
 Android、iOS 和 HarmonyOS 都只会在初始化阶段加载一次生成的 registry，因此宿主代码中不需要任何逐库的接入逻辑。
