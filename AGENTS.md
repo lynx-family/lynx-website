@@ -19,6 +19,13 @@ Follow the [commit](./CONTRIBUTING.md#commits) and
 `CONTRIBUTING.md`. Automated reviewers must also follow the policy
 embedded in [the pull request template](./.github/pull_request_template.md).
 
+## Repository Hygiene
+
+Do not commit scratch notes, one-off investigation scripts, temporary analysis
+output, debug dumps, or other process artifacts. Keep them outside the
+repository or in an appropriate ignored location. Commit generated files only
+when a documented workflow treats them as maintained outputs.
+
 ## Downstream Compatibility
 
 This repository is consumed by the in-house Lynx documentation site through a
