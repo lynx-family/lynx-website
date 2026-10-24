@@ -25,8 +25,7 @@ interface SimpleSupportStatementExtended extends BCD.SimpleSupportStatement {
 }
 
 export type SupportStatementExtended =
-  | SimpleSupportStatementExtended
-  | SimpleSupportStatementExtended[];
+  SimpleSupportStatementExtended | SimpleSupportStatementExtended[];
 
 export function getFirst<T>(a: T | T[]): T;
 export function getFirst<T>(a: T | T[] | undefined): T | undefined {

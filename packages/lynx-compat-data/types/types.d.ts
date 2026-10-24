@@ -100,8 +100,7 @@ export type SupportBlock = Partial<Record<PlatformName, SupportStatement>>;
  * via the `definition` "support_statement".
  */
 export type SupportStatement =
-  | SimpleSupportStatement
-  | SimpleSupportStatement[];
+  SimpleSupportStatement | SimpleSupportStatement[];
 /**
  * This interface was referenced by `CompatDataFile`'s JSON-Schema
  * via the `definition` "lynx_extensions_identifier".

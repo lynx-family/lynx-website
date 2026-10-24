@@ -9,12 +9,7 @@ import cls from 'classnames';
 import '../styles/icons.scss';
 
 export type IconSize =
-  | 'inherit'
-  | 'extra-small'
-  | 'small'
-  | 'default'
-  | 'large'
-  | 'extra-large';
+  'inherit' | 'extra-small' | 'small' | 'default' | 'large' | 'extra-large';
 
 export interface IconProps extends DetailedHTMLProps<
   React.HTMLAttributes<HTMLSpanElement>,
