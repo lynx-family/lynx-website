@@ -54,7 +54,9 @@ Lynxtron is Electron-like in the application model, but it does not ship a brows
 
 ## Natively Extensible
 
-Lynxtron extends the renderer through [LynxExtensionModule](/api/lynx-native-api/lynx-extension-module), the Desktop C++ extension API backed by the [public Lynx Native API](/api/lynx-native-api/lynx-view). This reference covers the native-view lifecycle, registration, and texture APIs used by this example. Native modules use the C++ extension-module wrapper and expose their JavaScript interface through [Node-API](/lynxtron/Native-Libraries/NodeJS-Native-Modules), while native UI and texture surfaces use the native-view wrappers. In desktop development, it is common for part of an application to need native-rendered graphics or native UI: a camera preview, video surface, map view, drawing canvas, platform control, or any surface that needs hardware access, deeper GPU integration, or system-provided rendering. Lynxtron can combine those native surfaces or native UI with the Lynx runtime, so native-rendered parts stay native while interaction and UI logic can still be built and iterated with Lynx UI.
+Lynxtron can integrate native capabilities for both its Node.js host and its Lynx UI. [Node.js addons](/lynxtron/Native-Libraries/NodeJS-Native-Modules) expose host-side APIs; [Lynx native libraries](/lynxtron/Native-Libraries/Lynx-Native-Libraries) register modules and custom elements for Lynx UI. On Desktop, a library can use [`LynxExtensionModule`](/api/lynx-native-api/lynx-extension-module), backed by the [public Lynx Native API](/api/lynx-native-api/lynx-view), for view and runtime lifecycle control, native-view registration, and texture integration. Registration helpers, packaging, and AutoLink organize these building blocks into a consumable library; the extension interface is not a separate third integration path. The example below uses these Desktop extension capabilities. See the [native capability overview](/lynxtron/learn/what-is-lynxtron#native-capability-integration) for the calling environments and integration choices.
+
+In desktop development, it is common for part of an application to need native-rendered graphics or native UI: a camera preview, video surface, map view, drawing canvas, platform control, or any surface that needs hardware access, deeper GPU integration, or system-provided rendering. Lynxtron can combine those native surfaces or native UI with the Lynx runtime, so native-rendered parts stay native while interaction and UI logic can still be built and iterated with Lynx UI.
 
 <Go
   example="native-texture-canvas"
@@ -88,6 +90,8 @@ Lynxtron does not lock Lynx to desktop. With Lynx, UI code can run across platfo
 > The same Lynx UI consumes one notes API. At build time, the desktop and Web targets wire that API to a Node preload bridge and a browser-side bridge, respectively.
 
 This is the Lynxtron cross-platform engineering model: keep the Lynx UI layer shareable, isolate host-specific logic behind platform adapters, and port the renderer model to new hosts when needed.
+
+Symmetric Host names the architecture of providing a consistent host capability interface to shared Lynx UI, with each platform implementing its own adapters. The Notes example illustrates business API adaptation: it manually registers a Web native module and does not call `setupSymmetricHost`. See [Running Lynxtron on the Web](/lynxtron/learn/running-on-web) for the template’s host setup, browser capability boundaries, and [Web Host API](/lynxtron/api/@lynx-js/lynxtron/web-host/index.mdx).
 
 ## Engineering Boundaries
 
