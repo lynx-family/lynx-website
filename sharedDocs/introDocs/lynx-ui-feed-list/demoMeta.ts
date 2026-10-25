@@ -28,7 +28,7 @@ export const feedListFooterDemoMeta = {
 };
 
 export const feedListDirectRefreshDemoMeta = {
-  highlight: '{17,45-62,73-77}',
+  highlight: '{17,45-62,73-78}',
   description:
     'highlight the ref, refresh handler, and refreshOptions connection',
   content: [
