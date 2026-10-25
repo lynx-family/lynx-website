@@ -190,7 +190,6 @@ const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
   const showRenderProp = source.some((row) => Boolean(getRenderProp(row)));
   const isVariantOnly = showClassName && !showRenderProp;
   const showType = showRenderProp;
-  const columnCount = Number(showClassName) + Number(showRenderProp) + 1;
   const classNameLabel = isZh ? '类名' : 'Class Name';
   const renderPropLabel = isZh ? '渲染属性' : 'Render Prop';
   const typeLabel = isZh ? '类型' : 'Type';
@@ -200,79 +199,97 @@ const ClassRenderPropTable = ({ source }: ClassRenderPropTableProps) => {
     <div
       className={`ui-api-list${isVariantOnly ? ' ui-api-state-list--variant-only' : ''}`}
     >
-      {!isVariantOnly && (
-        <div
-          aria-hidden="true"
-          className={`ui-api-state-header ui-api-state-fields ui-api-state-fields--${columnCount}`}
+      <table className="ui-api-state-table">
+        <thead
+          className={`ui-api-state-header${isVariantOnly ? ' ui-api-state-header--visually-hidden' : ''}`}
         >
-          {showClassName && <span>{classNameLabel}</span>}
-          {showRenderProp && <span>{renderPropLabel}</span>}
-          <span>{descriptionLabel}</span>
-        </div>
-      )}
-      {source.map((row, index) => {
-        const renderProp = getRenderProp(row);
-        const description = isZh
-          ? (row.item.description_zh ?? row.item.description)
-          : (row.item.description ?? row.item.description_zh);
-        const placeholderLabel = isZh ? '未提供' : 'Not provided';
+          <tr>
+            {showClassName && <th scope="col">{classNameLabel}</th>}
+            {showRenderProp && <th scope="col">{renderPropLabel}</th>}
+            {showType && <th scope="col">{typeLabel}</th>}
+            <th scope="col">{descriptionLabel}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {source.map((row, index) => {
+            const renderProp = getRenderProp(row);
+            const description = isZh
+              ? (row.item.description_zh ?? row.item.description)
+              : (row.item.description ?? row.item.description_zh);
+            const placeholderLabel = isZh ? '未提供' : 'Not provided';
 
-        return (
-          <div
-            className="ui-api-item"
-            key={row.className || renderProp || index}
-          >
-            <div
-              className={`ui-api-state-fields ui-api-state-fields--${columnCount}${isVariantOnly ? ' ui-api-state-fields--variant-only' : ''}`}
-            >
-              {showClassName && (
-                <div className="ui-api-state-field" data-label={classNameLabel}>
-                  {row.className ? (
-                    <span className="ui-api-item-name ui-api-state-class-name">
-                      {row.className}
-                    </span>
-                  ) : (
-                    <span
-                      aria-label={placeholderLabel}
-                      className="ui-api-state-placeholder"
-                    >
-                      &mdash;
-                    </span>
-                  )}
-                </div>
-              )}
-              {showRenderProp && (
-                <div
-                  className="ui-api-state-field ui-api-state-render-prop"
-                  data-label={renderPropLabel}
-                >
-                  {renderProp ? (
-                    <code className="ui-api-state-value">{renderProp}</code>
-                  ) : (
-                    <span
-                      aria-label={placeholderLabel}
-                      className="ui-api-state-placeholder"
-                    >
-                      &mdash;
-                    </span>
-                  )}
-                </div>
-              )}
-              <div
-                className="ui-api-state-description"
-                data-label={descriptionLabel}
+            return (
+              <tr
+                className="ui-api-item"
+                key={row.className || renderProp || index}
               >
-                {showType && (
-                  <span className="ui-api-state-type" data-label={typeLabel}>
-                    <code className="ui-api-state-value">{row.item.type}</code>
-                  </span>
+                {showClassName && (
+                  <td className="ui-api-state-cell ui-api-state-class-name-cell">
+                    <span
+                      aria-hidden="true"
+                      className="ui-api-state-mobile-label"
+                    >
+                      {classNameLabel}
+                    </span>
+                    {row.className ? (
+                      <span className="ui-api-item-name ui-api-state-class-name">
+                        {row.className}
+                      </span>
+                    ) : (
+                      <span
+                        aria-label={placeholderLabel}
+                        className="ui-api-state-placeholder"
+                      >
+                        &mdash;
+                      </span>
+                    )}
+                  </td>
                 )}
-                {description && <span>{description}</span>}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+                {showRenderProp && (
+                  <td className="ui-api-state-cell ui-api-state-render-prop">
+                    <span
+                      aria-hidden="true"
+                      className="ui-api-state-mobile-label"
+                    >
+                      {renderPropLabel}
+                    </span>
+                    {renderProp ? (
+                      <code className="ui-api-state-value">{renderProp}</code>
+                    ) : (
+                      <span
+                        aria-label={placeholderLabel}
+                        className="ui-api-state-placeholder"
+                      >
+                        &mdash;
+                      </span>
+                    )}
+                  </td>
+                )}
+                {showType && (
+                  <td className="ui-api-state-cell ui-api-state-type">
+                    <span
+                      aria-hidden="true"
+                      className="ui-api-state-mobile-label"
+                    >
+                      {typeLabel}
+                    </span>
+                    <code className="ui-api-state-value">{row.item.type}</code>
+                  </td>
+                )}
+                <td className="ui-api-state-cell ui-api-state-description">
+                  <span
+                    aria-hidden="true"
+                    className="ui-api-state-mobile-label"
+                  >
+                    {descriptionLabel}
+                  </span>
+                  {description && <span>{description}</span>}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };
