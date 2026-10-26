@@ -1,0 +1,189 @@
+---
+description: '使用 Agent Lynx 将 coding agent 连接到运行中的 Lynx 应用，检查页面、操作元素并录制性能 trace。'
+---
+
+# Agent Lynx
+
+[Agent Lynx](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx) 是一个让 coding agent 检查和操作运行中 Lynx 应用的 CLI。Agent 可以读取页面结构、点击和填写元素、检查日志、截图并录制性能 trace，再用这些运行结果验证代码修改。
+
+使用 Agent Lynx 进行运行时调试，使用 [Agent Skills](https://github.com/lynx-community/skills) 获取 Lynx 开发知识，使用 [Lynx Docs MCP](lynx-docs-mcp.mdx) 访问文档。
+
+## 快速开始
+
+### 安装 CLI
+
+Agent Lynx 要求 Node.js 18.19 或更高版本。安装公开的 npm 包：
+
+```bash
+npm install -g agent-lynx
+agent-lynx --help
+```
+
+也可以直接运行，无需全局安装：
+
+```bash
+npx --yes agent-lynx --help
+```
+
+下文示例使用 `agent-lynx`。如果使用单次运行方式，将其替换为 `npx --yes agent-lynx` 即可。
+
+### 让 Agent 读取使用说明
+
+Agent Lynx 自带可供 agent 发现和读取的 skills：
+
+```bash
+agent-lynx skills list
+agent-lynx skills get lynx-devtool
+```
+
+`skills get` 返回使用说明，并列出该 skill 的参考文件和示例，不会把 skill 安装到项目中。若希望 agent 通过自身的 skill 发现机制自动加载 DevTool skill，参见 [lynx-devtool](skills/lynx-devtool.mdx)。
+
+例如，可以对 coding agent 说：
+
+```text
+使用 Agent Lynx 调试当前打开的 Lynx 页面。先读取
+`npx --yes agent-lynx skills get lynx-devtool`，再查找已连接的
+client 和 session。检查页面和控制台，复现问题，修改源码，
+然后用新的截图验证结果。
+```
+
+也可以在项目的 [AGENTS.md](agentsmd.mdx) 中约定：运行时调试前先读取 `lynx-devtool` 使用说明。
+
+### 连接 Lynx 应用
+
+1. 运行 [Lynx Explorer](/guide/start/quick-start)，或已[集成 DevTool](/guide/start/integrate-lynx-devtool) 的应用。
+2. 在应用中打开 **Lynx Debug** 和 **Lynx DevTool** 开关。使用真机时，将设备连接到运行 Agent Lynx 的电脑，并完成对应平台的调试配置。参见[设备连接说明](/guide/devtool)。
+3. 在应用中打开 Lynx 页面，然后查找对应的 client 和 session：
+
+```bash
+agent-lynx list-clients
+agent-lynx list-sessions --client <clientId>
+```
+
+**Client** 是运行中的应用，**session** 是该应用中的 Lynx view 或调试上下文。使用命令实际返回的 ID。存在多个目标时，在后续页面命令中传入 `--client <clientId>` 和 `--session <sessionId>`，确保操作的是目标页面。
+
+设备命令会自动启动共享的本地 connector daemon。页面快照、元素操作和 ReactLynx 检查应使用默认的 daemon 连接，让多次 CLI 调用共享连接和缓存中的元素引用。
+
+## 检查和操作页面
+
+### 读取页面并操作元素
+
+获取精简的元素树：
+
+```bash
+agent-lynx snapshot
+```
+
+输出会为元素分配 `@e1` 等引用。执行以下命令时，使用你实际输出中的引用；示例中的引用分别代表对应的文本、输入框、按钮或滚动容器：
+
+```bash
+agent-lynx get text @e1
+agent-lynx get style @e1 --property color,width
+agent-lynx fill @e2 "Alice"
+agent-lynx snapshot
+agent-lynx tap @e3 --snapshot
+```
+
+交互后，先读取刷新的快照，再选择下一个目标。例如，对新快照中的滚动容器执行：
+
+```bash
+agent-lynx scroll @e4 --direction down
+agent-lynx snapshot
+```
+
+引用属于所选页面的缓存快照。跳转、重载或界面变化后，重新获取快照，并使用最新的引用。
+
+### 截图
+
+```bash
+agent-lynx screenshot --annotate -o ./page.jpeg
+```
+
+该命令截图并刷新快照。图片中的 `[3]` 等标记对应 `@e3` 等元素引用，agent 可以据此识别并操作可见目标。添加 `--json` 后，可获得截图路径、尺寸和同一次调用生成的新快照，便于程序读取。
+
+需要全屏截图时，使用 `agent-lynx screenshot --fullscreen -o ./screen.jpeg`。`--annotate` 和 `--fullscreen` 应分别使用。
+
+### 查看日志和定位源码
+
+```bash
+agent-lynx get-console --limit 50
+agent-lynx get-sources
+agent-lynx get-source-info @e1
+```
+
+`get-console` 包含 VM 线程和可用的调用栈。添加 `--watch` 可以在复现问题时持续读取新日志。页面提供 [UI source-map 元数据](/guide/devtool/ui-source-map)时，`get-source-info` 可以将元素映射到源码。
+
+需要图形化检查器时，运行 `agent-lynx inspect` 并打开输出的 URL，即可检查同一个 session。更底层的调试参见 `agent-lynx evaluate --help` 和 `agent-lynx cdp --help`。Lynx 支持部分 CDP 方法，发送请求前请查阅 [Lynx CDP 参考](/api/cdp/api-ref)。
+
+### 检查 ReactLynx 组件
+
+对于已[启用 ReactLynx DevTools](/guide/devtool/panels/preact-devtools-panel) 的开发构建：
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx component @c1
+```
+
+组件引用（`@c1`）与元素引用（`@e1`）不同。使用 `agent-lynx reactlynx link @e1` 查找元素对应的组件，或用 `agent-lynx reactlynx link @c1` 查找组件的宿主元素。请先获取页面快照和组件树，再使用它们返回的引用。
+
+## 录制和分析性能 Trace
+
+在**打开或重载目标页面之前**开始录制，以包含页面首帧。整个录制过程使用同一个 client：
+
+```bash
+agent-lynx trace start --client <clientId>
+agent-lynx open '<bundle-url>' --client <clientId>
+# 复现需要测量的交互，然后结束录制。
+agent-lynx trace end --client <clientId>
+```
+
+将 `<bundle-url>` 替换为应用可访问的 bundle URL，例如项目开发服务器输出的 URL。Agent Lynx 负责打开 URL，项目构建或开发服务器需要单独运行。
+
+`trace end` 返回 stream handle。将该值填入 `<stream>`，即可下载 trace：
+
+```bash
+agent-lynx trace read-data --client <clientId> --stream <stream> -o ./page.pftrace
+agent-lynx trace event-summary ./page.pftrace --json
+agent-lynx trace query ./page.pftrace --sql "SELECT name, COUNT(*) AS count FROM slice GROUP BY name"
+```
+
+`trace event-summary` 和 `trace query` 分析本地文件，无需连接设备。需要性能诊断指导时，使用 `agent-lynx skills get lynx-trace-analysis` 加载分析 skill，参见 [lynx-trace-analysis](skills/trace-analysis.mdx)。
+
+如果录制时提示启用调试并重启应用，重启后再次运行 `trace start`，然后再打开页面。Trace 支持取决于应用构建，参见 [trace 录制要求](/guide/devtool/trace/record-trace)。
+
+## 使用 Connector API
+
+需要编写 JavaScript 或 TypeScript 自动化脚本时，在项目中安装 Agent Lynx，使模块导入可以解析：
+
+```bash
+npm install agent-lynx
+```
+
+```js
+import { createDefaultConnector } from 'agent-lynx/connector';
+
+const connector = createDefaultConnector();
+const clients = await connector.listClients();
+console.log(clients);
+```
+
+默认 connector 与 CLI 共享 daemon 连接。Session 发现和 CDP 工作流参见 [Connector API 示例](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md)。
+
+## 常见问题
+
+| 现象                   | 检查方式                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 找不到 client          | 保持应用在前台运行，打开 Lynx Debug 和 Lynx DevTool，并检查设备连接。Android 设备还需确认已授权 USB 调试。   |
+| 选中了错误的页面       | 重新运行 `list-clients` 和 `list-sessions`，显式传入目标 client 和 session ID。                              |
+| 元素引用不存在或已失效 | 重新运行 `snapshot`，使用同一个 client 和 session 最新输出中的引用。                                         |
+| ReactLynx 组件树为空   | 检查所选 session，并使用包含兼容 ReactLynx DevTools 的开发构建。                                             |
+| 无法获取源码位置       | 启用 UI source-map 生成，并确保工具可以访问与页面匹配的 debug metadata。                                     |
+| Agent 报网络权限错误   | 允许 agent 访问本地 daemon 和设备服务。使用 Codex 时，参见 [Codex 网络配置](skills/lynx-devtool.mdx#codex)。 |
+
+可以用 `agent-lynx daemon status` 检查本地 daemon，并通过 `<command> --help` 查看当前选项。`--no-daemon` 用于显式的直接连接场景；页面快照、元素引用操作、`screenshot` 和 ReactLynx 命令需要 daemon。
+
+## 已有 Skill 和 MCP 工作流
+
+如果此前使用 `lynx-devtool` 或 skill 内的 trace 脚本，请将 CLI 入口改为 `agent-lynx`，并通过 `agent-lynx skills get lynx-devtool` 读取当前 DevTool 使用说明。[上面的 trace 流程](#录制和分析性能-trace)可以替代单独的录制脚本入口。
+
+必须通过 MCP 工具调用的客户端仍可参考 [Lynx DevTool MCP 配置](lynx-devtool-mcp.mdx)。能运行 shell 命令的 coding agent 可以直接使用 Agent Lynx。[Lynx Docs MCP](lynx-docs-mcp.mdx) 继续用于访问文档。
