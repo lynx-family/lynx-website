@@ -1,0 +1,225 @@
+---
+description: 'agent-lynx 公开命令清单、交互录制、内存工作流、连接配置及 JavaScript 和 TypeScript API。'
+---
+
+# agent-lynx 功能参考
+
+本页覆盖 `agent-lynx@0.14.19` 的公开命令和包导出入口。安装、设备配置和页面调试入门参见[使用指南](agent-lynx.mdx)。使用 `agent-lynx <command> --help` 查看已安装版本支持的完整选项。
+
+## 命令清单
+
+公开 CLI 提供以下 46 个可执行命令，子命令分别计数。`agent-lynx --version`、`agent-lynx --help` 和 `agent-lynx help <command>` 提供版本及帮助信息。
+
+| 能力                                  | 命令                                                                                                                                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 读取自带的 skills                     | `agent-lynx skills list`、`agent-lynx skills get`                                                                                                                                                                                       |
+| 查找应用和页面                        | `agent-lynx list-clients`、`agent-lynx wait-for-client`、`agent-lynx list-sessions`、`agent-lynx open`                                                                                                                                  |
+| 获取元素树                            | `agent-lynx snapshot`                                                                                                                                                                                                                   |
+| 交互与等待                            | `agent-lynx tap`、`agent-lynx long-press`、`agent-lynx fill`、`agent-lynx clear`、`agent-lynx scroll`、`agent-lynx wait`                                                                                                                |
+| 读取元素和定位源码                    | `agent-lynx get text`、`agent-lynx get style`、`agent-lynx get-source-info`                                                                                                                                                             |
+| 截图                                  | `agent-lynx screenshot`、`agent-lynx take-screenshot`、`agent-lynx take-content-screenshot`                                                                                                                                             |
+| 查看日志、脚本和图形化检查器          | `agent-lynx get-console`、`agent-lynx get-sources`、`agent-lynx inspect`                                                                                                                                                                |
+| 执行代码和发送协议请求                | `agent-lynx evaluate`、`agent-lynx cdp`、`agent-lynx app`                                                                                                                                                                               |
+| 检查、查找、关联和修改 ReactLynx 组件 | `agent-lynx reactlynx tree`、`agent-lynx reactlynx component`、`agent-lynx reactlynx find`、`agent-lynx reactlynx link`、`agent-lynx reactlynx update-prop`、`agent-lynx reactlynx update-state`、`agent-lynx reactlynx update-context` |
+| 管理全局开关                          | `agent-lynx global-switch list`、`agent-lynx global-switch get`、`agent-lynx global-switch set`                                                                                                                                         |
+| 抓取 JS 堆快照                        | `agent-lynx take-heap-snapshot`                                                                                                                                                                                                         |
+| 录制和分析性能 trace                  | `agent-lynx trace start`、`agent-lynx trace end`、`agent-lynx trace read-data`、`agent-lynx trace event-summary`、`agent-lynx trace query`                                                                                              |
+| 录制用于回放的交互数据                | `agent-lynx recorder start`、`agent-lynx recorder end`                                                                                                                                                                                  |
+| 管理共享的本地连接                    | `agent-lynx daemon status`、`agent-lynx daemon start`、`agent-lynx daemon stop`                                                                                                                                                         |
+
+## 页面操作与等待
+
+除了点击、填写和滚动，agent 还可以清空输入框、长按元素，以及等待页面条件满足。请将示例引用替换为所选页面最新快照中的引用；每次界面变化后重新选择下一个操作目标。
+
+```bash
+agent-lynx clear @e2 --snapshot
+agent-lynx long-press @e3 --duration 800 --snapshot
+agent-lynx wait --text "Ready" --timeout 15000
+agent-lynx wait --ref @e4 --timeout 15000
+```
+
+`wait` 在等待期间刷新并缓存快照，超时和轮询间隔的单位是**毫秒**。等待应用连接时使用 `wait-for-client`，其超时和轮询间隔的单位是**秒**：
+
+```bash
+agent-lynx wait-for-client --client-name com.lynx.uiapp --timeout 30
+```
+
+`snapshot --visible-only` 将元素树限制在可见区域。`get style --property color,width` 选择要读取的计算样式。元素操作支持 `--snapshot`，用于在操作后刷新元素树。
+
+## 滚动内容截图
+
+[使用指南](agent-lynx.mdx)介绍了标注截图和全屏截图。以下命令还支持直接截图以及完整滚动内容截图：
+
+```bash
+agent-lynx take-screenshot --fullscreen -o ./screen.jpeg
+agent-lynx take-content-screenshot --selector '#feed' --format png --scale 1 -o ./feed.png
+```
+
+`take-content-screenshot` 获取第一个匹配滚动容器的完整内容，包括可见区域外的部分。目标应为 `scroll-view` 或兼容的 `list`，且运行时需要支持该元素的内容截图 UI 方法。需要元素引用标记时，使用 `screenshot --annotate`。
+
+## 执行代码和发送协议请求
+
+```bash
+agent-lynx evaluate '1 + 1' --thread background
+agent-lynx cdp --client <clientId> --session <sessionId> --method DOM.getDocument
+agent-lynx app --client <clientId> --method App.openPage '{"url":"<bundle-url>"}'
+```
+
+`evaluate` 可选择 `background` 或 `main` VM，并支持等待 Promise、返回远程对象、选择执行上下文和副作用检查，参见 `evaluate --help`。`cdp` 向选定的 session 发送方法和可选的 JSON 参数。Lynx 支持的方法参见 [Lynx CDP 参考](/api/cdp/api-ref)。`app` 转发宿主 App 协议请求，可用方法及参数取决于宿主应用。
+
+日志命令 `get-console` 支持 `--watch`、`--level`、`--thread`、`--offset`、`--limit` 和 `--include-stack-traces`。JSON 输出保留可用的调用栈；同时启用 `--watch` 和 `--json` 时，每行输出一个 JSON 事件。
+
+## ReactLynx 查找与修改
+
+使用已[启用 ReactLynx DevTools](/guide/devtool/panels/preact-devtools-panel) 的开发构建，然后检查组件树：
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx find 'Button' --limit 10
+agent-lynx reactlynx find '^Button$' --regex
+agent-lynx reactlynx component @c1 --json
+```
+
+`tree` 获取新一代组件树。`find` 默认复用缓存，需要重新获取时添加 `--refresh`。`--depth` 限制树的输出深度，`--show-shells` 包含合成的包装组件。复用 `@cN` 引用时应使用相同的 shell 模式。[元素与组件关联](agent-lynx.mdx#检查-reactlynx-组件)同时使用最新 DOM 快照和组件树。
+
+对提供相应 prop、class state 或 context 的组件修改字段：
+
+```bash
+agent-lynx reactlynx update-prop @c1 title 'Updated' --raw
+agent-lynx reactlynx update-state @c1 count 1
+agent-lynx reactlynx update-context @c1 theme '"dark"'
+```
+
+路径相对于选定的 props、state 或 context 对象，例如 `user.name` 或 `items.0.title`。值默认按 JSON 解析，`--raw` 按原样传递字符串。`update-state` 面向 class 组件的 state，context 修改能力取决于适配器。成功后返回应用确认的修改后检查结果。这些操作影响运行中的页面，长期修复需要修改源码。
+
+## 全局开关与内存
+
+先列出支持的全局开关，再读取或修改某个开关：
+
+```bash
+agent-lynx global-switch list --client <clientId>
+agent-lynx global-switch get --client <clientId> --key enable_debug_mode
+agent-lynx global-switch set --client <clientId> --key enable_debug_mode --status on
+```
+
+开关涉及调试、DOM/CSS/Page 域、运行时配置和截图行为。可用键名参见 `global-switch get --help`。修改后若提示重启应用，请按提示操作。
+
+从两个 VM 线程分别抓取 QuickJS 堆快照：
+
+```bash
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread background -o ./background.heapsnapshot
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread main -o ./main.heapsnapshot
+```
+
+在支持 `Memory.getAllMemoryUsage` 的运行时中，可以通过全局 session `-1` 查询存活实例的全局 Lynx 内存：
+
+```bash
+agent-lynx cdp --client <clientId> --session -1 --method Memory.getAllMemoryUsage '{"timeoutMs":50000}'
+```
+
+该命令返回原始的 [Memory 域数据](/api/cdp/api-ref/memory)，包含各实例的内存信息。JS 堆快照用于检查 JS 对象，全局内存数据用于比较 Lynx 内存的构成和不同实例的占用。
+
+## 交互录制
+
+`recorder` 将模板加载、触摸事件、JS 模块调用和数据更新录制为 TestBench 回放 JSON。性能时序数据使用 `trace` 录制。
+
+```bash
+agent-lynx recorder start --client <clientId>
+agent-lynx open '<bundle-url>' --client <clientId>
+# 复现交互，然后保存录制数据。
+agent-lynx recorder end --client <clientId> -o ./recording.json
+```
+
+在**打开或重载页面之前**开始录制，使文件包含回放所需的 `loadTemplate`。如果 `recorder start` 启用了调试模式并要求重启，重启应用后再次运行该命令，再打开页面。`recorder end` 保存数据流、返回文件路径，并检查录制文件是否为空、无效或无法回放。多个 session 可能生成多个文件。
+
+回放和产物托管参见 [Lynx Recorder 指南](/guide/devtool/recorder)。
+
+## Trace 选项
+
+按照[录制、下载和分析流程](agent-lynx.mdx#录制和分析性能-trace)操作，再根据排查目标选择录制选项：
+
+| 目标                           | `trace start` 选项                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| 包含或排除事件类别             | `--include-categories <categories>`、`--exclude-categories <categories>`，类别名用逗号分隔       |
+| 关闭系统 trace                 | `--no-systrace`                                                                                  |
+| 采集内存数据                   | `--enable-memory-trace`                                                                          |
+| 控制自动垃圾回收               | `--force-gc`（默认开启）、`--no-force-gc`                                                        |
+| 自动采集 shared-group 堆快照   | `--enable-auto-heap-snapshot`，可配合 `--shared-group-id <id>`                                   |
+| 启用 JS Profile 并选择采样间隔 | `--js-profile-type quickjs` 或 `--js-profile-type v8`，可配合 `--js-profile-interval <interval>` |
+
+`trace end` 和 `trace read-data` 支持以秒为单位的 `--timeout`。本地分析示例：
+
+```bash
+agent-lynx trace event-summary ./page.pftrace --json -o ./events.json
+agent-lynx trace query ./page.pftrace --sql-file ./query.sql --max-rows 1000 -o ./query-result.json
+```
+
+`--sql` 和 `--sql-file` 必须且只能选择一个。查询输出包含 trace 路径、大小和哈希，便于确认结果对应的文件。这些本地命令无需连接设备。
+
+## 连接与 Daemon 管理
+
+```bash
+agent-lynx daemon status
+agent-lynx daemon start
+agent-lynx daemon stop
+```
+
+`status` 读取运行中 daemon 的版本和协议信息，不会启动 daemon。管理命令支持 `--port`，默认值为 `21783`。
+
+设备连接默认共享 daemon。显式的直接连接模式支持 Android、iOS、Desktop 和 HDT transport：
+
+```bash
+agent-lynx daemon stop
+agent-lynx --no-daemon list-clients
+```
+
+直接连接同一个目标前先停止 daemon。页面快照及引用操作、`wait`、`screenshot` 和 ReactLynx 命令需要 daemon，请使用默认连接模式。`ADB_SERVER_HOST` 和 `ADB_SERVER_PORT` 仅配置直接连接模式下的 Android ADB，在 daemon 模式中会被忽略。
+
+## 输出、帮助与环境变量
+
+在提供相应选项的命令中，用 `--client` 和 `--session` 显式选择目标，用 `--json` 请求结构化输出。全局 JSON 偏好只会转发给支持 JSON 模式的命令。
+
+| 环境变量                             | 用途                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `AGENT_LYNX_FORCE_JSON`              | 设为 `1` 或 `true`，启用命令支持的 JSON 输出模式。                                               |
+| `AGENT_LYNX_DISABLE_UPDATE_NOTICE`   | 设为 `1`，关闭 npm 更新提示。                                                                    |
+| `AGENT_LYNX_INVOKED_AS`              | 由进程宿主设置面向用户的调用名称。                                                               |
+| `AGENT_LYNX_CLI_PLACEHOLDER`         | 帮助和恢复提示中调用名称的回退值。                                                               |
+| `ADB_SERVER_HOST`、`ADB_SERVER_PORT` | 配置直接连接模式的 Android ADB server，默认值为 `127.0.0.1` 和 `5037`。                          |
+| `DEBUG`                              | 在 stderr 启用对应命名空间的诊断日志。                                                           |
+| `CODEX_SANDBOX_NETWORK_DISABLED`     | 宿主将其设为 `1` 时，设备命令会报告无法访问网络，参见[网络配置](skills/lynx-devtool.mdx#codex)。 |
+
+## 公开 JavaScript 和 TypeScript API
+
+在项目中安装 `agent-lynx`，然后使用命名导出入口：
+
+| 入口                      | 公开能力                                                                                                                                                                                                                                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-lynx/connector`    | `Connector`、基于 daemon 的 `createDefaultConnector` 和 `createDefaultTransports`、Android/iOS/Desktop/HDT/daemon transport、协议数据流，以及 `evaluateExpression` / `wrapExpression`。参见 [Connector 示例](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md)。 |
+| `agent-lynx/cli`          | 创建程序、注册和执行命令、读取 skills、格式化输出、配置调用名称、可选 telemetry 和更新提示。                                                                                                                                                                                                                                |
+| `agent-lynx/bin`          | 供进程启动器使用的已发布可执行模块。                                                                                                                                                                                                                                                                                        |
+| `agent-lynx/package.json` | 包版本、导出配置及其他包元数据。                                                                                                                                                                                                                                                                                            |
+
+### 托管或扩展 CLI
+
+```js
+import { createProgram } from 'agent-lynx/cli';
+
+const program = createProgram({ cliPlaceholder: 'my-tool lynx' });
+await program.parseAsync(process.argv);
+```
+
+需要自定义 transport 上下文时，使用 `createRootCommand(context, telemetry)` 和导出的 `register*Command` 函数。调用方提供 transports 和 command client；根命令的生命周期负责关闭这些 transports，并保留命令原始错误。导出的 `run*` 辅助函数可以复用命令行为，无需复制实现。
+
+CLI 入口还提供以下集成能力：
+
+| 范围                            | API 和行为                                                                                                                                                                                                       |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Skill 发现和读取                | `resolveBuiltInSkillRoots`、`discoverSkillDependencyNames`、`resolveSkillRootsFromPackageRoot`、`readSkillDocument`、`readSkillDocuments`、`scanSkillResources`、`renderAvailableSkills`、`renderSkillContent`。 |
+| 选择产品的 skills               | `createProgram({ skills: { skillRoots } })` 或 `registerSkillsCommand(program, { skillRoots })`，显式选择直接依赖的 Skill，不会递归聚合其他 agent 包的 skills。                                                  |
+| 命令结果和渲染                  | `ok`、`fail`、`renderJson`、snapshot 和 ReactLynx 渲染器，以及共享的 client/session/JSON 选项定义。                                                                                                              |
+| 录制和数据流工具                | `analyzeRecordingBuffer`、`recordingOutputPath`、`readUntilIdle`、`buildWatchSignal`，以及超时和取消辅助函数。                                                                                                   |
+| 调用名称和 JSON 偏好            | `resolveCliPlaceholder`、调用名称替换辅助函数和 `applyHostJsonPreference`。                                                                                                                                      |
+| 可选的宿主 telemetry 和更新提示 | `withTelemetry`、`logMonitor`、`resolveUpdateNotice`、`withUpdateNotice`；telemetry 以单次调用为范围，默认没有 reporter。                                                                                        |
+
+准确签名以导出的 TypeScript 声明为准。[CLI API 源码](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/cli.ts)、[命令导出](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/commands/index.ts)和 [Connector API 源码](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/connector.ts)列出了完整的公开 API 入口。

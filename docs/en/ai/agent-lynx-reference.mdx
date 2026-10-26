@@ -1,0 +1,225 @@
+---
+description: 'Public agent-lynx command inventory, recording and memory workflows, connection settings, and JavaScript and TypeScript APIs.'
+---
+
+# agent-lynx Reference
+
+This reference covers the public commands and package entry points in `agent-lynx@0.14.19`. Start with the [usage guide](agent-lynx.mdx) for installation, device setup, and a page-debugging workflow. Use `agent-lynx <command> --help` for the complete options supported by your installed version.
+
+## Command Inventory
+
+The public CLI provides the following 46 executable commands, counting subcommands individually. `agent-lynx --version`, `agent-lynx --help`, and `agent-lynx help <command>` provide version and help information.
+
+| Capability                                         | Commands                                                                                                                                                                                                                                |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read bundled skills                                | `agent-lynx skills list`, `agent-lynx skills get`                                                                                                                                                                                       |
+| Discover apps and pages                            | `agent-lynx list-clients`, `agent-lynx wait-for-client`, `agent-lynx list-sessions`, `agent-lynx open`                                                                                                                                  |
+| Capture the element tree                           | `agent-lynx snapshot`                                                                                                                                                                                                                   |
+| Interact and wait                                  | `agent-lynx tap`, `agent-lynx long-press`, `agent-lynx fill`, `agent-lynx clear`, `agent-lynx scroll`, `agent-lynx wait`                                                                                                                |
+| Read elements and locate source                    | `agent-lynx get text`, `agent-lynx get style`, `agent-lynx get-source-info`                                                                                                                                                             |
+| Capture screenshots                                | `agent-lynx screenshot`, `agent-lynx take-screenshot`, `agent-lynx take-content-screenshot`                                                                                                                                             |
+| Inspect logs, scripts, and the graphical inspector | `agent-lynx get-console`, `agent-lynx get-sources`, `agent-lynx inspect`                                                                                                                                                                |
+| Evaluate code and send protocol requests           | `agent-lynx evaluate`, `agent-lynx cdp`, `agent-lynx app`                                                                                                                                                                               |
+| Inspect, find, link, and edit ReactLynx components | `agent-lynx reactlynx tree`, `agent-lynx reactlynx component`, `agent-lynx reactlynx find`, `agent-lynx reactlynx link`, `agent-lynx reactlynx update-prop`, `agent-lynx reactlynx update-state`, `agent-lynx reactlynx update-context` |
+| Manage global switches                             | `agent-lynx global-switch list`, `agent-lynx global-switch get`, `agent-lynx global-switch set`                                                                                                                                         |
+| Capture a JS heap                                  | `agent-lynx take-heap-snapshot`                                                                                                                                                                                                         |
+| Record and analyze performance traces              | `agent-lynx trace start`, `agent-lynx trace end`, `agent-lynx trace read-data`, `agent-lynx trace event-summary`, `agent-lynx trace query`                                                                                              |
+| Record interactions for replay                     | `agent-lynx recorder start`, `agent-lynx recorder end`                                                                                                                                                                                  |
+| Manage the shared local connection                 | `agent-lynx daemon status`, `agent-lynx daemon start`, `agent-lynx daemon stop`                                                                                                                                                         |
+
+## Element Actions and Waiting
+
+In addition to tapping, filling, and scrolling, agents can clear inputs, long-press elements, and wait for a page condition. Replace the example refs with refs from the latest snapshot of the selected page; choose the next target again after each UI change.
+
+```bash
+agent-lynx clear @e2 --snapshot
+agent-lynx long-press @e3 --duration 800 --snapshot
+agent-lynx wait --text "Ready" --timeout 15000
+agent-lynx wait --ref @e4 --timeout 15000
+```
+
+`wait` refreshes and caches snapshots while waiting. Its timeout and interval are in **milliseconds**. To wait for an app to connect, use `wait-for-client`, whose timeout and interval are in **seconds**:
+
+```bash
+agent-lynx wait-for-client --client-name com.lynx.uiapp --timeout 30
+```
+
+Use `snapshot --visible-only` to limit the tree to the viewport. `get style --property color,width` selects computed CSS properties. Ref actions support `--snapshot` to refresh the tree after an action.
+
+## Screenshots of Scrollable Content
+
+The [usage guide](agent-lynx.mdx) covers annotated and fullscreen screenshots. These additional commands support direct screenshots and full scroll-container content:
+
+```bash
+agent-lynx take-screenshot --fullscreen -o ./screen.jpeg
+agent-lynx take-content-screenshot --selector '#feed' --format png --scale 1 -o ./feed.png
+```
+
+`take-content-screenshot` captures the first matching scroll container, including content outside the viewport. Use a `scroll-view` or a compatible `list`; the runtime must support the content-screenshot UI method on that element. Use `screenshot --annotate` when the image needs element-ref labels.
+
+## Runtime Evaluation and Protocol Requests
+
+```bash
+agent-lynx evaluate '1 + 1' --thread background
+agent-lynx cdp --client <clientId> --session <sessionId> --method DOM.getDocument
+agent-lynx app --client <clientId> --method App.openPage '{"url":"<bundle-url>"}'
+```
+
+`evaluate` selects the `background` or `main` VM and supports promise awaiting, remote-object results, execution-context selection, and side-effect checks; consult `evaluate --help`. `cdp` sends a method and optional JSON parameters to the selected session. Check the [Lynx CDP reference](/api/cdp/api-ref) for methods supported by Lynx. `app` forwards a host App protocol request; available methods and their parameters depend on the host application.
+
+For logs, `get-console` supports `--watch`, `--level`, `--thread`, `--offset`, `--limit`, and `--include-stack-traces`. JSON output preserves available stack traces; watch mode emits one JSON event per line when `--json` is enabled.
+
+## ReactLynx Search and Updates
+
+Use a development build with [ReactLynx DevTools enabled](/guide/devtool/panels/preact-devtools-panel), then inspect its component tree:
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx find 'Button' --limit 10
+agent-lynx reactlynx find '^Button$' --regex
+agent-lynx reactlynx component @c1 --json
+```
+
+`tree` captures a fresh component generation. `find` reuses the cached tree by default; use `--refresh` when you need a new generation. `--depth` limits tree output, and `--show-shells` includes synthetic wrappers. Use the same shell mode when reusing `@cN` labels. [Linking elements and components](agent-lynx.mdx#inspect-reactlynx-components) uses the latest DOM snapshot as well as the component tree.
+
+Update fields on a component that exposes the corresponding prop, class state, or context:
+
+```bash
+agent-lynx reactlynx update-prop @c1 title 'Updated' --raw
+agent-lynx reactlynx update-state @c1 count 1
+agent-lynx reactlynx update-context @c1 theme '"dark"'
+```
+
+Paths are relative to the selected props, state, or context object, such as `user.name` or `items.0.title`. Values are parsed as JSON; `--raw` sends a string verbatim. `update-state` targets class-component state, and context updates depend on the adapter. Successful updates return the app's post-update inspection result. These changes affect the running page; edit the source for a lasting fix.
+
+## Global Switches and Memory
+
+List the supported global switch keys before reading or changing one:
+
+```bash
+agent-lynx global-switch list --client <clientId>
+agent-lynx global-switch get --client <clientId> --key enable_debug_mode
+agent-lynx global-switch set --client <clientId> --key enable_debug_mode --status on
+```
+
+Switches control debugging, DOM/CSS/Page domains, runtime settings, and screenshot behavior. Use `global-switch get --help` for the accepted keys. Follow any app-restart instruction after changing a switch.
+
+Capture a QuickJS heap snapshot from either VM thread:
+
+```bash
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread background -o ./background.heapsnapshot
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread main -o ./main.heapsnapshot
+```
+
+For global Lynx memory usage across live instances, use the global session `-1` on a runtime supporting `Memory.getAllMemoryUsage`:
+
+```bash
+agent-lynx cdp --client <clientId> --session -1 --method Memory.getAllMemoryUsage '{"timeoutMs":50000}'
+```
+
+This returns the raw [Memory domain payload](/api/cdp/api-ref/memory), including per-instance memory data. A JS heap snapshot and global Lynx memory usage answer different questions: use the snapshot to inspect JS objects and the global payload to compare Lynx memory contributors and instances.
+
+## Interaction Recordings
+
+`recorder` records template loads, touch events, JS module calls, and data updates into TestBench replay JSON. Performance timing is recorded with `trace`.
+
+```bash
+agent-lynx recorder start --client <clientId>
+agent-lynx open '<bundle-url>' --client <clientId>
+# Reproduce the interactions, then save the recording.
+agent-lynx recorder end --client <clientId> -o ./recording.json
+```
+
+Start recording **before opening or reloading the page** so the file includes `loadTemplate`, which replay requires. If `recorder start` enables debug mode and asks for an app restart, restart the app and run it again before opening the page. `recorder end` saves the streams, reports the saved files, and diagnoses empty, invalid, or non-replayable recordings. Multiple sessions can produce multiple files.
+
+For replay and artifact hosting, follow the [Lynx Recorder guide](/guide/devtool/recorder).
+
+## Trace Options
+
+Follow the [record, download, and analyze workflow](agent-lynx.mdx#record-and-analyze-a-performance-trace), then select the capture controls needed for your investigation:
+
+| Goal                                          | `trace start` options                                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Include or exclude event categories           | `--include-categories <categories>`, `--exclude-categories <categories>`; comma-separated names      |
+| Disable system tracing                        | `--no-systrace`                                                                                      |
+| Collect memory data                           | `--enable-memory-trace`                                                                              |
+| Control automatic garbage collection          | `--force-gc` (default), `--no-force-gc`                                                              |
+| Capture automatic shared-group heap snapshots | `--enable-auto-heap-snapshot`, optionally `--shared-group-id <id>`                                   |
+| Enable JS profiling and select its interval   | `--js-profile-type quickjs` or `--js-profile-type v8`, optionally `--js-profile-interval <interval>` |
+
+`trace end` and `trace read-data` support `--timeout` in seconds. For local analysis:
+
+```bash
+agent-lynx trace event-summary ./page.pftrace --json -o ./events.json
+agent-lynx trace query ./page.pftrace --sql-file ./query.sql --max-rows 1000 -o ./query-result.json
+```
+
+Use exactly one of `--sql` and `--sql-file`. Query output includes the trace path, size, and hash so results can be associated with the file analyzed. These local commands do not require a connected device.
+
+## Connections and Daemon Lifecycle
+
+```bash
+agent-lynx daemon status
+agent-lynx daemon start
+agent-lynx daemon stop
+```
+
+`status` reads the running daemon's version and protocol information without starting it. Lifecycle commands accept `--port`, which defaults to `21783`.
+
+The default device connection shares the daemon. Explicit direct mode supports Android, iOS, Desktop, and HDT transports:
+
+```bash
+agent-lynx daemon stop
+agent-lynx --no-daemon list-clients
+```
+
+Stop the daemon before directly connecting to the same target. Snapshot refs and their actions, `wait`, `screenshot`, and ReactLynx commands require the daemon; keep their default connection mode. `ADB_SERVER_HOST` and `ADB_SERVER_PORT` configure Android ADB only in direct mode and are ignored in daemon mode.
+
+## Output, Help, and Environment
+
+Use `--client` and `--session` on commands that declare them to select the target explicitly. Use `--json` where supported to request structured output. The global JSON preference is forwarded only to commands with a JSON mode.
+
+| Environment variable                 | Purpose                                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `AGENT_LYNX_FORCE_JSON`              | Set to `1` or `true` to enable supported JSON output modes.                                                                             |
+| `AGENT_LYNX_DISABLE_UPDATE_NOTICE`   | Set to `1` to disable npm update notices.                                                                                               |
+| `AGENT_LYNX_INVOKED_AS`              | Set the user-facing invocation name in a process host.                                                                                  |
+| `AGENT_LYNX_CLI_PLACEHOLDER`         | Fallback invocation name for help and recovery hints.                                                                                   |
+| `ADB_SERVER_HOST`, `ADB_SERVER_PORT` | Configure the direct-mode Android ADB server; defaults are `127.0.0.1` and `5037`.                                                      |
+| `DEBUG`                              | Enable diagnostic logging namespaces on stderr.                                                                                         |
+| `CODEX_SANDBOX_NETWORK_DISABLED`     | When set to `1` by the host, device commands report unavailable network access. See the [network setup](skills/lynx-devtool.mdx#codex). |
+
+## Public JavaScript and TypeScript APIs
+
+Install `agent-lynx` as a project dependency and use its named entry points:
+
+| Entry point               | Public functionality                                                                                                                                                                                                                                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-lynx/connector`    | `Connector`, daemon-backed `createDefaultConnector` and `createDefaultTransports`, Android/iOS/Desktop/HDT/daemon transports, protocol streams, and `evaluateExpression` / `wrapExpression`. See the [Connector examples](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md). |
+| `agent-lynx/cli`          | Program creation, command registration and execution helpers, skill readers, output formatting, invocation naming, optional telemetry, and update notices.                                                                                                                                                                              |
+| `agent-lynx/bin`          | The published executable module for process launchers.                                                                                                                                                                                                                                                                                  |
+| `agent-lynx/package.json` | Package version, exports, and other package metadata.                                                                                                                                                                                                                                                                                   |
+
+### Host or Extend the CLI
+
+```js
+import { createProgram } from 'agent-lynx/cli';
+
+const program = createProgram({ cliPlaceholder: 'my-tool lynx' });
+await program.parseAsync(process.argv);
+```
+
+For a custom transport context, use `createRootCommand(context, telemetry)` and the exported `register*Command` functions. The caller supplies the transports and command client; the root lifecycle closes those transports and preserves action errors. The exported `run*` helpers reuse command actions without copying their implementations.
+
+The CLI entry point also provides these integration helpers:
+
+| Area                                | APIs and behavior                                                                                                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Skill discovery and reading         | `resolveBuiltInSkillRoots`, `discoverSkillDependencyNames`, `resolveSkillRootsFromPackageRoot`, `readSkillDocument`, `readSkillDocuments`, `scanSkillResources`, `renderAvailableSkills`, `renderSkillContent`.    |
+| Select a product's skills           | `createProgram({ skills: { skillRoots } })` or `registerSkillsCommand(program, { skillRoots })`; select explicit direct Skill dependencies. Discovery does not recursively aggregate other agent packages' skills. |
+| Command results and rendering       | `ok`, `fail`, `renderJson`, snapshot and ReactLynx renderers, and shared client/session/JSON option definitions.                                                                                                   |
+| Recording and stream utilities      | `analyzeRecordingBuffer`, `recordingOutputPath`, `readUntilIdle`, `buildWatchSignal`, and timeout / abort helpers.                                                                                                 |
+| Invocation and JSON preferences     | `resolveCliPlaceholder`, placeholder-replacement helpers, and `applyHostJsonPreference`.                                                                                                                           |
+| Optional host telemetry and notices | `withTelemetry`, `logMonitor`, `resolveUpdateNotice`, and `withUpdateNotice`; telemetry is invocation-scoped and has no default reporter.                                                                          |
+
+Use the exported TypeScript declarations for exact signatures. The [CLI API source](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/cli.ts), [command exports](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/commands/index.ts), and [Connector API source](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/connector.ts) provide the full public API entry points.
