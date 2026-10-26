@@ -17,6 +17,10 @@ import {
 import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import {
+  API_PARTIAL_ROUTE_EXCLUDE,
+  assertNoApiPartialRoutes,
+} from './scripts/build/api-partial-routes.mts';
 import versionJson from './docs/public/version.json';
 import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
@@ -30,6 +34,7 @@ export default defineConfig({
   route: {
     exclude: [
       'lynx-compat-data/**/*',
+      API_PARTIAL_ROUTE_EXCLUDE,
       '**/guide/start/fragments/**',
       '**/guide/custom-native-component/*',
       '**/guide/custom-native-modules/*',
@@ -241,7 +246,7 @@ export default defineConfig({
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
-    pluginSanitizeGeneratedHtml(),
+    pluginValidateAndSanitizeGeneratedHtml(),
   ],
   markdown: {
     defaultWrapCode: false,
@@ -269,13 +274,15 @@ export default defineConfig({
   llms: true,
 });
 
-// Some broken links are introduced only after Rspress renders the final HTML:
-// generated spec content may contain NUL bytes, language alternates can point
-// at missing localized routes, and living-spec emits one stale fragment link.
-// Sanitize those generated artifacts here so the source docs stay unchanged.
-function pluginSanitizeGeneratedHtml(): RspressPlugin {
+/**
+ * Validates the production route set and repairs known generated HTML defects.
+ *
+ * This hook runs once in Node.js after a production build. It never ships to
+ * the browser or executes during client-side navigation.
+ */
+function pluginValidateAndSanitizeGeneratedHtml(): RspressPlugin {
   return {
-    name: 'sanitize-generated-html',
+    name: 'validate-and-sanitize-generated-html',
     async afterBuild(config, isProd) {
       if (!isProd) {
         return;
@@ -287,18 +294,16 @@ function pluginSanitizeGeneratedHtml(): RspressPlugin {
       const routes = new Set(
         files.map((file) => routeForHtmlFile(outDir, file)),
       );
+      assertNoApiPartialRoutes(routes);
 
       await Promise.all(
         files.map(async (file) => {
           const html = await fs.readFile(file, 'utf8');
-          let sanitized = html.replaceAll('\u0000', '');
+          let sanitized = html.replace(/\u0000/g, '');
           if (routeForHtmlFile(outDir, file) === '/living-spec') {
             // The generated living spec links to #ref, but the actual section
             // id in the built page is #references.
-            sanitized = sanitized.replaceAll(
-              'href="#ref"',
-              'href="#references"',
-            );
+            sanitized = sanitized.replace(/href="#ref"/g, 'href="#references"');
           }
           sanitized = removeBrokenAlternateLinks(sanitized, routes);
           if (sanitized !== html) {
