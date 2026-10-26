@@ -1,18 +1,18 @@
 ---
-description: '使用 Agent Lynx 将 coding agent 连接到运行中的 Lynx 应用，检查页面、操作元素并录制性能 trace。'
+description: '使用 agent-lynx 将 coding agent 连接到运行中的 Lynx 应用，检查页面、操作元素并录制性能 trace。'
 ---
 
-# Agent Lynx
+# agent-lynx
 
-[Agent Lynx](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx) 是一个让 coding agent 检查和操作运行中 Lynx 应用的 CLI。Agent 可以读取页面结构、点击和填写元素、检查日志、截图并录制性能 trace，再用这些运行结果验证代码修改。
+[agent-lynx](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx) 是一个让 coding agent 检查和操作运行中 Lynx 应用的 CLI。Agent 可以读取页面结构、点击和填写元素、检查日志、截图并录制性能 trace，再用这些运行结果验证代码修改。
 
-使用 Agent Lynx 进行运行时调试，使用 [Agent Skills](https://github.com/lynx-community/skills) 获取 Lynx 开发知识，使用 [Lynx Docs MCP](lynx-docs-mcp.mdx) 访问文档。
+使用 agent-lynx 进行运行时调试，使用 [Agent Skills](https://github.com/lynx-community/skills) 获取 Lynx 开发知识，使用 [Lynx Docs MCP](lynx-docs-mcp.mdx) 访问文档。
 
 ## 快速开始
 
 ### 安装 CLI
 
-Agent Lynx 要求 Node.js 18.19 或更高版本。安装公开的 npm 包：
+agent-lynx 要求 Node.js 18.19 或更高版本。安装公开的 npm 包：
 
 ```bash
 npm install -g agent-lynx
@@ -29,7 +29,7 @@ npx --yes agent-lynx --help
 
 ### 让 Agent 读取使用说明
 
-Agent Lynx 自带可供 agent 发现和读取的 skills：
+agent-lynx 自带可供 agent 发现和读取的 skills：
 
 ```bash
 agent-lynx skills list
@@ -41,7 +41,7 @@ agent-lynx skills get lynx-devtool
 例如，可以对 coding agent 说：
 
 ```text
-使用 Agent Lynx 调试当前打开的 Lynx 页面。先读取
+使用 agent-lynx 调试当前打开的 Lynx 页面。先读取
 `npx --yes agent-lynx skills get lynx-devtool`，再查找已连接的
 client 和 session。检查页面和控制台，复现问题，修改源码，
 然后用新的截图验证结果。
@@ -52,7 +52,7 @@ client 和 session。检查页面和控制台，复现问题，修改源码，
 ### 连接 Lynx 应用
 
 1. 运行 [Lynx Explorer](/guide/start/quick-start)，或已[集成 DevTool](/guide/start/integrate-lynx-devtool) 的应用。
-2. 在应用中打开 **Lynx Debug** 和 **Lynx DevTool** 开关。使用真机时，将设备连接到运行 Agent Lynx 的电脑，并完成对应平台的调试配置。参见[设备连接说明](/guide/devtool)。
+2. 在应用中打开 **Lynx Debug** 和 **Lynx DevTool** 开关。使用真机时，将设备连接到运行 agent-lynx 的电脑，并完成对应平台的调试配置。参见[设备连接说明](/guide/devtool)。
 3. 在应用中打开 Lynx 页面，然后查找对应的 client 和 session：
 
 ```bash
@@ -137,7 +137,7 @@ agent-lynx open '<bundle-url>' --client <clientId>
 agent-lynx trace end --client <clientId>
 ```
 
-将 `<bundle-url>` 替换为应用可访问的 bundle URL，例如项目开发服务器输出的 URL。Agent Lynx 负责打开 URL，项目构建或开发服务器需要单独运行。
+将 `<bundle-url>` 替换为应用可访问的 bundle URL，例如项目开发服务器输出的 URL。agent-lynx 负责打开 URL，项目构建或开发服务器需要单独运行。
 
 `trace end` 返回 stream handle。将该值填入 `<stream>`，即可下载 trace：
 
@@ -153,7 +153,7 @@ agent-lynx trace query ./page.pftrace --sql "SELECT name, COUNT(*) AS count FROM
 
 ## 使用 Connector API
 
-需要编写 JavaScript 或 TypeScript 自动化脚本时，在项目中安装 Agent Lynx，使模块导入可以解析：
+需要编写 JavaScript 或 TypeScript 自动化脚本时，在项目中安装 agent-lynx，使模块导入可以解析：
 
 ```bash
 npm install agent-lynx
@@ -186,4 +186,4 @@ console.log(clients);
 
 如果此前使用 `lynx-devtool` 或 skill 内的 trace 脚本，请将 CLI 入口改为 `agent-lynx`，并通过 `agent-lynx skills get lynx-devtool` 读取当前 DevTool 使用说明。[上面的 trace 流程](#录制和分析性能-trace)可以替代单独的录制脚本入口。
 
-必须通过 MCP 工具调用的客户端仍可参考 [Lynx DevTool MCP 配置](lynx-devtool-mcp.mdx)。能运行 shell 命令的 coding agent 可以直接使用 Agent Lynx。[Lynx Docs MCP](lynx-docs-mcp.mdx) 继续用于访问文档。
+必须通过 MCP 工具调用的客户端仍可参考 [Lynx DevTool MCP 配置](lynx-devtool-mcp.mdx)。能运行 shell 命令的 coding agent 可以直接使用 agent-lynx。[Lynx Docs MCP](lynx-docs-mcp.mdx) 继续用于访问文档。
