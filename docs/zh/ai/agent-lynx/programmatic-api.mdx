@@ -1,0 +1,58 @@
+---
+description: '使用带类型的 Connector API、托管或扩展 CLI，并集成 agent-lynx 的公开入口和辅助函数。'
+---
+
+# 程序化 API
+
+## 使用 Connector API
+
+需要编写 JavaScript 或 TypeScript 自动化脚本时，在项目中安装 agent-lynx，使模块导入可以解析：
+
+```bash
+npm install agent-lynx
+```
+
+```js
+import { createDefaultConnector } from 'agent-lynx/connector';
+
+const connector = createDefaultConnector();
+const clients = await connector.listClients();
+console.log(clients);
+```
+
+默认 connector 与 CLI 共享 daemon 连接。Session 发现和 CDP 工作流参见 [Connector API 示例](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md)。
+
+## 公开包导出入口
+
+在项目中安装 `agent-lynx`，然后使用命名导出入口：
+
+| 入口                      | 公开能力                                                                                                                                                                                                                                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-lynx/connector`    | `Connector`、基于 daemon 的 `createDefaultConnector` 和 `createDefaultTransports`、Android/iOS/Desktop/HDT/daemon transport、协议数据流，以及 `evaluateExpression` / `wrapExpression`。参见 [Connector 示例](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md)。 |
+| `agent-lynx/cli`          | 创建程序、注册和执行命令、读取 skills、格式化输出、配置调用名称、可选 telemetry 和更新提示。                                                                                                                                                                                                                                |
+| `agent-lynx/bin`          | 供进程启动器使用的已发布可执行模块。                                                                                                                                                                                                                                                                                        |
+| `agent-lynx/package.json` | 包版本、导出配置及其他包元数据。                                                                                                                                                                                                                                                                                            |
+
+## 托管或扩展 CLI
+
+```js
+import { createProgram } from 'agent-lynx/cli';
+
+const program = createProgram({ cliPlaceholder: 'my-tool lynx' });
+await program.parseAsync(process.argv);
+```
+
+需要自定义 transport 上下文时，使用 `createRootCommand(context, telemetry)` 和导出的 `register*Command` 函数。调用方提供 transports 和 command client；根命令的生命周期负责关闭这些 transports，并保留命令原始错误。导出的 `run*` 辅助函数可以复用命令行为，无需复制实现。
+
+CLI 入口还提供以下集成能力：
+
+| 范围                            | API 和行为                                                                                                                                                                                                       |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Skill 发现和读取                | `resolveBuiltInSkillRoots`、`discoverSkillDependencyNames`、`resolveSkillRootsFromPackageRoot`、`readSkillDocument`、`readSkillDocuments`、`scanSkillResources`、`renderAvailableSkills`、`renderSkillContent`。 |
+| 选择产品的 skills               | `createProgram({ skills: { skillRoots } })` 或 `registerSkillsCommand(program, { skillRoots })`，显式选择直接依赖的 Skill，不会递归聚合其他 agent 包的 skills。                                                  |
+| 命令结果和渲染                  | `ok`、`fail`、`renderJson`、snapshot 和 ReactLynx 渲染器，以及共享的 client/session/JSON 选项定义。                                                                                                              |
+| 录制和数据流工具                | `analyzeRecordingBuffer`、`recordingOutputPath`、`readUntilIdle`、`buildWatchSignal`，以及超时和取消辅助函数。                                                                                                   |
+| 调用名称和 JSON 偏好            | `resolveCliPlaceholder`、调用名称替换辅助函数和 `applyHostJsonPreference`。                                                                                                                                      |
+| 可选的宿主 telemetry 和更新提示 | `withTelemetry`、`logMonitor`、`resolveUpdateNotice`、`withUpdateNotice`；telemetry 以单次调用为范围，默认没有 reporter。                                                                                        |
+
+准确签名以导出的 TypeScript 声明为准。[CLI API 源码](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/cli.ts)、[命令导出](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/commands/index.ts)和 [Connector API 源码](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/connector.ts)列出了完整的公开 API 入口。

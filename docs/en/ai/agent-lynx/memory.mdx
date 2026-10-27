@@ -1,0 +1,26 @@
+---
+description: 'Capture QuickJS heap snapshots from main and background threads and query global Lynx memory usage.'
+---
+
+# Memory Inspection
+
+[Connect an app and select a session](connections.mdx) before capturing a heap snapshot.
+
+## Capture a JS Heap Snapshot
+
+Capture a QuickJS heap snapshot from either VM thread:
+
+```bash
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread background -o ./background.heapsnapshot
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread main -o ./main.heapsnapshot
+```
+
+## Inspect Global Lynx Memory
+
+For global Lynx memory usage across live instances, use the global session `-1` on a runtime supporting `Memory.getAllMemoryUsage`:
+
+```bash
+agent-lynx cdp --client <clientId> --session -1 --method Memory.getAllMemoryUsage '{"timeoutMs":50000}'
+```
+
+This returns the raw [Memory domain payload](/api/cdp/api-ref/memory), including per-instance memory data. A JS heap snapshot and global Lynx memory usage answer different questions: use the snapshot to inspect JS objects and the global payload to compare Lynx memory contributors and instances.

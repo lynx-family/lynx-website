@@ -1,0 +1,54 @@
+---
+description: 'Record and download performance traces, configure capture options, summarize events, and query local traces with SQL.'
+---
+
+# Performance Tracing
+
+[Connect an app](connections.mdx) and select its client ID before recording. Local analysis commands can also work with an existing trace file.
+
+## Record, Download, and Analyze
+
+Start tracing **before opening or reloading the target page** to include its first frame. Use the same client throughout the recording:
+
+```bash
+agent-lynx trace start --client <clientId>
+agent-lynx open '<bundle-url>' --client <clientId>
+# Reproduce the interactions you want to measure, then stop recording.
+agent-lynx trace end --client <clientId>
+```
+
+Replace `<bundle-url>` with a bundle URL reachable by the app, such as the URL printed by your project's development server. agent-lynx opens the URL; run the project's build or development server separately.
+
+`trace end` returns a stream handle. Substitute that value for `<stream>` to download the trace:
+
+```bash
+agent-lynx trace read-data --client <clientId> --stream <stream> -o ./page.pftrace
+agent-lynx trace event-summary ./page.pftrace --json
+agent-lynx trace query ./page.pftrace --sql "SELECT name, COUNT(*) AS count FROM slice GROUP BY name"
+```
+
+`trace event-summary` and `trace query` analyze local files without a connected device. For guided performance diagnosis, load the analysis skill with `agent-lynx skills get lynx-trace-analysis`; see [lynx-trace-analysis](../skills/trace-analysis.mdx).
+
+If tracing asks you to enable debugging and restart the app, restart it and run `trace start` again before opening the page. Trace support depends on the app's build; see [trace recording requirements](/guide/devtool/trace/record-trace).
+
+## Capture Options
+
+Choose capture controls for your investigation:
+
+| Goal                                          | `trace start` options                                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Include or exclude event categories           | `--include-categories <categories>`, `--exclude-categories <categories>`; comma-separated names      |
+| Disable system tracing                        | `--no-systrace`                                                                                      |
+| Collect memory data                           | `--enable-memory-trace`                                                                              |
+| Control automatic garbage collection          | `--force-gc` (default), `--no-force-gc`                                                              |
+| Capture automatic shared-group heap snapshots | `--enable-auto-heap-snapshot`, optionally `--shared-group-id <id>`                                   |
+| Enable JS profiling and select its interval   | `--js-profile-type quickjs` or `--js-profile-type v8`, optionally `--js-profile-interval <interval>` |
+
+`trace end` and `trace read-data` support `--timeout` in seconds. For local analysis:
+
+```bash
+agent-lynx trace event-summary ./page.pftrace --json -o ./events.json
+agent-lynx trace query ./page.pftrace --sql-file ./query.sql --max-rows 1000 -o ./query-result.json
+```
+
+Use exactly one of `--sql` and `--sql-file`. Query output includes the trace path, size, and hash so results can be associated with the file analyzed. These local commands do not require a connected device.

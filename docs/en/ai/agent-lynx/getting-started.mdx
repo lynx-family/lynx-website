@@ -1,0 +1,59 @@
+---
+description: 'Install agent-lynx, load its bundled skills, connect an app, and inspect your first page.'
+---
+
+# Getting Started
+
+## Install the CLI
+
+agent-lynx requires Node.js 18.19 or later. Install the public npm package:
+
+```bash
+npm install -g agent-lynx
+agent-lynx --help
+```
+
+You can also run it without a global installation:
+
+```bash
+npx --yes agent-lynx --help
+```
+
+The examples below use `agent-lynx`. Replace it with `npx --yes agent-lynx` if you use the one-shot command.
+
+## Give Your Agent the Instructions
+
+agent-lynx ships with skills that the agent can discover and read directly:
+
+```bash
+agent-lynx skills list
+agent-lynx skills get lynx-devtool
+```
+
+`skills get` returns the instructions and lists the skill's reference and example files. It does not install a skill into your project. To make the DevTool skill available through your agent's automatic skill discovery, see [lynx-devtool](../skills/lynx-devtool.mdx).
+
+For example, ask your coding agent:
+
+```text
+Use agent-lynx to debug the currently open Lynx page. First read
+`npx --yes agent-lynx skills get lynx-devtool`, then find the connected
+client and session. Inspect the page and console, reproduce the issue,
+fix the source code, and verify the result with a fresh screenshot.
+```
+
+You can also add the instruction to read `lynx-devtool` before runtime debugging to your project's [AGENTS.md](../agentsmd.mdx).
+
+## Connect and Check a Page
+
+Run [Lynx Explorer](/guide/start/quick-start) or your app with [DevTool integrated](/guide/start/integrate-lynx-devtool), enable Lynx Debug and Lynx DevTool, and open a Lynx page. Complete the [device connection setup](connections.mdx) for your platform, then run:
+
+```bash
+agent-lynx list-clients
+agent-lynx list-sessions --client <clientId>
+agent-lynx snapshot --client <clientId> --session <sessionId>
+agent-lynx screenshot --client <clientId> --session <sessionId> --annotate -o ./page.jpeg
+```
+
+Replace the IDs with those returned by the discovery commands. A client is the running app; a session is a Lynx view or debugging context within it. Device commands automatically share a local connector daemon so subsequent calls can reuse the connection and refs.
+
+The snapshot gives elements refs such as `@e1`; the annotated screenshot labels the same elements. Continue with [Page Inspection and Interaction](page-inspection.mdx), then use a fresh snapshot or screenshot to verify your source changes. For errors, see [Troubleshooting](troubleshooting.mdx).

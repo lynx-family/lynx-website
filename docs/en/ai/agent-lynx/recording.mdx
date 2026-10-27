@@ -1,0 +1,20 @@
+---
+description: 'Record Lynx template loads, interactions, JS module calls, and data updates for TestBench replay.'
+---
+
+# Interaction Recording
+
+`recorder` records template loads, touch events, JS module calls, and data updates into TestBench replay JSON. For performance timing, use [performance tracing](tracing.mdx).
+
+[Connect an app](connections.mdx) and use its client ID throughout the recording:
+
+```bash
+agent-lynx recorder start --client <clientId>
+agent-lynx open '<bundle-url>' --client <clientId>
+# Reproduce the interactions, then save the recording.
+agent-lynx recorder end --client <clientId> -o ./recording.json
+```
+
+Start recording **before opening or reloading the page** so the file includes `loadTemplate`, which replay requires. If `recorder start` enables debug mode and asks for an app restart, restart the app and run it again before opening the page. `recorder end` saves the streams, reports the saved files, and diagnoses empty, invalid, or non-replayable recordings. Multiple sessions can produce multiple files.
+
+For replay and artifact hosting, follow the [Lynx Recorder guide](/guide/devtool/recorder).

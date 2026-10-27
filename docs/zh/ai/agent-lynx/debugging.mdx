@@ -1,0 +1,31 @@
+---
+description: '检查日志和脚本、定位 UI 源码、打开检查器、执行 JavaScript，以及发送 CDP 和 App 请求。'
+---
+
+# 日志与运行时调试
+
+先[连接应用并选择 session](connections.mdx)。使用 `get-source-info` 前先获取[页面快照](page-inspection.mdx)，并使用输出中的元素引用。
+
+## 日志、源码与检查器
+
+```bash
+agent-lynx get-console --limit 50
+agent-lynx get-sources
+agent-lynx get-source-info @e1
+```
+
+`get-console` 包含 VM 线程和可用的调用栈。添加 `--watch` 可以在复现问题时持续读取新日志。页面提供 [UI source-map 元数据](/guide/devtool/ui-source-map)时，`get-source-info` 可以将元素映射到源码。
+
+需要图形化检查器时，运行 `agent-lynx inspect` 并打开输出的 URL，即可检查同一个 session。
+
+## 执行代码与发送协议请求
+
+```bash
+agent-lynx evaluate '1 + 1' --thread background
+agent-lynx cdp --client <clientId> --session <sessionId> --method DOM.getDocument
+agent-lynx app --client <clientId> --method App.openPage '{"url":"<bundle-url>"}'
+```
+
+`evaluate` 可选择 `background` 或 `main` VM，并支持等待 Promise、返回远程对象、选择执行上下文和副作用检查，参见 `evaluate --help`。`cdp` 向选定的 session 发送方法和可选的 JSON 参数。Lynx 支持的方法参见 [Lynx CDP 参考](/api/cdp/api-ref)。`app` 转发宿主 App 协议请求，可用方法及参数取决于宿主应用。
+
+日志命令 `get-console` 支持 `--watch`、`--level`、`--thread`、`--offset`、`--limit` 和 `--include-stack-traces`。JSON 输出保留可用的调用栈；同时启用 `--watch` 和 `--json` 时，每行输出一个 JSON 事件。

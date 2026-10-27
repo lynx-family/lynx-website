@@ -1,0 +1,49 @@
+---
+description: '读取页面快照、文本与样式，点击、填写、清空、长按、滚动并等待页面变化。'
+---
+
+# 页面检查与交互
+
+先[连接应用并选择 session](connections.mdx)。使用默认 daemon 连接，让多次命令调用共享快照和元素引用。
+
+## 读取页面并操作元素
+
+获取精简的元素树：
+
+```bash
+agent-lynx snapshot
+```
+
+输出会为元素分配 `@e1` 等引用。执行以下命令时，使用你实际输出中的引用；示例中的引用分别代表对应的文本、输入框、按钮或滚动容器：
+
+```bash
+agent-lynx get text @e1
+agent-lynx get style @e1 --property color,width
+agent-lynx fill @e2 "Alice"
+agent-lynx snapshot
+agent-lynx tap @e3 --snapshot
+```
+
+交互后，先读取刷新的快照，再选择下一个目标。例如，对新快照中的滚动容器执行：
+
+```bash
+agent-lynx scroll @e4 --direction down
+agent-lynx snapshot
+```
+
+引用属于所选页面的缓存快照。跳转、重载或界面变化后，重新获取快照，并使用最新的引用。
+
+## 其他操作与等待
+
+除了点击、填写和滚动，agent 还可以清空输入框、长按元素，以及等待页面条件满足。请将示例引用替换为所选页面最新快照中的引用；每次界面变化后重新选择下一个操作目标。
+
+```bash
+agent-lynx clear @e2 --snapshot
+agent-lynx long-press @e3 --duration 800 --snapshot
+agent-lynx wait --text "Ready" --timeout 15000
+agent-lynx wait --ref @e4 --timeout 15000
+```
+
+`wait` 在等待期间刷新并缓存快照，超时和轮询间隔的单位是**毫秒**。等待应用连接时使用 [`wait-for-client`](connections.mdx#等待应用连接)，其单位为秒。
+
+`snapshot --visible-only` 将元素树限制在可见区域。`get style --property color,width` 选择要读取的计算样式。元素操作支持 `--snapshot`，用于在操作后刷新元素树。

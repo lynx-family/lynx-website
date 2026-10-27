@@ -1,0 +1,26 @@
+---
+description: '抓取主线程和后台线程的 QuickJS 堆快照，并查询全局 Lynx 内存占用。'
+---
+
+# 内存检查
+
+抓取堆快照前先[连接应用并选择 session](connections.mdx)。
+
+## 抓取 JS 堆快照
+
+从两个 VM 线程分别抓取 QuickJS 堆快照：
+
+```bash
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread background -o ./background.heapsnapshot
+agent-lynx take-heap-snapshot --client <clientId> --session <sessionId> --thread main -o ./main.heapsnapshot
+```
+
+## 检查全局 Lynx 内存
+
+在支持 `Memory.getAllMemoryUsage` 的运行时中，可以通过全局 session `-1` 查询存活实例的全局 Lynx 内存：
+
+```bash
+agent-lynx cdp --client <clientId> --session -1 --method Memory.getAllMemoryUsage '{"timeoutMs":50000}'
+```
+
+该命令返回原始的 [Memory 域数据](/api/cdp/api-ref/memory)，包含各实例的内存信息。JS 堆快照用于检查 JS 对象，全局内存数据用于比较 Lynx 内存的构成和不同实例的占用。

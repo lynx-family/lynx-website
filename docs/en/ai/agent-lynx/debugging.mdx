@@ -1,0 +1,31 @@
+---
+description: 'Inspect console logs and sources, locate UI source code, open an inspector, evaluate JavaScript, and send CDP and App requests.'
+---
+
+# Logs and Runtime Debugging
+
+[Connect an app and select a session](connections.mdx). For `get-source-info`, first capture a [page snapshot](page-inspection.mdx) and use an element ref from that output.
+
+## Logs, Sources, and the Inspector
+
+```bash
+agent-lynx get-console --limit 50
+agent-lynx get-sources
+agent-lynx get-source-info @e1
+```
+
+`get-console` includes the VM thread and available stack traces. Use `--watch` to stream new logs while reproducing an issue. `get-source-info` maps an element to source when the page provides [UI source-map metadata](/guide/devtool/ui-source-map).
+
+For a graphical inspector connected to the same session, run `agent-lynx inspect` and open the printed URL.
+
+## Evaluate Code and Send Protocol Requests
+
+```bash
+agent-lynx evaluate '1 + 1' --thread background
+agent-lynx cdp --client <clientId> --session <sessionId> --method DOM.getDocument
+agent-lynx app --client <clientId> --method App.openPage '{"url":"<bundle-url>"}'
+```
+
+`evaluate` selects the `background` or `main` VM and supports promise awaiting, remote-object results, execution-context selection, and side-effect checks; consult `evaluate --help`. `cdp` sends a method and optional JSON parameters to the selected session. Check the [Lynx CDP reference](/api/cdp/api-ref) for methods supported by Lynx. `app` forwards a host App protocol request; available methods and their parameters depend on the host application.
+
+For logs, `get-console` supports `--watch`, `--level`, `--thread`, `--offset`, `--limit`, and `--include-stack-traces`. JSON output preserves available stack traces; watch mode emits one JSON event per line when `--json` is enabled.

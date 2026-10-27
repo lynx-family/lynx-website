@@ -1,0 +1,18 @@
+---
+description: 'Resolve agent-lynx device connection, page selection, stale ref, ReactLynx, source map, and network issues.'
+---
+
+# Troubleshooting
+
+| Symptom                                      | What to check                                                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No clients are listed                        | Keep the app running in the foreground, enable Lynx Debug and Lynx DevTool, and check the device connection. On Android, confirm USB debugging is authorized. |
+| The wrong page is selected                   | Run `list-clients` and `list-sessions` again, then pass both target IDs explicitly.                                                                           |
+| An element ref is missing or stale           | Run `snapshot` again and use refs from its latest output for the same client and session.                                                                     |
+| The ReactLynx tree is empty                  | Check the selected session and use a development build with compatible ReactLynx DevTools.                                                                    |
+| Source information is unavailable            | Enable UI source-map generation and make the matching debug metadata reachable by the tooling.                                                                |
+| The agent reports a network-permission error | Allow the agent to reach the local daemon and device services. See [Codex network configuration](../skills/lynx-devtool.mdx#codex) if applicable.             |
+
+Use `agent-lynx daemon status` to inspect the local daemon and `<command> --help` for current options. `--no-daemon` is for explicit direct-transport workflows; snapshot refs, ref actions, `screenshot`, and ReactLynx commands require the daemon.
+
+See [Connections](connections.mdx) for daemon lifecycle and direct transports, and the [CLI reference](cli-reference.mdx#output-help-and-environment) for diagnostic environment settings.

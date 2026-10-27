@@ -1,0 +1,41 @@
+---
+description: '检查和搜索 ReactLynx 组件树、关联元素与组件，并修改 props、class state 和 context。'
+---
+
+# ReactLynx 组件
+
+先[连接应用并选择 session](connections.mdx)。使用默认 daemon 连接，让多次命令调用复用组件引用。
+
+## 读取组件与关联元素
+
+对于已[启用 ReactLynx DevTools](/guide/devtool/panels/preact-devtools-panel) 的开发构建：
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx component @c1
+```
+
+组件引用（`@c1`）与元素引用（`@e1`）不同。使用 `agent-lynx reactlynx link @e1` 查找元素对应的组件，或用 `agent-lynx reactlynx link @c1` 查找组件的宿主元素。请先获取页面快照和组件树，再使用它们返回的引用。
+
+## 查找组件
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx find 'Button' --limit 10
+agent-lynx reactlynx find '^Button$' --regex
+agent-lynx reactlynx component @c1 --json
+```
+
+`tree` 获取新一代组件树。`find` 默认复用缓存，需要重新获取时添加 `--refresh`。`--depth` 限制树的输出深度，`--show-shells` 包含合成的包装组件。复用 `@cN` 引用时应使用相同的 shell 模式。[元素与组件关联](#读取组件与关联元素)同时使用最新 DOM 快照和组件树。
+
+## 修改 Props、State 和 Context
+
+对提供相应 prop、class state 或 context 的组件修改字段：
+
+```bash
+agent-lynx reactlynx update-prop @c1 title 'Updated' --raw
+agent-lynx reactlynx update-state @c1 count 1
+agent-lynx reactlynx update-context @c1 theme '"dark"'
+```
+
+路径相对于选定的 props、state 或 context 对象，例如 `user.name` 或 `items.0.title`。值默认按 JSON 解析，`--raw` 按原样传递字符串。`update-state` 面向 class 组件的 state，context 修改能力取决于适配器。成功后返回应用确认的修改后检查结果。这些操作影响运行中的页面，长期修复需要修改源码。

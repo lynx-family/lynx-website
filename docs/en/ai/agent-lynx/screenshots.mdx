@@ -1,0 +1,26 @@
+---
+description: 'Capture annotated screenshots with element refs, fullscreen images, and complete scroll-container content.'
+---
+
+# Screenshots
+
+[Connect an app](connections.mdx) and select the target session before capturing images.
+
+## Annotated and Fullscreen Screenshots
+
+```bash
+agent-lynx screenshot --annotate -o ./page.jpeg
+```
+
+This captures the page and refreshes the snapshot. Image labels such as `[3]` correspond to refs such as `@e3`, so an agent can identify a visible target and interact with it. Add `--json` to receive the screenshot path, dimensions, and the same fresh snapshot as structured output.
+
+To capture the full screen, use `agent-lynx screenshot --fullscreen -o ./screen.jpeg`. Use `--annotate` and `--fullscreen` separately.
+
+## Direct Screenshots and Scrollable Content
+
+```bash
+agent-lynx take-screenshot --fullscreen -o ./screen.jpeg
+agent-lynx take-content-screenshot --selector '#feed' --format png --scale 1 -o ./feed.png
+```
+
+`take-content-screenshot` captures the first matching scroll container, including content outside the viewport. Use a `scroll-view` or a compatible `list`; the runtime must support the content-screenshot UI method on that element. Use `screenshot --annotate` when the image needs element-ref labels.

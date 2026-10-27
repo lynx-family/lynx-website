@@ -1,0 +1,18 @@
+---
+description: '排查 agent-lynx 设备连接、页面选择、引用失效、ReactLynx、源码映射和网络问题。'
+---
+
+# 常见问题
+
+| 现象                   | 检查方式                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 找不到 client          | 保持应用在前台运行，打开 Lynx Debug 和 Lynx DevTool，并检查设备连接。Android 设备还需确认已授权 USB 调试。      |
+| 选中了错误的页面       | 重新运行 `list-clients` 和 `list-sessions`，显式传入目标 client 和 session ID。                                 |
+| 元素引用不存在或已失效 | 重新运行 `snapshot`，使用同一个 client 和 session 最新输出中的引用。                                            |
+| ReactLynx 组件树为空   | 检查所选 session，并使用包含兼容 ReactLynx DevTools 的开发构建。                                                |
+| 无法获取源码位置       | 启用 UI source-map 生成，并确保工具可以访问与页面匹配的 debug metadata。                                        |
+| Agent 报网络权限错误   | 允许 agent 访问本地 daemon 和设备服务。使用 Codex 时，参见 [Codex 网络配置](../skills/lynx-devtool.mdx#codex)。 |
+
+可以用 `agent-lynx daemon status` 检查本地 daemon，并通过 `<command> --help` 查看当前选项。`--no-daemon` 用于显式的直接连接场景；页面快照、元素引用操作、`screenshot` 和 ReactLynx 命令需要 daemon。
+
+Daemon 管理和直接连接参见[应用与页面连接](connections.mdx)，诊断环境变量参见 [CLI 参考](cli-reference.mdx#输出帮助与环境变量)。

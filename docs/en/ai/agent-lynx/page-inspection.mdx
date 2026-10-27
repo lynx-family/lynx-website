@@ -1,0 +1,49 @@
+---
+description: 'Read page snapshots, text, and styles; tap, fill, clear, long-press, scroll, and wait for page conditions.'
+---
+
+# Page Inspection and Interaction
+
+First [connect an app and select a session](connections.mdx). Use the default daemon connection so separate commands share snapshots and element refs.
+
+## Read the Page and Act on Elements
+
+Capture a compact element tree:
+
+```bash
+agent-lynx snapshot
+```
+
+The output assigns refs such as `@e1` to elements. Use refs from your own output in the commands below; the sample refs are placeholders for the corresponding text, input, button, or scroll container:
+
+```bash
+agent-lynx get text @e1
+agent-lynx get style @e1 --property color,width
+agent-lynx fill @e2 "Alice"
+agent-lynx snapshot
+agent-lynx tap @e3 --snapshot
+```
+
+After an interaction, read the refreshed snapshot before choosing the next target. For a scroll container in that snapshot:
+
+```bash
+agent-lynx scroll @e4 --direction down
+agent-lynx snapshot
+```
+
+Refs belong to the selected page's cached snapshot. Capture a new snapshot after navigation, reloads, or UI changes, and use the latest refs.
+
+## More Actions and Waiting
+
+In addition to tapping, filling, and scrolling, agents can clear inputs, long-press elements, and wait for a page condition. Replace the example refs with refs from the latest snapshot of the selected page; choose the next target again after each UI change.
+
+```bash
+agent-lynx clear @e2 --snapshot
+agent-lynx long-press @e3 --duration 800 --snapshot
+agent-lynx wait --text "Ready" --timeout 15000
+agent-lynx wait --ref @e4 --timeout 15000
+```
+
+`wait` refreshes and caches snapshots while waiting. Its timeout and polling interval are in **milliseconds**. For app connections, use [`wait-for-client`](connections.mdx#wait-for-an-app), which uses seconds.
+
+Use `snapshot --visible-only` to limit the tree to the viewport. `get style --property color,width` selects computed CSS properties. Ref actions support `--snapshot` to refresh the tree after an action.

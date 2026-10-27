@@ -1,0 +1,57 @@
+---
+description: 'Discover Lynx apps and sessions, wait for connections, open pages, and manage the connector daemon and direct transports.'
+---
+
+# Connections
+
+## Connect an App and Select a Session
+
+1. Run [Lynx Explorer](/guide/start/quick-start) or your own app with [DevTool integrated](/guide/start/integrate-lynx-devtool).
+2. Enable **Lynx Debug** and **Lynx DevTool** in the app. For a physical device, connect it to the computer running agent-lynx and complete the platform's debugging setup. See [device connection setup](/guide/devtool).
+3. Open a Lynx page in the app, then discover its client and session:
+
+```bash
+agent-lynx list-clients
+agent-lynx list-sessions --client <clientId>
+```
+
+A **client** is a running app; a **session** is a Lynx view or debugging context within that app. Use the IDs returned by these commands. When several targets are connected, pass `--client <clientId>` and `--session <sessionId>` to subsequent page commands so they operate on the intended page.
+
+Device commands automatically start a shared local connector daemon. Keep the default daemon connection for snapshot refs, interactions, and ReactLynx inspection so separate CLI calls share the same connection and cached refs.
+
+## Wait for an App
+
+Use `wait-for-client` to wait for an app to connect. Its timeout and polling interval are in **seconds**:
+
+```bash
+agent-lynx wait-for-client --client-name com.lynx.uiapp --timeout 30
+```
+
+This waits for an app connection. To wait for text or an element on a page, use [page waiting](page-inspection.mdx#more-actions-and-waiting), whose timeouts are in milliseconds.
+
+## Open a Page
+
+```bash
+agent-lynx open '<bundle-url>' --client <clientId>
+```
+
+Use a bundle URL reachable by the app, such as the URL printed by your project's development server. Run the project's build or development server separately. After navigation, discover sessions again and refresh the page snapshot before using element refs.
+
+## Manage the Connector Daemon
+
+```bash
+agent-lynx daemon status
+agent-lynx daemon start
+agent-lynx daemon stop
+```
+
+`status` reads the running daemon's version and protocol information without starting it. Lifecycle commands accept `--port`, which defaults to `21783`.
+
+The default device connection shares the daemon. Explicit direct mode supports Android, iOS, Desktop, and HDT transports:
+
+```bash
+agent-lynx daemon stop
+agent-lynx --no-daemon list-clients
+```
+
+Stop the daemon before directly connecting to the same target. Snapshot refs and their actions, `wait`, `screenshot`, and ReactLynx commands require the daemon; keep their default connection mode. `ADB_SERVER_HOST` and `ADB_SERVER_PORT` configure Android ADB only in direct mode and are ignored in daemon mode.

@@ -1,0 +1,59 @@
+---
+description: '安装 agent-lynx、读取自带 skills、连接应用并检查第一个页面。'
+---
+
+# 快速开始
+
+## 安装 CLI
+
+agent-lynx 要求 Node.js 18.19 或更高版本。安装公开的 npm 包：
+
+```bash
+npm install -g agent-lynx
+agent-lynx --help
+```
+
+也可以直接运行，无需全局安装：
+
+```bash
+npx --yes agent-lynx --help
+```
+
+下文示例使用 `agent-lynx`。如果使用单次运行方式，将其替换为 `npx --yes agent-lynx` 即可。
+
+## 让 Agent 读取使用说明
+
+agent-lynx 自带可供 agent 发现和读取的 skills：
+
+```bash
+agent-lynx skills list
+agent-lynx skills get lynx-devtool
+```
+
+`skills get` 返回使用说明，并列出该 skill 的参考文件和示例，不会把 skill 安装到项目中。若希望 agent 通过自身的 skill 发现机制自动加载 DevTool skill，参见 [lynx-devtool](../skills/lynx-devtool.mdx)。
+
+例如，可以对 coding agent 说：
+
+```text
+使用 agent-lynx 调试当前打开的 Lynx 页面。先读取
+`npx --yes agent-lynx skills get lynx-devtool`，再查找已连接的
+client 和 session。检查页面和控制台，复现问题，修改源码，
+然后用新的截图验证结果。
+```
+
+也可以在项目的 [AGENTS.md](../agentsmd.mdx) 中约定：运行时调试前先读取 `lynx-devtool` 使用说明。
+
+## 连接并检查页面
+
+运行 [Lynx Explorer](/guide/start/quick-start) 或已[集成 DevTool](/guide/start/integrate-lynx-devtool) 的应用，打开 Lynx Debug 和 Lynx DevTool 开关，并打开一个 Lynx 页面。完成对应平台的[设备连接配置](connections.mdx)后，执行：
+
+```bash
+agent-lynx list-clients
+agent-lynx list-sessions --client <clientId>
+agent-lynx snapshot --client <clientId> --session <sessionId>
+agent-lynx screenshot --client <clientId> --session <sessionId> --annotate -o ./page.jpeg
+```
+
+将 ID 替换为查找命令实际返回的值。Client 是运行中的应用，session 是其中的 Lynx view 或调试上下文。设备命令自动共享本地 connector daemon，让后续调用复用连接和元素引用。
+
+快照为元素分配 `@e1` 等引用，标注截图显示相应的元素标记。接着可以[检查和操作页面](page-inspection.mdx)，并用新的快照或截图验证源码修改。遇到错误时，参见[常见问题](troubleshooting.mdx)。
