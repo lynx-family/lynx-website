@@ -11,13 +11,11 @@ import { APISummary, APITable } from '@lynx';
 
 `<lynx-view>` 是一个加载并展示 Lynx 模板的容器组件，可以在 Web 应用中使用它来渲染 Lynx 模板。
 
-##  API 参考
-
 完成上述集成后，你可以通过 Lynx for Web 提供的 API 实现更灵活的交互控制，以下是核心 API 的详细说明：
 
-### lynx-view
+## lynx-view
 
-#### Attributes
+### Attributes
 
 | 名称                        | 是否必传 | 说明                                                                                                               |
 | :-------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------- |
@@ -28,9 +26,9 @@ import { APISummary, APITable } from '@lynx';
 | transform-vw                | 否       | 开启 `vw` 转换，允许在容器级别使用 CSS 自定义属性代替 `vw` 单位，例如 `1vw` 转换为 `calc(1 * var(--vw-unit))`。    |
 | transform-vh                | 否       | 开启 `vh` 转换，允许在容器级别使用 CSS 自定义属性代替 `vh` 单位，例如 `1vh` 转换为 `calc(1 * var(--vh-unit))`。    |
 
-#### Properties
+### Properties
 
-##### nativeModulesMap
+#### nativeModulesMap
 
 自定义的 [NativeModule](/guide/use-native-modules)，key 为 module 名称，value 为 module 实现（一个 esm url）：
 
@@ -61,7 +59,7 @@ const nativeModulesMap = {
 lynxView.nativeModulesMap = nativeModulesMap;
 ```
 
-##### onNativeModulesCall
+#### onNativeModulesCall
 
 处理 NativeModules（JSB 等）相关调用的入口:
 
@@ -85,7 +83,7 @@ lynxView.onNativeModulesCall = (name, data, moduleName) => {
 };
 ```
 
-##### browserConfig
+#### browserConfig
 
 支持在实例级别动态配置 `systemInfo`，通过 `browserConfig` 属性进行设置：
 
@@ -97,9 +95,9 @@ lynxView.browserConfig = {
 };
 ```
 
-#### Events
+### Events
 
-##### error
+#### error
 
 报错信息通知：
 
@@ -123,9 +121,9 @@ lynxView.addEventListener('error', (err: LynxError) => {
 });
 ```
 
-#### Methods
+### Methods
 
-##### updateData
+#### updateData
 
 [详见](/api/lynx-native-api/lynx-view/update-meta-data.mdx)
 
@@ -142,7 +140,7 @@ updateData(
 ): void
 ```
 
-##### updateGlobalProps
+#### updateGlobalProps
 
 [详见](/api/lynx-api/main-thread/lynx-global-props)
 
@@ -150,7 +148,7 @@ updateData(
 updateGlobalProps(data: Cloneable): void;
 ```
 
-##### sendGlobalEvent
+#### sendGlobalEvent
 
 [详见](/api/lynx-native-api/lynx-view/send-global-event)
 
@@ -158,7 +156,7 @@ updateGlobalProps(data: Cloneable): void;
 sendGlobalEvent(eventName: string, params: Cloneable[]): void;
 ```
 
-#### 宽、高
+### 宽、高
 
 :::note
 lynx-view的内部排版会被强制移出外部排版流
@@ -170,9 +168,9 @@ lynx-view的内部排版会被强制移出外部排版流
 
 有些情况下您的确需要由 lynx-view 的内容决定宽或高，您可以设置 `height="auto"` 或者 `width="auto"` 来启动自动宽高监听器。在这种情况下，lynx-view 的内部排版依旧与外部排版流独立。
 
-### FAQ
+## FAQ
 
-#### 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'`.
+### 运行时报错：`Uncaught SecurityError: Failed to construct 'Worker': Script at 'xxx' cannot be accessed from origin 'xxx'.`
 
 这是因为 Worker 加载远程脚本需要遵守[同源策略](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy)，而项目的 JS 资源一般会部署在 CDN 上，从而造成了跨域问题。
 
@@ -191,7 +189,7 @@ document.body.innerHTML = `
 </lynx-view>`;
 ```
 
-#### 性能优化
+### 性能优化
 
 我们提供了 RSBuild 插件来做性能优化，你可以在你的 web 工程中引入[该插件](https://www.npmjs.com/package/@lynx-js/web-platform-rsbuild-plugin)
 
@@ -209,7 +207,10 @@ document.body.innerHTML = `
 
 ```ts
 // 升级前:
-import '@lynx-js/web-core/client';
+import '@lynx-js/web-core/index.css';
+import '@lynx-js/web-elements/index.css';
+import '@lynx-js/web-core';
+import '@lynx-js/web-elements/all';
 
 // 升级后:
 import '@lynx-js/web-core/client';
