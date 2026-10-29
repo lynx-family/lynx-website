@@ -1,49 +1,54 @@
 ---
-description: '读取页面快照、文本与样式，点击、填写、清空、长按、滚动并等待页面变化。'
+description: '跟随 agent 读取 Settings 页面、切换主题并验证结果，再滚动检查屏幕外的内容。'
 ---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { themeExample, scrollExample } from './_examples/page-inspection';
 
 # 页面检查与交互
 
-先[连接应用并选择 session](connections.mdx)。使用默认 daemon 连接，让多次命令调用共享快照和元素引用。
+找到页面之后，你可以把要完成的任务交给 agent。它通过快照理解页面结构，选择元素执行操作，再读取页面状态确认结果。
 
-## 读取页面并操作元素
+## 切换主题，并确认生效
 
-获取精简的元素树：
+继续[连接指南](connections.mdx)中的对话：agent 已读取 `lynx-devtool` skill，并找到了 Settings 页面。下面沿用同一个 client `android-phone:8901` 和 session `1`，让它完成一次主题切换。
 
-```bash
-agent-lynx snapshot
-```
+<AgentConversation locale="zh" {...themeExample}>
+  <p>
+    已切换到 <strong>Ocean</strong> 主题。页面根容器的背景色从{' '}
+    <code>rgba(9, 9, 11, 1)</code> 变为 <code>rgba(15, 23, 42, 1)</code>
+    ，与这个示例的 Ocean 主题背景色一致。
+  </p>
+</AgentConversation>
 
-输出会为元素分配 `@e1` 等引用。执行以下命令时，使用你实际输出中的引用；示例中的引用分别代表对应的文本、输入框、按钮或滚动容器：
+这段对话从页面结构中找到目标：`Ocean` 文字位于 `@e16`，包裹它的按钮容器是 `@e15`。点击后，agent 读取新的元素树，再比较页面根节点的计算样式。最终结论由操作前后的页面状态支撑。
 
-```bash
-agent-lynx get text @e1
-agent-lynx get style @e1 --property color,width
-agent-lynx fill @e2 "Alice"
-agent-lynx snapshot
-agent-lynx tap @e3 --snapshot
-```
+`@eN` 是当前页面快照中的元素引用，由 daemon 在命令之间保存。页面跳转、重载或内容变化后，应读取新快照，再从中选择目标。示例里主题切换没有改变树结构，编号保持相同；其他页面的编号可能改变。
 
-交互后，先读取刷新的快照，再选择下一个目标。例如，对新快照中的滚动容器执行：
+## 目标在屏幕外时，先滚动再检查
 
-```bash
-agent-lynx scroll @e4 --direction down
-agent-lynx snapshot
-```
+完整快照可以包含标为 `offscreen` 的节点。它们能帮助 agent 知道页面还有什么内容。接着查看 Settings 页底部，就需要先找到 `scrollable` 容器，滚动后再检查可见区域。
 
-引用属于所选页面的缓存快照。跳转、重载或界面变化后，重新获取快照，并使用最新的引用。
+<AgentConversation locale="zh" {...scrollExample}>
+  <p>
+    页面底部是 <strong>Danger Zone</strong>，包含{' '}
+    <strong>Delete Account</strong> 和 <strong>Cancel</strong>{' '}
+    按钮，以及不可逆操作的说明。我只滚动查看了内容。
+  </p>
+</AgentConversation>
 
-## 其他操作与等待
+这里的验证依据是滚动后的可见快照：底部按钮已经进入视口。若只想确认当前画面中的元素，可以让 agent 使用 `snapshot --visible-only`；需要了解屏幕外还有什么时，则读取完整快照。
 
-除了点击、填写和滚动，agent 还可以清空输入框、长按元素，以及等待页面条件满足。请将示例引用替换为所选页面最新快照中的引用；每次界面变化后重新选择下一个操作目标。
+## 让任务带上完成条件
 
-```bash
-agent-lynx clear @e2 --snapshot
-agent-lynx long-press @e3 --duration 800 --snapshot
-agent-lynx wait --text "Ready" --timeout 15000
-agent-lynx wait --ref @e4 --timeout 15000
-```
+在自己的页面上，可以用同样的方式描述输入、等待或长按任务。把“改什么”和“怎样才算完成”一起告诉 agent，方便它选择操作并检查结果：
 
-`wait` 在等待期间刷新并缓存快照，超时和轮询间隔的单位是**毫秒**。等待应用连接时使用 [`wait-for-client`](connections.mdx#等待应用连接)，其单位为秒。
+| 任务         | 可以这样说                                      | agent 需要确认的内容                                                                           |
+| ------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 修改输入     | “把搜索框里的内容改成 Lynx，再确认显示的文字。” | 从快照找到标为 `editable` 的输入框，用 `fill` 替换内容；需要清空时用 `clear`，随后读取新状态。 |
+| 等待加载     | “等到页面出现‘加载完成’，再告诉我结果。”        | 用 `wait --text` 等待页面给出完成信号，再检查对应内容。                                        |
+| 查看操作菜单 | “长按这条消息，看看有哪些可选操作。”            | 找到消息元素执行 `long-press`，再从新快照读取出现的菜单。                                      |
 
-`snapshot --visible-only` 将元素树限制在可见区域。`get style --property color,width` 选择要读取的计算样式。元素操作支持 `--snapshot`，用于在操作后刷新元素树。
+Settings 示例中的 Display Name 和 Email 是文本展示区域。填写任务应使用实际包含可编辑输入框的页面，agent 可以通过快照中的 `editable` 标记确认目标。
+
+下一节的[标注截图](screenshots.mdx#标注截图与全屏截图)使用同一个 Settings 示例，展示可见标注框与元素引用如何对应。若操作后没有出现预期变化，可以继续[查看日志和运行时状态](debugging.mdx)。具体参数、快照刷新行为和等待单位见 [CLI 参考](cli-reference.mdx#页面检查与交互选项)。

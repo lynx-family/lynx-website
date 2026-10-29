@@ -19,6 +19,7 @@ export type AgentConversationStep =
       description: string;
       command: string;
       output: string;
+      wrapOutput?: boolean;
       result?: string;
       defaultOpen?: boolean;
     };
@@ -224,7 +225,10 @@ export function AgentConversation({
                     </code>
                   </pre>
                   <div className={styles.codeLabel}>{copy.output}</div>
-                  <pre className={styles.output}>
+                  <pre
+                    className={`${styles.output} ${step.wrapOutput === false ? styles.preformatted : ''}`}
+                    tabIndex={step.wrapOutput === false ? 0 : undefined}
+                  >
                     <code>{step.output}</code>
                   </pre>
                 </div>

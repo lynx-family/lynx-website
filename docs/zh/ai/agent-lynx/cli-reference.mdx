@@ -37,6 +37,20 @@ description: 'agent-lynx 全部公开命令、版本与帮助、JSON 输出控�
 | 管理 daemon    | `daemon status` 读取版本和协议信息，不会启动 daemon。`daemon start` 和 `daemon stop` 管理其生命周期。管理命令支持 `--port`，默认值为 `21783`。                                    |
 | 使用直接连接   | 通过 `--no-daemon` 直接连接同一目标前，先停止 daemon。直接连接支持 Android、iOS、Desktop 和 HDT。快照引用及其操作、`wait`、`screenshot` 和 ReactLynx 命令需要默认的 daemon 模式。 |
 
+## 页面检查与交互选项
+
+[页面检查与交互](page-inspection.mdx)展示从快照到操作、再验证结果的完整过程。以下命令通过默认 daemon 共享所选页面的快照引用。
+
+| 操作           | 选项与行为                                                                                                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 获取快照       | `snapshot` 读取元素树，可以包含屏幕外的节点；`--visible-only` 只保留当前可见的元素。页面变化后使用新快照中的引用。                                                                                           |
+| 读取文本和样式 | `get text <ref>` 读取元素文本。`get style <ref> --property color,width` 选择要读取的计算样式，属性名以逗号分隔。                                                                                             |
+| 点击和长按     | `tap <ref>` 点击元素；`long-press <ref> --duration 800` 指定长按时长，单位为毫秒。                                                                                                                           |
+| 填写和清空     | `fill <ref> "Alice"` 替换可编辑输入框的内容；`clear <ref>` 清空内容。                                                                                                                                        |
+| 滚动           | `scroll <ref> --direction down` 操作滚动容器，方向支持 `up`、`down`、`left` 和 `right`。                                                                                                                     |
+| 操作后刷新     | 元素操作支持 `--snapshot`，用于刷新 daemon 的缓存引用。文本输出报告刷新结果；加上 `--json` 可在结果中取得新快照。继续操作前，应读取并使用新快照中的目标。                                                    |
+| 等待页面条件   | `wait --text "Ready" --timeout 15000` 等待文本匹配；`wait --ref <ref>` 等待引用在新快照中解析成功。等待期间刷新并缓存快照，`--timeout` 和 `--interval` 的单位为毫秒。应用连接的 `wait-for-client` 则使用秒。 |
+
 ## 输出、帮助与环境变量
 
 在提供相应选项的命令中，用 `--client` 和 `--session` 显式选择目标，用 `--json` 请求结构化输出。全局 JSON 偏好只会转发给支持 JSON 模式的命令。

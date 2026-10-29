@@ -37,6 +37,20 @@ The public CLI provides the following 46 executable commands, counting subcomman
 | Manage the daemon      | `daemon status` reads version and protocol information without starting the daemon. `daemon start` and `daemon stop` control its lifecycle. These commands accept `--port`; the default is `21783`.                                                    |
 | Use direct transports  | Stop the daemon before using `--no-daemon` to connect directly to the same target. Direct mode supports Android, iOS, Desktop, and HDT. Snapshot refs and their actions, `wait`, `screenshot`, and ReactLynx commands require the default daemon mode. |
 
+## Page Inspection and Interaction Options
+
+[Page Inspection and Interaction](page-inspection.mdx) demonstrates the complete snapshot, action, and verification workflow. These commands share the selected page's snapshot refs through the default daemon.
+
+| Operation                 | Options and behavior                                                                                                                                                                                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capture a snapshot        | `snapshot` reads the element tree, including offscreen nodes; `--visible-only` keeps only currently visible elements. Use refs from a new snapshot after the page changes.                                                                                              |
+| Read text and styles      | `get text <ref>` reads element text. `get style <ref> --property color,width` selects computed styles using comma-separated property names.                                                                                                                             |
+| Tap and long-press        | `tap <ref>` taps an element; `long-press <ref> --duration 800` sets the hold duration in milliseconds.                                                                                                                                                                  |
+| Fill and clear            | `fill <ref> "Alice"` replaces an editable field's contents; `clear <ref>` empties it.                                                                                                                                                                                   |
+| Scroll                    | `scroll <ref> --direction down` acts on a scroll container. Directions are `up`, `down`, `left`, and `right`.                                                                                                                                                           |
+| Refresh after an action   | Ref actions accept `--snapshot` to refresh the daemon's cached refs. Text output reports the refresh result; adding `--json` includes the new snapshot in the result. Read and use targets from the new snapshot before continuing.                                     |
+| Wait for a page condition | `wait --text "Ready" --timeout 15000` waits for matching text; `wait --ref <ref>` waits for a ref to resolve in a fresh snapshot. Waiting refreshes and caches snapshots. Both `--timeout` and `--interval` use milliseconds; app-level `wait-for-client` uses seconds. |
+
 ## Output, Help, and Environment
 
 Use `--client` and `--session` on commands that declare them to select the target explicitly. Use `--json` where supported to request structured output. The global JSON preference is forwarded only to commands with a JSON mode.
