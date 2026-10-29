@@ -1,57 +1,52 @@
 ---
-description: 'Discover Lynx apps and sessions, wait for connections, open pages, and manage the connector daemon and direct transports.'
+description: 'Follow an agent as it discovers Lynx apps on an Android phone connected over ADB and finds a page to debug.'
 ---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { connectionExample } from './_examples/connection';
 
 # Connections
 
-## Connect an App and Select a Session
+Start with “Are there any Lynx pages I can debug on my phone?” and follow the agent as it loads the instructions, discovers the app, and finds a page.
 
-1. Run [Lynx Explorer](/guide/start/quick-start) or your own app with [DevTool integrated](/guide/start/integrate-lynx-devtool).
-2. Enable **Lynx Debug** and **Lynx DevTool** in the app. For a physical device, connect it to the computer running agent-lynx and complete the platform's debugging setup. See [device connection setup](/guide/devtool).
-3. Open a Lynx page in the app, then discover its client and session:
+<AgentConversation locale="en" {...connectionExample}>
+  <p>
+    Found one. <strong>Lynx Explorer</strong> is running on your Android phone,
+    with a debuggable Lynx page at{' '}
+    <code>https://example.com/settings.lynx.bundle</code>.
+  </p>
+  <p>
+    The app's client ID is <code>android-phone:8901</code>, and the page's
+    session ID is <code>1</code>. These identify the target for inspecting the
+    page, reading logs, or taking a screenshot.
+  </p>
+</AgentConversation>
 
-```bash
-agent-lynx list-clients
-agent-lynx list-sessions --client <clientId>
-```
+## From an App to a Page
 
-A **client** is a running app; a **session** is a Lynx view or debugging context within that app. Use the IDs returned by these commands. When several targets are connected, pass `--client <clientId>` and `--session <sessionId>` to subsequent page commands so they operate on the intended page.
+A device can run several Lynx apps, and an app can contain several pages. The conversation identifies the target in two steps:
 
-Device commands automatically start a shared local connector daemon. Keep the default daemon connection for snapshot refs, interactions, and ReactLynx inspection so separate CLI calls share the same connection and cached refs.
+- **Client: choose the app.** `list-clients` returns app names, device information, and client IDs. This example finds Lynx Explorer on the Android phone.
+- **Session: choose the page.** `list-sessions` returns the app's debugging contexts and page URLs. Select a target with `type` set to `lynx` and keep its `session_id`.
 
-## Wait for an App
+Use both returned IDs for subsequent page operations so the agent acts on the page you intend. Discover the targets again after restarting the app or reopening a page.
 
-Use `wait-for-client` to wait for an app to connect. Its timeout and polling interval are in **seconds**:
+## Make Your App Discoverable
 
-```bash
-agent-lynx wait-for-client --client-name com.lynx.uiapp --timeout 30
-```
+Run [Lynx Explorer](/guide/start/quick-start) or your own app with [DevTool integrated](/guide/start/integrate-lynx-devtool), enable **Lynx Debug** and **Lynx DevTool**, and open a Lynx page. The example starts from this state. For other platforms, see [device connection setup](/guide/devtool).
 
-This waits for an app connection. To wait for text or an element on a page, use [page waiting](page-inspection.mdx#more-actions-and-waiting), whose timeouts are in milliseconds.
+If discovery is incomplete, continue the conversation:
 
-## Open a Page
+| Your current state                       | What you can say next                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| The app is still starting                | “Wait for Lynx Explorer to connect, then check its pages.”             |
+| The app is connected but no page is open | “Open the bundle URL from my development server, then check the page.” |
+| Several apps or pages are connected      | “Only inspect the Settings page on this Android phone.”                |
 
-```bash
-agent-lynx open '<bundle-url>' --client <clientId>
-```
+The agent can wait for an app, open a bundle URL, and choose a target using the device, app name, and page URL. Run the project's development server separately and make sure the app can reach the bundle URL.
 
-Use a bundle URL reachable by the app, such as the URL printed by your project's development server. Run the project's build or development server separately. After navigation, discover sessions again and refresh the page snapshot before using element refs.
+## How Calls Stay Connected
 
-## Manage the Connector Daemon
+Device commands automatically start the local **agent-lynx daemon**. It keeps device connections and snapshot refs across CLI calls, letting the agent continue from discovery to inspection, actions, and verification. See the [architecture diagram in the introduction](index.mdx#how-it-connects-to-your-app).
 
-```bash
-agent-lynx daemon status
-agent-lynx daemon start
-agent-lynx daemon stop
-```
-
-`status` reads the running daemon's version and protocol information without starting it. Lifecycle commands accept `--port`, which defaults to `21783`.
-
-The default device connection shares the daemon. Explicit direct mode supports Android, iOS, Desktop, and HDT transports:
-
-```bash
-agent-lynx daemon stop
-agent-lynx --no-daemon list-clients
-```
-
-Stop the daemon before directly connecting to the same target. Snapshot refs and their actions, `wait`, `screenshot`, and ReactLynx commands require the daemon; keep their default connection mode. `ADB_SERVER_HOST` and `ADB_SERVER_PORT` configure Android ADB only in direct mode and are ignored in daemon mode.
+Next, ask the agent to [inspect and operate on the page](page-inspection.mdx) or [take a screenshot](screenshots.mdx). Connection timeouts, daemon ports, and direct mode are documented in the [CLI reference](cli-reference.mdx#connection-options).

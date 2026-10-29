@@ -27,6 +27,16 @@ The public CLI provides the following 46 executable commands, counting subcomman
 | [Record page runtime state for replay](recording.mdx)               | `agent-lynx recorder start`, `agent-lynx recorder end`                                                                                                                                                                                  |
 | [Manage the shared local connection](connections.mdx)               | `agent-lynx daemon status`, `agent-lynx daemon start`, `agent-lynx daemon stop`                                                                                                                                                         |
 
+## Connection Options
+
+| Operation              | Options and behavior                                                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Select an app and page | Pass the returned `--client <clientId>` and `--session <sessionId>` to commands that declare them. Discover IDs again after app restarts or page navigation.                                                                                           |
+| Wait for an app        | `wait-for-client --client-name <name> --timeout 30` waits for an app connection. Timeout and polling intervals use **seconds**; page-level `wait` uses milliseconds.                                                                                   |
+| Open a page            | `open <bundle-url> --client <clientId>` uses a URL reachable by the app. Run the development server separately, then discover sessions and refresh the snapshot after navigation.                                                                      |
+| Manage the daemon      | `daemon status` reads version and protocol information without starting the daemon. `daemon start` and `daemon stop` control its lifecycle. These commands accept `--port`; the default is `21783`.                                                    |
+| Use direct transports  | Stop the daemon before using `--no-daemon` to connect directly to the same target. Direct mode supports Android, iOS, Desktop, and HDT. Snapshot refs and their actions, `wait`, `screenshot`, and ReactLynx commands require the default daemon mode. |
+
 ## Output, Help, and Environment
 
 Use `--client` and `--session` on commands that declare them to select the target explicitly. Use `--json` where supported to request structured output. The global JSON preference is forwarded only to commands with a JSON mode.

@@ -27,6 +27,16 @@ description: 'agent-lynx 全部公开命令、版本与帮助、JSON 输出控�
 | [录制页面运行时状态以供回放](recording.mdx)            | `agent-lynx recorder start`、`agent-lynx recorder end`                                                                                                                                                                                  |
 | [管理共享的本地连接](connections.mdx)                  | `agent-lynx daemon status`、`agent-lynx daemon start`、`agent-lynx daemon stop`                                                                                                                                                         |
 
+## 连接选项
+
+| 操作           | 选项与行为                                                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 选择应用和页面 | 在支持相应选项的命令中传入实际返回的 `--client <clientId>` 和 `--session <sessionId>`。应用重启或页面跳转后，重新查找 ID。                                                        |
+| 等待应用       | `wait-for-client --client-name <name> --timeout 30` 等待应用连接。超时与轮询间隔使用**秒**；页面级 `wait` 使用毫秒。                                                              |
+| 打开页面       | `open <bundle-url> --client <clientId>` 使用应用可访问的 URL。开发服务器需要单独运行，页面跳转后重新查找 session 并刷新快照。                                                     |
+| 管理 daemon    | `daemon status` 读取版本和协议信息，不会启动 daemon。`daemon start` 和 `daemon stop` 管理其生命周期。管理命令支持 `--port`，默认值为 `21783`。                                    |
+| 使用直接连接   | 通过 `--no-daemon` 直接连接同一目标前，先停止 daemon。直接连接支持 Android、iOS、Desktop 和 HDT。快照引用及其操作、`wait`、`screenshot` 和 ReactLynx 命令需要默认的 daemon 模式。 |
+
 ## 输出、帮助与环境变量
 
 在提供相应选项的命令中，用 `--client` 和 `--session` 显式选择目标，用 `--json` 请求结构化输出。全局 JSON 偏好只会转发给支持 JSON 模式的命令。
