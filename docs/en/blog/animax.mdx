@@ -13,7 +13,7 @@ import { BlogHeader, Caption, Go, ImageWall } from '@lynx';
 
 Today, we're announcing [AnimaX](https://github.com/lynx-family/animax), a cross-platform animation framework compatible with Lottie. You can keep creating animations in After Effects, combining shapes, images, text, and transparent video for playback in Lynx and native apps.
 
-AnimaX plays existing Lottie animations and supports adding Alpha Video layers through the [AFX export plugin](/animax/afx), bringing complex effects together with configurable images and text in a single animation.
+AnimaX plays existing Lottie animations and supports adding [Alpha Video](#alpha-video) layers through the [AFX export plugin](/animax/afx), bringing complex effects together with configurable images and text in a single animation.
 
 <ImageWall
   rows={2}
@@ -54,7 +54,7 @@ AnimaX plays existing Lottie animations and supports adding Alpha Video layers t
 
 Lottie established a workflow for bringing animations from After Effects into apps, allowing designers to bring their work directly into products. We want to build on that workflow, making room for richer visual effects while reducing the work needed to adapt animations across platforms.
 
-Animations with complex effects, masks, and layer compositing require teams to balance visual fidelity, platform differences, and rendering cost. AnimaX addresses these three challenges with mixed layers for complex effects, a shared renderer to reduce platform differences, and graphics work that runs off the main thread.
+Animations with complex effects, masks, and layer compositing require teams to balance visual fidelity, platform differences, and rendering cost. AnimaX addresses these three challenges with [mixed layers](#alpha-video) for complex effects, a [shared renderer](#consistent-rendering-across-platforms) to reduce platform differences, and [graphics work that runs off the main thread](#reduced-main-thread-work).
 
 ## Keep Your Lottie Workflow
 
@@ -65,16 +65,16 @@ existing assets would be hard to reuse. AnimaX keeps parsing Lottie-compatible
 artifacts so existing JSON files can enter the new runtime directly.
 
 This lets teams start by using AnimaX as a more capable Lottie player, then
-gradually introduce Alpha Video, dynamic properties, and mixed layers where they
+gradually introduce [Alpha Video](#alpha-video), [dynamic properties](#dynamic-properties), and mixed layers where they
 make sense. Designers still organize motion in After Effects. Developers still
-load animation assets, control playback, and listen to state changes. The main
+load animation assets, [control playback](/animax/lynx/basic-controls), and [listen to state changes](/animax/lynx/runtime-events). The main
 difference is that the playback pipeline underneath is now a more unified C++
 renderer.
 
-In practice, existing Lottie assets in a project can be handed to AnimaX for
-playback without asking designers to export them again from After Effects.
+In practice, [existing Lottie assets in a project can be handed to AnimaX for
+playback](/animax/migrate-from-lottie#reuse-your-animation-assets) without asking designers to export them again from After Effects.
 
-[AFX](/animax/afx) is the After Effects export plugin provided by AnimaX. It exports Lottie-compatible animations and can export selected layers as Alpha Video. You can keep using existing Lottie assets and use AFX when you want to add transparent video layers.
+[AFX](/animax/afx) is the After Effects export plugin provided by AnimaX. It exports Lottie-compatible animations and can export selected layers as Alpha Video. You can keep using existing Lottie assets and [use AFX](/animax/afx#getting-started) when you want to add transparent video layers.
 
 <Go
   example="animax"
@@ -114,10 +114,10 @@ smaller boundary instead of asking every platform to maintain a separate player.
 
 With
 [Skity](https://github.com/lynx-family/skity) as the self-rendering engine,
-AnimaX can support more drawing features and advanced motion through one
+AnimaX can support more [drawing features and advanced motion](/animax/feature-support#effects) through one
 graphics pipeline, reducing its dependence on the differences between native
 platform renderers. AnimaX supports more After Effects features than Lottie
-in several categories; see [Feature Support](../animax/feature-support) for
+in several categories; see [Feature Support](/animax/feature-support) for
 the full comparison.
 
 ### Reduced Main-Thread Work
@@ -192,10 +192,10 @@ often combines shape layers, images, text, blur, masks, lighting, and 3D-like
 visuals. Forcing all of that into image sequences inside Lottie usually leads to
 large files, unstable fidelity, and platform-specific rendering gaps.
 
-AnimaX supports [Alpha Video](../animax/alpha-video) layers. For effects that are
+AnimaX supports [Alpha Video](/animax/alpha-video) layers. For effects that are
 too complex for vectors today, or simply better expressed as video, designers
-can follow the [AFX export guide](/animax/afx) to organize and export those
-layers as transparent video. AnimaX then plays them together with Lottie
+can follow the [AFX export guide](/animax/afx) to [organize and export those
+layers as transparent video](/animax/alpha-video#how-to-use). AnimaX then plays them together with Lottie
 shape, image, and text layers. This keeps the expressive power of After
 Effects without forcing every visual detail into pure vector data.
 
@@ -220,8 +220,8 @@ Effects without forcing every visual detail into pure vector data.
 ### Dynamic Properties
 
 Once animation enters a product page, it is rarely just something that plays
-once and ends. A page may need to replace images based on user state, switch
-text for localization, update colors for themes, or change a layer property in
+once and ends. A page may need to [replace images](/animax/lynx/dynamic-properties#set-image-resources) based on user state, [switch
+text](/animax/lynx/dynamic-properties#set-text-font-resources) for localization, update colors for themes, or [change a layer property](/animax/lynx/dynamic-properties#update-other-layer-properties) in
 response to interaction.
 
 AnimaX optimizes these runtime updates and provides direct APIs for replacing
@@ -230,7 +230,7 @@ a configurable runtime layer, rather than a closed video or a set of UI pieces
 that cannot be reused. Designers can still build the motion in After Effects,
 while developers inject real product data at runtime.
 
-See [Dynamic Properties](../animax/lynx/dynamic-properties) for the Lynx component APIs
+See [Dynamic Properties](/animax/lynx/dynamic-properties) for the Lynx component APIs
 and native API entry points.
 
 ## Try AnimaX Today
@@ -242,7 +242,7 @@ played directly through the
 [`<animax-view>`](/api/elements/built-in/animax-view) element. The docs also
 include examples you can preview and try.
 
-For native apps, start with [Migrate from Lottie to AnimaX](../animax/migrate-from-lottie) if you are replacing an existing Lottie player, then follow the [Native Integration Guide](../animax/native/quick-start) to integrate AnimaX into iOS or Android. See the [Native API reference](/animax/native/api/animax-view) for playback controls, events, and status queries.
+For native apps, start with [Migrate from Lottie to AnimaX](/animax/migrate-from-lottie) if you are replacing an existing Lottie player, then follow the [Native Integration Guide](/animax/native/quick-start) to integrate AnimaX into iOS or Android. See the [Native API reference](/animax/native/api/animax-view) for [playback controls and lifecycle](/animax/native/playback), events, and status queries.
 
 Start with the [AnimaX introduction](/animax/introduction) to understand the
 runtime, then follow the [quick start](/animax/start/quick-start) to run a

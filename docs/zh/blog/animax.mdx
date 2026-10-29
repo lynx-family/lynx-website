@@ -13,7 +13,7 @@ import { BlogHeader, Caption, Go, ImageWall } from '@lynx';
 
 今天，我们正式发布 [AnimaX](https://github.com/lynx-family/animax)，一套兼容 Lottie 的跨平台动画框架。你可以继续使用 After Effects 创作动画，将形状、图片、文字与透明视频组合起来，在 Lynx 和原生应用中播放。
 
-AnimaX 可以播放已有的 Lottie 动画，也支持通过 [AFX 导出插件](/animax/afx)加入 Alpha Video 图层，让复杂特效与可配置的图片、文字出现在同一个动画中。
+AnimaX 可以播放已有的 Lottie 动画，也支持通过 [AFX 导出插件](/animax/afx)加入 [Alpha Video](#alpha-video) 图层，让复杂特效与可配置的图片、文字出现在同一个动画中。
 
 <ImageWall
   rows={2}
@@ -54,17 +54,17 @@ AnimaX 可以播放已有的 Lottie 动画，也支持通过 [AFX 导出插件](
 
 Lottie 建立了从 After Effects 到应用的动画交付流程，让设计师创作的动效可以直接进入产品。我们希望沿用这套流程，同时让它容纳更丰富的视觉效果，并减少不同平台之间的适配工作。
 
-当动画包含复杂特效、遮罩和图层合成时，团队需要同时处理效果还原、跨平台差异和渲染开销。AnimaX 围绕这三个问题设计：用混合图层承载复杂效果，用共享的渲染引擎减少平台差异，并将耗时的图形任务移出主线程。
+当动画包含复杂特效、遮罩和图层合成时，团队需要同时处理效果还原、跨平台差异和渲染开销。AnimaX 围绕这三个问题设计：用[混合图层](#alpha-video)承载复杂效果，用[共享的渲染引擎](#跨平台一致渲染)减少平台差异，并将[耗时的图形任务移出主线程](#减少主线程占用)。
 
 ## 沿用熟悉的 Lottie 工作流
 
 很多团队已经围绕 After Effects、Lottie JSON、预览工具、发布流程建立了完整链路。如果为了获得更强的渲染能力就重新定义一种格式，设计师和开发者都需要重新学习，已有产物也很难复用。AnimaX 选择继续解析 Lottie 格式产物，让现有 JSON 能够直接进入新的运行时。
 
-这意味着业务可以先把 AnimaX 当作一个更强的 Lottie 播放器使用，再逐步引入 Alpha Video、动态属性和混合图层。对设计师来说，产物组织方式仍然围绕 After Effects 展开；对开发者来说，接入方式仍然是加载动画资源、控制播放、监听状态，只是底层换成了更统一的 C++ 渲染管线。
+这意味着业务可以先把 AnimaX 当作一个更强的 Lottie 播放器使用，再逐步引入 [Alpha Video](#alpha-video)、[动态属性](#动态属性)和混合图层。对设计师来说，产物组织方式仍然围绕 After Effects 展开；对开发者来说，接入方式仍然是加载动画资源、[控制播放](/animax/lynx/basic-controls)、[监听状态](/animax/lynx/runtime-events)，只是底层换成了更统一的 C++ 渲染管线。
 
-也就是说，项目中原有的 Lottie 产物可以直接交给 AnimaX 播放，不需要设计师在 After Effects 中重新导出。
+也就是说，项目中[原有的 Lottie 产物可以直接交给 AnimaX 播放](/animax/migrate-from-lottie#复用动画资源)，不需要设计师在 After Effects 中重新导出。
 
-[AFX](/animax/afx) 是 AnimaX 提供的 After Effects 导出插件，可以导出兼容 Lottie 的动画，并将选定的图层导出为 Alpha Video。已有的 Lottie 资源可以继续使用；需要加入透明视频图层时，再通过 AFX 导出。
+[AFX](/animax/afx) 是 AnimaX 提供的 After Effects 导出插件，可以导出兼容 Lottie 的动画，并将选定的图层导出为 Alpha Video。已有的 Lottie 资源可以继续使用；需要加入透明视频图层时，再通过 [AFX 导出](/animax/afx#快速入门)。
 
 <Go
   example="animax"
@@ -91,7 +91,7 @@ AnimaX 使用 C++ 运行时和 [Skity](https://github.com/lynx-family/skity) 渲
 
 AnimaX 把核心逻辑收敛到 C++，并通过 [Skity](https://github.com/lynx-family/skity) 统一绘制行为。平台侧只需要提供必要的窗口、纹理、资源加载和事件能力，动画解析、图层计算、绘制顺序和大部分渲染逻辑都由同一套引擎完成。这样做不能消除所有平台差异，但能把差异控制在更小的边界里，避免每接入一个新平台就重新面对一套播放器实现。
 
-基于 [Skity](https://github.com/lynx-family/skity) 的自渲染能力，AnimaX 可以在统一的图形管线里支持更多绘制特性和高级动效，减少对平台原生绘制能力差异的依赖。AnimaX 在多类 After Effects 特性上比 Lottie 支持更多能力，完整对比见 [功能支持](../animax/feature-support)。
+基于 [Skity](https://github.com/lynx-family/skity) 的自渲染能力，AnimaX 可以在统一的图形管线里支持更多[绘制特性和高级动效](/animax/feature-support#效果)，减少对平台原生绘制能力差异的依赖。AnimaX 在多类 After Effects 特性上比 Lottie 支持更多能力，完整对比见 [功能支持](/animax/feature-support)。
 
 ### 减少主线程占用
 
@@ -138,9 +138,9 @@ iOS 数据：
 
 纯矢量图层无法表达所有 After Effects 效果。很多动效里会同时出现形状图层、图片、文字、模糊、遮罩、光效或 3D 效果。如果强行把这些内容全部转成图片序列再打包进 Lottie，往往会遇到体积过大、还原不稳定、端能力不一致的问题。
 
-AnimaX 支持 [Alpha Video](../animax/alpha-video) 图层。对于复杂度高、暂时不适合用矢量实现，或者本来就更适合视频表达的效果，设计师可以通过
+AnimaX 支持 [Alpha Video](/animax/alpha-video) 图层。对于复杂度高、暂时不适合用矢量实现，或者本来就更适合视频表达的效果，设计师可以通过
 [AFX 导出指南](/animax/afx)
-把相关图层组织并导出为透明视频图层，再与 Lottie 形状、图片和文本图层一起播放。这样既保留了 After Effects 的表达能力，也避免把所有视觉细节都压到纯矢量图层里。
+把相关图层[组织并导出为透明视频图层](/animax/alpha-video#使用方法)，再与 Lottie 形状、图片和文本图层一起播放。这样既保留了 After Effects 的表达能力，也避免把所有视觉细节都压到纯矢量图层里。
 
 <Go
   defaultTab="preview"
@@ -162,11 +162,11 @@ AnimaX 支持 [Alpha Video](../animax/alpha-video) 图层。对于复杂度高�
 
 ### 动态属性
 
-动效进入业务页面以后，常常不只是自动播放一遍。页面可能需要根据用户状态替换图片，根据语言切换文本，根据主题更新颜色，或者在交互发生时调整某个图层的属性。
+动效进入业务页面以后，常常不只是自动播放一遍。页面可能需要根据用户状态[替换图片](/animax/lynx/dynamic-properties#设置图片资源)，根据语言[切换文本](/animax/lynx/dynamic-properties#设置文本字体资源)，根据主题更新颜色，或者在交互发生时[调整某个图层的属性](/animax/lynx/dynamic-properties#更新其他图层属性)。
 
 AnimaX 对这类运行时修改做了专门优化，并提供更直接的 API 来替换图片、字体、文本等资源。业务可以把动画产物当作一个可配置的运行时图层，而不是一段完全封闭的视频或一组难以复用的 UI 片段。设计师仍然可以在 After Effects 里组织动画，开发者则可以在运行时把真实业务数据填进去。
 
-更多用法见 [动态属性](../animax/lynx/dynamic-properties)。
+更多用法见 [动态属性](/animax/lynx/dynamic-properties)。
 
 ## 立即体验
 
@@ -176,7 +176,7 @@ AnimaX 已发布在
 [`<animax-view>`](/api/elements/built-in/animax-view)
 元素播放 AnimaX 动画；也可以在示例文档中直接预览播放效果。
 
-若要在原生平台接入，已有 Lottie 方案可以先参考 [从 Lottie 迁移到 AnimaX](../animax/migrate-from-lottie)，再按照 [原生接入指引](../animax/native/quick-start) 完成 iOS 或 Android 接入。播放控制、事件和状态查询见 [原生 API 参考](/animax/native/api/animax-view)。
+若要在原生平台接入，已有 Lottie 方案可以先参考 [从 Lottie 迁移到 AnimaX](/animax/migrate-from-lottie)，再按照 [原生接入指引](/animax/native/quick-start) 完成 iOS 或 Android 接入。[播放控制与生命周期](/animax/native/playback)、事件和状态查询见 [原生 API 参考](/animax/native/api/animax-view)。
 
 你可以先从 [AnimaX 简介](/animax/introduction)了解整体能力，再跟随
 [快速开始](/animax/start/quick-start)
