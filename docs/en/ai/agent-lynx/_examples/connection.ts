@@ -3,8 +3,6 @@ import type { AgentConversationProps } from '@lynx/agent-conversation';
 export const connectionExample = {
   prompt:
     "I've connected my Android phone over adb. Can you check whether there are any Lynx pages I can debug?",
-  caption:
-    'Simulated conversation with abbreviated output. Device IDs, file paths, and page URLs are examples; use the values returned by your tools.',
   steps: [
     {
       type: 'note',
@@ -14,7 +12,6 @@ export const connectionExample = {
     {
       type: 'tool',
       id: 'skills-list',
-      name: 'skills list',
       description:
         'Discover the bundled skills and find lynx-devtool for device debugging.',
       command: 'agent-lynx skills list',
@@ -31,7 +28,6 @@ export const connectionExample = {
     {
       type: 'tool',
       id: 'skills-get',
-      name: 'skills get lynx-devtool',
       description:
         'Load the instructions and get the skill directory and reference file list.',
       command: 'agent-lynx skills get lynx-devtool',
@@ -78,7 +74,6 @@ In practice:
     {
       type: 'tool',
       id: 'list-clients',
-      name: 'list-clients',
       description:
         'Discover apps through the local daemon. The returned id is the client ID for subsequent calls.',
       command: 'agent-lynx list-clients',
@@ -103,7 +98,6 @@ In practice:
     {
       type: 'tool',
       id: 'list-sessions',
-      name: 'list-sessions',
       description:
         'Use the client ID from the previous result. Each session_id identifies a debugging context in that app.',
       command: 'agent-lynx list-sessions --client android-phone:8901',
@@ -118,4 +112,4 @@ In practice:
       defaultOpen: true,
     },
   ],
-} satisfies Pick<AgentConversationProps, 'prompt' | 'caption' | 'steps'>;
+} satisfies Pick<AgentConversationProps, 'prompt' | 'steps'>;

@@ -2,8 +2,6 @@ import type { AgentConversationProps } from '@lynx/agent-conversation';
 
 export const connectionExample = {
   prompt: '我已通过adb连接android手机，你帮我看看有没有可以调试的Lynx页面？',
-  caption:
-    '模拟对话，输出已节选。设备 ID、文件路径与页面地址为示例，请以工具实际返回的值为准。',
   steps: [
     {
       type: 'note',
@@ -12,7 +10,6 @@ export const connectionExample = {
     {
       type: 'tool',
       id: 'skills-list',
-      name: 'skills list',
       description:
         '发现 CLI 自带的 skills，找到与设备调试相关的 lynx-devtool。',
       command: 'agent-lynx skills list',
@@ -29,7 +26,6 @@ export const connectionExample = {
     {
       type: 'tool',
       id: 'skills-get',
-      name: 'skills get lynx-devtool',
       description: '加载使用说明，并取得 skill 的目录和参考文件清单。',
       command: 'agent-lynx skills get lynx-devtool',
       output: `<skill_content name="lynx-devtool">
@@ -73,7 +69,6 @@ In practice:
     {
       type: 'tool',
       id: 'list-clients',
-      name: 'list-clients',
       description:
         '默认通过本地 daemon 发现应用；返回值中的 id 是后续调用使用的 client ID。',
       command: 'agent-lynx list-clients',
@@ -98,7 +93,6 @@ In practice:
     {
       type: 'tool',
       id: 'list-sessions',
-      name: 'list-sessions',
       description:
         '使用上一步返回的 client ID 查询页面；session_id 标识这个应用里的调试上下文。',
       command: 'agent-lynx list-sessions --client android-phone:8901',
@@ -113,4 +107,4 @@ In practice:
       defaultOpen: true,
     },
   ],
-} satisfies Pick<AgentConversationProps, 'prompt' | 'caption' | 'steps'>;
+} satisfies Pick<AgentConversationProps, 'prompt' | 'steps'>;

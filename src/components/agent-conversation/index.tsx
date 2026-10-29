@@ -14,7 +14,7 @@ export type AgentConversationStep =
   | {
       type: 'tool';
       id: string;
-      name: string;
+      name?: string;
       kind?: 'command' | 'read';
       description: string;
       command: string;
@@ -94,7 +94,7 @@ export function AgentConversation({
           ) : (
             <section key={step.id}>
               <p>
-                <strong>{step.name}</strong>
+                <strong>{step.name ?? step.command}</strong>
                 {step.result && ` · ${step.result}`}
               </p>
               <pre>
@@ -196,7 +196,9 @@ export function AgentConversation({
                   }}
                 >
                   <Icon size={15} aria-hidden="true" />
-                  <span className={styles.toolName}>{step.name}</span>
+                  <span className={styles.toolName}>
+                    {step.name ?? step.command}
+                  </span>
                   {step.result && (
                     <span className={styles.toolResult}>
                       <Check size={12} aria-hidden="true" />
