@@ -2,6 +2,9 @@
 description: '获取带元素引用的标注截图、全屏截图和完整滚动内容截图。'
 ---
 
+import { withBase } from '@rspress/core/runtime';
+import { EmbedIframe } from '@lynx/EmbedIframe';
+
 # 截图
 
 截图前先[连接应用](connections.mdx)，并选择目标 session。
@@ -13,6 +16,16 @@ agent-lynx screenshot --annotate -o ./page.jpeg
 ```
 
 该命令截图并刷新快照。图片中的 `[3]` 等标记对应 `@e3` 等元素引用，agent 可以据此识别并操作可见目标。添加 `--json` 后，可获得截图路径、尺寸和同一次调用生成的新快照，便于程序读取。
+
+下面的示意图来自在 Lynx Explorer 中运行的 [Tailwind CSS 示例](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss)。悬停、点击或用键盘聚焦任一连线目标，即可同时高亮截图中的标注框和 snapshot 中的引用。
+
+<EmbedIframe
+  src={(theme) =>
+    `${withBase('/ai/agent-lynx/annotated-screenshot.html')}?theme=${theme}&lang=zh`
+  }
+  title="标注截图与 snapshot 引用的对应关系"
+  height={750}
+/>
 
 需要全屏截图时，使用 `agent-lynx screenshot --fullscreen -o ./screen.jpeg`。`--annotate` 和 `--fullscreen` 应分别使用。
 

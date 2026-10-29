@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>agent-lynx — Annotated screenshots and snapshot refs</title>
+    <style>
+      @font-face {
+        font-family: 'JetBrains Mono';
+        src: url('https://sf16-sg.tiktokcdn.com/obj/eden-sg/fgoeh7uhbfpognuvo/lynx-website/agent-lynx/annotations/fonts/jetbrains-mono-regular-f1a7a03672cd.woff2')
+          format('woff2');
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+      }
+      :root {
+        color-scheme: light;
+        --bg: #fff;
+        --panel: #f8f9fb;
+        --text: #242730;
+        --muted: #747a88;
+        --border: #e7e9ee;
+        --accent: #e90068;
+        --accent-bg: #fff0f6;
+        --tree: #a2a8b4;
+        --mono:
+          'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas,
+          'DejaVu Sans Mono', monospace;
+        --tree-indent: 18px;
+      }
+      :root[data-theme='dark'] {
+        color-scheme: dark;
+        --bg: #141518;
+        --panel: #1b1d22;
+        --text: #e5e7ed;
+        --muted: #979eae;
+        --border: #30333d;
+        --accent: #ff6ca9;
+        --accent-bg: #38202d;
+        --tree: #727b8f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          13px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+      button {
+        font: inherit;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .demo {
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 22px 22px 16px;
+      }
+      .intro {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-size: 17px;
+        font-weight: 650;
+        letter-spacing: -0.025em;
+        margin: 0 0 5px;
+      }
+      .intro p {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0;
+      }
+      .mapping {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 11px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        font: 12px var(--mono);
+        white-space: nowrap;
+      }
+      .mapping strong {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .mapping span {
+        color: var(--muted);
+      }
+      .viewport {
+        overflow-x: auto;
+        padding: 3px 3px 8px;
+        margin: -3px -3px 0;
+      }
+      .stage {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(210px, 0.8fr) minmax(300px, 1.2fr);
+        gap: clamp(48px, 8vw, 86px);
+        min-width: 590px;
+        align-items: stretch;
+      }
+      .panel {
+        min-width: 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 42px;
+        padding: 0 13px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel);
+        font: 11.5px var(--mono);
+        white-space: nowrap;
+      }
+      .panel-heading svg {
+        flex: none;
+        width: 15px;
+        height: 15px;
+        color: var(--muted);
+      }
+      .capture-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .image-wrap {
+        position: relative;
+        width: calc(100% - 24px);
+        max-width: 230px;
+        margin: 12px auto;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+      }
+      .image-wrap img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+      }
+      .capture-note {
+        padding: 0 10px 11px;
+        color: var(--muted);
+        font-size: 10px;
+        text-align: center;
+      }
+      .hotspot {
+        position: absolute;
+        z-index: 5;
+        min-height: 24px;
+        transform: translateY(-50%);
+        border: 0;
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 2px;
+      }
+      .hotspot::before {
+        content: '';
+        position: absolute;
+        inset: -3px;
+        border-radius: 4px;
+        border: 2px solid transparent;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .hotspot.is-active::before,
+      .hotspot:focus-visible::before {
+        border-color: var(--accent);
+        background: rgb(233 0 104 / 8%);
+        box-shadow: 0 0 0 3px rgb(233 0 104 / 10%);
+      }
+      .target-label {
+        position: absolute;
+        left: 0;
+        bottom: calc(100% + 6px);
+        padding: 3px 6px;
+        border-radius: 4px;
+        background: #e90068;
+        color: #fff;
+        font: 11px var(--mono);
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+      }
+      .hotspot.is-active .target-label,
+      .hotspot:focus-visible .target-label {
+        opacity: 1;
+      }
+      .terminal-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .snapshot-scroll {
+        flex: 1;
+        height: 0;
+        min-height: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+        padding: 12px 9px;
+        scrollbar-width: thin;
+      }
+      .snapshot {
+        position: relative;
+        width: max-content;
+        min-width: 100%;
+        font: 12px/20px var(--mono);
+        font-variant-ligatures: none;
+      }
+      .snapshot-row {
+        position: relative;
+        display: block;
+        width: 100%;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        padding: 0 7px;
+        margin: 0;
+        color: var(--text);
+        background: transparent;
+        font: inherit;
+        text-align: left;
+        white-space: pre;
+      }
+      .snapshot-row .branch {
+        display: inline-block;
+        width: calc(var(--depth) * var(--tree-indent));
+        color: transparent;
+        white-space: pre;
+      }
+      .tree-lines {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        overflow: visible;
+        pointer-events: none;
+        color: var(--tree);
+      }
+      .tree-lines path {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+      }
+      .snapshot-row .ref-token {
+        color: var(--muted);
+      }
+      .snapshot-row.is-target {
+        cursor: pointer;
+      }
+      .snapshot-row.is-target .ref-token {
+        color: var(--accent);
+        font-weight: 650;
+      }
+      .snapshot-row.is-active {
+        background: var(--accent-bg);
+        border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+      }
+      .snapshot-row.is-target:focus-visible {
+        outline-offset: -2px;
+      }
+      .omission {
+        height: 13px;
+        line-height: 11px;
+        color: var(--tree);
+        user-select: none;
+      }
+      .terminal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 39px;
+        padding: 7px 12px;
+        border-top: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .text-button {
+        border: 0;
+        padding: 2px;
+        color: var(--text);
+        background: none;
+        cursor: pointer;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .text-button:hover {
+        color: var(--accent);
+      }
+      .text-button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .connections {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 4;
+        overflow: visible;
+        pointer-events: none;
+        color: var(--accent);
+      }
+      .connection {
+        opacity: 0.6;
+        transition: opacity 0.15s;
+      }
+      .connection path {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5px;
+        vector-effect: non-scaling-stroke;
+      }
+      .connection circle {
+        fill: var(--bg);
+        stroke: currentColor;
+        stroke-width: 1.5px;
+        vector-effect: non-scaling-stroke;
+      }
+      .connection.is-active {
+        opacity: 1;
+      }
+      .connection.is-active path {
+        stroke-width: 2.25px;
+      }
+      .stage.has-active .connection:not(.is-active) {
+        opacity: 0.13;
+      }
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        padding-top: 9px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .footer p {
+        margin: 0;
+      }
+      .footer a {
+        color: var(--muted);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .footer a:hover {
+        color: var(--text);
+        text-decoration: underline;
+      }
+      .status-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 29px;
+        padding-top: 9px;
+      }
+      #map-status {
+        color: var(--accent);
+        font: 11px/1.5 var(--mono);
+        margin: 0;
+      }
+      #clear-selection {
+        flex: none;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      @media (min-width: 900px) {
+        .stage {
+          grid-template-columns: minmax(230px, 290px) minmax(320px, 1fr);
+        }
+      }
+      @media (max-width: 560px) {
+        .demo {
+          padding: 16px 14px 12px;
+        }
+        .intro {
+          align-items: flex-start;
+          margin-bottom: 15px;
+        }
+        h1 {
+          font-size: 15px;
+        }
+        .intro p {
+          max-width: 220px;
+        }
+        .mapping {
+          font-size: 10px;
+          padding: 6px 7px;
+          gap: 5px;
+        }
+        .footer {
+          font-size: 10px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="demo" aria-labelledby="demo-title">
+      <header class="intro">
+        <div>
+          <h1 id="demo-title" data-copy="title">
+            See the page. Address its elements.
+          </h1>
+          <p data-copy="subtitle">
+            One annotated screenshot, the same snapshot refs.
+          </p>
+        </div>
+        <div class="mapping" aria-label="Label N maps to snapshot ref eN">
+          <strong>[N]</strong><span>↔</span><strong>@eN</strong>
+        </div>
+      </header>
+      <div class="viewport" tabindex="0" data-label="viewport">
+        <div class="stage" id="stage">
+          <section class="panel capture-panel" data-label="capturePanel">
+            <div class="panel-heading">
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.4"
+                aria-hidden="true"
+              >
+                <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+                <circle cx="7" cy="8" r="1.5" />
+                <path d="m3 14 4.5-4 3 2.5L14 9l3.5 4" />
+              </svg>
+              <span>page.jpeg</span>
+            </div>
+            <div class="image-wrap" id="image-wrap">
+              <img
+                id="capture"
+                src="https://sf16-sg.tiktokcdn.com/obj/eden-sg/fgoeh7uhbfpognuvo/lynx-website/agent-lynx/annotations/settings-annotated-582b1d650b4c.webp"
+                width="1280"
+                height="2633"
+                alt="Lynx Explorer settings page, with numbered element annotations."
+                decoding="async"
+              />
+              <div id="hotspots"></div>
+            </div>
+            <div class="capture-note">Lynx Explorer · Tailwind CSS</div>
+          </section>
+          <section class="panel terminal-panel" data-label="snapshotPanel">
+            <div class="panel-heading">
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.4"
+                aria-hidden="true"
+              >
+                <path d="m3 5 5 5-5 5m7 0h7" />
+              </svg>
+              <span>agent-lynx snapshot</span>
+            </div>
+            <div
+              class="snapshot-scroll"
+              id="snapshot-scroll"
+              tabindex="0"
+              data-label="snapshotScroll"
+            >
+              <div class="snapshot" id="snapshot"></div>
+            </div>
+            <div class="terminal-footer">
+              <span id="snapshot-note"></span>
+              <button
+                class="text-button"
+                id="toggle-snapshot"
+                type="button"
+                aria-expanded="false"
+                aria-controls="snapshot"
+              ></button>
+            </div>
+          </section>
+          <svg
+            class="connections"
+            id="connections"
+            aria-hidden="true"
+            focusable="false"
+          ></svg>
+        </div>
+      </div>
+      <div class="footer">
+        <p data-copy="hint">
+          Hover, click, or focus a connected target on either side.
+        </p>
+        <a id="example-source" target="_blank" rel="noopener noreferrer"
+          ><span data-copy="source">Example source</span> ↗</a
+        >
+      </div>
+      <div class="status-row">
+        <p
+          id="map-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        ></p>
+        <button
+          id="clear-selection"
+          class="text-button"
+          type="button"
+          data-copy="clear"
+          disabled
+        >
+          Clear selection
+        </button>
+      </div>
+      <noscript
+        >This diagram needs JavaScript for element highlighting and curved
+        connections.</noscript
+      >
+    </main>
+    <!--
+      Captured from the Apache-2.0 Lynx Examples Tailwind CSS example.
+      JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors.
+      Font license: SIL Open Font License 1.1.
+      https://sf16-sg.tiktokcdn.com/obj/eden-sg/fgoeh7uhbfpognuvo/lynx-website/agent-lynx/annotations/fonts/JetBrainsMono-OFL.txt
+
+      Source revision: 3b019cec94b0e7b83e2239dd52839365fdd76522.
+      Build: pnpm --filter @lynx-example/tailwindcss run build.
+      Open the bundle in Lynx Explorer, select Light, then capture:
+        agent-lynx screenshot --annotate -o page.jpeg --json
+        agent-lynx snapshot
+      All 69 refs and centers were verified against the screenshot snapshot.
+      The WebP preserves the original capture dimensions and annotations.
+    -->
+    <script id="capture-data" type="application/json">
+      {
+        "width": 1280,
+        "height": 2633,
+        "lines": [
+          "@e1 [scroll-view] @(207,426) {scrollable}",
+          "└─ @e2 [view] @(207,436)",
+          "   ├─ @e3 [view] @(207,46)",
+          "   │  ├─ @e4 [text] \"Settings\" @(207,35)",
+          "   │  └─ @e5 [text] \"Manage your account and preferences.\" @(207,62)",
+          "   ├─ @e6 [view] @(207,153)",
+          "   │  ├─ @e7 [view] @(207,129)",
+          "   │  │  ├─ @e8 [text] \"Theme\" @(207,119)",
+          "   │  │  └─ @e9 [text] \"Switch design tokens at runtime via CSS variables.\" @(207,143)",
+          "   │  └─ @e10 [view] @(207,183)",
+          "   │     ├─ @e11 [view] @(91,182)",
+          "   │     │  └─ @e12 [text] \"Dark\" @(91,183)",
+          "   │     ├─ @e13 [view] @(207,182)",
+          "   │     │  └─ @e14 [text] \"Light\" @(208,183)",
+          "   │     └─ @e15 [view] @(324,182)",
+          "   │        └─ @e16 [text] \"Ocean\" @(323,183)",
+          "   ├─ @e17 [view] @(207,399)",
+          "   │  ├─ @e18 [view] @(207,273)",
+          "   │  │  ├─ @e19 [text] \"Profile\" @(207,263)",
+          "   │  │  └─ @e20 [text] \"Your public profile information.\" @(207,287)",
+          "   │  ├─ @e21 [view] @(207,406)",
+          "   │  │  ├─ @e22 [view] @(207,328)",
+          "   │  │  │  ├─ @e23 [view] @(54,329)",
+          "   │  │  │  │  └─ @e24 [text] \"H\" @(54,329)",
+          "   │  │  │  ├─ @e25 [view] @(132,328)",
+          "   │  │  │  │  ├─ @e26 [text] \"Hux\" @(132,320)",
+          "   │  │  │  │  └─ @e27 [text] \"hux@example.com\" @(132,339)",
+          "   │  │  │  └─ @e28 [view] @(359,329)",
+          "   │  │  │     └─ @e29 [view] @(359,329)",
+          "   │  │  │        └─ @e30 [text] \"PRO\" @(359,329)",
+          "   │  │  ├─ @e31 [view] @(207,363)",
+          "   │  │  ├─ @e32 [view] @(207,405)",
+          "   │  │  │  ├─ @e33 [text] \"Display Name\" @(207,386)",
+          "   │  │  │  └─ @e34 [view] @(207,416)",
+          "   │  │  │     └─ @e35 [text] \"Hux\" @(208,417)",
+          "   │  │  └─ @e36 [view] @(207,475)",
+          "   │  │     ├─ @e37 [text] \"Email\" @(207,456)",
+          "   │  │     └─ @e38 [view] @(207,487)",
+          "   │  │        └─ @e39 [text] \"hux@example.com\" @(208,487)",
+          "   │  └─ @e40 [view] @(207,533)",
+          "   │     └─ @e41 [view] @(81,533)",
+          "   │        └─ @e42 [text] \"Downgrade\" @(81,533)",
+          "   ├─ @e43 [view] @(207,671)",
+          "   │  ├─ @e44 [view] @(207,622)",
+          "   │  │  ├─ @e45 [text] \"Notifications\" @(207,613)",
+          "   │  │  └─ @e46 [text] \"Choose how you want to be notified.\" @(207,636)",
+          "   │  └─ @e47 [view] @(207,702)",
+          "   │     ├─ @e48 [view] @(207,675)",
+          "   │     │  ├─ @e49 [view] @(133,675)",
+          "   │     │  │  ├─ @e50 [text] \"Push Notifications\" @(133,668)",
+          "   │     │  │  └─ @e51 [text] \"Receive push notifications on your device.\" @(133,684)",
+          "   │     │  └─ @e52 [view] @(360,675)",
+          "   │     │     └─ @e53 [view] @(367,675)",
+          "   │     ├─ @e54 [view] @(207,702)",
+          "   │     └─ @e55 [view] @(207,728)",
+          "   │        ├─ @e56 [view] @(118,728)",
+          "   │        │  ├─ @e57 [text] \"Email Notifications\" @(118,721)",
+          "   │        │  └─ @e58 [text] \"Receive email digests and updates.\" @(118,737)",
+          "   │        └─ @e59 [view] @(360,728)",
+          "   │           └─ @e60 [view] @(354,728)",
+          "   └─ @e61 [view] @(207,816)",
+          "      ├─ @e62 [view] @(207,818)",
+          "      │  ├─ @e63 [text] \"Danger Zone\" @(207,808)",
+          "      │  └─ @e64 [text] \"Irreversible and destructive actions.\" @(207,832)",
+          "      └─ @e65 [view] @(207,871) {offscreen}",
+          "         ├─ @e66 [view] @(91,871) {offscreen}",
+          "         │  └─ @e67 [text] \"Delete Account\" @(91,871) {offscreen}",
+          "         └─ @e68 [view] @(186,871) {offscreen}",
+          "            └─ @e69 [text] \"Cancel\" @(186,871) {offscreen}"
+        ],
+        "annotations": [
+          {
+            "ref": "@e15",
+            "number": 15,
+            "tag": "view",
+            "box": { "x": 835, "y": 535, "width": 332, "height": 56 }
+          },
+          {
+            "ref": "@e41",
+            "number": 41,
+            "tag": "view",
+            "box": { "x": 154, "y": 1621, "width": 190, "height": 53 }
+          },
+          {
+            "ref": "@e48",
+            "number": 48,
+            "tag": "view",
+            "box": { "x": 111, "y": 2038, "width": 1059, "height": 97 }
+          }
+        ],
+        "source": {
+          "url": "https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss",
+          "revision": "3b019cec94b0e7b83e2239dd52839365fdd76522"
+        }
+      }
+    </script>
+    <script>
+      (() => {
+        'use strict';
+        const params = new URLSearchParams(location.search);
+        const zh = params.get('lang') === 'zh';
+        const dark =
+          params.get('theme') === 'dark' ||
+          (!params.has('theme') &&
+            matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.lang = zh ? 'zh-CN' : 'en';
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        const copy = zh
+          ? {
+              title: '看见页面，定位元素',
+              subtitle: '标注截图与 snapshot 共享同一组元素引用。',
+              hint: '悬停、点击或用键盘聚焦任一连线目标。',
+              source: '示例源码',
+              clear: '清除选择',
+              viewport: '标注截图与 snapshot 的左右对照，可横向滚动',
+              capturePanel: '标注截图',
+              snapshotPanel: 'agent-lynx snapshot 输出',
+              snapshotScroll: '快照输出，可滚动',
+              image: 'Lynx Explorer 设置页，带有编号的元素标注框。',
+              excerpt: '快照节选 · 69 个引用',
+              full: '完整快照 · 69 个引用',
+              showFull: '查看完整快照',
+              showExcerpt: '显示节选',
+              omitted: '已省略其他引用',
+              idle: '标签 [N] 对应引用 @eN',
+              labels: {
+                '@e15': 'Ocean 主题按钮',
+                '@e41': '账户方案按钮',
+                '@e48': '推送通知开关',
+              },
+            }
+          : {
+              title: 'See the page. Address its elements.',
+              subtitle: 'One annotated screenshot, the same snapshot refs.',
+              hint: 'Hover, click, or focus a connected target on either side.',
+              source: 'Example source',
+              clear: 'Clear selection',
+              viewport:
+                'Side-by-side annotated screenshot and snapshot, scroll horizontally',
+              capturePanel: 'Annotated screenshot',
+              snapshotPanel: 'agent-lynx snapshot output',
+              snapshotScroll: 'Snapshot output, scrollable',
+              image:
+                'Lynx Explorer settings page, with numbered element annotations.',
+              excerpt: 'Snapshot excerpt · 69 refs',
+              full: 'Full snapshot · 69 refs',
+              showFull: 'Full snapshot',
+              showExcerpt: 'Show excerpt',
+              omitted: 'Other snapshot refs omitted',
+              idle: 'Label [N] maps to ref @eN',
+              labels: {
+                '@e15': 'Ocean theme button',
+                '@e41': 'Plan button',
+                '@e48': 'Push notifications',
+              },
+            };
+        document.title = zh
+          ? 'agent-lynx — 标注截图与 snapshot 引用'
+          : 'agent-lynx — Annotated screenshots and snapshot refs';
+        document.querySelectorAll('[data-copy]').forEach((element) => {
+          element.textContent = copy[element.dataset.copy];
+        });
+        document.querySelectorAll('[data-label]').forEach((element) => {
+          element.setAttribute('aria-label', copy[element.dataset.label]);
+        });
+        document
+          .querySelector('.mapping')
+          .setAttribute('aria-label', copy.idle);
+        const data = JSON.parse(
+          document.getElementById('capture-data').textContent,
+        );
+        const stage = document.getElementById('stage');
+        const imageWrap = document.getElementById('image-wrap');
+        const image = document.getElementById('capture');
+        const snapshot = document.getElementById('snapshot');
+        const scroller = document.getElementById('snapshot-scroll');
+        const svg = document.getElementById('connections');
+        const status = document.getElementById('map-status');
+        const clear = document.getElementById('clear-selection');
+        const toggle = document.getElementById('toggle-snapshot');
+        const note = document.getElementById('snapshot-note');
+        image.alt = copy.image;
+        document.getElementById('example-source').href = data.source.url;
+        const excerptRefs = new Set([
+          1, 2, 6, 10, 15, 16, 17, 40, 41, 42, 43, 47, 48, 49, 50,
+        ]);
+        const structure = new Map();
+        const ancestors = [];
+        data.lines.filter(Boolean).forEach((line) => {
+          const match = /@e(\d+)/.exec(line);
+          if (!match) return;
+          const ref = '@e' + match[1];
+          const depth = match.index / 3;
+          structure.set(ref, { depth, parent: ancestors[depth - 1] });
+          ancestors[depth] = ref;
+          ancestors.length = depth + 1;
+        });
+        const treeSvg = makeSvg('svg', {
+          class: 'tree-lines',
+          'aria-hidden': 'true',
+          focusable: 'false',
+        });
+        const targets = new Map(
+          data.annotations.map((annotation) => [
+            annotation.ref,
+            { ...annotation },
+          ]),
+        );
+        const motion = matchMedia('(prefers-reduced-motion: reduce)');
+        let full = false;
+        let pinned = null;
+        let hovered = null;
+        let focused = null;
+        let frame = 0;
+
+        function drawTree() {
+          const bounds = snapshot.getBoundingClientRect();
+          treeSvg.setAttribute(
+            'viewBox',
+            '0 0 ' + bounds.width + ' ' + bounds.height,
+          );
+          const rows = new Map(
+            [...snapshot.querySelectorAll('[data-node-ref]')].map((row) => [
+              row.dataset.nodeRef,
+              row,
+            ]),
+          );
+          const branches = new Map();
+          rows.forEach((row, ref) => {
+            const parent = structure.get(ref).parent;
+            if (!parent || !rows.has(parent)) return;
+            const token = row
+              .querySelector('.ref-token')
+              .getBoundingClientRect();
+            const point = {
+              x: token.left - bounds.left,
+              y: token.top - bounds.top + token.height / 2,
+            };
+            if (!branches.has(parent)) branches.set(parent, []);
+            branches.get(parent).push(point);
+          });
+          treeSvg.replaceChildren();
+          branches.forEach((children, parent) => {
+            const rail = children[0].x - 9;
+            const top =
+              rows.get(parent).getBoundingClientRect().bottom -
+              bounds.top -
+              0.5;
+            const last = children[children.length - 1];
+            const path =
+              'M ' +
+              rail +
+              ' ' +
+              top +
+              ' V ' +
+              (last.y - 4) +
+              ' Q ' +
+              rail +
+              ' ' +
+              last.y +
+              ' ' +
+              (rail + 4) +
+              ' ' +
+              last.y +
+              ' H ' +
+              (last.x - 4) +
+              children
+                .slice(0, -1)
+                .map(
+                  (point) =>
+                    ' M ' + rail + ' ' + point.y + ' H ' + (point.x - 4),
+                )
+                .join('');
+            treeSvg.append(
+              makeSvg('path', {
+                d: path,
+                'data-parent-ref': parent,
+              }),
+            );
+          });
+        }
+        function draw() {
+          frame = 0;
+          drawTree();
+          const bounds = stage.getBoundingClientRect();
+          const visible = scroller.getBoundingClientRect();
+          svg.setAttribute(
+            'viewBox',
+            '0 0 ' + bounds.width + ' ' + bounds.height,
+          );
+          targets.forEach((target) => {
+            if (!target.row) return;
+            const start = target.hotspot.getBoundingClientRect();
+            const end = target.row
+              .querySelector('.ref-token')
+              .getBoundingClientRect();
+            const y = end.top + end.height / 2;
+            const shown =
+              y >= visible.top &&
+              y <= visible.bottom &&
+              end.left >= visible.left &&
+              end.left <= visible.right;
+            target.connection.style.display = shown ? '' : 'none';
+            if (!shown) return;
+            const x1 = start.right - bounds.left + 3;
+            const y1 = start.top + start.height / 2 - bounds.top;
+            const x2 = end.left - bounds.left - 7;
+            const y2 = y - bounds.top;
+            const bend = Math.max(25, Math.min(80, (x2 - x1) * 0.5));
+            target.path.setAttribute(
+              'd',
+              'M ' +
+                x1 +
+                ' ' +
+                y1 +
+                ' C ' +
+                (x1 + bend) +
+                ' ' +
+                y1 +
+                ', ' +
+                (x2 - bend) +
+                ' ' +
+                y2 +
+                ', ' +
+                x2 +
+                ' ' +
+                y2,
+            );
+            target.start.setAttribute('cx', x1);
+            target.start.setAttribute('cy', y1);
+            target.end.setAttribute('cx', x2);
+            target.end.setAttribute('cy', y2);
+          });
+        }
+        function scheduleDraw() {
+          if (!frame) frame = requestAnimationFrame(draw);
+        }
+        function update() {
+          const active = hovered || focused || pinned;
+          stage.classList.toggle('has-active', Boolean(active));
+          targets.forEach((target, ref) => {
+            const selected = ref === active;
+            target.hotspot.classList.toggle('is-active', selected);
+            target.row?.classList.toggle('is-active', selected);
+            target.connection.classList.toggle('is-active', selected);
+            target.hotspot.setAttribute('aria-pressed', String(ref === pinned));
+            target.row?.setAttribute('aria-pressed', String(ref === pinned));
+          });
+          const target = targets.get(active);
+          status.textContent = target
+            ? '[' +
+              target.number +
+              '] ↔ ' +
+              active +
+              ' · ' +
+              copy.labels[active]
+            : copy.idle;
+          clear.disabled = !pinned;
+        }
+        function bindTarget(element, ref) {
+          element.addEventListener('pointerenter', () => {
+            hovered = ref;
+            update();
+          });
+          element.addEventListener('pointerleave', () => {
+            hovered = null;
+            update();
+          });
+          element.addEventListener('focus', () => {
+            focused = ref;
+            hovered = null;
+            update();
+          });
+          element.addEventListener('blur', () => {
+            focused = null;
+            update();
+          });
+          element.addEventListener('click', () => {
+            pinned = pinned === ref ? null : ref;
+            if (pinned) {
+              const row = targets.get(ref).row;
+              const rowBounds = row.getBoundingClientRect();
+              const scrollBounds = scroller.getBoundingClientRect();
+              if (
+                rowBounds.top < scrollBounds.top ||
+                rowBounds.bottom > scrollBounds.bottom
+              ) {
+                scroller.scrollTo({
+                  top:
+                    scroller.scrollTop +
+                    rowBounds.top -
+                    scrollBounds.top -
+                    scroller.clientHeight / 2,
+                  behavior: motion.matches ? 'instant' : 'smooth',
+                });
+              }
+            }
+            update();
+            scheduleDraw();
+          });
+        }
+        function makeSvg(tag, attributes) {
+          const element = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            tag,
+          );
+          Object.entries(attributes).forEach(([key, value]) =>
+            element.setAttribute(key, value),
+          );
+          return element;
+        }
+        targets.forEach((target, ref) => {
+          const hotspot = document.createElement('button');
+          hotspot.type = 'button';
+          hotspot.className = 'hotspot';
+          hotspot.dataset.ref = ref;
+          hotspot.setAttribute(
+            'aria-label',
+            '[' + target.number + '] ↔ ' + ref + ': ' + copy.labels[ref],
+          );
+          hotspot.setAttribute('aria-controls', 'snapshot-' + ref.slice(1));
+          hotspot.style.left = (target.box.x / data.width) * 100 + '%';
+          hotspot.style.top =
+            ((target.box.y + target.box.height / 2) / data.height) * 100 + '%';
+          hotspot.style.width = (target.box.width / data.width) * 100 + '%';
+          hotspot.style.height = (target.box.height / data.height) * 100 + '%';
+          const label = document.createElement('span');
+          label.className = 'target-label';
+          label.textContent = '[' + target.number + '] ↔ ' + ref;
+          label.setAttribute('aria-hidden', 'true');
+          hotspot.append(label);
+          document.getElementById('hotspots').append(hotspot);
+          bindTarget(hotspot, ref);
+          target.hotspot = hotspot;
+          target.connection = makeSvg('g', {
+            class: 'connection',
+            'data-ref': ref,
+          });
+          target.path = makeSvg('path', {});
+          target.start = makeSvg('circle', { r: 2.5 });
+          target.end = makeSvg('circle', { r: 2.5 });
+          target.connection.append(target.path, target.start, target.end);
+          svg.append(target.connection);
+        });
+        function renderSnapshot() {
+          snapshot.replaceChildren(treeSvg);
+          let skipped = false;
+          data.lines.filter(Boolean).forEach((line) => {
+            const match = /@e(\d+)/.exec(line);
+            if (!match) return;
+            const ref = '@e' + match[1];
+            if (!full && !excerptRefs.has(Number(match[1]))) {
+              if (!skipped) {
+                const omission = document.createElement('div');
+                omission.className = 'snapshot-row omission';
+                omission.textContent = '…';
+                omission.style.paddingInlineStart =
+                  structure.get(ref).depth * 18 + 7 + 'px';
+                omission.setAttribute('aria-label', copy.omitted);
+                snapshot.append(omission);
+              }
+              skipped = true;
+              return;
+            }
+            skipped = false;
+            const target = targets.get(ref);
+            const row = document.createElement(target ? 'button' : 'div');
+            row.className = 'snapshot-row' + (target ? ' is-target' : '');
+            row.dataset.nodeRef = ref;
+            row.style.setProperty('--depth', structure.get(ref).depth);
+            const branch = document.createElement('span');
+            branch.className = 'branch';
+            branch.textContent = line.slice(0, match.index);
+            const token = document.createElement('span');
+            token.className = 'ref-token';
+            token.textContent = ref;
+            row.append(
+              branch,
+              token,
+              document.createTextNode(line.slice(match.index + ref.length)),
+            );
+            if (target) {
+              row.type = 'button';
+              row.id = 'snapshot-' + ref.slice(1);
+              row.dataset.ref = ref;
+              row.setAttribute('aria-label', ref + ': ' + copy.labels[ref]);
+              target.row = row;
+              bindTarget(row, ref);
+            }
+            snapshot.append(row);
+          });
+          note.textContent = full ? copy.full : copy.excerpt;
+          toggle.textContent = full ? copy.showExcerpt : copy.showFull;
+          toggle.setAttribute('aria-expanded', String(full));
+          update();
+          scheduleDraw();
+        }
+        toggle.addEventListener('click', () => {
+          full = !full;
+          hovered = null;
+          focused = null;
+          renderSnapshot();
+          scroller.scrollTop = 0;
+        });
+        function clearSelection() {
+          pinned = null;
+          hovered = null;
+          focused = null;
+          update();
+        }
+        clear.addEventListener('click', clearSelection);
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') clearSelection();
+        });
+        scroller.addEventListener('scroll', scheduleDraw, { passive: true });
+        image.addEventListener('load', scheduleDraw);
+        window.addEventListener('resize', scheduleDraw);
+        if ('ResizeObserver' in window) {
+          const observer = new ResizeObserver(scheduleDraw);
+          observer.observe(stage);
+          observer.observe(imageWrap);
+        }
+        document.fonts.ready.then(scheduleDraw);
+        renderSnapshot();
+      })();
+    </script>
+  </body>
+</html>
