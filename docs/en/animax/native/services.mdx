@@ -1,0 +1,282 @@
+---
+description: 'Extend AnimaX with resource loaders, image services, and instance-level abilities. See Native Quick Start for integration steps.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# Extend Native Capabilities
+
+Extend AnimaX with resource loaders, image services, and instance-level abilities. See [Native Quick Start](./quick-start) for integration steps.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Inject basic capabilities
+
+AnimaX uses a service-registry pattern for capabilities such as network resource loading and image decoding. Without these services, AnimaX can only load assets from local files and the app bundle.
+
+### Network resource loader
+
+Implement [`AnimaXLoaderProtocol`](./api/animax-loader-protocol) to handle network requests. Here is an example using `NSURLSession`:
+
+```objc
+// HttpLoader.h
+#import <AnimaX/AnimaXLoaderProtocol.h>
+
+@interface HttpLoader : NSObject <AnimaXLoaderProtocol>
+@end
+
+// HttpLoader.m
+#import "HttpLoader.h"
+#import <AnimaX/AnimaXLoaderResponse.h>
+
+@implementation HttpLoader
+
+- (void)handleRequest:(AnimaXLoaderRequest *)request
+           completion:(AnimaXLoaderCompletionHandler)completion {
+    NSURL *url = [NSURL URLWithString:request.url];
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithURL:url
+        completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            if (error) {
+                AnimaXLoaderResponse *resp =
+                    [AnimaXLoaderResponse responseWithError:error];
+                completion(resp);
+                return;
+            }
+            AnimaXLoaderResponse *resp =
+                [AnimaXLoaderResponse responseWithPayload:data];
+            completion(resp);
+        }];
+    [task resume];
+}
+
+- (AnimaXLoaderScheme)getScheme {
+    return AnimaXLoaderSchemeHttp;
+}
+
+@end
+```
+
+Register the loader via [`AnimaXResourceFactoryService`](./api/animax-resource-factory-service):
+
+```objc
+#import <AnimaX/AnimaXServiceCenter.h>
+#import <AnimaX/AnimaXResourceFactoryService.h>
+
+// In AppDelegate or before first view creation
+@interface MyResourceFactory : NSObject <AnimaXResourceFactoryService>
+@end
+
+@implementation MyResourceFactory
+- (NSArray<id<AnimaXLoaderProtocol>> *)createAnimaXLoaders {
+    return @[[[HttpLoader alloc] init]];
+}
+@end
+
+[[AnimaXServiceCenter sharedInstance]
+    registerService:@protocol(AnimaXResourceFactoryService)
+           withImpl:[[MyResourceFactory alloc] init]];
+```
+
+### Image loading service
+
+On iOS, implement [`AnimaXImageDecoderService`](./api/animax-image-service) to provide custom image decoding:
+
+```objc
+#import <AnimaX/AnimaXImageDecoderService.h>
+
+@interface MyImageDecoderService : NSObject <AnimaXImageDecoderService>
+@end
+
+@implementation MyImageDecoderService
+
+- (UIImage *)loadImageData:(NSData *)data {
+    // Use your image pipeline (SDWebImage, Kingfisher, etc.) to decode.
+    // Return nil to fall back to the default UIImage decoding.
+    return [UIImage imageWithData:data];
+}
+
+@end
+```
+
+Register it:
+
+```objc
+[[AnimaXServiceCenter sharedInstance]
+    registerService:@protocol(AnimaXImageDecoderService)
+           withImpl:[[MyImageDecoderService alloc] init]];
+```
+
+## Inject instance-level capabilities
+
+For most apps, the global `AnimaXServiceCenter` is sufficient. If you need instance-level capability injection, such as different image loading strategies for different screens, create a custom ability.
+
+```objc
+// CustomAbility.h
+#import <AnimaX/BaseAnimaXAbility.h>
+
+@interface CustomAbility : BaseAnimaXAbility
+@end
+
+// CustomAbility.m
+#import "CustomAbility.h"
+#import <AnimaX/AnimaXServiceCenter.h>
+
+@implementation CustomAbility
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        // Register services scoped to this view instance
+        // [self registerService:@protocol(...) withImpl:...];
+    }
+    return self;
+}
+
+@end
+
+// Use the custom ability
+CustomAbility *ability = [[CustomAbility alloc] init];
+AnimaXContext *context = [[AnimaXContext alloc] initWithAbility:ability];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+```
+
+:::info
+
+Services registered on an ability via `registerService` take priority over global services from `AnimaXServiceCenter`.
+
+:::
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+## Inject basic capabilities
+
+AnimaX uses a service-registry pattern for capabilities such as network resource loading and image decoding. Without these services, AnimaX can only load assets from local files and the app bundle.
+
+### Network resource loader
+
+Implement [`IAnimaXLoader`](./api/animax-loader-protocol) to handle network requests. Here is an example using OkHttp:
+
+```java
+public class HttpLoader implements IAnimaXLoader {
+    private final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
+
+    @Override
+    public void load(IAnimaXLoaderRequest request,
+                     IAnimaXLoaderCompletionHandler completionHandler) {
+        String uri = request.getUri();
+        Request httpRequest = new Request.Builder().url(uri).build();
+
+        client.newCall(httpRequest).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                completionHandler.onComplete(
+                    AnimaXLoaderResponse.createErrorResponse(e));
+            }
+
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    completionHandler.onComplete(
+                        AnimaXLoaderResponse.createErrorResponse(
+                            new Exception("HTTP " + response.code())));
+                    return;
+                }
+                byte[] bytes = response.body().bytes();
+                completionHandler.onComplete(
+                    AnimaXLoaderResponse.createByteArrayResponse(bytes));
+            }
+        });
+    }
+
+    @Override
+    public AnimaXLoaderScheme getScheme() {
+        return AnimaXLoaderScheme.HTTP;
+    }
+}
+```
+
+Register the loader via [`IAnimaXResourceFactoryService`](./api/animax-resource-factory-service) in `Application.onCreate()`:
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXResourceFactoryService.class,
+    new IAnimaXResourceFactoryService() {
+        @Override
+        public List<IAnimaXLoader> createAnimaXLoaders() {
+            return Collections.singletonList(new HttpLoader());
+        }
+    }
+);
+```
+
+### Image loading service
+
+AnimaX delegates image loading to [`IAnimaXImageService`](./api/animax-image-service). This lets you use your app's existing image pipeline (Fresco, Glide, Coil, etc.).
+
+```java
+public class MyImageService implements IAnimaXImageService {
+    @Override
+    public boolean loadImage(IAnimaXLoaderRequest request,
+                             IAnimaXLoaderCompletionHandler completionHandler) {
+        // Delegate to your image library here.
+        // Return true if this service handles the request, false to fall through
+        // to the resource loader chain.
+        String uri = request.getUri();
+        // ... load bitmap and call completionHandler.onComplete(...)
+        return false;
+    }
+}
+```
+
+Register it in `Application.onCreate()`:
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXImageService.class,
+    new MyImageService()
+);
+```
+
+## Inject instance-level capabilities
+
+For most apps, the global `AnimaXServiceCenter` is sufficient. If you need instance-level capabilities, such as different image loading strategies for different screens, create a custom ability.
+
+```java
+public class MyCustomAbility extends NativeAbility {
+
+    public MyCustomAbility() {
+        super();
+        // Register services scoped to this view instance
+        registerService(IAnimaXImageService.class, new MyScopedImageService());
+    }
+}
+
+// Use the custom ability when creating the context
+AnimaXContext context = new AnimaXContext.Builder(
+    new MyCustomAbility(), this
+).build();
+AnimaXView animaxView = new AnimaXView(context);
+```
+
+:::info
+
+Services registered on an ability take priority over global services from `AnimaXServiceCenter`, allowing instance-level services to override global services.
+
+:::
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## Next steps
+
+- For complete API signatures, see [Native API Reference](./api/animax-view).
+- For runnable examples, check the [AnimaX demo app](https://github.com/RickAi/animax-demo).

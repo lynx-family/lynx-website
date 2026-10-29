@@ -1,16 +1,54 @@
 ---
-description: '将 Lottie 动画迁移到 AnimaX，并用 AnimaXView 接入现有原生页面。'
+description: '在 Lynx 中复用 Lottie 资源，将原生播放器迁移到 AnimaX，并了解更多动画能力。'
 ---
 
 import { PlatformTabs } from '@lynx';
 
 # 从 Lottie 迁移到 AnimaX
 
-这篇文档说明如何把现有 Lottie 方案替换为 AnimaX 方案。
+先用 AnimaX 播放已有的 Lottie 动画，再适配播放控制，最后按需使用更多能力。你可以在 Lynx 页面中使用 `<animax-view>`，也可以在 iOS 或 Android 应用中直接接入原生 SDK。
 
-迁移时，动画产物本身可以继续作为资源传入：也就是 Android Java 或 iOS Swift 中原本传给 Lottie 的资源路径，只需要改到 AnimaXView 对应的 src 入口。
+## 替换前端播放器
 
-AnimaX 完全兼容 Lottie 的功能，同时支持更多高级功能，查看 [功能支持](./feature-support) 获取更多信息。
+### 复用动画资源
+
+AnimaX 可以读取 Lottie JSON，因此可以从已有动画资源开始，无需重新导出。请根据动画使用的特性和应用中的 AnimaX 版本，核对[功能支持](./feature-support)。
+
+这里的 drop-in replacement 指动画资源可以复用。播放器组件、方法和事件名称仍需适配，AnimaX 并不提供与所有 Lottie 播放器相同的 API。
+
+### 在 Lynx 中播放动画
+
+如果你正在把前端动画迁移到 Lynx，可以用 [`<animax-view>`](/api/elements/built-in/animax-view) 替换原有播放器组件。先按照[快速开始](./start/quick-start)准备 Lynx 项目和支持 AnimaX 的应用。
+
+下面假设 `animationUrl` 是已有 Lottie JSON 的 HTTPS 地址。保留这个资源地址，将它传给 `src`：
+
+```tsx
+<animax-view
+  src={animationUrl}
+  autoplay={true}
+  loop={true}
+  style={{ width: '120px', height: '120px' }}
+/>
+```
+
+| 原有播放器中的配置或操作 | 在 Lynx 中使用 AnimaX                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| 动画资源地址             | 将地址传给 `src`。                                                                    |
+| 已解析的动画数据         | 用 `json` 代替 `src`，传入 JSON 字符串，例如 `json={JSON.stringify(animationData)}`。 |
+| 自动播放和循环播放       | 设置 `autoplay` 和 `loop`。                                                           |
+| 播放器尺寸               | 设置元素的宽度和高度。                                                                |
+| 主动控制播放             | 在 `bindready` 之后调用 `play`、`pause`、`resume`、`seek` 等 UI 方法。                |
+| 播放回调                 | 通过 `bindstart`、`bindcompletion`、`bindupdate` 等事件绑定处理函数。                 |
+
+通过 `json` 传入数据时，其中引用的资源必须使用绝对 URL 或路径。除了动画本身，也要检查图片和字体是否正确加载。资源格式要求见 [`json` 属性](/api/elements/built-in/animax-view.html#json)。
+
+接下来可以按照[基础播放控制](./lynx/basic-controls)适配播放和暂停按钮，并通过[运行时事件](./lynx/runtime-events)同步业务状态。与原有播放器对照检查尺寸、循环播放、结束回调和资源加载结果。
+
+## 接入原生播放器
+
+对于原生页面，将 `LottieAnimationView` 替换为 `AnimaXView`。先按照[原生快速开始](./native/quick-start)安装 SDK 并完成应用配置。下面的示例假设已完成这些步骤。
+
+示例复用 `loading.json`，保留 120 × 120 的视图和循环播放行为。AnimaX 的资源接口同时指定加载位置：iOS 使用应用 Bundle，Android 使用本地 assets。
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="ios">
@@ -61,3 +99,15 @@ view.setSrc(UriUtil.fromLocalAsset("loading.json"));
 
 </PlatformTabs.Tab>
 </PlatformTabs>
+
+更多播放控制，以及视图离开页面时的资源清理，见[播放与生命周期](./native/playback)。如果应用已有自定义资源加载器、图片或视频服务，可以通过[扩展原生能力](./native/services)接入。
+
+## 使用更多能力
+
+已有动画迁移完成后，可以按需增加以下能力：
+
+- [动态属性](./lynx/dynamic-properties)：在播放过程中更新图层属性，或在播放开始前定制图片、字体等资源。
+- [Alpha 视频](./alpha-video)：播放透明视频，并将它与矢量图层组合，呈现需要视频渲染的效果。
+- [AFX 导出插件](./afx)：需要扩展已有资源时，导出和预览支持 Alpha 视频的动画。
+
+这些能力都可以按需使用。先验证已有动画的迁移结果，再分别引入新资源或运行时行为。
