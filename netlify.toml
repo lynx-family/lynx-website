@@ -200,6 +200,36 @@
   status = 301
   force = true
 
+# Blogs are not versioned. Redirect direct visits to the canonical main
+# deploy instead of serving this release's bundled, potentially stale copy.
+# Force these rules even when the release contains a matching HTML file.
+# The production proxy strips /4.1 before reaching this archive, so these
+# root-level rules also send /4.1/blog requests to the canonical /next blog.
+# Main must still serve the bare paths as the upstream for /next/*.
+[[redirects]]
+  from = "/blog"
+  to = "/next/blog/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/next/blog/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/blog"
+  to = "/next/zh/blog/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zh/blog/*"
+  to = "/next/zh/blog/:splat"
+  status = 301
+  force = true
+
 # Direct branch requests keep /4.1. Handle their legacy routes explicitly
 # because the local rewrite below does not chain into the root-level rules.
 [[redirects]]
