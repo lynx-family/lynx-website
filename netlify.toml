@@ -2,15 +2,15 @@
   command = "node scripts/ci/check-build-prereqs.mjs && pnpm gen:og && NODE_OPTIONS=--max-old-space-size=3072 RSPRESS_SSG_WORKER_THREAD_COUNT=2 pnpm exec rspress build"
   publish = "doc_build"
 
-# The version home is a directory-style URL, so redirect `/next` to `/next/`
+# The version home is a directory-style URL, so redirect `/4.1` to `/4.1/`
 # instead of serving the same page at two URLs. Netlify normalizes trailing
 # slashes before evaluating redirect rules, so a static redirect would also
 # match its target and cause a loop. Edge Functions run first and can inspect
-# the original pathname. `/4.1` needs no entry: it is not a home this branch
-# serves, and the compatibility rule below already sends it to the root.
+# the original pathname. `/next` is gone from this branch along with the rest
+# of the cross-version routing.
 [[edge_functions]]
   function = "redirect-version-root"
-  path = "/next"
+  path = "/4.1"
 
 [[headers]]
   for = "/*"
@@ -201,81 +201,11 @@
   status = 301
   force = true
 
-# Blogs are not versioned. Redirect direct visits to the canonical main
-# deploy instead of serving this release's bundled, potentially stale copy.
-# Force these rules even when the release contains a matching HTML file.
-# Keep them on the production release: main must still serve the bare paths
-# as the upstream for the /next/* proxy below.
-[[redirects]]
-  from = "/blog"
-  to = "/next/blog/"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/blog/*"
-  to = "/next/blog/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/zh/blog"
-  to = "/next/zh/blog/"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/zh/blog/*"
-  to = "/next/zh/blog/:splat"
-  status = 301
-  force = true
-
-# Serve current development docs from the main branch deploy.
-[[redirects]]
-  from = "/next/*"
-  to = "https://main--lynx-doc.netlify.app/:splat"
-  status = 200
-
-# 4.1 is canonical at the site root. Keep versioned URLs as permanent
-# compatibility redirects.
+# This branch is no longer the site root: 4.2 serves it and owns the
+# cross-version routing table. What is left is this deploy's own base,
+# which every built link and asset carries, rewritten to the files it
+# actually publishes.
 [[redirects]]
   from = "/4.1/*"
   to = "/:splat"
-  status = 301
-  force = true
-
-# Serve previous releases from their branch deploys.
-[[redirects]]
-  from = "/4.0/*"
-  to = "https://release-4-0--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.9/*"
-  to = "https://release-3-9--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.8/*"
-  to = "https://release-3-8--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.7/*"
-  to = "https://release-3-7--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.6/*"
-  to = "https://release-3-6--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.5/*"
-  to = "https://release-3-5--lynx-doc.netlify.app/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/3.4/*"
-  to = "https://release-3-4--lynx-doc.netlify.app/:splat"
   status = 200
