@@ -1,0 +1,66 @@
+import { APISummary, APITable } from '@lynx';
+
+# RequestAnimationFrame (请求动画帧)
+
+<APISummary query="lynx-native-api/lynx-extension-module/request-animation-frame" />
+
+`VSyncObserver` 类中的 `RequestAnimationFrame` 方法，允许您调度一个函数在下一次屏幕重绘前、与垂直同步（VSync）信号同步执行。这是在 Lynx 中运行动画或执行视觉更新的标准且最高效的方式，因为它能确保您的代码在最佳时机执行，从而避免不必要的渲染并提升性能。
+
+该方法提供了两个重载版本，允许您使用 C++ 的 `std::function` 或传统的 C 风格函数指针作为回调。
+
+## 方法签名
+
+### 使用 `std::function` 回调
+
+```cpp
+void RequestAnimationFrame(uintptr_t id, lynx::pub::VSyncObserverCallback callback);
+```
+
+### 使用 C 风格函数回调
+
+```cpp
+void RequestAnimationFrame(uintptr_t id,
+                           vsync_observer_callback callback,
+                           void* user_data);
+```
+
+## 参数说明
+
+| 名称        | 类型                                                | 描述                                                                                                                     | 是否必需 |
+| ----------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `id`        | `uintptr_t`                                         | 请求实例的唯一标识符。这有助于跟踪或管理多个动画请求。                                                                   | 是       |
+| `callback`  | `VSyncObserverCallback` / `vsync_observer_callback` | 当下一个 VSync 信号到达时将要调用的函数。该回调会接收两个 `int64_t` 类型的参数：`frame_start_time` 和 `frame_end_time`。 | 是       |
+| `user_data` | `void*`                                             | (仅限 C 风格函数重载) 一个透传的上下文指针，它将被传递给 C 风格函数回调。                                                | 否       |
+
+## 回调函数 (`lynx::pub::VSyncObserverCallback`)
+
+回调的函数签名如下：
+
+```cpp
+void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+- **`frame_start_time`**: 标志 VSync 帧开始的时间戳。
+- **`frame_end_time`**: 标志 VSync 帧结束的时间戳。
+
+## 代码示例
+
+以下是如何使用 C++ lambda 函数来调用 `RequestAnimationFrame` 的示例。
+
+```cpp
+// 假设 'vsync_observer' 是一个有效的 std::unique_ptr<VSyncObserver>，
+// 从 OnRuntimeAttach 生命周期方法中获得。
+
+uintptr_t request_id = 1; // 为此请求分配一个唯一的 ID
+
+vsync_observer->RequestAnimationFrame(request_id, [](int64_t start_time, int64_t end_time) {
+    // 在此处执行动画逻辑或视觉更新。
+    // 这段代码将在下一次重绘前运行。
+    printf("帧在 %lld 和 %lld 之间渲染\\n", start_time, end_time);
+});
+```
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/request-animation-frame" />

@@ -1,0 +1,66 @@
+import { APISummary, APITable } from '@lynx';
+
+# RequestAnimationFrame
+
+<APISummary query="lynx-native-api/lynx-extension-module/request-animation-frame" />
+
+The `RequestAnimationFrame` method, part of the `VSyncObserver` class, allows you to schedule a function to be executed just before the next screen repaint, synchronized with the vertical synchronization (VSync) signal. This is the standard and most efficient way to run animations or perform visual updates in Lynx, as it ensures that your code executes at the optimal time, avoiding unnecessary rendering and improving performance.
+
+There are two overloads for this method, allowing you to use either a C++ `std::function` or a traditional C-style function pointer as a callback.
+
+## Method Signature
+
+### With `std::function` callback
+
+```cpp
+void RequestAnimationFrame(uintptr_t id, lynx::pub::VSyncObserverCallback callback);
+```
+
+### With C-function callback
+
+```cpp
+void RequestAnimationFrame(uintptr_t id,
+                           vsync_observer_callback callback,
+                           void* user_data);
+```
+
+## Parameters
+
+| Name        | Type                                                           | Description                                                                                                                                           | Required |
+| ----------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `id`        | `uintptr_t`                                                    | A unique identifier for the request instance. This helps in tracking or managing multiple animation requests.                                         | Yes      |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | The function to be called when the next VSync signal arrives. The callback receives two `int64_t` arguments: `frame_start_time` and `frame_end_time`. | Yes      |
+| `user_data` | `void*`                                                        | (C-function overload only) A pass-through context pointer that will be provided to the C-function callback.                                           | No       |
+
+## Callback Function (`lynx::pub::VSyncObserverCallback`)
+
+The callback signature is as follows:
+
+```cpp
+void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+- **`frame_start_time`**: The timestamp indicating the start of the VSync frame.
+- **`frame_end_time`**: The timestamp indicating the end of the VSync frame.
+
+## Example
+
+Here's an example of how to use `RequestAnimationFrame` with a C++ lambda function.
+
+```cpp
+// Assuming 'vsync_observer' is a valid std::unique_ptr<VSyncObserver>
+// obtained from the OnRuntimeAttach lifecycle method.
+
+uintptr_t request_id = 1; // A unique ID for this request
+
+vsync_observer->RequestAnimationFrame(request_id, [](int64_t start_time, int64_t end_time) {
+    // Perform animation logic or visual updates here.
+    // This code will run just before the next repaint.
+    printf("Frame rendered between %lld and %lld\\n", start_time, end_time);
+});
+```
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/request-animation-frame" />

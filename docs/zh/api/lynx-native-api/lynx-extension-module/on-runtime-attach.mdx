@@ -1,0 +1,75 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeAttach
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-attach" />
+
+`OnRuntimeAttach` 是 `LynxExtensionModule` 类中一个至关重要的虚拟生命周期方法。当 BTS（后台线程脚本）运行时被创建并“附加”到扩展模块时，该方法被调用。
+
+此回调总是在 **BTS 线程**上调用。这是与 JavaScript 环境交互的主要入口点，例如定义原生模块或访问 VSync 观察者。
+
+## 方法签名
+
+```cpp
+virtual void OnRuntimeAttach(Napi::Env env,
+                           std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer);
+```
+
+## 参数说明
+
+| 名称             | 类型                             | 描述                                                                                                                                                                                | 是否必需 |
+| ---------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `env`            | `Napi::Env`                      | N-API 环境句柄。这是所有 N-API 调用与 JavaScript 引擎交互所需的上下文（例如，创建对象、定义函数）。                                                                                 | 是       |
+| `vsync_observer` | `std::unique_ptr<VSyncObserver>` | 指向 `VSyncObserver` 实例的唯一指针。该对象允许您通过 [`RequestAnimationFrame()`](./request-animation-frame) 等方法调度与显示刷新率同步的任务。此观察者在扩展模块被销毁前一直有效。 | 是       |
+
+## 使用方法
+
+重写此方法以执行需要访问 N-API 环境的设置。常见用例包括：
+
+- 使用 `SetNapiModuleCreator` 注册自定义原生模块。
+- 缓存 `napi_env` 以便稍后在 BTS 线程上使用。
+- 存储 `vsync_observer` 以调度动画。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+// 假设我们有一个函数来创建我们的原生模块
+napi_value CreateMyNativeModule(napi_env env, napi_value exports);
+
+const uint64_t kDemoExtensionModuleID =
+    reinterpret_cast<uint64_t>(&kDemoExtensionModuleID);
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    std::unique_ptr<lynx::pub::VSyncObserver> _vsync_observer;
+
+public:
+    void OnRuntimeAttach(Napi::Env env,
+                         std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer) override {
+        printf("MyExtensionModule: 运行时已在 BTS 线程上附加。\\n");
+
+        // 存储 VSync 观察者以备后用
+        _vsync_observer = std::move(vsync_observer);
+
+        // 将当前实例指针存储到 N-API 环境中，用于稍后的回调中可以从 N-API 环境中获取当前实例
+        lynx::pub::LynxExtensionModule::SetNapiInstanceData(
+            env, kDemoExtensionModuleID, this,
+            [](Napi::Env env, void* data, void* hint) {}, nullptr);
+    }
+    // ... 其他生命周期方法
+};
+```
+
+## 相关链接
+
+- [`OnRuntimeInit()`](./on-runtime-init)
+- [`OnRuntimeReady()`](./on-runtime-ready)
+- [`OnRuntimeDetach()`](./on-runtime-detach)
+- [`SetNapiModuleCreator()`](./set-napi-module-creator)
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-attach" />

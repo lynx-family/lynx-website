@@ -1,0 +1,62 @@
+import { APISummary, APITable } from '@lynx';
+
+# Retain
+
+<APISummary query="lynx-native-api/lynx-extension-module/retain" />
+
+The `Retain` method provides manual control over the reference count of the underlying `lynx_extension_module_t` C-API object. This is an advanced feature that should be used with caution.
+
+In most scenarios, the Lynx framework manages the lifecycle and memory of the extension module automatically. You typically do not need to call these methods.
+
+## `Retain()`
+
+Increments the reference count of the C-API object. This prevents the object from being deallocated even if the framework would otherwise have released it.
+
+### Method Signature
+
+```cpp
+void Retain();
+```
+
+## Usage
+
+These methods are useful in specific interoperability scenarios where you need to pass ownership of the module to another system or manage its lifecycle outside the standard Lynx flow. For example, if you store a raw pointer to the module in a separate, long-lived object, you should `Retain` it to ensure it remains valid and `Release` it when you are done.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class SomeOtherSystem {
+public:
+    void TakeOwnership(lynx::pub::LynxExtensionModule* module) {
+        _module = module;
+        if (_module) {
+            _module-&gt;Retain(); // Increment ref count
+        }
+    }
+
+    ~SomeOtherSystem() {
+        if (_module) {
+            _module-&gt;Release(); // Decrement ref count
+        }
+    }
+private:
+    lynx::pub::LynxExtensionModule* _module;
+};
+
+// ...
+// Somewhere in your code:
+// auto my_module = new MyExtensionModule();
+// some_other_system.TakeOwnership(my_module);
+// ...
+```
+
+## Warning
+
+Incorrectly managing the reference count can lead to memory leaks (if `Release` is not called enough) or crashes due to use-after-free errors (if `Release` is called too many times). Use these methods only if you have a clear understanding of the object ownership requirements.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/retain" />

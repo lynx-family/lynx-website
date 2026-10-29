@@ -1,0 +1,62 @@
+import { APISummary, APITable } from '@lynx';
+
+# RequestBeforeAnimationFrame
+
+<APISummary query="lynx-native-api/lynx-extension-module/request-before-animation-frame" />
+
+The `RequestBeforeAnimationFrame` method, part of the `VSyncObserver` class, schedules a function to be executed just before the next screen repaint, synchronized with the VSync signal. Unlike `RequestAnimationFrame`, callbacks registered with this method are guaranteed to be executed _before_ any standard animation frame callbacks. This is useful for tasks that need to update state or perform calculations before other visual updates occur in the same frame.
+
+This method also provides two overloads for C++ `std::function` and C-style function pointers.
+
+## Method Signature
+
+### With `std::function` callback
+
+```cpp
+void RequestBeforeAnimationFrame(uintptr_t id, lynx::pub::VSyncObserverCallback callback);
+```
+
+### With C-function callback
+
+```cpp
+void RequestBeforeAnimationFrame(uintptr_t id,
+                                 vsync_observer_callback callback,
+                                 void* user_data);
+```
+
+## Parameters
+
+| Name        | Type                                                           | Description                                                                                                                                                       | Required |
+| ----------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `id`        | `uintptr_t`                                                    | A unique identifier for the request instance.                                                                                                                     | Yes      |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | The function to be called before normal animation callbacks when the next VSync signal arrives. It receives `frame_start_time` and `frame_end_time` as arguments. | Yes      |
+| `user_data` | `void*`                                                        | (C-function overload only) A pass-through context pointer for the C-function callback.                                                                            | No       |
+
+## Callback Function (`lynx::pub::VSyncObserverCallback`)
+
+The callback signature is identical to `RequestAnimationFrame`:
+
+```cpp
+void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+## Example
+
+This example demonstrates how to schedule a high-priority task before other animations.
+
+```cpp
+// Assuming 'vsync_observer' is a valid std::unique_ptr<VSyncObserver>.
+
+uintptr_t high_priority_id = 2;
+
+vsync_observer->RequestBeforeAnimationFrame(high_priority_id, [](int64_t start_time, int64_t end_time) {
+    // This logic runs before other RequestAnimationFrame callbacks.
+    // Ideal for pre-calculation or state updates.
+    printf("High-priority task executed for frame: %lld\\n", start_time);
+});
+```
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/request-before-animation-frame" />

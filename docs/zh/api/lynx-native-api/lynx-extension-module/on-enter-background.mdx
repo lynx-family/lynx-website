@@ -1,0 +1,59 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnEnterBackground
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-enter-background" />
+
+`OnEnterBackground` 是 `LynxExtensionModule` 类中的一个虚拟生命周期方法。当宿主应用程序从前台转换到后台时，Lynx 框架会调用此方法。
+
+该回调总是在 **UI 线程**上调用。这是暂停非必要活动（如动画、视频播放或频繁的数据轮询）以节省系统资源和电池寿命的适当时机。
+
+## 方法签名
+
+```cpp
+virtual void OnEnterBackground();
+```
+
+## 使用方法
+
+在您的 `LynxExtensionModule` 子类中重写此方法以处理应用程序后台化事件。您应该暂停或节流任何不需要在后台运行的资源密集型任务。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyMediaModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnEnterForeground() override {
+        // 应用程序已进入前台。
+        printf("MyMediaModule: 正在恢复活动。\\n");
+
+        // 示例：向 BTS 线程发布一个任务以恢复视频播放器。
+        PostTaskToRuntime([]() {
+            // videoPlayer->resume();
+        });
+    }
+
+    void OnEnterBackground() override {
+        // 应用程序已进入后台。
+        printf("MyMediaModule: 正在暂停活动。\\n");
+
+        // 示例：发布一个任务以暂停视频播放器。
+        PostTaskToRuntime([]() {
+            // videoPlayer->pause();
+        });
+    }
+
+    // ... 其他生命周期方法
+};
+```
+
+## 相关链接
+
+- [`OnEnterForeground()`](./on-enter-foreground): 与此方法对应，在应用程序返回前台时调用。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-enter-background" />

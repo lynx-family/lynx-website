@@ -1,0 +1,57 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeInit
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-init" />
+
+`OnRuntimeInit` is a virtual lifecycle method in the `LynxExtensionModule` class. It is called by the Lynx framework when the BTS (Background Thread Script) Runtime instance is created and initialized for the associated `LynxView`.
+
+This callback is always invoked on the **BTS thread**. It signals that the JavaScript execution environment is being set up, but it is not yet ready to execute code. This is an early opportunity to prepare any resources that your module might need to interact with the runtime later.
+
+## Method Signature
+
+```cpp
+virtual void OnRuntimeInit();
+```
+
+## Usage
+
+Override this method in your `LynxExtensionModule` subclass to perform pre-setup tasks before the JavaScript runtime is fully active. For example, you might prepare data structures or initialize native modules that will later be exposed to JavaScript.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnRuntimeInit() override {
+        // The BTS runtime is being initialized.
+        // This is called on the UI thread.
+        printf("MyExtensionModule: BTS Runtime is initializing.\\n");
+        // Prepare any runtime-dependent resources here.
+    }
+
+    // ... other lifecycle methods
+};
+```
+
+## Lifecycle Sequence
+
+The `OnRuntimeInit` callback occurs in the following sequence:
+
+1.  `OnLynxViewCreate` (UI Thread)
+2.  **`OnRuntimeInit`** (BTS Thread)
+3.  `OnRuntimeAttach` (BTS Thread)
+4.  `OnRuntimeReady` (BTS Thread)
+
+## See Also
+
+- [`OnRuntimeAttach()`](./on-runtime-attach): Called on the BTS thread when the runtime is attached.
+- [`OnRuntimeReady()`](./on-runtime-ready): Called on the BTS thread when the runtime is ready to execute JavaScript.
+- [`OnRuntimeDetach()`](./on-runtime-detach): Called when the runtime is detached.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-init" />

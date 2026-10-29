@@ -1,0 +1,76 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeAttach
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-attach" />
+
+`OnRuntimeAttach` is a crucial virtual lifecycle method in the `LynxExtensionModule` class. It is called when the BTS (Background Thread Script) Runtime has been created and is now "attached" to the extension module.
+
+This callback is always invoked on the **BTS thread**. This is the primary entry point for interacting with the JavaScript environment, such as defining native modules or accessing the VSync observer.
+
+## Method Signature
+
+```cpp
+virtual void OnRuntimeAttach(Napi::Env env,
+                           std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer);
+```
+
+## Parameters
+
+| Name             | Type                             | Description                                                                                                                                                                                                                                                                   | Required |
+| ---------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `env`            | `Napi::Env`                      | The N-API environment handle. This is the context required for all N-API calls to interact with the JavaScript engine (e.g., creating objects, defining functions).                                                                                                           | Yes      |
+| `vsync_observer` | `std::unique_ptr<VSyncObserver>` | A unique pointer to a `VSyncObserver` instance. This object allows you to schedule tasks synchronized with the display's refresh rate via methods like [`RequestAnimationFrame()`](./request-animation-frame). The observer is valid until the extension module is destroyed. | Yes      |
+
+## Usage
+
+Override this method to perform setup that requires access to the N-API environment. Common use cases include:
+
+- Registering custom native modules using `SetNapiModuleCreator`.
+- Caching the `napi_env` for later use on the BTS thread.
+- Storing the `vsync_observer` to schedule animations.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+// Assume we have a function to create our native module
+napi_value CreateMyNativeModule(napi_env env, napi_value exports);
+
+const uint64_t kDemoExtensionModuleID =
+    reinterpret_cast<uint64_t>(&kDemoExtensionModuleID);
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    std::unique_ptr<lynx::pub::VSyncObserver> _vsync_observer;
+
+public:
+    void OnRuntimeAttach(Napi::Env env,
+                         std::unique_ptr<lynx::pub::VSyncObserver> vsync_observer) override {
+        printf("MyExtensionModule: Runtime attached on BTS thread.\\n");
+
+        // Store the VSync observer for later use
+        _vsync_observer = std::move(vsync_observer);
+
+        // Store the current instance pointer in the N-API environment so that the current instance can be retrieved from the N-API environment in later callbacks
+        lynx::pub::LynxExtensionModule::SetNapiInstanceData(
+            env, kDemoExtensionModuleID, this,
+            [](Napi::Env env, void* data, void* hint) {}, nullptr);
+    }
+
+    // ... other lifecycle methods
+};
+```
+
+## See Also
+
+- [`OnRuntimeInit()`](./on-runtime-init)
+- [`OnRuntimeReady()`](./on-runtime-ready)
+- [`OnRuntimeDetach()`](./on-runtime-detach)
+- [`SetNapiModuleCreator()`](./set-napi-module-creator)
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-attach" />

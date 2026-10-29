@@ -1,0 +1,57 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeInit
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-init" />
+
+`OnRuntimeInit` 是 `LynxExtensionModule` 类中的一个虚拟生命周期方法。当 Lynx 框架为关联的 `LynxView` 创建和初始化 BTS（后台线程脚本）运行时实例时，该方法被调用。
+
+此回调总是在 **BTS 线程**上调用。它标志着 JavaScript 执行环境正在搭建，但尚未准备好执行代码。这是一个早期时机，可以用来准备您的模块稍后可能需要与运行时交互的任何资源。
+
+## 方法签名
+
+```cpp
+virtual void OnRuntimeInit();
+```
+
+## 使用方法
+
+在您的 `LynxExtensionModule` 子类中重写此方法，以在 JavaScript 运行时完全激活之前执行预设置任务。例如，您可以在此准备数据结构或初始化稍后将暴露给 JavaScript 的原生模块。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnRuntimeInit() override {
+        // BTS 运行时正在初始化。
+        // 此回调在 UI 线程上调用。
+        printf("MyExtensionModule: BTS 运行时正在初始化。\\n");
+        // 在此处准备任何依赖于运行时的资源。
+    }
+
+    // ... 其他生命周期方法
+};
+```
+
+## 生命周期顺序
+
+`OnRuntimeInit` 回调在以下序列中发生：
+
+1.  `OnLynxViewCreate` (UI 线程)
+2.  **`OnRuntimeInit`** (BTS 线程)
+3.  `OnRuntimeAttach` (BTS 线程)
+4.  `OnRuntimeReady` (BTS 线程)
+
+## 相关链接
+
+- [`OnRuntimeAttach()`](./on-runtime-attach): 当运行时被附加时，在 BTS 线程上调用。
+- [`OnRuntimeReady()`](./on-runtime-ready): 当运行时准备好执行 JavaScript 时，在 BTS 线程上调用。
+- [`OnRuntimeDetach()`](./on-runtime-detach): 当运行时被分离时调用。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-init" />

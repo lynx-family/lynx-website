@@ -1,0 +1,72 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeReady
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-ready" />
+
+`OnRuntimeReady` 是 `LynxExtensionModule` 类中的一个虚拟生命周期方法。它在 BTS 运行时被附加并且初始的 JavaScript 环境完全设置好之后被调用。
+
+此回调总是在 **BTS 线程**上调用。它标志着运行时现在已经完全可操作，并准备好执行 JavaScript 代码。此时，您可以安全地与全局 `lynx` 对象交互，并执行依赖于页面初始状态的任务。
+
+## 方法签名
+
+```cpp
+virtual void OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url);
+```
+
+## 参数说明
+
+| 名称   | 类型          | 描述                                                                                                   | 是否必需 |
+| ------ | ------------- | ------------------------------------------------------------------------------------------------------ | -------- |
+| `env`  | `Napi::Env`   | N-API 环境句柄，与在 `OnRuntimeAttach` 中提供的一样。                                                  | 是       |
+| `lynx` | `Napi::Value` | 指向 JavaScript 上下文中全局 `lynx` 对象的 N-API 句柄。该对象提供了对各种 Lynx 特定 API 和属性的访问。 | 是       |
+| `url`  | `const char*` | 正在加载的当前 Lynx 页面的 URL。                                                                       | 是       |
+
+## 使用方法
+
+重写此方法以执行需要在 JavaScript 环境就绪后立即进行的操作。常见用例包括：
+
+- 执行初始的 JavaScript 代码。
+- 获取或设置全局 `lynx` 对象的属性。
+- 从原生代码触发初始数据获取或其他异步操作。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url) override {
+        printf("MyExtensionModule: 运行时已为 URL: %s 准备就绪\\n", url);
+
+        // 示例：从全局 'lynx' 对象获取一个属性
+        if (lynx.IsObject()) {
+            Napi::Object lynx_obj = lynx.As<Napi::Object>();
+
+            // 获取 'platform' 属性
+            if (lynx_obj.Has("platform")) {
+                Napi::Value platform_value = lynx_obj.Get("platform");
+
+                // 转换为字符串并打印
+                if (platform_value.IsString()) {
+                    std::string platform_str = platform_value.As<Napi::String>().Utf8Value();
+                    printf("检测到的 Lynx 平台: %s\\n", platform_str.c_str());
+                }
+            }
+        }
+    }
+    // ... 其他生命周期方法
+};
+```
+
+## 相关链接
+
+- [`OnRuntimeInit()`](./on-runtime-init)
+- [`OnRuntimeAttach()`](./on-runtime-attach)
+- [`OnRuntimeDetach()`](./on-runtime-detach)
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-ready" />

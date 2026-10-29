@@ -1,0 +1,74 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeDetach
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-detach" />
+
+`OnRuntimeDetach` 是 `LynxExtensionModule` 类中的一个虚拟生命周期方法。当 BTS（后台线程脚本）运行时即将从扩展模块中分离时，该方法被调用，这通常是 `LynxView` 销毁过程的一部分。
+
+此回调总是在 **BTS 线程**上调用。它是在 `OnRuntimeAttach` 或 `OnRuntimeReady` 中分配或初始化的任何资源进行清理的正确位置。
+
+## 方法签名
+
+```cpp
+virtual void OnRuntimeDetach();
+```
+
+## 使用方法
+
+重写此方法以执行与 JavaScript 运行时相关的清理任务。这是在 N-API 句柄或其他 BTS 线程特定资源失效之前，安全地与它们交互的最后机会。
+
+常见用例包括：
+
+- 释放 N-API `napi_ref` 句柄。
+- 清理仅在 BTS 线程上使用的数据结构。
+- 完成任何原生模块的终结工作。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    Napi::Env _env;
+    Napi::Reference _my_object_ref;
+
+public:
+    void OnRuntimeAttach(Napi::Env env, /*...*/) override {
+        _env = env;
+        // 假设在此处创建并存储了 _my_object_ref
+    }
+
+    void OnRuntimeDetach() override {
+        // BTS 运行时正在被分离。
+        // 清理所有与运行时相关的资源。
+        printf("MyExtensionModule: 运行时已分离。正在清理 N-API 引用。\\n");
+
+        if (_my_object_ref) {
+            _my_object_ref.Reset();
+        }
+    }
+
+    // ... 其他生命周期方法
+};
+```
+
+## 生命周期顺序
+
+`OnRuntimeDetach` 回调在主页面逻辑完成后、`LynxView` 完全销毁前发生。
+
+1.  `OnLynxViewDestroy` 被启动 (UI 线程)
+2.  **`OnRuntimeDetach`** 被调用 (BTS 线程)
+3.  ...其他清理工作...
+4.  `Destroy` 被调用 (BTS 线程)
+
+## 相关链接
+
+- [`OnRuntimeAttach()`](./on-runtime-attach): 与此方法对应。
+- [`Destroy()`](./destroy): 整个模块的最终清理方法。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-detach" />

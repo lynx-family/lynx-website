@@ -1,0 +1,66 @@
+import { APISummary, APITable } from '@lynx';
+
+# IsRunningTasksOnBTSThread
+
+<APISummary query="lynx-native-api/lynx-extension-module/is-running-tasks-on-bts-thread" />
+
+The `IsRunningTasksOnBTSThread` method is a utility function that checks whether the current code is executing on the BTS (Background Thread Script) thread.
+
+This is crucial for thread safety. Before calling any N-API functions or accessing resources that are only safe to use on the BTS thread, you should use this check to prevent crashes and race conditions.
+
+## Method Signature
+
+```cpp
+bool IsRunningTasksOnBTSThread();
+```
+
+## Return Value
+
+- `true`: If the current thread is the BTS thread.
+- `false`: If the current thread is not the BTS thread (e.g., it is the UI thread or another worker thread).
+
+## Usage
+
+Use this method as a guard before performing BTS-thread-specific operations, especially in functions that could be called from multiple threads.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    napi_env _env;
+
+public:
+    void OnRuntimeAttach(napi_env env, /*...*/) override {
+        _env = env;
+    }
+
+    void SomeMethodThatCouldBeCalledFromAnyThread() {
+        if (IsRunningTasksOnBTSThread()) {
+            // Safe to call N-API functions directly
+            printf("Running on BTS thread. Performing N-API call.\\n");
+            // napi_do_something(_env, ...);
+        } else {
+            // Not on the BTS thread, so post a task
+            printf("Not on BTS thread. Posting task instead.\\n");
+            PostTaskToRuntime([this]() {
+                // Now we are on the BTS thread
+                // napi_do_something(_env, ...);
+            });
+        }
+    }
+
+    // ... other methods
+};
+```
+
+## See Also
+
+- [`PostTaskToRuntime()`](./post-task-to-runtime): The method to use when you are _not_ on the BTS thread and need to execute code there.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/is-running-tasks-on-bts-thread" />

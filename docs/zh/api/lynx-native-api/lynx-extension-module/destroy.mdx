@@ -1,0 +1,73 @@
+import { APISummary, APITable } from '@lynx';
+
+# Destroy
+
+<APISummary query="lynx-native-api/lynx-extension-module/destroy" />
+
+`Destroy` 是在 `LynxExtensionModule` 实例上调用的最后一个虚拟生命周期方法。它标志着模块即将被永久销毁，应释放所有相关资源。
+
+此回调总是在 **BTS 线程**上调用。它保证在 `OnRuntimeDetach` 之后被调用。这是对整个模块执行任何清理的最后机会。
+
+## 方法签名
+
+```cpp
+virtual void Destroy();
+```
+
+## 使用方法
+
+在您的 `LynxExtensionModule` 子类中重写此方法，以释放模块持有的任何全局或长生命周期的资源。此方法完成后，模块的内存将被释放。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    SomeGlobalResource* _global_resource;
+
+public:
+    MyExtensionModule() {
+        _global_resource = new SomeGlobalResource();
+    }
+
+    // 注意：虚析构函数也是一个有效的清理位置，
+    // 但 Destroy() 是官方的生命周期回调。
+    ~MyExtensionModule() override = default;
+
+    void Destroy() override {
+        // 这是模块的最终清理点。
+        // 它在 BTS 线程上被调用。
+        printf("MyExtensionModule: 正在销毁模块和所有全局资源。\\n");
+
+        if (_global_resource) {
+            delete _global_resource;
+            _global_resource = nullptr;
+        }
+
+        // 调用基类实现是一个好习惯，尽管在这种情况下它是空的。
+        // lynx::pub::LynxExtensionModule::Destroy();
+    }
+
+    // ... 其他生命周期方法
+};
+```
+
+## 生命周期顺序
+
+`Destroy` 方法是模块拆卸过程的最后一步：
+
+1. `OnLynxViewDestroy` (UI 线程)
+2. `OnRuntimeDetach` (BTS 线程)
+3. **`Destroy`** (BTS 线程)
+4. `MyExtensionModule` 对象被删除。
+
+## 相关链接
+
+- [`OnRuntimeDetach()`](./on-runtime-detach)
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/destroy" />

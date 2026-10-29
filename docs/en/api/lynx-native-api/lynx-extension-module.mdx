@@ -55,31 +55,32 @@ void RegisterExtensionModule() {
 
 `LynxExtensionModule` exposes lifecycle callbacks across the UI thread and BTS thread:
 
-- `OnLynxViewCreate(...)`: called on the UI thread when a `LynxView` instance is created.
-- `OnLynxViewDestroy()`: called on the UI thread before the `LynxView` instance is destroyed.
-- `OnRuntimeInit()`: called on the UI thread when the BTS runtime instance is created.
-- `OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`: called on the BTS thread when the runtime is attached.
-- `OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url)`: called on the BTS thread when the runtime is ready.
-- `OnRuntimeDetach()`: called on the BTS thread when the runtime is detached.
-- `OnEnterForeground()`: called on the UI thread when the application enters foreground.
-- `OnEnterBackground()`: called on the UI thread when the application enters background.
-- `Destroy()`: called on the BTS thread before the extension module instance is released.
+- [`OnLynxViewCreate(...)`](./lynx-extension-module/on-lynx-view-create): called on the UI thread when a `LynxView` instance is created.
+- [`OnLynxViewDestroy()`](./lynx-extension-module/on-lynx-view-destroy): called on the UI thread before the `LynxView` instance is destroyed.
+- [`OnRuntimeInit()`](./lynx-extension-module/on-runtime-init): called on the UI thread when the BTS runtime instance is created.
+- [`OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`](./lynx-extension-module/on-runtime-attach): called on the BTS thread when the runtime is attached.
+- [`OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url)`](./lynx-extension-module/on-runtime-ready): called on the BTS thread when the runtime is ready.
+- [`OnRuntimeDetach()`](./lynx-extension-module/on-runtime-detach): called on the BTS thread when the runtime is detached.
+- [`OnEnterForeground()`](./lynx-extension-module/on-enter-foreground): called on the UI thread when the application enters foreground.
+- [`OnEnterBackground()`](./lynx-extension-module/on-enter-background): called on the UI thread when the application enters background.
+- [`Destroy()`](./lynx-extension-module/destroy): called on the BTS thread before the extension module instance is released.
 
 ## Runtime Utilities
 
 `LynxExtensionModule` also exposes Desktop runtime helpers:
 
-- `PostTaskToRuntime(...)`: posts work to the BTS thread.
-- `IsRunningTasksOnBTSThread()`: checks whether the current execution is already on the BTS thread.
-- `SetNapiModuleCreator(...)`: installs the NAPI exports creator for the module.
+- [`PostTaskToRuntime(...)`](./lynx-extension-module/post-task-to-runtime): posts work to the BTS thread.
+- [`IsRunningTasksOnBTSThread()`](./lynx-extension-module/is-running-tasks-on-bts-thread): checks whether the current execution is already on the BTS thread.
+- [`SetCModule(...)`](./lynx-extension-module/set-c-module): associates the module with its C API counterpart.
+- [`SetNapiModuleCreator(...)`](./lynx-extension-module/set-napi-module-creator): installs the NAPI exports creator for the module.
 - `SetNapiInstanceData(...)` / `GetNapiInstanceData(...)`: stores and reads keyed NAPI instance data.
-- `Retain()` / `Release()`: adjusts the lifetime of the module instance.
+- [`Retain()`](./lynx-extension-module/retain) / [`Release()`](./lynx-extension-module/release): adjusts the lifetime of the module instance.
 
-`VSyncObserver`, received in `OnRuntimeAttach(...)`, provides:
+`VSyncObserver`, received in [`OnRuntimeAttach(...)`](./lynx-extension-module/on-runtime-attach), provides:
 
-- `RequestAnimationFrame(...)`
-- `RequestBeforeAnimationFrame(...)`
-- `RegisterAfterAnimationFrameListener(...)`
+- [`RequestAnimationFrame(...)`](./lynx-extension-module/request-animation-frame)
+- [`RequestBeforeAnimationFrame(...)`](./lynx-extension-module/request-before-animation-frame)
+- [`RegisterAfterAnimationFrameListener(...)`](./lynx-extension-module/register-after-animation-frame-listener)
 
 ## Native View as Extension Capability
 
@@ -112,9 +113,9 @@ You can register a native view in three common places:
 
 - Globally through `LynxView::Builder::RegisterNativeView<T>(...)`
 - Per view through `LynxView::RegisterNativeView<T>(...)`
-- Inside an extension module during `OnLynxViewCreate(...)`
+- Inside an extension module during [`OnLynxViewCreate(...)`](./lynx-extension-module/on-lynx-view-create)
 
-The extension-module pattern is useful when a native view should always be installed together with the extension itself. In practice, this registration is usually performed from `OnLynxViewCreate(...)`:
+The extension-module pattern is useful when a native view should always be installed together with the extension itself. In practice, this registration is usually performed from [`OnLynxViewCreate(...)`](./lynx-extension-module/on-lynx-view-create):
 
 <CodeFold toggle>
 
