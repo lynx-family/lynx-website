@@ -40,7 +40,7 @@ Napi::Value YourCreatorFunction(Napi::Env env,
 
 ## Usage
 
-This method is typically called within the constructor or a dedicated initialization method of your `LynxExtensionModule` subclass to set up the module's binding logic.
+Call this method only after `SetCModule`, because registration immediately accesses the associated C module. The host integration should perform both calls after creating the C module and before returning it to Lynx.
 
 ## Code Example
 
@@ -64,7 +64,6 @@ public:
         return "Hello from C++!";
     }
 
-private:
     // 2. Define the module creator (Creator) function
     // It can be a static member function, a standalone function, or a lambda
     static Napi::Value BindMethods(Napi::Env env,
@@ -101,6 +100,7 @@ demo_extension_module_create_extension_module(void* opaque) {
           });
   module->SetCModule(c_module);
   module->SetNapiModuleCreator(&MyExtensionModule::BindMethods);
+  return c_module;
 }
 
 ```

@@ -4,7 +4,7 @@ import { APISummary, APITable } from '@lynx';
 
 <APISummary query="lynx-native-api/lynx-extension-module/register-after-animation-frame-listener" />
 
-The `RegisterAfterAnimationFrameListener` method, part of the `VSyncObserver` class, registers a persistent listener that is called after every VSync signal occurs. Unlike `RequestAnimationFrame`, which is a one-shot request, this listener remains active until the `VSyncObserver` is destroyed, making it suitable for continuous monitoring or tasks that need to run on every frame.
+The `RegisterAfterAnimationFrameListener` method, part of the `VSyncObserver` class, registers a persistent listener that is called after every VSync signal occurs. Unlike `RequestAnimationFrame`, which is a one-shot request, no API is exposed to unregister this listener, making it suitable for continuous monitoring or tasks that need to run on every frame.
 
 This method must be called on the BTS (Background Thread Script) thread. It also supports both C++ `std::function` and C-style function pointer callbacks.
 
@@ -26,14 +26,28 @@ void RegisterAfterAnimationFrameListener(vsync_observer_callback callback, void*
 
 | Name        | Type                                                           | Description                                                                                             | Required |
 | ----------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------- |
-| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | The function to be called after each VSync signal. It receives `frame_start_time` and `frame_end_time`. | Yes      |
-| `user_data` | `void*`                                                        | (C-function overload only) A pass-through context pointer for the C-function callback.                  | No       |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | The function to be called after each VSync signal. See the callback signatures below.                           | Yes      |
+| `user_data` | `void*`                                                        | (C-function overload only) A pass-through context pointer provided to the callback. Pass `nullptr` when unused. | Yes      |
+
+## Callback Functions
+
+The C++ `lynx::pub::VSyncObserverCallback` signature is:
+
+```cpp
+void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+The C `vsync_observer_callback` signature is:
+
+```cpp
+void(void* user_data, int64_t frame_start_time, int64_t frame_end_time);
+```
 
 ## Important Notes
 
 - **Execution Thread**: This method and its callbacks are intended to be used on the **BTS thread**.
 - **Persistent Listener**: The registered callback will be invoked for every subsequent VSync signal, not just once.
-- **Lifecycle**: The listener is automatically unregistered when the `VSyncObserver` instance is destroyed.
+- **Lifecycle**: Keep the `VSyncObserver` instance alive while the runtime may invoke the callback. The API does not provide an explicit unregister operation.
 
 ## Example
 

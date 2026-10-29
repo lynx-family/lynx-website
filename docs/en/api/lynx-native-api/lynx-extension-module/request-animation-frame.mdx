@@ -29,15 +29,21 @@ void RequestAnimationFrame(uintptr_t id,
 | Name        | Type                                                           | Description                                                                                                                                           | Required |
 | ----------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `id`        | `uintptr_t`                                                    | A unique identifier for the request instance. This helps in tracking or managing multiple animation requests.                                         | Yes      |
-| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | The function to be called when the next VSync signal arrives. The callback receives two `int64_t` arguments: `frame_start_time` and `frame_end_time`. | Yes      |
-| `user_data` | `void*`                                                        | (C-function overload only) A pass-through context pointer that will be provided to the C-function callback.                                           | No       |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | The function to be called when the next VSync signal arrives. See the callback signatures below.                                                      | Yes      |
+| `user_data` | `void*`                                                        | (C-function overload only) A pass-through context pointer provided to the callback. Pass `nullptr` when no context is needed.                          | Yes      |
 
-## Callback Function (`lynx::pub::VSyncObserverCallback`)
+## Callback Functions
 
-The callback signature is as follows:
+The C++ `lynx::pub::VSyncObserverCallback` signature is:
 
 ```cpp
 void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+The C `vsync_observer_callback` signature is:
+
+```cpp
+void(void* user_data, int64_t frame_start_time, int64_t frame_end_time);
 ```
 
 - **`frame_start_time`**: The timestamp indicating the start of the VSync frame.

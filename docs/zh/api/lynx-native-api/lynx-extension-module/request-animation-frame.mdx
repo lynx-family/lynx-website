@@ -29,15 +29,21 @@ void RequestAnimationFrame(uintptr_t id,
 | 名称        | 类型                                                | 描述                                                                                                                     | 是否必需 |
 | ----------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------- |
 | `id`        | `uintptr_t`                                         | 请求实例的唯一标识符。这有助于跟踪或管理多个动画请求。                                                                   | 是       |
-| `callback`  | `VSyncObserverCallback` / `vsync_observer_callback` | 当下一个 VSync 信号到达时将要调用的函数。该回调会接收两个 `int64_t` 类型的参数：`frame_start_time` 和 `frame_end_time`。 | 是       |
-| `user_data` | `void*`                                             | (仅限 C 风格函数重载) 一个透传的上下文指针，它将被传递给 C 风格函数回调。                                                | 否       |
+| `callback`  | `VSyncObserverCallback` / `vsync_observer_callback` | 当下一个 VSync 信号到达时将要调用的函数。具体签名见下文。                                             | 是       |
+| `user_data` | `void*`                                             | (仅限 C 风格函数重载) 传递给回调的上下文指针。不需要上下文时传入 `nullptr`。                          | 是       |
 
-## 回调函数 (`lynx::pub::VSyncObserverCallback`)
+## 回调函数
 
-回调的函数签名如下：
+C++ `lynx::pub::VSyncObserverCallback` 的签名如下：
 
 ```cpp
 void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+C `vsync_observer_callback` 的签名如下：
+
+```cpp
+void(void* user_data, int64_t frame_start_time, int64_t frame_end_time);
 ```
 
 - **`frame_start_time`**: 标志 VSync 帧开始的时间戳。

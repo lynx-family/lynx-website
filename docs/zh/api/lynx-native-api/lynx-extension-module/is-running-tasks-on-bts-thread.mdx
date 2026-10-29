@@ -30,10 +30,12 @@ bool IsRunningTasksOnBTSThread();
 
 class MyExtensionModule : public lynx::pub::LynxExtensionModule {
 private:
-    napi_env _env;
+    napi_env _env = nullptr;
 
 public:
-    void OnRuntimeAttach(napi_env env, /*...*/) override {
+    void OnRuntimeAttach(
+        Napi::Env env,
+        std::unique_ptr<lynx::pub::VSyncObserver> /*vsync_observer*/) override {
         _env = env;
     }
 

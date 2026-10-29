@@ -29,25 +29,35 @@ void Retain();
 
 class SomeOtherSystem {
 public:
+    SomeOtherSystem() = default;
+    SomeOtherSystem(const SomeOtherSystem&) = delete;
+    SomeOtherSystem& operator=(const SomeOtherSystem&) = delete;
+
     void TakeOwnership(lynx::pub::LynxExtensionModule* module) {
-        _module = module;
-        if (_module) {
-            _module-&gt;Retain(); // 增加引用计数
+        if (module == _module) {
+            return;
         }
+        if (module) {
+            module->Retain(); // 先保留传入模块
+        }
+        if (_module) {
+            _module->Release();
+        }
+        _module = module;
     }
 
     ~SomeOtherSystem() {
         if (_module) {
-            _module-&gt;Release(); // 减少引用计数
+            _module->Release();
         }
     }
 private:
-    lynx::pub::LynxExtensionModule* _module;
+    lynx::pub::LynxExtensionModule* _module = nullptr;
 };
 
 // ...
 // 在您的代码某处:
-// auto my_module = new MyExtensionModule();
+// 假设 my_module 是已通过 SetCModule 完成绑定的有效扩展模块。
 // some_other_system.TakeOwnership(my_module);
 // ...
 ```

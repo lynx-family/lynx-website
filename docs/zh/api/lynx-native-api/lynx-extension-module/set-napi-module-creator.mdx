@@ -40,7 +40,7 @@ Napi::Value YourCreatorFunction(Napi::Env env,
 
 ## 使用方法
 
-此方法通常在您的 `LynxExtensionModule` 子类的构造函数或一个专门的初始化方法中调用，以设置模块的绑定逻辑。
+仅在调用 `SetCModule` 后调用此方法，因为注册过程会立即访问关联的 C 模块。宿主集成代码应在创建 C 模块后、将其返回给 Lynx 之前依次完成这两个调用。
 
 ## 代码示例
 
@@ -64,7 +64,6 @@ public:
         return "Hello from C++!";
     }
 
-private:
     // 2. 定义模块创建者（Creator）函数
     // 它可以是一个静态成员函数、一个独立的函数，或者一个 Lambda
     static Napi::Value BindMethods(Napi::Env env,
@@ -101,6 +100,7 @@ demo_extension_module_create_extension_module(void* opaque) {
           });
   module->SetCModule(c_module);
   module->SetNapiModuleCreator(&MyExtensionModule::BindMethods);
+  return c_module;
 }
 ```
 

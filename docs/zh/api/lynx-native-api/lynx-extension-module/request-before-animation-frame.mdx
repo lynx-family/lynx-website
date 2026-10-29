@@ -29,15 +29,21 @@ void RequestBeforeAnimationFrame(uintptr_t id,
 | 名称        | 类型                                                           | 描述                                                                                                                  | 是否必需 |
 | ----------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
 | `id`        | `uintptr_t`                                                    | 请求实例的唯一标识符。                                                                                                | 是       |
-| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | 当下一个 VSync 信号到达时，在普通动画回调之前将要调用的函数。它接收 `frame_start_time` 和 `frame_end_time` 作为参数。 | 是       |
-| `user_data` | `void*`                                                        | (仅限 C 风格函数重载) 一个用于 C 风格函数回调的透传上下文指针。                                                       | 否       |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | 当下一个 VSync 信号到达时，在普通动画回调之前将要调用的函数。具体签名见下文。                       | 是       |
+| `user_data` | `void*`                                                        | (仅限 C 风格函数重载) 传递给回调的上下文指针。不需要上下文时传入 `nullptr`。                        | 是       |
 
-## 回调函数 (`lynx::pub::VSyncObserverCallback`)
+## 回调函数
 
-回调的函数签名与 `RequestAnimationFrame` 相同：
+C++ `lynx::pub::VSyncObserverCallback` 的签名如下：
 
 ```cpp
 void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+C `vsync_observer_callback` 的签名如下：
+
+```cpp
+void(void* user_data, int64_t frame_start_time, int64_t frame_end_time);
 ```
 
 ## 代码示例

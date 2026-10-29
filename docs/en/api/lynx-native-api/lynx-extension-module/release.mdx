@@ -29,25 +29,35 @@ These methods are useful in specific interoperability scenarios where you need t
 
 class SomeOtherSystem {
 public:
+    SomeOtherSystem() = default;
+    SomeOtherSystem(const SomeOtherSystem&) = delete;
+    SomeOtherSystem& operator=(const SomeOtherSystem&) = delete;
+
     void TakeOwnership(lynx::pub::LynxExtensionModule* module) {
-        _module = module;
-        if (_module) {
-            _module-&gt;Retain(); // Increment ref count
+        if (module == _module) {
+            return;
         }
+        if (module) {
+            module->Retain(); // Retain the incoming module first
+        }
+        if (_module) {
+            _module->Release();
+        }
+        _module = module;
     }
 
     ~SomeOtherSystem() {
         if (_module) {
-            _module-&gt;Release(); // Decrement ref count
+            _module->Release();
         }
     }
 private:
-    lynx::pub::LynxExtensionModule* _module;
+    lynx::pub::LynxExtensionModule* _module = nullptr;
 };
 
 // ...
 // Somewhere in your code:
-// auto my_module = new MyExtensionModule();
+// Assume my_module is a valid extension module already bound with SetCModule.
 // some_other_system.TakeOwnership(my_module);
 // ...
 ```

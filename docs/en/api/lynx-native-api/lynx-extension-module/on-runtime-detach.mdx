@@ -31,13 +31,13 @@ Common use cases include:
 
 class MyExtensionModule : public lynx::pub::LynxExtensionModule {
 private:
-    Napi::Env _env;
-    Napi::Reference _my_object_ref;
+    Napi::Reference<Napi::Object> _my_object_ref;
 
 public:
-    void OnRuntimeAttach(Napi::Env env, /*...*/) override {
-        _env = env;
-        // Assume _my_object_ref is created and stored here
+    void OnRuntimeAttach(
+        Napi::Env env,
+        std::unique_ptr<lynx::pub::VSyncObserver> /*vsync_observer*/) override {
+        _my_object_ref = Napi::Persistent(Napi::Object::New(env));
     }
 
     void OnRuntimeDetach() override {
@@ -45,7 +45,7 @@ public:
         // Clean up all runtime-specific resources.
         printf("MyExtensionModule: Runtime detached. Cleaning up N-API references.\\n");
 
-        if (_my_object_ref) {
+        if (!_my_object_ref.IsEmpty()) {
             _my_object_ref.Reset();
         }
     }
