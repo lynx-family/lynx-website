@@ -1,17 +1,19 @@
 ---
-description: '录制 Lynx 模板加载、交互、JS 模块调用和数据更新，生成 TestBench 回放数据。'
+description: '通过 Recorder 记录 Lynx 页面运行时状态并导出回放文件，用于复现与调试问题。'
 ---
 
-# 交互录制
+# Recorder
 
-`recorder` 将模板加载、触摸事件、JS 模块调用和数据更新录制为 TestBench 回放 JSON。性能时序数据使用[性能 Trace](tracing.mdx) 录制。
+[Recorder](/guide/devtool/recorder) 用于记录 Lynx 页面的运行时状态，并进行确定性回放。录制文件包含重建页面所需的视图结构、数据状态和运行时输入，便于脱离原始应用环境复现与调试问题。
+
+通过 `agent-lynx recorder` 开始录制并导出 TestBench 回放 JSON 文件。
 
 先[连接应用](connections.mdx)，整个录制过程使用同一个 client ID：
 
 ```bash
 agent-lynx recorder start --client <clientId>
 agent-lynx open '<bundle-url>' --client <clientId>
-# 复现交互，然后保存录制数据。
+# 页面达到需要记录的状态后，保存录制数据。
 agent-lynx recorder end --client <clientId> -o ./recording.json
 ```
 
