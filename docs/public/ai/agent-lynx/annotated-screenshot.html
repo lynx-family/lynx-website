@@ -113,9 +113,9 @@
       .stage {
         position: relative;
         display: grid;
-        grid-template-columns: minmax(210px, 0.8fr) minmax(300px, 1.2fr);
-        gap: clamp(48px, 8vw, 86px);
-        min-width: 590px;
+        grid-template-columns: minmax(210px, 256px) minmax(300px, 1fr);
+        gap: 24px;
+        min-width: 534px;
         align-items: stretch;
       }
       .panel {
@@ -273,19 +273,25 @@
       .snapshot-row .ref-token {
         color: var(--muted);
       }
-      .snapshot-row.is-target {
+      .ref-token.is-target {
+        display: inline-block;
+        vertical-align: top;
+        margin: -1px -3px;
+        padding: 0 2px;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        color: var(--accent);
+        background: transparent;
+        font: inherit;
+        font-weight: 650;
         cursor: pointer;
       }
-      .snapshot-row.is-target .ref-token {
-        color: var(--accent);
-        font-weight: 650;
-      }
-      .snapshot-row.is-active {
+      .ref-token.is-active {
         background: var(--accent-bg);
         border-color: color-mix(in srgb, var(--accent) 30%, transparent);
       }
-      .snapshot-row.is-target:focus-visible {
-        outline-offset: -2px;
+      .ref-token.is-target:focus-visible {
+        outline-offset: 1px;
       }
       .omission {
         height: 13px;
@@ -401,11 +407,6 @@
         overflow: hidden;
         clip-path: inset(50%);
         white-space: nowrap;
-      }
-      @media (min-width: 900px) {
-        .stage {
-          grid-template-columns: minmax(230px, 290px) minmax(320px, 1fr);
-        }
       }
       @media (max-width: 560px) {
         .demo {
@@ -803,12 +804,11 @@
           rows.forEach((row, ref) => {
             const parent = structure.get(ref).parent;
             if (!parent || !rows.has(parent)) return;
-            const token = row
-              .querySelector('.ref-token')
-              .getBoundingClientRect();
+            const branch = row.querySelector('.branch').getBoundingClientRect();
+            const rowBounds = row.getBoundingClientRect();
             const point = {
-              x: token.left - bounds.left,
-              y: token.top - bounds.top + token.height / 2,
+              x: branch.right - bounds.left,
+              y: rowBounds.top - bounds.top + rowBounds.height / 2,
             };
             if (!branches.has(parent)) branches.set(parent, []);
             branches.get(parent).push(point);
@@ -865,9 +865,7 @@
           targets.forEach((target) => {
             if (!target.row) return;
             const start = target.hotspot.getBoundingClientRect();
-            const end = target.row
-              .querySelector('.ref-token')
-              .getBoundingClientRect();
+            const end = target.token.getBoundingClientRect();
             const y = end.top + end.height / 2;
             const shown =
               y >= visible.top &&
@@ -915,10 +913,10 @@
           targets.forEach((target, ref) => {
             const selected = ref === active;
             target.hotspot.classList.toggle('is-active', selected);
-            target.row?.classList.toggle('is-active', selected);
+            target.token?.classList.toggle('is-active', selected);
             target.connection.classList.toggle('is-active', selected);
             target.hotspot.setAttribute('aria-pressed', String(ref === pinned));
-            target.row?.setAttribute('aria-pressed', String(ref === pinned));
+            target.token?.setAttribute('aria-pressed', String(ref === pinned));
           });
           const target = targets.get(active);
           status.textContent = target
@@ -1038,15 +1036,15 @@
             }
             skipped = false;
             const target = targets.get(ref);
-            const row = document.createElement(target ? 'button' : 'div');
-            row.className = 'snapshot-row' + (target ? ' is-target' : '');
+            const row = document.createElement('div');
+            row.className = 'snapshot-row';
             row.dataset.nodeRef = ref;
             row.style.setProperty('--depth', structure.get(ref).depth);
             const branch = document.createElement('span');
             branch.className = 'branch';
             branch.textContent = line.slice(0, match.index);
-            const token = document.createElement('span');
-            token.className = 'ref-token';
+            const token = document.createElement(target ? 'button' : 'span');
+            token.className = 'ref-token' + (target ? ' is-target' : '');
             token.textContent = ref;
             row.append(
               branch,
@@ -1054,12 +1052,13 @@
               document.createTextNode(line.slice(match.index + ref.length)),
             );
             if (target) {
-              row.type = 'button';
-              row.id = 'snapshot-' + ref.slice(1);
-              row.dataset.ref = ref;
-              row.setAttribute('aria-label', ref + ': ' + copy.labels[ref]);
+              token.type = 'button';
+              token.id = 'snapshot-' + ref.slice(1);
+              token.dataset.ref = ref;
+              token.setAttribute('aria-label', ref + ': ' + copy.labels[ref]);
               target.row = row;
-              bindTarget(row, ref);
+              target.token = token;
+              bindTarget(token, ref);
             }
             snapshot.append(row);
           });
