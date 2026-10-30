@@ -44,21 +44,6 @@ Ocean 按钮对应 `examples/tailwindcss/src/App.tsx` 第 **62 行、第 15 列*
 
 `get-source-info` 返回元素的源码位置，agent 再读取对应文件，才能看到事件绑定和业务逻辑。`mapped` 表示映射成功；运行时生成的包装节点或缺少元数据的页面可能无法得到源码位置。
 
-<details>
-<summary>复现环境与改动</summary>
-
-两段对话均使用 `agent-lynx@0.14.19` 和上面链接的示例版本，在本地构建后通过 Android 设备运行。日志采集使用 Lynx Explorer 4.2.0；源码定位使用集成公开 SDK `4.4.0-nightly.202610300608.307.g7e7e0e0a-SNAPSHOT` 的测试宿主。Lynx Explorer 4.2.0 尚未实现 `DOM.getOriginalNodeSourceInfo`，使用该版本执行源码定位会返回 `Not implemented`。
-
-在 `rsbuild.config.ts` 的 `pluginReactLynx` 选项中加入 `enableUiSourceMap: true`，并把 `src/App.tsx` 第 69 行临时改为：
-
-```tsx
-bindtap={() => setCurrentTheme(lynx.__globalProps.themeNames[t])}
-```
-
-宿主没有传入 `themeNames`，因此点击 Ocean 会触发上面的错误。原始回调为 `bindtap={() => setCurrentTheme(t)}`。`themeNames` 是这次复现加入的业务字段，不是 [GlobalProps](/api/lynx-api/lynx/lynx-global-props) 的内置属性。
-
-</details>
-
 ## 在同一个目标上串联证据
 
 同一个 session 可以包含 `background` 和 `main` 两个 VM。示例日志标为 `background`，因此后续的脚本请求和表达式求值也指向后台 VM。`get-sources` 列出的是后台 VM 中的脚本。

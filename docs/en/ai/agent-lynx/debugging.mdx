@@ -44,21 +44,6 @@ The Ocean button maps to the `view` at **line 62, column 15** of `examples/tailw
 
 `get-source-info` returns the element's source location. Reading that file reveals the event binding and application logic. A `mapped` status indicates success; runtime-generated wrappers or pages without the required metadata may not resolve to source locations.
 
-<details>
-<summary>Reproduction environment and changes</summary>
-
-Both conversations use `agent-lynx@0.14.19` and the example revision linked above, built locally and run on Android. Logs were captured in Lynx Explorer 4.2.0. Source mapping used a test host integrating the public SDK `4.4.0-nightly.202610300608.307.g7e7e0e0a-SNAPSHOT`. Lynx Explorer 4.2.0 does not implement `DOM.getOriginalNodeSourceInfo`; source lookup on that version returns `Not implemented`.
-
-Add `enableUiSourceMap: true` to the `pluginReactLynx` options in `rsbuild.config.ts`, and temporarily replace line 69 of `src/App.tsx` with:
-
-```tsx
-bindtap={() => setCurrentTheme(lynx.__globalProps.themeNames[t])}
-```
-
-The host does not supply `themeNames`, so tapping Ocean produces the error above. The original handler is `bindtap={() => setCurrentTheme(t)}`. `themeNames` is an application field introduced for this reproduction, not a built-in [GlobalProps](/api/lynx-api/lynx/lynx-global-props) property.
-
-</details>
-
 ## Keep Runtime Evidence on the Same Target
 
 A session can contain both `background` and `main` VMs. The example's log is tagged `background`, so the subsequent script request and evaluation target that VM. `get-sources` lists scripts from the background VM.
