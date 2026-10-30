@@ -1,0 +1,68 @@
+import { APISummary, APITable } from '@lynx';
+
+# IsRunningTasksOnBTSThread
+
+<APISummary query="lynx-native-api/lynx-extension-module/is-running-tasks-on-bts-thread" />
+
+`IsRunningTasksOnBTSThread` 方法是一个实用函数，用于检查当前代码是否在 BTS（后台线程脚本）线程上执行。
+
+这对于线程安全至关重要。在调用任何 N-API 函数或访问仅在 BTS 线程上使用才安全的资源之前，您应该使用此检查来防止崩溃和竞争条件。
+
+## 方法签名
+
+```cpp
+bool IsRunningTasksOnBTSThread();
+```
+
+## 返回值
+
+- `true`: 如果当前线程是 BTS 线程。
+- `false`: 如果当前线程不是 BTS 线程（例如，它是 UI 线程或另一个工作线程）。
+
+## 使用方法
+
+在执行特定于 BTS 线程的操作之前，尤其是在可能从多个线程调用的函数中，使用此方法作为保护。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    napi_env _env = nullptr;
+
+public:
+    void OnRuntimeAttach(
+        Napi::Env env,
+        std::unique_ptr<lynx::pub::VSyncObserver> /*vsync_observer*/) override {
+        _env = env;
+    }
+
+    void SomeMethodThatCouldBeCalledFromAnyThread() {
+        if (IsRunningTasksOnBTSThread()) {
+            // 直接调用 N-API 函数是安全的
+            printf("正在 BTS 线程上运行。执行 N-API 调用。\\n");
+            // napi_do_something(_env, ...);
+        } else {
+            // 不在 BTS 线程上，所以发布一个任务
+            printf("不在 BTS 线程上。改为发布任务。\\n");
+            PostTaskToRuntime([this]() {
+                // 现在我们在 BTS 线程上
+                // napi_do_something(_env, ...);
+            });
+        }
+    }
+
+    // ... 其他方法
+};
+```
+
+## 相关链接
+
+- [`PostTaskToRuntime()`](./post-task-to-runtime): 当您*不在* BTS 线程上但需要在那儿执行代码时使用的方法。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/is-running-tasks-on-bts-thread" />

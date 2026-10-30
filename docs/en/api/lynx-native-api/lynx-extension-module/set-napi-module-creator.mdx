@@ -1,0 +1,115 @@
+import { APISummary, APITable } from '@lynx';
+
+# SetNapiModuleCreator
+
+<APISummary query="lynx-native-api/lynx-extension-module/set-napi-module-creator" />
+
+`SetNapiModuleCreator` is a C++ template method used to register a "Creator". This creator is a callable object (like a function or lambda) responsible for creating and binding your custom native module's methods within the JavaScript environment.
+
+This API is a C++ interface, leveraging templates and C++11 features to provide enhanced type safety and flexibility. It automatically deduces your module type and ensures it correctly inherits from `LynxExtensionModule`.
+
+## Method Signature
+
+```cpp
+template <typename Creator>
+void SetNapiModuleCreator(Creator&& creator);
+```
+
+## Parameters
+
+| Name      | Type      | Description                                                                                                                                                                                                                                                    | Required |
+| :-------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- |
+| `creator` | `Creator` | A callable object (function, function pointer, or lambda) used to create the N-API module. Lynx calls this during runtime initialization to expose C++ functions to JavaScript. This creator must adhere to a specific function signature, as described below. | Yes      |
+
+## `Creator` Signature
+
+Your creator function must have the following signature:
+
+```cpp
+Napi::Value YourCreatorFunction(Napi::Env env,
+                                Napi::Value exports,
+                                const char* module_name,
+                                YourModuleType& module);
+```
+
+- **`env`**: The `Napi::Env` environment handle, which is the context for interacting with the JavaScript engine.
+- **`exports`**: A `Napi::Value` representing a JavaScript object that you should populate with your module's native functions and properties.
+- **`module_name`**: The name of the module.
+- **`module`**: A reference to your custom module instance. `YourModuleType` **must** be a class that inherits from `lynx::pub::LynxExtensionModule`. The API enforces this constraint internally with a `static_assert`.
+- **Return Value**: You must return the `exports` object after populating it.
+
+## Usage
+
+Call this method only after `SetCModule`, because registration immediately accesses the associated C module. The host integration should perform both calls after creating the C module and before returning it to Lynx.
+
+## Code Example
+
+The following example demonstrates how to define a custom `LynxExtensionModule` and use `SetNapiModuleCreator` to expose a native method to JavaScript.
+
+```cpp
+#include "lynx/platform/embedder/public/lynx_extension_module.h"
+
+// 1. Define your extension module class, inheriting from LynxExtensionModule
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    MyExtensionModule() {
+    }
+
+    void OnRuntimeInit() override {
+        // You can perform runtime initialization logic here
+    }
+
+    // Your custom C++ method
+    std::string getGreeting() {
+        return "Hello from C++!";
+    }
+
+    // 2. Define the module creator (Creator) function
+    // It can be a static member function, a standalone function, or a lambda
+    static Napi::Value BindMethods(Napi::Env env,
+                                   Napi::Value exports,
+                                   const char* module_name,
+                                   MyExtensionModule& module) {
+        // Use the incoming exports object
+        auto exports_obj = exports.As<Napi::Object>();
+
+        // 3. Bind your C++ method to the exports object
+        exports_obj.Set("getGreeting",
+                        Napi::Function::New(env, [&module](const Napi::CallbackInfo& info) {
+                            Napi::Env env = info.Env();
+                            // Call the method on the module instance
+                            std::string message = module.getGreeting();
+                            return Napi::String::New(env, message);
+                        }));
+
+        return exports_obj;
+    }
+};
+
+// In your integration code, create MyExtensionModule instance and register Napi Module Creator.
+LYNX_EXTERN_C lynx_extension_module_t*
+demo_extension_module_create_extension_module(void* opaque) {
+  auto* module = new MyExtensionModule();
+  lynx_extension_module_t* c_module =
+      lynx_extension_module_create_with_finalizer(
+          module, [](lynx_extension_module_t* m, void* user_data) {
+            if (user_data) {
+              delete reinterpret_cast<MyExtensionModule*>(
+                  user_data);
+            }
+          });
+  module->SetCModule(c_module);
+  module->SetNapiModuleCreator(&MyExtensionModule::BindMethods);
+  return c_module;
+}
+
+```
+
+## See Also
+
+- [`OnRuntimeAttach()`](./on-runtime-attach): The Creator function is invoked after this callback, as the N-API environment is ready by then.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/set-napi-module-creator" />

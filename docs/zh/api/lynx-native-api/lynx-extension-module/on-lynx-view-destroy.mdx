@@ -1,0 +1,60 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnLynxViewDestroy
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-lynx-view-destroy" />
+
+`OnLynxViewDestroy` 是 `LynxExtensionModule` 类中的一个虚拟生命周期方法。在关联的 `LynxView` 实例即将被销毁之前，Lynx 框架会调用此方法。
+
+该回调总是在 **UI 线程**上调用。它是在 `OnLynxViewCreate` 期间设置的清理任务、释放资源和注销监听器的理想位置。
+
+## 方法签名
+
+```cpp
+virtual void OnLynxViewDestroy();
+```
+
+## 使用方法
+
+您应该在自定义的 `LynxExtensionModule` 子类中重写此方法，以确保与 `LynxView` 关联的所有资源都得到正确释放。否则可能导致内存泄漏或其他意外行为。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    MyCustomListener* _listener;
+
+public:
+    void OnLynxViewCreate(lynx_view_t* lynx_view) override {
+        // 设置资源
+        _listener = new MyCustomListener();
+        // ... 将监听器附加到某个对象
+    }
+
+    void OnLynxViewDestroy() override {
+        // 一个 LynxView 即将被销毁。
+        // 在此处清理所有与视图相关的资源。
+        printf("MyExtensionModule: 正在清理 LynxView 的资源。\\n");
+
+        if (_listener) {
+            // ... 分离监听器
+            delete _listener;
+            _listener = nullptr;
+        }
+    }
+
+    // ... 其他重写的方法
+};
+```
+
+## 相关链接
+
+- [`OnLynxViewCreate()`](./on-lynx-view-create): 与此方法对应，在 `LynxView` 创建时调用。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-lynx-view-destroy" />

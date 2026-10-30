@@ -1,0 +1,72 @@
+import { APISummary, APITable } from '@lynx';
+
+# Retain
+
+<APISummary query="lynx-native-api/lynx-extension-module/retain" />
+
+`Retain` 方法提供了对底层 `lynx_extension_module_t` C-API 对象引用计数的手动控制。这是一项高级功能，应谨慎使用。
+
+在大多数情况下，Lynx 框架会自动管理扩展模块的生命周期和内存。您通常不需要调用这些方法。
+
+## `Retain()`
+
+增加 C-API 对象的引用计数。这可以防止对象被释放，即使框架在其他情况下已经释放了它。
+
+### 方法签名
+
+```cpp
+void Retain();
+```
+
+## 使用方法
+
+这些方法在特定的互操作性场景中非常有用，例如当您需要将模块的所有权传递给另一个系统或在标准 Lynx 流程之外管理其生命周期时。例如，如果您在一个独立的、长生命周期的对象中存储了模块的原始指针，您应该 `Retain` 它以确保其保持有效，并在使用完毕后 `Release` 它。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class SomeOtherSystem {
+public:
+    SomeOtherSystem() = default;
+    SomeOtherSystem(const SomeOtherSystem&) = delete;
+    SomeOtherSystem& operator=(const SomeOtherSystem&) = delete;
+
+    void TakeOwnership(lynx::pub::LynxExtensionModule* module) {
+        if (module == _module) {
+            return;
+        }
+        if (module) {
+            module->Retain(); // 先保留传入模块
+        }
+        if (_module) {
+            _module->Release();
+        }
+        _module = module;
+    }
+
+    ~SomeOtherSystem() {
+        if (_module) {
+            _module->Release();
+        }
+    }
+private:
+    lynx::pub::LynxExtensionModule* _module = nullptr;
+};
+
+// ...
+// 在您的代码某处:
+// 假设 my_module 是已通过 SetCModule 完成绑定的有效扩展模块。
+// some_other_system.TakeOwnership(my_module);
+// ...
+```
+
+## 警告
+
+不正确地管理引用计数可能导致内存泄漏（如果 `Release` 调用次数不足）或因使用已释放内存而导致的崩溃（如果 `Release` 调用次数过多）。仅在您清楚了解对象所有权要求的情况下才使用这些方法。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/retain" />

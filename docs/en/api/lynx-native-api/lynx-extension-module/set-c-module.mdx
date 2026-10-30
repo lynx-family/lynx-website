@@ -1,0 +1,30 @@
+import { APISummary, APITable } from '@lynx';
+
+# SetCModule
+
+<APISummary query="lynx-native-api/lynx-extension-module/set-c-module" />
+
+The `SetCModule` method is responsible for initializing the `LynxExtensionModule` by associating it with its underlying C-API counterpart, `lynx_extension_module_t`. This is a crucial setup step that must be performed to enable the C++ wrapper's functionality.
+
+Calling this method also triggers `BindFunction()`, which connects the C++ virtual methods (like `OnLynxViewCreate`, `OnRuntimeInit`, etc.) to the C-API's callback mechanism.
+
+## Method Signature
+
+```cpp
+void SetCModule(lynx_extension_module_t* c_module);
+```
+
+## Parameters
+
+| Name       | Type                       | Description                                                | Required |
+| ---------- | -------------------------- | ---------------------------------------------------------- | -------- |
+| `c_module` | `lynx_extension_module_t*` | A pointer to the C-API `lynx_extension_module_t` instance. | Yes      |
+
+## Usage
+
+The host integration must call this method immediately after creating the `lynx_extension_module_t` instance. Call it before using other wrapper methods, including `SetNapiModuleCreator`, and before returning the C module to Lynx. This binding allows your custom C++ `LynxExtensionModule` subclass to receive lifecycle events from the core Lynx engine.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/set-c-module" />

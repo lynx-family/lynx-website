@@ -1,0 +1,60 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnLynxViewDestroy
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-lynx-view-destroy" />
+
+`OnLynxViewDestroy` is a virtual lifecycle method in the `LynxExtensionModule` class. It is called by the Lynx framework just before the associated `LynxView` instance is destroyed.
+
+This callback is always invoked on the **UI thread**. It is the ideal place to perform cleanup tasks, release resources, and unregister listeners that were set up during `OnLynxViewCreate`.
+
+## Method Signature
+
+```cpp
+virtual void OnLynxViewDestroy();
+```
+
+## Usage
+
+You should override this method in your custom subclass of `LynxExtensionModule` to ensure that all resources tied to the `LynxView` are properly released. Failing to do so can lead to memory leaks or other unexpected behavior.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    MyCustomListener* _listener;
+
+public:
+    void OnLynxViewCreate(lynx_view_t* lynx_view) override {
+        // Setup resources
+        _listener = new MyCustomListener();
+        // ... attach listener to something
+    }
+
+    void OnLynxViewDestroy() override {
+        // A LynxView is about to be destroyed.
+        // Clean up all view-specific resources here.
+        printf("MyExtensionModule: Cleaning up resources for LynxView.\\n");
+
+        if (_listener) {
+            // ... detach listener
+            delete _listener;
+            _listener = nullptr;
+        }
+    }
+
+    // ... other overridden methods
+};
+```
+
+## See Also
+
+- [`OnLynxViewCreate()`](./on-lynx-view-create): The counterpart to this method, called when the `LynxView` is created.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-lynx-view-destroy" />

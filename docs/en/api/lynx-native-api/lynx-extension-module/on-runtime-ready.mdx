@@ -1,0 +1,73 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeReady
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-ready" />
+
+`OnRuntimeReady` is a virtual lifecycle method in the `LynxExtensionModule` class. It is called after the BTS runtime is attached and the initial JavaScript environment has been fully set up.
+
+This callback is always invoked on the **BTS thread**. It signifies that the runtime is now fully operational and ready to execute JavaScript code. This is the point where you can safely interact with the global `lynx` object and perform tasks that depend on the page's initial state.
+
+## Method Signature
+
+```cpp
+virtual void OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url);
+```
+
+## Parameters
+
+| Name   | Type          | Description                                                                                                                                     | Required |
+| ------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `env`  | `Napi::Env`   | The N-API environment handle, same as the one provided in `OnRuntimeAttach`.                                                                    | Yes      |
+| `lynx` | `Napi::Value` | A N-API handle to the global `lynx` object in the JavaScript context. This object provides access to various Lynx-specific APIs and properties. | Yes      |
+| `url`  | `const char*` | The URL of the current Lynx page being loaded.                                                                                                  | Yes      |
+
+## Usage
+
+Override this method to perform actions that need to happen once the JavaScript environment is live. Common use cases include:
+
+- Executing initial JavaScript code.
+- Getting or setting properties on the global `lynx` object.
+- Triggering initial data fetches or other asynchronous operations from native code.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url) override {
+        printf("MyExtensionModule: Runtime is ready for URL: %s\\n", url);
+
+        // Example: Get a property from the global 'lynx' object
+        if (lynx.IsObject()) {
+            Napi::Object lynx_obj = lynx.As<Napi::Object>();
+
+            // Get 'platform' property
+            if (lynx_obj.Has("platform")) {
+                Napi::Value platform_value = lynx_obj.Get("platform");
+
+                // Convert to string and print
+                if (platform_value.IsString()) {
+                    std::string platform_str = platform_value.As<Napi::String>().Utf8Value();
+                    printf("Detected Lynx platform: %s\\n", platform_str.c_str());
+                }
+            }
+        }
+    }
+
+    // ... other lifecycle methods
+};
+```
+
+## See Also
+
+- [`OnRuntimeInit()`](./on-runtime-init)
+- [`OnRuntimeAttach()`](./on-runtime-attach)
+- [`OnRuntimeDetach()`](./on-runtime-detach)
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-ready" />

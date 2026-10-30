@@ -1,0 +1,74 @@
+import { APISummary, APITable } from '@lynx';
+
+# Destroy
+
+<APISummary query="lynx-native-api/lynx-extension-module/destroy" />
+
+`Destroy` is the final virtual lifecycle method called on a `LynxExtensionModule` instance. It signals that the module is about to be permanently destroyed and all associated resources should be released.
+
+This callback is always invoked on the **BTS thread**. It is guaranteed to be called after `OnRuntimeDetach`. This is the last opportunity to perform any cleanup for the entire module.
+
+## Method Signature
+
+```cpp
+virtual void Destroy();
+```
+
+## Usage
+
+Override this method in your `LynxExtensionModule` subclass to release any global or long-lived resources that the module holds. After this method completes, the module's memory will be deallocated.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    SomeGlobalResource* _global_resource;
+
+public:
+    MyExtensionModule() {
+        _global_resource = new SomeGlobalResource();
+    }
+
+    // Note: The virtual destructor is also a valid place for cleanup,
+    // but Destroy() is the official lifecycle callback.
+    ~MyExtensionModule() override = default;
+
+    void Destroy() override {
+        // This is the final cleanup point for the module.
+        // It's called on the BTS thread.
+        printf("MyExtensionModule: Destroying module and all global resources.\\n");
+
+        if (_global_resource) {
+            delete _global_resource;
+            _global_resource = nullptr;
+        }
+
+        // It's good practice to call the base class implementation if it exists,
+        // though in this case it's empty.
+        // lynx::pub::LynxExtensionModule::Destroy();
+    }
+
+    // ... other lifecycle methods
+};
+```
+
+## Lifecycle Sequence
+
+The `Destroy` method is the last step in the module's teardown process:
+
+1. `OnLynxViewDestroy` (UI Thread)
+2. `OnRuntimeDetach` (BTS Thread)
+3. **`Destroy`** (BTS Thread)
+4. The `MyExtensionModule` object is deleted.
+
+## See Also
+
+- [`OnRuntimeDetach()`](./on-runtime-detach)
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/destroy" />

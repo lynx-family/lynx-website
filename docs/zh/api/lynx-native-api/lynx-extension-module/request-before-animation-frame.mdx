@@ -1,0 +1,68 @@
+import { APISummary, APITable } from '@lynx';
+
+# RequestBeforeAnimationFrame (请求动画帧前回调)
+
+<APISummary query="lynx-native-api/lynx-extension-module/request-before-animation-frame" />
+
+`VSyncObserver` 类中的 `RequestBeforeAnimationFrame` 方法，用于调度一个函数在下一次屏幕重绘前、与 VSync 信号同步执行。与 `RequestAnimationFrame` 不同，通过此方法注册的回调保证在所有标准的动画帧回调*之前*执行。这对于那些需要在同一帧中其他视觉更新发生前更新状态或执行计算的任务非常有用。
+
+该方法同样为 C++ `std::function` 和 C 风格函数指针提供了两种重载。
+
+## 方法签名
+
+### 使用 `std::function` 回调
+
+```cpp
+void RequestBeforeAnimationFrame(uintptr_t id, lynx::pub::VSyncObserverCallback callback);
+```
+
+### 使用 C 风格函数回调
+
+```cpp
+void RequestBeforeAnimationFrame(uintptr_t id,
+                                 vsync_observer_callback callback,
+                                 void* user_data);
+```
+
+## 参数说明
+
+| 名称        | 类型                                                           | 描述                                                                                                                  | 是否必需 |
+| ----------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
+| `id`        | `uintptr_t`                                                    | 请求实例的唯一标识符。                                                                                                | 是       |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | 当下一个 VSync 信号到达时，在普通动画回调之前将要调用的函数。具体签名见下文。                       | 是       |
+| `user_data` | `void*`                                                        | (仅限 C 风格函数重载) 传递给回调的上下文指针。不需要上下文时传入 `nullptr`。                        | 是       |
+
+## 回调函数
+
+C++ `lynx::pub::VSyncObserverCallback` 的签名如下：
+
+```cpp
+void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+C `vsync_observer_callback` 的签名如下：
+
+```cpp
+void(void* user_data, int64_t frame_start_time, int64_t frame_end_time);
+```
+
+## 代码示例
+
+这个例子演示了如何调度一个高优先级的任务在其他动画之前执行。
+
+```cpp
+// 假设 'vsync_observer' 是一个有效的 std::unique_ptr<VSyncObserver>。
+
+uintptr_t high_priority_id = 2;
+
+vsync_observer->RequestBeforeAnimationFrame(high_priority_id, [](int64_t start_time, int64_t end_time) {
+    // 这部分逻辑会在其他的 RequestAnimationFrame 回调之前运行。
+    // 非常适合用于预计算或状态更新。
+    printf("高优先级任务已在帧 %lld 执行\\n", start_time);
+});
+```
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/request-before-animation-frame" />

@@ -1,0 +1,54 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnLynxViewCreate
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-lynx-view-create" />
+
+`OnLynxViewCreate` 是 `LynxExtensionModule` 类中的一个虚拟生命周期方法。当一个与此扩展模块关联的新的 `lynx_view` 实例被创建时，Lynx 框架会调用此方法。
+
+该回调总是在 **UI 线程**上调用。它可作为一个入口点，用于初始化特定于给定 `lynx_view` 的资源或执行设置任务。
+
+## 方法签名
+
+```cpp
+virtual void OnLynxViewCreate(lynx_view_t* lynx_view);
+```
+
+## 参数说明
+
+| 名称        | 类型           | 描述                                                                                  | 是否必需 |
+| ----------- | -------------- | ------------------------------------------------------------------------------------- | -------- |
+| `lynx_view` | `lynx_view_t*` | 指向新创建的 `lynx_view` 实例的指针。您可以用它来与视图交互，例如附加客户端或监听器。 | 是       |
+
+## 使用方法
+
+您应该在自定义的 `LynxExtensionModule` 子类中重写此方法，以在创建 Lynx 页面时执行任何必要的初始化。例如，您可能想要设置特定于平台的监听器或准备数据源。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+#include "lynx_view.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnLynxViewCreate(lynx_view_t* lynx_view) override {
+        // 一个新的 lynx_view 已被创建。
+        // 在此处执行视图相关的设置。
+        printf("MyExtensionModule: lynx_view 在地址 %p 创建\\n", lynx_view);
+        // 注册一个名为 "demo-view" 的自定义元件
+        lynx_view_register_native_view(lynx_view, "demo-view", MyDemoView::Create, nullptr);
+    }
+
+    // ... 其他重写的方法
+};
+```
+
+## 相关链接
+
+- [`OnLynxViewDestroy()`](./on-lynx-view-destroy): 与此方法对应，在 `lynx_view` 即将被销毁时调用。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-lynx-view-create" />

@@ -1,0 +1,59 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnEnterForeground
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-enter-foreground" />
+
+`OnEnterForeground` is a virtual lifecycle method in the `LynxExtensionModule` class. It is called by the Lynx framework when the host application transitions from the background to the foreground.
+
+This callback is always invoked on the **UI thread**. It is useful for resuming activities, restarting animations, or refreshing data that may have been paused or become stale while the application was in the background.
+
+## Method Signature
+
+```cpp
+virtual void OnEnterForeground();
+```
+
+## Usage
+
+Override this method in your `LynxExtensionModule` subclass to handle application foregrounding events. For instance, you could resume a video, restart a WebSocket connection, or trigger a data refresh.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyMediaModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnEnterForeground() override {
+        // Application has entered the foreground.
+        printf("MyMediaModule: Resuming activities.\\n");
+
+        // Example: Post a task to the BTS thread to resume a video player.
+        PostTaskToRuntime([]() {
+            // videoPlayer->resume();
+        });
+    }
+
+    void OnEnterBackground() override {
+        // Application has entered the background.
+        printf("MyMediaModule: Pausing activities.\\n");
+
+        // Example: Post a task to pause the video player.
+        PostTaskToRuntime([]() {
+            // videoPlayer->pause();
+        });
+    }
+
+    // ... other lifecycle methods
+};
+```
+
+## See Also
+
+- [`OnEnterBackground()`](./on-enter-background): The counterpart to this method, called when the application enters the background.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-enter-foreground" />

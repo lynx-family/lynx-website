@@ -1,0 +1,114 @@
+import { APISummary, APITable } from '@lynx';
+
+# SetNapiModuleCreator
+
+<APISummary query="lynx-native-api/lynx-extension-module/set-napi-module-creator" />
+
+`SetNapiModuleCreator` 是一个 C++ 模板方法，用于注册一个“创建者”（Creator）。这个创建者是一个可调用对象（如函数、Lambda 表达式），负责在 JavaScript 环境中创建并绑定您的自定义原生模块方法。
+
+此 API 是一个 C++ 接口，利用模板和 C++11 特性提供了更强的类型安全和灵活性。它会自动推导您的模块类型，并确保其正确继承自 `LynxExtensionModule`。
+
+## 方法签名
+
+```cpp
+template <typename Creator>
+void SetNapiModuleCreator(Creator&& creator);
+```
+
+## 参数说明
+
+| 名称      | 类型      | 描述                                                                                                                                                                        | 是否必需 |
+| :-------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- |
+| `creator` | `Creator` | 一个可调用对象（函数、函数指针或 Lambda），用于创建 N-API 模块。Lynx 会在运行时初始化期间调用它，以将 C++ 函数暴露给 JavaScript。此创建者必须遵循特定的函数签名，如下所述。 | 是       |
+
+## `Creator` 签名
+
+您的创建者函数必须具有以下签名：
+
+```cpp
+Napi::Value YourCreatorFunction(Napi::Env env,
+                                Napi::Value exports,
+                                const char* module_name,
+                                YourModuleType& module);
+```
+
+- **`env`**: `Napi::Env` 环境句柄，是与 JavaScript 引擎交互的上下文。
+- **`exports`**: 一个 `Napi::Value`，代表一个 JavaScript 对象，您应使用您模块的原生函数和属性来填充它。
+- **`module_name`**: 模块的名称。
+- **`module`**: 对您的自定义模块实例的引用。`YourModuleType` **必须**是继承自 `lynx::pub::LynxExtensionModule` 的类。API 内部会通过 `static_assert` 强制执行此约束。
+- **返回值**: 填充后，您必须返回 `exports` 对象。
+
+## 使用方法
+
+仅在调用 `SetCModule` 后调用此方法，因为注册过程会立即访问关联的 C 模块。宿主集成代码应在创建 C 模块后、将其返回给 Lynx 之前依次完成这两个调用。
+
+## 代码示例
+
+以下示例展示了如何定义一个自定义的 `LynxExtensionModule`，并使用 `SetNapiModuleCreator` 来暴露一个原生方法给 JavaScript。
+
+```cpp
+#include "lynx/platform/embedder/public/lynx_extension_module.h"
+
+// 1. 定义您的扩展模块类，继承自 LynxExtensionModule
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    MyExtensionModule() {
+    }
+
+    void OnRuntimeInit() override {
+        // 可以在这里执行一些运行时初始化逻辑
+    }
+
+    // 您自定义的 C++ 方法
+    std::string getGreeting() {
+        return "Hello from C++!";
+    }
+
+    // 2. 定义模块创建者（Creator）函数
+    // 它可以是一个静态成员函数、一个独立的函数，或者一个 Lambda
+    static Napi::Value BindMethods(Napi::Env env,
+                                   Napi::Value exports,
+                                   const char* module_name,
+                                   MyExtensionModule& module) {
+        // 使用传入的 exports 对象
+        auto exports_obj = exports.As<Napi::Object>();
+
+        // 3. 将您的 C++ 方法绑定到导出对象上
+        exports_obj.Set("getGreeting",
+                        Napi::Function::New(env, [&module](const Napi::CallbackInfo& info) {
+                            Napi::Env env = info.Env();
+                            // 调用模块实例的方法
+                            std::string message = module.getGreeting();
+                            return Napi::String::New(env, message);
+                        }));
+
+        return exports_obj;
+    }
+};
+
+// 在您的集成代码中，创建 MyExtensionModule 实例并注册 Napi Module Creator.
+LYNX_EXTERN_C lynx_extension_module_t*
+demo_extension_module_create_extension_module(void* opaque) {
+  auto* module = new MyExtensionModule();
+  lynx_extension_module_t* c_module =
+      lynx_extension_module_create_with_finalizer(
+          module, [](lynx_extension_module_t* m, void* user_data) {
+            if (user_data) {
+              delete reinterpret_cast<MyExtensionModule*>(
+                  user_data);
+            }
+          });
+  module->SetCModule(c_module);
+  module->SetNapiModuleCreator(&MyExtensionModule::BindMethods);
+  return c_module;
+}
+```
+
+## 相关链接
+
+- [`OnRuntimeAttach()`](./on-runtime-attach): Creator 函数在此回调之后被调用，因为此时 N-API 环境已准备就绪。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/set-napi-module-creator" />

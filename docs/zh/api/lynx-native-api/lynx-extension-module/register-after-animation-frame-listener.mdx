@@ -1,0 +1,69 @@
+import { APISummary, APITable } from '@lynx';
+
+# RegisterAfterAnimationFrameListener (注册动画帧后监听器)
+
+<APISummary query="lynx-native-api/lynx-extension-module/register-after-animation-frame-listener" />
+
+`VSyncObserver` 类中的 `RegisterAfterAnimationFrameListener` 方法，用于注册一个持久的监听器，它会在每个 VSync 信号发生后被调用。与 `RequestAnimationFrame`（一次性请求）不同，此 API 不提供注销监听器的方法，因此适合需要持续监控或在每一帧都运行的任务。
+
+此方法必须在 BTS（后台线程脚本）线程上调用。它同样支持 C++ `std::function` 和 C 风格函数指针两种回调方式。
+
+## 方法签名
+
+### 使用 `std::function` 回调
+
+```cpp
+void RegisterAfterAnimationFrameListener(lynx::pub::VSyncObserverCallback callback);
+```
+
+### 使用 C 风格函数回调
+
+```cpp
+void RegisterAfterAnimationFrameListener(vsync_observer_callback callback, void* user_data);
+```
+
+## 参数说明
+
+| 名称        | 类型                                                           | 描述                                                                                   | 是否必需 |
+| ----------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------- |
+| `callback`  | `lynx::pub::VSyncObserverCallback` / `vsync_observer_callback` | 每个 VSync 信号发生后将要调用的函数。具体签名见下文。                                       | 是       |
+| `user_data` | `void*`                                                        | (仅限 C 风格函数重载) 传递给回调的上下文指针。不需要上下文时传入 `nullptr`。                | 是       |
+
+## 回调函数
+
+C++ `lynx::pub::VSyncObserverCallback` 的签名如下：
+
+```cpp
+void(int64_t frame_start_time, int64_t frame_end_time);
+```
+
+C `vsync_observer_callback` 的签名如下：
+
+```cpp
+void(void* user_data, int64_t frame_start_time, int64_t frame_end_time);
+```
+
+## 重要说明
+
+- **执行线程**: 此方法及其回调旨在 **BTS 线程**上使用。
+- **持久监听器**: 注册的回调将在后续的每一个 VSync 信号时被调用，而不仅仅是一次。
+- **生命周期**: 当运行时仍可能调用回调时，必须保持 `VSyncObserver` 实例存活。此 API 不提供显式的注销操作。
+
+## 代码示例
+
+这个例子展示了如何注册一个监听器来为每一帧记录信息。
+
+```cpp
+// 假设此代码在 BTS 线程上运行，并且 'vsync_observer' 是可用的。
+
+vsync_observer->RegisterAfterAnimationFrameListener([](int64_t start_time, int64_t end_time) {
+    // 这段日志将在每一帧都输出。
+    // 对于性能监控或持续更新很有用。
+    printf("帧已处理。开始: %lld, 结束: %lld\\n", start_time, end_time);
+});
+```
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/register-after-animation-frame-listener" />
