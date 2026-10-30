@@ -1,54 +1,81 @@
 ---
-description: 'Record and download performance traces, configure capture options, summarize events, and query local traces with SQL.'
+description: 'Capture performance traces with memory data, analyze them with skills, inspect global memory, and save JS heap snapshots.'
 ---
 
-# Performance Tracing
+import { AgentConversation } from '@lynx/agent-conversation';
+import {
+  traceCaptureExample,
+  traceMemoryExample,
+  liveMemoryExample,
+} from './_examples/performance';
 
-[Connect an app](connections.mdx) and select its client ID before recording. Local analysis commands can also work with an existing trace file.
+# Performance and Memory
 
-## Record, Download, and Analyze
+[Page inspection](page-inspection.mdx) shows what an action changed. A trace records what the threads executed, how long it took, and how memory changed during that work. agent-lynx provides capture, file validation, and local queries through the CLI, with analysis methods supplied by the relevant skills.
 
-Start tracing **before opening or reloading the target page** to include its first frame. Use the same client throughout the recording:
+| Question                                             | Evidence                                                                    |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| What happened during loading, updates, or scrolling? | A performance trace; add `--enable-memory-trace` to collect memory data too |
+| How much memory do live Lynx instances use now?      | Global memory statistics, broken down into elements, views, and runtimes    |
+| Which objects and references exist in a JS VM?       | JS heap snapshots, captured separately for the background and main VMs      |
 
-```bash
-agent-lynx trace start --client <clientId>
-agent-lynx open '<bundle-url>' --client <clientId>
-# Reproduce the interactions you want to measure, then stop recording.
-agent-lynx trace end --client <clientId>
-```
+The examples continue with the [Tailwind CSS Settings page](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss). The app is already [connected](connections.mdx), and `$CLIENT_ID` identifies the selected app. The bundle has been built locally and its URL is reachable by the device. The app must support the relevant [trace collection features](/guide/devtool/trace/record-trace).
 
-Replace `<bundle-url>` with a bundle URL reachable by the app, such as the URL printed by your project's development server. agent-lynx opens the URL; run the project's build or development server separately.
+## Capture a Page Load with Memory Data {#capture-a-trace}
 
-`trace end` returns a stream handle. Substitute that value for `<stream>` to download the trace:
+The capture window determines which questions a trace can answer. To include first-frame rendering, the agent loads `lynx-trace-record`, starts before opening the page, then checks for load events and the recorded memory configuration.
 
-```bash
-agent-lynx trace read-data --client <clientId> --stream <stream> -o ./page.pftrace
-agent-lynx trace event-summary ./page.pftrace --json
-agent-lynx trace query ./page.pftrace --sql "SELECT name, COUNT(*) AS count FROM slice GROUP BY name"
-```
+<AgentConversation {...traceCaptureExample} locale="en">
 
-`trace event-summary` and `trace query` analyze local files without a connected device. For guided performance diagnosis, load the analysis skill with `agent-lynx skills get lynx-trace-analysis`; see [lynx-trace-analysis](../skills/trace-analysis.mdx).
+Saved `settings-memory.pftrace` and parsed **8,257 events with 889 distinct names**, with no data loss reported. The file contains `LynxLoadTemplate` and `LynxDomReady`; its memory-capture and automatic-GC settings are both recorded as `1`.
 
-If tracing asks you to enable debugging and restart the app, restart it and run `trace start` again before opening the page. Trace support depends on the app's build; see [trace recording requirements](/guide/devtool/trace/record-trace).
+This trace is ready for inspecting the captured page load and memory changes. The next step is to load the analysis skill and choose a guide for the question being investigated.
 
-## Capture Options
+</AgentConversation>
 
-Choose capture controls for your investigation:
+The stream returned by `trace end` belongs to that recording and must be downloaded with `trace read-data` on the same client. After downloading, `event-summary`, `query`, and the analysis scripts can run offline. If `trace start` returns `restartRequired: true`, restart the app, rediscover its client, and start again. Open the page only after receiving `started: true`.
 
-| Goal                                          | `trace start` options                                                                                |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Include or exclude event categories           | `--include-categories <categories>`, `--exclude-categories <categories>`; comma-separated names      |
-| Disable system tracing                        | `--no-systrace`                                                                                      |
-| Collect memory data                           | `--enable-memory-trace`                                                                              |
-| Control automatic garbage collection          | `--force-gc` (default), `--no-force-gc`                                                              |
-| Capture automatic shared-group heap snapshots | `--enable-auto-heap-snapshot`, optionally `--shared-group-id <id>`                                   |
-| Enable JS profiling and select its interval   | `--js-profile-type quickjs` or `--js-profile-type v8`, optionally `--js-profile-interval <interval>` |
+`--enable-memory-trace` requests memory data from the runtime. Check the file's configuration and actual data as well as the command options; older runtimes may lack the required tracks. `--force-gc` is enabled by default and affects the memory curve. Use `--no-force-gc` when observing natural GC behavior, and keep collection conditions consistent when comparing results.
 
-`trace end` and `trace read-data` support `--timeout` in seconds. For local analysis:
+## Continue with the Analysis Skill {#analyze-memory-trace}
 
-```bash
-agent-lynx trace event-summary ./page.pftrace --json -o ./events.json
-agent-lynx trace query ./page.pftrace --sql-file ./query.sql --max-rows 1000 -o ./query-result.json
-```
+Once capture succeeds, the question determines the analysis path: metrics and rendering-pipeline guides for first-frame latency, the jank guide for scrolling, or the memory guide for memory changes. This conversation reuses the saved file and asks `lynx-trace-analysis` to produce a memory report for Settings.
 
-Use exactly one of `--sql` and `--sql-file`. Query output includes the trace path, size, and hash so results can be associated with the file analyzed. These local commands do not require a connected device.
+<AgentConversation {...traceMemoryExample} locale="en">
+
+Generated `settings-memory-report.html`, containing page and VM memory data with interactive charts. The selected page triggered **no high- or medium-confidence memory issue under the current rules** during this capture window.
+
+This recording covers loading but not memory release after exit. Checking whether objects survive page closure requires a capture covering that lifecycle as well.
+
+</AgentConversation>
+
+`$TRACE_SKILL_DIR` is the `Skill directory` returned by `skills get`. The analysis scripts ship with the skill; the agent reads its guide before choosing an entry point. A person can explore the resulting report, and further queries can reuse the same trace.
+
+## Inspect Current Memory and Save JS Heaps {#memory-inspection}
+
+For current memory contributors, query the live instances directly without recording another trace. This independent conversation checks Settings and saves both VM heaps. The global query uses session `-1`; object snapshots target the selected page's session `2`.
+
+<AgentConversation {...liveMemoryExample} locale="en">
+
+Collection completed for **1/1 instances**. Lynx-attributed memory is **7.85 MiB**, or **6.41%** of the app's **122.37 MiB** footprint. The largest contributor is the background runtime at **7.19 MiB**. The main runtime uses **585.91 KiB**, and the element tree uses **84.80 KiB** across **81 element nodes**. This runtime returned `0` for `viewBytes`.
+
+Saved `settings-background.heapsnapshot` and `settings-main.heapsnapshot` for inspecting JS objects and retainer paths. A single memory measurement or snapshot does not establish a leak.
+
+</AgentConversation>
+
+The global response's `totalBytes` measures Lynx-attributed memory, while `appBytes` measures the app footprint. Shared background runtimes are deduplicated in the global total. A heap snapshot describes JS objects in one VM, so its scope differs from the global statistics. Compare snapshots from the same VM under consistent GC conditions, recording their lifecycle positions such as load, interaction, and exit.
+
+## Performance and Memory Capabilities
+
+| Capability                            | What it supports                                                                                                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capture and validate traces           | `trace start`, `end`, and `read-data` record and download; `event-summary` checks parsing, event names, counts, and file identity                                     |
+| Select capture scope                  | `--include-categories` and `--exclude-categories` select event categories; `--no-systrace` disables system tracing                                                    |
+| Collect memory and JS profiles        | `--enable-memory-trace` adds memory data; `--js-profile-type quickjs` or `v8` enables sampling for that engine, with `--js-profile-interval` controlling its interval |
+| Capture shared-VM heaps automatically | `--enable-auto-heap-snapshot` targets shared-group VMs; `--shared-group-id` narrows the target, subject to runtime support                                            |
+| Analyze by question                   | `lynx-trace-analysis` supplies guides and scripts for loading, jank, rendering pipelines, NativeModules, regressions, and memory                                      |
+| Query local traces                    | `trace query` accepts inline SQL or a SQL file and reports file hashes, row counts, and truncation for reproducible results                                           |
+| Inspect global memory                 | `Memory.getAllMemoryUsage` reports registered instances' element, view, runtime, and app memory, with collection status                                               |
+| Inspect JS objects                    | `take-heap-snapshot` saves the background or main VM's object graph for object and retainer analysis                                                                  |
+
+See the [CLI reference](cli-reference.mdx) for options and the [Memory domain](/api/cdp/api-ref/memory) for fields. To save page runtime state as a replayable file, use [Recorder](recording.mdx).

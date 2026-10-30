@@ -1,22 +1,42 @@
 ---
-description: 'Capture Lynx page runtime state with Recorder and export replay files for reproducing and debugging issues.'
+description: 'Use Recorder skills to capture page runtime state, validate replay files, and inspect or edit TestBench artifacts.'
 ---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { recorderExample } from './_examples/recording';
 
 # Recorder
 
-[Recorder](/guide/devtool/recorder) records Lynx page runtime state for deterministic replay. Recordings preserve the view hierarchy, data state, and runtime inputs needed to reconstruct the page, so you can reproduce and debug issues independently of the original application environment.
+[Recorder](/guide/devtool/recorder) captures Lynx page runtime state for deterministic replay. Its artifacts include template loading, runtime inputs, and environment data so a page can be reproduced outside its original app environment. It complements [performance tracing](tracing.mdx): traces describe execution and timing, while Recorder reconstructs the page and its runtime behavior.
 
-Use `agent-lynx recorder` to start recording and export a TestBench replay JSON file.
+The bundled `lynx-recorder` skill guides capture. `lynx-recorder-fixture` provides artifact inspection, decoding, and editing tools. An agent can complete a recording, then continue inspecting its contents when needed.
 
-[Connect an app](connections.mdx) and use its client ID throughout the recording:
+## From Page State to a Replay Artifact
 
-```bash
-agent-lynx recorder start --client <clientId>
-agent-lynx open '<bundle-url>' --client <clientId>
-# Save the recording once the page reaches the state you want to capture.
-agent-lynx recorder end --client <clientId> -o ./recording.json
-```
+This example continues with the [Tailwind CSS Settings page](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss), opening it and switching to the Ocean theme. The app is already [connected](connections.mdx), `$CLIENT_ID` identifies it, and the bundle URL is reachable by the device.
 
-Start recording **before opening or reloading the page** so the file includes `loadTemplate`, which replay requires. If `recorder start` enables debug mode and asks for an app restart, restart the app and run it again before opening the page. `recorder end` saves the streams, reports the saved files, and diagnoses empty, invalid, or non-replayable recordings. Multiple sessions can produce multiple files.
+The conversation emphasizes capture boundaries and artifact checks: **start Recorder before opening the page** so the replay includes `loadTemplate`. The theme change is the page state being reproduced in this example.
 
-For replay and artifact hosting, follow the [Lynx Recorder guide](/guide/devtool/recorder).
+<AgentConversation {...recorderExample} locale="en">
+
+Saved `settings-recording-session3.json`. The artifact is marked `healthy: true` and contains **1 `loadTemplate` and 13 runtime actions**, including 3 `SendTouchEvent` entries. The recording includes both template loading and the inputs for this operation.
+
+The fixture summary confirms those contents. The file can now be passed to a Recorder-capable host for replay. To change replay inputs, use the fixture skill to inspect and edit the relevant section.
+
+</AgentConversation>
+
+The `savedFiles` returned by `recorder end` contains the actual output paths, which may include session suffixes or multiple files. `$FIXTURE_SKILL_DIR` is the directory returned by `skills get lynx-recorder-fixture`. The summary tool reads the saved filename instead of assuming that the `-o` argument is the final path.
+
+## Recording and Artifact Capabilities
+
+| Capability                   | What it supports                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Start and finish capture     | `recorder start` and `recorder end` use the same client to capture and save page runtime data                                                    |
+| Check capture completeness   | `recorder end` returns paths, action counts, `hasTemplate`, and diagnostics; without `loadTemplate`, record again starting before the page opens |
+| Inspect an existing artifact | The fixture skill's `summary` and `decode` accept local files or URLs to inspect the Action List, calls, callbacks, and configuration            |
+| Change replay inputs         | The fixture skill can edit mock responses, runtime operations, and environment settings, then `encode` a new replay file                         |
+| Reproduce and share a page   | Host the artifact at a device-accessible URL and replay it in a Recorder-capable host; see the [Recorder replay guide](/guide/devtool/recorder)  |
+
+The host must support Recorder. If starting returns `restartRequired: true`, restart the app, rediscover its client, and start again before opening the target page.
+
+A `.json` extension does not always mean plain JSON: Recorder artifacts may contain `base64(zlib(JSON))`. The fixture tools handle that encoding. When editing, preserve action order, call/callback associations, and template contents. `healthy` and `hasTemplate` confirm artifact structure and required data; actual replay is performed by a Recorder-capable host.
