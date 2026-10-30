@@ -1,31 +1,63 @@
 ---
-description: '跟随 agent 从资料加载失败追查日志、运行中的脚本和配置，再了解日志与运行时调试的各项能力。'
+description: '跟随 agent 用真实 Lynx 错误、运行中的脚本和实时值排查主题切换失败，再从页面元素定位 JSX 和事件处理函数。'
 ---
 
 import { AgentConversation } from '@lynx/agent-conversation';
-import { configurationExample } from './_examples/debugging';
+import {
+  runtimeErrorExample,
+  elementSourceExample,
+} from './_examples/debugging';
 
 # 日志与运行时调试
 
 当[页面检查](page-inspection.mdx)发现结果不符合预期时，agent-lynx 可以将页面现象与日志、已加载的脚本和 JavaScript 实时值对应起来，确认代码执行到哪里、收到了什么运行时输入。
 
-## 从加载失败追到运行时配置
+## 从点击无响应追到运行时错误
 
-下面以 Profile 页面为例：点击 **Load Profile** 后，用户资料没有显示出来。agent 已经[连接应用并选定页面](connections.mdx)，整个排查过程使用同一个 client `android-phone:8901` 和 session `2`。
+沿用[页面检查](page-inspection.mdx)中的 [Tailwind CSS Settings 示例](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss)，这次点击 **Ocean** 后，主题没有切换。为了复现这个故障，我们在本地副本的点击回调中加入了对缺失配置的读取；原示例没有这处错误。
 
-<AgentConversation locale="zh" {...configurationExample}>
-  <p>
-    这次加载在发出请求前就返回了。<code>profile-service.js</code> 中的加载函数在{' '}
-    <code>apiBaseUrl</code> 缺失时记录错误并返回；当前后台 VM 中这个字段的值是{' '}
-    <code>undefined</code>。
-  </p>
-  <p>
-    需要检查宿主加载该页面时，是否通过 <code>globalProps</code> 传入了有效的{' '}
-    <code>apiBaseUrl</code>。补齐后重新加载页面，再核对日志和资料展示结果。
-  </p>
+下面的命令与输出采集自 Android 上的 Lynx Explorer。agent 已经[连接应用并选定页面](connections.mdx)，`$CLIENT_ID` 是 `list-clients` 返回的目标应用 ID，本次页面的 session 为 `2`。
+
+<AgentConversation locale="zh" {...runtimeErrorExample}>
+
+点击触发了事件回调，但回调在读取 `lynx.__globalProps.themeNames[t]` 时抛出了 `TypeError`。当前 `themeNames` 是 `undefined`，读取它的 `ocean` 属性失败，因此 `setCurrentTheme` 没有执行。
+
+这个示例已经通过遍历得到主题名 `t`，应恢复为 `setCurrentTheme(t)`。如果业务确实需要宿主配置，则需要先约定并传入该字段，再处理缺失时的行为。
+
 </AgentConversation>
 
-日志指出了脚本位置和 VM 线程，读取脚本解释了失败条件，执行表达式则验证了当前页面是否满足这个条件。这里的 `apiBaseUrl` 是示例应用约定的业务字段，由宿主通过 [GlobalProps](/api/lynx-api/lynx/lynx-global-props) 传入。
+日志将“没有切换”定位到后台 VM 的异常，脚本源码说明了哪次属性读取失败，`evaluate` 则验证了当前值。脚本列表中可见 `app-service.js`，而本次调用栈指向 `.lynx/main/background.js`；应按实际返回的 URL 和脚本 ID 继续查找。
+
+`get-console` 订阅运行时日志，不保证保留历史记录。这段对话先启动 `--watch`，在监听期间点击按钮，并在收到两条错误后结束采集。一次短窗口没有输出，不能说明页面从未报错。
+
+## 从页面元素定位 JSX 和事件处理函数
+
+调用栈给出了运行中脚本的位置，UI source map 则能把**页面上的元素**对应到编写它的 JSX。继续查看 Ocean 按钮，就能把上一段中的错误回调落到本地源文件上。
+
+这段示例在支持 `DOM.getOriginalNodeSourceInfo` 的开发版客户端中运行同一份 bundle，构建时启用了 [UI source map](/guide/devtool/ui-source-map)。`$CLIENT_ID` 指向这个客户端，本次页面的 session 为 `1`。
+
+<AgentConversation locale="zh" {...elementSourceExample}>
+
+Ocean 按钮对应 `examples/tailwindcss/src/App.tsx` 第 **62 行、第 15 列**的 `view`，它由 `themeNames.map` 创建。第 **69 行**的 `bindtap` 绑定了点击处理函数，正是前面读取缺失配置的那段代码。
+
+</AgentConversation>
+
+`get-source-info` 返回元素的源码位置，agent 再读取对应文件，才能看到事件绑定和业务逻辑。`mapped` 表示映射成功；运行时生成的包装节点或缺少元数据的页面可能无法得到源码位置。
+
+<details>
+<summary>复现环境与改动</summary>
+
+两段对话均使用 `agent-lynx@0.14.19` 和上面链接的示例版本，在本地构建后通过 Android 设备运行。日志采集使用 Lynx Explorer 4.2.0；源码定位使用集成公开 SDK `4.4.0-nightly.202610300608.307.g7e7e0e0a-SNAPSHOT` 的测试宿主。Lynx Explorer 4.2.0 尚未实现 `DOM.getOriginalNodeSourceInfo`，使用该版本执行源码定位会返回 `Not implemented`。
+
+在 `rsbuild.config.ts` 的 `pluginReactLynx` 选项中加入 `enableUiSourceMap: true`，并把 `src/App.tsx` 第 69 行临时改为：
+
+```tsx
+bindtap={() => setCurrentTheme(lynx.__globalProps.themeNames[t])}
+```
+
+宿主没有传入 `themeNames`，因此点击 Ocean 会触发上面的错误。原始回调为 `bindtap={() => setCurrentTheme(t)}`。`themeNames` 是这次复现加入的业务字段，不是 [GlobalProps](/api/lynx-api/lynx/lynx-global-props) 的内置属性。
+
+</details>
 
 ## 在同一个目标上串联证据
 

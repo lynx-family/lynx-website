@@ -1,33 +1,63 @@
 ---
-description: 'Follow an agent as it diagnoses a profile load failure using logs, the loaded script, and runtime configuration, then explore the debugging capabilities.'
+description: 'Follow an agent from a real Lynx error to the loaded script and live value, then map a page element to its JSX and event handler.'
 ---
 
 import { AgentConversation } from '@lynx/agent-conversation';
-import { configurationExample } from './_examples/debugging';
+import {
+  runtimeErrorExample,
+  elementSourceExample,
+} from './_examples/debugging';
 
 # Logs and Runtime Debugging
 
 When [page inspection](page-inspection.mdx) reveals an unexpected result, agent-lynx can connect it to console logs, loaded scripts, and live JavaScript values. These provide evidence of where execution stopped and which runtime inputs the code received.
 
-## Trace a Failed Load to Its Runtime Configuration
+## Trace an Unresponsive Tap to a Runtime Error
 
-This example investigates a Profile page that stays empty after **Load Profile** is tapped. The agent has already [connected to the app and selected the page](connections.mdx), using client `android-phone:8901` and session `2` throughout the investigation.
+Return to the [Tailwind CSS Settings example](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss) from [page inspection](page-inspection.mdx). This time, tapping **Ocean** does not change the theme. To reproduce the failure, we added a missing-configuration read to the tap handler in a local checkout; the original example does not have this error.
 
-<AgentConversation locale="en" {...configurationExample}>
-  <p>
-    The load stops before sending a request. In <code>profile-service.js</code>,
-    the loading function logs an error and returns when <code>apiBaseUrl</code>{' '}
-    is missing. Its current value in the background VM is <code>undefined</code>
-    .
-  </p>
-  <p>
-    Check that the host passes a valid <code>apiBaseUrl</code> through{' '}
-    <code>globalProps</code> when loading this page. After supplying it, reload
-    the page and verify the logs and displayed profile.
-  </p>
+The commands and outputs below were captured in Lynx Explorer on Android. The agent has already [connected to the app and selected the page](connections.mdx). `$CLIENT_ID` is the target app ID returned by `list-clients`; this page has session ID `2`.
+
+<AgentConversation locale="en" {...runtimeErrorExample}>
+
+The tap reached its handler, which threw a `TypeError` while reading `lynx.__globalProps.themeNames[t]`. The current value of `themeNames` is `undefined`, so reading its `ocean` property fails before `setCurrentTheme` runs.
+
+This example already gets the theme name from the iteration variable `t`; restore `setCurrentTheme(t)`. If the application needs host configuration instead, define and supply that field and handle its absence explicitly.
+
 </AgentConversation>
 
-The log identifies a script and VM thread. Reading the script explains the failure condition; evaluating the field confirms that condition in the running page. Here, `apiBaseUrl` is an application-defined field supplied by the host through [GlobalProps](/api/lynx-api/lynx/lynx-global-props).
+The log connects the unchanged theme to an exception in the background VM. The script identifies the failing property read, and `evaluate` checks its current value. The script list includes `app-service.js`, while this stack points to `.lynx/main/background.js`; follow the URLs and script IDs returned by the runtime.
+
+`get-console` subscribes to runtime logs; it does not guarantee access to past messages. This conversation starts `--watch` before tapping and ends the capture after two errors arrive. An empty short capture does not mean the page never logged an error.
+
+## Locate an Element's JSX and Event Handler
+
+A stack trace identifies a location in the running script. A UI source map connects **an element on the page** to the JSX that created it. Looking up the Ocean button carries the investigation into the local source file.
+
+This example runs the same bundle in a development client that supports `DOM.getOriginalNodeSourceInfo`, with [UI source maps](/guide/devtool/ui-source-map) enabled at build time. `$CLIENT_ID` selects that client; this page has session ID `1`.
+
+<AgentConversation locale="en" {...elementSourceExample}>
+
+The Ocean button maps to the `view` at **line 62, column 15** of `examples/tailwindcss/src/App.tsx`, created by `themeNames.map`. Its `bindtap` at **line 69** binds the handler that reads the missing configuration field identified above.
+
+</AgentConversation>
+
+`get-source-info` returns the element's source location. Reading that file reveals the event binding and application logic. A `mapped` status indicates success; runtime-generated wrappers or pages without the required metadata may not resolve to source locations.
+
+<details>
+<summary>Reproduction environment and changes</summary>
+
+Both conversations use `agent-lynx@0.14.19` and the example revision linked above, built locally and run on Android. Logs were captured in Lynx Explorer 4.2.0. Source mapping used a test host integrating the public SDK `4.4.0-nightly.202610300608.307.g7e7e0e0a-SNAPSHOT`. Lynx Explorer 4.2.0 does not implement `DOM.getOriginalNodeSourceInfo`; source lookup on that version returns `Not implemented`.
+
+Add `enableUiSourceMap: true` to the `pluginReactLynx` options in `rsbuild.config.ts`, and temporarily replace line 69 of `src/App.tsx` with:
+
+```tsx
+bindtap={() => setCurrentTheme(lynx.__globalProps.themeNames[t])}
+```
+
+The host does not supply `themeNames`, so tapping Ocean produces the error above. The original handler is `bindtap={() => setCurrentTheme(t)}`. `themeNames` is an application field introduced for this reproduction, not a built-in [GlobalProps](/api/lynx-api/lynx/lynx-global-props) property.
+
+</details>
 
 ## Keep Runtime Evidence on the Same Target
 
