@@ -1,0 +1,79 @@
+---
+description: 'All public agent-lynx commands, version and help usage, JSON output controls, and environment variables.'
+---
+
+# CLI Reference
+
+This section documents the public functionality in `agent-lynx@0.14.23`. Start with [Getting Started](getting-started.mdx) for installation and device setup, or browse the [function guides](index.mdx#explore-by-function). The [programmatic APIs](programmatic-api.mdx) have their own reference. Use `agent-lynx <command> --help` for the complete options supported by your installed version.
+
+## Command Inventory
+
+The public CLI provides the following 46 executable commands, counting subcommands individually. `agent-lynx --version`, `agent-lynx --help`, and `agent-lynx help <command>` provide version and help information.
+
+| Capability                                                          | Commands                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Read bundled skills](getting-started.mdx)                          | `agent-lynx skills list`, `agent-lynx skills get`                                                                                                                                                                                       |
+| [Discover apps and pages](connections.mdx)                          | `agent-lynx list-clients`, `agent-lynx wait-for-client`, `agent-lynx list-sessions`, `agent-lynx open`                                                                                                                                  |
+| [Capture the element tree](page-inspection.mdx)                     | `agent-lynx snapshot`                                                                                                                                                                                                                   |
+| [Interact and wait](page-inspection.mdx)                            | `agent-lynx tap`, `agent-lynx long-press`, `agent-lynx fill`, `agent-lynx clear`, `agent-lynx scroll`, `agent-lynx wait`                                                                                                                |
+| [Read elements and locate source](debugging.mdx)                    | `agent-lynx get text`, `agent-lynx get style`, `agent-lynx get-source-info`                                                                                                                                                             |
+| [Capture screenshots](screenshots.mdx)                              | `agent-lynx screenshot`, `agent-lynx take-screenshot`, `agent-lynx take-content-screenshot`                                                                                                                                             |
+| [Inspect logs, scripts, and the graphical inspector](debugging.mdx) | `agent-lynx get-console`, `agent-lynx get-sources`, `agent-lynx inspect`                                                                                                                                                                |
+| [Evaluate code and send protocol requests](debugging.mdx)           | `agent-lynx evaluate`, `agent-lynx cdp`, `agent-lynx app`                                                                                                                                                                               |
+| [Inspect, find, link, and edit ReactLynx components](reactlynx.mdx) | `agent-lynx reactlynx tree`, `agent-lynx reactlynx component`, `agent-lynx reactlynx find`, `agent-lynx reactlynx link`, `agent-lynx reactlynx update-prop`, `agent-lynx reactlynx update-state`, `agent-lynx reactlynx update-context` |
+| [Manage global switches](runtime-settings.mdx)                      | `agent-lynx global-switch list`, `agent-lynx global-switch get`, `agent-lynx global-switch set`                                                                                                                                         |
+| [Capture a JS heap](tracing.mdx#memory-inspection)                  | `agent-lynx take-heap-snapshot`                                                                                                                                                                                                         |
+| [Record and analyze performance traces](tracing.mdx)                | `agent-lynx trace start`, `agent-lynx trace end`, `agent-lynx trace read-data`, `agent-lynx trace event-summary`, `agent-lynx trace query`                                                                                              |
+| [Record page runtime state for replay](recording.mdx)               | `agent-lynx recorder start`, `agent-lynx recorder end`                                                                                                                                                                                  |
+| [Manage the shared local connection](connections.mdx)               | `agent-lynx daemon status`, `agent-lynx daemon start`, `agent-lynx daemon stop`                                                                                                                                                         |
+
+## Connection Options
+
+| Operation              | Options and behavior                                                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Select an app and page | Pass the returned `--client <clientId>` and `--session <sessionId>` to commands that declare them. Discover IDs again after app restarts or page navigation.                                                                                           |
+| Wait for an app        | `wait-for-client --client-name <name> --timeout 30` waits for an app connection. Timeout and polling intervals use **seconds**; page-level `wait` uses milliseconds.                                                                                   |
+| Open a page            | `open <bundle-url> --client <clientId>` uses a URL reachable by the app. Run the development server separately, then discover sessions and refresh the snapshot after navigation.                                                                      |
+| Manage the daemon      | `daemon status` reads version and protocol information without starting the daemon. `daemon start` and `daemon stop` control its lifecycle. These commands accept `--port`; the default is `21783`.                                                    |
+| Use direct transports  | Stop the daemon before using `--no-daemon` to connect directly to the same target. Direct mode supports Android, iOS, Desktop, and HDT. Snapshot refs and their actions, `wait`, `screenshot`, and ReactLynx commands require the default daemon mode. |
+
+## Page Inspection and Interaction Options
+
+[Page Inspection and Interaction](page-inspection.mdx) demonstrates the complete snapshot, action, and verification workflow. These commands share the selected page's snapshot refs through the default daemon.
+
+| Operation                 | Options and behavior                                                                                                                                                                                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capture a snapshot        | `snapshot` reads the element tree, including offscreen nodes; `--visible-only` keeps only currently visible elements. Use refs from a new snapshot after the page changes.                                                                                              |
+| Read text and styles      | `get text <ref>` reads element text. `get style <ref> --property color,width` selects computed styles using comma-separated property names.                                                                                                                             |
+| Tap and long-press        | `tap <ref>` taps an element; `long-press <ref> --duration 800` sets the hold duration in milliseconds.                                                                                                                                                                  |
+| Fill and clear            | `fill <ref> "Alice"` replaces an editable field's contents; `clear <ref>` empties it.                                                                                                                                                                                   |
+| Scroll                    | `scroll <ref> --direction down` acts on a scroll container. Directions are `up`, `down`, `left`, and `right`.                                                                                                                                                           |
+| Refresh after an action   | Ref actions accept `--snapshot` to refresh the daemon's cached refs. Text output reports the refresh result; adding `--json` includes the new snapshot in the result. Read and use targets from the new snapshot before continuing.                                     |
+| Wait for a page condition | `wait --text "Ready" --timeout 15000` waits for matching text; `wait --ref <ref>` waits for a ref to resolve in a fresh snapshot. Waiting refreshes and caches snapshots. Both `--timeout` and `--interval` use milliseconds; app-level `wait-for-client` uses seconds. |
+
+## Logs and Runtime Debugging Options
+
+[Logs and Runtime Debugging](debugging.mdx) demonstrates how logs, loaded scripts, and runtime values can explain a page failure.
+
+| Operation                     | Options and behavior                                                                                                                                                                                                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Filter console logs           | `get-console` supports `--level`, `--thread`, `--offset`, and `--limit`. Levels are comma-separated, such as `error,warning`; threads are `background` and `main`, with both included by default.                                                                                |
+| Follow logs and retain stacks | `get-console --watch` streams messages until interrupted or `--limit` is reached. `--include-stack-traces` includes available stacks for non-error messages in formatted output. `--json` preserves available stacks; combined with `--watch`, it emits one JSON event per line. |
+| Locate scripts and UI source  | `get-sources` lists background VM script IDs and URLs. `get-source-info <target>` accepts an element node ID or a snapshot ref such as `@e1`; source mapping requires UI source-map metadata.                                                                                    |
+| Open the inspector            | `inspect` prints the selected client/session's inspector URL. `--port` selects the daemon port, defaulting to `21783`.                                                                                                                                                           |
+| Evaluate JavaScript           | `evaluate <expression>` selects `--thread background` (the default) or `--thread main`. It supports `--await-promise`, `--context-id`, `--throw-on-side-effect`, and `--no-return-by-value` for remote-object results. See `evaluate --help` for all evaluation options.         |
+| Send CDP requests             | `cdp --method <method> '<json-params>'` sends a method and optional JSON parameters to the selected session. `--thread` defaults to `background`; script and object IDs must belong to the selected VM.                                                                          |
+| Send App requests             | `app --client <clientId> --method <method> '<json-params>'` addresses the host app rather than a page session. Methods and parameters depend on the host application.                                                                                                            |
+
+## Output, Help, and Environment
+
+Use `--client` and `--session` on commands that declare them to select the target explicitly. Use `--json` where supported to request structured output. The global JSON preference is forwarded only to commands with a JSON mode.
+
+| Environment variable                 | Purpose                                                                            |
+| ------------------------------------ | ---------------------------------------------------------------------------------- |
+| `AGENT_LYNX_FORCE_JSON`              | Set to `1` or `true` to enable supported JSON output modes.                        |
+| `AGENT_LYNX_DISABLE_UPDATE_NOTICE`   | Set to `1` to disable npm update notices.                                          |
+| `AGENT_LYNX_INVOKED_AS`              | Set the user-facing invocation name in a process host.                             |
+| `AGENT_LYNX_CLI_PLACEHOLDER`         | Fallback invocation name for help and recovery hints.                              |
+| `ADB_SERVER_HOST`, `ADB_SERVER_PORT` | Configure the direct-mode Android ADB server; defaults are `127.0.0.1` and `5037`. |
+| `DEBUG`                              | Enable diagnostic logging namespaces on stderr.                                    |

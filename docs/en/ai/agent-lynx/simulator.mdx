@@ -1,0 +1,70 @@
+---
+description: 'Let an agent start Lynx Simulator locally, supply page data with page-env, and open, inspect, and interact with the page.'
+---
+
+import { withBase } from '@rspress/core/runtime';
+import { EmbedIframe } from '@lynx/EmbedIframe';
+
+export const simulatorPatchUrl = withBase(
+  '/ai/agent-lynx/simulator/bankcards-init-data.patch',
+);
+export const simulatorEnvUrl = withBase(
+  '/ai/agent-lynx/simulator/page-env.mjs',
+);
+
+# Lynx Simulator
+
+:::info Feature Preview
+Simulator has not yet shipped in the npm `agent-lynx` package. This guide previews the workflow in versions with Simulator support.
+:::
+
+With page source and a bundle, an agent can start a local Lynx runtime, prepare the data the page needs, open it, and check the result. Lynx Simulator provides a local client. Its pages use sessions and support the same snapshot, screenshot, and page interaction workflow.
+
+## From Page Source to an Inspectable Page
+
+This example uses the public [BankCards example](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/BankCards). It keeps the original UI and connects the fixed initial amount and card values to `useInitData`. The agent reads that data entry point, writes page-env, and checks what the page actually displays.
+
+Select any of the four steps to change the detail panel. In the second step, select a file to read it. The lines connect test data in page-env to the rendered values and the element refs returned by snapshot.
+
+<EmbedIframe
+  src={`${withBase('/ai/agent-lynx/simulator-demo.html')}?lang=en`}
+  title="agent-lynx simulator: prepare data, open BankCards, and check the page"
+  height={600}
+  autoHeight
+/>
+
+Two inputs carry through the workflow:
+
+| Data supplied by page-env | How the page reads it            | Result in the page and snapshot                              |
+| ------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| `templateData.amount`     | `useInitData().amount`           | Amount `268.50`                                              |
+| `templateData.card`       | The initial `selectedCard` value | Card number `4242 **** **** 4242` and cardholder `LYNX DEMO` |
+
+The agent can prepare different data scenarios for the same bundle, then inspect the page to verify the result. Apply the <a href={simulatorPatchUrl} download>initial-data patch</a> in the BankCards directory; <a href={simulatorEnvUrl} download>page-env.mjs</a> supplies the demo data. After building, use the bundle URL served by your local development server as `PAGE_URL` in the conversation.
+
+## What page-env Supplies
+
+`open --page-env` prepares the environment when opening a page. Its fields must match the data structures and bridge methods the page uses.
+
+| Capability           | Field          | Purpose                                                                                                                                        |
+| -------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Initial page data    | `templateData` | Supply Lynx initial data, which ReactLynx pages can read through `useInitData`. The example uses it for the amount and card details.           |
+| Host properties      | `globalProps`  | Supply configuration read through `lynx.__globalProps`.                                                                                        |
+| Bridge call handling | `jsb`          | Return test results based on a bridge method name and its parameters. A function handler can call `next()` to delegate to an existing handler. |
+
+For fixed data, load JSON from a local path, a `file:` URL, or an HTTP(S) URL. For computed or asynchronous data, export a factory from a local `.mjs` or ESM `.js` module. `templateData`, `globalProps`, and `jsb` can also be asynchronous functions. Each page evaluates its own environment; relative paths resolve from the CLI's working directory.
+
+After opening the page, continue with [inspection and interaction](page-inspection.mdx) or [logs and runtime values](debugging.mdx). The page's code determines its behavior; page-env supplies the inputs it depends on.
+
+## Manage the Local Runtime
+
+`simulator run` starts an empty runtime and returns a `clientId`. Open a bundle with that ID, select a page from `list-sessions`, and keep the same client and session for subsequent calls.
+
+| Operation                                                             | Purpose                                                                                                           |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `simulator list` / `simulator get --client …`                         | Inspect run status. `get` also returns current sessions.                                                          |
+| `simulator logs --client … --follow`                                  | Follow process output, including page-env loading errors.                                                         |
+| `simulator stop --client …`                                           | End the selected runtime and its pages. Closing an individual page leaves the runtime available for another page. |
+| `simulator run --ttl 20m` / `simulator wait --client … --timeout 20m` | Set an automatic stop time or wait for process exit. A `wait` timeout leaves the process running.                 |
+
+Simulator uses the daemon connection. The first run prepares dependencies; subsequent runs reuse the local cache. It currently requires Node.js 22+, npm, and macOS arm64/x64 or Linux x64. Linux also needs the runtime's system graphics libraries. macOS opens a window by default; Linux renders without one. The `open` options `--simulator-window-width`, `--simulator-window-height`, and `--simulator-windowless` control page dimensions and rendering mode.

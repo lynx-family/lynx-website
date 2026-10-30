@@ -1,0 +1,52 @@
+---
+description: 'Follow an agent as it discovers Lynx apps on an Android phone connected over ADB and finds a page to debug.'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { connectionExample } from './_examples/connection';
+
+# Connections
+
+Start with “Are there any Lynx pages I can debug on my phone?” and follow the agent as it loads the instructions, discovers the app, and finds a page.
+
+<AgentConversation locale="en" {...connectionExample}>
+  <p>
+    Found one. <strong>Lynx Explorer</strong> is running on your Android phone,
+    with a debuggable Lynx page at{' '}
+    <code>https://example.com/settings.lynx.bundle</code>.
+  </p>
+  <p>
+    The app's client ID is <code>android-phone:8901</code>, and the page's
+    session ID is <code>1</code>. These identify the target for inspecting the
+    page, reading logs, or taking a screenshot.
+  </p>
+</AgentConversation>
+
+## From an App to a Page
+
+A device can run several Lynx apps, and an app can contain several pages. The conversation identifies the target in two steps:
+
+- **Client: choose the app.** `list-clients` returns app names, device information, and client IDs. This example finds Lynx Explorer on the Android phone.
+- **Session: choose the page.** `list-sessions` returns the app's debugging contexts and page URLs. Select a target with `type` set to `lynx` and keep its `session_id`.
+
+Use both returned IDs for subsequent page operations so the agent acts on the page you intend. Discover the targets again after restarting the app or reopening a page.
+
+## Make Your App Discoverable
+
+Run [Lynx Explorer](/guide/start/quick-start) or your own app with [DevTool integrated](/guide/start/integrate-lynx-devtool), enable **Lynx Debug** and **Lynx DevTool**, and open a Lynx page. The example starts from this state. For other platforms, see [device connection setup](/guide/devtool).
+
+If discovery is incomplete, continue the conversation:
+
+| Your current state                       | What you can say next                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| The app is still starting                | “Wait for Lynx Explorer to connect, then check its pages.”             |
+| The app is connected but no page is open | “Open the bundle URL from my development server, then check the page.” |
+| Several apps or pages are connected      | “Only inspect the Settings page on this Android phone.”                |
+
+The agent can wait for an app, open a bundle URL, and choose a target using the device, app name, and page URL. Run the project's development server separately and make sure the app can reach the bundle URL.
+
+## How Calls Stay Connected
+
+Device commands automatically start the local **agent-lynx daemon**. It keeps device connections and snapshot refs across CLI calls, letting the agent continue from discovery to inspection, actions, and verification. See the [architecture diagram in the introduction](index.mdx#how-it-connects-to-your-app).
+
+Next, ask the agent to [inspect and operate on the page](page-inspection.mdx) or [take a screenshot](screenshots.mdx). Connection timeouts, daemon ports, and direct mode are documented in the [CLI reference](cli-reference.mdx#connection-options).

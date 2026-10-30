@@ -1,0 +1,81 @@
+---
+description: '从录制含内存数据的性能 Trace，到使用 skills 分析、查询全局内存和保存 JS 堆快照。'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import {
+  traceCaptureExample,
+  traceMemoryExample,
+  liveMemoryExample,
+} from './_examples/performance';
+
+# 性能与内存
+
+[页面检查](page-inspection.mdx)可以确认一次操作改变了什么；Trace 则记录这段过程里各线程执行了什么、花了多久，以及内存如何变化。agent-lynx 把采集、文件校验和本地查询交给 CLI，把分析方法交给对应的 skills。
+
+| 需要了解什么                   | 使用哪种证据                                                |
+| ------------------------------ | ----------------------------------------------------------- |
+| 加载、更新或滚动期间发生了什么 | 性能 Trace；加入 `--enable-memory-trace` 可同时采集内存数据 |
+| 当前各 Lynx 实例占用多少内存   | 全局内存查询，查看元素、视图和运行时的构成                  |
+| 某个 JS VM 中有哪些对象和引用  | JS 堆快照，分别检查后台与主线程 VM                          |
+
+下面继续使用 [Tailwind CSS 的 Settings 页面](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss)。示例已完成[应用连接](connections.mdx)，`$CLIENT_ID` 指选定的应用；bundle 已在本地构建，URL 可由设备访问。应用需要支持相应的 [Trace 采集能力](/guide/devtool/trace/record-trace)。
+
+## 录制包含内存数据的加载 Trace {#capture-a-trace}
+
+采集的起止位置决定能回答哪些问题。为了覆盖首次渲染，agent 先加载 `lynx-trace-record`，在打开页面之前开始录制，再检查产物是否包含加载事件和内存配置。
+
+<AgentConversation {...traceCaptureExample} locale="zh">
+
+已保存 `settings-memory.pftrace`，解析得到 **8,257 条事件、889 种事件名**，采集未报告数据丢失。文件包含 `LynxLoadTemplate` 和 `LynxDomReady`，内存采集与自动 GC 的记录值均为 `1`。
+
+这份 Trace 可以继续用于查看本次页面加载和内存变化；下一步可以加载分析 skill，针对具体问题读取对应指南。
+
+</AgentConversation>
+
+`trace end` 返回的 stream 属于本次采集，需要在同一个 client 上用 `trace read-data` 下载；完成后，`event-summary`、`query` 和分析脚本都可以离线运行。如果 `trace start` 返回 `restartRequired: true`，应重启应用、重新确认 client 并再次开始采集，直到 `started: true` 后再打开页面。
+
+`--enable-memory-trace` 用于请求运行时输出内存数据。除了确认参数，还要核对文件中的配置和实际数据；旧运行时可能缺少所需轨道。`--force-gc` 默认开启，会影响内存曲线；需要观察自然 GC 行为时可用 `--no-force-gc`，并在比较结果时保持采集条件一致。
+
+## 让分析 skill 接着处理这份 Trace {#analyze-memory-trace}
+
+采集成功之后，问题决定分析路径：首帧耗时对应 metrics 与渲染流水线指南，滚动卡顿对应 jank 指南，内存变化对应 memory 指南。下面沿用刚保存的文件，让 `lynx-trace-analysis` 生成 Settings 页面的内存报告。
+
+<AgentConversation {...traceMemoryExample} locale="zh">
+
+已生成 `settings-memory-report.html`，其中包含页面与 VM 的内存数据和交互图表。本次选中的页面在采集窗口内**未命中规则定义的高或中置信度内存问题**。
+
+这次录制覆盖了页面加载，没有覆盖退出后的释放过程；要判断页面关闭后是否仍有对象存活，需要补充完整生命周期的采集。
+
+</AgentConversation>
+
+这里的 `$TRACE_SKILL_DIR` 来自 `skills get` 返回的 `Skill directory`。分析脚本随 skill 提供；agent 先读取指南，再选择分析入口。报告路径可以继续交给人查看，后续查询也可以复用同一份 Trace。
+
+## 查看当前内存并保存 JS 堆快照 {#memory-inspection}
+
+如果问题是“当前哪些部分占用内存”，可以直接查询存活实例，无需重新录制 Trace。下面这段独立对话检查 Settings 页面的即时占用，再保存两个 VM 的堆快照：全局查询使用 session `-1`，抓取对象图则使用已选中的页面 session `2`。
+
+<AgentConversation {...liveMemoryExample} locale="zh">
+
+本次采集完成了 **1/1 个实例**：Lynx 归属内存为 **7.85 MiB**，约占应用 **122.37 MiB** 占用的 **6.41%**。主要来自后台运行时 **7.19 MiB**；主线程运行时为 **585.91 KiB**，元素树为 **84.80 KiB**，共 **81 个元素节点**。这次运行时返回的 `viewBytes` 为 `0`。
+
+已保存 `settings-background.heapsnapshot` 和 `settings-main.heapsnapshot`。它们可以用于检查 JS 对象和引用链；单次占用和单份快照还不能证明内存泄漏。
+
+</AgentConversation>
+
+全局返回的 `totalBytes` 是 Lynx 归属内存，`appBytes` 是应用占用；共享后台运行时会在全局总量中去重。堆快照只描述选定 VM 的 JS 对象，与全局统计的范围不同。比较快照时，应保持同一 VM、相同 GC 条件，并记录加载、操作和退出等生命周期位置。
+
+## 性能与内存能力
+
+| 能力                     | 支持的操作与用途                                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 采集与校验 Trace         | `trace start`、`end`、`read-data` 完成录制和下载；`event-summary` 检查解析状态、事件名、数量与文件标识                           |
+| 选择采集范围             | `--include-categories`、`--exclude-categories` 按类别控制事件；`--no-systrace` 关闭系统 Trace                                    |
+| 采集内存与 JS Profile    | `--enable-memory-trace` 加入内存数据；`--js-profile-type quickjs` 或 `v8` 启用对应引擎采样，`--js-profile-interval` 调整采样间隔 |
+| 自动抓取共享 VM 的堆快照 | `--enable-auto-heap-snapshot` 针对 shared-group VM，`--shared-group-id` 进一步限定目标；需要运行时支持                           |
+| 按问题分析 Trace         | `lynx-trace-analysis` 提供加载、卡顿、渲染流水线、NativeModule、回归对比和内存分析指南与脚本                                     |
+| 查询本地 Trace           | `trace query` 支持内联 SQL 或 SQL 文件，输出包含文件哈希、行数与截断状态，便于复核结果                                           |
+| 查看全局内存构成         | `Memory.getAllMemoryUsage` 返回已注册实例的元素、视图、运行时和应用占用，以及采集完成状态                                        |
+| 检查 JS 对象             | `take-heap-snapshot` 分别保存后台或主线程 VM 的对象图，供对象与引用链分析                                                        |
+
+命令参数参见 [CLI 参考](cli-reference.mdx)，内存字段参见 [Memory 域](/api/cdp/api-ref/memory)。需要把页面运行时状态保存为可回放文件时，使用 [Recorder](recording.mdx)。

@@ -1,0 +1,42 @@
+---
+description: '使用 Recorder skills 记录页面运行时状态、校验回放文件，并检查或编辑 TestBench 产物。'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { recorderExample } from './_examples/recording';
+
+# Recorder
+
+[Recorder](/guide/devtool/recorder) 记录 Lynx 页面的运行时状态，用于确定性回放。产物包含模板加载、运行时输入和环境数据，方便在脱离原始应用环境后复现页面。它与[性能 Trace](tracing.mdx) 互补：Trace 用来分析执行过程和耗时，Recorder 用来重建当时的页面与运行过程。
+
+agent-lynx 自带的 `lynx-recorder` skill 指导采集；`lynx-recorder-fixture` 则提供产物检查、解码和编辑工具。agent 可以先完成录制，再按需要继续检查文件。
+
+## 从页面状态到回放产物
+
+下面沿用 [Tailwind CSS 的 Settings 页面](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss)，在打开页面后切换到 Ocean 主题。示例已[连接应用](connections.mdx)，`$CLIENT_ID` 指选定的应用，bundle URL 可由设备访问。
+
+对话重点是采集边界和产物检查：**先开始 Recorder，再打开页面**，才能把回放需要的 `loadTemplate` 一并保存。主题切换只是这次需要重现的页面状态。
+
+<AgentConversation {...recorderExample} locale="zh">
+
+已保存 `settings-recording-session3.json`。产物检查为 `healthy: true`，包含 **1 次 `loadTemplate` 和 13 条运行时操作**；其中 `SendTouchEvent` 有 3 条。模板加载与这次操作的输入都已进入录制。
+
+fixture 摘要也确认了这些内容。可以继续把该文件交给支持 Recorder 的宿主回放；如果需要调整回放输入，再使用 fixture skill 检查和编辑相应 section。
+
+</AgentConversation>
+
+`recorder end` 的 `savedFiles` 是实际输出路径，可能带有 session 后缀，也可能包含多个文件。上面的 `$FIXTURE_SKILL_DIR` 来自 `skills get lynx-recorder-fixture` 返回的目录；摘要脚本读取实际保存的文件，而不是假定 `-o` 的名字就是最终文件名。
+
+## 录制与产物处理能力
+
+| 能力             | 支持的操作与用途                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 开始与结束录制   | `recorder start`、`recorder end` 通过同一 client 记录并保存页面运行时数据                                               |
+| 检查采集是否完整 | `recorder end` 返回文件路径、操作数量、`hasTemplate` 和诊断结果；缺少 `loadTemplate` 时需要从打开页面之前重新录制       |
+| 查看已有产物     | `lynx-recorder-fixture` 的 `summary`、`decode` 读取本地文件或 URL，检查 Action List、调用、回调与配置                   |
+| 调整回放输入     | fixture skill 可修改 mock 返回、运行时操作和环境配置，再用 `encode` 写入新的回放文件                                    |
+| 重现与分享页面   | 将产物放到设备可访问的地址，在支持 Recorder 的宿主中回放；具体托管与打开方式见 [Recorder 指南](/guide/devtool/recorder) |
+
+录制要求宿主具备 Recorder 能力。如果开始时返回 `restartRequired: true`，重启应用、重新确认 client 并再次开始，之后再打开目标页面。
+
+`.json` 后缀不一定代表明文 JSON：Recorder 产物可能是 `base64(zlib(JSON))`。fixture skill 的工具可以处理这种编码；编辑时需要保持操作顺序、调用与回调关联，以及模板内容。`healthy` 和 `hasTemplate` 用于确认产物结构与必要数据，实际回放仍由支持 Recorder 的宿主执行。

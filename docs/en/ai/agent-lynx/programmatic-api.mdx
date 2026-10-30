@@ -1,0 +1,58 @@
+---
+description: 'Use the typed Connector API, host or extend the CLI, and integrate agent-lynx public package entry points and helpers.'
+---
+
+# Programmatic APIs
+
+## Use the Connector API
+
+For JavaScript or TypeScript automation, install agent-lynx in the project so imports can resolve:
+
+```bash
+npm install agent-lynx
+```
+
+```js
+import { createDefaultConnector } from 'agent-lynx/connector';
+
+const connector = createDefaultConnector();
+const clients = await connector.listClients();
+console.log(clients);
+```
+
+The default connector shares the daemon connection with the CLI. See the [Connector API examples](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md) for session discovery and CDP workflows.
+
+## Public Package Entry Points
+
+Install `agent-lynx` as a project dependency and use its named entry points:
+
+| Entry point               | Public functionality                                                                                                                                                                                                                                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-lynx/connector`    | `Connector`, daemon-backed `createDefaultConnector` and `createDefaultTransports`, Android/iOS/Desktop/HDT/daemon transports, protocol streams, and `evaluateExpression` / `wrapExpression`. See the [Connector examples](https://github.com/lynx-community/skills/blob/main/packages/skills/lynx-devtool/references/library-usage.md). |
+| `agent-lynx/cli`          | Program creation, command registration and execution helpers, skill readers, output formatting, invocation naming, optional telemetry, and update notices.                                                                                                                                                                              |
+| `agent-lynx/bin`          | The published executable module for process launchers.                                                                                                                                                                                                                                                                                  |
+| `agent-lynx/package.json` | Package version, exports, and other package metadata.                                                                                                                                                                                                                                                                                   |
+
+## Host or Extend the CLI
+
+```js
+import { createProgram } from 'agent-lynx/cli';
+
+const program = createProgram({ cliPlaceholder: 'my-tool lynx' });
+await program.parseAsync(process.argv);
+```
+
+For a custom transport context, use `createRootCommand(context, telemetry)` and the exported `register*Command` functions. The caller supplies the transports and command client; the root lifecycle closes those transports and preserves action errors. The exported `run*` helpers reuse command actions without copying their implementations.
+
+The CLI entry point also provides these integration helpers:
+
+| Area                                | APIs and behavior                                                                                                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Skill discovery and reading         | `resolveBuiltInSkillRoots`, `discoverSkillDependencyNames`, `resolveSkillRootsFromPackageRoot`, `readSkillDocument`, `readSkillDocuments`, `scanSkillResources`, `renderAvailableSkills`, `renderSkillContent`.    |
+| Select a product's skills           | `createProgram({ skills: { skillRoots } })` or `registerSkillsCommand(program, { skillRoots })`; select explicit direct Skill dependencies. Discovery does not recursively aggregate other agent packages' skills. |
+| Command results and rendering       | `ok`, `fail`, `renderJson`, snapshot and ReactLynx renderers, and shared client/session/JSON option definitions.                                                                                                   |
+| Recording and stream utilities      | `analyzeRecordingBuffer`, `recordingOutputPath`, `readUntilIdle`, `buildWatchSignal`, and timeout / abort helpers.                                                                                                 |
+| Invocation and JSON preferences     | `resolveCliPlaceholder`, placeholder-replacement helpers, and `applyHostJsonPreference`.                                                                                                                           |
+| Optional host telemetry and notices | `withTelemetry`, `logMonitor`, `resolveUpdateNotice`, and `withUpdateNotice`; telemetry is invocation-scoped and has no default reporter.                                                                          |
+
+Use the exported TypeScript declarations for exact signatures. The [CLI API source](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/cli.ts), [command exports](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/commands/index.ts), and [Connector API source](https://github.com/lynx-community/skills/blob/main/packages/agent-lynx/src/connector.ts) provide the full public API entry points.

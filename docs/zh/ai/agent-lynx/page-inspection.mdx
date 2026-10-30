@@ -1,0 +1,53 @@
+---
+description: '跟随 agent 读取 Settings 页面、切换主题并验证结果，再滚动检查屏幕外的内容。'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { themeExample, scrollExample } from './_examples/page-inspection';
+
+# 页面检查与交互
+
+找到页面之后，你可以把要完成的任务交给 agent。它通过快照理解页面结构，选择元素执行操作，再读取页面状态确认结果。
+
+## 切换主题，并确认生效
+
+继续[连接指南](connections.mdx)中的对话：agent 已读取 `lynx-devtool` skill，并找到了 Settings 页面。下面沿用同一个 client `android-phone:8901` 和 session `1`，让它完成一次主题切换。
+
+<AgentConversation locale="zh" {...themeExample}>
+  <p>
+    已切换到 <strong>Ocean</strong> 主题。页面根容器的背景色从{' '}
+    <code>rgba(9, 9, 11, 1)</code> 变为 <code>rgba(15, 23, 42, 1)</code>
+    ，与这个示例的 Ocean 主题背景色一致。
+  </p>
+</AgentConversation>
+
+这段对话从页面结构中找到目标：`Ocean` 文字位于 `@e16`，包裹它的按钮容器是 `@e15`。点击后，agent 读取新的元素树，再比较页面根节点的计算样式。最终结论由操作前后的页面状态支撑。
+
+`@eN` 是当前页面快照中的元素引用，由 daemon 在命令之间保存。页面跳转、重载或内容变化后，应读取新快照，再从中选择目标。示例里主题切换没有改变树结构，编号保持相同；其他页面的编号可能改变。
+
+## 目标在屏幕外时，先滚动再检查
+
+完整快照可以包含标为 `offscreen` 的节点。它们能帮助 agent 知道页面还有什么内容。接着查看 Settings 页底部，就需要先找到 `scrollable` 容器，滚动后再检查可见区域。
+
+<AgentConversation locale="zh" {...scrollExample}>
+  <p>
+    页面底部是 <strong>Danger Zone</strong>，包含{' '}
+    <strong>Delete Account</strong> 和 <strong>Cancel</strong>{' '}
+    按钮，以及不可逆操作的说明。我只滚动查看了内容。
+  </p>
+</AgentConversation>
+
+这里的验证依据是滚动后的可见快照：底部按钮已经进入视口。若只想确认当前画面中的元素，可以让 agent 使用 `snapshot --visible-only`；需要了解屏幕外还有什么时，则读取完整快照。
+
+## 检查与交互能力
+
+| 能力           | 支持的操作与用途                                                                                                              |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 检查页面结构   | `snapshot` 提供元素树、文本、元素引用，以及 `editable`、`scrollable` 等状态标记。既可包含屏幕外内容，也可只查看当前可见元素。 |
+| 读取文本与样式 | `get text` 读取元素文本，`get style` 读取计算样式，为内容、颜色和尺寸变化提供验证依据。                                       |
+| 点击与长按     | `tap` 和 `long-press` 通过元素引用触发点击、长按操作，用于操作控件、打开上下文菜单等。                                        |
+| 编辑输入内容   | `fill` 替换可编辑输入框的内容，`clear` 清空内容。快照中的 `editable` 标记用于识别支持的目标。                                 |
+| 滚动内容       | `scroll` 对指定滚动容器执行上、下、左、右滚动，将屏幕外的内容带入视口。                                                       |
+| 等待页面变化   | `wait` 轮询新快照，直到找到匹配文本或元素引用能够解析，支持设置超时时间。                                                     |
+
+下一节的[标注截图](screenshots.mdx#标注截图与全屏截图)使用同一个 Settings 示例，展示可见标注框与元素引用如何对应。若操作后没有出现预期变化，可以继续[查看日志和运行时状态](debugging.mdx)。具体参数、快照刷新行为和等待单位见 [CLI 参考](cli-reference.mdx#页面检查与交互选项)。

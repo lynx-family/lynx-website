@@ -1,0 +1,53 @@
+---
+description: 'Follow an agent as it inspects Settings, switches the theme and verifies the result, then scrolls to inspect offscreen content.'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { themeExample, scrollExample } from './_examples/page-inspection';
+
+# Page Inspection and Interaction
+
+Once the agent has found a page, give it a task to complete. It uses snapshots to understand the page, chooses an element to act on, and reads the resulting state to verify the outcome.
+
+## Switch a Theme and Verify the Result
+
+Continue the [connection guide](connections.mdx): the agent has loaded the `lynx-devtool` skill and found the Settings page. The conversation below uses the same client, `android-phone:8901`, and session, `1`, to switch its theme.
+
+<AgentConversation locale="en" {...themeExample}>
+  <p>
+    Switched to <strong>Ocean</strong>. The page root's background color changed
+    from <code>rgba(9, 9, 11, 1)</code> to <code>rgba(15, 23, 42, 1)</code>,
+    matching the Ocean background color in this example.
+  </p>
+</AgentConversation>
+
+The conversation uses the page structure to identify the target: the `Ocean` label is `@e16`, inside the `@e15` button container. After tapping it, the agent reads a new tree and compares the root's computed style. Its conclusion comes from the page state before and after the action.
+
+An `@eN` ref identifies an element in the current page snapshot. The daemon retains these refs between calls. After navigation, reloads, or content changes, read a new snapshot and choose the target from that tree. This theme switch preserves the tree structure and its ref numbers; other changes can assign different numbers.
+
+## Scroll to Inspect Offscreen Content
+
+A full snapshot can include nodes marked `offscreen`, helping the agent discover content beyond the viewport. To inspect the bottom of Settings, it first finds the `scrollable` container, scrolls, and then reads the visible content.
+
+<AgentConversation locale="en" {...scrollExample}>
+  <p>
+    The bottom of the page contains <strong>Danger Zone</strong>, with{' '}
+    <strong>Delete Account</strong> and <strong>Cancel</strong> buttons and a
+    description of irreversible actions. I only scrolled to inspect the content.
+  </p>
+</AgentConversation>
+
+The visible snapshot after scrolling confirms that the bottom buttons have entered the viewport. Use `snapshot --visible-only` to inspect the current screen, or a full snapshot to discover content outside it.
+
+## Inspection and Interaction Capabilities
+
+| Capability             | What it supports                                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inspect page structure | `snapshot` exposes the element tree, text, element refs, and flags such as `editable` and `scrollable`. It can include offscreen content or show only visible elements. |
+| Read text and styles   | `get text` reads element text; `get style` reads computed styles, providing evidence of content, color, and size changes.                                               |
+| Tap and long-press     | `tap` and `long-press` act on an element ref to trigger controls and gestures such as opening a context menu.                                                           |
+| Edit input             | `fill` replaces an editable field's contents, and `clear` empties it. The snapshot's `editable` flag identifies supported targets.                                      |
+| Scroll content         | `scroll` moves a specified scroll container up, down, left, or right to bring offscreen content into view.                                                              |
+| Wait for page changes  | `wait` polls fresh snapshots until matching text is found or an element ref resolves, with a configurable timeout.                                                      |
+
+The next guide's [annotated screenshot](screenshots.mdx#annotated-and-fullscreen-screenshots) uses the same Settings example to connect visible boxes with element refs. If an action does not produce the expected change, continue with [logs and runtime debugging](debugging.mdx). See the [CLI reference](cli-reference.mdx#page-inspection-and-interaction-options) for parameters, snapshot refresh behavior, and wait units.

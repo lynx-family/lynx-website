@@ -1,0 +1,51 @@
+---
+description: '看 agent 如何从已通过 ADB 连接的 Android 手机中发现 Lynx 应用，并找到可调试的页面。'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { connectionExample } from './_examples/connection';
+
+# 应用与页面连接
+
+从一句“手机上有没有可调试的 Lynx 页面”出发，看 agent 如何读取所需知识、发现应用，再找到具体页面。
+
+<AgentConversation locale="zh" {...connectionExample}>
+  <p>
+    找到了。你的 Android 手机上运行着 <strong>Lynx Explorer</strong>
+    ，其中有一个可调试的 Lynx 页面，地址是{' '}
+    <code>https://example.com/settings.lynx.bundle</code>。
+  </p>
+  <p>
+    应用的 client ID 是 <code>android-phone:8901</code>，页面的 session ID 是{' '}
+    <code>1</code>。后续可以用这组目标检查页面结构、读取日志或截图。
+  </p>
+</AgentConversation>
+
+## 从应用到页面
+
+一个设备上可以运行多个 Lynx 应用，一个应用里也可能打开多个页面。这段对话分两次确认目标：
+
+- **Client 对应应用进程**，由 `list-clients` 返回应用名称、设备信息和 client ID。示例中找到的是 Android 手机上的 Lynx Explorer。
+- **Session 对应页面**，由 `list-sessions` 返回这个应用里的调试上下文及页面地址。选择 `type` 为 `lynx` 的目标，并保留它的 `session_id`。
+
+后续操作应同时使用实际返回的 client 和 session，确保 agent 操作的是你看到的页面。应用重启或页面重新打开后，再发现一次目标。
+
+## 让你的应用出现在结果里
+
+在手机上运行 [Lynx Explorer](/guide/start/quick-start)，或已[集成 DevTool](/guide/start/integrate-lynx-devtool) 的应用，开启 **Lynx Debug** 和 **Lynx DevTool**，并打开一个 Lynx 页面。上面的示例以这个状态为起点。其他平台参见[设备连接说明](/guide/devtool)。
+
+如果发现结果还不完整，可以继续告诉 agent：
+
+| 你现在的状态             | 可以继续说                                         |
+| ------------------------ | -------------------------------------------------- |
+| 应用还在启动             | “等 Lynx Explorer 连上后，再检查有哪些页面。”      |
+| 应用已连接，还没打开页面 | “把开发服务器给我的 bundle URL 打开，再检查页面。” |
+| 同时连接了多个应用或页面 | “只检查这台 Android 手机上的 Settings 页面。”      |
+
+agent 可以等待应用连接、打开指定的 bundle URL，并根据设备、应用名和页面地址选择目标。项目开发服务器需要单独运行，bundle URL 必须能从应用访问。
+
+## 为什么后续调用能接着用
+
+设备命令自动启动本地 **agent-lynx daemon**。它跨 CLI 调用保持设备连接，并保存快照中的元素引用，让“找到页面 → 检查 → 操作 → 验证”连续进行。参见[简介中的架构图](index.mdx#它如何连接应用)。
+
+下一步可以让 agent [检查页面与操作元素](page-inspection.mdx)，或[截图确认当前画面](screenshots.mdx)。等待超时、daemon 端口和直接连接模式等配置集中在 [CLI 参考](cli-reference.mdx#连接选项)。

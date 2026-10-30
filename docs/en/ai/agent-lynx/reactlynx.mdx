@@ -1,0 +1,41 @@
+---
+description: 'Inspect and search the ReactLynx component tree, link elements and components, and update props, class state, and context.'
+---
+
+# ReactLynx Components
+
+[Connect an app and select a session](connections.mdx). Keep the default daemon connection so component refs can be reused across commands.
+
+## Read Components and Link Elements
+
+For a development build with [ReactLynx DevTools enabled](/guide/devtool/panels/preact-devtools-panel):
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx component @c1
+```
+
+Component refs (`@c1`) differ from element refs (`@e1`). Use `agent-lynx reactlynx link @e1` to find an element's associated component, or `agent-lynx reactlynx link @c1` to find a component's host element. Capture a snapshot and component tree first, and use the refs they return.
+
+## Find Components
+
+```bash
+agent-lynx reactlynx tree
+agent-lynx reactlynx find 'Button' --limit 10
+agent-lynx reactlynx find '^Button$' --regex
+agent-lynx reactlynx component @c1 --json
+```
+
+`tree` captures a fresh component generation. `find` reuses the cached tree by default; use `--refresh` when you need a new generation. `--depth` limits tree output, and `--show-shells` includes synthetic wrappers. Use the same shell mode when reusing `@cN` labels. [Linking elements and components](#read-components-and-link-elements) uses the latest DOM snapshot as well as the component tree.
+
+## Update Props, State, and Context
+
+Update fields on a component that exposes the corresponding prop, class state, or context:
+
+```bash
+agent-lynx reactlynx update-prop @c1 title 'Updated' --raw
+agent-lynx reactlynx update-state @c1 count 1
+agent-lynx reactlynx update-context @c1 theme '"dark"'
+```
+
+Paths are relative to the selected props, state, or context object, such as `user.name` or `items.0.title`. Values are parsed as JSON; `--raw` sends a string verbatim. `update-state` targets class-component state, and context updates depend on the adapter. Successful updates return the app's post-update inspection result. These changes affect the running page; edit the source for a lasting fix.

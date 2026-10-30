@@ -1,0 +1,65 @@
+---
+description: '跟随 agent 用真实 Lynx 错误、运行中的脚本和实时值排查主题切换失败，再从页面元素定位 JSX 和事件处理函数。'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import {
+  runtimeErrorExample,
+  elementSourceExample,
+} from './_examples/debugging';
+
+# 日志与运行时调试
+
+当[页面检查](page-inspection.mdx)发现结果不符合预期时，agent-lynx 可以将页面现象与日志、已加载的脚本和 JavaScript 实时值对应起来，确认代码执行到哪里、收到了什么运行时输入。
+
+## 从点击无响应追到运行时错误
+
+沿用[页面检查](page-inspection.mdx)中的 [Tailwind CSS Settings 示例](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss)，这次点击 **Ocean** 后，主题没有切换。为了复现这个故障，我们在本地副本的点击回调中加入了对缺失配置的读取；原示例没有这处错误。
+
+下面的命令与输出采集自 Android 上的 Lynx Explorer。agent 已经[连接应用并选定页面](connections.mdx)，`$CLIENT_ID` 是 `list-clients` 返回的目标应用 ID，本次页面的 session 为 `2`。
+
+<AgentConversation locale="zh" {...runtimeErrorExample}>
+
+点击触发了事件回调，但回调在读取 `lynx.__globalProps.themeNames[t]` 时抛出了 `TypeError`。当前 `themeNames` 是 `undefined`，读取它的 `ocean` 属性失败，因此 `setCurrentTheme` 没有执行。
+
+这个示例已经通过遍历得到主题名 `t`，应恢复为 `setCurrentTheme(t)`。如果业务确实需要宿主配置，则需要先约定并传入该字段，再处理缺失时的行为。
+
+</AgentConversation>
+
+日志将“没有切换”定位到后台 VM 的异常，脚本源码说明了哪次属性读取失败，`evaluate` 则验证了当前值。脚本列表中可见 `app-service.js`，而本次调用栈指向 `.lynx/main/background.js`；应按实际返回的 URL 和脚本 ID 继续查找。
+
+`get-console` 订阅运行时日志，不保证保留历史记录。这段对话先启动 `--watch`，在监听期间点击按钮，并在收到两条错误后结束采集。一次短窗口没有输出，不能说明页面从未报错。
+
+## 从页面元素定位 JSX 和事件处理函数
+
+调用栈给出了运行中脚本的位置，UI source map 则能把**页面上的元素**对应到编写它的 JSX。继续查看 Ocean 按钮，就能把上一段中的错误回调落到本地源文件上。
+
+这段示例在支持 `DOM.getOriginalNodeSourceInfo` 的开发版客户端中运行同一份 bundle，构建时启用了 [UI source map](/guide/devtool/ui-source-map)。`$CLIENT_ID` 指向这个客户端，本次页面的 session 为 `1`。
+
+<AgentConversation locale="zh" {...elementSourceExample}>
+
+Ocean 按钮对应 `examples/tailwindcss/src/App.tsx` 第 **62 行、第 15 列**的 `view`，它由 `themeNames.map` 创建。第 **69 行**的 `bindtap` 绑定了点击处理函数，正是前面读取缺失配置的那段代码。
+
+</AgentConversation>
+
+`get-source-info` 返回元素的源码位置，agent 再读取对应文件，才能看到事件绑定和业务逻辑。`mapped` 表示映射成功；运行时生成的包装节点或缺少元数据的页面可能无法得到源码位置。
+
+## 在同一个目标上串联证据
+
+同一个 session 可以包含 `background` 和 `main` 两个 VM。示例日志标为 `background`，因此后续的脚本请求和表达式求值也指向后台 VM。`get-sources` 列出的是后台 VM 中的脚本。
+
+脚本 ID 和远程对象 ID 都属于对应的 client、session 和 VM。例如，日志中包含 `objectId` 时，可以通过 `cdp` 的 `Runtime.getProperties` 在同一目标上读取对象属性。页面重载或切换后，应重新获取日志和脚本 ID 再继续排查。
+
+## 日志与运行时调试能力
+
+| 能力                   | 支持的操作与用途                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 读取与跟踪日志         | `get-console` 读取日志级别、VM 线程和可用的调用栈；watch 模式可以在复现问题时持续跟踪新日志。                                                      |
+| 发现运行中的脚本       | `get-sources` 列出后台 VM 中的脚本 URL 和 ID；通过 `cdp` 的 `Debugger.getScriptSource` 读取脚本的运行时代码。                                      |
+| 定位元素源码           | 页面提供 [UI source-map 元数据](/guide/devtool/ui-source-map)时，`get-source-info` 可以将新[快照](page-inspection.mdx)中的元素引用映射到源码位置。 |
+| 检查 JavaScript 实时值 | `evaluate` 在后台或主线程 VM 中执行表达式，可读取实时值、等待 Promise，或返回远程对象供进一步检查。                                                |
+| 打开图形化检查器       | `inspect` 输出检查器 URL，在图形界面中检查选定的 client 和 session。                                                                               |
+| 发送页面协议请求       | `cdp` 调用 [Lynx CDP 实现](/api/cdp/api-ref)支持的方法，包括读取脚本源码、检查运行时对象等。                                                       |
+| 发送宿主协议请求       | `app` 向选定的 client 发送 App 协议请求，可用方法和参数取决于宿主应用。                                                                            |
+
+日志过滤、输出格式、VM 选择和表达式求值参数见 [CLI 参考](cli-reference.mdx#日志与运行时调试选项)。需要继续检查组件 props、state 和层级关系时，参见 [ReactLynx 组件](reactlynx.mdx)。

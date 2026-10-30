@@ -1,0 +1,65 @@
+---
+description: 'Follow an agent from a real Lynx error to the loaded script and live value, then map a page element to its JSX and event handler.'
+---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import {
+  runtimeErrorExample,
+  elementSourceExample,
+} from './_examples/debugging';
+
+# Logs and Runtime Debugging
+
+When [page inspection](page-inspection.mdx) reveals an unexpected result, agent-lynx can connect it to console logs, loaded scripts, and live JavaScript values. These provide evidence of where execution stopped and which runtime inputs the code received.
+
+## Trace an Unresponsive Tap to a Runtime Error
+
+Return to the [Tailwind CSS Settings example](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/tailwindcss) from [page inspection](page-inspection.mdx). This time, tapping **Ocean** does not change the theme. To reproduce the failure, we added a missing-configuration read to the tap handler in a local checkout; the original example does not have this error.
+
+The commands and outputs below were captured in Lynx Explorer on Android. The agent has already [connected to the app and selected the page](connections.mdx). `$CLIENT_ID` is the target app ID returned by `list-clients`; this page has session ID `2`.
+
+<AgentConversation locale="en" {...runtimeErrorExample}>
+
+The tap reached its handler, which threw a `TypeError` while reading `lynx.__globalProps.themeNames[t]`. The current value of `themeNames` is `undefined`, so reading its `ocean` property fails before `setCurrentTheme` runs.
+
+This example already gets the theme name from the iteration variable `t`; restore `setCurrentTheme(t)`. If the application needs host configuration instead, define and supply that field and handle its absence explicitly.
+
+</AgentConversation>
+
+The log connects the unchanged theme to an exception in the background VM. The script identifies the failing property read, and `evaluate` checks its current value. The script list includes `app-service.js`, while this stack points to `.lynx/main/background.js`; follow the URLs and script IDs returned by the runtime.
+
+`get-console` subscribes to runtime logs; it does not guarantee access to past messages. This conversation starts `--watch` before tapping and ends the capture after two errors arrive. An empty short capture does not mean the page never logged an error.
+
+## Locate an Element's JSX and Event Handler
+
+A stack trace identifies a location in the running script. A UI source map connects **an element on the page** to the JSX that created it. Looking up the Ocean button carries the investigation into the local source file.
+
+This example runs the same bundle in a development client that supports `DOM.getOriginalNodeSourceInfo`, with [UI source maps](/guide/devtool/ui-source-map) enabled at build time. `$CLIENT_ID` selects that client; this page has session ID `1`.
+
+<AgentConversation locale="en" {...elementSourceExample}>
+
+The Ocean button maps to the `view` at **line 62, column 15** of `examples/tailwindcss/src/App.tsx`, created by `themeNames.map`. Its `bindtap` at **line 69** binds the handler that reads the missing configuration field identified above.
+
+</AgentConversation>
+
+`get-source-info` returns the element's source location. Reading that file reveals the event binding and application logic. A `mapped` status indicates success; runtime-generated wrappers or pages without the required metadata may not resolve to source locations.
+
+## Keep Runtime Evidence on the Same Target
+
+A session can contain both `background` and `main` VMs. The example's log is tagged `background`, so the subsequent script request and evaluation target that VM. `get-sources` lists scripts from the background VM.
+
+Script IDs and remote object IDs belong to their client, session, and VM. For example, when a log contains an `objectId`, `cdp` can inspect its properties through `Runtime.getProperties` on the same target. After reloading or switching pages, obtain new logs and script IDs before continuing.
+
+## Logs and Runtime Debugging Capabilities
+
+| Capability                   | What it supports                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read and follow logs         | `get-console` reads console messages with their level, VM thread, and available stack traces. Watch mode follows new messages while an issue is reproduced.                         |
+| Identify loaded scripts      | `get-sources` lists script URLs and IDs from the background VM. `cdp` with `Debugger.getScriptSource` reads a script's runtime source.                                              |
+| Locate an element's source   | `get-source-info` maps an element ref from a fresh [snapshot](page-inspection.mdx) to its source location when [UI source-map metadata](/guide/devtool/ui-source-map) is available. |
+| Inspect JavaScript values    | `evaluate` executes an expression in the background or main VM to inspect live values, await a Promise, or return a remote object for further inspection.                           |
+| Open a graphical inspector   | `inspect` prints a URL for inspecting the selected client and session in a graphical interface.                                                                                     |
+| Send a page protocol request | `cdp` exposes methods supported by the [Lynx CDP implementation](/api/cdp/api-ref), including script source and runtime object inspection.                                          |
+| Send a host protocol request | `app` sends an App protocol request to the selected client. Available methods and parameters depend on the host application.                                                        |
+
+Filtering options, output formats, VM selection, and evaluation parameters are covered in the [CLI reference](cli-reference.mdx#logs-and-runtime-debugging-options). For component props, state, and relationships, continue with [ReactLynx components](reactlynx.mdx).
