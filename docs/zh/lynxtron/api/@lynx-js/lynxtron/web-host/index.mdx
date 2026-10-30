@@ -7,14 +7,28 @@ import * as Lynx from '@lynx';
 
 ## 接口
 
-| Interface                                                                                                 | 描述 |
-| --------------------------------------------------------------------------------------------------------- | ---- |
-| [BackgroundServiceConfig](/lynxtron/api/@lynx-js/lynxtron/web-host/Interface.BackgroundServiceConfig.mdx) | -    |
-| [HostConfig](/lynxtron/api/@lynx-js/lynxtron/web-host/Interface.HostConfig.mdx)                           | -    |
-| [MainThreadBridge](/lynxtron/api/@lynx-js/lynxtron/web-host/Interface.MainThreadBridge.mdx)               | -    |
+| Interface                                                                                                 | 描述                                 |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| [BackgroundServiceConfig](/lynxtron/api/@lynx-js/lynxtron/web-host/Interface.BackgroundServiceConfig.mdx) | 构建后的背景适配脚本 URL。           |
+| [HostConfig](/lynxtron/api/@lynx-js/lynxtron/web-host/Interface.HostConfig.mdx)                           | 可选的浏览器 bridge 与背景适配配置。 |
+| [MainThreadBridge](/lynxtron/api/@lynx-js/lynxtron/web-host/Interface.MainThreadBridge.mdx)               | 通过 RPC 暴露的浏览器主线程处理器。  |
 
 ## 函数
 
-| Function                                                                                       | 描述                          |
-| ---------------------------------------------------------------------------------------------- | ----------------------------- |
-| [setupSymmetricHost](/lynxtron/api/@lynx-js/lynxtron/web-host/Function.setupSymmetricHost.mdx) | Setup Symmetric Host for Web. |
+| Function                                                                                       | 描述                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [setupSymmetricHost](/lynxtron/api/@lynx-js/lynxtron/web-host/Function.setupSymmetricHost.mdx) | Configure browser host capabilities for a Lynx view. Call from the browser main thread before loading the Lynx bundle. Registers optional bridge handlers and a background adapter script. This replaces the view's nativeModulesMap and onNativeModulesCall. |
+
+{/* api-doc-overlay:lynxtron-web-host-index:start */}
+
+## Web 宿主能力
+
+Symmetric Host（对称宿主）是通过各平台适配层，为共享 Lynx UI 提供一致宿主能力接口的架构模式。此子路径用于配置浏览器宿主，并不为浏览器提供 Node.js 运行时。
+
+- **HostConfig**：组合可选的浏览器主线程 bridge 处理器与背景适配配置。
+- **MainThreadBridge**：将方法名映射到通过 RPC 调用的浏览器主线程处理器。
+- **BackgroundServiceConfig**：通过 `scriptURL` 指定构建后的适配脚本 URL。
+
+架构、生成文件和完整 bridge 示例参见[在 Web 中运行 Lynxtron](/lynxtron/learn/running-on-web)。
+
+{/* api-doc-overlay:lynxtron-web-host-index:end */}
