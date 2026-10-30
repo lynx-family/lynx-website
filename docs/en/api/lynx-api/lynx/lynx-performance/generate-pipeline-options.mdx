@@ -1,0 +1,48 @@
+---
+title: _generatePipelineOptions()
+---
+
+# `lynx.performance._generatePipelineOptions()`
+
+Creates a new Engine-generated [`PipelineOptions`](../../performance-api/pipeline-options.mdx) object for a framework-initiated pipeline.
+
+This method is a framework integration hook for Scripting Framework Developers. Application code must not call it.
+
+## Syntax
+
+```ts
+_generatePipelineOptions(): PipelineOptions;
+```
+
+### Parameters
+
+None.
+
+### Return value
+
+A new `PipelineOptions` object containing an Engine-generated `pipelineID`.
+
+Creating the object does not start the pipeline. Populate the framework-owned metadata and call [`_onPipelineStart()`](./on-pipeline-start.mdx) exactly once before recording or submitting framework work.
+
+## Example
+
+```ts
+function startUpdatePipeline(): PipelineOptions {
+  const options = lynx.performance._generatePipelineOptions();
+
+  options.pipelineOrigin = 'updateTriggeredByBts';
+  options.dsl = 'myFramework';
+  options.stage = 'update';
+
+  lynx.performance._onPipelineStart(options.pipelineID, options);
+  return options;
+}
+```
+
+Do not call this method when the Engine has already supplied `PipelineOptions` for the operation. An Engine-initiated pipeline is already created and started.
+
+## See also
+
+- [`PipelineOptions`](../../performance-api/pipeline-options.mdx)
+- [`_onPipelineStart()`](./on-pipeline-start.mdx)
+- [`__FlushElementTree`](../../../engine/element-api/__FlushElementTree.mdx)
