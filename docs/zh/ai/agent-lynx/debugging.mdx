@@ -1,31 +1,48 @@
 ---
-description: '检查日志和脚本、定位 UI 源码、打开检查器、执行 JavaScript，以及发送 CDP 和 App 请求。'
+description: '跟随 agent 从资料加载失败追查日志、运行中的脚本和配置，再了解日志与运行时调试的各项能力。'
 ---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { configurationExample } from './_examples/debugging';
 
 # 日志与运行时调试
 
-先[连接应用并选择 session](connections.mdx)。使用 `get-source-info` 前先获取[页面快照](page-inspection.mdx)，并使用输出中的元素引用。
+当[页面检查](page-inspection.mdx)发现结果不符合预期时，agent-lynx 可以将页面现象与日志、已加载的脚本和 JavaScript 实时值对应起来，确认代码执行到哪里、收到了什么运行时输入。
 
-## 日志、源码与检查器
+## 从加载失败追到运行时配置
 
-```bash
-agent-lynx get-console --limit 50
-agent-lynx get-sources
-agent-lynx get-source-info @e1
-```
+下面以 Profile 页面为例：点击 **Load Profile** 后，用户资料没有显示出来。agent 已经[连接应用并选定页面](connections.mdx)，整个排查过程使用同一个 client `android-phone:8901` 和 session `2`。
 
-`get-console` 包含 VM 线程和可用的调用栈。添加 `--watch` 可以在复现问题时持续读取新日志。页面提供 [UI source-map 元数据](/guide/devtool/ui-source-map)时，`get-source-info` 可以将元素映射到源码。
+<AgentConversation locale="zh" {...configurationExample}>
+  <p>
+    这次加载在发出请求前就返回了。<code>profile-service.js</code> 中的加载函数在{' '}
+    <code>apiBaseUrl</code> 缺失时记录错误并返回；当前后台 VM 中这个字段的值是{' '}
+    <code>undefined</code>。
+  </p>
+  <p>
+    需要检查宿主加载该页面时，是否通过 <code>globalProps</code> 传入了有效的{' '}
+    <code>apiBaseUrl</code>。补齐后重新加载页面，再核对日志和资料展示结果。
+  </p>
+</AgentConversation>
 
-需要图形化检查器时，运行 `agent-lynx inspect` 并打开输出的 URL，即可检查同一个 session。
+日志指出了脚本位置和 VM 线程，读取脚本解释了失败条件，执行表达式则验证了当前页面是否满足这个条件。这里的 `apiBaseUrl` 是示例应用约定的业务字段，由宿主通过 [GlobalProps](/api/lynx-api/lynx/lynx-global-props) 传入。
 
-## 执行代码与发送协议请求
+## 在同一个目标上串联证据
 
-```bash
-agent-lynx evaluate '1 + 1' --thread background
-agent-lynx cdp --client <clientId> --session <sessionId> --method DOM.getDocument
-agent-lynx app --client <clientId> --method App.openPage '{"url":"<bundle-url>"}'
-```
+同一个 session 可以包含 `background` 和 `main` 两个 VM。示例日志标为 `background`，因此后续的脚本请求和表达式求值也指向后台 VM。`get-sources` 列出的是后台 VM 中的脚本。
 
-`evaluate` 可选择 `background` 或 `main` VM，并支持等待 Promise、返回远程对象、选择执行上下文和副作用检查，参见 `evaluate --help`。`cdp` 向选定的 session 发送方法和可选的 JSON 参数。Lynx 支持的方法参见 [Lynx CDP 参考](/api/cdp/api-ref)。`app` 转发宿主 App 协议请求，可用方法及参数取决于宿主应用。
+脚本 ID 和远程对象 ID 都属于对应的 client、session 和 VM。例如，日志中包含 `objectId` 时，可以通过 `cdp` 的 `Runtime.getProperties` 在同一目标上读取对象属性。页面重载或切换后，应重新获取日志和脚本 ID 再继续排查。
 
-日志命令 `get-console` 支持 `--watch`、`--level`、`--thread`、`--offset`、`--limit` 和 `--include-stack-traces`。JSON 输出保留可用的调用栈；同时启用 `--watch` 和 `--json` 时，每行输出一个 JSON 事件。
+## 日志与运行时调试能力
+
+| 能力                   | 支持的操作与用途                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 读取与跟踪日志         | `get-console` 读取日志级别、VM 线程和可用的调用栈；watch 模式可以在复现问题时持续跟踪新日志。                                                      |
+| 发现运行中的脚本       | `get-sources` 列出后台 VM 中的脚本 URL 和 ID；通过 `cdp` 的 `Debugger.getScriptSource` 读取脚本的运行时代码。                                      |
+| 定位元素源码           | 页面提供 [UI source-map 元数据](/guide/devtool/ui-source-map)时，`get-source-info` 可以将新[快照](page-inspection.mdx)中的元素引用映射到源码位置。 |
+| 检查 JavaScript 实时值 | `evaluate` 在后台或主线程 VM 中执行表达式，可读取实时值、等待 Promise，或返回远程对象供进一步检查。                                                |
+| 打开图形化检查器       | `inspect` 输出检查器 URL，在图形界面中检查选定的 client 和 session。                                                                               |
+| 发送页面协议请求       | `cdp` 调用 [Lynx CDP 实现](/api/cdp/api-ref)支持的方法，包括读取脚本源码、检查运行时对象等。                                                       |
+| 发送宿主协议请求       | `app` 向选定的 client 发送 App 协议请求，可用方法和参数取决于宿主应用。                                                                            |
+
+日志过滤、输出格式、VM 选择和表达式求值参数见 [CLI 参考](cli-reference.mdx#日志与运行时调试选项)。需要继续检查组件 props、state 和层级关系时，参见 [ReactLynx 组件](reactlynx.mdx)。

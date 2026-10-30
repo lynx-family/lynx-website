@@ -1,31 +1,50 @@
 ---
-description: 'Inspect console logs and sources, locate UI source code, open an inspector, evaluate JavaScript, and send CDP and App requests.'
+description: 'Follow an agent as it diagnoses a profile load failure using logs, the loaded script, and runtime configuration, then explore the debugging capabilities.'
 ---
+
+import { AgentConversation } from '@lynx/agent-conversation';
+import { configurationExample } from './_examples/debugging';
 
 # Logs and Runtime Debugging
 
-[Connect an app and select a session](connections.mdx). For `get-source-info`, first capture a [page snapshot](page-inspection.mdx) and use an element ref from that output.
+When [page inspection](page-inspection.mdx) reveals an unexpected result, agent-lynx can connect it to console logs, loaded scripts, and live JavaScript values. These provide evidence of where execution stopped and which runtime inputs the code received.
 
-## Logs, Sources, and the Inspector
+## Trace a Failed Load to Its Runtime Configuration
 
-```bash
-agent-lynx get-console --limit 50
-agent-lynx get-sources
-agent-lynx get-source-info @e1
-```
+This example investigates a Profile page that stays empty after **Load Profile** is tapped. The agent has already [connected to the app and selected the page](connections.mdx), using client `android-phone:8901` and session `2` throughout the investigation.
 
-`get-console` includes the VM thread and available stack traces. Use `--watch` to stream new logs while reproducing an issue. `get-source-info` maps an element to source when the page provides [UI source-map metadata](/guide/devtool/ui-source-map).
+<AgentConversation locale="en" {...configurationExample}>
+  <p>
+    The load stops before sending a request. In <code>profile-service.js</code>,
+    the loading function logs an error and returns when <code>apiBaseUrl</code>{' '}
+    is missing. Its current value in the background VM is <code>undefined</code>
+    .
+  </p>
+  <p>
+    Check that the host passes a valid <code>apiBaseUrl</code> through{' '}
+    <code>globalProps</code> when loading this page. After supplying it, reload
+    the page and verify the logs and displayed profile.
+  </p>
+</AgentConversation>
 
-For a graphical inspector connected to the same session, run `agent-lynx inspect` and open the printed URL.
+The log identifies a script and VM thread. Reading the script explains the failure condition; evaluating the field confirms that condition in the running page. Here, `apiBaseUrl` is an application-defined field supplied by the host through [GlobalProps](/api/lynx-api/lynx/lynx-global-props).
 
-## Evaluate Code and Send Protocol Requests
+## Keep Runtime Evidence on the Same Target
 
-```bash
-agent-lynx evaluate '1 + 1' --thread background
-agent-lynx cdp --client <clientId> --session <sessionId> --method DOM.getDocument
-agent-lynx app --client <clientId> --method App.openPage '{"url":"<bundle-url>"}'
-```
+A session can contain both `background` and `main` VMs. The example's log is tagged `background`, so the subsequent script request and evaluation target that VM. `get-sources` lists scripts from the background VM.
 
-`evaluate` selects the `background` or `main` VM and supports promise awaiting, remote-object results, execution-context selection, and side-effect checks; consult `evaluate --help`. `cdp` sends a method and optional JSON parameters to the selected session. Check the [Lynx CDP reference](/api/cdp/api-ref) for methods supported by Lynx. `app` forwards a host App protocol request; available methods and their parameters depend on the host application.
+Script IDs and remote object IDs belong to their client, session, and VM. For example, when a log contains an `objectId`, `cdp` can inspect its properties through `Runtime.getProperties` on the same target. After reloading or switching pages, obtain new logs and script IDs before continuing.
 
-For logs, `get-console` supports `--watch`, `--level`, `--thread`, `--offset`, `--limit`, and `--include-stack-traces`. JSON output preserves available stack traces; watch mode emits one JSON event per line when `--json` is enabled.
+## Logs and Runtime Debugging Capabilities
+
+| Capability                   | What it supports                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read and follow logs         | `get-console` reads console messages with their level, VM thread, and available stack traces. Watch mode follows new messages while an issue is reproduced.                         |
+| Identify loaded scripts      | `get-sources` lists script URLs and IDs from the background VM. `cdp` with `Debugger.getScriptSource` reads a script's runtime source.                                              |
+| Locate an element's source   | `get-source-info` maps an element ref from a fresh [snapshot](page-inspection.mdx) to its source location when [UI source-map metadata](/guide/devtool/ui-source-map) is available. |
+| Inspect JavaScript values    | `evaluate` executes an expression in the background or main VM to inspect live values, await a Promise, or return a remote object for further inspection.                           |
+| Open a graphical inspector   | `inspect` prints a URL for inspecting the selected client and session in a graphical interface.                                                                                     |
+| Send a page protocol request | `cdp` exposes methods supported by the [Lynx CDP implementation](/api/cdp/api-ref), including script source and runtime object inspection.                                          |
+| Send a host protocol request | `app` sends an App protocol request to the selected client. Available methods and parameters depend on the host application.                                                        |
+
+Filtering options, output formats, VM selection, and evaluation parameters are covered in the [CLI reference](cli-reference.mdx#logs-and-runtime-debugging-options). For component props, state, and relationships, continue with [ReactLynx components](reactlynx.mdx).

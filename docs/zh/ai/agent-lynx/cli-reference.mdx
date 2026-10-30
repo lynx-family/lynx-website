@@ -51,6 +51,20 @@ description: 'agent-lynx 全部公开命令、版本与帮助、JSON 输出控�
 | 操作后刷新     | 元素操作支持 `--snapshot`，用于刷新 daemon 的缓存引用。文本输出报告刷新结果；加上 `--json` 可在结果中取得新快照。继续操作前，应读取并使用新快照中的目标。                                                    |
 | 等待页面条件   | `wait --text "Ready" --timeout 15000` 等待文本匹配；`wait --ref <ref>` 等待引用在新快照中解析成功。等待期间刷新并缓存快照，`--timeout` 和 `--interval` 的单位为毫秒。应用连接的 `wait-for-client` 则使用秒。 |
 
+## 日志与运行时调试选项
+
+[日志与运行时调试](debugging.mdx)展示如何结合日志、已加载的脚本和运行时值，解释页面异常的原因。
+
+| 操作                 | 选项与行为                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 过滤日志             | `get-console` 支持 `--level`、`--thread`、`--offset` 和 `--limit`。级别用逗号分隔，例如 `error,warning`；线程可选 `background` 和 `main`，默认读取两个线程。                                                             |
+| 跟踪日志与保留调用栈 | `get-console --watch` 持续输出日志，直到中断或达到 `--limit`。`--include-stack-traces` 在格式化输出中保留非错误日志的可用调用栈。`--json` 保留可用调用栈；同时启用 `--watch` 时，每行输出一个 JSON 事件。                |
+| 定位脚本与 UI 源码   | `get-sources` 列出后台 VM 中的脚本 ID 和 URL。`get-source-info <target>` 接受元素节点 ID 或 `@e1` 这样的快照引用；源码映射需要 UI source-map 元数据。                                                                    |
+| 打开检查器           | `inspect` 输出选定 client/session 的检查器 URL。`--port` 指定 daemon 端口，默认值为 `21783`。                                                                                                                            |
+| 执行 JavaScript      | `evaluate <expression>` 通过 `--thread` 选择 `background`（默认）或 `main`。支持 `--await-promise`、`--context-id`、`--throw-on-side-effect`，以及用 `--no-return-by-value` 返回远程对象。完整选项见 `evaluate --help`。 |
+| 发送 CDP 请求        | `cdp --method <method> '<json-params>'` 向选定 session 发送方法和可选的 JSON 参数。`--thread` 默认值为 `background`；脚本和对象 ID 必须属于选定的 VM。                                                                   |
+| 发送 App 请求        | `app --client <clientId> --method <method> '<json-params>'` 面向宿主应用，不选择页面 session。可用方法和参数取决于宿主应用。                                                                                             |
+
 ## 输出、帮助与环境变量
 
 在提供相应选项的命令中，用 `--client` 和 `--session` 显式选择目标，用 `--json` 请求结构化输出。全局 JSON 偏好只会转发给支持 JSON 模式的命令。

@@ -51,6 +51,20 @@ The public CLI provides the following 46 executable commands, counting subcomman
 | Refresh after an action   | Ref actions accept `--snapshot` to refresh the daemon's cached refs. Text output reports the refresh result; adding `--json` includes the new snapshot in the result. Read and use targets from the new snapshot before continuing.                                     |
 | Wait for a page condition | `wait --text "Ready" --timeout 15000` waits for matching text; `wait --ref <ref>` waits for a ref to resolve in a fresh snapshot. Waiting refreshes and caches snapshots. Both `--timeout` and `--interval` use milliseconds; app-level `wait-for-client` uses seconds. |
 
+## Logs and Runtime Debugging Options
+
+[Logs and Runtime Debugging](debugging.mdx) demonstrates how logs, loaded scripts, and runtime values can explain a page failure.
+
+| Operation                     | Options and behavior                                                                                                                                                                                                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Filter console logs           | `get-console` supports `--level`, `--thread`, `--offset`, and `--limit`. Levels are comma-separated, such as `error,warning`; threads are `background` and `main`, with both included by default.                                                                                |
+| Follow logs and retain stacks | `get-console --watch` streams messages until interrupted or `--limit` is reached. `--include-stack-traces` includes available stacks for non-error messages in formatted output. `--json` preserves available stacks; combined with `--watch`, it emits one JSON event per line. |
+| Locate scripts and UI source  | `get-sources` lists background VM script IDs and URLs. `get-source-info <target>` accepts an element node ID or a snapshot ref such as `@e1`; source mapping requires UI source-map metadata.                                                                                    |
+| Open the inspector            | `inspect` prints the selected client/session's inspector URL. `--port` selects the daemon port, defaulting to `21783`.                                                                                                                                                           |
+| Evaluate JavaScript           | `evaluate <expression>` selects `--thread background` (the default) or `--thread main`. It supports `--await-promise`, `--context-id`, `--throw-on-side-effect`, and `--no-return-by-value` for remote-object results. See `evaluate --help` for all evaluation options.         |
+| Send CDP requests             | `cdp --method <method> '<json-params>'` sends a method and optional JSON parameters to the selected session. `--thread` defaults to `background`; script and object IDs must belong to the selected VM.                                                                          |
+| Send App requests             | `app --client <clientId> --method <method> '<json-params>'` addresses the host app rather than a page session. Methods and parameters depend on the host application.                                                                                                            |
+
 ## Output, Help, and Environment
 
 Use `--client` and `--session` on commands that declare them to select the target explicitly. Use `--json` where supported to request structured output. The global JSON preference is forwarded only to commands with a JSON mode.
