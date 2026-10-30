@@ -1,0 +1,70 @@
+---
+description: '让 agent 在本机启动 Lynx Simulator，用 page-env 准备页面数据，再打开、检查和操作页面。'
+---
+
+import { withBase } from '@rspress/core/runtime';
+import { EmbedIframe } from '@lynx/EmbedIframe';
+
+export const simulatorPatchUrl = withBase(
+  '/ai/agent-lynx/simulator/bankcards-init-data.patch',
+);
+export const simulatorEnvUrl = withBase(
+  '/ai/agent-lynx/simulator/page-env.mjs',
+);
+
+# Lynx Simulator
+
+:::info 功能预览
+Simulator 尚未在 npm 的 `agent-lynx` 包中发布。本文预览支持 Simulator 的版本中的工作方式。
+:::
+
+有页面代码和 bundle，就可以让 agent 在本机启动 Lynx 运行时，准备页面依赖的数据，打开页面并检查结果。Lynx Simulator 为 agent 提供本地 client；打开的页面仍然通过 session 定位，沿用 `snapshot`、截图和页面交互等能力。
+
+## 从页面代码到可检查的页面
+
+下面用公开的 [BankCards 示例](https://github.com/lynx-family/lynx-examples/tree/3b019cec94b0e7b83e2239dd52839365fdd76522/examples/BankCards)展示这个过程。示例保留原有 UI，将金额与卡片的固定初始值接入 `useInitData`。agent 读取数据入口，写入 page-env，再核对页面实际显示的内容。
+
+点击四个步骤可以切换右侧详情；第二步的文件也可以点击查看。连线对应 page-env 中的测试数据、屏幕中的显示结果，以及 snapshot 返回的元素引用。
+
+<EmbedIframe
+  src={`${withBase('/ai/agent-lynx/simulator-demo.html')}?lang=zh`}
+  title="agent-lynx simulator：准备数据、打开 BankCards 并核对页面"
+  height={600}
+  autoHeight
+/>
+
+两项数据贯穿了整个过程：
+
+| page-env 提供的数据   | 页面读取方式                 | 页面与 snapshot 中的结果                       |
+| --------------------- | ---------------------------- | ---------------------------------------------- |
+| `templateData.amount` | `useInitData().amount`       | 金额 `268.50`                                  |
+| `templateData.card`   | 作为 `selectedCard` 的初始值 | 卡号 `4242 **** **** 4242`、持卡人 `LYNX DEMO` |
+
+这让 agent 可以为同一份 bundle 准备不同的数据场景，再用页面检查验证结果。示例使用的<a href={simulatorPatchUrl} download>初始数据适配补丁</a>可应用到 BankCards 目录；<a href={simulatorEnvUrl} download>page-env.mjs</a> 包含上面的演示数据。构建后，将本地开发服务器提供的 bundle URL 用作对话中的 `PAGE_URL`。
+
+## page-env 为页面提供什么
+
+`open --page-env` 在打开页面时准备环境。字段需要与页面实际使用的数据结构和桥接方法对应。
+
+| 能力         | 提供方式       | 用途                                                                                      |
+| ------------ | -------------- | ----------------------------------------------------------------------------------------- |
+| 初始页面数据 | `templateData` | 传入 Lynx 初始数据，ReactLynx 页面可通过 `useInitData` 读取。示例用它设置金额与卡片信息。 |
+| 宿主属性     | `globalProps`  | 提供页面通过 `lynx.__globalProps` 读取的配置。                                            |
+| 桥接调用处理 | `jsb`          | 根据桥接方法名与参数返回测试结果；函数形式可调用 `next()` 交给已有处理器。                |
+
+固定数据可以写成 JSON，使用本地路径、`file:` URL 或 HTTP(S) URL 加载。需要计算或异步准备数据时，使用本地 `.mjs` 或 ESM `.js` 模块导出工厂函数；`templateData`、`globalProps` 和 `jsb` 也支持异步函数。每次打开页面都会独立求值，相对路径从执行 CLI 的目录解析。
+
+打开后，可继续[检查页面与执行交互](page-inspection.mdx)，或读取[日志与运行时值](debugging.mdx)。业务状态仍由页面代码决定，page-env 提供的是它所依赖的输入。
+
+## 管理本地运行时
+
+`simulator run` 启动空的运行时并返回 `clientId`。用该 ID 打开 bundle，再从 `list-sessions` 返回的结果选择页面，后续调用保持同一组 client 和 session。
+
+| 操作                                                                  | 用途                                                                 |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `simulator list` / `simulator get --client …`                         | 查看运行状态；`get` 同时返回当前页面。                               |
+| `simulator logs --client … --follow`                                  | 持续查看运行时进程输出，包括 page-env 加载错误。                     |
+| `simulator stop --client …`                                           | 结束指定运行时及其页面。关闭单个页面后，运行时仍可继续打开其他页面。 |
+| `simulator run --ttl 20m` / `simulator wait --client … --timeout 20m` | 为运行时设置自动结束时间，或等待进程退出。`wait` 超时会保留进程。    |
+
+Simulator 使用 daemon 连接，首次运行会准备依赖，后续复用本地缓存。当前支持 Node.js 22+、npm，以及 macOS arm64/x64 或 Linux x64；Linux 还需要运行时所需的系统图形库。macOS 默认打开窗口，Linux 使用无窗口渲染；`open` 的 `--simulator-window-width`、`--simulator-window-height` 和 `--simulator-windowless` 可控制页面尺寸与渲染方式。

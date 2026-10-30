@@ -1,0 +1,38 @@
+--- a/src/final/index.tsx
++++ b/src/final/index.tsx
+@@ -2,7 +2,7 @@
+ // Licensed under the Apache License Version 2.0 that can be found in the
+ // LICENSE file in the root directory of this source tree.
+
+-import { root, useState } from "@lynx-js/react";
++import { root, useInitData, useState } from "@lynx-js/react";
+ import Amount from "./Components/Amount.jsx";
+ import BankCardScrollView from "./Components/BankCardScrollView.jsx";
+ import type { BankCard } from "./Components/BankCardScrollView.jsx";
+@@ -10,8 +10,16 @@
+ import Card from "./Components/Card.jsx";
+ import "./index.scss";
+
++declare module "@lynx-js/react" {
++  interface InitData {
++    amount?: string;
++    card?: BankCard;
++  }
++}
++
+ function BankCards() {
+-  const [selectedCard, setSelectedCard] = useState<BankCard>({
++  const initial = useInitData();
++  const [selectedCard, setSelectedCard] = useState<BankCard>(initial.card ?? {
+     type: "visa",
+     number: "4558 **** **** 6767",
+     name: "Alex Quentin",
+@@ -34,7 +42,7 @@
+
+   return (
+     <view className="page">
+-      <Amount amount="1314" />
++      <Amount amount={initial.amount ?? "1314"} />
+       <Card
+         selectedCard={selectedCard}
+         isFront={isFront}
