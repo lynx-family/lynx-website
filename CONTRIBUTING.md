@@ -96,6 +96,48 @@ node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
 ```
 
+### Writing Style
+
+The **Writing Style** CI job checks English/Chinese heading correspondence.
+It runs independently of build and portable import contracts, without the
+root `prepare` lifecycle.
+
+For changes to English/Chinese document headings, run:
+
+```bash
+pnpm run check:doc-heading-parity
+```
+
+The check compares the total count and ordered H1-H6 levels of paired tracked
+documents in `docs/en/` and `docs/zh/`, and `.zh.md` / `.zh.mdx` translations in
+`sharedDocs/`. It accepts translated heading text and pairs `.md` with `.mdx`
+by their extensionless relative path. Unpaired documents are outside this check.
+
+Markdown headings and literal MDX `h1`-`h6` tags are checked without executing
+documents or expanding imported components. A frontmatter `title` contributes
+one fallback H1 when the document has no Markdown H1, matching the site's
+Rspress theme.
+Code examples and comments do not contribute headings.
+
+The check does not enforce heading-level progression. Matching H2-to-H4
+sequences in both locales pass. Imported components are not expanded, so the
+check inspects source outlines rather than the complete rendered page.
+
+Temporary exceptions are explicit in `scripts/ci/doc-heading-allowlist.json`,
+with a reason for each affected pair.
+Generated and synchronized documentation must be fixed in its source.
+The four built-in element exceptions are tracked by
+[#1755](https://github.com/lynx-family/lynx-website/issues/1755) and
+[#1756](https://github.com/lynx-family/lynx-website/pull/1756).
+Read and parse errors still fail. Remove pair exceptions once fixed;
+aligned or deleted entries fail.
+
+For checker changes, also run:
+
+```bash
+node --test scripts/ci/check-doc-heading-parity.test.mjs
+```
+
 ### Go Components
 
 For changes to rendered `Go` components in `docs/` or `sharedDocs/`, run:
