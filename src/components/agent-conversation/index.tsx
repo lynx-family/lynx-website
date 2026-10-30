@@ -197,7 +197,10 @@ export function AgentConversation({
                   }}
                 >
                   <Icon size={15} aria-hidden="true" />
-                  <span className={styles.toolName}>
+                  <span
+                    className={styles.toolName}
+                    title={step.name ?? step.command}
+                  >
                     {step.name ?? step.command}
                   </span>
                   {step.result && (
