@@ -22,7 +22,7 @@ import {
   assertNoApiPartialRoutes,
 } from './scripts/build/api-partial-routes.mts';
 import versionJson from './docs/public/version.json';
-import { SITE_BASE } from './shared-route-config';
+import { SITE_BASE, SITE_BASE_PREFIX } from './shared-route-config';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
@@ -36,6 +36,7 @@ export default defineConfig({
       'lynx-compat-data/**/*',
       API_PARTIAL_ROUTE_EXCLUDE,
       '**/guide/start/fragments/**',
+      '**/animax/start/fragments/**',
       '**/guide/custom-native-component/*',
       '**/guide/custom-native-modules/*',
       '**/guide/embed-lynx-to-native/*',
@@ -156,6 +157,36 @@ export default defineConfig({
   plugins: [
     pluginClientRedirects({
       redirects: [
+        {
+          from: '^(.*)/animax/lynx/quick-start(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/start/quick-start.html`,
+        },
+        // Redirect paths are base-relative; restore the version prefix and keep
+        // the captured locale for links to the original AnimaX pages.
+        {
+          from: '^(.*)/animax/tutorial/basic-controls(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/lynx/basic-controls.html`,
+        },
+        {
+          from: '^(.*)/animax/tutorial/playback-timeline(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/lynx/playback-timeline.html`,
+        },
+        {
+          from: '^(.*)/animax/tutorial/runtime-events(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/lynx/runtime-events.html`,
+        },
+        {
+          from: '^(.*)/animax/dynamic-property(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/lynx/dynamic-properties.html`,
+        },
+        {
+          from: '^(.*)/animax/native/migrate-from-lottie(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/migrate-from-lottie.html`,
+        },
+        {
+          from: '^(.*)/animax/native/guide(?:\\.html|\\.mdx)?/?$',
+          to: `${SITE_BASE_PREFIX}$1/animax/native/quick-start.html`,
+        },
         // Preserve locale/version prefixes for the former root-package page.
         {
           from: '^(.*)/lynxtron/api/@lynx-js/lynxtron/Variable\\.contextBridge(?:\\.html|\\.mdx)?/?$',

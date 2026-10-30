@@ -1,23 +1,23 @@
 ---
-description: '教程：配置 AnimaX 的播放区间、速度、进度、片段播放和运行时状态查询。'
+description: 'Tutorial: configure AnimaX playback ranges, speed, progress, segments, and runtime status queries.'
 ---
 
 import { Go } from '@lynx';
 
-# 教程：播放时间线
+# Tutorial: Playback Timeline
 
-介绍和时间线相关的播放控制：限制播放帧区间、调整速度、设置初始进度、播放指定片段，以及从运行时查询播放状态。
+Learn timeline-level playback controls: limiting the playable frame range, changing speed, setting initial progress, playing a segment, and querying playback state from the runtime.
 
-## 配置播放属性
+## Configure playback props
 
-如果播放行为比较固定，优先使用 `<animax-view>` 上的声明式属性。下面的示例限制了播放帧区间，开启 repeat 时的反向播放，并通过 UI 状态调整速度和初始进度。
+For simple timeline behavior, prefer declarative attributes on `<animax-view>`. The example below sets a frame range, enables reverse playback on repeat, adjusts speed, and updates initial progress from UI state.
 
 <Go
   defaultTab="preview"
   webPreview={false}
   example="animax"
   defaultFile="src/playback-props/index.tsx"
-  defaultEntryFile="dist/playback-props.lynx.bundle"
+  defaultEntryName="playback-props"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/playback-props.gif"
   entry={[
     'src/playback-props/index.tsx',
@@ -29,7 +29,7 @@ import { Go } from '@lynx';
   }}
 />
 
-当只需要播放动画中的一段内容时，可以设置 `start-frame` 和 `end-frame`。`speed` 用于控制播放速度，`progress` 用于设置初始进度，`loop-count` 和 `bindrepeat` / `bindcompletion` 可以让界面感知重复播放和播放完成。
+Use `start-frame` and `end-frame` when only part of the source animation should be played. Use `speed` for the playback rate, `progress` for the initial position, and `loop-count` or `bindrepeat` / `bindcompletion` when the UI needs to reflect repeat and completion state.
 
 ```tsx {5-11}
 <animax-view
@@ -46,16 +46,16 @@ import { Go } from '@lynx';
 />
 ```
 
-## 基础循环播放
+## Basic loop playback
 
-如果只需要控制循环次数，可以单独使用 `loop-count`。`bindrepeat` 会在每次重复播放时回调，`bindcompletion` 会在配置的循环次数结束后触发。
+For a smaller looping case, `loop-count` can be used by itself. `bindrepeat` reports each repeat, and `bindcompletion` fires when the configured loop count has finished.
 
 <Go
   defaultTab="preview"
   webPreview={false}
   example="animax"
   defaultFile="src/basic-loop/index.tsx"
-  defaultEntryFile="dist/basic-loop.lynx.bundle"
+  defaultEntryName="basic-loop"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic-loop.gif"
   entry={['src/basic-loop/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
   highlight={{
@@ -63,16 +63,16 @@ import { Go } from '@lynx';
   }}
 />
 
-## 播放指定片段
+## Play a segment
 
-如果播放区间来自用户操作或业务逻辑，可以通过 `playSegment` UI Method 动态指定片段，而不是把区间写成静态属性。
+When the playback range is decided by user interaction or business logic, call the `playSegment` UI Method instead of changing static props.
 
 <Go
   defaultTab="preview"
   webPreview={false}
   example="animax"
   defaultFile="src/playsegment/index.tsx"
-  defaultEntryFile="dist/playsegment.lynx.bundle"
+  defaultEntryName="playsegment"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/playsegment.gif"
   entry={[
     'src/playsegment/index.tsx',
@@ -84,7 +84,7 @@ import { Go } from '@lynx';
   }}
 />
 
-片段的起止位置使用帧号表示。如果动画需要等待用户触发，再设置 `autoplay={false}`。
+The segment bounds are frame numbers. Keep `autoplay={false}` when the animation should wait for the segment command.
 
 ```tsx {3,12-20}
 <view
@@ -104,16 +104,16 @@ import { Go } from '@lynx';
 />
 ```
 
-## 查询运行时状态
+## Query runtime status
 
-当页面需要在用户操作、页面生命周期变化或宿主回调之后同步播放状态时，可以使用查询方法读取运行时状态。
+Query methods are useful when the UI needs to synchronize with playback after user actions, page visibility changes, or host-side lifecycle callbacks.
 
 <Go
   defaultTab="preview"
   webPreview={false}
   example="animax"
   defaultFile="src/methods-query/index.tsx"
-  defaultEntryFile="dist/methods-query.lynx.bundle"
+  defaultEntryName="methods-query"
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/methods-query.gif"
   entry={[
     'src/methods-query/index.tsx',
@@ -125,7 +125,7 @@ import { Go } from '@lynx';
   }}
 />
 
-`getDuration`、`getCurrentFrame` 和 `isAnimating` 会通过 UI Method 的回调返回结果。和播放控制一样，这些方法也应该在 `ready` 之后调用。
+`getDuration`, `getCurrentFrame`, and `isAnimating` return runtime state through the UI Method callback. As with playback methods, call them after `ready`.
 
 ```tsx {1-15,20-23}
 function invokeQuery(method: QueryMethod, onResult: (value: string) => void) {

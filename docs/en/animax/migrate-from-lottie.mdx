@@ -1,16 +1,54 @@
 ---
-description: 'Migrate Lottie animations to AnimaX and integrate them with AnimaXView in native pages.'
+description: 'Reuse Lottie assets in Lynx, migrate native players to AnimaX, and explore additional animation capabilities.'
 ---
 
 import { PlatformTabs } from '@lynx';
 
 # Migrate from Lottie to AnimaX
 
-This page explains how to replace an existing Lottie solution with AnimaX.
+Start by playing an existing Lottie animation with AnimaX, then adapt playback controls and explore additional capabilities. You can use AnimaX through `<animax-view>` in a Lynx page or integrate it directly into an iOS or Android app.
 
-When migrating, the animation asset itself can continue to be passed as the source: move the resource path originally passed to Lottie in Android Java or iOS Swift to the AnimaXView src entry.
+## Replace the frontend player
 
-AnimaX is compatible with Lottie features and supports more advanced features. See [Feature Support](./feature-support) for more information.
+### Reuse your animation assets
+
+AnimaX reads Lottie JSON, so you can start with your existing animation assets without exporting them again. Check [Feature Support](./feature-support) against the features used by your animation and the AnimaX version in your app.
+
+Here, drop-in replacement refers to reusing the animation resource. Player components, methods, and event names still need to be adapted; AnimaX does not expose the same API as every Lottie player.
+
+### Render the animation in Lynx
+
+If you are moving a frontend animation into Lynx, replace the player component with [`<animax-view>`](/api/elements/built-in/animax-view). Use the [Quick Start](./start/quick-start) to prepare a Lynx project and an app with AnimaX support.
+
+The following example assumes `animationUrl` is the HTTPS URL of your existing Lottie JSON. Keep that resource URL and pass it to `src`:
+
+```tsx
+<animax-view
+  src={animationUrl}
+  autoplay={true}
+  loop={true}
+  style={{ width: '120px', height: '120px' }}
+/>
+```
+
+| In your existing player           | In AnimaX for Lynx                                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Animation resource URL            | Pass the URL to `src`.                                                                              |
+| Parsed animation data             | Pass a JSON string to `json`, for example `json={JSON.stringify(animationData)}`, instead of `src`. |
+| Automatic playback and repetition | Set `autoplay` and `loop`.                                                                          |
+| Player size                       | Set the element's width and height.                                                                 |
+| Imperative playback controls      | Invoke UI methods such as `play`, `pause`, `resume`, and `seek` after `bindready`.                  |
+| Playback callbacks                | Connect handlers to events such as `bindstart`, `bindcompletion`, and `bindupdate`.                 |
+
+When passing `json`, referenced assets must use absolute URLs or paths. Check image and font loading as well as the animation itself. See the [`json` property](/api/elements/built-in/animax-view.html#json) for the resource format requirements.
+
+Use [Basic Controls](./lynx/basic-controls) to adapt play and pause buttons, and [Runtime Events](./lynx/runtime-events) to keep application state synchronized with playback. Compare the result with your existing player, including sizing, looping, completion callbacks, and resource loading.
+
+## Integrate the native player
+
+For a native page, replace `LottieAnimationView` with `AnimaXView`. First follow the [Native Quick Start](./native/quick-start) to install the SDK and configure the app. The examples below assume that setup is complete.
+
+These examples reuse `loading.json` and preserve a 120 × 120 view with looping playback. The AnimaX source API also specifies where the resource is loaded from: the app bundle on iOS or local assets on Android.
 
 <PlatformTabs queryKey="platform">
 <PlatformTabs.Tab platform="ios">
@@ -61,3 +99,15 @@ view.setSrc(UriUtil.fromLocalAsset("loading.json"));
 
 </PlatformTabs.Tab>
 </PlatformTabs>
+
+For additional playback controls and cleanup when a view leaves the page, see [Playback and Lifecycle](./native/playback). If your app has custom resource loaders or image and video services, connect them through [Extend Native Capabilities](./native/services).
+
+## Explore more features
+
+Once the migrated animation works, you can add capabilities as needed:
+
+- [Dynamic Properties](./lynx/dynamic-properties): update layer properties during playback, or customize image and font resources before playback starts.
+- [Alpha Video](./alpha-video): play transparent video and combine it with vector layers for effects that need video rendering.
+- [AFX Export Plugin](./afx): export and preview animations with Alpha Video support when you need to extend your existing assets.
+
+These capabilities are optional. Start by validating your existing animation; introduce new resources or runtime behavior separately.
