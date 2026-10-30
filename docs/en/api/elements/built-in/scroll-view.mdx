@@ -31,6 +31,16 @@ Basic scrolling component supporting both horizontal and vertical scrolling. Whe
   entry="src/base"
 />
 
+### Set the initial scroll position
+
+Use [`initial-scroll-offset`](#initial-scroll-offset) or [`initial-scroll-to-index`](#initial-scroll-to-index) to set the initial scroll position.
+
+:::warning
+
+Do not set both attributes. They can override each other.
+
+:::
+
 ### Scroll Events
 
 Use event callbacks such as [`bindscroll`](#bindscroll), [`bindscrolltoupper`](#bindscrolltoupper), and [`bindscrolltolower`](#bindscrolltolower) to monitor changes in scroll progress.
@@ -42,6 +52,31 @@ Use event callbacks such as [`bindscroll`](#bindscroll), [`bindscrolltoupper`](#
   highlight="{16-24}"
   entry="src/event"
 />
+
+### Scroll a child node into view
+
+`scrollIntoView` is a generic element method. Invoke it on a descendant node, not on the `<scroll-view>` itself.
+
+```tsx
+<scroll-view>
+  <text id="targetnode">Target node</text>
+</scroll-view>
+
+lynx
+  .createSelectorQuery()
+  .select('#targetnode')
+  .invoke({
+    method: 'scrollIntoView',
+    params: {
+      scrollIntoViewOptions: {
+        block: 'center',
+        inline: 'start',
+        behavior: 'smooth',
+      },
+    },
+  })
+  .exec();
+```
 
 ### Sticky Capability
 
