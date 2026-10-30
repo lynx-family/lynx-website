@@ -191,6 +191,26 @@ committed: change those pages in lynx-stack, then update
 testing-library and GenUI URLs are redirected by
 `netlify/edge-functions/lynx-stack-api-redirects/`.
 
+## CSS Reference Style
+
+- Include a non-empty frontmatter `title` in CSS property and data-type
+  references. Existing explicit H1 titles remain supported; keep their text
+  consistent with the frontmatter title.
+- Nest H3 `Values` under H2 `Syntax`. When values have individual headings,
+  use H4, preserving their anchors and matching the other locale. Do not skip
+  to H5 or replace anchored headings with standalone bold paragraphs.
+  Existing value lists may be retained; adopting an anchored definition-list
+  format is a separate change.
+- Record initial values in `Formal definition`. Additional default-value notes
+  belong in the relevant value description, without a separate default-value
+  heading.
+- Use `Differences from the Web` only for concrete Lynx behavior differences.
+  Put reference links without a difference explanation under `See also`.
+- In data-type references, `Units` is an H2 peer of `Syntax`; unit groups use
+  H3.
+- Keep heading and formatting corrections separate from missing translations,
+  examples, and behavior explanations.
+
 ## Deployment Portability
 
 Build and generation scripts must remain portable across GitHub Actions,
