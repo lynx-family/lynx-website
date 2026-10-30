@@ -39,16 +39,15 @@ A full snapshot can include nodes marked `offscreen`, helping the agent discover
 
 The visible snapshot after scrolling confirms that the bottom buttons have entered the viewport. Use `snapshot --visible-only` to inspect the current screen, or a full snapshot to discover content outside it.
 
-## Give the Task a Completion Condition
+## Inspection and Interaction Capabilities
 
-On your own pages, describe input, waiting, and long-press tasks in the same way. Tell the agent what to change and what would confirm success so it can choose an action and check the result:
-
-| Task             | What you can say                                                                | What the agent should check                                                                                         |
-| ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Edit input       | “Replace the search field's contents with Lynx and confirm the displayed text.” | Find a field marked `editable`, replace its contents with `fill` or empty it with `clear`, then read the new state. |
-| Wait for loading | “Wait until the page says ‘Loading complete’, then report the result.”          | Use `wait --text` for the page's completion signal, then inspect the corresponding content.                         |
-| Inspect a menu   | “Long-press this message and check which actions are available.”                | Find the message, use `long-press`, and read the resulting menu from a new snapshot.                                |
-
-Display Name and Email in the Settings example are text displays. For input tasks, use a page with actual editable fields; the snapshot's `editable` flag helps the agent identify them.
+| Capability             | What it supports                                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inspect page structure | `snapshot` exposes the element tree, text, element refs, and flags such as `editable` and `scrollable`. It can include offscreen content or show only visible elements. |
+| Read text and styles   | `get text` reads element text; `get style` reads computed styles, providing evidence of content, color, and size changes.                                               |
+| Tap and long-press     | `tap` and `long-press` act on an element ref to trigger controls and gestures such as opening a context menu.                                                           |
+| Edit input             | `fill` replaces an editable field's contents, and `clear` empties it. The snapshot's `editable` flag identifies supported targets.                                      |
+| Scroll content         | `scroll` moves a specified scroll container up, down, left, or right to bring offscreen content into view.                                                              |
+| Wait for page changes  | `wait` polls fresh snapshots until matching text is found or an element ref resolves, with a configurable timeout.                                                      |
 
 The next guide's [annotated screenshot](screenshots.mdx#annotated-and-fullscreen-screenshots) uses the same Settings example to connect visible boxes with element refs. If an action does not produce the expected change, continue with [logs and runtime debugging](debugging.mdx). See the [CLI reference](cli-reference.mdx#page-inspection-and-interaction-options) for parameters, snapshot refresh behavior, and wait units.
