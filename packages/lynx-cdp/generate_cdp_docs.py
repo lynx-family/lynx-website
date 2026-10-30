@@ -663,7 +663,7 @@ def render_custom_method(
 def render_fields(
     title: str, fields: Any, *, include_required: bool
 ) -> list[str]:
-    lines = [f"###### {title}", ""]
+    lines = [f"#### {title}", ""]
     if not fields:
         none_text = "No parameters." if title == "Parameters" else "No return fields."
         lines.extend([none_text, ""])
@@ -705,7 +705,7 @@ def render_events(events: Any) -> list[str]:
 def render_list_section(title: str, values: Any) -> list[str]:
     if not values:
         return []
-    lines = [f"###### {title}", ""]
+    lines = [f"#### {title}", ""]
     for item in values:
         lines.append(f"- {item}")
     lines.append("")
@@ -715,7 +715,7 @@ def render_list_section(title: str, values: Any) -> list[str]:
 def render_examples(examples: Any) -> list[str]:
     if not examples:
         return []
-    lines = ["###### Examples", ""]
+    lines = ["#### Examples", ""]
     for example in examples:
         lines.append(f"**{example['title']}**")
         lines.append("")

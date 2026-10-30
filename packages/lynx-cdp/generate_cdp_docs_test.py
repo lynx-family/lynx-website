@@ -27,7 +27,7 @@ events:
         self.assertEqual(
             render_events(doc["events"]),
             [
-                "###### Events",
+                "#### Events",
                 "",
                 "- Legacy.changed",
                 "- `GlobalProps.changed`: Emitted when values change.",

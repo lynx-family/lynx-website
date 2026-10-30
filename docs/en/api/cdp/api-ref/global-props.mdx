@@ -29,22 +29,22 @@ Disables GlobalProps change events for the current Lynx target.
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_global_props_agent.cc`
 
-###### Parameters
+#### Parameters
 
 No parameters.
 
-###### Returns
+#### Returns
 
 No return fields.
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorTasmExecutor on the TASM task runner.
 - The operation is idempotent and returns an empty result object.
 - GlobalProps.get and replace remain available after events are disabled.
 - Returns a CDP error with code -32000 when the TASM target is unavailable.
 
-###### Examples
+#### Examples
 
 **Disable GlobalProps inspection**
 
@@ -73,26 +73,26 @@ Enables GlobalProps change events for the current Lynx target.
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_global_props_agent.cc`
 
-###### Parameters
+#### Parameters
 
 No parameters.
 
-###### Returns
+#### Returns
 
 No return fields.
 
-###### Events
+#### Events
 
 - `GlobalProps.changed`: Emitted for each authoritative update with a backend-generated timestamp and a single replace item. Call GlobalProps.get to read the complete current value.
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorTasmExecutor on the TASM task runner.
 - The operation is idempotent and returns an empty result object.
 - Call GlobalProps.get after enabling to obtain the initial value and its timestamp; updates that happened before enable are not replayed.
 - Returns a CDP error with code -32000 when the TASM target is unavailable.
 
-###### Examples
+#### Examples
 
 **Enable GlobalProps inspection**
 
@@ -121,24 +121,24 @@ Returns the complete authoritative GlobalProps object for the current Lynx targe
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_global_props_agent.cc`
 
-###### Parameters
+#### Parameters
 
 No parameters.
 
-###### Returns
+#### Returns
 
 | Name          | Type     | Description                                                                                                                                                                                                                                                                                 |
 | ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `globalProps` | `object` | Complete current GlobalProps value read from TemplateAssembler. An empty or not-yet-initialized value is returned as an empty object.                                                                                                                                                       |
 | `timestamp`   | `number` | Backend-generated timestamp of the most recent applied GlobalProps change, monotonically increasing within the target. The frontend uses it to order GlobalProps.changed events against this response, e.g. while refetching after a replace marker. Zero when no change has been observed. |
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorTasmExecutor on the TASM task runner.
 - The response is serialized before it leaves the TASM task runner.
 - Returns a CDP error with code -32000 when the TASM target is unavailable.
 
-###### Examples
+#### Examples
 
 **Get current GlobalProps**
 
@@ -172,28 +172,28 @@ Atomically replaces the complete authoritative GlobalProps object for the curren
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_global_props_agent.cc`
 
-###### Parameters
+#### Parameters
 
 | Name          | Type     | Required | Description                                                                         |
 | ------------- | -------- | -------- | ----------------------------------------------------------------------------------- |
 | `globalProps` | `object` | Yes      | Complete replacement GlobalProps object. Keys omitted from this object are removed. |
 
-###### Returns
+#### Returns
 
 No return fields.
 
-###### Events
+#### Events
 
 - `GlobalProps.changed`: Emits a single replace change item. The frontend must call GlobalProps.get to rebuild its full state. The replace item never carries field values.
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorTasmExecutor on the TASM task runner.
 - The value must be a JSON object; arrays, scalar values, and null are rejected.
 - The update uses TemplateAssembler::UpdateGlobalProps so the TASM cache, MTS and BTS projections, and rendering follow the normal GlobalProps pipeline.
 - Returns a CDP error with code -32000 when the TASM target is unavailable.
 
-###### Examples
+#### Examples
 
 **Replace GlobalProps**
 

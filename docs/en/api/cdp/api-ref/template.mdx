@@ -29,20 +29,20 @@ Returns a base64-encoded slice of saved template binary bytes.
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_template_agent.cc`
 
-###### Parameters
+#### Parameters
 
 | Name     | Type      | Required | Description                                                                                                                              |
 | -------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `offset` | `integer` | Yes      | Byte offset into the saved template binary. Constraints: minimum 0.                                                                      |
 | `size`   | `integer` | Yes      | Maximum number of bytes to read. Platform implementations may clamp this value to the available template length. Constraints: minimum 0. |
 
-###### Returns
+#### Returns
 
 | Name   | Type     | Description                                                                                                                                                                       |
 | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `data` | `string` | Base64-encoded template bytes for the requested range. Empty when no template bytes are available, offset is outside the saved template, or the platform delegate is unavailable. |
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorUIExecutor on the UI thread.
 - params.offset and params.size are required. If either field is missing, the method returns a CDP error with message Params must have offset and size properties.
@@ -50,7 +50,7 @@ Returns a base64-encoded slice of saved template binary bytes.
 - Android returns a base64 slice from the saved binary template data or the bytes captured after a URL template load. The slice length is clamped to the remaining template bytes.
 - The generic embedder implementation returns an empty data string.
 
-###### Examples
+#### Examples
 
 **Read a template byte range**
 
@@ -85,23 +85,23 @@ Reports template data processor API information for the current template.
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_template_agent.cc`
 
-###### Parameters
+#### Parameters
 
 No parameters.
 
-###### Returns
+#### Returns
 
 | Name             | Type      | Description                                                                                        |
 | ---------------- | --------- | -------------------------------------------------------------------------------------------------- |
 | `useDefault`     | `boolean` | Whether the current template has a default data processor closure.                                 |
 | `processMapKeys` | `array`   | Names of registered data processor entries. This field is omitted when the processor map is empty. |
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorTasmExecutor on the TASM thread.
 - When TASM is unavailable, the result reports useDefault as false.
 
-###### Examples
+#### Examples
 
 **Get template processor API info**
 
@@ -133,22 +133,22 @@ Compatibility method for removed template config info support.
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_template_agent.cc`
 
-###### Parameters
+#### Parameters
 
 No parameters.
 
-###### Returns
+#### Returns
 
 | Name     | Type     | Description             |
 | -------- | -------- | ----------------------- |
 | `result` | `string` | Always an empty string. |
 
-###### Notes
+#### Notes
 
 - This method does not call the mediator or platform facade.
 - The response result is an empty string, not an object, because config info support was removed.
 
-###### Examples
+#### Examples
 
 **Get removed template config info**
 
@@ -177,23 +177,23 @@ Returns the current initial template data exposed by the platform facade.
 - Origin: `lynx-extension`
 - Source: `devtool/lynx_devtool/agent/domain_agent/inspector_template_agent.cc`
 
-###### Parameters
+#### Parameters
 
 No parameters.
 
-###### Returns
+#### Returns
 
 | Name      | Type     | Description                                                                                                                                                  |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `content` | `string` | Serialized template data produced from the platform Lepus value. This field is present only when the platform facade returns a non-null template data value. |
 
-###### Notes
+#### Notes
 
 - Dispatches through LynxDevToolMediator to InspectorUIExecutor on the UI thread.
 - Android reads the saved initial TemplateData pointer from the platform reload helper; Darwin delegates to the platform implementation.
 - If the platform facade has no template data value, the result object is returned without content.
 
-###### Examples
+#### Examples
 
 **Get current template data**
 
