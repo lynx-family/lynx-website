@@ -1,0 +1,154 @@
+---
+description: '教程：配置 AnimaX 的播放区间、速度、进度、片段播放和运行时状态查询。'
+---
+
+import { Go } from '@lynx';
+
+# 教程：播放时间线
+
+介绍和时间线相关的播放控制：限制播放帧区间、调整速度、设置初始进度、播放指定片段，以及从运行时查询播放状态。
+
+## 配置播放属性
+
+如果播放行为比较固定，优先使用 `<animax-view>` 上的声明式属性。下面的示例限制了播放帧区间，开启 repeat 时的反向播放，并通过 UI 状态调整速度和初始进度。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/playback-props/index.tsx"
+  defaultEntryFile="dist/playback-props.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/playback-props.gif"
+  entry={[
+    'src/playback-props/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/playback-props/index.tsx': '{82-95}',
+  }}
+/>
+
+当只需要播放动画中的一段内容时，可以设置 `start-frame` 和 `end-frame`。`speed` 用于控制播放速度，`progress` 用于设置初始进度，`loop-count` 和 `bindrepeat` / `bindcompletion` 可以让界面感知重复播放和播放完成。
+
+```tsx {5-11}
+<animax-view
+  src={PLAYBACK_PROPS_LOTTIE_SRC}
+  autoplay={true}
+  start-frame={24}
+  end-frame={144}
+  auto-reverse={true}
+  speed={speed}
+  progress={progress}
+  loop-count={2}
+  bindrepeat={handleRepeat}
+  bindcompletion={handleCompletion}
+/>
+```
+
+## 基础循环播放
+
+如果只需要控制循环次数，可以单独使用 `loop-count`。`bindrepeat` 会在每次重复播放时回调，`bindcompletion` 会在配置的循环次数结束后触发。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/basic-loop/index.tsx"
+  defaultEntryFile="dist/basic-loop.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic-loop.gif"
+  entry={['src/basic-loop/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/basic-loop/index.tsx': '{20-23,46-53}',
+  }}
+/>
+
+## 播放指定片段
+
+如果播放区间来自用户操作或业务逻辑，可以通过 `playSegment` UI Method 动态指定片段，而不是把区间写成静态属性。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/playsegment/index.tsx"
+  defaultEntryFile="dist/playsegment.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/playsegment.gif"
+  entry={[
+    'src/playsegment/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/playsegment/index.tsx': '{38,42,48-56}',
+  }}
+/>
+
+片段的起止位置使用帧号表示。如果动画需要等待用户触发，再设置 `autoplay={false}`。
+
+```tsx {3,12-20}
+<view
+  className="button"
+  bindtap={() => invokeAnimaX('playSegment', { startFrame: 15, endFrame: 75 })}
+>
+  <text className="button-text">Play Segment</text>
+</view>
+
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  src={PLAY_SEGMENT_LOTTIE_SRC}
+  autoplay={false}
+  loop={true}
+  bindstart={updateStatus('start')}
+  bindcompletion={updateStatus('complete')}
+/>
+```
+
+## 查询运行时状态
+
+当页面需要在用户操作、页面生命周期变化或宿主回调之后同步播放状态时，可以使用查询方法读取运行时状态。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/methods-query/index.tsx"
+  defaultEntryFile="dist/methods-query.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/methods-query.gif"
+  entry={[
+    'src/methods-query/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/methods-query/index.tsx': '{63-77,88,92,96,100,137-144}',
+  }}
+/>
+
+`getDuration`、`getCurrentFrame` 和 `isAnimating` 会通过 UI Method 的回调返回结果。和播放控制一样，这些方法也应该在 `ready` 之后调用。
+
+```tsx {1-15,20-23}
+function invokeQuery(method: QueryMethod, onResult: (value: string) => void) {
+  lynx
+    .createSelectorQuery()
+    .select(`#${ANIMAX_VIEW_ID}`)
+    .invoke({
+      method,
+      success(res) {
+        onResult(formatQueryResult(method, res));
+      },
+    })
+    .exec();
+}
+
+const queryCurrentFrame = () => {
+  invokeQuery('getCurrentFrame', setFrame);
+};
+
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  src={METHODS_QUERY_LOTTIE_SRC}
+  autoplay={true}
+  bindready={handleReady}
+/>;
+```

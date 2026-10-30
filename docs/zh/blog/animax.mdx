@@ -1,0 +1,230 @@
+---
+title: 'AnimaX 正式发布'
+date: 2026-07-06
+sidebar: false
+authors: ['RickAi', 'WATER1350', 'liyunrainbow', 'XianruoLi', 'cait7']
+badge_text: 'AnimaX 正式发布！'
+description: 'AnimaX 正式发布，一套基于 C++ 和 Skity 自渲染引擎构建的跨平台动画框架。它兼容现有 Lottie 工作流，支持 Alpha Video 图层、运行时动态属性、多线程渲染和多平台一致渲染，帮助团队在 Lynx 与原生应用中稳定交付复杂动效。'
+---
+
+import { BlogHeader, Caption, Go, ImageWall } from '@lynx';
+
+<BlogHeader />
+
+## 概览
+
+[AnimaX](/animax/)
+正式开源发布。它是 Lynx 团队自研的跨平台动画框架，底层由 C++ 运行时和
+[Skity](https://github.com/lynx-family/skity) 自渲染引擎驱动。
+
+AnimaX 没有重新定义一套动画工作流或产物格式，而是保留了设计师熟悉的 Lottie 工作流：设计师仍然使用 After Effects 制作动效，通过插件导出兼容 Lottie 协议的产物，再交给研发接入。
+在此基础上，AnimaX 补齐了复杂图层、一致渲染、运行时动态属性和多线程渲染能力。对于已经在使用 Lottie 的团队，它更像是一条平滑的升级路径，而不是要求业务重新适配新的工作流或产物格式。
+
+AnimaX 已发布在
+[lynx-family/animax](https://github.com/lynx-family/animax)
+仓库中，并提供 Android 和 iOS 原生示例。对于 Lynx 应用，可以直接使用
+[`<animax-view>`](/api/elements/built-in/animax-view)
+元素播放 AnimaX 动画；也可以在示例文档中直接预览播放效果。
+
+以下是几类典型 AnimaX 动画效果，覆盖形状、图片、文本图层，也包含 AnimaX 支持的透明视频图层。
+经过合理的动效拆分和图层组织后，设计师就能用 AnimaX 在业务场景中还原 After Effects 里的大部分复杂动效。
+
+<ImageWall
+  rows={2}
+  cols={3}
+  maxItems={6}
+  colsResponsive={{ base: 2, md: 3 }}
+  tileAspectRatio={9 / 16}
+  srcBase="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/"
+  images={[
+    {
+      filePath: 'vector.mp4',
+      alt: '矢量图层',
+    },
+    {
+      filePath: 'image.mp4',
+      alt: '图片图层',
+    },
+    {
+      filePath: 'text.mp4',
+      alt: '文本图层',
+    },
+    {
+      filePath: 'alpha_video.mp4',
+      alt: 'Alpha 视频图层',
+    },
+    {
+      filePath: 'vector2.mp4',
+      alt: '矢量图层',
+    },
+    {
+      filePath: 'mixed.mp4',
+      alt: '混合图层',
+    },
+  ]}
+/>
+
+<Caption>AnimaX 在不同图层类型上的渲染效果</Caption>
+
+## 为什么需要 AnimaX？
+
+Lottie 让移动端和 Web 上的矢量动画更容易分发，也让设计师可以沿用 After Effects
+制作动效。但在真实业务里，一旦动画进入复杂运营场景，几个问题就会反复出现：
+
+1. 各端能力不一致。Android、iOS、Web 侧常常依赖不同的 Lottie 实现，底层绘制能力和维护节奏也不一样。同一份产物在一个平台可以正常播放，换到另一个平台就可能出现缺失或偏差。比如形状图层上的模糊、遮罩、混合模式等效果，在某些端上可用，在另一些端上就可能退化甚至无法绘制。平台越多，这类差异的维护成本越高。
+2. 主线程性能压力。传统播放器很多逻辑会挤在 UI 线程上执行。复杂动画一旦叠加遮罩、蒙层、路径计算或图片序列，就容易和页面布局、滚动、交互抢主线程资源。业务通常会选择降低动画复杂度，或者把效果转成图片序列，但这样又会带来包体、内存和加载成本。
+3. 效果还原受限。Lottie 对 After Effects 的支持天然有限。设计稿里常见的复杂特效、文字、图片混合，很难用纯 Lottie 稳定还原。设计师需要改稿，开发需要补 UI，最后动画产物和页面逻辑被拆散，维护成本也跟着上升。
+
+AnimaX 的目标就是在不破坏 Lottie 工作流的前提下解决这些问题。
+它用统一的 C++ 运行时负责解析、调度和渲染，用 Skity 提供跨平台自渲染能力，再通过 Alpha Video、图片、文本、形状图层和动态属性，把复杂动效组合成一个可播放、可控制、可观察的动画运行时。
+
+### 完整兼容 Lottie
+
+兼容 Lottie 不是 AnimaX 的附加能力，而是它的起点。
+
+很多团队已经围绕 After Effects、Lottie JSON、预览工具、发布流程建立了完整链路。如果为了获得更强的渲染能力就重新定义一种格式，设计师和开发者都需要重新学习，已有产物也很难复用。AnimaX 选择继续解析 Lottie 格式产物，让现有 JSON 能够直接进入新的运行时。
+
+这意味着业务可以先把 AnimaX 当作一个更强的 Lottie 播放器使用，再逐步引入 Alpha Video、动态属性和混合图层。对设计师来说，产物组织方式仍然围绕 After Effects 展开；对开发者来说，接入方式仍然是加载动画资源、控制播放、监听状态，只是底层换成了更统一的 C++ 渲染管线。
+
+也就是说，项目中原有的 Lottie 产物可以直接交给 AnimaX 播放，不需要设计师在 After Effects 中重新导出。
+
+<Go
+  example="animax"
+  defaultTab="preview"
+  webPreview={false}
+  defaultFile="src/basic/index.tsx"
+  defaultEntryFile="dist/basic.lynx.bundle"
+  entry="src/basic"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/basic_v3.gif"
+  highlight={{
+    'src/basic/index.tsx': '{15-20}',
+  }}
+/>
+
+在 Lynx 应用中，可以通过 [`<animax-view>`](../api/elements/built-in/animax-view) 直接播放 AnimaX 资源。若要在原生平台接入，已有 Lottie 方案可以先参考 [从 Lottie 迁移到 AnimaX](../animax/migrate-from-lottie)，再按照 [原生接入指引](../animax/native/guide) 完成 iOS 或 Android 接入。
+
+### 支持复杂特效
+
+纯矢量图层无法表达所有 After Effects 效果。很多动效里会同时出现形状图层、图片、文字、模糊、遮罩、光效或 3D 效果。如果强行把这些内容全部转成图片序列再打包进 Lottie，往往会遇到体积过大、还原不稳定、端能力不一致的问题。
+
+AnimaX 提供了两条路径：
+
+1. 继续扩展矢量渲染。基于 [Skity](https://github.com/lynx-family/skity) 的自渲染能力，AnimaX 可以在统一的图形管线里支持更多绘制特性和高级动效，减少对平台原生绘制能力差异的依赖。AnimaX 在多类 After Effects 特性上比 Lottie 支持更多能力，完整对比见 [功能支持](../animax/feature-support)。
+
+2. 支持 [Alpha Video](../animax/alpha-video) 图层。对于复杂度高、暂时不适合用矢量实现，或者本来就更适合视频表达的效果，设计师可以通过
+   [AFX 导出指南](/animax/afx)
+   把相关图层组织并导出为透明视频图层，再与 Lottie 形状、图片和文本图层一起播放。这样既保留了 After Effects 的表达能力，也避免把所有视觉细节都压到纯矢量图层里。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/alpha-video-basic/index.tsx"
+  defaultEntryFile="dist/alpha-video-basic.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/alpha-video-basic.gif"
+  entry={[
+    'src/alpha-video-basic/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/alpha-video-basic/index.tsx': '{15-20}',
+    'src/shared/animation.ts': '{17}',
+  }}
+/>
+
+### 多平台一致渲染
+
+多端动画最难处理的不是“能不能播放”，而是“播放出来是不是一样”。
+
+在传统方案里，Android、iOS、Web 往往各自依赖不同渲染实现。同一个效果，Android 侧用 Skia 能正常绘制，iOS 侧若改用 Core Graphics 或其他实现，就可能出现细节偏差。即使只是形状图层上的模糊效果，也可能在一个平台正常，在另一个平台缺失。平台扩展到 HarmonyOS、桌面端或更多容器时，这种差异会继续放大。
+
+AnimaX 把核心逻辑收敛到 C++，并通过 [Skity](https://github.com/lynx-family/skity) 统一绘制行为。平台侧只需要提供必要的窗口、纹理、资源加载和事件能力，动画解析、图层计算、绘制顺序和大部分渲染逻辑都由同一套引擎完成。这样做不能消除所有平台差异，但能把差异控制在更小的边界里，避免每接入一个新平台就重新面对一套播放器实现。
+
+### 运行时动态属性
+
+动效进入业务页面以后，常常不只是自动播放一遍。页面可能需要根据用户状态替换图片，根据语言切换文本，根据主题更新颜色，或者在交互发生时调整某个图层的属性。
+
+AnimaX 对这类运行时修改做了专门优化，并提供更直接的 API 来替换图片、字体、文本等资源。业务可以把动画产物当作一个可配置的运行时图层，而不是一段完全封闭的视频或一组难以复用的 UI 片段。设计师仍然可以在 After Effects 里组织动画，开发者则可以在运行时把真实业务数据填进去。
+
+更多用法见 [动态属性](../animax/dynamic-property)。
+
+### 减少主线程占用
+
+复杂动画最容易拖慢页面的地方，通常不是播放状态本身，而是持续的图层计算、遮罩处理、混合和绘制。它们如果集中在 UI 线程上，就会和页面滚动、布局、手势响应抢资源，低端设备上尤其明显。
+
+AnimaX 的自渲染架构允许耗时渲染任务放到非 UI 线程执行。对于包含大量蒙层、遮罩、特效和图层合成的动画，这可以显著降低主线程压力，把卡顿风险从页面交互链路里移出去。
+
+[AnimaX Lottie Benchmark](https://github.com/RickAi/animax-lottie-benchmark)
+用 [Callstack 文章](https://www.callstack.com/blog/lottie-vs-rive-optimizing-mobile-app-animation)
+中的动画和测试方法做了一组固定场景对比。测试设备分别为 Android 10 的 Pixel 4 和 iOS 15.4 的 iPhone 12 Mini。
+
+FPS 结果如下。这里的 GPU Render FPS 指 GPU 线程离屏渲染的帧率；Lottie 未记录对应指标，因此用 `-` 表示。
+
+| 平台    | 引擎   | UI FPS | GPU Render FPS |
+| ------- | ------ | -----: | -------------: |
+| Android | AnimaX |   60.0 |           60.0 |
+| Android | Lottie |   37.2 |              - |
+| iOS     | AnimaX |   60.0 |           60.1 |
+| iOS     | Lottie |   60.0 |              - |
+
+Android 侧，AnimaX 的 UI FPS 和 GPU Render FPS 都稳定在 60.0，而 Lottie 的 UI FPS 为 37.2。这个差异更直接地体现了 AnimaX 自渲染管线在重遮罩、重合成动画中的价值：渲染工作不再持续挤占 UI 线程，页面交互、布局和业务逻辑能保留更多余量。iOS 侧，两者都能保持 60 FPS，这也符合 Lottie iOS 通过 Core Animation 路径把部分播放工作交给系统渲染基础设施的表现。
+
+内存数据需要单独分析。下面统计的是进入动画场景后相对基准值的内存增量，单位为 MB。由于 Android 和 iOS 暴露的内存指标不同，这里分平台列出。
+
+Android 数据：
+
+| 引擎   | Native Heap Delta | Java Heap Delta | Graphics Delta | TOTAL PSS Delta |
+| ------ | ----------------: | --------------: | -------------: | --------------: |
+| AnimaX |              8.14 |            0.68 |          65.73 |           76.64 |
+| Lottie |             11.39 |            3.69 |          19.07 |           36.13 |
+
+iOS 数据：
+
+| 引擎   | Resident Delta | Phys Footprint Delta | Internal Delta |
+| ------ | -------------: | -------------------: | -------------: |
+| AnimaX |          21.90 |                60.37 |          17.13 |
+| Lottie |          26.63 |                20.47 |          20.38 |
+
+内存结果需要结合各平台的统计口径来解读。Android 上，AnimaX 的 Native Heap 和 Java Heap 增量更低，但 Graphics 增量更高，这是自渲染引擎将工作集放入图形缓冲区、纹理和渲染缓存后的典型结果。iOS 上，AnimaX 的 Resident 和 Internal 增量低于 Lottie，但 Phys Footprint 更高。
+
+## 在 Lynx 或原生应用中使用
+
+在 Lynx 页面里，AnimaX 通过
+[`<animax-view>`](/api/elements/built-in/animax-view)
+暴露。最常见的用法是直接加载 `.json` 或 `.zip` 动画资源：
+
+```tsx
+<animax-view
+  className="animax-item"
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/showcase_url/logo.json"
+  autoplay
+  loop
+/>
+```
+
+属性、事件和运行时控制能力可以参考
+[`<animax-view>` API](/api/elements/built-in/animax-view)。
+
+AnimaX 也可以作为独立原生库集成。平台侧用法可以参考
+[原生 API 参考](/animax/native/api/animax-view)，其中覆盖 view 创建、资源加载、播放控制、事件和状态查询能力。
+
+## 后续发布计划
+
+后续平台支持也已在规划中：
+
+- HarmonyOS 与 Web 端预计于 2026 年 Q3 陆续发布，同期我们还会封装并推出 LynxUI AnimaX 组件，让 AnimaX 能以更统一的组件形式接入 LynxUI 体系。
+- Desktop 端的开源则计划在 2026 年 Q4 完成。
+
+## 立即体验
+
+你可以先从 [AnimaX 简介](/animax/introduction)了解整体能力，再跟随
+[快速开始](/animax/start/quick-start)
+跑通最小示例。如果动画资源来自 After Effects，可以继续阅读
+[AFX 导出指南](/animax/afx)，了解 Alpha Video 图层如何被生产出来并和 Lottie 产物一起播放。
+
+AnimaX 使用 Apache-2.0 许可证，并在开源仓库中持续演进。欢迎在
+[lynx-family/animax 仓库](https://github.com/lynx-family/animax)
+提交问题、讨论需求或参与贡献。
+
+AnimaX 不试图替代设计师熟悉的 Lottie 工作流，而是在这条工作流之上补齐更完整的渲染、合成和运行时控制能力。对于需要在多端稳定交付复杂动效的团队，它提供了一条更可控的路径。

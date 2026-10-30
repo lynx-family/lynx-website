@@ -1,0 +1,66 @@
+---
+description: 'AnimaXImageService API reference for custom image decoding or image loading on iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXImageService
+
+`AnimaXImageService` connects AnimaX image handling to the host app's existing image infrastructure.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Decode Images
+
+### loadImageData
+
+Decodes raw image data into a `UIImage`. Return `nil` when decoding is not handled, and AnimaX will continue with its default decoding pipeline.
+
+**Parameters**
+
+| Name   | Type       | Description     |
+| ------ | ---------- | --------------- |
+| `data` | `NSData *` | Raw image data. |
+
+**Return value**
+
+`UIImage *` or `nil`.
+
+## Registration
+
+```objc
+[[AnimaXServiceCenter sharedInstance] registerService:@protocol(AnimaXImageDecoderService)
+                                             withImpl:myImageDecoder];
+```
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Load Images
+
+### loadImage
+
+Loads an image asynchronously. Return `true` to take over the request; AnimaX will not continue with its default image loading pipeline.
+
+**Parameters**
+
+| Name                | Type                                                                  | Description                           |
+| ------------------- | --------------------------------------------------------------------- | ------------------------------------- |
+| `request`           | [`AnimaXLoaderRequest`](./animax-loader-request)                      | Image load request.                   |
+| `completionHandler` | [`AnimaXLoaderCompletionHandler`](./animax-loader-completion-handler) | Callback used to return the response. |
+
+**Return value**
+
+`boolean`. Return `true` when this service has handled the request; return `false` to let AnimaX continue with its default loading pipeline.
+
+## Registration
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXImageService.class,
+    myImageService);
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>

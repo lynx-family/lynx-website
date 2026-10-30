@@ -1,0 +1,140 @@
+import { Caption, ImageWall } from '@lynx';
+import * as NextSteps from '@lynx/NextSteps';
+
+# 介绍
+
+AnimaX (`/ˈænɪmæks/`) 是 Lynx 团队自研的高性能跨平台动画库，使用 C++ 构建，并自带基于 Skity 的渲染引擎。它不仅完全兼容 Lottie 格式，还支持独立播放 Alpha Video（透明视频），以及无缝混合 Lottie 2D 矢量图层和 Alpha Video。
+
+AnimaX 已基于 Apache-2.0 许可证正式开源。你可以在 [lynx-family/animax](https://github.com/lynx-family/animax) 仓库中查看源码、原生示例、AFX 导出插件文档、Issue 与 Discussions。
+
+AnimaX 采用统一的 C++ 自渲染架构，在 iOS 和 Android 平台上提供像素级一致的渲染效果，减少平台实现差异，并通过将图形任务移出主线程来提升性能。
+
+借助 2D 矢量图层与 Alpha Video 的混合能力，设计师可以实现仅靠 Lottie 难以呈现的丰富、复杂动画效果。
+
+## Showcase
+
+<ImageWall
+  rows={2}
+  cols={3}
+  maxItems={6}
+  colsResponsive={{ base: 2, md: 3 }}
+  tileAspectRatio={9 / 16}
+  srcBase="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/"
+  images={[
+    {
+      filePath: 'vector.mp4',
+      alt: '矢量图层',
+    },
+    {
+      filePath: 'image.mp4',
+      alt: '图片图层',
+    },
+    {
+      filePath: 'text.mp4',
+      alt: '文本图层',
+    },
+    {
+      filePath: 'alpha_video.mp4',
+      alt: 'Alpha Video',
+    },
+    {
+      filePath: 'vector2.mp4',
+      alt: '矢量图层',
+    },
+    {
+      filePath: 'mixed.mp4',
+      alt: '混合图层',
+    },
+  ]}
+/>
+
+<Caption>AnimaX 在不同图层类型上的渲染效果</Caption>
+
+## 为什么选择 AnimaX？
+
+虽然 Lottie 使得矢量动画在移动设备和网页上普及开来，但为了复现复杂的 After Effects 特性，通常需要做出妥协。设计师可能不得不依赖庞大的图像序列，这会使应用体积膨胀；由于不同平台的实现方式不同，还要面对 iOS 和 Android 上渲染不一致的问题；又或者因为传统的 Lottie 播放器在主线程上运行繁重的解析和渲染操作，从而导致性能下降。
+
+AnimaX 通过重新设计运行时引擎来解决这些问题，同时保持与标准 After Effects 和 Lottie 工作流的兼容性：
+
+- **出色的性能**：与占用主线程资源的传统 Lottie 播放器不同，AnimaX 将耗时的图形渲染任务转移到后台线程，即使在低端设备上也能保持流畅的帧率。
+- **一致的跨平台渲染**：AnimaX 由统一的 C++ 渲染引擎 [Skity](https://github.com/lynx-family/skity) 驱动，无需依赖各平台不同的原生绘制 API，能够在不同平台上提供像素级一致的渲染效果。
+- **更丰富的引擎能力**：针对 Lottie 难以渲染的复杂 AE 效果，AnimaX 支持混合标准 2D 矢量图层与 Alpha Video（透明视频），兼顾视觉表现、资源体积和运行性能。
+- **兼容 Lottie，迁移成本低**：AnimaX 可以直接解析并播放现有的 Lottie JSON 文件。已有 Lottie 动画资源通常无需重新导出，即可交由 AnimaX 播放。
+- **灵活的交互能力**：AnimaX 内置动态属性支持，可以在运行时修改动画属性，并响应用户交互。
+
+## 术语表
+
+<table>
+  <tr>
+    <th>术语</th>
+    <th>描述</th>
+  </tr>
+  <tr>
+    <td>
+      <b>Lottie</b>
+    </td>
+    <td>
+      一种最初由 Airbnb 开发的开源动画文件格式。设计师在 Adobe After Effects
+      中创建动画，并将其导出为轻量级的 JSON 文件，随后可以在移动和 Web
+      平台上原生渲染。AnimaX 与 Lottie 格式完全兼容。
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Alpha Video</b>
+    </td>
+    <td>
+      包含
+      Alpha（透明度）通道的视频格式，允许视频部分区域透明。这使得视频可以像叠加
+      UI 元素一样，以平滑边缘叠加在其他内容上方。AnimaX 支持独立播放 Alpha
+      Video，从而能够渲染那些仅靠矢量动画难以或无法实现的复杂视觉效果。
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Alpha Video 混合 (Alpha Video Mixing)</b>
+    </td>
+    <td>
+      在一个动画中将标准 2D 矢量/图像图层与 Alpha Video 结合的能力。这是 AnimaX
+      的一项重要能力——设计师可以将传统的 Lottie 元素（形状、文本、图像）与 Alpha
+      Video
+      混合使用，以创建更丰富、更具表现力的动画。主要优势包括：（1）与完整的图像序列相比，大幅缩小资源体积；（2）实现纯矢量图层无法再现的复杂视觉效果（如粒子、3D、真人实拍）；（3）由于
+      C++ 引擎在后台线程中使用统一流水线渲染所有图层类型，因此能保持流畅的性能。
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>动态属性 (Dynamic Properties)</b>
+    </td>
+    <td>
+      即可以在运行时修改的动画属性。开发者可以通过代码更改动画中的颜色、文本内容、位置等属性，让动画根据用户输入、数据变化或应用状态动态响应，而无需引入新的动画资源。
+    </td>
+  </tr>
+</table>
+
+## 下一步
+
+### 快速上手
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/animax/start/quick-start"
+    title="快速开始"
+    description="运行你的第一个 AnimaX 最小可运行示例"
+  />
+  <NextSteps.Step
+    href="/animax/afx"
+    title="制作动画"
+    description="使用 AFX 插件创作并导出适配 AnimaX 的 Lottie 动画"
+  />
+</NextSteps.Root>
+
+### 相关文档
+
+<NextSteps.Root>
+  <NextSteps.Step
+    href="/api/elements/built-in/animax-view"
+    title="<animax-view>"
+    description="查看 AnimaX 的 Lynx 集成 API"
+  />
+</NextSteps.Root>

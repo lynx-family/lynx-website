@@ -1,0 +1,146 @@
+---
+description: 'AnimaXCompositionFactory API reference for creating AnimaXComposition from JSON or URI.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXCompositionFactory
+
+`AnimaXCompositionFactory` asynchronously parses animation resources and creates [AnimaXComposition](./animax-composition). Reuse the parsed result across multiple [AnimaXView](./animax-view) instances to avoid parsing the same animation repeatedly.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Getting the Instance
+
+### shared
+
+Returns the global `AnimaXCompositionFactory` instance.
+
+**Return value**
+
+`AnimaXCompositionFactory *`
+
+## Loading Compositions
+
+### loadJson
+
+Parses an animation composition from a Lottie JSON string. When an `AnimaXContext` is provided, loading uses the service scope associated with that context. Without a context, loading uses the default ability and default service scope.
+
+**Available signatures**
+
+| Signature                          | Description                          |
+| ---------------------------------- | ------------------------------------ |
+| `loadJson:withContext:completion:` | Parse JSON with the given context.   |
+| `loadJson:completion:`             | Parse JSON with the default context. |
+
+**Parameters**
+
+| Name         | Type                                    | Description               |
+| ------------ | --------------------------------------- | ------------------------- |
+| `json`       | `NSString *`                            | Lottie JSON string.       |
+| `context`    | [`AnimaXContext`](./animax-context) `*` | Context used for loading. |
+| `completion` | `AnimaXCompositionCompletionBlock`      | Completion callback.      |
+
+**Return value**
+
+`void`
+
+### loadUri
+
+Loads and parses an animation composition from a URI. When an `AnimaXContext` is provided, loading uses the service scope associated with that context. Without a context, loading uses the default ability and default service scope.
+
+**Available signatures**
+
+| Signature                         | Description                           |
+| --------------------------------- | ------------------------------------- |
+| `loadUri:withContext:completion:` | Parse a URI with the given context.   |
+| `loadUri:completion:`             | Parse a URI with the default context. |
+
+**Parameters**
+
+| Name         | Type                                    | Description               |
+| ------------ | --------------------------------------- | ------------------------- |
+| `uri`        | `NSString *`                            | Animation resource URI.   |
+| `context`    | [`AnimaXContext`](./animax-context) `*` | Context used for loading. |
+| `completion` | `AnimaXCompositionCompletionBlock`      | Completion callback.      |
+
+**Return value**
+
+`void`
+
+## Releasing Resources
+
+### releaseAll
+
+Releases all resource loaders held by the factory and clears the underlying composition factory cache.
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Getting the Instance
+
+### inst
+
+Returns the global `AnimaXCompositionFactory` instance.
+
+**Return value**
+
+`AnimaXCompositionFactory`
+
+## Loading Compositions
+
+### loadJson
+
+Parses an animation composition from a Lottie JSON string. When a `ServiceScope` is provided, loading uses resource loaders registered in that scope. Without a scope, loading uses `ServiceScope.DEFAULT`.
+
+**Available signatures**
+
+| Signature                                                                       | Description                        |
+| ------------------------------------------------------------------------------- | ---------------------------------- |
+| `loadJson(ServiceScope scope, String json, AnimaXCompositionListener listener)` | Parse JSON with the given scope.   |
+| `loadJson(String json, AnimaXCompositionListener listener)`                     | Parse JSON with the default scope. |
+
+**Parameters**
+
+| Name       | Type                                                         | Description         |
+| ---------- | ------------------------------------------------------------ | ------------------- |
+| `scope`    | [`ServiceScope`](./animax-service-scope)                     | Service scope.      |
+| `json`     | `String`                                                     | Lottie JSON string. |
+| `listener` | [`AnimaXCompositionListener`](./animax-composition-listener) | Result callback.    |
+
+**Return value**
+
+`void`
+
+### loadUri
+
+Loads and parses an animation composition from a URI. When a `ServiceScope` is provided, loading uses resource loaders registered in that scope. Without a scope, loading uses `ServiceScope.DEFAULT`.
+
+**Available signatures**
+
+| Signature                                                                     | Description                         |
+| ----------------------------------------------------------------------------- | ----------------------------------- |
+| `loadUri(ServiceScope scope, String uri, AnimaXCompositionListener listener)` | Parse a URI with the given scope.   |
+| `loadUri(String uri, AnimaXCompositionListener listener)`                     | Parse a URI with the default scope. |
+
+**Parameters**
+
+| Name       | Type                                                         | Description             |
+| ---------- | ------------------------------------------------------------ | ----------------------- |
+| `scope`    | [`ServiceScope`](./animax-service-scope)                     | Service scope.          |
+| `uri`      | `String`                                                     | Animation resource URI. |
+| `listener` | [`AnimaXCompositionListener`](./animax-composition-listener) | Result callback.        |
+
+**Return value**
+
+`void`
+
+## Releasing Resources
+
+### release
+
+Releases all resource loaders held by the factory and clears the underlying composition factory cache.
+
+</PlatformTabs.Tab>
+</PlatformTabs>
