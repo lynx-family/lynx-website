@@ -5,6 +5,7 @@
 @use './hero-text';
 @use './semi';
 @use './llms-button';
+@use './switch-appearance';
 
 .rspress-doc {
   @include external-links.external-links;
@@ -275,3 +276,48 @@ $link-color-dark: rgba(84, 169, 255, 1);
   word-break: break-all;
 }
 // #endregion ======== overview =========
+
+// #region ======== view transition appearance fix =========
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+// Suppress CSS transitions while the theme class flips so all themed surfaces
+// switch instantly in sync instead of fading at different paces.
+html.rp-theme-switching *,
+html.rp-theme-switching *::before,
+html.rp-theme-switching *::after,
+html.rp-theme-switching *::-webkit-scrollbar-thumb {
+  transition: none !important;
+}
+
+// Prevent the doc container from creating its own view-transition group,
+// which would cause a separate transition animation and visual doubling.
+html.rp-appearance-transition .rspress-doc {
+  view-transition-name: none !important;
+}
+
+::view-transition-old(root),
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root),
+.dark::view-transition-old(root) {
+  z-index: 9999;
+}
+
+/* Initial 0px clip-path ONLY during Dark -> Light transition so the light
+   snapshot does not flash unclipped full-screen on Frame 0 before JS .animate() runs.
+   Must NEVER apply during Light -> Dark or normal state, otherwise new(root) is clipped to 0px. */
+html.rp-transition-dark-to-light::view-transition-new(root) {
+  clip-path: var(--rp-vt-clip-initial, circle(0px at 100% 0));
+}
+
+/* Prevent clicking the appearance switch while a transition is in flight */
+html.rp-appearance-transition .rp-switch-appearance {
+  pointer-events: none !important;
+}
+// #endregion ======== view transition appearance fix =========
