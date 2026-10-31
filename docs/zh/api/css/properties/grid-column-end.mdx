@@ -20,11 +20,7 @@ import { APISummary, APITable, Go } from '@lynx';
 
 可与 [`grid-column-start`](./grid-column-start.mdx) 配合指定子元件在列方向的跨度。
 
-当网格项目同时指定了 `grid-column-start` 和 `grid-column-end` 时，[`grid-column-span`](./grid-column-span.mdx) 属性失效。
-
 当同时设置了 `grid-column-start` 和 `grid-column-end`，且 `grid-column-start` 比 `grid-column-end` 更靠后时，会交换这个属性的值，表现与 Web 一致。
-
-当在 `grid-column-end` 中使用带有 span 关键字的值时，不能同时使用 `grid-column-span` 属性，否则会出现不符合预期的行为。
 
 ## 使用示例
 
@@ -85,12 +81,24 @@ grid-column-end = <number> | [span && <number>]
 
 - 不支持 `<custom-ident>`、`span && <custom-ident>`、`<integer> && <custom-ident>?`；
 
+## 注意事项
+
+- 当 `grid-column-start` 和 `grid-column-end` 指定了两个不同的具体网格线位置时，列跨度由两条网格线之间的距离决定，[`grid-column-span`](./grid-column-span) 不再生效。下面的网格项目占 3 列：
+
+  ```css
+  grid-column-start: 2;
+  grid-column-end: 5;
+  grid-column-span: 1;
+  ```
+
+- 不要将 `grid-column-span` 与 `grid-column-start` 或 `grid-column-end` 中的 `span <number>` 混用。它们都会指定列跨度，并可能相互覆盖。下面的声明同时指定了 3 列和 1 列这两个冲突的跨度：
+
+  ```css
+  grid-column-start: 2;
+  grid-column-end: span 3;
+  grid-column-span: 1;
+  ```
+
 ## 兼容性
 
 <APITable />
-
-## 常见问题
-
-- 当网格项目同时指定了 `grid-column-start` 和 `grid-column-end` 时，[`grid-column-span`](./grid-column-span.mdx) 属性失效。
-
-- 当在 `grid-column-end` 中使用带有 span 关键字的值时，不能同时使用 `grid-column-span` 属性，否则会出现不符合预期的行为。
