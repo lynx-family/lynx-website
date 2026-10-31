@@ -188,7 +188,8 @@ Gate 1 does not scan imports, resolve modules, or verify files exist.
 Run it from the active site's working directory after prepare. It uses that
 site's effective Rspress web/SSG resolvers and TypeScript configuration.
 
-The corpus includes site source/theme, tracked site modules, and declared roots.
+The corpus scans JS/TS/MDX in site source/theme, tracked site modules, and
+declared roots.
 OSS also scans assembled documents using producer-manifest ownership.
 Consumers use `--source-map` to declare additional document roots; copied OSS
 documents and transitive packages are not automatically scanned. Mounted OSS
@@ -207,11 +208,10 @@ CommonJS requests stay in the shared corpus, but alias-bearing `require()` and
 `import = require()` fail explicitly; the checker does not implement a CommonJS
 module analyzer.
 
-Stylesheet support is limited to static CSS/SCSS `url(...)` alias requests.
-The legacy `~` prefix is accepted only for these URLs.
-Alias-bearing `@import`, `@use`, `@forward`, Sass/Less requests, escaped URLs,
-interpolation, and concatenation fail explicitly. General stylesheet validity
-and preprocessor evaluation remain the build pipeline's responsibility.
+CSS/SCSS/Sass/Less contents are not scanned. Stylesheet syntax, preprocessing,
+and resolution remain the build pipeline's responsibility; alias ownership
+inside stylesheets is outside Gate 2's scope. Imports of stylesheets or assets
+from JS/TS/MDX remain in the corpus and receive the applicable alias checks.
 
 OSS and accepted synthetic layouts block CI. Real downstream legacy mismatches
 remain diagnostic until migration; do not add exceptions to make them pass.

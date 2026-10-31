@@ -52,6 +52,25 @@ export function createExportReader(
       host,
       options,
     );
+    let namespaceChecker: ts.TypeChecker | undefined;
+    const namespaceValue = (node: ts.ModuleDeclaration) => {
+      // The binder distinguishes erased and instantiated namespaces, including
+      // nested and merged declarations. No dependency traversal is needed.
+      namespaceChecker ??= ts
+        .createProgram(
+          [file],
+          { ...options, noResolve: true, noLib: true },
+          {
+            ...ts.createCompilerHost(options),
+            getSourceFile: (name) => (name === file ? tree : undefined),
+          },
+        )
+        .getTypeChecker();
+      return !!(
+        (namespaceChecker.getSymbolAtLocation(node.name)?.flags ?? 0) &
+        ts.SymbolFlags.Value
+      );
+    };
     const runtimeValue = (node: ts.Node): boolean =>
       !tree.isDeclarationFile &&
       !ts.isInterfaceDeclaration(node) &&
@@ -62,7 +81,8 @@ export function createExportReader(
         ts
           .getModifiers(node)
           ?.some((modifier) => modifier.kind === ts.SyntaxKind.DeclareKeyword)
-      );
+      ) &&
+      (!ts.isModuleDeclaration(node) || namespaceValue(node));
     const stack = new Set([...ancestors, file]);
     const imports = new Map<string, StaticExport | undefined>();
     const locals = new Map<string, StaticExport>();

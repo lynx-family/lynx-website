@@ -25,18 +25,12 @@ export interface ImportRecord {
   sourceArea: string;
   owner: OwnerId;
   specifier: string;
-  kind:
-    | 'import'
-    | 'require'
-    | 'export'
-    | 'export-star'
-    | 'dynamic'
-    | 'style-url';
+  kind: 'import' | 'require' | 'export' | 'export-star' | 'dynamic';
   line: number;
   bindings: ImportBinding[];
 }
 type SyntaxRecord = Omit<ImportRecord, 'importer' | 'sourceArea' | 'owner'>;
-const sourcePattern = /\.(?:[cm]?[jt]sx?|mdx?|css|scss|sass|less)$/;
+const sourcePattern = /\.(?:[cm]?[jt]sx?|mdx?)$/;
 export const posix = (file: string): string => file.split(path.sep).join('/');
 export const canonical = (file: string): string =>
   existsSync(file) ? realpathSync(file) : path.resolve(file);
@@ -285,76 +279,9 @@ function parseDocument(file: string, content: string): SyntaxRecord[] {
   return records;
 }
 
-/** Static CSS/SCSS URLs only; stylesheet alias imports/expressions fail explicitly. */
-function parseStyle(
-  file: string,
-  content: string,
-  aliases?: ActiveContracts['aliases'],
-): SyntaxRecord[] {
-  const quoted = String.raw`"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'`;
-  // Consume standalone strings/comments as whole tokens so their contents
-  // cannot masquerade as requests. This is not a stylesheet validity parser.
-  const pattern = new RegExp(
-    String.raw`(?<comment>/\*[\s\S]*?\*/${file.endsWith('.css') ? '' : '|//[^\\n]*'})|@(?<directiveKind>import|use|forward)\b(?<directive>[^;]*)|\burl\(\s*(?<url>${quoted}|[^)]*)\s*\)|(?<string>${quoted})`,
-    'gi',
-  );
-  const moduleArgument = new RegExp(
-    String.raw`^(?:\s|/\*[\s\S]*?\*/)*(${quoted}|[^\s;]+)`,
-  );
-  const records: SyntaxRecord[] = [];
-  for (const match of content.matchAll(pattern)) {
-    const { directiveKind, directive, url } = match.groups!;
-    // @use/@forward have one module argument; their configuration is data.
-    // @import can contain several comma-separated module requests.
-    const body =
-      directiveKind && directiveKind.toLowerCase() !== 'import'
-        ? moduleArgument.exec(directive!)?.[1]
-        : (directive ?? url);
-    if (!body) continue;
-    // Decode only to detect hidden aliases, never to accept escaped requests.
-    const decoded = body.replace(
-      /\\([0-9a-f]{1,6})\s?|\\(.)/gi,
-      (_, hex, character) =>
-        hex
-          ? String.fromCodePoint(Math.min(parseInt(hex, 16), 0x10ffff))
-          : character,
-    );
-    if (
-      !(decoded.match(/~?@[^\s"'();]+/g) ?? []).some(
-        (request) =>
-          !aliases || matchingAlias(request.replace(/^~/, ''), aliases),
-      )
-    )
-      continue;
-    const specifier = body.trim().replace(/^(['"])(.*)\1$/, '$2');
-    if (
-      directive ||
-      /\.(sass|less)$/.test(file) ||
-      /[\s"'\\$+]|#\{|@\{/.test(specifier) ||
-      (!new RegExp(`^(?:${quoted})$`).test(body.trim()) &&
-        /[()]/.test(specifier))
-    )
-      throw new Error(
-        `${file}: unsupported alias-bearing stylesheet syntax: ${body}`,
-      );
-    records.push({
-      specifier,
-      kind: 'style-url',
-      line: content.slice(0, match.index).split('\n').length,
-      bindings: [],
-    });
-  }
-  return records;
-}
-
-export function parseImports(
-  file: string,
-  content: string,
-  aliases?: ActiveContracts['aliases'],
-): SyntaxRecord[] {
+export function parseImports(file: string, content: string): SyntaxRecord[] {
+  if (!sourcePattern.test(file)) return [];
   if (/\.mdx?$/.test(file)) return parseDocument(file, content);
-  if (/\.(css|scss|sass|less)$/.test(file))
-    return parseStyle(file, content, aliases);
   return parseScript(file, content);
 }
 
@@ -372,8 +299,8 @@ export function matchingAlias(
 }
 
 /**
- * Scan site source/theme, declared roots, and tracked site modules. The OSS
- * caller supplies its producer manifest to include the assembled docs tree.
+ * Scan JS/TS/MDX in site source/theme, declared roots, and tracked site modules.
+ * The OSS caller supplies its producer manifest to include assembled docs.
  * Consumer layouts do not inspect installed package internals.
  * Return all imports in this scope so Gate 3 can reuse the same records.
  */
@@ -455,16 +382,13 @@ export function discoverCorpus(
       imports = parseImports(
         file,
         readFileSync(path.resolve(cwd, file), 'utf8'),
-        contracts.aliases,
       );
     } catch (error) {
       throw new Error(`${file}: ${(error as Error).message}`);
     }
     for (const record of imports) {
       if (!source) {
-        if (
-          matchingAlias(record.specifier.replace(/^~/, ''), contracts.aliases)
-        )
+        if (matchingAlias(record.specifier, contracts.aliases))
           throw new Error(`${file}: alias importer has no source area`);
         continue;
       }

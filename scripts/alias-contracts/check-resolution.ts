@@ -166,29 +166,16 @@ export async function checkResolution(
     errors.push(
       `${record.importer}:${record.line} ${record.specifier} [${environment}]: ${message}`,
     );
-  const records = corpus.filter((record) => {
-    if (!matchingAlias(record.specifier.replace(/^~/, ''), contracts.aliases))
-      return false;
-    if (record.kind !== 'style-url' && record.specifier.startsWith('~')) {
-      report(
-        record,
-        'contract',
-        'unsupported tilde prefix outside stylesheet URLs',
-      );
-      return false;
-    }
-    return true;
-  });
+  const records = corpus.filter((record) =>
+    matchingAlias(record.specifier, contracts.aliases),
+  );
   const resolutions: {
     record: ImportRecord;
     environment: Runtime['environments'][number];
     target?: string;
   }[] = [];
   for (const record of records) {
-    const request =
-      record.kind === 'style-url'
-        ? record.specifier.replace(/^~/, '')
-        : record.specifier;
+    const request = record.specifier;
     const alias = matchingAlias(request, contracts.aliases)!;
     for (const error of importErrors(
       alias,
@@ -210,11 +197,7 @@ export async function checkResolution(
     )
       continue;
     for (const environment of runtime.environments) {
-      const target = await environment.resolve(
-        record.importer,
-        request,
-        record.kind === 'style-url' ? record.kind : undefined,
-      );
+      const target = await environment.resolve(record.importer, request);
       resolutions.push({
         record,
         environment,
@@ -249,9 +232,7 @@ export async function checkResolution(
   const virtual = new Map<string, string>();
   const probeFiles = new Map<ImportRecord, string>();
   records
-    .filter(
-      (record) => record.kind !== 'require' && record.kind !== 'style-url',
-    )
+    .filter((record) => record.kind !== 'require')
     .forEach((record, index) => {
       const file = path.resolve(
         cwd,
@@ -354,6 +335,59 @@ export async function checkResolution(
         : [],
     );
   };
+  // Aliased symbol flags alone discard `export type` / `import type` edges.
+  // Verbatim imports ask the compiler which exports require `import type`,
+  // on both sides of the contract, without changing the caller's diagnostics.
+  const valueProbes = new Map<string, { file: string; names: string[] }>();
+  for (const entry of bareEntries) {
+    for (const file of [entry.target, ...entry.originals]) {
+      if (!file || valueProbes.has(file)) continue;
+      const names = [...exportsAt(program.getSourceFile(file)).values()]
+        .filter((symbol) => symbolFlags(symbol) & ts.SymbolFlags.Value)
+        .map((symbol) => symbol.name);
+      const probe = `${file}.__alias_values.mts`;
+      virtual.set(
+        probe,
+        names
+          .map(
+            (name, index) =>
+              `import { ${JSON.stringify(name)} as value${index} } from ${JSON.stringify(file)};`,
+          )
+          .join('\n'),
+      );
+      valueProbes.set(file, { file: probe, names });
+    }
+  }
+  const valueProgram = ts.createProgram(
+    [...program.getRootFileNames(), ...virtual.keys()],
+    {
+      ...options,
+      allowImportingTsExtensions: true,
+      verbatimModuleSyntax: true,
+    },
+    host,
+    program,
+  );
+  const valuesAt = new Map<string, Set<string>>();
+  for (const [file, probe] of valueProbes) {
+    const tree = valueProgram.getSourceFile(probe.file)!;
+    const diagnostics = valueProgram.getSemanticDiagnostics(tree);
+    valuesAt.set(
+      file,
+      new Set(
+        probe.names.filter((_, index) => {
+          const binding = (tree.statements[index] as ts.ImportDeclaration)
+            .importClause!;
+          return !diagnostics.some(
+            (diagnostic) =>
+              diagnostic.start !== undefined &&
+              diagnostic.start >= binding.getStart(tree) &&
+              diagnostic.start < binding.end,
+          );
+        }),
+      ),
+    );
+  }
   for (const { alias, target, originals } of bareEntries) {
     if (!target) {
       errors.push(
@@ -382,11 +416,9 @@ export async function checkResolution(
         // Preserve each export's capabilities, not its declaration syntax.
         if (
           !replacement ||
-          [
-            ts.SymbolFlags.Value,
-            ts.SymbolFlags.Type,
-            ts.SymbolFlags.Namespace,
-          ].some(
+          (valuesAt.get(original)?.has(name) &&
+            !valuesAt.get(target)?.has(name)) ||
+          [ts.SymbolFlags.Type, ts.SymbolFlags.Namespace].some(
             (capability) =>
               !!(symbolFlags(expected) & capability) &&
               !(symbolFlags(replacement) & capability),
@@ -472,11 +504,7 @@ export async function checkResolution(
       (result) => result.environment === environment,
     )) {
       const { record, target } = result;
-      if (
-        !target ||
-        record.bindings.every((binding) => binding.typeOnly) ||
-        record.kind === 'style-url'
-      )
+      if (!target || record.bindings.every((binding) => binding.typeOnly))
         continue;
       const surface = await readExports(target);
       for (const error of surface.errors)

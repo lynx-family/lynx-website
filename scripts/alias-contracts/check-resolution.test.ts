@@ -222,7 +222,9 @@ test(
       delete paths['@theme'];
       write(
         'global.d.ts',
-        `declare module '@theme' { export const Value: number; }`,
+        `declare module '@theme' { export const Value: number; }
+declare module '*.css';
+declare module '*.svg';`,
       );
       write(
         'tsconfig.json',
@@ -282,11 +284,8 @@ test(
       consumerRecord('@fixture2/child'),
       consumerRecord(nested),
       { ...consumerRecord('@fixture1/global'), bindings: [] },
-      {
-        ...consumerRecord('@assets/icon.svg'),
-        kind: 'style-url' as const,
-        bindings: [],
-      },
+      { ...consumerRecord('@fixture1/child.css'), bindings: [] },
+      { ...consumerRecord('@assets/icon.svg'), bindings: [] },
     ];
     const run = async (
       corpus = records,
@@ -416,6 +415,104 @@ export declare namespace Group { export interface Item {} }`,
           );
         } finally {
           write(original, saved);
+        }
+      },
+    );
+    await t.test(
+      'bare TypeScript entries preserve values through type-only forwarding chains',
+      async (t) => {
+        const original = `${areaRoot('oss-components')}/index.ts`;
+        const saved = readFileSync(path.join(cwd, original), 'utf8');
+        const source = `../../${areaRoot('oss-components')}`;
+        write(original, `${saved}\nexport class Model {}`);
+        write('consumer/local/type-hop.ts', `export type * from '${source}';`);
+        const cases = [
+          `export type { Value, Shape, Model } from '${source}';`,
+          `export { type Value, type Shape, type Model } from '${source}';`,
+          `import type { Value, Shape, Model } from '${source}'; export { Value, Shape, Model };`,
+          `import { type Value, type Shape, type Model } from '${source}'; export { Value, Shape, Model };`,
+          `export { Value, Shape, Model } from './type-hop';`,
+          `export * from './type-hop';`,
+        ];
+        try {
+          for (const content of cases) {
+            await t.test(content, async () => {
+              write('consumer/local/forwarded.ts', content);
+              const { result } = await run([], {
+                '@lynx': ['consumer/local/forwarded.ts'],
+              });
+              assert.deepEqual(result.errors, [
+                "@lynx: TypeScript bare entry must preserve OSS export 'Model'",
+                "@lynx: TypeScript bare entry must preserve OSS export 'Value'",
+              ]);
+            });
+          }
+          write('consumer/local/type-hop.ts', `export * from '${source}';`);
+          assert.deepEqual(
+            (await run([], { '@lynx': ['consumer/local/forwarded.ts'] })).result
+              .errors,
+            [],
+          );
+          write(
+            original,
+            `export type { Value } from './entry'; export interface Shape { value: number }`,
+          );
+          write(
+            'consumer/local/forwarded.ts',
+            `export type * from '${source}';`,
+          );
+          assert.deepEqual(
+            (await run([], { '@lynx': ['consumer/local/forwarded.ts'] })).result
+              .errors,
+            [],
+          );
+        } finally {
+          write(original, saved);
+        }
+      },
+    );
+    await t.test(
+      'wrappers may forward erased namespaces as types but must retain instantiated namespaces',
+      async (t) => {
+        const original = `${areaRoot('oss-components')}/index.ts`;
+        const wrapper = 'consumer/wrappers/components.ts';
+        const saved = readFileSync(path.join(cwd, original), 'utf8');
+        const savedWrapper = readFileSync(path.join(cwd, wrapper), 'utf8');
+        const source = `../../${areaRoot('oss-components')}`;
+        try {
+          for (const [body, value] of [
+            ['{ export interface Item {} }', false],
+            ['{ export type Item = string }', false],
+            ['{ export namespace Child { export interface Item {} } }', false],
+            ['.Child { export interface Item {} }', false],
+            ['{ export const item = 1 }', true],
+            ['{ export namespace Child { export const item = 1 } }', true],
+          ] as const) {
+            await t.test(body, async () => {
+              write(original, `${saved}\nexport namespace Group ${body}`);
+              write(
+                wrapper,
+                `export { Value, type Shape, type Group } from '${source}';`,
+              );
+              const { result } = await run([]);
+              assert.deepEqual(
+                result.errors,
+                value
+                  ? [
+                      "@lynx: TypeScript bare entry must preserve OSS export 'Group'",
+                      "@lynx: wrapper must preserve OSS export 'Group'",
+                    ]
+                  : [],
+              );
+              if (value) {
+                write(wrapper, `export * from '${source}';`);
+                assert.deepEqual((await run([])).result.errors, []);
+              }
+            });
+          }
+        } finally {
+          write(original, saved);
+          write(wrapper, savedWrapper);
         }
       },
     );
@@ -744,40 +841,6 @@ export declare namespace Group { export interface Item {} }`,
             ),
           );
         }
-      },
-    );
-    await t.test(
-      'non-style tilde aliases fail explicitly while static URLs remain supported',
-      async () => {
-        for (const source of [
-          "import { Value } from '~@fixture0';",
-          "export { Value } from '~@fixture0';",
-          "const lazy = import('~@fixture0');",
-        ]) {
-          const corpus = parseImports('entry.ts', source).map((entry) => ({
-            ...consumerRecord(entry.specifier),
-            ...entry,
-          }));
-          assert.ok(
-            (await run(corpus)).result.errors.some((error) =>
-              error.includes(
-                'unsupported tilde prefix outside stylesheet URLs',
-              ),
-            ),
-          );
-        }
-        assert.deepEqual(
-          (
-            await run([
-              {
-                ...consumerRecord('~@assets/icon.svg'),
-                kind: 'style-url',
-                bindings: [],
-              },
-            ])
-          ).result.errors,
-          [],
-        );
       },
     );
     await t.test(

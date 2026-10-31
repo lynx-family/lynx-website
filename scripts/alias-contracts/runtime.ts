@@ -10,11 +10,7 @@ export type RuntimeAliases = Record<
 export interface RuntimeEnvironment {
   name: string;
   aliases: RuntimeAliases;
-  resolve(
-    importer: string,
-    request: string,
-    kind?: 'style-url',
-  ): Promise<string | undefined>;
+  resolve(importer: string, request: string): Promise<string | undefined>;
 }
 export interface Runtime {
   explicitAliases: RuntimeAliases;
@@ -132,10 +128,10 @@ export async function createRuntime(
     return {
       name: child.options.name ?? 'web',
       aliases: child.options.resolve.alias ?? {},
-      resolve: (importer, request, kind) =>
+      resolve: (importer, request) =>
         new Promise((resolve, reject) => {
           const resolver = child.resolverFactory.get('normal', {
-            dependencyType: kind === 'style-url' ? 'url' : 'esm',
+            dependencyType: 'esm',
           });
           resolver.resolve(
             {},

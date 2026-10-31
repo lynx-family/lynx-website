@@ -104,6 +104,11 @@ through `--source-map`; the checker does not discover transitive producer packag
 Gate 2 and Gate 3 share this corpus; canonical spelling and migration baselines
 are separate import policy.
 
+Gate 2 scans JS/TS/MDX, including their imports of stylesheets and assets.
+It does not scan CSS/SCSS/Sass/Less contents or check alias ownership inside
+stylesheets. Stylesheet syntax, preprocessing, and resolution are verified by
+the build.
+
 ### Go Components
 
 For changes to rendered `Go` components in `docs/` or `sharedDocs/`, run:

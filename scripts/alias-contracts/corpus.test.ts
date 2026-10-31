@@ -181,121 +181,36 @@ test('script and MDX string-named re-exports preserve the imported name', () => 
     );
 });
 
-test('stylesheet module configuration strings are not import requests', async () => {
-  const { aliases } = await loadContracts();
-  for (const directive of ['use', 'forward']) {
-    assert.deepEqual(
-      parseImports(
-        'entry.scss',
-        `@${directive} "./tokens" with ($label: "@lynx/not-a-module");`,
-        aliases,
-      ),
-      [],
-    );
-    assert.throws(
-      () =>
-        parseImports(
-          'entry.scss',
-          `@${directive} "@lynx/tokens" with ($label: "./local");`,
-          aliases,
-        ),
-      /unsupported alias-bearing stylesheet/,
-    );
-  }
-  // Every comma-separated @import request still participates.
-  assert.throws(
-    () =>
-      parseImports('entry.scss', '@import "./local", "@lynx/tokens";', aliases),
-    /unsupported alias-bearing stylesheet/,
+test('discovery excludes stylesheet contents but retains JS/TS/MDX imports of styles and assets', async (t) => {
+  const cwd = mkdtempSync(
+    path.join(process.cwd(), 'node_modules/.cache/corpus-'),
   );
-});
-
-test('stylesheet corpus extracts static alias URLs without evaluating other strings', () => {
-  const records = parseImports(
-    'entry.scss',
-    `
-/* url('@ignored/a.svg') */
-.icon { background: url("@assets/icon.svg"); }
-`,
-  );
-  assert.deepEqual(
-    records.map((record) => record.specifier),
-    ['@assets/icon.svg'],
-  );
-  assert.throws(
-    () => parseImports('entry.scss', `@use '@entry/#{name}';`),
-    /unsupported alias-bearing/,
-  );
-  assert.deepEqual(
-    parseImports('entry.css', `.text { content: "url('@ignored/example')"; }`),
-    [],
-  );
-  // General stylesheet validity is delegated to the site's build pipeline.
-});
-
-test('stylesheet corpus recognizes mixed-case URLs and rejects alias module directives', () => {
-  assert.deepEqual(
-    parseImports(
-      'entry.css',
-      `.icon { background: UrL("@assets/icon.svg"); }`,
-    ).map((record) => [record.specifier, record.kind]),
-    [['@assets/icon.svg', 'style-url']],
-  );
-  for (const directive of ['import', 'use', 'forward'])
-    assert.throws(
-      () => parseImports('entry.scss', `@${directive} "@entry/tokens";`),
-      /unsupported alias-bearing stylesheet/,
-    );
-});
-
-test('stylesheet URLs preserve multiline whitespace and quoted parentheses', () => {
-  assert.deepEqual(
-    parseImports(
-      'entry.css',
-      `.icon { background: url(
-  "@assets/icon.svg"
-); }
-.other { background: url("@assets/icons/circle(1).svg"); }
-.text { content: "url('@ignored/icon(1).svg')"; }`,
-    ).map((record) => [record.specifier, record.kind]),
-    [
-      ['@assets/icon.svg', 'style-url'],
-      ['@assets/icons/circle(1).svg', 'style-url'],
-    ],
-  );
-});
-
-test('stylesheet corpus explicitly rejects alias syntax outside its static subset', async () => {
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  const write = (file: string, content: string) => {
+    mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true });
+    writeFileSync(path.join(cwd, file), content);
+  };
+  execFileSync('git', ['init', '--quiet', cwd]);
   for (const [file, content] of [
-    ['entry.sass', '@use "@entry/tokens"\n@use "@entry/other"'],
-    ['entry.less', '@import "@entry/tokens";'],
-    [
-      'entry.css',
-      String.raw`.icon { background: url("\40 assets/icon.svg"); }`,
-    ],
-    ['entry.scss', '@use "@entry/" + $name;'],
-    ['entry.scss', '.icon { background: url("@entry/" + $name); }'],
-  ])
-    assert.throws(
-      () => parseImports(file!, content!),
-      /unsupported alias-bearing stylesheet/,
-      `${file}: ${content}`,
-    );
+    ['tracked.css', '.icon { background: url("@assets/icon.svg"); }'],
+    ['theme/entry.scss', '@use "@lynx/tokens";'],
+    ['src/components/entry.sass', '@use "@lynx/tokens"\n@use "@lynx/other"'],
+    ['src/components/entry.less', '@import "@lynx/tokens";\n.invalid {'],
+  ]) {
+    write(file!, content!);
+    assert.deepEqual(parseImports(file!, content!), []);
+  }
+  execFileSync('git', ['add', 'tracked.css'], { cwd });
+  const content = "import '@theme/entry.scss';\nimport '@assets/icon.svg';";
+  for (const extension of ['js', 'ts', 'mdx'])
+    write(`src/components/imports.${extension}`, content);
+  const corpus = discoverCorpus(cwd, await loadContracts());
   assert.deepEqual(
-    parseImports(
-      'entry.scss',
-      '.icon { background: url("./icons/" + $name); }',
-    ).map((record) => record.specifier),
-    [],
-  );
-  const { aliases } = await loadContracts();
-  assert.deepEqual(
-    parseImports('entry.scss', '@use "~@mdn/minimalist/sass/utils";', aliases),
-    [],
-  );
-  assert.throws(
-    () => parseImports('entry.scss', '@use "@lynx/tokens";', aliases),
-    /unsupported alias-bearing stylesheet/,
+    corpus.map(({ importer, specifier, kind }) => [importer, specifier, kind]),
+    ['js', 'mdx', 'ts'].flatMap((extension) => [
+      [`src/components/imports.${extension}`, '@theme/entry.scss', 'import'],
+      [`src/components/imports.${extension}`, '@assets/icon.svg', 'import'],
+    ]),
   );
 });
 
