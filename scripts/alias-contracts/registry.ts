@@ -28,6 +28,11 @@ export const owners = [
       'Source and generated documentation owned by the lynx-ui OSS repository.',
   },
   {
+    id: 'lynx-stack',
+    description:
+      'Generated documentation owned by the lynx-stack OSS repository.',
+  },
+  {
     id: 'consumer',
     description:
       'Source owned by the active host; both the OSS website and downstream sites are consumers.',
@@ -57,7 +62,7 @@ export const aliases = [
     owner: 'lynx-website',
     visibility: 'public',
     kind: 'bare-and-subpaths',
-    allowedImporters: ['lynx-website', 'lynx-ui', 'consumer'],
+    allowedImporters: ['lynx-website', 'lynx-ui', 'lynx-stack', 'consumer'],
     bareTargetOwners: ['lynx-website', 'consumer'],
     // Direct component paths are existing migration inputs, not individually
     // versioned Component APIs. New and changed imports belong to Gate 3.
@@ -314,7 +319,7 @@ export const aliases = [
 // Every `id` below is a valid OSS `requiredAreas` reference. Gate 1 records
 // concrete alias implementations and producer areas, not broad importer-only
 // roots such as docs/en or docs/zh. Gate 3 derives complete importer ownership
-// from the real corpus and producer manifests, including generated lynx-stack
+// from the shared corpus and producer manifests, including generated lynx-stack
 // routes. Logical ownership and source role are separate: generated or mounted
 // content retains the owner of its canonical source. Consumers provide the IDs
 // required by shared aliases, bind them to their own roots, and may add areas
@@ -449,20 +454,5 @@ export const ossSourceAreas = [
 // Resolver overrides are exact, repository-local exceptions, not portable
 // aliases. A consumer supplies its own list and does not inherit these
 // physical implementation choices automatically.
-export const ossResolverOverrides = [
-  {
-    id: 'rspress-react-18-renderer',
-    specifier: '@rspress/core/_private/react',
-    kind: 'package-compatibility',
-    match: 'exact',
-    reason:
-      'Legacy React 18 renderer mapping still present in rspress.config.ts; Rspress 2.0.19 uses react-render-to-markdown directly.',
-    parity: {
-      runtime: 'override-required',
-      typescript: 'not-applicable',
-    },
-    lifecycle: 'temporary',
-    removalCondition:
-      'Gate 2 must verify the mapping is unused, then remove the resolver key and this record together.',
-  },
-] as const satisfies readonly ResolverOverride[];
+export const ossResolverOverrides =
+  [] as const satisfies readonly ResolverOverride[];

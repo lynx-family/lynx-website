@@ -5,7 +5,12 @@
  * the OSS website and downstream sites instantiate this role; it does not
  * identify one specific repository or physical directory.
  */
-export type OwnerId = 'lynx-website' | 'lynx-ui' | 'consumer' | 'rspress';
+export type OwnerId =
+  | 'lynx-website'
+  | 'lynx-ui'
+  | 'lynx-stack'
+  | 'consumer'
+  | 'rspress';
 
 /** Registry metadata for one stable logical source owner. */
 export interface Owner {

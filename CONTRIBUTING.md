@@ -94,7 +94,20 @@ For registry or checker changes, run:
 pnpm check:alias-contract-types
 node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
+pnpm test:alias-resolution
+pnpm check:alias-resolution
 ```
+
+Run OSS resolver probes after `pnpm run prepare` so the corpus includes generated
+producer documents and mounted source. Consumers define their checked roots
+through `--source-map`; the checker does not discover transitive producer packages.
+Gate 2 and Gate 3 share this corpus; canonical spelling and migration baselines
+are separate import policy.
+
+Gate 2 scans JS/TS/MDX, including their imports of stylesheets and assets.
+It does not scan CSS/SCSS/Sass/Less contents or check alias ownership inside
+stylesheets. Stylesheet syntax, preprocessing, and resolution are verified by
+the build.
 
 ### Go Components
 
