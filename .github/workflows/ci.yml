@@ -229,6 +229,31 @@ jobs:
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
 
+  # Check heading locale parity independently of build
+  # and portable import contracts. Inspect tracked sources without prepare.
+  writing-style:
+    name: Writing Style
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Heading Locale Parity Check
+        run: |
+          node --test scripts/ci/check-doc-heading-parity.test.mjs
+          node scripts/ci/check-doc-heading-parity.mjs
+
   # Keep authoring contracts that require installed dependencies separate from
   # portable import rules. API reference checks here may read the installed
   # Lynx Stack manifest or invoke pnpm pack, but installation still skips the
@@ -312,6 +337,7 @@ jobs:
       - dependency-provenance
       - generator-portability
       - documentation-imports
+      - writing-style
       - example-authoring
       - media-budget
     if: ${{ always() }}
