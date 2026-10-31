@@ -1,14 +1,17 @@
 # Alias Contracts
 
-Gate 1 of [#1487](https://github.com/lynx-family/lynx-website/issues/1487)
-defines portable alias policy and validates registry data. Resolver behavior
-belongs to [#1504](https://github.com/lynx-family/lynx-website/issues/1504);
+Gates 1 and 2 of [#1487](https://github.com/lynx-family/lynx-website/issues/1487)
+define portable alias policy and verify runtime/TypeScript resolution.
+Gate 2 implements [#1504](https://github.com/lynx-family/lynx-website/issues/1504);
 import policy and migration baselines belong to
 [#1505](https://github.com/lynx-family/lynx-website/issues/1505).
 
 - [`registry.ts`](./registry.ts): owners, aliases, OSS source map, local overrides.
 - [`types.ts`](./types.ts): field semantics and valid schema variants.
 - [`check-registry.ts`](./check-registry.ts): structural validator and packaged CLI.
+- [`corpus.ts`](./corpus.ts): shared executable imports and producer ownership.
+- [`check-resolution.ts`](./check-resolution.ts): actual Rspress/Rspack and
+  TypeScript probes with the same validated consumer modules.
 - [`UNDERSTANDING.md`](./UNDERSTANDING.md): ownership and resolution examples.
 
 ## Changing Policy
@@ -165,6 +168,9 @@ check the first resolved target against the declared areas and owners.
 pnpm check:alias-contract-types
 node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
+pnpm test:alias-resolution
+pnpm run prepare
+pnpm check:alias-resolution
 ```
 
 The test suite packs the complete package without lifecycle scripts, extracts
@@ -175,3 +181,37 @@ For downstream contract changes, also run `pnpm run prepare`,
 `pnpm run build`, and `pnpm pack --dry-run`. Before merge, obtain downstream
 packaged-checker, prepare, and build results against the exact candidate pin.
 Gate 1 does not scan imports, resolve modules, or verify files exist.
+
+## Resolver Probes
+
+`check-resolution.ts` accepts the same three CLI options as `check-registry.ts`.
+Run it from the active site's working directory after prepare. It uses that
+site's effective Rspress web/SSG resolvers and TypeScript configuration.
+
+The corpus includes site source/theme, tracked site modules, and declared roots.
+OSS also scans assembled documents using producer-manifest ownership.
+Consumers use `--source-map` to declare additional document roots; copied OSS
+documents and transitive packages are not automatically scanned. Mounted OSS
+modules remain in scope because consumer aliases can change their resolution.
+
+Checks cover alias shape, declared resolver keys, runtime/type compatibility,
+source ownership through symlinks, theme fallback, and complete, non-conflicting
+OSS exports in consumer wrappers. Type declarations alone do not prove a runtime
+implementation, even without observed bare imports. The TypeScript bare surface
+must retain OSS export names and their value/type/namespace capabilities.
+Markdown prose and code examples are excluded; script/document parse failures
+fail discovery.
+
+Gate 2 supports ESM imports/re-exports and literal dynamic imports. Literal
+CommonJS requests stay in the shared corpus, but alias-bearing `require()` and
+`import = require()` fail explicitly; the checker does not implement a CommonJS
+module analyzer.
+
+Stylesheet support is limited to static CSS/SCSS `url(...)` alias requests.
+The legacy `~` prefix is accepted only for these URLs.
+Alias-bearing `@import`, `@use`, `@forward`, Sass/Less requests, escaped URLs,
+interpolation, and concatenation fail explicitly. General stylesheet validity
+and preprocessor evaluation remain the build pipeline's responsibility.
+
+OSS and accepted synthetic layouts block CI. Real downstream legacy mismatches
+remain diagnostic until migration; do not add exceptions to make them pass.
