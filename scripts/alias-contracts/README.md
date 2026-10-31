@@ -1,15 +1,18 @@
 # Alias Contracts
 
-Gate 1 of [#1487](https://github.com/lynx-family/lynx-website/issues/1487)
-defines portable alias policy and validates registry data. Resolver behavior
-belongs to [#1504](https://github.com/lynx-family/lynx-website/issues/1504);
+Gates 1 and 2 of [#1487](https://github.com/lynx-family/lynx-website/issues/1487)
+define portable alias policy and verify runtime/TypeScript resolution.
+Gate 2 implements [#1504](https://github.com/lynx-family/lynx-website/issues/1504);
 import policy and migration baselines belong to
 [#1505](https://github.com/lynx-family/lynx-website/issues/1505).
 
 - [`registry.ts`](./registry.ts): owners, aliases, OSS source map, local overrides.
 - [`types.ts`](./types.ts): field semantics and valid schema variants.
 - [`check-registry.ts`](./check-registry.ts): structural validator and packaged CLI.
-- [`UNDERSTANDING.md`](./UNDERSTANDING.md): ownership and resolution examples.
+- [`check-resolution.ts`](./check-resolution.ts): actual Rspress/Rspack and
+  TypeScript resolver check.
+- [`UNDERSTANDING.md`](./UNDERSTANDING.md): gate architecture, ownership,
+  resolution, and analysis boundaries.
 
 ## Changing Policy
 
@@ -155,9 +158,7 @@ and own their exports directly.
 
 Adding policy does not configure a resolver or rewrite imports. Configure the
 site's runtime and TypeScript aliases, update code-generator alias settings,
-and migrate consumer-local imports together. Gate 2 must use the validated
-union of shared aliases and extensions with the same active source map, then
-check the first resolved target against the declared areas and owners.
+and migrate consumer-local imports together.
 
 ## Verification
 
@@ -165,13 +166,37 @@ check the first resolved target against the declared areas and owners.
 pnpm check:alias-contract-types
 node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
+pnpm test:alias-resolution
+pnpm run prepare
+pnpm check:alias-resolution
 ```
 
 The test suite packs the complete package without lifecycle scripts, extracts
 it into a temporary consumer's `node_modules`, and checks all three CLI options
 and shared-policy mutation regressions through the installed entry point.
 
-For downstream contract changes, also run `pnpm run prepare`,
-`pnpm run build`, and `pnpm pack --dry-run`. Before merge, obtain downstream
-packaged-checker, prepare, and build results against the exact candidate pin.
-Gate 1 does not scan imports, resolve modules, or verify files exist.
+Run `check:alias-resolution` from the active site's repository root after
+prepare. It accepts the same three consumer modules as `check-registry.ts` and
+uses the site's effective Rspress web/SSG resolvers and TypeScript configuration.
+
+Downstream sites invoke the installed entry directly:
+
+```bash
+node --import tsx \
+  node_modules/@lynx-js/lynx-doc/scripts/alias-contracts/check-resolution.ts \
+  --source-map ./scripts/alias-source-areas.mjs \
+  --resolver-overrides ./scripts/resolver-overrides.mjs \
+  --alias-extensions ./scripts/alias-extensions.ts
+```
+
+With `--source-map`, `docs/` and `sharedDocs/` are scanned only within declared
+source areas; other documents and transitive producer packages are not inferred.
+Mixed-ownership trees require explicit, non-overlapping areas for every region
+that must be checked. Undeclared documents remain outside the corpus.
+
+For downstream contract changes, also run `pnpm run build` and
+`pnpm pack --dry-run`, then obtain packaged-checker, prepare, resolver-check,
+and build results against the exact candidate pin. Do not add policy exceptions
+for pre-existing downstream migration debt. See
+[UNDERSTANDING.md](./UNDERSTANDING.md#gate-2-resolution-verification) for the
+corpus, runtime, export-surface, and syntax boundaries.

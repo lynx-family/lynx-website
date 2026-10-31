@@ -22,6 +22,12 @@ import {
   ossSourceAreas,
   owners,
 } from './registry.js';
+import type {
+  AliasContract,
+  Owner,
+  ResolverOverride,
+  SourceArea,
+} from './types.js';
 const scriptPath = fileURLToPath(import.meta.url);
 // Dynamic consumer modules are untyped at this boundary. `isRecord` verifies
 // their container shape, then the validator checks every accessed field.
@@ -50,7 +56,7 @@ const sharedDefaults: RegistryDefaults = structuredClone({
   resolverOverrides: ossResolverOverrides,
 });
 
-interface CliOptions {
+export interface CliOptions {
   help?: true;
   sourceMap?: string;
   resolverOverrides?: string;
@@ -810,7 +816,7 @@ export function validateAliasContracts({
 
 // Keep argument parsing strict because these option names and module export
 // contracts are consumed directly from the packaged downstream CLI.
-function parseArguments(args: readonly string[]): CliOptions {
+export function parseArguments(args: readonly string[]): CliOptions {
   const options: CliOptions = {};
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -900,6 +906,29 @@ export async function runCli(
     return 0;
   }
 
+  try {
+    await loadContracts(options, cwd, defaults);
+  } catch (error) {
+    console.error(`Alias contract check failed: ${errorMessage(error)}`);
+    return 1;
+  }
+  console.log('Alias contract validation passed.');
+  return 0;
+}
+
+/** Shared, validated policy boundary for corpus and resolver consumers. */
+export interface ActiveContracts {
+  owners: readonly Owner[];
+  aliases: readonly AliasContract[];
+  sourceAreas: readonly SourceArea[];
+  resolverOverrides: readonly ResolverOverride[];
+}
+
+export async function loadContracts(
+  options: CliOptions = {},
+  cwd = process.cwd(),
+  defaults: RegistryDefaults = sharedDefaults,
+): Promise<ActiveContracts> {
   let policy: RegistryDefaults;
   let sourceAreas: unknown;
   let resolverOverrides: unknown;
@@ -932,8 +961,7 @@ export async function runCli(
       );
     }
   } catch (error) {
-    console.error(`Alias contract check failed: ${errorMessage(error)}`);
-    return 1;
+    throw new Error(`Cannot load alias contracts: ${errorMessage(error)}`);
   }
 
   const errors = validateAliasContracts({
@@ -945,14 +973,19 @@ export async function runCli(
     sourceAreaPolicy: options.sourceMap ? policy.sourceAreas : undefined,
   });
   if (errors.length > 0) {
-    console.error('Alias contract validation failed:');
-    for (const error of errors) {
-      console.error(`  - ${error}`);
-    }
-    return 1;
+    throw new Error(
+      `Alias contract validation failed:\n${errors.map((error) => `  - ${error}`).join('\n')}`,
+    );
   }
-  console.log('Alias contract validation passed.');
-  return 0;
+  return structuredClone({
+    owners: policy.owners,
+    aliases: [
+      ...(policy.aliases as AliasContract[]),
+      ...(aliasExtensions as AliasContract[]),
+    ],
+    sourceAreas,
+    resolverOverrides,
+  }) as ActiveContracts;
 }
 
 function errorMessage(error: unknown): string {
