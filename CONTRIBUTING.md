@@ -96,6 +96,17 @@ node --import tsx --test scripts/alias-contracts/check-registry.test.ts
 pnpm check:alias-contracts
 ```
 
+### Writing Style
+
+Keep English and Chinese document headings consistent in count, order, and
+level. Heading text should follow the language of each page.
+
+For heading changes, run the check enforced by **Writing Style** CI:
+
+```bash
+pnpm run check:doc-heading-parity
+```
+
 ### Go Components
 
 For changes to rendered `Go` components in `docs/` or `sharedDocs/`, run:
