@@ -71,31 +71,6 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
-### Alias Contracts
-
-Follow the
-[alias contract guide](./scripts/alias-contracts/README.md) when changing
-portable aliases, direct-subpath policy, source ownership, or repository-local
-resolver overrides. The shared registry owns portable policy; consumers may
-declare constrained, additive private aliases through `aliasExtensions`.
-Resolver configuration implements the validated policy.
-
-- Register alias shape, ownership, and lifecycle in `aliases`; do not maintain
-  a duplicate list of files reachable below an alias.
-- Register physical roots and their ownership only in `ossSourceAreas`.
-- Register exact local exceptions in `ossResolverOverrides`, including their
-  reason, parity, lifecycle, and removal condition.
-- Keep consumer-private aliases in consumer modules, with explicit consumer
-  source areas; never add consumer-specific prefixes to the shared registry.
-
-For registry or checker changes, run:
-
-```bash
-pnpm check:alias-contract-types
-node --import tsx --test scripts/alias-contracts/check-registry.test.ts
-pnpm check:alias-contracts
-```
-
 ### Writing Style
 
 Keep English and Chinese document headings consistent in count, order, and
@@ -245,6 +220,35 @@ pnpm run build
 ```
 
 Then request downstream validation after the updated OSS revision is pinned.
+
+### Alias Contracts
+
+Portable resolver aliases are downstream interfaces. Follow the
+[alias contract guide](./scripts/alias-contracts/README.md) when changing alias
+policy, source ownership, resolver overrides, or checker behavior.
+
+- Keep shared policy in `registry.ts` and physical roots in source maps; do not
+  maintain file inventories for alias subpaths.
+- Keep consumer-private aliases in consumer modules, never in the shared
+  registry.
+- Declare exact local exceptions with their lifecycle and removal condition.
+
+For registry or checker changes, run:
+
+```bash
+pnpm check:alias-contract-types
+node --import tsx --test scripts/alias-contracts/check-registry.test.ts
+pnpm check:alias-contracts
+pnpm test:alias-resolution
+pnpm run prepare
+pnpm check:alias-resolution
+```
+
+The final resolver check requires the prepared repository. Changes to packaged
+checker interfaces also require downstream validation against the exact
+candidate revision. See the
+[understanding guide](./scripts/alias-contracts/UNDERSTANDING.md) for gate
+architecture and scope.
 
 ### Portable Documentation Imports
 

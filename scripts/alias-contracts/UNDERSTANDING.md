@@ -114,6 +114,42 @@ Gates 2/3 derives destinations from producer manifests and applies the
 website-owner fallback only to unmatched documents. That work introduces
 the `lynx-stack` owner without adding an `@lynx-stack` alias.
 
-Gate 2 owns corpus discovery and resolver verification; Gate 3 reuses the
-corpus for importer policy and exact shrinking baselines. Assets and legacy
-direct paths belong in that corpus/baseline, never in a second registry list.
+Gate 2 establishes the shared executable-import corpus and uses it for resolver
+verification. Gate 3 will reuse those records for import policy and exact
+migration baselines. Concrete direct-path and `@assets/*` inventories are
+derived from observed imports and belong only in Gate 3 data, never in the
+Gate 1 registry.
+
+## Gate 2 Resolution Verification
+
+Gate 1 validates that policy and consumer-supplied modules are structurally
+sound. Gate 2 applies the resulting `ActiveContracts` to the prepared site's
+actual runtime and TypeScript behavior:
+
+| Module                | Responsibility                                                  |
+| --------------------- | --------------------------------------------------------------- |
+| `corpus.ts`           | Discover executable imports and classify each importer's owner. |
+| `runtime.ts`          | Load the active Rspress configuration and real resolvers.       |
+| `exports.ts`          | Reconstruct static ESM export identities and runtime values.    |
+| `check-resolution.ts` | Apply policy across runtime and TypeScript probes.              |
+
+`check-registry.ts` remains the policy boundary. Its `loadContracts()` helper
+loads and validates the same `--source-map`, `--resolver-overrides`, and
+`--alias-extensions` modules for both gates, so Gate 2 cannot reinterpret or
+bypass Gate 1 policy.
+
+The corpus is syntax-only and ownership-aware. The runtime layer materializes
+Rspress's real `web`, `node`, and `node_md` resolvers. The export reader follows
+barrels without executing modules. The checker combines those inputs with
+importer-relative TypeScript probes, including wrapper completeness and
+generated negative alias shapes. Implementation details and supported syntax
+are documented beside these public APIs.
+
+Markdown prose, fenced examples, and stylesheet contents are outside the
+corpus. JS/TS/MDX imports of stylesheets and assets remain visible; the build
+owns style syntax and resolution. Alias-bearing CommonJS requests fail
+explicitly because Gate 2 does not implement a CommonJS module analyzer.
+
+OSS and accepted synthetic layouts block CI. Real downstream legacy mismatches
+remain diagnostic until migration; do not weaken shared policy merely to make
+them pass.
