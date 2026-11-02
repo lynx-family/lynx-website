@@ -25,6 +25,7 @@ import {
   normalizeGeneratedRoute,
   removeBrokenLanguageAlternates,
 } from './scripts/build/generated-html.mts';
+import { pluginPageSdkSince } from './scripts/build/page-sdk-since';
 import versionJson from './docs/public/version.json';
 import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
@@ -153,6 +154,7 @@ export default defineConfig({
     ],
   },
   plugins: [
+    pluginPageSdkSince(path.join(__dirname, 'docs')),
     pluginClientRedirects({
       redirects: [
         // Preserve locale/version prefixes for the former root-package page.
