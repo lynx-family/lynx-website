@@ -169,9 +169,12 @@ Lynx even when a browser API with a similar name exists.
 
 Use `version_added: true` for implemented Web features when the first Web package
 release is unknown, `false` for unsupported features, and `null` for unknown
-support. Use `partial_implementation` with a concrete limitation, and
-`alternative_name` when callers need a different tag or method name. Native Lynx
-SDK versions do not identify Web package releases.
+support. Use `partial_implementation` only when a missing core capability or a
+limitation affects common usage, and explain that limitation. Unsupported edge
+cases alone do not warrant a partial flag or a compatibility note. Do not mark
+an entire feature as partial solely because an optional subfeature is unsupported.
+Use `alternative_name` when callers need a different tag or method name. Native
+Lynx SDK versions do not identify Web package releases.
 
 Edit the corresponding compatibility JSON for hand-maintained features. For
 generated CSS properties, edit `web-css-support.json` and record the reviewed
