@@ -271,6 +271,8 @@ export default defineConfig({
     // users would see the raw placeholder text in the rendered output.
     remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
+      // Preserve the pre-2.1 policy until existing anchors are repaired.
+      checkAnchors: false,
       checkDeadLinks: {
         excludes: [
           '/guide/spec.html?ts=1743416098203#element%E2%91%A0',

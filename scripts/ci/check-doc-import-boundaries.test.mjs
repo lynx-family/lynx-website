@@ -17,7 +17,10 @@ const rspressPackage = JSON.parse(readFileSync(rspressPackagePath, 'utf8'));
 const rspressRequire = createRequire(rspressPackagePath);
 // Rspress does not expose its parser setup as a public API. A version bump must
 // therefore trigger a review of its MDX options and preprocessing behavior.
-const auditedRspressVersion = '2.0.19';
+// Audited 2.1.3: format selection, syntax plugins, frontmatter, and heading-ID
+// escaping are unchanged; use the same updated CJK plugins as the compiler.
+// The site explicitly retains pre-2.1 anchor checking; Shiki adds defaults.
+const auditedRspressVersion = '2.1.3';
 const parserDependencies = [
   '@mdx-js/mdx',
   'remark-cjk-friendly',
@@ -54,7 +57,7 @@ test('uses an audited Rspress parser contract', () => {
 test('reports actionable instructions for unaudited Rspress versions', () => {
   const message = rspressVersionAuditMessage('2.0.21');
   for (const expected of [
-    'Audited @rspress/core version: 2.0.19',
+    'Audited @rspress/core version: 2.1.3',
     'Installed @rspress/core version: 2.0.21',
     '@rspress/core/dist/node/mdx/options.js',
     'frontmatter',

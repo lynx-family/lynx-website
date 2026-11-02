@@ -34,18 +34,28 @@ export async function createRuntime(
   const require = createRequire(path.join(cwd, 'package.json'));
   const load = (specifier: string) =>
     import(pathToFileURL(require.resolve(specifier)).href);
-  const [{ loadConfigFile }, { PluginDriver, RouteService }, { initRsbuild }] =
+  const [configModule, { PluginDriver, RouteService }, { initRsbuild }] =
     await Promise.all([
       load('@rspress/core/dist/config/loadConfigFile.js'),
       load('@rspress/core/dist/index.js'),
       load('@rspress/core/dist/node/initRsbuild.js'),
     ]);
-  const { config, configFilePath } = suppliedConfig
-    ? {
-        config: suppliedConfig,
-        configFilePath: path.join(cwd, 'rspress.config.ts'),
-      }
+  const { loadConfigFile, normalizeConfigResult } = configModule;
+  // Newer Rspress passes Rsbuild LoadConfigResult through to initRsbuild.
+  // Keep its metadata while retaining the old host's plain-config contract.
+  const usesConfigResult = typeof normalizeConfigResult === 'function';
+  const defaultConfigPath = path.join(cwd, 'rspress.config.ts');
+  const loaded = suppliedConfig
+    ? usesConfigResult
+      ? normalizeConfigResult(suppliedConfig, defaultConfigPath)
+      : { config: suppliedConfig, configFilePath: defaultConfigPath }
     : await loadConfigFile(path.join(cwd, 'rspress.config.ts'));
+  const config = usesConfigResult ? loaded.content : loaded.config;
+  const configFilePath =
+    (usesConfigResult ? loaded.filePath : loaded.configFilePath) ??
+    defaultConfigPath;
+  const initConfig = (content: any) =>
+    usesConfigResult ? { ...loaded, content } : content;
   const driver = await PluginDriver.create(config, configFilePath, true);
   const modified = await driver.modifyConfig();
   modified.root = path.resolve(cwd, modified.root);
@@ -72,7 +82,7 @@ export async function createRuntime(
   }
   const rsbuild = await initRsbuild(
     modified.root,
-    modified,
+    initConfig(modified),
     driver,
     await RouteService.createSimple(),
     true,
@@ -97,7 +107,7 @@ export async function createRuntime(
   );
   const frameworkBuild = await initRsbuild(
     modified.root,
-    frameworkConfig,
+    initConfig(frameworkConfig),
     frameworkDriver,
     await RouteService.createSimple(),
     true,
