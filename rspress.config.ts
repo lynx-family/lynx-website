@@ -21,6 +21,7 @@ import {
   API_PARTIAL_ROUTE_EXCLUDE,
   assertNoApiPartialRoutes,
 } from './scripts/build/api-partial-routes.mts';
+import { assertNoNullCharacters } from './scripts/build/generated-html-integrity.mts';
 import versionJson from './docs/public/version.json';
 import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
@@ -294,7 +295,11 @@ function pluginValidateAndSanitizeGeneratedHtml(): RspressPlugin {
       await Promise.all(
         files.map(async (file) => {
           const html = await fs.readFile(file, 'utf8');
-          let sanitized = html.replace(/\u0000/g, '');
+          assertNoNullCharacters(
+            html,
+            path.relative(outDir, file).replace(/\\/g, '/'),
+          );
+          let sanitized = html;
           if (routeForHtmlFile(outDir, file) === '/living-spec') {
             // The generated living spec links to #ref, but the actual section
             // id in the built page is #references.
