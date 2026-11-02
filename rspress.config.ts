@@ -21,6 +21,10 @@ import {
   API_PARTIAL_ROUTE_EXCLUDE,
   assertNoApiPartialRoutes,
 } from './scripts/build/api-partial-routes.mts';
+import {
+  normalizeGeneratedRoute,
+  removeBrokenLanguageAlternates,
+} from './scripts/build/generated-html.mts';
 import versionJson from './docs/public/version.json';
 import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
@@ -291,21 +295,33 @@ function pluginValidateAndSanitizeGeneratedHtml(): RspressPlugin {
       );
       assertNoApiPartialRoutes(routes);
 
-      await Promise.all(
-        files.map(async (file) => {
-          const html = await fs.readFile(file, 'utf8');
-          let sanitized = html.replace(/\u0000/g, '');
-          if (routeForHtmlFile(outDir, file) === '/living-spec') {
-            // The generated living spec links to #ref, but the actual section
-            // id in the built page is #references.
-            sanitized = sanitized.replace(/href="#ref"/g, 'href="#references"');
-          }
-          sanitized = removeBrokenAlternateLinks(sanitized, routes);
-          if (sanitized !== html) {
-            await fs.writeFile(file, sanitized);
-          }
-        }),
-      );
+      // Bound the whole read/repair/write operation: thousands of concurrent
+      // HTML replacements can exceed the build's 4 GiB heap limit.
+      const batchSize = 8;
+      for (let offset = 0; offset < files.length; offset += batchSize) {
+        await Promise.all(
+          files.slice(offset, offset + batchSize).map(async (file) => {
+            const html = await fs.readFile(file, 'utf8');
+            let sanitized = html.replace(/\u0000/g, '');
+            if (routeForHtmlFile(outDir, file) === '/living-spec') {
+              // The generated living spec links to #ref, but the actual section
+              // id in the built page is #references.
+              sanitized = sanitized.replace(
+                /href="#ref"/g,
+                'href="#references"',
+              );
+            }
+            sanitized = removeBrokenLanguageAlternates(sanitized, routes, {
+              siteUrl: PUBLISH_URL,
+              base: config.base ?? '/',
+              pagePath: path.relative(outDir, file).replace(/\\/g, '/'),
+            });
+            if (sanitized !== html) {
+              await fs.writeFile(file, sanitized);
+            }
+          }),
+        );
+      }
     },
   };
 }
@@ -332,76 +348,6 @@ async function collectHtmlFiles(dir: string): Promise<string[]> {
 
 function routeForHtmlFile(root: string, file: string) {
   return normalizeGeneratedRoute(path.relative(root, file));
-}
-
-// Match the route shape Rspress serves for generated HTML files: both
-// `foo.html` and `foo/index.html` resolve to `/foo`.
-function normalizeGeneratedRoute(route: string) {
-  let normalized = route.replace(/\\/g, '/');
-  if (normalized.endsWith('.html')) normalized = normalized.slice(0, -5);
-  normalized = normalized.replace(/\/index$/, '');
-  if (normalized === 'index') normalized = '';
-  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
-  normalized = normalized.replace(/\/+/g, '/');
-  if (normalized.length > 1) normalized = normalized.replace(/\/+$/, '');
-  return normalized || '/';
-}
-
-// Rspress renders alternate-language links even when the target locale page was
-// not generated. Drop invalid head alternates and make visible switcher entries
-// inert so crawlers and users do not follow missing routes.
-function removeBrokenAlternateLinks(html: string, routes: Set<string>) {
-  const withoutBrokenHeadLinks = html.replace(/<link\b[^>]*>/g, (tag) => {
-    if (!/\brel=["']alternate["']/.test(tag)) return tag;
-    const href = tag.match(/\bhref=["']([^"']+)["']/)?.[1];
-    if (!isMissingGeneratedRoute(href, routes)) return tag;
-    return '';
-  });
-
-  return withoutBrokenHeadLinks.replace(
-    /<a\b(?=[^>]*\brel=["']alternate["'])[^>]*>[\s\S]*?<\/a>/g,
-    (tag) => {
-      const href = tag.match(/\bhref=["']([^"']+)["']/)?.[1];
-      if (!isMissingGeneratedRoute(href, routes)) return tag;
-      return tag
-        .replace(/^<a\b/, '<span')
-        .replace(/<\/a>$/, '</span>')
-        .replace(/\s+href=["'][^"']*["']/, '')
-        .replace(/\s+rel=["']alternate["']/, '')
-        .replace(/\s+hrefLang=["'][^"']*["']/, '')
-        .replace(
-          /\s+class=["']([^"']*)\brp-link\b([^"']*)["']/,
-          ' class="$1$2"',
-        )
-        .replace(/<span\b/, '<span aria-disabled="true"');
-    },
-  );
-}
-
-function isMissingGeneratedRoute(
-  href: string | undefined,
-  routes: Set<string>,
-) {
-  if (!href) return false;
-  const route = routeFromGeneratedHref(href);
-  return Boolean(route && !routes.has(route));
-}
-
-function routeFromGeneratedHref(href: string) {
-  try {
-    const url = new URL(href, PUBLISH_URL);
-    if (url.origin !== new URL(PUBLISH_URL).origin) return null;
-    let pathname = decodeURIComponent(url.pathname);
-    // Alternate links include the published version base (`/next` today), but
-    // generated routes are stored without that base.
-    if (pathname.startsWith(`/${versionJson.current_version}`)) {
-      pathname =
-        pathname.slice(`/${versionJson.current_version}`.length) || '/';
-    }
-    return normalizeGeneratedRoute(pathname);
-  } catch {
-    return null;
-  }
 }
 
 function remarkReplaceVersionJsonPlaceholders() {
