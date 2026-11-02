@@ -449,20 +449,5 @@ export const ossSourceAreas = [
 // Resolver overrides are exact, repository-local exceptions, not portable
 // aliases. A consumer supplies its own list and does not inherit these
 // physical implementation choices automatically.
-export const ossResolverOverrides = [
-  {
-    id: 'rspress-react-18-renderer',
-    specifier: '@rspress/core/_private/react',
-    kind: 'package-compatibility',
-    match: 'exact',
-    reason:
-      'Legacy React 18 renderer mapping still present in rspress.config.ts; Rspress 2.0.19 uses react-render-to-markdown directly.',
-    parity: {
-      runtime: 'override-required',
-      typescript: 'not-applicable',
-    },
-    lifecycle: 'temporary',
-    removalCondition:
-      'Gate 2 must verify the mapping is unused, then remove the resolver key and this record together.',
-  },
-] as const satisfies readonly ResolverOverride[];
+export const ossResolverOverrides =
+  [] as const satisfies readonly ResolverOverride[];
