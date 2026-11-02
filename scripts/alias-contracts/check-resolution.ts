@@ -2,8 +2,6 @@
  * Gate 2: actual Rspress/Rspack and TypeScript probes over the shared corpus.
  * Canonical spelling and import migration baselines deliberately belong to Gate 3.
  */
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -17,14 +15,16 @@ import {
   classifySource,
   discoverCorpus,
   matchingAlias,
+  readProducerManifest,
+  resolvedResource,
+  resourcePath,
   type ImportRecord,
 } from './corpus.js';
 import { createExportReader } from './exports.js';
 import { createRuntime, type Runtime, type RuntimeAliases } from './runtime.js';
 import type { AliasContract, SourceArea } from './types.js';
 
-const isDeclarationFile = (file: string) =>
-  /\.d\.[cm]?ts$/.test(file.split('?')[0]!);
+const isDeclarationFile = (file: string) => /\.d\.[cm]?ts$/.test(file);
 
 function keyErrors(
   bindings: RuntimeAliases,
@@ -115,7 +115,7 @@ export function targetErrors(
   return errors;
 }
 
-function readTsConfig(cwd: string) {
+export function readTsConfig(cwd: string) {
   const file = path.join(cwd, 'tsconfig.json');
   const config = ts.readConfigFile(file, ts.sys.readFile);
   if (config.error)
@@ -170,8 +170,10 @@ export async function checkResolution(
     errors.push(
       `${record.importer}:${record.line} ${record.specifier} [${environment}]: ${message}`,
     );
-  const records = corpus.filter((record) =>
-    matchingAlias(record.specifier, contracts.aliases),
+  const records = corpus.filter(
+    (record) =>
+      record.kind !== 'configuration' &&
+      matchingAlias(record.specifier, contracts.aliases),
   );
   const resolutions: {
     record: ImportRecord;
@@ -183,7 +185,7 @@ export async function checkResolution(
     const alias = matchingAlias(request, contracts.aliases)!;
     for (const error of importErrors(
       alias,
-      request === alias.specifier,
+      resourcePath(request) === alias.specifier,
       record.owner,
     ))
       report(record, 'contract', error);
@@ -201,7 +203,8 @@ export async function checkResolution(
     )
       continue;
     for (const environment of runtime.environments) {
-      const target = await environment.resolve(record.importer, request);
+      const resolved = await environment.resolve(record.importer, request);
+      const target = resolved ? resolvedResource(request, resolved) : undefined;
       resolutions.push({
         record,
         environment,
@@ -217,14 +220,10 @@ export async function checkResolution(
           environment.name,
           'runtime target is a declaration file',
         );
-      const area = classifySource(
-        target.split('?')[0]!,
-        cwd,
-        contracts.sourceAreas,
-      );
+      const area = classifySource(target, cwd, contracts.sourceAreas);
       for (const error of targetErrors(
         alias,
-        request === alias.specifier,
+        resourcePath(request) === alias.specifier,
         area,
       ))
         report(record, environment.name, error);
@@ -317,7 +316,7 @@ export async function checkResolution(
         .flatMap((entry) => [entry.target, ...entry.originals])
         .filter((file): file is string => !!file),
       ...resolutions
-        .map((result) => result.target?.split('?')[0])
+        .map((result) => result.target)
         .filter(
           (file): file is string => !!file && /\.[cm]?[jt]sx?$/.test(file),
         ),
@@ -519,7 +518,7 @@ export async function checkResolution(
       const alias = matchingAlias(record.specifier, contracts.aliases)!;
       for (const error of targetErrors(
         alias,
-        record.specifier === alias.specifier,
+        resourcePath(record.specifier) === alias.specifier,
         area,
       ))
         report(record, 'typescript', error);
@@ -555,7 +554,7 @@ export async function checkResolution(
       const surface = await readExports(target);
       for (const error of surface.errors)
         report(record, environment.name, error);
-      const implementationTree = program.getSourceFile(target.split('?')[0]!);
+      const implementationTree = program.getSourceFile(target);
       const implementationExports = exportsAt(implementationTree);
       const probeTree = program.getSourceFile(probeFiles.get(record) ?? '');
       const declarationExports = exportsAt(moduleSpecifiers.get(record));
@@ -616,11 +615,7 @@ export async function checkResolution(
         errors.push(
           `${alias.specifier} [${environment.name}]: runtime target is a declaration file`,
         );
-      const area = classifySource(
-        target.split('?')[0]!,
-        cwd,
-        contracts.sourceAreas,
-      );
+      const area = classifySource(target, cwd, contracts.sourceAreas);
       for (const error of targetErrors(alias, true, area))
         errors.push(`${alias.specifier} [${environment.name}]: ${error}`);
       if (
@@ -712,16 +707,7 @@ export async function runResolutionCli(
     // Only the OSS entry point owns preparation of this producer's documents.
     // A consumer source map defines its corpus without transitive-dependency
     // lookup or assumptions about an installed lynx-doc package's layout.
-    const manifest = options.sourceMap
-      ? undefined
-      : JSON.parse(
-          readFileSync(
-            createRequire(path.join(cwd, 'package.json')).resolve(
-              '@lynx-js/lynx-stack-docs/manifest.json',
-            ),
-            'utf8',
-          ),
-        );
+    const manifest = readProducerManifest(cwd, !!options.sourceMap);
     const corpus = discoverCorpus(cwd, contracts, manifest);
     runtime = await createRuntime(cwd);
     const { errors, probes } = await checkResolution(

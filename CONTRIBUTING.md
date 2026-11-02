@@ -236,15 +236,21 @@ policy, source ownership, resolver overrides, or checker behavior.
 For registry or checker changes, run:
 
 ```bash
-pnpm check:alias-contract-types
-node --import tsx --test scripts/alias-contracts/check-registry.test.ts
-pnpm check:alias-contracts
-pnpm test:alias-resolution
+pnpm check:aliases
 pnpm run prepare
 pnpm check:alias-resolution
+pnpm check:import-policy
+pnpm run build
 ```
 
-The final resolver check requires the prepared repository. Changes to packaged
+`check:aliases` runs the complete gate fixture suite without prepare. The
+resolver and import-policy commands check the prepared repository. Migration
+baselines record exact occurrences: remove or reduce entries alongside source
+migrations; never add allowances for new, moved, or changed imports. Update
+authoritative generator settings before regenerating their output. See the
+[baseline workflow](./scripts/alias-contracts/README.md#import-policy-and-baseline-shrinking).
+
+Changes to packaged
 checker interfaces also require downstream validation against the exact
 candidate revision. See the
 [understanding guide](./scripts/alias-contracts/UNDERSTANDING.md) for gate

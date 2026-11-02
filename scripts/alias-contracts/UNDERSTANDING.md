@@ -115,7 +115,7 @@ website-owner fallback only to unmatched documents. That work introduces
 the `lynx-stack` owner without adding an `@lynx-stack` alias.
 
 Gate 2 establishes the shared executable-import corpus and uses it for resolver
-verification. Gate 3 will reuse those records for import policy and exact
+verification. Gate 3 reuses those records for import policy and exact
 migration baselines. Concrete direct-path and `@assets/*` inventories are
 derived from observed imports and belong only in Gate 3 data, never in the
 Gate 1 registry.
@@ -135,7 +135,7 @@ actual runtime and TypeScript behavior:
 
 `check-registry.ts` remains the policy boundary. Its `loadContracts()` helper
 loads and validates the same `--source-map`, `--resolver-overrides`, and
-`--alias-extensions` modules for both gates, so Gate 2 cannot reinterpret or
+`--alias-extensions` modules for all three gates, so later gates cannot reinterpret or
 bypass Gate 1 policy.
 
 The corpus is syntax-only and ownership-aware. The runtime layer materializes
@@ -153,3 +153,22 @@ explicitly because Gate 2 does not implement a CommonJS module analyzer.
 OSS and accepted synthetic layouts block CI. Real downstream legacy mismatches
 remain diagnostic until migration; do not weaken shared policy merely to make
 them pass.
+
+## Gate 3 Import Policy
+
+`check-import-policy.ts` checks the same raw records independently of Gate 2's
+export probes. Runtime imports use every effective compiler resolver. Erased
+type imports use TypeScript resolution. Registered generator JSON fields carry
+the generated source area's importer owner; directory namespace settings do
+not pretend to be executable modules.
+
+Migration diagnostics count syntax occurrences once across compiler environments.
+The exact baseline lives with the importing repository. Hard target/source
+violations remain failures even when the import also has a migration allowance.
+Canonical spelling checks do not rewrite the resolver request.
+
+Documentation/runtime boundary metadata follows relocated source areas. Ordinary
+OSS locale documents use the corpus fallback, while producer destinations retain
+manifest ownership. Generated violations cannot create their own baseline
+entries. Current generated documentation is checked with zero debt; provenance
+descriptions alone cannot grant an allowance for a duplicated import.

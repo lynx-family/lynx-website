@@ -2,8 +2,14 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tsImport } from 'tsx/esm/api';
 
-import { parseDocumentation } from './documentation-parser.mjs';
+// Keep the existing plain-node CLI usable by lint-staged and CI. Loading only
+// Gate 3's documentation adapter does not initialize the site's resolvers.
+const { findDocumentationBoundaryImports } = await tsImport(
+  '../alias-contracts/boundary.ts',
+  import.meta.url,
+);
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const scriptPath = fileURLToPath(import.meta.url);
@@ -18,119 +24,11 @@ function toPosix(value) {
 }
 
 /**
- * Walk Markdown nodes and their embedded ESTree, including JSX attributes and
- * template substitutions. Yield statically known import sources, including
- * dynamic imports using template literals without substitutions. Only typed
- * AST children are visited, not locations, comments, or arbitrary metadata.
- * The parser decides what is executable.
- */
-function* importNodes(node) {
-  if (
-    node.type === 'ImportDeclaration' ||
-    node.type === 'ExportNamedDeclaration' ||
-    node.type === 'ExportAllDeclaration' ||
-    node.type === 'ImportExpression'
-  ) {
-    let specifier;
-    if (node.source?.type === 'Literal') {
-      specifier = node.source.value;
-    } else if (
-      node.type === 'ImportExpression' &&
-      node.source?.type === 'TemplateLiteral' &&
-      node.source.expressions.length === 0
-    ) {
-      specifier = node.source.quasis[0]?.value.cooked;
-    }
-    if (typeof specifier === 'string') {
-      yield { node, specifier };
-    }
-  }
-
-  if (node.data?.estree) {
-    yield* importNodes(node.data.estree);
-  }
-  for (const value of Object.values(node)) {
-    const children = Array.isArray(value) ? value : [value];
-    for (const child of children) {
-      if (
-        child &&
-        typeof child === 'object' &&
-        typeof child.type === 'string'
-      ) {
-        yield* importNodes(child);
-      }
-    }
-  }
-}
-
-/**
- * Suggest only documented component aliases. Preserve resource extensions and
- * query/hash modifiers; unknown source roots remain violations without a guess.
- */
-function suggestedAlias(target, modifier) {
-  const aliasRoots = [
-    ['src/components', '@lynx'],
-    ['src/lynx-ui/components', '@lynx-ui'],
-  ];
-  for (const [sourceRoot, alias] of aliasRoots) {
-    if (target !== sourceRoot && !target.startsWith(`${sourceRoot}/`)) {
-      continue;
-    }
-    const subpath = (
-      target === sourceRoot ? '' : target.slice(sourceRoot.length + 1)
-    )
-      .replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, '')
-      .replace(/(^|\/)index$/, '');
-    return `${alias}${subpath ? `/${subpath}` : ''}${modifier}`;
-  }
-  return undefined;
-}
-
-/**
- * Find imports violating the OSS/downstream source boundary.
- *
- * Rules:
- * - Use Rspress-aligned Markdown/MDX parsing, not text matching.
- * - Check static imports, re-exports, and statically known dynamic imports.
- * - Ignore examples, prose, comments, and strings, but visit JS expressions.
- * - Reject relative sources resolving into src/ or theme/; do not migrate aliases.
- * - Preserve query/hash modifiers and original one-based diagnostic lines.
- * - Suggest documented aliases without JS/TS extensions or a final index.
- * - Fail on parse errors; an unparsed document must not silently pass.
- *
- * Plain .md uses Markdown semantics, so import-looking text is not executable.
- * Computed dynamic sources are not evaluated or checked.
+ * Preserve the documentation entry's diagnostic shape while delegating parsing,
+ * relative boundaries and source-derived suggestions to Gate 3.
  */
 export function findSourceBoundaryImports(file, content) {
-  const normalizedFile = toPosix(file);
-  const tree = parseDocumentation(normalizedFile, content);
-  const violations = [];
-  for (const { node, specifier } of importNodes(tree)) {
-    if (!specifier.startsWith('./') && !specifier.startsWith('../')) {
-      continue;
-    }
-    const modifierIndex = specifier.search(/[?#]/);
-    const cleanSpecifier =
-      modifierIndex === -1 ? specifier : specifier.slice(0, modifierIndex);
-    const modifier = modifierIndex === -1 ? '' : specifier.slice(modifierIndex);
-    const target = path.posix.normalize(
-      path.posix.join(path.posix.dirname(normalizedFile), cleanSpecifier),
-    );
-    const crossesRuntimeBoundary = ['src', 'theme'].some(
-      (root) => target === root || target.startsWith(`${root}/`),
-    );
-    if (!crossesRuntimeBoundary) {
-      continue;
-    }
-    violations.push({
-      file: normalizedFile,
-      line: node.loc.start.line,
-      specifier,
-      target,
-      suggestion: suggestedAlias(target, modifier),
-    });
-  }
-  return violations.sort((a, b) => a.line - b.line);
+  return findDocumentationBoundaryImports(repoRoot, file, content);
 }
 
 /**

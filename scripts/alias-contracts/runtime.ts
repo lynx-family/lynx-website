@@ -147,7 +147,11 @@ export async function createRuntime(
             path.dirname(path.resolve(cwd, importer)),
             request,
             {},
-            (error: any, result: any) => {
+            (
+              error: any,
+              result: any,
+              resource?: { path: string; query: string; fragment: string },
+            ) => {
               if (
                 error &&
                 !/Can't resolve|NotFound|not found|cannot resolve|PackagePathNotExported|Package path .* is not exported/i.test(
@@ -155,7 +159,16 @@ export async function createRuntime(
                 )
               )
                 reject(error);
-              else resolve(typeof result === 'string' ? result : undefined);
+              // Rspack escapes literal '#' in its display string. The callback
+              // metadata preserves the filesystem path without that escaping.
+              else
+                resolve(
+                  typeof result === 'string'
+                    ? resource
+                      ? `${resource.path}${resource.query}${resource.fragment}`
+                      : result
+                    : undefined,
+                );
             },
           );
         }),

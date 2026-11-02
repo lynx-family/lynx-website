@@ -216,6 +216,17 @@ interface SourceAreaBase {
   readonly root: string;
   /** Logical owner retained by source at this physical location. */
   readonly owner: OwnerId;
+  /** Portable documentation/runtime boundary, including relocated mounts. */
+  readonly boundary?: 'documentation' | 'runtime';
+  /**
+   * JSON fields containing generator module namespaces. This area's owner
+   * imports the value in generated source; the JSON file's owner is irrelevant.
+   * Missing files are permitted in layouts that do not use that generator.
+   */
+  readonly moduleSpecifierFields?: readonly {
+    readonly file: string;
+    readonly path: readonly [string, ...string[]];
+  }[];
 }
 
 /**

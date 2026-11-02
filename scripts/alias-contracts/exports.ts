@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { parseDocumentation } from '../ci/documentation-parser.mjs';
-import { canonical, parseScript } from './corpus.js';
+import { canonical, parseScript, resolvedResource } from './corpus.js';
 import type { RuntimeEnvironment } from './runtime.js';
 
 /** Original export identity and whether that identity exists at runtime. */
@@ -34,7 +34,7 @@ export function createExportReader(
     file: string,
     ancestors = new Set<string>(),
   ): Promise<ExportSurface> => {
-    file = canonical(file.split('?')[0]!);
+    file = canonical(file);
     if (ancestors.has(file)) {
       cyclic = true;
       return { names: previous.get(file)?.names ?? new Map(), errors: [] };
@@ -196,14 +196,18 @@ export function createExportReader(
               undefined,
               ts.getModeForUsageLocation(tree, literal, options),
             ).resolvedModule?.resolvedFileName
-          : await runtime.resolve(file, request);
+          : await runtime
+              .resolve(file, request)
+              .then((resolved) =>
+                resolved ? resolvedResource(request, resolved) : undefined,
+              );
       if (!resolved) {
         surface.errors.push(`${file}: unresolved re-export '${request}'`);
         return undefined;
       }
       const exports = await read(resolved, stack);
       surface.errors.push(...exports.errors);
-      return { ...exports, file: canonical(resolved.split('?')[0]!) };
+      return { ...exports, file: canonical(resolved) };
     };
     for (const node of tree.statements) {
       if (

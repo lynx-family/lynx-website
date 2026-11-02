@@ -350,12 +350,14 @@ export const ossSourceAreas = [
     root: 'sharedDocs/introDocs',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'documentation',
   },
   {
     id: 'lynx-ui-package-docs',
     root: 'sharedDocs/packageDocs',
     owner: 'lynx-ui',
     role: 'generated',
+    boundary: 'documentation',
     origins: [
       {
         repository: 'lynx-family/lynx-ui',
@@ -370,6 +372,7 @@ export const ossSourceAreas = [
     root: 'sharedDocs/lynx-ui-intros.ts',
     owner: 'lynx-ui',
     role: 'generated',
+    boundary: 'documentation',
     origins: [
       {
         repository: 'lynx-family/lynx-ui',
@@ -382,24 +385,40 @@ export const ossSourceAreas = [
     root: 'src/components',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
+    moduleSpecifierFields: [
+      { file: 'components.json', path: ['aliases', 'lynx'] },
+      { file: 'components.json', path: ['aliases', 'components'] },
+      { file: 'components.json', path: ['aliases', 'ui'] },
+    ],
   },
   {
     id: 'oss-hooks',
     root: 'src/hooks',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
+    moduleSpecifierFields: [
+      { file: 'components.json', path: ['aliases', 'hooks'] },
+    ],
   },
   {
     id: 'oss-lib',
     root: 'src/lib',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
+    moduleSpecifierFields: [
+      { file: 'components.json', path: ['aliases', 'utils'] },
+      { file: 'components.json', path: ['aliases', 'lib'] },
+    ],
   },
   {
     id: 'oss-luna',
     root: 'src/luna',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
   },
   {
     // The OSS site owns these components even though they serve lynx-ui docs;
@@ -408,12 +427,14 @@ export const ossSourceAreas = [
     root: 'src/lynx-ui/components',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
   },
   {
     id: 'oss-styles',
     root: 'src/styles',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
   },
   {
     id: 'oss-open-graph-config',
@@ -436,12 +457,14 @@ export const ossSourceAreas = [
     root: 'theme',
     owner: 'lynx-website',
     role: 'authoritative',
+    boundary: 'runtime',
   },
   {
     id: 'rspress-default-theme',
     root: 'node_modules/@rspress/core/dist/theme',
     owner: 'rspress',
     role: 'mounted',
+    boundary: 'runtime',
     origins: [
       {
         repository: 'web-infra-dev/rspress',
