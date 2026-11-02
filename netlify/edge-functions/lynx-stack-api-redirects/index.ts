@@ -6,21 +6,6 @@
 
 import legacy from './legacy.json' with { type: 'json' };
 
-// The kind directories of the testing library, which TypeDoc names in the
-// language of the page. Its members are listed in legacy.json instead of
-// derived from the old URL: a member that used to be a function can be a
-// variable today, and only the generated pages know which.
-const ZH_KINDS: Record<string, string> = {
-  Classes: '类',
-  Functions: '函数',
-  Interfaces: '接口',
-  Namespaces: '命名空间',
-  Type_Aliases: '类型别名',
-  Variables: '变量',
-};
-
-const TESTING_LIBRARY = '/api/react/testing-library/';
-
 // The kinds the old reference published for this package.
 const TESTING_ENVIRONMENT: Record<string, string> = {
   Class: 'classes',
@@ -59,15 +44,10 @@ export default (request: Request) => {
   const url = new URL(request.url);
   const [, prefix, path] =
     /^((?:\/next)?(?:\/zh)?)(\/.*?)(?:\.html)?\/?$/.exec(url.pathname) ?? [];
-  let to = path && target(path);
+  const to = path && target(path);
   // A rule can answer with the path it was given, for a URL the reference
   // still publishes. Redirecting it to itself is a loop.
   if (!to || prefix + to === url.pathname) return;
-  if (prefix.includes('/zh') && to.startsWith(TESTING_LIBRARY)) {
-    const [kind, ...rest] = to.slice(TESTING_LIBRARY.length).split('/');
-    const localized = ZH_KINDS[kind!];
-    if (localized) to = TESTING_LIBRARY + [localized, ...rest].join('/');
-  }
   const destination = new URL(prefix + to, url);
   destination.search = url.search;
   return Response.redirect(destination, 301);
