@@ -187,6 +187,55 @@ For site UI changes under `src/` and `theme/`, see the
 [Theme and Component Design guide](./src/README.md). It covers visual
 consistency, component ownership, style overrides, and compatibility checks.
 
+## Versioning
+
+### Page-level SDK Versions
+
+New handwritten guide pages with one SDK version requirement can declare it
+in frontmatter:
+
+```yaml
+---
+since: '4.3'
+---
+```
+
+`since` is the minimum Lynx SDK version for the capability or usage described
+by the whole page, not its creation or last-updated version. Use a quoted
+`x.y` string; numeric values, patch versions, and `next` are not accepted.
+Keep existing English/Chinese counterparts consistent. No declaration means
+no support assertion.
+
+The theme displays one line above the document, including in exported
+Markdown. If `since` is at or below `latestStable` in
+`src/versioning/lynx-sdk-release.json`, it shows `Lynx SDK x.y+`. Otherwise it
+shows Pre-release and the target version. Pre-release means not yet in a
+stable SDK release; it does not promise a beta/RC artifact or imply
+Experimental API stability.
+
+After an SDK minor or major release becomes stable, update `latestStable`
+and rebuild. Page declarations stay unchanged. This metadata is independent
+of the existing website version menu and installation dependency versions.
+
+Only `docs/{en,zh}/guide` document routes participate. Imported fragments,
+synced/generated references, and other product version axes are outside this
+contract. Do not duplicate API compatibility data, infer platform support, or
+apply one version to a page whose instructions require different versions.
+Retain explicit platform and local version restrictions in the body.
+
+Builds validate the metadata and locale parity using Rspress's actual routes.
+For changes to the version resolver or validation, run:
+
+```bash
+node --import tsx --test scripts/build/page-sdk-since.test.ts
+```
+
+This feature does not change deployment or release-branch policy. Making
+`main` the default documentation entry and ending routine release-site
+branching first requires validated scoped snapshots for historical content,
+including necessary dependency, example, and artifact bindings, and a
+version-retention strategy for synced/generated documentation.
+
 ## CSS Reference Style
 
 - Include a non-empty frontmatter `title` in CSS property and data-type
