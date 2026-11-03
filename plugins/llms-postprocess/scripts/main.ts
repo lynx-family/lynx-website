@@ -1,8 +1,27 @@
 import { postprocessLLMs } from '../src/postprocess.ts';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { parseArgs } from 'node:util';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
+
+// This is a manual comparison tool, not the Rspress plugin entrypoint. Require
+// the build base so it cannot silently emit links for another docs version.
+const { values } = parseArgs({
+  options: {
+    base: {
+      type: 'string',
+    },
+  },
+});
+const base = requireBase(values.base);
+
+function requireBase(value: string | undefined): string {
+  if (!value) {
+    throw new Error('Missing required --base <path>. Example: --base /next');
+  }
+  return value;
+}
 
 async function main() {
   const roots = [
@@ -22,7 +41,7 @@ async function main() {
 
     const result = postprocessLLMs(
       'https://lynxjs.org',
-      '/3.5',
+      base,
       llmsTxt,
       agentsMD,
     );

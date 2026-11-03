@@ -156,6 +156,13 @@ then fail on additions, modifications, deletions, or untracked output files.
 When adding such a tool, include its complete output set in the consistency
 check.
 
+## Alias Contracts
+
+Follow the policy and change process in the
+[Alias Contract Guide](./scripts/alias-contracts/README.md). Treat the
+packaged checker path, CLI options, and consumer module export names as
+downstream compatibility interfaces.
+
 ## Documentation Imports
 
 The contributor-facing rules, examples, and alias selection table in
@@ -188,13 +195,15 @@ The `@` alias resolves directly to `src` in OSS, but downstream consumers may
 configure it as an ordered list of source roots. The resolver uses the first
 matching path; it does not merge directories or barrel exports. Existing `@/*`
 imports remain **temporarily** supported for compatibility, but do not add one
-for a new OSS documentation component when an `@lynx/*` import is available.
+for a new OSS documentation component. Promote it through the owning bare
+barrel.
 
 Likewise, a downstream `@lynx` alias may search multiple component roots. A
 subpath such as `@lynx/example` can fall through until that component exists,
 while the bare `@lynx` import stops at the first resolvable barrel. Use the
-barrel only when the export is present in every consumer's first matching
-barrel.
+barrel after the export is present in every consumer's first matching barrel.
+Existing `@lynx/*` and `@lynx-ui/*` imports are migration inventory, not stable
+file-level Component APIs.
 
 The OSS `@luna` alias is an exact-match barrel for `src/luna/index.ts`. Shared
 documentation must use only the bare `@luna` import so consumers need to

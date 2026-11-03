@@ -7,8 +7,8 @@ import {
   type PlatformKey,
 } from '@/components/platform-navigation/platform-colors';
 import ReactLynxIcon from '@/components/api-table/compat-table/assets/icons/reactlynx.svg?react';
-import VueLynxIcon from '@assets/home/vue-lynx-logo.svg?react';
-import OctaneIcon from '@assets/home/octane-logo.svg?react';
+import VueLynxIcon from './vue-lynx-logo.svg?react';
+import OctaneIcon from './octane-logo.svg?react';
 import styles from './index.module.less';
 
 const PlatformIconWrapper = ({ platform }: { platform: PlatformKey }) => (

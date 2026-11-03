@@ -16,10 +16,6 @@ import { APISummary, APITable, Deprecated, Go } from '@lynx';
 
 在[网格布局](/guide/ui/layout/grid-layout.mdx)中，指定网格项目的行跨度。用于简化开发，W3C 没有这个属性。此属性是子元件属性。
 
-当网格项目指定了 [`grid-row-start`](./grid-row-start.mdx) 和 [`grid-row-end`](./grid-row-end.mdx) 时，`grid-row-span` 属性失效。
-
-当在 `grid-row-start` 或 `grid-row-end` 中使用带有 span 关键字的值时，不能同时使用 `grid-row-span` 属性，否则会出现不符合预期的行为。
-
 ## 使用示例
 
 <Go
@@ -68,12 +64,24 @@ grid-row-span = <number>
 
 - Web 没有这个属性。
 
+## 注意事项
+
+- 当 [`grid-row-start`](./grid-row-start) 和 [`grid-row-end`](./grid-row-end) 指定了两个不同的具体网格线位置时，行跨度由两条网格线之间的距离决定，`grid-row-span` 不再生效。下面的网格项目占 3 行：
+
+  ```css
+  grid-row-start: 2;
+  grid-row-end: 5;
+  grid-row-span: 1;
+  ```
+
+- 不要将 `grid-row-span` 与 `grid-row-start` 或 `grid-row-end` 中的 `span <number>` 混用。它们都会指定行跨度，并可能相互覆盖。下面的声明同时指定了 3 行和 1 行这两个冲突的跨度：
+
+  ```css
+  grid-row-start: 2;
+  grid-row-end: span 3;
+  grid-row-span: 1;
+  ```
+
 ## 兼容性
 
 <APITable />
-
-## 常见问题
-
-- 当网格项目指定了 [`grid-row-start`](./grid-row-start.mdx) 和 [`grid-row-end`](./grid-row-end.mdx) 时，`grid-row-span` 属性失效。
-
-- 当在 `grid-row-start` 或 `grid-row-end` 中使用带有 span 关键字的值时，不能同时使用 `grid-row-span` 属性，否则会出现不符合预期的行为。

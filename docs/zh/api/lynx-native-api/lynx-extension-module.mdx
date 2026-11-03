@@ -55,31 +55,32 @@ void RegisterExtensionModule() {
 
 `LynxExtensionModule` 暴露了横跨 UI 线程和 BTS 线程的生命周期回调：
 
-- `OnLynxViewCreate(...)`：`LynxView` 实例创建时，在 UI 线程调用。
-- `OnLynxViewDestroy()`：`LynxView` 实例销毁前，在 UI 线程调用。
-- `OnRuntimeInit()`：BTS runtime 实例创建时，在 UI 线程调用。
-- `OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`：runtime attach 时，在 BTS 线程调用。
-- `OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url)`：runtime ready 时，在 BTS 线程调用。
-- `OnRuntimeDetach()`：runtime detach 时，在 BTS 线程调用。
-- `OnEnterForeground()`：应用进入前台时，在 UI 线程调用。
-- `OnEnterBackground()`：应用进入后台时，在 UI 线程调用。
-- `Destroy()`：extension module 实例释放前，在 BTS 线程调用。
+- [`OnLynxViewCreate(...)`](./lynx-extension-module/on-lynx-view-create)：`LynxView` 实例创建时，在 UI 线程调用。
+- [`OnLynxViewDestroy()`](./lynx-extension-module/on-lynx-view-destroy)：`LynxView` 实例销毁前，在 UI 线程调用。
+- [`OnRuntimeInit()`](./lynx-extension-module/on-runtime-init)：BTS runtime 实例创建时，在 UI 线程调用。
+- [`OnRuntimeAttach(Napi::Env env, std::unique_ptr<VSyncObserver> vsync_observer)`](./lynx-extension-module/on-runtime-attach)：runtime attach 时，在 BTS 线程调用。
+- [`OnRuntimeReady(Napi::Env env, Napi::Value lynx, const char* url)`](./lynx-extension-module/on-runtime-ready)：runtime ready 时，在 BTS 线程调用。
+- [`OnRuntimeDetach()`](./lynx-extension-module/on-runtime-detach)：runtime detach 时，在 BTS 线程调用。
+- [`OnEnterForeground()`](./lynx-extension-module/on-enter-foreground)：应用进入前台时，在 UI 线程调用。
+- [`OnEnterBackground()`](./lynx-extension-module/on-enter-background)：应用进入后台时，在 UI 线程调用。
+- [`Destroy()`](./lynx-extension-module/destroy)：extension module 实例释放前，在 BTS 线程调用。
 
 ## Runtime Utilities
 
 `LynxExtensionModule` 还提供了一组 Desktop runtime 辅助能力：
 
-- `PostTaskToRuntime(...)`：向 BTS 线程投递任务。
-- `IsRunningTasksOnBTSThread()`：判断当前执行是否已经位于 BTS 线程。
-- `SetNapiModuleCreator(...)`：为当前模块设置 NAPI exports creator。
+- [`PostTaskToRuntime(...)`](./lynx-extension-module/post-task-to-runtime)：向 BTS 线程投递任务。
+- [`IsRunningTasksOnBTSThread()`](./lynx-extension-module/is-running-tasks-on-bts-thread)：判断当前执行是否已经位于 BTS 线程。
+- [`SetCModule(...)`](./lynx-extension-module/set-c-module)：将模块与对应的 C API 实例关联。
+- [`SetNapiModuleCreator(...)`](./lynx-extension-module/set-napi-module-creator)：为当前模块设置 NAPI exports creator。
 - `SetNapiInstanceData(...)` / `GetNapiInstanceData(...)`：按 key 存取 NAPI instance data。
-- `Retain()` / `Release()`：调整模块实例的生命周期。
+- [`Retain()`](./lynx-extension-module/retain) / [`Release()`](./lynx-extension-module/release)：调整模块实例的生命周期。
 
-在 `OnRuntimeAttach(...)` 中拿到的 `VSyncObserver` 还提供：
+在 [`OnRuntimeAttach(...)`](./lynx-extension-module/on-runtime-attach) 中拿到的 `VSyncObserver` 还提供：
 
-- `RequestAnimationFrame(...)`
-- `RequestBeforeAnimationFrame(...)`
-- `RegisterAfterAnimationFrameListener(...)`
+- [`RequestAnimationFrame(...)`](./lynx-extension-module/request-animation-frame)
+- [`RequestBeforeAnimationFrame(...)`](./lynx-extension-module/request-before-animation-frame)
+- [`RegisterAfterAnimationFrameListener(...)`](./lynx-extension-module/register-after-animation-frame-listener)
 
 ## Native View 作为 Extension 能力
 
@@ -112,9 +113,9 @@ native view 能力归属于 Desktop extension 面，不单独作为另一套 Nat
 
 - 通过 `LynxView::Builder::RegisterNativeView<T>(...)` 全局或构建期注册
 - 通过 `LynxView::RegisterNativeView<T>(...)` 对单个 view 注册
-- 在 extension module 的 `OnLynxViewCreate(...)` 中注册
+- 在 extension module 的 [`OnLynxViewCreate(...)`](./lynx-extension-module/on-lynx-view-create) 中注册
 
-如果某个 native view 应该和 extension 一起安装，常见做法是在 `OnLynxViewCreate(...)` 里完成注册：
+如果某个 native view 应该和 extension 一起安装，常见做法是在 [`OnLynxViewCreate(...)`](./lynx-extension-module/on-lynx-view-create) 里完成注册：
 
 <CodeFold toggle>
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
-import { getLatestBlogIndexPath, toLatestBlogPath } from '@site/src/lib/utils';
+import { getLatestBlogIndexPath, toLatestBlogPath } from '../lib/utils';
 import {
   useLatestBlog,
   type LatestBlogConfig,

@@ -1,0 +1,67 @@
+import { APISummary, APITable } from '@lynx';
+
+# PostTaskToRuntime
+
+<APISummary query="lynx-native-api/lynx-extension-module/post-task-to-runtime" />
+
+`PostTaskToRuntime` 方法提供了一种在 BTS（后台线程脚本）线程上调度任务执行的方式。这是从任何线程（如 UI 线程）安全地分派工作到 JavaScript 运行时所在线程的主要机制。
+
+对于任何需要从 BTS 线程外部与 N-API 或其他 BTS 线程特定资源交互的操作，此方法都至关重要。该方法为 C++ `std::function` 和 C 风格函数指针提供了重载。
+
+## 方法签名
+
+### 使用 `std::function` 任务
+
+```cpp
+void PostTaskToRuntime(std::function<void()> task);
+```
+
+### 使用 C 风格函数任务
+
+```cpp
+void PostTaskToRuntime(lynx_extension_module_post_task_func func,
+                       void* user_data);
+```
+
+## 参数说明
+
+| 名称        | 类型                                   | 描述                                                        | 是否必需 |
+| ----------- | -------------------------------------- | ----------------------------------------------------------- | -------- |
+| `task`      | `std::function<void()>`                | 将在 BTS 线程上执行的 C++ 函数对象（如 lambda）。           | 是       |
+| `func`      | `lynx_extension_module_post_task_func` | 将在 BTS 线程上执行的 C 风格函数指针。                      | 是       |
+| `user_data` | `void*`                                | (仅限 C 风格函数重载) 用于 C 风格函数任务的透传上下文指针。不需要上下文时传入 `nullptr`。 | 是       |
+
+## 使用方法
+
+当您需要从另一个线程在 BTS 线程上执行操作时，请使用此方法。一个常见的场景是通过更新 JavaScript 运行时的状态来响应 UI 事件。
+
+## 代码示例
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    // 此方法可能在 UI 线程上因用户操作而被调用
+    void OnUserClickedButton() {
+        printf("按钮在 UI 线程上被点击。正在向 BTS 线程发布任务...\\n");
+
+        PostTaskToRuntime([]() {
+            // 此代码将在 BTS 线程上安全执行。
+            printf("任务现在正在 BTS 线程上运行。\\n");
+            // 您可以在此处安全地调用 N-API 函数或与运行时状态交互。
+        });
+    }
+
+    // ... 其他方法
+};
+```
+
+## 相关链接
+
+- [`IsRunningTasksOnBTSThread()`](./is-running-tasks-on-bts-thread): 检查当前线程是否为 BTS 线程。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/post-task-to-runtime" />

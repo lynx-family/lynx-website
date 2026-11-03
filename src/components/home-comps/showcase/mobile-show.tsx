@@ -1,5 +1,5 @@
-import case0src from '@assets/home/home-s-case-0.webp';
-import case1src from '@assets/home/home-s-case-1.webp';
+import case0src from './home-s-case-0.webp';
+import case1src from './home-s-case-1.webp';
 import cls from 'classnames';
 import styles from './index.module.less';
 

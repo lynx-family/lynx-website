@@ -1,0 +1,30 @@
+import { APISummary, APITable } from '@lynx';
+
+# SetCModule
+
+<APISummary query="lynx-native-api/lynx-extension-module/set-c-module" />
+
+`SetCModule` 方法负责通过将其与底层的 C-API 对应实例 `lynx_extension_module_t` 相关联来初始化 `LynxExtensionModule`。这是一个关键的设置步骤，必须执行以启用 C++ 包装器的功能。
+
+调用此方法还会触发 `BindFunction()`，该函数将 C++ 的虚方法（如 `OnLynxViewCreate`、`OnRuntimeInit` 等）连接到 C-API 的回调机制。
+
+## 方法签名
+
+```cpp
+void SetCModule(lynx_extension_module_t* c_module);
+```
+
+## 参数说明
+
+| 名称       | 类型                       | 描述                                              | 是否必需 |
+| ---------- | -------------------------- | ------------------------------------------------- | -------- |
+| `c_module` | `lynx_extension_module_t*` | 指向 C-API `lynx_extension_module_t` 实例的指针。 | 是       |
+
+## 使用方法
+
+宿主集成代码必须在创建 `lynx_extension_module_t` 实例后立即调用此方法。请在使用包括 `SetNapiModuleCreator` 在内的其他包装器方法之前、并在将 C 模块返回给 Lynx 之前完成调用。此绑定使您的自定义 C++ `LynxExtensionModule` 子类能够接收来自 Lynx 核心引擎的生命周期事件。
+
+## 兼容性
+
+
+<APITable query="lynx-native-api/lynx-extension-module/set-c-module" />

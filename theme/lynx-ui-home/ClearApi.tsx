@@ -6,8 +6,8 @@ import { descriptions } from './featuresDescriptions';
 import { CodeComparisonBlock } from './compareBlock';
 import './index.scss';
 import { useLang } from '@rspress/core/runtime';
-import TwoHalfCircleLight from '@assets/lynx-ui-home/TwoHalfCircleLight.svg';
-import RectangleLight from '@assets/lynx-ui-home/RectangleLight.svg';
+import TwoHalfCircleLight from './illustrations/TwoHalfCircleLight.svg';
+import RectangleLight from './illustrations/RectangleLight.svg';
 
 export const ClearAPI = () => {
   const lang = useLang() as 'en' | 'zh';

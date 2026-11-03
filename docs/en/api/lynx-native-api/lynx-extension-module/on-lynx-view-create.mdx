@@ -1,0 +1,54 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnLynxViewCreate
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-lynx-view-create" />
+
+`OnLynxViewCreate` is a virtual lifecycle method in the `LynxExtensionModule` class. It is called by the Lynx framework when a new `lynx_view` instance, associated with this extension module, is created.
+
+This callback is always invoked on the **UI thread**. It serves as an entry point for initializing resources or performing setup tasks that are specific to a given `lynx_view`.
+
+## Method Signature
+
+```cpp
+virtual void OnLynxViewCreate(lynx_view_t* lynx_view);
+```
+
+## Parameters
+
+| Name        | Type           | Description                                                                                                                              | Required |
+| ----------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `lynx_view` | `lynx_view_t*` | A pointer to the newly created `lynx_view` instance. You can use this to interact with the view, such as attaching clients or listeners. | Yes      |
+
+## Usage
+
+You should override this method in your custom subclass of `LynxExtensionModule` to perform any necessary initialization when a Lynx page is created. For example, you might want to set up platform-specific listeners or prepare data sources.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+#include "lynx_view.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+public:
+    void OnLynxViewCreate(lynx_view_t* lynx_view) override {
+        // A new lynx_view has been created.
+        // Perform view-specific setup here.
+        printf("MyExtensionModule: lynx_view created at address %p\\n", lynx_view);
+        // Register a custom element named "demo-view"
+        lynx_view_register_native_view(lynx_view, "demo-view", MyDemoView::Create, nullptr);
+    }
+
+    // ... other overridden methods
+};
+```
+
+## See Also
+
+- [`OnLynxViewDestroy()`](./on-lynx-view-destroy): The counterpart to this method, called when the `lynx_view` is about to be destroyed.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-lynx-view-create" />

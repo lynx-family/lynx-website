@@ -45,11 +45,16 @@ test('keeps locale and version prefixes', () => {
     location('/next/zh/api/react/Function.useInitData.html'),
     '/next/zh/api/react/Hooks/useInitData',
   );
-  // TypeDoc names the kind directories of a localized page in its language.
-  assert.equal(
-    location('/zh/api/reactlynx-testing-library/Function.render'),
-    '/zh/api/react/testing-library/函数/render',
-  );
+  for (const prefix of ['/zh', '/next/zh']) {
+    assert.equal(
+      location(`${prefix}/api/reactlynx-testing-library/Function.render`),
+      `${prefix}/api/react/testing-library/Functions/render`,
+    );
+    assert.equal(
+      location(`${prefix}/api/reactlynx-testing-library/Function.createEvent`),
+      `${prefix}/api/react/testing-library/Variables/createEvent`,
+    );
+  }
 });
 
 test('points a member at the kind it has today', () => {

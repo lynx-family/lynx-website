@@ -1,0 +1,74 @@
+import { APISummary, APITable } from '@lynx';
+
+# OnRuntimeDetach
+
+<APISummary query="lynx-native-api/lynx-extension-module/on-runtime-detach" />
+
+`OnRuntimeDetach` is a virtual lifecycle method in the `LynxExtensionModule` class. It is called when the BTS (Background Thread Script) Runtime is about to be detached from the extension module, typically as part of the `LynxView`'s destruction process.
+
+This callback is always invoked on the **BTS thread**. It is the correct place to clean up any resources that were allocated or initialized in `OnRuntimeAttach` or `OnRuntimeReady`.
+
+## Method Signature
+
+```cpp
+virtual void OnRuntimeDetach();
+```
+
+## Usage
+
+Override this method to perform cleanup tasks related to the JavaScript runtime. This is your last chance to safely interact with N-API handles or other BTS thread-specific resources before they become invalid.
+
+Common use cases include:
+
+- Releasing N-API `napi_ref` handles.
+- Cleaning up data structures that are only used on the BTS thread.
+- Finalizing any native modules.
+
+## Example
+
+```cpp
+#include "lynx_extension_module.h"
+
+class MyExtensionModule : public lynx::pub::LynxExtensionModule {
+private:
+    Napi::Reference<Napi::Object> _my_object_ref;
+
+public:
+    void OnRuntimeAttach(
+        Napi::Env env,
+        std::unique_ptr<lynx::pub::VSyncObserver> /*vsync_observer*/) override {
+        _my_object_ref = Napi::Persistent(Napi::Object::New(env));
+    }
+
+    void OnRuntimeDetach() override {
+        // The BTS runtime is being detached.
+        // Clean up all runtime-specific resources.
+        printf("MyExtensionModule: Runtime detached. Cleaning up N-API references.\\n");
+
+        if (!_my_object_ref.IsEmpty()) {
+            _my_object_ref.Reset();
+        }
+    }
+
+    // ... other lifecycle methods
+};
+```
+
+## Lifecycle Sequence
+
+The `OnRuntimeDetach` callback occurs after the main page logic has finished and before the `LynxView` is fully destroyed.
+
+1.  `OnLynxViewDestroy` is initiated (UI Thread)
+2.  **`OnRuntimeDetach`** is called (BTS Thread)
+3.  ...other cleanup...
+4.  `Destroy` is called (BTS Thread)
+
+## See Also
+
+- [`OnRuntimeAttach()`](./on-runtime-attach): The counterpart to this method.
+- [`Destroy()`](./destroy): The final cleanup method for the entire module.
+
+## Compatibility
+
+
+<APITable query="lynx-native-api/lynx-extension-module/on-runtime-detach" />
