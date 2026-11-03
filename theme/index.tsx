@@ -1,5 +1,4 @@
 import {
-  Head,
   removeBase,
   useLang,
   useLocation,
@@ -7,7 +6,6 @@ import {
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
-  Layout as BaseLayout,
   Link as BaseLink,
   getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
@@ -31,7 +29,6 @@ import { HomeLayout as LynxUIHomeLayout } from './lynx-ui-home';
 import {
   Banner,
   Features,
-  Footer,
   GalaxyHeroBackground,
   LynxtronFeatures,
   LynxtronShowcase,
@@ -39,80 +36,10 @@ import {
   ShowCase,
 } from '@/components/home-comps';
 import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@route-config';
-import AfterNavTitle from './AfterNavTitle';
-import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
 import RspeedyMigrationNotice from './RspeedyMigrationNotice';
-import { isGeneratedApiPage } from './api-reference';
 import { subsiteOf } from './api-subsites';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
-
-const NULL_BYTE_RE = /\u0000/g;
-
-const sanitizeHeadingAnchors = () => {
-  document
-    .querySelectorAll<HTMLElement>(
-      '.rspress-doc h1[id], .rspress-doc h2[id], .rspress-doc h3[id], .rspress-doc h4[id], .rspress-doc h5[id], .rspress-doc h6[id]',
-    )
-    .forEach((heading) => {
-      if (heading.id.includes('\u0000')) {
-        heading.id = heading.id.replace(NULL_BYTE_RE, '');
-      }
-
-      const anchor = heading.querySelector<HTMLAnchorElement>(
-        'a.rp-header-anchor[href]',
-      );
-      const href = anchor?.getAttribute('href');
-      if (anchor && href?.includes('\u0000')) {
-        anchor.setAttribute('href', href.replace(NULL_BYTE_RE, ''));
-      }
-    });
-};
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      htmlAttrs: unknown;
-    }
-  }
-}
-
-function Layout({
-  afterNavTitle = <AfterNavTitle />,
-  ...props
-}: Parameters<typeof BaseLayout>[0]) {
-  const { pathname } = useLocation();
-  const { page } = usePageData();
-  const subsite = subsiteOf(pathname);
-  const isApiReference = isGeneratedApiPage(page.pagePath);
-  const normalizedPath = removeBase(pathname);
-  const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
-  const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
-
-  useEffect(() => {
-    sanitizeHeadingAnchors();
-  }, [pathname]);
-
-  return (
-    <>
-      <Head>
-        <htmlAttrs
-          data-subsite={subsite}
-          data-api-reference={isApiReference ? 'true' : null}
-          data-scroll-locked={isStatusRoute ? 'true' : null}
-        />
-      </Head>
-      <OgHead />
-      <BaseLayout
-        {...props}
-        afterNavTitle={afterNavTitle}
-        beforeSidebar={<BeforeSidebar />}
-        beforeDocContent={<RspeedyMigrationNotice />}
-        bottom={<Footer />}
-      />
-    </>
-  );
-}
 
 const enSuffix = ' Native for More';
 const enWords = ['Unlock', 'Render', 'Vibe', 'Ship'];
@@ -359,7 +286,9 @@ const Search = () => {
   );
 };
 
-export { HomeLayout, Layout, Search };
+export { default as BeforeDocContent } from './BeforeDocContent';
+export { default as Layout } from './Layout';
+export { HomeLayout, Search };
 
 type BaseLinkProps = Parameters<typeof BaseLink>[0];
 type BaseLinkRestProps = Omit<

@@ -225,6 +225,18 @@ pnpm run build
 
 Then request downstream validation after the updated OSS revision is pinned.
 
+### Shared Theme Slots
+
+`Layout.beforeDocContent` defaults to the exported `BeforeDocContent` aggregate.
+Downstream themes should compose that export with their own UI: custom content
+replaces the slot, and `null` disables it. See the
+[component contract and example](./theme/BeforeDocContent.tsx).
+
+The export and slot semantics are downstream interfaces. Coordinate pin and
+composition updates in the same change, accounting for the daily sync window.
+Validate that shared and consumer content render exactly once and that caller
+overrides still work.
+
 ### Alias Contracts
 
 Portable resolver aliases are downstream interfaces. Follow the
