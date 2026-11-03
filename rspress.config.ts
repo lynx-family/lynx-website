@@ -1,5 +1,5 @@
 // cspell:ignore shikijs
-import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
+import { createLynxLlms } from '@lynx-js/rspress-plugin-llms-postprocess';
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
@@ -31,6 +31,10 @@ import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
+const { llmsTxt, apiIndexPlugin } = createLynxLlms({
+  publicDir: path.join(__dirname, 'docs', 'public'),
+  siteOrigin: PUBLISH_URL,
+});
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
@@ -241,7 +245,7 @@ export default defineConfig({
         },
       ],
     }),
-    pluginLLMsPostprocess(),
+    apiIndexPlugin,
     pluginAlgolia({
       verificationContent: '6AD08DFB25B7234D',
     }),
@@ -270,7 +274,7 @@ export default defineConfig({
       ],
     },
   },
-  llms: true,
+  llms: { llmsTxt },
 });
 
 /**

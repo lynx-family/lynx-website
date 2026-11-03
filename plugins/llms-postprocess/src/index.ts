@@ -5,6 +5,9 @@ import fs from 'node:fs/promises';
 
 import { postprocessLLMs } from './postprocess';
 
+export { createLynxLlms } from './config';
+
+/** @deprecated Use createLynxLlms with the official llms.llmsTxt option. */
 function pluginLLMsPostprocess(): RspressPlugin {
   return {
     name: 'rspress-plugin-llms-postprocess',
