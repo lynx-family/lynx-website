@@ -4,8 +4,86 @@ import os from 'node:os';
 import path from 'node:path';
 import { test, type TestContext } from 'node:test';
 
-import { resolveSdkSince } from '../../src/versioning/page-sdk-since';
-import { validatePageSdkSince } from './page-sdk-since';
+import {
+  resolveSdkSince,
+  shouldHideSdkSince,
+  validateSdkVersioning,
+} from '../../src/versioning/page-sdk-since';
+import { pluginPageSdkSince, validatePageSdkSince } from './page-sdk-since';
+
+test('each site can hide baseline capsules without changing page version facts', () => {
+  assert.equal(shouldHideSdkSince('3.2', '3.2'), true);
+  assert.equal(shouldHideSdkSince('3.1', '3.2'), true);
+  assert.equal(shouldHideSdkSince('3.2', '2.0'), false);
+  assert.equal(shouldHideSdkSince('4.0', '3.2'), false);
+  assert.equal(shouldHideSdkSince('3.2', undefined), false);
+  assert.equal(shouldHideSdkSince('3.10', '3.9'), false);
+  assert.equal(shouldHideSdkSince('3.9', '3.10'), true);
+  assert.deepEqual(resolveSdkSince('3.2', '4.2'), {
+    since: '3.2',
+    prerelease: false,
+  });
+});
+
+test('rejects malformed baselines and baselines beyond the stable release', () => {
+  for (const baseline of [3.2, null, '3', '3.2.0', 'next', '03.2']) {
+    assert.throws(
+      () =>
+        validateSdkVersioning({
+          latestStable: '4.2',
+          baseline: baseline as string,
+        }),
+      /sdkVersioning.baseline/,
+    );
+  }
+  assert.throws(
+    () => validateSdkVersioning({ latestStable: '3.9', baseline: '3.10' }),
+    /baseline must not exceed latestStable/,
+  );
+  assert.doesNotThrow(() =>
+    validateSdkVersioning({ latestStable: '3.10', baseline: '3.9' }),
+  );
+});
+
+test('the plugin passes independent host SDK settings to the runtime theme', async () => {
+  const utils = { addPlugin() {}, removePlugin() {} };
+  const oss = pluginPageSdkSince('/docs', {
+    latestStable: '4.2',
+    baseline: '3.2',
+  });
+  const consumer = pluginPageSdkSince('/docs', {
+    latestStable: '3.9',
+    baseline: '2.0',
+  });
+  const ossConfig = await oss.config!(
+    { themeConfig: { darkMode: true } },
+    utils,
+    false,
+  );
+  const consumerConfig = await consumer.config!({}, utils, false);
+  assert.deepEqual(ossConfig.themeConfig, {
+    darkMode: true,
+    sdkVersioning: { latestStable: '4.2', baseline: '3.2' },
+  });
+  assert.deepEqual(consumerConfig.themeConfig, {
+    sdkVersioning: { latestStable: '3.9', baseline: '2.0' },
+  });
+});
+
+test('one-argument consumers do not inherit the OSS display baseline', async () => {
+  const plugin = pluginPageSdkSince('/docs');
+  const config = await plugin.config!(
+    {},
+    { addPlugin() {}, removePlugin() {} },
+    false,
+  );
+  assert.ok(config.themeConfig);
+  assert.ok('sdkVersioning' in config.themeConfig);
+  assert.equal(
+    (config.themeConfig.sdkVersioning as { baseline?: string }).baseline,
+    undefined,
+  );
+});
 
 test('release metadata alone promotes a page, preserving its SDK requirement', () => {
   assert.deepEqual(resolveSdkSince('4.3', '4.2'), {

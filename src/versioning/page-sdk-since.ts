@@ -1,3 +1,20 @@
+export interface SdkVersioning {
+  latestStable: string;
+  baseline?: string;
+}
+
+/** Each host owns its release state and optional capsule display baseline. */
+export function validateSdkVersioning(value: SdkVersioning): SdkVersioning {
+  parseSdkVersion(value.latestStable, 'sdkVersioning.latestStable');
+  if (value.baseline !== undefined) {
+    parseSdkVersion(value.baseline, 'sdkVersioning.baseline');
+    if (resolveSdkSince(value.baseline, value.latestStable)?.prerelease) {
+      throw new Error('sdkVersioning.baseline must not exceed latestStable');
+    }
+  }
+  return value;
+}
+
 /** Page-level SDK facts currently apply only to handwritten guide routes. */
 export function isSdkSinceGuide(relativePath: unknown): boolean {
   return (
@@ -42,4 +59,14 @@ export function resolveSdkSince(since: unknown, latestStable: unknown) {
     prerelease:
       major > stableMajor || (major === stableMajor && minor > stableMinor),
   };
+}
+
+/** Hiding a capsule does not remove the page's version fact from Markdown. */
+export function shouldHideSdkSince(
+  since: string,
+  baseline: string | undefined,
+): boolean {
+  return (
+    baseline !== undefined && !resolveSdkSince(since, baseline)?.prerelease
+  );
 }
