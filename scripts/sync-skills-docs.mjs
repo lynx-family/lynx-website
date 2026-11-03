@@ -17,7 +17,11 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const WEBSITE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PACKAGE = '@lynx-js/agent-lynx-docs';
+const PACKAGE = '@lynx-js/skills-docs';
+const SECTIONS = new Map([
+  ['agent-lynx', 'ai/agent-lynx'],
+  ['skills', 'ai/skills'],
+]);
 const LYNXJS_LINK = /(\]\(|^\[[^\]]+\]:\s*)https:\/\/lynxjs\.org(\/[^)\s]*)/gm;
 
 function within(root, name) {
@@ -61,23 +65,28 @@ function localPageExists(docs, url) {
 }
 
 /** Mount the package before Rspress discovers routes, just like lynx-stack. */
-export function syncAgentLynxDocs({ website = WEBSITE, source } = {}) {
+export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
   website = resolve(website);
   source = resolve(
-    source ?? process.env.AGENT_LYNX_DOCS_SOURCE ?? packageSource(website),
+    source ?? process.env.SKILLS_DOCS_SOURCE ?? packageSource(website),
   );
   const docs = join(website, 'docs');
   const manifest = JSON.parse(
     readFileSync(join(source, 'manifest.json'), 'utf8'),
   );
   if (manifest.schemaVersion !== 1)
-    throw new Error('Unsupported agent-lynx docs manifest version.');
+    throw new Error('Unsupported skills docs manifest version.');
 
   const copies = [];
   const navigation = [];
+  const sections = new Map();
+  const localized = new Map();
   for (const section of manifest.sections) {
-    if (section.route !== 'ai/agent-lynx')
+    if (SECTIONS.get(section.id) !== section.route)
       throw new Error(`Unsupported section: ${section.route}`);
+    if (sections.has(section.id))
+      throw new Error(`Duplicate section: ${section.id}`);
+    sections.set(section.id, section);
     for (const [locale, content] of Object.entries(section.content)) {
       if (!['en', 'zh'].includes(locale))
         throw new Error(`Unsupported locale: ${locale}`);
@@ -89,30 +98,39 @@ export function syncAgentLynxDocs({ website = WEBSITE, source } = {}) {
           throw new Error(`Missing sidebar page: ${locale}/${item.name}`);
         }
       }
-      const templateFile = join(docs, locale, 'ai/_meta.template.json');
-      const template = JSON.parse(readFileSync(templateFile, 'utf8'));
-      if (
-        template.filter((item) => item.external === 'agent-lynx').length !== 1
-      ) {
-        throw new Error(`${templateFile} must mount agent-lynx exactly once.`);
-      }
-      const meta = template.flatMap((item) =>
-        item.external === 'agent-lynx'
-          ? [
-              { type: 'section-header', label: section.label },
-              ...items.map((page) => ({
-                ...page,
-                name: `agent-lynx/${page.name}`,
-              })),
-            ]
-          : [item],
-      );
-      navigation.push({ path: join(docs, locale, 'ai/_meta.json'), meta });
+      if (!localized.has(locale)) localized.set(locale, new Map());
+      localized.get(locale).set(section.id, [
+        { type: 'section-header', label: section.label },
+        ...items.map((page) => ({
+          ...page,
+          name: `${section.route.slice('ai/'.length)}/${page.name}`,
+        })),
+      ]);
       copies.push({ from, to, locale, section });
     }
   }
+  // Compose each locale once, so adding another section cannot overwrite the
+  // previously expanded sidebar or leave one of the package slots unresolved.
+  for (const locale of ['en', 'zh']) {
+    const entries = localized.get(locale);
+    const templateFile = join(docs, locale, 'ai/_meta.template.json');
+    const template = JSON.parse(readFileSync(templateFile, 'utf8'));
+    for (const id of sections.keys()) {
+      if (!entries?.has(id))
+        throw new Error(`Missing ${locale} content for section: ${id}`);
+      if (template.filter((item) => item.external === id).length !== 1)
+        throw new Error(`${templateFile} must mount ${id} exactly once.`);
+    }
+    const meta = template.flatMap((item) => {
+      if (!('external' in item)) return [item];
+      if (!entries?.has(item.external))
+        throw new Error(`Unknown documentation slot: ${item.external}`);
+      return entries.get(item.external);
+    });
+    navigation.push({ path: join(docs, locale, 'ai/_meta.json'), meta });
+  }
   for (const entry of manifest.sharedContent) {
-    if (entry.destination !== '_agent-lynx')
+    if (entry.destination !== '_ai')
       throw new Error('Unexpected shared documentation destination.');
     copies.push({
       from: within(source, entry.source),
@@ -120,7 +138,7 @@ export function syncAgentLynxDocs({ website = WEBSITE, source } = {}) {
     });
   }
   for (const entry of manifest.publicAssets) {
-    if (entry.destination !== 'ai/agent-lynx')
+    if (![...SECTIONS.values()].includes(entry.destination))
       throw new Error('Unexpected public documentation destination.');
     copies.push({
       from: within(source, entry.source),
@@ -169,7 +187,7 @@ if (
 ) {
   const args = process.argv.slice(2);
   const source = args.find((arg) => arg !== '--watch');
-  const result = syncAgentLynxDocs({ source });
+  const result = syncSkillsDocs({ source });
   console.log(`Synced ${result.sections.join(', ')} from ${result.source}`);
   if (args.includes('--watch')) {
     let timer;
@@ -180,13 +198,13 @@ if (
       clearTimeout(timer);
       timer = setTimeout(() => {
         try {
-          syncAgentLynxDocs({ source: result.source });
+          syncSkillsDocs({ source: result.source });
           console.log(`Updated ${relative(WEBSITE, result.source)}`);
         } catch (error) {
           console.error(error);
         }
       }, 100);
     });
-    console.log('Watching agent-lynx documentation sources.');
+    console.log('Watching skills documentation sources.');
   }
 }

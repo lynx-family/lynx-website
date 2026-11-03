@@ -177,21 +177,23 @@ committed: change those pages in lynx-stack, then update
 testing-library and GenUI URLs are redirected by
 `netlify/edge-functions/lynx-stack-api-redirects/`.
 
-The agent-lynx guides, conversation components, and interactive demos are
+The agent-lynx and Agent Skills guides, conversation components, and interactive demos are
 maintained in
-[skills/packages/agent-lynx-docs](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx-docs).
-`pnpm run sync:agent-lynx-docs` mounts `@lynx-js/agent-lynx-docs` during
-`prepare`. Its generated pages (`docs/{en,zh}/ai/agent-lynx`), shared modules
-(`docs/_agent-lynx`), public assets (`docs/public/ai/agent-lynx`), and AI
+[skills/packages/skills-docs](https://github.com/lynx-community/skills/tree/main/packages/skills-docs).
+`pnpm run sync:skills-docs` mounts `@lynx-js/skills-docs` during
+`prepare`. Its generated pages (`docs/{en,zh}/ai/agent-lynx` and
+`docs/{en,zh}/ai/skills`), shared modules
+(`docs/_ai`), public assets (`docs/public/ai/agent-lynx`), and AI
 navigation (`docs/{en,zh}/ai/_meta.json`) are ignored. Change other AI navigation
-in `_meta.template.json`; the `agent-lynx` slot expands from the package's
-localized navigation. Edit product content in skills and update the dependency
-here when it is released.
+in `_meta.template.json`; the `agent-lynx` and `skills` slots expand from the
+package's localized navigation. The website owns the AI landing page, overall
+section order, AGENTS.md guide, and MCP guides. Edit packaged content in skills
+and update this single dependency when it is released.
 
 For joint development, run the sync watcher alongside the website dev server:
 
 ```bash
-AGENT_LYNX_DOCS_SOURCE=/path/to/skills/packages/agent-lynx-docs pnpm sync:agent-lynx-docs --watch
+SKILLS_DOCS_SOURCE=/path/to/skills/packages/skills-docs pnpm sync:skills-docs --watch
 ```
 
 The package uses full `https://lynxjs.org/...` links for other website sections.

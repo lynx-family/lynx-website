@@ -37,7 +37,7 @@ export default defineConfig({
   outDir: 'doc_build',
   route: {
     exclude: [
-      '_agent-lynx/**',
+      '_ai/**',
       'lynx-compat-data/**/*',
       API_PARTIAL_ROUTE_EXCLUDE,
       '**/guide/start/fragments/**',
