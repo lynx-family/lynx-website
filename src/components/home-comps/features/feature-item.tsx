@@ -1,17 +1,17 @@
 import React from 'react';
 import styles from './index.module.less';
 
-import Item0 from '@assets/home/home-f-0.svg';
-import Item1 from '@assets/home/home-f-1.svg';
-import Item2 from '@assets/home/home-f-2.svg';
-import Item3 from '@assets/home/home-f-3.svg';
-import Item4 from '@assets/home/home-f-4.svg';
+import Item0 from './illustrations/home-f-0.svg';
+import Item1 from './illustrations/home-f-1.svg';
+import Item2 from './illustrations/home-f-2.svg';
+import Item3 from './illustrations/home-f-3.svg';
+import Item4 from './illustrations/home-f-4.svg';
 
-import Item0Dark from '@assets/home/home-f-0-dark.svg';
-import Item1Dark from '@assets/home/home-f-1-dark.svg';
-import Item2Dark from '@assets/home/home-f-2-dark.svg';
-import Item3Dark from '@assets/home/home-f-3-dark.svg';
-import Item4Dark from '@assets/home/home-f-4-dark.svg';
+import Item0Dark from './illustrations/home-f-0-dark.svg';
+import Item1Dark from './illustrations/home-f-1-dark.svg';
+import Item2Dark from './illustrations/home-f-2-dark.svg';
+import Item3Dark from './illustrations/home-f-3-dark.svg';
+import Item4Dark from './illustrations/home-f-4-dark.svg';
 import cls from 'classnames';
 import { useFixDark } from '@site/theme/hooks/use-fix-dark';
 
