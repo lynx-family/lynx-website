@@ -5,10 +5,10 @@
 import './index.scss';
 import { descriptions } from './featuresDescriptions';
 import { Features, type FeatureCardItem } from '@/components/home-comps';
-import ConsistencyDark from '@assets/lynx-ui-home/ConsistencyDark.svg';
-import ConsistencyLight from '@assets/lynx-ui-home/ConsistencyLight.svg';
-import PerformanceDark from '@assets/lynx-ui-home/PerformanceDark.svg';
-import PerformanceLight from '@assets/lynx-ui-home/PerformanceLight.svg';
+import ConsistencyDark from './illustrations/ConsistencyDark.svg';
+import ConsistencyLight from './illustrations/ConsistencyLight.svg';
+import PerformanceDark from './illustrations/PerformanceDark.svg';
+import PerformanceLight from './illustrations/PerformanceLight.svg';
 
 const ThemedVisual = ({
   alt,
