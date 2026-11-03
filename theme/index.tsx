@@ -105,7 +105,7 @@ function Layout({
       </Head>
       <OgHead />
       {/* Rspress omits document slots when exporting Markdown. */}
-      {import.meta.env.SSG_MD && <PageSdkSince />}
+      {import.meta.env.SSG_MD && <PageSdkSince format="markdown" />}
       <BaseLayout
         {...props}
         afterNavTitle={afterNavTitle}

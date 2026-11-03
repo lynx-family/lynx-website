@@ -9,6 +9,8 @@ import {
   isSdkSinceLayout,
   parseSdkVersion,
   resolveSdkSince,
+  validateSdkVersioning,
+  type SdkVersioning,
 } from '../../src/versioning/page-sdk-since';
 
 /** Consume actual routes so excluded fragments never acquire page metadata. */
@@ -65,14 +67,24 @@ export async function validatePageSdkSince(
   }
 }
 
-export function pluginPageSdkSince(docsRoot: string): RspressPlugin {
+export function pluginPageSdkSince(
+  docsRoot: string,
+  options: SdkVersioning = release,
+): RspressPlugin {
+  const sdkVersioning = validateSdkVersioning({ ...options });
   return {
     name: 'page-sdk-since',
+    config(config) {
+      return {
+        ...config,
+        themeConfig: { ...config.themeConfig, sdkVersioning },
+      };
+    },
     async routeGenerated(routes) {
       await validatePageSdkSince(
         routes.map((route) => route.absolutePath),
         docsRoot,
-        release.latestStable,
+        sdkVersioning.latestStable,
       );
     },
   };
