@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import extensionWidgetUrl from '@assets/lynxtron/extension-widget.svg';
+import extensionWidgetUrl from './assets/extension-widget.svg';
 import { MaskIcon } from './mask-icon';
 import styles from './extensible-widget.module.less';
 import cls from 'classnames';
