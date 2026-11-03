@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import esMain from 'es-main';
+import type { SupportStatement } from '../types/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +69,31 @@ const outputDir = path.join(__dirname, '..', 'css', 'properties');
 // covered by @lynx-js/css-defines). Tracked in git; copied into outputDir.
 const manualDir = path.join(__dirname, '..', 'css', 'properties-manual');
 
+export interface WebSupportOverride {
+  path: string[];
+  support: SupportStatement;
+}
+
+/** Replace only Web support, and reject paths removed or renamed upstream. */
+export function applyWebSupportOverrides(
+  data: Record<string, any>,
+  overrides: WebSupportOverride[],
+): void {
+  for (const { path: featurePath, support } of overrides) {
+    let feature = data;
+    for (const key of featurePath) {
+      feature = Object.prototype.hasOwnProperty.call(feature ?? {}, key)
+        ? feature[key]
+        : undefined;
+    }
+    if (!feature?.__compat) {
+      throw new Error(`Unknown Web CSS override: ${featurePath.join('.')}`);
+    }
+    feature.__compat.support.web_lynx = support;
+    feature.__compat.source_file = 'web-css-support.json';
+  }
+}
+
 /**
  * Attach source information to every compatibility statement in an identifier
  * tree.
@@ -107,6 +133,13 @@ export function addSourceMetadata(
  * Hand-maintained records link to files relative to this package's root.
  */
 async function generateCssProperties(): Promise<void> {
+  const { overrides } = JSON.parse(
+    await fs.readFile(
+      path.join(__dirname, '..', 'web-css-support.json'),
+      'utf-8',
+    ),
+  ) as { overrides: WebSupportOverride[] };
+  const remainingProperties = new Set(overrides.map(({ path }) => path[0]));
   // Clean output directory to avoid stale files from previous runs
   // colliding with the manual copy collision check below.
   await fs.rm(outputDir, { recursive: true, force: true });
@@ -149,6 +182,11 @@ async function generateCssProperties(): Promise<void> {
     addSourceMetadata(compatData, {
       source_url: `${CSS_DEFINES_SOURCE_BASE_URL}/${file}`,
     });
+    applyWebSupportOverrides(
+      compatData,
+      overrides.filter(({ path }) => path[0] === propertyName),
+    );
+    remainingProperties.delete(propertyName);
 
     // Verify that the compat_data key matches the property name
     if (!compatData[propertyName]) {
@@ -171,6 +209,11 @@ async function generateCssProperties(): Promise<void> {
   }
 
   console.log(`\nGenerated ${generated} CSS property compat data files`);
+  if (remainingProperties.size > 0) {
+    throw new Error(
+      `Unknown Web CSS override properties: ${[...remainingProperties].join(', ')}`,
+    );
+  }
   if (skipped > 0) {
     console.log(`Skipped ${skipped} files`);
   }

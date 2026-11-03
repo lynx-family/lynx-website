@@ -105,6 +105,7 @@ try {
   }
 
   const requiredEntries = [
+    'package/web-css-support.json',
     'package/css/properties/align-content.json',
     'package/css/properties/background-color.json',
     'package/css/properties/custom-property.json',

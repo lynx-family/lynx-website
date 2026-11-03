@@ -35,16 +35,18 @@ Data for Lynx elements e.g. `<view>`, `<text>`, `<image>`, etc.
 
 Data for CSS e.g. properties like `background`, `color`, etc.
 
-> **Note**: CSS property compatibility data (`css/properties/*`) is generated at build time and is **not** tracked in git. There are two sources, merged by `pnpm run gen-css`:
+> **Note**: CSS property compatibility data (`css/properties/*`) is generated at build time and is **not** tracked in git. The generator (`pnpm run gen-css`) uses these inputs:
 >
 > 1. **`@lynx-js/css-defines`** — the primary source of truth. To update a property, change the upstream definition and bump the dependency, then regenerate.
 > 2. **`css/properties-manual/`** — hand-maintained files for properties not yet covered by `css-defines` (e.g. `css-variable`, `custom-property`, `filter-properties`). The directory listing itself is the allowlist; no name is hardcoded in the generator. A filename collision between the two sources fails the build, so once `css-defines` adds coverage, remove the corresponding file from `properties-manual/`.
+> 3. **`web-css-support.json`** — Web support corrections for properties from `css-defines`, checked against `lynx-stack/main`. Each entry identifies a feature by its key path and replaces only `support.web_lynx`. Other platforms and feature definitions remain owned by `css-defines`. Missing upstream properties or feature paths fail generation, so dependency updates cannot silently discard these corrections.
 >
 > Every generated `__compat` block includes source metadata so contributors can
 > find the authoritative input instead of editing generated output:
 >
 > - `source_url` points to the upstream `css-defines` JSON file.
 > - `source_file` identifies a hand-maintained file relative to this package.
+>   Web overrides retain the upstream `source_url` and add `source_file: "web-css-support.json"`.
 >
 > Nested features receive the same metadata as their parent property.
 >
@@ -155,6 +157,30 @@ fetch('https://api.example.com/lynx-compat-data/platforms/ios.json')
 ```
 
 ## Development
+
+### Update Web support
+
+The Web statements were reviewed against
+[`lynx-stack/main` at `5041e00c0`](https://github.com/lynx-family/lynx-stack/tree/5041e00c0ff501cda3ec08f6ea7a402910898aa7).
+Check the implementations and tests in `packages/web-platform/web-core`,
+`packages/web-platform/web-elements`, and `packages/react/runtime` before changing
+support. Tag aliases, event payloads, and method signatures can differ from native
+Lynx even when a browser API with a similar name exists.
+
+Use `version_added: true` for implemented Web features when the first Web package
+release is unknown, `false` for unsupported features, and `null` for unknown
+support. Use `partial_implementation` only when a missing core capability or a
+limitation affects common usage, and explain that limitation. Unsupported edge
+cases alone do not warrant a partial flag or a compatibility note. Do not mark
+an entire feature as partial solely because an optional subfeature is unsupported.
+Use `alternative_name` when callers need a different tag or method name. Native
+Lynx SDK versions do not identify Web package releases.
+
+Edit the corresponding compatibility JSON for hand-maintained features. For
+generated CSS properties, edit `web-css-support.json` and record the reviewed
+source revision there. After an upstream `css-defines` release incorporates a
+correction, remove the redundant override. Run `pnpm run gen-css`, `pnpm run lint`,
+and `pnpm test` from this package to verify the result.
 
 ### Lint/Validate JSON Data
 
