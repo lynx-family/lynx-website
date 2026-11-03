@@ -28,6 +28,7 @@ export { TutorialTabs, LearnTutorialTabs } from './tutorial-tabs/TutorialTabs';
 export { default as APISummary } from './api-summary';
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
 export { default as APITable } from './api-table/APITable';
+export { PropertyDefinition } from './PropertyDefinition';
 export { VersionTable } from './VersionTable';
 
 // API Badges
