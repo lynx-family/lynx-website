@@ -1,4 +1,3 @@
-import IconX from '@assets/x-logo.svg?react';
 import {
   IconGithubLogo,
   IconGitlabLogo,
@@ -11,6 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import originListData from './authors.json';
 import originGroupData from './groups.json';
 import styles from './index.module.less';
+import IconX from './x-logo.svg?react';
 
 const brandSpList = {
   github: {
