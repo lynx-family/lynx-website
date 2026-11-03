@@ -1,11 +1,11 @@
 import type { CSSProperties, FC } from 'react';
 
-import appleUrl from '@assets/home/home-icon-apple.svg';
-import windowsUrl from '@assets/home/windows.svg';
-import cplusUrl from '@assets/lynxtron/c+.svg';
-import extensibleUrl from '@assets/lynxtron/extensible.svg';
-import lightningUrl from '@assets/lynxtron/lightning.svg';
-import multiplatformUrl from '@assets/lynxtron/multiplatform.svg';
+import appleUrl from './assets/home-icon-apple.svg';
+import windowsUrl from './assets/windows.svg';
+import cplusUrl from './assets/c+.svg';
+import extensibleUrl from './assets/extensible.svg';
+import lightningUrl from './assets/lightning.svg';
+import multiplatformUrl from './assets/multiplatform.svg';
 
 const MASK_URLS = {
   apple: appleUrl,
