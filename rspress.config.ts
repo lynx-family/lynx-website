@@ -1,5 +1,4 @@
 // cspell:ignore shikijs
-import { createLynxLlms } from '@lynx-js/rspress-plugin-llms-postprocess';
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
@@ -25,6 +24,7 @@ import {
   normalizeGeneratedRoute,
   removeBrokenLanguageAlternates,
 } from './scripts/build/generated-html.mts';
+import { createLynxLlms } from './scripts/build/llms.mts';
 import versionJson from './docs/public/version.json';
 import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
