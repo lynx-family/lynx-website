@@ -2,12 +2,7 @@
 api: elements/scroll-view
 ---
 
-import {
-  APISummary,
-  APITable,
-  AndroidOnly,
-  Go,
-} from '@lynx';
+import { APISummary, APITable, AndroidOnly, Go } from '@lynx';
 import APIReference from './scroll-view-API.mdx';
 
 # `<scroll-view>`
@@ -20,13 +15,15 @@ Basic scrolling component supporting both horizontal and vertical scrolling. Whe
 
 ### Horizontal and Vertical Scrolling
 
-`<scroll-view>` supports both horizontal and vertical scrolling, implemented through the `scroll-orientation` properties.
-`<scroll-view>` always uses the [linear](/guide/ui/layout/linear-layout.mdx) layout, and the layout direction is determined by the `scroll-orientation` attributes.
+`<scroll-view>` supports one scrolling axis at a time, configured by `scroll-orientation` (`vertical` by default). Give the view a bounded size along that axis so its content can exceed the visible area.
+
+`<scroll-view>` uses [linear](/guide/ui/layout/linear-layout.mdx) layout for its direct children, with the direction determined by `scroll-orientation`. To use Flexbox or another layout inside the scrolling content, place the content in a child `<view>`.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_basic.webp"
   example="scroll-view"
   defaultFile="src/base/App.tsx"
+  defaultEntryName="base"
   highlight="{15,24}"
   entry="src/base"
 />
@@ -39,30 +36,33 @@ Use event callbacks such as [`bindscroll`](#bindscroll), [`bindscrolltoupper`](#
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_events.webp"
   example="scroll-view"
   defaultFile="src/event/index.tsx"
+  defaultEntryName="event"
   highlight="{16-24}"
   entry="src/event"
 />
 
 ### Sticky Capability
 
-As a child node of `<scroll-view>`, you can set the `sticky` attribute making the child node remain at a certain distance from the top of the `<scroll-view>` and not continue scrolling with the content.
+Set the `sticky` attribute on a direct child of `<scroll-view>` to keep it at the configured edge offset as the content scrolls past it. For vertical scrolling, for example, use `sticky` with `top: 0`.
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_sticky.webp"
   example="scroll-view"
   defaultFile="src/sticky/index.tsx"
+  defaultEntryName="sticky"
   entry="src/sticky"
 />
 
 :::tip
 `sticky` can only be set for direct child nodes of `<scroll-view>`. On <AndroidOnly />, you need to add the `flatten={false}` attribute to `sticky` nodes.
 
-The direct child nodes of `<scroll-view>` only support `linear` and `sticky`. If you need more complex layouts, such as child nodes adapting to expand, it is recommended to provide a single child view to the `<scroll-view>` and implement more robust CSS capabilities within that single child node.
+The scroll container lays out its direct children linearly; this does not restrict the layout inside each child. A wrapper for more complex content can look like this:
 
-```javascript
-<scroll-view scroll-orientation="vertical">
-  <view> // do anything you want
-  {...}
+```tsx
+<scroll-view scroll-orientation="vertical" style={{ height: '300px' }}>
+  <view style={{ display: 'flex', flexDirection: 'row' }}>
+    <text>First item</text>
+    <text>Second item</text>
   </view>
 </scroll-view>
 ```
@@ -73,11 +73,9 @@ The direct child nodes of `<scroll-view>` only support `linear` and `sticky`. If
 
 ## Performance Optimization Suggestions
 
-`<scroll-view>` creates all of its child nodes at once, potentially causing severe first-screen load times. Use exposure events to drive it to create only visible child nodes.
+`<scroll-view>` creates all supplied child nodes and does not virtualize or recycle them. Large amounts of content can increase initial rendering time and memory usage.
 
-`<scroll-view>` lacks any reuse mechanism. If content is too extensive, it may consume an exceptionally large amount of memory, possibly causing OOM and other stability problems.
-
-For data exceeding three screens, use `<list>` to optimize performance, or simulate `<VisualizedList>` logic based on exposure events.
+For long or growing collections, prefer [`<list>`](./list.mdx). Exposure events can help defer expensive work, but do not turn `<scroll-view>` into a virtualized list or automatically remove off-screen nodes.
 
 ## Compatibility
 

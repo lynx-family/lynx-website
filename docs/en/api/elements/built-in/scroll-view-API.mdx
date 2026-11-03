@@ -1,305 +1,325 @@
-import { AndroidOnly, IOSOnly, ClayOnly, ClayWindowsOnly, ClayMacOSOnly, HarmonyOnly, Required, Deprecated, Go, PlatformTabs } from '@lynx';
-import { VersionBadge, APITable } from '@lynx';
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  HarmonyOnly,
+  VersionBadge,
+} from '@lynx';
 
 ## Attributes
 
+Support varies by platform and SDK version. See the [compatibility table](#compatibility) for version information. Numeric distances below use Lynx logical pixels (`px`), not physical device pixels.
+
 ### `bounces`
 
- <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @defaultValue: true
+```ts
 bounces?: boolean;
 ```
 
-Enable bounce effect
-
+Enables the bounce effect at the edges of the scrollable content. The default is `true` on iOS and on Clay for iOS/macOS, and `false` on HarmonyOS and on Clay for Windows. This attribute is not supported on Android, including Clay for Android.
 
 ### `enable-scroll`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @defaultValue: true
+```ts
+// Default: true
 'enable-scroll'?: boolean;
 ```
 
-Enable dragging
-
+Controls whether users can scroll by dragging. Setting it to `false` does not disable explicit positioning through `scrollTo` or `scrollBy`. On Clay, starting `autoScroll` also requires scrolling to be enabled.
 
 ### `initial-scroll-offset`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.17</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
 
-```tsx
-// @defaultValue: 0
+```ts
+// Default: 0
 'initial-scroll-offset'?: number;
 ```
 
-Initial scroll position, only effective once, in PX
+Sets the initial absolute scroll offset along the scrolling axis, in `px`. It is an initialization setting, not a controlled scroll position: use [`scrollTo`](#scrollto) for subsequent updates.
 
+Set either `initial-scroll-offset` or `initial-scroll-to-index`, rather than relying on a cross-platform precedence rule when both are supplied.
 
 ### `initial-scroll-to-index`
 
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>2.17</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
 
-```tsx
-// @defaultValue: 0
+```ts
 'initial-scroll-to-index'?: number;
 ```
 
-Scroll to specified child node on first screen, only effective once. All direct child nodes must be flatten=false.
+Initially positions the content at the specified direct child. The index is zero-based. Omitting this attribute does not select a child. Like `initial-scroll-offset`, it is intended for initialization; use `scrollTo` to change the position afterward.
 
+On Android, set `flatten={false}` on the direct children so their native node indices match the intended child indices. The index must refer to an existing child. Clay supports this attribute on Android, iOS, Windows, and macOS starting in version 4.0.
 
 ### `lower-threshold`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @defaultValue: 0
+```ts
+// Default: 0
 'lower-threshold'?: number;
 ```
 
-Set upper threshold to bindscrolltoupper event.
-
+Sets the distance from the ending edge, in `px`, at which [`bindscrolltolower`](#bindscrolltolower) is triggered. In a vertical view this is the bottom edge; in a left-to-right horizontal view it is the right edge.
 
 ### `scroll-bar-enable`
 
- <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @defaultValue: true
+```ts
+// Default: false
 'scroll-bar-enable'?: boolean;
 ```
 
-Enable scrollbar
-
+Controls whether a scroll indicator is shown. Android's built-in `scroll-view` applies this attribute to the vertical indicator only. iOS, HarmonyOS, and Clay support indicators for both scrolling orientations.
 
 ### `scroll-orientation`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>3.0</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>3.0</VersionBadge>
 
-```tsx
-// @defaultValue: 'vertical'
+```ts
+// Default: 'vertical'
 'scroll-orientation'?: 'vertical' | 'horizontal';
 ```
 
-Replacement of scroll-x and scroll-y
-
+Sets both the scrolling axis and the linear layout direction of the direct children. Prefer this attribute to the legacy `scroll-x` and `scroll-y` attributes.
 
 ### `upper-threshold`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @defaultValue: 0
+```ts
+// Default: 0
 'upper-threshold'?: number;
 ```
 
-Set upper threshold to bindscrolltoupper event.
-
+Sets the distance from the starting edge, in `px`, at which [`bindscrolltoupper`](#bindscrolltoupper) is triggered. In a vertical view this is the top edge; in a left-to-right horizontal view it is the left edge.
 
 ## Events
 
-Frontend can bind corresponding event callbacks to listen for runtime behaviors of the element, as shown below.
+Bind event handlers on `<scroll-view>` and read the payload from `event.detail`. The event name is available as `event.type`, not `event.detail.type`.
 
 ### `bindcontentsizechanged`
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.6</VersionBadge>
 
-```tsx
-bindcontentsizechanged = (e: ContentSizeChangedEvent) => {};
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.6</VersionBadge>
+
+<span id="contentsizechanged" />
+
+Fires when the content size changes, not after every layout or child update.
+
+```ts
+interface ContentSizeChangedDetail {
+  scrollWidth: number;
+  scrollHeight: number;
+}
 ```
 
-This event is triggered when the scrollview's content size changed.
-
+Both dimensions describe the content, in `px`. This event can be used to reposition the view after its content size changes, but an update that leaves the content size unchanged does not guarantee this event.
 
 ### `bindscroll`
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-bindscroll = (e: ScrollEvent) => {};
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
+
+<span id="scroll" />
+
+Fires as the scroll position changes. Its `detail` includes:
+
+```ts
+interface ScrollDetail {
+  scrollLeft: number;
+  scrollTop: number;
+  scrollWidth: number;
+  scrollHeight: number;
+  deltaX: number;
+  deltaY: number;
+}
 ```
 
-This event is triggered when the scrollview is scrolling.
-
+`scrollLeft` and `scrollTop` are the content offsets; `scrollWidth` and `scrollHeight` are the content dimensions. `deltaX` and `deltaY` are the change in offset reported for the event. All values use `px`.
 
 ### `bindscrollend`
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.6</VersionBadge>
 
-```tsx
-bindscrollend = (e: ScrollEndEvent) => {};
-```
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.6</VersionBadge>
 
-This event is triggered when the scrollview's scroll ended.
+<span id="scrollend" />
 
+Fires when scrolling ends. Its `detail` contains the scroll offsets and content dimensions described under [`bindscroll`](#bindscroll). Use the offsets to read the final position, rather than treating `deltaX` or `deltaY` as the total distance of the scroll.
 
 ### `bindscrolltolower`
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-bindscrolltolower = (e: ScrollToLowerEvent) => {};
-```
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-This event is triggered when the lower/right edge of the scrolling area intersects with the visible area defined by the lowerThreshold.
+<span id="scrolltolower" />
 
+Fires when scrolling enters the ending-edge region defined by `lower-threshold`: the bottom edge for vertical scrolling, or the right edge for left-to-right horizontal scrolling.
+
+Its `detail` contains the same fields as `bindscroll`. Do not assume that `deltaX` and `deltaY` are always zero in threshold events; this differs between implementations.
 
 ### `bindscrolltoupper`
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-bindscrolltoupper = (e: ScrollToUpperEvent) => {};
-```
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-This event is triggered when the upper/left edge of the scrolling area intersects with the visible area defined by the upperThreshold.
+<span id="scrolltoupper" />
 
+Fires when scrolling enters the starting-edge region defined by `upper-threshold`: the top edge for vertical scrolling, or the left edge for left-to-right horizontal scrolling. Its `detail` contains the same fields as `bindscroll`.
+
+For horizontal RTL content, Android, iOS, and Clay reverse the starting and ending edges. Do not rely on identical RTL threshold behavior on HarmonyOS.
 
 ## Methods
 
-Frontend can invoke component methods via the [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API.
+Invoke methods through [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html). The examples below assume a `<scroll-view id="scroll-view">` exists and has completed layout.
 
 ### `autoScroll`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+Starts or stops continuous scrolling along the configured axis.
+
 ```ts
-
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'autoScroll',
-      params: {
-        /**
-         * The distance of each second's scrolling, which supports positive and negative values. The unit of distance can be "px", "rpx", "ppx", or null (for iOS, the value must be greater than 1/screen.scale px).
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        rate: 60,
-        /**
-         * Start/stop automatic scrolling.
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        start: true,
-      },
-      success: function (res) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'autoScroll',
+    params: {
+      rate: 120,
+      start: true,
+    },
+  })
+  .exec();
 ```
 
-Automatic scrolling
+- `rate`: numeric speed in `px` per second. Android, iOS, and HarmonyOS support positive and negative values. Clay starts automatic scrolling only for a positive rate.
+- `start`: `true` starts scrolling; `false` stops it. To stop, invoke the method again with `{ rate: 0, start: false }`.
 
+Use a numeric rate for portability; unit-bearing strings such as `"120rpx"` are not supported consistently. With the default behavior, automatic scrolling stops at the content boundary and does not restart simply because the user drags away from that boundary.
 
 ### `getScrollInfo`
 
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+Reads the current scroll position.
+
 ```ts
 interface GetScrollInfoResult {
-  /**
-   * Total scrollable range along orientation, in PX
-   * @Android
-   * @iOS
-   * @Harmony
-   * @PC
-   */
-  scrollRange: number;
-  /**
-   * Content offset on X-axis, in PX
-   * @Android
-   * @iOS
-   * @Harmony
-   * @PC
-   */
   scrollX: number;
-  /**
-   * Content offset on Y-axis, in PX
-   * @Android
-   * @iOS
-   * @Harmony
-   * @PC
-   */
   scrollY: number;
+  scrollRange: number;
+  maxScrollOffset?: number;
 }
 
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'getScrollInfo',
-      success: function (res: GetScrollInfoResult) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'getScrollInfo',
+    success: (res: GetScrollInfoResult) => {
+      console.log(res.scrollX, res.scrollY);
+    },
+  })
+  .exec();
 ```
 
-Get scroll info
+`scrollX` and `scrollY` are the content offsets in `px`.
 
+The meaning of `scrollRange` differs by platform: Android, HarmonyOS, and Clay return the content length minus the viewport length along the scrolling axis; iOS preserves the legacy meaning of the full content length. Current iOS implementations additionally return `maxScrollOffset` for the maximum offset. Do not use `scrollRange` as a portable maximum scroll offset.
 
 ### `scrollBy`
 
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+Moves relative to the current position along the scrolling axis. Clay does not expose this UI method.
+
 ```ts
-interface ScrollByParams {
-  /**
-   * Offset to scroll
-   */
-  offset?: number;
-}
-
-const params: ScrollByParams = { offset: 100 };
-
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'scrollBy',
-      params,
-      success: function (res) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'scrollBy',
+    params: { offset: 100 },
+    success: (res) => {
+      console.log(res.consumedX, res.consumedY);
+    },
+  })
+  .exec();
 ```
 
-Scroll by specified offset
+Supply a numeric `offset` in `px`. Positive and negative values scroll in opposite directions. Unlike `scrollTo`, the offset is relative to the current position.
 
+The result contains `consumedX`, `consumedY`, `unconsumedX`, and `unconsumedY`, in `px`. Read the pair corresponding to the scrolling axis to determine how much of the requested movement was consumed.
 
 ### `scrollTo`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+Positions the content at an absolute offset or relative to a direct child.
+
 ```ts
 interface ScrollToParams {
-  /**
-   * Target item index
-   * @defaultValue 0
-   */
   index?: number;
-  /**
-   * Offset relative to target node
-   */
   offset?: number;
-  /**
-   * Enable scroll animation
-   */
   smooth?: boolean;
 }
 
-const params: ScrollToParams = { index: 0, offset: 0, smooth: true };
+const params: ScrollToParams = { offset: 100, smooth: true };
 
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'scrollTo',
-      params,
-      success: function (res) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'scrollTo',
+    params,
+    fail: (error) => {
+      console.error(error);
+    },
+  })
+  .exec();
 ```
 
-Scroll to specified position
+- Without `index`, `offset` is the absolute content offset in `px`, not a distance from the current position.
+- With `index`, the zero-based index selects a direct child and `offset` is added to that child's position. For example, `{ index: 1, offset: 0 }` aligns the second child. On Android, use `flatten={false}` on the direct children when positioning by index.
+- `offset` defaults to `0`; `smooth` defaults to `false`. Omitting `index` is not equivalent to `index: 0`, for example when the first child is inset by padding or margin.
 
+Use an existing child index and a target within the scrollable range. Out-of-range handling and callback timing differ across platforms; do not use the success callback as a cross-platform animation-completion signal. For horizontal RTL positioning by index, Android, iOS, and Clay align to the child's right edge and subtract the offset; HarmonyOS uses the child's left position plus the offset.
+
+### `scrollIntoView`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+Invoke this method on the **target descendant**, not on the scroll container, to bring the target into its ancestor scroll view. On Android, the target must have a native view; set `flatten={false}` when necessary.
+
+```ts
+lynx
+  .createSelectorQuery()
+  .select('#scroll-target')
+  .invoke({
+    method: 'scrollIntoView',
+    params: {
+      scrollIntoViewOptions: {
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'start',
+      },
+    },
+  })
+  .exec();
+```
+
+`scrollIntoViewOptions` is required. Use `behavior: 'smooth'` for animated scrolling or `'auto'` for immediate positioning. Use `block` for vertical alignment and `inline` for horizontal alignment; explicitly choose `'start'`, `'center'`, or `'end'` for consistent alignment rather than relying on platform-specific defaults.
