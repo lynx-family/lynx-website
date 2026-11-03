@@ -369,5 +369,4 @@ const Link = forwardRef<HTMLAnchorElement, BaseLinkProps>((props, ref) => {
 export { Link }; // override Link from @rspress/core/theme-original
 export { EditLink } from './EditLink';
 export { SwitchAppearance } from './SwitchAppearance';
-
 export * from '@rspress/core/theme-original';

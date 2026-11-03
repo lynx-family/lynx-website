@@ -1,0 +1,124 @@
+.page-sdk-since {
+  max-width: 100%;
+  margin: 0 0 0.625rem;
+
+  &__capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 24px;
+    max-width: 100%;
+    padding: 3px 8px 3px 7px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--rp-c-text-1) 5.5%, var(--rp-c-bg));
+    color: var(--rp-c-text-2);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+    vertical-align: middle;
+  }
+
+  &__trigger {
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    transition: background 180ms ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--rp-c-text-1) 9%, var(--rp-c-bg));
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--rp-c-brand);
+      outline-offset: 2px;
+    }
+  }
+
+  &__icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--rp-c-text-1);
+  }
+
+  &__chevron {
+    width: 10px;
+    height: 10px;
+    margin-left: 2px;
+    flex: none;
+    transition: transform 180ms ease;
+  }
+
+  &__trigger[data-state='open'] &__chevron {
+    transform: rotate(180deg);
+  }
+
+  &__content {
+    overflow: hidden;
+
+    &[data-state='open'] {
+      animation: page-sdk-since-expand 180ms ease-out;
+    }
+
+    &[data-state='closed'] {
+      animation: page-sdk-since-collapse 180ms ease-out;
+    }
+  }
+
+  &__description {
+    max-width: 60ch;
+    margin: 8px 0 0;
+    color: var(--rp-c-text-2);
+    font-size: 0.78125rem;
+    line-height: 1.6;
+
+    a {
+      display: block;
+      margin-top: 4px;
+      color: var(--rp-c-link);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
+  &__tooltip {
+    max-width: calc(100vw - 24px);
+    padding: 5px 9px;
+    border: 0;
+    background: var(--rp-c-text-1);
+    color: var(--rp-c-bg);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__trigger,
+    &__chevron {
+      transition: none;
+    }
+
+    &__content[data-state],
+    &__tooltip[data-state] {
+      animation: none;
+    }
+  }
+}
+
+@keyframes page-sdk-since-expand {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@keyframes page-sdk-since-collapse {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}

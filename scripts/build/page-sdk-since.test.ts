@@ -5,6 +5,7 @@ import path from 'node:path';
 import { test, type TestContext } from 'node:test';
 
 import {
+  compareSdkVersions,
   resolveSdkSince,
   shouldHideSdkSince,
   validateSdkVersioning,
@@ -21,7 +22,7 @@ test('each site can hide baseline capsules without changing page version facts',
   assert.equal(shouldHideSdkSince('3.9', '3.10'), true);
   assert.deepEqual(resolveSdkSince('3.2', '4.2'), {
     since: '3.2',
-    prerelease: false,
+    isAheadOfStable: false,
   });
 });
 
@@ -88,21 +89,22 @@ test('one-argument consumers do not inherit the OSS display baseline', async () 
 test('release metadata alone promotes a page, preserving its SDK requirement', () => {
   assert.deepEqual(resolveSdkSince('4.3', '4.2'), {
     since: '4.3',
-    prerelease: true,
+    isAheadOfStable: true,
   });
   for (const stable of ['4.3', '4.4', '5.0']) {
     assert.deepEqual(resolveSdkSince('4.3', stable), {
       since: '4.3',
-      prerelease: false,
+      isAheadOfStable: false,
     });
   }
   assert.equal(resolveSdkSince(undefined, '4.3'), null);
 });
 
 test('compares version components rather than decimals or strings', () => {
-  assert.equal(resolveSdkSince('4.10', '4.9')?.prerelease, true);
-  assert.equal(resolveSdkSince('4.9', '4.10')?.prerelease, false);
-  assert.equal(resolveSdkSince('5.0', '4.99')?.prerelease, true);
+  assert.equal(compareSdkVersions('4.10', '4.9'), 1);
+  assert.equal(compareSdkVersions('4.9', '4.10'), -1);
+  assert.equal(compareSdkVersions('4.10', '4.10'), 0);
+  assert.equal(compareSdkVersions('5.0', '4.99'), 1);
 });
 
 test('rejects ambiguous or unsupported SDK versions', () => {
@@ -204,6 +206,14 @@ test('ignores non-guide sources and excluded fragments, without executing MDX', 
     root,
     '4.2',
   );
+});
+
+test('ignores route pages outside the configured docs root', async (t) => {
+  const { root, files } = await fixture(t, {
+    'docs/en/guide/current.mdx': page("'4.2'"),
+    'snapshots/4.1/en/guide/invalid.mdx': page('4.10'),
+  });
+  await validatePageSdkSince(files, path.join(root, 'docs'), '4.2');
 });
 
 test('rejects annotated layouts that cannot display the notice', async (t) => {

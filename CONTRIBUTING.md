@@ -271,14 +271,38 @@ by the whole page, not its creation or last-updated version. Use a quoted
 Keep existing English/Chinese counterparts consistent. No declaration means
 no support assertion.
 
-The theme displays one line above the document, including in exported
-Markdown. If `since` is at or below `latestStable` in
-`src/versioning/lynx-sdk-release.json`, it shows `Lynx SDK x.y+`. Otherwise it
-shows Pre-release and the target version. Pre-release means not yet in a
-stable SDK release; it does not promise a beta/RC artifact or imply
+The theme displays a small capsule before the document's H1 through
+`Layout.beforeDocContent`. If `since` is at or below the site's
+`latestStable`, it shows `Lynx x.y+` with the L icon. Unreleased versions
+show the same version label with the L star icon in an expandable capsule.
+Hovering or focusing it shows an `Unreleased` tooltip, which is hidden while
+expanded. Expanding it shows the unreleased status, latest stable version,
+and a link to
+[Lynx releases](https://github.com/lynx-family/lynx/releases).
+Unreleased means not yet included in a stable SDK
+release; it does not promise a Nightly or beta/RC artifact or imply
 Experimental API stability.
 
-After an SDK minor or major release becomes stable, update `latestStable`
+Each site supplies global SDK settings as the second argument to
+`pluginPageSdkSince(docsRoot, { latestStable, baseline })` in its Rspress
+configuration. The plugin shares these settings with the theme through
+`themeConfig.sdkVersioning` and uses the same `latestStable` for validation.
+Both versions must be quoted `x.y` strings, and `baseline` must not exceed
+`latestStable`. Omitting `baseline` displays every annotated version.
+
+The OSS site reads `latestStable` from
+`src/versioning/lynx-sdk-release.json` and explicitly sets `baseline: '3.2'`
+in `rspress.config.ts`. Downstream sites must supply their own settings;
+they do not inherit the OSS baseline. The existing one-argument plugin call
+retains the release JSON default without hiding any capsules.
+
+Capsules with `since <= baseline` are omitted entirely, including their
+spacing. Keep the frontmatter fact: exported Markdown still includes the
+version statement, and unannotated pages remain unspecified. The baseline
+is a display threshold, not an assertion that older SDKs are unsupported,
+and should not advance automatically with each release.
+
+After an SDK minor or major release becomes stable, update the site's `latestStable`
 and rebuild. Page declarations stay unchanged. This metadata is independent
 of the existing website version menu and installation dependency versions.
 
