@@ -1,0 +1,224 @@
+// Copyright 2026 The Lynx Authors. All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { test } from 'node:test';
+
+import { syncAgentLynxDocs } from './sync-agent-lynx-docs.mjs';
+
+function write(file, content) {
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(
+    file,
+    typeof content === 'string' ? content : JSON.stringify(content),
+  );
+}
+
+function fixture(t) {
+  const website = mkdtempSync(join(tmpdir(), 'agent-lynx-docs-'));
+  t.after(() => rmSync(website, { recursive: true, force: true }));
+  execFileSync('git', ['init', '--quiet'], { cwd: website });
+  write(
+    join(website, '.gitignore'),
+    [
+      'node_modules/',
+      'docs/*/ai/agent-lynx/',
+      'docs/*/ai/_meta.json',
+      'docs/_agent-lynx/',
+      'docs/public/ai/agent-lynx/',
+      '',
+    ].join('\n'),
+  );
+  write(join(website, 'package.json'), {
+    name: 'docs-consumer',
+    private: true,
+  });
+  const source = join(website, 'node_modules/@lynx-js/agent-lynx-docs');
+  write(join(source, 'package.json'), {
+    name: '@lynx-js/agent-lynx-docs',
+    exports: { './manifest.json': './manifest.json' },
+  });
+  const manifest = {
+    schemaVersion: 1,
+    sections: [
+      {
+        route: 'ai/agent-lynx',
+        label: 'agent-lynx',
+        content: {
+          en: 'content/en/ai/agent-lynx',
+          zh: 'content/zh/ai/agent-lynx',
+        },
+      },
+    ],
+    sharedContent: [
+      { source: 'content/_agent-lynx', destination: '_agent-lynx' },
+    ],
+    publicAssets: [
+      { source: 'public/ai/agent-lynx', destination: 'ai/agent-lynx' },
+    ],
+    editBaseUrl:
+      'https://github.com/lynx-community/skills/edit/main/packages/agent-lynx-docs/content',
+  };
+  write(join(source, 'manifest.json'), manifest);
+  write(
+    join(source, 'content/_agent-lynx/conversation.tsx'),
+    'export const Conversation = () => null;\n',
+  );
+  write(join(source, 'public/ai/agent-lynx/demo.html'), '<main>Demo</main>');
+  for (const locale of ['en', 'zh']) {
+    const prefix = locale === 'zh' ? '/zh' : '';
+    write(join(website, `docs/${locale}/guide/recorder.mdx`), '# Recorder\n');
+    write(join(website, `docs/${locale}/ai/mcp.mdx`), '# DevTool MCP\n');
+    write(join(website, `docs/${locale}/ai/_meta.template.json`), [
+      { type: 'file', name: 'index.mdx' },
+      { external: 'agent-lynx' },
+      { type: 'section-header', label: 'Tools' },
+      { type: 'file', name: 'mcp.mdx', label: 'Lynx DevTool MCP' },
+    ]);
+    write(join(source, `content/${locale}/ai/agent-lynx/_meta.json`), [
+      {
+        type: 'file',
+        name: 'index.mdx',
+        label: locale === 'zh' ? '简介' : 'Introduction',
+      },
+    ]);
+    write(
+      join(source, `content/${locale}/ai/agent-lynx/index.mdx`),
+      [
+        '---',
+        'description: Lynx for your agent',
+        '---',
+        "import { Conversation } from '../../../_agent-lynx/conversation';",
+        '# agent-lynx',
+        `[Recorder](https://lynxjs.org${prefix}/guide/recorder.html?mode=all#replay)`,
+        `[Reference]: https://lynxjs.org${prefix}/guide/recorder#replay`,
+        `[Future](https://lynxjs.org${prefix}/guide/not-in-this-version.html)`,
+        '[Elsewhere](https://example.org/guide/recorder)',
+        '[Simulator](simulator.mdx)',
+        '',
+      ].join('\n'),
+    );
+    write(
+      join(source, `content/${locale}/ai/agent-lynx/simulator.mdx`),
+      '# Simulator preview\n',
+    );
+  }
+  return { website, source, manifest };
+}
+
+test('installed package mounts both locales, shared components, assets, and navigation', (t) => {
+  const { website } = fixture(t);
+  // Use installed-package resolution, without a source override.
+  syncAgentLynxDocs({ website });
+  for (const locale of ['en', 'zh']) {
+    const prefix = locale === 'zh' ? '/zh' : '';
+    const page = readFileSync(
+      join(website, `docs/${locale}/ai/agent-lynx/index.mdx`),
+      'utf8',
+    );
+    assert.ok(
+      page.includes(
+        `[Recorder](${prefix}/guide/recorder.html?mode=all#replay)`,
+      ),
+    );
+    assert.ok(page.includes(`[Reference]: ${prefix}/guide/recorder#replay`));
+    assert.ok(
+      page.includes(
+        `[Future](https://lynxjs.org${prefix}/guide/not-in-this-version.html)`,
+      ),
+    );
+    assert.ok(page.includes('[Elsewhere](https://example.org/guide/recorder)'));
+    assert.ok(page.includes('[Simulator](simulator.mdx)'));
+    assert.ok(
+      page.includes(
+        `sourceEditUrl: "https://github.com/lynx-community/skills/edit/main/packages/agent-lynx-docs/content/${locale}/ai/agent-lynx/index.mdx"`,
+      ),
+    );
+    assert.ok(page.includes('description: Lynx for your agent'));
+    assert.deepEqual(
+      JSON.parse(
+        readFileSync(join(website, `docs/${locale}/ai/_meta.json`), 'utf8'),
+      ),
+      [
+        { type: 'file', name: 'index.mdx' },
+        { type: 'section-header', label: 'agent-lynx' },
+        {
+          type: 'file',
+          name: 'agent-lynx/index.mdx',
+          label: locale === 'zh' ? '简介' : 'Introduction',
+        },
+        { type: 'section-header', label: 'Tools' },
+        { type: 'file', name: 'mcp.mdx', label: 'Lynx DevTool MCP' },
+      ],
+    );
+    // Hidden pages stay routable; the source controls only sidebar visibility.
+    assert.ok(
+      existsSync(join(website, `docs/${locale}/ai/agent-lynx/simulator.mdx`)),
+    );
+    assert.equal(
+      readFileSync(join(website, `docs/${locale}/ai/mcp.mdx`), 'utf8'),
+      '# DevTool MCP\n',
+    );
+  }
+  assert.ok(existsSync(join(website, 'docs/_agent-lynx/conversation.tsx')));
+  assert.equal(
+    readFileSync(join(website, 'docs/public/ai/agent-lynx/demo.html'), 'utf8'),
+    '<main>Demo</main>',
+  );
+});
+
+test('updating a package removes stale generated files and is repeatable', (t) => {
+  const { website, source } = fixture(t);
+  syncAgentLynxDocs({ website, source });
+  const stale = [
+    'docs/en/ai/agent-lynx/old.mdx',
+    'docs/zh/ai/agent-lynx/old.mdx',
+    'docs/_agent-lynx/old.tsx',
+    'docs/public/ai/agent-lynx/old.html',
+  ];
+  for (const file of stale) write(join(website, file), 'stale');
+  syncAgentLynxDocs({ website, source });
+  for (const file of stale) assert.ok(!existsSync(join(website, file)), file);
+  const page = join(website, 'docs/en/ai/agent-lynx/index.mdx');
+  const before = readFileSync(page, 'utf8');
+  syncAgentLynxDocs({ website, source });
+  assert.equal(readFileSync(page, 'utf8'), before);
+});
+
+test('an invalid package or unignored output fails before replacing existing content', (t) => {
+  const { website, source, manifest } = fixture(t);
+  const sentinel = join(website, 'docs/en/ai/agent-lynx/index.mdx');
+  write(sentinel, 'existing document');
+  write(join(source, 'manifest.json'), { ...manifest, schemaVersion: 99 });
+  assert.throws(
+    () => syncAgentLynxDocs({ website, source }),
+    /manifest version/,
+  );
+  assert.equal(readFileSync(sentinel, 'utf8'), 'existing document');
+  write(join(source, 'manifest.json'), manifest);
+  rmSync(join(source, 'public/ai/agent-lynx'), { recursive: true });
+  assert.throws(
+    () => syncAgentLynxDocs({ website, source }),
+    /Missing package content/,
+  );
+  assert.equal(readFileSync(sentinel, 'utf8'), 'existing document');
+  write(join(source, 'public/ai/agent-lynx/demo.html'), '<main>Demo</main>');
+  write(join(website, '.gitignore'), 'node_modules/\n');
+  assert.throws(
+    () => syncAgentLynxDocs({ website, source }),
+    /must be ignored by Git/,
+  );
+  assert.equal(readFileSync(sentinel, 'utf8'), 'existing document');
+});

@@ -166,6 +166,29 @@ committed: change those pages in lynx-stack, then update
 testing-library and GenUI URLs are redirected by
 `netlify/edge-functions/lynx-stack-api-redirects/`.
 
+The agent-lynx guides, conversation components, and interactive demos are
+maintained in
+[skills/packages/agent-lynx-docs](https://github.com/lynx-community/skills/tree/main/packages/agent-lynx-docs).
+`pnpm run sync:agent-lynx-docs` mounts `@lynx-js/agent-lynx-docs` during
+`prepare`. Its generated pages (`docs/{en,zh}/ai/agent-lynx`), shared modules
+(`docs/_agent-lynx`), public assets (`docs/public/ai/agent-lynx`), and AI
+navigation (`docs/{en,zh}/ai/_meta.json`) are ignored. Change other AI navigation
+in `_meta.template.json`; the `agent-lynx` slot expands from the package's
+localized navigation. Edit product content in skills and update the dependency
+here when it is released.
+
+For joint development, run the sync watcher alongside the website dev server:
+
+```bash
+AGENT_LYNX_DOCS_SOURCE=/path/to/skills/packages/agent-lynx-docs pnpm sync:agent-lynx-docs --watch
+```
+
+The package uses full `https://lynxjs.org/...` links for other website sections.
+As with lynx-stack, synchronization makes these links site-relative only when
+the target page exists in this checkout. The website build checks the resulting
+internal links; the package's standalone preview checks its own pages and
+anchors. The generated edit links point to the original files in skills.
+
 ## Deployment Portability
 
 Build and generation scripts must remain portable across GitHub Actions,
