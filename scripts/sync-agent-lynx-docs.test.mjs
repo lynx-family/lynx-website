@@ -108,7 +108,7 @@ function fixture(t) {
         '[Elsewhere](https://example.org/guide/recorder)',
         '[Simulator](simulator.mdx)',
         '',
-      ].join('\n'),
+      ].join(locale === 'zh' ? '\r\n' : '\n'),
     );
     write(
       join(source, `content/${locale}/ai/agent-lynx/simulator.mdx`),
@@ -128,6 +128,11 @@ test('installed package mounts both locales, shared components, assets, and navi
       join(website, `docs/${locale}/ai/agent-lynx/index.mdx`),
       'utf8',
     );
+    // Preserve the original metadata in the same frontmatter block when the
+    // source comes from either an LF or a Windows CRLF checkout.
+    const frontmatter = page.match(/^---\n([\s\S]*?)\n---\n/)?.[1];
+    assert.ok(frontmatter?.includes('description: Lynx for your agent'));
+    assert.ok(frontmatter?.includes('sourceEditUrl:'));
     assert.ok(
       page.includes(
         `[Recorder](${prefix}/guide/recorder.html?mode=all#replay)`,

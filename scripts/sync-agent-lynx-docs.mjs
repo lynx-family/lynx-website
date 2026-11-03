@@ -142,7 +142,7 @@ export function syncAgentLynxDocs({ website = WEBSITE, source } = {}) {
     for (const name of readdirSync(to, { recursive: true })) {
       if (!/\.mdx?$/.test(name)) continue;
       const file = join(to, name);
-      let text = readFileSync(file, 'utf8');
+      let text = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
       // Keep the lynx-stack policy: targets absent from this build stay external.
       text = text.replace(LYNXJS_LINK, (match, prefix, url) =>
         localPageExists(docs, url) ? prefix + url : match,
