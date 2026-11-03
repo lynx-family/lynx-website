@@ -1,16 +1,20 @@
 # Alias Contracts
 
-Gates 1 and 2 of [#1487](https://github.com/lynx-family/lynx-website/issues/1487)
-define portable alias policy and verify runtime/TypeScript resolution.
-Gate 2 implements [#1504](https://github.com/lynx-family/lynx-website/issues/1504);
-import policy and migration baselines belong to
-[#1505](https://github.com/lynx-family/lynx-website/issues/1505).
+The three gates of [#1487](https://github.com/lynx-family/lynx-website/issues/1487)
+define portable alias policy, verify runtime/TypeScript resolution, and enforce
+import policy with an exact migration baseline.
 
 - [`registry.ts`](./registry.ts): owners, aliases, OSS source map, local overrides.
 - [`types.ts`](./types.ts): field semantics and valid schema variants.
 - [`check-registry.ts`](./check-registry.ts): structural validator and packaged CLI.
 - [`check-resolution.ts`](./check-resolution.ts): actual Rspress/Rspack and
   TypeScript resolver check.
+- [`check-import-policy.ts`](./check-import-policy.ts): import policy and exact
+  baseline validation on the same raw corpus.
+- [`boundary.ts`](./boundary.ts): shared relative-boundary policy and the
+  documentation-only adapter used by Documentation Imports.
+- [`import-policy-baseline.json`](./import-policy-baseline.json): scanner-derived
+  OSS migration occurrences; no consumer findings.
 - [`UNDERSTANDING.md`](./UNDERSTANDING.md): gate architecture, ownership,
   resolution, and analysis boundaries.
 
@@ -70,6 +74,19 @@ A replacement source map must retain **every OSS source-area ID and owner**,
 including classification-only areas. Roots, roles, and origins may change
 with the layout. New IDs must be consumer-owned. This is distinct from
 `additionalOwners`, which governs where a particular alias may resolve.
+
+The optional `boundary` marks documentation or runtime trees, including relocated
+mounts. Shared IDs inherit their OSS boundary when omitted and cannot change it.
+Site configuration modules outside either tree do not become runtime modules.
+
+`moduleSpecifierFields` registers JSON generator settings on the area whose
+owner will import them. Each entry names a repository-relative JSON `file` and
+an array of property names in `path`. Only these values enter the corpus.
+Missing files are permitted; present files must parse and contain string values.
+Consumers register their own generator settings in their source map.
+Namespace settings may name directories without a barrel; Gate 3 uses the
+effective resolver's ordered roots to check their first existing target.
+Gate 2 probes executable requests only.
 
 The following is a **partial excerpt**, not a complete replacement map:
 
@@ -163,17 +180,38 @@ and migrate consumer-local imports together.
 ## Verification
 
 ```bash
-pnpm check:alias-contract-types
-node --import tsx --test scripts/alias-contracts/check-registry.test.ts
-pnpm check:alias-contracts
-pnpm test:alias-resolution
+pnpm check:aliases
 pnpm run prepare
 pnpm check:alias-resolution
+pnpm check:import-policy
+pnpm run build
 ```
 
-The test suite packs the complete package without lifecycle scripts, extracts
-it into a temporary consumer's `node_modules`, and checks all three CLI options
-and shared-policy mutation regressions through the installed entry point.
+`check:aliases` runs types and all three gates' fixtures, including packaged
+consumer CLI checks, without prepare. The required `Alias Contracts` CI job
+runs this suite after installing with lifecycle scripts disabled. `Validate`
+checks the real prepared corpus and build.
+
+Documentation Imports retains its existing command and tracked-document scan
+without prepare. Its entry delegates parsing, boundary checks and suggestions
+to Gate 3's documentation adapter; it does not load site configuration,
+initialize resolvers or require a migration baseline. Frozen fixtures preserve
+the former parser semantics, diagnostic locations and occurrence counts. The
+shared policy additionally rejects literal CommonJS requests and physical
+symlink crossings. Lexical prohibitions remain enforced even if a resolver
+redirects a relative request; missing targets and query/hash modifiers cannot
+waive them.
+
+Alias matching, bare/subpath permissions, resolver-override policy and canonical
+spelling use the resource path before the first `?` or `#`. Resolvers and
+TypeScript receive the complete request; diagnostics, baseline keys and
+replacement suffixes retain its modifiers. A modifier does not waive ownership
+or source-area checks.
+
+An importer reached through `docs/` or `sharedDocs/` retains its documentation
+constraint even if its symlink points into runtime source. Canonical ownership
+and the physical boundary still apply. Mount deduplication preserves this
+constraint while counting each physical syntax occurrence once.
 
 Run `check:alias-resolution` from the active site's repository root after
 prepare. It accepts the same three consumer modules as `check-registry.ts` and
@@ -200,3 +238,48 @@ and build results against the exact candidate pin. Do not add policy exceptions
 for pre-existing downstream migration debt. See
 [UNDERSTANDING.md](./UNDERSTANDING.md#gate-2-resolution-verification) for the
 corpus, runtime, export-surface, and syntax boundaries.
+
+## Import Policy and Baseline Shrinking
+
+Gate 3 checks importer permissions, private-owner closure, first resolved target
+ownership and source-area bounds, public spelling, direct resolver-override
+imports, and relative imports in both directions across documentation/runtime
+trees. Documentation `@assets` imports are forbidden. Layout-dependent runtime
+version-data imports are debt until their reviewed adapter exists.
+
+The baseline contains exact `{ rule, file, specifier, count }` records. It is
+not a wildcard allowlist or a resolver target inventory. A new file, moved
+import, changed spelling, increased count, duplicate entry, or stale entry fails.
+Resolution, target ownership, alias shape, and forbidden documentation assets
+cannot be hidden by a baseline. Consumer use of OSS-private imports is recorded
+only in the consumer's baseline; valid private extensions add no debt.
+
+Migrate the authoritative source or registered generator settings first, run
+prepare, then remove or reduce the affected baseline entries in the same change.
+Do not add allowances to make new imports pass. `--report` emits diagnostics and
+the observed inventory as JSON for investigation; it never changes the baseline.
+Diagnostics include rule, file, raw specifier, importer/target owners and
+replacement category. The initial OSS baseline was derived from this inventory.
+
+Generated outputs are checked after prepare and cannot receive independent
+baseline allowances. Current generated documentation has no migration debt.
+Canonical mounts are scanned once. A future generator that duplicates an
+authoritative violating import must first provide an explicit occurrence mapping
+so output validation can reuse that allowance; repository/root `origins` metadata
+alone does not establish that relationship.
+
+Consumers run Gate 3 after their own prepare with an explicit local JSON baseline
+(`[]` when there is no debt):
+
+```bash
+node --import tsx \
+  node_modules/@lynx-js/lynx-doc/scripts/alias-contracts/check-import-policy.ts \
+  --source-map ./scripts/alias-source-areas.mjs \
+  --resolver-overrides ./scripts/resolver-overrides.mjs \
+  --alias-extensions ./scripts/alias-extensions.ts \
+  --baseline ./scripts/import-policy-baseline.json
+```
+
+The baseline path resolves against the caller's working directory. Omitting it
+with a consumer source map is an error; consumers never inherit the OSS baseline.
+Keep private paths out of public reports and return only counts by rule.

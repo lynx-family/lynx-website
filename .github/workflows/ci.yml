@@ -136,7 +136,9 @@ jobs:
         run: pnpm run build
 
       - name: Prepared Alias Resolution Check
-        run: pnpm check:alias-resolution
+        run: |
+          pnpm check:alias-resolution
+          pnpm check:import-policy
 
       - name: API Redirect Fragment Check
         run: node scripts/ci/check-api-redirect-fragments.mjs
@@ -202,7 +204,8 @@ jobs:
       - name: Subsite Route Test
         run: node --test theme/utils/subsite-routes.test.ts
 
-  # Check committed documents with MDX dependencies, without running prepare.
+  # Check committed documents for relative imports crossing into runtime source.
+  # Reuse the shared boundary checker without prepare or site resolver setup.
   # Validate separately verifies generated documentation after root prepare.
   # Keep installation explicit and separate from dependency-free generator tests.
   documentation-imports:
@@ -223,18 +226,30 @@ jobs:
       - name: Install Dependencies Without Lifecycle Scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Alias Contract Check
-        run: |
-          pnpm check:alias-contract-types
-          # Include pack/extract consumer checks without the prepare lifecycle.
-          node --import tsx --test scripts/alias-contracts/check-registry.test.ts
-          pnpm check:alias-contracts
-          pnpm test:alias-resolution
-
       - name: Documentation Import Boundary Check
         run: |
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
+
+  alias-contracts:
+    name: Alias Contracts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Dependencies Without Lifecycle Scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Alias Gate Suite
+        run: pnpm check:aliases
 
   # Check heading locale parity independently of build
   # and portable import contracts. Inspect tracked sources without prepare.
@@ -344,6 +359,7 @@ jobs:
       - dependency-provenance
       - generator-portability
       - documentation-imports
+      - alias-contracts
       - writing-style
       - example-authoring
       - media-budget

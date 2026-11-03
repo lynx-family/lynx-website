@@ -1703,6 +1703,12 @@ test('validates consumer modules from the package produced by pnpm pack', async 
       '-C',
       installed,
       '--strip-components=1',
+      // Validate the complete published tarball's checker inputs without
+      // extracting unrelated generated website media.
+      'package/package.json',
+      'package/scripts/alias-contracts',
+      'package/scripts/ci/documentation-parser.mjs',
+      'package/scripts/ci/check-doc-import-boundaries.mjs',
     ],
     { timeout: 30_000 },
   );
@@ -1736,6 +1742,14 @@ test('validates consumer modules from the package produced by pnpm pack', async 
       root: 'generated/ui',
       owner: 'consumer',
       role: 'authoritative',
+      boundary: 'runtime',
+    },
+    {
+      id: 'consumer-documents',
+      root: 'content',
+      owner: 'consumer',
+      role: 'authoritative',
+      boundary: 'documentation',
     },
   ];
   const moduleExports = [
@@ -1794,6 +1808,200 @@ test('validates consumer modules from the package produced by pnpm pack', async 
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Alias contract validation passed/);
   });
+
+  await t.test(
+    'runs packaged Gate 3 with caller source map, extension and exact baseline',
+    () => {
+      writeModules();
+      // Gate 3 uses the same declared parser/runtime dependencies as Gate 2.
+      for (const dependency of [
+        'typescript',
+        '@mdx-js/mdx',
+        'gray-matter',
+        'remark-cjk-friendly',
+        'remark-cjk-friendly-gfm-strikethrough',
+        'remark-gfm',
+        '@rspress/core',
+      ]) {
+        const target = path.join(io.directory, 'node_modules', dependency);
+        mkdirSync(path.dirname(target), { recursive: true });
+        symlinkSync(
+          realpathSync(path.join(website, 'node_modules', dependency)),
+          target,
+        );
+      }
+      execFileSync('git', ['init', '--quiet', io.directory]);
+      mkdirSync(path.join(io.directory, 'generated/ui'), { recursive: true });
+      mkdirSync(path.join(io.directory, 'docs'));
+      mkdirSync(path.join(io.directory, 'theme'));
+      io.module('generated/ui/child.ts', 'export const Value = 1;');
+      io.module(
+        'generated/ui/entry.ts',
+        "export { Value } from '@local/child';",
+      );
+      io.module(
+        'tsconfig.json',
+        '{"compilerOptions":{"module":"esnext","moduleResolution":"bundler"}}',
+      );
+      io.module('baseline.json', '[]');
+      io.module(
+        'rspress.config.ts',
+        `export default {
+      root: 'docs', themeDir: 'theme', mediumZoom: false, ssg: true, llms: true,
+      builderConfig: { resolve: { alias: { '@local': ${JSON.stringify(path.join(io.directory, 'generated/ui'))} } } }
+    };`,
+      );
+      const policy = `${contractPath}/check-import-policy.ts`;
+      const result = execute(policy, [
+        ...args,
+        '--baseline',
+        './baseline.json',
+      ]);
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /Import policy passed/);
+      const missing = execute(policy, args);
+      assert.equal(missing.status, 1);
+      assert.match(missing.stderr, /requires --baseline/);
+      io.module(
+        'generated/ui/entry.ts',
+        "export { Value } from '@lynx/child';",
+      );
+      const rejected = execute(policy, [
+        ...args,
+        '--baseline',
+        './baseline.json',
+      ]);
+      assert.equal(rejected.status, 1);
+      assert.match(rejected.stderr, /unresolved-target/);
+      assert.match(rejected.stderr, /migration-subpath/);
+      io.module(
+        'generated/ui/entry.ts',
+        "export { Value } from '@local/child';",
+      );
+      mkdirSync(path.join(io.directory, 'content'));
+      const source = '../mounted/oss-components/missing.ts?raw#example';
+      io.module(
+        'content/page.mdx',
+        `<Example first={import('${source}')} second={import('${source}')} />`,
+      );
+      const boundaryResult = execute(policy, [
+        ...args,
+        '--baseline',
+        './baseline.json',
+        '--report',
+      ]);
+      assert.equal(boundaryResult.status, 1, boundaryResult.stderr);
+      const report = JSON.parse(boundaryResult.stdout);
+      assert.deepEqual(
+        report.violations.map((entry: MutableFixture) => [
+          entry.rule,
+          entry.file,
+          entry.line,
+          entry.specifier,
+          entry.baselinable,
+        ]),
+        Array.from({ length: 2 }, () => [
+          'relative-boundary',
+          'content/page.mdx',
+          1,
+          source,
+          false,
+        ]),
+      );
+      assert.deepEqual(report.inventory, []);
+      assert.equal(report.errors.length, 2);
+      mkdirSync(path.join(io.directory, 'mounted/oss-components'), {
+        recursive: true,
+      });
+      symlinkSync(
+        '../mounted/oss-components',
+        path.join(io.directory, 'content/runtime'),
+      );
+      symlinkSync(
+        '../mounted/oss-theme',
+        path.join(io.directory, 'content/unprepared'),
+      );
+      io.module(
+        'content/page.mdx',
+        "import X from './runtime/absent/deep.ts?raw';\nimport Y from './unprepared/absent.ts?raw';",
+      );
+      const symlink = execute(policy, [
+        ...args,
+        '--baseline',
+        './baseline.json',
+      ]);
+      assert.equal(symlink.status, 1);
+      assert.match(symlink.stderr, /relative-boundary content\/page\.mdx:1/);
+      assert.match(symlink.stderr, /relative-boundary content\/page\.mdx:2/);
+      io.module(
+        'content/page.mdx',
+        "import X from './local'\nconst invalid = 1",
+      );
+      const invalid = execute(policy, [
+        ...args,
+        '--baseline',
+        './baseline.json',
+      ]);
+      assert.equal(invalid.status, 1);
+      assert.match(invalid.stderr, /content\/page\.mdx:.*only import\/exports/);
+      io.module('content/page.mdx', "import X from './local';");
+      io.module('content/example.md', `import X from '${source}';`);
+      const allowed = execute(policy, [
+        ...args,
+        '--baseline',
+        './baseline.json',
+      ]);
+      assert.equal(allowed.status, 0, allowed.stderr);
+      assert.match(allowed.stdout, /Import policy passed/);
+    },
+  );
+
+  await t.test(
+    'the packaged documentation entry scans tracked files without prepare or a site config',
+    () => {
+      // The tarball extraction has no src tree, tsconfig or Rspress config.
+      // Exercise the unchanged plain-node command with missing runtime targets.
+      const documents = path.join(installed, 'docs/en');
+      mkdirSync(documents, { recursive: true });
+      writeFileSync(
+        path.join(documents, 'invalid.mdx'),
+        "import X from './local'\nconst invalid = 1",
+      );
+      writeFileSync(
+        path.join(documents, 'negative.mdx'),
+        "import X from '../../src?raw#example';",
+      );
+      writeFileSync(
+        path.join(documents, 'example.md'),
+        "import X from '../../theme/missing.ts';",
+      );
+      execFileSync('git', ['init', '--quiet', installed]);
+      execFileSync('git', ['add', 'docs'], { cwd: installed });
+      const entry = `${contractPath}/../ci/check-doc-import-boundaries.mjs`;
+      const result = spawnSync(process.execPath, [entry], {
+        cwd: io.directory,
+        encoding: 'utf8',
+        timeout: 10_000,
+      });
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /invalid\.mdx:2: could not parse document/);
+      assert.match(
+        result.stderr,
+        /negative\.mdx:1: '\.\.\/\.\.\/src\?raw#example'/,
+      );
+      assert.ok(!result.stderr.includes('example.md:'));
+      const allowed = spawnSync(
+        process.execPath,
+        [
+          entry,
+          path.join(documents, 'example.md'),
+          path.join(documents, 'deleted.mdx'),
+        ],
+        { cwd: io.directory, encoding: 'utf8', timeout: 10_000 },
+      );
+      assert.equal(allowed.status, 0, allowed.stderr);
+    },
+  );
 
   await t.test('rejects an explicitly undefined extension export', () => {
     writeModules();

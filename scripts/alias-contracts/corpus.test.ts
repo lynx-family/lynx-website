@@ -13,13 +13,73 @@ import test from 'node:test';
 import {
   classifySource,
   discoverCorpus,
+  matchingAlias,
   parseImports,
   producerAreas,
+  resolvedResource,
 } from './corpus.js';
 import { loadContracts } from './check-registry.js';
 import type { SourceArea } from './types.js';
 
 mkdirSync(path.join(process.cwd(), 'node_modules/.cache'), { recursive: true });
+
+test('resolved resources strip only the exact originating request suffix', () => {
+  for (const root of ['/checkout/C#/src', '/checkout/C?/src']) {
+    const file = `${root}/entry.ts`;
+    for (const suffix of [
+      '',
+      '?raw',
+      '#fragment',
+      '?raw#fragment',
+      '#fragment?raw',
+    ]) {
+      assert.equal(
+        resolvedResource(`@luna${suffix}`, `${file}${suffix}`),
+        file,
+      );
+      assert.equal(resolvedResource(`@luna${suffix}`, file), file);
+    }
+    assert.equal(
+      resolvedResource('@luna?raw', `${file}#fragment`),
+      `${file}#fragment`,
+    );
+    assert.equal(
+      resolvedResource('@luna#fragment', `${file}?raw#other`),
+      `${file}?raw#other`,
+    );
+    assert.equal(
+      resolvedResource('@luna', `${file}#fragment`),
+      `${file}#fragment`,
+    );
+  }
+});
+
+test('alias matching uses resource paths and keeps namespace boundaries', async () => {
+  const { aliases } = await loadContracts();
+  for (const modifier of [
+    '',
+    '?raw',
+    '#fragment',
+    '?raw#fragment',
+    '#fragment?raw',
+  ]) {
+    for (const [request, expected] of [
+      ['@luna', 'luna'],
+      ['@luna/child', 'luna'],
+      ['@theme/child.tsx', 'theme'],
+      ['@lynx-ui/child', 'lynx-ui'],
+      ['@luna-other', undefined],
+    ] as const) {
+      const plain = matchingAlias(request, aliases);
+      assert.equal(
+        matchingAlias(`${request}${modifier}`, aliases)?.id,
+        plain?.id,
+        `${request}${modifier}`,
+      );
+      assert.equal(!!plain, expected !== undefined);
+    }
+  }
+});
 
 test('script corpus preserves raw spelling, type imports, re-exports and dynamic imports', () => {
   const records = parseImports(
@@ -384,11 +444,13 @@ test('consumer discovery uses declared mounts without reading transitive produce
   ])
     write(`${root}/manifest.json`, '{invalid');
   assert.deepEqual(discoverCorpus(cwd, contracts), corpus);
-  write('src/site.ts', "import { Value } from '@lynx';");
-  assert.throws(
-    () => discoverCorpus(cwd, contracts),
-    /src\/site.ts: alias importer has no source area/,
-  );
+  for (const specifier of ['@lynx', '@luna?raw', '@luna#fragment']) {
+    write('src/site.ts', `import { Value } from '${specifier}';`);
+    assert.throws(
+      () => discoverCorpus(cwd, contracts),
+      /src\/site.ts: alias importer has no source area/,
+    );
+  }
   rmSync(path.join(cwd, 'src/site.ts'));
   // Caller-owned docs explicitly declared through the existing source map
   // remain in scope, as do their parse failures.

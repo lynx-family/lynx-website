@@ -19,6 +19,7 @@ import {
   type ActiveContracts,
 } from './check-registry.js';
 import { checkResolution } from './check-resolution.js';
+import { checkImportPolicy } from './check-import-policy.js';
 import { parseImports, type ImportRecord } from './corpus.js';
 import { createExportReader } from './exports.js';
 import { createRuntime, type RuntimeAliases } from './runtime.js';
@@ -26,9 +27,9 @@ import type { ConsumerAliasExtension } from './types.js';
 
 const repository = process.cwd();
 mkdirSync(path.join(repository, 'node_modules/.cache'), { recursive: true });
-function fixture() {
+function fixture(marker = '') {
   const cwd = mkdtempSync(
-    path.join(repository, 'node_modules/.cache/resolution-'),
+    path.join(repository, `node_modules/.cache/resolution-${marker}`),
   );
   const write = (file: string, content: string) => {
     mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true });
@@ -42,6 +43,174 @@ function fixture() {
   mkdirSync(path.join(cwd, 'docs'));
   return { cwd, write };
 }
+
+test('resolved files retain checkout characters across gates and export traversal', async (t) => {
+  for (const marker of ['C#-', 'C?-'])
+    await t.test(marker, async (t) => {
+      const { cwd, write } = fixture(marker);
+      t.after(() => rmSync(cwd, { recursive: true, force: true }));
+      const shared = await loadContracts();
+      const contracts: ActiveContracts = {
+        ...shared,
+        aliases: shared.aliases.filter((alias) => alias.specifier === '@luna'),
+      };
+      write(
+        'src/luna/value.ts',
+        'export const Value = 1; export interface Shape {}',
+      );
+      write('src/luna/index.ts', "export * from './value';");
+      write('src/luna/forward.ts', "export { Value } from './value#fragment';");
+      write(
+        'src/luna/forward-type.ts',
+        "export type { Shape } from './value';",
+      );
+      write(
+        'global.d.ts',
+        `declare module '@luna#fragment' { export const Value: number; }
+declare module '@luna?raw';`,
+      );
+      write(
+        'tsconfig.json',
+        JSON.stringify({
+          compilerOptions: {
+            module: 'ESNext',
+            moduleResolution: 'bundler',
+            strict: true,
+            skipLibCheck: true,
+            paths: { '@luna': ['src/luna/index.ts'] },
+          },
+          include: ['global.d.ts'],
+        }),
+      );
+      const runtime = await createRuntime(cwd, {
+        root: path.join(cwd, 'docs'),
+        themeDir: path.join(cwd, 'theme'),
+        mediumZoom: false,
+        ssg: true,
+        llms: true,
+        builderConfig: {
+          resolve: { alias: { '@luna$': path.join(cwd, 'src/luna/index.ts') } },
+          performance: { buildCache: false },
+        },
+      });
+      t.after(() => runtime.close());
+      const records: ImportRecord[] = [
+        { specifier: '@luna', bindings: [{ name: 'Value', typeOnly: false }] },
+        {
+          specifier: '@luna#fragment',
+          bindings: [{ name: 'Value', typeOnly: false }],
+        },
+        { specifier: '@luna?raw', bindings: [] },
+        { specifier: '@luna', bindings: [{ name: 'Shape', typeOnly: true }] },
+      ].map((record) => ({
+        ...record,
+        importer: 'src/luna/importer.ts',
+        sourceArea: 'oss-luna',
+        owner: 'lynx-website',
+        boundary: 'runtime',
+        kind: 'import',
+        line: 1,
+      }));
+      await t.test(
+        'Gate 3 retains permitted target ownership and importer restrictions',
+        async () => {
+          assert.deepEqual(
+            await checkImportPolicy(cwd, contracts, records, runtime),
+            [],
+          );
+          const forbidden = await checkImportPolicy(
+            cwd,
+            contracts,
+            records.map((record) => ({
+              ...record,
+              owner: 'lynx-stack',
+            })),
+            runtime,
+          );
+          assert.ok(
+            forbidden.every((entry) => entry.rule === 'importer-owner'),
+          );
+          assert.equal(forbidden.length, records.length);
+        },
+      );
+      await t.test(
+        'Gate 2 preserves runtime targets and physical ambient declarations',
+        async () => {
+          const result = await checkResolution(
+            cwd,
+            contracts,
+            records,
+            runtime,
+          );
+          assert.deepEqual(result.errors, []);
+          assert.equal(result.probes, 13);
+        },
+      );
+      await t.test(
+        'physical redirects retain the documentation boundary once',
+        async () => {
+          const specifier = './local?raw#fragment';
+          const redirected = {
+            ...runtime,
+            environments: runtime.environments.map((environment) => ({
+              ...environment,
+              resolve: async () =>
+                path.join(cwd, 'src/luna/index.ts') + '?raw#fragment',
+            })),
+          };
+          const findings = await checkImportPolicy(
+            cwd,
+            contracts,
+            [
+              {
+                ...records[0]!,
+                importer: 'docs/en/page.mdx',
+                boundary: 'documentation',
+                specifier,
+              },
+            ],
+            redirected,
+          );
+          assert.deepEqual(
+            findings.map((entry) => entry.rule),
+            ['relative-boundary'],
+          );
+          assert.equal(findings[0]!.specifier, specifier);
+        },
+      );
+      await t.test(
+        'export identities retain physical paths through runtime and erased edges',
+        async () => {
+          // Rspack accepts a literal '#' in this absolute probe. An unescaped
+          // '?' in a request is query syntax, unlike a resolver alias root.
+          if (marker === 'C#-')
+            assert.equal(
+              await runtime.environments[0]!.resolve(
+                path.join(cwd, 'rspress.config.ts'),
+                path.join(cwd, 'src/luna'),
+              ),
+              path.join(cwd, 'src/luna/index.ts'),
+            );
+          const read = createExportReader(runtime.environments[0]!);
+          const value = await read(path.join(cwd, 'src/luna/value.ts'));
+          assert.deepEqual(value.errors, []);
+          assert.deepEqual(value.names.get('Value'), {
+            identity: path.join(cwd, 'src/luna/value.ts') + '#Value',
+            value: true,
+          });
+          const forwarded = await read(path.join(cwd, 'src/luna/forward.ts'));
+          assert.deepEqual(forwarded.errors, []);
+          assert.deepEqual(
+            forwarded.names.get('Value'),
+            value.names.get('Value'),
+          );
+          const erased = await read(path.join(cwd, 'src/luna/forward-type.ts'));
+          assert.deepEqual(erased.errors, []);
+          assert.deepEqual(erased.names.get('Shape'), value.names.get('Shape'));
+        },
+      );
+    });
+});
 
 test(
   'synthetic downstream resolution, ownership, wrappers, themes and extensions',
@@ -309,6 +478,7 @@ declare module '*.svg';`,
       try {
         return {
           result: await checkResolution(cwd, contracts, corpus, runtime),
+          policy: await checkImportPolicy(cwd, contracts, corpus, runtime),
           runtime,
         };
       } finally {
@@ -330,8 +500,59 @@ declare module '*.svg';`,
         // subpaths-only fixture must not have an index capable of bare resolution.
         bindings['@fixture2'] = path.join(cwd, 'consumer/local/subpaths');
         write('consumer/local/subpaths/child.ts', 'export const Value = 1;');
-        const { result } = await run();
+        const { result, policy } = await run();
         assert.deepEqual(result.errors, []);
+        assert.deepEqual(
+          policy.filter((entry) => !entry.baselinable),
+          [],
+        );
+        assert.equal(
+          policy.filter((entry) => entry.rule === 'migration-subpath').length,
+          2,
+        );
+      },
+    );
+    await t.test(
+      'modified aliases keep bare ownership and resolve the complete request',
+      async () => {
+        const modified = [
+          '@luna?raw',
+          '@luna#fragment',
+          '@theme/fallback#fragment',
+        ].map((specifier) => ({ ...record(specifier), bindings: [] }));
+        const { result, policy } = await run(modified);
+        assert.equal(result.probes, modified.length * 4);
+        assert.ok(
+          !result.errors.some((error) =>
+            /runtime resolution failed|target (?:owner|source)|unsupported|declaration file/.test(
+              error,
+            ),
+          ),
+          result.errors.join('\n'),
+        );
+        assert.deepEqual(policy, []);
+        const forbidden = ['@luna?raw', '@luna#fragment'].map((specifier) => ({
+          ...record(specifier, 'oss-components'),
+          owner: 'lynx-stack' as const,
+          bindings: [],
+        }));
+        const rejected = await run(forbidden);
+        for (const { specifier } of forbidden) {
+          assert.ok(
+            rejected.result.errors.some((error) =>
+              error.includes(
+                `${specifier} [contract]: importer owner 'lynx-stack' is not allowed`,
+              ),
+            ),
+          );
+          assert.ok(
+            rejected.policy.some(
+              (entry) =>
+                entry.specifier === specifier &&
+                entry.rule === 'importer-owner',
+            ),
+          );
+        }
       },
     );
     await t.test(

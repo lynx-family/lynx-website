@@ -5,12 +5,15 @@
 import { execFileSync } from 'node:child_process';
 import {
   existsSync,
+  lstatSync,
   readFileSync,
   readdirSync,
+  readlinkSync,
   realpathSync,
   statSync,
 } from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import ts from 'typescript';
 import { parseDocumentation } from '../ci/documentation-parser.mjs';
 import type { ActiveContracts } from './check-registry.js';
@@ -30,17 +33,83 @@ export interface ImportRecord {
   sourceArea: string;
   owner: OwnerId;
   specifier: string;
-  kind: 'import' | 'require' | 'export' | 'export-star' | 'dynamic';
+  kind:
+    | 'import'
+    | 'require'
+    | 'export'
+    | 'export-star'
+    | 'dynamic'
+    | 'configuration';
   line: number;
   bindings: ImportBinding[];
   /** Original static import/re-export attributes, including `with`/`assert`. */
   attributes?: string;
+  boundary?: SourceArea['boundary'];
+  /** A documentation path remains constrained after importer symlink resolution. */
+  documentation?: true;
+  role?: SourceArea['role'];
+  /** JSON field path for a registered generator setting. */
+  field?: readonly string[];
 }
-type SyntaxRecord = Omit<ImportRecord, 'importer' | 'sourceArea' | 'owner'>;
+type SyntaxRecord = Omit<
+  ImportRecord,
+  | 'importer'
+  | 'sourceArea'
+  | 'owner'
+  | 'boundary'
+  | 'documentation'
+  | 'role'
+  | 'field'
+>;
 const sourcePattern = /\.(?:[cm]?[jt]sx?|mdx?)$/;
 export const posix = (file: string): string => file.split(path.sep).join('/');
-export const canonical = (file: string): string =>
-  existsSync(file) ? realpathSync(file) : path.resolve(file);
+/** Classify the resource path; resolvers and diagnostics retain the raw request. */
+export const resourcePath = (request: string): string =>
+  request.split(/[?#]/, 1)[0]!;
+/** Remove only the originating request's suffix from a runtime resolver result. */
+export const resolvedResource = (request: string, resolved: string): string => {
+  const suffix = request.slice(resourcePath(request).length);
+  return suffix && resolved.endsWith(suffix)
+    ? resolved.slice(0, -suffix.length)
+    : resolved;
+};
+/** Resolve existing parents too: an absent leaf can still cross a symlink. */
+export const canonical = (file: string): string => {
+  let absolute = path.resolve(file);
+  let parent = absolute;
+  const links = new Set<string>();
+  while (!existsSync(parent)) {
+    let metadata;
+    try {
+      metadata = lstatSync(parent, { throwIfNoEntry: false });
+    } catch (error) {
+      if (
+        !['ENOENT', 'ENOTDIR'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      )
+        throw error;
+    }
+    // Dangling directory links are common before prepare. Resolve their link
+    // text too; realpath cannot follow a destination that is still absent.
+    if (metadata?.isSymbolicLink()) {
+      if (links.has(parent))
+        throw new Error(`Cyclic source symlink: ${parent}`);
+      links.add(parent);
+      absolute = path.resolve(
+        path.dirname(parent),
+        readlinkSync(parent),
+        path.relative(parent, absolute),
+      );
+      parent = absolute;
+      continue;
+    }
+    const next = path.dirname(parent);
+    if (next === parent) return absolute;
+    parent = next;
+  }
+  return path.resolve(realpathSync(parent), path.relative(parent, absolute));
+};
 const contains = (root: string, file: string): boolean =>
   file === root || file.startsWith(`${root}${path.sep}`);
 const compare = (left: string, right: string): number =>
@@ -96,10 +165,96 @@ export function producerAreas(data: unknown): SourceArea[] {
         root: `docs/${locale}/${section.route}`,
         owner: 'lynx-stack' as const,
         role: 'generated' as const,
+        boundary: 'documentation' as const,
         origins: [{ repository: 'lynx-family/lynx-stack', root: origin }],
       };
     });
   });
+}
+
+/** Shared CLI producer lookup; consumer maps explicitly define their scope. */
+export function readProducerManifest(cwd: string, consumer: boolean): unknown {
+  return consumer
+    ? undefined
+    : JSON.parse(
+        readFileSync(
+          createRequire(path.join(cwd, 'package.json')).resolve(
+            '@lynx-js/lynx-stack-docs/manifest.json',
+          ),
+          'utf8',
+        ),
+      );
+}
+
+/** Preserve the pre-resolution boundary of standard documentation trees. */
+export function lexicalBoundary(
+  file: string,
+  cwd: string,
+): SourceArea['boundary'] {
+  const relative = posix(path.relative(cwd, path.resolve(cwd, file)));
+  if (
+    /^(docs|sharedDocs)(?:\/|$)/.test(relative) &&
+    relative !== 'docs/public' &&
+    !relative.startsWith('docs/public/')
+  )
+    return 'documentation';
+  if (/^(src|theme)(?:\/|$)/.test(relative)) return 'runtime';
+  return undefined;
+}
+
+/** Standard trees plus explicit metadata for relocated consumer roots. */
+export function portableBoundary(
+  file: string,
+  cwd: string,
+  areas: readonly SourceArea[],
+): SourceArea['boundary'] {
+  const area = classifySource(file, cwd, areas);
+  if (area?.boundary) return area.boundary;
+  return lexicalBoundary(canonical(path.resolve(cwd, file)), cwd);
+}
+
+/** Only registered JSON values enter the corpus; no JSON-wide string search. */
+export function configurationCorpus(
+  cwd: string,
+  areas: readonly SourceArea[],
+): ImportRecord[] {
+  const records: ImportRecord[] = [];
+  const documents = new Map<string, any>();
+  const fields = new Set<string>();
+  for (const area of areas) {
+    for (const field of area.moduleSpecifierFields ?? []) {
+      const absolute = path.resolve(cwd, field.file);
+      if (!existsSync(absolute)) continue;
+      const key = JSON.stringify([canonical(absolute), field.path]);
+      if (fields.has(key))
+        throw new Error(`${field.file}: duplicate registered field`);
+      fields.add(key);
+      if (!documents.has(absolute))
+        documents.set(absolute, JSON.parse(readFileSync(absolute, 'utf8')));
+      let value: any = documents.get(absolute);
+      for (const segment of field.path)
+        value =
+          value && Object.hasOwn(value, segment) ? value[segment] : undefined;
+      if (typeof value !== 'string' || !value.trim())
+        throw new Error(
+          `${field.file}: ${field.path.join('.')} must be a module specifier`,
+        );
+      records.push({
+        importer: field.file,
+        sourceArea: area.id,
+        owner: area.owner,
+        boundary: area.boundary,
+        // The setting itself is authoritative, even for generated destinations.
+        role: 'authoritative',
+        specifier: value,
+        field: field.path,
+        kind: 'configuration',
+        line: 1,
+        bindings: [],
+      });
+    }
+  }
+  return records;
 }
 
 /**
@@ -301,16 +456,17 @@ export function parseImports(file: string, content: string): SyntaxRecord[] {
   return parseScript(file, content);
 }
 
-/** Return the most specific registered alias covering a raw specifier. */
+/** Return the most specific registered alias covering a resource path. */
 export function matchingAlias(
   specifier: string,
   aliases: ActiveContracts['aliases'],
 ) {
+  const request = resourcePath(specifier);
   return aliases
     .filter(
       (alias) =>
-        specifier === alias.specifier ||
-        specifier.startsWith(`${alias.specifier}/`),
+        request === alias.specifier ||
+        request.startsWith(`${alias.specifier}/`),
     )
     .sort((left, right) => right.specifier.length - left.specifier.length)[0];
 }
@@ -351,9 +507,12 @@ export function discoverCorpus(
     const absolute = path.resolve(cwd, file);
     if (!existsSync(absolute)) return;
     if (statSync(absolute).isDirectory()) {
-      const real = canonical(absolute);
-      if (seenDirectories.has(real)) return;
-      seenDirectories.add(real);
+      const key = JSON.stringify([
+        canonical(absolute),
+        lexicalBoundary(file, cwd) === 'documentation',
+      ]);
+      if (seenDirectories.has(key)) return;
+      seenDirectories.add(key);
       for (const entry of readdirSync(absolute).sort()) {
         if (
           entry === 'node_modules' ||
@@ -378,22 +537,46 @@ export function discoverCorpus(
   ])
     walk(root);
   const records: ImportRecord[] = [];
-  const seen = new Map<string, OwnerId | undefined>();
+  const seen = new Map<
+    string,
+    { owner: OwnerId | undefined; records: ImportRecord[] }
+  >();
   for (const file of [...files].sort()) {
     // Producer areas override locale fallback, never an explicit other owner.
     const area = classifySource(file, cwd, areas);
     const fallback =
       producerManifest !== undefined && /^docs\/[^/]+\/.*\.mdx?$/.test(file)
-        ? { id: 'website-locale-docs', owner: 'lynx-website' as const }
-        : undefined;
+        ? {
+            id: 'website-locale-docs',
+            owner: 'lynx-website' as const,
+            role: 'authoritative' as const,
+          }
+        : !file.includes('/')
+          ? {
+              id: 'site-modules',
+              owner: 'consumer' as const,
+              role: 'authoritative' as const,
+            }
+          : undefined;
     const source = area ?? fallback;
     const real = canonical(path.resolve(cwd, file));
-    if (seen.has(real)) {
-      if (seen.get(real) !== source?.owner)
+    const documentation = lexicalBoundary(file, cwd) === 'documentation';
+    const previous = seen.get(real);
+    if (previous) {
+      if (previous.owner !== source?.owner)
         throw new Error(`${file}: ambiguous mounted importer ownership`);
+      // Prefer a documentation spelling for diagnostics and resolver context.
+      // A mount visited earlier must not erase its documentation constraint.
+      if (documentation)
+        for (const record of previous.records)
+          if (!record.documentation) {
+            record.importer = file;
+            record.documentation = true;
+          }
       continue;
     }
-    seen.set(real, source?.owner);
+    const discovered: ImportRecord[] = [];
+    seen.set(real, { owner: source?.owner, records: discovered });
     let imports: SyntaxRecord[];
     try {
       imports = parseImports(
@@ -409,19 +592,25 @@ export function discoverCorpus(
           throw new Error(`${file}: alias importer has no source area`);
         continue;
       }
-      records.push({
+      discovered.push({
         ...record,
         importer: file,
         sourceArea: source.id,
         owner: source.owner,
+        role: source.role,
+        boundary: portableBoundary(file, cwd, areas),
+        ...(documentation ? { documentation: true as const } : {}),
       });
     }
+    records.push(...discovered);
   }
+  records.push(...configurationCorpus(cwd, areas));
   return records.sort(
     (a, b) =>
       compare(a.importer, b.importer) ||
       a.line - b.line ||
       compare(a.specifier, b.specifier) ||
-      compare(a.kind, b.kind),
+      compare(a.kind, b.kind) ||
+      compare(a.field?.join('.') ?? '', b.field?.join('.') ?? ''),
   );
 }

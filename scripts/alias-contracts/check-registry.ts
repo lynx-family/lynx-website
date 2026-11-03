@@ -340,6 +340,7 @@ export function validateAliasContracts({
   // Index physical source areas before checking requiredAreas references.
   const sourceAreaIds = new Set<string>();
   const sourceAreaOwners = new Map<string, string>();
+  const configurationFields = new Set<string>();
   for (const [index, area] of sourceAreaList.entries()) {
     const label = nonEmptyString(area?.id)
       ? `source area '${area.id}'`
@@ -367,6 +368,33 @@ export function validateAliasContracts({
       errors.push(
         `${label} root '${describe(area.root ?? '')}' ${rootProblem}`,
       );
+    }
+    if (
+      area.boundary !== undefined &&
+      !['documentation', 'runtime'].includes(area.boundary)
+    )
+      errors.push(`${label} has unknown portable boundary`);
+    if (area.moduleSpecifierFields !== undefined) {
+      if (!Array.isArray(area.moduleSpecifierFields))
+        errors.push(`${label} moduleSpecifierFields must be an array`);
+      else
+        for (const field of area.moduleSpecifierFields) {
+          if (
+            !isRecord(field) ||
+            sourceRootProblem(field.file) ||
+            !field.file.endsWith('.json') ||
+            !Array.isArray(field.path) ||
+            !field.path.length ||
+            !field.path.every(nonEmptyString)
+          ) {
+            errors.push(`${label} has an invalid module specifier field`);
+            continue;
+          }
+          const key = JSON.stringify([field.file, field.path]);
+          if (configurationFields.has(key))
+            errors.push(`${label} duplicate module specifier field ${key}`);
+          configurationFields.add(key);
+        }
     }
     if (area.role === 'mounted' || area.role === 'generated') {
       if (!Array.isArray(area.origins) || area.origins.length === 0) {
@@ -427,6 +455,14 @@ export function validateAliasContracts({
       if (sharedArea && area.owner !== sharedArea.owner) {
         errors.push(
           `source area '${area.id}' must preserve OSS owner '${sharedArea.owner}', not '${area.owner}'`,
+        );
+      } else if (
+        sharedArea?.boundary &&
+        area.boundary !== undefined &&
+        area.boundary !== sharedArea.boundary
+      ) {
+        errors.push(
+          `source area '${area.id}' must preserve OSS boundary '${sharedArea.boundary}'`,
         );
       } else if (!sharedArea && area.owner !== 'consumer') {
         errors.push(
@@ -983,7 +1019,15 @@ export async function loadContracts(
       ...(policy.aliases as AliasContract[]),
       ...(aliasExtensions as AliasContract[]),
     ],
-    sourceAreas,
+    sourceAreas: (sourceAreas as SourceArea[]).map((area) => {
+      const shared = (policy.sourceAreas as SourceArea[]).find(
+        (shared) => shared.id === area.id,
+      );
+      return {
+        ...area,
+        ...(shared?.boundary ? { boundary: shared.boundary } : {}),
+      };
+    }),
     resolverOverrides,
   }) as ActiveContracts;
 }

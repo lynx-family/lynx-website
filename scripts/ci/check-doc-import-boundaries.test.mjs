@@ -588,6 +588,21 @@ test('CLI reports parse failures and violations together and ignores unrelated p
   assert.equal(result.status, 1);
   assert.match(result.stderr, /invalid\.mdx:2: could not parse document/);
   assert.match(result.stderr, /violation\.mdx:1:.*@lynx\/example/);
+  // Freeze lint-staged's caller-cwd behavior, raw resource modifiers, and
+  // duplicate file arguments before changing the implementation behind it.
+  writeFileSync(violation, "import X from '../../src?raw#example'\n");
+  const relative = spawnSync(
+    process.execPath,
+    [script, 'invalid.mdx', 'violation.mdx', 'violation.mdx'],
+    { cwd: directory, encoding: 'utf8', timeout: 30_000 },
+  );
+  assert.equal(relative.status, 1);
+  assert.match(relative.stderr, /invalid\.mdx:2: could not parse document/);
+  assert.equal(
+    relative.stderr.match(/violation\.mdx:1: '\.\.\/\.\.\/src\?raw#example'/g)
+      ?.length,
+    2,
+  );
   const allowed = spawnSync(
     process.execPath,
     [
