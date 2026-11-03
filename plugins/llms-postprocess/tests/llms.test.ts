@@ -121,6 +121,41 @@ test('caps appendix descriptions at 30 tokens without truncating API description
   assert.ok(apiIndex!.includes(description.trim()));
 });
 
+test('preserves legacy Markdown formatting in titles and descriptions', () => {
+  const apiPage = page('/api/example.html', {
+    title: 'MainThreadRef<T>',
+    description: '__BACKGROUND__ and `code` with <ReactNode>.',
+  });
+  const { apiIndex, llmsTxt } = renderLynxLlms(
+    context({
+      sections: [
+        {
+          title: 'Guide',
+          pages: [
+            {
+              ...apiPage,
+              routePath: '/guide/example.html',
+              link: '/next/guide/example.md',
+            },
+          ],
+        },
+        { title: 'APIs', pages: [apiPage] },
+      ],
+    }),
+    '# Read first',
+  );
+  // Frozen output from the removed postprocessor for the same metadata.
+  assert.equal(
+    apiIndex,
+    '# Lynx APIs\n\nBelow is a full list of available APIs of Lynx:\n\n## APIs\n\n* [MainThreadRef<T>](https://lynxjs.org/next/api/example.md): **BACKGROUND** and `code` with <ReactNode>.\n',
+  );
+  assert.ok(
+    llmsTxt.includes(
+      '* [MainThreadRef<T>](https://lynxjs.org/next/guide/example.md): **BACKGROUND** and `code` with <ReactNode>.',
+    ),
+  );
+});
+
 for (const base of ['', '/', '/next', '/4.0/']) {
   test(`preserves base ${JSON.stringify(base)} and the Chinese API index URL`, () => {
     const prefix = base.replace(/\/$/, '');

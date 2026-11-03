@@ -31,6 +31,6 @@ outputs. Configure both the callback and the plugin together. `publicDir`
 must contain `AGENTS.md` for the default language and
 `<lang>/AGENTS.md` for each additional language.
 
-The existing `pluginLLMsPostprocess` export is retained for consumers using
-the previous build configuration. Migrate by replacing that plugin with
-the callback and API index plugin above; do not enable both approaches.
+The previous postprocessing plugin and manual comparison script have been
+removed. Migrate existing configurations to the callback and API index
+plugin above.

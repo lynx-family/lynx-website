@@ -29,59 +29,36 @@ function absoluteLink(link: string, base: string, origin: string) {
   return `${origin.replace(/\/$/, '')}${basePrefix ? `/${basePrefix}` : ''}${link}`;
 }
 
-function truncateDescription(description: string) {
-  const tokens = encoding.encode(description);
-  return tokens.length <= 30
-    ? description
-    : `${encoding.decode(tokens.slice(0, 29))}…`;
+function truncateDescriptions(markdown: string) {
+  return markdown
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(\* \[.*\]\([^)]+\)): (.+)$/);
+      if (!match) return line;
+      const [, prefix, description] = match;
+      const tokens = encoding.encode(description);
+      return tokens.length <= 30
+        ? line
+        : `${prefix}: ${encoding.decode(tokens.slice(0, 29))}…`;
+    })
+    .join('\n');
 }
 
-function sectionNodes(
-  sections: LlmsTxtSection[],
-  depth: 2 | 3,
-  truncate = false,
-): RootContent[] {
+function sectionNodes(sections: LlmsTxtSection[], depth: 2 | 3): RootContent[] {
+  // Preserve Markdown in titles/descriptions, including code, emphasis and
+  // type signatures, as in Rspress's default index and the previous plugin.
   return sections.flatMap((section) =>
     section.pages.length === 0
       ? []
-      : [
-          {
-            type: 'heading' as const,
-            depth,
-            children: [{ type: 'text' as const, value: section.title }],
-          },
-          {
-            type: 'list' as const,
-            ordered: false,
-            spread: false,
-            children: section.pages.map((page) => ({
-              type: 'listItem' as const,
-              spread: false,
-              children: [
-                {
-                  type: 'paragraph' as const,
-                  children: [
-                    {
-                      type: 'link' as const,
-                      url: page.link,
-                      children: [
-                        { type: 'text' as const, value: page.title ?? '' },
-                      ],
-                    },
-                    ...(page.description
-                      ? [
-                          {
-                            type: 'text' as const,
-                            value: `: ${truncate ? truncateDescription(page.description) : page.description}`,
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-              ],
-            })),
-          },
-        ],
+      : fromMarkdown(
+          `${'#'.repeat(depth)} ${section.title}\n\n` +
+            section.pages
+              .map(
+                (page) =>
+                  `- [${page.title}](${page.link})${page.description ? `: ${page.description}` : ''}`,
+              )
+              .join('\n'),
+        ).children,
   );
 }
 
@@ -155,13 +132,15 @@ export function renderLynxLlms(
   return {
     llmsTxt:
       toMarkdown(agents, markdownOptions) +
-      '\n---\n\n## 98. Appendix: Links\n\nYou may find more information about Lynx and related resources in the links below:\n\n' +
-      toMarkdown(
-        { type: 'root', children: sectionNodes(appendix, 3, true) },
-        markdownOptions,
+      '---\n\n## 98. Appendix: Links\n\nYou may find more information about Lynx and related resources in the links below:\n\n' +
+      truncateDescriptions(
+        toMarkdown(
+          { type: 'root', children: sectionNodes(appendix, 3) },
+          markdownOptions,
+        ),
       ) +
       (apiIndex
-        ? `\n## 99. Appendix: Lynx APIs\n\nIf you need the full list of all APIs of Lynx, please refer to the [Lynx APIs](${apiLink}).\n`
+        ? `\n\n## 99. Appendix: Lynx APIs\n\nIf you need the full list of all APIs of Lynx, please refer to the [Lynx APIs](${apiLink}).\n`
         : ''),
     apiIndex,
   };
