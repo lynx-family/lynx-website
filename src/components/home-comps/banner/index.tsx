@@ -1,4 +1,4 @@
-import { cn } from '@site/src/lib/utils';
+import { cn } from '../../../lib/utils';
 import cls from 'classnames';
 import React from 'react';
 import { useLang } from '@rspress/core/runtime';
