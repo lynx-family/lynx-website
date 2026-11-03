@@ -1,0 +1,554 @@
+---
+title: 'Lynx 4.2: Cascade Layers, Shadow Animations, and More Control over Rendering'
+date: 2026-11-03
+sidebar: false
+authors: ['lynx']
+badge_text: 'Lynx 4.2 is released!'
+description: 'Explore the combined Lynx 4.1 and 4.2 updates to CSS, images, ReactLynx, native APIs, and debugging.'
+---
+
+import { BlogHeader, Go } from '@lynx';
+
+<BlogHeader />
+
+{/* cspell:ignore Autolink ServalSVG LepusNG allSettled maxSnapCount */}
+
+**Lynx 4.2 is here!** Because Lynx 4.1 and 4.2 were released close together, we are not publishing a separate 4.1 release blog. This post covers the highlights of **both releases** since [Lynx 4.0](/blog/lynx-4-0).
+
+This time, the focus is control: organize style precedence with CSS Cascade Layers, adapt styles to supported capabilities and changing color preferences, decide when ReactLynx hands over the first screen, and investigate memory across a page's lifetime. There are also improvements to images, text, scrolling, and host integration.
+
+## CSS with More Predictable Behavior
+
+### Organize Styles with Cascade Layers
+
+As a design system grows, application overrides can turn into a contest of increasingly specific selectors. CSS `@layer` lets you decide the order of groups of styles first, rather than expressing every override through selector specificity.
+
+For example, this card keeps the component's background but takes its padding from the utilities layer:
+
+```css
+@layer reset, base, components, utilities;
+
+@layer components {
+  .card {
+    padding: 16px;
+    background-color: #e8f4ff;
+  }
+}
+
+@layer utilities {
+  .compact {
+    padding: 8px;
+  }
+}
+```
+
+```tsx
+<view className="card compact">
+  <text>A compact card with 8px padding</text>
+</view>
+```
+
+With [cascade-layer ordering](https://github.com/lynx-family/lynx/pull/8209), a later layer wins over an earlier one for normal declarations; specificity and source order still matter within the same layer. Normal declarations outside layers take precedence over layered declarations. For `!important` declarations, the layer order is reversed. Named, anonymous, and nested layers are supported.
+
+Cascade layers and the conditional rules below require compatible build tooling and CSS Rule encoding. Add this plugin to your existing build configuration, alongside the project's Lynx and ReactLynx plugins:
+
+```js
+import { pluginLynxConfig } from '@lynx-js/config-rsbuild-plugin';
+
+pluginLynxConfig({
+  enableCSSRule: true,
+});
+```
+
+This is an opt-in encoding path, not a change automatically applied to every previously built template. See the [CSS Rule configuration example](/api/css/media-query#enable-css-rule-encoding).
+
+### Apply Styles Conditionally
+
+`@supports` adds declaration checks, engine-version range conditions, and combinations using `not`, `and`, and `or`. You can keep a fallback layout and enable an alternative when its CSS declaration is supported:
+
+```css
+.tiles {
+  display: flex;
+  flex-direction: column;
+}
+
+@supports (display: grid) {
+  .tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+```
+
+On a supporting runtime, two children of `.tiles` use two grid columns instead of a vertical stack. A declaration check tests the engine's CSS parser; it does not detect whether a host has installed an optional native service. Unsupported function conditions and unknown condition forms conservatively evaluate to false.
+
+Building on the [media queries introduced in 4.0](/blog/lynx-4-0#css-media-queries), hosts can also update the runtime's light/dark preference and trigger reevaluation of `prefers-color-scheme` without rebuilding the page. The existing media-query example shows the corresponding rules:
+
+<Go
+  example="css"
+  defaultFile="src/media_query/index.scss"
+  defaultEntryName="media_query"
+  entry="src/media_query"
+  highlight="{148-187}"
+  defaultTab="web"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/media-query-portrait-ranges.png"
+/>
+
+The preview illustrates media-query styles, not a recording of a host changing its color scheme. To test the new update path, switch the host's color preference while the same page remains open and check that the matching styles change.
+
+### Animate Shadows
+
+The new animator now supports [`box-shadow` in keyframes and transitions](https://github.com/lynx-family/lynx/pull/7619). Beyond changing a card's elevation, you can animate layered shadows to create colored halos, moving light, and dimensional effects.
+
+The three demos below were recorded in the native Android LynxExplorer app running Lynx 4.2.0. Each GIF is **896 × 1280 at 24 fps**, sampled from native video without upscaling or synthesized motion. The cards remain stationary: all animated effects come from `box-shadow`, not JavaScript timers or transforms.
+
+Enable `enable-new-animator={true}` on the animated element. The snippets focus on that element and its keyframes; typography, surrounding layout, and static decorative elements are omitted. Keep enough space around the element for its shadows. Readers who prefer reduced motion see a still frame instead of an automatically playing GIF.
+
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
+    gap: 16,
+    alignItems: 'start',
+    margin: '24px 0',
+  }}
+>
+
+<section style={{ minWidth: 0 }}>
+<h4 id="neon-reactor" style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.4, minHeight: "2.8em" }}>Neon Reactor</h4>
+
+<figure style={{ margin: 0 }}>
+  <picture>
+    <source
+      media="(prefers-reduced-motion: reduce)"
+      srcSet="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/neon-reactor-poster-fe70b03bcf166f84.webp"
+    />
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/neon-reactor-3c75a8beb227c2b6.gif"
+      alt="Neon Reactor: cyan and violet box-shadow layers pulse around a stationary circular core in Lynx 4.2."
+      width="896"
+      height="1280"
+      loading="lazy"
+      decoding="async"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        margin: '0 auto',
+        borderRadius: 12,
+      }}
+    />
+  </picture>
+  <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 12 }}>
+    <a href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/neon-reactor-3c75a8beb227c2b6.gif">
+      Open full-resolution GIF
+    </a>
+  </figcaption>
+</figure>
+
+<p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6 }}>Five shadows form a cyan-to-violet halo around a stationary core. The keyframes vary color, blur, and spread while the core stays still.</p>
+</section>
+
+<section style={{ minWidth: 0 }}>
+<h4 id="chromatic-orbit" style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.4, minHeight: "2.8em" }}>Chromatic Orbit</h4>
+
+<figure style={{ margin: 0 }}>
+  <picture>
+    <source
+      media="(prefers-reduced-motion: reduce)"
+      srcSet="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/chromatic-orbit-poster-3cf03b3dca474474.webp"
+    />
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/chromatic-orbit-9805285c0fb8c781.gif"
+      alt="Chromatic Orbit: three colored box shadows move around a stationary card in Lynx 4.2."
+      width="896"
+      height="1280"
+      loading="lazy"
+      decoding="async"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        margin: '0 auto',
+        borderRadius: 12,
+      }}
+    />
+  </picture>
+  <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 12 }}>
+    <a href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/chromatic-orbit-9805285c0fb8c781.gif">
+      Open full-resolution GIF
+    </a>
+  </figcaption>
+</figure>
+
+<p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6 }}>Three colored shadows travel around the card by changing their horizontal and vertical offsets. The card and text stay in place; the orbit comes entirely from box-shadow.</p>
+</section>
+
+<section style={{ minWidth: 0 }}>
+<h4 id="shadow-stack" style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.4, minHeight: "2.8em" }}>Shadow Stack</h4>
+
+<figure style={{ margin: 0 }}>
+  <picture>
+    <source
+      media="(prefers-reduced-motion: reduce)"
+      srcSet="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/shadow-stack-poster-418a721904c38c45.webp"
+    />
+    <img
+      src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/shadow-stack-cc160a51c8a5fe12.gif"
+      alt="Shadow Stack: hard-edged colored box shadows expand, collapse, and change direction behind a stationary card in Lynx 4.2."
+      width="896"
+      height="1280"
+      loading="lazy"
+      decoding="async"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        margin: '0 auto',
+        borderRadius: 12,
+      }}
+    />
+  </picture>
+  <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 12 }}>
+    <a href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/shadow-stack-cc160a51c8a5fe12.gif">
+      Open full-resolution GIF
+    </a>
+  </figcaption>
+</figure>
+
+<p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6 }}>Five hard-edged color shadows unfold to one side, collapse, and unfold to the other. A sixth, softer shadow adds depth without adding extra animated elements.</p>
+</section>
+
+</div>
+
+:::details Neon Reactor — animation code
+
+```tsx
+<view className="reactor" enable-new-animator={true}>
+  <text>42</text>
+</view>
+```
+
+```css
+.reactor {
+  width: 158px;
+  height: 158px;
+  border-radius: 79px;
+  background-color: #0b1022;
+  border: 1px solid #5ae8ff;
+  align-items: center;
+  justify-content: center;
+  animation: reactor-pulse 4s ease-in-out infinite;
+}
+
+@keyframes reactor-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0px 0px 10px 1px rgba(40, 229, 255, 0.9),
+      0px 0px 26px 5px rgba(0, 205, 255, 0.6),
+      0px 0px 62px 15px rgba(35, 108, 255, 0.25),
+      0px 0px 0px 10px rgba(26, 224, 255, 0.08),
+      0px 0px 0px 22px rgba(78, 155, 255, 0.04);
+  }
+  35% {
+    box-shadow:
+      0px 0px 18px 4px rgba(40, 245, 255, 1),
+      0px 0px 46px 17px rgba(0, 205, 255, 0.75),
+      0px 0px 82px 34px rgba(35, 108, 255, 0.5),
+      0px 0px 0px 21px rgba(26, 224, 255, 0.17),
+      0px 0px 0px 43px rgba(78, 155, 255, 0.1);
+  }
+  70% {
+    box-shadow:
+      0px 0px 20px 3px rgba(221, 138, 255, 1),
+      0px 0px 48px 15px rgba(170, 60, 255, 0.75),
+      0px 0px 88px 32px rgba(89, 46, 255, 0.5),
+      0px 0px 0px 17px rgba(212, 125, 255, 0.17),
+      0px 0px 0px 35px rgba(151, 86, 255, 0.1);
+  }
+}
+```
+
+:::
+
+:::details Chromatic Orbit — animation code
+
+```tsx
+<view className="orbit-card" enable-new-animator={true}>
+  <text>LYNX</text>
+</view>
+```
+
+```css
+.orbit-card {
+  width: 194px;
+  height: 194px;
+  border-radius: 40px;
+  background-color: #fffefa;
+  align-items: center;
+  justify-content: center;
+  animation: chromatic-orbit 6s linear infinite;
+}
+
+@keyframes chromatic-orbit {
+  0%,
+  100% {
+    box-shadow:
+      44px 0px 12px 2px rgba(43, 211, 232, 0.72),
+      -22px 38px 12px 2px rgba(149, 98, 247, 0.72),
+      -22px -38px 12px 2px rgba(255, 130, 147, 0.72);
+  }
+  25% {
+    box-shadow:
+      0px 44px 12px 2px rgba(43, 211, 232, 0.72),
+      -38px -22px 12px 2px rgba(149, 98, 247, 0.72),
+      38px -22px 12px 2px rgba(255, 130, 147, 0.72);
+  }
+  50% {
+    box-shadow:
+      -44px 0px 12px 2px rgba(43, 211, 232, 0.72),
+      22px -38px 12px 2px rgba(149, 98, 247, 0.72),
+      22px 38px 12px 2px rgba(255, 130, 147, 0.72);
+  }
+  75% {
+    box-shadow:
+      0px -44px 12px 2px rgba(43, 211, 232, 0.72),
+      38px 22px 12px 2px rgba(149, 98, 247, 0.72),
+      -38px 22px 12px 2px rgba(255, 130, 147, 0.72);
+  }
+}
+```
+
+:::
+
+:::details Shadow Stack — animation code
+
+```tsx
+<view className="stack-card" enable-new-animator={true}>
+  <text>MAKE SOME DEPTH.</text>
+</view>
+```
+
+```css
+.stack-card {
+  width: 208px;
+  height: 208px;
+  border-radius: 22px;
+  background-color: #fff7e5;
+  padding: 23px;
+  animation: shadow-stack 6s ease-in-out infinite;
+}
+
+@keyframes shadow-stack {
+  0%,
+  100% {
+    box-shadow:
+      4px 4px 0px 0px #f26d84,
+      8px 8px 0px 0px #ffae6e,
+      12px 12px 0px 0px #ffd66f,
+      16px 16px 0px 0px #91dacb,
+      20px 20px 0px 0px #9076db,
+      24px 24px 18px 0px rgba(0, 0, 0, 0.28);
+  }
+  30% {
+    box-shadow:
+      10px 10px 0px 0px #f26d84,
+      20px 20px 0px 0px #ffae6e,
+      30px 30px 0px 0px #ffd66f,
+      40px 40px 0px 0px #91dacb,
+      50px 50px 0px 0px #9076db,
+      60px 60px 30px 0px rgba(0, 0, 0, 0.38);
+  }
+  50% {
+    box-shadow:
+      0px 0px 0px 0px #f26d84,
+      0px 0px 0px 0px #ffae6e,
+      0px 0px 0px 0px #ffd66f,
+      0px 0px 0px 0px #91dacb,
+      0px 0px 0px 0px #9076db,
+      0px 10px 18px 0px rgba(0, 0, 0, 0.28);
+  }
+  80% {
+    box-shadow:
+      -10px 10px 0px 0px #f26d84,
+      -20px 20px 0px 0px #ffae6e,
+      -30px 30px 0px 0px #ffd66f,
+      -40px 40px 0px 0px #91dacb,
+      -50px 50px 0px 0px #9076db,
+      -60px 60px 30px 0px rgba(0, 0, 0, 0.38);
+  }
+}
+```
+
+:::
+
+These examples use the new animator in Lynx 4.2. The addition is animation support—not the static `box-shadow` property, which was already available. See [supported transition properties](/api/css/properties/transition-property).
+
+### Layout Defaults Closer to the Web
+
+With `targetSdkVersion >= 4.1`, grid placement shorthands (`grid-column` and `grid-row`) and a `0%` basis when omitted from the `flex` shorthand are enabled by default. These capabilities were previously introduced behind configuration; this update changes their target-SDK defaults. Explicitly setting `enableGridPlacementShorthands` or `enableFlexBasisZeroPercent` to `false` still overrides the default.
+
+When raising your target SDK, check layouts that depend on grid placement or the difference between a zero length and a percentage flex basis.
+
+## Text and Scrolling
+
+### Fine-Tune Text Decorations
+
+On the **Android and iOS TextService** rendering path, three properties give decorated text more precise styling:
+
+- `text-decoration-thickness` controls line thickness.
+- `-x-text-decoration-width` controls dash length or the period of a wave.
+- `-x-text-decoration-gap` controls the spacing between dashes or dots.
+
+The existing text-decoration example provides a starting point:
+
+<Go
+  example="css-api"
+  defaultFile="src/text-decoration/App.tsx"
+  defaultEntryName="text-decoration"
+  entry="src/text-decoration"
+  highlight="{28-38,48-50}"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/css/text-decoration.jpg"
+/>
+
+The preview shows the original decoration styles. To try the new controls, apply this class to a `<text>` element for a thicker dashed underline with explicit dash length and spacing:
+
+```css
+.annotation {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: #1479ff;
+  text-decoration-thickness: 2px;
+  -x-text-decoration-width: 8px;
+  -x-text-decoration-gap: 4px;
+}
+```
+
+These extensions require TextService. Do not assume identical support on the native text-rendering path.
+
+### Swipe across More List Items
+
+A snapping list need not advance just one item per gesture. On Android and iOS, `item-snap` adds `maxSnapCount` to let a quick swipe move across several items. The default remains `1`, preserving the previous behavior.
+
+Start with the existing horizontal snapping example:
+
+<Go
+  example="list"
+  defaultFile="src/horizontal-snap/index.tsx"
+  defaultEntryName="horizontalSnap"
+  entry="src/horizontal-snap"
+  highlight="{26,47}"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/list_horizontal_snap.gif"
+/>
+
+Then change its `item-snap` value to allow up to three items per swipe:
+
+```tsx
+item-snap={{ factor: 0.5, offset: 0, maxSnapCount: 3 }}
+```
+
+The embedded example and GIF show the original snapping behavior. Compare `maxSnapCount: 1` and `3` on a compatible native runtime to see the new behavior; the actual travel also depends on the gesture and remaining items.
+
+Item-based snapping also comes to `<scroll-view>`, giving hosts another option for paginated scrolling.
+
+## ReactLynx
+
+### Choose When the First Screen Is Ready
+
+[Instant First-Frame Rendering](/guide/interaction/ifr) lets the main thread render before the background runtime is ready. For pages whose critical data arrives in several batches, ReactLynx now lets the application explicitly decide when to hand the first-screen tree over to the background thread:
+
+```js
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+pluginReactLynx({
+  firstScreenSyncTiming: 'manual',
+});
+```
+
+Once the application's critical first-screen data is ready, call the [ready API](/api/react/Functions/markFirstScreenSyncReady):
+
+```ts
+import { markFirstScreenSyncReady } from '@lynx-js/react';
+
+// Call from the application's first-screen data-ready path.
+markFirstScreenSyncReady();
+```
+
+Before synchronization, the main thread can continue to handle host `updateData` calls synchronously. The handover happens only after **both** the ready signal and the current first-screen render have completed. The API works from either thread and repeated calls have no further effect.
+
+:::warning Always send the ready signal
+
+In manual mode, your data-ready path must call `markFirstScreenSyncReady()`, including any intended fallback for failed data requests. Otherwise background-thread hydration, and event handling that depends on it, remain unavailable. Do not wait for such an event handler to send the initial ready signal.
+
+:::
+
+This is a companion framework feature, available from `@lynx-js/react@0.123.0` and `@lynx-js/react-rsbuild-plugin@0.18.0`. ReactLynx package versions are independent of the engine SDK; upgrading Lynx alone does not update them.
+
+### Load Bundles on Demand, with Source-Level Debugging
+
+ReactLynx's lazy loading integrates with [`lynx.fetchBundle`](/react/code-splitting), while the corresponding SourceMap improvements preserve source-level debugging for lazy bundles. Configure `pluginReactLynx({ engineVersion: '3.9' })` or a later supported engine version to use this loading path; lower configurations retain the previous `QueryComponent` path.
+
+The example uses `lazy` and `Suspense` to split a component out of the initial bundle. Its FetchBundle build variant uses the new loading path:
+
+<Go
+  example="lazy-bundle"
+  defaultFile="src/App.tsx"
+  defaultEntryName="dist-fetchbundle/main"
+  entry="src"
+  highlight="{5,15-17}"
+/>
+
+## Lynx API
+
+The host-facing updates are focused on integration and inspection:
+
+- **SVG image-service hooks.** The image-service interfaces add [Android `fetchSVGImage`](https://github.com/lynx-family/lynx/pull/8104) and [iOS `loadSVGImageWithURL`](https://github.com/lynx-family/lynx/pull/8184) extension points. These are integration hooks for image-service implementers, not a bundled SVG decoder.
+
+- **Logical element-tree queries.** Android, iOS, and HarmonyOS add LynxElement node queries and parent/child access; Android and iOS also expose associated platform views. The logical element tree is not the same as the native view hierarchy.
+- **More native Autolink coverage.** Building on [Native Libraries and Autolink](/guide/autolink), Android and iOS add Node-API addon integration, while HarmonyOS adds global-library integration. Use matching SDK and platform-tooling versions.
+- **HarmonyOS host APIs.** Native modules can declare synchronous-return methods with `static syncMethods`. `LynxContext.getPageDataByKeyAsync` reads page data asynchronously by key, and `LynxViewClient.onIntrinsicContentSizeChange` reports intrinsic content-size changes. Synchronous methods wait for the UI thread and should not perform expensive work.
+- **`Promise.allSettled`.** Lynx Promise adds `allSettled` to wait for every asynchronous operation to finish and handle each fulfillment value or rejection reason without failing the whole group on the first rejection.
+
+### TemplateBundle Preloading
+
+Lynx 4.2 adds [`TemplateBundle.preload`](https://github.com/lynx-family/lynx/pull/9979) on Android, iOS, and HarmonyOS. It asynchronously loads LepusNG bytecode into pre-created main-thread runtimes, moving this preparation ahead of page use.
+
+The order matters: disable context auto-refill, create all required contexts, then request preload. Once preload is accepted, do not create additional contexts. The completion callback runs on the preload worker thread; marshal any UI work to the appropriate thread. This prepares runtime state—it does not download all page resources.
+
+Check whether the preload request was accepted. The success callback runs only after all pre-created runtimes finish loading; it is not called if validation or loading fails.
+
+## DevTool
+
+### Follow Memory across a Page's Lifetime
+
+Trace expands its existing memory analysis with process physical-memory data and events for main-thread script (MTS) and background-thread script (BTS) VMs and runtime pools. It also accepts Trace configuration from DevTool, supports garbage-collection controls during recording, and can capture VM snapshots by URL. Available tracks and controls depend on the platform and Trace configuration.
+
+For example, when investigating a page that appears to retain memory:
+
+1. Record entry, several representative updates, and exit in one Trace.
+2. Compare page lifetime and VM/runtime-pool events with the memory trend.
+3. Capture snapshots around the suspicious interval to investigate retained objects.
+
+A high point on a memory curve alone does not establish a leak; runtime pooling and normal object lifetimes also matter. See the [memory analysis guide](/guide/performance/analysis-performance/analysis-memory) for the existing workflow and the companion [Lynx Trace tools](https://github.com/lynx-family/lynx-trace).
+
+Android also adds [`LynxView.takeBTSHeapSnapshot`](https://github.com/lynx-family/lynx/pull/8704), which writes a QuickJS background-script heap snapshot to a file and reports success or failure on a background thread. Supply an absolute output path with an existing parent directory; an existing file is replaced.
+
+### Inspect Conditional Styles
+
+With a matching DevTool version, the Styles panel adds `@media` inspection and `@supports` inspection and editing, making it easier to understand which conditional rules apply. Supported Android, iOS, and desktop screenshot requests can also select PNG; JPEG remains the default.
+
+## Get Started with Lynx 4.2
+
+Follow [Integrate with Existing Apps](/guide/start/integrate-with-existing-apps) for your platform and select matching Lynx, PrimJS, services, and tooling versions. The Lynx 4.2.0 release uses PrimJS 4.2.1; companion dependencies do not necessarily share the same version number.
+
+Before upgrading an existing host, check these integration changes:
+
+| Area                          | What to check                                                                                                                                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| iOS / AnimaX                  | Use the `XElement/AnimaX` element dependency. Update the dependency declaration if your integration still uses `Lynx/AnimaX`.                                                                                                                    |
+| Android / LynxElement         | Replace `com.lynx.tasm.LynxElement` with `com.lynx.tasm.element.LynxElement`; migrate named callback implementations to `LynxElementCallback`.                                                                                                   |
+| HarmonyOS / image redirection | Migrate `shouldRedirectUrlAsync` callbacks to `AsyncCallback<LynxRedirectCallbackResult>`. Return a string or a structured `LynxRedirectResult` with `url` and optional `fallbackUrls` / `fileCacheName`, rather than the previous array result. |
+| Page target SDK / layout      | Recheck grid and flex layouts when raising `targetSdkVersion` to 4.1 or later.                                                                                                                                                                   |
+
+For complete engine changes and patch availability, consult the [Lynx 4.2.0 release notes](https://github.com/lynx-family/lynx/releases/tag/4.2.0). Thank you to everyone contributing code, reporting issues, and sharing examples—we look forward to seeing what you build with Lynx 4.2!
