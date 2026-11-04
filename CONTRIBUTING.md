@@ -71,6 +71,22 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
+MDX imports must be used in executable JSX, expressions, or exports. Check all
+site-owned MDX with:
+
+```bash
+pnpm run check:doc-unused-imports
+```
+
+The check analyzes MDX without executing it. It excludes Lynxtron, synchronized
+lynx-ui docs, and API sections owned by `@lynx-js/lynx-stack-docs`.
+
+For changes to this checker, also run:
+
+```bash
+node --test scripts/ci/check-doc-unused-imports.test.mjs
+```
+
 ### Writing Style
 
 Keep English and Chinese document headings consistent in count, order, and
