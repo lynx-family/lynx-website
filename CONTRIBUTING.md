@@ -71,6 +71,28 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
+MDX imports must also be used in executable JSX, expressions or exports.
+**Documentation Imports** CI rejects newly unused bindings compared with the
+event's base revision, regardless of whether the source is a package or an
+alias. Pre-commit checks compare staged documents with `HEAD`. Existing unused
+bindings remain visible in the full audit:
+
+```bash
+pnpm run check:doc-unused-imports
+pnpm run check:doc-unused-imports --base origin/main
+```
+
+The check does not execute documents or resolve imported modules. Code fences,
+comments, plain `.md` files and side-effect imports do not count as binding
+usage. Shadowed identifiers do not count as uses of an imported binding.
+There is no stored allowlist: cleanup automatically reduces the remaining debt.
+Fix generated or synchronized documents in their authoritative source.
+For changes to this checker, also run:
+
+```bash
+node --test scripts/ci/check-doc-unused-imports.test.mjs
+```
+
 ### Writing Style
 
 Keep English and Chinese document headings consistent in count, order, and

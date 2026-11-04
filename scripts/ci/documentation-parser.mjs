@@ -15,6 +15,11 @@ const processors = new Map(
     createProcessor({
       format,
       remarkPlugins: [remarkGfm, remarkCjkFriendly, remarkCjkStrikethrough],
+      recmaPlugins: [
+        () => (tree, file) => {
+          file.data.estree = tree;
+        },
+      ],
     }),
   ]),
 );
@@ -52,4 +57,18 @@ export function parseDocumentation(file, content) {
     path: normalizedFile,
     value: prepareSource(content),
   });
+}
+
+/**
+ * Compile to an ESTree module for scope analysis, without evaluating the
+ * generated JavaScript or resolving its imports. Use the same syntax and
+ * source preparation as the boundary parser.
+ */
+export function compileDocumentation(file, content) {
+  const normalizedFile = toPosix(file);
+  const format = path.posix.extname(normalizedFile).slice(1);
+  return processors.get(format).processSync({
+    path: normalizedFile,
+    value: prepareSource(content),
+  }).data.estree;
 }
