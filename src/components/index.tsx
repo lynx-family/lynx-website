@@ -18,6 +18,7 @@ export {
   ResponsiveDualColumn,
 } from './containers/ResponsiveDualColumn';
 export { PlatformTabs } from './platform-tabs/PlatformTabs';
+export * as NextSteps from './NextSteps';
 export { ChoiceTabs } from './choice-tabs/ChoiceTabs';
 export { TutorialTabs, LearnTutorialTabs } from './tutorial-tabs/TutorialTabs';
 
