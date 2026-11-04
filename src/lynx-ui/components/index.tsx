@@ -12,6 +12,7 @@ export {
 } from './ui-api-table';
 
 export { ClassRenderPropPreamble } from './class-render-prop-preamble';
+export { ChineseApiHeadings } from './localized-api-headings';
 
 export { Go } from '@/components/go/Go';
 
