@@ -1,5 +1,5 @@
-import type { SubsiteConfig } from '@site/shared-route-config';
-import { withBase } from '@rspress/core/runtime';
+import { SUBSITES_CONFIG, type SubsiteConfig } from '@route-config';
+import { Head, withBase } from '@rspress/core/runtime';
 
 function isExternalUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://');
@@ -9,6 +9,25 @@ function resolveLogoUrl(url: string): string {
   if (isExternalUrl(url)) return url;
   if (url.startsWith('/')) return withBase(url);
   return url;
+}
+
+export function SubsiteBlogStyles() {
+  // Reuse the host's public logo URLs rather than bundling another SVG copy.
+  // Head preserves these base-aware URLs in both SSG and client navigation.
+  const styles = SUBSITES_CONFIG.filter(
+    ({ value }) => value === 'ui' || value === 'lynxtron',
+  )
+    .map(
+      ({ value, logo }) =>
+        `:root[data-subsite="${value}"]{--home-blog-bg-img:url(${JSON.stringify(resolveLogoUrl(logo.light))})}` +
+        `:root.dark[data-subsite="${value}"]{--home-blog-bg-img:url(${JSON.stringify(resolveLogoUrl(logo.dark))})}`,
+    )
+    .join('\n');
+  return (
+    <Head>
+      <style>{styles}</style>
+    </Head>
+  );
 }
 
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {

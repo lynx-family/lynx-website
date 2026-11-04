@@ -13,7 +13,7 @@ import Item2Dark from './illustrations/home-f-2-dark.svg';
 import Item3Dark from './illustrations/home-f-3-dark.svg';
 import Item4Dark from './illustrations/home-f-4-dark.svg';
 import cls from 'classnames';
-import { useFixDark } from '@site/theme/hooks/use-fix-dark';
+import { useFixDark } from '../../../../theme/hooks/use-fix-dark';
 
 const comps = {
   item0: {

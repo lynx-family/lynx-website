@@ -3,7 +3,7 @@ import { Link } from '@rspress/core/theme';
 import { useI18n, useLang, withBase } from '@rspress/core/runtime';
 import { useEffect, useRef } from 'react';
 import { BorderBeam } from '@/components/home-comps/border-beam';
-import { getLangPrefix } from '../../../shared-route-config';
+import { getLangPrefix } from '@route-config';
 import './TutorialTabs.scss';
 
 export interface TutorialTabItem {

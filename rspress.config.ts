@@ -73,6 +73,13 @@ export default defineConfig({
       alias: {
         '@site': path.join(__dirname),
         '@og-config$': path.join(__dirname, 'shared-og-config.ts'),
+        '@route-config$': path.join(__dirname, 'shared-route-config.ts'),
+        '@version-data$': path.join(
+          __dirname,
+          'docs',
+          'public',
+          'version.json',
+        ),
         '@': path.join(__dirname, 'src'),
         '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
         '@assets': path.join(__dirname, 'docs', 'public', 'assets'),

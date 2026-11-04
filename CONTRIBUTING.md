@@ -339,10 +339,17 @@ narrowest shared entry points:
 | Components exported by the `lynx-ui` shared entry  | `@lynx-ui`       |
 | Luna components exported by its exact entry point  | `@luna`          |
 | Shared package-document modules                    | `@docs/<path>`   |
+| Host route metadata and helpers                    | `@route-config`  |
+| Published host version metadata                    | `@version-data`  |
 | MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports |
 
 `@luna` is an exact-match barrel for `src/luna/index.ts`. Use only the bare
 alias; `@luna/*` subpaths are not part of the shared resolver contract.
+
+`@route-config` and `@version-data` are exact host-provided entries. Bind them
+in both runtime and TypeScript configuration before consuming updated OSS
+source. They expose the existing route configuration exports and the default
+version metadata object; their physical paths belong to the active host.
 
 For new imports, omit JS/TS file extensions and a trailing `/index`. Existing
 imports that include `/index` remain supported and can be migrated separately.

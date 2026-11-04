@@ -1,6 +1,6 @@
 import { Space } from '@douyinfe/semi-ui';
-import useIfMobile from '@site/theme/hooks/use-if-mobile';
-import { useTiltEffect } from '@site/src/hooks';
+import useIfMobile from '../../../../theme/hooks/use-if-mobile';
+import { useTiltEffect } from '../../../hooks';
 import React, { ReactNode, useState } from 'react';
 import styles from './index.module.less';
 import { Moon } from './moon';

@@ -13,11 +13,11 @@ import {
 } from '@/components/ui/hover-card';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
-import useIfMobile from '@site/theme/hooks/use-if-mobile';
+import useIfMobile from './hooks/use-if-mobile';
 import { ChevronDown } from 'lucide-react';
 
-import { getLangPrefix } from '../shared-route-config';
-import versionJson from '../docs/public/version.json';
+import { getLangPrefix } from '@route-config';
+import versionJson from '@version-data';
 
 const menuItemClassName =
   'relative flex w-full cursor-default select-none items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';

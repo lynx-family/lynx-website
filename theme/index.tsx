@@ -38,7 +38,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
-import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
+import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
@@ -46,6 +46,7 @@ import RspeedyMigrationNotice from './RspeedyMigrationNotice';
 import { isGeneratedApiPage } from './api-reference';
 import { subsiteOf } from './api-subsites';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
+import { SubsiteBlogStyles } from './subsite-ui';
 
 const NULL_BYTE_RE = /\u0000/g;
 
@@ -103,6 +104,7 @@ function Layout({
         />
       </Head>
       <OgHead />
+      <SubsiteBlogStyles />
       <BaseLayout
         {...props}
         afterNavTitle={afterNavTitle}
@@ -317,6 +319,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     return (
       <>
         <OgHead />
+        <SubsiteBlogStyles />
         <div className="lynx-ui-home-layout-container">
           <LynxUIHomeLayout />
         </div>
@@ -327,6 +330,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   return (
     <>
       <OgHead />
+      <SubsiteBlogStyles />
       <MainHomeLayout {...props} />
     </>
   );

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { renderInlineMarkdown } from '@rspress/core/theme';
-import useIfMobile from '@site/theme/hooks/use-if-mobile';
-import { useBlogPages, useTiltEffect } from '@site/src/hooks';
+import useIfMobile from '../../../theme/hooks/use-if-mobile';
+import { useBlogPages, useTiltEffect } from '../../hooks';
 import { toLatestBlogPath } from '../../lib/utils';
 import { BlogAvatar } from '../blog-avatar';
 import { MeteorsBackground } from '../home-comps/meteors-background';

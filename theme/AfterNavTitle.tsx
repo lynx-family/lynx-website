@@ -3,7 +3,7 @@ import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme-original';
-import useIfMobile from '@site/theme/hooks/use-if-mobile';
+import useIfMobile from './hooks/use-if-mobile';
 import {
   SUBSITES_CONFIG,
   DROPDOWN_CORE,
@@ -11,7 +11,7 @@ import {
   DROPDOWN_NATIVE_FRAMEWORK,
   getSubItems,
   getLangPrefix,
-} from '@site/shared-route-config';
+} from '@route-config';
 import { Separator } from '@/components/ui/separator';
 import { subsiteConfigOf } from './api-subsites';
 import { SubsiteLogo } from './subsite-ui';

@@ -68,16 +68,13 @@ The dashboard is available at:
 
 ### Embedding Components
 
-You can embed individual components in other pages:
+Embed the dashboard through the public documentation entry:
 
 ```tsx
-import { APIStatusDashboard } from '@site/src/components/api-status';
+import { APIStatusLayout } from '@lynx';
 
 // Full dashboard
-<APIStatusDashboard />;
-
-// Or individual components
-import { CoverageCard, CategoryTable } from '@site/src/components/api-status';
+<APIStatusLayout />;
 ```
 
 ## Components

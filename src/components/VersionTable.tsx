@@ -1,4 +1,4 @@
-import versionData from '../../docs/public/version.json';
+import versionData from '@version-data';
 
 import { Link } from '@rspress/core/theme';
 
