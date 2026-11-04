@@ -117,6 +117,27 @@ export const aliases = [
     lifecycle: stablePublicLifecycle,
   },
   {
+    // A complete OSS page, separate from extensible document-component barrels.
+    id: 'api-status-page',
+    specifier: '@api-status',
+    owner: 'lynx-website',
+    visibility: 'public',
+    kind: 'exact',
+    allowedImporters: ['lynx-website', 'consumer'],
+    bareTargetOwners: ['lynx-website'],
+    canonical: publicCanonicalSpelling,
+    allowMultipleResolverRoots: false,
+    implementationSources: {
+      requiredAreas: ['oss-components'],
+      additionalOwners: [],
+    },
+    downstream: {
+      implementation: 'required',
+      mayExtendBare: false,
+    },
+    lifecycle: stablePublicLifecycle,
+  },
+  {
     id: 'luna-entry',
     specifier: '@luna',
     owner: 'lynx-website',

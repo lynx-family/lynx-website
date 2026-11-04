@@ -84,9 +84,14 @@ export { Go } from './go/Go';
 // ----------------------------------------------------------------------------
 
 export { Caption, Figure } from './Figure';
+export { EmbedIframe } from './EmbedIframe';
+export { FoldableRenderFlow } from './foldable-render-flow';
+export { HtmlViewer } from './html-viewer';
 export { ImageWall } from './ImageWall';
+export { InlineIcon } from './InlineIcon';
 export { default as Mermaid } from './Mermaid/Mermaid';
 export { VideoList } from './VideoList';
+export { ThemedImage } from './ThemedImage';
 export { YouTubeIframe } from './YoutubeIframe';
 
 // ----------------------------------------------------------------------------
