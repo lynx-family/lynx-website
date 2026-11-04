@@ -256,6 +256,14 @@ test(
       `${areaRoot('oss-open-graph-config')}/index.ts`,
       `export const Value = 1;`,
     );
+    write(
+      `${areaRoot('site-route-config')}/index.ts`,
+      `export const Value = 1;`,
+    );
+    write(
+      `${areaRoot('oss-version-data')}/index.ts`,
+      `export const Value = 1;`,
+    );
     write(`${areaRoot('oss-theme')}/index.ts`, `export const Value = 1;`);
     write(
       `${areaRoot('rspress-default-theme')}/fallback.ts`,
@@ -359,6 +367,16 @@ test(
         areaRoot('oss-open-graph-config'),
         'index.ts',
       ),
+      '@route-config$': path.join(
+        cwd,
+        areaRoot('site-route-config'),
+        'index.ts',
+      ),
+      '@version-data$': path.join(
+        cwd,
+        areaRoot('oss-version-data'),
+        'index.ts',
+      ),
       '@docs': path.join(cwd, areaRoot('lynx-ui-package-docs')),
       '@assets': path.join(cwd, areaRoot('site-public-assets')),
       '@theme': [
@@ -391,7 +409,7 @@ test(
         );
         if (key.endsWith('$') || alias.kind === 'bare-and-subpaths')
           paths[specifier] ??= roots.map((root) =>
-            root.endsWith('.ts') ? root : `${root}/index.ts`,
+            /\.(?:ts|json)$/.test(root) ? root : `${root}/index.ts`,
           );
         if (!key.endsWith('$') && alias.kind !== 'exact')
           paths[`${specifier}/*`] = roots.map((root) => `${root}/*`);
@@ -451,6 +469,8 @@ declare module '*.svg';`,
       record('@lynx-ui/entry'),
       record('@luna'),
       record('@og-config'),
+      record('@route-config'),
+      record('@version-data'),
       record('@theme'),
       record('@theme/custom'),
       record('@theme/fallback'),
@@ -520,6 +540,75 @@ declare module '*.svg';`,
           policy.filter((entry) => entry.rule === 'migration-subpath').length,
           2,
         );
+      },
+    );
+    await t.test(
+      'host entries reject prefix resolvers and unapproved target owners',
+      async () => {
+        for (const specifier of ['@route-config', '@version-data']) {
+          const key = `${specifier}$`;
+          const original = bindings[key]!;
+          delete bindings[key];
+          bindings[specifier] = original;
+          try {
+            const { result } = await run([record(specifier)]);
+            assert.ok(
+              result.errors.some((error) =>
+                error.includes('must use exact matching'),
+              ),
+              result.errors.join('\n'),
+            );
+          } finally {
+            delete bindings[specifier];
+            bindings[key] = original;
+          }
+          bindings[key] = path.join(
+            cwd,
+            areaRoot('rspress-default-theme'),
+            'custom.ts',
+          );
+          try {
+            const { result, policy } = await run([record(specifier)]);
+            assert.ok(
+              result.errors.some((error) =>
+                error.includes("target owner 'rspress'"),
+              ),
+              result.errors.join('\n'),
+            );
+            assert.ok(policy.some((entry) => entry.rule === 'target-policy'));
+          } finally {
+            bindings[key] = original;
+          }
+          const { policy } = await run([record(`${specifier}/child`)]);
+          assert.ok(policy.some((entry) => entry.rule === 'alias-shape'));
+        }
+      },
+    );
+    await t.test(
+      'host version metadata supports a consumer-owned JSON module with TS parity',
+      async () => {
+        addArea('consumer-version-data', 'consumer/version.json');
+        write(
+          'consumer/version.json',
+          JSON.stringify({ versions: [], current_version: 'next' }),
+        );
+        const original = bindings['@version-data$']!;
+        bindings['@version-data$'] = path.join(cwd, 'consumer/version.json');
+        try {
+          const version = {
+            ...record('@version-data'),
+            bindings: [{ name: 'default', typeOnly: false }],
+          };
+          const { result, policy } = await run(
+            [version],
+            {},
+            { resolveJsonModule: true },
+          );
+          assert.deepEqual(result.errors, []);
+          assert.deepEqual(policy, []);
+        } finally {
+          bindings['@version-data$'] = original;
+        }
       },
     );
     await t.test(

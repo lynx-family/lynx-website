@@ -1,7 +1,7 @@
 import { useLang, withBase } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme';
 import styles from './Step.module.scss';
-import { getLangPrefix } from '../../../shared-route-config';
+import { getLangPrefix } from '@route-config';
 
 const Step = (props: { href: string; title: string; description: string }) => {
   return (

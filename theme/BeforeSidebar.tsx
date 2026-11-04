@@ -1,6 +1,6 @@
 import { useLang, useLocation } from '@rspress/core/runtime';
 import { type SidebarData, SidebarList } from '@rspress/core/theme-original';
-import { SHARED_SIDEBAR_PATHS, getLangPrefix } from '@site/shared-route-config';
+import { SHARED_SIDEBAR_PATHS, getLangPrefix } from '@route-config';
 import './index.scss';
 import './SubsiteRow.scss';
 

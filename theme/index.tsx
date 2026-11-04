@@ -38,7 +38,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
-import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
+import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';

@@ -18,7 +18,5 @@ const useFixDark = () => {
 
   return isDark;
 };
-export {
-  useFixDark,
-  //
-};
+
+export { useFixDark };

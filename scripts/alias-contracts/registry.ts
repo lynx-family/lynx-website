@@ -180,6 +180,49 @@ export const aliases = [
     lifecycle: stablePublicLifecycle,
   },
   {
+    // The active host supplies route metadata used by the shared runtime.
+    id: 'route-config',
+    specifier: '@route-config',
+    owner: 'consumer',
+    visibility: 'public',
+    kind: 'exact',
+    allowedImporters: ['lynx-website', 'consumer'],
+    bareTargetOwners: ['consumer'],
+    canonical: publicCanonicalSpelling,
+    allowMultipleResolverRoots: false,
+    implementationSources: {
+      requiredAreas: ['site-route-config'],
+      additionalOwners: [],
+    },
+    downstream: {
+      implementation: 'required',
+      mayExtendBare: false,
+    },
+    lifecycle: stablePublicLifecycle,
+  },
+  {
+    // Hosts bind their published version metadata; the OSS source-area ID and
+    // owner remain stable for existing consumer source maps.
+    id: 'version-data',
+    specifier: '@version-data',
+    owner: 'consumer',
+    visibility: 'public',
+    kind: 'exact',
+    allowedImporters: ['lynx-website', 'lynx-ui', 'consumer'],
+    bareTargetOwners: ['lynx-website', 'consumer'],
+    canonical: publicCanonicalSpelling,
+    allowMultipleResolverRoots: false,
+    implementationSources: {
+      requiredAreas: ['oss-version-data'],
+      additionalOwners: ['consumer'],
+    },
+    downstream: {
+      implementation: 'required',
+      mayExtendBare: false,
+    },
+    lifecycle: stablePublicLifecycle,
+  },
+  {
     id: 'package-documents',
     specifier: '@docs',
     owner: 'consumer',
@@ -347,8 +390,7 @@ export const aliases = [
 // needed to classify consumer source.
 export const ossSourceAreas = [
   {
-    // Classifies the current @site target without approving that legacy
-    // spelling. Issue #1328 will migrate it to the exact @version-data alias.
+    // Published version metadata implementing the exact @version-data entry.
     id: 'oss-version-data',
     root: 'docs/public/version.json',
     owner: 'lynx-website',
@@ -464,10 +506,7 @@ export const ossSourceAreas = [
     role: 'authoritative',
   },
   {
-    // Each host provides and maintains its own authoritative
-    // shared-route-config.ts. This source area only classifies the target of
-    // the legacy @site/shared-route-config import; it does not register that
-    // spelling as a supported host adapter.
+    // Each host provides the authoritative @route-config implementation.
     id: 'site-route-config',
     root: 'shared-route-config.ts',
     owner: 'consumer',

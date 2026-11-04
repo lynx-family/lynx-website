@@ -35,6 +35,14 @@ Gate 1 checks the policy's structure. Gate 2 applies these conditions to the
 first resolved target. `additionalOwners` does not create new source-map IDs
 or override source-map ownership rules.
 
+The exact public host entries `@route-config` and `@version-data` preserve
+the existing route configuration exports and default version metadata object.
+Each host binds them in both Rspress runtime aliases (with an exact `$` key)
+and TypeScript paths (without a wildcard). `site-route-config` identifies the
+host route module; `oss-version-data` retains its existing ID and OSS owner
+even when mounted. A host-owned version module can instead use an additional
+consumer-owned area. Neither entry permits subpaths or barrel extensions.
+
 `mayExtendBare: true` requires consumer target and additional-source permission.
 A consumer wrapper must preserve all OSS barrel exports and may add unique
 names. Direct subpaths retain their separate owner policy.

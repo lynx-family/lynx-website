@@ -233,6 +233,12 @@ policy, source ownership, resolver overrides, or checker behavior.
   registry.
 - Declare exact local exceptions with their lifecycle and removal condition.
 
+Shared runtime hooks belong in `src/hooks`; theme-specific hooks belong in
+`theme/hooks`. Within `src`, prefer relative imports such as `../../hooks`.
+OSS theme code imports shared hooks through concrete `@/hooks/use-*` entries.
+See [Shared Hooks Across Runtime Mounts](./scripts/alias-contracts/UNDERSTANDING.md#shared-hooks-across-runtime-mounts)
+for ownership and downstream layout details.
+
 For registry or checker changes, run:
 
 ```bash
@@ -340,10 +346,22 @@ narrowest shared entry points:
 | Luna components exported by its exact entry point  | `@luna`          |
 | API Status components exported by the OSS barrel   | `@api-status`    |
 | Shared package-document modules                    | `@docs/<path>`   |
+| Host route metadata and helpers                    | `@route-config`  |
+| Published host version metadata                    | `@version-data`  |
+| Public exports of the active Rspress theme         | `@theme`         |
 | MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports |
+
+Prefer the public exports of bare `@theme`, the Rspress-governed theme entry.
+Direct source imports through `@theme/*` should be rare and used only when
+selecting the active site's theme implementation is intentional.
 
 `@luna` is an exact-match barrel for `src/luna/index.ts`. Use only the bare
 alias; `@luna/*` subpaths are not part of the shared resolver contract.
+
+`@route-config` and `@version-data` are exact host-provided entries. Bind them
+in both runtime and TypeScript configuration before consuming updated OSS
+source. They expose the existing route configuration exports and the default
+version metadata object; their physical paths belong to the active host.
 
 `@api-status` is the exact-match OSS barrel for API Status components,
 separate from the extensible `@lynx` document-component barrel. It currently
