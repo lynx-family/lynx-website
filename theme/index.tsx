@@ -84,7 +84,7 @@ function Layout({
   const { pathname } = useLocation();
   const { page } = usePageData();
   const subsite = subsiteOf(pathname);
-  const isApiReference = isGeneratedApiPage(page._relativePath ?? '');
+  const isApiReference = isGeneratedApiPage(page.pagePath);
   const normalizedPath = removeBase(pathname);
   const pathNoLang = normalizedPath.replace(/^\/zh\//, '/');
   const isStatusRoute = /^\/api\/status\/?$/.test(pathNoLang);
