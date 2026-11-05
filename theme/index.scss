@@ -278,6 +278,9 @@ $link-color-dark: rgba(84, 169, 255, 1);
 // #endregion ======== overview =========
 
 // #region ======== view transition appearance fix =========
+// Backport Rspress #3661, #3821 and #3823 while pinned to 2.0.19.
+// Keep the local surface suppression and document-group rules from #3628
+// until the runtime upgrade supplies them.
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -291,6 +294,12 @@ html.rp-theme-switching *::before,
 html.rp-theme-switching *::after,
 html.rp-theme-switching *::-webkit-scrollbar-thumb {
   transition: none !important;
+}
+
+.rp-nav {
+  transition:
+    background-color 0.2s ease-in-out,
+    border-bottom-color 0.2s ease-in-out;
 }
 
 // Prevent the doc container from creating its own view-transition group,
@@ -309,11 +318,29 @@ html.rp-appearance-transition .rspress-doc {
   z-index: 9999;
 }
 
-/* Initial 0px clip-path ONLY during Dark -> Light transition so the light
-   snapshot does not flash unclipped full-screen on Frame 0 before JS .animate() runs.
-   Must NEVER apply during Light -> Dark or normal state, otherwise new(root) is clipped to 0px. */
-html.rp-transition-dark-to-light::view-transition-new(root) {
-  clip-path: var(--rp-vt-clip-initial, circle(0px at 100% 0));
+// Keep Chromium's clip-path sampling on the main thread at the boundaries.
+html.rp-appearance-transition::view-transition-old(root),
+html.rp-appearance-transition::view-transition-new(root) {
+  will-change: contents;
+}
+
+// Start with the snapshots, without waiting for a JS ready callback.
+// The light snapshot is always on top: expand new light, shrink old light.
+html.rp-appearance-transition:not(.dark)::view-transition-new(root) {
+  animation: rp-appearance 400ms ease-in both;
+}
+
+html.rp-appearance-transition.dark::view-transition-old(root) {
+  animation: rp-appearance 400ms ease-in reverse both;
+}
+
+@keyframes rp-appearance {
+  from {
+    clip-path: var(--rp-vt-clip-start);
+  }
+  to {
+    clip-path: var(--rp-vt-clip-end);
+  }
 }
 
 /* Prevent clicking the appearance switch while a transition is in flight */
