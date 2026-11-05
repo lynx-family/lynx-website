@@ -66,10 +66,10 @@ for (const lang of ['en', 'zh']) {
     const lynxtronPage = pages.find((page) =>
       page.routePath.endsWith('/blog/lynxtron'),
     );
-    assert.equal(lynxtronPage.frontmatter.blog_hidden, true);
+    assert.notEqual(lynxtronPage.frontmatter.blog_hidden, true);
     assert.equal(
       blogPages.useBlogPages().some((page) => page.filename === 'lynxtron'),
-      false,
+      true,
     );
     const latest = load('src/hooks/use-latest-blog.ts', {
       './use-blog-pages': blogPages,
@@ -138,9 +138,9 @@ for (const lang of ['en', 'zh']) {
     destination = undefined;
     useBlogBtnDom('/lynxtron/');
     assert.equal(selectedConfig.filename, 'lynxtron');
-    assert.equal(badge.textContent, 'Lynxtron');
+    assert.equal(badge.textContent, lynxtronPage.title);
     listeners.click();
-    assert.equal(destination, undefined);
+    assert.equal(destination, lynxtronPage.routePath);
 
     pages.length = 0;
     useBlogBtnDom('/');

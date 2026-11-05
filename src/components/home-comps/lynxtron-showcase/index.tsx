@@ -19,7 +19,10 @@ export const LynxtronShowcase = () => {
     let frame = 0;
     let animation = 0;
     const update = (time: number) => {
-      video.style.setProperty('--video-mask-top', `${getVideoMaskTop(time)}%`);
+      video.parentElement?.style.setProperty(
+        '--video-mask-top',
+        `${getVideoMaskTop(time)}%`,
+      );
     };
     const sync = () => update(video.currentTime);
     // Follow decoded frames, not a separate CSS animation clock: buffering,
@@ -75,23 +78,25 @@ export const LynxtronShowcase = () => {
           />
         </a>
       </h2>
-      <video
-        ref={videoRef}
-        className={styles.video}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-label={
-          isZh ? '醒图专业版产品演示' : 'Retouch Pics desktop product demo'
-        }
-      >
-        <source src={demoVideo} type="video/mp4" />
-        {isZh
-          ? '您的浏览器不支持视频播放。'
-          : 'Your browser does not support video playback.'}
-      </video>
+      <div className={styles.videoStage}>
+        <video
+          ref={videoRef}
+          className={styles.video}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label={
+            isZh ? '醒图专业版产品演示' : 'Retouch Pics desktop product demo'
+          }
+        >
+          <source src={demoVideo} type="video/mp4" />
+          {isZh
+            ? '您的浏览器不支持视频播放。'
+            : 'Your browser does not support video playback.'}
+        </video>
+      </div>
     </section>
   );
 };

@@ -1,6 +1,6 @@
 # Migrating from Electron to Lynxtron
 
-If you already have an Electron app, you can think of the migration to Lynxtron as: **keep as much of the main process and desktop integration as possible, and replace the Chromium Renderer Web UI with Lynx UI**.
+If you already have an Electron app, you can think of the migration to Lynxtron as: **keep as much of the main process and desktop integration as possible, and rebuild the web pages in the renderer process with Lynx**.
 
 Lynxtron's main-process APIs mostly follow Electron. [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx), [`Menu`](/lynxtron/api/@lynx-js/lynxtron/Class.Menu.mdx), [`Tray`](/lynxtron/api/@lynx-js/lynxtron/Class.Tray.mdx), [`Notification`](/lynxtron/api/@lynx-js/lynxtron/Class.Notification.mdx), [`dialog`](/lynxtron/api/@lynx-js/lynxtron/Variable.dialog.mdx), [`shell`](/lynxtron/api/@lynx-js/lynxtron/Variable.shell.mdx), [`screen`](/lynxtron/api/@lynx-js/lynxtron/Variable.screen.mdx), and similar desktop APIs are close to their Electron counterparts. The part that needs a real redesign is the UI layer: Lynxtron does not load HTML pages and does not render through the DOM. Window content is driven by a Lynx bundle and rendered with Lynx elements, styles, and runtime DSLs.
 
@@ -13,12 +13,12 @@ Start by splitting the app by runtime layer instead of replacing files one by on
 | Main-process lifecycle, menus, tray, notifications, dialogs, shell, screen    | Usually reusable with minor changes, using Lynxtron APIs with the same or similar names, such as [`app`](/lynxtron/api/@lynx-js/lynxtron/Variable.app.mdx), [`Menu`](/lynxtron/api/@lynx-js/lynxtron/Class.Menu.mdx), [`Tray`](/lynxtron/api/@lynx-js/lynxtron/Class.Tray.mdx), [`Notification`](/lynxtron/api/@lynx-js/lynxtron/Class.Notification.mdx), [`dialog`](/lynxtron/api/@lynx-js/lynxtron/Variable.dialog.mdx), [`shell`](/lynxtron/api/@lynx-js/lynxtron/Variable.shell.mdx), and [`screen`](/lynxtron/api/@lynx-js/lynxtron/Variable.screen.mdx).                                                                               |
 | `BrowserWindow` creation and window options                                   | Replace it with [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx). Options such as [`width`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#width), [`height`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#height), [`frame`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#frame), [`transparent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#transparent), and [`titleBarStyle`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#titlebarstyle) are mostly the same. |
 | `loadFile('index.html')` / `loadURL()` for Web pages                          | Load a Lynx bundle instead, for example [`win.loadFile(bundlePath)`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#loadfile).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Renderer HTML, DOM, Web CSS, and Web component libraries                      | Rewrite as Lynx UI. You can use ReactLynx, VueLynx, or other Lynx runtime DSLs, and render with Lynx elements such as [`<view>`](/api/elements/built-in/view), [`<text>`](/api/elements/built-in/text), and [`<image>`](/api/elements/built-in/image).                                                                                                                                                                                                                                                                                                                                                                                       |
+| HTML, DOM, Web CSS, and Web component libraries in the renderer process       | Rewrite the interface with Lynx elements and styles. You can use ReactLynx, VueLynx, or other Lynx runtime DSLs, and render with Lynx elements such as [`<view>`](/api/elements/built-in/view), [`<text>`](/api/elements/built-in/text), and [`<image>`](/api/elements/built-in/image).                                                                                                                                                                                                                                                                                                                                                      |
 | `ipcRenderer` / `ipcMain`                                                     | Migrate by direction to [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent), `NativeModules.bridge.call` / `NativeModules.bridge.send`, and listen for [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) events on the main-process side.                                                                                                                                                                                                           |
 | `webPreferences.preload` / `contextBridge`                                    | Use [`lynxPreference.preload`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxPreference.mdx#preload) + [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) + [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) to expose Node.js capabilities through [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts).                                                                                                                                                      |
 | Node.js native modules built for the Electron ABI                             | Rebuild with [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/). See [Node.js Native Modules](/lynxtron/Native-Libraries/NodeJS-Native-Modules).                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `electron-builder` packaging configuration                                    | Use [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) as the packaging entry. You can usually keep `electron-builder.yml`, but make sure the app directory, file list, and Lynx bundle outputs point to the Lynxtron app.                                                                                                                                                                                                                                                                                                                                                                                              |
-| Embedded web content such as `<webview>`, `BrowserView`, or `WebContentsView` | Migrate case by case. If you still need to embed web content in Lynx UI, see the [browser tutorial](/lynxtron/learn/introduction_to_browser). If the migrated app needs system controls or complex native views, see [Lynx Native Libraries](/lynxtron/Native-Libraries/Lynx-Native-Libraries).                                                                                                                                                                                                                                                                                                                                              |
+| Embedded web content such as `<webview>`, `BrowserView`, or `WebContentsView` | Migrate case by case. If you still need to embed web content in Lynx, see the [browser tutorial](/lynxtron/learn/introduction_to_browser). If the migrated app needs system controls or complex native views, see [Lynx Native Libraries](/lynxtron/Native-Libraries/Lynx-Native-Libraries).                                                                                                                                                                                                                                                                                                                                                 |
 
 ## API Mapping
 
@@ -81,19 +81,19 @@ app.whenReady().then(() => {
 
 This example assumes that the built main-process file and `main.lynx.bundle` are in the same directory. Adjust the path to match your build output layout.
 
-Start by carrying over window shape options such as [`width`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#width), [`height`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#height), [`frame`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#frame), [`transparent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#transparent), [`titleBarStyle`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#titlebarstyle), and [`trafficLightPosition`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#trafficlightposition). For frameless windows, transparent windows, and custom title bars in Lynx UI, see [Building a Custom Window](/lynxtron/learn/Custom-Window-Styles).
+Start by carrying over window shape options such as [`width`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#width), [`height`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#height), [`frame`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#frame), [`transparent`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#transparent), [`titleBarStyle`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#titlebarstyle), and [`trafficLightPosition`](/lynxtron/api/@lynx-js/lynxtron/Interface.LynxWindowConstructorOptions.mdx#trafficlightposition). For frameless windows, transparent windows, and custom title bars in Lynx, see [Building a Custom Window](/lynxtron/learn/Custom-Window-Styles).
 
-## Rewrite the Renderer UI
+## Rewrite Renderer Pages with Lynx {#rewrite-the-renderer-ui}
 
-Lynxtron does not run the HTML page from the Electron Renderer directly. To migrate UI code, rewrite the DOM structure, Web CSS, and browser event model as Lynx UI.
+Lynxtron does not run the HTML page from the Electron renderer process directly. To migrate UI code, rewrite the DOM structure, Web CSS, and browser event model using Lynx elements, styles, and events.
 
-| Web / Electron Renderer | Lynxtron UI                                                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| `<div>` / `<span>`      | [`<view>`](/api/elements/built-in/view) / [`<text>`](/api/elements/built-in/text)                       |
-| `<img>`                 | [`<image>`](/api/elements/built-in/image)                                                               |
-| Web CSS                 | [Lynx styling](https://lynxjs.org/guide/ui/styling.html)                                                |
-| `-webkit-app-region`    | [`-x-app-region`](/lynxtron/learn/Custom-Window-Styles#define-ui-draggable-regions)                     |
-| Custom title-bar DOM    | [`<title-bar-view>`](/api/elements/built-in/title-bar-view) or Lynx elements with `-x-app-region: drag` |
+| Electron renderer process | Lynx elements and styles                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `<div>` / `<span>`        | [`<view>`](/api/elements/built-in/view) / [`<text>`](/api/elements/built-in/text)                       |
+| `<img>`                   | [`<image>`](/api/elements/built-in/image)                                                               |
+| Web CSS                   | [Lynx styling](https://lynxjs.org/guide/ui/styling.html)                                                |
+| `-webkit-app-region`      | [`-x-app-region`](/lynxtron/learn/Custom-Window-Styles#define-ui-draggable-regions)                     |
+| Custom title-bar DOM      | [`<title-bar-view>`](/api/elements/built-in/title-bar-view) or Lynx elements with `-x-app-region: drag` |
 
 Events also need to move from React DOM events to Lynx element events. For example, an Electron React button:
 
@@ -115,11 +115,11 @@ export function Toolbar() {
 }
 ```
 
-If your Electron app depends heavily on DOM APIs, browser layout behavior, Canvas, WebGL, or Web component libraries, treat UI migration as a separate phase. Keep the main-process services and communication protocol first, then rewrite each window with Lynx UI.
+If your Electron app depends heavily on DOM APIs, browser layout behavior, Canvas, WebGL, or Web component libraries, treat UI migration as a separate phase. Keep the main-process services and communication protocol first, then rewrite each window with Lynx.
 
-### Progressive Migration: Put Existing Web UI in `<webview>` First
+### Progressive Migration: Put Existing Web Pages in `<webview>` First
 
-If rewriting the entire Renderer UI at once is too expensive, you can build the window shell with Lynx UI first and put Web UI that has not been migrated yet into [`<webview>`](/api/elements/built-in/webview). This lets you migrate the main process, window creation, packaging, preload scripts, and IPC first while keeping parts of the existing Web pages running.
+If rewriting every renderer page at once is too expensive, you can build the window shell with Lynx first and put web pages that have not been migrated yet into [`<webview>`](/api/elements/built-in/webview). This lets you migrate the main process, window creation, packaging, preload scripts, and IPC first while keeping parts of the existing Web pages running.
 
 ```tsx
 export function LegacyPanel() {
@@ -141,9 +141,9 @@ This is useful as a transition strategy:
 - Build the window frame, title bar, navigation, global state, and new page entries with Lynx first.
 - Temporarily put old pages that rely heavily on the DOM or Web component libraries into `<webview>`.
 - After a page is migrated, replace its `<webview>` content with Lynx elements.
-- Keep newly migrated main-process capabilities behind Lynxtron bridge or preload scripts, instead of expanding the old Web UI's dependency on Electron Renderer APIs.
+- Keep newly migrated main-process capabilities behind Lynxtron bridge or preload scripts, instead of expanding the old web pages' dependency on Electron renderer-process APIs.
 
-Keep in mind that content inside `<webview>` is still Web content. It does not automatically become Lynx UI. This approach is useful for reducing migration risk and splitting the migration into smaller steps, but core desktop UI should still be gradually rewritten with Lynx elements.
+Keep in mind that content inside `<webview>` is still Web content. It is not automatically converted to Lynx elements. This approach is useful for reducing migration risk and splitting the migration into smaller steps, but core desktop UI should still be gradually rewritten with Lynx elements.
 
 ## Migrate Preload Scripts and Node.js Exposure
 
@@ -158,7 +158,7 @@ contextBridge.exposeInMainWorld('desktop', {
 });
 ```
 
-The Renderer side calls through `window.desktop`:
+The renderer process calls through `window.desktop`:
 
 ```typescript
 const config = await window.desktop.readConfig();
@@ -180,7 +180,7 @@ contextBridge.exposeInLynxBTS({
 });
 ```
 
-The Lynx UI side calls through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed):
+Application code running in the BTS context calls through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed):
 
 ```tsx
 const { desktop } = NativeModules.nodejs.exposed;
@@ -200,7 +200,7 @@ const result = await ipcRenderer.invoke('get-system-info', {
 });
 ```
 
-The Lynx UI side uses `NativeModules.bridge.call(method, payload, callback)`. It returns `void`, so receive the reply in the callback instead of directly awaiting the call:
+BTS code uses `NativeModules.bridge.call(method, payload, callback)`. It returns `void`, so receive the reply in the callback instead of directly awaiting the call:
 
 ```tsx
 // App.tsx
@@ -226,7 +226,7 @@ win.on('-lynx-invoke', (event, methodName, params) => {
 });
 ```
 
-If the Electron main process pushes events to the Renderer with `webContents.send()`:
+If the Electron main process pushes events to the renderer process with `webContents.send()`:
 
 ```typescript
 win.webContents.send('system-info-update', data);
@@ -238,7 +238,7 @@ Use [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxW
 win.sendGlobalEvent('system-info-update', data);
 ```
 
-The Lynx UI side receives it through [`GlobalEventEmitter`](/lynxtron/learn/Communication-Between-Node-And-Lynx#push-messages-from-nodejs-to-lynx). For a complete example, see [Bidirectional Message Communication Between Node Main Process and Lynx](/lynxtron/learn/Communication-Between-Node-And-Lynx#bidirectional-message-communication-between-node-main-process-and-lynx).
+BTS code receives it through [`GlobalEventEmitter`](/lynxtron/learn/Communication-Between-Node-And-Lynx#push-messages-from-nodejs-to-lynx). For a complete example, see [Bidirectional Message Communication Between Node Main Process and Lynx](/lynxtron/learn/Communication-Between-Node-And-Lynx#bidirectional-message-communication-between-node-main-process-and-lynx).
 
 ## Handle Native Modules, Builds, and Packaging
 
@@ -248,7 +248,7 @@ If the Electron project uses Node.js native modules, rebuild them for the Lynxtr
 npx @lynx-js/lynxtron-rebuild
 ```
 
-Use [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) for app packaging. It is based on `electron-builder` and can continue reading `electron-builder.yml`, but it replaces the Electron runtime with the Lynxtron runtime that matches the current Lynxtron dependency. Start with the [quick start](/lynxtron/introduction), then migrate your application code. The following scripts match the current scaffold's `lynx.config.ts` and `rsbuild.config.ts`, building the Lynx UI and desktop main process respectively. For an existing project, keep the `build` command that matches its build configuration and replace the packaging entry with `lynxtron-builder`:
+Use [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) for app packaging. It is based on `electron-builder` and can continue reading `electron-builder.yml`, but it replaces the Electron runtime with the Lynxtron runtime that matches the current Lynxtron dependency. Start with the [quick start](/lynxtron/introduction), then migrate your application code. The following scripts match the current scaffold's `lynx.config.ts` and `rsbuild.config.ts`, building the UI code and desktop main-process code respectively. For an existing project, keep the `build` command that matches its build configuration and replace the packaging entry with `lynxtron-builder`:
 
 ```json title="package.json"
 {
@@ -262,10 +262,10 @@ Use [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) for 
 During migration, check the following:
 
 - Native modules that depend on the Electron ABI are rebuilt with [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/).
-- Renderer code that directly accessed Node.js has moved into the main process or [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts).
+- Renderer-process code that directly accessed Node.js has moved into the main process or [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts).
 - `directories.app`, `files`, `extraResources`, and similar options in `electron-builder.yml` point to the Lynxtron main-process output, Lynx bundle, and required resources.
 - The Lynx bundle is built correctly and included in the packaged app.
-- Frameless windows, transparent windows, drag regions, and system buttons have been rewritten with Lynx UI.
+- Frameless windows, transparent windows, drag regions, and system buttons have been rewritten with Lynx.
 
 ## Recommended Migration Order
 
@@ -273,7 +273,7 @@ During migration, check the following:
 2. Move Electron main-process logic such as app lifecycle, menus, tray icons, and dialogs.
 3. Replace `BrowserWindow` with `LynxWindow` and load a minimal Lynx bundle.
 4. Migrate [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx#use-preload-scripts) and expose the Node.js capabilities needed by UI through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed).
-5. Rewrite Renderer UI window by window, replacing HTML, DOM, and CSS with Lynx elements and styles. If you need a progressive migration path, use `<webview>` first for Web pages that have not been migrated yet.
+5. Rewrite renderer pages window by window, replacing HTML, DOM, and CSS with Lynx elements and styles. If you need a progressive migration path, use `<webview>` first for Web pages that have not been migrated yet.
 6. Migrate IPC to `NativeModules.bridge.call` / `NativeModules.bridge.send` and [`LynxWindow.sendGlobalEvent()`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#sendglobalevent), and listen for [`-lynx-invoke`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-invoke) / [`-lynx-message`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx#event--lynx-message) events on the main-process side.
 7. Rebuild native modules, then use [`@lynx-js/lynxtron-builder`](/lynxtron/api/@lynx-js/lynxtron-builder/) to verify packaged assets and platform-specific behavior.
 
