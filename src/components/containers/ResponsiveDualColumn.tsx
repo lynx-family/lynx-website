@@ -1,5 +1,5 @@
 import React from 'react';
-import './ResponsiveDualColumn.css'; // 假设样式定义在这个CSS文件中
+import styles from './ResponsiveDualColumn.module.css';
 
 interface ResponsiveDualColumnProps {
   partition?: number[];
@@ -26,7 +26,7 @@ export const ResponsiveDualColumn: React.FC<ResponsiveDualColumnProps> = ({
   }
 
   return (
-    <div className="flex-container">
+    <div className={styles.container}>
       {React.Children.map(children, (child, index) =>
         React.cloneElement(child as React.ReactElement, {
           style: {

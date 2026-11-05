@@ -150,7 +150,7 @@ export const CodeFold = ({
             {img && (
               <ResizablePanel defaultSize={25} className="overflow-hidden">
                 <div
-                  className="image-frame"
+                  className="codefold-image-frame"
                   style={{
                     height: panelHeight,
                     transition: needsFold

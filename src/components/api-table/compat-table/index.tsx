@@ -262,36 +262,37 @@ export default function CompatibilityTable({
   return (
     <BrowserCompatibilityErrorBoundary>
       <BrowserInfoContext.Provider value={browserInfo}>
-        <div className="flex justify-end items-center mb-2">
-          <div className="flex gap-2 text-sm">
-            {(sourceUrl || path) && (
-              <EditThis path={path} sourceUrl={sourceUrl} />
-            )}
-            {lynxDocUrl && (
-              <a
-                href={lynxDocUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
-              >
-                <span>{t('api.reference')}</span>
-                <span className="text-xs">↗</span>
-              </a>
-            )}
-            {descriptionUrl && (
-              <a
-                href={descriptionUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
-              >
-                <span>MDN</span>
-                <span className="text-xs">↗</span>
-              </a>
-            )}
+        <div className="lynx-compat-table">
+          <div className="flex justify-end items-center mb-2">
+            <div className="flex gap-2 text-sm">
+              {(sourceUrl || path) && (
+                <EditThis path={path} sourceUrl={sourceUrl} />
+              )}
+              {lynxDocUrl && (
+                <a
+                  href={lynxDocUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
+                >
+                  <span>{t('api.reference')}</span>
+                  <span className="text-xs">↗</span>
+                </a>
+              )}
+              {descriptionUrl && (
+                <a
+                  href={descriptionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
+                >
+                  <span>MDN</span>
+                  <span className="text-xs">↗</span>
+                </a>
+              )}
+            </div>
           </div>
-        </div>
-        {/* <a
+          {/* <a
           className="bc-github-link external external-icon"
           href={getNewIssueURL()}
           target="_blank"
@@ -300,34 +301,35 @@ export default function CompatibilityTable({
         >
           Report problems with this compatibility data on GitHub
         </a> */}
-        <figure className="table-container">
-          <figure className="table-container-inner">
-            <table key="bc-table" className="bc-table bc-table-web">
-              <Headers
-                platforms={platforms}
-                browsers={browsers}
-                browserInfo={browserInfo}
-              />
-              <tbody>
-                <FeatureListAccordion
+          <figure className="table-container">
+            <figure className="table-container-inner">
+              <table key="bc-table" className="bc-table bc-table-web">
+                <Headers
+                  platforms={platforms}
                   browsers={browsers}
-                  features={listFeatures(data, '', name)}
-                  locale={locale}
+                  browserInfo={browserInfo}
                 />
-              </tbody>
-            </table>
+                <tbody>
+                  <FeatureListAccordion
+                    browsers={browsers}
+                    features={listFeatures(data, '', name)}
+                    locale={locale}
+                  />
+                </tbody>
+              </table>
+            </figure>
           </figure>
-        </figure>
-        <Legend compat={data} name={name} />
+          <Legend compat={data} name={name} />
 
-        {/* https://github.com/mdn/yari/issues/1191 */}
-        <div className="hidden">
-          The compatibility table on this page is generated from structured
-          data. If you'd like to contribute to the data, please check out{' '}
-          <a href="https://github.com/mdn/browser-compat-data">
-            https://github.com/mdn/browser-compat-data
-          </a>{' '}
-          and send us a pull request.
+          {/* https://github.com/mdn/yari/issues/1191 */}
+          <div className="hidden">
+            The compatibility table on this page is generated from structured
+            data. If you'd like to contribute to the data, please check out{' '}
+            <a href="https://github.com/mdn/browser-compat-data">
+              https://github.com/mdn/browser-compat-data
+            </a>{' '}
+            and send us a pull request.
+          </div>
         </div>
       </BrowserInfoContext.Provider>
     </BrowserCompatibilityErrorBoundary>

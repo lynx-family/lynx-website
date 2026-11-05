@@ -1,4 +1,5 @@
 import { Badge } from '@rspress/core/theme';
+import styles from './VersionBadge.module.scss';
 
 /**
  * VersionBadge component displays a badge with a Lynx icon and version information.
@@ -28,7 +29,7 @@ export function VersionBadge({
 
   return (
     <Badge>
-      <div className={'icon icon-lynx bg-current w-[0.9rem] h-[0.9rem]'} />
+      <span className={styles.icon} aria-hidden="true" />
       {content}
     </Badge>
   );

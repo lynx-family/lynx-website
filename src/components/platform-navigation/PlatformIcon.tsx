@@ -3,7 +3,7 @@ import { withBase } from '@rspress/core/runtime';
 import { cn } from '../../lib/utils';
 import { mapPlatformNameToIconName } from '../../lib/platform';
 import { PlatformIconProps } from './types';
-import './icon.scss';
+import styles from './icon.module.scss';
 
 // Single canonical icon source for every platform-icon surface on the site.
 // Adding a new platform = add an SVG here, extend ICON_NAME_TO_URL, done.
@@ -64,7 +64,7 @@ export const PlatformSvg = ({
   const svgUrl = toIconUrl(platformName);
   return (
     <div
-      className={cn('icon', className)}
+      className={cn(styles.icon, className)}
       key={key}
       style={{
         maskImage: `url(${svgUrl})`,
@@ -112,7 +112,7 @@ export const PlatformIcon = ({
           <PlatformSvg
             platformName={toPlatformName(platform)}
             key={platform}
-            className={`icon bg-current h-8 w-8`}
+            className={styles.groupIcon}
           />
         );
       })}
