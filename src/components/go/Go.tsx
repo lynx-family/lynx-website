@@ -53,10 +53,10 @@ const baseConfig = {
   explorerUrl: {
     cn:
       process.env.LYNX_EXPLORER_URL_CN ||
-      '/zh/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
+      '/zh/guide/start/quick-start#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
     en:
       process.env.LYNX_EXPLORER_URL_EN ||
-      '/guide/start/quick-start.html#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
+      '/guide/start/quick-start#download-lynx-explorer,ios-simulator-platform=macos-arm64,explorer-platform=ios-simulator',
   },
   explorerText: process.env.LYNX_EXPLORER_TEXT || 'Lynx Explorer',
   ErrorComponent,

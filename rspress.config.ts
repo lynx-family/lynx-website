@@ -36,6 +36,9 @@ export default defineConfig({
   root: path.join(__dirname, 'docs'),
   outDir: 'doc_build',
   route: {
+    // Netlify serves extensionless requests from the generated .html files,
+    // including requests forwarded through the /next/* rewrite.
+    cleanUrls: true,
     exclude: [
       'lynx-compat-data/**/*',
       API_PARTIAL_ROUTE_EXCLUDE,
@@ -172,46 +175,46 @@ export default defineConfig({
         // Preserve locale/version prefixes for the former root-package page.
         {
           from: '^(.*)/lynxtron/api/@lynx-js/lynxtron/Variable\\.contextBridge(?:\\.html|\\.mdx)?/?$',
-          to: '$1/lynxtron/api/@lynx-js/lynxtron/context-bridge/Variable.contextBridge.html',
+          to: '$1/lynxtron/api/@lynx-js/lynxtron/context-bridge/Variable.contextBridge',
         },
         {
           from: '/react/routing.html',
-          to: '/react/routing/react-router.html',
+          to: '/react/routing/react-router',
         },
         // Tutorials moved out of Get Started into top-level /learn/<slug>.
         {
           from: '^/guide/start/tutorial-gallery(\\.html)?$',
-          to: '/learn/gallery.html',
+          to: '/learn/gallery',
         },
         {
           from: '^/zh/guide/start/tutorial-gallery(\\.html)?$',
-          to: '/zh/learn/gallery.html',
+          to: '/zh/learn/gallery',
         },
         {
           from: '^/guide/start/tutorial-product-detail(\\.html)?$',
-          to: '/learn/product-detail.html',
+          to: '/learn/product-detail',
         },
         {
           from: '^/zh/guide/start/tutorial-product-detail(\\.html)?$',
-          to: '/zh/learn/product-detail.html',
+          to: '/zh/learn/product-detail',
         },
         // The build-time macros page was removed: the public macros are covered
         // by the API reference, and the rest were implementation details.
         {
           from: '^/react/build-time-macros(\\.html)?$',
-          to: '/api/react/Documents/Built-in_macros.html',
+          to: '/api/react/Documents/Built-in_macros',
         },
         {
           from: '^/zh/react/build-time-macros(\\.html)?$',
-          to: '/zh/api/react/Documents/Built-in_macros.html',
+          to: '/zh/api/react/Documents/Built-in_macros',
         },
         {
           from: '^/api/genui\\.html$',
-          to: '/api/genui/index.html',
+          to: '/api/genui/',
         },
         {
           from: '^/zh/api/genui\\.html$',
-          to: '/zh/api/genui/index.html',
+          to: '/zh/api/genui/',
         },
         // The lynx-ui subsite moved from /lynx-ui to /ui. Netlify 301s in
         // netlify.toml cover server-side hits; these client rules keep every
