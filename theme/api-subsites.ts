@@ -1,5 +1,8 @@
-import { CORE_SUBSITES, SUBSITES_CONFIG } from '@site/shared-route-config';
-import type { SubsiteConfig } from '@site/shared-route-config';
+import {
+  CORE_SUBSITES,
+  SUBSITES_CONFIG,
+  type SubsiteConfig,
+} from '@route-config';
 
 import { findSubsiteValue } from './utils/subsite-routes';
 

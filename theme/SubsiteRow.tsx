@@ -7,11 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  CORE_SUBSITES,
-  QUICK_START_PATH,
-  getLangPrefix,
-} from '@site/shared-route-config';
+import { CORE_SUBSITES, QUICK_START_PATH, getLangPrefix } from '@route-config';
 import { cn } from '@/lib/utils';
 
 import { SubsiteLogo } from './subsite-ui';

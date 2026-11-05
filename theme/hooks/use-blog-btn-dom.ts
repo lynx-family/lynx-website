@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
-import { useCanonicalLatestBlog, type LatestBlogConfig } from '@site/src/hooks';
-import { BLOG_IS_CROSS_VERSION } from '@site/shared-route-config';
+import { useCanonicalLatestBlog } from '@/hooks/use-canonical-latest-blog';
+import type { LatestBlogConfig } from '@/hooks/use-latest-blog';
+import { BLOG_IS_CROSS_VERSION } from '@route-config';
 
 type ConfigKey = '/' | '/react/' | '/build/' | '/lynxtron/';
 

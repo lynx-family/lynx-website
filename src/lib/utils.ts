@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { BLOG_BASE } from '@site/shared-route-config';
+import { BLOG_BASE } from '@route-config';
 
 const VERSION_PREFIX_RE = /^\/(?:next|\d+\.\d+)(?=\/|$)/;
 

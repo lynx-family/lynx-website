@@ -10,7 +10,7 @@ import ItemConfig from './icons/home-f-icon-5.svg?react';
 import IconReactDark from './icons/home-f-icon-1-dark.svg?react';
 import ItemPerformanceDark from './icons/home-f-icon-0-dark.svg?react';
 import ItemEcosystemDark from './icons/home-f-icon-2-dark.svg?react';
-import { useFixDark } from '@site/theme/hooks/use-fix-dark';
+import { useFixDark } from '../../../hooks';
 
 const comps = {
   react: {
