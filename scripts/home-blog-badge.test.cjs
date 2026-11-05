@@ -83,13 +83,13 @@ for (const lang of ['en', 'zh']) {
           useEffect: (fn) => fn(),
         },
         '@rspress/core/runtime': runtime,
-        '@site/src/hooks': {
+        '@/hooks/use-canonical-latest-blog': {
           useCanonicalLatestBlog: (config) => {
             selectedConfig = config;
             return latest.useLatestBlog(config);
           },
         },
-        '@site/shared-route-config': { BLOG_IS_CROSS_VERSION: false },
+        '@route-config': { BLOG_IS_CROSS_VERSION: false },
       },
       {
         document: {
