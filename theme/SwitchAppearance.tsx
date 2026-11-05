@@ -2,6 +2,7 @@ import { ThemeContext, useLang, useSite } from '@rspress/core/runtime';
 import { IconMoon, IconSun, SvgWrapper } from '@rspress/core/theme-original';
 import { type MouseEvent, useContext } from 'react';
 import { flushSync } from 'react-dom';
+import { getClipPath } from './getClipPath';
 import './switch-appearance.scss';
 
 const supportAppearanceTransition = () => {
@@ -37,11 +38,28 @@ export function SwitchAppearance({ onClick }: { onClick?: () => void }) {
     const enabled = site?.themeConfig?.enableAppearanceAnimation;
 
     // Use DOM ground-truth class to determine current theme
+    const root = document.documentElement;
     const isDark =
-      document.documentElement.classList.contains('dark') ||
-      document.documentElement.classList.contains('rp-dark');
+      root.classList.contains('dark') || root.classList.contains('rp-dark');
     const nextTheme = isDark ? 'light' : 'dark';
-    const willBeDark = nextTheme === 'dark';
+
+    let updated = false;
+    const updateTheme = () => {
+      updated = true;
+      // Rspress 2.0.19 does not suppress surface transitions in setTheme.
+      root.classList.add('rp-theme-switching');
+      try {
+        flushSync(() => {
+          setTheme(nextTheme);
+          onClick?.();
+        });
+      } finally {
+        void window.getComputedStyle(root).opacity;
+        requestAnimationFrame(() => {
+          root.classList.remove('rp-theme-switching');
+        });
+      }
+    };
 
     if (supported && enabled) {
       isAppearanceTransitioning = true;
@@ -49,7 +67,12 @@ export function SwitchAppearance({ onClick }: { onClick?: () => void }) {
       let y = event.clientY;
 
       // Handle keyboard activation or synthetic click with missing coordinates
-      if ((x === 0 && y === 0) || typeof x !== 'number' || Number.isNaN(x)) {
+      if (
+        event.detail === 0 ||
+        (x === 0 && y === 0) ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+      ) {
         const rect = (
           event.currentTarget as HTMLElement
         )?.getBoundingClientRect();
@@ -62,93 +85,47 @@ export function SwitchAppearance({ onClick }: { onClick?: () => void }) {
         }
       }
 
-      // Compute radius to cover the furthest viewport corner
-      const endRadius = Math.hypot(
-        Math.max(x, window.innerWidth - x),
-        Math.max(y, window.innerHeight - y),
-      );
-
-      // Cancel any leftover view-transition animations from previous runs
-      document.getAnimations().forEach((a) => {
-        const pseudo = (a.effect as KeyframeEffect)?.pseudoElement;
-        if (pseudo?.includes('view-transition')) {
-          a.cancel();
-        }
+      const clipPath = getClipPath({
+        height: window.innerHeight,
+        width: window.innerWidth,
+        x,
+        y,
       });
 
-      const root = document.documentElement;
+      // CSS starts clipping as soon as the snapshots are created.
+      root.style.setProperty('--rp-vt-clip-start', clipPath[0]);
+      root.style.setProperty('--rp-vt-clip-end', clipPath[1]);
       root.classList.add('rp-appearance-transition');
 
-      // For Dark -> Light only: set the initial clip-path variable so the
-      // light snapshot does not flash full-screen on Frame 0 before JS runs.
-      if (!willBeDark) {
-        root.style.setProperty(
-          '--rp-vt-clip-initial',
-          `circle(0px at ${x}px ${y}px)`,
-        );
-        root.classList.add('rp-transition-dark-to-light');
-      }
-
-      let anim: Animation | null = null;
       const cleanup = () => {
-        anim?.cancel();
         root.classList.remove('rp-appearance-transition');
-        root.classList.remove('rp-transition-dark-to-light');
-        root.style.removeProperty('--rp-vt-clip-initial');
+        root.style.removeProperty('--rp-vt-clip-start');
+        root.style.removeProperty('--rp-vt-clip-end');
         root.classList.remove('rp-theme-switching');
         isAppearanceTransitioning = false;
       };
 
       try {
         const transition = document.startViewTransition(async () => {
-          root.classList.add('rp-theme-switching');
-
-          flushSync(() => {
-            setTheme(nextTheme);
-            onClick?.();
-          });
-
-          // Allow DOM to settle, then remove transition suppression
-          window.getComputedStyle(root).opacity;
-          requestAnimationFrame(() => {
-            root.classList.remove('rp-theme-switching');
-          });
+          updateTheme();
         });
-
-        const clipPath = [
-          `circle(0px at ${x}px ${y}px)`,
-          `circle(${endRadius}px at ${x}px ${y}px)`,
-        ];
-
-        transition.ready.then(() => {
-          anim = document.documentElement.animate(
-            {
-              clipPath: willBeDark ? [...clipPath].reverse() : clipPath,
-            },
-            {
-              duration: 400,
-              easing: 'ease-in',
-              fill: 'both',
-              pseudoElement: willBeDark
-                ? '::view-transition-old(root)'
-                : '::view-transition-new(root)',
-            },
-          );
+        transition.updateCallbackDone.catch(() => {
+          transition.skipTransition();
         });
-
+        transition.ready.catch(() => {
+          // Skipping still runs the update callback. Keep ownership until
+          // finished settles so a late callback cannot race another switch.
+          transition.skipTransition();
+        });
         transition.finished.then(cleanup, cleanup);
       } catch {
         cleanup();
+        if (!updated) {
+          updateTheme();
+        }
       }
     } else {
-      const root = document.documentElement;
-      root.classList.add('rp-theme-switching');
-      setTheme(nextTheme);
-      onClick?.();
-      window.getComputedStyle(root).opacity;
-      requestAnimationFrame(() => {
-        root.classList.remove('rp-theme-switching');
-      });
+      updateTheme();
     }
   };
 
