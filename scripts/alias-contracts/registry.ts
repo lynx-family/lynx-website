@@ -117,7 +117,7 @@ export const aliases = [
     lifecycle: stablePublicLifecycle,
   },
   {
-    // A complete OSS page, separate from extensible document-component barrels.
+    // OSS API Status barrel, separate from extensible document-component barrels.
     id: 'api-status-page',
     specifier: '@api-status',
     owner: 'lynx-website',

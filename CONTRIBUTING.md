@@ -338,19 +338,20 @@ narrowest shared entry points:
 | Components exported by the OSS shared entry point  | `@lynx`          |
 | Components exported by the `lynx-ui` shared entry  | `@lynx-ui`       |
 | Luna components exported by its exact entry point  | `@luna`          |
-| OSS API Status page                                | `@api-status`    |
+| API Status components exported by the OSS barrel   | `@api-status`    |
 | Shared package-document modules                    | `@docs/<path>`   |
 | MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports |
 
 `@luna` is an exact-match barrel for `src/luna/index.ts`. Use only the bare
 alias; `@luna/*` subpaths are not part of the shared resolver contract.
 
-`@api-status` is an exact-match OSS page entry, separate from the extensible
-`@lynx` document-component barrel. It exports `APIStatusLayout`. Consumers
-bind it directly to the mounted OSS `src/components/api-status/index.ts` in
-both runtime and TypeScript resolution; no subpaths, fallback roots, or
-consumer wrapper are supported. Coordinate that binding before pinning a
-revision whose documentation uses the entry.
+`@api-status` is the exact-match OSS barrel for API Status components,
+separate from the extensible `@lynx` document-component barrel. It currently
+exports `APIStatusLayout`. Consumers bind it directly to the mounted OSS
+`src/components/api-status/index.ts` in both runtime and TypeScript
+resolution; no subpaths, fallback roots, or consumer wrapper are supported.
+Coordinate that binding before pinning a revision whose documentation uses
+the entry.
 
 For new imports, omit JS/TS file extensions and a trailing `/index`. Existing
 imports that include `/index` remain supported and can be migrated separately.
