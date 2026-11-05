@@ -244,6 +244,10 @@ test(
       `export { Value } from './entry'; export interface Shape { value: number }`,
     );
     write(
+      `${areaRoot('oss-components')}/api-status/index.ts`,
+      `export const Value = 1;`,
+    );
+    write(
       `${areaRoot('oss-lynx-ui-components')}/index.ts`,
       `export { Value } from './entry';`,
     );
@@ -342,6 +346,11 @@ test(
     const bindings: RuntimeAliases = {
       '@lynx$': path.join(cwd, 'consumer/wrappers/components.ts'),
       '@lynx': path.join(cwd, areaRoot('oss-components')),
+      '@api-status$': path.join(
+        cwd,
+        areaRoot('oss-components'),
+        'api-status/index.ts',
+      ),
       '@lynx-ui$': path.join(cwd, 'consumer/wrappers/ui.ts'),
       '@lynx-ui': path.join(cwd, areaRoot('oss-lynx-ui-components')),
       '@luna$': path.join(cwd, areaRoot('oss-luna'), 'index.ts'),
@@ -436,6 +445,7 @@ declare module '*.svg';`,
     });
     const records = [
       record('@lynx'),
+      record('@api-status'),
       record('@lynx/entry'),
       record('@lynx-ui'),
       record('@lynx-ui/entry'),
@@ -510,6 +520,46 @@ declare module '*.svg';`,
           policy.filter((entry) => entry.rule === 'migration-subpath').length,
           2,
         );
+      },
+    );
+    await t.test(
+      'API Status rejects consumer replacement, fallback roots and subpaths',
+      async () => {
+        const saved = bindings['@api-status$'];
+        try {
+          bindings['@api-status$'] = path.join(cwd, 'consumer/local/index.ts');
+          const replaced = await run([record('@api-status')]);
+          assert.ok(
+            replaced.result.errors.some((error) =>
+              /@api-status.*target owner 'consumer'/.test(error),
+            ),
+            replaced.result.errors.join('\n'),
+          );
+          assert.ok(
+            replaced.policy.some((entry) => entry.rule === 'target-policy'),
+          );
+          bindings['@api-status$'] = [
+            saved as string,
+            path.join(cwd, 'consumer/local/index.ts'),
+          ];
+          assert.ok(
+            (await run([record('@api-status')])).result.errors.some((error) =>
+              /@api-status.*multiple resolver roots/.test(error),
+            ),
+          );
+          bindings['@api-status$'] = saved!;
+          const subpath = await run([record('@api-status/child')]);
+          assert.ok(
+            subpath.result.errors.some((error) =>
+              /@api-status\/child.*unsupported direct subpath/.test(error),
+            ),
+          );
+          assert.ok(
+            subpath.policy.some((entry) => entry.rule === 'alias-shape'),
+          );
+        } finally {
+          bindings['@api-status$'] = saved!;
+        }
       },
     );
     await t.test(
