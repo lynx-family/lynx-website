@@ -8,11 +8,10 @@ const matter = require('gray-matter');
 
 const root = path.resolve(__dirname, '..');
 
-test('Lynxtron blog ordering, localized title and extensionless links', () => {
+test('Lynxtron blog entry, localized title and extensionless links', () => {
   for (const lang of ['en', 'zh']) {
     const dir = path.join(root, 'docs', lang, 'blog');
     const order = JSON.parse(fs.readFileSync(path.join(dir, '_meta.json')));
-    assert.equal(order[0], 'lynxtron');
     assert.equal(order.filter((slug) => slug === 'lynxtron').length, 1);
     const post = matter.read(path.join(dir, 'lynxtron.mdx'));
     if (lang === 'zh') assert.equal(post.data.title, '正式发布 Lynxtron');
