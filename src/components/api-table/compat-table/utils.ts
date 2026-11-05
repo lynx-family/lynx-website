@@ -11,17 +11,17 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 
 // Extended for the fields, beyond the bcd types, that are extra-added
 // exclusively in Yari.
-interface SimpleSupportStatementExtended extends BCD.SimpleSupportStatement {
+interface SimpleSupportStatementExtended extends LCD.SimpleSupportStatement {
   // Known for some support statements where the browser *version* is known,
   // as opposed to just "true" and if the version release date is known.
   release_date?: string;
   // The version before the version_removed if the *version* removed is known,
   // as opposed to just "true". Otherwise the version_removed.
-  version_last?: BCD.VersionValue;
+  version_last?: LCD.VersionValue;
 }
 
 export type SupportStatementExtended =
@@ -43,15 +43,15 @@ export function isTruthy<T>(t: T | false | undefined | null): t is T {
 
 interface Feature {
   name: string;
-  compat: BCD.CompatStatement;
+  compat: LCD.CompatStatement;
   depth: number;
 }
 
-function findFirstCompatDepth(identifier: BCD.Identifier) {
+function findFirstCompatDepth(identifier: LCD.Identifier) {
   const entries = [['', identifier]];
 
   while (entries.length) {
-    const [path, value] = entries.shift() as [string, BCD.Identifier];
+    const [path, value] = entries.shift() as [string, LCD.Identifier];
     if (value.__compat) {
       // Following entries have at least this depth.
       return path.split('.').length;
@@ -68,7 +68,7 @@ function findFirstCompatDepth(identifier: BCD.Identifier) {
 }
 
 export function listFeatures(
-  identifier: BCD.Identifier,
+  identifier: LCD.Identifier,
   parentName: string = '',
   rootName: string = '',
   depth: number = 0,
@@ -112,13 +112,13 @@ export function listFeatures(
   return features;
 }
 
-export function hasMore(support: BCD.SupportStatement | undefined) {
+export function hasMore(support: LCD.SupportStatement | undefined) {
   return Array.isArray(support) && support.length > 1;
 }
 
 export function versionIsPreview(
-  version: BCD.VersionValue | string | undefined,
-  browser: BCD.PlatformStatement,
+  version: LCD.VersionValue | string | undefined,
+  browser: LCD.PlatformStatement,
 ): boolean {
   if (version === 'preview') {
     return true;
@@ -133,7 +133,7 @@ export function versionIsPreview(
   return false;
 }
 
-export function hasNoteworthyNotes(support: BCD.SimpleSupportStatement) {
+export function hasNoteworthyNotes(support: LCD.SimpleSupportStatement) {
   return (
     (support.notes?.length || support.impl_url?.length) &&
     !support.version_removed &&
@@ -148,11 +148,11 @@ export function bugURLToString(url: string) {
   return bugNumber ? `bug ${bugNumber}` : url;
 }
 
-function hasLimitation(support: BCD.SimpleSupportStatement) {
+function hasLimitation(support: LCD.SimpleSupportStatement) {
   return hasMajorLimitation(support) || support.notes || support.impl_url;
 }
 
-function hasMajorLimitation(support: BCD.SimpleSupportStatement) {
+function hasMajorLimitation(support: LCD.SimpleSupportStatement) {
   return (
     support.partial_implementation ||
     support.alternative_name ||
@@ -162,17 +162,17 @@ function hasMajorLimitation(support: BCD.SimpleSupportStatement) {
   );
 }
 export function isFullySupportedWithoutLimitation(
-  support: BCD.SimpleSupportStatement,
+  support: LCD.SimpleSupportStatement,
 ) {
   return support.version_added && !hasLimitation(support);
 }
 
-export function isNotSupportedAtAll(support: BCD.SimpleSupportStatement) {
+export function isNotSupportedAtAll(support: LCD.SimpleSupportStatement) {
   return !support.version_added && !hasLimitation(support);
 }
 
 function isFullySupportedWithoutMajorLimitation(
-  support: BCD.SimpleSupportStatement,
+  support: LCD.SimpleSupportStatement,
 ) {
   return support.version_added && !hasMajorLimitation(support);
 }

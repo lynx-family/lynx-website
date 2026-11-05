@@ -1,15 +1,15 @@
-import type { PlatformName, VersionValue } from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 
 /** PlatformName extended with the aggregate 'clay' virtual platform. */
-export type DisplayPlatformName = PlatformName | 'clay';
+export type DisplayPlatformName = LCD.PlatformName | 'clay';
 
-export const NATIVE_PLATFORMS: PlatformName[] = [
+export const NATIVE_PLATFORMS: LCD.PlatformName[] = [
   'android',
   'ios',
   'harmony',
   'web_lynx',
 ];
-export const CLAY_PLATFORMS: PlatformName[] = [
+export const CLAY_PLATFORMS: LCD.PlatformName[] = [
   'clay_android',
   'clay_harmony',
   'clay_ios',
@@ -69,7 +69,7 @@ export interface RecentAPI {
   path: string;
   category: string;
   doc_url?: string;
-  versions: Partial<Record<DisplayPlatformName, VersionValue>>;
+  versions: Partial<Record<DisplayPlatformName, LCD.VersionValue>>;
 }
 
 export interface FeatureInfo {
@@ -80,7 +80,7 @@ export interface FeatureInfo {
   category: string;
   source_file?: string;
   support: Partial<
-    Record<DisplayPlatformName, { version_added: VersionValue }>
+    Record<DisplayPlatformName, { version_added: LCD.VersionValue }>
   >;
 }
 

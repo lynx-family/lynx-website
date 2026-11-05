@@ -11,7 +11,7 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import { useContext } from 'react';
 import { BrowserInfoContext } from './browser-info';
 import { HIDDEN_BROWSERS } from './index';
@@ -43,9 +43,9 @@ export const LEGEND_LABELS = {
 type LEGEND_KEY = keyof typeof LEGEND_LABELS;
 
 function getActiveLegendItems(
-  compat: BCD.Identifier,
+  compat: LCD.Identifier,
   name: string,
-  browserInfo: BCD.Platforms,
+  browserInfo: LCD.Platforms,
 ) {
   const legendItems = new Set<LEGEND_KEY>();
 
@@ -124,7 +124,7 @@ export function Legend({
   compat,
   name,
 }: {
-  compat: BCD.Identifier;
+  compat: LCD.Identifier;
   name: string;
 }) {
   const browserInfo = useContext(BrowserInfoContext);

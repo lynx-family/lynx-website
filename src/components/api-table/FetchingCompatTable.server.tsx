@@ -1,5 +1,5 @@
 import React from 'react';
-import type LCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import fs from 'fs';
 import path from 'path';
 

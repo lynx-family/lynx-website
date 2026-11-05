@@ -1,6 +1,5 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { PlatformSvg } from '@/components/platform-navigation/PlatformIcon';
+import { PlatformIcon } from '../platform/PlatformIcon';
 
 export interface PlatformConfig {
   label: string;
@@ -18,9 +17,9 @@ const makeIcon = (
   platformName: string,
 ): React.FC<{ className?: string; style?: React.CSSProperties }> => {
   return ({ className, style }) => (
-    <PlatformSvg
+    <PlatformIcon
       platformName={platformName}
-      className={cn('bg-current shrink-0', className)}
+      className={className}
       style={style}
     />
   );

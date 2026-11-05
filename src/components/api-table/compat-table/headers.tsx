@@ -11,11 +11,11 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
-import { mapPlatformNameToIconName } from '../../../lib/platform';
+import type * as LCD from '@lynx-js/lynx-compat-data';
+import { PlatformIcon } from '../../platform/PlatformIcon';
 import { BrowserName } from './browser-info';
 
-function mapPlatformKindToIconName(platformType: BCD.PlatformType) {
+function mapPlatformKindToIconName(platformType: LCD.PlatformType) {
   switch (platformType) {
     case 'native':
       return 'mobile';
@@ -34,8 +34,8 @@ function PlatformHeaders({
   browserInfo,
 }: {
   platforms: string[];
-  browsers: BCD.PlatformName[];
-  browserInfo: BCD.Platforms;
+  browsers: LCD.PlatformName[];
+  browserInfo: LCD.Platforms;
 }) {
   return (
     <tr className="bc-platforms">
@@ -81,11 +81,11 @@ function BrowserHeaders({
   browserInfo,
   platforms,
 }: {
-  browsers: BCD.PlatformName[];
-  browserInfo: BCD.Platforms;
+  browsers: LCD.PlatformName[];
+  browserInfo: LCD.Platforms;
   platforms: string[];
 }) {
-  const getBrowserPlatformType = (browser: BCD.PlatformName): string => {
+  const getBrowserPlatformType = (browser: LCD.PlatformName): string => {
     if (process.env.COMPAT_TABLE_HIDE_CLAY) {
       if (browser === 'clay_macos' || browser === 'clay_windows') {
         return 'native';
@@ -109,11 +109,10 @@ function BrowserHeaders({
             <div className={`bc-head-txt-label bc-head-icon-${browser}`}>
               <BrowserName id={browser} platformType={platformType} />
             </div>
-            <div
-              className={`bc-head-icon-symbol icon icon-${mapPlatformNameToIconName(
-                browser,
-              )}`}
-            ></div>
+            <PlatformIcon
+              platformName={browser}
+              className="bc-head-icon-symbol icon"
+            />
           </th>
         );
       })}
@@ -132,8 +131,8 @@ export function Headers({
   browserInfo,
 }: {
   platforms: string[];
-  browsers: BCD.PlatformName[];
-  browserInfo: BCD.Platforms;
+  browsers: LCD.PlatformName[];
+  browserInfo: LCD.Platforms;
 }) {
   return (
     <thead>

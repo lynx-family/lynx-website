@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
-import { PlatformSvg } from '@/components/platform-navigation/PlatformIcon';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
+import { PlatformIcon } from '../platform/PlatformIcon';
 import { Link } from '@rspress/core/theme';
 import React from 'react';
 // Visual treatment for the card (--tab-card-* custom properties) lives in
@@ -9,15 +8,13 @@ import React from 'react';
 import '../shared-tabs.scss';
 import './ChoiceTabs.scss';
 
-const PLATFORM_INFO: Record<string, { label: string; icon: PlatformName }> = {
+const PLATFORM_INFO: Record<string, { label: string; icon: string }> = {
   ios: { label: 'iOS', icon: 'ios' },
   android: { label: 'Android', icon: 'android' },
   harmony: { label: 'HarmonyOS', icon: 'harmony' },
   web: { label: 'Web', icon: 'web_lynx' },
-  // macos and windows aren't in PlatformName, but PlatformSvg accepts
-  // these as strings and resolves to the right SVG.
-  macos: { label: 'macOS', icon: 'macos' as PlatformName },
-  windows: { label: 'Windows', icon: 'windows' as PlatformName },
+  macos: { label: 'macOS', icon: 'macos' },
+  windows: { label: 'Windows', icon: 'windows' },
 };
 
 /** Separator marker inside a platforms array. Renders a "|" between groups. */
@@ -117,7 +114,7 @@ export const ChoiceTabs = ({
                     const info = PLATFORM_INFO[p];
                     if (!info) return null;
                     return (
-                      <PlatformSvg
+                      <PlatformIcon
                         key={p}
                         platformName={info.icon}
                         className="choice-tabs__platform-icon"

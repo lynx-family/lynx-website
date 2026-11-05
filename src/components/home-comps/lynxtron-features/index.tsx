@@ -1,12 +1,12 @@
 import type { FC, ReactNode } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import cls from 'classnames';
-import { MaskIcon, type MaskIconVariant } from './mask-icon';
+import { FeatureIcon, type FeatureIconVariant } from './FeatureIcon';
 import { ExtensibleWidget } from './extensible-widget';
 import styles from './index.module.less';
 
 const FEATURES: Array<{
-  iconVariant: MaskIconVariant;
+  iconVariant: FeatureIconVariant;
   title: { en: string; zh: string };
   desc: { en: string; zh: string };
 }> = [
@@ -48,7 +48,7 @@ const FEATURES: Array<{
 type CardContentProps = {
   title: ReactNode;
   desc: ReactNode;
-  iconVariant: MaskIconVariant;
+  iconVariant: FeatureIconVariant;
 };
 
 const SmallCard: FC<CardContentProps & { className?: string }> = ({
@@ -60,7 +60,7 @@ const SmallCard: FC<CardContentProps & { className?: string }> = ({
   return (
     <div className={cls(styles['ah-card'], styles['ah-small'], className)}>
       <div className={styles['ah-icon']}>
-        <MaskIcon variant={iconVariant} />
+        <FeatureIcon variant={iconVariant} className={styles['feature-icon']} />
       </div>
       <div className={styles['ah-content']}>
         <div className={styles['ah-title']}>{title}</div>
@@ -86,7 +86,7 @@ const LargeCard: FC<CardContentProps & { children?: ReactNode }> = ({
 
 /**
  * The feature-card row on the Lynxtron home: two small cards plus a
- * double-width card hosting the ExtensibleWidget artwork.
+ * double-width card hosting the ExtensibleWidget illustration.
  */
 export const LynxtronFeatures: FC = () => {
   const lang = useLang() === 'zh' ? 'zh' : 'en';

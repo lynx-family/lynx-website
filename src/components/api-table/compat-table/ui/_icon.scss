@@ -12,6 +12,8 @@
  *   Licensed under the Mozilla Public License, v. 2.0
  */
 
+@use '../../../icons/mask' as mask-icon;
+
 $icons:
   'add-filled', 'add', 'altname', 'bell', 'bell-filled', 'bell-ring',
   'bookmark-filled', 'bookmark', 'cancel', 'chatgpt', 'checkmark', 'chevron',
@@ -26,24 +28,16 @@ $icons:
   'return', 'safari', 'samsunginternet', 'search', 'send', 'server', 'sidebar',
   'simple-firefox', 'small-arrow', 'theme-light', 'star-filled', 'star',
   'theme-os-default', 'thumbs-down', 'thumbs-up', 'trash', 'trash-filled',
-  'twitter-x', 'unknown', 'warning', 'webview', 'yes', 'yes-circle', 'apple',
-  'macos-text', 'android', 'windows', 'web', 'clay', 'harmony', 'reactlynx';
+  'twitter-x', 'unknown', 'warning', 'webview', 'yes', 'yes-circle';
 
 @mixin icons {
   .icon {
-    --size: var(--icon-size, 1rem);
-    background-color: currentColor;
-    display: inline-block;
-    flex-shrink: 0;
-    height: var(--size);
-    mask-position: center;
-    mask-repeat: no-repeat;
-    mask-size: 100%;
-    vertical-align: middle;
-    width: var(--size);
+    @include mask-icon.mask;
+    --icon-size: var(--compat-table-icon-size, 1rem);
 
     @each $name in $icons {
       &.icon-#{$name} {
+        -webkit-mask-image: url('../assets/icons/' + $name + '.svg');
         mask-image: url('../assets/icons/' + $name + '.svg');
       }
     }
