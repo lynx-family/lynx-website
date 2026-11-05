@@ -352,7 +352,9 @@ export const APIItem: React.FC<APIItemProps> = ({
                     )}
                     title={`${PLATFORM_CONFIG[platform]?.label || platform}: ${isSupported ? 'Supported' : 'Not supported'}`}
                   >
-                    {Icon && <Icon style={{ width: 10, height: 10 } as any} />}
+                    {Icon && (
+                      <Icon className="[--icon-size:var(--api-status-item-icon-size,10px)]" />
+                    )}
                     <span
                       className={cn(
                         'inline-block w-1.5 h-1.5 rounded-full',
@@ -854,7 +856,7 @@ export const APIStatusDashboard: React.FC = () => {
                     </div>
                     <PlatformIcon
                       platform={platform}
-                      className={cn('w-3.5 h-3.5', colors.text)}
+                      className={cn('[--icon-size:0.875rem]', colors.text)}
                     />
                     <span>{PLATFORM_CONFIG[platform]?.label || platform}</span>
                     <span className={cn('font-mono', colors.text)}>
@@ -916,7 +918,7 @@ export const APIStatusDashboard: React.FC = () => {
                         </div>
                         <PlatformIcon
                           platform="clay"
-                          className={cn('w-3.5 h-3.5', colors.text)}
+                          className={cn('[--icon-size:0.875rem]', colors.text)}
                         />
                         <span>Clay</span>
                         <span className={cn('font-mono', colors.text)}>
@@ -994,7 +996,7 @@ export const APIStatusDashboard: React.FC = () => {
                         </div>
                         <PlatformIcon
                           platform={platform}
-                          className={cn('w-3.5 h-3.5', colors.text)}
+                          className={cn('[--icon-size:0.875rem]', colors.text)}
                         />
                         <span>
                           {PLATFORM_CONFIG[platform]?.label || platform}
@@ -1182,7 +1184,7 @@ export const APIStatusDashboard: React.FC = () => {
                       <div className="flex gap-2 items-center">
                         <PlatformIcon
                           platform={platform}
-                          className={cn('w-4 h-4', colors.text)}
+                          className={cn('[--icon-size:1rem]', colors.text)}
                         />
                         <span
                           className={cn('text-sm font-medium', colors.text)}

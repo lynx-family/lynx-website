@@ -181,6 +181,12 @@ committed: change those pages in lynx-stack, then update
 testing-library and GenUI URLs are redirected by
 `netlify/edge-functions/lynx-stack-api-redirects/`.
 
+## Theme and Component Design
+
+For site UI changes under `src/` and `theme/`, see the
+[Theme and Component Design guide](./src/README.md). It covers visual
+consistency, component ownership, style overrides, and compatibility checks.
+
 ## CSS Reference Style
 
 - Include a non-empty frontmatter `title` in CSS property and data-type

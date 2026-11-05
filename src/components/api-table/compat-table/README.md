@@ -43,13 +43,18 @@ Most of the code is stayed untouched so you will still see `Browser` all over th
 
 ### Icons
 
-Icon assets are copied into `assets/`. Because icon SVGs are loaded on-demand at runtime, we don't need to worry about having extra unused assets in the source.
+Compatibility/status icon assets remain in `assets/` and are selected by the
+table's scoped styles.
 
-Additionally, we downloaded some icons to represent Lynx platforms e.g. `icon-android`, `icon-ios`, `icon-web`, etc.
+Platform headers use the shared `PlatformIcon` in `../../platform/`. Its
+canonical artwork lives in `../../platform/assets/`; do not add a second
+platform-to-glyph mapping or duplicate platform artwork here.
 
 ### Styles
 
-We copied the dependent SCSS files to `ui/`. One concern is that the table is styled with global selectors which might cause conflicts with other components. Luckily, most of them are `bc-` prefixed and doesn't seem to break anything right now.
+We copied the dependent SCSS files to `ui/`. Their selectors are scoped under
+`.lynx-compat-table`. Mask drawing rules come from the shared icon mixin; the
+table owns status colors and its `--compat-table-icon-size` slot.
 
 The rendered table naturally inherits styles from the Lynx website e.g. font sizes and `code` formats, which looks different from the MDN web docs in a good way. We also added some extra tweaks to make it fit with Lynx's docs website.
 

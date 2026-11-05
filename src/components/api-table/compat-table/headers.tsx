@@ -12,7 +12,7 @@
  *   Licensed under the Mozilla Public License, v. 2.0
  */
 import type BCD from '@lynx-js/lynx-compat-data';
-import { mapPlatformNameToIconName } from '../../../lib/platform';
+import { PlatformIcon } from '../../platform/PlatformIcon';
 import { BrowserName } from './browser-info';
 
 function mapPlatformKindToIconName(platformType: BCD.PlatformType) {
@@ -109,11 +109,10 @@ function BrowserHeaders({
             <div className={`bc-head-txt-label bc-head-icon-${browser}`}>
               <BrowserName id={browser} platformType={platformType} />
             </div>
-            <div
-              className={`bc-head-icon-symbol icon icon-${mapPlatformNameToIconName(
-                browser,
-              )}`}
-            ></div>
+            <PlatformIcon
+              platformName={browser}
+              className="bc-head-icon-symbol icon"
+            />
           </th>
         );
       })}
