@@ -112,7 +112,7 @@ export const PlatformIcon = ({
           <PlatformSvg
             platformName={toPlatformName(platform)}
             key={platform}
-            style={{ '--icon-size': '2rem' } as React.CSSProperties}
+            className={styles.groupIcon}
           />
         );
       })}
