@@ -166,6 +166,10 @@ copies its package documentation into `sharedDocs/packageDocs/`, and generates
 revision or its sync and generation tooling, run `pnpm run prepare` and commit
 all changes in those output paths.
 
+For the complete lynx-ui refresh workflow, including example version checks
+and `Go` highlight updates, see the
+[lynx-ui update skill](./.agents/skills/lynx-ui-docs-update/SKILL.md).
+
 The API reference for lynx-stack packages is written and generated in
 [lynx-stack](https://github.com/lynx-family/lynx-stack/tree/main/docs/content)
 and copied here from the `@lynx-js/lynx-stack-docs` package by
