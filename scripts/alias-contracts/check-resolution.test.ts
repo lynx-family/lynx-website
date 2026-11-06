@@ -303,10 +303,6 @@ test(
     write('consumer/local/child.ts', `export const Value = 1;`);
     write('consumer/local/global.ts', 'const initialized = true;');
     write('consumer/local/child.css', `.example { color: red; }`);
-    write(
-      `${areaRoot('site-public-assets')}/icon.svg`,
-      '<svg xmlns="http://www.w3.org/2000/svg"/>',
-    );
     write('consumer/other/child.ts', `export const Value = 1;`);
     const lifecycle = {
       state: 'stable',
@@ -378,7 +374,6 @@ test(
         'index.ts',
       ),
       '@docs': path.join(cwd, areaRoot('lynx-ui-package-docs')),
-      '@assets': path.join(cwd, areaRoot('site-public-assets')),
       '@theme': [
         path.join(cwd, 'consumer/theme'),
         path.join(cwd, areaRoot('rspress-default-theme')),
@@ -484,7 +479,6 @@ declare module '*.svg';`,
       consumerRecord(nested),
       { ...consumerRecord('@fixture1/global'), bindings: [] },
       { ...consumerRecord('@fixture1/child.css'), bindings: [] },
-      { ...consumerRecord('@assets/icon.svg'), bindings: [] },
     ];
     const run = async (
       corpus = records,
@@ -540,6 +534,31 @@ declare module '*.svg';`,
           policy.filter((entry) => entry.rule === 'migration-subpath').length,
           2,
         );
+      },
+    );
+    await t.test(
+      'retired public asset mappings are rejected if reintroduced',
+      async () => {
+        bindings['@assets'] = path.join(cwd, 'docs/public/assets');
+        try {
+          const { result } = await run([], {
+            '@assets/*': ['docs/public/assets/*'],
+          });
+          assert.ok(
+            result.errors.some((error) =>
+              error.includes("unaccounted runtime resolver key '@assets'"),
+            ),
+            result.errors.join('\n'),
+          );
+          assert.ok(
+            result.errors.some((error) =>
+              error.includes("unaccounted TypeScript resolver key '@assets/*'"),
+            ),
+            result.errors.join('\n'),
+          );
+        } finally {
+          delete bindings['@assets'];
+        }
       },
     );
     await t.test(

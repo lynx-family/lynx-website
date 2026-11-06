@@ -221,6 +221,21 @@ test('host entries preserve exact contracts and existing source-map owners', () 
   );
 });
 
+test('public asset alias compatibility is retired', () => {
+  assert.equal(
+    (aliases as readonly AliasContract[]).some(
+      ({ specifier }) => specifier === '@assets',
+    ),
+    false,
+  );
+  assert.equal(
+    (ossSourceAreas as readonly SourceArea[]).some(
+      ({ id }) => id === 'site-public-assets',
+    ),
+    false,
+  );
+});
+
 test('permits a consumer custom theme alongside mounted OSS and framework themes', () => {
   const theme = (aliases as readonly AliasContract[]).find(
     ({ specifier }) => specifier === '@theme',

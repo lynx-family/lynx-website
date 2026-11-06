@@ -252,8 +252,10 @@ corpus, runtime, export-surface, and syntax boundaries.
 Gate 3 checks importer permissions, private-owner closure, first resolved target
 ownership and source-area bounds, public spelling, direct resolver-override
 imports, and relative imports in both directions across documentation/runtime
-trees. Documentation `@assets` imports are forbidden. Layout-dependent runtime
-version-data imports are debt until their reviewed adapter exists.
+trees. The retired `@assets` spelling is rejected for documentation and runtime
+imports; documentation uses approved CDN URLs, while runtime assets belong to
+their importing source. Layout-dependent runtime version-data imports are debt
+until their reviewed adapter exists.
 
 The baseline contains exact `{ rule, file, specifier, count }` records. It is
 not a wildcard allowlist or a resolver target inventory. A new file, moved

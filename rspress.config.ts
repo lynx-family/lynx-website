@@ -82,7 +82,6 @@ export default defineConfig({
         ),
         '@': path.join(__dirname, 'src'),
         '@docs': path.join(__dirname, 'sharedDocs', 'packageDocs'),
-        '@assets': path.join(__dirname, 'docs', 'public', 'assets'),
         '@lynx': path.join(__dirname, 'src', 'components'),
         '@api-status$': path.join(
           __dirname,
