@@ -1,0 +1,148 @@
+import Go from '@lynx/go/Go';
+
+# 在 Web 中运行 Lynxtron
+
+Lynxtron 可以让桌面应用与浏览器共享 Lynx UI 代码。Web 目标使用 Lynx for Web，以及基于浏览器能力实现的宿主接口。创建项目时启用 Web 支持，即可在同一项目中保留两个目标。
+
+## 创建并运行 Web 目标
+
+先按照[快速开始](/lynxtron/introduction)准备开发环境，再显式启用 Web 支持：
+
+```bash
+npm create @lynx-js/lynxtron@latest my-app -- --web
+cd my-app
+npm install
+npm run dev:web
+```
+
+在浏览器中打开 Web 开发服务器输出的地址。运行 `npm run dev` 则启动桌面目标。
+
+构建并在本地预览 Web 产物：
+
+```bash
+npm run build:web
+npm run start:web
+```
+
+模板的 `start:web` 脚本会再次构建 Web 目标，并提供 `dist/web` 的静态文件服务。请通过 HTTP 访问这些文件；直接以 `file:` URL 打开 `index.html`，不能提供相同的脚本与 Worker 加载环境。
+
+[create-lynxtron CLI](/lynxtron/api/@lynx-js/create-lynxtron/index.mdx) 根据 `--web` 或 `--no-web`，保留或移除 Web 文件、依赖、脚本和配置。
+
+## 通过 Symmetric Host 共享宿主能力接口
+
+让同一套 Lynx UI 在桌面与 Web 中运行，还需要让 UI 调用的宿主能力拥有一致的接口。例如，UI 发起弹窗请求时，桌面宿主调用原生弹窗，Web 宿主调用浏览器弹窗。
+
+Lynxtron 使用 **Symmetric Host（对称宿主）**模式组织这些能力：共享 UI 调用一致的宿主接口，各宿主使用自己的平台 API 实现接口，由适配层处理差异。
+
+生成的模板包含两条宿主能力路径：
+
+| UI 接口                        | 桌面实现                                                        | Web 实现                                                          |
+| ------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `NativeModules.bridge`         | 注册的桌面宿主处理器                                            | 通过 `setupSymmetricHost` 注册的处理器，经 RPC 在浏览器主线程执行 |
+| `NativeModules.nodejs.exposed` | Node.js preload 通过 `contextBridge.exposeInLynxBTS` 导出的能力 | 加载到 Lynx 背景 Worker 的 Web 适配脚本导出的能力                 |
+
+`nodejs` 模块名保留了 UI 的调用接口，并不为浏览器提供 Node.js 运行时。文件系统、原生窗口等桌面能力，需要在浏览器中实现可用的替代方案，或明确报告不支持。浏览器主线程与 Lynx 背景 Worker 的 API 不同：DOM 操作放在宿主中，兼容 Worker 的逻辑放在背景适配脚本中。
+
+## 通过 Notes 体验共享 UI
+
+在下方 Web 预览中创建笔记、修改内容并保存，再查看源码面板中的 `src/app/api.ts`：`getNotesApi` 向 UI 提供统一业务 API，并适配当前可用的桌面或 Web 模块。
+
+<Go
+  example="cross-platform-notes"
+  designWidth={800}
+  designHeight={600}
+  defaultFile="src/app/api.ts"
+  defaultEntryName="main"
+  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/cross-platform-notes"
+  defaultTab="web"
+  webPreviewMode="responsive"
+  highlight="{71-87,151-178,182-217}"
+  nativeFramework="lynxtron"
+/>
+
+桌面适配层将笔记存入文件系统，浏览器适配层使用 `localStorage`，UI 仍调用相同的列表、编辑和保存操作。这个示例手动注册 `webNotes` 模块，并在业务 API 层统一调用；它没有调用 `setupSymmetricHost`。后续章节介绍生成模板的宿主配置。
+
+## 生成项目的文件职责
+
+| 文件或目录                           | 职责                                            |
+| ------------------------------------ | ----------------------------------------------- |
+| `src/app/`                           | 共享 Lynx UI，以及对宿主能力的调用              |
+| `src/main/desktop/main.ts`           | 桌面进程与窗口初始化                            |
+| `src/main/desktop/preload.ts`        | 通过 context bridge 向 Lynx 导出桌面能力        |
+| `src/main/web/web-host.ts`           | 浏览器入口、创建 `<lynx-view>`、配置 Web 宿主   |
+| `src/main/web/nodejs_adapter_web.ts` | 通过 context bridge 导出能力的 Web 背景适配脚本 |
+| `src/main/web/index.html`            | 浏览器宿主的 HTML 入口                          |
+| `lynx.config.ts`                     | 桌面与 Web 的 Lynx UI 构建配置                  |
+| `rsbuild.config.ts`                  | 宿主构建、适配脚本产物与 Web 开发服务器配置     |
+
+模板将 Web 适配脚本构建为 `nodejs-adapter-web.js`，并将 Web 宿主与 UI bundle 放在 `dist/web`。适配脚本的 URL 必须与宿主构建配置一致。
+
+## 注册浏览器主线程能力
+
+[`setupSymmetricHost`](/lynxtron/api/@lynx-js/lynxtron/web-host/Function.setupSymmetricHost.mdx) 在浏览器主线程调用，为 `<lynx-view>` 配置 Native Modules。请从 `@lynx-js/lynxtron/web-host` 导入它；桌面包入口只用于桌面代码。
+
+下面是只配置 bridge 的最小示例。将 `src/main/web/web-host.ts` 替换为此入口，并使用下方 UI。在设置 bundle URL 和挂载视图之前注册宿主能力。
+
+```ts title="src/main/web/web-host.ts"
+import '@lynx-js/web-core/client';
+import { setupSymmetricHost } from '@lynx-js/lynxtron/web-host';
+
+const lynxView = document.createElement('lynx-view');
+lynxView.style.cssText = 'display:block;width:100vw;height:100vh';
+
+setupSymmetricHost(lynxView, {
+  bridge: {
+    showDialog(data: { message: string }) {
+      window.alert(data.message);
+      return { shown: true };
+    },
+  },
+});
+
+lynxView.setAttribute('url', './main.web.bundle');
+document.body.replaceChildren(lynxView);
+```
+
+在 Lynx 背景事件处理器中调用注册的方法。Web bridge 会将处理器结果传给末尾的回调；不要依赖代理方法的 Promise 返回该结果。
+
+```tsx title="src/app/App.tsx"
+export function App() {
+  function showDialog() {
+    'background only';
+    NativeModules.bridge.showDialog(
+      { message: 'Hello from Lynx UI' },
+      (result: { shown: boolean }) => console.log(result.shown),
+    );
+  }
+
+  return <text bindtap={showDialog}>Show dialog</text>;
+}
+```
+
+此示例只注册 `bridge`，没有注册 `nodejs`。模板原有 UI 会调用 `NativeModules.nodejs.exposed.echo`，因此还需要背景适配脚本。若要让新的 UI 同时用于桌面，需要在桌面宿主注册相同的 `showDialog` 方法。
+
+## 导出背景适配能力
+
+生成的 Web 适配脚本使用跨平台的 context bridge 导入路径：
+
+```ts title="src/main/web/nodejs_adapter_web.ts"
+import { contextBridge } from '@lynx-js/lynxtron/context-bridge';
+
+contextBridge.exposeInLynxBTS({
+  echo(message: string) {
+    return `Echo from Web: ${message}`;
+  },
+});
+```
+
+当前 Web 宿主实现会将构建后的适配脚本加载到 Lynx 背景 Worker，并将导出的能力暴露为 `NativeModules.nodejs.exposed`。它使用 `importScripts`，因此适配脚本必须构建为兼容 Worker 的脚本，不能直接传入 TypeScript 源文件或未打包的 ES module。
+
+通过 `nodejs.scriptURL` 配置构建后的适配脚本。这里的 `lynxView` 是前面创建的浏览器元素：
+
+```ts
+setupSymmetricHost(lynxView, {
+  nodejs: { scriptURL: './nodejs-adapter-web.js' },
+});
+```
+
+同时需要 `bridge` 和 `nodejs` 时，应在一次调用中配置两者。当前实现会重新赋值 `nativeModulesMap` 和 `onNativeModulesCall`；重复调用会替换此前的注册，而非追加能力。

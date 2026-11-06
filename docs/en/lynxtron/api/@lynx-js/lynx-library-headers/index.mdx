@@ -16,7 +16,9 @@ The published package contains:
 
 The C++ wrappers are backed by the public C API. Their API semantics are documented in the [Lynx Native API reference](https://lynxjs.org/next/api/lynx-native-api/lynx-view.html). See also [Using Native Modules](https://lynxjs.org/next/guide/use-native-modules.html?platform=node-api) and [Custom Native Components](https://lynxjs.org/next/guide/custom-native-component.html?platform=desktops).
 
-The package does not provide a Lynxtron-specific addon macro. Lynxtron consumes Lynx native libraries by loading their shared libraries with `process.dlopen(...)`; AutoLink can generate that host-side loading code.
+The package provides Lynx registration helpers, not a Node.js addon entry-point macro. On Desktop, element registration uses the extension-module lifecycle internally; library authors can use `LynxExtensionModule` directly for additional lifecycle control. See [native capability integration](/lynxtron/learn/what-is-lynxtron#native-capability-integration) for this layering.
+
+Host-side loaders can use `process.dlopen(...)`; AutoLink can generate the loading code. Applications should use the library's documented entry point. A compatible `.node` addon may be loaded through `require()`, which also uses the lower-level native loader; arbitrary shared libraries are not necessarily require-loadable addons.
 
 ## Use in CMake
 

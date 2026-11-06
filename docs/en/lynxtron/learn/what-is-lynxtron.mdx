@@ -37,6 +37,8 @@ The UI layer is standard Lynx. You can use runtime DSLs supported by Lynx, such 
 
 Unlike Electron's multi-process model (Main Process + Renderer Process), Lynxtron runs in a **single process** and uses **Main Thread + Lynx Background Thread** as a thread-level dual of Electron's two-process model. The Lynx Background Thread can be shared by multiple windows, or windows can use independent background threads.
 
+**Electron Renderer** refers to Electron’s Chromium renderer process. Lynxtron renders UI with Lynx, without a corresponding standalone Chromium renderer process. The main thread handles input, layout, and rendering, while the Lynx background thread runs most UI business logic. The table below maps responsibilities; it does not imply that Lynxtron has a Renderer process or a thread named Renderer.
+
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture-en.png"
   alt="Lynxtron single-process two-thread architecture"
@@ -90,6 +92,19 @@ The core flow is:
 The Lynx Background Thread that hosts BTS runs directly on Node.js, but BTS is still in an isolated context. It is not the Node.js global environment and cannot directly access Node.js APIs. All Node.js capabilities must be explicitly exposed through preload scripts.
 
 -> [Learn more: Node.js and Lynx Communication in Lynxtron](/lynxtron/learn/Communication-Between-Node-And-Lynx)
+
+## Native Capability Integration
+
+Native capabilities in Lynxtron can be called by the Node.js host or Lynx UI:
+
+| Calling environment          | Integration                                                             | How the capability becomes available                                                                                                                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Called from Node.js          | [Node.js addon](/lynxtron/Native-Libraries/NodeJS-Native-Modules)       | Load the package's host entry with `import` or `require`; rebuild only when required by runtime ABI compatibility                                                                                                                         |
+| Called from the Lynx runtime | [Lynx native library](/lynxtron/Native-Libraries/Lynx-Native-Libraries) | Register modules and elements with the [static registration macros](/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx). Loading or linking the library makes them available to Lynx. AutoLink can generate the host-side loading code |
+
+For library authors, the registration macros are the recommended entry point. `LYNX_REGISTER_NATIVE_MODULE` registers a native module through `lynx_env_register_native_module`. `LYNX_REGISTER_ELEMENT` registers an extension module through `lynx_env_register_extension_module`; that module registers the element when a Lynx view is created.
+
+A library may provide both kinds of capability. Loading its Node.js entry does not mean its exports automatically become Lynx `NativeModules`; the library must register the Lynx capability separately.
 
 ## Next Steps
 

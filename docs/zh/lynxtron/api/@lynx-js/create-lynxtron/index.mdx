@@ -14,15 +14,19 @@ npm create @lynx-js/lynxtron@latest my-app -- --no-web
 
 ## 参数
 
-| 参数             | 说明                                                                      |
-| ---------------- | ------------------------------------------------------------------------- |
-| `[project-name]` | 要创建的项目名或目标路径。未传入时会交互式询问，默认值为 `lynxtron-app`。 |
-| `--web`          | 默认包含 Web 支持，也就是生成 Symmetric Host 相关代码。                   |
-| `--no-web`       | 不生成 Web 支持相关代码。                                                 |
+| 参数             | 说明                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `[project-name]` | 要创建的项目名或目标路径。未传入时会交互式询问，默认值为 `lynxtron-app`。                                   |
+| `--web`          | 包含浏览器入口、宿主适配代码和 Web 构建配置。参见[在 Web 中运行 Lynxtron](/lynxtron/learn/running-on-web)。 |
+| `--no-web`       | 不生成 Web 支持相关代码。                                                                                   |
 
 ## 行为
 
-- 如果没有传入项目名或 Web 支持选项，CLI 会进入交互式询问。
+- 在交互式终端中不传参数时，CLI 会询问项目名和 Web 支持。传入参数、使用 `--yes` 或标准输入不是交互式终端时，缺失选项使用默认值；Web 支持默认开启。
 - 如果目标目录已存在且不为空，CLI 会询问是否覆盖。
 - 默认模板是 Lynxtron 桌面应用模板，包含 Node.js 主进程和 Lynx UI 代码。
 - 生成完成后，通常执行 `npm install` 和 `npm run dev` 开始开发。
+
+## Web 支持
+
+Web 支持采用 **Symmetric Host（对称宿主）**模式：桌面与浏览器宿主为共享 Lynx UI 提供一致的能力接口，由各平台分别实现。生成的 `src/main/web/` 包含浏览器宿主与背景适配脚本。运行 `npm run dev:web` 开发 Web 目标，运行 `npm run build:web` 构建，运行 `npm run start:web` 构建并本地预览。架构、文件职责和配置示例参见[在 Web 中运行 Lynxtron](/lynxtron/learn/running-on-web)。
