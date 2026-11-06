@@ -156,6 +156,9 @@ then fail on additions, modifications, deletions, or untracked output files.
 When adding such a tool, include its complete output set in the consistency
 check.
 
+For lynx-ui source pin, example package, and documentation refreshes, follow
+the [lynx-ui update skill](./.agents/skills/lynx-ui-docs-update/SKILL.md).
+
 ## Alias Contracts
 
 Follow the policy and change process in the
