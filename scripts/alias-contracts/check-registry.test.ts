@@ -221,6 +221,18 @@ test('host entries preserve exact contracts and existing source-map owners', () 
   );
 });
 
+test('public assets remain optional downstream migration compatibility', () => {
+  const assets = (aliases as readonly AliasContract[]).find(
+    ({ specifier }) => specifier === '@assets',
+  )!;
+  assert.equal(assets.kind, 'subpaths-only');
+  assert.equal(assets.lifecycle.state, 'migration');
+  assert.equal(assets.downstream.implementation, 'optional');
+  assert.deepEqual(assets.implementationSources.requiredAreas, [
+    'site-public-assets',
+  ]);
+});
+
 test('permits a consumer custom theme alongside mounted OSS and framework themes', () => {
   const theme = (aliases as readonly AliasContract[]).find(
     ({ specifier }) => specifier === '@theme',
@@ -1594,7 +1606,7 @@ test('consumer modules cannot redefine OSS alias policy', async (t) => {
   assert.match(io.errors.join('\n'), /cannot redefine OSS alias policy/);
 });
 
-test('consumer source maps must retain every OSS source-area ID', async (t) => {
+test('consumer source maps must retain required OSS source-area IDs', async (t) => {
   const io = consumerFixture(t);
   const sourceMap = io.sourceMap(
     ossSourceAreas.filter(({ id }) => id !== 'oss-version-data'),
@@ -1604,6 +1616,14 @@ test('consumer source maps must retain every OSS source-area ID', async (t) => {
     io.errors.join('\n'),
     /missing required OSS source area 'oss-version-data'/,
   );
+});
+
+test('consumer source maps may omit optional alias implementation areas', async (t) => {
+  const io = consumerFixture(t);
+  const sourceMap = io.sourceMap(
+    ossSourceAreas.filter(({ id }) => id !== 'site-public-assets'),
+  );
+  assert.equal(await runCli(['--source-map', sourceMap], io.directory), 0);
 });
 
 test('consumer source maps cannot change a shared source-area owner', async (t) => {

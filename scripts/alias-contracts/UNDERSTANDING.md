@@ -28,6 +28,11 @@ they consume through `@lynx-ui`.
 from a required area or an additionally permitted owner, **and** satisfy the
 target-owner policy for its import form.
 
+`requiredAreas` applies when the alias is implemented. A consumer may omit an
+area used only by shared aliases with `downstream.implementation: optional`
+when it also omits those resolver bindings. Classification-only areas and areas
+used by any required alias remain mandatory in every consumer source map.
+
 ## Shared Policy and Local Namespaces
 
 An assembled site contains source from different logical owners. Sharing a

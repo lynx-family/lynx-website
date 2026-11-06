@@ -35,6 +35,13 @@ Gate 1 checks the policy's structure. Gate 2 applies these conditions to the
 first resolved target. `additionalOwners` does not create new source-map IDs
 or override source-map ownership rules.
 
+A replacement source map must retain every shared source-area ID except an
+area used only by aliases whose downstream implementation is `optional`. An
+optional alias may omit its implementation area when the consumer has no
+mapping or corpus use for that alias. If the area remains, its shared owner and
+boundary still apply; any observed import must still resolve into a permitted
+active area.
+
 The exact public host entries `@route-config` and `@version-data` preserve
 the existing route configuration exports and default version metadata object.
 Each host binds them in both Rspress runtime aliases (with an exact `$` key)
@@ -78,10 +85,12 @@ The checker keeps a private snapshot of shared policy and deep-copies defaults
 before loading any consumer module. Mutating registry exports cannot alter
 the policy used by that invocation or later calls in the same process.
 
-A replacement source map must retain **every OSS source-area ID and owner**,
-including classification-only areas. Roots, roles, and origins may change
-with the layout. New IDs must be consumer-owned. This is distinct from
-`additionalOwners`, which governs where a particular alias may resolve.
+A replacement source map must retain every required OSS source-area ID and
+owner, including classification-only areas. It may omit an area referenced
+only by shared aliases whose downstream implementation is `optional`. Roots,
+roles, and origins may change with the layout. New IDs must be consumer-owned.
+This is distinct from `additionalOwners`, which governs where a particular
+alias may resolve.
 
 The optional `boundary` marks documentation or runtime trees, including relocated
 mounts. Shared IDs inherit their OSS boundary when omitted and cannot change it.

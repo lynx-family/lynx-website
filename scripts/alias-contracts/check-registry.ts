@@ -290,6 +290,12 @@ export function validateAliasContracts({
   const sourceAreaPolicyList = Array.isArray(sourceAreaPolicy)
     ? sourceAreaPolicy
     : undefined;
+  const sourceAreaPolicyById = new Map<string, UnknownRecord>(
+    (sourceAreaPolicyList ?? [])
+      .filter((area) => nonEmptyString(area?.id))
+      .map((area) => [area.id, area]),
+  );
+  const sharedAliasList = Array.isArray(aliasRecords) ? aliasRecords : [];
 
   if (!Array.isArray(ownerRecords)) {
     errors.push('owners must be an array');
@@ -435,12 +441,28 @@ export function validateAliasContracts({
   }
 
   if (sourceAreaPolicyList) {
-    const policyById = new Map<string, UnknownRecord>(
-      sourceAreaPolicyList
-        .filter((area) => nonEmptyString(area?.id))
-        .map((area) => [area.id, area]),
+    const optionalAreaIds = new Set(
+      [...sourceAreaPolicyById.keys()].filter((areaId) => {
+        const references = sharedAliasList.filter(
+          (alias) =>
+            isRecord(alias?.implementationSources) &&
+            Array.isArray(alias.implementationSources.requiredAreas) &&
+            alias.implementationSources.requiredAreas.includes(areaId),
+        );
+        return (
+          references.length > 0 &&
+          references.every(
+            (alias) =>
+              isRecord(alias?.downstream) &&
+              alias.downstream.implementation === 'optional',
+          )
+        );
+      }),
     );
-    for (const areaId of policyById.keys()) {
+    for (const areaId of sourceAreaPolicyById.keys()) {
+      if (optionalAreaIds.has(areaId)) {
+        continue;
+      }
       if (!sourceAreaIds.has(areaId)) {
         errors.push(
           `consumer source map is missing required OSS source area '${areaId}'`,
@@ -451,7 +473,7 @@ export function validateAliasContracts({
       if (!nonEmptyString(area?.id) || !nonEmptyString(area?.owner)) {
         continue;
       }
-      const sharedArea = policyById.get(area.id);
+      const sharedArea = sourceAreaPolicyById.get(area.id);
       if (sharedArea && area.owner !== sharedArea.owner) {
         errors.push(
           `source area '${area.id}' must preserve OSS owner '${sharedArea.owner}', not '${area.owner}'`,
@@ -680,10 +702,17 @@ export function validateAliasContracts({
           : []),
       ]);
       const { requiredAreas, additionalOwners } = alias.implementationSources;
+      const isOptionalSharedAlias =
+        index < sharedAliasList.length &&
+        isRecord(alias.downstream) &&
+        alias.downstream.implementation === 'optional';
+      const availableSourceAreaIds = isOptionalSharedAlias
+        ? new Set([...sourceAreaIds, ...sourceAreaPolicyById.keys()])
+        : sourceAreaIds;
       errors.push(
         ...referenceErrors(
           requiredAreas,
-          sourceAreaIds,
+          availableSourceAreaIds,
           `${label} implementationSources.requiredAreas`,
           'required source area',
         ),
@@ -696,7 +725,11 @@ export function validateAliasContracts({
       );
       if (Array.isArray(requiredAreas)) {
         for (const sourceArea of requiredAreas) {
-          const sourceAreaOwner = sourceAreaOwners.get(sourceArea);
+          const sourceAreaOwner =
+            sourceAreaOwners.get(sourceArea) ??
+            (isOptionalSharedAlias
+              ? sourceAreaPolicyById.get(sourceArea)?.owner
+              : undefined);
           if (sourceAreaOwner && !targetOwners.has(sourceAreaOwner)) {
             errors.push(
               `${label} required source area '${sourceArea}' has owner '${sourceAreaOwner}' outside its target owner policy`,

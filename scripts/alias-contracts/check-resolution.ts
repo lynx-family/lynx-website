@@ -302,8 +302,11 @@ export async function checkResolution(
       alias,
       target: resolveBare(alias.specifier),
       originals: alias.implementationSources.requiredAreas
-        .map((id) => contracts.sourceAreas.find((area) => area.id === id)!)
-        .filter((area) => area.owner === alias.owner)
+        .map((id) => contracts.sourceAreas.find((area) => area.id === id))
+        .filter(
+          (area): area is (typeof contracts.sourceAreas)[number] =>
+            area?.owner === alias.owner,
+        )
         .map((area) => resolveBare(path.resolve(cwd, area.root))),
     }));
   const program = ts.createProgram(
@@ -627,7 +630,8 @@ export async function checkResolution(
       const actual = await readExports(target);
       errors.push(...actual.errors);
       for (const id of alias.implementationSources.requiredAreas) {
-        const source = contracts.sourceAreas.find((area) => area.id === id)!;
+        const source = contracts.sourceAreas.find((area) => area.id === id);
+        if (!source) continue;
         if (source.owner !== alias.owner) continue;
         const original = await environment.resolve(
           importer,

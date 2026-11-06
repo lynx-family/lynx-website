@@ -543,6 +543,43 @@ declare module '*.svg';`,
       },
     );
     await t.test(
+      'optional assets may be absent from a zero-use consumer layout',
+      async () => {
+        const sourceAreas = contracts.sourceAreas;
+        const assetsBinding = bindings['@assets'];
+        contracts.sourceAreas = sourceAreas.filter(
+          ({ id }) => id !== 'site-public-assets',
+        );
+        delete bindings['@assets'];
+        try {
+          assert.deepEqual(
+            validateAliasContracts({
+              ...contracts,
+              aliases: shared.aliases,
+              aliasExtensions: extensions,
+              sourceAreaPolicy: shared.sourceAreas,
+            }),
+            [],
+          );
+          const corpus = records.filter(
+            ({ specifier }) => !specifier.startsWith('@assets/'),
+          );
+          const { result, policy } = await run(corpus);
+          assert.deepEqual(result.errors, []);
+          assert.deepEqual(
+            policy.filter((entry) => !entry.baselinable),
+            [],
+          );
+          assert.ok(
+            policy.every(({ specifier }) => !specifier.startsWith('@assets/')),
+          );
+        } finally {
+          contracts.sourceAreas = sourceAreas;
+          bindings['@assets'] = assetsBinding!;
+        }
+      },
+    );
+    await t.test(
       'host entries reject prefix resolvers and unapproved target owners',
       async () => {
         for (const specifier of ['@route-config', '@version-data']) {

@@ -103,12 +103,14 @@ export interface AliasSubpathPolicy {
 /**
  * Physical source policy for modules that implement an alias.
  *
- * Required areas are stable IDs present in every source map. Additional
- * owners permit consumer maps to bind the alias to repository-local areas
- * without registering their private IDs in OSS.
+ * Required areas are stable IDs present whenever that alias is implemented.
+ * Consumers may omit areas used only by shared aliases whose downstream
+ * implementation is optional. Additional owners permit consumer maps to bind
+ * the alias to repository-local areas without registering their private IDs
+ * in OSS.
  */
 export interface AliasImplementationSources {
-  /** Source-area IDs that every active source map must provide. */
+  /** Source-area IDs that an implementation of this alias must provide. */
   readonly requiredAreas: readonly string[];
   /** Owners permitted to provide additional repository-local source areas. */
   readonly additionalOwners: readonly OwnerId[];

@@ -271,7 +271,7 @@ export const aliases = [
       additionalOwners: [],
     },
     downstream: {
-      implementation: 'required',
+      implementation: 'optional',
     },
     lifecycle: {
       state: 'migration',
