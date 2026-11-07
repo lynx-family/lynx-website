@@ -9,8 +9,8 @@ import { Callout } from '@rspress/core/theme-original';
 
 // Historical Rspeedy pages link to the maintained migration guide.
 const MIGRATION_GUIDE: Record<string, string> = {
-  en: 'https://lynxjs.org/next/guide/build/rspeedy.html#migrating-an-rspeedy-project',
-  zh: 'https://lynxjs.org/next/zh/guide/build/rspeedy.html#migrating-an-rspeedy-project',
+  en: 'https://lynxjs.org/next/guide/build/rspeedy#migrating-an-rspeedy-project',
+  zh: 'https://lynxjs.org/next/zh/guide/build/rspeedy#migrating-an-rspeedy-project',
 };
 
 export default function RspeedyMigrationNotice() {

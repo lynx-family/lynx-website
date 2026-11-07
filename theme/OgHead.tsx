@@ -11,6 +11,7 @@
  */
 import {
   Head,
+  cleanUrlByConfig,
   removeBase,
   useLang,
   useLocation,
@@ -37,7 +38,7 @@ export default function OgHead() {
   const pathNoBase = removeBase(pathname);
   const selection = selectOg(pathNoBase, lang);
   const image = ogAbsolute(selection.imagePath);
-  const canonical = ogAbsolute(`${OG_BASE}${pathNoBase}`);
+  const canonical = ogAbsolute(`${OG_BASE}${cleanUrlByConfig(pathNoBase)}`);
   const isBlog = selection.kind === 'blog';
 
   const frontmatter = (page.frontmatter ?? {}) as Record<string, unknown>;

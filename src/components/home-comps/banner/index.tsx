@@ -30,7 +30,7 @@ export const Banner: React.FC = () => {
         {desc[lang]} <span className={styles['lynx-text']}>Lynx</span>
         {tailText[lang]}
       </p>
-      <Button href={`guide/start/quick-start.html`}>
+      <Button href="guide/start/quick-start">
         {btnText[lang] || btnText['en']}
       </Button>
       <DotPattern
