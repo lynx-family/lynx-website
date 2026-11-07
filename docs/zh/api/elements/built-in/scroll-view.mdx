@@ -8,6 +8,7 @@ import {
   AndroidOnly,
   Go,
 } from '@lynx';
+import APIReference from './scroll-view-API.mdx';
 
 # `<scroll-view>`
 
@@ -31,9 +32,19 @@ import {
   entry="src/base"
 />
 
+### 设置初始滚动位置
+
+使用 [`initial-scroll-offset`](#initial-scroll-offset) 或 [`initial-scroll-to-index`](#initial-scroll-to-index) 设置初始滚动位置。
+
+:::warning
+
+不要同时设置这两个属性，它们可能会相互覆盖。
+
+:::
+
 ### 滚动事件
 
-使用 [`bindscroll`](#scroll)、[`bindscrolltoupper`](#scrolltoupper) / [`bindscrolltolower`](#scrolltolower) 等事件回调监听滚动进度的变化。
+使用 [`bindscroll`](#bindscroll)、[`bindscrolltoupper`](#bindscrolltoupper) / [`bindscrolltolower`](#bindscrolltolower) 等事件回调监听滚动进度的变化。
 
 <Go
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/scroll_view_events.webp"
@@ -43,6 +54,31 @@ import {
   highlight="{16-24}"
   entry="src/event"
 />
+
+### 将子节点滚动到可视区域
+
+`scrollIntoView` 是通用元件方法。请在后代节点上调用该方法，而不是在 `<scroll-view>` 本身上调用。
+
+```tsx
+<scroll-view>
+  <text id="targetnode">目标节点</text>
+</scroll-view>
+
+lynx
+  .createSelectorQuery()
+  .select('#targetnode')
+  .invoke({
+    method: 'scrollIntoView',
+    params: {
+      scrollIntoViewOptions: {
+        block: 'center',
+        inline: 'start',
+        behavior: 'smooth',
+      },
+    },
+  })
+  .exec();
+```
 
 ### 吸顶能力
 
@@ -71,380 +107,7 @@ import {
 
 :::
 
-## 属性
-
-属性名和属性值用于描述元件的行为和外观
-
-### `scroll-orientation`
-
-```ts
-// DefaultValue: "vertical"
-scroll-orientation?: string
-```
-
-设置 `<scroll-view>` 滚动方向。
-
-| 值         | 说明                                                       |
-| ---------- | ---------------------------------------------------------- |
-| vertical   | `<scroll-view>`子节点纵向布局，`<scroll-view>`本身纵向滚动 |
-| horizontal | `<scroll-view>`子节点横向布局，`<scroll-view>`本身横向滚动 |
-
-### `enable-scroll`
-
-```ts
-// DefaultValue: true
-enable-scroll?: boolean
-```
-
-设置是否允许手势拖拽滚动。支持动态切换，在下一次手势中生效。禁止滚动时，用户手动不能滚动
-
-| 值    | 说明                                                           |
-| ----- | -------------------------------------------------------------- |
-| true  | 用户手势可以触发滚动                                           |
-| false | 用户手势不可以触发滚动，但仍能被 `scrollTo` 等滚动方法直接滚动 |
-
-### `initial-scroll-offset`
-
-```ts
-// DefaultValue: N/A
-initial-scroll-offset?: number = ${number}px
-```
-
-设置初次渲染时的内容**绝对**距离偏移（与 [`scrollTo`](#scrollto) 方法中的 offset 概念有所区别），横纵向由 `scroll-orientation` 决定，仅在第一次 `render` 执行时起效，不响应后续更改。
-
-:::tip
-**与 `initial-scroll-offset/to-index` 会相互覆盖，不能一起使用**
-:::
-
-### `initial-scroll-to-index`
-
-```ts
-// DefaultValue: N/A
-initial-scroll-to-index?: number = ${number}
-```
-
-设置初次渲染时定位到的子节点，仅在第一次 `render` 执行时起效，不响应后续更改。
-
-:::tip
-**与 `initial-scroll-offset/to-index` 会相互覆盖，不能一起使用**
-
-如果 `index` 非法（如为负值、超出子节点个数），则设置无效
-:::
-
-### `bounces`
-
-```ts
-// DefaultValue: true
-bounces?: boolean
-```
-
-开启边缘回弹效果。
-
-### `upper-threshold`
-
-```ts
-// DefaultValue: N/A
-upper-threshold?: string = ${number}px
-```
-
-设置一个滚动阈值 (单位 `px`)，表示距离顶部或者左边多远时触发 `scrolltoupper` 事件。
-
-### `lower-threshold`
-
-```ts
-// DefaultValue: N/A
-lower-threshold?: string = ${number}px
-```
-
-设置一个滚动阈值，表示距离底部或者右边多远时触发 `scrolltolower` 事件。
-
-### `scroll-bar-enable`
-
-```ts
-// DefaultValue: false
-scroll-bar-enable?: boolean
-```
-
-开启滚动条，支持动态切换。
-
-:::tip
-
-<AndroidOnly /> 仅纵向滚动有滚动条 `iOS` 支持纵向和横向滚动条 :::
-
-## 事件
-
-前端可以在组件上绑定相应事件回调来监听组件的运行时行为。
-
-### `scroll`
-
-```ts
-bindscroll = (e: scrollEvent) => {};
-
-interface scrollEvent extends CustomEvent {
-  detail: {
-    /**
-     * 事件名称
-     **/
-    type: 'scroll';
-    /**
-     * 距上次滚动的横向滚动偏移量
-     **/
-    deltaX: number;
-    /**
-     * 距上次滚动的纵向滚动偏移量
-     **/
-    deltaY: number;
-    /**
-     * 当前横向滚动偏移量
-     **/
-    scrollLeft: number;
-    /**
-     * 当前纵向滚动偏移量
-     **/
-    scrollTop: number;
-    /**
-     * 当前内容区域高度
-     **/
-    scrollHeight: number;
-    /**
-     * 当前内容区域宽度
-     **/
-    scrollWidth: number;
-  };
-}
-```
-
-发生滚动时（有/无动画），触发本事件。
-
-:::tip
-
-如果有回弹 (`bounces={true}`)，则在回弹状态下`scrollLeft`与`scrollTop`可能为负。
-:::
-
-### `scrolltoupper`
-
-```ts
-bindscrolltoupper = (e: scrollToUpperEvent) => {};
-
-interface scrollToUpperEvent extends CustomEvent {
-  detail: {
-    /**
-     * 事件名称
-     **/
-    type: 'scrolltoupper';
-    /**
-     * 默认值
-     **/
-    deltaX: 0;
-    /**
-     * 默认值
-     **/
-    deltaY: 0;
-  };
-}
-```
-
-当滚动区域的上/左边的 [`upperThreshold`](#upper-threshold) 规定的区域与可视区域相交时，触发该事件。
-
-### `scrolltolower`
-
-```ts
-bindscrolltolower = (e: scrollToLowerEvent) => {};
-interface bindscrolltolower extends CustomEvent {
-  detail: {
-    /**
-     * 事件名称
-     **/
-    type: 'scrolltolower';
-    /**
-     * 默认值
-     **/
-    deltaX: 0;
-    /**
-     * 默认值
-     **/
-    deltaY: 0;
-  };
-}
-```
-
-当滚动区域的上/左边的 [`lowerThreshold`](#lower-threshold) 规定的区域与可视区域相交时，触发该事件。
-
-### `scrollend`
-
-```ts
-bindscrollend = (e: scrollEndEvent) => {};
-interface scrollEndEvent extends CustomEvent {
-  detail: {
-    /**
-     * 事件名称
-     **/
-    type: 'scrollend';
-    /**
-     * 默认值
-     **/
-    deltaX: 0;
-    /**
-     * 默认值
-     **/
-    deltaY: 0;
-    /**
-     * 当前横向滚动偏移量
-     **/
-    scrollLeft: number;
-    /**
-     * 当前纵向滚动偏移量
-     **/
-    scrollTop: number;
-    /**
-     * 当前内容区域高度
-     **/
-    scrollHeight: number;
-    /**
-     * 当前内容区域宽度
-     **/
-    scrollWidth: number;
-  };
-}
-```
-
-滚动结束时触发该事件。
-
-### `contentsizechanged`
-
-```ts
-bindcontentsizechanged = (e: contentSizeChanged) => {};
-
-interface contentSizeChanged extends CustomEvent {
-  detail: {
-    /**
-     * 事件名称
-     **/
-    type: 'contentsizechanged';
-    /**
-     * 新内容区域宽度
-     **/
-    scrollWidth: number;
-    /**
-     * 新内容区域高度
-     **/
-    scrollHeight: number;
-  };
-}
-```
-
-直接子节点组成的内容区域的宽高发生变化时，触发本事件。
-本事件会在 `<scroll-view>` 的内容完成 layout 后触发。如对 `<scroll-view>` 的子节点进行更新，请在该事件中调用更新后的 [`scrollTo`](#scrollto) 等滚动方法。
-
-## 方法
-
-前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 执行组件的方法，使用方法如下。
-
-```ts title=index.js
-lynx
-  .createSelectorQuery() // 创建 SelectorQuery
-  .select('#video') // 指定目标节点的选择器
-  .invoke({
-    // 指定对目标节点的操作
-    method: 'seekTo',
-    params: {
-      duration: 1000,
-    },
-    success: function (res) {
-      console.log(res);
-    },
-    fail: function (res) {
-      console.log(res.code, res.data);
-    },
-  })
-  .exec(); // 执行查询
-```
-
-### `scrollTo`
-
-```tsx
-<scroll-view id="scroll" />
-// 目标滚动位置的计算方法：MIN(可滚动区域，child(index).position + offset)
-lynx.createSelectorQuery()
-  .select(`#scroll`)
-  .invoke({
-    method: 'scrollTo',
-    params: {
-      offset: 0, // offset 设置内容偏移量绝对值
-      index: 1, // index 目标子节点，如果设置为零，则会滚动 list 的 padding 的距离
-      smooth: true // smooth 设置是否平滑滚动
-    },
-  })
-  .exec();
-```
-
-将 `<scroll-view>` 的内容定位到特定位置，可以使用子节点序号 `index` 或绝对定位 `offset`。以 `offset` 为参数时，向右为正，向左为负；`RTL` 模式下正负会被倒转，向左为正，向右为负。
-
-### `autoScroll`
-
-```tsx
-<scroll-view id="scroll" />
-
-lynx.createSelectorQuery()
-  .select(`#scroll`)
-  .invoke({
-     method: 'autoScroll',
-      params: {
-        rate: 120, // rate 滑动速度，每秒的距离(单位：px/sec)
-        start: true // start 设置开始或者停止自动滚动
-      },
-  })
-  .exec();
-```
-
-触发自动滚动。如果 `rate` 过小会无法滑动。滚动到边界后，会主动停止 `autoScroll`。如果用户重新反向拖拽到某一个位置，松手后, `autoScroll` 也不会重新触发自动滚动。
-
-### `scrollIntoView`
-
-```tsx
-<scroll-view>
-  <text id="targetnode">"click me, scrollIntoView"</text>
-</scroll-view>
-
-lynx.createSelectorQuery()
-  .select(`#targetnode`)
-  .invoke({
-    method: 'scrollIntoView',
-    params: {
-      scrollIntoViewOptions: {
-        block: 'center', // 纵向对齐方式: “start" 顶对齐 | "center" 居中对齐 | "end" 底对齐
-        inline: 'start', // 横向对齐方式： "start" 左对齐 | "center" 居中对齐 | "end" 右对齐
-        behavior: 'smooth', // 'smooth', // "smooth" | "none" 可选，指顶滚动是否带有动画
-      },
-    },
-  })
-  .exec();
-```
-
-使 `<scroll-view>` 滚动到指定子节点。本方法绑定在 `<scroll-view>` 的任意（直接/非直接）子节点上，而不是 `<scroll-view>` 本身。
-
-### `scrollBy`
-
-```tsx
-<scroll-view id="scrollview" />
-
-lynx.createSelectorQuery()
-  .select('#scrollview')
-  .invoke({
-    method: 'scrollBy',
-    params: {
-      offset: 100, // 滚动的距离, 单位 px
-    },
-    success(res) {
-      console.log('succ ');
-    },
-    fail(res) {
-      console.log('err ');
-    },
-}).exec();
-```
-
-在现有偏移量基础上滚动的距离，单位 `px`
+<APIReference />
 
 ## 性能优化建议
 
