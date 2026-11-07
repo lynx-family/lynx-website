@@ -1,0 +1,251 @@
+---
+description: 'AnimaXServiceCenter API reference for service registration, lookup, and removal on iOS and Android.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXServiceCenter
+
+`AnimaXServiceCenter` is the global AnimaX service registry for shared capabilities such as resource loading, image decoding, and monitoring.
+
+Services are isolated by scope. Each protocol or service type can have only one registered implementation in the same scope. To replace an implementation, unregister the old one before registering the new one.
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Instance
+
+### sharedInstance
+
+Returns the global `AnimaXServiceCenter` instance. Global services are usually registered during app initialization.
+
+**Returns**
+
+`AnimaXServiceCenter *`
+
+## Register Services
+
+### registerService
+
+Registers a service implementation in the default scope. Use it for app-level services such as default resource loaders, image decoders, or monitoring services.
+
+**Parameters**
+
+| Name    | Type                | Description             |
+| ------- | ------------------- | ----------------------- |
+| `proto` | `Protocol *`        | Service protocol.       |
+| `impl`  | `id<AnimaXService>` | Service implementation. |
+
+### registerServiceWithScope
+
+Registers a service implementation in a specific scope. Use it when a business unit, page, or animation instance needs an isolated service implementation.
+
+**Parameters**
+
+| Name    | Type                                             | Description             |
+| ------- | ------------------------------------------------ | ----------------------- |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | Service scope.          |
+| `proto` | `Protocol *`                                     | Service protocol.       |
+| `impl`  | `id<AnimaXService>`                              | Service implementation. |
+
+## Get Services
+
+### getService
+
+Gets a service implementation from the default scope. Returns `nil` when no implementation is registered.
+
+**Parameters**
+
+| Name    | Type         | Description                  |
+| ------- | ------------ | ---------------------------- |
+| `proto` | `Protocol *` | Service protocol to look up. |
+
+**Returns**
+
+`id<AnimaXService>` or `nil`.
+
+### getServiceWithScope
+
+Gets a service implementation from a specific scope. Returns `nil` when no implementation is registered.
+
+**Parameters**
+
+| Name    | Type                                             | Description                  |
+| ------- | ------------------------------------------------ | ---------------------------- |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | Service scope.               |
+| `proto` | `Protocol *`                                     | Service protocol to look up. |
+
+**Returns**
+
+`id<AnimaXService>` or `nil`.
+
+## Unregister Services
+
+### unregisterService
+
+Removes the service implementation for a protocol from the default scope.
+
+**Parameters**
+
+| Name    | Type         | Description                 |
+| ------- | ------------ | --------------------------- |
+| `proto` | `Protocol *` | Service protocol to remove. |
+
+### unregisterServiceWithScope
+
+Removes the service implementation for a protocol from a specific scope.
+
+**Parameters**
+
+| Name    | Type                                             | Description                 |
+| ------- | ------------------------------------------------ | --------------------------- |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | Service scope.              |
+| `proto` | `Protocol *`                                     | Service protocol to remove. |
+
+### unregisterAllServices
+
+Removes all services from the default scope.
+
+### unregisterAllServicesWithScope
+
+Removes all services from a specific scope.
+
+**Parameters**
+
+| Name    | Type                                             | Description    |
+| ------- | ------------------------------------------------ | -------------- |
+| `scope` | [`AnimaXServiceScope *`](./animax-service-scope) | Service scope. |
+
+## Built-in Services
+
+### AnimaXResourceFactoryService
+
+[`AnimaXResourceFactoryService`](./animax-resource-factory-service) creates resource loaders such as network, file, or asset loaders.
+
+### AnimaXImageService
+
+[`AnimaXImageService`](./animax-image-service) decodes image data into `UIImage`. Return `nil` to fall back to the default decoder.
+
+### AnimaXMonitorService
+
+[`AnimaXMonitorService`](./animax-monitor-service) reports errors and performance metrics.
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## Instance
+
+### inst
+
+Returns the global `AnimaXServiceCenter` instance. Global services are usually registered during app initialization.
+
+**Returns**
+
+`AnimaXServiceCenter`
+
+## Register Services
+
+### registerService
+
+Registers a service instance. Use the default scope for most app-level services, or pass a scope when a business unit, page, or animation instance needs an isolated service implementation.
+
+**Available Signatures**
+
+| Signature                                                         | Description                                        |
+| ----------------------------------------------------------------- | -------------------------------------------------- |
+| `registerService(Class<T> clazz, T instance)`                     | Registers a service instance in the default scope. |
+| `registerService(ServiceScope scope, Class<T> clazz, T instance)` | Registers a service instance in a specific scope.  |
+
+**Parameters**
+
+| Name       | Type                                     | Description                                         |
+| ---------- | ---------------------------------------- | --------------------------------------------------- |
+| `scope`    | [`ServiceScope`](./animax-service-scope) | Service scope. Uses the default scope when omitted. |
+| `clazz`    | `Class<T>`                               | Service interface type.                             |
+| `instance` | `T`                                      | Service instance.                                   |
+
+## Get Services
+
+### getService
+
+Gets a service instance. When no scope is provided, lookup uses the default scope. Returns `null` when the service type is not registered, the scope is invalid, or the class type is null.
+
+**Available Signatures**
+
+| Signature                                        | Description                                     |
+| ------------------------------------------------ | ----------------------------------------------- |
+| `getService(Class<T> clazz)`                     | Gets a service instance from the default scope. |
+| `getService(ServiceScope scope, Class<T> clazz)` | Gets a service instance from a specific scope.  |
+
+**Parameters**
+
+| Name    | Type                                     | Description                                         |
+| ------- | ---------------------------------------- | --------------------------------------------------- |
+| `scope` | [`ServiceScope`](./animax-service-scope) | Service scope. Uses the default scope when omitted. |
+| `clazz` | `Class<T>`                               | Service interface type to look up.                  |
+
+**Returns**
+
+`T` or `null`.
+
+## Unregister Services
+
+### unregisterService
+
+Removes the service instance for a type. When no scope is provided, removal uses the default scope.
+
+**Available Signatures**
+
+| Signature                                               | Description                                                     |
+| ------------------------------------------------------- | --------------------------------------------------------------- |
+| `unregisterService(Class<T> clazz)`                     | Removes the service instance for a type from the default scope. |
+| `unregisterService(ServiceScope scope, Class<T> clazz)` | Removes the service instance for a type from a specific scope.  |
+
+**Parameters**
+
+| Name    | Type                                     | Description                                         |
+| ------- | ---------------------------------------- | --------------------------------------------------- |
+| `scope` | [`ServiceScope`](./animax-service-scope) | Service scope. Uses the default scope when omitted. |
+| `clazz` | `Class<T>`                               | Service interface type to remove.                   |
+
+### unregisterAllServices
+
+Removes all services. When no scope is provided, it removes services from the default scope.
+
+**Available Signatures**
+
+| Signature                                   | Description                                  |
+| ------------------------------------------- | -------------------------------------------- |
+| `unregisterAllServices()`                   | Removes all services from the default scope. |
+| `unregisterAllServices(ServiceScope scope)` | Removes all services from a specific scope.  |
+
+**Parameters**
+
+| Name    | Type                                     | Description    |
+| ------- | ---------------------------------------- | -------------- |
+| `scope` | [`ServiceScope`](./animax-service-scope) | Service scope. |
+
+## Built-in Services
+
+### AnimaXResourceFactoryService
+
+[`AnimaXResourceFactoryService`](./animax-resource-factory-service) creates resource loaders such as network, file, or asset loaders.
+
+### AnimaXImageService
+
+[`AnimaXImageService`](./animax-image-service) loads images from URIs. Return `true` from `loadImage()` to claim the request.
+
+### AnimaXMonitorService
+
+[`AnimaXMonitorService`](./animax-monitor-service) reports errors and performance metrics.
+
+### AnimaXSettingService
+
+[`AnimaXSettingService`](./animax-setting-service) provides runtime configuration values.
+
+### AnimaXVideoService
+
+[`AnimaXVideoService`](./animax-video-service) creates video player instances.
+
+</PlatformTabs.Tab>
+</PlatformTabs>

@@ -1,0 +1,152 @@
+---
+description: '教程：处理 AnimaX 生命周期事件、帧更新、图层点击和首帧占位图切换。'
+---
+
+import { Go } from '@lynx';
+
+# 教程：运行时事件
+
+运行时事件可以让页面直接观察播放器状态，而不是只依赖本地推断。本教程会介绍生命周期事件、指定帧更新、FPS 上报、图层点击，以及从占位图切换到动画首帧的流程。
+
+## 监听生命周期事件
+
+常用事件包括 `ready`、`firstframe`、`start`、`repeat`、`update`、`fps`、`error` 和 `completion`。它们可以用于日志、埋点、加载态和播放控制 UI。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/events/index.tsx"
+  defaultEntryFile="dist/events.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/events.gif"
+  entry={['src/events/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/events/index.tsx': '{41-44,56-71}',
+  }}
+/>
+
+`ready` 表示 AnimaX 已经准备好渲染模型和平台渲染对象。如果需要接收帧更新，可以在 `ready` 之后订阅关心的帧。
+
+```tsx {3,9-17}
+const handleReady = (e: AnimaXReadyEvent) => {
+  pushLog('ready', e);
+  invokeAnimaX('subscribeUpdateEvents', { frames: [0, 30, 60, 89] });
+};
+
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  src={EVENTS_LOTTIE_SRC}
+  fps-event-interval={500}
+  bindready={handleReady}
+  bindfirstframe={(e) => pushLog('firstframe', e)}
+  bindstart={(e) => pushLog('start', e)}
+  bindrepeat={(e) => pushLog('repeat', e)}
+  bindupdate={(e) => pushLog('update', e)}
+  bindfps={pushFPSLog}
+  binderror={pushErrorLog}
+  bindcompletion={(e) => pushLog('completion', e)}
+/>;
+```
+
+## 订阅 update 事件
+
+`update` 和其它生命周期事件不太一样：只有被订阅的帧完成渲染时，AnimaX 才会触发 `update`。如果页面需要持续或定点获取帧更新，需要在 `ready` 之后调用 `subscribeUpdateEvent` 或 `subscribeUpdateEvents`，再通过 `bindupdate` 接收回调。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/events-update/index.tsx"
+  defaultEntryFile="dist/events-update.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/events-update.gif"
+  entry={[
+    'src/events-update/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/events-update/index.tsx': '{20-23,25-28,46,52,59-67}',
+  }}
+/>
+
+## 处理图层点击
+
+当动画本身需要响应用户交互时，可以使用 `bindtaplayers`。回调会返回命中的图层名称，页面可以再把图层名称映射成具体业务动作。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/events-tap/index.tsx"
+  defaultEntryFile="dist/events-tap.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/events-tap.gif"
+  entry={['src/events-tap/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/events-tap/index.tsx': '{13,18-19,31-37}',
+  }}
+/>
+
+建议把映射逻辑留在业务侧。动画只负责上报图层名称，业务代码决定这些图层名称对应什么行为。
+
+```tsx {1,9}
+const handleTapLayers = (e: AnimaXTapEvent) => {
+  setLayers(e.detail.layerList.join(', ') || 'no layer');
+};
+
+<animax-view
+  src={EVENTS_TAP_LOTTIE_SRC}
+  autoplay={true}
+  loop={true}
+  bindtaplayers={handleTapLayers}
+/>;
+```
+
+## 从占位图切换到首帧
+
+在生产页面里，动画首帧真正渲染出来之前，可以先展示一张占位图。占位图应在 `firstframe` 事件中移除，而不是在 `ready` 事件中移除，这样可以避免短暂白屏或未完成渲染的画面。
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/firstframe-poster/index.tsx"
+  defaultEntryFile="dist/firstframe-poster.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/firstframe-posterv2.gif"
+  entry={[
+    'src/firstframe-poster/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/firstframe-poster/index.tsx': '{25-28,48-56}',
+  }}
+/>
+
+`ready` 适合用来开启控制能力或准备运行时数据；`firstframe` 更适合用来移除占位图。
+
+```tsx {1,9-11}
+const handleFirstFrame = (e: AnimaXFirstFrameEvent) => {
+  setShowPoster(false);
+  setStatus(`first frame: ${formatFrame(e.detail.current)}`);
+};
+
+<animax-view
+  src={FIRSTFRAME_POSTER_LOTTIE_SRC}
+  autoplay={true}
+  bindready={handleReady}
+  bindfirstframe={handleFirstFrame}
+  binderror={handleError}
+/>;
+
+{
+  showPoster ? (
+    <view className="poster-layer">
+      <image
+        className="poster-image"
+        src={DYNAMIC_REPLACEMENT_IMAGE_URL}
+        mode="aspectFill"
+      />
+    </view>
+  ) : null;
+}
+```

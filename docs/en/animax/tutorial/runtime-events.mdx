@@ -1,0 +1,152 @@
+---
+description: 'Tutorial: handle AnimaX lifecycle events, frame updates, layer taps, and first-frame poster transitions.'
+---
+
+import { Go } from '@lynx';
+
+# Tutorial: Runtime Events
+
+Runtime events let the page observe what the player is doing without guessing from local state. This tutorial covers lifecycle events, subscribed frame updates, FPS reporting, layer taps, and poster-to-first-frame transitions.
+
+## Listen to lifecycle events
+
+The main lifecycle events are `ready`, `firstframe`, `start`, `repeat`, `update`, `fps`, `error`, and `completion`. Use them to drive logs, analytics, loading states, and playback UI.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/events/index.tsx"
+  defaultEntryFile="dist/events.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/events.gif"
+  entry={['src/events/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/events/index.tsx': '{41-44,56-71}',
+  }}
+/>
+
+`ready` means AnimaX has prepared the rendering model and platform rendering object. If you need frame updates, subscribe to the frames you care about after `ready`.
+
+```tsx {3,9-17}
+const handleReady = (e: AnimaXReadyEvent) => {
+  pushLog('ready', e);
+  invokeAnimaX('subscribeUpdateEvents', { frames: [0, 30, 60, 89] });
+};
+
+<animax-view
+  id={ANIMAX_VIEW_ID}
+  src={EVENTS_LOTTIE_SRC}
+  fps-event-interval={500}
+  bindready={handleReady}
+  bindfirstframe={(e) => pushLog('firstframe', e)}
+  bindstart={(e) => pushLog('start', e)}
+  bindrepeat={(e) => pushLog('repeat', e)}
+  bindupdate={(e) => pushLog('update', e)}
+  bindfps={pushFPSLog}
+  binderror={pushErrorLog}
+  bindcompletion={(e) => pushLog('completion', e)}
+/>;
+```
+
+## Subscribe to update events
+
+`update` is different from the other lifecycle events: AnimaX only emits it for frames that have been subscribed. Subscribe in `ready` with `subscribeUpdateEvent` or `subscribeUpdateEvents`, then handle the callback with `bindupdate`.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/events-update/index.tsx"
+  defaultEntryFile="dist/events-update.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/events-update.gif"
+  entry={[
+    'src/events-update/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/events-update/index.tsx': '{20-23,25-28,46,52,59-67}',
+  }}
+/>
+
+## Handle layer taps
+
+Use `bindtaplayers` when the animation itself should be interactive. The callback returns the tapped layer names, so the page can map animation layers to business actions.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/events-tap/index.tsx"
+  defaultEntryFile="dist/events-tap.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/events-tap.gif"
+  entry={['src/events-tap/index.tsx', 'src/shared/animation.ts', 'src/App.css']}
+  highlight={{
+    'src/events-tap/index.tsx': '{13,18-19,31-37}',
+  }}
+/>
+
+Keep the mapping logic outside the animation component. The animation reports layer names, and the application decides what those names mean.
+
+```tsx {1,9}
+const handleTapLayers = (e: AnimaXTapEvent) => {
+  setLayers(e.detail.layerList.join(', ') || 'no layer');
+};
+
+<animax-view
+  src={EVENTS_TAP_LOTTIE_SRC}
+  autoplay={true}
+  loop={true}
+  bindtaplayers={handleTapLayers}
+/>;
+```
+
+## Switch from poster to first frame
+
+For production pages, show a poster before the animation has rendered its first frame. Hide the poster in `firstframe` instead of `ready`; this avoids exposing a blank or partially prepared view.
+
+<Go
+  defaultTab="preview"
+  webPreview={false}
+  example="animax"
+  defaultFile="src/firstframe-poster/index.tsx"
+  defaultEntryFile="dist/firstframe-poster.lynx.bundle"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/animax/docs/firstframe-posterv2.gif"
+  entry={[
+    'src/firstframe-poster/index.tsx',
+    'src/shared/animation.ts',
+    'src/App.css',
+  ]}
+  highlight={{
+    'src/firstframe-poster/index.tsx': '{25-28,48-56}',
+  }}
+/>
+
+`ready` is the right place to enable controls or prepare runtime data. `firstframe` is the right place to remove the poster.
+
+```tsx {1,9-11}
+const handleFirstFrame = (e: AnimaXFirstFrameEvent) => {
+  setShowPoster(false);
+  setStatus(`first frame: ${formatFrame(e.detail.current)}`);
+};
+
+<animax-view
+  src={FIRSTFRAME_POSTER_LOTTIE_SRC}
+  autoplay={true}
+  bindready={handleReady}
+  bindfirstframe={handleFirstFrame}
+  binderror={handleError}
+/>;
+
+{
+  showPoster ? (
+    <view className="poster-layer">
+      <image
+        className="poster-image"
+        src={DYNAMIC_REPLACEMENT_IMAGE_URL}
+        mode="aspectFill"
+      />
+    </view>
+  ) : null;
+}
+```
