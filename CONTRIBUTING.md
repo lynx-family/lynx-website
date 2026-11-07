@@ -277,10 +277,11 @@ Rspress copies every file under `docs/public` into the build output while
 preserving its path relative to that directory. These public files are
 URL-addressed resources, not code modules.
 
-Do not import from `@assets` in `docs/` or `sharedDocs/`. The alias points to
-the `docs/public/assets` subtree, so an import emits a bundled copy in addition
-to the public copy. There is no replacement asset alias: use an approved
-immutable documentation CDN URL by default.
+Do not import from the retired `@assets` namespace in `docs/` or `sharedDocs/`.
+Files under `docs/public/assets` are public URLs rather than modules, and
+importing one would emit a bundled copy in addition to the public copy. There
+is no replacement asset alias: use an approved immutable documentation CDN URL
+by default.
 
 When a document intentionally uses an existing public file, standard Markdown
 origin-root URLs are version-aware because Rspress resolves them under the

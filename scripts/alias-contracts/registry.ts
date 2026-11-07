@@ -248,38 +248,6 @@ export const aliases = [
     lifecycle: stablePublicLifecycle,
   },
   {
-    // Legacy compatibility for existing src/theme consumers only.
-    // Documentation imports are forbidden; Gate 3 owns no-new enforcement.
-    id: 'public-assets',
-    specifier: '@assets',
-    owner: 'consumer',
-    visibility: 'public',
-    kind: 'subpaths-only',
-    allowedImporters: ['lynx-website', 'consumer'],
-    subpaths: {
-      targetOwners: ['consumer'],
-      lifecycle: {
-        state: 'migration',
-        removalCondition:
-          'remove-after-runtime-assets-move-to-source-owned-locations',
-      },
-    },
-    canonical: publicCanonicalSpelling,
-    allowMultipleResolverRoots: false,
-    implementationSources: {
-      requiredAreas: ['site-public-assets'],
-      additionalOwners: [],
-    },
-    downstream: {
-      implementation: 'required',
-    },
-    lifecycle: {
-      state: 'migration',
-      removalCondition:
-        'remove-after-runtime-assets-move-to-source-owned-locations',
-    },
-  },
-  {
     id: 'rspress-theme',
     specifier: '@theme',
     owner: 'rspress',
@@ -394,15 +362,6 @@ export const ossSourceAreas = [
     id: 'oss-version-data',
     root: 'docs/public/version.json',
     owner: 'lynx-website',
-    role: 'authoritative',
-  },
-  {
-    // This is the OSS host's final assembled asset root. A downstream host
-    // binds the same ID to its final tree after copying OSS assets and applying
-    // its overlays; `@assets` still resolves through one deterministic root.
-    id: 'site-public-assets',
-    root: 'docs/public/assets',
-    owner: 'consumer',
     role: 'authoritative',
   },
   {

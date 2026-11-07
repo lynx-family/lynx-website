@@ -305,6 +305,9 @@ test('policy checks raw spellings, owners, targets, types, settings and portable
       await rules(record('@assets/icon.svg', { boundary: 'documentation' }))
     ).includes('document-assets'),
   );
+  assert.ok(
+    (await rules(record('@assets/icon.svg'))).includes('retired-alias'),
+  );
   assert.deepEqual(await rules(record('@theme/entry.scss')), []);
   assert.ok(
     (await rules(record('../runtime', { boundary: 'documentation' }))).includes(
