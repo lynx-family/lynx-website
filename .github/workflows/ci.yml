@@ -37,7 +37,12 @@ jobs:
             --lockfile-only \
             --ignore-scripts \
             --no-frozen-lockfile
-          if ! git diff --exit-code -- pnpm-lock.yaml; then
+          # Registry deprecation notices are mutable metadata and do not
+          # affect the resolved dependency graph or package integrity.
+          if ! git diff \
+            --exit-code \
+            --ignore-matching-lines='^[[:space:]]*deprecated:' \
+            -- pnpm-lock.yaml; then
             echo "::error::The committed pnpm-lock.yaml is inconsistent with the complete dependency resolution."
             cat <<'EOF'
           Regenerate the lockfile locally with:
