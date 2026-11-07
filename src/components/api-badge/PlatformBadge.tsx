@@ -2,28 +2,9 @@ import type LCD from '@lynx-js/lynx-compat-data';
 import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
 import { Badge } from '@rspress/core/theme';
 
-import { mapPlatformNameToIconName as mapCompatPlatformNameToIconName } from '../../lib/platform';
-import { PlatformSvg } from '../platform-navigation/PlatformIcon';
+import { PlatformIcon } from '../platform/PlatformIcon';
 
 import './PlatformBadge.css';
-
-/**
- * Maps a platform name to its corresponding icon name.
- * @param platform The platform name to map.
- * @returns The icon name for the given platform.
- */
-function mapPlatformNameToIconName(platform: ExtendedPlatformName) {
-  if (platform === 'clay') {
-    return 'clay';
-  }
-  if (platform === 'macos') {
-    return 'macos-text';
-  }
-  if (platform === 'windows') {
-    return 'windows';
-  }
-  return mapCompatPlatformNameToIconName(platform);
-}
 
 // Extend LCD-defined platform names with labels that are useful in prose but
 // are not compatibility-data platform keys.
@@ -99,7 +80,10 @@ function PlatformBadgeInner({
       style={{ display: 'contents' }}
     >
       <Badge type={type}>
-        <PlatformSvg platformName={platform} className="platform-badge__icon" />
+        <PlatformIcon
+          platformName={platform}
+          className="platform-badge__icon"
+        />
         <span className="platform-badge__label">{badgeText}</span>
       </Badge>
     </span>

@@ -11,19 +11,18 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
-
 /**
- * Maps a BCD platform name to the icon name used by the shared icon set
- * (see `PlatformSvg`'s `ICON_NAME_TO_URL`). Shared across the compat-table
- * headers, platform badges, and platform-navigation icons so every surface
- * derives the same icon for a given platform.
+ * Maps compatibility-data keys and site platform IDs to shared glyph names.
+ * Unknown names pass through; the platform renderer owns the fallback asset.
  */
-export function mapPlatformNameToIconName(platformName: BCD.PlatformName) {
+export function mapPlatformNameToIconName(platformName: string) {
   switch (platformName) {
     case 'ios':
     case 'clay_ios':
       return 'apple';
+    case 'macos':
+    case 'macos-arm64':
+    case 'macos-intel':
     case 'clay_macos':
       return 'macos-text';
     case 'android':

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
 import React, { useCallback, useEffect, useState } from 'react';
-import { PlatformSvg } from '../platform-navigation/PlatformIcon';
+import { PlatformIcon } from '../platform/PlatformIcon';
 import type { PlatformName } from '@lynx-js/lynx-compat-data';
 import '../shared-tabs.scss';
 
@@ -159,7 +159,7 @@ const OptionSelector = React.forwardRef<
             {Array.isArray(option.iconName) ? (
               <div className="shared-tabs__card-icons">
                 {option.iconName.map((icon, i) => (
-                  <PlatformSvg
+                  <PlatformIcon
                     key={`${option.id}-${i}`}
                     platformName={icon}
                     className="shared-tabs__card-icon"
@@ -167,7 +167,7 @@ const OptionSelector = React.forwardRef<
                 ))}
               </div>
             ) : (
-              <PlatformSvg
+              <PlatformIcon
                 platformName={option.iconName}
                 className="shared-tabs__card-icon"
               />
