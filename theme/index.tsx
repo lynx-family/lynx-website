@@ -42,6 +42,7 @@ import { BLOG_BASE, BLOG_IS_CROSS_VERSION } from '@route-config';
 import AfterNavTitle from './AfterNavTitle';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
+import PageSdkSince from './versioning/PageSdkSince';
 import RspeedyMigrationNotice from './RspeedyMigrationNotice';
 import { isGeneratedApiPage } from './api-reference';
 import { subsiteOf } from './api-subsites';
@@ -103,11 +104,18 @@ function Layout({
         />
       </Head>
       <OgHead />
+      {/* Rspress omits document slots when exporting Markdown. */}
+      {import.meta.env.SSG_MD && <PageSdkSince format="markdown" />}
       <BaseLayout
         {...props}
         afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
-        beforeDocContent={<RspeedyMigrationNotice />}
+        beforeDocContent={
+          <>
+            <PageSdkSince />
+            <RspeedyMigrationNotice />
+          </>
+        }
         bottom={<Footer />}
       />
     </>
