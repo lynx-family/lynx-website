@@ -451,6 +451,13 @@ than enumerate individual commands. Use lowercase `issue` and `doc`.
 ## Pull Requests
 
 - Base normal changes on `main`.
+- Open pull requests as drafts by default. When using GitHub CLI, pass
+  `--draft` to `gh pr create`.
+- Draft pull requests receive CI checks and CodeRabbit reviews. Keep them
+  in draft while checks and automated reviews run; only human maintainers
+  may mark them ready for review.
+- All pull requests require human review and manual merging. Review agents
+  may approve changes but must not mark pull requests ready or merge them.
 - Format pull request titles as Conventional Commit subjects.
 - Pull request title subjects must contain at least 3 non-whitespace
   characters and be no longer than 72 characters.
