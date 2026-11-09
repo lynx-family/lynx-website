@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
-import { PlatformIcon } from './PlatformIcon';
+import { PlatformIconGroup } from './PlatformIconGroup';
 import { Platform } from './types';
 import { Link } from '@rspress/core/theme';
 
@@ -43,7 +43,7 @@ const CardLinkTab = ({
         )}
       >
         <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
-          {platforms && <PlatformIcon platforms={platforms} />}
+          {platforms && <PlatformIconGroup platforms={platforms} />}
           {children}
         </CardContent>
       </Card>

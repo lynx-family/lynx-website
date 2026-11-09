@@ -1,4 +1,5 @@
 import type { CSSProperties, FC } from 'react';
+import { MaskIcon } from '../../icons/MaskIcon';
 
 import appleUrl from './assets/home-icon-apple.svg';
 import windowsUrl from './assets/windows.svg';
@@ -16,10 +17,10 @@ const MASK_URLS = {
   multiplatform: multiplatformUrl,
 };
 
-export type MaskIconVariant = keyof typeof MASK_URLS;
+export type FeatureIconVariant = keyof typeof MASK_URLS;
 
-type MaskIconProps = {
-  variant: MaskIconVariant;
+type FeatureIconProps = {
+  variant: FeatureIconVariant;
   className?: string;
   style?: CSSProperties;
 };
@@ -29,24 +30,12 @@ type MaskIconProps = {
  * so it can be tinted by the surrounding theme (several of the source
  * SVGs hardcode their stroke color).
  */
-export const MaskIcon: FC<MaskIconProps> = ({ variant, className, style }) => {
-  const maskImage = `url(${MASK_URLS[variant]})`;
+export const FeatureIcon: FC<FeatureIconProps> = ({
+  variant,
+  className,
+  style,
+}) => {
   return (
-    <div
-      aria-hidden
-      className={className}
-      style={{
-        background: 'currentColor',
-        WebkitMaskImage: maskImage,
-        maskImage,
-        WebkitMaskRepeat: 'no-repeat',
-        maskRepeat: 'no-repeat',
-        WebkitMaskPosition: 'center',
-        maskPosition: 'center',
-        WebkitMaskSize: 'contain',
-        maskSize: 'contain',
-        ...style,
-      }}
-    />
+    <MaskIcon src={MASK_URLS[variant]} className={className} style={style} />
   );
 };

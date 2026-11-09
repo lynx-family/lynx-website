@@ -5,7 +5,7 @@
  * badge need to access `platforms.json` to gather name for each platform.
  * - useSWR or a shared contextual store to ensure we are not over-fetching.
  */
-import type LCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import { PlatformBadge } from './PlatformBadge';
 import { StatusBadge } from './StatusBadge';
 export * as Platform from './PlatformBadge';

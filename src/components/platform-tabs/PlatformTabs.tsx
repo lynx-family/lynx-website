@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
 import React, { useCallback, useEffect, useState } from 'react';
-import { PlatformSvg } from '../platform-navigation/PlatformIcon';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
+import { PlatformIcon } from '../platform/PlatformIcon';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import '../shared-tabs.scss';
 
 type Platform =
@@ -20,7 +20,7 @@ type Platform =
   | 'macos-intel'
   | 'reactlynx';
 
-type IconRef = PlatformName | string;
+type IconRef = LCD.PlatformName | string;
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
   label: string;
@@ -75,17 +75,17 @@ const PLATFORM_OPTIONS: Array<{
   {
     id: 'macos',
     label: 'macOS',
-    iconName: 'macos' as PlatformName,
+    iconName: 'macos' as LCD.PlatformName,
   },
   {
     id: 'macos-arm64',
     label: 'macOS (arm64)',
-    iconName: 'macos' as PlatformName,
+    iconName: 'macos' as LCD.PlatformName,
   },
   {
     id: 'macos-intel',
     label: 'macOS (x86_64)',
-    iconName: 'macos' as PlatformName,
+    iconName: 'macos' as LCD.PlatformName,
   },
   {
     id: 'reactlynx',
@@ -159,7 +159,7 @@ const OptionSelector = React.forwardRef<
             {Array.isArray(option.iconName) ? (
               <div className="shared-tabs__card-icons">
                 {option.iconName.map((icon, i) => (
-                  <PlatformSvg
+                  <PlatformIcon
                     key={`${option.id}-${i}`}
                     platformName={icon}
                     className="shared-tabs__card-icon"
@@ -167,7 +167,7 @@ const OptionSelector = React.forwardRef<
                 ))}
               </div>
             ) : (
-              <PlatformSvg
+              <PlatformIcon
                 platformName={option.iconName}
                 className="shared-tabs__card-icon"
               />

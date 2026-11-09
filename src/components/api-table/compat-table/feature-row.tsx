@@ -11,7 +11,7 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import React, { useContext } from 'react';
 import { BrowserInfoContext } from './browser-info';
 import { LEGEND_LABELS } from './legend';
@@ -32,7 +32,7 @@ const DEFAULT_LOCALE = 'en-US';
 
 function getSupportClassName(
   support: SupportStatementExtended | undefined,
-  browser: BCD.PlatformStatement,
+  browser: LCD.PlatformStatement,
 ): 'no' | 'yes' | 'partial' | 'preview' | 'removed-partial' | 'unknown' {
   if (!support) {
     return 'unknown';
@@ -70,7 +70,7 @@ function getSupportBrowserReleaseDate(
   return getCurrentSupport(support)!.release_date;
 }
 
-function StatusIcons({ status }: { status: BCD.StatusBlock }) {
+function StatusIcons({ status }: { status: LCD.StatusBlock }) {
   const icons = [
     status.experimental && {
       title: 'Experimental. Expect behavior to change in the future.',
@@ -114,7 +114,7 @@ function prettierVersion(version: string) {
 
 function labelFromString(
   version: string | boolean | null | undefined,
-  browser: BCD.PlatformStatement,
+  browser: LCD.PlatformStatement,
 ) {
   if (typeof version !== 'string') {
     return <>{'?'}</>;
@@ -144,7 +144,7 @@ function labelFromString(
 function versionLabelFromSupport(
   added: string | boolean | null | undefined,
   removed: string | boolean | null | undefined,
-  browser: BCD.PlatformStatement,
+  browser: LCD.PlatformStatement,
 ) {
   if (typeof removed !== 'string') {
     return <>{labelFromString(added, browser)}</>;
@@ -163,8 +163,8 @@ const CellText = React.memo(
     browser,
     timeline = false,
   }: {
-    support: BCD.SupportStatement | undefined;
-    browser: BCD.PlatformStatement;
+    support: LCD.SupportStatement | undefined;
+    browser: LCD.PlatformStatement;
     timeline?: boolean;
   }) => {
     const currentSupport = getCurrentSupport(support);
@@ -293,7 +293,7 @@ function Icon({ name }: { name: string }) {
   );
 }
 
-function CellIcons({ support }: { support: BCD.SupportStatement | undefined }) {
+function CellIcons({ support }: { support: LCD.SupportStatement | undefined }) {
   const supportItem = getCurrentSupport(support);
   if (!supportItem) {
     return null;
@@ -314,8 +314,8 @@ function FlagsNote({
   supportItem,
   browser,
 }: {
-  supportItem: BCD.SimpleSupportStatement;
-  browser: BCD.PlatformStatement;
+  supportItem: LCD.SimpleSupportStatement;
+  browser: LCD.PlatformStatement;
 }) {
   const hasAddedVersion = typeof supportItem.version_added === 'string';
   const hasRemovedVersion = typeof supportItem.version_removed === 'string';
@@ -356,8 +356,8 @@ function FlagsNote({
 }
 
 function getNotes(
-  browser: BCD.PlatformStatement,
-  support: BCD.SupportStatement,
+  browser: LCD.PlatformStatement,
+  support: LCD.SupportStatement,
 ) {
   if (support) {
     return asList(support)
@@ -489,9 +489,9 @@ function CompatCell({
   onToggle,
   locale,
 }: {
-  browserId: BCD.PlatformName;
-  browserInfo: BCD.PlatformStatement;
-  support: BCD.SupportStatement | undefined;
+  browserId: LCD.PlatformName;
+  browserInfo: LCD.PlatformStatement;
+  support: LCD.SupportStatement | undefined;
   showNotes: boolean;
   onToggle: () => void;
   locale: string;
@@ -549,10 +549,10 @@ export const FeatureRow = React.memo(
     index: number;
     feature: {
       name: string;
-      compat: BCD.CompatStatement;
+      compat: LCD.CompatStatement;
       depth: number;
     };
-    browsers: BCD.PlatformName[];
+    browsers: LCD.PlatformName[];
     activeCell: number | null;
     onToggleCell: ([row, column]: [number, number]) => void;
     locale: string;

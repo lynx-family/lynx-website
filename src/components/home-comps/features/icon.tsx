@@ -1,18 +1,18 @@
 import React from 'react';
 import { withBase } from '@rspress/core/runtime';
 import { cn } from '@/lib/utils';
-import { PlatformSvg } from '@/components/platform-navigation/PlatformIcon';
+import { PlatformIcon } from '../../platform/PlatformIcon';
 import {
   PLATFORM_TINT,
   type PlatformKey,
-} from '@/components/platform-navigation/platform-colors';
-import ReactLynxIcon from '@/components/api-table/compat-table/assets/icons/reactlynx.svg?react';
+} from '../../platform/platform-colors';
+import ReactLynxIcon from '../../platform/assets/reactlynx.svg?react';
 import VueLynxIcon from './vue-lynx-logo.svg?react';
 import OctaneIcon from './octane-logo.svg?react';
 import styles from './index.module.less';
 
 const PlatformIconWrapper = ({ platform }: { platform: PlatformKey }) => (
-  <PlatformSvg
+  <PlatformIcon
     platformName={platform}
     className={cn(styles['platform-icon'], PLATFORM_TINT[platform])}
   />

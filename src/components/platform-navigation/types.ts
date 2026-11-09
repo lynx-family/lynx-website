@@ -7,7 +7,7 @@ export type Platform =
   | 'macos-arm64'
   | 'macos-intel';
 
-export interface PlatformIconProps {
+export interface PlatformIconGroupProps {
   /** The platforms to show icons for */
   platforms?: Platform[];
   /** Optional className for styling */

@@ -252,6 +252,11 @@ Do not add new `@site/*` dependencies. For new code:
   intentionally inject configuration. For example, `@og-config` is configured
   as the exact-match `@og-config$` alias in Rspress.
 
+## Theme and Component Design
+
+Follow the contributor-facing [Theme and Component Design](./src/README.md)
+guide for changes to `src/` and `theme/`.
+
 ## Change Rules
 
 Apply the section-specific rules above, including the resolver, host-root, and

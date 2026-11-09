@@ -11,10 +11,10 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import React, { useContext } from 'react';
 
-export const BrowserInfoContext = React.createContext<BCD.Platforms | null>(
+export const BrowserInfoContext = React.createContext<LCD.Platforms | null>(
   null,
 );
 
@@ -22,7 +22,7 @@ export function BrowserName({
   id,
   platformType,
 }: {
-  id: BCD.PlatformName;
+  id: LCD.PlatformName;
   platformType?: string;
 }) {
   const browserInfo = useContext(BrowserInfoContext);

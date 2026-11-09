@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
 import { Label } from '../ui/label';
-import { PlatformIcon } from './PlatformIcon';
+import { PlatformIconGroup } from './PlatformIconGroup';
 import { Platform } from './types';
 
 const PLATFORM_OPTIONS: Array<{
@@ -99,7 +99,7 @@ function OptionSelector({
           onClick={() => onSelect(option.id)}
         >
           <CardContent className="pt-4 pb-4 flex flex-col items-center gap-3">
-            <PlatformIcon platforms={[option.id]} />
+            <PlatformIconGroup platforms={[option.id]} />
             <Label
               htmlFor={option.id}
               className="cursor-pointer flex items-center gap-2 whitespace-nowrap text-center"

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type LCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import { usePageData, withBase } from '@rspress/core/runtime';
 import React from 'react';
 import useSWR from 'swr';
