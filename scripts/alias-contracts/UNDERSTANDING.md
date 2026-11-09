@@ -137,9 +137,10 @@ the `lynx-stack` owner without adding an `@lynx-stack` alias.
 
 Gate 2 establishes the shared executable-import corpus and uses it for resolver
 verification. Gate 3 reuses those records for import policy and exact
-migration baselines. Concrete direct-path and `@assets/*` inventories are
-derived from observed imports and belong only in Gate 3 data, never in the
-Gate 1 registry.
+migration baselines. Concrete direct component paths are derived from observed
+imports and belong only in Gate 3 data, never in the Gate 1 registry. The
+retired `@assets/*` spelling is rejected directly by Gate 3 and has no alias or
+source-area contract.
 
 ## Gate 2 Resolution Verification
 
