@@ -13,17 +13,17 @@ import { BlogHeader, Go } from '@lynx';
 
 {/* cspell:ignore Autolink ServalSVG LepusNG allSettled maxSnapCount */}
 
-**Lynx 4.2 发布了！**由于 Lynx 4.1 与 4.2 的发布时间间隔较短，我们不再为 4.1 单独编写 release blog。这篇文章将一并介绍 [Lynx 4.0](/blog/lynx-4-0) 之后，**两个版本**的重要更新。
+**Lynx 4.2 已经正式发布！**由于 Lynx 4.1 与 4.2 的发布时间间隔较短，我们不再为 4.1 单独编写 release blog。这篇文章将一并介绍 [Lynx 4.0](/blog/lynx-4-0) 之后，**两个版本**的重要更新。
 
-这一轮更新的关键词是“可控”：通过 CSS 层叠层组织样式优先级，根据样式能力与动态颜色偏好应用不同规则，自主决定 ReactLynx 首屏同步时机，以及沿着页面生命周期分析内存。同时，图片、文本、滚动交互和宿主接入也有进一步完善。
+这一轮更新的关键词是“可控”：通过 CSS Layer 组织样式优先级，根据样式能力与动态颜色偏好应用不同规则，自主决定 ReactLynx 首屏同步时机，以及沿着页面生命周期分析内存。同时，图片、文本、滚动交互和宿主接入也有进一步完善。
 
 ## 更可预测的 CSS 行为
 
-### 通过层叠层组织样式
+### 通过 `@layer` 组织样式
 
-随着设计系统不断扩展，覆盖组件样式很容易变成不断堆叠选择器优先级的竞赛。CSS `@layer` 允许你先确定各组样式的顺序，而不必为每次覆盖寻找更复杂的选择器。
+随着设计系统不断扩展，覆盖组件样式很容易变成不断堆叠选择器优先级的竞争。CSS `@layer` 允许你先确定各组样式的顺序，而不必为每次覆盖寻找更复杂的选择器。
 
-例如，下面的卡片会保留组件层的背景色，并采用工具层定义的内边距：
+例如，下面的卡片会保留 `components` 层的背景色，并采用 `utilities` 层定义的内边距：
 
 ```css
 @layer reset, base, components, utilities;
@@ -48,9 +48,9 @@ import { BlogHeader, Go } from '@lynx';
 </view>
 ```
 
-按照[层叠层顺序](https://github.com/lynx-family/lynx/pull/8209)，普通声明中靠后的层优先于靠前的层；同一层内仍由选择器优先级和源码顺序决定。未放入任何层的普通声明优先于层内声明。对于 `!important` 声明，层的优先级顺序会反转。命名层、匿名层和嵌套层均受支持。
+普通声明中靠后的层优先于靠前的层；同一层内仍由选择器优先级和源码顺序决定。未放入任何层的普通声明优先于层内声明。
 
-层叠层和下文的条件规则需要兼容的构建工具链，并启用 CSS Rule 编码。请在现有构建配置的插件列表中，与项目使用的 Lynx 和 ReactLynx 插件一起添加以下插件：
+`@layer` 和下文的 `@supports` 支持需要在构建时启用 CSS Rule。请在现有构建配置的插件列表中，与项目使用的 Lynx 和 ReactLynx 插件一起添加以下插件：
 
 ```js
 import { pluginLynxConfig } from '@lynx-js/config-rsbuild-plugin';
@@ -60,11 +60,13 @@ pluginLynxConfig({
 });
 ```
 
-这是需要显式开启的编码路径，并不会自动应用到所有已构建的模板。具体配置可参考 [CSS Rule 配置示例](/api/css/media-query#启用-css-rule-编码)。
+具体配置可参考 [CSS Rule 配置示例](/api/css/media-query#启用-css-rule-编码)。
 
 ### 按条件应用样式
 
-`@supports` 新增声明检测、引擎版本范围条件，以及 `not`、`and`、`or` 条件组合。你可以先保留一种回退布局，再在对应 CSS 声明受支持时启用另一种布局：
+现在可以使用 `@supports` 检测 CSS 声明支持、引擎版本范围等条件，并通过 `not`、`and`、`or` 进行条件组合。
+
+例如，在支持该声明的运行时中，`.tiles` 的两个子元素会采用两列 grid 布局，而不是纵向 flex 堆叠：
 
 ```css
 .tiles {
@@ -80,9 +82,7 @@ pluginLynxConfig({
 }
 ```
 
-在支持该声明的运行时中，`.tiles` 的两个子元素会采用两列网格布局，而不是纵向堆叠。声明检测检查的是引擎的 CSS 解析能力，并不判断宿主是否安装了某个可选的原生服务。不受支持的函数条件和未知条件形式会保守地求值为 false。
-
-在 [4.0 引入媒体查询](/blog/lynx-4-0#css-媒体查询)的基础上，宿主现在还可以更新运行时的深浅色偏好，触发 `prefers-color-scheme` 重新求值，而不必重新构建页面。以下现有媒体查询示例展示了对应的样式规则：
+在 [4.0 引入媒体查询](/blog/lynx-4-0#css-媒体查询) 的基础上，宿主现在还可以更新运行时的深浅色偏好，以触发 `prefers-color-scheme` 重新求值，从而不必重新渲染整个页面。以下现有媒体查询示例展示了对应的样式规则：
 
 <Go
   example="css"
@@ -94,15 +94,9 @@ pluginLynxConfig({
   img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/doc/media-query-portrait-ranges.png"
 />
 
-这里的预览用于说明媒体查询样式，并非宿主切换颜色模式的录屏。要验证新的更新路径，请保持同一页面打开，切换宿主的颜色偏好，并检查匹配的样式是否随之变化。
-
 ### 为阴影添加动画
 
-新动画器现在支持 [`box-shadow` 的关键帧和 transition 动画](https://github.com/lynx-family/lynx/pull/7619)。除了改变卡片的悬浮高度，还可以通过多层阴影实现彩色光晕、流动光影和层叠空间效果。
-
-以下三个 Demo 均录制于运行 Lynx 4.2.0 的 Android 原生 LynxExplorer 应用。每个 GIF 均为 **896 × 1280、24 fps**，由原生视频采样得到，没有放大低清画面或合成运动。卡片保持静止，全部动态效果来自 `box-shadow`，不依赖 JavaScript 定时器或 transform。
-
-在动画元素上启用 `enable-new-animator={true}`。代码片段保留了动画元素及其关键帧，省略文字排版、外围布局和静态装饰元素。请为阴影预留足够的显示空间。开启减少动态效果偏好的读者会看到静态帧，而不是自动播放的 GIF。
+新动画器现在支持 `box-shadow` 的关键帧和 transition 动画。
 
 <div
   style={{
@@ -139,14 +133,7 @@ pluginLynxConfig({
       }}
     />
   </picture>
-  <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 12 }}>
-    <a href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/neon-reactor-3c75a8beb227c2b6.gif">
-      查看原尺寸 GIF
-    </a>
-  </figcaption>
 </figure>
-
-<p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6 }}>五层阴影围绕静止的核心形成青紫光晕。关键帧改变颜色、模糊半径和扩散范围，核心本身保持不动。</p>
 </section>
 
 <section style={{ minWidth: 0 }}>
@@ -174,14 +161,7 @@ pluginLynxConfig({
       }}
     />
   </picture>
-  <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 12 }}>
-    <a href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/chromatic-orbit-9805285c0fb8c781.gif">
-      查看原尺寸 GIF
-    </a>
-  </figcaption>
 </figure>
-
-<p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6 }}>三层彩色阴影通过水平和垂直偏移变化环绕卡片流动。卡片与文字保持原位，环绕效果完全来自 box-shadow。</p>
 </section>
 
 <section style={{ minWidth: 0 }}>
@@ -209,17 +189,12 @@ pluginLynxConfig({
       }}
     />
   </picture>
-  <figcaption style={{ marginTop: 8, textAlign: 'center', fontSize: 12 }}>
-    <a href="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/blog/lynx-4-2/shadow-stack-cc160a51c8a5fe12.gif">
-      查看原尺寸 GIF
-    </a>
-  </figcaption>
 </figure>
-
-<p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6 }}>五层硬边彩色阴影向一侧展开、收拢，再向另一侧展开。第六层柔和阴影补充空间深度，无需增加额外的动画元素。</p>
 </section>
 
 </div>
+
+在动画元素上启用 `enable-new-animator={true}` 并使用 `@keyframes` 组织动画，查看以上效果代码：
 
 :::details 霓虹反应堆 — 动画代码
 
@@ -383,19 +358,24 @@ pluginLynxConfig({
 
 :::
 
-这些示例使用 Lynx 4.2 的新动画器。本次新增的是动画支持，而不是此前已有的静态 `box-shadow` 属性。支持范围可参考 [transition 属性列表](/api/css/properties/transition-property)。
-
 ### 更接近 Web 的布局默认行为
 
-当 `targetSdkVersion >= 4.1` 时，默认启用网格定位简写（`grid-column` 和 `grid-row`），并在 `flex` 简写省略 basis 时使用 `0%`。这些能力此前已通过配置引入，本次调整的是与目标 SDK 版本关联的默认值。显式将 `enableGridPlacementShorthands` 或 `enableFlexBasisZeroPercent` 设置为 `false`，仍可覆盖默认行为。
+当 `targetSdkVersion >= 4.1` 时，有以下两项默认行为变化，这些能力此前已通过配置引入，本次仅调整默认值：
 
-提升目标 SDK 版本时，请检查依赖网格定位，或依赖零长度与百分比 flex basis 差异的布局。
+- 默认启用网格定位简写（`grid-column` 和 `grid-row`）。
+- 在 `flex` 简写省略 basis 时使用 `0%`。
+
+:::tip
+显式将 `enableGridPlacementShorthands` 或 `enableFlexBasisZeroPercent` 设置为 `false`，仍可覆盖默认行为。
+
+升级 SDK 版本时，请检查依赖网格定位，或依赖零长度与百分比 flex basis 差异的布局。
+:::
 
 ## 文本与滚动交互
 
 ### 精细控制文本装饰
 
-使用 **Android 和 iOS 的 TextService** 文本渲染路径时，三个属性让文本装饰样式更加可控：
+在 **Android** 和 **iOS** 中现在可以使用以下三个属性让文本装饰样式更加可控：
 
 - `text-decoration-thickness` 控制装饰线厚度。
 - `-x-text-decoration-width` 控制虚线线段长度或波浪线的周期宽度。
@@ -424,8 +404,6 @@ pluginLynxConfig({
   -x-text-decoration-gap: 4px;
 }
 ```
-
-这些扩展需要 TextService，不应假定原生文本渲染路径也具备相同支持。
 
 ### 一次滑动跨越更多列表项
 
@@ -456,7 +434,7 @@ item-snap={{ factor: 0.5, offset: 0, maxSnapCount: 3 }}
 
 ### 自主决定首屏就绪时机
 
-[即时首帧渲染](/guide/interaction/ifr)允许主线程在后台运行时就绪之前完成渲染。对于关键数据分批到达的页面，ReactLynx 现在允许业务明确决定何时将首屏节点树同步到后台线程：
+[首帧直出](/guide/interaction/ifr)允许主线程在后台运行时就绪之前完成渲染。对于关键数据分批到达的页面，ReactLynx 现在允许开发者明确决定何时将首屏节点树同步到后台线程：
 
 ```js
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
@@ -466,7 +444,7 @@ pluginReactLynx({
 });
 ```
 
-当业务所需的首屏关键数据准备完成后，调用[就绪 API](/api/react/Functions/markFirstScreenSyncReady)：
+当页面所需的首屏关键数据准备完成后，调用[就绪 API](/api/react/Functions/markFirstScreenSyncReady)：
 
 ```ts
 import { markFirstScreenSyncReady } from '@lynx-js/react';
@@ -475,19 +453,17 @@ import { markFirstScreenSyncReady } from '@lynx-js/react';
 markFirstScreenSyncReady();
 ```
 
-同步之前，主线程仍可同步处理宿主的 `updateData` 调用。只有业务发送就绪信号，**且**当前首屏渲染完成后，才会执行同步。该 API 可以在任一线程调用，重复调用不会产生额外效果。
+同步之前，主线程仍可同步处理宿主的 `updateData` 调用。只有已发送就绪信号，**且**当前首屏渲染完成后，才会执行同步。该 API 可以在任一线程调用，重复调用不会产生额外效果。
 
 :::warning 务必发送就绪信号
 
-手动模式下，数据就绪路径必须调用 `markFirstScreenSyncReady()`，也需要覆盖业务预期的数据请求失败回退路径。否则，后台线程的 hydration 以及依赖它的事件处理将始终不可用。不要等待这类事件处理函数来发送首次就绪信号。
+手动模式下，数据就绪路径必须调用 `markFirstScreenSyncReady()`，也需要覆盖预期的数据请求失败回退路径。否则，后台线程的 hydration 以及依赖它的事件处理将始终不可用。不要等待这类事件处理函数来发送首次就绪信号。
 
 :::
 
-这是一项配套框架能力，从 `@lynx-js/react@0.123.0` 和 `@lynx-js/react-rsbuild-plugin@0.18.0` 起可用。ReactLynx 包与引擎 SDK 独立版本管理；仅升级 Lynx 不会同步更新这些包。
+### 按需加载支持 SourceMap
 
-### 按需加载，并保留源码级调试能力
-
-ReactLynx 的按需加载接入 [`lynx.fetchBundle`](/react/code-splitting)，相应的 SourceMap 改进让按需包也能继续进行源码级调试。配置 `pluginReactLynx({ engineVersion: '3.9' })` 或受支持的更高引擎版本即可使用这一加载路径；较低配置仍保留原有的 `QueryComponent` 路径。
+ReactLynx 的按需加载接入 [`lynx.fetchBundle`](/react/code-splitting)，相应的 SourceMap 改进让按需包也能继续进行源码级调试。配置 `pluginReactLynx({ engineVersion: '3.9' })` 或受支持的更高引擎版本即可使用这一加载路径。
 
 以下示例使用 `lazy` 和 `Suspense`，将一个组件从首包中拆分出来。它的 FetchBundle 构建变体采用了新的加载路径：
 
@@ -499,56 +475,19 @@ ReactLynx 的按需加载接入 [`lynx.fetchBundle`](/react/code-splitting)，�
   highlight="{5,15-17}"
 />
 
-## Lynx API
+## 其他 API 更新
 
-宿主侧的更新主要围绕接入和检查能力展开：
+其他涉及 API 的主要更新有：
 
-- **SVG 图片服务扩展。**图片服务接口新增 [Android `fetchSVGImage`](https://github.com/lynx-family/lynx/pull/8104) 和 [iOS `loadSVGImageWithURL`](https://github.com/lynx-family/lynx/pull/8184) 扩展点，供图片服务实现者接入；接口本身不提供 SVG 解码器。
-
+- **SVG 图片服务扩展。**图片服务接口新增 [Android `fetchSVGImage`](https://github.com/lynx-family/lynx/pull/8104) 和 [iOS `loadSVGImageWithURL`](https://github.com/lynx-family/lynx/pull/8184) 扩展点，供接入图片服务使用。
 - **逻辑元素树查询。**Android、iOS 和 HarmonyOS 新增 LynxElement 节点查询与父子关系访问；Android 和 iOS 还可访问对应的平台视图。逻辑元素树与原生视图层级并不等同。
-- **扩展原生 Autolink 覆盖范围。**在已有[原生库与 Autolink](/guide/autolink) 能力的基础上，Android 和 iOS 增加 Node-API addon 接入，HarmonyOS 增加全局库接入。请配套使用匹配的 SDK 和平台工具链版本。
-- **HarmonyOS 宿主 API。**原生模块可通过 `static syncMethods` 声明需要同步返回的方法。`LynxContext.getPageDataByKeyAsync` 支持异步按键读取页面数据，`LynxViewClient.onIntrinsicContentSizeChange` 通知内容固有尺寸变化。同步方法会等待 UI 线程完成，应避免执行耗时任务。
+- **TemplateBundle 预加载。**Lynx 4.2 为 Android、iOS 和 HarmonyOS 增加了 [`TemplateBundle.preload`](/api/lynx-native-api/template-bundle.html)，可将模板二进制数据异步加载到预先创建的主线程运行时中，把这部分准备工作前移到页面使用之前。
 - **`Promise.allSettled`。**Lynx Promise 新增 `allSettled`，等待所有异步操作结束后，分别处理每项的成功值或失败原因，而不是在首次拒绝时就让整组操作返回失败。
-
-### TemplateBundle 预加载
-
-Lynx 4.2 为 Android、iOS 和 HarmonyOS 增加了 [`TemplateBundle.preload`](https://github.com/lynx-family/lynx/pull/9979)，可将 LepusNG 字节码异步加载到预先创建的主线程运行时中，把这部分准备工作前移到页面使用之前。
-
-调用顺序非常重要：先关闭 context 自动补充，创建全部所需 context，再请求预加载。预加载被接受后，不要继续创建 context。完成回调在预加载工作线程执行；涉及 UI 的操作需要切换到相应线程。这项能力准备的是运行时状态，并不会下载页面的全部资源。
-
-请检查预加载请求是否被接受。只有全部预建运行时完成加载后，才会执行成功回调；验证或加载失败时不会调用该回调。
-
-## DevTool
-
-### 沿着页面生命周期分析内存
-
-Trace 在现有内存分析能力上，新增了进程物理内存数据，以及主线程脚本（MTS）和后台线程脚本（BTS）虚拟机、运行时池的相关事件。它还支持从 DevTool 传入 Trace 配置、控制录制期间的垃圾回收，以及按 URL 获取虚拟机快照。可用的数据轨道和控制项取决于平台及 Trace 配置。
-
-例如，当你排查一个似乎持续占用内存的页面时，可以：
-
-1. 在一次 Trace 中记录进入页面、多次典型更新和退出页面的过程。
-2. 对照页面生命周期、虚拟机及运行时池事件，观察内存趋势。
-3. 在可疑时间段前后捕获快照，进一步分析仍被保留的对象。
-
-仅凭内存曲线的高点并不能判定泄漏，还需要考虑运行时池和对象的正常生命周期。现有操作流程可参考[内存分析指南](/guide/performance/analysis-performance/analysis-memory)及配套的 [Lynx Trace 工具](https://github.com/lynx-family/lynx-trace)。
-
-Android 还新增了 [`LynxView.takeBTSHeapSnapshot`](https://github.com/lynx-family/lynx/pull/8704)，可将 QuickJS 后台脚本的堆快照写入文件，并在后台线程回调成功或失败结果。输出路径必须为绝对路径，父目录需要已存在；已有文件会被覆盖。
-
-### 检查条件样式
-
-配合匹配版本的 DevTool，Styles 面板增加了 `@media` 检查，以及 `@supports` 条件的查看和编辑，便于理解哪些条件规则正在生效。Android、iOS 和桌面端受支持的截屏请求还可以选择 PNG；默认格式仍为 JPEG。
 
 ## 开始使用 Lynx 4.2
 
-请根据目标平台参考[集成到现有应用](/guide/start/integrate-with-existing-apps)指南，并选择相互匹配的 Lynx、PrimJS、服务与工具链版本。Lynx 4.2.0 配套使用 PrimJS 4.2.1；各项依赖的版本号不一定相同。
+请根据目标平台参考[集成到现有应用](/guide/start/integrate-with-existing-apps)指南，并选择相互匹配的 Lynx、PrimJS、服务与工具链版本。
 
-升级现有宿主前，请检查以下接入变化：
+完整的引擎变化与补丁可用情况，请参阅 [Lynx 4.2.0 发布记录](https://github.com/lynx-family/lynx/releases/tag/4.2.0)。
 
-| 范围                   | 需要检查的内容                                                                                                                                                                                             |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| iOS / AnimaX           | 使用 `XElement/AnimaX` 元件依赖；如果现有接入仍使用 `Lynx/AnimaX`，请更新依赖声明。                                                                                                                        |
-| Android / LynxElement  | 将 `com.lynx.tasm.LynxElement` 替换为 `com.lynx.tasm.element.LynxElement`；具名回调实现迁移到 `LynxElementCallback`。                                                                                      |
-| HarmonyOS / 图片重定向 | 将 `shouldRedirectUrlAsync` 回调迁移到 `AsyncCallback<LynxRedirectCallbackResult>`。返回字符串，或包含 `url` 及可选 `fallbackUrls` / `fileCacheName` 的结构化 `LynxRedirectResult`，而不再返回原有的数组。 |
-| 页面目标 SDK / 布局    | 将 `targetSdkVersion` 提升至 4.1 或更高时，重新验证网格和 flex 布局。                                                                                                                                      |
-
-完整的引擎变化与补丁可用情况，请参阅 [Lynx 4.2.0 发布记录](https://github.com/lynx-family/lynx/releases/tag/4.2.0)。感谢每一位贡献代码、反馈问题和分享示例的开发者，期待看到你用 Lynx 4.2 构建的作品！
+感谢每一位贡献代码、反馈问题和分享示例的开发者，期待看到你用 Lynx 4.2 构建的作品！
