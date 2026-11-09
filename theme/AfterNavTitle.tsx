@@ -1,6 +1,6 @@
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ArrowUpRight, ChevronDown } from 'lucide-react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { useLang, useLocation, useNavigate } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme-original';
 import { useIfMobile } from '@/hooks/use-if-mobile';
@@ -351,14 +351,8 @@ export default function AfterNavTitle() {
   const { pathname } = useLocation();
   const lang = useLang();
   const isMobile = useIfMobile();
-  const [currentSubsite, setCurrentSubsite] = useState(() =>
-    subsiteConfigOf(pathname),
-  );
+  const currentSubsite = subsiteConfigOf(pathname);
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    setCurrentSubsite(subsiteConfigOf(pathname));
-  }, [pathname]);
 
   return (
     <div className="flex items-center gap-2">
