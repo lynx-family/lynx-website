@@ -11,6 +11,7 @@ import { ActionBtn } from './action-btn';
 import { FeatureItem } from './feature-item';
 import {
   IconAndroid,
+  IconAngularLynx,
   IconHarmony,
   IconIOS,
   IconMacOS,
@@ -141,8 +142,8 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
         zh: '不止于一个框架',
       },
       desc: {
-        en: 'Lynx is a platform for frameworks. ReactLynx (official), Vue, Octane, and Miso for Haskell all integrate through the same standardized APIs. All frameworks welcome.',
-        zh: 'Lynx 是一个面向框架的平台。ReactLynx（官方）、Vue、Octane 与适用于 Haskell 的 Miso 都通过同一套标准化 API 接入。欢迎所有框架加入。',
+        en: 'Lynx is a platform for frameworks. ReactLynx (official), Vue, Angular, Octane, and Miso all integrate through the same standardized APIs. All frameworks welcome.',
+        zh: 'Lynx 是一个面向框架的平台。ReactLynx（官方）、Vue、Angular、Octane 与 Miso 都通过同一套标准化 API 接入。欢迎所有框架加入。',
       },
       actions: [
         {
@@ -164,6 +165,16 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
           ),
           size: 'large',
           link: 'https://vue.lynxjs.org/',
+        },
+        {
+          text: (
+            <Space>
+              <IconAngularLynx />
+              Angular
+            </Space>
+          ),
+          size: 'large',
+          link: 'https://angularlynx.js.org/',
         },
         {
           text: (
