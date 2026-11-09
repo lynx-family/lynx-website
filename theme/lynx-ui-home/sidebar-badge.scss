@@ -1,11 +1,11 @@
 @mixin badge-style {
-  @apply inline-flex items-center justify-center rounded-full text-xs
-    bg-secondary font-semibold px-2.5 h-6 gap-1 text-xs;
+  @apply inline-flex items-center justify-center rounded-full bg-secondary
+    font-medium h-6 gap-1;
+  font-size: 0.6875rem;
+  line-height: 1rem;
   padding: 0.125rem 0.5rem;
-  position: absolute;
-  right: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
+  color: color-mix(in srgb, var(--rp-c-text-2) 90%, transparent);
+  flex-shrink: 0;
 }
 
 $lynx-ui-badge-names: (
@@ -16,17 +16,15 @@ $lynx-ui-badge-names: (
 // Scope to lynx-ui subsite to avoid leaking into main site sidebar
 [data-subsite='ui'] {
   @each $context, $label in $lynx-ui-badge-names {
-    .rspress-sidebar-collapse[data-context='#{$context}'],
-    .rspress-sidebar-item[data-context='#{$context}']:not(
-        :has(.rspress-sidebar-item)
-      )
-      div {
-      position: relative;
+    .rp-sidebar-item[data-context='#{$context}'] .rp-sidebar-item__left::after {
+      content: '#{$label}';
+      @include badge-style;
+    }
 
-      &:after {
-        content: '#{$label}';
-        @include badge-style;
-      }
+    .rp-sidebar-item--active[data-context='#{$context}']
+      .rp-sidebar-item__left::after {
+      color: var(--rp-c-brand);
+      background-color: color-mix(in srgb, var(--rp-c-brand) 10%, transparent);
     }
   }
 }
