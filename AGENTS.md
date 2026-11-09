@@ -265,11 +265,7 @@ generated-documentation constraints, to changes in those areas.
 - Call out changes to CI, build or generation workflows, release behavior, or
   downstream interfaces explicitly in the commit message and pull request
   description.
-- Open all pull requests as drafts by default. When using GitHub CLI, pass
-  `--draft` to `gh pr create`. Keep them in draft while CI and automated
-  reviews run; only human maintainers may mark them ready for review.
-- Run CI checks and CodeRabbit reviews on draft pull requests. Do not skip
-  checks based on draft status; keep CodeRabbit's
-  `reviews.auto_review.enabled` and `reviews.auto_review.drafts` set to `true`.
+- Open pull requests as drafts by default (`gh pr create --draft`). Only
+  human maintainers may mark them ready for review.
 - All pull requests require human review and must be merged manually. Review
   agents may approve changes but must not auto-merge them.
