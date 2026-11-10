@@ -1,4 +1,5 @@
 import { Space } from '@douyinfe/semi-ui';
+import { LayoutGrid } from 'lucide-react';
 import { useIfMobile, useTiltEffect } from '../../../hooks';
 import React, { ReactNode, useState } from 'react';
 import styles from './index.module.less';
@@ -38,12 +39,27 @@ export interface FeatureCardItem {
   stackedActions?: boolean;
   iconClass?: string;
   actions?: {
-    text: string | React.ReactNode;
+    /** A single node, or per-locale nodes when the label must be localized. */
+    text:
+      | string
+      | React.ReactNode
+      | { en: React.ReactNode; zh: React.ReactNode };
     link?: string;
     size: string;
   }[];
   customRender?: ReactNode;
 }
+// Douyin Mini-App's Lynx rendering engine is documented in Chinese only,
+// so the button carries an explicit language tag in both locales.
+const DOUYIN_MINIAPP_LYNX_URL =
+  'https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/miniapp-framework/lynx/introduction';
+
+const ChineseOnlyTag = ({ lang }: { lang: 'en' | 'zh' }) => (
+  <span className={styles['lang-tag']}>
+    {lang === 'zh' ? '仅中文' : 'Chinese only'}
+  </span>
+);
+
 const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
   '/': [
     {
@@ -107,6 +123,26 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
           ),
           size: 'large',
           link: 'guide/start/integrate-with-existing-apps.html?platform=macos',
+        },
+        {
+          text: {
+            en: (
+              <Space>
+                <LayoutGrid className={styles['miniapp-icon']} />
+                Douyin Mini-App
+                <ChineseOnlyTag lang="en" />
+              </Space>
+            ),
+            zh: (
+              <Space>
+                <LayoutGrid className={styles['miniapp-icon']} />
+                抖音小程序
+                <ChineseOnlyTag lang="zh" />
+              </Space>
+            ),
+          },
+          size: 'large',
+          link: DOUYIN_MINIAPP_LYNX_URL,
         },
       ],
     },
@@ -293,6 +329,15 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
   ],
 };
 
+const isLocalizedText = (
+  text: unknown,
+): text is { en: React.ReactNode; zh: React.ReactNode } =>
+  typeof text === 'object' &&
+  text !== null &&
+  !React.isValidElement(text) &&
+  'en' in text &&
+  'zh' in text;
+
 const Features = ({
   src = '/',
   items,
@@ -357,7 +402,11 @@ const Features = ({
                 {item.actions.map((action, actionIndex) => (
                   <ActionBtn
                     key={actionIndex}
-                    text={action.text}
+                    text={
+                      isLocalizedText(action.text)
+                        ? action.text[lang]
+                        : action.text
+                    }
                     link={action.link}
                     size={action.size}
                   />
