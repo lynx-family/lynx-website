@@ -7,11 +7,49 @@ badge_text: 'AnimaX is released!'
 description: 'AnimaX is released as a cross-platform animation framework built with C++ and the Skity self-rendering engine. It keeps the Lottie workflow while adding Alpha Video layers, runtime dynamic properties, multithreaded rendering, and consistent rendering across Lynx and native apps.'
 ---
 
-import { BlogHeader, Caption, Go, ImageWall } from '@lynx';
+import {
+  BlogHeader,
+  Caption,
+  Go,
+  ImageWall,
+  MetricComparison,
+  VideoList,
+} from '@lynx';
+import { normalizeImagePath } from '@rspress/core/runtime';
 
 <BlogHeader />
 
 Today, we're announcing [AnimaX](https://github.com/lynx-family/animax), a cross-platform animation framework compatible with Lottie. You can keep creating animations in After Effects, combining shapes, images, text, and transparent video for playback in Lynx and native apps.
+
+AnimaX was built by engineers at ByteDance and has been rolling out across
+ByteDance products such as TikTok and CapCut since 2023. Today it runs in dozens
+of apps across Android, iOS, HarmonyOS, desktop, and Web, rendering animations
+on the order of tens of billions of times every day. Those animations span a
+wide range: lightweight, high-frequency motion such as splash screens, loading
+states, and list effects, as well as visually intense, heavy-load experiences
+such as shopping festivals, LIVE gifts, rewards and incentive features, and
+global events.
+
+For TikTok's 2024 Paris Olympics campaign, AnimaX delivered visually rich
+effects to users around the world. In TikTok's incentive experiences, it has to
+run just as smoothly on a large population of low- and mid-range devices. These
+are the scenarios that keep pushing AnimaX on rendering consistency,
+performance floors, and expressiveness.
+
+{/* TODO(media): prototype clips committed for the deploy preview. Move them to the documentation CDN and switch these sources to CDN URLs before publishing. */}
+
+<VideoList
+  videos={[
+    {
+      src: normalizeImagePath('/assets/animax/blog/tiktok-olympics.mp4'),
+      title: "TikTok's 2024 Paris Olympics campaign",
+    },
+    {
+      src: normalizeImagePath('/assets/animax/blog/tiktok-incentive.mp4'),
+      title: 'TikTok incentive experience',
+    },
+  ]}
+/>
 
 AnimaX plays existing Lottie animations and supports adding [Alpha Video](#alpha-video) layers through the [AFX export plugin](/animax/afx), bringing complex effects together with configurable images and text in a single animation.
 
@@ -133,55 +171,164 @@ compositing, this can significantly reduce main-thread pressure and move the
 risk of jank out of the main interaction path.
 
 The [AnimaX Lottie Benchmark](https://github.com/RickAi/animax-lottie-benchmark)
-uses the animation and test method from the
+uses the rocket animation from the
 [Callstack article](https://www.callstack.com/blog/lottie-vs-rive-optimizing-mobile-app-animation)
-to run a fixed scenario comparison. The test devices were a Pixel 4 on Android
-10 and an iPhone 12 Mini on iOS 15.4.
+and plays the same vector asset on three platforms: a Pixel 4 on Android 10
+held at 60 Hz, an iPhone 12 Mini on iOS 15.4, and Chrome with the hardware WebGL
+backend, compared against lottie-web's SVG renderer. The method and full
+reports are open source and reproducible.
 
-The FPS results are below. GPU Render FPS refers to the offscreen rendering frame
-rate on the GPU thread. Lottie does not record the corresponding metric, so it
-is marked as `-`.
+<MetricComparison
+  label="AnimaX and Lottie benchmark results on Android, iOS, and Web"
+  series={[
+    { key: 'animax', label: 'AnimaX' },
+    { key: 'lottie', label: 'Lottie' },
+  ]}
+  groups={[
+    {
+      title: 'Android · Pixel 4',
+      metrics: [
+        {
+          title: 'Main-thread FPS',
+          hint: 'Higher is better',
+          unit: 'FPS',
+          max: 60,
+          values: { animax: 60.1, lottie: 37.5 },
+        },
+        {
+          title: 'Process CPU',
+          hint: 'Lower is better; 1 means one full core',
+          unit: 'cores',
+          digits: 2,
+          values: { animax: 0.71, lottie: 1.03 },
+        },
+        {
+          title: 'TOTAL PSS delta',
+          hint: 'Lower is better',
+          unit: 'MB',
+          values: { animax: 86.93, lottie: 35.2 },
+        },
+      ],
+    },
+    {
+      title: 'iOS · iPhone 12 Mini',
+      metrics: [
+        {
+          title: 'Main-thread FPS',
+          hint: 'Higher is better',
+          unit: 'FPS',
+          max: 60,
+          values: { animax: 60.0, lottie: 60.0 },
+        },
+        {
+          title: 'Phys Footprint delta',
+          hint: 'Lower is better',
+          unit: 'MB',
+          values: { animax: 60.37, lottie: 20.47 },
+        },
+      ],
+    },
+    {
+      title: 'Web · Chrome',
+      metrics: [
+        {
+          title: 'Average FPS',
+          hint: 'Higher is better',
+          unit: 'FPS',
+          max: 60,
+          values: { animax: 59.8, lottie: 60.1 },
+        },
+        {
+          title: 'JS heap',
+          hint: 'Lower is better',
+          unit: 'MB',
+          values: { animax: 7.86, lottie: 13.13 },
+        },
+        {
+          title: 'Chrome process RSS',
+          hint: 'Lower is better',
+          unit: 'MB',
+          values: { animax: 79.85, lottie: 107.42 },
+        },
+      ],
+    },
+  ]}
+/>
 
-| Platform | Engine | UI FPS | GPU Render FPS |
-| -------- | ------ | -----: | -------------: |
-| Android  | AnimaX |   60.0 |           60.0 |
-| Android  | Lottie |   37.2 |              - |
-| iOS      | AnimaX |   60.0 |           60.1 |
-| iOS      | Lottie |   60.0 |              - |
+<Caption>
+  Memory is the delta after entering the animation scene, relative to a
+  baseline. Each platform accounts for memory differently, so absolute values
+  should not be compared across platforms.
+</Caption>
 
-On Android, AnimaX keeps both UI FPS and GPU Render FPS stable at 60.0, while
-Lottie reaches 37.2 UI FPS. This difference shows the value of AnimaX's
-self-rendering pipeline for animations with heavy masks and composition work:
-rendering no longer continuously occupies the UI thread, leaving more headroom
-for interaction, layout, and business logic. On iOS, both engines stay at 60
-FPS, which matches Lottie iOS's Core Animation path, where part of the playback
-work can be handed to the system rendering infrastructure.
+Android shows the largest gap: AnimaX holds the main thread at 60 FPS while
+Lottie reaches 37.5 FPS, and AnimaX does so with less process CPU, about 0.71
+cores against 1.03. Moving rendering to the GPU thread leaves the main thread
+more headroom. On iOS, both engines hold 60 FPS, which matches Lottie iOS's Core
+Animation path handing part of the playback work to the system renderer. On the
+Web, frame rates are effectively the same, and AnimaX's WebGL backend keeps
+resources on the GPU side, so both the JS heap and Chrome's process RSS are
+lower.
 
-Memory is worth looking at separately. The following numbers are the memory
-delta after entering the animation scene relative to the baseline, in MB.
-Because Android and iOS expose different memory metrics, they are listed by
-platform.
+Memory needs to be read with each platform's accounting model in mind. On
+Android, AnimaX has lower Native Heap and Java Heap deltas but a higher Graphics
+delta; on iOS, its Phys Footprint is higher. This is the expected shape of a
+self-rendering engine whose working set lives in graphics buffers, textures,
+and renderer caches, which iOS counts directly toward the process footprint.
 
-Android data:
+::: details Full results
 
-| Engine | Native Heap Delta | Java Heap Delta | Graphics Delta | TOTAL PSS Delta |
-| ------ | ----------------: | --------------: | -------------: | --------------: |
-| AnimaX |              8.14 |            0.68 |          65.73 |           76.64 |
-| Lottie |             11.39 |            3.69 |          19.07 |           36.13 |
+Android (memory in MB, delta from baseline):
 
-iOS data:
+| Engine | Main FPS | GPU FPS | Native Heap | Dalvik Heap | Graphics | TOTAL PSS |
+| ------ | -------: | ------: | ----------: | ----------: | -------: | --------: |
+| AnimaX |     60.1 |    60.1 |        7.80 |        1.09 |    76.18 |     86.93 |
+| Lottie |     37.5 |       - |       11.33 |        3.61 |    18.39 |     35.20 |
 
-| Engine | Resident Delta | Phys Footprint Delta | Internal Delta |
-| ------ | -------------: | -------------------: | -------------: |
-| AnimaX |          21.90 |                60.37 |          17.13 |
-| Lottie |          26.63 |                20.47 |          20.38 |
+AnimaX's Graphics delta varied across the five samples (60.3–87.3 MB), while
+Lottie's stayed at about 18.4 MB.
 
-The memory results need to be read with each platform's accounting model in
-mind. On Android, AnimaX has lower Native Heap and Java Heap deltas, but a
-higher Graphics delta. That is a typical result for a self-rendering engine
-whose working set lives in graphics buffers, textures, and renderer caches. On
-iOS, AnimaX has lower Resident and Internal deltas than Lottie, but a higher
-Phys Footprint.
+iOS (memory in MB):
+
+| Engine | Main FPS | GPU FPS | Resident | Phys Footprint | Internal |
+| ------ | -------: | ------: | -------: | -------------: | -------: |
+| AnimaX |     60.0 |    60.1 |    21.90 |          60.37 |    17.13 |
+| Lottie |     60.0 |       - |    26.63 |          20.47 |    20.38 |
+
+Web (AnimaX WebGL against lottie-web SVG):
+
+| Engine     | Avg FPS | Used JS Heap | V8 Embedder | V8 Backing | Renderer RSS | Chrome RSS |
+| ---------- | ------: | -----------: | ----------: | ---------: | -----------: | ---------: |
+| AnimaX     |    59.8 |      7.86 MB |     7.62 MB |    1.26 MB |     73.81 MB |   79.85 MB |
+| Lottie-web |    60.1 |     13.13 MB |     1.28 MB |      ~0 MB |    101.29 MB |  107.42 MB |
+
+GPU FPS comes from the AnimaX engine callback. Lottie has no equivalent metric,
+so it is marked as `-`.
+
+:::
+
+### In Production
+
+A benchmark covers one animation on a few devices; production traffic is a
+different kind of test. Across several product teams that migrated from Lottie,
+the result has been consistent: AnimaX raises the floor of the experience
+rather than the peak.
+
+- **Incentive experiences**: frame rates in the middle percentiles improved by
+  about half, with clear gains in the low percentiles as well, while CPU and
+  memory stayed roughly flat.
+- **E-commerce campaigns**: where Lottie ran at barely more than ten frames per
+  second on low-percentile devices, AnimaX stayed close to the cap across
+  percentiles, and animation assets loaded noticeably faster.
+- **Large-scale events**: with frame rate capped at 30 FPS, AnimaX held the cap
+  across all percentiles on both platforms, while Lottie stuttered visibly at
+  the high percentiles.
+- **Stability**: no significant difference from Lottie, with ANR and jank
+  metrics slightly lower.
+
+This matches the Android benchmark: moving rendering off the UI thread does not
+make an already smooth device faster. It addresses the cases where the UI
+thread is already saturated.
 
 ## Go Further with AnimaX
 
